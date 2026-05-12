@@ -1,0 +1,17 @@
+.idea/*
+cmake-build-debug/*
+build-windows/
+cmake-build-web/*
+# Android signing — never commit private keys or passwords
+*.keystore
+*.jks
+key.properties
+# Android Gradle build artefacts
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
+android/app/.cxx/Debug
+android/app/.cxx/RelWithDebInfo
+
