@@ -1,0 +1,32 @@
+set(CMAKE_SYSTEM_NAME Windows)
+set(CMAKE_SYSTEM_PROCESSOR x86_64)
+
+set(MINGW_TRIPLET "x86_64-w64-mingw32" CACHE STRING "MinGW-w64 target triplet")
+
+message(STATUS "CNA: Loading MinGW-w64 toolchain (${MINGW_TRIPLET})")
+
+find_program(MINGW_C_COMPILER NAMES ${MINGW_TRIPLET}-gcc)
+find_program(MINGW_CXX_COMPILER NAMES ${MINGW_TRIPLET}-g++)
+find_program(MINGW_RC_COMPILER NAMES ${MINGW_TRIPLET}-windres)
+
+if(NOT MINGW_C_COMPILER)
+    message(FATAL_ERROR "Could not find MinGW-w64 C compiler (${MINGW_TRIPLET}-gcc). Please install mingw-w64 package or set MINGW_C_COMPILER.")
+endif()
+
+if(NOT MINGW_CXX_COMPILER)
+    message(FATAL_ERROR "Could not find MinGW-w64 C++ compiler (${MINGW_TRIPLET}-g++). Please install mingw-w64 package or set MINGW_CXX_COMPILER.")
+endif()
+
+set(CMAKE_C_COMPILER "${MINGW_C_COMPILER}")
+set(CMAKE_CXX_COMPILER "${MINGW_CXX_COMPILER}")
+set(CMAKE_RC_COMPILER "${MINGW_RC_COMPILER}")
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
+set(CNA_WINDOWS_DEPENDENCIES_ROOT "" CACHE PATH "Optional root folder containing Windows SDL3/SDL3_image/SDL3_mixer/SDL3_ttf CMake packages")
+if(CNA_WINDOWS_DEPENDENCIES_ROOT)
+    list(PREPEND CMAKE_PREFIX_PATH "${CNA_WINDOWS_DEPENDENCIES_ROOT}")
+endif()

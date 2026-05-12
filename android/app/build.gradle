@@ -1,0 +1,116 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace = "org.openeggbert.speedyblupi"
+    compileSdkVersion 35
+    ndkVersion = "30.0.14904198"
+
+    defaultConfig {
+        applicationId "org.openeggbert.speedyblupi"
+        minSdkVersion 21
+        targetSdkVersion 35
+        versionCode 1
+        versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                // Pass Android platform and C++ STL config.
+                arguments "-DANDROID_PLATFORM=android-21",
+                          "-DANDROID_STL=c++_static",
+                          // Disable sharp-runtime and CNA tests (they use gtest
+                          // which is not needed in the APK build).
+                          "-DCNA_BUILD_TESTS=OFF",
+                          "-DSHARP_RUNTIME_BUILD_TESTS=OFF"
+                abiFilters 'arm64-v8a', 'x86_64'
+            }
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            } else {
+                // key.properties not found – assembleRelease will fail with a clear message below
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (!keystorePropertiesFile.exists()) {
+                doFirst {
+                    throw new GradleException(
+                        "\n\n" +
+                        "========================================================\n" +
+                        " ERROR: key.properties not found in android/ directory.\n" +
+                        " Cannot build a signed release APK.\n" +
+                        " See ANDROID.md for instructions on creating key.properties.\n" +
+                        "========================================================\n"
+                    )
+                }
+            }
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+            jniDebuggable true
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            // Point to the game's root CMakeLists.txt (one level up from android/).
+            path '../../CMakeLists.txt'
+            version "4.1.2"
+        }
+    }
+
+    // Package game assets into the APK as Android assets (read-only).
+    //
+    // Asset layout in the APK must match the paths the game uses at runtime.
+    // The game loads e.g. "Content/backgrounds/decor000.png" and "worlds/world001.txt".
+    // SDL_IOFromFile on Android first checks internal storage, then the APK AAssetManager.
+    //
+    // We set the asset source to the galaxy-eggbert root so that the directory
+    // structure is preserved:
+    //   <galaxy-eggbert>/Content/backgrounds/... -> Content/backgrounds/... in APK
+    //   <galaxy-eggbert>/worlds/...              -> worlds/... in APK
+    //
+    // Other files at that level (src/, cmake/, etc.) are excluded by AGP because
+    // the asset merger only includes directories/files reachable from assets.srcDirs.
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/assets']
+            java.srcDirs = [
+                // SDL3 Java glue (SDLActivity, SDLAudioManager, etc.)
+                '../../../cna/third_party/SDL/android-project/app/src/main/java',
+                // Game-specific Java (just the minimal stub subclassing SDLActivity)
+                'src/main/java'
+            ]
+            res.srcDirs = ['src/main/res']
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+        }
+    }
+
+    lint {
+        abortOnError = false
+    }
+}
+
+dependencies {
+    // No extra Java/Kotlin dependencies required – SDL provides the full activity.
+}
