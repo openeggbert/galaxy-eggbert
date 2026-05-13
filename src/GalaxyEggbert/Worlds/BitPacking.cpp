@@ -21,6 +21,18 @@ std::uint8_t bitsNeededForPalette(std::size_t paletteCount) {
     return bits;
 }
 
+    std::vector<std::uint64_t> packPaletteIndices(
+    const std::vector<std::uint16_t>& indices,
+    std::uint8_t bitsPerValue) {
+
+    std::vector<std::uint64_t> words(packedWordCount(indices.size(), bitsPerValue), 0);
+    for (std::size_t i = 0; i < indices.size(); ++i) {
+        setPackedIndex(words, i, bitsPerValue, indices[i]);
+    }
+    return words;
+}
+
+    
 std::size_t packedWordCount(std::size_t valueCount, std::uint8_t bitsPerValue) {
     if (bitsPerValue == 0 || bitsPerValue > 16) {
         throw std::out_of_range("bitsPerValue must be in range 1..16");
@@ -96,17 +108,6 @@ void setPackedIndex(
         words[wordIndex + 1] &= ~overflowMask;
         words[wordIndex + 1] |= (static_cast<std::uint64_t>(value) >> remainingInWord) & overflowMask;
     }
-}
-
-std::vector<std::uint64_t> packPaletteIndices(
-    const std::vector<std::uint16_t>& indices,
-    std::uint8_t bitsPerValue) {
-
-    std::vector<std::uint64_t> words(packedWordCount(indices.size(), bitsPerValue), 0);
-    for (std::size_t i = 0; i < indices.size(); ++i) {
-        setPackedIndex(words, i, bitsPerValue, indices[i]);
-    }
-    return words;
 }
 
 std::vector<std::uint16_t> unpackPaletteIndices(

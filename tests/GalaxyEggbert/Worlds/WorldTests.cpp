@@ -1,0 +1,198 @@
+#include "GalaxyEggbert/Worlds/World.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <system_error>
+
+#include <gtest/gtest.h>
+
+namespace GalaxyEggbert::Worlds {
+
+namespace {
+
+std::filesystem::path makeTempPath(std::string_view extension) {
+    static std::atomic<std::uint64_t> sequence{0};
+    const auto uniqueSuffix = std::to_string(
+        std::chrono::steady_clock::now().time_since_epoch().count())
+        + "_" + std::to_string(sequence.fetch_add(1, std::memory_order_relaxed));
+    return std::filesystem::temp_directory_path()
+        / ("galaxy_eggbert_world_test_" + uniqueSuffix + std::string(extension));
+}
+
+void removeFileNoThrow(const std::filesystem::path& path) {
+    std::error_code removeError;
+    std::filesystem::remove(path, removeError);
+}
+
+std::string readAllBytes(const std::filesystem::path& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) {
+        throw std::runtime_error("Cannot open file for reading in test helper");
+    }
+
+    std::ostringstream stream;
+    stream << in.rdbuf();
+    return stream.str();
+}
+
+void writeAllBytes(const std::filesystem::path& path, const std::string& bytes) {
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    if (!out) {
+        throw std::runtime_error("Cannot open file for writing in test helper");
+    }
+    out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+    if (!out) {
+        throw std::runtime_error("Cannot write file in test helper");
+    }
+}
+
+} // namespace
+
+TEST(WorldTests, ConstructorAndWorldDimensionsAreConsistent) {
+    const World defaultWorld;
+    EXPECT_EQ(defaultWorld.chunksPerAxis(), VoxelConfig::WorldChunksPerAxis);
+    EXPECT_EQ(defaultWorld.blocksPerAxis(), VoxelConfig::WorldBlocksPerAxis);
+    EXPECT_EQ(
+        defaultWorld.chunkCount(),
+        static_cast<std::size_t>(VoxelConfig::WorldChunksPerAxis)
+            * VoxelConfig::WorldChunksPerAxis
+            * VoxelConfig::WorldChunksPerAxis);
+    EXPECT_THROW(static_cast<void>(World(0)), std::out_of_range);
+}
+
+TEST(WorldTests, SetAndGetBlockAcrossChunkBoundaries) {
+    World world;
+    const Block edgeA = Block::make(10, 0);
+    const Block edgeB = Block::make(11, 1);
+
+    world.setBlock(9, 9, 9, edgeA);
+    world.setBlock(10, 10, 10, edgeB);
+
+    EXPECT_EQ(world.getBlock(9, 9, 9), edgeA);
+    EXPECT_EQ(world.getBlock(10, 10, 10), edgeB);
+}
+
+TEST(WorldTests, BlockCoordinateValidationRejectsOutOfRange) {
+    World world;
+    const auto limit = world.blocksPerAxis();
+
+    EXPECT_THROW(static_cast<void>(world.getBlock(limit, 0, 0)), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(world.getBlock(0, limit, 0)), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(world.getBlock(0, 0, limit)), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(world.setBlock(limit, 0, 0, Block::make(1, 0))), std::out_of_range);
+}
+
+TEST(WorldTests, ChunkCoordinateValidationRejectsOutOfRange) {
+    World world;
+    const auto limit = world.chunksPerAxis();
+
+    EXPECT_THROW(static_cast<void>(world.chunk(limit, 0, 0)), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(world.chunk(0, limit, 0)), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(world.chunk(0, 0, limit)), std::out_of_range);
+}
+
+TEST(WorldSerializationTests, SaveAndLoadPreservesSparseAndBoundaryBlocks) {
+    const auto filePath = makeTempPath(".vwr");
+
+    World world;
+    const Block grass = Block::make(1, 0);
+    const Block dirt = Block::make(2, 0);
+    const Block stone = Block::make(3, 0);
+    const Block lava = Block::make(4, 7);
+
+    world.setBlock(0, 0, 0, grass);
+    world.setBlock(10, 1, 10, dirt);
+    world.setBlock(99, 99, 99, stone);
+    world.setBlock(50, 20, 70, lava);
+
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_EQ(loaded.getBlock(0, 0, 0), grass);
+    EXPECT_EQ(loaded.getBlock(10, 1, 10), dirt);
+    EXPECT_EQ(loaded.getBlock(99, 99, 99), stone);
+    EXPECT_EQ(loaded.getBlock(50, 20, 70), lava);
+    EXPECT_EQ(loaded.getBlock(5, 5, 5), Block::air());
+
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, SaveAndLoadEmptyWorldKeepsAirChunks) {
+    const auto filePath = makeTempPath(".vwr");
+
+    const World world(2);
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_EQ(loaded.chunksPerAxis(), 2);
+    EXPECT_EQ(loaded.chunkCount(), 8u);
+    EXPECT_EQ(loaded.getBlock(0, 0, 0), Block::air());
+    EXPECT_EQ(loaded.getBlock(19, 19, 19), Block::air());
+
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, LoadFromMissingFileThrows) {
+    const auto filePath = makeTempPath(".vwr");
+    removeFileNoThrow(filePath);
+    EXPECT_THROW(static_cast<void>(World::loadFromFile(filePath)), std::runtime_error);
+}
+
+TEST(WorldSerializationTests, LoadRejectsInvalidMagic) {
+    const auto filePath = makeTempPath(".vwr");
+    {
+        World world;
+        world.saveToFile(filePath);
+    }
+
+    std::string bytes = readAllBytes(filePath);
+    ASSERT_GE(bytes.size(), 4u);
+    bytes[0] = 'X';
+    writeAllBytes(filePath, bytes);
+
+    EXPECT_THROW(static_cast<void>(World::loadFromFile(filePath)), std::runtime_error);
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, LoadRejectsUnsupportedFlags) {
+    const auto filePath = makeTempPath(".vwr");
+    {
+        World world;
+        world.saveToFile(filePath);
+    }
+
+    std::string bytes = readAllBytes(filePath);
+    ASSERT_GE(bytes.size(), 8u);
+    bytes[7] = static_cast<char>(1);
+    writeAllBytes(filePath, bytes);
+
+    EXPECT_THROW(static_cast<void>(World::loadFromFile(filePath)), std::runtime_error);
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, LoadRejectsChunkCountMismatch) {
+    const auto filePath = makeTempPath(".vwr");
+    {
+        World world;
+        world.saveToFile(filePath);
+    }
+
+    std::string bytes = readAllBytes(filePath);
+    ASSERT_GE(bytes.size(), 12u);
+    bytes[8] = 0;
+    bytes[9] = 0;
+    bytes[10] = 0;
+    bytes[11] = 0;
+    writeAllBytes(filePath, bytes);
+
+    EXPECT_THROW(static_cast<void>(World::loadFromFile(filePath)), std::runtime_error);
+    removeFileNoThrow(filePath);
+}
+
+} // namespace GalaxyEggbert::Worlds

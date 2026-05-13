@@ -60,7 +60,6 @@ The first implementation intentionally keeps the core simple:
 ```text
 Block -> Chunk palette -> bit-packed palette indices -> World file
 ```
-
 RLE, LZ4/Zstd, palette deduplication, sparse storage, and octree storage are optional future extensions.
 
 ## Default World Layout

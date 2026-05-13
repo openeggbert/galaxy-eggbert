@@ -83,6 +83,11 @@ cmake --build cmake-build-web -j
 emrun cmake-build-web/GalaxyEggbert.html
 ```
 
+#### Test
+
+```bash
+ctest --test-dir /rv/data/development/github.com/openeggbert/galaxy-eggbert/cmake-build-debug --output-on-failure
+```
 #### Generated files
 
 | File | Description |
