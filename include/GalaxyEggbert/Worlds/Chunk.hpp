@@ -17,6 +17,32 @@
 namespace GalaxyEggbert::Worlds {
 
 /**
+ * @brief Sparse metadata payload assigned to one concrete block in a chunk.
+ */
+struct ChunkBlockMetadataRecord final {
+    /**
+     * @brief Local linear block index in chunk coordinates.
+     */
+    std::uint32_t localBlockIndex = 0;
+
+    /**
+     * @brief Type discriminator of the payload.
+     */
+    std::uint16_t metadataType = 0;
+
+    /**
+     * @brief Type-specific payload bytes.
+     */
+    std::vector<std::uint8_t> payload;
+
+    [[nodiscard]] bool operator==(const ChunkBlockMetadataRecord& other) const {
+        return localBlockIndex == other.localBlockIndex
+            && metadataType == other.metadataType
+            && payload == other.payload;
+    }
+};
+
+/**
  * @brief Palette-compressed 10 x 10 x 10 voxel chunk.
  *
  * The chunk stores palette indices in an adaptive bit-packed stream.
@@ -135,6 +161,37 @@ public:
     [[nodiscard]] std::uint8_t bitsPerBlock() const noexcept;
 
     /**
+     * @brief Returns sparse per-block metadata records stored in this chunk.
+     */
+    [[nodiscard]] const std::vector<ChunkBlockMetadataRecord>& extraMetadata() const noexcept;
+
+    /**
+     * @brief Adds or replaces sparse metadata for one local block index and type.
+     *
+     * @param localBlockIndex Local linear index in range <tt>[0, Volume)</tt>.
+     * @param metadataType Type discriminator of the payload.
+     * @param payload Type-specific raw bytes; payload length must fit into <tt>uint16_t</tt>.
+     * @throws std::out_of_range If @p localBlockIndex is out of range.
+     * @throws std::runtime_error If @p payload is too large for on-disk encoding.
+     */
+    void setExtraMetadata(std::uint32_t localBlockIndex,
+                          std::uint16_t metadataType,
+                          std::vector<std::uint8_t> payload);
+
+    /**
+     * @brief Removes sparse metadata for one local block index and type.
+     *
+     * @return <tt>true</tt> when a record was removed.
+     */
+    bool removeExtraMetadata(std::uint32_t localBlockIndex,
+                             std::uint16_t metadataType);
+
+    /**
+     * @brief Removes all sparse metadata records from this chunk.
+     */
+    void clearExtraMetadata();
+
+    /**
      * @brief Serializes the chunk to a binary stream.
      *
      * The on-disk format includes a chunk header (`VCH1` magic, format version,
@@ -158,6 +215,7 @@ public:
 private:
     std::vector<Block> palette_;
     std::vector<std::uint64_t> packedIndices_;
+    std::vector<ChunkBlockMetadataRecord> extraMetadata_;
     std::uint8_t bitsPerBlock_ = 1;
     bool dirty_ = false;
 
@@ -167,6 +225,13 @@ private:
     static std::size_t linearIndex(std::uint8_t localX,
                                    std::uint8_t localY,
                                    std::uint8_t localZ);
+
+    /**
+     * @brief Validates local linear block index inside this chunk.
+     *
+     * @throws std::out_of_range If index is outside <tt>[0, Volume)</tt>.
+     */
+    static void validateLocalBlockIndex(std::uint32_t localBlockIndex);
 
     /**
      * @brief Validates that local coordinates are inside chunk bounds.

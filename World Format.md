@@ -204,19 +204,30 @@ All numeric values are little-endian.
 
 ### Chunk Header
 
-| Offset | Size | Field         | Meaning                              |
-| -----: | ---: | ------------- | ------------------------------------ |
-|      0 |    4 | magic         | ASCII `VCH1`                         |
-|      4 |    1 | version       | `1`                                  |
-|      5 |    1 | chunkSize     | `10`                                 |
-|      6 |    1 | bitsPerBlock  | 1..8 in v1                           |
-|      7 |    1 | flags         | `0` in v1                            |
-|      8 |    2 | paletteCount  | 1..256                               |
-|     10 |    2 | reserved      | must be `0`                          |
-|     12 |    4 | blockCount    | `1000`                               |
-|     16 |    4 | dataSizeBytes | size of the packed `uint64_t` stream |
+Current v2 layout:
 
-Header size: 20 bytes.
+| Offset | Size | Field              | Meaning                              |
+| -----: | ---: | ------------------ | ------------------------------------ |
+|      0 |    4 | magic              | ASCII `VCH1`                         |
+|      4 |    1 | version            | `2`                                  |
+|      5 |    1 | chunkSize          | `10`                                 |
+|      6 |    1 | bitsPerBlock       | 1..8                                 |
+|      7 |    1 | flags              | bit flags (see below)                |
+|      8 |    2 | paletteCount       | 1..256                               |
+|     10 |    2 | reserved           | must be `0`                          |
+|     12 |    4 | blockCount         | `1000`                               |
+|     16 |    4 | dataSizeBytes      | size of packed `uint64_t` stream     |
+|     20 |    4 | extraMetaSizeBytes | size of optional sparse metadata     |
+
+Header size in v2: 24 bytes.
+
+Legacy v1 chunks use the previous 20-byte header without `extraMetaSizeBytes` and with `version = 1`.
+
+Chunk flags:
+
+* `0x00`: no flags
+* `0x01`: has extra sparse metadata section
+* other bits are reserved for future use
 
 ### Chunk Body
 
@@ -225,6 +236,42 @@ Immediately after the header:
 ```text
 palette[paletteCount] as uint16_t raw block values
 packedIndices[dataSizeBytes / 8] as uint64_t little-endian words
+optional extraMetadata[extraMetaSizeBytes]
+```
+
+If no sparse metadata are present:
+
+```text
+flags bit 0 is not set
+extraMetaSizeBytes = 0
+```
+
+### Extra Metadata Section `BMD1`
+
+The optional sparse metadata section starts with:
+
+| Size | Field       | Meaning                    |
+| ---: | ----------- | -------------------------- |
+|    4 | magic       | ASCII `BMD1`               |
+|    2 | version     | `1`                        |
+|    2 | reserved    | must be `0`                |
+|    4 | recordCount | number of metadata records |
+
+Then follow `recordCount` metadata records:
+
+| Size | Field           | Meaning                  |
+| ---: | --------------- | ------------------------ |
+|    4 | localBlockIndex | local linear block index |
+|    2 | metadataType    | metadata kind id         |
+|    2 | payloadSize     | payload byte size        |
+|    N | payload         | type-specific payload    |
+
+Sparse metadata are attached to concrete local block positions, not only to block type ids.
+
+Local block index convention:
+
+```cpp
+localBlockIndex = localX + localY * chunkSize + localZ * chunkSize * chunkSize;
 ```
 
 The first palette index is stored in the least significant bits of the first `uint64_t` word.

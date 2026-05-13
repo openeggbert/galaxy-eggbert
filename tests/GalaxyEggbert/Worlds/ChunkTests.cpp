@@ -1,6 +1,7 @@
 #include "GalaxyEggbert/Worlds/Chunk.hpp"
 
 #include <array>
+#include <cstdint>
 #include <sstream>
 #include <string>
 
@@ -19,6 +20,26 @@ std::string serializeChunk(const Chunk& chunk) {
 Chunk deserializeChunk(const std::string& bytes) {
     std::istringstream stream(bytes, std::ios::binary);
     return Chunk::read(stream);
+}
+
+std::uint32_t readU32LE(const std::string& bytes, std::size_t offset) {
+    return static_cast<std::uint32_t>(static_cast<unsigned char>(bytes[offset]))
+        | (static_cast<std::uint32_t>(static_cast<unsigned char>(bytes[offset + 1])) << 8)
+        | (static_cast<std::uint32_t>(static_cast<unsigned char>(bytes[offset + 2])) << 16)
+        | (static_cast<std::uint32_t>(static_cast<unsigned char>(bytes[offset + 3])) << 24);
+}
+
+void writeU32LE(std::string& bytes, std::size_t offset, std::uint32_t value) {
+    bytes[offset] = static_cast<char>(value & 0xFFu);
+    bytes[offset + 1] = static_cast<char>((value >> 8) & 0xFFu);
+    bytes[offset + 2] = static_cast<char>((value >> 16) & 0xFFu);
+    bytes[offset + 3] = static_cast<char>((value >> 24) & 0xFFu);
+}
+
+std::size_t extraMetadataSectionOffset(const Chunk& chunk) {
+    return 24u
+        + chunk.palette().size() * sizeof(std::uint16_t)
+        + chunk.packedIndices().size() * sizeof(std::uint64_t);
 }
 
 } // namespace
@@ -114,6 +135,66 @@ TEST(ChunkSerializationTests, RoundTripPreservesPaletteAndValues) {
     EXPECT_FALSE(loaded.isDirty());
 }
 
+TEST(ChunkSerializationTests, WriteUsesVersion2HeaderWithoutExtraMetadataByDefault) {
+    const Chunk chunk;
+    const std::string bytes = serializeChunk(chunk);
+    ASSERT_GE(bytes.size(), 24u);
+    EXPECT_EQ(static_cast<unsigned char>(bytes[4]), 2u);
+    EXPECT_EQ(static_cast<unsigned char>(bytes[7]), 0u);
+    EXPECT_EQ(readU32LE(bytes, 20), 0u);
+}
+
+TEST(ChunkSerializationTests, RoundTripPreservesSparseExtraMetadataRecords) {
+    Chunk original;
+    original.setExtraMetadata(0, 10, {0x01, 0x02, 0x03});
+    original.setExtraMetadata(999, 11, {});
+
+    const Chunk loaded = deserializeChunk(serializeChunk(original));
+    EXPECT_EQ(loaded.extraMetadata(), original.extraMetadata());
+    EXPECT_FALSE(loaded.isDirty());
+}
+
+TEST(ChunkTests, ExtraMetadataSetReplaceAndRemoveWorksByLocalBlockIndexAndType) {
+    Chunk chunk;
+    chunk.clearDirty();
+
+    chunk.setExtraMetadata(5, 42, {0xAA});
+    EXPECT_TRUE(chunk.isDirty());
+    ASSERT_EQ(chunk.extraMetadata().size(), 1u);
+
+    chunk.clearDirty();
+    chunk.setExtraMetadata(5, 42, {0xAA});
+    EXPECT_FALSE(chunk.isDirty());
+    ASSERT_EQ(chunk.extraMetadata().size(), 1u);
+
+    chunk.setExtraMetadata(5, 42, {0xBB, 0xCC});
+    EXPECT_TRUE(chunk.isDirty());
+    ASSERT_EQ(chunk.extraMetadata().size(), 1u);
+    EXPECT_EQ(chunk.extraMetadata()[0].payload, (std::vector<std::uint8_t>{0xBB, 0xCC}));
+
+    chunk.clearDirty();
+    EXPECT_FALSE(chunk.removeExtraMetadata(5, 41));
+    EXPECT_FALSE(chunk.isDirty());
+
+    EXPECT_TRUE(chunk.removeExtraMetadata(5, 42));
+    EXPECT_TRUE(chunk.isDirty());
+    EXPECT_TRUE(chunk.extraMetadata().empty());
+}
+
+TEST(ChunkSerializationTests, ReadSupportsLegacyVersion1PayloadWithoutExtraMetadata) {
+    Chunk chunk;
+    chunk.setBlock(1, 2, 3, Block::make(8, 1));
+
+    std::string bytes = serializeChunk(chunk);
+    ASSERT_GE(bytes.size(), 24u);
+    bytes[4] = static_cast<char>(1);
+    bytes.erase(20, 4);
+
+    const Chunk loaded = deserializeChunk(bytes);
+    EXPECT_EQ(loaded.getBlock(1, 2, 3), Block::make(8, 1));
+    EXPECT_TRUE(loaded.extraMetadata().empty());
+}
+
 TEST(ChunkSerializationTests, ReadRejectsInvalidMagic) {
     Chunk chunk;
     std::string bytes = serializeChunk(chunk);
@@ -136,6 +217,37 @@ TEST(ChunkSerializationTests, ReadRejectsMismatchedBitsPerBlock) {
     std::string bytes = serializeChunk(chunk);
     ASSERT_GE(bytes.size(), 7u);
     bytes[6] = static_cast<char>(8);
+    EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
+}
+
+TEST(ChunkSerializationTests, ReadRejectsMismatchedExtraMetadataFlagAndSize) {
+    Chunk chunk;
+    std::string bytes = serializeChunk(chunk);
+    ASSERT_GE(bytes.size(), 24u);
+    bytes[7] = static_cast<char>(0x01);
+    EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
+}
+
+TEST(ChunkSerializationTests, ReadRejectsInvalidExtraMetadataMagic) {
+    Chunk chunk;
+    chunk.setExtraMetadata(7, 3, {0x99});
+    std::string bytes = serializeChunk(chunk);
+
+    const std::size_t sectionOffset = extraMetadataSectionOffset(chunk);
+    ASSERT_GT(readU32LE(bytes, 20), 0u);
+    ASSERT_GE(bytes.size(), sectionOffset + 4u);
+    bytes[sectionOffset] = 'X';
+    EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
+}
+
+TEST(ChunkSerializationTests, ReadRejectsOutOfRangeExtraMetadataLocalBlockIndex) {
+    Chunk chunk;
+    chunk.setExtraMetadata(4, 2, {0x11, 0x22});
+    std::string bytes = serializeChunk(chunk);
+
+    const std::size_t sectionOffset = extraMetadataSectionOffset(chunk);
+    ASSERT_GE(bytes.size(), sectionOffset + 16u);
+    writeU32LE(bytes, sectionOffset + 12u, static_cast<std::uint32_t>(Chunk::Volume));
     EXPECT_THROW(static_cast<void>(deserializeChunk(bytes)), std::runtime_error);
 }
 
