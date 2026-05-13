@@ -33,7 +33,10 @@ set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_
 add_subdirectory(../cna CNA)
 include_directories(cna/include CNA)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES
+        "src/GalaxyEggbert/*.cpp"
+        "src/GalaxyEggbert/Worlds/*.cpp"
+)
 
 # On Android the "executable" is a shared library loaded by SDLActivity.
 # SDL's Java glue expects the native library to be named "libmain.so".
