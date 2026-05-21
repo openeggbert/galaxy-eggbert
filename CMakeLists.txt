@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # -----------------------------------------------------------------------------
-# CNA graphics backend selection
+# Nova3D graphics backend selection
 # -----------------------------------------------------------------------------
 #
 # Android and Emscripten use SDL_RENDERER only.
@@ -66,7 +66,7 @@ endif()
 
 message(STATUS "GalaxyEggbert graphics backend: ${GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER}")
 
-# Configure CNA before add_subdirectory(../cna CNA).
+# Configure CNA before add_subdirectory(../nova-3d Nova3D_dep).
 if(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "SDL_RENDERER")
     set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
     set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
@@ -99,12 +99,12 @@ endif()
 # Dependency configuration
 # -----------------------------------------------------------------------------
 #
-# GalaxyEggbert uses CNA/easy-gl as libraries only.
+# GalaxyEggbert uses Nova3D as its 3D engine (which internally uses CNA/easy-gl).
 # Do not build examples/tests from vendored dependencies.
 #
 # Important:
 # include(CTest) sets BUILD_TESTING=ON globally. Some subprojects use this
-# variable directly, so temporarily disable it before add_subdirectory(../cna).
+# variable directly, so temporarily disable it before add_subdirectory(../nova-3d).
 # -----------------------------------------------------------------------------
 
 set(GALAXY_EGGBERT_BUILD_TESTING "${BUILD_TESTING}" CACHE BOOL "Build GalaxyEggbert tests")
@@ -118,6 +118,10 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
 set(CNA_BUILD_TESTS    OFF CACHE BOOL "Build CNA tests" FORCE)
 set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "Build CNA examples" FORCE)
 
+# Nova3D options.
+set(NOVA3D_BUILD_TESTS    OFF CACHE BOOL "Build Nova3D tests" FORCE)
+set(NOVA3D_BUILD_EXAMPLES OFF CACHE BOOL "Build Nova3D examples" FORCE)
+
 # easy-gl option name variants, depending on how the library currently names them.
 set(EASY_GL_BUILD_TESTS     OFF CACHE BOOL "Build easy-gl tests" FORCE)
 set(EASY_GL_BUILD_EXAMPLES  OFF CACHE BOOL "Build easy-gl examples" FORCE)
@@ -128,7 +132,7 @@ set(EASY_GL_ENABLE_EXAMPLES OFF CACHE BOOL "Enable easy-gl examples" FORCE)
 set(EASYGL_ENABLE_TESTS     OFF CACHE BOOL "Enable easy-gl tests" FORCE)
 set(EASYGL_ENABLE_EXAMPLES  OFF CACHE BOOL "Enable easy-gl examples" FORCE)
 
-add_subdirectory(../cna CNA)
+add_subdirectory(../nova-3d Nova3D_dep)
 
 # Restore GalaxyEggbert's own BUILD_TESTING value after vendored dependencies.
 set(BUILD_TESTING "${GALAXY_EGGBERT_BUILD_TESTING}" CACHE BOOL "Build GalaxyEggbert tests" FORCE)
@@ -165,7 +169,9 @@ endif()
 
 # Old global include kept for compatibility with the existing project layout.
 # Prefer target_include_directories for new code.
-include_directories(cna/include CNA)
+include_directories(
+        ../nova-3d/include
+)
 
 file(GLOB_RECURSE SOURCES
         "src/GalaxyEggbert/*.cpp"
@@ -211,7 +217,7 @@ if(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "EASYGL")
     else()
         message(FATAL_ERROR
                 "Requested EASYGL backend, but target cna_backend_graphics_easygl does not exist. "
-                "Check CNA_BACKEND_EASY_GL and CNA's CMakeLists.txt.")
+                "Check CNA_BACKEND_EASY_GL and Nova3D/CNA's CMakeLists.txt.")
     endif()
 
 elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "SDL_RENDERER")
@@ -220,7 +226,7 @@ elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "SDL_RENDERER")
     else()
         message(STATUS
                 "Requested SDL_RENDERER backend, but target cna_backend_graphics_sdl_renderer does not exist. "
-                "Assuming it is linked through CNA directly.")
+                "Assuming it is linked through Nova3D/CNA directly.")
     endif()
 
 elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "BGFX")
@@ -258,52 +264,21 @@ message(STATUS "Selected CNA backend target: ${_cna_backend_target}")
 
 if(EMSCRIPTEN)
     target_link_libraries(${_game_target} PRIVATE
-            CNA
-            SDL3::SDL3-static
+            Nova3D
     )
 
 elseif(ANDROID)
     # Android uses lld. The target is a shared library libmain.so loaded by SDLActivity.
     target_link_libraries(${_game_target} PRIVATE
-            CNA
-            SDL3::SDL3
+            Nova3D
             android
             log
     )
 
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
-    if(_cna_backend_target)
-        target_link_libraries(${_game_target} PRIVATE
-                -Wl,--start-group
-                CNA
-                ${_cna_backend_target}
-                -Wl,--end-group
-                SDL3::SDL3
-        )
-    else()
-        target_link_libraries(${_game_target} PRIVATE
-                CNA
-                SDL3::SDL3
-        )
-    endif()
-
 else()
-    if(_cna_backend_target)
-        target_link_libraries(${_game_target} PRIVATE
-                CNA
-                ${_cna_backend_target}
-                SDL3::SDL3
-        )
-    else()
-        target_link_libraries(${_game_target} PRIVATE
-                CNA
-                SDL3::SDL3
-        )
-    endif()
-endif()
-
-if(TARGET SDL3::SDL3main)
-    target_link_libraries(${_game_target} PRIVATE SDL3::SDL3main)
+    target_link_libraries(${_game_target} PRIVATE
+            Nova3D
+    )
 endif()
 
 # -----------------------------------------------------------------------------
@@ -385,7 +360,7 @@ if(DOXYGEN_FOUND)
 
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
 
-    add_custom_target(docs
+    add_custom_target(GalaxyEggbertDocs
             COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating API documentation with Doxygen"
