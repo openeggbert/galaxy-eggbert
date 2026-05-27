@@ -13,7 +13,7 @@ if (NOT WIN32 AND CMAKE_BINARY_DIR MATCHES "build-windows")
             "on a CLEAN build directory.")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
