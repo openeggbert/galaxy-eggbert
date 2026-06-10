@@ -15,11 +15,11 @@
  *  - Esc              : quit
  */
 
-#include <Nova3D/Nova3D.h>
+#include <Urho3D/Urho3D.h>
 #include <cmath>
 #include <vector>
 
-using namespace Nova3D;
+using namespace Urho3D;
 
 namespace {
 constexpr float kPi       = 3.14159265358979323846f;
