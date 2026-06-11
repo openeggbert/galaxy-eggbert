@@ -1,6 +1,7 @@
 #pragma once
 
 // Master include for all game definitions ported from Speedy Blupi / mobile-eggbert.
+#include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/GameConstants.hpp"
 #include "GalaxyEggbert/def/BlupiAction.hpp"
 #include "GalaxyEggbert/def/ContinueMissionType.hpp"

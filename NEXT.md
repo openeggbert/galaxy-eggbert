@@ -71,20 +71,29 @@ Replace the hardcoded procedural terrain in `GalaxyEggbertGame::CreateTerrain()`
 
 ---
 
-## Phase 4 — Blupi player character
+## Phase 4 — Blupi player character ✅ (in progress)
 
-### 4.1 Placeholder → real character
+### 4.0 Current state (Phase 4a — done)
 
-- Currently: yellow Box.mdl orbiting the scene
-- Goal: `StaticModel` at Blupi's world position, facing direction from `Direction` enum
-- Short term: billboard sprite using `blupi.png` sprite sheet (same as mobile-eggbert)
-- Long term: animated 3D mesh
+- `src/GalaxyEggbert/Game/Blupi.hpp/.cpp` — dedicated Blupi class (separate from game coordinator)
+- Yellow ellipsoid (Sphere.mdl scaled) as placeholder
+- WASD movement (camera-relative), Space=jump
+- Physics: gravity, jump impulse, AABB collision against voxel world
+  - Derived from mobile-eggbert `Decor.cpp` (m_blupiVitesseX/Y), scaled from 64-px tile units to 1-unit 3D coords
+- `GamePhase` state machine: Init (title screen) → Play → Pause (ESC)
 
-### 4.2 Animation via sprite frames
+### 4.1 Sprite-based representation
 
-- Urho3D `AnimatedSprite2D` or manual UV-offset on a billboard quad
-- `BlupiAction` enum selects the animation row; `Tables` (ported from mobile-eggbert) select the frame
-- Frame advance: every N game ticks, same rate as mobile-eggbert
+- Billboard quad with UV offset into `blupi.png` sprite sheet
+- `BlupiAction` enum selects animation row; `Tables` (ported from mobile-eggbert) select frame
+- Frame advance every N game ticks, same rate as mobile-eggbert
+
+### 4.2 3D model with bones (future)
+
+- Replace billboard with a real Urho3D `AnimatedModel` + `AnimationController`
+- Skeleton bones for body, head, arms, legs (Blender → Urho3D exporter)
+- Animations: idle, walk, jump, fall — driven by `BlupiAction` state
+- Current class `Blupi` is designed to swap the model without changing physics/logic
 
 ---
 

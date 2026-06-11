@@ -223,6 +223,16 @@ if(_engine STREQUAL "U3D")
                     COMMENT "Copying game Content/ next to executable"
             )
         endif()
+
+        # Copy worlds/ (level data) next to executable.
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/worlds")
+            add_custom_command(TARGET ${_target} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${CMAKE_CURRENT_SOURCE_DIR}/worlds"
+                        "$<TARGET_FILE_DIR:${_target}>/worlds"
+                    COMMENT "Copying worlds/ next to executable"
+            )
+        endif()
     endif()
 
 elseif(_engine STREQUAL "NOVA3D")
