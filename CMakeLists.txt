@@ -7,7 +7,7 @@ message(STATUS "Project: ${PROJECT_NAME}")
 message(STATUS "Platform: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
-if (NOT WIN32 AND CMAKE_BINARY_DIR MATCHES "build-windows")
+if(NOT WIN32 AND CMAKE_BINARY_DIR MATCHES "build-windows")
     message(WARNING "Building in 'build-windows' directory, but WIN32 is not set. "
             "Make sure you used -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake "
             "on a CLEAN build directory.")
@@ -17,349 +17,284 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# -----------------------------------------------------------------------------
-# Nova3D graphics backend selection
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Engine backend selection
+# =============================================================================
 #
-# Android and Emscripten use SDL_RENDERER only.
-# Native desktop defaults to EASYGL.
+#   cmake -S . -B build-u3d    -DGALAXY_EGGBERT_ENGINE=U3D    (default)
+#   cmake -S . -B build-nova3d -DGALAXY_EGGBERT_ENGINE=NOVA3D
 #
-# Override on desktop with:
-#
-#   cmake -S . -B build -DGALAXY_EGGBERT_GRAPHICS_BACKEND=SDL_RENDERER
-#   cmake -S . -B build -DGALAXY_EGGBERT_GRAPHICS_BACKEND=EASYGL
-#
-# Supported values:
-#   SDL_RENDERER
-#   EASYGL
-#   BGFX
-#   VULKAN
-#
-# -----------------------------------------------------------------------------
+# U3D    — u3d-community/U3D (stable, full Urho3D scene graph)
+# NOVA3D — Robert Vokac's Nova3D fork (WIP; switch here when it matures)
+# =============================================================================
 
-set(GALAXY_EGGBERT_GRAPHICS_BACKEND "EASYGL" CACHE STRING "GalaxyEggbert graphics backend")
-set_property(CACHE GALAXY_EGGBERT_GRAPHICS_BACKEND PROPERTY STRINGS
-        SDL_RENDERER
-        EASYGL
-        EASY_GL
-        BGFX
-        VULKAN
-)
+set(GALAXY_EGGBERT_ENGINE "U3D" CACHE STRING "Engine backend: U3D or NOVA3D")
+set_property(CACHE GALAXY_EGGBERT_ENGINE PROPERTY STRINGS U3D NOVA3D)
+string(TOUPPER "${GALAXY_EGGBERT_ENGINE}" _engine)
 
-string(TOUPPER "${GALAXY_EGGBERT_GRAPHICS_BACKEND}" GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER)
-
-# Accept EASY_GL as an alias for EASYGL.
-if(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "EASY_GL")
-    set(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER "EASYGL")
+if(NOT _engine MATCHES "^(U3D|NOVA3D)$")
+    message(FATAL_ERROR "Unsupported GALAXY_EGGBERT_ENGINE='${GALAXY_EGGBERT_ENGINE}'. Use U3D or NOVA3D.")
 endif()
 
-# Android and Web: force SDL_RENDERER.
-if(ANDROID OR EMSCRIPTEN)
-    set(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER "SDL_RENDERER")
-endif()
+message(STATUS "GalaxyEggbert engine: ${_engine}")
 
-if(NOT GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER MATCHES "^(SDL_RENDERER|EASYGL|BGFX|VULKAN)$")
-    message(FATAL_ERROR
-            "Unsupported GALAXY_EGGBERT_GRAPHICS_BACKEND='${GALAXY_EGGBERT_GRAPHICS_BACKEND}'. "
-            "Use SDL_RENDERER, EASYGL, BGFX, or VULKAN.")
-endif()
+# =============================================================================
+# NOVA3D — graphics backend + dependency
+# =============================================================================
 
-message(STATUS "GalaxyEggbert graphics backend: ${GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER}")
+if(_engine STREQUAL "NOVA3D")
 
-# Configure CNA before add_subdirectory(../nova-3d Nova3D_dep).
-if(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "SDL_RENDERER")
-    set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
-    set(CNA_BACKEND_BGFX         OFF CACHE BOOL "Enable bgfx backend in CNA" FORCE)
-    set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "Enable Vulkan backend in CNA" FORCE)
-    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend" FORCE)
+    # Android and Emscripten force SDL_RENDERER; desktop defaults to EASYGL.
+    set(GALAXY_EGGBERT_GRAPHICS_BACKEND "EASYGL" CACHE STRING "Nova3D graphics backend")
+    set_property(CACHE GALAXY_EGGBERT_GRAPHICS_BACKEND PROPERTY STRINGS
+            SDL_RENDERER EASYGL BGFX VULKAN)
 
-elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "EASYGL")
-    set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-    set(CNA_BACKEND_EASY_GL      ON  CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
-    set(CNA_BACKEND_BGFX         OFF CACHE BOOL "Enable bgfx backend in CNA" FORCE)
-    set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "Enable Vulkan backend in CNA" FORCE)
-    set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING "Selected CNA backend" FORCE)
+    string(TOUPPER "${GALAXY_EGGBERT_GRAPHICS_BACKEND}" _gfx)
+    if(_gfx STREQUAL "EASY_GL")
+        set(_gfx "EASYGL")
+    endif()
+    if(ANDROID OR EMSCRIPTEN)
+        set(_gfx "SDL_RENDERER")
+    endif()
 
-elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "BGFX")
-    set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
-    set(CNA_BACKEND_BGFX         ON  CACHE BOOL "Enable bgfx backend in CNA" FORCE)
-    set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "Enable Vulkan backend in CNA" FORCE)
-    set(CNA_GRAPHICS_BACKEND "BGFX" CACHE STRING "Selected CNA backend" FORCE)
+    if(NOT _gfx MATCHES "^(SDL_RENDERER|EASYGL|BGFX|VULKAN)$")
+        message(FATAL_ERROR "Unsupported GALAXY_EGGBERT_GRAPHICS_BACKEND='${GALAXY_EGGBERT_GRAPHICS_BACKEND}'.")
+    endif()
+    message(STATUS "Nova3D graphics backend: ${_gfx}")
 
-elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "VULKAN")
-    set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
-    set(CNA_BACKEND_BGFX         OFF CACHE BOOL "Enable bgfx backend in CNA" FORCE)
-    set(CNA_BACKEND_VULKAN       ON  CACHE BOOL "Enable Vulkan backend in CNA" FORCE)
-    set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING "Selected CNA backend" FORCE)
-endif()
-# -----------------------------------------------------------------------------
-# Dependency configuration
-# -----------------------------------------------------------------------------
-#
-# GalaxyEggbert uses Nova3D as its 3D engine (which internally uses CNA/easy-gl).
-# Do not build examples/tests from vendored dependencies.
-#
-# Important:
-# include(CTest) sets BUILD_TESTING=ON globally. Some subprojects use this
-# variable directly, so temporarily disable it before add_subdirectory(../nova-3d).
-# -----------------------------------------------------------------------------
+    # Pass backend selection into CNA/Nova3D.
+    set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
+    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
+    set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
+    set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
 
-set(GALAXY_EGGBERT_BUILD_TESTING "${BUILD_TESTING}" CACHE BOOL "Build GalaxyEggbert tests")
+    if(_gfx STREQUAL "SDL_RENDERER")
+        set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "" FORCE)
+        set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "" FORCE)
+    elseif(_gfx STREQUAL "EASYGL")
+        set(CNA_BACKEND_EASY_GL      ON  CACHE BOOL "" FORCE)
+        set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING "" FORCE)
+    elseif(_gfx STREQUAL "BGFX")
+        set(CNA_BACKEND_BGFX         ON  CACHE BOOL "" FORCE)
+        set(CNA_GRAPHICS_BACKEND "BGFX" CACHE STRING "" FORCE)
+    elseif(_gfx STREQUAL "VULKAN")
+        set(CNA_BACKEND_VULKAN       ON  CACHE BOOL "" FORCE)
+        set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING "" FORCE)
+    endif()
 
-# Disable tests/examples for vendored dependencies.
-set(BUILD_TESTING OFF CACHE BOOL "Build tests" FORCE)
-set(BUILD_TESTS   OFF CACHE BOOL "Build tests" FORCE)
-set(BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
+    # Disable tests/examples in all sub-deps.
+    set(GALAXY_EGGBERT_BUILD_TESTING "${BUILD_TESTING}" CACHE BOOL "Build GalaxyEggbert tests")
+    set(BUILD_TESTING  OFF CACHE BOOL "" FORCE)
+    set(BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CNA_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(NOVA3D_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(NOVA3D_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(EASY_GL_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(EASY_GL_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(EASYGL_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
+    set(EASYGL_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
+    set(EASY_GL_ENABLE_TESTS    OFF CACHE BOOL "" FORCE)
+    set(EASY_GL_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(EASYGL_ENABLE_TESTS     OFF CACHE BOOL "" FORCE)
+    set(EASYGL_ENABLE_EXAMPLES  OFF CACHE BOOL "" FORCE)
 
-# CNA options, if present.
-set(CNA_BUILD_TESTS    OFF CACHE BOOL "Build CNA tests" FORCE)
-set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "Build CNA examples" FORCE)
+    add_subdirectory(../nova-3d Nova3D_dep)
 
-# Nova3D options.
-set(NOVA3D_BUILD_TESTS    OFF CACHE BOOL "Build Nova3D tests" FORCE)
-set(NOVA3D_BUILD_EXAMPLES OFF CACHE BOOL "Build Nova3D examples" FORCE)
+    set(BUILD_TESTING "${GALAXY_EGGBERT_BUILD_TESTING}" CACHE BOOL "" FORCE)
 
-# easy-gl option name variants, depending on how the library currently names them.
-set(EASY_GL_BUILD_TESTS     OFF CACHE BOOL "Build easy-gl tests" FORCE)
-set(EASY_GL_BUILD_EXAMPLES  OFF CACHE BOOL "Build easy-gl examples" FORCE)
-set(EASYGL_BUILD_TESTS      OFF CACHE BOOL "Build easy-gl tests" FORCE)
-set(EASYGL_BUILD_EXAMPLES   OFF CACHE BOOL "Build easy-gl examples" FORCE)
-set(EASY_GL_ENABLE_TESTS    OFF CACHE BOOL "Enable easy-gl tests" FORCE)
-set(EASY_GL_ENABLE_EXAMPLES OFF CACHE BOOL "Enable easy-gl examples" FORCE)
-set(EASYGL_ENABLE_TESTS     OFF CACHE BOOL "Enable easy-gl tests" FORCE)
-set(EASYGL_ENABLE_EXAMPLES  OFF CACHE BOOL "Enable easy-gl examples" FORCE)
+endif() # NOVA3D
 
-add_subdirectory(../nova-3d Nova3D_dep)
+# =============================================================================
+# U3D — locate pre-built library + headers
+# =============================================================================
 
-# Restore GalaxyEggbert's own BUILD_TESTING value after vendored dependencies.
-set(BUILD_TESTING "${GALAXY_EGGBERT_BUILD_TESTING}" CACHE BOOL "Build GalaxyEggbert tests" FORCE)
+if(_engine STREQUAL "U3D")
 
-message(STATUS "CNA_BACKEND_SDL_RENDERER=${CNA_BACKEND_SDL_RENDERER}")
-message(STATUS "CNA_BACKEND_EASY_GL=${CNA_BACKEND_EASY_GL}")
-message(STATUS "CNA_BACKEND_BGFX=${CNA_BACKEND_BGFX}")
-message(STATUS "CNA_BACKEND_VULKAN=${CNA_BACKEND_VULKAN}")
-message(STATUS "CNA_GRAPHICS_BACKEND=${CNA_GRAPHICS_BACKEND}")
+    if(ANDROID OR EMSCRIPTEN)
+        message(FATAL_ERROR
+            "U3D engine on Android/Emscripten is not yet supported. "
+            "See NEXT.md for the roadmap, or switch to GALAXY_EGGBERT_ENGINE=NOVA3D.")
+    endif()
 
-if(TARGET cna_backend_graphics_easygl)
-    message(STATUS "CNA target exists: cna_backend_graphics_easygl")
-else()
-    message(STATUS "CNA target does not exist: cna_backend_graphics_easygl")
-endif()
+    # Resolve URHO3D_HOME: cmake option > env var > local mirror default.
+    set(U3D_HOME "" CACHE PATH "Path to U3D build dir (include/ lib/ bin/). Leave empty to use local mirror.")
 
-if(TARGET cna_backend_graphics_sdl_renderer)
-    message(STATUS "CNA target exists: cna_backend_graphics_sdl_renderer")
-else()
-    message(STATUS "CNA target does not exist: cna_backend_graphics_sdl_renderer")
-endif()
+    if(U3D_HOME)
+        set(URHO3D_HOME "${U3D_HOME}")
+    elseif(DEFINED ENV{URHO3D_HOME})
+        set(URHO3D_HOME "$ENV{URHO3D_HOME}")
+    else()
+        set(URHO3D_HOME "/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug")
+    endif()
 
-if(TARGET cna_backend_graphics_bgfx)
-    message(STATUS "CNA target exists: cna_backend_graphics_bgfx")
-else()
-    message(STATUS "CNA target does not exist: cna_backend_graphics_bgfx")
-endif()
+    message(STATUS "URHO3D_HOME = ${URHO3D_HOME}")
 
-if(TARGET cna_backend_graphics_vulkan)
-    message(STATUS "CNA target exists: cna_backend_graphics_vulkan")
-else()
-    message(STATUS "CNA target does not exist: cna_backend_graphics_vulkan")
-endif()
+    # Add U3D CMake modules so find_package(Urho3D) works.
+    set(_u3d_src "/rv/data/library/github.com/u3d-community/U3D")
+    list(APPEND CMAKE_MODULE_PATH "${_u3d_src}/cmake/Modules")
 
-# Old global include kept for compatibility with the existing project layout.
-# Prefer target_include_directories for new code.
-include_directories(
-        ../nova-3d/include
-)
+    # U3D on x86_64 is always 64-bit; prevent FindUrho3D.cmake from trying -m32.
+    if(NOT DEFINED URHO3D_64BIT)
+        set(URHO3D_64BIT 1 CACHE INTERNAL "Force 64-bit ABI for U3D")
+    endif()
+
+    find_package(Urho3D REQUIRED)
+
+    message(STATUS "U3D include dirs : ${URHO3D_INCLUDE_DIRS}")
+    message(STATUS "U3D libraries    : ${URHO3D_LIBRARIES}")
+
+endif() # U3D
+
+# =============================================================================
+# Sources
+# =============================================================================
 
 file(GLOB_RECURSE SOURCES
         "src/GalaxyEggbert/*.cpp"
         "src/GalaxyEggbert/Worlds/*.cpp"
 )
 
-# On Android the "executable" is a shared library loaded by SDLActivity.
-# SDL's Java glue expects the native library to be named "libmain.so".
-# We use a CMake variable so all subsequent target_* calls use the right name.
+# =============================================================================
+# Target definition  (executable on desktop/web, shared lib on Android)
+# =============================================================================
+
 if(ANDROID)
-    set(_game_target main)
-    add_library(${_game_target} SHARED ${SOURCES})
+    # Android shared lib — name must be "main" for SDLActivity.
+    set(_target main)
+    add_library(${_target} SHARED ${SOURCES})
 else()
-    set(_game_target GalaxyEggbert)
-    add_executable(${_game_target}
+    set(_target GalaxyEggbert)
+    add_executable(${_target}
             ${SOURCES}
             include/GalaxyEggbert/Worlds/BlockMetadata.hpp
     )
 endif()
 
-# On Emscripten the output is HTML+JS+WASM; set the suffix accordingly.
 if(EMSCRIPTEN)
-    set_target_properties(${_game_target} PROPERTIES SUFFIX ".html")
+    set_target_properties(${_target} PROPERTIES SUFFIX ".html")
 endif()
 
-target_include_directories(${_game_target} PRIVATE
+# Game-internal headers (Worlds API, etc.)
+target_include_directories(${_target} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbert
 )
 
-# SDL3 is provided by CNA via vendored submodules
-# or system SDL if CNA_USE_SYSTEM_SDL=ON.
-# No separate find_package(SDL3) call is needed here.
+# =============================================================================
+# Engine-specific: compile definitions, includes, link
+# =============================================================================
 
-# -----------------------------------------------------------------------------
-# Select concrete CNA backend target
-# -----------------------------------------------------------------------------
+if(_engine STREQUAL "U3D")
 
-set(_cna_backend_target "")
+    target_compile_definitions(${_target} PRIVATE GE_ENGINE_U3D)
 
-if(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "EASYGL")
-    if(TARGET cna_backend_graphics_easygl)
-        set(_cna_backend_target cna_backend_graphics_easygl)
-    else()
-        message(FATAL_ERROR
-                "Requested EASYGL backend, but target cna_backend_graphics_easygl does not exist. "
-                "Check CNA_BACKEND_EASY_GL and Nova3D/CNA's CMakeLists.txt.")
-    endif()
-
-elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "SDL_RENDERER")
-    if(TARGET cna_backend_graphics_sdl_renderer)
-        set(_cna_backend_target cna_backend_graphics_sdl_renderer)
-    else()
-        message(STATUS
-                "Requested SDL_RENDERER backend, but target cna_backend_graphics_sdl_renderer does not exist. "
-                "Assuming it is linked through Nova3D/CNA directly.")
-    endif()
-
-elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "BGFX")
-    if(TARGET cna_backend_graphics_bgfx)
-        set(_cna_backend_target cna_backend_graphics_bgfx)
-    else()
-        message(FATAL_ERROR
-                "Requested BGFX backend, but target cna_backend_graphics_bgfx does not exist.")
-    endif()
-
-elseif(GALAXY_EGGBERT_GRAPHICS_BACKEND_UPPER STREQUAL "VULKAN")
-    if(TARGET cna_backend_graphics_vulkan)
-        set(_cna_backend_target cna_backend_graphics_vulkan)
-    else()
-        message(FATAL_ERROR
-                "Requested VULKAN backend, but target cna_backend_graphics_vulkan does not exist.")
-    endif()
-endif()
-
-message(STATUS "Selected CNA backend target: ${_cna_backend_target}")
-
-# -----------------------------------------------------------------------------
-# Link
-# -----------------------------------------------------------------------------
-#
-# CNA and the selected graphics backend static library may have circular symbol
-# references on Linux:
-#
-#   backend uses Color/Rectangle/Matrix from CNA
-#   CNA uses backend interfaces
-#
-# GNU ld may need --start-group/--end-group.
-# Emscripten and Android should not use this linker group.
-# -----------------------------------------------------------------------------
-
-if(EMSCRIPTEN)
-    target_link_libraries(${_game_target} PRIVATE
-            Nova3D
+    target_include_directories(${_target} PRIVATE
+            ${URHO3D_INCLUDE_DIRS}
     )
 
-elseif(ANDROID)
-    # Android uses lld. The target is a shared library libmain.so loaded by SDLActivity.
-    target_link_libraries(${_game_target} PRIVATE
-            Nova3D
-            android
-            log
+    target_link_libraries(${_target} PRIVATE
+            ${URHO3D_LIBRARIES}
     )
 
-else()
-    target_link_libraries(${_game_target} PRIVATE
-            Nova3D
-    )
-endif()
+    # On Linux the static libUrho3D.a needs these system libs.
+    if(UNIX AND NOT APPLE)
+        target_link_libraries(${_target} PRIVATE GL dl m rt pthread)
+    endif()
 
-# -----------------------------------------------------------------------------
-# Assets / platform-specific runtime configuration
-# -----------------------------------------------------------------------------
+    # Copy Data/ and CoreData/ next to the executable (desktop only).
+    if(NOT ANDROID AND NOT EMSCRIPTEN)
+        foreach(_dir Data CoreData)
+            if(EXISTS "${URHO3D_HOME}/bin/${_dir}")
+                add_custom_command(TARGET ${_target} POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                            "${URHO3D_HOME}/bin/${_dir}"
+                            "$<TARGET_FILE_DIR:${_target}>/${_dir}"
+                        COMMENT "Copying U3D ${_dir}/ next to executable"
+                )
+            endif()
+        endforeach()
+    endif()
 
-if(ANDROID)
-    # Android: no content copy needed.
-    # Assets are expected to be packaged into the APK.
+elseif(_engine STREQUAL "NOVA3D")
 
-elseif(EMSCRIPTEN)
-    # Emscripten link options.
-    #
-    # Asset virtual-filesystem layout:
-    #
-    #   ${CMAKE_CURRENT_SOURCE_DIR}/Content/backgrounds -> /Content/backgrounds
-    #   ${CMAKE_CURRENT_SOURCE_DIR}/Content/icons       -> /Content/icons
-    #   ${CMAKE_CURRENT_SOURCE_DIR}/Content/sounds      -> /Content/sounds
-    #   ${CMAKE_CURRENT_SOURCE_DIR}/worlds              -> /worlds
-    #
-    # Save data is persisted via IDBFS mounted at /save.
-    target_link_options(${_game_target} PRIVATE
-            -sALLOW_MEMORY_GROWTH=1
-            -sSTACK_SIZE=1048576
-            -sINITIAL_MEMORY=134217728
-            -sFORCE_FILESYSTEM=1
-            "-sEXPORTED_RUNTIME_METHODS=['FS','ccall','cwrap']"
-            -lidbfs.js
-            "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js"
-            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content/backgrounds@/Content/backgrounds"
-            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content/icons@/Content/icons"
-            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content/sounds@/Content/sounds"
-            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/worlds@/worlds"
+    target_compile_definitions(${_target} PRIVATE GE_ENGINE_NOVA3D)
+
+    target_include_directories(${_target} PRIVATE
+            ../nova-3d/include
     )
 
-else()
-    # Native desktop: copy Content directory next to the executable.
-    set(GALAXY_EGGBERT_CONTENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Content")
+    # Resolve CNA backend target name.
+    set(_cna "")
+    if(_gfx STREQUAL "EASYGL" AND TARGET cna_backend_graphics_easygl)
+        set(_cna cna_backend_graphics_easygl)
+    elseif(_gfx STREQUAL "SDL_RENDERER" AND TARGET cna_backend_graphics_sdl_renderer)
+        set(_cna cna_backend_graphics_sdl_renderer)
+    elseif(_gfx STREQUAL "BGFX" AND TARGET cna_backend_graphics_bgfx)
+        set(_cna cna_backend_graphics_bgfx)
+    elseif(_gfx STREQUAL "VULKAN" AND TARGET cna_backend_graphics_vulkan)
+        set(_cna cna_backend_graphics_vulkan)
+    endif()
 
-    if(EXISTS "${GALAXY_EGGBERT_CONTENT_DIR}")
-        add_custom_command(TARGET ${_game_target} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${GALAXY_EGGBERT_CONTENT_DIR}"
-                "$<TARGET_FILE_DIR:${_game_target}>/Content"
-                COMMENT "Copying game content next to executable"
+    if(EMSCRIPTEN)
+        target_link_libraries(${_target} PRIVATE Nova3D)
+    elseif(ANDROID)
+        target_link_libraries(${_target} PRIVATE Nova3D android log)
+    else()
+        target_link_libraries(${_target} PRIVATE Nova3D)
+    endif()
+
+    # Web: embed content + save FS
+    if(EMSCRIPTEN)
+        target_link_options(${_target} PRIVATE
+                -sALLOW_MEMORY_GROWTH=1
+                -sSTACK_SIZE=1048576
+                -sINITIAL_MEMORY=134217728
+                -sFORCE_FILESYSTEM=1
+                "-sEXPORTED_RUNTIME_METHODS=['FS','ccall','cwrap']"
+                -lidbfs.js
+                "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js"
+                "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content/backgrounds@/Content/backgrounds"
+                "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content/icons@/Content/icons"
+                "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content/sounds@/Content/sounds"
+                "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/worlds@/worlds"
         )
     endif()
-endif()
 
-# -----------------------------------------------------------------------------
-# Windows / MinGW runtime copying
-# -----------------------------------------------------------------------------
+    # Copy game content next to executable on desktop.
+    if(NOT ANDROID AND NOT EMSCRIPTEN)
+        set(_content "${CMAKE_CURRENT_SOURCE_DIR}/Content")
+        if(EXISTS "${_content}")
+            add_custom_command(TARGET ${_target} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${_content}" "$<TARGET_FILE_DIR:${_target}>/Content"
+                    COMMENT "Copying game content next to executable"
+            )
+        endif()
+    endif()
 
-if(WIN32)
-    cna_copy_sdl_runtime(${_game_target})
-endif()
+    # Windows / MinGW runtime DLLs (CNA SDL3).
+    if(WIN32)
+        cna_copy_sdl_runtime(${_target})
+    endif()
+    if(MINGW)
+        target_link_options(${_target} PRIVATE
+                -static-libgcc -static-libstdc++)
+        cna_copy_mingw_runtime(${_target})
+    endif()
 
-if(MINGW)
-    # Statically link the MinGW GCC and C++ runtime so the exe runs outside
-    # CLion/MSYS2 without needing libgcc_s_seh-1.dll / libstdc++-6.dll.
-    target_link_options(${_game_target} PRIVATE
-            -static-libgcc
-            -static-libstdc++
-    )
+endif() # engine-specific
 
-    # libwinpthread-1.dll cannot be statically linked this way; copy it instead.
-    cna_copy_mingw_runtime(${_game_target})
-endif()
-
-# -----------------------------------------------------------------------------
+# =============================================================================
 # Doxygen
-# -----------------------------------------------------------------------------
+# =============================================================================
 
 find_package(Doxygen)
-
 if(DOXYGEN_FOUND)
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
+    set(DOXYGEN_IN  ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-
     add_custom_target(GalaxyEggbertDocs
             COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -368,9 +303,9 @@ if(DOXYGEN_FOUND)
     )
 endif()
 
-# -----------------------------------------------------------------------------
-# Tests
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Tests  (engine-independent — pure C++ data model, no graphics)
+# =============================================================================
 
 if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN)
     include(FetchContent)
@@ -381,7 +316,6 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN)
                     googletest
                     URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
             )
-
             set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
             FetchContent_MakeAvailable(googletest)
         endif()
@@ -389,7 +323,6 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN)
         if(TARGET gtest AND NOT TARGET GTest::gtest)
             add_library(GTest::gtest ALIAS gtest)
         endif()
-
         if(TARGET gtest_main AND NOT TARGET GTest::gtest_main)
             add_library(GTest::gtest_main ALIAS gtest_main)
         endif()
@@ -412,9 +345,7 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN)
             ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
-    target_link_libraries(GalaxyEggbertWorldsTests PRIVATE
-            GTest::gtest_main
-    )
+    target_link_libraries(GalaxyEggbertWorldsTests PRIVATE GTest::gtest_main)
 
     include(GoogleTest)
     gtest_discover_tests(GalaxyEggbertWorldsTests)
