@@ -1,23 +1,169 @@
-# Galaxy Eggbert — Next Steps
+# Galaxy Eggbert — Development Roadmap
 
-## Platform support for U3D engine
-
-Phase 1 implements U3D support for **Linux desktop** and **Windows desktop**.
-The following platforms need additional work before they can build with `GALAXY_EGGBERT_ENGINE=U3D`.
+Galaxy Eggbert is a faithful 3D remake of Speedy Blupi, using mobile-eggbert
+(`/rv/data/development/github.com/openeggbert/mobile-eggbert`) as the primary reference.
+All gameplay logic, level data, enums, sounds, and textures originate from mobile-eggbert
+or the original Windows Phone game.
 
 ---
+
+## Phase 2 — Shared enums and assets
+
+Port the engine-independent definitions from mobile-eggbert verbatim.
+These carry numeric IDs that must match the level file format exactly.
+
+### 2.1 Port game enums to galaxy-eggbert
+
+Copy/adapt from `mobile-eggbert/include/WindowsPhoneSpeedyBlupi/`:
+
+| mobile-eggbert file | galaxy-eggbert target | Notes |
+|---|---|---|
+| `def/BlupiAction.hpp` | `include/GalaxyEggbert/BlupiAction.hpp` | 87 action states (Stop, March, Jump, …) |
+| `decor/ObjectType.hpp` | `include/GalaxyEggbert/ObjectType.hpp` | 203 object type IDs — do not renumber |
+| `decor/DecorAction.hpp` | `include/GalaxyEggbert/DecorAction.hpp` | Camera shake types |
+| `def/SoundChannel.hpp` | `include/GalaxyEggbert/SoundChannel.hpp` | Channels 0–92, same WAV index mapping |
+| `def/Direction.hpp` | `include/GalaxyEggbert/Direction.hpp` | 4-direction enum |
+| `def/SecretPower.hpp` | `include/GalaxyEggbert/SecretPower.hpp` | Power-up state flags |
+| `def/GameSpeed.hpp` | `include/GalaxyEggbert/GameSpeed.hpp` | Speed presets |
+| `Def.hpp` (constants) | `include/GalaxyEggbert/GameConstants.hpp` | MAXCELX=100, MAXCELY=100, sprite dims |
+| `Def::Phase` | `include/GalaxyEggbert/GamePhase.hpp` | Init, Play, Pause, Lost, Win, … |
+
+Drop SharpRuntime dependency — use plain C++ `uint8_t` instead of `ubytecs`.
+Drop Doxygen requirement — galaxy-eggbert does not require documentation on every member.
+
+### 2.2 Copy assets from mobile-eggbert
+
+These files can be used as-is:
+
+- **Sounds**: `Content/sounds/sound010.wav` … `sound092.wav` → `Content/sounds/` in galaxy-eggbert
+- **Sprite sheets** (for cube face textures and billboards):
+  - `Content/icons4x/element.png` — collectibles, objects, effects
+  - `Content/icons4x/blupi.png` — Blupi character sprite frames
+  - `Content/icons4x/explo.png` — explosions
+  - `Content/icons4x/object-m.png` — moving objects
+- **Tile textures**: `Content/backgrounds/decor000.png` … `decor031.png` — 32 tile types as cube face textures
+- **World files**: `worlds/world001.txt` … — same format, load via `GalaxyEggbert::Worlds::World::load()`
+
+---
+
+## Phase 3 — Level rendering from World data
+
+Replace the hardcoded procedural terrain in `GalaxyEggbertGame::CreateTerrain()` with actual level data.
+
+### 3.1 World loader integration
+
+- Load `worlds/world001.txt` via `World::load()` (already implemented, 54 tests passing)
+- Iterate chunks → blocks → spawn one `StaticModel` (Box.mdl) per non-air block
+- Apply the correct `decor*.png` tile texture to the top face of each cube
+- Use chunk dirty flags to batch spawning; do not spawn one node per frame
+
+### 3.2 Tile-to-texture mapping
+
+- `Block::type` maps to `decor{NNN}.png` (same mapping as in `Decor.cpp` of mobile-eggbert)
+- Load tile textures into Urho3D `ResourceCache` from `Content/decor/`
+- Each cube's top face uses the tile sprite; sides use a neutral stone texture
+
+### 3.3 Camera
+
+- Start from current 3rd-person orbit camera
+- Follow the player position once Blupi exists; until then, orbit the level centre
+- Isometric projection option: `Camera::SetOrthographic(true)`
+
+---
+
+## Phase 4 — Blupi player character
+
+### 4.1 Placeholder → real character
+
+- Currently: yellow Box.mdl orbiting the scene
+- Goal: `StaticModel` at Blupi's world position, facing direction from `Direction` enum
+- Short term: billboard sprite using `blupi.png` sprite sheet (same as mobile-eggbert)
+- Long term: animated 3D mesh
+
+### 4.2 Animation via sprite frames
+
+- Urho3D `AnimatedSprite2D` or manual UV-offset on a billboard quad
+- `BlupiAction` enum selects the animation row; `Tables` (ported from mobile-eggbert) select the frame
+- Frame advance: every N game ticks, same rate as mobile-eggbert
+
+---
+
+## Phase 5 — Input and gameplay logic
+
+Port the gameplay state machine from `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp`.
+Decor.cpp is the heart of the game: tile simulation, Blupi physics, enemy AI, collision.
+
+### 5.1 Input
+
+- WASD / arrow keys → `Direction` (left/right movement, jump)
+- Map touch pad buttons from mobile-eggbert to keyboard/gamepad equivalents
+- Urho3D `Input` subsystem replaces CNA `InputPad`
+
+### 5.2 Blupi physics (port from Decor.cpp)
+
+- Gravity, jump arc, landing — same float/int arithmetic as original
+- Walk animation state machine: Stop → March → Turn, same transitions
+- Vehicle modes: helicopter, jeep, skateboard, tank, balloon, surfboard — port each
+
+### 5.3 Collision
+
+- 2D tile-grid collision from Decor.cpp maps directly: Blupi's (x, y) in tile coordinates
+- The 3D world is the 2D tile grid extruded; collision stays 2D in the XZ plane
+- Block height (Y axis) is visual only; gameplay collision uses the 2D grid
+
+### 5.4 Enemy AI and objects
+
+- Port `MoveObjectStepLine` (patrol, follow, projectile) from Decor.cpp
+- Each `ObjectType` spawns one `StaticModel` billboard node in the Urho3D scene
+- `ObjectType::ObjectType7` (level exit) triggers win sequence
+
+---
+
+## Phase 6 — Game phases and HUD
+
+Port `Def::Phase` state machine from `Game1.cpp`:
+
+- **Init**: level/gamer select screen (adapt 2D menu to 3D UI overlay)
+- **Play**: active gameplay
+- **Pause**: pause overlay
+- **Lost**: death screen → restart
+- **Win**: level complete → next level
+
+HUD: Urho3D UI `Text` + `Sprite` for lives counter, treasure count, level name.
+Same gauge sprite (`jauge.png`) as mobile-eggbert, rendered as a 2D overlay.
+
+---
+
+## Phase 7 — Sound
+
+- Load `Content/sounds/sound010.wav` … via Urho3D `SoundSource` + `ResourceCache`
+- `SoundChannel` enum maps channel index → WAV file index (same as mobile-eggbert)
+- `SoundChannel::SoundChannel10` → `sound010.wav`, etc.
+- Multiple channels play simultaneously (Urho3D supports multiple `SoundSource` components)
+- Motor loop sounds (helicopter, jeep) use continuous play; stop on vehicle exit
+
+---
+
+## Phase 8 — Save data
+
+- Port `GameData` save format from mobile-eggbert verbatim (flat byte array, 3 gamer slots)
+- Store in user data directory via Urho3D `FileSystem::GetUserDocumentsDir()`
+- Compatible with mobile-eggbert save files
+
+---
+
+## Platform support for U3D engine
 
 ### Windows (MinGW cross-compile)
 
 Status: **CMake ready, needs U3D Windows build.**
 
-1. Build U3D for Windows (MinGW or MSVC):
+1. Build U3D for Windows:
    ```bash
-   # From a MinGW environment or using the existing toolchain:
    cmake -S /rv/data/library/github.com/u3d-community/U3D \
          -B /rv/data/library/github.com/u3d-community/U3D/build-windows \
          -DCMAKE_TOOLCHAIN_FILE=cmake/Toolchains/MinGW.cmake
-   ninja -C build-windows Urho3D
+   ninja -C /rv/data/library/github.com/u3d-community/U3D/build-windows -j2 Urho3D
    ```
 2. Configure galaxy-eggbert:
    ```bash
@@ -26,65 +172,26 @@ Status: **CMake ready, needs U3D Windows build.**
          -DGALAXY_EGGBERT_ENGINE=U3D \
          -DU3D_HOME=/rv/data/library/github.com/u3d-community/U3D/build-windows
    ```
-3. Add `cna_copy_sdl_runtime` equivalent for U3D (copy SDL3.dll, OpenAL, etc. from U3D's bin/).
-
----
 
 ### Android
 
 Status: **Not yet implemented for U3D.**
 
-U3D's Android build differs fundamentally from the current Nova3D/CNA approach:
-- U3D uses its own Gradle + CMake integration (`android/` directory in U3D source).
-- The AAR/JNI approach from `cmake/Modules/FindUrho3D.cmake` (lines for `ANDROID`) needs `BUILD_STAGING_DIR` or a Maven AAR.
-- Requires building U3D as an Android library first (ARM64-v8a, armeabi-v7a).
-
-Steps:
-1. Build U3D for Android: `./gradlew assembleRelease` inside U3D's `android/` directory.
-2. Set `BUILD_STAGING_DIR` or publish U3D AAR to a local Maven repository.
-3. Update galaxy-eggbert's `CMakeLists.txt` U3D section to handle `ANDROID=ON`.
-4. Remove the current `FATAL_ERROR` guard for `ANDROID + U3D`.
-
-Reference: `U3D/cmake/Modules/FindUrho3D.cmake` lines 89–118 (Android discovery logic).
-
----
+U3D uses its own Gradle + CMake Android integration.
+Steps: build U3D AAR → set `BUILD_STAGING_DIR` → remove `FATAL_ERROR` guard for ANDROID in CMakeLists.txt.
 
 ### Web (Emscripten)
 
 Status: **Not yet implemented for U3D.**
 
-U3D supports Emscripten but requires:
-- A separate Emscripten U3D build with `-DEMSCRIPTEN=1`.
-- Different resource embedding: `Data/` and `CoreData/` must be preloaded into the WASM virtual FS.
-- U3D's HTML5 template and SDL2 Emscripten port (U3D bundles its own SDL).
-
-Steps:
-1. Source Emscripten SDK, then build U3D:
-   ```bash
-   emcmake cmake -S /rv/.../U3D -B /rv/.../U3D/build-em
-   emmake ninja -C build-em Urho3D
-   ```
-2. Update galaxy-eggbert CMakeLists.txt U3D section for EMSCRIPTEN: add `--preload-file` for `Data/` and `CoreData/`.
-3. Remove the current `FATAL_ERROR` guard for `EMSCRIPTEN + U3D`.
+Steps: Emscripten U3D build (`emcmake cmake`) → add `--preload-file Data/ CoreData/` → remove `FATAL_ERROR` guard.
 
 ---
 
-## Nova3D scene-graph parity
+## Nova3D backend
 
-When Nova3D implements its full scene-graph backend (same API as U3D):
+When Nova3D implements the full Urho3D API (same headers, same namespace, same scene graph):
+
 1. Set `GALAXY_EGGBERT_ENGINE=NOVA3D` in CMake.
-2. Remove `#ifdef GE_ENGINE_U3D` / `#ifndef GE_ENGINE_U3D` guards from `GalaxyEggbertGame.cpp`.
-3. Drop the Nova3D stub `Start()`/`Update()` stubs.
-4. Verify `EP_RESOURCE_PATHS`, `ResourceCache`, `StaticModel`, etc. behave identically.
-
-Expected code change: zero lines in game logic, a few lines in `GalaxyEggbertApp.cpp` Setup().
-
----
-
-## Game development (post-Phase-1)
-
-- Integrate `GalaxyEggbert::Worlds::World` / `Chunk` data model with the U3D renderer:
-  spawn one `StaticModel` node per non-air block, use chunk dirty flags to batch updates.
-- Speedy Blupi player character: load an actual mesh instead of the Box.mdl placeholder.
-- Game world loading from `worlds/` directory using `World::load()`.
-- Basic gameplay mechanics ported from mobile-eggbert.
+2. Verify all Urho3D API calls compile and behave identically.
+3. Expected C++ source change: zero lines (no `#ifdef` guards exist).
