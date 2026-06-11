@@ -1,5 +1,6 @@
 .idea/*
 cmake-build-debug/*
+cmake-build-u3d/
 build-windows/
 cmake-build-web/*
 # Android signing — never commit private keys or passwords
