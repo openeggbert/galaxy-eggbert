@@ -11,22 +11,6 @@ GalaxyEggbertGame::GalaxyEggbertGame(Context* context)
 
 GalaxyEggbertGame::~GalaxyEggbertGame() { Stop(); }
 
-// ============================================================
-// Shared stubs (Nova3D path — scene graph not yet implemented)
-// ============================================================
-#ifndef GE_ENGINE_U3D
-
-void GalaxyEggbertGame::Start()  {}
-void GalaxyEggbertGame::Update(float /*dt*/) {}
-void GalaxyEggbertGame::Stop()   {}
-
-#else // GE_ENGINE_U3D
-// ============================================================
-// U3D implementation — full Urho3D scene graph
-// ============================================================
-
-// --------------- helpers ---------------
-
 SharedPtr<Material> GalaxyEggbertGame::MakeFlatMaterial(const Color& color, float emissive) {
     auto* cache = context_->GetSubsystem<ResourceCache>();
     SharedPtr<Material> mat(new Material(context_));
@@ -42,23 +26,19 @@ SharedPtr<Material> GalaxyEggbertGame::MakeFlatMaterial(const Color& color, floa
     return mat;
 }
 
-// --------------- scene creation ---------------
-
 void GalaxyEggbertGame::CreateScene() {
     scene_ = new Scene(context_);
     scene_->CreateComponent<Octree>();
     scene_->CreateComponent<DebugRenderer>();
 
-    // Atmosphere — galaxy alien world: deep blue-purple sky, distant fog
     auto* zoneNode = scene_->CreateChild("Zone");
     auto* zone = zoneNode->CreateComponent<Zone>();
     zone->SetBoundingBox(BoundingBox(-2000.0f, 2000.0f));
-    zone->SetAmbientColor(Color(0.22f, 0.18f, 0.38f));  // purple-blue ambient
-    zone->SetFogColor(Color(0.12f, 0.10f, 0.28f));       // deep space fog
+    zone->SetAmbientColor(Color(0.22f, 0.18f, 0.38f));
+    zone->SetFogColor(Color(0.12f, 0.10f, 0.28f));
     zone->SetFogStart(80.0f);
     zone->SetFogEnd(220.0f);
 
-    // Sun (slightly warm directional)
     auto* sunNode = scene_->CreateChild("Sun");
     sunNode->SetDirection(Vector3(-0.6f, -1.0f, -0.4f));
     auto* sun = sunNode->CreateComponent<Light>();
@@ -67,7 +47,6 @@ void GalaxyEggbertGame::CreateScene() {
     sun->SetBrightness(2.0f);
     sun->SetCastShadows(false);
 
-    // Soft secondary fill
     auto* fillNode = scene_->CreateChild("Fill");
     fillNode->SetDirection(Vector3(0.65f, -0.4f, 0.5f));
     auto* fill = fillNode->CreateComponent<Light>();
@@ -82,13 +61,12 @@ void GalaxyEggbertGame::CreateTerrain() {
     auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
     if (!boxModel) return;
 
-    // Galaxy-alien colour palette
     SharedPtr<Material> mats[5];
-    mats[0] = MakeFlatMaterial(Color(0.18f, 0.72f, 0.52f), 0.18f); // teal alien grass
-    mats[1] = MakeFlatMaterial(Color(0.28f, 0.22f, 0.45f), 0.14f); // purple rock
-    mats[2] = MakeFlatMaterial(Color(0.50f, 0.50f, 0.62f), 0.12f); // blue-grey stone
-    mats[3] = MakeFlatMaterial(Color(0.70f, 0.78f, 0.92f), 0.16f); // silver-blue sand
-    mats[4] = MakeFlatMaterial(Color(0.10f, 0.40f, 0.90f), 0.24f); // crystal-blue water
+    mats[0] = MakeFlatMaterial(Color(0.18f, 0.72f, 0.52f), 0.18f);
+    mats[1] = MakeFlatMaterial(Color(0.28f, 0.22f, 0.45f), 0.14f);
+    mats[2] = MakeFlatMaterial(Color(0.50f, 0.50f, 0.62f), 0.12f);
+    mats[3] = MakeFlatMaterial(Color(0.70f, 0.78f, 0.92f), 0.16f);
+    mats[4] = MakeFlatMaterial(Color(0.10f, 0.40f, 0.90f), 0.24f);
 
     std::mt19937 rng(42);
     std::uniform_int_distribution<int> gap(0, 99);
@@ -128,7 +106,6 @@ void GalaxyEggbertGame::CreateTerrain() {
         }
     }
 
-    // Orbiting marker (glowing yellow — "Blupi" placeholder)
     auto* lightNode = scene_->CreateChild("OrbitLight");
     auto* orbitLight = lightNode->CreateComponent<Light>();
     orbitLight->SetLightType(LIGHT_POINT);
@@ -181,8 +158,6 @@ void GalaxyEggbertGame::CreateHUD() {
     text->SetPosition(12, 12);
 }
 
-// --------------- lifecycle ---------------
-
 void GalaxyEggbertGame::Start() {
     CreateScene();
     CreateTerrain();
@@ -193,8 +168,6 @@ void GalaxyEggbertGame::Start() {
 void GalaxyEggbertGame::Stop() {
     scene_.Reset();
 }
-
-// --------------- per-frame ---------------
 
 void GalaxyEggbertGame::UpdateCamera(float dt) {
     if (!cameraNode_) return;
@@ -252,5 +225,3 @@ void GalaxyEggbertGame::Update(float dt) {
         if (dbg && oct) oct->DrawDebugGeometry(true);
     }
 }
-
-#endif // GE_ENGINE_U3D

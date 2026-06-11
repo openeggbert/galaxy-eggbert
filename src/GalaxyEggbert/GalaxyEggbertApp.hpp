@@ -16,12 +16,7 @@ public:
     void Stop()  override;
 
     void GameUpdate(float dt);
-
-#ifdef GE_ENGINE_U3D
     void HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
-#else
-    void Update(float dt) override { GameUpdate(dt); }
-#endif
 
 private:
     std::unique_ptr<GalaxyEggbertGame> game_;

@@ -188,8 +188,6 @@ target_include_directories(${_target} PRIVATE
 
 if(_engine STREQUAL "U3D")
 
-    target_compile_definitions(${_target} PRIVATE GE_ENGINE_U3D)
-
     target_include_directories(${_target} PRIVATE
             ${URHO3D_INCLUDE_DIRS}
     )
@@ -218,8 +216,6 @@ if(_engine STREQUAL "U3D")
     endif()
 
 elseif(_engine STREQUAL "NOVA3D")
-
-    target_compile_definitions(${_target} PRIVATE GE_ENGINE_NOVA3D)
 
     target_include_directories(${_target} PRIVATE
             ../nova-3d/include
