@@ -13,6 +13,7 @@ public:
     static constexpr float kGravity   = -22.0f;
     static constexpr float kJumpSpeed =  10.0f;
     static constexpr float kMoveSpeed =   5.5f;
+    static constexpr float kTurnSpeed = 180.0f; // degrees/second
     static constexpr float kHalfW     =   0.35f; // AABB half-size X and Z
     static constexpr float kHalfH     =   0.7f;  // AABB half-size Y
 
@@ -23,8 +24,7 @@ public:
     ~Blupi();
 
     // Call once per frame while in Play phase.
-    // cameraYaw is the horizontal camera angle for relative movement.
-    void Update(float dt, float cameraYaw);
+    void Update(float dt);
 
     Urho3D::Node* GetNode() const { return node_; }
     Urho3D::Vector3 GetPosition() const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
@@ -43,5 +43,6 @@ private:
     int wcx_, wcz_;
 
     Urho3D::Vector3 vel_{0.0f, 0.0f, 0.0f};
+    float facingYaw_ = 0.0f; // Blupi's own facing direction, degrees
     bool onGround_ = false;
 };

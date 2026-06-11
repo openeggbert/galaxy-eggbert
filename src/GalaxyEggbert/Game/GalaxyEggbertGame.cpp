@@ -203,7 +203,7 @@ void GalaxyEggbertGame::CreateHUD() {
     auto* font = cache->GetResource<Font>("Fonts/Anonymous Pro.ttf");
     if (!font) font = cache->GetResource<Font>("Fonts/DejaVuSansMono.ttf");
     if (font) text->SetFont(font, 14);
-    text->SetText("Galaxy Eggbert\nArrows: move  SPACE: jump  ESC: pause  RMB: rotate camera");
+    text->SetText("Galaxy Eggbert\nUP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause  RMB: rotate camera");
     text->SetColor(Color(0.85f, 0.90f, 1.0f));
     text->SetPosition(12, 12);
     hudText_ = text;
@@ -254,7 +254,7 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_, world_.get(), kWCX, kWCZ);
             if (Text* t = hudText_) {
-                t->SetText("Arrows: move  SPACE: jump  ESC: pause  RMB: rotate camera");
+                t->SetText("UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause  RMB: rotate camera");
                 t->SetVisible(true);
             }
             break;
@@ -289,7 +289,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     auto* input = context_->GetSubsystem<Input>();
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Pause); return; }
 
-    if (blupi_) blupi_->Update(dt, camYaw_);
+    if (blupi_) blupi_->Update(dt);
     UpdateCamera(dt);
 }
 

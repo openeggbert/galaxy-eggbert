@@ -135,31 +135,25 @@ void Blupi::ResolveXZ(Vector3& pos) {
     }
 }
 
-void Blupi::Update(float dt, float cameraYaw) {
+void Blupi::Update(float dt) {
     if (!node_) return;
     auto* input = context_->GetSubsystem<Input>();
 
-    // --- Horizontal input (camera-relative, arrow keys) ---
-    // fwd/right point in the direction the player should move when pressing
-    // UP/RIGHT. The camera sits at offset (sin(yaw), ..., cos(yaw)) from the
-    // target, so the "forward into the scene" direction is the negative of that.
-    float rad = cameraYaw * static_cast<float>(M_PI) / 180.0f;
-    Vector3 fwd (-std::sin(rad), 0.0f, -std::cos(rad));
-    Vector3 right(-std::cos(rad), 0.0f,  std::sin(rad));
+    // --- Rotation: LEFT/RIGHT arrows turn Blupi ---
+    if (input->GetKeyDown(KEY_LEFT))  facingYaw_ -= kTurnSpeed * dt;
+    if (input->GetKeyDown(KEY_RIGHT)) facingYaw_ += kTurnSpeed * dt;
+    node_->SetRotation(Quaternion(0.0f, facingYaw_, 0.0f));
 
-    Vector3 move = Vector3::ZERO;
-    if (input->GetKeyDown(KEY_UP))    move += fwd;
-    if (input->GetKeyDown(KEY_DOWN))  move -= fwd;
-    if (input->GetKeyDown(KEY_LEFT))  move -= right;
-    if (input->GetKeyDown(KEY_RIGHT)) move += right;
+    // --- Forward/back movement along Blupi's own facing direction ---
+    float rad = facingYaw_ * static_cast<float>(M_PI) / 180.0f;
+    Vector3 fwd(std::sin(rad), 0.0f, std::cos(rad));
 
-    if (move.LengthSquared() > 0.0f) move.Normalize();
-    vel_.x_ = move.x_ * kMoveSpeed;
-    vel_.z_ = move.z_ * kMoveSpeed;
+    float forwardInput = 0.0f;
+    if (input->GetKeyDown(KEY_UP))   forwardInput =  1.0f;
+    if (input->GetKeyDown(KEY_DOWN)) forwardInput = -1.0f;
 
-    // Face direction of travel
-    if (move.LengthSquared() > 0.0f)
-        node_->SetRotation(Quaternion(0.0f, std::atan2(move.x_, move.z_) * 180.0f / static_cast<float>(M_PI), 0.0f));
+    vel_.x_ = fwd.x_ * forwardInput * kMoveSpeed;
+    vel_.z_ = fwd.z_ * forwardInput * kMoveSpeed;
 
     // --- Gravity ---
     vel_.y_ += kGravity * dt;
