@@ -11,7 +11,7 @@ void GalaxyEggbertApp::Setup() {
     engineParameters_[EP_FULL_SCREEN]    = false;
     engineParameters_[EP_WINDOW_WIDTH]   = 1280;
     engineParameters_[EP_WINDOW_HEIGHT]  = 720;
-    engineParameters_[EP_RESOURCE_PATHS] = "Data;CoreData";
+    engineParameters_[EP_RESOURCE_PATHS] = "Data;CoreData;Content";
     engineParameters_[EP_LOG_NAME]       = "GalaxyEggbert.log";
     engineParameters_[EP_HEADLESS]       = false;
 }

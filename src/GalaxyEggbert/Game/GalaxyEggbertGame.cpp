@@ -2,14 +2,18 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <random>
 
 using namespace Urho3D;
+using namespace GalaxyEggbert::Worlds;
 
 GalaxyEggbertGame::GalaxyEggbertGame(Context* context)
     : context_(context) {}
 
 GalaxyEggbertGame::~GalaxyEggbertGame() { Stop(); }
+
+// --------------- material helpers ---------------
 
 SharedPtr<Material> GalaxyEggbertGame::MakeFlatMaterial(const Color& color, float emissive) {
     auto* cache = context_->GetSubsystem<ResourceCache>();
@@ -19,12 +23,42 @@ SharedPtr<Material> GalaxyEggbertGame::MakeFlatMaterial(const Color& color, floa
     if (!tech) tech = cache->GetResource<Technique>("Techniques/Diff.xml");
     if (tech) mat->SetTechnique(0, tech);
 
-    mat->SetShaderParameter("MatDiffColor",   color);
+    mat->SetShaderParameter("MatDiffColor",    color);
     mat->SetShaderParameter("MatEmissiveColor",
         Color(color.r_ * emissive, color.g_ * emissive, color.b_ * emissive));
-    mat->SetShaderParameter("MatSpecColor",   Color(0.04f, 0.04f, 0.04f, 1.0f));
+    mat->SetShaderParameter("MatSpecColor",    Color(0.04f, 0.04f, 0.04f, 1.0f));
     return mat;
 }
+
+SharedPtr<Material> GalaxyEggbertGame::GetTileMaterial(uint16_t blockType) {
+    auto it = tileMatCache_.find(blockType);
+    if (it != tileMatCache_.end()) return it->second;
+
+    auto* cache = context_->GetSubsystem<ResourceCache>();
+
+    char texPath[64];
+    snprintf(texPath, sizeof(texPath), "backgrounds/decor%03d.png", blockType);
+    auto* tex = cache->GetResource<Texture2D>(texPath);
+
+    SharedPtr<Material> mat;
+    if (tex) {
+        mat = SharedPtr<Material>(new Material(context_));
+        auto* tech = cache->GetResource<Technique>("Techniques/Diff.xml");
+        if (!tech) tech = cache->GetResource<Technique>("Techniques/DiffUnlit.xml");
+        if (tech) mat->SetTechnique(0, tech);
+        mat->SetTexture(TU_DIFFUSE, tex);
+        mat->SetShaderParameter("MatDiffColor",    Color(1.0f, 1.0f, 1.0f, 1.0f));
+        mat->SetShaderParameter("MatSpecColor",    Color(0.02f, 0.02f, 0.02f, 1.0f));
+    } else {
+        // fallback: flat grey for tile types without a texture file
+        mat = MakeFlatMaterial(Color(0.45f, 0.45f, 0.50f));
+    }
+
+    tileMatCache_[blockType] = mat;
+    return mat;
+}
+
+// --------------- scene creation ---------------
 
 void GalaxyEggbertGame::CreateScene() {
     scene_ = new Scene(context_);
@@ -61,51 +95,79 @@ void GalaxyEggbertGame::CreateTerrain() {
     auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
     if (!boxModel) return;
 
-    SharedPtr<Material> mats[5];
-    mats[0] = MakeFlatMaterial(Color(0.18f, 0.72f, 0.52f), 0.18f);
-    mats[1] = MakeFlatMaterial(Color(0.28f, 0.22f, 0.45f), 0.14f);
-    mats[2] = MakeFlatMaterial(Color(0.50f, 0.50f, 0.62f), 0.12f);
-    mats[3] = MakeFlatMaterial(Color(0.70f, 0.78f, 0.92f), 0.16f);
-    mats[4] = MakeFlatMaterial(Color(0.10f, 0.40f, 0.90f), 0.24f);
+    // Build world data model — terrain stored as blocks in the World.
+    // World is 100×100×100; we use the centre (50, 0, 50) as scene origin.
+    world_ = std::make_unique<World>();
 
     std::mt19937 rng(42);
     std::uniform_int_distribution<int> gap(0, 99);
-    std::uniform_int_distribution<int> matPick(0, 99);
+
+    // Surface tile types: decor001–decor013 (files that exist in Content/backgrounds/)
+    // 0 = air; use types 1-13 for surface variety, type 2 for subsurface stone.
+    const std::vector<uint16_t> surfaceTypes = {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13};
+    std::uniform_int_distribution<int> typePick(0, static_cast<int>(surfaceTypes.size()) - 1);
 
     const int radius = 18;
-    for (int z = -radius; z <= radius; ++z) {
-        for (int x = -radius; x <= radius; ++x) {
-            const bool spawn = (std::abs(x) <= 3 && std::abs(z) <= 3);
+    const int wcx = 50, wcz = 50; // world-space centre
+
+    for (int wz = wcz - radius; wz <= wcz + radius; ++wz) {
+        for (int wx = wcx - radius; wx <= wcx + radius; ++wx) {
+            const int rx = wx - wcx, rz = wz - wcz;
+            const bool spawn = (std::abs(rx) <= 3 && std::abs(rz) <= 3);
             if (!spawn && gap(rng) < 8) continue;
 
-            const float hf = std::sin(x * 0.28f) * 1.7f
-                           + std::cos(z * 0.24f) * 1.5f
-                           + std::sin((x + z) * 0.13f) * 1.1f;
+            const float hf = std::sin(rx * 0.28f) * 1.7f
+                           + std::cos(rz * 0.24f) * 1.5f
+                           + std::sin((rx + rz) * 0.13f) * 1.1f;
             std::uniform_int_distribution<int> jit(-1, 2);
-            int height = spawn ? 1 : std::max(1, std::min(2 + static_cast<int>(std::round(hf)) + jit(rng), 7));
+            int height = spawn ? 1
+                               : std::max(1, std::min(2 + static_cast<int>(std::round(hf)) + jit(rng), 7));
 
-            for (int y = 0; y < height; ++y) {
-                auto* node = scene_->CreateChild("Block");
-                node->SetPosition(Vector3(static_cast<float>(x),
-                                         static_cast<float>(y) - 0.5f,
-                                         static_cast<float>(z)));
-                auto* sm = node->CreateComponent<StaticModel>();
-                sm->SetModel(boxModel);
-
-                SharedPtr<Material> mat;
-                if (y == height - 1) {
-                    const int r = matPick(rng);
-                    mat = mats[r < 65 ? 0 : r < 78 ? 2 : r < 90 ? 3 : 4];
-                } else if (y > height - 4) {
-                    mat = mats[1];
-                } else {
-                    mat = mats[2];
-                }
-                sm->SetMaterial(mat);
+            for (int wy = 0; wy < height; ++wy) {
+                uint16_t blockType = (wy == height - 1)
+                    ? surfaceTypes[typePick(rng)]
+                    : uint16_t(2); // subsurface stone (decor002)
+                world_->setBlock(
+                    static_cast<uint16_t>(wx),
+                    static_cast<uint16_t>(wy),
+                    static_cast<uint16_t>(wz),
+                    Block::make(blockType));
             }
         }
     }
 
+    // Spawn one StaticModel node per non-air block, iterating chunk by chunk
+    // so empty chunks (the vast majority of the 100×100×100 world) are skipped.
+    const uint8_t cpa = world_->chunksPerAxis();
+    for (uint8_t ccy = 0; ccy < cpa; ++ccy) {
+        for (uint8_t ccz = 0; ccz < cpa; ++ccz) {
+            for (uint8_t ccx = 0; ccx < cpa; ++ccx) {
+                if (world_->chunk(ccx, ccy, ccz).isEmpty()) continue;
+                for (uint8_t ly = 0; ly < 10; ++ly) {
+                    for (uint8_t lz = 0; lz < 10; ++lz) {
+                        for (uint8_t lx = 0; lx < 10; ++lx) {
+                            const uint16_t wx = ccx * 10 + lx;
+                            const uint16_t wy = ccy * 10 + ly;
+                            const uint16_t wz = ccz * 10 + lz;
+                            const Block b = world_->getBlock(wx, wy, wz);
+                            if (b.isAir()) continue;
+
+                            auto* node = scene_->CreateChild("Block");
+                            node->SetPosition(Vector3(
+                                static_cast<float>(wx) - wcx,
+                                static_cast<float>(wy) - 0.5f,
+                                static_cast<float>(wz) - wcz));
+                            auto* sm = node->CreateComponent<StaticModel>();
+                            sm->SetModel(boxModel);
+                            sm->SetMaterial(GetTileMaterial(b.type()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Orbiting Blupi placeholder
     auto* lightNode = scene_->CreateChild("OrbitLight");
     auto* orbitLight = lightNode->CreateComponent<Light>();
     orbitLight->SetLightType(LIGHT_POINT);
@@ -151,12 +213,14 @@ void GalaxyEggbertGame::CreateHUD() {
     if (font) text->SetFont(font, 15);
 
     text->SetText(
-        "Galaxy Eggbert  [Phase 1 / U3D]\n"
+        "Galaxy Eggbert  [Phase 3 / U3D — World data model]\n"
         "WASD: move  |  RMB: look  |  Shift: fast  |  Q/E: down/up\n"
         "F1: debug geometry  |  ESC: quit");
     text->SetColor(Color(0.85f, 0.90f, 1.0f));
     text->SetPosition(12, 12);
 }
+
+// --------------- lifecycle ---------------
 
 void GalaxyEggbertGame::Start() {
     CreateScene();
@@ -167,7 +231,11 @@ void GalaxyEggbertGame::Start() {
 
 void GalaxyEggbertGame::Stop() {
     scene_.Reset();
+    world_.reset();
+    tileMatCache_.clear();
 }
+
+// --------------- per-frame ---------------
 
 void GalaxyEggbertGame::UpdateCamera(float dt) {
     if (!cameraNode_) return;

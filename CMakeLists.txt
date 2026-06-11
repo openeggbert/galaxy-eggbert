@@ -213,6 +213,16 @@ if(_engine STREQUAL "U3D")
                 )
             endif()
         endforeach()
+
+        # Copy game Content/ (tile textures, sprites, sounds) next to executable.
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Content")
+            add_custom_command(TARGET ${_target} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${CMAKE_CURRENT_SOURCE_DIR}/Content"
+                        "$<TARGET_FILE_DIR:${_target}>/Content"
+                    COMMENT "Copying game Content/ next to executable"
+            )
+        endif()
     endif()
 
 elseif(_engine STREQUAL "NOVA3D")
