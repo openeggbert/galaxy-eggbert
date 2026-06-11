@@ -319,10 +319,19 @@ void GalaxyEggbertGame::UpdateCamera(float dt) {
     if (!cameraNode_) return;
     auto* input = context_->GetSubsystem<Input>();
 
-    // Mouse-look with right button
+    // Camera yaw smoothly follows Blupi's facing direction (stays behind Blupi).
+    // RMB drag adjusts pitch only; yaw is always driven by Blupi.
+    if (blupi_) {
+        float targetYaw = blupi_->GetFacingYaw() + 180.0f;
+        // Shortest-path angle difference to avoid spinning around on wrap
+        float diff = targetYaw - camYaw_;
+        while (diff >  180.0f) diff -= 360.0f;
+        while (diff < -180.0f) diff += 360.0f;
+        camYaw_ += diff * std::min(1.0f, 8.0f * dt);
+    }
+
     if (input->GetMouseButtonDown(MOUSEB_RIGHT)) {
         const float sens = 0.12f;
-        camYaw_   += sens * static_cast<float>(input->GetMouseMoveX());
         camPitch_ += sens * static_cast<float>(input->GetMouseMoveY());
         camPitch_  = std::max(-60.0f, std::min(60.0f, camPitch_));
     }
