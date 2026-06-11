@@ -128,16 +128,21 @@ void GalaxyEggbertGame::CreateTerrain() {
         f(kWCX + R, kWCZ + dx);
     }
 
-    // Some stone-A platforms at various heights
+    // Platforms placed well away from the spawn centre so Blupi has a clear
+    // open area to walk around in. All platforms are at wy=1 (one block tall),
+    // reachable by jumping.
     struct Plat { int dx, dz, h; uint16_t type; };
     const Plat platforms[] = {
-        { 5, 3, 1, BlockTypes::StoneA }, { 5, 3, 2, BlockTypes::StoneA },
-        {-5, 3, 1, BlockTypes::StoneA }, {-5, 3, 2, BlockTypes::StoneA },
-        { 5,-5, 1, BlockTypes::StoneB }, { 5,-5, 2, BlockTypes::StoneB },
-        { 0, 6, 1, BlockTypes::Platform},
-        { 0,-6, 1, BlockTypes::Sp0    },
-        { 8, 0, 1, BlockTypes::StoneA }, { 8, 0, 2, BlockTypes::StoneA }, { 8, 0, 3, BlockTypes::StoneA },
-        {-8, 0, 1, BlockTypes::StoneB }, {-8, 0, 2, BlockTypes::StoneB },
+        // Raised 1-block step platforms on the cardinal axes (~10 units out)
+        { 10,  0, 1, BlockTypes::StoneA },
+        {-10,  0, 1, BlockTypes::StoneB },
+        {  0, 10, 1, BlockTypes::Platform },
+        {  0,-10, 1, BlockTypes::Sp0 },
+        // Corner platforms with 2-block towers
+        { 10, 10, 1, BlockTypes::StoneA }, { 10, 10, 2, BlockTypes::StoneA },
+        {-10, 10, 1, BlockTypes::StoneB }, {-10, 10, 2, BlockTypes::StoneB },
+        { 10,-10, 1, BlockTypes::Wall   }, { 10,-10, 2, BlockTypes::Wall   },
+        {-10,-10, 1, BlockTypes::StoneA }, {-10,-10, 2, BlockTypes::StoneA },
     };
     for (const auto& p : platforms) {
         int wx = kWCX + p.dx;
@@ -291,6 +296,17 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
     if (blupi_) blupi_->Update(dt);
     UpdateCamera(dt);
+
+    // Live position readout so movement is always verifiable
+    if (Text* t = hudText_) {
+        char buf[128];
+        Urho3D::Vector3 p = blupi_ ? blupi_->GetPosition() : Urho3D::Vector3::ZERO;
+        std::snprintf(buf, sizeof(buf),
+            "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
+            "pos (%.1f, %.1f, %.1f)  facing %.0f deg",
+            p.x_, p.y_, p.z_, blupi_ ? blupi_->GetFacingYaw() : 0.0f);
+        t->SetText(buf);
+    }
 }
 
 void GalaxyEggbertGame::UpdatePause(float dt) {

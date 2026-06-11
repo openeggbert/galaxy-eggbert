@@ -28,6 +28,7 @@ public:
 
     Urho3D::Node* GetNode() const { return node_; }
     Urho3D::Vector3 GetPosition() const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
+    float GetFacingYaw() const { return facingYaw_; }
 
 private:
     void SpawnAt(const Urho3D::Vector3& pos);

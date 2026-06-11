@@ -8,26 +8,42 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     : context_(context), world_(world), wcx_(wcx), wcz_(wcz)
 {
     auto* cache = context_->GetSubsystem<ResourceCache>();
+    auto* tech  = cache->GetResource<Technique>("Techniques/NoTexture.xml");
 
+    // Root node (unscaled) — holds body + direction indicator as children
+    // so both inherit the rotation without the scale complication.
     node_ = scene->CreateChild("Blupi");
 
-    // Yellow ellipsoid: scale Sphere.mdl to 0.7×1.4×0.7 (≈ kHalfW*2 × kHalfH*2 × kHalfW*2)
-    auto* sm = node_->CreateComponent<StaticModel>();
-    auto* model = cache->GetResource<Model>("Models/Sphere.mdl");
-    if (model) sm->SetModel(model);
+    // --- Body: yellow ellipsoid ---
+    auto* bodyNode = node_->CreateChild("BlupiBody");
+    bodyNode->SetScale(Vector3(kHalfW * 2.0f, kHalfH * 2.0f, kHalfW * 2.0f));
+    auto* sm = bodyNode->CreateComponent<StaticModel>();
+    if (auto* m = cache->GetResource<Model>("Models/Sphere.mdl")) sm->SetModel(m);
+    {
+        SharedPtr<Material> mat(new Material(context_));
+        if (tech) mat->SetTechnique(0, tech);
+        mat->SetShaderParameter("MatDiffColor",     Color(1.0f, 0.85f, 0.08f));
+        mat->SetShaderParameter("MatEmissiveColor", Color(0.28f, 0.22f, 0.02f));
+        mat->SetShaderParameter("MatSpecColor",     Color(0.5f, 0.45f, 0.1f, 16.0f));
+        sm->SetMaterial(mat);
+    }
 
-    SharedPtr<Material> mat(new Material(context_));
-    auto* tech = cache->GetResource<Technique>("Techniques/NoTexture.xml");
-    if (!tech) tech = cache->GetResource<Technique>("Techniques/Diff.xml");
-    if (tech) mat->SetTechnique(0, tech);
-    mat->SetShaderParameter("MatDiffColor",     Color(1.0f, 0.85f, 0.08f));
-    mat->SetShaderParameter("MatEmissiveColor", Color(0.30f, 0.25f, 0.02f));
-    mat->SetShaderParameter("MatSpecColor",     Color(0.6f, 0.55f, 0.1f, 32.0f));
-    sm->SetMaterial(mat);
+    // --- Direction indicator: small dark-red box sticking out at front (+Z local) ---
+    // Makes the facing direction visually obvious since the sphere is symmetric.
+    auto* noseNode = node_->CreateChild("BlupiFront");
+    noseNode->SetPosition(Vector3(0.0f, 0.0f, kHalfW + 0.12f));
+    noseNode->SetScale(Vector3(0.14f, 0.14f, 0.22f));
+    auto* noseSM = noseNode->CreateComponent<StaticModel>();
+    if (auto* m = cache->GetResource<Model>("Models/Box.mdl")) noseSM->SetModel(m);
+    {
+        SharedPtr<Material> mat(new Material(context_));
+        if (tech) mat->SetTechnique(0, tech);
+        mat->SetShaderParameter("MatDiffColor",     Color(0.75f, 0.15f, 0.10f));
+        mat->SetShaderParameter("MatEmissiveColor", Color(0.18f, 0.03f, 0.02f));
+        mat->SetShaderParameter("MatSpecColor",     Color(0.1f, 0.1f, 0.1f, 8.0f));
+        noseSM->SetMaterial(mat);
+    }
 
-    node_->SetScale(Vector3(kHalfW * 2.0f, kHalfH * 2.0f, kHalfW * 2.0f));
-
-    // Spawn on top of the centre block (world 50,0,50 → scene origin + a little above)
     SpawnAt(Vector3(0.0f, kHalfH + 0.5f, 0.0f));
 }
 
@@ -37,7 +53,7 @@ Blupi::~Blupi() {
 
 void Blupi::SpawnAt(const Vector3& pos) {
     if (node_) node_->SetPosition(pos);
-    vel_ = Vector3::ZERO;
+    vel_      = Vector3::ZERO;
     onGround_ = false;
 }
 
@@ -51,36 +67,41 @@ bool Blupi::IsSolid(int wx, int wy, int wz) const {
         static_cast<uint16_t>(wz)).isAir();
 }
 
-// scene → world: wx = round(px) + wcx,  wy = round(py),  wz = round(pz) + wcz
-// Block centre in scene: (wx-wcx, wy, wz-wcz); occupies y in [wy-0.5, wy+0.5]
+// Coordinate mapping:
+//   Block (wx,wy,wz) → scene centre (wx-wcx, wy, wz-wcz)
+//   Block occupies scene Y ∈ [wy-0.5, wy+0.5]
+//
+// Ground check uses floor(feetY) which gives the block whose Y range contains
+// or is just below the feet. The feetY<top condition filters out blocks above.
 
 void Blupi::ResolveY(Vector3& pos) {
     int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
     int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
 
     if (vel_.y_ <= 0.0f) {
-        // Check ground below feet
         float feetY = pos.y_ - kHalfH;
-        int wy = static_cast<int>(std::floor(feetY + 0.5f)); // block whose centre is just below feet
-        if (IsSolid(wx, wy, wz)) {
-            float top = static_cast<float>(wy) + 0.5f;
-            if (feetY < top) {
-                pos.y_ = top + kHalfH;
-                vel_.y_ = 0.0f;
-                onGround_ = true;
-                return;
+        // Check the block at/just-below feet (floor gives the containing block)
+        for (int wy : { static_cast<int>(std::floor(feetY)),
+                        static_cast<int>(std::floor(feetY)) - 1 }) {
+            if (IsSolid(wx, wy, wz)) {
+                float top = static_cast<float>(wy) + 0.5f;
+                if (feetY < top + 0.01f) {
+                    pos.y_   = top + kHalfH;
+                    vel_.y_  = 0.0f;
+                    onGround_ = true;
+                    return;
+                }
             }
         }
     }
 
-    // Check ceiling above head
     if (vel_.y_ > 0.0f) {
         float headY = pos.y_ + kHalfH;
-        int wy = static_cast<int>(std::floor(headY + 0.5f));
+        int wy = static_cast<int>(std::floor(headY + 0.01f));
         if (IsSolid(wx, wy, wz)) {
             float bot = static_cast<float>(wy) - 0.5f;
-            if (headY > bot) {
-                pos.y_ = bot - kHalfH;
+            if (headY > bot - 0.01f) {
+                pos.y_  = bot - kHalfH;
                 vel_.y_ = 0.0f;
                 return;
             }
@@ -91,46 +112,45 @@ void Blupi::ResolveY(Vector3& pos) {
 }
 
 void Blupi::ResolveXZ(Vector3& pos) {
-    // Check block Y levels that overlap with Blupi's body height.
-    // Use feetY + epsilon so we never check the ground block Blupi is
-    // standing on — otherwise every adjacent floor tile would look like a wall.
-    float feetY = pos.y_ - kHalfH;
-    float headY = pos.y_ + kHalfH;
-    int wyMin = static_cast<int>(std::floor(feetY + 0.51f));
-    int wyMax = static_cast<int>(std::floor(headY + 0.49f));
+    // Use the block at Blupi's lower body (avoids the ground block at Blupi's feet).
+    // round(pos.y_) when Blupi is on ground (pos.y_≈1.2) gives wy=1, which is
+    // above the floor layer at wy=0, so floor blocks are never treated as walls.
+    int bodyWY = static_cast<int>(std::round(pos.y_));
 
-    for (int checkWY = wyMin; checkWY <= wyMax; ++checkWY) {
-        {
-            int wx = static_cast<int>(std::floor(pos.x_ + kHalfW + 0.5f)) + wcx_;
-            int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
-            if (IsSolid(wx, checkWY, wz)) {
-                pos.x_ = static_cast<float>(wx - wcx_) - 0.5f - kHalfW;
-                if (vel_.x_ > 0.0f) vel_.x_ = 0.0f;
-            }
+    // +X wall
+    {
+        int wx = static_cast<int>(std::round(pos.x_ + kHalfW + 0.01f)) + wcx_;
+        int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
+        if (IsSolid(wx, bodyWY, wz)) {
+            pos.x_ = static_cast<float>(wx - wcx_) - 0.5f - kHalfW;
+            vel_.x_ = 0.0f;
         }
-        {
-            int wx = static_cast<int>(std::floor(pos.x_ - kHalfW + 0.5f)) + wcx_;
-            int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
-            if (IsSolid(wx, checkWY, wz)) {
-                pos.x_ = static_cast<float>(wx - wcx_) + 0.5f + kHalfW;
-                if (vel_.x_ < 0.0f) vel_.x_ = 0.0f;
-            }
+    }
+    // -X wall
+    {
+        int wx = static_cast<int>(std::round(pos.x_ - kHalfW - 0.01f)) + wcx_;
+        int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
+        if (IsSolid(wx, bodyWY, wz)) {
+            pos.x_ = static_cast<float>(wx - wcx_) + 0.5f + kHalfW;
+            vel_.x_ = 0.0f;
         }
-        {
-            int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
-            int wz = static_cast<int>(std::floor(pos.z_ + kHalfW + 0.5f)) + wcz_;
-            if (IsSolid(wx, checkWY, wz)) {
-                pos.z_ = static_cast<float>(wz - wcz_) - 0.5f - kHalfW;
-                if (vel_.z_ > 0.0f) vel_.z_ = 0.0f;
-            }
+    }
+    // +Z wall
+    {
+        int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
+        int wz = static_cast<int>(std::round(pos.z_ + kHalfW + 0.01f)) + wcz_;
+        if (IsSolid(wx, bodyWY, wz)) {
+            pos.z_ = static_cast<float>(wz - wcz_) - 0.5f - kHalfW;
+            vel_.z_ = 0.0f;
         }
-        {
-            int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
-            int wz = static_cast<int>(std::floor(pos.z_ - kHalfW + 0.5f)) + wcz_;
-            if (IsSolid(wx, checkWY, wz)) {
-                pos.z_ = static_cast<float>(wz - wcz_) + 0.5f + kHalfW;
-                if (vel_.z_ < 0.0f) vel_.z_ = 0.0f;
-            }
+    }
+    // -Z wall
+    {
+        int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
+        int wz = static_cast<int>(std::round(pos.z_ - kHalfW - 0.01f)) + wcz_;
+        if (IsSolid(wx, bodyWY, wz)) {
+            pos.z_ = static_cast<float>(wz - wcz_) + 0.5f + kHalfW;
+            vel_.z_ = 0.0f;
         }
     }
 }
@@ -155,20 +175,19 @@ void Blupi::Update(float dt) {
     vel_.x_ = fwd.x_ * forwardInput * kMoveSpeed;
     vel_.z_ = fwd.z_ * forwardInput * kMoveSpeed;
 
-    // --- Gravity ---
+    // --- Gravity (derived from mobile-eggbert Decor.cpp gravity constant) ---
     vel_.y_ += kGravity * dt;
-    vel_.y_ = std::max(vel_.y_, -30.0f); // terminal velocity
+    vel_.y_  = std::max(vel_.y_, -30.0f);
 
     // --- Jump ---
     if (onGround_ && input->GetKeyPress(KEY_SPACE)) {
-        vel_.y_ = kJumpSpeed;
+        vel_.y_   = kJumpSpeed;
         onGround_ = false;
     }
 
     // --- Integrate + collision, axis by axis ---
     Vector3 pos = node_->GetPosition();
 
-    // Y first so ground check is stable
     pos.y_ += vel_.y_ * dt;
     ResolveY(pos);
 
@@ -176,7 +195,6 @@ void Blupi::Update(float dt) {
     pos.z_ += vel_.z_ * dt;
     ResolveXZ(pos);
 
-    // Safety net: don't fall out of the world
     if (pos.y_ < -10.0f) SpawnAt(Vector3(0.0f, kHalfH + 0.5f, 0.0f));
 
     node_->SetPosition(pos);
