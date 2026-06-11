@@ -91,10 +91,15 @@ void Blupi::ResolveY(Vector3& pos) {
 }
 
 void Blupi::ResolveXZ(Vector3& pos) {
-    int wy = static_cast<int>(std::round(pos.y_));
-    // Check two Y levels (feet area and body area)
-    for (int dy = 0; dy <= 1; ++dy) {
-        int checkWY = wy - dy;
+    // Check block Y levels that overlap with Blupi's body height.
+    // Use feetY + epsilon so we never check the ground block Blupi is
+    // standing on — otherwise every adjacent floor tile would look like a wall.
+    float feetY = pos.y_ - kHalfH;
+    float headY = pos.y_ + kHalfH;
+    int wyMin = static_cast<int>(std::floor(feetY + 0.51f));
+    int wyMax = static_cast<int>(std::floor(headY + 0.49f));
+
+    for (int checkWY = wyMin; checkWY <= wyMax; ++checkWY) {
         {
             int wx = static_cast<int>(std::floor(pos.x_ + kHalfW + 0.5f)) + wcx_;
             int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
@@ -134,16 +139,19 @@ void Blupi::Update(float dt, float cameraYaw) {
     if (!node_) return;
     auto* input = context_->GetSubsystem<Input>();
 
-    // --- Horizontal input (camera-relative) ---
+    // --- Horizontal input (camera-relative, arrow keys) ---
+    // fwd/right point in the direction the player should move when pressing
+    // UP/RIGHT. The camera sits at offset (sin(yaw), ..., cos(yaw)) from the
+    // target, so the "forward into the scene" direction is the negative of that.
     float rad = cameraYaw * static_cast<float>(M_PI) / 180.0f;
-    Vector3 fwd( std::sin(rad), 0.0f, std::cos(rad));
-    Vector3 right(std::cos(rad), 0.0f, -std::sin(rad));
+    Vector3 fwd (-std::sin(rad), 0.0f, -std::cos(rad));
+    Vector3 right(-std::cos(rad), 0.0f,  std::sin(rad));
 
     Vector3 move = Vector3::ZERO;
-    if (input->GetKeyDown(KEY_W)) move += fwd;
-    if (input->GetKeyDown(KEY_S)) move -= fwd;
-    if (input->GetKeyDown(KEY_A)) move -= right;
-    if (input->GetKeyDown(KEY_D)) move += right;
+    if (input->GetKeyDown(KEY_UP))    move += fwd;
+    if (input->GetKeyDown(KEY_DOWN))  move -= fwd;
+    if (input->GetKeyDown(KEY_LEFT))  move -= right;
+    if (input->GetKeyDown(KEY_RIGHT)) move += right;
 
     if (move.LengthSquared() > 0.0f) move.Normalize();
     vel_.x_ = move.x_ * kMoveSpeed;

@@ -7,6 +7,36 @@ or the original Windows Phone game.
 
 ---
 
+## Architecture plan — class and file structure
+
+Inspired by mobile-eggbert's layering (`Game1` → `Decor` → `Pixmap`, `Tables`, `GameData`).
+Galaxy-eggbert maps the same concerns to Urho3D 3D classes:
+
+```
+src/GalaxyEggbert/
+  GalaxyEggbertApp.hpp/.cpp     — Urho3D Application subclass; wires lifecycle + event loop
+  GalaxyEggbertGame.hpp/.cpp    — top-level coordinator; owns scene, world, subsystems
+  Game/
+    Blupi.hpp/.cpp              — Blupi character: physics, input, collision (≈ Decor.cpp §Blupi)
+    Decor.hpp/.cpp              — tile/world simulation: objects, enemies, events (≈ Decor.cpp bulk)
+    Tables.hpp/.cpp             — animation frame tables (port Tables.cpp verbatim)
+    ObjectNode.hpp/.cpp         — Urho3D scene node for one moving object/enemy
+    HUD.hpp/.cpp                — 2D overlay: lives, keys, gauge (≈ Game1.cpp HUD drawing)
+    PhaseManager.hpp/.cpp       — GamePhase state machine + menu screen transitions
+    SoundManager.hpp/.cpp       — wraps Urho3D audio; maps SoundChannel → WAV files
+    Camera.hpp/.cpp             — 3rd-person / isometric camera logic
+  World/
+    (= current include/GalaxyEggbert/Worlds/ — keep engine-agnostic)
+```
+
+**Rules:**
+- One class per file. No "god object" files.
+- `GalaxyEggbertGame` delegates to subsystem objects; it does not contain game logic itself.
+- `Decor` is the heart of gameplay (same as in mobile-eggbert).
+- Headers that are used by tests stay in `include/`; all others in `src/`.
+
+---
+
 ## Phase 2 — Shared enums and assets
 
 Port the engine-independent definitions from mobile-eggbert verbatim.
