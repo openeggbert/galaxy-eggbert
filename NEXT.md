@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 11)
+## Current state (as of Phase 12)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -17,16 +17,19 @@ or the original Windows Phone game.
   - Frame tables ported from mobile-eggbert `Tables.cpp`
   - Physics: gravity, jump, AABB voxel collision (derived from `Decor.cpp`)
   - Arrow key controls: LEFT/RIGHT rotate, UP/DOWN move along facing
-- `Decor` object pool (up to 50 objects):
-  - ObjectType2 (enemy, patrols), ObjectType5 (treasure), ObjectType6 (egg), ObjectType7 (exit)
-  - Sprite billboard from `element.png`, animated via `GetIcon()` phase tables
-  - Collision: collect removes object, exit triggers Win, enemy triggers respawn/Lost
+- `Decor` object pool (up to 50 objects), all animated via `GetIcon()` phase tables:
+  - ObjectType2/3 (patrol enemies A/B), ObjectType16 (spider)
+  - ObjectType5 (treasure), ObjectType6 (egg), ObjectType7 (exit)
+  - ObjectType49/50/51 (red/green/blue keys) — key collection tracked, shown in HUD
+  - ObjectType25 (shield orb) — grants 5 s invincibility, shown in HUD as countdown
+  - Tile hazards: `Lava` (icon 68), `Spike` (icon 373), `Crusher` (icon 317) block types
+    — kill Blupi on contact unless shield is active; shield bypasses enemy hits too
 - `GamePhase` state machine: Init → Play → Pause / Win / Lost
   - Init, Pause, Win, Lost phases each show a fullscreen background overlay
 - Camera: smooth 3rd-person orbit; RMB pitch, scroll zoom, auto-yaw follow
-- HUD: lives counter, treasure count, `jauge.png` gauge sprite (bottom-left)
+- HUD: lives, treasures, keys, shield timer, `jauge.png` gauge sprite (bottom-left)
 - `SoundManager`: loads all 93 WAV files; per-channel volume from `tableVolumePitch`
-  - Wired: jump (ch1), collect (ch10), death (ch8), exit (ch57)
+  - Wired: jump (ch1), collect/treasure (ch10), key (ch11), shield (ch42), death (ch8), exit (ch57)
 - `GameData`: 640-byte save file, binary-compatible with mobile-eggbert
   - Stores lives, last world reached, door states (3 gamer slots)
   - Loaded at startup, written on win/lost/quit/reset
@@ -37,9 +40,9 @@ or the original Windows Phone game.
 src/GalaxyEggbert/Game/
   Blupi.hpp/.cpp          — physics, animation, sprite billboard       ✅
   Camera.hpp/.cpp         — 3rd-person orbit camera                    ✅
-  Decor.hpp/.cpp          — object pool, patrol movement, collision     ✅
+  Decor.hpp/.cpp          — object pool, patrol movement, collision     ✅ (partial)
   GameData.hpp/.cpp       — 640-byte save format (mobile-eggbert compat)✅
-  HUD.hpp/.cpp            — lives, treasures, gauge sprite              ✅
+  HUD.hpp/.cpp            — lives, keys, shield, gauge sprite           ✅ (partial)
   ObjectNode.hpp/.cpp     — single object billboard in Urho3D scene     ✅
   PhaseManager.hpp/.cpp   — GamePhase state + overlay transitions       ✅
   SoundManager.hpp/.cpp   — 93-channel WAV audio with volume table      ✅
@@ -47,11 +50,10 @@ src/GalaxyEggbert/Game/
 ```
 
 **Not yet done:**
-- More `ObjectType` variants (vehicles, hazards, traps, power-ups)
-- Tile-based events: lava, spikes, moving platforms, crushers
 - Multiple level files and progression (world001 → world002 → …)
 - Gamer-select screen (3 save slots) and settings screen
-- Full HUD: life icons (blupi head sprites), key count, level name
+- Full HUD: life icons (blupi head sprites), level name
+- Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
 - Animated 3D model for Blupi (currently billboard placeholder)
 - Windows, Android, Web platform builds
 
@@ -71,7 +73,7 @@ src/GalaxyEggbert/
     Camera.hpp/.cpp             — 3rd-person camera logic                         ✅
     Decor.hpp/.cpp              — object pool, enemies, events                    ✅ (partial)
     GameData.hpp/.cpp           — save data persistence                           ✅
-    HUD.hpp/.cpp                — 2D overlay: lives, keys, gauge                  ✅ (partial)
+    HUD.hpp/.cpp                — 2D overlay: lives, keys, shield, gauge          ✅ (partial)
     ObjectNode.hpp/.cpp         — Urho3D scene node for one moving object/enemy   ✅
     PhaseManager.hpp/.cpp       — GamePhase state machine + overlay transitions   ✅
     SoundManager.hpp/.cpp       — wraps Urho3D audio; maps SoundChannel → WAV     ✅
@@ -79,21 +81,6 @@ src/GalaxyEggbert/
   World/
     (= current include/GalaxyEggbert/Worlds/ — keep engine-agnostic)             ✅
 ```
-
----
-
-## Phase 12 — Extended Decor: more object types and tile hazards
-
-Port more of `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp`:
-
-- **More enemy types**: ObjectType1 (spider), ObjectType3 (fireball), ObjectType4 (rolling rock)
-- **Collectibles**: ObjectType8 (key), ObjectType9 (bomb), ObjectType25 (shield)
-- **Tile hazards**: lava tiles (`IsLave`), spike traps (`IsPiege`), crusher (`IsEcraseur`)
-  — detect via block type, trigger the same Blupi-kill logic
-- **Key counter**: HUD shows collected keys; locked doors require matching key count
-- **`PlaceObjectFromWorld()`**: read object placement from world file metadata
-  (mobile-eggbert stores objects in the same `.txt` grid; galaxy-eggbert can store them
-  in the `.vwr` format's metadata section once it is extended)
 
 ---
 
