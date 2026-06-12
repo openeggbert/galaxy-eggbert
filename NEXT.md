@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 13)
+## Current state (as of Phase 14)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -37,6 +37,12 @@ or the original Windows Phone game.
   win → next world without full reset; wraps at world 5; terrain cleared via `terrainRoot_` node
   - Per-world difficulty: +1 Crusher tile and +1 patrol enemy per world level
   - HUD shows current world number: `"World N | Lives: N  Treasures: N  Keys: N"`
+- Gamer-select screen at Init phase: keys 1/2/3 choose one of 3 save slots; shows
+  lives/world/doors per slot; text rendered on overlay via `PhaseManager::SetOverlayText()`
+- Settings screen (`GamePhase::MainSetup` / `PlaySetup`, `backgrounds/setup.png`):
+  sound on/off toggle (S key), persisted to save, applied at startup; ESC returns to caller
+  - Accessible via S key from Init (main menu) or Pause
+  - `SoundManager::SetEnabled(bool)`: mutes all channels; `Play()` is no-op when disabled
 - 54 unit tests pass for `Worlds/` data model (engine-independent)
 
 **Architecture (subsystem classes):**
@@ -54,7 +60,6 @@ src/GalaxyEggbert/Game/
 ```
 
 **Not yet done:**
-- Gamer-select screen (3 save slots) and settings screen
 - Full HUD: life icons (blupi head sprites), level name
 - Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
 - Animated 3D model for Blupi (currently billboard placeholder)
@@ -84,16 +89,6 @@ src/GalaxyEggbert/
   World/
     (= current include/GalaxyEggbert/Worlds/ — keep engine-agnostic)             ✅
 ```
-
----
-
-## Phase 14 — Gamer select and settings screen
-
-- Gamer select: show three slots with `GetGamerInfo()` stats (lives, main doors, secondary doors)
-- Settings screen (`backgrounds/setup.png` overlay):
-  - Sound on/off toggle → `GameData::SetSounds()` + `SoundManager` enable/disable
-  - (Future: accelerometer sensitivity, jump button side)
-- `selectedGamer` stored in `GameData`; switching slot reloads lives + world
 
 ---
 
