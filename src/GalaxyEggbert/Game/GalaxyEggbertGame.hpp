@@ -7,8 +7,10 @@
 #include "Decor.hpp"
 #include "HUD.hpp"
 #include "PhaseManager.hpp"
+#include "GameData.hpp"
 #include "SoundManager.hpp"
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 // Main game coordinator: owns the scene, terrain, and subsystem objects.
@@ -59,9 +61,12 @@ private:
     std::unique_ptr<SoundManager>     sound_;
 
     // State
-    bool drawDebug_      = false;
-    int  lives_          = 3;
-    int  prevCollected_  = 0;
+    bool        drawDebug_     = false;
+    int         lives_         = 3;
+    int         prevCollected_ = 0;
+    int         currentWorld_  = 1;
+    GameData    gameData_;
+    std::string savePath_;
 
     static constexpr int kWCX = 50;
     static constexpr int kWCZ = 50;

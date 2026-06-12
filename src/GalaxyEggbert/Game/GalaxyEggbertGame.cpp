@@ -267,6 +267,10 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
         if (decor_->WasExitReached()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel57);
+            ++currentWorld_;
+            gameData_.SetNbVies(lives_);
+            gameData_.SetLastWorld(currentWorld_);
+            gameData_.Write(savePath_);
             EnterPhase(GamePhase::Win);
             return;
         }
@@ -274,10 +278,14 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             --lives_;
             if (lives_ <= 0) {
                 if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+                gameData_.SetNbVies(3);
+                gameData_.Write(savePath_);
                 EnterPhase(GamePhase::Lost);
                 return;
             }
             if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+            gameData_.SetNbVies(lives_);
+            gameData_.Write(savePath_);
             if (blupi_) blupi_->Respawn();
         }
         decor_->ClearEvents();
@@ -310,7 +318,11 @@ void GalaxyEggbertGame::UpdateLost(float dt) {
 
 void GalaxyEggbertGame::ResetLevel() {
     lives_         = 3;
+    currentWorld_  = 1;
     prevCollected_ = 0;
+    gameData_.SetNbVies(3);
+    gameData_.SetLastWorld(1);
+    gameData_.Write(savePath_);
     decor_.reset();
     blupi_.reset();
     EnterPhase(GamePhase::Init);
@@ -325,6 +337,15 @@ void GalaxyEggbertGame::UpdatePause(float dt) {
 // ─── lifecycle ───────────────────────────────────────────────────────────────
 
 void GalaxyEggbertGame::Start() {
+    auto* fs = context_->GetSubsystem<FileSystem>();
+    savePath_ = fs->GetUserDocumentsDir().CString();
+    savePath_ += "GalaxyEggbert/save.dat";
+
+    if (gameData_.Read(savePath_)) {
+        lives_        = gameData_.GetNbVies();
+        currentWorld_ = gameData_.GetLastWorld();
+    }
+
     CreateScene();
     CreateTerrain();
     phases_ = std::make_unique<PhaseManager>(context_);
@@ -335,6 +356,11 @@ void GalaxyEggbertGame::Start() {
 }
 
 void GalaxyEggbertGame::Stop() {
+    if (!savePath_.empty()) {
+        gameData_.SetNbVies(lives_);
+        gameData_.SetLastWorld(currentWorld_);
+        gameData_.Write(savePath_);
+    }
     if (sound_) sound_->StopAll();
     decor_.reset();
     blupi_.reset();
