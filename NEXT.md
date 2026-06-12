@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 12)
+## Current state (as of Phase 13)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -33,6 +33,10 @@ or the original Windows Phone game.
 - `GameData`: 640-byte save file, binary-compatible with mobile-eggbert
   - Stores lives, last world reached, door states (3 gamer slots)
   - Loaded at startup, written on win/lost/quit/reset
+- Level progression: `LoadWorld(N)` loads `worlds/worldNNN.vwr`; `AdvanceToNextWorld()` transitions
+  win → next world without full reset; wraps at world 5; terrain cleared via `terrainRoot_` node
+  - Per-world difficulty: +1 Crusher tile and +1 patrol enemy per world level
+  - HUD shows current world number: `"World N | Lives: N  Treasures: N  Keys: N"`
 - 54 unit tests pass for `Worlds/` data model (engine-independent)
 
 **Architecture (subsystem classes):**
@@ -50,7 +54,6 @@ src/GalaxyEggbert/Game/
 ```
 
 **Not yet done:**
-- Multiple level files and progression (world001 → world002 → …)
 - Gamer-select screen (3 save slots) and settings screen
 - Full HUD: life icons (blupi head sprites), level name
 - Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
@@ -81,16 +84,6 @@ src/GalaxyEggbert/
   World/
     (= current include/GalaxyEggbert/Worlds/ — keep engine-agnostic)             ✅
 ```
-
----
-
-## Phase 13 — Level progression
-
-- Load `worlds/world001.vwr`, `world002.vwr`, … based on `GameData::GetLastWorld()`
-- On Win: `++currentWorld_` → `CreateTerrain()` for the next world file
-- Level-select screen shown at Init phase (list of unlocked worlds)
-- HUD shows current level number
-- Each world file stores its own layout; ship at least `world001.vwr` … `world005.vwr`
 
 ---
 
