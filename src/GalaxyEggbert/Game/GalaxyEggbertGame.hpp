@@ -42,8 +42,10 @@ private:
     void UpdatePause(float dt);
     void UpdateWin(float dt);
     void UpdateLost(float dt);
+    void UpdateSettings(float dt);
     void ResetLevel();
     void AdvanceToNextWorld();
+    void SelectGamer(int slot);
 
     // Scene
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
@@ -63,6 +65,7 @@ private:
     std::unique_ptr<SoundManager>     sound_;
 
     // State
+    GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;
     bool        drawDebug_     = false;
     int         lives_         = 3;
     int         prevCollected_ = 0;

@@ -284,13 +284,64 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
 void GalaxyEggbertGame::UpdateInit(float dt) {
     (void)dt;
     auto* input = context_->GetSubsystem<Input>();
-    const Key startKeys[] = {
-        KEY_SPACE, KEY_RETURN, KEY_W, KEY_A, KEY_S, KEY_D,
-        KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_Z, KEY_X
-    };
-    bool anyKey = input->GetMouseButtonPress(MOUSEB_LEFT);
-    for (Key k : startKeys) { if (input->GetKeyPress(k)) { anyKey = true; break; } }
-    if (anyKey) EnterPhase(GamePhase::Play);
+
+    // Rebuild slot display text every frame so stats stay current
+    char buf[512];
+    int n = 0;
+    n += std::snprintf(buf+n, sizeof(buf)-n, "Galaxy Eggbert\n\nSelect a gamer:\n\n");
+    for (int i = 0; i < GameData::kMaxGamer; ++i) {
+        int nbVies, mainDoors, secDoors;
+        gameData_.GetGamerInfo(i, nbVies, mainDoors, secDoors);
+        int lastWorld = gameData_.GetLastWorldForGamer(i);
+        n += std::snprintf(buf+n, sizeof(buf)-n,
+            "  [%d]  Lives: %d   World: %d   Doors: %d\n",
+            i+1, nbVies, lastWorld, mainDoors);
+    }
+    std::snprintf(buf+n, sizeof(buf)-n,
+        "\n1/2/3: choose gamer   S: Settings");
+    phases_->SetOverlayText(buf);
+
+    if (input->GetKeyPress(KEY_1)) { SelectGamer(0); return; }
+    if (input->GetKeyPress(KEY_2)) { SelectGamer(1); return; }
+    if (input->GetKeyPress(KEY_3)) { SelectGamer(2); return; }
+    if (input->GetKeyPress(KEY_S)) {
+        settingsReturnPhase_ = GamePhase::Init;
+        EnterPhase(GamePhase::MainSetup);
+    }
+}
+
+void GalaxyEggbertGame::SelectGamer(int slot) {
+    gameData_.SetSelectedGamer(slot);
+    lives_        = gameData_.GetNbVies();
+    currentWorld_ = gameData_.GetLastWorld();
+    gameData_.Write(savePath_);
+    decor_.reset();
+    blupi_.reset();
+    LoadWorld(currentWorld_);
+    EnterPhase(GamePhase::Play);
+}
+
+void GalaxyEggbertGame::UpdateSettings(float dt) {
+    (void)dt;
+    auto* input = context_->GetSubsystem<Input>();
+
+    bool soundOn = gameData_.GetSounds();
+    char buf[128];
+    std::snprintf(buf, sizeof(buf),
+        "Settings\n\n"
+        "Sound: %s\n\n"
+        "S: toggle sound   ESC: back",
+        soundOn ? "ON" : "OFF");
+    phases_->SetOverlayText(buf);
+
+    if (input->GetKeyPress(KEY_S)) {
+        gameData_.SetSounds(!soundOn);
+        gameData_.Write(savePath_);
+        if (sound_) sound_->SetEnabled(gameData_.GetSounds());
+    }
+    if (input->GetKeyPress(KEY_ESCAPE)) {
+        EnterPhase(settingsReturnPhase_);
+    }
 }
 
 void GalaxyEggbertGame::UpdatePlay(float dt) {
@@ -442,7 +493,11 @@ void GalaxyEggbertGame::ResetLevel() {
 void GalaxyEggbertGame::UpdatePause(float dt) {
     (void)dt;
     auto* input = context_->GetSubsystem<Input>();
-    if (input->GetKeyPress(KEY_ESCAPE)) EnterPhase(GamePhase::Play);
+    if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Play); return; }
+    if (input->GetKeyPress(KEY_S)) {
+        settingsReturnPhase_ = GamePhase::Pause;
+        EnterPhase(GamePhase::PlaySetup);
+    }
 }
 
 // ─── lifecycle ───────────────────────────────────────────────────────────────
@@ -463,6 +518,7 @@ void GalaxyEggbertGame::Start() {
     hud_    = std::make_unique<HUD>(context_);
     camera_ = std::make_unique<CameraController>(context_, scene_.Get());
     sound_  = std::make_unique<SoundManager>(context_, scene_.Get());
+    if (!gameData_.GetSounds()) sound_->SetEnabled(false);
     EnterPhase(GamePhase::Init);
 }
 
@@ -499,11 +555,13 @@ void GalaxyEggbertGame::Update(float dt) {
     if (input->GetKeyPress(KEY_F1)) drawDebug_ = !drawDebug_;
 
     switch (phase) {
-        case GamePhase::Init:  UpdateInit(dt);  break;
-        case GamePhase::Play:  UpdatePlay(dt);  break;
-        case GamePhase::Pause: UpdatePause(dt); break;
-        case GamePhase::Win:   UpdateWin(dt);   break;
-        case GamePhase::Lost:  UpdateLost(dt);  break;
+        case GamePhase::Init:      UpdateInit(dt);     break;
+        case GamePhase::Play:      UpdatePlay(dt);     break;
+        case GamePhase::Pause:     UpdatePause(dt);    break;
+        case GamePhase::Win:       UpdateWin(dt);      break;
+        case GamePhase::Lost:      UpdateLost(dt);     break;
+        case GamePhase::MainSetup:
+        case GamePhase::PlaySetup: UpdateSettings(dt); break;
         default: break;
     }
 

@@ -50,6 +50,7 @@ SoundManager::SoundManager(Context* context, Scene* scene)
 }
 
 void SoundManager::Play(SoundChannel channel, bool loop) {
+    if (!enabled_) return;
     int idx = static_cast<int>(ToRaw(channel));
     if (idx < 0 || idx >= kNumChannels) return;
     if (!sounds_[idx] || !sources_[idx]) return;

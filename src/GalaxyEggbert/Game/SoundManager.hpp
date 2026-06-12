@@ -16,11 +16,15 @@ public:
     void Stop(GalaxyEggbert::SoundChannel channel);
     void StopAll();
 
+    void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }
+    bool IsEnabled() const { return enabled_; }
+
     static constexpr int kNumChannels = 93;
 
 private:
     Urho3D::Context* context_;
     Urho3D::Node*    audioNode_ = nullptr;
+    bool             enabled_   = true;
     std::array<Urho3D::SharedPtr<Urho3D::Sound>, kNumChannels>  sounds_{};
     std::array<Urho3D::SoundSource*, kNumChannels>              sources_{};
 };

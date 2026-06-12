@@ -48,6 +48,9 @@ public:
     int  GetLastWorld() const     { return data_[GamerOffset() + 1]; }
     void SetLastWorld(int v)      { data_[GamerOffset() + 1] = static_cast<uint8_t>(v); }
 
+    int  GetNbViesForGamer(int gamer)    const { return data_[kSaveHeaderLength + kGamerLength * gamer]; }
+    int  GetLastWorldForGamer(int gamer) const { return data_[kSaveHeaderLength + kGamerLength * gamer + 1]; }
+
     void GetDoors(int doors[]) const;
     void SetDoors(const int doors[]);
     void GetGamerInfo(int gamer, int& nbVies, int& mainDoors, int& secondaryDoors) const;
