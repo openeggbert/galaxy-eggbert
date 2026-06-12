@@ -22,6 +22,8 @@ public:
 private:
     void CreateScene();
     void CreateTerrain();
+    void BuildDemoWorld();
+    void SpawnTerrainNodes();
     void CreateCamera();
     void CreateHUD();
 

@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
 
 using namespace Urho3D;
 using namespace GalaxyEggbert;
@@ -91,70 +92,52 @@ void GalaxyEggbertGame::CreateScene() {
     fill->SetCastShadows(false);
 }
 
-void GalaxyEggbertGame::CreateTerrain() {
-    // Load object-m.png sprite sheet (shared by all tile materials).
-    auto* cache = context_->GetSubsystem<ResourceCache>();
-    objectSheet_ = cache->GetResource<Texture2D>("icons/object-m.png");
-
-    auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
-    if (!boxModel) return;
-
-    world_ = std::make_unique<World>();
-
-    // Build a demo Speedy-Blupi-style level centred on (kWCX, 0, kWCZ).
-    // Flat grass floor with a few stone platforms.
-    const int R = 15; // half-radius of the play area
+void GalaxyEggbertGame::BuildDemoWorld() {
+    const int R = 15;
     for (int dz = -R; dz <= R; ++dz) {
         for (int dx = -R; dx <= R; ++dx) {
-            int wx = kWCX + dx;
-            int wz = kWCZ + dz;
+            int wx = kWCX + dx, wz = kWCZ + dz;
             if (wx < 0 || wz < 0 || wx >= 100 || wz >= 100) continue;
             world_->setBlock(static_cast<uint16_t>(wx), 0, static_cast<uint16_t>(wz),
                              Block::make(BlockTypes::Ground));
         }
     }
-
-    // Stone border walls
     for (int dx = -R; dx <= R; ++dx) {
-        auto f = [&](int wx, int wz) {
+        auto wall = [&](int wx, int wz) {
             if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100) {
                 world_->setBlock(static_cast<uint16_t>(wx), 1, static_cast<uint16_t>(wz), Block::make(BlockTypes::Wall));
                 world_->setBlock(static_cast<uint16_t>(wx), 2, static_cast<uint16_t>(wz), Block::make(BlockTypes::Wall));
             }
         };
-        f(kWCX + dx, kWCZ - R);
-        f(kWCX + dx, kWCZ + R);
-        f(kWCX - R, kWCZ + dx);
-        f(kWCX + R, kWCZ + dx);
+        wall(kWCX + dx, kWCZ - R); wall(kWCX + dx, kWCZ + R);
+        wall(kWCX - R, kWCZ + dx); wall(kWCX + R, kWCZ + dx);
     }
-
-    // Platforms placed well away from the spawn centre so Blupi has a clear
-    // open area to walk around in. All platforms are at wy=1 (one block tall),
-    // reachable by jumping.
     struct Plat { int dx, dz, h; uint16_t type; };
     const Plat platforms[] = {
-        // Raised 1-block step platforms on the cardinal axes (~10 units out)
         { 10,  0, 1, BlockTypes::StoneA },
         {-10,  0, 1, BlockTypes::StoneB },
         {  0, 10, 1, BlockTypes::Platform },
         {  0,-10, 1, BlockTypes::Sp0 },
-        // Corner platforms with 2-block towers
         { 10, 10, 1, BlockTypes::StoneA }, { 10, 10, 2, BlockTypes::StoneA },
         {-10, 10, 1, BlockTypes::StoneB }, {-10, 10, 2, BlockTypes::StoneB },
         { 10,-10, 1, BlockTypes::Wall   }, { 10,-10, 2, BlockTypes::Wall   },
         {-10,-10, 1, BlockTypes::StoneA }, {-10,-10, 2, BlockTypes::StoneA },
     };
     for (const auto& p : platforms) {
-        int wx = kWCX + p.dx;
-        int wz = kWCZ + p.dz;
+        int wx = kWCX + p.dx, wz = kWCZ + p.dz;
         if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100)
             world_->setBlock(static_cast<uint16_t>(wx),
                              static_cast<uint16_t>(p.h),
                              static_cast<uint16_t>(wz),
                              Block::make(p.type));
     }
+}
 
-    // Spawn scene nodes for all non-air blocks.
+void GalaxyEggbertGame::SpawnTerrainNodes() {
+    auto* cache = context_->GetSubsystem<ResourceCache>();
+    auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
+    if (!boxModel || !world_) return;
+
     const uint8_t cpa = world_->chunksPerAxis();
     for (uint8_t ccy = 0; ccy < cpa; ++ccy) {
         for (uint8_t ccz = 0; ccz < cpa; ++ccz) {
@@ -168,7 +151,6 @@ void GalaxyEggbertGame::CreateTerrain() {
                             const uint16_t wz = ccz * 10 + lz;
                             const Block b = world_->getBlock(wx, wy, wz);
                             if (b.isAir()) continue;
-
                             auto* node = scene_->CreateChild("Block");
                             node->SetPosition(Vector3(
                                 static_cast<float>(wx) - kWCX,
@@ -183,6 +165,33 @@ void GalaxyEggbertGame::CreateTerrain() {
             }
         }
     }
+}
+
+void GalaxyEggbertGame::CreateTerrain() {
+    auto* cache = context_->GetSubsystem<ResourceCache>();
+    objectSheet_ = cache->GetResource<Texture2D>("icons/object-m.png");
+
+    auto* fs = context_->GetSubsystem<FileSystem>();
+    const String worldFile = fs->GetProgramDir() + "worlds/world001.vwr";
+
+    if (fs->FileExists(worldFile)) {
+        try {
+            world_ = std::make_unique<World>(
+                World::loadFromFile(worldFile.CString()));
+        } catch (...) {
+            world_.reset();
+        }
+    }
+
+    if (!world_) {
+        world_ = std::make_unique<World>();
+        BuildDemoWorld();
+        std::filesystem::create_directories(
+            std::filesystem::path(worldFile.CString()).parent_path());
+        try { world_->saveToFile(worldFile.CString()); } catch (...) {}
+    }
+
+    SpawnTerrainNodes();
 }
 
 void GalaxyEggbertGame::CreateCamera() {
