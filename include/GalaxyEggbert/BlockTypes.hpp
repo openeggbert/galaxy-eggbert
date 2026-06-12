@@ -28,6 +28,9 @@ constexpr uint16_t Marker   = 14;  // icon 309
 constexpr uint16_t Tile411  = 15;  // icon 411
 constexpr uint16_t Tile412  = 16;  // icon 412
 constexpr uint16_t Tile413  = 17;  // icon 413
+constexpr uint16_t Lava     = 18;  // icon  68 — kills Blupi on contact
+constexpr uint16_t Spike    = 19;  // icon 373 — kills Blupi on contact
+constexpr uint16_t Crusher  = 20;  // icon 317 — kills Blupi on contact
 
 // Returns the icon index into object-m.png for a given block type, or -1 for air.
 inline int toIconIndex(uint16_t t) {
@@ -49,6 +52,9 @@ inline int toIconIndex(uint16_t t) {
         case Tile411:  return 411;
         case Tile412:  return 412;
         case Tile413:  return 413;
+        case Lava:     return  68;
+        case Spike:    return 373;
+        case Crusher:  return 317;
         default:       return  -1;
     }
 }

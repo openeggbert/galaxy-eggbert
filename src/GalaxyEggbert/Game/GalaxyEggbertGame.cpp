@@ -130,6 +130,19 @@ void GalaxyEggbertGame::BuildDemoWorld() {
                              static_cast<uint16_t>(wz),
                              Block::make(p.type));
     }
+
+    // Lava strip at dz=-5 (hazard zone near south area)
+    for (int dx = -3; dx <= 3; ++dx) {
+        int wx = kWCX + dx, wz = kWCZ - 5;
+        if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100)
+            world_->setBlock(static_cast<uint16_t>(wx), 0,
+                             static_cast<uint16_t>(wz),
+                             Block::make(BlockTypes::Lava));
+    }
+    // Spike tile at (6, 4)
+    world_->setBlock(static_cast<uint16_t>(kWCX + 6), 0,
+                     static_cast<uint16_t>(kWCZ + 4),
+                     Block::make(BlockTypes::Spike));
 }
 
 void GalaxyEggbertGame::SpawnTerrainNodes() {
@@ -204,10 +217,22 @@ void GalaxyEggbertGame::CreateDemoObjects() {
     decor_->PlaceObject(OT::ObjectType5, Vector3( 5.0f, 1.0f, -5.0f));
     // Extra-life egg
     decor_->PlaceObject(OT::ObjectType6, Vector3(-3.0f, 1.0f, -6.0f));
-    // Patrolling enemy
+    // Red key
+    decor_->PlaceObject(OT::ObjectType49, Vector3( 3.0f, 1.0f, -3.0f));
+    // Shield orb
+    decor_->PlaceObject(OT::ObjectType25, Vector3(-2.0f, 1.0f,  4.0f));
+    // Patrolling enemy A
     decor_->PlaceObject(OT::ObjectType2,
                         Vector3(-8.0f, 1.0f, 3.0f),
                         Vector3(-2.0f, 1.0f, 3.0f), 2.0f);
+    // Patrolling enemy B (variant)
+    decor_->PlaceObject(OT::ObjectType3,
+                        Vector3( 4.0f, 1.0f, 8.0f),
+                        Vector3( 9.0f, 1.0f, 8.0f), 2.5f);
+    // Spider
+    decor_->PlaceObject(OT::ObjectType16,
+                        Vector3(-7.0f, 1.0f, -2.0f),
+                        Vector3(-2.0f, 1.0f, -2.0f), 1.5f);
     // Level exit
     decor_->PlaceObject(OT::ObjectType7, Vector3(0.0f, 1.0f, -8.0f));
 }
@@ -220,7 +245,7 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
             if (!decor_) CreateDemoObjects();
-            hud_->ShowPlay(Vector3::ZERO, 0.0f, lives_, 0);
+            hud_->ShowPlay(Vector3::ZERO, 0.0f, lives_, 0, 0);
             hud_->SetVisible(true);
             break;
         default:
@@ -248,7 +273,6 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Pause); return; }
 
     if (blupi_) blupi_->Update(dt);
-
     if (blupi_ && blupi_->WasJumpedThisFrame() && sound_)
         sound_->Play(SoundChannel::SoundChannel1);
 
@@ -256,12 +280,56 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     float   yaw = blupi_ ? blupi_->GetFacingYaw() : 0.0f;
     camera_->Update(dt, pos, yaw);
 
+    // Shield countdown
+    if (shieldTimer_ > 0.0f) shieldTimer_ -= dt;
+
+    // Tile hazard check — only when standing on ground
+    if (blupi_ && blupi_->IsOnGround() && world_ && shieldTimer_ <= 0.0f) {
+        int wx = static_cast<int>(std::round(pos.x_)) + kWCX;
+        int wz = static_cast<int>(std::round(pos.z_)) + kWCZ;
+        int wy = static_cast<int>(std::floor(pos.y_ - Blupi::kHalfH));
+        if (wx >= 0 && wx < 100 && wy >= 0 && wy < 100 && wz >= 0 && wz < 100) {
+            uint16_t bt = world_->getBlock(
+                static_cast<uint16_t>(wx),
+                static_cast<uint16_t>(wy),
+                static_cast<uint16_t>(wz)).type();
+            if (bt == BlockTypes::Lava || bt == BlockTypes::Spike || bt == BlockTypes::Crusher) {
+                if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+                --lives_;
+                if (lives_ <= 0) {
+                    gameData_.SetNbVies(3);
+                    gameData_.Write(savePath_);
+                    EnterPhase(GamePhase::Lost);
+                    return;
+                }
+                gameData_.SetNbVies(lives_);
+                gameData_.Write(savePath_);
+                blupi_->Respawn();
+                pos = blupi_->GetPosition();
+            }
+        }
+    }
+
     if (decor_) {
         decor_->Update(dt, pos);
 
+        // Shield pickup
+        if (decor_->WasShieldCollected()) {
+            shieldTimer_ = 5.0f;
+            if (sound_) sound_->Play(SoundChannel::SoundChannel42);
+        }
+
+        // Key pickup
+        int keys = decor_->GetKeysCollected();
+        if (keys > keysCollected_) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel11);
+            keysCollected_ = keys;
+        }
+
+        // Treasure pickup
         int collected = decor_->GetCollected();
-        if (collected > prevCollected_ && sound_) {
-            sound_->Play(SoundChannel::SoundChannel10);
+        if (collected > prevCollected_) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel10);
             prevCollected_ = collected;
         }
 
@@ -274,16 +342,15 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             EnterPhase(GamePhase::Win);
             return;
         }
-        if (decor_->WasBlupiHit()) {
+        if (decor_->WasBlupiHit() && shieldTimer_ <= 0.0f) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel8);
             --lives_;
             if (lives_ <= 0) {
-                if (sound_) sound_->Play(SoundChannel::SoundChannel8);
                 gameData_.SetNbVies(3);
                 gameData_.Write(savePath_);
                 EnterPhase(GamePhase::Lost);
                 return;
             }
-            if (sound_) sound_->Play(SoundChannel::SoundChannel8);
             gameData_.SetNbVies(lives_);
             gameData_.Write(savePath_);
             if (blupi_) blupi_->Respawn();
@@ -291,7 +358,9 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         decor_->ClearEvents();
     }
 
-    hud_->ShowPlay(pos, yaw, lives_, decor_ ? decor_->GetCollected() : 0);
+    hud_->ShowPlay(pos, yaw, lives_,
+                   decor_ ? decor_->GetCollected() : 0,
+                   keysCollected_, shieldTimer_);
 }
 
 void GalaxyEggbertGame::UpdateWin(float dt) {
@@ -320,6 +389,8 @@ void GalaxyEggbertGame::ResetLevel() {
     lives_         = 3;
     currentWorld_  = 1;
     prevCollected_ = 0;
+    keysCollected_ = 0;
+    shieldTimer_   = 0.0f;
     gameData_.SetNbVies(3);
     gameData_.SetLastWorld(1);
     gameData_.Write(savePath_);

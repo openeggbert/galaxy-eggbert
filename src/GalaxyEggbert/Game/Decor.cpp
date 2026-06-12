@@ -26,15 +26,27 @@ void Decor::PlaceObject(ObjectType type, Vector3 pos, Vector3 posEnd, float spee
 // ScaleDiv(N) at 60 fps = N*3 (original game ran at 20 fps).
 int Decor::GetIcon(const Object& obj) const {
     int p = obj.animPhase;
+    // Key animation tables (ported verbatim from mobile-eggbert Tables.cpp).
+    static const int kCle1[12] = {209,210,211,212,213,214,215,214,213,212,211,210};
+    static const int kCle2[12] = {220,221,222,221,220,219,218,217,216,217,218,219};
+    static const int kCle3[12] = {229,228,227,226,225,224,223,224,225,226,227,228};
+    // Shield first 8 frames only (icons 144-151); frames 9-16 are outside element.png bounds.
+    static const int kShield[8] = {144,145,146,147,148,149,150,151};
     switch (obj.type) {
-        case ObjectType::ObjectType2: return 12 + (p / 6) % 9;    // enemy: icons 12-20
+        case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;   // enemy A: icons 12-20
+        case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;   // enemy B: icons 48-56
+        case ObjectType::ObjectType16: return 69 + (p / 3) % 9;   // spider:  icons 69-77
         case ObjectType::ObjectType5: {                             // treasure: 0→10→0 bounce
             int q = (p / 9) % 22;
             return (q < 11) ? q : (21 - q);
         }
-        case ObjectType::ObjectType6: return 21 + (p / 12) % 8;   // egg: icons 21-28
-        case ObjectType::ObjectType7: return 29 + (p / 9) % 8;    // exit: icons 29-36
-        default:                      return 0;
+        case ObjectType::ObjectType6:  return 21 + (p / 12) % 8;  // egg:     icons 21-28
+        case ObjectType::ObjectType7:  return 29 + (p /  9) % 8;  // exit:    icons 29-36
+        case ObjectType::ObjectType49: return kCle1[(p / 9) % 12]; // red key
+        case ObjectType::ObjectType50: return kCle2[(p / 9) % 12]; // green key
+        case ObjectType::ObjectType51: return kCle3[(p / 9) % 12]; // blue key
+        case ObjectType::ObjectType25: return kShield[(p / 6) % 8];// shield orb
+        default:                       return 0;
     }
 }
 
@@ -88,11 +100,24 @@ void Decor::Update(float dt, Vector3 blupiPos) {
                 obj.node->Remove();
                 ++collected_;
                 break;
+            case ObjectType::ObjectType49:
+            case ObjectType::ObjectType50:
+            case ObjectType::ObjectType51:
+                obj.active = false;
+                obj.node->Remove();
+                ++keysCollected_;
+                break;
+            case ObjectType::ObjectType25:
+                obj.active = false;
+                obj.node->Remove();
+                shieldCollected_ = true;
+                break;
             case ObjectType::ObjectType7:
                 exitReached_ = true;
                 break;
             case ObjectType::ObjectType2:
             case ObjectType::ObjectType3:
+            case ObjectType::ObjectType16:
                 blupiHit_ = true;
                 break;
             default:

@@ -42,14 +42,23 @@ void HUD::ShowWin() {
     if (BorderImage* g = gauge_) g->SetVisible(false);
 }
 
-void HUD::ShowPlay(Vector3 pos, float facingYaw, int lives, int collected) {
+void HUD::ShowPlay(Vector3 pos, float facingYaw, int lives, int collected,
+                   int keys, float shieldSecs) {
     if (Text* t = text_) {
-        char buf[192];
-        std::snprintf(buf, sizeof(buf),
-            "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
-            "pos (%.1f, %.1f, %.1f)  facing %.0f deg\n"
-            "Lives: %d  Treasures: %d",
-            pos.x_, pos.y_, pos.z_, facingYaw, lives, collected);
+        char buf[256];
+        if (shieldSecs > 0.0f) {
+            std::snprintf(buf, sizeof(buf),
+                "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
+                "pos (%.1f, %.1f, %.1f)  facing %.0f deg\n"
+                "Lives: %d  Treasures: %d  Keys: %d  SHIELD %.1fs",
+                pos.x_, pos.y_, pos.z_, facingYaw, lives, collected, keys, shieldSecs);
+        } else {
+            std::snprintf(buf, sizeof(buf),
+                "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
+                "pos (%.1f, %.1f, %.1f)  facing %.0f deg\n"
+                "Lives: %d  Treasures: %d  Keys: %d",
+                pos.x_, pos.y_, pos.z_, facingYaw, lives, collected, keys);
+        }
         t->SetText(buf);
     }
     if (BorderImage* g = gauge_) g->SetVisible(true);

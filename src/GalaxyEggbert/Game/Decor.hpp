@@ -38,10 +38,12 @@ public:
 
     void Update(float dt, Urho3D::Vector3 blupiPos);
 
-    bool WasExitReached() const { return exitReached_; }
-    bool WasBlupiHit()    const { return blupiHit_;    }
-    int  GetCollected()   const { return collected_;   }
-    void ClearEvents()          { exitReached_ = blupiHit_ = false; }
+    bool WasExitReached()     const { return exitReached_;     }
+    bool WasBlupiHit()        const { return blupiHit_;        }
+    bool WasShieldCollected() const { return shieldCollected_; }
+    int  GetCollected()       const { return collected_;       }
+    int  GetKeysCollected()   const { return keysCollected_;   }
+    void ClearEvents()              { exitReached_ = blupiHit_ = shieldCollected_ = false; }
 
 private:
     int  GetIcon(const Object& obj) const;
@@ -52,7 +54,9 @@ private:
     Urho3D::Scene*   scene_;
     std::array<Object, kMaxObjects> objects_{};
     int  objCount_    = 0;
-    bool exitReached_ = false;
-    bool blupiHit_    = false;
-    int  collected_   = 0;
+    bool exitReached_     = false;
+    bool blupiHit_        = false;
+    bool shieldCollected_ = false;
+    int  collected_       = 0;
+    int  keysCollected_   = 0;
 };

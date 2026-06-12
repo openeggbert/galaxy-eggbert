@@ -7,7 +7,8 @@ public:
     ~HUD() = default;
 
     void SetVisible(bool visible);
-    void ShowPlay(Urho3D::Vector3 pos, float facingYaw, int lives, int collected);
+    void ShowPlay(Urho3D::Vector3 pos, float facingYaw, int lives, int collected,
+                  int keys, float shieldSecs = 0.0f);
     void ShowWin();
 
 private:

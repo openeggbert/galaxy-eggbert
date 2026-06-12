@@ -33,6 +33,7 @@ public:
     Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
     float           GetFacingYaw()       const { return facingYaw_; }
     bool            WasJumpedThisFrame() const { return jumpedThisFrame_; }
+    bool            IsOnGround()         const { return onGround_; }
 
 private:
     void SpawnAt(const Urho3D::Vector3& pos);
