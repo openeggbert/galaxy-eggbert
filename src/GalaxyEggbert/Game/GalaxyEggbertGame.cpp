@@ -43,11 +43,9 @@ SharedPtr<Material> GalaxyEggbertGame::GetTileMaterial(uint16_t blockType) {
         auto* tech = cache->GetResource<Technique>("Techniques/Diff.xml");
         if (!tech) tech = cache->GetResource<Technique>("Techniques/DiffUnlit.xml");
         if (tech) mat->SetTechnique(0, tech);
-
         mat->SetTexture(TU_DIFFUSE, objectSheet_);
         mat->SetShaderParameter("MatDiffColor", Color(1.0f, 1.0f, 1.0f, 1.0f));
         mat->SetShaderParameter("MatSpecColor",  Color(0.02f, 0.02f, 0.02f, 1.0f));
-
         float uOff, vOff, uS, vS;
         BlockTypes::tileUV(icon, uOff, vOff, uS, vS);
         mat->SetShaderParameter("UOffset", Vector4(uS, 0.0f, 0.0f, uOff));
@@ -194,91 +192,19 @@ void GalaxyEggbertGame::CreateTerrain() {
     SpawnTerrainNodes();
 }
 
-void GalaxyEggbertGame::CreateCamera() {
-    cameraNode_ = scene_->CreateChild("Camera");
-
-    auto* cam = cameraNode_->CreateComponent<Camera>();
-    cam->SetNearClip(0.1f);
-    cam->SetFarClip(300.0f);
-
-    auto* renderer = context_->GetSubsystem<Renderer>();
-    SharedPtr<Viewport> vp(new Viewport(context_, scene_, cam));
-    renderer->SetViewport(0, vp);
-    renderer->SetDrawShadows(false);
-}
-
-void GalaxyEggbertGame::CreateHUD() {
-    auto* cache = context_->GetSubsystem<ResourceCache>();
-    auto* ui = context_->GetSubsystem<UI>();
-    if (!ui) return;
-
-    auto* root = ui->GetRoot();
-    auto* text = root->CreateChild<Text>("HUD");
-    auto* font = cache->GetResource<Font>("Fonts/Anonymous Pro.ttf");
-    if (!font) font = cache->GetResource<Font>("Fonts/DejaVuSansMono.ttf");
-    if (font) text->SetFont(font, 14);
-    text->SetText("Galaxy Eggbert\nUP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause  RMB: rotate camera");
-    text->SetColor(Color(0.85f, 0.90f, 1.0f));
-    text->SetPosition(12, 12);
-    hudText_ = text;
-}
-
-// ─── overlay (menu screens) ──────────────────────────────────────────────────
-
-void GalaxyEggbertGame::ShowOverlay(const char* texPath) {
-    HideOverlay();
-    auto* cache = context_->GetSubsystem<ResourceCache>();
-    auto* ui = context_->GetSubsystem<UI>();
-    if (!ui) return;
-
-    auto* tex = cache->GetResource<Texture2D>(texPath);
-    if (!tex) return;
-
-    auto* root = ui->GetRoot();
-    auto* img = root->CreateChild<BorderImage>("Overlay");
-    img->SetTexture(tex);
-    img->SetFullImageRect();
-    img->SetSize(root->GetWidth(), root->GetHeight());
-    img->SetAlignment(HA_LEFT, VA_TOP);
-    img->SetOpacity(1.0f);
-    overlayEl_ = img;
-}
-
-void GalaxyEggbertGame::HideOverlay() {
-    if (UIElement* el = overlayEl_) {
-        el->Remove();
-        overlayEl_.Reset();
-    }
-}
-
 // ─── phase transitions ───────────────────────────────────────────────────────
 
 void GalaxyEggbertGame::EnterPhase(GamePhase next) {
-    if (phase_ == next) return;
-    phase_ = next;
-
+    if (phases_->Current() == next) return;
+    phases_->Enter(next);
     switch (next) {
-        case GamePhase::Init:
-            ShowOverlay("backgrounds/init.png");
-            if (Text* t = hudText_) t->SetVisible(false);
-            break;
-
         case GamePhase::Play:
-            HideOverlay();
             if (!blupi_)
-                blupi_ = std::make_unique<Blupi>(context_, scene_, world_.get(), kWCX, kWCZ);
-            if (Text* t = hudText_) {
-                t->SetText("UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause  RMB: rotate camera");
-                t->SetVisible(true);
-            }
+                blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
+            hud_->SetVisible(true);
             break;
-
-        case GamePhase::Pause:
-            ShowOverlay("backgrounds/pause.png");
-            if (Text* t = hudText_) t->SetVisible(false);
-            break;
-
         default:
+            hud_->SetVisible(false);
             break;
     }
 }
@@ -288,8 +214,6 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
 void GalaxyEggbertGame::UpdateInit(float dt) {
     (void)dt;
     auto* input = context_->GetSubsystem<Input>();
-    // Any key or mouse click starts the game
-    // Any common key or mouse click starts the game
     const Key startKeys[] = {
         KEY_SPACE, KEY_RETURN, KEY_W, KEY_A, KEY_S, KEY_D,
         KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_Z, KEY_X
@@ -304,18 +228,11 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Pause); return; }
 
     if (blupi_) blupi_->Update(dt);
-    UpdateCamera(dt);
 
-    // Live position readout so movement is always verifiable
-    if (Text* t = hudText_) {
-        char buf[128];
-        Urho3D::Vector3 p = blupi_ ? blupi_->GetPosition() : Urho3D::Vector3::ZERO;
-        std::snprintf(buf, sizeof(buf),
-            "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
-            "pos (%.1f, %.1f, %.1f)  facing %.0f deg",
-            p.x_, p.y_, p.z_, blupi_ ? blupi_->GetFacingYaw() : 0.0f);
-        t->SetText(buf);
-    }
+    Vector3 pos = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
+    float   yaw = blupi_ ? blupi_->GetFacingYaw() : 0.0f;
+    camera_->Update(dt, pos, yaw);
+    hud_->ShowPlay(pos, yaw);
 }
 
 void GalaxyEggbertGame::UpdatePause(float dt) {
@@ -324,61 +241,22 @@ void GalaxyEggbertGame::UpdatePause(float dt) {
     if (input->GetKeyPress(KEY_ESCAPE)) EnterPhase(GamePhase::Play);
 }
 
-void GalaxyEggbertGame::UpdateCamera(float dt) {
-    if (!cameraNode_) return;
-    auto* input = context_->GetSubsystem<Input>();
-
-    // Camera yaw smoothly follows Blupi's facing direction (stays behind Blupi).
-    // RMB drag adjusts pitch only; yaw is always driven by Blupi.
-    if (blupi_) {
-        float targetYaw = blupi_->GetFacingYaw() + 180.0f;
-        // Shortest-path angle difference to avoid spinning around on wrap
-        float diff = targetYaw - camYaw_;
-        while (diff >  180.0f) diff -= 360.0f;
-        while (diff < -180.0f) diff += 360.0f;
-        camYaw_ += diff * std::min(1.0f, 8.0f * dt);
-    }
-
-    if (input->GetMouseButtonDown(MOUSEB_RIGHT)) {
-        const float sens = 0.12f;
-        camPitch_ += sens * static_cast<float>(input->GetMouseMoveY());
-        camPitch_  = std::max(-60.0f, std::min(60.0f, camPitch_));
-    }
-
-    // Zoom with scroll
-    camDist_ -= static_cast<float>(input->GetMouseMoveWheel()) * 1.5f;
-    camDist_  = std::max(3.0f, std::min(40.0f, camDist_));
-
-    // 3rd-person orbit around Blupi (or origin when no Blupi yet)
-    Vector3 target = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
-
-    float yawRad   = camYaw_   * static_cast<float>(M_PI) / 180.0f;
-    float pitchRad = camPitch_ * static_cast<float>(M_PI) / 180.0f;
-
-    Vector3 offset(
-        camDist_ * std::sin(yawRad) * std::cos(pitchRad),
-        camDist_ * std::sin(pitchRad),
-        camDist_ * std::cos(yawRad) * std::cos(pitchRad));
-
-    cameraNode_->SetPosition(target + offset);
-    cameraNode_->LookAt(target + Vector3(0.0f, kWCZ == 50 ? 0.5f : 0.0f, 0.0f));
-
-    (void)dt;
-}
-
 // ─── lifecycle ───────────────────────────────────────────────────────────────
 
 void GalaxyEggbertGame::Start() {
     CreateScene();
     CreateTerrain();
-    CreateCamera();
-    CreateHUD();
+    phases_ = std::make_unique<PhaseManager>(context_);
+    hud_    = std::make_unique<HUD>(context_);
+    camera_ = std::make_unique<CameraController>(context_, scene_.Get());
     EnterPhase(GamePhase::Init);
 }
 
 void GalaxyEggbertGame::Stop() {
     blupi_.reset();
-    HideOverlay();
+    phases_.reset();
+    hud_.reset();
+    camera_.reset();
     scene_.Reset();
     world_.reset();
     tileMatCache_.clear();
@@ -386,16 +264,18 @@ void GalaxyEggbertGame::Stop() {
 }
 
 void GalaxyEggbertGame::Update(float dt) {
+    if (!phases_) return;
     auto* engine = context_->GetSubsystem<Engine>();
     auto* input  = context_->GetSubsystem<Input>();
+    const GamePhase phase = phases_->Current();
 
-    if (phase_ == GamePhase::Init && input->GetKeyPress(KEY_ESCAPE)) {
+    if (phase == GamePhase::Init && input->GetKeyPress(KEY_ESCAPE)) {
         engine->Exit(); return;
     }
 
     if (input->GetKeyPress(KEY_F1)) drawDebug_ = !drawDebug_;
 
-    switch (phase_) {
+    switch (phase) {
         case GamePhase::Init:  UpdateInit(dt);  break;
         case GamePhase::Play:  UpdatePlay(dt);  break;
         case GamePhase::Pause: UpdatePause(dt); break;
