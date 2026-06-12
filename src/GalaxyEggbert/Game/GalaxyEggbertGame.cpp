@@ -1,5 +1,6 @@
 #include "GalaxyEggbertGame.hpp"
 #include "GalaxyEggbert/BlockTypes.hpp"
+#include "GalaxyEggbert/def/SoundChannel.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -248,16 +249,35 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
     if (blupi_) blupi_->Update(dt);
 
+    if (blupi_ && blupi_->WasJumpedThisFrame() && sound_)
+        sound_->Play(SoundChannel::SoundChannel1);
+
     Vector3 pos = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
     float   yaw = blupi_ ? blupi_->GetFacingYaw() : 0.0f;
     camera_->Update(dt, pos, yaw);
 
     if (decor_) {
         decor_->Update(dt, pos);
-        if (decor_->WasExitReached()) { EnterPhase(GamePhase::Win); return; }
+
+        int collected = decor_->GetCollected();
+        if (collected > prevCollected_ && sound_) {
+            sound_->Play(SoundChannel::SoundChannel10);
+            prevCollected_ = collected;
+        }
+
+        if (decor_->WasExitReached()) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel57);
+            EnterPhase(GamePhase::Win);
+            return;
+        }
         if (decor_->WasBlupiHit()) {
             --lives_;
-            if (lives_ <= 0) { EnterPhase(GamePhase::Lost); return; }
+            if (lives_ <= 0) {
+                if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+                EnterPhase(GamePhase::Lost);
+                return;
+            }
+            if (sound_) sound_->Play(SoundChannel::SoundChannel8);
             if (blupi_) blupi_->Respawn();
         }
         decor_->ClearEvents();
@@ -289,7 +309,8 @@ void GalaxyEggbertGame::UpdateLost(float dt) {
 }
 
 void GalaxyEggbertGame::ResetLevel() {
-    lives_ = 3;
+    lives_         = 3;
+    prevCollected_ = 0;
     decor_.reset();
     blupi_.reset();
     EnterPhase(GamePhase::Init);
@@ -309,15 +330,18 @@ void GalaxyEggbertGame::Start() {
     phases_ = std::make_unique<PhaseManager>(context_);
     hud_    = std::make_unique<HUD>(context_);
     camera_ = std::make_unique<CameraController>(context_, scene_.Get());
+    sound_  = std::make_unique<SoundManager>(context_, scene_.Get());
     EnterPhase(GamePhase::Init);
 }
 
 void GalaxyEggbertGame::Stop() {
+    if (sound_) sound_->StopAll();
     decor_.reset();
     blupi_.reset();
     phases_.reset();
     hud_.reset();
     camera_.reset();
+    sound_.reset();
     scene_.Reset();
     world_.reset();
     tileMatCache_.clear();

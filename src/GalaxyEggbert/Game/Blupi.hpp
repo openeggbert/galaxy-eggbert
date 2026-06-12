@@ -29,9 +29,10 @@ public:
     void Update(float dt);
     void Respawn();
 
-    Urho3D::Node*   GetNode()      const { return node_; }
-    Urho3D::Vector3 GetPosition()  const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
-    float           GetFacingYaw() const { return facingYaw_; }
+    Urho3D::Node*   GetNode()            const { return node_; }
+    Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
+    float           GetFacingYaw()       const { return facingYaw_; }
+    bool            WasJumpedThisFrame() const { return jumpedThisFrame_; }
 
 private:
     void SpawnAt(const Urho3D::Vector3& pos);
@@ -52,7 +53,8 @@ private:
     bool  onGround_  = false;
 
     // Sprite animation (billboard facing camera, UV-mapped from blupi.png)
-    Urho3D::BillboardSet*      sprite_   = nullptr;
+    bool                       jumpedThisFrame_ = false;
+    Urho3D::BillboardSet*      sprite_          = nullptr;
     GalaxyEggbert::BlupiAction action_   = GalaxyEggbert::BlupiAction::Stop;
     int                        animTick_ = 0;
 

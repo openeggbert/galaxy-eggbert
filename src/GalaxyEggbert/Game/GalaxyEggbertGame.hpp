@@ -7,6 +7,7 @@
 #include "Decor.hpp"
 #include "HUD.hpp"
 #include "PhaseManager.hpp"
+#include "SoundManager.hpp"
 #include <memory>
 #include <unordered_map>
 
@@ -55,10 +56,12 @@ private:
     std::unique_ptr<CameraController> camera_;
     std::unique_ptr<HUD>              hud_;
     std::unique_ptr<PhaseManager>     phases_;
+    std::unique_ptr<SoundManager>     sound_;
 
     // State
-    bool drawDebug_ = false;
-    int  lives_     = 3;
+    bool drawDebug_      = false;
+    int  lives_          = 3;
+    int  prevCollected_  = 0;
 
     static constexpr int kWCX = 50;
     static constexpr int kWCZ = 50;

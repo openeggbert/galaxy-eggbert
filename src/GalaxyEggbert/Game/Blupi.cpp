@@ -145,6 +145,7 @@ void Blupi::ResolveXZ(Vector3& pos) {
 void Blupi::Update(float dt) {
     if (!node_) return;
     auto* input = context_->GetSubsystem<Input>();
+    jumpedThisFrame_ = false;
 
     // --- Rotation ---
     bool turning = false;
@@ -169,8 +170,9 @@ void Blupi::Update(float dt) {
 
     // --- Jump ---
     if (onGround_ && input->GetKeyPress(KEY_SPACE)) {
-        vel_.y_   = kJumpSpeed;
-        onGround_ = false;
+        vel_.y_          = kJumpSpeed;
+        onGround_        = false;
+        jumpedThisFrame_ = true;
     }
 
     // --- Integrate + collision ---
