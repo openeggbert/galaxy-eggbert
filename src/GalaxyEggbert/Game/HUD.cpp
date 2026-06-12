@@ -23,6 +23,11 @@ void HUD::SetVisible(bool visible) {
     if (Text* t = text_) t->SetVisible(visible);
 }
 
+void HUD::ShowWin() {
+    if (Text* t = text_)
+        t->SetText("LEVEL COMPLETE!\nPress any key to continue...");
+}
+
 void HUD::ShowPlay(Vector3 pos, float facingYaw) {
     if (Text* t = text_) {
         char buf[128];

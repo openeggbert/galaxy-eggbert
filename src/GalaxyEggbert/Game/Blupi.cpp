@@ -39,6 +39,10 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     UpdateSprite();
 }
 
+void Blupi::Respawn() {
+    SpawnAt(Urho3D::Vector3(0.0f, kHalfH + 0.5f, 0.0f));
+}
+
 Blupi::~Blupi() {
     if (node_) { node_->Remove(); node_ = nullptr; }
 }

@@ -194,6 +194,23 @@ void GalaxyEggbertGame::CreateTerrain() {
 
 // ─── phase transitions ───────────────────────────────────────────────────────
 
+void GalaxyEggbertGame::CreateDemoObjects() {
+    using OT = GalaxyEggbert::ObjectType;
+    decor_ = std::make_unique<Decor>(context_, scene_.Get());
+    // Treasures (stationary)
+    decor_->PlaceObject(OT::ObjectType5, Vector3(-5.0f, 1.0f,  0.0f));
+    decor_->PlaceObject(OT::ObjectType5, Vector3( 0.0f, 1.0f,  5.0f));
+    decor_->PlaceObject(OT::ObjectType5, Vector3( 5.0f, 1.0f, -5.0f));
+    // Extra-life egg
+    decor_->PlaceObject(OT::ObjectType6, Vector3(-3.0f, 1.0f, -6.0f));
+    // Patrolling enemy
+    decor_->PlaceObject(OT::ObjectType2,
+                        Vector3(-8.0f, 1.0f, 3.0f),
+                        Vector3(-2.0f, 1.0f, 3.0f), 2.0f);
+    // Level exit
+    decor_->PlaceObject(OT::ObjectType7, Vector3(0.0f, 1.0f, -8.0f));
+}
+
 void GalaxyEggbertGame::EnterPhase(GamePhase next) {
     if (phases_->Current() == next) return;
     phases_->Enter(next);
@@ -201,6 +218,11 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
         case GamePhase::Play:
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
+            if (!decor_) CreateDemoObjects();
+            hud_->SetVisible(true);
+            break;
+        case GamePhase::Win:
+            hud_->ShowWin();
             hud_->SetVisible(true);
             break;
         default:
@@ -233,6 +255,24 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     float   yaw = blupi_ ? blupi_->GetFacingYaw() : 0.0f;
     camera_->Update(dt, pos, yaw);
     hud_->ShowPlay(pos, yaw);
+
+    if (decor_) {
+        decor_->Update(dt, pos);
+        if (decor_->WasExitReached()) { EnterPhase(GamePhase::Win); return; }
+        if (decor_->WasBlupiHit() && blupi_) blupi_->Respawn();
+        decor_->ClearEvents();
+    }
+}
+
+void GalaxyEggbertGame::UpdateWin(float dt) {
+    (void)dt;
+    auto* input = context_->GetSubsystem<Input>();
+    const Key keys[] = { KEY_SPACE, KEY_RETURN, KEY_ESCAPE,
+                         KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT };
+    for (Key k : keys) {
+        if (input->GetKeyPress(k)) { EnterPhase(GamePhase::Init); return; }
+    }
+    if (input->GetMouseButtonPress(MOUSEB_LEFT)) EnterPhase(GamePhase::Init);
 }
 
 void GalaxyEggbertGame::UpdatePause(float dt) {
@@ -253,6 +293,7 @@ void GalaxyEggbertGame::Start() {
 }
 
 void GalaxyEggbertGame::Stop() {
+    decor_.reset();
     blupi_.reset();
     phases_.reset();
     hud_.reset();
@@ -279,6 +320,7 @@ void GalaxyEggbertGame::Update(float dt) {
         case GamePhase::Init:  UpdateInit(dt);  break;
         case GamePhase::Play:  UpdatePlay(dt);  break;
         case GamePhase::Pause: UpdatePause(dt); break;
+        case GamePhase::Win:   UpdateWin(dt);   break;
         default: break;
     }
 

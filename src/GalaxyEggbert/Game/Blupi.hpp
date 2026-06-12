@@ -27,6 +27,7 @@ public:
     ~Blupi();
 
     void Update(float dt);
+    void Respawn();
 
     Urho3D::Node*   GetNode()      const { return node_; }
     Urho3D::Vector3 GetPosition()  const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }

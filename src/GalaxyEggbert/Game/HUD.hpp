@@ -8,6 +8,7 @@ public:
 
     void SetVisible(bool visible);
     void ShowPlay(Urho3D::Vector3 pos, float facingYaw);
+    void ShowWin();
 
 private:
     Urho3D::Context*              context_;

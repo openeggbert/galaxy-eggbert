@@ -4,6 +4,7 @@
 #include "GalaxyEggbert/def/GamePhase.hpp"
 #include "Blupi.hpp"
 #include "Camera.hpp"
+#include "Decor.hpp"
 #include "HUD.hpp"
 #include "PhaseManager.hpp"
 #include <memory>
@@ -25,6 +26,7 @@ private:
     void CreateTerrain();
     void BuildDemoWorld();
     void SpawnTerrainNodes();
+    void CreateDemoObjects();
 
     void EnterPhase(GalaxyEggbert::GamePhase next);
 
@@ -35,6 +37,7 @@ private:
     void UpdateInit(float dt);
     void UpdatePlay(float dt);
     void UpdatePause(float dt);
+    void UpdateWin(float dt);
 
     // Scene
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
@@ -46,6 +49,7 @@ private:
 
     // Subsystems
     std::unique_ptr<Blupi>            blupi_;
+    std::unique_ptr<Decor>            decor_;
     std::unique_ptr<CameraController> camera_;
     std::unique_ptr<HUD>              hud_;
     std::unique_ptr<PhaseManager>     phases_;
