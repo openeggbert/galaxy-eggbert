@@ -8,7 +8,7 @@ public:
 
     void SetVisible(bool visible);
     void ShowPlay(Urho3D::Vector3 pos, float facingYaw, int lives, int collected,
-                  int keys, float shieldSecs = 0.0f);
+                  int keys, float shieldSecs = 0.0f, int world = 1);
     void ShowWin();
 
 private:

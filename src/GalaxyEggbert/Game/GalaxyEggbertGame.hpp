@@ -26,7 +26,7 @@ public:
 
 private:
     void CreateScene();
-    void CreateTerrain();
+    void LoadWorld(int worldNum);
     void BuildDemoWorld();
     void SpawnTerrainNodes();
     void CreateDemoObjects();
@@ -43,9 +43,11 @@ private:
     void UpdateWin(float dt);
     void UpdateLost(float dt);
     void ResetLevel();
+    void AdvanceToNextWorld();
 
     // Scene
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
+    Urho3D::SharedPtr<Urho3D::Node>  terrainRoot_;
 
     // World data + tile material cache
     std::unique_ptr<GalaxyEggbert::Worlds::World>  world_;
@@ -70,8 +72,9 @@ private:
     GameData    gameData_;
     std::string savePath_;
 
-    static constexpr int kWCX = 50;
-    static constexpr int kWCZ = 50;
+    static constexpr int kWCX     = 50;
+    static constexpr int kWCZ     = 50;
+    static constexpr int kMaxWorld = 5;
 
     Urho3D::Context* context_;
 };

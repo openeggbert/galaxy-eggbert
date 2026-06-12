@@ -43,21 +43,23 @@ void HUD::ShowWin() {
 }
 
 void HUD::ShowPlay(Vector3 pos, float facingYaw, int lives, int collected,
-                   int keys, float shieldSecs) {
+                   int keys, float shieldSecs, int world) {
     if (Text* t = text_) {
         char buf[256];
         if (shieldSecs > 0.0f) {
             std::snprintf(buf, sizeof(buf),
                 "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
                 "pos (%.1f, %.1f, %.1f)  facing %.0f deg\n"
-                "Lives: %d  Treasures: %d  Keys: %d  SHIELD %.1fs",
-                pos.x_, pos.y_, pos.z_, facingYaw, lives, collected, keys, shieldSecs);
+                "World %d | Lives: %d  Treasures: %d  Keys: %d  SHIELD %.1fs",
+                pos.x_, pos.y_, pos.z_, facingYaw,
+                world, lives, collected, keys, shieldSecs);
         } else {
             std::snprintf(buf, sizeof(buf),
                 "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
                 "pos (%.1f, %.1f, %.1f)  facing %.0f deg\n"
-                "Lives: %d  Treasures: %d  Keys: %d",
-                pos.x_, pos.y_, pos.z_, facingYaw, lives, collected, keys);
+                "World %d | Lives: %d  Treasures: %d  Keys: %d",
+                pos.x_, pos.y_, pos.z_, facingYaw,
+                world, lives, collected, keys);
         }
         t->SetText(buf);
     }

@@ -89,6 +89,8 @@ void GalaxyEggbertGame::CreateScene() {
     fill->SetColor(Color(0.35f, 0.45f, 0.85f));
     fill->SetBrightness(0.55f);
     fill->SetCastShadows(false);
+
+    terrainRoot_ = scene_->CreateChild("Terrain");
 }
 
 void GalaxyEggbertGame::BuildDemoWorld() {
@@ -143,12 +145,22 @@ void GalaxyEggbertGame::BuildDemoWorld() {
     world_->setBlock(static_cast<uint16_t>(kWCX + 6), 0,
                      static_cast<uint16_t>(kWCZ + 4),
                      Block::make(BlockTypes::Spike));
+
+    // Extra hazards scaled by world number
+    for (int i = 1; i < currentWorld_; ++i) {
+        int wx = kWCX - 6 + (i - 1) * 2;
+        int wz = kWCZ + 6;
+        if (wx >= 0 && wx < 100 && wz >= 0 && wz < 100)
+            world_->setBlock(static_cast<uint16_t>(wx), 0,
+                             static_cast<uint16_t>(wz),
+                             Block::make(BlockTypes::Crusher));
+    }
 }
 
 void GalaxyEggbertGame::SpawnTerrainNodes() {
     auto* cache = context_->GetSubsystem<ResourceCache>();
     auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
-    if (!boxModel || !world_) return;
+    if (!boxModel || !world_ || !terrainRoot_) return;
 
     const uint8_t cpa = world_->chunksPerAxis();
     for (uint8_t ccy = 0; ccy < cpa; ++ccy) {
@@ -163,7 +175,7 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
                             const uint16_t wz = ccz * 10 + lz;
                             const Block b = world_->getBlock(wx, wy, wz);
                             if (b.isAir()) continue;
-                            auto* node = scene_->CreateChild("Block");
+                            auto* node = terrainRoot_->CreateChild("Block");
                             node->SetPosition(Vector3(
                                 static_cast<float>(wx) - kWCX,
                                 static_cast<float>(wy),
@@ -179,22 +191,26 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
     }
 }
 
-void GalaxyEggbertGame::CreateTerrain() {
-    auto* cache = context_->GetSubsystem<ResourceCache>();
-    objectSheet_ = cache->GetResource<Texture2D>("icons/object-m.png");
+void GalaxyEggbertGame::LoadWorld(int worldNum) {
+    if (terrainRoot_) terrainRoot_->RemoveAllChildren();
+    tileMatCache_.clear();
 
+    objectSheet_ = context_->GetSubsystem<ResourceCache>()
+        ->GetResource<Texture2D>("icons/object-m.png");
+
+    char fname[64];
+    std::snprintf(fname, sizeof(fname), "worlds/world%03d.vwr", worldNum);
     auto* fs = context_->GetSubsystem<FileSystem>();
-    const String worldFile = fs->GetProgramDir() + "worlds/world001.vwr";
+    const String worldFile = fs->GetProgramDir() + fname;
 
+    world_.reset();
     if (fs->FileExists(worldFile)) {
         try {
-            world_ = std::make_unique<World>(
-                World::loadFromFile(worldFile.CString()));
+            world_ = std::make_unique<World>(World::loadFromFile(worldFile.CString()));
         } catch (...) {
             world_.reset();
         }
     }
-
     if (!world_) {
         world_ = std::make_unique<World>();
         BuildDemoWorld();
@@ -235,6 +251,15 @@ void GalaxyEggbertGame::CreateDemoObjects() {
                         Vector3(-2.0f, 1.0f, -2.0f), 1.5f);
     // Level exit
     decor_->PlaceObject(OT::ObjectType7, Vector3(0.0f, 1.0f, -8.0f));
+
+    // Extra patrol enemies added per world beyond 1
+    for (int i = 1; i < currentWorld_ && i <= kMaxWorld; ++i) {
+        float off = static_cast<float>(i) * 3.0f;
+        decor_->PlaceObject(OT::ObjectType2,
+            Vector3(-off, 1.0f, off - 10.0f),
+            Vector3(-off + 4.0f, 1.0f, off - 10.0f),
+            1.5f + static_cast<float>(i) * 0.4f);
+    }
 }
 
 void GalaxyEggbertGame::EnterPhase(GamePhase next) {
@@ -245,7 +270,7 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
             if (!decor_) CreateDemoObjects();
-            hud_->ShowPlay(Vector3::ZERO, 0.0f, lives_, 0, 0);
+            hud_->ShowPlay(Vector3::ZERO, 0.0f, lives_, 0, 0, 0.0f, currentWorld_);
             hud_->SetVisible(true);
             break;
         default:
@@ -360,7 +385,22 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
     hud_->ShowPlay(pos, yaw, lives_,
                    decor_ ? decor_->GetCollected() : 0,
-                   keysCollected_, shieldTimer_);
+                   keysCollected_, shieldTimer_, currentWorld_);
+}
+
+void GalaxyEggbertGame::AdvanceToNextWorld() {
+    if (currentWorld_ > kMaxWorld) {
+        currentWorld_ = 1;
+        gameData_.SetLastWorld(1);
+        gameData_.Write(savePath_);
+    }
+    prevCollected_ = 0;
+    keysCollected_ = 0;
+    shieldTimer_   = 0.0f;
+    decor_.reset();
+    blupi_.reset();
+    LoadWorld(currentWorld_);
+    EnterPhase(GamePhase::Play);
 }
 
 void GalaxyEggbertGame::UpdateWin(float dt) {
@@ -369,9 +409,9 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
     const Key keys[] = { KEY_SPACE, KEY_RETURN, KEY_ESCAPE,
                          KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT };
     for (Key k : keys) {
-        if (input->GetKeyPress(k)) { ResetLevel(); return; }
+        if (input->GetKeyPress(k)) { AdvanceToNextWorld(); return; }
     }
-    if (input->GetMouseButtonPress(MOUSEB_LEFT)) ResetLevel();
+    if (input->GetMouseButtonPress(MOUSEB_LEFT)) AdvanceToNextWorld();
 }
 
 void GalaxyEggbertGame::UpdateLost(float dt) {
@@ -418,7 +458,7 @@ void GalaxyEggbertGame::Start() {
     }
 
     CreateScene();
-    CreateTerrain();
+    LoadWorld(currentWorld_);
     phases_ = std::make_unique<PhaseManager>(context_);
     hud_    = std::make_unique<HUD>(context_);
     camera_ = std::make_unique<CameraController>(context_, scene_.Get());
@@ -439,6 +479,7 @@ void GalaxyEggbertGame::Stop() {
     hud_.reset();
     camera_.reset();
     sound_.reset();
+    terrainRoot_.Reset();
     scene_.Reset();
     world_.reset();
     tileMatCache_.clear();
