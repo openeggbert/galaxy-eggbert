@@ -38,6 +38,8 @@ private:
     void UpdatePlay(float dt);
     void UpdatePause(float dt);
     void UpdateWin(float dt);
+    void UpdateLost(float dt);
+    void ResetLevel();
 
     // Scene
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
@@ -56,6 +58,7 @@ private:
 
     // State
     bool drawDebug_ = false;
+    int  lives_     = 3;
 
     static constexpr int kWCX = 50;
     static constexpr int kWCZ = 50;

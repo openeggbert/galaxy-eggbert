@@ -86,6 +86,7 @@ void Decor::Update(float dt, Vector3 blupiPos) {
             case ObjectType::ObjectType6:
                 obj.active = false;
                 obj.node->Remove();
+                ++collected_;
                 break;
             case ObjectType::ObjectType7:
                 exitReached_ = true;

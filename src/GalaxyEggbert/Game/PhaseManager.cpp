@@ -10,6 +10,8 @@ void PhaseManager::Enter(GamePhase phase) {
     switch (phase) {
         case GamePhase::Init:  ShowOverlay("backgrounds/init.png");  break;
         case GamePhase::Pause: ShowOverlay("backgrounds/pause.png"); break;
+        case GamePhase::Lost:  ShowOverlay("backgrounds/lost.png");  break;
+        case GamePhase::Win:   ShowOverlay("backgrounds/win.png");   break;
         default:               HideOverlay();                        break;
     }
 }

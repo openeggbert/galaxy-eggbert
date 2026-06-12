@@ -40,6 +40,7 @@ public:
 
     bool WasExitReached() const { return exitReached_; }
     bool WasBlupiHit()    const { return blupiHit_;    }
+    int  GetCollected()   const { return collected_;   }
     void ClearEvents()          { exitReached_ = blupiHit_ = false; }
 
 private:
@@ -53,4 +54,5 @@ private:
     int  objCount_    = 0;
     bool exitReached_ = false;
     bool blupiHit_    = false;
+    int  collected_   = 0;
 };

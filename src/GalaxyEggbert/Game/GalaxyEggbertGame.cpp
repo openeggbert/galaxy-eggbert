@@ -219,10 +219,7 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
             if (!decor_) CreateDemoObjects();
-            hud_->SetVisible(true);
-            break;
-        case GamePhase::Win:
-            hud_->ShowWin();
+            hud_->ShowPlay(Vector3::ZERO, 0.0f, lives_, 0);
             hud_->SetVisible(true);
             break;
         default:
@@ -254,14 +251,19 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     Vector3 pos = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
     float   yaw = blupi_ ? blupi_->GetFacingYaw() : 0.0f;
     camera_->Update(dt, pos, yaw);
-    hud_->ShowPlay(pos, yaw);
 
     if (decor_) {
         decor_->Update(dt, pos);
         if (decor_->WasExitReached()) { EnterPhase(GamePhase::Win); return; }
-        if (decor_->WasBlupiHit() && blupi_) blupi_->Respawn();
+        if (decor_->WasBlupiHit()) {
+            --lives_;
+            if (lives_ <= 0) { EnterPhase(GamePhase::Lost); return; }
+            if (blupi_) blupi_->Respawn();
+        }
         decor_->ClearEvents();
     }
+
+    hud_->ShowPlay(pos, yaw, lives_, decor_ ? decor_->GetCollected() : 0);
 }
 
 void GalaxyEggbertGame::UpdateWin(float dt) {
@@ -270,9 +272,27 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
     const Key keys[] = { KEY_SPACE, KEY_RETURN, KEY_ESCAPE,
                          KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT };
     for (Key k : keys) {
-        if (input->GetKeyPress(k)) { EnterPhase(GamePhase::Init); return; }
+        if (input->GetKeyPress(k)) { ResetLevel(); return; }
     }
-    if (input->GetMouseButtonPress(MOUSEB_LEFT)) EnterPhase(GamePhase::Init);
+    if (input->GetMouseButtonPress(MOUSEB_LEFT)) ResetLevel();
+}
+
+void GalaxyEggbertGame::UpdateLost(float dt) {
+    (void)dt;
+    auto* input = context_->GetSubsystem<Input>();
+    const Key keys[] = { KEY_SPACE, KEY_RETURN, KEY_ESCAPE,
+                         KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT };
+    for (Key k : keys) {
+        if (input->GetKeyPress(k)) { ResetLevel(); return; }
+    }
+    if (input->GetMouseButtonPress(MOUSEB_LEFT)) ResetLevel();
+}
+
+void GalaxyEggbertGame::ResetLevel() {
+    lives_ = 3;
+    decor_.reset();
+    blupi_.reset();
+    EnterPhase(GamePhase::Init);
 }
 
 void GalaxyEggbertGame::UpdatePause(float dt) {
@@ -321,6 +341,7 @@ void GalaxyEggbertGame::Update(float dt) {
         case GamePhase::Play:  UpdatePlay(dt);  break;
         case GamePhase::Pause: UpdatePause(dt); break;
         case GamePhase::Win:   UpdateWin(dt);   break;
+        case GamePhase::Lost:  UpdateLost(dt);  break;
         default: break;
     }
 
