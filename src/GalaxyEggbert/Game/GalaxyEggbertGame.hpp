@@ -105,6 +105,7 @@ private:
     float       controlsHintTimer_        = 8.0f;
     float       stompComboTimer_          = 0.0f; // countdown; combo resets when expired
     int         stompCombo_               = 0;    // consecutive stomp count this level
+    int         timeBonus_                = 0;    // one-shot speed bonus awarded on entering Win
     bool        bonusLifeAwarded_         = false;
 
     static constexpr int kWCX     = 50;

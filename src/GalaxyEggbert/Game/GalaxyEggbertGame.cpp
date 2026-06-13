@@ -526,6 +526,16 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             hud_->SetVisible(true);
             if (input) input->SetMouseVisible(false);
             break;
+        case GamePhase::Win: {
+            int b = (levelTime_ < 60.0f)  ? 200 :
+                    (levelTime_ < 120.0f) ? 100 :
+                    (levelTime_ < 180.0f) ?  50 : 0;
+            timeBonus_ = b;
+            score_    += b;
+            hud_->SetVisible(false);
+            if (input) input->SetMouseVisible(true);
+            break;
+        }
         default:
             hud_->SetVisible(false);
             if (input) input->SetMouseVisible(true);
@@ -581,6 +591,7 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     bonusLifeAwarded_       = false;
     stompCombo_             = 0;
     stompComboTimer_        = 0.0f;
+    timeBonus_              = 0;
     gameData_.Write(savePath_);
     decor_.reset();
     blupi_.reset();
@@ -645,6 +656,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 bonusLifeAwarded_       = false;
                 stompCombo_             = 0;
                 stompComboTimer_        = 0.0f;
+    timeBonus_              = 0;
                 prevCollected_          = 0;
                 keysRed_ = keysGreen_ = keysBlue_ = 0;
                 shieldTimer_            = 0.0f;
@@ -994,6 +1006,7 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
     bonusLifeAwarded_       = false;
     stompCombo_             = 0;
     stompComboTimer_        = 0.0f;
+    timeBonus_              = 0;
     decor_.reset();
     blupi_.reset();
     LoadWorld(currentWorld_);
@@ -1019,11 +1032,14 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
         gameData_.Write(savePath_);
     }
 
-    char buf[320];
+    char timeBonusBuf[32] = "";
+    if (timeBonus_ > 0)
+        std::snprintf(timeBonusBuf, sizeof(timeBonusBuf), "  Time bonus: +%d", timeBonus_);
+    char buf[384];
     std::snprintf(buf, sizeof(buf),
-        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\nScore: %d%s\n\nPress any key...",
-        header, completedWorld, wname, collected, total, lives_, wMins, wSecs, score_,
-        newBest ? "  *** NEW BEST! ***" : "");
+        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d%s\nScore: %d%s\n\nPress any key...",
+        header, completedWorld, wname, collected, total, lives_, wMins, wSecs, timeBonusBuf,
+        score_, newBest ? "  *** NEW BEST! ***" : "");
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
@@ -1067,6 +1083,7 @@ void GalaxyEggbertGame::ResetLevel() {
     bonusLifeAwarded_       = false;
     stompCombo_             = 0;
     stompComboTimer_        = 0.0f;
+    timeBonus_              = 0;
     gameData_.SetNbVies(3);
     gameData_.SetLastWorld(1);
     gameData_.Write(savePath_);
