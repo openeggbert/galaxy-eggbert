@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 33)
+## Current state (as of Phase 34)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -112,6 +112,12 @@ or the original Windows Phone game.
 - Pause overlay now shows treasure progress: `Lives: N   Treasures: X/Y`
 - Win overlay shows `"ALL WORLDS COMPLETE!"` header when completing world 5 (kMaxWorld);
   all other worlds show `"LEVEL COMPLETE!"`
+- ObjectType30 (drink) grants +1 life (cap 9) when collected; `Decor::drinkCollected_` flag,
+  same award logic as egg; drink still increments HUD `collected_` counter
+- ObjectType16 (spider) oscillates vertically (y=4 hang → y=1 drop) in real levels;
+  `StepMovement` stationary check now requires all 3 axes equal (Y clamp removed);
+  spider is dangerous only when descended (Y proximity check prevents aerial ghost hits)
+- Debug octree toggle moved from F1 → F12; F1–F5 world-jump now fires correctly in Play phase
 
 **Architecture (subsystem classes):**
 ```
@@ -176,6 +182,25 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 34 — Spider vertical drop + drink extra-life + F1 world-jump fix
+
+Status: **DONE**
+
+- `Decor::StepMovement()`: stationary check now includes Y axis (`posStart.y_ == posEnd.y_`);
+  `delta.y_ = 0.0f` clamp removed — movement can be along any axis; all existing horizontal
+  patrol enemies unaffected (their posStart.y_ == posEnd.y_ == 1.0f)
+- `LoadMobileEggbertTerrain`: ObjectType16 (spider) gets `posStart.y_=4.0f, posEnd.y_=1.0f`
+  so it oscillates hanging↔dropped; XZ unchanged; Y proximity check (Phase 32) prevents
+  hits while spider is high up; stomp possible when it drops to ground level
+- `Decor`: added `drinkCollected_` bool flag + `WasDrinkCollected()` + ClearEvents reset;
+  ObjectType30 collection sets it (also still increments `collected_`)
+- `GalaxyEggbertGame::UpdatePlay()`: `WasDrinkCollected()` → +1 life (cap 9), SoundChannel42,
+  `gameData_.Write()` — matching egg behaviour
+- Debug toggle moved from KEY_F1 to KEY_F12 in `Update()`; F1–F5 world-jump now reaches
+  the handler in `UpdatePlay()` without being consumed first
 
 ---
 

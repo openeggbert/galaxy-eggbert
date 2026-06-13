@@ -348,6 +348,11 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 spec.posStart.y_ = 3.0f;
                 spec.posEnd.y_   = 3.0f;
             }
+            // Spiders hang at ceiling height and drop to ground (vertical oscillation).
+            if (type == 16) {
+                spec.posStart.y_ = 4.0f;
+                spec.posEnd.y_   = 1.0f;
+            }
             mobileObjects_.push_back(spec);
             continue;
         }
@@ -669,8 +674,18 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             prevCollected_ = collected;
         }
 
-        // Egg pickup: grants +1 life (cap 9), same as bonus life sound.
+        // Egg pickup: grants +1 life (cap 9).
         if (decor_->WasEggCollected()) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel42);
+            if (lives_ < 9) {
+                ++lives_;
+                gameData_.SetNbVies(lives_);
+                gameData_.Write(savePath_);
+            }
+        }
+
+        // Drink pickup: grants +1 life (cap 9).
+        if (decor_->WasDrinkCollected()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel42);
             if (lives_ < 9) {
                 ++lives_;
@@ -891,7 +906,7 @@ void GalaxyEggbertGame::Update(float dt) {
         engine->Exit(); return;
     }
 
-    if (input->GetKeyPress(KEY_F1)) drawDebug_ = !drawDebug_;
+    if (input->GetKeyPress(KEY_F12)) drawDebug_ = !drawDebug_;
 
     switch (phase) {
         case GamePhase::Init:      UpdateInit(dt);     break;

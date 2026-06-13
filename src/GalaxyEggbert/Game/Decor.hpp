@@ -43,13 +43,14 @@ public:
     bool    WasBlupiHit()        const { return blupiHit_;        }
     bool    WasShieldCollected() const { return shieldCollected_; }
     bool    WasEggCollected()    const { return eggCollected_;    }
+    bool    WasDrinkCollected()  const { return drinkCollected_;  }
     bool    WasStompKill()       const { return stompKill_;       }
     int     GetCollected()       const { return collected_;       }
     int     GetTotalTreasures()  const { return totalTreasures_;  }
     int     GetKeysCollected()   const { return keysCollected_;   }
     // XZ delta accumulated by all platforms that Blupi is riding this frame.
     Urho3D::Vector3 GetPlatformDelta() const { return platformDelta_; }
-    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ = stompKill_ = false; }
+    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ = drinkCollected_ = stompKill_ = false; }
 
 private:
     int  GetIcon(const Object& obj) const;
@@ -64,6 +65,7 @@ private:
     bool            blupiHit_        = false;
     bool            shieldCollected_ = false;
     bool            eggCollected_    = false;
+    bool            drinkCollected_  = false;
     bool            stompKill_       = false;
     int             collected_       = 0;
     int             totalTreasures_  = 0;

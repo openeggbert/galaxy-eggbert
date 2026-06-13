@@ -67,15 +67,15 @@ int Decor::GetIcon(const Object& obj) const {
     }
 }
 
-// Linear patrol between posStart↔posEnd.
+// Linear patrol between posStart↔posEnd (any axis, including vertical for spiders).
 // Derived from mobile-eggbert Decor.cpp MoveObjectStepLine().
 void Decor::StepMovement(Object& obj, float dt) {
     if (obj.posStart.x_ == obj.posEnd.x_ &&
-        obj.posStart.z_ == obj.posEnd.z_) return; // stationary
+        obj.posStart.y_ == obj.posEnd.y_ &&
+        obj.posStart.z_ == obj.posEnd.z_) return; // truly stationary
 
     Vector3 target = (obj.direction > 0) ? obj.posEnd : obj.posStart;
     Vector3 delta  = target - obj.pos;
-    delta.y_       = 0.0f;
     float dist     = delta.Length();
     float step     = obj.speed * dt;
 
@@ -99,6 +99,7 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
     exitReached_   = false;
     blupiHit_      = false;
     eggCollected_  = false;
+    drinkCollected_= false;
     stompKill_     = false;
     platformDelta_ = Vector3::ZERO;
 
@@ -157,10 +158,11 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
                 obj.node->Remove();
                 shieldCollected_ = true;
                 break;
-            case ObjectType::ObjectType30: // drink → collectible
+            case ObjectType::ObjectType30: // drink → collectible + life pickup
                 obj.active = false;
                 obj.node->Remove();
                 ++collected_;
+                drinkCollected_ = true;
                 break;
             case ObjectType::ObjectType7:
                 exitReached_ = true;
