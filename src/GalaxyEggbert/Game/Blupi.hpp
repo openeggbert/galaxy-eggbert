@@ -39,6 +39,7 @@ public:
     float GetVelY()            const { return vel_.y_; }
     void  StartFlash(float duration) { flashTimer_ = duration; flashTickTimer_ = 0.0f; }
     void  Bounce() { vel_.y_ = kJumpSpeed * 0.6f; onGround_ = false; }
+    void  SnapToSurface(float surfaceY);
     void  SetShieldActive(bool active) { shieldActive_ = active; }
 
     Urho3D::Node*   GetNode()            const { return node_; }

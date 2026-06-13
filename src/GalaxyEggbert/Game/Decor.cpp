@@ -109,6 +109,7 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime)
     drinkCollected_= false;
     stompKill_     = false;
     platformDelta_ = Vector3::ZERO;
+    platformLandY_ = -999.0f;
 
     static constexpr float kRespawnDelay = 5.0f;
 
@@ -156,6 +157,8 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime)
                 std::abs(obj.pos.y_ - blupiPos.y_) < 1.5f) {
                 platformDelta_.x_ += delta.x_;
                 platformDelta_.z_ += delta.z_;
+                // Expose the platform's top surface so Blupi can be snapped onto it.
+                platformLandY_ = obj.pos.y_ + 0.5f;
             }
         }
 

@@ -47,6 +47,18 @@ void Blupi::Respawn() {
     SpawnAt(spawn_);
 }
 
+void Blupi::SnapToSurface(float surfaceY) {
+    if (!node_ || vel_.y_ > 0.0f) return;
+    Vector3 pos = node_->GetPosition();
+    float feetY = pos.y_ - kHalfH;
+    // Only snap when Blupi's feet are within [surfaceY-0.4, surfaceY+0.3].
+    if (feetY > surfaceY + 0.3f || feetY < surfaceY - 0.4f) return;
+    pos.y_    = surfaceY + kHalfH;
+    vel_.y_   = 0.0f;
+    onGround_ = true;
+    node_->SetPosition(pos);
+}
+
 Blupi::~Blupi() {
     if (node_) { node_->Remove(); node_ = nullptr; }
 }

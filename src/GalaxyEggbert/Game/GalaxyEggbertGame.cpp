@@ -462,30 +462,43 @@ void GalaxyEggbertGame::CreateDemoObjects() {
             decor_->PlaceObject(s.type, s.posStart, s.posEnd, s.speed);
         return;
     }
-    // Treasures (stationary)
+    // h=0 flat ground → object Y=1.0; h=2 platform → Y=3.0; h=3 hill top → Y=4.0
+    // Treasures: one on flat, one on elevated platform, one on hilltop
     decor_->PlaceObject(OT::ObjectType5, Vector3(-5.0f, 1.0f,  0.0f));
-    decor_->PlaceObject(OT::ObjectType5, Vector3( 0.0f, 1.0f,  5.0f));
-    decor_->PlaceObject(OT::ObjectType5, Vector3( 5.0f, 1.0f, -5.0f));
-    // Extra-life egg
-    decor_->PlaceObject(OT::ObjectType6, Vector3(-3.0f, 1.0f, -6.0f));
-    // Red key
-    decor_->PlaceObject(OT::ObjectType49, Vector3( 3.0f, 1.0f, -3.0f));
+    decor_->PlaceObject(OT::ObjectType5, Vector3(-4.0f, 3.0f, 10.0f)); // on elevated platform
+    decor_->PlaceObject(OT::ObjectType5, Vector3(11.0f, 4.0f,  0.0f)); // on hilltop (h=3)
+    // Extra-life egg on the staircase landing
+    decor_->PlaceObject(OT::ObjectType6, Vector3( 8.0f, 4.0f,  0.0f));
+    // Keys
+    decor_->PlaceObject(OT::ObjectType49, Vector3( 3.0f, 1.0f, -3.0f)); // red, flat
+    decor_->PlaceObject(OT::ObjectType50, Vector3(-6.0f, 3.0f, 10.0f)); // green, platform
+    decor_->PlaceObject(OT::ObjectType51, Vector3(10.0f, 3.0f,  2.0f)); // blue, on hill h=2
     // Shield orb
     decor_->PlaceObject(OT::ObjectType25, Vector3(-2.0f, 1.0f,  4.0f));
-    // Patrolling enemy A
+    // Drink (extra life)
+    decor_->PlaceObject(OT::ObjectType30, Vector3( 1.0f, 1.0f,  2.0f));
+    // Moving platform shuttles N-S on the flat area — Blupi can ride it
+    decor_->PlaceObject(OT::ObjectType1,
+                        Vector3(-5.0f, 1.0f, 3.0f),
+                        Vector3( 3.0f, 1.0f, 3.0f), 2.0f);
+    // Patrolling enemy A on flat ground
     decor_->PlaceObject(OT::ObjectType2,
-                        Vector3(-8.0f, 1.0f, 3.0f),
-                        Vector3(-2.0f, 1.0f, 3.0f), 2.0f);
-    // Patrolling enemy B (variant)
+                        Vector3(-8.0f, 1.0f,  0.0f),
+                        Vector3(-2.0f, 1.0f,  0.0f), 2.0f);
+    // Patrolling enemy B on elevated platform
     decor_->PlaceObject(OT::ObjectType3,
-                        Vector3( 4.0f, 1.0f, 8.0f),
-                        Vector3( 9.0f, 1.0f, 8.0f), 2.5f);
-    // Spider
+                        Vector3(-7.0f, 3.0f,  9.0f),
+                        Vector3(-1.0f, 3.0f,  9.0f), 2.0f);
+    // Spider: vertical drop near tower
     decor_->PlaceObject(OT::ObjectType16,
-                        Vector3(-7.0f, 1.0f, -2.0f),
-                        Vector3(-2.0f, 1.0f, -2.0f), 1.5f);
-    // Level exit
-    decor_->PlaceObject(OT::ObjectType7, Vector3(0.0f, 1.0f, -8.0f));
+                        Vector3(-13.0f, 5.0f, 13.0f),
+                        Vector3(-13.0f, 1.0f, 13.0f), 1.5f);
+    // Bird flying over the hill
+    decor_->PlaceObject(OT::ObjectType20,
+                        Vector3( 6.0f, 4.0f, -3.0f),
+                        Vector3(12.0f, 4.0f, -3.0f), 2.5f);
+    // Level exit at the hilltop
+    decor_->PlaceObject(OT::ObjectType7, Vector3(11.0f, 4.0f, -1.0f));
 
     // Extra patrol enemies added per world beyond 1
     for (int i = 1; i < currentWorld_ && i <= kMaxWorld; ++i) {
@@ -826,10 +839,13 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             }
         }
 
-        // Apply platform carry after all object updates.
+        // Apply platform carry and vertical surface snap after all object updates.
         Vector3 carry = decor_->GetPlatformDelta();
         if ((carry.x_ != 0.0f || carry.z_ != 0.0f) && blupi_)
             blupi_->ApplyExternalDelta(carry);
+        float landY = decor_->GetPlatformLandY();
+        if (landY > -900.0f && blupi_)
+            blupi_->SnapToSurface(landY);
 
         if (decor_->WasExitReached()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel57);
