@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 24)
+## Current state (as of Phase 25)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -78,6 +78,10 @@ or the original Windows Phone game.
   Air instead of solid blocks, removing invisible walls in real levels
   - `BlockTypes::isMobileTransparent(icon)` precomputed bool[441] lookup
   - Icons 68 (Lava) and 317 (Crusher) kept solid despite being quart-passable
+- Sky dome: `DiffSkydome.xml` sphere (500 units) loaded from `backgrounds/decorNNN.png`
+  per world; region parsed from `region=` in .txt header (`postopaque`, no depth write)
+- Strafe movement: A/D keys strafe Blupi left/right without rotating
+- ObjectType33 (blupit tank): `table_blupit_left` icons 248-250; patrol enemy, kills on contact
 
 **Architecture (subsystem classes):**
 ```
@@ -142,6 +146,21 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 25 — Sky dome + A/D strafe + blupit tank enemy
+
+Status: **DONE**
+
+- Sky dome: large sphere (500 units) using `DiffSkydome.xml` (renders at far plane, no depth
+  write, no fog); background texture `backgrounds/decorNNN.png` from `region=` in world header
+  - World 1 (region 0) → decor000.png, World 3 (region 16) → decor016.png, etc.
+- Strafe: A/D keys move Blupi left/right perpendicular to facing direction
+  (LEFT/RIGHT still rotates; A/D strafes without turning)
+- ObjectType33 (blupit tank): `table_blupit_left` icons {249,249,250,250,249,249,248,248};
+  patrol enemy like type 2/3; gets ±2 tile range if posStart==posEnd; kills on contact
+- `skyRegion_` field in GalaxyEggbertGame; reset per `LoadWorld`, parsed from `.txt` header
 
 ---
 

@@ -180,6 +180,28 @@ static void ApplyWorldSky(Urho3D::Scene* scene, int world) {
     zone->SetFogColor(kPalette[idx].fog);
 }
 
+void GalaxyEggbertGame::UpdateSkyDome(int region) {
+    auto* cache = context_->GetSubsystem<ResourceCache>();
+    auto* skyNode = scene_->GetChild("SkyDome");
+    if (!skyNode) {
+        skyNode = scene_->CreateChild("SkyDome");
+        skyNode->SetScale(500.0f);
+        auto* sky = skyNode->CreateComponent<StaticModel>();
+        sky->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
+    }
+    auto* sky = skyNode->GetComponent<StaticModel>();
+    if (!sky) return;
+    char path[64];
+    std::snprintf(path, sizeof(path), "backgrounds/decor%03d.png", region);
+    auto* tex = cache->GetResource<Texture2D>(path);
+    if (!tex) return;
+    SharedPtr<Material> mat(new Material(context_));
+    auto* tech = cache->GetResource<Technique>("Techniques/DiffSkydome.xml");
+    if (tech) mat->SetTechnique(0, tech);
+    mat->SetTexture(TU_DIFFUSE, tex);
+    sky->SetMaterial(mat);
+}
+
 void GalaxyEggbertGame::SpawnTerrainNodes() {
     auto* cache = context_->GetSubsystem<ResourceCache>();
     auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
@@ -230,6 +252,8 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
         if (!std::getline(f, header)) return false;
         const char* bp = std::strstr(header.c_str(), "blupiPos=");
         if (bp) std::sscanf(bp, "blupiPos=%d;%d", &blupiPosX, &blupiPosY);
+        const char* rg = std::strstr(header.c_str(), "region=");
+        if (rg) std::sscanf(rg, "region=%d", &skyRegion_);
     }
 
     const int blupiTileCol = blupiPosX / kMobTile;
@@ -260,8 +284,8 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
 
             bool supported = (type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
                               type == 6  || type == 7  || type == 13 || type == 16 || type == 17 ||
-                              type == 20 || type == 25 || type == 30 || type == 49 || type == 50 ||
-                              type == 51);
+                              type == 20 || type == 25 || type == 30 || type == 33 || type == 49 ||
+                              type == 50 || type == 51);
             if (!supported) continue;
 
             // pixel → 3D: tile = px/64, 3D = tile - kW (colOff=0, rowOff=0)
@@ -278,7 +302,7 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
             spec.speed    = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
 
             // Patrol enemies stored with posStart==posEnd — give default ±2 tile X patrol.
-            bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20);
+            bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20 || type == 33);
             if (isPatrol && spec.posStart.x_ == spec.posEnd.x_ &&
                             spec.posStart.z_ == spec.posEnd.z_) {
                 spec.posStart.x_ -= 2.0f;
@@ -316,6 +340,7 @@ void GalaxyEggbertGame::LoadWorld(int worldNum) {
     if (terrainRoot_) terrainRoot_->RemoveAllChildren();
     tileMatCache_.clear();
     mobileObjects_.clear();
+    skyRegion_ = 0;
 
     objectSheet_ = context_->GetSubsystem<ResourceCache>()
         ->GetResource<Texture2D>("icons/object-m.png");
@@ -350,6 +375,7 @@ void GalaxyEggbertGame::LoadWorld(int worldNum) {
 
     SpawnTerrainNodes();
     ApplyWorldSky(scene_.Get(), worldNum);
+    UpdateSkyDome(skyRegion_);
 }
 
 // ─── phase transitions ───────────────────────────────────────────────────────

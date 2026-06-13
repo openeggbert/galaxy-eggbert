@@ -156,13 +156,18 @@ void Blupi::Update(float dt) {
     // --- Forward/back movement along facing direction ---
     float rad = facingYaw_ * static_cast<float>(M_PI) / 180.0f;
     Vector3 fwd(std::sin(rad), 0.0f, std::cos(rad));
+    Vector3 right(fwd.z_, 0.0f, -fwd.x_);  // 90° clockwise from fwd
 
     float forwardInput = 0.0f;
     if (input->GetKeyDown(KEY_UP))   forwardInput =  1.0f;
     if (input->GetKeyDown(KEY_DOWN)) forwardInput = -1.0f;
 
-    vel_.x_ = fwd.x_ * forwardInput * kMoveSpeed;
-    vel_.z_ = fwd.z_ * forwardInput * kMoveSpeed;
+    float strafeInput = 0.0f;
+    if (input->GetKeyDown(KEY_A)) strafeInput = -1.0f;
+    if (input->GetKeyDown(KEY_D)) strafeInput =  1.0f;
+
+    vel_.x_ = (fwd.x_ * forwardInput + right.x_ * strafeInput) * kMoveSpeed;
+    vel_.z_ = (fwd.z_ * forwardInput + right.z_ * strafeInput) * kMoveSpeed;
 
     // --- Gravity ---
     vel_.y_ += kGravity * dt;

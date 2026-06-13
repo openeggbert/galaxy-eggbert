@@ -40,6 +40,7 @@ private:
     bool LoadMobileEggbertTerrain(const char* path);
     void SpawnTerrainNodes();
     void CreateDemoObjects();
+    void UpdateSkyDome(int region);
 
     void EnterPhase(GalaxyEggbert::GamePhase next);
 
@@ -76,6 +77,7 @@ private:
 
     std::vector<MobileObjSpec> mobileObjects_;
     Urho3D::Vector3            blupiSpawn_{0.0f, Blupi::kHalfH + 0.5f, 0.0f};
+    int                        skyRegion_ = 0;
 
     // State
     GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;

@@ -39,6 +39,8 @@ int Decor::GetIcon(const Object& obj) const {
     static const int kBird[8] = {98,99,100,101,102,103,104,105};
     // Fish (table_poisson_left): icons 81-83 wobble, phase / 6 at 60 fps.
     static const int kFish[8] = {82,82,81,81,82,82,83,83};
+    // Blupit tank (table_blupit_left): icons 248-250 cycling, phase / 6 at 60 fps.
+    static const int kBlupit[8] = {249,249,250,250,249,249,248,248};
     switch (obj.type) {
         case ObjectType::ObjectType1:  return 29;                      // platform: static
         case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;       // enemy A: icons 12-20
@@ -49,6 +51,7 @@ int Decor::GetIcon(const Object& obj) const {
         case ObjectType::ObjectType17: return kFish[(p / 6) % 8];      // fish
         case ObjectType::ObjectType20: return kBird[(p / 6) % 8];      // bird
         case ObjectType::ObjectType30: return 178;                     // drink: static
+        case ObjectType::ObjectType33: return kBlupit[(p / 6) % 8];   // blupit tank
         case ObjectType::ObjectType5: {                             // treasure: 0→10→0 bounce
             int q = (p / 9) % 22;
             return (q < 11) ? q : (21 - q);
@@ -159,6 +162,7 @@ void Decor::Update(float dt, Vector3 blupiPos) {
             case ObjectType::ObjectType16:
             case ObjectType::ObjectType17:
             case ObjectType::ObjectType20:
+            case ObjectType::ObjectType33:
                 blupiHit_ = true;
                 break;
             default:
