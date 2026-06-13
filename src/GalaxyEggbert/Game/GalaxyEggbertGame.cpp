@@ -538,6 +538,13 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
                 winStars_ = (tot == 0 || col >= tot) ? 3 :
                             (col * 2 >= tot)         ? 2 : 1;
             }
+            {
+                int w = currentWorld_ - 1; // world just completed (before increment)
+                if (w >= 1 && w <= 5) {
+                    if (bestTime_[w] <= 0.0f || levelTime_ < bestTime_[w])
+                        bestTime_[w] = levelTime_;
+                }
+            }
             hud_->SetVisible(false);
             if (input) input->SetMouseVisible(true);
             break;
@@ -1084,11 +1091,21 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
     char timeBonusBuf[32] = "";
     if (timeBonus_ > 0)
         std::snprintf(timeBonusBuf, sizeof(timeBonusBuf), "  Time bonus: +%d", timeBonus_);
-    char buf[384];
+    char bestTimeBuf[32] = "";
+    {
+        float bt = (completedWorld >= 1 && completedWorld <= 5) ? bestTime_[completedWorld] : 0.0f;
+        if (bt > 0.0f) {
+            bool newRecord = (static_cast<int>(bt) == static_cast<int>(levelTime_));
+            std::snprintf(bestTimeBuf, sizeof(bestTimeBuf),
+                newRecord ? "  Best: %d:%02d (NEW!)" : "  Best: %d:%02d",
+                static_cast<int>(bt) / 60, static_cast<int>(bt) % 60);
+        }
+    }
+    char buf[448];
     std::snprintf(buf, sizeof(buf),
-        "%s  [ %s ]\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d%s\nScore: %d%s\n\nPress any key...",
-        header, stars, completedWorld, wname, collected, total, lives_, wMins, wSecs, timeBonusBuf,
-        score_, newBest ? "  *** NEW BEST! ***" : "");
+        "%s  [ %s ]\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d%s%s\nScore: %d%s\n\nPress any key...",
+        header, stars, completedWorld, wname, collected, total, lives_, wMins, wSecs,
+        timeBonusBuf, bestTimeBuf, score_, newBest ? "  *** NEW BEST! ***" : "");
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();

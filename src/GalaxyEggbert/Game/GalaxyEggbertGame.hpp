@@ -87,6 +87,7 @@ private:
     GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;
     bool        drawDebug_    = false;
     float       gameSpeed_    = 1.0f;  // Slow=0.6, Normal=1.0, Fast=1.5; G key cycles
+    float       bestTime_[6]  = {};    // best levelTime_ per world [1..5]; 0=not yet beaten
     int         lives_        = 3;
     int         currentWorld_ = 1;
     int         score_        = 0;    // accumulated across all levels; reset on full restart
