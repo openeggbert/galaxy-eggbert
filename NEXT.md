@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 42)
+## Current state (as of Phase 43)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -144,6 +144,9 @@ or the original Windows Phone game.
   persisted when switching gamer slots mid-session (bug)
 - Fall death plays `SoundChannel8` (same as tile hazard / enemy hit); previously silent
 - Camera FOV set to 65° (was default 45°); wider view suits 3rd-person platformer
+- Score system: `score_` (persistent across level transitions, reset on full restart/slot select);
+  awards: +10 treasure, +25 stomp kill, +50 key, +50 egg/drink, +100 all-treasures bonus life;
+  shown in HUD text (`"Score: N"`), Win overlay, and Lost overlay (Game Over screen)
 - Level elapsed timer: `levelTime_` (per-level, resets in AdvanceToNextWorld/ResetLevel/SelectGamer/F-key jump);
   shown in HUD as `"M:SS"` alongside treasures; also displayed in Win overlay (`"Time: M:SS"`);
   timer stops accumulating the moment the Play phase exits (frozen in Win overlay)

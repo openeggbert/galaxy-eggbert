@@ -84,6 +84,7 @@ private:
     bool        drawDebug_    = false;
     int         lives_        = 3;
     int         currentWorld_ = 1;
+    int         score_        = 0;    // accumulated across all levels; reset on full restart
     float       totalTime_    = 0.0f; // runs continuously; drives hazard-tile animation
     GameData    gameData_;
     std::string savePath_;

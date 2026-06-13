@@ -10,7 +10,7 @@ public:
     void ShowPlay(int lives, int collected, int totalTreasures,
                   int keys49, int keys50, int keys51,
                   float shieldSecs = 0.0f, int world = 1, bool showHint = true,
-                  float levelTime = 0.0f);
+                  float levelTime = 0.0f, int score = 0);
     void ShowWin();
 
 private:

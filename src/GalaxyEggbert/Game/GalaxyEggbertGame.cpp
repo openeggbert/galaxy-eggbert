@@ -537,6 +537,7 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     gameData_.SetSelectedGamer(slot);
     lives_                  = gameData_.GetNbVies();
     currentWorld_           = gameData_.GetLastWorld();
+    score_                  = 0;
     levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;
@@ -692,6 +693,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         if (decor_->WasStompKill()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel5);
             if (blupi_) blupi_->Bounce();
+            score_ += 25;
         }
 
         // Shield pickup
@@ -704,6 +706,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         {
             int k49 = decor_->GetKeys49(), k50 = decor_->GetKeys50(), k51 = decor_->GetKeys51();
             if (k49 > keysRed_ || k50 > keysGreen_ || k51 > keysBlue_) {
+                score_ += 50 * ((k49 - keysRed_) + (k50 - keysGreen_) + (k51 - keysBlue_));
                 if (sound_) sound_->Play(SoundChannel::SoundChannel11);
                 keysRed_ = k49; keysGreen_ = k50; keysBlue_ = k51;
             }
@@ -712,12 +715,14 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         // Treasure pickup
         int collected = decor_->GetCollected();
         if (collected > prevCollected_) {
+            score_ += 10 * (collected - prevCollected_);
             if (sound_) sound_->Play(SoundChannel::SoundChannel10);
             prevCollected_ = collected;
         }
 
         // Egg pickup: grants +1 life (cap 9).
         if (decor_->WasEggCollected()) {
+            score_ += 50;
             if (sound_) sound_->Play(SoundChannel::SoundChannel42);
             if (lives_ < 9) {
                 ++lives_;
@@ -728,6 +733,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
         // Drink pickup: grants +1 life (cap 9).
         if (decor_->WasDrinkCollected()) {
+            score_ += 50;
             if (sound_) sound_->Play(SoundChannel::SoundChannel42);
             if (lives_ < 9) {
                 ++lives_;
@@ -740,6 +746,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         int total = decor_->GetTotalTreasures();
         if (!bonusLifeAwarded_ && total > 0 && collected >= total) {
             bonusLifeAwarded_ = true;
+            score_ += 100;
             if (lives_ < 9) {
                 ++lives_;
                 gameData_.SetNbVies(lives_);
@@ -785,7 +792,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    keysRed_, keysGreen_, keysBlue_,
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f,
-                   levelTime_);
+                   levelTime_, score_);
 }
 
 void GalaxyEggbertGame::AdvanceToNextWorld() {
@@ -821,8 +828,8 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
     int wSecs = static_cast<int>(levelTime_) % 60;
     char buf[256];
     std::snprintf(buf, sizeof(buf),
-        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\n\nPress any key...",
-        header, completedWorld, wname, collected, total, lives_, wMins, wSecs);
+        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\nScore: %d\n\nPress any key...",
+        header, completedWorld, wname, collected, total, lives_, wMins, wSecs, score_);
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
@@ -839,8 +846,8 @@ void GalaxyEggbertGame::UpdateLost(float dt) {
     const char* wname = WorldName(currentWorld_);
     char buf[256];
     std::snprintf(buf, sizeof(buf),
-        "GAME OVER\n\nFell on World %d: %s\n\nPress any key to restart...",
-        currentWorld_, wname);
+        "GAME OVER\n\nFell on World %d: %s\nScore: %d\n\nPress any key to restart...",
+        currentWorld_, wname, score_);
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
@@ -855,6 +862,7 @@ void GalaxyEggbertGame::UpdateLost(float dt) {
 void GalaxyEggbertGame::ResetLevel() {
     lives_                  = 3;
     currentWorld_           = 1;
+    score_                  = 0;
     levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;
