@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html" class="active">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Architecture</div>
+  <h1>Architecture</h1>
+  <p class="subtitle">How the project is structured, how components interact, and how data flows.</p>
+
+  <h2>High-Level Layering</h2>
+  <pre><code>┌─────────────────────────────────────────────────────┐
+│                  Urho3D Engine API                   │
+│  (Scene graph, ResourceCache, Input, Audio, UI, …)   │
+└────────────────────────┬────────────────────────────┘
+                         │ extends
+           ┌─────────────▼──────────────┐
+           │      GalaxyEggbertApp       │  ← entry point / lifecycle
+           │  (Urho3D::Application)      │
+           └─────────────┬──────────────┘
+                         │ owns
+           ┌─────────────▼──────────────┐
+           │     GalaxyEggbertGame       │  ← main game coordinator
+           │  (scene, world, subsystems) │
+           └──────┬────────────┬────────┘
+         owns     │            │ uses
+    ┌─────────────┘            └──────────────────────┐
+    │                                                  │
+    ▼   Game subsystems                                ▼  Data layer
+  Blupi          ← player physics, animation    World/Chunk/Block
+  Decor          ← object pool, enemies         (engine-agnostic)
+  CameraController ← 3rd-person orbit
+  HUD            ← 2D overlay
+  PhaseManager   ← game-phase state machine
+  SoundManager   ← 93-channel WAV audio
+  GameData       ← 640-byte save file</code></pre>
+
+  <h2>Main Components</h2>
+
+  <h3>Entry Point — <code>Program.cpp</code></h3>
+  <p>
+    A single line using the Urho3D macro:
+  </p>
+  <pre><code>URHO3D_DEFINE_APPLICATION_MAIN(GalaxyEggbertApp)</code></pre>
+  <p>
+    This macro expands to the platform-appropriate <code>main()</code> / <code>SDL_main()</code> entry point
+    and constructs a <code>GalaxyEggbertApp</code> instance.
+  </p>
+
+  <h3>Application — <code>GalaxyEggbertApp</code></h3>
+  <p>
+    Subclass of <code>Urho3D::Application</code>. Responsible for:
+  </p>
+  <ul>
+    <li><code>Setup()</code> — window title, resolution, resource paths, log file</li>
+    <li><code>Start()</code> — creates <code>GalaxyEggbertGame</code>, subscribes to <code>E_UPDATE</code> event</li>
+    <li><code>HandleUpdate()</code> — receives timestep from engine, calls <code>game_->Update(dt)</code></li>
+    <li><code>Stop()</code> — destroys the game object</li>
+  </ul>
+  <p>Source: <code>src/GalaxyEggbert/GalaxyEggbertApp.hpp</code>, <code>.cpp</code></p>
+
+  <h3>Game Coordinator — <code>GalaxyEggbertGame</code></h3>
+  <p>
+    Owns the Urho3D scene and all game subsystems. Responsibilities:
+  </p>
+  <ul>
+    <li>Creates the 3D scene (Octree, Zone, directional lights)</li>
+    <li>Loads and renders world data (block-by-block terrain nodes)</li>
+    <li>Manages the <code>GamePhase</code> state machine via <code>PhaseManager</code></li>
+    <li>Delegates per-frame logic to phase-specific update methods (<code>UpdateInit</code>, <code>UpdatePlay</code>, etc.)</li>
+    <li>Coordinates all subsystems: Blupi, Decor, Camera, HUD, Sound, Save</li>
+  </ul>
+  <p>Source: <code>src/GalaxyEggbert/Game/GalaxyEggbertGame.hpp</code>, <code>.cpp</code></p>
+
+  <h3>World Data Model — <code>World / Chunk / Block</code></h3>
+  <p>
+    Engine-agnostic C++ data model. No Urho3D dependency.
+    Tested by 54 unit tests in <code>tests/GalaxyEggbert/Worlds/</code>.
+  </p>
+  <ul>
+    <li><strong><code>Block</code></strong> — 16-bit value: 12-bit type ID + 4-bit metadata</li>
+    <li><strong><code>Chunk</code></strong> — 10×10×10 blocks; palette-compressed bit-packed storage</li>
+    <li><strong><code>World</code></strong> — 10×10×10 chunks (100×100×100 blocks total); save/load API</li>
+  </ul>
+  <p>Public headers: <code>include/GalaxyEggbert/Worlds/</code></p>
+
+  <h2>Initialization Flow</h2>
+  <pre><code>Program.cpp
+  └─ URHO3D_DEFINE_APPLICATION_MAIN(GalaxyEggbertApp)
+       └─ GalaxyEggbertApp::Setup()
+            ├─ Set window size: 1280×720
+            ├─ Set resource paths: Data;CoreData;Content
+            └─ Set log: GalaxyEggbert.log
+       └─ GalaxyEggbertApp::Start()
+            ├─ Create GalaxyEggbertGame
+            └─ game_->Start()
+                 ├─ Determine save path
+                 ├─ Read GameData (or defaults)
+                 ├─ CreateScene() — Scene + Octree + Zone + Lights
+                 ├─ LoadWorld(currentWorld_)
+                 ├─ Create PhaseManager, HUD, CameraController, SoundManager
+                 └─ EnterPhase(GamePhase::Init)</code></pre>
+
+  <h2>Update Flow (per frame)</h2>
+  <pre><code>E_UPDATE event from Urho3D engine
+  └─ GalaxyEggbertApp::HandleUpdate(dt)
+       └─ GalaxyEggbertGame::Update(dt)
+            ├─ Check global keys (ESC → quit, F1 → toggle debug)
+            └─ Switch on current GamePhase:
+                 Play:      UpdatePlay(dt)
+                 │           ├─ blupi_->Update(dt)    ← physics + animation
+                 │           ├─ camera_->Update(dt)   ← camera orbit
+                 │           ├─ decor_->Update(dt)    ← enemy + collectible update
+                 │           ├─ Collision/pickup event checks
+                 │           └─ hud_->ShowPlay(...)
+                 Init:      UpdateInit(dt)   ← gamer select
+                 Pause:     UpdatePause(dt)
+                 Win:       UpdateWin(dt)
+                 Lost:      UpdateLost(dt)
+                 Settings:  UpdateSettings(dt)</code></pre>
+
+  <h2>Shutdown Flow</h2>
+  <pre><code>GalaxyEggbertApp::Stop()
+  └─ game_.reset()
+       └─ GalaxyEggbertGame::Stop()
+            ├─ Save GameData to disk
+            ├─ sound_->StopAll()
+            ├─ Reset all subsystems (decor, blupi, phases, hud, camera, sound)
+            ├─ terrainRoot_.Reset()
+            ├─ scene_.Reset()
+            └─ world_.reset()</code></pre>
+
+  <h2>Dependency Map</h2>
+  <table>
+    <tr><th>Component</th><th>Depends on</th></tr>
+    <tr><td><code>GalaxyEggbertApp</code></td><td>Urho3D::Application, GalaxyEggbertGame</td></tr>
+    <tr><td><code>GalaxyEggbertGame</code></td><td>Urho3D (all subsystems), World, Blupi, Decor, Camera, HUD, PhaseManager, SoundManager, GameData</td></tr>
+    <tr><td><code>Blupi</code></td><td>Urho3D (Scene, Input, BillboardSet), World (read-only), Tables</td></tr>
+    <tr><td><code>Decor</code></td><td>Urho3D (Scene), ObjectNode</td></tr>
+    <tr><td><code>ObjectNode</code></td><td>Urho3D (BillboardSet, Texture2D)</td></tr>
+    <tr><td><code>CameraController</code></td><td>Urho3D (Scene, Camera node)</td></tr>
+    <tr><td><code>HUD</code></td><td>Urho3D (UI subsystem)</td></tr>
+    <tr><td><code>PhaseManager</code></td><td>Urho3D (UI subsystem, ResourceCache)</td></tr>
+    <tr><td><code>SoundManager</code></td><td>Urho3D (Audio, Sound, SoundSource)</td></tr>
+    <tr><td><code>GameData</code></td><td>C++ stdlib only (no engine dependency)</td></tr>
+    <tr><td><code>World / Chunk / Block</code></td><td>C++ stdlib only (no engine dependency)</td></tr>
+    <tr><td><code>Tables</code></td><td>BlupiAction enum only</td></tr>
+    <tr><td><code>BlockTypes</code></td><td>C++ stdlib only</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Engine Abstraction</strong>
+    Galaxy Eggbert uses the Urho3D API exclusively (no <code>#ifdef</code> guards for engine differences).
+    The Nova3D engine is expected to provide the same API and namespace; switching engines requires only a CMake flag change.
+  </div>
+
+  <div class="page-nav">
+    <a href="gameplay.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Gameplay</span>
+    </a>
+    <a class="next" href="project-structure.html">
+      <span class="label">Next</span>
+      <span class="title">Project Structure &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameData — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GameData</div>
+  <h1>GameData</h1>
+  <p class="subtitle">640-byte binary save file — binary-compatible with mobile-eggbert.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>GameData</code> is a plain-data struct that holds all persistent player progress.
+    The 640-byte layout is identical to the original mobile-eggbert save format,
+    allowing interoperability with save files from that game.
+    Three gamer slots are supported.
+  </p>
+  <p>Header: <code>src/GalaxyEggbert/Game/GameData.hpp</code></p>
+
+  <h2>Constants</h2>
+  <pre><code>static constexpr int kTotalLength = 640;   // total file size in bytes
+static constexpr int kMaxGamer    =   3;   // number of gamer slots</code></pre>
+
+  <h2>Binary Layout</h2>
+  <p>All values are single bytes (<code>uint8_t</code>) unless noted.</p>
+  <table>
+    <tr><th>Offset</th><th>Field</th><th>Values / Notes</th></tr>
+    <tr><td>0</td><td><code>version</code></td><td>Format version byte</td></tr>
+    <tr><td>1</td><td><em>reserved</em></td><td>Padding byte</td></tr>
+    <tr><td>2</td><td><code>selectedGamer</code></td><td>0–2, last active slot</td></tr>
+    <tr><td>3</td><td><code>sounds</code></td><td>0 = muted, 1 = enabled</td></tr>
+    <tr><td>4</td><td><code>jumpRight</code></td><td>0/1 control preference</td></tr>
+    <tr><td>5</td><td><code>autoZoom</code></td><td>0/1</td></tr>
+    <tr><td>6</td><td><code>accelActive</code></td><td>0/1 (accelerometer, mobile)</td></tr>
+    <tr><td>7</td><td><code>accelSensitivity</code></td><td>Sensitivity level 0–9</td></tr>
+    <tr><td>8–9</td><td><em>reserved</em></td><td>Alignment padding</td></tr>
+    <tr><td>10 + g×210</td><td><code>nbVies[g]</code></td><td>Lives remaining for gamer <em>g</em> (0–2)</td></tr>
+    <tr><td>11 + g×210</td><td><code>lastWorld[g]</code></td><td>Highest world reached (1–5)</td></tr>
+    <tr><td>20 + g×210</td><td><code>doors[g][0..199]</code></td><td>200 bytes: per-door completion flags</td></tr>
+  </table>
+  <div class="note">
+    <strong>Note:</strong> The gamer sub-record is 210 bytes (3 × 210 = 630), plus 10 bytes of global header = 640 total.
+  </div>
+
+  <h2>API</h2>
+  <pre><code>struct GameData {
+    static constexpr int kTotalLength = 640;
+    static constexpr int kMaxGamer    = 3;
+
+    uint8_t data[kTotalLength] = {};
+
+    void load(const std::filesystem::path&amp; path);
+    void save(const std::filesystem::path&amp; path) const;
+
+    // Convenience accessors (index into data[])
+    uint8_t&amp;       version()          { return data[0]; }
+    uint8_t&amp;       selectedGamer()    { return data[2]; }
+    uint8_t&amp;       sounds()           { return data[3]; }
+
+    uint8_t&amp;       nbVies(int g)      { return data[10 + g * 210]; }
+    uint8_t&amp;       lastWorld(int g)   { return data[11 + g * 210]; }
+    uint8_t*       doors(int g)       { return &amp;data[20 + g * 210]; }
+
+    const uint8_t& nbVies(int g)      const { return data[10 + g * 210]; }
+    const uint8_t& lastWorld(int g)   const { return data[11 + g * 210]; }
+    const uint8_t* doors(int g)       const { return &amp;data[20 + g * 210]; }
+};</code></pre>
+
+  <h2>File Locations</h2>
+  <p>See <a href="../save-system.html">Save System</a> for per-platform paths. Summary:</p>
+  <table>
+    <tr><th>Platform</th><th>Path</th></tr>
+    <tr><td>Linux</td><td><code>~/.local/share/galaxy-eggbert/gamedata.dat</code></td></tr>
+    <tr><td>Windows</td><td><code>%APPDATA%\galaxy-eggbert\gamedata.dat</code></td></tr>
+    <tr><td>Web</td><td>Emscripten IDBFS (persisted in IndexedDB)</td></tr>
+  </table>
+
+  <h2>Usage in GalaxyEggbertGame</h2>
+  <pre><code>// On startup
+gameData_.load(savePath);
+
+// When a gamer slot is selected
+int slot = gameData_.selectedGamer();
+lives_ = gameData_.nbVies(slot);
+currentWorld_ = gameData_.lastWorld(slot);
+
+// On world completion
+gameData_.doors(slot)[doorIndex] = 1;
+gameData_.lastWorld(slot) = currentWorld_;
+gameData_.save(savePath);</code></pre>
+
+  <div class="page-nav">
+    <a href="Chunk.html">← Chunk</a>
+    <a href="SoundManager.html">SoundManager →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

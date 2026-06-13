@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internals — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html" class="active">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Internals</div>
+  <h1>Internals</h1>
+  <p class="subtitle">Deep dives into algorithms, file formats, and subsystem mechanics.</p>
+
+  <div class="card-grid">
+    <a class="card" href="startup.html">
+      <h3>Startup Sequence</h3>
+      <p>From <code>main()</code> to the first gameplay frame — step by step.</p>
+    </a>
+    <a class="card" href="vwr-format.html">
+      <h3>VWR Binary Format</h3>
+      <p>Complete spec for the <code>.vwr</code> world file: magic, chunk table, VCH1 payload, BMD1 metadata.</p>
+    </a>
+    <a class="card" href="world-loading.html">
+      <h3>World Loading</h3>
+      <p>How <code>LoadWorld()</code> selects format, parses data, and spawns terrain nodes.</p>
+    </a>
+    <a class="card" href="object-lifecycle.html">
+      <h3>Object Lifecycle</h3>
+      <p>How game objects are placed, updated, and removed via the Decor pool.</p>
+    </a>
+    <a class="card" href="collision.html">
+      <h3>Collision System</h3>
+      <p>AABB voxel collision — ResolveY, ResolveXZ, and the block solidity rules.</p>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Levels &amp; Worlds — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html" class="active">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Levels &amp; Worlds</div>
+  <h1>Levels &amp; Worlds</h1>
+  <p class="subtitle">World file formats, loading pipeline, tile types, and object placement.</p>
+
+  <h2>World Configuration</h2>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>World dimensions</td><td>100 × 100 × 100 blocks</td></tr>
+    <tr><td>Chunk size</td><td>10 × 10 × 10 blocks</td></tr>
+    <tr><td>Chunks per axis</td><td>10</td></tr>
+    <tr><td>Total chunks</td><td>1000</td></tr>
+    <tr><td>Tile grid (gameplay)</td><td>100 × 100 tiles (MAXCELX × MAXCELY)</td></tr>
+    <tr><td>World center offset</td><td>kWCX=50, kWCZ=50 (Blupi origin mapped to block 50,0,50)</td></tr>
+  </table>
+  <p>
+    The original game uses a 2D 100×100 tile grid. In Galaxy Eggbert, each tile maps to one row of blocks
+    in the XZ plane. The Y axis adds 3D height; levels currently use Y=0 for the ground layer
+    with walls and platforms above.
+  </p>
+
+  <h2>World File Formats</h2>
+  <p>Galaxy Eggbert loads worlds from two file formats, tried in order:</p>
+
+  <h3>1. Native Binary Format (<code>.vwr</code>)</h3>
+  <p>
+    A custom palette-compressed voxel format. See <a href="internals/vwr-format.html">VWR Format</a>
+    for the complete specification.
+  </p>
+  <ul>
+    <li>File magic: <code>VWR1</code></li>
+    <li>Chunk payload magic: <code>VCH1</code></li>
+    <li>Palette-compressed per chunk; empty chunks skipped</li>
+    <li>Files are stored in <code>worlds/world001.vwr</code> … <code>worlds/world005.vwr</code></li>
+    <li>Generated from .txt on first run and cached for subsequent loads</li>
+  </ul>
+
+  <h3>2. Mobile-Eggbert Text Format (<code>.txt</code>)</h3>
+  <p>
+    A plain-text format from the original mobile-eggbert reference port.
+    Files are stored in <code>worlds/world001.txt</code> … <code>worlds/world005.txt</code>.
+  </p>
+  <pre><code>blupiPos=3200;3392 region=0 posDecor=1344;2048 …
+Decor:
+10,10,10,0,10,10,183,183,183, …   ← 100 rows × 100 columns, tile IDs
+…
+MoveObject: type=2 stepAdvance=2 … posStart=640;640 posEnd=1280;640
+MoveObject: type=5 stepAdvance=1 … posStart=1920;1280 posEnd=1920;1280
+…</code></pre>
+
+  <h4>Header fields</h4>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>blupiPos=X;Y</code></td><td>Blupi's spawn position in pixel coordinates (1 tile = 64 px)</td></tr>
+    <tr><td><code>region=N</code></td><td>Sky dome background index (maps to <code>backgrounds/decorNNN.png</code>)</td></tr>
+    <tr><td><code>posDecor=X;Y</code></td><td>Camera/scroll offset (not the grid origin; parsed but not used by Galaxy Eggbert)</td></tr>
+  </table>
+
+  <h4>Decor section</h4>
+  <p>
+    100 comma-separated rows of tile IDs. Row index = world Z coordinate. Column index = world X coordinate.
+    Tile ID 0 = air. Tile ID → block type mapping: <code>BlockTypes::fromMobileIconId(id)</code>.
+    Passable (decorative) tiles become Air; solid tiles keep their icon ID as block type.
+  </p>
+
+  <h4>MoveObject entries</h4>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>type=N</code></td><td>ObjectType (must match <code>ObjectType</code> enum)</td></tr>
+    <tr><td><code>stepAdvance=N</code></td><td>Speed: <code>speed = max(0.5, stepAdvance/3.0)</code></td></tr>
+    <tr><td><code>posStart=X;Y</code></td><td>Start position in pixels</td></tr>
+    <tr><td><code>posEnd=X;Y</code></td><td>End position in pixels</td></tr>
+  </table>
+  <p>
+    Supported object types from .txt files:
+    1, 2, 3, 4, 5, 6, 7, 12, 13, 16, 17, 20, 25, 30, 33, 49, 50, 51.
+  </p>
+
+  <h3>3. Demo World (fallback)</h3>
+  <p>
+    If neither <code>.vwr</code> nor <code>.txt</code> is found, a procedural demo world is generated
+    by <code>GalaxyEggbertGame::BuildDemoWorld()</code> and saved as <code>.vwr</code> for future runs.
+    The demo world includes: a 30×30 ground platform, perimeter walls, height-varied platforms,
+    a lava strip, a spike tile, patrol enemies, collectibles, and a level exit.
+  </p>
+
+  <h2>World Loading Pipeline</h2>
+  <pre><code>GalaxyEggbertGame::LoadWorld(worldNum):
+  1. Clear terrain nodes and material cache
+  2. Try to load worlds/worldNNN.vwr (binary)
+  3. If not found, try worlds/worldNNN.txt (text)
+     → LoadMobileEggbertTerrain() parses header + Decor section + MoveObjects
+  4. If still no world, generate demo world, save as .vwr
+  5. SpawnTerrainNodes() → iterate all chunks, create one Node+StaticModel per non-air block
+  6. ApplyWorldSky(scene, worldNum) → set Zone ambient + fog
+  7. UpdateSkyDome(skyRegion_) → load sky sphere texture</code></pre>
+
+  <h2>Block Types</h2>
+  <p>
+    Block type = icon index into <code>object-m.png</code>. Named constants:
+  </p>
+  <table>
+    <tr><th>Name</th><th>Icon ID</th><th>Description</th></tr>
+    <tr><td><code>Air</code></td><td>0</td><td>Empty / no block</td></tr>
+    <tr><td><code>Ground</code></td><td>10</td><td>Grass/ground tile</td></tr>
+    <tr><td><code>StoneA</code></td><td>18</td><td>Light stone</td></tr>
+    <tr><td><code>StoneB</code></td><td>25</td><td>Dark stone</td></tr>
+    <tr><td><code>Wall</code></td><td>183</td><td>Brick wall</td></tr>
+    <tr><td><code>Platform</code></td><td>200</td><td>Floating platform tile</td></tr>
+    <tr><td><code>Lava</code></td><td>68</td><td><strong>Hazard:</strong> kills Blupi</td></tr>
+    <tr><td><code>Spike</code></td><td>373</td><td><strong>Hazard:</strong> kills Blupi</td></tr>
+    <tr><td><code>Crusher</code></td><td>317</td><td><strong>Hazard:</strong> kills Blupi</td></tr>
+    <tr><td><code>Marker</code></td><td>309</td><td>Marker tile (purpose: Needs verification)</td></tr>
+    <tr><td><code>Sp0–Sp7</code></td><td>158–165</td><td>Special tile variants</td></tr>
+    <tr><td>All other IDs (1–440)</td><td>icon ID</td><td>Rendered from object-m.png; no special gameplay</td></tr>
+  </table>
+
+  <h2>Tile Passability</h2>
+  <p>
+    203 tile IDs are decorative (passable) and become <code>Air</code> when loaded from .txt files.
+    This is determined by the <code>BlockTypes::isMobileTransparent(icon)</code> lookup table,
+    derived from the original <code>table_decor_quart</code> data in mobile-eggbert.
+    Icons 68 (Lava) and 317 (Crusher) are excluded from the passable list even though
+    the original table marks them as decorative — they are kept solid for the hazard system.
+  </p>
+
+  <h2>The 5 Worlds</h2>
+  <table>
+    <tr><th>World</th><th>Theme</th><th>Source File</th></tr>
+    <tr><td>1</td><td>Grassland</td><td><code>worlds/world001.txt</code></td></tr>
+    <tr><td>2</td><td>Forest</td><td><code>worlds/world002.txt</code></td></tr>
+    <tr><td>3</td><td>Ice Caves</td><td><code>worlds/world003.txt</code></td></tr>
+    <tr><td>4</td><td>Lava Fields</td><td><code>worlds/world004.txt</code></td></tr>
+    <tr><td>5</td><td>Space Station</td><td><code>worlds/world005.txt</code></td></tr>
+  </table>
+
+  <div class="tip">
+    <strong>More Detail</strong>
+    For the full binary .vwr file format specification, see <a href="internals/vwr-format.html">VWR Format</a>.
+    For the world loading internals, see <a href="internals/world-loading.html">World Loading</a>.
+  </div>
+
+  <div class="page-nav">
+    <a href="controls.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Controls</span>
+    </a>
+    <a class="next" href="assets.html">
+      <span class="label">Next</span>
+      <span class="title">Assets &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

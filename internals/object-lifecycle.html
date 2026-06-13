@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Object Lifecycle — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Object Lifecycle</div>
+  <h1>Object Lifecycle</h1>
+  <p class="subtitle">How game objects are created, updated, and removed via the Decor pool.</p>
+
+  <h2>Creation</h2>
+  <p>
+    Objects are placed by calling <code>Decor::PlaceObject(type, pos, posEnd, speed)</code>.
+    This finds the first inactive slot in the 100-slot pool (<code>obj.active == false</code>)
+    and initialises it:
+  </p>
+  <pre><code>PlaceObject(ObjectType type, Vector3 pos, Vector3 posEnd, float speed):
+  for i in [0, kMaxObjects):
+      if !objects_[i].active:
+          obj = &objects_[i]
+          obj->type      = type
+          obj->posStart  = pos
+          obj->posEnd    = posEnd
+          obj->pos       = pos
+          obj->speed     = speed
+          obj->direction = +1
+          obj->animPhase = 0
+          obj->active    = true
+          obj->node      = make_unique&lt;ObjectNode&gt;(ctx, scene_, elementMat_)
+          return
+  // pool full — object silently dropped</code></pre>
+
+  <h2>Per-Frame Update</h2>
+  <pre><code>Decor::Update(dt, blupiPos):
+  platformDelta_ = Vector3::ZERO
+  for each active object obj:
+      StepMovement(obj, dt)
+      obj.animPhase++
+      icon = GetIcon(obj)
+      obj.node->SetIcon(icon)
+      obj.node->SetPosition(obj.pos)
+      CheckContact(obj, blupiPos)</code></pre>
+
+  <h3>StepMovement</h3>
+  <p>
+    Linear patrol between <code>posStart</code> and <code>posEnd</code>.
+    When the object reaches an endpoint, <code>direction</code> reverses:
+  </p>
+  <pre><code>StepMovement(obj, dt):
+  if posStart == posEnd: return   // stationary
+  obj.pos += direction * normalize(posEnd - posStart) * speed * dt
+  if distance(obj.pos, posEnd) &lt; 0.05f:
+      obj.direction = -1; obj.pos = posEnd
+  elif distance(obj.pos, posStart) &lt; 0.05f:
+      obj.direction = +1; obj.pos = posStart</code></pre>
+
+  <h3>Platform Carry</h3>
+  <p>
+    For <code>ObjectType1</code> (moving platform): if Blupi is within the carry radius,
+    the per-frame XZ displacement is accumulated in <code>platformDelta_</code>
+    and applied to Blupi via <code>blupi_->ApplyExternalDelta(platformDelta_)</code>
+    in <code>GalaxyEggbertGame::UpdatePlay()</code>.
+  </p>
+
+  <h3>Contact Detection</h3>
+  <pre><code>CheckContact(obj, blupiPos):
+  dist = distance(obj.pos, blupiPos)
+  if dist &lt; 0.85f:
+      switch(obj.type):
+          case ExitDoor:  exitReached_ = true
+          case EnemyA:    blupiHit_    = true
+          case Shield:    shieldCollected_ = true; deactivate(obj)
+          case Key1..3:   keysCollected_++; deactivate(obj)
+          case Treasure:  collected_++; deactivate(obj)
+          ...</code></pre>
+
+  <h2>Removal</h2>
+  <p>
+    <code>deactivate(obj)</code> sets <code>obj.active = false</code> and calls
+    <code>obj.node->Remove()</code>, which removes the scene node.
+    The pool slot becomes available for reuse by the next <code>PlaceObject()</code> call.
+    Removed objects do not respawn unless the level is fully reloaded.
+  </p>
+
+  <h2>Event Consumption</h2>
+  <pre><code>// In GalaxyEggbertGame::UpdatePlay():
+if (decor_->WasBlupiHit())        { /* lose life */ }
+if (decor_->WasExitReached())     { EnterPhase(Win); }
+if (decor_->WasShieldCollected()) { shieldTimer_ = 5.0f; blupi_->StartFlash(5.0f); }
+decor_->ClearEvents();            // reset all flags after reading</code></pre>
+
+  <div class="page-nav">
+    <a href="world-loading.html">← World Loading</a>
+    <a href="collision.html">Collision System →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

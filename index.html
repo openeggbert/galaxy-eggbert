@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galaxy Eggbert Documentation</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html" class="active">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>Galaxy Eggbert Documentation</h1>
+  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · Urho3D · CMake</p>
+
+  <div class="note">
+    <strong>Status</strong>
+    Galaxy Eggbert is actively developed (currently at Phase 27). Core gameplay, 3D rendering, audio, and save system are all functional. Vehicles, full enemy AI, and Web/Android builds are still work in progress.
+  </div>
+
+  <h2>What is Galaxy Eggbert?</h2>
+  <p>
+    Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, originally a Windows Phone XNA platformer game from 2013.
+    The project takes the original game's levels, audio, sprite sheets, and gameplay rules and renders them in a 3D voxel environment using the <a href="engine-integration.html">Urho3D engine API</a>.
+  </p>
+  <p>
+    The original 2D tile grid becomes a 100×100×100 voxel world. Blupi — the player character — is rendered as a billboard sprite. Enemies and collectibles patrol and bounce through the 3D space. The save format is binary-compatible with the mobile-eggbert C++ reference port.
+  </p>
+
+  <h2>Quick Navigation</h2>
+  <div class="card-grid">
+    <a class="card" href="getting-started.html">
+      <h3>&#128640; Getting Started</h3>
+      <p>Prerequisites, submodule setup, and first build steps.</p>
+    </a>
+    <a class="card" href="build.html">
+      <h3>&#128295; Build Guide</h3>
+      <p>CMake configuration for Linux, Windows, and Web targets.</p>
+    </a>
+    <a class="card" href="architecture.html">
+      <h3>&#127963; Architecture</h3>
+      <p>High-level design, subsystem map, and data flow.</p>
+    </a>
+    <a class="card" href="gameplay.html">
+      <h3>&#127918; Gameplay</h3>
+      <p>Core loop, player mechanics, enemies, and progression.</p>
+    </a>
+    <a class="card" href="levels.html">
+      <h3>&#127758; Levels &amp; Worlds</h3>
+      <p>World file formats, loading pipeline, and tile types.</p>
+    </a>
+    <a class="card" href="classes/index.html">
+      <h3>&#128196; Class Reference</h3>
+      <p>Documented public classes, structs, and enums.</p>
+    </a>
+    <a class="card" href="tutorials/index.html">
+      <h3>&#128214; Tutorials</h3>
+      <p>Step-by-step guides for common development tasks.</p>
+    </a>
+    <a class="card" href="development/known-issues.html">
+      <h3>&#128679; Known Issues</h3>
+      <p>TODO items, limitations, and incomplete features.</p>
+    </a>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <tr><th>Component</th><th>Technology</th></tr>
+    <tr><td>Language</td><td>C++23</td></tr>
+    <tr><td>Engine (primary)</td><td>Urho3D API via U3D community fork</td></tr>
+    <tr><td>Engine (future)</td><td>Nova3D (Robert Vokac's Urho3D fork)</td></tr>
+    <tr><td>Build system</td><td>CMake ≥ 3.21</td></tr>
+    <tr><td>Testing</td><td>GoogleTest (54 unit tests)</td></tr>
+    <tr><td>Documentation</td><td>Doxygen (auto-generated) + this site</td></tr>
+    <tr><td>Linux graphics</td><td>EasyGL (OpenGL) or SDL Renderer</td></tr>
+    <tr><td>Windows graphics</td><td>SDL Renderer</td></tr>
+    <tr><td>Audio</td><td>Urho3D built-in (SDL_mixer backend)</td></tr>
+  </table>
+
+  <h2>Current Status (Phase 27)</h2>
+  <table>
+    <tr><th>Feature</th><th>Status</th></tr>
+    <tr><td>Voxel world model (World/Chunk/Block)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>World loading (.vwr and .txt formats)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Terrain rendering (UV-mapped block faces)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Blupi billboard sprite + animation</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Physics: gravity, jump, AABB collision</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Enemies and collectibles (partial)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>HUD: lives, treasures, keys, shield</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Audio: 93 WAV channels</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Save system (640-byte binary)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>5 worlds with progression</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Linux + Windows builds</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Vehicles (helicopter, jeep, skateboard)</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Animated 3D Blupi model</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Web (Emscripten) build</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Android build</td><td><span class="badge badge-planned">Planned</span></td></tr>
+  </table>
+
+  <h2>How to Open This Documentation</h2>
+  <p>
+    This is a static website — no server required. Open <code>src/index.html</code> directly in any modern browser.
+    All links use relative paths, so the site works from any local directory or when hosted on GitHub Pages.
+  </p>
+
+  <div class="page-nav">
+    <span></span>
+    <a class="next" href="overview.html">
+      <span class="label">Next</span>
+      <span class="title">Project Overview &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GalaxyEggbertApp — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GalaxyEggbertApp</div>
+  <h1>GalaxyEggbertApp</h1>
+  <p class="subtitle">Urho3D Application subclass — engine lifecycle entry point.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>GalaxyEggbertApp</code> is the top-level application class. It subclasses
+    <code>Urho3D::Application</code> and is registered as the application entry point
+    via <code>URHO3D_DEFINE_APPLICATION_MAIN(GalaxyEggbertApp)</code> in <code>Program.cpp</code>.
+  </p>
+  <p>Sources: <code>src/GalaxyEggbert/GalaxyEggbertApp.hpp</code> and <code>.cpp</code></p>
+
+  <h2>Class Declaration</h2>
+  <pre><code>class GalaxyEggbertApp : public Urho3D::Application {
+    URHO3D_OBJECT(GalaxyEggbertApp, Urho3D::Application);
+public:
+    explicit GalaxyEggbertApp(Urho3D::Context* context);
+    void Setup() override;
+    void Start()  override;
+    void Stop()   override;
+    void GameUpdate(float dt);
+    void HandleUpdate(Urho3D::StringHash, Urho3D::VariantMap&amp;);
+private:
+    std::unique_ptr&lt;GalaxyEggbertGame&gt; game_;
+};</code></pre>
+
+  <h2>Methods</h2>
+
+  <h3><code>Setup()</code></h3>
+  <p>Called by Urho3D before engine initialization. Sets engine parameters:</p>
+  <ul>
+    <li>Window title: <code>"Galaxy Eggbert"</code></li>
+    <li>Size: 1280×720, not full screen</li>
+    <li>Resource paths: <code>Data;CoreData;Content</code></li>
+    <li>Log file: <code>GalaxyEggbert.log</code></li>
+  </ul>
+
+  <h3><code>Start()</code></h3>
+  <p>Called after engine initialization. Creates <code>GalaxyEggbertGame</code> and subscribes to the <code>E_UPDATE</code> event.</p>
+
+  <h3><code>HandleUpdate(eventType, eventData)</code></h3>
+  <p>Event handler for <code>E_UPDATE</code>. Extracts the timestep from <code>eventData[P_TIMESTEP]</code> and calls <code>GameUpdate(dt)</code>.</p>
+
+  <h3><code>GameUpdate(float dt)</code></h3>
+  <p>Delegates to <code>game_->Update(dt)</code> if the game object exists.</p>
+
+  <h3><code>Stop()</code></h3>
+  <p>Called on shutdown. Resets <code>game_</code> (triggers <code>GalaxyEggbertGame::Stop()</code> and save-write).</p>
+
+  <h2>Ownership</h2>
+  <p>
+    Owns <code>game_</code> as a <code>std::unique_ptr&lt;GalaxyEggbertGame&gt;</code>.
+    The game is created in <code>Start()</code> and destroyed in <code>Stop()</code>.
+  </p>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

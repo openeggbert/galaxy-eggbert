@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Systems — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="index.html" class="active">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Systems</div>
+  <h1>Systems</h1>
+  <p class="subtitle">Cross-cutting game systems — how major runtime behaviours are implemented.</p>
+
+  <p>
+    While the <a href="../classes/index.html">Classes</a> reference describes individual types,
+    this section explains how multiple classes work together to produce runtime behaviour.
+  </p>
+
+  <div class="card-grid">
+    <a class="card" href="../gameplay.html">
+      <h3>Physics &amp; Movement</h3>
+      <p>Gravity, jump, AABB collision, fall death. Implemented in <code>Blupi</code>.</p>
+    </a>
+    <a class="card" href="../rendering.html">
+      <h3>Rendering</h3>
+      <p>Scene graph, terrain, billboards, sky dome, HUD. Urho3D backend.</p>
+    </a>
+    <a class="card" href="../audio.html">
+      <h3>Audio</h3>
+      <p>93-channel WAV playback via <code>SoundManager</code>.</p>
+    </a>
+    <a class="card" href="../input.html">
+      <h3>Input</h3>
+      <p>Keyboard polling via Urho3D Input subsystem.</p>
+    </a>
+    <a class="card" href="../save-system.html">
+      <h3>Save System</h3>
+      <p>640-byte binary save file, 3 gamer slots, cross-platform paths.</p>
+    </a>
+    <a class="card" href="../levels.html">
+      <h3>Level Loading</h3>
+      <p>VWR binary format and mobile-eggbert .txt format parsers.</p>
+    </a>
+    <a class="card" href="../game-loop.html">
+      <h3>Game Loop</h3>
+      <p>Urho3D E_UPDATE event, per-frame dt, phase dispatch.</p>
+    </a>
+    <a class="card" href="../gameplay.html#phases">
+      <h3>Phase State Machine</h3>
+      <p>Init → Play → Pause → Win/Lost → Resume transitions.</p>
+    </a>
+  </div>
+
+  <h2>System Interaction Map</h2>
+  <table>
+    <tr><th>System</th><th>Reads from</th><th>Writes to</th><th>Owner class</th></tr>
+    <tr><td>Physics</td><td>World (blocks), Input</td><td>Blupi position/velocity</td><td><code>Blupi</code></td></tr>
+    <tr><td>Object system</td><td>Level file (ObjectType), Blupi position</td><td>Scene nodes, event flags</td><td><code>Decor</code></td></tr>
+    <tr><td>Rendering</td><td>World, Blupi pos, Decor nodes</td><td>Urho3D scene graph</td><td><code>GalaxyEggbertGame</code></td></tr>
+    <tr><td>Audio</td><td>Game events (jump, collect, die)</td><td>Urho3D SoundSource</td><td><code>SoundManager</code></td></tr>
+    <tr><td>HUD</td><td>lives_, Decor events, phase</td><td>Urho3D UI elements</td><td><code>HUD</code></td></tr>
+    <tr><td>Camera</td><td>Blupi node position</td><td>Camera node transform</td><td><code>CameraController</code></td></tr>
+    <tr><td>Save</td><td>GameData (memory)</td><td>Disk / IDBFS</td><td><code>GameData</code></td></tr>
+    <tr><td>Phase</td><td>Decor events, Input, timer</td><td>GamePhase, overlays</td><td><code>PhaseManager</code>, <code>GalaxyEggbertGame</code></td></tr>
+  </table>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

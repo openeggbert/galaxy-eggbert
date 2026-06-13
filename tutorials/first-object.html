@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adding a New Game Object — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Adding a New Game Object</div>
+  <h1>Tutorial: Adding a New Game Object</h1>
+  <p class="subtitle">Register a new ObjectType, map its sprite icon, and place it in a level.</p>
+
+  <div class="warn">
+    <strong>ObjectType IDs are frozen.</strong> Values 0–203 are binary-identical to the original
+    mobile-eggbert level format and must not be renumbered. New objects must use IDs above 203
+    or reuse unused slots.
+  </div>
+
+  <h2>Step 1 — Add the ObjectType Enum Value</h2>
+  <p>File: <code>include/GalaxyEggbert/def/ObjectType.hpp</code></p>
+  <pre><code>// After ObjectType203:
+ObjectType204 = 204,   // MyNewObject</code></pre>
+
+  <h2>Step 2 — Add an Icon Mapping in Decor::GetIcon()</h2>
+  <p>File: <code>src/GalaxyEggbert/Game/Decor.cpp</code></p>
+  <pre><code>case ObjectType204:
+    // element.png icon 42 — static
+    return 42;</code></pre>
+  <p>
+    Icon indices reference the <code>element.png</code> sprite sheet
+    (600×1740 px, 60×60 tiles, 10 cols × 29 rows, 290 icons).
+    Choose an appropriate icon that visually represents your object.
+    If the object animates, return <code>baseIcon + (animPhase / frameDivisor) % frameCount</code>.
+  </p>
+
+  <h2>Step 3 — Add Contact Behaviour in Decor::Update()</h2>
+  <p>
+    In the per-object contact check inside <code>Decor::Update()</code>, handle your object type:
+  </p>
+  <pre><code>if (obj.type == ObjectType204 &amp;&amp; distance &lt; 0.85f) {
+    // e.g., treat it as a collectible:
+    collected_++;
+    obj.active = false;
+    obj.node-&gt;Remove();
+}</code></pre>
+
+  <h2>Step 4 — Place the Object in a Level</h2>
+  <p>
+    In a mobile-eggbert <code>.txt</code> level file, add a <code>MoveObject</code> entry:
+  </p>
+  <pre><code>MoveObject
+   numObject=204
+   posStart=50.0 1.0 50.0
+   posEnd=50.0 1.0 50.0
+   speed=0.0
+   ...</code></pre>
+  <p>
+    Or call <code>Decor::PlaceObject()</code> directly from the demo world builder:
+  </p>
+  <pre><code>decor_-&gt;PlaceObject(ObjectType204, Vector3(50, 1, 50));</code></pre>
+
+  <h2>Step 5 — Build and Test</h2>
+  <pre><code>cmake --build cmake-build-debug --parallel
+cd cmake-build-debug/bin &amp;&amp; ./GalaxyEggbert</code></pre>
+  <p>
+    Navigate Blupi to the object. Verify it renders with the correct sprite and triggers
+    the expected behaviour on contact.
+  </p>
+
+  <div class="page-nav">
+    <a href="building.html">← Building the Game</a>
+    <a href="modifying-levels.html">Modifying a Level →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

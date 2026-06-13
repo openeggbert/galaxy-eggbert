@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extending the Game — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Extending the Game</div>
+  <h1>Extending the Game</h1>
+  <p class="subtitle">Where to add new object types, block types, game phases, and sounds.</p>
+
+  <h2>Adding a New Object Type</h2>
+  <p>See the full walkthrough in <a href="../tutorials/first-object.html">Tutorial: Adding a New Game Object</a>. Summary:</p>
+  <ol>
+    <li>Append enum value to <code>include/GalaxyEggbert/def/ObjectType.hpp</code> (IDs above 203 are safe for new types).</li>
+    <li>Add icon mapping case in <code>Decor::GetIcon()</code>.</li>
+    <li>Add contact behaviour in <code>Decor::Update() → CheckContact()</code>.</li>
+    <li>Optionally add a new event flag in <code>Decor</code> (e.g., <code>newEvent_</code>) and consume it in <code>GalaxyEggbertGame::UpdatePlay()</code>.</li>
+  </ol>
+
+  <h2>Adding a New Block Type</h2>
+  <ol>
+    <li>
+      Add a named constant in <code>include/GalaxyEggbert/BlockTypes.hpp</code>:
+      <pre><code>static constexpr uint16_t MyBlock = &lt;icon-index-in-object-m.png&gt;;</code></pre>
+    </li>
+    <li>
+      If the block should be passable (decorative, not collidable), add its ID to the
+      <code>isMobileTransparent()</code> lookup table in <code>BlockTypes.hpp</code>.
+    </li>
+    <li>
+      If the block originates from mobile-eggbert <code>.txt</code> levels, add a mapping
+      in <code>BlockTypes::fromMobileIconId()</code>.
+    </li>
+    <li>
+      The terrain node spawner (<code>SpawnTerrainNodes()</code>) and material cache
+      (<code>GetTileMaterial()</code>) work automatically for any non-zero block type ID.
+    </li>
+  </ol>
+
+  <h2>Adding a New Game Phase</h2>
+  <ol>
+    <li>Add the value to <code>include/GalaxyEggbert/def/GamePhase.hpp</code>.</li>
+    <li>Add an <code>UpdateXxx(dt)</code> method to <code>GalaxyEggbertGame</code>.</li>
+    <li>Add a dispatch case in <code>GalaxyEggbertGame::Update(dt)</code>:
+      <pre><code>case GamePhase::MyPhase: UpdateMyPhase(dt); break;</code></pre>
+    </li>
+    <li>Trigger it via <code>EnterPhase(GamePhase::MyPhase)</code> from the appropriate event handler.</li>
+  </ol>
+
+  <h2>Adding a New Sound</h2>
+  <ol>
+    <li>Place the WAV file at <code>Content/Data/Sound/sound0NN.wav</code> with the next available index.</li>
+    <li>Add the enum value to <code>include/GalaxyEggbert/def/SoundChannel.hpp</code>:
+      <pre><code>SoundChannelNN = NN,</code></pre>
+    </li>
+    <li>Update <code>SoundManager::kNumChannels</code> if needed.</li>
+    <li>Call <code>sound_->Play(SoundChannel::SoundChannelNN)</code> from the appropriate location.</li>
+  </ol>
+
+  <h2>Adding a New World</h2>
+  <ol>
+    <li>Increment <code>kMaxWorld</code> in <code>GalaxyEggbertGame</code>.</li>
+    <li>Add <code>Content/Data/Level/scene06.txt</code> (or <code>.vwr</code>).</li>
+    <li>Update <code>GameData</code> door count if new doors are added.</li>
+  </ol>
+  <div class="note">
+    World count is currently 5 (<code>kMaxWorld = 5</code>). Adding world 6+ requires
+    verifying the GameData door-slot layout stays within the 210-byte per-gamer record.
+  </div>
+
+  <div class="page-nav">
+    <a href="debugging.html">← Debugging</a>
+    <a href="known-issues.html">Known Issues →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

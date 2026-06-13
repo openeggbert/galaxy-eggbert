@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuration — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html" class="active">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Configuration</div>
+  <h1>Configuration</h1>
+  <p class="subtitle">Build-time CMake options and runtime engine settings.</p>
+
+  <h2>Build-Time CMake Options</h2>
+  <table>
+    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>GALAXY_EGGBERT_ENGINE</code></td><td><code>U3D</code></td><td>Engine backend: <code>U3D</code> or <code>NOVA3D</code></td></tr>
+    <tr><td><code>U3D_HOME</code></td><td>(empty)</td><td>Override path to pre-built U3D library. Falls back to <code>URHO3D_HOME</code> env var, then default hardcoded path.</td></tr>
+    <tr><td><code>BUILD_TESTING</code></td><td><code>ON</code></td><td>Build GoogleTest unit tests (disabled for Android/Emscripten)</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_GRAPHICS_BACKEND</code></td><td><code>EASYGL</code></td><td>Nova3D only: graphics backend (<code>SDL_RENDERER</code>, <code>EASYGL</code>, <code>BGFX</code>, <code>VULKAN</code>)</td></tr>
+    <tr><td><code>CNA_BACKEND_SDL_RENDERER</code></td><td>OFF</td><td>Nova3D: enable SDL Renderer backend</td></tr>
+    <tr><td><code>CNA_BACKEND_EASY_GL</code></td><td>OFF</td><td>Nova3D: enable EasyGL OpenGL backend</td></tr>
+    <tr><td><code>CNA_BACKEND_BGFX</code></td><td>OFF</td><td>Nova3D: enable BGFX backend (experimental)</td></tr>
+    <tr><td><code>CNA_WINDOWS_DEPENDENCIES_ROOT</code></td><td>(none)</td><td>Windows cross-build: root directory for SDL3 Windows libs</td></tr>
+    <tr><td><code>CMAKE_TOOLCHAIN_FILE</code></td><td>(none)</td><td>Toolchain file for cross-compilation</td></tr>
+    <tr><td><code>CMAKE_BUILD_TYPE</code></td><td>(none)</td><td>Standard CMake build type: Debug, Release, RelWithDebInfo</td></tr>
+  </table>
+
+  <h2>Runtime Window Configuration</h2>
+  <p>
+    Set in <code>GalaxyEggbertApp::Setup()</code> (<code>src/GalaxyEggbert/GalaxyEggbertApp.cpp:9</code>).
+    These are hard-coded — there is no runtime configuration file:
+  </p>
+  <pre><code>engineParameters_[EP_WINDOW_TITLE]   = "Galaxy Eggbert";
+engineParameters_[EP_FULL_SCREEN]    = false;
+engineParameters_[EP_WINDOW_WIDTH]   = 1280;
+engineParameters_[EP_WINDOW_HEIGHT]  = 720;
+engineParameters_[EP_RESOURCE_PATHS] = "Data;CoreData;Content";
+engineParameters_[EP_LOG_NAME]       = "GalaxyEggbert.log";
+engineParameters_[EP_HEADLESS]       = false;</code></pre>
+
+  <h2>In-Game Settings (persisted in save file)</h2>
+  <table>
+    <tr><th>Setting</th><th>Save byte</th><th>Default</th><th>How to change</th></tr>
+    <tr><td>Sound on/off</td><td><code>data_[3]</code></td><td>ON (1)</td><td>S key on settings screen</td></tr>
+    <tr><td>Selected gamer slot</td><td><code>data_[2]</code></td><td>0</td><td>1/2/3 on gamer-select</td></tr>
+    <tr><td>Jump right</td><td><code>data_[4]</code></td><td>1</td><td>Not yet exposed in UI</td></tr>
+    <tr><td>Auto zoom</td><td><code>data_[5]</code></td><td>1</td><td>Not yet exposed in UI</td></tr>
+    <tr><td>Accel active</td><td><code>data_[6]</code></td><td>0</td><td>Not yet exposed in UI (accelerometer for Android)</td></tr>
+    <tr><td>Accel sensitivity</td><td><code>data_[7]</code></td><td>50</td><td>Not yet exposed in UI</td></tr>
+  </table>
+
+  <h2>U3D Default Path</h2>
+  <p>
+    When <code>U3D_HOME</code> is not set and <code>URHO3D_HOME</code> env var is unset,
+    CMake defaults to:
+  </p>
+  <pre><code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code></pre>
+  <div class="warn">
+    <strong>Developer-specific path</strong>
+    This is a developer-specific hardcoded path. When working on a different machine,
+    always provide <code>-DU3D_HOME=</code> or set the <code>URHO3D_HOME</code> environment variable.
+  </div>
+
+  <div class="page-nav">
+    <a href="save-system.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Save System</span>
+    </a>
+    <a class="next" href="platform-support.html">
+      <span class="label">Next</span>
+      <span class="title">Platform Support &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

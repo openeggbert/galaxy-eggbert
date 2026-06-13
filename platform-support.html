@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform Support — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html" class="active">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Platform Support</div>
+  <h1>Platform Support</h1>
+  <p class="subtitle">What platforms are supported, which engine backend is used, and current status.</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Platform</th><th>Engine</th><th>Graphics</th><th>Status</th></tr>
+    <tr><td>Linux x86-64</td><td>U3D</td><td>OpenGL (EasyGL or SDL Renderer)</td><td><span class="badge badge-done">Working</span></td></tr>
+    <tr><td>Windows x86-64</td><td>U3D (MinGW cross)</td><td>SDL Renderer</td><td><span class="badge badge-done">Working</span></td></tr>
+    <tr><td>Web (Emscripten)</td><td>Nova3D</td><td>SDL Renderer (WebGL)</td><td><span class="badge badge-planned">Planned — U3D path blocked</span></td></tr>
+    <tr><td>Android</td><td>Nova3D</td><td>SDL Renderer</td><td><span class="badge badge-planned">Planned</span></td></tr>
+  </table>
+
+  <h2>Linux</h2>
+  <p>
+    Primary development platform. Two graphics backend options:
+  </p>
+  <ul>
+    <li><strong>EasyGL</strong> (<code>-DCNA_BACKEND_EASY_GL=ON</code>) — preferred for development</li>
+    <li><strong>SDL Renderer</strong> (<code>-DCNA_BACKEND_SDL_RENDERER=ON</code>) — alternative</li>
+  </ul>
+  <p>
+    The U3D engine must be pre-built. A pre-built binary is expected at
+    <code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code>
+    or at the path specified by <code>-DU3D_HOME=</code>.
+  </p>
+  <p>
+    The executable links against: <code>libUrho3D.a</code>, <code>GL</code>, <code>dl</code>,
+    <code>m</code>, <code>rt</code>, <code>pthread</code>.
+  </p>
+
+  <h2>Windows</h2>
+  <p>
+    Supported via cross-compilation from Linux using MinGW-w64 or natively on Windows.
+    The Windows build uses the SDL Renderer backend.
+    The resulting binary is a PE32+ x86-64 executable, statically linked against
+    <code>libgcc</code> and <code>libstdc++</code>.
+  </p>
+  <p>Windows system libraries linked: <code>opengl32</code>, <code>gdi32</code>, <code>winmm</code>,
+     <code>imm32</code>, <code>ole32</code>, <code>oleaut32</code>, <code>setupapi</code>,
+     <code>version</code>, <code>uuid</code>, <code>ws2_32</code>, <code>iphlpapi</code>.</p>
+  <pre><code># Cross-build from Linux
+cmake -S . -B build-windows \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+  -DGALAXY_EGGBERT_ENGINE=U3D \
+  -DU3D_HOME=/path/to/U3D/build-windows</code></pre>
+  <p>The toolchain file is at <code>cmake/toolchains/mingw-w64.cmake</code>.</p>
+
+  <h2>Web (Emscripten)</h2>
+  <div class="warn">
+    <strong>U3D Not Supported on Web</strong>
+    The CMakeLists.txt has a <code>FATAL_ERROR</code> guard for U3D + Emscripten:
+    the U3D engine backend cannot be built for the Web target.
+    Web builds require <code>-DGALAXY_EGGBERT_ENGINE=NOVA3D</code>.
+  </div>
+  <p>
+    The Nova3D + Emscripten path uses SDL Renderer with WebGL.
+    The Web build uses <code>emscripten_set_main_loop</code> (via <code>requestAnimationFrame</code>)
+    instead of a busy loop. Save data is persisted in IndexedDB via IDBFS.
+  </p>
+  <p>Generated files: <code>GalaxyEggbert.html</code>, <code>GalaxyEggbert.js</code>,
+     <code>GalaxyEggbert.wasm</code>, <code>GalaxyEggbert.data</code>.</p>
+  <p>Emscripten link options include: memory growth, 128 MB initial heap, filesystem exports,
+     IDBFS, and preloaded asset bundle.</p>
+
+  <h2>Android</h2>
+  <div class="warn">
+    <strong>Android Not Implemented</strong>
+    Android support is planned via the Nova3D engine backend.
+    The <code>android/</code> directory contains a Gradle project skeleton.
+    The CMakeLists.txt has a <code>FATAL_ERROR</code> guard for U3D + Android.
+    On Android, the build target is a shared library named <code>main</code> (required by SDLActivity).
+  </div>
+  <p>Android-specific CMake notes (from <code>CMakeLists.txt</code>):</p>
+  <ul>
+    <li>Target is <code>add_library(main SHARED …)</code> instead of <code>add_executable</code></li>
+    <li>Android and Emscripten force SDL_RENDERER backend for Nova3D</li>
+    <li>Additional link libraries: <code>android</code>, <code>log</code></li>
+  </ul>
+
+  <h2>Platform-Specific Code</h2>
+  <p>
+    Galaxy Eggbert contains <strong>no platform-specific <code>#ifdef</code> guards</strong> in C++ source.
+    Platform differences are handled entirely by:
+  </p>
+  <ul>
+    <li>CMake conditions (<code>if(ANDROID)</code>, <code>if(EMSCRIPTEN)</code>, <code>if(WIN32)</code>, etc.)</li>
+    <li>Urho3D engine API abstractions</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="configuration.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Configuration</span>
+    </a>
+    <a class="next" href="modules/index.html">
+      <span class="label">Next</span>
+      <span class="title">Module Index &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

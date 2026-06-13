@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine Integration — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html" class="active">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Engine Integration</div>
+  <h1>Engine Integration</h1>
+  <p class="subtitle">How Galaxy Eggbert uses Urho3D, U3D, and Nova3D.</p>
+
+  <h2>The Engine Abstraction Strategy</h2>
+  <p>
+    Galaxy Eggbert targets the <strong>Urho3D C++ API</strong> exclusively.
+    There are no <code>#ifdef GE_ENGINE_*</code> guards in the C++ source.
+    Two pre-built implementations of the Urho3D API exist:
+  </p>
+  <ul>
+    <li><strong>U3D</strong> — the <a href="https://github.com/u3d-community/U3D">u3d-community</a> fork of Urho3D. Stable; used for Linux and Windows builds.</li>
+    <li><strong>Nova3D</strong> — Robert Vokac's own Urho3D fork with CNA/SDL3 backend support. Used for Web (Emscripten) and Android targets once it matures.</li>
+  </ul>
+  <p>
+    Switching engines requires only a CMake flag: <code>-DGALAXY_EGGBERT_ENGINE=U3D</code> or <code>=NOVA3D</code>.
+    If Nova3D fails to compile Galaxy Eggbert, Nova3D must fix itself — not Galaxy Eggbert.
+  </p>
+
+  <h2>The <code>GEEngine.hpp</code> Header</h2>
+  <p>All engine usage flows through a single include:</p>
+  <pre><code>// src/GalaxyEggbert/GEEngine.hpp
+#pragma once
+#include &lt;Urho3D/Urho3DAll.h&gt;</code></pre>
+  <p>
+    This is the only place the engine is included. Every other source file that needs the engine includes <code>GEEngine.hpp</code>.
+  </p>
+
+  <h2>Urho3D Concepts Used</h2>
+  <table>
+    <tr><th>Urho3D Concept</th><th>Used for</th></tr>
+    <tr><td><code>Application</code></td><td>Base class for <code>GalaxyEggbertApp</code></td></tr>
+    <tr><td><code>Context</code></td><td>Engine context passed through all subsystems</td></tr>
+    <tr><td><code>Scene</code></td><td>3D scene graph root</td></tr>
+    <tr><td><code>Node</code></td><td>3D transform node; used for terrain blocks, Blupi, objects, camera</td></tr>
+    <tr><td><code>StaticModel</code></td><td>Terrain block rendering (Box.mdl)</td></tr>
+    <tr><td><code>BillboardSet</code></td><td>Blupi sprite and object sprites (always faces camera)</td></tr>
+    <tr><td><code>Material</code></td><td>Per-block materials with UV offsets into sprite sheets</td></tr>
+    <tr><td><code>Technique</code></td><td>Rendering technique (Diff.xml, DiffAlpha.xml, DiffSkydome.xml)</td></tr>
+    <tr><td><code>Texture2D</code></td><td>Sprite sheet textures loaded from <code>Content/icons/</code></td></tr>
+    <tr><td><code>Camera</code></td><td>3D perspective camera (component on camera node)</td></tr>
+    <tr><td><code>Octree</code></td><td>Spatial indexing for scene queries</td></tr>
+    <tr><td><code>Zone</code></td><td>Ambient lighting and fog per region</td></tr>
+    <tr><td><code>Light</code></td><td>Directional lights (sun + fill)</td></tr>
+    <tr><td><code>DebugRenderer</code></td><td>Debug geometry overlay (toggled by F1)</td></tr>
+    <tr><td><code>ResourceCache</code></td><td>Asset loading subsystem</td></tr>
+    <tr><td><code>FileSystem</code></td><td>Path resolution (program dir, user documents dir)</td></tr>
+    <tr><td><code>Input</code></td><td>Keyboard and mouse state per-frame</td></tr>
+    <tr><td><code>Engine</code></td><td>Exit method (<code>engine->Exit()</code>)</td></tr>
+    <tr><td><code>UI</code></td><td>2D UI overlay for HUD and phase overlays</td></tr>
+    <tr><td><code>Text</code></td><td>On-screen text (HUD, phase overlay text)</td></tr>
+    <tr><td><code>BorderImage</code></td><td>HUD sprite icons (life icons, key icons, gauge)</td></tr>
+    <tr><td><code>Sound</code></td><td>Loaded WAV resource</td></tr>
+    <tr><td><code>SoundSource</code></td><td>Per-channel audio playback node component</td></tr>
+    <tr><td><code>E_UPDATE</code></td><td>Per-frame update event</td></tr>
+  </table>
+
+  <h2>Entry Point Macro</h2>
+  <pre><code>// src/GalaxyEggbert/Program.cpp
+#include "GalaxyEggbertApp.hpp"
+URHO3D_DEFINE_APPLICATION_MAIN(GalaxyEggbertApp)</code></pre>
+  <p>
+    This Urho3D macro expands to the correct <code>main()</code> signature for the target platform
+    (standard <code>main</code> on desktop, <code>SDL_main</code> on Android/Emscripten, etc.)
+    and creates + runs a <code>GalaxyEggbertApp</code> instance.
+  </p>
+
+  <h2>Event Loop Integration</h2>
+  <pre><code>// GalaxyEggbertApp::Start()
+SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(GalaxyEggbertApp, HandleUpdate));
+
+// GalaxyEggbertApp::HandleUpdate()
+void GalaxyEggbertApp::HandleUpdate(StringHash, VariantMap&amp; eventData) {
+    using namespace Update;
+    GameUpdate(eventData[P_TIMESTEP].GetFloat());
+}</code></pre>
+  <p>
+    The update loop is driven by Urho3D's <code>E_UPDATE</code> event which fires every frame.
+    The timestep (<code>dt</code>) comes from the engine's time subsystem.
+    Galaxy Eggbert does not manage its own game loop.
+  </p>
+
+  <h2>Resource Loading</h2>
+  <p>
+    Resources are loaded through <code>Urho3D::ResourceCache</code>:
+  </p>
+  <pre><code>auto* cache = context_->GetSubsystem&lt;ResourceCache&gt;();
+auto* tex = cache->GetResource&lt;Texture2D&gt;("icons/blupi.png");
+auto* tech = cache->GetResource&lt;Technique&gt;("Techniques/Diff.xml");
+auto* sound = cache->GetResource&lt;Sound&gt;("sounds/sound001.wav");</code></pre>
+  <p>
+    Resource paths are relative to the search paths set in <code>GalaxyEggbertApp::Setup()</code>:
+    <code>Data;CoreData;Content</code>. <code>Data</code> and <code>CoreData</code> are from the U3D/Nova3D engine distribution.
+    <code>Content</code> is the game's own asset directory.
+  </p>
+
+  <h2>U3D vs Nova3D Differences</h2>
+  <table>
+    <tr><th>Aspect</th><th>U3D</th><th>Nova3D</th></tr>
+    <tr><td>Platforms</td><td>Linux, Windows</td><td>Linux, Windows, Web, Android</td></tr>
+    <tr><td>Graphics backends</td><td>OpenGL (Linux), D3D9/D3D11 (Win)</td><td>SDL Renderer, EasyGL, BGFX, Vulkan</td></tr>
+    <tr><td>Required pre-build</td><td>Yes — <code>libUrho3D.a</code></td><td>Via git submodule</td></tr>
+    <tr><td>Android</td><td>Not yet supported in GalaxyEggbert</td><td>Planned</td></tr>
+    <tr><td>Emscripten</td><td>Not yet supported in GalaxyEggbert</td><td>Planned</td></tr>
+    <tr><td>C++ API</td><td>Same Urho3D API</td><td>Same Urho3D API (goal)</td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a href="project-structure.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Project Structure</span>
+    </a>
+    <a class="next" href="game-loop.html">
+      <span class="label">Next</span>
+      <span class="title">Game Loop &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

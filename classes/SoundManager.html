@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundManager — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> SoundManager</div>
+  <h1>SoundManager</h1>
+  <p class="subtitle">93-channel sound player wrapping Urho3D Sound and SoundSource.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>SoundManager</code> loads and plays the game's 93 WAV sound effects
+    (<code>sound000.wav</code> through <code>sound092.wav</code> from <code>Content/Data/Sound/</code>).
+    Each file maps 1-to-1 to a <code>SoundChannel</code> enum value.
+    A global mute flag (<code>enabled_</code>) gates all playback.
+  </p>
+  <p>Header: <code>src/GalaxyEggbert/Game/SoundManager.hpp</code></p>
+
+  <h2>Constants</h2>
+  <pre><code>static constexpr int kNumChannels = 93;  // sound000–sound092</code></pre>
+
+  <h2>Internal Storage</h2>
+  <pre><code>private:
+    bool                            enabled_;
+    std::array&lt;Sound*, kNumChannels&gt;       sounds_;
+    std::array&lt;SoundSource*, kNumChannels&gt; sources_;</code></pre>
+  <p>
+    Each <code>SoundSource</code> is attached to the scene root node.
+    Sounds are loaded once at construction and kept in memory for the session.
+  </p>
+
+  <h2>API</h2>
+  <pre><code>class SoundManager {
+public:
+    SoundManager(Context* context, Scene* scene);
+
+    void Play(SoundChannel channel);
+    void SetEnabled(bool enabled);
+    bool IsEnabled() const;
+};</code></pre>
+
+  <h2>Wired Events</h2>
+  <table>
+    <tr><th>Game Event</th><th>Channel</th><th>Sound</th></tr>
+    <tr><td>Blupi jumps</td><td>SoundChannel::Jump (needs verification)</td><td>Jump sound</td></tr>
+    <tr><td>Blupi lands</td><td>SoundChannel::Land (needs verification)</td><td>Landing thud</td></tr>
+    <tr><td>Blupi dies</td><td>SoundChannel::Die (needs verification)</td><td>Death sound</td></tr>
+    <tr><td>Treasure collected</td><td>SoundChannel::Collect (needs verification)</td><td>Pickup jingle</td></tr>
+    <tr><td>Key collected</td><td>SoundChannel::Key (needs verification)</td><td>Key pickup</td></tr>
+    <tr><td>Shield collected</td><td>SoundChannel::Shield (needs verification)</td><td>Shield sound</td></tr>
+    <tr><td>Level exit reached</td><td>SoundChannel::Win (needs verification)</td><td>Level complete</td></tr>
+  </table>
+  <div class="nv">
+    <strong>Needs verification:</strong> Exact channel enum values for each game event require cross-referencing
+    <code>GalaxyEggbertGame.cpp</code> call sites.
+  </div>
+
+  <h2>SoundChannel Enum</h2>
+  <p>
+    Defined in <code>include/GalaxyEggbert/def/SoundChannel.hpp</code>.
+    Values <code>SoundChannel0</code> through <code>SoundChannel92</code>
+    map directly to <code>sound000.wav</code>–<code>sound092.wav</code>.
+    Numeric IDs must not change (they may be stored in level or save data).
+  </p>
+
+  <h2>Web Platform Note</h2>
+  <p>
+    Web/Emscripten builds require a user gesture before the browser allows audio.
+    Urho3D handles this via its built-in audio subsystem; no extra code in <code>SoundManager</code> is needed.
+  </p>
+
+  <div class="page-nav">
+    <a href="GameData.html">← GameData</a>
+    <a href="PhaseManager.html">PhaseManager →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assets — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html" class="active">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Assets</div>
+  <h1>Assets</h1>
+  <p class="subtitle">All game assets: sprites, sounds, backgrounds, and level data.</p>
+
+  <h2>Directory Structure</h2>
+  <pre><code>Content/
+├── backgrounds/    ← sky textures, menu backgrounds (PNG)
+├── icons/          ← sprite sheets for characters, tiles, objects (PNG)
+└── sounds/         ← WAV audio files
+
+worlds/             ← level data (.txt and .vwr)</code></pre>
+  <p>
+    All assets are committed in the repository and copied next to the executable at build time
+    via CMake post-build commands.
+  </p>
+
+  <h2>Sprite Sheets (<code>Content/icons/</code>)</h2>
+  <table>
+    <tr><th>File</th><th>Dimensions</th><th>Tile Size</th><th>Grid</th><th>Used for</th></tr>
+    <tr><td><code>blupi.png</code></td><td>600×2040</td><td>60×60</td><td>10 cols × 34 rows</td><td>Blupi player character all animation frames</td></tr>
+    <tr><td><code>blupi1.png</code></td><td>Needs verification</td><td>—</td><td>—</td><td>Alternate Blupi sprite (HUD life icon)</td></tr>
+    <tr><td><code>element.png</code></td><td>600×1740</td><td>60×60</td><td>10 cols × 29 rows (290 icons)</td><td>Game objects, enemies, collectibles (ObjectNode sprites)</td></tr>
+    <tr><td><code>explo.png</code></td><td>Needs verification</td><td>128×128</td><td>—</td><td>Explosion effects</td></tr>
+    <tr><td><code>object-m.png</code></td><td>1301×1431</td><td>64×64</td><td>20 cols</td><td>Terrain tile textures (all block face UVs)</td></tr>
+    <tr><td><code>button.png</code></td><td>Needs verification</td><td>40×40</td><td>—</td><td>UI buttons</td></tr>
+    <tr><td><code>text.png</code></td><td>Needs verification</td><td>32×32</td><td>—</td><td>Font glyphs</td></tr>
+    <tr><td><code>jauge.png</code></td><td>Needs verification</td><td>124×22</td><td>—</td><td>HUD gauge sprite (bottom-left)</td></tr>
+    <tr><td><code>pad.png</code></td><td>Needs verification</td><td>—</td><td>—</td><td>Touch pad (future Android)</td></tr>
+  </table>
+
+  <h3>Key Icon Indices</h3>
+  <table>
+    <tr><th>Sheet</th><th>Index</th><th>Used for</th></tr>
+    <tr><td><code>blupi.png</code></td><td>48 (col 8, row 4)</td><td>HUD life icon (Blupi head)</td></tr>
+    <tr><td><code>element.png</code></td><td>215 (col 5, row 21)</td><td>HUD key icon</td></tr>
+  </table>
+
+  <h2>Background Images (<code>Content/backgrounds/</code>)</h2>
+  <table>
+    <tr><th>File</th><th>Purpose</th></tr>
+    <tr><td><code>decor000.png</code> … <code>decor031.png</code></td><td>Sky dome textures (region index from level header)</td></tr>
+    <tr><td><code>init.png</code></td><td>Gamer-select / main menu background overlay</td></tr>
+    <tr><td><code>pause.png</code></td><td>Pause screen background</td></tr>
+    <tr><td><code>win.png</code></td><td>Level complete background</td></tr>
+    <tr><td><code>lost.png</code></td><td>Game over background</td></tr>
+    <tr><td><code>setup.png</code></td><td>Settings screen background</td></tr>
+    <tr><td><code>wait.png</code></td><td>Loading/wait screen background</td></tr>
+    <tr><td><code>trial.png</code></td><td>Trial/demo mode background (not yet in use)</td></tr>
+    <tr><td><code>gear.png</code></td><td>Settings/gear icon</td></tr>
+    <tr><td><code>speedyblupi.png</code></td><td>Speedy Blupi title image</td></tr>
+    <tr><td><code>blupiyoupie.png</code></td><td>Needs verification</td></tr>
+  </table>
+  <div class="note">
+    <strong>Note</strong>
+    Not all background indices (0–031) have corresponding files. Missing indices (e.g., 005, 014, 017) are simply absent from the repository. Loading a missing background will fail silently in Urho3D's ResourceCache.
+  </div>
+
+  <h2>Audio Files (<code>Content/sounds/</code>)</h2>
+  <p>
+    93 WAV files named <code>sound000.wav</code> … <code>sound092.wav</code>.
+    File index N maps directly to <code>SoundChannel::SoundChannelN</code>.
+    These are the original Speedy Blupi WAV files.
+  </p>
+
+  <h2>Level Data (<code>worlds/</code>)</h2>
+  <table>
+    <tr><th>File</th><th>Format</th><th>Description</th></tr>
+    <tr><td><code>world001.txt</code></td><td>Mobile-eggbert text</td><td>World 1: Grassland</td></tr>
+    <tr><td><code>world002.txt</code></td><td>Mobile-eggbert text</td><td>World 2: Forest</td></tr>
+    <tr><td><code>world003.txt</code></td><td>Mobile-eggbert text</td><td>World 3: Ice Caves</td></tr>
+    <tr><td><code>world004.txt</code></td><td>Mobile-eggbert text</td><td>World 4: Lava Fields</td></tr>
+    <tr><td><code>world005.txt</code></td><td>Mobile-eggbert text</td><td>World 5: Space Station</td></tr>
+    <tr><td><code>world001.vwr</code> … (generated)</td><td>Native binary</td><td>Generated on first run from .txt</td></tr>
+  </table>
+
+  <h2>Asset Loading</h2>
+  <p>
+    All assets are loaded through <code>Urho3D::ResourceCache</code> using resource-relative paths.
+    The search order is: <code>Data/</code> → <code>CoreData/</code> → <code>Content/</code>.
+    Within <code>Content/</code>, paths are relative: <code>"icons/blupi.png"</code>, <code>"sounds/sound001.wav"</code>, etc.
+  </p>
+  <p>
+    Level files are loaded directly from the filesystem using <code>Urho3D::FileSystem::GetProgramDir()</code>
+    as the base path, not through ResourceCache.
+  </p>
+
+  <h2>Engine Assets (Data/ and CoreData/)</h2>
+  <p>
+    Urho3D requires its own assets (shaders, default models, default materials) to be present at runtime.
+    These are copied from the U3D or Nova3D engine build output by CMake post-build commands:
+  </p>
+  <ul>
+    <li><code>Data/Techniques/Diff.xml</code>, <code>DiffAlpha.xml</code>, <code>DiffSkydome.xml</code>, <code>NoTexture.xml</code></li>
+    <li><code>CoreData/Shaders/</code> — GLSL/HLSL shaders</li>
+    <li><code>CoreData/Models/Box.mdl</code>, <code>Sphere.mdl</code> — basic geometry used by terrain and sky dome</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="levels.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Levels &amp; Worlds</span>
+    </a>
+    <a class="next" href="architecture.html">
+      <span class="label">Next</span>
+      <span class="title">Architecture &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

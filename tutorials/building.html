@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building the Game — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Building the Game</div>
+  <h1>Tutorial: Building the Game</h1>
+  <p class="subtitle">From a fresh clone to a running binary on Linux.</p>
+
+  <h2>Step 1 — Clone the Repository</h2>
+  <pre><code>git clone https://github.com/openeggbert/galaxy-eggbert.git
+cd galaxy-eggbert
+git submodule update --init --recursive</code></pre>
+
+  <h2>Step 2 — Verify Engine Availability</h2>
+  <p>
+    The default build uses U3D. Check that U3D is pre-built at the expected path:
+  </p>
+  <pre><code>ls /rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code></pre>
+  <p>
+    If U3D is elsewhere, set the <code>U3D_HOME</code> CMake variable (see <a href="../build.html">Build Guide</a>).
+  </p>
+
+  <h2>Step 3 — Configure with CMake</h2>
+  <pre><code>cmake -B cmake-build-debug \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DGALAXY_EGGBERT_ENGINE=U3D</code></pre>
+  <p>
+    This creates a <code>cmake-build-debug/</code> directory.
+    Use <code>-DCMAKE_BUILD_TYPE=Release</code> for optimised builds.
+  </p>
+
+  <h2>Step 4 — Build</h2>
+  <pre><code>cmake --build cmake-build-debug --parallel</code></pre>
+  <p>
+    Expected output: <code>cmake-build-debug/bin/GalaxyEggbert</code>.
+    Build time is typically 30–120 seconds depending on hardware.
+  </p>
+
+  <h2>Step 5 — Run</h2>
+  <pre><code>cd cmake-build-debug/bin
+./GalaxyEggbert</code></pre>
+  <div class="note">
+    <strong>Important:</strong> Run from within <code>cmake-build-debug/bin/</code> so that
+    Urho3D can find <code>CoreData/</code> and <code>Data/</code> relative to the executable.
+  </div>
+
+  <h2>Step 6 — Run Tests</h2>
+  <pre><code>cd cmake-build-debug
+ctest --output-on-failure</code></pre>
+  <p>Expected: 54 tests pass. Tests are engine-agnostic and do not require a display.</p>
+
+  <h2>Troubleshooting</h2>
+  <table>
+    <tr><th>Problem</th><th>Fix</th></tr>
+    <tr>
+      <td>CMake can't find U3D</td>
+      <td>Add <code>-DU3D_HOME=/path/to/U3D/cmake-build-debug</code></td>
+    </tr>
+    <tr>
+      <td>Binary crashes on startup</td>
+      <td>Ensure you launch from <code>cmake-build-debug/bin/</code>; check <code>GalaxyEggbert.log</code></td>
+    </tr>
+    <tr>
+      <td>Missing Content/ assets</td>
+      <td>Verify <code>Content/</code> symlink or copy exists next to binary</td>
+    </tr>
+    <tr>
+      <td>Compiler errors about C++23 features</td>
+      <td>Upgrade GCC to ≥13 or Clang to ≥17</td>
+    </tr>
+  </table>
+
+  <div class="page-nav">
+    <a href="index.html">← Tutorials</a>
+    <a href="first-object.html">Adding a New Game Object →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

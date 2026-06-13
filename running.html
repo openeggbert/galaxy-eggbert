@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running the Game — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html" class="active">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Running the Game</div>
+  <h1>Running the Game</h1>
+  <p class="subtitle">How to launch Galaxy Eggbert after building.</p>
+
+  <h2>Linux</h2>
+  <pre><code>./cmake-build-u3d/GalaxyEggbert</code></pre>
+  <p>
+    The binary looks for assets relative to its own location.
+    The build system copies <code>Content/</code>, <code>worlds/</code>, and U3D's <code>Data/</code> and <code>CoreData/</code>
+    directories next to the executable via post-build commands in <code>CMakeLists.txt</code>.
+  </p>
+
+  <h2>Windows</h2>
+  <p>Double-click <code>build-windows\GalaxyEggbert.exe</code>, or from PowerShell:</p>
+  <pre><code>.\build-windows\GalaxyEggbert.exe</code></pre>
+
+  <h2>Web (Emscripten)</h2>
+  <pre><code>emrun cmake-build-web/GalaxyEggbert.html</code></pre>
+  <p>
+    Alternatively, serve <code>cmake-build-web/</code> with any HTTP server and open <code>GalaxyEggbert.html</code> in a browser.
+    The game will not run from <code>file://</code> directly due to browser security restrictions on WebAssembly loading.
+  </p>
+  <div class="note">
+    <strong>Audio Note</strong>
+    Browsers may block audio until the user interacts with the page. If no sound plays, click the canvas once.
+  </div>
+
+  <h2>Required Files at Runtime</h2>
+  <p>The following must be present relative to the executable:</p>
+  <table>
+    <tr><th>Path</th><th>Source in Repo</th><th>Notes</th></tr>
+    <tr><td><code>Content/backgrounds/</code></td><td><code>Content/backgrounds/</code></td><td>Sky and menu PNGs</td></tr>
+    <tr><td><code>Content/icons/</code></td><td><code>Content/icons/</code></td><td>Sprite sheets</td></tr>
+    <tr><td><code>Content/sounds/</code></td><td><code>Content/sounds/</code></td><td>WAV audio files</td></tr>
+    <tr><td><code>worlds/</code></td><td><code>worlds/</code></td><td>Level data (.txt or .vwr)</td></tr>
+    <tr><td><code>Data/</code></td><td>U3D build output</td><td>Urho3D shaders and resources</td></tr>
+    <tr><td><code>CoreData/</code></td><td>U3D build output</td><td>Urho3D core shaders and models</td></tr>
+  </table>
+
+  <h2>Save File Location</h2>
+  <p>
+    On Linux and Windows, save data is stored at:
+  </p>
+  <pre><code>&lt;UserDocumentsDir&gt;/GalaxyEggbert/save.dat</code></pre>
+  <p>
+    On Web, save data is written to <code>/save/.cna_isolated_storage/SpeedyBlupi</code> inside
+    an Emscripten IDBFS virtual filesystem backed by the browser's IndexedDB.
+    The file is flushed on every write and on page unload.
+  </p>
+
+  <h2>Window Settings</h2>
+  <p>These are set in <a href="classes/GalaxyEggbertApp.html"><code>GalaxyEggbertApp::Setup()</code></a>
+     (<code>src/GalaxyEggbert/GalaxyEggbertApp.cpp:9</code>):</p>
+  <table>
+    <tr><th>Setting</th><th>Value</th></tr>
+    <tr><td>Window title</td><td>Galaxy Eggbert</td></tr>
+    <tr><td>Initial size</td><td>1280 × 720</td></tr>
+    <tr><td>Full screen</td><td>No</td></tr>
+    <tr><td>Log file</td><td><code>GalaxyEggbert.log</code></td></tr>
+    <tr><td>Resource paths</td><td><code>Data;CoreData;Content</code></td></tr>
+  </table>
+
+  <h2>First-Run Behavior</h2>
+  <ol>
+    <li>The engine initializes and calls <code>GalaxyEggbertApp::Setup()</code> to configure the window.</li>
+    <li><code>GalaxyEggbertApp::Start()</code> creates <code>GalaxyEggbertGame</code> and starts it.</li>
+    <li>Save data is loaded from disk if present; otherwise defaults (3 lives, world 1) are used.</li>
+    <li>World 1 is loaded: first tries <code>worlds/world001.vwr</code>, then <code>worlds/world001.txt</code>, then generates a demo world.</li>
+    <li>If a demo world is generated, it is saved as <code>worlds/world001.vwr</code> for future runs.</li>
+    <li>The game enters the <code>Init</code> phase (gamer-select screen).</li>
+  </ol>
+
+  <div class="page-nav">
+    <a href="build.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Build Guide</span>
+    </a>
+    <a class="next" href="gameplay.html">
+      <span class="label">Next</span>
+      <span class="title">Gameplay &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

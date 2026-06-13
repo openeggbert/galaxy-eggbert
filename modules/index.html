@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Index — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Levels &amp; Worlds</a>
+  <a href="../assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save System</a>
+  <a href="../configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="index.html" class="active">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Modules</div>
+  <h1>Module Index</h1>
+  <p class="subtitle">All major code modules and subsystems in Galaxy Eggbert.</p>
+
+  <div class="card-grid">
+    <a class="card" href="../classes/GalaxyEggbertApp.html">
+      <h3>Application</h3>
+      <p><code>GalaxyEggbertApp</code> — engine lifecycle, event subscription</p>
+    </a>
+    <a class="card" href="../classes/GalaxyEggbertGame.html">
+      <h3>Game Coordinator</h3>
+      <p><code>GalaxyEggbertGame</code> — scene, world, all subsystems</p>
+    </a>
+    <a class="card" href="../classes/Blupi.html">
+      <h3>Player (Blupi)</h3>
+      <p>Physics, input, AABB collision, sprite animation</p>
+    </a>
+    <a class="card" href="../classes/Decor.html">
+      <h3>Objects (Decor)</h3>
+      <p>Enemy pool, collectibles, patrol movement</p>
+    </a>
+    <a class="card" href="../classes/World.html">
+      <h3>World Data</h3>
+      <p>Voxel world: 100³ blocks, chunk-based storage</p>
+    </a>
+    <a class="card" href="../classes/Chunk.html">
+      <h3>Chunk</h3>
+      <p>Palette-compressed 10³ voxel container</p>
+    </a>
+    <a class="card" href="../classes/CameraController.html">
+      <h3>Camera</h3>
+      <p>3rd-person orbit camera</p>
+    </a>
+    <a class="card" href="../classes/HUD.html">
+      <h3>HUD</h3>
+      <p>Lives, keys, shield, gauge display</p>
+    </a>
+    <a class="card" href="../classes/PhaseManager.html">
+      <h3>Phase Manager</h3>
+      <p>Game-phase state machine and overlay</p>
+    </a>
+    <a class="card" href="../classes/SoundManager.html">
+      <h3>Sound Manager</h3>
+      <p>93-channel WAV audio playback</p>
+    </a>
+    <a class="card" href="../classes/GameData.html">
+      <h3>Save Data</h3>
+      <p><code>GameData</code> — 640-byte binary save file</p>
+    </a>
+    <a class="card" href="../rendering.html">
+      <h3>Rendering</h3>
+      <p>Urho3D scene graph, materials, sprites</p>
+    </a>
+    <a class="card" href="../audio.html">
+      <h3>Audio</h3>
+      <p>WAV playback via Urho3D audio subsystem</p>
+    </a>
+    <a class="card" href="../input.html">
+      <h3>Input</h3>
+      <p>Keyboard/mouse reading via Urho3D Input</p>
+    </a>
+    <a class="card" href="../internals/vwr-format.html">
+      <h3>World File (.vwr)</h3>
+      <p>Binary voxel format: header, chunk table, palette</p>
+    </a>
+    <a class="card" href="../levels.html">
+      <h3>Level Loading</h3>
+      <p>.vwr and .txt world loading pipeline</p>
+    </a>
+  </div>
+
+  <h2>Module Responsibilities</h2>
+  <table>
+    <tr><th>Module</th><th>Files</th><th>Notes</th></tr>
+    <tr><td>Application lifecycle</td><td><code>GalaxyEggbertApp.hpp/.cpp</code>, <code>Program.cpp</code></td><td>Entry point; wraps Urho3D Application</td></tr>
+    <tr><td>Game logic</td><td><code>GalaxyEggbertGame.hpp/.cpp</code></td><td>Owns scene, world, all subsystems; phase dispatch</td></tr>
+    <tr><td>Player physics</td><td><code>Blupi.hpp/.cpp</code></td><td>AABB voxel collision, billboard sprite</td></tr>
+    <tr><td>Object pool</td><td><code>Decor.hpp/.cpp</code>, <code>ObjectNode.hpp/.cpp</code></td><td>100-slot pool; patrol, pickup, collision events</td></tr>
+    <tr><td>Voxel data model</td><td><code>World.hpp/.cpp</code>, <code>Chunk.hpp/.cpp</code>, <code>Block.hpp</code></td><td>Engine-agnostic; 54 unit tests</td></tr>
+    <tr><td>Camera</td><td><code>Camera.hpp/.cpp</code></td><td>Smooth 3rd-person orbit; follows Blupi</td></tr>
+    <tr><td>HUD</td><td><code>HUD.hpp/.cpp</code></td><td>Urho3D UI elements; lives, keys, shield, gauge</td></tr>
+    <tr><td>Phase/overlay</td><td><code>PhaseManager.hpp/.cpp</code></td><td>Screen transitions; fullscreen background images + text</td></tr>
+    <tr><td>Audio</td><td><code>SoundManager.hpp/.cpp</code></td><td>93 WAV channels; volume table from mobile-eggbert</td></tr>
+    <tr><td>Save file</td><td><code>GameData.hpp/.cpp</code></td><td>640-byte binary; cross-compatible with mobile-eggbert</td></tr>
+    <tr><td>Animation tables</td><td><code>Tables.hpp/.cpp</code></td><td>Ported from mobile-eggbert Tables.cpp</td></tr>
+    <tr><td>Block type constants</td><td><code>BlockTypes.hpp</code></td><td>Named tile IDs; UV helpers</td></tr>
+    <tr><td>Game definitions</td><td><code>include/GalaxyEggbert/def/</code></td><td>All enums: GamePhase, ObjectType, SoundChannel, etc.</td></tr>
+    <tr><td>World I/O</td><td><code>Worlds/BinaryIO.cpp</code>, <code>BitPacking.cpp</code></td><td>VWR file read/write; bit-packing</td></tr>
+  </table>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

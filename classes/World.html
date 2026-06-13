@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> World</div>
+  <h1>World</h1>
+  <p class="subtitle">Fixed-size 100×100×100 voxel world with save/load API. Engine-agnostic.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>World</code> is a pure C++ class with no engine dependency.
+    It organizes 100×100×100 blocks into a 10×10×10 grid of <code>Chunk</code> objects,
+    each holding 10×10×10 blocks with palette-compressed bit-packing.
+  </p>
+  <p>Header: <code>include/GalaxyEggbert/Worlds/World.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/World.cpp</code>.</p>
+
+  <h2>API</h2>
+  <pre><code>namespace GalaxyEggbert::Worlds {
+
+class World final {
+public:
+    explicit World(uint8_t chunksPerAxis = VoxelConfig::WorldChunksPerAxis);
+
+    uint8_t  chunksPerAxis() const noexcept;    // default 10
+    uint16_t blocksPerAxis() const noexcept;    // default 100
+    size_t   chunkCount()    const noexcept;    // default 1000
+
+    Block getBlock(uint16_t x, uint16_t y, uint16_t z) const;
+    void  setBlock(uint16_t x, uint16_t y, uint16_t z, Block block);
+
+    const Chunk&amp; chunk(uint8_t cx, uint8_t cy, uint8_t cz) const;
+          Chunk&amp; chunk(uint8_t cx, uint8_t cy, uint8_t cz);
+
+    void        saveToFile(const std::filesystem::path&amp; path) const;
+    static World loadFromFile(const std::filesystem::path&amp; path);
+};</code></pre>
+
+  <h2>Usage Example</h2>
+  <pre><code>#include "GalaxyEggbert/Worlds/World.hpp"
+using namespace GalaxyEggbert::Worlds;
+
+World world;
+world.setBlock(10, 0, 10, Block::make(BlockTypes::Ground));
+world.setBlock(10, 1, 10, Block::make(BlockTypes::Wall));
+
+world.saveToFile("level.vwr");
+
+World loaded = World::loadFromFile("level.vwr");
+Block b = loaded.getBlock(10, 0, 10);
+assert(!b.isAir());</code></pre>
+
+  <h2>Error Handling</h2>
+  <ul>
+    <li><code>getBlock</code> / <code>setBlock</code>: throw <code>std::out_of_range</code> for invalid coordinates.</li>
+    <li><code>chunk()</code>: throws <code>std::out_of_range</code> for invalid chunk coordinates.</li>
+    <li><code>loadFromFile()</code>: throws <code>std::runtime_error</code> on file read failure or format mismatch.</li>
+    <li><code>saveToFile()</code>: throws <code>std::runtime_error</code> on write failure.</li>
+  </ul>
+
+  <h2>Internal Storage</h2>
+  <pre><code>private:
+    uint8_t          chunksPerAxis_;
+    std::vector&lt;Chunk&gt; chunks_; // size = chunksPerAxis³
+</code></pre>
+  <p>
+    Chunk grid is stored in row-major order: <code>index = cx + cy*n + cz*n²</code>
+    where <code>n = chunksPerAxis</code>. Block coordinates are partitioned into chunk
+    and local indices: <code>chunkX = worldX / 10; localX = worldX % 10</code>.
+  </p>
+
+  <h2>File Format</h2>
+  <p>The <code>.vwr</code> binary format is fully documented in <a href="../internals/vwr-format.html">VWR Format</a>.</p>
+
+  <h2>Tests</h2>
+  <p>
+    Covered by <code>tests/GalaxyEggbert/Worlds/WorldTests.cpp</code> (part of 54-test suite).
+    Tests include: get/set round-trips, save/load round-trips, empty chunk skipping, boundary conditions.
+  </p>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modifying a Level — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Modifying a Level</div>
+  <h1>Tutorial: Modifying a Level</h1>
+  <p class="subtitle">Edit a mobile-eggbert .txt level file and see changes in-game.</p>
+
+  <h2>Level File Location</h2>
+  <p>
+    Level files are in <code>Content/Data/Level/</code>.
+    Each world has a <code>scene0N.txt</code> file (where N = 1–5).
+    These are plain UTF-8 text files.
+  </p>
+
+  <h2>Understanding the Format</h2>
+  <p>Full format reference: <a href="../levels.html">Levels</a>. Quick summary:</p>
+  <pre><code>[Header]
+blupiPos=50 50       (Blupi spawn column / row in the 2D tile grid)
+region=2             (sky/background palette index 0–3)
+
+[Decor]              (100×100 tile grid, row-major)
+0 0 0 0 10 10 10 ... (tile IDs, space-separated, 100 per row × 100 rows)
+
+[MoveObject]
+numObject=7          (ObjectType::ExitDoor)
+posStart=50.0 1.0 50.0
+posEnd=50.0 1.0 50.0
+speed=0.0</code></pre>
+
+  <h2>Step 1 — Locate a Level File</h2>
+  <pre><code>ls Content/Data/Level/
+# scene01.txt  scene02.txt  scene03.txt  scene04.txt  scene05.txt</code></pre>
+
+  <h2>Step 2 — Change the Spawn Point</h2>
+  <p>
+    Open <code>scene01.txt</code> and change <code>blupiPos</code> to a different column/row:
+  </p>
+  <pre><code>[Header]
+blupiPos=60 40</code></pre>
+
+  <h2>Step 3 — Add a Block</h2>
+  <p>
+    In the <code>[Decor]</code> section, tile IDs map to <code>BlockTypes</code> constants:
+  </p>
+  <table>
+    <tr><th>ID</th><th>Block</th></tr>
+    <tr><td>0</td><td>Air (empty)</td></tr>
+    <tr><td>10</td><td>Ground</td></tr>
+    <tr><td>68</td><td>Lava</td></tr>
+    <tr><td>183</td><td>Wall</td></tr>
+    <tr><td>200</td><td>Platform</td></tr>
+  </table>
+  <p>
+    Change a <code>0</code> at the target position to <code>10</code> to add a ground block.
+    Tile coordinates: row index = Z axis, column = X axis, starting from top-left.
+  </p>
+
+  <h2>Step 4 — Add a Moving Object</h2>
+  <p>
+    Append a <code>MoveObject</code> block at the end of the file:
+  </p>
+  <pre><code>[MoveObject]
+numObject=25         (shield power-up, ObjectType25)
+posStart=55.0 1.0 55.0
+posEnd=55.0 1.0 55.0
+speed=0.0</code></pre>
+
+  <h2>Step 5 — Reload In-Game</h2>
+  <p>
+    Galaxy Eggbert loads level files at game start.
+    Restart the binary to see changes:
+  </p>
+  <pre><code>cd cmake-build-debug/bin &amp;&amp; ./GalaxyEggbert</code></pre>
+  <p>
+    There is currently no hot-reload feature; a restart is required.
+  </p>
+
+  <h2>Coordinate System</h2>
+  <p>
+    The <code>.txt</code> tile grid (100×100, XZ plane) is loaded into the 3D world at Y=0.
+    Each tile maps to one world block. Blupi spawn <code>(col, row)</code> in the file
+    maps to <code>(col + kWCX, 1, row + kWCZ)</code> in world coordinates (kWCX = kWCZ = 50).
+    <span class="nv">Needs verification — exact offset mapping.</span>
+  </p>
+
+  <div class="page-nav">
+    <a href="first-object.html">← Adding a New Game Object</a>
+    <a href="index.html">Tutorials ↑</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

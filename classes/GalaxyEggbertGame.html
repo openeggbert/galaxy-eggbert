@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GalaxyEggbertGame — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GalaxyEggbertGame</div>
+  <h1>GalaxyEggbertGame</h1>
+  <p class="subtitle">Main game coordinator — owns the scene, terrain, world, and all subsystems.</p>
+
+  <h2>Overview</h2>
+  <p>
+    This is the central class of Galaxy Eggbert. It creates and manages:
+  </p>
+  <ul>
+    <li>The Urho3D 3D scene (scene graph, lighting, sky)</li>
+    <li>The voxel world data model (<code>World</code>)</li>
+    <li>All game subsystems: <code>Blupi</code>, <code>Decor</code>, <code>CameraController</code>, <code>HUD</code>, <code>PhaseManager</code>, <code>SoundManager</code></li>
+    <li>The <code>GameData</code> save/load</li>
+    <li>The <code>GamePhase</code> state machine dispatch</li>
+  </ul>
+  <p>Source: <code>src/GalaxyEggbert/Game/GalaxyEggbertGame.hpp</code> and <code>.cpp</code></p>
+
+  <h2>Public Interface</h2>
+  <pre><code>class GalaxyEggbertGame {
+public:
+    explicit GalaxyEggbertGame(Urho3D::Context* context);
+    ~GalaxyEggbertGame();
+    void Start();
+    void Update(float dt);
+    void Stop();
+};</code></pre>
+
+  <h2>Key Private State</h2>
+  <table>
+    <tr><th>Member</th><th>Type</th><th>Purpose</th></tr>
+    <tr><td><code>scene_</code></td><td><code>SharedPtr&lt;Scene&gt;</code></td><td>Urho3D scene graph</td></tr>
+    <tr><td><code>terrainRoot_</code></td><td><code>SharedPtr&lt;Node&gt;</code></td><td>Parent node for all terrain block nodes</td></tr>
+    <tr><td><code>world_</code></td><td><code>unique_ptr&lt;World&gt;</code></td><td>Voxel world data</td></tr>
+    <tr><td><code>blupi_</code></td><td><code>unique_ptr&lt;Blupi&gt;</code></td><td>Player character</td></tr>
+    <tr><td><code>decor_</code></td><td><code>unique_ptr&lt;Decor&gt;</code></td><td>Object pool</td></tr>
+    <tr><td><code>camera_</code></td><td><code>unique_ptr&lt;CameraController&gt;</code></td><td>3rd-person camera</td></tr>
+    <tr><td><code>hud_</code></td><td><code>unique_ptr&lt;HUD&gt;</code></td><td>HUD overlay</td></tr>
+    <tr><td><code>phases_</code></td><td><code>unique_ptr&lt;PhaseManager&gt;</code></td><td>Phase state machine</td></tr>
+    <tr><td><code>sound_</code></td><td><code>unique_ptr&lt;SoundManager&gt;</code></td><td>Audio</td></tr>
+    <tr><td><code>gameData_</code></td><td><code>GameData</code></td><td>Save file data</td></tr>
+    <tr><td><code>lives_</code></td><td><code>int</code></td><td>Current life count (1–9)</td></tr>
+    <tr><td><code>currentWorld_</code></td><td><code>int</code></td><td>Current world number (1–5)</td></tr>
+    <tr><td><code>shieldTimer_</code></td><td><code>float</code></td><td>Seconds of shield remaining</td></tr>
+    <tr><td><code>respawnInvincibleTimer_</code></td><td><code>float</code></td><td>Seconds of post-respawn invincibility</td></tr>
+    <tr><td><code>tileMatCache_</code></td><td><code>unordered_map&lt;uint16_t, Material&gt;</code></td><td>Per-block-type material cache</td></tr>
+    <tr><td><code>kWCX / kWCZ</code></td><td><code>static constexpr int = 50</code></td><td>World center offset (block coords)</td></tr>
+    <tr><td><code>kMaxWorld</code></td><td><code>static constexpr int = 5</code></td><td>Total world count</td></tr>
+  </table>
+
+  <h2>Important Private Methods</h2>
+  <table>
+    <tr><th>Method</th><th>Purpose</th></tr>
+    <tr><td><code>CreateScene()</code></td><td>Creates Urho3D scene with Octree, Zone, lights</td></tr>
+    <tr><td><code>LoadWorld(worldNum)</code></td><td>Loads .vwr or .txt; fallback to demo; spawns terrain nodes; applies sky</td></tr>
+    <tr><td><code>BuildDemoWorld()</code></td><td>Generates procedural demo world when no files exist</td></tr>
+    <tr><td><code>SpawnTerrainNodes()</code></td><td>Iterates world chunks, creates one Box.mdl node per non-air block</td></tr>
+    <tr><td><code>LoadMobileEggbertTerrain(path)</code></td><td>Parses .txt format: header, Decor section, MoveObject entries</td></tr>
+    <tr><td><code>EnterPhase(next)</code></td><td>Transitions to a new GamePhase; reinitializes phase-specific state</td></tr>
+    <tr><td><code>UpdatePlay(dt)</code></td><td>Main gameplay update: player, camera, decor, events, HUD</td></tr>
+    <tr><td><code>UpdateInit(dt)</code></td><td>Gamer-select screen logic</td></tr>
+    <tr><td><code>UpdateSettings(dt)</code></td><td>Settings screen: sound toggle</td></tr>
+    <tr><td><code>SelectGamer(slot)</code></td><td>Loads gamer slot, starts gameplay</td></tr>
+    <tr><td><code>AdvanceToNextWorld()</code></td><td>Increments world, resets per-level counters, loads new world</td></tr>
+    <tr><td><code>ResetLevel()</code></td><td>Game over reset: lives=3, world=1, back to Init</td></tr>
+    <tr><td><code>GetTileMaterial(blockType)</code></td><td>Returns (or creates and caches) material for a block type</td></tr>
+    <tr><td><code>UpdateSkyDome(region)</code></td><td>Updates sky sphere texture based on region index</td></tr>
+  </table>
+
+  <h2>Constants</h2>
+  <pre><code>static constexpr int kWCX     = 50;   // world center X
+static constexpr int kWCZ     = 50;   // world center Z
+static constexpr int kMaxWorld =  5;   // number of worlds</code></pre>
+
+  <h2>Lifetime</h2>
+  <p>
+    Created in <code>GalaxyEggbertApp::Start()</code>; destroyed in <code>GalaxyEggbertApp::Stop()</code>.
+    The destructor calls <code>Stop()</code> which saves game data and releases all Urho3D resources.
+  </p>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

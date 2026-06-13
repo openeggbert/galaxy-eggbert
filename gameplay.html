@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gameplay — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html" class="active">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Gameplay</div>
+  <h1>Gameplay</h1>
+  <p class="subtitle">Core mechanics, enemies, collectibles, and progression.</p>
+
+  <h2>Core Gameplay Loop</h2>
+  <p>
+    Galaxy Eggbert is a 3D platformer. The player controls Blupi — a small character — through voxel worlds, collecting treasures, picking up keys and power-ups, avoiding enemies and hazard tiles, and reaching the level exit.
+  </p>
+  <ol>
+    <li>Select a gamer slot (1, 2, or 3) on the gamer-select screen.</li>
+    <li>Navigate Blupi through the 3D world.</li>
+    <li>Collect all treasures for a bonus life.</li>
+    <li>Collect any keys required to unlock doors (tracked in HUD).</li>
+    <li>Avoid patrol enemies, hazard tiles (Lava, Spike, Crusher), and fall deaths.</li>
+    <li>Reach the level exit (type 7 object) to advance to the next world.</li>
+    <li>After world 5, progression wraps back to world 1.</li>
+    <li>Losing all lives returns to the gamer-select screen; saves reset to 3 lives, world 1.</li>
+  </ol>
+
+  <h2>Player Character (Blupi)</h2>
+  <p>Implemented in <code>src/GalaxyEggbert/Game/Blupi.hpp</code> and <code>Blupi.cpp</code>.</p>
+
+  <h3>Physics Constants</h3>
+  <table>
+    <tr><th>Constant</th><th>Value</th><th>Notes</th></tr>
+    <tr><td><code>kGravity</code></td><td>−22.0 units/s²</td><td>Applied every frame to Y velocity</td></tr>
+    <tr><td><code>kJumpSpeed</code></td><td>10.0 units/s</td><td>Initial Y velocity on jump</td></tr>
+    <tr><td><code>kMoveSpeed</code></td><td>5.5 units/s</td><td>Horizontal movement speed</td></tr>
+    <tr><td><code>kTurnSpeed</code></td><td>180 °/s</td><td>Rotation speed (LEFT/RIGHT keys)</td></tr>
+    <tr><td><code>kHalfW</code></td><td>0.35 units</td><td>Half-width for AABB collision</td></tr>
+    <tr><td><code>kHalfH</code></td><td>0.70 units</td><td>Half-height for AABB collision</td></tr>
+    <tr><td>Terminal velocity</td><td>−30 units/s</td><td>Y velocity clamped</td></tr>
+    <tr><td>Fall death threshold</td><td>Y &lt; −10 units</td><td>Triggers death + respawn</td></tr>
+  </table>
+
+  <h3>Animation States</h3>
+  <table>
+    <tr><th>State (<code>BlupiAction</code>)</th><th>Triggered when</th></tr>
+    <tr><td><code>Stop</code></td><td>On ground, no horizontal input, not turning</td></tr>
+    <tr><td><code>March</code></td><td>On ground, horizontal speed &gt; 0.1</td></tr>
+    <tr><td><code>Turn</code></td><td>On ground, not moving, pressing LEFT or RIGHT</td></tr>
+    <tr><td><code>Jump</code></td><td>In air, Y velocity &gt; 0 (rising)</td></tr>
+    <tr><td><code>Air</code></td><td>In air, Y velocity ≤ 0 (falling)</td></tr>
+  </table>
+  <p>
+    Animation frames are looked up from <code>Tables::GetBlupiIcon(action, scaledPhase)</code>,
+    which maps to the <code>blupi.png</code> sprite sheet (600×2040 px, 60×60 tiles, 10 columns × 34 rows).
+    The animation ticks at 1/3 game-tick rate to match the original 20 fps timing.
+  </p>
+
+  <h3>Respawn Invincibility</h3>
+  <p>
+    After any respawn (fall death, tile hazard, or enemy hit), Blupi has <strong>2 seconds of invincibility</strong>.
+    During this time the sprite flashes (visible/invisible every 0.1 s).
+    Tile hazards and enemy hits are skipped while the timer is active.
+  </p>
+
+  <h2>Lives and Death</h2>
+  <ul>
+    <li>Start with <strong>3 lives</strong>. Maximum is <strong>9 lives</strong>.</li>
+    <li>Lose a life on: fall death, hazard tile contact, enemy contact (without shield).</li>
+    <li>Earn an extra life when all treasures in a level are collected (once per level).</li>
+    <li>At 0 lives: game over → gamer-select screen; save resets to 3 lives, world 1.</li>
+  </ul>
+
+  <h2>Collectibles</h2>
+  <table>
+    <tr><th>Object Type</th><th>Name</th><th>Effect</th></tr>
+    <tr><td><code>ObjectType5</code></td><td>Treasure</td><td>Counts toward treasure total; bonus life when all collected</td></tr>
+    <tr><td><code>ObjectType6</code></td><td>Extra-Life Egg</td><td>Counts as collected item</td></tr>
+    <tr><td><code>ObjectType30</code></td><td>Drink</td><td>Counts as collected item</td></tr>
+    <tr><td><code>ObjectType49</code></td><td>Red Key</td><td>Key collected (tracked in HUD)</td></tr>
+    <tr><td><code>ObjectType50</code></td><td>Green Key</td><td>Key collected</td></tr>
+    <tr><td><code>ObjectType51</code></td><td>Blue Key</td><td>Key collected</td></tr>
+    <tr><td><code>ObjectType25</code></td><td>Shield Orb</td><td>5 seconds of invincibility</td></tr>
+    <tr><td><code>ObjectType13</code></td><td>Helicopter</td><td>Grants shield (vehicle boarding placeholder)</td></tr>
+  </table>
+
+  <h2>Hazards</h2>
+  <h3>Tile Hazards</h3>
+  <table>
+    <tr><th>Block Type</th><th>Icon ID</th><th>Effect</th></tr>
+    <tr><td><code>Lava</code></td><td>68</td><td>Kills Blupi on contact (removes 1 life)</td></tr>
+    <tr><td><code>Spike</code></td><td>373</td><td>Kills Blupi on contact</td></tr>
+    <tr><td><code>Crusher</code></td><td>317</td><td>Kills Blupi on contact</td></tr>
+  </table>
+  <p>
+    Tile hazard detection is performed in <code>GalaxyEggbertGame::UpdatePlay()</code> each frame
+    when Blupi is on the ground and neither the shield nor respawn invincibility is active.
+  </p>
+
+  <h3>Fall Death</h3>
+  <p>Falling below Y = −10 world units triggers a death. The spawn point is fixed to the position
+     encoded in the level file's <code>blupiPos=</code> header field.</p>
+
+  <h2>Enemies</h2>
+  <table>
+    <tr><th>Object Type</th><th>Name</th><th>Behavior</th></tr>
+    <tr><td><code>ObjectType2</code></td><td>Patrol Enemy A</td><td>Patrols linearly between two points; kills on contact</td></tr>
+    <tr><td><code>ObjectType3</code></td><td>Patrol Enemy B</td><td>Same patrol, different sprite</td></tr>
+    <tr><td><code>ObjectType4</code></td><td>Bulldozer</td><td>Patrol using bulldozer sprite; kills on contact</td></tr>
+    <tr><td><code>ObjectType16</code></td><td>Spider</td><td>Patrol; kills on contact</td></tr>
+    <tr><td><code>ObjectType17</code></td><td>Fish</td><td>Patrol (water sections); kills on contact</td></tr>
+    <tr><td><code>ObjectType20</code></td><td>Bird</td><td>Patrol; kills on contact</td></tr>
+    <tr><td><code>ObjectType33</code></td><td>Blupit Tank</td><td>Patrol; kills on contact</td></tr>
+  </table>
+  <p>
+    All patrol enemies use linear movement between <code>posStart</code> and <code>posEnd</code>.
+    If a patrol enemy's start equals its end (stationary in level file), a default ±2 tile X patrol range is applied.
+    Contact detection uses a 0.85 unit radius check.
+  </p>
+
+  <h2>Moving Platforms</h2>
+  <p>
+    <code>ObjectType1</code> is a moving platform lift. It moves linearly between two endpoints.
+    When Blupi is within 0.85 units horizontally and 1.5 units vertically of the platform center,
+    the platform's XZ movement delta is applied to Blupi's position via <code>Blupi::ApplyExternalDelta()</code>.
+  </p>
+
+  <h2>The Level Exit</h2>
+  <p>
+    <code>ObjectType7</code> is the level exit goal marker. When Blupi's position is within 0.85 units
+    of the exit, <code>Decor::WasExitReached()</code> returns true, the win sound plays, and the game
+    transitions to the <code>Win</code> phase, then loads the next world.
+  </p>
+
+  <h2>World Progression</h2>
+  <ul>
+    <li>Worlds are numbered 1–5.</li>
+    <li>Per-world sky: Grassland (1), Forest (2), Ice Caves (3), Lava Fields (4), Space Station (5).</li>
+    <li>After world 5, wraps to world 1 (<code>currentWorld_</code> resets to 1).</li>
+    <li>Each world adds +1 Crusher tile and +1 patrol enemy for increasing difficulty.</li>
+    <li>Progress (current world, lives) is saved after every win/loss/quit.</li>
+  </ul>
+
+  <h2>Game Phases (Screens)</h2>
+  <table>
+    <tr><th>Phase</th><th>Screen</th><th>Notes</th></tr>
+    <tr><td><code>Init</code></td><td>Gamer-select / main menu</td><td>Keys 1/2/3 select slot; S opens settings; ESC quits</td></tr>
+    <tr><td><code>Play</code></td><td>Active gameplay</td><td>Main game state</td></tr>
+    <tr><td><code>Pause</code></td><td>Pause overlay</td><td>ESC resumes; S opens settings</td></tr>
+    <tr><td><code>Win</code></td><td>Level complete</td><td>Any key advances to next world</td></tr>
+    <tr><td><code>Lost</code></td><td>Game over</td><td>Any key returns to gamer-select</td></tr>
+    <tr><td><code>MainSetup</code></td><td>Settings (from main menu)</td><td>S toggles sound; ESC returns</td></tr>
+    <tr><td><code>PlaySetup</code></td><td>Settings (during pause)</td><td>S toggles sound; ESC returns</td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a href="running.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Running the Game</span>
+    </a>
+    <a class="next" href="controls.html">
+      <span class="label">Next</span>
+      <span class="title">Controls &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

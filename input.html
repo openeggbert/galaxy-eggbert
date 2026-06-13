@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Input — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html" class="active">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Input</div>
+  <h1>Input</h1>
+  <p class="subtitle">How keyboard and mouse input is read and processed.</p>
+
+  <h2>Input System</h2>
+  <p>
+    Input is read through <code>Urho3D::Input</code> subsystem, accessed via:
+  </p>
+  <pre><code>auto* input = context_->GetSubsystem&lt;Input&gt;();</code></pre>
+  <p>
+    Input is polled each frame inside the update functions — there is no event-driven input handling.
+  </p>
+
+  <h2>Two Input Methods</h2>
+  <table>
+    <tr><th>Method</th><th>Behavior</th><th>Used for</th></tr>
+    <tr><td><code>input->GetKeyDown(KEY_X)</code></td><td>Returns true every frame the key is held</td><td>Movement, rotation, strafe</td></tr>
+    <tr><td><code>input->GetKeyPress(KEY_X)</code></td><td>Returns true only on the frame the key is first pressed</td><td>Jump, phase transitions, menu selection</td></tr>
+    <tr><td><code>input->GetMouseButtonPress(MOUSEB_LEFT)</code></td><td>One-shot mouse button</td><td>Win/Lost screen continuation</td></tr>
+  </table>
+
+  <h2>Where Input is Read</h2>
+  <table>
+    <tr><th>Location</th><th>Keys handled</th></tr>
+    <tr><td><code>Blupi::Update()</code></td><td>UP/DOWN/LEFT/RIGHT/W/A/S/D/Q/E/Space — movement and jump</td></tr>
+    <tr><td><code>GalaxyEggbertGame::Update()</code></td><td>ESC (in Init → quit), F1 (debug toggle)</td></tr>
+    <tr><td><code>GalaxyEggbertGame::UpdateInit()</code></td><td>1/2/3 (gamer select), S (settings)</td></tr>
+    <tr><td><code>GalaxyEggbertGame::UpdatePlay()</code></td><td>ESC (pause)</td></tr>
+    <tr><td><code>GalaxyEggbertGame::UpdatePause()</code></td><td>ESC (resume), S (settings)</td></tr>
+    <tr><td><code>GalaxyEggbertGame::UpdateWin()</code></td><td>Space/Enter/ESC/arrows/mouse-left (continue)</td></tr>
+    <tr><td><code>GalaxyEggbertGame::UpdateLost()</code></td><td>Same as Win (reset)</td></tr>
+    <tr><td><code>GalaxyEggbertGame::UpdateSettings()</code></td><td>S (toggle sound), ESC (back)</td></tr>
+  </table>
+
+  <h2>Key Constants</h2>
+  <p>
+    Urho3D key constants used in the project:
+    <code>KEY_UP</code>, <code>KEY_DOWN</code>, <code>KEY_LEFT</code>, <code>KEY_RIGHT</code>,
+    <code>KEY_W</code>, <code>KEY_A</code>, <code>KEY_S</code>, <code>KEY_D</code>,
+    <code>KEY_Q</code>, <code>KEY_E</code>,
+    <code>KEY_SPACE</code>, <code>KEY_RETURN</code>, <code>KEY_ESCAPE</code>,
+    <code>KEY_1</code>, <code>KEY_2</code>, <code>KEY_3</code>,
+    <code>KEY_F1</code>, <code>KEY_S</code>.
+  </p>
+
+  <h2>Gamepad and Touch</h2>
+  <div class="nv">
+    <strong>Not Implemented</strong>
+    Gamepad controller input is not implemented. Touch input for Android is planned but not yet implemented.
+    Key bindings are hardcoded — there is no runtime remapping capability.
+  </div>
+
+  <div class="page-nav">
+    <a href="audio.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Audio</span>
+    </a>
+    <a class="next" href="save-system.html">
+      <span class="label">Next</span>
+      <span class="title">Save System &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

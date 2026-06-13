@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html" class="active">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Getting Started</div>
+  <h1>Getting Started</h1>
+  <p class="subtitle">Everything you need before your first build.</p>
+
+  <h2>Prerequisites</h2>
+
+  <h3>Common (all platforms)</h3>
+  <ul>
+    <li><strong>CMake ≥ 3.21</strong> — build system</li>
+    <li><strong>C++23-capable compiler</strong> — GCC 13+ or Clang 16+</li>
+    <li><strong>Git</strong> — for cloning and submodule management</li>
+  </ul>
+
+  <h3>Linux native build (EasyGL backend)</h3>
+  <ul>
+    <li>OpenGL development libraries (<code>libgl-dev</code> or equivalent)</li>
+    <li>Pre-built U3D library at the configured path (see below)</li>
+  </ul>
+
+  <h3>Windows cross-build from Linux (MinGW)</h3>
+  <ul>
+    <li><code>mingw-w64</code> package: <code>sudo apt install mingw-w64</code></li>
+    <li>Windows-target SDL3 libraries (supplied via <code>CNA_WINDOWS_DEPENDENCIES_ROOT</code>)</li>
+  </ul>
+
+  <h3>Web (Emscripten) — Nova3D path only</h3>
+  <ul>
+    <li>Emscripten SDK installed and activated (see <a href="build.html#web">Web Build</a>)</li>
+    <li>Nova3D engine backend (<code>-DGALAXY_EGGBERT_ENGINE=NOVA3D</code>)</li>
+  </ul>
+
+  <h2>Clone the Repository</h2>
+  <pre><code>git clone https://github.com/openeggbert/galaxy-eggbert.git
+cd galaxy-eggbert</code></pre>
+
+  <h2>Initialize Submodules</h2>
+  <p>
+    The Nova3D engine backend is a git submodule (<code>../nova-3d</code> relative to the project root).
+    Even if you only plan to use U3D, run submodule init to avoid CMake warnings:
+  </p>
+  <pre><code>git submodule init --recursive
+git submodule update --recursive</code></pre>
+
+  <h2>Set Up the U3D Engine (default backend)</h2>
+  <p>
+    Galaxy Eggbert defaults to the <strong>U3D</strong> engine backend.
+    U3D must be pre-built and available as a static library (<code>libUrho3D.a</code>) plus headers.
+  </p>
+  <p>
+    The default expected path, hard-coded in <code>CMakeLists.txt</code>, is:
+  </p>
+  <pre><code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code></pre>
+  <p>
+    You can override this via:
+  </p>
+  <ul>
+    <li>CMake option: <code>-DU3D_HOME=/path/to/urho3d/build</code></li>
+    <li>Environment variable: <code>URHO3D_HOME=/path/to/urho3d/build</code></li>
+  </ul>
+  <div class="warn">
+    <strong>Warning</strong>
+    The CMake configuration will fail with a fatal error if it cannot find the U3D library. Pre-building U3D from source is required before building Galaxy Eggbert with the U3D backend.
+  </div>
+
+  <h2>Verify the Asset Files</h2>
+  <p>Game assets are committed in the repository under <code>Content/</code> and <code>worlds/</code>:</p>
+  <pre><code>Content/
+  backgrounds/   ← sky/menu background PNGs
+  icons/         ← sprite sheets (blupi.png, element.png, object-m.png, …)
+  sounds/        ← WAV files (sound000.wav … sound092.wav)
+worlds/
+  world001.txt … world005.txt   ← level data (mobile-eggbert format)</code></pre>
+  <div class="tip">
+    <strong>Tip</strong>
+    The worlds in <code>worlds/*.txt</code> are the original mobile-eggbert world files. They are loaded at runtime and converted to 3D voxel data. The first run also generates <code>worlds/world001.vwr</code> as a binary cache.
+  </div>
+
+  <h2>Next Steps</h2>
+  <div class="card-grid">
+    <a class="card" href="build.html">
+      <h3>&#128295; Build Guide</h3>
+      <p>Detailed CMake commands for every platform.</p>
+    </a>
+    <a class="card" href="running.html">
+      <h3>&#9654; Running</h3>
+      <p>How to run the built executable.</p>
+    </a>
+    <a class="card" href="architecture.html">
+      <h3>&#127963; Architecture</h3>
+      <p>Understanding the code structure before diving in.</p>
+    </a>
+  </div>
+
+  <div class="page-nav">
+    <a href="overview.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Project Overview</span>
+    </a>
+    <a class="next" href="build.html">
+      <span class="label">Next</span>
+      <span class="title">Build Guide &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

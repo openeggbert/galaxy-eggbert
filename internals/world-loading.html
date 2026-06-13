@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Loading — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> World Loading</div>
+  <h1>World Loading</h1>
+  <p class="subtitle">How <code>GalaxyEggbertGame::LoadWorld()</code> selects, parses, and renders a level.</p>
+
+  <h2>Decision Tree</h2>
+  <pre><code>LoadWorld(worldNum):
+  path = "Content/Data/Level/scene0N.vwr"
+  if file exists:
+      world_ = World::loadFromFile(path)    // VWR binary
+  else:
+      path = "Content/Data/Level/scene0N.txt"
+      if file exists:
+          world_ = make_unique&lt;World&gt;()
+          LoadMobileEggbertTerrain(path)    // .txt text format
+      else:
+          BuildDemoWorld()                  // procedural fallback
+
+  SpawnTerrainNodes()
+  UpdateSkyDome(region)</code></pre>
+
+  <h2>VWR Loading</h2>
+  <p>
+    Delegates entirely to <code>World::loadFromFile()</code> and <code>Chunk::read()</code>.
+    The chunk table is read first; non-empty chunks are deserialized at their stored file offsets.
+    Empty chunks (all-air) are implicitly created as <code>Chunk::createUniform(Block::air())</code>.
+    Full spec: <a href="vwr-format.html">VWR Format</a>.
+  </p>
+
+  <h2>Mobile-Eggbert .txt Loading</h2>
+  <p>
+    Implemented in <code>GalaxyEggbertGame::LoadMobileEggbertTerrain(path)</code>.
+    The file has three sections:
+  </p>
+  <ol>
+    <li>
+      <strong>Header</strong> — key=value pairs: <code>blupiPos</code>, <code>region</code>.
+      Sets Blupi spawn point and sky index.
+    </li>
+    <li>
+      <strong>Decor section</strong> — 100×100 space-separated tile IDs (one row per line).
+      Each tile ID is mapped to a block type via <code>BlockTypes::fromMobileIconId(id)</code>.
+      Decorative tiles that have no 3D block equivalent are mapped to Air.
+    </li>
+    <li>
+      <strong>MoveObject entries</strong> — zero or more objects with type, posStart, posEnd, speed.
+      Each is placed via <code>decor_->PlaceObject(type, pos, posEnd, speed)</code>.
+    </li>
+  </ol>
+
+  <h2>SpawnTerrainNodes()</h2>
+  <p>
+    After the world data model is populated, terrain is made visible:
+  </p>
+  <pre><code>SpawnTerrainNodes():
+  terrainRoot_->RemoveAllChildren()      // clear previous level
+  for each chunk (cx, cy, cz):
+      if chunk.isEmpty(): continue
+      blocks = chunk.unpackBlocks()
+      for each (lx, ly, lz) in 10³:
+          block = blocks[lx + ly*10 + lz*100]
+          if block.isAir(): continue
+          worldX = cx*10 + lx - kWCX
+          worldY = cy*10 + ly
+          worldZ = cz*10 + lz - kWCZ
+          node = terrainRoot_->CreateChild()
+          node->SetPosition(worldX, worldY, worldZ)
+          StaticModel* sm = node->CreateComponent&lt;StaticModel&gt;()
+          sm->SetModel(boxModel)
+          sm->SetMaterial(GetTileMaterial(block.typeId))</code></pre>
+  <p>
+    Each non-air block becomes one box static mesh node.
+    Materials are cached per block type ID in <code>tileMatCache_</code>.
+    UV coordinates for the tile icon are computed via <code>BlockTypes::tileUV(typeId)</code>
+    using <code>object-m.png</code> (1301×1431 px, 64×64 tiles, 20 cols).
+  </p>
+
+  <h2>Sky Dome</h2>
+  <p>
+    <code>UpdateSkyDome(region)</code> sets the sky sphere texture based on the region index (0–3)
+    from the level header, selecting a <code>decor00N.png</code> background image.
+    See <a href="../rendering.html">Rendering</a> for the per-world sky palette table.
+  </p>
+
+  <h2>Demo World</h2>
+  <p>
+    <code>BuildDemoWorld()</code> fills the bottom layer (Y=0) of the world with Ground blocks
+    and a few Wall blocks to create a minimal playable arena — used when no level file is found.
+  </p>
+
+  <div class="page-nav">
+    <a href="vwr-format.html">← VWR Format</a>
+    <a href="object-lifecycle.html">Object Lifecycle →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

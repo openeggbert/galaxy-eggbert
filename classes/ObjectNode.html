@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObjectNode — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> ObjectNode</div>
+  <h1>ObjectNode</h1>
+  <p class="subtitle">Billboard sprite node for game objects, using <code>element.png</code>.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>ObjectNode</code> is a thin wrapper that creates a Urho3D <code>BillboardSet</code>
+    node in the scene and updates its UV coordinates to display a specific icon from the
+    <code>element.png</code> sprite sheet.
+    Used by <code>Decor</code> — one <code>ObjectNode</code> per active game object.
+  </p>
+  <p>Header: <code>src/GalaxyEggbert/Game/ObjectNode.hpp</code></p>
+
+  <h2>Sprite Sheet</h2>
+  <table>
+    <tr><th>File</th><th>Size</th><th>Tile size</th><th>Grid</th><th>Total icons</th></tr>
+    <tr><td><code>Content/Data/Image/element.png</code></td><td>600×1740 px</td><td>60×60 px</td><td>10 cols × 29 rows</td><td>290</td></tr>
+  </table>
+  <p>
+    Icon index → UV: <code>col = iconIdx % 10; row = iconIdx / 10</code>.
+    UV coordinates: <code>u = col/10.0, v = row/29.0</code>, size <code>1/10 × 1/29</code>.
+  </p>
+
+  <h2>BillboardSet Config</h2>
+  <pre><code>// Created in ObjectNode constructor:
+Node* node = scene->CreateChild();
+BillboardSet* bbSet = node->CreateComponent&lt;BillboardSet&gt;();
+bbSet->SetNumBillboards(1);
+bbSet->SetFaceCameraMode(FC_ROTATE_XYZ);
+bbSet->SetMaterial(elementMaterial);  // element.png</code></pre>
+
+  <h2>API</h2>
+  <pre><code>class ObjectNode {
+public:
+    ObjectNode(Context* context, Scene* scene, Material* material);
+
+    void SetIcon(int iconIdx);   // updates billboard UV
+    void SetPosition(Vector3 pos);
+    void Remove();               // removes scene node (permanent)
+
+    Node* GetNode() const;
+};</code></pre>
+
+  <h2>Usage by Decor</h2>
+  <p>
+    When <code>Decor::PlaceObject()</code> is called, a new <code>ObjectNode</code> is
+    created and stored in <code>Object::node</code>. Each frame, <code>Decor::Update()</code>
+    calls <code>node->SetIcon(GetIcon(obj))</code> and <code>node->SetPosition(obj.pos)</code>.
+    When an object is collected or removed, <code>node->Remove()</code> is called and
+    <code>obj.active = false</code>.
+  </p>
+
+  <div class="page-nav">
+    <a href="CameraController.html">← CameraController</a>
+    <a href="../systems/index.html">Systems →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

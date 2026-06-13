@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Loop — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html" class="active">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Game Loop</div>
+  <h1>Game Loop</h1>
+  <p class="subtitle">How the main loop is driven and how per-frame logic is organized.</p>
+
+  <h2>Loop Architecture</h2>
+  <p>
+    Galaxy Eggbert does not implement its own game loop. The engine (Urho3D/U3D) owns the loop
+    and fires an <code>E_UPDATE</code> event every frame. The application subscribes to this event
+    and feeds the delta time to the game.
+  </p>
+
+  <h2>Event Flow</h2>
+  <pre><code>// Engine internal loop (Urho3D):
+while (!shouldExit) {
+    engine->RunFrame();          // fires E_UPDATE, renders, etc.
+}
+
+// GalaxyEggbertApp subscribes at Start():
+SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(GalaxyEggbertApp, HandleUpdate));
+
+// Every frame:
+void GalaxyEggbertApp::HandleUpdate(StringHash, VariantMap&amp; eventData) {
+    using namespace Update;
+    float dt = eventData[P_TIMESTEP].GetFloat();
+    if (game_) game_->Update(dt);
+}</code></pre>
+
+  <h2>Per-Frame Update Sequence (<code>GalaxyEggbertGame::Update</code>)</h2>
+  <pre><code>GalaxyEggbertGame::Update(float dt)
+│
+├─ Check phase-agnostic keys:
+│    ESC in Init → engine->Exit()
+│    F1 → toggle debug overlay
+│
+├─ Switch on phases_->Current():
+│
+│  ┌─ GamePhase::Play → UpdatePlay(dt)
+│  │    ├─ ESC → Pause phase
+│  │    ├─ blupi_->Update(dt)
+│  │    │    ├─ Read input (UP/DOWN/LEFT/RIGHT/W/A/S/D/Q/E/Space)
+│  │    │    ├─ Apply gravity: vel_.y_ += kGravity * dt
+│  │    │    ├─ Integrate position
+│  │    │    ├─ ResolveY() ← vertical AABB collision
+│  │    │    ├─ ResolveXZ() ← horizontal AABB collision
+│  │    │    ├─ Fall death check (pos.y_ < -10)
+│  │    │    ├─ Update animation state
+│  │    │    └─ Invincibility flash update
+│  │    ├─ Sound triggers (jump, land)
+│  │    ├─ Fall death handling → life deduct or Lost phase
+│  │    ├─ camera_->Update(dt, blupiPos, blupiYaw)
+│  │    ├─ Countdown timers (shield, invincible, hint)
+│  │    ├─ Tile hazard check (Lava/Spike/Crusher under Blupi)
+│  │    ├─ decor_->Update(dt, blupiPos)
+│  │    │    ├─ StepMovement() for each active object
+│  │    │    ├─ Platform carry delta accumulation
+│  │    │    ├─ UpdateIcon() → ObjectNode UV update
+│  │    │    └─ TouchesBlupi() → event flags
+│  │    ├─ Process decor events:
+│  │    │    shield pickup, key pickup, treasure pickup,
+│  │    │    bonus life, platform carry, exit reached,
+│  │    │    enemy hit
+│  │    └─ hud_->ShowPlay(lives, collected, total, keys, shield, world)
+│  │
+│  ├─ GamePhase::Init → UpdateInit(dt)
+│  │    ├─ Rebuild gamer-select text
+│  │    ├─ Keys 1/2/3 → SelectGamer()
+│  │    └─ S → MainSetup
+│  │
+│  ├─ GamePhase::Pause → UpdatePause(dt)
+│  │    ├─ ESC → Play
+│  │    └─ S → PlaySetup
+│  │
+│  ├─ GamePhase::Win → UpdateWin(dt)
+│  │    └─ Any key/click → AdvanceToNextWorld()
+│  │
+│  ├─ GamePhase::Lost → UpdateLost(dt)
+│  │    └─ Any key/click → ResetLevel()
+│  │
+│  └─ GamePhase::MainSetup / PlaySetup → UpdateSettings(dt)
+│       ├─ S → toggle sound
+│       └─ ESC → return to caller
+│
+└─ If debug mode: oct->DrawDebugGeometry()</code></pre>
+
+  <h2>Timestep</h2>
+  <p>
+    The timestep (<code>dt</code>) is the wall-clock time since the last frame in seconds,
+    provided by the Urho3D engine. Galaxy Eggbert uses variable-timestep physics — all motion
+    and timers multiply by <code>dt</code> directly.
+  </p>
+
+  <h2>Web Build Timing (Nova3D / Emscripten)</h2>
+  <p>
+    The Web build uses a fixed-timestep accumulator in Nova3D/CNA's <code>Game.cpp</code>.
+    The browser calls the RAF callback at ~60 Hz; real inter-frame time is measured and accumulated,
+    and <code>Update()</code> fires only when one full <code>TargetElapsedTime</code> slice has been accumulated.
+    A 250 ms spike cap prevents runaway catch-up after a tab is backgrounded.
+    This ensures gameplay speed matches native desktop builds regardless of the browser's RAF cadence.
+  </p>
+
+  <h2>Rendering</h2>
+  <p>
+    Galaxy Eggbert does not call any explicit render functions.
+    Urho3D renders the scene automatically after the update events fire.
+    All visual changes (node positions, material updates, UI changes) are applied in the update phase
+    and the engine renders them at the end of <code>RunFrame()</code>.
+  </p>
+
+  <div class="page-nav">
+    <a href="engine-integration.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Engine Integration</span>
+    </a>
+    <a class="next" href="rendering.html">
+      <span class="label">Next</span>
+      <span class="title">Rendering &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

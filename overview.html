@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Overview — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html" class="active">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Project Overview</div>
+  <h1>Project Overview</h1>
+  <p class="subtitle">What Galaxy Eggbert is, where it comes from, and where it is going.</p>
+
+  <h2>What is Galaxy Eggbert?</h2>
+  <p>
+    Galaxy Eggbert is a <strong>3D remake</strong> of <em>Speedy Blupi</em>, a 2D side-scrolling platformer originally written in C# for Windows Phone using the XNA framework in 2013.
+    The remake transposes the original game's levels, sprites, sounds, and gameplay rules into a three-dimensional voxel world rendered with the <strong>Urho3D engine API</strong>.
+  </p>
+  <p>
+    The project is part of the <strong>OpenEggbert</strong> collection of open-source Speedy Blupi ports and remakes.
+    A sibling project, <strong>mobile-eggbert</strong>, is a direct C++ port (via MonoGame) of the original Windows Phone game.
+    Galaxy Eggbert uses mobile-eggbert as its primary gameplay reference and shares its level files, sound files, sprite sheets, and save-data format.
+  </p>
+
+  <h2>Lineage</h2>
+  <table>
+    <tr><th>Project</th><th>Description</th></tr>
+    <tr><td>Speedy Blupi (original)</td><td>C#/XNA Windows Phone platformer, 2013</td></tr>
+    <tr><td>mobile-eggbert</td><td>C++ port via ILSpy decompile → MonoGame → SDL3/CNA</td></tr>
+    <tr><td>Galaxy Eggbert</td><td>3D remake using Urho3D scene graph; this project</td></tr>
+  </table>
+
+  <h2>Type of Project</h2>
+  <p>
+    Galaxy Eggbert is a <strong>game remake</strong> — not an emulator, not a port, not an engine demo.
+    It reuses the original assets (sprites, sounds, level data) but replaces the 2D rendering with a 3D voxel scene.
+    The gameplay rules (physics constants, enemy behavior, sound indices, save format) are ported as faithfully as possible from the original game.
+  </p>
+
+  <h2>Key Features (verified from source)</h2>
+  <ul>
+    <li>100×100×100 voxel world composed of 10×10×10 chunks</li>
+    <li>Levels loaded from mobile-eggbert <code>.txt</code> world files or native <code>.vwr</code> binary files</li>
+    <li>Blupi rendered as a UV-mapped billboard sprite from <code>blupi.png</code></li>
+    <li>5 levels with distinct sky palettes: Grassland, Forest, Ice Caves, Lava Fields, Space Station</li>
+    <li>Enemies: patrol enemies (types 2, 3, 4, 16, 17, 20, 33), platform lifts (type 1)</li>
+    <li>Collectibles: treasures (type 5), extra-life eggs (type 6), keys (types 49–51), shield orbs (type 25)</li>
+    <li>Hazard tiles: Lava, Spike, Crusher</li>
+    <li>3rd-person orbit camera with smooth follow</li>
+    <li>HUD: lives, treasure counter, key icons, shield countdown, world name</li>
+    <li>93-channel WAV audio system (same indices as original game)</li>
+    <li>640-byte save file binary-compatible with mobile-eggbert</li>
+    <li>3 gamer save slots</li>
+    <li>54 engine-independent unit tests for the world data model</li>
+  </ul>
+
+  <h2>Platforms</h2>
+  <table>
+    <tr><th>Platform</th><th>Engine path</th><th>Status</th></tr>
+    <tr><td>Linux x86-64</td><td>U3D (primary)</td><td><span class="badge badge-done">Working</span></td></tr>
+    <tr><td>Windows x86-64</td><td>U3D (MinGW cross-compile)</td><td><span class="badge badge-done">Working</span></td></tr>
+    <tr><td>Web (Emscripten)</td><td>Nova3D / SDL Renderer</td><td><span class="badge badge-planned">Planned (U3D path not yet supported)</span></td></tr>
+    <tr><td>Android</td><td>Nova3D</td><td><span class="badge badge-planned">Planned</span></td></tr>
+  </table>
+
+  <div class="warn">
+    <strong>Important</strong>
+    The U3D engine backend does not yet support Android or Emscripten/Web targets. These targets require the Nova3D engine backend (set <code>-DGALAXY_EGGBERT_ENGINE=NOVA3D</code>). See <a href="platform-support.html">Platform Support</a> for details.
+  </div>
+
+  <h2>Important Dependencies</h2>
+  <table>
+    <tr><th>Dependency</th><th>Role</th><th>Required</th></tr>
+    <tr><td>U3D (u3d-community/U3D)</td><td>Urho3D engine library (pre-built)</td><td>Yes (default path)</td></tr>
+    <tr><td>Nova3D</td><td>Alternative engine (git submodule <code>../nova-3d</code>)</td><td>Only with <code>NOVA3D</code> engine</td></tr>
+    <tr><td>GoogleTest v1.14.0</td><td>Unit testing (auto-fetched by CMake)</td><td>Only when <code>BUILD_TESTING=ON</code></td></tr>
+    <tr><td>MinGW-w64</td><td>Windows cross-compilation from Linux</td><td>Only for Windows cross-build</td></tr>
+    <tr><td>Emscripten SDK</td><td>Web build</td><td>Only for Web target</td></tr>
+    <tr><td>Doxygen</td><td>API doc generation</td><td>Optional</td></tr>
+  </table>
+
+  <h2>Current Maturity</h2>
+  <p>
+    The project is in active development at <strong>Phase 27</strong>. Core gameplay is fully playable on Linux and Windows.
+    The codebase is structured and well-organized but is not yet feature-complete (vehicles, advanced enemy AI, full Emscripten/Android builds are still pending).
+  </p>
+  <p>
+    The unit-tested <code>Worlds/</code> data model is stable and production-quality.
+    The gameplay layer (<code>Game/</code>) is functional but still being expanded to cover all original enemy types and power-ups.
+  </p>
+
+  <div class="page-nav">
+    <a href="index.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Home</span>
+    </a>
+    <a class="next" href="getting-started.html">
+      <span class="label">Next</span>
+      <span class="title">Getting Started &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

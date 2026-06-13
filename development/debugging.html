@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debugging — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Debugging</div>
+  <h1>Debugging</h1>
+  <p class="subtitle">Log files, Urho3D utilities, and tips for common problems.</p>
+
+  <h2>Log File</h2>
+  <p>
+    Urho3D writes to <code>GalaxyEggbert.log</code> in the working directory
+    (configured in <code>GalaxyEggbertApp::Setup()</code>).
+    Check this first on any crash or unexpected behaviour.
+  </p>
+  <pre><code>tail -f cmake-build-debug/bin/GalaxyEggbert.log</code></pre>
+
+  <h2>Debug Build</h2>
+  <p>
+    Always debug with a <code>Debug</code> build — it enables Urho3D's internal assertions
+    and has no optimisations that mask bugs:
+  </p>
+  <pre><code>cmake -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build cmake-build-debug</code></pre>
+
+  <h2>Urho3D Debug Renderer</h2>
+  <p>
+    Urho3D provides a <code>DebugRenderer</code> component that can draw AABBs, lines, and text
+    in the 3D view. Add it to the scene and use it to visualise Blupi's hitbox or chunk boundaries:
+  </p>
+  <pre><code>// In CreateScene():
+scene_->CreateComponent&lt;DebugRenderer&gt;();
+
+// In Update():
+DebugRenderer* dr = scene_->GetComponent&lt;DebugRenderer&gt;();
+BoundingBox bb(pos - Vector3(0.35, 0, 0.35), pos + Vector3(0.35, 1.4, 0.35));
+dr->AddBoundingBox(bb, Color::GREEN);</code></pre>
+
+  <h2>Unit Tests</h2>
+  <p>
+    The 54-test suite in <code>tests/GalaxyEggbert/Worlds/</code> covers the engine-agnostic
+    data model. Run before and after changes:
+  </p>
+  <pre><code>cd cmake-build-debug
+ctest --output-on-failure -R Worlds</code></pre>
+
+  <h2>Common Problems</h2>
+  <table>
+    <tr><th>Symptom</th><th>Likely Cause</th><th>Fix</th></tr>
+    <tr>
+      <td>Black screen, no geometry</td>
+      <td>No level file found and BuildDemoWorld() failed</td>
+      <td>Check <code>Content/Data/Level/</code> exists and contains at least one <code>scene0N.txt</code></td>
+    </tr>
+    <tr>
+      <td>Blupi falls through floor</td>
+      <td>Block coordinate offset wrong (<code>kWCX</code>/<code>kWCZ</code>)</td>
+      <td>Verify <code>IsSolid()</code> uses the correct offset formula</td>
+    </tr>
+    <tr>
+      <td>Objects not appearing</td>
+      <td>Decor pool full (all 100 slots occupied)</td>
+      <td>Reduce object count in level or increase <code>kMaxObjects</code></td>
+    </tr>
+    <tr>
+      <td>Sound not playing</td>
+      <td><code>SoundManager::enabled_</code> is false, or WAV file missing</td>
+      <td>Check <code>gameData_.sounds()</code> flag; verify <code>Content/Data/Sound/sound0NN.wav</code> exists</td>
+    </tr>
+    <tr>
+      <td>Save not persisting</td>
+      <td>Write path has no permission or IDBFS not synced (Web)</td>
+      <td>Check permissions for <code>~/.local/share/galaxy-eggbert/</code></td>
+    </tr>
+    <tr>
+      <td>Test suite fails to compile</td>
+      <td>GoogleTest not found</td>
+      <td>Run <code>git submodule update --init</code></td>
+    </tr>
+  </table>
+
+  <h2>GDB Quick Start</h2>
+  <pre><code>cd cmake-build-debug/bin
+gdb ./GalaxyEggbert
+(gdb) run
+# On crash:
+(gdb) bt</code></pre>
+
+  <div class="page-nav">
+    <a href="coding-style.html">← Coding Style</a>
+    <a href="extending-the-game.html">Extending the Game →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Index — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Levels &amp; Worlds</a>
+  <a href="../assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save System</a>
+  <a href="../configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html" class="active">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Classes</div>
+  <h1>Class Index</h1>
+  <p class="subtitle">All documented public classes, structs, and enums.</p>
+
+  <h2>Application Layer</h2>
+  <div class="card-grid">
+    <a class="card" href="GalaxyEggbertApp.html">
+      <h3>GalaxyEggbertApp</h3>
+      <p>Urho3D Application subclass; Setup/Start/Stop lifecycle.</p>
+    </a>
+    <a class="card" href="GalaxyEggbertGame.html">
+      <h3>GalaxyEggbertGame</h3>
+      <p>Main game coordinator; owns scene, world, subsystems.</p>
+    </a>
+  </div>
+
+  <h2>Player</h2>
+  <div class="card-grid">
+    <a class="card" href="Blupi.html">
+      <h3>Blupi</h3>
+      <p>Player character: physics, input, AABB collision, billboard animation.</p>
+    </a>
+  </div>
+
+  <h2>Game Objects</h2>
+  <div class="card-grid">
+    <a class="card" href="Decor.html">
+      <h3>Decor</h3>
+      <p>100-slot object pool: enemies, collectibles, patrol, collision events.</p>
+    </a>
+    <a class="card" href="ObjectNode.html">
+      <h3>ObjectNode</h3>
+      <p>Urho3D BillboardSet node for one game object sprite.</p>
+    </a>
+  </div>
+
+  <h2>World Data Model</h2>
+  <div class="card-grid">
+    <a class="card" href="World.html">
+      <h3>World</h3>
+      <p>100×100×100 voxel world; save/load API (.vwr format).</p>
+    </a>
+    <a class="card" href="Chunk.html">
+      <h3>Chunk</h3>
+      <p>10×10×10 block container; palette + bit-packed indices.</p>
+    </a>
+  </div>
+
+  <h2>Subsystems</h2>
+  <div class="card-grid">
+    <a class="card" href="CameraController.html">
+      <h3>CameraController</h3>
+      <p>3rd-person orbit camera; smooth follow with yaw and pitch.</p>
+    </a>
+    <a class="card" href="HUD.html">
+      <h3>HUD</h3>
+      <p>2D overlay: life icons, key icons, shield timer, gauge.</p>
+    </a>
+    <a class="card" href="PhaseManager.html">
+      <h3>PhaseManager</h3>
+      <p>GamePhase state machine; fullscreen overlay transitions.</p>
+    </a>
+    <a class="card" href="SoundManager.html">
+      <h3>SoundManager</h3>
+      <p>93-channel WAV audio; volume table; enable/disable toggle.</p>
+    </a>
+    <a class="card" href="GameData.html">
+      <h3>GameData</h3>
+      <p>640-byte binary save; 3 gamer slots; mobile-eggbert compatible.</p>
+    </a>
+  </div>
+
+  <h2>Enums and Definitions</h2>
+  <table>
+    <tr><th>Enum</th><th>File</th><th>Description</th></tr>
+    <tr><td><code>GamePhase</code></td><td><code>include/…/def/GamePhase.hpp</code></td><td>Game screen/mode: Init, Play, Pause, Win, Lost, …</td></tr>
+    <tr><td><code>ObjectType</code></td><td><code>include/…/def/ObjectType.hpp</code></td><td>Object type IDs matching level file format (0–203)</td></tr>
+    <tr><td><code>BlupiAction</code></td><td><code>include/…/def/BlupiAction.hpp</code></td><td>Player animation states (Stop, March, Turn, Jump, Air, …)</td></tr>
+    <tr><td><code>SoundChannel</code></td><td><code>include/…/def/SoundChannel.hpp</code></td><td>Sound effect indices (0–92)</td></tr>
+    <tr><td><code>DoorKeyFlags</code></td><td><code>include/…/def/DoorKeyFlags.hpp</code></td><td>Key type bitfield</td></tr>
+    <tr><td><code>Direction</code></td><td><code>include/…/def/Direction.hpp</code></td><td>Directional enum</td></tr>
+    <tr><td><code>DecorAction</code></td><td><code>include/…/def/DecorAction.hpp</code></td><td>Camera shake types</td></tr>
+    <tr><td><code>GameSpeed</code></td><td><code>include/…/def/GameSpeed.hpp</code></td><td>Game speed enum</td></tr>
+    <tr><td><code>SecretPower</code></td><td><code>include/…/def/SecretPower.hpp</code></td><td>Secret power enum</td></tr>
+  </table>
+
+  <h2>Utility</h2>
+  <table>
+    <tr><th>Class/Namespace</th><th>File</th><th>Description</th></tr>
+    <tr><td><code>BlockTypes</code> (namespace)</td><td><code>include/…/BlockTypes.hpp</code></td><td>Block type constants; UV helpers; passability lookup</td></tr>
+    <tr><td><code>Tables</code></td><td><code>src/…/Game/Tables.hpp</code></td><td>Static animation frame tables; <code>GetBlupiIcon()</code></td></tr>
+    <tr><td><code>GameConstants</code></td><td><code>include/…/GameConstants.hpp</code></td><td>MAXCELX, MAXCELY, sprite cell sizes</td></tr>
+    <tr><td><code>VoxelConfig</code></td><td><code>include/…/Worlds/VoxelConfig.hpp</code></td><td>ChunkSize=10, MaxPaletteEntries, WorldChunksPerAxis=10</td></tr>
+  </table>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

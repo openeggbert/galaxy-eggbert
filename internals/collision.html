@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collision System — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Collision System</div>
+  <h1>Collision System</h1>
+  <p class="subtitle">AABB voxel collision — ResolveY, ResolveXZ, and block solidity rules.</p>
+
+  <h2>AABB Shape</h2>
+  <p>Blupi's hitbox is an axis-aligned bounding box (AABB):</p>
+  <pre><code>Width  = 2 * kHalfW = 0.70 units   (X and Z)
+Height = 2 * kHalfH = 1.40 units   (Y)</code></pre>
+  <p>
+    The pivot point (<code>pos</code>) is at the bottom centre of the AABB
+    (i.e., feet position).
+  </p>
+
+  <h2>Block Solidity</h2>
+  <pre><code>bool IsSolid(int wx, int wy, int wz):
+    if wx &lt; 0 || wy &lt; 0 || wz &lt; 0: return true   // treat out-of-bounds-low as solid floor
+    if wx &gt;= 100 || wy &gt;= 100 || wz &gt;= 100: return false  // out-of-bounds-high is air
+    block = world_->getBlock(wx + kWCX, wy, wz + kWCZ)
+    return !block.isAir()</code></pre>
+  <p>
+    Note: <code>kWCX = kWCZ = 50</code> translates gameplay coordinates to world storage coordinates.
+    The world Y axis is not offset.
+  </p>
+
+  <h2>ResolveY — Vertical Collision</h2>
+  <p>Called after applying gravity and Y velocity displacement each frame:</p>
+  <pre><code>ResolveY(pos):
+  footY = floor(pos.y)               // block row that feet are in
+  headY = floor(pos.y + 2*kHalfH)
+
+  // Falling — check floor
+  if vel_.y &lt;= 0:
+      if IsSolid(round(pos.x), footY, round(pos.z)):
+          pos.y = footY + 1          // snap feet to top of solid block
+          vel_.y = 0
+          onGround_ = true
+  else:
+      onGround_ = false
+
+  // Rising — check ceiling
+  if vel_.y &gt; 0:
+      if IsSolid(round(pos.x), headY, round(pos.z)):
+          pos.y = headY - 2*kHalfH  // push head below block
+          vel_.y = 0</code></pre>
+
+  <h2>ResolveXZ — Horizontal Collision</h2>
+  <p>Called after applying X and Z displacement each frame:</p>
+  <pre><code>ResolveXZ(pos):
+  bodyWY = round(pos.y)         // which Y block row the body occupies
+
+  // +X face
+  if IsSolid(round(pos.x + kHalfW), bodyWY, round(pos.z)):
+      pos.x = round(pos.x + kHalfW) - kHalfW
+  // -X face
+  if IsSolid(round(pos.x - kHalfW), bodyWY, round(pos.z)):
+      pos.x = round(pos.x - kHalfW) + kHalfW
+  // +Z face
+  if IsSolid(round(pos.x), bodyWY, round(pos.z + kHalfW)):
+      pos.z = round(pos.z + kHalfW) - kHalfW
+  // -Z face
+  if IsSolid(round(pos.x), bodyWY, round(pos.z - kHalfW)):
+      pos.z = round(pos.z - kHalfW) + kHalfW</code></pre>
+  <div class="note">
+    <strong>Design note:</strong> Horizontal collision only checks the body centre row (<code>bodyWY</code>),
+    not a full swept AABB. This is consistent with the original mobile-eggbert approach
+    and sufficient for the game's block-scale geometry.
+  </div>
+
+  <h2>Hazard Tiles</h2>
+  <p>
+    Lava (<code>typeId=68</code>) and Spike (<code>typeId=373</code>) blocks are solid for movement
+    but also trigger <code>blupiHit_</code> when stood on.
+    This check happens in <code>Blupi::Update()</code> after <code>ResolveY()</code>:
+    if <code>onGround_</code> and the block below is a hazard type, the hit flag is set.
+    (<span class="nv">Needs verification — exact implementation.</span>)
+  </p>
+
+  <h2>Fall Death</h2>
+  <pre><code>// After position update and collision resolution:
+if pos.y &lt; -10.0f:
+    fallDeath_ = true
+    pos = spawnPoint_
+    vel_ = Vector3::ZERO</code></pre>
+  <p>
+    <code>GalaxyEggbertGame::UpdatePlay()</code> checks <code>blupi_->WasFallDeath()</code>
+    each frame and deducts a life.
+  </p>
+
+  <h2>Object Collision</h2>
+  <p>
+    Blupi↔object collision is handled in <code>Decor::CheckContact()</code> using a simple
+    sphere test (radius 0.85 units), not the full AABB. See <a href="object-lifecycle.html">Object Lifecycle</a>.
+  </p>
+
+  <div class="page-nav">
+    <a href="object-lifecycle.html">← Object Lifecycle</a>
+    <a href="index.html">Internals ↑</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

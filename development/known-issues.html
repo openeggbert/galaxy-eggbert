@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Known Issues &amp; TODO — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Known Issues &amp; TODO</div>
+  <h1>Known Issues &amp; TODO</h1>
+  <p class="subtitle">What is working and what remains, as of Phase 27 (from <code>NEXT.md</code>).</p>
+
+  <h2>What Is Working</h2>
+  <ul>
+    <li>Linux build (U3D + EasyGL)</li>
+    <li>Windows native and MinGW cross-compile</li>
+    <li>Core game loop: physics, movement, jump, AABB collision</li>
+    <li>Voxel world: 100³ world, 10³ chunks, palette-compressed storage</li>
+    <li>VWR binary format: save and load</li>
+    <li>Mobile-eggbert .txt level loader</li>
+    <li>Terrain rendering: one box node per block, UV-mapped materials</li>
+    <li>Blupi billboard sprite animation</li>
+    <li>Basic Decor object pool: enemies, collectibles, keys, shield, exit</li>
+    <li>Moving platforms with Blupi carry</li>
+    <li>HUD: lives, treasure gauge, key icons</li>
+    <li>SoundManager: 93-channel WAV playback</li>
+    <li>GameData: 640-byte save file, 3 gamer slots</li>
+    <li>GamePhase state machine: Init, Play, Pause, Win, Lost, Settings</li>
+    <li>Sky dome with per-world region palette</li>
+    <li>54 unit tests for Worlds data model</li>
+    <li>GoogleTest integration</li>
+    <li>Doxygen target</li>
+  </ul>
+
+  <h2>Not Yet Done (Phase 27 TODO)</h2>
+
+  <h3>Platforms</h3>
+  <ul>
+    <li><span class="badge badge-planned">Planned</span> Web/Emscripten build (Nova3D only — U3D does not support Emscripten)</li>
+    <li><span class="badge badge-planned">Planned</span> Android build (Nova3D only)</li>
+    <li><span class="badge badge-wip">WIP</span> Nova3D engine fork — not yet stable</li>
+  </ul>
+
+  <h3>Gameplay</h3>
+  <ul>
+    <li>Many <code>ObjectType</code> values (0–203) are defined but not implemented in <code>Decor</code></li>
+    <li>Vehicles, advanced AI, projectiles — not ported from mobile-eggbert</li>
+    <li>Door/bridge tile-triggered events — not implemented</li>
+    <li>Object respawn on level reset (currently requires full reload)</li>
+    <li>Camera-vs-world collision avoidance (clips through geometry)</li>
+    <li>Horizontal collision uses single body-row check (not full AABB sweep)</li>
+    <li>Hazard tile damage (Lava, Spike) — <span class="nv">Needs verification whether wired up</span></li>
+    <li><code>BlupiAction</code> values beyond Stop/March/Turn/Jump/Air — not all wired to animations</li>
+  </ul>
+
+  <h3>Assets</h3>
+  <ul>
+    <li>Not all <code>decor000–031.png</code> background files exist (e.g., 005, 014, 017 are missing)</li>
+    <li><code>blupi1.png</code>, <code>explo.png</code> dimensions unverified</li>
+  </ul>
+
+  <h3>UI / UX</h3>
+  <ul>
+    <li>Main menu — not fully implemented beyond gamer-select</li>
+    <li>Ranking/score screen — not implemented</li>
+    <li>Trial mode — not implemented</li>
+    <li>Controller / gamepad input — not supported</li>
+    <li>Touch input — not supported</li>
+    <li>Accelerometer (mobile) — not applicable on desktop</li>
+  </ul>
+
+  <h3>Engine</h3>
+  <ul>
+    <li>Nova3D fork is work-in-progress; U3D is the stable default</li>
+    <li>No hot-reload for level files or assets during gameplay</li>
+  </ul>
+
+  <h2>Source of Truth</h2>
+  <p>
+    The authoritative TODO list is <code>NEXT.md</code> in the source repository root.
+    Check it for the most up-to-date phase status before starting work.
+  </p>
+
+  <div class="page-nav">
+    <a href="extending-the-game.html">← Extending the Game</a>
+    <a href="index.html">Development ↑</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

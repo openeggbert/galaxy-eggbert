@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chunk — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Chunk</div>
+  <h1>Chunk</h1>
+  <p class="subtitle">10×10×10 block sub-volume with palette-compressed bit-packing.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>Chunk</code> stores 1 000 block values in a compact palette + bit-packed index format.
+    It is the storage unit inside <code>World</code> — each world holds 10³ = 1 000 chunks.
+    Engine-agnostic; no Urho3D headers.
+  </p>
+  <p>Header: <code>include/GalaxyEggbert/Worlds/Chunk.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/Chunk.cpp</code>.</p>
+
+  <h2>Constants</h2>
+  <pre><code>static constexpr int Size   = 10;       // blocks per axis
+static constexpr int Volume = 1000;     // Size³</code></pre>
+
+  <h2>Internal Storage Layout</h2>
+  <pre><code>private:
+    std::vector&lt;Block&gt;    palette_;          // unique block values (≤256)
+    std::vector&lt;uint8_t&gt;  packedIndices_;    // bit-packed palette indices
+    std::vector&lt;uint8_t&gt;  extraMetadata_;    // reserved for future use
+    uint8_t               bitsPerBlock_;     // ceil(log2(palette_.size()))
+    bool                  dirty_;            // set by setBlock, cleared on serialise</code></pre>
+  <p>
+    When the palette has 1 entry (<em>uniform chunk</em>), <code>packedIndices_</code> may be empty.
+    <code>bitsPerBlock_</code> is recomputed whenever the palette grows.
+  </p>
+
+  <h2>API</h2>
+  <pre><code>namespace GalaxyEggbert::Worlds {
+
+class Chunk {
+public:
+    // Factory helpers
+    static Chunk createUniform(Block fillBlock);
+    static Chunk fromBlocks(const std::array&lt;Block, Volume&gt;&amp; blocks);
+
+    Block getBlock(uint8_t lx, uint8_t ly, uint8_t lz) const;
+    void  setBlock(uint8_t lx, uint8_t ly, uint8_t lz, Block block);
+
+    // Unpack all 1 000 blocks into a flat array (for terrain meshing)
+    std::array&lt;Block, Volume&gt; unpackBlocks() const;
+
+    bool isEmpty()   const;   // all blocks == Air
+    bool isUniform() const;   // palette_.size() == 1
+    bool isDirty()   const;   // modified since last write()
+
+    // Serialisation (called by World::saveToFile / loadFromFile)
+    void write(std::ostream&amp; os) const;
+    void read (std::istream&amp; is);
+};</code></pre>
+
+  <h2>Bit-packing Details</h2>
+  <p>
+    Block indices into the palette are stored consecutively in <code>packedIndices_</code>.
+    Each index occupies exactly <code>bitsPerBlock_</code> bits.
+    Indices are packed little-endian within each byte.
+  </p>
+  <table>
+    <tr><th>Palette size</th><th>Bits per block</th><th>Bytes for 1000 blocks</th></tr>
+    <tr><td>1 (uniform)</td><td>0</td><td>0 (packedIndices_ empty)</td></tr>
+    <tr><td>2</td><td>1</td><td>125</td></tr>
+    <tr><td>3–4</td><td>2</td><td>250</td></tr>
+    <tr><td>5–8</td><td>3</td><td>375</td></tr>
+    <tr><td>9–16</td><td>4</td><td>500</td></tr>
+    <tr><td>17–32</td><td>5</td><td>625</td></tr>
+    <tr><td>33–64</td><td>6</td><td>750</td></tr>
+    <tr><td>65–128</td><td>7</td><td>875</td></tr>
+    <tr><td>129–256</td><td>8</td><td>1000</td></tr>
+  </table>
+
+  <h2>Coordinate Mapping</h2>
+  <p>
+    Local indices <code>lx, ly, lz ∈ [0, 9]</code>. Flat index: <code>lx + ly*10 + lz*100</code>.
+    World-to-local: <code>lx = worldX % 10</code>. Chunk coordinate: <code>cx = worldX / 10</code>.
+  </p>
+
+  <h2>Serialisation</h2>
+  <p>
+    <code>write()</code> emits the <code>VCH1</code> chunk payload as described in
+    <a href="../internals/vwr-format.html">VWR Format</a>:
+    palette count, palette entries, packed index data, and optional BMD1 metadata section.
+  </p>
+
+  <h2>Tests</h2>
+  <p>
+    Covered by <code>tests/GalaxyEggbert/Worlds/ChunkTests.cpp</code>:
+    uniform create, palette growth, bit-pack round-trip, isEmpty/isUniform, dirty flag,
+    write/read round-trip.
+  </p>
+
+  <div class="page-nav">
+    <a href="World.html">← World</a>
+    <a href="GameData.html">GameData →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

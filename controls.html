@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controls — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html" class="active">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Controls</div>
+  <h1>Controls</h1>
+  <p class="subtitle">All keyboard and mouse bindings, as found in the source code.</p>
+
+  <h2>Movement (during gameplay)</h2>
+  <table>
+    <tr><th>Key</th><th>Alternate</th><th>Action</th><th>Source</th></tr>
+    <tr><td>↑ Arrow</td><td>W</td><td>Move forward (along facing direction)</td><td><code>Blupi.cpp:171</code></td></tr>
+    <tr><td>↓ Arrow</td><td>S</td><td>Move backward</td><td><code>Blupi.cpp:172</code></td></tr>
+    <tr><td>← Arrow</td><td>Q</td><td>Rotate left (turn)</td><td><code>Blupi.cpp:161</code></td></tr>
+    <tr><td>→ Arrow</td><td>E</td><td>Rotate right (turn)</td><td><code>Blupi.cpp:162</code></td></tr>
+    <tr><td>A</td><td>—</td><td>Strafe left (move perpendicular, no rotation)</td><td><code>Blupi.cpp:175</code></td></tr>
+    <tr><td>D</td><td>—</td><td>Strafe right</td><td><code>Blupi.cpp:176</code></td></tr>
+    <tr><td>Space</td><td>—</td><td>Jump (only when on ground)</td><td><code>Blupi.cpp:186</code></td></tr>
+  </table>
+
+  <h2>Game Controls</h2>
+  <table>
+    <tr><th>Key</th><th>Context</th><th>Action</th></tr>
+    <tr><td>ESC</td><td>Init phase</td><td>Quit the game</td></tr>
+    <tr><td>ESC</td><td>Play phase</td><td>Open pause menu</td></tr>
+    <tr><td>ESC</td><td>Pause phase</td><td>Resume gameplay</td></tr>
+    <tr><td>ESC</td><td>Settings</td><td>Return to previous screen</td></tr>
+    <tr><td>1</td><td>Init phase</td><td>Select gamer slot 1</td></tr>
+    <tr><td>2</td><td>Init phase</td><td>Select gamer slot 2</td></tr>
+    <tr><td>3</td><td>Init phase</td><td>Select gamer slot 3</td></tr>
+    <tr><td>S</td><td>Init / Pause</td><td>Open settings screen</td></tr>
+    <tr><td>S</td><td>Settings</td><td>Toggle sound on/off</td></tr>
+    <tr><td>Space / Enter</td><td>Win / Lost</td><td>Continue (advance or reset)</td></tr>
+    <tr><td>Mouse left click</td><td>Win / Lost</td><td>Continue</td></tr>
+    <tr><td>F1</td><td>Any</td><td>Toggle debug geometry overlay</td></tr>
+  </table>
+
+  <h2>Source Reference</h2>
+  <p>Input is read each frame through <code>Urho3D::Input</code> subsystem:</p>
+  <pre><code>// Example from Blupi.cpp — movement input
+if (input->GetKeyDown(KEY_UP) || input->GetKeyDown(KEY_W))
+    forwardInput = 1.0f;
+if (input->GetKeyDown(KEY_DOWN) || input->GetKeyDown(KEY_S))
+    forwardInput = -1.0f;
+
+// Jump (one-shot with GetKeyPress, not GetKeyDown)
+if (onGround_ && input->GetKeyPress(KEY_SPACE))
+    vel_.y_ = kJumpSpeed;</code></pre>
+  <p>
+    Note: <code>GetKeyDown</code> is used for held movement; <code>GetKeyPress</code> is used for one-shot actions like jump and phase transitions.
+    See <a href="input.html">Input System</a> for more detail.
+  </p>
+
+  <h2>Known Limitations</h2>
+  <ul>
+    <li>No gamepad/controller support is implemented. Needs verification from source.</li>
+    <li>No touch input is implemented (Android planned but not yet started).</li>
+    <li>Key bindings are hardcoded — no runtime remapping.</li>
+    <li>Camera orbit via right mouse button and scroll wheel is documented in <code>NEXT.md</code> but implementation needs verification.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="gameplay.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Gameplay</span>
+    </a>
+    <a class="next" href="levels.html">
+      <span class="label">Next</span>
+      <span class="title">Levels &amp; Worlds &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

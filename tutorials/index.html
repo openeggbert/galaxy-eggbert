@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutorials — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="index.html" class="active">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Tutorials</div>
+  <h1>Tutorials</h1>
+  <p class="subtitle">Step-by-step guides for building, modifying, and extending Galaxy Eggbert.</p>
+
+  <div class="card-grid">
+    <a class="card" href="building.html">
+      <h3>Building the Game</h3>
+      <p>Clone, configure CMake, compile, and run your first build on Linux or Windows.</p>
+    </a>
+    <a class="card" href="first-object.html">
+      <h3>Adding a New Game Object</h3>
+      <p>Define a new <code>ObjectType</code>, add its icon mapping, and place it in a level.</p>
+    </a>
+    <a class="card" href="modifying-levels.html">
+      <h3>Modifying a Level</h3>
+      <p>Edit a mobile-eggbert .txt level file and reload it in-game.</p>
+    </a>
+  </div>
+
+  <h2>Prerequisites</h2>
+  <ul>
+    <li>CMake ≥ 3.21 and a C++23 compiler (GCC 13+ or Clang 17+)</li>
+    <li>U3D engine pre-built at <code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code> (or set <code>U3D_HOME</code>)</li>
+    <li>Familiarity with basic C++ and CMake</li>
+  </ul>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>
