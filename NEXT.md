@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 74)
+## Current state (as of Phase 76)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,13 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Exit open sparkle + popup (Phase 76): `Decor::exitPos_` stored in `PlaceObject` for ObjectType7;
+  `GetExitPos()` exposed; in `UpdatePlay`, when `collected>=total`, shows "EXIT OPEN!" popup once
+  (`exitOpenNotified_` flag) and emits scale-0.4 sparkle every 3s (`exitSparkleTimer_`); both
+  reset per-level; helps players locate and recognize the now-usable exit
+- Treasure lock on exit (Phase 75): exit touch with incomplete treasures shows red popup
+  "Need all treasures!" instead of entering Win; `tot>0 && col<tot` guard before `EnterPhase(Win)`;
+  faithfully ports the original mobile-eggbert mechanic (all treasures required to open exit)
 - Star rating on win screen (Phase 74): `winStars_` (1–3) computed in `EnterPhase(Win)` from
   `collected/total`; displayed as "[ * * * ]"/"[ * * ]"/"[ * ]" in header line of win overlay;
   3 stars = 100%, 2 stars = 50%+, 1 star = any; `winStars_` reset with other per-level state
@@ -346,6 +353,31 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 76 — Exit open sparkle + "EXIT OPEN!" popup
+
+Status: **DONE**
+
+- `Decor::exitPos_` (Vector3, default x=-999) set in `PlaceObject` when ObjectType7 placed
+- `GetExitPos()` accessor added to public interface
+- `UpdatePlay`: when `exitOpen` (all treasures collected) and exit exists (`exitPos.x > -900`):
+  - Spawns "EXIT OPEN!" green `ScorePopup` once per level (`exitOpenNotified_` flag)
+  - Spawns scale-0.4 sparkle every 3s (`exitSparkleTimer_` countdown)
+- `exitSparkleTimer_` and `exitOpenNotified_` reset in all per-level reset paths
+- Visual feedback helps players identify when and where to go to complete the level
+
+---
+
+## Phase 75 — Treasure lock on exit
+
+Status: **DONE**
+
+- `WasExitReached()` handler in `UpdatePlay` now checks `tot>0 && col<tot` before entering Win
+- If locked: spawns red `ScorePopup` "Need all treasures!" at exit +Y=1; no phase transition
+- If open (or `tot==0`): plays SoundChannel57, advances world, enters Win phase as before
+- Faithfully ports mobile-eggbert's rule: all ObjectType5 treasures must be collected to use exit
 
 ---
 
