@@ -20,7 +20,8 @@ ObjectNode::ObjectNode(Context* context, Scene* scene) : context_(context) {
 
     Billboard* bb = sprite_->GetBillboard(0);
     bb->position_ = Vector3::ZERO;
-    bb->size_     = Vector2(1.0f, 1.0f);
+    // 60×60 px tile in a 64-px grid → visual size = 60/64 units (matches Blupi scale).
+    bb->size_     = Vector2(60.0f / 64.0f, 60.0f / 64.0f);
     bb->enabled_  = true;
     UpdateIcon(0);
 }

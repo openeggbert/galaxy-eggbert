@@ -39,7 +39,8 @@ public:
                      float speed = 1.5f);
 
     // blupiVelY: Blupi's current Y velocity; negative = falling. Used for stomp detection.
-    void Update(float dt, Urho3D::Vector3 blupiPos, float blupiVelY = 0.0f);
+    // totalTime: continuous game timer used for pickup Y-bobbing animation.
+    void Update(float dt, Urho3D::Vector3 blupiPos, float blupiVelY = 0.0f, float totalTime = 0.0f);
 
     bool    WasExitReached()     const { return exitReached_;     }
     bool    WasBlupiHit()        const { return blupiHit_;        }

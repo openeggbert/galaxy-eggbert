@@ -698,7 +698,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
     if (decor_) {
         float velY = blupi_ ? blupi_->GetVelY() : 0.0f;
-        decor_->Update(dt, pos, velY);
+        decor_->Update(dt, pos, velY, totalTime_);
 
         // Stomp kill: Blupi jumped on an enemy.
         if (decor_->WasStompKill()) {

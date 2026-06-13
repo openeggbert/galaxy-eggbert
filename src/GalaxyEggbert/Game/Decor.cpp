@@ -95,7 +95,14 @@ bool Decor::TouchesBlupi(const Object& obj, Vector3 blupiPos) const {
     return std::sqrt(dx * dx + dz * dz) < 0.85f && std::abs(dy) < 1.5f;
 }
 
-void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
+static bool IsPickup(ObjectType t) {
+    using OT = ObjectType;
+    return t == OT::ObjectType5 || t == OT::ObjectType6 || t == OT::ObjectType7 ||
+           t == OT::ObjectType25 || t == OT::ObjectType30 ||
+           t == OT::ObjectType49 || t == OT::ObjectType50 || t == OT::ObjectType51;
+}
+
+void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime) {
     exitReached_   = false;
     blupiHit_      = false;
     eggCollected_  = false;
@@ -142,7 +149,12 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
         }
 
         obj.node->UpdateIcon(GetIcon(obj));
-        obj.node->SetPosition(obj.pos);
+        // Pickups float with a sine-wave bob; stagger by index so nearby items
+        // don't oscillate in sync.
+        Vector3 drawPos = obj.pos;
+        if (IsPickup(obj.type))
+            drawPos.y_ += 0.12f * std::sinf(totalTime * 2.5f + static_cast<float>(i) * 1.5f);
+        obj.node->SetPosition(drawPos);
 
         if (!TouchesBlupi(obj, blupiPos)) continue;
 
