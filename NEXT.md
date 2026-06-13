@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 62)
+## Current state (as of Phase 63)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,10 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Variable jump height (Phase 63): `kMinJumpSpeed = kJumpSpeed × 0.30` — releasing Left Ctrl while
+  still ascending cuts `vel_.y_` to `kMinJumpSpeed`; full hold gives maximum arc, tap gives a
+  short hop ~30% as high; `jumpHeld_` flag cleared on landing or on button-release; reset in
+  `SpawnAt()`; pairs with coyote/buffer from Phase 62 for complete platformer-feel jump system
 - Coyote time + jump buffer (Phase 62): `kCoyoteTime=0.12s` grace period after walking off an edge
   where jump still fires; `kJumpBuffer=0.12s` queued jump fires on the landing frame if pressed
   just before touching ground; both implemented entirely in `Blupi::Update()` — no game-coordinator
@@ -300,6 +304,19 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 63 — Variable jump height
+
+Status: **DONE**
+
+- `Blupi::kMinJumpSpeed = kJumpSpeed * 0.30f = 3.0f`: minimum arc when jump released early
+- `jumpHeld_`: set to true when jump fires; cleared when either `onGround_` again or
+  jump button released (at which point `vel_.y_` is clamped to `kMinJumpSpeed` if still positive)
+- Holding Left Ctrl for the full press gives full `kJumpSpeed` arc; tapping gives a short hop
+- Complementary to Phase 62 coyote/buffer: together they form the standard 3-feature
+  responsive jump system (coyote + buffer + variable height)
 
 ---
 

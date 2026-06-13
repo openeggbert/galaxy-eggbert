@@ -76,6 +76,7 @@ void Blupi::SpawnAt(const Vector3& pos) {
     landedThisFrame_ = false;
     coyoteTimer_   = 0.0f;
     jumpBuffer_    = 0.0f;
+    jumpHeld_      = false;
     if (sprite_) {
         sprite_->GetBillboard(0)->enabled_ = true;
         sprite_->Commit();
@@ -246,6 +247,17 @@ void Blupi::Update(float dt) {
         jumpedThisFrame_ = true;
         jumpBuffer_      = 0.0f;
         coyoteTimer_     = 0.0f;
+        jumpHeld_        = true;
+    }
+
+    // Variable jump height: releasing jump early cuts the arc to kMinJumpSpeed.
+    if (jumpHeld_) {
+        if (onGround_) {
+            jumpHeld_ = false;
+        } else if (!input->GetKeyDown(KEY_LCTRL) && vel_.y_ > kMinJumpSpeed) {
+            vel_.y_  = kMinJumpSpeed;
+            jumpHeld_ = false;
+        }
     }
 
     // --- Integrate + collision ---
