@@ -16,7 +16,10 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     // Billboard sprite: always faces the camera, UV-mapped from blupi.png.
     sprite_ = node_->CreateComponent<BillboardSet>();
     sprite_->SetNumBillboards(1);
-    sprite_->SetFaceCameraMode(FC_ROTATE_XYZ);
+    // FC_ROTATE_Y: billboard rotates around world-Y only so size.y is always a
+    // vertical world-unit offset. FC_ROTATE_XYZ tilts with camera pitch, causing
+    // the sprite bottom to swing forward in Z and visually clip into terrain blocks.
+    sprite_->SetFaceCameraMode(FC_ROTATE_Y);
 
     {
         auto* tex  = cache->GetResource<Texture2D>("icons/blupi.png");
@@ -178,6 +181,17 @@ void Blupi::Update(float dt) {
     jumpedThisFrame_  = false;
     stepThisFrame_    = false;
     landedThisFrame_  = false;
+
+    // Input freeze: suppress all movement after death while the game's respawn timer counts
+    // down. Animation and shield blink still tick so the character doesn't look frozen solid.
+    if (inputFrozen_) {
+        action_ = BlupiAction::Stop;
+        ++animTick_;
+        if (shieldActive_) shieldBlinkPhase_ += dt;
+        UpdateSprite();
+        return;
+    }
+
     bool wasOnGround  = onGround_;
 
     // --- Rotation ---

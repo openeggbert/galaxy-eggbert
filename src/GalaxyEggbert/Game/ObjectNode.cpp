@@ -7,7 +7,7 @@ ObjectNode::ObjectNode(Context* context, Scene* scene) : context_(context) {
     node_   = scene->CreateChild("Object");
     sprite_ = node_->CreateComponent<BillboardSet>();
     sprite_->SetNumBillboards(1);
-    sprite_->SetFaceCameraMode(FC_ROTATE_XYZ);
+    sprite_->SetFaceCameraMode(FC_ROTATE_Y);
 
     auto* tex  = cache->GetResource<Texture2D>("icons/element.png");
     auto* tech = cache->GetResource<Technique>("Techniques/DiffAlpha.xml");

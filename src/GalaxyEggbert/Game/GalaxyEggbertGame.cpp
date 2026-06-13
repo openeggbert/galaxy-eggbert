@@ -574,6 +574,7 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
+    deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
     gameData_.Write(savePath_);
@@ -609,6 +610,16 @@ void GalaxyEggbertGame::UpdateSettings(float dt) {
 void GalaxyEggbertGame::UpdatePlay(float dt) {
     auto* input = context_->GetSubsystem<Input>();
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Pause); return; }
+
+    // Death-respawn freeze: suppress Blupi input for 1 s after any death so the explosion
+    // animation has time to play before the player regains control.
+    if (deathFreezeTimer_ > 0.0f) {
+        deathFreezeTimer_ -= dt;
+        if (deathFreezeTimer_ <= 0.0f) {
+            deathFreezeTimer_ = 0.0f;
+            if (blupi_) blupi_->SetInputFrozen(false);
+        }
+    }
 
     // Debug world jump: F1-F5 skips directly to that world.
     {
@@ -696,6 +707,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         blupi_->Respawn();
         respawnInvincibleTimer_ = 2.0f;
         blupi_->StartFlash(2.0f);
+        deathFreezeTimer_ = 1.0f;
+        blupi_->SetInputFrozen(true);
     }
 
     Vector3 pos = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
@@ -748,6 +761,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 blupi_->Respawn();
                 respawnInvincibleTimer_ = 2.0f;
                 blupi_->StartFlash(2.0f);
+                deathFreezeTimer_ = 1.0f;
+                blupi_->SetInputFrozen(true);
                 pos = blupi_->GetPosition();
             }
         }
@@ -873,7 +888,12 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             }
             gameData_.SetNbVies(lives_);
             gameData_.Write(savePath_);
-            if (blupi_) { blupi_->Respawn(); blupi_->StartFlash(2.0f); }
+            if (blupi_) {
+                blupi_->Respawn();
+                blupi_->StartFlash(2.0f);
+                deathFreezeTimer_ = 1.0f;
+                blupi_->SetInputFrozen(true);
+            }
             respawnInvincibleTimer_ = 2.0f;
         }
         decor_->ClearEvents();
@@ -900,6 +920,7 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
     keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
+    deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
     decor_.reset();
@@ -962,6 +983,7 @@ void GalaxyEggbertGame::ResetLevel() {
     keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
+    deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
     gameData_.SetNbVies(3);
