@@ -162,7 +162,8 @@ static const char* WorldName(int world) {
 
 void HUD::ShowPlay(int lives, int collected, int totalTreasures,
                    int keys49, int keys50, int keys51,
-                   float shieldSecs, int world, bool showHint, float levelTime, int score) {
+                   float shieldSecs, int world, bool showHint, float levelTime, int score,
+                   float gameSpeed) {
     int showLives = std::min(lives, kMaxDisplayedLives);
     for (int i = 0; i < kMaxDisplayedLives; i++)
         if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(i < showLives);
@@ -188,20 +189,20 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures,
     if (Text* t = text_) {
         char buf[256];
         const char* hint = showHint
-            ? "ARROWS: move/turn  LCTRL: jump  LSHIFT: crouch  RSHIFT: glide(air)/look-up  ESC: pause\n"
+            ? "ARROWS: move/turn  LCTRL: jump  LSHIFT: crouch  RSHIFT: glide(air)/look-up  G: speed  ESC: pause\n"
             : "";
         int mins = static_cast<int>(levelTime) / 60;
         int secs = static_cast<int>(levelTime) % 60;
+        const char* speedTag = (gameSpeed > 1.2f) ? "  FAST" : (gameSpeed < 0.8f) ? "  SLOW" : "";
         if (shieldSecs > 0.0f) {
             std::snprintf(buf, sizeof(buf),
-                "%sWorld %d: %s | Treasures: %d/%d  SHIELD %.1fs  %d:%02d  Score: %d",
-                hint, world, WorldName(world), collected, totalTreasures, shieldSecs, mins, secs, score);
-            // Low shield: orange warning colour; normal: default blue-white
+                "%sWorld %d: %s | Treasures: %d/%d  SHIELD %.1fs  %d:%02d  Score: %d%s",
+                hint, world, WorldName(world), collected, totalTreasures, shieldSecs, mins, secs, score, speedTag);
             t->SetColor(shieldSecs < 1.5f ? Color(1.0f, 0.55f, 0.1f) : Color(0.85f, 0.90f, 1.0f));
         } else {
             std::snprintf(buf, sizeof(buf),
-                "%sWorld %d: %s | Treasures: %d/%d  %d:%02d  Score: %d",
-                hint, world, WorldName(world), collected, totalTreasures, mins, secs, score);
+                "%sWorld %d: %s | Treasures: %d/%d  %d:%02d  Score: %d%s",
+                hint, world, WorldName(world), collected, totalTreasures, mins, secs, score, speedTag);
             t->SetColor(Color(0.85f, 0.90f, 1.0f));
         }
         t->SetText(buf);

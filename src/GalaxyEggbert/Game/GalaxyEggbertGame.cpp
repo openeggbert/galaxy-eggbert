@@ -623,6 +623,14 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         }
     }
 
+    // Game speed: G cycles Slow(0.6) → Normal(1.0) → Fast(1.5).
+    if (input->GetKeyPress(KEY_G)) {
+        if      (gameSpeed_ < 0.8f) gameSpeed_ = 1.0f;
+        else if (gameSpeed_ < 1.2f) gameSpeed_ = 1.5f;
+        else                        gameSpeed_ = 0.6f;
+    }
+    dt *= gameSpeed_;
+
     // Debug world jump: F1-F5 skips directly to that world.
     {
         static const Key kFKeys[] = { KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5 };
@@ -929,7 +937,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    keysRed_, keysGreen_, keysBlue_,
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f,
-                   levelTime_, score_);
+                   levelTime_, score_, gameSpeed_);
 
     // Level intro title card
     if (levelIntroTimer_ > 0.0f) {
