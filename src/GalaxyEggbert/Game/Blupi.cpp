@@ -35,12 +35,12 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     bb->enabled_  = true;
     sprite_->Commit();
 
-    SpawnAt(Vector3(0.0f, kHalfH + 0.5f, 0.0f));
+    SpawnAt(spawn_);
     UpdateSprite();
 }
 
 void Blupi::Respawn() {
-    SpawnAt(Urho3D::Vector3(0.0f, kHalfH + 0.5f, 0.0f));
+    SpawnAt(spawn_);
 }
 
 Blupi::~Blupi() {
@@ -184,7 +184,7 @@ void Blupi::Update(float dt) {
     ResolveXZ(pos);
 
     if (pos.y_ < -10.0f) {
-        SpawnAt(Vector3(0.0f, kHalfH + 0.5f, 0.0f));
+        SpawnAt(spawn_);
         return;
     }
 

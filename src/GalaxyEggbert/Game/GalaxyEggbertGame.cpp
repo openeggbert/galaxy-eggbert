@@ -194,6 +194,12 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
 }
 
 bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
+    // Tile size in mobile-eggbert world coordinates: 64 px per tile.
+    // Positions in MoveObject and blupiPos are absolute pixel coords.
+    // The 100x100 decor grid starts at tile (0,0) = pixel (0,0).
+    // posDecor in the header is the initial scroll/camera offset — not the grid origin.
+    static constexpr int kMobTile = 64;
+
     std::ifstream f(path);
     if (!f) return false;
 
@@ -201,15 +207,19 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
     {
         std::string header;
         if (!std::getline(f, header)) return false;
-        // Parse: DescFile: ... blupiPos=PX;PY ...
         const char* bp = std::strstr(header.c_str(), "blupiPos=");
         if (bp) std::sscanf(bp, "blupiPos=%d;%d", &blupiPosX, &blupiPosY);
     }
 
-    const int blupiCol = blupiPosX / 60;
-    const int blupiRow = blupiPosY / 60;
-    const int colOff   = kWCX - blupiCol;
-    const int rowOff   = kWCZ - blupiRow;
+    const int blupiTileCol = blupiPosX / kMobTile;
+    const int blupiTileRow = blupiPosY / kMobTile;
+
+    // Store Blupi's world-space 3D spawn position.
+    // world_x = tile_col (colOff=0), 3D X = world_x - kWCX = tile_col - kWCX.
+    blupiSpawn_ = Vector3(
+        static_cast<float>(blupiTileCol - (int)kWCX),
+        Blupi::kHalfH + 0.5f,
+        static_cast<float>(blupiTileRow - (int)kWCZ));
 
     mobileObjects_.clear();
 
@@ -227,26 +237,25 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
                 &type, &stepAdv, &psx, &psy, &pex, &pey);
 
-            // Only place types we handle; skip unknown/complex ones.
-            ObjectType ot = static_cast<ObjectType>(type);
             bool supported = (type == 2 || type == 3 || type == 4 || type == 5 ||
                               type == 6 || type == 7 || type == 16 || type == 20 ||
                               type == 25 || type == 49 || type == 50 || type == 51);
             if (!supported) continue;
 
+            // pixel → 3D: tile = px/64, 3D = tile - kW (colOff=0, rowOff=0)
             auto pixToV3 = [&](int px, int py) -> Vector3 {
                 return Vector3(
-                    static_cast<float>(px / 60 - blupiCol),
+                    static_cast<float>(px / kMobTile - (int)kWCX),
                     1.0f,
-                    static_cast<float>(py / 60 - blupiRow));
+                    static_cast<float>(py / kMobTile - (int)kWCZ));
             };
             MobileObjSpec spec;
-            spec.type     = ot;
+            spec.type     = static_cast<ObjectType>(type);
             spec.posStart = pixToV3(psx, psy);
             spec.posEnd   = pixToV3(pex, pey);
             spec.speed    = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
 
-            // Patrol enemies saved with posStart==posEnd — assign default ±2 tile X range.
+            // Patrol enemies stored with posStart==posEnd — give default ±2 tile X patrol.
             bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20);
             if (isPatrol && spec.posStart.x_ == spec.posEnd.x_ &&
                             spec.posStart.z_ == spec.posEnd.z_) {
@@ -257,10 +266,9 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
             continue;
         }
 
-        if (!inDecor) continue;
-        if (decorRow >= 100) continue;
+        if (!inDecor || decorRow >= 100) continue;
 
-        // Parse CSV row of tile IDs.
+        // Parse CSV row of tile IDs; decor row r maps directly to world_z=r.
         std::stringstream ss(line);
         std::string token;
         int col = 0;
@@ -269,13 +277,10 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 int tileId = std::stoi(token);
                 if (tileId > 0) {
                     uint16_t bt = BlockTypes::fromMobileIconId(tileId);
-                    int wx = col + colOff;
-                    int wz = decorRow + rowOff;
-                    if (wx >= 0 && wx < 100 && wz >= 0 && wz < 100) {
-                        world_->setBlock(static_cast<uint16_t>(wx), 0,
-                                         static_cast<uint16_t>(wz),
-                                         Block::make(bt));
-                    }
+                    // col = world_x, decorRow = world_z (colOff=rowOff=0)
+                    world_->setBlock(static_cast<uint16_t>(col), 0,
+                                     static_cast<uint16_t>(decorRow),
+                                     Block::make(bt));
                 }
             }
             ++col;
@@ -379,6 +384,8 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
             if (!decor_) CreateDemoObjects();
+            blupi_->SetSpawnPoint(blupiSpawn_);
+            blupi_->Respawn();
             hud_->ShowPlay(lives_, 0, decor_ ? decor_->GetTotalTreasures() : 0,
                            0, 0.0f, currentWorld_);
             hud_->SetVisible(true);

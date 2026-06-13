@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 19)
+## Current state (as of Phase 20)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -56,7 +56,9 @@ or the original Windows Phone game.
   - Terrain built from 100×100 Decor grid; tile IDs mapped via `BlockTypes::fromMobileIconId()`
   - MoveObjects parsed: types 2,3,4,5,6,7,16,20,25,49,50,51 placed as Decor objects
   - Patrol enemies with posStart==posEnd get default ±2 tile X patrol range
-  - World centered on Blupi spawn position from `blupiPos=` header
+  - 64px tile size for all position conversions (pixel → tile = px/64)
+  - `blupiPos=` header parsed → stored as `blupiSpawn_`; Blupi spawns at correct world position
+  - Fall-through-floor respawn uses `spawn_` (no longer hardcoded to origin)
 - ObjectType4 (bulldozer) and ObjectType20 (bird) added as patrol enemies
 - `ObjectNode` tile dimensions fixed: 60×60 px tiles, 10 cols (was wrong 64×9)
 
@@ -123,6 +125,18 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 20 — Correct Blupi spawn from real world files
+
+Status: **DONE**
+
+- `LoadMobileEggbertTerrain` uses 64px tile size (matches mobile-eggbert pixel coordinates)
+- `blupiPos=` header parsed → `blupiSpawn_` stored in `GalaxyEggbertGame`
+- `EnterPhase(Play)`: calls `blupi_->SetSpawnPoint(blupiSpawn_)` then `Respawn()`
+- Fall-through-floor respawn in `Blupi::Update` uses `spawn_` field (fixed hardcoded origin)
+- Blupi now starts at correct tile position in all 5 real world files
 
 ---
 
