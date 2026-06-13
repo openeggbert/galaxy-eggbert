@@ -14,7 +14,6 @@ public:
     void ShowWin();
     void ShowHitFlash();
     void ShowWorldIntro(const char* text, float alpha);
-    void SetDanger(bool danger);
     void Update(float dt);
 
 private:
@@ -29,6 +28,4 @@ private:
     Urho3D::WeakPtr<Urho3D::BorderImage> hitFlash_;
     Urho3D::WeakPtr<Urho3D::Text>        worldIntroText_;
     float hitFlashTimer_  = 0.0f;
-    float dangerPhase_    = 0.0f;
-    bool  dangerMode_     = false;
 };

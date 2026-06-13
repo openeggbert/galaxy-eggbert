@@ -91,9 +91,6 @@ void Blupi::SpawnAt(const Vector3& pos) {
     flashTimer_    = 0.0f;
     flashTickTimer_= 0.0f;
     landedThisFrame_ = false;
-    coyoteTimer_   = 0.0f;
-    jumpBuffer_    = 0.0f;
-    jumpHeld_      = false;
     if (sprite_) {
         sprite_->GetBillboard(0)->enabled_ = true;
         sprite_->Commit();
@@ -282,22 +279,6 @@ void Blupi::Update(float dt) {
     vel_.x_ = fwd.x_ * forwardInput * kMoveSpeed;
     vel_.z_ = fwd.z_ * forwardInput * kMoveSpeed;
 
-    // Coyote time: refreshed every frame while grounded; counts down in air.
-    // Allows jump for kCoyoteTime seconds after walking off an edge.
-    if (onGround_) {
-        coyoteTimer_ = kCoyoteTime;
-    } else {
-        coyoteTimer_ = std::max(0.0f, coyoteTimer_ - dt);
-    }
-
-    // Jump buffer: store intent for kJumpBuffer seconds so a jump press just
-    // before landing still fires on the landing frame.
-    if (input->GetKeyPress(KEY_LCTRL)) {
-        jumpBuffer_ = kJumpBuffer;
-    } else if (jumpBuffer_ > 0.0f) {
-        jumpBuffer_ = std::max(0.0f, jumpBuffer_ - dt);
-    }
-
     // --- Gravity (glide: Right Shift in air reduces gravity and caps fall speed) ---
     if (!onGround_ && lookingUp) {
         vel_.y_ += kGravity * 0.12f * dt;
@@ -307,24 +288,11 @@ void Blupi::Update(float dt) {
         vel_.y_  = std::max(vel_.y_, -30.0f);
     }
 
-    // --- Jump: fires when buffer is active and coyote window is open ---
-    if (jumpBuffer_ > 0.0f && coyoteTimer_ > 0.0f) {
+    // --- Jump ---
+    if (onGround_ && input->GetKeyPress(KEY_LCTRL)) {
         vel_.y_          = kJumpSpeed;
         onGround_        = false;
         jumpedThisFrame_ = true;
-        jumpBuffer_      = 0.0f;
-        coyoteTimer_     = 0.0f;
-        jumpHeld_        = true;
-    }
-
-    // Variable jump height: releasing jump early cuts the arc to kMinJumpSpeed.
-    if (jumpHeld_) {
-        if (onGround_) {
-            jumpHeld_ = false;
-        } else if (!input->GetKeyDown(KEY_LCTRL) && vel_.y_ > kMinJumpSpeed) {
-            vel_.y_  = kMinJumpSpeed;
-            jumpHeld_ = false;
-        }
     }
 
     // --- Integrate + collision ---

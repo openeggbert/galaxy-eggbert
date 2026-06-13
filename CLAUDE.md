@@ -2,9 +2,11 @@
 
 ## Project Overview
 
-**Galaxy Eggbert** is a faithful 3D remake of *Speedy Blupi* (originally a Windows Phone XNA game, 2013).
+**Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (itself a faithful C++ port of the original *Speedy Blupi*, a Windows Phone XNA game from 2013).
 It is implemented in C++ using the **Urho3D API** with **U3D** (`u3d-community/U3D`) as the reference backend.
 Nova3D (the user's own Urho3D fork) will replace U3D once it fully implements the same API.
+
+**Faithful remake rule:** Galaxy Eggbert must only implement gameplay features that exist in mobile-eggbert. Do not invent new mechanics (time bonuses, star ratings, coyote time, combo multipliers, etc.) unless they are present in mobile-eggbert. The 3D dimension allows natural adaptations (camera, step-up traversal, shadow, billboard sprites) but the game logic must mirror mobile-eggbert.
 
 Engine backend is selected at CMake configure time:
 ```

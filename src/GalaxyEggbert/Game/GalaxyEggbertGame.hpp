@@ -87,7 +87,6 @@ private:
     GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;
     bool        drawDebug_    = false;
     float       gameSpeed_    = 1.0f;  // Slow=0.6, Normal=1.0, Fast=1.5; G key cycles
-    float       bestTime_[6]  = {};    // best levelTime_ per world [1..5]; 0=not yet beaten
     int         lives_        = 3;
     int         currentWorld_ = 1;
     int         score_        = 0;    // accumulated across all levels; reset on full restart
@@ -104,10 +103,6 @@ private:
     float       respawnInvincibleTimer_   = 0.0f;
     float       deathFreezeTimer_         = 0.0f;
     float       controlsHintTimer_        = 8.0f;
-    float       stompComboTimer_          = 0.0f; // countdown; combo resets when expired
-    int         stompCombo_               = 0;    // consecutive stomp count this level
-    int         timeBonus_                = 0;    // one-shot speed bonus awarded on entering Win
-    int         winStars_                 = 0;    // 1-3 stars from treasure % on Win entry
     float       exitSparkleTimer_         = 0.0f; // countdown; exit sparkle every 3s when open
     bool        exitOpenNotified_         = false; // "EXIT OPEN!" popup shown once
     bool        bonusLifeAwarded_         = false;

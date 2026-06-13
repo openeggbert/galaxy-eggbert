@@ -20,12 +20,6 @@ public:
     static constexpr float kHalfW     =  0.35f;
     // 2D tile = 64 px, Blupi height = 46 px → 3D height = 46/64 units, half = 23/64.
     static constexpr float kHalfH     =  23.0f / 64.0f; // ≈ 0.359
-    // Grace period after walking off an edge where jump still fires (coyote time).
-    static constexpr float kCoyoteTime  = 0.12f;
-    // Queued jump window: jump pressed this many seconds before landing still fires.
-    static constexpr float kJumpBuffer  = 0.12f;
-    // Releasing jump early cuts the arc to this velocity (short hop).
-    static constexpr float kMinJumpSpeed = kJumpSpeed * 0.30f;
 
     explicit Blupi(Urho3D::Context* context,
                    Urho3D::Scene*   scene,
@@ -83,9 +77,6 @@ private:
     bool  shieldWarning_  = false;
     float shieldBlinkPhase_ = 0.0f;
     bool  inputFrozen_    = false;
-    float coyoteTimer_    = 0.0f;
-    float jumpBuffer_     = 0.0f;
-    bool  jumpHeld_       = false;
 
     void UpdateShadow();
 

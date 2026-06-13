@@ -527,24 +527,6 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (input) input->SetMouseVisible(false);
             break;
         case GamePhase::Win: {
-            int b = (levelTime_ < 60.0f)  ? 200 :
-                    (levelTime_ < 120.0f) ? 100 :
-                    (levelTime_ < 180.0f) ?  50 : 0;
-            timeBonus_ = b;
-            score_    += b;
-            {
-                int col  = decor_ ? decor_->GetCollected()      : 0;
-                int tot  = decor_ ? decor_->GetTotalTreasures() : 0;
-                winStars_ = (tot == 0 || col >= tot) ? 3 :
-                            (col * 2 >= tot)         ? 2 : 1;
-            }
-            {
-                int w = currentWorld_ - 1; // world just completed (before increment)
-                if (w >= 1 && w <= 5) {
-                    if (bestTime_[w] <= 0.0f || levelTime_ < bestTime_[w])
-                        bestTime_[w] = levelTime_;
-                }
-            }
             hud_->SetVisible(false);
             if (input) input->SetMouseVisible(true);
             break;
@@ -602,10 +584,6 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
-    stompCombo_             = 0;
-    stompComboTimer_        = 0.0f;
-    timeBonus_              = 0;
-    winStars_               = 0;
     exitSparkleTimer_       = 0.0f;
     exitOpenNotified_       = false;
     gameData_.Write(savePath_);
@@ -670,12 +648,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 levelTime_              = 0.0f;
                 controlsHintTimer_      = 8.0f;
                 bonusLifeAwarded_       = false;
-                stompCombo_             = 0;
-                stompComboTimer_        = 0.0f;
-    timeBonus_              = 0;
-    winStars_               = 0;
-    exitSparkleTimer_       = 0.0f;
-    exitOpenNotified_       = false;
+                exitSparkleTimer_       = 0.0f;
+                exitOpenNotified_       = false;
                 prevCollected_          = 0;
                 keysRed_ = keysGreen_ = keysBlue_ = 0;
                 shieldTimer_            = 0.0f;
@@ -844,21 +818,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             if (camera_) camera_->StartShake(0.12f, 0.2f);
             if (blupi_) blupi_->Bounce();
             explosions_.push_back(std::make_unique<Explosion>(context_, scene_.Get(), decor_->GetLastStompPos()));
-            ++stompCombo_;
-            stompComboTimer_ = 1.5f;
-            int pts = 25 * stompCombo_;
-            score_ += pts;
-            char stompBuf[16];
-            if (stompCombo_ > 1)
-                std::snprintf(stompBuf, sizeof(stompBuf), "+%d x%d!", pts, stompCombo_);
-            else
-                std::snprintf(stompBuf, sizeof(stompBuf), "+%d", pts);
-            spawnPopup(decor_->GetLastStompPos(), stompBuf, kYellow);
-        }
-        // Combo timer: reset combo if no stomp for 1.5 s.
-        if (stompComboTimer_ > 0.0f) {
-            stompComboTimer_ -= dt;
-            if (stompComboTimer_ <= 0.0f) { stompCombo_ = 0; stompComboTimer_ = 0.0f; }
+            score_ += 25;
+            spawnPopup(decor_->GetLastStompPos(), "+25", kYellow);
         }
 
         // Enemy respawn sparkle — mini poof when enemy reappears after 5 s.
@@ -1018,7 +979,6 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f,
                    levelTime_, score_, gameSpeed_);
-    hud_->SetDanger(lives_ == 1);
 
     // Level intro title card
     if (levelIntroTimer_ > 0.0f) {
@@ -1055,10 +1015,6 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
     deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
-    stompCombo_             = 0;
-    stompComboTimer_        = 0.0f;
-    timeBonus_              = 0;
-    winStars_               = 0;
     exitSparkleTimer_       = 0.0f;
     exitOpenNotified_       = false;
     decor_.reset();
@@ -1086,26 +1042,11 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
         gameData_.Write(savePath_);
     }
 
-    static const char* kStars[] = { "", "*", "* *", "* * *" };
-    const char* stars = kStars[winStars_ >= 1 && winStars_ <= 3 ? winStars_ : 0];
-    char timeBonusBuf[32] = "";
-    if (timeBonus_ > 0)
-        std::snprintf(timeBonusBuf, sizeof(timeBonusBuf), "  Time bonus: +%d", timeBonus_);
-    char bestTimeBuf[32] = "";
-    {
-        float bt = (completedWorld >= 1 && completedWorld <= 5) ? bestTime_[completedWorld] : 0.0f;
-        if (bt > 0.0f) {
-            bool newRecord = (static_cast<int>(bt) == static_cast<int>(levelTime_));
-            std::snprintf(bestTimeBuf, sizeof(bestTimeBuf),
-                newRecord ? "  Best: %d:%02d (NEW!)" : "  Best: %d:%02d",
-                static_cast<int>(bt) / 60, static_cast<int>(bt) % 60);
-        }
-    }
-    char buf[448];
+    char buf[320];
     std::snprintf(buf, sizeof(buf),
-        "%s  [ %s ]\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d%s%s\nScore: %d%s\n\nPress any key...",
-        header, stars, completedWorld, wname, collected, total, lives_, wMins, wSecs,
-        timeBonusBuf, bestTimeBuf, score_, newBest ? "  *** NEW BEST! ***" : "");
+        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\nScore: %d%s\n\nPress any key...",
+        header, completedWorld, wname, collected, total, lives_, wMins, wSecs,
+        score_, newBest ? "  *** NEW BEST! ***" : "");
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
@@ -1147,10 +1088,6 @@ void GalaxyEggbertGame::ResetLevel() {
     deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
-    stompCombo_             = 0;
-    stompComboTimer_        = 0.0f;
-    timeBonus_              = 0;
-    winStars_               = 0;
     exitSparkleTimer_       = 0.0f;
     exitOpenNotified_       = false;
     gameData_.SetNbVies(3);

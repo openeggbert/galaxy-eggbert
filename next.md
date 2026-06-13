@@ -1,13 +1,17 @@
 # Galaxy Eggbert — Development Roadmap
 
-Galaxy Eggbert is a faithful 3D remake of Speedy Blupi, using mobile-eggbert
-(`/rv/data/development/github.com/openeggbert/mobile-eggbert`) as the primary reference.
-All gameplay logic, level data, enums, sounds, and textures originate from mobile-eggbert
-or the original Windows Phone game.
+Galaxy Eggbert is a faithful 3D remake of **mobile-eggbert**
+(`/rv/data/development/github.com/openeggbert/mobile-eggbert`), which is itself a faithful
+C++ port of the original Windows Phone *Speedy Blupi* (XNA, 2013).
+
+**Faithful remake rule:** Only implement gameplay features that exist in mobile-eggbert.
+Do not add mechanics not present there (time bonuses, star ratings, coyote time, combo multipliers,
+best-time tracking, danger pulse, variable jump height, jump buffer, etc.).
+3D-specific adaptations (camera, step-up traversal, blob shadows, billboard sprites) are allowed.
 
 ---
 
-## Current state (as of Phase 76)
+## Current state (as of Phase 79)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -356,6 +360,41 @@ cmake --build build-windows --target GalaxyEggbert -j2
 
 ---
 
+## Phase 79 — Remove non-mobile-eggbert features
+
+Status: **DONE**
+
+Removed features that are not present in mobile-eggbert and violate the faithful-remake rule:
+- **Time bonus** (Phase 73): `timeBonus_` and its `EnterPhase(Win)` computation removed; score no
+  longer awards speed bonus on level complete
+- **Star rating** (Phase 74): `winStars_` and win-screen "[ * * * ]" display removed
+- **Best time per world** (Phase 78): `bestTime_[6]` array and win-screen "Best: M:SS" display removed
+- **Stomp combo multiplier** (Phase 72): `stompCombo_`/`stompComboTimer_` removed; stomp always
+  awards flat +25; camera shake on stomp kept (visual feedback, not score inflation)
+- **Danger pulse** (Phase 77): `HUD::SetDanger` / `dangerMode_` / `dangerPhase_` removed;
+  hitFlash pulse on lives==1 was not in mobile-eggbert
+- **Coyote time** (Phase 62): `kCoyoteTime` / `coyoteTimer_` removed; jump now fires only when
+  `onGround_` is true, matching mobile-eggbert's exact behaviour
+- **Jump buffer** (Phase 62): `kJumpBuffer` / `jumpBuffer_` removed
+- **Variable jump height** (Phase 63): `kMinJumpSpeed` / `jumpHeld_` removed; jump is fixed
+  impulse (`kJumpSpeed`) regardless of how long the button is held
+
+CLAUDE.md updated with explicit faithful-remake rule.
+
+---
+
+## Phase 78 — Best time per world
+
+Status: **REMOVED in Phase 79** — not in mobile-eggbert
+
+---
+
+## Phase 77 — Danger pulse (lives == 1)
+
+Status: **REMOVED in Phase 79** — not in mobile-eggbert
+
+---
+
 ## Phase 76 — Exit open sparkle + "EXIT OPEN!" popup
 
 Status: **DONE**
@@ -383,36 +422,22 @@ Status: **DONE**
 
 ## Phase 74 — Star rating on win screen
 
-Status: **DONE**
-
-- `winStars_` (int, per-level) computed in `EnterPhase(Win)`: 3 if collected==total or total==0,
-  2 if collected×2≥total, else 1
-- Displayed in `UpdateWin` header as "LEVEL COMPLETE!  [ * * * ]" using static `kStars[]` table
-- Bracket notation `[ * ]`/`[ * * ]`/`[ * * * ]` chosen for ASCII compatibility with any font
-- `winStars_` reset in `SelectGamer`, `AdvanceToNextWorld`, `ResetLevel`, F-key world jump
+Status: **REMOVED in Phase 79** — not in mobile-eggbert
 
 ---
 
 ## Phase 73 — Time bonus on level complete
 
-Status: **DONE**
-
-- `timeBonus_` (int, per-level) computed once in `EnterPhase(Win)`: `<60s=+200, <120s=+100, <180s=+50, else=0`
-- Added to `score_` immediately; `UpdateWin` shows "Time bonus: +N" on the time line if >0
-- `timeBonus_` reset in all per-level reset paths
+Status: **REMOVED in Phase 79** — not in mobile-eggbert
 
 ---
 
-## Phase 72 — Stomp camera shake + consecutive stomp combo multiplier
+## Phase 72 — Stomp camera shake
 
-Status: **DONE**
+Status: **PARTIALLY DONE** — camera shake kept; combo multiplier removed in Phase 79 (not in mobile-eggbert)
 
-- `camera_->StartShake(0.12f, 0.2f)` fires on every stomp kill (mild tactile feedback)
-- `stompCombo_` (per-level int), `stompComboTimer_` (per-level float 1.5 s countdown)
-- Each stomp kill: `++stompCombo_`, `stompComboTimer_ = 1.5f`, `score_ += 25 × combo`
-- Popup format: "+25" for first stomp; "+50 x2!", "+75 x3!" for chain; amber `kYellow` colour
-- Combo timer decrements each frame (after `dt *= gameSpeed_`); resets `stompCombo_ = 0` on expiry
-- Both fields reset in `SelectGamer`, `AdvanceToNextWorld`, `ResetLevel`, F-key world jump
+- `camera_->StartShake(0.12f, 0.2f)` fires on every stomp kill
+- Stomp awards flat +25 score (no combo); "+25" amber popup
 
 ---
 
@@ -520,30 +545,13 @@ Status: **DONE**
 
 ## Phase 63 — Variable jump height
 
-Status: **DONE**
-
-- `Blupi::kMinJumpSpeed = kJumpSpeed * 0.30f = 3.0f`: minimum arc when jump released early
-- `jumpHeld_`: set to true when jump fires; cleared when either `onGround_` again or
-  jump button released (at which point `vel_.y_` is clamped to `kMinJumpSpeed` if still positive)
-- Holding Left Ctrl for the full press gives full `kJumpSpeed` arc; tapping gives a short hop
-- Complementary to Phase 62 coyote/buffer: together they form the standard 3-feature
-  responsive jump system (coyote + buffer + variable height)
+Status: **REMOVED in Phase 79** — not in mobile-eggbert
 
 ---
 
 ## Phase 62 — Coyote time + jump buffer
 
-Status: **DONE**
-
-- `Blupi::kCoyoteTime = 0.12f` / `kJumpBuffer = 0.12f`: constants for the two grace windows
-- `coyoteTimer_`: refreshed to `kCoyoteTime` every frame while `onGround_`; counts down when
-  airborne; set to 0 when jump fires; reset in `SpawnAt()`
-- `jumpBuffer_`: set to `kJumpBuffer` on `GetKeyPress(LCTRL)`; counts down each frame;
-  consumed (set to 0) when jump fires; reset in `SpawnAt()`
-- Jump now fires when `jumpBuffer_ > 0 && coyoteTimer_ > 0` — covers on-ground, coyote, and
-  buffer-on-landing cases in one unified condition; replaces the old single-line
-  `if (onGround_ && KeyPress)` check
-- No changes outside `Blupi.hpp/.cpp` — self-contained platformer-feel improvement
+Status: **REMOVED in Phase 79** — not in mobile-eggbert
 
 ---
 
