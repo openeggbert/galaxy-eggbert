@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 66)
+## Current state (as of Phase 70)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,11 +221,27 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- High score per gamer slot (Phase 70): stored in GameData gamer-header reserved bytes 2–5 as
+  LE uint32; `GetHighScore()`/`SetHighScore(int)` accessors; `GetHighScoreForGamer(g)` for Init
+  display; Init screen shows "Best: N" per slot; Win overlay appends "*** NEW BEST! ***" and
+  persists when `score_ > GetHighScore()`; no binary incompatibility (reserved bytes were 0)
+- Enemy respawn sparkle (Phase 69): `Decor::respawnedThis_`/`lastRespawnPos_` event pair (mirrors
+  `stompKill_` pattern); fires when respawnTimer ≤ 0; `GalaxyEggbertGame` checks `WasRespawned()`
+  → spawns scale-0.35 `Explosion` at respawn position; cleared in `ClearEvents()`
+- Enemy blob shadows (Phase 68): `ObjectNode::shadowNode_` — flat `Box.mdl` (scale 0.4×0.01×0.4)
+  with solid dark `NoTexture` material; `SetPosition` places shadow at `pos.y − 0.48` (= blockTop
+  + 0.02 for ground-level objects); `SetShadowEnabled(false)` called for ObjectType20 (birds) at
+  construction; shadow follows object movement and visibility via `SetVisible()`
+- Level intro title card (Phase 67): `levelIntroTimer_` (3 s countdown) resets on each level start
+  (`SelectGamer`, `AdvanceToNextWorld`, F-key world jump); `UpdatePlay` computes fade-in (0–0.5 s),
+  full (0.5–2.5 s), fade-out (2.5–3.0 s) alpha; calls `HUD::ShowWorldIntro("WORLD N\nName", alpha)`;
+  amber `Text` (32 pt, HA_CENTER/VA_CENTER, −50 px Y offset); hidden on non-Play phases via
+  `HUD::SetVisible(false)`
 - Blob shadow (Phase 66): `Blupi::UpdateShadow()` — scans down from Blupi feet via `IsSolid()` up to
-  20 tiles; places a `Plane.mdl` node with `NoTextureAlpha` dark material (`Color(0,0,0,0.55)`) at
-  the surface (Y = blockTop + 0.52); scale `max(0.25, 0.55 − height×0.025)` shrinks as Blupi
-  rises; called in both normal and inputFrozen paths; helps judge jump landing in 3D perspective;
-  HUD hint updated: "RSHIFT: glide(air)/look-up"
+  20 tiles; places a `Box.mdl` node (scale Y=0.01) with `NoTexture.xml` dark material
+  (`Color(0.05,0.05,0.05,1.0)`) at `blockTop + 0.02`; scale `max(0.25, 0.55 − height×0.025)`
+  shrinks as Blupi rises; called in both normal and inputFrozen paths; helps judge jump landing in
+  3D perspective; HUD hint updated: "RSHIFT: glide(air)/look-up"
 - Glide / parachute (Phase 65): holding Right Shift while airborne switches to reduced gravity
   (`kGravity × 0.12`) and caps fall speed at `−1.5 m/s`; animation switches to `BlupiAction::Up`
   (arms-up) during glide descent; on ground Right Shift still triggers look-up as before;
@@ -320,14 +336,64 @@ cmake --build build-windows --target GalaxyEggbert -j2
 
 ---
 
+## Phase 70 — High score per gamer slot
+
+Status: **DONE**
+
+- `GameData::GetHighScore()`/`SetHighScore(int)`: LE uint32 in gamer-header bytes 2–5
+  (reserved in original mobile-eggbert format; cross-compatible since bytes were 0)
+- `GetHighScoreForGamer(int)`: allows Init screen to show per-slot best without switching active gamer
+- `UpdateInit`: replaced "Doors: N" with "Best: N" (total doors not displayed, high score is more relevant)
+- `UpdateWin`: checks `score_ > GetHighScore()` → sets `newBest=true` → saves and shows "*** NEW BEST! ***"
+  suffix in the win overlay text; score persists across level transitions so all-worlds score counts
+
+---
+
+## Phase 69 — Enemy respawn sparkle
+
+Status: **DONE**
+
+- `Decor`: added `respawnedThis_` bool + `lastRespawnPos_` Vector3 (mirrors `stompKill_`/`lastStompPos_` pattern)
+- Fires `respawnedThis_ = true; lastRespawnPos_ = obj.posStart` when enemy's `respawnTimer` expires
+- `ClearEvents()` resets `respawnedThis_`
+- `GalaxyEggbertGame::UpdatePlay()`: `WasRespawned()` → spawns scale-0.35 `Explosion` at `GetLastRespawnPos()`
+- Gives the player a visual "poof" cue that an enemy just came back to life
+
+---
+
+## Phase 68 — Blob shadows under enemies
+
+Status: **DONE**
+
+- `ObjectNode`: `shadowNode_` (`Node*`) — `Box.mdl` scale (0.4, 0.01, 0.4) with `NoTexture.xml` dark material
+- `SetPosition` places shadow at `pos.y − 0.48` which equals `blockTop + 0.02` for standing objects
+- `SetShadowEnabled(bool)`: disable for ObjectType20 (birds at Y=3.0 — shadow would float in mid-air)
+- Called in `PlaceObject`: `obj.node->SetShadowEnabled(type != ObjectType20)`
+- `SetVisible(bool)`: propagated to both sprite node and shadow node
+- `Remove()`: removes `shadowNode_` before `node_`
+
+---
+
+## Phase 67 — Level intro title card
+
+Status: **DONE**
+
+- `levelIntroTimer_` (3 s, per-level) reset in `SelectGamer`, `AdvanceToNextWorld`, F-key world jump
+- `UpdatePlay`: fades alpha 0→1 over first 0.5 s, holds 1.0 for 2 s, fades 1→0 over last 0.5 s
+- `HUD::ShowWorldIntro(text, alpha)`: amber `Text` (32 pt, HA_CENTER/VA_CENTER, Y −50) shows
+  "WORLD N\nWorldName"; SetVisible(false) hides it; cleared from `SetVisible(false)` on non-Play phases
+- Gives the player a clear visual cue when entering each world
+
+---
+
 ## Phase 66 — Blob shadow under Blupi
 
 Status: **DONE**
 
-- `Blupi::shadowNode_` (`Node*`): `Plane.mdl` with `NoTextureAlpha` material, `Color(0,0,0,0.55)`;
-  scale `Vector3(s, 1, s)` where `s = max(0.25, 0.55 − height × 0.025)`
+- `Blupi::shadowNode_` (`Node*`): `Box.mdl` (scale Y=0.01) with `NoTexture.xml` solid dark material
+  `Color(0.05,0.05,0.05,1.0)`; scale `Vector3(s, 0.01, s)` where `s = max(0.25, 0.55 − height × 0.025)`
 - `UpdateShadow()`: reads `node_->GetPosition()`, walks `IsSolid()` downward from feet (up to 20
-  tiles), places shadow at `blockTop + 0.52`; enabled only when ground found within range
+  tiles), places shadow at `blockTop + 0.02`; enabled only when ground found within range
 - Destructor: `shadowNode_->Remove()` before `node_->Remove()`
 - HUD hint: "RSHIFT: glide(air)/look-up" (updated from "look up")
 
