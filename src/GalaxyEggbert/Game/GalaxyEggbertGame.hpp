@@ -106,6 +106,7 @@ private:
     float       stompComboTimer_          = 0.0f; // countdown; combo resets when expired
     int         stompCombo_               = 0;    // consecutive stomp count this level
     int         timeBonus_                = 0;    // one-shot speed bonus awarded on entering Win
+    int         winStars_                 = 0;    // 1-3 stars from treasure % on Win entry
     bool        bonusLifeAwarded_         = false;
 
     static constexpr int kWCX     = 50;
