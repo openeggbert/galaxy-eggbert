@@ -537,6 +537,7 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     gameData_.SetSelectedGamer(slot);
     lives_                  = gameData_.GetNbVies();
     currentWorld_           = gameData_.GetLastWorld();
+    levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
@@ -583,6 +584,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         for (int i = 0; i < 5; ++i) {
             if (input->GetKeyPress(kFKeys[i])) {
                 currentWorld_           = i + 1;
+                levelTime_              = 0.0f;
                 controlsHintTimer_      = 8.0f;
                 bonusLifeAwarded_       = false;
                 prevCollected_          = 0;
@@ -599,6 +601,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     }
 
     totalTime_ += dt;
+    levelTime_ += dt;
     {
         float t = totalTime_;
         auto lavIt = tileMatCache_.find(BlockTypes::Lava);
@@ -781,7 +784,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    decor_ ? decor_->GetTotalTreasures() : 0,
                    keysRed_, keysGreen_, keysBlue_,
                    shieldTimer_, currentWorld_,
-                   controlsHintTimer_ > 0.0f);
+                   controlsHintTimer_ > 0.0f,
+                   levelTime_);
 }
 
 void GalaxyEggbertGame::AdvanceToNextWorld() {
@@ -790,6 +794,7 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
         gameData_.SetLastWorld(1);
         gameData_.Write(savePath_);
     }
+    levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
@@ -812,10 +817,12 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
     int total     = decor_ ? decor_->GetTotalTreasures() : 0;
     const char* header = (completedWorld >= kMaxWorld)
                          ? "ALL WORLDS COMPLETE!" : "LEVEL COMPLETE!";
+    int wMins = static_cast<int>(levelTime_) / 60;
+    int wSecs = static_cast<int>(levelTime_) % 60;
     char buf[256];
     std::snprintf(buf, sizeof(buf),
-        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d\n\nPress any key...",
-        header, completedWorld, wname, collected, total, lives_);
+        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\n\nPress any key...",
+        header, completedWorld, wname, collected, total, lives_, wMins, wSecs);
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
@@ -848,6 +855,7 @@ void GalaxyEggbertGame::UpdateLost(float dt) {
 void GalaxyEggbertGame::ResetLevel() {
     lives_                  = 3;
     currentWorld_           = 1;
+    levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;

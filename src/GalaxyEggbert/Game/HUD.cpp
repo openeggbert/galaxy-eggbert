@@ -114,7 +114,7 @@ static const char* WorldName(int world) {
 
 void HUD::ShowPlay(int lives, int collected, int totalTreasures,
                    int keys49, int keys50, int keys51,
-                   float shieldSecs, int world, bool showHint) {
+                   float shieldSecs, int world, bool showHint, float levelTime) {
     int showLives = std::min(lives, kMaxDisplayedLives);
     for (int i = 0; i < kMaxDisplayedLives; i++)
         if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(i < showLives);
@@ -142,14 +142,16 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures,
         const char* hint = showHint
             ? "W/S or UP/DN: move  Q/E or L/R: turn  A/D: strafe  SPACE: jump  ESC: pause\n"
             : "";
+        int mins = static_cast<int>(levelTime) / 60;
+        int secs = static_cast<int>(levelTime) % 60;
         if (shieldSecs > 0.0f) {
             std::snprintf(buf, sizeof(buf),
-                "%sWorld %d: %s | Treasures: %d/%d  SHIELD %.1fs",
-                hint, world, WorldName(world), collected, totalTreasures, shieldSecs);
+                "%sWorld %d: %s | Treasures: %d/%d  SHIELD %.1fs  %d:%02d",
+                hint, world, WorldName(world), collected, totalTreasures, shieldSecs, mins, secs);
         } else {
             std::snprintf(buf, sizeof(buf),
-                "%sWorld %d: %s | Treasures: %d/%d",
-                hint, world, WorldName(world), collected, totalTreasures);
+                "%sWorld %d: %s | Treasures: %d/%d  %d:%02d",
+                hint, world, WorldName(world), collected, totalTreasures, mins, secs);
         }
         t->SetText(buf);
     }

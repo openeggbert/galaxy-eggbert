@@ -84,10 +84,12 @@ private:
     bool        drawDebug_    = false;
     int         lives_        = 3;
     int         currentWorld_ = 1;
+    float       totalTime_    = 0.0f; // runs continuously; drives hazard-tile animation
     GameData    gameData_;
     std::string savePath_;
 
     // ── per-level state (reset in AdvanceToNextWorld / ResetLevel) ──────────
+    float       levelTime_                = 0.0f; // seconds elapsed this level
     int         prevCollected_            = 0;
     int         keysRed_ = 0, keysGreen_ = 0, keysBlue_ = 0;
     float       shieldTimer_              = 0.0f;
