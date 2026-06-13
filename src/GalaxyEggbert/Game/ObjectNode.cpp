@@ -32,14 +32,17 @@ void ObjectNode::SetPosition(Vector3 pos) {
     if (node_) node_->SetPosition(pos);
 }
 
-void ObjectNode::UpdateIcon(int icon) {
+void ObjectNode::UpdateIcon(int icon, bool flipX) {
     if (!sprite_) return;
     int   col = icon % kCols;
     int   row = icon / kCols;
     float u0  = col * kTile / kSheetW;
     float v0  = row * kTile / kSheetH;
+    float u1  = u0 + kTile / kSheetW;
+    float v1  = v0 + kTile / kSheetH;
     Billboard* bb = sprite_->GetBillboard(0);
-    bb->uv_ = Rect(u0, v0, u0 + kTile / kSheetW, v0 + kTile / kSheetH);
+    // Sprites in element.png face left; flip U when moving right.
+    bb->uv_ = flipX ? Rect(u1, v0, u0, v1) : Rect(u0, v0, u1, v1);
     sprite_->Commit();
 }
 

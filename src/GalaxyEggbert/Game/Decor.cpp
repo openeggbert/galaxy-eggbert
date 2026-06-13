@@ -135,6 +135,17 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime)
         StepMovement(obj, dt);
         ++obj.animPhase;
 
+        // Update facing for horizontally patrolling types (sprites face left by default).
+        {
+            using OT = ObjectType;
+            bool directional = (obj.type == OT::ObjectType2  || obj.type == OT::ObjectType3  ||
+                                obj.type == OT::ObjectType4  || obj.type == OT::ObjectType17 ||
+                                obj.type == OT::ObjectType20 || obj.type == OT::ObjectType33);
+            float dx = obj.pos.x_ - oldPos.x_;
+            if (directional && std::abs(dx) > 0.0001f)
+                obj.facingLeft = (dx < 0.0f);
+        }
+
         // Platform carry: if Blupi is horizontally within 0.85 units and
         // within 1.5 units vertically, push Blupi with the platform's XZ delta.
         if (obj.type == ObjectType::ObjectType1) {
@@ -148,7 +159,7 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime)
             }
         }
 
-        obj.node->UpdateIcon(GetIcon(obj));
+        obj.node->UpdateIcon(GetIcon(obj), !obj.facingLeft);
         // Pickups float with a sine-wave bob; stagger by index so nearby items
         // don't oscillate in sync.
         Vector3 drawPos = obj.pos;

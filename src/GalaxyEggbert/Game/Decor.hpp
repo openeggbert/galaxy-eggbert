@@ -26,6 +26,7 @@ public:
         int                        direction     = 1;    // +1 toward posEnd, -1 toward posStart
         int                        animPhase     = 0;
         bool                       active        = false;
+        bool                       facingLeft    = true; // sprites in element.png face left
         std::unique_ptr<ObjectNode> node;
     };
 

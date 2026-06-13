@@ -9,7 +9,7 @@ public:
     ~ObjectNode();
 
     void SetPosition(Urho3D::Vector3 pos);
-    void UpdateIcon(int icon);
+    void UpdateIcon(int icon, bool flipX = false);
     void SetVisible(bool visible);
     void Remove();
 
