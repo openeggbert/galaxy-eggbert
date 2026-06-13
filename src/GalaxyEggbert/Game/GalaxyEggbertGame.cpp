@@ -377,6 +377,7 @@ void GalaxyEggbertGame::LoadWorld(int worldNum) {
     SpawnTerrainNodes();
     ApplyWorldSky(scene_.Get(), worldNum);
     UpdateSkyDome(skyRegion_);
+    if (camera_) camera_->SetCollisionWorld(world_.get(), kWCX, kWCZ);
 }
 
 // ─── phase transitions ───────────────────────────────────────────────────────
@@ -516,6 +517,27 @@ void GalaxyEggbertGame::UpdateSettings(float dt) {
 void GalaxyEggbertGame::UpdatePlay(float dt) {
     auto* input = context_->GetSubsystem<Input>();
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Pause); return; }
+
+    // Debug world jump: F1-F5 skips directly to that world.
+    {
+        static const Key kFKeys[] = { KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5 };
+        for (int i = 0; i < 5; ++i) {
+            if (input->GetKeyPress(kFKeys[i])) {
+                currentWorld_           = i + 1;
+                controlsHintTimer_      = 8.0f;
+                bonusLifeAwarded_       = false;
+                prevCollected_          = 0;
+                keysCollected_          = 0;
+                shieldTimer_            = 0.0f;
+                respawnInvincibleTimer_ = 0.0f;
+                decor_.reset();
+                blupi_.reset();
+                LoadWorld(currentWorld_);
+                EnterPhase(GamePhase::Play);
+                return;
+            }
+        }
+    }
 
     if (blupi_) blupi_->Update(dt);
     if (blupi_ && sound_) {
@@ -711,6 +733,18 @@ void GalaxyEggbertGame::ResetLevel() {
 void GalaxyEggbertGame::UpdatePause(float dt) {
     (void)dt;
     auto* input = context_->GetSubsystem<Input>();
+
+    static const char* kWorldNames[] = {
+        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+    };
+    const char* wname = (currentWorld_ >= 1 && currentWorld_ <= 5)
+                        ? kWorldNames[currentWorld_ - 1] : "Unknown";
+    char buf[256];
+    std::snprintf(buf, sizeof(buf),
+        "PAUSED\n\nWorld %d: %s\nLives: %d\n\nESC: resume   S: settings",
+        currentWorld_, wname, lives_);
+    phases_->SetOverlayText(buf);
+
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Play); return; }
     if (input->GetKeyPress(KEY_S)) {
         settingsReturnPhase_ = GamePhase::Pause;
@@ -735,6 +769,7 @@ void GalaxyEggbertGame::Start() {
     phases_ = std::make_unique<PhaseManager>(context_);
     hud_    = std::make_unique<HUD>(context_);
     camera_ = std::make_unique<CameraController>(context_, scene_.Get());
+    camera_->SetCollisionWorld(world_.get(), kWCX, kWCZ);
     sound_  = std::make_unique<SoundManager>(context_, scene_.Get());
     if (!gameData_.GetSounds()) sound_->SetEnabled(false);
     EnterPhase(GamePhase::Init);

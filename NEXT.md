@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 28)
+## Current state (as of Phase 29)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -92,6 +92,10 @@ or the original Windows Phone game.
 - Full WASD+QE controls: W/S move forward/back (same as UP/DN), Q/E turn left/right (same as L/R)
 - Controls hint auto-fades after 8 s; `controlsHintTimer_` reset on every level load/select
 - Bonus life when all treasures collected (once per level, capped at 9 lives); plays SoundChannel42
+- Camera wall collision: DDA ray march from Blupi to desired camera pos; clamps to first solid voxel
+  - `SetCollisionWorld(World*, wcx, wcz)` wired in Start() and LoadWorld()
+- Pause screen shows world name, lives, and key hints via `phases_->SetOverlayText()`
+- F1–F5 debug world jump: instantly teleports to world 1–5 during play; full state reset
 
 **Architecture (subsystem classes):**
 ```
@@ -156,6 +160,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 29 — Camera wall collision + pause info + F1-F5 world jump
+
+Status: **DONE**
+
+- Camera collision: `CameraController` stores `World*` + offsets via `SetCollisionWorld()`;
+  `Update()` steps the ray from Blupi (0.5 unit margin) toward ideal position in 0.3-unit steps;
+  first solid voxel clamps camera distance to `max(1.5, t - step)`; avoids camera clipping into walls
+- Pause overlay text: `UpdatePause()` calls `phases_->SetOverlayText()` each frame with world
+  name (same table as HUD), lives, and key hints (ESC/S)
+- F1-F5 world jump: during Play, pressing F1-F5 performs a full state reset and loads world 1-5;
+  same reset sequence as AdvanceToNextWorld (resets all timers, flags, decor, blupi)
 
 ---
 

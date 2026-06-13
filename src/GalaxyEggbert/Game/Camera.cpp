@@ -1,6 +1,7 @@
 #include "Camera.hpp"
 #include <cmath>
 #include <algorithm>
+#include <cstdint>
 
 using namespace Urho3D;
 
@@ -39,6 +40,34 @@ void CameraController::Update(float dt, Vector3 targetPos, float targetYaw) {
         dist_ * std::sin(yawRad) * std::cos(pitchRad),
         dist_ * std::sin(pitchRad),
         dist_ * std::cos(yawRad) * std::cos(pitchRad));
+
+    // Wall collision: step ray from Blupi toward the desired camera position;
+    // if a solid voxel is encountered, clamp the camera distance before it.
+    if (world_) {
+        Vector3 rayOrigin = targetPos + Vector3(0.0f, 0.5f, 0.0f);
+        float   idealDist = offset.Length();
+        Vector3 dir       = offset / idealDist;
+        float   hitDist   = idealDist;
+        static constexpr float kStep = 0.3f;
+        for (float t = 0.5f; t < idealDist; t += kStep) {
+            Vector3 p  = rayOrigin + dir * t;
+            int     wx = static_cast<int>(std::round(p.x_)) + wcx_;
+            int     wy = static_cast<int>(std::floor(p.y_));
+            int     wz = static_cast<int>(std::round(p.z_)) + wcz_;
+            if (wx >= 0 && wx < 100 && wz >= 0 && wz < 100 && wy >= 0 && wy < 100) {
+                if (!world_->getBlock(
+                        static_cast<uint16_t>(wx),
+                        static_cast<uint16_t>(wy),
+                        static_cast<uint16_t>(wz)).isAir()) {
+                    hitDist = std::max(1.5f, t - kStep);
+                    break;
+                }
+            }
+        }
+        if (hitDist < idealDist)
+            offset = dir * hitDist;
+    }
+
     node_->SetPosition(targetPos + offset);
     node_->LookAt(targetPos + Vector3(0.0f, 0.5f, 0.0f));
 
