@@ -936,13 +936,21 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             blupi_->SnapToSurface(landY);
 
         if (decor_->WasExitReached()) {
-            if (sound_) sound_->Play(SoundChannel::SoundChannel57);
-            ++currentWorld_;
-            gameData_.SetNbVies(lives_);
-            gameData_.SetLastWorld(currentWorld_);
-            gameData_.Write(savePath_);
-            EnterPhase(GamePhase::Win);
-            return;
+            int col = decor_->GetCollected();
+            int tot = decor_->GetTotalTreasures();
+            if (tot > 0 && col < tot) {
+                // Exit locked until all treasures collected.
+                spawnPopup(pos + Vector3(0.0f, 1.0f, 0.0f),
+                    "Need all treasures!", Color(1.0f, 0.4f, 0.4f));
+            } else {
+                if (sound_) sound_->Play(SoundChannel::SoundChannel57);
+                ++currentWorld_;
+                gameData_.SetNbVies(lives_);
+                gameData_.SetLastWorld(currentWorld_);
+                gameData_.Write(savePath_);
+                EnterPhase(GamePhase::Win);
+                return;
+            }
         }
         if (decor_->WasBlupiHit() && shieldTimer_ <= 0.0f && respawnInvincibleTimer_ <= 0.0f) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel8);
