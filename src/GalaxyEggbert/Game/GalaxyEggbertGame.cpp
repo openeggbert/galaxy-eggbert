@@ -42,6 +42,7 @@ SharedPtr<Material> GalaxyEggbertGame::MakeFlatMaterial(const Color& color, floa
 }
 
 SharedPtr<Material> GalaxyEggbertGame::GetTileMaterial(uint16_t blockType) {
+    blockType = BlockTypes::tileAnimBase(blockType);
     auto it = tileMatCache_.find(blockType);
     if (it != tileMatCache_.end()) return it->second;
 
@@ -603,23 +604,33 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
     totalTime_ += dt;
     levelTime_ += dt;
+    // Tile animation — cycle icon sequences ported from mobile-eggbert Tables.cpp
     {
-        float t = totalTime_;
-        auto lavIt = tileMatCache_.find(BlockTypes::Lava);
-        if (lavIt != tileMatCache_.end() && lavIt->second) {
-            float p = 0.75f + 0.25f * std::sinf(t * 3.0f);
-            lavIt->second->SetShaderParameter("MatDiffColor", Color(p, p * 0.35f, 0.0f));
-        }
-        auto spkIt = tileMatCache_.find(BlockTypes::Spike);
-        if (spkIt != tileMatCache_.end() && spkIt->second) {
-            float p = 0.8f + 0.2f * std::sinf(t * 2.0f + 1.0f);
-            spkIt->second->SetShaderParameter("MatDiffColor", Color(p, p, p));
-        }
-        auto crIt = tileMatCache_.find(BlockTypes::Crusher);
-        if (crIt != tileMatCache_.end() && crIt->second) {
-            float p = 0.7f + 0.3f * std::sinf(t * 2.5f + 0.5f);
-            crIt->second->SetShaderParameter("MatDiffColor", Color(p, p * 0.3f, p * 0.3f));
-        }
+        static const int kLava[8]    = {68,69,70,71,72,71,70,69};
+        static const int kSpike[16]  = {374,374,373,347,373,374,374,374,373,347,347,373,374,374,374,374};
+        static const int kCrusher[10]= {317,317,318,319,320,321,322,323,323,323};
+        static const int kSaw[6]     = {378,379,380,381,382,383};
+        static const int kWater1[6]  = {92,93,94,95,94,93};
+        static const int kWater2[6]  = {91,96,97,98,97,96};
+
+        static constexpr float kFps = 6.0f;
+        int frame = static_cast<int>(totalTime_ * kFps);
+
+        auto animateTile = [&](uint16_t base, const int* seq, int n) {
+            auto it = tileMatCache_.find(base);
+            if (it == tileMatCache_.end() || !it->second) return;
+            float u, v, us, vs;
+            BlockTypes::tileUV(seq[frame % n], u, v, us, vs);
+            it->second->SetShaderParameter("UOffset", Vector4(us, 0.0f, 0.0f, u));
+            it->second->SetShaderParameter("VOffset", Vector4(0.0f, vs, 0.0f, v));
+        };
+
+        animateTile(BlockTypes::Lava,    kLava,    8);
+        animateTile(BlockTypes::Spike,   kSpike,  16);
+        animateTile(BlockTypes::Crusher, kCrusher,10);
+        animateTile(BlockTypes::Saw,     kSaw,     6);
+        animateTile(BlockTypes::Water1,  kWater1,  6);
+        animateTile(BlockTypes::Water2,  kWater2,  6);
     }
 
     if (blupi_) blupi_->Update(dt);
@@ -666,7 +677,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 static_cast<uint16_t>(wx),
                 static_cast<uint16_t>(wy),
                 static_cast<uint16_t>(wz)).type();
-            if (bt == BlockTypes::Lava || bt == BlockTypes::Spike || bt == BlockTypes::Crusher) {
+            if (BlockTypes::isHazard(bt)) {
                 if (sound_) sound_->Play(SoundChannel::SoundChannel8);
                 --lives_;
                 if (lives_ <= 0) {

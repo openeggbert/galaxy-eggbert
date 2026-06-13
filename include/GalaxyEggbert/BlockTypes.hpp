@@ -39,9 +39,32 @@ constexpr uint16_t Tile412  = 412;
 constexpr uint16_t Tile413  = 413;
 
 // Hazard tiles — same rule: value = icon index. Gameplay checks use these.
-constexpr uint16_t Lava     =  68;   // kills Blupi on contact
-constexpr uint16_t Spike    = 373;   // kills Blupi on contact
-constexpr uint16_t Crusher  = 317;   // kills Blupi on contact
+constexpr uint16_t Lava     =  68;   // kills Blupi on contact (anim group 68–72)
+constexpr uint16_t Spike    = 373;   // kills Blupi on contact (anim group 347,373,374)
+constexpr uint16_t Crusher  = 317;   // kills Blupi on contact (anim group 317–323)
+constexpr uint16_t Saw      = 378;   // kills Blupi on contact (anim group 378–383)
+
+// Water tiles — decorative (anim groups 92–95 and 96–98).
+constexpr uint16_t Water1   =  92;
+constexpr uint16_t Water2   =  96;
+
+// Map any icon in an animated tile group to the group's base/master icon.
+// All tiles in a group share one cached material whose UV is updated each frame.
+inline uint16_t tileAnimBase(uint16_t icon) {
+    if (icon >= 68  && icon <= 72)  return Lava;     // lava 8-frame loop
+    if (icon == 347 || icon == 373 || icon == 374) return Spike; // spike 16-frame
+    if (icon >= 317 && icon <= 323) return Crusher;  // crusher 10-frame
+    if (icon >= 378 && icon <= 383) return Saw;      // saw 6-frame loop
+    if (icon >= 92  && icon <= 95)  return Water1;   // water1 6-frame loop
+    if (icon == 91  || (icon >= 96 && icon <= 98)) return Water2; // water2 6-frame
+    return icon;
+}
+
+// True if a tile type is a hazard (kills Blupi on contact when not shielded).
+inline bool isHazard(uint16_t bt) {
+    uint16_t base = tileAnimBase(bt);
+    return base == Lava || base == Spike || base == Crusher || base == Saw;
+}
 
 // Block type → icon index. Since block type IS the icon index, this is trivial.
 // Returns -1 for Air.

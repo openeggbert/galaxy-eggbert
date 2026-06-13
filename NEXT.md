@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 46)
+## Current state (as of Phase 47)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -167,9 +167,12 @@ or the original Windows Phone game.
 - Level elapsed timer: `levelTime_` (per-level, resets in AdvanceToNextWorld/ResetLevel/SelectGamer/F-key jump);
   shown in HUD as `"M:SS"` alongside treasures; also displayed in Win overlay (`"Time: M:SS"`);
   timer stops accumulating the moment the Play phase exits (frozen in Win overlay)
-- Animated hazard tiles: Lava pulses orange, Spike flickers white, Crusher pulses red;
-  driven by `totalTime_` (runs continuously, not reset between levels); all three use
-  `SetShaderParameter("MatDiffColor", …)` on the shared material in `tileMatCache_`
+- Animated tiles (Phase 47): Lava, Crusher, Spike, Saw, Water1, Water2 all cycle through
+  their mobile-eggbert icon sequences (6–16 frames at 6 fps); driven by `totalTime_`;
+  `BlockTypes::tileAnimBase()` maps all icons in an animation group to one shared material;
+  UV offsets updated per frame via `SetShaderParameter("UOffset"/"VOffset")`; replaces
+  old color-pulsing; Saw (icon 378–383) added as 4th hazard tile; `BlockTypes::isHazard()`
+  centralises the hazard check (Lava/Spike/Crusher/Saw)
 
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to
