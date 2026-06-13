@@ -94,6 +94,7 @@ private:
     std::string savePath_;
 
     // ── per-level state (reset in AdvanceToNextWorld / ResetLevel) ──────────
+    float       levelIntroTimer_          = 3.0f; // countdown for world title card
     float       levelTime_                = 0.0f; // seconds elapsed this level
     int         prevCollected_            = 0;
     int         keysRed_ = 0, keysGreen_ = 0, keysBlue_ = 0;

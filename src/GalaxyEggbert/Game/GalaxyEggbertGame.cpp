@@ -569,6 +569,7 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     lives_                  = gameData_.GetNbVies();
     currentWorld_           = gameData_.GetLastWorld();
     score_                  = 0;
+    levelIntroTimer_        = 3.0f;
     levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;
@@ -627,6 +628,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         for (int i = 0; i < 5; ++i) {
             if (input->GetKeyPress(kFKeys[i])) {
                 currentWorld_           = i + 1;
+                levelIntroTimer_        = 3.0f;
                 levelTime_              = 0.0f;
                 controlsHintTimer_      = 8.0f;
                 bonusLifeAwarded_       = false;
@@ -922,6 +924,24 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f,
                    levelTime_, score_);
+
+    // Level intro title card
+    if (levelIntroTimer_ > 0.0f) {
+        levelIntroTimer_ = std::max(0.0f, levelIntroTimer_ - dt);
+        float elapsed   = 3.0f - levelIntroTimer_;
+        float remaining = levelIntroTimer_;
+        float alpha;
+        if      (elapsed   < 0.5f) alpha = elapsed   / 0.5f;
+        else if (remaining < 0.5f) alpha = remaining / 0.5f;
+        else                       alpha = 1.0f;
+        char introText[64];
+        std::snprintf(introText, sizeof(introText),
+            "WORLD %d\n%s", currentWorld_, WorldName(currentWorld_));
+        hud_->ShowWorldIntro(introText, alpha);
+    } else {
+        hud_->ShowWorldIntro("", 0.0f);
+    }
+
     hud_->Update(dt);
 }
 
@@ -931,6 +951,7 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
         gameData_.SetLastWorld(1);
         gameData_.Write(savePath_);
     }
+    levelIntroTimer_        = 3.0f;
     levelTime_              = 0.0f;
     prevCollected_          = 0;
     keysRed_ = keysGreen_ = keysBlue_ = 0;

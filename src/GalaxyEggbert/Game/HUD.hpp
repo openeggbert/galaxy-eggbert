@@ -13,6 +13,7 @@ public:
                   float levelTime = 0.0f, int score = 0);
     void ShowWin();
     void ShowHitFlash();
+    void ShowWorldIntro(const char* text, float alpha);
     void Update(float dt);
 
 private:
@@ -25,5 +26,6 @@ private:
     Urho3D::WeakPtr<Urho3D::BorderImage> lifeIcons_[kMaxDisplayedLives];
     Urho3D::WeakPtr<Urho3D::BorderImage> keyIcons_[3];
     Urho3D::WeakPtr<Urho3D::BorderImage> hitFlash_;
+    Urho3D::WeakPtr<Urho3D::Text>        worldIntroText_;
     float hitFlashTimer_ = 0.0f;
 };

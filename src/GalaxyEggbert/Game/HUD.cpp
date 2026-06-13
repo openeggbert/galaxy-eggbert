@@ -85,6 +85,14 @@ HUD::HUD(Context* context) : context_(context) {
     overflow->SetPosition(18 + kMaxDisplayedLives * 22, -84);
     overflow->SetVisible(false);
     livesOverflow_ = overflow;
+
+    auto* intro = root->CreateChild<Text>("WorldIntro");
+    if (font) intro->SetFont(font, 32);
+    intro->SetTextAlignment(HA_CENTER);
+    intro->SetAlignment(HA_CENTER, VA_CENTER);
+    intro->SetPosition(0, -50);
+    intro->SetVisible(false);
+    worldIntroText_ = intro;
 }
 
 static constexpr float kFlashDuration = 0.4f;
@@ -113,6 +121,7 @@ void HUD::SetVisible(bool visible) {
     if (Text* t = text_) t->SetVisible(visible);
     if (!visible) {
         if (Text* ot = livesOverflow_) ot->SetVisible(false);
+        if (Text* it = worldIntroText_) it->SetVisible(false);
         if (BorderImage* g = gauge_) g->SetVisible(false);
         for (int i = 0; i < kMaxDisplayedLives; i++)
             if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(false);
@@ -129,6 +138,17 @@ void HUD::ShowWin() {
         if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(false);
     for (int i = 0; i < 3; i++)
         if (BorderImage* icon = keyIcons_[i]) icon->SetVisible(false);
+}
+
+void HUD::ShowWorldIntro(const char* text, float alpha) {
+    if (Text* t = worldIntroText_) {
+        bool show = alpha > 0.01f;
+        t->SetVisible(show);
+        if (show) {
+            t->SetText(text);
+            t->SetColor(Color(1.0f, 0.92f, 0.4f, alpha));
+        }
+    }
 }
 
 static const char* WorldName(int world) {
