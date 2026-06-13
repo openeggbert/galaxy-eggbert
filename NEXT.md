@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 63)
+## Current state (as of Phase 64)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,10 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Auto step-up (Phase 64): `tryStepUp()` in `ResolveXZ` — when `onGround_` and a 1-tile step is
+  ahead (body-level block solid, block above clear, height diff ≤ 1.0 tile), snaps `pos.y_` to
+  the step top and returns `true` (skipping the horizontal block); Blupi now automatically walks
+  up stairs and 1-tile ledges without jumping; 2+-tile walls still block normally
 - Variable jump height (Phase 63): `kMinJumpSpeed = kJumpSpeed × 0.30` — releasing Left Ctrl while
   still ascending cuts `vel_.y_` to `kMinJumpSpeed`; full hold gives maximum arc, tap gives a
   short hop ~30% as high; `jumpHeld_` flag cleared on landing or on button-release; reset in
@@ -304,6 +308,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 64 — Auto step-up (1-tile ledge climb)
+
+Status: **DONE**
+
+- `Blupi::ResolveXZ`: `tryStepUp(wx, wz)` lambda called before the blocking push in both
+  `pushX` and `pushZ`; conditions: `onGround_`, `vel_.y_ ≤ 0`, body-level solid, above clear,
+  `0 < diff ≤ 1.0` where diff = stepTop − feet; snaps `pos.y_ = stepTop + kHalfH`
+- Blupi walks up single-tile steps (stairs, terrain edges) without needing to jump; 2+-tile
+  walls block as before; falling/jumping into a step does not trigger step-up (vel_.y_ guard)
+- Impact: traversal of the real mobile-eggbert levels is dramatically smoother; staircases
+  and terrain with varied height become natural to walk through
 
 ---
 

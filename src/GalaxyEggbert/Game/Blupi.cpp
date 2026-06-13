@@ -155,20 +155,40 @@ void Blupi::ResolveXZ(Vector3& pos) {
     // layer at wy=0, so floor blocks are never treated as walls.
     int bodyWY = static_cast<int>(std::round(pos.y_));
 
+    // Auto step-up: when on ground and a 1-tile step is ahead (body-level blocked,
+    // one above clear), snap Blupi onto the step top instead of stopping.
+    // diff ≤ 1.0 prevents stepping up into blocks that are too high.
+    auto tryStepUp = [&](int wx, int wz) -> bool {
+        if (!onGround_ || vel_.y_ > 0.0f) return false;
+        if (!IsSolid(wx, bodyWY, wz) || IsSolid(wx, bodyWY + 1, wz)) return false;
+        float stepTop = static_cast<float>(bodyWY) + 0.5f;
+        float feet    = pos.y_ - kHalfH;
+        float diff    = stepTop - feet;
+        if (diff <= 0.0f || diff > 1.0f) return false;
+        pos.y_    = stepTop + kHalfH;
+        onGround_ = true;
+        vel_.y_   = 0.0f;
+        return true;
+    };
+
     auto pushX = [&](float xEdge, int sign) {
         int wx = static_cast<int>(std::round(xEdge)) + wcx_;
         int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
         if (IsSolid(wx, bodyWY, wz)) {
-            pos.x_  = static_cast<float>(wx - wcx_) - sign * (0.5f + kHalfW);
-            vel_.x_ = 0.0f;
+            if (!tryStepUp(wx, wz)) {
+                pos.x_  = static_cast<float>(wx - wcx_) - sign * (0.5f + kHalfW);
+                vel_.x_ = 0.0f;
+            }
         }
     };
     auto pushZ = [&](float zEdge, int sign) {
         int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
         int wz = static_cast<int>(std::round(zEdge)) + wcz_;
         if (IsSolid(wx, bodyWY, wz)) {
-            pos.z_  = static_cast<float>(wz - wcz_) - sign * (0.5f + kHalfW);
-            vel_.z_ = 0.0f;
+            if (!tryStepUp(wx, wz)) {
+                pos.z_  = static_cast<float>(wz - wcz_) - sign * (0.5f + kHalfW);
+                vel_.z_ = 0.0f;
+            }
         }
     };
 
