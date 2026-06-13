@@ -42,6 +42,10 @@ void ObjectNode::UpdateIcon(int icon) {
     sprite_->Commit();
 }
 
+void ObjectNode::SetVisible(bool visible) {
+    if (node_) node_->SetEnabled(visible);
+}
+
 void ObjectNode::Remove() {
     if (node_) { node_->Remove(); node_ = nullptr; sprite_ = nullptr; }
 }

@@ -10,6 +10,7 @@ public:
 
     void SetPosition(Urho3D::Vector3 pos);
     void UpdateIcon(int icon);
+    void SetVisible(bool visible);
     void Remove();
 
 private:

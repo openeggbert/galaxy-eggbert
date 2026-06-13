@@ -17,14 +17,15 @@ public:
     static constexpr int kMaxObjects = 100;
 
     struct Object {
-        GalaxyEggbert::ObjectType  type      = GalaxyEggbert::ObjectType::ObjectType0;
+        GalaxyEggbert::ObjectType  type          = GalaxyEggbert::ObjectType::ObjectType0;
         Urho3D::Vector3            posStart;
         Urho3D::Vector3            posEnd;
         Urho3D::Vector3            pos;
-        float                      speed     = 1.5f;
-        int                        direction = 1;   // +1 toward posEnd, -1 toward posStart
-        int                        animPhase = 0;
-        bool                       active    = false;
+        float                      speed         = 1.5f;
+        float                      respawnTimer  = 0.0f; // >0 while waiting to respawn
+        int                        direction     = 1;    // +1 toward posEnd, -1 toward posStart
+        int                        animPhase     = 0;
+        bool                       active        = false;
         std::unique_ptr<ObjectNode> node;
     };
 

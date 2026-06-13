@@ -103,9 +103,26 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
     stompKill_     = false;
     platformDelta_ = Vector3::ZERO;
 
+    static constexpr float kRespawnDelay = 5.0f;
+
     for (int i = 0; i < objCount_; ++i) {
         Object& obj = objects_[i];
-        if (!obj.active) continue;
+        if (!obj.active) {
+            if (obj.respawnTimer > 0.0f) {
+                obj.respawnTimer -= dt;
+                if (obj.respawnTimer <= 0.0f) {
+                    obj.pos       = obj.posStart;
+                    obj.direction = 1;
+                    obj.animPhase = 0;
+                    obj.active    = true;
+                    if (obj.node) {
+                        obj.node->SetVisible(true);
+                        obj.node->SetPosition(obj.posStart);
+                    }
+                }
+            }
+            continue;
+        }
 
         const Vector3 oldPos = obj.pos;
         StepMovement(obj, dt);
@@ -181,9 +198,10 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
             case ObjectType::ObjectType20:
             case ObjectType::ObjectType33:
                 if (blupiVelY < -1.0f) {
-                    // Stomp: Blupi is falling, kill the enemy.
-                    obj.active = false;
-                    obj.node->Remove();
+                    // Stomp: hide and schedule respawn; do not permanently remove.
+                    obj.active       = false;
+                    obj.respawnTimer = kRespawnDelay;
+                    if (obj.node) obj.node->SetVisible(false);
                     stompKill_ = true;
                 } else {
                     blupiHit_ = true;

@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 43)
+## Current state (as of Phase 44)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -144,6 +144,10 @@ or the original Windows Phone game.
   persisted when switching gamer slots mid-session (bug)
 - Fall death plays `SoundChannel8` (same as tile hazard / enemy hit); previously silent
 - Camera FOV set to 65° (was default 45°); wider view suits 3rd-person platformer
+- Enemy respawn: stomped enemies (types 2/3/4/16/17/20/33) are hidden and respawn at posStart
+  after 5 s (`kRespawnDelay`); `Decor::Object::respawnTimer` counts down while `active=false`;
+  `ObjectNode::SetVisible(bool)` toggles `node_->SetEnabled()` without destroying the scene node;
+  pickup types (treasure, egg, key, shield, drink) are still permanently removed on collection
 - Score system: `score_` (persistent across level transitions, reset on full restart/slot select);
   awards: +10 treasure, +25 stomp kill, +50 key, +50 egg/drink, +100 all-treasures bonus life;
   shown in HUD text (`"Score: N"`), Win overlay, and Lost overlay (Game Over screen)
