@@ -2,8 +2,8 @@
 
 using namespace Urho3D;
 
-ScorePopup::ScorePopup(Context* ctx, Scene* scene, Vector3 pos, const char* text)
-    : origin_(pos)
+ScorePopup::ScorePopup(Context* ctx, Scene* scene, Vector3 pos, const char* text, Color color)
+    : color_(color), origin_(pos)
 {
     auto* cache = ctx->GetSubsystem<ResourceCache>();
     node_ = scene->CreateChild("ScorePopup");
@@ -14,7 +14,7 @@ ScorePopup::ScorePopup(Context* ctx, Scene* scene, Vector3 pos, const char* text
     if (!font) font = cache->GetResource<Font>("Fonts/DejaVuSansMono.ttf");
     if (font) t3d->SetFont(font, 24.0f);
     t3d->SetText(text);
-    t3d->SetColor(Color(1.0f, 0.95f, 0.2f, 1.0f));
+    t3d->SetColor(color_);
     t3d->SetAlignment(HA_CENTER, VA_CENTER);
     t3d->SetFaceCameraMode(FC_ROTATE_XYZ);
 }
@@ -30,6 +30,6 @@ bool ScorePopup::Update(float dt) {
     node_->SetPosition(origin_ + Vector3(0.0f, t * kRiseSpeed, 0.0f));
     float alpha = 1.0f - t;
     if (auto* t3d = node_->GetComponent<Text3D>())
-        t3d->SetColor(Color(1.0f, 0.95f, 0.2f, alpha));
+        t3d->SetColor(Color(color_.r_, color_.g_, color_.b_, alpha));
     return true;
 }
