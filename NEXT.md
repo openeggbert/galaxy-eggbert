@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 65)
+## Current state (as of Phase 66)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,11 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Blob shadow (Phase 66): `Blupi::UpdateShadow()` — scans down from Blupi feet via `IsSolid()` up to
+  20 tiles; places a `Plane.mdl` node with `NoTextureAlpha` dark material (`Color(0,0,0,0.55)`) at
+  the surface (Y = blockTop + 0.52); scale `max(0.25, 0.55 − height×0.025)` shrinks as Blupi
+  rises; called in both normal and inputFrozen paths; helps judge jump landing in 3D perspective;
+  HUD hint updated: "RSHIFT: glide(air)/look-up"
 - Glide / parachute (Phase 65): holding Right Shift while airborne switches to reduced gravity
   (`kGravity × 0.12`) and caps fall speed at `−1.5 m/s`; animation switches to `BlupiAction::Up`
   (arms-up) during glide descent; on ground Right Shift still triggers look-up as before;
@@ -312,6 +317,19 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 66 — Blob shadow under Blupi
+
+Status: **DONE**
+
+- `Blupi::shadowNode_` (`Node*`): `Plane.mdl` with `NoTextureAlpha` material, `Color(0,0,0,0.55)`;
+  scale `Vector3(s, 1, s)` where `s = max(0.25, 0.55 − height × 0.025)`
+- `UpdateShadow()`: reads `node_->GetPosition()`, walks `IsSolid()` downward from feet (up to 20
+  tiles), places shadow at `blockTop + 0.52`; enabled only when ground found within range
+- Destructor: `shadowNode_->Remove()` before `node_->Remove()`
+- HUD hint: "RSHIFT: glide(air)/look-up" (updated from "look up")
 
 ---
 

@@ -42,8 +42,23 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     bb->enabled_  = true;
     sprite_->Commit();
 
+    // Blob shadow: Plane.mdl with semi-transparent dark material, positioned at
+    // terrain surface below Blupi each frame (helps judge jump distances in 3D).
+    {
+        auto* planeModel = cache->GetResource<Model>("Models/Plane.mdl");
+        auto* tech       = cache->GetResource<Technique>("Techniques/NoTextureAlpha.xml");
+        shadowNode_ = scene->CreateChild("BlupiShadow");
+        auto* sm = shadowNode_->CreateComponent<StaticModel>();
+        if (planeModel) sm->SetModel(planeModel);
+        SharedPtr<Material> shadowMat(new Material(context_));
+        if (tech) shadowMat->SetTechnique(0, tech);
+        shadowMat->SetShaderParameter("MatDiffColor", Color(0.0f, 0.0f, 0.0f, 0.55f));
+        sm->SetMaterial(shadowMat);
+    }
+
     SpawnAt(spawn_);
     UpdateSprite();
+    UpdateShadow();
 }
 
 void Blupi::Respawn() {
@@ -63,7 +78,8 @@ void Blupi::SnapToSurface(float surfaceY) {
 }
 
 Blupi::~Blupi() {
-    if (node_) { node_->Remove(); node_ = nullptr; }
+    if (shadowNode_) { shadowNode_->Remove(); shadowNode_ = nullptr; }
+    if (node_)       { node_->Remove();       node_       = nullptr; }
 }
 
 void Blupi::SpawnAt(const Vector3& pos) {
@@ -102,6 +118,30 @@ void Blupi::UpdateSprite() {
         bb->color_ = Color(0.5f, 0.85f, 1.0f);
     }
     sprite_->Commit();
+}
+
+void Blupi::UpdateShadow() {
+    if (!shadowNode_ || !node_) return;
+    Vector3 pos = node_->GetPosition();
+    int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
+    int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
+    int startWY = static_cast<int>(std::floor(pos.y_ - kHalfH - 0.05f));
+    float shadowY = -999.0f;
+    for (int wy = startWY; wy >= 0 && startWY - wy < 20; --wy) {
+        if (IsSolid(wx, wy, wz)) {
+            shadowY = static_cast<float>(wy) + 0.52f;
+            break;
+        }
+    }
+    if (shadowY > -900.0f) {
+        float height = std::max(0.0f, (pos.y_ - kHalfH) - (shadowY - 0.02f));
+        float scale  = std::max(0.25f, 0.55f - height * 0.025f);
+        shadowNode_->SetEnabled(true);
+        shadowNode_->SetPosition(Vector3(pos.x_, shadowY, pos.z_));
+        shadowNode_->SetScale(Vector3(scale, 1.0f, scale));
+    } else {
+        shadowNode_->SetEnabled(false);
+    }
 }
 
 bool Blupi::IsSolid(int wx, int wy, int wz) const {
@@ -212,6 +252,7 @@ void Blupi::Update(float dt) {
         ++animTick_;
         if (shieldActive_) shieldBlinkPhase_ += dt;
         UpdateSprite();
+        UpdateShadow();
         return;
     }
 
@@ -349,4 +390,5 @@ void Blupi::Update(float dt) {
     }
 
     UpdateSprite();
+    UpdateShadow();
 }

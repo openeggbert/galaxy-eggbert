@@ -87,10 +87,13 @@ private:
     float jumpBuffer_     = 0.0f;
     bool  jumpHeld_       = false;
 
+    void UpdateShadow();
+
     // Sprite animation (billboard facing camera, UV-mapped from blupi.png)
     bool                       jumpedThisFrame_ = false;
     bool                       stepThisFrame_   = false;
     Urho3D::BillboardSet*      sprite_          = nullptr;
+    Urho3D::Node*              shadowNode_      = nullptr;
     GalaxyEggbert::BlupiAction action_   = GalaxyEggbert::BlupiAction::Stop;
     int                        animTick_ = 0;
 
