@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 64)
+## Current state (as of Phase 65)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,10 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Glide / parachute (Phase 65): holding Right Shift while airborne switches to reduced gravity
+  (`kGravity × 0.12`) and caps fall speed at `−1.5 m/s`; animation switches to `BlupiAction::Up`
+  (arms-up) during glide descent; on ground Right Shift still triggers look-up as before;
+  allows Blupi to cross gaps that would otherwise be too wide to jump
 - Auto step-up (Phase 64): `tryStepUp()` in `ResolveXZ` — when `onGround_` and a 1-tile step is
   ahead (body-level block solid, block above clear, height diff ≤ 1.0 tile), snaps `pos.y_` to
   the step top and returns `true` (skipping the horizontal block); Blupi now automatically walks
@@ -308,6 +312,19 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 65 — Glide / parachute (Right Shift in air)
+
+Status: **DONE**
+
+- Gravity when `!onGround_ && lookingUp`: `kGravity × 0.12 × dt`; vel_.y_ clamped to `−1.5`
+- Normal gravity (`kGravity × dt`, clamp `−30`) when not gliding
+- Animation: `BlupiAction::Up` while falling and gliding (`vel_.y_ ≤ 0 && lookingUp`);
+  ascending still uses `BlupiAction::Jump`; on-ground Up (look-up) unchanged
+- Extends the same `lookingUp` bool already read for ground look-up; no new input bindings
+- Practical use: cross wide gaps, survive tall falls, navigate aerial sections in world 3/4
 
 ---
 

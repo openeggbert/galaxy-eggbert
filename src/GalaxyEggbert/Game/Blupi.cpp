@@ -256,9 +256,14 @@ void Blupi::Update(float dt) {
         jumpBuffer_ = std::max(0.0f, jumpBuffer_ - dt);
     }
 
-    // --- Gravity ---
-    vel_.y_ += kGravity * dt;
-    vel_.y_  = std::max(vel_.y_, -30.0f);
+    // --- Gravity (glide: Right Shift in air reduces gravity and caps fall speed) ---
+    if (!onGround_ && lookingUp) {
+        vel_.y_ += kGravity * 0.12f * dt;
+        vel_.y_  = std::max(vel_.y_, -1.5f);
+    } else {
+        vel_.y_ += kGravity * dt;
+        vel_.y_  = std::max(vel_.y_, -30.0f);
+    }
 
     // --- Jump: fires when buffer is active and coyote window is open ---
     if (jumpBuffer_ > 0.0f && coyoteTimer_ > 0.0f) {
@@ -305,7 +310,8 @@ void Blupi::Update(float dt) {
     } else if (lookingUp && onGround_) {
         newAction = BlupiAction::Up;
     } else if (!onGround_) {
-        newAction = (vel_.y_ > 0.0f) ? BlupiAction::Jump : BlupiAction::Air;
+        if (lookingUp && vel_.y_ <= 0.0f) newAction = BlupiAction::Up; // gliding
+        else newAction = (vel_.y_ > 0.0f) ? BlupiAction::Jump : BlupiAction::Air;
     } else if (hSpeed > 0.1f) {
         newAction = BlupiAction::March;
     } else if (turning) {
