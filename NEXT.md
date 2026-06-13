@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 44)
+## Current state (as of Phase 45)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -144,6 +144,12 @@ or the original Windows Phone game.
   persisted when switching gamer slots mid-session (bug)
 - Fall death plays `SoundChannel8` (same as tile hazard / enemy hit); previously silent
 - Camera FOV set to 65° (was default 45°); wider view suits 3rd-person platformer
+- Control scheme redesign (Phase 45): WASD/QE/strafe removed; pure arrow-key movement/turn;
+  Left Ctrl = jump; Space = action (placeholder); Left Shift = crouch (BlupiAction::Down,
+  freezes at icon 35); Right Shift = look up (BlupiAction::Up, icon 44); crouching/looking-up
+  locks horizontal movement; Tables::GetBlupiIcon extended with Down(3-frame, maxPhase=2)
+  and Up(1-frame) entries from mobile-eggbert table_blupi; Pause overlay now shows score+time;
+  HUD hint updated to reflect new bindings
 - Enemy respawn: stomped enemies (types 2/3/4/16/17/20/33) are hidden and respawn at posStart
   after 5 s (`kRespawnDelay`); `Decor::Object::respawnTimer` counts down while `active=false`;
   `ObjectNode::SetVisible(bool)` toggles `node_->SetEnabled()` without destroying the scene node;

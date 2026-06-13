@@ -34,8 +34,10 @@ int Tables::GetBlupiIcon(BlupiAction action, int scaledPhase) {
     };
     static const int kMarch[] = {5,6,7,8,9,10};   // March(2): 6-frame walk cycle
     static const int kTurn[]  = {1,1,2,2,3,3};    // Turn(3):  6-frame turn
-    static const int kJump[]  = {17,18,19};        // Jump(4):  3-frame jump start
+    static const int kJump[]  = {17,18,19};          // Jump(4):  3-frame jump start
     static const int kAir[]   = {169,26,170,170,27}; // Air(5): 5 frames, freezes at 4
+    static const int kDown[]  = {33,34,35};           // Down(6):  crouch, 3 frames, freezes at 2
+    static const int kUp[]    = {44};                 // Up(7):    look-up, single frame
 
     struct Entry {
         BlupiAction action;
@@ -49,6 +51,8 @@ int Tables::GetBlupiIcon(BlupiAction action, int scaledPhase) {
         {BlupiAction::Turn,    6, 0, kTurn },
         {BlupiAction::Jump,    3, 0, kJump },
         {BlupiAction::Air,     5, 4, kAir  },
+        {BlupiAction::Down,    3, 2, kDown },
+        {BlupiAction::Up,      1, 0, kUp   },
     };
 
     for (const auto& e : kEntries) {

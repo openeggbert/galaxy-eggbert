@@ -159,32 +159,33 @@ void Blupi::Update(float dt) {
 
     // --- Rotation ---
     bool turning = false;
-    if (input->GetKeyDown(KEY_LEFT)  || input->GetKeyDown(KEY_Q)) { facingYaw_ -= kTurnSpeed * dt; turning = true; }
-    if (input->GetKeyDown(KEY_RIGHT) || input->GetKeyDown(KEY_E)) { facingYaw_ += kTurnSpeed * dt; turning = true; }
+    if (input->GetKeyDown(KEY_LEFT))  { facingYaw_ -= kTurnSpeed * dt; turning = true; }
+    if (input->GetKeyDown(KEY_RIGHT)) { facingYaw_ += kTurnSpeed * dt; turning = true; }
     node_->SetRotation(Quaternion(0.0f, facingYaw_, 0.0f));
+
+    // --- Crouch / look-up: lock movement while held ---
+    bool crouching = input->GetKeyDown(KEY_LSHIFT);
+    bool lookingUp = input->GetKeyDown(KEY_RSHIFT);
 
     // --- Forward/back movement along facing direction ---
     float rad = facingYaw_ * static_cast<float>(M_PI) / 180.0f;
     Vector3 fwd(std::sin(rad), 0.0f, std::cos(rad));
-    Vector3 right(fwd.z_, 0.0f, -fwd.x_);  // 90° clockwise from fwd
 
     float forwardInput = 0.0f;
-    if (input->GetKeyDown(KEY_UP)   || input->GetKeyDown(KEY_W)) forwardInput =  1.0f;
-    if (input->GetKeyDown(KEY_DOWN) || input->GetKeyDown(KEY_S)) forwardInput = -1.0f;
+    if (!crouching && !lookingUp) {
+        if (input->GetKeyDown(KEY_UP))   forwardInput =  1.0f;
+        if (input->GetKeyDown(KEY_DOWN)) forwardInput = -1.0f;
+    }
 
-    float strafeInput = 0.0f;
-    if (input->GetKeyDown(KEY_A)) strafeInput = -1.0f;
-    if (input->GetKeyDown(KEY_D)) strafeInput =  1.0f;
-
-    vel_.x_ = (fwd.x_ * forwardInput + right.x_ * strafeInput) * kMoveSpeed;
-    vel_.z_ = (fwd.z_ * forwardInput + right.z_ * strafeInput) * kMoveSpeed;
+    vel_.x_ = fwd.x_ * forwardInput * kMoveSpeed;
+    vel_.z_ = fwd.z_ * forwardInput * kMoveSpeed;
 
     // --- Gravity ---
     vel_.y_ += kGravity * dt;
     vel_.y_  = std::max(vel_.y_, -30.0f);
 
-    // --- Jump ---
-    if (onGround_ && input->GetKeyPress(KEY_SPACE)) {
+    // --- Jump (Left Ctrl) ---
+    if (onGround_ && input->GetKeyPress(KEY_LCTRL)) {
         vel_.y_          = kJumpSpeed;
         onGround_        = false;
         jumpedThisFrame_ = true;
@@ -210,7 +211,11 @@ void Blupi::Update(float dt) {
     // --- Animation state ---
     float hSpeed = std::sqrt(vel_.x_ * vel_.x_ + vel_.z_ * vel_.z_);
     BlupiAction newAction;
-    if (!onGround_) {
+    if (crouching && onGround_) {
+        newAction = BlupiAction::Down;
+    } else if (lookingUp && onGround_) {
+        newAction = BlupiAction::Up;
+    } else if (!onGround_) {
         newAction = (vel_.y_ > 0.0f) ? BlupiAction::Jump : BlupiAction::Air;
     } else if (hSpeed > 0.1f) {
         newAction = BlupiAction::March;

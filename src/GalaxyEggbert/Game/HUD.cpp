@@ -140,7 +140,7 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures,
     if (Text* t = text_) {
         char buf[256];
         const char* hint = showHint
-            ? "W/S or UP/DN: move  Q/E or L/R: turn  A/D: strafe  SPACE: jump  ESC: pause\n"
+            ? "ARROWS: move/turn  LCTRL: jump  SPACE: action  LSHIFT: crouch  RSHIFT: look up  ESC: pause\n"
             : "";
         int mins = static_cast<int>(levelTime) / 60;
         int secs = static_cast<int>(levelTime) % 60;

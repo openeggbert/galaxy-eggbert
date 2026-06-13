@@ -893,8 +893,9 @@ void GalaxyEggbertGame::UpdatePause(float dt) {
             keysBlue_ > 0 ? " Blue"  : "");
     char buf[320];
     std::snprintf(buf, sizeof(buf),
-        "PAUSED\n\nWorld %d: %s\nLives: %d   Treasures: %d/%d%s\n\nESC: resume   S: settings",
-        currentWorld_, wname, lives_, pauseCollected, pauseTotal, keyLine);
+        "PAUSED\n\nWorld %d: %s\nLives: %d   Treasures: %d/%d%s\nScore: %d   Time: %d:%02d\n\nESC: resume   S: settings",
+        currentWorld_, wname, lives_, pauseCollected, pauseTotal, keyLine,
+        score_, static_cast<int>(levelTime_) / 60, static_cast<int>(levelTime_) % 60);
     phases_->SetOverlayText(buf);
 
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Play); return; }
