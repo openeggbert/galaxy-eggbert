@@ -31,7 +31,7 @@ SharedPtr<Material> GalaxyEggbertGame::MakeFlatMaterial(const Color& color, floa
     auto* cache = context_->GetSubsystem<ResourceCache>();
     SharedPtr<Material> mat(new Material(context_));
     auto* tech = cache->GetResource<Technique>("Techniques/NoTexture.xml");
-    if (!tech) tech = cache->GetResource<Technique>("Techniques/Diff.xml");
+    if (!tech) tech = cache->GetResource<Technique>("Techniques/NoTextureUnlit.xml");
     if (tech) mat->SetTechnique(0, tech);
     mat->SetShaderParameter("MatDiffColor",
         Color(color.r_, color.g_, color.b_, color.a_));

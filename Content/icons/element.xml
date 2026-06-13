@@ -1,0 +1,5 @@
+<texture>
+    <address coord="u" mode="clamp" />
+    <address coord="v" mode="clamp" />
+    <mipmap enable="false" />
+</texture>

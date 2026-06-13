@@ -15,4 +15,5 @@ android/local.properties
 
 android/app/.cxx/Debug
 android/app/.cxx/RelWithDebInfo
+build-web/*
 
