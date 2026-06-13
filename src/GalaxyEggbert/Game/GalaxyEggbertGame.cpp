@@ -270,7 +270,7 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             if (!blupi_)
                 blupi_ = std::make_unique<Blupi>(context_, scene_.Get(), world_.get(), kWCX, kWCZ);
             if (!decor_) CreateDemoObjects();
-            hud_->ShowPlay(Vector3::ZERO, 0.0f, lives_, 0, 0, 0.0f, currentWorld_);
+            hud_->ShowPlay(lives_, 0, 0, 0.0f, currentWorld_);
             hud_->SetVisible(true);
             break;
         default:
@@ -434,7 +434,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         decor_->ClearEvents();
     }
 
-    hud_->ShowPlay(pos, yaw, lives_,
+    hud_->ShowPlay(lives_,
                    decor_ ? decor_->GetCollected() : 0,
                    keysCollected_, shieldTimer_, currentWorld_);
 }

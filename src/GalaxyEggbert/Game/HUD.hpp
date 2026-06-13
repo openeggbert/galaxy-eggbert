@@ -7,12 +7,15 @@ public:
     ~HUD() = default;
 
     void SetVisible(bool visible);
-    void ShowPlay(Urho3D::Vector3 pos, float facingYaw, int lives, int collected,
-                  int keys, float shieldSecs = 0.0f, int world = 1);
+    void ShowPlay(int lives, int collected, int keys, float shieldSecs = 0.0f, int world = 1);
     void ShowWin();
 
 private:
-    Urho3D::Context*                    context_;
-    Urho3D::WeakPtr<Urho3D::Text>       text_;
+    static constexpr int kMaxDisplayedLives = 5;
+
+    Urho3D::Context*                     context_;
+    Urho3D::WeakPtr<Urho3D::Text>        text_;
     Urho3D::WeakPtr<Urho3D::BorderImage> gauge_;
+    Urho3D::WeakPtr<Urho3D::BorderImage> lifeIcons_[kMaxDisplayedLives];
+    Urho3D::WeakPtr<Urho3D::BorderImage> keyIcons_[3];
 };

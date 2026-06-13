@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 15)
+## Current state (as of Phase 16)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -47,6 +47,8 @@ or the original Windows Phone game.
 - Windows build: `GalaxyEggbert.exe` (PE32+, x86-64) via MinGW-w64 cross-compile
   - `build-windows/` configured with `cmake/toolchains/mingw-w64.cmake` + U3D Windows build
   - Statically linked: `-static-libgcc -static-libstdc++`; Windows system libs include `iphlpapi`
+- HUD sprite icons: life icons (Blupi head, `blupi.png` icon 48) and key icons (`element.png` icon 215)
+  replace "Lives: N / Keys: N" text; both shown as `BorderImage` sprites inside/near the gauge
 
 **Architecture (subsystem classes):**
 ```
@@ -63,7 +65,7 @@ src/GalaxyEggbert/Game/
 ```
 
 **Not yet done:**
-- Full HUD: life icons (blupi head sprites), level name
+- Full HUD: level name (currently "World N", could be a descriptive string per world)
 - Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
 - Animated 3D model for Blupi (currently billboard placeholder)
 - Windows, Android, Web platform builds
@@ -115,7 +117,18 @@ cmake --build build-windows --target GalaxyEggbert -j2
 
 ---
 
-## Phase 16 — Android build (U3D)
+## Phase 16 — HUD sprite icons (life icons + key icons)
+
+Status: **DONE** — `HUD.cpp` rewritten with `BorderImage` sprite icons.
+
+- Life icons: `blupi.png` icon 48 (col 8, row 4 of 60×60 sheet) — up to 5 Blupi heads
+- Key icons: `element.png` icon 215 (col 5, row 21) — one icon per collected key (max 3)
+- Text simplified: removed position/facing debug; shows `World N | Treasures: N [SHIELD Xs]`
+- `ShowPlay` signature drops `pos`/`facingYaw` (no longer needed for display)
+
+---
+
+## Phase 17 — Android build (U3D)
 
 Status: **Not yet implemented for U3D.**
 
@@ -124,7 +137,7 @@ Steps: build U3D AAR → set `BUILD_STAGING_DIR` → remove `FATAL_ERROR` guard 
 
 ---
 
-## Phase 17 — Web build (Emscripten)
+## Phase 18 — Web build (Emscripten)
 
 Status: **Not yet implemented for U3D.**
 
