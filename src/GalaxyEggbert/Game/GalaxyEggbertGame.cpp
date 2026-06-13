@@ -1011,6 +1011,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f,
                    levelTime_, score_, gameSpeed_);
+    hud_->SetDanger(lives_ == 1);
 
     // Level intro title card
     if (levelIntroTimer_ > 0.0f) {

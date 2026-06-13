@@ -1,5 +1,6 @@
 #include "HUD.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 
 using namespace Urho3D;
@@ -95,6 +96,8 @@ HUD::HUD(Context* context) : context_(context) {
     worldIntroText_ = intro;
 }
 
+void HUD::SetDanger(bool danger) { dangerMode_ = danger; if (!danger) dangerPhase_ = 0.0f; }
+
 static constexpr float kFlashDuration = 0.4f;
 
 void HUD::ShowHitFlash() {
@@ -106,6 +109,14 @@ void HUD::ShowHitFlash() {
 }
 
 void HUD::Update(float dt) {
+    if (dangerMode_) {
+        dangerPhase_ += dt * 2.0f; // 2 Hz pulse
+        float a = 0.18f * (0.5f + 0.5f * std::sin(dangerPhase_ * 3.14159f));
+        if (BorderImage* f = hitFlash_) {
+            f->SetColor(Color(1.0f, 0.0f, 0.0f, a));
+            f->SetVisible(a > 0.005f);
+        }
+    }
     if (hitFlashTimer_ <= 0.0f) return;
     hitFlashTimer_ -= dt;
     if (hitFlashTimer_ <= 0.0f) {
@@ -120,6 +131,8 @@ void HUD::Update(float dt) {
 void HUD::SetVisible(bool visible) {
     if (Text* t = text_) t->SetVisible(visible);
     if (!visible) {
+        dangerMode_  = false;
+        dangerPhase_ = 0.0f;
         if (Text* ot = livesOverflow_) ot->SetVisible(false);
         if (Text* it = worldIntroText_) it->SetVisible(false);
         if (BorderImage* g = gauge_) g->SetVisible(false);
