@@ -343,6 +343,11 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 spec.posStart.x_ -= 2.0f;
                 spec.posEnd.x_   += 2.0f;
             }
+            // Birds fly above ground — lift them to aerial altitude.
+            if (type == 20) {
+                spec.posStart.y_ = 3.0f;
+                spec.posEnd.y_   = 3.0f;
+            }
             mobileObjects_.push_back(spec);
             continue;
         }
@@ -734,6 +739,21 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
 
 void GalaxyEggbertGame::UpdateWin(float dt) {
     (void)dt;
+    static const char* kWorldNames[] = {
+        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+    };
+    int completedWorld = currentWorld_ - 1;
+    if (completedWorld < 1) completedWorld = 1;
+    if (completedWorld > 5) completedWorld = 5;
+    const char* wname = kWorldNames[completedWorld - 1];
+    int collected = decor_ ? decor_->GetCollected()      : 0;
+    int total     = decor_ ? decor_->GetTotalTreasures() : 0;
+    char buf[256];
+    std::snprintf(buf, sizeof(buf),
+        "LEVEL COMPLETE!\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d\n\nPress any key...",
+        completedWorld, wname, collected, total, lives_);
+    phases_->SetOverlayText(buf);
+
     auto* input = context_->GetSubsystem<Input>();
     const Key keys[] = { KEY_SPACE, KEY_RETURN, KEY_ESCAPE,
                          KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT };
@@ -745,6 +765,17 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
 
 void GalaxyEggbertGame::UpdateLost(float dt) {
     (void)dt;
+    static const char* kWorldNames[] = {
+        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+    };
+    const char* wname = (currentWorld_ >= 1 && currentWorld_ <= 5)
+                        ? kWorldNames[currentWorld_ - 1] : "Unknown";
+    char buf[256];
+    std::snprintf(buf, sizeof(buf),
+        "GAME OVER\n\nFell on World %d: %s\n\nPress any key to restart...",
+        currentWorld_, wname);
+    phases_->SetOverlayText(buf);
+
     auto* input = context_->GetSubsystem<Input>();
     const Key keys[] = { KEY_SPACE, KEY_RETURN, KEY_ESCAPE,
                          KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT };

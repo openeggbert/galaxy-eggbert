@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 31)
+## Current state (as of Phase 32)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -102,6 +102,11 @@ or the original Windows Phone game.
   `Blupi::Bounce()` gives upward impulse (0.6 × kJumpSpeed); enemy removed from pool
   - All 7 enemy types stompable: ObjectType2/3/4/16/17/20/33
   - `Decor::WasStompKill()` / `stompKill_` flag; cleared in ClearEvents()
+- Win overlay shows completed world name, treasures collected/total, and lives remaining;
+  Lost overlay shows world name where Blupi died; both set via `phases_->SetOverlayText()`
+- ObjectType20 (bird): placed at y=3.0 in real levels so birds fly visually above terrain
+- `Decor::TouchesBlupi()` checks Y proximity (`std::abs(dy) < 1.5f`) so aerial birds
+  do not hit Blupi on the ground; all ground enemies (y=1.0) remain unaffected
 
 **Architecture (subsystem classes):**
 ```
@@ -166,6 +171,22 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 32 — Win/Lost result overlays + aerial birds
+
+Status: **DONE**
+
+- Win overlay: `UpdateWin()` calls `phases_->SetOverlayText()` each frame with "LEVEL COMPLETE!",
+  completed world name (currentWorld_-1), treasures collected/total, and lives remaining;
+  `decor_` is still alive during Win phase so stats remain queryable until `AdvanceToNextWorld()`
+- Lost overlay: `UpdateLost()` shows "GAME OVER", world name, and "press any key to restart"
+- `ObjectType20` (birds) placed at y=3.0f in `LoadMobileEggbertTerrain` so they fly visually
+  above the terrain instead of skimming the ground
+- `Decor::TouchesBlupi()` now checks `std::abs(dy) < 1.5f` alongside XZ radius;
+  aerial birds (dy ≈ 1.8 from ground Blupi) no longer ghost-hit while walking below them;
+  ground enemies and fish (dy < 0.8) unaffected
 
 ---
 

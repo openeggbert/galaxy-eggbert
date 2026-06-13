@@ -91,7 +91,8 @@ void Decor::StepMovement(Object& obj, float dt) {
 bool Decor::TouchesBlupi(const Object& obj, Vector3 blupiPos) const {
     float dx = obj.pos.x_ - blupiPos.x_;
     float dz = obj.pos.z_ - blupiPos.z_;
-    return std::sqrt(dx * dx + dz * dz) < 0.85f;
+    float dy = obj.pos.y_ - blupiPos.y_;
+    return std::sqrt(dx * dx + dz * dz) < 0.85f && std::abs(dy) < 1.5f;
 }
 
 void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
