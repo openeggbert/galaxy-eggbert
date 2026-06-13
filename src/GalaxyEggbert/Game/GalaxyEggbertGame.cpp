@@ -535,10 +535,14 @@ void GalaxyEggbertGame::UpdateInit(float dt) {
 
 void GalaxyEggbertGame::SelectGamer(int slot) {
     gameData_.SetSelectedGamer(slot);
-    lives_             = gameData_.GetNbVies();
-    currentWorld_      = gameData_.GetLastWorld();
-    controlsHintTimer_ = 8.0f;
-    bonusLifeAwarded_  = false;
+    lives_                  = gameData_.GetNbVies();
+    currentWorld_           = gameData_.GetLastWorld();
+    prevCollected_          = 0;
+    keysRed_ = keysGreen_ = keysBlue_ = 0;
+    shieldTimer_            = 0.0f;
+    respawnInvincibleTimer_ = 0.0f;
+    controlsHintTimer_      = 8.0f;
+    bonusLifeAwarded_       = false;
     gameData_.Write(savePath_);
     decor_.reset();
     blupi_.reset();
@@ -603,6 +607,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     // Fall death: deduct life, respawn with invincibility
     if (blupi_ && blupi_->WasFallDeath()) {
         blupi_->ClearFallDeath();
+        if (sound_) sound_->Play(SoundChannel::SoundChannel8);
         --lives_;
         if (lives_ <= 0) {
             gameData_.SetNbVies(3);

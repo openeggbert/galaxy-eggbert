@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 39)
+## Current state (as of Phase 40)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -139,6 +139,12 @@ or the original Windows Phone game.
   drift at game start
 - Pause overlay shows collected key types ("Keys: Red Green Blue") when any are held;
   line omitted entirely when no keys collected
+- `SelectGamer()` now resets all per-level state (`prevCollected_`, `keysRed/Green/Blue_`,
+  `shieldTimer_`, `respawnInvincibleTimer_`) matching `AdvanceToNextWorld`; previously these
+  persisted when switching gamer slots mid-session (bug)
+- Fall death plays `SoundChannel8` (same as tile hazard / enemy hit); previously silent
+- Camera FOV set to 65° (was default 45°); wider view suits 3rd-person platformer
+
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to
   `keysRed_/keysGreen_/keysBlue_`; Decor.hpp comment updated to list all 15 supported types;
@@ -207,6 +213,21 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 40 — SelectGamer reset bug, fall-death sound, FOV
+
+Status: **DONE**
+
+- `SelectGamer()`: added missing per-level resets (`prevCollected_`, `keysRed/Green/Blue_`,
+  `shieldTimer_`, `respawnInvincibleTimer_`); all per-level fields now match what
+  `AdvanceToNextWorld` and `ResetLevel` already reset — switching gamer slots no longer
+  carries over stale shield/key state from a previous play session
+- Fall death path: `sound_->Play(SoundChannel8)` added before life deduction;
+  previously falling off the map was the only death path without an audio cue
+- `CameraController`: `cam->SetFov(65.0f)` in constructor; Urho3D default 45° was too
+  narrow for a 3rd-person view — 65° gives a natural platformer field of view
 
 ---
 

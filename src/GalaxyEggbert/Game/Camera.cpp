@@ -10,6 +10,7 @@ CameraController::CameraController(Context* context, Scene* scene)
 {
     node_ = scene->CreateChild("Camera");
     auto* cam = node_->CreateComponent<Camera>();
+    cam->SetFov(65.0f);
     cam->SetNearClip(0.1f);
     cam->SetFarClip(300.0f);
     auto* renderer = context_->GetSubsystem<Renderer>();
