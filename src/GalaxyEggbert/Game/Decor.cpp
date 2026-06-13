@@ -98,6 +98,7 @@ bool Decor::TouchesBlupi(const Object& obj, Vector3 blupiPos) const {
 void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
     exitReached_   = false;
     blupiHit_      = false;
+    eggCollected_  = false;
     stompKill_     = false;
     platformDelta_ = Vector3::ZERO;
 
@@ -129,10 +130,15 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
 
         switch (obj.type) {
             case ObjectType::ObjectType5:
+                obj.active = false;
+                obj.node->Remove();
+                ++collected_;
+                break;
             case ObjectType::ObjectType6:
                 obj.active = false;
                 obj.node->Remove();
                 ++collected_;
+                eggCollected_ = true;
                 break;
             case ObjectType::ObjectType49:
             case ObjectType::ObjectType50:

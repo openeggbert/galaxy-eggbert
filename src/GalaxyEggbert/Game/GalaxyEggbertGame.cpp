@@ -669,6 +669,16 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             prevCollected_ = collected;
         }
 
+        // Egg pickup: grants +1 life (cap 9), same as bonus life sound.
+        if (decor_->WasEggCollected()) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel42);
+            if (lives_ < 9) {
+                ++lives_;
+                gameData_.SetNbVies(lives_);
+                gameData_.Write(savePath_);
+            }
+        }
+
         // Bonus life when all treasures collected (once per level, capped at 9).
         int total = decor_->GetTotalTreasures();
         if (!bonusLifeAwarded_ && total > 0 && collected >= total) {
@@ -748,10 +758,12 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
     const char* wname = kWorldNames[completedWorld - 1];
     int collected = decor_ ? decor_->GetCollected()      : 0;
     int total     = decor_ ? decor_->GetTotalTreasures() : 0;
+    const char* header = (completedWorld >= kMaxWorld)
+                         ? "ALL WORLDS COMPLETE!" : "LEVEL COMPLETE!";
     char buf[256];
     std::snprintf(buf, sizeof(buf),
-        "LEVEL COMPLETE!\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d\n\nPress any key...",
-        completedWorld, wname, collected, total, lives_);
+        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d\n\nPress any key...",
+        header, completedWorld, wname, collected, total, lives_);
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
@@ -811,10 +823,12 @@ void GalaxyEggbertGame::UpdatePause(float dt) {
     };
     const char* wname = (currentWorld_ >= 1 && currentWorld_ <= 5)
                         ? kWorldNames[currentWorld_ - 1] : "Unknown";
+    int pauseCollected = decor_ ? decor_->GetCollected()      : 0;
+    int pauseTotal     = decor_ ? decor_->GetTotalTreasures() : 0;
     char buf[256];
     std::snprintf(buf, sizeof(buf),
-        "PAUSED\n\nWorld %d: %s\nLives: %d\n\nESC: resume   S: settings",
-        currentWorld_, wname, lives_);
+        "PAUSED\n\nWorld %d: %s\nLives: %d   Treasures: %d/%d\n\nESC: resume   S: settings",
+        currentWorld_, wname, lives_, pauseCollected, pauseTotal);
     phases_->SetOverlayText(buf);
 
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Play); return; }

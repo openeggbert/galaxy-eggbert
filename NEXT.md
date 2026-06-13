@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 32)
+## Current state (as of Phase 33)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -107,6 +107,11 @@ or the original Windows Phone game.
 - ObjectType20 (bird): placed at y=3.0 in real levels so birds fly visually above terrain
 - `Decor::TouchesBlupi()` checks Y proximity (`std::abs(dy) < 1.5f`) so aerial birds
   do not hit Blupi on the ground; all ground enemies (y=1.0) remain unaffected
+- ObjectType6 (egg) grants +1 life (cap 9) when collected; plays SoundChannel42;
+  `Decor::eggCollected_` / `WasEggCollected()` flag distinct from generic `collected_`
+- Pause overlay now shows treasure progress: `Lives: N   Treasures: X/Y`
+- Win overlay shows `"ALL WORLDS COMPLETE!"` header when completing world 5 (kMaxWorld);
+  all other worlds show `"LEVEL COMPLETE!"`
 
 **Architecture (subsystem classes):**
 ```
@@ -171,6 +176,21 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 33 — Egg extra-life + pause treasures + all-worlds message
+
+Status: **DONE**
+
+- `Decor`: ObjectType6 (egg) now sets `eggCollected_` flag on collection (still increments
+  `collected_` for HUD); `WasEggCollected()` / `ClearEvents()` wired; reset in `Update()` start
+- `GalaxyEggbertGame::UpdatePlay()`: checks `WasEggCollected()` → +1 life (cap 9),
+  `gameData_.Write()`, `SoundChannel42`; behaviour mirrors the original mobile-eggbert egg pickup
+- `UpdatePause()`: overlay text now shows `"Lives: N   Treasures: X/Y"` — pausing
+  mid-level shows collected/total treasure count alongside lives
+- `UpdateWin()`: uses `header = (completedWorld >= kMaxWorld) ? "ALL WORLDS COMPLETE!" : "LEVEL COMPLETE!"`;
+  completing world 5 shows the distinct all-worlds congratulation text
 
 ---
 
