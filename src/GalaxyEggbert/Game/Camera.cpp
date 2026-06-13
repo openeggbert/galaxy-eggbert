@@ -30,6 +30,8 @@ void CameraController::Update(float dt, Vector3 targetPos, float targetYaw) {
     if (input->GetMouseButtonDown(MOUSEB_RIGHT)) {
         pitch_ += 0.12f * static_cast<float>(input->GetMouseMoveY());
         pitch_  = std::max(-60.0f, std::min(60.0f, pitch_));
+    } else {
+        pitch_ += (kDefaultPitch - pitch_) * std::min(1.0f, 2.0f * dt);
     }
     dist_ -= static_cast<float>(input->GetMouseMoveWheel()) * 1.5f;
     dist_  = std::max(3.0f, std::min(40.0f, dist_));

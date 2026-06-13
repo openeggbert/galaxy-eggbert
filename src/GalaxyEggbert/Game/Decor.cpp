@@ -138,7 +138,6 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
             case ObjectType::ObjectType6:
                 obj.active = false;
                 obj.node->Remove();
-                ++collected_;
                 eggCollected_ = true;
                 break;
             case ObjectType::ObjectType49:
@@ -158,10 +157,9 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
                 obj.node->Remove();
                 shieldCollected_ = true;
                 break;
-            case ObjectType::ObjectType30: // drink → collectible + life pickup
+            case ObjectType::ObjectType30: // drink → life pickup (not a treasure)
                 obj.active = false;
                 obj.node->Remove();
-                ++collected_;
                 drinkCollected_ = true;
                 break;
             case ObjectType::ObjectType7:

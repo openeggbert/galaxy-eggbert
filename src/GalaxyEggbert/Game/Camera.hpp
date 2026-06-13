@@ -20,6 +20,7 @@ private:
     float yaw_   = 180.0f;
     float pitch_ =  25.0f;
     float dist_  =  12.0f;
+    static constexpr float kDefaultPitch = 20.0f;
 
     const GalaxyEggbert::Worlds::World* world_ = nullptr;
     int wcx_ = 50;

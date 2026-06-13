@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 35)
+## Current state (as of Phase 36)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -123,6 +123,11 @@ or the original Windows Phone game.
   after each timer decrement
 - HUD lives overflow: `livesOverflow_` Text element shows `"xN"` in amber when lives exceed the
   5 icon slots; hidden when lives ≤ 5; cleared in `SetVisible(false)`
+- Treasure counter: `Decor::collected_` now counts only ObjectType5; eggs (type6) and drinks
+  (type30) no longer inflate it — they award lives via separate flags; HUD "X/Y" display and
+  bonus-life check both now reflect true treasure-only progress; double-sound on egg/drink fixed
+- Camera pitch auto-reset: when RMB is not held, pitch exponentially decays toward
+  `kDefaultPitch=20°` at rate `2×dt`; players no longer get stuck looking up/down
 
 **Architecture (subsystem classes):**
 ```
@@ -187,6 +192,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 36 — Treasure-only counter + camera pitch auto-reset
+
+Status: **DONE**
+
+- `Decor`: ObjectType6 (egg) and ObjectType30 (drink) no longer increment `collected_`;
+  only ObjectType5 (treasure) does — `collected_`/`GetCollected()` is now purely type5;
+  HUD "Treasures: X/Y" display is now correct; bonus life fires only on all type5 collected;
+  egg/drink collect sound was SoundChannel10+42 (double), now just SoundChannel42 (life sound)
+- `CameraController`: `kDefaultPitch = 20.0f`; when RMB is not held, pitch decays toward
+  default via `pitch_ += (kDefaultPitch - pitch_) * min(1, 2*dt)`; players who tilt the camera
+  see it automatically return to a playable overhead angle when they let go
 
 ---
 
