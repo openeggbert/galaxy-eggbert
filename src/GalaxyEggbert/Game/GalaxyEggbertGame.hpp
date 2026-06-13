@@ -75,6 +75,7 @@ private:
     std::unique_ptr<SoundManager>     sound_;
 
     std::vector<MobileObjSpec> mobileObjects_;
+    Urho3D::Vector3            blupiSpawn_{0.0f, Blupi::kHalfH + 0.5f, 0.0f};
 
     // State
     GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;

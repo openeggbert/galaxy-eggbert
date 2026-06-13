@@ -28,6 +28,7 @@ public:
 
     void Update(float dt);
     void Respawn();
+    void SetSpawnPoint(Urho3D::Vector3 pos) { spawn_ = pos; }
 
     Urho3D::Node*   GetNode()            const { return node_; }
     Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
@@ -50,6 +51,7 @@ private:
     int wcx_, wcz_;
 
     Urho3D::Vector3 vel_{0.0f, 0.0f, 0.0f};
+    Urho3D::Vector3 spawn_{0.0f, kHalfH + 0.5f, 0.0f};
     float facingYaw_ = 0.0f;
     bool  onGround_  = false;
 
