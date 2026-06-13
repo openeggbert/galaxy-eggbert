@@ -88,7 +88,13 @@ void Blupi::UpdateSprite() {
     float v0 = row * kTile / kSheetH;
     Billboard* bb = sprite_->GetBillboard(0);
     bb->uv_   = Rect(u0, v0, u0 + kTile / kSheetW, v0 + kTile / kSheetH);
-    bb->color_ = shieldActive_ ? Color(0.5f, 0.85f, 1.0f) : Color::WHITE;
+    if (!shieldActive_) {
+        bb->color_ = Color::WHITE;
+    } else if (shieldWarning_ && std::fmod(shieldBlinkPhase_, 0.3f) >= 0.15f) {
+        bb->color_ = Color::WHITE; // blink to white rapidly when shield is about to expire
+    } else {
+        bb->color_ = Color(0.5f, 0.85f, 1.0f);
+    }
     sprite_->Commit();
 }
 
@@ -251,6 +257,8 @@ void Blupi::Update(float dt) {
     // One footstep sound per stride (6-frame march cycle × 3 ticks/frame = 18 ticks).
     if (action_ == BlupiAction::March && onGround_ && animTick_ % 18 == 1)
         stepThisFrame_ = true;
+
+    if (shieldActive_) shieldBlinkPhase_ += dt;
 
     // Invincibility flash: toggle billboard visibility every 0.1 s.
     if (flashTimer_ > 0.0f) {

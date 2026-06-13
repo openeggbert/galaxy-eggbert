@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 51)
+## Current state (as of Phase 58)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -185,6 +185,30 @@ or the original Windows Phone game.
   icons 0–11) from `explo.png` (1440×1440, 24 cols × 24 rows of 60×60 tiles) at 12 fps
   as a 1.5-unit BillboardSet at the death position; spawned on all 3 death paths; auto-
   destroys when done; reset on `LoadWorld()` and `Stop()`
+- Footstep sound (Phase 52): `SoundChannel3` plays once per march stride (`animTick_ % 18 == 1`
+  at 60 fps, matching 6-frame × 3-tick cycle); stomp kill also spawns explosion at enemy position
+- Score popup system (Phase 53): `ScorePopup` class — `Text3D` node with `FC_ROTATE_XYZ`,
+  font 24 pt; rises 1.5 units/s and fades alpha over 1 s; `popups_` vector in game auto-erased
+  when done; `score_` persists across level transitions; awards: +10 treasure, +25 stomp,
+  +50 key/egg/drink, +100 all-treasures bonus
+- Enemy facing direction (Phase 54): `Object::facingLeft` updated each frame from XZ delta;
+  sprites face left by default (mobile-eggbert convention); `ObjectNode::UpdateIcon(icon, flipX)`
+  swaps U0↔U1 when moving right; directional types: 2/3/4/17/20/33
+- Shield expiry feedback (Phase 55): `SoundChannel44` plays on shield expiry + "SHIELD OFF" cyan
+  `ScorePopup`; shield pickup shows "SHIELD!" cyan popup; egg/drink show "+1 LIFE!" green popup
+- Blupi billboard visual offset (fix): `bb->position_ = (0, kVisHalf−kHalfH, 0)` ≈ +0.11 units
+  upward; aligns sprite bottom with physics feet — was clipping into block surface
+- Minecraft-style demo world (Phase 56): flat ground plane (R=18), raised hill (h=1–3 east),
+  staircase up from west, elevated platform across north (h=2), stone tower NW (h=4),
+  lava pit with stepping stones SW, spike strip south, crusher corridor east, water channel west,
+  border walls; extra Crusher tiles added per world difficulty
+- Moving platform vertical landing (Phase 57): `Decor::GetPlatformLandY()` exposes platform top
+  surface Y; `Blupi::SnapToSurface(float)` snaps feet when within [−0.4, +0.3] of surface and
+  not jumping up; wired in `UpdatePlay()` after platform carry delta; `StepMovement` Y-snap fix:
+  `obj.pos = target` (was only snapping X/Z, leaving Y behind for spider/vertical movers)
+- Shield warning (Phase 58): when `shieldTimer_ < 1.5f` Blupi tint blinks rapidly between cyan
+  and white (0.15 s intervals via `shieldBlinkPhase_`); HUD shield text colour turns orange
+  (`Color(1.0, 0.55, 0.1)`) at < 1.5 s remaining; restores blue-white when shield expires
 
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to
@@ -254,6 +278,102 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 58 — Shield warning blink + HUD colour change
+
+Status: **DONE**
+
+- `Blupi`: added `shieldWarning_` bool + `shieldBlinkPhase_` float + `SetShieldWarning(bool)`;
+  `shieldBlinkPhase_` accumulates dt while shield is active; `UpdateSprite()` alternates tint
+  between `Color(0.5, 0.85, 1.0)` and `Color::WHITE` every 0.15 s when `shieldWarning_` is true
+- `HUD::ShowPlay()`: shield text `SetColor(Color(1.0, 0.55, 0.1))` when `shieldSecs < 1.5f`;
+  `Color(0.85, 0.90, 1.0)` otherwise; colour restored to normal after shield expires
+- `GalaxyEggbertGame`: `blupi_->SetShieldWarning(shieldTimer_ > 0 && shieldTimer_ < 1.5f)`
+  called alongside `SetShieldActive()` after each frame's timer decrement
+- `Decor::StepMovement` Y-snap bug fixed: `obj.pos = target` (was `obj.pos.x_ = target.x_;
+  obj.pos.z_ = target.z_;` — left Y unchanged when reaching a waypoint, breaking spider vertical
+  oscillation and any future vertical-moving platform)
+
+---
+
+## Phase 57 — Moving platform landing (SnapToSurface) + improved demo objects
+
+Status: **DONE**
+
+- `Decor::platformLandY_`: set to `obj.pos.y_ + 0.5f` each frame when platform is under Blupi;
+  exposed via `GetPlatformLandY()`; reset to −999 at start of each Update
+- `Blupi::SnapToSurface(float surfaceY)`: if `vel_.y_ ≤ 0` and feet within [surfaceY−0.4,
+  surfaceY+0.3], snaps `pos.y_ = surfaceY + kHalfH`, zeroes `vel_.y_`, sets `onGround_ = true`
+- `UpdatePlay()`: `float landY = decor_->GetPlatformLandY(); if (landY > −900) blupi_->SnapToSurface(landY)`
+  called after platform carry delta; keeps Blupi standing on moving platforms
+- `CreateDemoObjects()`: updated object placements to match Phase 56 terrain heights;
+  moving platform E-W on flat area (Y=1), treasures at h=0/2/3 heights, bird over hill (Y=4),
+  spider vertical drop near tower, exit at hilltop (Y=4)
+
+---
+
+## Phase 56 — Minecraft-style demo world
+
+Status: **DONE**
+
+- `BuildDemoWorld()` fully rewritten: flat ground plane R=18, raised hill (h=1–3 east at dx 6–12),
+  staircase of 4 steps (dx 5–8), elevated platform across north (dx −8..0, dz 8..12, h=2),
+  stone tower NW (dx −14..−12, dz 12..14, h=1..4), lava pit with 4 stepping stones (dz=−6, SW),
+  spike strip (dz=−10), crusher corridor (dx 2..5, dz=−7), water channel (dx −8/−9, dz −4..4),
+  border walls (h=1..3 along R=18 perimeter); extra Crusher tiles per world number
+- Provides terrain with varied heights (h=0..4) for testing jump, platform, and hazard mechanics
+
+---
+
+## Phase 55 — Shield expiry feedback + life pickup popups
+
+Status: **DONE**
+
+- Shield expiry: `hadShield` bool captured before timer decrement; when `hadShield && shieldTimer_ ≤ 0`,
+  plays `SoundChannel44` and spawns "SHIELD OFF" cyan `ScorePopup` at Blupi's position
+- Shield pickup: spawns "SHIELD!" cyan popup at collection point
+- Egg/drink pickup: additional "+1 LIFE!" green popup spawned above score popup when life awarded
+- Popup colour constants: `kYellow(1.0,0.95,0.2)`, `kGreen(0.4,1.0,0.4)`, `kCyan(0.3,0.8,1.0)`;
+  all passed explicitly to `spawnPopup` lambda (lambda default args cannot reference local vars)
+
+---
+
+## Phase 54 — Enemy facing direction
+
+Status: **DONE**
+
+- `Decor::Object::facingLeft` bool: updated each frame from `dx = pos.x_ − oldPos.x_`;
+  directional types 2/3/4/17/20/33 checked; `facingLeft = (dx < 0)` (sprites default face left)
+- `ObjectNode::UpdateIcon(int icon, bool flipX)`: when `flipX`, UV rect swaps `u0`↔`u1`
+  so the billboard mirror-flips horizontally; no geometry change needed
+- Called as `obj.node->UpdateIcon(GetIcon(obj), !obj.facingLeft)` each frame
+
+---
+
+## Phase 53 — Score popup system
+
+Status: **DONE**
+
+- `ScorePopup` class: `Text3D` node with `SetFaceCameraMode(FC_ROTATE_XYZ)`, font 24 pt,
+  rises `1.5×t` units and fades alpha `1.0 − t` over `kDuration = 1.0 s`; returns false from
+  `Update()` when done; `~ScorePopup()` removes node from scene
+- `popups_` (`std::vector<std::unique_ptr<ScorePopup>>`) in game; erased per frame with
+  `remove_if(…!p->Update(dt))`; cleared in `LoadWorld()` and `Stop()`
+- `score_` persistent int; reset only on full restart (`ResetLevel`) or slot select;
+  awards: +10 treasure, +25 stomp kill, +50 key/egg/drink, +100 all-treasures bonus
+
+---
+
+## Phase 52 — Footstep sound + stomp explosion
+
+Status: **DONE**
+
+- `Blupi::stepThisFrame_` / `WasStepThisFrame()`: set when `action_ == March && onGround_
+  && animTick_ % 18 == 1`; one footstep sound per stride (6 anim frames × 3 ticks/frame = 18)
+- `GalaxyEggbertGame::UpdatePlay()`: plays `SoundChannel3` when `WasStepThisFrame()`
+- Stomp kill: `Explosion` spawned at `GetLastStompPos()` in addition to bounce/sound
 
 ---
 

@@ -176,10 +176,13 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures,
             std::snprintf(buf, sizeof(buf),
                 "%sWorld %d: %s | Treasures: %d/%d  SHIELD %.1fs  %d:%02d  Score: %d",
                 hint, world, WorldName(world), collected, totalTreasures, shieldSecs, mins, secs, score);
+            // Low shield: orange warning colour; normal: default blue-white
+            t->SetColor(shieldSecs < 1.5f ? Color(1.0f, 0.55f, 0.1f) : Color(0.85f, 0.90f, 1.0f));
         } else {
             std::snprintf(buf, sizeof(buf),
                 "%sWorld %d: %s | Treasures: %d/%d  %d:%02d  Score: %d",
                 hint, world, WorldName(world), collected, totalTreasures, mins, secs, score);
+            t->SetColor(Color(0.85f, 0.90f, 1.0f));
         }
         t->SetText(buf);
     }

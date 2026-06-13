@@ -80,8 +80,7 @@ void Decor::StepMovement(Object& obj, float dt) {
     float step     = obj.speed * dt;
 
     if (dist <= step) {
-        obj.pos.x_    = target.x_;
-        obj.pos.z_    = target.z_;
+        obj.pos       = target;
         obj.direction = -obj.direction;
     } else {
         obj.pos += delta.Normalized() * step;

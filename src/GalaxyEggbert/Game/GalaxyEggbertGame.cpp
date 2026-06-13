@@ -708,7 +708,10 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         if (shieldTimer_ > 0.0f)           shieldTimer_            -= dt;
         if (respawnInvincibleTimer_ > 0.0f) respawnInvincibleTimer_ -= dt;
         if (controlsHintTimer_ > 0.0f)     controlsHintTimer_      -= dt;
-        if (blupi_) blupi_->SetShieldActive(shieldTimer_ > 0.0f);
+        if (blupi_) {
+            blupi_->SetShieldActive(shieldTimer_ > 0.0f);
+            blupi_->SetShieldWarning(shieldTimer_ > 0.0f && shieldTimer_ < 1.5f);
+        }
         if (hadShield && shieldTimer_ <= 0.0f) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel44);
             static const Color kCyan(0.3f, 0.8f, 1.0f, 1.0f);
