@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 29)
+## Current state (as of Phase 30)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -16,7 +16,7 @@ or the original Windows Phone game.
   - Full animation state machine: Stop, March, Turn, Jump, Air
   - Frame tables ported from mobile-eggbert `Tables.cpp`
   - Physics: gravity, jump, AABB voxel collision (derived from `Decor.cpp`)
-  - Arrow key controls: LEFT/RIGHT rotate, UP/DOWN move along facing
+  - Controls: WASD move/strafe, Q/E or L/R arrows turn, SPACE jump (arrow keys also work)
 - `Decor` object pool (up to 100 objects), all animated via `GetIcon()` phase tables:
   - ObjectType2/3 (patrol enemies A/B), ObjectType16 (spider)
   - ObjectType5 (treasure), ObjectType6 (egg), ObjectType7 (exit)
@@ -54,7 +54,7 @@ or the original Windows Phone game.
 - Real levels: `LoadMobileEggbertTerrain()` parses mobile-eggbert `.txt` world files
   - `worlds/world00N.txt` (from mobile-eggbert world01N.txt) loaded automatically when present
   - Terrain built from 100×100 Decor grid; tile IDs mapped via `BlockTypes::fromMobileIconId()`
-  - MoveObjects parsed: types 2,3,4,5,6,7,16,20,25,49,50,51 placed as Decor objects
+  - MoveObjects parsed: types 1–7,12,13,16,17,20,25,30,33,49–51 placed as Decor objects
   - Patrol enemies with posStart==posEnd get default ±2 tile X patrol range
   - 64px tile size for all position conversions (pixel → tile = px/64)
   - `blupiPos=` header parsed → stored as `blupiSpawn_`; Blupi spawns at correct world position
@@ -96,6 +96,8 @@ or the original Windows Phone game.
   - `SetCollisionWorld(World*, wcx, wcz)` wired in Start() and LoadWorld()
 - Pause screen shows world name, lives, and key hints via `phases_->SetOverlayText()`
 - F1–F5 debug world jump: instantly teleports to world 1–5 during play; full state reset
+- Terrain depth fill: edge tiles (any horizontal air neighbour) get 3 dark fill blocks extruded
+  below them (`Color(0.22, 0.19, 0.17)`); cliffs now appear solid from any camera angle
 
 **Architecture (subsystem classes):**
 ```
@@ -160,6 +162,21 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 30 — Terrain depth fill (cliff extrusion)
+
+Status: **DONE**
+
+- `SpawnTerrainNodes()`: for each solid block, checks all 4 horizontal neighbours; if any
+  is air or out-of-bounds the block is an "edge" tile → 3 extra `BlockFill` nodes placed
+  at y-1, y-2, y-3 with a dark earthy material (`Color(0.22, 0.19, 0.17)`)
+- `kFillDepth = 3` (constant at top of function); reuses the same `fillMat` SharedPtr across
+  all fill blocks to avoid per-block material allocation
+- Net effect: terrain cliffs appear as solid 3-unit-deep walls rather than thin 1-unit slabs;
+  camera can now look sideways at platforms and see proper depth
+- Also fixed two stale lines in NEXT.md (controls description, MoveObject type list)
 
 ---
 

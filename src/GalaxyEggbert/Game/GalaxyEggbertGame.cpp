@@ -207,6 +207,11 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
     auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
     if (!boxModel || !world_ || !terrainRoot_) return;
 
+    // Dark earthy colour for fill blocks extruded below exposed cliff edges.
+    SharedPtr<Material> fillMat = MakeFlatMaterial(Color(0.22f, 0.19f, 0.17f));
+    static constexpr int kFillDepth = 3;
+    static constexpr int kNbDir[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+
     const uint8_t cpa = world_->chunksPerAxis();
     for (uint8_t ccy = 0; ccy < cpa; ++ccy) {
         for (uint8_t ccz = 0; ccz < cpa; ++ccz) {
@@ -220,6 +225,7 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
                             const uint16_t wz = ccz * 10 + lz;
                             const Block b = world_->getBlock(wx, wy, wz);
                             if (b.isAir()) continue;
+
                             auto* node = terrainRoot_->CreateChild("Block");
                             node->SetPosition(Vector3(
                                 static_cast<float>(wx) - kWCX,
@@ -228,6 +234,34 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
                             auto* sm = node->CreateComponent<StaticModel>();
                             sm->SetModel(boxModel);
                             sm->SetMaterial(GetTileMaterial(b.type()));
+
+                            // Edge fill: if any horizontal neighbour is air or out-of-bounds,
+                            // extrude kFillDepth dark blocks downward to create cliff depth.
+                            int iwx = static_cast<int>(wx), iwz = static_cast<int>(wz);
+                            bool isEdge = false;
+                            for (auto& nb : kNbDir) {
+                                int nx = iwx + nb[0], nz = iwz + nb[1];
+                                if (nx < 0 || nx >= 100 || nz < 0 || nz >= 100) {
+                                    isEdge = true; break;
+                                }
+                                if (world_->getBlock(
+                                        static_cast<uint16_t>(nx), wy,
+                                        static_cast<uint16_t>(nz)).isAir()) {
+                                    isEdge = true; break;
+                                }
+                            }
+                            if (isEdge) {
+                                for (int dy = 1; dy <= kFillDepth; ++dy) {
+                                    auto* fill = terrainRoot_->CreateChild("BlockFill");
+                                    fill->SetPosition(Vector3(
+                                        static_cast<float>(iwx) - kWCX,
+                                        static_cast<float>(wy)  - static_cast<float>(dy),
+                                        static_cast<float>(iwz) - kWCZ));
+                                    auto* fSm = fill->CreateComponent<StaticModel>();
+                                    fSm->SetModel(boxModel);
+                                    fSm->SetMaterial(fillMat);
+                                }
+                            }
                         }
                     }
                 }
