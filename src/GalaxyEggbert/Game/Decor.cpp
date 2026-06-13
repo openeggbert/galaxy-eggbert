@@ -46,6 +46,7 @@ int Decor::GetIcon(const Object& obj) const {
         case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;       // enemy A: icons 12-20
         case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;       // enemy B: icons 48-56
         case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8]; // bulldozer
+        case ObjectType::ObjectType12: return 32;                      // crate: static
         case ObjectType::ObjectType13: return 68;                      // helicopter: static
         case ObjectType::ObjectType16: return 69 + (p / 3) % 9;        // spider: icons 69-77
         case ObjectType::ObjectType17: return kFish[(p / 6) % 8];      // fish

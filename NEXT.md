@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 26)
+## Current state (as of Phase 27)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -86,6 +86,9 @@ or the original Windows Phone game.
 - Respawn invincibility: 2 s grace period after any respawn; tile hazards and enemy hits
   are skipped while `respawnInvincibleTimer_ > 0`
 - `kMaxObjects` increased from 50 → 100 (worlds 3–5 have up to 57 objects)
+- Blupi flashes (billboard toggles every 0.1 s) during 2 s post-respawn invincibility window
+- Landing sound: `SoundChannel4` plays when Blupi transitions from airborne → ground
+- ObjectType12 (crate): static decoration, element.png icon 32; now placed in world 4 (2 instances)
 
 **Architecture (subsystem classes):**
 ```
@@ -150,6 +153,21 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 27 — Invincibility flash + landing sound + ObjectType12 crate
+
+Status: **DONE**
+
+- Blupi invincibility flash: `StartFlash(float)` / `flashTimer_` / `flashTickTimer_` in Blupi;
+  billboard enabled_ toggled every 0.1 s while timer > 0; resets to visible when timer expires
+  and on `SpawnAt()`; called with `2.0f` after each respawn path in GalaxyEggbertGame
+- Landing sound: `landedThisFrame_` flag set in `Blupi::Update()` when onGround_ transitions
+  false→true after `ResolveY()`; `SoundChannel4` played by GalaxyEggbertGame each landing
+- ObjectType12 (crate/box — pushable in original): added as static decoration;
+  `GetIcon()` returns 32 (element.png); no collision action; type 12 added to supported list
+  in `LoadMobileEggbertTerrain()`
 
 ---
 

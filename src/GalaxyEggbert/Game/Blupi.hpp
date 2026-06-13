@@ -32,8 +32,10 @@ public:
     void ApplyExternalDelta(Urho3D::Vector3 delta) {
         if (node_) node_->SetPosition(node_->GetPosition() + delta);
     }
-    bool WasFallDeath() const { return fallDeath_; }
-    void ClearFallDeath()     { fallDeath_ = false; }
+    bool WasFallDeath()        const { return fallDeath_; }
+    void ClearFallDeath()            { fallDeath_ = false; }
+    bool WasLandedThisFrame()  const { return landedThisFrame_; }
+    void StartFlash(float duration)  { flashTimer_ = duration; flashTickTimer_ = 0.0f; }
 
     Urho3D::Node*   GetNode()            const { return node_; }
     Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
@@ -58,8 +60,11 @@ private:
     Urho3D::Vector3 vel_{0.0f, 0.0f, 0.0f};
     Urho3D::Vector3 spawn_{0.0f, kHalfH + 0.5f, 0.0f};
     float facingYaw_ = 0.0f;
-    bool  onGround_  = false;
-    bool  fallDeath_ = false;
+    bool  onGround_       = false;
+    bool  fallDeath_      = false;
+    bool  landedThisFrame_= false;
+    float flashTimer_     = 0.0f;
+    float flashTickTimer_ = 0.0f;
 
     // Sprite animation (billboard facing camera, UV-mapped from blupi.png)
     bool                       jumpedThisFrame_ = false;

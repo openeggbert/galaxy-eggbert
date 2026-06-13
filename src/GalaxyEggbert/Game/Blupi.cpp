@@ -49,9 +49,16 @@ Blupi::~Blupi() {
 
 void Blupi::SpawnAt(const Vector3& pos) {
     if (node_) node_->SetPosition(pos);
-    vel_      = Vector3::ZERO;
-    onGround_ = false;
-    animTick_ = 0;
+    vel_           = Vector3::ZERO;
+    onGround_      = false;
+    animTick_      = 0;
+    flashTimer_    = 0.0f;
+    flashTickTimer_= 0.0f;
+    landedThisFrame_ = false;
+    if (sprite_) {
+        sprite_->GetBillboard(0)->enabled_ = true;
+        sprite_->Commit();
+    }
 }
 
 void Blupi::UpdateSprite() {
@@ -145,7 +152,9 @@ void Blupi::ResolveXZ(Vector3& pos) {
 void Blupi::Update(float dt) {
     if (!node_) return;
     auto* input = context_->GetSubsystem<Input>();
-    jumpedThisFrame_ = false;
+    jumpedThisFrame_  = false;
+    landedThisFrame_  = false;
+    bool wasOnGround  = onGround_;
 
     // --- Rotation ---
     bool turning = false;
@@ -184,6 +193,7 @@ void Blupi::Update(float dt) {
     Vector3 pos = node_->GetPosition();
     pos.y_ += vel_.y_ * dt;
     ResolveY(pos);
+    landedThisFrame_ = !wasOnGround && onGround_;
     pos.x_ += vel_.x_ * dt;
     pos.z_ += vel_.z_ * dt;
     ResolveXZ(pos);
@@ -214,5 +224,22 @@ void Blupi::Update(float dt) {
         animTick_ = 0;
     }
     ++animTick_;
+
+    // Invincibility flash: toggle billboard visibility every 0.1 s.
+    if (flashTimer_ > 0.0f) {
+        flashTimer_     -= dt;
+        flashTickTimer_ -= dt;
+        if (flashTickTimer_ <= 0.0f) {
+            flashTickTimer_ = 0.1f;
+            bool vis = sprite_->GetBillboard(0)->enabled_;
+            sprite_->GetBillboard(0)->enabled_ = !vis;
+            sprite_->Commit();
+        }
+        if (flashTimer_ <= 0.0f && sprite_) {
+            sprite_->GetBillboard(0)->enabled_ = true;
+            sprite_->Commit();
+        }
+    }
+
     UpdateSprite();
 }

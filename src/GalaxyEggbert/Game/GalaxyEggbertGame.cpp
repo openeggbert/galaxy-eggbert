@@ -283,8 +283,9 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 &type, &stepAdv, &psx, &psy, &pex, &pey);
 
             bool supported = (type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
-                              type == 6  || type == 7  || type == 13 || type == 16 || type == 17 ||
-                              type == 20 || type == 25 || type == 30 || type == 33 || type == 49 ||
+                              type == 6  || type == 7  || type == 12 || type == 13 || type == 16 ||
+                              type == 17 || type == 20 || type == 25 || type == 30 || type == 33 ||
+                              type == 49 ||
                               type == 50 || type == 51);
             if (!supported) continue;
 
@@ -515,8 +516,10 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Pause); return; }
 
     if (blupi_) blupi_->Update(dt);
-    if (blupi_ && blupi_->WasJumpedThisFrame() && sound_)
-        sound_->Play(SoundChannel::SoundChannel1);
+    if (blupi_ && sound_) {
+        if (blupi_->WasJumpedThisFrame())  sound_->Play(SoundChannel::SoundChannel1);
+        if (blupi_->WasLandedThisFrame())  sound_->Play(SoundChannel::SoundChannel4);
+    }
 
     // Fall death: deduct life, respawn with invincibility
     if (blupi_ && blupi_->WasFallDeath()) {
@@ -532,6 +535,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         gameData_.Write(savePath_);
         blupi_->Respawn();
         respawnInvincibleTimer_ = 2.0f;
+        blupi_->StartFlash(2.0f);
     }
 
     Vector3 pos = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
@@ -565,6 +569,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 gameData_.Write(savePath_);
                 blupi_->Respawn();
                 respawnInvincibleTimer_ = 2.0f;
+                blupi_->StartFlash(2.0f);
                 pos = blupi_->GetPosition();
             }
         }
@@ -618,7 +623,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             }
             gameData_.SetNbVies(lives_);
             gameData_.Write(savePath_);
-            if (blupi_) blupi_->Respawn();
+            if (blupi_) { blupi_->Respawn(); blupi_->StartFlash(2.0f); }
             respawnInvincibleTimer_ = 2.0f;
         }
         decor_->ClearEvents();
