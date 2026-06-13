@@ -11,12 +11,14 @@ public:
     void SetPosition(Urho3D::Vector3 pos);
     void UpdateIcon(int icon, bool flipX = false);
     void SetVisible(bool visible);
+    void SetShadowEnabled(bool enabled);
     void Remove();
 
 private:
     Urho3D::Context*      context_;
-    Urho3D::Node*         node_   = nullptr;
-    Urho3D::BillboardSet* sprite_ = nullptr;
+    Urho3D::Node*         node_       = nullptr;
+    Urho3D::BillboardSet* sprite_     = nullptr;
+    Urho3D::Node*         shadowNode_ = nullptr;
 
     static constexpr float kSheetW = 600.0f;
     static constexpr float kSheetH = 1740.0f;

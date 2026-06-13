@@ -27,12 +27,27 @@ ObjectNode::ObjectNode(Context* context, Scene* scene) : context_(context) {
     bb->size_     = Vector2(60.0f / 64.0f, 60.0f / 64.0f);
     bb->enabled_  = true;
     UpdateIcon(0);
+
+    // Blob shadow: flat Box.mdl at ground surface below the object.
+    auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
+    auto* shadowTech = cache->GetResource<Technique>("Techniques/NoTexture.xml");
+    shadowNode_ = scene->CreateChild("ObjShadow");
+    auto* sm = shadowNode_->CreateComponent<StaticModel>();
+    if (boxModel) sm->SetModel(boxModel);
+    SharedPtr<Material> shadowMat(new Material(context_));
+    if (shadowTech) shadowMat->SetTechnique(0, shadowTech);
+    shadowMat->SetShaderParameter("MatDiffColor",     Color(0.05f, 0.05f, 0.05f, 1.0f));
+    shadowMat->SetShaderParameter("MatEmissiveColor", Color(0.0f, 0.0f, 0.0f, 0.0f));
+    sm->SetMaterial(shadowMat);
+    shadowNode_->SetScale(Vector3(0.40f, 0.01f, 0.40f));
 }
 
 ObjectNode::~ObjectNode() { Remove(); }
 
 void ObjectNode::SetPosition(Vector3 pos) {
     if (node_) node_->SetPosition(pos);
+    // pos.y = blockTop + 0.5 for standing objects → shadow at pos.y - 0.48 = blockTop + 0.02
+    if (shadowNode_) shadowNode_->SetPosition(Vector3(pos.x_, pos.y_ - 0.48f, pos.z_));
 }
 
 void ObjectNode::UpdateIcon(int icon, bool flipX) {
@@ -50,9 +65,15 @@ void ObjectNode::UpdateIcon(int icon, bool flipX) {
 }
 
 void ObjectNode::SetVisible(bool visible) {
-    if (node_) node_->SetEnabled(visible);
+    if (node_)       node_->SetEnabled(visible);
+    if (shadowNode_) shadowNode_->SetEnabled(visible);
+}
+
+void ObjectNode::SetShadowEnabled(bool enabled) {
+    if (shadowNode_) shadowNode_->SetEnabled(enabled);
 }
 
 void ObjectNode::Remove() {
-    if (node_) { node_->Remove(); node_ = nullptr; sprite_ = nullptr; }
+    if (shadowNode_) { shadowNode_->Remove(); shadowNode_ = nullptr; }
+    if (node_)       { node_->Remove();       node_       = nullptr; sprite_ = nullptr; }
 }
