@@ -6,6 +6,8 @@ using namespace Urho3D;
 GalaxyEggbertApp::GalaxyEggbertApp(Urho3D::Context* context)
     : Application(context) {}
 
+GalaxyEggbertApp::~GalaxyEggbertApp() = default;
+
 void GalaxyEggbertApp::Setup() {
     engineParameters_[EP_WINDOW_TITLE]   = "Galaxy Eggbert";
     engineParameters_[EP_FULL_SCREEN]    = false;

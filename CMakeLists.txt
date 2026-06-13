@@ -112,19 +112,21 @@ endif() # NOVA3D
 
 if(_engine STREQUAL "U3D")
 
-    if(ANDROID OR EMSCRIPTEN)
+    if(ANDROID)
         message(FATAL_ERROR
-            "U3D engine on Android/Emscripten is not yet supported. "
-            "See NEXT.md for the roadmap, or switch to GALAXY_EGGBERT_ENGINE=NOVA3D.")
+            "U3D engine on Android is not yet supported. "
+            "See NEXT.md for the roadmap.")
     endif()
 
-    # Resolve URHO3D_HOME: cmake option > env var > local mirror default.
+    # Resolve URHO3D_HOME: cmake option > env var > platform default.
     set(U3D_HOME "" CACHE PATH "Path to U3D build dir (include/ lib/ bin/). Leave empty to use local mirror.")
 
     if(U3D_HOME)
         set(URHO3D_HOME "${U3D_HOME}")
     elseif(DEFINED ENV{URHO3D_HOME})
         set(URHO3D_HOME "$ENV{URHO3D_HOME}")
+    elseif(EMSCRIPTEN)
+        set(URHO3D_HOME "/rv/data/library/github.com/u3d-community/U3D/build-web")
     else()
         set(URHO3D_HOME "/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug")
     endif()
@@ -196,8 +198,24 @@ if(_engine STREQUAL "U3D")
             ${URHO3D_LIBRARIES}
     )
 
+    if(EMSCRIPTEN)
+        # Emscripten: memory, filesystem, embind, and content preloading.
+        set(_u3d_desktop "/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug")
+        target_link_libraries(${_target} PRIVATE embind)
+        target_link_options(${_target} PRIVATE
+            -sALLOW_MEMORY_GROWTH=1
+            -sINITIAL_MEMORY=134217728
+            -sNO_EXIT_RUNTIME=1
+            -sFORCE_FILESYSTEM=1
+            "SHELL:--preload-file ${_u3d_desktop}/bin/Data@/Data"
+            "SHELL:--preload-file ${_u3d_desktop}/bin/CoreData@/CoreData"
+            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content@/Content"
+            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/worlds@/worlds"
+        )
+    endif()
+
     # On Linux the static libUrho3D.a needs these system libs.
-    if(UNIX AND NOT APPLE)
+    if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
         target_link_libraries(${_target} PRIVATE GL dl m rt pthread)
     endif()
 

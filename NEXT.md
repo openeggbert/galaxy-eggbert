@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 45)
+## Current state (as of Phase 46)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -144,6 +144,13 @@ or the original Windows Phone game.
   persisted when switching gamer slots mid-session (bug)
 - Fall death plays `SoundChannel8` (same as tile hazard / enemy hit); previously silent
 - Camera FOV set to 65° (was default 45°); wider view suits 3rd-person platformer
+- Web (Emscripten/WebAssembly) build (Phase 46): `build-web/GalaxyEggbert.html` + `.wasm` (3.4 MB) + `.data` (48 MB preloaded content);
+  emsdk 3.1.60 at `/rv/data/library/emsdk`; U3D built for web at `/rv/data/library/github.com/u3d-community/U3D/build-web/lib/libUrho3D.a`;
+  CMakeLists.txt: removed FATAL_ERROR for Emscripten in U3D branch, added `build-web` as default URHO3D_HOME for EMSCRIPTEN,
+  added `-lembind` + content `--preload-file` link options; GEEngine.hpp: pre-includes Bullet headers to complete types before
+  Urho3DAll.h; GalaxyEggbertApp: explicit `~GalaxyEggbertApp()` dtor defined in .cpp to avoid incomplete `unique_ptr` type;
+  U3D Ptr.h `CheckedDelete` sizeof check removed (upstream Clang 19 compat fix); Linux + Windows builds unaffected
+  - Web build command: `. /rv/data/library/emsdk/emsdk_env.sh && emcmake cmake -S . -B build-web -DGALAXY_EGGBERT_ENGINE=U3D -DBUILD_TESTING=OFF -DWEB=1 && cmake --build build-web --target GalaxyEggbert -j2`
 - Control scheme redesign (Phase 45): WASD/QE/strafe removed; pure arrow-key movement/turn;
   Left Ctrl = jump; Space = action (placeholder); Left Shift = crouch (BlupiAction::Down,
   freezes at icon 35); Right Shift = look up (BlupiAction::Up, icon 44); crouching/looking-up

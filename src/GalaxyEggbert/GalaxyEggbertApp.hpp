@@ -10,6 +10,7 @@ class GalaxyEggbertApp : public Urho3D::Application {
 
 public:
     explicit GalaxyEggbertApp(Urho3D::Context* context);
+    ~GalaxyEggbertApp() override;
 
     void Setup() override;
     void Start() override;
