@@ -12,6 +12,9 @@ public:
     void SetCollisionWorld(const GalaxyEggbert::Worlds::World* w, int wcx, int wcz) {
         world_ = w; wcx_ = wcx; wcz_ = wcz;
     }
+    void StartShake(float intensity = 0.4f, float duration = 0.3f) {
+        shakeIntensity_ = intensity; shakeTimer_ = duration; shakeDuration_ = duration;
+    }
     Urho3D::Node* GetNode() const { return node_; }
 
 private:
@@ -26,4 +29,8 @@ private:
     const GalaxyEggbert::Worlds::World* world_ = nullptr;
     int wcx_ = 50;
     int wcz_ = 50;
+
+    float shakeTimer_     = 0.0f;
+    float shakeIntensity_ = 0.0f;
+    float shakeDuration_  = 0.3f;
 };

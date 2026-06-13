@@ -72,7 +72,15 @@ void CameraController::Update(float dt, Vector3 targetPos, float targetYaw) {
             offset = dir * hitDist;
     }
 
-    node_->SetPosition(targetPos + offset);
+    Vector3 shakeOff;
+    if (shakeTimer_ > 0.0f) {
+        shakeTimer_ = std::max(0.0f, shakeTimer_ - dt);
+        float t   = shakeTimer_ / shakeDuration_;
+        float mag = shakeIntensity_ * t;
+        float a   = shakeTimer_ * 59.0f;
+        shakeOff  = Vector3(std::cos(a) * mag, std::sin(a * 1.3f) * mag, 0.0f);
+    }
+    node_->SetPosition(targetPos + offset + shakeOff);
     node_->LookAt(targetPos + Vector3(0.0f, 0.35f, 0.0f));
 
     (void)dt;

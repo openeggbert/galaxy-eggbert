@@ -62,6 +62,12 @@ HUD::HUD(Context* context) : context_(context) {
         keyIcons_[i] = icon;
     }
 
+    auto* flash = root->CreateChild<BorderImage>("HitFlash");
+    flash->SetColor(Color(1.0f, 0.0f, 0.0f, 0.0f));
+    flash->SetSize(10000, 10000);
+    flash->SetVisible(false);
+    hitFlash_ = flash;
+
     auto* font = cache->GetResource<Font>("Fonts/Anonymous Pro.ttf");
     if (!font) font = cache->GetResource<Font>("Fonts/DejaVuSansMono.ttf");
 
@@ -79,6 +85,28 @@ HUD::HUD(Context* context) : context_(context) {
     overflow->SetPosition(18 + kMaxDisplayedLives * 22, -84);
     overflow->SetVisible(false);
     livesOverflow_ = overflow;
+}
+
+static constexpr float kFlashDuration = 0.4f;
+
+void HUD::ShowHitFlash() {
+    hitFlashTimer_ = kFlashDuration;
+    if (BorderImage* f = hitFlash_) {
+        f->SetColor(Color(1.0f, 0.0f, 0.0f, 0.5f));
+        f->SetVisible(true);
+    }
+}
+
+void HUD::Update(float dt) {
+    if (hitFlashTimer_ <= 0.0f) return;
+    hitFlashTimer_ -= dt;
+    if (hitFlashTimer_ <= 0.0f) {
+        hitFlashTimer_ = 0.0f;
+        if (BorderImage* f = hitFlash_) f->SetVisible(false);
+        return;
+    }
+    float alpha = 0.5f * (hitFlashTimer_ / kFlashDuration);
+    if (BorderImage* f = hitFlash_) f->SetColor(Color(1.0f, 0.0f, 0.0f, alpha));
 }
 
 void HUD::SetVisible(bool visible) {

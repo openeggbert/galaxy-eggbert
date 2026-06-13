@@ -12,6 +12,8 @@ public:
                   float shieldSecs = 0.0f, int world = 1, bool showHint = true,
                   float levelTime = 0.0f, int score = 0);
     void ShowWin();
+    void ShowHitFlash();
+    void Update(float dt);
 
 private:
     static constexpr int kMaxDisplayedLives = 5;
@@ -22,4 +24,6 @@ private:
     Urho3D::WeakPtr<Urho3D::BorderImage> gauge_;
     Urho3D::WeakPtr<Urho3D::BorderImage> lifeIcons_[kMaxDisplayedLives];
     Urho3D::WeakPtr<Urho3D::BorderImage> keyIcons_[3];
+    Urho3D::WeakPtr<Urho3D::BorderImage> hitFlash_;
+    float hitFlashTimer_ = 0.0f;
 };

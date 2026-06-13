@@ -643,6 +643,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (blupi_ && blupi_->WasFallDeath()) {
         blupi_->ClearFallDeath();
         if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+        camera_->StartShake();
+        hud_->ShowHitFlash();
         --lives_;
         if (lives_ <= 0) {
             gameData_.SetNbVies(3);
@@ -679,6 +681,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 static_cast<uint16_t>(wz)).type();
             if (BlockTypes::isHazard(bt)) {
                 if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+                camera_->StartShake();
+                hud_->ShowHitFlash();
                 --lives_;
                 if (lives_ <= 0) {
                     gameData_.SetNbVies(3);
@@ -782,6 +786,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         }
         if (decor_->WasBlupiHit() && shieldTimer_ <= 0.0f && respawnInvincibleTimer_ <= 0.0f) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel8);
+            camera_->StartShake();
+            hud_->ShowHitFlash();
             --lives_;
             if (lives_ <= 0) {
                 gameData_.SetNbVies(3);
@@ -804,6 +810,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f,
                    levelTime_, score_);
+    hud_->Update(dt);
 }
 
 void GalaxyEggbertGame::AdvanceToNextWorld() {
