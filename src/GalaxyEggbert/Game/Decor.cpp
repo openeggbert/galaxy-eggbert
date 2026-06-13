@@ -44,9 +44,11 @@ int Decor::GetIcon(const Object& obj) const {
         case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;       // enemy A: icons 12-20
         case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;       // enemy B: icons 48-56
         case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8]; // bulldozer
+        case ObjectType::ObjectType13: return 68;                      // helicopter: static
         case ObjectType::ObjectType16: return 69 + (p / 3) % 9;        // spider: icons 69-77
         case ObjectType::ObjectType17: return kFish[(p / 6) % 8];      // fish
         case ObjectType::ObjectType20: return kBird[(p / 6) % 8];      // bird
+        case ObjectType::ObjectType30: return 178;                     // drink: static
         case ObjectType::ObjectType5: {                             // treasure: 0→10→0 bounce
             int q = (p / 9) % 22;
             return (q < 11) ? q : (21 - q);
@@ -137,6 +139,16 @@ void Decor::Update(float dt, Vector3 blupiPos) {
                 obj.active = false;
                 obj.node->Remove();
                 shieldCollected_ = true;
+                break;
+            case ObjectType::ObjectType13: // helicopter → shield (vehicle boarding placeholder)
+                obj.active = false;
+                obj.node->Remove();
+                shieldCollected_ = true;
+                break;
+            case ObjectType::ObjectType30: // drink → collectible
+                obj.active = false;
+                obj.node->Remove();
+                ++collected_;
                 break;
             case ObjectType::ObjectType7:
                 exitReached_ = true;

@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 22)
+## Current state (as of Phase 23)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -70,6 +70,10 @@ or the original Windows Phone game.
   - `fromMobileIconId` is now trivial: `icon > 0 ? icon : Air`
   - `toIconIndex` is trivial: `t == Air ? -1 : t`
   - All 400+ distinct tile IDs across the 5 world files render correctly
+- ObjectType13 (helicopter pickup): static icon 68; collecting grants shield (boarding placeholder)
+- ObjectType30 (drink pickup): static icon 178; collecting counts as treasure
+- Per-world sky palette: ambient + fog colours change per world (Grassland green →
+  Forest dark → Ice Caves blue-white → Lava Fields red → Space Station near-black)
 
 **Architecture (subsystem classes):**
 ```
@@ -134,6 +138,22 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 23 — Helicopter/drink pickups + per-world sky colours
+
+Status: **DONE**
+
+- `ObjectType13` (helicopter): static element.png icon 68; collecting grants shield as vehicle-boarding placeholder
+- `ObjectType30` (drink): static element.png icon 178; collecting increments treasure counter
+- Both added to `LoadMobileEggbertTerrain` supported list (21 helicopters in world 4)
+- `ApplyWorldSky()`: Urho3D Zone ambient + fog colour swapped per world number
+  - 1 Grassland: warm green sky
+  - 2 Forest: dark green
+  - 3 Ice Caves: pale blue-white
+  - 4 Lava Fields: deep red
+  - 5 Space Station: near-black
 
 ---
 

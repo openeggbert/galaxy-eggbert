@@ -159,6 +159,27 @@ void GalaxyEggbertGame::BuildDemoWorld() {
     }
 }
 
+// World-specific sky and fog palette.
+// Derived from the visual theme of each Speedy Blupi world.
+static void ApplyWorldSky(Urho3D::Scene* scene, int world) {
+    using namespace Urho3D;
+    struct SkyPalette { Color ambient; Color fog; };
+    static const SkyPalette kPalette[] = {
+        { Color(0.28f, 0.38f, 0.22f), Color(0.55f, 0.72f, 0.42f) }, // 1 Grassland
+        { Color(0.18f, 0.28f, 0.16f), Color(0.12f, 0.20f, 0.10f) }, // 2 Forest
+        { Color(0.30f, 0.35f, 0.48f), Color(0.62f, 0.72f, 0.88f) }, // 3 Ice Caves
+        { Color(0.38f, 0.16f, 0.08f), Color(0.22f, 0.08f, 0.04f) }, // 4 Lava Fields
+        { Color(0.05f, 0.06f, 0.18f), Color(0.02f, 0.03f, 0.10f) }, // 5 Space Station
+    };
+    int idx = std::max(0, std::min(world - 1, 4));
+    auto* zoneNode = scene->GetChild("Zone");
+    if (!zoneNode) return;
+    auto* zone = zoneNode->GetComponent<Zone>();
+    if (!zone) return;
+    zone->SetAmbientColor(kPalette[idx].ambient);
+    zone->SetFogColor(kPalette[idx].fog);
+}
+
 void GalaxyEggbertGame::SpawnTerrainNodes() {
     auto* cache = context_->GetSubsystem<ResourceCache>();
     auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
@@ -237,9 +258,10 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
                 &type, &stepAdv, &psx, &psy, &pex, &pey);
 
-            bool supported = (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 ||
-                              type == 6 || type == 7 || type == 16 || type == 17 || type == 20 ||
-                              type == 25 || type == 49 || type == 50 || type == 51);
+            bool supported = (type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
+                              type == 6  || type == 7  || type == 13 || type == 16 || type == 17 ||
+                              type == 20 || type == 25 || type == 30 || type == 49 || type == 50 ||
+                              type == 51);
             if (!supported) continue;
 
             // pixel → 3D: tile = px/64, 3D = tile - kW (colOff=0, rowOff=0)
@@ -327,6 +349,7 @@ void GalaxyEggbertGame::LoadWorld(int worldNum) {
     }
 
     SpawnTerrainNodes();
+    ApplyWorldSky(scene_.Get(), worldNum);
 }
 
 // ─── phase transitions ───────────────────────────────────────────────────────
