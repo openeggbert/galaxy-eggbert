@@ -208,7 +208,7 @@ if(_engine STREQUAL "U3D")
             -sINITIAL_MEMORY=134217728
             -sNO_EXIT_RUNTIME=1
             -sFORCE_FILESYSTEM=1
-            "SHELL:--shell-file ${_u3d_web}/bin/shell.html"
+            "SHELL:--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell.html"
             "SHELL:--preload-file ${_u3d_desktop}/bin/Data@/Data"
             "SHELL:--preload-file ${_u3d_desktop}/bin/CoreData@/CoreData"
             "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content@/Content"
