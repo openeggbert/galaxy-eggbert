@@ -49,7 +49,9 @@ public:
     bool    WasEggCollected()    const { return eggCollected_;    }
     bool    WasDrinkCollected()  const { return drinkCollected_;  }
     bool    WasStompKill()       const { return stompKill_;       }
-    Urho3D::Vector3 GetLastStompPos() const { return lastStompPos_; }
+    Urho3D::Vector3 GetLastStompPos()   const { return lastStompPos_;   }
+    bool    WasRespawned()       const { return respawnedThis_;    }
+    Urho3D::Vector3 GetLastRespawnPos() const { return lastRespawnPos_; }
     int     GetCollected()       const { return collected_;       }
     int     GetTotalTreasures()  const { return totalTreasures_;  }
     int     GetKeys49()          const { return keysType49_;      }
@@ -60,7 +62,7 @@ public:
     Urho3D::Vector3 GetPlatformDelta() const { return platformDelta_; }
     // Y surface height to snap Blupi onto; -999 means no platform under Blupi.
     float           GetPlatformLandY() const { return platformLandY_; }
-    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ = drinkCollected_ = stompKill_ = false; }
+    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ = drinkCollected_ = stompKill_ = respawnedThis_ = false; }
 
 private:
     int  GetIcon(const Object& obj) const;
@@ -77,6 +79,7 @@ private:
     bool            eggCollected_    = false;
     bool            drinkCollected_  = false;
     bool            stompKill_       = false;
+    bool            respawnedThis_   = false;
     int             collected_       = 0;
     int             totalTreasures_  = 0;
     int             keysType49_      = 0;
@@ -85,4 +88,5 @@ private:
     Urho3D::Vector3 platformDelta_{0.0f, 0.0f, 0.0f};
     float           platformLandY_ = -999.0f;
     Urho3D::Vector3 lastStompPos_{0.0f, 0.0f, 0.0f};
+    Urho3D::Vector3 lastRespawnPos_{0.0f, 0.0f, 0.0f};
 };

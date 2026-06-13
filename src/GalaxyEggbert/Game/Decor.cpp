@@ -127,6 +127,8 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime)
                         obj.node->SetVisible(true);
                         obj.node->SetPosition(obj.posStart);
                     }
+                    respawnedThis_ = true;
+                    lastRespawnPos_ = obj.posStart;
                 }
             }
             continue;

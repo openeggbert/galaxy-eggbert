@@ -803,6 +803,11 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             score_ += 25;
         }
 
+        // Enemy respawn sparkle — mini poof when enemy reappears after 5 s.
+        if (decor_->WasRespawned())
+            explosions_.push_back(std::make_unique<Explosion>(context_, scene_.Get(),
+                decor_->GetLastRespawnPos(), 0.35f));
+
         // Shield pickup
         if (decor_->WasShieldCollected()) {
             shieldTimer_ = 5.0f;
