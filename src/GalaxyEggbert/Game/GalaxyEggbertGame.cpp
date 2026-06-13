@@ -392,6 +392,7 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
 
 void GalaxyEggbertGame::LoadWorld(int worldNum) {
     explosion_.reset();
+    popups_.clear();
     if (terrainRoot_) terrainRoot_->RemoveAllChildren();
     tileMatCache_.clear();
     mobileObjects_.clear();
@@ -635,6 +636,10 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     }
 
     if (explosion_ && !explosion_->Update(dt)) explosion_.reset();
+    popups_.erase(
+        std::remove_if(popups_.begin(), popups_.end(),
+            [dt](std::unique_ptr<ScorePopup>& p){ return !p->Update(dt); }),
+        popups_.end());
 
     if (blupi_) blupi_->Update(dt);
     if (blupi_ && sound_) {
@@ -711,11 +716,16 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         float velY = blupi_ ? blupi_->GetVelY() : 0.0f;
         decor_->Update(dt, pos, velY, totalTime_);
 
+        auto spawnPopup = [&](Vector3 p, const char* txt) {
+            popups_.push_back(std::make_unique<ScorePopup>(context_, scene_.Get(), p, txt));
+        };
+
         // Stomp kill: Blupi jumped on an enemy.
         if (decor_->WasStompKill()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel5);
             if (blupi_) blupi_->Bounce();
             explosion_ = std::make_unique<Explosion>(context_, scene_.Get(), decor_->GetLastStompPos());
+            spawnPopup(decor_->GetLastStompPos(), "+25");
             score_ += 25;
         }
 
@@ -729,7 +739,9 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         {
             int k49 = decor_->GetKeys49(), k50 = decor_->GetKeys50(), k51 = decor_->GetKeys51();
             if (k49 > keysRed_ || k50 > keysGreen_ || k51 > keysBlue_) {
-                score_ += 50 * ((k49 - keysRed_) + (k50 - keysGreen_) + (k51 - keysBlue_));
+                int gained = (k49 - keysRed_) + (k50 - keysGreen_) + (k51 - keysBlue_);
+                score_ += 50 * gained;
+                spawnPopup(pos + Vector3(0.0f, 0.5f, 0.0f), "+50");
                 if (sound_) sound_->Play(SoundChannel::SoundChannel11);
                 keysRed_ = k49; keysGreen_ = k50; keysBlue_ = k51;
             }
@@ -739,6 +751,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         int collected = decor_->GetCollected();
         if (collected > prevCollected_) {
             score_ += 10 * (collected - prevCollected_);
+            spawnPopup(pos + Vector3(0.0f, 0.5f, 0.0f), "+10");
             if (sound_) sound_->Play(SoundChannel::SoundChannel10);
             prevCollected_ = collected;
         }
@@ -746,6 +759,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         // Egg pickup: grants +1 life (cap 9).
         if (decor_->WasEggCollected()) {
             score_ += 50;
+            spawnPopup(pos + Vector3(0.0f, 0.5f, 0.0f), "+50");
             if (sound_) sound_->Play(SoundChannel::SoundChannel42);
             if (lives_ < 9) {
                 ++lives_;
@@ -757,6 +771,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         // Drink pickup: grants +1 life (cap 9).
         if (decor_->WasDrinkCollected()) {
             score_ += 50;
+            spawnPopup(pos + Vector3(0.0f, 0.5f, 0.0f), "+50");
             if (sound_) sound_->Play(SoundChannel::SoundChannel42);
             if (lives_ < 9) {
                 ++lives_;
@@ -770,6 +785,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         if (!bonusLifeAwarded_ && total > 0 && collected >= total) {
             bonusLifeAwarded_ = true;
             score_ += 100;
+            spawnPopup(pos + Vector3(0.0f, 0.8f, 0.0f), "+100");
             if (lives_ < 9) {
                 ++lives_;
                 gameData_.SetNbVies(lives_);
@@ -964,6 +980,7 @@ void GalaxyEggbertGame::Stop() {
     if (auto* input = context_->GetSubsystem<Input>()) input->SetMouseVisible(true);
     if (sound_) sound_->StopAll();
     explosion_.reset();
+    popups_.clear();
     decor_.reset();
     blupi_.reset();
     phases_.reset();

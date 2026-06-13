@@ -11,6 +11,7 @@
 #include "GameData.hpp"
 #include "SoundManager.hpp"
 #include "Explosion.hpp"
+#include "ScorePopup.hpp"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -76,6 +77,7 @@ private:
     std::unique_ptr<PhaseManager>     phases_;
     std::unique_ptr<SoundManager>     sound_;
     std::unique_ptr<Explosion>        explosion_;
+    std::vector<std::unique_ptr<ScorePopup>> popups_;
 
     std::vector<MobileObjSpec> mobileObjects_;
     Urho3D::Vector3            blupiSpawn_{0.0f, Blupi::kHalfH + 0.5f, 0.0f};
