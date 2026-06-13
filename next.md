@@ -20,7 +20,7 @@ best-time tracking, danger pulse, variable jump height, jump buffer, etc.).
   - Full animation state machine: Stop, March, Turn, Jump, Air
   - Frame tables ported from mobile-eggbert `Tables.cpp`
   - Physics: gravity, jump, AABB voxel collision (derived from `Decor.cpp`)
-  - Controls: WASD move/strafe, Q/E or L/R arrows turn, SPACE jump (arrow keys also work)
+  - Controls: arrow keys move/turn, Left Ctrl jump, Left Shift crouch, Right Shift look-up/glide
 - `Decor` object pool (up to 100 objects), all animated via `GetIcon()` phase tables:
   - ObjectType2/3 (patrol enemies A/B), ObjectType16 (spider)
   - ObjectType5 (treasure), ObjectType6 (egg), ObjectType7 (exit)
@@ -84,7 +84,6 @@ best-time tracking, danger pulse, variable jump height, jump buffer, etc.).
   - Icons 68 (Lava) and 317 (Crusher) kept solid despite being quart-passable
 - Sky dome: `DiffSkydome.xml` sphere (500 units) loaded from `backgrounds/decorNNN.png`
   per world; region parsed from `region=` in .txt header (`postopaque`, no depth write)
-- Strafe movement: A/D keys strafe Blupi left/right without rotating
 - ObjectType33 (blupit tank): `table_blupit_left` icons 248-250; patrol enemy, kills on contact
 - Fall-death life deduction: falling off map now deducts a life (previously free respawn)
 - Respawn invincibility: 2 s grace period after any respawn; tile hazards and enemy hits
@@ -94,7 +93,7 @@ best-time tracking, danger pulse, variable jump height, jump buffer, etc.).
 - Landing sound: `SoundChannel4` plays when Blupi transitions from airborne → ground
 - ObjectType12 (crate): static decoration, element.png icon 32; now placed in world 4 (2 instances)
 - Full WASD+QE controls: W/S move forward/back (same as UP/DN), Q/E turn left/right (same as L/R)
-- Controls hint auto-fades after 8 s; `controlsHintTimer_` reset on every level load/select
+- Controls hint auto-fades after 8 s; `controlsHintTimer_` reset on every level load/select; WASD/QE removed in Phase 45 (pure arrow-key scheme)
 - Bonus life when all treasures collected (once per level, capped at 9 lives); plays SoundChannel42
 - Camera wall collision: DDA ray march from Blupi to desired camera pos; clamps to first solid voxel
   - `SetCollisionWorld(World*, wcx, wcz)` wired in Start() and LoadWorld()
@@ -232,16 +231,7 @@ best-time tracking, danger pulse, variable jump height, jump buffer, etc.).
 - Treasure lock on exit (Phase 75): exit touch with incomplete treasures shows red popup
   "Need all treasures!" instead of entering Win; `tot>0 && col<tot` guard before `EnterPhase(Win)`;
   faithfully ports the original mobile-eggbert mechanic (all treasures required to open exit)
-- Star rating on win screen (Phase 74): `winStars_` (1–3) computed in `EnterPhase(Win)` from
-  `collected/total`; displayed as "[ * * * ]"/"[ * * ]"/"[ * ]" in header line of win overlay;
-  3 stars = 100%, 2 stars = 50%+, 1 star = any; `winStars_` reset with other per-level state
-- Time speed bonus on win (Phase 73): `timeBonus_` computed once in `EnterPhase(Win)`;
-  `<60s=+200, <120s=+100, <180s=+50`; added to `score_`; shown as "Time bonus: +N" in win overlay;
-  reset in per-level state reset functions
-- Stomp camera shake + combo multiplier (Phase 72): `camera_->StartShake(0.12f, 0.2f)` on each stomp
-  kill; `stompCombo_` counter increments on each stomp within 1.5 s window (`stompComboTimer_`);
-  score = 25 × combo (25/50/75…); popup shows "+50 x2!" format; combo resets when timer expires or
-  level resets; `stompCombo_`/`stompComboTimer_` added to per-level state
+- Stomp camera shake (Phase 72): `camera_->StartShake(0.12f, 0.2f)` on each stomp; flat +25 score
 - Game speed selector (Phase 71): `gameSpeed_` float (0.6/1.0/1.5); G key cycles during play;
   `dt *= gameSpeed_` scales all physics, animation, and timers uniformly; HUD shows "SLOW" or
   "FAST" suffix in status text when not at 1.0×; controls hint updated with "G: speed"
@@ -268,21 +258,10 @@ best-time tracking, danger pulse, variable jump height, jump buffer, etc.).
   3D perspective; HUD hint updated: "RSHIFT: glide(air)/look-up"
 - Glide / parachute (Phase 65): holding Right Shift while airborne switches to reduced gravity
   (`kGravity × 0.12`) and caps fall speed at `−1.5 m/s`; animation switches to `BlupiAction::Up`
-  (arms-up) during glide descent; on ground Right Shift still triggers look-up as before;
-  allows Blupi to cross gaps that would otherwise be too wide to jump
+  (arms-up) during glide descent; on ground Right Shift still triggers look-up as before
 - Auto step-up (Phase 64): `tryStepUp()` in `ResolveXZ` — when `onGround_` and a 1-tile step is
   ahead (body-level block solid, block above clear, height diff ≤ 1.0 tile), snaps `pos.y_` to
-  the step top and returns `true` (skipping the horizontal block); Blupi now automatically walks
-  up stairs and 1-tile ledges without jumping; 2+-tile walls still block normally
-- Variable jump height (Phase 63): `kMinJumpSpeed = kJumpSpeed × 0.30` — releasing Left Ctrl while
-  still ascending cuts `vel_.y_` to `kMinJumpSpeed`; full hold gives maximum arc, tap gives a
-  short hop ~30% as high; `jumpHeld_` flag cleared on landing or on button-release; reset in
-  `SpawnAt()`; pairs with coyote/buffer from Phase 62 for complete platformer-feel jump system
-- Coyote time + jump buffer (Phase 62): `kCoyoteTime=0.12s` grace period after walking off an edge
-  where jump still fires; `kJumpBuffer=0.12s` queued jump fires on the landing frame if pressed
-  just before touching ground; both implemented entirely in `Blupi::Update()` — no game-coordinator
-  changes needed; `coyoteTimer_/jumpBuffer_` reset in `SpawnAt()`; improves platformer feel
-  significantly, especially on narrow platforms and moving-platform hops
+  the step top; Blupi walks up stairs and 1-tile ledges without jumping; 2+-tile walls block normally
 - Multiple simultaneous explosions (Phase 61): `explosions_` vector replaces single `explosion_`
   unique_ptr; all 3 death paths + stomp push_back; ticked with `remove_if(!e->Update(dt))`
 - Pickup sparkle (Phase 61): `Explosion` constructor takes optional `float scale = 1.0f`;
@@ -311,32 +290,7 @@ src/GalaxyEggbert/Game/
 **Not yet done:**
 - Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer — player-mode state machine)
 - Animated 3D model for Blupi (currently billboard placeholder)
-- Android and Web (Emscripten) platform builds
-
----
-
-## Architecture plan — class and file structure
-
-Inspired by mobile-eggbert's layering (`Game1` → `Decor` → `Pixmap`, `Tables`, `GameData`).
-Galaxy-eggbert maps the same concerns to Urho3D 3D classes:
-
-```
-src/GalaxyEggbert/
-  GalaxyEggbertApp.hpp/.cpp     — Urho3D Application subclass; wires lifecycle + event loop
-  GalaxyEggbertGame.hpp/.cpp    — top-level coordinator; owns scene, world, subsystems
-  Game/
-    Blupi.hpp/.cpp              — Blupi character: physics, input, collision      ✅
-    Camera.hpp/.cpp             — 3rd-person camera logic                         ✅
-    Decor.hpp/.cpp              — object pool, enemies, events                    ✅ (partial)
-    GameData.hpp/.cpp           — save data persistence                           ✅
-    HUD.hpp/.cpp                — 2D overlay: lives, keys, shield, gauge          ✅ (partial)
-    ObjectNode.hpp/.cpp         — Urho3D scene node for one moving object/enemy   ✅
-    PhaseManager.hpp/.cpp       — GamePhase state machine + overlay transitions   ✅
-    SoundManager.hpp/.cpp       — wraps Urho3D audio; maps SoundChannel → WAV     ✅
-    Tables.hpp/.cpp             — animation frame tables (port Tables.cpp)        ✅
-  World/
-    (= current include/GalaxyEggbert/Worlds/ — keep engine-agnostic)             ✅
-```
+- Android build
 
 ---
 
@@ -1038,20 +992,12 @@ Status: **DONE** — `HUD.cpp` rewritten with `BorderImage` sprite icons.
 
 ---
 
-## Phase 19 — Android build (U3D)
+## Android build
 
-Status: **Not yet implemented for U3D.**
+Status: **Not yet implemented.**
 
 U3D uses its own Gradle + CMake Android integration.
 Steps: build U3D AAR → set `BUILD_STAGING_DIR` → remove `FATAL_ERROR` guard for ANDROID in CMakeLists.txt.
-
----
-
-## Phase 20 — Web build (Emscripten)
-
-Status: **Not yet implemented for U3D.**
-
-Steps: Emscripten U3D build (`emcmake cmake`) → add `--preload-file Data/ CoreData/` → remove `FATAL_ERROR` guard.
 
 ---
 
