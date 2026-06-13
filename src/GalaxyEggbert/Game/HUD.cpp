@@ -88,7 +88,17 @@ void HUD::ShowWin() {
         if (BorderImage* icon = keyIcons_[i]) icon->SetVisible(false);
 }
 
-void HUD::ShowPlay(int lives, int collected, int keys, float shieldSecs, int world) {
+static const char* WorldName(int world) {
+    static const char* kNames[] = {
+        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+    };
+    int idx = world - 1;
+    if (idx >= 0 && idx < 5) return kNames[idx];
+    return "Unknown";
+}
+
+void HUD::ShowPlay(int lives, int collected, int totalTreasures, int keys,
+                   float shieldSecs, int world) {
     int showLives = std::min(lives, kMaxDisplayedLives);
     for (int i = 0; i < kMaxDisplayedLives; i++)
         if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(i < showLives);
@@ -100,17 +110,17 @@ void HUD::ShowPlay(int lives, int collected, int keys, float shieldSecs, int wor
     if (BorderImage* g = gauge_) g->SetVisible(true);
 
     if (Text* t = text_) {
-        char buf[192];
+        char buf[256];
         if (shieldSecs > 0.0f) {
             std::snprintf(buf, sizeof(buf),
                 "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
-                "World %d | Treasures: %d  SHIELD %.1fs",
-                world, collected, shieldSecs);
+                "World %d: %s | Treasures: %d/%d  SHIELD %.1fs",
+                world, WorldName(world), collected, totalTreasures, shieldSecs);
         } else {
             std::snprintf(buf, sizeof(buf),
                 "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
-                "World %d | Treasures: %d",
-                world, collected);
+                "World %d: %s | Treasures: %d/%d",
+                world, WorldName(world), collected, totalTreasures);
         }
         t->SetText(buf);
     }

@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 16)
+## Current state (as of Phase 17)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -49,6 +49,8 @@ or the original Windows Phone game.
   - Statically linked: `-static-libgcc -static-libstdc++`; Windows system libs include `iphlpapi`
 - HUD sprite icons: life icons (Blupi head, `blupi.png` icon 48) and key icons (`element.png` icon 215)
   replace "Lives: N / Keys: N" text; both shown as `BorderImage` sprites inside/near the gauge
+- HUD treasure total: shows "Treasures: N/total" — total counted by `Decor::GetTotalTreasures()`
+- HUD world names: `WorldName(N)` lookup — "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
 
 **Architecture (subsystem classes):**
 ```
@@ -65,7 +67,7 @@ src/GalaxyEggbert/Game/
 ```
 
 **Not yet done:**
-- Full HUD: level name (currently "World N", could be a descriptive string per world)
+- Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
 - Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
 - Animated 3D model for Blupi (currently billboard placeholder)
 - Windows, Android, Web platform builds
@@ -114,6 +116,16 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 17 — HUD treasure total + world names
+
+Status: **DONE** — `Decor::GetTotalTreasures()` + `WorldName()` lookup in HUD.
+
+- `Decor::PlaceObject` counts ObjectType5 placements into `totalTreasures_`
+- `HUD::ShowPlay` now shows `"Treasures: N/total"` and `"World N: <Name>"`
+- World name table: 1→Grassland, 2→Forest, 3→Ice Caves, 4→Lava Fields, 5→Space Station
 
 ---
 

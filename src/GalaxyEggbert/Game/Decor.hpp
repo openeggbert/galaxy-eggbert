@@ -42,6 +42,7 @@ public:
     bool WasBlupiHit()        const { return blupiHit_;        }
     bool WasShieldCollected() const { return shieldCollected_; }
     int  GetCollected()       const { return collected_;       }
+    int  GetTotalTreasures()  const { return totalTreasures_;  }
     int  GetKeysCollected()   const { return keysCollected_;   }
     void ClearEvents()              { exitReached_ = blupiHit_ = shieldCollected_ = false; }
 
@@ -58,5 +59,6 @@ private:
     bool blupiHit_        = false;
     bool shieldCollected_ = false;
     int  collected_       = 0;
+    int  totalTreasures_  = 0;
     int  keysCollected_   = 0;
 };
