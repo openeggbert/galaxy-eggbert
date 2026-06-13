@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 40)
+## Current state (as of Phase 41)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -144,6 +144,9 @@ or the original Windows Phone game.
   persisted when switching gamer slots mid-session (bug)
 - Fall death plays `SoundChannel8` (same as tile hazard / enemy hit); previously silent
 - Camera FOV set to 65° (was default 45°); wider view suits 3rd-person platformer
+- Animated hazard tiles: Lava pulses orange, Spike flickers white, Crusher pulses red;
+  driven by `totalTime_` (runs continuously, not reset between levels); all three use
+  `SetShaderParameter("MatDiffColor", …)` on the shared material in `tileMatCache_`
 
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to

@@ -598,6 +598,26 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         }
     }
 
+    totalTime_ += dt;
+    {
+        float t = totalTime_;
+        auto lavIt = tileMatCache_.find(BlockTypes::Lava);
+        if (lavIt != tileMatCache_.end() && lavIt->second) {
+            float p = 0.75f + 0.25f * std::sinf(t * 3.0f);
+            lavIt->second->SetShaderParameter("MatDiffColor", Color(p, p * 0.35f, 0.0f));
+        }
+        auto spkIt = tileMatCache_.find(BlockTypes::Spike);
+        if (spkIt != tileMatCache_.end() && spkIt->second) {
+            float p = 0.8f + 0.2f * std::sinf(t * 2.0f + 1.0f);
+            spkIt->second->SetShaderParameter("MatDiffColor", Color(p, p, p));
+        }
+        auto crIt = tileMatCache_.find(BlockTypes::Crusher);
+        if (crIt != tileMatCache_.end() && crIt->second) {
+            float p = 0.7f + 0.3f * std::sinf(t * 2.5f + 0.5f);
+            crIt->second->SetShaderParameter("MatDiffColor", Color(p, p * 0.3f, p * 0.3f));
+        }
+    }
+
     if (blupi_) blupi_->Update(dt);
     if (blupi_ && sound_) {
         if (blupi_->WasJumpedThisFrame())  sound_->Play(SoundChannel::SoundChannel1);
