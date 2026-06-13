@@ -744,7 +744,11 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 static_cast<uint16_t>(wx),
                 static_cast<uint16_t>(wy),
                 static_cast<uint16_t>(wz)).type();
-            if (BlockTypes::isHazard(bt)) {
+            // Crusher is only lethal during its extended phase (frames 5-9 of 10-frame
+            // animation at 6 fps). Frames 0-4 are the retracted/rising state — safe to stand on.
+            bool crusherSafe = (bt == BlockTypes::Crusher &&
+                                static_cast<int>(totalTime_ * 6.0f) % 10 < 5);
+            if (BlockTypes::isHazard(bt) && !crusherSafe) {
                 if (sound_) sound_->Play(SoundChannel::SoundChannel8);
                 camera_->StartShake();
                 hud_->ShowHitFlash();

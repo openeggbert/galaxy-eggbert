@@ -19,8 +19,11 @@ ObjectNode::ObjectNode(Context* context, Scene* scene) : context_(context) {
     sprite_->SetMaterial(mat);
 
     Billboard* bb = sprite_->GetBillboard(0);
-    bb->position_ = Vector3::ZERO;
-    // 60×60 px tile in a 64-px grid → visual size = 60/64 units (matches Blupi scale).
+    // Objects placed at node Y=1.0 (one unit above block center at Y=0).
+    // Block top = Y+0.5. For sprite bottom to land at block top:
+    //   offset = blockTop + visHalf - nodeY = 0.5 + 60/128 - 1.0 = -1/32 ≈ -0.031
+    static constexpr float kVisHalf = 60.0f / 64.0f / 2.0f;
+    bb->position_ = Vector3(0.0f, kVisHalf - 0.5f, 0.0f); // ≈ -0.031 downward
     bb->size_     = Vector2(60.0f / 64.0f, 60.0f / 64.0f);
     bb->enabled_  = true;
     UpdateIcon(0);

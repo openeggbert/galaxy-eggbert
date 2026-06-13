@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 58)
+## Current state (as of Phase 60)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -209,6 +209,18 @@ or the original Windows Phone game.
 - Shield warning (Phase 58): when `shieldTimer_ < 1.5f` Blupi tint blinks rapidly between cyan
   and white (0.15 s intervals via `shieldBlinkPhase_`); HUD shield text colour turns orange
   (`Color(1.0, 0.55, 0.1)`) at < 1.5 s remaining; restores blue-white when shield expires
+- Sprite embedding fix: `FC_ROTATE_XYZ` → `FC_ROTATE_Y` for Blupi and ObjectNode billboards;
+  with XYZ the billboard tilts with camera pitch so vertical size.y is applied in camera-up
+  direction, causing the sprite bottom to clip into terrain at the default 20° pitch; `FC_ROTATE_Y`
+  keeps the sprite upright so size.y is a pure world-Y offset — bottom aligns at block top ✓
+- Death respawn freeze (Phase 59): `Blupi::inputFrozen_` / `SetInputFrozen(bool)` suppresses
+  all movement for 1 s after any death (`deathFreezeTimer_` in game); animation still ticks;
+  lets the death explosion play before the player regains control; reset on level transitions
+- Crusher timing (Phase 60): `BlockTypes::Crusher` is only lethal during frames 5–9 of its
+  10-frame 6-fps cycle (icons 321–323, crusher fully down); frames 0–4 (317–320, retracted/
+  rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
+- ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
+  aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
 
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to
@@ -278,6 +290,40 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 60 — Crusher timing + ObjectNode vertical offset
+
+Status: **DONE**
+
+- `GalaxyEggbertGame::UpdatePlay()`: `crusherSafe = (bt == Crusher && (int)(totalTime_*6)%10 < 5)`;
+  `isHazard(bt) && !crusherSafe` — crusher kills only during frames 5–9 (extended position);
+  frames 0–4 (retracted/rising, icons 317–320) are passable; matches mobile-eggbert behavior
+  where the timing window lets Blupi run through the corridor without dying
+- `ObjectNode::ObjectNode()`: `bb->position_ = Vector3(0, kVisHalf - 0.5f, 0)` ≈ −0.031 downward;
+  objects placed at node Y=1.0 previously had sprite bottom at Y=0.531 (floating above block top
+  0.5); offset corrects this so feet land exactly on the surface; consistent with Blupi's offset
+  formula `kVisHalf - kHalfH` (same math, different height above block top)
+
+---
+
+## Phase 59 — Death respawn freeze + FC_ROTATE_Y sprite fix
+
+Status: **DONE**
+
+- `Blupi::inputFrozen_` / `SetInputFrozen(bool)`: when true, `Update()` skips all movement and
+  physics, runs only `++animTick_` and `UpdateSprite()` + shield blink; prevents re-death during
+  the 1 s freeze window (respawnInvincibleTimer_ also active)
+- `GalaxyEggbertGame::deathFreezeTimer_` (per-level): set to 1.0 s after all 3 death paths
+  (fall, tile hazard, enemy hit); counted down at top of `UpdatePlay()`; `SetInputFrozen(false)`
+  on expiry; reset in `AdvanceToNextWorld / ResetLevel / SelectGamer`
+- Sprite embedding root cause: `FC_ROTATE_XYZ` tilts the billboard to fully face the camera
+  including pitch; at default 20° pitch the billboard bottom swings forward in Z and clips into
+  terrain block front faces; fixed by switching Blupi and ObjectNode to `FC_ROTATE_Y` (keeps
+  sprite upright, size.y = pure world-Y offset, bottom lands at block top regardless of pitch)
+- `Decor::StepMovement` Y-snap bug also fixed (Phase 58 commit): `obj.pos = target` replaces
+  `obj.pos.x_=target.x_; obj.pos.z_=target.z_` — spider vertical oscillation now correct
 
 ---
 
