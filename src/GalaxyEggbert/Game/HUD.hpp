@@ -16,6 +16,7 @@ private:
 
     Urho3D::Context*                     context_;
     Urho3D::WeakPtr<Urho3D::Text>        text_;
+    Urho3D::WeakPtr<Urho3D::Text>        livesOverflow_;
     Urho3D::WeakPtr<Urho3D::BorderImage> gauge_;
     Urho3D::WeakPtr<Urho3D::BorderImage> lifeIcons_[kMaxDisplayedLives];
     Urho3D::WeakPtr<Urho3D::BorderImage> keyIcons_[3];

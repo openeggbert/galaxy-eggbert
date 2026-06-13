@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 34)
+## Current state (as of Phase 35)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -118,6 +118,11 @@ or the original Windows Phone game.
   `StepMovement` stationary check now requires all 3 axes equal (Y clamp removed);
   spider is dangerous only when descended (Y proximity check prevents aerial ghost hits)
 - Debug octree toggle moved from F1 → F12; F1–F5 world-jump now fires correctly in Play phase
+- Blupi billboard tinted cyan (`Color(0.5, 0.85, 1.0)`) when shield is active; resets to white
+  when timer expires; `Blupi::SetShieldActive(bool)` wired from `GalaxyEggbertGame::UpdatePlay()`
+  after each timer decrement
+- HUD lives overflow: `livesOverflow_` Text element shows `"xN"` in amber when lives exceed the
+  5 icon slots; hidden when lives ≤ 5; cleared in `SetVisible(false)`
 
 **Architecture (subsystem classes):**
 ```
@@ -182,6 +187,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 35 — Blupi shield tint + lives overflow indicator
+
+Status: **DONE**
+
+- `Blupi::SetShieldActive(bool)`: sets `shieldActive_` field; `UpdateSprite()` applies
+  `bb->color_ = shieldActive_ ? Color(0.5, 0.85, 1.0) : Color::WHITE` each frame;
+  Urho3D multiplies billboard color with texture giving a visible blue-cyan tint
+- `GalaxyEggbertGame::UpdatePlay()`: calls `blupi_->SetShieldActive(shieldTimer_ > 0.0f)`
+  immediately after decrementing timers so tint is always in sync with the actual shield state
+- `HUD`: added `livesOverflow_` (Text, amber color) positioned right of the 5 life icons;
+  `ShowPlay()` shows `"xN"` when lives > `kMaxDisplayedLives`; `SetVisible(false)` hides it
 
 ---
 

@@ -57,19 +57,29 @@ HUD::HUD(Context* context) : context_(context) {
         keyIcons_[i] = icon;
     }
 
-    auto* text = root->CreateChild<Text>("HUD");
     auto* font = cache->GetResource<Font>("Fonts/Anonymous Pro.ttf");
     if (!font) font = cache->GetResource<Font>("Fonts/DejaVuSansMono.ttf");
+
+    auto* text = root->CreateChild<Text>("HUD");
     if (font) text->SetFont(font, 14);
     text->SetColor(Color(0.85f, 0.90f, 1.0f));
     text->SetPosition(12, 12);
     text->SetVisible(false);
     text_ = text;
+
+    auto* overflow = root->CreateChild<Text>("LivesOverflow");
+    if (font) overflow->SetFont(font, 13);
+    overflow->SetColor(Color(1.0f, 0.92f, 0.4f));
+    overflow->SetAlignment(HA_LEFT, VA_BOTTOM);
+    overflow->SetPosition(18 + kMaxDisplayedLives * 22, -84);
+    overflow->SetVisible(false);
+    livesOverflow_ = overflow;
 }
 
 void HUD::SetVisible(bool visible) {
     if (Text* t = text_) t->SetVisible(visible);
     if (!visible) {
+        if (Text* ot = livesOverflow_) ot->SetVisible(false);
         if (BorderImage* g = gauge_) g->SetVisible(false);
         for (int i = 0; i < kMaxDisplayedLives; i++)
             if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(false);
@@ -102,6 +112,17 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures, int keys,
     int showLives = std::min(lives, kMaxDisplayedLives);
     for (int i = 0; i < kMaxDisplayedLives; i++)
         if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(i < showLives);
+
+    if (Text* ot = livesOverflow_) {
+        if (lives > kMaxDisplayedLives) {
+            char cnt[8];
+            std::snprintf(cnt, sizeof(cnt), "x%d", lives);
+            ot->SetText(cnt);
+            ot->SetVisible(true);
+        } else {
+            ot->SetVisible(false);
+        }
+    }
 
     int showKeys = std::min(keys, 3);
     for (int i = 0; i < 3; i++)

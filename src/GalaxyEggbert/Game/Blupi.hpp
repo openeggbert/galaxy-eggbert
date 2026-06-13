@@ -38,6 +38,7 @@ public:
     float GetVelY()            const { return vel_.y_; }
     void  StartFlash(float duration) { flashTimer_ = duration; flashTickTimer_ = 0.0f; }
     void  Bounce() { vel_.y_ = kJumpSpeed * 0.6f; onGround_ = false; }
+    void  SetShieldActive(bool active) { shieldActive_ = active; }
 
     Urho3D::Node*   GetNode()            const { return node_; }
     Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
@@ -67,6 +68,7 @@ private:
     bool  landedThisFrame_= false;
     float flashTimer_     = 0.0f;
     float flashTickTimer_ = 0.0f;
+    bool  shieldActive_   = false;
 
     // Sprite animation (billboard facing camera, UV-mapped from blupi.png)
     bool                       jumpedThisFrame_ = false;

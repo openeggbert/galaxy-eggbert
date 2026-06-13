@@ -71,7 +71,8 @@ void Blupi::UpdateSprite() {
     float u0 = col * kTile / kSheetW;
     float v0 = row * kTile / kSheetH;
     Billboard* bb = sprite_->GetBillboard(0);
-    bb->uv_ = Rect(u0, v0, u0 + kTile / kSheetW, v0 + kTile / kSheetH);
+    bb->uv_   = Rect(u0, v0, u0 + kTile / kSheetW, v0 + kTile / kSheetH);
+    bb->color_ = shieldActive_ ? Color(0.5f, 0.85f, 1.0f) : Color::WHITE;
     sprite_->Commit();
 }
 

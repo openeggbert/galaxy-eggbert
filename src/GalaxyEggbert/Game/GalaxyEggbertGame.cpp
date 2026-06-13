@@ -614,6 +614,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (shieldTimer_ > 0.0f)           shieldTimer_            -= dt;
     if (respawnInvincibleTimer_ > 0.0f) respawnInvincibleTimer_ -= dt;
     if (controlsHintTimer_ > 0.0f)     controlsHintTimer_      -= dt;
+    if (blupi_) blupi_->SetShieldActive(shieldTimer_ > 0.0f);
 
     // Tile hazard check — only when standing on ground and not invincible
     if (blupi_ && blupi_->IsOnGround() && world_ && shieldTimer_ <= 0.0f && respawnInvincibleTimer_ <= 0.0f) {
