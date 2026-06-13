@@ -103,6 +103,8 @@ private:
     float       respawnInvincibleTimer_   = 0.0f;
     float       deathFreezeTimer_         = 0.0f;
     float       controlsHintTimer_        = 8.0f;
+    float       stompComboTimer_          = 0.0f; // countdown; combo resets when expired
+    int         stompCombo_               = 0;    // consecutive stomp count this level
     bool        bonusLifeAwarded_         = false;
 
     static constexpr int kWCX     = 50;

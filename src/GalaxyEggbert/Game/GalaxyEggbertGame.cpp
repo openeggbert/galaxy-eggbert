@@ -579,6 +579,8 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
+    stompCombo_             = 0;
+    stompComboTimer_        = 0.0f;
     gameData_.Write(savePath_);
     decor_.reset();
     blupi_.reset();
@@ -641,6 +643,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 levelTime_              = 0.0f;
                 controlsHintTimer_      = 8.0f;
                 bonusLifeAwarded_       = false;
+                stompCombo_             = 0;
+                stompComboTimer_        = 0.0f;
                 prevCollected_          = 0;
                 keysRed_ = keysGreen_ = keysBlue_ = 0;
                 shieldTimer_            = 0.0f;
@@ -806,10 +810,24 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         // Stomp kill: Blupi jumped on an enemy.
         if (decor_->WasStompKill()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel5);
+            if (camera_) camera_->StartShake(0.12f, 0.2f);
             if (blupi_) blupi_->Bounce();
             explosions_.push_back(std::make_unique<Explosion>(context_, scene_.Get(), decor_->GetLastStompPos()));
-            spawnPopup(decor_->GetLastStompPos(), "+25", kYellow);
-            score_ += 25;
+            ++stompCombo_;
+            stompComboTimer_ = 1.5f;
+            int pts = 25 * stompCombo_;
+            score_ += pts;
+            char stompBuf[16];
+            if (stompCombo_ > 1)
+                std::snprintf(stompBuf, sizeof(stompBuf), "+%d x%d!", pts, stompCombo_);
+            else
+                std::snprintf(stompBuf, sizeof(stompBuf), "+%d", pts);
+            spawnPopup(decor_->GetLastStompPos(), stompBuf, kYellow);
+        }
+        // Combo timer: reset combo if no stomp for 1.5 s.
+        if (stompComboTimer_ > 0.0f) {
+            stompComboTimer_ -= dt;
+            if (stompComboTimer_ <= 0.0f) { stompCombo_ = 0; stompComboTimer_ = 0.0f; }
         }
 
         // Enemy respawn sparkle — mini poof when enemy reappears after 5 s.
@@ -974,6 +992,8 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
     deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
+    stompCombo_             = 0;
+    stompComboTimer_        = 0.0f;
     decor_.reset();
     blupi_.reset();
     LoadWorld(currentWorld_);
@@ -1045,6 +1065,8 @@ void GalaxyEggbertGame::ResetLevel() {
     deathFreezeTimer_       = 0.0f;
     controlsHintTimer_      = 8.0f;
     bonusLifeAwarded_       = false;
+    stompCombo_             = 0;
+    stompComboTimer_        = 0.0f;
     gameData_.SetNbVies(3);
     gameData_.SetLastWorld(1);
     gameData_.Write(savePath_);
