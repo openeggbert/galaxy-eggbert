@@ -79,19 +79,21 @@ private:
     Urho3D::Vector3            blupiSpawn_{0.0f, Blupi::kHalfH + 0.5f, 0.0f};
     int                        skyRegion_ = 0;
 
-    // State
+    // ── persistent game state (survives level transitions) ──────────────────
     GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;
-    bool        drawDebug_     = false;
-    int         lives_         = 3;
-    int         prevCollected_ = 0;
-    int         keys49_ = 0, keys50_ = 0, keys51_ = 0;
+    bool        drawDebug_    = false;
+    int         lives_        = 3;
+    int         currentWorld_ = 1;
+    GameData    gameData_;
+    std::string savePath_;
+
+    // ── per-level state (reset in AdvanceToNextWorld / ResetLevel) ──────────
+    int         prevCollected_            = 0;
+    int         keysRed_ = 0, keysGreen_ = 0, keysBlue_ = 0;
     float       shieldTimer_              = 0.0f;
     float       respawnInvincibleTimer_   = 0.0f;
     float       controlsHintTimer_        = 8.0f;
     bool        bonusLifeAwarded_         = false;
-    int         currentWorld_  = 1;
-    GameData    gameData_;
-    std::string savePath_;
 
     static constexpr int kWCX     = 50;
     static constexpr int kWCZ     = 50;

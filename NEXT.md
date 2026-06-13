@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 38)
+## Current state (as of Phase 39)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -139,6 +139,10 @@ or the original Windows Phone game.
   drift at game start
 - Pause overlay shows collected key types ("Keys: Red Green Blue") when any are held;
   line omitted entirely when no keys collected
+- **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
+  3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to
+  `keysRed_/keysGreen_/keysBlue_`; Decor.hpp comment updated to list all 15 supported types;
+  GalaxyEggbertGame.hpp state section split into "persistent" vs "per-level" groups
 
 **Architecture (subsystem classes):**
 ```
@@ -203,6 +207,23 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 39 — Maintainability refactor (no behaviour change)
+
+Status: **DONE**
+
+- `GalaxyEggbertGame.cpp`: added file-scoped `static const char* WorldName(int)` helper;
+  removed 3× duplicated local `kWorldNames[]` in `UpdatePause`, `UpdateWin`, `UpdateLost`
+- `GalaxyEggbertGame.hpp/.cpp`: `keys49_/50_/51_` renamed to `keysRed_/keysGreen_/keysBlue_`
+  throughout (mechanical sed rename, zero logic change)
+- `GalaxyEggbertGame.hpp`: state block split into two clearly labelled groups:
+  "persistent game state" (`lives_`, `currentWorld_`, `gameData_`, …) and
+  "per-level state" (`prevCollected_`, `keysRed_/Green_/Blue_`, timers, `bonusLifeAwarded_`)
+  — makes "what needs resetting on level load" immediately visible
+- `Decor.hpp`: header comment replaced with accurate list of all 15 supported object types,
+  movement capabilities, and what remains unported
 
 ---
 

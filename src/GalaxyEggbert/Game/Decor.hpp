@@ -5,12 +5,13 @@
 #include <array>
 #include <memory>
 
-// Partial port of mobile-eggbert Decor.cpp — object pool, patrol movement,
-// and Blupi–object collision for Phase 8 basic gameplay.
+// Object pool and patrol/collision engine, ported from mobile-eggbert Decor.cpp.
 //
-// Covers: MoveObjectStepLine (linear patrol), MoveObjectStepIcon (icon/phase)
-// for ObjectType2 (enemy), ObjectType5 (treasure), ObjectType6 (egg), ObjectType7 (exit).
-// Full Decor port (tile events, all enemy AI, vehicles) is future work.
+// Supported types: 1 (platform), 2/3 (enemies A/B), 4 (bulldozer), 5 (treasure),
+//   6 (egg), 7 (exit), 12 (crate), 13 (helicopter), 16 (spider), 17 (fish),
+//   20 (bird), 25 (shield), 30 (drink), 33 (blupit tank), 49/50/51 (keys R/G/B).
+// Movement: linear XYZ patrol (StepMovement), vertical oscillation for spiders.
+// Not yet ported: tile events, advanced vehicle AI (jeep, skateboard).
 class Decor {
 public:
     static constexpr int kMaxObjects = 100;

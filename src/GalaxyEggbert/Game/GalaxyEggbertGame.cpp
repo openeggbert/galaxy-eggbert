@@ -12,6 +12,14 @@ using namespace Urho3D;
 using namespace GalaxyEggbert;
 using namespace GalaxyEggbert::Worlds;
 
+static const char* WorldName(int world) {
+    static const char* kNames[] = {
+        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+    };
+    int idx = world - 1;
+    return (idx >= 0 && idx < 5) ? kNames[idx] : "Unknown";
+}
+
 GalaxyEggbertGame::GalaxyEggbertGame(Context* context)
     : context_(context) {}
 
@@ -574,7 +582,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 controlsHintTimer_      = 8.0f;
                 bonusLifeAwarded_       = false;
                 prevCollected_          = 0;
-                keys49_ = keys50_ = keys51_ = 0;
+                keysRed_ = keysGreen_ = keysBlue_ = 0;
                 shieldTimer_            = 0.0f;
                 respawnInvincibleTimer_ = 0.0f;
                 decor_.reset();
@@ -667,9 +675,9 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         // Key pickup — track per type so HUD shows correct icon colours.
         {
             int k49 = decor_->GetKeys49(), k50 = decor_->GetKeys50(), k51 = decor_->GetKeys51();
-            if (k49 > keys49_ || k50 > keys50_ || k51 > keys51_) {
+            if (k49 > keysRed_ || k50 > keysGreen_ || k51 > keysBlue_) {
                 if (sound_) sound_->Play(SoundChannel::SoundChannel11);
-                keys49_ = k49; keys50_ = k50; keys51_ = k51;
+                keysRed_ = k49; keysGreen_ = k50; keysBlue_ = k51;
             }
         }
 
@@ -746,7 +754,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     hud_->ShowPlay(lives_,
                    decor_ ? decor_->GetCollected() : 0,
                    decor_ ? decor_->GetTotalTreasures() : 0,
-                   keys49_, keys50_, keys51_,
+                   keysRed_, keysGreen_, keysBlue_,
                    shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f);
 }
@@ -758,7 +766,7 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
         gameData_.Write(savePath_);
     }
     prevCollected_          = 0;
-    keys49_ = keys50_ = keys51_ = 0;
+    keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
     controlsHintTimer_      = 8.0f;
@@ -771,13 +779,10 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
 
 void GalaxyEggbertGame::UpdateWin(float dt) {
     (void)dt;
-    static const char* kWorldNames[] = {
-        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
-    };
     int completedWorld = currentWorld_ - 1;
     if (completedWorld < 1) completedWorld = 1;
     if (completedWorld > 5) completedWorld = 5;
-    const char* wname = kWorldNames[completedWorld - 1];
+    const char* wname = WorldName(completedWorld);
     int collected = decor_ ? decor_->GetCollected()      : 0;
     int total     = decor_ ? decor_->GetTotalTreasures() : 0;
     const char* header = (completedWorld >= kMaxWorld)
@@ -799,11 +804,7 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
 
 void GalaxyEggbertGame::UpdateLost(float dt) {
     (void)dt;
-    static const char* kWorldNames[] = {
-        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
-    };
-    const char* wname = (currentWorld_ >= 1 && currentWorld_ <= 5)
-                        ? kWorldNames[currentWorld_ - 1] : "Unknown";
+    const char* wname = WorldName(currentWorld_);
     char buf[256];
     std::snprintf(buf, sizeof(buf),
         "GAME OVER\n\nFell on World %d: %s\n\nPress any key to restart...",
@@ -823,7 +824,7 @@ void GalaxyEggbertGame::ResetLevel() {
     lives_                  = 3;
     currentWorld_           = 1;
     prevCollected_          = 0;
-    keys49_ = keys50_ = keys51_ = 0;
+    keysRed_ = keysGreen_ = keysBlue_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
     controlsHintTimer_      = 8.0f;
@@ -840,19 +841,15 @@ void GalaxyEggbertGame::UpdatePause(float dt) {
     (void)dt;
     auto* input = context_->GetSubsystem<Input>();
 
-    static const char* kWorldNames[] = {
-        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
-    };
-    const char* wname = (currentWorld_ >= 1 && currentWorld_ <= 5)
-                        ? kWorldNames[currentWorld_ - 1] : "Unknown";
+    const char* wname = WorldName(currentWorld_);
     int pauseCollected = decor_ ? decor_->GetCollected()      : 0;
     int pauseTotal     = decor_ ? decor_->GetTotalTreasures() : 0;
     char keyLine[64] = "";
-    if (keys49_ + keys50_ + keys51_ > 0)
+    if (keysRed_ + keysGreen_ + keysBlue_ > 0)
         std::snprintf(keyLine, sizeof(keyLine), "\nKeys:%s%s%s",
-            keys49_ > 0 ? " Red"   : "",
-            keys50_ > 0 ? " Green" : "",
-            keys51_ > 0 ? " Blue"  : "");
+            keysRed_ > 0 ? " Red"   : "",
+            keysGreen_ > 0 ? " Green" : "",
+            keysBlue_ > 0 ? " Blue"  : "");
     char buf[320];
     std::snprintf(buf, sizeof(buf),
         "PAUSED\n\nWorld %d: %s\nLives: %d   Treasures: %d/%d%s\n\nESC: resume   S: settings",
