@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 72)
+## Current state (as of Phase 74)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,12 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Star rating on win screen (Phase 74): `winStars_` (1–3) computed in `EnterPhase(Win)` from
+  `collected/total`; displayed as "[ * * * ]"/"[ * * ]"/"[ * ]" in header line of win overlay;
+  3 stars = 100%, 2 stars = 50%+, 1 star = any; `winStars_` reset with other per-level state
+- Time speed bonus on win (Phase 73): `timeBonus_` computed once in `EnterPhase(Win)`;
+  `<60s=+200, <120s=+100, <180s=+50`; added to `score_`; shown as "Time bonus: +N" in win overlay;
+  reset in per-level state reset functions
 - Stomp camera shake + combo multiplier (Phase 72): `camera_->StartShake(0.12f, 0.2f)` on each stomp
   kill; `stompCombo_` counter increments on each stomp within 1.5 s window (`stompComboTimer_`);
   score = 25 × combo (25/50/75…); popup shows "+50 x2!" format; combo resets when timer expires or
@@ -340,6 +346,28 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 74 — Star rating on win screen
+
+Status: **DONE**
+
+- `winStars_` (int, per-level) computed in `EnterPhase(Win)`: 3 if collected==total or total==0,
+  2 if collected×2≥total, else 1
+- Displayed in `UpdateWin` header as "LEVEL COMPLETE!  [ * * * ]" using static `kStars[]` table
+- Bracket notation `[ * ]`/`[ * * ]`/`[ * * * ]` chosen for ASCII compatibility with any font
+- `winStars_` reset in `SelectGamer`, `AdvanceToNextWorld`, `ResetLevel`, F-key world jump
+
+---
+
+## Phase 73 — Time bonus on level complete
+
+Status: **DONE**
+
+- `timeBonus_` (int, per-level) computed once in `EnterPhase(Win)`: `<60s=+200, <120s=+100, <180s=+50, else=0`
+- Added to `score_` immediately; `UpdateWin` shows "Time bonus: +N" on the time line if >0
+- `timeBonus_` reset in all per-level reset paths
 
 ---
 
