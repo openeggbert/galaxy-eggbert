@@ -127,21 +127,18 @@ void Blupi::UpdateShadow() {
     int wx = static_cast<int>(std::round(pos.x_)) + wcx_;
     int wz = static_cast<int>(std::round(pos.z_)) + wcz_;
     int startWY = static_cast<int>(std::floor(pos.y_ - kHalfH - 0.05f));
-    float shadowY = -999.0f;
+    float groundTop = -999.0f;
     for (int wy = startWY; wy >= 0 && startWY - wy < 20; --wy) {
         if (IsSolid(wx, wy, wz)) {
-            shadowY = static_cast<float>(wy) + 0.52f;
+            groundTop = static_cast<float>(wy) + 0.5f; // block top surface Y
             break;
         }
     }
-    if (shadowY > -900.0f) {
-        float groundTop = shadowY - 0.52f + 0.5f; // = wy + 0.5f
-        float height    = std::max(0.0f, (pos.y_ - kHalfH) - groundTop);
-        float scale     = std::max(0.25f, 0.55f - height * 0.025f);
+    if (groundTop > -900.0f) {
+        float height = std::max(0.0f, (pos.y_ - kHalfH) - groundTop);
+        float scale  = std::max(0.25f, 0.55f - height * 0.025f);
         shadowNode_->SetEnabled(true);
-        // Place shadow just above block top surface (groundTop + 0.5 = shadowY - 0.02)
-        shadowNode_->SetPosition(Vector3(pos.x_, groundTop + 0.52f, pos.z_));
-        // Y scale 0.01 makes Box.mdl (1x1x1) into a flat 0.01-unit-thick disc.
+        shadowNode_->SetPosition(Vector3(pos.x_, groundTop + 0.02f, pos.z_));
         shadowNode_->SetScale(Vector3(scale, 0.01f, scale));
     } else {
         shadowNode_->SetEnabled(false);
