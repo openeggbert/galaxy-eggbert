@@ -237,8 +237,8 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
                 "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
                 &type, &stepAdv, &psx, &psy, &pex, &pey);
 
-            bool supported = (type == 2 || type == 3 || type == 4 || type == 5 ||
-                              type == 6 || type == 7 || type == 16 || type == 20 ||
+            bool supported = (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 ||
+                              type == 6 || type == 7 || type == 16 || type == 17 || type == 20 ||
                               type == 25 || type == 49 || type == 50 || type == 51);
             if (!supported) continue;
 
@@ -525,6 +525,11 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel10);
             prevCollected_ = collected;
         }
+
+        // Apply platform carry after all object updates.
+        Vector3 carry = decor_->GetPlatformDelta();
+        if ((carry.x_ != 0.0f || carry.z_ != 0.0f) && blupi_)
+            blupi_->ApplyExternalDelta(carry);
 
         if (decor_->WasExitReached()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel57);

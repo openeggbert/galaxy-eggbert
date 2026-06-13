@@ -37,11 +37,15 @@ int Decor::GetIcon(const Object& obj) const {
     static const int kBulldozer[8] = {66,66,67,67,66,66,65,65};
     // Bird (table_oiseau_left): icons 98-105, phase / 6 at 60 fps.
     static const int kBird[8] = {98,99,100,101,102,103,104,105};
+    // Fish (table_poisson_left): icons 81-83 wobble, phase / 6 at 60 fps.
+    static const int kFish[8] = {82,82,81,81,82,82,83,83};
     switch (obj.type) {
+        case ObjectType::ObjectType1:  return 29;                      // platform: static
         case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;       // enemy A: icons 12-20
         case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;       // enemy B: icons 48-56
         case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8]; // bulldozer
         case ObjectType::ObjectType16: return 69 + (p / 3) % 9;        // spider: icons 69-77
+        case ObjectType::ObjectType17: return kFish[(p / 6) % 8];      // fish
         case ObjectType::ObjectType20: return kBird[(p / 6) % 8];      // bird
         case ObjectType::ObjectType5: {                             // treasure: 0→10→0 bounce
             int q = (p / 9) % 22;
@@ -85,15 +89,30 @@ bool Decor::TouchesBlupi(const Object& obj, Vector3 blupiPos) const {
 }
 
 void Decor::Update(float dt, Vector3 blupiPos) {
-    exitReached_ = false;
-    blupiHit_    = false;
+    exitReached_  = false;
+    blupiHit_     = false;
+    platformDelta_ = Vector3::ZERO;
 
     for (int i = 0; i < objCount_; ++i) {
         Object& obj = objects_[i];
         if (!obj.active) continue;
 
+        const Vector3 oldPos = obj.pos;
         StepMovement(obj, dt);
         ++obj.animPhase;
+
+        // Platform carry: if Blupi is horizontally within 0.85 units and
+        // within 1.5 units vertically, push Blupi with the platform's XZ delta.
+        if (obj.type == ObjectType::ObjectType1) {
+            Vector3 delta = obj.pos - oldPos;
+            float dx = obj.pos.x_ - blupiPos.x_;
+            float dz = obj.pos.z_ - blupiPos.z_;
+            if (std::sqrt(dx*dx + dz*dz) < 0.85f &&
+                std::abs(obj.pos.y_ - blupiPos.y_) < 1.5f) {
+                platformDelta_.x_ += delta.x_;
+                platformDelta_.z_ += delta.z_;
+            }
+        }
 
         obj.node->UpdateIcon(GetIcon(obj));
         obj.node->SetPosition(obj.pos);
@@ -126,6 +145,7 @@ void Decor::Update(float dt, Vector3 blupiPos) {
             case ObjectType::ObjectType3:
             case ObjectType::ObjectType4:
             case ObjectType::ObjectType16:
+            case ObjectType::ObjectType17:
             case ObjectType::ObjectType20:
                 blupiHit_ = true;
                 break;

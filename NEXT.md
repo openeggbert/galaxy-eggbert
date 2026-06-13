@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 20)
+## Current state (as of Phase 21)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -60,6 +60,10 @@ or the original Windows Phone game.
   - `blupiPos=` header parsed → stored as `blupiSpawn_`; Blupi spawns at correct world position
   - Fall-through-floor respawn uses `spawn_` (no longer hardcoded to origin)
 - ObjectType4 (bulldozer) and ObjectType20 (bird) added as patrol enemies
+- ObjectType17 (fish): patrol enemy using `table_poisson_left` icons 81–83
+- ObjectType1 (platform lift): moves between posStart↔posEnd carrying Blupi
+  - `Decor::GetPlatformDelta()` returns XZ carry delta; applied via `Blupi::ApplyExternalDelta`
+  - Carry activated when Blupi is within 0.85 units horizontally and 1.5 units vertically
 - `ObjectNode` tile dimensions fixed: 60×60 px tiles, 10 cols (was wrong 64×9)
 
 **Architecture (subsystem classes):**
@@ -125,6 +129,17 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 21 — Fish enemy + moving platform lift
+
+Status: **DONE**
+
+- `ObjectType17` (fish): patrol enemy; `table_poisson_left` icons {82,82,81,81,82,82,83,83}; damages Blupi on contact
+- `ObjectType1` (platform lift): moves between posStart↔posEnd; `Decor::GetPlatformDelta()` returns the XZ delta carried by platforms Blupi is riding; applied in `UpdatePlay` via `Blupi::ApplyExternalDelta`
+- Both added to `LoadMobileEggbertTerrain` supported-types list
+- 18 platform and 10 fish objects now active in real world files
 
 ---
 

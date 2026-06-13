@@ -38,13 +38,15 @@ public:
 
     void Update(float dt, Urho3D::Vector3 blupiPos);
 
-    bool WasExitReached()     const { return exitReached_;     }
-    bool WasBlupiHit()        const { return blupiHit_;        }
-    bool WasShieldCollected() const { return shieldCollected_; }
-    int  GetCollected()       const { return collected_;       }
-    int  GetTotalTreasures()  const { return totalTreasures_;  }
-    int  GetKeysCollected()   const { return keysCollected_;   }
-    void ClearEvents()              { exitReached_ = blupiHit_ = shieldCollected_ = false; }
+    bool    WasExitReached()     const { return exitReached_;     }
+    bool    WasBlupiHit()        const { return blupiHit_;        }
+    bool    WasShieldCollected() const { return shieldCollected_; }
+    int     GetCollected()       const { return collected_;       }
+    int     GetTotalTreasures()  const { return totalTreasures_;  }
+    int     GetKeysCollected()   const { return keysCollected_;   }
+    // XZ delta accumulated by all platforms that Blupi is riding this frame.
+    Urho3D::Vector3 GetPlatformDelta() const { return platformDelta_; }
+    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = false; }
 
 private:
     int  GetIcon(const Object& obj) const;
@@ -55,10 +57,11 @@ private:
     Urho3D::Scene*   scene_;
     std::array<Object, kMaxObjects> objects_{};
     int  objCount_    = 0;
-    bool exitReached_     = false;
-    bool blupiHit_        = false;
-    bool shieldCollected_ = false;
-    int  collected_       = 0;
-    int  totalTreasures_  = 0;
-    int  keysCollected_   = 0;
+    bool            exitReached_     = false;
+    bool            blupiHit_        = false;
+    bool            shieldCollected_ = false;
+    int             collected_       = 0;
+    int             totalTreasures_  = 0;
+    int             keysCollected_   = 0;
+    Urho3D::Vector3 platformDelta_{0.0f, 0.0f, 0.0f};
 };

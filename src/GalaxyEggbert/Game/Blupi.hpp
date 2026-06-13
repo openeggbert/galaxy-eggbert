@@ -29,6 +29,9 @@ public:
     void Update(float dt);
     void Respawn();
     void SetSpawnPoint(Urho3D::Vector3 pos) { spawn_ = pos; }
+    void ApplyExternalDelta(Urho3D::Vector3 delta) {
+        if (node_) node_->SetPosition(node_->GetPosition() + delta);
+    }
 
     Urho3D::Node*   GetNode()            const { return node_; }
     Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
