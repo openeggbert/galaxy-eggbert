@@ -1,11 +1,13 @@
 #pragma once
 #include "../GEEngine.hpp"
 
-// One-shot death explosion: plays table_explo1 (39 frames, icons 0-11) from explo.png.
+// One-shot explosion: plays table_explo1 (39 frames, icons 0-11) from explo.png.
+// scale controls world-unit size (1.0 = death explosion 1.5 units; 0.4 = pickup sparkle).
 // Call Update(dt) each frame; it returns false when the animation finishes.
 class Explosion {
 public:
-    Explosion(Urho3D::Context* ctx, Urho3D::Scene* scene, Urho3D::Vector3 pos);
+    Explosion(Urho3D::Context* ctx, Urho3D::Scene* scene, Urho3D::Vector3 pos,
+              float scale = 1.0f);
     ~Explosion();
     bool Update(float dt);
 

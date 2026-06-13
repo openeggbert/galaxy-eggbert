@@ -76,7 +76,7 @@ private:
     std::unique_ptr<HUD>              hud_;
     std::unique_ptr<PhaseManager>     phases_;
     std::unique_ptr<SoundManager>     sound_;
-    std::unique_ptr<Explosion>        explosion_;
+    std::vector<std::unique_ptr<Explosion>>  explosions_;
     std::vector<std::unique_ptr<ScorePopup>> popups_;
 
     std::vector<MobileObjSpec> mobileObjects_;

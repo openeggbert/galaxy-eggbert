@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 60)
+## Current state (as of Phase 61)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,11 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Multiple simultaneous explosions (Phase 61): `explosions_` vector replaces single `explosion_`
+  unique_ptr; all 3 death paths + stomp push_back; ticked with `remove_if(!e->Update(dt))`
+- Pickup sparkle (Phase 61): `Explosion` constructor takes optional `float scale = 1.0f`;
+  `bb->size_ = Vector2(1.5*scale, 1.5*scale)`; treasure/key/egg/drink collection spawns
+  a scale-0.4 mini-explosion alongside the score popup; death explosions remain scale-1.0
 
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to

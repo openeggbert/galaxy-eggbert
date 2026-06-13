@@ -10,7 +10,7 @@ const int Explosion::kSeq[kTotal] = {
     7, 8, 8, 9, 9, 10, 10, 11, 11
 };
 
-Explosion::Explosion(Context* ctx, Scene* scene, Vector3 pos) {
+Explosion::Explosion(Context* ctx, Scene* scene, Vector3 pos, float scale) {
     auto* cache = ctx->GetSubsystem<ResourceCache>();
     node_ = scene->CreateChild("Explosion");
     node_->SetPosition(pos);
@@ -30,7 +30,7 @@ Explosion::Explosion(Context* ctx, Scene* scene, Vector3 pos) {
 
     Billboard* bb = sprite_->GetBillboard(0);
     bb->position_ = Vector3::ZERO;
-    bb->size_     = Vector2(1.5f, 1.5f);
+    bb->size_     = Vector2(1.5f * scale, 1.5f * scale);
     bb->enabled_  = true;
     SetFrame(kSeq[0]);
 }
