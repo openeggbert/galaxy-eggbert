@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 14)
+## Current state (as of Phase 15)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -44,6 +44,9 @@ or the original Windows Phone game.
   - Accessible via S key from Init (main menu) or Pause
   - `SoundManager::SetEnabled(bool)`: mutes all channels; `Play()` is no-op when disabled
 - 54 unit tests pass for `Worlds/` data model (engine-independent)
+- Windows build: `GalaxyEggbert.exe` (PE32+, x86-64) via MinGW-w64 cross-compile
+  - `build-windows/` configured with `cmake/toolchains/mingw-w64.cmake` + U3D Windows build
+  - Statically linked: `-static-libgcc -static-libstdc++`; Windows system libs include `iphlpapi`
 
 **Architecture (subsystem classes):**
 ```
@@ -94,26 +97,25 @@ src/GalaxyEggbert/
 
 ## Phase 15 — Windows build (MinGW cross-compile)
 
-Status: **CMake ready, needs U3D Windows build.**
+Status: **DONE** — `build-windows/GalaxyEggbert.exe` (PE32+, x86-64, 22 MB).
 
-1. Build U3D for Windows:
-   ```bash
-   cmake -S /rv/data/library/github.com/u3d-community/U3D \
-         -B /rv/data/library/github.com/u3d-community/U3D/build-windows \
-         -DCMAKE_TOOLCHAIN_FILE=cmake/Toolchains/MinGW.cmake
-   ninja -C /rv/data/library/github.com/u3d-community/U3D/build-windows -j2 Urho3D
-   ```
-2. Configure galaxy-eggbert:
-   ```bash
-   cmake -S . -B build-windows \
-         -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-         -DGALAXY_EGGBERT_ENGINE=U3D \
-         -DU3D_HOME=/rv/data/library/github.com/u3d-community/U3D/build-windows
-   ```
+Build commands (for reference):
+```bash
+# U3D Windows library (already built at build-windows/lib/libUrho3D.a):
+make -C /rv/data/library/github.com/u3d-community/U3D/build-windows -j2 Urho3D
+
+# Galaxy Eggbert Windows executable:
+cmake -S . -B build-windows \
+      -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+      -DGALAXY_EGGBERT_ENGINE=U3D \
+      -DU3D_HOME=/rv/data/library/github.com/u3d-community/U3D/build-windows \
+      -DBUILD_TESTING=OFF
+cmake --build build-windows --target GalaxyEggbert -j2
+```
 
 ---
 
-## Android
+## Phase 16 — Android build (U3D)
 
 Status: **Not yet implemented for U3D.**
 
@@ -122,7 +124,7 @@ Steps: build U3D AAR → set `BUILD_STAGING_DIR` → remove `FATAL_ERROR` guard 
 
 ---
 
-## Web (Emscripten)
+## Phase 17 — Web build (Emscripten)
 
 Status: **Not yet implemented for U3D.**
 

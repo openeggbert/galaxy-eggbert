@@ -201,6 +201,15 @@ if(_engine STREQUAL "U3D")
         target_link_libraries(${_target} PRIVATE GL dl m rt pthread)
     endif()
 
+    if(WIN32)
+        target_link_libraries(${_target} PRIVATE
+            opengl32 gdi32 winmm imm32 ole32 oleaut32 setupapi version uuid ws2_32 iphlpapi)
+    endif()
+
+    if(MINGW)
+        target_link_options(${_target} PRIVATE -static-libgcc -static-libstdc++)
+    endif()
+
     # Copy Data/ and CoreData/ next to the executable (desktop only).
     if(NOT ANDROID AND NOT EMSCRIPTEN)
         foreach(_dir Data CoreData)
