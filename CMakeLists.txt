@@ -199,14 +199,16 @@ if(_engine STREQUAL "U3D")
     )
 
     if(EMSCRIPTEN)
-        # Emscripten: memory, filesystem, embind, and content preloading.
+        # Emscripten: memory, filesystem, embind, shell, and content preloading.
         set(_u3d_desktop "/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug")
+        set(_u3d_web    "/rv/data/library/github.com/u3d-community/U3D/build-web")
         target_link_libraries(${_target} PRIVATE embind)
         target_link_options(${_target} PRIVATE
             -sALLOW_MEMORY_GROWTH=1
             -sINITIAL_MEMORY=134217728
             -sNO_EXIT_RUNTIME=1
             -sFORCE_FILESYSTEM=1
+            "SHELL:--shell-file ${_u3d_web}/bin/shell.html"
             "SHELL:--preload-file ${_u3d_desktop}/bin/Data@/Data"
             "SHELL:--preload-file ${_u3d_desktop}/bin/CoreData@/CoreData"
             "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content@/Content"
