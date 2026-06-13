@@ -229,9 +229,9 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
 
             // Only place types we handle; skip unknown/complex ones.
             ObjectType ot = static_cast<ObjectType>(type);
-            bool supported = (type == 2 || type == 3 || type == 5 || type == 6 ||
-                              type == 7 || type == 16 || type == 25 ||
-                              type == 49 || type == 50 || type == 51);
+            bool supported = (type == 2 || type == 3 || type == 4 || type == 5 ||
+                              type == 6 || type == 7 || type == 16 || type == 20 ||
+                              type == 25 || type == 49 || type == 50 || type == 51);
             if (!supported) continue;
 
             auto pixToV3 = [&](int px, int py) -> Vector3 {
@@ -245,6 +245,14 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
             spec.posStart = pixToV3(psx, psy);
             spec.posEnd   = pixToV3(pex, pey);
             spec.speed    = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
+
+            // Patrol enemies saved with posStart==posEnd — assign default ±2 tile X range.
+            bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20);
+            if (isPatrol && spec.posStart.x_ == spec.posEnd.x_ &&
+                            spec.posStart.z_ == spec.posEnd.z_) {
+                spec.posStart.x_ -= 2.0f;
+                spec.posEnd.x_   += 2.0f;
+            }
             mobileObjects_.push_back(spec);
             continue;
         }

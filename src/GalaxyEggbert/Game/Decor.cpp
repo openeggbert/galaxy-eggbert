@@ -33,10 +33,16 @@ int Decor::GetIcon(const Object& obj) const {
     static const int kCle3[12] = {229,228,227,226,225,224,223,224,225,226,227,228};
     // Shield first 8 frames only (icons 144-151); frames 9-16 are outside element.png bounds.
     static const int kShield[8] = {144,145,146,147,148,149,150,151};
+    // Bulldozer (table_bulldozer_left): icons 65,66,67 cycling, phase / 9 at 60 fps.
+    static const int kBulldozer[8] = {66,66,67,67,66,66,65,65};
+    // Bird (table_oiseau_left): icons 98-105, phase / 6 at 60 fps.
+    static const int kBird[8] = {98,99,100,101,102,103,104,105};
     switch (obj.type) {
-        case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;   // enemy A: icons 12-20
-        case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;   // enemy B: icons 48-56
-        case ObjectType::ObjectType16: return 69 + (p / 3) % 9;   // spider:  icons 69-77
+        case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;       // enemy A: icons 12-20
+        case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;       // enemy B: icons 48-56
+        case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8]; // bulldozer
+        case ObjectType::ObjectType16: return 69 + (p / 3) % 9;        // spider: icons 69-77
+        case ObjectType::ObjectType20: return kBird[(p / 6) % 8];      // bird
         case ObjectType::ObjectType5: {                             // treasure: 0→10→0 bounce
             int q = (p / 9) % 22;
             return (q < 11) ? q : (21 - q);
@@ -118,7 +124,9 @@ void Decor::Update(float dt, Vector3 blupiPos) {
                 break;
             case ObjectType::ObjectType2:
             case ObjectType::ObjectType3:
+            case ObjectType::ObjectType4:
             case ObjectType::ObjectType16:
+            case ObjectType::ObjectType20:
                 blupiHit_ = true;
                 break;
             default:

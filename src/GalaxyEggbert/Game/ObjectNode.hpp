@@ -2,7 +2,7 @@
 #include "../GEEngine.hpp"
 
 // Urho3D scene node for one game object — billboard UV-mapped from element.png.
-// element.png: 600x1740 px, 64x64 tiles, 9 cols x 27 rows, 243 icons.
+// element.png: 600×1740 px, 60×60 px tiles, 10 cols × 29 rows, 290 icons.
 class ObjectNode {
 public:
     ObjectNode(Urho3D::Context* context, Urho3D::Scene* scene);
@@ -19,6 +19,6 @@ private:
 
     static constexpr float kSheetW = 600.0f;
     static constexpr float kSheetH = 1740.0f;
-    static constexpr float kTile   =  64.0f;
-    static constexpr int   kCols   =   9;
+    static constexpr float kTile   =  60.0f;
+    static constexpr int   kCols   =  10;
 };

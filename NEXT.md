@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 18)
+## Current state (as of Phase 19)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -54,8 +54,11 @@ or the original Windows Phone game.
 - Real levels: `LoadMobileEggbertTerrain()` parses mobile-eggbert `.txt` world files
   - `worlds/world00N.txt` (from mobile-eggbert world01N.txt) loaded automatically when present
   - Terrain built from 100×100 Decor grid; tile IDs mapped via `BlockTypes::fromMobileIconId()`
-  - MoveObjects parsed: types 2,3,5,6,7,16,25,49,50,51 placed as Decor objects
+  - MoveObjects parsed: types 2,3,4,5,6,7,16,20,25,49,50,51 placed as Decor objects
+  - Patrol enemies with posStart==posEnd get default ±2 tile X patrol range
   - World centered on Blupi spawn position from `blupiPos=` header
+- ObjectType4 (bulldozer) and ObjectType20 (bird) added as patrol enemies
+- `ObjectNode` tile dimensions fixed: 60×60 px tiles, 10 cols (was wrong 64×9)
 
 **Architecture (subsystem classes):**
 ```
@@ -72,10 +75,9 @@ src/GalaxyEggbert/Game/
 ```
 
 **Not yet done:**
-- Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
-- Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer)
+- Vehicles and advanced object types (helicopter, jeep, skateboard, bulldozer — player-mode state machine)
 - Animated 3D model for Blupi (currently billboard placeholder)
-- Windows, Android, Web platform builds
+- Android and Web (Emscripten) platform builds
 
 ---
 
@@ -124,6 +126,19 @@ cmake --build build-windows --target GalaxyEggbert -j2
 
 ---
 
+## Phase 19 — New enemy types + ObjectNode sprite fix
+
+Status: **DONE**
+
+- `ObjectNode` sprite UV fixed: 60×60 px tiles, 10 cols (was erroneously 64 px/9 cols)
+- `ObjectType4` (bulldozer): patrol enemy using `table_bulldozer_left` icons 65–67
+- `ObjectType20` (bird): patrol enemy using `table_oiseau_left` icons 98–105
+- Both damage Blupi on contact (same as ObjectType2/3)
+- `LoadMobileEggbertTerrain` now parses types 4 and 20; stationary patrol enemies
+  get a default ±2 tile X patrol range
+
+---
+
 ## Phase 18 — Real mobile-eggbert world loading
 
 Status: **DONE** — `LoadMobileEggbertTerrain()` in GalaxyEggbertGame.cpp.
@@ -157,7 +172,7 @@ Status: **DONE** — `HUD.cpp` rewritten with `BorderImage` sprite icons.
 
 ---
 
-## Phase 17 — Android build (U3D)
+## Phase 19 — Android build (U3D)
 
 Status: **Not yet implemented for U3D.**
 
@@ -166,7 +181,7 @@ Steps: build U3D AAR → set `BUILD_STAGING_DIR` → remove `FATAL_ERROR` guard 
 
 ---
 
-## Phase 18 — Web build (Emscripten)
+## Phase 20 — Web build (Emscripten)
 
 Status: **Not yet implemented for U3D.**
 
