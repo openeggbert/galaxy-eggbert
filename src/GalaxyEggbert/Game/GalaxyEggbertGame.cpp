@@ -518,15 +518,32 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (blupi_ && blupi_->WasJumpedThisFrame() && sound_)
         sound_->Play(SoundChannel::SoundChannel1);
 
+    // Fall death: deduct life, respawn with invincibility
+    if (blupi_ && blupi_->WasFallDeath()) {
+        blupi_->ClearFallDeath();
+        --lives_;
+        if (lives_ <= 0) {
+            gameData_.SetNbVies(3);
+            gameData_.Write(savePath_);
+            EnterPhase(GamePhase::Lost);
+            return;
+        }
+        gameData_.SetNbVies(lives_);
+        gameData_.Write(savePath_);
+        blupi_->Respawn();
+        respawnInvincibleTimer_ = 2.0f;
+    }
+
     Vector3 pos = blupi_ ? blupi_->GetPosition() : Vector3::ZERO;
     float   yaw = blupi_ ? blupi_->GetFacingYaw() : 0.0f;
     camera_->Update(dt, pos, yaw);
 
-    // Shield countdown
+    // Countdown timers
     if (shieldTimer_ > 0.0f) shieldTimer_ -= dt;
+    if (respawnInvincibleTimer_ > 0.0f) respawnInvincibleTimer_ -= dt;
 
-    // Tile hazard check — only when standing on ground
-    if (blupi_ && blupi_->IsOnGround() && world_ && shieldTimer_ <= 0.0f) {
+    // Tile hazard check — only when standing on ground and not invincible
+    if (blupi_ && blupi_->IsOnGround() && world_ && shieldTimer_ <= 0.0f && respawnInvincibleTimer_ <= 0.0f) {
         int wx = static_cast<int>(std::round(pos.x_)) + kWCX;
         int wz = static_cast<int>(std::round(pos.z_)) + kWCZ;
         int wy = static_cast<int>(std::floor(pos.y_ - Blupi::kHalfH));
@@ -547,6 +564,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 gameData_.SetNbVies(lives_);
                 gameData_.Write(savePath_);
                 blupi_->Respawn();
+                respawnInvincibleTimer_ = 2.0f;
                 pos = blupi_->GetPosition();
             }
         }
@@ -589,7 +607,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             EnterPhase(GamePhase::Win);
             return;
         }
-        if (decor_->WasBlupiHit() && shieldTimer_ <= 0.0f) {
+        if (decor_->WasBlupiHit() && shieldTimer_ <= 0.0f && respawnInvincibleTimer_ <= 0.0f) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel8);
             --lives_;
             if (lives_ <= 0) {
@@ -601,6 +619,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             gameData_.SetNbVies(lives_);
             gameData_.Write(savePath_);
             if (blupi_) blupi_->Respawn();
+            respawnInvincibleTimer_ = 2.0f;
         }
         decor_->ClearEvents();
     }
@@ -617,9 +636,10 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
         gameData_.SetLastWorld(1);
         gameData_.Write(savePath_);
     }
-    prevCollected_ = 0;
-    keysCollected_ = 0;
-    shieldTimer_   = 0.0f;
+    prevCollected_          = 0;
+    keysCollected_          = 0;
+    shieldTimer_            = 0.0f;
+    respawnInvincibleTimer_ = 0.0f;
     decor_.reset();
     blupi_.reset();
     LoadWorld(currentWorld_);
@@ -649,11 +669,12 @@ void GalaxyEggbertGame::UpdateLost(float dt) {
 }
 
 void GalaxyEggbertGame::ResetLevel() {
-    lives_         = 3;
-    currentWorld_  = 1;
-    prevCollected_ = 0;
-    keysCollected_ = 0;
-    shieldTimer_   = 0.0f;
+    lives_                  = 3;
+    currentWorld_           = 1;
+    prevCollected_          = 0;
+    keysCollected_          = 0;
+    shieldTimer_            = 0.0f;
+    respawnInvincibleTimer_ = 0.0f;
     gameData_.SetNbVies(3);
     gameData_.SetLastWorld(1);
     gameData_.Write(savePath_);

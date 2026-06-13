@@ -13,7 +13,7 @@
 // Full Decor port (tile events, all enemy AI, vehicles) is future work.
 class Decor {
 public:
-    static constexpr int kMaxObjects = 50;
+    static constexpr int kMaxObjects = 100;
 
     struct Object {
         GalaxyEggbert::ObjectType  type      = GalaxyEggbert::ObjectType::ObjectType0;

@@ -189,6 +189,7 @@ void Blupi::Update(float dt) {
     ResolveXZ(pos);
 
     if (pos.y_ < -10.0f) {
+        fallDeath_ = true;
         SpawnAt(spawn_);
         return;
     }

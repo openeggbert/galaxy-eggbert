@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 25)
+## Current state (as of Phase 26)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -82,6 +82,10 @@ or the original Windows Phone game.
   per world; region parsed from `region=` in .txt header (`postopaque`, no depth write)
 - Strafe movement: A/D keys strafe Blupi left/right without rotating
 - ObjectType33 (blupit tank): `table_blupit_left` icons 248-250; patrol enemy, kills on contact
+- Fall-death life deduction: falling off map now deducts a life (previously free respawn)
+- Respawn invincibility: 2 s grace period after any respawn; tile hazards and enemy hits
+  are skipped while `respawnInvincibleTimer_ > 0`
+- `kMaxObjects` increased from 50 → 100 (worlds 3–5 have up to 57 objects)
 
 **Architecture (subsystem classes):**
 ```
@@ -146,6 +150,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 26 — Fall-death life deduction + respawn invincibility + kMaxObjects fix
+
+Status: **DONE**
+
+- Fall death: `Blupi::Update()` sets `fallDeath_ = true` before `SpawnAt()` when `pos.y_ < -10`;
+  `GalaxyEggbertGame::UpdatePlay()` reads `WasFallDeath()`, deducts a life, handles Lost phase,
+  clears flag via `ClearFallDeath()`
+- Respawn invincibility: `respawnInvincibleTimer_` (2 s) set after every respawn path (fall death,
+  tile hazard, enemy hit); tile hazard check and `WasBlupiHit()` both guarded with `<= 0.0f`;
+  reset to 0 in `ResetLevel()` and `AdvanceToNextWorld()`
+- `kMaxObjects` in `Decor.hpp` increased from 50 → 100; worlds 3/4/5 need 52/57/50 slots
 
 ---
 
