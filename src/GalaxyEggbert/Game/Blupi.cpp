@@ -30,8 +30,11 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     }
 
     Billboard* bb = sprite_->GetBillboard(0);
-    bb->position_ = Vector3::ZERO;
-    // Sprite tile is 60×60 px in a 64-px grid → visual size = 60/64 units.
+    // Offset the billboard center upward so the sprite's bottom aligns with
+    // the physics feet (center - kHalfH). Without this offset the lower part
+    // of the sprite clips into the block surface.
+    static constexpr float kVisHalf = 60.0f / 64.0f / 2.0f; // half visual height
+    bb->position_ = Vector3(0.0f, kVisHalf - kHalfH, 0.0f);
     bb->size_     = Vector2(60.0f / 64.0f, 60.0f / 64.0f);
     bb->enabled_  = true;
     sprite_->Commit();

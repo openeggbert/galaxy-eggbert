@@ -105,66 +105,81 @@ void GalaxyEggbertGame::CreateScene() {
 }
 
 void GalaxyEggbertGame::BuildDemoWorld() {
-    const int R = 15;
-    for (int dz = -R; dz <= R; ++dz) {
-        for (int dx = -R; dx <= R; ++dx) {
-            int wx = kWCX + dx, wz = kWCZ + dz;
-            if (wx < 0 || wz < 0 || wx >= 100 || wz >= 100) continue;
-            world_->setBlock(static_cast<uint16_t>(wx), 0, static_cast<uint16_t>(wz),
-                             Block::make(BlockTypes::Ground));
-        }
-    }
-    for (int dx = -R; dx <= R; ++dx) {
-        auto wall = [&](int wx, int wz) {
-            if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100) {
-                world_->setBlock(static_cast<uint16_t>(wx), 1, static_cast<uint16_t>(wz), Block::make(BlockTypes::Wall));
-                world_->setBlock(static_cast<uint16_t>(wx), 2, static_cast<uint16_t>(wz), Block::make(BlockTypes::Wall));
-            }
-        };
-        wall(kWCX + dx, kWCZ - R); wall(kWCX + dx, kWCZ + R);
-        wall(kWCX - R, kWCZ + dx); wall(kWCX + R, kWCZ + dx);
-    }
-    struct Plat { int dx, dz, h; uint16_t type; };
-    const Plat platforms[] = {
-        { 10,  0, 1, BlockTypes::StoneA },
-        {-10,  0, 1, BlockTypes::StoneB },
-        {  0, 10, 1, BlockTypes::Platform },
-        {  0,-10, 1, BlockTypes::Sp0 },
-        { 10, 10, 1, BlockTypes::StoneA }, { 10, 10, 2, BlockTypes::StoneA },
-        {-10, 10, 1, BlockTypes::StoneB }, {-10, 10, 2, BlockTypes::StoneB },
-        { 10,-10, 1, BlockTypes::Wall   }, { 10,-10, 2, BlockTypes::Wall   },
-        {-10,-10, 1, BlockTypes::StoneA }, {-10,-10, 2, BlockTypes::StoneA },
-    };
-    for (const auto& p : platforms) {
-        int wx = kWCX + p.dx, wz = kWCZ + p.dz;
+    auto setBlock = [&](int dx, int h, int dz, uint16_t type) {
+        int wx = kWCX + dx, wz = kWCZ + dz;
         if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100)
             world_->setBlock(static_cast<uint16_t>(wx),
-                             static_cast<uint16_t>(p.h),
-                             static_cast<uint16_t>(wz),
-                             Block::make(p.type));
+                             static_cast<uint16_t>(h),
+                             static_cast<uint16_t>(wz), Block::make(type));
+    };
+
+    // ── flat ground plane ─────────────────────────────────────────────────
+    const int R = 18;
+    for (int dz = -R; dz <= R; ++dz)
+        for (int dx = -R; dx <= R; ++dx)
+            setBlock(dx, 0, dz, BlockTypes::Ground);
+
+    // ── raised hill (h=1..3) in the east ─────────────────────────────────
+    for (int dz = -4; dz <= 4; ++dz)
+        for (int dx = 6; dx <= 12; ++dx)
+            setBlock(dx, 1, dz, BlockTypes::StoneA);
+    for (int dz = -2; dz <= 2; ++dz)
+        for (int dx = 8; dx <= 12; ++dx)
+            setBlock(dx, 2, dz, BlockTypes::StoneA);
+    for (int dz = -1; dz <= 1; ++dz)
+        setBlock(11, 3, dz, BlockTypes::StoneB);
+
+    // ── staircase up to the hill from the west ────────────────────────────
+    for (int step = 0; step < 4; ++step)
+        for (int dz = -2; dz <= 2; ++dz)
+            for (int sh = 0; sh <= step; ++sh)
+                setBlock(5 + step, sh, dz, BlockTypes::StoneA);
+
+    // ── elevated platform across the north ───────────────────────────────
+    for (int dx = -8; dx <= 0; ++dx)
+        for (int dz = 8; dz <= 12; ++dz)
+            setBlock(dx, 2, dz, BlockTypes::Platform);
+
+    // ── stone tower in the NW ─────────────────────────────────────────────
+    for (int h = 1; h <= 4; ++h)
+        for (int dz = 12; dz <= 14; ++dz)
+            for (int dx = -14; dx <= -12; ++dx)
+                setBlock(dx, h, dz, BlockTypes::Wall);
+
+    // ── stepping stones over a lava pit (SW) ─────────────────────────────
+    for (int dx = -12; dx <= -2; ++dx)
+        setBlock(dx, 0, -6, BlockTypes::Lava);
+    for (int s = 0; s < 4; ++s)
+        setBlock(-10 + s * 3, 0, -6, BlockTypes::StoneB);
+
+    // ── spike hazard strip in the south ──────────────────────────────────
+    for (int dx = -3; dx <= 3; ++dx)
+        setBlock(dx, 0, -10, BlockTypes::Spike);
+
+    // ── crusher corridor heading east ─────────────────────────────────────
+    for (int dx = 2; dx <= 5; ++dx)
+        setBlock(dx, 0, -7, BlockTypes::Crusher);
+
+    // ── water channel in the west ─────────────────────────────────────────
+    for (int dz = -4; dz <= 4; ++dz) {
+        setBlock(-8, 0, dz, BlockTypes::Water1);
+        setBlock(-9, 0, dz, BlockTypes::Water2);
     }
 
-    // Lava strip at dz=-5 (hazard zone near south area)
-    for (int dx = -3; dx <= 3; ++dx) {
-        int wx = kWCX + dx, wz = kWCZ - 5;
-        if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100)
-            world_->setBlock(static_cast<uint16_t>(wx), 0,
-                             static_cast<uint16_t>(wz),
-                             Block::make(BlockTypes::Lava));
+    // ── border walls ─────────────────────────────────────────────────────
+    for (int d = -R; d <= R; ++d) {
+        for (int h = 1; h <= 3; ++h) {
+            setBlock(d,  h, -R, BlockTypes::Wall);
+            setBlock(d,  h,  R, BlockTypes::Wall);
+            setBlock(-R, h,  d, BlockTypes::Wall);
+            setBlock( R, h,  d, BlockTypes::Wall);
+        }
     }
-    // Spike tile at (6, 4)
-    world_->setBlock(static_cast<uint16_t>(kWCX + 6), 0,
-                     static_cast<uint16_t>(kWCZ + 4),
-                     Block::make(BlockTypes::Spike));
 
-    // Extra hazards scaled by world number
+    // ── extra hazards scaled by world number ─────────────────────────────
     for (int i = 1; i < currentWorld_; ++i) {
-        int wx = kWCX - 6 + (i - 1) * 2;
-        int wz = kWCZ + 6;
-        if (wx >= 0 && wx < 100 && wz >= 0 && wz < 100)
-            world_->setBlock(static_cast<uint16_t>(wx), 0,
-                             static_cast<uint16_t>(wz),
-                             Block::make(BlockTypes::Crusher));
+        int dx = -6 + (i - 1) * 2;
+        setBlock(dx, 0, 6, BlockTypes::Crusher);
     }
 }
 
