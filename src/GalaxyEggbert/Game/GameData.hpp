@@ -51,6 +51,11 @@ public:
     int  GetNbViesForGamer(int gamer)    const { return data_[kSaveHeaderLength + kGamerLength * gamer]; }
     int  GetLastWorldForGamer(int gamer) const { return data_[kSaveHeaderLength + kGamerLength * gamer + 1]; }
 
+    // High score stored in gamer-header reserved bytes 2..5 (LE uint32, galaxy-eggbert extension).
+    int  GetHighScore()                  const { return ReadU32(GamerOffset() + 2); }
+    void SetHighScore(int v)                   { WriteU32(GamerOffset() + 2, v);   }
+    int  GetHighScoreForGamer(int gamer) const { return ReadU32(kSaveHeaderLength + kGamerLength * gamer + 2); }
+
     void GetDoors(int doors[]) const;
     void SetDoors(const int doors[]);
     void GetGamerInfo(int gamer, int& nbVies, int& mainDoors, int& secondaryDoors) const;
@@ -60,6 +65,16 @@ private:
     static int GamerOffset(int g)    { return kSaveHeaderLength + kGamerLength * g; }
     void Initialize();
     void Initialize(int gamer);
+
+    int     ReadU32(int off) const {
+        return (int)(data_[off] | (data_[off+1]<<8) | (data_[off+2]<<16) | (data_[off+3]<<24));
+    }
+    void    WriteU32(int off, int v) {
+        data_[off]   = (uint8_t)(v);
+        data_[off+1] = (uint8_t)(v >> 8);
+        data_[off+2] = (uint8_t)(v >> 16);
+        data_[off+3] = (uint8_t)(v >> 24);
+    }
 
     uint8_t data_[kTotalLength]{};
 };

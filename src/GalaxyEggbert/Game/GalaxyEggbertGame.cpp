@@ -546,10 +546,11 @@ void GalaxyEggbertGame::UpdateInit(float dt) {
     for (int i = 0; i < GameData::kMaxGamer; ++i) {
         int nbVies, mainDoors, secDoors;
         gameData_.GetGamerInfo(i, nbVies, mainDoors, secDoors);
-        int lastWorld = gameData_.GetLastWorldForGamer(i);
+        int lastWorld  = gameData_.GetLastWorldForGamer(i);
+        int highScore  = gameData_.GetHighScoreForGamer(i);
         n += std::snprintf(buf+n, sizeof(buf)-n,
-            "  [%d]  Lives: %d   World: %d   Doors: %d\n",
-            i+1, nbVies, lastWorld, mainDoors);
+            "  [%d]  Lives: %d   World: %d   Best: %d\n",
+            i+1, nbVies, lastWorld, highScore);
     }
     std::snprintf(buf+n, sizeof(buf)-n,
         "\n1/2/3: choose gamer   S: Settings");
@@ -983,10 +984,18 @@ void GalaxyEggbertGame::UpdateWin(float dt) {
                          ? "ALL WORLDS COMPLETE!" : "LEVEL COMPLETE!";
     int wMins = static_cast<int>(levelTime_) / 60;
     int wSecs = static_cast<int>(levelTime_) % 60;
-    char buf[256];
+
+    bool newBest = score_ > gameData_.GetHighScore();
+    if (newBest) {
+        gameData_.SetHighScore(score_);
+        gameData_.Write(savePath_);
+    }
+
+    char buf[320];
     std::snprintf(buf, sizeof(buf),
-        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\nScore: %d\n\nPress any key...",
-        header, completedWorld, wname, collected, total, lives_, wMins, wSecs, score_);
+        "%s\n\nWorld %d: %s\nTreasures: %d/%d  |  Lives: %d  |  Time: %d:%02d\nScore: %d%s\n\nPress any key...",
+        header, completedWorld, wname, collected, total, lives_, wMins, wSecs, score_,
+        newBest ? "  *** NEW BEST! ***" : "");
     phases_->SetOverlayText(buf);
 
     auto* input = context_->GetSubsystem<Input>();
