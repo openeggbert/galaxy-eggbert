@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 21)
+## Current state (as of Phase 22)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -65,6 +65,11 @@ or the original Windows Phone game.
   - `Decor::GetPlatformDelta()` returns XZ carry delta; applied via `Blupi::ApplyExternalDelta`
   - Carry activated when Blupi is within 0.85 units horizontally and 1.5 units vertically
 - `ObjectNode` tile dimensions fixed: 60×60 px tiles, 10 cols (was wrong 64×9)
+- `BlockTypes` redesigned: block type = icon ID; every mobile-eggbert tile now renders
+  its actual texture from `object-m.png` instead of falling back to grass
+  - `fromMobileIconId` is now trivial: `icon > 0 ? icon : Air`
+  - `toIconIndex` is trivial: `t == Air ? -1 : t`
+  - All 400+ distinct tile IDs across the 5 world files render correctly
 
 **Architecture (subsystem classes):**
 ```
@@ -129,6 +134,19 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 22 — Full tile texture variety (BlockTypes identity redesign)
+
+Status: **DONE**
+
+- `BlockTypes`: block type = icon ID directly; named constants equal their icon values
+- `fromMobileIconId`: trivial identity — `icon > 0 → icon`, `0 → Air`
+- `toIconIndex`: trivial — `t == Air ? -1 : t`
+- Result: all 400+ distinct tile IDs in the 5 world files now render their actual
+  object-m.png texture (ice, rock, forest, lava field tiles etc.) instead of defaulting to grass
+- Named gameplay constants (Ground=10, Wall=183, Lava=68, Spike=373, Crusher=317, …) unchanged in semantics
 
 ---
 

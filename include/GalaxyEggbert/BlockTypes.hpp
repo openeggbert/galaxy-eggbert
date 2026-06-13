@@ -1,100 +1,61 @@
 #pragma once
 #include <cstdint>
 
-// Block type IDs and tile UV helpers for galaxy-eggbert's voxel World format.
-// Icon indices and tile categories are derived from the mobile-eggbert world format
-// (see mobile-eggbert/worlds/world001.txt and Decor.cpp for the original 2D mapping).
+// Block type IDs for galaxy-eggbert's voxel World format.
+//
+// Design: block type = icon index into object-m.png.
+// Air = 0 (no block). Every other value is the icon ID displayed as the
+// tile face texture. Named constants equal their icon IDs so gameplay code
+// can reference them by name without a separate mapping table.
 
 namespace GalaxyEggbert {
 namespace BlockTypes {
 
-// Galaxy-eggbert block type IDs (12-bit, 0=air).
-// Tile icons reference object-m.png (20-column, 64×64 tile grid).
-constexpr uint16_t Air      = 0;
-constexpr uint16_t Ground   = 1;   // icon  10  – grass/ground
-constexpr uint16_t StoneA   = 2;   // icon  18  – light stone
-constexpr uint16_t StoneB   = 3;   // icon  25  – dark stone
-constexpr uint16_t Wall     = 4;   // icon 183  – brick wall
-constexpr uint16_t Platform = 5;   // icon 200  – floating platform
-constexpr uint16_t Sp0      = 6;   // icon 158
-constexpr uint16_t Sp1      = 7;   // icon 159
-constexpr uint16_t Sp2      = 8;   // icon 160
-constexpr uint16_t Sp3      = 9;   // icon 161
-constexpr uint16_t Sp4      = 10;  // icon 162
-constexpr uint16_t Sp5      = 11;  // icon 163
-constexpr uint16_t Sp6      = 12;  // icon 164
-constexpr uint16_t Sp7      = 13;  // icon 165
-constexpr uint16_t Marker   = 14;  // icon 309
-constexpr uint16_t Tile411  = 15;  // icon 411
-constexpr uint16_t Tile412  = 16;  // icon 412
-constexpr uint16_t Tile413  = 17;  // icon 413
-constexpr uint16_t Lava     = 18;  // icon  68 — kills Blupi on contact
-constexpr uint16_t Spike    = 19;  // icon 373 — kills Blupi on contact
-constexpr uint16_t Crusher  = 20;  // icon 317 — kills Blupi on contact
-
-// Returns the icon index into object-m.png for a given block type, or -1 for air.
-inline int toIconIndex(uint16_t t) {
-    switch (t) {
-        case Ground:   return  10;
-        case StoneA:   return  18;
-        case StoneB:   return  25;
-        case Wall:     return 183;
-        case Platform: return 200;
-        case Sp0:      return 158;
-        case Sp1:      return 159;
-        case Sp2:      return 160;
-        case Sp3:      return 161;
-        case Sp4:      return 162;
-        case Sp5:      return 163;
-        case Sp6:      return 164;
-        case Sp7:      return 165;
-        case Marker:   return 309;
-        case Tile411:  return 411;
-        case Tile412:  return 412;
-        case Tile413:  return 413;
-        case Lava:     return  68;
-        case Spike:    return 373;
-        case Crusher:  return 317;
-        default:       return  -1;
-    }
-}
-
-// Convert a mobile-eggbert icon ID (as stored in world .txt files) to a galaxy-eggbert block type.
-// Unknown solid IDs fall back to Ground; 0/-1 → Air.
-inline uint16_t fromMobileIconId(int icon) {
-    switch (icon) {
-        case  10: return Ground;
-        case  18: return StoneA;
-        case  25: return StoneB;
-        case 183: return Wall;
-        case 200: return Platform;
-        case 158: return Sp0;
-        case 159: return Sp1;
-        case 160: return Sp2;
-        case 161: return Sp3;
-        case 162: return Sp4;
-        case 163: return Sp5;
-        case 164: return Sp6;
-        case 165: return Sp7;
-        case 309: return Marker;
-        case 411: return Tile411;
-        case 412: return Tile412;
-        case 413: return Tile413;
-        case  68: return Lava;
-        case 373: return Spike;
-        case 317: return Crusher;
-        default:  return icon > 0 ? Ground : Air;
-    }
-}
-
 // object-m.png dimensions: 1301×1431 px, 64×64 px per tile, 20 columns.
-constexpr int kSheetW   = 1301;
-constexpr int kSheetH   = 1431;
-constexpr int kTileSize = 64;
+constexpr int kSheetW    = 1301;
+constexpr int kSheetH    = 1431;
+constexpr int kTileSize  = 64;
 constexpr int kSheetCols = kSheetW / kTileSize; // 20
-constexpr int kSheetRows = kSheetH / kTileSize; // 22
 
-// UV of tile for icon index (col-major layout: icon = row*cols + col).
+constexpr uint16_t Air      =   0;   // empty / no block
+
+// Named tile types — value equals the icon index in object-m.png.
+constexpr uint16_t Ground   =  10;   // grass/ground
+constexpr uint16_t StoneA   =  18;   // light stone
+constexpr uint16_t StoneB   =  25;   // dark stone
+constexpr uint16_t Wall     = 183;   // brick wall
+constexpr uint16_t Platform = 200;   // floating platform
+constexpr uint16_t Sp0      = 158;
+constexpr uint16_t Sp1      = 159;
+constexpr uint16_t Sp2      = 160;
+constexpr uint16_t Sp3      = 161;
+constexpr uint16_t Sp4      = 162;
+constexpr uint16_t Sp5      = 163;
+constexpr uint16_t Sp6      = 164;
+constexpr uint16_t Sp7      = 165;
+constexpr uint16_t Marker   = 309;
+constexpr uint16_t Tile411  = 411;
+constexpr uint16_t Tile412  = 412;
+constexpr uint16_t Tile413  = 413;
+
+// Hazard tiles — same rule: value = icon index. Gameplay checks use these.
+constexpr uint16_t Lava     =  68;   // kills Blupi on contact
+constexpr uint16_t Spike    = 373;   // kills Blupi on contact
+constexpr uint16_t Crusher  = 317;   // kills Blupi on contact
+
+// Block type → icon index. Since block type IS the icon index, this is trivial.
+// Returns -1 for Air.
+inline int toIconIndex(uint16_t t) {
+    return (t == Air) ? -1 : static_cast<int>(t);
+}
+
+// Convert a mobile-eggbert decor icon ID to a block type.
+// Every positive ID is stored directly; 0 or negative → Air.
+inline uint16_t fromMobileIconId(int icon) {
+    return icon > 0 ? static_cast<uint16_t>(icon) : Air;
+}
+
+// UV of tile for icon index (row-major, 20 cols).
 inline void tileUV(int icon, float& uOff, float& vOff, float& uScale, float& vScale) {
     const int col = icon % kSheetCols;
     const int row = icon / kSheetCols;
