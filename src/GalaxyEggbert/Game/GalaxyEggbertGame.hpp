@@ -107,6 +107,8 @@ private:
     int         stompCombo_               = 0;    // consecutive stomp count this level
     int         timeBonus_                = 0;    // one-shot speed bonus awarded on entering Win
     int         winStars_                 = 0;    // 1-3 stars from treasure % on Win entry
+    float       exitSparkleTimer_         = 0.0f; // countdown; exit sparkle every 3s when open
+    bool        exitOpenNotified_         = false; // "EXIT OPEN!" popup shown once
     bool        bonusLifeAwarded_         = false;
 
     static constexpr int kWCX     = 50;

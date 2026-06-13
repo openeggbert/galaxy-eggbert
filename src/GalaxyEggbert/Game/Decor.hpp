@@ -60,6 +60,8 @@ public:
     int     GetKeysCollected()   const { return keysType49_ + keysType50_ + keysType51_; }
     // XZ delta accumulated by all platforms that Blupi is riding this frame.
     Urho3D::Vector3 GetPlatformDelta() const { return platformDelta_; }
+    // Position of the exit object (ObjectType7), or Vector3(-999,0,0) if none.
+    Urho3D::Vector3 GetExitPos() const { return exitPos_; }
     // Y surface height to snap Blupi onto; -999 means no platform under Blupi.
     float           GetPlatformLandY() const { return platformLandY_; }
     void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ = drinkCollected_ = stompKill_ = respawnedThis_ = false; }
@@ -89,4 +91,5 @@ private:
     float           platformLandY_ = -999.0f;
     Urho3D::Vector3 lastStompPos_{0.0f, 0.0f, 0.0f};
     Urho3D::Vector3 lastRespawnPos_{0.0f, 0.0f, 0.0f};
+    Urho3D::Vector3 exitPos_{-999.0f, 0.0f, 0.0f};
 };

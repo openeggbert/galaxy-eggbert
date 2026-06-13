@@ -599,6 +599,8 @@ void GalaxyEggbertGame::SelectGamer(int slot) {
     stompComboTimer_        = 0.0f;
     timeBonus_              = 0;
     winStars_               = 0;
+    exitSparkleTimer_       = 0.0f;
+    exitOpenNotified_       = false;
     gameData_.Write(savePath_);
     decor_.reset();
     blupi_.reset();
@@ -665,6 +667,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 stompComboTimer_        = 0.0f;
     timeBonus_              = 0;
     winStars_               = 0;
+    exitSparkleTimer_       = 0.0f;
+    exitOpenNotified_       = false;
                 prevCollected_          = 0;
                 keysRed_ = keysGreen_ = keysBlue_ = 0;
                 shieldTimer_            = 0.0f;
@@ -977,6 +981,29 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         decor_->ClearEvents();
     }
 
+    // Exit open sparkle: emit a mini sparkle at the exit every 3s when all treasures collected.
+    if (decor_) {
+        int col = decor_->GetCollected(), tot = decor_->GetTotalTreasures();
+        bool exitOpen = (tot == 0 || col >= tot);
+        Vector3 epos = decor_->GetExitPos();
+        if (exitOpen && epos.x_ > -900.0f) {
+            if (!exitOpenNotified_) {
+                exitOpenNotified_ = true;
+                popups_.push_back(std::make_unique<ScorePopup>(
+                    context_, scene_.Get(), epos + Vector3(0.0f, 1.0f, 0.0f),
+                    "EXIT OPEN!", Color(0.4f, 1.0f, 0.4f)));
+            }
+            exitSparkleTimer_ -= dt;
+            if (exitSparkleTimer_ <= 0.0f) {
+                exitSparkleTimer_ = 3.0f;
+                explosions_.push_back(std::make_unique<Explosion>(
+                    context_, scene_.Get(), epos, 0.4f));
+            }
+        } else {
+            exitOpenNotified_ = false;
+        }
+    }
+
     hud_->ShowPlay(lives_,
                    decor_ ? decor_->GetCollected() : 0,
                    decor_ ? decor_->GetTotalTreasures() : 0,
@@ -1024,6 +1051,8 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
     stompComboTimer_        = 0.0f;
     timeBonus_              = 0;
     winStars_               = 0;
+    exitSparkleTimer_       = 0.0f;
+    exitOpenNotified_       = false;
     decor_.reset();
     blupi_.reset();
     LoadWorld(currentWorld_);
@@ -1104,6 +1133,8 @@ void GalaxyEggbertGame::ResetLevel() {
     stompComboTimer_        = 0.0f;
     timeBonus_              = 0;
     winStars_               = 0;
+    exitSparkleTimer_       = 0.0f;
+    exitOpenNotified_       = false;
     gameData_.SetNbVies(3);
     gameData_.SetLastWorld(1);
     gameData_.Write(savePath_);

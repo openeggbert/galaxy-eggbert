@@ -21,7 +21,8 @@ void Decor::PlaceObject(ObjectType type, Vector3 pos, Vector3 posEnd, float spee
     obj.node      = std::make_unique<ObjectNode>(context_, scene_);
     obj.node->SetPosition(pos);
     if (type == ObjectType::ObjectType20) obj.node->SetShadowEnabled(false);
-    if (type == ObjectType::ObjectType5) ++totalTreasures_;
+    if (type == ObjectType::ObjectType5)  ++totalTreasures_;
+    if (type == ObjectType::ObjectType7)  exitPos_ = pos;
 }
 
 // Derived from mobile-eggbert Decor.cpp MoveObjectStepIcon().
