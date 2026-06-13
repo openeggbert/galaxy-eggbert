@@ -42,17 +42,18 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
     bb->enabled_  = true;
     sprite_->Commit();
 
-    // Blob shadow: Plane.mdl with semi-transparent dark material, positioned at
-    // terrain surface below Blupi each frame (helps judge jump distances in 3D).
+    // Blob shadow: very flat Box.mdl (Y scale 0.01) with solid dark NoTexture material.
+    // Positioned at terrain surface below Blupi each frame via UpdateShadow().
     {
-        auto* planeModel = cache->GetResource<Model>("Models/Plane.mdl");
-        auto* tech       = cache->GetResource<Technique>("Techniques/NoTextureAlpha.xml");
+        auto* boxModel = cache->GetResource<Model>("Models/Box.mdl");
+        auto* tech     = cache->GetResource<Technique>("Techniques/NoTexture.xml");
         shadowNode_ = scene->CreateChild("BlupiShadow");
         auto* sm = shadowNode_->CreateComponent<StaticModel>();
-        if (planeModel) sm->SetModel(planeModel);
+        if (boxModel) sm->SetModel(boxModel);
         SharedPtr<Material> shadowMat(new Material(context_));
         if (tech) shadowMat->SetTechnique(0, tech);
-        shadowMat->SetShaderParameter("MatDiffColor", Color(0.0f, 0.0f, 0.0f, 0.55f));
+        shadowMat->SetShaderParameter("MatDiffColor",    Color(0.05f, 0.05f, 0.05f, 1.0f));
+        shadowMat->SetShaderParameter("MatEmissiveColor", Color(0.0f,  0.0f,  0.0f,  0.0f));
         sm->SetMaterial(shadowMat);
     }
 
@@ -134,11 +135,14 @@ void Blupi::UpdateShadow() {
         }
     }
     if (shadowY > -900.0f) {
-        float height = std::max(0.0f, (pos.y_ - kHalfH) - (shadowY - 0.02f));
-        float scale  = std::max(0.25f, 0.55f - height * 0.025f);
+        float groundTop = shadowY - 0.52f + 0.5f; // = wy + 0.5f
+        float height    = std::max(0.0f, (pos.y_ - kHalfH) - groundTop);
+        float scale     = std::max(0.25f, 0.55f - height * 0.025f);
         shadowNode_->SetEnabled(true);
-        shadowNode_->SetPosition(Vector3(pos.x_, shadowY, pos.z_));
-        shadowNode_->SetScale(Vector3(scale, 1.0f, scale));
+        // Place shadow just above block top surface (groundTop + 0.5 = shadowY - 0.02)
+        shadowNode_->SetPosition(Vector3(pos.x_, groundTop + 0.52f, pos.z_));
+        // Y scale 0.01 makes Box.mdl (1x1x1) into a flat 0.01-unit-thick disc.
+        shadowNode_->SetScale(Vector3(scale, 0.01f, scale));
     } else {
         shadowNode_->SetEnabled(false);
     }

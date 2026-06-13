@@ -1093,6 +1093,10 @@ void GalaxyEggbertGame::Update(float dt) {
         engine->Exit(); return;
     }
 
+    if (input->GetKeyPress(KEY_F11)) {
+        auto* graphics = context_->GetSubsystem<Graphics>();
+        if (graphics) graphics->ToggleFullscreen();
+    }
     if (input->GetKeyPress(KEY_F12)) drawDebug_ = !drawDebug_;
 
     switch (phase) {
