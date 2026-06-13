@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 70)
+## Current state (as of Phase 72)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,13 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Stomp camera shake + combo multiplier (Phase 72): `camera_->StartShake(0.12f, 0.2f)` on each stomp
+  kill; `stompCombo_` counter increments on each stomp within 1.5 s window (`stompComboTimer_`);
+  score = 25 × combo (25/50/75…); popup shows "+50 x2!" format; combo resets when timer expires or
+  level resets; `stompCombo_`/`stompComboTimer_` added to per-level state
+- Game speed selector (Phase 71): `gameSpeed_` float (0.6/1.0/1.5); G key cycles during play;
+  `dt *= gameSpeed_` scales all physics, animation, and timers uniformly; HUD shows "SLOW" or
+  "FAST" suffix in status text when not at 1.0×; controls hint updated with "G: speed"
 - High score per gamer slot (Phase 70): stored in GameData gamer-header reserved bytes 2–5 as
   LE uint32; `GetHighScore()`/`SetHighScore(int)` accessors; `GetHighScoreForGamer(g)` for Init
   display; Init screen shows "Best: N" per slot; Win overlay appends "*** NEW BEST! ***" and
@@ -333,6 +340,31 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 72 — Stomp camera shake + consecutive stomp combo multiplier
+
+Status: **DONE**
+
+- `camera_->StartShake(0.12f, 0.2f)` fires on every stomp kill (mild tactile feedback)
+- `stompCombo_` (per-level int), `stompComboTimer_` (per-level float 1.5 s countdown)
+- Each stomp kill: `++stompCombo_`, `stompComboTimer_ = 1.5f`, `score_ += 25 × combo`
+- Popup format: "+25" for first stomp; "+50 x2!", "+75 x3!" for chain; amber `kYellow` colour
+- Combo timer decrements each frame (after `dt *= gameSpeed_`); resets `stompCombo_ = 0` on expiry
+- Both fields reset in `SelectGamer`, `AdvanceToNextWorld`, `ResetLevel`, F-key world jump
+
+---
+
+## Phase 71 — Game speed selector
+
+Status: **DONE**
+
+- `gameSpeed_` (float, persistent across level transitions, default 1.0f)
+- G key during play cycles: Normal(1.0) → Fast(1.5) → Slow(0.6) → Normal
+- `dt *= gameSpeed_` at top of `UpdatePlay` — scales all physics, timers, animation uniformly
+- `HUD::ShowPlay` gets `float gameSpeed` param; `speedTag = "FAST"/"SLOW"/""` appended to status text
+- Controls hint updated: "G: speed" added
 
 ---
 
