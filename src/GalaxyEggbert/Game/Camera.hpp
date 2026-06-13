@@ -18,7 +18,7 @@ private:
     Urho3D::Context* context_;
     Urho3D::Node*    node_  = nullptr;
     float yaw_        = 180.0f;
-    float pitch_      =  25.0f;
+    float pitch_      =  20.0f; // = kDefaultPitch
     float dist_       =  12.0f;
     float targetDist_ =  12.0f;
     static constexpr float kDefaultPitch = 20.0f;

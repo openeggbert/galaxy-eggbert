@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 37)
+## Current state (as of Phase 38)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -133,6 +133,12 @@ or the original Windows Phone game.
   each slot visible only when that specific key type was collected
 - Camera zoom smoothed: `targetDist_` accumulates scroll input; `dist_` lerps toward it at
   rate `8×dt`; zoom feels responsive but not jumpy
+- Mouse cursor hidden in Play phase, restored in all other phases (Pause/Win/Lost/Init/Settings)
+  and on Stop(); `EnterPhase` calls `input->SetMouseVisible(bool)` per phase
+- Camera initial pitch changed from 25° to `kDefaultPitch` (20°) so there is no auto-reset
+  drift at game start
+- Pause overlay shows collected key types ("Keys: Red Green Blue") when any are held;
+  line omitted entirely when no keys collected
 
 **Architecture (subsystem classes):**
 ```
@@ -197,6 +203,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 38 — Mouse cursor management + camera pitch fix + pause key status
+
+Status: **DONE**
+
+- `EnterPhase(Play)`: `input->SetMouseVisible(false)` — cursor hidden during gameplay so it
+  doesn't drift off-screen during RMB camera control; all other phases call `SetMouseVisible(true)`;
+  `Stop()` also restores visibility for clean shutdown
+- `Camera.hpp`: initial `pitch_ = 20.0f` (was 25°) matches `kDefaultPitch`; no longer drifts
+  toward default at startup
+- `UpdatePause()`: builds `keyLine` only when `keys49_+keys50_+keys51_ > 0`; shows
+  "Keys: Red / Green / Blue" for collected types; line absent when no keys held
 
 ---
 

@@ -474,6 +474,7 @@ void GalaxyEggbertGame::CreateDemoObjects() {
 void GalaxyEggbertGame::EnterPhase(GamePhase next) {
     if (phases_->Current() == next) return;
     phases_->Enter(next);
+    auto* input = context_->GetSubsystem<Input>();
     switch (next) {
         case GamePhase::Play:
             if (!blupi_)
@@ -484,9 +485,11 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             hud_->ShowPlay(lives_, 0, decor_ ? decor_->GetTotalTreasures() : 0,
                            0, 0, 0, 0.0f, currentWorld_);
             hud_->SetVisible(true);
+            if (input) input->SetMouseVisible(false);
             break;
         default:
             hud_->SetVisible(false);
+            if (input) input->SetMouseVisible(true);
             break;
     }
 }
@@ -844,10 +847,16 @@ void GalaxyEggbertGame::UpdatePause(float dt) {
                         ? kWorldNames[currentWorld_ - 1] : "Unknown";
     int pauseCollected = decor_ ? decor_->GetCollected()      : 0;
     int pauseTotal     = decor_ ? decor_->GetTotalTreasures() : 0;
-    char buf[256];
+    char keyLine[64] = "";
+    if (keys49_ + keys50_ + keys51_ > 0)
+        std::snprintf(keyLine, sizeof(keyLine), "\nKeys:%s%s%s",
+            keys49_ > 0 ? " Red"   : "",
+            keys50_ > 0 ? " Green" : "",
+            keys51_ > 0 ? " Blue"  : "");
+    char buf[320];
     std::snprintf(buf, sizeof(buf),
-        "PAUSED\n\nWorld %d: %s\nLives: %d   Treasures: %d/%d\n\nESC: resume   S: settings",
-        currentWorld_, wname, lives_, pauseCollected, pauseTotal);
+        "PAUSED\n\nWorld %d: %s\nLives: %d   Treasures: %d/%d%s\n\nESC: resume   S: settings",
+        currentWorld_, wname, lives_, pauseCollected, pauseTotal, keyLine);
     phases_->SetOverlayText(buf);
 
     if (input->GetKeyPress(KEY_ESCAPE)) { EnterPhase(GamePhase::Play); return; }
@@ -886,6 +895,7 @@ void GalaxyEggbertGame::Stop() {
         gameData_.SetLastWorld(currentWorld_);
         gameData_.Write(savePath_);
     }
+    if (auto* input = context_->GetSubsystem<Input>()) input->SetMouseVisible(true);
     if (sound_) sound_->StopAll();
     decor_.reset();
     blupi_.reset();
