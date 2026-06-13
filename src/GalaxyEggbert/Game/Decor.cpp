@@ -141,11 +141,19 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
                 eggCollected_ = true;
                 break;
             case ObjectType::ObjectType49:
+                obj.active = false;
+                obj.node->Remove();
+                ++keysType49_;
+                break;
             case ObjectType::ObjectType50:
+                obj.active = false;
+                obj.node->Remove();
+                ++keysType50_;
+                break;
             case ObjectType::ObjectType51:
                 obj.active = false;
                 obj.node->Remove();
-                ++keysCollected_;
+                ++keysType51_;
                 break;
             case ObjectType::ObjectType25:
                 obj.active = false;

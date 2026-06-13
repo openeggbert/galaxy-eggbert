@@ -7,7 +7,8 @@ public:
     ~HUD() = default;
 
     void SetVisible(bool visible);
-    void ShowPlay(int lives, int collected, int totalTreasures, int keys,
+    void ShowPlay(int lives, int collected, int totalTreasures,
+                  int keys49, int keys50, int keys51,
                   float shieldSecs = 0.0f, int world = 1, bool showHint = true);
     void ShowWin();
 

@@ -6,8 +6,13 @@ using namespace Urho3D;
 
 // blupi.png: 600×2040, 10 cols × 34 rows of 60×60 px. Icon 48 = col 8, row 4.
 static const IntRect kBlupiHeadRect{480, 240, 540, 300};
-// element.png: 600×1740, 10 cols × 29 rows of 60×60 px. Icon 215 = col 5, row 21.
-static const IntRect kKeyIconRect{300, 1260, 360, 1320};
+// element.png: 600×1740, 10 cols × 29 rows of 60×60 px.
+// Icon 209 (red key) = col 9, row 20. Icon 220 (green) = col 0, row 22. Icon 229 (blue) = col 9, row 22.
+static const IntRect kKeyRects[3] = {
+    {540, 1200, 600, 1260}, // type49 red key
+    {  0, 1320,  60, 1380}, // type50 green key
+    {540, 1320, 600, 1380}, // type51 blue key
+};
 
 HUD::HUD(Context* context) : context_(context) {
     auto* cache = context_->GetSubsystem<ResourceCache>();
@@ -42,13 +47,13 @@ HUD::HUD(Context* context) : context_(context) {
         lifeIcons_[i] = icon;
     }
 
-    // Key icons: element.png icon 215 (red key), one per collected key (max 3).
+    // Key icons: distinct red/green/blue icons from element.png, one slot per key type.
     auto* elemTex = cache->GetResource<Texture2D>("icons/element.png");
     for (int i = 0; i < 3; i++) {
         auto* icon = root->CreateChild<BorderImage>("KeyIcon" + String(i));
         if (elemTex) {
             icon->SetTexture(elemTex);
-            icon->SetImageRect(kKeyIconRect);
+            icon->SetImageRect(kKeyRects[i]);
         }
         icon->SetSize(20, 20);
         icon->SetAlignment(HA_LEFT, VA_BOTTOM);
@@ -107,7 +112,8 @@ static const char* WorldName(int world) {
     return "Unknown";
 }
 
-void HUD::ShowPlay(int lives, int collected, int totalTreasures, int keys,
+void HUD::ShowPlay(int lives, int collected, int totalTreasures,
+                   int keys49, int keys50, int keys51,
                    float shieldSecs, int world, bool showHint) {
     int showLives = std::min(lives, kMaxDisplayedLives);
     for (int i = 0; i < kMaxDisplayedLives; i++)
@@ -124,9 +130,10 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures, int keys,
         }
     }
 
-    int showKeys = std::min(keys, 3);
+    // Key slots: 0=red(type49), 1=green(type50), 2=blue(type51).
+    const int keyHave[3] = { keys49, keys50, keys51 };
     for (int i = 0; i < 3; i++)
-        if (BorderImage* icon = keyIcons_[i]) icon->SetVisible(i < showKeys);
+        if (BorderImage* icon = keyIcons_[i]) icon->SetVisible(keyHave[i] > 0);
 
     if (BorderImage* g = gauge_) g->SetVisible(true);
 

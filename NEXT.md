@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 36)
+## Current state (as of Phase 37)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -128,6 +128,11 @@ or the original Windows Phone game.
   bonus-life check both now reflect true treasure-only progress; double-sound on egg/drink fixed
 - Camera pitch auto-reset: when RMB is not held, pitch exponentially decays toward
   `kDefaultPitch=20°` at rate `2×dt`; players no longer get stuck looking up/down
+- Per-type key icons: `Decor` tracks `keysType49_/50_/51_` separately; `ShowPlay` takes
+  `keys49,keys50,keys51`; HUD slot 0=red(icon 209), slot 1=green(icon 220), slot 2=blue(icon 229);
+  each slot visible only when that specific key type was collected
+- Camera zoom smoothed: `targetDist_` accumulates scroll input; `dist_` lerps toward it at
+  rate `8×dt`; zoom feels responsive but not jumpy
 
 **Architecture (subsystem classes):**
 ```
@@ -192,6 +197,22 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 37 — Per-type key icons + smooth camera zoom
+
+Status: **DONE**
+
+- `Decor`: replaced single `keysCollected_` with `keysType49_/50_/51_`; `GetKeys49/50/51()`
+  added; `GetKeysCollected()` returns their sum; each key case increments its own counter
+- `GalaxyEggbertGame`: `keysCollected_` replaced by `keys49_/50_/51_`; key detection
+  compares all 3 per-type; reset sites updated; `ShowPlay` call passes all 3 values
+- `HUD`: `ShowPlay` signature takes `keys49,keys50,keys51`; constructor assigns per-slot
+  icon rects (`kKeyRects[3]`): icon 209 red, icon 220 green, icon 229 blue; each slot
+  shown only when its respective key type has been collected
+- `CameraController`: `targetDist_` field receives scroll input; `dist_` lerps toward it
+  with `min(1, 8×dt)` each frame — zoom is smooth even with fast wheel moves
 
 ---
 

@@ -84,7 +84,7 @@ private:
     bool        drawDebug_     = false;
     int         lives_         = 3;
     int         prevCollected_ = 0;
-    int         keysCollected_ = 0;
+    int         keys49_ = 0, keys50_ = 0, keys51_ = 0;
     float       shieldTimer_              = 0.0f;
     float       respawnInvincibleTimer_   = 0.0f;
     float       controlsHintTimer_        = 8.0f;

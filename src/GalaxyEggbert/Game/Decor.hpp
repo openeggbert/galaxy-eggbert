@@ -47,7 +47,10 @@ public:
     bool    WasStompKill()       const { return stompKill_;       }
     int     GetCollected()       const { return collected_;       }
     int     GetTotalTreasures()  const { return totalTreasures_;  }
-    int     GetKeysCollected()   const { return keysCollected_;   }
+    int     GetKeys49()          const { return keysType49_;      }
+    int     GetKeys50()          const { return keysType50_;      }
+    int     GetKeys51()          const { return keysType51_;      }
+    int     GetKeysCollected()   const { return keysType49_ + keysType50_ + keysType51_; }
     // XZ delta accumulated by all platforms that Blupi is riding this frame.
     Urho3D::Vector3 GetPlatformDelta() const { return platformDelta_; }
     void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ = drinkCollected_ = stompKill_ = false; }
@@ -69,6 +72,8 @@ private:
     bool            stompKill_       = false;
     int             collected_       = 0;
     int             totalTreasures_  = 0;
-    int             keysCollected_   = 0;
+    int             keysType49_      = 0;
+    int             keysType50_      = 0;
+    int             keysType51_      = 0;
     Urho3D::Vector3 platformDelta_{0.0f, 0.0f, 0.0f};
 };

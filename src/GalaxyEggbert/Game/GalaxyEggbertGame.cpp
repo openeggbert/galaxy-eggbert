@@ -482,7 +482,7 @@ void GalaxyEggbertGame::EnterPhase(GamePhase next) {
             blupi_->SetSpawnPoint(blupiSpawn_);
             blupi_->Respawn();
             hud_->ShowPlay(lives_, 0, decor_ ? decor_->GetTotalTreasures() : 0,
-                           0, 0.0f, currentWorld_);
+                           0, 0, 0, 0.0f, currentWorld_);
             hud_->SetVisible(true);
             break;
         default:
@@ -571,7 +571,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 controlsHintTimer_      = 8.0f;
                 bonusLifeAwarded_       = false;
                 prevCollected_          = 0;
-                keysCollected_          = 0;
+                keys49_ = keys50_ = keys51_ = 0;
                 shieldTimer_            = 0.0f;
                 respawnInvincibleTimer_ = 0.0f;
                 decor_.reset();
@@ -661,11 +661,13 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel42);
         }
 
-        // Key pickup
-        int keys = decor_->GetKeysCollected();
-        if (keys > keysCollected_) {
-            if (sound_) sound_->Play(SoundChannel::SoundChannel11);
-            keysCollected_ = keys;
+        // Key pickup — track per type so HUD shows correct icon colours.
+        {
+            int k49 = decor_->GetKeys49(), k50 = decor_->GetKeys50(), k51 = decor_->GetKeys51();
+            if (k49 > keys49_ || k50 > keys50_ || k51 > keys51_) {
+                if (sound_) sound_->Play(SoundChannel::SoundChannel11);
+                keys49_ = k49; keys50_ = k50; keys51_ = k51;
+            }
         }
 
         // Treasure pickup
@@ -741,7 +743,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     hud_->ShowPlay(lives_,
                    decor_ ? decor_->GetCollected() : 0,
                    decor_ ? decor_->GetTotalTreasures() : 0,
-                   keysCollected_, shieldTimer_, currentWorld_,
+                   keys49_, keys50_, keys51_,
+                   shieldTimer_, currentWorld_,
                    controlsHintTimer_ > 0.0f);
 }
 
@@ -752,7 +755,7 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
         gameData_.Write(savePath_);
     }
     prevCollected_          = 0;
-    keysCollected_          = 0;
+    keys49_ = keys50_ = keys51_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
     controlsHintTimer_      = 8.0f;
@@ -817,7 +820,7 @@ void GalaxyEggbertGame::ResetLevel() {
     lives_                  = 3;
     currentWorld_           = 1;
     prevCollected_          = 0;
-    keysCollected_          = 0;
+    keys49_ = keys50_ = keys51_ = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
     controlsHintTimer_      = 8.0f;
