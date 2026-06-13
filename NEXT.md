@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 23)
+## Current state (as of Phase 24)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -74,6 +74,10 @@ or the original Windows Phone game.
 - ObjectType30 (drink pickup): static icon 178; collecting counts as treasure
 - Per-world sky palette: ambient + fog colours change per world (Grassland green →
   Forest dark → Ice Caves blue-white → Lava Fields red → Space Station near-black)
+- Correct tile passability: 203 decorative tile IDs (from `table_decor_quart`) become
+  Air instead of solid blocks, removing invisible walls in real levels
+  - `BlockTypes::isMobileTransparent(icon)` precomputed bool[441] lookup
+  - Icons 68 (Lava) and 317 (Crusher) kept solid despite being quart-passable
 
 **Architecture (subsystem classes):**
 ```
@@ -138,6 +142,20 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 24 — Correct tile passability from table_decor_quart
+
+Status: **DONE**
+
+- `BlockTypes::isMobileTransparent(icon)`: precomputed `bool[441]` from mobile-eggbert
+  `Tables::table_decor_quart` — true for icons with all-zero 4×4 sub-cells (fully decorative)
+- `fromMobileIconId`: passable tiles → `Air` instead of solid block
+  - 203 icon IDs become Air (sky tiles, clouds, backgrounds, decorative patterns)
+  - Icons 68 (Lava) and 317 (Crusher) excluded — kept solid for hazard gameplay
+  - Spike (373) is NOT passable in the quart table — already solid and correct
+- Removes invisible walls that blocked Blupi in all 5 real world files
 
 ---
 

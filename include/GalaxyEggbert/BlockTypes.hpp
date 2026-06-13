@@ -49,10 +49,46 @@ inline int toIconIndex(uint16_t t) {
     return (t == Air) ? -1 : static_cast<int>(t);
 }
 
+// True for icon IDs that have all-zero table_decor_quart sub-cells in
+// mobile-eggbert (fully transparent/decorative — no collision).
+// Icons 68 (Lava) and 317 (Crusher) are excluded and kept solid for the
+// galaxy-eggbert hazard system even though they are quart-passable.
+inline bool isMobileTransparent(int icon) {
+    static const bool kPassable[441] = {
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true, true, true, true,
+        true, true, true, true, true, true, true, true, false, true, true, true, true, true, false, false, true, true, false, false,
+        false, false, false, false, false, true, true, false, false, false, false, true, true, true, true, true, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true, true, true,
+        true, true, true, true, true, true, false, true, true, false, true, true, false, true, true, false, true, true, true, false,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true,
+        true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+        true, true, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, true, true,
+        true, true, true, true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, true, true,
+        true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+        true, true, true, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+        true, false, true, true, false, true, true, true, true, true, true, false, false, false, false, false, false, false, true, true,
+        true, true, true, true, false, true, true, true, true, true, false, false, false, false, false, false, false, true, false, true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, true, true, true, true, true, true, false, false, true, true, true, true, true,
+        true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, true, true,
+        true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        false
+    };
+    return icon >= 0 && icon < 441 && kPassable[icon];
+}
+
 // Convert a mobile-eggbert decor icon ID to a block type.
-// Every positive ID is stored directly; 0 or negative → Air.
+// Passable (decorative) tiles become Air; everything else keeps its icon ID.
+// 0 or negative → Air.
 inline uint16_t fromMobileIconId(int icon) {
-    return icon > 0 ? static_cast<uint16_t>(icon) : Air;
+    if (icon <= 0) return Air;
+    if (isMobileTransparent(icon)) return Air;
+    return static_cast<uint16_t>(icon);
 }
 
 // UV of tile for icon index (row-major, 20 cols).
