@@ -48,7 +48,7 @@ void CameraController::Update(float dt, Vector3 targetPos, float targetYaw) {
     // Wall collision: step ray from Blupi toward the desired camera position;
     // if a solid voxel is encountered, clamp the camera distance before it.
     if (world_) {
-        Vector3 rayOrigin = targetPos + Vector3(0.0f, 0.5f, 0.0f);
+        Vector3 rayOrigin = targetPos + Vector3(0.0f, 0.35f, 0.0f);
         float   idealDist = offset.Length();
         Vector3 dir       = offset / idealDist;
         float   hitDist   = idealDist;
@@ -73,7 +73,7 @@ void CameraController::Update(float dt, Vector3 targetPos, float targetYaw) {
     }
 
     node_->SetPosition(targetPos + offset);
-    node_->LookAt(targetPos + Vector3(0.0f, 0.5f, 0.0f));
+    node_->LookAt(targetPos + Vector3(0.0f, 0.35f, 0.0f));
 
     (void)dt;
 }

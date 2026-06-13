@@ -31,7 +31,8 @@ Blupi::Blupi(Context* context, Scene* scene, const World* world, int wcx, int wc
 
     Billboard* bb = sprite_->GetBillboard(0);
     bb->position_ = Vector3::ZERO;
-    bb->size_     = Vector2(kHalfH * 2.0f, kHalfH * 2.0f);
+    // Sprite tile is 60×60 px in a 64-px grid → visual size = 60/64 units.
+    bb->size_     = Vector2(60.0f / 64.0f, 60.0f / 64.0f);
     bb->enabled_  = true;
     sprite_->Commit();
 
@@ -123,7 +124,7 @@ void Blupi::ResolveY(Vector3& pos) {
 }
 
 void Blupi::ResolveXZ(Vector3& pos) {
-    // round(pos.y_) when on ground (pos.y_≈1.2) gives wy=1, above the floor
+    // round(pos.y_) when on ground (pos.y_≈0.86) gives wy=1, above the floor
     // layer at wy=0, so floor blocks are never treated as walls.
     int bodyWY = static_cast<int>(std::round(pos.y_));
 

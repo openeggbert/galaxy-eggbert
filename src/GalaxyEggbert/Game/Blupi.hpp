@@ -17,8 +17,9 @@ public:
     static constexpr float kJumpSpeed =  10.0f;
     static constexpr float kMoveSpeed =   5.5f;
     static constexpr float kTurnSpeed = 180.0f; // degrees/second
-    static constexpr float kHalfW     =   0.35f;
-    static constexpr float kHalfH     =   0.7f;
+    static constexpr float kHalfW     =  0.35f;
+    // 2D tile = 64 px, Blupi height = 46 px → 3D height = 46/64 units, half = 23/64.
+    static constexpr float kHalfH     =  23.0f / 64.0f; // ≈ 0.359
 
     explicit Blupi(Urho3D::Context* context,
                    Urho3D::Scene*   scene,
