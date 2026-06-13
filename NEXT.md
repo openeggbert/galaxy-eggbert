@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 61)
+## Current state (as of Phase 62)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -221,6 +221,11 @@ or the original Windows Phone game.
   rising) are safe to stand on — `crusherSafe` bool computed from `totalTime_` before kill check
 - ObjectNode vertical offset (Phase 60): `bb->position_ = (0, kVisHalf−0.5, 0)` ≈ −0.031 units;
   aligns sprite bottom with block top surface (node Y=1.0, block top Y=0.5, visHalf=60/128)
+- Coyote time + jump buffer (Phase 62): `kCoyoteTime=0.12s` grace period after walking off an edge
+  where jump still fires; `kJumpBuffer=0.12s` queued jump fires on the landing frame if pressed
+  just before touching ground; both implemented entirely in `Blupi::Update()` — no game-coordinator
+  changes needed; `coyoteTimer_/jumpBuffer_` reset in `SpawnAt()`; improves platformer feel
+  significantly, especially on narrow platforms and moving-platform hops
 - Multiple simultaneous explosions (Phase 61): `explosions_` vector replaces single `explosion_`
   unique_ptr; all 3 death paths + stomp push_back; ticked with `remove_if(!e->Update(dt))`
 - Pickup sparkle (Phase 61): `Explosion` constructor takes optional `float scale = 1.0f`;
@@ -295,6 +300,22 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 62 — Coyote time + jump buffer
+
+Status: **DONE**
+
+- `Blupi::kCoyoteTime = 0.12f` / `kJumpBuffer = 0.12f`: constants for the two grace windows
+- `coyoteTimer_`: refreshed to `kCoyoteTime` every frame while `onGround_`; counts down when
+  airborne; set to 0 when jump fires; reset in `SpawnAt()`
+- `jumpBuffer_`: set to `kJumpBuffer` on `GetKeyPress(LCTRL)`; counts down each frame;
+  consumed (set to 0) when jump fires; reset in `SpawnAt()`
+- Jump now fires when `jumpBuffer_ > 0 && coyoteTimer_ > 0` — covers on-ground, coyote, and
+  buffer-on-landing cases in one unified condition; replaces the old single-line
+  `if (onGround_ && KeyPress)` check
+- No changes outside `Blupi.hpp/.cpp` — self-contained platformer-feel improvement
 
 ---
 
