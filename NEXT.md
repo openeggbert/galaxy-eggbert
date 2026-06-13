@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 17)
+## Current state (as of Phase 18)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -51,6 +51,11 @@ or the original Windows Phone game.
   replace "Lives: N / Keys: N" text; both shown as `BorderImage` sprites inside/near the gauge
 - HUD treasure total: shows "Treasures: N/total" — total counted by `Decor::GetTotalTreasures()`
 - HUD world names: `WorldName(N)` lookup — "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+- Real levels: `LoadMobileEggbertTerrain()` parses mobile-eggbert `.txt` world files
+  - `worlds/world00N.txt` (from mobile-eggbert world01N.txt) loaded automatically when present
+  - Terrain built from 100×100 Decor grid; tile IDs mapped via `BlockTypes::fromMobileIconId()`
+  - MoveObjects parsed: types 2,3,5,6,7,16,25,49,50,51 placed as Decor objects
+  - World centered on Blupi spawn position from `blupiPos=` header
 
 **Architecture (subsystem classes):**
 ```
@@ -116,6 +121,18 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 18 — Real mobile-eggbert world loading
+
+Status: **DONE** — `LoadMobileEggbertTerrain()` in GalaxyEggbertGame.cpp.
+
+- `worlds/world00N.txt` files (from mobile-eggbert world01N.txt) shipped in the repo
+- `LoadWorld()` tries .vwr first, then .txt, then generates demo world
+- `BlockTypes::fromMobileIconId()` maps mobile-eggbert tile IDs → galaxy-eggbert block types
+- MoveObject parser handles types 2,3,5,6,7,16,25,49,50,51; speed from `stepAdvance`
+- Blupi always spawns at 3D (0,y,0); world is centered on the `blupiPos` from the file
 
 ---
 

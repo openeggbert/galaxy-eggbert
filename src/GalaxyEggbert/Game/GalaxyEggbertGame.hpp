@@ -2,6 +2,7 @@
 #include "../GEEngine.hpp"
 #include "GalaxyEggbert/Worlds/World.hpp"
 #include "GalaxyEggbert/def/GamePhase.hpp"
+#include "GalaxyEggbert/def/ObjectType.hpp"
 #include "Blupi.hpp"
 #include "Camera.hpp"
 #include "Decor.hpp"
@@ -12,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // Main game coordinator: owns the scene, terrain, and subsystem objects.
 // Delegates camera, HUD, and phase/overlay management to dedicated classes.
@@ -25,9 +27,17 @@ public:
     void Stop();
 
 private:
+    struct MobileObjSpec {
+        GalaxyEggbert::ObjectType type;
+        Urho3D::Vector3           posStart;
+        Urho3D::Vector3           posEnd;
+        float                     speed;
+    };
+
     void CreateScene();
     void LoadWorld(int worldNum);
     void BuildDemoWorld();
+    bool LoadMobileEggbertTerrain(const char* path);
     void SpawnTerrainNodes();
     void CreateDemoObjects();
 
@@ -63,6 +73,8 @@ private:
     std::unique_ptr<HUD>              hud_;
     std::unique_ptr<PhaseManager>     phases_;
     std::unique_ptr<SoundManager>     sound_;
+
+    std::vector<MobileObjSpec> mobileObjects_;
 
     // State
     GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;

@@ -59,6 +59,34 @@ inline int toIconIndex(uint16_t t) {
     }
 }
 
+// Convert a mobile-eggbert icon ID (as stored in world .txt files) to a galaxy-eggbert block type.
+// Unknown solid IDs fall back to Ground; 0/-1 → Air.
+inline uint16_t fromMobileIconId(int icon) {
+    switch (icon) {
+        case  10: return Ground;
+        case  18: return StoneA;
+        case  25: return StoneB;
+        case 183: return Wall;
+        case 200: return Platform;
+        case 158: return Sp0;
+        case 159: return Sp1;
+        case 160: return Sp2;
+        case 161: return Sp3;
+        case 162: return Sp4;
+        case 163: return Sp5;
+        case 164: return Sp6;
+        case 165: return Sp7;
+        case 309: return Marker;
+        case 411: return Tile411;
+        case 412: return Tile412;
+        case 413: return Tile413;
+        case  68: return Lava;
+        case 373: return Spike;
+        case 317: return Crusher;
+        default:  return icon > 0 ? Ground : Air;
+    }
+}
+
 // object-m.png dimensions: 1301×1431 px, 64×64 px per tile, 20 columns.
 constexpr int kSheetW   = 1301;
 constexpr int kSheetH   = 1431;

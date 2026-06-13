@@ -5,6 +5,8 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 
 using namespace Urho3D;
 using namespace GalaxyEggbert;
@@ -191,32 +193,124 @@ void GalaxyEggbertGame::SpawnTerrainNodes() {
     }
 }
 
+bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
+    std::ifstream f(path);
+    if (!f) return false;
+
+    int blupiPosX = 0, blupiPosY = 0;
+    {
+        std::string header;
+        if (!std::getline(f, header)) return false;
+        // Parse: DescFile: ... blupiPos=PX;PY ...
+        const char* bp = std::strstr(header.c_str(), "blupiPos=");
+        if (bp) std::sscanf(bp, "blupiPos=%d;%d", &blupiPosX, &blupiPosY);
+    }
+
+    const int blupiCol = blupiPosX / 60;
+    const int blupiRow = blupiPosY / 60;
+    const int colOff   = kWCX - blupiCol;
+    const int rowOff   = kWCZ - blupiRow;
+
+    mobileObjects_.clear();
+
+    std::string line;
+    int decorRow = 0;
+    bool inDecor = false;
+
+    while (std::getline(f, line)) {
+        if (line.find("Decor:") == 0) { inDecor = true; continue; }
+
+        if (line.rfind("MoveObject:", 0) == 0) {
+            inDecor = false;
+            int type = 0, psx = 0, psy = 0, pex = 0, pey = 0, stepAdv = 1;
+            std::sscanf(line.c_str(),
+                "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
+                &type, &stepAdv, &psx, &psy, &pex, &pey);
+
+            // Only place types we handle; skip unknown/complex ones.
+            ObjectType ot = static_cast<ObjectType>(type);
+            bool supported = (type == 2 || type == 3 || type == 5 || type == 6 ||
+                              type == 7 || type == 16 || type == 25 ||
+                              type == 49 || type == 50 || type == 51);
+            if (!supported) continue;
+
+            auto pixToV3 = [&](int px, int py) -> Vector3 {
+                return Vector3(
+                    static_cast<float>(px / 60 - blupiCol),
+                    1.0f,
+                    static_cast<float>(py / 60 - blupiRow));
+            };
+            MobileObjSpec spec;
+            spec.type     = ot;
+            spec.posStart = pixToV3(psx, psy);
+            spec.posEnd   = pixToV3(pex, pey);
+            spec.speed    = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
+            mobileObjects_.push_back(spec);
+            continue;
+        }
+
+        if (!inDecor) continue;
+        if (decorRow >= 100) continue;
+
+        // Parse CSV row of tile IDs.
+        std::stringstream ss(line);
+        std::string token;
+        int col = 0;
+        while (col < 100 && std::getline(ss, token, ',')) {
+            if (!token.empty()) {
+                int tileId = std::stoi(token);
+                if (tileId > 0) {
+                    uint16_t bt = BlockTypes::fromMobileIconId(tileId);
+                    int wx = col + colOff;
+                    int wz = decorRow + rowOff;
+                    if (wx >= 0 && wx < 100 && wz >= 0 && wz < 100) {
+                        world_->setBlock(static_cast<uint16_t>(wx), 0,
+                                         static_cast<uint16_t>(wz),
+                                         Block::make(bt));
+                    }
+                }
+            }
+            ++col;
+        }
+        ++decorRow;
+    }
+    return true;
+}
+
 void GalaxyEggbertGame::LoadWorld(int worldNum) {
     if (terrainRoot_) terrainRoot_->RemoveAllChildren();
     tileMatCache_.clear();
+    mobileObjects_.clear();
 
     objectSheet_ = context_->GetSubsystem<ResourceCache>()
         ->GetResource<Texture2D>("icons/object-m.png");
 
-    char fname[64];
-    std::snprintf(fname, sizeof(fname), "worlds/world%03d.vwr", worldNum);
     auto* fs = context_->GetSubsystem<FileSystem>();
-    const String worldFile = fs->GetProgramDir() + fname;
+    char fname[64];
+
+    std::snprintf(fname, sizeof(fname), "worlds/world%03d.vwr", worldNum);
+    const String worldVwr = fs->GetProgramDir() + fname;
+
+    std::snprintf(fname, sizeof(fname), "worlds/world%03d.txt", worldNum);
+    const String worldTxt = fs->GetProgramDir() + fname;
 
     world_.reset();
-    if (fs->FileExists(worldFile)) {
+    if (fs->FileExists(worldVwr)) {
         try {
-            world_ = std::make_unique<World>(World::loadFromFile(worldFile.CString()));
-        } catch (...) {
+            world_ = std::make_unique<World>(World::loadFromFile(worldVwr.CString()));
+        } catch (...) { world_.reset(); }
+    }
+    if (!world_ && fs->FileExists(worldTxt)) {
+        world_ = std::make_unique<World>();
+        if (!LoadMobileEggbertTerrain(worldTxt.CString()))
             world_.reset();
-        }
     }
     if (!world_) {
         world_ = std::make_unique<World>();
         BuildDemoWorld();
         std::filesystem::create_directories(
-            std::filesystem::path(worldFile.CString()).parent_path());
-        try { world_->saveToFile(worldFile.CString()); } catch (...) {}
+            std::filesystem::path(worldVwr.CString()).parent_path());
+        try { world_->saveToFile(worldVwr.CString()); } catch (...) {}
     }
 
     SpawnTerrainNodes();
@@ -227,6 +321,13 @@ void GalaxyEggbertGame::LoadWorld(int worldNum) {
 void GalaxyEggbertGame::CreateDemoObjects() {
     using OT = GalaxyEggbert::ObjectType;
     decor_ = std::make_unique<Decor>(context_, scene_.Get());
+
+    // Use real mobile-eggbert objects when a .txt world was loaded.
+    if (!mobileObjects_.empty()) {
+        for (auto& s : mobileObjects_)
+            decor_->PlaceObject(s.type, s.posStart, s.posEnd, s.speed);
+        return;
+    }
     // Treasures (stationary)
     decor_->PlaceObject(OT::ObjectType5, Vector3(-5.0f, 1.0f,  0.0f));
     decor_->PlaceObject(OT::ObjectType5, Vector3( 0.0f, 1.0f,  5.0f));
