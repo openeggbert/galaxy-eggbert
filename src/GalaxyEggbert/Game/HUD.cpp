@@ -98,7 +98,7 @@ static const char* WorldName(int world) {
 }
 
 void HUD::ShowPlay(int lives, int collected, int totalTreasures, int keys,
-                   float shieldSecs, int world) {
+                   float shieldSecs, int world, bool showHint) {
     int showLives = std::min(lives, kMaxDisplayedLives);
     for (int i = 0; i < kMaxDisplayedLives; i++)
         if (BorderImage* icon = lifeIcons_[i]) icon->SetVisible(i < showLives);
@@ -111,16 +111,17 @@ void HUD::ShowPlay(int lives, int collected, int totalTreasures, int keys,
 
     if (Text* t = text_) {
         char buf[256];
+        const char* hint = showHint
+            ? "W/S or UP/DN: move  Q/E or L/R: turn  A/D: strafe  SPACE: jump  ESC: pause\n"
+            : "";
         if (shieldSecs > 0.0f) {
             std::snprintf(buf, sizeof(buf),
-                "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
-                "World %d: %s | Treasures: %d/%d  SHIELD %.1fs",
-                world, WorldName(world), collected, totalTreasures, shieldSecs);
+                "%sWorld %d: %s | Treasures: %d/%d  SHIELD %.1fs",
+                hint, world, WorldName(world), collected, totalTreasures, shieldSecs);
         } else {
             std::snprintf(buf, sizeof(buf),
-                "UP/DOWN: move  LEFT/RIGHT: turn  SPACE: jump  ESC: pause\n"
-                "World %d: %s | Treasures: %d/%d",
-                world, WorldName(world), collected, totalTreasures);
+                "%sWorld %d: %s | Treasures: %d/%d",
+                hint, world, WorldName(world), collected, totalTreasures);
         }
         t->SetText(buf);
     }

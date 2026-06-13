@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 27)
+## Current state (as of Phase 28)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -17,7 +17,7 @@ or the original Windows Phone game.
   - Frame tables ported from mobile-eggbert `Tables.cpp`
   - Physics: gravity, jump, AABB voxel collision (derived from `Decor.cpp`)
   - Arrow key controls: LEFT/RIGHT rotate, UP/DOWN move along facing
-- `Decor` object pool (up to 50 objects), all animated via `GetIcon()` phase tables:
+- `Decor` object pool (up to 100 objects), all animated via `GetIcon()` phase tables:
   - ObjectType2/3 (patrol enemies A/B), ObjectType16 (spider)
   - ObjectType5 (treasure), ObjectType6 (egg), ObjectType7 (exit)
   - ObjectType49/50/51 (red/green/blue keys) — key collection tracked, shown in HUD
@@ -89,6 +89,9 @@ or the original Windows Phone game.
 - Blupi flashes (billboard toggles every 0.1 s) during 2 s post-respawn invincibility window
 - Landing sound: `SoundChannel4` plays when Blupi transitions from airborne → ground
 - ObjectType12 (crate): static decoration, element.png icon 32; now placed in world 4 (2 instances)
+- Full WASD+QE controls: W/S move forward/back (same as UP/DN), Q/E turn left/right (same as L/R)
+- Controls hint auto-fades after 8 s; `controlsHintTimer_` reset on every level load/select
+- Bonus life when all treasures collected (once per level, capped at 9 lives); plays SoundChannel42
 
 **Architecture (subsystem classes):**
 ```
@@ -153,6 +156,19 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 28 — WASD/QE controls + bonus life + controls hint fade
+
+Status: **DONE**
+
+- Full WASD+QE control scheme: W/S as alias for UP/DN (forward/back), Q/E as alias for L/R arrow
+  (turn); A/D strafe unchanged; all keys checked via `||` in Blupi::Update()
+- Controls hint line in HUD fades after 8 s (`controlsHintTimer_`); hint updated to show new keys;
+  reset to 8.0f on every world load, SelectGamer, AdvanceToNextWorld, ResetLevel
+- Bonus life on all-treasures: when `collected >= totalTreasures > 0` and `!bonusLifeAwarded_`,
+  award +1 life (cap 9), play SoundChannel42, persist via GameData; flag reset per level
 
 ---
 

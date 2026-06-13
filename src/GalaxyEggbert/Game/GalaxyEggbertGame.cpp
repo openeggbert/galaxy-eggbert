@@ -479,8 +479,10 @@ void GalaxyEggbertGame::UpdateInit(float dt) {
 
 void GalaxyEggbertGame::SelectGamer(int slot) {
     gameData_.SetSelectedGamer(slot);
-    lives_        = gameData_.GetNbVies();
-    currentWorld_ = gameData_.GetLastWorld();
+    lives_             = gameData_.GetNbVies();
+    currentWorld_      = gameData_.GetLastWorld();
+    controlsHintTimer_ = 8.0f;
+    bonusLifeAwarded_  = false;
     gameData_.Write(savePath_);
     decor_.reset();
     blupi_.reset();
@@ -543,8 +545,9 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     camera_->Update(dt, pos, yaw);
 
     // Countdown timers
-    if (shieldTimer_ > 0.0f) shieldTimer_ -= dt;
+    if (shieldTimer_ > 0.0f)           shieldTimer_            -= dt;
     if (respawnInvincibleTimer_ > 0.0f) respawnInvincibleTimer_ -= dt;
+    if (controlsHintTimer_ > 0.0f)     controlsHintTimer_      -= dt;
 
     // Tile hazard check — only when standing on ground and not invincible
     if (blupi_ && blupi_->IsOnGround() && world_ && shieldTimer_ <= 0.0f && respawnInvincibleTimer_ <= 0.0f) {
@@ -598,6 +601,18 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             prevCollected_ = collected;
         }
 
+        // Bonus life when all treasures collected (once per level, capped at 9).
+        int total = decor_->GetTotalTreasures();
+        if (!bonusLifeAwarded_ && total > 0 && collected >= total) {
+            bonusLifeAwarded_ = true;
+            if (lives_ < 9) {
+                ++lives_;
+                gameData_.SetNbVies(lives_);
+                gameData_.Write(savePath_);
+                if (sound_) sound_->Play(SoundChannel::SoundChannel42);
+            }
+        }
+
         // Apply platform carry after all object updates.
         Vector3 carry = decor_->GetPlatformDelta();
         if ((carry.x_ != 0.0f || carry.z_ != 0.0f) && blupi_)
@@ -632,7 +647,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     hud_->ShowPlay(lives_,
                    decor_ ? decor_->GetCollected() : 0,
                    decor_ ? decor_->GetTotalTreasures() : 0,
-                   keysCollected_, shieldTimer_, currentWorld_);
+                   keysCollected_, shieldTimer_, currentWorld_,
+                   controlsHintTimer_ > 0.0f);
 }
 
 void GalaxyEggbertGame::AdvanceToNextWorld() {
@@ -645,6 +661,8 @@ void GalaxyEggbertGame::AdvanceToNextWorld() {
     keysCollected_          = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
+    controlsHintTimer_      = 8.0f;
+    bonusLifeAwarded_       = false;
     decor_.reset();
     blupi_.reset();
     LoadWorld(currentWorld_);
@@ -680,6 +698,8 @@ void GalaxyEggbertGame::ResetLevel() {
     keysCollected_          = 0;
     shieldTimer_            = 0.0f;
     respawnInvincibleTimer_ = 0.0f;
+    controlsHintTimer_      = 8.0f;
+    bonusLifeAwarded_       = false;
     gameData_.SetNbVies(3);
     gameData_.SetLastWorld(1);
     gameData_.Write(savePath_);

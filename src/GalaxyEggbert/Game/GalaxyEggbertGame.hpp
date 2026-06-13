@@ -87,6 +87,8 @@ private:
     int         keysCollected_ = 0;
     float       shieldTimer_              = 0.0f;
     float       respawnInvincibleTimer_   = 0.0f;
+    float       controlsHintTimer_        = 8.0f;
+    bool        bonusLifeAwarded_         = false;
     int         currentWorld_  = 1;
     GameData    gameData_;
     std::string savePath_;

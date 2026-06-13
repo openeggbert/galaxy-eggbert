@@ -158,8 +158,8 @@ void Blupi::Update(float dt) {
 
     // --- Rotation ---
     bool turning = false;
-    if (input->GetKeyDown(KEY_LEFT))  { facingYaw_ -= kTurnSpeed * dt; turning = true; }
-    if (input->GetKeyDown(KEY_RIGHT)) { facingYaw_ += kTurnSpeed * dt; turning = true; }
+    if (input->GetKeyDown(KEY_LEFT)  || input->GetKeyDown(KEY_Q)) { facingYaw_ -= kTurnSpeed * dt; turning = true; }
+    if (input->GetKeyDown(KEY_RIGHT) || input->GetKeyDown(KEY_E)) { facingYaw_ += kTurnSpeed * dt; turning = true; }
     node_->SetRotation(Quaternion(0.0f, facingYaw_, 0.0f));
 
     // --- Forward/back movement along facing direction ---
@@ -168,8 +168,8 @@ void Blupi::Update(float dt) {
     Vector3 right(fwd.z_, 0.0f, -fwd.x_);  // 90° clockwise from fwd
 
     float forwardInput = 0.0f;
-    if (input->GetKeyDown(KEY_UP))   forwardInput =  1.0f;
-    if (input->GetKeyDown(KEY_DOWN)) forwardInput = -1.0f;
+    if (input->GetKeyDown(KEY_UP)   || input->GetKeyDown(KEY_W)) forwardInput =  1.0f;
+    if (input->GetKeyDown(KEY_DOWN) || input->GetKeyDown(KEY_S)) forwardInput = -1.0f;
 
     float strafeInput = 0.0f;
     if (input->GetKeyDown(KEY_A)) strafeInput = -1.0f;

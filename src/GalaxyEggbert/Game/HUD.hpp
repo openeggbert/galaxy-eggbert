@@ -8,7 +8,7 @@ public:
 
     void SetVisible(bool visible);
     void ShowPlay(int lives, int collected, int totalTreasures, int keys,
-                  float shieldSecs = 0.0f, int world = 1);
+                  float shieldSecs = 0.0f, int world = 1, bool showHint = true);
     void ShowWin();
 
 private:
