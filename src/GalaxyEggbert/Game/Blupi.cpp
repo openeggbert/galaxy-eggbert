@@ -155,6 +155,7 @@ void Blupi::Update(float dt) {
     if (!node_) return;
     auto* input = context_->GetSubsystem<Input>();
     jumpedThisFrame_  = false;
+    stepThisFrame_    = false;
     landedThisFrame_  = false;
     bool wasOnGround  = onGround_;
 
@@ -231,6 +232,10 @@ void Blupi::Update(float dt) {
         animTick_ = 0;
     }
     ++animTick_;
+
+    // One footstep sound per stride (6-frame march cycle × 3 ticks/frame = 18 ticks).
+    if (action_ == BlupiAction::March && onGround_ && animTick_ % 18 == 1)
+        stepThisFrame_ = true;
 
     // Invincibility flash: toggle billboard visibility every 0.1 s.
     if (flashTimer_ > 0.0f) {

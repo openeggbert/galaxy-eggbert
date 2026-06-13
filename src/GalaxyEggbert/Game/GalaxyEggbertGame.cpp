@@ -640,6 +640,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     if (blupi_ && sound_) {
         if (blupi_->WasJumpedThisFrame())  sound_->Play(SoundChannel::SoundChannel1);
         if (blupi_->WasLandedThisFrame())  sound_->Play(SoundChannel::SoundChannel4);
+        if (blupi_->WasStepThisFrame())    sound_->Play(SoundChannel::SoundChannel3);
     }
 
     // Fall death: deduct life, respawn with invincibility
@@ -714,6 +715,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         if (decor_->WasStompKill()) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel5);
             if (blupi_) blupi_->Bounce();
+            explosion_ = std::make_unique<Explosion>(context_, scene_.Get(), decor_->GetLastStompPos());
             score_ += 25;
         }
 

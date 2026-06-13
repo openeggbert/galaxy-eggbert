@@ -214,7 +214,8 @@ void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY, float totalTime)
                     obj.active       = false;
                     obj.respawnTimer = kRespawnDelay;
                     if (obj.node) obj.node->SetVisible(false);
-                    stompKill_ = true;
+                    stompKill_    = true;
+                    lastStompPos_ = obj.pos;
                 } else {
                     blupiHit_ = true;
                 }

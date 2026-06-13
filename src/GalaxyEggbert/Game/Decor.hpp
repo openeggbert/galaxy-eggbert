@@ -48,6 +48,7 @@ public:
     bool    WasEggCollected()    const { return eggCollected_;    }
     bool    WasDrinkCollected()  const { return drinkCollected_;  }
     bool    WasStompKill()       const { return stompKill_;       }
+    Urho3D::Vector3 GetLastStompPos() const { return lastStompPos_; }
     int     GetCollected()       const { return collected_;       }
     int     GetTotalTreasures()  const { return totalTreasures_;  }
     int     GetKeys49()          const { return keysType49_;      }
@@ -79,4 +80,5 @@ private:
     int             keysType50_      = 0;
     int             keysType51_      = 0;
     Urho3D::Vector3 platformDelta_{0.0f, 0.0f, 0.0f};
+    Urho3D::Vector3 lastStompPos_{0.0f, 0.0f, 0.0f};
 };

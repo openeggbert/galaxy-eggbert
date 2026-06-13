@@ -45,6 +45,7 @@ public:
     Urho3D::Vector3 GetPosition()        const { return node_ ? node_->GetPosition() : Urho3D::Vector3::ZERO; }
     float           GetFacingYaw()       const { return facingYaw_; }
     bool            WasJumpedThisFrame() const { return jumpedThisFrame_; }
+    bool            WasStepThisFrame()   const { return stepThisFrame_;   }
     bool            IsOnGround()         const { return onGround_; }
 
 private:
@@ -73,6 +74,7 @@ private:
 
     // Sprite animation (billboard facing camera, UV-mapped from blupi.png)
     bool                       jumpedThisFrame_ = false;
+    bool                       stepThisFrame_   = false;
     Urho3D::BillboardSet*      sprite_          = nullptr;
     GalaxyEggbert::BlupiAction action_   = GalaxyEggbert::BlupiAction::Stop;
     int                        animTick_ = 0;
