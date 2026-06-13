@@ -635,7 +635,14 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
     }
 
     if (decor_) {
-        decor_->Update(dt, pos);
+        float velY = blupi_ ? blupi_->GetVelY() : 0.0f;
+        decor_->Update(dt, pos, velY);
+
+        // Stomp kill: Blupi jumped on an enemy.
+        if (decor_->WasStompKill()) {
+            if (sound_) sound_->Play(SoundChannel::SoundChannel5);
+            if (blupi_) blupi_->Bounce();
+        }
 
         // Shield pickup
         if (decor_->WasShieldCollected()) {

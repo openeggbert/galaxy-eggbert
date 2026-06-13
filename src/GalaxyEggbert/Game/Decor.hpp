@@ -36,17 +36,19 @@ public:
                      Urho3D::Vector3 posEnd = Urho3D::Vector3(0.0f, -999.0f, 0.0f),
                      float speed = 1.5f);
 
-    void Update(float dt, Urho3D::Vector3 blupiPos);
+    // blupiVelY: Blupi's current Y velocity; negative = falling. Used for stomp detection.
+    void Update(float dt, Urho3D::Vector3 blupiPos, float blupiVelY = 0.0f);
 
     bool    WasExitReached()     const { return exitReached_;     }
     bool    WasBlupiHit()        const { return blupiHit_;        }
     bool    WasShieldCollected() const { return shieldCollected_; }
+    bool    WasStompKill()       const { return stompKill_;       }
     int     GetCollected()       const { return collected_;       }
     int     GetTotalTreasures()  const { return totalTreasures_;  }
     int     GetKeysCollected()   const { return keysCollected_;   }
     // XZ delta accumulated by all platforms that Blupi is riding this frame.
     Urho3D::Vector3 GetPlatformDelta() const { return platformDelta_; }
-    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = false; }
+    void ClearEvents() { exitReached_ = blupiHit_ = shieldCollected_ = stompKill_ = false; }
 
 private:
     int  GetIcon(const Object& obj) const;
@@ -60,6 +62,7 @@ private:
     bool            exitReached_     = false;
     bool            blupiHit_        = false;
     bool            shieldCollected_ = false;
+    bool            stompKill_       = false;
     int             collected_       = 0;
     int             totalTreasures_  = 0;
     int             keysCollected_   = 0;

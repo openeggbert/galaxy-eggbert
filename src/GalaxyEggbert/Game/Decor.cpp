@@ -94,9 +94,10 @@ bool Decor::TouchesBlupi(const Object& obj, Vector3 blupiPos) const {
     return std::sqrt(dx * dx + dz * dz) < 0.85f;
 }
 
-void Decor::Update(float dt, Vector3 blupiPos) {
-    exitReached_  = false;
-    blupiHit_     = false;
+void Decor::Update(float dt, Vector3 blupiPos, float blupiVelY) {
+    exitReached_   = false;
+    blupiHit_      = false;
+    stompKill_     = false;
     platformDelta_ = Vector3::ZERO;
 
     for (int i = 0; i < objCount_; ++i) {
@@ -164,7 +165,14 @@ void Decor::Update(float dt, Vector3 blupiPos) {
             case ObjectType::ObjectType17:
             case ObjectType::ObjectType20:
             case ObjectType::ObjectType33:
-                blupiHit_ = true;
+                if (blupiVelY < -1.0f) {
+                    // Stomp: Blupi is falling, kill the enemy.
+                    obj.active = false;
+                    obj.node->Remove();
+                    stompKill_ = true;
+                } else {
+                    blupiHit_ = true;
+                }
                 break;
             default:
                 break;

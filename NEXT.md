@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 30)
+## Current state (as of Phase 31)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -98,6 +98,10 @@ or the original Windows Phone game.
 - F1–F5 debug world jump: instantly teleports to world 1–5 during play; full state reset
 - Terrain depth fill: edge tiles (any horizontal air neighbour) get 3 dark fill blocks extruded
   below them (`Color(0.22, 0.19, 0.17)`); cliffs now appear solid from any camera angle
+- Enemy stomp: falling Blupi (velY < -1.0) kills enemy on contact; plays SoundChannel5 (bounce);
+  `Blupi::Bounce()` gives upward impulse (0.6 × kJumpSpeed); enemy removed from pool
+  - All 7 enemy types stompable: ObjectType2/3/4/16/17/20/33
+  - `Decor::WasStompKill()` / `stompKill_` flag; cleared in ClearEvents()
 
 **Architecture (subsystem classes):**
 ```
@@ -162,6 +166,21 @@ cmake -S . -B build-windows \
       -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbert -j2
 ```
+
+---
+
+## Phase 31 — Enemy stomp mechanic
+
+Status: **DONE**
+
+- `Decor::Update()` now takes `float blupiVelY`; if `blupiVelY < -1.0` when touching an
+  enemy (types 2,3,4,16,17,20,33) → stomp: enemy marked inactive + removed, `stompKill_` set
+  instead of `blupiHit_`; otherwise normal hit applies
+- `Blupi::Bounce()`: sets `vel_.y_ = kJumpSpeed * 0.6f`, clears `onGround_`; gives a natural
+  bounce off the enemy's head
+- `Blupi::GetVelY()`: exposes current Y velocity for Decor/GalaxyEggbertGame queries
+- GalaxyEggbertGame: passes `blupi_->GetVelY()` to `decor_->Update()`; handles `WasStompKill()`
+  → plays SoundChannel5 (bounce/boing, ported channel ID from mobile-eggbert) + calls Bounce()
 
 ---
 
