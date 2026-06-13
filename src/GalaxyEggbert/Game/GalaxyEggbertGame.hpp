@@ -10,6 +10,7 @@
 #include "PhaseManager.hpp"
 #include "GameData.hpp"
 #include "SoundManager.hpp"
+#include "Explosion.hpp"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -74,6 +75,7 @@ private:
     std::unique_ptr<HUD>              hud_;
     std::unique_ptr<PhaseManager>     phases_;
     std::unique_ptr<SoundManager>     sound_;
+    std::unique_ptr<Explosion>        explosion_;
 
     std::vector<MobileObjSpec> mobileObjects_;
     Urho3D::Vector3            blupiSpawn_{0.0f, Blupi::kHalfH + 0.5f, 0.0f};

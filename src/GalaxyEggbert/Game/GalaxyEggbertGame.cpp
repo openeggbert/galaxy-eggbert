@@ -391,6 +391,7 @@ bool GalaxyEggbertGame::LoadMobileEggbertTerrain(const char* path) {
 }
 
 void GalaxyEggbertGame::LoadWorld(int worldNum) {
+    explosion_.reset();
     if (terrainRoot_) terrainRoot_->RemoveAllChildren();
     tileMatCache_.clear();
     mobileObjects_.clear();
@@ -633,6 +634,8 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
         animateTile(BlockTypes::Water2,  kWater2,  6);
     }
 
+    if (explosion_ && !explosion_->Update(dt)) explosion_.reset();
+
     if (blupi_) blupi_->Update(dt);
     if (blupi_ && sound_) {
         if (blupi_->WasJumpedThisFrame())  sound_->Play(SoundChannel::SoundChannel1);
@@ -641,10 +644,12 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
 
     // Fall death: deduct life, respawn with invincibility
     if (blupi_ && blupi_->WasFallDeath()) {
+        Vector3 deathPos = blupi_->GetPosition();
         blupi_->ClearFallDeath();
         if (sound_) sound_->Play(SoundChannel::SoundChannel8);
         camera_->StartShake();
         hud_->ShowHitFlash();
+        explosion_ = std::make_unique<Explosion>(context_, scene_.Get(), deathPos);
         --lives_;
         if (lives_ <= 0) {
             gameData_.SetNbVies(3);
@@ -683,6 +688,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
                 if (sound_) sound_->Play(SoundChannel::SoundChannel8);
                 camera_->StartShake();
                 hud_->ShowHitFlash();
+                explosion_ = std::make_unique<Explosion>(context_, scene_.Get(), pos);
                 --lives_;
                 if (lives_ <= 0) {
                     gameData_.SetNbVies(3);
@@ -788,6 +794,7 @@ void GalaxyEggbertGame::UpdatePlay(float dt) {
             if (sound_) sound_->Play(SoundChannel::SoundChannel8);
             camera_->StartShake();
             hud_->ShowHitFlash();
+            explosion_ = std::make_unique<Explosion>(context_, scene_.Get(), pos);
             --lives_;
             if (lives_ <= 0) {
                 gameData_.SetNbVies(3);
@@ -954,6 +961,7 @@ void GalaxyEggbertGame::Stop() {
     }
     if (auto* input = context_->GetSubsystem<Input>()) input->SetMouseVisible(true);
     if (sound_) sound_->StopAll();
+    explosion_.reset();
     decor_.reset();
     blupi_.reset();
     phases_.reset();
