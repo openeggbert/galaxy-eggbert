@@ -7,7 +7,7 @@ or the original Windows Phone game.
 
 ---
 
-## Current state (as of Phase 47)
+## Current state (as of Phase 51)
 
 **Working:**
 - World loaded from `worlds/world001.vwr` at runtime; demo world saved on first run
@@ -173,6 +173,18 @@ or the original Windows Phone game.
   UV offsets updated per frame via `SetShaderParameter("UOffset"/"VOffset")`; replaces
   old color-pulsing; Saw (icon 378–383) added as 4th hazard tile; `BlockTypes::isHazard()`
   centralises the hazard check (Lava/Spike/Crusher/Saw)
+- Blupi proportions corrected (Phase 48): `kHalfH = 23/64 ≈ 0.359` (block=64px, Blupi=46px);
+  billboard visual size `60/64 = 0.9375`; camera look-at Y offset 0.35; ObjectNode same scale
+- Pickup bobbing (Phase 49): pickups (treasure/egg/exit/keys/shield/drink) oscillate on a
+  sine-wave Y offset `0.12·sin(totalTime·2.5 + i·1.5)`; enemies/platforms stay flat
+- Camera shake + red screen flash (Phase 50): `CameraController::StartShake(intensity,duration)`
+  applies decaying oscillating XY offset to camera position; `HUD::ShowHitFlash()` shows
+  a full-screen red `BorderImage` at 50% alpha fading to 0 over 0.4 s; both triggered on
+  fall death, tile hazard hit, and enemy contact; `HUD::Update(dt)` ticks the flash
+- Death explosion animation (Phase 51): `Explosion` class plays `table_explo1` (39 frames,
+  icons 0–11) from `explo.png` (1440×1440, 24 cols × 24 rows of 60×60 tiles) at 12 fps
+  as a 1.5-unit BillboardSet at the death position; spawned on all 3 death paths; auto-
+  destroys when done; reset on `LoadWorld()` and `Stop()`
 
 - **Refactor (Phase 39):** `WorldName()` file-scoped helper in GalaxyEggbertGame.cpp replaces
   3× duplicated `kWorldNames[]` array in UpdatePause/Win/Lost; `keys49_/50_/51_` renamed to
