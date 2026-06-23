@@ -332,6 +332,122 @@ elseif(_engine STREQUAL "NOVA3D")
 endif() # engine-specific
 
 # =============================================================================
+# Simple3D port target — GalaxyEggbertSimple3D
+#
+# Build with:
+#   cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
+#   cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
+#
+# The existing GalaxyEggbert (Urho3D) target is NOT replaced or modified.
+# =============================================================================
+
+option(GALAXY_EGGBERT_BUILD_SIMPLE3D "Build the Simple3D port target" OFF)
+
+if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
+
+    # Locate simple-3d: explicit option > sibling ../simple-3d directory.
+    set(SIMPLE3D_HOME "" CACHE PATH
+        "Path to simple-3d source directory. Defaults to ../simple-3d.")
+
+    if(NOT SIMPLE3D_HOME)
+        set(SIMPLE3D_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../simple-3d")
+    endif()
+
+    if(NOT EXISTS "${SIMPLE3D_HOME}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "simple-3d not found at '${SIMPLE3D_HOME}'. "
+            "Clone it there or set -DSIMPLE3D_HOME=<path>.")
+    endif()
+
+    message(STATUS "simple-3d source: ${SIMPLE3D_HOME}")
+
+    # Suppress tests/examples inside simple-3d when built as sub-dep.
+    set(_s3d_save_BUILD_TESTING "${BUILD_TESTING}")
+    set(BUILD_TESTING  OFF CACHE BOOL "" FORCE)
+    set(BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+    add_subdirectory("${SIMPLE3D_HOME}" Simple3D_dep)
+
+    set(BUILD_TESTING "${_s3d_save_BUILD_TESTING}" CACHE BOOL "" FORCE)
+
+    # Engine-independent shared sources (no Urho3D dependencies).
+    set(GE_SHARED_SOURCES
+        src/GalaxyEggbert/Worlds/BinaryIO.cpp
+        src/GalaxyEggbert/Worlds/BitPacking.cpp
+        src/GalaxyEggbert/Worlds/Chunk.cpp
+        src/GalaxyEggbert/Worlds/World.cpp
+    )
+
+    # New Simple3D-specific sources.
+    set(GE_SIMPLE3D_SOURCES
+        src/GalaxyEggbertSimple3D/Program.cpp
+        src/GalaxyEggbertSimple3D/GalaxyEggbertSimpleGame.cpp
+        src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp
+        src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp
+        src/GalaxyEggbertSimple3D/Game/GEBlupiController.cpp
+        src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp
+        src/GalaxyEggbertSimple3D/Game/GEHud.cpp
+        src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp
+    )
+
+    add_executable(GalaxyEggbertSimple3D
+        ${GE_SIMPLE3D_SOURCES}
+        ${GE_SHARED_SOURCES}
+    )
+
+    target_include_directories(GalaxyEggbertSimple3D PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertSimple3D
+        ${SIMPLE3D_HOME}/include
+    )
+
+    target_link_libraries(GalaxyEggbertSimple3D PRIVATE Simple3D)
+
+    # Pass U3D binary path so the game can call SetResourcePrefixPaths().
+    set(_u3d_desktop "/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug")
+    target_compile_definitions(GalaxyEggbertSimple3D PRIVATE
+        GALAXY_EGGBERT_U3D_BIN_PATH="${_u3d_desktop}/bin"
+    )
+
+    if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
+        target_link_libraries(GalaxyEggbertSimple3D PRIVATE GL dl m rt pthread)
+    endif()
+
+    if(MINGW)
+        target_link_options(GalaxyEggbertSimple3D PRIVATE
+            -static-libgcc -static-libstdc++)
+    endif()
+
+    # Copy U3D Data/ and CoreData/ next to the executable.
+    foreach(_dir Data CoreData)
+        if(EXISTS "${_u3d_desktop}/bin/${_dir}")
+            add_custom_command(TARGET GalaxyEggbertSimple3D POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${_u3d_desktop}/bin/${_dir}"
+                    "$<TARGET_FILE_DIR:GalaxyEggbertSimple3D>/${_dir}"
+                COMMENT "Copying U3D ${_dir}/ next to GalaxyEggbertSimple3D"
+            )
+        endif()
+    endforeach()
+
+    # Copy game Content/ and worlds/ next to executable.
+    foreach(_d Content worlds)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_d}")
+            add_custom_command(TARGET GalaxyEggbertSimple3D POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CMAKE_CURRENT_SOURCE_DIR}/${_d}"
+                    "$<TARGET_FILE_DIR:GalaxyEggbertSimple3D>/${_d}"
+                COMMENT "Copying ${_d}/ next to GalaxyEggbertSimple3D"
+            )
+        endif()
+    endforeach()
+
+    message(STATUS "GalaxyEggbertSimple3D target enabled.")
+
+endif() # GALAXY_EGGBERT_BUILD_SIMPLE3D
+
+# =============================================================================
 # Doxygen
 # =============================================================================
 

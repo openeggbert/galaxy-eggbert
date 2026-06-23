@@ -190,3 +190,22 @@
 
 - [x] U3D active
 - [ ] Nova3D (Urho3D fork in progress; switch via `GALAXY_EGGBERT_ENGINE=NOVA3D`; zero game-code changes expected)
+
+---
+
+## Simple3D Migration
+
+Galaxy Eggbert is migrating from direct Urho3D/Nova3D API to the high-level `simple-3d` framework.
+The legacy Urho3D target (`GalaxyEggbert`) is kept until the Simple3D port reaches playable parity.
+New target: `GalaxyEggbertSimple3D` (build with `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON`).
+See `docs/simple3d_migration.md` and `docs/SIMPLE3D_GAPS.md` for details.
+
+- [x] S3D-1 — Simple3D port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD labels, orbit camera, minimal sound, CMake target, gap documentation
+- [ ] S3D-2 — Terrain visual fidelity: tile atlas material + UV offset per block type
+- [ ] S3D-3 — Blupi sprite/billboard animation from `blupi.png`
+- [ ] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`
+- [ ] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
+- [ ] S3D-6 — Phase/menu port: Init gamer select, Settings, Ranking screen
+- [ ] S3D-7 — Sound channel parity: 93 channels, per-channel volume, loop control
+- [ ] S3D-8 — Web/Android build verification with Simple3D backend
+- [ ] S3D-9 — Remove legacy Urho3D path after Simple3D version reaches playable parity

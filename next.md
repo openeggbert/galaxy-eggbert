@@ -13,6 +13,7 @@ See `plan.md` for the feature checklist.
 
 | Phase | Summary |
 |-------|---------|
+| 80 | Simple3D migration skeleton (S3D-1): new `GalaxyEggbertSimple3D` target, all subsystem stubs (GEWorldRuntime, GETerrainRenderer, GEBlupiController, GEDecorSystem, GEHud, GESound, GECameraRig), docs/SIMPLE3D_GAPS.md, docs/simple3d_migration.md |
 | 79 | Remove non-mobile-eggbert features (time bonus, star rating, best time, stomp combo, danger pulse, coyote time, jump buffer, variable jump height) |
 | 78 | Best time per world — **removed in 79** |
 | 77 | Danger pulse (lives == 1) — **removed in 79** |

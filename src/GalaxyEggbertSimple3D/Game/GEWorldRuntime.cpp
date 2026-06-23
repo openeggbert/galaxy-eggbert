@@ -1,0 +1,167 @@
+#include "GEWorldRuntime.hpp"
+#include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Worlds/Block.hpp>
+
+#include <algorithm>
+#include <cstring>
+#include <fstream>
+#include <sstream>
+
+using namespace GalaxyEggbert;
+using namespace GalaxyEggbert::Worlds;
+using namespace Simple3D;
+
+namespace GESimple3D {
+
+static constexpr float kBlupiHalfH = 23.0f / 64.0f; // same as old Blupi::kHalfH
+
+const char* GEWorldRuntime::WorldName(int world) {
+    static const char* kNames[] = {
+        "Grassland", "Forest", "Ice Caves", "Lava Fields", "Space Station"
+    };
+    int idx = world - 1;
+    return (idx >= 0 && idx < 5) ? kNames[idx] : "Unknown";
+}
+
+GEWorldRuntime::GEWorldRuntime()
+    : world_(std::make_unique<World>()) {}
+
+bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
+    static constexpr int kMobTile = 64;
+
+    std::ifstream f(path);
+    if (!f) return false;
+
+    world_ = std::make_unique<World>();
+    mobileObjects_.clear();
+    skyRegion_ = 0;
+    totalTreasures_ = 0;
+
+    int blupiPosX = 0, blupiPosY = 0;
+    {
+        std::string header;
+        if (!std::getline(f, header)) return false;
+        const char* bp = std::strstr(header.c_str(), "blupiPos=");
+        if (bp) std::sscanf(bp, "blupiPos=%d;%d", &blupiPosX, &blupiPosY);
+        const char* rg = std::strstr(header.c_str(), "region=");
+        if (rg) std::sscanf(rg, "region=%d", &skyRegion_);
+    }
+
+    const int blupiTileCol = blupiPosX / kMobTile;
+    const int blupiTileRow = blupiPosY / kMobTile;
+    blupiSpawn_ = Vector3(
+        static_cast<float>(blupiTileCol - kWCX),
+        kBlupiHalfH + 0.5f,
+        static_cast<float>(blupiTileRow - kWCZ));
+
+    std::string line;
+    int decorRow = 0;
+    bool inDecor = false;
+
+    while (std::getline(f, line)) {
+        if (line.find("Decor:") == 0) { inDecor = true; continue; }
+
+        if (line.rfind("MoveObject:", 0) == 0) {
+            inDecor = false;
+            int type = 0, psx = 0, psy = 0, pex = 0, pey = 0, stepAdv = 1;
+            std::sscanf(line.c_str(),
+                "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
+                &type, &stepAdv, &psx, &psy, &pex, &pey);
+
+            bool supported = (type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
+                              type == 6  || type == 7  || type == 12 || type == 13 || type == 16 ||
+                              type == 17 || type == 20 || type == 25 || type == 30 || type == 33 ||
+                              type == 49 || type == 50 || type == 51);
+            if (!supported) continue;
+
+            auto pixToV3 = [&](int px, int py) -> Vector3 {
+                return Vector3(
+                    static_cast<float>(px / kMobTile - kWCX),
+                    1.0f,
+                    static_cast<float>(py / kMobTile - kWCZ));
+            };
+
+            MobileObjSpec spec;
+            spec.type     = static_cast<ObjectType>(type);
+            spec.posStart = pixToV3(psx, psy);
+            spec.posEnd   = pixToV3(pex, pey);
+            spec.speed    = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
+
+            bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20 || type == 33);
+            if (isPatrol && spec.posStart.x_ == spec.posEnd.x_ &&
+                            spec.posStart.z_ == spec.posEnd.z_) {
+                spec.posStart.x_ -= 2.0f;
+                spec.posEnd.x_   += 2.0f;
+            }
+            if (type == 20) { spec.posStart.y_ = 3.0f; spec.posEnd.y_ = 3.0f; }
+            if (type == 16) { spec.posStart.y_ = 4.0f; spec.posEnd.y_ = 1.0f; }
+
+            if (type == 5) ++totalTreasures_;
+
+            mobileObjects_.push_back(spec);
+            continue;
+        }
+
+        if (!inDecor || decorRow >= 100) continue;
+
+        std::stringstream ss(line);
+        std::string token;
+        int col = 0;
+        while (col < 100 && std::getline(ss, token, ',')) {
+            if (!token.empty()) {
+                int tileId = std::stoi(token);
+                if (tileId > 0) {
+                    uint16_t bt = BlockTypes::fromMobileIconId(tileId);
+                    world_->setBlock(
+                        static_cast<uint16_t>(col), 0,
+                        static_cast<uint16_t>(decorRow),
+                        Block::make(bt));
+                }
+            }
+            ++col;
+        }
+        ++decorRow;
+    }
+    return true;
+}
+
+void GEWorldRuntime::BuildDemoWorld() {
+    world_ = std::make_unique<World>();
+    mobileObjects_.clear();
+    skyRegion_ = 0;
+    blupiSpawn_ = Vector3(0.0f, kBlupiHalfH + 0.5f, 0.0f);
+
+    auto setBlock = [&](int dx, int h, int dz, uint16_t type) {
+        int wx = kWCX + dx, wz = kWCZ + dz;
+        if (wx >= 0 && wz >= 0 && wx < 100 && wz < 100)
+            world_->setBlock(
+                static_cast<uint16_t>(wx),
+                static_cast<uint16_t>(h),
+                static_cast<uint16_t>(wz),
+                Block::make(type));
+    };
+
+    const int R = 12;
+    for (int dz = -R; dz <= R; ++dz)
+        for (int dx = -R; dx <= R; ++dx)
+            setBlock(dx, 0, dz, BlockTypes::Ground);
+
+    for (int dz = -3; dz <= 3; ++dz)
+        for (int dx = 4; dx <= 8; ++dx)
+            setBlock(dx, 1, dz, BlockTypes::StoneA);
+
+    for (int dx = -4; dx <= 4; ++dx)
+        setBlock(dx, 0, -6, BlockTypes::Lava);
+    setBlock(2, 0, -6, BlockTypes::StoneB);
+    setBlock(-2, 0, -6, BlockTypes::StoneB);
+}
+
+void GEWorldRuntime::ResetLevel() {
+    levelTime_ = 0.0f;
+}
+
+void GEWorldRuntime::Update(float dt) {
+    levelTime_ += dt;
+}
+
+} // namespace GESimple3D
