@@ -32,10 +32,10 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 - Playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
 - Phase 79 removed non-mobile-eggbert features: time bonus, star rating, best time, stomp combo, danger pulse, coyote time, jump buffer, variable jump
 
-### GalaxyEggbertSimple3D (Simple3D target) — SKELETON ONLY, NOT BUILT YET
+### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, NOT YET RUN
 - Phase 80 (S3D-1): skeleton created, all source files exist under `src/GalaxyEggbertSimple3D/`
 - Target is OFF by default (`-DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON` to enable)
-- Has NOT been compiled yet — likely has build issues due to Simple3D API gaps
+- **Compiles successfully** — binary `cmake-build-simple3d/GalaxyEggbertSimple3D` (89 MB)
 - Terrain: grey placeholder cubes, no tile textures
 - Blupi: `CharacterController`-based, basic movement, no sprites
 - HUD: text-only labels
@@ -61,10 +61,12 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 
 ## 4. Current blocker / main problem
 
-**`GalaxyEggbertSimple3D` has never been compiled — build errors likely exist.**
+**`GalaxyEggbertSimple3D` compiles and links — not yet launched/tested.**
 
 All previously-missing Simple3D APIs are now implemented — no API gaps remain.
 See `docs/SIMPLE3D_GAPS.md` for the full list of available APIs.
+
+Next: S3D-2 (tile textures) — run the binary and verify terrain looks correct.
 
 ---
 
@@ -144,15 +146,9 @@ cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 
 **Ordered by priority:**
 
-### Task 1 — First compile of GalaxyEggbertSimple3D
-**Goal:** Get the Simple3D target to compile (even if it doesn't run correctly).
-**Files:** `CMakeLists.txt`, `src/GalaxyEggbertSimple3D/**`
-**Steps:**
-1. Ensure `../simple-3d` is built
-2. Run: `cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON`
-3. Run: `cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2`
-4. Fix each compile error one by one; note any missing Simple3D API as gaps
-**Verify:** Binary `cmake-build-simple3d/GalaxyEggbertSimple3D` exists and launches
+### ~~Task 1 — First compile of GalaxyEggbertSimple3D~~ DONE
+Binary `cmake-build-simple3d/GalaxyEggbertSimple3D` builds successfully.
+Fixed: `Label::SetScale` (Urho3D Text has no SetScale — reimplemented via font size scaling in simple-3d), `SetShieldActive` → `SetShieldTimer` in GalaxyEggbertSimpleGame.cpp.
 
 ### Task 2 — S3D-2: Tile textures in GETerrainRenderer
 **Goal:** Replace grey Box.mdl cubes with textured tiles from `object-m.png`.

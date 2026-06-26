@@ -218,7 +218,7 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     worldRuntime_.Update(dt);
 
-    blupi_.SetShieldActive(shieldTimer_ > 0.0f);
+    blupi_.SetShieldTimer(shieldTimer_);
     blupi_.SetInputFrozen(false);
     blupi_.Update(*this, dt);
 
