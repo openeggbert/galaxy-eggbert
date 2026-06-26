@@ -188,17 +188,16 @@
 
 ## Engine backend
 
-- [x] U3D active
-- [ ] Nova3D (Urho3D fork in progress; switch via `GALAXY_EGGBERT_ENGINE=NOVA3D`; zero game-code changes expected)
+- [x] Simple3D (via U3D/Urho3D) — active, primary target `GalaxyEggbertSimple3D`
+- [ ] Nova3D (Urho3D fork in progress; Simple3D selects it via `-DSIMPLE3D_ENGINE=NOVA3D`)
 
 ---
 
 ## Simple3D Migration
 
-Galaxy Eggbert is migrating from direct Urho3D/Nova3D API to the high-level `simple-3d` framework.
-The legacy Urho3D target (`GalaxyEggbert`) is kept until the Simple3D port reaches playable parity.
-New target: `GalaxyEggbertSimple3D` (build with `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON`).
-See `docs/simple3d_migration.md` and `docs/SIMPLE3D_GAPS.md` for details.
+Galaxy Eggbert runs entirely on the `simple-3d` framework (target: `GalaxyEggbertSimple3D`).
+The legacy direct-Urho3D target has been removed (S3D-9).
+Build with: `cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON`
 
 - [x] S3D-1 — Simple3D port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD labels, orbit camera, minimal sound, CMake target, gap documentation
 - [x] S3D-2 — Terrain visual fidelity: tile atlas material + UV offset per block type
@@ -207,5 +206,5 @@ See `docs/simple3d_migration.md` and `docs/SIMPLE3D_GAPS.md` for details.
 - [x] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
 - [x] S3D-6 — Phase/menu port: Init gamer select with per-slot data, Settings screen (sound toggle), SaveData persistence
 - [x] S3D-7 — Sound channel parity: 93 channels via SoundChannel enum, per-channel volume from tableVolumePitch, no-restart policy, key/life/shield-off events wired
-- [ ] S3D-8 — Web/Android build verification with Simple3D backend
-- [ ] S3D-9 — Remove legacy Urho3D path after Simple3D version reaches playable parity
+- [x] S3D-8 — Web build verified: GalaxyEggbertSimple3D.html builds with Emscripten; NetworkManager stub for web; Android blocked (U3D no Android support)
+- [x] S3D-9 — Remove legacy Urho3D path after Simple3D version reaches playable parity
