@@ -10,16 +10,11 @@ rather than repeating the list.
 
 ## Still missing
 
-| Feature needed | Simple3D workaround | Proposed Simple3D API |
-|---|---|---|
-| Sky dome / sky sphere (per-world background image) | `SetClearColor()` per-world approximation | `Game::SetSkyDome(texPath)` or `Game::SetSkyColor(top, horizon, bottom)` |
-| Per-channel audio (93 indexed channels with per-channel volume/pitch) | Map 5 critical sounds only via `Game::PlaySound(path, volume)` | `Game::PlaySound(path, volume, channel)` with channel priority, or per-entity `AudioSource` volume |
+None — all previously identified gaps are now implemented in simple-3d.
 
 ---
 
-## Already available in Simple3D (resolved gaps)
-
-These were missing at S3D-1 time (2026-06-23) and are now implemented:
+## Available in Simple3D
 
 | Feature | Simple3D API |
 |---|---|
@@ -42,3 +37,5 @@ These were missing at S3D-1 time (2026-06-23) and are now implemented:
 | Orbit camera | `Camera::SetOrbitMode`, `SetOrbitAngles`, `SetOrbitPitchLimits` |
 | Camera collision avoidance | `Camera::SetCollisionEnabled(true)` |
 | Scene fade transitions | `Game::FadeOut(duration, cb)`, `FadeIn(duration, cb)` |
+| Sky dome / sky sphere | `Game::SetSkyDome(texPath)`, `SetSkyGradient(zenith, horizon)`, `SetSkyDomeEnabled(bool)` |
+| Per-channel audio (93 indexed channels) | `Game::PlaySound(path, volume, channel)`, `StopSound(channel)`, `SetChannelVolume(channel, volume)`, `IsChannelPlaying(channel)` |

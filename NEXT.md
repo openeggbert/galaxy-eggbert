@@ -63,12 +63,8 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 
 **`GalaxyEggbertSimple3D` has never been compiled — build errors likely exist.**
 
-Most previously-missing Simple3D APIs are now implemented (tile textures, billboard UV crop,
-fog, ambient, camera shake, UI image rect, progress bar, fade transitions).
-
-Two gaps remain — see `docs/SIMPLE3D_GAPS.md` for the full current list:
-- Sky dome (per-world background image)
-- Per-channel audio (93 indexed channels)
+All previously-missing Simple3D APIs are now implemented — no API gaps remain.
+See `docs/SIMPLE3D_GAPS.md` for the full list of available APIs.
 
 ---
 
