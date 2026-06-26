@@ -25,7 +25,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #   cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 # =============================================================================
 
-option(GALAXY_EGGBERT_BUILD_SIMPLE3D "Build the Simple3D port target" OFF)
+option(GALAXY_EGGBERT_BUILD_SIMPLE3D "Build the Simple3D port target" ON)
 
 if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
 
