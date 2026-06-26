@@ -61,24 +61,14 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 
 ## 4. Current blocker / main problem
 
-**S3D-2 (terrain textures) requires Simple3D API that does not exist yet.**
+**`GalaxyEggbertSimple3D` has never been compiled — build errors likely exist.**
 
-Specifically, `GETerrainRenderer` needs to call something like:
-```cpp
-e->SetTileTexture("icons/object-m.png", uOff, vOff, uScale, vScale);
-```
+Most previously-missing Simple3D APIs are now implemented (tile textures, billboard UV crop,
+fog, ambient, camera shake, UI image rect, progress bar, fade transitions).
 
-But `Simple3D::Entity` has no method to set a diffuse texture with UV offset on a StaticModel.
-The needed API additions to `simple-3d`:
-- `Entity::SetTileTexture(texturePath, uOff, vOff, uScale, vScale)` — atlas sub-tile material
-- `Entity::SetMaterialColor(Color)` — flat unlit color (for fill/edge blocks)
-
-These must be added to `../simple-3d` before S3D-2 can proceed.
-Without them, the Simple3D terrain remains grey placeholder cubes.
-
-**Secondary blocker:** `GalaxyEggbertSimple3D` has never been compiled — build errors likely exist.
-
-Full list of missing Simple3D APIs: `docs/SIMPLE3D_GAPS.md`
+Two gaps remain — see `docs/SIMPLE3D_GAPS.md` for the full current list:
+- Sky dome (per-world background image)
+- Per-channel audio (93 indexed channels)
 
 ---
 
@@ -168,21 +158,12 @@ cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 4. Fix each compile error one by one; note any missing Simple3D API as gaps
 **Verify:** Binary `cmake-build-simple3d/GalaxyEggbertSimple3D` exists and launches
 
-### Task 2 — Add `Entity::SetTileTexture` to simple-3d (S3D-2 prerequisite)
-**Goal:** Add `void Entity::SetTileTexture(const std::string& texturePath, float uOff, float vOff, float uScale, float vScale)` to simple-3d.
-This creates a Urho3D `Diff`-technique material with the atlas texture and UOffset/VOffset shader parameters, then applies it to the entity's StaticModel.
-Also add `void Entity::SetMaterialColor(const Color& color)` for flat-colored fill blocks.
-**Files in simple-3d:**
-- `include/Simple3D/Entity/Entity.h` — declare both methods
-- `src/Simple3D/Entity/Entity.cpp` — implement (use Urho3D::Material, ResourceCache, Technique, Texture2D internally)
-- `API.md` — document under Entity section
-**Verify:** Build simple-3d, then use from GETerrainRenderer and rebuild GalaxyEggbertSimple3D
-
-### Task 3 — S3D-2: Tile textures in GETerrainRenderer
+### Task 2 — S3D-2: Tile textures in GETerrainRenderer
 **Goal:** Replace grey Box.mdl cubes with textured tiles from `object-m.png`.
+`Entity::SetTileTexture` and `Entity::SetMaterialColor` are now in simple-3d — no prerequisite task needed.
 **Files:** `src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp/.hpp`
 **Steps:**
-1. After Task 2, call `BlockTypes::tileUV(icon, uOff, vOff, uS, vS)` per block
+1. Call `BlockTypes::tileUV(icon, uOff, vOff, uS, vS)` per block
 2. Call `e->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS)`
 3. For fill/edge blocks, call `e->SetMaterialColor(Color(0.22f, 0.19f, 0.17f))`
 4. Remove `// TODO(S3D-2)` comments

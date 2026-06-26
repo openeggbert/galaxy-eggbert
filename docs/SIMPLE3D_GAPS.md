@@ -1,49 +1,44 @@
 # Simple3D API Gaps — Galaxy Eggbert
 
-Features required by galaxy-eggbert that are missing from the Simple3D API as of 2026-06-23.
+**Single source of truth for missing Simple3D APIs** required by the galaxy-eggbert
+Simple3D port (`GalaxyEggbertSimple3D`). Update this file when simple-3d adds a feature.
 
-These are documented here instead of being hacked with direct Urho3D calls in the Simple3D port code.
+Code stubs in `src/GalaxyEggbertSimple3D/` and references in `NEXT.md` point here
+rather than repeating the list.
 
-| Feature needed by Galaxy Eggbert | Currently in Simple3D? | Temporary workaround | Proposed Simple3D API |
-|---|---|---|---|
-| Tile atlas material with per-tile UV offset | No | Grey Box.mdl cubes (S3D-1) | `Entity::SetMaterialUVOffset(uOff, vOff, uScale, vScale)` or `Entity::SetAtlasMaterial(texPath, col, row, cols, rows)` |
-| Billboard sprite with UV-region crop (sprite sheet) | Partial — `AddBillboard(path, size)` exists but no UV crop | Box.mdl placeholder cube (S3D-1) | `Entity::AddBillboard(texPath, uvRect, size)` |
-| Sky dome / sky sphere | No | `SetClearColor()` per-world approximation | `Game::SetSkyDome(texPath)` or `Game::SetSkyColor(top, horizon, bottom)` |
-| Fog colour + fog start/end range | No | `SetClearColor()` approximation | `Game::SetFogColor(Color)`, `Game::SetFogRange(start, end)` |
-| Ambient zone (world-space ambient light colour) | No | Sun directional light approximation | `Game::SetAmbientColor(Color)` |
-| UI Image with UV-region crop (sprite sheet slice) | `UI::Image` exists but no UV crop | Text-only HUD (S3D-1) | `UI::Image::SetImageRect(IntRect)` |
-| UI gauge / life-icon sprite strip | No | Text-only HUD (S3D-1) | `UI::ProgressBar` + `UI::Image` composition, or dedicated `UI::SpriteStrip` |
-| Pixel-positioned hit-flash full-screen overlay | No | Skip in S3D-1 | `UI::Panel::SetFullscreen()` with alpha fade |
-| Particle explosion from sprite sheet frames | Partial — `AddParticleEmitter(xmlPath)` exists, but requires `explo.png` strip frames | Skip in S3D-1 | `AddParticleEmitter` with custom sprite-sheet XML, or `Entity::AddBillboardAnimation(texPath, cols, rows, fps)` |
-| Per-channel audio volume (93 channels) | No — only `Game::PlaySound(path, volume)` | Map 5 critical sounds only (S3D-1) | `AudioSource::SetVolume()` per entity source, or `Game::PlaySound(path, volume, channel)` with channel priority |
-| Looped sound effects (e.g. lava hiss, engine rumble) | Partial — `Entity::AddAudioSource` can loop | Not wired yet in S3D-1 | Wire `Entity::AddAudioSource()` per world hazard entity |
-| Camera shake | No | `GECameraRig::StartShake` is a no-op stub | `Camera::Shake(intensity, duration)` |
-| Input actions (keyboard + gamepad unified) | **Yes** — `BindAction / BindAxis2D` available | Already used in S3D-1 | ✅ Already available |
-| Save data (binary GameData blob) | Partial — `Simple3D::SaveData` exists (JSON) | Not wired in S3D-1 | Port GameData to `SaveData` JSON, or `SaveData::SaveRaw()` for binary |
-| 3D audio listener (positional sound) | Yes — `Game::SetAudioListener(entity)` | Not wired in S3D-1 | Wire to Blupi entity in Start() |
-| Trigger volumes (collect pickup on contact) | **Yes** — `AddTriggerSphere` / `SetOnTriggerEnter` | Already used in S3D-1 | ✅ Already available |
-| Character controller (platformer) | **Yes** — `AddCharacterController` | Already used in S3D-1 | ✅ Already available |
+---
 
-## What IS available in Simple3D (and used in S3D-1)
+## Still missing
 
-- `Game` subclass with `Start / Update / Stop`
-- `CreateEntity`, `CreateCamera`, `CreateLabel`
-- `Entity::AddModel`, `SetPosition`, `SetScale`, `SetRotation`
-- `Entity::AddRigidBody`, `AddBoxCollider`, `AddCapsuleCollider`
-- `Entity::AddTriggerSphere`, `SetOnTriggerEnter`
-- `Entity::AddCharacterController` → `CharacterController::Move / TryJump / IsOnGround`
-- `Entity::CreateChild`
-- `Entity::SetCollisionLayer(CollisionLayer)`, `SetCollisionMask`
-- `CollisionLayer::Actor / StaticGeometry / Trigger`
-- `MakeCollisionMask({...})`
-- `Camera::SetOrbitMode`, `SetOrbitAngles`, `SetOrbitPitchLimits`, `SetOrbitSensitivity`
-- `Camera::SetCollisionEnabled`, `SetFOV`, `SetFarClip`
-- `Label::SetText / SetPosition / SetFontSize / SetColor / SetVisible`
-- `Game::PlaySound`, `PlayMusic`, `SetMasterVolume`
-- `Game::IsKeyDown`, `IsKeyPressed`
-- `Game::IsGamepadButtonDown`, `IsGamepadButtonPressed`, `GetGamepadAxis`
-- `Game::BindAction`, `BindAxis2D`, `IsActionDown`, `IsActionPressed`, `GetAxis2D`
-- `Game::SetClearColor`, `SetWindowTitle`, `SetWindowSize`, `SetAppName`
-- `Game::SetResourcePrefixPaths`
-- `Game::DestroyEntity`, `FindEntity`, `IsPendingDestroy`
-- `Entity::AddDirectionalLight`
+| Feature needed | Simple3D workaround | Proposed Simple3D API |
+|---|---|---|
+| Sky dome / sky sphere (per-world background image) | `SetClearColor()` per-world approximation | `Game::SetSkyDome(texPath)` or `Game::SetSkyColor(top, horizon, bottom)` |
+| Per-channel audio (93 indexed channels with per-channel volume/pitch) | Map 5 critical sounds only via `Game::PlaySound(path, volume)` | `Game::PlaySound(path, volume, channel)` with channel priority, or per-entity `AudioSource` volume |
+
+---
+
+## Already available in Simple3D (resolved gaps)
+
+These were missing at S3D-1 time (2026-06-23) and are now implemented:
+
+| Feature | Simple3D API |
+|---|---|
+| Tile atlas material with per-tile UV offset | `Entity::SetTileTexture(texPath, uOff, vOff, uScale, vScale)` |
+| Flat unlit solid-colour material | `Entity::SetMaterialColor(Color)` |
+| Billboard UV-region crop (sprite sheet) | `Entity::SetBillboardUVRect(x, y, w, h)` |
+| Fog colour + range | `Game::SetFogEnabled(bool)`, `SetFogColor(Color)`, `SetFogRange(start, end)` |
+| Ambient scene light colour | `Game::SetAmbientColor(Color)` |
+| Camera shake | `Camera::Shake(intensity, duration)` |
+| UI Image UV crop (sprite sheet slice) | `UI::Image::SetImageRect(x, y, w, h)` |
+| UI gauge / progress bar | `UI::ProgressBar` via `CreateProgressBar()` |
+| Full-screen hit-flash overlay | `UI::Panel` with `SetColor` + `SetOpacity` + `FadeIn/FadeOut` |
+| Particle explosion | `Entity::AddParticleEmitter(xmlPath)` |
+| Looped 3D audio source | `Entity::AddAudioSource()` |
+| 3D audio listener | `Game::SetAudioListener(entity)` |
+| Save data | `Game::GetSaveData(slot)` → `SaveData::Get/Set/Load/Save` |
+| Input actions (keyboard + gamepad unified) | `BindAction / BindAxis2D` |
+| Trigger volumes | `Entity::AddTriggerSphere/Box/Capsule` + `SetOnTriggerEnter` |
+| Character controller | `Entity::AddCharacterController` → `CharacterController` |
+| Orbit camera | `Camera::SetOrbitMode`, `SetOrbitAngles`, `SetOrbitPitchLimits` |
+| Camera collision avoidance | `Camera::SetCollisionEnabled(true)` |
+| Scene fade transitions | `Game::FadeOut(duration, cb)`, `FadeIn(duration, cb)` |
