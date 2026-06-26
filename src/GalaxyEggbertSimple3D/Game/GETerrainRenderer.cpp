@@ -1,5 +1,6 @@
 #include "GETerrainRenderer.hpp"
 #include <GalaxyEggbert/Worlds/Block.hpp>
+#include <GalaxyEggbert/BlockTypes.hpp>
 
 using namespace Simple3D;
 using namespace GalaxyEggbert;
@@ -40,7 +41,11 @@ void GETerrainRenderer::Build(Game& game, const GEWorldRuntime& worldRuntime) {
 
                             auto* e = game.CreateEntity("Block" + std::to_string(blockIndex++));
                             e->AddModel("Models/Box.mdl");
-                            // TODO(S3D-2): Set tile-atlas material with UV offset for block type b.type()
+                            {
+                                float uOff, vOff, uS, vS;
+                                BlockTypes::tileUV(b.type(), uOff, vOff, uS, vS);
+                                e->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
+                            }
                             e->SetPosition(fx, fy, fz);
                             e->AddRigidBody(0.0f);
                             e->AddBoxCollider(Vector3(1.0f, 1.0f, 1.0f));
@@ -66,6 +71,7 @@ void GETerrainRenderer::Build(Game& game, const GEWorldRuntime& worldRuntime) {
                                 for (int dy = 1; dy <= kFillDepth; ++dy) {
                                     auto* fe = game.CreateEntity("BlockFill" + std::to_string(blockIndex++));
                                     fe->AddModel("Models/Box.mdl");
+                                    fe->SetMaterialColor(Color(0.22f, 0.19f, 0.17f));
                                     fe->SetPosition(fx, fy - static_cast<float>(dy), fz);
                                     fe->AddRigidBody(0.0f);
                                     fe->AddBoxCollider(Vector3(1.0f, 1.0f, 1.0f));

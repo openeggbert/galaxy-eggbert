@@ -7,9 +7,8 @@ namespace GESimple3D {
 
 // Builds Simple3D entity blocks for the voxel world.
 //
-// S3D-1 limitation: all blocks are grey Box.mdl cubes — no tile textures.
-// Tile-atlas UV material is missing from Simple3D (see docs/SIMPLE3D_GAPS.md).
-// TODO(S3D-2): Replace with atlas-UV material once Simple3D exposes UV-offset API.
+// Top face of each cube is textured with the tile's UV region from object-m.png.
+// Fill/edge blocks below cliff edges use a flat dark colour.
 class GETerrainRenderer {
 public:
     // Destroys all terrain entities via game.DestroyEntity then spawns new ones.

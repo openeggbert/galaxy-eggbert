@@ -150,17 +150,9 @@ cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 Binary `cmake-build-simple3d/GalaxyEggbertSimple3D` builds successfully.
 Fixed: `Label::SetScale` (Urho3D Text has no SetScale — reimplemented via font size scaling in simple-3d), `SetShieldActive` → `SetShieldTimer` in GalaxyEggbertSimpleGame.cpp.
 
-### Task 2 — S3D-2: Tile textures in GETerrainRenderer
-**Goal:** Replace grey Box.mdl cubes with textured tiles from `object-m.png`.
-`Entity::SetTileTexture` and `Entity::SetMaterialColor` are now in simple-3d — no prerequisite task needed.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp/.hpp`
-**Steps:**
-1. Call `BlockTypes::tileUV(icon, uOff, vOff, uS, vS)` per block
-2. Call `e->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS)`
-3. For fill/edge blocks, call `e->SetMaterialColor(Color(0.22f, 0.19f, 0.17f))`
-4. Remove `// TODO(S3D-2)` comments
-5. Mark S3D-2 as `[x]` in `plan.md`
-**Verify:** Launch GalaxyEggbertSimple3D — terrain shows mobile-eggbert tile graphics
+### ~~Task 2 — S3D-2: Tile textures in GETerrainRenderer~~ DONE
+`GETerrainRenderer` now calls `BlockTypes::tileUV` + `e->SetTileTexture("icons/object-m.png", ...)` per block.
+Fill/edge blocks use `SetMaterialColor(Color(0.22f, 0.19f, 0.17f))`. Builds successfully.
 
 ### Task 4 — Ranking screen (Urho3D version)
 **Goal:** Implement `Phase::Ranking` — high-score table accessible from Init screen.
