@@ -1,11 +1,20 @@
 #pragma once
 
 #include <Simple3D/Simple3D.h>
+#include <cstdint>
 
 namespace GESimple3D {
 
-// Blupi character controller for the Simple3D port.
-// TODO: crouch, death freeze — stubbed below.
+// Blupi animation/movement state — values match mobile-eggbert BlupiAction IDs.
+enum class BlupiState : uint8_t {
+    Stop  = 1,
+    March = 2,
+    Jump  = 4,
+    Air   = 5,
+    Down  = 6,  // crouch (LShift)
+    Up    = 7,  // look-up / glide (RShift)
+};
+
 class GEBlupiController {
 public:
     static constexpr float kMoveSpeed  = 5.5f;
@@ -14,32 +23,25 @@ public:
     static constexpr float kGravity    = 25.0f;
     static constexpr float kFallLimit  = -10.0f;
 
-    // blupi.png sprite sheet constants (600×2040 px, 60×60 tiles, 10 cols)
-    static constexpr float kSheetW  = 600.0f;
-    static constexpr float kSheetH  = 2040.0f;
+    // blupi.png: 60×60 px tiles, 10 columns per row
     static constexpr int   kTilePx  = 60;
     static constexpr int   kCols    = 10;
-    static constexpr float kHalfH   = 23.0f / 64.0f;   // physics half-height
-    static constexpr float kVisHalf = 60.0f / 64.0f / 2.0f; // billboard visual half
+    static constexpr float kHalfH   = 23.0f / 64.0f;
+    static constexpr float kVisHalf = 60.0f / 64.0f / 2.0f;
 
-    // Creates the player entity and CharacterController.
     void Create(Simple3D::Game& game);
-
-    // Reads input and updates the character. Call every frame from Game::Update.
     void Update(Simple3D::Game& game, float dt);
-
-    // Teleports Blupi to the spawn point.
     void Respawn();
 
     void SetSpawnPoint(const Simple3D::Vector3& pos) { spawn_ = pos; }
 
-    Simple3D::Entity*   GetEntity()       const { return player_; }
-    Simple3D::Vector3   GetPosition()     const;
-    float               GetFacingYaw()    const { return yaw_; }
-    bool                IsOnGround()      const;
-    float               GetVelY()         const;
+    Simple3D::Entity* GetEntity()    const { return player_; }
+    Simple3D::Vector3 GetPosition()  const;
+    float             GetFacingYaw() const { return yaw_; }
+    bool              IsOnGround()   const;
+    float             GetVelY()      const;
 
-    void SetShieldTimer(float t) { shieldTimer_ = t; }
+    void  SetShieldTimer(float t) { shieldTimer_ = t; }
     float GetShieldTimer()  const { return shieldTimer_; }
     bool  IsShieldActive()  const { return shieldTimer_ > 0.0f; }
 
@@ -48,22 +50,32 @@ public:
     bool WasLandedThisFrame() const { return landedThisFrame_; }
     bool WasJumpedThisFrame() const { return jumpedThisFrame_; }
 
+    BlupiState GetState() const { return state_; }
+
     void SetSpriteVisible(bool v);
 
 private:
-    void UpdateSprite(bool moving);
+    void UpdateState(bool grounded, bool moving, bool jumpTriggered,
+                     bool crouchHeld, bool lookUpHeld, float stickX);
+    void AdvanceAnim(float dt);
+    void ApplySprite();
 
-    Simple3D::Entity*             player_       = nullptr;
-    Simple3D::Entity*             sprite_       = nullptr;
-    Simple3D::CharacterController* cc_          = nullptr;
-    Simple3D::Vector3             spawn_        = {0.0f, 0.86f, 0.0f};
-    float yaw_             = 0.0f;
-    float shieldTimer_     = 0.0f;
-    int   animTick_        = 0;
-    bool  inputFrozen_     = false;
-    bool  wasGrounded_     = false;
-    bool  landedThisFrame_ = false;
-    bool  jumpedThisFrame_ = false;
+    Simple3D::Entity*              player_    = nullptr;
+    Simple3D::Entity*              sprite_    = nullptr;
+    Simple3D::CharacterController* cc_        = nullptr;
+    Simple3D::Vector3              spawn_     = {0.0f, 0.86f, 0.0f};
+
+    float      yaw_            = 0.0f;
+    float      shieldTimer_    = 0.0f;
+    bool       inputFrozen_    = false;
+    bool       wasGrounded_    = false;
+    bool       landedThisFrame_= false;
+    bool       jumpedThisFrame_= false;
+    bool       facingRight_    = false;
+
+    BlupiState state_          = BlupiState::Stop;
+    int        animPhase_      = 0;   // index into current state's frame table
+    float      animTimer_      = 0.0f;
 };
 
 } // namespace GESimple3D

@@ -158,10 +158,19 @@ void GEWorldRuntime::BuildDemoWorld() {
 
 void GEWorldRuntime::ResetLevel() {
     levelTime_ = 0.0f;
+    animTimer_ = 0.0f;
+    animPhase_ = 0;
 }
 
 void GEWorldRuntime::Update(float dt) {
     levelTime_ += dt;
+    animTimer_ += dt;
+    // 6 fps animation tick — matches mobile-eggbert's animated tile rate
+    static constexpr float kAnimPeriod = 1.0f / 6.0f;
+    while (animTimer_ >= kAnimPeriod) {
+        animTimer_ -= kAnimPeriod;
+        animPhase_++;
+    }
 }
 
 } // namespace GESimple3D

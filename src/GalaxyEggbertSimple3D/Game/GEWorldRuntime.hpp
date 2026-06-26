@@ -57,6 +57,9 @@ public:
     void SetWorldNum(int n) { worldNum_ = n; }
     void SetTotalTreasures(int n) { totalTreasures_ = n; }
 
+    // Global animation tick (increments at 6 fps). Used for crusher kill-phase check.
+    int GetAnimPhase() const { return animPhase_; }
+
 private:
     std::unique_ptr<GalaxyEggbert::Worlds::World> world_;
     std::vector<MobileObjSpec> mobileObjects_;
@@ -65,6 +68,8 @@ private:
     int   worldNum_       = 1;
     int   totalTreasures_ = 0;
     float levelTime_      = 0.0f;
+    float animTimer_      = 0.0f;
+    int   animPhase_      = 0;
 };
 
 } // namespace GESimple3D

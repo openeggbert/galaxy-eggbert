@@ -1,5 +1,7 @@
 #include "GalaxyEggbertSimpleGame.hpp"
 #include "Support/Simple3DMissingFeatures.hpp"
+#include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Worlds/Block.hpp>
 #include <cstdio>
 #include <cmath>
 #include <filesystem>
@@ -302,6 +304,35 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     blupi_.SetInputFrozen(false);
     blupi_.Update(*this, dt);
 
+    // Tile hazard detection (inspired by Decor.cpp BlupiStep/DecorDetect).
+    // Query World at Blupi's tile position; kill if standing on a hazard tile.
+    if (!blupi_.IsShieldActive()) {
+        using namespace GalaxyEggbert;
+        auto* world = worldRuntime_.GetWorld();
+        if (world) {
+            Vector3 bp = blupi_.GetPosition();
+            int tx = static_cast<int>(std::round(bp.x_)) + GESimple3D::GEWorldRuntime::kWCX;
+            int tz = static_cast<int>(std::round(bp.z_)) + GESimple3D::GEWorldRuntime::kWCZ;
+            if (tx >= 0 && tx < 100 && tz >= 0 && tz < 100) {
+                uint16_t tileType = world->getBlock(
+                    static_cast<uint16_t>(tx), 0,
+                    static_cast<uint16_t>(tz)).type();
+                if (BlockTypes::isHazard(tileType)) {
+                    bool kill = true;
+                    // Crusher: kills only when extended (phases 5-9 of 10-frame cycle)
+                    if (BlockTypes::tileAnimBase(tileType) == BlockTypes::Crusher)
+                        kill = (worldRuntime_.GetAnimPhase() % 10 >= 5);
+                    if (kill) {
+                        hud_.ShowHitFlash();
+                        sound_->PlayHit();
+                        ResetLevel();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     Vector3 blupiPos = blupi_.GetPosition();
     float   blupiVelY = blupi_.GetVelY();
 
@@ -371,8 +402,8 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     if (blupi_.WasLandedThisFrame())  sound_->PlayLand();
     if (blupi_.WasJumpedThisFrame())  sound_->PlayJump();
 
-    // Fall death
-    if (blupi_.GetPosition().y_ < -10.0f) {
+    // Fall out of world
+    if (blupi_.GetPosition().y_ < GESimple3D::GEBlupiController::kFallLimit) {
         hud_.ShowHitFlash();
         sound_->PlayHit();
         ResetLevel();
