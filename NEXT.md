@@ -4,154 +4,246 @@
 
 **Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (a C++ port of *Speedy Blupi*, a Windows Phone XNA game from 2013).
 
-- Two build targets:
-  - `GalaxyEggbert` — original, fully working, built against U3D
-  - `GalaxyEggbertSimple3D` — new port in progress, built against `simple-3d`
-- **Faithful remake rule:** Only implement what exists in mobile-eggbert. No new mechanics.
-- 3D-specific adaptations (camera, blob shadows, auto step-up, billboard sprites) are allowed.
-- Feature tracking: `plan.md` (checklist)
-
-Architecture target:
-```
-galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
-```
+- **Faithful remake rule:** Only implement what exists in mobile-eggbert. No invented mechanics.
+- Sole build target: `GalaxyEggbertSimple3D` — built against `simple-3d` (which wraps U3D/Urho3D).
+- The legacy Urho3D-direct target `GalaxyEggbert` was removed in S3D-9.
+- **Backend layering:** `galaxy-eggbert game code → Simple3D API → U3D (Urho3D fork)`.
+  Nova3D can replace U3D in the future by changing only Simple3D's cmake linkage — zero changes in galaxy-eggbert.
+- World format: identical to mobile-eggbert `.txt` files (`worlds/world001.txt` … `world005.txt`).
+- Tile sprites: same PNGs as mobile-eggbert (`Content/icons/object-m.png`, `blupi.png`, `element.png`).
+- Reference: `/rv/data/development/github.com/openeggbert/mobile-eggbert` (Decor.cpp, Tables.cpp).
 
 ---
 
 ## 2. Current status
 
-### GalaxyEggbert (Urho3D target) — FULLY WORKING
-- Builds and runs: `cmake --build cmake-build-u3d --target GalaxyEggbert -j2`
-- 80 phases complete; playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
+### Builds
+- `cmake-build-debug/GalaxyEggbertSimple3D` — **builds clean** (CLion default profile).
+- `cmake-build-simple3d/GalaxyEggbertSimple3D` — **builds clean**.
+- `cmake-build-debug/GalaxyEggbertWorldsTests` — **54/54 tests pass** (run directly; ctest discovery broken).
 
-### GalaxyEggbertSimple3D (Simple3D target) — PRIMARY TARGET (S3D-9 DONE)
-- Compiles: `cmake-build-simple3d/GalaxyEggbertSimple3D`
-- Legacy direct-Urho3D target (`src/GalaxyEggbert/Game/`) deleted; `src/GalaxyEggbert/Worlds/` kept (shared)
-- Terrain: tile-atlas textures from `object-m.png` per block type (S3D-2 ✅)
-- Blupi: billboard sprite from `blupi.png`, walk animation frames 0–9 (S3D-3 ✅)
-- Decor: all enemies + pickups rendered as animated billboard sprites from `element.png` (S3D-4 ✅)
-- HUD: gauge sprite, life icons, key icons, red hit-flash panel (S3D-5 ✅)
-- Phase/menu: Init screen shows per-slot data (lives/world/best); Settings screen (S key) with sound toggle; SaveData persistence for 3 slots (S3D-6 ✅)
-- Sound: 93 channels via SoundChannel enum, per-channel volume from tableVolumePitch (S3D-7 ✅)
-- Web: builds as `.html`+`.wasm` with Emscripten (S3D-8 ✅)
-- Camera: orbit mode
+### What works
+- World loading from mobile-eggbert `.txt` format (5 worlds).
+- 3D terrain rendered as cubes with tile textures from `object-m.png`.
+- Animated tiles: lava (8-frame), crusher (10-frame), saw (6-frame), spike (16-frame), water1/2 (6-frame) — exact frame tables from `mobile-eggbert Tables.cpp`.
+- Blupi billboard sprite from `blupi.png` with state machine (Stop/March/Jump/Air/Down/Up) and exact frame tables from `table_blupi`.
+- Mobile object billboards from `element.png` with per-type animation (keys, treasure, shield, egg, drink, exit, enemies, platforms).
+- Tile hazard detection: lava/spike/saw instant kill; crusher kills only in phases 5-9 of 10-frame animation cycle.
+- Enemy stomp: upward `BounceUp()` impulse on kill, score +25.
+- Respawn invincibility: 2 s after death with 10 Hz sprite flash; hazard/enemy-hit detection skipped.
+- Pickup system: treasure counting, exit gate opens when all collected, bonus life on gate open.
+- Key pickups (red/green/blue), shield pickup (5 s timer), egg/drink (+1 life).
+- HUD: lives, world, treasure count, key icons, shield timer, level timer, score, game speed indicator, controls hint.
+- Save/load: 3 gamer slots (lives, world, best score) + sound settings, persisted via `Simple3D::SaveData`.
+- Sound: 93 channels, per-channel volume (from `tableVolumePitch`), correct WAV paths.
+- Camera: 3rd-person orbit following Blupi via `GECameraRig`.
+- Physics: `CharacterController` + gravity + jump + glide (RShift).
+- Game phases: Init (slot select) → Play → Pause → Win → Lost → Settings.
+- 5 sky colours (one per world region) via `SetClearColor`.
+- Resource loading: `Content/` registered via `Game::AddResourceDir("Content")` — icons and sounds load correctly.
+- `GALAXY_EGGBERT_BUILD_SIMPLE3D` defaults to `ON` — CLion default profile works without extra flags.
 
-### Tests
-- 54 engine-independent unit tests for `GalaxyEggbert::Worlds::*` — pass
+### What does not work yet
+- Camera shake (`GECameraRig::StartShake` is a no-op — Simple3D has no shake API).
+- Sound loop support (`GESound::Play(channel, loop=true)` ignores the loop flag).
+- "EXIT OPEN!" popup text (no on-screen notification when exit unlocks).
+- Per-type enemy AI: all enemies use the same linear patrol regardless of `ObjectType`.
+- ObjectType12 (crate) push mechanic — crate renders but cannot be pushed.
+- Ventilator/fan tiles (icons 126-137) not in `BlockTypes`; not animated.
+- Sky fog/zone colour per world region (only clear colour changes, no fog).
+- Android and web builds (untested after S3D-9).
 
 ---
 
 ## 3. Recent changes
 
-- **S3D-9** — Legacy removal: deleted `src/GalaxyEggbert/Game/` and top-level Urho3D app files; removed old `GalaxyEggbert` target + engine-selection block from CMakeLists.txt; `src/GalaxyEggbert/Worlds/` kept (shared with tests); `GalaxyEggbertSimple3D` is now the sole game target
-- **S3D-8** — Web build: CMake Emscripten block for `GalaxyEggbertSimple3D` (preload files, memory flags, embind); `NetworkManager_stub.cpp` in simple-3d for `__EMSCRIPTEN__`; produces `.html`+`.wasm`+`.data` (6.1 MB wasm, 48 MB data)
-- **S3D-7** — Sound: GESound expanded to all 93 channels via `Game::PlaySound(path,vol,ch)`; per-channel volume from tableVolumePitch; no-restart policy (except ch10); fixed wrong paths (jump was using ch42/life sound); added key (ch11), life (ch42), shield-off (ch44) events
-- **S3D-6** — Phase/menu: Init shows per-slot lives/world/best via SaveData (slots 0–2); Settings screen from Init (S) and Pause (S); sound toggle persisted in slot 3; save on win/lose/level-reset
-- **S3D-5** — HUD: gauge sprite (`jauge.png`), life icons (blupi.png icon 48), key icons (element.png red/green/blue), hit-flash panel; `ShowHitFlash()`+`Update(dt)` wired in game loop
-- **S3D-4** — Decor: all enemies + pickups replaced with billboard sprites from `element.png`; `GetObjIcon()` ported from Decor.cpp; animation phase updated every frame
-- **S3D-3** — Blupi: box placeholder replaced with billboard from `blupi.png`; walk animation cycles frames 0–9 row 0; idle shows frame 0
-- **S3D-2** — `GETerrainRenderer`: `BlockTypes::tileUV` + `SetTileTexture("icons/object-m.png", ...)` per block; fill/edge blocks use `SetMaterialColor(dark brown)`
-- **S3D-1 compile** — fixed `Label::SetScale` in simple-3d; fixed `SetShieldActive` → `SetShieldTimer`
+| Commit | Change |
+|--------|--------|
+| `869dceb` | fix: `AddResourceDir("Content")` in `Start()` — fixes white/blank tile textures |
+| `c129475` | fix: `GALAXY_EGGBERT_BUILD_SIMPLE3D` default changed to `ON` |
+| `89dd87a` | feat: tile animation (exact tables from Tables.cpp), respawn invincibility (2 s flash), stomp `BounceUp()` |
+| `af6434f` | feat: `BlupiAction` state machine, tile hazard detection from World data, 6 fps `animPhase_` counter |
+| `da6232c` | feat: S3D-9 — removed legacy Urho3D target; `src/GalaxyEggbert/Game/` deleted |
+| simple-3d `9cd38f7` | feat: `Game::AddResourceDir()` added to Simple3D public API |
 
 ---
 
-## 4. Current focus
+## 4. Current blocker / main problem
 
-**Simple3D migration complete (S3D-1 through S3D-9 done). Next: gameplay depth — enemy AI, Blupi physics, missing mechanics.**
+**No single hard blocker** — game runs and is playable end-to-end.
+
+The most visible quality gap is **all enemies use identical linear patrol AI** regardless of type.
+In mobile-eggbert, each enemy type has distinct behaviour (bird hovers at fixed Y, fish swims vertically, bulldozer charges on contact, blupit mirrors Blupi). Current `GEDecorSystem::Update()` moves all enemies identically, which makes levels feel wrong.
+
+Secondary gap: **sound loops not implemented** — music/ambient channels that should loop play once and stop.
 
 ---
 
-## 5. Known incomplete items
+## 5. Known bugs and limitations
 
 | Status | Issue |
 |--------|-------|
-| incomplete | Android build — blocked: U3D engine on Android not yet supported in simple-3d |
-| incomplete | Sound loop support — `Game::PlaySound(ch)` has no loop param; no channels currently need it |
-| incomplete | GECameraRig::StartShake — stub, needs `Camera::Shake(intensity, duration)` call |
-| incomplete | GEDecorSystem: enemy AI — basic patrol only; Decor.cpp state machine not ported |
-| incomplete | Ranking screen not implemented |
-| incomplete | Push mechanic (ObjectType12 crates) not implemented |
-| incomplete | ObjectType23 (projectile), ObjectType96/97 (follow enemies) not implemented |
-| incomplete | Vehicles: helicopter, jeep, tank, skateboard, balloon, swim, surf |
-| incomplete | Nova3D backend not available yet (Simple3D selects it via `-DSIMPLE3D_ENGINE=NOVA3D`) |
-| incomplete | Respawn invincibility flash (2 s grace period) — not implemented in GEBlupiController |
-| incomplete | Death freeze (1 s input lock after death) — not implemented |
-| incomplete | Bounce after stomp — placeholder (uses Respawn) |
-| needs verification | `GEBlupiController` step-up via `CharacterController::SetStepHeight` — behaviour may differ from old AABB step-up |
+| confirmed | Camera shake is a no-op (`GECameraRig::StartShake` does nothing) |
+| confirmed | Sound loop flag ignored in `GESound::Play()` — looping sounds play once only |
+| confirmed | All enemies share one patrol AI regardless of `ObjectType` |
+| confirmed | ObjectType12 (crate) cannot be pushed — renders statically |
+| confirmed | "EXIT OPEN!" event has no on-screen text notification |
+| confirmed | `ctest` does not discover `GalaxyEggbertWorldsTests` in cmake-build-debug (binary runs fine manually) |
+| incomplete | Ventilator/fan tiles (icons 126-137) not defined in `BlockTypes`, not animated |
+| incomplete | Sky fog/zone colour per world region — only `SetClearColor` changes |
+| unknown | Web (Emscripten) build untested after S3D-9 |
+| unknown | Android build untested |
+| needs verification | Stomp bounce height `kJumpSpeed * 0.65f` — matches mobile-eggbert feel? |
 
 ---
 
 ## 6. Architecture notes
 
-### Single build target
+### Main modules
 
-| Target | Sources | Engine API | Status |
-|--------|---------|------------|--------|
-| `GalaxyEggbertSimple3D` | `src/GalaxyEggbertSimple3D/` | `Simple3D` only | Primary, playable |
+```
+GalaxyEggbertSimpleGame        — main game class (game phases, level lifecycle)
+  GEWorldRuntime               — world data: loads .txt, holds World voxel grid, MobileObjSpec list,
+                                  6 fps animPhase_ counter
+  GETerrainRenderer            — spawns Box entities from World; Update(animPhase) refreshes animated tile UVs
+  GEBlupiController            — Blupi entity: CharacterController, BlupiState machine, billboard sprite
+  GEDecorSystem                — mobile objects: pickups (trigger sphere), enemies/platforms (patrol),
+                                  animation from GetObjIcon()
+  GEHud                        — HUD overlay (Simple3D UI labels + panels)
+  GECameraRig                  — 3rd-person camera following Blupi
+  GESound                      — sound channel wrapper (93 channels, per-channel volume)
 
-Shared (engine-agnostic) code compiled into `GalaxyEggbertSimple3D` and the unit tests:
-- `include/GalaxyEggbert/Worlds/` — Block, Chunk, World data model
-- `include/GalaxyEggbert/BlockTypes.hpp` — tile type constants + `tileUV()` UV math
+include/GalaxyEggbert/Worlds/  — engine-independent voxel grid (100×100×10), tested by GalaxyEggbertWorldsTests
+include/GalaxyEggbert/BlockTypes.hpp — tile type constants; block type = icon index in object-m.png
+```
 
-### Key invariants
-- Block type = icon index = `object-m.png` atlas position (except Air=0)
-- `BlockTypes::tileUV(icon, uOff, vOff, uScale, vScale)` → UV rect in `object-m.png` (1301×1431 px, 64×64 tiles, 20 cols)
-- World files: `worlds/world001.txt` … `world005.txt` — mobile-eggbert format, all blocks at y=0
-- Simple3D API gaps: `docs/SIMPLE3D_GAPS.md` (currently none outstanding)
+### Data flow
+
+```
+worlds/worldXXX.txt
+  → GEWorldRuntime::LoadFromMobileEggbertFile()
+      → World (blocks) + mobileObjects_ (MobileObjSpec list) + blupiSpawn_
+  → GETerrainRenderer::Build()   — one Box entity per block; animTiles_ subset for UV updates
+  → GEDecorSystem::Build()       — one entity per MobileObjSpec; trigger spheres for pickups
+  → GEBlupiController::Respawn() — positions Blupi at blupiSpawn_
+```
+
+### Important invariants
+
+- **Block type = icon index** in `object-m.png` (20 cols, 64×64 px tiles). No separate mapping.
+- **World coordinates:** world grid is 100×100; Blupi's 3D position uses offset `kWCX=50, kWCZ=50` to centre the grid at origin.
+- **animPhase_** in `GEWorldRuntime` ticks at 6 fps; used for crusher kill-phase check AND `GETerrainRenderer::Update()`.
+- **No `#ifdef GE_ENGINE_*`** anywhere. Engine differences belong in Simple3D, not in galaxy-eggbert.
+- **Faithful remake:** check `Decor.cpp` in mobile-eggbert before implementing any new gameplay behaviour.
+- **RAM:** build with `-j2` maximum (32 GB RAM constraint; crashes with more parallel jobs).
+
+### API boundaries that must remain stable
+
+- `GEWorldRuntime::kWCX / kWCZ = 50` — changing breaks tile coordinate conversion everywhere.
+- `BlockTypes::fromMobileIconId()` — maps mobile-eggbert icon IDs to block types; must match world file format.
+- `GEDecorSystem::GetObjIcon(ObjectType, phase)` — ported from Decor.cpp; do not change without cross-referencing mobile-eggbert.
 
 ---
 
 ## 7. Useful commands
 
 ```bash
-# Configure (first time)
-cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON -DSIMPLE3D_HOME=../simple-3d
+# Configure (CLion default profile or manual):
+cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
 
-# Build and run
+# Build game:
+cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
+
+# Run game:
+./cmake-build-debug/GalaxyEggbertSimple3D
+
+# Build and run unit tests:
+cmake --build cmake-build-debug --target GalaxyEggbertWorldsTests -j2
+./cmake-build-debug/GalaxyEggbertWorldsTests
+
+# Build with explicit Simple3D profile:
+cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
 cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 ./cmake-build-simple3d/GalaxyEggbertSimple3D
 
-# Run unit tests
-cmake --build cmake-build-simple3d --target GalaxyEggbertWorldsTests -j2
-./cmake-build-simple3d/GalaxyEggbertWorldsTests
+# Reference: mobile-eggbert animation tables
+grep -n "table_decor\|table_blupi" /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp
+
+# Reference: mobile-eggbert gameplay logic
+less /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp
 ```
 
 ---
 
-## 8. Next tasks
+## 8. Next smallest tasks
 
-### Task — Respawn invincibility + death freeze
-**Goal:** After Blupi dies: 1 s input freeze, then 2 s invincibility with sprite flash.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GEBlupiController.hpp/.cpp`, `GalaxyEggbertSimpleGame.cpp`
-**Reference:** `../mobile-eggbert` — `Blupi.cpp` respawn/invincibility logic
+Ordered by impact / faithfulness to mobile-eggbert:
 
-### Task — Ranking screen
-**Goal:** `GamePhase::Ranking` — high-score table from Init screen (R key).
-**Files:** `src/GalaxyEggbertSimple3D/GalaxyEggbertSimpleGame.hpp/.cpp`, `Game/GEHud.hpp/.cpp`
-**Reference:** `../mobile-eggbert` — `Phase::Ranking` in `Def.hpp`
+### Task 1 — Sound loop support
+**Goal:** Channels with `loop=true` (music, ambient) actually loop.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GESound.cpp/hpp`; may require adding loop support to `simple-3d/src/Simple3D/Audio/Audio.cpp` or `Game::PlaySound`.
+**Verify:** Run game; music/ambient channel plays continuously without stopping.
 
-### Task — Push mechanic
-**Goal:** Blupi pushes ObjectType12 crates horizontally on contact.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.hpp/.cpp`, `GEBlupiController.cpp`
-**Reference:** `../mobile-eggbert` — crate push logic in `Decor.cpp`
+### Task 2 — Per-type enemy AI (inspired by `MoveObjectStepIcon` in Decor.cpp)
+**Goal:** Bird (type 20) hovers at fixed Y and patrols horizontally; fish (type 17) patrols vertically; bulldozer (type 4) uses charge/turn; blupit (type 33) mirrors Blupi X direction.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp`
+**Reference:** `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp` — `MoveObjectStepIcon()`.
+**Verify:** Load world001.txt; enemies visually behave differently from each other.
+
+### Task 3 — "EXIT OPEN!" HUD popup
+**Goal:** When all treasures collected, show timed text "EXIT OPEN!" for ~3 s.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GEHud.cpp/hpp`, `GalaxyEggbertSimpleGame.cpp`
+**Verify:** Collect all treasures; popup appears and disappears after a few seconds.
+
+### Task 4 — ObjectType12 crate push mechanic
+**Goal:** Walking into a crate pushes it one tile horizontally (inspired by Decor.cpp crate logic).
+**Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp`
+**Reference:** `mobile-eggbert Decor.cpp` — ObjectType12 handling in `MoveObjectStepIcon`.
+**Verify:** Walk into a crate; it slides one tile in the push direction.
+
+### Task 5 — Ventilator/fan tile animation
+**Goal:** Icons 126-137 (fan up/down/left/right) animate using `table_decor_ventillog/d/h/b` (3 frames each).
+**Files:** `include/GalaxyEggbert/BlockTypes.hpp` (add Vent* constants + `tileAnimBase` ranges), `src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp` (add kAnimVent* tables).
+**Reference:** `mobile-eggbert Tables.cpp` — `table_decor_ventillog[3]` = {126,127,128}.
+**Verify:** Load a level with fan tiles; they animate at 6 fps.
+
+### Task 6 — Camera shake
+**Goal:** `GECameraRig::StartShake()` produces visible camera jitter for ~0.3 s on death/hit.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; possibly add `Game::OffsetCamera()` or position-jitter to Simple3D.
+**Verify:** Trigger a death; camera shakes briefly.
+
+### Task 7 — Fix ctest discovery
+**Goal:** `ctest --test-dir cmake-build-debug` discovers and runs the 54 world tests.
+**Files:** `CMakeLists.txt` — investigate `gtest_discover_tests` issue in the debug profile.
+**Verify:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
 
 ---
 
 ## 9. Do not do yet
 
-- Do not port Vehicles (helicopter, jeep, tank) — complex multi-state
-- Do not touch Android build
-- Do not edit simple-3d and galaxy-eggbert simultaneously in parallel agents — file conflicts
-- Do not add features not in mobile-eggbert (faithful remake rule)
-- Do not use `-j` more than `-j2` — RAM constraint
+- **No broad refactor** of `GEDecorSystem` until per-type AI is implemented (structure will change with it).
+- **No Android or web build** until desktop gameplay faithfully matches mobile-eggbert.
+- **No Nova3D integration** — Simple3D backend switch belongs in the `simple-3d` repo. Wait until Nova3D implements the full Urho3D API.
+- **No new gameplay mechanics** not present in mobile-eggbert (no coyote time, combo multipliers, star ratings, time bonuses).
+- **No 3D character model** — billboard Blupi is correct for now; a real mesh requires asset work outside this repo.
+- **Do not touch `src/GalaxyEggbert/Worlds/`** unless fixing a data model bug confirmed by a failing unit test.
+- **Do not add `#ifdef GE_ENGINE_*`** anywhere — backend differences belong in Simple3D only.
+- **No sky/fog overhaul** until Simple3D exposes per-zone fog API (it currently does not).
 
 ---
 
 ## 10. Resume prompt
 
 ```
-Read NEXT.md first. Then inspect only files relevant to the first task in section 8.
-Do not refactor unrelated code. Make one small, verified change.
-Build with the command from section 7 to confirm success.
-Update NEXT.md sections 2, 3, 4, 8 after finishing.
+Read NEXT.md first. Then inspect only the files listed under the first task in section 8.
+Do not refactor unrelated code.
+Make one small, concrete improvement — implement the task goal as described.
+Cross-reference mobile-eggbert source at:
+  /rv/data/development/github.com/openeggbert/mobile-eggbert/
+before implementing any gameplay behaviour.
+After the change, run:
+  cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
+  ./cmake-build-debug/GalaxyEggbertWorldsTests
+Verify the build is clean and all 54 tests pass.
+Update NEXT.md: move the completed task to section 3 (Recent changes) and remove it from section 8.
 ```
