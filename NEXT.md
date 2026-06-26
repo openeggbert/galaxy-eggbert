@@ -24,10 +24,11 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 - Builds and runs: `cmake --build cmake-build-u3d --target GalaxyEggbert -j2`
 - 80 phases complete; playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
 
-### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-3 DONE
+### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-4 DONE
 - Compiles: `cmake-build-simple3d/GalaxyEggbertSimple3D` (89 MB)
 - Terrain: tile-atlas textures from `object-m.png` per block type (S3D-2 ✅)
 - Blupi: billboard sprite from `blupi.png`, walk animation frames 0–9 (S3D-3 ✅)
+- Decor: all enemies + pickups rendered as animated billboard sprites from `element.png` (S3D-4 ✅)
 - HUD: text-only labels
 - Sound: 5 key sounds wired
 - Camera: orbit mode
@@ -39,7 +40,8 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 ## 3. Recent changes
 
-- **S3D-3** — Blupi: box placeholder replaced with billboard from `blupi.png`; child entity at vertical offset `kVisHalf - kHalfH`; walk animation cycles frames 0–9 row 0; idle shows frame 0
+- **S3D-4** — Decor: all enemies + pickups replaced with billboard sprites from `element.png`; `GetObjIcon()` ported from Decor.cpp; animation phase updated every frame
+- **S3D-3** — Blupi: box placeholder replaced with billboard from `blupi.png`; walk animation cycles frames 0–9 row 0; idle shows frame 0
 - **S3D-2** — `GETerrainRenderer`: `BlockTypes::tileUV` + `SetTileTexture("icons/object-m.png", ...)` per block; fill/edge blocks use `SetMaterialColor(dark brown)`
 - **S3D-1 compile** — fixed `Label::SetScale` in simple-3d; fixed `SetShieldActive` → `SetShieldTimer`
 
@@ -47,7 +49,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 ## 4. Current focus
 
-**S3D-4 — Decor object visuals (enemies + pickups as billboard sprites from `element.png`)**
+**S3D-5 — HUD images (gauge, life icons, key icons) via `UI::Image::SetImageRect`**
 
 ---
 
@@ -55,7 +57,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 | Status | Issue |
 |--------|-------|
-| incomplete | S3D-4: Decor object visuals (enemies, pickups as billboards from `element.png`) — current task |
+| incomplete | S3D-5: HUD images (gauge, life icons, key icons) via `UI::Image::SetImageRect` — current task |
 | incomplete | S3D-5: HUD images (gauge, life icons, key icons) via `UI::Image::SetImageRect` |
 | incomplete | S3D-6: Phase/menu system (Init gamer select, Ranking screen) |
 | incomplete | S3D-7: Sound channel parity — 93 channels; API available, not wired |
@@ -113,10 +115,10 @@ cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 
 ## 8. Next tasks
 
-### Task — S3D-4: Decor object visuals
-**Goal:** Enemies and pickups show as billboard sprites from `element.png`.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp/.hpp`
-**Reference:** `src/GalaxyEggbert/Game/Decor.cpp` — ObjectNode sprite UV per ObjectType
+### Task — S3D-5: HUD images
+**Goal:** Replace text-only HUD with sprite icons: life icons, key icons, treasure gauge.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GEHud.cpp/.hpp`
+**Reference:** `src/GalaxyEggbert/Game/GalaxyEggbertGame.cpp` — HUD BorderImage setup; `icons/button.png` for icons
 
 ### Task — Ranking screen (Urho3D version)
 **Goal:** `Phase::Ranking` — high-score table from Init screen.

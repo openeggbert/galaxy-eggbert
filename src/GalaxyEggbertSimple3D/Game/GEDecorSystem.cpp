@@ -6,6 +6,39 @@ using namespace GalaxyEggbert;
 
 namespace GESimple3D {
 
+// Ported from Decor.cpp GetIcon(). element.png icon index per ObjectType + animation phase.
+int GEDecorSystem::GetObjIcon(ObjectType type, int p) {
+    static const int kCle1[12]    = {209,210,211,212,213,214,215,214,213,212,211,210};
+    static const int kCle2[12]    = {220,221,222,221,220,219,218,217,216,217,218,219};
+    static const int kCle3[12]    = {229,228,227,226,225,224,223,224,225,226,227,228};
+    static const int kShield[8]   = {144,145,146,147,148,149,150,151};
+    static const int kBulldozer[8]= {66,66,67,67,66,66,65,65};
+    static const int kBird[8]     = {98,99,100,101,102,103,104,105};
+    static const int kFish[8]     = {82,82,81,81,82,82,83,83};
+    static const int kBlupit[8]   = {249,249,250,250,249,249,248,248};
+    switch (type) {
+        case ObjectType::ObjectType1:  return 29;
+        case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;
+        case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;
+        case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8];
+        case ObjectType::ObjectType12: return 32;
+        case ObjectType::ObjectType13: return 68;
+        case ObjectType::ObjectType16: return 69 + (p / 3) % 9;
+        case ObjectType::ObjectType17: return kFish[(p / 6) % 8];
+        case ObjectType::ObjectType20: return kBird[(p / 6) % 8];
+        case ObjectType::ObjectType30: return 178;
+        case ObjectType::ObjectType33: return kBlupit[(p / 6) % 8];
+        case ObjectType::ObjectType5: { int q = (p / 9) % 22; return (q < 11) ? q : (21 - q); }
+        case ObjectType::ObjectType6:  return 21 + (p / 12) % 8;
+        case ObjectType::ObjectType7:  return 29 + (p /  9) % 8;
+        case ObjectType::ObjectType49: return kCle1[(p / 9) % 12];
+        case ObjectType::ObjectType50: return kCle2[(p / 9) % 12];
+        case ObjectType::ObjectType51: return kCle3[(p / 9) % 12];
+        case ObjectType::ObjectType25: return kShield[(p / 6) % 8];
+        default:                       return 0;
+    }
+}
+
 static bool IsPickup(ObjectType t) {
     return t == ObjectType::ObjectType5  ||  // treasure
            t == ObjectType::ObjectType6  ||  // egg
@@ -32,6 +65,25 @@ static bool IsPlatform(ObjectType t) {
     return t == ObjectType::ObjectType1;
 }
 
+// Billboard world size matches element.png tile: 60 px at 64 px/world-unit.
+static constexpr float kElemWorldSize = GEDecorSystem::kElemTilePx / 64.0f;
+// Sprite child vertical offset: same calculation as ObjectNode (kVisHalf - 0.5)
+static constexpr float kSpriteOffY = kElemWorldSize * 0.5f - 0.5f;
+
+static Entity* MakeSprite(Game& game, Entity* parent, const std::string& name, ObjectType type) {
+    auto* s = parent->CreateChild(name + "_spr");
+    s->SetLocalPosition(Simple3D::Vector3(0.0f, kSpriteOffY, 0.0f));
+    s->AddBillboard("icons/element.png", kElemWorldSize);
+    int icon = GEDecorSystem::GetObjIcon(type, 0);
+    int col  = icon % GEDecorSystem::kElemCols;
+    int row  = icon / GEDecorSystem::kElemCols;
+    s->SetBillboardUVRect(col * GEDecorSystem::kElemTilePx,
+                          row * GEDecorSystem::kElemTilePx,
+                          GEDecorSystem::kElemTilePx,
+                          GEDecorSystem::kElemTilePx);
+    return s;
+}
+
 void GEDecorSystem::Build(Game& game, const GEWorldRuntime& world, Entity* player) {
     Clear(game);
 
@@ -50,9 +102,7 @@ void GEDecorSystem::Build(Game& game, const GEWorldRuntime& world, Entity* playe
         e->SetPosition(spec.posStart);
 
         if (IsPickup(spec.type)) {
-            // Small trigger sphere for collection; visual is a tiny box.
-            e->SetScale(0.5f);
-            e->AddModel("Models/Box.mdl");
+            st.sprite = MakeSprite(game, e, st.name, spec.type);
             e->AddTriggerSphere(0.7f);
             e->SetCollisionMask(CollisionLayer::Actor);
 
@@ -116,14 +166,7 @@ void GEDecorSystem::Build(Game& game, const GEWorldRuntime& world, Entity* playe
                 });
             }
         } else if (IsPlatform(spec.type) || IsEnemy(spec.type)) {
-            // Placeholder box — no texture or sprite yet (S3D-4).
-            // TODO(S3D-4): Add billboard sprite from element.png for enemies.
-            e->SetScale(0.8f);
-            e->AddModel("Models/Box.mdl");
-            if (IsEnemy(spec.type)) {
-                // Proximity check handled in Update(); no physics body for enemy boxes.
-                // TODO: Add trigger box and stomp detection via velY.
-            }
+            st.sprite = MakeSprite(game, e, st.name, spec.type);
         }
 
         st.entity = e;
@@ -149,8 +192,18 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
     for (auto& st : objects_) {
         if (!st.entity || !st.active) continue;
 
-        // Basic patrol movement for platforms and enemies.
-        // TODO(S3D-4): Port full patrol + spider oscillation logic.
+        // Advance animation phase (capped at large value to avoid overflow)
+        st.animPhase = (st.animPhase + 1) % 10000;
+
+        // Update billboard UV
+        if (st.sprite) {
+            int icon = GetObjIcon(st.type, st.animPhase);
+            int col  = icon % kElemCols;
+            int row  = icon / kElemCols;
+            st.sprite->SetBillboardUVRect(col * kElemTilePx, row * kElemTilePx,
+                                          kElemTilePx, kElemTilePx);
+        }
+
         if (IsPlatform(st.type) || IsEnemy(st.type)) {
             Vector3 pos = st.entity->GetPosition();
             Vector3 target = (st.direction > 0.0f) ? st.posEnd : st.posStart;
@@ -163,7 +216,6 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
                 st.entity->SetPosition(pos + move);
             }
 
-            // Simple proximity enemy-hit check (no stomp detection yet).
             if (IsEnemy(st.type)) {
                 Vector3 ep = st.entity->GetPosition();
                 float dx = ep.x_ - blupiPos.x_;
@@ -171,11 +223,10 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
                 float dz = ep.z_ - blupiPos.z_;
                 float d2 = dx*dx + dy*dy + dz*dz;
                 if (d2 < 0.9f * 0.9f) {
-                    // Stomp: Blupi falling onto enemy
                     if (blupiVelY < -1.0f && blupiPos.y_ > ep.y_ + 0.3f) {
                         stompKill_ = true;
                         st.active = false;
-                        st.entity->SetPosition(Vector3(0.0f, -999.0f, 0.0f)); // hide
+                        st.entity->SetPosition(Vector3(0.0f, -999.0f, 0.0f));
                     } else {
                         blupiHit_ = true;
                     }

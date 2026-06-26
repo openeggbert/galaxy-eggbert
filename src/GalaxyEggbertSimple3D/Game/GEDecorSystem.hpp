@@ -11,11 +11,7 @@
 namespace GESimple3D {
 
 // Object pool and interaction system for Simple3D port.
-//
-// Reuses object-type concepts from mobile-eggbert / old Decor.cpp.
-// S3D-1 pass: placeholder box entities + trigger spheres for pickups.
-// No patrol AI, no billboard sprites. Those come in S3D-4.
-// TODO(S3D-4): Port patrol movement and directional sprites.
+// Sprites from element.png (600×1740 px, 60×60 tiles, 10 cols × 29 rows).
 class GEDecorSystem {
 public:
     // Spawn all objects from the world's MobileObjSpec list.
@@ -47,15 +43,22 @@ public:
             drinkCollected_ = stompKill_ = false;
     }
 
+    static constexpr int kElemTilePx = 60;
+    static constexpr int kElemCols   = 10;
+    static int GetObjIcon(GalaxyEggbert::ObjectType type, int phase);
+
 private:
+
     struct ObjState {
         GalaxyEggbert::ObjectType type;
-        Simple3D::Entity*  entity   = nullptr;
+        Simple3D::Entity*  entity    = nullptr;
+        Simple3D::Entity*  sprite    = nullptr; // child entity with billboard
         Simple3D::Vector3  posStart;
         Simple3D::Vector3  posEnd;
-        float              speed    = 1.5f;
+        float              speed     = 1.5f;
         float              direction = 1.0f;
-        bool               active   = true;
+        int                animPhase = 0;
+        bool               active    = true;
         std::string        name;
     };
 
