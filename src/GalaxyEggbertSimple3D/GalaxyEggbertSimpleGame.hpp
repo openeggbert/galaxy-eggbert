@@ -74,6 +74,8 @@ private:
     // ── phase transition state ─────────────────────────────────────────────────
     float phaseTimer_      = 0.0f;
     int   prevCollected_   = 0;
+    int   prevTotalKeys_   = 0;
+    bool  wasShieldActive_ = false;
 
     static constexpr int kMaxWorld = 5;
 };

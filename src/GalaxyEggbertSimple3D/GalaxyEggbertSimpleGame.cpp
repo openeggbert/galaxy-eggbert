@@ -173,6 +173,8 @@ void GalaxyEggbertSimpleGame::LoadWorld(int worldNum) {
     bonusLifeAwarded_ = false;
     shieldTimer_      = 0.0f;
     prevCollected_    = 0;
+    prevTotalKeys_    = 0;
+    wasShieldActive_  = false;
 }
 
 // ─── slot persistence ─────────────────────────────────────────────────────────
@@ -329,8 +331,18 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     if (decor_.WasEggCollected() || decor_.WasDrinkCollected()) {
         lives_ = std::min(lives_ + 1, 9);
         score_ += 50;
-        sound_->PlayCollect();
+        sound_->PlayLife();
     }
+
+    // Key pickup sound (ch11)
+    int totalKeys = decor_.GetKeys49() + decor_.GetKeys50() + decor_.GetKeys51();
+    if (totalKeys > prevTotalKeys_) sound_->PlayKey();
+    prevTotalKeys_ = totalKeys;
+
+    // Shield-off sound (ch44) when shield expires
+    bool shieldNow = blupi_.IsShieldActive();
+    if (wasShieldActive_ && !shieldNow) sound_->PlayShieldOff();
+    wasShieldActive_ = shieldNow;
 
     if (decor_.WasShieldCollected()) {
         shieldTimer_ = 5.0f;

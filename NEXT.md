@@ -24,7 +24,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 - Builds and runs: `cmake --build cmake-build-u3d --target GalaxyEggbert -j2`
 - 80 phases complete; playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
 
-### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-6 DONE
+### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-7 DONE
 - Compiles: `cmake-build-simple3d/GalaxyEggbertSimple3D` (89 MB)
 - Terrain: tile-atlas textures from `object-m.png` per block type (S3D-2 ✅)
 - Blupi: billboard sprite from `blupi.png`, walk animation frames 0–9 (S3D-3 ✅)
@@ -41,6 +41,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 ## 3. Recent changes
 
+- **S3D-7** — Sound: GESound expanded to all 93 channels via `Game::PlaySound(path,vol,ch)`; per-channel volume from tableVolumePitch; no-restart policy (except ch10); fixed wrong paths (jump was using ch42/life sound); added key (ch11), life (ch42), shield-off (ch44) events
 - **S3D-6** — Phase/menu: Init shows per-slot lives/world/best via SaveData (slots 0–2); Settings screen from Init (S) and Pause (S); sound toggle persisted in slot 3; save on win/lose/level-reset
 - **S3D-5** — HUD: gauge sprite (`jauge.png`), life icons (blupi.png icon 48), key icons (element.png red/green/blue), hit-flash panel; `ShowHitFlash()`+`Update(dt)` wired in game loop
 - **S3D-4** — Decor: all enemies + pickups replaced with billboard sprites from `element.png`; `GetObjIcon()` ported from Decor.cpp; animation phase updated every frame
@@ -52,7 +53,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 ## 4. Current focus
 
-**S3D-7 — Sound channel parity (93 channels, per-channel volume)**
+**S3D-8 — Web/Android build verification with Simple3D backend**
 
 ---
 
@@ -61,7 +62,8 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 | Status | Issue |
 |--------|-------|
 | incomplete | S3D-7: Sound channel parity — 93 channels; API available, not wired |
-| incomplete | S3D-7: Sound channel parity — 93 channels; per-channel volume; loop control |
+| incomplete | S3D-8: Web/Android build verification with Simple3D backend |
+| incomplete | Sound loop support — `Game::PlaySound(ch)` has no loop param; no channels currently need it |
 | incomplete | GECameraRig::StartShake — stub, needs `Camera::Shake(intensity, duration)` call |
 | incomplete | GEDecorSystem: enemy AI placeholder, not ported from Decor.cpp |
 | incomplete | Save data not wired in Simple3D path |
@@ -116,10 +118,10 @@ cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 
 ## 8. Next tasks
 
-### Task — S3D-7: Sound channel parity
-**Goal:** Wire all 93 sound channels with per-channel volume from `tableVolumePitch`; loop control for ambient sounds.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GESound.hpp/.cpp`
-**Reference:** `src/GalaxyEggbert/Game/SoundManager.cpp` — channel table; `../mobile-eggbert/Tables.cpp` — volume table
+### Task — S3D-8: Web/Android build verification
+**Goal:** Verify `GalaxyEggbertSimple3D` compiles for Emscripten (Web) and Android.
+**Files:** `CMakeLists.txt` — platform-specific flags
+**Reference:** existing `GalaxyEggbert` web build setup
 
 ### Task — Ranking screen (Urho3D version)
 **Goal:** `Phase::Ranking` — high-score table from Init screen.

@@ -206,6 +206,6 @@ See `docs/simple3d_migration.md` and `docs/SIMPLE3D_GAPS.md` for details.
 - [x] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`
 - [x] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
 - [x] S3D-6 — Phase/menu port: Init gamer select with per-slot data, Settings screen (sound toggle), SaveData persistence
-- [ ] S3D-7 — Sound channel parity: 93 channels, per-channel volume, loop control
+- [x] S3D-7 — Sound channel parity: 93 channels via SoundChannel enum, per-channel volume from tableVolumePitch, no-restart policy, key/life/shield-off events wired
 - [ ] S3D-8 — Web/Android build verification with Simple3D backend
 - [ ] S3D-9 — Remove legacy Urho3D path after Simple3D version reaches playable parity

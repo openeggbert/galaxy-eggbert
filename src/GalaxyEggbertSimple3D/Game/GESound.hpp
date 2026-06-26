@@ -1,40 +1,42 @@
 #pragma once
 
 #include <Simple3D/Simple3D.h>
-#include <string>
+#include <GalaxyEggbert/def/SoundChannel.hpp>
 
 namespace GESimple3D {
 
-// Minimal sound wrapper for the Simple3D port (S3D-1 pass).
-//
-// The old SoundManager had 93 indexed WAV channels with per-channel volume from
-// a tableVolumePitch table. Simple3D exposes only Game::PlaySound(path, volume).
-// In S3D-1 we map only the 5 most critical sound events to named paths.
-// TODO(S3D-7): Expand with per-channel volume and loop control when Simple3D
-//              exposes a richer Audio API.  See docs/SIMPLE3D_GAPS.md.
+// Sound system for the Simple3D port.
+// Channel indices map directly to asset file indices (ch1 → sounds/sound001.wav).
+// Per-channel volume from tableVolumePitch (ported from mobile-eggbert).
+// Conflict policy: channel is not restarted if already playing, except channel 10.
 class GESound {
 public:
+    static constexpr int kNumChannels = 93;
+
     explicit GESound(Simple3D::Game* game) : game_(game) {}
 
-    void PlayJump()    { Play("sounds/sound042.wav", 0.85f); }
-    void PlayLand()    { Play("sounds/sound018.wav", 0.70f); }
-    void PlayCollect() { Play("sounds/sound010.wav", 0.80f); }
-    void PlayHit()     { Play("sounds/sound033.wav", 0.90f); }
-    void PlayStomp()   { Play("sounds/sound047.wav", 0.80f); }
-    void PlayWin()     { Play("sounds/sound057.wav", 0.90f); }
+    void Play(GalaxyEggbert::SoundChannel channel, bool loop = false);
+    void Stop(GalaxyEggbert::SoundChannel channel);
+    void StopAll();
 
-    void SetEnabled(bool e) { enabled_ = e; }
-    bool IsEnabled()  const { return enabled_; }
-
-    // Set master volume via Simple3D (0.0 – 1.0).
+    void SetEnabled(bool e) { enabled_ = e; if (!e) StopAll(); }
+    bool IsEnabled() const { return enabled_; }
     void SetMasterVolume(float v) { if (game_) game_->SetMasterVolume(v); }
 
-private:
-    void Play(const std::string& path, float volume) {
-        if (enabled_ && game_) game_->PlaySound(path, volume);
-    }
+    // Named shortcuts matching Urho3D SoundManager channel assignments
+    void PlayJump()     { Play(GalaxyEggbert::SoundChannel::SoundChannel1);  }
+    void PlayStep()     { Play(GalaxyEggbert::SoundChannel::SoundChannel3);  }
+    void PlayLand()     { Play(GalaxyEggbert::SoundChannel::SoundChannel4);  }
+    void PlayStomp()    { Play(GalaxyEggbert::SoundChannel::SoundChannel5);  }
+    void PlayHit()      { Play(GalaxyEggbert::SoundChannel::SoundChannel8);  }
+    void PlayCollect()  { Play(GalaxyEggbert::SoundChannel::SoundChannel10); }
+    void PlayKey()      { Play(GalaxyEggbert::SoundChannel::SoundChannel11); }
+    void PlayLife()     { Play(GalaxyEggbert::SoundChannel::SoundChannel42); }
+    void PlayShieldOff(){ Play(GalaxyEggbert::SoundChannel::SoundChannel44); }
+    void PlayWin()      { Play(GalaxyEggbert::SoundChannel::SoundChannel57); }
 
-    Simple3D::Game* game_   = nullptr;
+private:
+    Simple3D::Game* game_    = nullptr;
     bool            enabled_ = true;
 };
 
