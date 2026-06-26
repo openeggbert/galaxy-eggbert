@@ -32,6 +32,8 @@ public:
     void Create(Simple3D::Game& game);
     void Update(Simple3D::Game& game, float dt);
     void Respawn();
+    // Upward bounce after stomping an enemy (inspired by mobile-eggbert BlupiStep bounce).
+    void BounceUp();
 
     void SetSpawnPoint(const Simple3D::Vector3& pos) { spawn_ = pos; }
 

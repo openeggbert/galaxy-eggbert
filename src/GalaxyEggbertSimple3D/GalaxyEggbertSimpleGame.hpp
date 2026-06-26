@@ -66,10 +66,11 @@ private:
     int   gamerSlot_     = 1;
 
     // ── per-level state ───────────────────────────────────────────────────────
-    float shieldTimer_       = 0.0f;
-    float controlsHintTimer_ = 8.0f;
-    bool  exitOpen_          = false;
-    bool  bonusLifeAwarded_  = false;
+    float shieldTimer_        = 0.0f;
+    float respawnInvincTimer_ = 0.0f;   // 2s invincibility + sprite flash after respawn
+    float controlsHintTimer_  = 8.0f;
+    bool  exitOpen_           = false;
+    bool  bonusLifeAwarded_   = false;
 
     // ── phase transition state ─────────────────────────────────────────────────
     float phaseTimer_      = 0.0f;

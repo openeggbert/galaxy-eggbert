@@ -13,6 +13,32 @@ static constexpr int kWCZ = GEWorldRuntime::kWCZ;
 static constexpr int kFillDepth = 3;
 static const int kNbDir[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
 
+// Animation frame tables from mobile-eggbert Tables.cpp
+static const int kAnimLava[8]     = {68, 69, 70, 71, 72, 71, 70, 69};
+static const int kAnimSpike[16]   = {374,374,373,347,373,374,374,374,373,347,347,373,374,374,374,374};
+static const int kAnimCrusher[10] = {317,317,318,319,320,321,322,323,323,323};
+static const int kAnimSaw[6]      = {378,379,380,381,382,383};
+static const int kAnimWater1[6]   = {92,93,94,95,94,93};
+static const int kAnimWater2[6]   = {91,96,97,98,97,96};
+
+static int animIcon(uint16_t base, int phase) {
+    switch (base) {
+        case BlockTypes::Lava:    return kAnimLava[phase % 8];
+        case BlockTypes::Spike:   return kAnimSpike[phase % 16];
+        case BlockTypes::Crusher: return kAnimCrusher[phase % 10];
+        case BlockTypes::Saw:     return kAnimSaw[phase % 6];
+        case BlockTypes::Water1:  return kAnimWater1[phase % 6];
+        case BlockTypes::Water2:  return kAnimWater2[phase % 6];
+        default: return static_cast<int>(base);
+    }
+}
+
+static bool isAnimated(uint16_t base) {
+    return base == BlockTypes::Lava   || base == BlockTypes::Spike   ||
+           base == BlockTypes::Crusher|| base == BlockTypes::Saw     ||
+           base == BlockTypes::Water1 || base == BlockTypes::Water2;
+}
+
 void GETerrainRenderer::Build(Game& game, const GEWorldRuntime& worldRuntime) {
     Clear(game);
 
@@ -51,6 +77,10 @@ void GETerrainRenderer::Build(Game& game, const GEWorldRuntime& worldRuntime) {
                             e->AddBoxCollider(Vector3(1.0f, 1.0f, 1.0f));
                             e->SetCollisionLayer(CollisionLayer::StaticGeometry);
                             terrainEntities_.push_back(e);
+
+                            uint16_t animBase = BlockTypes::tileAnimBase(b.type());
+                            if (isAnimated(animBase))
+                                animTiles_.push_back({e, animBase});
 
                             // Edge-fill: extrude dark blocks downward at cliff edges
                             int iwx = static_cast<int>(wx);
@@ -91,6 +121,19 @@ void GETerrainRenderer::Clear(Game& game) {
     for (auto* e : terrainEntities_)
         game.DestroyEntity(e);
     terrainEntities_.clear();
+    animTiles_.clear();
+    lastAnimPhase_ = -1;
+}
+
+void GETerrainRenderer::Update(int animPhase) {
+    if (animPhase == lastAnimPhase_) return;
+    lastAnimPhase_ = animPhase;
+    for (auto& at : animTiles_) {
+        int icon = animIcon(at.base, animPhase);
+        float uOff, vOff, uS, vS;
+        BlockTypes::tileUV(icon, uOff, vOff, uS, vS);
+        at.entity->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
+    }
 }
 
 } // namespace GESimple3D

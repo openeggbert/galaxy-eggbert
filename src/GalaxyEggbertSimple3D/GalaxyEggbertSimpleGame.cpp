@@ -171,12 +171,13 @@ void GalaxyEggbertSimpleGame::LoadWorld(int worldNum) {
 
     camera_.Create(*this, blupi_.GetEntity());
 
-    exitOpen_         = false;
-    bonusLifeAwarded_ = false;
-    shieldTimer_      = 0.0f;
-    prevCollected_    = 0;
-    prevTotalKeys_    = 0;
-    wasShieldActive_  = false;
+    exitOpen_          = false;
+    bonusLifeAwarded_  = false;
+    shieldTimer_       = 0.0f;
+    respawnInvincTimer_= 0.0f;
+    prevCollected_     = 0;
+    prevTotalKeys_     = 0;
+    wasShieldActive_   = false;
 }
 
 // ─── slot persistence ─────────────────────────────────────────────────────────
@@ -255,6 +256,7 @@ void GalaxyEggbertSimpleGame::ResetLevel() {
     if (score_ > slots_[idx].best) slots_[idx].best = score_;
     SaveSlot(idx);
     LoadWorld(currentWorld_);
+    respawnInvincTimer_ = 2.0f;
     EnterPhase(GamePhase::Play);
 }
 
@@ -298,7 +300,18 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     controlsHintTimer_ -= dt;
     if (shieldTimer_ > 0.0f) shieldTimer_ -= dt;
 
+    // Respawn invincibility countdown + sprite flash (inspired by mobile-eggbert Blupi.cpp)
+    if (respawnInvincTimer_ > 0.0f) {
+        respawnInvincTimer_ -= dt;
+        // Flash at 10 Hz: visible for half the cycle
+        bool visible = (static_cast<int>(respawnInvincTimer_ * 10.0f) % 2 == 0);
+        blupi_.SetSpriteVisible(visible);
+        if (respawnInvincTimer_ <= 0.0f)
+            blupi_.SetSpriteVisible(true);
+    }
+
     worldRuntime_.Update(dt);
+    terrain_.Update(worldRuntime_.GetAnimPhase());
 
     blupi_.SetShieldTimer(shieldTimer_);
     blupi_.SetInputFrozen(false);
@@ -306,7 +319,8 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     // Tile hazard detection (inspired by Decor.cpp BlupiStep/DecorDetect).
     // Query World at Blupi's tile position; kill if standing on a hazard tile.
-    if (!blupi_.IsShieldActive()) {
+    // Skipped during respawn invincibility and shield.
+    if (!blupi_.IsShieldActive() && respawnInvincTimer_ <= 0.0f) {
         using namespace GalaxyEggbert;
         auto* world = worldRuntime_.GetWorld();
         if (world) {
@@ -383,10 +397,10 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     if (decor_.WasStompKill()) {
         score_ += 25;
         sound_->PlayStomp();
-        blupi_.Respawn(); // bounce placeholder — TODO: real Bounce()
+        blupi_.BounceUp();
     }
 
-    if (decor_.WasBlupiHit() && !blupi_.IsShieldActive()) {
+    if (decor_.WasBlupiHit() && !blupi_.IsShieldActive() && respawnInvincTimer_ <= 0.0f) {
         hud_.ShowHitFlash();
         sound_->PlayHit();
         ResetLevel();

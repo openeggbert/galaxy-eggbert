@@ -209,6 +209,16 @@ void GEBlupiController::Respawn() {
     wasGrounded_ = false;
 }
 
+void GEBlupiController::BounceUp() {
+    if (!player_) return;
+    Vector3 v = player_->GetLinearVelocity();
+    v.y_ = kJumpSpeed * 0.65f;
+    player_->SetLinearVelocity(v);
+    state_     = BlupiState::Jump;
+    animPhase_ = 0;
+    animTimer_ = 0.0f;
+}
+
 void GEBlupiController::SetSpriteVisible(bool v) {
     if (sprite_) sprite_->SetActive(v);
 }
