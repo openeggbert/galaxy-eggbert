@@ -78,6 +78,7 @@ void GalaxyEggbertSimpleGame::Update(float dt) {
         case GamePhase::Lost:   UpdateLost(dt);   break;
         default: break;
     }
+    hud_.Update(dt);
 }
 
 void GalaxyEggbertSimpleGame::Stop() {
@@ -266,6 +267,7 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     }
 
     if (decor_.WasBlupiHit() && !blupi_.IsShieldActive()) {
+        hud_.ShowHitFlash();
         sound_->PlayHit();
         ResetLevel();
         return;
@@ -282,6 +284,7 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     // Fall death
     if (blupi_.GetPosition().y_ < -10.0f) {
+        hud_.ShowHitFlash();
         sound_->PlayHit();
         ResetLevel();
         return;
