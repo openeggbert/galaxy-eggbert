@@ -23,7 +23,8 @@ public:
 
     void ShowLost(int worldNum, const std::string& worldName);
     void ShowPause(int score, float levelTime);
-    void ShowInit();
+    void ShowInit(const std::string& text);
+    void ShowSettings(bool soundOn, bool fromPause);
     void ShowHitFlash();
     void Update(float dt);
     void SetVisible(bool visible);

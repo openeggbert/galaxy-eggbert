@@ -215,19 +215,43 @@ void GEHud::ShowPause(int score, float levelTime) {
 
     char buf[128];
     std::snprintf(buf, sizeof(buf),
-        "PAUSED\n\nScore: %d  Time: %d:%02d\n\nESC to resume",
+        "PAUSED\n\nScore: %d  Time: %d:%02d\n\nESC: resume   S: settings",
         score, mins, secs);
     overlay_->SetText(buf);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
 }
 
-void GEHud::ShowInit() {
+static void HidePlayHud(Simple3D::UI::Image* gauge,
+                        Simple3D::UI::Image* lifeIcons[], int nLives,
+                        Simple3D::UI::Image* keyIcons[], Simple3D::Label* overflow) {
+    if (gauge) gauge->SetVisible(false);
+    for (int i = 0; i < nLives; ++i) if (lifeIcons[i]) lifeIcons[i]->SetVisible(false);
+    for (int i = 0; i < 3; ++i)     if (keyIcons[i])  keyIcons[i]->SetVisible(false);
+    if (overflow) overflow->SetVisible(false);
+}
+
+void GEHud::ShowInit(const std::string& text) {
     if (!overlay_) return;
     main_->SetVisible(false);
     hint_->SetVisible(false);
     overlay_->SetVisible(true);
-    if (gauge_) gauge_->SetVisible(false);
-    overlay_->SetText("Galaxy Eggbert\n\nPress 1, 2 or 3 to select gamer slot\nPress Esc to quit");
+    HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
+    overlay_->SetText(text);
+    overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
+}
+
+void GEHud::ShowSettings(bool soundOn, bool fromPause) {
+    if (!overlay_) return;
+    main_->SetVisible(false);
+    hint_->SetVisible(false);
+    overlay_->SetVisible(true);
+    HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
+    char buf[128];
+    std::snprintf(buf, sizeof(buf),
+        "Settings\n\nSound: %s\n\nS: toggle sound   ESC: %s",
+        soundOn ? "ON" : "OFF",
+        fromPause ? "back to pause" : "back to menu");
+    overlay_->SetText(buf);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
 }
 

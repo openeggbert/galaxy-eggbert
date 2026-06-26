@@ -31,8 +31,16 @@ private:
     void UpdateInit(float dt);
     void UpdatePlay(float dt);
     void UpdatePause(float dt);
+    void UpdateSettings(float dt);
     void UpdateWin(float dt);
     void UpdateLost(float dt);
+
+    // Slot persistence helpers
+    void LoadAllSlots();
+    void SaveSlot(int idx);
+    void LoadSettings();
+    void SaveSettings();
+    std::string BuildInitText() const;
 
     // Subsystems
     GESimple3D::GEWorldRuntime   worldRuntime_;
@@ -43,9 +51,14 @@ private:
     GESimple3D::GECameraRig       camera_;
     std::unique_ptr<GESimple3D::GESound> sound_;
 
+    // ── per-slot save data ────────────────────────────────────────────────────
+    struct SlotData { int lives = 3; int world = 1; int best = 0; };
+    SlotData slots_[3];
+    bool soundOn_ = true;
+
     // ── persistent game state ─────────────────────────────────────────────────
-    GalaxyEggbert::GamePhase phase_    = GalaxyEggbert::GamePhase::Init;
-    GalaxyEggbert::GamePhase returnPhase_ = GalaxyEggbert::GamePhase::Init;
+    GalaxyEggbert::GamePhase phase_              = GalaxyEggbert::GamePhase::Init;
+    GalaxyEggbert::GamePhase settingsReturnPhase_ = GalaxyEggbert::GamePhase::Init;
     int   currentWorld_  = 1;
     int   lives_         = 3;
     int   score_         = 0;

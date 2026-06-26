@@ -24,6 +24,10 @@ void GalaxyEggbertSimpleGame::Start() {
 
     sound_ = std::make_unique<GESimple3D::GESound>(this);
 
+    LoadAllSlots();
+    LoadSettings();
+    sound_->SetEnabled(soundOn_);
+
     SetupInput();
 
     // Lighting
@@ -37,7 +41,6 @@ void GalaxyEggbertSimpleGame::Start() {
     fill->SetCastShadows(false);
 
     hud_.Create(*this);
-    hud_.ShowInit();
 
     EnterPhase(GamePhase::Init);
 }
@@ -71,11 +74,13 @@ void GalaxyEggbertSimpleGame::Update(float dt) {
     dt *= gameSpeed_;
 
     switch (phase_) {
-        case GamePhase::Init:   UpdateInit(dt);   break;
-        case GamePhase::Play:   UpdatePlay(dt);   break;
-        case GamePhase::Pause:  UpdatePause(dt);  break;
-        case GamePhase::Win:    UpdateWin(dt);    break;
-        case GamePhase::Lost:   UpdateLost(dt);   break;
+        case GamePhase::Init:      UpdateInit(dt);     break;
+        case GamePhase::Play:      UpdatePlay(dt);     break;
+        case GamePhase::Pause:     UpdatePause(dt);    break;
+        case GamePhase::MainSetup:
+        case GamePhase::PlaySetup: UpdateSettings(dt); break;
+        case GamePhase::Win:       UpdateWin(dt);      break;
+        case GamePhase::Lost:      UpdateLost(dt);     break;
         default: break;
     }
     hud_.Update(dt);
@@ -93,7 +98,7 @@ void GalaxyEggbertSimpleGame::EnterPhase(GamePhase next) {
 
     switch (next) {
         case GamePhase::Init:
-            hud_.ShowInit();
+            hud_.ShowInit(BuildInitText());
             break;
         case GamePhase::Play:
             controlsHintTimer_ = 8.0f;
@@ -101,6 +106,12 @@ void GalaxyEggbertSimpleGame::EnterPhase(GamePhase next) {
             break;
         case GamePhase::Pause:
             hud_.ShowPause(score_, worldRuntime_.GetLevelTime());
+            break;
+        case GamePhase::MainSetup:
+            hud_.ShowSettings(soundOn_, false);
+            break;
+        case GamePhase::PlaySetup:
+            hud_.ShowSettings(soundOn_, true);
             break;
         case GamePhase::Win:
             hud_.ShowWin(currentWorld_,
@@ -164,12 +175,58 @@ void GalaxyEggbertSimpleGame::LoadWorld(int worldNum) {
     prevCollected_    = 0;
 }
 
+// ─── slot persistence ─────────────────────────────────────────────────────────
+
+void GalaxyEggbertSimpleGame::LoadAllSlots() {
+    for (int i = 0; i < 3; ++i) {
+        Simple3D::SaveData sd;
+        if (sd.Load(i)) {
+            slots_[i].lives = sd.GetInt("lives", 3);
+            slots_[i].world = sd.GetInt("world", 1);
+            slots_[i].best  = sd.GetInt("best",  0);
+        }
+    }
+}
+
+void GalaxyEggbertSimpleGame::SaveSlot(int idx) {
+    Simple3D::SaveData sd;
+    sd.Set("lives", slots_[idx].lives);
+    sd.Set("world", slots_[idx].world);
+    sd.Set("best",  slots_[idx].best);
+    sd.Save(idx);
+}
+
+void GalaxyEggbertSimpleGame::LoadSettings() {
+    Simple3D::SaveData sd;
+    if (sd.Load(3)) soundOn_ = sd.GetBool("sound", true);
+}
+
+void GalaxyEggbertSimpleGame::SaveSettings() {
+    Simple3D::SaveData sd;
+    sd.Set("sound", soundOn_);
+    sd.Save(3);
+}
+
+std::string GalaxyEggbertSimpleGame::BuildInitText() const {
+    char buf[512];
+    int n = 0;
+    n += std::snprintf(buf+n, sizeof(buf)-n, "Galaxy Eggbert\n\nSelect a gamer:\n\n");
+    for (int i = 0; i < 3; ++i) {
+        n += std::snprintf(buf+n, sizeof(buf)-n,
+            "  [%d]  Lives: %d   World: %d   Best: %d\n",
+            i+1, slots_[i].lives, slots_[i].world, slots_[i].best);
+    }
+    std::snprintf(buf+n, sizeof(buf)-n,
+        "\n1/2/3: choose gamer   S: Settings   Esc: quit");
+    return buf;
+}
+
 // ─── gamer select ────────────────────────────────────────────────────────────
 
 void GalaxyEggbertSimpleGame::SelectGamer(int slot) {
     gamerSlot_    = slot;
-    currentWorld_ = 1;
-    lives_        = 3;
+    currentWorld_ = slots_[slot - 1].world;
+    lives_        = slots_[slot - 1].lives;
     score_        = 0;
     blupi_.Create(*this);
     LoadWorld(currentWorld_);
@@ -180,11 +237,19 @@ void GalaxyEggbertSimpleGame::SelectGamer(int slot) {
 
 void GalaxyEggbertSimpleGame::ResetLevel() {
     lives_--;
+    int idx = gamerSlot_ - 1;
     if (lives_ <= 0) {
         lives_ = 0;
+        if (score_ > slots_[idx].best) slots_[idx].best = score_;
+        slots_[idx].lives = 3;
+        slots_[idx].world = 1;
+        SaveSlot(idx);
         EnterPhase(GamePhase::Lost);
         return;
     }
+    slots_[idx].lives = lives_;
+    if (score_ > slots_[idx].best) slots_[idx].best = score_;
+    SaveSlot(idx);
     LoadWorld(currentWorld_);
     EnterPhase(GamePhase::Play);
 }
@@ -192,6 +257,11 @@ void GalaxyEggbertSimpleGame::ResetLevel() {
 void GalaxyEggbertSimpleGame::AdvanceToNextWorld() {
     currentWorld_++;
     if (currentWorld_ > kMaxWorld) currentWorld_ = 1;
+    int idx = gamerSlot_ - 1;
+    slots_[idx].world = currentWorld_;
+    slots_[idx].lives = lives_;
+    if (score_ > slots_[idx].best) slots_[idx].best = score_;
+    SaveSlot(idx);
     LoadWorld(currentWorld_);
     EnterPhase(GamePhase::Play);
 }
@@ -200,6 +270,8 @@ void GalaxyEggbertSimpleGame::AdvanceToNextWorld() {
 
 void GalaxyEggbertSimpleGame::UpdateInit(float dt) {
     (void)dt;
+    hud_.ShowInit(BuildInitText());
+
     for (int slot = 1; slot <= 3; ++slot) {
         Key k = (slot == 1) ? Key::Num1 : (slot == 2) ? Key::Num2 : Key::Num3;
         if (IsKeyPressed(k) ||
@@ -207,6 +279,11 @@ void GalaxyEggbertSimpleGame::UpdateInit(float dt) {
             SelectGamer(slot);
             return;
         }
+    }
+    if (IsKeyPressed(Key::S)) {
+        settingsReturnPhase_ = GamePhase::Init;
+        EnterPhase(GamePhase::MainSetup);
+        return;
     }
     if (IsKeyPressed(Key::Escape) || IsGamepadButtonPressed(GamepadButton::B))
         Quit();
@@ -316,9 +393,26 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
 void GalaxyEggbertSimpleGame::UpdatePause(float dt) {
     (void)dt;
+    if (IsKeyPressed(Key::S)) {
+        settingsReturnPhase_ = GamePhase::Pause;
+        EnterPhase(GamePhase::PlaySetup);
+        return;
+    }
     if (IsActionPressed("Pause") || IsActionPressed("AnyKey")) {
         EnterPhase(GamePhase::Play);
     }
+}
+
+void GalaxyEggbertSimpleGame::UpdateSettings(float dt) {
+    (void)dt;
+    if (IsKeyPressed(Key::S)) {
+        soundOn_ = !soundOn_;
+        if (sound_) sound_->SetEnabled(soundOn_);
+        SaveSettings();
+        hud_.ShowSettings(soundOn_, settingsReturnPhase_ == GamePhase::Pause);
+    }
+    if (IsKeyPressed(Key::Escape))
+        EnterPhase(settingsReturnPhase_);
 }
 
 void GalaxyEggbertSimpleGame::UpdateWin(float dt) {

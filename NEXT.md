@@ -24,12 +24,13 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 - Builds and runs: `cmake --build cmake-build-u3d --target GalaxyEggbert -j2`
 - 80 phases complete; playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
 
-### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-5 DONE
+### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-6 DONE
 - Compiles: `cmake-build-simple3d/GalaxyEggbertSimple3D` (89 MB)
 - Terrain: tile-atlas textures from `object-m.png` per block type (S3D-2 ✅)
 - Blupi: billboard sprite from `blupi.png`, walk animation frames 0–9 (S3D-3 ✅)
 - Decor: all enemies + pickups rendered as animated billboard sprites from `element.png` (S3D-4 ✅)
-- HUD: gauge sprite (`jauge.png`), life icons (blupi.png icon 48), key icons (element.png), red hit-flash panel (S3D-5 ✅)
+- HUD: gauge sprite, life icons, key icons, red hit-flash panel (S3D-5 ✅)
+- Phase/menu: Init screen shows per-slot data (lives/world/best); Settings screen (S key) with sound toggle; SaveData persistence for 3 slots (S3D-6 ✅)
 - Sound: 5 key sounds wired
 - Camera: orbit mode
 
@@ -40,6 +41,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 ## 3. Recent changes
 
+- **S3D-6** — Phase/menu: Init shows per-slot lives/world/best via SaveData (slots 0–2); Settings screen from Init (S) and Pause (S); sound toggle persisted in slot 3; save on win/lose/level-reset
 - **S3D-5** — HUD: gauge sprite (`jauge.png`), life icons (blupi.png icon 48), key icons (element.png red/green/blue), hit-flash panel; `ShowHitFlash()`+`Update(dt)` wired in game loop
 - **S3D-4** — Decor: all enemies + pickups replaced with billboard sprites from `element.png`; `GetObjIcon()` ported from Decor.cpp; animation phase updated every frame
 - **S3D-3** — Blupi: box placeholder replaced with billboard from `blupi.png`; walk animation cycles frames 0–9 row 0; idle shows frame 0
@@ -50,7 +52,7 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 ## 4. Current focus
 
-**S3D-6 — Phase/menu system (Init gamer select, Settings, Ranking screen)**
+**S3D-7 — Sound channel parity (93 channels, per-channel volume)**
 
 ---
 
@@ -58,8 +60,8 @@ galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 
 | Status | Issue |
 |--------|-------|
-| incomplete | S3D-6: Phase/menu system (Init gamer select, Ranking screen) |
 | incomplete | S3D-7: Sound channel parity — 93 channels; API available, not wired |
+| incomplete | S3D-7: Sound channel parity — 93 channels; per-channel volume; loop control |
 | incomplete | GECameraRig::StartShake — stub, needs `Camera::Shake(intensity, duration)` call |
 | incomplete | GEDecorSystem: enemy AI placeholder, not ported from Decor.cpp |
 | incomplete | Save data not wired in Simple3D path |
@@ -114,10 +116,10 @@ cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 
 ## 8. Next tasks
 
-### Task — S3D-6: Phase/menu system
-**Goal:** Port Init gamer select (3 slots), Settings, Ranking screen to Simple3D.
-**Files:** `src/GalaxyEggbertSimple3D/GalaxyEggbertSimpleGame.cpp`, `GEHud.cpp/.hpp`
-**Reference:** `src/GalaxyEggbert/Game/GalaxyEggbertGame.cpp` — phase transitions; `../mobile-eggbert` — `Phase::Ranking`
+### Task — S3D-7: Sound channel parity
+**Goal:** Wire all 93 sound channels with per-channel volume from `tableVolumePitch`; loop control for ambient sounds.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GESound.hpp/.cpp`
+**Reference:** `src/GalaxyEggbert/Game/SoundManager.cpp` — channel table; `../mobile-eggbert/Tables.cpp` — volume table
 
 ### Task — Ranking screen (Urho3D version)
 **Goal:** `Phase::Ranking` — high-score table from Init screen.
