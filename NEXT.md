@@ -10,7 +10,7 @@
   - `GalaxyEggbertSimple3D` — new port in progress, built against `simple-3d` (a high-level C++ framework wrapping Urho3D)
 - **Faithful remake rule:** Only implement what exists in mobile-eggbert. No new mechanics.
 - 3D-specific adaptations (camera, blob shadows, auto step-up, billboard sprites) are allowed.
-- Feature tracking: `plan.md` (checklist) and `next.md` (phase log)
+- Feature tracking: `plan.md` (checklist)
 
 Architecture target:
 ```
@@ -56,11 +56,6 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 - Created `docs/simple3d_migration_task.md` — original task instructions preserved
 - Updated `CMakeLists.txt` — added `GalaxyEggbertSimple3D` target (off by default)
 - Updated `plan.md` — Simple3D Migration section with S3D-1 through S3D-9
-- Updated `next.md` — Phase 80 row added
-
-**Phase 79 (commit `e7a1a4f`):**
-- Removed non-mobile-eggbert features from Urho3D version (time bonus, coyote time, etc.)
-- Renamed `NEXT.md` → `next.md`, updated `CLAUDE.md` with faithful remake rule
 
 ---
 
@@ -82,6 +77,8 @@ These must be added to `../simple-3d` before S3D-2 can proceed.
 Without them, the Simple3D terrain remains grey placeholder cubes.
 
 **Secondary blocker:** `GalaxyEggbertSimple3D` has never been compiled — build errors likely exist.
+
+Full list of missing Simple3D APIs: `docs/SIMPLE3D_GAPS.md`
 
 ---
 
@@ -153,11 +150,6 @@ cmake -S . -B cmake-build-simple3d \
   -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON \
   -DSIMPLE3D_HOME=../simple-3d
 cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
-
-# Build simple-3d standalone (required first)
-cd ../simple-3d
-cmake -S . -B build-u3d
-cmake --build build-u3d -j2
 ```
 
 ---
