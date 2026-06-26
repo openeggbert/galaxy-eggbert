@@ -23,6 +23,10 @@ void GalaxyEggbertSimpleGame::Start() {
 #if defined(GALAXY_EGGBERT_U3D_BIN_PATH)
     SetResourcePrefixPaths(GALAXY_EGGBERT_U3D_BIN_PATH);
 #endif
+    // Game assets (icons/, sounds/, backgrounds/) live in Content/ next to the
+    // executable — not inside Data/ or CoreData/. Add it so the resource cache
+    // can find textures like "icons/object-m.png".
+    AddResourceDir("Content");
 
     sound_ = std::make_unique<GESimple3D::GESound>(this);
 
