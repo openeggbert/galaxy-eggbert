@@ -16,11 +16,12 @@ void GEBlupiController::Create(Game& game) {
         CollisionLayer::Trigger
     }));
 
-    // Visual placeholder — a box until billboard sprite is available (S3D-3).
-    // TODO(S3D-3): Replace with Entity::AddBillboard using blupi.png sprite sheet.
-    auto* visual = player_->CreateChild("BlupiVisual");
-    visual->AddModel("Models/Box.mdl");
-    visual->SetScale(Vector3(0.7f, 1.4f, 0.7f));
+    // Billboard sprite child: offset upward so the sprite bottom aligns with physics feet.
+    sprite_ = player_->CreateChild("BlupiSprite");
+    sprite_->SetLocalPosition(Vector3(0.0f, kVisHalf - kHalfH, 0.0f));
+    float worldSize = kTilePx / 64.0f;
+    sprite_->AddBillboard("icons/blupi.png", worldSize);
+    UpdateSprite(false);
 }
 
 void GEBlupiController::Update(Game& game, float dt) {
@@ -84,6 +85,9 @@ void GEBlupiController::Update(Game& game, float dt) {
     // Respawn on fall
     Vector3 pos = player_->GetPosition();
     if (pos.y_ < kFallLimit) Respawn();
+
+    bool moving = (std::fabs(stickX) > 0.1f || std::fabs(stickY) > 0.1f);
+    UpdateSprite(moving);
 }
 
 void GEBlupiController::Respawn() {
@@ -93,6 +97,21 @@ void GEBlupiController::Respawn() {
     player_->SetLinearVelocity(Vector3::ZERO);
     player_->SetRotation(Quaternion(0.0f, 0.0f, 0.0f));
     wasGrounded_ = false;
+}
+
+void GEBlupiController::UpdateSprite(bool moving) {
+    if (!sprite_) return;
+    // Walk animation: frames 0-9 in row 0 when moving, frame 0 when idle.
+    // Each frame is kTilePx × kTilePx pixels; 10 columns per row.
+    animTick_ = moving ? (animTick_ + 1) % (kCols * 3) : 0;
+    int icon = animTick_ / 3; // 3 engine ticks per animation frame
+    int col  = icon % kCols;
+    int row  = icon / kCols;
+    sprite_->SetBillboardUVRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
+}
+
+void GEBlupiController::SetSpriteVisible(bool v) {
+    if (sprite_) sprite_->SetActive(v);
 }
 
 Vector3 GEBlupiController::GetPosition() const {

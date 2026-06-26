@@ -202,7 +202,7 @@ See `docs/simple3d_migration.md` and `docs/SIMPLE3D_GAPS.md` for details.
 
 - [x] S3D-1 — Simple3D port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD labels, orbit camera, minimal sound, CMake target, gap documentation
 - [x] S3D-2 — Terrain visual fidelity: tile atlas material + UV offset per block type
-- [ ] S3D-3 — Blupi sprite/billboard animation from `blupi.png`
+- [x] S3D-3 — Blupi sprite/billboard animation from `blupi.png`
 - [ ] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`
 - [ ] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
 - [ ] S3D-6 — Phase/menu port: Init gamer select, Settings, Ranking screen

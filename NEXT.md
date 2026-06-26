@@ -4,23 +4,17 @@
 
 **Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (a C++ port of *Speedy Blupi*, a Windows Phone XNA game from 2013).
 
-- Implemented in C++ using the **Urho3D API**
-- Two build targets exist:
-  - `GalaxyEggbert` — original, fully working, built against U3D (u3d-community/U3D backend)
-  - `GalaxyEggbertSimple3D` — new port in progress, built against `simple-3d` (a high-level C++ framework wrapping Urho3D)
+- Two build targets:
+  - `GalaxyEggbert` — original, fully working, built against U3D
+  - `GalaxyEggbertSimple3D` — new port in progress, built against `simple-3d`
 - **Faithful remake rule:** Only implement what exists in mobile-eggbert. No new mechanics.
 - 3D-specific adaptations (camera, blob shadows, auto step-up, billboard sprites) are allowed.
 - Feature tracking: `plan.md` (checklist)
 
 Architecture target:
 ```
-galaxy-eggbert game code
-  -> simple-3d API
-    -> Urho3D / Nova3D
-      -> CNA / backend
+galaxy-eggbert game code -> simple-3d API -> Urho3D / Nova3D -> CNA / backend
 ```
-
-The Simple3D migration (prefix: S3D-*) is the current development focus.
 
 ---
 
@@ -28,16 +22,12 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 
 ### GalaxyEggbert (Urho3D target) — FULLY WORKING
 - Builds and runs: `cmake --build cmake-build-u3d --target GalaxyEggbert -j2`
-- 80 phases complete, all committed and pushed to `develop`
-- Playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
-- Phase 79 removed non-mobile-eggbert features: time bonus, star rating, best time, stomp combo, danger pulse, coyote time, jump buffer, variable jump
+- 80 phases complete; playable: 5 worlds, enemies, pickups, shield, stomp, score, HUD, camera, sound
 
-### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, NOT YET RUN
-- Phase 80 (S3D-1): skeleton created, all source files exist under `src/GalaxyEggbertSimple3D/`
-- Target is OFF by default (`-DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON` to enable)
-- **Compiles successfully** — binary `cmake-build-simple3d/GalaxyEggbertSimple3D` (89 MB)
-- Terrain: grey placeholder cubes, no tile textures
-- Blupi: `CharacterController`-based, basic movement, no sprites
+### GalaxyEggbertSimple3D (Simple3D target) — BUILDS, S3D-3 DONE
+- Compiles: `cmake-build-simple3d/GalaxyEggbertSimple3D` (89 MB)
+- Terrain: tile-atlas textures from `object-m.png` per block type (S3D-2 ✅)
+- Blupi: billboard sprite from `blupi.png`, walk animation frames 0–9 (S3D-3 ✅)
 - HUD: text-only labels
 - Sound: 5 key sounds wired
 - Camera: orbit mode
@@ -49,47 +39,36 @@ The Simple3D migration (prefix: S3D-*) is the current development focus.
 
 ## 3. Recent changes
 
-**Phase 80 (commit `381b6e2`):**
-- Created `src/GalaxyEggbertSimple3D/` — 14 new source files (full skeleton)
-- Created `docs/SIMPLE3D_GAPS.md` — table of missing Simple3D APIs
-- Created `docs/simple3d_migration.md` — architecture and migration progress
-- Created `docs/simple3d_migration_task.md` — original task instructions preserved
-- Updated `CMakeLists.txt` — added `GalaxyEggbertSimple3D` target (off by default)
-- Updated `plan.md` — Simple3D Migration section with S3D-1 through S3D-9
+- **S3D-3** — Blupi: box placeholder replaced with billboard from `blupi.png`; child entity at vertical offset `kVisHalf - kHalfH`; walk animation cycles frames 0–9 row 0; idle shows frame 0
+- **S3D-2** — `GETerrainRenderer`: `BlockTypes::tileUV` + `SetTileTexture("icons/object-m.png", ...)` per block; fill/edge blocks use `SetMaterialColor(dark brown)`
+- **S3D-1 compile** — fixed `Label::SetScale` in simple-3d; fixed `SetShieldActive` → `SetShieldTimer`
 
 ---
 
-## 4. Current blocker / main problem
+## 4. Current focus
 
-**`GalaxyEggbertSimple3D` compiles and links — not yet launched/tested.**
-
-All previously-missing Simple3D APIs are now implemented — no API gaps remain.
-See `docs/SIMPLE3D_GAPS.md` for the full list of available APIs.
-
-Next: S3D-2 (tile textures) — run the binary and verify terrain looks correct.
+**S3D-4 — Decor object visuals (enemies + pickups as billboard sprites from `element.png`)**
 
 ---
 
-## 5. Known bugs and limitations
+## 5. Known incomplete items
 
 | Status | Issue |
 |--------|-------|
-| incomplete | `GalaxyEggbertSimple3D` never compiled — unknown build errors |
-| incomplete | S3D-2 blocked: `Entity::SetTileTexture` missing from simple-3d |
-| incomplete | S3D-3: Blupi billboard animation needs `AddBillboard(texPath, uvRect, size)` (UV crop not yet in simple-3d) |
-| incomplete | S3D-5: HUD images (gauge, life icons, key icons, hit flash) — `UI::Image::SetImageRect` exists in simple-3d UI but not exposed in simple-3d public API |
-| incomplete | S3D-6: Phase/menu system (Init gamer select, Ranking screen) not ported |
-| incomplete | S3D-7: Sound channel parity — only 5 sounds wired |
-| incomplete | GECameraRig::StartShake is a no-op stub (Camera::Shake missing from simple-3d) |
-| incomplete | GEDecorSystem: enemy AI logic is placeholder, not ported from Decor.cpp |
+| incomplete | S3D-4: Decor object visuals (enemies, pickups as billboards from `element.png`) — current task |
+| incomplete | S3D-5: HUD images (gauge, life icons, key icons) via `UI::Image::SetImageRect` |
+| incomplete | S3D-6: Phase/menu system (Init gamer select, Ranking screen) |
+| incomplete | S3D-7: Sound channel parity — 93 channels; API available, not wired |
+| incomplete | GECameraRig::StartShake — stub, needs `Camera::Shake(intensity, duration)` call |
+| incomplete | GEDecorSystem: enemy AI placeholder, not ported from Decor.cpp |
 | incomplete | Save data not wired in Simple3D path |
-| incomplete | Ranking screen not implemented in Urho3D version either |
+| incomplete | Ranking screen not implemented (Urho3D version either) |
 | incomplete | Push mechanic (ObjectType12 crates) not implemented |
 | incomplete | ObjectType23 (projectile), ObjectType96/97 (follow enemies) not implemented |
 | incomplete | Vehicles: helicopter, jeep, tank, skateboard, balloon, swim, surf |
 | incomplete | Android build not implemented |
 | incomplete | Nova3D backend not available yet |
-| needs verification | `GEBlupiController` step-up: currently uses `CharacterController::SetStepHeight`; actual Urho3D CC behaviour vs. old manual AABB step-up may differ |
+| needs verification | `GEBlupiController` step-up via `CharacterController::SetStepHeight` — behaviour vs. old AABB step-up may differ |
 
 ---
 
@@ -99,94 +78,74 @@ Next: S3D-2 (tile textures) — run the binary and verify terrain looks correct.
 
 | Target | Sources | Engine API | Status |
 |--------|---------|------------|--------|
-| `GalaxyEggbert` | `src/GalaxyEggbert/` | Direct Urho3D (`#include <Urho3D/Urho3DAll.h>`) | Fully working |
-| `GalaxyEggbertSimple3D` | `src/GalaxyEggbertSimple3D/` | `#include <Simple3D/Simple3D.h>` only | Skeleton, untested |
+| `GalaxyEggbert` | `src/GalaxyEggbert/` | Direct Urho3D | Fully working |
+| `GalaxyEggbertSimple3D` | `src/GalaxyEggbertSimple3D/` | `Simple3D` only | Builds, S3D-2 done |
 
 Shared (engine-agnostic) code compiled into both targets:
 - `include/GalaxyEggbert/Worlds/` — Block, Chunk, World data model
 - `include/GalaxyEggbert/BlockTypes.hpp` — tile type constants + `tileUV()` UV math
-- `src/GalaxyEggbert/Game/Tables.cpp` — animation frame tables (Urho3D target only for now)
 
 ### Key invariants
-- `BlockTypes::tileUV(icon, uOff, vOff, uScale, vScale)` maps icon index → UV rect in `object-m.png` (1301×1431 px, 64×64 tiles, 20 columns)
 - Block type = icon index = `object-m.png` atlas position (except Air=0)
-- `MAXCELX = MAXCELY = 100` — level grid is always 100×100
-- World files: `worlds/world001.txt` … `world005.txt` — mobile-eggbert format
-- Save data: `GameData` 640-byte binary — compatible with mobile-eggbert (Urho3D path only)
-- No `#ifdef` for engine differences in C++ source — Simple3D port is a separate source tree
-
-### Simple3D gaps documented in
-- `docs/SIMPLE3D_GAPS.md` — full table of missing APIs with proposed solutions
-- `src/GalaxyEggbertSimple3D/Support/Simple3DMissingFeatures.hpp` — inline stub docs
+- `BlockTypes::tileUV(icon, uOff, vOff, uScale, vScale)` → UV rect in `object-m.png` (1301×1431 px, 64×64 tiles, 20 cols)
+- World files: `worlds/world001.txt` … `world005.txt` — mobile-eggbert format, all blocks at y=0
+- No `#ifdef` for engine differences — Simple3D port is a separate source tree
+- Simple3D API gaps: `docs/SIMPLE3D_GAPS.md` (currently none outstanding)
 
 ---
 
 ## 7. Useful commands
 
 ```bash
-# Build Urho3D version (default, working)
+# Build Urho3D version
 cmake --build cmake-build-u3d --target GalaxyEggbert -j2
 ./cmake-build-u3d/GalaxyEggbert
 
 # Run unit tests
-cmake --build cmake-build-u3d --target RunTests -j2
-# or directly:
 ./cmake-build-u3d/tests/GalaxyEggbertWorlds
 
-# Configure Simple3D build (first time)
-cmake -S . -B cmake-build-simple3d \
-  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON \
-  -DSIMPLE3D_HOME=../simple-3d
+# Build Simple3D version (first time: add -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON -DSIMPLE3D_HOME=../simple-3d)
 cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
+./cmake-build-simple3d/GalaxyEggbertSimple3D
 ```
 
 ---
 
-## 8. Next smallest tasks
+## 8. Next tasks
 
-**Ordered by priority:**
+### Task — S3D-4: Decor object visuals
+**Goal:** Enemies and pickups show as billboard sprites from `element.png`.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp/.hpp`
+**Reference:** `src/GalaxyEggbert/Game/Decor.cpp` — ObjectNode sprite UV per ObjectType
 
-### ~~Task 1 — First compile of GalaxyEggbertSimple3D~~ DONE
-Binary `cmake-build-simple3d/GalaxyEggbertSimple3D` builds successfully.
-Fixed: `Label::SetScale` (Urho3D Text has no SetScale — reimplemented via font size scaling in simple-3d), `SetShieldActive` → `SetShieldTimer` in GalaxyEggbertSimpleGame.cpp.
-
-### ~~Task 2 — S3D-2: Tile textures in GETerrainRenderer~~ DONE
-`GETerrainRenderer` now calls `BlockTypes::tileUV` + `e->SetTileTexture("icons/object-m.png", ...)` per block.
-Fill/edge blocks use `SetMaterialColor(Color(0.22f, 0.19f, 0.17f))`. Builds successfully.
-
-### Task 4 — Ranking screen (Urho3D version)
-**Goal:** Implement `Phase::Ranking` — high-score table accessible from Init screen.
+### Task — Ranking screen (Urho3D version)
+**Goal:** `Phase::Ranking` — high-score table from Init screen.
 **Files:** `src/GalaxyEggbert/Game/GalaxyEggbertGame.hpp/.cpp`
-**Reference:** `../mobile-eggbert` — `Phase::Ranking` in `Def.hpp`, score display in `Game1.cpp`
-**Verify:** Press R on Init screen → ranking shown; F key returns to gamer select
+**Reference:** `../mobile-eggbert` — `Phase::Ranking` in `Def.hpp`
 
-### Task 5 — Push mechanic for ObjectType12 crates (Urho3D version)
-**Goal:** Blupi can push crates horizontally when walking into them.
-**Files:** `src/GalaxyEggbert/Game/Blupi.cpp`, `src/GalaxyEggbert/Game/Decor.cpp`
+### Task — Push mechanic (Urho3D version)
+**Goal:** Blupi pushes ObjectType12 crates horizontally.
+**Files:** `src/GalaxyEggbert/Game/Blupi.cpp`, `Decor.cpp`
 **Reference:** `../mobile-eggbert` — crate push logic in `Decor.cpp`
-**Verify:** Walk into a crate → it slides; crate stops at wall
 
 ---
 
 ## 9. Do not do yet
 
-- Do not attempt full visual parity of Simple3D version in one session
-- Do not port Vehicles (helicopter, jeep, tank) — complex multi-state; tackle after core port is solid
-- Do not touch Android build — needs separate CMake toolchain work
+- Do not port Vehicles (helicopter, jeep, tank) — complex multi-state
+- Do not touch Android build
 - Do not edit simple-3d and galaxy-eggbert simultaneously in parallel agents — file conflicts
-- Do not delete `src/GalaxyEggbert/` (Urho3D version) — keep as reference until Simple3D version is playable
-- Do not add features not present in mobile-eggbert (faithful remake rule)
-- Do not use `-j` more than `-j2` — RAM constraint on this machine (crashes with more parallel jobs)
+- Do not delete `src/GalaxyEggbert/` — keep as reference until Simple3D version is playable
+- Do not add features not in mobile-eggbert (faithful remake rule)
+- Do not use `-j` more than `-j2` — RAM constraint
 
 ---
 
 ## 10. Resume prompt
 
 ```
-Read NEXT.md first to understand the current state of galaxy-eggbert.
-Then inspect only the files relevant to the first task listed in section 8.
-Do not refactor unrelated code.
-Make one small, verified improvement.
-Run the relevant build command from section 7 to confirm success.
-Update NEXT.md after finishing — update sections 2, 3, 4, and 8 to reflect what changed.
+Read NEXT.md first. Then inspect only files relevant to the first task in section 8.
+Do not refactor unrelated code. Make one small, verified change.
+Build with the command from section 7 to confirm success.
+Update NEXT.md sections 2, 3, 4, 8 after finishing.
 ```
