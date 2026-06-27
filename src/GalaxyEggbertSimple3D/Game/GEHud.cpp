@@ -32,12 +32,28 @@ void GEHud::SetMenuBackground(const std::string& bgPath) {
 }
 
 void GEHud::Create(Game& game) {
-    // Created first so it renders behind all other HUD elements.
+    // Created first so they render behind all other HUD elements.
     menuBg_ = game.CreateImage("");
     menuBg_->SetSize(1280, 720);
     menuBg_->SetAnchor(Anchor::TopLeft);
     menuBg_->SetPosition(0, 0);
     menuBg_->SetVisible(false);
+
+    // speedyblupi.png: 640×160 → drawn at 1280×240, slides in from above.
+    speedyblupiLogo_ = game.CreateImage("backgrounds/speedyblupi.png");
+    speedyblupiLogo_->SetAnchor(Anchor::TopLeft);
+    speedyblupiLogo_->SetSize(1280, 240);
+    speedyblupiLogo_->SetPosition(0, -240);
+    speedyblupiLogo_->SetVisible(false);
+
+    // blupiyoupie.png: 410×380 → drawn scaled ×2/×1.5, centered at (936,420).
+    // Screen centre is (640,360); offset = (296,60).
+    blupiyoupieLogo_ = game.CreateImage("backgrounds/blupiyoupie.png");
+    blupiyoupieLogo_->SetAnchor(Anchor::Center);
+    blupiyoupieLogo_->SetPosition(296, 60);
+    blupiyoupieLogo_->SetSize(820, 570);
+    blupiyoupieLogo_->SetColor(Color(1.0f, 1.0f, 1.0f, 0.0f));
+    blupiyoupieLogo_->SetVisible(false);
 
     main_ = game.CreateLabel("");
     main_->SetPosition(12, 12);
@@ -106,7 +122,37 @@ void GEHud::ShowHitFlash() {
     }
 }
 
+void GEHud::HideInitLogos() {
+    initAnimTime_   = -1.0f;
+    initAnimActive_ = false;
+    if (speedyblupiLogo_)  speedyblupiLogo_->SetVisible(false);
+    if (blupiyoupieLogo_)  blupiyoupieLogo_->SetVisible(false);
+}
+
 void GEHud::Update(float dt) {
+    // Init logo animation: speedyblupi slides from top, blupiyoupie scales in.
+    if (initAnimActive_) {
+        initAnimTime_ += dt;
+        float t = std::min(initAnimTime_ / 1.0f, 1.0f);
+
+        // speedyblupi: ease-out quadratic slide down from y=-240
+        float eased = 1.0f - (1.0f - t) * (1.0f - t);
+        int yPos = static_cast<int>(-240.0f + eased * 240.0f);
+        if (speedyblupiLogo_) speedyblupiLogo_->SetPosition(0, yPos);
+
+        // blupiyoupie: scale from 0.5→1.0, opacity from 0.25→1.0
+        float scale   = 0.5f + t * 0.5f;
+        float opacity = std::min(scale * scale, 1.0f);
+        int w = static_cast<int>(820.0f * scale);
+        int h = static_cast<int>(570.0f * scale);
+        if (blupiyoupieLogo_) {
+            blupiyoupieLogo_->SetSize(w, h);
+            blupiyoupieLogo_->SetColor(Color(1.0f, 1.0f, 1.0f, opacity));
+        }
+
+        if (t >= 1.0f) initAnimActive_ = false;
+    }
+
     if (hitFlashTimer_ <= 0.0f) return;
     hitFlashTimer_ -= dt;
     if (hitFlashTimer_ <= 0.0f) {
@@ -125,6 +171,7 @@ void GEHud::ShowPlay(int worldNum, const std::string& worldName,
                      float gameSpeed, bool showHint) {
     if (!main_) return;
     SetMenuBackground("");
+    HideInitLogos();
     overlay_->SetVisible(false);
     main_->SetVisible(true);
     hint_->SetVisible(showHint);
@@ -190,6 +237,7 @@ void GEHud::ShowWin(int worldNum, const std::string& worldName,
     int secs = static_cast<int>(levelTime) % 60;
 
     SetMenuBackground("backgrounds/win.png");
+    HideInitLogos();
     char buf[256];
     std::snprintf(buf, sizeof(buf),
         "LEVEL COMPLETE!\n\nWorld %d: %s\nTreasures: %d/%d  Lives: %d  Time: %d:%02d\nScore: %d\n\nPress any key...",
@@ -211,6 +259,7 @@ void GEHud::ShowLost(int worldNum, const std::string& worldName) {
     if (livesOverflow_) livesOverflow_->SetVisible(false);
 
     SetMenuBackground("backgrounds/lost.png");
+    HideInitLogos();
     char buf[128];
     std::snprintf(buf, sizeof(buf),
         "GAME OVER\n\nWorld %d: %s\n\nPress any key...",
@@ -232,6 +281,7 @@ void GEHud::ShowPause(int score, float levelTime) {
     if (livesOverflow_) livesOverflow_->SetVisible(false);
 
     SetMenuBackground("backgrounds/pause.png");
+    HideInitLogos();
     int mins = static_cast<int>(levelTime) / 60;
     int secs = static_cast<int>(levelTime) % 60;
 
@@ -259,6 +309,13 @@ void GEHud::ShowInit(const std::string& text) {
     overlay_->SetVisible(true);
     HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
     SetMenuBackground("backgrounds/init.png");
+    // Start logo animation only on first entry; called every frame from UpdateInit.
+    if (initAnimTime_ < 0.0f) {
+        initAnimTime_   = 0.0f;
+        initAnimActive_ = true;
+        if (speedyblupiLogo_) { speedyblupiLogo_->SetPosition(0, -240); speedyblupiLogo_->SetVisible(true); }
+        if (blupiyoupieLogo_) { blupiyoupieLogo_->SetSize(410, 285);    blupiyoupieLogo_->SetColor(Color(1,1,1,0)); blupiyoupieLogo_->SetVisible(true); }
+    }
     overlay_->SetText(text);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
 }
@@ -270,6 +327,7 @@ void GEHud::ShowSettings(bool soundOn, bool fromPause) {
     overlay_->SetVisible(true);
     HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
     SetMenuBackground("backgrounds/setup.png");
+    HideInitLogos();
     char buf[128];
     std::snprintf(buf, sizeof(buf),
         "Settings\n\nSound: %s\n\nS: toggle sound   ESC: %s",

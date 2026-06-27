@@ -46,8 +46,8 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 ### 2.2 Phase: Init (main menu / gamer select)
 
 - [x] MENU-006 — Render `init.png` as full-screen background
-- [ ] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from right on enter, matching mobile-eggbert `DrawBackgroundFade` animation (ease-in quadratic)
-- [ ] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (zoom from 0→1 quadratic)
+- [x] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from top on enter, ease-out quadratic over 1 s
+- [x] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (0.5→1.0 with fade-in) over 1 s
 - [ ] MENU-009 — Three gamer-slot buttons (A / B / C): render from `button.png` sprite sheet, correct position
 - [ ] MENU-010 — Each gamer slot shows: name ("Gamer A/B/C"), lives count, main doors opened, secondary doors opened (text next to button, 0.7 scale)
 - [ ] MENU-011 — "PLAY" button (`InitPlay` glyph) with label below

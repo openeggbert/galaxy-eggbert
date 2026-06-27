@@ -32,16 +32,22 @@ public:
     void SetMenuBackground(const std::string& bgPath);
 
 private:
-    Simple3D::UI::Image* menuBg_         = nullptr;  // full-screen menu background; created first
-    Simple3D::Label*     main_           = nullptr;
-    Simple3D::Label*     overlay_        = nullptr;
-    Simple3D::Label*     hint_           = nullptr;
-    Simple3D::Label*     livesOverflow_  = nullptr;
-    Simple3D::UI::Image* gauge_          = nullptr;
+    void HideInitLogos();
+
+    Simple3D::UI::Image* menuBg_           = nullptr;  // full-screen menu background; created first
+    Simple3D::UI::Image* speedyblupiLogo_  = nullptr;
+    Simple3D::UI::Image* blupiyoupieLogo_  = nullptr;
+    Simple3D::Label*     main_             = nullptr;
+    Simple3D::Label*     overlay_          = nullptr;
+    Simple3D::Label*     hint_             = nullptr;
+    Simple3D::Label*     livesOverflow_    = nullptr;
+    Simple3D::UI::Image* gauge_            = nullptr;
     Simple3D::UI::Image* lifeIcons_[kMaxDisplayedLives] = {};
-    Simple3D::UI::Image* keyIcons_[3]   = {};
-    Simple3D::UI::Panel* hitFlash_       = nullptr;
-    float                hitFlashTimer_  = 0.0f;
+    Simple3D::UI::Image* keyIcons_[3]      = {};
+    Simple3D::UI::Panel* hitFlash_         = nullptr;
+    float                hitFlashTimer_    = 0.0f;
+    float                initAnimTime_     = -1.0f;  // -1 = not started
+    bool                 initAnimActive_   = false;
 };
 
 } // namespace GESimple3D
