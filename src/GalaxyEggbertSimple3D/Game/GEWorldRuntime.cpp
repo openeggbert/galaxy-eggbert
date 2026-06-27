@@ -77,7 +77,7 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
             auto pixToV3 = [&](int px, int py) -> Vector3 {
                 return Vector3(
                     static_cast<float>(px / kMobTile - kWCX),
-                    1.0f,
+                    1.05f,  // 0.05 above tile top (y=0.5) to avoid sprite depth-fight with tile face
                     static_cast<float>(py / kMobTile - kWCZ));
             };
 

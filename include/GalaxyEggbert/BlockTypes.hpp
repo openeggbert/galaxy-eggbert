@@ -197,13 +197,20 @@ inline uint16_t fromMobileIconId(int icon) {
 }
 
 // UV of tile for icon index (row-major, 20 cols).
+// Half-pixel inset: at u_box=1.0, GPU computes floor(u_atlas * W) which without
+// inset lands on the FIRST pixel of the NEXT atlas tile, producing a dark seam.
+// Inset moves the sampled range to pixel centres [+0.5px .. lastPx-0.5px].
 inline void tileUV(int icon, float& uOff, float& vOff, float& uScale, float& vScale) {
     const int col = icon % kSheetCols;
     const int row = icon / kSheetCols;
-    uScale = static_cast<float>(kTileSize) / static_cast<float>(kSheetW);
-    vScale = static_cast<float>(kTileSize) / static_cast<float>(kSheetH);
-    uOff   = col * uScale;
-    vOff   = row * vScale;
+    const float stepU = static_cast<float>(kTileSize) / static_cast<float>(kSheetW);
+    const float stepV = static_cast<float>(kTileSize) / static_cast<float>(kSheetH);
+    const float halfU = 0.5f / static_cast<float>(kSheetW);
+    const float halfV = 0.5f / static_cast<float>(kSheetH);
+    uOff   = col * stepU + halfU;
+    vOff   = row * stepV + halfV;
+    uScale = stepU - 2.0f * halfU;
+    vScale = stepV - 2.0f * halfV;
 }
 
 } // namespace BlockTypes
