@@ -16,14 +16,18 @@ public:
     // Creates the Simple3D camera in orbit mode following the given entity.
     void Create(Simple3D::Game& game, Simple3D::Entity* target);
 
+    // Rotate camera to face the same direction as Blupi (yaw in degrees).
+    void SetYaw(float yaw);
+
     Simple3D::Camera* GetCamera() const { return cam_; }
 
-    // Camera shake — no-op in S3D-1 (Simple3D lacks shake API).
-    // TODO: Implement via position jitter when Simple3D supports it.
-    void StartShake(float /*intensity*/ = 0.4f, float /*duration*/ = 0.3f) {}
+    void StartShake(float intensity = 0.4f, float duration = 0.3f) {
+        if (cam_) cam_->Shake(intensity, duration);
+    }
 
 private:
-    Simple3D::Camera* cam_ = nullptr;
+    Simple3D::Camera* cam_   = nullptr;
+    float             pitch_ = 20.0f;
 };
 
 } // namespace GESimple3D

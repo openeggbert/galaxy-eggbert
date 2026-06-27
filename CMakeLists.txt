@@ -74,6 +74,8 @@ if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
         src/GalaxyEggbertSimple3D/Game/GEHud.cpp
         src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp
         src/GalaxyEggbertSimple3D/Game/GESound.cpp
+        src/GalaxyEggbertSimple3D/Game/GEExploSystem.cpp
+        src/GalaxyEggbertSimple3D/Game/GEBridgeSystem.cpp
     )
 
     add_executable(GalaxyEggbertSimple3D

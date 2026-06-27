@@ -34,6 +34,15 @@ public:
     void PlayLife()     { Play(GalaxyEggbert::SoundChannel::SoundChannel42); }
     void PlayShieldOff(){ Play(GalaxyEggbert::SoundChannel::SoundChannel44); }
     void PlayWin()      { Play(GalaxyEggbert::SoundChannel::SoundChannel57); }
+    void PlayClick()    { Play(GalaxyEggbert::SoundChannel::SoundChannel10); }
+    void PlayConfirm()  { Play(GalaxyEggbert::SoundChannel::SoundChannel2);  }
+    void PlaySpring()     { Play(GalaxyEggbert::SoundChannel::SoundChannel41); }
+    void PlayTeleport()   { Play(GalaxyEggbert::SoundChannel::SoundChannel71); }
+    void PlaySwitchOn()   { Play(GalaxyEggbert::SoundChannel::SoundChannel77); }
+    void PlaySwitchOff()  { Play(GalaxyEggbert::SoundChannel::SoundChannel76); }
+    void PlayBridgeStart()  { Play(GalaxyEggbert::SoundChannel::SoundChannel72); }
+    void PlayBridgePhase2() { Play(GalaxyEggbert::SoundChannel::SoundChannel73); }
+    void PlayWaterSplash()  { Play(GalaxyEggbert::SoundChannel::SoundChannel25); }
 
 private:
     Simple3D::Game* game_    = nullptr;

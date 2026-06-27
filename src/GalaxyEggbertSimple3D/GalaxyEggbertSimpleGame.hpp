@@ -8,6 +8,8 @@
 #include "Game/GEHud.hpp"
 #include "Game/GESound.hpp"
 #include "Game/GECameraRig.hpp"
+#include "Game/GEExploSystem.hpp"
+#include "Game/GEBridgeSystem.hpp"
 #include <GalaxyEggbert/def/GamePhase.hpp>
 #include <memory>
 #include <string>
@@ -49,6 +51,8 @@ private:
     GESimple3D::GEDecorSystem     decor_;
     GESimple3D::GEHud             hud_;
     GESimple3D::GECameraRig       camera_;
+    GESimple3D::GEExploSystem     explo_;
+    GESimple3D::GEBridgeSystem    bridge_;
     std::unique_ptr<GESimple3D::GESound> sound_;
 
     // ── per-slot save data ────────────────────────────────────────────────────
@@ -77,6 +81,11 @@ private:
     int   prevCollected_   = 0;
     int   prevTotalKeys_   = 0;
     bool  wasShieldActive_ = false;
+    bool  mousePrevDown_    = false;
+    bool  cameraIsometric_  = false;
+    bool  worldJustLoaded_  = false;
+    float teleportCooldown_ = 0.0f;
+    float oxygenLevel_      = 1.0f;
 
-    static constexpr int kMaxWorld = 5;
+    static constexpr int kMaxWorld = 20;
 };

@@ -202,6 +202,11 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
             int row  = icon / kElemCols;
             st.sprite->SetBillboardUVRect(col * kElemTilePx, row * kElemTilePx,
                                           kElemTilePx, kElemTilePx);
+
+            if (IsEnemy(st.type)) {
+                bool facingRight = (st.direction > 0.0f) == (st.posEnd.x_ >= st.posStart.x_);
+                st.sprite->SetFlipX2D(facingRight);
+            }
         }
 
         if (IsPlatform(st.type) || IsEnemy(st.type)) {
@@ -225,6 +230,7 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
                 if (d2 < 0.9f * 0.9f) {
                     if (blupiVelY < -1.0f && blupiPos.y_ > ep.y_ + 0.3f) {
                         stompKill_ = true;
+                        stompPos_  = ep;
                         st.active = false;
                         st.entity->SetPosition(Vector3(0.0f, -999.0f, 0.0f));
                     } else {

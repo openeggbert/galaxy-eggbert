@@ -68,12 +68,15 @@ void GalaxyEggbertSimpleGame::SetupInput() {
         .GamepadButton(GamepadButton::A)
         .GamepadButton(GamepadButton::B);
 
+    BindAction("Action")
+        .Key(Key::E)
+        .GamepadButton(GamepadButton::X);
+
     // TODO(#24B): Move to Task #24B Input Actions when defined.
     // Tank controls: Left/Right = turn, Up/Down = move forward/back.
     BindAxis2D("Move")
         .Keys(Key::Left, Key::Right, Key::Down, Key::Up)
-        .GamepadStick(GamepadAxis::LeftX, GamepadAxis::LeftY)
-        .InvertY(true);
+        .GamepadStick(GamepadAxis::LeftX, GamepadAxis::LeftY);
 }
 
 void GalaxyEggbertSimpleGame::Update(float dt) {
@@ -103,12 +106,23 @@ void GalaxyEggbertSimpleGame::EnterPhase(GamePhase next) {
     phaseTimer_ = 0.0f;
 
     switch (next) {
-        case GamePhase::Init:
-            hud_.ShowInit(BuildInitText(), gamerSlot_ - 1);
+        case GamePhase::Init: {
+            GESimple3D::GEHud::InitSlotInfo si[3] = {
+                {slots_[0].lives, slots_[0].world, slots_[0].best},
+                {slots_[1].lives, slots_[1].world, slots_[1].best},
+                {slots_[2].lives, slots_[2].world, slots_[2].best},
+            };
+            hud_.ShowInit(BuildInitText(), gamerSlot_ - 1, si);
             break;
+        }
         case GamePhase::Play:
             controlsHintTimer_ = 8.0f;
             hud_.SetVisible(true);
+            if (worldJustLoaded_) {
+                hud_.ShowWorldName(currentWorld_,
+                    GESimple3D::GEWorldRuntime::WorldName(currentWorld_));
+                worldJustLoaded_ = false;
+            }
             break;
         case GamePhase::Pause:
             hud_.ShowPause(score_, worldRuntime_.GetLevelTime());
@@ -139,6 +153,8 @@ void GalaxyEggbertSimpleGame::EnterPhase(GamePhase next) {
 void GalaxyEggbertSimpleGame::LoadWorld(int worldNum) {
     terrain_.Clear(*this);
     decor_.Clear(*this);
+    explo_.Clear(*this);
+    bridge_.Clear();
 
     worldRuntime_.SetWorldNum(worldNum);
     worldRuntime_.ResetLevel();
@@ -179,9 +195,12 @@ void GalaxyEggbertSimpleGame::LoadWorld(int worldNum) {
     bonusLifeAwarded_  = false;
     shieldTimer_       = 0.0f;
     respawnInvincTimer_= 0.0f;
+    oxygenLevel_       = 1.0f;
     prevCollected_     = 0;
     prevTotalKeys_     = 0;
     wasShieldActive_   = false;
+    worldJustLoaded_   = true;
+    teleportCooldown_  = 0.0f;
 }
 
 // ─── slot persistence ─────────────────────────────────────────────────────────
@@ -217,17 +236,7 @@ void GalaxyEggbertSimpleGame::SaveSettings() {
 }
 
 std::string GalaxyEggbertSimpleGame::BuildInitText() const {
-    char buf[512];
-    int n = 0;
-    n += std::snprintf(buf+n, sizeof(buf)-n, "Galaxy Eggbert\n\nSelect a gamer:\n\n");
-    for (int i = 0; i < 3; ++i) {
-        n += std::snprintf(buf+n, sizeof(buf)-n,
-            "  [%d]  Lives: %d   World: %d   Best: %d\n",
-            i+1, slots_[i].lives, slots_[i].world, slots_[i].best);
-    }
-    std::snprintf(buf+n, sizeof(buf)-n,
-        "\n1/2/3: choose gamer   S: Settings   Esc: quit");
-    return buf;
+    return "Up/Down: navigate   Enter: start   Del: new game   S: settings   Esc: quit";
 }
 
 // ─── gamer select ────────────────────────────────────────────────────────────
@@ -280,16 +289,47 @@ void GalaxyEggbertSimpleGame::AdvanceToNextWorld() {
 
 void GalaxyEggbertSimpleGame::UpdateInit(float dt) {
     (void)dt;
-    hud_.ShowInit(BuildInitText(), gamerSlot_ - 1);
+    {
+        GESimple3D::GEHud::InitSlotInfo si[3] = {
+            {slots_[0].lives, slots_[0].world, slots_[0].best},
+            {slots_[1].lives, slots_[1].world, slots_[1].best},
+            {slots_[2].lives, slots_[2].world, slots_[2].best},
+        };
+        hud_.ShowInit(BuildInitText(), gamerSlot_ - 1, si);
+    }
 
+    int prevSlot = gamerSlot_;
+
+    // Up/Down (keyboard or D-pad) navigate the highlighted slot without starting.
+    if (IsKeyPressed(Key::Up) || IsGamepadButtonPressed(GamepadButton::DPadUp))
+        gamerSlot_ = (gamerSlot_ == 1) ? 3 : gamerSlot_ - 1;
+    else if (IsKeyPressed(Key::Down) || IsGamepadButtonPressed(GamepadButton::DPadDown))
+        gamerSlot_ = (gamerSlot_ == 3) ? 1 : gamerSlot_ + 1;
+
+    // 1/2/3 jump to slot without starting.
     for (int slot = 1; slot <= 3; ++slot) {
         Key k = (slot == 1) ? Key::Num1 : (slot == 2) ? Key::Num2 : Key::Num3;
-        if (IsKeyPressed(k) ||
-            (slot == 1 && IsGamepadButtonPressed(GamepadButton::A))) {
-            SelectGamer(slot);
-            return;
-        }
+        if (IsKeyPressed(k)) gamerSlot_ = slot;
     }
+
+    if (gamerSlot_ != prevSlot && sound_) sound_->PlayClick();
+
+    // Delete: reset highlighted slot to new-game defaults.
+    if (IsKeyPressed(Key::Delete)) {
+        int idx = gamerSlot_ - 1;
+        slots_[idx] = SlotData{};
+        SaveSlot(idx);
+        if (sound_) sound_->PlayClick();
+    }
+
+    // Enter / Jump key / Gamepad A: confirm highlighted slot.
+    if (IsKeyPressed(Key::Return) || IsKeyPressed(Key::LCtrl) ||
+        IsGamepadButtonPressed(GamepadButton::A)) {
+        if (sound_) sound_->PlayConfirm();
+        SelectGamer(gamerSlot_);
+        return;
+    }
+
     if (IsKeyPressed(Key::S)) {
         settingsReturnPhase_ = GamePhase::Init;
         EnterPhase(GamePhase::MainSetup);
@@ -316,10 +356,13 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     worldRuntime_.Update(dt);
     terrain_.Update(worldRuntime_.GetAnimPhase());
+    explo_.Update(*this, dt);
+    bridge_.Update(dt, terrain_, *sound_);
 
     blupi_.SetShieldTimer(shieldTimer_);
     blupi_.SetInputFrozen(false);
     blupi_.Update(*this, dt);
+    camera_.SetYaw(blupi_.GetFacingYaw());
 
     // Tile hazard detection (inspired by Decor.cpp BlupiStep/DecorDetect).
     // Query World at Blupi's tile position; kill if standing on a hazard tile.
@@ -340,13 +383,100 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
                     // Crusher: kills only when extended (phases 5-9 of 10-frame cycle)
                     if (BlockTypes::tileAnimBase(tileType) == BlockTypes::Crusher)
                         kill = (worldRuntime_.GetAnimPhase() % 10 >= 5);
+                    // Blitz: active 25% of ticks (animPhase%4==0), inspired by BlitzActif
+                    if (BlockTypes::isBlitz(tileType))
+                        kill = (worldRuntime_.GetAnimPhase() % 4 == 0);
                     if (kill) {
                         hud_.ShowHitFlash();
                         sound_->PlayHit();
+                        camera_.StartShake();
                         ResetLevel();
                         return;
                     }
                 }
+            }
+        }
+    }
+
+    // Clear swim mode when Blupi leaves water (becomes airborne).
+    if (!blupi_.IsOnGround() && blupi_.IsSwimming()) {
+        blupi_.SetSwimming(false);
+        oxygenLevel_ = 1.0f;
+    }
+
+    // Spring tile (TILE-034): auto-launch Blupi upward when grounded on spring (icon 211).
+    // Inspired by mobile-eggbert IsRessort — fires whenever grounded && on spring tile.
+    if (blupi_.IsOnGround()) {
+        auto* world = worldRuntime_.GetWorld();
+        if (world) {
+            Vector3 bp = blupi_.GetPosition();
+            int tx = static_cast<int>(std::round(bp.x_)) + GESimple3D::GEWorldRuntime::kWCX;
+            int tz = static_cast<int>(std::round(bp.z_)) + GESimple3D::GEWorldRuntime::kWCZ;
+            if (tx >= 0 && tx < 100 && tz >= 0 && tz < 100) {
+                uint16_t tileType = world->getBlock(
+                    static_cast<uint16_t>(tx), 0,
+                    static_cast<uint16_t>(tz)).type();
+                if (BlockTypes::isSpring(tileType)) {
+                    bool jumpHeld = IsKeyDown(Key::LCtrl) || IsKeyDown(Key::Space);
+                    blupi_.Launch(jumpHeld
+                        ? GESimple3D::GEBlupiController::kJumpSpeed * 1.2f
+                        : GESimple3D::GEBlupiController::kJumpSpeed);
+                    sound_->PlaySpring();
+                }
+                // Bridge tile (TILE-039/PICKUP-064): trigger 157-frame construction animation.
+                if (BlockTypes::isBridge(tileType) && !bridge_.IsActive(tx, tz)) {
+                    bridge_.Spawn(tx, tz);
+                    sound_->PlayBridgeStart();
+                }
+                // Water tile (TILE-042): swimming mode — reduced speed, oxygen drain, drown.
+                if (BlockTypes::isWater(tileType)) {
+                    if (!blupi_.IsSwimming()) {
+                        blupi_.SetSwimming(true);
+                        if (sound_) sound_->PlayWaterSplash();
+                    }
+                    if (!blupi_.IsShieldActive())
+                        oxygenLevel_ -= dt / 8.0f;
+                    if (oxygenLevel_ < 0.0f) oxygenLevel_ = 0.0f;
+                    if (oxygenLevel_ <= 0.0f && respawnInvincTimer_ <= 0.0f) {
+                        hud_.ShowHitFlash();
+                        if (sound_) sound_->PlayHit();
+                        camera_.StartShake();
+                        oxygenLevel_ = 1.0f;
+                        ResetLevel();
+                        return;
+                    }
+                } else if (blupi_.IsSwimming()) {
+                    blupi_.SetSwimming(false);
+                    oxygenLevel_ = 1.0f;
+                }
+            }
+        }
+    }
+
+    // Ventilator (TILE-040): adjacent fan base tile kills Blupi when not shielded.
+    // Inspired by mobile-eggbert IsVentillo — BlupiDead on fan contact unless m_blupiShield.
+    if (respawnInvincTimer_ <= 0.0f) {
+        auto* world = worldRuntime_.GetWorld();
+        if (world) {
+            Vector3 bp = blupi_.GetPosition();
+            int tx = static_cast<int>(std::round(bp.x_)) + GESimple3D::GEWorldRuntime::kWCX;
+            int tz = static_cast<int>(std::round(bp.z_)) + GESimple3D::GEWorldRuntime::kWCZ;
+            static const int kFDx[] = { 1,-1, 0, 0};
+            static const int kFDz[] = { 0, 0, 1,-1};
+            for (int d = 0; d < 4; ++d) {
+                int nx = tx + kFDx[d], nz = tz + kFDz[d];
+                if (nx < 0 || nx >= 100 || nz < 0 || nz >= 100) continue;
+                if (!BlockTypes::isFan(world->getBlock(
+                        static_cast<uint16_t>(nx), 0,
+                        static_cast<uint16_t>(nz)).type())) continue;
+                if (!blupi_.IsShieldActive()) {
+                    hud_.ShowHitFlash();
+                    sound_->PlayHit();
+                    camera_.StartShake();
+                    ResetLevel();
+                    return;
+                }
+                break;
             }
         }
     }
@@ -361,7 +491,7 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
         if (decor_.GetCollected() >= decor_.GetTotalTreasures() &&
             decor_.GetTotalTreasures() > 0) {
             exitOpen_ = true;
-            // TODO: Show "EXIT OPEN!" popup — needs Simple3D::Label with timed fade
+            hud_.ShowExitOpen();
         }
         if (!bonusLifeAwarded_ && exitOpen_) {
             bonusLifeAwarded_ = true;
@@ -372,7 +502,9 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     // Collect treasure score
     if (decor_.GetCollected() > prevCollected_) {
-        score_ += 10 * (decor_.GetCollected() - prevCollected_);
+        int delta = decor_.GetCollected() - prevCollected_;
+        score_ += 10 * delta;
+        hud_.ShowScorePlus(10 * delta);
         prevCollected_ = decor_.GetCollected();
         sound_->PlayCollect();
     }
@@ -388,6 +520,106 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
     if (totalKeys > prevTotalKeys_) sound_->PlayKey();
     prevTotalKeys_ = totalKeys;
 
+    // Door tile (TILE-036): open when Blupi is adjacent and holds the matching key.
+    // Inspired by mobile-eggbert IsDoor — checks own tile + cardinal neighbours.
+    {
+        auto* world = worldRuntime_.GetWorld();
+        if (world) {
+            int tx = static_cast<int>(std::round(blupiPos.x_)) + GESimple3D::GEWorldRuntime::kWCX;
+            int tz = static_cast<int>(std::round(blupiPos.z_)) + GESimple3D::GEWorldRuntime::kWCZ;
+            static const int kDx[] = {0, 1, -1, 0,  0};
+            static const int kDz[] = {0, 0,  0, 1, -1};
+            for (int d = 0; d < 5; ++d) {
+                int nx = tx + kDx[d], nz = tz + kDz[d];
+                if (nx < 0 || nx >= 100 || nz < 0 || nz >= 100) continue;
+                uint16_t t = world->getBlock(
+                    static_cast<uint16_t>(nx), 0,
+                    static_cast<uint16_t>(nz)).type();
+                if (!BlockTypes::isDoor(t)) continue;
+                int kt = BlockTypes::doorKeyType(t);
+                bool has = (kt == 49 && decor_.GetKeys49() > 0) ||
+                           (kt == 50 && decor_.GetKeys50() > 0) ||
+                           (kt == 51 && decor_.GetKeys51() > 0);
+                if (has) {
+                    terrain_.OpenDoor(*this, nx, nz, world);
+                    decor_.ConsumeKey(kt);
+                    sound_->PlayKey();
+                }
+            }
+        }
+    }
+
+    // Teleporter (TILE-037): check tiles adjacent to Blupi for icons 330-333.
+    // On contact scan the whole map for the matching icon at a different position.
+    // Inspired by mobile-eggbert IsTeleporte + SearchTeleporte.
+    if (teleportCooldown_ > 0.0f) {
+        teleportCooldown_ -= dt;
+    } else if (blupi_.IsOnGround()) {
+        auto* world = worldRuntime_.GetWorld();
+        if (world) {
+            int tx = static_cast<int>(std::round(blupiPos.x_)) + GESimple3D::GEWorldRuntime::kWCX;
+            int tz = static_cast<int>(std::round(blupiPos.z_)) + GESimple3D::GEWorldRuntime::kWCZ;
+            static const int kDx[] = {0, 1, -1, 0,  0};
+            static const int kDz[] = {0, 0,  0, 1, -1};
+            for (int d = 0; d < 5; ++d) {
+                int nx = tx + kDx[d], nz = tz + kDz[d];
+                if (nx < 0 || nx >= 100 || nz < 0 || nz >= 100) continue;
+                uint16_t portalIcon = world->getBlock(
+                    static_cast<uint16_t>(nx), 0,
+                    static_cast<uint16_t>(nz)).type();
+                if (!BlockTypes::isTeleporter(portalIcon)) continue;
+                // Find the matching exit: same icon, different position (>2 tiles away).
+                int exitWx = -1, exitWz = -1;
+                for (int sz = 0; sz < 100 && exitWx < 0; ++sz) {
+                    for (int sx = 0; sx < 100 && exitWx < 0; ++sx) {
+                        if (sx == nx && sz == nz) continue;
+                        if (std::abs(sx - nx) < 3 && std::abs(sz - nz) < 3) continue;
+                        if (world->getBlock(
+                                static_cast<uint16_t>(sx), 0,
+                                static_cast<uint16_t>(sz)).type() == portalIcon)
+                        { exitWx = sx; exitWz = sz; }
+                    }
+                }
+                if (exitWx < 0) break;
+                // Teleport Blupi one tile south of the exit portal.
+                Simple3D::Vector3 dest(
+                    static_cast<float>(exitWx - GESimple3D::GEWorldRuntime::kWCX),
+                    blupiPos.y_,
+                    static_cast<float>(exitWz - GESimple3D::GEWorldRuntime::kWCZ) + 1.0f);
+                blupi_.GetEntity()->SetPosition(dest);
+                blupi_.GetEntity()->SetLinearVelocity(Simple3D::Vector3::ZERO);
+                sound_->PlayTeleport();
+                teleportCooldown_ = 2.0f;
+                break;
+            }
+        }
+    }
+
+    // Switch (TILE-038): press Action (E) while adjacent to switch tile → toggle 384↔385,
+    // linked saws 378↔379 within ±20 tiles on same Z row.
+    // Inspired by mobile-eggbert ActiveSwitch (PlayAction + IsSwitch → ActiveSwitch).
+    if (IsActionPressed("Action")) {
+        auto* world = worldRuntime_.GetWorld();
+        if (world) {
+            int tx = static_cast<int>(std::round(blupiPos.x_)) + GESimple3D::GEWorldRuntime::kWCX;
+            int tz = static_cast<int>(std::round(blupiPos.z_)) + GESimple3D::GEWorldRuntime::kWCZ;
+            static const int kSDx[] = {0, 1,-1, 0, 0};
+            static const int kSDz[] = {0, 0, 0, 1,-1};
+            for (int d = 0; d < 5; ++d) {
+                int nx = tx + kSDx[d], nz = tz + kSDz[d];
+                if (nx < 0 || nx >= 100 || nz < 0 || nz >= 100) continue;
+                uint16_t t = world->getBlock(
+                    static_cast<uint16_t>(nx), 0,
+                    static_cast<uint16_t>(nz)).type();
+                if (!BlockTypes::isSwitch(t)) continue;
+                bool wasOff = (t == BlockTypes::SwitchOff);
+                if (terrain_.ToggleSwitch(nx, nz, world))
+                    wasOff ? sound_->PlaySwitchOn() : sound_->PlaySwitchOff();
+                break;
+            }
+        }
+    }
+
     // Shield-off sound (ch44) when shield expires
     bool shieldNow = blupi_.IsShieldActive();
     if (wasShieldActive_ && !shieldNow) sound_->PlayShieldOff();
@@ -395,18 +627,20 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     if (decor_.WasShieldCollected()) {
         shieldTimer_ = 5.0f;
-        sound_->PlayCollect();
+        sound_->PlayLife();
     }
 
     if (decor_.WasStompKill()) {
         score_ += 25;
         sound_->PlayStomp();
         blupi_.BounceUp();
+        explo_.Spawn(*this, decor_.GetStompPos());
     }
 
     if (decor_.WasBlupiHit() && !blupi_.IsShieldActive() && respawnInvincTimer_ <= 0.0f) {
         hud_.ShowHitFlash();
         sound_->PlayHit();
+        camera_.StartShake();
         ResetLevel();
         return;
     }
@@ -419,11 +653,13 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
 
     if (blupi_.WasLandedThisFrame())  sound_->PlayLand();
     if (blupi_.WasJumpedThisFrame())  sound_->PlayJump();
+    if (blupi_.WasSteppedThisFrame()) sound_->PlayStep();
 
     // Fall out of world
     if (blupi_.GetPosition().y_ < GESimple3D::GEBlupiController::kFallLimit) {
         hud_.ShowHitFlash();
         sound_->PlayHit();
+        camera_.StartShake(0.6f, 0.4f);
         ResetLevel();
         return;
     }
@@ -435,28 +671,65 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
         else                         gameSpeed_ = 0.6f;
     }
 
+    // Camera mode toggle: C switches between perspective and isometric (CAM-010).
+    if (IsKeyPressed(Key::C)) {
+        cameraIsometric_ = !cameraIsometric_;
+        auto* cam = camera_.GetCamera();
+        if (cam) {
+            if (cameraIsometric_) {
+                cam->SetOrbitAngles(45.0f, 58.0f);
+                cam->SetFOV(28.0f);
+            } else {
+                cam->SetOrbitAngles(180.0f, 20.0f);
+                cam->SetFOV(65.0f);
+            }
+        }
+    }
+
     // Pause
     if (IsActionPressed("Pause")) {
         EnterPhase(GamePhase::Pause);
         return;
     }
 
+    float hintAlpha = std::max(0.0f, std::min(1.0f, controlsHintTimer_));
     hud_.ShowPlay(
         currentWorld_,
         GESimple3D::GEWorldRuntime::WorldName(currentWorld_),
         lives_, decor_.GetCollected(), decor_.GetTotalTreasures(),
         decor_.GetKeys49(), decor_.GetKeys50(), decor_.GetKeys51(),
         shieldTimer_, worldRuntime_.GetLevelTime(), score_,
-        gameSpeed_, controlsHintTimer_ > 0.0f);
+        gameSpeed_, hintAlpha,
+        blupi_.IsSwimming() ? oxygenLevel_ : -1.0f);
+
+    hud_.UpdateMinimap(blupiPos.x_, blupiPos.z_);
 
     decor_.ClearEvents();
 }
 
 void GalaxyEggbertSimpleGame::UpdatePause(float dt) {
     (void)dt;
+
+    // Hover highlight on pause icon buttons (MENU-024).
+    hud_.SetPauseBtnHover(hud_.GetClickedPauseBtn(GetMousePosition()));
+
+    // Mouse click on pause icon buttons (MENU-023).
+    bool mouseDown = IsMouseButtonDown(MouseButton::Left);
+    if (mouseDown && !mousePrevDown_) {
+        int btn = hud_.GetClickedPauseBtn(GetMousePosition());
+        if (btn == 0) { EnterPhase(GamePhase::Play);    mousePrevDown_ = mouseDown; return; }
+        if (btn == 1) { settingsReturnPhase_ = GamePhase::Pause; EnterPhase(GamePhase::PlaySetup); mousePrevDown_ = mouseDown; return; }
+        if (btn == 2) { EnterPhase(GamePhase::Init);    mousePrevDown_ = mouseDown; return; }
+    }
+    mousePrevDown_ = mouseDown;
+
     if (IsKeyPressed(Key::S)) {
         settingsReturnPhase_ = GamePhase::Pause;
         EnterPhase(GamePhase::PlaySetup);
+        return;
+    }
+    if (IsKeyPressed(Key::Q)) {
+        EnterPhase(GamePhase::Init);
         return;
     }
     if (IsActionPressed("Pause") || IsActionPressed("AnyKey")) {

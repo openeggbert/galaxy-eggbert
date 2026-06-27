@@ -7,12 +7,14 @@ namespace GESimple3D {
 
 // Blupi animation/movement state — values match mobile-eggbert BlupiAction IDs.
 enum class BlupiState : uint8_t {
-    Stop  = 1,
-    March = 2,
-    Jump  = 4,
-    Air   = 5,
-    Down  = 6,  // crouch (LShift)
-    Up    = 7,  // look-up / glide (RShift)
+    Stop     = 1,
+    March    = 2,
+    Jump     = 4,
+    Air      = 5,
+    Down     = 6,  // crouch (LShift)
+    Up       = 7,  // look-up / glide (RShift)
+    SwimIdle = 18, // StopNage — treading water
+    SwimMove = 19, // MarchNage — swimming forward
 };
 
 class GEBlupiController {
@@ -34,6 +36,8 @@ public:
     void Respawn();
     // Upward bounce after stomping an enemy (inspired by mobile-eggbert BlupiStep bounce).
     void BounceUp();
+    // Launch Blupi upward at arbitrary speed (spring, catapult, etc.).
+    void Launch(float ySpeed);
 
     void SetSpawnPoint(const Simple3D::Vector3& pos) { spawn_ = pos; }
 
@@ -47,10 +51,14 @@ public:
     float GetShieldTimer()  const { return shieldTimer_; }
     bool  IsShieldActive()  const { return shieldTimer_ > 0.0f; }
 
+    void SetSwimming(bool sw) { swimming_ = sw; }
+    bool IsSwimming()   const { return swimming_; }
+
     void SetInputFrozen(bool f) { inputFrozen_ = f; }
 
-    bool WasLandedThisFrame() const { return landedThisFrame_; }
-    bool WasJumpedThisFrame() const { return jumpedThisFrame_; }
+    bool WasLandedThisFrame()  const { return landedThisFrame_;  }
+    bool WasJumpedThisFrame()  const { return jumpedThisFrame_;  }
+    bool WasSteppedThisFrame() const { return steppedThisFrame_; }
 
     BlupiState GetState() const { return state_; }
 
@@ -70,10 +78,12 @@ private:
     float      yaw_            = 0.0f;
     float      shieldTimer_    = 0.0f;
     bool       inputFrozen_    = false;
-    bool       wasGrounded_    = false;
-    bool       landedThisFrame_= false;
-    bool       jumpedThisFrame_= false;
+    bool       wasGrounded_     = false;
+    bool       landedThisFrame_ = false;
+    bool       jumpedThisFrame_ = false;
+    bool       steppedThisFrame_= false;
     bool       facingRight_    = false;
+    bool       swimming_       = false;
 
     BlupiState state_          = BlupiState::Stop;
     int        animPhase_      = 0;   // index into current state's frame table

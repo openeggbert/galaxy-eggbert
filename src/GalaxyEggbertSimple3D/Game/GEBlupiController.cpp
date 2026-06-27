@@ -14,6 +14,11 @@ static const int kAirFrames[]   = {169, 26, 170, 170, 27};
 static const int kDownFrames[]  = {33};
 static const int kUpFrames[]    = {44};
 
+// StopNage (BlupiAction 18): 10 frames cycling icons 76-77 from blupi.png.
+static const int kSwimIdleFrames[] = {76,76,76,76,76,76,77,77,77,77};
+// MarchNage (BlupiAction 19): 14 frames cycling icons 76-81,39 from blupi.png.
+static const int kSwimMoveFrames[] = {76,76,77,77,78,78,79,79,80,80,81,81,39,39};
+
 static constexpr float kAnimFps = 8.0f; // animation ticks per second
 
 void GEBlupiController::Create(Game& game) {
@@ -50,6 +55,16 @@ void GEBlupiController::Update(Game& game, float dt) {
 
     if (shieldTimer_ > 0.0f) shieldTimer_ -= dt;
 
+    // Shield visual: pulse blue tint on sprite while shielded (HUD-010).
+    if (sprite_) {
+        if (IsShieldActive()) {
+            float p = 0.55f + 0.45f * std::sinf(shieldTimer_ * 3.14159f * 6.0f);
+            sprite_->SetMaterialColor(Color(0.25f * p, 0.5f * p + 0.25f, p, 1.0f));
+        } else {
+            sprite_->SetMaterialColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+        }
+    }
+
     if (inputFrozen_) {
         cc_->Move(Vector3::ZERO, dt);
         AdvanceAnim(dt);
@@ -60,10 +75,6 @@ void GEBlupiController::Update(Game& game, float dt) {
     Vector2 axis = game.GetAxis2D("Move");
     float stickX = axis.x_;
     float stickY = axis.y_;
-    if (game.IsKeyDown(Key::Left))  stickX -= 1.0f;
-    if (game.IsKeyDown(Key::Right)) stickX += 1.0f;
-    if (game.IsKeyDown(Key::Up))    stickY += 1.0f;
-    if (game.IsKeyDown(Key::Down))  stickY -= 1.0f;
 
     float mag = std::sqrt(stickX*stickX + stickY*stickY);
     if (mag > 1.0f) { stickX /= mag; stickY /= mag; }
@@ -77,10 +88,11 @@ void GEBlupiController::Update(Game& game, float dt) {
         player_->SetRotation(Quaternion(0.0f, yaw_, 0.0f));
 
     float rad = yaw_ * (3.14159265f / 180.0f);
+    float speed = swimming_ ? kMoveSpeed * 0.4f : kMoveSpeed;
     Vector3 moveVel(
-        std::sin(rad) * stickY * kMoveSpeed,
+        std::sin(rad) * stickY * speed,
         0.0f,
-        std::cos(rad) * stickY * kMoveSpeed);
+        std::cos(rad) * stickY * speed);
     cc_->Move(moveVel, dt);
 
     bool jumpPressed = game.IsActionPressed("Jump");
@@ -159,6 +171,9 @@ void GEBlupiController::UpdateState(bool grounded, bool moving, bool jumpTrigger
             if (state_ != BlupiState::Down) { state_ = BlupiState::Down; animPhase_ = 0; }
         } else if (lookUpHeld) {
             if (state_ != BlupiState::Up)   { state_ = BlupiState::Up;   animPhase_ = 0; }
+        } else if (swimming_) {
+            BlupiState tgt = moving ? BlupiState::SwimMove : BlupiState::SwimIdle;
+            if (state_ != tgt) { state_ = tgt; animPhase_ = 0; }
         } else if (moving) {
             if (state_ != BlupiState::March){ state_ = BlupiState::March; animPhase_ = 0; }
         } else {
@@ -169,10 +184,16 @@ void GEBlupiController::UpdateState(bool grounded, bool moving, bool jumpTrigger
 }
 
 void GEBlupiController::AdvanceAnim(float dt) {
+    steppedThisFrame_ = false;
     animTimer_ += dt;
     if (animTimer_ >= 1.0f / kAnimFps) {
         animTimer_ -= 1.0f / kAnimFps;
         animPhase_++;
+        // Step sound on march frames 0 and 3 of 6-frame cycle (matches mobile-eggbert footstep cadence).
+        if (state_ == BlupiState::March) {
+            int f = animPhase_ % 6;
+            steppedThisFrame_ = (f == 0 || f == 3);
+        }
     }
 }
 
@@ -184,8 +205,10 @@ void GEBlupiController::ApplySprite() {
     switch (state_) {
     case BlupiState::March: frames = kMarchFrames; nFrames = 6; break;
     case BlupiState::Jump:  frames = kJumpFrames;  nFrames = 3; break;
-    case BlupiState::Air:   frames = kAirFrames;   nFrames = 5; break;
-    case BlupiState::Down:  frames = kDownFrames;  nFrames = 1; break;
+    case BlupiState::Air:      frames = kAirFrames;      nFrames = 5;  break;
+    case BlupiState::Down:     frames = kDownFrames;      nFrames = 1;  break;
+    case BlupiState::SwimIdle: frames = kSwimIdleFrames;  nFrames = 10; break;
+    case BlupiState::SwimMove: frames = kSwimMoveFrames;  nFrames = 14; break;
     case BlupiState::Up:    frames = kUpFrames;    nFrames = 1; break;
     default:                frames = kStopFrames;  nFrames = 1; break;
     }
@@ -200,6 +223,7 @@ void GEBlupiController::ApplySprite() {
 void GEBlupiController::Respawn() {
     if (!player_) return;
     yaw_       = 0.0f;
+    swimming_  = false;
     state_     = BlupiState::Stop;
     animPhase_ = 0;
     animTimer_ = 0.0f;
@@ -209,14 +233,18 @@ void GEBlupiController::Respawn() {
     wasGrounded_ = false;
 }
 
-void GEBlupiController::BounceUp() {
+void GEBlupiController::Launch(float ySpeed) {
     if (!player_) return;
     Vector3 v = player_->GetLinearVelocity();
-    v.y_ = kJumpSpeed * 0.65f;
+    v.y_ = ySpeed;
     player_->SetLinearVelocity(v);
     state_     = BlupiState::Jump;
     animPhase_ = 0;
     animTimer_ = 0.0f;
+}
+
+void GEBlupiController::BounceUp() {
+    Launch(kJumpSpeed * 0.65f);
 }
 
 void GEBlupiController::SetSpriteVisible(bool v) {

@@ -32,11 +32,18 @@ public:
     bool WasEggCollected()    const { return eggCollected_; }
     bool WasDrinkCollected()  const { return drinkCollected_; }
     bool WasStompKill()       const { return stompKill_; }
+    Simple3D::Vector3 GetStompPos() const { return stompPos_; }
     int  GetCollected()       const { return collected_; }
     int  GetTotalTreasures()  const { return totalTreasures_; }
     int  GetKeys49()          const { return keys49_; }
     int  GetKeys50()          const { return keys50_; }
     int  GetKeys51()          const { return keys51_; }
+
+    void ConsumeKey(int keyType) {
+        if      (keyType == 49 && keys49_ > 0) --keys49_;
+        else if (keyType == 50 && keys50_ > 0) --keys50_;
+        else if (keyType == 51 && keys51_ > 0) --keys51_;
+    }
 
     void ClearEvents() {
         exitReached_ = blupiHit_ = shieldCollected_ = eggCollected_ =
@@ -65,6 +72,7 @@ private:
     std::vector<ObjState>        objects_;
     std::unordered_set<std::string> collected_set_;
 
+    Simple3D::Vector3    stompPos_;
     bool exitReached_     = false;
     bool blupiHit_        = false;
     bool shieldCollected_ = false;

@@ -19,6 +19,7 @@ static const int kKeyRects[3][4] = {
 };
 
 static constexpr float kFlashDuration = 0.4f;
+static constexpr int   kSlotY[3]     = { 259, 364, 469 };
 
 void GEHud::SetMenuBackground(const std::string& bgPath) {
     if (!menuBg_) return;
@@ -58,7 +59,6 @@ void GEHud::Create(Game& game) {
     // Gamer slot buttons: pad.png, cell 140×140.
     // Positions scaled from 640×480 → 1280×720 (factor 2×/1.5×).
     // buttonSizeFactor2 = 720*140/480 = 210; size = 105×105.
-    static const int kSlotY[3] = { 259, 364, 469 };
     for (int i = 0; i < 3; ++i) {
         gamerSlotBtns_[i] = game.CreateImage("icons/pad.png");
         gamerSlotBtns_[i]->SetImageRect((4 + i) * 140, 0, 140, 140);
@@ -67,6 +67,88 @@ void GEHud::Create(Game& game) {
         gamerSlotBtns_[i]->SetPosition(20, kSlotY[i]);
         gamerSlotBtns_[i]->SetVisible(false);
     }
+
+    // Slot info labels: right of each slot button, show lives/world/best per slot.
+    for (int i = 0; i < 3; ++i) {
+        slotLabels_[i] = game.CreateLabel("");
+        slotLabels_[i]->SetPosition(135, kSlotY[i] + 15);
+        slotLabels_[i]->SetFontSize(14);
+        slotLabels_[i]->SetColor(Color(1.0f, 0.92f, 0.4f));
+        slotLabels_[i]->SetVisible(false);
+    }
+
+    // InitPlay button: pad.png icon 7 (col7*140=980, row0).
+    initPlayBtn_ = game.CreateImage("icons/pad.png");
+    initPlayBtn_->SetImageRect(980, 0, 140, 140);
+    initPlayBtn_->SetSize(210, 210);
+    initPlayBtn_->SetAnchor(Anchor::TopLeft);
+    initPlayBtn_->SetPosition(1050, 310);
+    initPlayBtn_->SetVisible(false);
+
+    // Pause icon buttons: Resume (icon 10), Settings (icon 19), Quit (icon 11).
+    // pad.png: 8 cols×3 rows, 140×140; icon N → col=N%8, row=N/8.
+    static const int kPausePadIcon[3] = { 10, 19, 11 };
+    for (int i = 0; i < 3; ++i) {
+        pauseBtns_[i] = game.CreateImage("icons/pad.png");
+        int col = kPausePadIcon[i] % 8;
+        int row = kPausePadIcon[i] / 8;
+        pauseBtns_[i]->SetImageRect(col * 140, row * 140, 140, 140);
+        pauseBtns_[i]->SetSize(105, 105);
+        pauseBtns_[i]->SetAnchor(Anchor::TopLeft);
+        pauseBtns_[i]->SetPosition(462 + i * 125, 470);
+        pauseBtns_[i]->SetVisible(false);
+    }
+
+    // Minimap: 100×100 panel at bottom-right; Blupi dot inside it.
+    minimapBg_ = game.CreatePanel();
+    minimapBg_->SetColor(Color(0.0f, 0.0f, 0.0f, 0.6f));
+    minimapBg_->SetSize(100, 100);
+    minimapBg_->SetAnchor(Anchor::TopLeft);
+    minimapBg_->SetPosition(1170, 610);
+    minimapBg_->SetVisible(false);
+
+    minimapDot_ = game.CreatePanel();
+    minimapDot_->SetColor(Color(1.0f, 0.9f, 0.2f, 1.0f));
+    minimapDot_->SetSize(4, 4);
+    minimapDot_->SetAnchor(Anchor::TopLeft);
+    minimapDot_->SetPosition(1218, 658);  // default: world centre
+    minimapDot_->SetVisible(false);
+
+    // World thumbnail shown on win screen (top-right corner).
+    winWorldBg_ = game.CreateImage("");
+    winWorldBg_->SetSize(340, 191);
+    winWorldBg_->SetAnchor(Anchor::TopLeft);
+    winWorldBg_->SetPosition(900, 250);
+    winWorldBg_->SetVisible(false);
+
+    // World name banner: large centred text, fades out after 2.5 s (HUD-040).
+    worldNameLabel_ = game.CreateLabel("");
+    worldNameLabel_->SetPosition(640, 300);
+    worldNameLabel_->SetFontSize(28);
+    worldNameLabel_->SetColor(Color(1.0f, 1.0f, 1.0f, 0.0f));
+    worldNameLabel_->SetVisible(false);
+
+    // "EXIT OPEN!" banner (HUD-020/026): green, 3 s fade.
+    exitOpenLabel_ = game.CreateLabel("EXIT OPEN!");
+    exitOpenLabel_->SetPosition(640, 200);
+    exitOpenLabel_->SetFontSize(40);
+    exitOpenLabel_->SetColor(Color(0.3f, 1.0f, 0.3f, 0.0f));
+    exitOpenLabel_->SetVisible(false);
+
+    // Score "+N" popup (HUD-025): yellow, 0.8 s fade.
+    scorePlusLabel_ = game.CreateLabel("");
+    scorePlusLabel_->SetPosition(640, 340);
+    scorePlusLabel_->SetFontSize(24);
+    scorePlusLabel_->SetColor(Color(1.0f, 1.0f, 0.3f, 0.0f));
+    scorePlusLabel_->SetVisible(false);
+
+    // Pause icon during Play (HUD-022): pad.png icon 10, top-right corner.
+    playPauseBtn_ = game.CreateImage("icons/pad.png");
+    playPauseBtn_->SetImageRect(2 * 140, 1 * 140, 140, 140);  // icon 10: col2, row1
+    playPauseBtn_->SetSize(36, 36);
+    playPauseBtn_->SetAnchor(Anchor::TopLeft);
+    playPauseBtn_->SetPosition(1234, 8);
+    playPauseBtn_->SetVisible(false);
 
     main_ = game.CreateLabel("");
     main_->SetPosition(12, 12);
@@ -140,8 +222,22 @@ void GEHud::HideInitLogos() {
     initAnimActive_ = false;
     if (speedyblupiLogo_)  speedyblupiLogo_->SetVisible(false);
     if (blupiyoupieLogo_)  blupiyoupieLogo_->SetVisible(false);
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         if (gamerSlotBtns_[i]) gamerSlotBtns_[i]->SetVisible(false);
+        if (slotLabels_[i])    slotLabels_[i]->SetVisible(false);
+    }
+    if (initPlayBtn_) initPlayBtn_->SetVisible(false);
+    for (int i = 0; i < 3; ++i) if (pauseBtns_[i]) pauseBtns_[i]->SetVisible(false);
+    if (winWorldBg_)     winWorldBg_->SetVisible(false);
+    if (minimapBg_)      minimapBg_->SetVisible(false);
+    if (minimapDot_)     minimapDot_->SetVisible(false);
+    if (worldNameLabel_) worldNameLabel_->SetVisible(false);
+    worldNameTimer_ = 0.0f;
+    if (exitOpenLabel_)  { exitOpenLabel_->SetVisible(false);  exitOpenTimer_  = 0.0f; }
+    if (scorePlusLabel_) { scorePlusLabel_->SetVisible(false); scorePlusTimer_ = 0.0f; }
+    if (playPauseBtn_)   playPauseBtn_->SetVisible(false);
+    // Reset overlay position for non-init screens.
+    if (overlay_) overlay_->SetPosition(12, 12);
 }
 
 void GEHud::Update(float dt) {
@@ -168,6 +264,46 @@ void GEHud::Update(float dt) {
         if (t >= 1.0f) initAnimActive_ = false;
     }
 
+    if (scoreFlashTimer_ > 0.0f) scoreFlashTimer_ -= dt;
+
+    // World name banner fade (HUD-040): 0.4s fade-in, hold, 0.6s fade-out.
+    if (worldNameTimer_ > 0.0f) {
+        worldNameTimer_ -= dt;
+        static constexpr float kTotal = 2.5f, kFadeIn = 0.4f, kFadeOut = 0.6f;
+        float alpha;
+        if (worldNameTimer_ > kTotal - kFadeIn)
+            alpha = 1.0f - (worldNameTimer_ - (kTotal - kFadeIn)) / kFadeIn;
+        else if (worldNameTimer_ < kFadeOut)
+            alpha = worldNameTimer_ / kFadeOut;
+        else
+            alpha = 1.0f;
+        if (worldNameLabel_) worldNameLabel_->SetColor(Color(1.0f, 1.0f, 0.9f, alpha));
+        if (worldNameTimer_ <= 0.0f && worldNameLabel_) worldNameLabel_->SetVisible(false);
+    }
+
+    // EXIT OPEN! banner fade (HUD-020/026): 0.3s in, hold, 0.5s out.
+    if (exitOpenTimer_ > 0.0f) {
+        exitOpenTimer_ -= dt;
+        static constexpr float kETotal = 3.0f, kEIn = 0.3f, kEOut = 0.5f;
+        float alpha;
+        if (exitOpenTimer_ > kETotal - kEIn)
+            alpha = 1.0f - (exitOpenTimer_ - (kETotal - kEIn)) / kEIn;
+        else if (exitOpenTimer_ < kEOut)
+            alpha = exitOpenTimer_ / kEOut;
+        else
+            alpha = 1.0f;
+        if (exitOpenLabel_) exitOpenLabel_->SetColor(Color(0.3f, 1.0f, 0.3f, alpha));
+        if (exitOpenTimer_ <= 0.0f && exitOpenLabel_) exitOpenLabel_->SetVisible(false);
+    }
+
+    // Score "+N" popup fade (HUD-025): 0.8 s linear fade-out.
+    if (scorePlusTimer_ > 0.0f) {
+        scorePlusTimer_ -= dt;
+        float alpha = std::max(0.0f, scorePlusTimer_ / 0.8f);
+        if (scorePlusLabel_) scorePlusLabel_->SetColor(Color(1.0f, 1.0f, 0.3f, alpha));
+        if (scorePlusTimer_ <= 0.0f && scorePlusLabel_) scorePlusLabel_->SetVisible(false);
+    }
+
     if (hitFlashTimer_ <= 0.0f) return;
     hitFlashTimer_ -= dt;
     if (hitFlashTimer_ <= 0.0f) {
@@ -183,13 +319,22 @@ void GEHud::ShowPlay(int worldNum, const std::string& worldName,
                      int lives, int collected, int totalTreasures,
                      int keys49, int keys50, int keys51,
                      float shieldSecs, float levelTime, int score,
-                     float gameSpeed, bool showHint) {
+                     float gameSpeed, float hintAlpha,
+                     float oxygenPct) {
     if (!main_) return;
     SetMenuBackground("");
     HideInitLogos();
     overlay_->SetVisible(false);
     main_->SetVisible(true);
-    hint_->SetVisible(showHint);
+    if (playPauseBtn_) playPauseBtn_->SetVisible(true);
+    if (hintAlpha <= 0.0f) {
+        if (hint_) hint_->SetVisible(false);
+    } else {
+        if (hint_) {
+            hint_->SetVisible(true);
+            hint_->SetColor(Color(0.75f, 0.85f, 0.75f, hintAlpha));
+        }
+    }
 
     // Life icons
     int showLives = std::min(lives, kMaxDisplayedLives);
@@ -231,7 +376,17 @@ void GEHud::ShowPlay(int worldNum, const std::string& worldName,
             mins, secs, score, speedTag);
         main_->SetColor(Color(0.85f, 0.90f, 1.0f));
     }
+    if (oxygenPct >= 0.0f) {
+        char o2[32];
+        std::snprintf(o2, sizeof(o2), "  O2:%d%%", static_cast<int>(oxygenPct * 100.0f));
+        std::strncat(buf, o2, sizeof(buf) - std::strlen(buf) - 1);
+    }
     main_->SetText(buf);
+    if (score != prevScore_) { prevScore_ = score; scoreFlashTimer_ = 0.5f; }
+    if (scoreFlashTimer_ > 0.0f)
+        main_->SetColor(Color(1.0f, 1.0f, 0.15f));  // bright yellow flash on score change
+    if (minimapBg_)  minimapBg_->SetVisible(true);
+    if (minimapDot_) minimapDot_->SetVisible(true);
 }
 
 void GEHud::ShowWin(int worldNum, const std::string& worldName,
@@ -253,6 +408,13 @@ void GEHud::ShowWin(int worldNum, const std::string& worldName,
 
     SetMenuBackground("backgrounds/win.png");
     HideInitLogos();
+    overlay_->SetPosition(12, 260);
+    if (winWorldBg_) {
+        char decorPath[64];
+        std::snprintf(decorPath, sizeof(decorPath), "backgrounds/decor%03d.png", worldNum - 1);
+        winWorldBg_->SetTexture(decorPath);
+        winWorldBg_->SetVisible(true);
+    }
     char buf[256];
     std::snprintf(buf, sizeof(buf),
         "LEVEL COMPLETE!\n\nWorld %d: %s\nTreasures: %d/%d  Lives: %d  Time: %d:%02d\nScore: %d\n\nPress any key...",
@@ -275,6 +437,7 @@ void GEHud::ShowLost(int worldNum, const std::string& worldName) {
 
     SetMenuBackground("backgrounds/lost.png");
     HideInitLogos();
+    overlay_->SetPosition(12, 260);
     char buf[128];
     std::snprintf(buf, sizeof(buf),
         "GAME OVER\n\nWorld %d: %s\n\nPress any key...",
@@ -302,10 +465,11 @@ void GEHud::ShowPause(int score, float levelTime) {
 
     char buf[128];
     std::snprintf(buf, sizeof(buf),
-        "PAUSED\n\nScore: %d  Time: %d:%02d\n\nESC: resume   S: settings",
+        "PAUSED\n\nScore: %d  Time: %d:%02d\n\nESC: resume   S: settings   Q: quit",
         score, mins, secs);
     overlay_->SetText(buf);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
+    for (int i = 0; i < 3; ++i) if (pauseBtns_[i]) pauseBtns_[i]->SetVisible(true);
 }
 
 static void HidePlayHud(Simple3D::UI::Image* gauge,
@@ -317,12 +481,22 @@ static void HidePlayHud(Simple3D::UI::Image* gauge,
     if (overflow) overflow->SetVisible(false);
 }
 
-void GEHud::ShowInit(const std::string& text, int selectedSlot) {
+void GEHud::ShowInit(const std::string& hint, int selectedSlot,
+                     const InitSlotInfo slots[3]) {
     if (!overlay_) return;
     main_->SetVisible(false);
     hint_->SetVisible(false);
     overlay_->SetVisible(true);
     HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
+    for (int i = 0; i < 3; ++i) if (pauseBtns_[i]) pauseBtns_[i]->SetVisible(false);
+    if (winWorldBg_)     winWorldBg_->SetVisible(false);
+    if (minimapBg_)      minimapBg_->SetVisible(false);
+    if (minimapDot_)     minimapDot_->SetVisible(false);
+    if (worldNameLabel_) worldNameLabel_->SetVisible(false);
+    worldNameTimer_ = 0.0f;
+    if (playPauseBtn_)   playPauseBtn_->SetVisible(false);
+    if (exitOpenLabel_)  { exitOpenLabel_->SetVisible(false);  exitOpenTimer_  = 0.0f; }
+    if (scorePlusLabel_) { scorePlusLabel_->SetVisible(false); scorePlusTimer_ = 0.0f; }
     SetMenuBackground("backgrounds/init.png");
     // Start logo animation only on first entry; called every frame from UpdateInit.
     if (initAnimTime_ < 0.0f) {
@@ -330,8 +504,11 @@ void GEHud::ShowInit(const std::string& text, int selectedSlot) {
         initAnimActive_ = true;
         if (speedyblupiLogo_) { speedyblupiLogo_->SetPosition(0, -240); speedyblupiLogo_->SetVisible(true); }
         if (blupiyoupieLogo_) { blupiyoupieLogo_->SetSize(410, 285);    blupiyoupieLogo_->SetColor(Color(1,1,1,0)); blupiyoupieLogo_->SetVisible(true); }
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 3; ++i) {
             if (gamerSlotBtns_[i]) gamerSlotBtns_[i]->SetVisible(true);
+            if (slotLabels_[i])    slotLabels_[i]->SetVisible(true);
+        }
+        if (initPlayBtn_) initPlayBtn_->SetVisible(true);
     }
     // Update selected gamer slot highlight (normal icon 4/5/6, selected 16/17/18).
     for (int i = 0; i < 3; ++i) {
@@ -341,7 +518,18 @@ void GEHud::ShowInit(const std::string& text, int selectedSlot) {
         int iy = sel ? 280 : 0;
         gamerSlotBtns_[i]->SetImageRect(ix, iy, 140, 140);
     }
-    overlay_->SetText(text);
+    // Update per-slot info labels (MENU-010).
+    static const char* kName[] = { "Gamer A", "Gamer B", "Gamer C" };
+    for (int i = 0; i < 3; ++i) {
+        if (!slotLabels_[i]) continue;
+        char buf[128];
+        std::snprintf(buf, sizeof(buf),
+            "%s\nLives: %d  World: %d  Best: %d",
+            kName[i], slots[i].lives, slots[i].world, slots[i].best);
+        slotLabels_[i]->SetText(buf);
+    }
+    overlay_->SetPosition(12, 640);  // bottom strip — clear of logos and slot buttons
+    overlay_->SetText(hint);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
 }
 
@@ -374,6 +562,63 @@ void GEHud::SetVisible(bool visible) {
             if (keyIcons_[i]) keyIcons_[i]->SetVisible(false);
         if (livesOverflow_) livesOverflow_->SetVisible(false);
     }
+}
+
+void GEHud::SetPauseBtnHover(int hoverIdx) {
+    for (int i = 0; i < 3; ++i) {
+        if (!pauseBtns_[i]) continue;
+        float alpha = (hoverIdx < 0 || i == hoverIdx) ? 1.0f : 0.5f;
+        pauseBtns_[i]->SetColor(Color(1.0f, 1.0f, 1.0f, alpha));
+    }
+}
+
+void GEHud::UpdateMinimap(float worldX, float worldZ) {
+    if (!minimapDot_) return;
+    // World coords ∈ [-50,50]; map to minimap pixel [0,100]. Clamp to border.
+    int px = static_cast<int>(worldX + 50.0f);
+    int pz = static_cast<int>(worldZ + 50.0f);
+    if (px < 0) px = 0; else if (px > 96) px = 96;
+    if (pz < 0) pz = 0; else if (pz > 96) pz = 96;
+    minimapDot_->SetPosition(1170 + px, 610 + pz);
+}
+
+int GEHud::GetClickedPauseBtn(const Simple3D::Vector2& mousePos) const {
+    for (int i = 0; i < 3; ++i) {
+        if (!pauseBtns_[i] || !pauseBtns_[i]->IsVisible()) continue;
+        auto pos  = pauseBtns_[i]->GetPosition();
+        auto size = pauseBtns_[i]->GetSize();
+        if (mousePos.x_ >= pos.x_ && mousePos.x_ < pos.x_ + size.x_ &&
+            mousePos.y_ >= pos.y_ && mousePos.y_ < pos.y_ + size.y_)
+            return i;
+    }
+    return -1;
+}
+
+void GEHud::ShowExitOpen() {
+    if (!exitOpenLabel_) return;
+    exitOpenLabel_->SetColor(Color(0.3f, 1.0f, 0.3f, 0.0f));
+    exitOpenLabel_->SetVisible(true);
+    exitOpenTimer_ = 3.0f;
+}
+
+void GEHud::ShowScorePlus(int delta) {
+    if (!scorePlusLabel_) return;
+    char buf[16];
+    std::snprintf(buf, sizeof(buf), "+%d", delta);
+    scorePlusLabel_->SetText(buf);
+    scorePlusLabel_->SetColor(Color(1.0f, 1.0f, 0.3f, 1.0f));
+    scorePlusLabel_->SetVisible(true);
+    scorePlusTimer_ = 0.8f;
+}
+
+void GEHud::ShowWorldName(int worldNum, const std::string& name) {
+    if (!worldNameLabel_) return;
+    char buf[128];
+    std::snprintf(buf, sizeof(buf), "World %d: %s", worldNum, name.c_str());
+    worldNameLabel_->SetText(buf);
+    worldNameLabel_->SetColor(Color(1.0f, 1.0f, 0.9f, 0.0f));
+    worldNameLabel_->SetVisible(true);
+    worldNameTimer_ = 2.5f;
 }
 
 } // namespace GESimple3D
