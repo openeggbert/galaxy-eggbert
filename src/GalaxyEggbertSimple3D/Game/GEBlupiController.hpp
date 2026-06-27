@@ -46,6 +46,7 @@ public:
     float             GetFacingYaw() const { return yaw_; }
     bool              IsOnGround()   const;
     float             GetVelY()      const;
+    float             GetVelX()      const;
 
     void  SetShieldTimer(float t) { shieldTimer_ = t; }
     float GetShieldTimer()  const { return shieldTimer_; }

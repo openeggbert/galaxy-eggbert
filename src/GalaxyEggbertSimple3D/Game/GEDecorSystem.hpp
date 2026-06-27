@@ -2,6 +2,7 @@
 
 #include <Simple3D/Simple3D.h>
 #include <GalaxyEggbert/def/ObjectType.hpp>
+#include <GalaxyEggbert/Worlds/World.hpp>
 #include "GEWorldRuntime.hpp"
 #include <array>
 #include <string>
@@ -22,8 +23,10 @@ public:
     // Destroy all spawned entities.
     void Clear(Simple3D::Game& game);
 
-    // Update patrol movement (S3D-1: only basic platform movement).
-    void Update(float dt, const Simple3D::Vector3& blupiPos, float blupiVelY);
+    // Update patrol movement and crate push.
+    // blupiVelX: Blupi X velocity (positive = right) used for push direction detection.
+    void Update(float dt, const Simple3D::Vector3& blupiPos,
+                float blupiVelY, float blupiVelX);
 
     // Events — cleared each frame by the game loop
     bool WasExitReached()     const { return exitReached_; }
@@ -58,14 +61,15 @@ private:
 
     struct ObjState {
         GalaxyEggbert::ObjectType type;
-        Simple3D::Entity*  entity    = nullptr;
-        Simple3D::Entity*  sprite    = nullptr; // child entity with billboard
+        Simple3D::Entity*  entity       = nullptr;
+        Simple3D::Entity*  sprite       = nullptr; // child entity with billboard
         Simple3D::Vector3  posStart;
         Simple3D::Vector3  posEnd;
-        float              speed     = 1.5f;
-        float              direction = 1.0f;
-        int                animPhase = 0;
-        bool               active    = true;
+        float              speed        = 1.5f;
+        float              direction    = 1.0f;
+        int                animPhase    = 0;
+        bool               active       = true;
+        float              pushCooldown = 0.0f; // seconds until next push allowed (type 12)
         std::string        name;
     };
 
@@ -85,6 +89,8 @@ private:
     int  keys49_         = 0;
     int  keys50_         = 0;
     int  keys51_         = 0;
+
+    const GalaxyEggbert::Worlds::World* world_ = nullptr;
 };
 
 } // namespace GESimple3D

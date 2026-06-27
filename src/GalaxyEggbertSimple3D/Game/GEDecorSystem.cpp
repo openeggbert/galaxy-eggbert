@@ -1,4 +1,5 @@
 #include "GEDecorSystem.hpp"
+#include <GalaxyEggbert/Worlds/Block.hpp>
 #include <cmath>
 
 using namespace Simple3D;
@@ -84,8 +85,12 @@ static Entity* MakeSprite(Game& game, Entity* parent, const std::string& name, O
     return s;
 }
 
+static constexpr int kWCX = GEWorldRuntime::kWCX;
+static constexpr int kWCZ = GEWorldRuntime::kWCZ;
+
 void GEDecorSystem::Build(Game& game, const GEWorldRuntime& world, Entity* player) {
     Clear(game);
+    world_ = world.GetWorld();
 
     totalTreasures_ = 0;
     int idx = 0;
@@ -167,6 +172,8 @@ void GEDecorSystem::Build(Game& game, const GEWorldRuntime& world, Entity* playe
             }
         } else if (IsPlatform(spec.type) || IsEnemy(spec.type)) {
             st.sprite = MakeSprite(game, e, st.name, spec.type);
+        } else if (spec.type == ObjectType::ObjectType12) {
+            st.sprite = MakeSprite(game, e, st.name, spec.type);
         }
 
         st.entity = e;
@@ -182,10 +189,12 @@ void GEDecorSystem::Clear(Game& game) {
     collected_set_.clear();
     collected_ = 0; totalTreasures_ = 0;
     keys49_ = keys50_ = keys51_ = 0;
+    world_ = nullptr;
     ClearEvents();
 }
 
-void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
+void GEDecorSystem::Update(float dt, const Vector3& blupiPos,
+                            float blupiVelY, float blupiVelX) {
     // ClearEvents() is called by the game loop AFTER it has processed events,
     // not here, so the caller can read them after Update() returns.
 
@@ -213,7 +222,7 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
             Vector3 pos = st.entity->GetPosition();
             Vector3 target = (st.direction > 0.0f) ? st.posEnd : st.posStart;
             Vector3 diff = target - pos;
-            float dist = std::sqrt(diff.x_ * diff.x_ + diff.z_ * diff.z_);
+            float dist = std::sqrt(diff.x_ * diff.x_ + diff.y_ * diff.y_ + diff.z_ * diff.z_);
             if (dist < 0.05f) {
                 st.direction = -st.direction;
             } else {
@@ -235,6 +244,57 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos, float blupiVelY) {
                         st.entity->SetPosition(Vector3(0.0f, -999.0f, 0.0f));
                     } else {
                         blupiHit_ = true;
+                    }
+                }
+            }
+        }
+
+        // Crate push (ObjectType12) — faithful to mobile-eggbert TestPushCaisse.
+        // Blupi must be adjacent in X (same Z lane) and moving toward the crate.
+        // Floor support check: destination world tile at y=0 must be non-Air so the
+        // crate doesn't get pushed off a cliff into empty space.
+        if (st.type == ObjectType::ObjectType12) {
+            st.pushCooldown = std::max(0.0f, st.pushCooldown - dt);
+
+            if (st.pushCooldown <= 0.0f && world_) {
+                Vector3 pos = st.entity->GetPosition();
+                float relX = pos.x_ - blupiPos.x_;
+                float relZ = pos.z_ - blupiPos.z_;
+                float distX = std::abs(relX);
+                float distZ = std::abs(relZ);
+
+                // Blupi in same Z lane, adjacent tile in X, and moving toward crate.
+                if (distZ < 0.6f && distX > 0.3f && distX < 1.1f) {
+                    float pushDir = (relX > 0.0f) ? 1.0f : -1.0f;
+                    if (blupiVelX * pushDir > 0.1f) {
+                        float destX = pos.x_ + pushDir;
+                        int wx = static_cast<int>(std::round(destX)) + kWCX;
+                        int wz = static_cast<int>(std::round(pos.z_)) + kWCZ;
+
+                        if (wx >= 0 && wx < 100 && wz >= 0 && wz < 100) {
+                            using namespace GalaxyEggbert::Worlds;
+                            bool hasFloor = !world_->getBlock(
+                                static_cast<uint16_t>(wx), 0,
+                                static_cast<uint16_t>(wz)).isAir();
+                            if (hasFloor) {
+                                bool occupied = false;
+                                for (auto& other : objects_) {
+                                    if (&other == &st || other.type != ObjectType::ObjectType12
+                                        || !other.entity) continue;
+                                    Vector3 op = other.entity->GetPosition();
+                                    if (std::abs(op.x_ - destX) < 0.5f &&
+                                        std::abs(op.z_ - pos.z_) < 0.5f) {
+                                        occupied = true; break;
+                                    }
+                                }
+                                if (!occupied) {
+                                    st.entity->SetPosition(Vector3(destX, pos.y_, pos.z_));
+                                    st.posStart.x_ += pushDir;
+                                    st.posEnd.x_   += pushDir;
+                                    st.pushCooldown = 0.4f;
+                                }
+                            }
+                        }
                     }
                 }
             }

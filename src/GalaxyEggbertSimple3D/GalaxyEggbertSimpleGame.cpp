@@ -481,10 +481,11 @@ void GalaxyEggbertSimpleGame::UpdatePlay(float dt) {
         }
     }
 
-    Vector3 blupiPos = blupi_.GetPosition();
+    Vector3 blupiPos  = blupi_.GetPosition();
     float   blupiVelY = blupi_.GetVelY();
+    float   blupiVelX = blupi_.GetVelX();
 
-    decor_.Update(dt, blupiPos, blupiVelY);
+    decor_.Update(dt, blupiPos, blupiVelY, blupiVelX);
 
     // Collect treasures
     if (decor_.GetCollected() > 0 && !exitOpen_) {

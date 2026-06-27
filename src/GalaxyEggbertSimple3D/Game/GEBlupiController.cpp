@@ -263,4 +263,8 @@ float GEBlupiController::GetVelY() const {
     return player_ ? player_->GetLinearVelocity().y_ : 0.0f;
 }
 
+float GEBlupiController::GetVelX() const {
+    return player_ ? player_->GetLinearVelocity().x_ : 0.0f;
+}
+
 } // namespace GESimple3D
