@@ -1,210 +1,867 @@
-# Galaxy Eggbert — Feature Plan
+# Galaxy Eggbert — Comprehensive Feature Plan
 
 3D faithful remake of **mobile-eggbert** (C++ port of *Speedy Blupi*, Windows Phone XNA 2013).
 
-**Rule:** Only implement what exists in mobile-eggbert. 3D-specific adaptations
-(camera, blob shadows, billboard sprites, auto step-up) are allowed.
+**Faithful remake rule:** Implement only what exists in mobile-eggbert.
+3D-specific adaptations (camera, billboard sprites, blob shadow, auto step-up) are allowed.
+
+**Inspiration rule:** Be inspired by Decor.cpp logic; do not port it verbatim.
+
+**Rendering:** Simple3D API → U3D/Urho3D. Animations via billboard sprites from same PNGs as mobile-eggbert.
+
+**Mission numbering:** 1=intro hub, 10=world1 hub, 11-19=world1 levels, 20=world2 hub, 21-29=world2 levels, … (78 worlds total in mobile-eggbert).
+
+Legend: `[x]` done · `[ ]` todo · `[~]` partial / revision needed
 
 ---
 
-## Engine & Build
+## 1. Engine & Build
 
-- [x] Urho3D API build (U3D backend, Linux)
-- [x] Windows cross-compile (MinGW-w64)
-- [x] Web build (Emscripten / WebAssembly)
-- [ ] Android build
-
----
-
-## World & Terrain
-
-- [x] Load world from mobile-eggbert `.txt` format
-- [x] 100×100 decor grid rendered as 3D terrain (1 cube per tile)
-- [x] Tile textures from `object-m.png` (icon ID = block type)
-- [x] 400+ distinct tile IDs render correct textures
-- [x] Correct tile passability (decorative tiles → Air, via `table_decor_quart`)
-- [x] 5 worlds (Grassland, Forest, Ice Caves, Lava Fields, Space Station)
-- [x] Level progression: win → next world, wraps at 5
-- [x] Terrain depth fill (cliff edges extrude 3 dark fill blocks downward)
-- [x] Sky dome per world (`backgrounds/decorNNN.png`, `region=` from header)
-- [x] Per-world sky palette (ambient + fog colours)
-- [x] `blupiPos=` header parsed → Blupi spawns at correct world position
+- [x] BUILD-001 — CMake target `GalaxyEggbertSimple3D` builds on Linux (U3D backend)
+- [x] BUILD-002 — `GALAXY_EGGBERT_BUILD_SIMPLE3D` defaults to `ON`
+- [x] BUILD-003 — Web build (Emscripten / WebAssembly) — `GalaxyEggbertSimple3D.html`
+- [ ] BUILD-004 — Android build (blocked: U3D has no Android support; revisit with Nova3D)
+- [ ] BUILD-005 — Windows cross-compile (MinGW-w64) verified after S3D-9
+- [ ] BUILD-006 — Nova3D backend switch: `cmake -S . -B build-nova3d -DSIMPLE3D_ENGINE=NOVA3D`
+- [x] BUILD-007 — `GalaxyEggbertWorldsTests` (54 unit tests) builds and all pass
+- [ ] BUILD-008 — `ctest --test-dir cmake-build-debug` discovers and runs 54 world tests
+- [ ] BUILD-009 — CI: automated build on push (GitHub Actions, Linux + Web targets)
+- [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets)
 
 ---
 
-## Tile Types & Hazards
+## 2. Menu & Screens (PRIORITY)
 
-- [x] Animated tiles: Lava, Crusher, Spike, Saw, Water1, Water2 (cycle at 6 fps)
-- [x] Lava (icon 68) — kills on contact
-- [x] Spike (icon 373) — kills on contact
-- [x] Crusher (icon 317) — kills only during frames 5–9 (fully extended)
-- [x] Saw (icon 378–383) — kills on contact
-- [x] Shield bypasses all tile hazards and enemy hits
+Menu screens use the same PNG backgrounds as mobile-eggbert (`Content/backgrounds/*.png`, `Content/icons/*.png`).
+Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::Label` overlays.
 
----
+### 2.1 Phase: First / Wait (loading screen)
 
-## Game Phases & UI
+- [ ] MENU-001 — Render `wait.png` as full-screen `UI::Image` during boot loading phase
+- [ ] MENU-002 — Display animated loading gauge (`jauge.png`, yellow fill) at bottom-centre, same position as mobile-eggbert (196, 426 in 640×480 space)
+- [ ] MENU-003 — Gauge fills from 0→100% as resources load (replicate `DrawWaitProgress` logic)
+- [ ] MENU-004 — Transition from Wait → Init after loading completes (≥1 s minimum)
+- [ ] MENU-005 — Hide wait gauge if resuming a saved game (ContinueMission path)
 
-- [x] Init (gamer select: slots 1/2/3)
-- [x] Play
-- [x] Pause
-- [x] Win
-- [x] Lost (game over)
-- [x] Settings (sound toggle, accessible from Init and Pause)
-- [ ] Ranking screen (high-score table, accessible from Init)
-- [x] Overlay text renderer (PhaseManager)
-- [x] Level intro title card (world name, 3 s fade-in/hold/fade-out)
-- [x] Controls hint (auto-fades after 8 s)
-- [x] Mouse cursor hidden during Play
+### 2.2 Phase: Init (main menu / gamer select)
 
----
+- [ ] MENU-006 — Render `init.png` as full-screen background
+- [ ] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from right on enter, matching mobile-eggbert `DrawBackgroundFade` animation (ease-in quadratic)
+- [ ] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (zoom from 0→1 quadratic)
+- [ ] MENU-009 — Three gamer-slot buttons (A / B / C): render from `button.png` sprite sheet, correct position
+- [ ] MENU-010 — Each gamer slot shows: name ("Gamer A/B/C"), lives count, main doors opened, secondary doors opened (text next to button, 0.7 scale)
+- [ ] MENU-011 — "PLAY" button (`InitPlay` glyph) with label below
+- [ ] MENU-012 — "SETUP" button (`InitSetup` glyph) with label to the right
+- [ ] MENU-013 — "RANKING" button (`InitRanking` glyph) — shown only when ranking mode active
+- [ ] MENU-014 — Semi-transparent panel behind left gamer slots (pad.png icon 15, opacity 0.3)
+- [ ] MENU-015 — Semi-transparent panel behind right action buttons (pad.png icon 15, opacity 0.3)
+- [ ] MENU-016 — Keyboard Back / Escape → exit game (from Init phase)
+- [ ] MENU-017 — Animated fade-out when transitioning from Init → Play (speedyblupi.png slides out, blupiyoupie.png zooms out)
+- [ ] MENU-018 — Animated fade-out when transitioning from Init → MainSetup (speedyblupi.png slides right, gear appears)
+- [x] MENU-019 — Gamer selection persisted (GameData byte 2)
+- [x] MENU-020 — Gamer slot info (lives, lastWorld, doors) read from GameData
 
-## HUD
+### 2.3 Phase: Play (active gameplay)
 
-- [x] Life icons (Blupi head sprite, up to 5 + overflow text)
-- [x] Gauge sprite (`jauge.png`, bottom-left)
-- [x] Treasure counter ("N/total")
-- [x] Key icons — red / green / blue, one slot per type
-- [x] Shield timer
-- [x] World name + elapsed time
-- [x] Score
-- [x] Game speed indicator (FAST / SLOW label)
-- [x] Hit flash (red full-screen overlay, 0.4 s fade)
-- [x] Camera shake on hit
+- [ ] MENU-021 — Hide all menu UI elements during Play phase
+- [ ] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — top-right corner icon from `button.png`
+- [ ] MENU-023 — On-screen directional pad (`pad.png` icons 0, 1) for touch/gamepad emulation
+- [ ] MENU-024 — On-screen "JUMP" button (`PlayJump`) visible during Play
+- [ ] MENU-025 — On-screen "ACTION" button (`PlayAction`) visible during Play
+- [ ] MENU-026 — On-screen "DOWN" button (`PlayDown`) visible during Play (when applicable)
+- [x] MENU-027 — Keyboard: Back/Escape during Play → Pause phase
 
----
+### 2.4 Phase: Pause
 
-## Blupi Character
+- [ ] MENU-028 — Render `pause.png` as full-screen background
+- [ ] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190)
+- [ ] MENU-030 — "MENU" button (`PauseMenu`) with label below
+- [ ] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1
+- [ ] MENU-032 — "SETUP" button (`PauseSetup`) with label below
+- [ ] MENU-033 — "RESTART" button (`PauseRestart`) — shown only when mission ≠ 1 AND mission % 10 ≠ 0
+- [ ] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below
+- [ ] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if mission%10==0 → Init, else mission/10*10)
+- [ ] MENU-036 — PauseRestart restarts current mission
+- [ ] MENU-037 — PauseContinue resumes play without reloading
+- [ ] MENU-038 — Animated fade-out from Pause → Play (blupiyoupie.png zooms out)
+- [ ] MENU-039 — Animated slide-out when Pause → PlaySetup (blupiyoupie.png slides right)
 
-- [x] Physics: gravity, jump, AABB voxel collision
-- [x] Controls: arrow keys (forward/turn), Left Ctrl (jump), Left Shift (crouch), Right Shift (look-up / glide)
-- [x] Animation: Stop, March, Turn, Jump, Air, Down (crouch), Up (look-up / glide)
-- [x] Frame tables ported from `Tables.cpp`
-- [x] Glide / suspend: Right Shift in air → reduced gravity, capped fall speed
-- [x] Auto step-up: 1-tile ledges climbed automatically *(3D adaptation)*
-- [x] Respawn invincibility: 2 s grace period, Blupi flashes
-- [x] Death freeze: 1 s input lock after death (explosion plays before regaining control)
-- [x] Blob shadow (scans downward, scales with height) *(3D adaptation)*
-- [x] Shield tint: cyan sprite when active; blinks at < 1.5 s remaining
-- [x] Footstep sound (ch3 per march stride)
-- [x] Landing sound (ch4)
-- [x] Stomp kill (velY < −1.0 on contact with enemy)
-- [x] Bounce after stomp
-- [ ] Push mechanic (push ObjectType12 crates)
-- [ ] Helicopter boarding (`m_blupiHelico`): ObjectType13 → fly mode
-- [ ] Jeep boarding (`m_blupiJeep`): ObjectType19 → drive mode
-- [ ] Tank boarding (`m_blupiTank`): ObjectType28 → tank mode
-- [ ] Skateboard (`m_blupiSkate`): ObjectType24 → skate mode
-- [ ] Balloon / overhead (`m_blupiOver`): ObjectType46 → float mode
-- [ ] Swim (`m_blupiNage`) and Surf (`m_blupiSurf`)
-- [ ] Suction-cup power-up: ObjectType26 → BlupiAction::Sucette
+### 2.5 Phase: Resume (saved game continue prompt)
 
----
+- [ ] MENU-040 — Render `pause.png` background (same as Pause)
+- [ ] MENU-041 — Render `blupiyoupie.png` with rotation spring animation
+- [ ] MENU-042 — "MENU" button (`ResumeMenu`) → Init
+- [ ] MENU-043 — "CONTINUE" button (`ResumeContinue`) → ContinueMission()
+- [ ] MENU-044 — Resume phase triggers when app reactivates with a saved mid-game state
+- [ ] MENU-045 — Keyboard Back during Resume → Init
 
-## Enemies
+### 2.6 Phase: Win
 
-- [x] ObjectType2 — patrol enemy A (table_robot_left)
-- [x] ObjectType3 — patrol enemy B
-- [x] ObjectType4 — bulldozer (table_bulldozer_left)
-- [x] ObjectType16 — spider (vertical oscillation: hang ↔ drop)
-- [x] ObjectType17 — fish (patrol, table_poisson_left)
-- [x] ObjectType20 — bird (aerial patrol, y = 3.0)
-- [x] ObjectType33 — blupit tank (table_blupit_left)
-- [x] Patrol movement: posStart ↔ posEnd; stationary gets ±2 tile default range
-- [x] Stomp kills all enemy types; enemy respawns at posStart after 5 s
-- [x] Directional sprites (flipX when moving right)
-- [x] Blob shadow under enemies (disabled for birds) *(3D adaptation)*
-- [x] Y-proximity check: aerial enemies don't hit ground-level Blupi
-- [ ] ObjectType23 — fired projectile (enemies shoot at Blupi)
-- [ ] ObjectType96 / 97 — follow enemies (chase Blupi)
+- [ ] MENU-046 — Render `win.png` as full-screen background
+- [ ] MENU-047 — Render `blupiyoupie.png` with pulsating scale (sin wave animation, amplitude 1.0±0.5)
+- [ ] MENU-048 — "RETURN" button (`WinLostReturn`) → Init
+- [ ] MENU-049 — Display mission elapsed time in text overlay
+- [ ] MENU-050 — Display score in text overlay
+- [ ] MENU-051 — Display "NEW RECORD!" text if score exceeds saved high score
+- [ ] MENU-052 — Auto-advance to next level after N seconds (optional: like mobile-eggbert)
 
----
+### 2.7 Phase: Lost (game over)
 
-## Pickups & Collectibles
+- [ ] MENU-053 — Render `lost.png` as full-screen background
+- [ ] MENU-054 — Render `blupiyoupie.png` with spin animation (6× rotation, quadratic ease-in, same as mobile-eggbert)
+- [ ] MENU-055 — "RETURN" button (`WinLostReturn`) → Init
+- [ ] MENU-056 — Display lives remaining and score
+- [ ] MENU-057 — If 0 lives: "GAME OVER" text; if lives remain: "TRY AGAIN" hint
 
-- [x] ObjectType1 — platform lift (moves posStart ↔ posEnd, carries Blupi)
-- [x] ObjectType47 / 48 — platform lift variants (rightward / leftward carry)  *(not yet, minor)*
-- [x] ObjectType5 — treasure (+10 score; all required to open exit)
-- [x] ObjectType6 — egg (+1 life, cap 9)
-- [x] ObjectType7 — exit (triggers Win when all treasures collected)
-- [x] ObjectType12 — crate (static decoration)
-- [x] ObjectType13 — helicopter pickup (placeholder: grants shield; full boarding `[ ]` above)
-- [x] ObjectType25 — shield orb (5 s invincibility)
-- [x] ObjectType30 — drink (+1 life, cap 9)
-- [x] ObjectType49 / 50 / 51 — red / green / blue keys (+50 score; shown in HUD)
-- [x] Exit locked until all ObjectType5 collected; "EXIT OPEN!" popup + sparkle when unlocked
-- [x] Bonus life when all treasures collected (once per level)
-- [x] Pickup bobbing (sine-wave Y offset) *(3D visual)*
-- [x] Score popups (rising text, 1 s fade) *(3D visual)*
-- [ ] ObjectType19 — jeep pickup (full boarding above)
-- [ ] ObjectType21 — secret exit
-- [ ] ObjectType24 — skateboard pickup
-- [ ] ObjectType26 — suction-cup power-up
-- [ ] ObjectType28 — tank pickup
-- [ ] ObjectType29 — bullet ammo
-- [ ] ObjectType31 — cloud power-up
-- [ ] ObjectType40 — invert power-up
-- [ ] ObjectType46 — balloon pickup
-- [ ] ObjectType55 — dynamite
+### 2.8 Phase: MainSetup / PlaySetup (settings)
 
----
+- [ ] MENU-058 — Render `setup.png` as full-screen background
+- [ ] MENU-059 — Render `speedyblupi.png` sliding in from left (ease-out quadratic)
+- [ ] MENU-060 — Render two rotating `gear.png` icons (one CW, one CCW, varying speeds)
+- [ ] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state
+- [ ] MENU-062 — "JUMP" mode toggle (`SetupJump`) — left/right jump direction
+- [ ] MENU-063 — "ZOOM" toggle (`SetupZoom`) — auto-zoom on/off
+- [ ] MENU-064 — "ACCEL" toggle (`SetupAccel`) — accelerometer on/off
+- [ ] MENU-065 — "RESET Gamer X" button (`SetupReset`) — with gamer letter in text
+- [ ] MENU-066 — "RETURN" button (`SetupReturn`) → Init (from MainSetup) or Play (from PlaySetup)
+- [ ] MENU-067 — All toggles persist to GameData immediately on press
+- [ ] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing)
+- [ ] MENU-069 — Keyboard Back during Setup → Init
 
-## Score & Progression
+### 2.9 Phase: Ranking
 
-- [x] Score: +10 treasure, +25 stomp, +50 key / egg / drink, +100 all-treasures bonus
-- [x] High score per gamer slot (persisted in GameData bytes 2–5)
-- [x] Level elapsed timer (HUD + Win overlay)
-- [x] Game speed selector: G key cycles Slow (0.6×) → Normal (1.0×) → Fast (1.5×)
+- [ ] MENU-070 — Render `pause.png` background (same as Pause/Resume)
+- [ ] MENU-071 — Display high-score table for all 3 gamer slots (name, score, doors opened)
+- [ ] MENU-072 — "BACK" button (`RankingContinue`) → Init
+- [ ] MENU-073 — Highlight current gamer row
 
----
+### 2.10 Phase: Trial (purchase prompt — low priority for open-source port)
 
-## Sound
+- [ ] MENU-074 — Render `trial.png` background
+- [ ] MENU-075 — Display trial text lines (TX_TRIAL1..6)
+- [ ] MENU-076 — "BUY" button (`TrialBuy`) — no-op or skip in open-source build
+- [ ] MENU-077 — "CANCEL" button (`TrialCancel`) → Init
+- [ ] MENU-078 — Trial mode guard: if mission > 20 and mission % 10 > 1 → Trial (replicate mobile-eggbert trial logic)
 
-- [x] SoundManager: 93 WAV files from `Content/sounds/`
-- [x] Per-channel volume from `tableVolumePitch`
-- [x] Sound on/off toggle (persisted in GameData)
-- [x] Channels wired: jump ch1, footstep ch3, landing ch4, stomp ch5, death ch8, collect ch10, key ch11, life ch42, shield-off ch44, exit ch57
+### 2.11 Level Intro / Mission Title
 
----
+- [ ] MENU-079 — Level intro title card: world name text, 3 s duration (fade-in 0.5s, hold 2s, fade-out 0.5s)
+- [ ] MENU-080 — Training level hint bar: show tutorial text from `table_training1..4` based on Blupi position
+- [ ] MENU-081 — Training hint rendered as overlay bar (pad.png icon 15 background, text centred)
+- [ ] MENU-082 — Training hint auto-scales down if text is too wide (min 0.5×)
 
-## Save Data
+### 2.12 Button Font & Text Rendering
 
-- [x] GameData: 640-byte binary format, binary-compatible with mobile-eggbert
-- [x] 3 gamer slots: lives, last world, door states
-- [x] High score extension (gamer-header bytes 2–5, was reserved)
-- [x] Auto-save on win / lost / quit / reset / gamer-select
+- [ ] MENU-083 — Render button labels using `text.png` font sheet (32×32 per glyph)
+- [ ] MENU-084 — `Text::DrawText` equivalent: render text string using glyph atlas
+- [ ] MENU-085 — `Text::DrawTextCenter` equivalent: centre-aligned text rendering
+- [ ] MENU-086 — Text scaling (0.45×, 0.7×, 1.0×) used for different label sizes
+- [ ] MENU-087 — Localised strings (MyResource strings): port key TX_ constants for button labels
 
----
+### 2.13 Phase Transitions & Animations
 
-## Camera *(3D-specific)*
+- [ ] MENU-088 — Fade-out animation between animated phases (20-frame linear fade, Config::ScaleTime(20))
+- [ ] MENU-089 — `fadeOutPhase` deferred transition: start animation, complete transition after 20 frames
+- [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start)
+- [ ] MENU-091 — Phase time counter reset on each phase entry
 
-- [x] 3rd-person orbit (RMB pitch, scroll zoom, auto-yaw follow)
-- [x] Smooth zoom (lerp)
-- [x] Pitch auto-reset to 20° when RMB released
-- [x] Wall collision (DDA ray march from Blupi to desired position)
-- [x] FOV 65°
+### 2.14 Cheat Menu (hidden)
+
+- [ ] MENU-092 — Cheat gesture recognition: sequence of 6 button glyphs (Cheat11..Cheat32) unlocks cheat menu
+- [ ] MENU-093 — Cheat menu overlay: 9 cheat action buttons (Cheat1..Cheat9)
+- [ ] MENU-094 — Cheat 1: OpenDoors (open all doors in current level)
+- [ ] MENU-095 — Cheat 2: SuperBlupi (invincibility + all abilities)
+- [ ] MENU-096 — Cheat 3: ShowSecret (reveal secret exits)
+- [ ] MENU-097 — Cheat 4: LayEgg (spawn eggs)
+- [ ] MENU-098 — Cheat 5: Reset gamer progress
+- [ ] MENU-099 — Cheat 6: Simulate trial mode toggle
+- [ ] MENU-100 — Cheat 7: CleanAll (remove all mobile objects)
+- [ ] MENU-101 — Cheat 8: AllTreasure (collect all treasures)
+- [ ] MENU-102 — Cheat 9: EndGoal (win current level immediately)
 
 ---
 
-## Engine backend
+## 3. HUD (Heads-Up Display)
 
-- [x] Simple3D (via U3D/Urho3D) — active, primary target `GalaxyEggbertSimple3D`
-- [ ] Nova3D (Urho3D fork in progress; Simple3D selects it via `-DSIMPLE3D_ENGINE=NOVA3D`)
+- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row
+- [~] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout
+- [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel
+- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15, opacity 0.6)
+- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held
+- [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held
+- [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held
+- [x] HUD-008 — Shield timer gauge (jauge.png yellow fill) — visible when shield active
+- [x] HUD-009 — Score display (text label, top-right area)
+- [x] HUD-010 — World name + elapsed level timer
+- [x] HUD-011 — Game speed indicator label (SLOW / NORMAL / FAST)
+- [x] HUD-012 — Gauge sprite (jauge.png) bottom-left area
+- [x] HUD-013 — Hit flash: red full-screen overlay panel, 0.4 s fade on damage
+- [x] HUD-014 — Camera shake on hit (wired but shake amount is no-op — see CAM-006)
+- [ ] HUD-015 — Bullet counter: element.png icon 176 × m_blupiBullet, small row near bottom-right
+- [ ] HUD-016 — Dynamite count: element.png icon 252 shown when m_blupiDynamite > 0
+- [ ] HUD-017 — Perso (persona) counter: button.png icon 108 + "= N" text when m_blupiPerso > 0
+- [ ] HUD-018 — Second gauge (jauge.png red fill): used for charge level (m_blupiLevel in charge mode)
+- [ ] HUD-019 — Yellow gauge: shield timer ticks down from 100 (shown while shield active, hidden when expired)
+- [ ] HUD-020 — "EXIT OPEN!" popup text (3 s timed, big centred text) when all treasures collected
+- [ ] HUD-021 — Controls hint bar fades after 8 s (re-show on new level)
+- [ ] HUD-022 — Pause button icon visible during Play phase (top area)
+- [ ] HUD-023 — HUD hidden during non-Play phases (Init, Pause, Win, Lost, Setup)
+- [ ] HUD-024 — Training hint overlay at screen top (missions 11-14 only)
+- [ ] HUD-025 — Score popup: "+N" floating text rises and fades over 1 s at collection position *(3D visual)*
+- [ ] HUD-026 — "EXIT OPEN!" text: centre screen, large font, 3 s duration
 
 ---
 
-## Simple3D Migration
+## 4. Blupi Character
 
-Galaxy Eggbert runs entirely on the `simple-3d` framework (target: `GalaxyEggbertSimple3D`).
-The legacy direct-Urho3D target has been removed (S3D-9).
-Build with: `cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON`
+### 4.1 Physics & Movement
 
-- [x] S3D-1 — Simple3D port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD labels, orbit camera, minimal sound, CMake target, gap documentation
-- [x] S3D-2 — Terrain visual fidelity: tile atlas material + UV offset per block type
-- [x] S3D-3 — Blupi sprite/billboard animation from `blupi.png`
+- [x] BLUPI-001 — Gravity applied every frame (m_blupiVitesseY increases downward)
+- [x] BLUPI-002 — Jump: upward velocity on Left Ctrl press; air flag set
+- [x] BLUPI-003 — Walk left/right: arrow keys set horizontal speed
+- [x] BLUPI-004 — Crouch: Left Shift sets Down state
+- [x] BLUPI-005 — Look up / glide: Right Shift in air → reduced gravity, capped fall speed
+- [x] BLUPI-006 — Auto step-up: 1-tile ledges climbed automatically *(3D adaptation)*
+- [x] BLUPI-007 — AABB tile collision via CharacterController
+- [x] BLUPI-008 — Respawn at blupiStart on death
+- [x] BLUPI-009 — Respawn invincibility: 2 s grace period after death
+- [x] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide)
+- [x] BLUPI-011 — Blob shadow (scans downward, scales with height) *(3D adaptation)*
+- [ ] BLUPI-012 — Sub-pixel accumulator (m_blupiSubPixelX/Y) — prevents drift at high FPS
+- [ ] BLUPI-013 — BlupiBloque: directional collision query (can I move here?)
+- [ ] BLUPI-014 — BlupiAdjust: push Blupi out of penetrated tiles after movement
+- [ ] BLUPI-015 — SCROLL_SPEED = 8 px/tick camera scroll toward Blupi
+- [ ] BLUPI-016 — m_blupiLevel: charge level gauge for vehicles/actions
+- [ ] BLUPI-017 — m_blupiTimeNoAsc: timer preventing lift re-entry after a dismount
+- [ ] BLUPI-018 — m_blupiTimeMockery: timer for enemy mockery animation
+- [ ] BLUPI-019 — m_blupiTimeOuf: relief animation timer (Ouf variants)
+- [ ] BLUPI-020 — m_blupiFifoPos[10]: history of last 10 positions (used for teleporter exit placement)
+- [ ] BLUPI-021 — Blupi "front" flag (m_blupiFront): determines draw order vs objects
+
+### 4.2 BlupiAction State Machine (87 states)
+
+- [x] BLUPI-022 — None (uninitialised)
+- [x] BLUPI-023 — Stop (idle standing)
+- [x] BLUPI-024 — March (walking)
+- [x] BLUPI-025 — Turn (turning around)
+- [x] BLUPI-026 — Jump (jumping)
+- [x] BLUPI-027 — Air (airborne / falling)
+- [x] BLUPI-028 — Down (crouch)
+- [x] BLUPI-029 — Up (look-up / glide)
+- [ ] BLUPI-030 — Vertigo (hanging on ledge in fear — ACTION_VERTIGO)
+- [ ] BLUPI-031 — Recede (moving backward — ACTION_RECEDE)
+- [ ] BLUPI-032 — Advance (moving forward — ACTION_ADVANCE)
+- [ ] BLUPI-033 — Clear1..Clear8 (clearing animations — used for special level events)
+- [ ] BLUPI-034 — Set (placing object — ACTION_SET)
+- [ ] BLUPI-035 — Win (level-win celebration animation)
+- [x] BLUPI-036 — Push (pushing a crate — ACTION_PUSH) — state exists but logic not wired
+- [ ] BLUPI-037 — StopHelico (helicopter hover)
+- [ ] BLUPI-038 — MarchHelico (helicopter fly forward)
+- [ ] BLUPI-039 — TurnHelico (helicopter turn)
+- [ ] BLUPI-040 — StopNage (treading water)
+- [ ] BLUPI-041 — MarchNage (swimming forward)
+- [ ] BLUPI-042 — TurnNage (turning while swimming)
+- [ ] BLUPI-043 — StopSurf (surfboard idle)
+- [ ] BLUPI-044 — MarchSurf (surfing forward)
+- [ ] BLUPI-045 — TurnSurf (turning on surfboard)
+- [ ] BLUPI-046 — Drown (drowning in deep water)
+- [ ] BLUPI-047 — StopJeep / MarchJeep / TurnJeep (jeep vehicle states)
+- [ ] BLUPI-048 — StopPop / Pop (pop-star costume idle/dance)
+- [ ] BLUPI-049 — Bye (farewell exit animation)
+- [ ] BLUPI-050 — StopSuspend / MarchSuspend / TurnSuspend / JumpSuspend (rope hanging)
+- [ ] BLUPI-051 — Hide (hiding in object)
+- [ ] BLUPI-052 — JumpAie (hurt jump on hazard contact)
+- [ ] BLUPI-053 — StopSkate / MarchSkate / TurnSkate / JumpSkate / AirSkate (skateboard)
+- [ ] BLUPI-054 — TakeSkate (picking up skateboard)
+- [ ] BLUPI-055 — DeposeSkate (putting down skateboard)
+- [ ] BLUPI-056 — Ouf1a / Ouf1b / Ouf2 / Ouf3 / Ouf4 / Ouf5 (relief animations)
+- [ ] BLUPI-057 — Sucette (collecting lollipop/suction-cup power-up)
+- [ ] BLUPI-058 — StopTank / MarchTank / TurnTank / FireTank (tank vehicle)
+- [ ] BLUPI-059 — Glu (stuck in glue)
+- [ ] BLUPI-060 — Drink (drinking power-up animation)
+- [ ] BLUPI-061 — Charge (being charged at by enemy)
+- [ ] BLUPI-062 — Electro (electrocuted by electric field)
+- [ ] BLUPI-063 — HelicoGlu (helicopter stuck in glue)
+- [ ] BLUPI-064 — TurnAir (turning while airborne)
+- [ ] BLUPI-065 — StopMarch (decelerating from walk to stop)
+- [ ] BLUPI-066 — StopJump / StopJumph (jump landing, high-jump landing)
+- [ ] BLUPI-067 — Mockery / Mockeryi / Mockeryp (enemy mocking Blupi)
+- [ ] BLUPI-068 — Balloon (balloon flight mode)
+- [ ] BLUPI-069 — StopOver / MarchOver / TurnOver (flat/squashed mode)
+- [ ] BLUPI-070 — Recedeq / Advanceq (quick backward/forward movement)
+- [ ] BLUPI-071 — StopEcrase / MarchEcrase (crushed under object)
+- [ ] BLUPI-072 — Teleporte (teleporting animation)
+- [ ] BLUPI-073 — Switch (activating a switch)
+- [ ] BLUPI-074 — Non (refusing / head-shake animation)
+- [ ] BLUPI-075 — SlowdownSkate (skateboard braking)
+- [ ] BLUPI-076 — TakeDynamite / PutDynamite (dynamite pickup/place)
+
+### 4.3 Blupi Sprite Animation
+
+- [x] BLUPI-077 — Frame tables from `table_blupi` (2911 entries)
+- [x] BLUPI-078 — Billboard sprite from `blupi.png` (60×60 px cells)
+- [x] BLUPI-079 — Direction flipping: mirror sprite when moving right (table_mirror)
+- [ ] BLUPI-080 — All 87 BlupiAction frames resolved from table_blupi via action+phase+dir lookup
+- [ ] BLUPI-081 — `blupi1.png` alternate skin channel (Blupi1_11/12/13 variants for ObjectType200-203)
+- [x] BLUPI-082 — Shield tint: cyan/blue sprite overlay when m_blupiShield active
+- [x] BLUPI-083 — Shield blink at < 1.5 s remaining (blink 10 Hz)
+
+### 4.4 Vehicle Modes (each = new movement model + sprite sheet section)
+
+- [ ] BLUPI-084 — Helicopter mode (m_blupiHelico): 8-direction flight, no gravity, propeller sound loop (ch16/ch18)
+- [ ] BLUPI-085 — Helicopter boarding: touch ObjectType13 → sets m_blupiHelico, removes object
+- [ ] BLUPI-086 — Helicopter dismount: press Down → drops Blupi, reverts to normal mode
+- [ ] BLUPI-087 — Helicopter destroyed by creature (ObjectType54): ByeByeHelico debris effect
+- [ ] BLUPI-088 — Jeep mode (m_blupiJeep): horizontal drive, jump, carry Blupi
+- [ ] BLUPI-089 — Jeep boarding: touch ObjectType19 → sets m_blupiJeep
+- [ ] BLUPI-090 — Jeep motor sound loop (ch29/ch31, high/low pitch via m_blupiMotorHigh)
+- [ ] BLUPI-091 — Tank mode (m_blupiTank): drive + fire projectiles (ch FireTank)
+- [ ] BLUPI-092 — Tank boarding: touch ObjectType28 → sets m_blupiTank
+- [ ] BLUPI-093 — Tank fire sound (ch 53) on FireTank animation frames
+- [ ] BLUPI-094 — Skateboard mode (m_blupiSkate): faster horizontal, higher jump
+- [ ] BLUPI-095 — Skateboard pickup: touch ObjectType24 → TakeSkate animation → sets m_blupiSkate
+- [ ] BLUPI-096 — Balloon mode (m_blupiOver/m_blupiBalloon): float up/down, limited horizontal
+- [ ] BLUPI-097 — Balloon pickup: touch ObjectType46 → sets m_blupiOver
+- [ ] BLUPI-098 — Swimming (m_blupiNage): entered when Blupi falls into water (`table_vitesse_nage`)
+- [ ] BLUPI-099 — Surfing (m_blupiSurf): surfboard on water surface (`table_vitesse_surf`)
+- [ ] BLUPI-100 — Vent (fan) propulsion (m_blupiVent): blown by ventilator tile
+- [ ] BLUPI-101 — Suspend (rope hang): entered when Blupi grabs a rope tile
+- [ ] BLUPI-102 — Motor sound crossfade: one-shot start/stop sounds + looped motor sound
+- [ ] BLUPI-103 — m_blupiMotorHigh: pitch variant selection (fast vs slow motor)
+
+### 4.5 Blupi Special States & Power-ups
+
+- [x] BLUPI-104 — Shield (m_blupiShield): 5 s invincibility from ObjectType25; bypasses all hazards
+- [ ] BLUPI-105 — Shield timer (m_blupiTimeShield): counts down 0→100 ticks; gauge shows progress
+- [ ] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active)
+- [ ] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers
+- [ ] BLUPI-108 — Cloud mode (m_blupiCloud): from ObjectType31, floats through blocks for N ticks
+- [ ] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
+- [ ] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions)
+- [ ] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions
+- [ ] BLUPI-112 — Hide mode (m_blupiHide): concealed in object
+- [ ] BLUPI-113 — Sucette/suction-cup (m_blupiPower): from ObjectType26, walk up walls
+- [ ] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions
+- [ ] BLUPI-115 — Bullet count (m_blupiBullet): from ObjectType29; FireTank expends bullets
+- [ ] BLUPI-116 — Ecrase mode (m_blupiEcrase): crushed flat under object (StopEcrase/MarchEcrase)
+- [ ] BLUPI-117 — m_blupiPerso: persona counter (shown in HUD as button icon 108 + count)
+
+### 4.6 Blupi Death & Respawn
+
+- [x] BLUPI-118 — Death: BlupiDead() triggers explosion effect, resets lives-1, respawn
+- [x] BLUPI-119 — Death freeze: 1 s input lock before respawn
+- [ ] BLUPI-120 — Drown death: different animation (ACTION_DROWN) in deep water
+- [ ] BLUPI-121 — Electro death: ACTION_ELECTRO animation + electric shake
+- [ ] BLUPI-122 — Glu death: Blupi stuck (ACTION_GLU) for several frames then die
+- [ ] BLUPI-123 — Charge death: enemy charge-hit animation (ACTION_CHARGE)
+- [ ] BLUPI-124 — Ouf recovery: after close call, play one of Ouf1a..Ouf5 animations
+- [ ] BLUPI-125 — Mockery: enemies mock Blupi (ACTION_MOCKERY/i/p) for m_blupiTimeMockery ticks
+- [x] BLUPI-126 — Stomp kill: velY < -1.0 on contact with enemy → BounceUp() + kill enemy
+- [x] BLUPI-127 — BounceUp: upward impulse kJumpSpeed × 0.65
+
+### 4.7 Blupi Sounds
+
+- [x] BLUPI-128 — Jump sound: ch1 on jump
+- [x] BLUPI-129 — Footstep sound: ch3 per march stride (surface-dependent via SoundEnviron)
+- [x] BLUPI-130 — Landing sound: ch4 on ground contact
+- [x] BLUPI-131 — Stomp kill sound: ch5
+- [x] BLUPI-132 — Death sound: ch8
+- [ ] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile type
+- [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient)
+- [ ] BLUPI-135 — Swim bubble sound: ch37
+- [ ] BLUPI-136 — Glide sound: ch41
+- [ ] BLUPI-137 — Teleport in/out sounds: ch9 / ch12
+- [ ] BLUPI-138 — Shield-on sound: ch50 when shield activated
+- [x] BLUPI-139 — Shield-off sound: ch44 when shield expires
+- [ ] BLUPI-140 — Dynamite pickup/place sounds: ch52
+- [ ] BLUPI-141 — Tank fire sound: ch53
+- [ ] BLUPI-142 — Switch activate: ch76/ch77 (off/on)
+- [ ] BLUPI-143 — Rope suspend sounds: ch47 (attach), ch65 (detach)
+- [ ] BLUPI-144 — Drink sound: ch58 on Drink action
+- [ ] BLUPI-145 — Key pickup sound: ch11
+- [x] BLUPI-146 — Life / egg pickup sound: ch42
+- [ ] BLUPI-147 — Sucette pickup sound: ch62
+- [ ] BLUPI-148 — Balloon motor sounds: ch28/ch30 (start/stop), ch29/ch31 (loop low/high)
+- [ ] BLUPI-149 — Electro sounds: ch38 (long arc) / ch90 (spark)
+- [ ] BLUPI-150 — Glu splash sounds: ch51
+- [ ] BLUPI-151 — Water splash sounds: ch23 (small plouf), ch64 (tiplouf), ch24 (blup bubble)
+- [ ] BLUPI-152 — Secret exit found sound: ch21
+- [ ] BLUPI-153 — Door open sound: ch7
+
+---
+
+## 5. Tile Types & Terrain
+
+### 5.1 World Loading
+
+- [x] TILE-001 — Load world from mobile-eggbert `.txt` format (100×100 grid)
+- [x] TILE-002 — 100×100 decor grid rendered as 3D cubes (1 cube per occupied tile)
+- [x] TILE-003 — Tile textures from `object-m.png` (20 cols, 64×64 px; icon ID = block type)
+- [x] TILE-004 — Correct tile passability via `table_decor_quart` (decorative → Air)
+- [x] TILE-005 — 5 worlds (Grassland, Forest, Ice Caves, Lava Fields, Space Station)
+- [x] TILE-006 — Level progression: win → next world, wraps at world 5
+- [x] TILE-007 — Terrain depth fill (cliff edges extrude 3 dark fill blocks downward) *(3D)*
+- [x] TILE-008 — Sky dome per world (`backgrounds/decorNNN.png`)
+- [x] TILE-009 — Per-world sky colour (ambient + fog)
+- [x] TILE-010 — `blupiPos=` header parsed → Blupi spawn position
+- [x] TILE-011 — `region=` header parsed → background texture selection
+- [x] TILE-012 — `music=` header parsed → ambient music track
+
+### 5.2 Animated Tiles
+
+- [x] TILE-013 — animPhase_ counter: 6 fps tick counter in GEWorldRuntime
+- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}) — kills on contact
+- [x] TILE-015 — Crusher tiles (10-frame: {317..323...}) — kills in frames 5-9
+- [x] TILE-016 — Saw tiles (6-frame: {378..383}) — kills on contact
+- [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1) — kills on contact
+- [x] TILE-018 — Water1 tiles (6-frame: {92..95,94,93}) — animated decoration
+- [x] TILE-019 — Water2 tiles (6-frame: {91,96..98,97,96}) — animated decoration
+- [ ] TILE-020 — Ventilator/fan Up tiles (icons 126-128, 3-frame: table_decor_ventillog)
+- [ ] TILE-021 — Ventilator/fan Down tiles (icons 129-131, 3-frame: table_decor_ventillod)
+- [ ] TILE-022 — Ventilator/fan Right tiles (icons 132-134, 3-frame: table_decor_ventilloh)
+- [ ] TILE-023 — Ventilator/fan Left tiles (icons 135-137, 3-frame: table_decor_ventillob)
+- [ ] TILE-024 — Water drip tiles (icons: table_decor_goutte, 48-frame)
+- [ ] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame)
+- [ ] TILE-026 — Marine tile (icon 203: table_marine, 11 frames, Object channel)
+- [ ] TILE-027 — GETerrainRenderer::Update called every frame with animPhase for all animated tiles
+
+### 5.3 Interactive / Hazard Tiles
+
+- [x] TILE-028 — Lava (icon 68-72): kill Blupi on contact (IsLave)
+- [x] TILE-029 — Spike (icon 373/347): kill Blupi on contact (IsPiege)
+- [x] TILE-030 — Crusher (icon 317-323): kill only when fully extended (IsEcraseur, phase 5-9)
+- [x] TILE-031 — Saw (icon 378-383): kill Blupi on contact (IsScie)
+- [ ] TILE-032 — Water drip (IsGoutte): triggers glu/slow effect when hit
+- [ ] TILE-033 — Blitz/lightning tile (IsBlitz): electric instant death
+- [ ] TILE-034 — Spring/ressort tile (IsRessort): launch Blupi upward
+- [ ] TILE-035 — Temp tile (IsTemp): brief passability change (bridge-like)
+- [ ] TILE-036 — Door tile (IsDoor): locked door, opened by matching key (DoorKeyFlags)
+- [ ] TILE-037 — Teleporter tile (IsTeleporte / SearchTeleporte): pair of tiles, teleport Blupi
+- [ ] TILE-038 — Switch tile (IsSwitch / ActiveSwitch): toggles state of linked door/bridge
+- [ ] TILE-039 — Bridge tile (IsBridge): builds a bridge (ObjectType52 animation)
+- [ ] TILE-040 — Ventilator tile (IsVentillo): blows Blupi in direction when standing in fan stream
+- [ ] TILE-041 — Normal jump tile (IsNormalJump): forces a jump when stepped on
+- [ ] TILE-042 — Water surface (IsSurfWater): enter surf mode
+- [ ] TILE-043 — Deep water (IsDeepWater): enter swim/drown mode
+- [ ] TILE-044 — Out-of-water exit (IsOutWater): exit swim mode when reaching dry tile
+- [ ] TILE-045 — Barre / barrier tile (GetTypeBarre): blocks certain vehicle types
+
+### 5.4 Tile Adaptation (visual smoothing)
+
+- [ ] TILE-046 — `table_adapt_decor` (144 entries): smooth corner blending based on neighbour mask
+- [ ] TILE-047 — `table_adapt_fromage` (32 entries): cheese tile corner blending
+- [ ] TILE-048 — `table_decor_quart` (7056 entries): full tile replacement lookup by neighbour mask
+
+### 5.5 Background & Sky
+
+- [x] TILE-049 — Background sky PNG per region (`decor000.png`..`decor031.png`, not all consecutive)
+- [x] TILE-050 — 5 sky colour palettes (ambient + fog per world region)
+- [ ] TILE-051 — Per-zone fog colour changes mid-level (region changes between areas)
+- [ ] TILE-052 — Lightning tile visual effect (icon 66-68 drawn 13 px higher, ch69 sound)
+
+---
+
+## 6. Enemy AI
+
+All enemies use billboard sprites from `element.png` (64×64 px cells).
+
+### 6.1 Common Enemy Behaviour
+
+- [x] ENEMY-001 — Patrol movement: oscillate between posStart and posEnd at constant speed
+- [x] ENEMY-002 — Stationary enemies get ±2 tile default patrol range
+- [x] ENEMY-003 — Directional sprites: flipX when moving right (`table_mirror`)
+- [x] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact
+- [x] ENEMY-005 — Enemy respawns at posStart after 5 s (kill timer)
+- [x] ENEMY-006 — Blob shadow under enemies *(3D adaptation)*
+- [x] ENEMY-007 — Y-proximity check: aerial enemies don't hit ground-level Blupi
+- [ ] ENEMY-008 — `MoveObjectStepLine`: advance/recede speed + end-dwell timer logic
+- [ ] ENEMY-009 — `MoveObjectStepIcon`: per-type animation phase counter update
+
+### 6.2 Per-Type Enemy Implementation
+
+- [x] ENEMY-010 — ObjectType2: patrol enemy A (table_robot_left/right, icons 12-20 in element.png)
+- [x] ENEMY-011 — ObjectType3: patrol enemy B (icons 48-56 in element.png)
+- [x] ENEMY-012 — ObjectType4: bulldozer (table_bulldozer_left/right, turn2l/r)
+- [ ] ENEMY-013 — ObjectType4: bulldozer charge behaviour on Blupi contact (distinct from simple patrol)
+- [x] ENEMY-014 — ObjectType16: spider (icons 69-77, vertical oscillation hang↔drop)
+- [x] ENEMY-015 — ObjectType17: fish (table_poisson_left/right, patrol in water)
+- [ ] ENEMY-016 — ObjectType17: turn animation (table_poisson_turn2l/r, 48 frames each)
+- [x] ENEMY-017 — ObjectType20: bird (table_oiseau_left/right, aerial Y=3.0 patrol)
+- [ ] ENEMY-018 — ObjectType20: turn animation (table_oiseau_turn2l/r, 10 frames each)
+- [x] ENEMY-019 — ObjectType33: blupit (table_blupit_left/right)
+- [ ] ENEMY-020 — ObjectType33: blupit fires ObjectType23 projectile at phase 3 and phase 21 during turn
+- [ ] ENEMY-021 — ObjectType32: blupih (table_blupih_left/right, turn2l/r)
+- [ ] ENEMY-022 — ObjectType32: blupih fires ObjectType23 projectile during turn animation
+- [ ] ENEMY-023 — ObjectType44: wasp/bee (table_guepe_left/right, 6-frame, fast patrol)
+- [ ] ENEMY-024 — ObjectType44: turn animation (table_guepe_turn2l/r, 5 frames)
+- [ ] ENEMY-025 — ObjectType54: creature (table_creature_left/right, 8-frame, slow patrol)
+- [ ] ENEMY-026 — ObjectType54: long turn animation (table_creature_turn2, 152 frames)
+- [ ] ENEMY-027 — ObjectType54: destroys Blupi's helicopter on contact (ByeByeHelico triggered)
+- [ ] ENEMY-028 — ObjectType18: additional patrol enemy variant (sprite/behaviour TBD from Decor.cpp)
+- [ ] ENEMY-029 — ObjectType96: follow enemy 1 (table_follow1, 26 frames) — chases Blupi
+- [ ] ENEMY-030 — ObjectType97: follow enemy 2 (table_follow2, 5 frames) — tracks exact position
+- [ ] ENEMY-031 — ObjectType96/97: MoveObjectFollow() logic — path toward Blupi
+
+### 6.3 Projectiles
+
+- [ ] ENEMY-032 — ObjectType23: fired projectile (icon 176 from element.png) — spawned by blupih/blupit
+- [ ] ENEMY-033 — Projectile travels toward Blupi position, expires after 55 frames
+- [ ] ENEMY-034 — Projectile hit detection: damage Blupi if shield inactive
+- [ ] ENEMY-035 — Projectile sound (ch27 on fire?)
+
+### 6.4 Enemy Sounds
+
+- [ ] ENEMY-036 — Stomp kill sound: ch5 (already wired)
+- [ ] ENEMY-037 — Bulldozer turn sound (ch33)
+- [ ] ENEMY-038 — Enemy destruction sound varies by type
+- [ ] ENEMY-039 — Wasp/bee movement sound (ch72/ch73)
+- [ ] ENEMY-040 — Creature movement sound
+
+---
+
+## 7. Pickups & Objects
+
+### 7.1 Static Collectibles
+
+- [x] PICKUP-001 — ObjectType5: treasure (icons 0-11, element.png) — +10 score, required for exit
+- [x] PICKUP-002 — ObjectType6: egg (icons 21-28) — +1 life (cap 9), ch42 sound
+- [x] PICKUP-003 — ObjectType7: exit goal (icons 29-36) — triggers Win when all treasures collected
+- [x] PICKUP-004 — ObjectType49: red key (table_cle1, 12 frames) — sets Key1 flag, +50 score, ch11
+- [x] PICKUP-005 — ObjectType50: green key (table_cle2, 12 frames) — sets Key2 flag, +50 score
+- [x] PICKUP-006 — ObjectType51: blue key (table_cle3, 12 frames) — sets Key3 flag, +50 score
+- [x] PICKUP-007 — ObjectType25: shield orb (table_shield, 16 frames) — 5 s invincibility, ch50
+- [x] PICKUP-008 — ObjectType30: drink (icon 178) — +1 life (cap 9), ch42 sound
+- [ ] PICKUP-009 — ObjectType21: secret exit (table_cle, 12 frames) — sets m_bFoundCle, triggers Win
+- [ ] PICKUP-010 — ObjectType31: cloud power-up (table_charge, 6 frames, Object channel) — m_blupiCloud 100 ticks
+- [ ] PICKUP-011 — ObjectType40: invert power-up (table_invert, 20 frames) — m_blupiInvert 100 ticks + particle burst
+- [ ] PICKUP-012 — ObjectType26: suction-cup (table_power, 8 frames) — ACTION_Sucette, wall climbing
+- [ ] PICKUP-013 — ObjectType29: bullet ammo (icon 177) — +10 bullets to m_blupiBullet
+- [ ] PICKUP-014 — ObjectType55: dynamite (icon 252) — ACTION_TakeDynamite
+- [ ] PICKUP-015 — ObjectType13: helicopter (icon 68 in element.png) — sets m_blupiHelico
+- [ ] PICKUP-016 — ObjectType19: jeep (icon 89) — sets m_blupiJeep
+- [ ] PICKUP-017 — ObjectType28: tank (icon 167) — sets m_blupiTank
+- [ ] PICKUP-018 — ObjectType24: skateboard (table_skate, 34 frames) — ACTION_TakeSkate
+- [ ] PICKUP-019 — ObjectType46: balloon (icon 208) — sets m_blupiOver / m_blupiBalloon
+
+### 7.2 Platform Lifts
+
+- [x] PICKUP-020 — ObjectType1: platform lift (moves posStart↔posEnd, carries Blupi)
+- [ ] PICKUP-021 — ObjectType47: platform lift rightward carry (+2 px/frame horizontal to Blupi when riding)
+- [ ] PICKUP-022 — ObjectType48: platform lift leftward carry (-2 px/frame horizontal)
+- [ ] PICKUP-023 — AscenseurDetect: detect lift below Blupi within height threshold
+- [ ] PICKUP-024 — AscenseurVertigo: Blupi hangs on edge of platform (Vertigo state)
+- [ ] PICKUP-025 — AscenseurShift: shift Blupi with moving platform
+- [ ] PICKUP-026 — AscenseurSynchro: synchronise multiple lifts
+- [ ] PICKUP-027 — m_blupiTimeNoAsc: cooldown preventing immediate re-entry
+
+### 7.3 Crates (ObjectType12)
+
+- [~] PICKUP-028 — ObjectType12: crate renders (static billboard) — revision: push mechanic needed
+- [ ] PICKUP-029 — Crate push: walking into a crate → push 1 tile horizontally (ACTION_PUSH)
+- [ ] PICKUP-030 — Crate stops when hitting a wall or another crate
+- [ ] PICKUP-031 — Crates can be stacked (UpdateCaisse / SearchLinkCaisse)
+- [ ] PICKUP-032 — m_rankCaisse / m_nbRankCaisse: array of crate object indices
+- [ ] PICKUP-033 — TestPushCaisse: check if push is valid (clear path)
+- [ ] PICKUP-034 — CaisseInFront: detect crate directly in front of Blupi
+- [ ] PICKUP-035 — SmallShake on crate land / impact
+
+### 7.4 Doors & Keys
+
+- [ ] PICKUP-036 — DoorKeyFlags: 3-bit flag (Key1 / Key2 / Key3)
+- [ ] PICKUP-037 — Door tile (IsDoor): opens when Blupi touches and holds matching key
+- [ ] PICKUP-038 — InitializeDoors: restore door states from GameData on level load
+- [ ] PICKUP-039 — MemorizeDoors: save door states to GameData on level exit
+- [ ] PICKUP-040 — Door open animation: ObjectType22 (3-phase animation, self-removes)
+- [ ] PICKUP-041 — Door open sound: ch7
+
+### 7.5 Visual Effects (transient objects)
+
+- [ ] PICKUP-042 — ObjectType8: primary explosion (table_explo1, explo.png Explosion channel)
+- [ ] PICKUP-043 — ObjectType9: small explosion (table_explo2, 20 frames)
+- [ ] PICKUP-044 — ObjectType10: tertiary explosion (table_explo3, 20 frames)
+- [ ] PICKUP-045 — ObjectType11: fan shockwave (table_explo4, 9 frames) — triggers BigShake
+- [ ] PICKUP-046 — ObjectType36: pollution puff (table_pollution, 8 frames, 16-tick lifetime)
+- [ ] PICKUP-047 — ObjectType37: clear effect (table_clear, 70 frames)
+- [ ] PICKUP-048 — ObjectType38: electric arc (table_electro, 90 frames, starts Blupi1_12 channel)
+- [ ] PICKUP-049 — ObjectType39: treasure sparkle (table_tresortrack, 11 frames) — spawned on pickup
+- [ ] PICKUP-050 — ObjectType41/42: invert start/stop particles (table_invertstart/stop, 8 frames × 4 dirs)
+- [ ] PICKUP-051 — ObjectType53: tentacle hazard (table_tentacule, 45 frames, 90-tick lifetime)
+- [ ] PICKUP-052 — ObjectType57: shield trail (table_shieldtrack, 20 frames)
+- [ ] PICKUP-053 — ObjectType58: shield disappear (20 frames)
+- [ ] PICKUP-054 — ObjectType27: magic track sparkle (table_magictrack, 24 frames)
+- [ ] PICKUP-055 — ObjectType90: electric spark (table_explo5, 12 frames) — triggers ElectricShake
+- [ ] PICKUP-056 — ObjectType91: small flash (table_explo6, 6 frames)
+- [ ] PICKUP-057 — ObjectType92: long energy arc (table_explo7, 128 frames)
+- [ ] PICKUP-058 — ObjectType93: tiny flash (table_explo8, 5 frames)
+- [ ] PICKUP-059 — ObjectType98/99/100: water splashes (table_sploutch1/2/3, 10/13/18 frames)
+- [ ] PICKUP-060 — ObjectType14: water plouf (table_plouf, 7 frames, Object channel)
+- [ ] PICKUP-061 — ObjectType15: water bubble (table_blup, 20 frames) — rises to waypoint
+- [ ] PICKUP-062 — ObjectType34: goo particle (table_glu, 25-frame looping element) — sticks to geometry
+- [ ] PICKUP-063 — ObjectType35: small plouf (table_tiplouf, 3 frames)
+
+### 7.6 Special Level Objects
+
+- [ ] PICKUP-064 — ObjectType52: bridge construction (table_bridge, 157 frames) — also updates static decor
+- [ ] PICKUP-065 — ObjectType56: dynamite fuse (table_dynamitef, 100 frames) — triggers DynamiteStart() at phases 50-69
+- [ ] PICKUP-066 — DynamiteStart: blast clears tiles in all 4 directions (radius-based)
+- [ ] PICKUP-067 — ObjectType200-203: Blupi avatar skins (icons 257-262 on respective channels)
+- [ ] PICKUP-068 — ObjectType200: costume select pickup → triggers player-select voyage when touched
+- [ ] PICKUP-069 — ObjectType201-203: damage Blupi on contact if shield/hide/SuperBlupi inactive
+
+### 7.7 Pickup Sounds
+
+- [x] PICKUP-070 — Treasure collect: ch10 (always restarts)
+- [x] PICKUP-071 — Key pickup: ch11
+- [x] PICKUP-072 — Life pickup (egg/drink): ch42
+- [x] PICKUP-073 — Shield pickup: ch50 (already wired in GESound)
+- [x] PICKUP-074 — Win/exit sound: ch57
+- [ ] PICKUP-075 — Door open: ch7
+- [ ] PICKUP-076 — Switch activate (on): ch77; switch deactivate: ch76
+- [ ] PICKUP-077 — Explosion sounds: ch10 (collect), ch39 (key sparkle), ch40 (explosion)
+- [ ] PICKUP-078 — Water plouf: ch23
+- [ ] PICKUP-079 — Water bubble: ch24
+- [ ] PICKUP-080 — Water small plouf: ch64
+- [ ] PICKUP-081 — Glu/glue sound: ch51
+- [ ] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions)
+- [ ] PICKUP-083 — Secret exit pickup: ch21
+- [ ] PICKUP-084 — Bridge construction sound: ch20
+- [ ] PICKUP-085 — Balloon pickup sound: ch46
+- [ ] PICKUP-086 — Shield trail sound: ch48
+- [ ] PICKUP-087 — Shield loop sound: ch49 (looped while shield active)
+
+---
+
+## 8. Score & Progression
+
+- [x] SCORE-001 — +10 score per treasure collected
+- [x] SCORE-002 — +25 score per enemy stomped
+- [x] SCORE-003 — +50 score per key collected
+- [ ] SCORE-004 — +50 score per egg collected (mobile-eggbert: ch42 + life + score)
+- [ ] SCORE-005 — +50 score per drink collected
+- [x] SCORE-006 — +100 bonus when all treasures collected (all-treasures bonus)
+- [x] SCORE-007 — High score per gamer slot persisted
+- [x] SCORE-008 — Level elapsed timer displayed in HUD
+- [x] SCORE-009 — Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)
+- [ ] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes (from mobile-eggbert enum)
+- [ ] SCORE-011 — Slow game speed: alternate-frame skip (`slow_frame` toggle in game loop)
+- [ ] SCORE-012 — Win screen: display total score, elapsed time, new-record indicator
+- [ ] SCORE-013 — Mission numbering: world hub (X0) → levels (X1-X5) → next hub ((X+1)0)
+- [ ] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs) supported
+- [ ] SCORE-015 — IsTerminated: -1=lost, -2=win, ≥1=advance to mission N
+- [ ] SCORE-016 — Mission advance: m_term = m_mission/10*10 + next_level_in_world
+- [ ] SCORE-017 — Hub mission (mission % 10 == 0): no treasure counter in HUD
+- [ ] SCORE-018 — Training missions (11-14): show tutorial hint overlay
+- [ ] SCORE-019 — MemorizeGamerProgress: save lives and doors after each win/loss
+- [ ] SCORE-020 — LastWorld: updated when completing a hub (mission divisible by 10)
+
+---
+
+## 9. Sound System
+
+- [x] SOUND-001 — 93 WAV files (`sounds/sound000.wav`..`sound092.wav`) loaded
+- [x] SOUND-002 — Per-channel volume from tableVolumePitch (GESound)
+- [x] SOUND-003 — Sound on/off toggle (persisted in GameData byte 3)
+- [x] SOUND-004 — Sound loop support: `loop=true` flag passes to `Game::PlaySound(loop)` in Simple3D
+- [ ] SOUND-005 — Positional (panned) audio: volume/balance based on screen X position (SoundEnviron)
+- [ ] SOUND-006 — SoundEnviron: maps ch3/ch4 footstep to tile-surface variant (ch78-91)
+- [ ] SOUND-007 — Vehicle motor loop: ch16/ch18 (helicopter high/low), ch29/ch31 (jeep/tank/over)
+- [ ] SOUND-008 — Motor sound crossfade: start sound (ch15/ch28) + stop sound (ch17/ch30)
+- [ ] SOUND-009 — PosSound: update panned position of active motor loop each frame
+- [ ] SOUND-010 — Ambient sound: all 72 gameplay channels wired to correct game events (see full list)
+
+### Complete Sound Channel Wire-up (0=reserved, 1-92=game SFX)
+
+- [x] SOUND-011 — ch1: jump
+- [ ] SOUND-012 — ch2: unknown (research needed)
+- [x] SOUND-013 — ch3: footstep (surface-dependent)
+- [x] SOUND-014 — ch4: landing
+- [x] SOUND-015 — ch5: stomp kill
+- [ ] SOUND-016 — ch6: unknown
+- [ ] SOUND-017 — ch7: door open
+- [x] SOUND-018 — ch8: death / hit
+- [ ] SOUND-019 — ch9: teleport in
+- [x] SOUND-020 — ch10: collect (always restarts)
+- [x] SOUND-021 — ch11: key pickup
+- [ ] SOUND-022 — ch12: teleport out
+- [ ] SOUND-023 — ch13: bridge build phase 1
+- [ ] SOUND-024 — ch14: bridge build phase 2
+- [ ] SOUND-025 — ch15: helicopter motor start
+- [ ] SOUND-026 — ch16: helicopter motor high (loop)
+- [ ] SOUND-027 — ch17: helicopter motor stop
+- [ ] SOUND-028 — ch18: helicopter motor low (loop)
+- [ ] SOUND-029 — ch19: teleport (alternate)
+- [ ] SOUND-030 — ch20: bridge completed
+- [ ] SOUND-031 — ch21: secret exit found
+- [ ] SOUND-032 — ch22: unknown
+- [ ] SOUND-033 — ch23: water plouf
+- [ ] SOUND-034 — ch24: water bubble rise
+- [ ] SOUND-035 — ch25: unknown
+- [ ] SOUND-036 — ch26: unknown
+- [ ] SOUND-037 — ch27: projectile fired
+- [ ] SOUND-038 — ch28: jeep/tank start
+- [ ] SOUND-039 — ch29: jeep/tank motor high (loop)
+- [ ] SOUND-040 — ch30: jeep/tank stop
+- [ ] SOUND-041 — ch31: jeep/tank motor low (loop)
+- [ ] SOUND-042 — ch32: unknown
+- [ ] SOUND-043 — ch33: bulldozer turn
+- [ ] SOUND-044 — ch34: unknown
+- [ ] SOUND-045 — ch35: unknown
+- [ ] SOUND-046 — ch36: water walk ambient
+- [ ] SOUND-047 — ch37: swim bubble
+- [ ] SOUND-048 — ch38: electric arc (long)
+- [ ] SOUND-049 — ch39: key sparkle effect
+- [ ] SOUND-050 — ch40: explosion
+- [x] SOUND-051 — ch41: glide
+- [x] SOUND-052 — ch42: life/egg/drink pickup
+- [ ] SOUND-053 — ch43: unknown
+- [x] SOUND-054 — ch44: shield off
+- [ ] SOUND-055 — ch45: unknown
+- [ ] SOUND-056 — ch46: balloon mode sound
+- [ ] SOUND-057 — ch47: suspend attach
+- [ ] SOUND-058 — ch48: shield sparkle
+- [ ] SOUND-059 — ch49: shield loop (looped while active)
+- [ ] SOUND-060 — ch50: shield pickup
+- [ ] SOUND-061 — ch51: glu/glue splash
+- [ ] SOUND-062 — ch52: dynamite / impact
+- [ ] SOUND-063 — ch53: tank fire
+- [ ] SOUND-064 — ch54: long explosion (creature death?)
+- [ ] SOUND-065 — ch55: unknown
+- [ ] SOUND-066 — ch56: unknown
+- [x] SOUND-067 — ch57: exit open / win
+- [ ] SOUND-068 — ch58: drink pickup
+- [ ] SOUND-069 — ch59: unknown
+- [ ] SOUND-070 — ch60: pickup/collect (variant)
+- [ ] SOUND-071 — ch61: unknown
+- [ ] SOUND-072 — ch62: sucette / suction-cup
+- [ ] SOUND-073 — ch63: unknown
+- [ ] SOUND-074 — ch64: small water plouf
+- [ ] SOUND-075 — ch65: suspend detach / rope release
+- [ ] SOUND-076 — ch66: unknown
+- [ ] SOUND-077 — ch67: unknown
+- [ ] SOUND-078 — ch68: unknown
+- [ ] SOUND-079 — ch69: lightning strike
+- [ ] SOUND-080 — ch70: unknown
+- [ ] SOUND-081 — ch71: unknown
+- [ ] SOUND-082 — ch72: wasp approach
+- [ ] SOUND-083 — ch73: wasp attack
+- [ ] SOUND-084 — ch74: teleport in (Blupi arrival)
+- [ ] SOUND-085 — ch75: teleport out (Blupi exit)
+- [ ] SOUND-086 — ch76: switch deactivate
+- [ ] SOUND-087 — ch77: switch activate
+- [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (mapped by SoundEnviron)
+- [ ] SOUND-089 — ch92: follow-enemy sound
+- [ ] SOUND-090 — Sound enable/disable respects enabled_ flag (all channels silenced when off)
+
+---
+
+## 10. Camera *(3D-specific)*
+
+- [x] CAM-001 — 3rd-person orbit following Blupi (GECameraRig)
+- [x] CAM-002 — RMB pitch control
+- [x] CAM-003 — Scroll-wheel zoom (smooth lerp)
+- [x] CAM-004 — Pitch auto-reset to 20° when RMB released
+- [x] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera position)
+- [x] CAM-006 — FOV 65°
+- [ ] CAM-007 — Camera shake: SmallShake (minor impacts: crate land, small explosions)
+- [ ] CAM-008 — Camera shake: BigShake (fan-blade hit, large explosion) — triggered by ObjectType11
+- [ ] CAM-009 — Camera shake: ElectricShake (ObjectType90 electric spark contact)
+- [ ] CAM-010 — Camera shake: table_decor_action per-frame (dx, dy) offsets × 3 multiplier
+- [ ] CAM-011 — Camera shake: fixed N-frame duration, self-clears to None after last frame
+- [ ] CAM-012 — GECameraRig::StartShake(DecorAction) implementation in Simple3D
+- [ ] CAM-013 — HotSpot zoom: MoveHotSpot() eases camera zoom toward target
+- [ ] CAM-014 — HotSpot target: m_hotSpotFinalZoom/X/Y interpolated over N frames
+- [ ] CAM-015 — HotSpot: triggered on special events (secret exit found, level end zoom)
+- [ ] CAM-016 — SCROLL_MARGX = 80 px / SCROLL_MARGY = 40 px viewport scroll margins
+- [ ] CAM-017 — Smooth scroll: camera eases toward Blupi at SCROLL_SPEED = 8 px/tick
+
+---
+
+## 11. Save Data
+
+- [x] SAVE-001 — GameData: 640-byte flat binary format, binary-compatible with mobile-eggbert
+- [x] SAVE-002 — Global header (10 bytes): version, selectedGamer, sounds, jumpRight, autoZoom, accelActive
+- [x] SAVE-003 — 3 gamer slots × 210 bytes: lives (byte 0), lastWorld (byte 1), doors[200] (bytes 10-209)
+- [x] SAVE-004 — Auto-save on win / lost / quit / reset / gamer-select
+- [x] SAVE-005 — `Simple3D::SaveData` used for persistence
+- [ ] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors)
+- [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub worlds)
+- [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per gamer slot
+- [ ] SAVE-009 — CurrentWrite / CurrentRead: mid-game save/load (on app deactivate/activate)
+- [ ] SAVE-010 — CurrentDelete: remove mid-game save (on OnExiting or normal level exit)
+- [ ] SAVE-011 — Accelerometer sensitivity setting (byte 7, 0-100 → 0.0-1.0)
+- [ ] SAVE-012 — JumpRight setting (byte 4) — jump direction preference
+- [ ] SAVE-013 — AutoZoom setting (byte 5)
+- [ ] SAVE-014 — Ranking mode persisted when isRankingMode is active
+
+---
+
+## 12. Visual Polish *(3D-specific and faithful to mobile-eggbert)*
+
+- [x] VISUAL-001 — Blob shadow under Blupi (scales with height, disabled in helicopter/balloon)
+- [x] VISUAL-002 — Blob shadow under enemies (disabled for birds)
+- [x] VISUAL-003 — Pickup bobbing: sine-wave Y offset on collectibles
+- [x] VISUAL-004 — Score popups: rising "+N" text, 1 s fade at collection position
+- [x] VISUAL-005 — Respawn flash: Blupi billboard blinks at 10 Hz for 2 s after respawn
+- [x] VISUAL-006 — Shield tint: cyan sprite when m_blupiShield active
+- [x] VISUAL-007 — Shield blink at < 1.5 s remaining
+- [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px, Explosion channel)
+- [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
+- [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
+- [ ] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded
+- [ ] VISUAL-012 — Treasure sparkle: ObjectType39 on each treasure pickup
+- [ ] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers
+- [ ] VISUAL-014 — Invert power-up particles: ObjectType41 (4-direction burst on pickup)
+- [ ] VISUAL-015 — Invert expire particles: ObjectType42 (4-direction burst on expiry)
+- [ ] VISUAL-016 — Goo particle: ObjectType34 sticks to geometry (element.png, 25 frames)
+- [ ] VISUAL-017 — Magic track sparkle: ObjectType27 trail effect
+- [ ] VISUAL-018 — Helicopter debris: ByeByeHelico float-based debris pool when helico destroyed
+- [ ] VISUAL-019 — Bridge construction animation: ObjectType52 (157 frames) modifies static decor
+- [ ] VISUAL-020 — Dynamite fuse animation: ObjectType56 (100 frames) with blast events at phases 50-69
+- [ ] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png)
+- [ ] VISUAL-022 — Sky gradient per world region (SetSkyGradient with zenith/horizon colours)
+- [ ] VISUAL-023 — Per-world fog (SetFogEnabled + SetFogColor + SetFogRange per region)
+- [ ] VISUAL-024 — Lightning visual: tiles 66-68 draw 13 px higher; ch69 sound
+- [ ] VISUAL-025 — "EXIT OPEN!" text pop-up with sparkle effect when exit unlocks
+
+---
+
+## 13. Simple3D Migration Milestones
+
+- [x] S3D-1 — Port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD, camera, sound, CMake target
+- [x] S3D-2 — Terrain visual fidelity: tile atlas UV per block type
+- [x] S3D-3 — Blupi billboard animation from `blupi.png`
 - [x] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`
 - [x] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
-- [x] S3D-6 — Phase/menu port: Init gamer select with per-slot data, Settings screen (sound toggle), SaveData persistence
-- [x] S3D-7 — Sound channel parity: 93 channels via SoundChannel enum, per-channel volume from tableVolumePitch, no-restart policy, key/life/shield-off events wired
-- [x] S3D-8 — Web build verified: GalaxyEggbertSimple3D.html builds with Emscripten; NetworkManager stub for web; Android blocked (U3D no Android support)
-- [x] S3D-9 — Remove legacy Urho3D path after Simple3D version reaches playable parity
+- [x] S3D-6 — Phase/menu port: Init gamer select with per-slot data, Settings screen, SaveData
+- [x] S3D-7 — Sound channel parity: 93 channels, per-channel volume, no-restart policy
+- [x] S3D-8 — Web build verified (Emscripten)
+- [x] S3D-9 — Remove legacy Urho3D direct target; src/GalaxyEggbert/Game/ deleted
+- [ ] S3D-10 — Full menu system (all phases with background PNGs and correct transitions)
+- [ ] S3D-11 — Vehicle modes: helicopter, jeep, tank (boarding + physics + motor sounds)
+- [ ] S3D-12 — Skateboard mode: faster movement + jump + table_skate animation
+- [ ] S3D-13 — Swimming / surfing modes
+- [ ] S3D-14 — Full enemy AI (all ObjectTypes with correct turn animations and projectiles)
+- [ ] S3D-15 — Explosion / effect billboard system (explo.png objects)
+- [ ] S3D-16 — Dynamite mechanic (pickup + place + fuse + blast)
+- [ ] S3D-17 — All 78 world files playable end-to-end
+- [ ] S3D-18 — Camera shake implementation
+- [ ] S3D-19 — Crate push mechanic
+- [ ] S3D-20 — Positional audio (panned sound by screen X position)
+- [ ] S3D-21 — Nova3D backend switch (`-DSIMPLE3D_ENGINE=NOVA3D`)
+- [ ] S3D-22 — Android build
+
+---
+
+## 14. Tests & Quality
+
+- [x] TEST-001 — GalaxyEggbertWorldsTests: 54 unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest)
+- [ ] TEST-002 — ctest discovery in cmake-build-debug (gtest_discover_tests fix)
+- [ ] TEST-003 — Test: all 78 world files parse without error
+- [ ] TEST-004 — Test: BlockTypes::tileUV returns valid UV for all known icon IDs
+- [ ] TEST-005 — Test: GEWorldRuntime::LoadFromMobileEggbertFile round-trip
+- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format)
+- [ ] TEST-007 — Test: animPhase_ matches mobile-eggbert table indices at known times
+
+---
+
+*Total tasks: ~650. Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22).*
