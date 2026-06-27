@@ -10,7 +10,7 @@
 namespace GESimple3D {
 
 // Builds Simple3D entity blocks for the voxel world.
-// Each tile: Box.mdl (dark sides + physics) + Plane.mdl (tile texture on top, depth-bias decal).
+// Each tile is one Box.mdl with the tile texture on all 6 faces (no separate Plane entity).
 // Fill/edge blocks below cliff edges use a flat dark colour.
 class GETerrainRenderer {
 public:
@@ -35,24 +35,22 @@ public:
     // Returns true if a switch entity was found.
     bool ToggleSwitch(int wx, int wz, GalaxyEggbert::Worlds::World* world);
 
-    // Set the top-face Plane entity UV for tile at (wx, wz).
-    // icon >= 0: show and update UV; icon < 0: hide the Plane (tile visually absent).
+    // Set the Box entity UV for tile at (wx, wz).
+    // icon >= 0: show and update UV; icon < 0: hide (SetActive false, kills visual+physics).
     // Returns false if position not in tileEntityMap_.
     bool SetTileIcon(int wx, int wz, int icon);
 
 private:
     struct AnimTile {
-        Simple3D::Entity* entity;   // Plane entity — UV texture updates go here
-        Simple3D::Entity* parent;   // Box entity — SetActive for Temp tile goes here
+        Simple3D::Entity* entity;  // Box entity — UV texture updates and SetActive go here
         uint16_t          base;
         bool              active = true;  // false when switch-disabled (stopped saw)
     };
 
     std::vector<Simple3D::Entity*>               terrainEntities_;
     std::vector<AnimTile>                        animTiles_;
-    struct DoorBlock { Simple3D::Entity* box; Simple3D::Entity* top; };
-    std::map<std::pair<int,int>, DoorBlock>      doorEntities_;
-    std::map<std::pair<int,int>, Simple3D::Entity*> tileEntityMap_;  // Plane entity at y=0
+    std::map<std::pair<int,int>, Simple3D::Entity*> doorEntities_;
+    std::map<std::pair<int,int>, Simple3D::Entity*> tileEntityMap_;  // Box entity at y=0
     int                                          lastAnimPhase_ = -1;
 };
 

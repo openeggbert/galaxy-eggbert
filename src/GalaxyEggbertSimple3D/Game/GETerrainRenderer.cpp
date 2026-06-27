@@ -55,9 +55,6 @@ static bool isAnimated(uint16_t base) {
            base == BlockTypes::Marine;
 }
 
-static constexpr float kDepthBiasConst = -0.0001f;
-static constexpr float kDepthBiasSlope = -0.5f;
-
 void GETerrainRenderer::Build(Game& game, const GEWorldRuntime& worldRuntime) {
     Clear(game);
 
@@ -86,33 +83,26 @@ void GETerrainRenderer::Build(Game& game, const GEWorldRuntime& worldRuntime) {
 
                             auto* e = game.CreateEntity("Block" + std::to_string(blockIndex++));
                             e->AddModel("Models/Box.mdl");
-                            e->SetMaterialColor(Color(0.28f, 0.22f, 0.18f));
+                            {
+                                float uOff, vOff, uS, vS;
+                                BlockTypes::tileUV(b.type(), uOff, vOff, uS, vS);
+                                e->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
+                            }
                             e->SetPosition(fx, fy, fz);
                             e->AddRigidBody(0.0f);
                             e->AddBoxCollider(Vector3(1.0f, 1.0f, 1.0f));
                             e->SetCollisionLayer(CollisionLayer::StaticGeometry);
                             terrainEntities_.push_back(e);
 
-                            auto* top = game.CreateEntity("Block" + std::to_string(blockIndex++) + "_top");
-                            top->AddModel("Models/Plane.mdl");
-                            {
-                                float uOff, vOff, uS, vS;
-                                BlockTypes::tileUV(b.type(), uOff, vOff, uS, vS);
-                                top->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
-                            }
-                            top->SetDepthBias(kDepthBiasConst, kDepthBiasSlope);
-                            top->SetPosition(fx, fy + 0.5f, fz);
-                            terrainEntities_.push_back(top);
-
                             if (wy == 0)
-                                tileEntityMap_[{wx, wz}] = top;
+                                tileEntityMap_[{wx, wz}] = e;
 
                             uint16_t animBase = BlockTypes::tileAnimBase(b.type());
                             if (isAnimated(animBase))
-                                animTiles_.push_back({top, e, animBase, true});
+                                animTiles_.push_back({e, animBase, true});
 
                             if (BlockTypes::isDoor(b.type()))
-                                doorEntities_[{wx, wz}] = {e, top};
+                                doorEntities_[{wx, wz}] = e;
 
                             // Edge-fill: extrude dark blocks downward at cliff edges
                             int iwx = static_cast<int>(wx);
@@ -163,17 +153,12 @@ bool GETerrainRenderer::OpenDoor(Game& game, int wx, int wz,
                                   GalaxyEggbert::Worlds::World* world) {
     auto it = doorEntities_.find({wx, wz});
     if (it == doorEntities_.end()) return false;
-    Entity* box = it->second.box;
-    Entity* top = it->second.top;
+    Entity* box = it->second;
     terrainEntities_.erase(
         std::remove(terrainEntities_.begin(), terrainEntities_.end(), box),
         terrainEntities_.end());
-    terrainEntities_.erase(
-        std::remove(terrainEntities_.begin(), terrainEntities_.end(), top),
-        terrainEntities_.end());
     doorEntities_.erase(it);
     game.DestroyEntity(box);
-    game.DestroyEntity(top);
     if (world) world->setBlock(
         static_cast<uint16_t>(wx), 0, static_cast<uint16_t>(wz),
         GalaxyEggbert::Worlds::Block::make(BlockTypes::Air));
@@ -187,14 +172,12 @@ void GETerrainRenderer::Update(int animPhase) {
         if (!at.active) continue;
         int icon = animIcon(at.base, animPhase);
         if (at.base == BlockTypes::Temp) {
-            at.parent->SetActive(icon >= 0);
             at.entity->SetActive(icon >= 0);
             if (icon < 0) continue;
         }
         float uOff, vOff, uS, vS;
         BlockTypes::tileUV(icon, uOff, vOff, uS, vS);
         at.entity->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
-        at.entity->SetDepthBias(kDepthBiasConst, kDepthBiasSlope);
     }
 }
 
@@ -216,7 +199,6 @@ bool GETerrainRenderer::ToggleSwitch(int wx, int wz,
     float uOff, vOff, uS, vS;
     BlockTypes::tileUV(newSwitch, uOff, vOff, uS, vS);
     it->second->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
-    it->second->SetDepthBias(kDepthBiasConst, kDepthBiasSlope);
 
     // Scan ±20 tiles in X at same Z for linked saw tiles, toggle 378↔379.
     uint16_t fromSaw = activate ? BlockTypes::SawStopped : BlockTypes::Saw;
@@ -238,7 +220,6 @@ bool GETerrainRenderer::ToggleSwitch(int wx, int wz,
                 // Stopped: set UV to static SawStopped icon
                 BlockTypes::tileUV(BlockTypes::SawStopped, uOff, vOff, uS, vS);
                 sit->second->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
-                sit->second->SetDepthBias(kDepthBiasConst, kDepthBiasSlope);
             }
             break;
         }
@@ -246,7 +227,6 @@ bool GETerrainRenderer::ToggleSwitch(int wx, int wz,
             // Reactivating: set UV to Saw base icon immediately
             BlockTypes::tileUV(BlockTypes::Saw, uOff, vOff, uS, vS);
             sit->second->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
-            sit->second->SetDepthBias(kDepthBiasConst, kDepthBiasSlope);
         }
     }
     return true;
@@ -262,7 +242,6 @@ bool GETerrainRenderer::SetTileIcon(int wx, int wz, int icon) {
         float uOff, vOff, uS, vS;
         BlockTypes::tileUV(icon, uOff, vOff, uS, vS);
         it->second->SetTileTexture("icons/object-m.png", uOff, vOff, uS, vS);
-        it->second->SetDepthBias(kDepthBiasConst, kDepthBiasSlope);
     }
     return true;
 }

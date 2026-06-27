@@ -54,7 +54,7 @@ void GEBridgeSystem::Update(float dt, GETerrainRenderer& terrain, GESound& sound
             active_.erase(active_.begin() + i);
             continue;
         }
-        terrain.SetTileIcon(b.wx, b.wz, kTable[frame]);
+        terrain.SetTileIcon(b.wx, b.wz, kTable[frame] >= 0 ? kTable[frame] : 364);
     }
 }
 
