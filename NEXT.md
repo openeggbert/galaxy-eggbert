@@ -45,7 +45,7 @@
 
 ### What does not work yet
 - Camera shake (`GECameraRig::StartShake` is a no-op — Simple3D has no shake API).
-- Sound loop support (`GESound::Play(channel, loop=true)` ignores the loop flag).
+- ~~Sound loop support~~ — implemented; `GESound::Play(loop=true)` now loops via `sound->SetLooped(loop)` in Simple3D.
 - "EXIT OPEN!" popup text (no on-screen notification when exit unlocks).
 - Per-type enemy AI: all enemies use the same linear patrol regardless of `ObjectType`.
 - ObjectType12 (crate) push mechanic — crate renders but cannot be pushed.
@@ -59,6 +59,7 @@
 
 | Commit | Change |
 |--------|--------|
+| (pending) | feat: sound loop support — `GESound::Play(loop=true)` + `Game::PlaySound(loop)` in Simple3D |
 | `869dceb` | fix: `AddResourceDir("Content")` in `Start()` — fixes white/blank tile textures |
 | `c129475` | fix: `GALAXY_EGGBERT_BUILD_SIMPLE3D` default changed to `ON` |
 | `89dd87a` | feat: tile animation (exact tables from Tables.cpp), respawn invincibility (2 s flash), stomp `BounceUp()` |
@@ -84,7 +85,7 @@ Secondary gap: **sound loops not implemented** — music/ambient channels that s
 | Status | Issue |
 |--------|-------|
 | confirmed | Camera shake is a no-op (`GECameraRig::StartShake` does nothing) |
-| confirmed | Sound loop flag ignored in `GESound::Play()` — looping sounds play once only |
+| fixed | Sound loop flag — implemented; looping sounds now loop correctly |
 | confirmed | All enemies share one patrol AI regardless of `ObjectType` |
 | confirmed | ObjectType12 (crate) cannot be pushed — renders statically |
 | confirmed | "EXIT OPEN!" event has no on-screen text notification |
@@ -179,40 +180,35 @@ less /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhone
 
 Ordered by impact / faithfulness to mobile-eggbert:
 
-### Task 1 — Sound loop support
-**Goal:** Channels with `loop=true` (music, ambient) actually loop.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GESound.cpp/hpp`; may require adding loop support to `simple-3d/src/Simple3D/Audio/Audio.cpp` or `Game::PlaySound`.
-**Verify:** Run game; music/ambient channel plays continuously without stopping.
-
-### Task 2 — Per-type enemy AI (inspired by `MoveObjectStepIcon` in Decor.cpp)
+### Task 1 — Per-type enemy AI (inspired by `MoveObjectStepIcon` in Decor.cpp)
 **Goal:** Bird (type 20) hovers at fixed Y and patrols horizontally; fish (type 17) patrols vertically; bulldozer (type 4) uses charge/turn; blupit (type 33) mirrors Blupi X direction.
 **Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp`
 **Reference:** `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp` — `MoveObjectStepIcon()`.
 **Verify:** Load world001.txt; enemies visually behave differently from each other.
 
-### Task 3 — "EXIT OPEN!" HUD popup
+### Task 2 — "EXIT OPEN!" HUD popup
 **Goal:** When all treasures collected, show timed text "EXIT OPEN!" for ~3 s.
 **Files:** `src/GalaxyEggbertSimple3D/Game/GEHud.cpp/hpp`, `GalaxyEggbertSimpleGame.cpp`
 **Verify:** Collect all treasures; popup appears and disappears after a few seconds.
 
-### Task 4 — ObjectType12 crate push mechanic
+### Task 3 — ObjectType12 crate push mechanic
 **Goal:** Walking into a crate pushes it one tile horizontally (inspired by Decor.cpp crate logic).
 **Files:** `src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp`
 **Reference:** `mobile-eggbert Decor.cpp` — ObjectType12 handling in `MoveObjectStepIcon`.
 **Verify:** Walk into a crate; it slides one tile in the push direction.
 
-### Task 5 — Ventilator/fan tile animation
+### Task 4 — Ventilator/fan tile animation
 **Goal:** Icons 126-137 (fan up/down/left/right) animate using `table_decor_ventillog/d/h/b` (3 frames each).
 **Files:** `include/GalaxyEggbert/BlockTypes.hpp` (add Vent* constants + `tileAnimBase` ranges), `src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp` (add kAnimVent* tables).
 **Reference:** `mobile-eggbert Tables.cpp` — `table_decor_ventillog[3]` = {126,127,128}.
 **Verify:** Load a level with fan tiles; they animate at 6 fps.
 
-### Task 6 — Camera shake
+### Task 5 — Camera shake
 **Goal:** `GECameraRig::StartShake()` produces visible camera jitter for ~0.3 s on death/hit.
 **Files:** `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; possibly add `Game::OffsetCamera()` or position-jitter to Simple3D.
 **Verify:** Trigger a death; camera shakes briefly.
 
-### Task 7 — Fix ctest discovery
+### Task 6 — Fix ctest discovery
 **Goal:** `ctest --test-dir cmake-build-debug` discovers and runs the 54 world tests.
 **Files:** `CMakeLists.txt` — investigate `gtest_discover_tests` issue in the debug profile.
 **Verify:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.

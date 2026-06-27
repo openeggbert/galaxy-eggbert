@@ -32,17 +32,16 @@ static const float kVolumePitch[200] = {
 };
 
 void GESound::Play(SoundChannel channel, bool loop) {
-    (void)loop; // loop not yet supported via Game::PlaySound(channel) — no-op
     if (!enabled_ || !game_) return;
     int idx = static_cast<int>(ToRaw(channel));
     if (idx < 0 || idx >= kNumChannels) return;
     // Channel 10 always restarts; all other channels don't interrupt if already playing
-    if (channel != SoundChannel::SoundChannel10 && game_->IsChannelPlaying(idx)) return;
+    if (channel != SoundChannel::SoundChannel10 && !loop && game_->IsChannelPlaying(idx)) return;
     float vol = (idx * 2 < static_cast<int>(sizeof(kVolumePitch) / sizeof(float)))
                 ? kVolumePitch[idx * 2] : 1.0f;
     char path[48];
     std::snprintf(path, sizeof(path), "sounds/sound%03d.wav", idx);
-    game_->PlaySound(path, vol, idx);
+    game_->PlaySound(path, vol, idx, loop);
 }
 
 void GESound::Stop(SoundChannel channel) {
