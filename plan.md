@@ -48,7 +48,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [x] MENU-006 — Render `init.png` as full-screen background
 - [x] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from top on enter, ease-out quadratic over 1 s
 - [x] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (0.5→1.0 with fade-in) over 1 s
-- [ ] MENU-009 — Three gamer-slot buttons (A / B / C): render from `button.png` sprite sheet, correct position
+- [x] MENU-009 — Three gamer-slot buttons (A / B / C): render from `pad.png` (cell 140×140), correct screen positions, selected slot highlighted with alternate icon
 - [ ] MENU-010 — Each gamer slot shows: name ("Gamer A/B/C"), lives count, main doors opened, secondary doors opened (text next to button, 0.7 scale)
 - [ ] MENU-011 — "PLAY" button (`InitPlay` glyph) with label below
 - [ ] MENU-012 — "SETUP" button (`InitSetup` glyph) with label to the right

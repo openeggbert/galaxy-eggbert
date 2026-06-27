@@ -23,7 +23,7 @@ public:
 
     void ShowLost(int worldNum, const std::string& worldName);
     void ShowPause(int score, float levelTime);
-    void ShowInit(const std::string& text);
+    void ShowInit(const std::string& text, int selectedSlot = 0);
     void ShowSettings(bool soundOn, bool fromPause);
     void ShowHitFlash();
     void Update(float dt);
@@ -37,6 +37,7 @@ private:
     Simple3D::UI::Image* menuBg_           = nullptr;  // full-screen menu background; created first
     Simple3D::UI::Image* speedyblupiLogo_  = nullptr;
     Simple3D::UI::Image* blupiyoupieLogo_  = nullptr;
+    Simple3D::UI::Image* gamerSlotBtns_[3] = {};
     Simple3D::Label*     main_             = nullptr;
     Simple3D::Label*     overlay_          = nullptr;
     Simple3D::Label*     hint_             = nullptr;

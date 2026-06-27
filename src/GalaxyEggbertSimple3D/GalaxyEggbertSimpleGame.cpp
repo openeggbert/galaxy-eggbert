@@ -104,7 +104,7 @@ void GalaxyEggbertSimpleGame::EnterPhase(GamePhase next) {
 
     switch (next) {
         case GamePhase::Init:
-            hud_.ShowInit(BuildInitText());
+            hud_.ShowInit(BuildInitText(), gamerSlot_ - 1);
             break;
         case GamePhase::Play:
             controlsHintTimer_ = 8.0f;
@@ -280,7 +280,7 @@ void GalaxyEggbertSimpleGame::AdvanceToNextWorld() {
 
 void GalaxyEggbertSimpleGame::UpdateInit(float dt) {
     (void)dt;
-    hud_.ShowInit(BuildInitText());
+    hud_.ShowInit(BuildInitText(), gamerSlot_ - 1);
 
     for (int slot = 1; slot <= 3; ++slot) {
         Key k = (slot == 1) ? Key::Num1 : (slot == 2) ? Key::Num2 : Key::Num3;

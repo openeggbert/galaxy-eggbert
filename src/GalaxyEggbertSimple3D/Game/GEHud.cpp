@@ -55,6 +55,19 @@ void GEHud::Create(Game& game) {
     blupiyoupieLogo_->SetColor(Color(1.0f, 1.0f, 1.0f, 0.0f));
     blupiyoupieLogo_->SetVisible(false);
 
+    // Gamer slot buttons: pad.png, cell 140×140.
+    // Positions scaled from 640×480 → 1280×720 (factor 2×/1.5×).
+    // buttonSizeFactor2 = 720*140/480 = 210; size = 105×105.
+    static const int kSlotY[3] = { 259, 364, 469 };
+    for (int i = 0; i < 3; ++i) {
+        gamerSlotBtns_[i] = game.CreateImage("icons/pad.png");
+        gamerSlotBtns_[i]->SetImageRect((4 + i) * 140, 0, 140, 140);
+        gamerSlotBtns_[i]->SetSize(105, 105);
+        gamerSlotBtns_[i]->SetAnchor(Anchor::TopLeft);
+        gamerSlotBtns_[i]->SetPosition(20, kSlotY[i]);
+        gamerSlotBtns_[i]->SetVisible(false);
+    }
+
     main_ = game.CreateLabel("");
     main_->SetPosition(12, 12);
     main_->SetFontSize(14);
@@ -127,6 +140,8 @@ void GEHud::HideInitLogos() {
     initAnimActive_ = false;
     if (speedyblupiLogo_)  speedyblupiLogo_->SetVisible(false);
     if (blupiyoupieLogo_)  blupiyoupieLogo_->SetVisible(false);
+    for (int i = 0; i < 3; ++i)
+        if (gamerSlotBtns_[i]) gamerSlotBtns_[i]->SetVisible(false);
 }
 
 void GEHud::Update(float dt) {
@@ -302,7 +317,7 @@ static void HidePlayHud(Simple3D::UI::Image* gauge,
     if (overflow) overflow->SetVisible(false);
 }
 
-void GEHud::ShowInit(const std::string& text) {
+void GEHud::ShowInit(const std::string& text, int selectedSlot) {
     if (!overlay_) return;
     main_->SetVisible(false);
     hint_->SetVisible(false);
@@ -315,6 +330,16 @@ void GEHud::ShowInit(const std::string& text) {
         initAnimActive_ = true;
         if (speedyblupiLogo_) { speedyblupiLogo_->SetPosition(0, -240); speedyblupiLogo_->SetVisible(true); }
         if (blupiyoupieLogo_) { blupiyoupieLogo_->SetSize(410, 285);    blupiyoupieLogo_->SetColor(Color(1,1,1,0)); blupiyoupieLogo_->SetVisible(true); }
+        for (int i = 0; i < 3; ++i)
+            if (gamerSlotBtns_[i]) gamerSlotBtns_[i]->SetVisible(true);
+    }
+    // Update selected gamer slot highlight (normal icon 4/5/6, selected 16/17/18).
+    for (int i = 0; i < 3; ++i) {
+        if (!gamerSlotBtns_[i]) continue;
+        bool sel = (i == selectedSlot);
+        int ix = sel ? i * 140 : (4 + i) * 140;
+        int iy = sel ? 280 : 0;
+        gamerSlotBtns_[i]->SetImageRect(ix, iy, 140, 140);
     }
     overlay_->SetText(text);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
