@@ -6,7 +6,25 @@
 It is implemented in C++ using the **Urho3D API** with **U3D** (`u3d-community/U3D`) as the reference backend.
 Nova3D (the user's own Urho3D fork) will replace U3D once it fully implements the same API.
 
-**Faithful remake rule:** Galaxy Eggbert must only implement gameplay features that exist in mobile-eggbert. Do not invent new mechanics (time bonuses, star ratings, coyote time, combo multipliers, etc.) unless they are present in mobile-eggbert. The 3D dimension allows natural adaptations (camera, step-up traversal, shadow, billboard sprites) but the game logic must mirror mobile-eggbert.
+## CRITICAL RULE — Faithful Remake
+
+**Galaxy Eggbert is a faithful 3D remake of mobile-eggbert. Nothing more.**
+
+Before suggesting or implementing ANY feature, verify it exists in mobile-eggbert first.
+If it is not in mobile-eggbert, do NOT implement it and do NOT suggest it.
+
+Examples of things that must NOT be added (do not exist in mobile-eggbert):
+- Coins / mince
+- Time bonuses / star ratings
+- Coyote time / wall jump / double jump
+- Combo multipliers
+- Any mechanic invented by Claude
+
+The 3D dimension allows only natural technical adaptations: perspective camera, billboard sprites,
+shadow, step-up traversal. Game logic, objects, enemies, and pickups must mirror mobile-eggbert exactly.
+
+When suggesting next tasks after completing work, only suggest tasks that port features
+already verified to exist in mobile-eggbert (`/rv/data/development/github.com/openeggbert/mobile-eggbert`).
 
 Engine backend is selected at CMake configure time:
 ```
