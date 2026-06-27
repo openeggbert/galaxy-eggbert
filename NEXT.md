@@ -6,7 +6,6 @@
 
 - **Faithful remake rule:** Only implement what exists in mobile-eggbert. No invented mechanics.
 - Sole build target: `GalaxyEggbertSimple3D` — built against `simple-3d` (which wraps U3D/Urho3D).
-- The legacy Urho3D-direct target `GalaxyEggbert` was removed in S3D-9.
 - **Backend layering:** `galaxy-eggbert game code → Simple3D API → U3D (Urho3D fork)`.
   Nova3D can replace U3D in the future by changing only Simple3D's cmake linkage — zero changes in galaxy-eggbert.
 - World format: identical to mobile-eggbert `.txt` files (`worlds/world001.txt` … `world005.txt`).
@@ -23,37 +22,33 @@
 - `cmake-build-debug/GalaxyEggbertWorldsTests` — **54/54 tests pass** (run directly; ctest discovery broken).
 
 ### What works
-- World loading from mobile-eggbert `.txt` format (5 worlds).
-- 3D terrain rendered as cubes with tile textures from `object-m.png`.
-- Animated tiles: lava (8-frame), crusher (10-frame), saw (6-frame), spike (16-frame), water1/2 (6-frame) — exact frame tables from `mobile-eggbert Tables.cpp`.
+- World loading from mobile-eggbert `.txt` format.
+- 3D terrain rendered as cubes with tile textures from `object-m.png` using `Techniques/DiffUnlit.xml` (no hard-edge lighting seam).
+- Animated tiles: lava (8-frame), crusher (10-frame), saw (6-frame), spike (16-frame), water1/2 (6-frame), fan (3-frame per direction), marine (11-frame), temp (20-frame) — exact frame tables from `mobile-eggbert Tables.cpp`.
 - Blupi billboard sprite from `blupi.png` with state machine (Stop/March/Jump/Air/Down/Up) and exact frame tables from `table_blupi`.
 - Mobile object billboards from `element.png` with per-type animation (keys, treasure, shield, egg, drink, exit, enemies, platforms).
-- Ventilator/fan tiles (icons 126–137) animated at 6 fps — 3-frame tables per direction (FanLeft/Right/Up/Down) in `GETerrainRenderer`.
-- Vertical platform (type 16) movement fixed — `GEDecorSystem` patrol now uses 3D distance (X+Y+Z), not 2D (X+Z).
-- "EXIT OPEN!" HUD popup — green text, 3 s (0.3 s fade-in / hold / 0.5 s fade-out), already fully implemented.
-- ObjectType12 crate push — sprite (element.png icon 32), proximity+velocity detection, floor support check, 0.4 s cooldown, no push off a cliff or into another crate.
-- Tile hazard detection: lava/spike/saw instant kill; crusher kills only in phases 5-9 of 10-frame animation cycle.
-- Enemy stomp: upward `BounceUp()` impulse on kill, score +25.
-- Respawn invincibility: 2 s after death with 10 Hz sprite flash; hazard/enemy-hit detection skipped.
-- Pickup system: treasure counting, exit gate opens when all collected, bonus life on gate open.
+- ObjectType12 crate: renders with sprite (element.png icon 32) and can be pushed one tile horizontally; floor support check prevents pushing off cliffs; 0.4 s cooldown.
+- Vertical platform (type 16): patrol uses 3D distance (X+Y+Z) so it now correctly moves up/down.
+- Tile hazard detection: lava/spike/saw instant kill; crusher kills only in phases 5-9.
+- Enemy stomp: `BounceUp()` impulse on kill, score +25.
+- Respawn invincibility: 2 s after death with 10 Hz sprite flash.
+- Pickup system: treasure counting, exit gate opens when all collected (+1 life bonus).
 - Key pickups (red/green/blue), shield pickup (5 s timer), egg/drink (+1 life).
-- HUD: lives, world, treasure count, key icons, shield timer, level timer, score, game speed indicator, controls hint.
-- Save/load: 3 gamer slots (lives, world, best score) + sound settings, persisted via `Simple3D::SaveData`.
-- Sound: 93 channels, per-channel volume (from `tableVolumePitch`), correct WAV paths.
+- "EXIT OPEN!" HUD popup: green text, 3 s (0.3 s fade-in / hold / 0.5 s fade-out).
+- HUD: lives, world, treasure count, key icons, shield timer, level timer, score, game speed, controls hint.
+- Save/load: 3 gamer slots (lives, world, best score) + sound settings via `Simple3D::SaveData`.
+- Sound: 93 channels, per-channel volume (from `tableVolumePitch`), correct WAV paths, loop support.
 - Camera: 3rd-person orbit following Blupi via `GECameraRig`.
 - Physics: `CharacterController` + gravity + jump + glide (RShift).
 - Game phases: Init (slot select) → Play → Pause → Win → Lost → Settings.
 - 5 sky colours (one per world region) via `SetClearColor`.
-- Resource loading: `Content/` registered via `Game::AddResourceDir("Content")` — icons and sounds load correctly.
-- `GALAXY_EGGBERT_BUILD_SIMPLE3D` defaults to `ON` — CLion default profile works without extra flags.
+- Resource loading: `Content/` registered via `Game::AddResourceDir("Content")`.
 
 ### What does not work yet
-- Camera shake (`GECameraRig::StartShake` is a no-op — Simple3D has no shake API).
-- ~~Sound loop support~~ — implemented; `GESound::Play(loop=true)` now loops via `sound->SetLooped(loop)` in Simple3D.
-- ~~"EXIT OPEN!" popup text~~ — already fully implemented (GEHud::ShowExitOpen, 3 s fade).
-- ObjectType12 (crate) push mechanic — crate renders but cannot be pushed.
-- Sky fog/zone colour per world region (only clear colour changes, no fog).
-- Android and web builds (untested after S3D-9).
+- Camera shake: `GECameraRig::StartShake` is a no-op — Simple3D has no camera-offset API.
+- Sky fog/zone colour per world region — only clear colour changes, no distance fog.
+- `ctest` does not discover `GalaxyEggbertWorldsTests` (binary runs fine manually).
+- Android and web builds untested after S3D-9.
 
 ---
 
@@ -61,13 +56,12 @@
 
 | Commit | Change |
 |--------|--------|
-| (pending) | feat: sound loop support — `GESound::Play(loop=true)` + `Game::PlaySound(loop)` in Simple3D |
-| `869dceb` | fix: `AddResourceDir("Content")` in `Start()` — fixes white/blank tile textures |
-| `c129475` | fix: `GALAXY_EGGBERT_BUILD_SIMPLE3D` default changed to `ON` |
-| `89dd87a` | feat: tile animation (exact tables from Tables.cpp), respawn invincibility (2 s flash), stomp `BounceUp()` |
-| `af6434f` | feat: `BlupiAction` state machine, tile hazard detection from World data, 6 fps `animPhase_` counter |
-| `da6232c` | feat: S3D-9 — removed legacy Urho3D target; `src/GalaxyEggbert/Game/` deleted |
-| simple-3d `9cd38f7` | feat: `Game::AddResourceDir()` added to Simple3D public API |
+| `ac1d8d1` | feat: crate push (ObjectType12) + fix vertical platform patrol (3D dist) |
+| `396295a` | docs: strengthen faithful remake rule in CLAUDE.md (forbid coins etc.) |
+| `a3cd1df` | fix: half-pixel UV inset in tileUV(); raise decor entity Y to 1.05 |
+| `dd35277` | fix: revert to single Box entity per tile |
+| `4f50e0e` | feat: TILE-039/042/064 + VISUAL-011/012 + controls + camera |
+| simple-3d `f5ae0a9` | fix: use DiffUnlit technique in SetTileTexture to eliminate tile seams |
 
 ---
 
@@ -75,9 +69,7 @@
 
 **No single hard blocker** — game runs and is playable end-to-end.
 
-Note: mobile-eggbert enemies have **no per-type AI** — all patrol linearly between `posStart` and `posEnd` (`MoveObjectStepLine` in Decor.cpp). `MoveObjectStepIcon` only sets sprite frames. The only exception is ObjectType97 (homing bomb) which follows Blupi.
-
-The most visible remaining gap: **"EXIT OPEN!" popup** (no text shown when exit unlocks) and **ObjectType12 crate push** not implemented.
+Most visible remaining quality gap: **camera shake is a no-op**. Deaths and hazard hits have no visual impact. Simple3D currently exposes no camera-offset API, so adding shake requires either extending Simple3D's `Game` class with an `OffsetCamera()` call, or applying a position-jitter directly to the camera node inside `GECameraRig` (if the node is accessible).
 
 ---
 
@@ -86,14 +78,12 @@ The most visible remaining gap: **"EXIT OPEN!" popup** (no text shown when exit 
 | Status | Issue |
 |--------|-------|
 | confirmed | Camera shake is a no-op (`GECameraRig::StartShake` does nothing) |
-| fixed | Sound loop flag — implemented; looping sounds now loop correctly |
-| fixed | ObjectType12 crate — push mechanic + sprite implemented |
-| fixed | "EXIT OPEN!" popup — GEHud::ShowExitOpen() was already fully implemented |
 | confirmed | `ctest` does not discover `GalaxyEggbertWorldsTests` in cmake-build-debug (binary runs fine manually) |
 | incomplete | Sky fog/zone colour per world region — only `SetClearColor` changes |
 | unknown | Web (Emscripten) build untested after S3D-9 |
 | unknown | Android build untested |
 | needs verification | Stomp bounce height `kJumpSpeed * 0.65f` — matches mobile-eggbert feel? |
+| needs verification | Crate push floor-support check uses world tile at y=0; stacked crates (y=1) not tested |
 
 ---
 
@@ -108,7 +98,7 @@ GalaxyEggbertSimpleGame        — main game class (game phases, level lifecycle
   GETerrainRenderer            — spawns Box entities from World; Update(animPhase) refreshes animated tile UVs
   GEBlupiController            — Blupi entity: CharacterController, BlupiState machine, billboard sprite
   GEDecorSystem                — mobile objects: pickups (trigger sphere), enemies/platforms (patrol),
-                                  animation from GetObjIcon()
+                                  crate push, animation from GetObjIcon()
   GEHud                        — HUD overlay (Simple3D UI labels + panels)
   GECameraRig                  — 3rd-person camera following Blupi
   GESound                      — sound channel wrapper (93 channels, per-channel volume)
@@ -134,7 +124,7 @@ worlds/worldXXX.txt
 - **World coordinates:** world grid is 100×100; Blupi's 3D position uses offset `kWCX=50, kWCZ=50` to centre the grid at origin.
 - **animPhase_** in `GEWorldRuntime` ticks at 6 fps; used for crusher kill-phase check AND `GETerrainRenderer::Update()`.
 - **No `#ifdef GE_ENGINE_*`** anywhere. Engine differences belong in Simple3D, not in galaxy-eggbert.
-- **Faithful remake:** check `Decor.cpp` in mobile-eggbert before implementing any new gameplay behaviour.
+- **Faithful remake:** check `Decor.cpp` in mobile-eggbert before implementing any new gameplay behaviour. Mobile-eggbert enemies have NO per-type AI — all patrol linearly between `posStart` and `posEnd`; only ObjectType97 (homing bomb) tracks Blupi.
 - **RAM:** build with `-j2` maximum (32 GB RAM constraint; crashes with more parallel jobs).
 
 ### API boundaries that must remain stable
@@ -180,8 +170,9 @@ less /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhone
 Ordered by impact / faithfulness to mobile-eggbert:
 
 ### Task 1 — Camera shake
-**Goal:** `GECameraRig::StartShake()` produces visible camera jitter for ~0.3 s on death/hit.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; possibly add `Game::OffsetCamera()` or position-jitter to Simple3D.
+**Goal:** `GECameraRig::StartShake()` produces visible camera jitter for ~0.3 s on death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert.
+**Files:** `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; possibly add `Game::SetCameraPositionOffset()` or similar to `simple-3d/src/Simple3D/Game.cpp`.
+**Reference:** `mobile-eggbert Decor.cpp` — `m_decorAction = DecorAction::SmallShake`.
 **Verify:** Trigger a death; camera shakes briefly.
 
 ### Task 2 — Fix ctest discovery
@@ -195,7 +186,7 @@ Ordered by impact / faithfulness to mobile-eggbert:
 
 - **No Android or web build** until desktop gameplay faithfully matches mobile-eggbert.
 - **No Nova3D integration** — Simple3D backend switch belongs in the `simple-3d` repo. Wait until Nova3D implements the full Urho3D API.
-- **No new gameplay mechanics** not present in mobile-eggbert (no coyote time, combo multipliers, star ratings, time bonuses).
+- **No new gameplay mechanics** not present in mobile-eggbert (no coins, coyote time, combo multipliers, star ratings, time bonuses).
 - **No 3D character model** — billboard Blupi is correct for now; a real mesh requires asset work outside this repo.
 - **Do not touch `src/GalaxyEggbert/Worlds/`** unless fixing a data model bug confirmed by a failing unit test.
 - **Do not add `#ifdef GE_ENGINE_*`** anywhere — backend differences belong in Simple3D only.
