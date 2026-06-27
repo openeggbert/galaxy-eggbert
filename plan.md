@@ -45,7 +45,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ### 2.2 Phase: Init (main menu / gamer select)
 
-- [ ] MENU-006 — Render `init.png` as full-screen background
+- [x] MENU-006 — Render `init.png` as full-screen background
 - [ ] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from right on enter, matching mobile-eggbert `DrawBackgroundFade` animation (ease-in quadratic)
 - [ ] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (zoom from 0→1 quadratic)
 - [ ] MENU-009 — Three gamer-slot buttons (A / B / C): render from `button.png` sprite sheet, correct position
@@ -73,7 +73,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ### 2.4 Phase: Pause
 
-- [ ] MENU-028 — Render `pause.png` as full-screen background
+- [x] MENU-028 — Render `pause.png` as full-screen background
 - [ ] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190)
 - [ ] MENU-030 — "MENU" button (`PauseMenu`) with label below
 - [ ] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1
@@ -97,7 +97,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ### 2.6 Phase: Win
 
-- [ ] MENU-046 — Render `win.png` as full-screen background
+- [x] MENU-046 — Render `win.png` as full-screen background
 - [ ] MENU-047 — Render `blupiyoupie.png` with pulsating scale (sin wave animation, amplitude 1.0±0.5)
 - [ ] MENU-048 — "RETURN" button (`WinLostReturn`) → Init
 - [ ] MENU-049 — Display mission elapsed time in text overlay
@@ -107,7 +107,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ### 2.7 Phase: Lost (game over)
 
-- [ ] MENU-053 — Render `lost.png` as full-screen background
+- [x] MENU-053 — Render `lost.png` as full-screen background
 - [ ] MENU-054 — Render `blupiyoupie.png` with spin animation (6× rotation, quadratic ease-in, same as mobile-eggbert)
 - [ ] MENU-055 — "RETURN" button (`WinLostReturn`) → Init
 - [ ] MENU-056 — Display lives remaining and score
@@ -115,7 +115,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ### 2.8 Phase: MainSetup / PlaySetup (settings)
 
-- [ ] MENU-058 — Render `setup.png` as full-screen background
+- [x] MENU-058 — Render `setup.png` as full-screen background
 - [ ] MENU-059 — Render `speedyblupi.png` sliding in from left (ease-out quadratic)
 - [ ] MENU-060 — Render two rotating `gear.png` icons (one CW, one CCW, varying speeds)
 - [ ] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state

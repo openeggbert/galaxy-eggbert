@@ -20,7 +20,25 @@ static const int kKeyRects[3][4] = {
 
 static constexpr float kFlashDuration = 0.4f;
 
+void GEHud::SetMenuBackground(const std::string& bgPath) {
+    if (!menuBg_) return;
+    if (bgPath.empty()) {
+        menuBg_->SetVisible(false);
+        return;
+    }
+    menuBg_->SetTexture(bgPath);
+    menuBg_->SetSize(1280, 720);
+    menuBg_->SetVisible(true);
+}
+
 void GEHud::Create(Game& game) {
+    // Created first so it renders behind all other HUD elements.
+    menuBg_ = game.CreateImage("");
+    menuBg_->SetSize(1280, 720);
+    menuBg_->SetAnchor(Anchor::TopLeft);
+    menuBg_->SetPosition(0, 0);
+    menuBg_->SetVisible(false);
+
     main_ = game.CreateLabel("");
     main_->SetPosition(12, 12);
     main_->SetFontSize(14);
@@ -106,6 +124,7 @@ void GEHud::ShowPlay(int worldNum, const std::string& worldName,
                      float shieldSecs, float levelTime, int score,
                      float gameSpeed, bool showHint) {
     if (!main_) return;
+    SetMenuBackground("");
     overlay_->SetVisible(false);
     main_->SetVisible(true);
     hint_->SetVisible(showHint);
@@ -170,6 +189,7 @@ void GEHud::ShowWin(int worldNum, const std::string& worldName,
     int mins = static_cast<int>(levelTime) / 60;
     int secs = static_cast<int>(levelTime) % 60;
 
+    SetMenuBackground("backgrounds/win.png");
     char buf[256];
     std::snprintf(buf, sizeof(buf),
         "LEVEL COMPLETE!\n\nWorld %d: %s\nTreasures: %d/%d  Lives: %d  Time: %d:%02d\nScore: %d\n\nPress any key...",
@@ -190,6 +210,7 @@ void GEHud::ShowLost(int worldNum, const std::string& worldName) {
         if (keyIcons_[i]) keyIcons_[i]->SetVisible(false);
     if (livesOverflow_) livesOverflow_->SetVisible(false);
 
+    SetMenuBackground("backgrounds/lost.png");
     char buf[128];
     std::snprintf(buf, sizeof(buf),
         "GAME OVER\n\nWorld %d: %s\n\nPress any key...",
@@ -210,6 +231,7 @@ void GEHud::ShowPause(int score, float levelTime) {
         if (keyIcons_[i]) keyIcons_[i]->SetVisible(false);
     if (livesOverflow_) livesOverflow_->SetVisible(false);
 
+    SetMenuBackground("backgrounds/pause.png");
     int mins = static_cast<int>(levelTime) / 60;
     int secs = static_cast<int>(levelTime) % 60;
 
@@ -236,6 +258,7 @@ void GEHud::ShowInit(const std::string& text) {
     hint_->SetVisible(false);
     overlay_->SetVisible(true);
     HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
+    SetMenuBackground("backgrounds/init.png");
     overlay_->SetText(text);
     overlay_->SetColor(Color(1.0f, 0.92f, 0.4f));
 }
@@ -246,6 +269,7 @@ void GEHud::ShowSettings(bool soundOn, bool fromPause) {
     hint_->SetVisible(false);
     overlay_->SetVisible(true);
     HidePlayHud(gauge_, lifeIcons_, kMaxDisplayedLives, keyIcons_, livesOverflow_);
+    SetMenuBackground("backgrounds/setup.png");
     char buf[128];
     std::snprintf(buf, sizeof(buf),
         "Settings\n\nSound: %s\n\nS: toggle sound   ESC: %s",

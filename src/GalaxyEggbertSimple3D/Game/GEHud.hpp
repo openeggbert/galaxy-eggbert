@@ -29,7 +29,10 @@ public:
     void Update(float dt);
     void SetVisible(bool visible);
 
+    void SetMenuBackground(const std::string& bgPath);
+
 private:
+    Simple3D::UI::Image* menuBg_         = nullptr;  // full-screen menu background; created first
     Simple3D::Label*     main_           = nullptr;
     Simple3D::Label*     overlay_        = nullptr;
     Simple3D::Label*     hint_           = nullptr;
