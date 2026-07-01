@@ -2,38 +2,55 @@
 
 ## 0. Current direction (read this first)
 
-**Current active direction:** Direct CNA + Easy3D migration — skeleton target implemented.
+**Current active direction:** Direct CNA + Easy3D migration — skeleton target, asset path
+strategy, and world-file parsing implemented.
 
 **Current working implementation:** `GalaxyEggbertSimple3D` — unchanged, remains the buildable
 reference target. Sections 1–10 below describe it and stay accurate/current for that target.
 
 **`GalaxyEggbertCNA` skeleton status: builds and runs (2026-07-01).** See "§0a. GalaxyEggbertCNA
-skeleton status" immediately below for build commands, verification, and what it does and does
-not do yet.
+skeleton status" for build commands and verification.
 
-**Next recommended implementation task:** finalize and implement the asset path strategy for
-Mobile Eggbert assets/worlds (build-time copy, per `plan.md` E3D-MIG-013) — without modifying
-`../mobile-eggbert`. See `plan.md`, Phase 3 ("Asset path and Mobile Eggbert reuse").
+**Mobile Eggbert asset reuse: implemented (2026-07-01).** `Content/` and `worlds/` are now copied
+next to the `GalaxyEggbertCNA` binary at build time. See "§0b. Mobile Eggbert asset reuse status"
+for details.
+
+**World loading (Phase 4): implemented (2026-07-01).** `GalaxyEggbertCNA` now parses
+`worlds/world001.txt` into the shared `GalaxyEggbert::Worlds::World` at startup — parse only,
+nothing renders it yet. See "§0c. World loading status" for build commands, output, and the
+independent cross-check.
+
+**Next recommended implementation task:** Phase 5, "Easy3D terrain path" — this is the first
+phase that needs actual rendering, and per `easy3d.md` §7.3 Easy3D currently has **no renderer**
+(no CPU-side vertex builders, no CNA draw-call adapter for `CubeBatch`/`BillboardBatch`). Before
+writing terrain code, first resolve `plan.md` E3D-MIG-050 (where do the vertex builders/render
+adapters live: inside `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA`?) — this
+is flagged `[?]` (requires a decision) and is a bigger design question than the previous three
+phases. See `plan.md`, Phase 5.
 
 - `easy3d.md` — the migration analysis document (current Simple3D/Easy3D/mobile-eggbert state,
   target architecture, reuse strategy, risks, open questions).
 - `plan.md` — section "Direct CNA + Easy3D Migration" has the full task list (`E3D-MIG-*`).
 
 **Key unresolved decisions** (see `easy3d.md` §12 for full detail; tracked as `plan.md` tasks):
-- Asset strategy for mobile-eggbert assets — build-time copy recommended for the first
-  implementation, sibling-path runtime read considered as an optional later convenience
-  (`plan.md` E3D-MIG-013). **Decided, not yet implemented — this is the next task.**
+- Asset strategy for mobile-eggbert assets — **implemented**: build-time copy from
+  `../mobile-eggbert/Content` and `../mobile-eggbert/worlds` into the `GalaxyEggbertCNA` build
+  output (`plan.md` E3D-MIG-013/030).
 - Target/source-tree name — decided: `GalaxyEggbertCNA` / `src/GalaxyEggbertCNA/` / build option
   `GALAXY_EGGBERT_BUILD_CNA` (`plan.md` E3D-MIG-014). **Implemented.**
+- `ObjectType`/`SoundChannel` ID parity between galaxy-eggbert and mobile-eggbert — **resolved,
+  no mismatch found** (`plan.md` E3D-MIG-039, §0b below). No further action needed.
 - Whether mobile-eggbert should later gain a read-only library target for `Tables`/`Def`/
   `GameData`/`ObjectType`/`SoundChannel` (requires explicit user approval as a separate
   mobile-eggbert-side task), versus staying asset+reference-only (`plan.md` E3D-MIG-015).
 - Where Easy3D's CPU-side vertex builders and CNA render adapters should be implemented — inside
-  `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3/§12 Q5).
+  `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3/§12 Q5,
+  `plan.md` E3D-MIG-050). **Still open — blocks Phase 5.**
 
-**Do not start the CNA/Easy3D gameplay/world/asset port beyond the asset-strategy task above until
-that task is done and reviewed.** No content loading, world loading, terrain rendering, or Blupi
-rendering exists in `GalaxyEggbertCNA` yet — see §0a.
+**Do not start rendering (Phase 5+) speculatively beyond what's explicitly asked for next.**
+`GalaxyEggbertCNA` opens a window, clears the screen, copies mobile-eggbert assets next to itself,
+and parses one world file — no terrain rendering, no Blupi rendering, no HUD, no sound, no
+gameplay exists yet. See §0a/§0b/§0c.
 
 ## 0a. GalaxyEggbertCNA skeleton status
 
@@ -86,6 +103,111 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2
 **Not done / explicitly out of scope for this task:** no assets loaded, no worlds loaded, no
 terrain/Blupi rendering, no gameplay, no Lua, no renderer abstraction beyond the minimum shown
 above. See `plan.md` Phase 3 onward for what comes next.
+
+## 0b. Mobile Eggbert asset reuse status
+
+**Implemented 2026-07-01.** `plan.md` Phase 3 ("Asset path and Mobile Eggbert reuse"),
+`E3D-MIG-030`..`039`. `../mobile-eggbert` was only ever read from — nothing in it was modified.
+
+**What was added:** in the `GALAXY_EGGBERT_BUILD_CNA` block of the root `CMakeLists.txt`, a new
+`MOBILE_EGGBERT_HOME` cache variable (defaults to `../mobile-eggbert`, same pattern as
+`CNA_HOME`/`EASY3D_HOME`) and two `POST_BUILD` `add_custom_command(... COMMAND ${CMAKE_COMMAND} -E
+copy_directory ...)` steps on the `GalaxyEggbertCNA` target: one copies
+`${MOBILE_EGGBERT_HOME}/Content` and one copies `${MOBILE_EGGBERT_HOME}/worlds`, both landing next
+to the built binary (inside the git-ignored `build-cna/` directory — nothing from mobile-eggbert
+is committed). If either source directory is missing, CMake emits a `WARNING` and
+`GalaxyEggbertCNA` still builds (the code skeleton does not require the assets to exist).
+
+**Build commands used:** the same as §0a — the copy happens automatically as a post-build step of
+the existing `GalaxyEggbertCNA` target, no new command needed:
+```bash
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2
+```
+
+**Verification (2026-07-01, this sandbox):**
+- `build-cna/Content/` and `build-cna/worlds/` exist next to the binary after build.
+- `Content/icons/*.png`: 9/9 present (`blupi.png`, `blupi1.png`, `button.png`, `element.png`,
+  `explo.png`, `jauge.png`, `object-m.png`, `pad.png`, `text.png`) — spot-checked the six named in
+  `plan.md` Phase 3 explicitly (`blupi.png`, `object-m.png`, `element.png`, `pad.png`,
+  `jauge.png`, `explo.png`).
+- `Content/sounds/*.wav`: 93/93 present.
+- `worlds/*.txt`: 78/78 present; `world001.txt` verified byte-identical to
+  `../mobile-eggbert/worlds/world001.txt` via `diff -q`.
+- `Content/icons4x/` and `Content/backgrounds/` (incl. `backgrounds4x/`) were copied too as part
+  of the wholesale `Content/` copy — not required yet, but harmless and available for later.
+- `git status --short build-cna/` confirms nothing under the copy destination is tracked by git.
+
+**`ObjectType`/`SoundChannel` ID parity cross-check (`E3D-MIG-039`) — resolved, no mismatch:**
+compared galaxy-eggbert's `include/GalaxyEggbert/def/ObjectType.hpp` and `SoundChannel.hpp`
+against mobile-eggbert's `include/WindowsPhoneSpeedyBlupi/decor/ObjectType.hpp` and
+`def/SoundChannel.hpp` by extracting and diffing the full numeric ID sets (not a visual
+spot-check): `ObjectType` — both declare the identical 204 IDs (0–203, same gaps).
+`SoundChannel` — both declare 0–92 identically. No changes were made to either repository; none
+were needed.
+
+**Not done / explicitly out of scope (as of §0b):** nothing in `GalaxyEggbertCNA` code reads,
+loads, parses, or renders any file under `Content/` or `worlds/` yet. That starts with Phase 4
+(world loading — done, see §0c below) and continues through Phase 5+ (terrain/Blupi rendering,
+sound).
+
+## 0c. World loading status
+
+**Implemented 2026-07-01.** `plan.md` Phase 4 ("World loading"), `E3D-MIG-040`..`043`.
+
+**What was added:**
+- `GE_SHARED_SOURCES` (the engine-agnostic `Worlds` sources — `BinaryIO.cpp`, `BitPacking.cpp`,
+  `Chunk.cpp`, `World.cpp`) was hoisted from inside the `GALAXY_EGGBERT_BUILD_SIMPLE3D` CMake
+  block to top-level scope in `CMakeLists.txt`, so `GalaxyEggbertCNA` can reuse the exact same
+  list instead of duplicating it.
+- New `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp` (namespace `GalaxyEggbert::CNA`) — a
+  minimal mobile-eggbert `.txt` world-file parser. Modeled on (same header/`Decor:`/`MoveObject:`
+  line handling, same `BlockTypes::fromMobileIconId` + `World::setBlock` usage) but **not copied
+  from** `GESimple3D::GEWorldRuntime` — written independently, and deliberately smaller: no
+  `MobileObjSpec`/object parsing (that belongs to Phase 7), no Simple3D types anywhere.
+- `GalaxyEggbertCnaGame::LoadContent()` now calls
+  `worldRuntime_.LoadFromMobileEggbertFile("worlds/world001.txt")` and prints a one-line
+  diagnostic summary (spawn tile, sky region, non-air block count) to stdout. **Parse only** —
+  nothing reads `GetWorld()` for rendering.
+- `GalaxyEggbertCNA`'s `target_include_directories` gained `include/` (needed for
+  `<GalaxyEggbert/Worlds/World.hpp>` etc.).
+
+**Build commands used:** unchanged from §0a/§0b — the same `cmake --build build-cna --target
+GalaxyEggbertCNA -j2` now also compiles the new sources and prints the world-load result on run.
+
+**Results (verified 2026-07-01, this sandbox):**
+- `GalaxyEggbertCNA` builds successfully with the new `Game/GEWorldRuntime.cpp` and the four
+  shared `Worlds` sources linked in.
+- Ran the binary (`timeout 3s ./build-cna/GalaxyEggbertCNA`) and captured stdout:
+  ```
+  GalaxyEggbertCNA: loaded worlds/world001.txt — spawn tile (12, 92), sky region 0, 594 non-air blocks.
+  ```
+- **`GalaxyEggbertSimple3D` and `GalaxyEggbertWorldsTests` re-verified unaffected** after the
+  `GE_SHARED_SOURCES` CMake refactor: `cmake -S . -B build && cmake --build build -j2` builds both
+  clean; `ctest --test-dir build --output-on-failure` — 54/54 pass.
+
+**`E3D-MIG-042` cross-check — stated honestly:** this is cross-checked against an **independent
+Python re-implementation** of the parser, not a live re-run of the `GalaxyEggbertSimple3D` binary.
+Reasoning: modifying Simple3D to add diagnostic output is against the standing hard rule (do not
+modify `src/GalaxyEggbertSimple3D/`), and Simple3D's own `GEWorldRuntime::LoadFromMobileEggbertFile()`
+already calls the exact same shared `World`/`BlockTypes` code as the new CNA parser, so a second
+C++ run through that shared code would not be a genuinely independent check anyway. Instead, a
+throwaway script (not committed — scratch-space only) mechanically **extracts** the
+`kPassable[441]` transparency table straight out of `BlockTypes.hpp` via regex (not hand-copied,
+to avoid a transcription bug) and reimplements the header + Decor-grid parsing in Python with
+different control flow, run against the real `build-cna/worlds/world001.txt`:
+```
+[python cross-check] spawn tile: (12, 92)
+[python cross-check] sky region: 0
+[python cross-check] raw non-zero Decor cells: 612
+[python cross-check] non-air blocks after BlockTypes filtering: 594
+```
+**Exact match** against `GalaxyEggbertCNA`'s own printed output (spawn tile, region, and non-air
+block count all identical). The raw-cell count (612, before transparency filtering) is a new data
+point confirming the grid-parsing/indexing itself (not just the shared filter table) is correct.
+
+**Not done / explicitly out of scope:** no `MoveObject:` (object/enemy/pickup) parsing (Phase 7),
+no rendering of any kind (Phase 5/6), no gameplay.
 
 ---
 

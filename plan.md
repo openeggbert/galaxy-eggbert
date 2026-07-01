@@ -87,23 +87,44 @@ solid color.
 
 ### Phase 3 — Asset path and Mobile Eggbert reuse
 
-- [ ] E3D-MIG-030 — Implement the asset path strategy decided in E3D-MIG-013.
-- [ ] E3D-MIG-031 — Reuse `Content/icons/blupi.png`.
-- [ ] E3D-MIG-032 — Reuse `Content/icons/object-m.png`.
-- [ ] E3D-MIG-033 — Reuse `Content/icons/element.png`.
-- [ ] E3D-MIG-034 — Reuse `Content/icons/pad.png`.
-- [ ] E3D-MIG-035 — Reuse `Content/icons/jauge.png`.
-- [ ] E3D-MIG-036 — Reuse `Content/icons/explo.png`.
-- [ ] E3D-MIG-037 — Reuse `Content/sounds/soundNNN.wav` (93 files).
-- [ ] E3D-MIG-038 — Reuse `worlds/worldXXX.txt` (78 files).
-- [ ] E3D-MIG-039 — `[?]` Cross-check galaxy-eggbert's existing `include/GalaxyEggbert/def/ObjectType.hpp` and `SoundChannel.hpp` against mobile-eggbert's versions for exact ID parity (`easy3d.md` §12 Q4).
+**Done (2026-07-01).** Full verification recorded in `NEXT.md` §0b. mobile-eggbert was only read
+from, never modified.
+
+- [x] E3D-MIG-030 — Implemented the asset path strategy decided in E3D-MIG-013: `GalaxyEggbertCNA`'s
+  `CMakeLists.txt` block now copies `../mobile-eggbert/Content/` and `../mobile-eggbert/worlds/`
+  next to the built binary via a `POST_BUILD` `copy_directory` command (new `MOBILE_EGGBERT_HOME`
+  cache variable, defaults to `../mobile-eggbert`, mirroring the existing `CNA_HOME`/`EASY3D_HOME`
+  pattern). The copy destination is inside the git-ignored `build-cna/` output directory — nothing
+  from mobile-eggbert is committed into this repository. Missing source directories produce a
+  `WARNING`, not a hard failure (the code skeleton still builds without assets present).
+- [x] E3D-MIG-031 — Reuse `Content/icons/blupi.png`. Copied wholesale with the rest of `Content/icons/` (verified present).
+- [x] E3D-MIG-032 — Reuse `Content/icons/object-m.png`. Copied wholesale (verified present).
+- [x] E3D-MIG-033 — Reuse `Content/icons/element.png`. Copied wholesale (verified present).
+- [x] E3D-MIG-034 — Reuse `Content/icons/pad.png`. Copied wholesale (verified present).
+- [x] E3D-MIG-035 — Reuse `Content/icons/jauge.png`. Copied wholesale (verified present).
+- [x] E3D-MIG-036 — Reuse `Content/icons/explo.png`. Copied wholesale (verified present).
+- [x] E3D-MIG-037 — Reuse `Content/sounds/soundNNN.wav` (93 files). Verified: 93/93 present after build.
+- [x] E3D-MIG-038 — Reuse `worlds/worldXXX.txt` (78 files). Verified: 78/78 present after build, `world001.txt` byte-identical to mobile-eggbert's copy (`diff -q`).
+- [x] E3D-MIG-039 — Cross-checked galaxy-eggbert's `include/GalaxyEggbert/def/ObjectType.hpp` and
+  `SoundChannel.hpp` against mobile-eggbert's `decor/ObjectType.hpp` and `def/SoundChannel.hpp`.
+  **Result: exact ID parity, no mismatches.** `ObjectType`: both sides declare the identical set of
+  204 numeric IDs (0–203, with the same internal gaps). `SoundChannel`: both sides declare 0–92
+  identically. Verified programmatically (extracted and diffed the full numeric ID sets, not just
+  spot-checked) — not just visual inspection. **No action needed; nothing was changed in either
+  repository.**
+
+Note: only `Content/` and `worlds/` are made available on disk next to `GalaxyEggbertCNA`.
+Nothing in `GalaxyEggbertCNA` code loads, parses, or renders any of these files yet — that starts
+in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
 
 ### Phase 4 — World loading
 
-- [ ] E3D-MIG-040 — Confirm `GalaxyEggbert::Worlds` loader (already engine-agnostic) links into `GalaxyEggbertCNA` unchanged.
-- [ ] E3D-MIG-041 — Load a real mobile-eggbert `worldNNN.txt` file end-to-end in the new target (parse only, no render yet).
-- [ ] E3D-MIG-042 — Cross-check parsed grid dimensions/tile codes against a Simple3D-loaded run of the same world file for a sanity diff.
-- [ ] E3D-MIG-043 — Minimal world runtime (`GEWorldRuntime`-equivalent) for the CNA/Easy3D target, modeled on but not copied from the Simple3D version.
+**Done (2026-07-01).** Full verification recorded in `NEXT.md` §0c.
+
+- [x] E3D-MIG-040 — Confirmed `GalaxyEggbert::Worlds` (the engine-agnostic `include/GalaxyEggbert/Worlds/` + `src/GalaxyEggbert/Worlds/` tree) links into `GalaxyEggbertCNA` unchanged. `GE_SHARED_SOURCES` was hoisted from inside the `GALAXY_EGGBERT_BUILD_SIMPLE3D` block to top-level `CMakeLists.txt` scope so both targets reuse the same source list; `GalaxyEggbertSimple3D` re-verified unaffected after the move (54/54 `GalaxyEggbertWorldsTests` still pass).
+- [x] E3D-MIG-041 — `GalaxyEggbertCnaGame::LoadContent()` loads `worlds/world001.txt` end-to-end (parse only — nothing renders it). Verified by running the binary: `spawn tile (12, 92), sky region 0, 594 non-air blocks`.
+- [x] E3D-MIG-042 — Cross-checked parsed grid dimensions/tile codes. **Caveat, stated honestly:** this was cross-checked against an independent from-scratch Python re-implementation of the parser (spawn tile, sky region, raw grid cell count, and the `BlockTypes::kPassable` filtering), not a live re-run of the `GalaxyEggbertSimple3D` binary — modifying Simple3D to add diagnostic output was out of scope (hard rule: do not modify `src/GalaxyEggbertSimple3D/`), and Simple3D's existing `GEWorldRuntime::LoadFromMobileEggbertFile()` uses the identical shared `World`/`BlockTypes` code already, so a second C++ run would not be a truly independent check. The Python script mechanically extracts the `kPassable[441]` table from `BlockTypes.hpp` (not hand-transcribed) and reimplements the header + grid parsing with different control flow, run against the real `build-cna/worlds/world001.txt`. Result: **exact match** — spawn tile `(12, 92)`, sky region `0`, `594` non-air blocks (out of `612` raw non-zero Decor cells before transparency filtering) on both sides.
+- [x] E3D-MIG-043 — Minimal `GEWorldRuntime` for CNA: `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`, namespace `GalaxyEggbert::CNA`. Modeled on (header/region parsing shape, `Decor:`/`MoveObject:` line handling, `BlockTypes::fromMobileIconId` + `World::setBlock` usage) but not copied from `GESimple3D::GEWorldRuntime` — independently written, smaller (no `MobileObjSpec`/object parsing, that's Phase 7; no Simple3D types).
 
 ### Phase 5 — Easy3D terrain path
 

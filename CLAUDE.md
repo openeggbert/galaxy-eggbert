@@ -58,6 +58,9 @@ Rules for this direction:
 - Do not add Lua unless explicitly requested by the user.
 - Do not add MeshCraft, Mesh World, Nova3D, or further Simple3D features back into the active
   target path.
+- `../simple-3d` may be **read** freely when actually needed (e.g. to check an API signature
+  while touching `GalaxyEggbertSimple3D`) — do not read it reflexively/speculatively, only when
+  the task at hand genuinely requires it. **Never modify `../simple-3d`.**
 
 ## CRITICAL RULE — Faithful Remake
 

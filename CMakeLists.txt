@@ -17,6 +17,15 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Engine-independent shared sources (no Urho3D/Simple3D/CNA dependencies).
+# Shared by every game target — Simple3D, CNA, and the engine-agnostic test suite.
+set(GE_SHARED_SOURCES
+    src/GalaxyEggbert/Worlds/BinaryIO.cpp
+    src/GalaxyEggbert/Worlds/BitPacking.cpp
+    src/GalaxyEggbert/Worlds/Chunk.cpp
+    src/GalaxyEggbert/Worlds/World.cpp
+)
+
 # =============================================================================
 # Simple3D port target — GalaxyEggbertSimple3D
 #
@@ -54,14 +63,6 @@ if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
     add_subdirectory("${SIMPLE3D_HOME}" Simple3D_dep)
 
     set(BUILD_TESTING "${_s3d_save_BUILD_TESTING}" CACHE BOOL "" FORCE)
-
-    # Engine-independent shared sources (no Urho3D dependencies).
-    set(GE_SHARED_SOURCES
-        src/GalaxyEggbert/Worlds/BinaryIO.cpp
-        src/GalaxyEggbert/Worlds/BitPacking.cpp
-        src/GalaxyEggbert/Worlds/Chunk.cpp
-        src/GalaxyEggbert/Worlds/World.cpp
-    )
 
     # New Simple3D-specific sources.
     set(GE_SIMPLE3D_SOURCES
@@ -218,9 +219,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     add_executable(GalaxyEggbertCNA
         src/GalaxyEggbertCNA/main.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp
+        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        ${GE_SHARED_SOURCES}
     )
 
     target_include_directories(GalaxyEggbertCNA PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
     )
 
@@ -259,6 +263,42 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     if(TARGET SDL3::SDL3main)
         target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3main)
+    endif()
+
+    # -------------------------------------------------------------------
+    # Mobile Eggbert asset reuse (plan.md E3D-MIG-013/030 — decided strategy)
+    #
+    # mobile-eggbert is read-only: its Content/ and worlds/ directories are
+    # copied next to the GalaxyEggbertCNA binary at build time, never
+    # modified, and never committed into this repository (the destination
+    # is inside the git-ignored build output directory). This makes the
+    # sprite sheets, sounds, and world files available on disk for later
+    # phases (terrain/Blupi rendering, sound, world loading) — nothing in
+    # GalaxyEggbertCNA loads or reads them yet.
+    # -------------------------------------------------------------------
+    set(MOBILE_EGGBERT_HOME "" CACHE PATH
+        "Path to the mobile-eggbert source directory (read-only asset source). Defaults to ../mobile-eggbert.")
+    if(NOT MOBILE_EGGBERT_HOME)
+        set(MOBILE_EGGBERT_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../mobile-eggbert")
+    endif()
+
+    if(NOT EMSCRIPTEN AND NOT ANDROID)
+        foreach(_me_dir Content worlds)
+            if(EXISTS "${MOBILE_EGGBERT_HOME}/${_me_dir}")
+                add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${MOBILE_EGGBERT_HOME}/${_me_dir}"
+                        "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/${_me_dir}"
+                    COMMENT "Copying mobile-eggbert ${_me_dir}/ next to GalaxyEggbertCNA (read-only source, not committed)"
+                )
+            else()
+                message(WARNING
+                    "GalaxyEggbertCNA: mobile-eggbert ${_me_dir}/ not found at "
+                    "'${MOBILE_EGGBERT_HOME}/${_me_dir}'. GalaxyEggbertCNA will still build, but "
+                    "will have no ${_me_dir}/ next to it. Set -DMOBILE_EGGBERT_HOME=<path> if "
+                    "mobile-eggbert lives elsewhere.")
+            endif()
+        endforeach()
     endif()
 
     message(STATUS "GalaxyEggbertCNA target enabled (skeleton — no gameplay yet).")
