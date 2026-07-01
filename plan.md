@@ -193,6 +193,14 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
 - [ ] E3D-MIG-123 — Optional Easy3D renderer polish, once the minimal adapters from Phase 5/6 exist.
 - [ ] E3D-MIG-124 — None of the above are part of the first playable migration.
 
+**Decided (2026-07-01, rejected — do not revisit without explicit user request):** no
+`mobile-eggbert .txt → galaxy-eggbert .vwr` auto-converter tool. Mobile-eggbert levels are flat
+(Y=0); mechanically expanding that into `.vwr`'s native 3D format produces a mostly-empty,
+unplayable shape — "a curiosity, not something to play." The existing pattern (parse `.txt` live
+at runtime into a flat `World`, render with 3D tech — Phase 4/5) stays as the faithful-remake
+content source. Genuinely 3D-designed worlds (real verticality) are separate future work,
+hand-authored by the user or Claude — not derived from mobile-eggbert data by any tool.
+
 ---
 
 ## 1. Engine & Build
