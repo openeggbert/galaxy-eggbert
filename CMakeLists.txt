@@ -157,6 +157,115 @@ if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
 endif() # GALAXY_EGGBERT_BUILD_SIMPLE3D
 
 # =============================================================================
+# Direct CNA + Easy3D skeleton target — GalaxyEggbertCNA (planned direction)
+#
+# OFF by default; does not affect the default build. This is the first
+# skeleton step of the new long-term direction (see easy3d.md, plan.md
+# "Direct CNA + Easy3D Migration"). It only opens a window and clears the
+# screen to a solid color — no gameplay, no assets, no worlds.
+#
+# Build with:
+#   cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+#   cmake --build build-cna --target GalaxyEggbertCNA
+# =============================================================================
+
+option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + Easy3D Galaxy Eggbert target" OFF)
+
+if(GALAXY_EGGBERT_BUILD_CNA)
+
+    # Locate CNA and easy-3d: explicit option > sibling directory.
+    set(CNA_HOME "" CACHE PATH
+        "Path to the CNA source directory. Defaults to ../cna.")
+    if(NOT CNA_HOME)
+        set(CNA_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../cna")
+    endif()
+
+    set(EASY3D_HOME "" CACHE PATH
+        "Path to the easy-3d source directory. Defaults to ../easy-3d.")
+    if(NOT EASY3D_HOME)
+        set(EASY3D_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../easy-3d")
+    endif()
+
+    if(NOT EXISTS "${CNA_HOME}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "CNA not found at '${CNA_HOME}'. Clone it there or set -DCNA_HOME=<path>.")
+    endif()
+    if(NOT EXISTS "${EASY3D_HOME}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "easy-3d not found at '${EASY3D_HOME}'. Clone it there or set -DEASY3D_HOME=<path>.")
+    endif()
+
+    message(STATUS "CNA source: ${CNA_HOME}")
+    message(STATUS "easy-3d source: ${EASY3D_HOME}")
+
+    # Add CNA first: easy-3d's own CMakeLists.txt auto-detects an existing
+    # `CNA` target from the parent project and links against it instead of
+    # building its own copy (see easy-3d/CMakeLists.txt "Resolve CNA linkage").
+    # Keep CNA's own tests/examples out of this build — we only need the library.
+    if(NOT TARGET CNA)
+        set(CNA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+        set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        add_subdirectory("${CNA_HOME}" CNA_dep)
+    endif()
+
+    # Keep easy-3d's own tests/examples out of this build too.
+    set(EASY3D_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(EASY3D_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    if(NOT TARGET easy3d)
+        add_subdirectory("${EASY3D_HOME}" easy3d_dep)
+    endif()
+
+    add_executable(GalaxyEggbertCNA
+        src/GalaxyEggbertCNA/main.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp
+    )
+
+    target_include_directories(GalaxyEggbertCNA PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+    )
+
+    # CNA's static library and its graphics-backend static library have
+    # circular symbol references (mirrors how CNA's own examples/demo_2d
+    # link themselves in ../cna/CMakeLists.txt) — GNU/Clang on non-Windows
+    # need a linker group to resolve both directions; MSVC/MinGW do not.
+    # CNA_GRAPHICS_BACKEND is the cache variable CNA itself set while
+    # configuring above (defaults to EASYGL on Linux, SDL_RENDERER elsewhere;
+    # see ../cna/CMakeLists.txt) — reuse it to name the matching backend target.
+    set(_ge_cna_backend_target "")
+    if(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
+        set(_ge_cna_backend_target "cna_backend_graphics_sdl_renderer")
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL")
+        set(_ge_cna_backend_target "cna_backend_graphics_easygl")
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "BGFX")
+        set(_ge_cna_backend_target "cna_backend_graphics_bgfx")
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "VULKAN")
+        set(_ge_cna_backend_target "cna_backend_graphics_vulkan")
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE
+            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
+            SHARP_RUNTIME)
+    else()
+        target_link_libraries(GalaxyEggbertCNA PRIVATE CNA SHARP_RUNTIME)
+    endif()
+
+    # Prefer the easy3d::easy3d alias if present.
+    if(TARGET easy3d::easy3d)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE easy3d::easy3d)
+    else()
+        target_link_libraries(GalaxyEggbertCNA PRIVATE easy3d)
+    endif()
+
+    if(TARGET SDL3::SDL3main)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3main)
+    endif()
+
+    message(STATUS "GalaxyEggbertCNA target enabled (skeleton — no gameplay yet).")
+
+endif() # GALAXY_EGGBERT_BUILD_CNA
+
+# =============================================================================
 # Doxygen
 # =============================================================================
 

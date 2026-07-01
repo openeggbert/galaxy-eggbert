@@ -3,6 +3,8 @@ cmake-build-debug/*
 cmake-build-u3d/
 build-windows/
 cmake-build-web/*
+/build/
+/build-cna/
 # Android signing — never commit private keys or passwords
 *.keystore
 *.jks

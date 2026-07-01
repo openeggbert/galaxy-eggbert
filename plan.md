@@ -50,17 +50,19 @@ Legend: `[x]` done · `[ ]` todo · `[~]` partial · `[?]` requires user decisio
 
 ### Next implementation batch — CNA target skeleton
 
-This is the immediate next implementation task after this documentation-cleanup pass (tracked in
-`NEXT.md` §0). It is a focused pull of the skeleton-only items already listed in Phase 2 below
-(`E3D-MIG-020..026`), called out here separately so the very next actionable step is unambiguous.
-No gameplay, no asset pipeline, no renderer — just an empty window.
+**Done (2026-07-01).** This was the immediate next implementation task after the
+documentation-cleanup pass (tracked in `NEXT.md` §0/§0a for full build commands and verification
+results). It was a focused pull of the skeleton-only items already listed in Phase 2 below
+(`E3D-MIG-020..026`), called out here separately so the very next actionable step was unambiguous.
+No gameplay, no asset pipeline, no renderer beyond the minimum — just a window that clears to a
+solid color.
 
-- [ ] E3D-MIG-NEXT-001 — Add `GALAXY_EGGBERT_BUILD_CNA` option, default OFF.
-- [ ] E3D-MIG-NEXT-002 — Add `src/GalaxyEggbertCNA/` skeleton.
-- [ ] E3D-MIG-NEXT-003 — Add `GalaxyEggbertCNA` executable target linking CNA and easy3d.
-- [ ] E3D-MIG-NEXT-004 — Minimal CNA game/window/clear-color loop.
-- [ ] E3D-MIG-NEXT-005 — Verify `GalaxyEggbertSimple3D` still builds unchanged.
-- [ ] E3D-MIG-NEXT-006 — Verify `GalaxyEggbertWorldsTests` still pass.
+- [x] E3D-MIG-NEXT-001 — Add `GALAXY_EGGBERT_BUILD_CNA` option, default OFF.
+- [x] E3D-MIG-NEXT-002 — Add `src/GalaxyEggbertCNA/` skeleton.
+- [x] E3D-MIG-NEXT-003 — Add `GalaxyEggbertCNA` executable target linking CNA and easy3d.
+- [x] E3D-MIG-NEXT-004 — Minimal CNA game/window/clear-color loop.
+- [x] E3D-MIG-NEXT-005 — Verify `GalaxyEggbertSimple3D` still builds unchanged.
+- [x] E3D-MIG-NEXT-006 — Verify `GalaxyEggbertWorldsTests` still pass.
 
 ### Phase 1 — Repository integration investigation
 
@@ -73,13 +75,15 @@ No gameplay, no asset pipeline, no renderer — just an empty window.
 
 ### Phase 2 — New target skeleton
 
-- [ ] E3D-MIG-020 — Add new CMake option (default OFF initially) to build the new target, e.g. `GALAXY_EGGBERT_BUILD_CNA`.
-- [ ] E3D-MIG-021 — `add_subdirectory(../cna)` then `add_subdirectory(../easy-3d)` from galaxy-eggbert's `CMakeLists.txt`.
-- [ ] E3D-MIG-022 — Create `src/GalaxyEggbertCNA/` tree (empty skeleton).
-- [ ] E3D-MIG-023 — Add `add_executable(GalaxyEggbertCNA ...)` linking `CNA` and `easy3d`.
-- [ ] E3D-MIG-024 — Minimal CNA `Game` subclass: open a window, run the loop, clear to a solid color. No gameplay.
-- [ ] E3D-MIG-025 — Confirm `GalaxyEggbertSimple3D` target and `GALAXY_EGGBERT_BUILD_SIMPLE3D` option still build unaffected.
-- [ ] E3D-MIG-026 — Confirm `GalaxyEggbertWorldsTests` still builds and 54/54 tests pass unaffected.
+**Done (2026-07-01).** Full verification and build commands recorded in `NEXT.md` §0a.
+
+- [x] E3D-MIG-020 — Add new CMake option (default OFF initially) to build the new target, e.g. `GALAXY_EGGBERT_BUILD_CNA`.
+- [x] E3D-MIG-021 — `add_subdirectory(../cna)` then `add_subdirectory(../easy-3d)` from galaxy-eggbert's `CMakeLists.txt`. (Confirmed this order matters: Easy3D auto-detects and links the parent-provided `CNA` target instead of building its own copy.)
+- [x] E3D-MIG-022 — Create `src/GalaxyEggbertCNA/` tree (skeleton: `main.cpp`, `GalaxyEggbertCnaGame.hpp/.cpp`, namespace `GalaxyEggbert::CNA`).
+- [x] E3D-MIG-023 — Add `add_executable(GalaxyEggbertCNA ...)` linking `CNA` and `easy3d` (via the `easy3d::easy3d` alias).
+- [x] E3D-MIG-024 — Minimal CNA `Game` subclass: open a window, run the loop, clear to a solid color. No gameplay. Verified by a 3-second smoke run (window created, EasyGL/OpenGL ES 3.2 backend initialized, no crash).
+- [x] E3D-MIG-025 — Confirm `GalaxyEggbertSimple3D` target and `GALAXY_EGGBERT_BUILD_SIMPLE3D` option still build unaffected. Confirmed: default `build/` config (option untouched/OFF) builds `GalaxyEggbertSimple3D` clean, source unchanged.
+- [x] E3D-MIG-026 — Confirm `GalaxyEggbertWorldsTests` still builds and 54/54 tests pass unaffected. Confirmed via `ctest --test-dir build --output-on-failure`.
 
 ### Phase 3 — Asset path and Mobile Eggbert reuse
 

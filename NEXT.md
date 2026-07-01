@@ -2,15 +2,18 @@
 
 ## 0. Current direction (read this first)
 
-**Current active direction:** Direct CNA + Easy3D migration planning.
+**Current active direction:** Direct CNA + Easy3D migration — skeleton target implemented.
 
 **Current working implementation:** `GalaxyEggbertSimple3D` — unchanged, remains the buildable
 reference target. Sections 1–10 below describe it and stay accurate/current for that target.
 
-**Next recommended implementation task** after this documentation cleanup: create the initial
-`GalaxyEggbertCNA` target skeleton — CMake option `GALAXY_EGGBERT_BUILD_CNA`, default OFF; opens a
-CNA window and clears the screen; no gameplay. `GalaxyEggbertSimple3D` stays unchanged throughout.
-See `plan.md`, "Next implementation batch — CNA target skeleton" (`E3D-MIG-NEXT-001..006`).
+**`GalaxyEggbertCNA` skeleton status: builds and runs (2026-07-01).** See "§0a. GalaxyEggbertCNA
+skeleton status" immediately below for build commands, verification, and what it does and does
+not do yet.
+
+**Next recommended implementation task:** finalize and implement the asset path strategy for
+Mobile Eggbert assets/worlds (build-time copy, per `plan.md` E3D-MIG-013) — without modifying
+`../mobile-eggbert`. See `plan.md`, Phase 3 ("Asset path and Mobile Eggbert reuse").
 
 - `easy3d.md` — the migration analysis document (current Simple3D/Easy3D/mobile-eggbert state,
   target architecture, reuse strategy, risks, open questions).
@@ -19,17 +22,70 @@ See `plan.md`, "Next implementation batch — CNA target skeleton" (`E3D-MIG-NEX
 **Key unresolved decisions** (see `easy3d.md` §12 for full detail; tracked as `plan.md` tasks):
 - Asset strategy for mobile-eggbert assets — build-time copy recommended for the first
   implementation, sibling-path runtime read considered as an optional later convenience
-  (`plan.md` E3D-MIG-013).
+  (`plan.md` E3D-MIG-013). **Decided, not yet implemented — this is the next task.**
 - Target/source-tree name — decided: `GalaxyEggbertCNA` / `src/GalaxyEggbertCNA/` / build option
-  `GALAXY_EGGBERT_BUILD_CNA` (`plan.md` E3D-MIG-014).
+  `GALAXY_EGGBERT_BUILD_CNA` (`plan.md` E3D-MIG-014). **Implemented.**
 - Whether mobile-eggbert should later gain a read-only library target for `Tables`/`Def`/
   `GameData`/`ObjectType`/`SoundChannel` (requires explicit user approval as a separate
   mobile-eggbert-side task), versus staying asset+reference-only (`plan.md` E3D-MIG-015).
 - Where Easy3D's CPU-side vertex builders and CNA render adapters should be implemented — inside
   `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3/§12 Q5).
 
-**Do not start the CNA/Easy3D gameplay port before the `GalaxyEggbertCNA` skeleton target exists
-and builds cleanly.**
+**Do not start the CNA/Easy3D gameplay/world/asset port beyond the asset-strategy task above until
+that task is done and reviewed.** No content loading, world loading, terrain rendering, or Blupi
+rendering exists in `GalaxyEggbertCNA` yet — see §0a.
+
+## 0a. GalaxyEggbertCNA skeleton status
+
+**Implemented 2026-07-01.** New source tree `src/GalaxyEggbertCNA/` (`main.cpp`,
+`GalaxyEggbertCnaGame.hpp/.cpp`, namespace `GalaxyEggbert::CNA`). New CMake option
+`GALAXY_EGGBERT_BUILD_CNA` (default `OFF`) in the root `CMakeLists.txt`, adding
+`add_subdirectory(../cna)` then `add_subdirectory(../easy-3d)` (in that order, so Easy3D
+auto-detects and links the parent-provided `CNA` target instead of building its own copy) and
+defining an `add_executable(GalaxyEggbertCNA ...)` linking `CNA` and `easy3d::easy3d`.
+
+What it does: opens a CNA/SDL window titled "Galaxy Eggbert (CNA)", constructs an
+`Easy3D::Camera3D` and calls `GetViewMatrix()` once (proves Easy3D headers compile and its math
+links against CNA from this target — not used for rendering), clears the screen to a solid color
+every frame (cornflower blue, `0.392, 0.584, 0.929`), and runs/exits via CNA's standard
+`Game::Run()` loop. No content loading, no textures, no sounds, no world files, no terrain, no
+Blupi, no input handling beyond what `Game::Run()` provides by default.
+
+**Build commands used:**
+```bash
+# Default build — unaffected by the new option (GALAXY_EGGBERT_BUILD_CNA defaults OFF):
+cmake -S . -B build
+cmake --build build -j2
+ctest --test-dir build --output-on-failure
+
+# New CNA target:
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2
+```
+
+**Results (verified 2026-07-01, this sandbox):**
+- `GalaxyEggbertCNA` — **builds successfully.** CNA configured with its own default backend on
+  this platform (EASYGL on Linux, via sibling `../easy-gl`); no backend flags were forced. Linked
+  `CNA` via the GNU/Clang linker-group workaround (`-Wl,--start-group CNA
+  cna_backend_graphics_easygl -Wl,--end-group SHARP_RUNTIME`), mirroring how CNA's own
+  `examples/demo_2d` links itself — a plain `target_link_libraries(... CNA)` is expected to fail
+  to link on GNU/Clang/non-Windows due to circular symbol references between CNA and its backend
+  static library. `easy3d::easy3d` linked cleanly via the alias.
+- **Ran successfully** for a 3-second smoke test (`timeout 3s ./build-cna/GalaxyEggbertCNA`,
+  `DISPLAY=:0` reachable in this sandbox): SDL window created, `EasyGLGraphicsBackend initialized
+  with OpenGL OpenGL ES 3.2 Mesa 25.0.7-2`, ran the clear loop with no crash, no leftover process
+  after being killed. The window-close → clean-exit path (via CNA's own `Game::Run()` event
+  polling) was not separately exercised — only a forced external kill was tested.
+- `GalaxyEggbertSimple3D` — **unaffected.** Built clean in the default `build/` configuration
+  (`GALAXY_EGGBERT_BUILD_CNA` untouched/OFF), binary present, unchanged source.
+- `GalaxyEggbertWorldsTests` — **unaffected. 54/54 tests pass** (`ctest --test-dir build`).
+- No errors were hit requiring CNA/easy-3d/sharp-runtime/easy-gl fixes — the build succeeded
+  end-to-end with only the linker-group workaround noted above, which is standard practice
+  already used by CNA's own examples, not a bug.
+
+**Not done / explicitly out of scope for this task:** no assets loaded, no worlds loaded, no
+terrain/Blupi rendering, no gameplay, no Lua, no renderer abstraction beyond the minimum shown
+above. See `plan.md` Phase 3 onward for what comes next.
 
 ---
 
