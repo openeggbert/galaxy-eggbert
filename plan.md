@@ -9,9 +9,150 @@
 
 **Rendering:** Simple3D API → U3D/Urho3D. Animations via billboard sprites from same PNGs as mobile-eggbert.
 
+> **Direction update (2026-07-01):** The Simple3D → U3D/Nova3D engine direction described above
+> and throughout sections 1–14 below is **superseded** as the long-term target. The new target
+> direction is **direct CNA + Easy3D**, with mobile-eggbert used read-only as reference/asset
+> source. See `easy3d.md` for the full analysis and the **"Direct CNA + Easy3D Migration"**
+> section below for the task list. Sections 1–14 remain valid as historical/current reference for
+> `GalaxyEggbertSimple3D`, which is **not** being deleted — it stays as the working faithful-remake
+> reference until the CNA/Easy3D target reaches parity.
+
 **Mission numbering:** 1=intro hub, 10=world1 hub, 11-19=world1 levels, 20=world2 hub, 21-29=world2 levels, … (78 worlds total in mobile-eggbert).
 
 Legend: `[x]` done · `[ ]` todo · `[~]` partial / revision needed
+
+---
+
+## Direct CNA + Easy3D Migration
+
+**Superseding direction (2026-07-01).** Full analysis: `easy3d.md`. This section is the task
+list; `easy3d.md` has the reasoning, evidence, and open questions behind each task.
+
+Target architecture: `Galaxy Eggbert → CNA directly`, with `Easy3D` used beside CNA for small
+reusable helpers (cameras, texture atlas, billboard/cube batching, debug draw). Easy3D does not
+hide CNA. `mobile-eggbert` is read-only reference/asset source — no code or data is copied from
+it without explicit user approval, task by task.
+
+The old Simple3D/U3D/Nova3D direction (sections 1–14 above) is superseded but **not discarded**:
+`GalaxyEggbertSimple3D` stays intact and buildable as historical reference and as the current
+faithful-remake gameplay checklist until the new target reaches parity.
+
+Legend: `[x]` done · `[ ]` todo · `[~]` partial · `[?]` requires user decision before starting
+
+### Phase 0 — Documentation and direction lock
+
+- [x] E3D-MIG-000 — Create `easy3d.md` analysis document.
+- [x] E3D-MIG-001 — Mark Simple3D/Nova3D direction as superseded by Direct CNA + Easy3D (this section + note above).
+- [x] E3D-MIG-002 — Document Mobile Eggbert as read-only for Galaxy migration.
+- [x] E3D-MIG-003 — Document that Easy3D is a CNA helper and must not hide CNA.
+- [x] E3D-MIG-004 — Document no Lua in first migration phase.
+- [ ] E3D-MIG-005 — `[?]` Decide: reconcile `README.md` (already CNA-oriented) with `CLAUDE.md`/`NEXT.md` (still Simple3D-oriented) — roll README back, or update the others now? (`easy3d.md` §12 Q6)
+
+### Phase 1 — Repository integration investigation
+
+- [x] E3D-MIG-010 — Inspect CNA CMake target and include/link requirements (via mobile-eggbert's usage and Easy3D's `EASY3D_CNA_DIR`/`EASY3D_LINK_CNA` options).
+- [x] E3D-MIG-011 — Inspect Easy3D CMake target and include/link requirements (target `easy3d`, alias `easy3d::easy3d`, auto-detects parent `CNA` target).
+- [x] E3D-MIG-012 — Inspect whether Mobile Eggbert exposes a reusable library target — confirmed **no**, only `add_executable(WindowsPhoneSpeedyBlupi ...)`.
+- [ ] E3D-MIG-013 — `[?]` Decide asset path strategy for Mobile Eggbert assets: sibling-path read, build-time copy, or symlink (`easy3d.md` §9, §12 Q3).
+- [ ] E3D-MIG-014 — `[?]` Decide new source tree/target name: `GalaxyEggbertCNA` (recommended, `easy3d.md` §9) vs `GalaxyEggbertEasy3D`.
+- [ ] E3D-MIG-015 — `[?]` Decide whether to ask mobile-eggbert maintainers (i.e. request user approval) for a future `add_library()` target covering `Tables`/`Def`/`GameData`/`ObjectType`/`SoundChannel` only (`easy3d.md` §12 Q2).
+
+### Phase 2 — New target skeleton
+
+- [ ] E3D-MIG-020 — Add new CMake option (default OFF initially) to build the new target, e.g. `GALAXY_EGGBERT_BUILD_CNA`.
+- [ ] E3D-MIG-021 — `add_subdirectory(../cna)` then `add_subdirectory(../easy-3d)` from galaxy-eggbert's `CMakeLists.txt`.
+- [ ] E3D-MIG-022 — Create `src/GalaxyEggbertCNA/` tree (empty skeleton).
+- [ ] E3D-MIG-023 — Add `add_executable(GalaxyEggbertCNA ...)` linking `CNA` and `easy3d`.
+- [ ] E3D-MIG-024 — Minimal CNA `Game` subclass: open a window, run the loop, clear to a solid color. No gameplay.
+- [ ] E3D-MIG-025 — Confirm `GalaxyEggbertSimple3D` target and `GALAXY_EGGBERT_BUILD_SIMPLE3D` option still build unaffected.
+- [ ] E3D-MIG-026 — Confirm `GalaxyEggbertWorldsTests` still builds and 54/54 tests pass unaffected.
+
+### Phase 3 — Asset path and Mobile Eggbert reuse
+
+- [ ] E3D-MIG-030 — Implement the asset path strategy decided in E3D-MIG-013.
+- [ ] E3D-MIG-031 — Reuse `Content/icons/blupi.png`.
+- [ ] E3D-MIG-032 — Reuse `Content/icons/object-m.png`.
+- [ ] E3D-MIG-033 — Reuse `Content/icons/element.png`.
+- [ ] E3D-MIG-034 — Reuse `Content/icons/pad.png`.
+- [ ] E3D-MIG-035 — Reuse `Content/icons/jauge.png`.
+- [ ] E3D-MIG-036 — Reuse `Content/icons/explo.png`.
+- [ ] E3D-MIG-037 — Reuse `Content/sounds/soundNNN.wav` (93 files).
+- [ ] E3D-MIG-038 — Reuse `worlds/worldXXX.txt` (78 files).
+- [ ] E3D-MIG-039 — `[?]` Cross-check galaxy-eggbert's existing `include/GalaxyEggbert/def/ObjectType.hpp` and `SoundChannel.hpp` against mobile-eggbert's versions for exact ID parity (`easy3d.md` §12 Q4).
+
+### Phase 4 — World loading
+
+- [ ] E3D-MIG-040 — Confirm `GalaxyEggbert::Worlds` loader (already engine-agnostic) links into `GalaxyEggbertCNA` unchanged.
+- [ ] E3D-MIG-041 — Load a real mobile-eggbert `worldNNN.txt` file end-to-end in the new target (parse only, no render yet).
+- [ ] E3D-MIG-042 — Cross-check parsed grid dimensions/tile codes against a Simple3D-loaded run of the same world file for a sanity diff.
+- [ ] E3D-MIG-043 — Minimal world runtime (`GEWorldRuntime`-equivalent) for the CNA/Easy3D target, modeled on but not copied from the Simple3D version.
+
+### Phase 5 — Easy3D terrain path
+
+- [ ] E3D-MIG-050 — `[?]` Decide where the CPU-side vertex-builder gap gets filled: inside `../easy-3d` (its own roadmap Phase 3) or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3, §12 Q5).
+- [ ] E3D-MIG-051 — Implement/obtain a CPU-side vertex builder for `Easy3D::CubeBatch` items.
+- [ ] E3D-MIG-052 — Implement/obtain a CNA renderer adapter that issues draw calls for cube-batch vertex data.
+- [ ] E3D-MIG-053 — Use `Easy3D::TextureAtlas` to map `object-m.png` tile cells to UV rects.
+- [ ] E3D-MIG-054 — Queue one `CubeBatch` item per non-empty world cell; render a static (non-animated) terrain pass.
+- [ ] E3D-MIG-055 — Add animated-tile support (lava/crusher/saw/spike/water/fan/marine/temp) using mobile-eggbert's frame tables as reference, matching the Simple3D port's existing behavior.
+- [ ] E3D-MIG-056 — Do not add MeshCraft or any mesh-import path.
+
+### Phase 6 — Blupi first version
+
+- [ ] E3D-MIG-060 — Add invisible/collision-only Blupi placeholder for early debug movement, if useful.
+- [ ] E3D-MIG-061 — CPU-side vertex builder for `Easy3D::BillboardBatch` items.
+- [ ] E3D-MIG-062 — CNA renderer adapter for billboard-batch vertex data.
+- [ ] E3D-MIG-063 — Render Blupi as a 2D billboard using `blupi.png`/`blupi1.png` frames — no 3D model required.
+- [ ] E3D-MIG-064 — Port Blupi's state machine (Stop/March/Jump/Air/Down/Up) using `table_blupi` frame indices as reference (copy/adapt requires approval per `easy3d.md` §5.4/§5.7 — confirm scope before transcribing table data).
+- [ ] E3D-MIG-065 — (Optional, later) 3D Blupi model.
+- [ ] E3D-MIG-066 — (Optional, later) Camera mode switching.
+
+### Phase 7 — Object/decor first version
+
+- [ ] E3D-MIG-070 — Render pickups/enemies as billboards from `element.png`.
+- [ ] E3D-MIG-071 — Reuse `ObjectType` IDs (pending E3D-MIG-039 parity check) for object identification.
+- [ ] E3D-MIG-072 — Use mobile-eggbert's `Decor.cpp` as canonical behavior reference for per-object-type movement/collision — reference only, no direct linking or copying (`easy3d.md` §5.2, §6.4).
+- [ ] E3D-MIG-073 — Keep gameplay faithful — no invented mechanics; cross-check every behavior against mobile-eggbert before implementing.
+- [ ] E3D-MIG-074 — `[?]` Before implementing any object behavior that seems to require exposing internal `Decor` state, stop and discuss with the user (`easy3d.md` §5.2).
+
+### Phase 8 — Sound
+
+- [ ] E3D-MIG-080 — Thin CNA `SoundEffect`/`SoundEffectInstance` wrapper for `GalaxyEggbertCNA`, informed by but not copied from mobile-eggbert's `Sound`/`ISound`.
+- [ ] E3D-MIG-081 — Reuse `sound*.wav` files directly.
+- [ ] E3D-MIG-082 — Reuse/cross-check `SoundChannel` indices (pending E3D-MIG-039).
+- [ ] E3D-MIG-083 — 93-channel playback parity with the Simple3D port's existing sound system (per-channel volume, loop support).
+
+### Phase 9 — HUD
+
+- [ ] E3D-MIG-090 — Start minimal: lives, world, treasure count only.
+- [ ] E3D-MIG-091 — Reuse mobile-eggbert HUD assets (`jauge.png`, `pad.png`, `text.png`, `button.png`).
+- [ ] E3D-MIG-092 — Use CNA `SpriteBatch` (or an Easy3D HUD helper only if one already exists — do not build a new one speculatively).
+- [ ] E3D-MIG-093 — Avoid building a full UI framework in Easy3D or Galaxy Eggbert.
+
+### Phase 10 — Gameplay parity
+
+- [ ] E3D-MIG-100 — Port pickups (treasure/keys/shield/egg/drink) — behavior reference: mobile-eggbert `Decor.cpp` + existing Simple3D port.
+- [ ] E3D-MIG-101 — Port hazard/kill detection (lava/spike/saw/crusher).
+- [ ] E3D-MIG-102 — Port enemy stomp + score.
+- [ ] E3D-MIG-103 — Port respawn invincibility.
+- [ ] E3D-MIG-104 — Port exit-gate logic.
+- [ ] E3D-MIG-105 — Port crate push (ObjectType12) and platform patrol, matching the Simple3D port's already-fixed behavior.
+- [ ] E3D-MIG-106 — Save/load — decide scope per `easy3d.md` §12 Q7 (byte-compatible with mobile-eggbert `GameData`, or fresh format).
+- [ ] E3D-MIG-107 — No new gameplay mechanics — every item on this list must trace back to confirmed mobile-eggbert behavior.
+
+### Phase 11 — Retire Simple3D path (later)
+
+- [ ] E3D-MIG-110 — Do not delete `GalaxyEggbertSimple3D` now.
+- [ ] E3D-MIG-111 — Retire it only after `GalaxyEggbertCNA` reaches playable parity with sections 1–14 above.
+- [ ] E3D-MIG-112 — Keep it as historical reference until then; re-evaluate with the user before any deletion.
+
+### Phase 12 — Optional future
+
+- [ ] E3D-MIG-120 — Optional 3D Blupi model.
+- [ ] E3D-MIG-121 — Optional camera mode switching.
+- [ ] E3D-MIG-122 — Optional Lua discussion (undecided, out of scope for first migration — coordinate timing with `../easy-3d`'s own open Lua question).
+- [ ] E3D-MIG-123 — Optional Easy3D renderer polish, once the minimal adapters from Phase 5/6 exist.
+- [ ] E3D-MIG-124 — None of the above are part of the first playable migration.
 
 ---
 
