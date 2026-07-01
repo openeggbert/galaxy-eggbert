@@ -1,433 +1,240 @@
 # NEXT.md — Galaxy Eggbert
 
-## 0. Current direction (read this first)
-
-**Current active direction:** Direct CNA + Easy3D migration — skeleton target, asset path
-strategy, and world-file parsing implemented.
-
-**Current working implementation:** `GalaxyEggbertSimple3D` — unchanged, remains the buildable
-reference target. Sections 1–10 below describe it and stay accurate/current for that target.
-
-**`GalaxyEggbertCNA` skeleton status: builds and runs (2026-07-01).** See "§0a. GalaxyEggbertCNA
-skeleton status" for build commands and verification.
-
-**Mobile Eggbert asset reuse: implemented (2026-07-01).** `Content/` and `worlds/` are now copied
-next to the `GalaxyEggbertCNA` binary at build time. See "§0b. Mobile Eggbert asset reuse status"
-for details.
-
-**World loading (Phase 4): implemented (2026-07-01).** `GalaxyEggbertCNA` now parses
-`worlds/world001.txt` into the shared `GalaxyEggbert::Worlds::World` at startup — parse only,
-nothing renders it yet. See "§0c. World loading status" for build commands, output, and the
-independent cross-check.
-
-**Next recommended implementation task:** Phase 5, "Easy3D terrain path" — this is the first
-phase that needs actual rendering, and per `easy3d.md` §7.3 Easy3D currently has **no renderer**
-(no CPU-side vertex builders, no CNA draw-call adapter for `CubeBatch`/`BillboardBatch`). Before
-writing terrain code, first resolve `plan.md` E3D-MIG-050 (where do the vertex builders/render
-adapters live: inside `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA`?) — this
-is flagged `[?]` (requires a decision) and is a bigger design question than the previous three
-phases. See `plan.md`, Phase 5.
-
-- `easy3d.md` — the migration analysis document (current Simple3D/Easy3D/mobile-eggbert state,
-  target architecture, reuse strategy, risks, open questions).
-- `plan.md` — section "Direct CNA + Easy3D Migration" has the full task list (`E3D-MIG-*`).
-
-**Key unresolved decisions** (see `easy3d.md` §12 for full detail; tracked as `plan.md` tasks):
-- Asset strategy for mobile-eggbert assets — **implemented**: build-time copy from
-  `../mobile-eggbert/Content` and `../mobile-eggbert/worlds` into the `GalaxyEggbertCNA` build
-  output (`plan.md` E3D-MIG-013/030).
-- Target/source-tree name — decided: `GalaxyEggbertCNA` / `src/GalaxyEggbertCNA/` / build option
-  `GALAXY_EGGBERT_BUILD_CNA` (`plan.md` E3D-MIG-014). **Implemented.**
-- `ObjectType`/`SoundChannel` ID parity between galaxy-eggbert and mobile-eggbert — **resolved,
-  no mismatch found** (`plan.md` E3D-MIG-039, §0b below). No further action needed.
-- Whether mobile-eggbert should later gain a read-only library target for `Tables`/`Def`/
-  `GameData`/`ObjectType`/`SoundChannel` (requires explicit user approval as a separate
-  mobile-eggbert-side task), versus staying asset+reference-only (`plan.md` E3D-MIG-015).
-- Where Easy3D's CPU-side vertex builders and CNA render adapters should be implemented — inside
-  `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3/§12 Q5,
-  `plan.md` E3D-MIG-050). **Still open — blocks Phase 5.**
-
-**Do not start rendering (Phase 5+) speculatively beyond what's explicitly asked for next.**
-`GalaxyEggbertCNA` opens a window, clears the screen, copies mobile-eggbert assets next to itself,
-and parses one world file — no terrain rendering, no Blupi rendering, no HUD, no sound, no
-gameplay exists yet. See §0a/§0b/§0c.
-
-## 0a. GalaxyEggbertCNA skeleton status
-
-**Implemented 2026-07-01.** New source tree `src/GalaxyEggbertCNA/` (`main.cpp`,
-`GalaxyEggbertCnaGame.hpp/.cpp`, namespace `GalaxyEggbert::CNA`). New CMake option
-`GALAXY_EGGBERT_BUILD_CNA` (default `OFF`) in the root `CMakeLists.txt`, adding
-`add_subdirectory(../cna)` then `add_subdirectory(../easy-3d)` (in that order, so Easy3D
-auto-detects and links the parent-provided `CNA` target instead of building its own copy) and
-defining an `add_executable(GalaxyEggbertCNA ...)` linking `CNA` and `easy3d::easy3d`.
-
-What it does: opens a CNA/SDL window titled "Galaxy Eggbert (CNA)", constructs an
-`Easy3D::Camera3D` and calls `GetViewMatrix()` once (proves Easy3D headers compile and its math
-links against CNA from this target — not used for rendering), clears the screen to a solid color
-every frame (cornflower blue, `0.392, 0.584, 0.929`), and runs/exits via CNA's standard
-`Game::Run()` loop. No content loading, no textures, no sounds, no world files, no terrain, no
-Blupi, no input handling beyond what `Game::Run()` provides by default.
-
-**Build commands used:**
-```bash
-# Default build — unaffected by the new option (GALAXY_EGGBERT_BUILD_CNA defaults OFF):
-cmake -S . -B build
-cmake --build build -j2
-ctest --test-dir build --output-on-failure
-
-# New CNA target:
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
-cmake --build build-cna --target GalaxyEggbertCNA -j2
-```
-
-**Results (verified 2026-07-01, this sandbox):**
-- `GalaxyEggbertCNA` — **builds successfully.** CNA configured with its own default backend on
-  this platform (EASYGL on Linux, via sibling `../easy-gl`); no backend flags were forced. Linked
-  `CNA` via the GNU/Clang linker-group workaround (`-Wl,--start-group CNA
-  cna_backend_graphics_easygl -Wl,--end-group SHARP_RUNTIME`), mirroring how CNA's own
-  `examples/demo_2d` links itself — a plain `target_link_libraries(... CNA)` is expected to fail
-  to link on GNU/Clang/non-Windows due to circular symbol references between CNA and its backend
-  static library. `easy3d::easy3d` linked cleanly via the alias.
-- **Ran successfully** for a 3-second smoke test (`timeout 3s ./build-cna/GalaxyEggbertCNA`,
-  `DISPLAY=:0` reachable in this sandbox): SDL window created, `EasyGLGraphicsBackend initialized
-  with OpenGL OpenGL ES 3.2 Mesa 25.0.7-2`, ran the clear loop with no crash, no leftover process
-  after being killed. The window-close → clean-exit path (via CNA's own `Game::Run()` event
-  polling) was not separately exercised — only a forced external kill was tested.
-- `GalaxyEggbertSimple3D` — **unaffected.** Built clean in the default `build/` configuration
-  (`GALAXY_EGGBERT_BUILD_CNA` untouched/OFF), binary present, unchanged source.
-- `GalaxyEggbertWorldsTests` — **unaffected. 54/54 tests pass** (`ctest --test-dir build`).
-- No errors were hit requiring CNA/easy-3d/sharp-runtime/easy-gl fixes — the build succeeded
-  end-to-end with only the linker-group workaround noted above, which is standard practice
-  already used by CNA's own examples, not a bug.
-
-**Not done / explicitly out of scope for this task:** no assets loaded, no worlds loaded, no
-terrain/Blupi rendering, no gameplay, no Lua, no renderer abstraction beyond the minimum shown
-above. See `plan.md` Phase 3 onward for what comes next.
-
-## 0b. Mobile Eggbert asset reuse status
-
-**Implemented 2026-07-01.** `plan.md` Phase 3 ("Asset path and Mobile Eggbert reuse"),
-`E3D-MIG-030`..`039`. `../mobile-eggbert` was only ever read from — nothing in it was modified.
-
-**What was added:** in the `GALAXY_EGGBERT_BUILD_CNA` block of the root `CMakeLists.txt`, a new
-`MOBILE_EGGBERT_HOME` cache variable (defaults to `../mobile-eggbert`, same pattern as
-`CNA_HOME`/`EASY3D_HOME`) and two `POST_BUILD` `add_custom_command(... COMMAND ${CMAKE_COMMAND} -E
-copy_directory ...)` steps on the `GalaxyEggbertCNA` target: one copies
-`${MOBILE_EGGBERT_HOME}/Content` and one copies `${MOBILE_EGGBERT_HOME}/worlds`, both landing next
-to the built binary (inside the git-ignored `build-cna/` directory — nothing from mobile-eggbert
-is committed). If either source directory is missing, CMake emits a `WARNING` and
-`GalaxyEggbertCNA` still builds (the code skeleton does not require the assets to exist).
-
-**Build commands used:** the same as §0a — the copy happens automatically as a post-build step of
-the existing `GalaxyEggbertCNA` target, no new command needed:
-```bash
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
-cmake --build build-cna --target GalaxyEggbertCNA -j2
-```
-
-**Verification (2026-07-01, this sandbox):**
-- `build-cna/Content/` and `build-cna/worlds/` exist next to the binary after build.
-- `Content/icons/*.png`: 9/9 present (`blupi.png`, `blupi1.png`, `button.png`, `element.png`,
-  `explo.png`, `jauge.png`, `object-m.png`, `pad.png`, `text.png`) — spot-checked the six named in
-  `plan.md` Phase 3 explicitly (`blupi.png`, `object-m.png`, `element.png`, `pad.png`,
-  `jauge.png`, `explo.png`).
-- `Content/sounds/*.wav`: 93/93 present.
-- `worlds/*.txt`: 78/78 present; `world001.txt` verified byte-identical to
-  `../mobile-eggbert/worlds/world001.txt` via `diff -q`.
-- `Content/icons4x/` and `Content/backgrounds/` (incl. `backgrounds4x/`) were copied too as part
-  of the wholesale `Content/` copy — not required yet, but harmless and available for later.
-- `git status --short build-cna/` confirms nothing under the copy destination is tracked by git.
-
-**`ObjectType`/`SoundChannel` ID parity cross-check (`E3D-MIG-039`) — resolved, no mismatch:**
-compared galaxy-eggbert's `include/GalaxyEggbert/def/ObjectType.hpp` and `SoundChannel.hpp`
-against mobile-eggbert's `include/WindowsPhoneSpeedyBlupi/decor/ObjectType.hpp` and
-`def/SoundChannel.hpp` by extracting and diffing the full numeric ID sets (not a visual
-spot-check): `ObjectType` — both declare the identical 204 IDs (0–203, same gaps).
-`SoundChannel` — both declare 0–92 identically. No changes were made to either repository; none
-were needed.
-
-**Not done / explicitly out of scope (as of §0b):** nothing in `GalaxyEggbertCNA` code reads,
-loads, parses, or renders any file under `Content/` or `worlds/` yet. That starts with Phase 4
-(world loading — done, see §0c below) and continues through Phase 5+ (terrain/Blupi rendering,
-sound).
-
-## 0c. World loading status
-
-**Implemented 2026-07-01.** `plan.md` Phase 4 ("World loading"), `E3D-MIG-040`..`043`.
-
-**What was added:**
-- `GE_SHARED_SOURCES` (the engine-agnostic `Worlds` sources — `BinaryIO.cpp`, `BitPacking.cpp`,
-  `Chunk.cpp`, `World.cpp`) was hoisted from inside the `GALAXY_EGGBERT_BUILD_SIMPLE3D` CMake
-  block to top-level scope in `CMakeLists.txt`, so `GalaxyEggbertCNA` can reuse the exact same
-  list instead of duplicating it.
-- New `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp` (namespace `GalaxyEggbert::CNA`) — a
-  minimal mobile-eggbert `.txt` world-file parser. Modeled on (same header/`Decor:`/`MoveObject:`
-  line handling, same `BlockTypes::fromMobileIconId` + `World::setBlock` usage) but **not copied
-  from** `GESimple3D::GEWorldRuntime` — written independently, and deliberately smaller: no
-  `MobileObjSpec`/object parsing (that belongs to Phase 7), no Simple3D types anywhere.
-- `GalaxyEggbertCnaGame::LoadContent()` now calls
-  `worldRuntime_.LoadFromMobileEggbertFile("worlds/world001.txt")` and prints a one-line
-  diagnostic summary (spawn tile, sky region, non-air block count) to stdout. **Parse only** —
-  nothing reads `GetWorld()` for rendering.
-- `GalaxyEggbertCNA`'s `target_include_directories` gained `include/` (needed for
-  `<GalaxyEggbert/Worlds/World.hpp>` etc.).
-
-**Build commands used:** unchanged from §0a/§0b — the same `cmake --build build-cna --target
-GalaxyEggbertCNA -j2` now also compiles the new sources and prints the world-load result on run.
-
-**Results (verified 2026-07-01, this sandbox):**
-- `GalaxyEggbertCNA` builds successfully with the new `Game/GEWorldRuntime.cpp` and the four
-  shared `Worlds` sources linked in.
-- Ran the binary (`timeout 3s ./build-cna/GalaxyEggbertCNA`) and captured stdout:
-  ```
-  GalaxyEggbertCNA: loaded worlds/world001.txt — spawn tile (12, 92), sky region 0, 594 non-air blocks.
-  ```
-- **`GalaxyEggbertSimple3D` and `GalaxyEggbertWorldsTests` re-verified unaffected** after the
-  `GE_SHARED_SOURCES` CMake refactor: `cmake -S . -B build && cmake --build build -j2` builds both
-  clean; `ctest --test-dir build --output-on-failure` — 54/54 pass.
-
-**`E3D-MIG-042` cross-check — stated honestly:** this is cross-checked against an **independent
-Python re-implementation** of the parser, not a live re-run of the `GalaxyEggbertSimple3D` binary.
-Reasoning: modifying Simple3D to add diagnostic output is against the standing hard rule (do not
-modify `src/GalaxyEggbertSimple3D/`), and Simple3D's own `GEWorldRuntime::LoadFromMobileEggbertFile()`
-already calls the exact same shared `World`/`BlockTypes` code as the new CNA parser, so a second
-C++ run through that shared code would not be a genuinely independent check anyway. Instead, a
-throwaway script (not committed — scratch-space only) mechanically **extracts** the
-`kPassable[441]` transparency table straight out of `BlockTypes.hpp` via regex (not hand-copied,
-to avoid a transcription bug) and reimplements the header + Decor-grid parsing in Python with
-different control flow, run against the real `build-cna/worlds/world001.txt`:
-```
-[python cross-check] spawn tile: (12, 92)
-[python cross-check] sky region: 0
-[python cross-check] raw non-zero Decor cells: 612
-[python cross-check] non-air blocks after BlockTypes filtering: 594
-```
-**Exact match** against `GalaxyEggbertCNA`'s own printed output (spawn tile, region, and non-air
-block count all identical). The raw-cell count (612, before transparency filtering) is a new data
-point confirming the grid-parsing/indexing itself (not just the shared filter table) is correct.
-
-**Not done / explicitly out of scope:** no `MoveObject:` (object/enemy/pickup) parsing (Phase 7),
-no rendering of any kind (Phase 5/6), no gameplay.
-
----
-
 ## 1. Project summary
 
-**Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (a C++ port of *Speedy Blupi*, a Windows Phone XNA game from 2013).
+**Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (a C++ port of *Speedy Blupi*, a
+Windows Phone XNA game from 2013). Main goal: reimplement the same game logic, levels, and assets
+in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without inventing new mechanics.
 
-- **Faithful remake rule:** Only implement what exists in mobile-eggbert. No invented mechanics.
-- Current build target: `GalaxyEggbertSimple3D` — built against `simple-3d` (which wraps U3D/Urho3D). This is a reference/historical target going forward, not the long-term direction — see §0.
-- **Backend layering (current target only):** `galaxy-eggbert game code → Simple3D API → U3D (Urho3D fork)`.
-  This Simple3D/U3D/Nova3D layering is superseded as the long-term direction by direct CNA + Easy3D (§0); it remains accurate for how `GalaxyEggbertSimple3D` itself works today.
-- World format: identical to mobile-eggbert `.txt` files (`worlds/world001.txt` … `world005.txt`).
-- Tile sprites: same PNGs as mobile-eggbert (`Content/icons/object-m.png`, `blupi.png`, `element.png`).
-- Reference: `/rv/data/development/github.com/openeggbert/mobile-eggbert` (Decor.cpp, Tables.cpp) — read-only, no changes without explicit user approval.
+**Current development phase:** mid-migration between two build targets:
 
----
+- `GalaxyEggbertSimple3D` (built on `simple-3d` → U3D/Urho3D) — the **only playable** target,
+  feature-complete enough to play through core mechanics end-to-end (see §2).
+- `GalaxyEggbertCNA` (built directly on **CNA** + **Easy3D** helper library) — the **new
+  long-term target**, currently a skeleton: opens a window, copies mobile-eggbert assets next to
+  itself, parses one world file. No rendering, no gameplay yet.
+
+**Important architectural decisions (all recorded in `plan.md`/`easy3d.md`/`CLAUDE.md`):**
+
+- Direct CNA + Easy3D supersedes the old Simple3D → U3D → Nova3D direction as the long-term
+  target. `GalaxyEggbertSimple3D` is **not being deleted** — it stays as the working reference
+  until the CNA/Easy3D path reaches feature parity with it.
+- Easy3D is a small helper library beside CNA (cameras, texture atlas, batching) — it must not
+  hide CNA; game code may call CNA directly.
+- `../mobile-eggbert` is **read-only**. Its assets (PNGs, sounds, world files) are freely reused;
+  its code/data (tables, enum values, `Decor.cpp` logic) are reference-only — copying/adapting
+  requires explicit user approval first.
+- Mobile-eggbert's world files are flat 2D data (Y=0 everywhere). There is **no** and will be
+  **no** automated `.txt → .vwr` converter that "promotes" a 2D level into a 3D one — that
+  produces empty, unplayable geometry. The existing approach (parse the flat 2D layout, render it
+  with 3D tech: cubes, camera, billboards) is correct and stays. Genuinely 3D-designed levels are
+  separate future hand-authored work, not derived from mobile-eggbert.
 
 ## 2. Current status
 
-### Builds
-- `cmake-build-debug/GalaxyEggbertSimple3D` — **builds clean** (CLion default profile).
-- `cmake-build-simple3d/GalaxyEggbertSimple3D` — **builds clean**.
-- `cmake-build-debug/GalaxyEggbertWorldsTests` — **54/54 tests pass** (run directly; ctest discovery broken).
+### Build status
+- `GalaxyEggbertSimple3D` — **builds clean** (`cmake -S . -B build && cmake --build build -j2`).
+- `GalaxyEggbertWorldsTests` — **54/54 tests pass** (`ctest --test-dir build`).
+- `GalaxyEggbertCNA` — **builds clean** (opt-in: `-DGALAXY_EGGBERT_BUILD_CNA=ON`), **runs**
+  (opens an SDL/EasyGL window, clears to a solid color, prints a world-load diagnostic to stdout,
+  exits without crashing under a forced kill).
 
 ### What works
-- World loading from mobile-eggbert `.txt` format.
-- 3D terrain rendered as cubes with tile textures from `object-m.png` using `Techniques/DiffUnlit.xml` (no hard-edge lighting seam).
-- Animated tiles: lava (8-frame), crusher (10-frame), saw (6-frame), spike (16-frame), water1/2 (6-frame), fan (3-frame per direction), marine (11-frame), temp (20-frame) — exact frame tables from `mobile-eggbert Tables.cpp`.
-- Blupi billboard sprite from `blupi.png` with state machine (Stop/March/Jump/Air/Down/Up) and exact frame tables from `table_blupi`.
-- Mobile object billboards from `element.png` with per-type animation (keys, treasure, shield, egg, drink, exit, enemies, platforms).
-- ObjectType12 crate: renders with sprite (element.png icon 32) and can be pushed one tile horizontally; floor support check prevents pushing off cliffs; 0.4 s cooldown.
-- Vertical platform (type 16): patrol uses 3D distance (X+Y+Z) so it now correctly moves up/down.
-- Tile hazard detection: lava/spike/saw instant kill; crusher kills only in phases 5-9.
-- Enemy stomp: `BounceUp()` impulse on kill, score +25.
-- Respawn invincibility: 2 s after death with 10 Hz sprite flash.
-- Pickup system: treasure counting, exit gate opens when all collected (+1 life bonus).
-- Key pickups (red/green/blue), shield pickup (5 s timer), egg/drink (+1 life).
-- "EXIT OPEN!" HUD popup: green text, 3 s (0.3 s fade-in / hold / 0.5 s fade-out).
-- HUD: lives, world, treasure count, key icons, shield timer, level timer, score, game speed, controls hint.
-- Save/load: 3 gamer slots (lives, world, best score) + sound settings via `Simple3D::SaveData`.
-- Sound: 93 channels, per-channel volume (from `tableVolumePitch`), correct WAV paths, loop support.
-- Camera: 3rd-person orbit following Blupi via `GECameraRig`.
-- Physics: `CharacterController` + gravity + jump + glide (RShift).
-- Game phases: Init (slot select) → Play → Pause → Win → Lost → Settings.
-- 5 sky colours (one per world region) via `SetClearColor`.
-- Resource loading: `Content/` registered via `Game::AddResourceDir("Content")`.
+- **`GalaxyEggbertSimple3D`** (full details unchanged from before this migration): world loading
+  from mobile-eggbert `.txt`, textured/animated 3D terrain, Blupi billboard with state machine,
+  mobile-object billboards, crate push, platform patrol, hazard detection, enemy stomp, respawn
+  invincibility, pickups (treasure/keys/shield/egg/drink), exit-gate logic, HUD, save/load (3
+  slots), 93-channel sound, 3rd-person orbit camera, 5 sky colors per region.
+- **`GalaxyEggbertCNA`** (new, minimal): CMake option `GALAXY_EGGBERT_BUILD_CNA` (default OFF)
+  builds it alongside/instead of Simple3D; links `CNA` + `easy3d::easy3d`; copies
+  `../mobile-eggbert/Content/` and `worlds/` next to its binary at build time; parses
+  `worlds/world001.txt` into the shared `GalaxyEggbert::Worlds::World` at startup (parse only).
 
 ### What does not work yet
-- Camera shake: `GECameraRig::StartShake` is a no-op — Simple3D has no camera-offset API.
-- Sky fog/zone colour per world region — only clear colour changes, no distance fog.
-- `ctest` does not discover `GalaxyEggbertWorldsTests` (binary runs fine manually).
-- Android and web builds untested after S3D-9.
-
----
+- `GalaxyEggbertCNA`: no terrain/Blupi/object rendering, no HUD, no sound, no gameplay, no input
+  beyond default window handling. Easy3D itself currently has **no renderer** at all (its
+  `BillboardBatch`/`CubeBatch` are CPU-side item queues with zero GPU draw calls — confirmed by
+  grep, see `easy3d.md` §7.3) — this blocks the next phase, see §4.
+- `GalaxyEggbertSimple3D`: camera shake is a no-op; no per-zone fog; Android/Web builds untested
+  since the last engine change.
 
 ## 3. Recent changes
 
 | Commit | Change |
-|--------|--------|
-| `ac1d8d1` | feat: crate push (ObjectType12) + fix vertical platform patrol (3D dist) |
-| `396295a` | docs: strengthen faithful remake rule in CLAUDE.md (forbid coins etc.) |
-| `a3cd1df` | fix: half-pixel UV inset in tileUV(); raise decor entity Y to 1.05 |
-| `dd35277` | fix: revert to single Box entity per tile |
-| `4f50e0e` | feat: TILE-039/042/064 + VISUAL-011/012 + controls + camera |
-| simple-3d `f5ae0a9` | fix: use DiffUnlit technique in SetTileTexture to eliminate tile seams |
+|---|---|
+| `3293a3d` | docs: reject mobile-eggbert 2D→3D world auto-conversion idea (`plan.md`) |
+| `0f01490` | feat: mobile-eggbert asset build-time copy + world-file parsing (`.txt` → `World`) for `GalaxyEggbertCNA`; `ObjectType`/`SoundChannel` ID parity confirmed identical to mobile-eggbert; `GE_SHARED_SOURCES` hoisted to top-level CMake scope |
+| `c6b6456` | feat: `GalaxyEggbertCNA` skeleton target — new `GALAXY_EGGBERT_BUILD_CNA` option, links CNA + Easy3D, opens window, clears screen |
+| `f579824` | docs: reconcile `README.md`/`CLAUDE.md`/`NEXT.md` around the new CNA+Easy3D direction |
+| `ebea834` | docs: add `easy3d.md` migration analysis + `plan.md` "Direct CNA + Easy3D Migration" section |
+| `ac1d8d1` | feat (Simple3D): crate push (ObjectType12) + fix vertical platform patrol (3D distance) |
 
----
+Files added this migration: `easy3d.md`; `src/GalaxyEggbertCNA/` (`main.cpp`,
+`GalaxyEggbertCnaGame.hpp/.cpp`, `Game/GEWorldRuntime.hpp/.cpp`). No `src/GalaxyEggbertSimple3D/`
+files were touched. No sibling repository was modified (mobile-eggbert, cna, easy-3d, simple-3d
+are all read-only for this work).
 
 ## 4. Current blocker / main problem
 
-**No single hard blocker** — game runs and is playable end-to-end.
+**Not a build/test failure — an open design decision blocking Phase 5.**
 
-Most visible remaining quality gap: **camera shake is a no-op**. Deaths and hazard hits have no visual impact. Simple3D currently exposes no camera-offset API, so adding shake requires either extending Simple3D's `Game` class with an `OffsetCamera()` call, or applying a position-jitter directly to the camera node inside `GECameraRig` (if the node is accessible).
-
----
+- **Symptom:** Easy3D (`../easy-3d`) has cameras and a texture atlas, but its `BillboardBatch` and
+  `CubeBatch` are pure CPU-side item queues — there is no code anywhere (in Easy3D or in
+  galaxy-eggbert) that turns queued items into vertex data or issues a CNA `GraphicsDevice` draw
+  call. This isn't a bug; Easy3D's own roadmap describes this as not-yet-built.
+- **Failing command:** none — nothing crashes or errors; the capability simply doesn't exist yet.
+- **Affected modules:** `../easy-3d` (`BillboardBatch`, `CubeBatch`), and whatever new
+  `GalaxyEggbertCNA` terrain code Phase 5 would add.
+- **What's blocking progress:** `plan.md` `E3D-MIG-050` asks where the CPU-side vertex builders
+  and CNA render-call adapters should live — inside `../easy-3d` itself, or as an adapter local to
+  `GalaxyEggbertCNA`. This has not been decided yet, and writing terrain-rendering code before
+  deciding risks building it in the wrong place.
+- **What's already been tried:** nothing — this is queued as the next task (§8, task 1).
 
 ## 5. Known bugs and limitations
 
 | Status | Issue |
-|--------|-------|
-| confirmed | Camera shake is a no-op (`GECameraRig::StartShake` does nothing) |
-| confirmed | `ctest` does not discover `GalaxyEggbertWorldsTests` in cmake-build-debug (binary runs fine manually) |
-| incomplete | Sky fog/zone colour per world region — only `SetClearColor` changes |
-| unknown | Web (Emscripten) build untested after S3D-9 |
-| unknown | Android build untested |
-| needs verification | Stomp bounce height `kJumpSpeed * 0.65f` — matches mobile-eggbert feel? |
-| needs verification | Crate push floor-support check uses world tile at y=0; stacked crates (y=1) not tested |
-
----
+|---|---|
+| confirmed | Simple3D: `GECameraRig::StartShake()` is a no-op (Simple3D has no camera-offset API) |
+| confirmed, environment-specific | `ctest` does not discover `GalaxyEggbertWorldsTests` when configured in the pre-existing `cmake-build-debug` CLion profile (binary runs fine manually). **Not reproduced** in a fresh `build/` directory this session — `ctest --test-dir build` correctly finds and runs all 54 tests there. Likely a stale/IDE-specific config issue in `cmake-build-debug`, not a general CMake problem. |
+| incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region |
+| incomplete | `GalaxyEggbertCNA`: no terrain/Blupi/object rendering, no HUD, no sound, no gameplay (expected at this phase, not a bug) |
+| unknown | Simple3D Android/Web builds untested since the last engine change |
+| unknown | `GalaxyEggbertCNA`'s clean-exit-on-window-close path was not separately exercised — only a forced external `timeout`/kill was tested during verification |
+| needs verification | Simple3D: stomp bounce height (`kJumpSpeed * 0.65f`) — does it match mobile-eggbert's feel? |
+| needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
+| risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds/world001.txt"`) — only works if the binary is run from its own build directory; fails silently to an empty world (with a stderr warning) otherwise |
 
 ## 6. Architecture notes
 
 ### Main modules
-
 ```
-GalaxyEggbertSimpleGame        — main game class (game phases, level lifecycle)
-  GEWorldRuntime               — world data: loads .txt, holds World voxel grid, MobileObjSpec list,
-                                  6 fps animPhase_ counter
-  GETerrainRenderer            — spawns Box entities from World; Update(animPhase) refreshes animated tile UVs
-  GEBlupiController            — Blupi entity: CharacterController, BlupiState machine, billboard sprite
-  GEDecorSystem                — mobile objects: pickups (trigger sphere), enemies/platforms (patrol),
-                                  crate push, animation from GetObjIcon()
-  GEHud                        — HUD overlay (Simple3D UI labels + panels)
-  GECameraRig                  — 3rd-person camera following Blupi
-  GESound                      — sound channel wrapper (93 channels, per-channel volume)
+include/GalaxyEggbert/Worlds/, src/GalaxyEggbert/Worlds/   — engine-agnostic voxel World (100×100
+                                                               grid), Block/Chunk, .vwr save format.
+                                                               Shared by BOTH targets below
+                                                               (GE_SHARED_SOURCES in CMakeLists.txt).
+include/GalaxyEggbert/BlockTypes.hpp                        — tile type constants; block type =
+                                                               icon index in object-m.png;
+                                                               fromMobileIconId() is the single
+                                                               shared mobile-eggbert-icon→block
+                                                               translation used by BOTH targets.
 
-include/GalaxyEggbert/Worlds/  — engine-independent voxel grid (100×100×10), tested by GalaxyEggbertWorldsTests
-include/GalaxyEggbert/BlockTypes.hpp — tile type constants; block type = icon index in object-m.png
+src/GalaxyEggbertSimple3D/   — full playable game (Simple3D/U3D). GalaxyEggbertSimpleGame owns
+                                GEWorldRuntime, GETerrainRenderer, GEBlupiController,
+                                GEDecorSystem, GEHud, GECameraRig, GESound, GEExploSystem,
+                                GEBridgeSystem. Not touched by the CNA migration.
+
+src/GalaxyEggbertCNA/        — new, minimal. GalaxyEggbertCnaGame (Microsoft::Xna::Framework::Game
+                                subclass) owns Game/GEWorldRuntime (mobile-eggbert .txt parser,
+                                independent of Simple3D's version) and an Easy3D::Camera3D
+                                (currently just proves the link works, not used for rendering).
 ```
 
-### Data flow
-
+### Data flow (current, both targets read the same file format)
 ```
-worlds/worldXXX.txt
-  → GEWorldRuntime::LoadFromMobileEggbertFile()
-      → World (blocks) + mobileObjects_ (MobileObjSpec list) + blupiSpawn_
-  → GETerrainRenderer::Build()   — one Box entity per block; animTiles_ subset for UV updates
-  → GEDecorSystem::Build()       — one entity per MobileObjSpec; trigger spheres for pickups
-  → GEBlupiController::Respawn() — positions Blupi at blupiSpawn_
+worlds/worldXXX.txt (mobile-eggbert format, header + Decor: grid [+ MoveObject: lines])
+  Simple3D: → GEWorldRuntime::LoadFromMobileEggbertFile() → World + MobileObjSpec list + blupiSpawn
+            → GETerrainRenderer / GEDecorSystem / GEBlupiController (renders everything)
+  CNA:      → GEWorldRuntime::LoadFromMobileEggbertFile() → World only (MoveObject: lines ignored
+              for now — that's Phase 7). Nothing consumes the parsed World yet — parse only.
 ```
 
 ### Important invariants
+- Block type = icon index in `object-m.png` (20 cols, 64×64 px tiles) — no separate mapping table.
+- World grid is 100×100; both `GEWorldRuntime` implementations independently define a
+  `kWCX`/`kWCZ` (Simple3D) or `kWorldCenterX`/`kWorldCenterZ` (CNA) = 50 offset to center the grid.
+- `ObjectType` (204 IDs) and `SoundChannel` (93 IDs) in `include/GalaxyEggbert/def/` are confirmed
+  numerically identical to mobile-eggbert's versions (verified 2026-07-01) — do not renumber.
+- No `#ifdef GE_ENGINE_*` anywhere — engine differences belong inside Simple3D (for that target)
+  or are simply separate code in `src/GalaxyEggbertCNA/` (for the new target).
+- Build with `-j2` maximum (32 GB RAM constraint; crashes observed with more parallel jobs).
 
-- **Block type = icon index** in `object-m.png` (20 cols, 64×64 px tiles). No separate mapping.
-- **World coordinates:** world grid is 100×100; Blupi's 3D position uses offset `kWCX=50, kWCZ=50` to centre the grid at origin.
-- **animPhase_** in `GEWorldRuntime` ticks at 6 fps; used for crusher kill-phase check AND `GETerrainRenderer::Update()`.
-- **No `#ifdef GE_ENGINE_*`** anywhere. Engine differences belong in Simple3D, not in galaxy-eggbert.
-- **Faithful remake:** check `Decor.cpp` in mobile-eggbert before implementing any new gameplay behaviour. Mobile-eggbert enemies have NO per-type AI — all patrol linearly between `posStart` and `posEnd`; only ObjectType97 (homing bomb) tracks Blupi.
-- **RAM:** build with `-j2` maximum (32 GB RAM constraint; crashes with more parallel jobs).
-
-### API boundaries that must remain stable
-
-- `GEWorldRuntime::kWCX / kWCZ = 50` — changing breaks tile coordinate conversion everywhere.
-- `BlockTypes::fromMobileIconId()` — maps mobile-eggbert icon IDs to block types; must match world file format.
-- `GEDecorSystem::GetObjIcon(ObjectType, phase)` — ported from Decor.cpp; do not change without cross-referencing mobile-eggbert.
-
----
+### Boundaries that must remain stable
+- `BlockTypes::fromMobileIconId()` — must match the mobile-eggbert world file format exactly.
+- `ObjectType`/`SoundChannel` numeric values — stored in level files, must never be renumbered.
+- `GEDecorSystem::GetObjIcon(ObjectType, phase)` (Simple3D) — do not change without
+  cross-referencing mobile-eggbert's `Decor.cpp`.
+- `src/GalaxyEggbertSimple3D/` must not be mutated into the CNA implementation — new CNA/Easy3D
+  code goes in `src/GalaxyEggbertCNA/` only.
+- mobile-eggbert stays read-only; no code/data copied from it without explicit user approval.
 
 ## 7. Useful commands
 
 ```bash
-# Configure (CLion default profile or manual):
-cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
+# Configure + build Simple3D (default target):
+cmake -S . -B build
+cmake --build build --target GalaxyEggbertSimple3D -j2
+./build/GalaxyEggbertSimple3D
 
-# Build game:
-cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
+# Build + run world-model unit tests:
+cmake --build build --target GalaxyEggbertWorldsTests -j2
+ctest --test-dir build --output-on-failure
 
-# Run game:
-./cmake-build-debug/GalaxyEggbertSimple3D
+# Configure + build the new CNA target (opt-in, off by default):
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2
 
-# Build and run unit tests:
-cmake --build cmake-build-debug --target GalaxyEggbertWorldsTests -j2
-./cmake-build-debug/GalaxyEggbertWorldsTests
+# Run CNA target — must run from its own build directory (relative asset paths):
+cd build-cna && ./GalaxyEggbertCNA
+# Expect on stdout: "GalaxyEggbertCNA: loaded worlds/world001.txt — spawn tile (12, 92), sky region 0, 594 non-air blocks."
 
-# Build with explicit Simple3D profile:
-cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
-cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
-./cmake-build-simple3d/GalaxyEggbertSimple3D
-
-# Reference: mobile-eggbert animation tables
-grep -n "table_decor\|table_blupi" /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp
-
-# Reference: mobile-eggbert gameplay logic
-less /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp
+# Reference: mobile-eggbert animation tables / gameplay logic (read-only)
+grep -n "table_decor\|table_blupi" ../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp
+less ../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp
 ```
 
----
+No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format tooling to run.
 
 ## 8. Next smallest tasks
 
-**The primary next task for the repository overall is the `GalaxyEggbertCNA` skeleton described
-in §0** — not the Simple3D tasks below. The tasks in this section are secondary
-maintenance/polish items for the `GalaxyEggbertSimple3D` reference target; they remain valid to
-pick up, but do not represent the project's forward direction.
-
-Ordered by impact / faithfulness to mobile-eggbert:
-
-### Task 1 — Camera shake
-**Goal:** `GECameraRig::StartShake()` produces visible camera jitter for ~0.3 s on death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert.
-**Files:** `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; possibly add `Game::SetCameraPositionOffset()` or similar to `simple-3d/src/Simple3D/Game.cpp`.
-**Reference:** `mobile-eggbert Decor.cpp` — `m_decorAction = DecorAction::SmallShake`.
-**Verify:** Trigger a death; camera shakes briefly.
-
-### Task 2 — Fix ctest discovery
-**Goal:** `ctest --test-dir cmake-build-debug` discovers and runs the 54 world tests.
-**Files:** `CMakeLists.txt` — investigate `gtest_discover_tests` issue in the debug profile.
-**Verify:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-
----
+1. **Decide `E3D-MIG-050`** — where should Easy3D's CPU-side vertex builders and CNA
+   `GraphicsDevice` draw-call adapters live: inside `../easy-3d` itself, or as an adapter local to
+   `GalaxyEggbertCNA`? This is a decision, not code — but it blocks everything in Phase 5.
+   **Files:** `easy3d.md` §7.3, `plan.md` `E3D-MIG-050`. **Verification:** decision recorded in
+   `plan.md` with reasoning.
+2. **First Easy3D terrain vertex builder** (once task 1 is decided) — implement a CPU-side
+   function that turns `Easy3D::CubeBatch::Items()` into vertex/index data for one static (not yet
+   animated) cube. **Files:** depends on task 1's decision (`../easy-3d/src/CubeBatch.cpp` or new
+   `src/GalaxyEggbertCNA/Game/...`). **Verification:** new unit/compile-check test asserting
+   expected vertex count for a known `CubeBatch` content; `GalaxyEggbertCNA` still builds.
+3. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+   `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
+   `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
+   **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
+4. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+   (not a forced kill) and confirm the process exits 0 with no leaked resources.
+   **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
+   to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
+5. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
+   death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert. **Files:**
+   `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; may need a new `Game::SetCameraPositionOffset()`-style
+   API added to `../simple-3d` (would need discussion, since `simple-3d` is a sibling repo).
+   **Verification:** trigger a death in-game; camera visibly shakes briefly.
 
 ## 9. Do not do yet
 
-- **No CNA/Easy3D gameplay port** before the `GalaxyEggbertCNA` skeleton target exists and builds
-  cleanly (§0).
-- **No mobile-eggbert modifications** without explicit user approval — it is read-only for this
-  migration (§0, `easy3d.md` §5.1).
-- **No further investment in the Simple3D/U3D/Nova3D direction** beyond keeping
-  `GalaxyEggbertSimple3D` working — it is superseded as the long-term target (§0).
-- **No Android or web build** until desktop gameplay faithfully matches mobile-eggbert.
-- **No Nova3D integration** — that direction is superseded; do not pursue it further.
-- **No new gameplay mechanics** not present in mobile-eggbert (no coins, coyote time, combo multipliers, star ratings, time bonuses).
-- **No 3D character model** — billboard Blupi is correct for now; a real mesh requires asset work outside this repo.
-- **Do not touch `src/GalaxyEggbert/Worlds/`** unless fixing a data model bug confirmed by a failing unit test.
-- **Do not add `#ifdef GE_ENGINE_*`** anywhere — backend differences belong in Simple3D (for the current target) only.
-- **No sky/fog overhaul** until Simple3D exposes per-zone fog API (it currently does not).
-
----
+- No further investment in Simple3D/U3D/Nova3D beyond bug fixes on the existing reference target
+  — that direction is superseded.
+- No modifications to `../mobile-eggbert`, `../cna`, `../easy-3d`, or `../simple-3d` without
+  explicit user approval — all read-only.
+- No `.txt → .vwr` (or any) automated 2D-to-3D world converter — rejected, see §1.
+- No terrain/Blupi/object rendering or gameplay in `GalaxyEggbertCNA` until task 1 (§8) is decided
+  — writing rendering code before that risks putting it in the wrong place.
+- No Easy3D scope creep — no ECS, scene graph, physics, resource cache, editor, or Lua.
+- No mass refactor of `include/GalaxyEggbert/Worlds/` unless a failing unit test justifies it.
+- No `#ifdef GE_ENGINE_*` anywhere.
+- No new gameplay mechanics not present in mobile-eggbert (no coins, coyote time, combo
+  multipliers, star ratings, time bonuses).
 
 ## 10. Resume prompt
 
 ```
-Read NEXT.md first. Then inspect only the files listed under the first task in section 8.
-Do not refactor unrelated code.
-Make one small, concrete improvement — implement the task goal as described.
-Cross-reference mobile-eggbert source at:
-  /rv/data/development/github.com/openeggbert/mobile-eggbert/
-before implementing any gameplay behaviour.
-After the change, run:
-  cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
-  ./cmake-build-debug/GalaxyEggbertWorldsTests
-Verify the build is clean and all 54 tests pass.
-Update NEXT.md: move the completed task to section 3 (Recent changes) and remove it from section 8.
+Read NEXT.md first. Then inspect only the files needed for the first task in section 8.
+Do not refactor unrelated code and do not expand scope beyond that one task.
+Make one small, verified improvement — implement the task goal as described, nothing more.
+Cross-reference mobile-eggbert source at ../mobile-eggbert (read-only) before implementing any
+gameplay or world-format behavior.
+After the change, run the verification command listed for that task.
+Update NEXT.md when done: move the completed task into section 3 (Recent changes), remove it
+from section 8, and add whatever new next-smallest task naturally follows.
 ```
