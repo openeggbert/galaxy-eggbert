@@ -46,15 +46,29 @@ Legend: `[x]` done · `[ ]` todo · `[~]` partial · `[?]` requires user decisio
 - [x] E3D-MIG-002 — Document Mobile Eggbert as read-only for Galaxy migration.
 - [x] E3D-MIG-003 — Document that Easy3D is a CNA helper and must not hide CNA.
 - [x] E3D-MIG-004 — Document no Lua in first migration phase.
-- [ ] E3D-MIG-005 — `[?]` Decide: reconcile `README.md` (already CNA-oriented) with `CLAUDE.md`/`NEXT.md` (still Simple3D-oriented) — roll README back, or update the others now? (`easy3d.md` §12 Q6)
+- [x] E3D-MIG-005 — Reconciled: `README.md`, `CLAUDE.md`, and `NEXT.md` now consistently describe `GalaxyEggbertSimple3D` as current/working and `GalaxyEggbertCNA` as planned/not-yet-implemented (documentation cleanup pass, 2026-07-01). `README.md`'s CNA build instructions were not rolled back — they were relabeled as "planned" and retargeted to `GalaxyEggbertCNA` instead of implying `GalaxyEggbert` builds today.
+
+### Next implementation batch — CNA target skeleton
+
+This is the immediate next implementation task after this documentation-cleanup pass (tracked in
+`NEXT.md` §0). It is a focused pull of the skeleton-only items already listed in Phase 2 below
+(`E3D-MIG-020..026`), called out here separately so the very next actionable step is unambiguous.
+No gameplay, no asset pipeline, no renderer — just an empty window.
+
+- [ ] E3D-MIG-NEXT-001 — Add `GALAXY_EGGBERT_BUILD_CNA` option, default OFF.
+- [ ] E3D-MIG-NEXT-002 — Add `src/GalaxyEggbertCNA/` skeleton.
+- [ ] E3D-MIG-NEXT-003 — Add `GalaxyEggbertCNA` executable target linking CNA and easy3d.
+- [ ] E3D-MIG-NEXT-004 — Minimal CNA game/window/clear-color loop.
+- [ ] E3D-MIG-NEXT-005 — Verify `GalaxyEggbertSimple3D` still builds unchanged.
+- [ ] E3D-MIG-NEXT-006 — Verify `GalaxyEggbertWorldsTests` still pass.
 
 ### Phase 1 — Repository integration investigation
 
 - [x] E3D-MIG-010 — Inspect CNA CMake target and include/link requirements (via mobile-eggbert's usage and Easy3D's `EASY3D_CNA_DIR`/`EASY3D_LINK_CNA` options).
 - [x] E3D-MIG-011 — Inspect Easy3D CMake target and include/link requirements (target `easy3d`, alias `easy3d::easy3d`, auto-detects parent `CNA` target).
 - [x] E3D-MIG-012 — Inspect whether Mobile Eggbert exposes a reusable library target — confirmed **no**, only `add_executable(WindowsPhoneSpeedyBlupi ...)`.
-- [ ] E3D-MIG-013 — `[?]` Decide asset path strategy for Mobile Eggbert assets: sibling-path read, build-time copy, or symlink (`easy3d.md` §9, §12 Q3).
-- [ ] E3D-MIG-014 — `[?]` Decide new source tree/target name: `GalaxyEggbertCNA` (recommended, `easy3d.md` §9) vs `GalaxyEggbertEasy3D`.
+- [~] E3D-MIG-013 — Asset path strategy **decided, not yet implemented**: first implementation will use a **build-time copy** from `../mobile-eggbert/Content` and `../mobile-eggbert/worlds` into the Galaxy Eggbert build/runtime output (reproducible builds, no dependency on a sibling checkout existing at runtime). A later, optional convenience mode may add sibling-path runtime read for local development. Symlinks were considered and rejected as fragile on Windows/CI. **The copy mechanism itself (CMake custom command, etc.) is future work — not implemented in this task; see Phase 3.**
+- [x] E3D-MIG-014 — Decided: source tree `src/GalaxyEggbertCNA/`, target `GalaxyEggbertCNA`, build option `GALAXY_EGGBERT_BUILD_CNA` (default OFF). Recorded consistently in `easy3d.md` §9, `README.md`, `CLAUDE.md`, and `NEXT.md`.
 - [ ] E3D-MIG-015 — `[?]` Decide whether to ask mobile-eggbert maintainers (i.e. request user approval) for a future `add_library()` target covering `Tables`/`Def`/`GameData`/`ObjectType`/`SoundChannel` only (`easy3d.md` §12 Q2).
 
 ### Phase 2 — New target skeleton

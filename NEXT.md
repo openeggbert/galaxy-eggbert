@@ -1,16 +1,49 @@
 # NEXT.md — Galaxy Eggbert
 
+## 0. Current direction (read this first)
+
+**Current active direction:** Direct CNA + Easy3D migration planning.
+
+**Current working implementation:** `GalaxyEggbertSimple3D` — unchanged, remains the buildable
+reference target. Sections 1–10 below describe it and stay accurate/current for that target.
+
+**Next recommended implementation task** after this documentation cleanup: create the initial
+`GalaxyEggbertCNA` target skeleton — CMake option `GALAXY_EGGBERT_BUILD_CNA`, default OFF; opens a
+CNA window and clears the screen; no gameplay. `GalaxyEggbertSimple3D` stays unchanged throughout.
+See `plan.md`, "Next implementation batch — CNA target skeleton" (`E3D-MIG-NEXT-001..006`).
+
+- `easy3d.md` — the migration analysis document (current Simple3D/Easy3D/mobile-eggbert state,
+  target architecture, reuse strategy, risks, open questions).
+- `plan.md` — section "Direct CNA + Easy3D Migration" has the full task list (`E3D-MIG-*`).
+
+**Key unresolved decisions** (see `easy3d.md` §12 for full detail; tracked as `plan.md` tasks):
+- Asset strategy for mobile-eggbert assets — build-time copy recommended for the first
+  implementation, sibling-path runtime read considered as an optional later convenience
+  (`plan.md` E3D-MIG-013).
+- Target/source-tree name — decided: `GalaxyEggbertCNA` / `src/GalaxyEggbertCNA/` / build option
+  `GALAXY_EGGBERT_BUILD_CNA` (`plan.md` E3D-MIG-014).
+- Whether mobile-eggbert should later gain a read-only library target for `Tables`/`Def`/
+  `GameData`/`ObjectType`/`SoundChannel` (requires explicit user approval as a separate
+  mobile-eggbert-side task), versus staying asset+reference-only (`plan.md` E3D-MIG-015).
+- Where Easy3D's CPU-side vertex builders and CNA render adapters should be implemented — inside
+  `../easy-3d` itself, or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3/§12 Q5).
+
+**Do not start the CNA/Easy3D gameplay port before the `GalaxyEggbertCNA` skeleton target exists
+and builds cleanly.**
+
+---
+
 ## 1. Project summary
 
 **Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (a C++ port of *Speedy Blupi*, a Windows Phone XNA game from 2013).
 
 - **Faithful remake rule:** Only implement what exists in mobile-eggbert. No invented mechanics.
-- Sole build target: `GalaxyEggbertSimple3D` — built against `simple-3d` (which wraps U3D/Urho3D).
-- **Backend layering:** `galaxy-eggbert game code → Simple3D API → U3D (Urho3D fork)`.
-  Nova3D can replace U3D in the future by changing only Simple3D's cmake linkage — zero changes in galaxy-eggbert.
+- Current build target: `GalaxyEggbertSimple3D` — built against `simple-3d` (which wraps U3D/Urho3D). This is a reference/historical target going forward, not the long-term direction — see §0.
+- **Backend layering (current target only):** `galaxy-eggbert game code → Simple3D API → U3D (Urho3D fork)`.
+  This Simple3D/U3D/Nova3D layering is superseded as the long-term direction by direct CNA + Easy3D (§0); it remains accurate for how `GalaxyEggbertSimple3D` itself works today.
 - World format: identical to mobile-eggbert `.txt` files (`worlds/world001.txt` … `world005.txt`).
 - Tile sprites: same PNGs as mobile-eggbert (`Content/icons/object-m.png`, `blupi.png`, `element.png`).
-- Reference: `/rv/data/development/github.com/openeggbert/mobile-eggbert` (Decor.cpp, Tables.cpp).
+- Reference: `/rv/data/development/github.com/openeggbert/mobile-eggbert` (Decor.cpp, Tables.cpp) — read-only, no changes without explicit user approval.
 
 ---
 
@@ -167,6 +200,11 @@ less /rv/data/development/github.com/openeggbert/mobile-eggbert/src/WindowsPhone
 
 ## 8. Next smallest tasks
 
+**The primary next task for the repository overall is the `GalaxyEggbertCNA` skeleton described
+in §0** — not the Simple3D tasks below. The tasks in this section are secondary
+maintenance/polish items for the `GalaxyEggbertSimple3D` reference target; they remain valid to
+pick up, but do not represent the project's forward direction.
+
 Ordered by impact / faithfulness to mobile-eggbert:
 
 ### Task 1 — Camera shake
@@ -184,12 +222,18 @@ Ordered by impact / faithfulness to mobile-eggbert:
 
 ## 9. Do not do yet
 
+- **No CNA/Easy3D gameplay port** before the `GalaxyEggbertCNA` skeleton target exists and builds
+  cleanly (§0).
+- **No mobile-eggbert modifications** without explicit user approval — it is read-only for this
+  migration (§0, `easy3d.md` §5.1).
+- **No further investment in the Simple3D/U3D/Nova3D direction** beyond keeping
+  `GalaxyEggbertSimple3D` working — it is superseded as the long-term target (§0).
 - **No Android or web build** until desktop gameplay faithfully matches mobile-eggbert.
-- **No Nova3D integration** — Simple3D backend switch belongs in the `simple-3d` repo. Wait until Nova3D implements the full Urho3D API.
+- **No Nova3D integration** — that direction is superseded; do not pursue it further.
 - **No new gameplay mechanics** not present in mobile-eggbert (no coins, coyote time, combo multipliers, star ratings, time bonuses).
 - **No 3D character model** — billboard Blupi is correct for now; a real mesh requires asset work outside this repo.
 - **Do not touch `src/GalaxyEggbert/Worlds/`** unless fixing a data model bug confirmed by a failing unit test.
-- **Do not add `#ifdef GE_ENGINE_*`** anywhere — backend differences belong in Simple3D only.
+- **Do not add `#ifdef GE_ENGINE_*`** anywhere — backend differences belong in Simple3D (for the current target) only.
 - **No sky/fog overhaul** until Simple3D exposes per-zone fog API (it currently does not).
 
 ---

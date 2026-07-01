@@ -1,5 +1,10 @@
 # Simple3D API Gaps — Galaxy Eggbert
 
+> **Direction note:** this document describes the Simple3D path. That path is now superseded as
+> the long-term target by Direct CNA + Easy3D (see `easy3d.md`, `plan.md` §"Direct CNA + Easy3D
+> Migration"). The Simple3D implementation (`GalaxyEggbertSimple3D`) remains a working
+> historical/reference implementation until the CNA/Easy3D target reaches parity.
+
 **Single source of truth for missing Simple3D APIs** required by the galaxy-eggbert
 Simple3D port (`GalaxyEggbertSimple3D`). Update this file when simple-3d adds a feature.
 

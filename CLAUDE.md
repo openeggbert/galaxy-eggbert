@@ -3,8 +3,61 @@
 ## Project Overview
 
 **Galaxy Eggbert** is a faithful 3D remake of **mobile-eggbert** (itself a faithful C++ port of the original *Speedy Blupi*, a Windows Phone XNA game from 2013).
-It is implemented in C++ using the **Urho3D API** with **U3D** (`u3d-community/U3D`) as the reference backend.
-Nova3D (the user's own Urho3D fork) will replace U3D once it fully implements the same API.
+
+The current buildable implementation, `GalaxyEggbertSimple3D`, is written in C++ using the
+**Simple3D** API (`../simple-3d`), which currently wraps **U3D** (`u3d-community/U3D`, a Urho3D
+fork). This is the working, playable target today — see `NEXT.md` for its status.
+
+The **planned long-term implementation**, `GalaxyEggbertCNA`, does not exist yet. See
+"Current Direction Lock" below.
+
+## Current Direction Lock
+
+**The long-term target is Direct CNA + Easy3D.**
+
+```text
+Galaxy Eggbert
+  -> CNA directly
+  -> Easy3D beside CNA (small helpers only — cameras, texture atlas, billboard/cube batching)
+  -> mobile-eggbert used read-only as reference / asset / data source
+```
+
+This supersedes the old long-term direction:
+
+```text
+Galaxy Eggbert -> Simple3D -> U3D / Urho3D / Nova3D -> (CNA someday)
+```
+
+`GalaxyEggbertSimple3D` is **not being removed**. It remains the current working implementation
+and stays in the repository as a historical/reference implementation until the CNA/Easy3D target
+(`GalaxyEggbertCNA`) reaches feature parity with it.
+
+**Before doing any migration work, read `easy3d.md` (full analysis) and `plan.md` (section
+"Direct CNA + Easy3D Migration", task IDs `E3D-MIG-*`).**
+
+Rules for this direction:
+
+- Do not expand the Simple3D/U3D/Nova3D direction except to keep the existing
+  `GalaxyEggbertSimple3D` reference target working (bug fixes, faithful-remake gameplay parity
+  work are fine; new engine-layer investment beyond that is not).
+- Do not modify `../mobile-eggbert` without explicit user approval.
+- Do not refactor mobile-eggbert for Galaxy Eggbert, and do not split it into a `core` library.
+- Do not copy mobile-eggbert code or data (tables, enums, save-format byte layout, sprite/frame
+  logic, etc.) into Galaxy Eggbert without explicit user approval, even if it looks like "just
+  data." See `easy3d.md` §5.7 for specific examples of load-bearing data that must not be
+  transcribed casually.
+- Reusing mobile-eggbert *assets* (PNG sprite sheets, sounds, world files) by sibling path or
+  build-time copy is allowed only once the asset strategy task is approved/implemented — do not
+  wire up ad hoc asset paths outside that plan.
+- Prefer new CNA/Easy3D code under `src/GalaxyEggbertCNA/` (planned tree name — see below).
+- Do not mutate `src/GalaxyEggbertSimple3D/` into the CNA implementation. Keep it intact as
+  historical/current reference; the CNA path is new code in a new tree.
+- Easy3D is a helper library beside CNA — do not hide CNA behind Easy3D, and do not let Easy3D
+  grow into a scene graph / ECS / engine. See `easy3d.md` §7 for what does and does not belong in
+  Easy3D.
+- Do not add Lua unless explicitly requested by the user.
+- Do not add MeshCraft, Mesh World, Nova3D, or further Simple3D features back into the active
+  target path.
 
 ## CRITICAL RULE — Faithful Remake
 
@@ -26,79 +79,94 @@ shadow, step-up traversal. Game logic, objects, enemies, and pickups must mirror
 When suggesting next tasks after completing work, only suggest tasks that port features
 already verified to exist in mobile-eggbert (`/rv/data/development/github.com/openeggbert/mobile-eggbert`).
 
-Engine backend is selected at CMake configure time:
+Current build target selection (actual, matches `CMakeLists.txt`):
 ```
-cmake -S . -B cmake-build-u3d -DGALAXY_EGGBERT_ENGINE=U3D     # default
-cmake -S . -B build-nova3d    -DGALAXY_EGGBERT_ENGINE=NOVA3D   # future
+cmake -S . -B cmake-build-debug -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON   # default ON, current working target
+cmake --build cmake-build-debug --target GalaxyEggbertSimple3D
+```
+
+Planned (not yet implemented — see "Current Direction Lock" above and `plan.md`):
+```
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON    # planned option, default OFF
+cmake --build build-cna --target GalaxyEggbertCNA
 ```
 
 ## Relationship to mobile-eggbert
 
-**mobile-eggbert** (`/rv/data/development/github.com/openeggbert/mobile-eggbert`) is the primary reference and inspiration.
-It is a C++ port of the original Windows Phone Speedy Blupi, ported path: C# (ILSpy decompile) → MonoGame → C++ with CNA (XNA-compatible SDL3 framework).
+**mobile-eggbert** (`/rv/data/development/github.com/openeggbert/mobile-eggbert`) is the primary
+reference and inspiration. It is a C++ port of the original Windows Phone Speedy Blupi, ported
+path: C# (ILSpy decompile) → MonoGame → C++ with CNA (XNA-compatible SDL3 framework).
 
-### What to reuse or use as direct inspiration from mobile-eggbert
+**mobile-eggbert is read-only for this migration.** Per "Current Direction Lock" above, do not
+copy code or data from it into Galaxy Eggbert without explicit user approval — this applies to
+every row below. Where reuse is possible without copying (assets, or a future approved library
+link), that is called out explicitly.
 
 | Category | mobile-eggbert source | Reuse plan for galaxy-eggbert |
 |---|---|---|
-| Game enums | `include/WindowsPhoneSpeedyBlupi/def/` | Copy/adapt: `BlupiAction`, `Direction`, `SecretPower`, `GameSpeed`, `KeyPressFlags` |
-| Object types | `decor/ObjectType.hpp` | Copy verbatim — numeric IDs must match level file format |
-| Decor actions | `decor/DecorAction.hpp` | Copy verbatim (camera shake types) |
-| Sound channels | `def/SoundChannel.hpp` | Copy — 92 sound effects, same index mapping |
-| Sprite sheets | `Content/icons/` and `Content/icons4x/` | Use as texture source for cube faces: `blupi.png`, `element.png`, `explo.png`, `object-m.png`, `button.png` |
-| Level backgrounds | `Content/backgrounds/decor000.png` … | Use as skybox or level-specific background |
-| Sounds | `Content/sounds/sound010.wav` … | Copy directly — same WAV files, same indices |
-| World files | `worlds/world001.txt` … | Same format — galaxy-eggbert reads these worlds |
-| Game phases | `Def::Phase` enum | Adapt for 3D (same logical phases: Init, Play, Pause, Lost, Win, …) |
-| Level constants | `Def::MAXCELX=100`, `MAXCELY=100` | Same grid dimensions — level data is 2D, rendered in 3D |
-| Gameplay logic | `Decor.cpp` / `Decor.hpp` | Port to 3D: same state machine, same physics rules, same AI |
-| Save data | `GameData.cpp` | Reuse byte-level save format for compatibility |
-| Tables | `Tables.cpp` (animation tables, movement tables) | Port directly — same frame indices |
+| Sprite sheets | `Content/icons/` and `Content/icons4x/` | Direct asset reuse (no copying of code) — texture source for tile/billboard rendering: `blupi.png`, `element.png`, `explo.png`, `object-m.png`, `button.png` |
+| Level backgrounds | `Content/backgrounds/decor000.png` … | Direct asset reuse — level-specific background/skybox |
+| Sounds | `Content/sounds/sound000.wav` … `sound092.wav` | Direct asset reuse — same WAV files, same indices |
+| World files | `worlds/world001.txt` … | Direct asset reuse — same text format, read by the existing engine-agnostic `GalaxyEggbert::Worlds` parser |
+| Game enums (`BlupiAction`, `Direction`, `SecretPower`, `GameSpeed`, `KeyPressFlags`, `ObjectType`, `SoundChannel`, decor actions) | `include/WindowsPhoneSpeedyBlupi/def/`, `decor/` | Behavioral/ID reference only — galaxy-eggbert has its own `include/GalaxyEggbert/def/*.hpp` equivalents; copying/reconciling IDs requires explicit user approval (see `easy3d.md` §12 Q4) |
+| Level constants (`MAXCELX=100`, `MAXCELY=100`, etc.) | `Def.hpp` | Reference only — galaxy-eggbert's own `GameConstants.hpp` already tracks the grid dimensions |
+| Gameplay logic | `Decor.cpp` / `Decor.hpp` | **Canonical behavioral reference only.** At ~11,700 lines with `IPixmap`/`ISound` members threaded through simulation methods, it is not a reusable component — see `easy3d.md` §5.2/§6.4. Study it, do not link or copy it. |
+| Animation/movement tables | `Tables.cpp` | Reference only unless a future approved mobile-eggbert library target makes direct linking possible (`easy3d.md` §12 Q2); do not transcribe array contents without approval |
+| Save data | `GameData.cpp` | Reference only — reusing the byte-level layout for save compatibility is an open question (`easy3d.md` §12 Q7), not a default |
 
-### What differs in galaxy-eggbert (3D-specific)
+### mobile-eggbert build-target reality
 
-- **Renderer**: Urho3D scene graph (`Scene`, `Node`, `StaticModel`, `Camera`) instead of 2D sprite batching
-- **Tile representation**: Each 2D decor tile → one 3D cube/mesh node with the tile's sprite as a texture on its top face
-- **Blupi character**: 3D mesh/model instead of 2D sprite sheet (initially use Box.mdl placeholder until a real mesh exists)
-- **Camera**: 3rd-person perspective or isometric, orbiting the player; not a fixed 2D scrolling viewport
-- **Sprite sheets as textures**: `decor*.png` tile sprites are applied as textures to cube faces; explosion/effect sprites can use billboard nodes
+mobile-eggbert's `CMakeLists.txt` currently defines only `add_executable(WindowsPhoneSpeedyBlupi
+...)` — there is no `add_library()` target. It **cannot be linked as a CMake dependency today**
+without a mobile-eggbert-side change, which would itself require explicit user approval as a
+separate task. Do not assume or claim otherwise.
+
+## Engine rules
+
+- **No `#ifdef` guards for engine differences** in `GalaxyEggbertSimple3D` or the planned
+  `GalaxyEggbertCNA` — each target speaks its own API directly (Simple3D, or CNA+Easy3D
+  respectively). If a backend beneath Simple3D is missing a feature, that is a `simple-3d`-repo
+  problem, not something to work around in galaxy-eggbert.
+- Public headers (used by tests) go in `include/`; private implementation headers go in `src/`.
+- `include/GalaxyEggbert/Worlds/`, `def/*.hpp`, `BlockTypes.hpp`, `Def.hpp`, `GameConstants.hpp`
+  are engine-agnostic and shared by both the current Simple3D target and the planned CNA target.
+  Do not add engine-specific dependencies to this tree.
 
 ## Source layout
 
 ```
 include/GalaxyEggbert/
   Worlds/          — data model: Block, Chunk, World (engine-agnostic, tested)
-src/GalaxyEggbert/
-  GEEngine.hpp     — includes <Urho3D/Urho3DAll.h>
-  GalaxyEggbertApp.hpp / .cpp   — Urho3D Application subclass
+  def/, BlockTypes.hpp, Def.hpp, GameConstants.hpp — engine-agnostic enums/constants
+
+src/GalaxyEggbert/Worlds/       — implementation of the engine-agnostic world/voxel model
+
+src/GalaxyEggbertSimple3D/      — current working target (GalaxyEggbertSimple3D), built on Simple3D/U3D
+  GalaxyEggbertSimpleGame.hpp / .cpp
   Game/
-    GalaxyEggbertGame.hpp / .cpp — main game logic (scene, camera, terrain, HUD)
+    GEWorldRuntime, GETerrainRenderer, GEBlupiController, GEDecorSystem,
+    GEHud, GESound, GECameraRig, GEExploSystem, GEBridgeSystem
+
+src/GalaxyEggbertCNA/            — PLANNED, does not exist yet (see "Current Direction Lock")
+
 tests/
-  GalaxyEggbert/Worlds/         — unit tests (54 tests, engine-independent)
+  GalaxyEggbert/Worlds/          — unit tests (54 tests, engine-independent)
 ```
-
-## Engine rules
-
-- **No `#ifdef GE_ENGINE_*` in C++ source code.** Galaxy-eggbert targets pure Urho3D API.
-  If Nova3D doesn't compile it, Nova3D must fix itself.
-- Entry point is always `URHO3D_DEFINE_APPLICATION_MAIN(GalaxyEggbertApp)`.
-- Update loop is always via `SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(...))`.
-- Include always `<Urho3D/Urho3DAll.h>` via `GEEngine.hpp`.
 
 ## Build
 
-U3D must be pre-built:
-```
-/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug/lib/libUrho3D.a
-```
+Current working build (`GalaxyEggbertSimple3D`, requires `simple-3d` and a pre-built U3D):
 
-Default build (U3D, Linux):
 ```bash
-cmake --build cmake-build-u3d --target GalaxyEggbert -j2
-./cmake-build-u3d/GalaxyEggbert
+cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
+./cmake-build-debug/GalaxyEggbertSimple3D
 ```
 
 Use `-j2` maximum to protect RAM (32 GB limit; crashes occurred with more parallel jobs + multiple sessions).
+
+`GalaxyEggbertCNA` has no build instructions yet because it does not exist. See `plan.md`,
+"Next implementation batch — CNA target skeleton", for the planned first steps.
 
 ## Code rules
 
