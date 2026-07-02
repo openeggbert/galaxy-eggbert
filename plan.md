@@ -128,11 +128,120 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
 
 ### Phase 5 — Easy3D terrain path
 
-- [ ] E3D-MIG-050 — `[?]` Decide where the CPU-side vertex-builder gap gets filled: inside `../easy-3d` (its own roadmap Phase 3) or as an adapter local to `GalaxyEggbertCNA` (`easy3d.md` §7.3, §12 Q5).
-- [ ] E3D-MIG-051 — Implement/obtain a CPU-side vertex builder for `Easy3D::CubeBatch` items.
-- [ ] E3D-MIG-052 — Implement/obtain a CNA renderer adapter that issues draw calls for cube-batch vertex data.
-- [ ] E3D-MIG-053 — Use `Easy3D::TextureAtlas` to map `object-m.png` tile cells to UV rects.
-- [ ] E3D-MIG-054 — Queue one `CubeBatch` item per non-empty world cell; render a static (non-animated) terrain pass.
+- [x] E3D-MIG-050 — Decided (2026-07-02): both the CPU-side vertex-builder gap (Easy3D's own
+  Phase 3) and the CNA renderer-adapter gap (Phase 4) get filled **inside `../easy-3d` itself**,
+  not as a `GalaxyEggbertCNA`-local adapter. Matches easy-3d's own `docs/ROADMAP.md` Phase 3/4 and
+  `NEXT.md` §8 item 8, which already scope this in detail (proposed files
+  `include/Easy3D/BillboardMesh.hpp`, `CubeMesh.hpp`). Reasoning: turning a `BillboardItem`/
+  `CubeItem`/`DebugLine`/`DebugBox` into vertex/index arrays, and turning those into CNA
+  `GraphicsDevice` draw calls, is generic 3D-batching plumbing with zero Eggbert-specific knowledge
+  (no `ObjectType`, no tile IDs, no gameplay) — exactly the "boring, testable... billboard/cube
+  batching, texture atlas, debug drawing" helper role `easy-3d/docs/ARCHITECTURE.md` assigns to
+  Easy3D, and reusable beyond this one game. Everything Eggbert-specific (which UV rect maps to
+  which `ObjectType`/tile ID, which world cell gets a `CubeItem`, animated-tile frame selection)
+  stays in `GalaxyEggbertCNA`, which only calls Easy3D's new vertex-builder/adapter functions with
+  that data — mirroring the existing `TextureAtlas` split (Easy3D stores UV rects by name; Galaxy
+  Eggbert decides what name means what tile). **Caveat:** this records *where the code should
+  live*, not a green light to start editing `../easy-3d` — implementing E3D-MIG-051/052 modifies a
+  sibling repo, which `NEXT.md`'s "Do not do yet" list requires explicit user approval for before
+  any code is written there.
+- [x] E3D-MIG-051 — Done (2026-07-02, user approved). Implemented `Easy3D::CubeVertex` +
+  `AppendCubeMesh`/`BuildCubeMesh` **inside `../easy-3d`**
+  (`include/Easy3D/CubeMesh.hpp`/`src/CubeMesh.cpp`) per E3D-MIG-050: turns `CubeBatch` items into
+  24 vertices + 36 indices per cube (one UV per face — 4 vertices per face rather than 8 shared
+  corners, since a shared corner can't hold 3 different per-face UVs), CCW-wound as seen from
+  outside. New CNA-link-gated `tests/test_cube_mesh.cpp` in easy-3d. Verified: easy-3d default
+  build 2/2 tests, CNA-linked build 5/5 tests; `GalaxyEggbertCNA` still builds clean against the
+  updated `easy3d`; `GalaxyEggbertWorldsTests` still 54/54 (unaffected, unrelated tree). Full
+  detail recorded in `../easy-3d/NEXT.md` §3/§8 item 8.
+- [x] E3D-MIG-052 — Done (2026-07-02, user approved). CNA draw-path decision: real, working,
+  tested indexed-3D drawing already exists in CNA (`VertexBuffer`+`IndexBuffer`+`BasicEffect`+
+  `GraphicsDevice::DrawIndexedPrimitives`), proven by CNA's own `examples/house3d_demo.cpp` — build
+  GPU buffers once, `SetVertexBuffer`/`Indices`/`DrawIndexedPrimitives` per frame inside a
+  `pass.Apply()` loop. `SpriteBatch` is 2D-only, not usable. New `Easy3D::CubeMeshRenderer`
+  (`include/Easy3D/CubeMeshRenderer.hpp` + `src/CubeMeshRenderer.cpp` in `../easy-3d`): constructor
+  uploads a `CubeMesh`'s `CubeVertex`/index arrays to GPU (converting `CubeVertex{Position,Uv}` to
+  CNA's `VertexPositionTexture{Position,TextureCoordinate}` — an exact 1:1 field match), 32-bit
+  `IndexBuffer` (matches `CubeMesh`'s `uint32_t` indices); `Draw(GraphicsDevice&, BasicEffect&)`
+  issues the indexed draw call, following `house3d_demo.cpp`'s exact pattern. The caller owns and
+  configures the `BasicEffect` (World/View/Projection/Texture) — the adapter knows nothing about
+  tiles, gameplay, or cameras, matching E3D-MIG-050's split. Found and fixed a real bug while
+  wiring this up: `../easy-3d`'s "headers-only" default build (no CNA linked) didn't have
+  `../sharp-runtime/include` on its path, so anything pulling `GraphicsDevice.hpp`/
+  `BasicEffect.hpp` (which need `Color.hpp` → `SharpRuntime/SharpRuntimeHelper.hpp`) failed to
+  compile there — unlike the shallow `Vector2`/`Vector3`/`Matrix` headers `Camera3D`/`CubeBatch`
+  already used. Added a `EASY3D_SHARP_RUNTIME_DIR` cache variable (mirrors the existing
+  `EASY3D_CNA_DIR` pattern) to `../easy-3d/CMakeLists.txt`, fixing the default build without
+  affecting the CNA-linked path (which already gets it transitively through the `CNA` target).
+  New `tests/test_cube_mesh_renderer.cpp` in `../easy-3d` — **compile-check only, always** (not
+  gated by `EASY3D_CNA_LINKED` like the other tests), since `CubeMeshRenderer`'s constructor needs
+  a live `GraphicsDevice&`, which only exists once a real CNA `Game` has opened a window — not
+  something a plain `main()` can produce. **Genuine runtime verification instead came from the real
+  target:** wired a temporary debug cube (one hardcoded `CubeItem`, `GETileAtlas`'s Ground UV) into
+  `GalaxyEggbertCnaGame` (galaxy-eggbert), ran the actual windowed binary, and read back the
+  center-screen pixel via `GraphicsDevice::GetBackBufferData` (mirroring CNA's own
+  `easygl_vertex_formats_test.cpp` pattern) — printed `debug cube center pixel RGBA = (255, 255,
+  255, 255)`, clearly distinct from the sky-blue clear color, confirming a real `DrawIndexedPrimitives`
+  call actually rasterized pixels. Verified: `../easy-3d` default build (2/2 tests, plus the new
+  compile-check) and CNA-linked build (5/5 tests, unaffected) both green;
+  `GalaxyEggbertCNA` rebuilt clean and the debug-cube pixel readback above confirms it end-to-end.
+  This debug cube is temporary scaffolding (labeled as such in code) — E3D-MIG-054 replaces it with
+  real per-world-cell terrain.
+- [x] E3D-MIG-053 — Done (2026-07-02). New `GalaxyEggbert::CNA::GETileAtlas`
+  (`src/GalaxyEggbertCNA/Game/GETileAtlas.hpp/.cpp`): builds an `Easy3D::TextureAtlas` sized to
+  `BlockTypes::kSheetW`/`kSheetH` and registers the full `object-m.png` grid via `AddGrid` (rows
+  computed as `ceil(kSheetH / kTileSize)`); `GetTileUv(blockType)` returns the UV rect for a block
+  type, exploiting that `AddGrid`'s row-major frame numbering is mathematically identical to
+  `BlockTypes`' own `icon = row * kSheetCols + col` convention, so frame index == block type
+  directly (no separate mapping table). Wired into `GalaxyEggbertCnaGame::LoadContent()`
+  (prints UV for Ground/Lava/Wall to stdout, data-only — nothing queues a `CubeBatch` item yet).
+  **Verification note:** `GalaxyEggbertCNA`'s full CNA-linked build is currently broken by an
+  unrelated, external issue — `../sharp-runtime`'s `IAsyncResult` interface was extended
+  (uncommitted change in that repo, not mine) and `../cna`'s `StorageDevice` hasn't been updated to
+  match, so the whole `CNA` static library fails to compile. This is outside this task's scope
+  (neither `../cna` nor `../sharp-runtime` is approved for modification here) and appears to be a
+  concurrent, in-progress change by another session. Because `GETileAtlas` has zero functional
+  dependency on CNA (only touches CNA-free `Easy3D::TextureAtlas` + header-only `BlockTypes`),
+  it was verified independently instead: a standalone compile+link (bypassing the broken parts of
+  CNA entirely) confirmed `GetTileUv()` for Air/negative/out-of-range → all-zero, named tile types
+  match independently recomputed UVs, row-wrap and distinct-icon behavior correct. Separately,
+  `-fsyntax-only` confirmed `GalaxyEggbertCnaGame.cpp`'s actual CNA/easy-3d usage compiles cleanly
+  against the real headers. **Update (2026-07-02, later same day):** `../cna` shipped
+  `e1939bc` ("fix(StorageDevice): implement IAsyncResult's new AsyncState/AsyncWaitHandle"),
+  resolving the external breakage. Rebuilt `GalaxyEggbertCNA` clean and ran it: printed UV values
+  for Ground/Lava/Wall match the standalone independent verification exactly, and the world-load
+  line (spawn tile (12, 92), sky region 0, 594 non-air blocks) is unregressed. Full build+run
+  re-verification is done — no longer owed.
+- [x] E3D-MIG-054 — Done (2026-07-02). New `GalaxyEggbert::CNA::GETerrainRenderer`
+  (`src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`): walks the full 100x100 `World` grid,
+  queues one `Easy3D::CubeBatch` item (1x1x1, world position `(x - kWorldCenterX, 0, z -
+  kWorldCenterZ)`, UV from `GETileAtlas`) per non-air block, builds it through
+  `Easy3D::BuildCubeMesh`, and owns an `Easy3D::CubeMeshRenderer` for it — a static, one-shot
+  upload (no per-frame rebuild, matching `house3d_demo.cpp`'s own pattern and this phase's
+  "non-animated" scope). Also tracks the block-position centroid (`CentroidX()`/`CentroidZ()`),
+  used to aim the camera reliably (the spawn tile itself is usually the open-air cell Blupi stands
+  in, not a solid block, so it's not a reliable look-at target). Replaced the temporary
+  `E3D-MIG-052` debug cube in `GalaxyEggbertCnaGame` entirely — camera now targets the terrain
+  centroid from a high angled overhead position; `Draw()` also enables depth testing
+  (`SetDepthTestEnabled(true)`, needed now that many cubes can occlude each other, matching
+  `house3d_demo.cpp`). **Verified:** rebuilt `GalaxyEggbertCNA` clean and ran it —
+  `terrain mesh uploaded — 594 blocks, 14256 vertices, 7128 triangles` (594×24=14256,
+  594×12=7128, exact match to the already-verified non-air-block count); a 5x5 grid pixel-sampling
+  check (more robust than a single center pixel, which can miss terrain if it falls between blocks)
+  found `13/25 sampled screen points show non-background (terrain) color` — genuine, non-vacuous
+  confirmation that real per-block terrain, not a placeholder, is on screen. **Follow-up, done same
+  day (2026-07-02):** loaded `object-m.png` directly via CNA's own
+  `Texture2D(assetName, GraphicsDevice&)` constructor (against the already build-time-copied
+  `Content/icons/object-m.png`) and bound it to `terrainEffect_`
+  (`setTextureEnabledProperty(true)`/`setTextureProperty(&terrainTexture_)`) — **not** via
+  mobile-eggbert's `Pixmap` class, which the user initially suggested reusing; declined because
+  (a) mobile-eggbert has no CMake library target to link at all today, and (b) `Pixmap` is
+  confirmed 2D-`SpriteBatch`-coupled in `easy3d.md` §5.2, not usable for this 3D `BasicEffect`
+  path — CNA's native `Texture2D` already does exactly what's needed with no mobile-eggbert
+  dependency. Verified: texture loads at `1301x1431 px` (matches `BlockTypes::kSheetW`/`kSheetH`
+  exactly); re-ran the pixel-sampling check — `13/25` terrain-covered points still, now with
+  **5 distinct colors** among them (proof the texture is genuinely sampled per-pixel, not a flat
+  fallback).
 - [ ] E3D-MIG-055 — Add animated-tile support (lava/crusher/saw/spike/water/fan/marine/temp) using mobile-eggbert's frame tables as reference, matching the Simple3D port's existing behavior.
 - [ ] E3D-MIG-056 — Do not add MeshCraft or any mesh-import path.
 

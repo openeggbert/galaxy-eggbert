@@ -220,6 +220,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/main.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp
         src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
+        src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp
         ${GE_SHARED_SOURCES}
     )
 

@@ -552,6 +552,16 @@ with `E3D-MIG-*` IDs. Summary of phases:
 5. **Where should the Easy3D rendering gap (§7.3) be filled** — inside `../easy-3d` itself (its
    own roadmap Phase 3/4), or as a thin adapter living only in `GalaxyEggbertCNA`? This affects
    whether `../easy-3d` needs a follow-up task of its own.
+
+   > **Decision (2026-07-02, recorded as `plan.md` `E3D-MIG-050`):** inside `../easy-3d` itself.
+   > Cross-checking easy-3d's own `docs/ROADMAP.md` (Phase 3 "CPU-side vertex builders", Phase 4
+   > "CNA renderer adapters") and `NEXT.md` §8 item 8 showed that repo's own plan already scopes
+   > this work as its own, independent of Galaxy Eggbert — it is generic billboard/cube/debug
+   > geometry-and-draw-call plumbing with no Eggbert-specific knowledge, matching
+   > `docs/ARCHITECTURE.md`'s stated helper role. Galaxy Eggbert stays the owner of all
+   > Eggbert-specific meaning (tile IDs, `ObjectType`, animated-tile frames) and only calls the
+   > new Easy3D functions. This is a documentation decision only — implementing it still requires
+   > separate, explicit user approval to modify `../easy-3d` (a sibling repo).
 6. **Documentation reconciliation:** should `README.md`'s aspirational CNA build instructions be
    rolled back to match current Simple3D reality until the new target exists, or should
    `CLAUDE.md`/`NEXT.md`/`plan.md` be updated now to describe the CNA/Easy3D target as the
