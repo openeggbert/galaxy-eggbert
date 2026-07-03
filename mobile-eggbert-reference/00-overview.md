@@ -26,11 +26,13 @@ tile icon, every `ObjectType`, and every animation mobile-eggbert has, built up 
 Tracked as `DOC-001`..`DOC-006` in `plan.md` §15 ("Documentation — mobile-eggbert 2D reference,
 complete"). Each file below notes its own completeness status at the top.
 
-**Progress:** `DOC-001` (file split), `DOC-002` (complete tile catalog, all 441 icons), and
-`DOC-003` (complete `ObjectType` classification, all 204 IDs) done 2026-07-03. `DOC-003` also
-surfaced a real rendering bug (wrong sprite-sheet channel assumed for 5 `ObjectType`s in
-`GEDecorSystem.cpp`) — see `03-objects.md`'s bug callout. `DOC-004`..`DOC-006` (animations, sounds,
-backgrounds) still pending.
+**Progress:** `DOC-001` (file split), `DOC-002` (complete tile catalog, all 441 icons), `DOC-003`
+(complete `ObjectType` classification, all 204 IDs), and `DOC-004` (complete animation catalog, 71
+sequences) done 2026-07-03. `DOC-003` surfaced a real rendering bug (wrong sprite-sheet channel
+assumed for 5 `ObjectType`s in `GEDecorSystem.cpp`) — see `03-objects.md`'s bug callout, tracked as
+`DOC-007`, not yet fixed. `DOC-004` surfaced a second real finding (not a bug fix, a documentation
+correction): object animations have no confirmed frame rate — see `08-animations.md`'s correction
+note. `DOC-005`/`DOC-006` (sounds, backgrounds) still pending.
 
 ## Files in this reference
 
@@ -44,7 +46,7 @@ backgrounds) still pending.
 | `05-backgrounds.md` | Background/sky region images | Partial — 3 of 38 backgrounds shown; `region=` mapping unresolved (`DOC-006`) |
 | `06-doors.md` | Door tile behavior (2D) | Believed complete for the 2D behavior itself |
 | `07-sounds.md` | The 93 sound channels | Not yet expanded — pointer only (`DOC-005`) |
-| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Partial — 31 animations documented, explosions and 12 newer ObjectTypes not yet covered** (`DOC-004`) |
+| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete for known sequences** — 71 documented, full `Tables.cpp` sweep done (`DOC-004`, done 2026-07-03) |
 | `09-open-questions.md` | Open questions for the eventual 3D mapping design | Living list, updated as facts are found |
 
 ## How images were generated

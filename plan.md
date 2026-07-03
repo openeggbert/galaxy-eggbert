@@ -1326,14 +1326,27 @@ current progress, not just this list.
   `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
   of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
   check or a scripted crop-and-compare against the correct sheet) before considering it done.
-- [ ] DOC-004 — Complete animation catalog. Currently 31 animations documented (`08-animations.md`).
-  Missing: explosions (`explo.png`, needs `Tables::table_explo_size[icon]` cross-reference for
-  per-type frame count/size), the door slide-up animation (positional, needs a different
-  representation than a frame-cycle GIF), and animated-GIF coverage for the 12 `ObjectType`s added
-  in `plan.md` §6 Phase-6-adjacent MoveObject fix (`table_blupih_left`, `table_guepe_left`,
-  `table_creature_left`, `table_chenille`, `table_follow1`/`table_follow2` — already transcribed
-  into `GEDecorSystem.cpp`, just need cropping into GIFs the same way the original 14 object
-  animations were).
+- [x] DOC-004 — Done (2026-07-03). Expanded `08-animations.md` from 31 to 71 animated sequences: 8
+  explosion tables (`table_explo1`–`8`, transcribed from `Tables.cpp`, `-1` frames rendered
+  transparent same as `Temp`'s vanish frames), a 10-frame door slide-up composite (positional, not
+  a frame-cycle), and 10 GIFs for 9 of the 12 newly-supported `ObjectType`s (`19`/`46`/`55` are
+  static icons, no animation; `96` has dormant+awake states = 2 GIFs). Applied `DOC-003`'s
+  sprite-sheet correction: `32` (blupih) cropped from `blupi1.png`, `47` (chenille track) from
+  `object-m.png`, not `element.png` — cross-checked the other 7 new types' real `channel=` field
+  across all 78 world files and confirmed `element.png` (channel=10) is correct for those. Ran a
+  full `Tables.cpp` sweep (grep for every `table_*` identifier) and categorized all ~100 found:
+  covered / deferred-with-reason (mostly directional-variant tables for enemies whose one direction
+  is already shown, and effects for `ObjectType`s confirmed vestigial-in-real-levels by `DOC-003`) /
+  out-of-scope (non-visual parameter tables like `table_decor_quart`, `table_vitesse_*`,
+  `table_training*`) — nothing silently dropped. **Real finding, not fixed here**: object animations
+  (`GEDecorSystem::Update()`) have no throttled timer (unlike tiles/Blupi, which do) — `st.animPhase`
+  increments every `Update()` call with no rate cap found in `GalaxyEggbertSimple3D`, so the "6 fps ÷
+  divisor" duration figures for the original 14 object animations (and any new ones added this pass)
+  are unconfirmed and likely off by ~10x if the real frame rate is closer to 60 fps; flagged
+  prominently in `08-animations.md` rather than left as an uncorrected assumption. Verified: all 403
+  image references across `mobile-eggbert-reference/` resolve to real files (zero orphans/broken
+  links), all 19 new GIFs' frame counts checked with `identify` against the source table lengths
+  (all exact matches).
 - [ ] DOC-005 — Complete sound catalog. Currently a pointer only (`07-sounds.md`). List all 93
   `SoundChannel` entries with their actual in-game trigger/purpose (several are already known
   incidentally — e.g. channel 33 = door opening, per `06-doors.md` — collect these plus grep
