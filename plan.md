@@ -1262,4 +1262,52 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 
 ---
 
+## 15. Documentation — mobile-eggbert 2D reference (complete)
+
+User feedback 2026-07-03: the first pass at `mobile-eggbert-2d-reference.md` (single file, 461
+lines) was a representative sample, not a complete catalog — "všechny animace, všechny typy bloků"
+(all animations, all block types). Restructured into `mobile-eggbert-reference/` (multi-file, one
+concern per file, `images/` subfolder) and tracked as explicit, individually completable tasks
+below. Each file's own top-of-file status note tracks its completion state — check there for
+current progress, not just this list.
+
+- [x] DOC-001 — Done (2026-07-03). Split the single `mobile-eggbert-2d-reference.md` into
+  `mobile-eggbert-reference/00-overview.md` through `09-open-questions.md` (10 files) +
+  `mobile-eggbert-reference/images/` (moved via `git mv`, history preserved). Verified
+  programmatically: all 85 image references across all files resolve to real files, and all 85
+  actual image files are referenced somewhere (no orphans, no broken links).
+- [ ] DOC-002 — Complete tile/icon catalog. Currently 29 of ~441 addressable `object-m.png` icons
+  documented (`02-tiles.md`). For every icon 0–440: crop a 64×64 screenshot (grid math already
+  documented in `02-tiles.md`'s "How these images were generated"), note its `isMobileTransparent`
+  passability flag (`BlockTypes.hpp`'s existing 441-entry table already has this data — no new
+  mobile-eggbert research needed for that part), and check whether it's actually used in any of the
+  78 real world files (grep `worlds/*.txt`) vs. never placed anywhere. Named/behavioral icons (the
+  29 already done) need no further mobile-eggbert research; the remaining ~410 are plain
+  ground/wall/decoration variants — categorize by visual inspection of the crop, not guesswork.
+- [ ] DOC-003 — Complete `ObjectType` catalog. Currently 18 of 204 IDs have a confirmed icon
+  (`03-objects.md`); 29 of 204 are confirmed to appear in real levels at all. For the ~175
+  "unidentified/reserved" IDs: check `Decor.cpp`'s `GetIcon()`/`MoveObjectStepIcon` switch (already
+  partially read this session — see `03-objects.md`'s per-type sourcing for the 12 types added
+  2026-07-03 as a research pattern to repeat) for whether each ID has real distinct logic or is
+  genuinely vestigial (declared only to keep the enum contiguous). Crop icons for any newly-confirmed
+  type the same way `04.1`'s existing 18 were done.
+- [ ] DOC-004 — Complete animation catalog. Currently 31 animations documented (`08-animations.md`).
+  Missing: explosions (`explo.png`, needs `Tables::table_explo_size[icon]` cross-reference for
+  per-type frame count/size), the door slide-up animation (positional, needs a different
+  representation than a frame-cycle GIF), and animated-GIF coverage for the 12 `ObjectType`s added
+  in `plan.md` §6 Phase-6-adjacent MoveObject fix (`table_blupih_left`, `table_guepe_left`,
+  `table_creature_left`, `table_chenille`, `table_follow1`/`table_follow2` — already transcribed
+  into `GEDecorSystem.cpp`, just need cropping into GIFs the same way the original 14 object
+  animations were).
+- [ ] DOC-005 — Complete sound catalog. Currently a pointer only (`07-sounds.md`). List all 93
+  `SoundChannel` entries with their actual in-game trigger/purpose (several are already known
+  incidentally — e.g. channel 33 = door opening, per `06-doors.md` — collect these plus grep
+  `Decor.cpp` for the rest).
+- [ ] DOC-006 — Complete backgrounds catalog. Currently 3 of 38 background images thumbnailed
+  (`05-backgrounds.md`), and the `region=` → filename selection code was not located. Find that
+  mapping code (likely in higher-level UI/game-state code, not `Decor.cpp` itself — search for
+  `PixmapChannel::Background` load sites), document it, and thumbnail the remaining 35 backgrounds.
+
+---
+
 *Total tasks: ~650. Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22).*

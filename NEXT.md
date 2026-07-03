@@ -388,13 +388,12 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Write a mobile-eggbert 2D-world reference doc (in progress, user-requested 2026-07-03)** —
-   an English markdown catalog of everything a mobile-eggbert 2D world can contain (block/tile
-   types, elements/objects, enemies, backgrounds, doors, etc.) and the mobile-eggbert `.txt` world
-   file format itself, as the factual basis for a deliberate ID/behavior mapping to galaxy-eggbert's
-   richer 3D `.vwr`/`World`/`BlockMetadata` format (e.g. doors as transparent billboards instead of
-   opaque cubes). Explicitly requested *before* further block/object/door rendering work, to avoid
-   guessing. Read-only research against `../mobile-eggbert` — no code changes.
+1. **Complete the mobile-eggbert 2D-world reference (in progress, user-requested 2026-07-03,
+   escalated to "complete" same day)** — split into `mobile-eggbert-reference/` (10 files +
+   `images/`, see `00-overview.md` for the index). First pass covered a representative sample; the
+   user wants full coverage (every tile icon, every `ObjectType`, every animation). Tracked as
+   `DOC-002`..`DOC-006` in `plan.md` §15 — work through those in order (tile catalog first, it's
+   the most mechanical/tractable). Read-only research against `../mobile-eggbert` — no code changes.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
