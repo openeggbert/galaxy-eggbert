@@ -44,6 +44,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   adapters — decided because that work is generic 3D-batching plumbing with zero Eggbert-specific
   knowledge, matching Easy3D's own stated role. Modifying `../easy-3d` still requires explicit,
   per-change user approval; it is not blanket-authorized.
+- **Open design question, not decided yet (2026-07-03):** how should mobile-eggbert's objects/
+  elements (all `ObjectType`s) actually be rendered in 3D — billboard, or a textured cube (with
+  untextured faces filled by a per-texture fallback color instead of left blank), or a mix depending
+  on the object? Whichever objects use the cube approach will need per-block metadata for render
+  mode, fallback color, and likely a 4-direction facing/rotation for directional textures. Full
+  writeup: `mobile-eggbert-reference/09-open-questions.md` (first bullet) — this is a generalization
+  of the already-noted doors-as-billboards question, not a separate decision to make independently.
 
 ## 2. Current status
 
@@ -207,7 +214,31 @@ this session): `NEXT.md`, `plan.md`, `CMakeLists.txt`; modified
 
 ## 4. Current blocker / main problem
 
-**No blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
+**Documentation track (not code): `mobile-eggbert-reference/`'s GIFs are corrupted and the whole
+effort has been reopened — this is the actual current blocker for that track.** The user visually
+inspected `08-animations.md` and found that every animated GIF's frames accumulate the previous
+frame's opaque pixels instead of clearing ("frame 2 shows frame 1 ghosted into its background").
+Confirmed programmatically (coalesce each GIF, measure mean alpha per frame — should fluctuate with
+the real source frame data, not monotonically converge):
+- `blupi-action-02-march.gif`: 80.0→85→86.2→86.3→86.6→86.7, plateaus (bug present).
+- `object-anim-type05-treasure.gif`: 133.7→...→153.6, plateaus (bug present).
+- `explosion-anim-explo1.gif`: 9.3→...→161.9, plateaus (bug present).
+- `tile-anim-temp.gif`: alpha correctly oscillates, hits exactly 0 on the two genuinely-blank
+  frames (no symptom) — but tile content is fully opaque, so this test can't rule out the same root
+  cause being invisible there; **do not assume tiles are exempt**.
+
+All 129 animated GIFs need regeneration with fixed tooling. The user also asked whether `DOC-002`
+(tiles)/`DOC-003` (objects) can be trusted given this — their *text/classification* content is
+unaffected (it's not image-specific), but every generated image is being re-verified rather than
+assumed correct, since 11 sprite-channel bugs have already turned up in that same effort. Per the
+user's explicit instruction, this has been broken into ~168 small, single-purpose tasks
+(`plan.md` §16, `DOC-100`–`DOC-267`) instead of a few large opaque passes, since the large-pass
+approach is part of how these gaps went undetected in the first place. **Nothing has been fixed
+yet — this session's remaining `NEXT.md`/`plan.md` update was scoped as analysis-only, per explicit
+user instruction ("toto je jenom analýza a aktualizace next.md a plan.md").** Start the actual fix
+with `plan.md`'s `DOC-100`.
+
+**Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
 `CubeMeshRenderer` + `Texture2D` → visible, textured pixels on screen, verified by geometry counts
 and by on-screen color sampling. The remaining gaps (Blupi, objects, HUD, sound) are new
@@ -247,6 +278,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
+| confirmed, documentation only | All 129 animated GIFs in `mobile-eggbert-reference/images/` ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Not a galaxy-eggbert code bug, a documentation-tooling bug. Fix tracked as `plan.md` `DOC-100`; regeneration as `DOC-101`–`DOC-229`. |
 
 ## 6. Architecture notes
 
@@ -388,12 +420,13 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Complete the mobile-eggbert 2D-world reference (in progress, user-requested 2026-07-03,
-   escalated to "complete" same day)** — split into `mobile-eggbert-reference/` (10 files +
-   `images/`, see `00-overview.md` for the index). First pass covered a representative sample; the
-   user wants full coverage (every tile icon, every `ObjectType`, every animation). Tracked as
-   `DOC-002`..`DOC-006` in `plan.md` §15 — work through those in order (tile catalog first, it's
-   the most mechanical/tractable). Read-only research against `../mobile-eggbert` — no code changes.
+1. **Fix the `mobile-eggbert-reference/` GIF ghosting bug, then work through the ~168-task rework
+   list (in progress, reopened 2026-07-03 — see §4 and `plan.md` §16 for the full story).** Every
+   animated GIF needs regeneration; every static icon needs re-verification; `DOC-005`/`DOC-006`
+   (sounds, backgrounds) were never started. Start with `plan.md`'s `DOC-100` (root-cause fix for the
+   GIF bug — nothing else in that section can proceed correctly until this lands). Read-only research
+   against `../mobile-eggbert` plus local image/GIF tooling work — no galaxy-eggbert C++ code
+   changes.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.

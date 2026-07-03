@@ -1276,7 +1276,11 @@ current progress, not just this list.
   `mobile-eggbert-reference/images/` (moved via `git mv`, history preserved). Verified
   programmatically: all 85 image references across all files resolve to real files, and all 85
   actual image files are referenced somewhere (no orphans, no broken links).
-- [x] DOC-002 — Done (2026-07-03). All 441 addressable icons (0–440) accounted for in `02-tiles.md`:
+- [ ] DOC-002 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16).** All 441 tile icons
+  are still individually correct static crops (single-frame images aren't affected by the GIF bug),
+  but this is being re-verified anyway (`DOC-230`) given how many sprite-channel bugs have surfaced
+  elsewhere. History below kept as-is.
+  ~~Done (2026-07-03). All 441 addressable icons (0–440) accounted for in `02-tiles.md`:~~
   313 with a full 64×64 crop (every named/behavioral icon plus every icon confirmed used in at
   least one of the 78 real level files), remaining 128 unused/unnamed icons listed compactly by
   range (passability + mechanical alpha-based visual signal, not fabricated names). Built via a
@@ -1299,7 +1303,12 @@ current progress, not just this list.
   the range boundaries were imprecise. Regenerated the 128-icon set as exact non-overlapping ranges
   (independently re-cropped, re-measured, re-merged only on consecutive-and-same-category runs);
   verified programmatically: 313 + 128 = 441, zero overlap, zero gaps.
-- [x] DOC-003 — Done (2026-07-03). Every `ObjectType` ID 0–203 classified into exactly one of 4
+- [ ] DOC-003 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16).** The 0–203
+  classification itself is unaffected (that's a text/grep result, not an image); the static icon
+  crops (single-frame, not GIF) are also not subject to the ghosting bug, but are being re-verified
+  anyway (`DOC-231`) since 11 sprite-channel bugs have already turned up among them. History below
+  kept as-is.
+  Done (2026-07-03). Every `ObjectType` ID 0–203 classified into exactly one of 4
   categories, verified programmatically (script partitioned all 204 IDs, asserted no overlap/gap):
   **A** (29 IDs) — real `Decor.cpp` logic AND placed in ≥1 of the 78 shipped levels; **B** (41 IDs)
   — real logic confirmed (via direct grep of `Decor::MoveObjectStepIcon`, lines ~8192–9057, plus
@@ -1333,7 +1342,21 @@ current progress, not just this list.
   `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
   of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
   check or a scripted crop-and-compare against the correct sheet) before considering it done.
-- [x] DOC-004 — **Done (2026-07-03), after being reopened once same day.** User caught a real
+- [ ] DOC-004 — **Reopened a second time, 2026-07-03 (GIF ghosting bug, see §16.1/§16.2).** The user
+  found by visual inspection that the GIFs themselves are corrupted: each frame accumulates the
+  previous frame's opaque pixels instead of clearing (e.g. frame 2 shows frame 1 ghosted into its
+  background). Confirmed via alpha-channel analysis on coalesced frames: `blupi-action-02-march.gif`
+  mean alpha rises monotonically and plateaus (80.0→85→86.2→86.3→86.6→86.7) instead of fluctuating
+  with the real walk-cycle silhouette; same pattern confirmed in `object-anim-type05-treasure.gif`
+  (133.7→...→153.6, plateaus) and `explosion-anim-explo1.gif` (9.3→...→161.9, plateaus). Tile
+  animations (`tile-anim-temp.gif`) show NO such pattern (alpha correctly oscillates and hits exactly
+  0 on the two real blank frames) — but since tile frames are fully opaque, this test can't rule out
+  a shared root cause being invisible there; do not assume tiles are exempt without dedicated
+  verification (`DOC-101`–`DOC-112`). All 129 animated GIFs need regeneration with fixed tooling —
+  see §16 for the full task breakdown. Nothing in this "done" entry below is trustworthy for the
+  actual `.gif` files; the frame-data research (which icons, which order, which sheet) is still
+  correct and doesn't need redoing, only the final GIF assembly step.
+  **Previous "done" note (2026-07-03), after being reopened once same day.** User caught a real
   completeness gap in the first "done" pass (kept below for history), then this was fixed by parsing
   `Tables::table_blupi[2911]` (`../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp`) directly
   and programmatically — a flat record list `{actionId, frameCount, holdLimit, icon_0..icon_N}`
@@ -1402,6 +1425,240 @@ current progress, not just this list.
   mapping code (likely in higher-level UI/game-state code, not `Decor.cpp` itself — search for
   `PixmapChannel::Background` load sites), document it, and thumbnail the remaining 35 backgrounds.
 
+## 16. Documentation rework (2026-07-03) — GIF ghosting bug + full completeness audit
+
+**Nothing in `mobile-eggbert-reference/` is being treated as actually finished right now.** The user
+inspected `08-animations.md`'s GIFs directly and found a real rendering bug: each frame keeps the
+previous frame's opaque pixels instead of clearing before drawing the next one — visually, frame 2
+shows frame 1 ghosted into its background, frame 3 shows frames 1+2, etc. Confirmed programmatically
+(coalesce each GIF, measure mean alpha per frame): `blupi-action-02-march.gif` goes
+80.0→85→86.2→86.3→86.6→86.7 and plateaus — a real walk cycle's alpha should fluctuate with the leg
+positions, not monotonically converge. Same pattern in `object-anim-type05-treasure.gif`
+(133.7→...→153.6, plateaus) and `explosion-anim-explo1.gif` (9.3→...→161.9, plateaus). Tile
+animations (`tile-anim-temp.gif`) do NOT show this pattern — alpha correctly oscillates and hits
+exactly 0 on the genuinely-blank frames — but since tile content is fully opaque, this test cannot
+rule out the same root cause being invisible there, so tiles are not assumed exempt.
+
+The user also asked, separately, whether `DOC-002`/`DOC-003`'s "complete" claims can be trusted at
+all given this — see those entries above, now marked reopened: their *text/data* content (icon
+classifications, frame tables, channel corrections) is not affected by a GIF-specific bug and
+doesn't need redoing, but every generated *image file* is being re-verified rather than assumed
+correct, given how many distinct bugs (channel mismatches, the Blupi partial-port gap, now this)
+have turned up in this same effort so far.
+
+**Per the user's explicit instruction**: this is broken into ~170 small, single-purpose tasks so the
+rework can actually be done properly and incrementally, not batched into a few large opaque passes
+the way the original `DOC-002`–`DOC-004` work was (which is part of how these gaps went undetected —
+large multi-hundred-tool-call passes are hard to spot-check as thoroughly as many small ones).
+`DOC-100` (the root-cause fix) blocks every GIF-regeneration task below it; nothing else in this
+section has a hard ordering dependency, but doing the static-asset re-verification (§16.3) before or
+alongside the GIF work is reasonable since neither blocks the other.
+
+### 16.1 Root cause
+- [ ] DOC-100 — Diagnose and fix the GIF-assembly ghosting/disposal bug itself (the tool/script/command used to combine per-frame PNGs into a `.gif`) so newly-generated GIFs stop accumulating previous frames' opaque pixels. Verify the fix with the same alpha-channel-per-frame test used to find the bug (coalesce the GIF, measure mean alpha per frame, confirm it varies per the real source frame data instead of monotonically increasing/plateauing) before regenerating anything downstream.
+
+### 16.2 Regenerate animated GIFs with the fixed tooling (129 tasks, one per sequence)
+
+Tile animations (12) — no ghosting symptom observed via alpha testing, but content is fully
+opaque so the test can't rule out a shared root cause being invisible there; regenerate
+defensively with the fixed tooling and re-verify rather than assuming these are exempt.
+
+- [ ] DOC-101 — Regenerate + verify `tile-anim-lava.gif` (animated tile: Lava).
+- [ ] DOC-102 — Regenerate + verify `tile-anim-spike.gif` (animated tile: Spike).
+- [ ] DOC-103 — Regenerate + verify `tile-anim-crusher.gif` (animated tile: Crusher).
+- [ ] DOC-104 — Regenerate + verify `tile-anim-saw.gif` (animated tile: Saw).
+- [ ] DOC-105 — Regenerate + verify `tile-anim-water1.gif` (animated tile: Water1).
+- [ ] DOC-106 — Regenerate + verify `tile-anim-water2.gif` (animated tile: Water2).
+- [ ] DOC-107 — Regenerate + verify `tile-anim-temp.gif` (animated tile: Temp).
+- [ ] DOC-108 — Regenerate + verify `tile-anim-marine.gif` (animated tile: Marine).
+- [ ] DOC-109 — Regenerate + verify `tile-anim-fanleft.gif` (animated tile: FanLeft).
+- [ ] DOC-110 — Regenerate + verify `tile-anim-fanright.gif` (animated tile: FanRight).
+- [ ] DOC-111 — Regenerate + verify `tile-anim-fanup.gif` (animated tile: FanUp).
+- [ ] DOC-112 — Regenerate + verify `tile-anim-fandown.gif` (animated tile: FanDown).
+
+Blupi actions (84) — **confirmed ghosting**, all need regeneration.
+
+- [ ] DOC-113 — Regenerate + verify `blupi-action-01-stop.gif` (`BlupiAction::Stop`=1).
+- [ ] DOC-114 — Regenerate + verify `blupi-action-02-march.gif` (`BlupiAction::March`=2).
+- [ ] DOC-115 — Regenerate + verify `blupi-action-03-turn.gif` (`BlupiAction::Turn`=3).
+- [ ] DOC-116 — Regenerate + verify `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4).
+- [ ] DOC-117 — Regenerate + verify `blupi-action-05-air.gif` (`BlupiAction::Air`=5).
+- [ ] DOC-118 — Regenerate + verify `blupi-action-06-down.gif` (`BlupiAction::Down`=6).
+- [ ] DOC-119 — Regenerate + verify `blupi-action-07-up.gif` (`BlupiAction::Up`=7).
+- [ ] DOC-120 — Regenerate + verify `blupi-action-08-vertigo.gif` (`BlupiAction::Vertigo`=8).
+- [ ] DOC-121 — Regenerate + verify `blupi-action-09-recede.gif` (`BlupiAction::Recede`=9).
+- [ ] DOC-122 — Regenerate + verify `blupi-action-10-advance.gif` (`BlupiAction::Advance`=10).
+- [ ] DOC-123 — Regenerate + verify `blupi-action-11-clear1.gif` (`BlupiAction::Clear1`=11).
+- [ ] DOC-124 — Regenerate + verify `blupi-action-13-win.gif` (`BlupiAction::Win`=13).
+- [ ] DOC-125 — Regenerate + verify `blupi-action-14-push.gif` (`BlupiAction::Push`=14).
+- [ ] DOC-126 — Regenerate + verify `blupi-action-15-stophelico.gif` (`BlupiAction::StopHelico`=15).
+- [ ] DOC-127 — Regenerate + verify `blupi-action-16-marchhelico.gif` (`BlupiAction::MarchHelico`=16).
+- [ ] DOC-128 — Regenerate + verify `blupi-action-17-turnhelico.gif` (`BlupiAction::TurnHelico`=17).
+- [ ] DOC-129 — Regenerate + verify `blupi-action-18-stopnage.gif` (`BlupiAction::StopNage`=18).
+- [ ] DOC-130 — Regenerate + verify `blupi-action-19-marchnage.gif` (`BlupiAction::MarchNage`=19).
+- [ ] DOC-131 — Regenerate + verify `blupi-action-20-turnnage.gif` (`BlupiAction::TurnNage`=20).
+- [ ] DOC-132 — Regenerate + verify `blupi-action-21-stopsurf.gif` (`BlupiAction::StopSurf`=21).
+- [ ] DOC-133 — Regenerate + verify `blupi-action-22-marchsurf.gif` (`BlupiAction::MarchSurf`=22).
+- [ ] DOC-134 — Regenerate + verify `blupi-action-23-turnsurf.gif` (`BlupiAction::TurnSurf`=23).
+- [ ] DOC-135 — Regenerate + verify `blupi-action-24-drown.gif` (`BlupiAction::Drown`=24).
+- [ ] DOC-136 — Regenerate + verify `blupi-action-25-stopjeep.gif` (`BlupiAction::StopJeep`=25).
+- [ ] DOC-137 — Regenerate + verify `blupi-action-26-marchjeep.gif` (`BlupiAction::MarchJeep`=26).
+- [ ] DOC-138 — Regenerate + verify `blupi-action-27-turnjeep.gif` (`BlupiAction::TurnJeep`=27).
+- [ ] DOC-139 — Regenerate + verify `blupi-action-28-stoppop.gif` (`BlupiAction::StopPop`=28).
+- [ ] DOC-140 — Regenerate + verify `blupi-action-29-pop.gif` (`BlupiAction::Pop`=29).
+- [ ] DOC-141 — Regenerate + verify `blupi-action-30-bye.gif` (`BlupiAction::Bye`=30).
+- [ ] DOC-142 — Regenerate + verify `blupi-action-31-stopsuspend.gif` (`BlupiAction::StopSuspend`=31).
+- [ ] DOC-143 — Regenerate + verify `blupi-action-32-marchsuspend.gif` (`BlupiAction::MarchSuspend`=32).
+- [ ] DOC-144 — Regenerate + verify `blupi-action-33-turnsuspend.gif` (`BlupiAction::TurnSuspend`=33).
+- [ ] DOC-145 — Regenerate + verify `blupi-action-34-jumpsuspend.gif` (`BlupiAction::JumpSuspend`=34).
+- [ ] DOC-146 — Regenerate + verify `blupi-action-35-hide.gif` (`BlupiAction::Hide`=35).
+- [ ] DOC-147 — Regenerate + verify `blupi-action-36-jumpaie.gif` (`BlupiAction::JumpAie`=36).
+- [ ] DOC-148 — Regenerate + verify `blupi-action-37-stopskate.gif` (`BlupiAction::StopSkate`=37).
+- [ ] DOC-149 — Regenerate + verify `blupi-action-38-marchskate.gif` (`BlupiAction::MarchSkate`=38).
+- [ ] DOC-150 — Regenerate + verify `blupi-action-39-turnskate.gif` (`BlupiAction::TurnSkate`=39).
+- [ ] DOC-151 — Regenerate + verify `blupi-action-40-jumpskate.gif` (`BlupiAction::JumpSkate`=40).
+- [ ] DOC-152 — Regenerate + verify `blupi-action-41-airskate.gif` (`BlupiAction::AirSkate`=41).
+- [ ] DOC-153 — Regenerate + verify `blupi-action-42-takeskate.gif` (`BlupiAction::TakeSkate`=42).
+- [ ] DOC-154 — Regenerate + verify `blupi-action-43-deposeskate.gif` (`BlupiAction::DeposeSkate`=43).
+- [ ] DOC-155 — Regenerate + verify `blupi-action-44-ouf1a.gif` (`BlupiAction::Ouf1a`=44).
+- [ ] DOC-156 — Regenerate + verify `blupi-action-45-ouf1b.gif` (`BlupiAction::Ouf1b`=45).
+- [ ] DOC-157 — Regenerate + verify `blupi-action-46-ouf2.gif` (`BlupiAction::Ouf2`=46).
+- [ ] DOC-158 — Regenerate + verify `blupi-action-47-ouf3.gif` (`BlupiAction::Ouf3`=47).
+- [ ] DOC-159 — Regenerate + verify `blupi-action-48-ouf4.gif` (`BlupiAction::Ouf4`=48).
+- [ ] DOC-160 — Regenerate + verify `blupi-action-49-sucette.gif` (`BlupiAction::Sucette`=49).
+- [ ] DOC-161 — Regenerate + verify `blupi-action-50-stoptank.gif` (`BlupiAction::StopTank`=50).
+- [ ] DOC-162 — Regenerate + verify `blupi-action-51-marchtank.gif` (`BlupiAction::MarchTank`=51).
+- [ ] DOC-163 — Regenerate + verify `blupi-action-52-turntank.gif` (`BlupiAction::TurnTank`=52).
+- [ ] DOC-164 — Regenerate + verify `blupi-action-53-firetank.gif` (`BlupiAction::FireTank`=53).
+- [ ] DOC-165 — Regenerate + verify `blupi-action-54-glu.gif` (`BlupiAction::Glu`=54).
+- [ ] DOC-166 — Regenerate + verify `blupi-action-55-drink.gif` (`BlupiAction::Drink`=55).
+- [ ] DOC-167 — Regenerate + verify `blupi-action-56-charge.gif` (`BlupiAction::Charge`=56).
+- [ ] DOC-168 — Regenerate + verify `blupi-action-57-electro.gif` (`BlupiAction::Electro`=57).
+- [ ] DOC-169 — Regenerate + verify `blupi-action-58-helicoglu.gif` (`BlupiAction::HelicoGlu`=58).
+- [ ] DOC-170 — Regenerate + verify `blupi-action-59-turnair.gif` (`BlupiAction::TurnAir`=59).
+- [ ] DOC-171 — Regenerate + verify `blupi-action-60-stopmarch.gif` (`BlupiAction::StopMarch`=60).
+- [ ] DOC-172 — Regenerate + verify `blupi-action-61-stopjump.gif` (`BlupiAction::StopJump`=61).
+- [ ] DOC-173 — Regenerate + verify `blupi-action-62-stopjumph.gif` (`BlupiAction::StopJumph`=62).
+- [ ] DOC-174 — Regenerate + verify `blupi-action-63-mockery.gif` (`BlupiAction::Mockery`=63).
+- [ ] DOC-175 — Regenerate + verify `blupi-action-64-mockeryi.gif` (`BlupiAction::Mockeryi`=64).
+- [ ] DOC-176 — Regenerate + verify `blupi-action-65-ouf5.gif` (`BlupiAction::Ouf5`=65).
+- [ ] DOC-177 — Regenerate + verify `blupi-action-66-balloon.gif` (`BlupiAction::Balloon`=66).
+- [ ] DOC-178 — Regenerate + verify `blupi-action-67-stopover.gif` (`BlupiAction::StopOver`=67).
+- [ ] DOC-179 — Regenerate + verify `blupi-action-68-marchover.gif` (`BlupiAction::MarchOver`=68).
+- [ ] DOC-180 — Regenerate + verify `blupi-action-69-turnover.gif` (`BlupiAction::TurnOver`=69).
+- [ ] DOC-181 — Regenerate + verify `blupi-action-72-stopecrase.gif` (`BlupiAction::StopEcrase`=72).
+- [ ] DOC-182 — Regenerate + verify `blupi-action-73-marchecrase.gif` (`BlupiAction::MarchEcrase`=73).
+- [ ] DOC-183 — Regenerate + verify `blupi-action-74-teleporte.gif` (`BlupiAction::Teleporte`=74).
+- [ ] DOC-184 — Regenerate + verify `blupi-action-75-clear2.gif` (`BlupiAction::Clear2`=75).
+- [ ] DOC-185 — Regenerate + verify `blupi-action-76-clear3.gif` (`BlupiAction::Clear3`=76).
+- [ ] DOC-186 — Regenerate + verify `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77).
+- [ ] DOC-187 — Regenerate + verify `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
+- [ ] DOC-188 — Regenerate + verify `blupi-action-79-clear6.gif` (`BlupiAction::Clear6`=79).
+- [ ] DOC-189 — Regenerate + verify `blupi-action-80-clear7.gif` (`BlupiAction::Clear7`=80).
+- [ ] DOC-190 — Regenerate + verify `blupi-action-81-clear8.gif` (`BlupiAction::Clear8`=81).
+- [ ] DOC-191 — Regenerate + verify `blupi-action-82-switch.gif` (`BlupiAction::Switch`=82).
+- [ ] DOC-192 — Regenerate + verify `blupi-action-83-mockeryp.gif` (`BlupiAction::Mockeryp`=83).
+- [ ] DOC-193 — Regenerate + verify `blupi-action-84-non.gif` (`BlupiAction::Non`=84).
+- [ ] DOC-194 — Regenerate + verify `blupi-action-85-slowdownskate.gif` (`BlupiAction::SlowdownSkate`=85).
+- [ ] DOC-195 — Regenerate + verify `blupi-action-86-takedynamite.gif` (`BlupiAction::TakeDynamite`=86).
+- [ ] DOC-196 — Regenerate + verify `blupi-action-87-putdynamite.gif` (`BlupiAction::PutDynamite`=87).
+
+Object/pickup/enemy animations (24) — **confirmed ghosting** (spot-checked via `treasure`),
+all need regeneration.
+
+- [ ] DOC-197 — Regenerate + verify `object-anim-type02-patrolA.gif`.
+- [ ] DOC-198 — Regenerate + verify `object-anim-type03-patrolB.gif`.
+- [ ] DOC-199 — Regenerate + verify `object-anim-type04-bulldozer.gif`.
+- [ ] DOC-200 — Regenerate + verify `object-anim-type05-treasure.gif`.
+- [ ] DOC-201 — Regenerate + verify `object-anim-type06-egg.gif`.
+- [ ] DOC-202 — Regenerate + verify `object-anim-type07-exit.gif`.
+- [ ] DOC-203 — Regenerate + verify `object-anim-type16-spider.gif`.
+- [ ] DOC-204 — Regenerate + verify `object-anim-type17-fish.gif`.
+- [ ] DOC-205 — Regenerate + verify `object-anim-type20-bird.gif`.
+- [ ] DOC-206 — Regenerate + verify `object-anim-type21-secretexit.gif`.
+- [ ] DOC-207 — Regenerate + verify `object-anim-type24-skateboard.gif`.
+- [ ] DOC-208 — Regenerate + verify `object-anim-type25-shield.gif`.
+- [ ] DOC-209 — Regenerate + verify `object-anim-type26-suctioncup.gif`.
+- [ ] DOC-210 — Regenerate + verify `object-anim-type32-blupih.gif`.
+- [ ] DOC-211 — Regenerate + verify `object-anim-type33-blupit.gif`.
+- [ ] DOC-212 — Regenerate + verify `object-anim-type40-mirrorinvert.gif`.
+- [ ] DOC-213 — Regenerate + verify `object-anim-type44-wasp.gif`.
+- [ ] DOC-214 — Regenerate + verify `object-anim-type47-chenille.gif`.
+- [ ] DOC-215 — Regenerate + verify `object-anim-type49-key1.gif`.
+- [ ] DOC-216 — Regenerate + verify `object-anim-type50-key2.gif`.
+- [ ] DOC-217 — Regenerate + verify `object-anim-type51-key3.gif`.
+- [ ] DOC-218 — Regenerate + verify `object-anim-type54-largecreature.gif`.
+- [ ] DOC-219 — Regenerate + verify `object-anim-type96-follower-awake.gif`.
+- [ ] DOC-220 — Regenerate + verify `object-anim-type96-follower-dormant.gif`.
+
+Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need regeneration.
+
+- [ ] DOC-221 — Regenerate + verify `explosion-anim-explo1.gif` (`table_explo1`, real per-icon size from `table_explo_size`).
+- [ ] DOC-222 — Regenerate + verify `explosion-anim-explo2.gif` (`table_explo2`, real per-icon size from `table_explo_size`).
+- [ ] DOC-223 — Regenerate + verify `explosion-anim-explo3.gif` (`table_explo3`, real per-icon size from `table_explo_size`).
+- [ ] DOC-224 — Regenerate + verify `explosion-anim-explo4.gif` (`table_explo4`, real per-icon size from `table_explo_size`).
+- [ ] DOC-225 — Regenerate + verify `explosion-anim-explo5.gif` (`table_explo5`, real per-icon size from `table_explo_size`).
+- [ ] DOC-226 — Regenerate + verify `explosion-anim-explo6.gif` (`table_explo6`, real per-icon size from `table_explo_size`).
+- [ ] DOC-227 — Regenerate + verify `explosion-anim-explo7.gif` (`table_explo7`, real per-icon size from `table_explo_size`).
+- [ ] DOC-228 — Regenerate + verify `explosion-anim-explo8.gif` (`table_explo8`, real per-icon size from `table_explo_size`).
+
+Door (1) — same DOC-004 pass as explosions, assume affected until verified.
+
+- [ ] DOC-229 — Regenerate + verify `door-slide.gif` (10-frame positional composite).
+### 16.3 Static (non-animated) asset re-verification
+
+Not confirmed broken (single-frame images have no compositing/disposal to go wrong), but
+given the repeated sprite-channel bugs already found this session (11 `ObjectType`s drawing
+from the wrong sheet), these deserve a real re-check, not an assumption they're fine.
+
+- [ ] DOC-230 — Re-verify all 313 `tile-full-*.png` crops: correct grid math, correct source pixels, no off-by-one against the 65px-stride formula (spot-check at minimum the first/last icon of each row boundary).
+- [ ] DOC-231 — Re-verify all 67 `object-type*.png` static icons' sprite-sheet channel against `Decor.cpp`'s real `channel=`/`BlupiSearchIcon()`-equivalent logic per ID — do not assume the 11 corrections already found are the only ones; check every single one.
+- [ ] DOC-232 — Re-verify the 4 `blupi-icon*.png` representative frames (§4.2 of `03-objects.md`) are still accurate now that the full `table_blupi` parse exists — pick more meaningful representative frames if the originals (icons 0/1/5/10) don't actually represent real named states well.
+- [ ] DOC-233 — Re-verify the 3 `bg-decor*.png` background thumbnails render correctly and are the correct real files (not off-by-one in the `decorNNN` numbering).
+- [ ] DOC-234 — Re-verify the 3 door crops (`tile-334/335/336-Door*.png`) are pixel-correct against the current (fixed) tile-grid formula.
+
+### 16.4 DOC-005 — Complete sound catalog (93 channels), broken into batches
+
+- [ ] DOC-235 — Research and document `SoundChannel` 0-9 (or however mobile-eggbert's own channel numbering starts) — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-236 — Research and document `SoundChannel` 10-19 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-237 — Research and document `SoundChannel` 20-29 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-238 — Research and document `SoundChannel` 30-39 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-239 — Research and document `SoundChannel` 40-49 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-240 — Research and document `SoundChannel` 50-59 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-241 — Research and document `SoundChannel` 60-69 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-242 — Research and document `SoundChannel` 70-79 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-243 — Research and document `SoundChannel` 80-89 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [ ] DOC-244 — Research and document `SoundChannel` 90-92 (final batch) — real in-game trigger/purpose per channel.
+- [ ] DOC-245 — Cross-check the completed per-channel catalog against `include/GalaxyEggbert/def/SoundChannel.hpp`'s existing names/comments for consistency; flag and resolve any mismatch.
+- [ ] DOC-246 — Verify all 93 `.wav` files in `../mobile-eggbert/Content/sounds/` are accounted for 1:1 against the 93 documented channels (no gaps, no extras).
+
+### 16.5 DOC-006 — Complete backgrounds catalog (38 images) + resolve region= mapping
+
+- [ ] DOC-247 — Locate the real `region=` → `decorNNN.png` selection code (search UI/game-state code beyond `Decor.cpp` for `PixmapChannel::Background` load sites) — this is the single most important unresolved fact in this file.
+- [ ] DOC-248 — Once the mapping is found, verify it against every real level file's actual `region=` value (all 78 files) to confirm the mapping is exhaustive and correct.
+- [ ] DOC-249 — Thumbnail + verify background images `decor000`-`decor003` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-250 — Thumbnail + verify background images `decor004`-`decor007` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-251 — Thumbnail + verify background images `decor008`-`decor011` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-252 — Thumbnail + verify background images `decor012`-`decor015` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-253 — Thumbnail + verify background images `decor016`-`decor019` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-254 — Thumbnail + verify background images `decor020`-`decor023` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-255 — Thumbnail + verify background images `decor024`-`decor027` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-256 — Thumbnail + verify background images `decor028`-`decor031` (skip any confirmed-missing IDs in that range).
+- [ ] DOC-257 — Document `blupiyoupie.png`/`gear.png` (title/settings-screen backgrounds) separately from level backgrounds, with their real trigger context.
+
+### 16.6 Markdown file completeness re-review (one real read-through per file)
+
+- [ ] DOC-258 — Full read-through of `00-overview.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-259 — Full read-through of `01-world-file-format.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-260 — Full read-through of `02-tiles.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-261 — Full read-through of `03-objects.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-262 — Full read-through of `04-enemy-behavior.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-263 — Full read-through of `05-backgrounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-264 — Full read-through of `06-doors.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-265 — Full read-through of `07-sounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-266 — Full read-through of `08-animations.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [ ] DOC-267 — Full read-through of `09-open-questions.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+
 ---
 
-*Total tasks: ~650. Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22).*
+*Total tasks: ~820 (~650 gameplay/engine + ~168 documentation-rework tasks in §16, `DOC-100`–`DOC-267`). Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22), Documentation rework (168).*
