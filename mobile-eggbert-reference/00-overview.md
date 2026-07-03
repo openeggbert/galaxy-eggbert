@@ -17,14 +17,17 @@ already-approved partial ports (`include/GalaxyEggbert/BlockTypes.hpp`,
 `include/GalaxyEggbert/def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`,
 `src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp`).
 
-## Status: incomplete, in progress
+## Status: partially complete, in progress
 
 The first pass (2026-07-03) covered a **representative sample**, not the full space — 29 of
 roughly 441 addressable tile icons, 18 of 204 `ObjectType`s, 31 of an unknown-but-larger total
 animation count. The user flagged this as insufficient: the goal is **complete** coverage of every
 tile icon, every `ObjectType`, and every animation mobile-eggbert has, built up incrementally.
-Tracked as `DOC-001`..`DOC-0xx` in `plan.md` (§"Documentation — mobile-eggbert 2D reference,
+Tracked as `DOC-001`..`DOC-006` in `plan.md` §15 ("Documentation — mobile-eggbert 2D reference,
 complete"). Each file below notes its own completeness status at the top.
+
+**Progress:** `DOC-001` (file split) and `DOC-002` (complete tile catalog, all 441 icons) done
+2026-07-03. `DOC-003`..`DOC-006` (objects, animations, sounds, backgrounds) still pending.
 
 ## Files in this reference
 
@@ -32,7 +35,7 @@ complete"). Each file below notes its own completeness status at the top.
 |---|---|---|
 | `00-overview.md` | This file — scope, index, status | — |
 | `01-world-file-format.md` | The `.txt` level file format (header, `Decor:`, `BigDecor:`, `MoveObject:`) | Believed complete — all sections of the format have been identified |
-| `02-tiles.md` | Every tile/block icon in `object-m.png` | **Partial — 29 of ~441 icons** (`DOC-002`) |
+| `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete** — all 441 addressable icons accounted for (`DOC-002`, done 2026-07-03) |
 | `03-objects.md` | Every `ObjectType` (204 IDs) | **Partial — 18 of 204 have confirmed icons/behavior** (`DOC-003`) |
 | `04-enemy-behavior.md` | The enemy/object movement & collision model | Architectural overview only, not per-type exhaustive |
 | `05-backgrounds.md` | Background/sky region images | Partial — 3 of 38 backgrounds shown; `region=` mapping unresolved (`DOC-006`) |

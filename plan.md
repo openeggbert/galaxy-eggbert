@@ -1276,14 +1276,29 @@ current progress, not just this list.
   `mobile-eggbert-reference/images/` (moved via `git mv`, history preserved). Verified
   programmatically: all 85 image references across all files resolve to real files, and all 85
   actual image files are referenced somewhere (no orphans, no broken links).
-- [ ] DOC-002 — Complete tile/icon catalog. Currently 29 of ~441 addressable `object-m.png` icons
-  documented (`02-tiles.md`). For every icon 0–440: crop a 64×64 screenshot (grid math already
-  documented in `02-tiles.md`'s "How these images were generated"), note its `isMobileTransparent`
-  passability flag (`BlockTypes.hpp`'s existing 441-entry table already has this data — no new
-  mobile-eggbert research needed for that part), and check whether it's actually used in any of the
-  78 real world files (grep `worlds/*.txt`) vs. never placed anywhere. Named/behavioral icons (the
-  29 already done) need no further mobile-eggbert research; the remaining ~410 are plain
-  ground/wall/decoration variants — categorize by visual inspection of the crop, not guesswork.
+- [x] DOC-002 — Done (2026-07-03). All 441 addressable icons (0–440) accounted for in `02-tiles.md`:
+  313 with a full 64×64 crop (every named/behavioral icon plus every icon confirmed used in at
+  least one of the 78 real level files), remaining 128 unused/unnamed icons listed compactly by
+  range (passability + mechanical alpha-based visual signal, not fabricated names). Built via a
+  script (parses `BlockTypes::kPassable[441]` programmatically, batch-crops all icons with
+  ImageMagick, scans real `Decor:`/`BigDecor:` grid sections across all 78 world files for genuine
+  usage counts — not hand-typed). Real findings: (1) icon 440 has no real pixel data — the sheet
+  only has 22 full 65px-stride rows (1430 of 1431px), so real icons are 0–439; (2) animated
+  sub-frame icons (e.g. `Crusher` 318–323, `Saw` 379–383) are *never* placed directly in level
+  files — only the base/first frame is, confirming `BlockTypes::tileAnimBase()`'s design assumption
+  independently; (3) three named icons (`Water2`=96, `Spring`=211, `SwitchOff`=385) have 0/78 usage
+  in the shipped level set (double-checked with a raw grep to rule out a parsing bug) — still
+  functionally real, just never authored into any shipped level. Verified: all 372 image
+  references across the whole `mobile-eggbert-reference/` tree resolve to real files, zero
+  orphaned images, spot-checked crops for real pixel dimensions/content. Old per-name image files
+  superseded by `images/tile-full-NNN.png` (single source of truth) except the 3 door crops still
+  referenced by `06-doors.md`. **Follow-up fix (same day, coordinator's own verification pass):**
+  found the "128 unused/unnamed" compact-range table used coarse, loosely-worded ranges (e.g.
+  "166–205") that numerically overlapped icons already documented above (79 icons double-counted,
+  e.g. `Wall`=183 sat inside that range) — total coverage (441/441) was never actually wrong, but
+  the range boundaries were imprecise. Regenerated the 128-icon set as exact non-overlapping ranges
+  (independently re-cropped, re-measured, re-merged only on consecutive-and-same-category runs);
+  verified programmatically: 313 + 128 = 441, zero overlap, zero gaps.
 - [ ] DOC-003 — Complete `ObjectType` catalog. Currently 18 of 204 IDs have a confirmed icon
   (`03-objects.md`); 29 of 204 are confirmed to appear in real levels at all. For the ~175
   "unidentified/reserved" IDs: check `Decor.cpp`'s `GetIcon()`/`MoveObjectStepIcon` switch (already
