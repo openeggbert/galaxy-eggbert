@@ -26,8 +26,11 @@ tile icon, every `ObjectType`, and every animation mobile-eggbert has, built up 
 Tracked as `DOC-001`..`DOC-006` in `plan.md` §15 ("Documentation — mobile-eggbert 2D reference,
 complete"). Each file below notes its own completeness status at the top.
 
-**Progress:** `DOC-001` (file split) and `DOC-002` (complete tile catalog, all 441 icons) done
-2026-07-03. `DOC-003`..`DOC-006` (objects, animations, sounds, backgrounds) still pending.
+**Progress:** `DOC-001` (file split), `DOC-002` (complete tile catalog, all 441 icons), and
+`DOC-003` (complete `ObjectType` classification, all 204 IDs) done 2026-07-03. `DOC-003` also
+surfaced a real rendering bug (wrong sprite-sheet channel assumed for 5 `ObjectType`s in
+`GEDecorSystem.cpp`) — see `03-objects.md`'s bug callout. `DOC-004`..`DOC-006` (animations, sounds,
+backgrounds) still pending.
 
 ## Files in this reference
 
@@ -36,7 +39,7 @@ complete"). Each file below notes its own completeness status at the top.
 | `00-overview.md` | This file — scope, index, status | — |
 | `01-world-file-format.md` | The `.txt` level file format (header, `Decor:`, `BigDecor:`, `MoveObject:`) | Believed complete — all sections of the format have been identified |
 | `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete** — all 441 addressable icons accounted for (`DOC-002`, done 2026-07-03) |
-| `03-objects.md` | Every `ObjectType` (204 IDs) | **Partial — 18 of 204 have confirmed icons/behavior** (`DOC-003`) |
+| `03-objects.md` | Every `ObjectType` (204 IDs) | **Complete for classification** (`DOC-003`, done 2026-07-03) — 29 real+used, 41 real+unused-in-shipped-levels, 1 ambiguous, 133 vestigial; 30 of 204 have a cropped icon |
 | `04-enemy-behavior.md` | The enemy/object movement & collision model | Architectural overview only, not per-type exhaustive |
 | `05-backgrounds.md` | Background/sky region images | Partial — 3 of 38 backgrounds shown; `region=` mapping unresolved (`DOC-006`) |
 | `06-doors.md` | Door tile behavior (2D) | Believed complete for the 2D behavior itself |

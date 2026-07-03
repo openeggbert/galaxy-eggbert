@@ -1299,13 +1299,33 @@ current progress, not just this list.
   the range boundaries were imprecise. Regenerated the 128-icon set as exact non-overlapping ranges
   (independently re-cropped, re-measured, re-merged only on consecutive-and-same-category runs);
   verified programmatically: 313 + 128 = 441, zero overlap, zero gaps.
-- [ ] DOC-003 — Complete `ObjectType` catalog. Currently 18 of 204 IDs have a confirmed icon
-  (`03-objects.md`); 29 of 204 are confirmed to appear in real levels at all. For the ~175
-  "unidentified/reserved" IDs: check `Decor.cpp`'s `GetIcon()`/`MoveObjectStepIcon` switch (already
-  partially read this session — see `03-objects.md`'s per-type sourcing for the 12 types added
-  2026-07-03 as a research pattern to repeat) for whether each ID has real distinct logic or is
-  genuinely vestigial (declared only to keep the enum contiguous). Crop icons for any newly-confirmed
-  type the same way `04.1`'s existing 18 were done.
+- [x] DOC-003 — Done (2026-07-03). Every `ObjectType` ID 0–203 classified into exactly one of 4
+  categories, verified programmatically (script partitioned all 204 IDs, asserted no overlap/gap):
+  **A** (29 IDs) — real `Decor.cpp` logic AND placed in ≥1 of the 78 shipped levels; **B** (41 IDs)
+  — real logic confirmed (via direct grep of `Decor::MoveObjectStepIcon`, lines ~8192–9057, plus
+  the rest of `Decor.cpp`/`Tables.cpp`) but never level-placed (mostly dynamically-spawned effects:
+  explosions, splashes, door-open animation, etc.); **C** (1 ID, `95`) — appears only as a
+  range-boundary literal in comparisons, never a direct `type==` check, left ambiguous rather than
+  guessed; **D** (133 IDs) — zero references anywhere in `Decor.cpp`/`Tables.cpp`, genuinely
+  vestigial (`43`, `45`, `59-89`, `94`, `101-199`). Cropped icons for the 12 types added by the
+  earlier `MoveObject` fix (bringing total cropped from 18 to 30). **Real bug found, not fixed
+  (documented in `03-objects.md`, tracked as `DOC-007` below)**: `GEDecorSystem.cpp` assumes every
+  `ObjectType` draws via `element.png`, but real level data's `channel=` field shows types `1`,
+  `12`, `47` actually use `PixmapChannel::Object` (`object-m.png`), and types `32`/`33` (`blupih`/
+  `blupit`) use `PixmapChannel::Blupi1_11/12/13` (`blupi1.png`) — confirmed by grepping real
+  `MoveObject:` lines across all 78 world files, not assumed. `47`'s `table_chenille` icon values
+  (311–316) are additionally out-of-bounds for `element.png` (which only holds icons 0–289) —
+  reproduced the ImageMagick crop error directly. `33` is one of the *original* 18 "confirmed"
+  types, meaning this bug predates today's session. Files: `mobile-eggbert-reference/03-objects.md`,
+  `00-overview.md`, 12 new + 1 corrected image crop in `images/`.
+- [ ] DOC-007 — Fix the `ObjectType` sprite-channel bug found by `DOC-003`: `GEDecorSystem.cpp`
+  (Simple3D) hardcodes `element.png` for every object type; types `1`/`12`/`47` need
+  `object-m.png`, types `32`/`33` need `blupi1.png` (variant selected by the level file's own
+  `channel=` field — not a fixed choice per type, per real data showing `32`/`33` use different
+  `Blupi1_1{1,2,3}` variants in different levels). Likely fix: read `.channel` from the parsed
+  `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
+  of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
+  check or a scripted crop-and-compare against the correct sheet) before considering it done.
 - [ ] DOC-004 — Complete animation catalog. Currently 31 animations documented (`08-animations.md`).
   Missing: explosions (`explo.png`, needs `Tables::table_explo_size[icon]` cross-reference for
   per-type frame count/size), the door slide-up animation (positional, needs a different
