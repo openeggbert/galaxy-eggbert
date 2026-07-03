@@ -11,10 +11,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - `GalaxyEggbertSimple3D` (built on `simple-3d` → U3D/Urho3D) — the **only playable** target,
   feature-complete enough to play through core mechanics end-to-end (see §2).
 - `GalaxyEggbertCNA` (built directly on **CNA** + **Easy3D** helper library) — the **new
-  long-term target**. Currently: opens a window, copies mobile-eggbert assets next to itself,
-  parses one world file, and renders real, textured, static terrain (one cube per non-air world
-  cell, using `object-m.png`). No Blupi, no objects/pickups, no animated tiles, no HUD, no sound,
-  no gameplay yet.
+  long-term target**. Currently: opens a window, loads a genuinely 3D, hand-authored `.vwr` world
+  (`worlds3d/world001.vwr` — real Y variation, not a flat mobile-eggbert layout), and renders real,
+  textured terrain across all Y layers (one cube per non-air world cell, using `object-m.png`) with
+  working animated tiles (lava/crusher/saw/spike/water/fan/marine/temp). No Blupi, no
+  objects/pickups, no HUD, no sound, no gameplay yet.
 
 **Important architectural decisions** (recorded in `plan.md`/`easy3d.md`/`CLAUDE.md`):
 
@@ -28,10 +29,14 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   values) is reference-only — copying or linking requires explicit user approval first.
   mobile-eggbert currently has **no CMake library target** (only `add_executable`), so it cannot
   be linked as a dependency today regardless of approval.
-- Mobile-eggbert's world files are flat 2D data (Y=0 everywhere). There is **no** and will be
-  **no** automated `.txt → .vwr` converter that "promotes" a 2D level into a 3D one. The existing
-  approach (parse the flat 2D layout, render it with 3D tech: cubes, camera, billboards) is
-  correct and stays. Genuinely 3D-designed levels are separate future hand-authored work.
+- Mobile-eggbert's world files are flat 2D data (Y=0 everywhere) and are reference/inspiration
+  only for world design — they are **not** the intended long-term data source for
+  `GalaxyEggbertCNA`. There is **no** and will be **no** automated `.txt → .vwr` converter that
+  "promotes" a 2D level into a 3D one (rejected direction, unchanged). `GalaxyEggbertCNA` now
+  defaults to loading a genuinely 3D, hand-authored `.vwr` world (`worlds3d/world001.vwr`,
+  generated via `tools/GenerateSampleWorld3D.cpp`); `GEWorldRuntime::LoadFromMobileEggbertFile`
+  stays in the code only as a secondary/reference path (e.g. for later faithful-remake level
+  porting), not the default anymore.
 - New CPU-side mesh builders and CNA renderer adapters (e.g. `Easy3D::CubeMesh`,
   `Easy3D::CubeMeshRenderer`) live inside `../easy-3d` itself, not as galaxy-eggbert-local
   adapters — decided because that work is generic 3D-batching plumbing with zero Eggbert-specific
@@ -44,7 +49,7 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - `GalaxyEggbertSimple3D` — **builds clean** (`cmake -S . -B build && cmake --build build -j2`).
 - `GalaxyEggbertWorldsTests` — **54/54 tests pass** (`ctest --test-dir build`).
 - `GalaxyEggbertCNA` — **builds clean** (opt-in: `-DGALAXY_EGGBERT_BUILD_CNA=ON`), **runs and
-  renders real, textured terrain**.
+  renders real, textured terrain with working animated tiles**.
 - `../easy-3d` — default (headers-only) build and CNA-linked build both green; 2/2 and 5/5 tests
   respectively (the newest class, `CubeMeshRenderer`, is compile-check-only — see §6).
 
@@ -56,22 +61,37 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   sound, 3rd-person orbit camera, 5 sky colors per region.
 - **`GalaxyEggbertCNA`**: CMake option `GALAXY_EGGBERT_BUILD_CNA` (default OFF) builds it
   alongside/instead of Simple3D; links `CNA` + `easy3d::easy3d`; copies
-  `../mobile-eggbert/Content/` and `worlds/` next to its binary at build time; parses
-  `worlds/world001.txt` into the shared `GalaxyEggbert::Worlds::World`; maps block types to
-  `object-m.png` UV rects (`GETileAtlas`); walks the loaded world and renders one textured cube
-  per non-air cell (`GETerrainRenderer` + `Easy3D::CubeMeshRenderer`), textured with a real CNA
-  `Texture2D` of `object-m.png`. Verified by a real run: `594 blocks, 14256 vertices, 7128
-  triangles` uploaded; a 5x5 on-screen pixel sample found 13/25 sampled points showing terrain
-  color with 5 distinct colors among them (confirms real texture sampling, not a placeholder).
+  `../mobile-eggbert/Content/` + `worlds/` and this repo's own `worlds3d/` next to its binary at
+  build time. By default loads `worlds3d/world001.vwr` — a genuinely 3D, hand-authored world
+  (`GEWorldRuntime::LoadFromVwrFile`, real Y variation) — into the shared
+  `GalaxyEggbert::Worlds::World` (`LoadFromMobileEggbertFile` for mobile-eggbert `.txt` files still
+  exists as a secondary/reference path). Maps block types to `object-m.png` UV rects
+  (`GETileAtlas`); walks every Y layer of the loaded world and renders one textured cube per
+  non-air cell (`GETerrainRenderer` + `Easy3D::CubeMeshRenderer`), textured with a real CNA
+  `Texture2D` of `object-m.png`, animated tiles included (see below). Verified by a real run on
+  `worlds3d/world001.vwr`: `2749 blocks, 65976 vertices, 32988 triangles` uploaded, Y range
+  [0, 13]; a 5x5 on-screen pixel sample found 21/25 sampled points showing terrain color with 10
+  distinct colors among them (confirms real texture sampling, not a placeholder).
 - **`Easy3D::CubeMesh`** (`AppendCubeMesh`/`BuildCubeMesh`): turns `CubeBatch` items into
   vertex/index arrays (24 vertices + 36 indices per cube).
 - **`Easy3D::CubeMeshRenderer`**: uploads that data to CNA `VertexBuffer`/`IndexBuffer` once and
   issues `DrawIndexedPrimitives` via a caller-configured `BasicEffect` — the real CNA draw path,
   matching CNA's own `examples/house3d_demo.cpp` pattern.
+- **`GalaxyEggbertCNA` animated tiles**: `GETerrainRenderer` splits blocks into a static mesh
+  (built once) and an animated subset (lava/crusher/saw/spike/water1/water2/fan×4/marine/temp)
+  rebuilt into a second `CubeMeshRenderer` whenever the anim phase changes, driven by
+  `GEWorldRuntime::Update(dt)`/`GetAnimPhase()` (6 fps, matches Simple3D/mobile-eggbert) called
+  from `GalaxyEggbertCnaGame::Update(GameTime&)`. Verified with mobile-eggbert's `world024.txt`
+  (137 animated blocks, loaded via the secondary `.txt` path as a build-artifact-only test, not
+  committed): ran 8s / ~48 rebuild cycles with no crash. The default `worlds3d/world001.vwr` has
+  0 animated tiles (none of its block types are hazard/animated ones).
+- **First hand-authored 3D world**: `worlds3d/world001.vwr`, generated by
+  `tools/GenerateSampleWorld3D.cpp` (new CMake tool target, engine-agnostic) — ground floor,
+  10-step ascending staircase, raised platform, walled room with doorway, two pillars; 2749
+  non-air blocks, Y range [0, 13]; round-trip-verified via `World::loadFromFile()`.
 
 ### What does not work yet
-- `GalaxyEggbertCNA`: no Blupi rendering, no object/pickup rendering, no animated tiles
-  (lava/crusher/saw/water/etc. — terrain is currently fully static), no HUD, no sound, no
+- `GalaxyEggbertCNA`: no Blupi rendering, no object/pickup rendering, no HUD, no sound, no
   gameplay, no input beyond default window handling. `Easy3D::BillboardBatch`/`DebugDraw` have no
   vertex builder or renderer adapter at all yet (needed for Blupi/objects).
 - `GalaxyEggbertSimple3D`: camera shake is a no-op; no per-zone fog; Android/Web builds untested
@@ -79,8 +99,46 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. None of this is committed yet in either repository (see §4/§9).
+Most recent first. Committed and pushed to `origin/develop`: `galaxy-eggbert` commit `a636649`
+("feat: render real, textured terrain in GalaxyEggbertCNA from world data"), `../easy-3d` commit
+`b4c52c0` ("feat: add CubeMesh vertex builder and CubeMeshRenderer CNA draw adapter"). The
+animated-tile entry directly below this line is **not committed yet** (see §9) — everything after
+it is already committed.
 
+- **First hand-authored 3D world, fully wired (E3D-MIG-058, new, not committed)**: added
+  `tools/GenerateSampleWorld3D.cpp` (new CMake target `GenerateSampleWorld3D`, engine-agnostic,
+  only depends on `include/GalaxyEggbert/Worlds/`) and ran it once to produce
+  `worlds3d/world001.vwr` — a ground floor, a 10-step solid ascending staircase, a raised platform,
+  a walled room with a doorway, and two pillars, built with `World::setBlock()`/`saveToFile()` and
+  round-trip-verified with `World::loadFromFile()`: 2749 non-air blocks, Y range [0, 13] — real
+  height variation, not another flat Y=0 layout. This directly addresses the user's flag that
+  mobile-eggbert's flat 2D `.txt` files should not be galaxy-eggbert's real world-data source.
+  Wired in per user decisions: added `GEWorldRuntime::LoadFromVwrFile()` and made it
+  `GalaxyEggbertCnaGame`'s default load (kept `LoadFromMobileEggbertFile` as a secondary/reference
+  path, not removed). Fixed the real gap this surfaced: `GETerrainRenderer` previously only ever
+  read `world.getBlock(x, 0, z)` — it now walks every Y layer, and `GETerrainRenderer`/
+  `GalaxyEggbertCnaGame`'s camera framing gained a `CentroidY()` instead of assuming Y=0. Added
+  `worlds3d/` to the CMake asset-copy step. **Verified with a real run:**
+  `loaded worlds3d/world001.vwr — 2749 non-air blocks, Y range [0, 13]` → `terrain mesh uploaded —
+  2749 blocks (0 animated), 65976 vertices, 32988 triangles` → visibility check `21/25` sampled
+  points showing textured terrain, 10 distinct colors; ran 8s with no crash.
+- **`GalaxyEggbertCNA` animated tiles (E3D-MIG-055, new, not committed)**: `GETerrainRenderer` now
+  splits blocks into a static mesh (built once, unchanged behavior) and an animated subset
+  (lava/crusher/saw/spike/water1/water2/fan-left/right/up/down/marine/temp), rebuilt into a second
+  `Easy3D::CubeMeshRenderer` only when the animation phase changes. Frame tables and
+  `animIcon`/`isAnimated` logic ported 1:1 from `GalaxyEggbertSimple3D`'s already-shipped
+  `GETerrainRenderer.cpp` (same repo, already-approved data — not a fresh mobile-eggbert
+  transcription). Added `GEWorldRuntime::Update(dt)`/`GetAnimPhase()` (6 fps tick, matches
+  Simple3D/mobile-eggbert) and a `GalaxyEggbertCnaGame::Update(GameTime&)` override to drive it.
+  Verified with `worlds/world001.txt` (0 animated tiles — proves the empty-set path is crash-safe)
+  and, via a build-artifact-only substitution of mobile-eggbert's `world024.txt` (not committed,
+  restored after), with 137 real animated blocks — ran 8s (~48 rebuild cycles at 6 fps) with no
+  crash. Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`,
+  `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`,
+  `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`. No `../easy-3d` changes needed. Decided and
+  recorded in `plan.md` (E3D-MIG-057, not scheduled): world data stays loaded whole (no
+  chunk-radius streaming) — worlds are small (100×100, hundreds of blocks) and mobile-eggbert
+  itself has no such concept.
 - **`GalaxyEggbertCNA` terrain texturing**: loaded `object-m.png` (1301×1431 px, matches
   `BlockTypes::kSheetW/kSheetH`) via CNA's own `Texture2D(assetName, GraphicsDevice&)` constructor
   and bound it to the terrain's `BasicEffect` (`TextureEnabled=true`). Deliberately **not** via
@@ -121,27 +179,41 @@ Most recent first. None of this is committed yet in either repository (see §4/�
   `c6b6456` (`GalaxyEggbertCNA` skeleton target), `f579824`/`ebea834` (direction-lock docs),
   `ac1d8d1` (Simple3D crate push + platform patrol fix).
 
-Files added this migration and not yet committed: `easy3d.md`; `src/GalaxyEggbertCNA/` (`main.cpp`,
-`GalaxyEggbertCnaGame.hpp/.cpp`, `Game/GEWorldRuntime.hpp/.cpp`, `Game/GETileAtlas.hpp/.cpp`,
-`Game/GETerrainRenderer.hpp/.cpp`); in `../easy-3d`: `include/Easy3D/CubeMesh.hpp`,
-`include/Easy3D/CubeMeshRenderer.hpp`, `src/CubeMesh.cpp`, `src/CubeMeshRenderer.cpp`,
-`tests/test_cube_mesh.cpp`, `tests/test_cube_mesh_renderer.cpp`, plus doc/CMake edits.
-`src/GalaxyEggbertSimple3D/` was not touched. `../mobile-eggbert`, `../cna`, and `../simple-3d`
-remain untouched/read-only. `../easy-3d` was modified twice this migration, **each time with
-explicit user approval** — any further edits there need their own approval too.
+Files changed this session and not yet committed (`galaxy-eggbert` only — no `../easy-3d` changes
+this session): `NEXT.md`, `plan.md`, `CMakeLists.txt`; modified
+`src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`,
+`src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`,
+`src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`; new `tools/GenerateSampleWorld3D.cpp` and
+`worlds3d/world001.vwr`. `src/GalaxyEggbertSimple3D/` was not touched. `../mobile-eggbert`,
+`../cna`, `../simple-3d`, and `../easy-3d` all remain untouched this session.
 
 ## 4. Current blocker / main problem
 
-**No blocker.** Real, textured, non-animated terrain renders end-to-end from the actual loaded
-world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/`CubeMeshRenderer` +
-`Texture2D` → visible, textured pixels on screen, verified by geometry counts and by on-screen
-color sampling. The remaining gaps (animated tiles, Blupi, objects, HUD, sound) are new
+**No blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
+actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
+`CubeMeshRenderer` + `Texture2D` → visible, textured pixels on screen, verified by geometry counts
+and by on-screen color sampling. The remaining gaps (Blupi, objects, HUD, sound) are new
 capabilities to build, not bugs to fix.
 
-The one open practical note: **nothing described in this document is committed** in either
-`galaxy-eggbert` or `../easy-3d`. A future session should confirm with the user before committing,
-and should re-check `git status`/`git log` in both repos first, since this environment has shown
-other concurrent sessions landing changes in sibling repos (e.g. the `../cna` fix above).
+**Direction question resolved (2026-07-03):** the user flagged that loading mobile-eggbert's
+*flat 2D* `.txt` world files as the primary/only data source for `GalaxyEggbertCNA` was the wrong
+end-state — mobile-eggbert's 2D layouts should stay reference/inspiration only, and galaxy-eggbert
+needed at least one genuinely 3D, hand-authored `.vwr` world as the actual playable-world source.
+This does not contradict the existing "no automated `.txt`→`.vwr` converter" rule (§1) — it was
+the natural next step of it. Resolved in full (E3D-MIG-058, §3):
+`worlds3d/world001.vwr` (2749 blocks, Y range [0, 13]) is now `GalaxyEggbertCNA`'s default loaded
+world; `LoadFromMobileEggbertFile` stays available as a secondary/reference path;
+`GETerrainRenderer` now walks all Y layers (previously Y=0 only — a real gap found and fixed along
+the way). Verified with a real run showing textured terrain across the full structure.
+
+Known follow-up, not blocking: no face-culling/occlusion in `GETerrainRenderer` — fine at 2749
+blocks, will matter for denser/taller hand-authored worlds later.
+
+**Not committed yet:** the animated-tile work and the hand-authored-3D-world work (both described
+at the top of §3) — only the older `a636649`/`b4c52c0` batch is committed and pushed so far. A
+future session should re-check `git status`/`git log` in both repos first before assuming any of
+this is current, since this environment has shown other concurrent sessions landing changes in
+sibling repos (e.g. the `../cna` fix noted above).
 
 ## 5. Known bugs and limitations
 
@@ -150,13 +222,13 @@ other concurrent sessions landing changes in sibling repos (e.g. the `../cna` fi
 | confirmed | Simple3D: `GECameraRig::StartShake()` is a no-op (Simple3D has no camera-offset API) |
 | confirmed, environment-specific | `ctest` does not discover `GalaxyEggbertWorldsTests` when configured in the pre-existing `cmake-build-debug` CLion profile (binary runs fine manually). Not reproduced in a fresh `build/` directory — `ctest --test-dir build` correctly finds and runs all 54 tests there. Likely a stale/IDE-specific config issue in `cmake-build-debug`, not a general CMake problem. |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region |
-| incomplete | `GalaxyEggbertCNA`: no Blupi/object rendering, no animated tiles, no HUD, no sound, no gameplay (expected at this phase, not a bug) |
+| incomplete | `GalaxyEggbertCNA`: no Blupi/object rendering, no HUD, no sound, no gameplay (expected at this phase, not a bug) |
 | unknown | Simple3D Android/Web builds untested since the last engine change |
 | unknown | `GalaxyEggbertCNA`'s clean-exit-on-window-close path was not separately exercised — only a forced external `timeout`/kill was tested during verification |
 | needs verification | Simple3D: stomp bounce height (`kJumpSpeed * 0.65f`) — does it match mobile-eggbert's feel? |
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
-| risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds/world001.txt"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
-| risky assumption | `GETerrainRenderer` rebuilds nothing after construction — fine for the current static-only phase, but animated tiles (§8 task 1) will need either a rebuild-per-frame path or a shader-side animation approach; not yet decided |
+| risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
+| incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
 
 ## 6. Architecture notes
 
@@ -178,11 +250,22 @@ src/GalaxyEggbertSimple3D/   — full playable game (Simple3D/U3D). GalaxyEggber
                                 GEBridgeSystem. Not touched by the CNA migration.
 
 src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame (Microsoft::Xna::Framework::Game subclass)
-                                owns Game/GEWorldRuntime (mobile-eggbert .txt parser),
+                                owns Game/GEWorldRuntime (LoadFromVwrFile() default,
+                                LoadFromMobileEggbertFile() secondary/reference path),
                                 Game/GETileAtlas (block type → UV rect), Game/GETerrainRenderer
-                                (World → one CubeMeshRenderer-backed mesh for all non-air blocks),
-                                an Easy3D::Camera3D (aimed at the terrain's block centroid), a CNA
-                                Texture2D of object-m.png, and a BasicEffect bound to it.
+                                (World, all Y layers → static + animated CubeMeshRenderer-backed
+                                meshes), an Easy3D::Camera3D (aimed at the terrain's 3D block
+                                centroid), a CNA Texture2D of object-m.png, and a BasicEffect
+                                bound to it.
+
+tools/GenerateSampleWorld3D.cpp — engine-agnostic CLI tool (CMake target
+                                GenerateSampleWorld3D): builds a hand-authored 3D World in memory
+                                and saves it via World::saveToFile(). Only depends on
+                                include/GalaxyEggbert/Worlds/ — no engine deps, runs standalone.
+
+worlds3d/                    — galaxy-eggbert's own hand-authored .vwr worlds (committed to this
+                                repo, unlike mobile-eggbert's worlds/ which is copied at build
+                                time). world001.vwr is the first one (E3D-MIG-058).
 
 ../easy-3d/                  — companion library beside CNA (not touched by default; two
                                 approved edits this migration). Camera3D/OrbitCamera/FollowCamera,
@@ -192,15 +275,21 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame (Microsoft::Xna::Framework
                                 started.
 ```
 
-### Data flow (both targets read the same file format)
+### Data flow
 ```
-worlds/worldXXX.txt (mobile-eggbert format, header + Decor: grid [+ MoveObject: lines])
-  Simple3D: → GEWorldRuntime::LoadFromMobileEggbertFile() → World + MobileObjSpec list + blupiSpawn
-            → GETerrainRenderer / GEDecorSystem / GEBlupiController (renders everything)
-  CNA:      → GEWorldRuntime::LoadFromMobileEggbertFile() → World (MoveObject: lines still ignored
-              — that's a later phase) → GETerrainRenderer → Easy3D::CubeBatch/CubeMesh/
-              CubeMeshRenderer + Texture2D(object-m.png) (renders static, textured terrain; no
-              Blupi/object rendering yet).
+Hand-authored 3D worlds (worlds3d/*.vwr, engine-agnostic binary format):
+  CNA (default): → GEWorldRuntime::LoadFromVwrFile() → World::loadFromFile() → World (all Y
+                   layers) → GETerrainRenderer → Easy3D::CubeBatch/CubeMesh/CubeMeshRenderer +
+                   Texture2D(object-m.png) (renders real 3D, textured, animated terrain; no
+                   Blupi/object rendering yet).
+
+Mobile-eggbert worlds (worlds/worldXXX.txt, header + Decor: grid [+ MoveObject: lines], flat Y=0):
+  Simple3D:      → GEWorldRuntime::LoadFromMobileEggbertFile() → World + MobileObjSpec list +
+                   blupiSpawn → GETerrainRenderer / GEDecorSystem / GEBlupiController (renders
+                   everything; this is Simple3D's only/default world source).
+  CNA (secondary/reference path only, not the default anymore):
+                 → GEWorldRuntime::LoadFromMobileEggbertFile() → World (MoveObject: lines still
+                   ignored — that's a later phase) → same GETerrainRenderer path as above.
 ```
 
 ### Important invariants
@@ -248,12 +337,19 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2
 # Run CNA target — must run from its own build directory (relative asset paths):
 cd build-cna && ./GalaxyEggbertCNA
 # Expect on stdout, in order:
-#   "GalaxyEggbertCNA: loaded worlds/world001.txt — spawn tile (12, 92), sky region 0, 594 non-air blocks."
+#   "GalaxyEggbertCNA: loaded worlds3d/world001.vwr — 2749 non-air blocks, Y range [0, 13]."
 #   GETileAtlas UV diagnostics (Ground/Lava/Wall)
 #   "GalaxyEggbertCNA: terrain texture loaded — 1301x1431 px."
-#   "GalaxyEggbertCNA: terrain mesh uploaded — 594 blocks, 14256 vertices, 7128 triangles."
+#   "GalaxyEggbertCNA: terrain mesh uploaded — 2749 blocks (0 animated), 65976 vertices, 32988 triangles."
+#   (this sample world has no animated tiles; run GalaxyEggbertCNA on a mobile-eggbert-derived
+#   .txt world via GEWorldRuntime::LoadFromMobileEggbertFile for a non-zero animated count, e.g.
+#   mobile-eggbert's world024.txt has 137)
 #   "GalaxyEggbertCNA: terrain visibility check — N/25 sampled screen points show non-background (terrain) color, M distinct color(s) among them..."
 # A window opens showing textured cube terrain (object-m.png tiles) from an angled overhead view.
+
+# Regenerate the hand-authored 3D sample world (if tools/GenerateSampleWorld3D.cpp changes):
+cmake --build build-cna --target GenerateSampleWorld3D -j2
+./build-cna/GenerateSampleWorld3D worlds3d/world001.vwr
 
 # easy-3d: default (headers-only) build + tests
 cmake -S ../easy-3d -B /tmp/e3d-build -DEASY3D_CNA_DIR=../cna
@@ -274,22 +370,22 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Add animated-tile support** (lava/crusher/saw/spike/water/fan/marine/temp) — using
-   mobile-eggbert's frame tables and the Simple3D port's existing behavior as reference (do not
-   copy code/data without approval). This is the main remaining terrain gap.
-   **Files:** `src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp` (currently build-once; will
-   need either a per-frame partial rebuild for animated-tile groups, or a different mechanism —
-   worth a short design pass before implementing, since it's not yet decided how).
-   **Verification:** run `GalaxyEggbertCNA`; lava/water tiles visibly animate over time.
-2. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+1. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+   proof-of-concept (staircase + one room). Now that loading, rendering, and animated tiles all
+   work for real 3D structures, a natural next step is a more level-like design (multiple rooms,
+   hazard tiles placed at various Y, a path a Blupi could actually walk). Not urgent — no user
+   request yet for a specific design.
+2. **Add face-culling/occlusion to `GETerrainRenderer`** if a future hand-authored world gets
+   dense/tall enough for it to matter (see §5). Not needed at the current 2749-block scale.
+3. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-3. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+4. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-4. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
+5. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
    death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert. **Files:**
    `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; may need a new
    `Game::SetCameraPositionOffset()`-style API added to `../simple-3d` (would need discussion,
@@ -309,8 +405,8 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - No `#ifdef GE_ENGINE_*` anywhere.
 - No new gameplay mechanics not present in mobile-eggbert (no coins, coyote time, combo
   multipliers, star ratings, time bonuses).
-- No committing anything without asking first — the user has not requested a commit for this
-  migration's work yet (see §4).
+- No committing/pushing without asking first each time — the previous batch was committed and
+  pushed on explicit request (see §3); that is not standing authorization for future batches.
 
 ## 10. Resume prompt
 

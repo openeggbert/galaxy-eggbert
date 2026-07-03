@@ -242,8 +242,68 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
   exactly); re-ran the pixel-sampling check — `13/25` terrain-covered points still, now with
   **5 distinct colors** among them (proof the texture is genuinely sampled per-pixel, not a flat
   fallback).
-- [ ] E3D-MIG-055 — Add animated-tile support (lava/crusher/saw/spike/water/fan/marine/temp) using mobile-eggbert's frame tables as reference, matching the Simple3D port's existing behavior.
+- [x] E3D-MIG-055 — Done (2026-07-03). Added animated-tile support to `GalaxyEggbertCNA`
+  (lava/crusher/saw/spike/water1/water2/fan×4/marine/temp) by porting the frame tables and
+  `animIcon`/`isAnimated` logic 1:1 from `GalaxyEggbertSimple3D`'s already-shipped
+  `GETerrainRenderer.cpp` (same galaxy-eggbert repo; not a fresh mobile-eggbert transcription —
+  those tables were already approved/committed for Simple3D). Design (user-approved): periodic
+  rebuild of just the animated subset, not shader-side UV animation — `GETerrainRenderer` now
+  splits blocks into a static `CubeMeshRenderer` (built once, unchanged) and an animated subset
+  tracked as `(x, z, animBase)`, rebuilt into a second `CubeMeshRenderer` only when
+  `GEWorldRuntime::GetAnimPhase()` changes (`GETerrainRenderer::Update()`). Added
+  `GEWorldRuntime::Update(dt)`/`GetAnimPhase()` to CNA's `GEWorldRuntime`, mirroring Simple3D's 6
+  fps `kAnimPeriod` exactly. `GalaxyEggbertCnaGame` gained an `Update(GameTime&)` override driving
+  both. Verified two ways: (1) `worlds/world001.txt` has 0 animated tiles — ran 8s (~48 rebuild
+  cycles at 6 fps) with no crash, proving the empty-animated-set path is safe; (2) swapped in
+  mobile-eggbert's `world024.txt` (137 animated blocks) as a build-artifact-only substitution (not
+  committed, restored after) — ran 8s with no crash, `1887 blocks (137 animated), 45288 vertices`
+  uploaded, terrain visibility check still found textured pixels on screen. Guarded the one new
+  edge case (all animated tiles hidden in the same phase, e.g. Temp's 2 blank frames of 20) by
+  skipping `CubeMeshRenderer` construction instead of building a zero-size GPU buffer. Files:
+  `src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`,
+  `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`,
+  `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`. No `../easy-3d`/`../mobile-eggbert` changes
+  needed.
+- [x] E3D-MIG-058 — Done (2026-07-03). User flagged that `GalaxyEggbertCNA` loading
+  mobile-eggbert's flat 2D `.txt` files is not the intended end-state for galaxy-eggbert's world
+  data — mobile-eggbert 2D layouts are reference/inspiration only; galaxy-eggbert needs at least
+  one genuinely 3D, hand-authored `.vwr` world. Full pipeline now done, in two parts:
+  1. **World generation.** Added `tools/GenerateSampleWorld3D.cpp` (new CMake target
+     `GenerateSampleWorld3D`, engine-agnostic — only depends on `include/GalaxyEggbert/Worlds/`):
+     builds a small structure with real Y variation (ground floor, a 10-step solid ascending
+     staircase, a raised platform, a walled room with a doorway, two pillars) using the existing
+     tested `World::setBlock()`/`saveToFile()` API, round-trip-verified via `World::loadFromFile()`.
+     Ran it once and committed the output: `worlds3d/world001.vwr` — 2749 non-air blocks, Y range
+     [0, 13].
+  2. **Wiring, per user decisions (asked via `AskUserQuestion` and answered):** kept
+     `GEWorldRuntime::LoadFromMobileEggbertFile` in the code as a secondary/reference path (not
+     removed); added `GEWorldRuntime::LoadFromVwrFile()` (thin wrapper over
+     `Worlds::World::loadFromFile()`; `.vwr` carries no spawn/sky-region header, so those reset to
+     0) and made `GalaxyEggbertCnaGame::LoadContent()` call it by default instead of the
+     mobile-eggbert `.txt` loader. Fixed the real prerequisite gap found while investigating:
+     `GETerrainRenderer` (CNA) previously only ever read `world.getBlock(x, 0, z)` — a single Y
+     layer — so it could not render a multi-Y world at all; it now walks every Y layer
+     (`0..blocksPerAxis()-1`). Added a `CentroidY()` (alongside the existing X/Z) and updated the
+     camera framing in `GalaxyEggbertCnaGame` to target the full 3D centroid instead of assuming
+     Y=0. Added `worlds3d/` to the CMake asset-copy step for `GalaxyEggbertCNA`. **Verified with a
+     real run:** `loaded worlds3d/world001.vwr — 2749 non-air blocks, Y range [0, 13]` →
+     `terrain mesh uploaded — 2749 blocks (0 animated), 65976 vertices, 32988 triangles` →
+     terrain visibility check found `21/25` sampled points showing textured terrain color with 10
+     distinct colors; ran 8s with no crash. Known follow-up (not blocking, noted for later): no
+     face-culling/occlusion — fine at this structure's size (2749 blocks) but will matter for
+     denser/taller hand-authored worlds. Files: `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`,
+     `src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`,
+     `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`, `CMakeLists.txt`,
+     `tools/GenerateSampleWorld3D.cpp`, `worlds3d/world001.vwr`.
 - [ ] E3D-MIG-056 — Do not add MeshCraft or any mesh-import path.
+- [ ] E3D-MIG-057 — (Future, not scheduled) Chunk-radius world loading/streaming — load/render only the
+  current + neighboring chunks instead of the whole `World` at once. Decided 2026-07-03: **not
+  needed now.** `World` is a documented "small fixed-size voxel world" (100×100×100 max, 1000
+  chunks); mobile-eggbert's source levels are flat 2D (Y=0), so real worlds have ~100 non-empty
+  chunks and hundreds of blocks (world001 = 594 blocks → 14256 vertices, trivial for any GPU).
+  mobile-eggbert itself loads each level whole, with no chunk-radius concept. Revisit only if a
+  real world grows large/open enough to need it, or a measured perf problem appears — do not
+  implement speculatively (`CLAUDE.md` "no abstractions beyond what the task requires").
 
 ### Phase 6 — Blupi first version
 

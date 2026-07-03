@@ -23,6 +23,7 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbertCnaGame();
 
         void LoadContent() override;
+        void Update(Microsoft::Xna::Framework::GameTime& gameTime) override;
         void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
         GetTypeNameHPP()

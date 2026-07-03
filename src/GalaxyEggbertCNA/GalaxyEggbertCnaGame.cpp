@@ -19,36 +19,44 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::LoadContent()
     {
-        // Parse-only sanity check (plan.md E3D-MIG-041) — nothing here renders
-        // the loaded world yet; see plan.md Phase 5/6 for that.
-        const bool loaded = worldRuntime_.LoadFromMobileEggbertFile("worlds/world001.txt");
+        // Default world source: a genuinely 3D, hand-authored .vwr world
+        // (plan.md E3D-MIG-058), not a flat mobile-eggbert .txt layout.
+        // LoadFromMobileEggbertFile() stays available on GEWorldRuntime as a
+        // secondary/reference path (e.g. for later faithful-remake level
+        // porting) but is no longer the default load here.
+        const bool loaded = worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr");
         if (!loaded)
         {
-            std::cout << "GalaxyEggbertCNA: worlds/world001.txt not found or failed to parse "
+            std::cout << "GalaxyEggbertCNA: worlds3d/world001.vwr not found or failed to load "
                          "(run the binary from its own build directory)." << std::endl;
             return;
         }
 
         const auto& world = worldRuntime_.GetWorld();
         int nonAirBlocks = 0;
+        int minY = -1;
+        int maxY = -1;
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        for (int z = 0; z < blocksPerAxis; ++z)
+        for (int y = 0; y < blocksPerAxis; ++y)
         {
-            for (int x = 0; x < blocksPerAxis; ++x)
+            for (int z = 0; z < blocksPerAxis; ++z)
             {
-                if (!world.getBlock(static_cast<std::uint16_t>(x), 0,
-                                     static_cast<std::uint16_t>(z)).isAir())
+                for (int x = 0; x < blocksPerAxis; ++x)
                 {
-                    ++nonAirBlocks;
+                    if (!world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                         static_cast<std::uint16_t>(z)).isAir())
+                    {
+                        ++nonAirBlocks;
+                        if (minY < 0) minY = y;
+                        maxY = y;
+                    }
                 }
             }
         }
 
-        std::cout << "GalaxyEggbertCNA: loaded worlds/world001.txt — "
-                  << "spawn tile (" << worldRuntime_.GetSpawnTileX() << ", "
-                  << worldRuntime_.GetSpawnTileZ() << "), sky region "
-                  << worldRuntime_.GetSkyRegion() << ", " << nonAirBlocks
-                  << " non-air blocks." << std::endl;
+        std::cout << "GalaxyEggbertCNA: loaded worlds3d/world001.vwr — "
+                  << nonAirBlocks << " non-air blocks, Y range [" << minY << ", " << maxY
+                  << "]." << std::endl;
 
         // Tile-atlas sanity check (plan.md E3D-MIG-053) — nothing queues a
         // CubeBatch item from this yet; this only proves GETileAtlas resolves
@@ -83,20 +91,35 @@ namespace GalaxyEggbert::CNA
         terrainEffect_->setTextureEnabledProperty(true);
         terrainEffect_->setTextureProperty(&terrainTexture_);
 
-        // Frame the camera on the terrain's block centroid, not the spawn
-        // tile — the spawn tile itself is typically the open-air cell Blupi
-        // stands in, not a solid block, so it's an unreliable look-at target.
+        // Frame the camera on the terrain's block centroid (all 3 axes, not
+        // just X/Z) — a reliable look-at target regardless of world shape,
+        // now that worlds can have real Y variation (plan.md E3D-MIG-058).
         // A high, angled overhead view over the centroid reliably covers a
         // meaningful chunk of the loaded level.
         const float centroidX = terrainRenderer_->CentroidX();
+        const float centroidY = terrainRenderer_->CentroidY();
         const float centroidZ = terrainRenderer_->CentroidZ();
-        camera_.SetTarget(Easy3D::Camera3D::Vector3(centroidX, 0.0f, centroidZ));
-        camera_.SetPosition(Easy3D::Camera3D::Vector3(centroidX, 40.0f, centroidZ + 40.0f));
+        camera_.SetTarget(Easy3D::Camera3D::Vector3(centroidX, centroidY, centroidZ));
+        camera_.SetPosition(Easy3D::Camera3D::Vector3(centroidX, centroidY + 40.0f, centroidZ + 40.0f));
 
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
-                  << terrainRenderer_->BlockCount() << " blocks, "
+                  << terrainRenderer_->BlockCount() << " blocks ("
+                  << terrainRenderer_->AnimatedBlockCount() << " animated), "
                   << terrainRenderer_->VertexCount() << " vertices, "
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
+    }
+
+    void GalaxyEggbertCnaGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
+    {
+        Game::Update(gameTime);
+
+        const float dt = static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
+        worldRuntime_.Update(dt);
+
+        if (terrainRenderer_)
+        {
+            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+        }
     }
 
     void GalaxyEggbertCnaGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)

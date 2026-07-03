@@ -303,9 +303,33 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         endforeach()
     endif()
 
+    # galaxy-eggbert's own hand-authored 3D worlds (plan.md E3D-MIG-058) —
+    # committed to this repository, copied next to the binary like Content/worlds above.
+    if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/worlds3d")
+        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_CURRENT_SOURCE_DIR}/worlds3d"
+                "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/worlds3d"
+            COMMENT "Copying worlds3d/ next to GalaxyEggbertCNA"
+        )
+    endif()
+
     message(STATUS "GalaxyEggbertCNA target enabled (skeleton — no gameplay yet).")
 
 endif() # GALAXY_EGGBERT_BUILD_CNA
+
+# =============================================================================
+# Tools (engine-independent — pure C++ data model, no graphics)
+# =============================================================================
+
+add_executable(GenerateSampleWorld3D
+        tools/GenerateSampleWorld3D.cpp
+        ${GE_SHARED_SOURCES}
+)
+
+target_include_directories(GenerateSampleWorld3D PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 # =============================================================================
 # Doxygen

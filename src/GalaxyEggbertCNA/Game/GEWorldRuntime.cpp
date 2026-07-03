@@ -5,6 +5,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <exception>
 #include <fstream>
 #include <sstream>
 
@@ -96,5 +97,33 @@ namespace GalaxyEggbert::CNA
         }
 
         return true;
+    }
+
+    bool GEWorldRuntime::LoadFromVwrFile(const std::string& path)
+    {
+        try
+        {
+            world_ = std::make_unique<Worlds::World>(Worlds::World::loadFromFile(path));
+        }
+        catch (const std::exception&)
+        {
+            return false;
+        }
+
+        spawnTileX_ = 0;
+        spawnTileZ_ = 0;
+        skyRegion_ = 0;
+        return true;
+    }
+
+    void GEWorldRuntime::Update(float dt)
+    {
+        animTimer_ += dt;
+        static constexpr float kAnimPeriod = 1.0f / 6.0f;
+        while (animTimer_ >= kAnimPeriod)
+        {
+            animTimer_ -= kAnimPeriod;
+            ++animPhase_;
+        }
     }
 }
