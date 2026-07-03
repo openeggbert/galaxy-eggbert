@@ -27,12 +27,18 @@ Tracked as `DOC-001`..`DOC-006` in `plan.md` §15 ("Documentation — mobile-egg
 complete"). Each file below notes its own completeness status at the top.
 
 **Progress:** `DOC-001` (file split), `DOC-002` (complete tile catalog, all 441 icons), `DOC-003`
-(complete `ObjectType` classification, all 204 IDs), and `DOC-004` (complete animation catalog, 71
-sequences) done 2026-07-03. `DOC-003` surfaced a real rendering bug (wrong sprite-sheet channel
-assumed for 5 `ObjectType`s in `GEDecorSystem.cpp`) — see `03-objects.md`'s bug callout, tracked as
-`DOC-007`, not yet fixed. `DOC-004` surfaced a second real finding (not a bug fix, a documentation
-correction): object animations have no confirmed frame rate — see `08-animations.md`'s correction
-note. `DOC-005`/`DOC-006` (sounds, backgrounds) still pending.
+(complete `ObjectType` classification, all 204 IDs), and `DOC-004` (complete animation catalog,
+including all 87 real `BlupiAction` states) done 2026-07-03. `DOC-003` surfaced a real rendering bug
+(wrong sprite-sheet channel assumed for 5 `ObjectType`s in `GEDecorSystem.cpp`) — see
+`03-objects.md`'s bug callout, tracked as `DOC-007`, not yet fixed. `DOC-004` surfaced a second real
+finding (not a bug fix, a documentation correction): object animations have no confirmed frame rate
+— see `08-animations.md`'s correction note. `DOC-004` was briefly marked done, then **correctly
+reopened by the user**, who caught that its Blupi section only covered galaxy-eggbert's own
+8-state partial port instead of mobile-eggbert's real 87-state `BlupiAction` enum — now fixed by
+parsing `Tables::table_blupi` directly; see `08-animations.md` §2 for the full account. **Still
+outstanding, not yet started**: the 40 `ObjectType` icon crops the user asked for in `03-objects.md`
+Category B (real behavior, never placed in a shipped level) — approved but not yet executed as of
+this pass. `DOC-005`/`DOC-006` (sounds, backgrounds) still pending too.
 
 ## Files in this reference
 
@@ -46,7 +52,7 @@ note. `DOC-005`/`DOC-006` (sounds, backgrounds) still pending.
 | `05-backgrounds.md` | Background/sky region images | Partial — 3 of 38 backgrounds shown; `region=` mapping unresolved (`DOC-006`) |
 | `06-doors.md` | Door tile behavior (2D) | Believed complete for the 2D behavior itself |
 | `07-sounds.md` | The 93 sound channels | Not yet expanded — pointer only (`DOC-005`) |
-| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete for known sequences** — 71 documented, full `Tables.cpp` sweep done (`DOC-004`, done 2026-07-03) |
+| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete** — 155 sequences documented: 12 tiles, all 87 real `BlupiAction` states (84 with a real animation, 3 confirmed no-record), 23 objects, 8 explosions, 1 door slide (`DOC-004`, done 2026-07-03, reopened once and fixed same day) |
 | `09-open-questions.md` | Open questions for the eventual 3D mapping design | Living list, updated as facts are found |
 
 ## How images were generated

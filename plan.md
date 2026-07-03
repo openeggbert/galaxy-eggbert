@@ -1333,7 +1333,29 @@ current progress, not just this list.
   `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
   of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
   check or a scripted crop-and-compare against the correct sheet) before considering it done.
-- [ ] DOC-004 — **Reopened same day.** User caught a real completeness gap this "done" entry missed:
+- [x] DOC-004 — **Done (2026-07-03), after being reopened once same day.** User caught a real
+  completeness gap in the first "done" pass (kept below for history), then this was fixed by parsing
+  `Tables::table_blupi[2911]` (`../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp`) directly
+  and programmatically — a flat record list `{actionId, frameCount, holdLimit, icon_0..icon_N}`
+  terminated by `actionId==0`, the same structure `Decor::BlupiSearchIcon()` (`Decor.cpp` ~line 2390)
+  consumes at runtime. Result: **84 of the 87 real `BlupiAction` values now have a documented,
+  GIF-illustrated animation** in `08-animations.md` §2, grouped into 23 categories (Core movement,
+  Helicopter/Jeep/Tank/Skate/Surf/Nage modes, hazard contact, relief "Ouf" animations, Clear/erasing
+  variants, etc.). 3 actions (`Set`=12, `Recedeq`=70, `Advanceq`=71) have no direct `table_blupi`
+  record — noted honestly as "no record found", not guessed (mobile-eggbert's own doc comment
+  suggests a stage-1 action-remapping step may redirect these before the table lookup runs; not
+  traced in this pass). Channel selection (`blupi.png` vs `element.png`) and the `-1` "invisible
+  frame" convention (same as `Temp` tile) were both confirmed directly from `BlupiSearchIcon()`, not
+  assumed. **Independent verification**: the parsed data reproduces `GEBlupiController.cpp`'s
+  existing `March`/`Jump`/`Air`/`SwimIdle`/`SwimMove` arrays byte-for-byte, confirming both the new
+  parser and the original partial port are correct — the gap was purely that 82 other real actions
+  were outside that port's scope. Whole-tree image-integrity check: 519 image references, 519 real
+  files, zero orphans, zero broken links. Frame counts spot-checked with `identify` (Stop=330,
+  March=6, Teleporte=128, all exact). **Explicitly out of scope for this fix, not done**: the 40
+  `ObjectType` icon crops from `DOC-003`'s Category B that the user separately approved — still
+  pending.
+  ---
+  Original (reopened) entry, kept for history:
   the Blupi section only covers the **8 `BlupiState` values `GEBlupiController.cpp` (galaxy-eggbert's
   own Simple3D port) implements** (Stop/March/Jump/Air/Down/Up/SwimIdle/SwimMove — 5 animated + 3
   static), not mobile-eggbert's real `BlupiAction` enum

@@ -1,10 +1,16 @@
 # Animations
 
-**Status: COMPLETE for known animated sequences** — 71 animated sequences documented (12 tiles, 5
-Blupi states, 14 original objects, 8 explosions, 1 door slide, 9 new-object-type animations across
-10 GIFs — `ObjectType96` has two states, dormant and awake). A full sweep of every `table_*` array
-in mobile-eggbert's `Tables.cpp` (§4 below) confirms nothing else animates that isn't either already
-covered here or explicitly listed as deferred/out-of-scope with a reason. Tracked as `DOC-004` in
+**Status: COMPLETE.** 155 animated sequences documented: 12 tiles (§1), all 87 real `BlupiAction`
+states — 84 with a real `table_blupi`-sourced animation, 3 confirmed to have no direct record
+(§2), 14 original + 9 newer object animations (§3), 8 explosions (§4), 1 door slide (§5).
+
+**History**: an earlier pass in this series (2026-07-03) documented only the 8 `BlupiState` values
+`GEBlupiController.cpp` (galaxy-eggbert's own partial Simple3D port) implements, not mobile-eggbert's
+real 87-state `BlupiAction` enum — the user caught that this was the wrong source of truth (both the
+generating pass and the coordinator's own verification had trusted the partial port as if it were
+complete, instead of checking mobile-eggbert's own enum directly). §2 was regenerated from scratch
+against the real source — see §2's own methodology note for details. Tiles (§1) and
+objects/explosions/door (§3–§5) were not affected by this specific gap. Tracked as `DOC-004` in
 `plan.md`.
 
 Every animated sequence mobile-eggbert's tile/character/object system can produce, as looping
@@ -54,18 +60,236 @@ The two `-1` ("invisible") frames in `Temp`'s table are rendered as fully-transp
 (verified: alpha channel mean 0 on both), not skipped — matching the real vanish-then-reappear
 behavior (Blupi falls through while invisible, per `02-tiles.md`).
 
-## 2. Blupi character states (`blupi.png`, 8 fps base tick = 125 ms/frame — confirmed, throttled timer)
+## 2. Blupi character states — all 87 real `BlupiAction` values (`blupi.png`/`element.png`, 8 fps
+base tick = 125 ms/frame per `GEBlupiController.cpp`'s confirmed throttled timer)
 
-`Stop`={0}, `Down`={33}, `Up`={44} are single static frames (no animation) — see `03-objects.md`
-for those.
+**Complete as of this pass.** Source of truth is mobile-eggbert's real
+`../mobile-eggbert/include/WindowsPhoneSpeedyBlupi/def/BlupiAction.hpp` enum (87 real states,
+`None`=0 excluded) — NOT galaxy-eggbert's `GEBlupiController.cpp`, which only implements 8 of
+these for the currently-playable Simple3D game (this was the exact gap the user caught: an earlier
+pass in this series treated the partial port as if it were the complete animation set). Frame data
+comes from parsing `Tables::table_blupi[2911]`
+(`../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp`) directly and programmatically — a flat
+record list `{actionId, frameCount, holdLimit, icon_0..icon_(frameCount-1)}` terminated by
+`actionId==0`, consumed by `Decor::BlupiSearchIcon()` (`Decor.cpp` ~line 2390). `holdLimit`
+(confirmed from that function's doc comment) clamps the phase counter at a fixed frame for
+one-shot animations instead of wrapping — noted per-row below where it applies. Channel selection
+(`blupi.png` vs `element.png`) is also read directly from `BlupiSearchIcon()`: only
+`Clear1`/`Clear2`/`Clear3`/`Glu`/`Electro` (the last only while its icon is `< 266`) use
+`element.png`; everything else uses `blupi.png`. Icon `-1` in a frame list is a real, confirmed
+"invisible frame" sentinel (same convention as the `Temp` tile, `02-tiles.md`) — rendered as a
+transparent 60×60 frame, not skipped. **3 of the 87 actions (`Set`=12, `Recedeq`=70, `Advanceq`=71)
+have no `table_blupi` record at all** — mobile-eggbert's own doc comment says stage-1 "action
+remapping" rewrites the base action into a mode-specific variant before the table lookup runs, so
+these likely resolve to another action's animation at runtime; this pass did not trace that
+remapping logic, so they're listed as "no record found" rather than a guessed mapping.
 
-| State | Frames | Duration/frame | Loop length | GIF |
-|---|---|---|---|---|
-| March (walk) | 6 | 125 ms | 0.75 s | ![March anim](images/blupi-anim-march.gif) |
-| Jump | 3 | 125 ms | 0.375 s | ![Jump anim](images/blupi-anim-jump.gif) |
-| Air (falling) | 5 | 125 ms | 0.625 s | ![Air anim](images/blupi-anim-air.gif) |
-| SwimIdle | 10 | 125 ms | 1.25 s | ![SwimIdle anim](images/blupi-anim-swimidle.gif) |
-| SwimMove | 14 | 125 ms | 1.75 s | ![SwimMove anim](images/blupi-anim-swimmove.gif) |
+Independent cross-check: this pass's parse of `table_blupi` reproduces `GEBlupiController.cpp`'s
+existing `March`/`Jump`/`Air`/`SwimIdle`/`SwimMove` frame arrays byte-for-byte — confirms both the
+parser and galaxy-eggbert's original 5-action port are correct as far as they go; the gap was
+purely that 82 other real actions were never in scope for that port in the first place.
+
+### Core ground movement
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Stop` | 1 | Standing still (ACTION_STOP). | 330 | blupi.png | ![Stop](images/blupi-action-01-stop.gif) |
+| `March` | 2 | Walking (ACTION_MARCH). | 6 | blupi.png | ![March](images/blupi-action-02-march.gif) |
+| `Turn` | 3 | Turning around (ACTION_TURN). | 6 | blupi.png | ![Turn](images/blupi-action-03-turn.gif) |
+| `Jump` | 4 | Jumping (ACTION_JUMP). | 3 | blupi.png | ![Jump](images/blupi-action-04-jump.gif) |
+| `Air` | 5 | Airborne / falling (ACTION_AIR). | 5 | blupi.png | ![Air](images/blupi-action-05-air.gif) |
+| `Down` | 6 | Moving down (ACTION_DOWN). | 3 | blupi.png | ![Down](images/blupi-action-06-down.gif) |
+| `Up` | 7 | Moving up (ACTION_UP). | 1 | blupi.png | ![Up](images/blupi-action-07-up.gif) |
+| `Vertigo` | 8 | Hanging on a ledge in fear (ACTION_VERTIGO). | 8 | blupi.png | ![Vertigo](images/blupi-action-08-vertigo.gif) |
+| `Recede` | 9 | Moving backward (ACTION_RECEDE). | 6 | blupi.png | ![Recede](images/blupi-action-09-recede.gif) |
+| `Advance` | 10 | Moving forward (ACTION_ADVANCE). | 6 | blupi.png | ![Advance](images/blupi-action-10-advance.gif) |
+
+### Table/level-editing & progression
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Clear1` | 11 | Clearing/erasing animation variant 1 (ACTION_CLEAR1). | 70 | element.png | ![Clear1](images/blupi-action-11-clear1.gif) |
+| `Set` | 12 | Placing/setting an object (ACTION_SET). | *no `table_blupi` record found* | — | — |
+| `Win` | 13 | Level-win celebration (ACTION_WIN). | 6 | blupi.png | ![Win](images/blupi-action-13-win.gif) |
+| `Push` | 14 | Pushing a crate (ACTION_PUSH). | 6 | blupi.png | ![Push](images/blupi-action-14-push.gif) |
+
+### Helicopter mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopHelico` | 15 | Hovering in helicopter mode (ACTION_STOPHELICO). | 1 | blupi.png | ![StopHelico](images/blupi-action-15-stophelico.gif) |
+| `MarchHelico` | 16 | Flying forward in helicopter mode (ACTION_MARCHHELICO). | 8 | blupi.png | ![MarchHelico](images/blupi-action-16-marchhelico.gif) |
+| `TurnHelico` | 17 | Turning in helicopter mode (ACTION_TURNHELICO). | 10 | blupi.png | ![TurnHelico](images/blupi-action-17-turnhelico.gif) |
+
+### Swimming (Nage) mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopNage` | 18 | Treading water (ACTION_STOPNAGE). | 10 | blupi.png | ![StopNage](images/blupi-action-18-stopnage.gif) |
+| `MarchNage` | 19 | Swimming forward (ACTION_MARCHNAGE). | 14 | blupi.png | ![MarchNage](images/blupi-action-19-marchnage.gif) |
+| `TurnNage` | 20 | Turning while swimming (ACTION_TURNNAGE). | 10 | blupi.png | ![TurnNage](images/blupi-action-20-turnnage.gif) |
+
+### Surfboard mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopSurf` | 21 | Surfboard idle (ACTION_STOPSURF). | 12 | blupi.png | ![StopSurf](images/blupi-action-21-stopsurf.gif) |
+| `MarchSurf` | 22 | Surfing forward (ACTION_MARCHSURF). | 12 | blupi.png | ![MarchSurf](images/blupi-action-22-marchsurf.gif) |
+| `TurnSurf` | 23 | Turning on surfboard (ACTION_TURNSURF). | 10 | blupi.png | ![TurnSurf](images/blupi-action-23-turnsurf.gif) |
+| `Drown` | 24 | Drowning in deep water (ACTION_DROWN). | 90 | blupi.png | ![Drown](images/blupi-action-24-drown.gif) |
+
+### Jeep mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopJeep` | 25 | Jeep idle (ACTION_STOPJEEP). | 8 | blupi.png | ![StopJeep](images/blupi-action-25-stopjeep.gif) |
+| `MarchJeep` | 26 | Driving jeep (ACTION_MARCHJEEP). | 8 | blupi.png | ![MarchJeep](images/blupi-action-26-marchjeep.gif) |
+| `TurnJeep` | 27 | Turning jeep (ACTION_TURNJEEP). | 7 | blupi.png | ![TurnJeep](images/blupi-action-27-turnjeep.gif) |
+
+### Pop-star / celebration
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopPop` | 28 | Pop-star idle (ACTION_STOPPOP). | 6 | blupi.png | ![StopPop](images/blupi-action-28-stoppop.gif) |
+| `Pop` | 29 | Pop-star dancing/moving (ACTION_POP). | 6 | blupi.png | ![Pop](images/blupi-action-29-pop.gif) |
+| `Bye` | 30 | Farewell/exit animation (ACTION_BYE). | 12 | blupi.png | ![Bye](images/blupi-action-30-bye.gif) |
+
+### Hanging/suspended mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopSuspend` | 31 | Hanging idle (ACTION_STOPSUSPEND). | 328 | blupi.png | ![StopSuspend](images/blupi-action-31-stopsuspend.gif) |
+| `MarchSuspend` | 32 | Moving while hanging (ACTION_MARCHSUSPEND). | 12 | blupi.png | ![MarchSuspend](images/blupi-action-32-marchsuspend.gif) |
+| `TurnSuspend` | 33 | Turning while hanging (ACTION_TURNSUSPEND). | 10 | blupi.png | ![TurnSuspend](images/blupi-action-33-turnsuspend.gif) |
+| `JumpSuspend` | 34 | Jumping from a hanging position (ACTION_JUMPSUSPEND). | 10 | blupi.png | ![JumpSuspend](images/blupi-action-34-jumpsuspend.gif) |
+| `Hide` | 35 | Hiding (ACTION_HIDE). | 9 | blupi.png | ![Hide](images/blupi-action-35-hide.gif) |
+
+### Hurt-jump / skateboard mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `JumpAie` | 36 | Hurt-jump (ACTION_JUMPAIE). | 32 | blupi.png | ![JumpAie](images/blupi-action-36-jumpaie.gif) |
+| `StopSkate` | 37 | Skateboard idle (ACTION_STOPSKATE). | 140 | blupi.png | ![StopSkate](images/blupi-action-37-stopskate.gif) |
+| `MarchSkate` | 38 | Skating forward (ACTION_MARCHSKATE). | 96 | blupi.png | ![MarchSkate](images/blupi-action-38-marchskate.gif) |
+| `TurnSkate` | 39 | Turning on skateboard (ACTION_TURNSKATE). | 14 | blupi.png | ![TurnSkate](images/blupi-action-39-turnskate.gif) |
+| `JumpSkate` | 40 | Jumping on skateboard (ACTION_JUMPSKATE). | 3 | blupi.png | ![JumpSkate](images/blupi-action-40-jumpskate.gif) |
+| `AirSkate` | 41 | Airborne on skateboard (ACTION_AIRSKATE). | 8 | blupi.png | ![AirSkate](images/blupi-action-41-airskate.gif) |
+| `TakeSkate` | 42 | Picking up skateboard (ACTION_TAKESKATE). | 20 | blupi.png | ![TakeSkate](images/blupi-action-42-takeskate.gif) |
+| `DeposeSkate` | 43 | Putting down skateboard (ACTION_DEPOSESKATE). | 20 | blupi.png | ![DeposeSkate](images/blupi-action-43-deposeskate.gif) |
+
+### Relief ("Ouf") animations, part 1
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Ouf1a` | 44 | Relief animation variant 1a (ACTION_OUF1a). | 29 | blupi.png | ![Ouf1a](images/blupi-action-44-ouf1a.gif) |
+| `Ouf1b` | 45 | Relief animation variant 1b (ACTION_OUF1b). | 29 | blupi.png | ![Ouf1b](images/blupi-action-45-ouf1b.gif) |
+| `Ouf2` | 46 | Relief animation variant 2 (ACTION_OUF2). | 32 | blupi.png | ![Ouf2](images/blupi-action-46-ouf2.gif) |
+| `Ouf3` | 47 | Relief animation variant 3 (ACTION_OUF3). | 34 | blupi.png | ![Ouf3](images/blupi-action-47-ouf3.gif) |
+| `Ouf4` | 48 | Relief animation variant 4 (ACTION_OUF4). | 40 | blupi.png | ![Ouf4](images/blupi-action-48-ouf4.gif) |
+
+### Pickup & tank mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Sucette` | 49 | Collecting a lollipop power-up (ACTION_SUCETTE). | 32 | blupi.png | ![Sucette](images/blupi-action-49-sucette.gif) |
+| `StopTank` | 50 | Tank idle (ACTION_STOPTANK). | 64 | blupi.png | ![StopTank](images/blupi-action-50-stoptank.gif) |
+| `MarchTank` | 51 | Driving tank (ACTION_MARCHTANK). | 8 | blupi.png | ![MarchTank](images/blupi-action-51-marchtank.gif) |
+| `TurnTank` | 52 | Turning tank (ACTION_TURNTANK). | 12 | blupi.png | ![TurnTank](images/blupi-action-52-turntank.gif) |
+| `FireTank` | 53 | Tank firing (ACTION_FIRETANK). | 6 | blupi.png | ![FireTank](images/blupi-action-53-firetank.gif) |
+
+### Hazard contact
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Glu` | 54 | Stuck in glue/trap (ACTION_GLU). | 25 | element.png | ![Glu](images/blupi-action-54-glu.gif) |
+| `Drink` | 55 | Drinking a power-up (ACTION_DRINK). | 4 | blupi.png | ![Drink](images/blupi-action-55-drink.gif) |
+| `Charge` | 56 | Being charged at by an enemy (ACTION_CHARGE). | 64 | blupi.png | ![Charge](images/blupi-action-56-charge.gif) |
+| `Electro` | 57 | Electrocuted (ACTION_ELECTRO). | 90 | mixed(icon<266=element.png,else=blupi.png) | ![Electro](images/blupi-action-57-electro.gif) |
+| `HelicoGlu` | 58 | Helicopter stuck in glue (ACTION_HELICOGLU). | 14 | blupi.png | ![HelicoGlu](images/blupi-action-58-helicoglu.gif) |
+
+### Air/landing micro-states
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `TurnAir` | 59 | Turning while airborne (ACTION_TURNAIR). | 6 | blupi.png | ![TurnAir](images/blupi-action-59-turnair.gif) |
+| `StopMarch` | 60 | Decelerating from walk to stop (ACTION_STOPMARCH). | 3 | blupi.png | ![StopMarch](images/blupi-action-60-stopmarch.gif) |
+| `StopJump` | 61 | Jump landing (ACTION_STOPJUMP). | 5 | blupi.png | ![StopJump](images/blupi-action-61-stopjump.gif) |
+| `StopJumph` | 62 | High-jump landing (ACTION_STOPJUMPh). | 2 | blupi.png | ![StopJumph](images/blupi-action-62-stopjumph.gif) |
+
+### Mockery (enemy taunts Blupi)
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Mockery` | 63 | Enemy mocking Blupi (ACTION_MOCKERY). | 92 | blupi.png | ![Mockery](images/blupi-action-63-mockery.gif) |
+| `Mockeryi` | 64 | Enemy mocking Blupi, inverted (ACTION_MOCKERYi). | 104 | blupi.png | ![Mockeryi](images/blupi-action-64-mockeryi.gif) |
+| `Mockeryp` | 83 | Enemy mocking, alternate pose (ACTION_MOCKERYp). | 60 | blupi.png | ![Mockeryp](images/blupi-action-83-mockeryp.gif) |
+
+### Relief animation, part 2 & balloon
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Ouf5` | 65 | Relief animation variant 5 (ACTION_OUF5). | 44 | blupi.png | ![Ouf5](images/blupi-action-65-ouf5.gif) |
+| `Balloon` | 66 | Balloon mode (ACTION_BALLOON). | 16 | blupi.png | ![Balloon](images/blupi-action-66-balloon.gif) |
+
+### Flattened ("Over") mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopOver` | 67 | Flat/squashed idle (ACTION_STOPOVER). | 1 | blupi.png | ![StopOver](images/blupi-action-67-stopover.gif) |
+| `MarchOver` | 68 | Moving while flat (ACTION_MARCHOVER). | 12 | blupi.png | ![MarchOver](images/blupi-action-68-marchover.gif) |
+| `TurnOver` | 69 | Turning while flat (ACTION_TURNOVER). | 7 | blupi.png | ![TurnOver](images/blupi-action-69-turnover.gif) |
+
+### Quick recede/advance
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Recedeq` | 70 | Quick backward movement (ACTION_RECEDEq). | *no `table_blupi` record found* | — | — |
+| `Advanceq` | 71 | Quick forward movement (ACTION_ADVANCEq). | *no `table_blupi` record found* | — | — |
+
+### Crushed ("Ecrase") mode
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `StopEcrase` | 72 | Crushed idle (ACTION_STOPECRASE). | 1 | blupi.png | ![StopEcrase](images/blupi-action-72-stopecrase.gif) |
+| `MarchEcrase` | 73 | Moving while crushed (ACTION_MARCHECRASE). | 24 | blupi.png | ![MarchEcrase](images/blupi-action-73-marchecrase.gif) |
+
+### Teleporting
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Teleporte` | 74 | Teleporting (ACTION_TELEPORTE). | 128 (67 transparent) | blupi.png | ![Teleporte](images/blupi-action-74-teleporte.gif) |
+
+### Clearing/erasing animation variants
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Clear2` | 75 | Clearing animation variant 2 (ACTION_CLEAR2). | 1 (1 transparent) | element.png | ![Clear2](images/blupi-action-75-clear2.gif) |
+| `Clear3` | 76 | Clearing animation variant 3 (ACTION_CLEAR3). | 70 (40 transparent) | element.png | ![Clear3](images/blupi-action-76-clear3.gif) |
+| `Clear4` | 77 | Clearing animation variant 4 (ACTION_CLEAR4). | 110 | blupi.png | ![Clear4](images/blupi-action-77-clear4.gif) |
+| `Clear5` | 78 | Clearing animation variant 5 (ACTION_CLEAR5). | 1 (1 transparent) | blupi.png | ![Clear5](images/blupi-action-78-clear5.gif) |
+| `Clear6` | 79 | Clearing animation variant 6 (ACTION_CLEAR6). | 1 (1 transparent) | blupi.png | ![Clear6](images/blupi-action-79-clear6.gif) |
+| `Clear7` | 80 | Clearing animation variant 7 (ACTION_CLEAR7). | 1 (1 transparent) | blupi.png | ![Clear7](images/blupi-action-80-clear7.gif) |
+| `Clear8` | 81 | Clearing animation variant 8 (ACTION_CLEAR8). | 1 (1 transparent) | blupi.png | ![Clear8](images/blupi-action-81-clear8.gif) |
+
+### Switch & refusal
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `Switch` | 82 | Activating a switch (ACTION_SWITCH). | 10 | blupi.png | ![Switch](images/blupi-action-82-switch.gif) |
+| `Non` | 84 | Blupi refusing / shaking head (ACTION_NON). | 18 | blupi.png | ![Non](images/blupi-action-84-non.gif) |
+
+### Skateboard braking
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `SlowdownSkate` | 85 | Skateboard braking (ACTION_SLOWDOWNSKATE). | 1 | blupi.png | ![SlowdownSkate](images/blupi-action-85-slowdownskate.gif) |
+
+### Dynamite handling
+
+| Action | ID | Description | Frames | Sheet | GIF |
+|---|---|---|---|---|---|
+| `TakeDynamite` | 86 | Picking up dynamite (ACTION_TAKEDYNAMITE). | 18 | blupi.png | ![TakeDynamite](images/blupi-action-86-takedynamite.gif) |
+| `PutDynamite` | 87 | Placing dynamite (ACTION_PUTDYNAMITE). | 26 | blupi.png | ![PutDynamite](images/blupi-action-87-putdynamite.gif) |
 
 ## 3. Object/pickup/enemy animations (`element.png` unless noted — see per-row sheet)
 
