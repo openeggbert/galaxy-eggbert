@@ -1,13 +1,19 @@
 # Objects/Elements Catalog (`ObjectType`, 204 IDs)
 
-**Status: COMPLETE for classification** — every ID 0–203 is now placed in exactly one of four
+**Status: COMPLETE for classification and icons.** Every ID 0–203 is placed in exactly one of four
 categories (real behavior + used in shipped levels / real behavior but never placed in a shipped
 level / ambiguous boundary-only reference / vestigial with zero references), verified
-programmatically against real mobile-eggbert source and all 78 world files. Icon crops exist for
-30 of the 70 "real behavior" IDs (the original 18 plus the 12 recently added — see below);
-cropping icons for the remaining 40 "real but unused in shipped levels" IDs is not done (lower
-value: they never appear in a real level, so there's nothing to visually cross-check against).
-Tracked as `DOC-003` in `plan.md`.
+programmatically against real mobile-eggbert source and all 78 world files. **Follow-up
+(2026-07-03): icon crops added for Category B too, per user request — "no icon, lower value" is
+not an acceptable silent scope cut.** Of Category B's 41 IDs, 37 got a real crop (sourced from a
+direct `Decor.cpp`/`Tables.cpp` case, not guessed); the remaining 4 (`0`, `18`, `22`, `58`) have no
+crop because no icon-assignment logic for them exists anywhere in `Decor.cpp` (`0`/`18`/`58`) or
+because the icon is inherently variable, not fixed (`22` — inherits whichever door tile spawned it;
+see `06-doors.md`) — documented explicitly per-ID in the table below, not silently skipped. Along
+the way, corrected 3 more sprite-channel assumptions inherited from the original (wrong)
+"everything is `element.png`" premise: `14`/`15`/`31`/`35`/`48`/`52` actually use `object-m.png`
+(`PixmapChannel::Object`), and `38`'s first 30 ticks use `blupi1.png` before switching to
+`element.png`. Tracked as `DOC-003` in `plan.md`.
 
 `ObjectType` (`include/GalaxyEggbert/def/ObjectType.hpp`, mirrors mobile-eggbert's own enum
 1:1 in numeric value, confirmed 0–203 with no gaps/duplicates) is already fully declared in
@@ -98,49 +104,49 @@ author ever placed one — they may still be reachable through non-`MoveObject` 
 dynamically by other game logic, like explosion/effect types typically are) rather than being
 level-authored placements.
 
-| ID | Name (from `ObjectType.hpp`) |
-|---|---|
-| 0 | null / inactive slot |
-| 8 | primary explosion (Explosion channel) |
-| 9 | secondary small explosion |
-| 10 | tertiary explosion |
-| 11 | fan-hit shockwave (triggers BigShake) |
-| 14 | water plouf splash |
-| 15 | water bubble rising |
-| 18 | patrol variant |
-| 22 | door opening animation (dynamically spawned when a door opens — see `06-doors.md`) |
-| 23 | fired projectile (from blupih/blupit enemies — dynamically spawned, not level-placed) |
-| 25 | shield (100 ticks invincibility) — has a confirmed icon table (`kShield`/real `table_shield`) but is apparently never a placed `MoveObject`; likely granted as an effect, not an authored pickup |
-| 27 | magic track sparkle (24 frames) |
-| 28 | tank |
-| 29 | bullet ammo pack (+10 bullets) |
-| 31 | charge/cloud power-up (100 ticks) |
-| 34 | goo/glue particle (25-frame loop) |
-| 35 | small plouf splash |
-| 36 | pollution/cloud puff (8 frames) |
-| 37 | clear/dissipate effect (70 frames) |
-| 38 | electric arc (90 frames) |
-| 39 | sparkle trail (spawned on pickup, not level-placed) |
-| 41 | invert-start particle burst |
-| 42 | invert-stop particle burst |
-| 48 | platform lift, leftward carry bonus (same channel-mismatch risk as `47`, not yet checked — deferred) |
-| 52 | bridge construction (157 frames) |
-| 53 | tentacle hazard (45 frames, Explosion channel) |
-| 56 | dynamite fuse (100 frames, triggers blasts 50–69 — dynamically spawned by `55`, not level-placed directly) |
-| 57 | shield trail sparkle (20 frames) |
-| 58 | shield disappear effect |
-| 90 | electric spark (triggers ElectricShake) |
-| 91 | small flash |
-| 92 | long energy arc (128 frames) |
-| 93 | tiny flash (5 frames) |
-| 97 | follow enemy variant 2 (tracks Blupi exactly — the "awake" promotion of `96`, dynamically switched-to, not level-placed as `97` directly) |
-| 98 | water splash variant 1 (10 frames) |
-| 99 | water splash variant 2 (13 frames) |
-| 100 | water splash variant 3 (18 frames) |
-| 200 | Blupi default skin |
-| 201 | Blupi skin variant 1 (damages Blupi on contact) |
-| 202 | Blupi skin variant 2 |
-| 203 | Blupi skin variant 3 |
+| ID | Name (from `ObjectType.hpp`) | Image | Sheet / source |
+|---|---|---|---|
+| 0 | null / inactive slot | *(no icon — this is a slot-recycling marker, never assigned in `MoveObjectStepIcon()`; every other type sets `type = ObjectType0` on expiry, it has no visual of its own)* | — |
+| 8 | primary explosion (Explosion channel, 39 frames) | ![8](images/object-type008-icon000-explo1.png) | `explo.png`, `table_explo1[0]`=0 |
+| 9 | secondary small explosion (20 frames) | ![9](images/object-type009-icon012-explo2.png) | `explo.png`, `table_explo2[0]`=12 |
+| 10 | tertiary explosion (20 frames) | ![10](images/object-type010-icon032-explo3.png) | `explo.png`, `table_explo3[0]`=32 |
+| 11 | fan-hit shockwave (9 frames, triggers BigShake) | ![11](images/object-type011-icon012-explo4.png) | `explo.png`, `table_explo4[0]`=12 |
+| 14 | water plouf splash (7 frames) | ![14](images/object-type014-icon099-plouf.png) | `object-m.png` (**not `element.png`**), `table_plouf[0]`=99 |
+| 15 | water bubble rising (20 frames) | ![15](images/object-type015-icon103-blup.png) | `object-m.png` (**not `element.png`**), `table_blup[0]`=103 |
+| 18 | patrol variant | *(no icon — no `MoveObjectStepIcon()` case found anywhere for `ObjectType18`; only referenced by ID inside a generic "has a sprite" type-list, never given its own animation logic)* | — |
+| 22 | door opening animation (dynamically spawned when a door opens — see `06-doors.md`) | *(no fixed icon — inherits whichever door tile spawned it, sliding that exact icon; see `02-tiles.md`'s Door1/2/3 crops, icons 334/335/336)* | `object-m.png`, variable |
+| 23 | fired projectile (from blupih/blupit enemies — dynamically spawned, not level-placed) | ![23](images/object-type023-icon176-projectile.png) | `element.png`, static icon 176 |
+| 25 | shield (100 ticks invincibility) — confirmed real 16-frame `table_shield`; apparently never a placed `MoveObject`, likely granted as an effect not an authored pickup | ![25](images/object-type025-icon144-shield16.png) | `element.png`, `table_shield[0]`=144 |
+| 27 | magic track sparkle (24 frames) | ![27](images/object-type027-icon152-magictrack.png) | `element.png`, `table_magictrack[0]`=152 |
+| 28 | tank | ![28](images/object-type028-icon167-tank.png) | `element.png`, static icon 167 |
+| 29 | bullet ammo pack (+10 bullets) | ![29](images/object-type029-icon177-bulletpack.png) | `element.png`, static icon 177 |
+| 31 | charge/cloud power-up (6 frames, 100 ticks) | ![31](images/object-type031-icon238-charge.png) | `object-m.png` (**not `element.png`**), `table_charge[0]`=238 |
+| 34 | goo/glue particle (25-frame loop) | ![34](images/object-type034-icon168-glu.png) | `element.png`, `table_glu[0]`=168 |
+| 35 | small plouf splash (3 frames) | ![35](images/object-type035-icon244-tiplouf.png) | `object-m.png` (**not `element.png`**), `table_tiplouf[0]`=244 |
+| 36 | pollution/cloud puff (8 frames) | ![36](images/object-type036-icon179-pollution.png) | `element.png`, `table_pollution[0]`=179 |
+| 37 | clear/dissipate effect (70 frames) | ![37](images/object-type037-icon040-clear.png) | `element.png`, `table_clear[0]`=40 |
+| 38 | electric arc (90 frames) — **two-channel animation**: first 30 ticks draw from `blupi1.png`, ticks 30–89 from `element.png` | ![38](images/object-type038-icon266-electro-blupi1channel.png) | `blupi1.png` (ticks 0–29), then `element.png`; `table_electro[0]`=266 |
+| 39 | sparkle trail (spawned on pickup, not level-placed; `table_tresortrack` is an 11-frame sparkle sequence related to `ObjectType5`'s treasure sparkle in `08-animations.md`, not identical) | ![39](images/object-type039-icon166-tresortrack.png) | `element.png`, `table_tresortrack[0]`=166 |
+| 41 | invert-start particle burst (8 frames) | ![41](images/object-type041-icon179-invertstart.png) | `element.png`, `table_invertstart[0]`=179 |
+| 42 | invert-stop particle burst (8 frames) | ![42](images/object-type042-icon186-invertstop.png) | `element.png`, `table_invertstop[0]`=186 |
+| 48 | platform lift, leftward carry bonus — mirrors `47`'s `table_chenille` with `table_chenillei` (6 frames); channel not independently confirmed in source (no explicit `channel=` assignment found for `48`, inferred from `47`'s identical pattern, corrected the same way) | ![48](images/object-type048-icon316-chenillei-objectchannel.png) | `object-m.png` (inferred), `table_chenillei[0]`=316 |
+| 52 | bridge construction (157 frames) | ![52](images/object-type052-icon365-bridge.png) | `object-m.png` (**not `element.png`**), `table_bridge[0]`=365 |
+| 53 | tentacle hazard (45 frames, Explosion channel) | ![53](images/object-type053-icon086-tentacule.png) | `explo.png`, `table_tentacule[0]`=86 |
+| 56 | dynamite fuse (100 frames, triggers blasts 50–69 — dynamically spawned by `55`, not level-placed directly) | ![56](images/object-type056-icon253-dynamitefuse.png) | `element.png`, `table_dynamitef[0]`=253 |
+| 57 | shield trail sparkle (20 frames) | ![57](images/object-type057-icon274-shieldtrack.png) | `element.png`, `table_shieldtrack[0]`=274 |
+| 58 | shield disappear effect | *(no icon — the only `ObjectType58` logic found is a phase≥20-ticks removal; no icon is ever assigned to it)* | — |
+| 90 | electric spark (12 frames, triggers ElectricShake) | ![90](images/object-type090-icon054-explo5.png) | `explo.png`, `table_explo5[0]`=54 |
+| 91 | small flash (6 frames) | ![91](images/object-type091-icon054-explo6.png) | `explo.png`, `table_explo6[0]`=54 |
+| 92 | long energy arc (128 frames) | ![92](images/object-type092-icon060-explo7.png) | `explo.png`, `table_explo7[0]`=60 |
+| 93 | tiny flash (5 frames) | ![93](images/object-type093-icon007-explo8.png) | `explo.png`, `table_explo8[0]`=7 |
+| 97 | follow enemy variant 2 (5 frames; tracks Blupi exactly — the "awake" promotion of `96`, dynamically switched-to, not level-placed as `97` directly) | ![97](images/object-type097-icon256-follow2.png) | `element.png`, `table_follow2[0]`=256 |
+| 98 | water splash variant 1 (10 frames) | ![98](images/object-type098-icon090-sploutch1.png) | `explo.png`, `table_sploutch1[0]`=90 |
+| 99 | water splash variant 2 (13 frames; first 3 frames are invisible — `-1` in the table, a fall-height delay before the splash appears) | ![99](images/object-type099-icon090-sploutch2.png) | `explo.png`, `table_sploutch2[3]`=90 (first real frame) |
+| 100 | water splash variant 3 (18 frames; first 8 frames are invisible, same delay pattern as `99` but for a greater fall height) | ![100](images/object-type100-icon090-sploutch3.png) | `explo.png`, `table_sploutch3[8]`=90 (first real frame) |
+| 200 | Blupi default skin (6-frame idle cycle, icons 257–262) | ![200](images/object-type200-icon257-blupiskin0.png) | `blupi.png`, icon 257 |
+| 201 | Blupi skin variant 1 (damages Blupi on contact) — same base frames as `200`; the `Blupi1_11`/`_12`/`_13` channels all read the identical `blupi1.png` pixels (confirmed: `Pixmap::GetBitmap()` returns the same bitmap for all three), so any color/tint difference is applied at render time, not visible in a raw crop | ![201](images/object-type201-icon257-blupiskin1.png) | `blupi1.png` (untinted), icon 257 |
+| 202 | Blupi skin variant 2 (same caveat as `201`) | ![202](images/object-type202-icon257-blupiskin2.png) | `blupi1.png` (untinted), icon 257 |
+| 203 | Blupi skin variant 3 (same caveat as `201`) | ![203](images/object-type203-icon257-blupiskin3.png) | `blupi1.png` (untinted), icon 257 |
 
 ## Category C — ambiguous: boundary-only reference (1 ID)
 

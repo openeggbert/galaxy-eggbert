@@ -1318,6 +1318,13 @@ current progress, not just this list.
   reproduced the ImageMagick crop error directly. `33` is one of the *original* 18 "confirmed"
   types, meaning this bug predates today's session. Files: `mobile-eggbert-reference/03-objects.md`,
   `00-overview.md`, 12 new + 1 corrected image crop in `images/`.
+  **Follow-up (same day)**: user pointed out that skipping icon crops for Category B (41 IDs, real
+  behavior but never level-placed) as "lower value" was exactly the kind of silent scope cut they'd
+  already flagged — cropped 37 of 41 (the other 4 — `0`, `18`, `22`, `58` — genuinely have no
+  icon-assignment logic anywhere in `Decor.cpp`, documented as such rather than guessed). Found 6
+  more sprite-channel corrections along the way: `14`/`15`/`31`/`35`/`48`/`52` use `object-m.png`
+  (not `element.png`), and `38` switches from `blupi1.png` (first 30 ticks) to `element.png`.
+  Verified: all 440 image references in `mobile-eggbert-reference/` resolve, zero orphans.
 - [ ] DOC-007 — Fix the `ObjectType` sprite-channel bug found by `DOC-003`: `GEDecorSystem.cpp`
   (Simple3D) hardcodes `element.png` for every object type; types `1`/`12`/`47` need
   `object-m.png`, types `32`/`33` need `blupi1.png` (variant selected by the level file's own
@@ -1326,7 +1333,24 @@ current progress, not just this list.
   `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
   of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
   check or a scripted crop-and-compare against the correct sheet) before considering it done.
-- [x] DOC-004 — Done (2026-07-03). Expanded `08-animations.md` from 31 to 71 animated sequences: 8
+- [ ] DOC-004 — **Reopened same day.** User caught a real completeness gap this "done" entry missed:
+  the Blupi section only covers the **8 `BlupiState` values `GEBlupiController.cpp` (galaxy-eggbert's
+  own Simple3D port) implements** (Stop/March/Jump/Air/Down/Up/SwimIdle/SwimMove — 5 animated + 3
+  static), not mobile-eggbert's real `BlupiAction` enum
+  (`../mobile-eggbert/include/WindowsPhoneSpeedyBlupi/def/BlupiAction.hpp`), which has **87 real
+  states** (`None`=0 + 87 actions 1–87): Stop/March/Turn/Jump/Air/Down/Up/Vertigo/Recede/Advance/
+  Win/Push, plus full Stop/March/Turn triads per mode (Helico, Nage/swim, Surf, Jeep, Tank, Skate,
+  Over/flattened, Ecrase/crushed), Drown, Glu, Electro, Charge, Teleporte, TakeDynamite/PutDynamite,
+  8 `Clear1`–`8` variants, `Ouf1a`–`Ouf5` relief animations, `Mockery`/`Mockeryi`/`Mockeryp`, and
+  more — see the file for the full list. **Root cause**: both the generating fork and the
+  coordinator's own verification treated galaxy-eggbert's already-ported subset as if it were
+  mobile-eggbert's complete state machine, instead of checking the real upstream enum directly —
+  the same class of mistake as `DOC-003`'s sprite-channel bug (trusting a partial port as ground
+  truth) but in the completeness-checking process itself, not just the data. Verification in this
+  pass checked internal consistency (do frame/image counts add up) but not external completeness
+  (does the *scope* match the real source) — a gap in the verification method itself, worth
+  remembering for future `DOC-*` passes.
+  Previous (incomplete) summary, kept for history: expanded `08-animations.md` from 31 to 71 animated sequences: 8
   explosion tables (`table_explo1`–`8`, transcribed from `Tables.cpp`, `-1` frames rendered
   transparent same as `Temp`'s vanish frames), a 10-frame door slide-up composite (positional, not
   a frame-cycle), and 10 GIFs for 9 of the 12 newly-supported `ObjectType`s (`19`/`46`/`55` are
