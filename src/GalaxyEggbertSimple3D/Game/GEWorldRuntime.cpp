@@ -34,6 +34,7 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
 
     world_ = std::make_unique<World>();
     mobileObjects_.clear();
+    bigDecor_.assign(100 * 100, BlockTypes::Air);
     skyRegion_ = 0;
     totalTreasures_ = 0;
 
@@ -56,22 +57,34 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
 
     std::string line;
     int decorRow = 0;
-    bool inDecor = false;
+    int bigDecorRow = 0;
+    // BigDecor: is a distinct section from Decor: (see mobile-eggbert-2d-reference.md
+    // §2.3) — must be checked as its own prefix, not folded into the Decor:
+    // row counter, or its 100 rows are silently skipped once decorRow
+    // already reached 100 from the main grid.
+    enum class Section { None, Decor, BigDecor };
+    Section section = Section::None;
 
     while (std::getline(f, line)) {
-        if (line.find("Decor:") == 0) { inDecor = true; continue; }
+        if (line.rfind("BigDecor:", 0) == 0) { section = Section::BigDecor; continue; }
+        if (line.rfind("Decor:", 0) == 0)    { section = Section::Decor;    continue; }
 
         if (line.rfind("MoveObject:", 0) == 0) {
-            inDecor = false;
+            section = Section::None;
             int type = 0, psx = 0, psy = 0, pex = 0, pey = 0, stepAdv = 1;
             std::sscanf(line.c_str(),
                 "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
                 &type, &stepAdv, &psx, &psy, &pex, &pey);
 
+            // Types 19,21,24,26,32,40,44,46,47,54,55,96 added — real ObjectType
+            // values found in use across all 78 mobile-eggbert level files that
+            // this loader previously silently dropped (mobile-eggbert-2d-reference.md §2.4).
             bool supported = (type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
                               type == 6  || type == 7  || type == 12 || type == 13 || type == 16 ||
-                              type == 17 || type == 20 || type == 25 || type == 30 || type == 33 ||
-                              type == 49 || type == 50 || type == 51);
+                              type == 17 || type == 19 || type == 20 || type == 21 || type == 24 ||
+                              type == 25 || type == 26 || type == 30 || type == 32 || type == 33 ||
+                              type == 40 || type == 44 || type == 46 || type == 47 || type == 49 ||
+                              type == 50 || type == 51 || type == 54 || type == 55 || type == 96);
             if (!supported) continue;
 
             auto pixToV3 = [&](int px, int py) -> Vector3 {
@@ -87,7 +100,12 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
             spec.posEnd   = pixToV3(pex, pey);
             spec.speed    = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
 
-            bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20 || type == 33);
+            // 32 (blupih), 44 (wasp), 54 (large creature) patrol posStart<->posEnd
+            // the same way as the existing patrol enemies (Decor.cpp
+            // MoveObjectStepIcon keys their turn/walk icon off posStart vs
+            // posEnd, i.e. they are patrol-line objects too).
+            bool isPatrol = (type == 2 || type == 3 || type == 4 || type == 20 || type == 32 ||
+                             type == 33 || type == 44 || type == 54);
             if (isPatrol && spec.posStart.x_ == spec.posEnd.x_ &&
                             spec.posStart.z_ == spec.posEnd.z_) {
                 spec.posStart.x_ -= 2.0f;
@@ -95,6 +113,8 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
             }
             if (type == 20) { spec.posStart.y_ = 3.0f; spec.posEnd.y_ = 3.0f; }
             if (type == 16) { spec.posStart.y_ = 4.0f; spec.posEnd.y_ = 1.0f; }
+            // Wasp/bee (44) flies at head height, same convention as the bird (20).
+            if (type == 44) { spec.posStart.y_ = 3.0f; spec.posEnd.y_ = 3.0f; }
 
             if (type == 5) ++totalTreasures_;
 
@@ -102,25 +122,44 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
             continue;
         }
 
-        if (!inDecor || decorRow >= 100) continue;
-
-        std::stringstream ss(line);
-        std::string token;
-        int col = 0;
-        while (col < 100 && std::getline(ss, token, ',')) {
-            if (!token.empty()) {
-                int tileId = std::stoi(token);
-                if (tileId > 0) {
-                    uint16_t bt = BlockTypes::fromMobileIconId(tileId);
-                    world_->setBlock(
-                        static_cast<uint16_t>(col), 0,
-                        static_cast<uint16_t>(decorRow),
-                        Block::make(bt));
+        if (section == Section::Decor && decorRow < 100) {
+            std::stringstream ss(line);
+            std::string token;
+            int col = 0;
+            while (col < 100 && std::getline(ss, token, ',')) {
+                if (!token.empty()) {
+                    int tileId = std::stoi(token);
+                    if (tileId > 0) {
+                        uint16_t bt = BlockTypes::fromMobileIconId(tileId);
+                        world_->setBlock(
+                            static_cast<uint16_t>(col), 0,
+                            static_cast<uint16_t>(decorRow),
+                            Block::make(bt));
+                    }
                 }
+                ++col;
             }
-            ++col;
+            ++decorRow;
+            continue;
         }
-        ++decorRow;
+
+        if (section == Section::BigDecor && bigDecorRow < 100) {
+            std::stringstream ss(line);
+            std::string token;
+            int col = 0;
+            while (col < 100 && std::getline(ss, token, ',')) {
+                if (!token.empty()) {
+                    int tileId = std::stoi(token);
+                    if (tileId > 0) {
+                        bigDecor_[static_cast<std::size_t>(bigDecorRow) * 100 + static_cast<std::size_t>(col)] =
+                            BlockTypes::fromMobileIconId(tileId);
+                    }
+                }
+                ++col;
+            }
+            ++bigDecorRow;
+            continue;
+        }
     }
     return true;
 }
@@ -128,6 +167,7 @@ bool GEWorldRuntime::LoadFromMobileEggbertFile(const std::string& path) {
 void GEWorldRuntime::BuildDemoWorld() {
     world_ = std::make_unique<World>();
     mobileObjects_.clear();
+    bigDecor_.assign(100 * 100, BlockTypes::Air);
     skyRegion_ = 0;
     blupiSpawn_ = Vector3(0.0f, kBlupiHalfH + 0.5f, 0.0f);
 

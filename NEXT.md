@@ -14,8 +14,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   long-term target**. Currently: opens a window, loads a genuinely 3D, hand-authored `.vwr` world
   (`worlds3d/world001.vwr` — real Y variation, not a flat mobile-eggbert layout), and renders real,
   textured terrain across all Y layers (one cube per non-air world cell, using `object-m.png`) with
-  working animated tiles (lava/crusher/saw/spike/water/fan/marine/temp). No Blupi, no
-  objects/pickups, no HUD, no sound, no gameplay yet.
+  working animated tiles (lava/crusher/saw/spike/water/fan/marine/temp), and moves an invisible,
+  collision-only Blupi placeholder around it (arrow keys + Space, grid collision with step-up
+  traversal and gravity — no sprite yet). No object/pickup rendering, no HUD, no sound, no real
+  gameplay yet.
 
 **Important architectural decisions** (recorded in `plan.md`/`easy3d.md`/`CLAUDE.md`):
 
@@ -91,9 +93,9 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   non-air blocks, Y range [0, 13]; round-trip-verified via `World::loadFromFile()`.
 
 ### What does not work yet
-- `GalaxyEggbertCNA`: no Blupi rendering, no object/pickup rendering, no HUD, no sound, no
-  gameplay, no input beyond default window handling. `Easy3D::BillboardBatch`/`DebugDraw` have no
-  vertex builder or renderer adapter at all yet (needed for Blupi/objects).
+- `GalaxyEggbertCNA`: no Blupi *rendering* (it's an invisible collision point — see §3), no
+  object/pickup rendering, no HUD, no sound, no real gameplay. `Easy3D::BillboardBatch`/`DebugDraw`
+  have no vertex builder or renderer adapter at all yet (needed for Blupi's sprite and objects).
 - `GalaxyEggbertSimple3D`: camera shake is a no-op; no per-zone fog; Android/Web builds untested
   since the last engine change.
 
@@ -101,9 +103,25 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Committed and pushed to `origin/develop`: `galaxy-eggbert` commit `a636649`
 ("feat: render real, textured terrain in GalaxyEggbertCNA from world data"), `../easy-3d` commit
-`b4c52c0` ("feat: add CubeMesh vertex builder and CubeMeshRenderer CNA draw adapter"). The
-animated-tile entry directly below this line is **not committed yet** (see §9) — everything after
-it is already committed.
+`b4c52c0` ("feat: add CubeMesh vertex builder and CubeMeshRenderer CNA draw adapter"). Everything
+below this line is **not committed yet** (see §9).
+
+- **Invisible collision-only Blupi placeholder (E3D-MIG-060, new)**: added
+  `GEBlupiController` (`src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`) — arrow keys move,
+  Space jumps, grid-based collision against `Worlds::World` with step-up traversal (climbs up to 1
+  block) and real gravity/landing. Deliberately engine-agnostic (only depends on `Worlds::World`,
+  no CNA types) so it's independently testable: added `tools/VerifyBlupiMovement.cpp` (new CMake
+  tool, no CNA link needed) which scripts input against the real `worlds3d/world001.vwr` and
+  checks spawning grounded, climbing the staircase, being blocked by a wall, and falling under
+  gravity — all passed. This caught a real bug in `tools/GenerateSampleWorld3D.cpp` (the platform
+  floor double-stacked a block on `x=20`, creating an unclimbable 2-block cliff at the top of the
+  staircase) — fixed and regenerated `worlds3d/world001.vwr` (2729 blocks now, was 2749).
+  `GalaxyEggbertCnaGame` now spawns Blupi at world `(0,1,0)` and the camera follows it every frame
+  instead of a fixed terrain-centroid shot. No sprite/visual yet (`E3D-MIG-061..063`).
+- **Chunk-radius streaming re-scheduled (E3D-MIG-057)**: user overrode the earlier "not needed
+  now" call — galaxy-eggbert's real hand-authored 3D worlds are intended to be much denser/more
+  three-dimensional than the current placeholder sample, so this is now marked **scheduled** in
+  `plan.md` (not yet implemented).
 
 - **First hand-authored 3D world, fully wired (E3D-MIG-058, new, not committed)**: added
   `tools/GenerateSampleWorld3D.cpp` (new CMake target `GenerateSampleWorld3D`, engine-agnostic,
@@ -370,22 +388,33 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
-   proof-of-concept (staircase + one room). Now that loading, rendering, and animated tiles all
-   work for real 3D structures, a natural next step is a more level-like design (multiple rooms,
-   hazard tiles placed at various Y, a path a Blupi could actually walk). Not urgent — no user
-   request yet for a specific design.
-2. **Add face-culling/occlusion to `GETerrainRenderer`** if a future hand-authored world gets
-   dense/tall enough for it to matter (see §5). Not needed at the current 2749-block scale.
-3. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+1. **Write a mobile-eggbert 2D-world reference doc (in progress, user-requested 2026-07-03)** —
+   an English markdown catalog of everything a mobile-eggbert 2D world can contain (block/tile
+   types, elements/objects, enemies, backgrounds, doors, etc.) and the mobile-eggbert `.txt` world
+   file format itself, as the factual basis for a deliberate ID/behavior mapping to galaxy-eggbert's
+   richer 3D `.vwr`/`World`/`BlockMetadata` format (e.g. doors as transparent billboards instead of
+   opaque cubes). Explicitly requested *before* further block/object/door rendering work, to avoid
+   guessing. Read-only research against `../mobile-eggbert` — no code changes.
+2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
+   only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
+   Natural co-requisite with face-culling below.
+3. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+   proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
+   genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — see task 1, this
+   should follow the mapping doc, not precede it.
+4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
+   task 2/3); not needed at the current ~2700-block scale.
+5. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder +CNA renderer
+   adapter for `Easy3D::BillboardBatch`, then draw `blupi.png` at `GEBlupiController`'s position.
+6. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-4. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+7. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-5. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
+8. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
    death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert. **Files:**
    `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; may need a new
    `Game::SetCameraPositionOffset()`-style API added to `../simple-3d` (would need discussion,

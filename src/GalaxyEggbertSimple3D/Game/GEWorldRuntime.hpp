@@ -54,6 +54,13 @@ public:
 
     const std::vector<MobileObjSpec>& GetMobileObjects() const { return mobileObjects_; }
 
+    // BigDecor: is a second 100x100 background tile layer in mobile-eggbert
+    // level files (see mobile-eggbert-2d-reference.md §2.3) — parsed and
+    // stored here (same icon-id-to-block-type conversion as the main grid),
+    // but not yet rendered anywhere; how to represent it in 3D is an open
+    // question, not decided by this parser. Row-major, [row*100 + col].
+    const std::vector<uint16_t>& GetBigDecor() const { return bigDecor_; }
+
     void SetWorldNum(int n) { worldNum_ = n; }
     void SetTotalTreasures(int n) { totalTreasures_ = n; }
 
@@ -63,6 +70,7 @@ public:
 private:
     std::unique_ptr<GalaxyEggbert::Worlds::World> world_;
     std::vector<MobileObjSpec> mobileObjects_;
+    std::vector<uint16_t> bigDecor_;
     Simple3D::Vector3 blupiSpawn_{0.0f, 0.86f, 0.0f};
     int   skyRegion_      = 0;
     int   worldNum_       = 1;

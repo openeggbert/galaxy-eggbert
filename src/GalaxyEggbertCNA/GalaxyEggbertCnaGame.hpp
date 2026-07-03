@@ -3,6 +3,7 @@
 #include "Game/GEWorldRuntime.hpp"
 #include "Game/GETileAtlas.hpp"
 #include "Game/GETerrainRenderer.hpp"
+#include "Game/GEBlupiController.hpp"
 
 #include <Easy3D/Camera3D.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
@@ -48,5 +49,10 @@ namespace GalaxyEggbert::CNA
         // mobile-eggbert Pixmap reuse — that class is 2D SpriteBatch-coupled,
         // not usable for this 3D BasicEffect draw path; see easy3d.md §5.2).
         Microsoft::Xna::Framework::Graphics::Texture2D terrainTexture_;
+
+        // Invisible, collision-only movement placeholder (plan.md
+        // E3D-MIG-060) — arrow keys + Space, camera follows it. No sprite
+        // yet (E3D-MIG-061..063).
+        GEBlupiController blupi_;
     };
 }

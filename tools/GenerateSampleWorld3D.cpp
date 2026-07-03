@@ -41,9 +41,13 @@ int main(int argc, char** argv)
         fill(x, x, 0, step, 45, 54, BlockTypes::StoneA);
     }
 
-    // Raised platform floor at y=10, sitting on top of the tallest step
-    // (step 9's surface is y=9 at x=20).
-    fill(5, 20, 10, 10, 40, 59, BlockTypes::Platform);
+    // Raised platform floor at y=10, sitting flush with the tallest step's
+    // own surface (x=20's staircase fill already reaches y=9, surface
+    // y=10) -- starts at x=19, NOT x=20, so it doesn't stack a second
+    // block on top of the staircase's own last step (that produced an
+    // unclimbable 2-block cliff at the x=21->20 transition; caught by
+    // tools/VerifyBlupiMovement.cpp).
+    fill(5, 19, 10, 10, 40, 59, BlockTypes::Platform);
 
     // Room walls, 3 blocks tall (y=11..13), around the platform perimeter,
     // with a 3-wide doorway on the staircase-facing edge (x=20, z=48..51).

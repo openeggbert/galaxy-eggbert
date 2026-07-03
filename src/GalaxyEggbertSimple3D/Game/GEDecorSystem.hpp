@@ -70,6 +70,7 @@ private:
         int                animPhase    = 0;
         bool               active       = true;
         float              pushCooldown = 0.0f; // seconds until next push allowed (type 12)
+        bool               followerAwake = false; // type 96: dormant until Blupi is near
         std::string        name;
     };
 

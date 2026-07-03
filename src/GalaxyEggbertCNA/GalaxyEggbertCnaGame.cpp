@@ -3,6 +3,7 @@
 #include "GalaxyEggbert/BlockTypes.hpp"
 
 #include <Microsoft/Xna/Framework/Color.hpp>
+#include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
 
 #include <cstdint>
@@ -91,16 +92,13 @@ namespace GalaxyEggbert::CNA
         terrainEffect_->setTextureEnabledProperty(true);
         terrainEffect_->setTextureProperty(&terrainTexture_);
 
-        // Frame the camera on the terrain's block centroid (all 3 axes, not
-        // just X/Z) — a reliable look-at target regardless of world shape,
-        // now that worlds can have real Y variation (plan.md E3D-MIG-058).
-        // A high, angled overhead view over the centroid reliably covers a
-        // meaningful chunk of the loaded level.
-        const float centroidX = terrainRenderer_->CentroidX();
-        const float centroidY = terrainRenderer_->CentroidY();
-        const float centroidZ = terrainRenderer_->CentroidZ();
-        camera_.SetTarget(Easy3D::Camera3D::Vector3(centroidX, centroidY, centroidZ));
-        camera_.SetPosition(Easy3D::Camera3D::Vector3(centroidX, centroidY + 40.0f, centroidZ + 40.0f));
+        // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
+        // inside worlds3d/world001.vwr's ground floor). The .vwr format
+        // carries no spawn point itself (see LoadFromVwrFile()), so this is
+        // a fixed known-good spot for this specific sample world. The
+        // camera now follows blupi_ every frame (see Update()) instead of a
+        // fixed terrain-centroid shot.
+        blupi_.SetPosition(0.0f, 1.0f, 0.0f);
 
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
                   << terrainRenderer_->BlockCount() << " blocks ("
@@ -119,6 +117,25 @@ namespace GalaxyEggbert::CNA
         if (terrainRenderer_)
         {
             terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+
+            // Arrow keys move Blupi (invisible, collision-only placeholder —
+            // plan.md E3D-MIG-060), Space jumps; the camera follows behind
+            // and above so movement is visible even with no sprite yet.
+            using Microsoft::Xna::Framework::Input::Keyboard;
+            using Microsoft::Xna::Framework::Input::Keys;
+            const auto keys = Keyboard::GetState();
+            float dx = 0.0f;
+            float dz = 0.0f;
+            if (keys.IsKeyDown(Keys::Left))  dx -= 1.0f;
+            if (keys.IsKeyDown(Keys::Right)) dx += 1.0f;
+            if (keys.IsKeyDown(Keys::Up))    dz -= 1.0f;
+            if (keys.IsKeyDown(Keys::Down))  dz += 1.0f;
+            const bool jumpPressed = keys.IsKeyDown(Keys::Space);
+            blupi_.Step(worldRuntime_.GetWorld(), dx, dz, jumpPressed, dt);
+
+            camera_.SetTarget(Easy3D::Camera3D::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()));
+            camera_.SetPosition(Easy3D::Camera3D::Vector3(
+                blupi_.GetX(), blupi_.GetY() + 8.0f, blupi_.GetZ() + 10.0f));
         }
     }
 

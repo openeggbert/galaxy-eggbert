@@ -155,6 +155,35 @@ if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
 
     message(STATUS "GalaxyEggbertSimple3D target enabled.")
 
+    # Scripted verification for the BigDecor: parsing fix (mobile-eggbert-2d-reference.md
+    # §2.3) — depends on Simple3D for GEWorldRuntime's Vector3 fields, so it
+    # only exists when the Simple3D target is being built.
+    add_executable(VerifyBigDecorParsing
+        tools/VerifyBigDecorParsing.cpp
+        src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp
+        ${GE_SHARED_SOURCES}
+    )
+    target_include_directories(VerifyBigDecorParsing PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertSimple3D
+        ${SIMPLE3D_HOME}/include
+    )
+    target_link_libraries(VerifyBigDecorParsing PRIVATE Simple3D)
+
+    # Scripted verification that the 12 previously-dropped MoveObject types
+    # now spawn (mobile-eggbert-2d-reference.md §2.4).
+    add_executable(VerifyMoveObjectTypes
+        tools/VerifyMoveObjectTypes.cpp
+        src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp
+        ${GE_SHARED_SOURCES}
+    )
+    target_include_directories(VerifyMoveObjectTypes PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertSimple3D
+        ${SIMPLE3D_HOME}/include
+    )
+    target_link_libraries(VerifyMoveObjectTypes PRIVATE Simple3D)
+
 endif() # GALAXY_EGGBERT_BUILD_SIMPLE3D
 
 # =============================================================================
@@ -222,6 +251,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp
+        src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -329,6 +359,20 @@ add_executable(GenerateSampleWorld3D
 
 target_include_directories(GenerateSampleWorld3D PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# GEBlupiController.hpp/.cpp are deliberately engine-agnostic (only depend on
+# GalaxyEggbert::Worlds) despite living under src/GalaxyEggbertCNA/ — this
+# tool links them without needing CNA at all (see plan.md E3D-MIG-060).
+add_executable(VerifyBlupiMovement
+        tools/VerifyBlupiMovement.cpp
+        src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
+        ${GE_SHARED_SOURCES}
+)
+
+target_include_directories(VerifyBlupiMovement PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
 # =============================================================================

@@ -2,8 +2,10 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace GalaxyEggbert::CNA
 {
@@ -42,8 +44,18 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int GetSkyRegion() const { return skyRegion_; }
         [[nodiscard]] int GetAnimPhase() const { return animPhase_; }
 
+        // BigDecor: is a second 100x100 background tile layer in
+        // mobile-eggbert level files (see mobile-eggbert-2d-reference.md
+        // §2.3) — parsed and stored here (same icon-id-to-block-type
+        // conversion as the main grid), but not yet rendered anywhere; how
+        // to represent it in 3D is an open question, not decided by this
+        // parser. Row-major, [row*100 + col]. Empty when loaded from a
+        // `.vwr` file (that format has no BigDecor concept).
+        [[nodiscard]] const std::vector<std::uint16_t>& GetBigDecor() const { return bigDecor_; }
+
     private:
         std::unique_ptr<Worlds::World> world_;
+        std::vector<std::uint16_t> bigDecor_;
         int spawnTileX_ = 0;
         int spawnTileZ_ = 0;
         int skyRegion_ = 0;

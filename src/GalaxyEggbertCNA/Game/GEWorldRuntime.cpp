@@ -54,46 +54,82 @@ namespace GalaxyEggbert::CNA
         spawnTileZ_ = blupiPixelY / kMobileTileSize;
 
         std::string line;
-        bool inDecor = false;
+        // BigDecor: is a distinct section from Decor: (see
+        // mobile-eggbert-2d-reference.md §2.3) — must be checked as its own
+        // prefix, not folded into the Decor: row counter, or its 100 rows
+        // are silently skipped once decorRow already reached 100 from the
+        // main grid.
+        enum class Section { None, Decor, BigDecor };
+        Section section = Section::None;
         int decorRow = 0;
+        int bigDecorRow = 0;
+        bigDecor_.assign(static_cast<std::size_t>(kDecorGridSize) * kDecorGridSize, BlockTypes::Air);
 
         while (std::getline(file, line))
         {
+            if (line.rfind("BigDecor:", 0) == 0)
+            {
+                section = Section::BigDecor;
+                continue;
+            }
             if (line.rfind("Decor:", 0) == 0)
             {
-                inDecor = true;
+                section = Section::Decor;
                 continue;
             }
             if (line.rfind("MoveObject:", 0) == 0)
             {
                 // Object/decor parsing belongs to a later phase (plan.md Phase 7).
-                continue;
-            }
-            if (!inDecor || decorRow >= kDecorGridSize)
-            {
+                section = Section::None;
                 continue;
             }
 
-            std::stringstream row(line);
-            std::string cell;
-            int col = 0;
-            while (col < kDecorGridSize && std::getline(row, cell, ','))
+            if (section == Section::Decor && decorRow < kDecorGridSize)
             {
-                if (!cell.empty())
+                std::stringstream row(line);
+                std::string cell;
+                int col = 0;
+                while (col < kDecorGridSize && std::getline(row, cell, ','))
                 {
-                    const int tileId = std::stoi(cell);
-                    if (tileId > 0)
+                    if (!cell.empty())
                     {
-                        const std::uint16_t blockType = BlockTypes::fromMobileIconId(tileId);
-                        world_->setBlock(
-                            static_cast<std::uint16_t>(col), 0,
-                            static_cast<std::uint16_t>(decorRow),
-                            Worlds::Block::make(blockType));
+                        const int tileId = std::stoi(cell);
+                        if (tileId > 0)
+                        {
+                            const std::uint16_t blockType = BlockTypes::fromMobileIconId(tileId);
+                            world_->setBlock(
+                                static_cast<std::uint16_t>(col), 0,
+                                static_cast<std::uint16_t>(decorRow),
+                                Worlds::Block::make(blockType));
+                        }
                     }
+                    ++col;
                 }
-                ++col;
+                ++decorRow;
+                continue;
             }
-            ++decorRow;
+
+            if (section == Section::BigDecor && bigDecorRow < kDecorGridSize)
+            {
+                std::stringstream row(line);
+                std::string cell;
+                int col = 0;
+                while (col < kDecorGridSize && std::getline(row, cell, ','))
+                {
+                    if (!cell.empty())
+                    {
+                        const int tileId = std::stoi(cell);
+                        if (tileId > 0)
+                        {
+                            bigDecor_[static_cast<std::size_t>(bigDecorRow) * kDecorGridSize +
+                                      static_cast<std::size_t>(col)] = BlockTypes::fromMobileIconId(tileId);
+                        }
+                    }
+                    ++col;
+                }
+                ++bigDecorRow;
+                continue;
+            }
         }
 
         return true;
@@ -113,6 +149,7 @@ namespace GalaxyEggbert::CNA
         spawnTileX_ = 0;
         spawnTileZ_ = 0;
         skyRegion_ = 0;
+        bigDecor_.clear();
         return true;
     }
 

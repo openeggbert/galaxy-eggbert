@@ -296,18 +296,59 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
      `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`, `CMakeLists.txt`,
      `tools/GenerateSampleWorld3D.cpp`, `worlds3d/world001.vwr`.
 - [ ] E3D-MIG-056 — Do not add MeshCraft or any mesh-import path.
-- [ ] E3D-MIG-057 — (Future, not scheduled) Chunk-radius world loading/streaming — load/render only the
-  current + neighboring chunks instead of the whole `World` at once. Decided 2026-07-03: **not
-  needed now.** `World` is a documented "small fixed-size voxel world" (100×100×100 max, 1000
-  chunks); mobile-eggbert's source levels are flat 2D (Y=0), so real worlds have ~100 non-empty
-  chunks and hundreds of blocks (world001 = 594 blocks → 14256 vertices, trivial for any GPU).
-  mobile-eggbert itself loads each level whole, with no chunk-radius concept. Revisit only if a
-  real world grows large/open enough to need it, or a measured perf problem appears — do not
-  implement speculatively (`CLAUDE.md` "no abstractions beyond what the task requires").
+- [ ] E3D-MIG-057 — **Scheduled** (status changed 2026-07-03, user override of the original "not
+  scheduled" call). Chunk-radius world loading/streaming — load/render only the current +
+  neighboring chunks instead of the whole `World` at once. Original 2026-07-03 reasoning for
+  deferring it: `world001`-derived worlds only had ~594–2749 blocks, trivial for any GPU, and
+  mobile-eggbert itself has no chunk-radius concept. **User override, same day:** that reasoning
+  was based on the current placeholder sample world only — galaxy-eggbert's real hand-authored 3D
+  worlds are intended to be much denser and more genuinely three-dimensional than any mobile-eggbert
+  2D level (Blupi moving through real volume, not just a mostly-flat plane with a staircase), so
+  chunk-radius streaming will be needed once real worlds are built, not deferred until a problem
+  appears. Not yet implemented — scheduled means "on the list to actually do," not done. Natural
+  prerequisite/co-requisite: `GETerrainRenderer`'s face-culling/occlusion gap (noted under
+  E3D-MIG-058) — a denser world needs both.
+- [x] E3D-MIG-059 — Done (2026-07-03). Fixed a real bug found while writing
+  `mobile-eggbert-2d-reference.md` §2.3: neither `GEWorldRuntime` (Simple3D nor CNA) recognized the
+  `BigDecor:` section of mobile-eggbert level files — its 100 rows were silently skipped because
+  the row counter had already reached 100 from the main `Decor:` grid. Refactored both
+  `GEWorldRuntime::LoadFromMobileEggbertFile` implementations
+  (`src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.hpp/.cpp`,
+  `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`) to track section state explicitly
+  (`None`/`Decor`/`BigDecor`) instead of one shared row counter, and added a `GetBigDecor()`
+  accessor (flat row-major `vector<uint16_t>`, same icon→block-type conversion as the main grid).
+  Deliberately **parses and stores only** — does not render it anywhere, since how to represent
+  `BigDecor` in 3D is still an open question (`mobile-eggbert-2d-reference.md` §9), not something to
+  invent here. Verified with a new tool, `tools/VerifyBigDecorParsing.cpp` (added to `CMakeLists.txt`
+  inside the `GALAXY_EGGBERT_BUILD_SIMPLE3D` block): confirmed `world013.txt` now parses 14 non-air
+  `BigDecor` cells (previously 0) and `world001.txt` parses 2 (matches the doc's "effectively
+  empty" note); also confirmed no regression in the main grid (`world001.txt` still parses exactly
+  594 non-air blocks, matching the value established earlier this session). `GalaxyEggbertCNA`
+  rebuilt clean; `GalaxyEggbertWorldsTests` still 54/54.
 
 ### Phase 6 — Blupi first version
 
-- [ ] E3D-MIG-060 — Add invisible/collision-only Blupi placeholder for early debug movement, if useful.
+- [x] E3D-MIG-060 — Done (2026-07-03). Added `GalaxyEggbert::CNA::GEBlupiController`
+  (`src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`): invisible, collision-only movement —
+  arrow keys move (world-axis-aligned), Space jumps, grid-based collision against `Worlds::World`
+  with step-up traversal (climbs up to 1 block, matching `CLAUDE.md`'s allowed 3D adaptations) and
+  gravity/landing. Constants (`kMoveSpeed=5.5`, `kJumpSpeed=12`, `kGravity=25`, `kFallLimit=-10`)
+  match Simple3D's already-approved `GEBlupiController` values. Deliberately engine-agnostic (only
+  depends on `GalaxyEggbert::Worlds::World`, no CNA types) so it is independently testable — added
+  `tools/VerifyBlupiMovement.cpp` (new CMake tool target, no CNA link needed either) which scripts
+  input against the real `worlds3d/world001.vwr` and checks: spawns grounded, climbs the staircase
+  via step-up (Y 1→11), is blocked by the room's west wall (doesn't clip through), and falls under
+  real gravity from height and lands. All checks passed. This surfaced and fixed a real bug in
+  `tools/GenerateSampleWorld3D.cpp`: the platform floor fill included x=20, double-stacking a block
+  on top of the staircase's own last step and creating an unclimbable 2-block cliff — narrowed the
+  fill range to x=5..19; regenerated `worlds3d/world001.vwr` (2729 blocks now, was 2749) and
+  re-verified. Wired into `GalaxyEggbertCnaGame`: spawns Blupi at world (0,1,0) (the ground floor);
+  `Update()` polls `Keyboard::GetState()` (arrows + Space) and calls `Step()`; the camera now
+  follows Blupi's live position every frame instead of a fixed terrain-centroid shot. Verified with
+  a real run (no live keypresses in headless CI, so Blupi stays at spawn, but confirms the full
+  pipeline runs with no crash): `terrain visibility check — 25/25` (close-up follow-cam fills the
+  screen with floor, as expected at spawn). No sprite/visual yet (`E3D-MIG-061..063`), no animation
+  state machine (`E3D-MIG-064`).
 - [ ] E3D-MIG-061 — CPU-side vertex builder for `Easy3D::BillboardBatch` items.
 - [ ] E3D-MIG-062 — CNA renderer adapter for billboard-batch vertex data.
 - [ ] E3D-MIG-063 — Render Blupi as a 2D billboard using `blupi.png`/`blupi1.png` frames — no 3D model required.
