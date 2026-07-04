@@ -1572,7 +1572,19 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   per frame went from `1` (broken) to `89`-`100` (real content), coalesced alpha-mean ~241-246/255
   (near-fully-opaque, matching the forced-opaque intent), visually a clean, always-visible water
   surface with no black/blue bleed.
-- [ ] DOC-106 — Regenerate + verify `tile-anim-water2.gif` (animated tile: Water2).
+- [x] DOC-106 — Regenerated + verified `tile-anim-water2.gif` (animated tile: Water2). Frames are
+  the 6 real `kAnimWater2` icons (`GETerrainRenderer.cpp`: `{91,96,97,98,97,96}`), cropped with the
+  corrected pixel math and assembled with the (now translucency-aware, `DOC-105`) `make-gif.sh`.
+  **Initially looked like a regression** — coalesced-frame alpha-mean came back as 0 despite
+  `colors=42-48` — but this was a false alarm in the *test methodology*, not the image: unlike
+  Water1, Water2's source crop has **no fully-transparent region at all** (alpha uniformly
+  100-104/255 across the entire 64x64 cell — a full-bleed underwater fill, not a wave-shaped
+  surface silhouette), so after the `DOC-105` opacity fix every pixel legitimately becomes fully
+  opaque with no transparency left to report; when ImageMagick then writes that as a plain
+  (alpha-free) indexed PNG for the coalesce-test, `%[fx:mean.a]` reports 0 for images with no
+  alpha channel at all, which is where the false "0" came from. Confirmed by direct pixel query on
+  the real output GIF (solid color at both center and corner, as expected for a full-tile fill) and
+  a visual comparison to the previously-committed GIF (same solid light-blue look, no regression).
 - [ ] DOC-107 — Regenerate + verify `tile-anim-temp.gif` (animated tile: Temp).
 - [ ] DOC-108 — Regenerate + verify `tile-anim-marine.gif` (animated tile: Marine).
 - [ ] DOC-109 — Regenerate + verify `tile-anim-fanleft.gif` (animated tile: FanLeft).
