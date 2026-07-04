@@ -1763,7 +1763,11 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   frames (icons 25,29,46,47,46,29 each paired), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
   source crops — no ghosting.
-- [ ] DOC-142 — Regenerate + verify `blupi-action-31-stopsuspend.gif` (`BlupiAction::StopSuspend`=31).
+- [x] DOC-142 — Regenerated + verified `blupi-action-31-stopsuspend.gif` (`BlupiAction::StopSuspend`=31).
+  328 real frames (icons in range 143-164, via `extract-blupi-action.py`), cropped from `blupi.png`
+  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across
+  the full cycle stays in a tight ~84.6-91.6/255 range — no ghosting even across this long
+  sequence.
 - [ ] DOC-143 — Regenerate + verify `blupi-action-32-marchsuspend.gif` (`BlupiAction::MarchSuspend`=32).
 - [ ] DOC-144 — Regenerate + verify `blupi-action-33-turnsuspend.gif` (`BlupiAction::TurnSuspend`=33).
 - [ ] DOC-145 — Regenerate + verify `blupi-action-34-jumpsuspend.gif` (`BlupiAction::JumpSuspend`=34).
