@@ -2238,7 +2238,15 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
 
 ### 16.4 DOC-005 — Complete sound catalog (93 channels), broken into batches
 
-- [ ] DOC-235 — Research and document `SoundChannel` 0-9 (or however mobile-eggbert's own channel numbering starts) — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-235 — Researched and documented `SoundChannel` 0-9 in `07-sounds.md`. Real findings:
+  channel 0 is a reserved "no sound"/silence sentinel (not a real effect, matches the header's own
+  comment); channel 2 is **provably unused** (zero references anywhere in `Decor.cpp`/
+  `Tables.cpp`/`InputPad.cpp`); channels 3/4 are generic footstep/landing and head-bump sounds
+  remapped per-terrain via `Decor::SoundEnviron()` (cross-references channels 78-91, a later
+  batch); channel 3 is also reused as a generic pickup/reward confirmation chime in
+  `Decor::VoyageStep()`. Also corrected `07-sounds.md`'s inaccurate claim that
+  `SoundChannel.hpp` has a "name-only list" — it has no names/comments at all, just the bare
+  numeric enum.
 - [ ] DOC-236 — Research and document `SoundChannel` 10-19 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-237 — Research and document `SoundChannel` 20-29 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-238 — Research and document `SoundChannel` 30-39 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
