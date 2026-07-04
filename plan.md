@@ -2395,7 +2395,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   forward-reference for channel 65 that should have pointed to the now-written section, and a
   "Remaining sound work" phrasing for `DOC-245`/`DOC-246` that read as still-pending even though
   both are done immediately below it.
-- [ ] DOC-266 — Full read-through of `08-animations.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-266 — Full read-through of `08-animations.md`. Verified all 129 GIF references resolve
+  (programmatic check). Found a real gap: despite being the file whose 129 GIFs were directly
+  affected, it had **zero mention anywhere** of the `DOC-100`-`DOC-229` ghosting-bug fix — added a
+  dedicated paragraph documenting the bug, the `make-gif.sh` fix, the translucency fix, and
+  cross-references to the `S3D-2`/`S3D-4` engine bugs the regeneration surfaced. §6/§7's open-items
+  lists were checked and remain accurate (unaffected by the GIF regeneration).
 - [ ] DOC-267 — Full read-through of `09-open-questions.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 
 ---

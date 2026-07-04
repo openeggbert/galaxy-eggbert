@@ -21,6 +21,21 @@ data is taken from galaxy-eggbert's own already-approved, verified-against-sourc
 `GEDecorSystem::GetObjIcon`'s per-type tables), not re-derived here. All GIFs loop (last frame
 connects back to the first).
 
+**All 129 GIFs regenerated 2026-07-04 (`DOC-100`-`DOC-229`)**: the user found by visual inspection
+that every animated GIF in this file was corrupted — each frame accumulated the previous frame's
+opaque pixels instead of clearing (`convert`'s default GIF disposal method is `Undefined`, not
+`Background`). Confirmed via alpha-channel analysis (mean alpha per coalesced frame climbs and
+plateaus instead of tracking the real per-frame silhouette) and fixed in
+`mobile-eggbert-reference/tools/make-gif.sh` (`-dispose Background`). A second bug found along the
+way: genuinely translucent tiles (e.g. `Water1`) could randomly collapse to fully transparent under
+GIF's binary-alpha encoding — fixed in the same script (`-channel A -threshold 1%`, forcing any
+visible pixel fully opaque; translucent content now renders as its real saturated color). Two of
+the regenerated GIFs (`blupi-action-02-march.gif`, `explosion-anim-explo1.gif`) are the exact files
+that originally surfaced the bug report. Regenerating also surfaced two real **engine** bugs (not
+GIF-tooling bugs) — see `plan.md` §13 for `S3D-2` (`BlockTypes::tileUV()`'s leading-margin grid bug,
+found via `tile-anim-lava.gif`'s visible seam) and `S3D-4` (`ObjectType47`/Chenille's wrong sprite
+sheet).
+
 **Correction (2026-07-03, found while completing this pass): the "6 fps" tick rate claimed below
 for object/explosion animations is not confirmed and is likely wrong.** Tile animations
 (`GEWorldRuntime::Update()`) and Blupi's state animations (`GEBlupiController::AdvanceAnim()`) both
