@@ -1533,7 +1533,16 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   (252.88 for icon 374/373, 252.63 for icon 347) tracks the source crops (253.285/253.082) almost
   exactly with no monotonic climb; visually matches the old committed GIF's green-spike look (icon
   mapping confirmed correct), just without any bleed/seam.
-- [ ] DOC-103 — Regenerate + verify `tile-anim-crusher.gif` (animated tile: Crusher).
+- [x] DOC-103 — Regenerated + verified `tile-anim-crusher.gif` (animated tile: Crusher). Frames are
+  the 10 real `kAnimCrusher` icons (`GETerrainRenderer.cpp`: `{317,317,318,319,320,321,322,323,
+  323,323}`), cropped with the corrected `1+col*65,1+row*65` pixel math (`S3D-2`) and assembled
+  with `make-gif.sh`. Stress-tested two more edge cases: icon 319 sits in the last column (col 19,
+  x=1236, right edge at x=1300 — fits within `kSheetW`=1301 with exactly 1px to spare) and icon 320
+  wraps to column 0 of the next row, both landing cleanly with no cropping error. **Verified**:
+  coalesced-frame alpha-mean tracks the source crops closely (108.2→99.2→89.8→78.2→69.7→61.3→52.5,
+  matching the real per-icon values 108.9→98.6→89.3→78.8→70.3→60.7→52.0) — this is a genuine
+  content decrease (piston retracting, more transparent background revealed each frame), distinct
+  in shape from the ghosting bug's spurious monotonic *increase*-then-plateau.
 - [ ] DOC-104 — Regenerate + verify `tile-anim-saw.gif` (animated tile: Saw).
 - [ ] DOC-105 — Regenerate + verify `tile-anim-water1.gif` (animated tile: Water1).
 - [ ] DOC-106 — Regenerate + verify `tile-anim-water2.gif` (animated tile: Water2).
