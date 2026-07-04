@@ -1616,7 +1616,13 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   with the corrected pixel math and assembled with `make-gif.sh`. **Verified**: coalesced-frame
   alpha-mean (141.8/141.8/138.3) tracks the source crops (134.2/134.4/131.0) closely — no
   ghosting.
-- [ ] DOC-112 — Regenerate + verify `tile-anim-fandown.gif` (animated tile: FanDown).
+- [x] DOC-112 — Regenerated + verified `tile-anim-fandown.gif` (animated tile: FanDown, last of
+  the 12 tile animations). Frames are the 3 real icons (`GETerrainRenderer.cpp`:
+  `FanDown = 135 + (phase % 3)` → 135,136,137), cropped with the corrected pixel math and
+  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (145.9/145.9/142.3)
+  tracks the source crops (139.7/139.9/136.6) closely — no ghosting. All 12 tile animations
+  (`DOC-101`-`DOC-112`) are now regenerated and verified; `DOC-113` onward moves to the 87 real
+  Blupi action animations.
 
 Blupi actions (84) — **confirmed ghosting**, all need regeneration.
 
