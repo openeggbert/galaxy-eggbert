@@ -2341,7 +2341,8 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   against a fresh resize.
 - [x] DOC-255 — Thumbnailed + verified `decor024`-`027` (no missing ids in this range).
   Pixel-exact against a fresh resize.
-- [ ] DOC-256 — Thumbnail + verify background images `decor028`-`decor031` (skip any confirmed-missing IDs in that range).
+- [x] DOC-256 — Thumbnailed + verified `decor028`-`031` (no missing ids in this range).
+  Pixel-exact against a fresh resize. This completes all 28 level-background thumbnails.
 - [ ] DOC-257 — Document `blupiyoupie.png`/`gear.png` (title/settings-screen backgrounds) separately from level backgrounds, with their real trigger context.
 
 ### 16.6 Markdown file completeness re-review (one real read-through per file)

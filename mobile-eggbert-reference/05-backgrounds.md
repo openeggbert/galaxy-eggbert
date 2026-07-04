@@ -1,7 +1,8 @@
 # Backgrounds / Sky Regions
 
-**Status: `region=` → filename mapping RESOLVED (`DOC-247`, `DOC-248`); 3 of 38 background images
-shown so far, batch thumbnailing in progress.** Tracked as `DOC-006` in `plan.md`.
+**Status: `region=` → filename mapping RESOLVED (`DOC-247`, `DOC-248`); all 28 level backgrounds
+thumbnailed (`DOC-249`-`DOC-256`); the 10 non-level UI-screen backgrounds still need documenting
+(`DOC-257`).** Tracked as `DOC-006` in `plan.md`.
 
 `../mobile-eggbert/Content/backgrounds/` contains 38 images total: 28 level backgrounds
 (`decor000.png` through `decor031.png`, non-contiguous — ids 005, 014, 017, 023 are missing from
@@ -70,11 +71,17 @@ sprite-sheet crop, so unaffected by the `object-m.png` leading-margin bug):
 ![decor025](images/bg-decor025.png)
 ![decor026](images/bg-decor026.png)
 ![decor027](images/bg-decor027.png)
+![decor028](images/bg-decor028.png)
+![decor029](images/bg-decor029.png)
+![decor030](images/bg-decor030.png)
+![decor031](images/bg-decor031.png)
 
-**`DOC-233`/`DOC-249`-`DOC-255` (2026-07-04):** `decor000`-`decor002` re-verified (`DOC-233`);
-`decor003` (`DOC-249`), `decor004`/`006`/`007` (`DOC-250`, skipping missing id `005`),
-`decor008`-`011` (`DOC-251`), `decor012`/`013`/`015` (`DOC-252`, skipping missing id `014`),
-`decor016`/`018`/`019` (`DOC-253`, skipping missing id `017`), `decor020`-`022` (`DOC-254`,
-skipping missing id `023`), and `decor024`-`027` (`DOC-255`) added. All 24 confirmed pixel-exact
-(`compare -metric AE`=0) against a fresh `convert decorNNN.png -resize 240x180`. `decor015` is a
-genuinely grayscale image (not a bug) — a stone-cave background.
+**`DOC-233`/`DOC-249`-`DOC-256` (2026-07-04):** all 28 level backgrounds now thumbnailed —
+`decor000`-`decor002` re-verified (`DOC-233`); `decor003` (`DOC-249`), `decor004`/`006`/`007`
+(`DOC-250`, skipping missing id `005`), `decor008`-`011` (`DOC-251`), `decor012`/`013`/`015`
+(`DOC-252`, skipping missing id `014`), `decor016`/`018`/`019` (`DOC-253`, skipping missing id
+`017`), `decor020`-`022` (`DOC-254`, skipping missing id `023`), `decor024`-`027` (`DOC-255`), and
+`decor028`-`031` (`DOC-256`) added. All 28 confirmed pixel-exact (`compare -metric AE`=0) against a
+fresh `convert decorNNN.png -resize 240x180`. `decor015` is a genuinely grayscale image (not a
+bug) — a stone-cave background. This completes the level-background half of `DOC-006`; the 10
+non-level UI-screen backgrounds are documented next (`DOC-257`).
