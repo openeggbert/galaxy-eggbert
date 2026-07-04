@@ -2383,7 +2383,9 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   distance, `kFollow1`/`kFollow2` table names) still match `GEDecorSystem.cpp` — unaffected by the
   `S3D-4` Chenille fix, which only touched `ObjectType47`. Tightened one stale-sounding phrase
   referring to `DOC-003` as still in progress (it's complete). No other changes needed.
-- [ ] DOC-263 — Full read-through of `05-backgrounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-263 — Full read-through of `05-backgrounds.md`. Verified all 28 image references
+  resolve. This file was substantially rewritten fresh during `DOC-247`-`DOC-257` this session, so
+  it was already internally consistent — no stale claims found, no changes needed.
 - [ ] DOC-264 — Full read-through of `06-doors.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-265 — Full read-through of `07-sounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-266 — Full read-through of `08-animations.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
