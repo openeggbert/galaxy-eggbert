@@ -15,6 +15,14 @@ the way, corrected 3 more sprite-channel assumptions inherited from the original
 (`PixmapChannel::Object`), and `38`'s first 30 ticks use `blupi1.png` before switching to
 `element.png`. Tracked as `DOC-003` in `plan.md`.
 
+**`DOC-231` (2026-07-04):** re-verified all 67 icon crops' sheet/channel and grid math. The 7 crops
+sourced from `object-m.png` (`14`, `15`, `31`, `35`, `47`, `48`, `52`) had the same leading-margin
+bug as `DOC-230`'s tile crops (missing the 1px margin before the first row/column) and were
+regenerated with the corrected formula from `02-tiles.md`. The other 60 crops (`element.png`/
+`blupi.png`/`blupi1.png`/`explo.png`) are unaffected — those sheets divide evenly into their tile
+grid with no gap or leading margin (`600×1740`/`600×2040`/`1440×1440`, all exact multiples of their
+tile size), confirmed by direct `identify` measurement, not assumed.
+
 `ObjectType` (`include/GalaxyEggbert/def/ObjectType.hpp`, mirrors mobile-eggbert's own enum
 1:1 in numeric value, confirmed 0–203 with no gaps/duplicates) is already fully declared in
 galaxy-eggbert with categorized comments. Summary by category (not re-listing all 204 IDs — see

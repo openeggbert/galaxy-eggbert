@@ -1352,11 +1352,14 @@ current progress, not just this list.
   the range boundaries were imprecise. Regenerated the 128-icon set as exact non-overlapping ranges
   (independently re-cropped, re-measured, re-merged only on consecutive-and-same-category runs);
   verified programmatically: 313 + 128 = 441, zero overlap, zero gaps.
-- [ ] DOC-003 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16).** The 0–203
-  classification itself is unaffected (that's a text/grep result, not an image); the static icon
-  crops (single-frame, not GIF) are also not subject to the ghosting bug, but are being re-verified
-  anyway (`DOC-231`) since 11 sprite-channel bugs have already turned up among them. History below
-  kept as-is.
+- [x] DOC-003 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16), re-closed
+  2026-07-04 (`DOC-231`).** The 0–203 classification itself was unaffected (that's a text/grep
+  result, not an image), but 7 of the 67 icon crops had a real bug: the ones sourced from
+  `object-m.png` (`14`, `15`, `31`, `35`, `47`, `48`, `52`) had the same `S3D-2`/`DOC-230`
+  leading-margin bug. Confirmed pixel-exact against the old formula before regenerating with the
+  corrected one. The other 60 crops (`element.png`/`blupi.png`/`blupi1.png`/`explo.png`) confirmed
+  unaffected — those sheets' dimensions divide evenly into their tile grid (no gap/margin). See
+  `03-objects.md`'s new `DOC-231` note. History below kept as-is.
   Done (2026-07-03). Every `ObjectType` ID 0–203 classified into exactly one of 4
   categories, verified programmatically (script partitioned all 204 IDs, asserted no overlap/gap):
   **A** (29 IDs) — real `Decor.cpp` logic AND placed in ≥1 of the 78 shipped levels; **B** (41 IDs)
@@ -2212,7 +2215,14 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   y=1+row*65`. Spot-checked `tile-full-068.png` (Lava, no more blue seam) and `tile-full-437.png`
   (last file, row/col boundary, complete un-truncated sprite). Updated `02-tiles.md`'s generation
   formula and icon-440/sheet-dimension findings to match. See `DOC-002` above.
-- [ ] DOC-231 — Re-verify all 67 `object-type*.png` static icons' sprite-sheet channel against `Decor.cpp`'s real `channel=`/`BlupiSearchIcon()`-equivalent logic per ID — do not assume the 11 corrections already found are the only ones; check every single one.
+- [x] DOC-231 — Re-verified all 67 `object-type*.png` static icons. Channel/sheet classification
+  (which sheet each ID uses) was already correct from the earlier `DOC-003` pass; the real find was
+  a grid-math bug, not a channel bug: the 7 crops sourced from `object-m.png` (`14`, `15`, `31`,
+  `35`, `47`, `48`, `52`) had the `DOC-230`/`S3D-2` leading-margin bug (confirmed pixel-exact
+  against the old formula) and were regenerated with the corrected `x=1+col*65, y=1+row*65`. The
+  other 60 (`element.png`/`blupi.png`/`blupi1.png`/`explo.png`) confirmed unaffected by direct
+  `identify` measurement (600×1740/600×2040/1440×1440 all divide evenly into their tile size, no
+  gap or leading margin exists on those sheets).
 - [ ] DOC-232 — Re-verify the 4 `blupi-icon*.png` representative frames (§4.2 of `03-objects.md`) are still accurate now that the full `table_blupi` parse exists — pick more meaningful representative frames if the originals (icons 0/1/5/10) don't actually represent real named states well.
 - [ ] DOC-233 — Re-verify the 3 `bg-decor*.png` background thumbnails render correctly and are the correct real files (not off-by-one in the `decorNNN` numbering).
 - [ ] DOC-234 — Re-verify the 3 door crops (`tile-334/335/336-Door*.png`) are pixel-correct against the current (fixed) tile-grid formula.
