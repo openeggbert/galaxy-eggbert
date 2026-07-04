@@ -1736,7 +1736,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   10 real frames (icons 105-109, each paired), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
   source crops — no ghosting.
-- [ ] DOC-135 — Regenerate + verify `blupi-action-24-drown.gif` (`BlupiAction::Drown`=24).
+- [x] DOC-135 — Regenerated + verified `blupi-action-24-drown.gif` (`BlupiAction::Drown`=24). 90
+  real frames (icons in range 76-98, via `extract-blupi-action.py`), cropped from `blupi.png` and
+  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across the
+  full cycle stays in a tight ~77.7-79.3/255 range — no ghosting even across this long sequence.
 - [ ] DOC-136 — Regenerate + verify `blupi-action-25-stopjeep.gif` (`BlupiAction::StopJeep`=25).
 - [ ] DOC-137 — Regenerate + verify `blupi-action-26-marchjeep.gif` (`BlupiAction::MarchJeep`=26).
 - [ ] DOC-138 — Regenerate + verify `blupi-action-27-turnjeep.gif` (`BlupiAction::TurnJeep`=27).
