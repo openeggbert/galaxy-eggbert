@@ -295,10 +295,10 @@ animations (`DOC-101`-`DOC-112`) are now regenerated and verified.** `DOC-113`
 see `plan.md`'s `DOC-113` for the full writeup. `DOC-114` (`blupi-action-02-march.gif` — the exact
 GIF that first surfaced the `DOC-100` ghosting bug report — is confirmed fixed, alpha now
 fluctuates instead of climbing). **Running tally (full per-task detail lives in `plan.md` §16,
-not repeated here): `DOC-100`–`DOC-126` done** (root cause + translucency fix + `tileUV` engine
-bug + all 12 tile animations + 14 Blupi actions, one of which -- action 12/Set -- has no
-table_blupi entry and needs no GIF). 103 of the 129 GIFs (`DOC-127`–`DOC-229`)
-still need regenerating — next is `DOC-127` (`blupi-action-16-marchhelico.gif`).
+not repeated here): `DOC-100`–`DOC-127` done** (root cause + translucency fix + `tileUV` engine
+bug + all 12 tile animations + 15 Blupi actions, one of which -- action 12/Set -- has no
+table_blupi entry and needs no GIF). 102 of the 129 GIFs (`DOC-128`–`DOC-229`)
+still need regenerating — next is `DOC-128` (`blupi-action-17-turnhelico.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -340,7 +340,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 103 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-126` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 103 (`DOC-127`–`DOC-229`) still need regenerating with the fixed tool. |
+| confirmed, documentation only, tool now fixed | 102 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-127` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 102 (`DOC-128`–`DOC-229`) still need regenerating with the fixed tool. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
 ## 6. Architecture notes
@@ -484,14 +484,14 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 ## 8. Next smallest tasks
 
 1. **Work through the ~168-task `mobile-eggbert-reference/` rework list (in progress, reopened
-   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-126` are done: the
+   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-127` are done: the
    GIF-ghosting root-cause fix, a second fix for translucent content vanishing (`DOC-105`), the
    real `BlockTypes::tileUV` gap/pitch engine bug (found via `DOC-101`, see §3 and `plan.md`'s
-   `S3D-2`), all 12 tile animations, and 14 of 84 Blupi actions (also landed a reusable
+   `S3D-2`), all 12 tile animations, and 15 of 84 Blupi actions (also landed a reusable
    tool, `mobile-eggbert-reference/tools/extract-blupi-action.py`, reading mobile-eggbert's
    `table_blupi` live rather than copying it — see `plan.md`'s `DOC-113`). Full per-task detail is
-   in `plan.md` §16, not repeated here. Next: `DOC-127` (`blupi-action-16-marchhelico.gif`), then continue
-   through `DOC-128`–`DOC-267` (102 more GIF regenerations, then static-icon re-verification, then
+   in `plan.md` §16, not repeated here. Next: `DOC-128` (`blupi-action-17-turnhelico.gif`), then continue
+   through `DOC-129`–`DOC-267` (101 more GIF regenerations, then static-icon re-verification, then
    `DOC-005`/`DOC-006` sounds/backgrounds which were never started). Read-only research against
    `../mobile-eggbert` plus local image/GIF tooling work — the `BlockTypes.hpp`/`GETileAtlas.cpp`
    engine fix already landed this session; no further galaxy-eggbert C++ code changes expected for

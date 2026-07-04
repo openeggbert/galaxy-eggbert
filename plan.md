@@ -1704,7 +1704,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   Single real frame (icon 61, `frameCount=1`), cropped from `blupi.png` and assembled with
   `make-gif.sh` (no ghosting possible with a single frame). **Verified**: coalesced alpha-mean
   matches the source crop.
-- [ ] DOC-127 — Regenerate + verify `blupi-action-16-marchhelico.gif` (`BlupiAction::MarchHelico`=16).
+- [x] DOC-127 — Regenerated + verified `blupi-action-16-marchhelico.gif` (`BlupiAction::MarchHelico`=16).
+  8 real frames (icons 61,62,63,62,61,64,65,64), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern matching the
+  source crops — no ghosting.
 - [ ] DOC-128 — Regenerate + verify `blupi-action-17-turnhelico.gif` (`BlupiAction::TurnHelico`=17).
 - [ ] DOC-129 — Regenerate + verify `blupi-action-18-stopnage.gif` (`BlupiAction::StopNage`=18).
 - [ ] DOC-130 — Regenerate + verify `blupi-action-19-marchnage.gif` (`BlupiAction::MarchNage`=19).
