@@ -2016,7 +2016,10 @@ all need regeneration.
   cropped and assembled with `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean
   is now a clean mirrored ping-pong pattern (~127-141/255, frame0≈frame21, frame10≈frame11 at the
   turnaround) — confirms `DOC-100`'s fix resolves this exact originally-reported case.
-- [ ] DOC-201 — Regenerate + verify `object-anim-type06-egg.gif`.
+- [x] DOC-201 — Regenerated + verified `object-anim-type06-egg.gif` (`ObjectType6`). 8 real frames
+  (icons 21-28, from `21 + (p/12)%8`), `element.png`, cropped and assembled with `make-gif.sh` at
+  delay 200 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame alpha-mean is a
+  clean symmetric pattern (66.0→58.1→44.9→58.3→66.0→58.2→45.0→58.0) — no ghosting.
 - [ ] DOC-202 — Regenerate + verify `object-anim-type07-exit.gif`.
 - [ ] DOC-203 — Regenerate + verify `object-anim-type16-spider.gif`.
 - [ ] DOC-204 — Regenerate + verify `object-anim-type17-fish.gif`.
