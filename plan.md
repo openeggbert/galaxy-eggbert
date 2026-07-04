@@ -1843,7 +1843,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   64 real frames (icons in range 237-241, via `extract-blupi-action.py`), cropped from `blupi.png`
   and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in
   a tight range — no ghosting.
-- [ ] DOC-162 — Regenerate + verify `blupi-action-51-marchtank.gif` (`BlupiAction::MarchTank`=51).
+- [x] DOC-162 — Regenerated + verified `blupi-action-51-marchtank.gif` (`BlupiAction::MarchTank`=51).
+  8 real frames (icons 238,237,238,239 each paired), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
+  source crops — no ghosting.
 - [ ] DOC-163 — Regenerate + verify `blupi-action-52-turntank.gif` (`BlupiAction::TurnTank`=52).
 - [ ] DOC-164 — Regenerate + verify `blupi-action-53-firetank.gif` (`BlupiAction::FireTank`=53).
 - [ ] DOC-165 — Regenerate + verify `blupi-action-54-glu.gif` (`BlupiAction::Glu`=54).
