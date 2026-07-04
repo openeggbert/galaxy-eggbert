@@ -1601,7 +1601,11 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
   (63.1→61.1→59.5→58.6→58.3→59.5→58.3→58.6→59.5→61.1→63.1) matching the real per-icon values
   (53.4→52.8→50.9→49.9→50.1→51.9→50.1→49.9→50.9→52.8→53.4) — no ghosting, no bleed.
-- [ ] DOC-109 — Regenerate + verify `tile-anim-fanleft.gif` (animated tile: FanLeft).
+- [x] DOC-109 — Regenerated + verified `tile-anim-fanleft.gif` (animated tile: FanLeft). Frames are
+  the 3 real icons (`GETerrainRenderer.cpp`: `FanLeft = 126 + (phase % 3)` → 126,127,128), cropped
+  with the corrected pixel math and assembled with `make-gif.sh`. **Verified**: coalesced-frame
+  alpha-mean (143.1/143.4/139.7) tracks the source crops (136.4/136.5/133.2) closely — no
+  ghosting.
 - [ ] DOC-110 — Regenerate + verify `tile-anim-fanright.gif` (animated tile: FanRight).
 - [ ] DOC-111 — Regenerate + verify `tile-anim-fanup.gif` (animated tile: FanUp).
 - [ ] DOC-112 — Regenerate + verify `tile-anim-fandown.gif` (animated tile: FanDown).
