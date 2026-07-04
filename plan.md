@@ -2117,7 +2117,10 @@ all need regeneration.
   8 real frames (icons 247-251 mirrored, `kCreature`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
   matching the source crops — no ghosting.
-- [ ] DOC-219 — Regenerate + verify `object-anim-type96-follower-awake.gif`.
+- [x] DOC-219 — Regenerated + verified `object-anim-type96-follower-awake.gif` (`ObjectType96`
+  awake state, `GetFollowerAwakeIcon()`). 5 real frames (icons 256,258,260,262,264, `kFollow2`),
+  `element.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
+  coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
 - [ ] DOC-220 — Regenerate + verify `object-anim-type96-follower-dormant.gif`.
 
 Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need regeneration.
