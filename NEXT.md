@@ -337,19 +337,22 @@ to allow overlapping plays; channels 15-18/28-31 are the two vehicle motor quart
 idle" and buff-pickup sound families; channels 43/45/56/63 form a complete 4-buff "about to expire"
 warning family; and channel 92 is the follower enemy's wake-up sound.
 
-**`DOC-006` mapping resolved (2026-07-04):** `DOC-247` found the `region=` → background mapping
-that was this file's biggest open question — it's a direct, non-indirected formula in
+**`DOC-006` (background catalog) DONE (2026-07-04):** `DOC-247` found the `region=` → background
+mapping that was this file's biggest open question — it's a direct, non-indirected formula in
 `Decor::LoadImages()` (`"decor" + zero-padded region number`), not hidden in UI code as suspected.
 `DOC-248` cross-checked it against all 78 real level files: every region value used has a real
 background file, and the 4 "missing" `decorNNN.png` ids are exactly the ones no level ever
-references. Also found 8 more non-level UI-screen backgrounds beyond the previously-known
-`blupiyoupie`/`gear` (init/lost/pause/setup/speedyblupi/trial/wait/win), all loaded by literal name
-outside the `region=` path.
+references. `DOC-249`-`DOC-256` thumbnailed all 28 real level backgrounds (batches of ~4, each
+pixel-exact against a fresh resize). `DOC-257` documented the 10 non-level UI-screen backgrounds
+(8 more than the previously-known `blupiyoupie`/`gear`) and their two loading mechanisms: 7
+(`wait`/`init`/`pause`/`lost`/`win`/`setup`/`trial`) keyed off `Game1::SetPhase()`'s `Def::Phase`
+switch via the same `BackgroundCache()` levels use; 3 (`speedyblupi`/`blupiyoupie`/`gear`) loaded
+once at startup into dedicated texture slots and drawn as logo/menu-chrome overlays, never through
+`region=`.
 
-**Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.5 onward,
-`DOC-249`-`DOC-267`): thumbnailing the remaining background images in batches (`DOC-249`-`DOC-256`),
-documenting the non-level UI backgrounds (`DOC-257`), and a final markdown read-through pass
-(`DOC-258`-`DOC-267`).
+**Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.6,
+`DOC-258`-`DOC-267`): the final markdown read-through pass — one consistency check per reference
+file now that all image/data rework has landed.
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -545,11 +548,15 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `object-type*` icons, and the 3 door crops had the same pre-`S3D-2`-fix leading-margin bug and
    were regenerated; the Blupi representative frames and background thumbnails were confirmed
    already correct. `DOC-005` (all 93 sound channels, `DOC-235`-`DOC-246`) is now fully done,
-   including a self-correction of a channel-40 mis-attribution found mid-batch. `DOC-247`/`DOC-248`
-   resolved `DOC-006`'s biggest open question (the `region=` → background mapping, found directly
-   in `Decor::LoadImages()`, no indirection). Next: `DOC-249`, thumbnailing the remaining background
-   images in batches, then a final markdown read-through (`DOC-258`-`DOC-267`). Read-only research
-   against `../mobile-eggbert` plus local image/GIF tooling work.
+   including a self-correction of a channel-40 mis-attribution found mid-batch. `DOC-006` (the
+   background catalog) is also now fully done: `DOC-247`/`DOC-248` resolved the `region=` →
+   background mapping (a direct formula in `Decor::LoadImages()`, no indirection, verified against
+   all 78 levels), `DOC-249`-`DOC-256` thumbnailed all 28 level backgrounds, and `DOC-257` documented
+   the 10 non-level UI-screen backgrounds (found 8 more than the 2 previously known) and their two
+   different loading mechanisms (`Def::Phase`-keyed vs. dedicated startup-loaded logo/chrome
+   textures). Next: the final markdown read-through pass (`DOC-258`-`DOC-267`, §16.6) — one
+   consistency pass per reference file now that all the image/data rework has landed. Read-only
+   research against `../mobile-eggbert` plus local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.

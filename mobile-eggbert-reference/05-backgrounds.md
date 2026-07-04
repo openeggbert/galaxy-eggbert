@@ -1,8 +1,8 @@
 # Backgrounds / Sky Regions
 
-**Status: `region=` → filename mapping RESOLVED (`DOC-247`, `DOC-248`); all 28 level backgrounds
-thumbnailed (`DOC-249`-`DOC-256`); the 10 non-level UI-screen backgrounds still need documenting
-(`DOC-257`).** Tracked as `DOC-006` in `plan.md`.
+**Status: COMPLETE.** `region=` → filename mapping resolved (`DOC-247`, `DOC-248`); all 28 level
+backgrounds thumbnailed (`DOC-249`-`DOC-256`); the 10 non-level UI-screen backgrounds documented
+(`DOC-257`). Tracked as `DOC-006` in `plan.md`.
 
 `../mobile-eggbert/Content/backgrounds/` contains 38 images total: 28 level backgrounds
 (`decor000.png` through `decor031.png`, non-contiguous — ids 005, 014, 017, 023 are missing from
@@ -83,5 +83,33 @@ sprite-sheet crop, so unaffected by the `object-m.png` leading-margin bug):
 `017`), `decor020`-`022` (`DOC-254`, skipping missing id `023`), `decor024`-`027` (`DOC-255`), and
 `decor028`-`031` (`DOC-256`) added. All 28 confirmed pixel-exact (`compare -metric AE`=0) against a
 fresh `convert decorNNN.png -resize 240x180`. `decor015` is a genuinely grayscale image (not a
-bug) — a stone-cave background. This completes the level-background half of `DOC-006`; the 10
-non-level UI-screen backgrounds are documented next (`DOC-257`).
+bug) — a stone-cave background. This completes the level-background half of `DOC-006`.
+
+## The 10 non-level UI-screen backgrounds (`DOC-257`)
+
+None of these go through `region=`/`Decor::LoadImages()`. Two different loading mechanisms:
+
+**7 files loaded by literal name via the same `Pixmap::BackgroundCache()` used for levels**, keyed
+off the game's UI `Def::Phase` state machine in `Game1::SetPhase()` (`Game1.cpp` ~line 1025):
+
+| File | Real trigger |
+|---|---|
+| `wait.png` | Boot/loading screen — loaded once in `Game1::LoadContent()`, before any phase is set. |
+| `init.png` | `Def::Phase::Init` — the main menu/title phase. |
+| `pause.png` | `Def::Phase::Pause`, `Resume`, and `Ranking` (all three reuse this one file). |
+| `lost.png` | `Def::Phase::Lost` — level-failed screen. |
+| `win.png` | `Def::Phase::Win` — level-complete screen. |
+| `setup.png` | `Def::Phase::MainSetup` and `PlaySetup` (both reuse this one file). |
+| `trial.png` | `Def::Phase::Trial` — trial/demo-mode nag screen. |
+
+**3 files loaded once at startup into their own dedicated texture slots** (`Pixmap::LoadContent()`,
+not the swappable `bitmapBackground` slot the 7 files above share) — these are logo/menu-chrome
+graphics drawn as UI overlays, not full-screen phase backgrounds:
+
+| File | Real trigger |
+|---|---|
+| `speedyblupi.png` | The "SpeedyBlupi" title logo — drawn by `Game1::DrawBackgroundFade()` during the fade-in/fade-out transition animation between phases. |
+| `blupiyoupie.png` | The "Youpie" (celebration) character graphic — drawn in several places in `Game1::Draw()`/`DrawBackgroundFade()` during win/celebration animation beats (rotating/scaling entrance effects). |
+| `gear.png` | A spinning gear icon — drawn by `Game1::DrawButtonsBackground()` behind the on-screen button chrome (two overlapping copies, counter-rotating). |
+
+This closes `DOC-006` (the full background catalog) entirely.

@@ -2343,7 +2343,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   Pixel-exact against a fresh resize.
 - [x] DOC-256 — Thumbnailed + verified `decor028`-`031` (no missing ids in this range).
   Pixel-exact against a fresh resize. This completes all 28 level-background thumbnails.
-- [ ] DOC-257 — Document `blupiyoupie.png`/`gear.png` (title/settings-screen backgrounds) separately from level backgrounds, with their real trigger context.
+- [x] DOC-257 — Documented all 10 non-level UI-screen backgrounds (not just `blupiyoupie`/`gear` as
+  originally scoped — found 8 more). 7 (`wait`/`init`/`pause`/`lost`/`win`/`setup`/`trial`) are
+  loaded by literal name via the same `BackgroundCache()` levels use, keyed off `Game1::SetPhase()`'s
+  `Def::Phase` switch; 3 (`speedyblupi`/`blupiyoupie`/`gear`) are loaded once at startup into their
+  own dedicated texture slots and drawn as logo/menu-chrome overlays (`DrawBackgroundFade()`,
+  `DrawButtonsBackground()`), not full-screen phase backgrounds. This closes `DOC-006` entirely.
 
 ### 16.6 Markdown file completeness re-review (one real read-through per file)
 
