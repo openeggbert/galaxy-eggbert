@@ -2064,7 +2064,10 @@ all need regeneration.
   real frames (icons 187-194 mirrored, `kInvert`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean stays in a tight range — no
   ghosting.
-- [ ] DOC-213 — Regenerate + verify `object-anim-type44-wasp.gif`.
+- [x] DOC-213 — Regenerated + verified `object-anim-type44-wasp.gif` (`ObjectType44`). 6 real
+  frames (icons 195-198 mirrored, `kGuepeLeft`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
+  source crops — no ghosting.
 - [ ] DOC-214 — Regenerate + verify `object-anim-type47-chenille.gif`.
 - [ ] DOC-215 — Regenerate + verify `object-anim-type49-key1.gif`.
 - [ ] DOC-216 — Regenerate + verify `object-anim-type50-key2.gif`.
