@@ -1550,7 +1550,28 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   19 of 22 — all clean. **Verified**: coalesced-frame alpha-mean (75.8/74.9/74.8/75.4/74.6/75.1)
   tracks the source crops (75.75/74.85/74.55/75.33/74.67/74.79) closely, roughly flat as expected
   for a symmetric rotating shape — no accumulation.
-- [ ] DOC-105 — Regenerate + verify `tile-anim-water1.gif` (animated tile: Water1).
+- [x] DOC-105 — Regenerated + verified `tile-anim-water1.gif` (animated tile: Water1). Found and
+  fixed a **second, independent tooling bug** while doing this task: Water1's source icons (92-95)
+  are genuinely translucent (alpha 0-127, never above ~50%, matching a see-through water surface).
+  GIF only supports binary transparency, so ImageMagick's `convert` must collapse each pixel to
+  fully transparent or fully opaque; for this near-uniform low-alpha content its automatic
+  per-image heuristic collapsed the **entire frame** to a single fully-transparent color
+  (`colors=1`) — confirmed the **already-committed** `tile-anim-water1.gif` had this exact defect
+  too (pre-existing, not introduced this session). A near-identical tile, Water2 (similar ~100/255
+  alpha), did *not* collapse — confirms the heuristic is inconsistent, not a clean/predictable
+  threshold. **User decision (2026-07-04):** since GIF cannot represent partial alpha at all here
+  regardless of approach, show the sprite's real saturated color (fully opaque wherever alpha>0)
+  rather than pre-blending against an arbitrarily-chosen backdrop color (rejected alternative —
+  the blended look would only be "correct" for one specific, made-up background color, not
+  whatever the doc page actually renders against). Landed in `make-gif.sh`: each frame now gets
+  `-channel A -threshold 1% +channel` before assembly. **Verified no regression on already-shipped
+  GIFs**: re-ran `tile-anim-lava.gif`'s frames through the updated script — coalesced alpha-mean
+  shifted by only ~2-3/255 (edge anti-aliasing very slightly harder), visually unchanged; the
+  already-committed lava/spike/crusher/saw GIFs were left as-is (they never exhibited the
+  collapse-to-one-color symptom, so redoing them isn't necessary). **Water1 verified**: `colors`
+  per frame went from `1` (broken) to `89`-`100` (real content), coalesced alpha-mean ~241-246/255
+  (near-fully-opaque, matching the forced-opaque intent), visually a clean, always-visible water
+  surface with no black/blue bleed.
 - [ ] DOC-106 — Regenerate + verify `tile-anim-water2.gif` (animated tile: Water2).
 - [ ] DOC-107 — Regenerate + verify `tile-anim-temp.gif` (animated tile: Temp).
 - [ ] DOC-108 — Regenerate + verify `tile-anim-marine.gif` (animated tile: Marine).

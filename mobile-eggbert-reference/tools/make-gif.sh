@@ -8,6 +8,16 @@
 # (confirmed via coalesce+alpha-mean test) instead of tracking the real source frame data.
 # `-dispose Background` makes each frame clear to a transparent canvas before the next is drawn.
 #
+# Also fixes a second bug found via DOC-105 (tile-anim-water1.gif): GIF only supports binary
+# (all-or-nothing) transparency, so ImageMagick must collapse each pixel to fully transparent or
+# fully opaque. For genuinely translucent source content (alpha uniformly under ~50%, e.g. water
+# tiles), ImageMagick's automatic per-image threshold is inconsistent — it collapsed one real
+# tile (Water1) to a single fully-transparent color while a near-identical one (Water2) survived.
+# `-channel A -threshold 1%` forces any pixel with ANY visibility to fully opaque before GIF
+# encoding, so translucent content always renders as its real (saturated, non-blended) color
+# instead of randomly vanishing. Per user decision (2026-07-04): show the sprite's true color, not
+# a blend against some arbitrarily-chosen backdrop color.
+#
 # Usage: make-gif.sh <delay_ticks_1_100s> <output.gif> <frame1.png> [frame2.png ...]
 set -euo pipefail
 
@@ -20,4 +30,16 @@ delay="$1"
 output="$2"
 shift 2
 
-convert -dispose Background -delay "$delay" -loop 0 "$@" "$output"
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+processed=()
+i=0
+for frame in "$@"; do
+  out="$tmpdir/frame_$(printf '%04d' "$i").png"
+  convert "$frame" -channel A -threshold 1% +channel "$out"
+  processed+=("$out")
+  i=$((i + 1))
+done
+
+convert -dispose Background -delay "$delay" -loop 0 "${processed[@]}" "$output"

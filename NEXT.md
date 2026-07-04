@@ -111,10 +111,22 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 Most recent first. Committed and pushed to `origin/develop`: `galaxy-eggbert` commit `a636649`
 ("feat: render real, textured terrain in GalaxyEggbertCNA from world data"), `../easy-3d` commit
 `b4c52c0` ("feat: add CubeMesh vertex builder and CubeMeshRenderer CNA draw adapter"). Everything
-below this line is **not committed yet** (see §9).
+below this line is committed locally (one commit per `DOC-1xx` task, per user instruction) but
+**not pushed** to `origin/develop` yet (see §9 — pushing needs explicit request each time).
 
-- **Fixed a real tile-atlas UV bug shared by both engine targets (S3D-2 follow-up, new, not
-  committed)**: found while regenerating `mobile-eggbert-reference/tile-anim-lava.gif` (`DOC-101`)
+- **Fixed a second GIF-tooling bug: translucent content vanishing entirely (DOC-105, new,
+  committed locally)**: found while regenerating `tile-anim-water1.gif`. Water1's source icons are
+  genuinely translucent (alpha 0-127, never above ~50%) — GIF can only store binary transparency,
+  and ImageMagick's automatic per-image heuristic collapsed the whole frame to a single, fully
+  transparent color (confirmed the **already-committed** GIF had this exact defect too, pre-existing).
+  A near-identical tile, Water2, did not collapse — the heuristic is inconsistent, not a clean
+  threshold. Per user decision: since GIF can't show partial alpha here either way, show the
+  sprite's real saturated color rather than pre-blending against an arbitrarily-chosen backdrop.
+  Fixed in `make-gif.sh` (`-channel A -threshold 1% +channel` per frame before assembly) — verified
+  no meaningful regression on the already-shipped lava/spike/crusher/saw GIFs (~2-3/255 alpha shift,
+  visually unchanged), so those were left as-is. Full writeup in `plan.md`'s `DOC-105`.
+- **Fixed a real tile-atlas UV bug shared by both engine targets (S3D-2 follow-up, committed
+  locally)**: found while regenerating `mobile-eggbert-reference/tile-anim-lava.gif` (`DOC-101`)
   — the user spotted a thick blue bar and a seam cutting the lava sprite in a screenshot.
   `BlockTypes::tileUV()` (`include/GalaxyEggbert/BlockTypes.hpp`, shared by `GalaxyEggbertSimple3D`
   and `GalaxyEggbertCNA`) assumed a flat, contiguous 64px grid in `object-m.png`; the real sheet
@@ -268,9 +280,10 @@ invocation, so the same mistake can't silently recur across 129 regenerations).
 **`DOC-101` (`tile-anim-lava.gif`) is also done** — regenerated with the fixed tool, and along the
 way turned up + fixed the real `BlockTypes::tileUV` gap/pitch engine bug (see §3's top entry and
 `plan.md`'s `S3D-2`). `DOC-102` (`tile-anim-spike.gif`, high row indices 17-18 of 22), `DOC-103`
-(`tile-anim-crusher.gif`, last-column + row-wrap edge cases), and `DOC-104` (`tile-anim-saw.gif`,
-another row-wrap case) are also done — no bleed/seam in any. 125 of the 129 GIFs (`DOC-105`–
-`DOC-229`) are still not regenerated — next is `DOC-105` (`tile-anim-water1.gif`).
+(`tile-anim-crusher.gif`, last-column + row-wrap edge cases), `DOC-104` (`tile-anim-saw.gif`,
+another row-wrap case), and `DOC-105` (`tile-anim-water1.gif`, which also found + fixed the
+translucent-content-vanishing bug — see this section's top entry) are done. 124 of the 129 GIFs
+(`DOC-106`–`DOC-229`) are still not regenerated — next is `DOC-106` (`tile-anim-water2.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -312,7 +325,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 125 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root-cause tool fix landed (`DOC-100`); `tile-anim-lava.gif`/`tile-anim-spike.gif`/`tile-anim-crusher.gif`/`tile-anim-saw.gif` regenerated (`DOC-101`-`DOC-104`); the other 125 (`DOC-105`–`DOC-229`) still need regenerating with the fixed tool. |
+| confirmed, documentation only, tool now fixed | 124 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root-cause tool fix landed (`DOC-100`), plus a second tool fix for translucent content vanishing (found via `DOC-105`); `tile-anim-lava.gif`/`tile-anim-spike.gif`/`tile-anim-crusher.gif`/`tile-anim-saw.gif`/`tile-anim-water1.gif` regenerated (`DOC-101`-`DOC-105`); the other 124 (`DOC-106`–`DOC-229`) still need regenerating with the fixed tool. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
 ## 6. Architecture notes
@@ -459,10 +472,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100` (root-cause fix for the
    GIF ghosting bug) and `DOC-101` (`tile-anim-lava.gif`, which also surfaced and fixed the real
    `BlockTypes::tileUV` gap/pitch engine bug — see §3, `plan.md`'s `S3D-2`), `DOC-102`
-   (`tile-anim-spike.gif`), `DOC-103` (`tile-anim-crusher.gif`), and `DOC-104` (`tile-anim-saw.gif`)
-   are done. Next: `DOC-105`, regenerate + verify `tile-anim-water1.gif` with the fixed tool and
-   gap-aware crop coordinates, then continue through `DOC-106`–`DOC-267` (124 more GIF
-   regenerations, then static-icon re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds
+   (`tile-anim-spike.gif`), `DOC-103` (`tile-anim-crusher.gif`), `DOC-104` (`tile-anim-saw.gif`),
+   and `DOC-105` (`tile-anim-water1.gif`, which also surfaced and fixed a second tool bug —
+   translucent content vanishing entirely — see §3) are done. Next: `DOC-106`, regenerate + verify
+   `tile-anim-water2.gif` with the fixed tool, then continue through `DOC-107`–`DOC-267` (123 more
+   GIF regenerations, then static-icon re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds
    which were never
    started). Read-only research against `../mobile-eggbert` plus local image/GIF tooling work —
    the `BlockTypes.hpp`/`GETileAtlas.cpp` engine fix already landed this session; no further
@@ -506,8 +520,9 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - No `#ifdef GE_ENGINE_*` anywhere.
 - No new gameplay mechanics not present in mobile-eggbert (no coins, coyote time, combo
   multipliers, star ratings, time bonuses).
-- No committing/pushing without asking first each time — the previous batch was committed and
-  pushed on explicit request (see §3); that is not standing authorization for future batches.
+- Committing after each finished task is now standing user instruction (2026-07-04, see §3) — one
+  commit per `DOC-1xx`/task, not batched. **Pushing** to `origin/develop` is still NOT standing
+  authorization — only push on explicit request each time.
 
 ## 10. Resume prompt
 
