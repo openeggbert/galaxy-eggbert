@@ -2005,7 +2005,10 @@ all need regeneration.
   `make-gif.sh` at delay 100. **Verified**: coalesced-frame alpha-mean tracks the source crops
   closely (numerically identical to `patrolA`'s pattern — same alpha coverage, distinct silhouette
   confirmed visually) — no ghosting.
-- [ ] DOC-199 — Regenerate + verify `object-anim-type04-bulldozer.gif`.
+- [x] DOC-199 — Regenerated + verified `object-anim-type04-bulldozer.gif` (`ObjectType4`). 8 real
+  frames (icons 66,66,67,67,66,66,65,65, `kBulldozer`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean is a clean paired pattern
+  matching the source crops — no ghosting.
 - [ ] DOC-200 — Regenerate + verify `object-anim-type05-treasure.gif`.
 - [ ] DOC-201 — Regenerate + verify `object-anim-type06-egg.gif`.
 - [ ] DOC-202 — Regenerate + verify `object-anim-type07-exit.gif`.
