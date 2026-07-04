@@ -2105,7 +2105,10 @@ all need regeneration.
   frames (icons 209-215 mirrored, `kCle1`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
   matching the source crops — no ghosting.
-- [ ] DOC-216 — Regenerate + verify `object-anim-type50-key2.gif`.
+- [x] DOC-216 — Regenerated + verified `object-anim-type50-key2.gif` (`ObjectType50`). 12 real
+  frames (icons 216-222 mirrored, `kCle2`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean matches the source crops
+  closely — no ghosting.
 - [ ] DOC-217 — Regenerate + verify `object-anim-type51-key3.gif`.
 - [ ] DOC-218 — Regenerate + verify `object-anim-type54-largecreature.gif`.
 - [ ] DOC-219 — Regenerate + verify `object-anim-type96-follower-awake.gif`.
