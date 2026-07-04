@@ -1678,7 +1678,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   8 real frames (icons 0,169,26,170,27,171,28,172), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean tracks the source crops closely
   (e.g. 79.9→80.0, 82.8→76.3) — no ghosting.
-- [ ] DOC-121 — Regenerate + verify `blupi-action-09-recede.gif` (`BlupiAction::Recede`=9).
+- [x] DOC-121 — Regenerated + verified `blupi-action-09-recede.gif` (`BlupiAction::Recede`=9). 6
+  real frames (icons 5-10 — same icon set as `March`, direction is a separate flip flag, not a
+  different icon set), cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**:
+  coalesced-frame alpha-mean tracks the source crops closely — no ghosting.
 - [ ] DOC-122 — Regenerate + verify `blupi-action-10-advance.gif` (`BlupiAction::Advance`=10).
 - [ ] DOC-123 — Regenerate + verify `blupi-action-11-clear1.gif` (`BlupiAction::Clear1`=11).
 - [ ] DOC-124 — Regenerate + verify `blupi-action-13-win.gif` (`BlupiAction::Win`=13).
