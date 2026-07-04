@@ -2386,7 +2386,9 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
 - [x] DOC-263 — Full read-through of `05-backgrounds.md`. Verified all 28 image references
   resolve. This file was substantially rewritten fresh during `DOC-247`-`DOC-257` this session, so
   it was already internally consistent — no stale claims found, no changes needed.
-- [ ] DOC-264 — Full read-through of `06-doors.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-264 — Full read-through of `06-doors.md`. Verified all 3 image references resolve
+  (post-`DOC-234` regeneration). Content is internally consistent — the `SoundChannel33` door
+  reference matches `DOC-236`'s independent sound-catalog finding exactly. No stale claims found.
 - [ ] DOC-265 — Full read-through of `07-sounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-266 — Full read-through of `08-animations.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-267 — Full read-through of `09-open-questions.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
