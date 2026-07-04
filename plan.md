@@ -2020,7 +2020,10 @@ all need regeneration.
   (icons 21-28, from `21 + (p/12)%8`), `element.png`, cropped and assembled with `make-gif.sh` at
   delay 200 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame alpha-mean is a
   clean symmetric pattern (66.0→58.1→44.9→58.3→66.0→58.2→45.0→58.0) — no ghosting.
-- [ ] DOC-202 — Regenerate + verify `object-anim-type07-exit.gif`.
+- [x] DOC-202 — Regenerated + verified `object-anim-type07-exit.gif` (`ObjectType7`). 8 real frames
+  (icons 29-36, from `29 + (p/9)%8`), `element.png`, cropped and assembled with `make-gif.sh` at
+  delay 150. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
+  ghosting.
 - [ ] DOC-203 — Regenerate + verify `object-anim-type16-spider.gif`.
 - [ ] DOC-204 — Regenerate + verify `object-anim-type17-fish.gif`.
 - [ ] DOC-205 — Regenerate + verify `object-anim-type20-bird.gif`.
