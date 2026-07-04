@@ -1674,7 +1674,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   frame (icon 44, `frameCount=1`), cropped from `blupi.png` and assembled with `make-gif.sh`
   (single-frame GIF, no ghosting possible by construction). **Verified**: coalesced alpha-mean
   (85.3) matches the source crop (80.0) — visually a clean "looking up" pose.
-- [ ] DOC-120 — Regenerate + verify `blupi-action-08-vertigo.gif` (`BlupiAction::Vertigo`=8).
+- [x] DOC-120 — Regenerated + verified `blupi-action-08-vertigo.gif` (`BlupiAction::Vertigo`=8).
+  8 real frames (icons 0,169,26,170,27,171,28,172), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean tracks the source crops closely
+  (e.g. 79.9→80.0, 82.8→76.3) — no ghosting.
 - [ ] DOC-121 — Regenerate + verify `blupi-action-09-recede.gif` (`BlupiAction::Recede`=9).
 - [ ] DOC-122 — Regenerate + verify `blupi-action-10-advance.gif` (`BlupiAction::Advance`=10).
 - [ ] DOC-123 — Regenerate + verify `blupi-action-11-clear1.gif` (`BlupiAction::Clear1`=11).
