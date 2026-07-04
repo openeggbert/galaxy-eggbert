@@ -1666,7 +1666,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   as other already-cataloged holdLimit actions). Cropped from `blupi.png`, assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (79.3/79.1/80.0/80.0/81.8) tracks the
   source crops (74.1/74.0/74.7/74.7/76.0) closely — no ghosting.
-- [ ] DOC-118 — Regenerate + verify `blupi-action-06-down.gif` (`BlupiAction::Down`=6).
+- [x] DOC-118 — Regenerated + verified `blupi-action-06-down.gif` (`BlupiAction::Down`=6). 3 real
+  frames (icons 33,34,35), cropped from `blupi.png` and assembled with `make-gif.sh`.
+  **Verified**: coalesced-frame alpha-mean (84.3/82.8/80.4) tracks the source crops
+  (79.3/78.5/76.0) closely — no ghosting.
 - [ ] DOC-119 — Regenerate + verify `blupi-action-07-up.gif` (`BlupiAction::Up`=7).
 - [ ] DOC-120 — Regenerate + verify `blupi-action-08-vertigo.gif` (`BlupiAction::Vertigo`=8).
 - [ ] DOC-121 — Regenerate + verify `blupi-action-09-recede.gif` (`BlupiAction::Recede`=9).
