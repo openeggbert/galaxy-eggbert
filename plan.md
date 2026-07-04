@@ -2000,7 +2000,11 @@ all need regeneration.
   **Verified**: coalesced-frame alpha-mean tracks the source crops closely (small ~4-5/255 bump
   from the `DOC-105` opacity-forcing fix, same magnitude as already seen on tile anims) — no
   ghosting.
-- [ ] DOC-198 — Regenerate + verify `object-anim-type03-patrolB.gif`.
+- [x] DOC-198 — Regenerated + verified `object-anim-type03-patrolB.gif` (`ObjectType3`). 9 real
+  frames (icons 48-56, from `48 + (p/6)%9`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 100. **Verified**: coalesced-frame alpha-mean tracks the source crops
+  closely (numerically identical to `patrolA`'s pattern — same alpha coverage, distinct silhouette
+  confirmed visually) — no ghosting.
 - [ ] DOC-199 — Regenerate + verify `object-anim-type04-bulldozer.gif`.
 - [ ] DOC-200 — Regenerate + verify `object-anim-type05-treasure.gif`.
 - [ ] DOC-201 — Regenerate + verify `object-anim-type06-egg.gif`.

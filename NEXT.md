@@ -300,9 +300,9 @@ not repeated here): `DOC-100`–`DOC-196` done** — **all 84 Blupi action GIFs 
 actions; 3 of the 87 real BlupiActions -- 12/Set, 70, 71 -- confirmed to have no
 table_blupi entry, needed no GIF). `DOC-197` (`object-anim-type02-patrolA.gif`, first of
 24 object/pickup/enemy animations — these use `element.png` and frame data from
-`GEDecorSystem::GetObjIcon()`, not `table_blupi`) is also done. 32 of the 129 GIFs
-(`DOC-198`–`DOC-229`) still need regenerating — next is `DOC-198`
-(`object-anim-type03-patrolB.gif`).
+`GEDecorSystem::GetObjIcon()`, not `table_blupi`) and `DOC-198` (`object-anim-type03-patrolB.gif`)
+are also done. 31 of the 129 GIFs (`DOC-199`–`DOC-229`) still need regenerating — next is
+`DOC-199` (`object-anim-type04-bulldozer.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -495,11 +495,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `mobile-eggbert-reference/tools/extract-blupi-action.py`, reading mobile-eggbert's
    `table_blupi` live rather than copying it — see `plan.md`'s `DOC-113`), and `DOC-197`
    (`object-anim-type02-patrolA.gif`, first of 24 object/pickup/enemy animations — these use
-   `element.png` and frame data from `GEDecorSystem::GetObjIcon()`, not `table_blupi`). Full
-   per-task detail is in `plan.md` §16, not repeated here. Next: `DOC-198`
-   (`object-anim-type03-patrolB.gif`), then continue through `DOC-199`–`DOC-267` (31 more GIF
-   regenerations, then static-icon re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds
-   which were never started). Read-only research against
+   `element.png` and frame data from `GEDecorSystem::GetObjIcon()`, not `table_blupi`), and
+   `DOC-198` (`object-anim-type03-patrolB.gif`). Full per-task detail is in `plan.md` §16, not
+   repeated here. Next: `DOC-199` (`object-anim-type04-bulldozer.gif`), then continue through
+   `DOC-200`–`DOC-267` (30 more GIF regenerations, then static-icon re-verification, then
+   `DOC-005`/`DOC-006` sounds/backgrounds which were never started). Read-only research against
    `../mobile-eggbert` plus local image/GIF tooling work — the `BlockTypes.hpp`/`GETileAtlas.cpp`
    engine fix already landed this session; no further galaxy-eggbert C++ code changes expected for
    the remaining GIF-regeneration tasks themselves.
