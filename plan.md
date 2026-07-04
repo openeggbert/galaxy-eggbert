@@ -2140,7 +2140,13 @@ Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need 
   alpha-mean is now a real fluctuating pattern (10.1→147.2→147.2→104.6→25.1) instead of a
   monotonic climb-then-plateau — confirms `DOC-100`'s fix resolves this exact originally-reported
   case too.
-- [ ] DOC-222 — Regenerate + verify `explosion-anim-explo2.gif` (`table_explo2`, real per-icon size from `table_explo_size`).
+- [x] DOC-222 — Regenerated + verified `explosion-anim-explo2.gif` (mobile-eggbert's
+  `table_explo2`, read live from `Tables.cpp` for this doc task — not yet ported into
+  galaxy-eggbert's `GEExploSystem`, not copied into the repo). 20 real frames (icons 12-15, with
+  6 `-1` blank-frame sentinels — "scattered debris" per the source comment), `explo.png`, cropped
+  (144×144, no gap) and assembled with `make-gif.sh` at delay 17. **Verified**: coalesced-frame
+  alpha-mean correctly lands at exactly 0 on the `-1` frames and fluctuates realistically
+  elsewhere — no ghosting.
 - [ ] DOC-223 — Regenerate + verify `explosion-anim-explo3.gif` (`table_explo3`, real per-icon size from `table_explo_size`).
 - [ ] DOC-224 — Regenerate + verify `explosion-anim-explo4.gif` (`table_explo4`, real per-icon size from `table_explo_size`).
 - [ ] DOC-225 — Regenerate + verify `explosion-anim-explo5.gif` (`table_explo5`, real per-icon size from `table_explo_size`).
