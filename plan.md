@@ -1867,7 +1867,14 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   real frames (icons in range 0-4,268-270, via `extract-blupi-action.py`), cropped from `blupi.png`
   and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in
   a tight range — no ghosting.
-- [ ] DOC-168 — Regenerate + verify `blupi-action-57-electro.gif` (`BlupiAction::Electro`=57).
+- [x] DOC-168 — Regenerated + verified `blupi-action-57-electro.gif` (`BlupiAction::Electro`=57).
+  90 real frames, **the only action with a genuine per-frame channel switch**: icons 266/267
+  (frames 0-29, `blupi.png`, the electric-shock jolt) then icons 40-47 (frames 30-89, `element.png`,
+  a black silhouette) — confirmed against the documented rule "Electro only while icon<266 uses
+  `element.png`". Verified visually that both segments crop cleanly from their respective sheets
+  (checked frame 0 = shocked Blupi on `blupi.png`, frame 30 = black silhouette on `element.png`).
+  **Verified**: coalesced-frame alpha-mean shows a real content jump at the channel boundary
+  (~133→~77) — a genuine transition, not ghosting; both segments individually fluctuate normally.
 - [ ] DOC-169 — Regenerate + verify `blupi-action-58-helicoglu.gif` (`BlupiAction::HelicoGlu`=58).
 - [ ] DOC-170 — Regenerate + verify `blupi-action-59-turnair.gif` (`BlupiAction::TurnAir`=59).
 - [ ] DOC-171 — Regenerate + verify `blupi-action-60-stopmarch.gif` (`BlupiAction::StopMarch`=60).
