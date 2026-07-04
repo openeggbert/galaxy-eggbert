@@ -1903,7 +1903,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   real frames (icons 1,288-290 mirrored,1), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight range — no
   ghosting.
-- [ ] DOC-177 — Regenerate + verify `blupi-action-66-balloon.gif` (`BlupiAction::Balloon`=66).
+- [x] DOC-177 — Regenerated + verified `blupi-action-66-balloon.gif` (`BlupiAction::Balloon`=66).
+  16 real frames (icons 291-295 mirrored, each paired), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
+  source crops — no ghosting.
 - [ ] DOC-178 — Regenerate + verify `blupi-action-67-stopover.gif` (`BlupiAction::StopOver`=67).
 - [ ] DOC-179 — Regenerate + verify `blupi-action-68-marchover.gif` (`BlupiAction::MarchOver`=68).
 - [ ] DOC-180 — Regenerate + verify `blupi-action-69-turnover.gif` (`BlupiAction::TurnOver`=69).
