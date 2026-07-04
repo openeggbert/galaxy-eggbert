@@ -2259,7 +2259,13 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   Also confirmed channels 28/29 as the jeep/tank/overcraft motor quartet's start/loop-high half
   (mirrors 15/16 for the helicopter, channels 0-9 batch); channels 20/21 are the Down/Up climb
   end/start sounds (channel 7 already covered Down-start).
-- [ ] DOC-238 — Research and document `SoundChannel` 30-39 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-238 — Researched and documented `SoundChannel` 30-39 in `07-sounds.md`. Real finds:
+  channel 32 (world-exit tile) is distinct from channel 14 (goal-reached win fanfare) — two
+  different "leave the level" events with different sounds; channels 36/37 are genuinely periodic
+  idle-animation ticks (triggered on `m_blupiPhase % N`), not simple one-shot state transitions
+  like most other channels — flagged so a future port doesn't miss them. Also completes the
+  jeep/tank/overcraft motor quartet (30/31, stop/loop-low) and confirms channel 33 as the door
+  sound already known from `06-doors.md`.
 - [ ] DOC-239 — Research and document `SoundChannel` 40-49 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-240 — Research and document `SoundChannel` 50-59 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-241 — Research and document `SoundChannel` 60-69 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.

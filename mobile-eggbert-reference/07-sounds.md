@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-29 of 93 documented (`DOC-235`-`DOC-237`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-39 of 93 documented (`DOC-235`-`DOC-238`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -70,4 +70,23 @@ start/loop-high/stop/loop-low pattern one batch later in the numbering.
 | 29 | `sound029.wav` | Jeep/tank/overcraft engine **loop**, high-pitch variant — the ground-vehicle equivalent of channel 16; defensively `StopSound`'d at the same dozens of state-transition points as the helicopter loop channels. |
 
 Channels 30/31 (the jeep/tank/overcraft loop's stop one-shot and low-pitch variant, completing the
-28-31 quartet) are documented in the next batch (`DOC-238`).
+28-31 quartet) are documented below (`DOC-238`).
+
+## Channels 30-39
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 30 | `sound030.wav` | Jeep/tank engine **stop** one-shot — plays when voluntarily dismounting (action button), completing the 28-31 ground-vehicle quartet (parallel to channel 17 for the helicopter). |
+| 31 | `sound031.wav` | Jeep/tank/overcraft engine **loop**, low-pitch variant — the ground-vehicle equivalent of channel 18; also `StopSound`'d defensively alongside 16/18/29 at every major state-transition point (death, world-exit, level-end, vehicle destruction). |
+| 32 | `sound032.wav` | **World-exit** sound — plays when Blupi reaches a special "world portal" tile (`IsWorld()`) and enters `BlupiAction::Bye`, leaving the level entirely (e.g. returning to the world map). **A real finding**: this is a distinct sound from channel 14's level-complete/Win fanfare — reaching a world-exit tile is not the same event as winning via the goal object. |
+| 33 | `sound033.wav` | **Door opening** sound — already confirmed in `06-doors.md` (`Decor::OpenDoor`, `Decor.cpp` ~11667): plays when a door tile is unlocked and its slide-up animation starts. |
+| 34 | `sound034.wav` | **Grab suspend-bar** sound — plays when Blupi catches hold of a hanging bar/rope (`m_blupiSuspend` becomes true). |
+| 35 | `sound035.wav` | **Release suspend-bar** sound — plays when Blupi jumps off a suspend bar (the `BlupiAction::Jump` case while `m_blupiSuspend` is active); pairs with channel 34. |
+| 36 | `sound036.wav` | Idle ambient tick while hanging on a suspend bar (`BlupiAction::StopSuspend`) — a periodic sway/creak cue on specific animation-phase ticks, not a one-shot event. |
+| 37 | `sound037.wav` | Idle ambient tick while standing still (`BlupiAction::Stop`) — a periodic fidget/blink cue on specific animation-phase ticks, the standing equivalent of channel 36. |
+| 38 | `sound038.wav` | **Crate-push** sound — starts when Blupi begins pushing a crate (`ObjectType12`, `BlupiAction::Push`) and is explicitly stopped when the push ends; effectively a push-in-progress loop/cue. |
+| 39 | `sound039.wav` | **Crate-bump** sound — plays when Blupi collides with a crate while airborne without the jump key held (`BlupiAction::Pop`/`StopPop`), i.e. bumping into a box rather than pushing it; stopped when leaving the Pop/StopPop states. |
+
+Channels 36/37 are genuinely periodic idle-animation cues (triggered on specific `m_blupiPhase %
+N` ticks), not simple state-transition one-shots like most other channels documented so far — worth
+flagging since a naive port might only wire up one-shot triggers and miss these.
