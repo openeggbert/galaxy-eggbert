@@ -1585,7 +1585,16 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   alpha channel at all, which is where the false "0" came from. Confirmed by direct pixel query on
   the real output GIF (solid color at both center and corner, as expected for a full-tile fill) and
   a visual comparison to the previously-committed GIF (same solid light-blue look, no regression).
-- [ ] DOC-107 — Regenerate + verify `tile-anim-temp.gif` (animated tile: Temp).
+- [x] DOC-107 — Regenerated + verified `tile-anim-temp.gif` (animated tile: Temp). Frames are the
+  20 real `kAnimTemp` values (`GETerrainRenderer.cpp`:
+  `{328,328,327,327,326,326,325,325,324,324,325,325,326,326,327,329,328,328,-1,-1}`), 18 real
+  icons cropped with the corrected pixel math + the 2 trailing `-1` sentinels rendered as genuinely
+  blank 64×64 transparent frames (`convert -size 64x64 xc:none`, not cropped from the sheet —
+  matches this file's own pre-existing documented convention that `-1` = a real invisible frame,
+  not a skip), assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean traces a
+  clean pulse (47.8→84.0→112.1→130.1→141.9→…→47.8→**0, 0**) matching the source icons' real alpha
+  progression (46.5→79.6→…→137.4→…→46.5) with the two invisible frames correctly landing at exactly
+  0 — no ghosting, no bleed on any of the 6 distinct sheet positions used.
 - [ ] DOC-108 — Regenerate + verify `tile-anim-marine.gif` (animated tile: Marine).
 - [ ] DOC-109 — Regenerate + verify `tile-anim-fanleft.gif` (animated tile: FanLeft).
 - [ ] DOC-110 — Regenerate + verify `tile-anim-fanright.gif` (animated tile: FanRight).
