@@ -2174,7 +2174,12 @@ Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need 
   **Verified**: coalesced-frame alpha-mean spot-checked lands at exactly 0 on `-1` frames
   (including the trailing fade-out) and stays low/consistent on real frames (~2/255, matching a
   sparse particle-scatter look) — no ghosting.
-- [ ] DOC-228 — Regenerate + verify `explosion-anim-explo8.gif` (`table_explo8`, real per-icon size from `table_explo_size`).
+- [x] DOC-228 — Regenerated + verified `explosion-anim-explo8.gif` (mobile-eggbert's
+  `table_explo8`, read live, not yet ported into galaxy-eggbert; **last of the 8 explosion
+  animations**). 5 real frames (icons 7-11, "dying-ember tail" per the source comment),
+  `explo.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
+  coalesced-frame alpha-mean is a clean fade (104.6→67.2→53.5→44.4→25.1) — no ghosting. **All 8
+  explosion animations (`DOC-221`-`DOC-228`) are now regenerated and verified.**
 
 Door (1) — same DOC-004 pass as explosions, assume affected until verified.
 
