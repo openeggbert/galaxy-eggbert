@@ -43,14 +43,15 @@ indexed by **world number** (1–5, "Grassland/Forest/Ice Caves/Lava Fields/Spac
 marked `TODO(S3D-sky)` as a rough proxy since Simple3D lacks a fog/zone API. No real background
 *image* (parallax `decorNNN.png`) is loaded by either galaxy-eggbert target today.
 
-Sample thumbnails (resized to 240px wide; 35 of 38 backgrounds still need a thumbnail):
+Thumbnails (resized to 240×180, same method as `DOC-233`: plain `convert -resize`, not a
+sprite-sheet crop, so unaffected by the `object-m.png` leading-margin bug):
 
 ![decor000](images/bg-decor000.png)
 ![decor001](images/bg-decor001.png)
 ![decor002](images/bg-decor002.png)
+![decor003](images/bg-decor003.png)
 
-**`DOC-233` (2026-07-04):** re-verified all 3 thumbnails. These are plain resizes of the full
-`decorNNN.png` source (640×480 → 240×180, same aspect ratio), not sprite-sheet crops, so they were
-never subject to the `object-m.png` leading-margin bug. Confirmed pixel-exact (`compare -metric
-AE`=0) against a fresh `convert decorNNN.png -resize 240x180`, and confirmed the `bg-decorNNN` ↔
-`decorNNN` numbering correspondence is direct (no off-by-one). No regeneration needed.
+**`DOC-233`/`DOC-249` (2026-07-04):** `decor000`-`decor002` re-verified (`DOC-233`); `decor003`
+added (`DOC-249`, first batch of the 25 remaining backgrounds — no id in this range is missing).
+All 4 confirmed pixel-exact (`compare -metric AE`=0) against a fresh `convert decorNNN.png -resize
+240x180`.

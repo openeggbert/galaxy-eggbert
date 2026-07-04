@@ -2327,7 +2327,8 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   `region=` value (28 distinct values used) and confirmed every one has a real, existing
   `decorNNN.png` — zero missing backgrounds are ever referenced. The 4 "missing" ids (005, 014,
   017, 023) are exactly the ones no level uses.
-- [ ] DOC-249 — Thumbnail + verify background images `decor000`-`decor003` (skip any confirmed-missing IDs in that range).
+- [x] DOC-249 — Thumbnailed + verified `decor000`-`decor003` (no missing ids in this range;
+  000-002 already existed from `DOC-233`, added `decor003`). Pixel-exact against a fresh resize.
 - [ ] DOC-250 — Thumbnail + verify background images `decor004`-`decor007` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-251 — Thumbnail + verify background images `decor008`-`decor011` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-252 — Thumbnail + verify background images `decor012`-`decor015` (skip any confirmed-missing IDs in that range).
