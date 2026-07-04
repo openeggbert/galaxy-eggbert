@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-39 of 93 documented (`DOC-235`-`DOC-238`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-49 of 93 documented (`DOC-235`-`DOC-239`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -90,3 +90,25 @@ Channels 30/31 (the jeep/tank/overcraft loop's stop one-shot and low-pitch varia
 Channels 36/37 are genuinely periodic idle-animation cues (triggered on specific `m_blupiPhase %
 N` ticks), not simple state-transition one-shots like most other channels documented so far — worth
 flagging since a naive port might only wire up one-shot triggers and miss these.
+
+## Channels 40-49
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 40 | `sound040.wav` | **Charge/Cloud power-up** activation sound (`ObjectType31`) — plays when picked up, along with an `ElectricShake` screen-shake decor action. |
+| 41 | `sound041.wav` | Generic **pop/burst effect** sound — plays when the balloon effect expires, when the "squashed" (`m_blupiEcrase`) effect ends (spawning 4 `ObjectType41` burst sprites in a cross pattern), and at one auto-launch site with the same burst-like framing. |
+| 42 | `sound042.wav` | **Shield power-up** activation sound (`ObjectType25`, and the `RoundShield` cheat) — plays when the shield becomes active. |
+| 43 | `sound043.wav` | Shield **about-to-expire** warning — plays once, exactly when the shield countdown timer (`m_blupiTimeShield`) reaches 10. |
+| 44 | `sound044.wav` | **Power-mode** activation sound — plays when the `Sucette` pickup animation completes and `m_blupiPower` becomes true. |
+| 45 | `sound045.wav` | Power-mode **about-to-expire** warning — plays once when `m_blupiTimeShield` reaches 20 while `m_blupiPower` is active; the power-mode equivalent of channel 43. |
+| 46 | `sound046.wav` | Idle "fidget" reaction sound for the `Ouf1a`/`Ouf1b` idle-boredom animations (`BlupiActionOuf`, triggered probabilistically the longer Blupi stands still). |
+| 47 | `sound047.wav` | Idle fidget sound for the `Ouf5` and `Mockeryp` idle-animation variants. |
+| 48 | `sound048.wav` | Idle fidget sound for the `Ouf3` idle-animation variant. |
+| 49 | `sound049.wav` | Idle fidget sound for the `Ouf4` idle-animation variant. |
+
+Channels 46-49 (plus channel 65, documented in a later batch, for the `Mockery`/`Mockeryi` variants)
+are all part of the same family: Blupi has several distinct "bored idle" reaction animations
+(`Ouf1a`, `Ouf1b`, `Ouf3`, `Ouf4`, `Ouf5`, `Mockery`, `Mockeryi`, `Mockeryp`) chosen based on how
+long (`m_blupiTimeOuf`) Blupi has been standing still, each with its own sound. Channels 43/45
+(shield/power expiry warnings) are a matched pair with the same "about to run out" role for their
+respective power-ups.

@@ -2266,7 +2266,11 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   like most other channels — flagged so a future port doesn't miss them. Also completes the
   jeep/tank/overcraft motor quartet (30/31, stop/loop-low) and confirms channel 33 as the door
   sound already known from `06-doors.md`.
-- [ ] DOC-239 — Research and document `SoundChannel` 40-49 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-239 — Researched and documented `SoundChannel` 40-49 in `07-sounds.md`. Real find:
+  channels 46-49 (plus 65, a later batch) turn out to be a whole family of distinct "bored idle"
+  reaction-animation sounds (`Ouf1a/1b/3/4/5`, `Mockery/i/p`) chosen by how long Blupi has stood
+  still — not independent one-off effects. Also confirmed a matched shield/power "about to expire"
+  warning pair (43/45) and the Charge/Shield/Power power-up activation sounds (40/42/44).
 - [ ] DOC-240 — Research and document `SoundChannel` 50-59 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-241 — Research and document `SoundChannel` 60-69 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-242 — Research and document `SoundChannel` 70-79 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
