@@ -1626,7 +1626,23 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
 
 Blupi actions (84) — **confirmed ghosting**, all need regeneration.
 
-- [ ] DOC-113 — Regenerate + verify `blupi-action-01-stop.gif` (`BlupiAction::Stop`=1).
+- [x] DOC-113 — Regenerated + verified `blupi-action-01-stop.gif` (`BlupiAction::Stop`=1). First
+  of the 84-Blupi-action batch — landed a new reusable tool,
+  `mobile-eggbert-reference/tools/extract-blupi-action.py`, which reads
+  `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp` **live** at run time and parses
+  `table_blupi`'s record format (`{actionId, frameCount, holdLimit, icons...}`, confirmed directly
+  from `Decor::BlupiSearchIcon()`'s loop, `Decor.cpp` ~line 2393) — it does not copy/transcribe the
+  table into galaxy-eggbert, same "read live, don't copy" pattern as `make-gif.sh` reading sprite
+  sheets (per `CLAUDE.md`'s mobile-eggbert reuse rules). Action 1 has **330 real frames**
+  (frameCount=330, holdLimit=0 — matches the already-committed GIF's frame count and 08-animations.md's
+  documented table exactly, confirming both the parser and the pre-existing doc entry are correct),
+  mostly icon 0 (Blupi's neutral standing pose on `blupi.png`, 60×60 cells, no gap — confirmed via
+  mobile-eggbert's own `Pixmap::GetSrcRectangle`, `PixmapChannel::Blupi`: `srcGap=0`, so no
+  gap-math needed here unlike `object-m.png`) interspersed with blink/idle-gesture icons (23, 133,
+  135-138). Cropped all 330 frames, assembled with `make-gif.sh` at delay 13 (125 ms, matches the
+  doc's confirmed 8fps Blupi tick). **Verified**: coalesced-frame alpha-mean spot-checked across
+  the full cycle (frames 0,1,5,50,100,150,200,250,300,329) stays in a tight, non-monotonic
+  ~79-86/255 range — no ghosting even across this much longer sequence.
 - [ ] DOC-114 — Regenerate + verify `blupi-action-02-march.gif` (`BlupiAction::March`=2).
 - [ ] DOC-115 — Regenerate + verify `blupi-action-03-turn.gif` (`BlupiAction::Turn`=3).
 - [ ] DOC-116 — Regenerate + verify `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4).
