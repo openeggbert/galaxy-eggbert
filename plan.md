@@ -1943,7 +1943,11 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   real frames (icons 40/41 for 30 frames, **uses `element.png`**, then 40 trailing `-1` blank
   frames), cropped and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean
   transitions from real content (~77.3/255) to exactly 0 at frame 30 — no ghosting.
-- [ ] DOC-186 — Regenerate + verify `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77).
+- [x] DOC-186 — Regenerated + verified `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77). 110
+  real frames (icons in range 324-334, via `extract-blupi-action.py`), **uses `blupi.png`**
+  (Clear4 is not in the `element.png` exception list despite its name — matches the confirmed
+  rule), cropped and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean stays
+  in a real, non-monotonic range — no ghosting.
 - [ ] DOC-187 — Regenerate + verify `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
 - [ ] DOC-188 — Regenerate + verify `blupi-action-79-clear6.gif` (`BlupiAction::Clear6`=79).
 - [ ] DOC-189 — Regenerate + verify `blupi-action-80-clear7.gif` (`BlupiAction::Clear7`=80).
