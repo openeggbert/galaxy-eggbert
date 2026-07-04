@@ -2101,7 +2101,10 @@ all need regeneration.
   `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
   alpha-mean tracks the source crops closely (~91.9-92.9/255 vs ~82.6-83.4/255 source, the usual
   small `DOC-105` opacity-forcing bump) — no ghosting.
-- [ ] DOC-215 — Regenerate + verify `object-anim-type49-key1.gif`.
+- [x] DOC-215 — Regenerated + verified `object-anim-type49-key1.gif` (`ObjectType49`). 12 real
+  frames (icons 209-215 mirrored, `kCle1`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
+  matching the source crops — no ghosting.
 - [ ] DOC-216 — Regenerate + verify `object-anim-type50-key2.gif`.
 - [ ] DOC-217 — Regenerate + verify `object-anim-type51-key3.gif`.
 - [ ] DOC-218 — Regenerate + verify `object-anim-type54-largecreature.gif`.
