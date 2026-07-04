@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-49 of 93 documented (`DOC-235`-`DOC-239`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-59 of 93 documented (`DOC-235`-`DOC-240`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -95,8 +95,8 @@ flagging since a naive port might only wire up one-shot triggers and miss these.
 
 | Channel | `.wav` | Real trigger (from `Decor.cpp`) |
 |---|---|---|
-| 40 | `sound040.wav` | **Charge/Cloud power-up** activation sound (`ObjectType31`) — plays when picked up, along with an `ElectricShake` screen-shake decor action. |
-| 41 | `sound041.wav` | Generic **pop/burst effect** sound — plays when the balloon effect expires, when the "squashed" (`m_blupiEcrase`) effect ends (spawning 4 `ObjectType41` burst sprites in a cross pattern), and at one auto-launch site with the same burst-like framing. |
+| 40 | `sound040.wav` | **Wasp/bee sting** effect sound (`ObjectType44` contact) — inflates Blupi into a temporary "puffed up" debuff (`m_blupiBalloon = true`, ~100-tick timer, `ElectricShake` decor action) that pops on its own via channel 41. **Correction (found while researching this batch, `DOC-240`): earlier documentation of this channel as the `ObjectType31` Charge/Cloud pickup was wrong — that's channel 58 (this batch). Also a real finding in its own right: `m_blupiBalloon`, despite its name, is unrelated to the `ObjectType46` "balloon" vehicle pickup** (which sets `m_blupiOver`, not `m_blupiBalloon`, and plays no sound at all) **— a genuine naming collision in the original source.** |
+| 41 | `sound041.wav` | Generic **pop/burst effect** sound — plays when the wasp-sting balloon debuff (channel 40) expires (`ObjectType91` spawn), when the "squashed" (`m_blupiEcrase`) effect ends (spawning 4 `ObjectType41` burst sprites in a cross pattern), and at one auto-launch site with the same burst-like framing. |
 | 42 | `sound042.wav` | **Shield power-up** activation sound (`ObjectType25`, and the `RoundShield` cheat) — plays when the shield becomes active. |
 | 43 | `sound043.wav` | Shield **about-to-expire** warning — plays once, exactly when the shield countdown timer (`m_blupiTimeShield`) reaches 10. |
 | 44 | `sound044.wav` | **Power-mode** activation sound — plays when the `Sucette` pickup animation completes and `m_blupiPower` becomes true. |
@@ -112,3 +112,24 @@ are all part of the same family: Blupi has several distinct "bored idle" reactio
 long (`m_blupiTimeOuf`) Blupi has been standing still, each with its own sound. Channels 43/45
 (shield/power expiry warnings) are a matched pair with the same "about to run out" role for their
 respective power-ups.
+
+## Channels 50-59
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 50 | `sound050.wav` | **Suction-cup power-up** (`ObjectType26`, "Sucette") pickup **start** sound — plays when the action button is pressed on the pickup, before the `Sucette` animation completes into the actual `Power` buff (channel 44). |
+| 51 | `sound051.wav` | **Glue-trap death** sound — plays when Blupi dies from stepping in glue/goo (`IsPiege`/`IsGoutte`, `BlupiDead(BlupiAction::Glu)`). Another dedicated death sound distinct from channel 8's generic one (see channel 26/drowning for the first such case). |
+| 52 | `sound052.wav` | **Bullet-fired** sound — plays when a projectile (`ObjectType23`) is successfully spawned, in both the helicopter (`HelicoGlu`) and tank (`FireTank`) firing sequences. |
+| 53 | `sound053.wav` | **Out-of-ammo** sound — plays when the fire button is pressed but `m_blupiBullet == 0`, in both the helicopter and tank firing paths (the "click" when trying to fire with no bullets left). |
+| 54 | `sound054.wav` | **Bullet-pack pickup** fanfare — plays at the end of the `ObjectType29` (bullet pack, icon 177) collectible "voyage" arc, refilling `m_blupiBullet`. |
+| 55 | `sound055.wav` | Charge/Cloud action **complete** sound — plays when the `BlupiAction::Charge` animation finishes and `m_blupiCloud` becomes true (the buff is now actually active); pairs with channel 58 (pickup start). |
+| 56 | `sound056.wav` | Cloud (Charge) **about-to-expire** warning — plays once when `m_blupiTimeShield` reaches 25 while `m_blupiCloud` is active; the third member of the expiry-warning family alongside channels 43 (shield) and 45 (power). |
+| 57 | `sound057.wav` | **Drink power-up** (`ObjectType30`) pickup **start** sound — plays when the action button is pressed on the pickup, before the `Drink` animation completes into the `Hide` buff (channel 62, a later batch — not `Power`; `Drink` and `Sucette` grant two different buffs). |
+| 58 | `sound058.wav` | **Charge/Cloud power-up** (`ObjectType31`) pickup **start** sound — the real trigger for picking up this item (corrects the earlier mis-attribution of this event to channel 40, above). |
+| 59 | `sound059.wav` | Effect sound for an in-flight object destroyed by an electric hazard (`BlupiElectro`, spawns `ObjectType38`). |
+
+Channels 50/44, 57/62, and 58/55 are three matching pickup-start/effect-complete pairs — each of
+the three "drink-like" power-up items (`Sucette`/suction-cup, `Drink`, `Charge`/cloud) plays a sound
+when first grabbed and a second, different sound when its buff actually activates a short animation
+later. This is the same start/complete pattern as the vehicle motor quartets, just for buffs instead
+of engines.

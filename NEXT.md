@@ -320,19 +320,21 @@ frames and 3 background thumbnails were confirmed already pixel-correct (neither
 `object-m.png`'s buggy grid) — no changes needed there. This closes out all of the
 sprite-crop-adjacent static-icon re-verification work.
 
-**`DOC-005` (sound catalog) in progress (2026-07-04):** `DOC-235`-`DOC-239` documented channels 0-49
-in `07-sounds.md` — real findings include channel 0 being a reserved "no sound" sentinel, channel 2
-being provably unused (zero references anywhere), channels 3/4 doing double duty as generic
-footstep/head-bump sounds (remapped per-terrain via `SoundEnviron()`) plus channel 3 also serving as
-a generic pickup-confirmation chime, channel 10 being special-cased to allow overlapping plays,
-channels 15-18/28-31 being the helicopter/ground-vehicle motor quartets, channel 26 (drowning) being
-a genuinely distinct death sound from channel 8's generic one, channel 32 (world-exit) being
-distinct from channel 14 (goal-reached win), channels 36/37 being periodic idle-animation ticks
-rather than one-shot triggers, and channels 46-49 being part of a whole family of "bored idle"
-reaction sounds keyed off how long Blupi has stood still.
+**`DOC-005` (sound catalog) in progress (2026-07-04):** `DOC-235`-`DOC-240` documented channels 0-59
+in `07-sounds.md`. **Self-correction found mid-`DOC-240`**: channel 40 was mis-documented in
+`DOC-239` as the Charge/Cloud pickup sound — it's actually the wasp/bee sting "puffed up" debuff
+sound; the real Charge/Cloud pickup sound is channel 58. Along the way found a genuine
+naming-collision bug-note in the original source: `m_blupiBalloon` (the sting debuff flag) is
+unrelated to the `ObjectType46` "balloon" vehicle pickup, which sets `m_blupiOver` instead and plays
+no sound. Other real findings across this range: channel 0 is a reserved "no sound" sentinel,
+channel 2 is provably unused, channels 3/4 do double duty as footstep/head-bump plus pickup-chime
+sounds, channel 10 is special-cased to allow overlapping plays, channels 15-18/28-31 are the two
+vehicle motor quartets, channels 8/26/51 are three distinct death sounds (generic/drowning/glue),
+channel 32 (world-exit) differs from channel 14 (win), channels 36/37 are periodic idle ticks, and
+channels 46-49 plus 50/44, 57/62, 58/55 are "bored idle" and buff-pickup sound families.
 
 **Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.4 onward,
-`DOC-240`-`DOC-267`): the remaining 5 sound-channel batches (50-92), the sound/`SoundChannel.hpp`
+`DOC-241`-`DOC-267`): the remaining 4 sound-channel batches (60-92), the sound/`SoundChannel.hpp`
 cross-check and `.wav`-file accounting, `DOC-006` (background catalog, never started), and a final
 markdown read-through pass.
 
@@ -529,10 +531,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `DOC-230` through `DOC-234` are also done: all 313 `tile-full-*` crops, 7 of the 67
    `object-type*` icons, and the 3 door crops had the same pre-`S3D-2`-fix leading-margin bug and
    were regenerated; the Blupi representative frames and background thumbnails were confirmed
-   already correct. `DOC-235`-`DOC-239` (sound channels 0-49) are also done. Next: `DOC-240`,
-   channels 50-59, continuing the `DOC-005` 93-channel sound catalog, then `DOC-006` background
-   catalog, then a final markdown read-through. Read-only research against `../mobile-eggbert` plus
-   local image/GIF tooling work.
+   already correct. `DOC-235`-`DOC-240` (sound channels 0-59) are also done, including a
+   self-correction of a channel-40 mis-attribution found mid-batch. Next: `DOC-241`, channels 60-69,
+   continuing the `DOC-005` 93-channel sound catalog, then `DOC-006` background catalog, then a
+   final markdown read-through. Read-only research against `../mobile-eggbert` plus local image/GIF
+   tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.

@@ -2271,7 +2271,17 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   reaction-animation sounds (`Ouf1a/1b/3/4/5`, `Mockery/i/p`) chosen by how long Blupi has stood
   still — not independent one-off effects. Also confirmed a matched shield/power "about to expire"
   warning pair (43/45) and the Charge/Shield/Power power-up activation sounds (40/42/44).
-- [ ] DOC-240 — Research and document `SoundChannel` 50-59 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-240 — Researched and documented `SoundChannel` 50-59 in `07-sounds.md`. **Self-correction
+  found mid-batch**: channel 40 (documented in `DOC-239`) was mis-attributed to the `ObjectType31`
+  Charge/Cloud pickup — the real trigger for that is channel 58 (this batch); channel 40 is actually
+  the wasp/bee (`ObjectType44`) sting effect, which inflates Blupi into a temporary "puffed up"
+  debuff via `m_blupiBalloon`. Fixed both entries in `07-sounds.md`. Also a genuine naming-collision
+  finding: `m_blupiBalloon` (the debuff flag) is unrelated to `ObjectType46`'s "balloon" vehicle
+  pickup, which actually sets `m_blupiOver` and plays no sound at all. Other real finds: channel 51
+  is a third dedicated death sound (glue traps, distinct from channels 8 and 26); channels 50/44,
+  57/62, 58/55 are three matching pickup-start/buff-complete sound pairs for the "drink-like"
+  power-ups (Sucette, Drink, Charge), mirroring the vehicle-motor start/loop pattern for buffs
+  instead of engines.
 - [ ] DOC-241 — Research and document `SoundChannel` 60-69 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-242 — Research and document `SoundChannel` 70-79 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-243 — Research and document `SoundChannel` 80-89 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
