@@ -2036,7 +2036,10 @@ all need regeneration.
   frames (icons 98-105, `kBird`), `element.png`, cropped and assembled with `make-gif.sh` at delay
   100. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
   ghosting.
-- [ ] DOC-206 — Regenerate + verify `object-anim-type21-secretexit.gif`.
+- [x] DOC-206 — Regenerated + verified `object-anim-type21-secretexit.gif` (`ObjectType21`). 12
+  real frames (icons 122-128 mirrored, `kCleGeneric`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
+  alpha-mean is a clean mirrored pattern matching the source crops — no ghosting.
 - [ ] DOC-207 — Regenerate + verify `object-anim-type24-skateboard.gif`.
 - [ ] DOC-208 — Regenerate + verify `object-anim-type25-shield.gif`.
 - [ ] DOC-209 — Regenerate + verify `object-anim-type26-suctioncup.gif`.
