@@ -2009,7 +2009,13 @@ all need regeneration.
   frames (icons 66,66,67,67,66,66,65,65, `kBulldozer`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean is a clean paired pattern
   matching the source crops — no ghosting.
-- [ ] DOC-200 — Regenerate + verify `object-anim-type05-treasure.gif`.
+- [x] DOC-200 — Regenerated + verified `object-anim-type05-treasure.gif` (`ObjectType5`). **This is
+  the exact GIF that first surfaced the `DOC-100` ghosting bug report** (originally logged
+  "133.7→...→153.6, plateaus"). 22 real frames (icons 0-10 ping-ponged, from
+  `q<11 ? q : (21-q)`), `element.png` (confirmed a treasure-chest sprite via direct pixel check),
+  cropped and assembled with `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean
+  is now a clean mirrored ping-pong pattern (~127-141/255, frame0≈frame21, frame10≈frame11 at the
+  turnaround) — confirms `DOC-100`'s fix resolves this exact originally-reported case.
 - [ ] DOC-201 — Regenerate + verify `object-anim-type06-egg.gif`.
 - [ ] DOC-202 — Regenerate + verify `object-anim-type07-exit.gif`.
 - [ ] DOC-203 — Regenerate + verify `object-anim-type16-spider.gif`.
