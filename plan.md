@@ -2121,7 +2121,10 @@ all need regeneration.
   awake state, `GetFollowerAwakeIcon()`). 5 real frames (icons 256,258,260,262,264, `kFollow2`),
   `element.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
   coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
-- [ ] DOC-220 — Regenerate + verify `object-anim-type96-follower-dormant.gif`.
+- [x] DOC-220 — Regenerated + verified `object-anim-type96-follower-dormant.gif` (`ObjectType96`
+  dormant state, `kFollow1`). 26 real frames (icons 256-265 mirrored), `element.png`, cropped and
+  assembled with `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean spot-checked
+  stays in a tight range — no ghosting.
 
 Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need regeneration.
 
