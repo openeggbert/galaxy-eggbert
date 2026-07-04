@@ -2362,7 +2362,11 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   task). Also found `plan.md`'s own top-level `DOC-004`/`DOC-005`/`DOC-006` entries (§15) were still
   marked `[ ]` even though their real completion happened via `DOC-100`-`DOC-229`/`DOC-235`-`DOC-246`/
   `DOC-247`-`DOC-257` — marked all three `[x]` with a pointer to where the real work landed.
-- [ ] DOC-259 — Full read-through of `01-world-file-format.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-259 — Full read-through of `01-world-file-format.md`. No image references in this file
+  (nothing to check for broken links). No staleness found: the `region=` field's cross-reference to
+  `05-backgrounds.md` is still accurate now that that file is complete (correctly notes
+  galaxy-eggbert's own engine doesn't consume `region=` yet — that's a separate, still-true fact
+  from mobile-eggbert's own mapping now being fully documented). No changes needed.
 - [ ] DOC-260 — Full read-through of `02-tiles.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-261 — Full read-through of `03-objects.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-262 — Full read-through of `04-enemy-behavior.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
