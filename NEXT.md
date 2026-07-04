@@ -304,10 +304,17 @@ mobile-eggbert's `table_explo2`-`table_explo8`, read live — galaxy-eggbert has
 confirmed the ghosting bug report — both now confirmed fixed. Full per-task detail (frame source,
 icon lists, verification numbers) is in `plan.md` §16, not repeated here.
 
+**`DOC-230` done (2026-07-04):** re-verifying the 313 `tile-full-*.png` crops found a real bug, not
+just doc staleness — they were generated with the same pre-`S3D-2`-fix formula (`x=col*65,
+y=row*65`, no 1px leading margin) as the buggy animated GIFs, confirmed pixel-exact against the old
+formula before regenerating all 313 with the corrected `x=1+col*65, y=1+row*65`. `02-tiles.md`'s
+generation formula and icon-440 finding updated to match. Full detail in `plan.md` `DOC-230`/`DOC-002`.
+
 **Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.3 onward,
-`DOC-230`-`DOC-267`): static-icon re-verification (313 tile crops, 67 object icons, etc.),
-`DOC-005` (93-channel sound catalog, never started), `DOC-006` (background catalog, never
-started), and a final markdown read-through pass.
+`DOC-231`-`DOC-267`): remaining static-icon re-verification (67 `object-type*.png` icons, 4 Blupi
+representative frames, 3 background thumbnails, 3 door crops — all may have the same leading-margin
+bug where they source from `object-m.png`/`element.png`), `DOC-005` (93-channel sound catalog, never
+started), `DOC-006` (background catalog, never started), and a final markdown read-through pass.
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -499,11 +506,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `BlockTypes::tileUV` and `ObjectType47`/Chenille engine bugs found and fixed along the way —
    see §4 for the summary, `plan.md` for full per-task detail — 12 tile animations, 84 Blupi
    actions, 24 object/pickup/enemy animations, 8 explosions, and the door-slide illustration).
-   Next: `DOC-230`, the first of the static-icon re-verification tasks (§16.3 — 313 `tile-full-*`
-   crops, then 67 `object-type*` static icons, then Blupi/background/door spot-checks), followed
-   by `DOC-235`–`DOC-267` (the never-started `DOC-005` 93-channel sound catalog, `DOC-006`
-   background catalog, and a final markdown read-through). Read-only research against
-   `../mobile-eggbert` plus local image/GIF tooling work.
+   `DOC-230` is also done: all 313 `tile-full-*` crops had the same pre-`S3D-2`-fix leading-margin
+   bug and were regenerated. Next: `DOC-231`, the 67 `object-type*` static icons, then
+   Blupi/background/door spot-checks (§16.3), followed by `DOC-235`–`DOC-267` (the never-started
+   `DOC-005` 93-channel sound catalog, `DOC-006` background catalog, and a final markdown
+   read-through). Read-only research against `../mobile-eggbert` plus local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.

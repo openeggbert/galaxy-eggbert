@@ -1322,10 +1322,13 @@ current progress, not just this list.
   `mobile-eggbert-reference/images/` (moved via `git mv`, history preserved). Verified
   programmatically: all 85 image references across all files resolve to real files, and all 85
   actual image files are referenced somewhere (no orphans, no broken links).
-- [ ] DOC-002 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16).** All 441 tile icons
-  are still individually correct static crops (single-frame images aren't affected by the GIF bug),
-  but this is being re-verified anyway (`DOC-230`) given how many sprite-channel bugs have surfaced
-  elsewhere. History below kept as-is.
+- [x] DOC-002 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16), re-closed 2026-07-04
+  (`DOC-230`).** All 313 `tile-full-*.png` crops turned out to have a real bug, not just doc
+  staleness: they were generated with `x = col*65, y = row*65` (no leading margin), the same
+  off-by-one root cause as the `S3D-2` engine bug the Lava GIF's blue seam exposed. Confirmed via
+  `compare -metric AE` = 0 against the old formula (pixel-exact match) before regenerating all 313
+  with the corrected `x = 1+col*65, y = 1+row*65`. See `DOC-230` below and `02-tiles.md`'s "How
+  these images were generated" section for the full writeup. History below kept as-is.
   ~~Done (2026-07-03). All 441 addressable icons (0–440) accounted for in `02-tiles.md`:~~
   313 with a full 64×64 crop (every named/behavioral icon plus every icon confirmed used in at
   least one of the 78 real level files), remaining 128 unused/unnamed icons listed compactly by
@@ -2202,7 +2205,13 @@ Not confirmed broken (single-frame images have no compositing/disposal to go wro
 given the repeated sprite-channel bugs already found this session (11 `ObjectType`s drawing
 from the wrong sheet), these deserve a real re-check, not an assumption they're fine.
 
-- [ ] DOC-230 — Re-verify all 313 `tile-full-*.png` crops: correct grid math, correct source pixels, no off-by-one against the 65px-stride formula (spot-check at minimum the first/last icon of each row boundary).
+- [x] DOC-230 — Re-verified all 313 `tile-full-*.png` crops: found a real bug (not just doc
+  staleness) — every crop used the old `x=col*65, y=row*65` formula (no 1px leading margin), the
+  same root cause as the `S3D-2` engine bug. Confirmed pixel-exact against the old formula
+  (`compare -metric AE`=0) before regenerating all 313 with the corrected `x=1+col*65,
+  y=1+row*65`. Spot-checked `tile-full-068.png` (Lava, no more blue seam) and `tile-full-437.png`
+  (last file, row/col boundary, complete un-truncated sprite). Updated `02-tiles.md`'s generation
+  formula and icon-440/sheet-dimension findings to match. See `DOC-002` above.
 - [ ] DOC-231 — Re-verify all 67 `object-type*.png` static icons' sprite-sheet channel against `Decor.cpp`'s real `channel=`/`BlupiSearchIcon()`-equivalent logic per ID — do not assume the 11 corrections already found are the only ones; check every single one.
 - [ ] DOC-232 — Re-verify the 4 `blupi-icon*.png` representative frames (§4.2 of `03-objects.md`) are still accurate now that the full `table_blupi` parse exists — pick more meaningful representative frames if the originals (icons 0/1/5/10) don't actually represent real named states well.
 - [ ] DOC-233 — Re-verify the 3 `bg-decor*.png` background thumbnails render correctly and are the correct real files (not off-by-one in the `decorNNN` numbering).

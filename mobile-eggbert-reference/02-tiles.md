@@ -6,13 +6,16 @@ confirmed used in at least one of the 78 real level files), the remaining 128 un
 listed compactly by range (passability + a mechanical visual signal, not a fabricated name — see
 "Unused/unnamed icons" below). Generated and verified 2026-07-03 (`DOC-002`).
 
-Icons are indices into `object-m.png` (1301×1431 px, 64×64 px tiles, 20 columns — confirmed by
-direct file inspection, matches `BlockTypes::kSheetW/kSheetH/kTileSize/kSheetCols` and
-`WindowsPhoneSpeedyBlupi::Def::DIMOBJX/DIMOBJY = 64`).
+Icons are indices into `object-m.png` (1301×1431 px, 64×64 px tiles with a 1px gap and a 1px
+leading margin, 20 columns — confirmed by direct file inspection, matches
+`BlockTypes::kSheetW/kSheetH/kTileSize/kSheetCols/kSheetGap` and
+`WindowsPhoneSpeedyBlupi::Def::DIMOBJX/DIMOBJY = 64`; the sheet's exact dimensions, 1+20×65 by
+1+22×65, are what confirm the leading margin — see "How these images were generated" below).
 
 **Finding: icon 440 has no real pixel data.** The sheet is only tall enough for 22 full 65px-stride
-rows (22×65=1430px of a 1431px-tall image) — i.e. icons 0–439 (440 real icons), not 0–440. Icon
-440 is the theoretical next slot but only has 1px of image data (a sliver, not a real tile).
+rows plus the 1px leading margin (1+22×65=1431px, exactly the image height) — i.e. icons 0–439
+(440 real icons), not 0–440. Icon 440 is the theoretical next slot; its row would start at pixel
+row 1431, one past the last valid row, so it has zero real pixel data (not even a sliver).
 `BlockTypes::kPassable[441]` includes an entry for it anyway (bounds-safety in the passability
 table, not because it's a real tile) — value `false`.
 
@@ -453,7 +456,17 @@ ImageMagick (`convert -crop`) directly against `../mobile-eggbert/Content/icons/
 (read-only source, never modified), plus a small Python script (Pillow) for the mean-alpha visual
 signal and for extracting `Decor:`/`BigDecor:` grid usage counts from all 78 real world files.
 Grid math taken from mobile-eggbert's own rendering code (`Pixmap.cpp`'s `PixmapChannel::Object`
-case), not guessed: 64×64 px tiles, **1 px gap** between tiles, 20 columns. Icon `n`'s pixel rect:
-`col = n % 20`, `row = n / 20`, `x = col * 65`, `y = row * 65`, crop 64×64 at `(x, y)`.
-Passability per icon is read directly out of `BlockTypes::isMobileTransparent`'s existing 441-entry
-`kPassable[]` array (parsed programmatically, not retyped by hand).
+case), not guessed: 64×64 px tiles, **1 px gap** between tiles, 20 columns, plus a **1 px leading
+margin** before the first column/row (confirmed by the sheet's real dimensions: 1301×1431 =
+1 + 20×65 by 1 + 22×65, not 20×65 by 22×65 — see `BlockTypes.hpp`'s `kSheetGap`). Icon `n`'s pixel
+rect: `col = n % 20`, `row = n / 20`, `x = 1 + col * 65`, `y = 1 + row * 65`, crop 64×64 at
+`(x, y)`. Passability per icon is read directly out of `BlockTypes::isMobileTransparent`'s existing
+441-entry `kPassable[]` array (parsed programmatically, not retyped by hand).
+
+**Correction (2026-07-04, `DOC-230`):** the original `DOC-002` pass omitted the 1px leading margin
+(used `x = col * 65, y = row * 65`), shifting every crop 1px up-and-left from its true tile —
+the same root cause as the `S3D-2` engine bug found via the Lava GIF's blue seam artifact. Verified
+pixel-exact against the old formula (`compare -metric AE` = 0 vs. the pre-correction files) before
+regenerating; all 313 `tile-full-*.png` crops were regenerated with the corrected formula. Spot
+checks: `tile-full-068.png` (Lava) no longer shows the blue seam; `tile-full-437.png` (last file,
+row/col boundary) crops a complete sprite with no truncation.
