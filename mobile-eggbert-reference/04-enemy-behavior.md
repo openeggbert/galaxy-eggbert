@@ -1,8 +1,8 @@
 # Enemy/Object Behavior Model
 
 **Status:** architectural overview only — describes the general movement/collision *system*, not a
-per-type exhaustive behavior catalog (that level of detail belongs in `03-objects.md` per-type as
-it gets filled in under `DOC-003`).
+per-type exhaustive behavior catalog (that level of per-type detail, where it exists, is in
+`03-objects.md`, complete for classification under `DOC-003`).
 
 From `Decor.cpp`'s own architectural documentation (top-of-file comment, paraphrased): most
 enemies/effects are **table-driven** — a `MoveObject` moves linearly between `posStart` and

@@ -2378,7 +2378,11 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   `ObjectType47`'s bug was "not fixed in this pass" for all 5 types, but `47` was actually fixed
   separately as `S3D-4` (2026-07-04) — updated the table to show `47` fixed and `1`/`12`/`32`/`33`
   still open (`DOC-007`), and corrected the summary paragraph's "5 ObjectTypes" claim to "4".
-- [ ] DOC-262 — Full read-through of `04-enemy-behavior.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-262 — Full read-through of `04-enemy-behavior.md`. No image references in this file
+  (nothing to check for broken links). Verified the follower-pattern claims (2.5-unit wake
+  distance, `kFollow1`/`kFollow2` table names) still match `GEDecorSystem.cpp` — unaffected by the
+  `S3D-4` Chenille fix, which only touched `ObjectType47`. Tightened one stale-sounding phrase
+  referring to `DOC-003` as still in progress (it's complete). No other changes needed.
 - [ ] DOC-263 — Full read-through of `05-backgrounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-264 — Full read-through of `06-doors.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-265 — Full read-through of `07-sounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
