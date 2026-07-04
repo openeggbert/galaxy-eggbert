@@ -2183,7 +2183,19 @@ Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need 
 
 Door (1) — same DOC-004 pass as explosions, assume affected until verified.
 
-- [ ] DOC-229 — Regenerate + verify `door-slide.gif` (10-frame positional composite).
+- [x] DOC-229 — Regenerated + verified `door-slide.gif` (10-frame positional composite —
+  **the very last of the 129 GIF-regeneration tasks**). Per the doc's own text, this is an
+  illustrative approximation (not derived from any ported galaxy-eggbert code — doors haven't
+  been ported yet, per `09-open-questions.md`), not a frame-cycle: `Door1` (icon 334, cropped
+  from `object-m.png` at the corrected `1+col*65,1+row*65` pitch) composited onto a 64×128
+  transparent canvas at 10 linearly-interpolated Y offsets (64→-64px), sliding it from fully
+  visible in the lower half up and out of frame. Assembled with `make-gif.sh` at delay 17
+  (matches the pre-existing GIF's rate). **Verified**: coalesced-frame alpha-mean stays constant
+  while the door is fully in-frame (frames 0-4), then decreases smoothly as it clips off the top
+  edge (frames 5-8), reaching exactly 0 once fully off-screen (frame 9) — a genuine progressive
+  clip, not ghosting. **All 129 animated GIFs (`DOC-101`-`DOC-229`) are now regenerated and
+  verified — the GIF-regeneration portion of the `mobile-eggbert-reference/` rework is
+  complete.**
 ### 16.3 Static (non-animated) asset re-verification
 
 Not confirmed broken (single-frame images have no compositing/disposal to go wrong), but

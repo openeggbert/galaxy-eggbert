@@ -267,74 +267,47 @@ this session): `NEXT.md`, `plan.md`, `CMakeLists.txt`; modified
 
 ## 4. Current blocker / main problem
 
-**Documentation track (not code): `mobile-eggbert-reference/`'s GIFs are corrupted and the whole
-effort has been reopened — this is the actual current blocker for that track.** The user visually
-inspected `08-animations.md` and found that every animated GIF's frames accumulate the previous
-frame's opaque pixels instead of clearing ("frame 2 shows frame 1 ghosted into its background").
-Confirmed programmatically (coalesce each GIF, measure mean alpha per frame — should fluctuate with
-the real source frame data, not monotonically converge):
-- `blupi-action-02-march.gif`: 80.0→85→86.2→86.3→86.6→86.7, plateaus (bug present).
-- `object-anim-type05-treasure.gif`: 133.7→...→153.6, plateaus (bug present).
-- `explosion-anim-explo1.gif`: 9.3→...→161.9, plateaus (bug present).
-- `tile-anim-temp.gif`: alpha correctly oscillates, hits exactly 0 on the two genuinely-blank
-  frames (no symptom) — but tile content is fully opaque, so this test can't rule out the same root
-  cause being invisible there; **do not assume tiles are exempt**.
+**Documentation track: RESOLVED — all 129 animated GIFs regenerated and verified.** The user
+visually inspected `08-animations.md` and found every animated GIF's frames accumulating the
+previous frame's opaque pixels instead of clearing (GIF ghosting). Root cause (`DOC-100`): the old
+workflow assembled GIFs with plain `convert -delay D -loop 0 frame*.png out.gif`, leaving every
+frame's disposal method `Undefined` — without an explicit disposal, each frame composites onto the
+still-visible previous canvas instead of a cleared one, so transparent/semi-transparent pixels let
+prior opaque pixels bleed through (mean alpha climbs then plateaus). Fixed with
+`mobile-eggbert-reference/tools/make-gif.sh` (`-dispose Background`), verified via a synthetic
+repro. A second tooling bug (`DOC-105`): genuinely translucent content (e.g. water tiles) could
+randomly collapse to fully transparent under GIF's binary-alpha encoding — fixed in the same
+script (`-channel A -threshold 1%`, forcing any visible pixel fully opaque; per user decision,
+translucent content now renders as its real saturated color rather than blended against an
+invented backdrop).
 
-All 129 animated GIFs need regeneration with fixed tooling. The user also asked whether `DOC-002`
-(tiles)/`DOC-003` (objects) can be trusted given this — their *text/classification* content is
-unaffected (it's not image-specific), but every generated image is being re-verified rather than
-assumed correct, since 11 sprite-channel bugs have already turned up in that same effort. Per the
-user's explicit instruction, this has been broken into ~168 small, single-purpose tasks
-(`plan.md` §16, `DOC-100`–`DOC-267`) instead of a few large opaque passes, since the large-pass
-approach is part of how these gaps went undetected in the first place.
+Regenerating surfaced two real **engine** bugs (not just doc bugs), both fixed with explicit user
+approval — full detail in `plan.md`:
+- **`S3D-2`**: `BlockTypes::tileUV()` (shared by `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA`)
+  assumed a flat 64px grid in `object-m.png`; the real sheet is packed on a 65px pitch (64px + 1px
+  gap). Fixed in `BlockTypes.hpp`/`GETileAtlas.cpp`; verified by rebuilding both targets clean.
+- **`S3D-4`**: `ObjectType47` (Chenille lift)'s icon table indexes `object-m.png`, not
+  `element.png` like every other object sprite (the old icon values were out of bounds for
+  `element.png`); `GEDecorSystem.cpp` hardcoded `element.png` for all platform/enemy sprites.
+  Fixed by special-casing `ObjectType47`. **Build-unverified**: mid-session `../simple-3d` was
+  found moved into `/rv/data/archive/trash/2026/` (restored with approval), and U3D's own
+  prebuilt `cmake-build-debug` turned out to be missing entirely — rebuilding U3D was explicitly
+  declined as too slow to do right now (see §2's Build status note). Verified by static review
+  only; confirm with a real build once U3D is available.
 
-**`DOC-100` (root cause) is now fixed and verified** — the old workflow assembled GIFs with plain
-`convert -delay D -loop 0 frame*.png out.gif`, which leaves every frame's GIF disposal method as
-`Undefined` (confirmed via `identify -format "%D"` on the existing broken GIFs). Without an
-explicit disposal, each new frame composites on top of whatever is still on the canvas from the
-previous one instead of a cleared background, so transparent/semi-transparent pixels let prior
-opaque pixels bleed through — mean alpha climbs then plateaus at saturation, matching the reported
-symptom exactly. Fix: `-dispose Background`, so each frame clears to a transparent canvas first.
-Verified with a synthetic 6-frame repro: broken path reproduced the climbing pattern
-(17.6→21.3→24.9→28.5→32.1→35.7), fixed path gave a flat 17.6 on every coalesced frame. Landed as
-`mobile-eggbert-reference/tools/make-gif.sh` (a real script this time, not an ad hoc `convert`
-invocation, so the same mistake can't silently recur across 129 regenerations).
+All 129 GIFs (`DOC-101`–`DOC-229`) are regenerated and verified — 12 tile animations, 84 Blupi
+actions (landed `mobile-eggbert-reference/tools/extract-blupi-action.py`, reading mobile-eggbert's
+`table_blupi` live rather than copying it), 24 object/pickup/enemy animations, 8 explosions (using
+mobile-eggbert's `table_explo2`-`table_explo8`, read live — galaxy-eggbert has only ported
+`table_explo1` so far), and the door-slide illustration. Two of the regenerated GIFs
+(`blupi-action-02-march.gif`, `explosion-anim-explo1.gif`) are the exact files that originally
+confirmed the ghosting bug report — both now confirmed fixed. Full per-task detail (frame source,
+icon lists, verification numbers) is in `plan.md` §16, not repeated here.
 
-**`DOC-101` (`tile-anim-lava.gif`) is also done** — regenerated with the fixed tool, and along the
-way turned up + fixed the real `BlockTypes::tileUV` gap/pitch engine bug (see §3's top entry and
-`plan.md`'s `S3D-2`). `DOC-102` (`tile-anim-spike.gif`, high row indices 17-18 of 22), `DOC-103`
-(`tile-anim-crusher.gif`, last-column + row-wrap edge cases), `DOC-104` (`tile-anim-saw.gif`,
-another row-wrap case), `DOC-105` (`tile-anim-water1.gif`, which also found + fixed the
-translucent-content-vanishing bug — see this section's top entry), `DOC-106`
-(`tile-anim-water2.gif` — a full-bleed uniformly-translucent tile, no bug, just a test-methodology
-false alarm, see `plan.md`), `DOC-107` (`tile-anim-temp.gif` — 18 real icons + 2 genuinely blank
-`-1`-sentinel frames, all clean), `DOC-108` (`tile-anim-marine.gif`), `DOC-109`
-(`tile-anim-fanleft.gif`), `DOC-110` (`tile-anim-fanright.gif`), `DOC-111`
-(`tile-anim-fanup.gif`), and `DOC-112` (`tile-anim-fandown.gif`) are done — **all 12 tile
-animations (`DOC-101`-`DOC-112`) are now regenerated and verified.** `DOC-113`
-(`blupi-action-01-stop.gif`, 330 real frames) is also done — landed a new tool,
-`mobile-eggbert-reference/tools/extract-blupi-action.py`, which reads mobile-eggbert's
-`table_blupi` live (not copied into galaxy-eggbert) to get each Blupi action's real frame list;
-see `plan.md`'s `DOC-113` for the full writeup. `DOC-114` (`blupi-action-02-march.gif` — the exact
-GIF that first surfaced the `DOC-100` ghosting bug report — is confirmed fixed, alpha now
-fluctuates instead of climbing). **Running tally (full per-task detail lives in `plan.md` §16,
-not repeated here): `DOC-100`–`DOC-196` done** — **all 84 Blupi action GIFs are now regenerated and verified**
-(root cause + translucency fix + `tileUV` engine bug + all 12 tile animations + all 84 Blupi
-actions; 3 of the 87 real BlupiActions -- 12/Set, 70, 71 -- confirmed to have no
-table_blupi entry, needed no GIF). `DOC-197` (`object-anim-type02-patrolA.gif`, first of
-24 object/pickup/enemy animations — these use `element.png` and frame data from
-`GEDecorSystem::GetObjIcon()`, not `table_blupi`), `DOC-198`–`DOC-202` (`patrolB`/`bulldozer`/
-`treasure` — the exact GIF that first surfaced the `DOC-100` ghosting bug report, now confirmed
-fixed — `egg`/`exit`), `DOC-203` (`object-anim-type16-spider.gif`), and `DOC-204`
-(`object-anim-type17-fish.gif`) and `DOC-205` (`object-anim-type20-bird.gif`) are also done. 24 of
-the 129 GIFs (`DOC-206`–`DOC-229`) still need regenerating; `DOC-206`
-(`object-anim-type21-secretexit.gif`), `DOC-207` (`object-anim-type24-skateboard.gif`), and
-`DOC-208` (`object-anim-type25-shield.gif`), `DOC-209` (`object-anim-type26-suctioncup.gif`), and
-`DOC-210` (`object-anim-type32-blupih.gif`), `DOC-211` (`object-anim-type33-blupit.gif`), and
-`DOC-212` (`object-anim-type40-mirrorinvert.gif`), `DOC-213` (`object-anim-type44-wasp.gif`), and
-`DOC-214` (`object-anim-type47-chenille.gif` — which also found + fixed a real Chenille texture
-bug in the shipped `GalaxyEggbertSimple3D` target, build-unverified per the note above — see §3)
-are now also done, next is `DOC-215` (`object-anim-type49-key1.gif`).
+**Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.3 onward,
+`DOC-230`-`DOC-267`): static-icon re-verification (313 tile crops, 67 object icons, etc.),
+`DOC-005` (93-channel sound catalog, never started), `DOC-006` (background catalog, never
+started), and a final markdown read-through pass.
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -376,7 +349,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 1 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-228` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 1 (`DOC-229`) still need regenerating with the fixed tool. |
+| fixed (2026-07-04) | ~~GIF ghosting bug across `mobile-eggbert-reference/images/`~~. All 129 animated GIFs (`DOC-101`-`DOC-229`) regenerated and verified with the fixed `make-gif.sh` — see §4. |
 | fixed, build-unverified (2026-07-04) | `ObjectType47` (Chenille lift)'s `element.png`-vs-`object-m.png` texture bug in `GalaxyEggbertSimple3D` — see §3's top entry and `plan.md`'s `S3D-4`. Fixed by static review; U3D's prebuilt `cmake-build-debug` is missing in this environment so the fix could not be confirmed by an actual compile yet. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
@@ -521,35 +494,16 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 ## 8. Next smallest tasks
 
 1. **Work through the ~168-task `mobile-eggbert-reference/` rework list (in progress, reopened
-   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-214` are done: the
-   GIF-ghosting root-cause fix, a second fix for translucent content vanishing (`DOC-105`), the
-   real `BlockTypes::tileUV` gap/pitch engine bug (found via `DOC-101`, see §3 and `plan.md`'s
-   `S3D-2`), all 12 tile animations, all 84 Blupi actions (also landed a reusable tool,
-   `mobile-eggbert-reference/tools/extract-blupi-action.py`, reading mobile-eggbert's
-   `table_blupi` live rather than copying it), and 14 of 24 object/pickup/enemy animations —
-   `DOC-214` also found + fixed a real `ObjectType47` (Chenille) texture bug in
-   `GalaxyEggbertSimple3D` (`plan.md`'s `S3D-4`), currently **build-unverified** since U3D's
-   prebuilt `cmake-build-debug` is missing in this environment (see §2's Build status note — check
-   whether it's been rebuilt before assuming Simple3D still compiles). Full per-task detail is in
-   `plan.md` §16, not repeated here. Next: `DOC-215` (`object-anim-type49-key1.gif`), then continue
-   through `DOC-216`–`DOC-267` (14 more GIF regenerations, then static-icon re-verification, then
-   `DOC-005`/`DOC-006` sounds/backgrounds which were never started). `DOC-215`
-   (`object-anim-type49-key1.gif`), `DOC-216` (`object-anim-type50-key2.gif`), and `DOC-217`
-   (`object-anim-type51-key3.gif`), and `DOC-218` (`object-anim-type54-largecreature.gif`) are
-   also done, `DOC-219` (`object-anim-type96-follower-awake.gif`) is now also done, next is
-   `DOC-220` (`object-anim-type96-follower-dormant.gif`) — **all 24 object/pickup/enemy
-   animations are now done**. `DOC-221` (`explosion-anim-explo1.gif` — the second GIF that
-   originally confirmed the `DOC-100` ghosting bug report, now confirmed fixed), `DOC-222`
-   (`explosion-anim-explo2.gif`), `DOC-223` (`explosion-anim-explo3.gif`), `DOC-224`
-   (`explosion-anim-explo4.gif`), `DOC-225` (`explosion-anim-explo5.gif`), `DOC-226`
-   (`explosion-anim-explo6.gif`), `DOC-227` (`explosion-anim-explo7.gif`), and `DOC-228`
-   (`explosion-anim-explo8.gif`) are also done — **all 8 explosion animations are now done.**
-   Next: `DOC-229`, the very last GIF (`door-slide.gif`, a 10-frame positional composite, not a
-   simple icon-table lookup like the others). (galaxy-eggbert has only ported `table_explo1`
-   so far; `table_explo2`-`table_explo8` were read live from
-   `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp` for these doc tasks only, not
-   copied into galaxy-eggbert).
-   Read-only research against `../mobile-eggbert` plus local image/GIF tooling work.
+   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-229` are done:
+   **all 129 animated GIFs regenerated and verified** (root cause + translucency fix, the real
+   `BlockTypes::tileUV` and `ObjectType47`/Chenille engine bugs found and fixed along the way —
+   see §4 for the summary, `plan.md` for full per-task detail — 12 tile animations, 84 Blupi
+   actions, 24 object/pickup/enemy animations, 8 explosions, and the door-slide illustration).
+   Next: `DOC-230`, the first of the static-icon re-verification tasks (§16.3 — 313 `tile-full-*`
+   crops, then 67 `object-type*` static icons, then Blupi/background/door spot-checks), followed
+   by `DOC-235`–`DOC-267` (the never-started `DOC-005` 93-channel sound catalog, `DOC-006`
+   background catalog, and a final markdown read-through). Read-only research against
+   `../mobile-eggbert` plus local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
