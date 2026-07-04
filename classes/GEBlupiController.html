@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEBlupiController — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GEBlupiController</div>
+  <h1>GEBlupiController</h1>
+  <p class="subtitle">Invisible, collision-only movement placeholder — no sprite, no animation state machine yet.</p>
+
+  <h2>Overview</h2>
+  <p>
+    Its own header comment describes it precisely: <em>"invisible, collision-only movement
+    placeholder … no sprite, no animation state machine yet."</em> It is engine-agnostic — depends
+    only on <code>GalaxyEggbert::Worlds</code> — which is why it can be scripted headlessly by the
+    <code>VerifyBlupiMovement</code> tool without a live window.
+  </p>
+  <p>Sources: <code>src/GalaxyEggbertCNA/Game/GEBlupiController.hpp</code> and <code>.cpp</code>.</p>
+
+  <h2>Constants (match GalaxyEggbertSimple3D's equivalent controller)</h2>
+  <pre><code>static constexpr float kMoveSpeed = 5.5f;   // units/s
+static constexpr float kJumpSpeed = 12.0f;  // units/s
+static constexpr float kGravity   = 25.0f;  // units/s²
+static constexpr float kFallLimit = -10.0f; // terminal fall velocity clamp
+static constexpr float kStepLimit = 1.0f;   // max step-up height</code></pre>
+
+  <h2>API</h2>
+  <pre><code>class GEBlupiController {
+public:
+    void SetPosition(float x, float y, float z);
+    Vector3 GetPosition() const;
+
+    bool IsSolidAt(const Worlds::World&amp; world, int gx, int gy, int gz) const;
+    int  GroundHeightAt(const Worlds::World&amp; world, int gx, int gz) const;
+
+    void Step(const Worlds::World&amp; world, float dx, float dz, bool jumpPressed, float dt);
+    bool IsOnGround() const;
+};</code></pre>
+
+  <h2><code>GroundHeightAt(gx, gz)</code></h2>
+  <p>Scans Y from top down for the first solid block; returns its Y+1, or 0 if the column is empty.</p>
+
+  <h2><code>TryMoveAxis</code> (internal)</h2>
+  <p>
+    Per-axis horizontal move: allows the move if the target column's ground is at most
+    <code>kStepLimit</code> above the current feet Y (i.e. a 1-block step-up), and auto-lifts Y
+    onto the new ground when grounded.
+  </p>
+
+  <h2><code>Step(world, dx, dz, jumpPressed, dt)</code></h2>
+  <ol>
+    <li>Moves X then Z independently via <code>TryMoveAxis</code>.</li>
+    <li>Applies a jump impulse (<code>kJumpSpeed</code>) when grounded and <code>jumpPressed</code>.</li>
+    <li>Applies gravity, clamped to <code>kFallLimit</code>.</li>
+    <li>Resolves vertical collision against <code>GroundHeightAt</code>, setting <code>m_onGround</code>/<code>m_velocityY = 0</code> on landing.</li>
+  </ol>
+  <p>
+    Grid coordinates are computed via <code>std::lround(pos + kWorldCenter)</code>, clamped to
+    <code>[0, blocksPerAxis - 1]</code>.
+  </p>
+
+  <h2>What This Class Does Not Do</h2>
+  <ul>
+    <li>No sprite or rendering of any kind.</li>
+    <li>No animation state machine (<code>BlupiAction</code> is defined elsewhere but not driven here).</li>
+    <li>No swimming, hazard, spring, or fan interactions — <code>BlockTypes</code> has predicate helpers for these, but they are not wired into this controller yet.</li>
+  </ul>
+
+  <h2>Verification Tool</h2>
+  <p>
+    <code>tools/VerifyBlupiMovement.cpp</code> is a standalone CMake target linking only
+    <code>GEBlupiController.cpp</code> — no CNA dependency — used to script and verify movement
+    behavior headlessly.
+  </p>
+
+  <div class="page-nav">
+    <a href="GETileAtlas.html">← GETileAtlas</a>
+    <a href="World.html">World →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

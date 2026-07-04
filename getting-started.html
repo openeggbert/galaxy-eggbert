@@ -53,94 +53,68 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Getting Started</div>
   <h1>Getting Started</h1>
-  <p class="subtitle">Everything you need before your first build.</p>
+  <p class="subtitle">Everything you need before your first GalaxyEggbertCNA build.</p>
 
   <h2>Prerequisites</h2>
-
-  <h3>Common (all platforms)</h3>
   <ul>
-    <li><strong>CMake ≥ 3.21</strong> — build system</li>
-    <li><strong>C++23-capable compiler</strong> — GCC 13+ or Clang 16+</li>
-    <li><strong>Git</strong> — for cloning and submodule management</li>
+    <li><strong>CMake ≥ 3.21</strong> and a modern C++ compiler (GCC or Clang)</li>
+    <li><strong>Git</strong></li>
+    <li>OpenGL development libraries on Linux (for the default EasyGL backend)</li>
   </ul>
 
-  <h3>Linux native build (EasyGL backend)</h3>
-  <ul>
-    <li>OpenGL development libraries (<code>libgl-dev</code> or equivalent)</li>
-    <li>Pre-built U3D library at the configured path (see below)</li>
-  </ul>
-
-  <h3>Windows cross-build from Linux (MinGW)</h3>
-  <ul>
-    <li><code>mingw-w64</code> package: <code>sudo apt install mingw-w64</code></li>
-    <li>Windows-target SDL3 libraries (supplied via <code>CNA_WINDOWS_DEPENDENCIES_ROOT</code>)</li>
-  </ul>
-
-  <h3>Web (Emscripten) — Nova3D path only</h3>
-  <ul>
-    <li>Emscripten SDK installed and activated (see <a href="build.html#web">Web Build</a>)</li>
-    <li>Nova3D engine backend (<code>-DGALAXY_EGGBERT_ENGINE=NOVA3D</code>)</li>
-  </ul>
+  <h2>Required Sibling Repositories</h2>
+  <p>
+    Galaxy Eggbert is not self-contained: <code>CMakeLists.txt</code> expects three sibling
+    directories next to the <code>galaxy-eggbert</code> checkout, each overridable via a CMake
+    cache variable:
+  </p>
+  <table>
+    <tr><th>Repository</th><th>Default path</th><th>Override variable</th><th>Role</th></tr>
+    <tr><td>CNA</td><td><code>../cna</code></td><td><code>CNA_HOME</code></td><td>The game framework itself (target <code>CNA</code>)</td></tr>
+    <tr><td>Easy3D</td><td><code>../easy-3d</code></td><td><code>EASY3D_HOME</code></td><td>Small helper library beside CNA (target <code>easy3d::easy3d</code>)</td></tr>
+    <tr><td>mobile-eggbert</td><td><code>../mobile-eggbert</code></td><td><code>MOBILE_EGGBERT_HOME</code></td><td>Read-only asset source (<code>Content/</code>, <code>worlds/</code>), copied at build time</td></tr>
+  </table>
+  <div class="warn">
+    <strong>Configure CNA before Easy3D</strong>
+    Order matters: Easy3D auto-detects a parent <code>CNA</code> target and links against it instead
+    of building its own copy. Configuring in the wrong order can produce duplicate-symbol errors.
+  </div>
 
   <h2>Clone the Repository</h2>
   <pre><code>git clone https://github.com/openeggbert/galaxy-eggbert.git
 cd galaxy-eggbert</code></pre>
 
-  <h2>Initialize Submodules</h2>
+  <h2>Configure and Build GalaxyEggbertCNA</h2>
+  <pre><code>cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
   <p>
-    The Nova3D engine backend is a git submodule (<code>../nova-3d</code> relative to the project root).
-    Even if you only plan to use U3D, run submodule init to avoid CMake warnings:
+    <code>GALAXY_EGGBERT_BUILD_CNA</code> defaults to <code>OFF</code> (it is opt-in);
+    <code>GALAXY_EGGBERT_BUILD_SIMPLE3D</code> defaults to <code>ON</code> and builds the older,
+    currently-playable Simple3D reference target. See <a href="build.html">Build Guide</a> for the
+    full CMake variable reference.
   </p>
-  <pre><code>git submodule init --recursive
-git submodule update --recursive</code></pre>
 
-  <h2>Set Up the U3D Engine (default backend)</h2>
+  <h2>What Gets Copied at Build Time</h2>
   <p>
-    Galaxy Eggbert defaults to the <strong>U3D</strong> engine backend.
-    U3D must be pre-built and available as a static library (<code>libUrho3D.a</code>) plus headers.
+    Post-build CMake commands copy <code>../mobile-eggbert/Content/</code> and
+    <code>../mobile-eggbert/worlds/</code> (read-only source, not committed to galaxy-eggbert)
+    plus this repo's own committed <code>worlds3d/</code> directory next to the
+    <code>GalaxyEggbertCNA</code> binary. This step is skipped under Emscripten or Android.
   </p>
-  <p>
-    The default expected path, hard-coded in <code>CMakeLists.txt</code>, is:
-  </p>
-  <pre><code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code></pre>
-  <p>
-    You can override this via:
-  </p>
-  <ul>
-    <li>CMake option: <code>-DU3D_HOME=/path/to/urho3d/build</code></li>
-    <li>Environment variable: <code>URHO3D_HOME=/path/to/urho3d/build</code></li>
-  </ul>
-  <div class="warn">
-    <strong>Warning</strong>
-    The CMake configuration will fail with a fatal error if it cannot find the U3D library. Pre-building U3D from source is required before building Galaxy Eggbert with the U3D backend.
-  </div>
-
-  <h2>Verify the Asset Files</h2>
-  <p>Game assets are committed in the repository under <code>Content/</code> and <code>worlds/</code>:</p>
-  <pre><code>Content/
-  backgrounds/   ← sky/menu background PNGs
-  icons/         ← sprite sheets (blupi.png, element.png, object-m.png, …)
-  sounds/        ← WAV files (sound000.wav … sound092.wav)
-worlds/
-  world001.txt … world005.txt   ← level data (mobile-eggbert format)</code></pre>
-  <div class="tip">
-    <strong>Tip</strong>
-    The worlds in <code>worlds/*.txt</code> are the original mobile-eggbert world files. They are loaded at runtime and converted to 3D voxel data. The first run also generates <code>worlds/world001.vwr</code> as a binary cache.
-  </div>
 
   <h2>Next Steps</h2>
   <div class="card-grid">
     <a class="card" href="build.html">
       <h3>&#128295; Build Guide</h3>
-      <p>Detailed CMake commands for every platform.</p>
+      <p>Full CMake variable reference and target names.</p>
     </a>
     <a class="card" href="running.html">
       <h3>&#9654; Running</h3>
-      <p>How to run the built executable.</p>
+      <p>What happens when GalaxyEggbertCNA starts.</p>
     </a>
     <a class="card" href="architecture.html">
       <h3>&#127963; Architecture</h3>
-      <p>Understanding the code structure before diving in.</p>
+      <p>The Direction Lock and how CNA/Easy3D/mobile-eggbert relate.</p>
     </a>
   </div>
 

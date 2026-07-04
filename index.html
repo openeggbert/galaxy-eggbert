@@ -58,95 +58,103 @@
 
 <main id="content">
   <h1>Galaxy Eggbert Documentation</h1>
-  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · Urho3D · CMake</p>
+  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · CNA · Easy3D · CMake</p>
 
-  <div class="note">
-    <strong>Status</strong>
-    Galaxy Eggbert is actively developed (currently at Phase 27). Core gameplay, 3D rendering, audio, and save system are all functional. Vehicles, full enemy AI, and Web/Android builds are still work in progress.
+  <div class="warn">
+    <strong>This documentation was rewritten 2026-07-04</strong>
+    It now describes the <strong>current long-term direction: Direct CNA + Easy3D</strong>
+    (<code>GalaxyEggbertCNA</code>), per the project's "Current Direction Lock" (see
+    <a href="architecture.html">Architecture</a>). The previous documentation described an
+    Urho3D-based architecture (<code>GalaxyEggbertApp</code>, <code>Blupi</code>, <code>Decor</code>, …)
+    that no longer exists in the source tree. The older, currently-playable
+    <code>GalaxyEggbertSimple3D</code> target (built on Simple3D/U3D) still exists as a reference
+    implementation and is mentioned where relevant, but is not the subject of this rewrite.
   </div>
 
   <h2>What is Galaxy Eggbert?</h2>
   <p>
-    Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, originally a Windows Phone XNA platformer game from 2013.
-    The project takes the original game's levels, audio, sprite sheets, and gameplay rules and renders them in a 3D voxel environment using the <a href="engine-integration.html">Urho3D engine API</a>.
+    Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, originally a Windows Phone XNA platformer game from 2013,
+    itself later ported to C++ as <strong>mobile-eggbert</strong>.
+    Galaxy Eggbert's long-term target, <code>GalaxyEggbertCNA</code>, is built <strong>directly on CNA</strong>
+    (an XNA-compatible, SDL3-based C++ game framework) with <strong>Easy3D</strong> as a small helper
+    library beside it (cameras, texture atlas, cube/billboard batching) — Easy3D does not hide CNA.
   </p>
   <p>
-    The original 2D tile grid becomes a 100×100×100 voxel world. Blupi — the player character — is rendered as a billboard sprite. Enemies and collectibles patrol and bounce through the 3D space. The save format is binary-compatible with the mobile-eggbert C++ reference port.
+    <code>GalaxyEggbertCNA</code> is real, buildable code today (opt-in via CMake), not a future plan:
+    it opens a window, loads a genuinely 3D, hand-authored <code>.vwr</code> voxel world, renders
+    textured animated terrain across all Y layers, and moves an invisible collision-only Blupi
+    placeholder through it with gravity and step-up traversal. It does <strong>not</strong> yet render
+    Blupi's sprite, objects/pickups, a HUD, or play sound — see the status table below.
   </p>
 
   <h2>Quick Navigation</h2>
   <div class="card-grid">
     <a class="card" href="getting-started.html">
       <h3>&#128640; Getting Started</h3>
-      <p>Prerequisites, submodule setup, and first build steps.</p>
+      <p>Prerequisites and first build steps for GalaxyEggbertCNA.</p>
     </a>
     <a class="card" href="build.html">
       <h3>&#128295; Build Guide</h3>
-      <p>CMake configuration for Linux, Windows, and Web targets.</p>
+      <p>CMake options, the CNA/Easy3D/mobile-eggbert sibling repo layout.</p>
     </a>
     <a class="card" href="architecture.html">
       <h3>&#127963; Architecture</h3>
-      <p>High-level design, subsystem map, and data flow.</p>
+      <p>The Direction Lock, layering, and how CNA/Easy3D/mobile-eggbert relate.</p>
     </a>
     <a class="card" href="gameplay.html">
-      <h3>&#127918; Gameplay</h3>
-      <p>Core loop, player mechanics, enemies, and progression.</p>
+      <h3>&#127918; Gameplay Status</h3>
+      <p>What actually works today vs. what's planned, faithfully to mobile-eggbert.</p>
     </a>
     <a class="card" href="levels.html">
-      <h3>&#127758; Levels &amp; Worlds</h3>
-      <p>World file formats, loading pipeline, and tile types.</p>
+      <h3>&#127758; Worlds &amp; the .vwr Format</h3>
+      <p>The genuinely-3D voxel world format and how it differs from mobile-eggbert's flat levels.</p>
     </a>
     <a class="card" href="classes/index.html">
       <h3>&#128196; Class Reference</h3>
-      <p>Documented public classes, structs, and enums.</p>
+      <p>GEWorldRuntime, GETerrainRenderer, GEBlupiController, GETileAtlas, and the Worlds data model.</p>
     </a>
     <a class="card" href="tutorials/index.html">
       <h3>&#128214; Tutorials</h3>
-      <p>Step-by-step guides for common development tasks.</p>
+      <p>Building GalaxyEggbertCNA and exploring the world/terrain pipeline.</p>
     </a>
     <a class="card" href="development/known-issues.html">
       <h3>&#128679; Known Issues</h3>
-      <p>TODO items, limitations, and incomplete features.</p>
+      <p>What's not implemented yet, and the E3D-MIG task roadmap.</p>
     </a>
   </div>
 
   <h2>Technology Stack</h2>
   <table>
     <tr><th>Component</th><th>Technology</th></tr>
-    <tr><td>Language</td><td>C++23</td></tr>
-    <tr><td>Engine (primary)</td><td>Urho3D API via U3D community fork</td></tr>
-    <tr><td>Engine (future)</td><td>Nova3D (Robert Vokac's Urho3D fork)</td></tr>
-    <tr><td>Build system</td><td>CMake ≥ 3.21</td></tr>
-    <tr><td>Testing</td><td>GoogleTest (54 unit tests)</td></tr>
-    <tr><td>Documentation</td><td>Doxygen (auto-generated) + this site</td></tr>
-    <tr><td>Linux graphics</td><td>EasyGL (OpenGL) or SDL Renderer</td></tr>
-    <tr><td>Windows graphics</td><td>SDL Renderer</td></tr>
-    <tr><td>Audio</td><td>Urho3D built-in (SDL_mixer backend)</td></tr>
+    <tr><td>Language</td><td>C++ (CMake ≥ 3.21)</td></tr>
+    <tr><td>Game framework</td><td><strong>CNA</strong> — XNA-compatible, SDL3-based C++ framework (<code>../CNA</code>)</td></tr>
+    <tr><td>Helper library</td><td><strong>Easy3D</strong> — cameras, texture atlas, cube/billboard batching (<code>../easy-3d</code>)</td></tr>
+    <tr><td>Reference implementation</td><td><code>GalaxyEggbertSimple3D</code> — built on Simple3D/U3D, the currently-playable target</td></tr>
+    <tr><td>Reference game</td><td><code>mobile-eggbert</code> — read-only C++ port of the original Speedy Blupi; source of assets and behavioral truth</td></tr>
+    <tr><td>Testing</td><td>GoogleTest (world/voxel data model)</td></tr>
+    <tr><td>Graphics backend (CNA, Linux default)</td><td>EasyGL (OpenGL); SDL Renderer elsewhere</td></tr>
   </table>
 
-  <h2>Current Status (Phase 27)</h2>
+  <h2>GalaxyEggbertCNA Status (2026-07-04)</h2>
   <table>
     <tr><th>Feature</th><th>Status</th></tr>
-    <tr><td>Voxel world model (World/Chunk/Block)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>World loading (.vwr and .txt formats)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Terrain rendering (UV-mapped block faces)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Blupi billboard sprite + animation</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Physics: gravity, jump, AABB collision</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Enemies and collectibles (partial)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>HUD: lives, treasures, keys, shield</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Audio: 93 WAV channels</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Save system (640-byte binary)</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>5 worlds with progression</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Linux + Windows builds</td><td><span class="badge badge-done">Done</span></td></tr>
-    <tr><td>Vehicles (helicopter, jeep, skateboard)</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Animated 3D Blupi model</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Web (Emscripten) build</td><td><span class="badge badge-planned">Planned</span></td></tr>
-    <tr><td>Android build</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>CMake build (<code>GALAXY_EGGBERT_BUILD_CNA=ON</code>)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Load a genuinely 3D, hand-authored <code>.vwr</code> world</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Textured terrain rendering (one cube per non-air block)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Animated tiles (lava/crusher/saw/spike/water/fan/marine/temp, 6 fps)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Invisible collision-only Blupi movement (gravity, step-up, jump)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Blupi rendered as a sprite/billboard</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>HUD</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Sound</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Real gameplay (hazards, enemies, pickups, exit, save/load)</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Chunk-radius world streaming / face culling</td><td><span class="badge badge-planned">Planned</span></td></tr>
   </table>
+  <p>Full task-by-task roadmap: <a href="development/known-issues.html">Known Issues</a>.</p>
 
   <h2>How to Open This Documentation</h2>
   <p>
-    This is a static website — no server required. Open <code>src/index.html</code> directly in any modern browser.
+    This is a static website — no server required. Open <code>index.html</code> directly in any modern browser.
     All links use relative paths, so the site works from any local directory or when hosted on GitHub Pages.
   </p>
 

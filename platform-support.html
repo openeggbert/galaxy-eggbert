@@ -53,93 +53,35 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Platform Support</div>
   <h1>Platform Support</h1>
-  <p class="subtitle">What platforms are supported, which engine backend is used, and current status.</p>
+  <p class="subtitle">What platforms GalaxyEggbertCNA targets today.</p>
 
   <h2>Summary</h2>
   <table>
-    <tr><th>Platform</th><th>Engine</th><th>Graphics</th><th>Status</th></tr>
-    <tr><td>Linux x86-64</td><td>U3D</td><td>OpenGL (EasyGL or SDL Renderer)</td><td><span class="badge badge-done">Working</span></td></tr>
-    <tr><td>Windows x86-64</td><td>U3D (MinGW cross)</td><td>SDL Renderer</td><td><span class="badge badge-done">Working</span></td></tr>
-    <tr><td>Web (Emscripten)</td><td>Nova3D</td><td>SDL Renderer (WebGL)</td><td><span class="badge badge-planned">Planned — U3D path blocked</span></td></tr>
-    <tr><td>Android</td><td>Nova3D</td><td>SDL Renderer</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><th>Platform</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>Linux x86-64</td><td><span class="badge badge-done">Working</span></td><td>Primary development platform; CNA graphics backend defaults to EasyGL (OpenGL)</td></tr>
+    <tr><td>Windows x86-64</td><td><span class="badge badge-wip">Untested recently</span></td><td>MinGW cross-compile toolchain exists (<code>cmake/toolchains/mingw-w64.cmake</code>); CNA backend elsewhere defaults to SDL Renderer</td></tr>
+    <tr><td>Web (Emscripten)</td><td><span class="badge badge-planned">Not attempted for CNA</span></td><td>Asset-copy step explicitly skips when <code>EMSCRIPTEN</code> is set, implying future support, but no build has been attempted</td></tr>
+    <tr><td>Android</td><td><span class="badge badge-planned">Not attempted for CNA</span></td><td>Asset-copy step explicitly skips when <code>ANDROID</code> is set; a separate <code>android/</code> directory and <code>ANDROID.md</code> exist but are not confirmed to cover <code>GalaxyEggbertCNA</code></td></tr>
   </table>
 
-  <h2>Linux</h2>
-  <p>
-    Primary development platform. Two graphics backend options:
-  </p>
-  <ul>
-    <li><strong>EasyGL</strong> (<code>-DCNA_BACKEND_EASY_GL=ON</code>) — preferred for development</li>
-    <li><strong>SDL Renderer</strong> (<code>-DCNA_BACKEND_SDL_RENDERER=ON</code>) — alternative</li>
-  </ul>
-  <p>
-    The U3D engine must be pre-built. A pre-built binary is expected at
-    <code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code>
-    or at the path specified by <code>-DU3D_HOME=</code>.
-  </p>
-  <p>
-    The executable links against: <code>libUrho3D.a</code>, <code>GL</code>, <code>dl</code>,
-    <code>m</code>, <code>rt</code>, <code>pthread</code>.
-  </p>
-
-  <h2>Windows</h2>
-  <p>
-    Supported via cross-compilation from Linux using MinGW-w64 or natively on Windows.
-    The Windows build uses the SDL Renderer backend.
-    The resulting binary is a PE32+ x86-64 executable, statically linked against
-    <code>libgcc</code> and <code>libstdc++</code>.
-  </p>
-  <p>Windows system libraries linked: <code>opengl32</code>, <code>gdi32</code>, <code>winmm</code>,
-     <code>imm32</code>, <code>ole32</code>, <code>oleaut32</code>, <code>setupapi</code>,
-     <code>version</code>, <code>uuid</code>, <code>ws2_32</code>, <code>iphlpapi</code>.</p>
-  <pre><code># Cross-build from Linux
-cmake -S . -B build-windows \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-  -DGALAXY_EGGBERT_ENGINE=U3D \
-  -DU3D_HOME=/path/to/U3D/build-windows</code></pre>
-  <p>The toolchain file is at <code>cmake/toolchains/mingw-w64.cmake</code>.</p>
-
-  <h2>Web (Emscripten)</h2>
-  <div class="warn">
-    <strong>U3D Not Supported on Web</strong>
-    The CMakeLists.txt has a <code>FATAL_ERROR</code> guard for U3D + Emscripten:
-    the U3D engine backend cannot be built for the Web target.
-    Web builds require <code>-DGALAXY_EGGBERT_ENGINE=NOVA3D</code>.
+  <div class="note">
+    <strong>Simple3D vs CNA</strong>
+    <code>GalaxyEggbertSimple3D</code> (the currently-playable reference target) has separately
+    been built for Linux and Windows; its Android/Web builds are noted in <code>NEXT.md</code> as
+    "untested since the last engine change." <code>GalaxyEggbertCNA</code> is a newer, desktop-only
+    effort so far — do not assume its platform matrix mirrors Simple3D's.
   </div>
-  <p>
-    The Nova3D + Emscripten path uses SDL Renderer with WebGL.
-    The Web build uses <code>emscripten_set_main_loop</code> (via <code>requestAnimationFrame</code>)
-    instead of a busy loop. Save data is persisted in IndexedDB via IDBFS.
-  </p>
-  <p>Generated files: <code>GalaxyEggbert.html</code>, <code>GalaxyEggbert.js</code>,
-     <code>GalaxyEggbert.wasm</code>, <code>GalaxyEggbert.data</code>.</p>
-  <p>Emscripten link options include: memory growth, 128 MB initial heap, filesystem exports,
-     IDBFS, and preloaded asset bundle.</p>
 
-  <h2>Android</h2>
-  <div class="warn">
-    <strong>Android Not Implemented</strong>
-    Android support is planned via the Nova3D engine backend.
-    The <code>android/</code> directory contains a Gradle project skeleton.
-    The CMakeLists.txt has a <code>FATAL_ERROR</code> guard for U3D + Android.
-    On Android, the build target is a shared library named <code>main</code> (required by SDLActivity).
-  </div>
-  <p>Android-specific CMake notes (from <code>CMakeLists.txt</code>):</p>
-  <ul>
-    <li>Target is <code>add_library(main SHARED …)</code> instead of <code>add_executable</code></li>
-    <li>Android and Emscripten force SDL_RENDERER backend for Nova3D</li>
-    <li>Additional link libraries: <code>android</code>, <code>log</code></li>
-  </ul>
-
-  <h2>Platform-Specific Code</h2>
+  <h2>No Engine-Difference #ifdef Guards</h2>
   <p>
-    Galaxy Eggbert contains <strong>no platform-specific <code>#ifdef</code> guards</strong> in C++ source.
-    Platform differences are handled entirely by:
+    Per the project's direction-lock rules, neither <code>GalaxyEggbertSimple3D</code> nor
+    <code>GalaxyEggbertCNA</code> uses <code>#ifdef</code> guards to paper over engine
+    differences — each target speaks its own API (Simple3D, or CNA+Easy3D) directly. If a backend
+    beneath either is missing a feature, that is a problem for the sub-repo (<code>simple-3d</code>
+    or <code>CNA</code>/<code>easy-3d</code>), not something to work around inside galaxy-eggbert.
+    Platform differences that do exist are resolved entirely by CMake (<code>if(ANDROID)</code>,
+    <code>if(EMSCRIPTEN)</code>, <code>if(WIN32)</code>, …).
   </p>
-  <ul>
-    <li>CMake conditions (<code>if(ANDROID)</code>, <code>if(EMSCRIPTEN)</code>, <code>if(WIN32)</code>, etc.)</li>
-    <li>Urho3D engine API abstractions</li>
-  </ul>
 
   <div class="page-nav">
     <a href="configuration.html">

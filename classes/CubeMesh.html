@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easy3D::CubeMesh — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Easy3D::CubeMesh</div>
+  <h1>Easy3D::CubeMesh</h1>
+  <p class="subtitle">CPU-side vertex/index builder — turns a CubeBatch into GPU-ready arrays.</p>
+
+  <h2>Overview</h2>
+  <p>
+    Lives in the sibling <code>../easy-3d</code> repository (namespace <code>Easy3D</code>), not in
+    galaxy-eggbert itself — added under task <code>E3D-MIG-051</code> specifically because this is
+    generic 3D-batching plumbing with zero Eggbert-specific knowledge, matching Easy3D's stated
+    role as a small helper library beside CNA.
+  </p>
+  <p>Header: <code>include/Easy3D/CubeMesh.hpp</code>. Implementation: <code>src/CubeMesh.cpp</code> (in <code>../easy-3d</code>).</p>
+
+  <h2>API (as used by GalaxyEggbertCNA)</h2>
+  <pre><code>namespace Easy3D {
+
+struct CubeVertex { /* position, normal, UV */ };
+
+// Converts a CubeBatch (CPU-side queue of cube placements + UVs)
+// into flat vertex/index arrays: 24 vertices + 36 indices per cube.
+struct CubeMeshData {
+    std::vector&lt;CubeVertex&gt; vertices;
+    std::vector&lt;uint32_t&gt;   indices;
+};
+CubeMeshData BuildCubeMesh(const CubeBatch&amp; batch);
+
+}</code></pre>
+
+  <h2>Used By</h2>
+  <p>
+    <a href="GETerrainRenderer.html">GETerrainRenderer</a> builds a <code>CubeBatch</code> from
+    non-air world blocks and calls <code>BuildCubeMesh</code>, then hands the result to
+    <a href="CubeMeshRenderer.html">CubeMeshRenderer</a> for upload/draw.
+  </p>
+
+  <h2>Modification Policy</h2>
+  <div class="warn">
+    <strong>Requires approval</strong>
+    Modifying <code>../easy-3d</code> (including this class) requires explicit, per-change user
+    approval — it is not blanket-authorized just because galaxy-eggbert depends on it.
+  </div>
+
+  <div class="page-nav">
+    <a href="VoxelConfig.html">← VoxelConfig</a>
+    <a href="CubeMeshRenderer.html">Easy3D::CubeMeshRenderer →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

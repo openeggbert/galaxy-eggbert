@@ -53,129 +53,76 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Project Structure</div>
   <h1>Project Structure</h1>
-  <p class="subtitle">All important directories and files explained.</p>
+  <p class="subtitle">All important directories and files, as they exist today.</p>
 
   <h2>Root Layout</h2>
   <pre><code>galaxy-eggbert/
-├── CMakeLists.txt          ← main build configuration
-├── Doxyfile                ← Doxygen configuration template
-├── README.md               ← build instructions
-├── CLAUDE.md               ← developer guidelines (for Claude Code)
-├── NEXT.md                 ← development roadmap and phase log
-├── ANDROID.md              ← Android build notes
-├── WINDOWS.md              ← Windows-specific notes
-├── U3D_SUPPORT_PLAN.md     ← U3D engine integration plan
-├── World Format.md         ← .vwr file format specification
+├── CMakeLists.txt          ← main build configuration (both targets)
+├── CLAUDE.md                ← direction lock + developer guidelines
+├── NEXT.md                  ← current status / roadmap
+├── plan.md                  ← full task list, incl. E3D-MIG-* (CNA migration)
+├── easy3d.md                ← full Easy3D design analysis
+├── README.md
+├── World Format.md           ← .vwr binary format spec
 ├── LICENSE
 │
-├── src/GalaxyEggbert/      ← C++ game source (engine-dependent)
-├── include/GalaxyEggbert/  ← C++ public headers (engine-agnostic)
-├── tests/GalaxyEggbert/    ← GoogleTest unit tests
+├── include/GalaxyEggbert/    ← engine-agnostic public headers
+│   ├── Worlds/                 ← World, Chunk, Block, BlockMetadata, VoxelConfig, BinaryIO, BitPacking
+│   ├── def/                    ← gameplay enums (BlupiAction, ObjectType, SoundChannel, …)
+│   ├── BlockTypes.hpp, Def.hpp, GameConstants.hpp
 │
-├── Content/                ← game assets (committed in repo)
-│   ├── backgrounds/        ← sky/menu PNGs (decor000.png … decor031.png, etc.)
-│   ├── icons/              ← sprite sheets
-│   └── sounds/             ← WAV audio files
+├── src/GalaxyEggbert/Worlds/  ← implementation of the engine-agnostic world/voxel model
 │
-├── worlds/                 ← level data (committed in repo)
-│   ├── world001.txt        ← level 1 (mobile-eggbert format)
-│   └── … world005.txt
+├── src/GalaxyEggbertSimple3D/ ← current playable reference target (Simple3D/U3D)
+│   └── Game/                    GEBlupiController, GEBridgeSystem, GECameraRig, GEDecorSystem,
+│                                 GEExploSystem, GEHud, GESound, GETerrainRenderer, GEWorldRuntime
 │
-├── cmake/
-│   ├── toolchains/
-│   │   └── mingw-w64.cmake ← MinGW cross-compilation toolchain
-│   └── web/
-│       └── pre.js          ← Emscripten pre-JS (IDBFS setup)
+├── src/GalaxyEggbertCNA/      ← long-term target (this documentation's focus)
+│   ├── main.cpp
+│   ├── GalaxyEggbertCnaGame.hpp/.cpp
+│   └── Game/                    GEBlupiController, GETerrainRenderer, GETileAtlas, GEWorldRuntime
 │
-├── android/                ← Android Gradle project (placeholder)
+├── mobile-eggbert-reference/  ← factual catalog of mobile-eggbert's 2D content (docs + images/)
 │
-├── cmake-build-debug/      ← generated; CLion debug build
-├── cmake-build-u3d/        ← generated; U3D Linux build
-└── build-windows/          ← generated; MinGW Windows build</code></pre>
+├── tools/                     ← GenerateSampleWorld3D, VerifyBlupiMovement (engine-agnostic)
+├── worlds3d/                  ← hand-authored 3D .vwr worlds (world001.vwr)
+├── worlds/                    ← mobile-eggbert-format .txt sample levels
+├── Content/                   ← copied game assets (icons/, sounds/, backgrounds/)
+├── tests/GalaxyEggbert/Worlds/ ← GoogleTest unit tests for the Worlds data model
+│
+├── cmake/toolchains/mingw-w64.cmake
+├── build-cna/                 ← generated; GalaxyEggbertCNA build
+└── cmake-build-debug/          ← generated; GalaxyEggbertSimple3D build</code></pre>
 
-  <h2>Source Directory (<code>src/GalaxyEggbert/</code>)</h2>
+  <h2><code>src/GalaxyEggbertCNA/</code> Files</h2>
   <table>
     <tr><th>File</th><th>Role</th></tr>
-    <tr><td><code>Program.cpp</code></td><td>Application entry point — <code>URHO3D_DEFINE_APPLICATION_MAIN</code></td></tr>
-    <tr><td><code>GalaxyEggbertApp.hpp/.cpp</code></td><td>Urho3D Application subclass — lifecycle, event subscription</td></tr>
-    <tr><td><code>GEEngine.hpp</code></td><td>Master Urho3D include: <code>#include &lt;Urho3D/Urho3DAll.h&gt;</code></td></tr>
-    <tr><td><code>Game/GalaxyEggbertGame.hpp/.cpp</code></td><td>Main game coordinator — scene, world, all subsystems</td></tr>
-    <tr><td><code>Game/Blupi.hpp/.cpp</code></td><td>Player character — physics, input, AABB collision, animation</td></tr>
-    <tr><td><code>Game/Camera.hpp/.cpp</code></td><td>3rd-person orbit camera</td></tr>
-    <tr><td><code>Game/Decor.hpp/.cpp</code></td><td>Object pool — enemies, collectibles, platforms</td></tr>
-    <tr><td><code>Game/GameData.hpp/.cpp</code></td><td>640-byte save file — mobile-eggbert compatible</td></tr>
-    <tr><td><code>Game/HUD.hpp/.cpp</code></td><td>2D heads-up display — lives, keys, shield, gauge</td></tr>
-    <tr><td><code>Game/ObjectNode.hpp/.cpp</code></td><td>Urho3D scene node for one game object (billboard)</td></tr>
-    <tr><td><code>Game/PhaseManager.hpp/.cpp</code></td><td>GamePhase state machine + overlay background</td></tr>
-    <tr><td><code>Game/SoundManager.hpp/.cpp</code></td><td>93-channel WAV audio playback</td></tr>
-    <tr><td><code>Game/Tables.hpp/.cpp</code></td><td>Animation frame tables from mobile-eggbert</td></tr>
-    <tr><td><code>Worlds/BinaryIO.cpp</code></td><td>World file binary read/write helpers</td></tr>
-    <tr><td><code>Worlds/BitPacking.cpp</code></td><td>Bit-packing logic for palette indices</td></tr>
-    <tr><td><code>Worlds/Chunk.cpp</code></td><td><code>Chunk</code> class implementation</td></tr>
-    <tr><td><code>Worlds/World.cpp</code></td><td><code>World</code> class implementation</td></tr>
-    <tr><td><code>Worlds/test_worlds.cpp</code></td><td>Test world generation utilities</td></tr>
+    <tr><td><code>main.cpp</code></td><td>Constructs and runs <code>GalaxyEggbertCnaGame</code></td></tr>
+    <tr><td><code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>CNA <code>Game</code> subclass — LoadContent/Update/Draw</td></tr>
+    <tr><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>World loading (.vwr, secondary .txt), tile-animation phase</td></tr>
+    <tr><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>Builds static + animated cube meshes from world blocks</td></tr>
+    <tr><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → UV rect mapping into <code>object-m.png</code></td></tr>
+    <tr><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Invisible collision-only player movement</td></tr>
   </table>
 
-  <h2>Public Headers (<code>include/GalaxyEggbert/</code>)</h2>
-  <p>These headers are used by tests and may be included independently of the engine.</p>
+  <h2><code>include/GalaxyEggbert/Worlds/</code> Files (engine-agnostic)</h2>
   <table>
     <tr><th>File</th><th>Role</th></tr>
-    <tr><td><code>BlockTypes.hpp</code></td><td>Block type ID constants and UV helpers</td></tr>
-    <tr><td><code>GameConstants.hpp</code></td><td>MAXCELX/Y, LXIMAGE/LYIMAGE, sprite cell sizes</td></tr>
-    <tr><td><code>Def.hpp</code></td><td>Master include for all game definitions</td></tr>
-    <tr><td><code>def/BlupiAction.hpp</code></td><td>Player animation state enum</td></tr>
-    <tr><td><code>def/GamePhase.hpp</code></td><td>Game screen/phase enum</td></tr>
-    <tr><td><code>def/ObjectType.hpp</code></td><td>Object type enum (matches level file format)</td></tr>
-    <tr><td><code>def/SoundChannel.hpp</code></td><td>Sound slot index enum (0–92)</td></tr>
-    <tr><td><code>def/SpriteChannel.hpp</code></td><td>Sprite channel enum (Needs verification)</td></tr>
-    <tr><td><code>def/DoorKeyFlags.hpp</code></td><td>Door/key flag bitfield</td></tr>
-    <tr><td><code>def/Direction.hpp</code></td><td>Direction enum</td></tr>
-    <tr><td><code>def/GameSpeed.hpp</code></td><td>Game speed enum</td></tr>
-    <tr><td><code>def/DecorAction.hpp</code></td><td>Camera shake types</td></tr>
-    <tr><td><code>def/KeyPressFlags.hpp</code></td><td>Key press flags</td></tr>
-    <tr><td><code>def/SecretPower.hpp</code></td><td>Secret power enum</td></tr>
-    <tr><td><code>def/ContinueMissionType.hpp</code></td><td>Mission continuation type</td></tr>
-    <tr><td><code>Worlds/Block.hpp</code></td><td>Block value type and make/access helpers</td></tr>
-    <tr><td><code>Worlds/Chunk.hpp</code></td><td>Chunk class (palette-compressed 10³ voxel container)</td></tr>
-    <tr><td><code>Worlds/World.hpp</code></td><td>World class (10³ chunks, save/load API)</td></tr>
-    <tr><td><code>Worlds/VoxelConfig.hpp</code></td><td>ChunkSize=10, MaxPaletteEntries, etc.</td></tr>
-    <tr><td><code>Worlds/BitPacking.hpp</code></td><td>Bit-packing interface</td></tr>
-    <tr><td><code>Worlds/BinaryIO.hpp</code></td><td>Binary I/O helpers interface</td></tr>
-    <tr><td><code>Worlds/BlockMetadata.hpp</code></td><td>Block metadata types</td></tr>
-    <tr><td><code>Worlds/test_worlds.hpp</code></td><td>Test world generation interface</td></tr>
+    <tr><td><code>Block.hpp</code></td><td>16-bit packed voxel value: 12-bit type + 4-bit metadata</td></tr>
+    <tr><td><code>BlockMetadata.hpp</code></td><td>Bit-level accessor wrapper around the 4-bit metadata nibble</td></tr>
+    <tr><td><code>Chunk.hpp</code></td><td>10×10×10 palette-compressed voxel container</td></tr>
+    <tr><td><code>World.hpp</code></td><td>10×10×10 grid of chunks (100³ blocks); save/load API</td></tr>
+    <tr><td><code>VoxelConfig.hpp</code></td><td>Compile-time constants: ChunkSize=10, MaxPaletteEntries=256, etc.</td></tr>
+    <tr><td><code>BinaryIO.hpp/.cpp</code></td><td>Little-endian read/write helpers, magic-signature I/O</td></tr>
+    <tr><td><code>BitPacking.hpp/.cpp</code></td><td>Palette index bit-packing</td></tr>
+    <tr><td><code>test_worlds.hpp</code></td><td>Test world generation utilities</td></tr>
   </table>
 
-  <h2>Tests (<code>tests/GalaxyEggbert/Worlds/</code>)</h2>
-  <table>
-    <tr><th>File</th><th>Tests</th></tr>
-    <tr><td><code>BlockTests.cpp</code></td><td>Block encoding/decoding</td></tr>
-    <tr><td><code>BitPackingTests.cpp</code></td><td>Bit-packing correctness</td></tr>
-    <tr><td><code>ChunkTests.cpp</code></td><td>Chunk palette, get/set, empty checks</td></tr>
-    <tr><td><code>WorldTests.cpp</code></td><td>World get/set, save/load round-trips</td></tr>
-    <tr><td><code>BlockMetadataTest.cpp</code></td><td>Sparse block metadata</td></tr>
-  </table>
-  <p>Total: 54 tests. No engine dependency — can be built and run independently.</p>
+  <h2><code>include/GalaxyEggbert/def/</code> Enums</h2>
+  <p>All 12 headers are aggregated by <code>include/GalaxyEggbert/Def.hpp</code>: <code>BlupiAction</code>, <code>ContinueMissionType</code>, <code>DecorAction</code>, <code>Direction</code>, <code>DoorKeyFlags</code>, <code>GamePhase</code>, <code>GameSpeed</code>, <code>KeyPressFlags</code>, <code>ObjectType</code>, <code>SecretPower</code>, <code>SoundChannel</code>, <code>SpriteChannel</code>.</p>
 
-  <h2>Assets (<code>Content/</code>)</h2>
-  <table>
-    <tr><th>Directory</th><th>Contents</th></tr>
-    <tr><td><code>Content/backgrounds/</code></td><td>~30 sky/background PNGs (decor000.png…), menu screens (init.png, pause.png, win.png, lost.png, setup.png, wait.png, trial.png, gear.png, speedyblupi.png, blupiyoupie.png)</td></tr>
-    <tr><td><code>Content/icons/</code></td><td>blupi.png, element.png, explo.png, object-m.png, button.png, text.png, jauge.png, pad.png, blupi1.png</td></tr>
-    <tr><td><code>Content/sounds/</code></td><td>sound000.wav … sound092.wav (93 WAV files)</td></tr>
-  </table>
-
-  <h2>Build Directories</h2>
-  <div class="warn">
-    <strong>Generated</strong>
-    The following directories are generated by CMake and are not part of the source tree. Do not commit them.
-  </div>
-  <table>
-    <tr><th>Directory</th><th>Purpose</th></tr>
-    <tr><td><code>cmake-build-debug/</code></td><td>CLion IDE debug build</td></tr>
-    <tr><td><code>cmake-build-u3d/</code></td><td>U3D engine Linux build</td></tr>
-    <tr><td><code>cmake-build-web/</code></td><td>Emscripten Web build</td></tr>
-    <tr><td><code>build-windows/</code></td><td>MinGW Windows cross-build</td></tr>
-  </table>
+  <h2>Tests</h2>
+  <p><code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code> data model — no CNA, Easy3D, or Simple3D dependency.</p>
 
   <div class="page-nav">
     <a href="architecture.html">

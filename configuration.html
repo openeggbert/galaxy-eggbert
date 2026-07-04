@@ -53,58 +53,27 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Configuration</div>
   <h1>Configuration</h1>
-  <p class="subtitle">Build-time CMake options and runtime engine settings.</p>
+  <p class="subtitle">Build-time CMake options — there is no runtime configuration file.</p>
 
   <h2>Build-Time CMake Options</h2>
   <table>
     <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
-    <tr><td><code>GALAXY_EGGBERT_ENGINE</code></td><td><code>U3D</code></td><td>Engine backend: <code>U3D</code> or <code>NOVA3D</code></td></tr>
-    <tr><td><code>U3D_HOME</code></td><td>(empty)</td><td>Override path to pre-built U3D library. Falls back to <code>URHO3D_HOME</code> env var, then default hardcoded path.</td></tr>
-    <tr><td><code>BUILD_TESTING</code></td><td><code>ON</code></td><td>Build GoogleTest unit tests (disabled for Android/Emscripten)</td></tr>
-    <tr><td><code>GALAXY_EGGBERT_GRAPHICS_BACKEND</code></td><td><code>EASYGL</code></td><td>Nova3D only: graphics backend (<code>SDL_RENDERER</code>, <code>EASYGL</code>, <code>BGFX</code>, <code>VULKAN</code>)</td></tr>
-    <tr><td><code>CNA_BACKEND_SDL_RENDERER</code></td><td>OFF</td><td>Nova3D: enable SDL Renderer backend</td></tr>
-    <tr><td><code>CNA_BACKEND_EASY_GL</code></td><td>OFF</td><td>Nova3D: enable EasyGL OpenGL backend</td></tr>
-    <tr><td><code>CNA_BACKEND_BGFX</code></td><td>OFF</td><td>Nova3D: enable BGFX backend (experimental)</td></tr>
-    <tr><td><code>CNA_WINDOWS_DEPENDENCIES_ROOT</code></td><td>(none)</td><td>Windows cross-build: root directory for SDL3 Windows libs</td></tr>
-    <tr><td><code>CMAKE_TOOLCHAIN_FILE</code></td><td>(none)</td><td>Toolchain file for cross-compilation</td></tr>
-    <tr><td><code>CMAKE_BUILD_TYPE</code></td><td>(none)</td><td>Standard CMake build type: Debug, Release, RelWithDebInfo</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>OFF</code></td><td>Build the <code>GalaxyEggbertCNA</code> target (opt-in)</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_SIMPLE3D</code></td><td><code>ON</code></td><td>Build the <code>GalaxyEggbertSimple3D</code> reference target</td></tr>
+    <tr><td><code>CNA_HOME</code></td><td><code>../cna</code></td><td>Path to the sibling CNA repository</td></tr>
+    <tr><td><code>EASY3D_HOME</code></td><td><code>../easy-3d</code></td><td>Path to the sibling Easy3D repository</td></tr>
+    <tr><td><code>MOBILE_EGGBERT_HOME</code></td><td><code>../mobile-eggbert</code></td><td>Path to the sibling mobile-eggbert repository (asset source)</td></tr>
+    <tr><td><code>BUILD_TESTING</code></td><td><code>ON</code></td><td>Build GoogleTest unit tests for the Worlds data model</td></tr>
+    <tr><td><code>CMAKE_TOOLCHAIN_FILE</code></td><td>(none)</td><td>e.g. <code>cmake/toolchains/mingw-w64.cmake</code> for Windows cross-compilation</td></tr>
   </table>
 
-  <h2>Runtime Window Configuration</h2>
+  <h2>Runtime Configuration</h2>
   <p>
-    Set in <code>GalaxyEggbertApp::Setup()</code> (<code>src/GalaxyEggbert/GalaxyEggbertApp.cpp:9</code>).
-    These are hard-coded — there is no runtime configuration file:
+    There is no configuration file, no settings screen, and no persisted preferences in
+    <code>GalaxyEggbertCNA</code> today. The window title ("Galaxy Eggbert (CNA)"), default world
+    (<code>worlds3d/world001.vwr</code>), and texture path (<code>Content/icons/object-m.png</code>)
+    are hard-coded in <code>GalaxyEggbertCnaGame::LoadContent()</code>.
   </p>
-  <pre><code>engineParameters_[EP_WINDOW_TITLE]   = "Galaxy Eggbert";
-engineParameters_[EP_FULL_SCREEN]    = false;
-engineParameters_[EP_WINDOW_WIDTH]   = 1280;
-engineParameters_[EP_WINDOW_HEIGHT]  = 720;
-engineParameters_[EP_RESOURCE_PATHS] = "Data;CoreData;Content";
-engineParameters_[EP_LOG_NAME]       = "GalaxyEggbert.log";
-engineParameters_[EP_HEADLESS]       = false;</code></pre>
-
-  <h2>In-Game Settings (persisted in save file)</h2>
-  <table>
-    <tr><th>Setting</th><th>Save byte</th><th>Default</th><th>How to change</th></tr>
-    <tr><td>Sound on/off</td><td><code>data_[3]</code></td><td>ON (1)</td><td>S key on settings screen</td></tr>
-    <tr><td>Selected gamer slot</td><td><code>data_[2]</code></td><td>0</td><td>1/2/3 on gamer-select</td></tr>
-    <tr><td>Jump right</td><td><code>data_[4]</code></td><td>1</td><td>Not yet exposed in UI</td></tr>
-    <tr><td>Auto zoom</td><td><code>data_[5]</code></td><td>1</td><td>Not yet exposed in UI</td></tr>
-    <tr><td>Accel active</td><td><code>data_[6]</code></td><td>0</td><td>Not yet exposed in UI (accelerometer for Android)</td></tr>
-    <tr><td>Accel sensitivity</td><td><code>data_[7]</code></td><td>50</td><td>Not yet exposed in UI</td></tr>
-  </table>
-
-  <h2>U3D Default Path</h2>
-  <p>
-    When <code>U3D_HOME</code> is not set and <code>URHO3D_HOME</code> env var is unset,
-    CMake defaults to:
-  </p>
-  <pre><code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code></pre>
-  <div class="warn">
-    <strong>Developer-specific path</strong>
-    This is a developer-specific hardcoded path. When working on a different machine,
-    always provide <code>-DU3D_HOME=</code> or set the <code>URHO3D_HOME</code> environment variable.
-  </div>
 
   <div class="page-nav">
     <a href="save-system.html">

@@ -53,78 +53,30 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Save System</div>
   <h1>Save System</h1>
-  <p class="subtitle">640-byte binary save format, compatible with mobile-eggbert.</p>
+  <p class="subtitle">Not implemented yet in GalaxyEggbertCNA; an open design question for CNA specifically.</p>
 
-  <h2>Overview</h2>
+  <div class="warn">
+    <strong>Not implemented, and not fully decided</strong>
+    <code>GalaxyEggbertCNA</code> has no save/load code at all — there is no lives count, no world
+    progress, and nothing to persist yet since there's no real gameplay. Even for
+    <code>GalaxyEggbertSimple3D</code> (which does implement save/load), whether to reuse
+    mobile-eggbert's exact byte-level save format for cross-compatibility is documented in
+    <code>CLAUDE.md</code> as an open question, not a default — see <code>easy3d.md</code> §12 Q7.
+  </div>
+
+  <h2>What mobile-eggbert's Format Looks Like (reference only)</h2>
   <p>
-    Galaxy Eggbert uses the same persistent save-data binary format as the original Speedy Blupi game
-    and the mobile-eggbert C++ port. The format is a 640-byte flat binary array.
-    Files written by Galaxy Eggbert can be read by mobile-eggbert and vice versa.
+    mobile-eggbert's save data (<code>GameData.cpp</code>) is a flat binary layout covering per-slot
+    lives, last-world-reached, and door-open flags across 3 gamer slots. It is listed in
+    <code>CLAUDE.md</code>'s reuse table as <strong>reference only</strong> — reusing its exact byte
+    layout for save compatibility requires explicit user approval, it is not assumed.
   </p>
 
-  <h2>Save File Location</h2>
-  <table>
-    <tr><th>Platform</th><th>Path</th></tr>
-    <tr><td>Linux</td><td><code>~/Documents/GalaxyEggbert/save.dat</code> (Needs verification: exact path depends on Urho3D's <code>GetUserDocumentsDir()</code>)</td></tr>
-    <tr><td>Windows</td><td><code>%USERPROFILE%\Documents\GalaxyEggbert\save.dat</code></td></tr>
-    <tr><td>Web</td><td>IndexedDB at <code>/save/.cna_isolated_storage/SpeedyBlupi</code> (IDBFS)</td></tr>
-  </table>
-
-  <h2>Binary Layout</h2>
-  <pre><code>Offset   Size   Field
-[0]      1      version tag              (default 1)
-[1]      1      reserved                 (default 1)
-[2]      1      selectedGamer  0..2      (default 0)
-[3]      1      sounds         1=on      (default 1)
-[4]      1      jumpRight      1=right   (default 1)
-[5]      1      autoZoom       1=on      (default 1)
-[6]      1      accelActive    1=on      (default 0)
-[7]      1      accelSensitivity 0..100  (default 50)
-[8-9]    2      reserved
-
-[10 + g*210 .. +9]   per-gamer header for gamer slot g (g=0,1,2):
-  [+0]   1      nbVies (lives remaining, default 3)
-  [+1]   1      lastWorld (last world reached, default 1)
-  [+2..9] 8     reserved
-
-[10 + g*210 + 10 .. +209]   door states for gamer g:
-  200 bytes: door[0..199]  0=locked, 1=opened</code></pre>
-
-  <p>Total: 10 (header) + 3 × 210 (gamer slots) = 640 bytes.</p>
-
-  <h2>GameData Class</h2>
+  <h2>Roadmap</h2>
   <p>
-    <code>GameData</code> (<code>src/GalaxyEggbert/Game/GameData.hpp</code>) wraps the raw byte array
-    and provides typed accessors. The format offset constants are defined as <code>static constexpr int</code>
-    members.
-  </p>
-  <pre><code>GameData data;
-data.Read(savePath);           // load from file
-data.SetNbVies(lives_);        // write lives for current gamer
-data.SetLastWorld(world_);     // write world progress
-data.Write(savePath);          // flush to disk</code></pre>
-
-  <h2>When Save Is Written</h2>
-  <ul>
-    <li>On world win (<code>UpdateWin</code> → <code>AdvanceToNextWorld</code>)</li>
-    <li>On game over / Lost phase (<code>ResetLevel</code>)</li>
-    <li>On gamer select (<code>SelectGamer</code>)</li>
-    <li>On quit (<code>GalaxyEggbertGame::Stop</code>)</li>
-    <li>On sound toggle (settings screen)</li>
-    <li>On any respawn that deducts a life</li>
-  </ul>
-
-  <h2>When Save Is Read</h2>
-  <ul>
-    <li>At startup in <code>GalaxyEggbertGame::Start()</code></li>
-    <li>If the file does not exist or is the wrong size, all defaults are used and no error is thrown</li>
-  </ul>
-
-  <h2>Web Save (IDBFS)</h2>
-  <p>
-    On the Web build, Emscripten's <code>IDBFS</code> virtual filesystem is mounted at <code>/save</code>.
-    The save file is written to the IDBFS filesystem and synced to IndexedDB on every write and on page unload.
-    This is configured by the <code>cmake/web/pre.js</code> pre-JS file.
+    Per <code>plan.md</code>'s E3D-MIG-100…107 gameplay-porting tasks, save/load is sequenced after
+    core gameplay (pickups, hazards, enemy stomp, exit gate) is ported — with an explicit decision
+    point on save-format reuse before implementation begins.
   </p>
 
   <div class="page-nav">

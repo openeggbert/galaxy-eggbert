@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Adding a New Game Object — Galaxy Eggbert Docs</title>
+<title>Authoring a New .vwr World — Galaxy Eggbert Docs</title>
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -30,70 +30,67 @@
   <a href="../development/index.html">Development</a>
 </nav>
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Adding a New Game Object</div>
-  <h1>Tutorial: Adding a New Game Object</h1>
-  <p class="subtitle">Register a new ObjectType, map its sprite icon, and place it in a level.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Authoring a New .vwr World</div>
+  <h1>Tutorial: Authoring a New .vwr World</h1>
+  <p class="subtitle">Use GenerateSampleWorld3D as a template to build your own hand-authored 3D world.</p>
 
   <div class="warn">
-    <strong>ObjectType IDs are frozen.</strong> Values 0–203 are binary-identical to the original
-    mobile-eggbert level format and must not be renumbered. New objects must use IDs above 203
-    or reuse unused slots.
+    <strong>No automated converter</strong>
+    There is deliberately no tool that converts a flat mobile-eggbert <code>.txt</code> level into
+    a <code>.vwr</code> world — this was explicitly rejected as a direction. <code>.vwr</code>
+    worlds with real Y variation must be hand-authored in code, as shown below.
   </div>
 
-  <h2>Step 1 — Add the ObjectType Enum Value</h2>
-  <p>File: <code>include/GalaxyEggbert/def/ObjectType.hpp</code></p>
-  <pre><code>// After ObjectType203:
-ObjectType204 = 204,   // MyNewObject</code></pre>
-
-  <h2>Step 2 — Add an Icon Mapping in Decor::GetIcon()</h2>
-  <p>File: <code>src/GalaxyEggbert/Game/Decor.cpp</code></p>
-  <pre><code>case ObjectType204:
-    // element.png icon 42 — static
-    return 42;</code></pre>
+  <h2>Step 1 — Study the Existing Generator</h2>
   <p>
-    Icon indices reference the <code>element.png</code> sprite sheet
-    (600×1740 px, 60×60 tiles, 10 cols × 29 rows, 290 icons).
-    Choose an appropriate icon that visually represents your object.
-    If the object animates, return <code>baseIcon + (animPhase / frameDivisor) % frameCount</code>.
+    <code>tools/GenerateSampleWorld3D.cpp</code> is the only example today. It builds
+    <code>worlds3d/world001.vwr</code>: a ground floor, a 10-step ascending staircase, a raised
+    platform, a walled room with a doorway, and two pillars — using only
+    <code>GalaxyEggbert::Worlds::World::setBlock()</code> calls, then
+    <code>world.saveToFile(...)</code>.
   </p>
 
-  <h2>Step 3 — Add Contact Behaviour in Decor::Update()</h2>
-  <p>
-    In the per-object contact check inside <code>Decor::Update()</code>, handle your object type:
-  </p>
-  <pre><code>if (obj.type == ObjectType204 &amp;&amp; distance &lt; 0.85f) {
-    // e.g., treat it as a collectible:
-    collected_++;
-    obj.active = false;
-    obj.node-&gt;Remove();
+  <h2>Step 2 — Copy It as a Starting Point</h2>
+  <pre><code>#include "GalaxyEggbert/Worlds/World.hpp"
+#include "GalaxyEggbert/BlockTypes.hpp"
+using namespace GalaxyEggbert::Worlds;
+
+int main() {
+    World world;
+
+    // Ground floor
+    for (int x = 30; x &lt; 70; ++x)
+        for (int z = 30; z &lt; 70; ++z)
+            world.setBlock(x, 0, z, Block::make(BlockTypes::Ground));
+
+    // Add your own shapes here — staircases, platforms, rooms.
+
+    world.saveToFile("worlds3d/myworld.vwr");
+    return 0;
 }</code></pre>
 
-  <h2>Step 4 — Place the Object in a Level</h2>
-  <p>
-    In a mobile-eggbert <code>.txt</code> level file, add a <code>MoveObject</code> entry:
-  </p>
-  <pre><code>MoveObject
-   numObject=204
-   posStart=50.0 1.0 50.0
-   posEnd=50.0 1.0 50.0
-   speed=0.0
-   ...</code></pre>
-  <p>
-    Or call <code>Decor::PlaceObject()</code> directly from the demo world builder:
-  </p>
-  <pre><code>decor_-&gt;PlaceObject(ObjectType204, Vector3(50, 1, 50));</code></pre>
+  <h2>Step 3 — Add a CMake Tool Target</h2>
+  <p>Follow the existing <code>GenerateSampleWorld3D</code> target pattern in <code>CMakeLists.txt</code> — it is engine-agnostic and needs no CNA link.</p>
 
-  <h2>Step 5 — Build and Test</h2>
-  <pre><code>cmake --build cmake-build-debug --parallel
-cd cmake-build-debug/bin &amp;&amp; ./GalaxyEggbert</code></pre>
+  <h2>Step 4 — Generate and Point GalaxyEggbertCNA at It</h2>
+  <pre><code>cmake --build build-cna --target GenerateSampleWorld3D
+./build-cna/GenerateSampleWorld3D</code></pre>
   <p>
-    Navigate Blupi to the object. Verify it renders with the correct sprite and triggers
-    the expected behaviour on contact.
+    Then change the path in <code>GalaxyEggbertCnaGame::LoadContent()</code>
+    (<code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code>) to your new file, or
+    replace <code>world001.vwr</code> directly.
+  </p>
+
+  <h2>Step 5 — Verify Block Counts</h2>
+  <p>
+    Use <code>World::loadFromFile()</code> in a small test to round-trip your world and check its
+    non-air block count and Y range, the same way <code>world001.vwr</code>'s stats (2729 blocks,
+    Y range [0, 13]) were verified.
   </p>
 
   <div class="page-nav">
-    <a href="building.html">← Building the Game</a>
-    <a href="modifying-levels.html">Modifying a Level →</a>
+    <a href="building.html">← Building GalaxyEggbertCNA</a>
+    <a href="modifying-levels.html">Adding a Block Type →</a>
   </div>
 </main>
 </div>

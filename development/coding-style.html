@@ -30,61 +30,59 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Coding Style</div>
   <h1>Coding Style</h1>
-  <p class="subtitle">Rules and conventions from <code>CLAUDE.md</code> and the existing codebase.</p>
+  <p class="subtitle">Rules from CLAUDE.md's Current Direction Lock and the existing codebase.</p>
 
-  <h2>Language Standard</h2>
-  <p>C++23. Required features used: <code>std::expected</code>, <code>std::flat_map</code>, structured bindings, ranges. Compiler minimum: GCC 13 or Clang 17.</p>
-
-  <h2>No #ifdef Engine Guards</h2>
+  <h2>The Direction Lock (binding, not a suggestion)</h2>
   <div class="warn">
-    <strong>Critical rule:</strong> Do NOT add <code>#ifdef URHO3D_ENGINE</code>, <code>#ifdef U3D</code>,
-    <code>#ifdef NOVA3D</code>, or any engine-conditional code in C++ source files.
-    Engine selection is CMake's responsibility. All C++ code uses the unified Urho3D API.
+    <strong>Read this before touching engine-layer code</strong>
+    Full text: <a href="../architecture.html">Architecture</a>. In short: CNA is used directly (no
+    abstraction layer); Easy3D is a small helper beside it (must not hide CNA, must not become a
+    scene graph/ECS); <code>GalaxyEggbertSimple3D</code> stays as reference, not to be expanded;
+    <code>../mobile-eggbert</code> is read-only — its code/data requires explicit approval to reuse,
+    its assets do not.
   </div>
+
+  <h2>No <code>#ifdef</code> Engine Guards</h2>
   <p>
-    Source: <code>CLAUDE.md</code> — "no #ifdef engine guards in C++ source. Engine selection is
-    CMake's job."
+    Neither <code>GalaxyEggbertSimple3D</code> nor <code>GalaxyEggbertCNA</code> may use
+    <code>#ifdef</code> to paper over engine differences — each target speaks its own API
+    (Simple3D, or CNA+Easy3D) directly. If a backend is missing a feature, that's a problem for the
+    sub-repo (<code>simple-3d</code> or <code>CNA</code>/<code>easy-3d</code>), not something to
+    work around here.
   </p>
 
-  <h2>Naming Conventions</h2>
+  <h2>Naming Conventions (as used in src/GalaxyEggbertCNA/)</h2>
   <table>
     <tr><th>Element</th><th>Convention</th><th>Example</th></tr>
-    <tr><td>Classes</td><td>PascalCase</td><td><code>GalaxyEggbertGame</code></td></tr>
-    <tr><td>Methods</td><td>PascalCase</td><td><code>LoadWorld()</code></td></tr>
-    <tr><td>Private members</td><td>camelCase with trailing underscore</td><td><code>lives_</code>, <code>world_</code></td></tr>
-    <tr><td>Constants</td><td><code>kPascalCase</code></td><td><code>kGravity</code>, <code>kMaxObjects</code></td></tr>
+    <tr><td>Classes</td><td>PascalCase, <code>GE</code> prefix for CNA/Simple3D game classes</td><td><code>GEWorldRuntime</code>, <code>GEBlupiController</code></td></tr>
+    <tr><td>Methods</td><td>PascalCase</td><td><code>LoadFromVwrFile()</code></td></tr>
+    <tr><td>Constants</td><td><code>kPascalCase</code></td><td><code>kMoveSpeed</code>, <code>kWorldCenterX</code></td></tr>
     <tr><td>Enum values</td><td>PascalCase within enum class</td><td><code>GamePhase::Play</code></td></tr>
-    <tr><td>Namespaces</td><td>PascalCase</td><td><code>GalaxyEggbert::Worlds</code></td></tr>
-    <tr><td>Files</td><td>PascalCase, matching class name</td><td><code>GalaxyEggbertGame.cpp</code></td></tr>
+    <tr><td>Namespaces</td><td>PascalCase</td><td><code>GalaxyEggbert::Worlds</code>, <code>GalaxyEggbert::CNA</code>, <code>Easy3D</code></td></tr>
   </table>
 
   <h2>Header Layout</h2>
   <p>
-    Public API headers live under <code>include/GalaxyEggbert/</code>.
-    Implementation-private headers live beside their <code>.cpp</code> in <code>src/GalaxyEggbert/</code>.
-    The master include <code>include/GalaxyEggbert/Def.hpp</code> re-exports all public definitions.
+    Public API headers used by tests live under <code>include/GalaxyEggbert/</code> (all
+    engine-agnostic: <code>Worlds/</code>, <code>def/</code>, <code>BlockTypes.hpp</code>,
+    <code>Def.hpp</code>, <code>GameConstants.hpp</code>). Private implementation headers live
+    beside their <code>.cpp</code> under <code>src/GalaxyEggbertCNA/</code> or
+    <code>src/GalaxyEggbertSimple3D/</code>.
   </p>
-
-  <h2>Engine API Rules</h2>
-  <ul>
-    <li>Include only <code>&lt;Urho3D/Urho3DAll.h&gt;</code> via the <code>GEEngine.hpp</code> proxy — never include individual Urho3D headers directly in game code.</li>
-    <li>Use <code>SharedPtr</code>/<code>WeakPtr</code> only for Urho3D reference-counted objects. Use <code>std::unique_ptr</code> for game-owned subsystems.</li>
-    <li>Subscribe to events using <code>SubscribeToEvent()</code>; do not poll Urho3D event queues manually.</li>
-  </ul>
 
   <h2>Enum Stability</h2>
   <p>
-    <code>ObjectType</code>, <code>SoundChannel</code>, and <code>BlupiAction</code> enum values must not change.
-    These are stored in level files and save data — reassigning values is a data-corruption bug.
-    New values must be appended at the end or use existing unused slots.
+    <code>ObjectType</code>, <code>SoundChannel</code>, <code>BlupiAction</code>, and other
+    <code>def/</code> enums are frozen to match mobile-eggbert's level/save format exactly — do not
+    renumber existing values. New values must be appended at the end.
   </p>
 
-  <h2>U3D Pre-build Path</h2>
-  <p>
-    The U3D engine is expected pre-built at:
-    <code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code>
-    (set via <code>U3D_HOME</code> CMake variable if different).
-  </p>
+  <h2>Approval Gates</h2>
+  <ul>
+    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../easy-3d</code> requires explicit, per-change user approval.</li>
+    <li>Copying mobile-eggbert code or data (tables, enums, save-format bytes) requires explicit approval, even data that "looks like just data."</li>
+    <li>No Lua unless explicitly requested by the user.</li>
+  </ul>
 
   <div class="page-nav">
     <a href="index.html">← Development</a>

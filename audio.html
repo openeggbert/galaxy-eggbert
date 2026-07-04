@@ -53,70 +53,42 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Audio</div>
   <h1>Audio</h1>
-  <p class="subtitle">Sound system: channels, assets, and playback.</p>
+  <p class="subtitle">Not implemented yet in GalaxyEggbertCNA.</p>
 
-  <h2>Overview</h2>
+  <div class="warn">
+    <strong>Planned, not implemented</strong>
+    <code>GalaxyEggbertCNA</code> plays no sound at all today. This page describes the sound system
+    it must eventually replicate faithfully from mobile-eggbert (per the E3D-MIG-080…083 roadmap
+    tasks), plus what already works in the <code>GalaxyEggbertSimple3D</code> reference target.
+  </div>
+
+  <h2>The Target: 93-Channel WAV Playback</h2>
   <p>
-    Audio is handled by the <a href="classes/SoundManager.html"><code>SoundManager</code></a> class
-    (<code>src/GalaxyEggbert/Game/SoundManager.hpp/.cpp</code>).
-    It wraps the Urho3D audio subsystem and provides 93 named sound channels matching the original game's sound table.
+    mobile-eggbert (and <code>GalaxyEggbertSimple3D</code>, which already ports this faithfully)
+    uses 93 WAV files, <code>sound000.wav</code> through <code>sound092.wav</code>, indexed 1:1 by
+    the <code>SoundChannel</code> enum (<code>SoundChannel0</code>–<code>SoundChannel92</code>).
+    Channel 0 is reserved; channels 1–92 are sound effects. These indices are frozen — they must
+    not be renumbered, matching the original game's sound table exactly.
+  </p>
+  <p>
+    The WAV assets themselves are already copied into <code>Content/sounds/</code> at build time
+    (part of the standard mobile-eggbert asset copy), so they are available on disk — CNA simply
+    doesn't load or play them yet.
   </p>
 
-  <h2>Sound Assets</h2>
+  <h2>Roadmap (plan.md, E3D-MIG-080…083)</h2>
+  <ol>
+    <li>Add a sound wrapper around CNA's audio API.</li>
+    <li>Reuse <code>sound000.wav</code>–<code>sound092.wav</code> directly (asset reuse, no code copy).</li>
+    <li>Reuse/cross-check the <code>SoundChannel</code> enum against mobile-eggbert.</li>
+    <li>Reach 93-channel playback parity with mobile-eggbert / GalaxyEggbertSimple3D.</li>
+  </ol>
+
+  <h2>Documentation Gap</h2>
   <p>
-    93 WAV files are stored in <code>Content/sounds/</code>:
-    <code>sound000.wav</code> … <code>sound092.wav</code>.
-    The file indices map directly to <code>SoundChannel</code> enum values.
-    These are the same WAV files as the original Speedy Blupi game.
-  </p>
-
-  <h2>SoundChannel Enum</h2>
-  <p>
-    Defined in <code>include/GalaxyEggbert/def/SoundChannel.hpp</code>.
-    Values range from <code>SoundChannel0</code> (reserved) to <code>SoundChannel92</code>.
-    Do not renumber — indices must match the original game's sound table.
-  </p>
-
-  <h2>Wired Sound Events</h2>
-  <table>
-    <tr><th>SoundChannel</th><th>File</th><th>Event</th></tr>
-    <tr><td><code>SoundChannel1</code></td><td>sound001.wav</td><td>Blupi jumps</td></tr>
-    <tr><td><code>SoundChannel4</code></td><td>sound004.wav</td><td>Blupi lands on ground</td></tr>
-    <tr><td><code>SoundChannel8</code></td><td>sound008.wav</td><td>Blupi hit (by enemy or hazard tile)</td></tr>
-    <tr><td><code>SoundChannel10</code></td><td>sound010.wav</td><td>Treasure collected</td></tr>
-    <tr><td><code>SoundChannel11</code></td><td>sound011.wav</td><td>Key collected</td></tr>
-    <tr><td><code>SoundChannel42</code></td><td>sound042.wav</td><td>Shield collected / bonus life awarded</td></tr>
-    <tr><td><code>SoundChannel57</code></td><td>sound057.wav</td><td>Level exit reached (win)</td></tr>
-  </table>
-
-  <h2>Playback Behavior</h2>
-  <ul>
-    <li>Same-channel conflict policy: a playing channel is <strong>not restarted</strong>, except <code>SoundChannel10</code> (treasure pickup).</li>
-    <li>Volume per channel is taken from the <code>tableVolumePitch</code> table ported from mobile-eggbert. Needs verification: exact volume values are in <code>SoundManager.cpp</code>.</li>
-    <li>When sound is disabled (<code>SoundManager::SetEnabled(false)</code>), <code>Play()</code> is a no-op and all channels are stopped.</li>
-    <li>Sound can be toggled from the settings screen (S key) and is persisted in the save file.</li>
-  </ul>
-
-  <h2>API</h2>
-  <pre><code>class SoundManager {
-    void Play(SoundChannel channel, bool loop = false);
-    void Stop(SoundChannel channel);
-    void StopAll();
-    void SetEnabled(bool enabled);
-    bool IsEnabled() const;
-};</code></pre>
-
-  <h2>Urho3D Integration</h2>
-  <p>
-    Each channel corresponds to a <code>Urho3D::Sound</code> resource and a <code>Urho3D::SoundSource</code>
-    component on an audio node in the scene. The <code>SoundManager</code> creates all 93 channels at construction
-    by loading resources from the cache.
-  </p>
-
-  <h2>Web / Browser Audio</h2>
-  <p>
-    Browsers require a user gesture before audio starts. If no sound is heard in the Web build,
-    click the canvas once. This is a browser security policy, not a bug in Galaxy Eggbert.
+    <code>mobile-eggbert-reference/07-sounds.md</code> is currently pointer-only — the 93 channels
+    are known to exist and be ID-matched, but no per-channel trigger/purpose catalog has been
+    written yet (tracked as an open documentation task, not a code task).
   </p>
 
   <div class="page-nav">

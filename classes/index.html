@@ -53,41 +53,51 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Classes</div>
   <h1>Class Index</h1>
-  <p class="subtitle">All documented public classes, structs, and enums.</p>
+  <p class="subtitle">The real, current classes behind GalaxyEggbertCNA — not the retired Urho3D-era class names.</p>
 
-  <h2>Application Layer</h2>
+  <div class="note">
+    <strong>2026-07-04 rewrite</strong>
+    This reference previously documented classes (<code>GalaxyEggbertApp</code>, <code>Blupi</code>,
+    <code>Decor</code>, <code>HUD</code>, <code>PhaseManager</code>, <code>SoundManager</code>,
+    <code>CameraController</code>, <code>ObjectNode</code>, <code>GameData</code>) that belonged to
+    a Urho3D-based architecture no longer present in the source tree. It now documents the classes
+    that actually exist in <code>src/GalaxyEggbertCNA/</code> and the shared
+    <code>include/GalaxyEggbert/Worlds/</code> data model.
+  </div>
+
+  <h2>GalaxyEggbertCNA — Application Layer</h2>
   <div class="card-grid">
-    <a class="card" href="GalaxyEggbertApp.html">
-      <h3>GalaxyEggbertApp</h3>
-      <p>Urho3D Application subclass; Setup/Start/Stop lifecycle.</p>
-    </a>
-    <a class="card" href="GalaxyEggbertGame.html">
-      <h3>GalaxyEggbertGame</h3>
-      <p>Main game coordinator; owns scene, world, subsystems.</p>
+    <a class="card" href="GalaxyEggbertCnaGame.html">
+      <h3>GalaxyEggbertCnaGame</h3>
+      <p>CNA <code>Game</code> subclass — LoadContent/Update/Draw entry point.</p>
     </a>
   </div>
 
-  <h2>Player</h2>
+  <h2>GalaxyEggbertCNA — World &amp; Rendering</h2>
   <div class="card-grid">
-    <a class="card" href="Blupi.html">
-      <h3>Blupi</h3>
-      <p>Player character: physics, input, AABB collision, billboard animation.</p>
+    <a class="card" href="GEWorldRuntime.html">
+      <h3>GEWorldRuntime</h3>
+      <p>Loads .vwr (or secondary .txt) worlds; drives 6 fps tile animation.</p>
+    </a>
+    <a class="card" href="GETerrainRenderer.html">
+      <h3>GETerrainRenderer</h3>
+      <p>Builds static + animated cube meshes from world blocks.</p>
+    </a>
+    <a class="card" href="GETileAtlas.html">
+      <h3>GETileAtlas</h3>
+      <p>Block type → UV rect mapping into object-m.png.</p>
     </a>
   </div>
 
-  <h2>Game Objects</h2>
+  <h2>GalaxyEggbertCNA — Player</h2>
   <div class="card-grid">
-    <a class="card" href="Decor.html">
-      <h3>Decor</h3>
-      <p>100-slot object pool: enemies, collectibles, patrol, collision events.</p>
-    </a>
-    <a class="card" href="ObjectNode.html">
-      <h3>ObjectNode</h3>
-      <p>Urho3D BillboardSet node for one game object sprite.</p>
+    <a class="card" href="GEBlupiController.html">
+      <h3>GEBlupiController</h3>
+      <p>Invisible, collision-only movement placeholder: gravity, step-up, jump.</p>
     </a>
   </div>
 
-  <h2>World Data Model</h2>
+  <h2>Engine-Agnostic World Data Model (shared with Simple3D)</h2>
   <div class="card-grid">
     <a class="card" href="World.html">
       <h3>World</h3>
@@ -97,53 +107,54 @@
       <h3>Chunk</h3>
       <p>10×10×10 block container; palette + bit-packed indices.</p>
     </a>
+    <a class="card" href="Block.html">
+      <h3>Block</h3>
+      <p>16-bit packed voxel value: 12-bit type + 4-bit metadata.</p>
+    </a>
+    <a class="card" href="BlockMetadata.html">
+      <h3>BlockMetadata</h3>
+      <p>Bit-level accessor wrapper around the 4-bit metadata nibble.</p>
+    </a>
+    <a class="card" href="VoxelConfig.html">
+      <h3>VoxelConfig</h3>
+      <p>Compile-time constants: ChunkSize=10, MaxPaletteEntries=256, etc.</p>
+    </a>
   </div>
 
-  <h2>Subsystems</h2>
+  <h2>Easy3D Helpers Used by GalaxyEggbertCNA</h2>
   <div class="card-grid">
-    <a class="card" href="CameraController.html">
-      <h3>CameraController</h3>
-      <p>3rd-person orbit camera; smooth follow with yaw and pitch.</p>
+    <a class="card" href="CubeMesh.html">
+      <h3>Easy3D::CubeMesh</h3>
+      <p>CPU-side vertex/index builder for cube batches.</p>
     </a>
-    <a class="card" href="HUD.html">
-      <h3>HUD</h3>
-      <p>2D overlay: life icons, key icons, shield timer, gauge.</p>
-    </a>
-    <a class="card" href="PhaseManager.html">
-      <h3>PhaseManager</h3>
-      <p>GamePhase state machine; fullscreen overlay transitions.</p>
-    </a>
-    <a class="card" href="SoundManager.html">
-      <h3>SoundManager</h3>
-      <p>93-channel WAV audio; volume table; enable/disable toggle.</p>
-    </a>
-    <a class="card" href="GameData.html">
-      <h3>GameData</h3>
-      <p>640-byte binary save; 3 gamer slots; mobile-eggbert compatible.</p>
+    <a class="card" href="CubeMeshRenderer.html">
+      <h3>Easy3D::CubeMeshRenderer</h3>
+      <p>Uploads cube mesh data to CNA buffers and draws it.</p>
     </a>
   </div>
 
-  <h2>Enums and Definitions</h2>
+  <h2>Enums and Definitions (<code>include/GalaxyEggbert/def/</code>)</h2>
   <table>
-    <tr><th>Enum</th><th>File</th><th>Description</th></tr>
-    <tr><td><code>GamePhase</code></td><td><code>include/…/def/GamePhase.hpp</code></td><td>Game screen/mode: Init, Play, Pause, Win, Lost, …</td></tr>
-    <tr><td><code>ObjectType</code></td><td><code>include/…/def/ObjectType.hpp</code></td><td>Object type IDs matching level file format (0–203)</td></tr>
-    <tr><td><code>BlupiAction</code></td><td><code>include/…/def/BlupiAction.hpp</code></td><td>Player animation states (Stop, March, Turn, Jump, Air, …)</td></tr>
-    <tr><td><code>SoundChannel</code></td><td><code>include/…/def/SoundChannel.hpp</code></td><td>Sound effect indices (0–92)</td></tr>
-    <tr><td><code>DoorKeyFlags</code></td><td><code>include/…/def/DoorKeyFlags.hpp</code></td><td>Key type bitfield</td></tr>
-    <tr><td><code>Direction</code></td><td><code>include/…/def/Direction.hpp</code></td><td>Directional enum</td></tr>
-    <tr><td><code>DecorAction</code></td><td><code>include/…/def/DecorAction.hpp</code></td><td>Camera shake types</td></tr>
-    <tr><td><code>GameSpeed</code></td><td><code>include/…/def/GameSpeed.hpp</code></td><td>Game speed enum</td></tr>
-    <tr><td><code>SecretPower</code></td><td><code>include/…/def/SecretPower.hpp</code></td><td>Secret power enum</td></tr>
+    <tr><th>Enum</th><th>Description</th></tr>
+    <tr><td><code>GamePhase</code></td><td>Screen/mode: None, First, Wait, Init, Play, Pause, Lost, Win, Trial, MainSetup, PlaySetup, Resume, Ranking</td></tr>
+    <tr><td><code>ObjectType</code></td><td>204 IDs (0–203), frozen to match mobile-eggbert's level format exactly</td></tr>
+    <tr><td><code>BlupiAction</code></td><td>88 animation states (Stop, March, Turn, Jump, Air, …), mirrors original <code>ACTION_*</code></td></tr>
+    <tr><td><code>SoundChannel</code></td><td>93 channels (0–92), 1:1 with <code>sound000.wav</code>…<code>sound092.wav</code></td></tr>
+    <tr><td><code>SpriteChannel</code></td><td>Texture-atlas selector; mirrors original <code>CH*</code> constants</td></tr>
+    <tr><td><code>DoorKeyFlags</code></td><td>Bitmask of held keys (Key1/Key2/Key3), serialized to save files</td></tr>
+    <tr><td><code>Direction</code></td><td>None, Left, Right</td></tr>
+    <tr><td><code>DecorAction</code></td><td>Camera-shake type: None, SmallShake, BigShake, ElectricShake</td></tr>
+    <tr><td><code>GameSpeed</code></td><td>Slow=0, Normal=1, Fast=2, Faster=4, Fastest=8</td></tr>
+    <tr><td><code>KeyPressFlags</code></td><td>Bitmask: None, Jump, Fire, Down</td></tr>
+    <tr><td><code>SecretPower</code></td><td>None, Shield, Power, Cloud, Hide</td></tr>
+    <tr><td><code>ContinueMissionType</code></td><td>None, Pending, Active</td></tr>
   </table>
 
   <h2>Utility</h2>
   <table>
     <tr><th>Class/Namespace</th><th>File</th><th>Description</th></tr>
-    <tr><td><code>BlockTypes</code> (namespace)</td><td><code>include/…/BlockTypes.hpp</code></td><td>Block type constants; UV helpers; passability lookup</td></tr>
-    <tr><td><code>Tables</code></td><td><code>src/…/Game/Tables.hpp</code></td><td>Static animation frame tables; <code>GetBlupiIcon()</code></td></tr>
-    <tr><td><code>GameConstants</code></td><td><code>include/…/GameConstants.hpp</code></td><td>MAXCELX, MAXCELY, sprite cell sizes</td></tr>
-    <tr><td><code>VoxelConfig</code></td><td><code>include/…/Worlds/VoxelConfig.hpp</code></td><td>ChunkSize=10, MaxPaletteEntries, WorldChunksPerAxis=10</td></tr>
+    <tr><td><code>BlockTypes</code> (namespace)</td><td><code>include/GalaxyEggbert/BlockTypes.hpp</code></td><td>Block type constants; UV helpers; mobile icon ID conversion</td></tr>
+    <tr><td><code>GameConstants</code></td><td><code>include/GalaxyEggbert/GameConstants.hpp</code></td><td>MAXCELX=100, MAXCELY=100, sprite cell sizes</td></tr>
   </table>
 </main>
 </div>

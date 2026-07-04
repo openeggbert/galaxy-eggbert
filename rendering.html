@@ -53,152 +53,81 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Rendering</div>
   <h1>Rendering</h1>
-  <p class="subtitle">How the 3D scene is built and rendered.</p>
+  <p class="subtitle">One cube per non-air block, drawn via Easy3D's CubeMeshRenderer through CNA.</p>
 
-  <h2>Rendering Backend</h2>
+  <h2>Overview</h2>
   <p>
-    Galaxy Eggbert uses the <strong>Urho3D scene graph</strong> for all rendering.
-    The underlying graphics API depends on the engine backend and platform:
+    <code>GalaxyEggbertCNA</code> renders terrain only — there is no Blupi sprite, no object
+    rendering, no HUD, no sky dome. Terrain rendering works end-to-end and is verified: a real run
+    on <code>worlds3d/world001.vwr</code> uploaded 2749 blocks (pre-bugfix count) as 65976 vertices
+    / 32988 triangles, and a 5×5 on-screen pixel sample found 21 of 25 sampled points showing real
+    terrain color across 10 distinct colors — confirming genuine texture sampling, not a placeholder.
+  </p>
+
+  <h2>Pipeline</h2>
+  <pre><code>GETerrainRenderer(world, tileAtlas):
+  for each (x, y, z) in world.blocksPerAxis()³:
+      block = world.getBlock(x, y, z)
+      if block.isAir(): continue
+      worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ   // Y unshifted
+      if BlockTypes::tileAnimBase(block.type()) is animated:
+          store in m_animBlocks (rebuilt on anim-phase change)
+      else:
+          add a 1×1×1 cube at (worldX, y, worldZ) to a CubeBatch,
+          UV from tileAtlas.GetTileUv(block.type())
+
+  staticMesh   = Easy3D::BuildCubeMesh(staticBatch)     // 24 verts + 36 indices per cube
+  staticRenderer   = Easy3D::CubeMeshRenderer(device, staticMesh)
+  animatedRenderer = Easy3D::CubeMeshRenderer(device, animatedMeshForCurrentPhase)</code></pre>
+  <p>
+    No face culling or greedy meshing is performed — every non-air block gets a full cube, even
+    where faces are fully occluded by neighbors. This is a known, flagged limitation (see
+    <a href="development/known-issues.html">Known Issues</a>) that will matter once denser
+    hand-authored worlds exist.
+  </p>
+
+  <h2>Texture Mapping — GETileAtlas</h2>
+  <p>
+    Wraps an <code>Easy3D::TextureAtlas</code> sized to <code>object-m.png</code> (1301×1431 px),
+    registered as one grid: 64 px tiles, 20 columns, 65 px pitch (64 px icon + 1 px inter-tile gap).
+    <code>GetTileUv(blockType)</code> returns an all-zero rect for Air (type ≤ 0), otherwise looks
+    up <code>"tile_&lt;blockType&gt;"</code> in the atlas.
+  </p>
+
+  <h2>Animated Tiles</h2>
+  <p>
+    Ported 1:1 from mobile-eggbert's <code>Tables.cpp</code> (via <code>GalaxyEggbertSimple3D</code>):
   </p>
   <table>
-    <tr><th>Platform</th><th>Backend</th><th>Graphics API</th></tr>
-    <tr><td>Linux (U3D)</td><td>EasyGL or SDL Renderer</td><td>OpenGL 3.x</td></tr>
-    <tr><td>Windows (U3D)</td><td>SDL Renderer</td><td>OpenGL or D3D9/11</td></tr>
-    <tr><td>Web (Nova3D)</td><td>SDL Renderer</td><td>WebGL</td></tr>
+    <tr><th>Tile</th><th>Frames</th></tr>
+    <tr><td>Lava</td><td>8</td></tr>
+    <tr><td>Spike</td><td>16</td></tr>
+    <tr><td>Crusher</td><td>10</td></tr>
+    <tr><td>Saw</td><td>6</td></tr>
+    <tr><td>Water1 / Water2</td><td>6 each</td></tr>
+    <tr><td>Temp</td><td>20 (including 2 invisible/blank frames)</td></tr>
+    <tr><td>Fan ×4 directions</td><td>3 each</td></tr>
+    <tr><td>Marine</td><td>11</td></tr>
   </table>
-  <p>Galaxy Eggbert does not call any graphics API directly — all rendering is through Urho3D node components.</p>
-
-  <h2>Scene Structure</h2>
-  <pre><code>Scene (Urho3D::Scene)
-├─ Octree component         ← spatial indexing
-├─ DebugRenderer component  ← F1 debug overlay
-├─ "Zone" node
-│    └─ Zone component      ← ambient light + fog per world
-├─ "Sun" node
-│    └─ Light (Directional) ← primary warm light
-├─ "Fill" node
-│    └─ Light (Directional) ← blue fill light
-├─ "SkyDome" node (scale=500)
-│    └─ StaticModel (Sphere.mdl) ← background sky sphere
-├─ "Terrain" node
-│    └─ … "Block" children  ← one child node per non-air voxel
-│         └─ StaticModel (Box.mdl) + Material
-├─ "Blupi" node
-│    └─ BillboardSet        ← player sprite
-└─ … object nodes (from Decor)
-     └─ BillboardSet        ← enemy/collectible sprites</code></pre>
-
-  <h2>Terrain Rendering</h2>
   <p>
-    Each non-air block in the world is spawned as a child of the <code>Terrain</code> node
-    in <code>GalaxyEggbertGame::SpawnTerrainNodes()</code>.
-    A Urho3D <code>Box.mdl</code> (unit cube) plus a material is created per block.
-  </p>
-  <pre><code>// Source: GalaxyEggbertGame.cpp, SpawnTerrainNodes()
-auto* node = terrainRoot_->CreateChild("Block");
-node->SetPosition(Vector3(wx - kWCX, wy, wz - kWCZ));
-auto* sm = node->CreateComponent&lt;StaticModel&gt;();
-sm->SetModel(boxModel);
-sm->SetMaterial(GetTileMaterial(b.type()));</code></pre>
-  <p>
-    The world is centered at <code>(kWCX, 0, kWCZ) = (50, 0, 50)</code> in world coordinates,
-    so Blupi starts near the origin of 3D space.
+    Animated blocks are split into a second mesh, rebuilt only when the anim phase actually
+    changes (not every frame). If the current phase yields zero visible animated cubes (e.g.
+    Temp's blank frames), the animated renderer is reset to null rather than uploading empty data.
   </p>
 
-  <h2>Tile Materials</h2>
-  <p>
-    Each block type maps to a region in <code>Content/icons/object-m.png</code> (1301×1431 px, 20 columns, 64×64 px tiles).
-    The block type ID <strong>is</strong> the icon index into this sheet.
-    Materials are cached in <code>tileMatCache_</code> (unordered_map by block type) to avoid
-    creating duplicate materials for the same block type.
-  </p>
-  <pre><code>// UV computation (BlockTypes::tileUV)
-const int col = icon % 20;             // kSheetCols = 1301/64 = 20
-const int row = icon / 20;
-uScale = 64.0f / 1301.0f;
-vScale = 64.0f / 1431.0f;
-uOff   = col * uScale;
-vOff   = row * vScale;
-
-// Applied as material shader parameters:
-mat->SetShaderParameter("UOffset", Vector4(uS, 0, 0, uOff));
-mat->SetShaderParameter("VOffset", Vector4(0, vS, 0, vOff));</code></pre>
-
-  <h2>Sprite Rendering (Blupi)</h2>
-  <p>
-    Blupi is rendered as a <code>BillboardSet</code> with a single billboard.
-    The billboard uses <code>FC_ROTATE_XYZ</code> (always faces camera from all angles).
-    UV coordinates are set from the <code>blupi.png</code> sheet (600×2040 px, 60×60 tiles, 10 cols × 34 rows)
-    based on the current animation action and frame tick.
-  </p>
-  <pre><code>Billboard* bb = sprite_->GetBillboard(0);
-bb->size_ = Vector2(kHalfH * 2.0f, kHalfH * 2.0f);  // 1.4 × 1.4 units
-bb->uv_   = Rect(u0, v0, u0 + uW, v0 + vH);
-sprite_->Commit();</code></pre>
-
-  <h2>Object Sprite Rendering (Decor)</h2>
-  <p>
-    Each game object (enemy, collectible, etc.) is wrapped in an <code>ObjectNode</code>,
-    which creates a <code>BillboardSet</code> UV-mapped from <code>element.png</code>
-    (600×1740 px, 60×60 px tiles, 10 cols × 29 rows).
-    The icon index is updated every frame by <code>Decor::GetIcon()</code>.
-  </p>
-
-  <h2>Sky Dome</h2>
-  <p>
-    A sphere node (scale=500) uses the <code>DiffSkydome.xml</code> technique
-    (renders at the far plane, no depth write, no fog).
-    The texture is loaded from <code>Content/backgrounds/decorNNN.png</code>,
-    where NNN is the <code>region=</code> value from the current level's .txt header.
-  </p>
-  <pre><code>// UpdateSkyDome(region)
-char path[64];
-snprintf(path, sizeof(path), "backgrounds/decor%03d.png", region);
-auto* tex = cache->GetResource&lt;Texture2D&gt;(path);
-// … apply to sphere StaticModel</code></pre>
-
-  <h2>Lighting</h2>
-  <table>
-    <tr><th>Light</th><th>Color</th><th>Brightness</th><th>Direction</th></tr>
-    <tr><td>Sun (directional)</td><td>Warm white (1.0, 0.94, 0.80)</td><td>2.0</td><td>(−0.6, −1.0, −0.4)</td></tr>
-    <tr><td>Fill (directional)</td><td>Blue-violet (0.35, 0.45, 0.85)</td><td>0.55</td><td>(0.65, −0.4, 0.5)</td></tr>
-  </table>
-  <p>Neither light casts shadows (<code>SetCastShadows(false)</code>).</p>
-
-  <h2>Per-World Sky Palette</h2>
-  <table>
-    <tr><th>World</th><th>Theme</th><th>Ambient</th><th>Fog</th></tr>
-    <tr><td>1</td><td>Grassland</td><td>Warm green (0.28, 0.38, 0.22)</td><td>Bright green (0.55, 0.72, 0.42)</td></tr>
-    <tr><td>2</td><td>Forest</td><td>Dark green (0.18, 0.28, 0.16)</td><td>Near-black green (0.12, 0.20, 0.10)</td></tr>
-    <tr><td>3</td><td>Ice Caves</td><td>Pale blue (0.30, 0.35, 0.48)</td><td>Light blue (0.62, 0.72, 0.88)</td></tr>
-    <tr><td>4</td><td>Lava Fields</td><td>Deep red (0.38, 0.16, 0.08)</td><td>Dim red (0.22, 0.08, 0.04)</td></tr>
-    <tr><td>5</td><td>Space Station</td><td>Near-black (0.05, 0.06, 0.18)</td><td>Near-black (0.02, 0.03, 0.10)</td></tr>
-  </table>
-
-  <h2>2D UI / HUD Rendering</h2>
-  <p>
-    The HUD uses Urho3D's 2D UI layer: <code>Text</code> and <code>BorderImage</code> elements.
-    Life icons are <code>BorderImage</code> sprites UV-mapped from <code>blupi.png</code> (icon 48 = col 8, row 4).
-    Key icons use <code>element.png</code> (icon 215 = col 5, row 21).
-    The gauge sprite is from <code>jauge.png</code>.
-  </p>
-
-  <h2>Debug Rendering</h2>
-  <p>
-    Pressing <strong>F1</strong> toggles the debug geometry overlay:
-  </p>
-  <pre><code>if (drawDebug_ &amp;&amp; scene_) {
-    auto* dbg = scene_->GetComponent&lt;DebugRenderer&gt;();
-    auto* oct = scene_->GetComponent&lt;Octree&gt;();
-    if (dbg &amp;&amp; oct) oct->DrawDebugGeometry(true);
-}</code></pre>
+  <h2>Draw Call</h2>
+  <pre><code>terrainEffect_-&gt;View = camera.GetViewMatrix();
+terrainEffect_-&gt;Projection = camera.GetProjectionMatrix();
+terrainEffect_-&gt;World = Matrix::Identity;
+staticRenderer-&gt;Draw(device, *terrainEffect_);
+if (animatedRenderer) animatedRenderer-&gt;Draw(device, *terrainEffect_);</code></pre>
 
   <h2>Known Rendering Limitations</h2>
   <ul>
-    <li>All non-air blocks are spawned as individual nodes — no mesh merging or greedy meshing. Performance may degrade for fully occupied worlds.</li>
-    <li>No face culling between adjacent solid blocks — inner faces are drawn but invisible.</li>
-    <li>Blupi is a billboard sprite, not a 3D model. A proper 3D mesh is planned.</li>
-    <li>Shadows are disabled.</li>
+    <li>No face culling between adjacent solid blocks.</li>
+    <li>No chunk-radius streaming — the entire world is uploaded up front.</li>
+    <li>No Blupi sprite, no object/pickup rendering, no sky dome, no HUD.</li>
+    <li><code>Easy3D::BillboardBatch</code> has no vertex builder or renderer adapter — this blocks all sprite rendering.</li>
   </ul>
 
   <div class="page-nav">

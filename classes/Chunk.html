@@ -32,74 +32,76 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Chunk</div>
   <h1>Chunk</h1>
-  <p class="subtitle">10×10×10 block sub-volume with palette-compressed bit-packing.</p>
+  <p class="subtitle">10×10×10 palette-compressed voxel container. The storage unit inside World.</p>
 
   <h2>Overview</h2>
   <p>
-    <code>Chunk</code> stores 1 000 block values in a compact palette + bit-packed index format.
-    It is the storage unit inside <code>World</code> — each world holds 10³ = 1 000 chunks.
-    Engine-agnostic; no Urho3D headers.
+    <code>Chunk</code> (namespace <code>GalaxyEggbert::Worlds</code>) stores <code>Chunk::Volume</code>
+    (1000) block values in a compact palette + bit-packed index format. Engine-agnostic; no CNA,
+    Easy3D, or Urho3D headers.
   </p>
   <p>Header: <code>include/GalaxyEggbert/Worlds/Chunk.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/Chunk.cpp</code>.</p>
 
   <h2>Constants</h2>
-  <pre><code>static constexpr int Size   = 10;       // blocks per axis
-static constexpr int Volume = 1000;     // Size³</code></pre>
+  <pre><code>static constexpr int Size   = 10;    // blocks per axis
+static constexpr int Volume = 1000;  // Size³</code></pre>
 
   <h2>Internal Storage Layout</h2>
   <pre><code>private:
-    std::vector&lt;Block&gt;    palette_;          // unique block values (≤256)
-    std::vector&lt;uint8_t&gt;  packedIndices_;    // bit-packed palette indices
-    std::vector&lt;uint8_t&gt;  extraMetadata_;    // reserved for future use
-    uint8_t               bitsPerBlock_;     // ceil(log2(palette_.size()))
-    bool                  dirty_;            // set by setBlock, cleared on serialise</code></pre>
+    std::vector&lt;Block&gt;                       palette_;         // unique block values (≤256)
+    std::vector&lt;uint64_t&gt;                    packedIndices_;   // bit-packed palette indices
+    uint8_t                                  bitsPerBlock_;    // ceil(log2(palette_.size()))
+    bool                                     dirty_;           // set by setBlock
+    std::vector&lt;ChunkBlockMetadataRecord&gt;    extraMetadata_;   // sparse per-block metadata</code></pre>
   <p>
-    When the palette has 1 entry (<em>uniform chunk</em>), <code>packedIndices_</code> may be empty.
-    <code>bitsPerBlock_</code> is recomputed whenever the palette grows.
+    When the palette has 1 entry (a <em>uniform chunk</em>), <code>packedIndices_</code> may be
+    empty. <code>extraMetadata_</code> stores sparse per-block metadata keyed by local linear
+    index plus a type discriminator and arbitrary payload bytes — it does not store a render mesh;
+    meshing is meant to be a runtime-only cache built by classes like <a href="GETerrainRenderer.html">GETerrainRenderer</a>.
   </p>
 
   <h2>API</h2>
-  <pre><code>namespace GalaxyEggbert::Worlds {
-
-class Chunk {
+  <pre><code>class Chunk {
 public:
-    // Factory helpers
     static Chunk createUniform(Block fillBlock);
     static Chunk fromBlocks(const std::array&lt;Block, Volume&gt;&amp; blocks);
 
     Block getBlock(uint8_t lx, uint8_t ly, uint8_t lz) const;
     void  setBlock(uint8_t lx, uint8_t ly, uint8_t lz, Block block);
 
-    // Unpack all 1 000 blocks into a flat array (for terrain meshing)
     std::array&lt;Block, Volume&gt; unpackBlocks() const;
 
     bool isEmpty()   const;   // all blocks == Air
     bool isUniform() const;   // palette_.size() == 1
     bool isDirty()   const;   // modified since last write()
+    void clearDirty();
 
-    // Serialisation (called by World::saveToFile / loadFromFile)
+    void setExtraMetadata(size_t localIndex, ...);
+    void removeExtraMetadata(size_t localIndex);
+    void clearExtraMetadata();
+
     void write(std::ostream&amp; os) const;
     void read (std::istream&amp; is);
 };</code></pre>
 
   <h2>Bit-packing Details</h2>
-  <p>
-    Block indices into the palette are stored consecutively in <code>packedIndices_</code>.
-    Each index occupies exactly <code>bitsPerBlock_</code> bits.
-    Indices are packed little-endian within each byte.
-  </p>
   <table>
-    <tr><th>Palette size</th><th>Bits per block</th><th>Bytes for 1000 blocks</th></tr>
-    <tr><td>1 (uniform)</td><td>0</td><td>0 (packedIndices_ empty)</td></tr>
-    <tr><td>2</td><td>1</td><td>125</td></tr>
-    <tr><td>3–4</td><td>2</td><td>250</td></tr>
-    <tr><td>5–8</td><td>3</td><td>375</td></tr>
-    <tr><td>9–16</td><td>4</td><td>500</td></tr>
-    <tr><td>17–32</td><td>5</td><td>625</td></tr>
-    <tr><td>33–64</td><td>6</td><td>750</td></tr>
-    <tr><td>65–128</td><td>7</td><td>875</td></tr>
-    <tr><td>129–256</td><td>8</td><td>1000</td></tr>
+    <tr><th>Palette size</th><th>Bits per block</th></tr>
+    <tr><td>1 (uniform)</td><td>0</td></tr>
+    <tr><td>2</td><td>1</td></tr>
+    <tr><td>3–4</td><td>2</td></tr>
+    <tr><td>5–8</td><td>3</td></tr>
+    <tr><td>9–16</td><td>4</td></tr>
+    <tr><td>17–32</td><td>5</td></tr>
+    <tr><td>33–64</td><td>6</td></tr>
+    <tr><td>65–128</td><td>7</td></tr>
+    <tr><td>129–256</td><td>8</td></tr>
   </table>
+  <p>
+    See <a href="VoxelConfig.html">VoxelConfig</a> for <code>bitsNeededForPalette()</code> and
+    related bit-packing constants, and <code>BinaryIO.hpp</code>/<code>BitPacking.hpp</code> for
+    the low-level pack/unpack helpers.
+  </p>
 
   <h2>Coordinate Mapping</h2>
   <p>
@@ -107,23 +109,23 @@ public:
     World-to-local: <code>lx = worldX % 10</code>. Chunk coordinate: <code>cx = worldX / 10</code>.
   </p>
 
-  <h2>Serialisation</h2>
+  <h2>Serialization</h2>
   <p>
-    <code>write()</code> emits the <code>VCH1</code> chunk payload as described in
-    <a href="../internals/vwr-format.html">VWR Format</a>:
-    palette count, palette entries, packed index data, and optional BMD1 metadata section.
+    <code>write()</code> emits the <code>VCH1</code> chunk payload described in
+    <a href="../internals/vwr-format.html">VWR Format</a>: version/chunkSize/bitsPerBlock/flags
+    header, palette entries, packed index data, and an optional sparse metadata section
+    (<code>BMD1</code> magic).
   </p>
 
   <h2>Tests</h2>
   <p>
-    Covered by <code>tests/GalaxyEggbert/Worlds/ChunkTests.cpp</code>:
-    uniform create, palette growth, bit-pack round-trip, isEmpty/isUniform, dirty flag,
-    write/read round-trip.
+    Covered by <code>tests/GalaxyEggbert/Worlds/ChunkTests.cpp</code>: uniform create, palette
+    growth, bit-pack round-trip, isEmpty/isUniform, dirty flag, write/read round-trip.
   </p>
 
   <div class="page-nav">
     <a href="World.html">← World</a>
-    <a href="GameData.html">GameData →</a>
+    <a href="Block.html">Block →</a>
   </div>
 </main>
 </div>

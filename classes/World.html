@@ -30,13 +30,13 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> World</div>
   <h1>World</h1>
-  <p class="subtitle">Fixed-size 100×100×100 voxel world with save/load API. Engine-agnostic.</p>
+  <p class="subtitle">Fixed-size 100×100×100 voxel world with save/load API. Engine-agnostic; shared by Simple3D and CNA.</p>
 
   <h2>Overview</h2>
   <p>
-    <code>World</code> is a pure C++ class with no engine dependency.
-    It organizes 100×100×100 blocks into a 10×10×10 grid of <code>Chunk</code> objects,
-    each holding 10×10×10 blocks with palette-compressed bit-packing.
+    <code>World</code> (namespace <code>GalaxyEggbert::Worlds</code>) is a pure C++ class with no
+    engine dependency. It organizes blocks into a <code>chunksPerAxis</code>³ grid of
+    <code>Chunk</code> objects (default 10, giving 1000 chunks / 100³ = 1,000,000 blocks).
   </p>
   <p>Header: <code>include/GalaxyEggbert/Worlds/World.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/World.cpp</code>.</p>
 
@@ -75,6 +75,14 @@ World loaded = World::loadFromFile("level.vwr");
 Block b = loaded.getBlock(10, 0, 10);
 assert(!b.isAir());</code></pre>
 
+  <h2>Used By</h2>
+  <ul>
+    <li><a href="GEWorldRuntime.html">GEWorldRuntime</a> (CNA) — loads <code>.vwr</code> and mobile-eggbert <code>.txt</code> data into a <code>World</code></li>
+    <li><a href="GETerrainRenderer.html">GETerrainRenderer</a> (CNA) — iterates every block to build terrain meshes</li>
+    <li><a href="GEBlupiController.html">GEBlupiController</a> (CNA) — reads blocks for collision</li>
+    <li>The equivalent Simple3D-side classes with the same names</li>
+  </ul>
+
   <h2>Error Handling</h2>
   <ul>
     <li><code>getBlock</code> / <code>setBlock</code>: throw <code>std::out_of_range</code> for invalid coordinates.</li>
@@ -85,13 +93,11 @@ assert(!b.isAir());</code></pre>
 
   <h2>Internal Storage</h2>
   <pre><code>private:
-    uint8_t          chunksPerAxis_;
-    std::vector&lt;Chunk&gt; chunks_; // size = chunksPerAxis³
-</code></pre>
+    uint8_t             chunksPerAxis_;
+    std::vector&lt;Chunk&gt;  chunks_;   // size = chunksPerAxis³</code></pre>
   <p>
-    Chunk grid is stored in row-major order: <code>index = cx + cy*n + cz*n²</code>
-    where <code>n = chunksPerAxis</code>. Block coordinates are partitioned into chunk
-    and local indices: <code>chunkX = worldX / 10; localX = worldX % 10</code>.
+    Chunk grid is row-major: <code>index = cx + cy*n + cz*n²</code> where <code>n = chunksPerAxis</code>.
+    Block coordinates partition into chunk and local indices: <code>chunkX = worldX / 10; localX = worldX % 10</code>.
   </p>
 
   <h2>File Format</h2>
@@ -99,9 +105,14 @@ assert(!b.isAir());</code></pre>
 
   <h2>Tests</h2>
   <p>
-    Covered by <code>tests/GalaxyEggbert/Worlds/WorldTests.cpp</code> (part of 54-test suite).
-    Tests include: get/set round-trips, save/load round-trips, empty chunk skipping, boundary conditions.
+    Covered by <code>tests/GalaxyEggbert/Worlds/WorldTests.cpp</code>: get/set round-trips,
+    save/load round-trips, empty chunk skipping, boundary conditions.
   </p>
+
+  <div class="page-nav">
+    <a href="GEBlupiController.html">← GEBlupiController</a>
+    <a href="Chunk.html">Chunk →</a>
+  </div>
 </main>
 </div>
 <script src="../assets/script.js"></script>

@@ -53,100 +53,56 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Assets</div>
   <h1>Assets</h1>
-  <p class="subtitle">All game assets: sprites, sounds, backgrounds, and level data.</p>
+  <p class="subtitle">Reused mobile-eggbert assets, and what GalaxyEggbertCNA actually uses today.</p>
 
-  <h2>Directory Structure</h2>
-  <pre><code>Content/
-├── backgrounds/    ← sky textures, menu backgrounds (PNG)
-├── icons/          ← sprite sheets for characters, tiles, objects (PNG)
-└── sounds/         ← WAV audio files
-
-worlds/             ← level data (.txt and .vwr)</code></pre>
+  <h2>The Reuse Rule</h2>
   <p>
-    All assets are committed in the repository and copied next to the executable at build time
-    via CMake post-build commands.
+    mobile-eggbert is <strong>read-only</strong>. Its <em>assets</em> (sprite sheets, sounds, world
+    files) are freely reused by direct file path or build-time copy. Its <em>code</em>
+    (<code>Decor.cpp</code>, <code>Tables.cpp</code>, <code>GameData.cpp</code>) is reference-only
+    — copying or linking requires explicit user approval, even for "just data" like animation tables.
   </p>
 
-  <h2>Sprite Sheets (<code>Content/icons/</code>)</h2>
+  <h2>What GalaxyEggbertCNA Actually Loads Today</h2>
   <table>
-    <tr><th>File</th><th>Dimensions</th><th>Tile Size</th><th>Grid</th><th>Used for</th></tr>
-    <tr><td><code>blupi.png</code></td><td>600×2040</td><td>60×60</td><td>10 cols × 34 rows</td><td>Blupi player character all animation frames</td></tr>
-    <tr><td><code>blupi1.png</code></td><td>Needs verification</td><td>—</td><td>—</td><td>Alternate Blupi sprite (HUD life icon)</td></tr>
-    <tr><td><code>element.png</code></td><td>600×1740</td><td>60×60</td><td>10 cols × 29 rows (290 icons)</td><td>Game objects, enemies, collectibles (ObjectNode sprites)</td></tr>
-    <tr><td><code>explo.png</code></td><td>Needs verification</td><td>128×128</td><td>—</td><td>Explosion effects</td></tr>
-    <tr><td><code>object-m.png</code></td><td>1301×1431</td><td>64×64</td><td>20 cols</td><td>Terrain tile textures (all block face UVs)</td></tr>
-    <tr><td><code>button.png</code></td><td>Needs verification</td><td>40×40</td><td>—</td><td>UI buttons</td></tr>
-    <tr><td><code>text.png</code></td><td>Needs verification</td><td>32×32</td><td>—</td><td>Font glyphs</td></tr>
-    <tr><td><code>jauge.png</code></td><td>Needs verification</td><td>124×22</td><td>—</td><td>HUD gauge sprite (bottom-left)</td></tr>
-    <tr><td><code>pad.png</code></td><td>Needs verification</td><td>—</td><td>—</td><td>Touch pad (future Android)</td></tr>
+    <tr><th>Asset</th><th>Source</th><th>Used for</th></tr>
+    <tr><td><code>Content/icons/object-m.png</code></td><td>1301×1431 px, 64×64 px tiles, 20 columns, 65 px pitch (1 px gap)</td><td>Terrain block textures, mapped via <code>GETileAtlas</code></td></tr>
+    <tr><td><code>worlds3d/world001.vwr</code></td><td>Hand-authored 3D world (this repo)</td><td>Default loaded world</td></tr>
   </table>
+  <p>Nothing else is currently loaded — no Blupi sprite, no object/element sprites, no sounds, no backgrounds.</p>
 
-  <h3>Key Icon Indices</h3>
+  <h2>mobile-eggbert Asset Inventory (available for future use)</h2>
   <table>
-    <tr><th>Sheet</th><th>Index</th><th>Used for</th></tr>
-    <tr><td><code>blupi.png</code></td><td>48 (col 8, row 4)</td><td>HUD life icon (Blupi head)</td></tr>
-    <tr><td><code>element.png</code></td><td>215 (col 5, row 21)</td><td>HUD key icon</td></tr>
+    <tr><th>Directory</th><th>Contents</th></tr>
+    <tr><td><code>Content/icons/</code></td><td><code>object-m.png</code> (terrain), <code>blupi.png</code>/<code>blupi1.png</code> (player), <code>element.png</code> (objects), <code>explo.png</code> (explosions), <code>button.png</code>, <code>jauge.png</code> (HUD gauge), <code>pad.png</code> (touch pad), <code>text.png</code> (font)</td></tr>
+    <tr><td><code>Content/sounds/</code></td><td>93 WAV files, <code>sound000.wav</code>–<code>sound092.wav</code>, matching <code>SoundChannel</code> 1:1</td></tr>
+    <tr><td><code>Content/backgrounds/</code></td><td>~34 sky/menu PNGs (<code>decor000.png</code>… non-contiguous, plus title/menu screens)</td></tr>
+    <tr><td><code>worlds/</code></td><td>78 mobile-eggbert <code>.txt</code> levels upstream (5 sample files, <code>world001.txt</code>–<code>world005.txt</code>, committed locally)</td></tr>
   </table>
+  <p>
+    All of the above is copied at build time from <code>../mobile-eggbert/Content</code> and
+    <code>../mobile-eggbert/worlds</code> next to the <code>GalaxyEggbertCNA</code> binary (skipped
+    under Emscripten/Android) — it is present on disk even though CNA doesn't load most of it yet.
+  </p>
 
-  <h2>Background Images (<code>Content/backgrounds/</code>)</h2>
+  <h2>Reference Catalog: mobile-eggbert-reference/</h2>
+  <p>
+    A factual catalog of mobile-eggbert's 2D content lives at <code>mobile-eggbert-reference/</code>
+    in the source repo — it exists specifically to ground future 3D-mapping decisions in verified
+    fact rather than assumption:
+  </p>
   <table>
-    <tr><th>File</th><th>Purpose</th></tr>
-    <tr><td><code>decor000.png</code> … <code>decor031.png</code></td><td>Sky dome textures (region index from level header)</td></tr>
-    <tr><td><code>init.png</code></td><td>Gamer-select / main menu background overlay</td></tr>
-    <tr><td><code>pause.png</code></td><td>Pause screen background</td></tr>
-    <tr><td><code>win.png</code></td><td>Level complete background</td></tr>
-    <tr><td><code>lost.png</code></td><td>Game over background</td></tr>
-    <tr><td><code>setup.png</code></td><td>Settings screen background</td></tr>
-    <tr><td><code>wait.png</code></td><td>Loading/wait screen background</td></tr>
-    <tr><td><code>trial.png</code></td><td>Trial/demo mode background (not yet in use)</td></tr>
-    <tr><td><code>gear.png</code></td><td>Settings/gear icon</td></tr>
-    <tr><td><code>speedyblupi.png</code></td><td>Speedy Blupi title image</td></tr>
-    <tr><td><code>blupiyoupie.png</code></td><td>Needs verification</td></tr>
+    <tr><th>File</th><th>Covers</th></tr>
+    <tr><td><code>01-world-file-format.md</code></td><td>The mobile-eggbert <code>.txt</code> level format</td></tr>
+    <tr><td><code>02-tiles.md</code></td><td>All 441 tile/block icon IDs in <code>object-m.png</code></td></tr>
+    <tr><td><code>03-objects.md</code></td><td>All 204 <code>ObjectType</code> IDs, classified by behavior</td></tr>
+    <tr><td><code>04-enemy-behavior.md</code></td><td>Table-driven vs. hand-coded enemy movement</td></tr>
+    <tr><td><code>05-backgrounds.md</code></td><td>Sky/background images (partial — only 3 of 38 characterized)</td></tr>
+    <tr><td><code>06-doors.md</code></td><td>Door tiles: key-bitmask logic, opening animation</td></tr>
+    <tr><td><code>07-sounds.md</code></td><td>93 sound channels (pointer-only, not yet expanded)</td></tr>
+    <tr><td><code>08-animations.md</code></td><td>All 155 animated sequences (tiles, Blupi, objects, explosions, doors) — complete</td></tr>
+    <tr><td><code>09-open-questions.md</code></td><td>Unresolved 3D-mapping design questions</td></tr>
   </table>
-  <div class="note">
-    <strong>Note</strong>
-    Not all background indices (0–031) have corresponding files. Missing indices (e.g., 005, 014, 017) are simply absent from the repository. Loading a missing background will fail silently in Urho3D's ResourceCache.
-  </div>
-
-  <h2>Audio Files (<code>Content/sounds/</code>)</h2>
-  <p>
-    93 WAV files named <code>sound000.wav</code> … <code>sound092.wav</code>.
-    File index N maps directly to <code>SoundChannel::SoundChannelN</code>.
-    These are the original Speedy Blupi WAV files.
-  </p>
-
-  <h2>Level Data (<code>worlds/</code>)</h2>
-  <table>
-    <tr><th>File</th><th>Format</th><th>Description</th></tr>
-    <tr><td><code>world001.txt</code></td><td>Mobile-eggbert text</td><td>World 1: Grassland</td></tr>
-    <tr><td><code>world002.txt</code></td><td>Mobile-eggbert text</td><td>World 2: Forest</td></tr>
-    <tr><td><code>world003.txt</code></td><td>Mobile-eggbert text</td><td>World 3: Ice Caves</td></tr>
-    <tr><td><code>world004.txt</code></td><td>Mobile-eggbert text</td><td>World 4: Lava Fields</td></tr>
-    <tr><td><code>world005.txt</code></td><td>Mobile-eggbert text</td><td>World 5: Space Station</td></tr>
-    <tr><td><code>world001.vwr</code> … (generated)</td><td>Native binary</td><td>Generated on first run from .txt</td></tr>
-  </table>
-
-  <h2>Asset Loading</h2>
-  <p>
-    All assets are loaded through <code>Urho3D::ResourceCache</code> using resource-relative paths.
-    The search order is: <code>Data/</code> → <code>CoreData/</code> → <code>Content/</code>.
-    Within <code>Content/</code>, paths are relative: <code>"icons/blupi.png"</code>, <code>"sounds/sound001.wav"</code>, etc.
-  </p>
-  <p>
-    Level files are loaded directly from the filesystem using <code>Urho3D::FileSystem::GetProgramDir()</code>
-    as the base path, not through ResourceCache.
-  </p>
-
-  <h2>Engine Assets (Data/ and CoreData/)</h2>
-  <p>
-    Urho3D requires its own assets (shaders, default models, default materials) to be present at runtime.
-    These are copied from the U3D or Nova3D engine build output by CMake post-build commands:
-  </p>
-  <ul>
-    <li><code>Data/Techniques/Diff.xml</code>, <code>DiffAlpha.xml</code>, <code>DiffSkydome.xml</code>, <code>NoTexture.xml</code></li>
-    <li><code>CoreData/Shaders/</code> — GLSL/HLSL shaders</li>
-    <li><code>CoreData/Models/Box.mdl</code>, <code>Sphere.mdl</code> — basic geometry used by terrain and sky dome</li>
-  </ul>
 
   <div class="page-nav">
     <a href="levels.html">

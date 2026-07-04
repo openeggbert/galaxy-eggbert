@@ -53,75 +53,57 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Running the Game</div>
   <h1>Running the Game</h1>
-  <p class="subtitle">How to launch Galaxy Eggbert after building.</p>
+  <p class="subtitle">What happens when you launch GalaxyEggbertCNA.</p>
 
-  <h2>Linux</h2>
-  <pre><code>./cmake-build-u3d/GalaxyEggbert</code></pre>
+  <h2>Launch</h2>
+  <pre><code>./build-cna/GalaxyEggbertCNA</code></pre>
   <p>
-    The binary looks for assets relative to its own location.
-    The build system copies <code>Content/</code>, <code>worlds/</code>, and U3D's <code>Data/</code> and <code>CoreData/</code>
-    directories next to the executable via post-build commands in <code>CMakeLists.txt</code>.
+    <code>src/GalaxyEggbertCNA/main.cpp</code> constructs a
+    <code>GalaxyEggbert::CNA::GalaxyEggbertCnaGame</code> (a subclass of
+    <code>Microsoft::Xna::Framework::Game</code>), calls <code>Run()</code>, then deletes it.
+    Window title: <strong>"Galaxy Eggbert (CNA)"</strong>.
   </p>
 
-  <h2>Windows</h2>
-  <p>Double-click <code>build-windows\GalaxyEggbert.exe</code>, or from PowerShell:</p>
-  <pre><code>.\build-windows\GalaxyEggbert.exe</code></pre>
-
-  <h2>Web (Emscripten)</h2>
-  <pre><code>emrun cmake-build-web/GalaxyEggbert.html</code></pre>
-  <p>
-    Alternatively, serve <code>cmake-build-web/</code> with any HTTP server and open <code>GalaxyEggbert.html</code> in a browser.
-    The game will not run from <code>file://</code> directly due to browser security restrictions on WebAssembly loading.
-  </p>
-  <div class="note">
-    <strong>Audio Note</strong>
-    Browsers may block audio until the user interacts with the page. If no sound plays, click the canvas once.
+  <div class="warn">
+    <strong>Relative-path assumption</strong>
+    The loader uses relative paths (<code>"worlds3d/world001.vwr"</code>,
+    <code>"Content/icons/object-m.png"</code>) — the binary must be run from its own build
+    directory, where the post-build asset copy placed these files. This is a known, flagged
+    limitation (see <a href="development/known-issues.html">Known Issues</a>).
   </div>
 
-  <h2>Required Files at Runtime</h2>
-  <p>The following must be present relative to the executable:</p>
-  <table>
-    <tr><th>Path</th><th>Source in Repo</th><th>Notes</th></tr>
-    <tr><td><code>Content/backgrounds/</code></td><td><code>Content/backgrounds/</code></td><td>Sky and menu PNGs</td></tr>
-    <tr><td><code>Content/icons/</code></td><td><code>Content/icons/</code></td><td>Sprite sheets</td></tr>
-    <tr><td><code>Content/sounds/</code></td><td><code>Content/sounds/</code></td><td>WAV audio files</td></tr>
-    <tr><td><code>worlds/</code></td><td><code>worlds/</code></td><td>Level data (.txt or .vwr)</td></tr>
-    <tr><td><code>Data/</code></td><td>U3D build output</td><td>Urho3D shaders and resources</td></tr>
-    <tr><td><code>CoreData/</code></td><td>U3D build output</td><td>Urho3D core shaders and models</td></tr>
-  </table>
-
-  <h2>Save File Location</h2>
-  <p>
-    On Linux and Windows, save data is stored at:
-  </p>
-  <pre><code>&lt;UserDocumentsDir&gt;/GalaxyEggbert/save.dat</code></pre>
-  <p>
-    On Web, save data is written to <code>/save/.cna_isolated_storage/SpeedyBlupi</code> inside
-    an Emscripten IDBFS virtual filesystem backed by the browser's IndexedDB.
-    The file is flushed on every write and on page unload.
-  </p>
-
-  <h2>Window Settings</h2>
-  <p>These are set in <a href="classes/GalaxyEggbertApp.html"><code>GalaxyEggbertApp::Setup()</code></a>
-     (<code>src/GalaxyEggbert/GalaxyEggbertApp.cpp:9</code>):</p>
-  <table>
-    <tr><th>Setting</th><th>Value</th></tr>
-    <tr><td>Window title</td><td>Galaxy Eggbert</td></tr>
-    <tr><td>Initial size</td><td>1280 × 720</td></tr>
-    <tr><td>Full screen</td><td>No</td></tr>
-    <tr><td>Log file</td><td><code>GalaxyEggbert.log</code></td></tr>
-    <tr><td>Resource paths</td><td><code>Data;CoreData;Content</code></td></tr>
-  </table>
-
-  <h2>First-Run Behavior</h2>
+  <h2>What Happens on Startup (<code>LoadContent()</code>)</h2>
   <ol>
-    <li>The engine initializes and calls <code>GalaxyEggbertApp::Setup()</code> to configure the window.</li>
-    <li><code>GalaxyEggbertApp::Start()</code> creates <code>GalaxyEggbertGame</code> and starts it.</li>
-    <li>Save data is loaded from disk if present; otherwise defaults (3 lives, world 1) are used.</li>
-    <li>World 1 is loaded: first tries <code>worlds/world001.vwr</code>, then <code>worlds/world001.txt</code>, then generates a demo world.</li>
-    <li>If a demo world is generated, it is saved as <code>worlds/world001.vwr</code> for future runs.</li>
-    <li>The game enters the <code>Init</code> phase (gamer-select screen).</li>
+    <li>Loads the default world: <code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code> — a genuinely 3D, hand-authored voxel world (2729 non-air blocks, Y range [0, 13]).</li>
+    <li>Builds a <code>GETerrainRenderer</code> from the loaded world and a <code>GETileAtlas</code>.</li>
+    <li>Loads <code>Content/icons/object-m.png</code> as a CNA <code>Texture2D</code> and creates a <code>BasicEffect</code> (textured, no vertex color).</li>
+    <li>Places <code>GEBlupiController</code> at spawn position <code>(0, 1, 0)</code>.</li>
   </ol>
+
+  <h2>Per-Frame Update</h2>
+  <ol>
+    <li><code>worldRuntime_.Update(dt)</code> — advances the 6 fps tile animation phase.</li>
+    <li>Reads arrow keys + Space via <code>Keyboard::GetState()</code>.</li>
+    <li>Steps <code>GEBlupiController::Step(world, dx, dz, jump, dt)</code> — grid collision, step-up traversal, gravity.</li>
+    <li>Updates an <code>Easy3D::Camera3D</code> to follow Blupi.</li>
+  </ol>
+
+  <h2>Draw</h2>
+  <p>
+    Clears the device to sky blue (<code>0.392, 0.584, 0.929, 1.0</code>), enables depth test,
+    sets the terrain effect's View/Projection from the camera, and draws the terrain via
+    <code>GETerrainRenderer::Draw()</code>. A one-shot self-check samples backbuffer pixels via
+    <code>GetBackBufferData()</code> to confirm terrain is actually visible (not a placeholder color).
+  </p>
+
+  <h2>Controls</h2>
+  <p>See <a href="controls.html">Controls</a> for the full key list — currently just arrow keys + Space.</p>
+
+  <h2>What You Will (and Won't) See</h2>
+  <ul>
+    <li><strong>You will see:</strong> real, textured, animated 3D terrain — a ground floor, a 10-step staircase, a raised platform, a walled room with a doorway, two pillars.</li>
+    <li><strong>You will not see:</strong> Blupi (the controller is invisible/collision-only), any objects or pickups, a HUD, or hear any sound.</li>
+  </ul>
 
   <div class="page-nav">
     <a href="build.html">

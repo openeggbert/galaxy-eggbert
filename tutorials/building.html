@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Building the Game — Galaxy Eggbert Docs</title>
+<title>Building GalaxyEggbertCNA — Galaxy Eggbert Docs</title>
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -30,77 +30,64 @@
   <a href="../development/index.html">Development</a>
 </nav>
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Building the Game</div>
-  <h1>Tutorial: Building the Game</h1>
-  <p class="subtitle">From a fresh clone to a running binary on Linux.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Building GalaxyEggbertCNA</div>
+  <h1>Tutorial: Building GalaxyEggbertCNA</h1>
+  <p class="subtitle">From a fresh clone to a running window on Linux.</p>
 
-  <h2>Step 1 — Clone the Repository</h2>
-  <pre><code>git clone https://github.com/openeggbert/galaxy-eggbert.git
-cd galaxy-eggbert
-git submodule update --init --recursive</code></pre>
-
-  <h2>Step 2 — Verify Engine Availability</h2>
+  <h2>Step 1 — Clone the Repository and Its Siblings</h2>
+  <pre><code>cd ~/development
+git clone https://github.com/openeggbert/galaxy-eggbert.git
+git clone &lt;url&gt; cna
+git clone &lt;url&gt; easy-3d
+git clone &lt;url&gt; mobile-eggbert
+cd galaxy-eggbert</code></pre>
   <p>
-    The default build uses U3D. Check that U3D is pre-built at the expected path:
-  </p>
-  <pre><code>ls /rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code></pre>
-  <p>
-    If U3D is elsewhere, set the <code>U3D_HOME</code> CMake variable (see <a href="../build.html">Build Guide</a>).
-  </p>
-
-  <h2>Step 3 — Configure with CMake</h2>
-  <pre><code>cmake -B cmake-build-debug \
-      -DCMAKE_BUILD_TYPE=Debug \
-      -DGALAXY_EGGBERT_ENGINE=U3D</code></pre>
-  <p>
-    This creates a <code>cmake-build-debug/</code> directory.
-    Use <code>-DCMAKE_BUILD_TYPE=Release</code> for optimised builds.
+    By default, CMake expects <code>cna</code>, <code>easy-3d</code>, and <code>mobile-eggbert</code>
+    as siblings of <code>galaxy-eggbert</code>. Use <code>-DCNA_HOME=</code>,
+    <code>-DEASY3D_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> if yours are elsewhere.
   </p>
 
-  <h2>Step 4 — Build</h2>
-  <pre><code>cmake --build cmake-build-debug --parallel</code></pre>
-  <p>
-    Expected output: <code>cmake-build-debug/bin/GalaxyEggbert</code>.
-    Build time is typically 30–120 seconds depending on hardware.
-  </p>
-
-  <h2>Step 5 — Run</h2>
-  <pre><code>cd cmake-build-debug/bin
-./GalaxyEggbert</code></pre>
-  <div class="note">
-    <strong>Important:</strong> Run from within <code>cmake-build-debug/bin/</code> so that
-    Urho3D can find <code>CoreData/</code> and <code>Data/</code> relative to the executable.
+  <h2>Step 2 — Configure</h2>
+  <pre><code>cmake -S . -B build-cna \
+  -DGALAXY_EGGBERT_BUILD_CNA=ON \
+  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
+  -DCMAKE_BUILD_TYPE=Debug</code></pre>
+  <div class="warn">
+    <strong>Configure order matters</strong>
+    <code>CNA</code> must configure before <code>easy-3d</code> — Easy3D auto-detects a parent
+    <code>CNA</code> target and links against it instead of building its own copy.
   </div>
 
-  <h2>Step 6 — Run Tests</h2>
-  <pre><code>cd cmake-build-debug
-ctest --output-on-failure</code></pre>
-  <p>Expected: 54 tests pass. Tests are engine-agnostic and do not require a display.</p>
+  <h2>Step 3 — Build</h2>
+  <pre><code>cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
+  <p>This also builds and runs the post-build asset-copy step (mobile-eggbert's <code>Content/</code> + <code>worlds/</code>, plus this repo's own <code>worlds3d/</code>).</p>
+
+  <h2>Step 4 — Run</h2>
+  <pre><code>cd build-cna
+./GalaxyEggbertCNA</code></pre>
+  <div class="note">
+    <strong>Run from the build directory</strong>
+    The loader uses relative paths (<code>worlds3d/world001.vwr</code>, <code>Content/icons/object-m.png</code>) — you must run the binary from where the asset copy placed those files.
+  </div>
+  <p>Expected: a window titled "Galaxy Eggbert (CNA)" showing a sky-blue-cleared 3D view of textured terrain (a ground floor, staircase, platform, walled room, and pillars). Arrow keys + Space move an invisible collision point around; there is nothing visible to represent it.</p>
+
+  <h2>Step 5 — Run the Worlds Data Model Tests</h2>
+  <pre><code>cmake -S . -B build-cna -DBUILD_TESTING=ON
+cmake --build build-cna --target GalaxyEggbertWorldsTests
+ctest --test-dir build-cna --output-on-failure</code></pre>
 
   <h2>Troubleshooting</h2>
   <table>
     <tr><th>Problem</th><th>Fix</th></tr>
-    <tr>
-      <td>CMake can't find U3D</td>
-      <td>Add <code>-DU3D_HOME=/path/to/U3D/cmake-build-debug</code></td>
-    </tr>
-    <tr>
-      <td>Binary crashes on startup</td>
-      <td>Ensure you launch from <code>cmake-build-debug/bin/</code>; check <code>GalaxyEggbert.log</code></td>
-    </tr>
-    <tr>
-      <td>Missing Content/ assets</td>
-      <td>Verify <code>Content/</code> symlink or copy exists next to binary</td>
-    </tr>
-    <tr>
-      <td>Compiler errors about C++23 features</td>
-      <td>Upgrade GCC to ≥13 or Clang to ≥17</td>
-    </tr>
+    <tr><td>CMake can't find CNA/Easy3D/mobile-eggbert</td><td>Pass <code>-DCNA_HOME=</code>, <code>-DEASY3D_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> explicitly</td></tr>
+    <tr><td>Duplicate-symbol link errors</td><td>Reconfigure from a clean build directory — usually caused by configuring Easy3D before CNA</td></tr>
+    <tr><td>Binary can't find <code>worlds3d/world001.vwr</code></td><td>Run from inside <code>build-cna/</code>, not the repo root</td></tr>
+    <tr><td>No visible terrain</td><td>Check <code>Content/icons/object-m.png</code> was copied next to the binary</td></tr>
   </table>
 
   <div class="page-nav">
     <a href="index.html">← Tutorials</a>
-    <a href="first-object.html">Adding a New Game Object →</a>
+    <a href="first-object.html">Authoring a New .vwr World →</a>
   </div>
 </main>
 </div>

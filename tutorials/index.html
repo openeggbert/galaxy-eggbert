@@ -32,27 +32,36 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Tutorials</div>
   <h1>Tutorials</h1>
-  <p class="subtitle">Step-by-step guides for building, modifying, and extending Galaxy Eggbert.</p>
+  <p class="subtitle">Building GalaxyEggbertCNA and working with its world/terrain pipeline.</p>
 
   <div class="card-grid">
     <a class="card" href="building.html">
-      <h3>Building the Game</h3>
-      <p>Clone, configure CMake, compile, and run your first build on Linux or Windows.</p>
+      <h3>Building GalaxyEggbertCNA</h3>
+      <p>Clone, configure CMake with the sibling CNA/Easy3D/mobile-eggbert repos, compile, and run.</p>
     </a>
     <a class="card" href="first-object.html">
-      <h3>Adding a New Game Object</h3>
-      <p>Define a new <code>ObjectType</code>, add its icon mapping, and place it in a level.</p>
+      <h3>Authoring a New .vwr World</h3>
+      <p>Use <code>GenerateSampleWorld3D</code> as a template to build your own hand-authored 3D world.</p>
     </a>
     <a class="card" href="modifying-levels.html">
-      <h3>Modifying a Level</h3>
-      <p>Edit a mobile-eggbert .txt level file and reload it in-game.</p>
+      <h3>Adding a Block Type</h3>
+      <p>Add a named block type constant and see it rendered by GETerrainRenderer.</p>
     </a>
+  </div>
+
+  <div class="note">
+    <strong>Why these three tutorials</strong>
+    Earlier versions of this page covered "Adding a New Game Object" and "Modifying a Level" —
+    those assumed a working object system and a mobile-eggbert-.txt-first pipeline that
+    <code>GalaxyEggbertCNA</code> doesn't have yet (no object rendering at all; <code>.txt</code>
+    loading is now a secondary path). The tutorials below match what the CNA target can actually do
+    today: build it, and work with its <code>.vwr</code> terrain pipeline.
   </div>
 
   <h2>Prerequisites</h2>
   <ul>
-    <li>CMake ≥ 3.21 and a C++23 compiler (GCC 13+ or Clang 17+)</li>
-    <li>U3D engine pre-built at <code>/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug</code> (or set <code>U3D_HOME</code>)</li>
+    <li>CMake ≥ 3.21 and a modern C++ compiler</li>
+    <li>Sibling checkouts of <code>../cna</code>, <code>../easy-3d</code>, and <code>../mobile-eggbert</code> (or overrides — see <a href="../getting-started.html">Getting Started</a>)</li>
     <li>Familiarity with basic C++ and CMake</li>
   </ul>
 </main>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GETileAtlas — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GETileAtlas</div>
+  <h1>GETileAtlas</h1>
+  <p class="subtitle">Maps block type IDs to UV rects in object-m.png via Easy3D::TextureAtlas.</p>
+
+  <h2>Overview</h2>
+  <p>
+    Wraps an <code>Easy3D::TextureAtlas</code> sized to the sheet dimensions
+    <code>kSheetW × kSheetH = 1301 × 1431</code> (<code>object-m.png</code>), registered as one
+    grid via <code>AddGrid</code> with <code>kTileSize = 64</code>, <code>kSheetCols = 20</code>,
+    and <code>kSheetGap = 1</code> (65 px pitch: 64 px icon + 1 px inter-tile gap — confirmed
+    against mobile-eggbert's <code>Pixmap::GetSrcRectangle</code>).
+  </p>
+  <p>Sources: <code>src/GalaxyEggbertCNA/Game/GETileAtlas.hpp</code> and <code>.cpp</code>.</p>
+
+  <h2>API</h2>
+  <pre><code>class GETileAtlas {
+public:
+    explicit GETileAtlas(int textureWidth, int textureHeight);
+    Easy3D::UvRect GetTileUv(uint16_t blockType) const;
+};</code></pre>
+
+  <h2><code>GetTileUv(blockType)</code></h2>
+  <p>
+    Returns an all-zero <code>UvRect</code> for <code>blockType &lt;= 0</code> (Air); otherwise
+    looks up <code>"tile_&lt;blockType&gt;"</code> in the atlas. <code>BlockTypes::tileUV()</code>
+    (in <code>BlockTypes.hpp</code>) independently computes the same rect with a half-pixel inset
+    to avoid seam bleeding, and is cross-checked against this class.
+  </p>
+  <div class="note">
+    <strong>Bug fixed 2026-07-04</strong>
+    The atlas grid registration originally assumed a flat 64 px pitch with no inter-tile gap;
+    accounting for the sheet's real 65 px pitch (1 px gap) fixed visible seam artifacts.
+  </div>
+
+  <h2>Dependencies</h2>
+  <p><code>Easy3D::TextureAtlas</code> only.</p>
+
+  <div class="page-nav">
+    <a href="GETerrainRenderer.html">← GETerrainRenderer</a>
+    <a href="GEBlupiController.html">GEBlupiController →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

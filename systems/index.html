@@ -31,60 +31,56 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Systems</div>
   <h1>Systems</h1>
-  <p class="subtitle">Cross-cutting game systems — how major runtime behaviours are implemented.</p>
-
-  <p>
-    While the <a href="../classes/index.html">Classes</a> reference describes individual types,
-    this section explains how multiple classes work together to produce runtime behaviour.
-  </p>
+  <p class="subtitle">Cross-cutting behaviors — what's implemented today, and what's planned.</p>
 
   <div class="card-grid">
     <a class="card" href="../gameplay.html">
-      <h3>Physics &amp; Movement</h3>
-      <p>Gravity, jump, AABB collision, fall death. Implemented in <code>Blupi</code>.</p>
+      <h3>Movement</h3>
+      <p>Gravity, jump, step-up collision. Implemented in <code>GEBlupiController</code> — invisible only.</p>
     </a>
     <a class="card" href="../rendering.html">
       <h3>Rendering</h3>
-      <p>Scene graph, terrain, billboards, sky dome, HUD. Urho3D backend.</p>
+      <p>Terrain only: cube-per-block, animated tiles. No sprites yet.</p>
     </a>
     <a class="card" href="../audio.html">
       <h3>Audio</h3>
-      <p>93-channel WAV playback via <code>SoundManager</code>.</p>
+      <p>Not implemented. Planned: 93-channel WAV parity with mobile-eggbert.</p>
     </a>
     <a class="card" href="../input.html">
       <h3>Input</h3>
-      <p>Keyboard polling via Urho3D Input subsystem.</p>
+      <p>Arrow keys + Space, polled via CNA Keyboard each frame.</p>
     </a>
     <a class="card" href="../save-system.html">
       <h3>Save System</h3>
-      <p>640-byte binary save file, 3 gamer slots, cross-platform paths.</p>
+      <p>Not implemented. Save-format reuse is an open decision, not a default.</p>
     </a>
     <a class="card" href="../levels.html">
       <h3>Level Loading</h3>
-      <p>VWR binary format and mobile-eggbert .txt format parsers.</p>
+      <p>.vwr binary format (default) and mobile-eggbert .txt parser (secondary).</p>
     </a>
     <a class="card" href="../game-loop.html">
       <h3>Game Loop</h3>
-      <p>Urho3D E_UPDATE event, per-frame dt, phase dispatch.</p>
+      <p>CNA's Game base class drives LoadContent/Update/Draw.</p>
     </a>
-    <a class="card" href="../gameplay.html#phases">
-      <h3>Phase State Machine</h3>
-      <p>Init → Play → Pause → Win/Lost → Resume transitions.</p>
+    <a class="card" href="../gameplay.html">
+      <h3>Gameplay</h3>
+      <p>No hazards, enemies, pickups, or exit condition yet — planned per plan.md's E3D-MIG-100s.</p>
     </a>
   </div>
 
-  <h2>System Interaction Map</h2>
+  <h2>System Interaction Map (GalaxyEggbertCNA today)</h2>
   <table>
     <tr><th>System</th><th>Reads from</th><th>Writes to</th><th>Owner class</th></tr>
-    <tr><td>Physics</td><td>World (blocks), Input</td><td>Blupi position/velocity</td><td><code>Blupi</code></td></tr>
-    <tr><td>Object system</td><td>Level file (ObjectType), Blupi position</td><td>Scene nodes, event flags</td><td><code>Decor</code></td></tr>
-    <tr><td>Rendering</td><td>World, Blupi pos, Decor nodes</td><td>Urho3D scene graph</td><td><code>GalaxyEggbertGame</code></td></tr>
-    <tr><td>Audio</td><td>Game events (jump, collect, die)</td><td>Urho3D SoundSource</td><td><code>SoundManager</code></td></tr>
-    <tr><td>HUD</td><td>lives_, Decor events, phase</td><td>Urho3D UI elements</td><td><code>HUD</code></td></tr>
-    <tr><td>Camera</td><td>Blupi node position</td><td>Camera node transform</td><td><code>CameraController</code></td></tr>
-    <tr><td>Save</td><td>GameData (memory)</td><td>Disk / IDBFS</td><td><code>GameData</code></td></tr>
-    <tr><td>Phase</td><td>Decor events, Input, timer</td><td>GamePhase, overlays</td><td><code>PhaseManager</code>, <code>GalaxyEggbertGame</code></td></tr>
+    <tr><td>Movement</td><td>World (blocks), Keyboard</td><td>Blupi position/velocity</td><td><code>GEBlupiController</code></td></tr>
+    <tr><td>World loading</td><td>.vwr file, mobile-eggbert .txt (secondary)</td><td><code>Worlds::World</code></td><td><code>GEWorldRuntime</code></td></tr>
+    <tr><td>Tile animation</td><td>Elapsed time</td><td><code>animPhase_</code></td><td><code>GEWorldRuntime</code></td></tr>
+    <tr><td>Terrain rendering</td><td>World blocks, GETileAtlas, anim phase</td><td>CNA VertexBuffer/IndexBuffer</td><td><code>GETerrainRenderer</code></td></tr>
+    <tr><td>Camera</td><td>Blupi position</td><td>View/Projection matrices</td><td><code>Easy3D::Camera3D</code></td></tr>
   </table>
+  <p>
+    Audio, HUD, save, and gameplay-event systems (hazards, pickups, enemies, exit) do not exist yet
+    in this table — see <a href="../development/known-issues.html">Known Issues</a> for the roadmap.
+  </p>
 </main>
 </div>
 <script src="../assets/script.js"></script>

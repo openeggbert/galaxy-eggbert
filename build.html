@@ -53,119 +53,86 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Build Guide</div>
   <h1>Build Guide</h1>
-  <p class="subtitle">CMake configuration and build commands for every supported platform.</p>
+  <p class="subtitle">CMake targets and options for GalaxyEggbertCNA (and the GalaxyEggbertSimple3D reference target).</p>
 
-  <h2>Engine Backend Selection</h2>
-  <p>
-    The CMake variable <code>GALAXY_EGGBERT_ENGINE</code> selects the engine:
-  </p>
+  <h2>Two Build Targets</h2>
   <table>
-    <tr><th>Value</th><th>Engine</th><th>Status</th></tr>
-    <tr><td><code>U3D</code> (default)</td><td>u3d-community/U3D (Urho3D fork)</td><td><span class="badge badge-done">Stable</span></td></tr>
-    <tr><td><code>NOVA3D</code></td><td>Robert Vokac's Nova3D fork</td><td><span class="badge badge-wip">WIP</span></td></tr>
+    <tr><th>CMake option</th><th>Default</th><th>Target</th><th>Role</th></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_SIMPLE3D</code></td><td><code>ON</code></td><td><code>GalaxyEggbertSimple3D</code></td><td>Current only fully-playable target, built on Simple3D/U3D</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>OFF</code> (opt-in)</td><td><code>GalaxyEggbertCNA</code></td><td>Long-term target, built directly on CNA + Easy3D</td></tr>
   </table>
 
-  <h2 id="linux">Linux Native Build (U3D + EasyGL)</h2>
-  <pre><code>cmake -S . -B build-linux \
-  -DCNA_BACKEND_SDL_RENDERER=OFF \
-  -DCNA_BACKEND_EASY_GL=ON \
-  -DCNA_BACKEND_BGFX=OFF
-cmake --build build-linux --target GalaxyEggbert -j2</code></pre>
+  <h2 id="cna">Building GalaxyEggbertCNA</h2>
+  <pre><code>cmake -S . -B build-cna \
+  -DGALAXY_EGGBERT_BUILD_CNA=ON \
+  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
+  <p>Build directory convention: <code>build-cna</code>. Configure order matters — <code>CNA</code> must be configured before <code>easy-3d</code> (Easy3D auto-detects a parent <code>CNA</code> target).</p>
+
+  <h3>Sibling Repository Path Overrides</h3>
+  <table>
+    <tr><th>Variable</th><th>Default</th></tr>
+    <tr><td><code>CNA_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../cna</code></td></tr>
+    <tr><td><code>EASY3D_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../easy-3d</code></td></tr>
+    <tr><td><code>MOBILE_EGGBERT_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../mobile-eggbert</code></td></tr>
+  </table>
+
+  <h3>What Links Into GalaxyEggbertCNA</h3>
+  <ul>
+    <li><code>CNA</code> — the game framework</li>
+    <li><code>SHARP_RUNTIME</code></li>
+    <li><code>easy3d::easy3d</code> (or the <code>easy3d</code> target)</li>
+    <li>The CNA graphics backend static library — <code>cna_backend_graphics_easygl</code> on Linux by default, or an SDL-renderer/BGFX/Vulkan backend elsewhere</li>
+    <li><code>${GE_SHARED_SOURCES}</code> — the engine-agnostic <code>src/GalaxyEggbert/Worlds/*.cpp</code> sources, shared with <code>GalaxyEggbertSimple3D</code></li>
+  </ul>
   <div class="note">
-    <strong>Note</strong>
-    Use <code>-j2</code> maximum parallel jobs to protect RAM. Crashes with more parallel jobs have been observed in memory-constrained sessions.
+    <strong>Circular link group</strong>
+    On non-Windows GNU/Clang toolchains, CNA and its backend library have circular symbol
+    references, so they are linked inside a <code>-Wl,--start-group … --end-group</code> block.
   </div>
 
-  <h2 id="linux-u3d">Linux Native Build (U3D — primary recommended path)</h2>
-  <pre><code># Set U3D_HOME if not using the default path
-cmake -S . -B cmake-build-u3d \
-  -DGALAXY_EGGBERT_ENGINE=U3D \
-  -DU3D_HOME=/path/to/U3D/cmake-build-debug
-cmake --build cmake-build-u3d --target GalaxyEggbert -j2</code></pre>
+  <h3>Post-Build Asset Copy</h3>
+  <p>
+    Custom post-build commands copy <code>mobile-eggbert/Content</code> and
+    <code>mobile-eggbert/worlds</code> (read-only source, not committed here) plus this repo's own
+    committed <code>worlds3d/</code> directory next to the <code>GalaxyEggbertCNA</code> binary.
+    Skipped when <code>EMSCRIPTEN</code> or <code>ANDROID</code> is set.
+  </p>
 
-  <h2 id="windows">Windows Native Build</h2>
-  <p>Run on Windows with a MinGW or MSVC compiler:</p>
-  <pre><code>cmake -S . -B build-windows \
-  -DCNA_BACKEND_SDL_RENDERER=ON \
-  -DCNA_BACKEND_EASY_GL=OFF \
-  -DCNA_BACKEND_BGFX=OFF
-cmake --build build-windows --target GalaxyEggbert</code></pre>
-
-  <h2 id="cross">Windows Cross-Build from Linux (MinGW-w64)</h2>
-  <pre><code># Install MinGW-w64 first:
-sudo apt install mingw-w64
-
-# Always use a clean build directory when switching toolchains:
-rm -rf build-windows
-
-cmake -S . -B build-windows \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-  -DGALAXY_EGGBERT_ENGINE=U3D \
-  -DU3D_HOME=/path/to/U3D/build-windows \
-  -DBUILD_TESTING=OFF
-cmake --build build-windows --target GalaxyEggbert -j2</code></pre>
-  <div class="warn">
-    <strong>Important</strong>
-    Always start with a clean <code>build-windows/</code> directory when switching from a Linux-native to a MinGW toolchain build.
-    Mixing toolchains in the same directory causes CMake cache corruption.
-  </div>
-  <p>The resulting <code>build-windows/GalaxyEggbert.exe</code> is a PE32+ x86-64 binary,
-     statically linked against libgcc and libstdc++.</p>
-
-  <h2 id="web">Web Build (Emscripten) — Nova3D only</h2>
-  <div class="warn">
-    <strong>U3D not supported</strong>
-    The U3D backend cannot be built for Emscripten/Web. Use <code>GALAXY_EGGBERT_ENGINE=NOVA3D</code>.
-  </div>
-  <h3>Step 1 — Install Emscripten SDK</h3>
-  <pre><code>git clone https://github.com/emscripten-core/emsdk.git
-cd emsdk
-./emsdk install latest
-./emsdk activate latest
-source ./emsdk_env.sh</code></pre>
-  <h3>Step 2 — Configure</h3>
-  <pre><code>source /path/to/emsdk/emsdk_env.sh
-emcmake cmake -S . -B cmake-build-web \
-  -DGALAXY_EGGBERT_ENGINE=NOVA3D \
-  -DCMAKE_BUILD_TYPE=Debug</code></pre>
-  <h3>Step 3 — Build</h3>
-  <pre><code>cmake --build cmake-build-web -j</code></pre>
-  <h3>Generated Files</h3>
+  <h3>Additional Tool Targets</h3>
   <table>
-    <tr><th>File</th><th>Description</th></tr>
-    <tr><td><code>GalaxyEggbert.html</code></td><td>Main entry — open in browser</td></tr>
-    <tr><td><code>GalaxyEggbert.js</code></td><td>Emscripten JS glue code</td></tr>
-    <tr><td><code>GalaxyEggbert.wasm</code></td><td>WebAssembly binary</td></tr>
-    <tr><td><code>GalaxyEggbert.data</code></td><td>Preloaded asset bundle</td></tr>
+    <tr><th>Target</th><th>Purpose</th></tr>
+    <tr><td><code>GenerateSampleWorld3D</code></td><td>Generates <code>worlds3d/world001.vwr</code> — engine-agnostic, no CNA link needed</td></tr>
+    <tr><td><code>VerifyBlupiMovement</code></td><td>Exercises <code>GEBlupiController</code> headlessly (links only <code>GEBlupiController.cpp</code> — no CNA dependency)</td></tr>
   </table>
+
+  <h2 id="simple3d">Building GalaxyEggbertSimple3D (reference target)</h2>
+  <pre><code>cmake -S . -B cmake-build-debug -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
+cmake --build cmake-build-debug --target GalaxyEggbertSimple3D</code></pre>
+  <p>
+    This is the default (option is <code>ON</code> unless disabled). It remains the only
+    end-to-end-playable target and is not expected to gain new engine-layer investment beyond
+    bug fixes and faithful-remake gameplay parity work.
+  </p>
 
   <h2 id="testing">Running Tests</h2>
-  <pre><code># Configure with tests enabled (default for non-web, non-android builds)
-cmake -S . -B cmake-build-u3d -DBUILD_TESTING=ON
-cmake --build cmake-build-u3d --target GalaxyEggbertWorldsTests
-
-# Run tests
-ctest --test-dir cmake-build-u3d --output-on-failure</code></pre>
+  <pre><code>cmake -S . -B build-cna -DBUILD_TESTING=ON
+cmake --build build-cna --target GalaxyEggbertWorldsTests
+ctest --test-dir build-cna --output-on-failure</code></pre>
   <p>
-    The test suite (<code>GalaxyEggbertWorldsTests</code>) covers the <code>Worlds/</code> data model only.
-    It has no dependency on U3D or any graphics library — 54 tests run purely in C++.
+    <code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code>
+    data model (<code>World</code>, <code>Chunk</code>, <code>Block</code>, bit-packing, binary I/O)
+    — no dependency on CNA, Easy3D, or Simple3D.
   </p>
 
-  <h2 id="doxygen">Generating API Docs (Doxygen)</h2>
-  <pre><code>cmake --build cmake-build-u3d --target GalaxyEggbertDocs</code></pre>
-  <p>Output goes to <code>cmake-build-u3d/html/</code>. Requires <code>doxygen</code> to be installed.</p>
-
-  <h2>CMake Variables Reference</h2>
-  <table>
-    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
-    <tr><td><code>GALAXY_EGGBERT_ENGINE</code></td><td><code>U3D</code></td><td>Engine backend: <code>U3D</code> or <code>NOVA3D</code></td></tr>
-    <tr><td><code>U3D_HOME</code></td><td>(auto)</td><td>Path to pre-built U3D library directory</td></tr>
-    <tr><td><code>BUILD_TESTING</code></td><td><code>ON</code></td><td>Enable GoogleTest unit tests</td></tr>
-    <tr><td><code>CNA_BACKEND_SDL_RENDERER</code></td><td>varies</td><td>Use SDL Renderer backend (Nova3D only)</td></tr>
-    <tr><td><code>CNA_BACKEND_EASY_GL</code></td><td>varies</td><td>Use EasyGL OpenGL backend (Nova3D only)</td></tr>
-    <tr><td><code>CNA_BACKEND_BGFX</code></td><td>OFF</td><td>Use BGFX backend (Nova3D only, experimental)</td></tr>
-    <tr><td><code>CMAKE_TOOLCHAIN_FILE</code></td><td>(none)</td><td>Toolchain file for cross-compilation</td></tr>
-  </table>
+  <h2>Windows</h2>
+  <p>
+    Cross-compile from Linux using the MinGW-w64 toolchain file, or build natively on Windows.
+    Build-dir convention: <code>build-windows</code>.
+  </p>
+  <pre><code>cmake -S . -B build-windows \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake
+cmake --build build-windows -j2</code></pre>
 
   <div class="page-nav">
     <a href="getting-started.html">

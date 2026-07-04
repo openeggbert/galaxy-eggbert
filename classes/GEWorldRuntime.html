@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEWorldRuntime — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GEWorldRuntime</div>
+  <h1>GEWorldRuntime</h1>
+  <p class="subtitle">Wraps a Worlds::World; loads .vwr (default) or mobile-eggbert .txt (secondary); drives tile animation.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>GEWorldRuntime</code> (CNA version) owns a <code>std::unique_ptr&lt;Worlds::World&gt;</code>
+    and centers the 100×100 grid on the origin: <code>kWorldCenterX = kWorldCenterZ = 50</code>
+    (matches Simple3D's equivalent <code>kWCX</code>/<code>kWCZ</code>).
+  </p>
+  <p>Sources: <code>src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp</code> and <code>.cpp</code>.</p>
+
+  <h2>API</h2>
+  <pre><code>class GEWorldRuntime {
+public:
+    bool LoadFromVwrFile(const std::string&amp; path);           // default load path
+    bool LoadFromMobileEggbertFile(const std::string&amp; path); // secondary/reference path
+
+    void Update(float dt);          // advances 6 fps tile-animation phase
+
+    const Worlds::World&amp; GetWorld() const;
+    int   GetSpawnTileX() const;
+    int   GetSpawnTileZ() const;
+    int   GetSkyRegion() const;
+    int   GetAnimPhase() const;
+    const std::vector&lt;uint16_t&gt;&amp; GetBigDecor() const;
+};</code></pre>
+
+  <h2><code>LoadFromVwrFile(path)</code> — the default path</h2>
+  <p>
+    Calls <code>Worlds::World::loadFromFile(path)</code>. On exception, returns <code>false</code>
+    leaving the prior world untouched. Resets <code>spawnTileX_/Z_ = 0</code>, <code>skyRegion_ = 0</code>,
+    and clears <code>bigDecor_</code> — the <code>.vwr</code> format carries no spawn/sky-region
+    header, unlike the mobile-eggbert text format.
+  </p>
+
+  <h2><code>LoadFromMobileEggbertFile(path)</code> — secondary/reference path</h2>
+  <p>
+    Parses mobile-eggbert's flat <code>.txt</code> format. Converts each icon ID via
+    <code>BlockTypes::fromMobileIconId</code> and calls <code>world_-&gt;setBlock(col, 0, row, ...)</code>
+    — always at <code>Y=0</code> (this format is inherently flat). Also populates:
+  </p>
+  <ul>
+    <li><code>spawnTileX_/spawnTileZ_</code> from the header's <code>blupiPos=</code> (divided by <code>kMobileTileSize=64</code>)</li>
+    <li><code>skyRegion_</code> from <code>region=</code></li>
+    <li><code>bigDecor_</code> — a 100×100 <code>vector&lt;uint16_t&gt;</code> background layer, row-major <code>[row*100+col]</code>, parsed but not currently rendered</li>
+  </ul>
+  <p>
+    This is <strong>no longer the default</strong> world loader for CNA — it exists for future
+    faithful-remake level porting, not day-to-day use.
+  </p>
+
+  <h2><code>Update(dt)</code></h2>
+  <pre><code>animTimer_ += dt;
+constexpr float kAnimPeriod = 1.0f / 6.0f;   // 6 fps
+while (animTimer_ &gt;= kAnimPeriod) {
+    animTimer_ -= kAnimPeriod;
+    ++animPhase_;
+}</code></pre>
+  <p>Matches <code>GalaxyEggbertSimple3D</code>'s and mobile-eggbert's original animation rate.</p>
+
+  <h2>Dependencies</h2>
+  <p><code>GalaxyEggbert::Worlds::World</code> only — no CNA or Easy3D dependency.</p>
+
+  <div class="page-nav">
+    <a href="GalaxyEggbertCnaGame.html">← GalaxyEggbertCnaGame</a>
+    <a href="GETerrainRenderer.html">GETerrainRenderer →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

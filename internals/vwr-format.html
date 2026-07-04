@@ -30,101 +30,85 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> VWR Binary Format</div>
   <h1>VWR Binary Format</h1>
-  <p class="subtitle">Complete specification for the <code>.vwr</code> voxel world file.</p>
+  <p class="subtitle">The only world format with genuine Y variation. Binary, little-endian, palette-compressed.</p>
 
   <div class="note">
-    This spec is derived directly from <code>World Format.md</code> in the source repository
-    and the implementation in <code>src/GalaxyEggbert/Worlds/World.cpp</code>
-    and <code>Chunk.cpp</code>.
+    Derived from <code>World Format.md</code> in the source repository and the implementation in
+    <code>src/GalaxyEggbert/Worlds/World.cpp</code> / <code>Chunk.cpp</code> and
+    <code>tools/GenerateSampleWorld3D.cpp</code>.
   </div>
 
   <h2>Overall Structure</h2>
-  <pre><code>[World Header]
-[Chunk Table]          — sparse list of non-empty chunk entries
-[Chunk Payloads]       — one VCH1 block per entry in the chunk table</code></pre>
+  <pre><code>[World Header]     — 32 bytes, magic VWR1
+[Chunk Table]       — 20 bytes/entry: offset, size, x/y/z, flags
+[Chunk Payloads]    — one VCH1 block per non-empty chunk table entry</code></pre>
 
-  <h2>World Header</h2>
+  <h2>World Header (32 bytes)</h2>
   <table>
-    <tr><th>Offset</th><th>Size</th><th>Field</th><th>Value / Notes</th></tr>
-    <tr><td>0</td><td>4 bytes</td><td>magic</td><td><code>VWR1</code> (ASCII, no null terminator)</td></tr>
-    <tr><td>4</td><td>uint8</td><td>chunksPerAxis</td><td>Normally <code>10</code></td></tr>
-    <tr><td>5</td><td>uint32 LE</td><td>nonEmptyChunkCount</td><td>Number of entries in chunk table</td></tr>
+    <tr><th>Field</th><th>Notes</th></tr>
+    <tr><td>magic</td><td><code>VWR1</code> (4 bytes, ASCII, no null terminator)</td></tr>
+    <tr><td>version</td><td>1</td></tr>
+    <tr><td>chunkSize</td><td>Normally 10</td></tr>
+    <tr><td>chunksPerAxis</td><td>Normally 10</td></tr>
+    <tr><td>flags</td><td>Reserved</td></tr>
+    <tr><td>chunkCount</td><td>Number of entries in the chunk table</td></tr>
+    <tr><td>chunkTableOffset</td><td>Byte offset to the chunk table</td></tr>
+    <tr><td>chunkDataOffset</td><td>Byte offset to the first chunk payload</td></tr>
+    <tr><td>reserved</td><td>Padding to 32 bytes</td></tr>
   </table>
 
-  <h2>Chunk Table</h2>
+  <h2>Chunk Table (20 bytes per entry)</h2>
+  <table>
+    <tr><th>Field</th><th>Size</th><th>Notes</th></tr>
+    <tr><td>offset</td><td>uint64 LE</td><td>Byte offset to this chunk's VCH1 payload; 0 if empty</td></tr>
+    <tr><td>size</td><td>uint32 LE</td><td>Payload size in bytes; 0 if empty</td></tr>
+    <tr><td>x, y, z</td><td>uint16 each</td><td>Chunk coordinates</td></tr>
+    <tr><td>flags</td><td>2 bytes</td><td><code>0x0001 = EMPTY</code></td></tr>
+  </table>
   <p>
-    Immediately follows the world header. Contains <code>nonEmptyChunkCount</code> entries,
-    each describing one non-empty chunk. Empty chunks (all-air) are not stored.
+    Empty chunks (all-air) are entirely skipped — flagged <code>EMPTY</code>, offset 0, size 0. This
+    matters for handcrafted worlds, which typically have large empty regions.
   </p>
-  <table>
-    <tr><th>Size</th><th>Field</th><th>Notes</th></tr>
-    <tr><td>uint8</td><td>cx</td><td>Chunk X index, 0 … chunksPerAxis-1</td></tr>
-    <tr><td>uint8</td><td>cy</td><td>Chunk Y index, 0 … chunksPerAxis-1</td></tr>
-    <tr><td>uint8</td><td>cz</td><td>Chunk Z index, 0 … chunksPerAxis-1</td></tr>
-    <tr><td>uint64 LE</td><td>offset</td><td>Byte offset from start of file to this chunk's VCH1 block</td></tr>
-  </table>
-  <p>Chunk table entry size: <strong>11 bytes</strong> each.</p>
 
   <h2>VCH1 Chunk Payload</h2>
-  <p>Each chunk payload begins with the magic bytes <code>VCH1</code>:</p>
-  <table>
-    <tr><th>Size</th><th>Field</th><th>Notes</th></tr>
-    <tr><td>4 bytes</td><td>magic</td><td><code>VCH1</code></td></tr>
-    <tr><td>uint8</td><td>bitsPerBlock</td><td>0 = uniform (palette size 1, no packed data)</td></tr>
-    <tr><td>uint8</td><td>paletteCount</td><td>Number of unique block values (1–256)</td></tr>
-    <tr><td>paletteCount × blockSize</td><td>palette[]</td><td>Block values; blockSize = sizeof(Block) = 2 bytes</td></tr>
-    <tr><td>ceil(1000 × bitsPerBlock / 8)</td><td>packedIndices</td><td>Omitted if bitsPerBlock == 0</td></tr>
-    <tr><td>0 or more</td><td>BMD1 section</td><td>Optional metadata (see below)</td></tr>
-  </table>
-
-  <h2>Block Type</h2>
-  <pre><code>struct Block {
-    uint16_t typeId;   // matches BlockTypes constants / object-m.png icon index
-};</code></pre>
-  <p><code>typeId == 0</code> means Air. All other values are solid blocks.</p>
-
-  <h2>BMD1 Metadata Section (Optional)</h2>
-  <p>If present, immediately follows the packed index data:</p>
-  <table>
-    <tr><th>Size</th><th>Field</th><th>Notes</th></tr>
-    <tr><td>4 bytes</td><td>magic</td><td><code>BMD1</code></td></tr>
-    <tr><td>uint32 LE</td><td>metaLength</td><td>Byte length of metadata payload</td></tr>
-    <tr><td>metaLength bytes</td><td>metadata</td><td>Reserved for future per-block metadata (e.g., orientation, light level)</td></tr>
-  </table>
-  <div class="nv">
-    <strong>Needs verification:</strong> Whether BMD1 sections are written by the current implementation
-    or reserved for future use.
-  </div>
-
-  <h2>Bit-packing Detail</h2>
   <p>
-    Palette indices are stored little-endian, consecutive, <code>bitsPerBlock</code> bits each,
-    packed into bytes from the least-significant bit first.
-    Index for flat position <code>i = lx + ly*10 + lz*100</code>:
+    Two header versions exist: v2 (current) is 24 bytes — version, chunkSize, bitsPerBlock, flags,
+    paletteCount, reserved, blockCount, dataSizeBytes, extraMetaSizeBytes. Legacy v1 is 20 bytes
+    (no extra-metadata field).
   </p>
-  <pre><code>// conceptual read
-uint64_t bitOffset = i * bitsPerBlock;
-uint8_t  byteIdx   = bitOffset / 8;
-uint8_t  bitShift  = bitOffset % 8;
-uint8_t  mask      = (1u &lt;&lt; bitsPerBlock) - 1;
-uint8_t  idx       = (packedIndices[byteIdx] &gt;&gt; bitShift) &amp; mask;</code></pre>
+  <table>
+    <tr><th>Section</th><th>Notes</th></tr>
+    <tr><td>magic</td><td><code>VCH1</code></td></tr>
+    <tr><td>header (v2, 24 bytes)</td><td>version, chunkSize, bitsPerBlock, flags, paletteCount, reserved, blockCount, dataSizeBytes, extraMetaSizeBytes</td></tr>
+    <tr><td>palette[]</td><td><code>uint16_t</code> raw block values, <code>paletteCount</code> entries</td></tr>
+    <tr><td>packed indices</td><td><code>uint64_t</code> words, <code>bitsPerBlock</code> bits per block (see Bit-packing below)</td></tr>
+    <tr><td>optional metadata</td><td><code>BMD1</code> magic + sparse per-block metadata</td></tr>
+  </table>
 
-  <h2>Example: 2-block Chunk</h2>
-  <pre><code>// A chunk with 500 Ground blocks and 500 Air blocks:
-VCH1
-bitsPerBlock = 1          (2 palette entries)
-paletteCount = 2
-palette[0]   = 0x0000     (Air)
-palette[1]   = 0x000A     (Ground, typeId=10)
-packedIndices: 125 bytes, each bit = index into palette</code></pre>
+  <h2>Bit-packing</h2>
+  <p>
+    Palette indices are packed little-endian, consecutive, <code>bitsPerBlock</code> bits each,
+    into <code>uint64_t</code> words. <code>bitsNeededForPalette(count)</code> (in
+    <a href="../classes/VoxelConfig.html">VoxelConfig</a>/BitPacking) gives: 1 bit for 1–2 palette
+    entries, up to 8 bits for 129–256 entries.
+  </p>
+
+  <h2>Example World: worlds3d/world001.vwr</h2>
+  <p>
+    Generated by <code>tools/GenerateSampleWorld3D.cpp</code>: ground floor (Ground, y=0, x/z
+    30–70), a 10-step ascending staircase (StoneA, x 29→20, z 45–54, step heights 0–9), a raised
+    platform (Platform, y=10, x 5–19, z 40–59), room walls 3 blocks tall (Wall, y=11–13) with a
+    doorway, and two decorative pillars (StoneB). Verified stats:
+    <strong>2729 non-air blocks</strong> (post-bugfix; was 2749 before a staircase/doorway fix),
+    <strong>Y range [0, 13]</strong>.
+  </p>
 
   <h2>Related Files</h2>
   <ul>
-    <li><code>include/GalaxyEggbert/Worlds/World.hpp</code> — saveToFile/loadFromFile</li>
-    <li><code>include/GalaxyEggbert/Worlds/Chunk.hpp</code> — write/read per chunk</li>
-    <li><code>World Format.md</code> — canonical spec in source repo</li>
-    <li><a href="../classes/World.html">World class reference</a></li>
-    <li><a href="../classes/Chunk.html">Chunk class reference</a></li>
+    <li><code>include/GalaxyEggbert/Worlds/World.hpp</code> — <code>saveToFile</code>/<code>loadFromFile</code></li>
+    <li><code>include/GalaxyEggbert/Worlds/Chunk.hpp</code> — per-chunk <code>write</code>/<code>read</code></li>
+    <li><code>World Format.md</code> — canonical spec in the source repo</li>
+    <li><a href="../classes/World.html">World class reference</a>, <a href="../classes/Chunk.html">Chunk class reference</a></li>
   </ul>
 
   <div class="page-nav">

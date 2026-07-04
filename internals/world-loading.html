@@ -30,92 +30,65 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> World Loading</div>
   <h1>World Loading</h1>
-  <p class="subtitle">How <code>GalaxyEggbertGame::LoadWorld()</code> selects, parses, and renders a level.</p>
+  <p class="subtitle">GEWorldRuntime picks a format; GETerrainRenderer turns it into draw calls.</p>
 
-  <h2>Decision Tree</h2>
-  <pre><code>LoadWorld(worldNum):
-  path = "Content/Data/Level/scene0N.vwr"
-  if file exists:
-      world_ = World::loadFromFile(path)    // VWR binary
-  else:
-      path = "Content/Data/Level/scene0N.txt"
-      if file exists:
-          world_ = make_unique&lt;World&gt;()
-          LoadMobileEggbertTerrain(path)    // .txt text format
-      else:
-          BuildDemoWorld()                  // procedural fallback
-
-  SpawnTerrainNodes()
-  UpdateSkyDome(region)</code></pre>
-
-  <h2>VWR Loading</h2>
+  <h2>Load Path (GalaxyEggbertCnaGame::LoadContent)</h2>
+  <pre><code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr");   // the only path used today
+terrainRenderer_ = GETerrainRenderer(worldRuntime_.GetWorld(), tileAtlas);</code></pre>
   <p>
-    Delegates entirely to <code>World::loadFromFile()</code> and <code>Chunk::read()</code>.
-    The chunk table is read first; non-empty chunks are deserialized at their stored file offsets.
-    Empty chunks (all-air) are implicitly created as <code>Chunk::createUniform(Block::air())</code>.
-    Full spec: <a href="vwr-format.html">VWR Format</a>.
+    <code>LoadFromMobileEggbertFile(path)</code> exists as a secondary/reference method on the same
+    class but is not called from <code>GalaxyEggbertCnaGame</code> today.
   </p>
 
-  <h2>Mobile-Eggbert .txt Loading</h2>
+  <h2><code>LoadFromVwrFile(path)</code></h2>
+  <pre><code>bool GEWorldRuntime::LoadFromVwrFile(const std::string&amp; path) {
+    try {
+        world_ = std::make_unique&lt;Worlds::World&gt;(Worlds::World::loadFromFile(path));
+    } catch (...) {
+        return false;   // prior world (if any) is left untouched
+    }
+    spawnTileX_ = spawnTileZ_ = 0;
+    skyRegion_ = 0;
+    bigDecor_.clear();
+    return true;
+}</code></pre>
   <p>
-    Implemented in <code>GalaxyEggbertGame::LoadMobileEggbertTerrain(path)</code>.
-    The file has three sections:
+    Delegates entirely to <code>World::loadFromFile()</code> / <code>Chunk::read()</code> — see
+    <a href="vwr-format.html">VWR Format</a> for the binary layout. Because <code>.vwr</code>
+    carries no spawn/sky-region header, those fields are simply reset to defaults.
   </p>
+
+  <h2><code>LoadFromMobileEggbertFile(path)</code> (secondary path, not wired into CNA's game loop yet)</h2>
   <ol>
-    <li>
-      <strong>Header</strong> — key=value pairs: <code>blupiPos</code>, <code>region</code>.
-      Sets Blupi spawn point and sky index.
-    </li>
-    <li>
-      <strong>Decor section</strong> — 100×100 space-separated tile IDs (one row per line).
-      Each tile ID is mapped to a block type via <code>BlockTypes::fromMobileIconId(id)</code>.
-      Decorative tiles that have no 3D block equivalent are mapped to Air.
-    </li>
-    <li>
-      <strong>MoveObject entries</strong> — zero or more objects with type, posStart, posEnd, speed.
-      Each is placed via <code>decor_->PlaceObject(type, pos, posEnd, speed)</code>.
-    </li>
+    <li><strong>Header</strong> — <code>blupiPos=</code>, <code>region=</code> key/value pairs.</li>
+    <li><strong>Decor section</strong> — 100×100 tile IDs, one row per line; each converted via <code>BlockTypes::fromMobileIconId(id)</code> and placed at <code>Y=0</code> (inherently flat).</li>
+    <li><strong>BigDecor section</strong> — a second 100×100 background layer; parsed and stored in <code>bigDecor_</code> but not rendered anywhere.</li>
+    <li><strong>MoveObject entries</strong> — object placements; not currently parsed by this method for CNA.</li>
   </ol>
 
-  <h2>SpawnTerrainNodes()</h2>
+  <h2>GETerrainRenderer Construction</h2>
+  <pre><code>GETerrainRenderer(world, tileAtlas):
+  for x, y, z in world.blocksPerAxis()³:
+      block = world.getBlock(x, y, z)
+      if block.isAir(): continue
+      worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ
+      if BlockTypes::tileAnimBase(block.type()) is animated:
+          m_animBlocks.push_back({worldX, y, worldZ, baseIcon})
+      else:
+          cubeBatch.Add(Cube(worldX, y, worldZ), tileAtlas.GetTileUv(block.type()))
+  staticMesh = Easy3D::BuildCubeMesh(cubeBatch)
+  staticRenderer = Easy3D::CubeMeshRenderer(device, staticMesh)</code></pre>
   <p>
-    After the world data model is populated, terrain is made visible:
-  </p>
-  <pre><code>SpawnTerrainNodes():
-  terrainRoot_->RemoveAllChildren()      // clear previous level
-  for each chunk (cx, cy, cz):
-      if chunk.isEmpty(): continue
-      blocks = chunk.unpackBlocks()
-      for each (lx, ly, lz) in 10³:
-          block = blocks[lx + ly*10 + lz*100]
-          if block.isAir(): continue
-          worldX = cx*10 + lx - kWCX
-          worldY = cy*10 + ly
-          worldZ = cz*10 + lz - kWCZ
-          node = terrainRoot_->CreateChild()
-          node->SetPosition(worldX, worldY, worldZ)
-          StaticModel* sm = node->CreateComponent&lt;StaticModel&gt;()
-          sm->SetModel(boxModel)
-          sm->SetMaterial(GetTileMaterial(block.typeId))</code></pre>
-  <p>
-    Each non-air block becomes one box static mesh node.
-    Materials are cached per block type ID in <code>tileMatCache_</code>.
-    UV coordinates for the tile icon are computed via <code>BlockTypes::tileUV(typeId)</code>
-    using <code>object-m.png</code> (1301×1431 px, 64×64 tiles, 20 cols).
+    See <a href="../classes/GETerrainRenderer.html">GETerrainRenderer</a> and
+    <a href="../rendering.html">Rendering</a> for the animated-tile mesh rebuild logic.
   </p>
 
-  <h2>Sky Dome</h2>
-  <p>
-    <code>UpdateSkyDome(region)</code> sets the sky sphere texture based on the region index (0–3)
-    from the level header, selecting a <code>decor00N.png</code> background image.
-    See <a href="../rendering.html">Rendering</a> for the per-world sky palette table.
-  </p>
-
-  <h2>Demo World</h2>
-  <p>
-    <code>BuildDemoWorld()</code> fills the bottom layer (Y=0) of the world with Ground blocks
-    and a few Wall blocks to create a minimal playable arena — used when no level file is found.
-  </p>
+  <h2>What's Not Wired Up</h2>
+  <ul>
+    <li>No sky dome / background rendering (region index is parsed by the secondary loader but goes nowhere).</li>
+    <li>No object/pickup placement, even when loading a mobile-eggbert <code>.txt</code> file's MoveObject entries.</li>
+    <li>No chunk-radius streaming — the entire world is walked and uploaded at load time.</li>
+  </ul>
 
   <div class="page-nav">
     <a href="vwr-format.html">← VWR Format</a>

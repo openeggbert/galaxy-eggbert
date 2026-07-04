@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Known Issues &amp; TODO — Galaxy Eggbert Docs</title>
+<title>Known Issues &amp; Roadmap — Galaxy Eggbert Docs</title>
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -28,79 +28,76 @@
   <a href="index.html">Development</a>
 </nav>
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Known Issues &amp; TODO</div>
-  <h1>Known Issues &amp; TODO</h1>
-  <p class="subtitle">What is working and what remains, as of Phase 27 (from <code>NEXT.md</code>).</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Known Issues &amp; Roadmap</div>
+  <h1>Known Issues &amp; Roadmap</h1>
+  <p class="subtitle">What GalaxyEggbertCNA can do today (2026-07-04), what's next, and the full E3D-MIG task list.</p>
 
-  <h2>What Is Working</h2>
+  <h2>What Works Today</h2>
   <ul>
-    <li>Linux build (U3D + EasyGL)</li>
-    <li>Windows native and MinGW cross-compile</li>
-    <li>Core game loop: physics, movement, jump, AABB collision</li>
-    <li>Voxel world: 100³ world, 10³ chunks, palette-compressed storage</li>
-    <li>VWR binary format: save and load</li>
-    <li>Mobile-eggbert .txt level loader</li>
-    <li>Terrain rendering: one box node per block, UV-mapped materials</li>
-    <li>Blupi billboard sprite animation</li>
-    <li>Basic Decor object pool: enemies, collectibles, keys, shield, exit</li>
-    <li>Moving platforms with Blupi carry</li>
-    <li>HUD: lives, treasure gauge, key icons</li>
-    <li>SoundManager: 93-channel WAV playback</li>
-    <li>GameData: 640-byte save file, 3 gamer slots</li>
-    <li>GamePhase state machine: Init, Play, Pause, Win, Lost, Settings</li>
-    <li>Sky dome with per-world region palette</li>
-    <li>54 unit tests for Worlds data model</li>
-    <li>GoogleTest integration</li>
-    <li>Doxygen target</li>
+    <li>Opt-in CMake build (<code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code>), builds clean.</li>
+    <li>Loads a genuinely 3D, hand-authored <code>.vwr</code> world (<code>worlds3d/world001.vwr</code>).</li>
+    <li>Renders real, textured terrain across all Y layers — one cube per non-air block, via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code>.</li>
+    <li>Animated tiles (lava/crusher/saw/spike/water/fan/marine/temp) at 6 fps.</li>
+    <li>Invisible, collision-only Blupi placeholder: arrow keys + Space, grid collision, 1-block step-up traversal, gravity.</li>
   </ul>
 
-  <h2>Not Yet Done (Phase 27 TODO)</h2>
+  <h2>Not Yet Implemented</h2>
+  <table>
+    <tr><th>Area</th><th>Status</th><th>Blocked on</th></tr>
+    <tr><td>Blupi sprite rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Easy3D BillboardBatch vertex builder + CNA renderer adapter (E3D-MIG-061/062)</td></tr>
+    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Same billboard blocker, plus billboard-vs-cube design decision</td></tr>
+    <tr><td>HUD</td><td><span class="badge badge-planned">Planned</span></td><td>CNA SpriteBatch usage (E3D-MIG-090…093)</td></tr>
+    <tr><td>Sound</td><td><span class="badge badge-planned">Planned</span></td><td>Sound wrapper around CNA audio (E3D-MIG-080…083)</td></tr>
+    <tr><td>Real gameplay (hazards, enemies, pickups, exit)</td><td><span class="badge badge-planned">Planned</span></td><td>E3D-MIG-100…107</td></tr>
+    <tr><td>Save/load</td><td><span class="badge badge-planned">Planned</span></td><td>Save-format reuse decision, not yet made</td></tr>
+    <tr><td>Chunk-radius streaming / face culling</td><td><span class="badge badge-planned">Planned</span></td><td>E3D-MIG-057; not urgent until worlds get denser</td></tr>
+  </table>
 
-  <h3>Platforms</h3>
+  <h2>Known Bugs / Limitations</h2>
   <ul>
-    <li><span class="badge badge-planned">Planned</span> Web/Emscripten build (Nova3D only — U3D does not support Emscripten)</li>
-    <li><span class="badge badge-planned">Planned</span> Android build (Nova3D only)</li>
-    <li><span class="badge badge-wip">WIP</span> Nova3D engine fork — not yet stable</li>
+    <li>Relative asset paths (<code>"worlds3d/world001.vwr"</code>, <code>"Content/icons/object-m.png"</code>) only work when run from the build output directory.</li>
+    <li>No face culling — every non-air block draws a full cube even where fully occluded by neighbors.</li>
+    <li>Clean-exit-on-window-close path is only tested via forced kill so far, not verified end-to-end.</li>
+    <li>128 of 129 animated reference GIFs in <code>mobile-eggbert-reference/images/</code> were found corrupted (frame-ghosting from a missing GIF disposal method); the tool is fixed but only 1 GIF has been regenerated so far — a documentation gap, not a code bug.</li>
+    <li>Background <code>region=</code> → filename mapping is unresolved for most values (<code>mobile-eggbert-reference/05-backgrounds.md</code>, only 3 of 38 characterized).</li>
   </ul>
 
-  <h3>Gameplay</h3>
-  <ul>
-    <li>Many <code>ObjectType</code> values (0–203) are defined but not implemented in <code>Decor</code></li>
-    <li>Vehicles, advanced AI, projectiles — not ported from mobile-eggbert</li>
-    <li>Door/bridge tile-triggered events — not implemented</li>
-    <li>Object respawn on level reset (currently requires full reload)</li>
-    <li>Camera-vs-world collision avoidance (clips through geometry)</li>
-    <li>Horizontal collision uses single body-row check (not full AABB sweep)</li>
-    <li>Hazard tile damage (Lava, Spike) — <span class="nv">Needs verification whether wired up</span></li>
-    <li><code>BlupiAction</code> values beyond Stop/March/Turn/Jump/Air — not all wired to animations</li>
-  </ul>
+  <h2>Near-Term Roadmap (from NEXT.md)</h2>
+  <ol>
+    <li>Continue the mobile-eggbert-reference documentation rework (regenerate remaining animated GIFs, then sounds/backgrounds docs).</li>
+    <li>Chunk-radius world streaming once denser hand-authored worlds exist.</li>
+    <li>Author more <code>.vwr</code> worlds beyond the single proof-of-concept.</li>
+    <li>Add face-culling/occlusion to <code>GETerrainRenderer</code>.</li>
+    <li>Render Blupi as a billboard — requires the Easy3D billboard vertex builder + renderer adapter first.</li>
+    <li>Verify <code>GalaxyEggbertCNA</code>'s clean-exit-on-window-close path.</li>
+  </ol>
 
-  <h3>Assets</h3>
-  <ul>
-    <li>Not all <code>decor000–031.png</code> background files exist (e.g., 005, 014, 017 are missing)</li>
-    <li><code>blupi1.png</code>, <code>explo.png</code> dimensions unverified</li>
-  </ul>
-
-  <h3>UI / UX</h3>
-  <ul>
-    <li>Main menu — not fully implemented beyond gamer-select</li>
-    <li>Ranking/score screen — not implemented</li>
-    <li>Trial mode — not implemented</li>
-    <li>Controller / gamepad input — not supported</li>
-    <li>Touch input — not supported</li>
-    <li>Accelerometer (mobile) — not applicable on desktop</li>
-  </ul>
-
-  <h3>Engine</h3>
-  <ul>
-    <li>Nova3D fork is work-in-progress; U3D is the stable default</li>
-    <li>No hot-reload for level files or assets during gameplay</li>
-  </ul>
+  <h2>Full E3D-MIG Task List (plan.md)</h2>
+  <table>
+    <tr><th>Range</th><th>Status</th><th>Covers</th></tr>
+    <tr><td>E3D-MIG-000…005</td><td><span class="badge badge-done">Done</span></td><td>Docs/analysis/direction-lock write-up</td></tr>
+    <tr><td>E3D-MIG-NEXT-001…006</td><td><span class="badge badge-done">Done</span></td><td>Build option, skeleton tree, executable target, minimal clear-color loop</td></tr>
+    <tr><td>E3D-MIG-010…014</td><td><span class="badge badge-done">Done</span></td><td>CNA/Easy3D/mobile-eggbert CMake inspection, asset-copy strategy decided</td></tr>
+    <tr><td>E3D-MIG-020…026</td><td><span class="badge badge-done">Done</span></td><td>Option added, skeleton files, minimal Game subclass verified via smoke run</td></tr>
+    <tr><td>E3D-MIG-030…043</td><td><span class="badge badge-done">Done</span></td><td>Asset build-time copy, shared sources, world file loads end-to-end, minimal GEWorldRuntime</td></tr>
+    <tr><td>E3D-MIG-050…055</td><td><span class="badge badge-done">Done</span></td><td>CNA draw-path decision, CubeMesh, CubeMeshRenderer, GETileAtlas, GETerrainRenderer, animated tiles</td></tr>
+    <tr><td>E3D-MIG-058…060</td><td><span class="badge badge-done">Done</span></td><td>.vwr as default load path, GEBlupiController invisible movement + VerifyBlupiMovement tool</td></tr>
+    <tr><td>E3D-MIG-015</td><td><span class="badge badge-wip">Pending decision</span></td><td>Whether to request a mobile-eggbert <code>add_library()</code> target</td></tr>
+    <tr><td>E3D-MIG-056</td><td>Standing constraint</td><td>Do not add a MeshCraft/mesh-import path</td></tr>
+    <tr><td>E3D-MIG-057</td><td><span class="badge badge-planned">Planned</span></td><td>Chunk-radius streaming</td></tr>
+    <tr><td>E3D-MIG-061…066</td><td><span class="badge badge-planned">Planned</span></td><td>Billboard vertex builder, CNA billboard adapter, render Blupi as billboard, Blupi state-machine port</td></tr>
+    <tr><td>E3D-MIG-070…074</td><td><span class="badge badge-planned">Planned</span></td><td>Render pickups/enemies as billboards, faithfulness checks</td></tr>
+    <tr><td>E3D-MIG-080…083</td><td><span class="badge badge-planned">Planned</span></td><td>Sound wrapper, 93-channel playback parity</td></tr>
+    <tr><td>E3D-MIG-090…093</td><td><span class="badge badge-planned">Planned</span></td><td>HUD via CNA SpriteBatch</td></tr>
+    <tr><td>E3D-MIG-100…107</td><td><span class="badge badge-planned">Planned</span></td><td>Gameplay porting: pickups, hazards, enemy stomp, respawn invincibility, exit gate, save/load</td></tr>
+    <tr><td>E3D-MIG-110…112</td><td>Standing constraint</td><td>Keep Simple3D until CNA reaches parity, retire only then</td></tr>
+    <tr><td>E3D-MIG-120…124</td><td>Out of scope</td><td>Optional items: 3D Blupi model, camera modes, Lua, renderer polish</td></tr>
+  </table>
 
   <h2>Source of Truth</h2>
   <p>
-    The authoritative TODO list is <code>NEXT.md</code> in the source repository root.
-    Check it for the most up-to-date phase status before starting work.
+    <code>NEXT.md</code> and <code>plan.md</code> in the source repository root are authoritative
+    and change frequently — check them directly before starting new work.
   </p>
 
   <div class="page-nav">

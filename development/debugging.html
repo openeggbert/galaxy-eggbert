@@ -30,83 +30,44 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Debugging</div>
   <h1>Debugging</h1>
-  <p class="subtitle">Log files, Urho3D utilities, and tips for common problems.</p>
+  <p class="subtitle">Verifying terrain visibility, headless collision testing, and common problems.</p>
 
-  <h2>Log File</h2>
+  <h2>Terrain Visibility Self-Check</h2>
   <p>
-    Urho3D writes to <code>GalaxyEggbert.log</code> in the working directory
-    (configured in <code>GalaxyEggbertApp::Setup()</code>).
-    Check this first on any crash or unexpected behaviour.
+    <code>GalaxyEggbertCnaGame::Draw()</code> includes a one-shot self-check: it samples a 5×5 grid
+    of on-screen pixels via <code>GetBackBufferData()</code> and counts how many show real terrain
+    color vs. the sky-blue clear color. A healthy run shows most sampled points with real terrain
+    color across many distinct colors — confirming actual texture sampling, not a placeholder or a
+    fully-blue (empty) screen.
   </p>
-  <pre><code>tail -f cmake-build-debug/bin/GalaxyEggbert.log</code></pre>
 
-  <h2>Debug Build</h2>
+  <h2>Headless Collision Verification</h2>
+  <pre><code>cmake --build build-cna --target VerifyBlupiMovement
+./build-cna/VerifyBlupiMovement</code></pre>
   <p>
-    Always debug with a <code>Debug</code> build — it enables Urho3D's internal assertions
-    and has no optimisations that mask bugs:
+    <code>tools/VerifyBlupiMovement.cpp</code> links only <code>GEBlupiController.cpp</code> (no
+    CNA/Easy3D dependency) and scripts movement scenarios without a live window — the fastest way
+    to debug step-up/gravity/collision logic in isolation.
   </p>
-  <pre><code>cmake -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build cmake-build-debug</code></pre>
 
-  <h2>Urho3D Debug Renderer</h2>
-  <p>
-    Urho3D provides a <code>DebugRenderer</code> component that can draw AABBs, lines, and text
-    in the 3D view. Add it to the scene and use it to visualise Blupi's hitbox or chunk boundaries:
-  </p>
-  <pre><code>// In CreateScene():
-scene_->CreateComponent&lt;DebugRenderer&gt;();
-
-// In Update():
-DebugRenderer* dr = scene_->GetComponent&lt;DebugRenderer&gt;();
-BoundingBox bb(pos - Vector3(0.35, 0, 0.35), pos + Vector3(0.35, 1.4, 0.35));
-dr->AddBoundingBox(bb, Color::GREEN);</code></pre>
-
-  <h2>Unit Tests</h2>
-  <p>
-    The 54-test suite in <code>tests/GalaxyEggbert/Worlds/</code> covers the engine-agnostic
-    data model. Run before and after changes:
-  </p>
-  <pre><code>cd cmake-build-debug
-ctest --output-on-failure -R Worlds</code></pre>
+  <h2>Worlds Data Model Tests</h2>
+  <pre><code>cmake -S . -B build-cna -DBUILD_TESTING=ON
+cmake --build build-cna --target GalaxyEggbertWorldsTests
+ctest --test-dir build-cna --output-on-failure</code></pre>
 
   <h2>Common Problems</h2>
   <table>
     <tr><th>Symptom</th><th>Likely Cause</th><th>Fix</th></tr>
-    <tr>
-      <td>Black screen, no geometry</td>
-      <td>No level file found and BuildDemoWorld() failed</td>
-      <td>Check <code>Content/Data/Level/</code> exists and contains at least one <code>scene0N.txt</code></td>
-    </tr>
-    <tr>
-      <td>Blupi falls through floor</td>
-      <td>Block coordinate offset wrong (<code>kWCX</code>/<code>kWCZ</code>)</td>
-      <td>Verify <code>IsSolid()</code> uses the correct offset formula</td>
-    </tr>
-    <tr>
-      <td>Objects not appearing</td>
-      <td>Decor pool full (all 100 slots occupied)</td>
-      <td>Reduce object count in level or increase <code>kMaxObjects</code></td>
-    </tr>
-    <tr>
-      <td>Sound not playing</td>
-      <td><code>SoundManager::enabled_</code> is false, or WAV file missing</td>
-      <td>Check <code>gameData_.sounds()</code> flag; verify <code>Content/Data/Sound/sound0NN.wav</code> exists</td>
-    </tr>
-    <tr>
-      <td>Save not persisting</td>
-      <td>Write path has no permission or IDBFS not synced (Web)</td>
-      <td>Check permissions for <code>~/.local/share/galaxy-eggbert/</code></td>
-    </tr>
-    <tr>
-      <td>Test suite fails to compile</td>
-      <td>GoogleTest not found</td>
-      <td>Run <code>git submodule update --init</code></td>
-    </tr>
+    <tr><td>Solid blue screen, no terrain</td><td>Binary not run from its build directory, so relative asset paths fail</td><td>Run from inside <code>build-cna/</code></td></tr>
+    <tr><td>Texture seams between tiles</td><td>Atlas pitch miscalculated (64 px vs. real 65 px pitch)</td><td>Check <code>GETileAtlas</code>'s grid registration — see the 2026-07-04 bug fix note on its class page</td></tr>
+    <tr><td>Invisible collision point falls through floor</td><td>World-center offset mismatch between renderer and controller</td><td>Both must use the same <code>kWorldCenterX/Z = 50</code></td></tr>
+    <tr><td>CMake link errors (duplicate symbols)</td><td>Easy3D configured before CNA</td><td>Reconfigure from a clean build dir, CNA first</td></tr>
+    <tr><td>Test suite fails to build</td><td>GoogleTest not fetched</td><td>Ensure network access during first CMake configure, or check <code>BUILD_TESTING=ON</code></td></tr>
   </table>
 
-  <h2>GDB Quick Start</h2>
-  <pre><code>cd cmake-build-debug/bin
-gdb ./GalaxyEggbert
+  <h2>GDB</h2>
+  <pre><code>cd build-cna
+gdb ./GalaxyEggbertCNA
 (gdb) run
 # On crash:
 (gdb) bt</code></pre>

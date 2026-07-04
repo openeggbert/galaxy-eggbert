@@ -53,111 +53,53 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Game Loop</div>
   <h1>Game Loop</h1>
-  <p class="subtitle">How the main loop is driven and how per-frame logic is organized.</p>
+  <p class="subtitle">How CNA's Game base class drives GalaxyEggbertCnaGame each frame.</p>
 
-  <h2>Loop Architecture</h2>
+  <h2>Loop Ownership</h2>
   <p>
-    Galaxy Eggbert does not implement its own game loop. The engine (Urho3D/U3D) owns the loop
-    and fires an <code>E_UPDATE</code> event every frame. The application subscribes to this event
-    and feeds the delta time to the game.
+    <code>GalaxyEggbertCnaGame</code> does not implement its own loop — it inherits one from CNA's
+    <code>Microsoft::Xna::Framework::Game</code> base class (XNA-style: <code>LoadContent</code>
+    once, then <code>Update</code>/<code>Draw</code> every frame with a <code>GameTime</code>).
   </p>
 
-  <h2>Event Flow</h2>
-  <pre><code>// Engine internal loop (Urho3D):
-while (!shouldExit) {
-    engine->RunFrame();          // fires E_UPDATE, renders, etc.
-}
-
-// GalaxyEggbertApp subscribes at Start():
-SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(GalaxyEggbertApp, HandleUpdate));
-
-// Every frame:
-void GalaxyEggbertApp::HandleUpdate(StringHash, VariantMap&amp; eventData) {
-    using namespace Update;
-    float dt = eventData[P_TIMESTEP].GetFloat();
-    if (game_) game_->Update(dt);
+  <h2><code>Update(GameTime&amp; gameTime)</code></h2>
+  <pre><code>void GalaxyEggbertCnaGame::Update(GameTime&amp; gameTime) {
+    Game::Update(gameTime);
+    worldRuntime_.Update(dt);              // advances 6 fps tile-animation phase
+    auto keys = Keyboard::GetState();
+    float dx = /* from arrow keys */;
+    float dz = /* from arrow keys */;
+    bool jump = keys.IsKeyDown(Keys::Space);
+    blupi_.Step(worldRuntime_.GetWorld(), dx, dz, jump, dt);
+    camera_.SetTarget(blupi_.GetPosition());
+    camera_.Update(dt);
 }</code></pre>
 
-  <h2>Per-Frame Update Sequence (<code>GalaxyEggbertGame::Update</code>)</h2>
-  <pre><code>GalaxyEggbertGame::Update(float dt)
-│
-├─ Check phase-agnostic keys:
-│    ESC in Init → engine->Exit()
-│    F1 → toggle debug overlay
-│
-├─ Switch on phases_->Current():
-│
-│  ┌─ GamePhase::Play → UpdatePlay(dt)
-│  │    ├─ ESC → Pause phase
-│  │    ├─ blupi_->Update(dt)
-│  │    │    ├─ Read input (UP/DOWN/LEFT/RIGHT/W/A/S/D/Q/E/Space)
-│  │    │    ├─ Apply gravity: vel_.y_ += kGravity * dt
-│  │    │    ├─ Integrate position
-│  │    │    ├─ ResolveY() ← vertical AABB collision
-│  │    │    ├─ ResolveXZ() ← horizontal AABB collision
-│  │    │    ├─ Fall death check (pos.y_ < -10)
-│  │    │    ├─ Update animation state
-│  │    │    └─ Invincibility flash update
-│  │    ├─ Sound triggers (jump, land)
-│  │    ├─ Fall death handling → life deduct or Lost phase
-│  │    ├─ camera_->Update(dt, blupiPos, blupiYaw)
-│  │    ├─ Countdown timers (shield, invincible, hint)
-│  │    ├─ Tile hazard check (Lava/Spike/Crusher under Blupi)
-│  │    ├─ decor_->Update(dt, blupiPos)
-│  │    │    ├─ StepMovement() for each active object
-│  │    │    ├─ Platform carry delta accumulation
-│  │    │    ├─ UpdateIcon() → ObjectNode UV update
-│  │    │    └─ TouchesBlupi() → event flags
-│  │    ├─ Process decor events:
-│  │    │    shield pickup, key pickup, treasure pickup,
-│  │    │    bonus life, platform carry, exit reached,
-│  │    │    enemy hit
-│  │    └─ hud_->ShowPlay(lives, collected, total, keys, shield, world)
-│  │
-│  ├─ GamePhase::Init → UpdateInit(dt)
-│  │    ├─ Rebuild gamer-select text
-│  │    ├─ Keys 1/2/3 → SelectGamer()
-│  │    └─ S → MainSetup
-│  │
-│  ├─ GamePhase::Pause → UpdatePause(dt)
-│  │    ├─ ESC → Play
-│  │    └─ S → PlaySetup
-│  │
-│  ├─ GamePhase::Win → UpdateWin(dt)
-│  │    └─ Any key/click → AdvanceToNextWorld()
-│  │
-│  ├─ GamePhase::Lost → UpdateLost(dt)
-│  │    └─ Any key/click → ResetLevel()
-│  │
-│  └─ GamePhase::MainSetup / PlaySetup → UpdateSettings(dt)
-│       ├─ S → toggle sound
-│       └─ ESC → return to caller
-│
-└─ If debug mode: oct->DrawDebugGeometry()</code></pre>
+  <h2><code>Draw(const GameTime&amp; gameTime)</code></h2>
+  <pre><code>void GalaxyEggbertCnaGame::Draw(const GameTime&amp; gameTime) {
+    device.Clear(Color(0.392f, 0.584f, 0.929f, 1.0f));  // sky blue
+    device.SetDepthTestEnabled(true);
+    terrainEffect_-&gt;View       = camera_.GetViewMatrix();
+    terrainEffect_-&gt;Projection = camera_.GetProjectionMatrix();
+    terrainEffect_-&gt;World      = Matrix::Identity;
+    terrainRenderer_-&gt;Draw(device, *terrainEffect_);
+}</code></pre>
 
-  <h2>Timestep</h2>
+  <h2>Tile Animation Timing</h2>
   <p>
-    The timestep (<code>dt</code>) is the wall-clock time since the last frame in seconds,
-    provided by the Urho3D engine. Galaxy Eggbert uses variable-timestep physics — all motion
-    and timers multiply by <code>dt</code> directly.
+    <code>GEWorldRuntime::Update(dt)</code> accumulates an internal timer and advances
+    <code>animPhase_</code> at a fixed period of 1/6 second (6 fps) — matching both
+    <code>GalaxyEggbertSimple3D</code> and mobile-eggbert's original animation rate.
+    <code>GETerrainRenderer</code> checks <code>GetAnimPhase()</code> and only rebuilds its animated
+    cube mesh when the phase actually changes.
   </p>
 
-  <h2>Web Build Timing (Nova3D / Emscripten)</h2>
-  <p>
-    The Web build uses a fixed-timestep accumulator in Nova3D/CNA's <code>Game.cpp</code>.
-    The browser calls the RAF callback at ~60 Hz; real inter-frame time is measured and accumulated,
-    and <code>Update()</code> fires only when one full <code>TargetElapsedTime</code> slice has been accumulated.
-    A 250 ms spike cap prevents runaway catch-up after a tab is backgrounded.
-    This ensures gameplay speed matches native desktop builds regardless of the browser's RAF cadence.
-  </p>
-
-  <h2>Rendering</h2>
-  <p>
-    Galaxy Eggbert does not call any explicit render functions.
-    Urho3D renders the scene automatically after the update events fire.
-    All visual changes (node positions, material updates, UI changes) are applied in the update phase
-    and the engine renders them at the end of <code>RunFrame()</code>.
-  </p>
+  <h2>What's Missing Compared to a Full Game Loop</h2>
+  <ul>
+    <li>No phase/state-machine dispatch (<code>GamePhase</code> exists as an enum but nothing switches on it in CNA yet).</li>
+    <li>No fixed-timestep accumulator — CNA's own <code>Game</code> loop timing model is used as-is.</li>
+    <li>No pause, no menu, no win/lose handling.</li>
+  </ul>
 
   <div class="page-nav">
     <a href="engine-integration.html">

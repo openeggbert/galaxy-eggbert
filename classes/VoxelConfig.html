@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoxelConfig — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> VoxelConfig</div>
+  <h1>VoxelConfig</h1>
+  <p class="subtitle">Compile-time constants shared by the whole Worlds data model.</p>
+
+  <h2>Overview</h2>
+  <p>Header: <code>include/GalaxyEggbert/Worlds/VoxelConfig.hpp</code>, namespace <code>GalaxyEggbert::Worlds::VoxelConfig</code>.</p>
+
+  <h2>Constants</h2>
+  <table>
+    <tr><th>Constant</th><th>Value</th><th>Meaning</th></tr>
+    <tr><td><code>FormatVersion</code></td><td>1</td><td>.vwr/chunk format version</td></tr>
+    <tr><td><code>ChunkSize</code></td><td>10</td><td>Blocks per chunk axis</td></tr>
+    <tr><td><code>ChunkVolume</code></td><td>1000</td><td>10³</td></tr>
+    <tr><td><code>WorldChunksPerAxis</code></td><td>10</td><td>Chunks per world axis</td></tr>
+    <tr><td><code>WorldBlocksPerAxis</code></td><td>100</td><td>10 × 10</td></tr>
+    <tr><td><code>MaxBlockType</code></td><td>4095</td><td>12-bit type ID ceiling</td></tr>
+    <tr><td><code>MaxBlockMetadata</code></td><td>15</td><td>4-bit metadata ceiling</td></tr>
+    <tr><td><code>MaxPaletteEntries</code></td><td>256</td><td>Max unique blocks per chunk (8-bit index)</td></tr>
+  </table>
+
+  <h2>Related Helpers</h2>
+  <p>
+    <code>BitPacking.hpp</code>/<code>.cpp</code> provides <code>bitsNeededForPalette(count)</code>
+    (1 bit for 1–2 entries, up to 8 bits for 129–256), <code>packPaletteIndices</code>,
+    <code>unpackPaletteIndices</code>, <code>getPackedIndex</code>, <code>setPackedIndex</code>, and
+    <code>packedWordCount</code> — all consumed by <a href="Chunk.html">Chunk</a>.
+  </p>
+  <p>
+    <code>BinaryIO.hpp</code>/<code>.cpp</code> provides little-endian
+    <code>writeU8/16/32/64LE</code>, <code>readU8/16/32/64LE</code>, and
+    <code>writeMagic</code>/<code>readMagic</code> for 4-byte file signatures — used by
+    <a href="World.html">World</a> and <a href="Chunk.html">Chunk</a> serialization.
+  </p>
+
+  <div class="page-nav">
+    <a href="BlockMetadata.html">← BlockMetadata</a>
+    <a href="CubeMesh.html">Easy3D::CubeMesh →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GalaxyEggbertCnaGame — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GalaxyEggbertCnaGame</div>
+  <h1>GalaxyEggbertCnaGame</h1>
+  <p class="subtitle">CNA Game subclass — the entry point and per-frame driver of GalaxyEggbertCNA.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>GalaxyEggbertCnaGame</code> (namespace <code>GalaxyEggbert::CNA</code>) subclasses
+    <code>Microsoft::Xna::Framework::Game</code>, CNA's XNA-compatible game base class. It owns the
+    world runtime, terrain renderer, tile atlas, texture, effect, Blupi controller, and camera.
+  </p>
+  <p>Sources: <code>src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp</code> and <code>.cpp</code>, constructed from <code>src/GalaxyEggbertCNA/main.cpp</code>.</p>
+
+  <h2>Construction</h2>
+  <p>Sets the window title via <code>getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)")</code>.</p>
+
+  <h2>Overridden Methods</h2>
+
+  <h3><code>LoadContent()</code></h3>
+  <ul>
+    <li>Loads the default world: <code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code>.</li>
+    <li>Builds a <code>GETerrainRenderer</code> from the loaded world plus a <code>GETileAtlas</code>.</li>
+    <li>Loads <code>Content/icons/object-m.png</code> as a CNA <code>Texture2D</code>.</li>
+    <li>Creates a <code>BasicEffect</code> with <code>VertexColorEnabled=false</code>, <code>TextureEnabled=true</code>, bound to that texture.</li>
+    <li>Places <code>GEBlupiController</code> at spawn <code>(0, 1, 0)</code>.</li>
+  </ul>
+
+  <h3><code>Update(GameTime&amp; gameTime)</code></h3>
+  <ul>
+    <li>Calls <code>Game::Update</code>.</li>
+    <li>Advances <code>worldRuntime_.Update(dt)</code> — drives the 6 fps tile-animation phase.</li>
+    <li>Reads <code>Keyboard::GetState()</code> for arrow keys + Space.</li>
+    <li>Steps <code>blupi_.Step(world, dx, dz, jump, dt)</code>.</li>
+    <li>Updates the <code>Easy3D::Camera3D</code> to follow Blupi (<code>SetTarget</code>/<code>SetPosition</code>).</li>
+  </ul>
+
+  <h3><code>Draw(const GameTime&amp; gameTime)</code></h3>
+  <ul>
+    <li>Clears the device to sky blue (<code>0.392, 0.584, 0.929, 1.0</code>).</li>
+    <li>Enables depth test.</li>
+    <li>Sets the terrain effect's View/Projection from the camera, World to identity.</li>
+    <li>Calls <code>terrainRenderer_-&gt;Draw(device, *terrainEffect_)</code>.</li>
+    <li>Includes a one-shot terrain-visibility self-check that samples backbuffer pixels via <code>GetBackBufferData()</code>.</li>
+  </ul>
+
+  <h2>What This Class Does Not Do</h2>
+  <p>
+    No phase/state-machine dispatch, no HUD, no sound, no object rendering, no Blupi sprite. It is
+    purely: load one world, render its terrain, move an invisible collision point through it.
+  </p>
+
+  <h2>Dependencies</h2>
+  <ul>
+    <li>CNA: <code>Game</code>, <code>GameTime</code>, <code>Texture2D</code>, <code>BasicEffect</code>, <code>Keyboard</code>/<code>Keys</code></li>
+    <li>Easy3D: <code>Camera3D</code></li>
+    <li><code>GEWorldRuntime</code>, <code>GETerrainRenderer</code>, <code>GETileAtlas</code>, <code>GEBlupiController</code></li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="index.html">← Classes</a>
+    <a href="GEWorldRuntime.html">GEWorldRuntime →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

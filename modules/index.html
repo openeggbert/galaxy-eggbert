@@ -53,24 +53,28 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Modules</div>
   <h1>Module Index</h1>
-  <p class="subtitle">All major code modules and subsystems in Galaxy Eggbert.</p>
+  <p class="subtitle">Major code modules in GalaxyEggbertCNA and the shared Worlds data model.</p>
 
   <div class="card-grid">
-    <a class="card" href="../classes/GalaxyEggbertApp.html">
+    <a class="card" href="../classes/GalaxyEggbertCnaGame.html">
       <h3>Application</h3>
-      <p><code>GalaxyEggbertApp</code> — engine lifecycle, event subscription</p>
+      <p><code>GalaxyEggbertCnaGame</code> — CNA Game subclass, LoadContent/Update/Draw</p>
     </a>
-    <a class="card" href="../classes/GalaxyEggbertGame.html">
-      <h3>Game Coordinator</h3>
-      <p><code>GalaxyEggbertGame</code> — scene, world, all subsystems</p>
+    <a class="card" href="../classes/GEWorldRuntime.html">
+      <h3>World Runtime</h3>
+      <p><code>GEWorldRuntime</code> — loads .vwr/.txt, drives tile animation</p>
     </a>
-    <a class="card" href="../classes/Blupi.html">
-      <h3>Player (Blupi)</h3>
-      <p>Physics, input, AABB collision, sprite animation</p>
+    <a class="card" href="../classes/GETerrainRenderer.html">
+      <h3>Terrain Renderer</h3>
+      <p><code>GETerrainRenderer</code> — builds static + animated cube meshes</p>
     </a>
-    <a class="card" href="../classes/Decor.html">
-      <h3>Objects (Decor)</h3>
-      <p>Enemy pool, collectibles, patrol movement</p>
+    <a class="card" href="../classes/GETileAtlas.html">
+      <h3>Tile Atlas</h3>
+      <p><code>GETileAtlas</code> — block type → UV rect mapping</p>
+    </a>
+    <a class="card" href="../classes/GEBlupiController.html">
+      <h3>Player Controller</h3>
+      <p><code>GEBlupiController</code> — invisible collision-only movement</p>
     </a>
     <a class="card" href="../classes/World.html">
       <h3>World Data</h3>
@@ -80,37 +84,21 @@
       <h3>Chunk</h3>
       <p>Palette-compressed 10³ voxel container</p>
     </a>
-    <a class="card" href="../classes/CameraController.html">
-      <h3>Camera</h3>
-      <p>3rd-person orbit camera</p>
+    <a class="card" href="../classes/CubeMesh.html">
+      <h3>Easy3D::CubeMesh</h3>
+      <p>CPU-side cube-batch vertex/index builder</p>
     </a>
-    <a class="card" href="../classes/HUD.html">
-      <h3>HUD</h3>
-      <p>Lives, keys, shield, gauge display</p>
-    </a>
-    <a class="card" href="../classes/PhaseManager.html">
-      <h3>Phase Manager</h3>
-      <p>Game-phase state machine and overlay</p>
-    </a>
-    <a class="card" href="../classes/SoundManager.html">
-      <h3>Sound Manager</h3>
-      <p>93-channel WAV audio playback</p>
-    </a>
-    <a class="card" href="../classes/GameData.html">
-      <h3>Save Data</h3>
-      <p><code>GameData</code> — 640-byte binary save file</p>
+    <a class="card" href="../classes/CubeMeshRenderer.html">
+      <h3>Easy3D::CubeMeshRenderer</h3>
+      <p>Uploads and draws cube mesh data via CNA</p>
     </a>
     <a class="card" href="../rendering.html">
       <h3>Rendering</h3>
-      <p>Urho3D scene graph, materials, sprites</p>
-    </a>
-    <a class="card" href="../audio.html">
-      <h3>Audio</h3>
-      <p>WAV playback via Urho3D audio subsystem</p>
+      <p>Cube-per-block terrain, animated tiles, no billboards yet</p>
     </a>
     <a class="card" href="../input.html">
       <h3>Input</h3>
-      <p>Keyboard/mouse reading via Urho3D Input</p>
+      <p>Arrow keys + Space, polled via CNA Keyboard</p>
     </a>
     <a class="card" href="../internals/vwr-format.html">
       <h3>World File (.vwr)</h3>
@@ -118,27 +106,21 @@
     </a>
     <a class="card" href="../levels.html">
       <h3>Level Loading</h3>
-      <p>.vwr and .txt world loading pipeline</p>
+      <p>.vwr (default) and mobile-eggbert .txt (secondary) loading</p>
     </a>
   </div>
 
   <h2>Module Responsibilities</h2>
   <table>
     <tr><th>Module</th><th>Files</th><th>Notes</th></tr>
-    <tr><td>Application lifecycle</td><td><code>GalaxyEggbertApp.hpp/.cpp</code>, <code>Program.cpp</code></td><td>Entry point; wraps Urho3D Application</td></tr>
-    <tr><td>Game logic</td><td><code>GalaxyEggbertGame.hpp/.cpp</code></td><td>Owns scene, world, all subsystems; phase dispatch</td></tr>
-    <tr><td>Player physics</td><td><code>Blupi.hpp/.cpp</code></td><td>AABB voxel collision, billboard sprite</td></tr>
-    <tr><td>Object pool</td><td><code>Decor.hpp/.cpp</code>, <code>ObjectNode.hpp/.cpp</code></td><td>100-slot pool; patrol, pickup, collision events</td></tr>
-    <tr><td>Voxel data model</td><td><code>World.hpp/.cpp</code>, <code>Chunk.hpp/.cpp</code>, <code>Block.hpp</code></td><td>Engine-agnostic; 54 unit tests</td></tr>
-    <tr><td>Camera</td><td><code>Camera.hpp/.cpp</code></td><td>Smooth 3rd-person orbit; follows Blupi</td></tr>
-    <tr><td>HUD</td><td><code>HUD.hpp/.cpp</code></td><td>Urho3D UI elements; lives, keys, shield, gauge</td></tr>
-    <tr><td>Phase/overlay</td><td><code>PhaseManager.hpp/.cpp</code></td><td>Screen transitions; fullscreen background images + text</td></tr>
-    <tr><td>Audio</td><td><code>SoundManager.hpp/.cpp</code></td><td>93 WAV channels; volume table from mobile-eggbert</td></tr>
-    <tr><td>Save file</td><td><code>GameData.hpp/.cpp</code></td><td>640-byte binary; cross-compatible with mobile-eggbert</td></tr>
-    <tr><td>Animation tables</td><td><code>Tables.hpp/.cpp</code></td><td>Ported from mobile-eggbert Tables.cpp</td></tr>
-    <tr><td>Block type constants</td><td><code>BlockTypes.hpp</code></td><td>Named tile IDs; UV helpers</td></tr>
+    <tr><td>Application lifecycle</td><td><code>main.cpp</code>, <code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>Entry point; owns all CNA-side subsystems</td></tr>
+    <tr><td>World loading &amp; animation</td><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>.vwr default, .txt secondary; 6 fps anim phase</td></tr>
+    <tr><td>Terrain rendering</td><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>One cube per non-air block, static + animated split</td></tr>
+    <tr><td>Texture mapping</td><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → UV rect via Easy3D::TextureAtlas</td></tr>
+    <tr><td>Player movement</td><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Engine-agnostic; collision-only, no rendering</td></tr>
+    <tr><td>Voxel data model</td><td><code>include/GalaxyEggbert/Worlds/*.hpp</code>, <code>src/GalaxyEggbert/Worlds/*.cpp</code></td><td>Engine-agnostic; shared with Simple3D; unit tested</td></tr>
     <tr><td>Game definitions</td><td><code>include/GalaxyEggbert/def/</code></td><td>All enums: GamePhase, ObjectType, SoundChannel, etc.</td></tr>
-    <tr><td>World I/O</td><td><code>Worlds/BinaryIO.cpp</code>, <code>BitPacking.cpp</code></td><td>VWR file read/write; bit-packing</td></tr>
+    <tr><td>Cube batching (Easy3D)</td><td><code>../easy-3d</code>: <code>CubeMesh</code>, <code>CubeMeshRenderer</code></td><td>Generic 3D-batching plumbing, no Eggbert-specific knowledge</td></tr>
   </table>
 </main>
 </div>

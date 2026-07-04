@@ -31,28 +31,28 @@
 <main id="content">
   <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Internals</div>
   <h1>Internals</h1>
-  <p class="subtitle">Deep dives into algorithms, file formats, and subsystem mechanics.</p>
+  <p class="subtitle">Deep dives into GalaxyEggbertCNA's algorithms and file formats.</p>
 
   <div class="card-grid">
     <a class="card" href="startup.html">
       <h3>Startup Sequence</h3>
-      <p>From <code>main()</code> to the first gameplay frame — step by step.</p>
+      <p>From <code>main()</code> to the first rendered frame.</p>
     </a>
     <a class="card" href="vwr-format.html">
       <h3>VWR Binary Format</h3>
-      <p>Complete spec for the <code>.vwr</code> world file: magic, chunk table, VCH1 payload, BMD1 metadata.</p>
+      <p>Complete spec for the <code>.vwr</code> world file: header, chunk table, VCH1 payload.</p>
     </a>
     <a class="card" href="world-loading.html">
       <h3>World Loading</h3>
-      <p>How <code>LoadWorld()</code> selects format, parses data, and spawns terrain nodes.</p>
+      <p>How GEWorldRuntime selects a format and GETerrainRenderer builds meshes from it.</p>
     </a>
     <a class="card" href="object-lifecycle.html">
       <h3>Object Lifecycle</h3>
-      <p>How game objects are placed, updated, and removed via the Decor pool.</p>
+      <p>Not implemented yet — what mobile-eggbert's Decor system does, as the porting target.</p>
     </a>
     <a class="card" href="collision.html">
       <h3>Collision System</h3>
-      <p>AABB voxel collision — ResolveY, ResolveXZ, and the block solidity rules.</p>
+      <p>GEBlupiController's grid collision, step-up traversal, and gravity.</p>
     </a>
   </div>
 </main>

@@ -55,83 +55,62 @@
   <h1>Project Overview</h1>
   <p class="subtitle">What Galaxy Eggbert is, where it comes from, and where it is going.</p>
 
-  <h2>What is Galaxy Eggbert?</h2>
-  <p>
-    Galaxy Eggbert is a <strong>3D remake</strong> of <em>Speedy Blupi</em>, a 2D side-scrolling platformer originally written in C# for Windows Phone using the XNA framework in 2013.
-    The remake transposes the original game's levels, sprites, sounds, and gameplay rules into a three-dimensional voxel world rendered with the <strong>Urho3D engine API</strong>.
-  </p>
-  <p>
-    The project is part of the <strong>OpenEggbert</strong> collection of open-source Speedy Blupi ports and remakes.
-    A sibling project, <strong>mobile-eggbert</strong>, is a direct C++ port (via MonoGame) of the original Windows Phone game.
-    Galaxy Eggbert uses mobile-eggbert as its primary gameplay reference and shares its level files, sound files, sprite sheets, and save-data format.
-  </p>
-
   <h2>Lineage</h2>
   <table>
     <tr><th>Project</th><th>Description</th></tr>
     <tr><td>Speedy Blupi (original)</td><td>C#/XNA Windows Phone platformer, 2013</td></tr>
-    <tr><td>mobile-eggbert</td><td>C++ port via ILSpy decompile → MonoGame → SDL3/CNA</td></tr>
-    <tr><td>Galaxy Eggbert</td><td>3D remake using Urho3D scene graph; this project</td></tr>
+    <tr><td>mobile-eggbert</td><td>C++ port: ILSpy decompile → MonoGame → CNA (SDL3). Read-only reference for Galaxy Eggbert.</td></tr>
+    <tr><td>GalaxyEggbertSimple3D</td><td>Current playable 3D remake, built on Simple3D (wraps U3D/Urho3D). Kept as reference until CNA reaches parity.</td></tr>
+    <tr><td>GalaxyEggbertCNA</td><td><strong>Long-term target.</strong> Built directly on CNA + Easy3D. This documentation's focus.</td></tr>
   </table>
+
+  <h2>The Current Direction Lock</h2>
+  <p>The project's <code>CLAUDE.md</code> records an explicit, binding direction:</p>
+  <pre><code>Galaxy Eggbert
+  -&gt; CNA directly
+  -&gt; Easy3D beside CNA (small helpers only — cameras, texture atlas, billboard/cube batching)
+  -&gt; mobile-eggbert used read-only as reference / asset / data source</code></pre>
+  <p>
+    This supersedes an older long-term direction (<code>Galaxy Eggbert -&gt; Simple3D -&gt; U3D / Urho3D / Nova3D -&gt; (CNA someday)</code>).
+    <code>GalaxyEggbertSimple3D</code> is <strong>not being removed</strong> — it remains the only
+    fully playable target and stays in the repository as a historical/reference implementation
+    until <code>GalaxyEggbertCNA</code> reaches feature parity with it.
+  </p>
 
   <h2>Type of Project</h2>
   <p>
-    Galaxy Eggbert is a <strong>game remake</strong> — not an emulator, not a port, not an engine demo.
-    It reuses the original assets (sprites, sounds, level data) but replaces the 2D rendering with a 3D voxel scene.
-    The gameplay rules (physics constants, enemy behavior, sound indices, save format) are ported as faithfully as possible from the original game.
+    Galaxy Eggbert is a <strong>faithful game remake</strong> — not an emulator, not a generic engine demo.
+    The rule from <code>CLAUDE.md</code> is explicit: <em>"Galaxy Eggbert is a faithful 3D remake of
+    mobile-eggbert. Nothing more."</em> Before any feature is implemented or suggested, its existence
+    in mobile-eggbert must be verified first. Forbidden inventions include coins, time bonuses/star
+    ratings, coyote time/wall jump/double jump, combo multipliers, or any other mechanic not present
+    in the original. The only allowed additions are the natural technical consequences of moving to
+    3D: a perspective camera, billboard sprites, shadows, and step-up traversal.
   </p>
 
-  <h2>Key Features (verified from source)</h2>
+  <h2>What GalaxyEggbertCNA Does Today</h2>
   <ul>
-    <li>100×100×100 voxel world composed of 10×10×10 chunks</li>
-    <li>Levels loaded from mobile-eggbert <code>.txt</code> world files or native <code>.vwr</code> binary files</li>
-    <li>Blupi rendered as a UV-mapped billboard sprite from <code>blupi.png</code></li>
-    <li>5 levels with distinct sky palettes: Grassland, Forest, Ice Caves, Lava Fields, Space Station</li>
-    <li>Enemies: patrol enemies (types 2, 3, 4, 16, 17, 20, 33), platform lifts (type 1)</li>
-    <li>Collectibles: treasures (type 5), extra-life eggs (type 6), keys (types 49–51), shield orbs (type 25)</li>
-    <li>Hazard tiles: Lava, Spike, Crusher</li>
-    <li>3rd-person orbit camera with smooth follow</li>
-    <li>HUD: lives, treasure counter, key icons, shield countdown, world name</li>
-    <li>93-channel WAV audio system (same indices as original game)</li>
-    <li>640-byte save file binary-compatible with mobile-eggbert</li>
-    <li>3 gamer save slots</li>
-    <li>54 engine-independent unit tests for the world data model</li>
+    <li>Builds clean via <code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code> (opt-in, default OFF).</li>
+    <li>Loads a genuinely 3D, hand-authored <code>.vwr</code> voxel world (<code>worlds3d/world001.vwr</code>) — not a flat mobile-eggbert layout.</li>
+    <li>Renders real, textured terrain across all Y layers: one cube per non-air world cell, textured from <code>object-m.png</code> via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code>.</li>
+    <li>Animates hazard/special tiles (lava, crusher, saw, spike, water, fan, marine, temp) at 6 fps, matching mobile-eggbert's original rate.</li>
+    <li>Moves an invisible, collision-only Blupi placeholder: arrow keys + Space, grid collision with 1-block step-up traversal and gravity — no sprite yet.</li>
   </ul>
-
-  <h2>Platforms</h2>
-  <table>
-    <tr><th>Platform</th><th>Engine path</th><th>Status</th></tr>
-    <tr><td>Linux x86-64</td><td>U3D (primary)</td><td><span class="badge badge-done">Working</span></td></tr>
-    <tr><td>Windows x86-64</td><td>U3D (MinGW cross-compile)</td><td><span class="badge badge-done">Working</span></td></tr>
-    <tr><td>Web (Emscripten)</td><td>Nova3D / SDL Renderer</td><td><span class="badge badge-planned">Planned (U3D path not yet supported)</span></td></tr>
-    <tr><td>Android</td><td>Nova3D</td><td><span class="badge badge-planned">Planned</span></td></tr>
-  </table>
-
   <div class="warn">
-    <strong>Important</strong>
-    The U3D engine backend does not yet support Android or Emscripten/Web targets. These targets require the Nova3D engine backend (set <code>-DGALAXY_EGGBERT_ENGINE=NOVA3D</code>). See <a href="platform-support.html">Platform Support</a> for details.
+    <strong>Not yet implemented</strong>
+    No Blupi sprite/rendering, no object or pickup rendering, no HUD, no sound, no real gameplay
+    (hazard damage, enemies, pickups, exit-gate, save/load). <code>Easy3D::BillboardBatch</code> and
+    <code>DebugDraw</code> have no CPU-side vertex builder or CNA renderer adapter yet — that is the
+    main blocker for rendering Blupi and objects. See <a href="development/known-issues.html">Known Issues</a>.
   </div>
 
-  <h2>Important Dependencies</h2>
-  <table>
-    <tr><th>Dependency</th><th>Role</th><th>Required</th></tr>
-    <tr><td>U3D (u3d-community/U3D)</td><td>Urho3D engine library (pre-built)</td><td>Yes (default path)</td></tr>
-    <tr><td>Nova3D</td><td>Alternative engine (git submodule <code>../nova-3d</code>)</td><td>Only with <code>NOVA3D</code> engine</td></tr>
-    <tr><td>GoogleTest v1.14.0</td><td>Unit testing (auto-fetched by CMake)</td><td>Only when <code>BUILD_TESTING=ON</code></td></tr>
-    <tr><td>MinGW-w64</td><td>Windows cross-compilation from Linux</td><td>Only for Windows cross-build</td></tr>
-    <tr><td>Emscripten SDK</td><td>Web build</td><td>Only for Web target</td></tr>
-    <tr><td>Doxygen</td><td>API doc generation</td><td>Optional</td></tr>
-  </table>
-
-  <h2>Current Maturity</h2>
-  <p>
-    The project is in active development at <strong>Phase 27</strong>. Core gameplay is fully playable on Linux and Windows.
-    The codebase is structured and well-organized but is not yet feature-complete (vehicles, advanced enemy AI, full Emscripten/Android builds are still pending).
-  </p>
-  <p>
-    The unit-tested <code>Worlds/</code> data model is stable and production-quality.
-    The gameplay layer (<code>Game/</code>) is functional but still being expanded to cover all original enemy types and power-ups.
-  </p>
+  <h2>Key Facts (verified from source, 2026-07-04)</h2>
+  <ul>
+    <li>World: 100×100×100 blocks, arranged as 10×10×10 chunks (<code>include/GalaxyEggbert/Worlds/</code> — engine-agnostic, shared by Simple3D and CNA).</li>
+    <li><code>worlds3d/world001.vwr</code>: 2729 non-air blocks, Y range [0, 13] — ground floor, a 10-step staircase, a raised platform, a walled room, two pillars.</li>
+    <li>All gameplay enums (<code>ObjectType</code> 0–203, <code>SoundChannel</code> 0–92, <code>BlupiAction</code>, etc.) are numerically frozen to match mobile-eggbert's level/save format exactly.</li>
+    <li>mobile-eggbert's assets (sprite sheets, sounds, world files) are directly reused by file path / build-time copy; its <em>code</em> (Decor.cpp, Tables.cpp, GameData.cpp) is reference-only and may not be copied or linked without explicit approval.</li>
+  </ul>
 
   <div class="page-nav">
     <a href="index.html">
