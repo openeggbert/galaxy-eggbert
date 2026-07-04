@@ -1926,7 +1926,13 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
 - [x] DOC-182 — Regenerated + verified `blupi-action-73-marchecrase.gif` (`BlupiAction::MarchEcrase`=73).
   24 real frames (icons 317-323 mirrored), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean stays in a tight range — no ghosting.
-- [ ] DOC-183 — Regenerate + verify `blupi-action-74-teleporte.gif` (`BlupiAction::Teleporte`=74).
+- [x] DOC-183 — Regenerated + verified `blupi-action-74-teleporte.gif` (`BlupiAction::Teleporte`=74).
+  128 real frames including 67 `-1` invisible-frame sentinels (rendered as genuinely blank 60×60
+  transparent frames, same convention as `Temp`/`Ouf4`) — first interspersed with flickering real
+  content (a teleport flicker effect) starting around frame 48, then a solid run of `-1` to the
+  end, cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
+  alpha-mean transitions from real content (~86.3-86.7/255) to exactly 0 once the solid `-1` run
+  starts (~frame 75) — matches the teleport vanish behavior, no ghosting.
 - [ ] DOC-184 — Regenerate + verify `blupi-action-75-clear2.gif` (`BlupiAction::Clear2`=75).
 - [ ] DOC-185 — Regenerate + verify `blupi-action-76-clear3.gif` (`BlupiAction::Clear3`=76).
 - [ ] DOC-186 — Regenerate + verify `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77).
