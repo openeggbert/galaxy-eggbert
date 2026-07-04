@@ -1755,7 +1755,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   6 real frames (icons 122×3, 125×3), cropped from `blupi.png` and assembled with `make-gif.sh`.
   **Verified**: coalesced-frame alpha-mean is flat per icon matching the source crops — no
   ghosting.
-- [ ] DOC-140 — Regenerate + verify `blupi-action-29-pop.gif` (`BlupiAction::Pop`=29).
+- [x] DOC-140 — Regenerated + verified `blupi-action-29-pop.gif` (`BlupiAction::Pop`=29). 6 real
+  frames (icons 126,125,124,123,122,121 — same set as `StopPop` but descending, one per frame),
+  cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
+  alpha-mean fluctuates matching the source crops — no ghosting.
 - [ ] DOC-141 — Regenerate + verify `blupi-action-30-bye.gif` (`BlupiAction::Bye`=30).
 - [ ] DOC-142 — Regenerate + verify `blupi-action-31-stopsuspend.gif` (`BlupiAction::StopSuspend`=31).
 - [ ] DOC-143 — Regenerate + verify `blupi-action-32-marchsuspend.gif` (`BlupiAction::MarchSuspend`=32).
