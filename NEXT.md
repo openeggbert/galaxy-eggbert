@@ -376,7 +376,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 12 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-217` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 12 (`DOC-218`–`DOC-229`) still need regenerating with the fixed tool. |
+| confirmed, documentation only, tool now fixed | 11 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-218` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 11 (`DOC-219`–`DOC-229`) still need regenerating with the fixed tool. |
 | fixed, build-unverified (2026-07-04) | `ObjectType47` (Chenille lift)'s `element.png`-vs-`object-m.png` texture bug in `GalaxyEggbertSimple3D` — see §3's top entry and `plan.md`'s `S3D-4`. Fixed by static review; U3D's prebuilt `cmake-build-debug` is missing in this environment so the fix could not be confirmed by an actual compile yet. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
@@ -535,8 +535,8 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    through `DOC-216`–`DOC-267` (14 more GIF regenerations, then static-icon re-verification, then
    `DOC-005`/`DOC-006` sounds/backgrounds which were never started). `DOC-215`
    (`object-anim-type49-key1.gif`), `DOC-216` (`object-anim-type50-key2.gif`), and `DOC-217`
-   (`object-anim-type51-key3.gif`) are also done, next is `DOC-218`
-   (`object-anim-type54-largecreature.gif`).
+   (`object-anim-type51-key3.gif`), and `DOC-218` (`object-anim-type54-largecreature.gif`) are
+   also done, next is `DOC-219` (`object-anim-type96-follower-awake.gif`).
    Read-only research against `../mobile-eggbert` plus local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
