@@ -55,7 +55,17 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 2. Current status
 
 ### Build status
-- `GalaxyEggbertSimple3D` — **builds clean** (`cmake -S . -B build && cmake --build build -j2`).
+- `GalaxyEggbertSimple3D` — **builds clean** (`cmake -S . -B build && cmake --build build -j2`),
+  confirmed earlier this session (`S3D-2`'s `tileUV` fix build). **Environment note (2026-07-04):**
+  partway through this same session `../simple-3d` was found moved into
+  `/rv/data/archive/trash/2026/` — restored back to `../simple-3d` with explicit user approval.
+  Once restored, discovered U3D's own prebuilt `cmake-build-debug` directory
+  (`/rv/data/library/github.com/u3d-community/U3D/`, a separate pre-existing dependency, not part
+  of this repo) is missing entirely — its source is present but never built in this environment.
+  Rebuilding all of U3D/Urho3D from scratch is a long operation the user explicitly chose to skip
+  for now (`S3D-4`'s Chenille fix below is therefore verified by static review only, not a real
+  compile). **Before assuming `GalaxyEggbertSimple3D` currently builds, check whether U3D's
+  `cmake-build-debug` has been rebuilt since.**
 - `GalaxyEggbertWorldsTests` — **54/54 tests pass** (`ctest --test-dir build`).
 - `GalaxyEggbertCNA` — **builds clean** (opt-in: `-DGALAXY_EGGBERT_BUILD_CNA=ON`), **runs and
   renders real, textured terrain with working animated tiles**.
@@ -113,6 +123,19 @@ Most recent first. Committed and pushed to `origin/develop`: `galaxy-eggbert` co
 `b4c52c0` ("feat: add CubeMesh vertex builder and CubeMeshRenderer CNA draw adapter"). Everything
 below this line is committed locally (one commit per `DOC-1xx` task, per user instruction) but
 **not pushed** to `origin/develop` yet (see §9 — pushing needs explicit request each time).
+
+- **Fixed a real Chenille (`ObjectType47`) texture bug in `GalaxyEggbertSimple3D` (S3D-4 follow-up,
+  new, committed locally, build-unverified — see plan.md's `S3D-4` for the full writeup)**: found
+  while regenerating `object-anim-type47-chenille.gif` for `DOC-214` — `kChenille`'s icon values
+  (311-316) are out of bounds for `element.png` but are real `object-m.png` coordinates
+  (confirmed visually), while `GEDecorSystem.cpp` unconditionally bound `element.png` for every
+  platform/enemy sprite. Confirmed `ObjectType47` is used in real levels (`world051.txt` ×10,
+  `world103.txt` ×7). Fixed by special-casing `ObjectType47` to bind `object-m.png` with the
+  correct gap-aware UV math. **Could not verify by rebuilding** — mid-session, `../simple-3d` had
+  been moved into `/rv/data/archive/trash/2026/` (restored with explicit approval), and once
+  restored, U3D's own prebuilt `cmake-build-debug` turned out to be missing entirely; rebuilding
+  U3D from scratch was explicitly declined by the user as too slow to do right now. Verified by
+  static review only — confirm with a real build once U3D is rebuilt.
 
 - **Fixed a second GIF-tooling bug: translucent content vanishing entirely (DOC-105, new,
   committed locally)**: found while regenerating `tile-anim-water1.gif`. Water1's source icons are
@@ -308,8 +331,10 @@ the 129 GIFs (`DOC-206`–`DOC-229`) still need regenerating; `DOC-206`
 (`object-anim-type21-secretexit.gif`), `DOC-207` (`object-anim-type24-skateboard.gif`), and
 `DOC-208` (`object-anim-type25-shield.gif`), `DOC-209` (`object-anim-type26-suctioncup.gif`), and
 `DOC-210` (`object-anim-type32-blupih.gif`), `DOC-211` (`object-anim-type33-blupit.gif`), and
-`DOC-212` (`object-anim-type40-mirrorinvert.gif`), and `DOC-213` (`object-anim-type44-wasp.gif`)
-are now also done, next is `DOC-214` (`object-anim-type47-chenille.gif`).
+`DOC-212` (`object-anim-type40-mirrorinvert.gif`), `DOC-213` (`object-anim-type44-wasp.gif`), and
+`DOC-214` (`object-anim-type47-chenille.gif` — which also found + fixed a real Chenille texture
+bug in the shipped `GalaxyEggbertSimple3D` target, build-unverified per the note above — see §3)
+are now also done, next is `DOC-215` (`object-anim-type49-key1.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -351,7 +376,8 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 16 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-213` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 16 (`DOC-214`–`DOC-229`) still need regenerating with the fixed tool. |
+| confirmed, documentation only, tool now fixed | 15 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-214` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 15 (`DOC-215`–`DOC-229`) still need regenerating with the fixed tool. |
+| fixed, build-unverified (2026-07-04) | `ObjectType47` (Chenille lift)'s `element.png`-vs-`object-m.png` texture bug in `GalaxyEggbertSimple3D` — see §3's top entry and `plan.md`'s `S3D-4`. Fixed by static review; U3D's prebuilt `cmake-build-debug` is missing in this environment so the fix could not be confirmed by an actual compile yet. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
 ## 6. Architecture notes
@@ -495,25 +521,20 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 ## 8. Next smallest tasks
 
 1. **Work through the ~168-task `mobile-eggbert-reference/` rework list (in progress, reopened
-   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-197` are done: the
+   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-214` are done: the
    GIF-ghosting root-cause fix, a second fix for translucent content vanishing (`DOC-105`), the
    real `BlockTypes::tileUV` gap/pitch engine bug (found via `DOC-101`, see §3 and `plan.md`'s
    `S3D-2`), all 12 tile animations, all 84 Blupi actions (also landed a reusable tool,
    `mobile-eggbert-reference/tools/extract-blupi-action.py`, reading mobile-eggbert's
-   `table_blupi` live rather than copying it — see `plan.md`'s `DOC-113`), and `DOC-197`
-   (`object-anim-type02-patrolA.gif`, first of 24 object/pickup/enemy animations — these use
-   `element.png` and frame data from `GEDecorSystem::GetObjIcon()`, not `table_blupi`), `DOC-198`–
-   `DOC-202` (`patrolB`/`bulldozer`/`treasure` — the exact GIF that first surfaced the `DOC-100`
-   ghosting bug, now confirmed fixed — `egg`/`exit`), `DOC-203` (`object-anim-type16-spider.gif`),
-   `DOC-204` (`object-anim-type17-fish.gif`), `DOC-205` (`object-anim-type20-bird.gif`), and
-   `DOC-206` (`object-anim-type21-secretexit.gif`) are done. Next: `DOC-207`
-   (`object-anim-type24-skateboard.gif`), then continue through `DOC-208`–`DOC-267` (22 more GIF
-   regenerations, then static-icon re-verification, then
-   `DOC-005`/`DOC-006` sounds/backgrounds which were never started).
-   Read-only research against
-   `../mobile-eggbert` plus local image/GIF tooling work — the `BlockTypes.hpp`/`GETileAtlas.cpp`
-   engine fix already landed this session; no further galaxy-eggbert C++ code changes expected for
-   the remaining GIF-regeneration tasks themselves.
+   `table_blupi` live rather than copying it), and 14 of 24 object/pickup/enemy animations —
+   `DOC-214` also found + fixed a real `ObjectType47` (Chenille) texture bug in
+   `GalaxyEggbertSimple3D` (`plan.md`'s `S3D-4`), currently **build-unverified** since U3D's
+   prebuilt `cmake-build-debug` is missing in this environment (see §2's Build status note — check
+   whether it's been rebuilt before assuming Simple3D still compiles). Full per-task detail is in
+   `plan.md` §16, not repeated here. Next: `DOC-215` (`object-anim-type49-key1.gif`), then continue
+   through `DOC-216`–`DOC-267` (14 more GIF regenerations, then static-icon re-verification, then
+   `DOC-005`/`DOC-006` sounds/backgrounds which were never started). Read-only research against
+   `../mobile-eggbert` plus local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.

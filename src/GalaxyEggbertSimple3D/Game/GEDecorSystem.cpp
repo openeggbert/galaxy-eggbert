@@ -1,4 +1,5 @@
 #include "GEDecorSystem.hpp"
+#include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <cmath>
 
@@ -142,11 +143,35 @@ static constexpr float kElemWorldSize = GEDecorSystem::kElemTilePx / 64.0f;
 // Sprite child vertical offset: same calculation as ObjectNode (kVisHalf - 0.5)
 static constexpr float kSpriteOffY = kElemWorldSize * 0.5f - 0.5f;
 
+// ObjectType47 (Chenille)'s icon table (kChenille, icons 311-316) indexes
+// object-m.png, not element.png like every other object sprite: those icons
+// are out of bounds for element.png (600x1740px, 60px tiles -> max icon 289)
+// but show the real tracked-platform texture on object-m.png at its actual
+// 65px gap-aware pitch (BlockTypes::kSheetGap, see plan.md's S3D-2). Confirmed
+// visually while regenerating DOC-214's reference GIF.
+static constexpr float kChenilleWorldSize = static_cast<float>(BlockTypes::kTileSize) / 64.0f;
+static constexpr float kChenilleOffY = kChenilleWorldSize * 0.5f - 0.5f;
+
+static void SetChenilleUV(Entity* sprite, int icon) {
+    constexpr int kPitch = BlockTypes::kTileSize + BlockTypes::kSheetGap;
+    const int col = icon % BlockTypes::kSheetCols;
+    const int row = icon / BlockTypes::kSheetCols;
+    sprite->SetBillboardUVRect(BlockTypes::kSheetGap + col * kPitch,
+                               BlockTypes::kSheetGap + row * kPitch,
+                               BlockTypes::kTileSize, BlockTypes::kTileSize);
+}
+
 static Entity* MakeSprite(Game& game, Entity* parent, const std::string& name, ObjectType type) {
     auto* s = parent->CreateChild(name + "_spr");
+    int icon = GEDecorSystem::GetObjIcon(type, 0);
+    if (type == ObjectType::ObjectType47) {
+        s->SetLocalPosition(Simple3D::Vector3(0.0f, kChenilleOffY, 0.0f));
+        s->AddBillboard("icons/object-m.png", kChenilleWorldSize);
+        SetChenilleUV(s, icon);
+        return s;
+    }
     s->SetLocalPosition(Simple3D::Vector3(0.0f, kSpriteOffY, 0.0f));
     s->AddBillboard("icons/element.png", kElemWorldSize);
-    int icon = GEDecorSystem::GetObjIcon(type, 0);
     int col  = icon % GEDecorSystem::kElemCols;
     int row  = icon / GEDecorSystem::kElemCols;
     s->SetBillboardUVRect(col * GEDecorSystem::kElemTilePx,
@@ -280,10 +305,14 @@ void GEDecorSystem::Update(float dt, const Vector3& blupiPos,
             int icon = (st.type == ObjectType::ObjectType96 && st.followerAwake)
                            ? GetFollowerAwakeIcon(st.animPhase)
                            : GetObjIcon(st.type, st.animPhase);
-            int col  = icon % kElemCols;
-            int row  = icon / kElemCols;
-            st.sprite->SetBillboardUVRect(col * kElemTilePx, row * kElemTilePx,
-                                          kElemTilePx, kElemTilePx);
+            if (st.type == ObjectType::ObjectType47) {
+                SetChenilleUV(st.sprite, icon);
+            } else {
+                int col  = icon % kElemCols;
+                int row  = icon / kElemCols;
+                st.sprite->SetBillboardUVRect(col * kElemTilePx, row * kElemTilePx,
+                                              kElemTilePx, kElemTilePx);
+            }
 
             if (IsEnemy(st.type)) {
                 bool facingRight = (st.direction > 0.0f) == (st.posEnd.x_ >= st.posStart.x_);

@@ -1251,7 +1251,30 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
   Independently, cropping the same corrected pixel math for the `tile-anim-lava.gif` doc frames
   produced clean images with no blue bleed/seam (see `DOC-101`).
 - [x] S3D-3 — Blupi billboard animation from `blupi.png`
-- [x] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`
+- [x] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`. **Bug
+  found + fixed (2026-07-04, while regenerating `object-anim-type47-chenille.gif` for
+  `DOC-214`):** `ObjectType47` (Chenille — the moving-track lift platform)'s icon table
+  (`GEDecorSystem.cpp`'s `kChenille = {311,312,313,314,315,316}`) indexes `object-m.png`, not
+  `element.png` like every other object sprite — those icon values are out of bounds for
+  `element.png` (600×1740px, 60px tiles → max valid icon 289) but show the real tracked-platform
+  texture on `object-m.png` at its actual 65px gap-aware pitch (`BlockTypes::kSheetGap`, `S3D-2`).
+  `MakeSprite()`/`Update()` unconditionally bound `"icons/element.png"` for every platform/enemy
+  sprite, so any level placing a Chenille lift would sample past the end of `element.png` instead
+  of the intended texture. **Confirmed this is not theoretical**: `ObjectType47` appears in real
+  mobile-eggbert levels (`world051.txt` ×10, `world103.txt` ×7, several others). Fixed by
+  special-casing `ObjectType47` in `MakeSprite()`/`Update()` to bind `object-m.png` and compute its
+  UV rect via `BlockTypes::kTileSize/kSheetGap/kSheetCols` instead of `element.png`'s plain
+  60px/10-col grid. **Verification caveat, stated honestly**: could not rebuild
+  `GalaxyEggbertSimple3D` to confirm compilation — `../simple-3d` had been moved into
+  `/rv/data/archive/trash/2026/` mid-session (restored, with explicit user approval, back to
+  `../simple-3d`), and once restored, U3D's own prebuilt `cmake-build-debug` (a separate,
+  pre-existing dependency at `/rv/data/library/github.com/u3d-community/U3D/`) turned out to be
+  missing entirely — rebuilding it from source is a large, slow operation the user explicitly
+  chose to skip rather than doing right now. This change is therefore **verified by static review
+  only** (matches the file's existing patterns exactly; `BlockTypes::kTileSize`/`kSheetGap`/
+  `kSheetCols` are pre-existing, already-used constants; no new syntax introduced beyond a
+  conditional branch and one small file-local helper function) — not by an actual compile. Should
+  be confirmed with a real build once U3D is available again.
 - [x] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
 - [x] S3D-6 — Phase/menu port: Init gamer select with per-slot data, Settings screen, SaveData
 - [x] S3D-7 — Sound channel parity: 93 channels, per-channel volume, no-restart policy
@@ -2068,7 +2091,16 @@ all need regeneration.
   frames (icons 195-198 mirrored, `kGuepeLeft`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
   source crops — no ghosting.
-- [ ] DOC-214 — Regenerate + verify `object-anim-type47-chenille.gif`.
+- [x] DOC-214 — Regenerated + verified `object-anim-type47-chenille.gif` (`ObjectType47`). 6 real
+  frames (icons 311-316, `kChenille`). **Found + fixed a real engine bug along the way**: these
+  icons are actually `object-m.png` coordinates (a tracked-platform texture, confirmed visually),
+  not `element.png` like every other object sprite — `element.png` is only 600×1740px/60px tiles
+  (max valid icon 289), so `GEDecorSystem.cpp`'s renderer was reading past the end of the wrong
+  sheet. Full writeup + the shipped-game fix: `plan.md`'s `S3D-4`. This GIF is cropped from
+  `object-m.png` at the corrected `1+col*65,1+row*65` pitch (`S3D-2`), assembled with
+  `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
+  alpha-mean tracks the source crops closely (~91.9-92.9/255 vs ~82.6-83.4/255 source, the usual
+  small `DOC-105` opacity-forcing bump) — no ghosting.
 - [ ] DOC-215 — Regenerate + verify `object-anim-type49-key1.gif`.
 - [ ] DOC-216 — Regenerate + verify `object-anim-type50-key2.gif`.
 - [ ] DOC-217 — Regenerate + verify `object-anim-type51-key3.gif`.
