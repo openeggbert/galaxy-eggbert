@@ -1939,7 +1939,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   in mobile-eggbert's own table). Rendered as a blank 60×60 transparent frame via `make-gif.sh`
   for tooling consistency with the rest of the batch. **Verified**: matches the pre-existing GIF's
   blank state exactly.
-- [ ] DOC-185 — Regenerate + verify `blupi-action-76-clear3.gif` (`BlupiAction::Clear3`=76).
+- [x] DOC-185 — Regenerated + verified `blupi-action-76-clear3.gif` (`BlupiAction::Clear3`=76). 70
+  real frames (icons 40/41 for 30 frames, **uses `element.png`**, then 40 trailing `-1` blank
+  frames), cropped and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean
+  transitions from real content (~77.3/255) to exactly 0 at frame 30 — no ghosting.
 - [ ] DOC-186 — Regenerate + verify `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77).
 - [ ] DOC-187 — Regenerate + verify `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
 - [ ] DOC-188 — Regenerate + verify `blupi-action-79-clear6.gif` (`BlupiAction::Clear6`=79).
