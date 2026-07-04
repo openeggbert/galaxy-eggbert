@@ -1835,7 +1835,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   real frames (icons 0,135-137,232/233 alternating,137-135,0), cropped from `blupi.png` and
   assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a
   tight range — no ghosting.
-- [ ] DOC-160 — Regenerate + verify `blupi-action-49-sucette.gif` (`BlupiAction::Sucette`=49).
+- [x] DOC-160 — Regenerated + verified `blupi-action-49-sucette.gif` (`BlupiAction::Sucette`=49).
+  32 real frames (icons 234-236 mirrored, repeating), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight range — no
+  ghosting.
 - [ ] DOC-161 — Regenerate + verify `blupi-action-50-stoptank.gif` (`BlupiAction::StopTank`=50).
 - [ ] DOC-162 — Regenerate + verify `blupi-action-51-marchtank.gif` (`BlupiAction::MarchTank`=51).
 - [ ] DOC-163 — Regenerate + verify `blupi-action-52-turntank.gif` (`BlupiAction::TurnTank`=52).
