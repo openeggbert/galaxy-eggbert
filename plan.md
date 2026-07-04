@@ -1523,7 +1523,16 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   is mostly opaque (little transparent area to accumulate through), matching the
   `08-animations.md` caveat that this test "can't rule out the same root cause being invisible" on
   opaque tile content.
-- [ ] DOC-102 — Regenerate + verify `tile-anim-spike.gif` (animated tile: Spike).
+- [x] DOC-102 — Regenerated + verified `tile-anim-spike.gif` (animated tile: Spike). Frames are the
+  16 real `kAnimSpike` icons (`GETerrainRenderer.cpp`:
+  `{374,374,373,347,373,374,374,374,373,347,347,373,374,374,374,374}` — 3 distinct icons: 374
+  extended, 373 mid, 347 retracted), cropped with the corrected `1 + col*65, 1 + row*65` pixel math
+  (`S3D-2`) — this set stress-tested the gap fix at high row indices (row 17-18 of 22; the old
+  buggy 64px-flat math would have been off by ~17-18px here), assembled with
+  `mobile-eggbert-reference/tools/make-gif.sh`. **Verified**: coalesced-frame alpha-mean
+  (252.88 for icon 374/373, 252.63 for icon 347) tracks the source crops (253.285/253.082) almost
+  exactly with no monotonic climb; visually matches the old committed GIF's green-spike look (icon
+  mapping confirmed correct), just without any bleed/seam.
 - [ ] DOC-103 — Regenerate + verify `tile-anim-crusher.gif` (animated tile: Crusher).
 - [ ] DOC-104 — Regenerate + verify `tile-anim-saw.gif` (animated tile: Saw).
 - [ ] DOC-105 — Regenerate + verify `tile-anim-water1.gif` (animated tile: Water1).
