@@ -1815,7 +1815,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   20 real frames (same icon set as `TakeSkate` but reversed order), cropped from `blupi.png` and
   assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches `TakeSkate`'s
   pattern reversed — no ghosting.
-- [ ] DOC-155 — Regenerate + verify `blupi-action-44-ouf1a.gif` (`BlupiAction::Ouf1a`=44).
+- [x] DOC-155 — Regenerated + verified `blupi-action-44-ouf1a.gif` (`BlupiAction::Ouf1a`=44). 29
+  real frames (icons 1,222-225 mirrored,1), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight
+  ~86.3-87.7/255 range — no ghosting.
 - [ ] DOC-156 — Regenerate + verify `blupi-action-45-ouf1b.gif` (`BlupiAction::Ouf1b`=45).
 - [ ] DOC-157 — Regenerate + verify `blupi-action-46-ouf2.gif` (`BlupiAction::Ouf2`=46).
 - [ ] DOC-158 — Regenerate + verify `blupi-action-47-ouf3.gif` (`BlupiAction::Ouf3`=47).
