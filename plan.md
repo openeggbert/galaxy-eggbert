@@ -2373,7 +2373,11 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   icons' "visual signal" alpha values were computed with the pre-`S3D-2` crop formula and never
   recomputed — added a note explaining why (not load-bearing, spot-checked 3 icons against the
   corrected formula and confirmed no sparse/solid category flips: 233→237, 86→91, 97→100).
-- [ ] DOC-261 — Full read-through of `03-objects.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-261 — Full read-through of `03-objects.md`. Verified all 71 image references resolve
+  (programmatic check). Found a real staleness bug: the sprite-channel bug table still said
+  `ObjectType47`'s bug was "not fixed in this pass" for all 5 types, but `47` was actually fixed
+  separately as `S3D-4` (2026-07-04) — updated the table to show `47` fixed and `1`/`12`/`32`/`33`
+  still open (`DOC-007`), and corrected the summary paragraph's "5 ObjectTypes" claim to "4".
 - [ ] DOC-262 — Full read-through of `04-enemy-behavior.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-263 — Full read-through of `05-backgrounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-264 — Full read-through of `06-doors.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.

@@ -90,17 +90,17 @@ via that one sheet unconditionally. Checking real level files' `MoveObject: ... 
 
 | Type | Real `channel=` value in shipped levels | Real sheet | galaxy-eggbert currently assumes |
 |---|---|---|---|
-| 1 | `channel=1` | `PixmapChannel::Object` (`object-m.png`) | `element.png` (wrong) |
-| 12 | `channel=1` | `PixmapChannel::Object` (`object-m.png`) | `element.png` (wrong) |
-| 32 (blupih) | `channel=12` or `13` | `PixmapChannel::Blupi1_12`/`Blupi1_13` (`blupi1.png`) | `element.png` (wrong) |
-| 33 (blupit) | `channel=11`, `12`, or `13` | `PixmapChannel::Blupi1_11/12/13` (`blupi1.png`) | `element.png` (wrong) — **this is one of the *original* 18 "confirmed" types**, not a new one |
-| 47 (platform lift, track texture) | `channel=1` | `PixmapChannel::Object` (`object-m.png`) | `element.png` (wrong — and `table_chenille`'s icon values 311–316 are **out of bounds** for `element.png`, which only holds icons 0–289; cropping icon 311 from `element.png` throws an ImageMagick range error, confirmed) |
+| 1 | `channel=1` | `PixmapChannel::Object` (`object-m.png`) | `element.png` (wrong, **still unfixed**) |
+| 12 | `channel=1` | `PixmapChannel::Object` (`object-m.png`) | `element.png` (wrong, **still unfixed**) |
+| 32 (blupih) | `channel=12` or `13` | `PixmapChannel::Blupi1_12`/`Blupi1_13` (`blupi1.png`) | `element.png` (wrong, **still unfixed**) |
+| 33 (blupit) | `channel=11`, `12`, or `13` | `PixmapChannel::Blupi1_11/12/13` (`blupi1.png`) | `element.png` (wrong, **still unfixed**) — this is one of the *original* 18 "confirmed" types, not a new one |
+| 47 (platform lift, track texture) | `channel=1` | `PixmapChannel::Object` (`object-m.png`) | ~~`element.png` (wrong~~ **fixed 2026-07-04 as `S3D-4`** — `GEDecorSystem.cpp` now special-cases `ObjectType47` to bind `object-m.png`; see `plan.md` §13. `table_chenille`'s icon values 311–316 were out of bounds for `element.png`, which only holds icons 0–289 — reproduced the ImageMagick range error directly before fixing) |
 
-This means galaxy-eggbert's Simple3D port is very likely drawing the *wrong texture* (or, for type
-47/48, a texture-sheet-bounds violation) for these 5 `ObjectType`s today. This is a real rendering
-bug, not just a documentation gap — **not fixed in this pass** (out of scope for a cataloging task;
-needs its own careful fix, likely reading `.channel` per-`MoveObjectSpec` from the level file
-instead of hardcoding `element.png`). Recorded as a new item in `plan.md`.
+This means galaxy-eggbert's Simple3D port is very likely drawing the *wrong texture* for 4 of these
+5 `ObjectType`s today (`1`/`12`/`32`/`33` — type `47` was fixed separately, see above). This is a
+real rendering bug, not just a documentation gap — tracked as `DOC-007` in `plan.md`, **still open**
+(out of scope for a cataloging task; needs its own careful fix, likely reading `.channel`
+per-`MoveObjectSpec` from the level file instead of hardcoding `element.png`).
 
 `object-type047-icon311-objectchannel.png` (correct sheet) replaces the earlier, wrong-sheet crop
 for type 47 in the icon table below.
