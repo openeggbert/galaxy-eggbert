@@ -2367,7 +2367,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   `05-backgrounds.md` is still accurate now that that file is complete (correctly notes
   galaxy-eggbert's own engine doesn't consume `region=` yet — that's a separate, still-true fact
   from mobile-eggbert's own mapping now being fully documented). No changes needed.
-- [ ] DOC-260 — Full read-through of `02-tiles.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-260 — Full read-through of `02-tiles.md`. Verified all 313 image references resolve
+  (programmatic check). Clarified the top status line to distinguish classification date
+  (2026-07-03) from crop-regeneration date (2026-07-04, `DOC-230`). Found the 128 unused/unnamed
+  icons' "visual signal" alpha values were computed with the pre-`S3D-2` crop formula and never
+  recomputed — added a note explaining why (not load-bearing, spot-checked 3 icons against the
+  corrected formula and confirmed no sparse/solid category flips: 233→237, 86→91, 97→100).
 - [ ] DOC-261 — Full read-through of `03-objects.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-262 — Full read-through of `04-enemy-behavior.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-263 — Full read-through of `05-backgrounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.

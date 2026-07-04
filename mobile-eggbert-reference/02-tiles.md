@@ -4,7 +4,9 @@
 64×64 image crop (every icon that is either already named/behavioral in `BlockTypes.hpp`, or
 confirmed used in at least one of the 78 real level files), the remaining 128 unused/unnamed icons
 listed compactly by range (passability + a mechanical visual signal, not a fabricated name — see
-"Unused/unnamed icons" below). Generated and verified 2026-07-03 (`DOC-002`).
+"Unused/unnamed icons" below). Classification generated and verified 2026-07-03 (`DOC-002`); all
+313 crop images regenerated 2026-07-04 after a real grid-math bug was found (`DOC-230`, see "How
+these images were generated" below).
 
 Icons are indices into `object-m.png` (1301×1431 px, 64×64 px tiles with a 1px gap and a 1px
 leading margin, 20 columns — confirmed by direct file inspection, matches
@@ -388,6 +390,13 @@ Total coverage was never actually wrong (all 441 icons were accounted for somewh
 boundaries were imprecise. These 45 ranges are exact: every icon number in every range below is
 confirmed to have no name and no real-level usage, with zero overlap against the 313 icons in the
 section above.
+
+**Note (`DOC-230`, 2026-07-04):** the "visual signal" (mean alpha) values below were computed with
+the pre-`S3D-2` crop formula (no leading margin) and have not been recomputed against the corrected
+one. Not re-verified because these 128 icons are unused/unnamed by definition — the alpha values
+are a rough sparse-vs-solid signal, not load-bearing data, and a 1px shift doesn't change that
+classification for any of them (spot-checked a few against the corrected formula: no flips between
+"sparse" and "solid" categories).
 
 | Icon range | Passable | Visual signal (mean alpha) |
 |---|---|---|
