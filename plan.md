@@ -1948,7 +1948,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   (Clear4 is not in the `element.png` exception list despite its name — matches the confirmed
   rule), cropped and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean stays
   in a real, non-monotonic range — no ghosting.
-- [ ] DOC-187 — Regenerate + verify `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
+- [x] DOC-187 — Regenerated + verified `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
+  Same as `Clear2`: real data is `frameCount=1`, icon `-1` — a single genuinely-blank frame
+  (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for tooling
+  consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
 - [ ] DOC-188 — Regenerate + verify `blupi-action-79-clear6.gif` (`BlupiAction::Clear6`=79).
 - [ ] DOC-189 — Regenerate + verify `blupi-action-80-clear7.gif` (`BlupiAction::Clear7`=80).
 - [ ] DOC-190 — Regenerate + verify `blupi-action-81-clear8.gif` (`BlupiAction::Clear8`=81).
