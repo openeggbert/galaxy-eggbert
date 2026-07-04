@@ -1875,7 +1875,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   (checked frame 0 = shocked Blupi on `blupi.png`, frame 30 = black silhouette on `element.png`).
   **Verified**: coalesced-frame alpha-mean shows a real content jump at the channel boundary
   (~133→~77) — a genuine transition, not ghosting; both segments individually fluctuate normally.
-- [ ] DOC-169 — Regenerate + verify `blupi-action-58-helicoglu.gif` (`BlupiAction::HelicoGlu`=58).
+- [x] DOC-169 — Regenerated + verified `blupi-action-58-helicoglu.gif` (`BlupiAction::HelicoGlu`=58).
+  14 real frames (icons 271-274 mirrored), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
+  source crops — no ghosting.
 - [ ] DOC-170 — Regenerate + verify `blupi-action-59-turnair.gif` (`BlupiAction::TurnAir`=59).
 - [ ] DOC-171 — Regenerate + verify `blupi-action-60-stopmarch.gif` (`BlupiAction::StopMarch`=60).
 - [ ] DOC-172 — Regenerate + verify `blupi-action-61-stopjump.gif` (`BlupiAction::StopJump`=61).
