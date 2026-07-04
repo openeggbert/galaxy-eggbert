@@ -1744,7 +1744,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   8 real frames (icons 111,111,110,110,111,111,112,112), cropped from `blupi.png` and assembled
   with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching
   the source crops — no ghosting.
-- [ ] DOC-137 — Regenerate + verify `blupi-action-26-marchjeep.gif` (`BlupiAction::MarchJeep`=26).
+- [x] DOC-137 — Regenerated + verified `blupi-action-26-marchjeep.gif` (`BlupiAction::MarchJeep`=26).
+  8 real frames (icons 111,111,110,110,111,111,112,112, same icon set as `StopJeep`), cropped from
+  `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches
+  `StopJeep`'s pattern exactly — no ghosting.
 - [ ] DOC-138 — Regenerate + verify `blupi-action-27-turnjeep.gif` (`BlupiAction::TurnJeep`=27).
 - [ ] DOC-139 — Regenerate + verify `blupi-action-28-stoppop.gif` (`BlupiAction::StopPop`=28).
 - [ ] DOC-140 — Regenerate + verify `blupi-action-29-pop.gif` (`BlupiAction::Pop`=29).
