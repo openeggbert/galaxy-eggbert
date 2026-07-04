@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-79 of 93 documented (`DOC-235`-`DOC-242`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-89 of 93 documented (`DOC-235`-`DOC-243`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -168,4 +168,27 @@ the sheet actually gets played — worth keeping in mind for `DOC-246`'s full 93
 | 79 | `sound079.wav` | `SoundEnviron()` **head-bump** variant (remapped from generic channel 4) for the same terrain-icon range as channel 78 — its paired opposite. |
 
 Channels 78/79 are the first of the 7 terrain-specific footstep/head-bump pairs promised back in the
-channels 0-9 section; the remaining 6 pairs (80-91) are documented in the next batch (`DOC-243`).
+channels 0-9 section; the remaining 6 pairs (80-91) are documented below (`DOC-243`/`DOC-244`).
+
+## Channels 80-89
+
+All 10 are `Decor::SoundEnviron()` terrain-specific remaps of the generic footstep (channel 3) and
+head-bump (channel 4) sounds — see the channels 0-9 section for the remapping mechanism. Each pair
+below is keyed by the tile-icon range Blupi is standing on/hitting when the remap fires.
+
+| Channel | `.wav` | Real trigger (from `Decor::SoundEnviron()`) |
+|---|---|---|
+| 80 | `sound080.wav` | Landing variant for obstacle icons 1-28, 78-90, 250-260, 311-316, 324-329. |
+| 81 | `sound081.wav` | Head-bump variant for the same icon range as channel 80. |
+| 82 | `sound082.wav` | Landing variant for obstacle icons 284-303, and icon 338. |
+| 83 | `sound083.wav` | Head-bump variant for the same icon range as channel 82. |
+| 84 | `sound084.wav` | Landing variant for obstacle icons 341-363. |
+| 85 | `sound085.wav` | Head-bump variant for the same icon range as channel 84. |
+| 86 | `sound086.wav` | Landing variant for obstacle icons 215-234. |
+| 87 | `sound087.wav` | Head-bump variant for the same icon range as channel 86. |
+| 88 | `sound088.wav` | Landing variant for obstacle icons 246-249. |
+| 89 | `sound089.wav` | Head-bump variant for the same icon range as channel 88. |
+
+This completes 6 of the 7 terrain-remap pairs (78/79 plus these 5); the 7th pair (90/91, obstacle
+icons 107-109) is documented in the final sound batch (`DOC-244`), which also closes out the
+93-channel catalog.

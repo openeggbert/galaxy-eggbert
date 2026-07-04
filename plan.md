@@ -2293,7 +2293,10 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   the channels 0-9 batch; channel 70 (crusher-trap onset) pairs with channel 41's recovery pop from
   an earlier batch; channels 74/75 are two distinct death-sequence cues (angel-ascent vs.
   cut-apart) for different death causes; channels 76/77 are a switch on/off click pair.
-- [ ] DOC-243 — Research and document `SoundChannel` 80-89 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-243 — Researched and documented `SoundChannel` 80-89 in `07-sounds.md`. All 10 are
+  `Decor::SoundEnviron()` terrain-specific footstep/head-bump remaps, confirmed directly from the
+  function body (5 more icon-range pairs, completing 6 of 7 total alongside 78/79 from the previous
+  batch); the last pair (90/91) lands in the final batch, `DOC-244`.
 - [ ] DOC-244 — Research and document `SoundChannel` 90-92 (final batch) — real in-game trigger/purpose per channel.
 - [ ] DOC-245 — Cross-check the completed per-channel catalog against `include/GalaxyEggbert/def/SoundChannel.hpp`'s existing names/comments for consistency; flag and resolve any mismatch.
 - [ ] DOC-246 — Verify all 93 `.wav` files in `../mobile-eggbert/Content/sounds/` are accounted for 1:1 against the 93 documented channels (no gaps, no extras).

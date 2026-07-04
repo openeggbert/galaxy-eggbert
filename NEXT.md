@@ -320,23 +320,23 @@ frames and 3 background thumbnails were confirmed already pixel-correct (neither
 `object-m.png`'s buggy grid) — no changes needed there. This closes out all of the
 sprite-crop-adjacent static-icon re-verification work.
 
-**`DOC-005` (sound catalog) in progress (2026-07-04):** `DOC-235`-`DOC-242` documented channels 0-79
-in `07-sounds.md`. **Self-correction found mid-`DOC-240`**: channel 40 was mis-documented in
-`DOC-239` as the Charge/Cloud pickup sound — it's actually the wasp/bee sting "puffed up" debuff
-sound; the real Charge/Cloud pickup sound is channel 58. Along the way found a genuine
-naming-collision bug-note in the original source: `m_blupiBalloon` (the sting debuff flag) is
-unrelated to the `ObjectType46` "balloon" vehicle pickup, which sets `m_blupiOver` instead and plays
-no sound. Other real findings across this range: channels 2/68 are provably unused, channels 3/4 do
-double duty as footstep/head-bump plus pickup-chime sounds (and 78/79 are the first confirmed
-terrain-specific remap of that pair), channel 10 is special-cased to allow overlapping plays,
-channels 15-18/28-31 are the two vehicle motor quartets, channels 8/26/51 are three distinct death
-sounds (generic/drowning/glue) plus 74/75 are two more for specific death causes, channel 32
-(world-exit) differs from channel 14 (win), channels 36/37 are periodic idle ticks, channels
-46-49/65 plus 50/44/57/62/58/55 are "bored idle" and buff-pickup sound families, and channels
-43/45/56/63 form a complete 4-buff "about to expire" warning family.
+**`DOC-005` (sound catalog) in progress (2026-07-04):** `DOC-235`-`DOC-243` documented channels 0-89
+in `07-sounds.md` — one batch left (`DOC-244`, channels 90-92) to close out the full catalog.
+**Self-correction found mid-`DOC-240`**: channel 40 was mis-documented in `DOC-239` as the
+Charge/Cloud pickup sound — it's actually the wasp/bee sting "puffed up" debuff sound; the real
+Charge/Cloud pickup sound is channel 58. Along the way found a genuine naming-collision bug-note in
+the original source: `m_blupiBalloon` (the sting debuff flag) is unrelated to the `ObjectType46`
+"balloon" vehicle pickup, which sets `m_blupiOver` instead and plays no sound. Other real findings:
+channels 2/68 are provably unused; channels 78-89 confirm 6 of the 7 `SoundEnviron()`
+terrain-specific footstep/head-bump remap pairs (the 7th, 90/91, is in the final batch); channel 10
+is special-cased to allow overlapping plays; channels 15-18/28-31 are the two vehicle motor
+quartets; channels 8/26/51/74/75 are five distinct death-related cues; channel 32 (world-exit)
+differs from channel 14 (win); channels 36/37 are periodic idle ticks; channels 46-49/65 plus
+50/44/57/62/58/55 are "bored idle" and buff-pickup sound families; and channels 43/45/56/63 form a
+complete 4-buff "about to expire" warning family.
 
 **Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.4 onward,
-`DOC-243`-`DOC-267`): the remaining 2 sound-channel batches (80-92), the sound/`SoundChannel.hpp`
+`DOC-244`-`DOC-267`): the final sound-channel batch (90-92), the sound/`SoundChannel.hpp`
 cross-check and `.wav`-file accounting, `DOC-006` (background catalog, never started), and a final
 markdown read-through pass.
 
@@ -533,11 +533,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `DOC-230` through `DOC-234` are also done: all 313 `tile-full-*` crops, 7 of the 67
    `object-type*` icons, and the 3 door crops had the same pre-`S3D-2`-fix leading-margin bug and
    were regenerated; the Blupi representative frames and background thumbnails were confirmed
-   already correct. `DOC-235`-`DOC-242` (sound channels 0-79) are also done, including a
-   self-correction of a channel-40 mis-attribution found mid-batch. Next: `DOC-243`, channels 80-89,
-   continuing the `DOC-005` 93-channel sound catalog, then `DOC-006` background catalog, then a
-   final markdown read-through. Read-only research against `../mobile-eggbert` plus local image/GIF
-   tooling work.
+   already correct. `DOC-235`-`DOC-243` (sound channels 0-89) are also done, including a
+   self-correction of a channel-40 mis-attribution found mid-batch. Next: `DOC-244`, the final
+   channels 90-92, closing out the `DOC-005` 93-channel sound catalog, then `DOC-006` background
+   catalog, then a final markdown read-through. Read-only research against `../mobile-eggbert` plus
+   local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
