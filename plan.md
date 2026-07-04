@@ -2044,7 +2044,10 @@ all need regeneration.
   real frames (icons 129-135 mirrored, `kSkate`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
   source crops — no ghosting.
-- [ ] DOC-208 — Regenerate + verify `object-anim-type25-shield.gif`.
+- [x] DOC-208 — Regenerated + verified `object-anim-type25-shield.gif` (`ObjectType25`). 8 real
+  frames (icons 144-151, `kShield`), `element.png`, cropped and assembled with `make-gif.sh` at
+  delay 100. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
+  ghosting.
 - [ ] DOC-209 — Regenerate + verify `object-anim-type26-suctioncup.gif`.
 - [ ] DOC-210 — Regenerate + verify `object-anim-type32-blupih.gif`.
 - [ ] DOC-211 — Regenerate + verify `object-anim-type33-blupit.gif`.
