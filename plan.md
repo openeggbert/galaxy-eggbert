@@ -1933,7 +1933,12 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   end, cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
   alpha-mean transitions from real content (~86.3-86.7/255) to exactly 0 once the solid `-1` run
   starts (~frame 75) — matches the teleport vanish behavior, no ghosting.
-- [ ] DOC-184 — Regenerate + verify `blupi-action-75-clear2.gif` (`BlupiAction::Clear2`=75).
+- [x] DOC-184 — Regenerated + verified `blupi-action-75-clear2.gif` (`BlupiAction::Clear2`=75). Real
+  data is `frameCount=1`, icon `-1` — a single genuinely-blank frame (not a bug: the already-committed
+  GIF is also `colors=1`/fully transparent, confirming this action has no visible representation
+  in mobile-eggbert's own table). Rendered as a blank 60×60 transparent frame via `make-gif.sh`
+  for tooling consistency with the rest of the batch. **Verified**: matches the pre-existing GIF's
+  blank state exactly.
 - [ ] DOC-185 — Regenerate + verify `blupi-action-76-clear3.gif` (`BlupiAction::Clear3`=76).
 - [ ] DOC-186 — Regenerate + verify `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77).
 - [ ] DOC-187 — Regenerate + verify `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
