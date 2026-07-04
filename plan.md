@@ -2040,7 +2040,10 @@ all need regeneration.
   real frames (icons 122-128 mirrored, `kCleGeneric`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
   alpha-mean is a clean mirrored pattern matching the source crops — no ghosting.
-- [ ] DOC-207 — Regenerate + verify `object-anim-type24-skateboard.gif`.
+- [x] DOC-207 — Regenerated + verified `object-anim-type24-skateboard.gif` (`ObjectType24`). 34
+  real frames (icons 129-135 mirrored, `kSkate`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
+  source crops — no ghosting.
 - [ ] DOC-208 — Regenerate + verify `object-anim-type25-shield.gif`.
 - [ ] DOC-209 — Regenerate + verify `object-anim-type26-suctioncup.gif`.
 - [ ] DOC-210 — Regenerate + verify `object-anim-type32-blupih.gif`.
