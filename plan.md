@@ -1606,7 +1606,11 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   with the corrected pixel math and assembled with `make-gif.sh`. **Verified**: coalesced-frame
   alpha-mean (143.1/143.4/139.7) tracks the source crops (136.4/136.5/133.2) closely — no
   ghosting.
-- [ ] DOC-110 — Regenerate + verify `tile-anim-fanright.gif` (animated tile: FanRight).
+- [x] DOC-110 — Regenerated + verified `tile-anim-fanright.gif` (animated tile: FanRight). Frames
+  are the 3 real icons (`GETerrainRenderer.cpp`: `FanRight = 129 + (phase % 3)` → 129,130,131),
+  cropped with the corrected pixel math and assembled with `make-gif.sh`. **Verified**:
+  coalesced-frame alpha-mean (144.4/144.4/140.8) tracks the source crops (137.9/138.2/134.8)
+  closely — no ghosting.
 - [ ] DOC-111 — Regenerate + verify `tile-anim-fanup.gif` (animated tile: FanUp).
 - [ ] DOC-112 — Regenerate + verify `tile-anim-fandown.gif` (animated tile: FanDown).
 
