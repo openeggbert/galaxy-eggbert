@@ -2253,7 +2253,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   start/loop-high/stop/loop-low quartet (jeep/tank/overcraft's equivalent quartet is 28-31, a later
   batch); channels 13/14 are the goal-reached "not enough treasure"/"win" pair; channel 19 is a
   special upgrade of channel 11's treasure fanfare for the last treasure specifically.
-- [ ] DOC-237 — Research and document `SoundChannel` 20-29 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-237 — Researched and documented `SoundChannel` 20-29 in `07-sounds.md`. Real find:
+  channel 26 (drowning) is a **distinct** death sound from channel 8's generic lava/electric/fall
+  death sound, not a reuse — the oxygen-meter-depleted death path plays its own dedicated cue.
+  Also confirmed channels 28/29 as the jeep/tank/overcraft motor quartet's start/loop-high half
+  (mirrors 15/16 for the helicopter, channels 0-9 batch); channels 20/21 are the Down/Up climb
+  end/start sounds (channel 7 already covered Down-start).
 - [ ] DOC-238 — Research and document `SoundChannel` 30-39 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-239 — Research and document `SoundChannel` 40-49 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-240 — Research and document `SoundChannel` 50-59 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.

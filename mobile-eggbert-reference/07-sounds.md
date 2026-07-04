@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-19 of 93 documented (`DOC-235`, `DOC-236`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-29 of 93 documented (`DOC-235`-`DOC-237`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -51,5 +51,23 @@ unused `ObjectType`s and tile icons found elsewhere in this rework.
 | 19 | `sound019.wav` | **Final-treasure** pickup fanfare — upgrades channel 11 specifically when `m_nbTresor == m_totalTresor - 1` at pickup time (i.e. this is the treasure that completes the set). |
 
 Channels 15-18 are the helicopter half of a motor-sound quartet; the jeep/tank/overcraft half
-(channels 28-31) is documented in the next batch (`DOC-237`) since it follows the identical
+(channels 28-31) is documented below (`DOC-237`) since it follows the identical
 start/loop-high/stop/loop-low pattern one batch later in the numbering.
+
+## Channels 20-29
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 20 | `sound020.wav` | Descend-**end** sound — plays when `BlupiAction::Down` finishes and Blupi returns to `Stop`. Pairs with channel 7 (descend-*start*, see channels 0-9); there is no equivalent "ascend-end" sound — the `Up`→`Stop` transition is silent. |
+| 21 | `sound021.wav` | Ascend-**start** sound for `BlupiAction::Up` (documented already in channels 0-9 as channel 7's pair). |
+| 22 | `sound022.wav` | Water entry/exit splash — plays on every transition between swimming/surfing and open air (jumping out of water, being pushed out, surfacing at the water's edge). |
+| 23 | `sound023.wav` | "Plouf" splash effect sound — plays in `Decor::MoveObjectPlouf()` when spawning `ObjectType14` (the water splash effect documented in `03-objects.md`). |
+| 24 | `sound024.wav` | "Blup" rising-bubble sound — plays in `Decor::MoveObjectBlup()` when spawning `ObjectType15` (the water bubble effect documented in `03-objects.md`). |
+| 25 | `sound025.wav` | Start-surfing transition sound — plays when Blupi transitions from swimming (`m_blupiNage`) to surfing on the surface (`m_blupiSurf`). |
+| 26 | `sound026.wav` | **Drowning death** sound — plays when the underwater oxygen meter (`m_blupiLevel`) reaches 0 and Blupi enters `BlupiAction::Drown`. **A real finding**: drowning has its own dedicated death sound, distinct from channel 8's generic lava/electric/fall death sound — not the same "you died" cue reused. |
+| 27 | `sound027.wav` | Blupi "sigh"/reaction sound — plays for the `Ouf3` reaction action and also when the action button is pressed while Blupi is already idle-standing (`BlupiAction::Non`, a "nothing to do here" no-op reaction). |
+| 28 | `sound028.wav` | Jeep/tank/overcraft engine **start** one-shot — the ground-vehicle equivalent of channel 15 (see channels 0-9), same `AdaptMotorVehicleSound()` mechanism. |
+| 29 | `sound029.wav` | Jeep/tank/overcraft engine **loop**, high-pitch variant — the ground-vehicle equivalent of channel 16; defensively `StopSound`'d at the same dozens of state-transition points as the helicopter loop channels. |
+
+Channels 30/31 (the jeep/tank/overcraft loop's stop one-shot and low-pitch variant, completing the
+28-31 quartet) are documented in the next batch (`DOC-238`).
