@@ -2297,7 +2297,11 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   `Decor::SoundEnviron()` terrain-specific footstep/head-bump remaps, confirmed directly from the
   function body (5 more icon-range pairs, completing 6 of 7 total alongside 78/79 from the previous
   batch); the last pair (90/91) lands in the final batch, `DOC-244`.
-- [ ] DOC-244 — Research and document `SoundChannel` 90-92 (final batch) — real in-game trigger/purpose per channel.
+- [x] DOC-244 — Researched and documented `SoundChannel` 90-92, closing out the 93-channel catalog.
+  Channels 90/91 complete the 7th/last `SoundEnviron()` terrain remap pair (obstacle icons
+  107-109); channel 92 is the `ObjectType96` follower's wake-up sound, confirming the
+  dormant→awake transition documented in `03-objects.md` and correctly silenced while
+  `m_blupiHide` is active.
 - [ ] DOC-245 — Cross-check the completed per-channel catalog against `include/GalaxyEggbert/def/SoundChannel.hpp`'s existing names/comments for consistency; flag and resolve any mismatch.
 - [ ] DOC-246 — Verify all 93 `.wav` files in `../mobile-eggbert/Content/sounds/` are accounted for 1:1 against the 93 documented channels (no gaps, no extras).
 

@@ -1,7 +1,9 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-89 of 93 documented (`DOC-235`-`DOC-243`).** Tracked as `DOC-005` in
-`plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
+**Status: all 93 channels documented (`DOC-235`-`DOC-244`); `DOC-245` (cross-check against
+`SoundChannel.hpp`) and `DOC-246` (verify all 93 `.wav` files accounted for) still open.** Tracked
+as `DOC-005` in `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93
+channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
 the bare numeric enum** (the previous version of this line said "name-only list", which overstated
@@ -190,5 +192,16 @@ below is keyed by the tile-icon range Blupi is standing on/hitting when the rema
 | 89 | `sound089.wav` | Head-bump variant for the same icon range as channel 88. |
 
 This completes 6 of the 7 terrain-remap pairs (78/79 plus these 5); the 7th pair (90/91, obstacle
-icons 107-109) is documented in the final sound batch (`DOC-244`), which also closes out the
-93-channel catalog.
+icons 107-109) is documented below (`DOC-244`), which also closes out the 93-channel catalog.
+
+## Channels 90-92 (final batch)
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 90 | `sound090.wav` | `SoundEnviron()` **landing** variant for obstacle icons 107-109 — the 7th and last terrain-specific footstep remap pair. |
+| 91 | `sound091.wav` | `SoundEnviron()` **head-bump** variant for the same icon range as channel 90. |
+| 92 | `sound092.wav` | **Follower enemy wake-up** sound — plays when a dormant `ObjectType96` follower (documented in `03-objects.md`) detects Blupi within 100px and transitions to its awake/chasing state (`ObjectType97`). Silenced while `m_blupiHide` is active (a hidden Blupi doesn't wake followers). |
+
+This closes the 93-channel `SoundChannel` catalog (`DOC-235`-`DOC-244`). Remaining sound work:
+`DOC-245` (cross-check this catalog against `SoundChannel.hpp`) and `DOC-246` (verify all 93
+`.wav` files are accounted for 1:1, no gaps/extras).
