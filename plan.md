@@ -1595,7 +1595,12 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   clean pulse (47.8→84.0→112.1→130.1→141.9→…→47.8→**0, 0**) matching the source icons' real alpha
   progression (46.5→79.6→…→137.4→…→46.5) with the two invisible frames correctly landing at exactly
   0 — no ghosting, no bleed on any of the 6 distinct sheet positions used.
-- [ ] DOC-108 — Regenerate + verify `tile-anim-marine.gif` (animated tile: Marine).
+- [x] DOC-108 — Regenerated + verified `tile-anim-marine.gif` (animated tile: Marine). Frames are
+  the 11 real `kAnimMarine` icons (`GETerrainRenderer.cpp`: `{203,204,205,206,207,208,207,206,205,
+  204,203}` — a seaweed/plant sway), cropped with the corrected pixel math and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
+  (63.1→61.1→59.5→58.6→58.3→59.5→58.3→58.6→59.5→61.1→63.1) matching the real per-icon values
+  (53.4→52.8→50.9→49.9→50.1→51.9→50.1→49.9→50.9→52.8→53.4) — no ghosting, no bleed.
 - [ ] DOC-109 — Regenerate + verify `tile-anim-fanleft.gif` (animated tile: FanLeft).
 - [ ] DOC-110 — Regenerate + verify `tile-anim-fanright.gif` (animated tile: FanRight).
 - [ ] DOC-111 — Regenerate + verify `tile-anim-fanup.gif` (animated tile: FanUp).
