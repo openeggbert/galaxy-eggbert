@@ -1394,7 +1394,9 @@ current progress, not just this list.
   `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
   of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
   check or a scripted crop-and-compare against the correct sheet) before considering it done.
-- [ ] DOC-004 — **Reopened a second time, 2026-07-03 (GIF ghosting bug, see §16.1/§16.2).** The user
+- [x] DOC-004 — **Reopened a second time, 2026-07-03 (GIF ghosting bug, see §16.1/§16.2), re-closed
+  2026-07-04.** All 129 animated GIFs (`DOC-101`–`DOC-229`) regenerated and verified with the fixed
+  `make-gif.sh` (`-dispose Background` + binary-alpha threshold). History below kept as-is. The user
   found by visual inspection that the GIFs themselves are corrupted: each frame accumulates the
   previous frame's opaque pixels instead of clearing (e.g. frame 2 shows frame 1 ghosted into its
   background). Confirmed via alpha-channel analysis on coalesced frames: `blupi-action-02-march.gif`
@@ -1468,14 +1470,13 @@ current progress, not just this list.
   image references across `mobile-eggbert-reference/` resolve to real files (zero orphans/broken
   links), all 19 new GIFs' frame counts checked with `identify` against the source table lengths
   (all exact matches).
-- [ ] DOC-005 — Complete sound catalog. Currently a pointer only (`07-sounds.md`). List all 93
-  `SoundChannel` entries with their actual in-game trigger/purpose (several are already known
-  incidentally — e.g. channel 33 = door opening, per `06-doors.md` — collect these plus grep
-  `Decor.cpp` for the rest).
-- [ ] DOC-006 — Complete backgrounds catalog. Currently 3 of 38 background images thumbnailed
-  (`05-backgrounds.md`), and the `region=` → filename selection code was not located. Find that
-  mapping code (likely in higher-level UI/game-state code, not `Decor.cpp` itself — search for
-  `PixmapChannel::Background` load sites), document it, and thumbnail the remaining 35 backgrounds.
+- [x] DOC-005 — Complete sound catalog. **Done 2026-07-04** via `DOC-235`–`DOC-246` (§16.4): all 93
+  `SoundChannel` entries documented with their real in-game trigger in `07-sounds.md`, cross-checked
+  against `SoundChannel.hpp`, all 93 `.wav` files verified accounted for.
+- [x] DOC-006 — Complete backgrounds catalog. **Done 2026-07-04** via `DOC-247`–`DOC-257` (§16.5):
+  the `region=` → filename mapping found (direct formula in `Decor::LoadImages()`, no lookup table)
+  and verified against all 78 levels, all 28 level backgrounds thumbnailed, all 10 non-level
+  UI-screen backgrounds documented.
 
 ## 16. Documentation rework (2026-07-03) — GIF ghosting bug + full completeness audit
 
@@ -2352,7 +2353,15 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
 
 ### 16.6 Markdown file completeness re-review (one real read-through per file)
 
-- [ ] DOC-258 — Full read-through of `00-overview.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-258 — Full read-through of `00-overview.md`. No image references in this file (nothing to
+  check for broken links). Found and fixed a large stale block: the "Status" section still
+  described the 2026-07-03 pre-rework state (partial coverage, DOC-005/006 "pending") and the file
+  table still said `05-backgrounds.md` was "Partial... unresolved" and `07-sounds.md` was "Not yet
+  expanded" — both now complete. Rewrote the status section and file table to reflect current
+  reality, and added a clear callout for `DOC-007` (the one real engine bug still open, not a doc
+  task). Also found `plan.md`'s own top-level `DOC-004`/`DOC-005`/`DOC-006` entries (§15) were still
+  marked `[ ]` even though their real completion happened via `DOC-100`-`DOC-229`/`DOC-235`-`DOC-246`/
+  `DOC-247`-`DOC-257` — marked all three `[x]` with a pointer to where the real work landed.
 - [ ] DOC-259 — Full read-through of `01-world-file-format.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-260 — Full read-through of `02-tiles.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-261 — Full read-through of `03-objects.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.

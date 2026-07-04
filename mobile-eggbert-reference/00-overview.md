@@ -17,28 +17,32 @@ already-approved partial ports (`include/GalaxyEggbert/BlockTypes.hpp`,
 `include/GalaxyEggbert/def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`,
 `src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp`).
 
-## Status: partially complete, in progress
+## Status: complete for cataloging; one real engine bug (`DOC-007`) still open
 
-The first pass (2026-07-03) covered a **representative sample**, not the full space — 29 of
-roughly 441 addressable tile icons, 18 of 204 `ObjectType`s, 31 of an unknown-but-larger total
-animation count. The user flagged this as insufficient: the goal is **complete** coverage of every
-tile icon, every `ObjectType`, and every animation mobile-eggbert has, built up incrementally.
-Tracked as `DOC-001`..`DOC-006` in `plan.md` §15 ("Documentation — mobile-eggbert 2D reference,
-complete"). Each file below notes its own completeness status at the top.
+The first pass (2026-07-03) covered a representative sample; the user flagged this as insufficient
+and the goal became **complete** coverage of every tile icon, every `ObjectType`, every animation,
+every sound channel, and every background — built up incrementally, one small task at a time.
+Tracked as `DOC-001`-`DOC-006` in `plan.md` §15, then `DOC-100`-`DOC-267` in §16 after a second
+audit (2026-07-03/04) found the GIFs themselves had a real ghosting bug and several sprite crops had
+a real 1px-grid-offset bug. **All of `DOC-001`-`DOC-006` are now done** — see each file's own
+status note below for specifics. Each file notes its own completeness status at the top; this
+section only summarizes.
 
-**Progress:** `DOC-001` (file split), `DOC-002` (complete tile catalog, all 441 icons), `DOC-003`
-(complete `ObjectType` classification, all 204 IDs), and `DOC-004` (complete animation catalog,
-including all 87 real `BlupiAction` states) done 2026-07-03. `DOC-003` surfaced a real rendering bug
-(wrong sprite-sheet channel assumed for 5 `ObjectType`s in `GEDecorSystem.cpp`) — see
-`03-objects.md`'s bug callout, tracked as `DOC-007`, not yet fixed. `DOC-004` surfaced a second real
-finding (not a bug fix, a documentation correction): object animations have no confirmed frame rate
-— see `08-animations.md`'s correction note. `DOC-004` was briefly marked done, then **correctly
-reopened by the user**, who caught that its Blupi section only covered galaxy-eggbert's own
-8-state partial port instead of mobile-eggbert's real 87-state `BlupiAction` enum — now fixed by
-parsing `Tables::table_blupi` directly; see `08-animations.md` §2 for the full account. **Still
-outstanding, not yet started**: the 40 `ObjectType` icon crops the user asked for in `03-objects.md`
-Category B (real behavior, never placed in a shipped level) — approved but not yet executed as of
-this pass. `DOC-005`/`DOC-006` (sounds, backgrounds) still pending too.
+**What's still open:** `DOC-007` — a real, unfixed engine bug in `GalaxyEggbertSimple3D`'s
+`GEDecorSystem.cpp`: it hardcodes `element.png` for every `ObjectType`, but real level data shows
+types `1`/`12` need `object-m.png` and types `32`/`33` (`blupih`/`blupit`) need `blupi1.png` (type
+`47`'s equivalent bug was fixed separately as `S3D-4`, Chenille — see `plan.md` §13 — but `1`/`12`/
+`32`/`33` are not). This is a code fix, not a documentation task, and is out of scope for this
+reference tree.
+
+**Two real engine bugs were found and fixed during the `DOC-100`-`DOC-267` audit** (not just
+documentation corrections — see `plan.md` §13 "Simple3D Migration Milestones" for full detail):
+`S3D-2` (`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`; the real sheet has a 1px
+gap *and* a 1px leading margin, confirmed by the sheet's exact pixel dimensions) and `S3D-4`
+(`ObjectType47`/Chenille's real sprite sheet is `object-m.png`, not `element.png`, and its icon
+values were out of bounds for `element.png`). `S3D-2`'s fix meant every crop sourced from
+`object-m.png` across this whole reference tree needed regenerating with the corrected formula —
+tracked file-by-file in `plan.md` §16.3 (`DOC-230`-`DOC-234`).
 
 ## Files in this reference
 
@@ -46,13 +50,13 @@ this pass. `DOC-005`/`DOC-006` (sounds, backgrounds) still pending too.
 |---|---|---|
 | `00-overview.md` | This file — scope, index, status | — |
 | `01-world-file-format.md` | The `.txt` level file format (header, `Decor:`, `BigDecor:`, `MoveObject:`) | Believed complete — all sections of the format have been identified |
-| `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete** — all 441 addressable icons accounted for (`DOC-002`, done 2026-07-03) |
-| `03-objects.md` | Every `ObjectType` (204 IDs) | **Complete for classification** (`DOC-003`, done 2026-07-03) — 29 real+used, 41 real+unused-in-shipped-levels, 1 ambiguous, 133 vestigial; 30 of 204 have a cropped icon |
+| `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete** — all 441 addressable icons accounted for (`DOC-002`); all 313 full crops regenerated with the corrected grid formula after the `S3D-2` bug was found (`DOC-230`) |
+| `03-objects.md` | Every `ObjectType` (204 IDs) | **Complete for classification** (`DOC-003`) — 29 real+used, 41 real+unused-in-shipped-levels, 1 ambiguous, 133 vestigial; all 67 cropped icons re-verified, 7 regenerated for the `S3D-2` grid bug (`DOC-231`) |
 | `04-enemy-behavior.md` | The enemy/object movement & collision model | Architectural overview only, not per-type exhaustive |
-| `05-backgrounds.md` | Background/sky region images | Partial — 3 of 38 backgrounds shown; `region=` mapping unresolved (`DOC-006`) |
-| `06-doors.md` | Door tile behavior (2D) | Believed complete for the 2D behavior itself |
-| `07-sounds.md` | The 93 sound channels | Not yet expanded — pointer only (`DOC-005`) |
-| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete** — 155 sequences documented: 12 tiles, all 87 real `BlupiAction` states (84 with a real animation, 3 confirmed no-record), 23 objects, 8 explosions, 1 door slide (`DOC-004`, done 2026-07-03, reopened once and fixed same day) |
+| `05-backgrounds.md` | Background/sky region images | **Complete** — `region=` → filename mapping found and verified against all 78 levels, all 28 level backgrounds thumbnailed, all 10 non-level UI-screen backgrounds documented (`DOC-006`/`DOC-247`-`DOC-257`) |
+| `06-doors.md` | Door tile behavior (2D) | Believed complete for the 2D behavior itself; all 3 door icon crops regenerated for the `S3D-2` grid bug (`DOC-234`) |
+| `07-sounds.md` | The 93 sound channels | **Complete** — all 93 channels documented with their real in-game trigger, cross-checked against `SoundChannel.hpp`, all 93 `.wav` files verified accounted for (`DOC-005`/`DOC-235`-`DOC-246`) |
+| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete** — 155 sequences documented (12 tiles, all 87 real `BlupiAction` states, 23 objects, 8 explosions, 1 door slide); all 129 animated GIFs regenerated after a ghosting/translucency bug in the GIF-assembly tooling was found and fixed (`DOC-004`/`DOC-100`-`DOC-229`) |
 | `09-open-questions.md` | Open questions for the eventual 3D mapping design | Living list, updated as facts are found |
 
 ## How images were generated
