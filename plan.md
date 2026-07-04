@@ -2056,7 +2056,10 @@ all need regeneration.
   frames (icons 66,67,68,67,66,69,70,69, `kBlupihLeft`), `element.png`, cropped and assembled with
   `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
   source crops — no ghosting.
-- [ ] DOC-211 — Regenerate + verify `object-anim-type33-blupit.gif`.
+- [x] DOC-211 — Regenerated + verified `object-anim-type33-blupit.gif` (`ObjectType33`). 8 real
+  frames (icons 249,249,250,250,249,249,248,248, `kBlupit`), `element.png`, cropped and assembled
+  with `make-gif.sh` at delay 100. **Verified**: coalesced-frame alpha-mean is a clean paired
+  pattern matching the source crops — no ghosting.
 - [ ] DOC-212 — Regenerate + verify `object-anim-type40-mirrorinvert.gif`.
 - [ ] DOC-213 — Regenerate + verify `object-anim-type44-wasp.gif`.
 - [ ] DOC-214 — Regenerate + verify `object-anim-type47-chenille.gif`.
