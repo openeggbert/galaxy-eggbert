@@ -2128,7 +2128,18 @@ all need regeneration.
 
 Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need regeneration.
 
-- [ ] DOC-221 — Regenerate + verify `explosion-anim-explo1.gif` (`table_explo1`, real per-icon size from `table_explo_size`).
+- [x] DOC-221 — Regenerated + verified `explosion-anim-explo1.gif` (`GEExploSystem::kTable`, ported
+  from mobile-eggbert's `table_explo1`). **This is the second GIF that originally confirmed the
+  `DOC-100` ghosting bug report** (logged "9.3→...→161.9, plateaus"). 39 real frames (icons 0-11,
+  first of 8 explosion animations), **uses `explo.png`** (1440×1440px, 144px cells, 10 cols, no
+  gap — confirmed from mobile-eggbert's own `Pixmap.cpp`, `PixmapChannel::Explosion`: `srcGap=0`),
+  cropped and assembled with `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). Note:
+  galaxy-eggbert's already-shipped `GEExploSystem` uses a fixed 144×144 cell for every frame
+  (`kCellPx`), not mobile-eggbert's real per-frame varying size from `table_explo_size` — an
+  already-approved simplification, not something this task changes. **Verified**: coalesced-frame
+  alpha-mean is now a real fluctuating pattern (10.1→147.2→147.2→104.6→25.1) instead of a
+  monotonic climb-then-plateau — confirms `DOC-100`'s fix resolves this exact originally-reported
+  case too.
 - [ ] DOC-222 — Regenerate + verify `explosion-anim-explo2.gif` (`table_explo2`, real per-icon size from `table_explo_size`).
 - [ ] DOC-223 — Regenerate + verify `explosion-anim-explo3.gif` (`table_explo3`, real per-icon size from `table_explo_size`).
 - [ ] DOC-224 — Regenerate + verify `explosion-anim-explo4.gif` (`table_explo4`, real per-icon size from `table_explo_size`).
