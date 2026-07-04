@@ -2335,7 +2335,8 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   Pixel-exact against a fresh resize.
 - [x] DOC-252 — Thumbnailed + verified `decor012`, `013`, `015` (skipped missing id `014`).
   Pixel-exact against a fresh resize; `decor015` is genuinely grayscale, not a bug.
-- [ ] DOC-253 — Thumbnail + verify background images `decor016`-`decor019` (skip any confirmed-missing IDs in that range).
+- [x] DOC-253 — Thumbnailed + verified `decor016`, `018`, `019` (skipped missing id `017`).
+  Pixel-exact against a fresh resize.
 - [ ] DOC-254 — Thumbnail + verify background images `decor020`-`decor023` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-255 — Thumbnail + verify background images `decor024`-`decor027` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-256 — Thumbnail + verify background images `decor028`-`decor031` (skip any confirmed-missing IDs in that range).
