@@ -1655,7 +1655,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (86.3/86.3/87.1/87.1/
   86.1/86.1) exactly matches the paired-icon pattern of the source crops (79.7/79.7/78.6/78.6/
   79.3/79.3) — no accumulation.
-- [ ] DOC-116 — Regenerate + verify `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4).
+- [x] DOC-116 — Regenerated + verified `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4). 3 real
+  frames (icons 17,18,19), cropped from `blupi.png` and assembled with `make-gif.sh`.
+  **Verified**: coalesced-frame alpha-mean (76.8/79.6/80.1) tracks the source crops
+  (72.0/74.5/75.1) closely — no ghosting.
 - [ ] DOC-117 — Regenerate + verify `blupi-action-05-air.gif` (`BlupiAction::Air`=5).
 - [ ] DOC-118 — Regenerate + verify `blupi-action-06-down.gif` (`BlupiAction::Down`=6).
 - [ ] DOC-119 — Regenerate + verify `blupi-action-07-up.gif` (`BlupiAction::Up`=7).
