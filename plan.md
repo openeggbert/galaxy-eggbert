@@ -2247,7 +2247,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   `Decor::VoyageStep()`. Also corrected `07-sounds.md`'s inaccurate claim that
   `SoundChannel.hpp` has a "name-only list" — it has no names/comments at all, just the bare
   numeric enum.
-- [ ] DOC-236 — Research and document `SoundChannel` 10-19 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-236 — Researched and documented `SoundChannel` 10-19 in `07-sounds.md`. Real findings:
+  channel 10 is a small explosion/kill-impact sound, special-cased in `Sound::PlayImage` to be the
+  one channel allowed to overlap itself; channels 15-18 are the helicopter engine's
+  start/loop-high/stop/loop-low quartet (jeep/tank/overcraft's equivalent quartet is 28-31, a later
+  batch); channels 13/14 are the goal-reached "not enough treasure"/"win" pair; channel 19 is a
+  special upgrade of channel 11's treasure fanfare for the last treasure specifically.
 - [ ] DOC-237 — Research and document `SoundChannel` 20-29 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-238 — Research and document `SoundChannel` 30-39 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-239 — Research and document `SoundChannel` 40-49 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.

@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-9 of 93 documented (`DOC-235`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-19 of 93 documented (`DOC-235`, `DOC-236`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -34,3 +34,22 @@ batch (channels 78-91) with a cross-reference back here.
 
 Channel 2 being provably unused is a real finding, not a gap in this pass — same pattern as the
 unused `ObjectType`s and tile icons found elsewhere in this rework.
+
+## Channels 10-19
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 10 | `sound010.wav` | **Small explosion/kill-impact** sound — plays whenever an enemy (bird/wasp/creature/`blupih`/`blupit`) is destroyed (converted to `ObjectType8`, the primary explosion) and whenever a ridden vehicle (helicopter/jeep/tank/skateboard) is destroyed by a spring/bounce hazard (`IsRessort`). **Special-cased in `Sound::PlayImage`**: it is the one channel excluded from the "don't restart if already playing" dedup check, so it can overlap with itself (needed since multiple kills/impacts can happen in quick succession). |
+| 11 | `sound011.wav` | Generic **treasure/key pickup fanfare** — plays at the end of the collectible "voyage" arc for treasure (`ObjectType5`) and all 3 keys (`Decor::VoyageStep`/`VoyageInit`), and by the `AllTreasure` cheat. Superseded by channel 19 for the *last* treasure specifically. |
+| 12 | `sound012.wav` | Secret-level-exit collectible found chime — plays when picking up the `ObjectType21` marker (distinct from actually reaching the goal tile, which is channels 13/14). |
+| 13 | `sound013.wav` | "Not enough treasure yet" rejection sound — plays when Blupi reaches the level-exit goal (`ObjectType7`/`21`) but `m_nbTresor < m_totalTresor`. Real logic confirmed at both the actual goal-touch site and the `EndGoal` cheat path. |
+| 14 | `sound014.wav` | **Level-complete/Win fanfare** — plays when Blupi reaches the goal tile with all treasure already collected (`BlupiAction::Win`). Also stops all 4 vehicle-motor-loop channels (16/18/29/31) first, since winning ends any ride. |
+| 15 | `sound015.wav` | Helicopter engine **start** one-shot (`AdaptMotorVehicleSound`, played once when transitioning from no motor to the helicopter loop). |
+| 16 | `sound016.wav` | Helicopter engine **loop**, high-pitch variant (`m_blupiMotorHigh`) — looped via `PlayImage(..., bLoop=true)`; defensively `StopSound`'d at dozens of state-transition points (death, mode switch, level end) to guarantee it never keeps looping past its vehicle's lifetime. |
+| 17 | `sound017.wav` | Helicopter engine **stop** one-shot (played once when transitioning from the helicopter loop back to no motor). |
+| 18 | `sound018.wav` | Helicopter engine **loop**, low-pitch variant — the other half of channel 16's high/low pair, same loop/stop pattern. |
+| 19 | `sound019.wav` | **Final-treasure** pickup fanfare — upgrades channel 11 specifically when `m_nbTresor == m_totalTresor - 1` at pickup time (i.e. this is the treasure that completes the set). |
+
+Channels 15-18 are the helicopter half of a motor-sound quartet; the jeep/tank/overcraft half
+(channels 28-31) is documented in the next batch (`DOC-237`) since it follows the identical
+start/loop-high/stop/loop-low pattern one batch later in the numbering.

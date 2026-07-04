@@ -320,14 +320,15 @@ frames and 3 background thumbnails were confirmed already pixel-correct (neither
 `object-m.png`'s buggy grid) — no changes needed there. This closes out all of the
 sprite-crop-adjacent static-icon re-verification work.
 
-**`DOC-005` (sound catalog) started (2026-07-04):** `DOC-235` documented channels 0-9 in
-`07-sounds.md` — real findings include channel 0 being a reserved "no sound" sentinel, channel 2
-being provably unused (zero references anywhere), and channels 3/4 doing double duty as
-generic footstep/head-bump sounds (remapped per-terrain via `SoundEnviron()`) plus channel 3 also
-serving as a generic pickup-confirmation chime.
+**`DOC-005` (sound catalog) in progress (2026-07-04):** `DOC-235`/`DOC-236` documented channels 0-19
+in `07-sounds.md` — real findings include channel 0 being a reserved "no sound" sentinel, channel 2
+being provably unused (zero references anywhere), channels 3/4 doing double duty as generic
+footstep/head-bump sounds (remapped per-terrain via `SoundEnviron()`) plus channel 3 also serving as
+a generic pickup-confirmation chime, channel 10 being special-cased to allow overlapping plays, and
+channels 15-18 being the helicopter engine's start/loop-high/stop/loop-low quartet.
 
 **Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.4 onward,
-`DOC-236`-`DOC-267`): the remaining 9 sound-channel batches (10-92), the sound/`SoundChannel.hpp`
+`DOC-237`-`DOC-267`): the remaining 8 sound-channel batches (20-92), the sound/`SoundChannel.hpp`
 cross-check and `.wav`-file accounting, `DOC-006` (background catalog, never started), and a final
 markdown read-through pass.
 
@@ -524,10 +525,10 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `DOC-230` through `DOC-234` are also done: all 313 `tile-full-*` crops, 7 of the 67
    `object-type*` icons, and the 3 door crops had the same pre-`S3D-2`-fix leading-margin bug and
    were regenerated; the Blupi representative frames and background thumbnails were confirmed
-   already correct. `DOC-235` (sound channels 0-9) is also done. Next: `DOC-236`, channels 10-19,
-   continuing the `DOC-005` 93-channel sound catalog, then `DOC-006` background catalog, then a
-   final markdown read-through. Read-only research against `../mobile-eggbert` plus local image/GIF
-   tooling work.
+   already correct. `DOC-235`/`DOC-236` (sound channels 0-19) are also done. Next: `DOC-237`,
+   channels 20-29, continuing the `DOC-005` 93-channel sound catalog, then `DOC-006` background
+   catalog, then a final markdown read-through. Read-only research against `../mobile-eggbert` plus
+   local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
