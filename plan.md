@@ -2162,7 +2162,11 @@ Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need 
   alternating with `-1`, "strobing fragments" per the source comment), `explo.png`, cropped and
   assembled with `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean correctly
   alternates real-content/exactly-0 — no ghosting.
-- [ ] DOC-226 — Regenerate + verify `explosion-anim-explo6.gif` (`table_explo6`, real per-icon size from `table_explo_size`).
+- [x] DOC-226 — Regenerated + verified `explosion-anim-explo6.gif` (mobile-eggbert's
+  `table_explo6`, read live, not yet ported into galaxy-eggbert). 6 real frames (icons 54-59,
+  same icon set as `explo5` without the strobe blanks, "dense burst" per the source comment),
+  `explo.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
+  coalesced-frame alpha-mean matches `explo5`'s non-blank values exactly — no ghosting.
 - [ ] DOC-227 — Regenerate + verify `explosion-anim-explo7.gif` (`table_explo7`, real per-icon size from `table_explo_size`).
 - [ ] DOC-228 — Regenerate + verify `explosion-anim-explo8.gif` (`table_explo8`, real per-icon size from `table_explo_size`).
 
