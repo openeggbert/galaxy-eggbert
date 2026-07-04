@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-59 of 93 documented (`DOC-235`-`DOC-240`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-69 of 93 documented (`DOC-235`-`DOC-241`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -124,7 +124,7 @@ respective power-ups.
 | 54 | `sound054.wav` | **Bullet-pack pickup** fanfare — plays at the end of the `ObjectType29` (bullet pack, icon 177) collectible "voyage" arc, refilling `m_blupiBullet`. |
 | 55 | `sound055.wav` | Charge/Cloud action **complete** sound — plays when the `BlupiAction::Charge` animation finishes and `m_blupiCloud` becomes true (the buff is now actually active); pairs with channel 58 (pickup start). |
 | 56 | `sound056.wav` | Cloud (Charge) **about-to-expire** warning — plays once when `m_blupiTimeShield` reaches 25 while `m_blupiCloud` is active; the third member of the expiry-warning family alongside channels 43 (shield) and 45 (power). |
-| 57 | `sound057.wav` | **Drink power-up** (`ObjectType30`) pickup **start** sound — plays when the action button is pressed on the pickup, before the `Drink` animation completes into the `Hide` buff (channel 62, a later batch — not `Power`; `Drink` and `Sucette` grant two different buffs). |
+| 57 | `sound057.wav` | **Drink power-up** (`ObjectType30`) pickup **start** sound — plays when the action button is pressed on the pickup, before the `Drink` animation completes into the `Hide` buff (channel 62, below — not `Power`; `Drink` and `Sucette` grant two different buffs). |
 | 58 | `sound058.wav` | **Charge/Cloud power-up** (`ObjectType31`) pickup **start** sound — the real trigger for picking up this item (corrects the earlier mis-attribution of this event to channel 40, above). |
 | 59 | `sound059.wav` | Effect sound for an in-flight object destroyed by an electric hazard (`BlupiElectro`, spawns `ObjectType38`). |
 
@@ -133,3 +133,21 @@ the three "drink-like" power-up items (`Sucette`/suction-cup, `Drink`, `Charge`/
 when first grabbed and a second, different sound when its buff actually activates a short animation
 later. This is the same start/complete pattern as the vehicle motor quartets, just for buffs instead
 of engines.
+
+## Channels 60-69
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 60 | `sound060.wav` | Generic pickup-**start** chime for the dynamite (`ObjectType55`, icon 252) and character/persona (icon 108, `Button` channel) "voyage" pickups, plus the `Bombs` cheat. Parallels channel 11's role for treasure/keys, but for these two items specifically. |
+| 61 | `sound061.wav` | Blupi **skin/persona swap** sound — plays when the action button spawns an `ObjectType200` (Blupi skin variant) and `m_blupiPerso` is decremented (spending a persona point to change skin). |
+| 62 | `sound062.wav` | `Drink` buff-**complete** sound — plays when the `Drink` animation finishes and `m_blupiHide` becomes true (the actual buff activates); pairs with channel 57 (pickup start). |
+| 63 | `sound063.wav` | `Hide` (Drink buff) **about-to-expire** warning — plays once when `m_blupiTimeShield` reaches 20 while `m_blupiHide` is active; the fourth and last member of the expiry-warning family alongside channels 43 (shield), 45 (power), and 56 (cloud). |
+| 64 | `sound064.wav` | "Tiplouf" small-splash sound — plays in `Decor::MoveObjectTiplouf()` when spawning `ObjectType35` (documented in `03-objects.md`), the smaller counterpart to channel 23's "plouf". |
+| 65 | `sound065.wav` | Idle taunt sound for the `Mockery`/`Mockeryi` idle-animation variants (part of the same "bored idle" family as channels 46-49, cross-referenced there). |
+| 66 | `sound066.wav` | **Mirror/invert power-up** (`ObjectType40`) pickup activation sound — plays when picked up, spawning 4 `ObjectType41` burst sprites (same burst pattern as the squash-effect end, channel 41). |
+| 67 | `sound067.wav` | Mirror/invert buff **expiry** burst sound — plays when `m_blupiInvert` wears off (`m_blupiTimeShield` reaches 0), spawning 3 `ObjectType42` sprites in a spread pattern. Unlike channels 43/45/56/63, this buff has no separate "about to expire" warning stage — just a direct end-of-buff pop. |
+| 68 | `sound068.wav` | **Unused.** Zero references anywhere in `Decor.cpp`/`Tables.cpp`/`InputPad.cpp`/`Sound.cpp` — confirmed by grep, the second such gap after channel 2. |
+| 69 | `sound069.wav` | Electric **"Blitz" zap** ambient sound — plays in `Decor::BlitzActif()` on specific ticks of a 100-tick lightning-flicker cycle, synced to the visible strikes near a blitz-emitter tile (icon 304). |
+
+Channel 68 being provably unused (like channel 2) reinforces that not every reserved `.wav` file in
+the sheet actually gets played — worth keeping in mind for `DOC-246`'s full 93-channel accounting.

@@ -2282,7 +2282,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   57/62, 58/55 are three matching pickup-start/buff-complete sound pairs for the "drink-like"
   power-ups (Sucette, Drink, Charge), mirroring the vehicle-motor start/loop pattern for buffs
   instead of engines.
-- [ ] DOC-241 — Research and document `SoundChannel` 60-69 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-241 — Researched and documented `SoundChannel` 60-69 in `07-sounds.md`. Real finds:
+  channel 68 is provably unused (zero references, the second such gap after channel 2); channel 63
+  completes the 4-member "about to expire" warning family (43/45/56/63, one per buff type); channel
+  67 (mirror/invert expiry) has no matching warning stage, just a direct pop, unlike the other 3
+  buffs. Also confirms channel 61 as a Blupi skin/persona-swap sound and channel 69 as an ambient
+  lightning-zap cue synced to a 100-tick flicker cycle.
 - [ ] DOC-242 — Research and document `SoundChannel` 70-79 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-243 — Research and document `SoundChannel` 80-89 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-244 — Research and document `SoundChannel` 90-92 (final batch) — real in-game trigger/purpose per channel.
