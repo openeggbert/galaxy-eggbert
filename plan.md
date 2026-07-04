@@ -1692,7 +1692,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   `Electro` use `element.png`), cropped and assembled with `make-gif.sh`. **Verified**:
   coalesced-frame alpha-mean spot-checked across the cycle (77.3→77.3→69.6→21.4→37.4→40.9→40.9) is
   a real decreasing-then-settling dissipation pattern, not a ghosting climb-then-plateau — no bug.
-- [ ] DOC-124 — Regenerate + verify `blupi-action-13-win.gif` (`BlupiAction::Win`=13).
+- [x] DOC-124 — Regenerated + verified `blupi-action-13-win.gif` (`BlupiAction::Win`=13). 6 real
+  frames (icons 41,41,42,42,43,43), cropped from `blupi.png` and assembled with `make-gif.sh`.
+  **Verified**: coalesced-frame alpha-mean (84.6/84.6/86.4/86.4/87.6/87.6) matches the source
+  crops' paired pattern with a gentle real trend, not a ghosting climb — no bug.
 - [ ] DOC-125 — Regenerate + verify `blupi-action-14-push.gif` (`BlupiAction::Push`=14).
 - [ ] DOC-126 — Regenerate + verify `blupi-action-15-stophelico.gif` (`BlupiAction::StopHelico`=15).
 - [ ] DOC-127 — Regenerate + verify `blupi-action-16-marchhelico.gif` (`BlupiAction::MarchHelico`=16).
