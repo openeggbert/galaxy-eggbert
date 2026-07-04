@@ -1543,7 +1543,13 @@ defensively with the fixed tooling and re-verify rather than assuming these are 
   matching the real per-icon values 108.9→98.6→89.3→78.8→70.3→60.7→52.0) — this is a genuine
   content decrease (piston retracting, more transparent background revealed each frame), distinct
   in shape from the ghosting bug's spurious monotonic *increase*-then-plateau.
-- [ ] DOC-104 — Regenerate + verify `tile-anim-saw.gif` (animated tile: Saw).
+- [x] DOC-104 — Regenerated + verified `tile-anim-saw.gif` (animated tile: Saw). Frames are the 6
+  real `kAnimSaw` icons (`GETerrainRenderer.cpp`: `{378,379,380,381,382,383}` — a rotating blade),
+  cropped with the corrected `1+col*65,1+row*65` pixel math (`S3D-2`) and assembled with
+  `make-gif.sh`. Another row-wrap edge case (icon 379 col 19 row 18 → icon 380 col 0 row 19), row
+  19 of 22 — all clean. **Verified**: coalesced-frame alpha-mean (75.8/74.9/74.8/75.4/74.6/75.1)
+  tracks the source crops (75.75/74.85/74.55/75.33/74.67/74.79) closely, roughly flat as expected
+  for a symmetric rotating shape — no accumulation.
 - [ ] DOC-105 — Regenerate + verify `tile-anim-water1.gif` (animated tile: Water1).
 - [ ] DOC-106 — Regenerate + verify `tile-anim-water2.gif` (animated tile: Water2).
 - [ ] DOC-107 — Regenerate + verify `tile-anim-temp.gif` (animated tile: Temp).

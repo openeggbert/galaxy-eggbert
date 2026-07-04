@@ -267,10 +267,10 @@ invocation, so the same mistake can't silently recur across 129 regenerations).
 
 **`DOC-101` (`tile-anim-lava.gif`) is also done** — regenerated with the fixed tool, and along the
 way turned up + fixed the real `BlockTypes::tileUV` gap/pitch engine bug (see §3's top entry and
-`plan.md`'s `S3D-2`). `DOC-102` (`tile-anim-spike.gif`, high row indices 17-18 of 22) and `DOC-103`
-(`tile-anim-crusher.gif`, last-column + row-wrap edge cases) are also done — no bleed/seam in
-either. 126 of the 129 GIFs (`DOC-104`–`DOC-229`) are still not regenerated — next is `DOC-104`
-(`tile-anim-saw.gif`).
+`plan.md`'s `S3D-2`). `DOC-102` (`tile-anim-spike.gif`, high row indices 17-18 of 22), `DOC-103`
+(`tile-anim-crusher.gif`, last-column + row-wrap edge cases), and `DOC-104` (`tile-anim-saw.gif`,
+another row-wrap case) are also done — no bleed/seam in any. 125 of the 129 GIFs (`DOC-105`–
+`DOC-229`) are still not regenerated — next is `DOC-105` (`tile-anim-water1.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -312,7 +312,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 126 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root-cause tool fix landed (`DOC-100`); `tile-anim-lava.gif`/`tile-anim-spike.gif`/`tile-anim-crusher.gif` regenerated (`DOC-101`-`DOC-103`); the other 126 (`DOC-104`–`DOC-229`) still need regenerating with the fixed tool. |
+| confirmed, documentation only, tool now fixed | 125 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root-cause tool fix landed (`DOC-100`); `tile-anim-lava.gif`/`tile-anim-spike.gif`/`tile-anim-crusher.gif`/`tile-anim-saw.gif` regenerated (`DOC-101`-`DOC-104`); the other 125 (`DOC-105`–`DOC-229`) still need regenerating with the fixed tool. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
 ## 6. Architecture notes
@@ -459,10 +459,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100` (root-cause fix for the
    GIF ghosting bug) and `DOC-101` (`tile-anim-lava.gif`, which also surfaced and fixed the real
    `BlockTypes::tileUV` gap/pitch engine bug — see §3, `plan.md`'s `S3D-2`), `DOC-102`
-   (`tile-anim-spike.gif`), and `DOC-103` (`tile-anim-crusher.gif`) are done. Next: `DOC-104`,
-   regenerate + verify `tile-anim-saw.gif` with the fixed tool and gap-aware crop coordinates,
-   then continue through `DOC-105`–`DOC-267` (125 more GIF regenerations, then static-icon
-   re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds which were never
+   (`tile-anim-spike.gif`), `DOC-103` (`tile-anim-crusher.gif`), and `DOC-104` (`tile-anim-saw.gif`)
+   are done. Next: `DOC-105`, regenerate + verify `tile-anim-water1.gif` with the fixed tool and
+   gap-aware crop coordinates, then continue through `DOC-106`–`DOC-267` (124 more GIF
+   regenerations, then static-icon re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds
+   which were never
    started). Read-only research against `../mobile-eggbert` plus local image/GIF tooling work —
    the `BlockTypes.hpp`/`GETileAtlas.cpp` engine fix already landed this session; no further
    galaxy-eggbert C++ code changes expected for the remaining GIF-regeneration tasks themselves.
