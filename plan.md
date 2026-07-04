@@ -1783,7 +1783,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
 - [x] DOC-146 — Regenerated + verified `blupi-action-35-hide.gif` (`BlupiAction::Hide`=35). 9 real
   frames (icons 276-284), cropped from `blupi.png` and assembled with `make-gif.sh`.
   **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
-- [ ] DOC-147 — Regenerate + verify `blupi-action-36-jumpaie.gif` (`BlupiAction::JumpAie`=36).
+- [x] DOC-147 — Regenerated + verified `blupi-action-36-jumpaie.gif` (`BlupiAction::JumpAie`=36).
+  32 real frames (icons 135,177-180 mirrored, 135), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across the cycle stays in a
+  tight ~79.2-86.0/255 range — no ghosting.
 - [ ] DOC-148 — Regenerate + verify `blupi-action-37-stopskate.gif` (`BlupiAction::StopSkate`=37).
 - [ ] DOC-149 — Regenerate + verify `blupi-action-38-marchskate.gif` (`BlupiAction::MarchSkate`=38).
 - [ ] DOC-150 — Regenerate + verify `blupi-action-39-turnskate.gif` (`BlupiAction::TurnSkate`=39).
