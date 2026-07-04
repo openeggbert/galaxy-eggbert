@@ -1983,7 +1983,11 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   18 real frames (icons 1,2,41-43,42,41,2,1 each paired), cropped from `blupi.png` and assembled
   with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean symmetric pattern — no
   ghosting.
-- [ ] DOC-196 — Regenerate + verify `blupi-action-87-putdynamite.gif` (`BlupiAction::PutDynamite`=87).
+- [x] DOC-196 — Regenerated + verified `blupi-action-87-putdynamite.gif` (`BlupiAction::PutDynamite`=87,
+  **the last of the 84-Blupi-action batch**). 26 real frames (icons 135,137,230/231 mirrored,137,135),
+  cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
+  alpha-mean stays in a tight range — no ghosting. **All 84 Blupi action GIFs
+  (`DOC-113`-`DOC-196`) are now regenerated and verified.**
 
 Object/pickup/enemy animations (24) — **confirmed ghosting** (spot-checked via `treasure`),
 all need regeneration.
