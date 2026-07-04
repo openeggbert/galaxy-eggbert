@@ -1956,7 +1956,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   Same as `Clear2`/`Clear5`: real data is `frameCount=1`, icon `-1` — a single genuinely-blank
   frame (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for
   tooling consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
-- [ ] DOC-189 — Regenerate + verify `blupi-action-80-clear7.gif` (`BlupiAction::Clear7`=80).
+- [x] DOC-189 — Regenerated + verified `blupi-action-80-clear7.gif` (`BlupiAction::Clear7`=80). Same
+  as `Clear2`/`Clear5`/`Clear6`: `frameCount=1`, icon `-1` — a single genuinely-blank frame
+  (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for tooling
+  consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
 - [ ] DOC-190 — Regenerate + verify `blupi-action-81-clear8.gif` (`BlupiAction::Clear8`=81).
 - [ ] DOC-191 — Regenerate + verify `blupi-action-82-switch.gif` (`BlupiAction::Switch`=82).
 - [ ] DOC-192 — Regenerate + verify `blupi-action-83-mockeryp.gif` (`BlupiAction::Mockeryp`=83).
