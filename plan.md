@@ -2048,7 +2048,10 @@ all need regeneration.
   frames (icons 144-151, `kShield`), `element.png`, cropped and assembled with `make-gif.sh` at
   delay 100. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
   ghosting.
-- [ ] DOC-209 — Regenerate + verify `object-anim-type26-suctioncup.gif`.
+- [x] DOC-209 — Regenerated + verified `object-anim-type26-suctioncup.gif` (`ObjectType26`). 8 real
+  frames (icons 136-143, `kPower`), `element.png`, cropped and assembled with `make-gif.sh` at
+  delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
+  ghosting.
 - [ ] DOC-210 — Regenerate + verify `object-anim-type32-blupih.gif`.
 - [ ] DOC-211 — Regenerate + verify `object-anim-type33-blupit.gif`.
 - [ ] DOC-212 — Regenerate + verify `object-anim-type40-mirrorinvert.gif`.
