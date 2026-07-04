@@ -2315,8 +2315,18 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
 
 ### 16.5 DOC-006 — Complete backgrounds catalog (38 images) + resolve region= mapping
 
-- [ ] DOC-247 — Locate the real `region=` → `decorNNN.png` selection code (search UI/game-state code beyond `Decor.cpp` for `PixmapChannel::Background` load sites) — this is the single most important unresolved fact in this file.
-- [ ] DOC-248 — Once the mapping is found, verify it against every real level file's actual `region=` value (all 78 files) to confirm the mapping is exhaustive and correct.
+- [x] DOC-247 — Found the real mapping code: it's directly in `Decor.cpp`, not hidden in
+  higher-level UI/game-state code as suspected. `Decor::LoadImages()` (~line 245) builds the
+  filename directly as `"decor" + zero-padded-3-digit(m_region)`; `m_region` is read straight from
+  the level file's `region=` field (`Decor.cpp` ~line 11323, `Worlds::GetIntField`). No lookup
+  table, no indirection — `region=N` always means `decorNNN.png`. Also found the 10 non-level
+  UI-screen backgrounds (`init`/`lost`/`pause`/`setup`/`speedyblupi`/`trial`/`wait`/`win` plus the
+  already-known `blupiyoupie`/`gear`) are loaded by literal name from `Game1.cpp`, never through
+  this `region=` path — corrects the earlier doc, which only mentioned 2 of these 10.
+- [x] DOC-248 — Cross-checked the resolved mapping against all 78 real level files: extracted every
+  `region=` value (28 distinct values used) and confirmed every one has a real, existing
+  `decorNNN.png` — zero missing backgrounds are ever referenced. The 4 "missing" ids (005, 014,
+  017, 023) are exactly the ones no level uses.
 - [ ] DOC-249 — Thumbnail + verify background images `decor000`-`decor003` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-250 — Thumbnail + verify background images `decor004`-`decor007` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-251 — Thumbnail + verify background images `decor008`-`decor011` (skip any confirmed-missing IDs in that range).
