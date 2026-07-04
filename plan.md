@@ -2167,7 +2167,13 @@ Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need 
   same icon set as `explo5` without the strobe blanks, "dense burst" per the source comment),
   `explo.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
   coalesced-frame alpha-mean matches `explo5`'s non-blank values exactly — no ghosting.
-- [ ] DOC-227 — Regenerate + verify `explosion-anim-explo7.gif` (`table_explo7`, real per-icon size from `table_explo_size`).
+- [x] DOC-227 — Regenerated + verified `explosion-anim-explo7.gif` (mobile-eggbert's
+  `table_explo7`, read live, not yet ported into galaxy-eggbert). 128 real frames (icons 60-65
+  with many `-1` sentinels including a trailing fade-out run, "large multi-particle scatter" per
+  the source comment), `explo.png`, cropped and assembled with `make-gif.sh` at delay 17.
+  **Verified**: coalesced-frame alpha-mean spot-checked lands at exactly 0 on `-1` frames
+  (including the trailing fade-out) and stays low/consistent on real frames (~2/255, matching a
+  sparse particle-scatter look) — no ghosting.
 - [ ] DOC-228 — Regenerate + verify `explosion-anim-explo8.gif` (`table_explo8`, real per-icon size from `table_explo_size`).
 
 Door (1) — same DOC-004 pass as explosions, assume affected until verified.
