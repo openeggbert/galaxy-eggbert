@@ -1650,7 +1650,11 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean now fluctuates
   (85.9→81.8→83.7→85.4→81.9→83.9) matching the real per-icon values (80.5→76.9→78.7→80.2→76.8→78.5)
   — no monotonic climb, confirming `DOC-100`'s fix resolves the original bug report.
-- [ ] DOC-115 — Regenerate + verify `blupi-action-03-turn.gif` (`BlupiAction::Turn`=3).
+- [x] DOC-115 — Regenerated + verified `blupi-action-03-turn.gif` (`BlupiAction::Turn`=3). 6 real
+  frames (icons `1,1,2,2,3,3`, via `extract-blupi-action.py`), cropped from `blupi.png` and
+  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (86.3/86.3/87.1/87.1/
+  86.1/86.1) exactly matches the paired-icon pattern of the source crops (79.7/79.7/78.6/78.6/
+  79.3/79.3) — no accumulation.
 - [ ] DOC-116 — Regenerate + verify `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4).
 - [ ] DOC-117 — Regenerate + verify `blupi-action-05-air.gif` (`BlupiAction::Air`=5).
 - [ ] DOC-118 — Regenerate + verify `blupi-action-06-down.gif` (`BlupiAction::Down`=6).
