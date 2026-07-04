@@ -24,3 +24,9 @@ Sample thumbnails (resized to 240px wide; 35 of 38 backgrounds still need a thum
 ![decor000](images/bg-decor000.png)
 ![decor001](images/bg-decor001.png)
 ![decor002](images/bg-decor002.png)
+
+**`DOC-233` (2026-07-04):** re-verified all 3 thumbnails. These are plain resizes of the full
+`decorNNN.png` source (640×480 → 240×180, same aspect ratio), not sprite-sheet crops, so they were
+never subject to the `object-m.png` leading-margin bug. Confirmed pixel-exact (`compare -metric
+AE`=0) against a fresh `convert decorNNN.png -resize 240x180`, and confirmed the `bg-decorNNN` ↔
+`decorNNN` numbering correspondence is direct (no off-by-one). No regeneration needed.

@@ -222,3 +222,12 @@ state/animation catalog (see `08-animations.md` for animated GIFs of Blupi's act
 ![Blupi frame 1](images/blupi-icon001.png)
 ![Blupi frame 5](images/blupi-icon005.png)
 ![Blupi frame 10](images/blupi-icon010.png)
+
+**`DOC-232` (2026-07-04):** re-verified these 4 against the now-complete `table_blupi` parse
+(`extract-blupi-action.py`) and the fixed sheet-grid formula. Pixel-exact match (`compare -metric
+AE`=0) against the flat 60×60/10-col grid with no gap — `blupi.png` is 600×2040 (exact multiple of
+60 in both dimensions), so it never had the `object-m.png` leading-margin bug. The 4 frames turned
+out to already be meaningful, not arbitrary: icon 0 is `BlupiAction::Stop`'s frame (`ACTION_STOP`,
+idle), icon 1 is `Turn`'s first frame (`ACTION_TURN`), and icons 5/10 are `March`'s first/last frame
+(`ACTION_MARCH`, a 6-frame walk cycle 5–10) — confirmed by reading `table_blupi` live. No
+regeneration needed.

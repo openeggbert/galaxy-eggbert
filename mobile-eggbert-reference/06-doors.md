@@ -24,6 +24,10 @@ Door icon crops (see `02-tiles.md`'s image-generation note):
 
 ![Door1](images/tile-334-Door1.png) ![Door2](images/tile-335-Door2.png) ![Door3](images/tile-336-Door3.png)
 
+**`DOC-234` (2026-07-04):** re-verified these 3 crops against the corrected `object-m.png` grid
+formula. All 3 had the `DOC-230`/`S3D-2` leading-margin bug (confirmed pixel-exact against the old
+`x=col*65, y=row*65` formula) and were regenerated with the corrected `x=1+col*65, y=1+row*65`.
+
 ## Open question for the 3D mapping (not decided here)
 
 The user wants doors in the 3D target rendered as **billboards with transparency** rather than

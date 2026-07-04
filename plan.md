@@ -2223,9 +2223,18 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   other 60 (`element.png`/`blupi.png`/`blupi1.png`/`explo.png`) confirmed unaffected by direct
   `identify` measurement (600×1740/600×2040/1440×1440 all divide evenly into their tile size, no
   gap or leading margin exists on those sheets).
-- [ ] DOC-232 — Re-verify the 4 `blupi-icon*.png` representative frames (§4.2 of `03-objects.md`) are still accurate now that the full `table_blupi` parse exists — pick more meaningful representative frames if the originals (icons 0/1/5/10) don't actually represent real named states well.
-- [ ] DOC-233 — Re-verify the 3 `bg-decor*.png` background thumbnails render correctly and are the correct real files (not off-by-one in the `decorNNN` numbering).
-- [ ] DOC-234 — Re-verify the 3 door crops (`tile-334/335/336-Door*.png`) are pixel-correct against the current (fixed) tile-grid formula.
+- [x] DOC-232 — Re-verified the 4 `blupi-icon*.png` representative frames against the full
+  `table_blupi` parse (`extract-blupi-action.py`) and the flat `blupi.png` grid (600×2040, exact
+  multiple of 60×60 — no gap/margin, confirmed pixel-exact, AE=0). Turned out to already be
+  meaningful: icon 0 = `BlupiAction::Stop`'s frame, icon 1 = `Turn`'s first frame, icons 5/10 =
+  `March`'s first/last frame (a 6-frame walk cycle 5–10). No regeneration or reselection needed.
+- [x] DOC-233 — Re-verified the 3 `bg-decor*.png` background thumbnails. Plain resizes of the full
+  `decorNNN.png` (640×480 → 240×180), not sprite-sheet crops — never subject to the leading-margin
+  bug. Pixel-exact (AE=0) against a fresh resize; `bg-decorNNN` ↔ `decorNNN` numbering confirmed
+  direct, no off-by-one.
+- [x] DOC-234 — Re-verified the 3 door crops (`tile-334/335/336-Door*.png`). All 3 had the
+  `DOC-230`/`S3D-2` leading-margin bug (confirmed pixel-exact against the old formula) and were
+  regenerated with the corrected `x=1+col*65, y=1+row*65`.
 
 ### 16.4 DOC-005 — Complete sound catalog (93 channels), broken into batches
 

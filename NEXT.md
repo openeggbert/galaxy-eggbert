@@ -314,11 +314,15 @@ crops with the corrected `x=1+col*65, y=1+row*65`. The other 60 object icons
 divide evenly into their tile size, no gap/margin exists. `02-tiles.md`/`03-objects.md` updated to
 match. Full detail in `plan.md` `DOC-230`/`DOC-231`/`DOC-002`/`DOC-003`.
 
+**`DOC-232`/`DOC-233`/`DOC-234` done (2026-07-04):** the door crops (`tile-334/335/336-Door*.png`)
+had the same `object-m.png` leading-margin bug and were regenerated; the 4 Blupi representative
+frames and 3 background thumbnails were confirmed already pixel-correct (neither sources from
+`object-m.png`'s buggy grid) — no changes needed there. This closes out all of the
+sprite-crop-adjacent static-icon re-verification work.
+
 **Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.3 onward,
-`DOC-232`-`DOC-267`): 4 Blupi representative frames, 3 background thumbnails, 3 door crops (door
-crops source from `object-m.png` too — check for the same leading-margin bug), `DOC-005`
-(93-channel sound catalog, never started), `DOC-006` (background catalog, never started), and a
-final markdown read-through pass.
+`DOC-235`-`DOC-267`): `DOC-005` (93-channel sound catalog, never started), `DOC-006` (background
+catalog, never started), and a final markdown read-through pass.
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -510,12 +514,12 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `BlockTypes::tileUV` and `ObjectType47`/Chenille engine bugs found and fixed along the way —
    see §4 for the summary, `plan.md` for full per-task detail — 12 tile animations, 84 Blupi
    actions, 24 object/pickup/enemy animations, 8 explosions, and the door-slide illustration).
-   `DOC-230` and `DOC-231` are also done: all 313 `tile-full-*` crops plus 7 of the 67
-   `object-type*` icons had the same pre-`S3D-2`-fix leading-margin bug and were regenerated. Next:
-   `DOC-232`, the Blupi/background/door spot-checks (§16.3), followed by `DOC-235`–`DOC-267` (the
-   never-started `DOC-005` 93-channel sound catalog, `DOC-006` background catalog, and a final
-   markdown read-through). Read-only research against `../mobile-eggbert` plus local image/GIF
-   tooling work.
+   `DOC-230` through `DOC-234` are also done: all 313 `tile-full-*` crops, 7 of the 67
+   `object-type*` icons, and the 3 door crops had the same pre-`S3D-2`-fix leading-margin bug and
+   were regenerated; the Blupi representative frames and background thumbnails were confirmed
+   already correct. Next: `DOC-235`–`DOC-267` (the never-started `DOC-005` 93-channel sound
+   catalog, `DOC-006` background catalog, and a final markdown read-through). Read-only research
+   against `../mobile-eggbert` plus local image/GIF tooling work.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
