@@ -1855,7 +1855,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   6 real frames (icons 251×2, 238×4), cropped from `blupi.png` and assembled with `make-gif.sh`.
   **Verified**: coalesced-frame alpha-mean is flat per icon matching the source crops — no
   ghosting.
-- [ ] DOC-165 — Regenerate + verify `blupi-action-54-glu.gif` (`BlupiAction::Glu`=54).
+- [x] DOC-165 — Regenerated + verified `blupi-action-54-glu.gif` (`BlupiAction::Glu`=54). 25 real
+  frames (icons in range 168-171), **uses `element.png`** (per the confirmed channel rule), cropped
+  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in
+  a tight ~100.0-102.4/255 range — no ghosting.
 - [ ] DOC-166 — Regenerate + verify `blupi-action-55-drink.gif` (`BlupiAction::Drink`=55).
 - [ ] DOC-167 — Regenerate + verify `blupi-action-56-charge.gif` (`BlupiAction::Charge`=56).
 - [ ] DOC-168 — Regenerate + verify `blupi-action-57-electro.gif` (`BlupiAction::Electro`=57).
