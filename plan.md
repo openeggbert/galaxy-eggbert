@@ -2302,8 +2302,16 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   107-109); channel 92 is the `ObjectType96` follower's wake-up sound, confirming the
   dormant→awake transition documented in `03-objects.md` and correctly silenced while
   `m_blupiHide` is active.
-- [ ] DOC-245 — Cross-check the completed per-channel catalog against `include/GalaxyEggbert/def/SoundChannel.hpp`'s existing names/comments for consistency; flag and resolve any mismatch.
-- [ ] DOC-246 — Verify all 93 `.wav` files in `../mobile-eggbert/Content/sounds/` are accounted for 1:1 against the 93 documented channels (no gaps, no extras).
+- [x] DOC-245 — Cross-checked the completed catalog against `SoundChannel.hpp`. Confirmed exactly
+  93 sequential entries (`SoundChannel0`-`SoundChannel92`, zero gaps) with no per-channel
+  names/comments (already noted). The header's top comment ("Channels 1–92 are game sound
+  effects") is slightly overbroad — channels 2 and 68 are numbered as effects but are provably
+  unused; not a bug, just worth recording so a future port doesn't assume every channel is wired
+  up somewhere.
+- [x] DOC-246 — Verified all 93 `.wav` files in `../mobile-eggbert/Content/sounds/` (`sound000.wav`
+  through `sound092.wav`) are accounted for 1:1 against the 93 documented channels — programmatic
+  diff against the expected `0..92` sequence found zero gaps and zero extras; all files non-empty.
+  This closes `DOC-005` (the full sound catalog) entirely.
 
 ### 16.5 DOC-006 — Complete backgrounds catalog (38 images) + resolve region= mapping
 

@@ -1,7 +1,7 @@
 # Sounds
 
-**Status: all 93 channels documented (`DOC-235`-`DOC-244`); `DOC-245` (cross-check against
-`SoundChannel.hpp`) and `DOC-246` (verify all 93 `.wav` files accounted for) still open.** Tracked
+**Status: COMPLETE.** All 93 channels documented (`DOC-235`-`DOC-244`); `SoundChannel.hpp`
+cross-checked (`DOC-245`); all 93 `.wav` files verified accounted for (`DOC-246`). Tracked
 as `DOC-005` in `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93
 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
@@ -205,3 +205,29 @@ icons 107-109) is documented below (`DOC-244`), which also closes out the 93-cha
 This closes the 93-channel `SoundChannel` catalog (`DOC-235`-`DOC-244`). Remaining sound work:
 `DOC-245` (cross-check this catalog against `SoundChannel.hpp`) and `DOC-246` (verify all 93
 `.wav` files are accounted for 1:1, no gaps/extras).
+
+## `SoundChannel.hpp` cross-check (`DOC-245`)
+
+`include/GalaxyEggbert/def/SoundChannel.hpp` declares exactly 93 entries, `SoundChannel0` through
+`SoundChannel92`, each `SoundChannelN = N` — verified programmatically (counted 93 `= N` entries,
+confirmed the sorted numeric sequence has zero gaps from 0 to 92). No per-channel names or comments
+exist to cross-check against individually (as already corrected in the intro above); the only
+header-level claim to check is the file's own top comment:
+
+> Channel 0 is reserved. Channels 1–92 are game sound effects.
+
+This is *mostly* accurate but slightly overbroad: channels 2 and 68 are numbered as "game sound
+effects" by that comment, but this catalog found both are **provably unused** — zero references
+anywhere in `Decor.cpp`/`Tables.cpp`/`InputPad.cpp`/`Sound.cpp`. They have real `.wav` files and
+valid enum slots, but nothing in the game ever plays them. Not a bug (the comment is a reasonable
+simplification, not a precise per-channel spec), but worth recording here since it's the kind of
+detail that would silently get "ported" as if every channel 1-92 must be wired up somewhere.
+
+## `.wav` file accounting (`DOC-246`)
+
+`../mobile-eggbert/Content/sounds/` contains exactly 93 files, `sound000.wav` through
+`sound092.wav` — verified programmatically (extracted every file's numeric suffix, sorted, diffed
+against the expected `0..92` sequence: exact match, no gaps, no extras). All files are non-empty
+(`find ... -size 0` returns zero results; smallest file is 2356 bytes). This is a clean 1:1 mapping
+against the 93 `SoundChannel` enum entries confirmed in `DOC-245` — every channel has a real audio
+asset, including the two (2, 68) that are never actually played by any code path.
