@@ -1919,7 +1919,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   7 real frames (icons 296,310-314,303), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean fluctuates smoothly matching the source
   crops — no ghosting.
-- [ ] DOC-181 — Regenerate + verify `blupi-action-72-stopecrase.gif` (`BlupiAction::StopEcrase`=72).
+- [x] DOC-181 — Regenerated + verified `blupi-action-72-stopecrase.gif` (`BlupiAction::StopEcrase`=72).
+  Single real frame (icon 320, `frameCount=1`), cropped from `blupi.png` and assembled with
+  `make-gif.sh` (no ghosting possible with a single frame). **Verified**: coalesced alpha-mean
+  matches the source crop.
 - [ ] DOC-182 — Regenerate + verify `blupi-action-73-marchecrase.gif` (`BlupiAction::MarchEcrase`=73).
 - [ ] DOC-183 — Regenerate + verify `blupi-action-74-teleporte.gif` (`BlupiAction::Teleporte`=74).
 - [ ] DOC-184 — Regenerate + verify `blupi-action-75-clear2.gif` (`BlupiAction::Clear2`=75).
