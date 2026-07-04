@@ -2288,7 +2288,11 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   67 (mirror/invert expiry) has no matching warning stage, just a direct pop, unlike the other 3
   buffs. Also confirms channel 61 as a Blupi skin/persona-swap sound and channel 69 as an ambient
   lightning-zap cue synced to a 100-tick flicker cycle.
-- [ ] DOC-242 — Research and document `SoundChannel` 70-79 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
+- [x] DOC-242 — Researched and documented `SoundChannel` 70-79 in `07-sounds.md`. Real finds:
+  channels 78/79 are the first confirmed pair of the 7 `SoundEnviron()` terrain remaps promised in
+  the channels 0-9 batch; channel 70 (crusher-trap onset) pairs with channel 41's recovery pop from
+  an earlier batch; channels 74/75 are two distinct death-sequence cues (angel-ascent vs.
+  cut-apart) for different death causes; channels 76/77 are a switch on/off click pair.
 - [ ] DOC-243 — Research and document `SoundChannel` 80-89 — real in-game trigger/purpose per channel, grep `Decor.cpp` for `SoundChannel` usage.
 - [ ] DOC-244 — Research and document `SoundChannel` 90-92 (final batch) — real in-game trigger/purpose per channel.
 - [ ] DOC-245 — Cross-check the completed per-channel catalog against `include/GalaxyEggbert/def/SoundChannel.hpp`'s existing names/comments for consistency; flag and resolve any mismatch.

@@ -1,6 +1,6 @@
 # Sounds
 
-**Status: IN PROGRESS — channels 0-69 of 93 documented (`DOC-235`-`DOC-241`).** Tracked as `DOC-005` in
+**Status: IN PROGRESS — channels 0-79 of 93 documented (`DOC-235`-`DOC-242`).** Tracked as `DOC-005` in
 `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93 channels) is
 already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
@@ -151,3 +151,21 @@ of engines.
 
 Channel 68 being provably unused (like channel 2) reinforces that not every reserved `.wav` file in
 the sheet actually gets played — worth keeping in mind for `DOC-246`'s full 93-channel accounting.
+
+## Channels 70-79
+
+| Channel | `.wav` | Real trigger (from `Decor.cpp`) |
+|---|---|---|
+| 70 | `sound070.wav` | **Crusher-trap** (`Ecraseur`/`IsEcraseur`) onset sound — plays when Blupi gets squashed (`m_blupiEcrase = true`); pairs with channel 41 for the recovery pop when the effect ends. |
+| 71 | `sound071.wav` | **Teleporter** use sound — plays when Blupi steps onto a teleporter tile (`IsTeleporte`, `BlupiAction::Teleporte`). |
+| 72 | `sound072.wav` | **Bridge construction start** sound — plays at phase 0 of the 157-frame `ObjectType52` bridge-building sequence (documented in `03-objects.md`). |
+| 73 | `sound073.wav` | Bridge construction **progress** sound — plays partway through the same sequence, at phase 137 (of 157), as a secondary construction cue before completion. |
+| 74 | `sound074.wav` | Death-sequence **"angel ascent"** cue — plays for the fall-into-void (`Clear2`) and lava (`Clear3`) death recovery arcs, alongside the `VoyageInit` that spawns the angel-ascent animation (icons 230-241, per the cross-reference in the channels 0-9 section's `VoyageStep` note). |
+| 75 | `sound075.wav` | Death-sequence sound for the saw/`Scie` death (`Clear4`) — spawns 3 `ObjectType41` burst sprites instead of the angel-ascent animation; a distinct "cut apart" cue rather than channel 74's ascent. |
+| 76 | `sound076.wav` | Switch **click (off)** sound — plays in `Decor::ActiveSwitch()` when a switch is toggled to its closed/inactive state (icon 385). |
+| 77 | `sound077.wav` | Switch **click (on)** sound — plays in the same function when toggled to open/active (icon 384); pairs with channel 76, one call site picks between them with `bState ? 77 : 76`. |
+| 78 | `sound078.wav` | `SoundEnviron()` **landing** variant (remapped from generic channel 3) for one specific terrain-icon range (obstacle icons 32-34, 41-47, 139-143 — see the channels 0-9 section for the remapping mechanism). |
+| 79 | `sound079.wav` | `SoundEnviron()` **head-bump** variant (remapped from generic channel 4) for the same terrain-icon range as channel 78 — its paired opposite. |
+
+Channels 78/79 are the first of the 7 terrain-specific footstep/head-bump pairs promised back in the
+channels 0-9 section; the remaining 6 pairs (80-91) are documented in the next batch (`DOC-243`).
