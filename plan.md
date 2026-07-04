@@ -2339,7 +2339,8 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   Pixel-exact against a fresh resize.
 - [x] DOC-254 — Thumbnailed + verified `decor020`-`022` (skipped missing id `023`). Pixel-exact
   against a fresh resize.
-- [ ] DOC-255 — Thumbnail + verify background images `decor024`-`decor027` (skip any confirmed-missing IDs in that range).
+- [x] DOC-255 — Thumbnailed + verified `decor024`-`027` (no missing ids in this range).
+  Pixel-exact against a fresh resize.
 - [ ] DOC-256 — Thumbnail + verify background images `decor028`-`decor031` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-257 — Document `blupiyoupie.png`/`gear.png` (title/settings-screen backgrounds) separately from level backgrounds, with their real trigger context.
 

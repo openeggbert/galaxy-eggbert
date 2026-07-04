@@ -66,11 +66,15 @@ sprite-sheet crop, so unaffected by the `object-m.png` leading-margin bug):
 ![decor020](images/bg-decor020.png)
 ![decor021](images/bg-decor021.png)
 ![decor022](images/bg-decor022.png)
+![decor024](images/bg-decor024.png)
+![decor025](images/bg-decor025.png)
+![decor026](images/bg-decor026.png)
+![decor027](images/bg-decor027.png)
 
-**`DOC-233`/`DOC-249`-`DOC-254` (2026-07-04):** `decor000`-`decor002` re-verified (`DOC-233`);
+**`DOC-233`/`DOC-249`-`DOC-255` (2026-07-04):** `decor000`-`decor002` re-verified (`DOC-233`);
 `decor003` (`DOC-249`), `decor004`/`006`/`007` (`DOC-250`, skipping missing id `005`),
 `decor008`-`011` (`DOC-251`), `decor012`/`013`/`015` (`DOC-252`, skipping missing id `014`),
-`decor016`/`018`/`019` (`DOC-253`, skipping missing id `017`), and `decor020`-`022` (`DOC-254`,
-skipping missing id `023`) added. All 20 confirmed pixel-exact (`compare -metric AE`=0) against a
-fresh `convert decorNNN.png -resize 240x180`. `decor015` is a genuinely grayscale image (not a
-bug) — a stone-cave background.
+`decor016`/`018`/`019` (`DOC-253`, skipping missing id `017`), `decor020`-`022` (`DOC-254`,
+skipping missing id `023`), and `decor024`-`027` (`DOC-255`) added. All 24 confirmed pixel-exact
+(`compare -metric AE`=0) against a fresh `convert decorNNN.png -resize 240x180`. `decor015` is a
+genuinely grayscale image (not a bug) — a stone-cave background.
