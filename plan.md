@@ -1643,7 +1643,13 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   doc's confirmed 8fps Blupi tick). **Verified**: coalesced-frame alpha-mean spot-checked across
   the full cycle (frames 0,1,5,50,100,150,200,250,300,329) stays in a tight, non-monotonic
   ~79-86/255 range — no ghosting even across this much longer sequence.
-- [ ] DOC-114 — Regenerate + verify `blupi-action-02-march.gif` (`BlupiAction::March`=2).
+- [x] DOC-114 — Regenerated + verified `blupi-action-02-march.gif` (`BlupiAction::March`=2). This
+  is the exact GIF that first surfaced the `DOC-100` ghosting bug (originally reported climbing
+  80.0→85→86.2→86.3→86.6→86.7 then plateauing). 6 real frames (icons 5-10, via
+  `extract-blupi-action.py`), cropped from `blupi.png` (60×60, no gap) and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean now fluctuates
+  (85.9→81.8→83.7→85.4→81.9→83.9) matching the real per-icon values (80.5→76.9→78.7→80.2→76.8→78.5)
+  — no monotonic climb, confirming `DOC-100`'s fix resolves the original bug report.
 - [ ] DOC-115 — Regenerate + verify `blupi-action-03-turn.gif` (`BlupiAction::Turn`=3).
 - [ ] DOC-116 — Regenerate + verify `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4).
 - [ ] DOC-117 — Regenerate + verify `blupi-action-05-air.gif` (`BlupiAction::Air`=5).
