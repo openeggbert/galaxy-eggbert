@@ -2331,7 +2331,8 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   000-002 already existed from `DOC-233`, added `decor003`). Pixel-exact against a fresh resize.
 - [x] DOC-250 — Thumbnailed + verified `decor004`, `006`, `007` (skipped missing id `005`).
   Pixel-exact against a fresh resize.
-- [ ] DOC-251 — Thumbnail + verify background images `decor008`-`decor011` (skip any confirmed-missing IDs in that range).
+- [x] DOC-251 — Thumbnailed + verified `decor008`-`decor011` (no missing ids in this range).
+  Pixel-exact against a fresh resize.
 - [ ] DOC-252 — Thumbnail + verify background images `decor012`-`decor015` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-253 — Thumbnail + verify background images `decor016`-`decor019` (skip any confirmed-missing IDs in that range).
 - [ ] DOC-254 — Thumbnail + verify background images `decor020`-`decor023` (skip any confirmed-missing IDs in that range).

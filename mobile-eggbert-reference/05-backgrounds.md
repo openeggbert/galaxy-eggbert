@@ -53,8 +53,12 @@ sprite-sheet crop, so unaffected by the `object-m.png` leading-margin bug):
 ![decor004](images/bg-decor004.png)
 ![decor006](images/bg-decor006.png)
 ![decor007](images/bg-decor007.png)
+![decor008](images/bg-decor008.png)
+![decor009](images/bg-decor009.png)
+![decor010](images/bg-decor010.png)
+![decor011](images/bg-decor011.png)
 
-**`DOC-233`/`DOC-249`/`DOC-250` (2026-07-04):** `decor000`-`decor002` re-verified (`DOC-233`);
-`decor003` (`DOC-249`) and `decor004`/`006`/`007` (`DOC-250`, skipping missing id `005`) added. All
-7 confirmed pixel-exact (`compare -metric AE`=0) against a fresh `convert decorNNN.png -resize
-240x180`.
+**`DOC-233`/`DOC-249`-`DOC-251` (2026-07-04):** `decor000`-`decor002` re-verified (`DOC-233`);
+`decor003` (`DOC-249`), `decor004`/`006`/`007` (`DOC-250`, skipping missing id `005`), and
+`decor008`-`011` (`DOC-251`) added. All 11 confirmed pixel-exact (`compare -metric AE`=0) against a
+fresh `convert decorNNN.png -resize 240x180`.
