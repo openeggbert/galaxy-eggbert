@@ -1776,7 +1776,10 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
   10 real frames (icons 151-155, each paired), cropped from `blupi.png` and assembled with
   `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
   source crops — no ghosting.
-- [ ] DOC-145 — Regenerate + verify `blupi-action-34-jumpsuspend.gif` (`BlupiAction::JumpSuspend`=34).
+- [x] DOC-145 — Regenerated + verified `blupi-action-34-jumpsuspend.gif` (`BlupiAction::JumpSuspend`=34).
+  10 real frames (icons 157×2, 165×4, 166×4), cropped from `blupi.png` and assembled with
+  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is flat per icon matching the source
+  crops exactly — no ghosting.
 - [ ] DOC-146 — Regenerate + verify `blupi-action-35-hide.gif` (`BlupiAction::Hide`=35).
 - [ ] DOC-147 — Regenerate + verify `blupi-action-36-jumpaie.gif` (`BlupiAction::JumpAie`=36).
 - [ ] DOC-148 — Regenerate + verify `blupi-action-37-stopskate.gif` (`BlupiAction::StopSkate`=37).
