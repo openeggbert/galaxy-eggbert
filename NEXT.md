@@ -267,7 +267,18 @@ this session): `NEXT.md`, `plan.md`, `CMakeLists.txt`; modified
 
 ## 4. Current blocker / main problem
 
-**Documentation track: RESOLVED — all 129 animated GIFs regenerated and verified.** The user
+**Documentation track: RESOLVED — the entire ~168-task `mobile-eggbert-reference/` rework
+(`DOC-100`-`DOC-267`) is done as of 2026-07-04.** Summary: 129 animated GIFs regenerated after a
+ghosting bug; 320 sprite crops (313 tile + 7 object) regenerated after a real 1px leading-margin
+grid bug (`S3D-2`) was found via the GIFs; that same audit found and fixed a second real engine bug
+(`S3D-4`, `ObjectType47`/Chenille's wrong sprite sheet); the full 93-channel sound catalog was
+documented from scratch; the full background catalog was documented, including resolving a
+previously-unsolved `region=` → filename mapping; and a final read-through of all 10 reference
+files found and fixed several stale claims (including two in `09-open-questions.md` that had gone
+stale mid-rework). Full task-by-task detail is in `plan.md` §16. **No further work is scheduled in
+this track** — see §8 below for what's next.
+
+**Documentation track history (superseded by the above, kept for context):** the user
 visually inspected `08-animations.md` and found every animated GIF's frames accumulating the
 previous frame's opaque pixels instead of clearing (GIF ghosting). Root cause (`DOC-100`): the old
 workflow assembled GIFs with plain `convert -delay D -loop 0 frame*.png out.gif`, leaving every
@@ -350,9 +361,19 @@ switch via the same `BackgroundCache()` levels use; 3 (`speedyblupi`/`blupiyoupi
 once at startup into dedicated texture slots and drawn as logo/menu-chrome overlays, never through
 `region=`.
 
-**Not done yet in the `mobile-eggbert-reference/` rework** (see `plan.md` §16.6,
-`DOC-258`-`DOC-267`): the final markdown read-through pass — one consistency check per reference
-file now that all image/data rework has landed.
+**`DOC-258`-`DOC-267` DONE (2026-07-04) — final markdown read-through, closing the rework
+entirely:** one consistency pass per reference file. Found and fixed real staleness in several:
+`00-overview.md`'s status section and file table still described the pre-rework state (claimed
+`05-backgrounds.md`/`07-sounds.md` incomplete when both are done) and `plan.md`'s own
+`DOC-004`/`005`/`006` entries were still marked undone despite being finished via later subtasks;
+`03-objects.md`'s sprite-channel bug table still said `ObjectType47`'s bug was unfixed when it was
+fixed separately as `S3D-4`; `08-animations.md` had **zero mention anywhere** of the `DOC-100`-`229`
+ghosting-bug fix despite being the file whose 129 GIFs it directly affected; `09-open-questions.md`
+still called the `region=` mapping "unresolved" and claimed "~175 still-unresearched `ObjectType`
+IDs" when both were fully resolved earlier in this same rework. `01-world-file-format.md`,
+`04-enemy-behavior.md`, `05-backgrounds.md`, `06-doors.md`, and `07-sounds.md` needed only minor
+consistency fixes or none at all. **This closes the entire ~168-task `mobile-eggbert-reference/`
+rework (`DOC-100`-`DOC-267`) — no further work is scheduled in this track.**
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -538,32 +559,23 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Work through the ~168-task `mobile-eggbert-reference/` rework list (in progress, reopened
-   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100`–`DOC-229` are done:
-   **all 129 animated GIFs regenerated and verified** (root cause + translucency fix, the real
-   `BlockTypes::tileUV` and `ObjectType47`/Chenille engine bugs found and fixed along the way —
-   see §4 for the summary, `plan.md` for full per-task detail — 12 tile animations, 84 Blupi
-   actions, 24 object/pickup/enemy animations, 8 explosions, and the door-slide illustration).
-   `DOC-230` through `DOC-234` are also done: all 313 `tile-full-*` crops, 7 of the 67
-   `object-type*` icons, and the 3 door crops had the same pre-`S3D-2`-fix leading-margin bug and
-   were regenerated; the Blupi representative frames and background thumbnails were confirmed
-   already correct. `DOC-005` (all 93 sound channels, `DOC-235`-`DOC-246`) is now fully done,
-   including a self-correction of a channel-40 mis-attribution found mid-batch. `DOC-006` (the
-   background catalog) is also now fully done: `DOC-247`/`DOC-248` resolved the `region=` →
-   background mapping (a direct formula in `Decor::LoadImages()`, no indirection, verified against
-   all 78 levels), `DOC-249`-`DOC-256` thumbnailed all 28 level backgrounds, and `DOC-257` documented
-   the 10 non-level UI-screen backgrounds (found 8 more than the 2 previously known) and their two
-   different loading mechanisms (`Def::Phase`-keyed vs. dedicated startup-loaded logo/chrome
-   textures). Next: the final markdown read-through pass (`DOC-258`-`DOC-267`, §16.6) — one
-   consistency pass per reference file now that all the image/data rework has landed. Read-only
-   research against `../mobile-eggbert` plus local image/GIF tooling work.
+1. **`mobile-eggbert-reference/` rework: DONE (2026-07-03/04, `DOC-100`-`DOC-267`, ~168 tasks — see
+   §4 for the full summary, `plan.md` §16 for per-task detail).** All 129 animated GIFs
+   regenerated, 320 sprite crops fixed for a real leading-margin grid bug (`S3D-2`), a second real
+   engine bug found and fixed (`S3D-4`), the full 93-channel sound catalog documented, the full
+   background catalog documented (including resolving the `region=` mapping), and a final
+   read-through of all 10 files landed. **No further work is scheduled here.** The natural next
+   step in this *track* is the actual 3D-mapping design this reference exists to inform (billboard
+   vs. textured-cube for objects, `BigDecor` layer treatment, door rendering, etc. — see
+   `09-open-questions.md`), but that is a distinct design task, not scoped here as its own
+   `DOC-*`/`E3D-MIG-*` id yet.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
 3. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
    proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
-   genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — see task 1, this
-   should follow the mapping doc, not precede it.
+   genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — this should follow the
+   mapping-design decisions (see task 1), not precede them.
 4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
    task 2/3); not needed at the current ~2700-block scale.
 5. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder +CNA renderer

@@ -59,12 +59,18 @@ answering them later, in a separate mapping-design task.
   latter already works and doesn't obviously need the block-metadata system at all.
 - Teleporter pairing is implicit (scan-the-map) in mobile-eggbert — worth deciding whether to keep
   that convention or make pairing explicit via `BlockMetadata` now that the format supports it.
-- The `region=` → background-image mapping is still unresolved (`05-backgrounds.md`) — needed
-  before any real background/skybox work, 2D or 3D.
-- What should the ~175 still-unresearched `ObjectType` IDs (`03-objects.md`) actually turn out to
-  be? Some may be genuinely vestigial/unused; the mapping design shouldn't have to account for
-  types that never appear in any real level.
-- The 8 partial-support `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/
+- ~~The `region=` → background-image mapping is still unresolved~~ **Resolved 2026-07-04**
+  (`DOC-247`/`DOC-248`, `05-backgrounds.md`) — it's a direct formula, no lookup table. The remaining
+  open question is a mapping-*design* one, not a research one: should the eventual 3D target load
+  real parallax background images at all (it currently doesn't — see `05-backgrounds.md`'s "What
+  galaxy-eggbert currently does instead"), and if so, how does a flat 2D background become a 3D
+  skybox/backdrop?
+- ~~What should the ~175 still-unresearched `ObjectType` IDs actually turn out to be?~~ **Resolved
+  2026-07-04** — `03-objects.md`'s classification is complete for all 204 IDs (`DOC-003`): 133 are
+  confirmed genuinely vestigial (zero references anywhere in source), 41 have real behavior but are
+  never placed in a shipped level, 1 is ambiguous, 29 are real and used. The remaining open question
+  is about the 7 partial-support types below, not about unresearched ones.
+- The 7 partial-support `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/
   dynamite — `03-objects.md`) spawn but have no gameplay effect — whether/when to implement their
   real pickup behavior is a separate decision from the 3D mapping question, but affects how much of
   their behavior needs documenting here first.

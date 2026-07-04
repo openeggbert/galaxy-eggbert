@@ -1480,7 +1480,14 @@ current progress, not just this list.
 
 ## 16. Documentation rework (2026-07-03) — GIF ghosting bug + full completeness audit
 
-**Nothing in `mobile-eggbert-reference/` is being treated as actually finished right now.** The user
+**Status: COMPLETE (2026-07-04).** All 168 tasks (`DOC-100`-`DOC-267`) done: 129 GIFs regenerated,
+320 sprite crops fixed for a real leading-margin grid bug (`S3D-2`), 2 real engine bugs found and
+fixed (`S3D-2`, `S3D-4`), the full 93-channel sound catalog documented, the full background catalog
+documented (including resolving the `region=` mapping), and a final read-through of all 10 files
+found and fixed several stale claims. See `DOC-267`'s entry below for the closing summary.
+
+**Nothing in `mobile-eggbert-reference/` was being treated as actually finished when this section
+started.** The user
 inspected `08-animations.md`'s GIFs directly and found a real rendering bug: each frame keeps the
 previous frame's opaque pixels instead of clearing before drawing the next one — visually, frame 2
 shows frame 1 ghosted into its background, frame 3 shows frames 1+2, etc. Confirmed programmatically
@@ -2401,7 +2408,14 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
   dedicated paragraph documenting the bug, the `make-gif.sh` fix, the translucency fix, and
   cross-references to the `S3D-2`/`S3D-4` engine bugs the regeneration surfaced. §6/§7's open-items
   lists were checked and remain accurate (unaffected by the GIF regeneration).
-- [ ] DOC-267 — Full read-through of `09-open-questions.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-267 — Full read-through of `09-open-questions.md` (no images in this file). Found two
+  real stale entries and fixed both: the `region=` mapping item still said "unresolved" (it was
+  resolved by `DOC-247`/`DOC-248` — rewrote it as a resolved-research/open-design-question split),
+  and the `ObjectType` item still said "~175 still-unresearched IDs" when `03-objects.md`'s
+  classification of all 204 IDs is complete (`DOC-003`) — rewrote to reflect the real remaining
+  question (the 7 partial-support types, not "unresearched" ones). Also fixed an off-by-one: the
+  partial-support list was labeled "8" but only 7 types are named. **This closes `DOC-267`, the
+  last task of the entire `DOC-100`-`DOC-267` documentation rework.**
 
 ---
 
