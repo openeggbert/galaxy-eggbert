@@ -300,12 +300,11 @@ not repeated here): `DOC-100`–`DOC-196` done** — **all 84 Blupi action GIFs 
 actions; 3 of the 87 real BlupiActions -- 12/Set, 70, 71 -- confirmed to have no
 table_blupi entry, needed no GIF). `DOC-197` (`object-anim-type02-patrolA.gif`, first of
 24 object/pickup/enemy animations — these use `element.png` and frame data from
-`GEDecorSystem::GetObjIcon()`, not `table_blupi`), `DOC-198` (`object-anim-type03-patrolB.gif`),
-`DOC-199` (`object-anim-type04-bulldozer.gif`), `DOC-200` (`object-anim-type05-treasure.gif`
-— the exact GIF that first surfaced the `DOC-100` ghosting bug report, now confirmed fixed), and
-`DOC-201` (`object-anim-type06-egg.gif`), and `DOC-202` (`object-anim-type07-exit.gif`) are also
-done. 27 of the 129 GIFs (`DOC-203`–`DOC-229`) still need regenerating — next is `DOC-203`
-(`object-anim-type16-spider.gif`).
+`GEDecorSystem::GetObjIcon()`, not `table_blupi`), `DOC-198`–`DOC-202` (`patrolB`/`bulldozer`/
+`treasure` — the exact GIF that first surfaced the `DOC-100` ghosting bug report, now confirmed
+fixed — `egg`/`exit`), and `DOC-203` (`object-anim-type16-spider.gif`) are also done. 26 of the
+129 GIFs (`DOC-204`–`DOC-229`) still need regenerating — next is `DOC-204`
+(`object-anim-type17-fish.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -347,7 +346,7 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only, tool now fixed | 27 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-202` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 27 (`DOC-203`–`DOC-229`) still need regenerating with the fixed tool. |
+| confirmed, documentation only, tool now fixed | 26 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root cause fixed (`DOC-100`) plus a second tool fix for translucent content vanishing (`DOC-105`); `DOC-100`–`DOC-203` regenerated and verified so far (see `plan.md` §16 for per-task detail) — the other 26 (`DOC-204`–`DOC-229`) still need regenerating with the fixed tool. |
 | fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
 ## 6. Architecture notes
@@ -498,12 +497,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `mobile-eggbert-reference/tools/extract-blupi-action.py`, reading mobile-eggbert's
    `table_blupi` live rather than copying it — see `plan.md`'s `DOC-113`), and `DOC-197`
    (`object-anim-type02-patrolA.gif`, first of 24 object/pickup/enemy animations — these use
-   `element.png` and frame data from `GEDecorSystem::GetObjIcon()`, not `table_blupi`), `DOC-198`
-   (`object-anim-type03-patrolB.gif`), `DOC-199` (`object-anim-type04-bulldozer.gif`),
-   `DOC-200` (`object-anim-type05-treasure.gif` — the exact GIF that first surfaced the `DOC-100`
-   ghosting bug, now confirmed fixed), `DOC-201` (`object-anim-type06-egg.gif`), and `DOC-202`
-   (`object-anim-type07-exit.gif`) are done. Next: `DOC-203` (`object-anim-type16-spider.gif`),
-   then continue through `DOC-204`–`DOC-267` (26 more GIF regenerations, then static-icon
+   `element.png` and frame data from `GEDecorSystem::GetObjIcon()`, not `table_blupi`), `DOC-198`–
+   `DOC-202` (`patrolB`/`bulldozer`/`treasure` — the exact GIF that first surfaced the `DOC-100`
+   ghosting bug, now confirmed fixed — `egg`/`exit`), and `DOC-203`
+   (`object-anim-type16-spider.gif`) are done. Next: `DOC-204` (`object-anim-type17-fish.gif`),
+   then continue through `DOC-205`–`DOC-267` (25 more GIF regenerations, then static-icon
    re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds which were never started).
    Read-only research against
    `../mobile-eggbert` plus local image/GIF tooling work — the `BlockTypes.hpp`/`GETileAtlas.cpp`

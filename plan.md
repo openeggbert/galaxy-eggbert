@@ -2024,7 +2024,10 @@ all need regeneration.
   (icons 29-36, from `29 + (p/9)%8`), `element.png`, cropped and assembled with `make-gif.sh` at
   delay 150. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
   ghosting.
-- [ ] DOC-203 — Regenerate + verify `object-anim-type16-spider.gif`.
+- [x] DOC-203 — Regenerated + verified `object-anim-type16-spider.gif` (`ObjectType16`). 9 real
+  frames (icons 69-77, from `69 + (p/3)%9`), `element.png`, cropped and assembled with
+  `make-gif.sh` at delay 50 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
+  alpha-mean fluctuates matching the source crops — no ghosting.
 - [ ] DOC-204 — Regenerate + verify `object-anim-type17-fish.gif`.
 - [ ] DOC-205 — Regenerate + verify `object-anim-type20-bird.gif`.
 - [ ] DOC-206 — Regenerate + verify `object-anim-type21-secretexit.gif`.
