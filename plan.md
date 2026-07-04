@@ -1992,7 +1992,14 @@ Blupi actions (84) — **confirmed ghosting**, all need regeneration.
 Object/pickup/enemy animations (24) — **confirmed ghosting** (spot-checked via `treasure`),
 all need regeneration.
 
-- [ ] DOC-197 — Regenerate + verify `object-anim-type02-patrolA.gif`.
+- [x] DOC-197 — Regenerated + verified `object-anim-type02-patrolA.gif` (`ObjectType2`). 9 real
+  frames (icons 12-20, from `GEDecorSystem::GetObjIcon()`'s `12 + (p/6)%9` formula — already-ported
+  Simple3D code, not a fresh mobile-eggbert transcription), **uses `element.png`**, cropped and
+  assembled with `make-gif.sh` at delay 100 (matches the pre-existing GIF's rate — the doc's own
+  flagged timing-accuracy caveat for object anims is a separate concern, not touched here).
+  **Verified**: coalesced-frame alpha-mean tracks the source crops closely (small ~4-5/255 bump
+  from the `DOC-105` opacity-forcing fix, same magnitude as already seen on tile anims) — no
+  ghosting.
 - [ ] DOC-198 — Regenerate + verify `object-anim-type03-patrolB.gif`.
 - [ ] DOC-199 — Regenerate + verify `object-anim-type04-bulldozer.gif`.
 - [ ] DOC-200 — Regenerate + verify `object-anim-type05-treasure.gif`.
