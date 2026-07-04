@@ -108,8 +108,8 @@ flagging since a naive port might only wire up one-shot triggers and miss these.
 | 48 | `sound048.wav` | Idle fidget sound for the `Ouf3` idle-animation variant. |
 | 49 | `sound049.wav` | Idle fidget sound for the `Ouf4` idle-animation variant. |
 
-Channels 46-49 (plus channel 65, documented in a later batch, for the `Mockery`/`Mockeryi` variants)
-are all part of the same family: Blupi has several distinct "bored idle" reaction animations
+Channels 46-49 (plus channel 65, below in the channels 60-69 section, for the `Mockery`/`Mockeryi`
+variants) are all part of the same family: Blupi has several distinct "bored idle" reaction animations
 (`Ouf1a`, `Ouf1b`, `Ouf3`, `Ouf4`, `Ouf5`, `Mockery`, `Mockeryi`, `Mockeryp`) chosen based on how
 long (`m_blupiTimeOuf`) Blupi has been standing still, each with its own sound. Channels 43/45
 (shield/power expiry warnings) are a matched pair with the same "about to run out" role for their
@@ -202,9 +202,9 @@ icons 107-109) is documented below (`DOC-244`), which also closes out the 93-cha
 | 91 | `sound091.wav` | `SoundEnviron()` **head-bump** variant for the same icon range as channel 90. |
 | 92 | `sound092.wav` | **Follower enemy wake-up** sound — plays when a dormant `ObjectType96` follower (documented in `03-objects.md`) detects Blupi within 100px and transitions to its awake/chasing state (`ObjectType97`). Silenced while `m_blupiHide` is active (a hidden Blupi doesn't wake followers). |
 
-This closes the 93-channel `SoundChannel` catalog (`DOC-235`-`DOC-244`). Remaining sound work:
-`DOC-245` (cross-check this catalog against `SoundChannel.hpp`) and `DOC-246` (verify all 93
-`.wav` files are accounted for 1:1, no gaps/extras).
+This closes the per-channel trigger documentation (`DOC-235`-`DOC-244`). Two more checks follow
+below: `DOC-245` (cross-check this catalog against `SoundChannel.hpp`) and `DOC-246` (verify all 93
+`.wav` files are accounted for 1:1, no gaps/extras) — both done, closing `DOC-005` entirely.
 
 ## `SoundChannel.hpp` cross-check (`DOC-245`)
 

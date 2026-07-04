@@ -2389,7 +2389,12 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
 - [x] DOC-264 — Full read-through of `06-doors.md`. Verified all 3 image references resolve
   (post-`DOC-234` regeneration). Content is internally consistent — the `SoundChannel33` door
   reference matches `DOC-236`'s independent sound-catalog finding exactly. No stale claims found.
-- [ ] DOC-265 — Full read-through of `07-sounds.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
+- [x] DOC-265 — Full read-through of `07-sounds.md` (no images in this file — text-only channel
+  catalog). Verified all 93 channel numbers appear exactly once (programmatic diff against 0-92,
+  exact match). Fixed two small internal-consistency slips: a "documented in a later batch"
+  forward-reference for channel 65 that should have pointed to the now-written section, and a
+  "Remaining sound work" phrasing for `DOC-245`/`DOC-246` that read as still-pending even though
+  both are done immediately below it.
 - [ ] DOC-266 — Full read-through of `08-animations.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 - [ ] DOC-267 — Full read-through of `09-open-questions.md` after all the above tasks land: confirm every image reference is current (not pointing at a since-regenerated/renamed file), confirm the status note at the top matches true state, confirm no stale claims survived from before this rework.
 
