@@ -1226,7 +1226,30 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 ## 13. Simple3D Migration Milestones
 
 - [x] S3D-1 — Port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD, camera, sound, CMake target
-- [x] S3D-2 — Terrain visual fidelity: tile atlas UV per block type
+- [x] S3D-2 — Terrain visual fidelity: tile atlas UV per block type. **Bug found + fixed
+  (2026-07-04, while regenerating `mobile-eggbert-reference/tile-anim-lava.gif` for `DOC-101`):**
+  `BlockTypes::tileUV()` (`include/GalaxyEggbert/BlockTypes.hpp`, shared by `GalaxyEggbertSimple3D`
+  and `GalaxyEggbertCNA`) assumed a flat, contiguous 64px grid in `object-m.png`. The real sheet
+  (confirmed from mobile-eggbert's own `Pixmap::GetSrcRectangle`, `PixmapChannel::Object` case:
+  `srcGap=1`) is packed on a **65px pitch** (64px icon + 1px gap) with a 1px leading margin —
+  `pixelX = 1 + col*65`, not `col*64`. The missing gap caused a cumulative 1px/column/row drift:
+  by icon 68 (Lava, col 8 row 3) the sampled box was already off by (9px, 4px), bleeding in ~4px
+  of the icon-above's content (a blue warning-sign icon) and cutting a visible seam partway
+  through the tile — this is what the user spotted as "a thick blue line and the lava looking cut
+  ~20% from the left" in a `GalaxyEggbertCNA` screenshot. Fixed by adding `BlockTypes::kSheetGap=1`
+  and using it in `tileUV()`'s pixel-offset math, and passing the same gap as
+  `startX/startY/spacingX/spacingY` to `Easy3D::TextureAtlas::AddGrid` in
+  `src/GalaxyEggbertCNA/Game/GETileAtlas.cpp` (which already supported gap/offset parameters —
+  no `../easy-3d` change needed); also corrected `GETileAtlas`'s row count from the old
+  ceil(1431/64)=23 to the pitch-aware floor((1431-1)/65)=22 (the highest named `BlockTypes` icon
+  constant is 413, well within the 22-row range, so nothing used the extra bogus row). **Verified**:
+  both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` rebuild clean; `GalaxyEggbertWorldsTests`
+  still 54/54; a real `GalaxyEggbertCNA` run logs UV values matching the corrected formula by hand
+  (`Lava (68) UV = (0.400461, 0.136967)-(0.449654, 0.181691)`, i.e. pixel origin ≈(521,196), matching
+  `1+8*65=521, 1+3*65=196`) and its built-in terrain-visibility check still shows real, multi-color
+  textured terrain (25/25 sampled points, 7 distinct colors) — no crash, no flat-fallback regression.
+  Independently, cropping the same corrected pixel math for the `tile-anim-lava.gif` doc frames
+  produced clean images with no blue bleed/seam (see `DOC-101`).
 - [x] S3D-3 — Blupi billboard animation from `blupi.png`
 - [x] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`
 - [x] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
@@ -1455,7 +1478,24 @@ section has a hard ordering dependency, but doing the static-asset re-verificati
 alongside the GIF work is reasonable since neither blocks the other.
 
 ### 16.1 Root cause
-- [ ] DOC-100 — Diagnose and fix the GIF-assembly ghosting/disposal bug itself (the tool/script/command used to combine per-frame PNGs into a `.gif`) so newly-generated GIFs stop accumulating previous frames' opaque pixels. Verify the fix with the same alpha-channel-per-frame test used to find the bug (coalesce the GIF, measure mean alpha per frame, confirm it varies per the real source frame data instead of monotonically increasing/plateauing) before regenerating anything downstream.
+- [x] DOC-100 — Diagnosed and fixed the GIF-assembly ghosting/disposal bug. **Root cause:** the
+  prior workflow assembled frames with plain `convert -delay D -loop 0 frame*.png out.gif`, which
+  leaves every frame's GIF disposal method as `Undefined` (`identify -format "%D"` on the existing
+  broken GIFs confirms this). With disposal `Undefined`/`None`, a GIF decoder composites each new
+  frame on top of whatever is still on the canvas from the previous frame instead of clearing to
+  background first — so any frame with transparent/semi-transparent pixels lets prior opaque
+  pixels bleed through, and per-frame mean alpha climbs (then plateaus once compounded pixels
+  saturate at alpha=255), matching the originally-reported symptom exactly. **Fix:** add
+  `-dispose Background` so each frame is cleared to a transparent canvas before the next is drawn.
+  **Verified** with a synthetic repro (6 semi-transparent frames, same shape as a real sprite
+  crop): the broken path reproduced the reported pattern (mean alpha 17.6→21.3→24.9→28.5→32.1→35.7,
+  monotonic climb); the fixed path (`-dispose Background`) gave a flat 17.6 on every coalesced
+  frame, i.e. each frame now matches its real source data with zero accumulation. Landed as a
+  reusable wrapper, `mobile-eggbert-reference/tools/make-gif.sh` (`make-gif.sh <delay> <out.gif>
+  <frame1.png> [frame2.png ...]`), so `DOC-101`–`DOC-267` use the fixed tool instead of ad hoc
+  `convert` invocations (the ad hoc-command pattern is how the bug was introduced in the first
+  place). Real sprite-sheet GIFs (`blupi-action-*`, `tile-anim-*`, etc.) are not regenerated by
+  this task — that is `DOC-101` onward; this task only fixes and verifies the tool itself.
 
 ### 16.2 Regenerate animated GIFs with the fixed tooling (129 tasks, one per sequence)
 
@@ -1463,7 +1503,26 @@ Tile animations (12) — no ghosting symptom observed via alpha testing, but con
 opaque so the test can't rule out a shared root cause being invisible there; regenerate
 defensively with the fixed tooling and re-verify rather than assuming these are exempt.
 
-- [ ] DOC-101 — Regenerate + verify `tile-anim-lava.gif` (animated tile: Lava).
+- [x] DOC-101 — Regenerated + verified `tile-anim-lava.gif` (animated tile: Lava). Frames are the 8
+  real `kAnimLava` icons (`GETerrainRenderer.cpp`: `{68,69,70,71,72,71,70,69}`), cropped directly
+  from `../mobile-eggbert/Content/icons/object-m.png` at `64x64`, assembled with the fixed
+  `mobile-eggbert-reference/tools/make-gif.sh` at 17-centisecond delay (167 ms, matches
+  `08-animations.md`'s existing table). **First crop attempt used the naive `col*64,row*64` pixel
+  math and turned up a second, independent bug**: a thick blue bar bled in at the top of every
+  frame and a vertical seam cut across the flame ~20% from the left (user caught this from a
+  screenshot). Root cause + fix is the `S3D-2` gap/pitch bug above — `object-m.png` is packed on a
+  65px pitch (64px + 1px gap), not flat 64px. **Final crop uses the corrected
+  `1 + col*65, 1 + row*65` pixel math** (same formula now codified in `BlockTypes::tileUV()`) —
+  clean frames, no bleed, no seam. **Verified**: coalesced-frame alpha-mean tracks the corrected
+  per-frame source crops almost exactly (e.g. frame 4/icon 72, the one visually distinct frame:
+  99.17 coalesced vs 99.00 source-crop; mirrored frames 1↔7, 2↔6, 3↔5 match each other within
+  noise) — no monotonic climb, i.e. the DOC-100 ghosting fix holds on the corrected crops too. The
+  **old** committed GIF, re-coalesced for comparison, was uniformly ~8-10 alpha points higher
+  across all 8 frames than the (naive-crop) true source at the time — confirms the ghosting bug was
+  present here too, just smaller in magnitude than the Blupi-sprite cases because lava tile content
+  is mostly opaque (little transparent area to accumulate through), matching the
+  `08-animations.md` caveat that this test "can't rule out the same root cause being invisible" on
+  opaque tile content.
 - [ ] DOC-102 — Regenerate + verify `tile-anim-spike.gif` (animated tile: Spike).
 - [ ] DOC-103 — Regenerate + verify `tile-anim-crusher.gif` (animated tile: Crusher).
 - [ ] DOC-104 — Regenerate + verify `tile-anim-saw.gif` (animated tile: Saw).

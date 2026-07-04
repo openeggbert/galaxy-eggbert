@@ -12,9 +12,18 @@ namespace GalaxyEggbert {
 namespace BlockTypes {
 
 // object-m.png dimensions: 1301×1431 px, 64×64 px per tile, 20 columns.
+// Real packing (confirmed from mobile-eggbert's Pixmap::GetSrcRectangle,
+// PixmapChannel::Object case: srcGap=1) is NOT a flat 64px grid — each cell
+// sits on a 65px pitch (64px icon + 1px gap), with a 1px leading margin:
+// pixelX = kSheetGap + col*(kTileSize+kSheetGap), same for Y. Column/row
+// count is still derived from kTileSize alone (matches mobile-eggbert's own
+// `width / bitmapGridX` using the pre-gap grid size), so kSheetCols is
+// unaffected — only the per-tile pixel offset needs the gap term (see
+// tileUV() below).
 constexpr int kSheetW    = 1301;
 constexpr int kSheetH    = 1431;
 constexpr int kTileSize  = 64;
+constexpr int kSheetGap  = 1;
 constexpr int kSheetCols = kSheetW / kTileSize; // 20
 
 constexpr uint16_t Air      =   0;   // empty / no block
@@ -197,18 +206,26 @@ inline uint16_t fromMobileIconId(int icon) {
 }
 
 // UV of tile for icon index (row-major, 20 cols).
+// Pixel offset accounts for the real 65px pitch (kTileSize + kSheetGap), not
+// a flat 64px grid — see kSheetGap's comment above. Without this, sampling
+// drifts by 1px per column/row and bleeds neighbouring icons' pixels in by
+// the time it reaches later rows/columns (confirmed visually: icon 68 was
+// picking up ~4-9px of icon 48's content before this fix).
 // Half-pixel inset: at u_box=1.0, GPU computes floor(u_atlas * W) which without
 // inset lands on the FIRST pixel of the NEXT atlas tile, producing a dark seam.
 // Inset moves the sampled range to pixel centres [+0.5px .. lastPx-0.5px].
 inline void tileUV(int icon, float& uOff, float& vOff, float& uScale, float& vScale) {
+    constexpr int kPitch = kTileSize + kSheetGap;
     const int col = icon % kSheetCols;
     const int row = icon / kSheetCols;
+    const float pxX = static_cast<float>(kSheetGap + col * kPitch);
+    const float pxY = static_cast<float>(kSheetGap + row * kPitch);
     const float stepU = static_cast<float>(kTileSize) / static_cast<float>(kSheetW);
     const float stepV = static_cast<float>(kTileSize) / static_cast<float>(kSheetH);
     const float halfU = 0.5f / static_cast<float>(kSheetW);
     const float halfV = 0.5f / static_cast<float>(kSheetH);
-    uOff   = col * stepU + halfU;
-    vOff   = row * stepV + halfV;
+    uOff   = pxX / static_cast<float>(kSheetW) + halfU;
+    vOff   = pxY / static_cast<float>(kSheetH) + halfV;
     uScale = stepU - 2.0f * halfU;
     vScale = stepV - 2.0f * halfV;
 }

@@ -113,6 +113,24 @@ Most recent first. Committed and pushed to `origin/develop`: `galaxy-eggbert` co
 `b4c52c0` ("feat: add CubeMesh vertex builder and CubeMeshRenderer CNA draw adapter"). Everything
 below this line is **not committed yet** (see §9).
 
+- **Fixed a real tile-atlas UV bug shared by both engine targets (S3D-2 follow-up, new, not
+  committed)**: found while regenerating `mobile-eggbert-reference/tile-anim-lava.gif` (`DOC-101`)
+  — the user spotted a thick blue bar and a seam cutting the lava sprite in a screenshot.
+  `BlockTypes::tileUV()` (`include/GalaxyEggbert/BlockTypes.hpp`, shared by `GalaxyEggbertSimple3D`
+  and `GalaxyEggbertCNA`) assumed a flat, contiguous 64px grid in `object-m.png`; the real sheet
+  (confirmed from mobile-eggbert's own `Pixmap::GetSrcRectangle`, `PixmapChannel::Object`:
+  `srcGap=1`) is packed on a 65px pitch (64px icon + 1px gap) with a 1px leading margin, causing a
+  cumulative 1px/column/row drift that bled neighboring icons in by later rows/columns. Fixed by
+  adding `BlockTypes::kSheetGap=1` and using it in `tileUV()`'s pixel math, and passing the same
+  gap to `Easy3D::TextureAtlas::AddGrid` in `src/GalaxyEggbertCNA/Game/GETileAtlas.cpp` (which
+  already supported gap/offset params — no `../easy-3d` change needed); also corrected its row
+  count from ceil(1431/64)=23 to the pitch-aware floor((1431-1)/65)=22 (verified nothing used icons
+  in the old bogus row — highest named `BlockTypes` constant is 413). **Verified**: both
+  `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` rebuild clean; `GalaxyEggbertWorldsTests` still
+  54/54; a real `GalaxyEggbertCNA` run logs UV values matching the corrected formula by hand, and
+  its terrain-visibility check still shows real, multi-color textured terrain (25/25, 7 distinct
+  colors) — no regression. Full writeup in `plan.md` under `S3D-2`. Files:
+  `include/GalaxyEggbert/BlockTypes.hpp`, `src/GalaxyEggbertCNA/Game/GETileAtlas.cpp`.
 - **Invisible collision-only Blupi placeholder (E3D-MIG-060, new)**: added
   `GEBlupiController` (`src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`) — arrow keys move,
   Space jumps, grid-based collision against `Worlds::World` with step-up traversal (climbs up to 1
@@ -233,10 +251,24 @@ unaffected (it's not image-specific), but every generated image is being re-veri
 assumed correct, since 11 sprite-channel bugs have already turned up in that same effort. Per the
 user's explicit instruction, this has been broken into ~168 small, single-purpose tasks
 (`plan.md` §16, `DOC-100`–`DOC-267`) instead of a few large opaque passes, since the large-pass
-approach is part of how these gaps went undetected in the first place. **Nothing has been fixed
-yet — this session's remaining `NEXT.md`/`plan.md` update was scoped as analysis-only, per explicit
-user instruction ("toto je jenom analýza a aktualizace next.md a plan.md").** Start the actual fix
-with `plan.md`'s `DOC-100`.
+approach is part of how these gaps went undetected in the first place.
+
+**`DOC-100` (root cause) is now fixed and verified** — the old workflow assembled GIFs with plain
+`convert -delay D -loop 0 frame*.png out.gif`, which leaves every frame's GIF disposal method as
+`Undefined` (confirmed via `identify -format "%D"` on the existing broken GIFs). Without an
+explicit disposal, each new frame composites on top of whatever is still on the canvas from the
+previous one instead of a cleared background, so transparent/semi-transparent pixels let prior
+opaque pixels bleed through — mean alpha climbs then plateaus at saturation, matching the reported
+symptom exactly. Fix: `-dispose Background`, so each frame clears to a transparent canvas first.
+Verified with a synthetic 6-frame repro: broken path reproduced the climbing pattern
+(17.6→21.3→24.9→28.5→32.1→35.7), fixed path gave a flat 17.6 on every coalesced frame. Landed as
+`mobile-eggbert-reference/tools/make-gif.sh` (a real script this time, not an ad hoc `convert`
+invocation, so the same mistake can't silently recur across 129 regenerations).
+
+**`DOC-101` (`tile-anim-lava.gif`) is also done** — regenerated with the fixed tool, and along the
+way turned up + fixed the real `BlockTypes::tileUV` gap/pitch engine bug (see §3's top entry and
+`plan.md`'s `S3D-2`). 128 of the 129 GIFs (`DOC-102`–`DOC-229`) are still not regenerated — next is
+`DOC-102` (`tile-anim-spike.gif`).
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders end-to-end from the
 actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` → `Easy3D::CubeMesh`/
@@ -278,7 +310,8 @@ sibling repos (e.g. the `../cna` fix noted above).
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; stacked crates (y=1) untested |
 | risky assumption | `GalaxyEggbertCNA`'s world loader uses a relative path (`"worlds3d/world001.vwr"`, `"Content/icons/object-m.png"`) — only works if the binary is run from its own build directory; fails silently (world) or presumably throws (texture) otherwise |
 | incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — draws one full cube per non-air block regardless of neighbors. Fine at the current sample world's size (2749 blocks); will need revisiting for denser/taller hand-authored worlds |
-| confirmed, documentation only | All 129 animated GIFs in `mobile-eggbert-reference/images/` ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Not a galaxy-eggbert code bug, a documentation-tooling bug. Fix tracked as `plan.md` `DOC-100`; regeneration as `DOC-101`–`DOC-229`. |
+| confirmed, documentation only, tool now fixed | 128 of 129 animated GIFs in `mobile-eggbert-reference/images/` still ghost/accumulate previous frames instead of clearing (confirmed via alpha-channel analysis on coalesced frames — see §4). Root-cause tool fix landed (`DOC-100`) and `tile-anim-lava.gif` regenerated (`DOC-101`); the other 128 (`DOC-102`–`DOC-229`) still need regenerating with the fixed tool. |
+| fixed (2026-07-04) | ~~`BlockTypes::tileUV()` assumed a flat 64px grid in `object-m.png`, missing the sheet's real 1px inter-tile gap (65px pitch) — bled neighboring icons in by later rows/columns~~. Fixed in both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` — see §3's top entry and `plan.md`'s `S3D-2`. |
 
 ## 6. Architecture notes
 
@@ -420,13 +453,16 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Fix the `mobile-eggbert-reference/` GIF ghosting bug, then work through the ~168-task rework
-   list (in progress, reopened 2026-07-03 — see §4 and `plan.md` §16 for the full story).** Every
-   animated GIF needs regeneration; every static icon needs re-verification; `DOC-005`/`DOC-006`
-   (sounds, backgrounds) were never started. Start with `plan.md`'s `DOC-100` (root-cause fix for the
-   GIF bug — nothing else in that section can proceed correctly until this lands). Read-only research
-   against `../mobile-eggbert` plus local image/GIF tooling work — no galaxy-eggbert C++ code
-   changes.
+1. **Work through the ~168-task `mobile-eggbert-reference/` rework list (in progress, reopened
+   2026-07-03 — see §4 and `plan.md` §16 for the full story).** `DOC-100` (root-cause fix for the
+   GIF ghosting bug) and `DOC-101` (`tile-anim-lava.gif`, which also surfaced and fixed the real
+   `BlockTypes::tileUV` gap/pitch engine bug — see §3, `plan.md`'s `S3D-2`) are done. Next:
+   `DOC-102`, regenerate + verify `tile-anim-spike.gif` with the fixed tool and gap-aware crop
+   coordinates, then continue through `DOC-103`–`DOC-267` (127 more GIF regenerations, then
+   static-icon re-verification, then `DOC-005`/`DOC-006` sounds/backgrounds which were never
+   started). Read-only research against `../mobile-eggbert` plus local image/GIF tooling work —
+   the `BlockTypes.hpp`/`GETileAtlas.cpp` engine fix already landed this session; no further
+   galaxy-eggbert C++ code changes expected for the remaining GIF-regeneration tasks themselves.
 2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
