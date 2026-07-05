@@ -11,14 +11,17 @@ library (which currently wraps U3D/Urho3D). This is a real, working, playable bu
 
 ## Target direction
 
-The planned long-term implementation is **`GalaxyEggbertCNA`**, built directly on **CNA** (a C++
+The long-term implementation is **`GalaxyEggbertCNA`**, built directly on **CNA** (a C++
 reimplementation of the XNA 4.0 API), with **Easy3D** used as a small helper library beside CNA
 (cameras, texture atlas, billboard/cube batching). Easy3D does not hide CNA — Galaxy Eggbert code
 is free to call CNA directly at any time.
 
-**`GalaxyEggbertCNA` does not exist yet.** It is planned, not implemented — there is no CMake
-target for it today. See `easy3d.md` for the full migration analysis and `plan.md` (section
-"Direct CNA + Easy3D Migration") for the task list.
+**`GalaxyEggbertCNA` now exists** as an early-stage, opt-in build target (`src/GalaxyEggbertCNA/`,
+`-DGALAXY_EGGBERT_BUILD_CNA=ON`) — it builds, opens a window, and renders real, textured, animated
+3D terrain from a hand-authored world, but has no Blupi/object rendering, HUD, sound, or gameplay
+yet, and is far from feature parity with `GalaxyEggbertSimple3D`. See `NEXT.md` for its current
+status, `easy3d.md` for the original migration analysis (now a dated snapshot — see its own
+status-update banner), and `plan.md` (section "Direct CNA + Easy3D Migration") for the task list.
 
 The former long-term direction — Simple3D → U3D/Urho3D → Nova3D — is now superseded by direct
 CNA + Easy3D. `GalaxyEggbertSimple3D` remains the current working implementation and stays in the
@@ -59,36 +62,35 @@ cmake --build cmake-build-debug --target GalaxyEggbertWorldsTests -j2
 ./cmake-build-debug/GalaxyEggbertWorldsTests
 ```
 
-### Planned build — `GalaxyEggbertCNA` (not implemented yet)
+### `GalaxyEggbertCNA` build — early-stage, opt-in (default OFF)
 
-The commands below describe the intended CNA build once the `GalaxyEggbertCNA` target and the
-`GALAXY_EGGBERT_BUILD_CNA` CMake option exist. **They do not work today** — there is no such
-target in `CMakeLists.txt` yet. They are recorded here as the agreed target shape for when that
-work starts (see `plan.md`, "Next implementation batch — CNA target skeleton").
+Not at feature parity with Simple3D yet — see `NEXT.md` §2 for current status. Requires sibling
+checkouts of `../cna` and `../easy-3d` (or `-DCNA_HOME=`/`-DEASY3D_HOME=` overrides).
 
-#### Linux native build (planned)
+#### Linux native build (confirmed working)
 
 ```bash
-cmake -S . -B build-linux \
-  -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DCNA_BACKEND_SDL_RENDERER=OFF \
-  -DCNA_BACKEND_EASY_GL=ON \
-  -DCNA_BACKEND_BGFX=OFF
-cmake --build build-linux --target GalaxyEggbertCNA
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2
+cd build-cna && ./GalaxyEggbertCNA   # must run from its own build dir (relative asset paths)
 ```
 
-#### Windows native build (planned)
+The graphics backend (EasyGL on Linux by default, SDL_Renderer elsewhere) is CNA's own
+`CNA_GRAPHICS_BACKEND` cache option (`SDL_RENDERER` / `EASYGL` / `BGFX` / `VULKAN`), not a
+galaxy-eggbert-specific flag — pass `-DCNA_GRAPHICS_BACKEND=<value>` to override it.
+
+#### Windows native build (not verified in this session)
+
+Same commands as above, run from a Windows toolchain (e.g. CLion's bundled MinGW — see
+`WINDOWS.md` for known gaps, notably that runtime DLLs are not yet auto-copied next to the
+executable).
 
 ```powershell
-cmake -S . -B build-windows \
-  -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DCNA_BACKEND_SDL_RENDERER=ON \
-  -DCNA_BACKEND_EASY_GL=OFF \
-  -DCNA_BACKEND_BGFX=OFF
+cmake -S . -B build-windows -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
 cmake --build build-windows --target GalaxyEggbertCNA
 ```
 
-#### Windows cross-build from Linux (MinGW-w64) (planned)
+#### Windows cross-build from Linux (MinGW-w64) (not verified in this session)
 
 **Important: Always use a clean build directory when switching toolchains (e.g., `rm -rf build-windows`).**
 
@@ -99,15 +101,15 @@ cmake --build build-windows --target GalaxyEggbertCNA
 rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-  -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DCNA_BACKEND_SDL_RENDERER=ON \
-  -DCNA_WINDOWS_DEPENDENCIES_ROOT=/path/to/windows/sdl3/libs
+  -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
 cmake --build build-windows --target GalaxyEggbertCNA
 ```
 
-*Note: You must provide Windows-target SDL3 package configs (`SDL3`, `SDL3_image`, etc.) through `CNA_WINDOWS_DEPENDENCIES_ROOT` or `CMAKE_PREFIX_PATH`.*
+*Note: this requires Windows-target SDL3 package configs (`SDL3`, `SDL3_image`, etc.) discoverable
+via `CMAKE_PREFIX_PATH` or a similar override — the exact mechanism has not been re-verified
+against the current `CMakeLists.txt` in this session.*
 
-#### Web / Emscripten build (planned)
+#### Web / Emscripten build (not verified in this session — CNA's CMake path has no Emscripten-specific handling confirmed yet)
 
 ##### Prerequisites
 
@@ -162,7 +164,7 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 | `/worlds` | `worlds/` | Read-only; preloaded |
 | `/save` | IndexedDB (IDBFS) | Writable; persists save file |
 
-##### Notes (planned, once `GalaxyEggbertCNA` exists)
+##### Notes (planned — not yet confirmed working for `GalaxyEggbertCNA`'s Emscripten build)
 
 - Save data would be stored via IndexedDB (IDBFS), flushed on every write and on page unload.
 - Audio uses SDL_mixer; the browser may require a user gesture before audio starts.
@@ -171,14 +173,20 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 - **Game speed**: intended to use a fixed-timestep accumulator in `CNA/Game.cpp` to match native
   desktop timing, the same approach CNA already uses elsewhere.
 
-### Backend status (planned, for `GalaxyEggbertCNA`)
+### Backend status for `GalaxyEggbertCNA`
 
-- Windows: SDL_Renderer is the intended supported backend.
-- Linux: SDL_Renderer is intended to be supported; easy-gl can be enabled explicitly when needed.
-- Web (Emscripten): SDL_Renderer backend, experimental.
-- Android: planned, further out.
+- Linux: confirmed working, EasyGL backend by default (`CNA_GRAPHICS_BACKEND=EASYGL`).
+- Windows: SDL_Renderer is the intended supported backend; not verified in this session (see
+  `WINDOWS.md` for known gaps).
+- Web (Emscripten): SDL_Renderer backend, experimental — the CMake plumbing for it has not been
+  confirmed to exist for `GalaxyEggbertCNA` specifically (no Emscripten-specific handling found in
+  its part of `CMakeLists.txt` as of 2026-07-05).
+- Android: intended, see `ANDROID.md` — cross-check against `NEXT.md` for current status.
 
-None of the above is implemented yet — `GalaxyEggbertSimple3D` is the only backend that currently
-builds and runs.
+`GalaxyEggbertSimple3D` remains the only target with a fully verified, playable, cross-platform
+build; `GalaxyEggbertCNA` builds and renders real terrain on Linux today but is not yet at feature
+parity and its non-Linux backends are unverified.
 
 ## Progress
+
+See `NEXT.md` for current build status, recent changes, known bugs, and the next planned tasks.
