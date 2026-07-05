@@ -137,19 +137,34 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   round-trip-verified via `World::loadFromFile()`.
 
 ### What does not work yet
-- `GalaxyEggbertCNA`: no Blupi *rendering* (it's an invisible collision point — see §3), no
-  object/pickup rendering, no HUD, no sound, no real gameplay. `Easy3D::BillboardBatch`/`DebugDraw`
-  have no vertex builder or renderer adapter at all yet (needed for Blupi's sprite and objects).
+- `GalaxyEggbertCNA`: still no *3D* Blupi rendering — he's an invisible collision point in the
+  world (see §3). **Since 2026-07-05:** the camera is first-person (following his facing) and a
+  2D animation-state indicator (idle/walk/jump) shows in the screen's bottom-right corner as an
+  interim stand-in, but there is still no visible 3D character. No object/pickup rendering, no
+  HUD, no sound, no real gameplay. `Easy3D::BillboardBatch`/`DebugDraw` have no vertex builder or
+  renderer adapter at all yet (needed for Blupi's eventual 3D sprite and objects, once a 3D model
+  exists).
 - `GalaxyEggbertSimple3D`: no per-zone fog; Android/Web builds untested since the last engine
   change. (Camera shake is real and wired up — see §5, corrected 2026-07-05.)
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 181+ commits ahead of `origin/develop` as
+Most recent first. `galaxy-eggbert` `develop` branch is 183+ commits ahead of `origin/develop` as
 of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
-staleness pass + gameplay-behavior spec, below) is committed locally; whether it has been pushed
-depends on when you're reading this (see §9 for the push policy: push only on explicit request,
-never assume standing authorization).
+staleness pass + gameplay-behavior spec + interim Blupi camera/HUD, below) is committed locally;
+whether it has been pushed depends on when you're reading this (see §9 for the push policy: push
+only on explicit request, never assume standing authorization).
+
+**CNA-only direction confirmed + interim Blupi camera/HUD (2026-07-05).** User confirmed Galaxy
+Eggbert will run only on CNA long-term (`GalaxyEggbertSimple3D` is transitional, to be gradually
+removed, not kept indefinitely — see `CLAUDE.md`). Also approved the `15-3d-render-mapping-design.md`
+proposal (§3 below has the full writeup) and, since no Blupi 3D model exists yet, confirmed the
+interim plan: first-person camera + a 2D animation-state indicator. Implemented and verified by
+screenshot (see §2/§8): `GEBlupiController` (CNA) now tracks a facing yaw and a coarse
+`Stop`/`March`/`Jump` animation state (frame tables ported from `GalaxyEggbertSimple3D`'s own
+code); the camera is first-person; a `SpriteBatch`-drawn indicator shows the current frame in the
+screen's bottom-right corner. Also re-verified `GalaxyEggbertCNA`'s terrain stats against the
+current 2729-block world (65496 vertices, 32748 triangles, 25/25 visibility-check points) — see §7.
 
 **Gameplay-behavior specification, `DOC-300`-`DOC-306` (8 commits, 2026-07-05) — NEW INITIATIVE,
 first pass COMPLETE.** The user explicitly asked whether all objects/animations/etc. were fully
@@ -549,16 +564,20 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    mapping-design decisions (task 1), not precede them.
 4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
    task 2/3); not needed at the current ~2700-block scale.
-5. **IN PROGRESS (2026-07-05): interim Blupi representation** — no Blupi 3D model exists yet (see
-   §1), so full billboard rendering (`E3D-MIG-061..063`) waits for it. Near-term scope instead:
-   switch the CNA camera from its current third-person chase view to a first-person/player-view
-   camera (`GEBlupiController` gains a facing yaw), plus a small 2D animation-state indicator
-   (idle/walk/jump) drawn in the screen's bottom-right corner via `SpriteBatch`, reusing
-   `GalaxyEggbertSimple3D`'s already-approved `blupi.png` frame tables. **Files:**
+5. ~~Interim Blupi representation~~ — **DONE (2026-07-05)**. No Blupi 3D model exists yet (see
+   §1), so full billboard rendering (`E3D-MIG-061..063`) still waits for it, but the interim scope
+   is implemented: `GEBlupiController` (CNA) now tracks a facing yaw (from movement input, holds
+   its last value while idle/airborne) and a coarse `Stop`/`March`/`Jump` animation state at 8fps,
+   exposing `GetAnimIcon()` for the `blupi.png` frame to show — frame tables ported from
+   `GalaxyEggbertSimple3D`'s own already-approved `GEBlupiController.cpp`, not a fresh
+   mobile-eggbert transcription. `GalaxyEggbertCnaGame`'s camera switched from the old third-person
+   chase offset to first-person (position = Blupi's eye height, target = eye + facing direction);
+   a `SpriteBatch`-drawn 2D indicator now shows the current animation frame in the screen's
+   bottom-right corner. **Verified** by building, running, and screenshotting: first-person
+   ground-level view confirmed visually, indicator visible, and holding the Up key changed ~18% of
+   on-screen pixels (camera + position genuinely updating). **Files:**
    `src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`,
-   `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`. **Verification:** build + run
-   `GalaxyEggbertCNA`, confirm the view is first-person and the corner indicator changes between
-   idle/walk/jump as Blupi moves.
+   `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`.
 6. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
