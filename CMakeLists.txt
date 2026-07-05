@@ -187,12 +187,14 @@ if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
 endif() # GALAXY_EGGBERT_BUILD_SIMPLE3D
 
 # =============================================================================
-# Direct CNA + Easy3D skeleton target — GalaxyEggbertCNA (planned direction)
+# Direct CNA + Easy3D target — GalaxyEggbertCNA (long-term direction, see CLAUDE.md
+# "Current Direction Lock")
 #
-# OFF by default; does not affect the default build. This is the first
-# skeleton step of the new long-term direction (see easy3d.md, plan.md
-# "Direct CNA + Easy3D Migration"). It only opens a window and clears the
-# screen to a solid color — no gameplay, no assets, no worlds.
+# OFF by default; does not affect the default build. Early-stage: renders real,
+# textured, animated 3D terrain from a hand-authored world, with an invisible
+# collision-only Blupi — no Blupi/object rendering, HUD, or sound yet. See
+# NEXT.md for current status (easy3d.md/plan.md "Direct CNA + Easy3D Migration"
+# for the original analysis and task list).
 #
 # Build with:
 #   cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
@@ -344,7 +346,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         )
     endif()
 
-    message(STATUS "GalaxyEggbertCNA target enabled (skeleton — no gameplay yet).")
+    message(STATUS "GalaxyEggbertCNA target enabled (renders terrain, no gameplay yet).")
 
 endif() # GALAXY_EGGBERT_BUILD_CNA
 
