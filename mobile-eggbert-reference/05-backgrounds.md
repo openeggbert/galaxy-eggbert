@@ -109,7 +109,7 @@ graphics drawn as UI overlays, not full-screen phase backgrounds:
 | File | Real trigger |
 |---|---|
 | `speedyblupi.png` | The "SpeedyBlupi" title logo — drawn by `Game1::DrawBackgroundFade()` during the fade-in/fade-out transition animation between phases. |
-| `blupiyoupie.png` | The "Youpie" (celebration) character graphic — drawn in several places in `Game1::Draw()`/`DrawBackgroundFade()` during win/celebration animation beats (rotating/scaling entrance effects). |
-| `gear.png` | A spinning gear icon — drawn by `Game1::DrawButtonsBackground()` behind the on-screen button chrome (two overlapping copies, counter-rotating). |
+| `blupiyoupie.png` | The "Youpie" mascot graphic — drawn by `Game1::DrawBackgroundFade()` across four separate phase blocks (`Init`, `Pause`/`Resume`, `Lost`, `Win`). It is the general non-gameplay-screen mascot, not a win-specific celebration graphic — only one of its four usage sites is actually win-related. |
+| `gear.png` | A spinning gear icon — drawn by `Game1::DrawBackgroundFade()` (not `DrawButtonsBackground()`), only during the `MainSetup`/`PlaySetup` fade transition. Two copies are drawn, but not symmetrically counter-rotating: one uses `rotation`, the other `(0.0 - rotation) * 0.5` (opposite sign, half magnitude). |
 
 This closes `DOC-006` (the full background catalog) entirely.
