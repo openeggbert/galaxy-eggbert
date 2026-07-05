@@ -1,10 +1,12 @@
 # 3D Render Mapping Design — Block Types → Render Treatment
 
-**Status: PROPOSAL, not yet approved/implemented (2026-07-05).** This resolves the render-mode
-question raised in `09-open-questions.md`'s first bullet with concrete answers, grounded in what
-`GalaxyEggbertCNA`'s renderer actually supports today and in the full tile/object catalogs
-(`02-tiles.md`, `03-objects.md`) plus the new gameplay-behavior spec (`10`-`14-*.md`). Nothing here
-is implemented yet — this is a design to review before any code changes.
+**Status: APPROVED (2026-07-05), not yet implemented.** User confirmed the §6 recommendation
+(`MoveObject`s stay a separate list, not embedded `World` blocks) explicitly; the rest of the
+proposal (§3-§5 render-mode categorization) stands as written. This resolves the render-mode
+question raised in `09-open-questions.md`'s first bullet, grounded in what `GalaxyEggbertCNA`'s
+renderer actually supports today and in the full tile/object catalogs (`02-tiles.md`,
+`03-objects.md`) plus the gameplay-behavior spec (`10`-`14-*.md`). Approved as a design — actual
+implementation (billboard renderer, etc.) is separate, scoped work, tracked in `NEXT.md` §8.
 
 ## 1. What the renderer actually supports today (confirmed by reading source)
 

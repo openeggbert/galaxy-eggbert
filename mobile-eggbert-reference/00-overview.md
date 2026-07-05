@@ -69,7 +69,7 @@ tracked file-by-file in `plan.md` §16.3 (`DOC-230`-`DOC-234`).
 | `12-hazards-and-interactables.md` | What happens when Blupi touches each hazard/interactive tile (lava, spikes, saw, crusher, spring, teleporter, water, fan, etc.) | New (`DOC-302`, 2026-07-05) |
 | `13-object-pickups.md` | Pickup/power-up `ObjectType` mechanics (treasure, keys, shield, drink, charge, mirror, vehicles, etc.) | New (`DOC-304`, 2026-07-05) |
 | `14-crates-lifts-bridges-effects.md` | Crate push, platform lifts, dynamite, bridge construction, destruction/death effects | New (`DOC-306`, 2026-07-05) |
-| `15-3d-render-mapping-design.md` | Proposed render-mode mapping (billboard vs. cube) for every block type/`ObjectType`, resolving two `09-open-questions.md` items | **Proposal, not yet approved/implemented** (2026-07-05) |
+| `15-3d-render-mapping-design.md` | Render-mode mapping (billboard vs. cube) for every block type/`ObjectType`, resolving two `09-open-questions.md` items | **Approved** (2026-07-05), not yet implemented |
 
 ## How images were generated
 
