@@ -149,11 +149,27 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 183+ commits ahead of `origin/develop` as
+Most recent first. `galaxy-eggbert` `develop` branch is 184+ commits ahead of `origin/develop` as
 of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
-staleness pass + gameplay-behavior spec + interim Blupi camera/HUD, below) is committed locally;
-whether it has been pushed depends on when you're reading this (see §9 for the push policy: push
-only on explicit request, never assume standing authorization).
+staleness pass + gameplay-behavior spec + interim Blupi camera/HUD + 3D-mapping open questions,
+below) is committed locally; whether it has been pushed depends on when you're reading this (see
+§9 for the push policy: push only on explicit request, never assume standing authorization).
+
+**5 more `09-open-questions.md` items resolved (2026-07-05) — `15-3d-render-mapping-design.md` §9
+addendum.** Continuing from the approved render-mode design: doors (no new design needed — closed
+door stays `UniformCube`, door-open animation already `Billboard` via `ObjectType22`); `BigDecor`
+(confirmed by exhaustive `Decor.cpp` grep to be purely decorative/non-colliding — never referenced
+by any collision function — recommend `Billboard`, not folded into the main grid, not a second
+`World` layer); hazard-animation phase (no change — it's a shared, group-wide counter in
+mobile-eggbert, not per-instance state, so per-block metadata would be redundant with the working
+CPU-rebuild approach); backgrounds/skybox (recommend keeping flat sky-clear-color — the source art
+is flat 2D, a poor fit for real skybox geometry, and neither CNA nor `../easy-3d` has any skybox
+capability today); teleporter pairing (keep implicit scan-based, matches existing code). Also
+narrowed (not closed) the billboard walk-cycle mismatch note: the first-person camera means the
+player never sees Blupi's own billboard, so it no longer applies to him, though it's still real for
+future enemy billboards. Of the file's original 9 questions, 7 are now resolved — only that
+narrowed walk-cycle item and the 7 partial-support `ObjectType`s' implementation priority remain
+open, both deliberately (neither is a rendering/research question).
 
 **CNA-only direction confirmed + interim Blupi camera/HUD (2026-07-05).** User confirmed Galaxy
 Eggbert will run only on CNA long-term (`GalaxyEggbertSimple3D` is transitional, to be gradually
@@ -551,20 +567,32 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **`BigDecor` layer treatment, door rendering, and the remaining open questions** — see
-   `09-open-questions.md`, now narrower since the billboard/cube and `MoveObject`-embedding
-   questions are resolved (`15-3d-render-mapping-design.md`, approved 2026-07-05). Not yet scoped
-   as its own `DOC-*`/`E3D-MIG-*` id.
-2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
+1. ~~`BigDecor` layer treatment, door rendering, and the remaining open questions~~ — **DONE
+   (2026-07-05)**. `15-3d-render-mapping-design.md` §9 addendum resolved doors (no new design
+   needed — closed door stays `UniformCube`, door-open animation already `Billboard` via
+   `ObjectType22`), `BigDecor` (confirmed non-colliding by exhaustive source check, recommend
+   `Billboard`), hazard-animation metadata (no change — keep the CPU-rebuild approach), background/
+   skybox rendering (recommend keeping flat sky-clear-color, not a real skybox), and teleporter
+   pairing (keep implicit scan-based). Of `09-open-questions.md`'s original 9 questions, 7 are now
+   resolved — only the billboard walk-cycle mismatch (narrowed to future enemy billboards, doesn't
+   apply to Blupi's own first-person view) and the 7 partial-support `ObjectType`s' implementation
+   priority remain deliberately open.
+2. **Implement the approved 3D render-mapping design** — `Easy3D::BillboardBatch`'s vertex
+   builder + CNA renderer adapter (`E3D-MIG-061..063`, already planned) for the ~68 `Billboard`
+   `ObjectType`s and `BigDecor`; a small `Easy3D::CubeBatch`-based path (reusing existing terrain
+   cube machinery) for platform lifts + crates. See `15-3d-render-mapping-design.md` §7 for the
+   full breakdown. Waits on an actual 3D Blupi model for the Blupi-specific part, but object/enemy/
+   `BigDecor` billboards don't need one.
+3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
-3. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+4. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
    proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
-   genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — this should follow the
-   mapping-design decisions (task 1), not precede them.
-4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
-   task 2/3); not needed at the current ~2700-block scale.
-5. ~~Interim Blupi representation~~ — **DONE (2026-07-05)**. No Blupi 3D model exists yet (see
+   genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — now that the
+   mapping-design decisions (task 1) are settled, this can proceed.
+5. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
+   task 3/4); not needed at the current ~2700-block scale.
+6. ~~Interim Blupi representation~~ — **DONE (2026-07-05)**. No Blupi 3D model exists yet (see
    §1), so full billboard rendering (`E3D-MIG-061..063`) still waits for it, but the interim scope
    is implemented: `GEBlupiController` (CNA) now tracks a facing yaw (from movement input, holds
    its last value while idle/airborne) and a coarse `Stop`/`March`/`Jump` animation state at 8fps,
@@ -578,15 +606,15 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    on-screen pixels (camera + position genuinely updating). **Files:**
    `src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`,
    `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`.
-6. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+7. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-7. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+8. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-8. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
+9. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
    §5). `GECameraRig::StartShake()` already calls a real `../simple-3d` `Camera::Shake()` API and
    is wired up at 5 death/hazard call sites. If it still doesn't look right in-game, the next step
    would be tuning intensity/duration to match mobile-eggbert's `DecorAction::SmallShake` feel, not
