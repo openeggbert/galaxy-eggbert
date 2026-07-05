@@ -22,8 +22,20 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 **Important architectural decisions** (recorded in `plan.md`/`easy3d.md`/`CLAUDE.md`):
 
 - Direct CNA + Easy3D supersedes the old Simple3D → U3D → Nova3D direction as the long-term
-  target. `GalaxyEggbertSimple3D` is **not being deleted** — it stays as the working reference
-  until the CNA/Easy3D path reaches feature parity with it.
+  target. **Updated 2026-07-05: Galaxy Eggbert will run only on CNA long-term.**
+  `GalaxyEggbertSimple3D` is transitional, not permanent — it will be **gradually removed** from
+  galaxy-eggbert as `GalaxyEggbertCNA` gains equivalent functionality, piece by piece, not kept
+  indefinitely "as reference." It remains the only playable target today and stays intact for now
+  (no removal without an explicit task), but its long-term fate is removal.
+- **No Blupi 3D model exists yet (noted 2026-07-05); the user will provide 3D models in the
+  future.** Until then, `GalaxyEggbertCNA` cannot render a visible 3D Blupi character at all — the
+  interim plan: (1) only a **player-view/first-person-style camera** is possible for now (no
+  third-person view, since there'd be nothing behind the camera to see); (2) Blupi's *current
+  animation state* (idle/walk/jump/etc.) is shown as a small 2D indicator in roughly the
+  **bottom-right corner of the screen** — reusing the existing 2D sprite animations/GIFs already
+  cataloged in `08-animations.md` — purely to signal what action is happening (e.g. the walk
+  animation plays there while Blupi walks), not as an in-world 3D character. This is a stopgap,
+  not a design decision about the eventual 3D Blupi's look.
 - Easy3D is a small helper library beside CNA (cameras, texture atlas, batching, mesh building,
   renderer adapters) — it must not hide CNA; game code may call CNA directly.
 - `../mobile-eggbert` is **read-only**. Its assets (PNGs, sounds, world files) are freely reused
@@ -565,8 +577,12 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 9. Do not do yet
 
-- No further investment in Simple3D/U3D/Nova3D beyond bug fixes on the existing reference target
-  — that direction is superseded.
+- No further investment in Simple3D/U3D/Nova3D beyond bug fixes on the existing playable target —
+  that direction is superseded and, per the 2026-07-05 update above, is scheduled for gradual
+  removal, not indefinite retention.
+- No deleting/removing any `GalaxyEggbertSimple3D` code without an explicit removal task — "gradual
+  removal" is the stated long-term direction, not standing authorization to start removing pieces
+  unprompted.
 - No modifications to `../mobile-eggbert`, `../cna`, `../easy-3d`, or `../simple-3d` without
   explicit user approval for that specific change — none of the approvals granted so far are
   blanket authorization for further edits.

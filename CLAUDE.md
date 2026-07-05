@@ -6,7 +6,9 @@
 
 The current buildable implementation, `GalaxyEggbertSimple3D`, is written in C++ using the
 **Simple3D** API (`../simple-3d`), which currently wraps **U3D** (`u3d-community/U3D`, a Urho3D
-fork). This is the working, playable target today — see `NEXT.md` for its status.
+fork). This is the working, playable target today — see `NEXT.md` for its status. It is
+**transitional, not permanent**: Galaxy Eggbert will run only on CNA long-term, and Simple3D will
+be gradually removed as `GalaxyEggbertCNA` matures (see "Current Direction Lock" below).
 
 The **long-term implementation**, `GalaxyEggbertCNA`, now exists as an early-stage, opt-in build
 target (`src/GalaxyEggbertCNA/`) — it builds, opens a window, and renders real, textured,
@@ -31,9 +33,13 @@ This supersedes the old long-term direction:
 Galaxy Eggbert -> Simple3D -> U3D / Urho3D / Nova3D -> (CNA someday)
 ```
 
-`GalaxyEggbertSimple3D` is **not being removed**. It remains the current working implementation
-and stays in the repository as a historical/reference implementation until the CNA/Easy3D target
-(`GalaxyEggbertCNA`) reaches feature parity with it.
+**`GalaxyEggbertCNA` is the sole intended end state (updated 2026-07-05).** Galaxy Eggbert will
+run only on CNA — `GalaxyEggbertSimple3D` is a transitional target, not a permanent one. It will be
+**gradually removed** from galaxy-eggbert as `GalaxyEggbertCNA` gains equivalent functionality,
+piece by piece, not kept indefinitely "as reference." For now it remains the only playable target
+and stays intact — do not delete any of it without an explicit removal task from the user, and
+this does not loosen the "no new engine-layer investment" rule below — but treat its presence as
+temporary, not as a permanent historical fixture.
 
 **Before doing any migration work, read `easy3d.md` (full analysis) and `plan.md` (section
 "Direct CNA + Easy3D Migration", task IDs `E3D-MIG-*`).**
@@ -53,8 +59,10 @@ Rules for this direction:
   build-time copy is allowed only once the asset strategy task is approved/implemented — do not
   wire up ad hoc asset paths outside that plan.
 - Prefer new CNA/Easy3D code under `src/GalaxyEggbertCNA/` (see "Source layout" below).
-- Do not mutate `src/GalaxyEggbertSimple3D/` into the CNA implementation. Keep it intact as
-  historical/current reference; the CNA path is new code in a new tree.
+- Do not mutate `src/GalaxyEggbertSimple3D/` into the CNA implementation. Keep it intact for now
+  (it's the only playable target); the CNA path is new code in a new tree. Its long-term fate is
+  gradual removal as CNA gains equivalent capability, not permanent retention — but don't remove
+  any of it without an explicit removal task.
 - Easy3D is a helper library beside CNA — do not hide CNA behind Easy3D, and do not let Easy3D
   grow into a scene graph / ECS / engine. See `easy3d.md` §7 for what does and does not belong in
   Easy3D.
