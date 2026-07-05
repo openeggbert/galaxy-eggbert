@@ -200,10 +200,10 @@ per-block metadata — the first real use of the facing bits §3 reserved but ne
 longer exceptions. Icon 202 needs a genuinely new geometry (a thin bar/rod Blupi walks on top of
 to cross a hazard — not billboard, not full cube, not `DirectionalCube` either), tentatively named
 `thin-bar`, not designed yet. Icon 200 (`Platform`) confirmed likely misnamed — user describes it
-as a passable grate with open (not just fallback-colored) top/bottom. **A second Q&A round is
-planned for the other ~137 §10.2-§10.5 icons** (Billboard/ThinMechanical/special-surface/
-architectural-kit), to replace the first-pass 8-agent guesses with direct user identification the
-same way — scope (all ~137, or some subset) still being confirmed with the user.
+as a passable grate with open (not just fallback-colored) top/bottom. **Second Q&A round created (2026-07-07)** — user chose the larger scope: all ~280 remaining named
+tiles (not just the ~137 already flagged in §10.2-§10.5), so `questionnaire-all-remaining-tiles.md`
+covers every named icon except the 34 above, each with its current name/category/usage and a
+blank "what is it / render mode" pair to fill in. Not yet answered as of this writing.
 
 **Terrain-tile render-mode labeling pass, `02-tiles.md` (2026-07-06).** Follow-up to the finding
 directly below: 171 of the 314 named tiles now carry an inline render-mode note in their Category
