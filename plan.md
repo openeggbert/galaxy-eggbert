@@ -2419,4 +2419,52 @@ from the wrong sheet), these deserve a real re-check, not an assumption they're 
 
 ---
 
-*Total tasks: ~820 (~650 gameplay/engine + ~168 documentation-rework tasks in §16, `DOC-100`–`DOC-267`). Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22), Documentation rework (168).*
+## 17. Independent review pass, CLAUDE.md/repo-wide staleness fix, and gameplay-behavior spec (2026-07-05)
+
+**Status: COMPLETE.** Three sequential efforts, all user-requested, all committed 2026-07-05.
+
+**`DOC-268`-`DOC-276` — independent review pass over the `DOC-100`-`DOC-267` rework.** The user
+asked for a genuinely independent second check before trusting the rework as ground truth. 6
+parallel agents re-verified all 10 `mobile-eggbert-reference/*.md` files against
+`../mobile-eggbert` source, galaxy-eggbert's own code, and the image/GIF assets on disk. Found and
+fixed 13 real errors across 5 files (00-overview.md, 03-objects.md, 04-enemy-behavior.md,
+06-doors.md, 09-open-questions.md came back clean) — see `NEXT.md` §3 for the full per-file list
+(wrong draw-site claims, incomplete sound triggers, a mislabeled excerpt, a Crusher/Saw file-count
+copy-paste error, an inverted Water1/Water2 categorization, a miscategorized tile constant, a wrong
+animation-count summary, a swapped table attribution).
+
+**`DOC-278` — `CLAUDE.md` staleness fix, then a repo-wide doc sweep.** The review above surfaced
+that `CLAUDE.md` itself still claimed `GalaxyEggbertCNA` "does not exist yet" — fixed. The user
+then asked to sweep every `.md` file in the repo (not just the reference tree) for the same kind of
+staleness. Found and fixed: `NEXT.md`'s own stale camera-shake bug entry (it's real and working);
+deleted 3 completed Simple3D-migration docs (`docs/simple3d_migration.md`,
+`docs/simple3d_migration_task.md`, `docs/SIMPLE3D_GAPS.md`) plus 2 vestigial dead headers, all
+describing a legacy Urho3D tree that no longer exists; fixed `easy3d.md`'s dangling references and
+added a dated-snapshot status banner; rewrote `WINDOWS.md` to match the actual CMake build (not
+fictional helper functions); fixed `README.md`'s matching CNA-staleness and wrong CMake option
+names; fixed `ANDROID.md`'s stale NDK version/clone-path/ABI claims; fixed `World Format.md`'s
+broken example header path and a missing struct field; fixed two stale "skeleton" comments in
+`CMakeLists.txt`.
+
+**`DOC-300`-`DOC-306` — first prose gameplay-behavior spec.** The user asked whether all
+objects/animations were "completely" documented; told that the existing catalog covers *what
+exists* but not *how it behaves* (`Decor.cpp` was reference-only, no-transcription per this file's
+own §5 rules), the user gave scoped approval: prose behavior + key numeric constants (not
+pseudocode, not verbatim code) for `ObjectType` Category A+B and core Blupi mechanics, recorded in
+`CLAUDE.md`. 7 parallel agents drafted 5 new files (`10-blupi-mechanics.md`,
+`11-save-and-progression.md`, `12-hazards-and-interactables.md`, `13-object-pickups.md`,
+`14-crates-lifts-bridges-effects.md`) and extended 2 existing ones (`04-enemy-behavior.md`,
+`06-doors.md`); 7 independent agents then adversarially verified each against
+`Decor.cpp`/`GameData.cpp`/`Game1.cpp`, finding and fixing ~20 real errors. Two findings stood out:
+bridge tiles genuinely lose floor support during most of their construction animation (a draft
+claim that they were "purely cosmetic" was reversed by verification, which also caught a
+pre-existing `02-tiles.md` error on the same tile); and mobile-eggbert genuinely supports vertical
+crate-stack linking, narrowing the scope of `NEXT.md`'s existing "stacked crates untested"
+limitation note. Also fixed two cross-file classification errors this surfaced in `03-objects.md`
+(`ObjectType46` is "Overcraft" not "balloon"; `ObjectType18` is vestigial, not a "patrol walker
+enemy"). This is documentation only — porting any of it into actual game code remains a separate,
+per-feature decision each time.
+
+---
+
+*Total tasks: ~865 (~650 gameplay/engine + ~168 documentation-rework tasks in §16, `DOC-100`–`DOC-267`, + ~9 review/staleness tasks + 7 gameplay-behavior-spec tasks in §17, `DOC-268`–`DOC-306`). Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22), Documentation rework (168), Review/staleness/behavior-spec (16).*

@@ -135,11 +135,63 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 173+ commits ahead of `origin/develop` as
+Most recent first. `galaxy-eggbert` `develop` branch is 181+ commits ahead of `origin/develop` as
 of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
-staleness pass, below) is committed locally; whether it has been pushed depends on when you're
-reading this (see §9 for the push policy: push only on explicit request, never assume standing
-authorization).
+staleness pass + gameplay-behavior spec, below) is committed locally; whether it has been pushed
+depends on when you're reading this (see §9 for the push policy: push only on explicit request,
+never assume standing authorization).
+
+**Gameplay-behavior specification, `DOC-300`-`DOC-306` (8 commits, 2026-07-05) — NEW INITIATIVE,
+first pass COMPLETE.** The user explicitly asked whether all objects/animations/etc. were fully
+specified, and — after being told the existing catalog documents *what exists* but not *how it
+behaves* (`Decor.cpp` stayed "reference only, do not transcribe" per `CLAUDE.md`) — gave scoped
+approval to add a genuine prose gameplay-behavior spec to `mobile-eggbert-reference/`: behavior in
+words + key numeric constants (not pseudocode, not verbatim code transcription), covering
+`ObjectType` Category A+B (~70 IDs with real behavior) and core Blupi mechanics. Recorded in
+`CLAUDE.md`'s reuse table; this is documentation, not a license to copy logic into actual game
+code. 7 parallel agents drafted, then 7 independent agents adversarially verified each against
+`Decor.cpp`/`GameData.cpp`/`Game1.cpp` — found and fixed **~20 real errors**, including one
+significant one (see below). New/extended files:
+- `10-blupi-mechanics.md` (new) — Blupi's core movement/jump/gravity physics, ground detection,
+  ghost mode, death handling, per-vehicle-mode constants (helicopter/overcraft/balloon/ecrase/
+  jeep/tank/skateboard/swim/surf/suspended).
+- `11-save-and-progression.md` (new) — save/load behavior (conceptual only, no byte layout —
+  that stays a separate open question per `easy3d.md` §12 Q7), world/mission transitions, lives
+  lifecycle.
+- `12-hazards-and-interactables.md` (new) — what happens when Blupi touches each hazard/
+  interactive tile (lava, spikes, saw, crusher, spring, teleporter, water states, fans, etc).
+- `13-object-pickups.md` (new) — pickup/power-up mechanics for all 20 non-key pickup `ObjectType`s.
+- `14-crates-lifts-bridges-effects.md` (new) — crate push (including real vertical-stack linking,
+  see below), platform lifts, dynamite, bridge construction, destruction/death effects.
+- `06-doors.md` (extended) — full door/key gameplay logic (treasure-gated doors, win/lose door
+  effects, key persistence, `AdaptDoors`/`SearchDoor`).
+- `04-enemy-behavior.md` (extended) — per-enemy-type patrol/attack/contact/death detail.
+
+**Two findings worth flagging specifically:**
+- **Bridge tiles are NOT purely cosmetic during construction** (a draft claim that verification
+  caught and reversed) — `Tables::table_decor_quart` (the real ground-contact check, not
+  `IsPassIcon`) shows the bridge cell loses floor support for 136 of its 157 construction ticks,
+  corroborated independently by galaxy-eggbert's own `BlockTypes::kPassable[364]=false`. This also
+  surfaced a **pre-existing error in `02-tiles.md`**, now fixed: icon 364 was labeled "passable in
+  2D," which was never true.
+- **mobile-eggbert genuinely supports vertical crate-stack linking** (`SearchLinkCaisse` links
+  crates vertically, not just horizontally, moving a whole stack atomically) — but the
+  floor-support gap-check only ever applies to the row Blupi is directly pushing; linked crates
+  above that row skip it entirely. This means the existing known-limitation note in §5
+  ("crate push floor-support check only tested at y=0; stacked crates untested") is narrower than
+  it sounds — the real open question is whether stacked crates *link and move together at all* in
+  galaxy-eggbert's own port, not the support-check depth.
+
+Also fixed two smaller cross-file classification errors surfaced by verification:
+`ObjectType46` was misclassified in `03-objects.md` as a "balloon" pickup — it's actually
+"Overcraft" (sets `m_blupiOver`, identical to `CheatCodes::Overcraft`; traced to mobile-eggbert's
+own self-contradictory `ObjectType.hpp` comment). `ObjectType18` was grouped as a "patrol walker
+enemy" in `03-objects.md`'s summary despite being confirmed fully vestigial (one incidental
+`DynamiteStart` destroy-list reference, no real behavior) — removed from that grouping.
+
+**Not yet done:** this is the *first pass* — porting any of this into actual gameplay code (either
+target) remains a separate, per-feature decision each time (per the approval's own scope), not
+something this pass did or was meant to do.
 
 **Repo-wide documentation staleness sweep (2026-07-05, ~9 commits) — COMPLETE, user-requested
 follow-up to the CLAUDE.md fix above.** Audited every `.md` file in the repo (not just
@@ -483,8 +535,9 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    output.
 2. **The actual 3D-mapping design task** (billboard vs. textured-cube for objects, `BigDecor`
    layer treatment, door rendering, etc. — see `09-open-questions.md`) — the reference material's
-   independent review pass (§3, `DOC-268`-`276`) is now done, so this is unblocked; not yet scoped
-   as its own `DOC-*`/`E3D-MIG-*` id.
+   independent review pass (§3, `DOC-268`-`276`) is done, and it now also has a verified prose
+   gameplay-behavior spec to draw on (`10`-`14-*.md`, `DOC-300`-`306`), so this is unblocked with
+   more grounding than before; not yet scoped as its own `DOC-*`/`E3D-MIG-*` id.
 3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
