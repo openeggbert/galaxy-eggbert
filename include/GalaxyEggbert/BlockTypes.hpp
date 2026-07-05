@@ -32,7 +32,12 @@ constexpr uint16_t Air      =   0;   // empty / no block
 constexpr uint16_t Ground   =  10;   // grass/ground
 constexpr uint16_t StoneA   =  18;   // light stone
 constexpr uint16_t StoneB   =  25;   // dark stone
-constexpr uint16_t Wall     = 183;   // brick wall
+// Renamed from Wall (2026-07-06) -- confirmed by direct crop inspection to be a
+// golden pillar/post, not brick-wall texture; rare (1/78 files, only 12 cells,
+// forming a gate/portal-frame shape immediately after icon 182, the real door
+// tile). See mobile-eggbert-reference/02-tiles.md and
+// mobile-eggbert-reference/15-3d-render-mapping-design.md for the full finding.
+constexpr uint16_t GoldPillar = 183;
 constexpr uint16_t Platform = 200;   // floating platform
 constexpr uint16_t Sp0      = 158;
 constexpr uint16_t Sp1      = 159;

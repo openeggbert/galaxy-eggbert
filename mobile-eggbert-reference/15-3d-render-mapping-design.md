@@ -10,6 +10,9 @@ implementation (billboard renderer, etc.) is separate, scoped work, tracked in `
 **§9 addendum (same day):** resolves 5 more `09-open-questions.md` items (doors, `BigDecor`,
 hazard-animation metadata, background/skybox rendering, teleporter pairing) — same approval
 status, not yet implemented.
+**§4 correction (2026-07-06, user-caught):** icon 183 (renamed `GoldPillar`, was misclassified as
+`Wall`) is the one exception to "all terrain is `UniformCube`" — see §4's updated text. This is a
+factual correction to the original §4 claim, not a new open decision.
 
 ## 1. What the renderer actually supports today (confirmed by reading source)
 
@@ -74,10 +77,21 @@ decoration.
 
 ## 4. Terrain tiles (block-type-id space): categorization
 
-**All 441 tile icons → `UniformCube`.** No exceptions found. This matches current behavior
-exactly — no rendering code changes needed for terrain. (`Bridge`, icon 364, keeps its existing
+**Default: `UniformCube`.** Matches current behavior for essentially all 441 tile icons — no
+rendering code changes needed for ordinary terrain. (`Bridge`, icon 364, keeps its existing
 special-cased animated/collision handling from `GETerrainRenderer` — that's a construction-sequence
 detail, not a render-mode question; see `14-crates-lifts-bridges-effects.md`.)
+
+**One exception found (2026-07-06, user-caught):** icon 183 (`BlockTypes::GoldPillar`, renamed
+from the wrong `Wall` name/description — see `02-tiles.md`'s corrected row) is visually a golden
+pillar/post, not brick-wall texture, confirmed by direct crop inspection. It's rare (1/78 files,
+only 12 cells, forming a two-column gate/portal-frame shape immediately after icon 182 — the real
+door tile, per `06-doors.md`'s `SearchDoor`) and carries a separate special meaning in
+`Decor::AdaptDoors`'s hub/world-select-screen logic (marks an uncollected world's gold). This is
+the same "rare and special, not mass-repeated structural material" pattern that puts objects on
+the `Billboard` path in §5, not the `UniformCube` path — **recommend `Billboard` for icon 183**,
+overriding the terrain default for this one icon. No other terrain icon was found to warrant the
+same exception (all others are either genuinely common structural/hazard tiles or unnamed/unused).
 
 ## 5. Objects/enemies/pickups (`ObjectType`, not currently in the block-type-id space)
 

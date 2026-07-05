@@ -72,7 +72,7 @@ namespace GalaxyEggbert::CNA
         };
         printTileUv("Ground", GalaxyEggbert::BlockTypes::Ground);
         printTileUv("Lava", GalaxyEggbert::BlockTypes::Lava);
-        printTileUv("Wall", GalaxyEggbert::BlockTypes::Wall);
+        printTileUv("GoldPillar", GalaxyEggbert::BlockTypes::GoldPillar);
 
         // Static terrain mesh for the loaded world (plan.md E3D-MIG-054) —
         // one CubeBatch item per non-air cell, textured via GETileAtlas.

@@ -180,7 +180,7 @@ without a galaxy-eggbert constant yet.
 | ![icon180](images/tile-full-180.png) | 180 | (unnamed) | unnamed variant | no | yes | 2/78 files |
 | ![icon181](images/tile-full-181.png) | 181 | (unnamed) | unnamed variant | no | yes | 1/78 files |
 | ![icon182](images/tile-full-182.png) | 182 | (unnamed) | unnamed variant | no | no | 12/78 files |
-| ![icon183](images/tile-full-183.png) | 183 | `Wall` | wall | no | no | 1/78 files |
+| ![icon183](images/tile-full-183.png) | 183 | `GoldPillar` (renamed from `Wall`, 2026-07-06 — the old name/description was wrong) | decorative/gate-adjacent | no | no | 1/78 files (`world001.txt`, 12 cells forming two parallel 6-7-tile-tall columns — a gate/portal-frame shape, not tiled wall material) — **correction:** the crop is visibly a golden pillar/post, not brick-wall texture; sits immediately after icon 182 (the real door tile, see `06-doors.md`'s `SearchDoor`), consistent with a door/gate-adjacent decorative element. Separately, `Decor::AdaptDoors` gives icon 183 a special meaning on mobile-eggbert's hub/world-select screen (`m_mission==1`): it marks an uncollected world's gold, removed via a rising open-door-style animation once collected (see `06-doors.md`) — whether that specific hub context is `world001.txt` itself wasn't confirmed, but it shows this icon carries real symbolic weight beyond ordinary terrain. |
 | ![icon185](images/tile-full-185.png) | 185 | (unnamed) | unnamed variant | no | yes | 8/78 files |
 | ![icon186](images/tile-full-186.png) | 186 | (unnamed) | unnamed variant | no | no | 11/78 files |
 | ![icon187](images/tile-full-187.png) | 187 | (unnamed) | unnamed variant | no | no | 9/78 files |
@@ -390,7 +390,8 @@ depicts.
 **Correction (2026-07-03, post-generation verification):** the ranges below were regenerated from
 scratch (independently re-cropped and re-measured) after a completeness check found the original
 version of this table used coarse, loosely-worded ranges (e.g. "166–205") that numerically
-overlapped icons already documented in the section above (e.g. `Wall`=183 sits inside that range).
+overlapped icons already documented in the section above (e.g. `GoldPillar`=183, then named `Wall`,
+sits inside that range).
 Total coverage was never actually wrong (all 441 icons were accounted for somewhere), but the range
 boundaries were imprecise. These ranges are exact: every icon number in every range below is
 confirmed to have no name and no real-level usage, with zero overlap against the 314 icons in the

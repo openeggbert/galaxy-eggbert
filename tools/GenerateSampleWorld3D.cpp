@@ -51,11 +51,17 @@ int main(int argc, char** argv)
 
     // Room walls, 3 blocks tall (y=11..13), around the platform perimeter,
     // with a 3-wide doorway on the staircase-facing edge (x=20, z=48..51).
-    fill(5, 5,   11, 13, 40, 59, BlockTypes::Wall);   // west wall
-    fill(6, 19,  11, 13, 40, 40, BlockTypes::Wall);   // north wall
-    fill(6, 19,  11, 13, 59, 59, BlockTypes::Wall);   // south wall
-    fill(20, 20, 11, 13, 40, 47, BlockTypes::Wall);   // east wall, north of doorway
-    fill(20, 20, 11, 13, 52, 59, BlockTypes::Wall);   // east wall, south of doorway
+    // Uses StoneB (icon 25, common structural tile, 42/78 real levels) --
+    // was BlockTypes::Wall (icon 183) until 2026-07-06, when that constant
+    // was found to be a rare (1/78 files) golden pillar/gate-post graphic,
+    // not real wall texture (renamed to GoldPillar; see 02-tiles.md and
+    // 15-3d-render-mapping-design.md). This fill was silently using the
+    // wrong texture for these walls until this fix.
+    fill(5, 5,   11, 13, 40, 59, BlockTypes::StoneB); // west wall
+    fill(6, 19,  11, 13, 40, 40, BlockTypes::StoneB); // north wall
+    fill(6, 19,  11, 13, 59, 59, BlockTypes::StoneB); // south wall
+    fill(20, 20, 11, 13, 40, 47, BlockTypes::StoneB); // east wall, north of doorway
+    fill(20, 20, 11, 13, 52, 59, BlockTypes::StoneB); // east wall, south of doorway
 
     // Two decorative pillars inside the room.
     fill(10, 10, 11, 13, 45, 45, BlockTypes::StoneB);
