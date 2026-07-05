@@ -63,13 +63,13 @@ tracked file-by-file in `plan.md` §16.3 (`DOC-230`-`DOC-234`).
 | `06-doors.md` | Door tile behavior (2D) | Complete for icons/animation; **full door/key gameplay logic** (treasure-gated doors, win/lose effects, key persistence, `AdaptDoors`/`SearchDoor`) added `DOC-303` (2026-07-05); all 3 door icon crops regenerated for the `S3D-2` grid bug (`DOC-234`) |
 | `07-sounds.md` | The 93 sound channels | **Complete** — all 93 channels documented with their real in-game trigger, cross-checked against `SoundChannel.hpp`, all 93 `.wav` files verified accounted for (`DOC-005`/`DOC-235`-`DOC-246`) |
 | `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete** — 131 sequences documented (12 tiles, all 87 real `BlupiAction` states, 23 objects, 8 explosions, 1 door slide); all 129 animated GIFs regenerated after a ghosting/translucency bug in the GIF-assembly tooling was found and fixed (`DOC-004`/`DOC-100`-`DOC-229`) |
-| `09-open-questions.md` | Open questions for the eventual 3D mapping design | Living list, updated as facts are found |
+| `09-open-questions.md` | Open questions for the eventual 3D mapping design | **Mostly resolved** (2026-07-05) — 7 of 9 original questions answered, see `15-3d-render-mapping-design.md`; 2 deliberately left open (see the file's own status note) |
 | `10-blupi-mechanics.md` | Blupi's core movement/physics/state machine (`Decor::BlupiStep()` and its direct helpers) | New (`DOC-300`, 2026-07-05) — first prose gameplay-behavior spec in this tree (scoped user approval); several sub-behaviors flagged open/uncertain rather than guessed |
 | `11-save-and-progression.md` | Save/load behavior (conceptual, no byte layout) and world/mission progression | New (`DOC-301`, 2026-07-05) |
 | `12-hazards-and-interactables.md` | What happens when Blupi touches each hazard/interactive tile (lava, spikes, saw, crusher, spring, teleporter, water, fan, etc.) | New (`DOC-302`, 2026-07-05) |
 | `13-object-pickups.md` | Pickup/power-up `ObjectType` mechanics (treasure, keys, shield, drink, charge, mirror, vehicles, etc.) | New (`DOC-304`, 2026-07-05) |
 | `14-crates-lifts-bridges-effects.md` | Crate push, platform lifts, dynamite, bridge construction, destruction/death effects | New (`DOC-306`, 2026-07-05) |
-| `15-3d-render-mapping-design.md` | Render-mode mapping (billboard vs. cube) for every block type/`ObjectType`, resolving two `09-open-questions.md` items | **Approved** (2026-07-05), not yet implemented |
+| `15-3d-render-mapping-design.md` | Render-mode mapping (billboard vs. cube) for every block type/`ObjectType`, plus doors/`BigDecor`/animation-metadata/backgrounds/teleporter-pairing — resolves 7 of `09-open-questions.md`'s 9 items | **Approved** (2026-07-05), not yet implemented |
 
 ## How images were generated
 

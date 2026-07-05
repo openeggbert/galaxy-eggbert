@@ -1,7 +1,11 @@
 # Open Questions for the 3D Mapping Design
 
-These are flagged, not answered, here — this whole reference exists to give a factual basis for
-answering them later, in a separate mapping-design task.
+**Status (2026-07-05): mostly resolved.** Of the 9 questions originally flagged here, 7 are now
+resolved (see `15-3d-render-mapping-design.md` for the design and its §9 addendum) — only the
+billboard walk-cycle mismatch (narrowed to enemies, not Blupi) and the 7 partial-support
+`ObjectType`s' implementation priority remain genuinely open, both deliberately, since neither is
+a rendering/research question. This reference existed to give a factual basis for answering these
+questions — that work is now largely done.
 
 - ~~How should mobile-eggbert's objects/elements (all `ObjectType`s, `03-objects.md`) be rendered
   in 3D at all?~~ **Resolved — approved 2026-07-05** — see `15-3d-render-mapping-design.md`:
@@ -45,31 +49,50 @@ answering them later, in a separate mapping-design task.
   This is a strong point in favor of constraining the camera design early (see the billboard/cube
   question above) rather than assuming a fully free 3rd-person orbit camera is compatible with
   billboard-rendered characters using only mobile-eggbert's original 2-directional sprite content.
-- Should `BigDecor` become a second parallel render layer in the 3D `World` (e.g. a background
-  chunk offset behind the main terrain), or be folded into the main grid, or be dropped? Its actual
-  collision behavior in 2D (does Blupi ever collide with `BigDecor` cells, or is it purely visual?)
-  was not confirmed in this pass and should be checked before deciding.
-- Should hazard/animated tiles (lava, saws, etc.) carry their animation phase as `BlockMetadata`
-  instead of being handled by the current CPU-side "rebuild the animated subset's mesh" approach
-  (`GETerrainRenderer::Update()`)? The 4-bit metadata field is a plausible fit for a handful of
-  animation-phase states, but 12-bit type IDs already fully separate animated groups by base icon.
-- Should doors be a distinct `BlockMetadata`-tagged variant of a normal block, or something else
-  entirely (a billboard object type layered over an `Air` cell, matching how mobile-eggbert's own
-  door-open animation is itself a `MoveObject`, not a tile mutation with an attached animation)?
+  **Partially addressed for Blupi himself (2026-07-05):** `GalaxyEggbertCNA`'s camera is now
+  first-person (see `NEXT.md`) — the player never sees their own character's billboard at all, so
+  this specific concern doesn't apply to Blupi in the current camera mode. It's still a real,
+  unresolved concern for **other** billboard-rendered characters (enemies) once those exist and are
+  viewed from an angle — not fully closed, just narrower than originally framed.
+- ~~Should `BigDecor` become a second parallel render layer in the 3D `World`, be folded into the
+  main grid, or be dropped? Its actual collision behavior in 2D was not confirmed in this pass.~~
+  **Resolved — 2026-07-05** — see `15-3d-render-mapping-design.md` §9.2: confirmed by exhaustive
+  source check that `BigDecor` is purely decorative in mobile-eggbert (never referenced by any
+  collision function). Recommendation: render as `Billboard`s (not folded into the main solid-block
+  grid, and not a second parallel `World` layer).
+- ~~Should hazard/animated tiles carry their animation phase as `BlockMetadata` instead of the
+  current CPU-side "rebuild the animated subset's mesh" approach?~~ **Resolved — 2026-07-05** —
+  see `15-3d-render-mapping-design.md` §9.3: no change recommended. Animation phase is a shared,
+  group-wide counter in mobile-eggbert (all tiles in a group advance in lockstep), not per-instance
+  state, so per-block metadata would be redundant with what `GETerrainRenderer::Update()` already
+  does correctly.
+- ~~Should doors be a distinct `BlockMetadata`-tagged variant, or a billboard object layered over
+  `Air`, matching mobile-eggbert's own door-open-is-a-`MoveObject` model?~~ **Resolved — 2026-07-05**
+  — see `15-3d-render-mapping-design.md` §9.1: no new design needed. A closed door is already a
+  terrain block (`UniformCube`, §4's default); the door-open animation is already `ObjectType22`,
+  which already falls under §5's `Billboard` default — the two existing categories already cover
+  both halves of this correctly.
 - ~~Should `MoveObject` records (pickups, enemies, effects) become `World`-embedded per-block
   metadata, or stay a separate object list alongside the `World`~~ **Resolved — approved
   2026-07-05** — see `15-3d-render-mapping-design.md` §6: they stay a separate list (as
   galaxy-eggbert's own `MobileObjSpec`/`GEDecorSystem` already model them for the 2D-sourced
   Simple3D target), not embedded blocks — the block-type-id space is designed for
   static terrain, not per-instance dynamic state (position, phase, patrol range).
-- Teleporter pairing is implicit (scan-the-map) in mobile-eggbert — worth deciding whether to keep
-  that convention or make pairing explicit via `BlockMetadata` now that the format supports it.
+- ~~Teleporter pairing is implicit (scan-the-map) in mobile-eggbert — worth deciding whether to
+  keep that convention or make pairing explicit via `BlockMetadata`.~~ **Resolved — 2026-07-05** —
+  see `15-3d-render-mapping-design.md` §9.6: keep the implicit scan-based approach (already how
+  `BlockTypes.hpp`'s `isTeleporter()` works); revisit only if a future world wants more pairs than
+  the icon-based scheme comfortably supports.
 - ~~The `region=` → background-image mapping is still unresolved~~ **Resolved 2026-07-04**
-  (`DOC-247`/`DOC-248`, `05-backgrounds.md`) — it's a direct formula, no lookup table. The remaining
-  open question is a mapping-*design* one, not a research one: should the eventual 3D target load
-  real parallax background images at all (it currently doesn't — see `05-backgrounds.md`'s "What
-  galaxy-eggbert currently does instead"), and if so, how does a flat 2D background become a 3D
-  skybox/backdrop?
+  (`DOC-247`/`DOC-248`, `05-backgrounds.md`) — it's a direct formula, no lookup table.
+  ~~The remaining open question is a mapping-*design* one: should the eventual 3D target load real
+  parallax background images at all, and if so, how does a flat 2D background become a 3D
+  skybox/backdrop?~~ **Design question resolved — 2026-07-05** — see
+  `15-3d-render-mapping-design.md` §9.5: recommend NOT attempting real skybox/parallax rendering
+  (the source art is flat 2D, a poor fit for 3D skybox geometry — no skybox capability exists in
+  CNA/`../easy-3d` today either); keep `GalaxyEggbertSimple3D`'s existing flat sky-clear-color
+  approach, with a suggested follow-up to derive each region's color from its real background PNG
+  instead of the current 5 hand-picked approximations.
 - ~~What should the ~175 still-unresearched `ObjectType` IDs actually turn out to be?~~ **Resolved
   2026-07-04** — `03-objects.md`'s classification is complete for all 204 IDs (`DOC-003`): 133 are
   confirmed genuinely vestigial (zero references anywhere in source), 41 have real behavior but are
@@ -78,4 +101,8 @@ answering them later, in a separate mapping-design task.
 - The 7 partial-support `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/
   dynamite — `03-objects.md`) spawn but have no gameplay effect — whether/when to implement their
   real pickup behavior is a separate decision from the 3D mapping question, but affects how much of
-  their behavior needs documenting here first.
+  their behavior needs documenting here first. **Still genuinely open (2026-07-05) — deliberately
+  not resolved as part of the 3D-mapping design work**, since it's a gameplay-implementation
+  priority question, not a rendering or research question — the behavior itself is already fully
+  documented in `13-object-pickups.md`/`04-enemy-behavior.md` regardless of when/whether it gets
+  implemented. Revisit when scoping actual gameplay work for the CNA target.

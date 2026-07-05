@@ -7,6 +7,9 @@ question raised in `09-open-questions.md`'s first bullet, grounded in what `Gala
 renderer actually supports today and in the full tile/object catalogs (`02-tiles.md`,
 `03-objects.md`) plus the gameplay-behavior spec (`10`-`14-*.md`). Approved as a design — actual
 implementation (billboard renderer, etc.) is separate, scoped work, tracked in `NEXT.md` §8.
+**§9 addendum (same day):** resolves 5 more `09-open-questions.md` items (doors, `BigDecor`,
+hazard-animation metadata, background/skybox rendering, teleporter pairing) — same approval
+status, not yet implemented.
 
 ## 1. What the renderer actually supports today (confirmed by reading source)
 
@@ -124,11 +127,91 @@ If this proposal is approved:
 - The facing/rotation metadata bits can be reserved in the format now (cheap) without being used
   by anything yet.
 
-## 8. Open items this proposal does NOT resolve
+## 8. Open items this proposal did NOT originally resolve
 
-- Doors-as-billboard-vs-something-else (still open, see `09-open-questions.md`) — doors are
-  currently a terrain block type (`Door1/2/3`), not an `ObjectType`, so they fall under §4's
-  `UniformCube` default; whether that's the right long-term treatment for something that
-  animates/opens is a separate question from this doc's scope.
-- `BigDecor` (second tile layer) — still unresolved, unaffected by this proposal.
-- Hazard/animated-tile metadata-vs-CPU-rebuild question — still open, unaffected.
+- ~~Doors-as-billboard-vs-something-else~~ — resolved in §9 below (2026-07-05).
+- ~~`BigDecor` (second tile layer)~~ — resolved in §9 below (2026-07-05).
+- ~~Hazard/animated-tile metadata-vs-CPU-rebuild question~~ — resolved in §9 below (2026-07-05).
+
+## 9. Addendum (2026-07-05): doors, `BigDecor`, hazard-animation metadata, teleporter pairing
+
+Resolving five more `09-open-questions.md` items with concrete research + recommendations.
+
+### 9.1 Doors: closed door stays `UniformCube`; door-open animation is already `Billboard`
+
+Checked `Decor::OpenDoor()` (`06-doors.md`'s `DOC-303` research): a closed door is a solid terrain
+tile (`Door1`/`Door2`/`Door3`, icons 334-336); opening it sets the tile to Air and spawns
+`ObjectType22`, a transient `MoveObject` that slides up using **whichever door icon spawned it**
+(no fixed icon of its own — see `03-objects.md`'s row for ID 22). This already matches §4/§5's
+categories exactly, with no new design needed:
+- **Closed door → `UniformCube`** (§4's terrain default, unchanged).
+- **Door-open animation → `Billboard`** (§5's `ObjectType` default, already covers ID 22) — the
+  billboard's texture is chosen dynamically at spawn time from the door tile it replaces, which is
+  an implementation detail (look up the closed door's icon before removing it), not a new render
+  mode or metadata field.
+
+No `BlockMetadata` tagging is needed for doors beyond what §2/§3 already define.
+
+### 9.2 `BigDecor`: confirmed non-colliding — recommend `Billboard`, not folded into the main grid
+
+**New fact, confirmed by direct source check:** `m_bigDecor` is referenced in exactly two places in
+`Decor.cpp` — the draw pass (`Build()`, ~line 716) and save/load (`Read`/`Write`, ~lines 11088-11339).
+It is **never** referenced by any collision function (`DecorDetect`, `IsBlocIcon`, `IsPassIcon`,
+`TestPath`, or any of the `Is*` hazard checks) — confirmed by an exhaustive grep across the whole
+file. `BigDecor` is purely decorative in mobile-eggbert; Blupi never collides with it. This resolves
+the open question's stated prerequisite ("was not confirmed in this pass").
+
+The draw code also shows `BigDecor` can itself be animated (icon `203` remaps through
+`Tables::table_marine`, same as a main-grid Marine tile) and applies a small per-icon Y offset
+(e.g. `-13` for icons 66-68) — it's a real background layer, not a trivial afterthought.
+
+**Recommendation: render `BigDecor` cells as `Billboard`s (§5's category), not folded into the main
+solid-block grid, and not a second parallel `World` layer.** Reasoning:
+- It's confirmed non-colliding — putting it in the main grid as a normal solid block would be
+  wrong (it would incorrectly block movement).
+- A true second parallel voxel layer (a whole extra `World` alongside the main one) is a lot of
+  new plumbing for content that's small in practice (`01-world-file-format.md`: single digits to
+  low tens of cells per level) and never interacted with.
+- `Billboard`s already have no collision in this design (§5) and already support per-frame texture
+  swaps (needed for the animated case above) — reusing that path is the smallest change that's
+  still faithful to "purely decorative, sometimes animated."
+
+### 9.3 Hazard/animated-tile phase: keep the current `BlockMetadata`-free CPU-rebuild approach
+
+Animation phase in mobile-eggbert is a **shared, group-wide counter** — all `Lava` tiles (for
+example) advance through their 8-frame loop in lockstep, driven by one global tick, not
+independent per-instance state (confirmed by `Tables.cpp`'s single shared frame-index formula per
+group, already used in `GETerrainRenderer`/`GEWorldRuntime::GetAnimPhase()`). Storing phase in each
+block's 4-bit metadata would duplicate the same value across every instance of a group for no
+benefit. **Recommendation: no change** — keep the existing "rebuild the animated subset's mesh on
+global phase change" approach (`GETerrainRenderer::Update()`), which is already implemented,
+tested (NEXT.md: ~48 rebuild cycles over 8s, no crash), and correctly matches how mobile-eggbert
+itself models tile animation.
+
+### 9.5 Backgrounds: keep flat sky-color, don't attempt real skybox/parallax rendering
+
+Checked: neither CNA nor `../easy-3d` has any skybox/skydome capability today (confirmed by
+grepping both include trees for "Skybox"/"SkyDome"/"SkyGradient" — zero matches). Building one from
+scratch is possible but the source material is a poor fit: mobile-eggbert's 28 region backgrounds
+(`05-backgrounds.md`) are flat 2D parallax images (240×180 px), designed to scroll behind a fixed
+side-on 2D camera — not a 360° panorama or cubemap. Projecting one onto real 3D skybox geometry
+would only look correct from one angle and would visibly distort or seam elsewhere.
+
+**Recommendation: keep the current approach — a flat sky clear-color per region — rather than
+attempting real background-image skybox rendering.** `GalaxyEggbertSimple3D` already does this
+(`GalaxyEggbertSimpleGame.cpp`, 5 hardcoded `Color` values indexed by world number, under a
+`TODO(S3D-sky)` marker). A reasonable improvement (not a new capability, just better sourcing):
+derive each region's clear-color by sampling/averaging its actual background PNG instead of using
+5 hand-picked colors for all ~28 regions — still a flat color, just faithfully sourced from the
+real per-region art instead of approximated for a handful of regions. This is a small, low-risk
+follow-up, not a blocker.
+
+### 9.6 Teleporter pairing: keep implicit scan-based pairing
+
+Mobile-eggbert pairs teleporters by scanning the map for a matching icon at use-time
+(`Decor::SearchTeleporte`, per `12-hazards-and-interactables.md`), not by an explicit stored pair
+ID. `BlockTypes.hpp` already mirrors this with 4 named icons (`Teleport1..4`) and a scan-based
+`isTeleporter()` helper. **Recommendation: keep the implicit scan approach** — it already works,
+needs no new metadata, and matches the source faithfully. Revisit only if a future hand-authored
+3D world wants more simultaneous teleporter pairs than the icon-based scheme comfortably supports
+(not a current need).
