@@ -1,17 +1,21 @@
 # Open Questions for the 3D Mapping Design
 
-**Status (2026-07-05): mostly resolved.** Of the 9 questions originally flagged here, 7 are now
-resolved (see `15-3d-render-mapping-design.md` for the design and its §9 addendum) — only the
-billboard walk-cycle mismatch (narrowed to enemies, not Blupi) and the 7 partial-support
-`ObjectType`s' implementation priority remain genuinely open, both deliberately, since neither is
-a rendering/research question. This reference existed to give a factual basis for answering these
-questions — that work is now largely done.
+**Status (2026-07-05): mostly resolved. Status update (2026-07-06): the terrain side of that
+resolution turned out to be substantially wrong** — see `15-3d-render-mapping-design.md` §10. The
+`ObjectType`/`MoveObject` side of the render-mode question (below) still stands; the "terrain
+tiles are all `UniformCube`, no facing/rotation needed" claim does not — a systematic re-check
+found roughly 100 terrain icons that are actually thin/mechanical/pillar-shaped special elements,
+not bulk material. Treat this file's "resolved" markers on rendering-adjacent items as historical
+narration of what was believed on 2026-07-05, not current fact — `15-3d-render-mapping-design.md`
+§10 is the current source of truth.
 
 - ~~How should mobile-eggbert's objects/elements (all `ObjectType`s, `03-objects.md`) be rendered
-  in 3D at all?~~ **Resolved — approved 2026-07-05** — see `15-3d-render-mapping-design.md`:
-  default `Billboard` for ~68 of ~70 real `ObjectType`s, with `UniformCube` for platform lifts and
-  crates; terrain tiles stay `UniformCube` (already correct for all 441 icons, no facing/rotation
-  actually needed by any current tile). Implementation is separate, scoped work (`NEXT.md` §8).
+  in 3D at all?~~ **Resolved — approved 2026-07-05, terrain-side correction 2026-07-06** — see
+  `15-3d-render-mapping-design.md`: default `Billboard` for ~68 of ~70 real `ObjectType`s, with
+  `UniformCube` for platform lifts and crates (this part still stands). **The terrain-tiles part
+  ("all 441 icons stay `UniformCube`, no facing/rotation needed") turned out to be wrong — see
+  §10: roughly 100 terrain icons are thin/mechanical/pillar-shaped and need `Billboard` or a new
+  `ThinMechanical` treatment instead.** Implementation is separate, scoped work (`NEXT.md` §8).
   Original framing below, for context:
   - **Billboard** — a flat, always-camera-facing sprite (already the plan for Blupi/objects per
     `plan.md`'s `E3D-MIG-061`–`063`).
@@ -67,11 +71,12 @@ questions — that work is now largely done.
   state, so per-block metadata would be redundant with what `GETerrainRenderer::Update()` already
   does correctly.
 - ~~Should doors be a distinct `BlockMetadata`-tagged variant, or a billboard object layered over
-  `Air`, matching mobile-eggbert's own door-open-is-a-`MoveObject` model?~~ **Resolved — 2026-07-05**
-  — see `15-3d-render-mapping-design.md` §9.1: no new design needed. A closed door is already a
-  terrain block (`UniformCube`, §4's default); the door-open animation is already `ObjectType22`,
-  which already falls under §5's `Billboard` default — the two existing categories already cover
-  both halves of this correctly.
+  `Air`, matching mobile-eggbert's own door-open-is-a-`MoveObject` model?~~ **Resolved — 2026-07-05,
+  corrected 2026-07-06** — see `15-3d-render-mapping-design.md` §9.1/§10.2: still no new design
+  needed (both halves fall under the existing `Billboard` category), but the *specific* answer
+  changed — a closed door (`Door1/2/3`, icons 334-336) is **not** `UniformCube` as first thought;
+  direct crop inspection showed it's a pillar/bollard shape, not a door panel, so it's `Billboard`
+  too, same as the already-correct door-open animation (`ObjectType22`).
 - ~~Should `MoveObject` records (pickups, enemies, effects) become `World`-embedded per-block
   metadata, or stay a separate object list alongside the `World`~~ **Resolved — approved
   2026-07-05** — see `15-3d-render-mapping-design.md` §6: they stay a separate list (as

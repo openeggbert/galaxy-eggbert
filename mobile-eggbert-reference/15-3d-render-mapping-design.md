@@ -11,8 +11,14 @@ implementation (billboard renderer, etc.) is separate, scoped work, tracked in `
 hazard-animation metadata, background/skybox rendering, teleporter pairing) — same approval
 status, not yet implemented.
 **§4 correction (2026-07-06, user-caught):** icon 183 (renamed `GoldPillar`, was misclassified as
-`Wall`) is the one exception to "all terrain is `UniformCube`" — see §4's updated text. This is a
-factual correction to the original §4 claim, not a new open decision.
+`Wall`) is the one exception to "all terrain is `UniformCube`" — see §4's updated text.
+**Superseded the same day by §10: a systematic re-check found ~100 exceptions, not 1** — the
+`GoldPillar`/`Saw` catches were the first two instances of a much larger, systemic gap. §4/§9.1's
+"closed door = `UniformCube`" call is reversed. **This whole document's render-mode
+categorization is now PARTIALLY INVALIDATED pending §10's triage** — treat §4/§5's "no other
+exceptions" language as historical, not current, and §10 as the actual current state of
+knowledge. Not yet independently re-verified (see §10's own methodology note) or re-approved by
+the user in its expanded form.
 
 ## 1. What the renderer actually supports today (confirmed by reading source)
 
@@ -77,21 +83,19 @@ decoration.
 
 ## 4. Terrain tiles (block-type-id space): categorization
 
-**Default: `UniformCube`.** Matches current behavior for essentially all 441 tile icons — no
-rendering code changes needed for ordinary terrain. (`Bridge`, icon 364, keeps its existing
-special-cased animated/collision handling from `GETerrainRenderer` — that's a construction-sequence
-detail, not a render-mode question; see `14-crates-lifts-bridges-effects.md`.)
+**Default: `UniformCube`.** Correct for genuine bulk/structural material (dirt, rock, brick,
+grass, generic wall/floor variants) — no rendering code changes needed for these.
 
-**One exception found (2026-07-06, user-caught):** icon 183 (`BlockTypes::GoldPillar`, renamed
-from the wrong `Wall` name/description — see `02-tiles.md`'s corrected row) is visually a golden
-pillar/post, not brick-wall texture, confirmed by direct crop inspection. It's rare (1/78 files,
-only 12 cells, forming a two-column gate/portal-frame shape immediately after icon 182 — the real
-door tile, per `06-doors.md`'s `SearchDoor`) and carries a separate special meaning in
-`Decor::AdaptDoors`'s hub/world-select-screen logic (marks an uncollected world's gold). This is
-the same "rare and special, not mass-repeated structural material" pattern that puts objects on
-the `Billboard` path in §5, not the `UniformCube` path — **recommend `Billboard` for icon 183**,
-overriding the terrain default for this one icon. No other terrain icon was found to warrant the
-same exception (all others are either genuinely common structural/hazard tiles or unnamed/unused).
+**Status (2026-07-06): the earlier claim here — "one exception found (icon 183), no other terrain
+icon warrants the same exception" — was wrong and has been superseded.** A systematic re-check (8
+parallel agents, every one of the 314 named tiles individually crop-inspected) found the true
+exception count is much larger — on the order of 100 icons, not 1. See **§10** for the full
+findings and the revised categorization framework (a third render mode, `ThinMechanical`/decal,
+in addition to `UniformCube` and `Billboard`). §4's role now is just: **UniformCube remains the
+correct default for tiles NOT listed in §10** (the majority — dirt/rock/grass/generic-wall
+variants are still fine as-is). `Bridge` (icon 364) is covered in §10 too (thin walkway, not
+`UniformCube`) — superseding this section's earlier claim that it was merely a "construction-
+sequence detail, not a render-mode question."
 
 ## 5. Objects/enemies/pickups (`ObjectType`, not currently in the block-type-id space)
 
@@ -151,18 +155,21 @@ If this proposal is approved:
 
 Resolving five more `09-open-questions.md` items with concrete research + recommendations.
 
-### 9.1 Doors: closed door stays `UniformCube`; door-open animation is already `Billboard`
+### 9.1 Doors: ~~closed door stays `UniformCube`~~ **correction (2026-07-06): closed door is also `Billboard`**
 
 Checked `Decor::OpenDoor()` (`06-doors.md`'s `DOC-303` research): a closed door is a solid terrain
 tile (`Door1`/`Door2`/`Door3`, icons 334-336); opening it sets the tile to Air and spawns
 `ObjectType22`, a transient `MoveObject` that slides up using **whichever door icon spawned it**
-(no fixed icon of its own — see `03-objects.md`'s row for ID 22). This already matches §4/§5's
-categories exactly, with no new design needed:
-- **Closed door → `UniformCube`** (§4's terrain default, unchanged).
-- **Door-open animation → `Billboard`** (§5's `ObjectType` default, already covers ID 22) — the
-  billboard's texture is chosen dynamically at spawn time from the door tile it replaces, which is
-  an implementation detail (look up the closed door's icon before removing it), not a new render
-  mode or metadata field.
+(no fixed icon of its own — see `03-objects.md`'s row for ID 22). The door-open animation half of
+this was already right: **door-open animation → `Billboard`** (§5's `ObjectType` default already
+covers ID 22, dynamically textured from the closed door's icon at spawn time).
+
+**But the "closed door → `UniformCube`" half was wrong**, per the §10 large-scale finding below:
+direct crop inspection of icon 334 (`Door1`) shows a red pillar/bollard shape, not a flat door
+panel or wall material — the same "rare-and-special, not bulk material" pattern as `GoldPillar`.
+**Corrected: closed door → `Billboard` too**, matching mobile-eggbert's own apparent convention of
+drawing interactive/special tiles (doors, teleporters, secret powers, signs) as vertical post/
+pillar sprites rather than tileable wall material. See §10 for the full scope of this correction.
 
 No `BlockMetadata` tagging is needed for doors beyond what §2/§3 already define.
 
@@ -229,3 +236,187 @@ ID. `BlockTypes.hpp` already mirrors this with 4 named icons (`Teleport1..4`) an
 needs no new metadata, and matches the source faithfully. Revisit only if a future hand-authored
 3D world wants more simultaneous teleporter pairs than the icon-based scheme comfortably supports
 (not a current need).
+
+## 10. Large-scale finding (2026-07-06): `UniformCube` is wrong for ~100 tiles, not 1
+
+**Trigger:** after seeing the first billboard-rendered `MoveObject`s in a live run, the user
+noticed a "circular saw" (icon 378, `BlockTypes::Saw`) rendering as a `UniformCube` looked visibly
+wrong — a spinning saw blade is a **thin, flat, circular mechanical object**, not a chunk of solid
+bulk material tileable on all 6 cube faces (including the sides, which would show a full blade
+face instead of a thin edge). This is a different failure mode from the earlier `GoldPillar` case
+(§4's original text) — `GoldPillar` was **misidentified** (wrong name for what it showed); `Saw`
+is **correctly identified** but still wrong as a render-mode assumption, because being a genuine,
+common hazard tile doesn't make it bulk material.
+
+**Method:** 8 parallel agents each visually inspected one ~40-icon slice of `02-tiles.md`'s 314
+named tiles (every crop, compared against its current name/description and against the "is this
+genuinely bulk material?" question), specifically watching for the `Saw` pattern in
+hazard/animated/interactive tiles and for the `GoldPillar` pattern (misidentified rare icons)
+elsewhere. This is a **first-pass finding, not yet independently adversarially verified** the way
+the `DOC-1xx`/`DOC-3xx` documentation passes were — treat specific icon identities below as
+probable, not certain, until spot-checked further; the scale and pattern of the finding itself
+(this is a large, systemic gap, not 1-2 isolated misses) is solid.
+
+### 10.1 Revised render-mode framework — a third mode is needed
+
+§2's `renderMode` enum needs a third value: `ThinMechanical` (name provisional) — a thin,
+flat/circular/mechanical hazard or interactive element that is common enough (and tied precisely
+enough to its grid position, for gameplay reasons) that pure `Billboard` framing feels
+under-specified, but `UniformCube` is definitely wrong. Concretely this probably renders as a thin
+horizontal or vertical plane/decal at the block's position (not a full 6-face cube), similar in
+spirit to `Billboard` but not necessarily camera-facing (a saw blade lies flat in a fixed
+orientation; a switch panel is wall-mounted, not free-facing). **The exact geometry for
+`ThinMechanical` is not decided here** — this section documents *what needs it*, not *how it's
+built*; that's follow-up design work.
+
+### 10.2 Confirmed vertical post/pillar/marker family → `Billboard`
+
+**Pattern:** mobile-eggbert draws many interactive/special tiles as a **vertical post/pillar/
+pedestal** sprite (matching `GoldPillar`'s shape) rather than tileable wall/floor material — this
+turns out to be a recurring house style for "special" tiles, not a one-off. All of these are
+recommended `Billboard`:
+
+- **`Door1`/`Door2`/`Door3` (334-336)** — **correction to §9.1**: confirmed by direct crop
+  inspection to be a red pillar/bollard, not a door panel. Reverses the earlier "closed door stays
+  `UniformCube`" call.
+- **`Teleport1..4` (330-333)** — cone/pyramid "beacon" post with colored indicator dots + an
+  emblem letter per pair. The design doc's own table already called these "solid pillar" without
+  drawing the render-mode conclusion.
+- **`Sp0`/`Sp1` (158-159) and `Sp2`-`Sp7` (160-165)** — gold pedestal + distinct icon per value;
+  almost certainly mobile-eggbert's 8-value `SecretPower` enum. All rare (1/78 each).
+- **Two numbered-marker families**: icons **174-181** (red disc + digit 1-8 on a post, usage
+  12,12,12,12,9,4,2,1) and icons **421-437** (gold ball + digit 1-15,17 on a post, usage up to
+  15/78 for "2") — likely level-order or counter markers of some kind; not yet identified
+  precisely, but unambiguously post-mounted, not bulk.
+- **`Marker` (309)** — small gold trophy/cup on a pedestal, 1/78.
+- **`Crusher` base (317)** — teal segmented piston shaft on a small base, 3/78 — thin mechanical
+  rod, not a solid block (matches the `Saw` pattern directly, on a different hazard type).
+- Icon **182** — plain post/pillar; `02-tiles.md`'s own text already notes 182 is "the real door
+  tile" per `06-doors.md`'s `SearchDoor`, but the catalog row itself was never reconciled with
+  that identity.
+- Icons **76** (stone pedestal/column, 22/78 — common), **77** (yellow "Y" signpost/antenna,
+  11/78), **191** (thin red post, 6/78), **399** (fluted classical column, 5/78), **404** (green
+  vase/bulb on a neck, 3/78), **410** (small green knob/dome, mostly cropped, 5/78).
+- Decorative prop clusters: **218-222** (colored balls/marbles, candy-striped poles), **230/231**
+  (star badges), **233/234** (mushroom/tree silhouettes), **235/236** (same candy-pole art as
+  218-222 but `passable:yes`, more common at 14-15/78), **245** (arched window/doorway pair,
+  3/78), **215-217** (plain spheres/orbs, 10-14/78), **304** (gold ball on a red spring/screw
+  bumper, 15/78 — common), **375-377** (twisted rope/banded decorative posts, 1-5/78), **398**
+  (fence rail on two posts), **411-413** (gold picture-frame-on-pedestal display stands, currently
+  named `Tile411`/`412`/`413`, 1/78 each).
+- Signs: **30/31** (yellow sign with painted numeral "1"/"2", 10/78 and 4/78), **48** (yellow
+  warning-triangle sign, already a good name candidate `WarningSign`, 11/78), **214** (dashed
+  red/yellow boundary-marker outline, 7/78).
+
+### 10.3 Thin mechanical/hazard tiles tied to gameplay position → `ThinMechanical`
+
+These are functionally important (hazards, switches, mechanisms) and often common — not rare
+edge cases like §10.2 — but are still visually thin/flat/mechanical, not bulk material:
+
+- **`Saw`/`SawStopped` (378/379)** — the finding that started this whole pass. Circular blade;
+  379 (stopped state) inherits the same shape.
+- **`Spring` (211)** — coiled spring, already flagged as a direct `Saw`-precedent parallel.
+- **`Blitz` (305)** — thin jagged lightning-bolt/arc line, not bulk, 15/78 (common hazard).
+- **`Switch`/`SwitchOff` (384/385)** — flat wall-mounted control box with ON/OFF lights; tiling
+  this on 6 faces (including top/bottom) is nonsensical for a wall-mounted panel. 8/78.
+- **`FanLeft`/`Right`/`Up`/`Down` (126/129/132/135)** — ventilator with thin propeller blades on a
+  hub protruding from a wall panel, confirming the task's explicit fan/ventilator concern.
+- **`Temp` base (324)** — stepped triangular/pyramid wedge; the *silhouette itself* is non-cuboid
+  (distinct from, in addition to, the usual hazard-flicker concern).
+- **`Bridge` (364)** — confirmed independently against `Tables::table_decor_quart`: only the top
+  16px band is solid, the rest of the cell is empty — a thin walkway/log structure, not a solid
+  volume. (Supersedes §4's older "construction-sequence detail, not a render-mode question" text.)
+- **`Spike` base (373)** — lower confidence: crop looks like the same glossy wall-texture family
+  as its neighbors, not an obviously pointed spike shape; name may be code-derived (`Decor::
+  IsPiege`, French "trap") rather than a literal visual match. Flagged for a closer look, not a
+  confirmed `ThinMechanical` case yet.
+- Pipe/conduit systems: icon **138** (single blue pipe segment with flanged joints, 19/78 —
+  common) and icons **250-260** (an 11-icon blue pipe/valve/gauge-fitting family — straight runs,
+  elbows, T-junctions, valves; usage 1-9/78 per icon).
+- Grates/vents: **201** (metal cross-braced grate, `passable:yes`, **36/78 — the single most
+  common icon flagged in this whole pass**), **187-189** (green ventilation-grille bars, 9-10/78).
+- **86-90** — gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained
+  balls), 5-18/78.
+- **110/114/118/122** — thin dashed wire/spark/cable line segments, 1-8/78, exact identity unclear.
+- **264-273** — sparse yellow drip/goo/liquid overlay family (10 icons, mostly-transparent
+  coverage), 6-8/78 each; marked `animated:no` in the catalog but the near-identical shapes across
+  10 consecutive icons suggest an undetected animation cycle.
+- **199** — yellow crossed-bar A-frame/brace, `passable:yes`, 9/78 — thin scaffold/ladder-brace
+  structure.
+- **192** — a real painted door-with-hinges graphic, currently miscatalogued as generic
+  "unnamed variant" filler; 11/78.
+- **66** — vertical rung-segmented column, reads as a `Ladder`; 15/78, `passable:yes`.
+
+### 10.4 Special surface treatment needed (neither `UniformCube` nor `Billboard`)
+
+- **`Water1`/`Water2` (91/92/96)** — a flat liquid surface with a wavy top-edge silhouette;
+  common (25-38/78). Tiling the surface-ripple texture onto all 6 cube faces (including the
+  sides/bottom, which should show depth, not another ripple surface) is wrong the same way a
+  swimming pool isn't a solid turquoise brick. Needs a dedicated flat/top-surface liquid treatment
+  — this is a real design gap `DirectionalCube` (§2) doesn't quite cover either (a top-only
+  texture with fallback color on the other 5 faces is close, but "fallback color" for water's
+  sides should probably still read as water, e.g. a darker/duller tint, not an arbitrary flat
+  color).
+- **`Marine` base (203)** — a green seaweed/kelp frond, 18/78. Correctly named (fits the aquatic
+  theme) but is a thin plant frond, not bulk — recommend foliage-style billboard/cross-plane
+  treatment (like grass in many voxel games), not `UniformCube`.
+
+### 10.5 Architectural frame kit (391-395, 397, 400) — likely an assembly, not per-tile icons
+
+Icons 391 (twin arch/window niches), 392/393 (left/right door-jamb edge pieces), 394/395/397
+(lintel + corner-post fragments), and 400 (the archway opening itself) look like fragments of one
+modular door/archway sprite kit meant to compose together, not independent tileable materials
+(5-7/78 each). Flagged together since they likely need a coordinated design decision (a multi-
+block archway assembly) rather than individual per-icon treatment.
+
+### 10.6 Needs identification before a render-mode decision (uncertain visual content)
+
+These are confirmed *not* to be plain bulk fill, but their exact identity/purpose wasn't resolved
+in this pass — worth a follow-up look (higher-res crop, or cross-referencing `Decor.cpp` usage)
+before committing to a specific treatment:
+
+- **1, 7** — flat bezel/panel with a waveform line + colored status dots; reads like a
+  control-panel or gauge display (8-10/78).
+- **61, 62, 65, 67** — orange/brown wood-toned shapes, possibly plank/beam family related to the
+  `Ladder` (66) finding above (6-14/78).
+- **73** — a ring of small spheres around a gold center, circular/rotating arrangement (12/78).
+- **78-85** — dark metallic panels with bolt/lever/connector shapes; reads like a switch/circuit-
+  board tileset (2-14/78); the grate-like background alone might be fine as `UniformCube`, but the
+  raised connector details likely aren't.
+- **139-143** — a wooden bookcase/cabinet furniture set (closed/open-door variants); lower-severity
+  flag since it's genuine bulk furniture, but the art is strongly front-facing only — a
+  front-face-only texture might suit it better than full 6-face `UniformCube` (9-10/78 each).
+- **198** — white rounded arch/dome shape, possibly a tunnel or igloo-style opening (10/78).
+- **200 (`Platform`)** — possible misidentification: the name implies a flat walkable tread, but
+  the crop shows two thin vertical support-leg posts, no visible flat surface (27/78 — common,
+  worth resolving).
+- **202** — almost entirely blank/transparent except one thin horizontal line; identity unclear,
+  clearly not bulk regardless (11/78).
+- **246-249** — a continuous embossed bubble/foam pattern filling the tile edge-to-edge; plausibly
+  genuine bulk material (unlike the sparse 264-273 drip family) but visually unusual enough to
+  double-check (8/78 each).
+- **386-389** — thin-looking vertical shapes (plate/flag posts, cylindrical post, disc-on-pedestal)
+  but marked non-passable/solid, unlike the confirmed-post family in §10.2 — could genuinely be
+  intended solid pillars rather than thin decorative posts (4-6/78).
+- **401-403** — extremely faint gray branching/radiating line art, barely visible without
+  upscaling; **the most heavily used unidentified icons in this whole pass (15-16/78 files each)**
+  — high-priority to resolve given the usage count.
+
+### 10.7 What this means for §7's "what would actually need building"
+
+§7's summary ("no terrain-rendering changes needed, `UniformCube` already correct for all 441
+icons") is **no longer accurate** and needs revisiting once the icons above are triaged into
+firm categories. Practical next steps, roughly in priority order:
+1. Resolve §10.6's identification questions (especially **401-403**, the most-used unidentified
+   icons, and **200**/`Platform`, since a misnamed common structural tile affects gameplay-relevant
+   assumptions elsewhere, not just rendering).
+2. Decide the `ThinMechanical` render mode's actual geometry (§10.1) — this blocks a firm
+   recommendation for all of §10.3's ~25 icons.
+3. Decide the water/liquid surface treatment (§10.4) — affects some of the most commonly-placed
+   tiles in the whole catalog (up to 38/78 files for `Water1`).
+4. Update `02-tiles.md` itself with corrected names/categories for everything in §10.2-§10.4 (most
+   rows are currently still catalogued as generic "(unnamed) unnamed variant," which is what let
+   this gap go unnoticed for as long as it did).
+5. An independent adversarial verification pass over this section's specific icon-by-icon claims,
+   matching the rigor the `DOC-3xx` behavior-spec docs got, before treating any single icon's
+   identity here as final.
