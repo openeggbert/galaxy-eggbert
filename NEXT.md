@@ -58,8 +58,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - New CPU-side mesh builders and CNA renderer adapters (e.g. `Easy3D::CubeMesh`,
   `Easy3D::CubeMeshRenderer`) live inside `../easy-3d` itself, not as galaxy-eggbert-local
   adapters — decided because that work is generic 3D-batching plumbing with zero Eggbert-specific
-  knowledge, matching Easy3D's own stated role. Modifying `../easy-3d` still requires explicit,
-  per-change user approval; it is not blanket-authorized.
+  knowledge, matching Easy3D's own stated role. **Updated 2026-07-06: the user has granted
+  standing permission to modify `../easy-3d`** (previously each change needed separate explicit
+  approval) — this unblocks implementing the `Easy3D::BillboardBatch` vertex builder/renderer
+  adapter (`15-3d-render-mapping-design.md` §7) without asking again each time. Still keep changes
+  scoped to what Easy3D's stated role covers (§7 of `easy3d.md` — small, generic 3D-batching
+  helpers; no scene graph/ECS/engine creep) and still never touch `../cna` or `../simple-3d`
+  without asking.
 - **Open design question, not decided yet (2026-07-03):** how should mobile-eggbert's objects/
   elements (all `ObjectType`s) actually be rendered in 3D — billboard, or a textured cube (with
   untextured faces filled by a per-texture fallback color instead of left blank), or a mix depending
@@ -475,12 +480,12 @@ worlds3d/                    — galaxy-eggbert's own hand-authored .vwr worlds 
                                 repo, unlike mobile-eggbert's worlds/ which is copied at build
                                 time). world001.vwr is the first one (E3D-MIG-058).
 
-../easy-3d/                  — companion library beside CNA (not touched by default; two
-                                approved edits this migration). Camera3D/OrbitCamera/FollowCamera,
-                                TextureAtlas, BillboardBatch/CubeBatch/DebugDraw (CPU-side item
-                                queues), CubeMesh (vertex/index builder), CubeMeshRenderer (CNA
-                                draw-call adapter). Billboard/DebugDraw builders+adapters: not
-                                started.
+../easy-3d/                  — companion library beside CNA. User granted standing permission to
+                                modify it 2026-07-06 (previously per-change approval only).
+                                Camera3D/OrbitCamera/FollowCamera, TextureAtlas,
+                                BillboardBatch/CubeBatch/DebugDraw (CPU-side item queues), CubeMesh
+                                (vertex/index builder), CubeMeshRenderer (CNA draw-call adapter).
+                                Billboard/DebugDraw builders+adapters: not started.
 ```
 
 ### Data flow
@@ -521,8 +526,10 @@ Mobile-eggbert worlds (worlds/worldXXX.txt, header + Decor: grid [+ MoveObject: 
 - `src/GalaxyEggbertSimple3D/` must not be mutated into the CNA implementation — new CNA/Easy3D
   code goes in `src/GalaxyEggbertCNA/` only.
 - mobile-eggbert stays read-only; no code/data copied from it without explicit user approval.
-- `../easy-3d`, `../cna`, and `../simple-3d` are sibling repos: read freely when needed, modify
-  only with explicit, per-change user approval.
+- `../cna` and `../simple-3d` are sibling repos: read freely when needed, modify only with
+  explicit, per-change user approval. `../easy-3d` is also a sibling repo, read freely, but the
+  user granted **standing** permission to modify it 2026-07-06 (no longer per-change) — still
+  keep changes within Easy3D's stated scope (small, generic 3D-batching helpers beside CNA).
 - Easy3D must not hide CNA (its APIs use CNA/XNA types directly) and must not grow into a scene
   graph / ECS / engine — new helpers stay small and generic.
 
@@ -601,8 +608,9 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    full breakdown. Waits on an actual 3D Blupi model for the Blupi-specific part, but object/enemy/
    `BigDecor` billboards don't need one. **Partial progress (2026-07-05):** `GEWorldRuntime` (CNA)
    now parses `MoveObject:` records (see §3) — the data prerequisite is done; the renderer itself
-   (`Easy3D::BillboardBatch` vertex builder, a `../easy-3d` change needing its own explicit
-   per-change approval per `CLAUDE.md`) is not started.
+   (`Easy3D::BillboardBatch` vertex builder, a `../easy-3d` change) is not started yet, but the
+   user granted standing permission to modify `../easy-3d` (2026-07-06, see §6), so this no longer
+   needs a separate approval round before starting.
 3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
@@ -648,9 +656,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - No deleting/removing any `GalaxyEggbertSimple3D` code without an explicit removal task — "gradual
   removal" is the stated long-term direction, not standing authorization to start removing pieces
   unprompted.
-- No modifications to `../mobile-eggbert`, `../cna`, `../easy-3d`, or `../simple-3d` without
-  explicit user approval for that specific change — none of the approvals granted so far are
-  blanket authorization for further edits.
+- No modifications to `../mobile-eggbert`, `../cna`, or `../simple-3d` without explicit user
+  approval for that specific change — none of the approvals granted so far for those three are
+  blanket authorization for further edits. **Exception: `../easy-3d` has standing permission to
+  modify (granted 2026-07-06)** — still keep changes within its stated scope (small, generic
+  3D-batching helpers beside CNA, not a scene graph/ECS/engine).
 - No `.txt → .vwr` (or any) automated 2D-to-3D world converter — rejected, see §1.
 - No Easy3D scope creep — no ECS, scene graph, physics, resource cache, editor, or Lua.
 - No mass refactor of `include/GalaxyEggbert/Worlds/` unless a failing unit test justifies it.
