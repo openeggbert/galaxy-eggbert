@@ -1,5 +1,4 @@
 #include "GalaxyEggbertSimpleGame.hpp"
-#include "Support/Simple3DMissingFeatures.hpp"
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <cstdio>
