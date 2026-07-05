@@ -6,6 +6,7 @@
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
 
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -92,6 +93,12 @@ namespace GalaxyEggbert::CNA
         terrainEffect_->setTextureEnabledProperty(true);
         terrainEffect_->setTextureProperty(&terrainTexture_);
 
+        // Interim 2D Blupi animation-state indicator (no 3D model yet,
+        // 2026-07-05) — same blupi.png already copied next to this binary
+        // for the eventual billboard (E3D-MIG-061..063).
+        blupiIconTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi.png", device);
+        blupiIconBatch_ = std::make_unique<Microsoft::Xna::Framework::Graphics::SpriteBatch>(device);
+
         // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
         // inside worlds3d/world001.vwr's ground floor). The .vwr format
         // carries no spawn point itself (see LoadFromVwrFile()), so this is
@@ -119,8 +126,7 @@ namespace GalaxyEggbert::CNA
             terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
 
             // Arrow keys move Blupi (invisible, collision-only placeholder —
-            // plan.md E3D-MIG-060), Space jumps; the camera follows behind
-            // and above so movement is visible even with no sprite yet.
+            // plan.md E3D-MIG-060), Space jumps.
             using Microsoft::Xna::Framework::Input::Keyboard;
             using Microsoft::Xna::Framework::Input::Keys;
             const auto keys = Keyboard::GetState();
@@ -133,9 +139,20 @@ namespace GalaxyEggbert::CNA
             const bool jumpPressed = keys.IsKeyDown(Keys::Space);
             blupi_.Step(worldRuntime_.GetWorld(), dx, dz, jumpPressed, dt);
 
-            camera_.SetTarget(Easy3D::Camera3D::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()));
-            camera_.SetPosition(Easy3D::Camera3D::Vector3(
-                blupi_.GetX(), blupi_.GetY() + 8.0f, blupi_.GetZ() + 10.0f));
+            // First-person/player-view camera (2026-07-05): no 3D Blupi
+            // model exists yet, so there is nothing for a third-person
+            // camera to show — look from Blupi's eye position in his
+            // current facing direction instead (see GEBlupiController's
+            // GetYaw() convention: 0 rad = facing -Z).
+            constexpr float kEyeHeight = 0.75f;
+            constexpr float kLookDistance = 5.0f;
+            const float yaw = blupi_.GetYaw();
+            const Easy3D::Camera3D::Vector3 eye(blupi_.GetX(), blupi_.GetY() + kEyeHeight, blupi_.GetZ());
+            camera_.SetPosition(eye);
+            camera_.SetTarget(Easy3D::Camera3D::Vector3(
+                eye.X + std::sin(yaw) * kLookDistance,
+                eye.Y,
+                eye.Z - std::cos(yaw) * kLookDistance));
         }
     }
 
@@ -198,6 +215,35 @@ namespace GalaxyEggbert::CNA
                           << " (>1 means the texture is actually being sampled, not a flat fallback)."
                           << std::endl;
             }
+        }
+
+        // Interim 2D Blupi animation-state indicator, bottom-right corner
+        // (no 3D model yet, 2026-07-05 — see GalaxyEggbertCnaGame.hpp).
+        // blupi.png: 60x60 px tiles, 10 columns per row (matches
+        // GalaxyEggbertSimple3D::GEBlupiController's kTilePx/kCols).
+        if (blupiIconBatch_)
+        {
+            constexpr int kTilePx = 60;
+            constexpr int kCols = 10;
+            constexpr int kOnScreenSize = 96;
+            constexpr int kMargin = 8;
+
+            const int icon = blupi_.GetAnimIcon();
+            const int col = icon % kCols;
+            const int row = icon / kCols;
+            const Microsoft::Xna::Framework::Rectangle srcRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
+
+            const auto& viewport = device.getViewportProperty();
+            const int screenW = viewport.getWidthProperty();
+            const int screenH = viewport.getHeightProperty();
+            const Microsoft::Xna::Framework::Rectangle destRect(
+                screenW - kOnScreenSize - kMargin, screenH - kOnScreenSize - kMargin,
+                kOnScreenSize, kOnScreenSize);
+
+            blupiIconBatch_->Begin();
+            blupiIconBatch_->Draw(blupiIconTexture_, destRect, srcRect,
+                                   Microsoft::Xna::Framework::Color::White);
+            blupiIconBatch_->End();
         }
     }
 

@@ -17,6 +17,13 @@ namespace GalaxyEggbert::CNA
         {
             return std::clamp(v, 0, blocksPerAxis - 1);
         }
+
+        // blupi.png icon indices, ported from GalaxyEggbertSimple3D's own
+        // already-approved GEBlupiController.cpp (kStopFrames/kMarchFrames/
+        // kJumpFrames) — not a fresh mobile-eggbert transcription.
+        constexpr int kStopFrames[]  = {0};
+        constexpr int kMarchFrames[] = {5, 6, 7, 8, 9, 10};
+        constexpr int kJumpFrames[]  = {17, 18, 19};
     }
 
     void GEBlupiController::SetPosition(float x, float y, float z) noexcept
@@ -74,6 +81,8 @@ namespace GalaxyEggbert::CNA
 
     void GEBlupiController::Step(const Worlds::World& world, float dx, float dz, bool jumpPressed, float dt)
     {
+        const bool moving = (dx != 0.0f || dz != 0.0f);
+
         if (dx != 0.0f)
         {
             TryMoveAxis(world, dx * kMoveSpeed * dt, 0.0f);
@@ -81,6 +90,13 @@ namespace GalaxyEggbert::CNA
         if (dz != 0.0f)
         {
             TryMoveAxis(world, 0.0f, dz * kMoveSpeed * dt);
+        }
+
+        if (moving)
+        {
+            // 0 rad = facing -Z, matching the forward vector the CNA camera
+            // derives from GetYaw() (sin(yaw), 0, -cos(yaw)).
+            m_yaw = std::atan2(dx, -dz);
         }
 
         if (m_onGround && jumpPressed)
@@ -108,5 +124,43 @@ namespace GalaxyEggbert::CNA
             m_onGround = false;
         }
         m_y = newY;
+
+        UpdateAnim(moving, dt);
+    }
+
+    void GEBlupiController::UpdateAnim(bool moving, float dt)
+    {
+        const AnimState newState = !m_onGround ? AnimState::Jump
+                                  : moving      ? AnimState::March
+                                                : AnimState::Stop;
+        if (newState != m_animState)
+        {
+            m_animState = newState;
+            m_animPhase = 0;
+            m_animTimer = 0.0f;
+            return;
+        }
+
+        m_animTimer += dt;
+        const float frameDuration = 1.0f / kAnimFps;
+        if (m_animTimer >= frameDuration)
+        {
+            m_animTimer -= frameDuration;
+            ++m_animPhase;
+        }
+    }
+
+    int GEBlupiController::GetAnimIcon() const noexcept
+    {
+        switch (m_animState)
+        {
+            case AnimState::March:
+                return kMarchFrames[m_animPhase % (sizeof(kMarchFrames) / sizeof(kMarchFrames[0]))];
+            case AnimState::Jump:
+                return kJumpFrames[m_animPhase % (sizeof(kJumpFrames) / sizeof(kJumpFrames[0]))];
+            case AnimState::Stop:
+            default:
+                return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];
+        }
     }
 }

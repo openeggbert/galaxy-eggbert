@@ -8,16 +8,20 @@
 #include <Easy3D/Camera3D.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
+#include <Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <memory>
 
 namespace GalaxyEggbert::CNA
 {
-    // Minimal skeleton for the planned Direct CNA + Easy3D target: opens a
-    // window, parses one world file (no rendering yet), and clears the screen.
-    // No assets are drawn, no terrain/Blupi rendering, no gameplay yet — see
-    // plan.md, "Direct CNA + Easy3D Migration", for what's next.
+    // Direct CNA + Easy3D target: loads a hand-authored .vwr world, renders
+    // real textured/animated 3D terrain, and moves an invisible,
+    // collision-only Blupi placeholder through it (see NEXT.md for current
+    // status). No 3D Blupi model exists yet (2026-07-05) — the camera is
+    // first-person (nothing to show in third-person), and Blupi's current
+    // animation state is signaled via a small 2D indicator in the
+    // screen's bottom-right corner instead of an in-world sprite.
     class GalaxyEggbertCnaGame final : public Microsoft::Xna::Framework::Game
     {
     public:
@@ -51,8 +55,16 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D terrainTexture_;
 
         // Invisible, collision-only movement placeholder (plan.md
-        // E3D-MIG-060) — arrow keys + Space, camera follows it. No sprite
-        // yet (E3D-MIG-061..063).
+        // E3D-MIG-060) — arrow keys + Space, first-person camera follows
+        // its facing. No 3D sprite yet (E3D-MIG-061..063) — see blupiIcon_
+        // below for the interim 2D stand-in.
         GEBlupiController blupi_;
+
+        // Interim 2D animation-state indicator (bottom-right corner) while
+        // no 3D Blupi model exists (2026-07-05) — blupi.png, drawn via
+        // SpriteBatch, not a 3D billboard. Lazily constructed in
+        // LoadContent() since SpriteBatch needs a live GraphicsDevice.
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> blupiIconBatch_;
+        Microsoft::Xna::Framework::Graphics::Texture2D blupiIconTexture_;
     };
 }
