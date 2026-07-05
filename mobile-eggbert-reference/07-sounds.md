@@ -140,8 +140,8 @@ of engines.
 
 | Channel | `.wav` | Real trigger (from `Decor.cpp`) |
 |---|---|---|
-| 60 | `sound060.wav` | Generic pickup-**start** chime for the dynamite (`ObjectType55`, icon 252) and character/persona (icon 108, `Button` channel) "voyage" pickups, plus the `Bombs` cheat. Parallels channel 11's role for treasure/keys, but for these two items specifically. |
-| 61 | `sound061.wav` | Blupi **skin/persona swap** sound — plays when the action button spawns an `ObjectType200` (Blupi skin variant) and `m_blupiPerso` is decremented (spending a persona point to change skin). |
+| 60 | `sound060.wav` | Generic pickup-**start** chime for the dynamite (`ObjectType55`, icon 252) and character/persona (icon 108, `Button` channel) "voyage" pickups, plus two cheat codes (`Bombs` and `Dynamite`). Parallels channel 11's role for treasure/keys, but for these two items specifically. |
+| 61 | `sound061.wav` | Shared by two distinct actions: Blupi **skin/persona swap** (spawns an `ObjectType200`, `m_blupiPerso` decremented) and **dynamite placement** (`BlupiAction::PutDynamite`, spawns `ObjectType56`, `m_blupiDynamite` decremented). Same channel, two unrelated triggers. |
 | 62 | `sound062.wav` | `Drink` buff-**complete** sound — plays when the `Drink` animation finishes and `m_blupiHide` becomes true (the actual buff activates); pairs with channel 57 (pickup start). |
 | 63 | `sound063.wav` | `Hide` (Drink buff) **about-to-expire** warning — plays once when `m_blupiTimeShield` reaches 20 while `m_blupiHide` is active; the fourth and last member of the expiry-warning family alongside channels 43 (shield), 45 (power), and 56 (cloud). |
 | 64 | `sound064.wav` | "Tiplouf" small-splash sound — plays in `Decor::MoveObjectTiplouf()` when spawning `ObjectType35` (documented in `03-objects.md`), the smaller counterpart to channel 23's "plouf". |
@@ -162,7 +162,7 @@ the sheet actually gets played — worth keeping in mind for `DOC-246`'s full 93
 | 71 | `sound071.wav` | **Teleporter** use sound — plays when Blupi steps onto a teleporter tile (`IsTeleporte`, `BlupiAction::Teleporte`). |
 | 72 | `sound072.wav` | **Bridge construction start** sound — plays at phase 0 of the 157-frame `ObjectType52` bridge-building sequence (documented in `03-objects.md`). |
 | 73 | `sound073.wav` | Bridge construction **progress** sound — plays partway through the same sequence, at phase 137 (of 157), as a secondary construction cue before completion. |
-| 74 | `sound074.wav` | Death-sequence **"angel ascent"** cue — plays for the fall-into-void (`Clear2`) and lava (`Clear3`) death recovery arcs, alongside the `VoyageInit` that spawns the angel-ascent animation (icons 230-241, per the cross-reference in the channels 0-9 section's `VoyageStep` note). |
+| 74 | `sound074.wav` | Death-sequence recovery cue — plays for both the fall-into-void (`Clear2`) and lava (`Clear3`) death arcs, but the visual it accompanies differs: `Clear2` spawns the real "angel ascent" animation (icon 230, cycling within 230-241 per `VoyageStep`), while `Clear3` spawns icon 40 with a fixed 50-tick duration and no cycling — the shared sound does not imply a shared animation. |
 | 75 | `sound075.wav` | Death-sequence sound for the saw/`Scie` death (`Clear4`) — spawns 3 `ObjectType41` burst sprites instead of the angel-ascent animation; a distinct "cut apart" cue rather than channel 74's ascent. |
 | 76 | `sound076.wav` | Switch **click (off)** sound — plays in `Decor::ActiveSwitch()` when a switch is toggled to its closed/inactive state (icon 385). |
 | 77 | `sound077.wav` | Switch **click (on)** sound — plays in the same function when toggled to open/active (icon 384); pairs with channel 76, one call site picks between them with `bState ? 77 : 76`. |
