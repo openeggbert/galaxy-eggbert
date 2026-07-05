@@ -135,10 +135,41 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 163 commits ahead of `origin/develop` as
-of 2026-07-04 — this whole batch (engine work + doc rework, below) is committed locally; whether
-it has been pushed depends on when you're reading this (see §9 for the push policy: push only on
-explicit request, never assume standing authorization).
+Most recent first. `galaxy-eggbert` `develop` branch is 163+ commits ahead of `origin/develop` as
+of 2026-07-05 — this whole batch (engine work + doc rework + review pass, below) is committed
+locally; whether it has been pushed depends on when you're reading this (see §9 for the push
+policy: push only on explicit request, never assume standing authorization).
+
+**Independent review pass over `DOC-100`–`DOC-267`, `DOC-268`–`DOC-276` (6 commits, 2026-07-05) —
+COMPLETE.** Six parallel agents independently re-checked all 10 `mobile-eggbert-reference/*.md`
+files against `../mobile-eggbert` source, galaxy-eggbert's own code, and the referenced
+image/GIF assets on disk — this was the review pass requested 2026-07-04 (§8's former task 1).
+Found and fixed 13 real errors across 5 files (00-overview.md, 03-objects.md, 04-enemy-behavior.md,
+06-doors.md, 09-open-questions.md came back clean):
+- `05-backgrounds.md` (`DOC-268`): `gear.png`'s draw site/rotation and `blupiyoupie.png`'s
+  "win-only" framing were both wrong against `Game1.cpp`.
+- `07-sounds.md` (`DOC-269`): sound channels 60/61/74 had incomplete or wrong trigger claims
+  (channel 61 also fires on dynamite placement, not just persona swap; channel 74's "angel ascent"
+  animation claim is false for the lava-death path).
+- `01-world-file-format.md` (`DOC-270`): a quoted `world001.txt` excerpt was mislabeled "row 2"
+  (it's the first `Decor:` data row).
+- `02-tiles.md` (`DOC-271`/`272`/`273`, the largest file): Crusher's real-level usage count was
+  copy-pasted from Saw's ("15 files" vs. actual 3); icon 91 was miscategorized as `Water1` when it
+  actually belongs to `Water2`'s frame table (frame ranges fixed accordingly), and the file's
+  "only base icons are authored" finding was stated as universal when `Water2` inverts it; icon 379
+  (`SawStopped`, a real, actively-used `BlockTypes.hpp` constant) was misfiled in the unused/unnamed
+  table instead of the named table — moved, crop regenerated, counts corrected 313/128 → 314/127.
+- `08-animations.md` (`DOC-274`/`275`/`276`): the "155 animated sequences" summary didn't match its
+  own breakdown (131); the §6 completeness sweep had the two fan-related table families swapped
+  (`ventillo*` are the real fan tiles, `ventg/d/h/b` are a distinct unimplemented tile); the "6 fps,
+  confirmed" tile-tick claim was only checked against galaxy-eggbert's own simplified constant, not
+  mobile-eggbert's real per-tile rates, which vary (Saw is actually 4x faster).
+
+Separately flagged, not yet fixed (outside `mobile-eggbert-reference/` scope, found independently
+by 3 of the 6 review agents): `CLAUDE.md`'s "Current Direction Lock" section still says
+`GalaxyEggbertCNA` "does not exist yet" / "has no build instructions yet because it does not
+exist" — stale, since `src/GalaxyEggbertCNA/` is a real, working, committed tree (this file's own
+§2 already documents it building and running). Needs a `CLAUDE.md` staleness fix as its own task.
 
 **Documentation rework, `DOC-100`–`DOC-267` (~168 commits, 2026-07-03/04) — COMPLETE.** Full
 detail in `plan.md` §16 and summarized in §4 below; not repeated here. Headline outcomes: 129
@@ -192,29 +223,22 @@ skeleton target), `f579824`/`ebea834` (direction-lock docs), `ac1d8d1` (Simple3D
 platform patrol fix). `../cna` shipped an external fix (`e1939bc`, unrelated `StorageDevice`/
 `IAsyncResult` mismatch) that briefly broke the `GalaxyEggbertCNA` build — confirmed resolved.
 
-**Next planned activity (not started yet, requested 2026-07-04):** a dedicated review pass over
-the entire `DOC-100`–`DOC-267` documentation rework to double-check it was all done properly —
-see §4 and §8, task 1.
+**Next planned activity:** see §8 — the review pass above is done, so the natural next steps are
+fixing the newly-discovered `CLAUDE.md` staleness (§8 task 1), then confirming CNA's terrain stats
+post-regeneration (§8 task 2), then the actual 3D-mapping design task (§8 task 3).
 
 ## 4. Current blocker / main problem
 
 **No hard blocker right now.** Both active tracks are in a "done, next thing is queued" state:
 
-**Documentation track: the ~168-task `mobile-eggbert-reference/` rework (`DOC-100`–`DOC-267`) is
-complete as of 2026-07-04**, but the user has requested a **second, independent review pass**
-before trusting it fully — that pass has **not started yet** and is the actual next task (§8,
-task 1). Rationale for the review: the rework's own closing self-audit (`DOC-258`–`DOC-267`) was
-done by the same working process that produced the earlier 258 tasks, and it already caught real
-staleness in 5 of 10 files on its first pass (see below) — a genuinely independent re-check is
-warranted before treating any of it as ground truth for the upcoming 3D-mapping design work.
-Summary of what was done, full detail in `plan.md` §16 (not repeated here): 129 animated GIFs
-regenerated after a ghosting bug (`DOC-100`/`DOC-105`); 320 sprite crops regenerated after a real
-1px leading-margin grid bug in `object-m.png` (`S3D-2`); a second real engine bug found the same
-way (`S3D-4`, `ObjectType47`/Chenille's wrong sprite sheet, **build-unverified** — see §5); the
-full 93-channel sound catalog documented from scratch (`DOC-005`); the full background catalog
-documented, including a previously-unsolved `region=` → filename mapping (`DOC-006`); and a final
-read-through that fixed stale claims in `00-overview.md`, `03-objects.md`, `08-animations.md`, and
-`09-open-questions.md`.
+**Documentation track: no blocker — the `mobile-eggbert-reference/` rework AND its requested
+independent review pass are both complete as of 2026-07-05.** The rework (`DOC-100`–`DOC-267`)
+shipped 2026-07-03/04; the independently-requested second review pass (`DOC-268`–`DOC-276`, see
+§3 above) ran 2026-07-05 via 6 parallel review agents and found + fixed 13 real errors across 5
+files. The reference material can now be treated as ground truth for the upcoming 3D-mapping
+design work (§8, task 3) with meaningfully higher confidence than before the review. One loose
+end from the review: `CLAUDE.md` itself was found stale (still claims `GalaxyEggbertCNA` "does not
+exist yet") — see §8, task 1.
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders
 end-to-end from the actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` →
@@ -396,26 +420,24 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Review pass over the entire `DOC-100`–`DOC-267` documentation rework (requested 2026-07-04,
-   NOT STARTED).** Goal: independently verify the ~168-task rework (`plan.md` §16) was actually
-   done properly, not just self-reported as done. Suggested approach: re-read all 10
-   `mobile-eggbert-reference/*.md` files fresh; spot-check a sample of image references against
-   the actual PNG/GIF files on disk (dimensions, pixel content); spot-check a sample of factual
-   claims (sound channel triggers, background mappings, ObjectType classifications) directly
-   against mobile-eggbert source; check for internal contradictions between files and against
-   `plan.md`. **Files:** all of `mobile-eggbert-reference/*.md`, cross-referenced against
-   `../mobile-eggbert` (read-only) and `plan.md` §16. **Verification:** produce a list of
-   confirmed-correct vs. found-wrong claims; fix anything found wrong, one commit per fix, same as
-   the original rework's convention.
+1. **Fix `CLAUDE.md` staleness re: `GalaxyEggbertCNA` (found 2026-07-05 during the DOC review
+   pass, NOT STARTED).** `CLAUDE.md`'s "Current Direction Lock" section states the planned
+   `GalaxyEggbertCNA` "does not exist yet" and "has no build instructions yet because it does not
+   exist" — both false today: `src/GalaxyEggbertCNA/` is a real, working, committed tree (this
+   file's own §2 documents it building and rendering real terrain). Update `CLAUDE.md` to
+   reflect current reality (it exists, builds via `-DGALAXY_EGGBERT_BUILD_CNA=ON`, and is not yet
+   at feature parity with Simple3D) without loosening any of its actual direction-lock rules.
+   **Files:** `CLAUDE.md`. **Verification:** re-read the "Current Direction Lock" and build-target
+   sections, confirm they match `NEXT.md` §2/§7's current, verified state.
 2. **Confirm `GalaxyEggbertCNA`'s reported terrain stats after the `worlds3d/world001.vwr`
    2749→2729 block regeneration** (see §5) — run it, capture the real vertex/triangle counts and
    visibility-sample result, update this file. **Files:** none (verification only).
    **Verification:** `cd build-cna && ./GalaxyEggbertCNA`, compare stdout against §7's expected
    output.
 3. **The actual 3D-mapping design task** (billboard vs. textured-cube for objects, `BigDecor`
-   layer treatment, door rendering, etc. — see `09-open-questions.md`) — the natural next step
-   once task 1 confirms the reference material is trustworthy, but not yet scoped as its own
-   `DOC-*`/`E3D-MIG-*` id.
+   layer treatment, door rendering, etc. — see `09-open-questions.md`) — the reference material's
+   independent review pass (§3, `DOC-268`-`276`) is now done, so this is unblocked; not yet scoped
+   as its own `DOC-*`/`E3D-MIG-*` id.
 4. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
@@ -458,9 +480,7 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - Committing after each finished task is now standing user instruction (2026-07-04, see §3) — one
   commit per `DOC-1xx`/task, not batched. **Pushing** to `origin/develop` is still NOT standing
   authorization — only push on explicit request each time.
-- Do not start the 3D-mapping design task (§8, task 3) before the `DOC-100`–`DOC-267` review pass
-  (§8, task 1) has actually run — the design task depends on the reference material being
-  independently confirmed correct, not just self-reported as done.
+- (Resolved 2026-07-05: the review pass ran, see §3/§4 — this no longer blocks task 3.)
 
 ## 10. Resume prompt
 
