@@ -312,7 +312,7 @@ without a galaxy-eggbert constant yet.
 | ![icon361](images/tile-full-361.png) | 361 | (unnamed) | unnamed variant | no | no | 5/78 files |
 | ![icon362](images/tile-full-362.png) | 362 | (unnamed) | unnamed variant | no | no | 13/78 files |
 | ![icon363](images/tile-full-363.png) | 363 | (unnamed) | unnamed variant | no | no | 12/78 files |
-| ![icon364](images/tile-full-364.png) | 364 | `Bridge` | interactive | no | no | 9/78 files — passable in 2D; solid in galaxy-eggbert |
+| ![icon364](images/tile-full-364.png) | 364 | `Bridge` | interactive | no | no | 9/78 files — mostly solid in 2D too (only its top quarter is solid per `table_decor_quart`, `IsPassIcon(364)` returns false); solid in galaxy-eggbert. **Correction (2026-07-05, DOC-306):** an earlier version of this row claimed 364 was fully "passable in 2D" — false, see `14-crates-lifts-bridges-effects.md` for the full construction-sequence behavior (the cell does become fully hollow for most of the 157-tick build animation, but the finished/idle tile itself is not simply "passable"). |
 | ![icon373](images/tile-full-373.png) | 373 | `Spike (base)` | hazard | yes, 16 frames (347,373,374) | no | 5/78 files — kills Blupi on contact |
 | ![icon375](images/tile-full-375.png) | 375 | (unnamed) | unnamed variant | no | yes | 3/78 files |
 | ![icon376](images/tile-full-376.png) | 376 | (unnamed) | unnamed variant | no | yes | 5/78 files |

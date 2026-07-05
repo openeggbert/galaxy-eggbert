@@ -8,14 +8,20 @@ backgrounds, doors, sounds, and animations — as the factual, source-grounded b
 deliberate mapping design onto galaxy-eggbert's richer 3D `World`/`.vwr` format (see
 `World Format.md`).
 
-**This is a catalog, not a design document.** It does not decide how any 2D concept should be
-represented in 3D (e.g. whether doors become billboards, whether `BigDecor` becomes a second
-render layer or per-block metadata) — those are open questions listed in `09-open-questions.md`,
-to be resolved in a separate mapping-design task. All facts below were read directly from
-`../mobile-eggbert` (read-only reference) and cross-checked against galaxy-eggbert's own
-already-approved partial ports (`include/GalaxyEggbert/BlockTypes.hpp`,
+**This is a catalog and behavior spec, not a 3D design document.** It does not decide how any 2D
+concept should be represented in 3D (e.g. whether doors become billboards, whether `BigDecor`
+becomes a second render layer or per-block metadata) — those are open questions listed in
+`09-open-questions.md`, to be resolved in a separate mapping-design task. All facts below were
+read directly from `../mobile-eggbert` (read-only reference) and cross-checked against
+galaxy-eggbert's own already-approved partial ports (`include/GalaxyEggbert/BlockTypes.hpp`,
 `include/GalaxyEggbert/def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`,
 `src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp`).
+
+**Extended 2026-07-05 (`DOC-300`-`DOC-306`) with a prose gameplay-behavior spec** — files
+`10`-`14` plus new sections in `04-enemy-behavior.md`/`06-doors.md` — under explicit, scoped user
+approval recorded in `CLAUDE.md` (behavior in prose + key numeric constants; not pseudocode, not
+verbatim code transcription; covers `ObjectType` Category A+B and core Blupi mechanics). This is
+documentation, not a license to copy the logic into actual game code.
 
 ## Status: complete for cataloging; one real engine bug (`DOC-007`) still open
 
@@ -52,12 +58,17 @@ tracked file-by-file in `plan.md` §16.3 (`DOC-230`-`DOC-234`).
 | `01-world-file-format.md` | The `.txt` level file format (header, `Decor:`, `BigDecor:`, `MoveObject:`) | Believed complete — all sections of the format have been identified |
 | `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete** — all 441 addressable icons accounted for (`DOC-002`); all 313 full crops regenerated with the corrected grid formula after the `S3D-2` bug was found (`DOC-230`) |
 | `03-objects.md` | Every `ObjectType` (204 IDs) | **Complete for classification** (`DOC-003`) — 29 real+used, 41 real+unused-in-shipped-levels, 1 ambiguous, 133 vestigial; all 67 cropped icons re-verified, 7 regenerated for the `S3D-2` grid bug (`DOC-231`) |
-| `04-enemy-behavior.md` | The enemy/object movement & collision model | Architectural overview only, not per-type exhaustive |
+| `04-enemy-behavior.md` | The enemy/object movement & collision model | Architectural overview, **plus per-type enemy behavior** (patrol/attack/contact/death detail for each real enemy `ObjectType`) added `DOC-305` (2026-07-05) |
 | `05-backgrounds.md` | Background/sky region images | **Complete** — `region=` → filename mapping found and verified against all 78 levels, all 28 level backgrounds thumbnailed, all 10 non-level UI-screen backgrounds documented (`DOC-006`/`DOC-247`-`DOC-257`) |
-| `06-doors.md` | Door tile behavior (2D) | Believed complete for the 2D behavior itself; all 3 door icon crops regenerated for the `S3D-2` grid bug (`DOC-234`) |
+| `06-doors.md` | Door tile behavior (2D) | Complete for icons/animation; **full door/key gameplay logic** (treasure-gated doors, win/lose effects, key persistence, `AdaptDoors`/`SearchDoor`) added `DOC-303` (2026-07-05); all 3 door icon crops regenerated for the `S3D-2` grid bug (`DOC-234`) |
 | `07-sounds.md` | The 93 sound channels | **Complete** — all 93 channels documented with their real in-game trigger, cross-checked against `SoundChannel.hpp`, all 93 `.wav` files verified accounted for (`DOC-005`/`DOC-235`-`DOC-246`) |
-| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete** — 155 sequences documented (12 tiles, all 87 real `BlupiAction` states, 23 objects, 8 explosions, 1 door slide); all 129 animated GIFs regenerated after a ghosting/translucency bug in the GIF-assembly tooling was found and fixed (`DOC-004`/`DOC-100`-`DOC-229`) |
+| `08-animations.md` | Every animated sequence (tiles, Blupi, objects, explosions, doors) | **Complete** — 131 sequences documented (12 tiles, all 87 real `BlupiAction` states, 23 objects, 8 explosions, 1 door slide); all 129 animated GIFs regenerated after a ghosting/translucency bug in the GIF-assembly tooling was found and fixed (`DOC-004`/`DOC-100`-`DOC-229`) |
 | `09-open-questions.md` | Open questions for the eventual 3D mapping design | Living list, updated as facts are found |
+| `10-blupi-mechanics.md` | Blupi's core movement/physics/state machine (`Decor::BlupiStep()` and its direct helpers) | New (`DOC-300`, 2026-07-05) — first prose gameplay-behavior spec in this tree (scoped user approval); several sub-behaviors flagged open/uncertain rather than guessed |
+| `11-save-and-progression.md` | Save/load behavior (conceptual, no byte layout) and world/mission progression | New (`DOC-301`, 2026-07-05) |
+| `12-hazards-and-interactables.md` | What happens when Blupi touches each hazard/interactive tile (lava, spikes, saw, crusher, spring, teleporter, water, fan, etc.) | New (`DOC-302`, 2026-07-05) |
+| `13-object-pickups.md` | Pickup/power-up `ObjectType` mechanics (treasure, keys, shield, drink, charge, mirror, vehicles, etc.) | New (`DOC-304`, 2026-07-05) |
+| `14-crates-lifts-bridges-effects.md` | Crate push, platform lifts, dynamite, bridge construction, destruction/death effects | New (`DOC-306`, 2026-07-05) |
 
 ## How images were generated
 

@@ -33,11 +33,11 @@ the header for the full, already-commented list):
 - **Bulldozer**: 4
 - **Collectibles**: 5 (treasure), 6 (extra-life egg), 7 (level-exit goal), 21 (secret-level exit), 39 (pickup sparkle)
 - **Key collectibles**: 49, 50, 51 (correspond to `DoorKeyFlags::Key1/2/3`)
-- **Vehicle/power-up pickups**: 13 (helicopter), 19 (jeep), 24 (skateboard), 25 (shield), 26 (suction-cup), 28 (tank), 29 (bullet pack), 30 (drink), 31 (charge/cloud), 40 (mirror/invert), 46 (balloon), 55 (dynamite)
+- **Vehicle/power-up pickups**: 13 (helicopter), 19 (jeep), 24 (skateboard), 25 (shield), 26 (suction-cup), 28 (tank), 29 (bullet pack), 30 (drink), 31 (charge/cloud), 40 (mirror/invert), 46 (Overcraft/hover — corrected from "balloon" 2026-07-05, DOC-300; see row below), 55 (dynamite)
 - **Explosions/visual effects** (transient, auto-expire): 8–12, 36–38, 41, 42, 53, 90–93, 98–100
 - **Water/goo effects**: 14, 15, 34, 35
 - **Projectiles**: 23 (fired by `blupih`/`blupit` enemies)
-- **Patrol walker enemies**: 16 (spider), 17 (fish), 18 (variant), 20 (bird), 32 (`blupih`, fires projectiles on turn), 33 (`blupit`, fires two), 44 (wasp/bee), 54 (large creature, destroys helicopter on contact)
+- **Patrol walker enemies**: 16 (spider), 17 (fish), 20 (bird), 32 (`blupih`, fires projectiles on turn), 33 (`blupit`, fires two), 44 (wasp/bee — inflates Blupi into a "balloon" state rather than killing him), 54 (large creature, destroys Blupi's vehicle or fatally grabs him — only while paused mid-turn, never destroyed itself). **18 removed from this list (2026-07-05, DOC-305): confirmed vestigial, not a real enemy — see its row below.**
 - **Moving level objects**: 22 (door-opening animation, see `06-doors.md`), 27 (magic sparkle), 52 (bridge construction, 157 frames), 56 (dynamite fuse), 57/58 (shield effects)
 - **Blupi skin variants**: 200–203
 - **Unidentified/reserved**: 43, 45, 59–89, 94, 101–199 (declared only to keep the enum contiguous
@@ -121,7 +121,7 @@ level-authored placements.
 | 11 | fan-hit shockwave (9 frames, triggers BigShake) | ![11](images/object-type011-icon012-explo4.png) | `explo.png`, `table_explo4[0]`=12 |
 | 14 | water plouf splash (7 frames) | ![14](images/object-type014-icon099-plouf.png) | `object-m.png` (**not `element.png`**), `table_plouf[0]`=99 |
 | 15 | water bubble rising (20 frames) | ![15](images/object-type015-icon103-blup.png) | `object-m.png` (**not `element.png`**), `table_blup[0]`=103 |
-| 18 | patrol variant | *(no icon — no `MoveObjectStepIcon()` case found anywhere for `ObjectType18`; only referenced by ID inside a generic "has a sprite" type-list, never given its own animation logic)* | — |
+| 18 | **not actually a patrol enemy** (correction, 2026-07-05, DOC-305): confirmed vestigial in practice — its only reference anywhere in `Decor.cpp` is one line inside `DynamiteStart`'s destroy-list (see `04-enemy-behavior.md`'s per-type section); no icon, no animation, no patrol/attack logic, never placed in any of the 78 world files | *(no icon — no `MoveObjectStepIcon()` case found anywhere for `ObjectType18`; only referenced by ID inside a generic "has a sprite" type-list, never given its own animation logic)* | — |
 | 22 | door opening animation (dynamically spawned when a door opens — see `06-doors.md`) | *(no fixed icon — inherits whichever door tile spawned it, sliding that exact icon; see `02-tiles.md`'s Door1/2/3 crops, icons 334/335/336)* | `object-m.png`, variable |
 | 23 | fired projectile (from blupih/blupit enemies — dynamically spawned, not level-placed) | ![23](images/object-type023-icon176-projectile.png) | `element.png`, static icon 176 |
 | 25 | shield (100 ticks invincibility) — confirmed real 16-frame `table_shield`; apparently never a placed `MoveObject`, likely granted as an effect not an authored pickup | ![25](images/object-type025-icon144-shield16.png) | `element.png`, `table_shield[0]`=144 |
@@ -204,7 +204,7 @@ have a crop: the original 18 (from `GEDecorSystem::GetObjIcon`) plus the 12 adde
 | ![ObjectType33](images/object-type033-icon249.png) | 33 | Patrol walker enemy (`blupit`) — icon shown is via `element.png`; real channel is `blupi1.png`, see bug note above |
 | ![ObjectType40](images/object-type040-icon187.png) | 40 | Vehicle/power-up pickup (mirror/invert) |
 | ![ObjectType44](images/object-type044-icon195.png) | 44 | Patrol walker enemy (wasp/bee) |
-| ![ObjectType46](images/object-type046-icon208.png) | 46 | Vehicle/power-up pickup (balloon) |
+| ![ObjectType46](images/object-type046-icon208.png) | 46 | Vehicle/power-up pickup — **correction (2026-07-05, DOC-300): this is the Overcraft (hover vehicle) pickup, not "balloon."** `Decor.cpp` sets `m_blupiOver = true` on pickup (confirmed identical to `CheatCodes::Overcraft`, which sets the same flag directly) — mobile-eggbert's own `ObjectType.hpp` comment calling it a "Balloon vehicle pick-up" is itself self-contradictory (it also says "boarding sets `m_blupiOver`"), which is what misled the original classification here. See `10-blupi-mechanics.md`'s Overcraft section for the actual vehicle behavior. |
 | ![ObjectType47](images/object-type047-icon311-objectchannel.png) | 47 | Platform lift (track texture) — correct-channel crop (`object-m.png`) |
 | ![ObjectType49](images/object-type049-icon209.png) | 49 | Key collectible (`Key1`) |
 | ![ObjectType50](images/object-type050-icon220.png) | 50 | Key collectible (`Key2`) |
