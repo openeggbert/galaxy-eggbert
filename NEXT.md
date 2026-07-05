@@ -112,13 +112,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   per non-air cell (`GETerrainRenderer` + `Easy3D::CubeMeshRenderer`), textured with a real CNA
   `Texture2D` of `object-m.png`, animated tiles included (see below). **Block count note
   (2026-07-04): `worlds3d/world001.vwr` was regenerated to 2729 non-air blocks (was 2749) after
-  `E3D-MIG-060` fixed an unclimbable-cliff bug in `tools/GenerateSampleWorld3D.cpp`.** The
-  vertex/triangle/on-screen-sample numbers below were measured against the older 2749-block
-  version and have **not been re-run** against the current 2729-block file — treat them as
-  indicative, not current, until re-verified with a real run. Last verified run (pre-regen):
-  `2749 blocks, 65976 vertices, 32988 triangles` uploaded, Y range [0, 13]; a 5x5 on-screen pixel
-  sample found 21/25 sampled points showing terrain color with 10 distinct colors among them
-  (confirms real texture sampling, not a placeholder).
+  `E3D-MIG-060` fixed an unclimbable-cliff bug in `tools/GenerateSampleWorld3D.cpp`.** **Re-verified
+  2026-07-05 (§8's former task 1) against the current 2729-block file:** `2729 blocks, 65496
+  vertices, 32748 triangles` uploaded, Y range [0, 13]; a 5x5 on-screen pixel sample found 25/25
+  sampled points showing terrain color with 7 distinct colors among them (confirms real texture
+  sampling, not a placeholder). Build/run confirmed clean (`EasyGL`/OpenGL ES 3.2 Mesa backend).
 - **`Easy3D::CubeMesh`** (`AppendCubeMesh`/`BuildCubeMesh`): turns `CubeBatch` items into
   vertex/index arrays (24 vertices + 36 indices per cube).
 - **`Easy3D::CubeMeshRenderer`**: uploads that data to CNA `VertexBuffer`/`IndexBuffer` once and
@@ -498,17 +496,15 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2
 
 # Run CNA target — must run from its own build directory (relative asset paths):
 cd build-cna && ./GalaxyEggbertCNA
-# Expect on stdout, in order. Vertex/triangle/visibility numbers below are NOT yet re-verified
-# against the current 2729-block worlds3d/world001.vwr (last real run was pre-regeneration,
-# against the 2749-block version — see §2/§5, and update this comment once re-run):
+# Expect on stdout, in order (re-verified 2026-07-05 against the current 2729-block file):
 #   "GalaxyEggbertCNA: loaded worlds3d/world001.vwr — 2729 non-air blocks, Y range [0, 13]."
 #   GETileAtlas UV diagnostics (Ground/Lava/Wall)
 #   "GalaxyEggbertCNA: terrain texture loaded — 1301x1431 px."
-#   "GalaxyEggbertCNA: terrain mesh uploaded — N blocks (0 animated), ... vertices, ... triangles."
+#   "GalaxyEggbertCNA: terrain mesh uploaded — 2729 blocks (0 animated), 65496 vertices, 32748 triangles."
 #   (this sample world has no animated tiles; run GalaxyEggbertCNA on a mobile-eggbert-derived
 #   .txt world via GEWorldRuntime::LoadFromMobileEggbertFile for a non-zero animated count, e.g.
 #   mobile-eggbert's world024.txt has 137)
-#   "GalaxyEggbertCNA: terrain visibility check — N/25 sampled screen points show non-background (terrain) color, M distinct color(s) among them..."
+#   "GalaxyEggbertCNA: terrain visibility check — 25/25 sampled screen points show non-background (terrain) color, 7 distinct color(s) among them..."
 # A window opens showing textured cube terrain (object-m.png tiles) from an angled overhead view.
 
 # Regenerate the hand-authored 3D sample world (if tools/GenerateSampleWorld3D.cpp changes):
@@ -540,48 +536,38 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Confirm `GalaxyEggbertCNA`'s reported terrain stats after the `worlds3d/world001.vwr`
-   2749→2729 block regeneration** (see §5) — run it, capture the real vertex/triangle counts and
-   visibility-sample result, update this file. **Files:** none (verification only).
-   **Verification:** `cd build-cna && ./GalaxyEggbertCNA`, compare stdout against §7's expected
-   output.
-2. **Review and approve (or revise) the 3D render-mapping proposal** —
-   `mobile-eggbert-reference/15-3d-render-mapping-design.md` (written 2026-07-05, **not yet
-   approved**): proposes `UniformCube` for all 441 terrain tiles (no change from today),
-   `Billboard` for ~68 of ~70 real `ObjectType`s (matching the already-planned `E3D-MIG-061..063`),
-   `UniformCube` for platform lifts + crates, and recommends `MoveObject`s stay a separate list
-   rather than becoming embedded `World` blocks. Resolves 2 of `09-open-questions.md`'s items if
-   approved. **Files:** none yet (design review only). **Verification:** user approves, revises, or
-   asks follow-up questions; once approved, implementation (billboard renderer, `../easy-3d`
-   changes if any) becomes its own scoped task(s), not done as part of this review.
-3. **`BigDecor` layer treatment, door rendering, and the remaining open questions** — see
-   `09-open-questions.md`, now narrower after task 2's proposal (if approved) resolves the
-   billboard/cube and `MoveObject`-embedding questions. Not yet scoped as its own
-   `DOC-*`/`E3D-MIG-*` id.
-4. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
+1. **`BigDecor` layer treatment, door rendering, and the remaining open questions** — see
+   `09-open-questions.md`, now narrower since the billboard/cube and `MoveObject`-embedding
+   questions are resolved (`15-3d-render-mapping-design.md`, approved 2026-07-05). Not yet scoped
+   as its own `DOC-*`/`E3D-MIG-*` id.
+2. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
-5. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+3. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
    proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
    genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — this should follow the
-   mapping-design decisions (task 2/3), not precede them.
-6. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
-   task 4/5); not needed at the current ~2700-block scale.
-7. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder + CNA renderer
-   adapter for `Easy3D::BillboardBatch`, then draw `blupi.png` at `GEBlupiController`'s position.
-   **Update per the 2026-07-05 no-3D-model note (§1):** since no Blupi 3D model exists yet, this
-   task's real near-term scope is a player-view/first-person camera + a 2D animation-state
-   indicator in the screen's bottom-right corner (not an in-world 3D billboard) — full billboard
-   rendering waits for the actual 3D model.
-8. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+   mapping-design decisions (task 1), not precede them.
+4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
+   task 2/3); not needed at the current ~2700-block scale.
+5. **IN PROGRESS (2026-07-05): interim Blupi representation** — no Blupi 3D model exists yet (see
+   §1), so full billboard rendering (`E3D-MIG-061..063`) waits for it. Near-term scope instead:
+   switch the CNA camera from its current third-person chase view to a first-person/player-view
+   camera (`GEBlupiController` gains a facing yaw), plus a small 2D animation-state indicator
+   (idle/walk/jump) drawn in the screen's bottom-right corner via `SpriteBatch`, reusing
+   `GalaxyEggbertSimple3D`'s already-approved `blupi.png` frame tables. **Files:**
+   `src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`,
+   `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`. **Verification:** build + run
+   `GalaxyEggbertCNA`, confirm the view is first-person and the corner indicator changes between
+   idle/walk/jump as Blupi moves.
+6. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-9. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+7. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-10. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
+8. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
    §5). `GECameraRig::StartShake()` already calls a real `../simple-3d` `Camera::Shake()` API and
    is wired up at 5 death/hazard call sites. If it still doesn't look right in-game, the next step
    would be tuning intensity/duration to match mobile-eggbert's `DecorAction::SmallShake` feel, not
