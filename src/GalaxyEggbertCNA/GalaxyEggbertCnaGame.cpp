@@ -2,6 +2,8 @@
 
 #include "GalaxyEggbert/BlockTypes.hpp"
 
+#include <Easy3D/BillboardBatch.hpp>
+#include <Easy3D/BillboardMesh.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
@@ -98,6 +100,16 @@ namespace GalaxyEggbert::CNA
         // for the eventual billboard (E3D-MIG-061..063).
         blupiIconTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi.png", device);
         blupiIconBatch_ = std::make_unique<Microsoft::Xna::Framework::Graphics::SpriteBatch>(device);
+
+        // Billboard rendering for MoveObjects (15-3d-render-mapping-design.md
+        // §5/§7) — element.png, same asset already used by GalaxyEggbertSimple3D.
+        objectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/element.png", device);
+        objectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        objectEffect_->VertexColorEnabled = false;
+        objectEffect_->setTextureEnabledProperty(true);
+        objectEffect_->setTextureProperty(&objectTexture_);
+        std::cout << "GalaxyEggbertCNA: " << worldRuntime_.GetMobileObjects().size()
+                  << " MoveObject(s) parsed for billboard rendering." << std::endl;
 
         // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
         // inside worlds3d/world001.vwr's ground floor). The .vwr format
@@ -233,6 +245,48 @@ namespace GalaxyEggbert::CNA
                           << distinctTerrainColors.size() << " distinct color(s) among them"
                           << " (>1 means the texture is actually being sampled, not a flat fallback)."
                           << std::endl;
+            }
+        }
+
+        // Billboard rendering for worldRuntime_'s parsed MoveObjects
+        // (15-3d-render-mapping-design.md §5/§7, first pass 2026-07-06) —
+        // static phase only (no per-instance animation timers yet), element.png
+        // only (see GEObjectIcons.hpp's known-limitation note re: DOC-007).
+        // Rebuilt every frame since billboard vertex positions depend on the
+        // camera (Easy3D::BillboardMeshRenderer's header comment).
+        if (objectEffect_ && !worldRuntime_.GetMobileObjects().empty())
+        {
+            // Camera-facing basis: the inverse view matrix's Right/Up rows
+            // give the camera's world-space right/up vectors (standard
+            // spherical-billboard technique).
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto cameraRight = invView.getRightProperty();
+            const auto cameraUp = invView.getUpProperty();
+
+            Easy3D::BillboardBatch batch;
+            constexpr float kObjectSize = 1.0f;
+            constexpr float kObjectGroundOffset = 1.0f; // matches blupi_'s own ground-standing height
+            for (const auto& obj : worldRuntime_.GetMobileObjects())
+            {
+                const int icon = GetObjIcon(obj.type, 0);
+                const auto uv = GetElementIconUv(icon);
+                batch.Add(
+                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
+                    Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+            }
+
+            std::vector<Easy3D::BillboardVertex> vertices;
+            std::vector<std::uint32_t> indices;
+            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
+
+            if (!indices.empty())
+            {
+                objectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                objectEffect_->View = camera_.GetViewMatrix();
+                objectEffect_->Projection = camera_.GetProjectionMatrix();
+                objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                objectMeshRenderer_->Draw(device, *objectEffect_);
             }
         }
 

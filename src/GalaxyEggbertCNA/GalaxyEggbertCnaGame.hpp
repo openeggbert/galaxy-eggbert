@@ -4,7 +4,9 @@
 #include "Game/GETileAtlas.hpp"
 #include "Game/GETerrainRenderer.hpp"
 #include "Game/GEBlupiController.hpp"
+#include "Game/GEObjectIcons.hpp"
 
+#include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
@@ -66,5 +68,15 @@ namespace GalaxyEggbert::CNA
         // LoadContent() since SpriteBatch needs a live GraphicsDevice.
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> blupiIconBatch_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupiIconTexture_;
+
+        // Billboard rendering for worldRuntime_'s parsed MoveObjects
+        // (15-3d-render-mapping-design.md §5/§7) — element.png, static phase
+        // (no animation yet). Rebuilt every frame since billboard vertex
+        // positions depend on the camera (see Easy3D::BillboardMeshRenderer's
+        // header comment) — objectMeshRenderer_ is reconstructed in Draw(),
+        // not lazily cached like terrainRenderer_.
+        Microsoft::Xna::Framework::Graphics::Texture2D objectTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMeshRenderer_;
     };
 }
