@@ -135,18 +135,60 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 165+ commits ahead of `origin/develop` as
+Most recent first. `galaxy-eggbert` `develop` branch is 173+ commits ahead of `origin/develop` as
 of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
 staleness pass, below) is committed locally; whether it has been pushed depends on when you're
 reading this (see §9 for the push policy: push only on explicit request, never assume standing
 authorization).
 
-**Stale camera-shake bug entry corrected (2026-07-05), found during a wider repo-doc staleness
-sweep.** `NEXT.md` itself claimed Simple3D's camera shake was a no-op needing a new `../simple-3d`
-API. False: `Camera::Shake(intensity, duration)`/`IsShaking()` already exist in `../simple-3d`
-(`Camera.cpp:511`), `GECameraRig::StartShake()` already calls it, and it's wired up at 5 real
-death/hazard sites in `GalaxyEggbertSimpleGame.cpp`. No code changed — only this file's own stale
-claim, in §2/§5/§8 (see those sections).
+**Repo-wide documentation staleness sweep (2026-07-05, ~9 commits) — COMPLETE, user-requested
+follow-up to the CLAUDE.md fix above.** Audited every `.md` file in the repo (not just
+`mobile-eggbert-reference/`) for claims that no longer match reality or point at the superseded
+Simple3D-only direction, per explicit user request ("update CLAUDE.md and other files, remove
+outdated things, it must point in the current direction"). Findings and fixes:
+- **`NEXT.md` itself** had a stale bug entry: claimed Simple3D's camera shake was a no-op needing
+  a new `../simple-3d` API. False — `Camera::Shake()`/`IsShaking()` already exist
+  (`Camera.cpp:511`), `GECameraRig::StartShake()` already calls it, wired up at 5 real death/hazard
+  sites. Corrected in §2/§5/§8; no code changed, only this file's own claim.
+- **`docs/simple3d_migration.md`, `docs/simple3d_migration_task.md`, `docs/SIMPLE3D_GAPS.md`** —
+  deleted (user decision): all three described the Urho3D→Simple3D migration as still in progress,
+  referencing a legacy `src/GalaxyEggbert/` game-code tree that no longer exists (only `Worlds/`
+  remains). Also deleted two vestigial, unused headers in the same category
+  (`Simple3DMissingFeatures.hpp`, `Simple3DMigrationNotes.hpp`).
+- **`easy3d.md`** — fixed dangling references to the deleted docs above (preserving their useful
+  content inline), and added a 2026-07-05 status-update banner at the top: the whole 575-line
+  document is a dated analysis snapshot (self-labeled "as of 2026-07-01") written before
+  `GalaxyEggbertCNA` existed as code, so it still describes CNA as unbuilt throughout — the banner
+  points to `NEXT.md` for current status rather than rewriting the historical rationale line by
+  line.
+- **`WINDOWS.md`** (user decision: doc-only fix) — described CMake machinery (`_game_target`,
+  `cna_copy_mingw_runtime()`/`cna_copy_sdl_runtime()`, a `CnaTests.exe` target) that doesn't exist
+  in this repo's `CMakeLists.txt`. Rewritten to describe what's actually wired up (only
+  `-static-libgcc`/`-static-libstdc++` on `GalaxyEggbertSimple3D`) and flag SDL/MinGW runtime DLL
+  copying as a known, unimplemented gap for both targets.
+- **`README.md`** — same "CNA does not exist yet" staleness as `CLAUDE.md` had, plus backend CMake
+  option names that don't match reality (`CNA_BACKEND_SDL_RENDERER`/etc. vs. the real
+  `CNA_GRAPHICS_BACKEND` string option). Fixed to match `CLAUDE.md`'s corrected framing; Windows/
+  Web/Android CNA build paths marked "not verified in this session" rather than falsely "planned"
+  or falsely "done."
+- **`ANDROID.md`** — stale NDK version (`28.2.13676358` vs. `build.gradle`'s actual
+  `30.0.14904198`), an inconsistent old clone-directory name (`speedy-blupi-2013` vs. the
+  `galaxy-eggbert` path used two sections later), and a wrong ABI claim (said arm64-v8a only;
+  `build.gradle` already builds arm64-v8a + x86_64). Flagged but not fixed (needs a real
+  investigation, not a doc edit): `SpeedyBlupiActivity.java` expects native code in `libmain.so`,
+  but `CMakeLists.txt` unconditionally does `add_executable` with no Android `SHARED` library path
+  — may mean the Android build doesn't currently produce a loadable `.so`.
+- **`World Format.md`** — a nonexistent header path in its usage example
+  (`openeggbert/voxel/World.hpp` → fixed to the real `GalaxyEggbert/Worlds/World.hpp`), and a
+  missing `extraMetadata_` member in its runtime `Chunk` model snippet (real field in
+  `Chunk.hpp:218`).
+- **`CMakeLists.txt`** — two comments/status messages still called `GalaxyEggbertCNA` a bare
+  "skeleton" that "only opens a window and clears the screen" — updated to match reality (renders
+  real terrain, no gameplay yet).
+- **`plan.md`** — checked (header/executive-summary + the full "Direct CNA + Easy3D Migration"
+  section) and found already current; no changes needed.
+- All `.md` files in the repo confirmed to be in English (one Czech phrase in `plan.md` is an
+  already-translated direct quote of prior user feedback, left as-is).
 
 **`CLAUDE.md` staleness fix, `DOC-278` (2026-07-05) — COMPLETE.** Fixed the loose end the review
 pass below surfaced: `CLAUDE.md`'s "Current Direction Lock" section, build-target selection,
