@@ -1,12 +1,14 @@
 # Tile/Block Catalog (`Decor`/`BigDecor` icon vocabulary)
 
-**Status: COMPLETE.** All 441 addressable icon IDs (0–440) are accounted for — 313 with a full
+**Status: COMPLETE.** All 441 addressable icon IDs (0–440) are accounted for — 314 with a full
 64×64 image crop (every icon that is either already named/behavioral in `BlockTypes.hpp`, or
-confirmed used in at least one of the 78 real level files), the remaining 128 unused/unnamed icons
+confirmed used in at least one of the 78 real level files), the remaining 127 unused/unnamed icons
 listed compactly by range (passability + a mechanical visual signal, not a fabricated name — see
 "Unused/unnamed icons" below). Classification generated and verified 2026-07-03 (`DOC-002`); all
 313 crop images regenerated 2026-07-04 after a real grid-math bug was found (`DOC-230`, see "How
-these images were generated" below).
+these images were generated" below). Icon 379 (`SawStopped`, a real `BlockTypes.hpp` constant
+actively used in code) was found miscategorized as unnamed/unused during a 2026-07-05 independent
+review pass and moved into the named table (see `DOC-273`), bringing the counts to 314/127.
 
 Icons are indices into `object-m.png` (1301×1431 px, 64×64 px tiles with a 1px gap and a 1px
 leading margin, 20 columns — confirmed by direct file inspection, matches
@@ -21,15 +23,17 @@ row 1431, one past the last valid row, so it has zero real pixel data (not even 
 `BlockTypes::kPassable[441]` includes an entry for it anyway (bounds-safety in the passability
 table, not because it's a real tile) — value `false`.
 
-**Finding: animated sub-frame icons are never placed directly in level files.** Checking real-file
-usage per icon confirms that for every animated group (`Lava` 68–72, `Crusher` 317–323, `Saw`
-378–383, `Water1`/`Water2` 91–98, `Temp` 324–329, `Marine` 203–208), only the *base* icon (the
-first frame, matching `BlockTypes::tileAnimBase()`'s convention) is ever found in a `Decor:`/
-`BigDecor:` grid — e.g. `Crusher`'s frames 318–323 all show "not found in any scanned file" while
-318's base 317 is used in 15 files. This is a real, verified pattern: sub-frame IDs only exist as
-runtime animation states the rendering code cycles through, never as authored level data — which is
-exactly what `BlockTypes::tileAnimBase()`'s "map any icon in a group to its base" design already
-assumes, now independently confirmed.
+**Finding: animated sub-frame icons are almost never placed directly in level files — Water is the
+exception.** Checking real-file usage per icon confirms that for `Lava` 68–72, `Crusher` 317–323,
+`Saw` 378–383, `Temp` 324–329, and `Marine` 203–208, only the *base* icon (the first frame,
+matching `BlockTypes::tileAnimBase()`'s convention) is ever found in a `Decor:`/`BigDecor:` grid —
+e.g. `Crusher`'s frames 318–323 all show "not found in any scanned file" while base icon 317 is
+used in 3/78 files. `Water1`/`Water2` break this pattern: per `Tables.cpp`, icon 91 belongs to
+`Water2`'s frame table (`table_decor_eau2 = {91,96,97,98,97,96}`), not `Water1`'s, and it is icon
+91 — a sub-frame, not `Water2`'s base icon 96 — that is actually placed in levels (25/78 files),
+while base icon 96 itself is used in 0/78. So the "only the base icon is authored" rule holds for
+five of the six animated groups but is inverted for `Water2`. `BlockTypes::tileAnimBase()`'s
+"map any icon in a group to its base" design still handles this correctly at runtime either way.
 
 ## Named/behavioral tiles and every icon used in a real level (313 of 441)
 
@@ -126,9 +130,9 @@ without a galaxy-eggbert constant yet.
 | ![icon88](images/tile-full-088.png) | 88 | (unnamed) | unnamed variant | no | no | 14/78 files |
 | ![icon89](images/tile-full-089.png) | 89 | (unnamed) | unnamed variant | no | no | 14/78 files |
 | ![icon90](images/tile-full-090.png) | 90 | (unnamed) | unnamed variant | no | no | 9/78 files |
-| ![icon91](images/tile-full-091.png) | 91 | (unnamed) | unnamed variant | no | no | 25/78 files |
-| ![icon92](images/tile-full-092.png) | 92 | `Water1 (base)` | decorative/swimmable | yes, 6 frames (91-95) | no | 38/78 files — Blupi swims when grounded |
-| ![icon96](images/tile-full-096.png) | 96 | `Water2 (base)` | decorative/swimmable | yes, 6 frames (96-98) | no | not found in scanned files — Blupi swims when grounded |
+| ![icon91](images/tile-full-091.png) | 91 | (unnamed) | `Water2` sub-frame (per `table_decor_eau2`, not `Water1`) | yes, part of `Water2`'s 6-frame cycle | no | 25/78 files |
+| ![icon92](images/tile-full-092.png) | 92 | `Water1 (base)` | decorative/swimmable | yes, 6 frames (92-95) | no | 38/78 files — Blupi swims when grounded |
+| ![icon96](images/tile-full-096.png) | 96 | `Water2 (base)` | decorative/swimmable | yes, 6 frames (91, 96-98) | no | not found in scanned files — Blupi swims when grounded |
 | ![icon107](images/tile-full-107.png) | 107 | (unnamed) | unnamed variant | no | no | 6/78 files |
 | ![icon108](images/tile-full-108.png) | 108 | (unnamed) | unnamed variant | no | no | 3/78 files |
 | ![icon109](images/tile-full-109.png) | 109 | (unnamed) | unnamed variant | no | no | 2/78 files |
@@ -314,6 +318,7 @@ without a galaxy-eggbert constant yet.
 | ![icon376](images/tile-full-376.png) | 376 | (unnamed) | unnamed variant | no | yes | 5/78 files |
 | ![icon377](images/tile-full-377.png) | 377 | (unnamed) | unnamed variant | no | yes | 1/78 files |
 | ![icon378](images/tile-full-378.png) | 378 | `Saw (base)` | hazard | yes, 6 frames (378-383) | no | 15/78 files — kills Blupi on contact; stoppable by Switch |
+| ![icon379](images/tile-full-379.png) | 379 | `SawStopped` | interactive/hazard-adjacent | no | no | not found in scanned files — the Saw's toggled-off, safe static state; `GETerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled |
 | ![icon384](images/tile-full-384.png) | 384 | `Switch` | interactive | no | no | 8/78 files — toggles linked Saw tiles |
 | ![icon385](images/tile-full-385.png) | 385 | `SwitchOff` | interactive | no | no | not found in scanned files — toggles linked Saw tiles |
 | ![icon386](images/tile-full-386.png) | 386 | (unnamed) | unnamed variant | no | no | 6/78 files |
@@ -387,13 +392,14 @@ scratch (independently re-cropped and re-measured) after a completeness check fo
 version of this table used coarse, loosely-worded ranges (e.g. "166–205") that numerically
 overlapped icons already documented in the section above (e.g. `Wall`=183 sits inside that range).
 Total coverage was never actually wrong (all 441 icons were accounted for somewhere), but the range
-boundaries were imprecise. These 45 ranges are exact: every icon number in every range below is
-confirmed to have no name and no real-level usage, with zero overlap against the 313 icons in the
-section above.
+boundaries were imprecise. These ranges are exact: every icon number in every range below is
+confirmed to have no name and no real-level usage, with zero overlap against the 314 icons in the
+section above (icon 379 was removed from this table on 2026-07-05, see `DOC-273`; the table below
+now lists the remaining 127).
 
 **Note (`DOC-230`, 2026-07-04):** the "visual signal" (mean alpha) values below were computed with
 the pre-`S3D-2` crop formula (no leading margin) and have not been recomputed against the corrected
-one. Not re-verified because these 128 icons are unused/unnamed by definition — the alpha values
+one. Not re-verified because these icons are unused/unnamed by definition — the alpha values
 are a rough sparse-vs-solid signal, not load-bearing data, and a 1px shift doesn't change that
 classification for any of them (spot-checked a few against the corrected formula: no flips between
 "sparse" and "solid" categories).
@@ -438,7 +444,6 @@ classification for any of them (spot-checked a few against the corrected formula
 | 365-366 | no | sparse/decorative (mostly transparent) |
 | 367-372 | yes | sparse/decorative (mostly transparent) |
 | 374 | no | solid/textured tile, uncategorized |
-| 379 | no | sparse/decorative (mostly transparent) |
 | 380-383 | yes | sparse/decorative (mostly transparent) |
 | 405-409 | yes | sparse/decorative (mostly transparent) |
 | 414-420 | yes | solid/textured tile, uncategorized |
@@ -446,7 +451,7 @@ classification for any of them (spot-checked a few against the corrected formula
 | 438-439 | no | sparse/decorative (mostly transparent) |
 | 440 | no | empty sheet slot (near-fully transparent) |
 
-Verified programmatically: the 128 icons spanned by these 45 ranges have zero overlap with the 313
+Verified programmatically: the 127 icons spanned by these 44 ranges have zero overlap with the 314
 icons in the section above, and their union is exactly `{0..440}` (441 icons, no gaps, no
 double-counts).
 
