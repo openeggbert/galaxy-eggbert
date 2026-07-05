@@ -1,8 +1,10 @@
 # Animations
 
-**Status: COMPLETE.** 155 animated sequences documented: 12 tiles (§1), all 87 real `BlupiAction`
+**Status: COMPLETE.** 131 animated sequences documented: 12 tiles (§1), all 87 real `BlupiAction`
 states — 84 with a real `table_blupi`-sourced animation, 3 confirmed to have no direct record
 (§2), 14 original + 9 newer object animations (§3), 8 explosions (§4), 1 door slide (§5).
+(12+87+14+9+8+1 = 131; a prior version of this line said 155, which didn't match this
+breakdown — corrected 2026-07-05.)
 
 **History**: an earlier pass in this series (2026-07-03) documented only the 8 `BlupiState` values
 `GEBlupiController.cpp` (galaxy-eggbert's own partial Simple3D port) implements, not mobile-eggbert's
@@ -54,7 +56,12 @@ search didn't locate; flagging it here rather than leaving the wrong assumption 
 unverified number as if confirmed). New animation entries added in this pass (§2–§4) use the same
 "N ticks, assumed frame rate" phrasing with the same caveat, not a confirmed duration.
 
-## 1. Animated tiles (`object-m.png`, 6 fps base tick ≈ 167 ms/frame — confirmed, throttled timer)
+## 1. Animated tiles (`object-m.png`, galaxy-eggbert's own uniform 6 fps ≈ 167 ms/frame tick — real
+and throttled in `GEWorldRuntime::Update()`, but a simplification: mobile-eggbert's real per-tile
+divisors vary and mostly don't equal 167 ms/frame, e.g. Saw ticks at 50 ms/frame (20 fps, `Decor.cpp`'s
+`table_decor_scie` divisor=1) and Crusher/Water1/Marine at 150 ms/frame (divisor=3) — see the
+per-tile table below for mobile-eggbert's actual rates; do not read "6 fps" as a mobile-eggbert-confirmed
+constant)
 
 | Animation | Frames | Duration/frame | Loop length | GIF |
 |---|---|---|---|---|
@@ -407,8 +414,9 @@ Every `table_*` identifier found in mobile-eggbert's `Tables.cpp` (`grep`, exhau
 
 **Covered above:** `table_blupi` (Blupi states, §2), `table_decor_lave`/`_eau1`/`_eau2`/`_ecraseur`/
 `_scie`/`_temp`/`_piege1`/`_piege2` (tiles, §1 — Spike's two `_piege` tables both map into the
-single `Spike` sequence already documented), `table_marine` (§1), `table_decor_ventb`/`_ventd`/
-`_ventg`/`_venth` (the 4 fan tiles, §1), `table_cle1`/`_cle2`/`_cle3` (keys, §3.1), `table_tresortrack`
+single `Spike` sequence already documented), `table_marine` (§1), `table_decor_ventillob`/
+`_ventillod`/`_ventillog`/`_ventilloh` (the 4 fan tiles at icons 126-137, §1 — icons match
+`BlockTypes::FanLeft`/etc. exactly), `table_cle1`/`_cle2`/`_cle3` (keys, §3.1), `table_tresortrack`
 (treasure, §3.1), `table_blupih_left` (§3.2), `table_guepe_left` (§3.2), `table_creature_left`
 (§3.2, "same for both directions in source" per `GEDecorSystem.cpp`'s comment), `table_chenille`
 (§3.2), `table_follow1`/`table_follow2` (§3.2), `table_skate` (§3.2 as `24`'s table), `table_power`
@@ -424,9 +432,9 @@ a simplification, not sourced 1:1 from these), `table_bulldozer_left`/`_right`/`
 `table_guepe_right`/`_turn2l`/`_turn2r`, `table_creature_turn2`, `table_oiseau_left`/`_right`/
 `_turn2l`/`_turn2r`, `table_poisson_left`/`_right`/`_turn2l`/`_turn2r`, `table_bridge` (`ObjectType52`),
 `table_charge` (`ObjectType31`), `table_chenillei` (inverse/return chenille direction), `table_clear`
-(`ObjectType37`), `table_decor_goutte` (unidentified — droplet decoration?), `table_decor_ventillob`/
-`_ventillod`/`_ventillog`/`_ventilloh` (unidentified — possibly the fan *device* sprite distinct from
-the wind-effect tiles already covered; not resolved), `table_drinkeffect`/`_drinkoffset`/
+(`ObjectType37`), `table_decor_goutte` (unidentified — droplet decoration?), `table_decor_ventb`/
+`_ventd`/`_ventg`/`_venth` (icons 110-125, a distinct 4-frame "wind-vent particle stream" tile,
+separate from the fan tiles already covered in §1 — not built into a GIF this pass), `table_drinkeffect`/`_drinkoffset`/
 `_drinkoffsetLength` (`ObjectType30`'s drink effect, beyond its already-documented static icon 178),
 `table_dynamitef` (`ObjectType56`, dynamite fuse), `table_electro` (`ObjectType38`), `table_glu`
 (`ObjectType34`), `table_invertpanel`/`_invertstart`/`_invertstop` (`ObjectType41`/`42` particle
