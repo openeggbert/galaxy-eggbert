@@ -545,31 +545,43 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    visibility-sample result, update this file. **Files:** none (verification only).
    **Verification:** `cd build-cna && ./GalaxyEggbertCNA`, compare stdout against §7's expected
    output.
-2. **The actual 3D-mapping design task** (billboard vs. textured-cube for objects, `BigDecor`
-   layer treatment, door rendering, etc. — see `09-open-questions.md`) — the reference material's
-   independent review pass (§3, `DOC-268`-`276`) is done, and it now also has a verified prose
-   gameplay-behavior spec to draw on (`10`-`14-*.md`, `DOC-300`-`306`), so this is unblocked with
-   more grounding than before; not yet scoped as its own `DOC-*`/`E3D-MIG-*` id.
-3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
+2. **Review and approve (or revise) the 3D render-mapping proposal** —
+   `mobile-eggbert-reference/15-3d-render-mapping-design.md` (written 2026-07-05, **not yet
+   approved**): proposes `UniformCube` for all 441 terrain tiles (no change from today),
+   `Billboard` for ~68 of ~70 real `ObjectType`s (matching the already-planned `E3D-MIG-061..063`),
+   `UniformCube` for platform lifts + crates, and recommends `MoveObject`s stay a separate list
+   rather than becoming embedded `World` blocks. Resolves 2 of `09-open-questions.md`'s items if
+   approved. **Files:** none yet (design review only). **Verification:** user approves, revises, or
+   asks follow-up questions; once approved, implementation (billboard renderer, `../easy-3d`
+   changes if any) becomes its own scoped task(s), not done as part of this review.
+3. **`BigDecor` layer treatment, door rendering, and the remaining open questions** — see
+   `09-open-questions.md`, now narrower after task 2's proposal (if approved) resolves the
+   billboard/cube and `MoveObject`-embedding questions. Not yet scoped as its own
+   `DOC-*`/`E3D-MIG-*` id.
+4. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
-4. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+5. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
    proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
    genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — this should follow the
-   mapping-design decisions (task 2), not precede them.
-5. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
-   task 3/4); not needed at the current ~2700-block scale.
-6. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder + CNA renderer
+   mapping-design decisions (task 2/3), not precede them.
+6. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
+   task 4/5); not needed at the current ~2700-block scale.
+7. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder + CNA renderer
    adapter for `Easy3D::BillboardBatch`, then draw `blupi.png` at `GEBlupiController`'s position.
-7. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+   **Update per the 2026-07-05 no-3D-model note (§1):** since no Blupi 3D model exists yet, this
+   task's real near-term scope is a player-view/first-person camera + a 2D animation-state
+   indicator in the screen's bottom-right corner (not an in-world 3D billboard) — full billboard
+   rendering waits for the actual 3D model.
+8. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-8. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+9. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-9. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
+10. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
    §5). `GECameraRig::StartShake()` already calls a real `../simple-3d` `Camera::Shake()` API and
    is wired up at 5 death/hazard call sites. If it still doesn't look right in-game, the next step
    would be tuning intensity/duration to match mobile-eggbert's `DecorAction::SmallShake` feel, not

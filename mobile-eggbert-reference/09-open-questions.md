@@ -3,9 +3,12 @@
 These are flagged, not answered, here — this whole reference exists to give a factual basis for
 answering them later, in a separate mapping-design task.
 
-- **How should mobile-eggbert's objects/elements (all `ObjectType`s, `03-objects.md`) be rendered in
-  3D at all?** Raised by the user 2026-07-03, not decided here. Two candidate approaches, not
-  mutually exclusive across different object types:
+- ~~How should mobile-eggbert's objects/elements (all `ObjectType`s, `03-objects.md`) be rendered
+  in 3D at all?~~ **Proposal written 2026-07-05, not yet approved/implemented** — see
+  `15-3d-render-mapping-design.md`: default `Billboard` for ~68 of ~70 real `ObjectType`s, with
+  `UniformCube` for platform lifts and crates; terrain tiles stay `UniformCube` (already correct
+  for all 441 icons, no facing/rotation actually needed by any current tile). Kept here, not
+  removed, until the proposal is actually approved. Original framing below, for context:
   - **Billboard** — a flat, always-camera-facing sprite (already the plan for Blupi/objects per
     `plan.md`'s `E3D-MIG-061`–`063`).
   - **Textured cube** — apply the 2D texture to one or more cube faces (which face(s), and whether
@@ -53,10 +56,12 @@ answering them later, in a separate mapping-design task.
 - Should doors be a distinct `BlockMetadata`-tagged variant of a normal block, or something else
   entirely (a billboard object type layered over an `Air` cell, matching how mobile-eggbert's own
   door-open animation is itself a `MoveObject`, not a tile mutation with an attached animation)?
-- Should `MoveObject` records (pickups, enemies, effects) become `World`-embedded per-block
-  metadata, or stay a separate object list alongside the `World` (as galaxy-eggbert's own
-  `MobileObjSpec`/`GEDecorSystem` already model them for the 2D-sourced Simple3D target)? The
-  latter already works and doesn't obviously need the block-metadata system at all.
+- ~~Should `MoveObject` records (pickups, enemies, effects) become `World`-embedded per-block
+  metadata, or stay a separate object list alongside the `World`~~ **Proposal written 2026-07-05,
+  not yet approved** — see `15-3d-render-mapping-design.md` §6: recommends keeping them a
+  separate list (as galaxy-eggbert's own `MobileObjSpec`/`GEDecorSystem` already model them for
+  the 2D-sourced Simple3D target), not embedded blocks — the block-type-id space is designed for
+  static terrain, not per-instance dynamic state (position, phase, patrol range).
 - Teleporter pairing is implicit (scan-the-map) in mobile-eggbert — worth deciding whether to keep
   that convention or make pairing explicit via `BlockMetadata` now that the format supports it.
 - ~~The `region=` → background-image mapping is still unresolved~~ **Resolved 2026-07-04**
