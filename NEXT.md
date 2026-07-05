@@ -15,9 +15,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   (`worlds3d/world001.vwr` — real Y variation, not a flat mobile-eggbert layout), and renders real,
   textured terrain across all Y layers (one cube per non-air world cell, using `object-m.png`) with
   working animated tiles (lava/crusher/saw/spike/water/fan/marine/temp), and moves an invisible,
-  collision-only Blupi placeholder around it (arrow keys + Space, grid collision with step-up
-  traversal and gravity — no sprite yet). No object/pickup rendering, no HUD, no sound, no real
-  gameplay yet.
+  collision-only Blupi placeholder around it with **tank controls** (Left/Right turn, Up/Down move
+  forward/back along the current facing — not a strafe pad; Space jumps; LShift crouches, RShift
+  looks up — matches `GalaxyEggbertSimple3D`'s already-shipped control scheme, fixed 2026-07-05),
+  grid collision with step-up traversal and gravity — no 3D sprite yet, see the first-person
+  camera + 2D animation-indicator note above. Parses `MoveObject:` records too now (from
+  mobile-eggbert `.txt` files) but nothing renders them yet. No object/pickup rendering, no HUD,
+  no sound, no real gameplay yet.
 
 **Important architectural decisions** (recorded in `plan.md`/`easy3d.md`/`CLAUDE.md`):
 
@@ -149,11 +153,24 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 184+ commits ahead of `origin/develop` as
+Most recent first. `galaxy-eggbert` `develop` branch is 186+ commits ahead of `origin/develop` as
 of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
-staleness pass + gameplay-behavior spec + interim Blupi camera/HUD + 3D-mapping open questions,
-below) is committed locally; whether it has been pushed depends on when you're reading this (see
-§9 for the push policy: push only on explicit request, never assume standing authorization).
+staleness pass + gameplay-behavior spec + interim Blupi camera/HUD + 3D-mapping open questions +
+CNA controls/MoveObject parsing, below) is committed locally; whether it has been pushed depends
+on when you're reading this (see §9 for the push policy: push only on explicit request, never
+assume standing authorization).
+
+**`GalaxyEggbertCNA` tank controls + `MoveObject:` parsing (2026-07-05).** User feedback: the
+controls felt wrong (arrows were an absolute-direction strafe pad). Fixed to match
+`GalaxyEggbertSimple3D`'s already-shipped scheme exactly: Left/Right turn, Up/Down move forward/
+back along the current facing (never strafe); LShift crouches, RShift looks up (`GEBlupiController`
+gained `Down`/`Up` animation states, icons 33/44, same frame tables as Simple3D). Live-verified by
+screenshot: turning changes the view without moving position; crouch/look-up each show a distinct
+HUD icon and (look-up) visibly tilt the camera. Separately, ported `GESimple3D::GEWorldRuntime`'s
+already-working `MoveObject:` parser to the CNA target (previously ignored entirely) — ObjectType
+allowlist, patrol-line synthesis, engine-agnostic (plain floats, no CNA/XNA Vector3 dependency,
+confirmed by a standalone verify tool with zero CNA linkage). Nothing renders these objects yet;
+this is the parsing prerequisite for `15-3d-render-mapping-design.md`'s billboard renderer.
 
 **5 more `09-open-questions.md` items resolved (2026-07-05) — `15-3d-render-mapping-design.md` §9
 addendum.** Continuing from the approved render-mode design: doors (no new design needed — closed
@@ -582,7 +599,10 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `ObjectType`s and `BigDecor`; a small `Easy3D::CubeBatch`-based path (reusing existing terrain
    cube machinery) for platform lifts + crates. See `15-3d-render-mapping-design.md` §7 for the
    full breakdown. Waits on an actual 3D Blupi model for the Blupi-specific part, but object/enemy/
-   `BigDecor` billboards don't need one.
+   `BigDecor` billboards don't need one. **Partial progress (2026-07-05):** `GEWorldRuntime` (CNA)
+   now parses `MoveObject:` records (see §3) — the data prerequisite is done; the renderer itself
+   (`Easy3D::BillboardBatch` vertex builder, a `../easy-3d` change needing its own explicit
+   per-change approval per `CLAUDE.md`) is not started.
 3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
