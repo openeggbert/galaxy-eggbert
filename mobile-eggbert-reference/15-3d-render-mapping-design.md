@@ -19,6 +19,12 @@ categorization is now PARTIALLY INVALIDATED pending §10's triage** — treat §
 exceptions" language as historical, not current, and §10 as the actual current state of
 knowledge. Not yet independently re-verified (see §10's own methodology note) or re-approved by
 the user in its expanded form.
+**§10.6's 34 unidentified icons resolved (2026-07-07) — see §11.** User directly identified each
+one via a Q&A pass; result also reverses §3's "don't build `DirectionalCube` yet" call — 15 of the
+34 icons genuinely need per-face texture + fallback color, and 3 (cobwebs) need the previously-
+unused facing metadata. A second Q&A round is planned for the rest of §10's ~137 icons (Billboard/
+ThinMechanical/special-surface/architectural-kit) to replace the first-pass agent guesses with
+direct user identification the same way.
 
 ## 1. What the renderer actually supports today (confirmed by reading source)
 
@@ -71,15 +77,15 @@ already encodes the direction as a **separate icon ID**, not as a rotation of on
   levels only ever show doors from one fixed 2D angle anyway.
 - Switches, springs, teleporters: all single-icon, non-directional in the source art.
 
-**Recommendation: reserve the facing bits (cheap, forward-looking) but don't build `DirectionalCube`
-support yet.** Every real, currently-cataloged tile (all 441 icons in `02-tiles.md`) is correctly
-served by `UniformCube` alone. `DirectionalCube` becomes useful only for **new, hand-authored 3D
-content** that isn't sourced from a mobile-eggbert icon (e.g. a future wall-mounted decoration with
-a real "front"), which is speculative future work, not a blocker for faithful-remake parity. This
-is a meaningful simplification: the `Easy3D::CubeItem`/`CubeMesh` per-face extension this would
-require (an `../easy-3d` change, needing its own separate approval per `CLAUDE.md`) does not need
-to happen for mobile-eggbert parity — only if/when denser hand-authored worlds want directional
-decoration.
+~~**Recommendation: reserve the facing bits (cheap, forward-looking) but don't build
+`DirectionalCube` support yet.** Every real, currently-cataloged tile (all 441 icons in
+`02-tiles.md`) is correctly served by `UniformCube` alone. `DirectionalCube` becomes useful only
+for **new, hand-authored 3D content**...~~ **Reversed (2026-07-07) — see §11.** The user
+personally identified 15 real, currently-cataloged icons that need per-face texture + fallback
+color (`DirectionalCube`), and 3 (401-403, cobwebs) that need the facing metadata specifically —
+this is no longer speculative future work, it's confirmed present-day need. The
+`Easy3D::CubeItem`/`CubeMesh` per-face extension does need to happen for mobile-eggbert parity
+after all.
 
 ## 4. Terrain tiles (block-type-id space): categorization
 
@@ -407,9 +413,8 @@ before committing to a specific treatment:
 §7's summary ("no terrain-rendering changes needed, `UniformCube` already correct for all 441
 icons") is **no longer accurate** and needs revisiting once the icons above are triaged into
 firm categories. Practical next steps, roughly in priority order:
-1. Resolve §10.6's identification questions (especially **401-403**, the most-used unidentified
-   icons, and **200**/`Platform`, since a misnamed common structural tile affects gameplay-relevant
-   assumptions elsewhere, not just rendering).
+1. ~~Resolve §10.6's identification questions (especially 401-403, and 200/`Platform`)~~ — **all
+   34 of §10.6's icons resolved by direct user identification, 2026-07-07 — see §11.**
 2. Decide the `ThinMechanical` render mode's actual geometry (§10.1) — this blocks a firm
    recommendation for all of §10.3's ~25 icons.
 3. Decide the water/liquid surface treatment (§10.4) — affects some of the most commonly-placed
@@ -423,3 +428,55 @@ firm categories. Practical next steps, roughly in priority order:
 5. An independent adversarial verification pass over this section's specific icon-by-icon claims,
    matching the rigor the `DOC-3xx` behavior-spec docs got, before treating any single icon's
    identity here as final.
+
+## 11. §10.6 resolved by direct user identification (2026-07-07)
+
+Method changed for this batch: instead of another agent-driven guess, the user was asked directly
+(`mobile-eggbert-reference/questionnaire-unidentified-tiles.md`, a throwaway Q&A file, one block
+per icon with its crop image, deleted from the numbered doc index on purpose) what each of §10.6's
+34 icons actually shows and how it should render. These are first-person, direct-observation
+answers — higher confidence than the earlier 8-agent guesses, though still just one person's read
+of a 64×64 crop, not independently cross-checked. All 34 are resolved; §10.6 no longer has any
+open items.
+
+**Headline result: `DirectionalCube` is needed after all** — reverses §3's "don't build it yet"
+call (see that section's strikethrough). 15 of the 34 icons need per-face texture + a fallback
+color on the untextured faces:
+
+| Icons | What it is | Face treatment |
+|---|---|---|
+| 1, 7 | control panel / machine part | texture on 1 side face, blue fallback on the rest |
+| 73 | passable block | texture on all 4 side faces, blue fallback top+bottom |
+| 85 | some block | texture on 4 faces (2 top-ish, 2 side), grey fallback on the other 2 |
+| 139-143 | bookshelf/cabinet | texture on 1 face (front), orange-wood fallback on the other 5 |
+| 198 | passable block | texture on 2 opposite side faces, beige fallback on the rest |
+| 200 (`Platform`) | passable block / grate | texture on 4 side faces, top+bottom **open/transparent** — not just a fallback color, an actual omitted face; confirms the earlier suspicion this icon is misnamed (not a flat walkable tread) |
+| 386-388 | palace block/fragment | texture on 1 face, grey fallback on the other 5 |
+| 389 | probably a fountain | texture on 1 face, grey fallback on the other 5 |
+| 401-403 | **cobweb** | texture on 1 face, transparent on the rest, **rotation (4 cardinal directions) stored in the per-block metadata** — the first real, concrete use of the facing bits §3 reserved but never had a use case for |
+
+Icon 200's "open/transparent top+bottom" and icon 401-403's facing-metadata need are each a step
+beyond plain `DirectionalCube` (a face that's actually absent, not just colored) — flagged here,
+not yet designed in detail.
+
+**Resolved to plain `Billboard`** (matches §10.2's existing category, identity corrected):
+61, 62, 65, 67 — bricks (previously guessed as a wood-plank/`Ladder`-related family; user
+identifies them as brick, singular/plural per icon, not lumber).
+
+**Resolved to plain `UniformCube`** (fully bulk material, no longer exceptions — remove from any
+future §10 tally): 78-84 (some kind of block, texture all 6 sides) and 246-249 (cheese, texture
+all sides).
+
+**New geometry needed, distinct from every existing mode — icon 202**: a horizontal bar/rod Blupi
+walks on top of to cross a hazard below (a real gameplay element, not decoration). Not a billboard
+(it has a real walkable top), not a full cube (visually a thin bar, not a solid block), not quite
+`ThinMechanical` either (that mode's own geometry is still undecided — this one has a concrete
+shape from the user: a thin rectangular prism, texture wrapping the 4 long faces, the 2 small end-
+cap faces a flat blue). Tentatively named **`thin-bar`** here; needs its own follow-up design
+(possibly `ThinMechanical`'s eventual geometry turns out to be exactly this shape for some of
+§10.3's icons too — worth revisiting together).
+
+**Practical impact:** `Easy3D::CubeMesh`'s current "one texture region per cube, all 6 faces"
+limitation (§1) is now a confirmed blocker for real mobile-eggbert parity, not just a
+speculative future want — extending it to support `DirectionalCube` (per-face texture + fallback
+color) is real, scoped-but-not-yet-approved follow-up work for `../easy-3d`.

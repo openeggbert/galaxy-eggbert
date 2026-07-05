@@ -177,13 +177,33 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 188+ commits ahead of `origin/develop` as
-of 2026-07-06 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
+Most recent first. `galaxy-eggbert` `develop` branch is 189+ commits ahead of `origin/develop` as
+of 2026-07-07 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
 staleness pass + gameplay-behavior spec + interim Blupi camera/HUD + 3D-mapping open questions +
 CNA controls/MoveObject parsing + billboard object rendering + the terrain-tile render-mode
-finding below) is committed locally; whether it has been pushed depends on when you're reading
-this (see §9 for the push policy: push only on explicit request, never assume standing
-authorization).
+finding + the user Q&A identification round below) is committed locally; whether it has been
+pushed depends on when you're reading this (see §9 for the push policy: push only on explicit
+request, never assume standing authorization).
+
+**User Q&A identification round 1, 34 icons (2026-07-07) — `DirectionalCube` confirmed needed.**
+Instead of another agent guess, wrote a throwaway per-icon Q&A file
+(`mobile-eggbert-reference/questionnaire-unidentified-tiles.md`, one block per icon with its crop
+image) asking the user directly what each of §10.6's 34 unidentified icons shows and how to render
+it. User answered all 34. Result, applied to `02-tiles.md` + written up in
+`15-3d-render-mapping-design.md` §11: **15 icons need `DirectionalCube`** (per-face texture + flat
+fallback color on the rest) — reverses §3's "nobody needs this yet" call, e.g. icon 1/7 (control
+panel, texture on 1 face + blue fallback), 139-143 (bookshelf, texture on 1 face + orange-wood
+fallback), 401-403 (**cobweb** — texture on 1 face, transparent elsewhere, rotation stored in
+per-block metadata — the first real use of the facing bits §3 reserved but never had a use for).
+4 icons (61/62/65/67) turned out to be brick, not wood — stays `Billboard`, identity corrected.
+11 icons (78-84, 246-249) resolved to plain `UniformCube` — full bulk material after all, no
+longer exceptions. Icon 202 needs a genuinely new geometry (a thin bar/rod Blupi walks on top of
+to cross a hazard — not billboard, not full cube, not `DirectionalCube` either), tentatively named
+`thin-bar`, not designed yet. Icon 200 (`Platform`) confirmed likely misnamed — user describes it
+as a passable grate with open (not just fallback-colored) top/bottom. **A second Q&A round is
+planned for the other ~137 §10.2-§10.5 icons** (Billboard/ThinMechanical/special-surface/
+architectural-kit), to replace the first-pass 8-agent guesses with direct user identification the
+same way — scope (all ~137, or some subset) still being confirmed with the user.
 
 **Terrain-tile render-mode labeling pass, `02-tiles.md` (2026-07-06).** Follow-up to the finding
 directly below: 171 of the 314 named tiles now carry an inline render-mode note in their Category

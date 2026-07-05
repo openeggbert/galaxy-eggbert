@@ -15,17 +15,26 @@ into the named table (see `DOC-273`), bringing the counts to 314/127.
 large-scale finding (~100 of the 314 named tiles are visually thin/mechanical/pillar-shaped, not
 bulk material — first noticed when `Saw`, icon 378, rendered wrong as a `UniformCube`), every
 flagged icon's Category cell below now carries an appended note in the form
-`— **RenderMode** (§10.N): <what it actually looks like>`. Three note kinds:
+`— **RenderMode** (§10.N): <what it actually looks like>`. Note kinds:
 - `**Billboard**` / `**ThinMechanical**` / `**special-surface**` / `**architectural-kit**` — a
   render-mode recommendation from §10.2–§10.5, with a one-line visual description. `ThinMechanical`
   is a provisional third render mode (not yet built — see §10.1); its exact geometry is undecided.
-- `needs identification (§10.6)` — confirmed *not* plain bulk fill, but the icon's exact
-  identity/purpose wasn't resolved well enough to commit to a render mode yet.
+- `**DirectionalCube**` — per-face texture + a flat fallback color on the untextured faces (§3's
+  originally-deferred mode, confirmed genuinely needed 2026-07-07 — see `15-3d-render-mapping-
+  design.md` §11); the note says which faces get the real texture and what fallback color the rest
+  get.
+- `**thin-bar**` (icon 202 only) — a new geometry, a thin rectangular-prism bar Blupi walks on
+  top of, not yet built anywhere.
 Rows with no such note are unaffected by this finding — still correctly `UniformCube` (the
 default, per §4). This is a documentation labeling pass only; **no render-mode code has been
-implemented from it yet** (tracked as follow-up work, `15-3d-render-mapping-design.md` §10.7).
-These per-icon identifications are a first-pass finding, not yet independently
-adversarially verified (see §10's own methodology note) — treat them as probable, not certain.
+implemented from it yet** (tracked as follow-up work, `15-3d-render-mapping-design.md` §10.7/§11).
+
+**§10.6's 34 "needs identification" icons were resolved by direct user identification on
+2026-07-07** (`questionnaire-unidentified-tiles.md` — a throwaway Q&A file, answered and applied,
+not part of this doc's numbered index) — see `15-3d-render-mapping-design.md` §11 for the full
+table. None of those 34 rows say `needs identification` anymore. The other ~137 icons flagged in
+§10.2-§10.5 still carry the original first-pass 8-agent guesses, not yet independently verified —
+a second user Q&A round for those is planned the same way.
 
 Icons are indices into `object-m.png` (1301×1431 px, 64×64 px tiles with a 1px gap and a 1px
 leading margin, 20 columns — confirmed by direct file inspection, matches
@@ -63,13 +72,13 @@ without a galaxy-eggbert constant yet.
 
 | Image | Icon | Name | Category | Animated? | Passable | Used in real levels |
 |---|---|---|---|---|---|---|
-| ![icon1](images/tile-full-001.png) | 1 | (unnamed) | unnamed variant — needs identification (§10.6): flat bezel/panel with a waveform line + colored status dots; reads like a control-panel/gauge display | no | no | 10/78 files |
+| ![icon1](images/tile-full-001.png) | 1 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): ovládací panel/displej s tlačítky (nebo světly); textura na 1 boční straně (čelo), zbylé boční strany modrou fallback barvou — potvrzuje reálnou potřebu `DirectionalCube` z §3, dosud odloženého jako "zatím nepotřebný" | no | no | 10/78 files |
 | ![icon2](images/tile-full-002.png) | 2 | (unnamed) | unnamed variant | no | no | 8/78 files |
 | ![icon3](images/tile-full-003.png) | 3 | (unnamed) | unnamed variant | no | no | 20/78 files |
 | ![icon4](images/tile-full-004.png) | 4 | (unnamed) | unnamed variant | no | no | 11/78 files |
 | ![icon5](images/tile-full-005.png) | 5 | (unnamed) | unnamed variant | no | no | 14/78 files |
 | ![icon6](images/tile-full-006.png) | 6 | (unnamed) | unnamed variant | no | no | 8/78 files |
-| ![icon7](images/tile-full-007.png) | 7 | (unnamed) | unnamed variant — needs identification (§10.6): flat bezel/panel with a waveform line + colored status dots; reads like a control-panel/gauge display | no | no | 8/78 files |
+| ![icon7](images/tile-full-007.png) | 7 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): kus nějakého stroje; textura na 1 boční straně, zbylé boční strany modrou fallback barvou | no | no | 8/78 files |
 | ![icon8](images/tile-full-008.png) | 8 | (unnamed) | unnamed variant | no | no | 9/78 files |
 | ![icon9](images/tile-full-009.png) | 9 | (unnamed) | unnamed variant | no | no | 12/78 files |
 | ![icon10](images/tile-full-010.png) | 10 | `Ground` | ground | no | no | 30/78 files |
@@ -120,28 +129,28 @@ without a galaxy-eggbert constant yet.
 | ![icon58](images/tile-full-058.png) | 58 | (unnamed) | unnamed variant | no | yes | 17/78 files |
 | ![icon59](images/tile-full-059.png) | 59 | (unnamed) | unnamed variant | no | yes | 24/78 files |
 | ![icon60](images/tile-full-060.png) | 60 | (unnamed) | unnamed variant | no | yes | 24/78 files |
-| ![icon61](images/tile-full-061.png) | 61 | (unnamed) | unnamed variant — needs identification (§10.6): orange/brown wood-toned shape, possibly a plank/beam family related to the `Ladder` (66) finding | no | yes | 6/78 files |
-| ![icon62](images/tile-full-062.png) | 62 | (unnamed) | unnamed variant — needs identification (§10.6): orange/brown wood-toned shape, possibly a plank/beam family related to the `Ladder` (66) finding | no | yes | 6/78 files |
+| ![icon61](images/tile-full-061.png) | 61 | (unnamed) | unnamed variant — **Billboard** (user 2026-07-07): cihla | no | yes | 6/78 files |
+| ![icon62](images/tile-full-062.png) | 62 | (unnamed) | unnamed variant — **Billboard** (user 2026-07-07): cihla | no | yes | 6/78 files |
 | ![icon63](images/tile-full-063.png) | 63 | (unnamed) | unnamed variant | no | yes | 10/78 files |
 | ![icon64](images/tile-full-064.png) | 64 | (unnamed) | unnamed variant | no | yes | 9/78 files |
-| ![icon65](images/tile-full-065.png) | 65 | (unnamed) | unnamed variant — needs identification (§10.6): orange/brown wood-toned shape, possibly a plank/beam family related to the `Ladder` (66) finding | no | yes | 6/78 files |
+| ![icon65](images/tile-full-065.png) | 65 | (unnamed) | unnamed variant — **Billboard** (user 2026-07-07): několik cihel | no | yes | 6/78 files |
 | ![icon66](images/tile-full-066.png) | 66 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): vertical rung-segmented column, reads as a ladder, passable | no | yes | 15/78 files |
-| ![icon67](images/tile-full-067.png) | 67 | (unnamed) | unnamed variant — needs identification (§10.6): orange/brown wood-toned shape, possibly a plank/beam family related to the `Ladder` (66) finding | no | yes | 14/78 files |
+| ![icon67](images/tile-full-067.png) | 67 | (unnamed) | unnamed variant — **Billboard** (user 2026-07-07): cihly | no | yes | 14/78 files |
 | ![icon68](images/tile-full-068.png) | 68 | `Lava (base)` | hazard | yes, 8 frames (68-72) | no | 41/78 files — kills Blupi on contact |
 | ![icon69](images/tile-full-069.png) | 69 | (unnamed) | unnamed variant | no | yes | 9/78 files |
-| ![icon73](images/tile-full-073.png) | 73 | (unnamed) | unnamed variant — needs identification (§10.6): ring of small spheres around a gold center, circular/rotating arrangement | no | yes | 12/78 files |
+| ![icon73](images/tile-full-073.png) | 73 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na všech 4 bočních stranách, nahoře i dole modrá fallback barva | no | yes | 12/78 files |
 | ![icon74](images/tile-full-074.png) | 74 | (unnamed) | unnamed variant | no | no | 9/78 files |
 | ![icon75](images/tile-full-075.png) | 75 | (unnamed) | unnamed variant | no | no | 10/78 files |
 | ![icon76](images/tile-full-076.png) | 76 | (unnamed) | unnamed variant — **Billboard** (§10.2): stone pedestal/column | no | yes | 22/78 files |
 | ![icon77](images/tile-full-077.png) | 77 | (unnamed) | unnamed variant — **Billboard** (§10.2): yellow "Y" signpost/antenna | no | yes | 11/78 files |
-| ![icon78](images/tile-full-078.png) | 78 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 14/78 files |
-| ![icon79](images/tile-full-079.png) | 79 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 14/78 files |
-| ![icon80](images/tile-full-080.png) | 80 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 14/78 files |
-| ![icon81](images/tile-full-081.png) | 81 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 14/78 files |
-| ![icon82](images/tile-full-082.png) | 82 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 14/78 files |
-| ![icon83](images/tile-full-083.png) | 83 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 13/78 files |
-| ![icon84](images/tile-full-084.png) | 84 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | no | 14/78 files |
-| ![icon85](images/tile-full-085.png) | 85 | (unnamed) | unnamed variant — needs identification (§10.6): dark metallic panel with bolt/lever/connector shapes; reads like a switch/circuit-board tileset | no | yes | 2/78 files |
+| ![icon78](images/tile-full-078.png) | 78 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 14/78 files |
+| ![icon79](images/tile-full-079.png) | 79 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 14/78 files |
+| ![icon80](images/tile-full-080.png) | 80 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 14/78 files |
+| ![icon81](images/tile-full-081.png) | 81 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 14/78 files |
+| ![icon82](images/tile-full-082.png) | 82 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 14/78 files |
+| ![icon83](images/tile-full-083.png) | 83 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 13/78 files |
+| ![icon84](images/tile-full-084.png) | 84 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification` | no | no | 14/78 files |
+| ![icon85](images/tile-full-085.png) | 85 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): nějaký blok; textura na 4 stranách (2 shora, 2 boční), zbylé 2 strany šedou fallback barvou | no | yes | 2/78 files |
 | ![icon86](images/tile-full-086.png) | 86 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls) | no | yes | 5/78 files |
 | ![icon87](images/tile-full-087.png) | 87 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls) | no | no | 18/78 files |
 | ![icon88](images/tile-full-088.png) | 88 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls) | no | no | 14/78 files |
@@ -162,11 +171,11 @@ without a galaxy-eggbert constant yet.
 | ![icon132](images/tile-full-132.png) | 132 | `FanUp (base)` | hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel | yes, 3 frames (132-134) | no | 4/78 files — kills unless shielded |
 | ![icon135](images/tile-full-135.png) | 135 | `FanDown (base)` | hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel | yes, 3 frames (135-137) | no | 1/78 files — kills unless shielded |
 | ![icon138](images/tile-full-138.png) | 138 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): single blue pipe segment with flanged joints | no | yes | 19/78 files |
-| ![icon139](images/tile-full-139.png) | 139 | (unnamed) | unnamed variant — needs identification (§10.6): wooden bookcase/cabinet furniture set (closed/open-door variants), strongly front-facing art | no | no | 9/78 files |
-| ![icon140](images/tile-full-140.png) | 140 | (unnamed) | unnamed variant — needs identification (§10.6): wooden bookcase/cabinet furniture set (closed/open-door variants), strongly front-facing art | no | no | 10/78 files |
-| ![icon141](images/tile-full-141.png) | 141 | (unnamed) | unnamed variant — needs identification (§10.6): wooden bookcase/cabinet furniture set (closed/open-door variants), strongly front-facing art | no | no | 9/78 files |
-| ![icon142](images/tile-full-142.png) | 142 | (unnamed) | unnamed variant — needs identification (§10.6): wooden bookcase/cabinet furniture set (closed/open-door variants), strongly front-facing art | no | no | 9/78 files |
-| ![icon143](images/tile-full-143.png) | 143 | (unnamed) | unnamed variant — needs identification (§10.6): wooden bookcase/cabinet furniture set (closed/open-door variants), strongly front-facing art | no | no | 8/78 files |
+| ![icon139](images/tile-full-139.png) | 139 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva) | no | no | 9/78 files |
+| ![icon140](images/tile-full-140.png) | 140 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva) | no | no | 10/78 files |
+| ![icon141](images/tile-full-141.png) | 141 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva) | no | no | 9/78 files |
+| ![icon142](images/tile-full-142.png) | 142 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva) | no | no | 9/78 files |
+| ![icon143](images/tile-full-143.png) | 143 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva) | no | no | 8/78 files |
 | ![icon144](images/tile-full-144.png) | 144 | (unnamed) | unnamed variant | no | no | 14/78 files |
 | ![icon145](images/tile-full-145.png) | 145 | (unnamed) | unnamed variant | no | no | 14/78 files |
 | ![icon146](images/tile-full-146.png) | 146 | (unnamed) | unnamed variant | no | no | 9/78 files |
@@ -211,11 +220,11 @@ without a galaxy-eggbert constant yet.
 | ![icon195](images/tile-full-195.png) | 195 | (unnamed) | unnamed variant | no | no | 8/78 files |
 | ![icon196](images/tile-full-196.png) | 196 | (unnamed) | unnamed variant | no | no | 9/78 files |
 | ![icon197](images/tile-full-197.png) | 197 | (unnamed) | unnamed variant | no | no | 9/78 files |
-| ![icon198](images/tile-full-198.png) | 198 | (unnamed) | unnamed variant — needs identification (§10.6): white rounded arch/dome shape, possibly a tunnel or igloo-style opening | no | yes | 10/78 files |
+| ![icon198](images/tile-full-198.png) | 198 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na 2 protilehlých bočních stranách, zbylé strany béžovou fallback barvou | no | yes | 10/78 files |
 | ![icon199](images/tile-full-199.png) | 199 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): yellow crossed-bar A-frame/brace, passable | no | yes | 9/78 files |
-| ![icon200](images/tile-full-200.png) | 200 | `Platform` | decoration — needs identification (§10.6): possible misidentification as `Platform`: crop shows two thin vertical support-leg posts, no visible flat tread | no | yes | 27/78 files — "floating platform" |
+| ![icon200](images/tile-full-200.png) | 200 | `Platform` | decoration — **DirectionalCube** (user 2026-07-07): průchozí blok / mříž (potvrzuje dřívější podezření na chybné jméno `Platform`); textura na 4 bočních stranách, nahoře i dole nic (průhledné/otevřené, ne jen fallback barva — potřebuje skutečné vynechání stěny, ne jen jinou barvu) | no | yes | 27/78 files — "floating platform" |
 | ![icon201](images/tile-full-201.png) | 201 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): metal cross-braced grate, passable — most common flagged icon in this pass (36/78 files) | no | yes | 36/78 files |
-| ![icon202](images/tile-full-202.png) | 202 | (unnamed) | unnamed variant — needs identification (§10.6): almost entirely blank/transparent except one thin horizontal line | no | yes | 11/78 files |
+| ![icon202](images/tile-full-202.png) | 202 | (unnamed) | unnamed variant — **thin-bar (nová geometrie)** (user 2026-07-07): tyč, po které Blupi chodí a přeleze nebezpečnou překážku pod ní; NE billboard — tenký hranolový (ne krychlový) model tyče, textura na 4 dlouhých stranách, 2 čelní (malé, čtvercové) strany modré; jiná geometrie než `ThinMechanical` i `DirectionalCube` | no | yes | 11/78 files |
 | ![icon203](images/tile-full-203.png) | 203 | `Marine (base)` | decorative/animated water — **special-surface** (§10.4): green seaweed/kelp frond — thin plant, not bulk; foliage-style billboard/cross-plane treatment recommended | yes, 11 frames (203-208) | yes | 18/78 files |
 | ![icon211](images/tile-full-211.png) | 211 | `Spring` | interactive — **ThinMechanical** (§10.3): coiled spring, direct `Saw`-precedent parallel | no | no | not found in scanned files — auto-launches Blupi upward |
 | ![icon214](images/tile-full-214.png) | 214 | (unnamed) | unnamed variant — **Billboard** (§10.2): dashed red/yellow boundary-marker outline | no | no | 7/78 files |
@@ -234,10 +243,10 @@ without a galaxy-eggbert constant yet.
 | ![icon235](images/tile-full-235.png) | 235 | (unnamed) | unnamed variant — **Billboard** (§10.2): candy-striped pole (same art family as 218-222), passable | no | yes | 15/78 files |
 | ![icon236](images/tile-full-236.png) | 236 | (unnamed) | unnamed variant — **Billboard** (§10.2): candy-striped pole (same art family as 218-222), passable | no | yes | 14/78 files |
 | ![icon245](images/tile-full-245.png) | 245 | (unnamed) | unnamed variant — **Billboard** (§10.2): arched window/doorway pair | no | yes | 3/78 files |
-| ![icon246](images/tile-full-246.png) | 246 | (unnamed) | unnamed variant — needs identification (§10.6): continuous embossed bubble/foam pattern filling the tile edge-to-edge; plausibly genuine bulk material but visually unusual | no | no | 8/78 files |
-| ![icon247](images/tile-full-247.png) | 247 | (unnamed) | unnamed variant — needs identification (§10.6): continuous embossed bubble/foam pattern filling the tile edge-to-edge; plausibly genuine bulk material but visually unusual | no | no | 8/78 files |
-| ![icon248](images/tile-full-248.png) | 248 | (unnamed) | unnamed variant — needs identification (§10.6): continuous embossed bubble/foam pattern filling the tile edge-to-edge; plausibly genuine bulk material but visually unusual | no | no | 8/78 files |
-| ![icon249](images/tile-full-249.png) | 249 | (unnamed) | unnamed variant — needs identification (§10.6): continuous embossed bubble/foam pattern filling the tile edge-to-edge; plausibly genuine bulk material but visually unusual | no | no | 8/78 files |
+| ![icon246](images/tile-full-246.png) | 246 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách | no | no | 8/78 files |
+| ![icon247](images/tile-full-247.png) | 247 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách | no | no | 8/78 files |
+| ![icon248](images/tile-full-248.png) | 248 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách | no | no | 8/78 files |
+| ![icon249](images/tile-full-249.png) | 249 | (unnamed) | unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách | no | no | 8/78 files |
 | ![icon250](images/tile-full-250.png) | 250 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved) | no | no | 2/78 files |
 | ![icon251](images/tile-full-251.png) | 251 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved) | no | no | 9/78 files |
 | ![icon252](images/tile-full-252.png) | 252 | (unnamed) | unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved) | no | no | 9/78 files |
@@ -338,10 +347,10 @@ without a galaxy-eggbert constant yet.
 | ![icon379](images/tile-full-379.png) | 379 | `SawStopped` | interactive/hazard-adjacent — **ThinMechanical** (§10.3): same circular-blade shape as 378, stopped state | no | no | not found in scanned files — the Saw's toggled-off, safe static state; `GETerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled |
 | ![icon384](images/tile-full-384.png) | 384 | `Switch` | interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights | no | no | 8/78 files — toggles linked Saw tiles |
 | ![icon385](images/tile-full-385.png) | 385 | `SwitchOff` | interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights | no | no | not found in scanned files — toggles linked Saw tiles |
-| ![icon386](images/tile-full-386.png) | 386 | (unnamed) | unnamed variant — needs identification (§10.6): thin-looking vertical shape (plate/flag post, cylindrical post, disc-on-pedestal) but marked non-passable/solid, unlike the confirmed post family | no | no | 6/78 files |
-| ![icon387](images/tile-full-387.png) | 387 | (unnamed) | unnamed variant — needs identification (§10.6): thin-looking vertical shape (plate/flag post, cylindrical post, disc-on-pedestal) but marked non-passable/solid, unlike the confirmed post family | no | no | 6/78 files |
-| ![icon388](images/tile-full-388.png) | 388 | (unnamed) | unnamed variant — needs identification (§10.6): thin-looking vertical shape (plate/flag post, cylindrical post, disc-on-pedestal) but marked non-passable/solid, unlike the confirmed post family | no | no | 4/78 files |
-| ![icon389](images/tile-full-389.png) | 389 | (unnamed) | unnamed variant — needs identification (§10.6): thin-looking vertical shape (plate/flag post, cylindrical post, disc-on-pedestal) but marked non-passable/solid, unlike the confirmed post family | no | no | 5/78 files |
+| ![icon386](images/tile-full-386.png) | 386 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou | no | no | 6/78 files |
+| ![icon387](images/tile-full-387.png) | 387 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou | no | no | 6/78 files |
+| ![icon388](images/tile-full-388.png) | 388 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou | no | no | 4/78 files |
+| ![icon389](images/tile-full-389.png) | 389 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): asi fontána; textura na 1 straně, zbylých 5 stran šedou fallback barvou | no | no | 5/78 files |
 | ![icon390](images/tile-full-390.png) | 390 | (unnamed) | unnamed variant | no | no | 5/78 files |
 | ![icon391](images/tile-full-391.png) | 391 | (unnamed) | unnamed variant — **architectural-kit** (§10.5): twin arch/window niches — likely a fragment of a modular door/archway sprite kit | no | no | 7/78 files |
 | ![icon392](images/tile-full-392.png) | 392 | (unnamed) | unnamed variant — **architectural-kit** (§10.5): left door-jamb edge piece — likely a fragment of a modular door/archway sprite kit | no | no | 7/78 files |
@@ -353,9 +362,9 @@ without a galaxy-eggbert constant yet.
 | ![icon398](images/tile-full-398.png) | 398 | (unnamed) | unnamed variant — **Billboard** (§10.2): fence rail on two posts | no | yes | 7/78 files |
 | ![icon399](images/tile-full-399.png) | 399 | (unnamed) | unnamed variant — **Billboard** (§10.2): fluted classical column | no | yes | 5/78 files |
 | ![icon400](images/tile-full-400.png) | 400 | (unnamed) | unnamed variant — **architectural-kit** (§10.5): the archway opening itself — likely a fragment of a modular door/archway sprite kit | no | yes | 5/78 files |
-| ![icon401](images/tile-full-401.png) | 401 | (unnamed) | unnamed variant — needs identification (§10.6): extremely faint gray branching/radiating line art, barely visible — highest priority to resolve (15-16/78 files each) | no | yes | 16/78 files |
-| ![icon402](images/tile-full-402.png) | 402 | (unnamed) | unnamed variant — needs identification (§10.6): extremely faint gray branching/radiating line art, barely visible — highest priority to resolve (15-16/78 files each) | no | yes | 15/78 files |
-| ![icon403](images/tile-full-403.png) | 403 | (unnamed) | unnamed variant — needs identification (§10.6): extremely faint gray branching/radiating line art, barely visible — highest priority to resolve (15-16/78 files each) | no | yes | 15/78 files |
+| ![icon401](images/tile-full-401.png) | 401 | (unnamed) | unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v per-block metadatech — první reálné využití §3's rezervovaných facing bitů | no | yes | 16/78 files |
+| ![icon402](images/tile-full-402.png) | 402 | (unnamed) | unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v per-block metadatech — první reálné využití §3's rezervovaných facing bitů | no | yes | 15/78 files |
+| ![icon403](images/tile-full-403.png) | 403 | (unnamed) | unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v per-block metadatech — první reálné využití §3's rezervovaných facing bitů | no | yes | 15/78 files |
 | ![icon404](images/tile-full-404.png) | 404 | (unnamed) | unnamed variant — **Billboard** (§10.2): green vase/bulb on a neck | no | yes | 3/78 files |
 | ![icon410](images/tile-full-410.png) | 410 | (unnamed) | unnamed variant — **Billboard** (§10.2): small green knob/dome, mostly cropped | no | yes | 5/78 files |
 | ![icon411](images/tile-full-411.png) | 411 | `Tile411` | unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand | no | yes | 1/78 files |
