@@ -118,9 +118,14 @@ link), that is called out explicitly.
 | World files | `worlds/world001.txt` … | Direct asset reuse — same text format, read by the existing engine-agnostic `GalaxyEggbert::Worlds` parser |
 | Game enums (`BlupiAction`, `Direction`, `SecretPower`, `GameSpeed`, `KeyPressFlags`, `ObjectType`, `SoundChannel`, decor actions) | `include/WindowsPhoneSpeedyBlupi/def/`, `decor/` | Behavioral/ID reference only — galaxy-eggbert has its own `include/GalaxyEggbert/def/*.hpp` equivalents; copying/reconciling IDs requires explicit user approval (see `easy3d.md` §12 Q4) |
 | Level constants (`MAXCELX=100`, `MAXCELY=100`, etc.) | `Def.hpp` | Reference only — galaxy-eggbert's own `GameConstants.hpp` already tracks the grid dimensions |
-| Gameplay logic | `Decor.cpp` / `Decor.hpp` | **Canonical behavioral reference only.** At ~11,700 lines with `IPixmap`/`ISound` members threaded through simulation methods, it is not a reusable component — see `easy3d.md` §5.2/§6.4. Study it, do not link or copy it. |
+| Gameplay logic | `Decor.cpp` / `Decor.hpp` | **Canonical behavioral reference only for actual GalaxyEggbert game code** (`src/GalaxyEggbertSimple3D/`, `src/GalaxyEggbertCNA/`) — at ~11,700 lines with `IPixmap`/`ISound` members threaded through simulation methods, it is not a reusable component, see `easy3d.md` §5.2/§6.4; study it, do not link or copy it into those trees. **Exception, approved 2026-07-05:** a written, prose behavioral specification (with key numeric constants — speeds, timers, ranges; not pseudocode, not a verbatim/line-by-line transcription) of mobile-eggbert's gameplay logic may be added to `mobile-eggbert-reference/`, covering: `ObjectType` Category A+B (real behavior, ~70 IDs) and core Blupi mechanics (movement/jump/gravity, secret powers, gauge/lives, doors+keys, save behavior). This is documentation of behavior, not a license to copy this logic into actual game code — implementing any of it in `GalaxyEggbertCNA`/`GalaxyEggbertSimple3D` is a separate decision each time. |
 | Animation/movement tables | `Tables.cpp` | Reference only unless a future approved mobile-eggbert library target makes direct linking possible (`easy3d.md` §12 Q2); do not transcribe array contents without approval |
 | Save data | `GameData.cpp` | Reference only — reusing the byte-level layout for save compatibility is an open question (`easy3d.md` §12 Q7), not a default |
+
+**mobile-eggbert is never modified, including for analysis purposes** (clarified 2026-07-05): if
+a task genuinely needs a working copy to mark up/annotate/experiment with, copy the file into
+`galaxy-eggbert` first (e.g. a scratch location, clearly not part of the build) and work on that
+copy — never edit anything under `../mobile-eggbert` itself, even temporarily.
 
 ### mobile-eggbert build-target reality
 
