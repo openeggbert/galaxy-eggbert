@@ -135,10 +135,18 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 163+ commits ahead of `origin/develop` as
-of 2026-07-05 — this whole batch (engine work + doc rework + review pass, below) is committed
-locally; whether it has been pushed depends on when you're reading this (see §9 for the push
-policy: push only on explicit request, never assume standing authorization).
+Most recent first. `galaxy-eggbert` `develop` branch is 164+ commits ahead of `origin/develop` as
+of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix, below)
+is committed locally; whether it has been pushed depends on when you're reading this (see §9 for
+the push policy: push only on explicit request, never assume standing authorization).
+
+**`CLAUDE.md` staleness fix, `DOC-278` (2026-07-05) — COMPLETE.** Fixed the loose end the review
+pass below surfaced: `CLAUDE.md`'s "Current Direction Lock" section, build-target selection,
+source layout, and Build section all still said `GalaxyEggbertCNA` "does not exist yet" / "has no
+build instructions ... because it does not exist." Updated all of them to reflect that
+`src/GalaxyEggbertCNA/` is a real, working, opt-in tree (builds via
+`-DGALAXY_EGGBERT_BUILD_CNA=ON`, renders real textured/animated terrain) that just isn't at
+feature parity with Simple3D yet — no Current Direction Lock rule was loosened or changed.
 
 **Independent review pass over `DOC-100`–`DOC-267`, `DOC-268`–`DOC-276` (6 commits, 2026-07-05) —
 COMPLETE.** Six parallel agents independently re-checked all 10 `mobile-eggbert-reference/*.md`
@@ -165,11 +173,9 @@ Found and fixed 13 real errors across 5 files (00-overview.md, 03-objects.md, 04
   confirmed" tile-tick claim was only checked against galaxy-eggbert's own simplified constant, not
   mobile-eggbert's real per-tile rates, which vary (Saw is actually 4x faster).
 
-Separately flagged, not yet fixed (outside `mobile-eggbert-reference/` scope, found independently
-by 3 of the 6 review agents): `CLAUDE.md`'s "Current Direction Lock" section still says
-`GalaxyEggbertCNA` "does not exist yet" / "has no build instructions yet because it does not
-exist" — stale, since `src/GalaxyEggbertCNA/` is a real, working, committed tree (this file's own
-§2 already documents it building and running). Needs a `CLAUDE.md` staleness fix as its own task.
+Separately flagged (outside `mobile-eggbert-reference/` scope, found independently by 3 of the 6
+review agents): `CLAUDE.md`'s "Current Direction Lock" section said `GalaxyEggbertCNA` "does not
+exist yet" — stale. Fixed the same day, see `DOC-278` above.
 
 **Documentation rework, `DOC-100`–`DOC-267` (~168 commits, 2026-07-03/04) — COMPLETE.** Full
 detail in `plan.md` §16 and summarized in §4 below; not repeated here. Headline outcomes: 129
@@ -223,22 +229,22 @@ skeleton target), `f579824`/`ebea834` (direction-lock docs), `ac1d8d1` (Simple3D
 platform patrol fix). `../cna` shipped an external fix (`e1939bc`, unrelated `StorageDevice`/
 `IAsyncResult` mismatch) that briefly broke the `GalaxyEggbertCNA` build — confirmed resolved.
 
-**Next planned activity:** see §8 — the review pass above is done, so the natural next steps are
-fixing the newly-discovered `CLAUDE.md` staleness (§8 task 1), then confirming CNA's terrain stats
-post-regeneration (§8 task 2), then the actual 3D-mapping design task (§8 task 3).
+**Next planned activity:** see §8 — the review pass and its `CLAUDE.md` follow-up are both done, so
+the natural next step is confirming CNA's terrain stats post-regeneration (§8 task 1), then the
+actual 3D-mapping design task (§8 task 2).
 
 ## 4. Current blocker / main problem
 
 **No hard blocker right now.** Both active tracks are in a "done, next thing is queued" state:
 
-**Documentation track: no blocker — the `mobile-eggbert-reference/` rework AND its requested
-independent review pass are both complete as of 2026-07-05.** The rework (`DOC-100`–`DOC-267`)
-shipped 2026-07-03/04; the independently-requested second review pass (`DOC-268`–`DOC-276`, see
-§3 above) ran 2026-07-05 via 6 parallel review agents and found + fixed 13 real errors across 5
-files. The reference material can now be treated as ground truth for the upcoming 3D-mapping
-design work (§8, task 3) with meaningfully higher confidence than before the review. One loose
-end from the review: `CLAUDE.md` itself was found stale (still claims `GalaxyEggbertCNA` "does not
-exist yet") — see §8, task 1.
+**Documentation track: no blocker — the `mobile-eggbert-reference/` rework, its requested
+independent review pass, and the `CLAUDE.md` staleness fix that review surfaced are all complete
+as of 2026-07-05.** The rework (`DOC-100`–`DOC-267`) shipped 2026-07-03/04; the
+independently-requested second review pass (`DOC-268`–`DOC-276`, see §3 above) ran 2026-07-05 via
+6 parallel review agents and found + fixed 13 real errors across 5 files; `DOC-278` then fixed
+`CLAUDE.md`'s own staleness that the review turned up. The reference material can now be treated
+as ground truth for the upcoming 3D-mapping design work (§8, task 2) with meaningfully higher
+confidence than before the review.
 
 **Engine/code track: no blocker.** Real, textured terrain with working animated tiles renders
 end-to-end from the actual loaded world file — `GEWorldRuntime` → `GETerrainRenderer` →
@@ -420,44 +426,35 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Fix `CLAUDE.md` staleness re: `GalaxyEggbertCNA` (found 2026-07-05 during the DOC review
-   pass, NOT STARTED).** `CLAUDE.md`'s "Current Direction Lock" section states the planned
-   `GalaxyEggbertCNA` "does not exist yet" and "has no build instructions yet because it does not
-   exist" — both false today: `src/GalaxyEggbertCNA/` is a real, working, committed tree (this
-   file's own §2 documents it building and rendering real terrain). Update `CLAUDE.md` to
-   reflect current reality (it exists, builds via `-DGALAXY_EGGBERT_BUILD_CNA=ON`, and is not yet
-   at feature parity with Simple3D) without loosening any of its actual direction-lock rules.
-   **Files:** `CLAUDE.md`. **Verification:** re-read the "Current Direction Lock" and build-target
-   sections, confirm they match `NEXT.md` §2/§7's current, verified state.
-2. **Confirm `GalaxyEggbertCNA`'s reported terrain stats after the `worlds3d/world001.vwr`
+1. **Confirm `GalaxyEggbertCNA`'s reported terrain stats after the `worlds3d/world001.vwr`
    2749→2729 block regeneration** (see §5) — run it, capture the real vertex/triangle counts and
    visibility-sample result, update this file. **Files:** none (verification only).
    **Verification:** `cd build-cna && ./GalaxyEggbertCNA`, compare stdout against §7's expected
    output.
-3. **The actual 3D-mapping design task** (billboard vs. textured-cube for objects, `BigDecor`
+2. **The actual 3D-mapping design task** (billboard vs. textured-cube for objects, `BigDecor`
    layer treatment, door rendering, etc. — see `09-open-questions.md`) — the reference material's
    independent review pass (§3, `DOC-268`-`276`) is now done, so this is unblocked; not yet scoped
    as its own `DOC-*`/`E3D-MIG-*` id.
-4. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
+3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
-5. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+4. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
    proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
    genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — this should follow the
-   mapping-design decisions (task 3), not precede them.
-6. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
-   task 4/5); not needed at the current ~2700-block scale.
-7. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder + CNA renderer
+   mapping-design decisions (task 2), not precede them.
+5. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
+   task 3/4); not needed at the current ~2700-block scale.
+6. **Render Blupi as a billboard (E3D-MIG-061..063)** — CPU-side vertex builder + CNA renderer
    adapter for `Easy3D::BillboardBatch`, then draw `blupi.png` at `GEBlupiController`'s position.
-8. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+7. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-9. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+8. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-10. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
+9. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
    death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert. **Files:**
    `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; may need a new
    `Game::SetCameraPositionOffset()`-style API added to `../simple-3d` (would need discussion,
