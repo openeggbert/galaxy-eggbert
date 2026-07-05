@@ -38,7 +38,7 @@ vestigial/unused for level files, distinct from the level's filename-encoded wor
 ## 2. `Decor:` grid — the primary tile map
 
 A literal `Decor:` line, followed by exactly 100 lines, each a comma-separated row of 100 integers
-(one row = one Z/row index, columns = X). Real excerpt (`world001.txt`, row 2, truncated):
+(one row = one Z/row index, columns = X). Real excerpt (`world001.txt`, first `Decor:` data row, truncated):
 
 ```
 Decor:
