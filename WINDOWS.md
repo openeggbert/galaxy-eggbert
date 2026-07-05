@@ -5,62 +5,33 @@
 The project is configured to build on Windows using the bundled CLion MinGW
 toolchain (GCC/G++ targeting `x86_64-w64-mingw32`).
 
-### Running the executable outside CLion
+### Static C++ runtime
 
-When built with MinGW the executable normally depends on MinGW runtime DLLs that
-are only available inside the CLion/MSYS2 environment:
-
-| DLL | Handled by |
-|-----|-----------|
-| `libgcc_s_seh-1.dll` | Statically linked (`-static-libgcc`) |
-| `libstdc++-6.dll` | Statically linked (`-static-libstdc++`) |
-| `libwinpthread-1.dll` | Copied next to the executable at build time |
-| `SDL3.dll` | Copied next to the executable at build time |
-| `SDL3_image.dll` | Copied next to the executable at build time |
-| `SDL3_mixer.dll` | Copied next to the executable at build time |
-
-After a successful build the output directory
-(`cmake-build-debug/` or your chosen build dir) should contain:
-
-```
-GalaxyEggbert.exe
-libwinpthread-1.dll
-SDL3.dll
-SDL3_image.dll
-SDL3_mixer.dll
-Content/   (game assets)
-```
-
-You can copy this entire directory to any Windows machine and run the game
-without installing MinGW, CLion, or any other runtime.
-
-### How it is implemented (CMake)
-
-**Static GCC/C++ runtime** — in `CMakeLists.txt`, guarded by `if(MINGW)`:
+`GalaxyEggbertSimple3D` links the GCC/C++ runtime statically on MinGW, guarded by
+`if(MINGW)` in `CMakeLists.txt`:
 
 ```cmake
-target_link_options(${_game_target} PRIVATE -static-libgcc -static-libstdc++)
+target_link_options(GalaxyEggbertSimple3D PRIVATE -static-libgcc -static-libstdc++)
 ```
 
-**Copying `libwinpthread-1.dll`** — the helper function `cna_copy_mingw_runtime()`
-defined in `../../cna/cmake/ThirdPartySDL.cmake`:
-1. Calls `gcc -print-file-name=libwinpthread-1.dll` at configure time to locate
-   the DLL inside the active MinGW installation.
-2. Falls back to the directory that contains the compiler binary.
-3. Adds a `POST_BUILD` command that copies the DLL next to the target executable.
+This avoids a runtime dependency on `libgcc_s_seh-1.dll`/`libstdc++-6.dll` outside the
+CLion/MSYS2 environment. `GalaxyEggbertCNA` does not currently have this option applied — if you
+need a portable `GalaxyEggbertCNA.exe`, either build it inside the CLion/MSYS2 environment (so the
+MinGW runtime DLLs are already on `PATH`), or add the same `-static-libgcc -static-libstdc++`
+link options to its CMake target.
 
-**SDL runtime DLLs** — copied by the existing `cna_copy_sdl_runtime()` helper
-(also in `ThirdPartySDL.cmake`), called unconditionally for all `WIN32` builds.
+### Known gap: no runtime DLL copying
 
-### Test executable (`CnaTests.exe`)
-
-The same steps are applied to `CnaTests.exe`:
-- `-static-libgcc -static-libstdc++` is added via `target_link_options`.
-- `cna_copy_mingw_runtime(CnaTests)` copies `libwinpthread-1.dll`.
-- `cna_copy_sdl_runtime(CnaTests)` copies the SDL DLLs.
-- `gtest`/`gmock` shared libraries are also copied at POST_BUILD.
+Neither `GalaxyEggbertSimple3D` nor `GalaxyEggbertCNA` currently has a `POST_BUILD` step that
+copies runtime DLLs (`libwinpthread-1.dll`, or `SDL3.dll`/`SDL3_image.dll`/`SDL3_mixer.dll` for
+`GalaxyEggbertCNA`) next to the built executable — running either `.exe` outside the build
+environment on a machine without those DLLs on `PATH` will fail to launch. The sibling `../cna`
+repository's `cmake/ThirdPartySDL.cmake` already provides reusable helper functions for exactly
+this (`cna_copy_mingw_runtime(target)`, `cna_copy_sdl_runtime(target)`), but this repo's
+`CMakeLists.txt` does not currently call them for either target. Wiring these up is a real,
+open task, not yet scheduled — see `NEXT.md` for the current task list.
 
 ### Linux / Web / Android
 
-These changes are fully guarded by `if(MINGW)` / `if(WIN32)` and have no effect
-on Linux, Emscripten (WebAssembly), or Android builds.
+The static-runtime option above is guarded by `if(MINGW)` and has no effect on Linux, Emscripten
+(WebAssembly), or Android builds.
