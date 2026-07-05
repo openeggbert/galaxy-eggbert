@@ -3,6 +3,7 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <exception>
@@ -15,6 +16,31 @@ namespace GalaxyEggbert::CNA
     {
         constexpr int kMobileTileSize = 64;
         constexpr int kDecorGridSize = 100;
+
+        // Same ObjectType allowlist as GESimple3D::GEWorldRuntime's
+        // already-approved MoveObject parser — the 29 real, in-use types
+        // confirmed against all 78 mobile-eggbert level files (see
+        // mobile-eggbert-reference/01-world-file-format.md).
+        bool IsSupportedMoveObjectType(int type)
+        {
+            return type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
+                   type == 6  || type == 7  || type == 12 || type == 13 || type == 16 ||
+                   type == 17 || type == 19 || type == 20 || type == 21 || type == 24 ||
+                   type == 25 || type == 26 || type == 30 || type == 32 || type == 33 ||
+                   type == 40 || type == 44 || type == 46 || type == 47 || type == 49 ||
+                   type == 50 || type == 51 || type == 54 || type == 55 || type == 96;
+        }
+
+        // 32 (blupih), 44 (wasp), 54 (large creature) patrol posStart<->posEnd
+        // the same way as the other patrol enemies (Decor.cpp
+        // MoveObjectStepIcon keys their turn/walk icon off posStart vs
+        // posEnd, i.e. they are patrol-line objects too) — mirrors
+        // GESimple3D::GEWorldRuntime's isPatrol logic.
+        bool IsPatrolMoveObjectType(int type)
+        {
+            return type == 2 || type == 3 || type == 4 || type == 20 || type == 32 ||
+                   type == 33 || type == 44 || type == 54;
+        }
     }
 
     GEWorldRuntime::GEWorldRuntime()
@@ -64,6 +90,7 @@ namespace GalaxyEggbert::CNA
         int decorRow = 0;
         int bigDecorRow = 0;
         bigDecor_.assign(static_cast<std::size_t>(kDecorGridSize) * kDecorGridSize, BlockTypes::Air);
+        mobileObjects_.clear();
 
         while (std::getline(file, line))
         {
@@ -79,8 +106,36 @@ namespace GalaxyEggbert::CNA
             }
             if (line.rfind("MoveObject:", 0) == 0)
             {
-                // Object/decor parsing belongs to a later phase (plan.md Phase 7).
                 section = Section::None;
+
+                int type = 0, psx = 0, psy = 0, pex = 0, pey = 0, stepAdv = 1;
+                std::sscanf(line.c_str(),
+                    "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
+                    &type, &stepAdv, &psx, &psy, &pex, &pey);
+
+                if (!IsSupportedMoveObjectType(type))
+                {
+                    continue;
+                }
+
+                MobileObjSpec spec;
+                spec.type = static_cast<ObjectType>(type);
+                spec.posStartX = static_cast<float>(psx) / kMobileTileSize - kWorldCenterX;
+                spec.posStartY = 0.0f;
+                spec.posStartZ = static_cast<float>(psy) / kMobileTileSize - kWorldCenterZ;
+                spec.posEndX = static_cast<float>(pex) / kMobileTileSize - kWorldCenterX;
+                spec.posEndY = 0.0f;
+                spec.posEndZ = static_cast<float>(pey) / kMobileTileSize - kWorldCenterZ;
+                spec.speed = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
+
+                if (IsPatrolMoveObjectType(type) &&
+                    spec.posStartX == spec.posEndX && spec.posStartZ == spec.posEndZ)
+                {
+                    spec.posStartX -= 2.0f;
+                    spec.posEndX += 2.0f;
+                }
+
+                mobileObjects_.push_back(spec);
                 continue;
             }
 
@@ -150,6 +205,7 @@ namespace GalaxyEggbert::CNA
         spawnTileZ_ = 0;
         skyRegion_ = 0;
         bigDecor_.clear();
+        mobileObjects_.clear();
         return true;
     }
 

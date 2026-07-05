@@ -377,6 +377,22 @@ target_include_directories(VerifyBlupiMovement PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# GEWorldRuntime.hpp/.cpp (CNA) are deliberately engine-agnostic (only
+# depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
+# Vector3) — this tool links it without needing CNA at all, verifying
+# MoveObject: parsing (E3D-MIG-06x prerequisite) the same way
+# VerifyMoveObjectTypes.cpp does for the Simple3D-side parser.
+add_executable(VerifyMoveObjectTypesCna
+        tools/VerifyMoveObjectTypesCna.cpp
+        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        ${GE_SHARED_SOURCES}
+)
+
+target_include_directories(VerifyMoveObjectTypesCna PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
 # =============================================================================
 # Doxygen
 # =============================================================================
