@@ -128,8 +128,13 @@ namespace GalaxyEggbert::CNA
             // Tank controls (2026-07-05, matches GalaxyEggbertSimple3D's
             // already-shipped "Move" axis scheme): Left/Right turn, Up/Down
             // move forward/back along the current facing — arrows are not
-            // a strafe pad. Space jumps; LShift crouches, RShift looks up
-            // (mirrors Simple3D's Down/Up BlupiState).
+            // a strafe pad. LCtrl jumps and Space is reserved for "Action"
+            // (matches mobile-eggbert's own InputPad.cpp key glyphs exactly:
+            // LeftControl -> PlayJump, Space -> PlayAction) — Space is read
+            // here but not wired to anything yet, since there is no
+            // interactive-object system in GalaxyEggbertCNA yet. LShift
+            // crouches, RShift looks up (mirrors Simple3D's Down/Up
+            // BlupiState).
             using Microsoft::Xna::Framework::Input::Keyboard;
             using Microsoft::Xna::Framework::Input::Keys;
             const auto keys = Keyboard::GetState();
@@ -139,7 +144,8 @@ namespace GalaxyEggbert::CNA
             if (keys.IsKeyDown(Keys::Right)) turnInput += 1.0f;
             if (keys.IsKeyDown(Keys::Up))    moveInput += 1.0f;
             if (keys.IsKeyDown(Keys::Down))  moveInput -= 1.0f;
-            const bool jumpPressed = keys.IsKeyDown(Keys::Space);
+            const bool jumpPressed = keys.IsKeyDown(Keys::LeftControl);
+            [[maybe_unused]] const bool actionPressed = keys.IsKeyDown(Keys::Space);
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
