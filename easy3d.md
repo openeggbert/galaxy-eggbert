@@ -3,6 +3,14 @@
 **Status:** Analysis only. No C++ code changed. No sibling repository modified. This document
 records confirmed facts, recommendations, and open questions as of 2026-07-01.
 
+**Status update (2026-07-05):** the recommendations below were acted on. `GalaxyEggbertCNA`
+(`src/GalaxyEggbertCNA/`) now exists as a real, working, opt-in build target (builds via
+`-DGALAXY_EGGBERT_BUILD_CNA=ON`, renders real textured/animated 3D terrain), and Easy3D gained a
+real renderer (`CubeMesh`/`CubeMeshRenderer`) — see `NEXT.md` for current, up-to-date status. The
+facts, rationale, and recommendations captured below are preserved as the historical record of why
+those decisions were made; do not read "not yet built"/"does not exist" statements below as
+describing the current state — check `NEXT.md` for that.
+
 ---
 
 ## 1. Executive Summary
@@ -61,9 +69,9 @@ Confirmed via inspection of `src/GalaxyEggbertSimple3D/` and `CMakeLists.txt`:
   `CLAUDE.md` documenting one (`-DGALAXY_EGGBERT_ENGINE=U3D` / `NOVA3D`). That option is
   aspirational/historical, not currently wired up.
 - The old direct-Urho3D tree (`GalaxyEggbertApp`, `GalaxyEggbertGame`, a `GalaxyEggbert` target
-  linking Urho3D directly) referenced in `docs/simple3d_migration.md` as "kept until S3D-9" **no
-  longer exists on disk.** `src/GalaxyEggbert/` today contains only the engine-agnostic `Worlds/`
-  subtree.
+  linking Urho3D directly), once kept as a "historical reference until S3D-9" per the (since
+  completed and deleted, 2026-07-05) Simple3D migration docs, **no longer exists on disk.**
+  `src/GalaxyEggbert/` today contains only the engine-agnostic `Worlds/` subtree.
 - `src/GalaxyEggbertSimple3D/` totals 3,251 lines across 10 files:
 
   | File | Lines | Simple3D-coupled? |
@@ -81,18 +89,19 @@ Confirmed via inspection of `src/GalaxyEggbertSimple3D/` and `CMakeLists.txt`:
 
   Every `Game/*.hpp` except `GEBridgeSystem.hpp` includes `<Simple3D/Simple3D.h>`. `GEBridgeSystem`
   is the one class in this tree that is already engine-agnostic pure logic.
-- `docs/SIMPLE3D_GAPS.md` currently lists **zero missing APIs** ("None — all previously
-  identified gaps are now implemented in simple-3d") and enumerates 18 Simple3D engine-facing
-  capabilities actually in use: tile-atlas UV offset, billboard UV-region crop, fog, ambient
-  light, camera shake, UI image UV crop, UI progress bar, full-screen fade panel, particle
-  emitter, looped 3D audio source + listener, save data, input action binding, trigger volumes,
-  character controller, orbit camera, camera collision avoidance, scene fade transitions, sky
-  dome, and 93-channel indexed audio. This list is a useful checklist of *engine capabilities*
-  any CNA/Easy3D replacement will eventually need to cover — not a checklist to port literally,
-  since CNA/Easy3D has a completely different API shape.
-- `docs/simple3d_migration.md` contains an old Urho3D-class → Simple3D-class mapping table and
-  is useful purely as **behavioral reference** (what each class was responsible for), independent
-  of which engine ends up implementing it.
+- The Simple3D API-gap tracker (deleted 2026-07-05 once the Simple3D migration finished with zero
+  outstanding gaps) enumerated 18 Simple3D engine-facing capabilities actually in use: tile-atlas
+  UV offset, billboard UV-region crop, fog, ambient light, camera shake, UI image UV crop, UI
+  progress bar, full-screen fade panel, particle emitter, looped 3D audio source + listener, save
+  data, input action binding, trigger volumes, character controller, orbit camera, camera
+  collision avoidance, scene fade transitions, sky dome, and 93-channel indexed audio. This list
+  (preserved here since the source doc is gone) is a useful checklist of *engine capabilities* any
+  CNA/Easy3D replacement will eventually need to cover — not a checklist to port literally, since
+  CNA/Easy3D has a completely different API shape.
+- An old Urho3D-class → Simple3D-class mapping table (also deleted 2026-07-05 along with the rest
+  of the completed migration's docs) is still recoverable from git history if needed purely as
+  **behavioral reference** (what each class was responsible for), independent of which engine ends
+  up implementing it.
 - `NEXT.md` confirms the Simple3D build is functionally quite far along: world loading, textured
   terrain with animated tiles (lava/crusher/saw/spike/water/fan/marine/temp using mobile-eggbert's
   own frame tables), Blupi billboard with full state machine, mobile-object billboards, a crate
@@ -329,17 +338,17 @@ All confirmed present in `../mobile-eggbert/Content/` and `../mobile-eggbert/wor
 
 ### 6.1 Keep as historical reference
 
-`src/GalaxyEggbertSimple3D/` in its entirety, plus `docs/simple3d_migration.md` and
-`docs/SIMPLE3D_GAPS.md`. These document real, working, faithful gameplay behavior (per §2.1) and
-remain the best available reference for "what does correct galaxy-eggbert behavior look like" even
-after the engine underneath changes.
+`src/GalaxyEggbertSimple3D/` in its entirety. It documents real, working, faithful gameplay
+behavior (per §2.1) and remains the best available reference for "what does correct
+galaxy-eggbert behavior look like" even after the engine underneath changes.
 
 ### 6.2 Systems to rewrite
 
 Everything in `Game/*.cpp` except `GEBridgeSystem` will need a CNA/Easy3D-native rewrite, since
 their current implementations call Simple3D APIs (`Entity::SetTileTexture`, `Camera::Shake`,
 `UI::ProgressBar`, etc.) that have no CNA/Easy3D equivalent. The *behavior* they implement (per
-`docs/SIMPLE3D_GAPS.md` and `NEXT.md`) is the porting target; the *code* is not reusable verbatim.
+§6.1's capability checklist above and `NEXT.md`) is the porting target; the *code* is not reusable
+verbatim.
 
 ### 6.3 Systems to discard
 
