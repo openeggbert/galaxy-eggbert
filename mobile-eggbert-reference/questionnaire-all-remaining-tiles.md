@@ -45,7 +45,7 @@ neověřeno), nebo prázdná/"unnamed variant" pokud jsem dlaždici nechal jako 
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stro
 
 **Render mód?**
 Odpověď:
