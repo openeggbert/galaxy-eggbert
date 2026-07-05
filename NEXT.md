@@ -144,26 +144,119 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   10-step ascending staircase, raised platform, walled room with doorway, two pillars; 2729
   non-air blocks (as of the `E3D-MIG-060` cliff-bug fix, see §3), Y range [0, 13];
   round-trip-verified via `World::loadFromFile()`.
+- **`GalaxyEggbertCNA` controls (2026-07-05)**: tank controls matching `GalaxyEggbertSimple3D` —
+  Left/Right turn, Up/Down move forward/back along facing (never strafe); jump is Left Ctrl;
+  Space is reserved for mobile-eggbert's Action key (read but not yet wired to any behavior);
+  LShift crouches, RShift looks up, each with its own `GEBlupiController` animation state and HUD
+  icon.
+- **`GalaxyEggbertCNA` `MoveObject` parsing + billboard rendering (2026-07-06)**:
+  `GEWorldRuntime::LoadFromMobileEggbertFile`/`LoadFromVwrFile` parse `MoveObject:` records into
+  engine-agnostic `MobileObjSpec`s (ported allowlist/patrol-line logic from
+  `GESimple3D::GEWorldRuntime`, verified against 12 real level files via
+  `tools/VerifyMoveObjectTypesCna.cpp`); `GalaxyEggbertCnaGame::Draw()` renders every one as a real
+  camera-facing textured billboard via new `Easy3D::BillboardMesh`/`BillboardMeshRenderer`
+  (`../easy-3d`) + `GEObjectIcons` (icon lookup ported from `GEDecorSystem::GetObjIcon`). Live
+  screenshot-verified on `world065.txt` (67 objects: sign, hazard, treasure chest all rendered
+  correctly). Same `element.png`-for-everything gap as `GalaxyEggbertSimple3D`'s `DOC-007`
+  (types 1/12/32/33 need different sheets) — inherited, not fixed here.
 
 ### What does not work yet
 - `GalaxyEggbertCNA`: still no *3D* Blupi rendering — he's an invisible collision point in the
   world (see §3). **Since 2026-07-05:** the camera is first-person (following his facing) and a
-  2D animation-state indicator (idle/walk/jump) shows in the screen's bottom-right corner as an
-  interim stand-in, but there is still no visible 3D character. No object/pickup rendering, no
-  HUD, no sound, no real gameplay. `Easy3D::BillboardBatch`/`DebugDraw` have no vertex builder or
-  renderer adapter at all yet (needed for Blupi's eventual 3D sprite and objects, once a 3D model
-  exists).
+  2D animation-state indicator (idle/walk/jump/crouch/look-up) shows in the screen's bottom-right
+  corner as an interim stand-in, but there is still no visible 3D character. `MoveObject`s now
+  render as billboards (see above), but there is still no `BigDecor` rendering (parsed, not
+  drawn), no HUD, no sound, no real gameplay. No platform-lift/crate `UniformCube` path yet
+  (§8 task 2's remaining half).
+- Terrain-tile render modes: **`UniformCube` is now known-wrong for ~100 of the 314 named tiles**
+  (`15-3d-render-mapping-design.md` §10, 2026-07-06) — labeled in `02-tiles.md` but not
+  implemented (see §8 task 3). The renderer itself hasn't changed; every terrain block still
+  renders as a `UniformCube` today, including the ~100 flagged icons.
 - `GalaxyEggbertSimple3D`: no per-zone fog; Android/Web builds untested since the last engine
   change. (Camera shake is real and wired up — see §5, corrected 2026-07-05.)
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 186+ commits ahead of `origin/develop` as
-of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
+Most recent first. `galaxy-eggbert` `develop` branch is 188+ commits ahead of `origin/develop` as
+of 2026-07-06 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
 staleness pass + gameplay-behavior spec + interim Blupi camera/HUD + 3D-mapping open questions +
-CNA controls/MoveObject parsing, below) is committed locally; whether it has been pushed depends
-on when you're reading this (see §9 for the push policy: push only on explicit request, never
-assume standing authorization).
+CNA controls/MoveObject parsing + billboard object rendering + the terrain-tile render-mode
+finding below) is committed locally; whether it has been pushed depends on when you're reading
+this (see §9 for the push policy: push only on explicit request, never assume standing
+authorization).
+
+**Terrain-tile render-mode labeling pass, `02-tiles.md` (2026-07-06).** Follow-up to the finding
+directly below: 171 of the 314 named tiles now carry an inline render-mode note in their Category
+cell (`**Billboard**` / `**ThinMechanical**` / `**special-surface**` / `**architectural-kit**` /
+`needs identification`), one per icon flagged in `15-3d-render-mapping-design.md` §10.2-§10.6.
+Generated mechanically from a hardcoded icon→(mode, description) mapping (script, not hand-edited
+row by row) to guarantee every mapped icon actually got updated; spot-checked via `git diff`
+against §10's source text. **Documentation only — no rename of any `BlockTypes.hpp` constant, no
+new render mode implemented, no code changed.** Known-incomplete on purpose: §10.6's ~30 icons
+(401-403, 200/`Platform`, etc.) are flagged as needing identification, not given a fabricated
+identity or render mode; the `ThinMechanical` mode's actual geometry is still undecided (§10.1);
+none of this has had the independent adversarial-verification pass the `DOC-3xx` docs got.
+
+**Large-scale terrain-tile render-mode finding, `15-3d-render-mapping-design.md` §10 (2026-07-06).**
+Trigger: after the billboard-object rendering below shipped, the user noticed the circular saw
+tile (icon 378, `Saw`) rendering as a `UniformCube` looked visibly wrong — a thin spinning blade
+tiled on all 6 cube faces. This is a **different failure mode than the `GoldPillar` catch below**:
+`Saw` is correctly *identified*, just wrong as a render-mode *assumption* (being common/genuine
+hazard art doesn't make it bulk material). User asked for a thorough analysis labeling every block
+type's actual visual identity, so 8 parallel agents each crop-inspected a ~40-icon slice of all 314
+named tiles. Result: **roughly 100 icons, not 1, need something other than `UniformCube`** —
+reverses §4/§9.1's earlier "GoldPillar is the only exception" and "closed door stays `UniformCube`"
+calls (icon 334/`Door1` turns out to be a pillar/bollard shape too, same house style as
+`GoldPillar`). Findings sorted into: §10.2 confirmed post/pillar/marker family → `Billboard`
+(~50 icons: doors, teleporters, `SecretPower` pedestals, two numbered-marker families, signs,
+decorative props); §10.3 thin mechanical/hazard tiles → a new provisional third render mode,
+`ThinMechanical` (~25 icons: `Saw`, `Spring`, `Blitz`, switches, fans, pipes, grates, `Bridge`,
+`Ladder` — geometry not yet decided); §10.4 special surface treatment (`Water1`/`Water2`, `Marine`
+— neither cube nor billboard fits a flat liquid/foliage surface); §10.5 an architectural frame kit
+(391-395/397/400, likely a modular archway assembly, not independent tileable icons); §10.6 ~15
+icons still needing identification before any render-mode call, prioritized by usage (401-403 are
+the most-used unidentified icons in the whole pass, 15-16/78 files each). **First-pass finding, not
+yet independently adversarially verified** — treat specific icon identities as probable, not
+certain, until spot-checked further (the scale/pattern of the gap itself is solid). Practical
+next steps are listed in the design doc's own §10.7 (identify §10.6's icons, decide
+`ThinMechanical`'s geometry, decide water treatment, adversarially verify) — none of §10's specific
+recommendations have been implemented in code yet, only labeled in `02-tiles.md` (see above).
+
+**`GalaxyEggbertCNA` renders `MoveObject`s as billboards (2026-07-06).** Implements the §5/§7
+recommendation from the approved render-mapping design: new `Easy3D::BillboardMesh`/
+`BillboardMeshRenderer` (`../easy-3d`, mirrors the existing `CubeMesh`/`CubeMeshRenderer` pattern,
+camera-facing via view-matrix inverse right/up basis) + new `GEObjectIcons` (CNA-side icon lookup,
+ported verbatim from `GESimple3D::GEDecorSystem::GetObjIcon`, plus `element.png` UV math). Wired
+into `GalaxyEggbertCnaGame::Draw()`: every parsed `MobileObjSpec` (from the `MoveObject:` parsing
+below) now draws as a real textured billboard. Live-verified by screenshot on a real mobile-eggbert
+level (`world065.txt`, 67 objects) — a red arrow sign, a hazard object, and a treasure chest all
+rendered correctly with real textures, no backface-culling issues; reverted the test world-load
+back to `worlds3d/world001.vwr` afterward, confirmed regression-free. Known gap inherited, not
+introduced: `element.png` is used for every `ObjectType` in this first pass, even though real data
+shows types 1/12 need `object-m.png` and 32/33 need `blupi1.png` (same `DOC-007` gap
+`GalaxyEggbertSimple3D` already has and hasn't fixed either).
+
+**Standing permission to modify `../easy-3d` (2026-07-05).** User granted blanket permission (was
+previously per-change approval) — recorded in `CLAUDE.md`/`easy3d.md`/here (§6/§9 below) so future
+sessions don't need to re-ask before adding new Easy3D helpers like the billboard mesh above.
+
+**Jump is Left Ctrl, Space is reserved for Action (2026-07-05).** User feedback: jump should not be
+Space — Space should behave like mobile-eggbert's Action key instead. `GalaxyEggbertCnaGame` now
+reads `jumpPressed` from `Keys::LeftControl` and `actionPressed` from `Keys::Space` (read but not
+yet wired to any behavior — `[[maybe_unused]]`, since mobile-eggbert's Action key isn't implemented
+in CNA yet).
+
+**`GoldPillar` rename + sample-world wall-texture bug fix (2026-07-06, user-caught).** User flagged
+that the "yellow doors"/wall-textured cubes at icon 183 were wrong — special/rare tiles like this
+shouldn't be `UniformCube`. Direct crop inspection confirmed icon 183 (previously
+`BlockTypes::Wall`, described as "brick wall") is actually a golden pillar/post — renamed to
+`GoldPillar`, 1/78 files, 12 cells forming a gate/portal-frame shape right after icon 182 (the real
+door tile per `06-doors.md`'s `SearchDoor`). This also uncovered a real bug in
+`tools/GenerateSampleWorld3D.cpp`: the hand-authored sample world's room walls used
+`BlockTypes::Wall` (i.e. the golden-pillar texture) for ordinary structural walls — fixed to use
+`BlockTypes::StoneB` (icon 25, a genuinely common structural tile, 42/78 real levels) instead;
+regenerated `worlds3d/world001.vwr` (same 2729 blocks/geometry, only the wall texture changed).
+This was the **first instance** of what turned into the much larger §10 finding above.
 
 **`GalaxyEggbertCNA` tank controls + `MoveObject:` parsing (2026-07-05).** User feedback: the
 controls felt wrong (arrows were an absolute-direction strafe pad). Fixed to match
@@ -601,26 +694,33 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    resolved — only the billboard walk-cycle mismatch (narrowed to future enemy billboards, doesn't
    apply to Blupi's own first-person view) and the 7 partial-support `ObjectType`s' implementation
    priority remain deliberately open.
-2. **Implement the approved 3D render-mapping design** — `Easy3D::BillboardBatch`'s vertex
-   builder + CNA renderer adapter (`E3D-MIG-061..063`, already planned) for the ~68 `Billboard`
-   `ObjectType`s and `BigDecor`; a small `Easy3D::CubeBatch`-based path (reusing existing terrain
-   cube machinery) for platform lifts + crates. See `15-3d-render-mapping-design.md` §7 for the
-   full breakdown. Waits on an actual 3D Blupi model for the Blupi-specific part, but object/enemy/
-   `BigDecor` billboards don't need one. **Partial progress (2026-07-05):** `GEWorldRuntime` (CNA)
-   now parses `MoveObject:` records (see §3) — the data prerequisite is done; the renderer itself
-   (`Easy3D::BillboardBatch` vertex builder, a `../easy-3d` change) is not started yet, but the
-   user granted standing permission to modify `../easy-3d` (2026-07-06, see §6), so this no longer
-   needs a separate approval round before starting.
-3. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
+2. ~~Implement the approved 3D render-mapping design for `MoveObject`s~~ — **DONE for objects
+   (2026-07-06)**: `Easy3D::BillboardMesh`/`BillboardMeshRenderer` (new, mirrors `CubeMesh`/
+   `CubeMeshRenderer`) + `GEObjectIcons` now render every parsed `MobileObjSpec` as a real textured
+   billboard in `GalaxyEggbertCnaGame::Draw()`, live-verified by screenshot (see §3). Still open:
+   `BigDecor` billboards specifically (not wired up yet — `GEWorldRuntime` doesn't parse
+   `BigDecor:` for CNA at all yet), and the small `Easy3D::CubeBatch`-based path for platform lifts
+   + crates (§7's two `UniformCube` exceptions among objects).
+3. **Terrain-tile render-mode follow-up (`15-3d-render-mapping-design.md` §10, 2026-07-06 finding)**
+   — the ~100-icon finding above is labeled in `02-tiles.md` but not implemented. In priority order
+   (§10.7): (a) resolve §10.6's ~15 still-unidentified icons, especially 401-403 (most-used, 15-16/
+   78 files each) and 200/`Platform` (possible misnaming of a common tile); (b) decide the
+   `ThinMechanical` render mode's actual geometry (§10.1 — thin plane? decal? something else?);
+   (c) decide the water/liquid surface treatment (§10.4 — affects up to 38/78 files for `Water1`);
+   (d) an independent adversarial verification pass over §10's specific icon claims, matching the
+   rigor the `DOC-3xx` docs got; (e) only after (a)-(d), implement whichever render modes the
+   triage settles on. None of this is started — this is a documentation finding, not yet a design
+   decision the user has re-approved in its expanded (~100-icon) form.
+4. **Chunk-radius world streaming (E3D-MIG-057, now scheduled)** — implement loading/rendering
    only the current + neighboring chunks, once real (denser, more 3D) hand-authored worlds exist.
    Natural co-requisite with face-culling below.
-4. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
+5. **Expand `worlds3d/world001.vwr`, or author more `.vwr` worlds** — the current sample is a
    proof-of-concept (staircase + one room). A natural next step is a more level-like, denser,
    genuinely 3D design (multiple rooms/levels, hazard tiles at various Y) — now that the
    mapping-design decisions (task 1) are settled, this can proceed.
-5. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
-   task 3/4); not needed at the current ~2700-block scale.
-6. ~~Interim Blupi representation~~ — **DONE (2026-07-05)**. No Blupi 3D model exists yet (see
+6. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser (see
+   task 4/5); not needed at the current ~2700-block scale.
+7. ~~Interim Blupi representation~~ — **DONE (2026-07-05)**. No Blupi 3D model exists yet (see
    §1), so full billboard rendering (`E3D-MIG-061..063`) still waits for it, but the interim scope
    is implemented: `GEBlupiController` (CNA) now tracks a facing yaw (from movement input, holds
    its last value while idle/airborne) and a coarse `Stop`/`March`/`Jump` animation state at 8fps,
@@ -634,15 +734,15 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    on-screen pixels (camera + position genuinely updating). **Files:**
    `src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`,
    `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`.
-7. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
+8. **Fix `ctest` discovery in the `cmake-build-debug` profile** — investigate why
    `gtest_discover_tests` doesn't find `GalaxyEggbertWorldsTests` there (works fine in a fresh
    `build/` dir). **Files:** `CMakeLists.txt`, `cmake-build-debug/` config.
    **Verification:** `ctest --test-dir cmake-build-debug -R GalaxyEggbert` reports 54 passed.
-8. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
+9. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-9. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
+10. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
    §5). `GECameraRig::StartShake()` already calls a real `../simple-3d` `Camera::Shake()` API and
    is wired up at 5 death/hazard call sites. If it still doesn't look right in-game, the next step
    would be tuning intensity/duration to match mobile-eggbert's `DecorAction::SmallShake` feel, not

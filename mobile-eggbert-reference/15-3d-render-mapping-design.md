@@ -414,9 +414,12 @@ firm categories. Practical next steps, roughly in priority order:
    recommendation for all of §10.3's ~25 icons.
 3. Decide the water/liquid surface treatment (§10.4) — affects some of the most commonly-placed
    tiles in the whole catalog (up to 38/78 files for `Water1`).
-4. Update `02-tiles.md` itself with corrected names/categories for everything in §10.2-§10.4 (most
-   rows are currently still catalogued as generic "(unnamed) unnamed variant," which is what let
-   this gap go unnoticed for as long as it did).
+4. ~~Update `02-tiles.md` itself with corrected names/categories for everything in §10.2-§10.4~~
+   **Done (2026-07-06)** — all 171 flagged icons across §10.2-§10.5 now carry an inline
+   render-mode note in `02-tiles.md`'s Category column (Billboard/ThinMechanical/special-surface/
+   architectural-kit/needs-identification); see that file's own "Render-mode labeling pass" status
+   note. This is a documentation label, not a rename of any `BlockTypes.hpp` constant and not an
+   implementation of any new render mode.
 5. An independent adversarial verification pass over this section's specific icon-by-icon claims,
    matching the rigor the `DOC-3xx` behavior-spec docs got, before treating any single icon's
    identity here as final.
