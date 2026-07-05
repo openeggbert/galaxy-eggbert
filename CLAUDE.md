@@ -8,8 +8,11 @@ The current buildable implementation, `GalaxyEggbertSimple3D`, is written in C++
 **Simple3D** API (`../simple-3d`), which currently wraps **U3D** (`u3d-community/U3D`, a Urho3D
 fork). This is the working, playable target today — see `NEXT.md` for its status.
 
-The **planned long-term implementation**, `GalaxyEggbertCNA`, does not exist yet. See
-"Current Direction Lock" below.
+The **long-term implementation**, `GalaxyEggbertCNA`, now exists as an early-stage, opt-in build
+target (`src/GalaxyEggbertCNA/`) — it builds, opens a window, and renders real, textured,
+animated 3D terrain from a hand-authored world, but has no Blupi/object rendering, HUD, sound, or
+gameplay yet, and is far from feature parity with `GalaxyEggbertSimple3D`. See `NEXT.md` §2 for
+its current status and "Current Direction Lock" below for the rules governing it.
 
 ## Current Direction Lock
 
@@ -49,7 +52,7 @@ Rules for this direction:
 - Reusing mobile-eggbert *assets* (PNG sprite sheets, sounds, world files) by sibling path or
   build-time copy is allowed only once the asset strategy task is approved/implemented — do not
   wire up ad hoc asset paths outside that plan.
-- Prefer new CNA/Easy3D code under `src/GalaxyEggbertCNA/` (planned tree name — see below).
+- Prefer new CNA/Easy3D code under `src/GalaxyEggbertCNA/` (see "Source layout" below).
 - Do not mutate `src/GalaxyEggbertSimple3D/` into the CNA implementation. Keep it intact as
   historical/current reference; the CNA path is new code in a new tree.
 - Easy3D is a helper library beside CNA — do not hide CNA behind Easy3D, and do not let Easy3D
@@ -88,10 +91,12 @@ cmake -S . -B cmake-build-debug -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON   # default O
 cmake --build cmake-build-debug --target GalaxyEggbertSimple3D
 ```
 
-Planned (not yet implemented — see "Current Direction Lock" above and `plan.md`):
+Early-stage, opt-in (default OFF — not at feature parity with Simple3D yet, see "Current
+Direction Lock" above and `NEXT.md` §2 for current status):
 ```
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON    # planned option, default OFF
-cmake --build build-cna --target GalaxyEggbertCNA
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2
+cd build-cna && ./GalaxyEggbertCNA   # must run from its own build dir (relative asset paths)
 ```
 
 ## Relationship to mobile-eggbert
@@ -126,14 +131,14 @@ separate task. Do not assume or claim otherwise.
 
 ## Engine rules
 
-- **No `#ifdef` guards for engine differences** in `GalaxyEggbertSimple3D` or the planned
+- **No `#ifdef` guards for engine differences** in `GalaxyEggbertSimple3D` or
   `GalaxyEggbertCNA` — each target speaks its own API directly (Simple3D, or CNA+Easy3D
   respectively). If a backend beneath Simple3D is missing a feature, that is a `simple-3d`-repo
   problem, not something to work around in galaxy-eggbert.
 - Public headers (used by tests) go in `include/`; private implementation headers go in `src/`.
 - `include/GalaxyEggbert/Worlds/`, `def/*.hpp`, `BlockTypes.hpp`, `Def.hpp`, `GameConstants.hpp`
-  are engine-agnostic and shared by both the current Simple3D target and the planned CNA target.
-  Do not add engine-specific dependencies to this tree.
+  are engine-agnostic and shared by both the Simple3D and CNA targets. Do not add engine-specific
+  dependencies to this tree.
 
 ## Source layout
 
@@ -150,7 +155,9 @@ src/GalaxyEggbertSimple3D/      — current working target (GalaxyEggbertSimple3
     GEWorldRuntime, GETerrainRenderer, GEBlupiController, GEDecorSystem,
     GEHud, GESound, GECameraRig, GEExploSystem, GEBridgeSystem
 
-src/GalaxyEggbertCNA/            — PLANNED, does not exist yet (see "Current Direction Lock")
+src/GalaxyEggbertCNA/            — early-stage long-term target (GalaxyEggbertCNA), built directly
+                                    on CNA + Easy3D (see "Current Direction Lock"); opt-in via
+                                    -DGALAXY_EGGBERT_BUILD_CNA=ON, not at feature parity yet
 
 tests/
   GalaxyEggbert/Worlds/          — unit tests (54 tests, engine-independent)
@@ -168,8 +175,8 @@ cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
 
 Use `-j2` maximum to protect RAM (32 GB limit; crashes occurred with more parallel jobs + multiple sessions).
 
-`GalaxyEggbertCNA` has no build instructions yet because it does not exist. See `plan.md`,
-"Next implementation batch — CNA target skeleton", for the planned first steps.
+`GalaxyEggbertCNA` build instructions are above under "Current build target selection". See
+`NEXT.md` §2/§7 for its current status and the full set of verification/tooling commands.
 
 ## Code rules
 
