@@ -11,7 +11,7 @@ Android APK using SDL3, the Android NDK, and CMake.
 |------|---------------------|
 | Android Studio | Ladybug (2024.2) or newer |
 | Android SDK | API level 35 |
-| Android NDK | 28.2.13676358 (installed via SDK Manager) |
+| Android NDK | 30.0.14904198 (installed via SDK Manager) |
 | CMake (NDK bundle) | 3.21+ (installed via SDK Manager) |
 | Java (JDK) | 17 (bundled with Android Studio) |
 | Git | any recent version |
@@ -19,7 +19,7 @@ Android APK using SDL3, the Android NDK, and CMake.
 ### Install NDK and CMake via Android Studio
 
 1. Open **Android Studio → Settings → SDK Manager → SDK Tools**.
-2. Check **NDK (Side by side)** version **28.2.13676358**.
+2. Check **NDK (Side by side)** version **30.0.14904198**.
 3. Check **CMake** (version 3.21 or higher).
 4. Click **Apply** and let Android Studio download and install.
 
@@ -28,8 +28,8 @@ Android APK using SDL3, the Android NDK, and CMake.
 ## Clone and initialise submodules
 
 ```bash
-git clone <repository-url> speedy-blupi-2013
-cd speedy-blupi-2013
+git clone <repository-url> galaxy-eggbert
+cd galaxy-eggbert
 git submodule update --init --recursive
 ```
 
@@ -158,12 +158,12 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 
 ## Supported ABIs
 
-The current Gradle configuration builds for **arm64-v8a** only.  To add other
-ABIs (e.g. `x86_64` for the emulator) edit
-`android/app/build.gradle` and extend the `abiFilters` list:
+The current Gradle configuration builds for **arm64-v8a** and **x86_64** (the
+latter for the emulator).  To add further ABIs edit `android/app/build.gradle`
+and extend the `abiFilters` list:
 
 ```groovy
-abiFilters 'arm64-v8a', 'x86_64'
+abiFilters 'arm64-v8a', 'x86_64', 'armeabi-v7a'
 ```
 
 ---

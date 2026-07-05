@@ -23,7 +23,7 @@ The default `100³` world is only the first practical configuration. The format 
 ## How to Use
 
 ```cpp
-#include "openeggbert/voxel/World.hpp"
+#include "GalaxyEggbert/Worlds/World.hpp"
 
 using namespace GalaxyEggbert::Worlds;
 
@@ -130,6 +130,7 @@ The runtime `Chunk` object contains:
 ```cpp
 std::vector<Block> palette;
 std::vector<uint64_t> packedIndices;
+std::vector<ChunkBlockMetadataRecord> extraMetadata;
 uint8_t bitsPerBlock;
 bool dirty;
 ```
