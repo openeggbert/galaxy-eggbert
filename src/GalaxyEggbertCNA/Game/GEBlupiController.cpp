@@ -20,10 +20,13 @@ namespace GalaxyEggbert::CNA
 
         // blupi.png icon indices, ported from GalaxyEggbertSimple3D's own
         // already-approved GEBlupiController.cpp (kStopFrames/kMarchFrames/
-        // kJumpFrames) — not a fresh mobile-eggbert transcription.
+        // kJumpFrames/kDownFrames/kUpFrames) — not a fresh mobile-eggbert
+        // transcription.
         constexpr int kStopFrames[]  = {0};
         constexpr int kMarchFrames[] = {5, 6, 7, 8, 9, 10};
         constexpr int kJumpFrames[]  = {17, 18, 19};
+        constexpr int kDownFrames[]  = {33};
+        constexpr int kUpFrames[]    = {44};
     }
 
     void GEBlupiController::SetPosition(float x, float y, float z) noexcept
@@ -79,24 +82,32 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GEBlupiController::Step(const Worlds::World& world, float dx, float dz, bool jumpPressed, float dt)
+    void GEBlupiController::Step(const Worlds::World& world, float turnInput, float moveInput,
+                                  bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt)
     {
-        const bool moving = (dx != 0.0f || dz != 0.0f);
-
-        if (dx != 0.0f)
+        // Tank controls (matches GalaxyEggbertSimple3D's "Move" axis
+        // handling): turning changes yaw directly; movement is always along
+        // the current facing direction, never a free strafe. 0 rad = facing
+        // -Z, matching the forward vector the CNA camera derives from
+        // GetYaw() (sin(yaw), 0, -cos(yaw)).
+        if (turnInput != 0.0f)
         {
-            TryMoveAxis(world, dx * kMoveSpeed * dt, 0.0f);
-        }
-        if (dz != 0.0f)
-        {
-            TryMoveAxis(world, 0.0f, dz * kMoveSpeed * dt);
+            m_yaw += turnInput * kTurnSpeed * dt;
         }
 
+        const bool moving = (moveInput != 0.0f);
         if (moving)
         {
-            // 0 rad = facing -Z, matching the forward vector the CNA camera
-            // derives from GetYaw() (sin(yaw), 0, -cos(yaw)).
-            m_yaw = std::atan2(dx, -dz);
+            const float dx = std::sin(m_yaw) * moveInput * kMoveSpeed * dt;
+            const float dz = -std::cos(m_yaw) * moveInput * kMoveSpeed * dt;
+            if (dx != 0.0f)
+            {
+                TryMoveAxis(world, dx, 0.0f);
+            }
+            if (dz != 0.0f)
+            {
+                TryMoveAxis(world, 0.0f, dz);
+            }
         }
 
         if (m_onGround && jumpPressed)
@@ -125,14 +136,18 @@ namespace GalaxyEggbert::CNA
         }
         m_y = newY;
 
-        UpdateAnim(moving, dt);
+        UpdateAnim(moving, crouchHeld, lookUpHeld, dt);
     }
 
-    void GEBlupiController::UpdateAnim(bool moving, float dt)
+    void GEBlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt)
     {
-        const AnimState newState = !m_onGround ? AnimState::Jump
-                                  : moving      ? AnimState::March
-                                                : AnimState::Stop;
+        // Precedence matches GalaxyEggbertSimple3D::GEBlupiController::UpdateState:
+        // airborne beats crouch/look-up beats moving beats idle.
+        const AnimState newState = !m_onGround  ? AnimState::Jump
+                                  : crouchHeld   ? AnimState::Down
+                                  : lookUpHeld   ? AnimState::Up
+                                  : moving       ? AnimState::March
+                                                 : AnimState::Stop;
         if (newState != m_animState)
         {
             m_animState = newState;
@@ -158,6 +173,10 @@ namespace GalaxyEggbert::CNA
                 return kMarchFrames[m_animPhase % (sizeof(kMarchFrames) / sizeof(kMarchFrames[0]))];
             case AnimState::Jump:
                 return kJumpFrames[m_animPhase % (sizeof(kJumpFrames) / sizeof(kJumpFrames[0]))];
+            case AnimState::Down:
+                return kDownFrames[m_animPhase % (sizeof(kDownFrames) / sizeof(kDownFrames[0]))];
+            case AnimState::Up:
+                return kUpFrames[m_animPhase % (sizeof(kUpFrames) / sizeof(kUpFrames[0]))];
             case AnimState::Stop:
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];

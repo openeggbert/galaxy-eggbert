@@ -125,33 +125,46 @@ namespace GalaxyEggbert::CNA
         {
             terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
 
-            // Arrow keys move Blupi (invisible, collision-only placeholder —
-            // plan.md E3D-MIG-060), Space jumps.
+            // Tank controls (2026-07-05, matches GalaxyEggbertSimple3D's
+            // already-shipped "Move" axis scheme): Left/Right turn, Up/Down
+            // move forward/back along the current facing — arrows are not
+            // a strafe pad. Space jumps; LShift crouches, RShift looks up
+            // (mirrors Simple3D's Down/Up BlupiState).
             using Microsoft::Xna::Framework::Input::Keyboard;
             using Microsoft::Xna::Framework::Input::Keys;
             const auto keys = Keyboard::GetState();
-            float dx = 0.0f;
-            float dz = 0.0f;
-            if (keys.IsKeyDown(Keys::Left))  dx -= 1.0f;
-            if (keys.IsKeyDown(Keys::Right)) dx += 1.0f;
-            if (keys.IsKeyDown(Keys::Up))    dz -= 1.0f;
-            if (keys.IsKeyDown(Keys::Down))  dz += 1.0f;
+            float turnInput = 0.0f;
+            float moveInput = 0.0f;
+            if (keys.IsKeyDown(Keys::Left))  turnInput -= 1.0f;
+            if (keys.IsKeyDown(Keys::Right)) turnInput += 1.0f;
+            if (keys.IsKeyDown(Keys::Up))    moveInput += 1.0f;
+            if (keys.IsKeyDown(Keys::Down))  moveInput -= 1.0f;
             const bool jumpPressed = keys.IsKeyDown(Keys::Space);
-            blupi_.Step(worldRuntime_.GetWorld(), dx, dz, jumpPressed, dt);
+            const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
+            const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
+            blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
+                        crouchHeld, lookUpHeld, dt);
 
             // First-person/player-view camera (2026-07-05): no 3D Blupi
             // model exists yet, so there is nothing for a third-person
             // camera to show — look from Blupi's eye position in his
             // current facing direction instead (see GEBlupiController's
-            // GetYaw() convention: 0 rad = facing -Z).
+            // GetYaw() convention: 0 rad = facing -Z). Crouching lowers the
+            // eye height; looking up tilts the look target upward — neither
+            // is a real head/body pose (no 3D model yet), just a rough
+            // camera-only stand-in for the animation-indicator state.
             constexpr float kEyeHeight = 0.75f;
+            constexpr float kCrouchEyeHeight = 0.4f;
             constexpr float kLookDistance = 5.0f;
+            constexpr float kLookUpTilt = 2.5f;
             const float yaw = blupi_.GetYaw();
-            const Easy3D::Camera3D::Vector3 eye(blupi_.GetX(), blupi_.GetY() + kEyeHeight, blupi_.GetZ());
+            const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
+            const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
+            const Easy3D::Camera3D::Vector3 eye(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
             camera_.SetPosition(eye);
             camera_.SetTarget(Easy3D::Camera3D::Vector3(
                 eye.X + std::sin(yaw) * kLookDistance,
-                eye.Y,
+                eye.Y + lookYOffset,
                 eye.Z - std::cos(yaw) * kLookDistance));
         }
     }

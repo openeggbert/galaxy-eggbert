@@ -32,15 +32,19 @@ int main(int argc, char** argv)
     // controller should recognize it is already standing on solid ground.
     GEBlupiController blupi;
     blupi.SetPosition(0.0f, 1.0f, 0.0f);
-    blupi.Step(world, 0.0f, 0.0f, false, dt);
+    blupi.Step(world, 0.0f, 0.0f, false, false, false, dt);
     check(blupi.IsOnGround(), "spawns grounded on the ground floor");
 
     // 2. Walk west (-X) toward and up the 10-step staircase (world x from
     // -21 down to -30, world z band [-5,4] -- spawn z=0 is inside it).
-    // Expect Y to climb via step-up traversal.
+    // Expect Y to climb via step-up traversal. Tank controls move along the
+    // current facing direction, so face west (-X) first: yaw=0 faces -Z,
+    // so -90 deg (-pi/2 rad) faces -X.
+    constexpr float kFaceWest = -1.57079633f;
+    blupi.SetYaw(kFaceWest);
     for (int i = 0; i < 400; ++i) // ~6.7 simulated seconds
     {
-        blupi.Step(world, -1.0f, 0.0f, false, dt);
+        blupi.Step(world, 0.0f, 1.0f, false, false, false, dt);
     }
     std::cout << "After walking west: x=" << blupi.GetX() << " y=" << blupi.GetY()
               << " z=" << blupi.GetZ() << " onGround=" << blupi.IsOnGround() << std::endl;
@@ -51,7 +55,7 @@ int main(int argc, char** argv)
     // block, not clip through.
     for (int i = 0; i < 300; ++i)
     {
-        blupi.Step(world, -1.0f, 0.0f, false, dt);
+        blupi.Step(world, 0.0f, 1.0f, false, false, false, dt);
     }
     std::cout << "After walking into wall: x=" << blupi.GetX() << std::endl;
     check(blupi.GetX() > -45.0f, "wall blocks horizontal movement (did not clip through x=-45 wall)");
@@ -62,7 +66,7 @@ int main(int argc, char** argv)
     faller.SetPosition(40.0f, 20.0f, 40.0f);
     for (int i = 0; i < 200 && !faller.IsOnGround(); ++i)
     {
-        faller.Step(world, 0.0f, 0.0f, false, dt);
+        faller.Step(world, 0.0f, 0.0f, false, false, false, dt);
     }
     std::cout << "Faller landed at y=" << faller.GetY() << std::endl;
     check(faller.IsOnGround(), "falls under gravity and lands");
