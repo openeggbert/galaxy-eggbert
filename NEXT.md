@@ -130,15 +130,23 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - `GalaxyEggbertCNA`: no Blupi *rendering* (it's an invisible collision point — see §3), no
   object/pickup rendering, no HUD, no sound, no real gameplay. `Easy3D::BillboardBatch`/`DebugDraw`
   have no vertex builder or renderer adapter at all yet (needed for Blupi's sprite and objects).
-- `GalaxyEggbertSimple3D`: camera shake is a no-op; no per-zone fog; Android/Web builds untested
-  since the last engine change.
+- `GalaxyEggbertSimple3D`: no per-zone fog; Android/Web builds untested since the last engine
+  change. (Camera shake is real and wired up — see §5, corrected 2026-07-05.)
 
 ## 3. Recent changes
 
-Most recent first. `galaxy-eggbert` `develop` branch is 164+ commits ahead of `origin/develop` as
-of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix, below)
-is committed locally; whether it has been pushed depends on when you're reading this (see §9 for
-the push policy: push only on explicit request, never assume standing authorization).
+Most recent first. `galaxy-eggbert` `develop` branch is 165+ commits ahead of `origin/develop` as
+of 2026-07-05 — this whole batch (engine work + doc rework + review pass + CLAUDE.md fix + wider
+staleness pass, below) is committed locally; whether it has been pushed depends on when you're
+reading this (see §9 for the push policy: push only on explicit request, never assume standing
+authorization).
+
+**Stale camera-shake bug entry corrected (2026-07-05), found during a wider repo-doc staleness
+sweep.** `NEXT.md` itself claimed Simple3D's camera shake was a no-op needing a new `../simple-3d`
+API. False: `Camera::Shake(intensity, duration)`/`IsShaking()` already exist in `../simple-3d`
+(`Camera.cpp:511`), `GECameraRig::StartShake()` already calls it, and it's wired up at 5 real
+death/hazard sites in `GalaxyEggbertSimpleGame.cpp`. No code changed — only this file's own stale
+claim, in §2/§5/§8 (see those sections).
 
 **`CLAUDE.md` staleness fix, `DOC-278` (2026-07-05) — COMPLETE.** Fixed the loose end the review
 pass below surfaced: `CLAUDE.md`'s "Current Direction Lock" section, build-target selection,
@@ -261,7 +269,7 @@ streaming, `E3D-MIG-057`).
 
 | Status | Issue |
 |---|---|
-| confirmed | Simple3D: `GECameraRig::StartShake()` is a no-op (Simple3D has no camera-offset API) |
+| fixed (stale entry, corrected 2026-07-05) | ~~Simple3D: `GECameraRig::StartShake()` is a no-op (Simple3D has no camera-offset API)~~. Wrong: `../simple-3d` has a real `Camera::Shake(intensity, duration)`/`IsShaking()` API (`Camera.cpp:511`, random local-space XY offset applied per-frame), `GECameraRig::StartShake()` calls it directly, and it's wired up at 5 real death/hazard call sites in `GalaxyEggbertSimpleGame.cpp`. No code change was needed — this entry was simply out of date. |
 | confirmed, environment-specific | `ctest` does not discover `GalaxyEggbertWorldsTests` when configured in the pre-existing `cmake-build-debug` CLion profile (binary runs fine manually). Not reproduced in a fresh `build/` directory — `ctest --test-dir build` correctly finds and runs all 54 tests there. Likely a stale/IDE-specific config issue in `cmake-build-debug`, not a general CMake problem. |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object rendering, no HUD, no sound, no gameplay (expected at this phase, not a bug) |
@@ -454,12 +462,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    (not a forced kill) and confirm the process exits 0 with no leaked resources.
    **Files:** none expected — diagnostic verification only, possibly add an `OnExiting` log line
    to `GalaxyEggbertCnaGame` if useful. **Verification:** manual run + exit code check.
-9. **Simple3D camera shake** — make `GECameraRig::StartShake()` produce visible jitter on
-   death/hazard hit, matching `DecorAction::SmallShake` in mobile-eggbert. **Files:**
-   `src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp/hpp`; may need a new
-   `Game::SetCameraPositionOffset()`-style API added to `../simple-3d` (would need discussion,
-   since `simple-3d` is a sibling repo). **Verification:** trigger a death in-game; camera
-   visibly shakes briefly.
+9. ~~Simple3D camera shake~~ — **already done**, this task was based on a stale bug entry (see
+   §5). `GECameraRig::StartShake()` already calls a real `../simple-3d` `Camera::Shake()` API and
+   is wired up at 5 death/hazard call sites. If it still doesn't look right in-game, the next step
+   would be tuning intensity/duration to match mobile-eggbert's `DecorAction::SmallShake` feel, not
+   implementing it from scratch.
 
 ## 9. Do not do yet
 
