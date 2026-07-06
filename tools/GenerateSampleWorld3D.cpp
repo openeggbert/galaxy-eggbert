@@ -35,10 +35,15 @@ int main(int argc, char** argv)
 
     // Ascending solid staircase: 10 steps, x=29 down to x=20, z=45..54,
     // each column solid from y=0 up to its own step height.
+    // Uses RockPile (icon 35, confirmed genuine bulk stone-like material) --
+    // was BlockTypes::StoneA until 2026-07-08, when direct user identification
+    // found StoneA to actually be a machine-piece graphic, not stone texture
+    // (see BlockTypes.hpp's note on Ground/StoneA/StoneB and
+    // mobile-eggbert-reference/questionnaire-all-remaining-tiles.md).
     for (int step = 0; step < 10; ++step)
     {
         const int x = 29 - step;
-        fill(x, x, 0, step, 45, 54, BlockTypes::StoneA);
+        fill(x, x, 0, step, 45, 54, BlockTypes::RockPile);
     }
 
     // Raised platform floor at y=10, sitting flush with the tallest step's
@@ -51,21 +56,21 @@ int main(int argc, char** argv)
 
     // Room walls, 3 blocks tall (y=11..13), around the platform perimeter,
     // with a 3-wide doorway on the staircase-facing edge (x=20, z=48..51).
-    // Uses StoneB (icon 25, common structural tile, 42/78 real levels) --
-    // was BlockTypes::Wall (icon 183) until 2026-07-06, when that constant
-    // was found to be a rare (1/78 files) golden pillar/gate-post graphic,
-    // not real wall texture (renamed to GoldPillar; see 02-tiles.md and
-    // 15-3d-render-mapping-design.md). This fill was silently using the
-    // wrong texture for these walls until this fix.
-    fill(5, 5,   11, 13, 40, 59, BlockTypes::StoneB); // west wall
-    fill(6, 19,  11, 13, 40, 40, BlockTypes::StoneB); // north wall
-    fill(6, 19,  11, 13, 59, 59, BlockTypes::StoneB); // south wall
-    fill(20, 20, 11, 13, 40, 47, BlockTypes::StoneB); // east wall, north of doorway
-    fill(20, 20, 11, 13, 52, 59, BlockTypes::StoneB); // east wall, south of doorway
+    // Uses BrickWall (icon 261, confirmed genuine "zeď z cihel"/brick-wall
+    // material) -- was BlockTypes::StoneB until 2026-07-08, when direct user
+    // identification found StoneB to actually be a machine-piece graphic too
+    // (StoneB itself replaced BlockTypes::Wall/GoldPillar here on 2026-07-06
+    // for the same reason -- see BlockTypes.hpp's note on Ground/StoneA/
+    // StoneB and mobile-eggbert-reference/questionnaire-all-remaining-tiles.md).
+    fill(5, 5,   11, 13, 40, 59, BlockTypes::BrickWall); // west wall
+    fill(6, 19,  11, 13, 40, 40, BlockTypes::BrickWall); // north wall
+    fill(6, 19,  11, 13, 59, 59, BlockTypes::BrickWall); // south wall
+    fill(20, 20, 11, 13, 40, 47, BlockTypes::BrickWall); // east wall, north of doorway
+    fill(20, 20, 11, 13, 52, 59, BlockTypes::BrickWall); // east wall, south of doorway
 
     // Two decorative pillars inside the room.
-    fill(10, 10, 11, 13, 45, 45, BlockTypes::StoneB);
-    fill(10, 10, 11, 13, 54, 54, BlockTypes::StoneB);
+    fill(10, 10, 11, 13, 45, 45, BlockTypes::BrickWall);
+    fill(10, 10, 11, 13, 54, 54, BlockTypes::BrickWall);
 
     world.saveToFile(outPath);
 

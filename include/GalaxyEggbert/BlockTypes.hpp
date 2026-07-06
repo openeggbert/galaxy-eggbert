@@ -29,9 +29,23 @@ constexpr int kSheetCols = kSheetW / kTileSize; // 20
 constexpr uint16_t Air      =   0;   // empty / no block
 
 // Named tile types — value equals the icon index in object-m.png.
+// NOTE (2026-07-08): Ground/StoneA/StoneB's names/comments below are WRONG --
+// direct user identification (mobile-eggbert-reference/
+// questionnaire-all-remaining-tiles.md, round 2) found all three to actually
+// be machine-piece graphics (DirectionalCube render mode: 1-2 textured faces
+// + flat-color/transparent fallback faces), not bulk ground/stone material.
+// Kept here (not renamed/removed) because renaming would require touching
+// every existing usage; do not add new bulk-terrain usages of these three --
+// use BrickWall/RockPile below instead, which ARE confirmed genuine bulk
+// material (UniformCube, textured on all 6 faces).
 constexpr uint16_t Ground   =  10;   // grass/ground
 constexpr uint16_t StoneA   =  18;   // light stone
 constexpr uint16_t StoneB   =  25;   // dark stone
+// Confirmed genuine bulk terrain material (UniformCube, all 6 faces textured)
+// via the same round-2 identification pass above -- safe replacements for
+// StoneA/StoneB in new bulk-fill code.
+constexpr uint16_t RockPile  =  35;   // pile of rocks, non-passable
+constexpr uint16_t BrickWall = 261;   // brick wall, non-passable
 // Renamed from Wall (2026-07-06) -- confirmed by direct crop inspection to be a
 // golden pillar/post, not brick-wall texture; rare (1/78 files, only 12 cells,
 // forming a gate/portal-frame shape immediately after icon 182, the real door
