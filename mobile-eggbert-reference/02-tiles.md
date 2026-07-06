@@ -404,8 +404,42 @@ runtime, by toggling a placed `Switch`, never authored as the initial state).
 
 ## Unused/unnamed icons (128 of 441) — compact listing
 
+**Correction (2026-07-08): the "unused" claim below is wrong for at least 32 of these icons.**
+The original scan only checked whether an icon appears in a level's static `Decor:`/`BigDecor:`
+grid. It did not check `MoveObject:` records, which carry their own `icon=` field
+(`Decor::MoveObject::icon` in mobile-eggbert) that is looked up every frame in
+`Decor::MoveObjectStepIcon()` and can reference the *same* `object-m.png` sheet — confirmed by
+`Pixmap::GetBitmap()` mapping `PixmapChannel::Object` directly to `bitmapObject`, which
+`Pixmap::LoadContent()` loads from `"object-m"`. So a `Decor:`/`BigDecor:`-only scan misses any
+icon that only ever appears as a MoveObject animation frame. Confirmed by direct
+`Decor.cpp`/`Tables.cpp` cross-reference (not by re-scanning level files, since these are
+computed sprite indices, not grid contents):
+
+| Icons | Real use (mobile-eggbert `Decor.cpp`/`Tables.cpp`) |
+|---|---|
+| 32, 33, 34 | `ObjectType12` (crates) — static icon per crate variant, `PixmapChannel::Object` |
+| 99, 100, 101, 102 | `Tables::table_plouf` — water splash effect animation |
+| 244 | `Tables::table_tiplouf` (with 99) — small splash variant |
+| 103, 104, 105, 106 | `Tables::table_blup` — Blupi's underwater breathing-bubble animation |
+| 238, 239, 240, 241, 242, 243 | `Tables::table_charge` — `ObjectType31` "Charge" pickup animation |
+| 311, 312, 313, 314, 315, 316 | `Tables::table_chenille`/`table_chenillei` — `ObjectType47`/`48`, conveyor-belt lift tread |
+| 365, 366, 367, 368, 369, 370, 371, 372 | `Tables::table_bridge` — `Bridge` (icon 364) construction-sequence frames (see `14-crates-lifts-bridges-effects.md`) |
+
+These 32 icons were nonetheless independently identified by the user in
+`questionnaire-unused-tiles.md` (round 3) before this correction was found, and every one of the
+above source-confirmed identities **matches** the user's answer there (crates, water splash,
+breathing bubbles, Charge pickup, chenille tread, bridge build frames) — the render-mode answers
+recorded there stand. The remaining ~65 icons in the table below have not been individually
+re-checked against every `MoveObjectStepIcon()` branch; treat "0/78 files" for any one of them as
+unverified rather than confirmed, not as proven wrong (see task "Fix 02-tiles.md's incorrect
+'unused' claim" for the followup: extending this cross-reference to the rest of the table would
+need to trace every remaining `ObjectType` branch's icon table/range and check whether it uses
+`PixmapChannel::Object` vs. `Element`/`Explosion`/`Blupi*`, which index different sprite sheets and
+so don't count as `object-m.png` usage).
+
 These icons have no name in `BlockTypes.hpp` **and** were not found in any of the 78 real level
-files' `Decor:`/`BigDecor:` grids. No image is embedded per-icon here to keep this file's size
+files' `Decor:`/`BigDecor:` grids (see correction above — true for the grid, not necessarily for
+`MoveObject:` frames). No image is embedded per-icon here to keep this file's size
 reasonable — regenerate a crop on demand with the formula in "How these images were generated"
 below if one is needed later. The "visual signal" column is a mechanical measurement (mean
 alpha-channel value of the crop), not a guess at what the tile depicts — low alpha means the
