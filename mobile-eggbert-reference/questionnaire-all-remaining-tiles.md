@@ -45,10 +45,10 @@ neověřeno), nebo prázdná/"unnamed variant" pokud jsem dlaždici nechal jako 
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď: stro
+Odpověď: kus nějakého stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura na 4 bočních stranách, shora a zdola plná barva (modrý odstín, stejný jako pozadí ikony)
 
 ---
 
@@ -62,10 +62,10 @@ Odpověď:
 - Použití: 20/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s červeným světlem, které něco signalizuje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -79,10 +79,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -96,10 +96,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -113,10 +113,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -130,10 +130,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -147,10 +147,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -164,10 +164,10 @@ Odpověď:
 - Použití: 30/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky (katalogové jméno `Ground` je podle uživatele nesprávné)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -181,10 +181,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -198,10 +198,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s 3 barevnými světly signalizujícími něco
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -215,10 +215,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s nějakými výstupky
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -232,10 +232,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s 2 barevnými světly signalizujícími něco
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, zbylých 5 stran plná barva (modrý odstín); natočení textury (ze 4 možných stran) je uložené v metadatech daného bloku
 
 ---
 
@@ -249,10 +249,10 @@ Odpověď:
 - Použití: 16/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura na 2 protilehlých bočních stranách (směr nastavitelný v metadatech bloku), shora plná barva (modrý odstín), zdola průhledné, ze zbylých 2 bočních stran jedna průhledná a druhá plná barva (modrý odstín)
 
 ---
 
@@ -266,10 +266,10 @@ Odpověď:
 - Použití: 21/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura na 2 protilehlých bočních stranách (směr nastavitelný v metadatech bloku), shora plná barva (modrý odstín), zdola průhledné, ze zbylých 2 bočních stran jedna průhledná a druhá plná barva (modrý odstín)
 
 ---
 
@@ -283,10 +283,10 @@ Odpověď:
 - Použití: 16/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura na 2 protilehlých bočních stranách (směr nastavitelný v metadatech bloku), shora plná barva (modrý odstín), zdola průhledné, ze zbylých 2 bočních stran jedna průhledná a druhá plná barva (modrý odstín)
 
 ---
 
@@ -300,10 +300,10 @@ Odpověď:
 - Použití: 21/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje (katalogové jméno `StoneA` je podle uživatele nesprávné)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura na 2 protilehlých bočních stranách (směr nastavitelný v metadatech bloku), shora plná barva (modrý odstín), zdola průhledné, ze zbylých 2 bočních stran jedna průhledná a druhá plná barva (modrý odstín)
 
 ---
 
@@ -317,10 +317,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné ze 4 bočních stran, shora plná barva (modrý odstín), zbylé 4 strany (3 boční + zdola) průhledné
 
 ---
 
@@ -334,10 +334,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné ze 4 bočních stran, shora plná barva (modrý odstín), zbylé 4 strany (3 boční + zdola) průhledné
 
 ---
 
@@ -351,10 +351,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné ze 4 bočních stran, shora plná barva (modrý odstín), zbylé 4 strany (3 boční + zdola) průhledné
 
 ---
 
@@ -368,10 +368,10 @@ Odpověď:
 - Použití: 17/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora i zdola plná barva (modrý odstín)
 
 ---
 
@@ -385,10 +385,10 @@ Odpověď:
 - Použití: 34/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora i zdola plná barva (modrý odstín)
 
 ---
 
@@ -402,10 +402,10 @@ Odpověď:
 - Použití: 35/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora i zdola plná barva (modrý odstín)
 
 ---
 
@@ -419,10 +419,10 @@ Odpověď:
 - Použití: 42/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje (katalogové jméno `StoneB` je podle uživatele nesprávné)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -436,10 +436,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -453,10 +453,10 @@ Odpověď:
 - Použití: 15/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje, 2 trubky, jedna z trubek má na sobě koule
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -470,10 +470,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — textura jen na jedné boční straně, shora plná barva (modrý odstín), zbylé 4 strany (3 boční + zdola) průhledné
 
 ---
 
@@ -487,10 +487,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -504,10 +504,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ Billboard (dřívější poznámka je špatně). Startovní pozice pohyblivého (moveable) objektu — editorová ikona, pozůstatek z desktopové Speedy Blupi (C++98/DirectX3). Ikony 30 a 31 se v Galaxy Eggbert použijí jen ve 3D editoru světa, ne ve hře samotné.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách (textura má i průhlednost), shora i zdola plná barva (žlutá)
 
 ---
 
@@ -521,10 +521,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ Billboard (dřívější poznámka je špatně). Koncová pozice pohyblivého (moveable) objektu, dvojice k ikoně 30 — editorová ikona, pozůstatek z desktopové Speedy Blupi (C++98/DirectX3). Použije se jen ve 3D editoru světa, ne ve hře samotné.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na všech 4 bočních stranách (textura má i průhlednost), shora i zdola plná barva (žlutá)
 
 ---
 
@@ -538,10 +538,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -555,10 +555,10 @@ Odpověď:
 - Použití: 18/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -572,10 +572,10 @@ Odpověď:
 - Použití: 18/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -589,10 +589,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -606,10 +606,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -623,10 +623,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -640,10 +640,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -657,10 +657,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -674,10 +674,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -691,10 +691,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (hnědý odstín), zdola průhledné
 
 ---
 
@@ -708,10 +708,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (hnědý odstín), zdola průhledné
 
 ---
 
@@ -725,10 +725,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (hnědý odstín), zdola průhledné
 
 ---
 
@@ -742,10 +742,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěná stěna
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (hnědý odstín), zdola průhledné
 
 ---
 
@@ -759,10 +759,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ Billboard (dřívější poznámka je špatně). Kus stroje — textura je nálepka výstražného trojúhelníku.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné straně, zbylých 5 stran plná barva (modrý odstín)
 
 ---
 
@@ -776,10 +776,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 2 bočních stranách + shora + zdola (správně natočené textury), zbylé 2 boční strany plná barva (modrý odstín)
 
 ---
 
@@ -793,10 +793,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora i zdola plná barva (modrý odstín)
 
 ---
 
@@ -810,10 +810,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kus stroje s tyčemi
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -827,10 +827,10 @@ Odpověď:
 - Použití: 16/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: tyče, co něco podpírají
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora i zdola plná barva (modrý odstín)
 
 ---
 
@@ -844,10 +844,10 @@ Odpověď:
 - Použití: 23/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -861,10 +861,10 @@ Odpověď:
 - Použití: 25/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -878,10 +878,10 @@ Odpověď:
 - Použití: 26/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -895,10 +895,10 @@ Odpověď:
 - Použití: 29/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -912,10 +912,10 @@ Odpověď:
 - Použití: 18/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -929,10 +929,10 @@ Odpověď:
 - Použití: 17/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -946,10 +946,10 @@ Odpověď:
 - Použití: 24/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -963,10 +963,10 @@ Odpověď:
 - Použití: 24/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -980,10 +980,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -997,10 +997,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: šroub
 
 **Render mód?**
-Odpověď:
+Odpověď: nová geometrie — `TripleCrossBillboard`: stejná textura vykreslená 3× uprostřed bloku, každá rovina pootočená o 60° vůči ostatním, v půdorysu tvoří trojúhelník (obdoba "cross" billboardu u rostlin, ale se 3 rovinami místo 2)
 
 ---
 
@@ -1014,10 +1014,10 @@ Odpověď:
 - Použití: 15/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical/žebřík (dřívější poznámka je špatně). Několik cihel.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, průchozí, textura jen na jedné ze 4 bočních stran (směr v metadatech bloku), zbylých 5 stran průhledných
 
 ---
 
@@ -1031,10 +1031,10 @@ Odpověď:
 - Použití: 41/78 files — kills Blupi on contact
 
 **Co to je?**
-Odpověď:
+Odpověď: láva
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách (zachovává stávající animovaný render, žádná nová geometrie)
 
 ---
 
@@ -1048,10 +1048,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: láva (animační snímek stejné sekvence jako ikona 68)
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách (zachovává stávající animovaný render, žádná nová geometrie)
 
 ---
 
@@ -1065,10 +1065,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamení
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, shora plná barva (šedivá), zdola průhledné
 
 ---
 
@@ -1082,10 +1082,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamení
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, shora plná barva (šedivá), zdola průhledné
 
 ---
 
@@ -1096,13 +1096,13 @@ Odpověď:
 - Aktuální jméno v katalogu: (unnamed)
 - Moje dřívější poznámka (kategorie): unnamed variant — **Billboard** (§10.2): stone pedestal/column
 - Animace: no, passable: yes
-- Použití: 22/78 files
+- Užití: 22/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: kamenný podstavec/sloup, průchozí
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. Nová geometrie — `InnerPillarBox`: vnější krychle bloku je celá (všech 6 stran) průhledná; uvnitř bloku je menší kvádr (sloup), který má texturu na svých 4 bočních stranách
 
 ---
 
@@ -1116,10 +1116,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dřevěný podstavec/sloupek, průchozí
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. Nová geometrie — `InnerFlatPlate` (varianta `InnerPillarBox` z ikony 76, ale místo kvádru je uvnitř tenká deska): vnější krychle bloku celá průhledná; uvnitř je plochá deska s texturou na obou stranách
 
 ---
 
@@ -1133,10 +1133,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: brána/mříž s protizávažím (mechanismus s kovovými tyčemi a závěsnými koulemi)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na bočních stranách, shora i zdola plná barva (šedivý odstín)
 
 ---
 
@@ -1150,10 +1150,10 @@ Odpověď:
 - Použití: 18/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: brána/mříž s protizávažím (mechanismus s kovovými tyčemi a závěsnými koulemi)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na bočních stranách, shora plná barva (šedivý odstín), zdola průhledné
 
 ---
 
@@ -1167,10 +1167,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: brána/mříž s protizávažím (mechanismus s kovovými tyčemi a závěsnými koulemi)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na bočních stranách, shora plná barva (šedivý odstín), zdola průhledné
 
 ---
 
@@ -1184,10 +1184,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: brána/mříž s protizávažím (mechanismus s kovovými tyčemi a závěsnými koulemi)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na bočních stranách, shora plná barva (šedivý odstín), zdola průhledné
 
 ---
 
@@ -1201,10 +1201,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: brána/mříž s protizávažím (mechanismus s kovovými tyčemi a závěsnými koulemi)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na bočních stranách, shora plná barva (šedivý odstín), zdola průhledné
 
 ---
 
@@ -1218,10 +1218,10 @@ Odpověď:
 - Použití: 25/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: voda
 
 **Render mód?**
-Odpověď:
+Odpověď: OTEVŘENÁ OTÁZKA — uživatel zatím neví, jak vodu v 3D renderovat, rozhodne se později (viz task "Decide water tile render mode")
 
 ---
 
@@ -1235,10 +1235,10 @@ Odpověď:
 - Použití: 38/78 files — Blupi swims when grounded
 
 **Co to je?**
-Odpověď:
+Odpověď: voda
 
 **Render mód?**
-Odpověď:
+Odpověď: OTEVŘENÁ OTÁZKA — uživatel zatím neví, jak vodu v 3D renderovat, rozhodne se později (viz task "Decide water tile render mode")
 
 ---
 
@@ -1252,10 +1252,10 @@ Odpověď:
 - Použití: not found in scanned files — Blupi swims when grounded
 
 **Co to je?**
-Odpověď:
+Odpověď: voda
 
 **Render mód?**
-Odpověď:
+Odpověď: OTEVŘENÁ OTÁZKA — uživatel zatím neví, jak vodu v 3D renderovat, rozhodne se později (viz task "Decide water tile render mode")
 
 ---
 
@@ -1269,10 +1269,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: tráva
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura (stávající dlaždice) na bočních stranách, zdola hnědá plná barva, shora samostatná textura trávy (viz task "Source/generate a grass-top texture" — potřeba sehnat licenčně vhodný asset nebo vygenerovat)
 
 ---
 
@@ -1286,10 +1286,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: tráva
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, 2 boční strany vlastní textura ikony 108, 1 boční strana textura ikony 107, 1 boční strana průhledná, zdola hnědá plná barva, shora samostatná textura trávy (viz task "Source/generate a grass-top texture")
 
 ---
 
@@ -1303,10 +1303,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: tráva
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, 2 boční strany vlastní textura ikony 109, 1 boční strana textura ikony 107, 1 boční strana průhledná, zdola hnědá plná barva, shora samostatná textura trávy (viz task "Source/generate a grass-top texture")
 
 ---
 
@@ -1320,10 +1320,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: grafické znázornění větru od větráku, který Blupiho na daném místě táhne směrem pryč od větráku
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerFlatPlate` — deska uprostřed krychle, textura na obou stranách
 
 ---
 
@@ -1337,10 +1337,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: grafické znázornění větru od větráku, který Blupiho na daném místě táhne směrem pryč od větráku
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerFlatPlate` — deska uprostřed krychle, textura na obou stranách
 
 ---
 
@@ -1354,10 +1354,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: grafické znázornění větru od větráku, který Blupiho na daném místě táhne směrem pryč od větráku
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerFlatPlate` — deska uprostřed krychle, textura na obou stranách
 
 ---
 
@@ -1371,10 +1371,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: grafické znázornění větru od větráku, který Blupiho na daném místě táhne směrem pryč od větráku
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerFlatPlate` — deska uprostřed krychle, textura na obou stranách
 
 ---
 
@@ -1388,10 +1388,10 @@ Odpověď:
 - Použití: 8/78 files — kills unless shielded
 
 **Co to je?**
-Odpověď:
+Odpověď: větrák (fan)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, 5. strana (základna větráku) plná barva (modrý odstín), 6. strana průhledná
 
 ---
 
@@ -1405,10 +1405,10 @@ Odpověď:
 - Použití: 7/78 files — kills unless shielded
 
 **Co to je?**
-Odpověď:
+Odpověď: větrák (fan)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, 5. strana (základna větráku) plná barva (modrý odstín), 6. strana průhledná
 
 ---
 
@@ -1422,10 +1422,10 @@ Odpověď:
 - Použití: 4/78 files — kills unless shielded
 
 **Co to je?**
-Odpověď:
+Odpověď: větrák (fan)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, 5. strana (základna větráku) plná barva (modrý odstín), 6. strana průhledná
 
 ---
 
@@ -1439,10 +1439,10 @@ Odpověď:
 - Použití: 1/78 files — kills unless shielded
 
 **Co to je?**
-Odpověď:
+Odpověď: větrák (fan)
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, 5. strana (základna větráku) plná barva (modrý odstín), 6. strana průhledná
 
 ---
 
@@ -1456,10 +1456,10 @@ Odpověď:
 - Použití: 19/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: trubka, přichycená nahoře k nějakému dalšímu bloku
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerFlatPlate` — deska uprostřed krychle
 
 ---
 
@@ -1473,10 +1473,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1490,10 +1490,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1507,10 +1507,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1524,10 +1524,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1541,10 +1541,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1558,10 +1558,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1575,10 +1575,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1592,10 +1592,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1609,10 +1609,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1626,10 +1626,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1643,10 +1643,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivá), zdola průhledné
 
 ---
 
@@ -1660,10 +1660,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivá), zdola průhledné
 
 ---
 
@@ -1677,10 +1677,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -1694,10 +1694,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1711,10 +1711,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1728,10 +1728,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1745,10 +1745,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1762,10 +1762,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1779,10 +1779,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1796,10 +1796,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1813,10 +1813,10 @@ Odpověď:
 - Použití: 1/78 files — named but no behavior attached yet
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1830,10 +1830,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1847,10 +1847,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1864,10 +1864,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1881,10 +1881,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1898,10 +1898,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1915,10 +1915,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1932,10 +1932,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1949,10 +1949,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stanoviště pro přenesení do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1966,10 +1966,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: obyčejný sloup/pilíř — skutečná spouštěcí dlaždice dveří (`SearchDoor`, viz `06-doors.md`)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -1983,10 +1983,10 @@ Odpověď:
 - Použití: 1/78 files (`world001.txt`, 12 cells forming two parallel 6-7-tile-tall columns — a gate/portal-frame shape, not tiled wall material) — **correction:** the crop is visibly a golden pillar/post, not brick-wall texture; sits immediately after icon 182 (the real door tile, see `06-doors.md`'s `SearchDoor`), consistent with a door/gate-adjacent decorative element. Separately, `Decor::AdaptDoors` gives icon 183 a special meaning on mobile-eggbert's hub/world-select screen (`m_mission==1`): it marks an uncollected world's gold, removed via a rising open-door-style animation once collected (see `06-doors.md`) — whether that specific hub context is `world001.txt` itself wasn't confirmed, but it shows this icon carries real symbolic weight beyond ordinary terrain.
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup, nepruchozí
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard — uživatel se domnívá, že se sloup zvedá/animuje při otevírání dveří (potvrdit proti `Decor::AdaptDoors`/`06-doors.md` při implementaci)
 
 ---
 
@@ -2000,10 +2000,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hromada kamenů, průchozí
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — textura na všech 6 stranách
 
 ---
 
@@ -2017,10 +2017,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okno na straně domu
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2034,10 +2034,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ ventilační mřížka (dřívější poznámka je špatně). Okno na straně domu.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2051,10 +2051,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ ventilační mřížka (dřívější poznámka je špatně). Okno na straně domu.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2068,10 +2068,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ ventilační mřížka (dřívější poznámka je špatně). Okno na straně domu.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2085,10 +2085,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okno na straně domu
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2102,10 +2102,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ billboard/tenký červený sloup (dřívější poznámka je špatně). Okno na straně domu.
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2119,10 +2119,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: dveře na straně domu (identita souhlasí s dřívější poznámkou, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura jen na jedné boční straně (směr v metadatech bloku), zbylých 5 stran plná barva (béžový odstín)
 
 ---
 
@@ -2136,10 +2136,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: střecha domu s okny
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivý odstín), zdola plná barva (béžový odstín)
 
 ---
 
@@ -2153,10 +2153,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: střecha domu s okny
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivý odstín), zdola plná barva (béžový odstín)
 
 ---
 
@@ -2170,10 +2170,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: střecha domu s okny
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivý odstín), zdola plná barva (béžový odstín)
 
 ---
 
@@ -2187,10 +2187,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: střecha domu, bez okna
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivý odstín), zdola plná barva (béžový odstín)
 
 ---
 
@@ -2204,10 +2204,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: střecha domu, bez okna
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (šedivý odstín), zdola plná barva (béžový odstín)
 
 ---
 
@@ -2221,10 +2221,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stejné jako ikona 77 (podstavec), jen jiný tvar podstavce
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerFlatPlate` (stejně jako ikona 77) — deska uprostřed krychle, textura na obou stranách
 
 ---
 
@@ -2238,10 +2238,10 @@ Odpověď:
 - Použití: 36/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: železné mříže (anglický popis "metal cross-braced grate" je přesnější než ThinMechanical klasifikace)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2255,10 +2255,10 @@ Odpověď:
 - Použití: 18/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: Marine (mořská řasa)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -2272,10 +2272,10 @@ Odpověď:
 - Použití: not found in scanned files — auto-launches Blupi upward
 
 **Co to je?**
-Odpověď:
+Odpověď: Spring (pružina)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. Billboard
 
 ---
 
@@ -2289,10 +2289,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: (dřívější poznámka — přerušovaný červený/žlutý ohraničující obrys)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2306,10 +2306,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2323,10 +2323,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2340,10 +2340,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2357,10 +2357,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2374,10 +2374,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2391,10 +2391,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2408,10 +2408,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2425,10 +2425,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2442,10 +2442,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2459,10 +2459,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2476,10 +2476,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2493,10 +2493,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: krychle s dětským motivem
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2510,10 +2510,10 @@ Odpověď:
 - Použití: 15/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -2527,10 +2527,10 @@ Odpověď:
 - Použití: 14/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -2544,10 +2544,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okna paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ Billboard. DirectionalCube — krychle, shora i zdola plná barva (šedivý odstín), textura jen na jedné boční straně, zbylé 3 boční strany průhledné
 
 ---
 
@@ -2561,10 +2561,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2578,10 +2578,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2595,10 +2595,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2612,10 +2612,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2629,10 +2629,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2646,10 +2646,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2663,10 +2663,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2680,10 +2680,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2697,10 +2697,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2714,10 +2714,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2731,10 +2731,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: modrá trubka/ventil/měřicí přípojka (identita souhlasí, render mód ne)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na bočních stranách, shora plná barva (modrý odstín), zdola průhledné
 
 ---
 
@@ -2748,10 +2748,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zeď z cihel
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2765,10 +2765,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zeď z cihel
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2782,10 +2782,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zeď z cihel
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -2799,10 +2799,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra (nejistota u uživatele)
 
 **Render mód?**
-Odpověď:
+Odpověď: NEJISTÉ — uživatel neví jistě, návrh: `InnerFlatPlate` (textura na desce uprostřed krychle)
 
 ---
 
@@ -2816,10 +2816,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra (nejistota u uživatele)
 
 **Render mód?**
-Odpověď:
+Odpověď: NEJISTÉ — uživatel neví jistě, návrh: `InnerFlatPlate` (textura na desce uprostřed krychle)
 
 ---
 
@@ -2833,10 +2833,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra (nejistota u uživatele)
 
 **Render mód?**
-Odpověď:
+Odpověď: NEJISTÉ — uživatel neví jistě, návrh: `InnerFlatPlate` (textura na desce uprostřed krychle)
 
 ---
 
@@ -2850,10 +2850,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra (nejistota u uživatele)
 
 **Render mód?**
-Odpověď:
+Odpověď: NEJISTÉ — uživatel neví jistě, návrh: `InnerFlatPlate` (textura na desce uprostřed krychle)
 
 ---
 
@@ -2867,10 +2867,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra (nejistota u uživatele)
 
 **Render mód?**
-Odpověď:
+Odpověď: NEJISTÉ — uživatel neví jistě, návrh: `InnerFlatPlate` (textura na desce uprostřed krychle)
 
 ---
 
@@ -2884,10 +2884,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra (nejistota u uživatele)
 
 **Render mód?**
-Odpověď:
+Odpověď: NEJISTÉ — uživatel neví jistě, návrh: `InnerFlatPlate` (textura na desce uprostřed krychle)
 
 ---
 
@@ -2901,10 +2901,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -2918,10 +2918,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -2935,10 +2935,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -2952,10 +2952,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -2969,10 +2969,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -2986,10 +2986,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3003,10 +3003,10 @@ Odpověď:
 - Použití: 6/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3020,10 +3020,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3037,10 +3037,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3054,10 +3054,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3071,10 +3071,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3088,10 +3088,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3105,10 +3105,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje sýra
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3122,10 +3122,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zeď z cihel
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 4 bočních stranách, shora i zdola plná barva (oranžový odstín)
 
 ---
 
@@ -3139,10 +3139,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hroudy země
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3156,10 +3156,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3173,10 +3173,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3190,10 +3190,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3207,10 +3207,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3224,10 +3224,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3241,10 +3241,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3258,10 +3258,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3275,10 +3275,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3292,10 +3292,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3309,10 +3309,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3326,10 +3326,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3343,10 +3343,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3360,10 +3360,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3377,10 +3377,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3394,10 +3394,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3411,10 +3411,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3428,10 +3428,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3445,10 +3445,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3462,10 +3462,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: okraje hroudy hlíny
 
 **Render mód?**
-Odpověď:
+Odpověď: `InnerFlatPlate` — textura na desce uprostřed krychle
 
 ---
 
@@ -3479,10 +3479,10 @@ Odpověď:
 - Použití: 15/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: generátor blesku
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3496,10 +3496,10 @@ Odpověď:
 - Použití: 15/78 files — kills 25% of ticks
 
 **Co to je?**
-Odpověď:
+Odpověď: blesk (identita souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. Billboard
 
 ---
 
@@ -3513,10 +3513,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: malý zlatý pohár na podstavci (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3530,10 +3530,10 @@ Odpověď:
 - Použití: 3/78 files — kills Blupi on contact
 
 **Co to je?**
-Odpověď:
+Odpověď: Crusher (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3547,10 +3547,10 @@ Odpověď:
 - Použití: 5/78 files — vanishes 2/20 frames
 
 **Co to je?**
-Odpověď:
+Odpověď: Temp (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. Billboard
 
 ---
 
@@ -3564,10 +3564,10 @@ Odpověď:
 - Použití: 11/78 files — solid pillar
 
 **Co to je?**
-Odpověď:
+Odpověď: Teleport1 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3581,10 +3581,10 @@ Odpověď:
 - Použití: 6/78 files — solid pillar
 
 **Co to je?**
-Odpověď:
+Odpověď: Teleport2 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3598,10 +3598,10 @@ Odpověď:
 - Použití: 4/78 files — solid pillar
 
 **Co to je?**
-Odpověď:
+Odpověď: Teleport3 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3615,10 +3615,10 @@ Odpověď:
 - Použití: 3/78 files — solid pillar
 
 **Co to je?**
-Odpověď:
+Odpověď: Teleport4 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3632,10 +3632,10 @@ Odpověď:
 - Použití: 12/78 files — key-gated, see 06-doors.md
 
 **Co to je?**
-Odpověď:
+Odpověď: Door1 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3649,10 +3649,10 @@ Odpověď:
 - Použití: 10/78 files — key-gated, see 06-doors.md
 
 **Co to je?**
-Odpověď:
+Odpověď: Door2 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3666,10 +3666,10 @@ Odpověď:
 - Použití: 11/78 files — key-gated, see 06-doors.md
 
 **Co to je?**
-Odpověď:
+Odpověď: Door3 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -3683,10 +3683,10 @@ Odpověď:
 - Použití: 8/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: (souhlas s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3700,10 +3700,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sýr
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3717,10 +3717,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3734,10 +3734,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3751,10 +3751,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3768,10 +3768,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3785,10 +3785,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3802,10 +3802,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3819,10 +3819,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3836,10 +3836,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3853,10 +3853,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3870,10 +3870,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3887,10 +3887,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3904,10 +3904,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3921,10 +3921,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3938,10 +3938,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3955,10 +3955,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3972,10 +3972,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -3989,10 +3989,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4006,10 +4006,10 @@ Odpověď:
 - Použití: 11/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4023,10 +4023,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4040,10 +4040,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4057,10 +4057,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4074,10 +4074,10 @@ Odpověď:
 - Použití: 13/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4091,10 +4091,10 @@ Odpověď:
 - Použití: 12/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4108,10 +4108,10 @@ Odpověď:
 - Použití: 9/78 files — mostly solid in 2D too (only its top quarter is solid per `table_decor_quart`, `IsPassIcon(364)` returns false); solid in galaxy-eggbert. **Correction (2026-07-05, DOC-306):** an earlier version of this row claimed 364 was fully "passable in 2D" — false, see `14-crates-lifts-bridges-effects.md` for the full construction-sequence behavior (the cell does become fully hollow for most of the 157-tick build animation, but the finished/idle tile itself is not simply "passable").
 
 **Co to je?**
-Odpověď:
+Odpověď: Bridge (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. DirectionalCube — krychle, textura na 4 bočních stranách, shora plná barva (hnědý odstín), zdola průhledné
 
 ---
 
@@ -4125,10 +4125,10 @@ Odpověď:
 - Použití: 5/78 files — kills Blupi on contact
 
 **Co to je?**
-Odpověď:
+Odpověď: NENÍ Spike/hrot (dřívější poznámka je špatně) — zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. UniformCube — krychle, textura na všech 6 stranách
 
 ---
 
@@ -4142,10 +4142,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: podstavec/sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4159,10 +4159,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: podstavec/sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4176,10 +4176,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: podstavec/sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4193,10 +4193,10 @@ Odpověď:
 - Použití: 15/78 files — kills Blupi on contact; stoppable by Switch
 
 **Co to je?**
-Odpověď:
+Odpověď: Saw (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. Billboard
 
 ---
 
@@ -4210,10 +4210,10 @@ Odpověď:
 - Použití: not found in scanned files — the Saw's toggled-off, safe static state; `GETerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled
 
 **Co to je?**
-Odpověď:
+Odpověď: SawStopped (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. Billboard
 
 ---
 
@@ -4227,10 +4227,10 @@ Odpověď:
 - Použití: 8/78 files — toggles linked Saw tiles
 
 **Co to je?**
-Odpověď:
+Odpověď: Switch (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerPillarBox` (jako ikona 76) — vnější krychle průhledná, uvnitř kvádr s texturou na jedné straně, zbylé strany kvádru plná barva (modrý odstín)
 
 ---
 
@@ -4244,10 +4244,10 @@ Odpověď:
 - Použití: not found in scanned files — toggles linked Saw tiles
 
 **Co to je?**
-Odpověď:
+Odpověď: SwitchOff (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ ThinMechanical. `InnerPillarBox` (jako ikona 76) — vnější krychle průhledná, uvnitř kvádr s texturou na jedné straně, zbylé strany kvádru plná barva (modrý odstín)
 
 ---
 
@@ -4261,10 +4261,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4278,10 +4278,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4295,10 +4295,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4312,10 +4312,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4329,10 +4329,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4346,10 +4346,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4363,10 +4363,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4380,10 +4380,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: stavební blok paláce
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura jen na jedné boční straně, zbylé strany plná barva (šedivý odstín)
 
 ---
 
@@ -4397,10 +4397,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zábradlí (souhlasí s dřívější poznámkou), ale je statické — neotáčí se dle pohledu hráče
 
 **Render mód?**
-Odpověď:
+Odpověď: NENÍ klasický (kamerou otočný) Billboard. `InnerFlatPlate` — deska uprostřed průhledné krychle, textura na obou stranách desky
 
 ---
 
@@ -4414,10 +4414,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloupec (souhlasí s dřívější poznámkou)
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard — klasický, otáčí se dle pohledu hráče
 
 ---
 
@@ -4431,10 +4431,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: brána/vchod
 
 **Render mód?**
-Odpověď:
+Odpověď: DirectionalCube — krychle, textura na 2 protilehlých bočních stranách, zbylé strany plná barva (šedivý odstín); průchozí je to jen skrz tuto texturovanou stranu (otvor)
 
 ---
 
@@ -4448,10 +4448,10 @@ Odpověď:
 - Použití: 3/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4465,10 +4465,10 @@ Odpověď:
 - Použití: 5/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: zelený sliz
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4482,10 +4482,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: budka do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4499,10 +4499,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: budka do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4516,10 +4516,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: budka do jiného světa
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4533,10 +4533,10 @@ Odpověď:
 - Použití: 10/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4550,10 +4550,10 @@ Odpověď:
 - Použití: 15/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4567,10 +4567,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4584,10 +4584,10 @@ Odpověď:
 - Použití: 9/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4601,10 +4601,10 @@ Odpověď:
 - Použití: 4/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4618,10 +4618,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4635,10 +4635,10 @@ Odpověď:
 - Použití: 7/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4652,10 +4652,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4669,10 +4669,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4686,10 +4686,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4703,10 +4703,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4720,10 +4720,10 @@ Odpověď:
 - Použití: 2/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4737,10 +4737,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4754,10 +4754,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4771,10 +4771,10 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
 
@@ -4788,9 +4788,9 @@ Odpověď:
 - Použití: 1/78 files
 
 **Co to je?**
-Odpověď:
+Odpověď: sloup
 
 **Render mód?**
-Odpověď:
+Odpověď: Billboard
 
 ---
