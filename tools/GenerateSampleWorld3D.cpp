@@ -103,6 +103,16 @@ int main(int argc, char** argv)
     // proving the render mode renders correctly, not a floor Blupi walks on.
     fill(48, 52, 3, 3, 40, 44, BlockTypes::Platform);
 
+    // Two more floating DirectionalCube demo blocks, right next to the icon
+    // 200 grate, showing the two other confirmed face patterns from the
+    // 2026-07-08 GEDirectionalCubeTiles.cpp backfill (NEXT.md §8 task 1):
+    // icon 2 (top+bottom flat fallback color, no open faces) and icon 25
+    // (top flat fallback color, bottom open) -- both "unnamed variant" icons
+    // per 02-tiles.md, no BlockTypes constant needed for a demo placement.
+    // Same off-path reasoning as the grate above (y=3, z=40..44).
+    fill(54, 56, 3, 3, 40, 44, static_cast<std::uint16_t>(2));
+    fill(58, 60, 3, 3, 40, 44, static_cast<std::uint16_t>(25));
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

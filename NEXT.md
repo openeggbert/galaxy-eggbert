@@ -50,9 +50,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   97 of the 127 remaining "unused" icons (round 3, also direct user Q&A) — the other 30 are icon 0
   (`Air`), icon 440 (confirmed no real pixel data), and animation sub-frames that inherit their
   base icon's identity (Lava/Fan/Crusher/Temp/Saw/Water2 groups). **The `DirectionalCube` render
-  mode is now implemented and proven on one icon (200/`Platform`, 2026-07-08, §3)** — the other
-  ~100 confirmed `DirectionalCube` icons, plus `InnerPillarBox`/`InnerFlatPlate`/
-  `TripleCrossBillboard` entirely, still need wiring; see §8 tasks 1-2, the active thread.
+  mode is now implemented and wired up for 49 of ~98 confirmed icons (200/`Platform` +
+  48 more, 2026-07-08, §3)** — the remaining ~49 confirmed `DirectionalCube` icons need a
+  capability this table can't express yet (per-placement face rotation, texture alpha, or a
+  missing grass asset — see §3/§8 task 1's "not yet" list), and `InnerPillarBox`/`InnerFlatPlate`/
+  `TripleCrossBillboard` are still fully unimplemented; see §8 tasks 1-2, the active thread.
 - A real documentation bug was found and fixed during round 3: `02-tiles.md`'s "0/78 files, unused"
   claim only checked the static `Decor:`/`BigDecor:` grid, not `MoveObject:` records' own `icon=`
   field (which can reference the same `object-m.png` sheet). At least 32 of the "unused" icons are
@@ -102,6 +104,15 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   vertices/8 triangles each instead of 6 faces × 24/12 — deterministic proof the top/bottom faces
   were genuinely omitted, not just untextured), and a saved `screenshot.png` visually confirms the
   grate: real texture on its 4 side faces, sky-blue visible straight through the open top/bottom.
+- **Re-run after backfilling 48 more `DirectionalCube` icons** (same session, §3): `VerifyBlupiMovement`
+  all-pass again against the further-regenerated world (2784 blocks, +30 over the grate-only
+  version — two more 3×1×5 demo rows, icons 2 and 25). Live run's vertex/triangle counts
+  (66556/33278) are exactly +660/+330 over the grate-only baseline — 15 icon-2 blocks × 6 visible
+  faces (24 vertices/12 triangles each, both top/bottom flat-color) + 15 icon-25 blocks × 5 visible
+  faces (20 vertices/10 triangles each, top color/bottom open) — again deterministic proof the
+  table's per-icon face counts are exactly what's rendered. `screenshot.png` shows the icon-200
+  grate (open top/bottom) next to icon 2 (solid-looking, swatch-colored top and sides) with
+  visibly different treatments.
 
 ### What works
 - **`GalaxyEggbertSimple3D`**: unchanged this session — world loading from mobile-eggbert `.txt`,
@@ -110,11 +121,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   logic, HUD, save/load (3 slots), 93-channel sound, 3rd-person orbit camera, 5 sky colors per
   region, camera shake on death/hazard.
 - **`GalaxyEggbertCNA`**: loads `worlds3d/world001.vwr` by default, renders every Y layer as
-  textured cubes (animated tiles included) *or*, for icon 200 (`Platform`) only so far, as a
-  `DirectionalCube` (4 textured side faces, genuinely open top/bottom — see §3), tank-control
-  Blupi (invisible collision point), first-person camera + 2D animation-state HUD indicator,
-  renders `MoveObject`s as billboards. Also now writes `screenshot.png` next to the binary on its
-  first rendered frame (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block) for visual
+  textured cubes (animated tiles included) *or*, for the 49 icons `GEDirectionalCubeTiles.cpp`
+  knows about (200/`Platform` + 48 more, see §3), as a `DirectionalCube` — 4 side faces always
+  textured, top/bottom each independently a real hole or a flat fallback color (approximated by
+  sampling a small swatch of the tile's own texture near its top/bottom edge). Tank-control Blupi
+  (invisible collision point), first-person camera + 2D animation-state HUD indicator, renders
+  `MoveObject`s as billboards. Also now writes `screenshot.png` next to the binary on its first
+  rendered frame (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block) for visual
   verification.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
@@ -127,10 +140,15 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ### What does not work yet
 - `GalaxyEggbertCNA`: no visible 3D Blupi, no `BigDecor` rendering, no platform-lift/crate
   `UniformCube` object path, no HUD, no sound, no real gameplay logic (all expected at this phase).
-- **`DirectionalCube` is implemented but only wired up for 1 of ~100 confirmed icons** (200/
-  `Platform`, see §3) — `GEDirectionalCubeTiles.cpp` needs every other icon's questionnaire answer
-  transcribed in (§8 task 1). `InnerPillarBox`, `InnerFlatPlate`, `TripleCrossBillboard` (see §6)
-  are still only documentation/decisions, not code — `DirectionalCube` was the first one built.
+- **`DirectionalCube` is implemented and wired up for 49 of ~98 confirmed icons** (200/`Platform`
+  + 48 more, see §3) — the remaining ~49 all need a capability `GEDirectionalCubeTiles.cpp` can't
+  express yet: per-placement face rotation (~40 icons say "směr v metadatech bloku" — which of the
+  4 side faces gets the texture is stored per block instance in mobile-eggbert, and
+  galaxy-eggbert's `World`/`Block` format has no orientation field to read that from yet), real
+  texture alpha (icons 30/31), the fan "base" icons' ambiguous top-vs-bottom assignment (126/129/
+  132/135), or a not-yet-sourced grass top texture (icons 107-109) — see §8 task 1. `InnerPillarBox`,
+  `InnerFlatPlate`, `TripleCrossBillboard` (see §6) are still only documentation/decisions, not
+  code — `DirectionalCube` was the first render mode actually built.
 - Water render mode (icons 91/92/93/94/95/96) is an **open, explicitly deferred design question**
   — the user has not yet decided how water should look in 3D.
 - Icon 107 (grass) needs a real top-face grass texture, which doesn't exist yet in the asset set —
@@ -142,6 +160,29 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Backfilled 48 more confirmed `DirectionalCube` icons into `GEDirectionalCubeTiles.cpp`
+  (2026-07-08, §8 task 1).** All 48 answered "krychle, textura na (všech/4) bočních stranách" in
+  the questionnaires — i.e. all 4 side faces always show the real texture; only top/bottom vary,
+  independently, between "flat fallback color" and "open" — so no per-placement rotation is needed
+  and each could be wired up exactly as confirmed, no guessing. Added `SwatchUv()`: since every
+  named fallback color in the questionnaire answers is per-icon (icon 2's answer literally says
+  "modrý odstín, stejný jako pozadí ikony" — "same as the icon's own background"), a "flat color"
+  face's `Uv` samples a small swatch of the *same* tile's own texture near its top or bottom edge
+  (matching which face — "shora"/"zdola" — asked for it) instead of a hardcoded RGB; this also
+  reproduces icons with genuinely different top vs. bottom colors (e.g. icon 193: gray top / beige
+  bottom) since the two edges are sampled independently. Screened all ~98 confirmed
+  `DirectionalCube` icons from `questionnaire-all-remaining-tiles.md`/`questionnaire-unused-tiles.md`
+  and excluded ~49 that need a capability not built yet: ~40 need per-placement face rotation
+  ("směr v metadatech bloku") that `World`/`Block` has no field for; icons 30/31 need real texture
+  alpha; icons 126/129/132/135's "5. strana (základna)" doesn't say whether the base is top or
+  bottom; icons 107-109 need a not-yet-sourced grass texture — see §5's expanded list. Added 2 more
+  demo blocks (icons 2 and 25) next to the existing grate in
+  `tools/GenerateSampleWorld3D.cpp`, regenerated `worlds3d/world001.vwr` (2784 blocks, up from
+  2754). Verified: `VerifyBlupiMovement` all-pass; live run's vertex/triangle counts
+  (66556/33278) are exactly +660/+330 over the previous baseline (15 icon-2 blocks × 6 faces + 15
+  icon-25 blocks × 5 faces) — deterministic proof the table's face counts render exactly as
+  specified; `screenshot.png` shows the icon-200 grate next to icon 2's solid, swatch-colored
+  block, visibly different treatments.
 - **Implemented the `DirectionalCube` render mode and proved it on icon 200/`Platform`
   (2026-07-08).** Added `Easy3D::DirectionalCubeItem`/`DirectionalCubeFace`/
   `CubeFace`/`AppendDirectionalCubeMesh` to `../easy-3d`'s `CubeMesh.hpp/.cpp` — a cube where each
@@ -285,8 +326,8 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETil
                                 GETerrainRenderer (World, all Y layers → static + animated
                                 CubeMeshRenderer-backed meshes — UniformCube by default, or
                                 DirectionalCube per GEDirectionalCubeTiles's lookup), new
-                                GEDirectionalCubeTiles (per-icon DirectionalCube face table, only
-                                icon 200 wired up so far), GEBlupiController, GEObjectIcons, an
+                                GEDirectionalCubeTiles (per-icon DirectionalCube face table, 49 of
+                                ~98 confirmed icons wired up so far), GEBlupiController, GEObjectIcons, an
                                 Easy3D::Camera3D (first-person).
 
 tools/GenerateSampleWorld3D.cpp — builds worlds3d/world001.vwr. Ground floor/staircase/platform
@@ -383,18 +424,32 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Backfill the remaining ~100 confirmed `DirectionalCube` icons into
-   `GEDirectionalCubeTiles.cpp`.** The render mode itself is now implemented and proven on icon
-   200 (§3) — this task is pure data transcription: for each `DirectionalCube` answer in
-   `questionnaire-all-remaining-tiles.md`/`questionnaire-unused-tiles.md`/`02-tiles.md`, add an
-   entry to `TryGetDirectionalCubeFaces()` with its exact confirmed faces (which are textured vs.
-   open vs. flat-fallback-color — for the color case, pick a small corner-swatch `UvRect` of the
-   *same* tile's own texture as an approximation of "same color as the icon's background", per the
-   questionnaire's own reasoning; `GETileAtlas`/`BlockTypes::tileUV()` has the pitch/gap math
-   needed to compute a sub-rect). **Do not guess** — only transcribe icons with an exact recorded
-   answer (§9). **Files:** `src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp`. **Verification:**
-   extend the `../easy-3d` unit tests or add a small compile-check tool per batch, plus periodic
-   live screenshots as icons are added to the sample world.
+1. **Backfill the remaining ~49 confirmed `DirectionalCube` icons into
+   `GEDirectionalCubeTiles.cpp` — each needs a real capability first, this is no longer pure data
+   entry.** 49 of ~98 are done (2026-07-08, §3: icon 200 + the 48 "all 4 sides textured, top/bottom
+   independently color-or-open" icons, via `SwatchUv()`). What's left, grouped by the missing
+   capability:
+   - **~40 icons need per-placement face rotation** (their answer says "směr v metadatech bloku" —
+     only 1 or 2 of the 4 side faces show the texture, and which one is a per-block-instance
+     property in mobile-eggbert). Needs: (a) figuring out where mobile-eggbert actually stores this
+     per-cell rotation (check `Decor.cpp`/the `Decor:`/`BigDecor:` grid cell encoding — may be a
+     separate byte/bitfield alongside the icon ID, not investigated yet), (b) an additive
+     orientation field on `GalaxyEggbert::Worlds::Block` (must not break the existing `.vwr`
+     format for files without it), (c) `GETerrainRenderer` picking the right face per-instance
+     instead of a single fixed table entry. Real design work, not a quick add.
+   - **Icons 30/31 need real texture alpha** ("textura má i průhlednost") — confirm whether the CNA
+     terrain draw path (`BasicEffect`/`GraphicsDevice` blend state in `GalaxyEggbertCnaGame.cpp`)
+     supports alpha-blended terrain at all yet; if not, that's a prerequisite.
+   - **Icons 126/129/132/135 (the 4 fan tiles) have an ambiguous top-vs-bottom "5. strana
+     (základna větráku)"** — needs the user to confirm whether the described "base" face is top or
+     bottom before it can be added (don't assume "base = bottom").
+   - **Icons 107-109 need the not-yet-sourced grass top texture** (§8 task 4) before they can be
+     wired up (icon 107 itself IS that grass-texture task).
+   **Files:** `src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp` (and, for the rotation group,
+   `include/GalaxyEggbert/Worlds/Block.hpp`/`World.*`). **Verification:** for the rotation group,
+   new `GalaxyEggbert::Worlds` unit tests for the orientation field/`.vwr` round-trip plus a
+   `VerifyBlupiMovement`-style regression check; for all groups, a live screenshot per batch added
+   to the sample world (matches the pattern in §3's 2026-07-08 entries).
 2. **Design + implement `InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard`** — the other 3
    render modes the round 2/3 identification converged on, still undesigned in code (unlike
    `DirectionalCube`, these need genuinely different geometry — a small box/plate *inside* a
