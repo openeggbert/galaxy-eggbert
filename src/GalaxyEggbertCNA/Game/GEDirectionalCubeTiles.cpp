@@ -1,4 +1,5 @@
 #include "GEDirectionalCubeTiles.hpp"
+#include "GESwatchUv.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
@@ -7,36 +8,6 @@ namespace GalaxyEggbert::CNA
     namespace
     {
         using Easy3D::CubeFace;
-
-        // A small sample of the tile's OWN texture -- used to approximate a
-        // DirectionalCube's "flat fallback color" face without a second,
-        // vertex-color shader path (see GEDirectionalCubeTiles.hpp's header
-        // comment for why). The questionnaire answers themselves justify
-        // this: every named fallback color ("modrý odstín", "hnědý odstín",
-        // ...) is described per-icon, not from a fixed palette -- icon 2's
-        // answer spells it out directly ("modrý odstín, stejný jako pozadí
-        // ikony" = "blue, same as the icon's own background"). Sampling
-        // near the top edge for a face specified as "shora" (top) and near
-        // the bottom edge for "zdola" (bottom), rather than one fixed corner
-        // for both, also reproduces icons where those two colors are
-        // genuinely different (e.g. icon 193: gray top / beige bottom)
-        // instead of forcing them to match. kMidSwatchV is for a "flat
-        // color" SIDE face (not top/bottom) -- no "shora"/"zdola" wording to
-        // anchor to, so a middle sample is the closest generic analog.
-        Easy3D::UvRect SwatchUv(const Easy3D::UvRect& tile, float vCenterFrac)
-        {
-            constexpr float kHalfSize = 0.06f;
-            const float uMid = (tile.U0 + tile.U1) * 0.5f;
-            const float uHalf = (tile.U1 - tile.U0) * kHalfSize;
-            const float vSpan = tile.V1 - tile.V0;
-            const float vCenter = tile.V0 + vSpan * vCenterFrac;
-            const float vHalf = vSpan * kHalfSize;
-            return Easy3D::UvRect{uMid - uHalf, vCenter - vHalf, uMid + uHalf, vCenter + vHalf};
-        }
-
-        constexpr float kTopSwatchV = 0.08f;
-        constexpr float kBottomSwatchV = 0.92f;
-        constexpr float kMidSwatchV = 0.5f;
 
         // Every icon below answered "krychle, textura na (všech/4) bočních
         // stranách" -- all 4 side faces always show the tile's real texture;

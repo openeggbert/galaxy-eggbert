@@ -254,6 +254,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp
         src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp
+        src/GalaxyEggbertCNA/Game/GESwatchUv.cpp
+        src/GalaxyEggbertCNA/Game/GEInnerPillarBoxTiles.cpp
+        src/GalaxyEggbertCNA/Game/GEInnerFlatPlateTiles.cpp
+        src/GalaxyEggbertCNA/Game/GETripleCrossBillboardTiles.cpp
         src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         ${GE_SHARED_SOURCES}

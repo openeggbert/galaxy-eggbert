@@ -1,5 +1,8 @@
 #include "GETerrainRenderer.hpp"
 #include "GEDirectionalCubeTiles.hpp"
+#include "GEInnerFlatPlateTiles.hpp"
+#include "GEInnerPillarBoxTiles.hpp"
+#include "GETripleCrossBillboardTiles.hpp"
 #include "GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -17,6 +20,84 @@ namespace GalaxyEggbert::CNA
         // one world unit per tile.
         constexpr int kWorldCenterX = GEWorldRuntime::kWorldCenterX;
         constexpr int kWorldCenterZ = GEWorldRuntime::kWorldCenterZ;
+
+        // InnerFlatPlate/TripleCrossBillboard geometry sizing — "spans most
+        // of the block" per the questionnaire wording, leaving a visible
+        // margin so the plate/cross doesn't clip through neighboring blocks'
+        // faces.
+        constexpr float kInnerFlatPlateWidth = 0.75f;
+        constexpr float kInnerFlatPlateHeight = 0.9f;
+        constexpr float kTripleCrossWidth = 0.8f;
+        constexpr float kTripleCrossHeight = 1.0f;
+
+        // Appends whichever "new geometry" render mode (if any) @p lookupIcon
+        // uses, into @p vertices/@p indices, textured with @p tileUv.
+        // Returns true if it handled the icon (caller should skip its normal
+        // UniformCube path); false if @p lookupIcon isn't one of these
+        // modes. @p lookupIcon and @p tileUv's icon are the same for static
+        // (non-animated) blocks, but deliberately different for animated
+        // ones: @p lookupIcon is the animation group's fixed base icon (so
+        // the render-mode/face-pattern lookup doesn't change frame to
+        // frame), while @p tileUv is always the currently-sampled frame's
+        // actual texture (see GETerrainRenderer::Update's fan-tile comment).
+        bool AppendSpecialGeometry(int lookupIcon, const Easy3D::UvRect& tileUv,
+                                   const Easy3D::CubeBatch::Vector3& center,
+                                   std::vector<Easy3D::CubeVertex>& vertices,
+                                   std::vector<std::uint32_t>& indices)
+        {
+            Easy3D::DirectionalCubeFace directionalFaces[6];
+            if (TryGetDirectionalCubeFaces(lookupIcon, tileUv, directionalFaces))
+            {
+                Easy3D::DirectionalCubeItem item;
+                item.Center = center;
+                item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
+                for (int face = 0; face < 6; ++face)
+                {
+                    item.Faces[face] = directionalFaces[face];
+                }
+                Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
+                return true;
+            }
+
+            Easy3D::DirectionalCubeFace pillarFaces[6];
+            if (TryGetInnerPillarBoxFaces(lookupIcon, tileUv, pillarFaces))
+            {
+                Easy3D::DirectionalCubeItem item;
+                item.Center = center;
+                item.Size = Easy3D::CubeBatch::Vector3(kInnerPillarWidth, kInnerPillarHeight, kInnerPillarWidth);
+                for (int face = 0; face < 6; ++face)
+                {
+                    item.Faces[face] = pillarFaces[face];
+                }
+                Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
+                return true;
+            }
+
+            if (IsInnerFlatPlateIcon(lookupIcon))
+            {
+                Easy3D::PlateItem item;
+                item.Center = center;
+                item.Width = kInnerFlatPlateWidth;
+                item.Height = kInnerFlatPlateHeight;
+                item.Uv = tileUv;
+                item.Axis = Easy3D::PlateAxis::Z;
+                Easy3D::AppendPlateMesh(item, vertices, indices);
+                return true;
+            }
+
+            if (IsTripleCrossBillboardIcon(lookupIcon))
+            {
+                Easy3D::TripleCrossItem item;
+                item.Center = center;
+                item.Width = kTripleCrossWidth;
+                item.Height = kTripleCrossHeight;
+                item.Uv = tileUv;
+                Easy3D::AppendTripleCrossMesh(item, vertices, indices);
+                return true;
+            }
+
+            return false;
+        }
 
         // Animation frame tables — ported 1:1 from GalaxyEggbertSimple3D's
         // already-shipped GETerrainRenderer.cpp (same galaxy-eggbert repo;
@@ -68,7 +149,8 @@ namespace GalaxyEggbert::CNA
         : m_tileAtlas(&tileAtlas)
     {
         Easy3D::CubeBatch staticBatch;
-        std::vector<Easy3D::DirectionalCubeItem> directionalItems;
+        std::vector<Easy3D::CubeVertex> staticVertices;
+        std::vector<std::uint32_t> staticIndices;
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -103,24 +185,15 @@ namespace GalaxyEggbert::CNA
                     }
 
                     const Easy3D::CubeBatch::Vector3 center(worldX, worldY, worldZ);
-                    const Easy3D::CubeBatch::Vector3 size(1.0f, 1.0f, 1.0f);
                     const auto tileUv = tileAtlas.GetTileUv(static_cast<int>(block.type()));
 
-                    Easy3D::DirectionalCubeFace directionalFaces[6];
-                    if (TryGetDirectionalCubeFaces(static_cast<int>(block.type()), tileUv, directionalFaces))
+                    if (AppendSpecialGeometry(static_cast<int>(block.type()), tileUv, center,
+                                              staticVertices, staticIndices))
                     {
-                        Easy3D::DirectionalCubeItem item;
-                        item.Center = center;
-                        item.Size = size;
-                        for (int face = 0; face < 6; ++face)
-                        {
-                            item.Faces[face] = directionalFaces[face];
-                        }
-                        directionalItems.push_back(item);
                         continue;
                     }
 
-                    staticBatch.Add(center, size, tileUv);
+                    staticBatch.Add(center, Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f), tileUv);
                 }
             }
         }
@@ -132,18 +205,12 @@ namespace GalaxyEggbert::CNA
             m_centroidZ = static_cast<float>(sumZ / m_blockCount);
         }
 
-        std::vector<Easy3D::CubeVertex> staticVertices;
-        std::vector<std::uint32_t> staticIndices;
+        // Appended after the special-geometry blocks above, not merged into
+        // one pass: AppendCubeMesh/AppendDirectionalCubeMesh/AppendPlateMesh/
+        // AppendTripleCrossMesh all offset indices by the vertex count
+        // already present, so concatenation order doesn't matter for
+        // correctness.
         Easy3D::BuildCubeMesh(staticBatch, staticVertices, staticIndices);
-        for (const auto& item : directionalItems)
-        {
-            // Appended after the uniform-cube batch, not merged into it:
-            // AppendDirectionalCubeMesh/AppendCubeMesh both offset indices by
-            // the vertex count already present, so concatenation order
-            // doesn't matter for correctness -- this just keeps the two
-            // code paths visually separate here.
-            Easy3D::AppendDirectionalCubeMesh(item, staticVertices, staticIndices);
-        }
         m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
 
         Update(device, 0);
@@ -159,7 +226,8 @@ namespace GalaxyEggbert::CNA
         m_lastAnimPhase = animPhase;
 
         Easy3D::CubeBatch animBatch;
-        std::vector<Easy3D::DirectionalCubeItem> animDirectionalItems;
+        std::vector<Easy3D::CubeVertex> animVertices;
+        std::vector<std::uint32_t> animIndices;
         for (const auto& block : m_animBlocks)
         {
             const int icon = AnimIcon(block.base, animPhase);
@@ -169,40 +237,27 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
             const Easy3D::CubeBatch::Vector3 center(block.x, block.y, block.z);
-            const Easy3D::CubeBatch::Vector3 size(1.0f, 1.0f, 1.0f);
             const auto tileUv = m_tileAtlas->GetTileUv(icon);
 
-            // The 4 fan tiles are both animated (blade spin) AND, per
-            // GEDirectionalCubeTiles.cpp, DirectionalCube (base + open face)
-            // -- check the table here too, or fan blocks would always fall
-            // through to a plain untextured-on-every-face UniformCube and
-            // the table entry would never actually be used (found
+            // Looked up by block.base (the animation group's fixed base
+            // icon, e.g. FanLeft=126), NOT by icon (the current frame, e.g.
+            // 126/127/128) -- a special-geometry table only has an entry for
+            // the base icon, and the render mode/face pattern must stay
+            // constant across the animation; only tileUv (the
+            // actually-sampled texture) should change frame to frame. Found
             // 2026-07-08 via a live block/vertex-count mismatch on the fan
-            // demo block in worlds3d/world001.vwr). Looked up by block.base
-            // (the animation group's base icon, e.g. FanLeft=126), NOT by
-            // icon (the current frame, e.g. 126/127/128) -- the table only
-            // has an entry for the base icon, and the face
-            // pattern/visibility must stay constant across the animation;
-            // only tileUv (the actually-sampled texture) should change
-            // frame to frame.
-            Easy3D::DirectionalCubeFace directionalFaces[6];
-            if (TryGetDirectionalCubeFaces(static_cast<int>(block.base), tileUv, directionalFaces))
+            // demo block: without this, fan blocks always fell through to a
+            // plain untextured-on-every-face UniformCube and their
+            // GEDirectionalCubeTiles entry was silently dead code.
+            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, center, animVertices, animIndices))
             {
-                Easy3D::DirectionalCubeItem item;
-                item.Center = center;
-                item.Size = size;
-                for (int face = 0; face < 6; ++face)
-                {
-                    item.Faces[face] = directionalFaces[face];
-                }
-                animDirectionalItems.push_back(item);
                 continue;
             }
 
-            animBatch.Add(center, size, tileUv);
+            animBatch.Add(center, Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f), tileUv);
         }
 
-        if (animBatch.Empty() && animDirectionalItems.empty())
+        if (animBatch.Empty() && animVertices.empty())
         {
             // All animated tiles are in a hidden frame this phase (e.g. Temp's
             // 2 blank frames out of 20) — avoid constructing a zero-size GPU
@@ -211,13 +266,7 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
-        std::vector<Easy3D::CubeVertex> animVertices;
-        std::vector<std::uint32_t> animIndices;
         Easy3D::BuildCubeMesh(animBatch, animVertices, animIndices);
-        for (const auto& item : animDirectionalItems)
-        {
-            Easy3D::AppendDirectionalCubeMesh(item, animVertices, animIndices);
-        }
         m_animRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, animVertices, animIndices);
     }
 

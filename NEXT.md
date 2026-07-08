@@ -58,8 +58,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   distinct icons; the questionnaire's "uloženo v metadatech bloku" phrasing was the answerer's own
   guess while eyeballing crops, not a real mobile-eggbert source finding). Only 9 confirmed icons
   remain: 2 need real texture alpha, 3 need a missing grass asset, 4 (icons 15-18) need a
-  two-part axis+side-asymmetry read their crops didn't give a confident answer for. `InnerPillarBox`/
-  `InnerFlatPlate`/`TripleCrossBillboard` are still fully unimplemented; see §8 tasks 1-2.
+  two-part axis+side-asymmetry read their crops didn't give a confident answer for.
+  **`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` are now also implemented (2026-07-08,
+  §3), all 76 confirmed icons across the 3 modes wired up** — `InnerPillarBox` reuses
+  `DirectionalCubeItem` directly (a smaller box instead of a full-size cube); `InnerFlatPlate` and
+  `TripleCrossBillboard` are 2 new `Easy3D` mesh builders (a double-sided plate; 3 double-sided
+  planes 60° apart). All 4 confirmed render modes from the tile-identification work are now real
+  code — see §8 for what's left (mostly per-icon data-quality follow-ups, not new mechanisms).
 - A real documentation bug was found and fixed during round 3: `02-tiles.md`'s "0/78 files, unused"
   claim only checked the static `Decor:`/`BigDecor:` grid, not `MoveObject:` records' own `icon=`
   field (which can reference the same `object-m.png` sheet). At least 32 of the "unused" icons are
@@ -70,11 +75,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### Build status
 - `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-08)**, after implementing
-  the `DirectionalCube` render mode (§3). Built `GenerateSampleWorld3D`, `VerifyBlupiMovement`, and
+  `InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` (§3, the last of this session's 4
+  render-mode implementations). Built `GenerateSampleWorld3D`, `VerifyBlupiMovement`, and
   `GalaxyEggbertCNA` itself from `build-cna/` — all succeeded.
 - `../easy-3d` — **CNA-linked build rebuilt and all 6/6 tests passed today (2026-07-08)**, after
-  adding `AppendDirectionalCubeMesh`/`DirectionalCubeItem` to `CubeMesh.hpp/.cpp` (§3). Command:
-  `cmake -S ../easy-3d -B /tmp/e3d-build-cna -DEASY3D_LINK_CNA=ON -DEASY3D_CNA_BACKEND=EASY_GL -DEASY3D_CNA_DIR=../cna && cmake --build /tmp/e3d-build-cna -j2 && ctest --test-dir /tmp/e3d-build-cna`.
+  adding `AppendPlateMesh`/`PlateItem`/`AppendTripleCrossMesh`/`TripleCrossItem` to
+  `CubeMesh.hpp/.cpp` (§3, on top of the earlier `AppendDirectionalCubeMesh` addition same day).
+  Command: `cmake -S ../easy-3d -B /tmp/e3d-build-cna -DEASY3D_LINK_CNA=ON -DEASY3D_CNA_BACKEND=EASY_GL -DEASY3D_CNA_DIR=../cna && cmake --build /tmp/e3d-build-cna -j2 && ctest --test-dir /tmp/e3d-build-cna`.
 - `GalaxyEggbertSimple3D` — **not maintained going forward (per user, 2026-07-08): treated as a
   historical reference only, not to be built/fixed/verified.** Its build was found broken in this
   environment today (`cmake -S . -B cmake-build-debug` fails at `find_package(Urho3D)` —
@@ -126,6 +133,18 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   `GETerrainRenderer::Update()` to also check `GEDirectionalCubeTiles` for animated blocks, see
   §3) — deterministic proof the fan-animation-path fix and the new single-face/axis entries render
   exactly as specified.
+- **Re-run a final time after implementing `InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard`**
+  (same session, §3): `VerifyBlupiMovement` all-pass a fourth time against the further-regenerated
+  world (2833 blocks, +4 — one demo block each for icons 76/384/77/53). Live run's vertex/triangle
+  counts (67648/33824) are exactly +72/+36 over the previous baseline — icon 76 (`InnerPillarBox`,
+  4 faces = 16v/8t) + icon 384 (`InnerPillarBox`, 6 faces = 24v/12t) + icon 77 (`InnerFlatPlate`,
+  1 double-sided plate = 8v/4t) + icon 53 (`TripleCrossBillboard`, 3 double-sided planes = 24v/12t)
+  — deterministic proof all 3 new modes render exactly the declared geometry. A temporary debug
+  spawn repositioning (reverted before committing, not part of the diff) got a real close-up
+  screenshot of all 4 new blocks: icon 76 shows as 2 thin visible pillar edges, icon 384 as a
+  small solid box, icon 77 clearly shows its actual Y-signpost texture on the plate (confirms UV
+  mapping isn't flipped/misaligned), and icon 53 shows the correct small round/teal shape matching
+  its source crop.
 
 ### What works
 - **`GalaxyEggbertSimple3D`**: unchanged this session — world loading from mobile-eggbert `.txt`,
@@ -134,14 +153,15 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   logic, HUD, save/load (3 slots), 93-channel sound, 3rd-person orbit camera, 5 sky colors per
   region, camera shake on death/hazard.
 - **`GalaxyEggbertCNA`**: loads `worlds3d/world001.vwr` by default, renders every Y layer as
-  textured cubes (animated tiles included) *or*, for the 49 icons `GEDirectionalCubeTiles.cpp`
-  knows about (200/`Platform` + 48 more, see §3), as a `DirectionalCube` — 4 side faces always
-  textured, top/bottom each independently a real hole or a flat fallback color (approximated by
-  sampling a small swatch of the tile's own texture near its top/bottom edge). Tank-control Blupi
-  (invisible collision point), first-person camera + 2D animation-state HUD indicator, renders
-  `MoveObject`s as billboards. Also now writes `screenshot.png` next to the binary on its first
-  rendered frame (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block) for visual
-  verification.
+  textured `UniformCube`s (animated tiles included) *or*, per-icon, one of 4 special render modes
+  now implemented: `DirectionalCube` (90 of ~99 confirmed icons — 4 side faces always textured,
+  top/bottom each independently open or a flat fallback color), `InnerPillarBox` (3 of 3 — outer
+  cube fully transparent, a smaller inner box textured), `InnerFlatPlate` (63 of 63 — outer cube
+  transparent, a single double-sided plate), `TripleCrossBillboard` (10 of 10 — 3 double-sided
+  planes 60° apart through the block's center). Tank-control Blupi (invisible collision point),
+  first-person camera + 2D animation-state HUD indicator, renders `MoveObject`s as billboards.
+  Also now writes `screenshot.png` next to the binary on its first rendered frame
+  (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block) for visual verification.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -153,12 +173,14 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ### What does not work yet
 - `GalaxyEggbertCNA`: no visible 3D Blupi, no `BigDecor` rendering, no platform-lift/crate
   `UniformCube` object path, no HUD, no sound, no real gameplay logic (all expected at this phase).
-- **`DirectionalCube` is implemented and wired up for 90 of ~99 confirmed icons** (see §3) — only
-  9 remain: icons 30/31 need real texture alpha, icons 107-109 need a not-yet-sourced grass top
-  texture, and icons 15-18 need a two-part axis+side-asymmetry read their crops didn't give a
-  confident answer for (see §8 task 1). `InnerPillarBox`, `InnerFlatPlate`, `TripleCrossBillboard`
-  (see §6) are still only documentation/decisions, not code — `DirectionalCube` was the first
-  render mode actually built.
+- **All 4 confirmed render modes are now implemented; 166 of ~175 total confirmed icons across all
+  4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
+  `TripleCrossBillboard`) — only 9 `DirectionalCube` icons remain (30/31 need real texture alpha, 107-109
+  need a not-yet-sourced grass top texture, 15-18 need a two-part axis+side-asymmetry read their
+  crops didn't give a confident answer for; see §8 task 1). `InnerFlatPlate`'s 63 icons all default
+  to the same fixed plate axis/size (only a small sample of crops was individually checked, see
+  §3) — good enough to render correctly, but not each icon's exact axis independently confirmed
+  the way `DirectionalCube`'s icons were.
 - Water render mode (icons 91/92/93/94/95/96) is an **open, explicitly deferred design question**
   — the user has not yet decided how water should look in 3D.
 - Icon 107 (grass) needs a real top-face grass texture, which doesn't exist yet in the asset set —
@@ -170,6 +192,47 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented `InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard`, the last 3 of the 4
+  confirmed render modes (2026-07-08, §8 task 2).**
+  - **`InnerPillarBox` needed no new Easy3D code at all** — it's just a `DirectionalCubeItem` with
+    a smaller `Size` (a "post" instead of a full block) instead of a new mesh type; reused
+    `AppendDirectionalCubeMesh` directly. New `GEInnerPillarBoxTiles.{hpp,cpp}` covers all 3
+    confirmed icons: 76 (4 side faces textured, top/bottom open — unstated in the questionnaire
+    answer, treated as open like icon 200) and 384/385 (`BlockTypes::Switch`/`SwitchOff` — 1 side
+    textured, other 5 flat color, same `SwatchUv` approach, defaulting to `PosZ` facing like
+    `DirectionalCube`'s symmetric icons).
+  - **`InnerFlatPlate` and `TripleCrossBillboard` needed real new geometry**: added
+    `Easy3D::PlateItem`/`AppendPlateMesh` (a double-sided quad on a fixed axis — emits both
+    triangle windings so it's visible from both sides regardless of the renderer's cull state, no
+    z-fighting since both windings share the exact same vertex positions) and
+    `Easy3D::TripleCrossItem`/`AppendTripleCrossMesh` (3 `PlateMesh`-style double-sided planes,
+    60° apart around Y) to `CubeMesh.hpp/.cpp`. Both still emit plain `CubeVertex` (position+UV)
+    so the existing `CubeMeshRenderer`/`BasicEffect` draw path needed no changes. Added 6 new
+    `easy3d_test_cube_mesh` cases (all 6/6 `../easy-3d` tests pass).
+  - **Extracted the DirectionalCube "flat color" swatch-sampling helper into a shared
+    `GESwatchUv.{hpp,cpp}`** (was private to `GEDirectionalCubeTiles.cpp`) so
+    `GEInnerPillarBoxTiles.cpp` could reuse it without duplicating the logic.
+  - **`InnerFlatPlate` (63 confirmed icons) and `TripleCrossBillboard` (10 confirmed icons)** are
+    both fully backfilled: new `GEInnerFlatPlateTiles.{hpp,cpp}`/`GETripleCrossBillboardTiles.{hpp,cpp}`
+    list every confirmed icon. `TripleCrossBillboard` needed no per-icon facing decision at all —
+    its 3-plane arrangement is rotationally symmetric by construction, so every icon uses the same
+    fixed angles. `InnerFlatPlate` icons all default to the same fixed axis/size — a sample of 5
+    crops (77, 110, 114, 264, 367) showed the same "small, front-facing or symmetric decoration,
+    no reliable axis cue" pattern already found for most single-face `DirectionalCube` icons, so a
+    uniform default was used rather than checking all 63 individually.
+  - **`GETerrainRenderer.cpp` refactored**: the per-block "which render mode does this icon use"
+    logic (previously `DirectionalCube`-only, inline in both the static-block loop and
+    `Update()`'s animated-block loop) is now one shared `AppendSpecialGeometry()` helper checking
+    all 4 modes in order, called from both loops — avoids re-duplicating the
+    static-vs-animated-lookup-icon distinction (§3's earlier fan-animation-path fix) a third and
+    fourth time.
+  - Added 1 demo block each (icons 76, 384, 77, 53) to `tools/GenerateSampleWorld3D.cpp`.
+    Verified: `VerifyBlupiMovement` all-pass against the regenerated world (2833 blocks, up from
+    2829); live run's vertex/triangle counts (67648/33824) are exactly +72/+36 over the previous
+    baseline, matching each mode's declared face/plane count exactly; a temporary debug spawn
+    reposition (reverted before committing) got a real screenshot of all 4 new blocks — icon 77's
+    plate clearly shows its actual Y-signpost texture (confirms correct, non-flipped UV mapping)
+    and icon 53's triple-cross shows the correct small round/teal shape matching its source crop.
 - **Resolved the fan base ambiguity, discovered mobile-eggbert has no rotation metadata, and
   backfilled 41 more `DirectionalCube` icons (2026-07-08, §8 task 1).**
   - **Fans (126/129/132/135):** user re-examined the crops and confirmed which of top/bottom is
@@ -335,14 +398,15 @@ Most recent first. Full history: `git log`.
 `VerifyBlupiMovement` passes. The previously-reported missing-`rules.ninja` build issue did not
 reproduce this session.
 
-**The active thread has shifted from identification to implementation.** Tile identification (the
-multi-session "active thread" through 2026-07-06/07) is now complete (§1). `DirectionalCube` — the
-first of the render modes the identification work converged on — is now implemented in
-`Easy3D::CubeMesh`/`GETerrainRenderer` and proven on 1 icon (200/`Platform`, 2026-07-08, §3). What
-remains: transcribing the other ~100 confirmed `DirectionalCube` icons' answers into
-`GEDirectionalCubeTiles.cpp` (§8 task 1, mostly data entry), and designing/implementing
-`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` from scratch (§8 task 2, real new
-geometry, not yet started).
+**Tile-identification implementation is essentially done.** Tile identification itself (the
+multi-session "active thread" through 2026-07-06/07) completed 2026-07-06/07 (§1); all 4 confirmed
+render modes (`DirectionalCube`, `InnerPillarBox`, `InnerFlatPlate`, `TripleCrossBillboard`) are
+now implemented in code and wired into `GETerrainRenderer` (2026-07-08, §3) — 166 of ~175 total
+confirmed icons across all 4 modes. What remains is narrow: 9 specific `DirectionalCube` icons
+each blocked on a distinct small thing (texture alpha, a missing grass asset, or a genuinely
+ambiguous crop — §8 task 1), not a new render-mode mechanism. The next *new* mechanism work is the
+water render mode (§8 task 2, still an open design question) and `BigDecor`/platform-lift object
+rendering (§8 tasks 4-5).
 
 ## 5. Known bugs and limitations
 
@@ -350,7 +414,7 @@ geometry, not yet started).
 |---|---|
 | open design question | Water tile render mode (icons 91/92/93/94/95/96) — user has explicitly deferred deciding this. |
 | incomplete | Icon 107 (grass) needs a real top-face grass texture — none exists yet; needs a license-compatible source or generation. |
-| incomplete | None of `DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` are implemented in `Easy3D`/`GETerrainRenderer` — identification-only so far. |
+| incomplete | 9 confirmed `DirectionalCube` icons still unwired: 30/31 (texture alpha), 107-109 (missing grass asset), 15-18 (ambiguous crop read) — see §8 task 1. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards, no HUD, no sound, no gameplay logic (expected at this phase). No `BigDecor` rendering (parsed only). No platform-lift/crate `UniformCube` object path. |
 | unverified this session | `GalaxyEggbertWorldsTests` 54/54 pass and the `cmake-build-debug` `ctest` discovery issue — both last checked 2026-07-07, not re-run today. |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
@@ -386,18 +450,23 @@ src/GalaxyEggbertSimple3D/   — historical reference only as of 2026-07-08 (not
 
 src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETileAtlas,
                                 GETerrainRenderer (World, all Y layers → static + animated
-                                CubeMeshRenderer-backed meshes — UniformCube by default, or
-                                DirectionalCube per GEDirectionalCubeTiles's lookup; the animated
-                                path checks the table too, by animation-group base icon, not the
-                                current frame's icon), GEDirectionalCubeTiles (per-icon
-                                DirectionalCube face table, 90 of ~99 confirmed icons wired up),
-                                GEBlupiController, GEObjectIcons, an Easy3D::Camera3D
+                                CubeMeshRenderer-backed meshes; per block, one shared
+                                AppendSpecialGeometry() helper checks all 4 special render-mode
+                                tables in order — DirectionalCube, InnerPillarBox, InnerFlatPlate,
+                                TripleCrossBillboard — falling back to plain UniformCube; the
+                                animated path calls the same helper, keyed by animation-group base
+                                icon, not the current frame's icon), GEDirectionalCubeTiles (90 of
+                                ~99 confirmed DirectionalCube icons), GEInnerPillarBoxTiles (3 of 3),
+                                GEInnerFlatPlateTiles (63 of 63), GETripleCrossBillboardTiles
+                                (10 of 10), GESwatchUv (shared "flat fallback color" sampling
+                                helper), GEBlupiController, GEObjectIcons, an Easy3D::Camera3D
                                 (first-person).
 
 tools/GenerateSampleWorld3D.cpp — builds worlds3d/world001.vwr. Ground floor/staircase/platform
                                 use RockPile, walls/pillars use BrickWall (no more Ground/StoneA/
-                                StoneB usage); a small floating icon-200 DirectionalCube demo grate
-                                was added 2026-07-08 near spawn (§3).
+                                StoneB usage); a demo row of DirectionalCube/InnerPillarBox/
+                                InnerFlatPlate/TripleCrossBillboard blocks was added near spawn
+                                2026-07-08 (§3).
 
 mobile-eggbert-reference/    — questionnaire-unidentified-tiles.md (round 1, 34 icons, DONE),
                                 questionnaire-all-remaining-tiles.md (round 2, 280 icons, DONE),
@@ -407,11 +476,12 @@ mobile-eggbert-reference/    — questionnaire-unidentified-tiles.md (round 1, 3
                                 correction note about the MoveObject icon= finding (§3).
 
 ../easy-3d/                  — companion library beside CNA. Standing permission to modify.
-                                CubeMesh/CubeMeshRenderer (terrain: UniformCube, now also
-                                DirectionalCube via AppendDirectionalCubeMesh, added 2026-07-08),
-                                BillboardMesh/BillboardMeshRenderer (objects). InnerPillarBox/
-                                InnerFlatPlate/TripleCrossBillboard (§1/§8) are still NOT
-                                implemented here.
+                                CubeMesh/CubeMeshRenderer (terrain: UniformCube, DirectionalCube via
+                                AppendDirectionalCubeMesh, PlateItem/AppendPlateMesh, TripleCrossItem/
+                                AppendTripleCrossMesh — all added 2026-07-08, all emitting plain
+                                CubeVertex so CubeMeshRenderer/BasicEffect needed no changes),
+                                BillboardMesh/BillboardMeshRenderer (objects). InnerPillarBox reuses
+                                DirectionalCubeItem directly (no new Easy3D code needed).
 ```
 
 ### Important invariants
@@ -428,9 +498,15 @@ mobile-eggbert-reference/    — questionnaire-unidentified-tiles.md (round 1, 3
   bulk-terrain fills** — all three are confirmed mislabeled (machine-piece graphics, not stone/
   ground). Use `RockPile`/`BrickWall` (or another icon confirmed genuine via the round 2/3
   questionnaires) instead.
-- **New invariant (2026-07-08): only add an icon to `GEDirectionalCubeTiles.cpp` with its exact
-  per-face answer copied from the questionnaire files** (`questionnaire-all-remaining-tiles.md` /
-  `questionnaire-unused-tiles.md` / `02-tiles.md`) — never guess a new icon's face config (see §9).
+- **New invariant (2026-07-08): only add an icon to `GEDirectionalCubeTiles.cpp`/
+  `GEInnerPillarBoxTiles.cpp`/`GEInnerFlatPlateTiles.cpp`/`GETripleCrossBillboardTiles.cpp` with its
+  exact confirmed answer from the questionnaire files** (`questionnaire-all-remaining-tiles.md` /
+  `questionnaire-unused-tiles.md` / `02-tiles.md`) — never guess a new icon's render mode or face
+  config (see §9).
+- **New invariant (2026-07-08): `PlateItem`/`TripleCrossItem`/`DirectionalCubeItem` are the only
+  "special geometry" primitives — add a new one only for a genuinely new shape**, not as a
+  workaround inside `GETerrainRenderer`. `InnerPillarBox` deliberately has NO dedicated Easy3D type
+  — it's just `DirectionalCubeItem` with a smaller `Size`.
 - Build with `-j2` maximum (32 GB RAM constraint; crashes observed with more parallel jobs).
 
 ### Boundaries that must remain stable
@@ -496,7 +572,7 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    - **Icons 30/31 need real texture alpha** ("textura má i průhlednost") — confirm whether the CNA
      terrain draw path (`BasicEffect`/`GraphicsDevice` blend state in `GalaxyEggbertCnaGame.cpp`)
      supports alpha-blended terrain at all yet; if not, that's a prerequisite.
-   - **Icons 107-109 need the not-yet-sourced grass top texture** (§8 task 4) before they can be
+   - **Icons 107-109 need the not-yet-sourced grass top texture** (§8 task 3) before they can be
      wired up (icon 107 itself IS that grass-texture task).
    - **Icons 15-18 need a two-part read their crops didn't give a confident answer for**: an axis
      choice (which 2 opposite side faces are textured) AND which of the 2 remaining perpendicular
@@ -507,39 +583,38 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    **Files:** `src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp`. **Verification:** a live
    screenshot per batch added to the sample world plus a `VerifyBlupiMovement` regression check
    and the vertex/triangle-count arithmetic check (matches the pattern in §3's 2026-07-08 entries).
-2. **Design + implement `InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard`** — the other 3
-   render modes the round 2/3 identification converged on, still undesigned in code (unlike
-   `DirectionalCube`, these need genuinely different geometry — a small box/plate *inside* a
-   transparent cube, or 3 crossed planes — not just a `CubeMesh` face-mask extension). **Files:**
-   `../easy-3d/include/Easy3D/` (new mesh builder(s)), `src/GalaxyEggbertCNA/Game/
-   GETerrainRenderer.*`. **Verification:** new unit tests mirroring `CubeMesh`'s, plus a live
-   screenshot per mode.
-3. **Decide the water render mode** (icons 91/92/93/94/95/96) — currently an explicitly open
+2. **Decide the water render mode** (icons 91/92/93/94/95/96) — currently an explicitly open
    question. Needs a design decision from the user (special flat surface? animated UniformCube
-   like today? something else?), then implementation. **Files:** whatever §8 task 2 introduces for
-   special-surface tiles, `GETerrainRenderer`. **Verification:** live screenshot of water rendering
-   as intended.
-4. **Source or generate a grass-top texture for icon 107.** No such asset exists yet. **Files:**
+   like today? something else?), then implementation. **Files:** likely a new `Easy3D` mesh
+   builder for special-surface tiles (see `PlateMesh`/`TripleCrossMesh` for the established
+   pattern — plain `CubeVertex` output, reuse `CubeMeshRenderer`), `GETerrainRenderer`.
+   **Verification:** live screenshot of water rendering as intended.
+3. **Source or generate a grass-top texture for icon 107.** No such asset exists yet. **Files:**
    likely a new file under `mobile-eggbert-reference/` or a texture-atlas addition in
    `GETileAtlas`. **Verification:** visual check once icon 107 is added to `GEDirectionalCubeTiles`
    (task 1) with a real top-face texture.
-5. **`BigDecor` billboard rendering for CNA** — `GEWorldRuntime` doesn't parse `BigDecor:` for CNA
+4. **`BigDecor` billboard rendering for CNA** — `GEWorldRuntime` doesn't parse `BigDecor:` for CNA
    at all yet (Simple3D already does — reference its parsing logic read-only, do not build/run
    Simple3D itself, see §9). Recommended render mode: `Billboard`. **Files:**
    `src/GalaxyEggbertCNA/Game/GEWorldRuntime.*`, `GalaxyEggbertCnaGame.cpp`. **Verification:** a
    tool mirroring `VerifyMoveObjectTypesCna.cpp` against a real level with known `BigDecor:` cells.
-6. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
+5. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
    `CubeMesh`/`CubeMeshRenderer` machinery for the two approved "objects are cubes, not billboards"
    exceptions. **Files:** `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp`.
-7. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
+6. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
    Use a Simple3D-OFF tree (e.g. `build-cna`, or a fresh configure with
    `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`) — do **not** use `cmake-build-debug`, which configures
    Simple3D/U3D and is currently broken for unrelated reasons the user has said not to fix (§9).
    **Verification:** `ctest --test-dir <tree> --output-on-failure`.
-8. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
+7. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-9. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
+8. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
    a forced kill/timeout) and confirm the process exits 0 with no leaked resources.
+9. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
+   different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
+   367), all consistent with "no reliable cue, default is fine," but not exhaustive like
+   `DirectionalCube`'s per-icon backfill was. Low priority — the default already renders correctly,
+   this would only improve fidelity for any icon that turns out to need a different axis.
 
 ## 9. Do not do yet
 
@@ -557,13 +632,15 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - No mass refactor of `include/GalaxyEggbert/Worlds/` unless a failing unit test justifies it.
 - No `#ifdef GE_ENGINE_*` anywhere.
 - No new gameplay mechanics not present in mobile-eggbert.
-- **No adding a `GEDirectionalCubeTiles.cpp` entry (or any `InnerPillarBox`/`InnerFlatPlate`/
-  `TripleCrossBillboard` mapping, §8 tasks 1-2) speculatively, without re-checking the exact
-  per-icon answer recorded in `questionnaire-all-remaining-tiles.md`/`questionnaire-unused-tiles.md`/
+- **No adding a `GEDirectionalCubeTiles.cpp`/`GEInnerPillarBoxTiles.cpp`/`GEInnerFlatPlateTiles.cpp`/
+  `GETripleCrossBillboardTiles.cpp` entry speculatively, without re-checking the exact per-icon
+  answer recorded in `questionnaire-all-remaining-tiles.md`/`questionnaire-unused-tiles.md`/
   `02-tiles.md` first** — that's the whole point of having done direct user Q&A instead of agent
-  guessing. Icon 200 is the only entry confirmed and wired up so far.
+  guessing. 166 of ~175 confirmed icons across all 4 modes are wired up (2026-07-08, §3); only 9
+  `DirectionalCube` icons remain (§8 task 1).
 - No re-running the full 97-icon or 280-icon questionnaires again — both are done; only the small
-  number of explicitly-open items (water, icon 107 grass texture) need further decisions.
+  number of explicitly-open items (water, icon 107 grass texture, icons 15-18's face config) need
+  further decisions.
 - Commit after each finished task (standing instruction) — one commit per task, not batched.
   **Pushing** to `origin/develop` is still NOT standing authorization — only push on explicit
   request each time.

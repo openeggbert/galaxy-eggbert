@@ -123,6 +123,21 @@ int main(int argc, char** argv)
     fill(66, 68, 3, 3, 40, 44, static_cast<std::uint16_t>(392));
     fill(70, 72, 3, 3, 40, 44, static_cast<std::uint16_t>(49));
 
+    // One demo block each for the 3 new-geometry render modes added
+    // 2026-07-08 (NEXT.md §8 task 2): icon 76 (InnerPillarBox, 4 sides of a
+    // smaller inner box textured, top/bottom open), icon 384 (InnerPillarBox
+    // variant, BlockTypes::Switch -- 1 side of the inner box textured, other
+    // 5 flat color), icon 77 (InnerFlatPlate -- single double-sided plate,
+    // outer cube fully transparent), icon 53 (TripleCrossBillboard -- 3
+    // planes at 60° through the block's center). Single blocks, not walls,
+    // since these are individual objects, not bulk terrain. Same off-path
+    // reasoning as the rest of this row (y=3, away from Blupi's tested
+    // spawn/staircase/wall-collision path).
+    fill(74, 74, 3, 3, 42, 42, static_cast<std::uint16_t>(76));
+    fill(76, 76, 3, 3, 42, 42, static_cast<std::uint16_t>(384));
+    fill(78, 78, 3, 3, 42, 42, static_cast<std::uint16_t>(77));
+    fill(80, 80, 3, 3, 42, 42, static_cast<std::uint16_t>(53));
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is
