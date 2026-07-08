@@ -11,6 +11,9 @@
 #include <Easy3D/CubeBatch.hpp>
 #include <Easy3D/CubeMesh.hpp>
 
+#include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
+#include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
+
 namespace GalaxyEggbert::CNA
 {
     namespace
@@ -133,11 +136,21 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Water is animated too, but drawn as its own semi-transparent pass
+        // (see GETerrainRenderer::Draw) -- IsAnimated() deliberately
+        // EXCLUDES it so the constructor/Update() route water blocks to
+        // m_waterBlocks/m_waterRenderer instead of m_animBlocks/m_animRenderer.
+        bool IsWater(std::uint16_t base)
+        {
+            using namespace GalaxyEggbert::BlockTypes;
+            return base == Water1 || base == Water2;
+        }
+
         bool IsAnimated(std::uint16_t base)
         {
             using namespace GalaxyEggbert::BlockTypes;
             return base == Lava    || base == Spike    || base == Crusher || base == Saw ||
-                   base == Water1  || base == Water2   || base == Temp    ||
+                   base == Temp    ||
                    base == FanLeft || base == FanRight  || base == FanUp   || base == FanDown ||
                    base == Marine;
         }
@@ -178,6 +191,11 @@ namespace GalaxyEggbert::CNA
                     sumZ += worldZ;
 
                     const std::uint16_t animBase = GalaxyEggbert::BlockTypes::tileAnimBase(block.type());
+                    if (IsWater(animBase))
+                    {
+                        m_waterBlocks.push_back({worldX, worldY, worldZ, animBase});
+                        continue;
+                    }
                     if (IsAnimated(animBase))
                     {
                         m_animBlocks.push_back({worldX, worldY, worldZ, animBase});
@@ -216,19 +234,14 @@ namespace GalaxyEggbert::CNA
         Update(device, 0);
     }
 
-    void GETerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)
+    std::unique_ptr<Easy3D::CubeMeshRenderer> GETerrainRenderer::RebuildAnimatedRenderer(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+        const std::vector<AnimBlock>& blocks, int animPhase) const
     {
-        if (animPhase == m_lastAnimPhase || m_animBlocks.empty())
-        {
-            m_lastAnimPhase = animPhase;
-            return;
-        }
-        m_lastAnimPhase = animPhase;
-
-        Easy3D::CubeBatch animBatch;
-        std::vector<Easy3D::CubeVertex> animVertices;
-        std::vector<std::uint32_t> animIndices;
-        for (const auto& block : m_animBlocks)
+        Easy3D::CubeBatch batch;
+        std::vector<Easy3D::CubeVertex> vertices;
+        std::vector<std::uint32_t> indices;
+        for (const auto& block : blocks)
         {
             const int icon = AnimIcon(block.base, animPhase);
             if (icon < 0)
@@ -249,25 +262,38 @@ namespace GalaxyEggbert::CNA
             // demo block: without this, fan blocks always fell through to a
             // plain untextured-on-every-face UniformCube and their
             // GEDirectionalCubeTiles entry was silently dead code.
-            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, center, animVertices, animIndices))
+            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, center, vertices, indices))
             {
                 continue;
             }
 
-            animBatch.Add(center, Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f), tileUv);
+            batch.Add(center, Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f), tileUv);
         }
 
-        if (animBatch.Empty() && animVertices.empty())
+        if (batch.Empty() && vertices.empty())
         {
-            // All animated tiles are in a hidden frame this phase (e.g. Temp's
-            // 2 blank frames out of 20) — avoid constructing a zero-size GPU
-            // buffer; just draw nothing until the next non-empty phase.
-            m_animRenderer.reset();
+            // Every block in this group is in a hidden frame this phase
+            // (e.g. Temp's 2 blank frames out of 20) — avoid constructing a
+            // zero-size GPU buffer; caller draws nothing until the next
+            // non-empty phase.
+            return nullptr;
+        }
+
+        Easy3D::BuildCubeMesh(batch, vertices, indices);
+        return std::make_unique<Easy3D::CubeMeshRenderer>(device, vertices, indices);
+    }
+
+    void GETerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)
+    {
+        if (animPhase == m_lastAnimPhase || (m_animBlocks.empty() && m_waterBlocks.empty()))
+        {
+            m_lastAnimPhase = animPhase;
             return;
         }
+        m_lastAnimPhase = animPhase;
 
-        Easy3D::BuildCubeMesh(animBatch, animVertices, animIndices);
-        m_animRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, animVertices, animIndices);
+        m_animRenderer = RebuildAnimatedRenderer(device, m_animBlocks, animPhase);
+        m_waterRenderer = RebuildAnimatedRenderer(device, m_waterBlocks, animPhase);
     }
 
     void GETerrainRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -281,17 +307,37 @@ namespace GalaxyEggbert::CNA
         {
             m_animRenderer->Draw(device, effect);
         }
+        if (m_waterRenderer)
+        {
+            // Semi-transparent pass (2026-07-08 design decision, see
+            // NEXT.md §8): drawn last, with alpha blending and depth WRITES
+            // disabled (but depth TESTING still on, via DepthRead) so water
+            // composites correctly over opaque terrain already in the depth
+            // buffer without blocking whatever's drawn after it. object-m.png
+            // has real per-pixel alpha (confirmed 2026-07-08); NonPremultiplied
+            // matches its un-premultiplied RGB. State is restored to Opaque/
+            // Default afterward so the caller's own state isn't disturbed.
+            using Microsoft::Xna::Framework::Graphics::BlendState;
+            using Microsoft::Xna::Framework::Graphics::DepthStencilState;
+            device.setBlendStateProperty(BlendState::NonPremultiplied);
+            device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+            m_waterRenderer->Draw(device, effect);
+            device.setDepthStencilStateProperty(DepthStencilState::Default);
+            device.setBlendStateProperty(BlendState::Opaque);
+        }
     }
 
     int GETerrainRenderer::VertexCount() const noexcept
     {
         return (m_staticRenderer ? m_staticRenderer->VertexCount() : 0) +
-               (m_animRenderer ? m_animRenderer->VertexCount() : 0);
+               (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
+               (m_waterRenderer ? m_waterRenderer->VertexCount() : 0);
     }
 
     int GETerrainRenderer::PrimitiveCount() const noexcept
     {
         return (m_staticRenderer ? m_staticRenderer->PrimitiveCount() : 0) +
-               (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0);
+               (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
+               (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0);
     }
 }

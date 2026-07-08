@@ -138,6 +138,16 @@ int main(int argc, char** argv)
     fill(78, 78, 3, 3, 42, 42, static_cast<std::uint16_t>(77));
     fill(80, 80, 3, 3, 42, 42, static_cast<std::uint16_t>(53));
 
+    // Water render mode demo (2026-07-08 design decision, §8 task 2):
+    // BlockTypes::Water1 is a semi-transparent alpha-blended cube now
+    // (GETerrainRenderer's dedicated water pass), not a solid animated
+    // UniformCube like every other terrain tile. Places a BrickWall block
+    // 2 cells behind (further -Z from spawn) a Water1 block so both are
+    // visible from spawn's default camera -- the wall should show through
+    // the water block if the semi-transparent pass actually works.
+    fill(85, 85, 3, 3, 40, 40, BlockTypes::BrickWall);
+    fill(85, 85, 3, 3, 42, 42, BlockTypes::Water1);
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

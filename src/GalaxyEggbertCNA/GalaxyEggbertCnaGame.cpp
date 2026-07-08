@@ -122,7 +122,8 @@ namespace GalaxyEggbert::CNA
 
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
                   << terrainRenderer_->BlockCount() << " blocks ("
-                  << terrainRenderer_->AnimatedBlockCount() << " animated), "
+                  << terrainRenderer_->AnimatedBlockCount() << " animated, "
+                  << terrainRenderer_->WaterBlockCount() << " water/semi-transparent), "
                   << terrainRenderer_->VertexCount() << " vertices, "
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
     }

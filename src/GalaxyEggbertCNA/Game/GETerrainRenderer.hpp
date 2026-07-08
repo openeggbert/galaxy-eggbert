@@ -14,9 +14,11 @@ namespace GalaxyEggbert::CNA
 {
     // Builds one static Easy3D::CubeMeshRenderer covering every non-animated
     // non-air cell of a loaded World, plus a second CubeMeshRenderer for the
-    // animated subset (lava/crusher/saw/spike/water/fan/marine/temp) that is
-    // rebuilt whenever Update() is given a new animation phase (plan.md
-    // E3D-MIG-054/055). One 1x1x1 cube per block, textured via GETileAtlas.
+    // opaque animated subset (lava/crusher/saw/spike/fan/marine/temp) and a
+    // third for the water subset (Water1/Water2 -- animated AND drawn with
+    // alpha blending, see Draw()'s comment), both rebuilt whenever Update()
+    // is given a new animation phase (plan.md E3D-MIG-054/055). One 1x1x1
+    // cube per block, textured via GETileAtlas.
     class GETerrainRenderer
     {
     public:
@@ -34,6 +36,7 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] int BlockCount() const noexcept { return m_blockCount; }
         [[nodiscard]] int AnimatedBlockCount() const noexcept { return static_cast<int>(m_animBlocks.size()); }
+        [[nodiscard]] int WaterBlockCount() const noexcept { return static_cast<int>(m_waterBlocks.size()); }
         [[nodiscard]] int VertexCount() const noexcept;
         [[nodiscard]] int PrimitiveCount() const noexcept;
 
@@ -53,9 +56,21 @@ namespace GalaxyEggbert::CNA
             std::uint16_t base;
         };
 
+        // Shared rebuild logic for m_animRenderer/m_waterRenderer: computes
+        // each block's current-frame icon via AnimIcon(), applies
+        // AppendSpecialGeometry() where applicable, and uploads a fresh
+        // CubeMeshRenderer. Returns nullptr if every block resolved to a
+        // hidden frame (e.g. Temp's blank frames) — caller should just clear
+        // its renderer pointer in that case rather than upload an empty mesh.
+        [[nodiscard]] std::unique_ptr<Easy3D::CubeMeshRenderer> RebuildAnimatedRenderer(
+            Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+            const std::vector<AnimBlock>& blocks, int animPhase) const;
+
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_staticRenderer;
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_animRenderer;
+        std::unique_ptr<Easy3D::CubeMeshRenderer> m_waterRenderer;
         std::vector<AnimBlock> m_animBlocks;
+        std::vector<AnimBlock> m_waterBlocks;
         const GETileAtlas* m_tileAtlas = nullptr;
         int m_blockCount = 0;
         float m_centroidX = 0.0f;
