@@ -89,6 +89,20 @@ int main(int argc, char** argv)
     fill(10, 10, 11, 13, 45, 45, BlockTypes::BrickWall);
     fill(10, 10, 11, 13, 54, 54, BlockTypes::BrickWall);
 
+    // Floating demo grate, y=3, directly ahead of Blupi's spawn (grid
+    // (50,*,50) == world origin, default yaw faces -Z -- see
+    // GEWorldRuntime::kWorldCenterX/Z and GalaxyEggbertCnaGame::Update's
+    // camera setup) -- first real placement of icon 200 (Platform) using the
+    // new DirectionalCube render mode (NEXT.md §8 task 1, 2026-07-08):
+    // textured on its 4 side faces, top/bottom genuinely open. Deliberately
+    // floating well above Blupi's collision height (y=3, spawn/staircase-
+    // walk tests only ever occupy y<=2) and off to the side of the westward
+    // staircase-walk/wall-collision test path (which stays at z=50 the whole
+    // time; this sits at z=40..44) so it cannot affect
+    // tools/VerifyBlupiMovement.cpp's existing checks -- purely decorative,
+    // proving the render mode renders correctly, not a floor Blupi walks on.
+    fill(48, 52, 3, 3, 40, 44, BlockTypes::Platform);
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

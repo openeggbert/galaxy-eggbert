@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <set>
+#include <vector>
 
 namespace GalaxyEggbert::CNA
 {
@@ -244,6 +245,22 @@ namespace GalaxyEggbert::CNA
                           << " sampled screen points show non-background (terrain) color, "
                           << distinctTerrainColors.size() << " distinct color(s) among them"
                           << " (>1 means the texture is actually being sampled, not a flat fallback)."
+                          << std::endl;
+
+                // One-shot full-frame screenshot for manual/visual
+                // verification (2026-07-08, DirectionalCube render mode,
+                // NEXT.md §8 task 1) -- the pixel-sample check above proves
+                // terrain is textured, but not that a specific tile's
+                // geometry (e.g. an open top/bottom face) looks right; a
+                // real image is the only way to confirm that by eye.
+                std::vector<Microsoft::Xna::Framework::Color> backBuffer(
+                    static_cast<std::size_t>(w) * static_cast<std::size_t>(h),
+                    Microsoft::Xna::Framework::Color(0, 0, 0, 0));
+                device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
+                Microsoft::Xna::Framework::Graphics::Texture2D screenshot(device, w, h);
+                screenshot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
+                screenshot.SaveAsPng("screenshot.png");
+                std::cout << "GalaxyEggbertCNA: wrote screenshot.png (" << w << "x" << h << ")."
                           << std::endl;
             }
         }

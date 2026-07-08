@@ -1,4 +1,5 @@
 #include "GETerrainRenderer.hpp"
+#include "GEDirectionalCubeTiles.hpp"
 #include "GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -67,6 +68,7 @@ namespace GalaxyEggbert::CNA
         : m_tileAtlas(&tileAtlas)
     {
         Easy3D::CubeBatch staticBatch;
+        std::vector<Easy3D::DirectionalCubeItem> directionalItems;
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -102,7 +104,23 @@ namespace GalaxyEggbert::CNA
 
                     const Easy3D::CubeBatch::Vector3 center(worldX, worldY, worldZ);
                     const Easy3D::CubeBatch::Vector3 size(1.0f, 1.0f, 1.0f);
-                    staticBatch.Add(center, size, tileAtlas.GetTileUv(static_cast<int>(block.type())));
+                    const auto tileUv = tileAtlas.GetTileUv(static_cast<int>(block.type()));
+
+                    Easy3D::DirectionalCubeFace directionalFaces[6];
+                    if (TryGetDirectionalCubeFaces(static_cast<int>(block.type()), tileUv, directionalFaces))
+                    {
+                        Easy3D::DirectionalCubeItem item;
+                        item.Center = center;
+                        item.Size = size;
+                        for (int face = 0; face < 6; ++face)
+                        {
+                            item.Faces[face] = directionalFaces[face];
+                        }
+                        directionalItems.push_back(item);
+                        continue;
+                    }
+
+                    staticBatch.Add(center, size, tileUv);
                 }
             }
         }
@@ -117,6 +135,15 @@ namespace GalaxyEggbert::CNA
         std::vector<Easy3D::CubeVertex> staticVertices;
         std::vector<std::uint32_t> staticIndices;
         Easy3D::BuildCubeMesh(staticBatch, staticVertices, staticIndices);
+        for (const auto& item : directionalItems)
+        {
+            // Appended after the uniform-cube batch, not merged into it:
+            // AppendDirectionalCubeMesh/AppendCubeMesh both offset indices by
+            // the vertex count already present, so concatenation order
+            // doesn't matter for correctness -- this just keeps the two
+            // code paths visually separate here.
+            Easy3D::AppendDirectionalCubeMesh(item, staticVertices, staticIndices);
+        }
         m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
 
         Update(device, 0);
