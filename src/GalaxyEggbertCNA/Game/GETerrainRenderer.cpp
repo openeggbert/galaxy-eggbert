@@ -166,6 +166,20 @@ namespace GalaxyEggbert::CNA
         {
             return icon == 30 || icon == 31;
         }
+
+        // Icon 107: confirmed DirectionalCube with its top face intentionally
+        // left open in GEDirectionalCubeTiles.cpp (see that file's comment) --
+        // its real top surface is this separate grass_top.png overlay
+        // (NEXT.md §8 task 3), not part of object-m.png at all. Icons
+        // 108/109 need the SAME grass texture plus more per-side work
+        // (GEDirectionalCubeTiles.hpp) -- not included here yet.
+        constexpr float kGrassPlateWidth = 1.0f;
+        constexpr float kGrassPlateDepth = 1.0f;
+
+        bool IsGrassTopIcon(int icon)
+        {
+            return icon == 107;
+        }
     }
 
     GETerrainRenderer::GETerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -178,6 +192,8 @@ namespace GalaxyEggbert::CNA
         std::vector<std::uint32_t> staticIndices;
         std::vector<Easy3D::CubeVertex> transparentStaticVertices;
         std::vector<std::uint32_t> transparentStaticIndices;
+        std::vector<Easy3D::CubeVertex> grassVertices;
+        std::vector<std::uint32_t> grassIndices;
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -230,6 +246,23 @@ namespace GalaxyEggbert::CNA
                         continue;
                     }
 
+                    if (IsGrassTopIcon(icon))
+                    {
+                        // Additive, not exclusive: the block's sides/bottom
+                        // still go through the normal DirectionalCube path
+                        // below (which leaves the top face open on purpose,
+                        // see GEDirectionalCubeTiles.cpp) -- this only adds
+                        // the separate grass-textured top plate, offset to
+                        // sit exactly at the block's top face (Y + 0.5).
+                        Easy3D::PlateItem grassItem;
+                        grassItem.Center = Easy3D::CubeBatch::Vector3(worldX, worldY + 0.5f, worldZ);
+                        grassItem.Width = kGrassPlateWidth;
+                        grassItem.Height = kGrassPlateDepth;
+                        grassItem.Uv = Easy3D::UvRect{0.0f, 0.0f, 1.0f, 1.0f};
+                        grassItem.Axis = Easy3D::PlateAxis::Y;
+                        Easy3D::AppendPlateMesh(grassItem, grassVertices, grassIndices);
+                    }
+
                     if (AppendSpecialGeometry(icon, tileUv, center, staticVertices, staticIndices))
                     {
                         continue;
@@ -259,6 +292,11 @@ namespace GalaxyEggbert::CNA
         {
             m_transparentStaticRenderer =
                 std::make_unique<Easy3D::CubeMeshRenderer>(device, transparentStaticVertices, transparentStaticIndices);
+        }
+
+        if (!grassVertices.empty())
+        {
+            m_grassRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, grassVertices, grassIndices);
         }
 
         Update(device, 0);
@@ -368,12 +406,22 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GETerrainRenderer::DrawGrass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                      Microsoft::Xna::Framework::Graphics::BasicEffect& grassEffect) const
+    {
+        if (m_grassRenderer)
+        {
+            m_grassRenderer->Draw(device, grassEffect);
+        }
+    }
+
     int GETerrainRenderer::VertexCount() const noexcept
     {
         return (m_staticRenderer ? m_staticRenderer->VertexCount() : 0) +
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->VertexCount() : 0) +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
-               (m_waterRenderer ? m_waterRenderer->VertexCount() : 0);
+               (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
+               (m_grassRenderer ? m_grassRenderer->VertexCount() : 0);
     }
 
     int GETerrainRenderer::PrimitiveCount() const noexcept
@@ -381,6 +429,7 @@ namespace GalaxyEggbert::CNA
         return (m_staticRenderer ? m_staticRenderer->PrimitiveCount() : 0) +
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->PrimitiveCount() : 0) +
                (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
-               (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0);
+               (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0) +
+               (m_grassRenderer ? m_grassRenderer->PrimitiveCount() : 0);
     }
 }

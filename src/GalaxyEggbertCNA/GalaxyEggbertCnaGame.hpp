@@ -56,6 +56,17 @@ namespace GalaxyEggbert::CNA
         // not usable for this 3D BasicEffect draw path; see easy3d.md §5.2).
         Microsoft::Xna::Framework::Graphics::Texture2D terrainTexture_;
 
+        // Icon 107's grass-top overlay (NEXT.md §8 task 3) — a genuinely
+        // separate, galaxy-eggbert-owned asset (textures3d/grass_top.png,
+        // copied next to the binary like worlds3d/), NOT part of
+        // object-m.png (which is fully re-copied from ../mobile-eggbert on
+        // every build, so nothing can be added into it). Needs its own
+        // BasicEffect since BasicEffect only binds one texture at a time;
+        // drawn via GETerrainRenderer::DrawGrass() right after the main
+        // terrain Draw() call.
+        Microsoft::Xna::Framework::Graphics::Texture2D grassTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> grassEffect_;
+
         // Invisible, collision-only movement placeholder (plan.md
         // E3D-MIG-060) — arrow keys + Space, first-person camera follows
         // its facing. No 3D sprite yet (E3D-MIG-061..063) — see blupiIcon_

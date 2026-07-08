@@ -15,12 +15,14 @@ namespace GalaxyEggbert::CNA
     // Builds one static Easy3D::CubeMeshRenderer covering every non-animated
     // opaque non-air cell of a loaded World, a second static renderer for
     // the small set of non-animated blocks that ALSO need alpha blending
-    // (icons 30/31 -- see Draw()'s comment), plus a third CubeMeshRenderer
-    // for the opaque animated subset (lava/crusher/saw/spike/fan/marine/
-    // temp) and a fourth for the water subset (Water1/Water2 -- animated
-    // AND alpha-blended), the latter two rebuilt whenever Update() is given
-    // a new animation phase (plan.md E3D-MIG-054/055). One 1x1x1 cube per
-    // block, textured via GETileAtlas.
+    // (icons 30/31 -- see Draw()'s comment), a third for the icon-107
+    // grass-top overlay (its own texture, drawn via DrawGrass() with a
+    // separate effect), plus a fourth CubeMeshRenderer for the opaque
+    // animated subset (lava/crusher/saw/spike/fan/marine/temp) and a fifth
+    // for the water subset (Water1/Water2 -- animated AND alpha-blended),
+    // the latter two rebuilt whenever Update() is given a new animation
+    // phase (plan.md E3D-MIG-054/055). One 1x1x1 cube per block, textured
+    // via GETileAtlas.
     class GETerrainRenderer
     {
     public:
@@ -35,6 +37,17 @@ namespace GalaxyEggbert::CNA
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
+
+        // Draws the grass-top overlay (icon 107 blocks' real grass texture,
+        // NEXT.md §8 task 3) with a SEPARATE effect/texture bind from the
+        // main object-m.png-based Draw() -- BasicEffect only binds one
+        // texture at a time, and grass_top.png is a genuinely separate,
+        // galaxy-eggbert-owned asset, not part of the object-m.png atlas.
+        // Caller (GalaxyEggbertCnaGame) owns @p grassEffect and must bind
+        // its own grass texture + View/Projection/World before calling.
+        // No-op if no icon-107 blocks exist in this World.
+        void DrawGrass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                       Microsoft::Xna::Framework::Graphics::BasicEffect& grassEffect) const;
 
         [[nodiscard]] int BlockCount() const noexcept { return m_blockCount; }
         [[nodiscard]] int AnimatedBlockCount() const noexcept { return static_cast<int>(m_animBlocks.size()); }
@@ -72,6 +85,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_transparentStaticRenderer;
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_animRenderer;
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_waterRenderer;
+        std::unique_ptr<Easy3D::CubeMeshRenderer> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;
         std::vector<AnimBlock> m_waterBlocks;
         const GETileAtlas* m_tileAtlas = nullptr;

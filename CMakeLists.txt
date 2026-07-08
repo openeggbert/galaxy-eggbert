@@ -352,6 +352,21 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         )
     endif()
 
+    # galaxy-eggbert's own 3D-specific textures (e.g. grass_top.png, icon 107 —
+    # NEXT.md §8 task 3) — genuinely owned by galaxy-eggbert, NOT part of
+    # mobile-eggbert's Content/ (which gets fully re-copied fresh from
+    # mobile-eggbert on every build, so anything placed there would be wiped
+    # out; see the "Copying mobile-eggbert Content/" step above). Same
+    # copy-next-to-binary pattern as worlds3d/ above.
+    if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/textures3d")
+        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_CURRENT_SOURCE_DIR}/textures3d"
+                "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/textures3d"
+            COMMENT "Copying textures3d/ next to GalaxyEggbertCNA"
+        )
+    endif()
+
     message(STATUS "GalaxyEggbertCNA target enabled (renders terrain, no gameplay yet).")
 
 endif() # GALAXY_EGGBERT_BUILD_CNA

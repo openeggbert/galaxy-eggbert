@@ -96,6 +96,19 @@ namespace GalaxyEggbert::CNA
         terrainEffect_->setTextureEnabledProperty(true);
         terrainEffect_->setTextureProperty(&terrainTexture_);
 
+        // Icon 107's grass-top overlay (NEXT.md §8 task 3) — genuinely
+        // separate from object-m.png, copied next to this binary from
+        // textures3d/ (like worlds3d/, see CMakeLists.txt's POST_BUILD
+        // step), not from mobile-eggbert's Content/.
+        grassTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("textures3d/grass_top.png", device);
+        std::cout << "GalaxyEggbertCNA: grass texture loaded — "
+                  << grassTexture_.getWidthProperty() << "x"
+                  << grassTexture_.getHeightProperty() << " px." << std::endl;
+        grassEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        grassEffect_->VertexColorEnabled = false;
+        grassEffect_->setTextureEnabledProperty(true);
+        grassEffect_->setTextureProperty(&grassTexture_);
+
         // Interim 2D Blupi animation-state indicator (no 3D model yet,
         // 2026-07-05) — same blupi.png already copied next to this binary
         // for the eventual billboard (E3D-MIG-061..063).
@@ -202,6 +215,20 @@ namespace GalaxyEggbert::CNA
             terrainEffect_->Projection = camera_.GetProjectionMatrix();
             terrainEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             terrainRenderer_->Draw(device, *terrainEffect_);
+
+            if (grassEffect_)
+            {
+                // Icon 107's grass-top overlay (NEXT.md §8 task 3) — a
+                // separate texture/effect (BasicEffect only binds one
+                // texture at a time), drawn right after the main opaque
+                // terrain pass so it composites correctly (both opaque, no
+                // special blend/depth state needed, unlike water/icons
+                // 30-31).
+                grassEffect_->View = camera_.GetViewMatrix();
+                grassEffect_->Projection = camera_.GetProjectionMatrix();
+                grassEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                terrainRenderer_->DrawGrass(device, *grassEffect_);
+            }
 
             static bool terrainPixelPrinted = false;
             if (!terrainPixelPrinted)

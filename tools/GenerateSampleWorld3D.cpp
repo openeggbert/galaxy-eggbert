@@ -156,6 +156,17 @@ int main(int argc, char** argv)
     fill(90, 90, 3, 3, 40, 40, BlockTypes::BrickWall);
     fill(90, 90, 3, 3, 42, 42, static_cast<std::uint16_t>(30));
 
+    // Icon 107 demo (2026-07-08, §8 task 3): a DirectionalCube whose top
+    // face is deliberately left open in GEDirectionalCubeTiles.cpp, covered
+    // instead by GETerrainRenderer's separate grass_top.png overlay plate.
+    // Placed as a small patch directly on the ground floor (y=0, not the
+    // elevated y=3 demo row) so its real top surface is naturally visible
+    // from a normal standing view, the way the ground floor itself already
+    // is -- away from the spawn/staircase/wall-collision test coordinates
+    // (grid x=35-37, z=35-37; ground floor spans x/z 30-70, tests use
+    // z=50 and x<=29).
+    fill(35, 37, 0, 0, 35, 37, static_cast<std::uint16_t>(107));
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

@@ -52,6 +52,18 @@ namespace GalaxyEggbert::CNA
             {254, true, false}, {255, true, false}, {256, true, false}, {257, true, false},
             {258, true, false}, {259, true, false}, {260, true, false},
             {364, true, false}, {365, true, false}, {366, true, false},
+            // icon 107: shora open (false) here on PURPOSE, not a real hole --
+            // its confirmed answer is "shora samostatná textura trávy"
+            // (top = a SEPARATE grass texture), rendered by
+            // GETerrainRenderer's dedicated grass-top pass
+            // (IsGrassTopIcon()/m_grassRenderer, 2026-07-08, §8 task 3), not
+            // by this table at all. Setting TopColor=false here just stops
+            // this table from drawing a competing/z-fighting top face over
+            // the grass plate. zdola (bottom) = hnědá plná barva, and
+            // SwatchUv's bottom sample correctly picks up brown here since
+            // icon 107's own texture is genuinely grass-on-top-of-dirt
+            // (confirmed by looking at its crop).
+            {107, false, true},
         };
 
         // The 4 ventilator/fan tiles: 4 side faces always textured; the
