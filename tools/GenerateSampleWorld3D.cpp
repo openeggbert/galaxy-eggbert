@@ -148,6 +148,14 @@ int main(int argc, char** argv)
     fill(85, 85, 3, 3, 40, 40, BlockTypes::BrickWall);
     fill(85, 85, 3, 3, 42, 42, BlockTypes::Water1);
 
+    // Icon 30 demo (2026-07-08, §8 task 1): a DirectionalCube whose own side
+    // texture has real per-pixel alpha, using the same static-but-
+    // transparent render pass as water (see GETerrainRenderer.cpp's
+    // NeedsAlphaBlend()). Same BrickWall-behind-it setup as the water demo,
+    // to visually confirm this icon is genuinely alpha-blended too.
+    fill(90, 90, 3, 3, 40, 40, BlockTypes::BrickWall);
+    fill(90, 90, 3, 3, 42, 42, static_cast<std::uint16_t>(30));
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

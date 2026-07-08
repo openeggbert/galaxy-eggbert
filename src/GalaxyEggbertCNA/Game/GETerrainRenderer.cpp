@@ -154,6 +154,18 @@ namespace GalaxyEggbert::CNA
                    base == FanLeft || base == FanRight  || base == FanUp   || base == FanDown ||
                    base == Marine;
         }
+
+        // Icons 30/31: confirmed DirectionalCube (GEDirectionalCubeTiles.cpp)
+        // whose own side-face texture has real per-pixel alpha ("textura má
+        // i průhlednost") -- editor-only start-position markers for a
+        // moveable object, not used in actual gameplay worlds, but still
+        // need genuine alpha blending to render correctly if ever placed.
+        // Not animated, so they don't go through m_animBlocks/m_waterBlocks
+        // -- routed to their own static-but-transparent renderer instead.
+        bool NeedsAlphaBlend(int icon)
+        {
+            return icon == 30 || icon == 31;
+        }
     }
 
     GETerrainRenderer::GETerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -164,6 +176,8 @@ namespace GalaxyEggbert::CNA
         Easy3D::CubeBatch staticBatch;
         std::vector<Easy3D::CubeVertex> staticVertices;
         std::vector<std::uint32_t> staticIndices;
+        std::vector<Easy3D::CubeVertex> transparentStaticVertices;
+        std::vector<std::uint32_t> transparentStaticIndices;
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -203,10 +217,20 @@ namespace GalaxyEggbert::CNA
                     }
 
                     const Easy3D::CubeBatch::Vector3 center(worldX, worldY, worldZ);
-                    const auto tileUv = tileAtlas.GetTileUv(static_cast<int>(block.type()));
+                    const int icon = static_cast<int>(block.type());
+                    const auto tileUv = tileAtlas.GetTileUv(icon);
 
-                    if (AppendSpecialGeometry(static_cast<int>(block.type()), tileUv, center,
-                                              staticVertices, staticIndices))
+                    if (NeedsAlphaBlend(icon))
+                    {
+                        // Not animated, so it skips m_waterBlocks entirely --
+                        // goes straight into its own static-but-transparent
+                        // buffer, built once here and never rebuilt by
+                        // Update() (same lifecycle as m_staticRenderer).
+                        AppendSpecialGeometry(icon, tileUv, center, transparentStaticVertices, transparentStaticIndices);
+                        continue;
+                    }
+
+                    if (AppendSpecialGeometry(icon, tileUv, center, staticVertices, staticIndices))
                     {
                         continue;
                     }
@@ -230,6 +254,12 @@ namespace GalaxyEggbert::CNA
         // correctness.
         Easy3D::BuildCubeMesh(staticBatch, staticVertices, staticIndices);
         m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
+
+        if (!transparentStaticVertices.empty())
+        {
+            m_transparentStaticRenderer =
+                std::make_unique<Easy3D::CubeMeshRenderer>(device, transparentStaticVertices, transparentStaticIndices);
+        }
 
         Update(device, 0);
     }
@@ -307,21 +337,32 @@ namespace GalaxyEggbert::CNA
         {
             m_animRenderer->Draw(device, effect);
         }
-        if (m_waterRenderer)
+        if (m_waterRenderer || m_transparentStaticRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
             // NEXT.md §8): drawn last, with alpha blending and depth WRITES
-            // disabled (but depth TESTING still on, via DepthRead) so water
-            // composites correctly over opaque terrain already in the depth
-            // buffer without blocking whatever's drawn after it. object-m.png
-            // has real per-pixel alpha (confirmed 2026-07-08); NonPremultiplied
-            // matches its un-premultiplied RGB. State is restored to Opaque/
-            // Default afterward so the caller's own state isn't disturbed.
+            // disabled (but depth TESTING still on, via DepthRead) so
+            // transparent geometry composites correctly over opaque terrain
+            // already in the depth buffer without blocking whatever's drawn
+            // after it. object-m.png has real per-pixel alpha (confirmed
+            // 2026-07-08); NonPremultiplied matches its un-premultiplied
+            // RGB. Covers both water (animated) and the static-but-
+            // transparent icons 30/31 -- same blend/depth state either way,
+            // so one state change covers both draws. State is restored to
+            // Opaque/Default afterward so the caller's own state isn't
+            // disturbed.
             using Microsoft::Xna::Framework::Graphics::BlendState;
             using Microsoft::Xna::Framework::Graphics::DepthStencilState;
             device.setBlendStateProperty(BlendState::NonPremultiplied);
             device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
-            m_waterRenderer->Draw(device, effect);
+            if (m_transparentStaticRenderer)
+            {
+                m_transparentStaticRenderer->Draw(device, effect);
+            }
+            if (m_waterRenderer)
+            {
+                m_waterRenderer->Draw(device, effect);
+            }
             device.setDepthStencilStateProperty(DepthStencilState::Default);
             device.setBlendStateProperty(BlendState::Opaque);
         }
@@ -330,6 +371,7 @@ namespace GalaxyEggbert::CNA
     int GETerrainRenderer::VertexCount() const noexcept
     {
         return (m_staticRenderer ? m_staticRenderer->VertexCount() : 0) +
+               (m_transparentStaticRenderer ? m_transparentStaticRenderer->VertexCount() : 0) +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0);
     }
@@ -337,6 +379,7 @@ namespace GalaxyEggbert::CNA
     int GETerrainRenderer::PrimitiveCount() const noexcept
     {
         return (m_staticRenderer ? m_staticRenderer->PrimitiveCount() : 0) +
+               (m_transparentStaticRenderer ? m_transparentStaticRenderer->PrimitiveCount() : 0) +
                (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0);
     }

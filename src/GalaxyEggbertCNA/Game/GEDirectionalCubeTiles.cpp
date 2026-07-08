@@ -29,6 +29,17 @@ namespace GalaxyEggbert::CNA
             // shora + zdola both flat color
             {2, true, true}, {22, true, true}, {23, true, true}, {24, true, true},
             {50, true, true}, {52, true, true}, {86, true, true},
+            // icons 30/31: same face pattern as any other "4 sides + top/bottom
+            // color" entry -- the confirmed answer's "textura má i průhlednost"
+            // is about the SIDE faces' own texture having real per-pixel alpha,
+            // not a different face layout. That alpha need is handled
+            // separately in GETerrainRenderer.cpp (NeedsAlphaBlend()), which
+            // routes these 2 icons to a dedicated semi-transparent draw pass
+            // reusing the water render mode's blend state (2026-07-08).
+            // Editor-only markers (moveable-object start position) per the
+            // questionnaire -- never placed in real gameplay worlds, but
+            // wired up for completeness/correctness.
+            {30, true, true}, {31, true, true},
             {193, true, true}, {194, true, true}, {195, true, true}, {196, true, true}, {197, true, true},
             {224, true, true}, {225, true, true}, {226, true, true}, {227, true, true}, {228, true, true},
             {232, true, true}, {283, true, true},

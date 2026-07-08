@@ -13,12 +13,14 @@
 namespace GalaxyEggbert::CNA
 {
     // Builds one static Easy3D::CubeMeshRenderer covering every non-animated
-    // non-air cell of a loaded World, plus a second CubeMeshRenderer for the
-    // opaque animated subset (lava/crusher/saw/spike/fan/marine/temp) and a
-    // third for the water subset (Water1/Water2 -- animated AND drawn with
-    // alpha blending, see Draw()'s comment), both rebuilt whenever Update()
-    // is given a new animation phase (plan.md E3D-MIG-054/055). One 1x1x1
-    // cube per block, textured via GETileAtlas.
+    // opaque non-air cell of a loaded World, a second static renderer for
+    // the small set of non-animated blocks that ALSO need alpha blending
+    // (icons 30/31 -- see Draw()'s comment), plus a third CubeMeshRenderer
+    // for the opaque animated subset (lava/crusher/saw/spike/fan/marine/
+    // temp) and a fourth for the water subset (Water1/Water2 -- animated
+    // AND alpha-blended), the latter two rebuilt whenever Update() is given
+    // a new animation phase (plan.md E3D-MIG-054/055). One 1x1x1 cube per
+    // block, textured via GETileAtlas.
     class GETerrainRenderer
     {
     public:
@@ -67,6 +69,7 @@ namespace GalaxyEggbert::CNA
             const std::vector<AnimBlock>& blocks, int animPhase) const;
 
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_staticRenderer;
+        std::unique_ptr<Easy3D::CubeMeshRenderer> m_transparentStaticRenderer;
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_animRenderer;
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_waterRenderer;
         std::vector<AnimBlock> m_animBlocks;
