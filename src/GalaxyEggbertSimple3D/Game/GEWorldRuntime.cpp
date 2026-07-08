@@ -181,19 +181,24 @@ void GEWorldRuntime::BuildDemoWorld() {
                 Block::make(type));
     };
 
+    // Ground/StoneA/StoneB below are confirmed mislabeled (machine-piece
+    // graphics, not ground/stone material -- see BlockTypes.hpp's note).
+    // Uses RockPile/BrickWall instead (confirmed genuine bulk material, same
+    // fix already applied to tools/GenerateSampleWorld3D.cpp in 59c2e61 and
+    // 2026-07-08's follow-up).
     const int R = 12;
     for (int dz = -R; dz <= R; ++dz)
         for (int dx = -R; dx <= R; ++dx)
-            setBlock(dx, 0, dz, BlockTypes::Ground);
+            setBlock(dx, 0, dz, BlockTypes::RockPile);
 
     for (int dz = -3; dz <= 3; ++dz)
         for (int dx = 4; dx <= 8; ++dx)
-            setBlock(dx, 1, dz, BlockTypes::StoneA);
+            setBlock(dx, 1, dz, BlockTypes::BrickWall);
 
     for (int dx = -4; dx <= 4; ++dx)
         setBlock(dx, 0, -6, BlockTypes::Lava);
-    setBlock(2, 0, -6, BlockTypes::StoneB);
-    setBlock(-2, 0, -6, BlockTypes::StoneB);
+    setBlock(2, 0, -6, BlockTypes::BrickWall);
+    setBlock(-2, 0, -6, BlockTypes::BrickWall);
 }
 
 void GEWorldRuntime::ResetLevel() {

@@ -31,7 +31,14 @@ int main(int argc, char** argv)
     };
 
     // Ground floor, y=0.
-    fill(30, 70, 0, 0, 30, 70, BlockTypes::Ground);
+    // Uses RockPile (icon 35, confirmed genuine bulk stone-like material) --
+    // was BlockTypes::Ground until 2026-07-08, when direct user identification
+    // found Ground to actually be a machine-piece graphic too, not ground/grass
+    // texture (see BlockTypes.hpp's note on Ground/StoneA/StoneB and
+    // mobile-eggbert-reference/questionnaire-all-remaining-tiles.md). This
+    // usage was missed in the earlier StoneA/StoneB fix (59c2e61) even though
+    // it's the same file and the same invariant violation.
+    fill(30, 70, 0, 0, 30, 70, BlockTypes::RockPile);
 
     // Ascending solid staircase: 10 steps, x=29 down to x=20, z=45..54,
     // each column solid from y=0 up to its own step height.
@@ -52,7 +59,17 @@ int main(int argc, char** argv)
     // block on top of the staircase's own last step (that produced an
     // unclimbable 2-block cliff at the x=21->20 transition; caught by
     // tools/VerifyBlupiMovement.cpp).
-    fill(5, 19, 10, 10, 40, 59, BlockTypes::Platform);
+    // Uses RockPile (icon 35), same material as the staircase it sits flush
+    // with -- was BlockTypes::Platform (icon 200) until 2026-07-08, when
+    // round-1 Q&A found icon 200 to actually be a passable grate/grid graphic
+    // (DirectionalCube: 4 side faces textured, top/bottom genuinely open, not
+    // just a fallback color), not a real solid floor surface -- same class of
+    // bug as Ground/StoneA/StoneB (see BlockTypes.hpp and 02-tiles.md's icon
+    // 200 entry). BlockTypes::Platform is kept defined (not renamed/removed)
+    // for the same reason as Ground/StoneA/StoneB -- do not use it for new
+    // solid-floor fills; wait for the DirectionalCube render mode (§8 task 2)
+    // to render it as the passable grate it actually is.
+    fill(5, 19, 10, 10, 40, 59, BlockTypes::RockPile);
 
     // Room walls, 3 blocks tall (y=11..13), around the platform perimeter,
     // with a 3-wide doorway on the staircase-facing edge (x=20, z=48..51).

@@ -59,17 +59,18 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 2. Current status
 
 ### Build status
-- `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-08)**, after the
-  `BlockTypes.hpp`/`GenerateSampleWorld3D.cpp` texture fix (§3). Built `GenerateSampleWorld3D`,
-  `VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, and `GalaxyEggbertCNA` itself from
-  `build-cna/` — all succeeded. The previously-reported missing `CMakeFiles/rules.ninja` issue
-  (noted 2026-07-07) did **not** reproduce this session; `cmake --build build-cna --target ...`
-  worked directly with no reconfigure needed. Not root-caused, just no longer blocking.
-- `GalaxyEggbertSimple3D` — **not rebuilt this session** (no source changes to this target since
-  2026-07-03/04, and no reason to touch it this session). Carrying forward the prior caveat
-  unverified: U3D's own prebuilt directory
-  (`/rv/data/library/github.com/u3d-community/U3D/`) may still be missing a prebuilt
-  `cmake-build-debug` in this environment — confirm before trusting a fresh Simple3D build.
+- `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-08)**, after the Platform/
+  Ground fix (§3, §8 old task 1). Built `GenerateSampleWorld3D`, `VerifyBlupiMovement`, and
+  `GalaxyEggbertCNA` itself from `build-cna/` — all succeeded.
+- `GalaxyEggbertSimple3D` — **build confirmed broken in this environment today (2026-07-08)**,
+  unrelated to this session's source edit: `cmake -S . -B cmake-build-debug` fails at
+  `find_package(Urho3D)` — `URHO3D_BASE_INCLUDE_DIR-NOTFOUND`, "Could NOT find compatible Urho3D
+  library". The U3D prebuilt at `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug`
+  is missing/incompatible. This confirms the prior session's unverified caveat — it's a pre-existing
+  environment gap in the U3D prebuilt, not something introduced by today's `GEWorldRuntime.cpp`
+  edit (that edit only swaps enum constant names already defined in `BlockTypes.hpp`, syntactically
+  trivial — not exercised by a real build+run this session because of this blocker). Needs a fresh
+  U3D build in this environment before `GalaxyEggbertSimple3D` can be rebuilt/verified again.
 - `GalaxyEggbertWorldsTests` — not rebuilt/re-run this session; last confirmed 54/54 via
   `ctest --test-dir build` on 2026-07-07. The `cmake-build-debug` profile's `ctest` discovery
   issue (`GalaxyEggbertWorldsTests_NOT_BUILT`) was also last checked 2026-07-07, not re-verified.
@@ -77,15 +78,16 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   tests, CNA-linked 6/6 tests).
 
 ### Test status
-- `VerifyBlupiMovement` — **run today, ALL CHECKS PASSED** (spawn, staircase step-up climb,
-  standing on platform, wall collision, gravity/fall) against the regenerated `world001.vwr`.
-  Confirms the texture-only fix in §3 didn't change collision/geometry.
+- `VerifyBlupiMovement` — **run today (twice), ALL CHECKS PASSED** both before and after the
+  Platform/Ground fix (spawn, staircase step-up climb, standing on platform, wall collision,
+  gravity/fall) against the regenerated `world001.vwr`. Confirms both texture-only fixes today
+  didn't change collision/geometry.
 - `VerifyMoveObjectTypesCna` — built today, not run this session (no MoveObject-parsing code
   changed, so not expected to differ from its last known-good state).
-- A live `GalaxyEggbertCNA` run (5s, headless-terminated) confirmed: loads
-  `worlds3d/world001.vwr` (2729 non-air blocks, Y range [0,13] — unchanged from before the texture
-  fix), uploads the terrain mesh (65496 vertices, 32748 triangles), and a terrain-visibility sample
-  shows real texture variation (4 distinct sampled colors, not a flat fallback).
+- A live `GalaxyEggbertCNA` run (5s, headless-terminated) after the Platform/Ground fix confirmed:
+  loads `worlds3d/world001.vwr` (2729 non-air blocks, Y range [0,13] — unchanged), uploads the
+  terrain mesh (65496 vertices, 32748 triangles), and a terrain-visibility sample shows real
+  texture variation (10 distinct sampled colors, not a flat fallback).
 
 ### What works
 - **`GalaxyEggbertSimple3D`**: unchanged this session — world loading from mobile-eggbert `.txt`,
@@ -116,18 +118,30 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   — the user has not yet decided how water should look in 3D.
 - Icon 107 (grass) needs a real top-face grass texture, which doesn't exist yet in the asset set —
   needs sourcing (license-compatible) or generating.
-- Icon 200 (`Platform`) is used as a solid floor in `GenerateSampleWorld3D.cpp`, but round-1 Q&A
-  found it's actually a passable grate graphic, not a real platform surface — same class of bug
-  as `StoneA`/`StoneB`, not yet fixed (see §5/§8).
-- `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`'s small hardcoded fallback/default world
-  (lines ~184-195) still uses `Ground`/`StoneA`/`StoneB` the same wrong way `GenerateSampleWorld3D`
-  did before today's fix — not yet fixed, separate file/target.
-- Simple3D: no per-zone fog; Android/Web builds untested since the last engine change.
+- Simple3D: no per-zone fog; Android/Web builds untested since the last engine change; build itself
+  is currently broken in this environment (missing/incompatible U3D prebuilt, see §2/§8 task 1).
 
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
 
+- **Fixed `Platform`/`Ground` misuse in the sample world and Simple3D's fallback world (2026-07-08,
+  §8 old task 1).** Icon 200 (`Platform`) was confirmed by round-1 Q&A to be a passable grate/grid
+  graphic (`DirectionalCube`: 4 textured side faces, top/bottom genuinely open — not a real solid
+  floor), same bug class as the `StoneA`/`StoneB` fix below. `tools/GenerateSampleWorld3D.cpp`'s
+  raised platform floor now uses `RockPile` (icon 35) instead, matching the staircase it sits flush
+  with. Also found and fixed the same file's ground floor (line ~34) still using `BlockTypes::Ground`
+  — missed by the earlier `StoneA`/`StoneB` fix (`59c2e61`) even though it's the same file/invariant
+  violation; now `RockPile` too. `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`'s
+  `BuildDemoWorld()` fallback world had the same three-way `Ground`/`StoneA`/`StoneB` bug — now
+  `RockPile` (floor) and `BrickWall` (raised block + lava-adjacent markers). Added a warning comment
+  on `BlockTypes::Platform` in `BlockTypes.hpp` mirroring the existing `Ground`/`StoneA`/`StoneB`
+  one. Regenerated `worlds3d/world001.vwr` (same 2729 blocks, Y range [0,13] — texture only).
+  Verified: clean `GenerateSampleWorld3D`/`VerifyBlupiMovement`/`GalaxyEggbertCNA` build,
+  `VerifyBlupiMovement` all-pass, live `GalaxyEggbertCNA` run shows real terrain texture (10 distinct
+  sampled colors). `GalaxyEggbertSimple3D` itself could not be rebuilt to verify the
+  `GEWorldRuntime.cpp` change compiles+runs — see §2's build-status note (pre-existing U3D-prebuilt
+  environment gap, unrelated to this edit); the edit is a syntactically trivial enum-constant swap.
 - **Fixed `StoneA`/`StoneB` misuse in the sample world (2026-07-08, `59c2e61`).** Both were
   confirmed (via the round-2 Q&A below) to actually be machine-piece graphics, not bulk stone
   material — the same mistake `StoneB` itself was introduced to fix on 2026-07-06. Added
@@ -189,14 +203,12 @@ unstarted) — see §8 task 1.
 
 | Status | Issue |
 |---|---|
-| confirmed, needs fix | Icon 200 (`Platform`) is used as a solid floor in `GenerateSampleWorld3D.cpp`, but is actually a passable grate graphic (round-1 Q&A) — same class of bug `StoneA`/`StoneB` just got fixed for. |
-| confirmed, needs fix | `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`'s hardcoded fallback/default world (~line 184-195) still uses `Ground`/`StoneA`/`StoneB` for terrain the same wrong way `GenerateSampleWorld3D.cpp` did before today. |
 | open design question | Water tile render mode (icons 91/92/93/94/95/96) — user has explicitly deferred deciding this. |
 | incomplete | Icon 107 (grass) needs a real top-face grass texture — none exists yet; needs a license-compatible source or generation. |
 | incomplete | None of `DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` are implemented in `Easy3D`/`GETerrainRenderer` — identification-only so far. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards, no HUD, no sound, no gameplay logic (expected at this phase). No `BigDecor` rendering (parsed only). No platform-lift/crate `UniformCube` object path. |
 | unverified this session | `GalaxyEggbertWorldsTests` 54/54 pass and the `cmake-build-debug` `ctest` discovery issue — both last checked 2026-07-07, not re-run today. |
-| unverified this session | Simple3D build (U3D prebuilt directory possibly missing) — not touched today. |
+| confirmed broken, needs environment fix | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt at `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug` is missing/incompatible (confirmed 2026-07-08, see §2). Blocks rebuilding/verifying `GalaxyEggbertSimple3D` until a fresh U3D build exists in this environment. |
 | incomplete | `element.png` used for every `ObjectType` billboard, even though types 1/12 need `object-m.png` and 32/33 need `blupi1.png` (`DOC-007`, same gap in both targets). |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
@@ -232,9 +244,8 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETil
                                 GEBlupiController, GEObjectIcons, an Easy3D::Camera3D
                                 (first-person).
 
-tools/GenerateSampleWorld3D.cpp — builds worlds3d/world001.vwr. Fixed today to use RockPile/
-                                BrickWall instead of StoneA/StoneB. Still uses BlockTypes::Platform
-                                (icon 200) for the raised floor — known-wrong, not yet fixed (§5).
+tools/GenerateSampleWorld3D.cpp — builds worlds3d/world001.vwr. Fully switched to RockPile/
+                                BrickWall today — no more Ground/StoneA/StoneB/Platform usage.
 
 mobile-eggbert-reference/    — questionnaire-unidentified-tiles.md (round 1, 34 icons, DONE),
                                 questionnaire-all-remaining-tiles.md (round 2, 280 icons, DONE),
@@ -321,14 +332,13 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Fix icon 200 (`Platform`) misuse in `GenerateSampleWorld3D.cpp`, and the analogous
-   `Ground`/`StoneA`/`StoneB` bug in Simple3D's `GEWorldRuntime.cpp` fallback world.** Round-1 Q&A
-   already found icon 200 is a passable grate, not a real platform surface. Pick (or confirm) a
-   genuine solid-floor material, update both files, regenerate `world001.vwr`, re-run
-   `VerifyBlupiMovement`. **Files:** `tools/GenerateSampleWorld3D.cpp`,
-   `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`, `include/GalaxyEggbert/BlockTypes.hpp`.
-   **Verification:** `./build-cna/VerifyBlupiMovement` all-pass; rebuild+run `GalaxyEggbertSimple3D`
-   if touching its fallback world.
+1. **Fix the Simple3D build environment** — `cmake -S . -B cmake-build-debug` fails at
+   `find_package(Urho3D)` (`URHO3D_BASE_INCLUDE_DIR-NOTFOUND`); the U3D prebuilt at
+   `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug` is missing/incompatible
+   (confirmed 2026-07-08, see §2). Needed before `GalaxyEggbertSimple3D` or today's
+   `GEWorldRuntime.cpp` fallback-world edit can be rebuilt/run-verified. **Verification:**
+   `cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2` succeeds and the binary
+   runs.
 2. **Design + implement the new render modes** (`DirectionalCube`, `InnerPillarBox`,
    `InnerFlatPlate`, `TripleCrossBillboard`) that the round 2/3 identification converged on. Start
    with `DirectionalCube` (most common) — needs an `Easy3D::CubeMesh`/`CubeItem` per-face texture +

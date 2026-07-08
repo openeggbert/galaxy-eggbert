@@ -52,6 +52,15 @@ constexpr uint16_t BrickWall = 261;   // brick wall, non-passable
 // tile). See mobile-eggbert-reference/02-tiles.md and
 // mobile-eggbert-reference/15-3d-render-mapping-design.md for the full finding.
 constexpr uint16_t GoldPillar = 183;
+// NOTE (2026-07-08): "floating platform" below is WRONG in the same way as
+// Ground/StoneA/StoneB above -- round-1 Q&A (mobile-eggbert-reference/
+// questionnaire-unidentified-tiles.md, confirmed again in 02-tiles.md's icon
+// 200 entry) found this to be a passable grate/grid graphic (DirectionalCube:
+// 4 textured side faces, top/bottom genuinely open, not a fallback color),
+// not a real solid floor. Do not use it for new solid-floor fills -- use
+// RockPile/BrickWall (UniformCube, confirmed genuine bulk material) instead
+// until the DirectionalCube render mode (see NEXT.md §8 task 2) exists to
+// render it correctly as an open grate.
 constexpr uint16_t Platform = 200;   // floating platform
 constexpr uint16_t Sp0      = 158;
 constexpr uint16_t Sp1      = 159;
