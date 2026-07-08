@@ -9,8 +9,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 **Current development phase:** mid-migration between two build targets:
 
-- `GalaxyEggbertSimple3D` (built on `simple-3d` → U3D/Urho3D) — the **only playable** target,
-  feature-complete enough to play through core mechanics end-to-end (see §2).
+- `GalaxyEggbertSimple3D` (built on `simple-3d` → U3D/Urho3D) — historical reference only as of
+  2026-07-08 (per user): feature-complete enough to play through core mechanics end-to-end, but no
+  longer built/fixed/verified going forward (see §2, §9). Its build is currently broken in this
+  environment (missing/incompatible U3D prebuilt) and that is intentionally left unfixed.
 - `GalaxyEggbertCNA` (built directly on **CNA** + **Easy3D** helper library) — the **new
   long-term target**, opt-in and pre-parity. Opens a window, loads a genuinely 3D hand-authored
   `.vwr` world (`worlds3d/world001.vwr`), renders real textured/animated terrain (one cube per
@@ -62,15 +64,15 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-08)**, after the Platform/
   Ground fix (§3, §8 old task 1). Built `GenerateSampleWorld3D`, `VerifyBlupiMovement`, and
   `GalaxyEggbertCNA` itself from `build-cna/` — all succeeded.
-- `GalaxyEggbertSimple3D` — **build confirmed broken in this environment today (2026-07-08)**,
-  unrelated to this session's source edit: `cmake -S . -B cmake-build-debug` fails at
-  `find_package(Urho3D)` — `URHO3D_BASE_INCLUDE_DIR-NOTFOUND`, "Could NOT find compatible Urho3D
-  library". The U3D prebuilt at `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug`
-  is missing/incompatible. This confirms the prior session's unverified caveat — it's a pre-existing
-  environment gap in the U3D prebuilt, not something introduced by today's `GEWorldRuntime.cpp`
-  edit (that edit only swaps enum constant names already defined in `BlockTypes.hpp`, syntactically
-  trivial — not exercised by a real build+run this session because of this blocker). Needs a fresh
-  U3D build in this environment before `GalaxyEggbertSimple3D` can be rebuilt/verified again.
+- `GalaxyEggbertSimple3D` — **not maintained going forward (per user, 2026-07-08): treated as a
+  historical reference only, not to be built/fixed/verified.** Its build was found broken in this
+  environment today (`cmake -S . -B cmake-build-debug` fails at `find_package(Urho3D)` —
+  `URHO3D_BASE_INCLUDE_DIR-NOTFOUND`, U3D prebuilt at
+  `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug` missing/incompatible), but per
+  this instruction that is **not to be fixed** — do not spend effort rebuilding, reconfiguring, or
+  troubleshooting U3D/Simple3D. Today's `GEWorldRuntime.cpp` fallback-world edit (§3) is a
+  syntactically trivial enum-constant swap and was not run-verified for this reason; that is
+  accepted, not a gap to close.
 - `GalaxyEggbertWorldsTests` — not rebuilt/re-run this session; last confirmed 54/54 via
   `ctest --test-dir build` on 2026-07-07. The `cmake-build-debug` profile's `ctest` discovery
   issue (`GalaxyEggbertWorldsTests_NOT_BUILT`) was also last checked 2026-07-07, not re-verified.
@@ -118,8 +120,8 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   — the user has not yet decided how water should look in 3D.
 - Icon 107 (grass) needs a real top-face grass texture, which doesn't exist yet in the asset set —
   needs sourcing (license-compatible) or generating.
-- Simple3D: no per-zone fog; Android/Web builds untested since the last engine change; build itself
-  is currently broken in this environment (missing/incompatible U3D prebuilt, see §2/§8 task 1).
+- Simple3D: build is currently broken in this environment (missing/incompatible U3D prebuilt, see
+  §2) — **not to be fixed**, per user 2026-07-08: Simple3D is historical reference only now (§9).
 
 ## 3. Recent changes
 
@@ -208,7 +210,7 @@ unstarted) — see §8 task 1.
 | incomplete | None of `DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` are implemented in `Easy3D`/`GETerrainRenderer` — identification-only so far. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards, no HUD, no sound, no gameplay logic (expected at this phase). No `BigDecor` rendering (parsed only). No platform-lift/crate `UniformCube` object path. |
 | unverified this session | `GalaxyEggbertWorldsTests` 54/54 pass and the `cmake-build-debug` `ctest` discovery issue — both last checked 2026-07-07, not re-run today. |
-| confirmed broken, needs environment fix | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt at `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug` is missing/incompatible (confirmed 2026-07-08, see §2). Blocks rebuilding/verifying `GalaxyEggbertSimple3D` until a fresh U3D build exists in this environment. |
+| not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every `ObjectType` billboard, even though types 1/12 need `object-m.png` and 32/33 need `blupi1.png` (`DOC-007`, same gap in both targets). |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
@@ -332,47 +334,47 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Fix the Simple3D build environment** — `cmake -S . -B cmake-build-debug` fails at
-   `find_package(Urho3D)` (`URHO3D_BASE_INCLUDE_DIR-NOTFOUND`); the U3D prebuilt at
-   `/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug` is missing/incompatible
-   (confirmed 2026-07-08, see §2). Needed before `GalaxyEggbertSimple3D` or today's
-   `GEWorldRuntime.cpp` fallback-world edit can be rebuilt/run-verified. **Verification:**
-   `cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2` succeeds and the binary
-   runs.
-2. **Design + implement the new render modes** (`DirectionalCube`, `InnerPillarBox`,
+1. **Design + implement the new render modes** (`DirectionalCube`, `InnerPillarBox`,
    `InnerFlatPlate`, `TripleCrossBillboard`) that the round 2/3 identification converged on. Start
    with `DirectionalCube` (most common) — needs an `Easy3D::CubeMesh`/`CubeItem` per-face texture +
    fallback-color/transparency extension. **Files:** `../easy-3d/include/Easy3D/CubeMesh.*`,
    `src/GalaxyEggbertCNA/Game/GETerrainRenderer.*`/`GETileAtlas.*`. **Verification:** new unit/
    compile-check tests mirroring the existing `CubeMesh`/`BillboardMesh` ones, plus a live
    screenshot showing at least one `DirectionalCube` tile rendering correctly.
-3. **Decide the water render mode** (icons 91/92/93/94/95/96) — currently an explicitly open
+2. **Decide the water render mode** (icons 91/92/93/94/95/96) — currently an explicitly open
    question. Needs a design decision from the user (special flat surface? animated UniformCube
-   like today? something else?), then implementation. **Files:** whatever §8 task 2 introduces for
+   like today? something else?), then implementation. **Files:** whatever §8 task 1 introduces for
    special-surface tiles, `GETerrainRenderer`. **Verification:** live screenshot of water rendering
    as intended.
-4. **Source or generate a grass-top texture for icon 107.** No such asset exists yet. **Files:**
+3. **Source or generate a grass-top texture for icon 107.** No such asset exists yet. **Files:**
    likely a new file under `mobile-eggbert-reference/` or a texture-atlas addition in
-   `GETileAtlas`. **Verification:** visual check once task 2's `DirectionalCube` mode can consume
+   `GETileAtlas`. **Verification:** visual check once task 1's `DirectionalCube` mode can consume
    a custom top-face texture.
-5. **`BigDecor` billboard rendering for CNA** — `GEWorldRuntime` doesn't parse `BigDecor:` for CNA
-   at all yet (Simple3D already does). Recommended render mode: `Billboard`. **Files:**
+4. **`BigDecor` billboard rendering for CNA** — `GEWorldRuntime` doesn't parse `BigDecor:` for CNA
+   at all yet (Simple3D already does — reference its parsing logic read-only, do not build/run
+   Simple3D itself, see §9). Recommended render mode: `Billboard`. **Files:**
    `src/GalaxyEggbertCNA/Game/GEWorldRuntime.*`, `GalaxyEggbertCnaGame.cpp`. **Verification:** a
    tool mirroring `VerifyMoveObjectTypesCna.cpp` against a real level with known `BigDecor:` cells.
-6. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
+5. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
    `CubeMesh`/`CubeMeshRenderer` machinery for the two approved "objects are cubes, not billboards"
    exceptions. **Files:** `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp`.
-7. **Re-verify `GalaxyEggbertWorldsTests` (54/54) and the `cmake-build-debug` ctest-discovery
-   issue** — both last checked 2026-07-07, not re-run this session. **Verification:**
-   `ctest --test-dir build --output-on-failure` and `ctest --test-dir cmake-build-debug`.
-8. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
+6. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
+   Use a Simple3D-OFF tree (e.g. `build-cna`, or a fresh configure with
+   `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`) — do **not** use `cmake-build-debug`, which configures
+   Simple3D/U3D and is currently broken for unrelated reasons the user has said not to fix (§9).
+   **Verification:** `ctest --test-dir <tree> --output-on-failure`.
+7. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-9. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
+8. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
    a forced kill/timeout) and confirm the process exits 0 with no leaked resources.
 
 ## 9. Do not do yet
 
-- No further investment in Simple3D/U3D/Nova3D beyond bug fixes on the existing playable target.
+- **No building, fixing, or troubleshooting `GalaxyEggbertSimple3D`/U3D/Nova3D at all (updated
+  2026-07-08, per user)** — it is a historical reference only now, not a maintained target. Its
+  build is currently broken in this environment (missing/incompatible U3D prebuilt) and that is
+  not to be fixed. Source may still be read for reference (e.g. porting `BigDecor` parsing logic to
+  CNA), but do not configure/build/run it or spend effort on its build environment.
 - No deleting/removing any `GalaxyEggbertSimple3D` code without an explicit removal task.
 - No modifications to `../mobile-eggbert`, `../cna`, or `../simple-3d` without explicit user
   approval for that specific change. `../easy-3d` has standing permission (still scoped to small,
@@ -382,11 +384,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - No mass refactor of `include/GalaxyEggbert/Worlds/` unless a failing unit test justifies it.
 - No `#ifdef GE_ENGINE_*` anywhere.
 - No new gameplay mechanics not present in mobile-eggbert.
-- **No implementing any render mode from §8 task 2 speculatively without re-checking the exact
+- **No implementing any render mode from §8 task 1 speculatively without re-checking the exact
   per-icon answer recorded in `questionnaire-all-remaining-tiles.md`/`questionnaire-unused-tiles.md`
   first** — that's the whole point of having done direct user Q&A instead of agent guessing.
 - No re-running the full 97-icon or 280-icon questionnaires again — both are done; only the small
-  number of explicitly-open items (water, icon 107 grass texture, icon 200) need further decisions.
+  number of explicitly-open items (water, icon 107 grass texture) need further decisions.
 - Commit after each finished task (standing instruction) — one commit per task, not batched.
   **Pushing** to `origin/develop` is still NOT standing authorization — only push on explicit
   request each time.
