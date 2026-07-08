@@ -113,6 +113,16 @@ int main(int argc, char** argv)
     fill(54, 56, 3, 3, 40, 44, static_cast<std::uint16_t>(2));
     fill(58, 60, 3, 3, 40, 44, static_cast<std::uint16_t>(25));
 
+    // Three more demo blocks showing the newer single-face/axis/fan
+    // DirectionalCube patterns added 2026-07-08: icon 126 (FanLeft -- 4
+    // sides tex, base flat-color at bottom, open top), icon 392 (single
+    // face tex on -X, 5 other faces flat color), icon 49 (2 opposite sides
+    // + top + bottom tex on the X axis, other 2 sides flat color). Same
+    // off-path reasoning as the rest of this row.
+    fill(62, 64, 3, 3, 40, 44, static_cast<std::uint16_t>(126));
+    fill(66, 68, 3, 3, 40, 44, static_cast<std::uint16_t>(392));
+    fill(70, 72, 3, 3, 40, 44, static_cast<std::uint16_t>(49));
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

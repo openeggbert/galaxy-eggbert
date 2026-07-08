@@ -6,20 +6,23 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        // A small sample of the tile's OWN texture, taken near its top or
-        // bottom edge -- used to approximate a DirectionalCube's "flat
-        // fallback color" face without a second, vertex-color shader path
-        // (see GEDirectionalCubeTiles.hpp's header comment for why). The
-        // questionnaire answers themselves justify this: every named
-        // fallback color ("modrý odstín", "hnědý odstín", ...) is described
-        // per-icon, not from a fixed palette -- icon 2's answer spells it
-        // out directly ("modrý odstín, stejný jako pozadí ikony" = "blue,
-        // same as the icon's own background"). Sampling near the top edge
-        // for a face specified as "shora" (top) and near the bottom edge for
-        // "zdola" (bottom), rather than one fixed corner for both, also
-        // reproduces icons where those two colors are genuinely different
-        // (e.g. icon 193: gray top / beige bottom) instead of forcing them
-        // to match.
+        using Easy3D::CubeFace;
+
+        // A small sample of the tile's OWN texture -- used to approximate a
+        // DirectionalCube's "flat fallback color" face without a second,
+        // vertex-color shader path (see GEDirectionalCubeTiles.hpp's header
+        // comment for why). The questionnaire answers themselves justify
+        // this: every named fallback color ("modrý odstín", "hnědý odstín",
+        // ...) is described per-icon, not from a fixed palette -- icon 2's
+        // answer spells it out directly ("modrý odstín, stejný jako pozadí
+        // ikony" = "blue, same as the icon's own background"). Sampling
+        // near the top edge for a face specified as "shora" (top) and near
+        // the bottom edge for "zdola" (bottom), rather than one fixed corner
+        // for both, also reproduces icons where those two colors are
+        // genuinely different (e.g. icon 193: gray top / beige bottom)
+        // instead of forcing them to match. kMidSwatchV is for a "flat
+        // color" SIDE face (not top/bottom) -- no "shora"/"zdola" wording to
+        // anchor to, so a middle sample is the closest generic analog.
         Easy3D::UvRect SwatchUv(const Easy3D::UvRect& tile, float vCenterFrac)
         {
             constexpr float kHalfSize = 0.06f;
@@ -33,6 +36,7 @@ namespace GalaxyEggbert::CNA
 
         constexpr float kTopSwatchV = 0.08f;
         constexpr float kBottomSwatchV = 0.92f;
+        constexpr float kMidSwatchV = 0.5f;
 
         // Every icon below answered "krychle, textura na (všech/4) bočních
         // stranách" -- all 4 side faces always show the tile's real texture;
@@ -42,11 +46,7 @@ namespace GalaxyEggbert::CNA
         // user Q&A in mobile-eggbert-reference/
         // questionnaire-all-remaining-tiles.md (round 2) and
         // questionnaire-unused-tiles.md (round 3), confirmed 2026-07-08 --
-        // see those files for each icon's exact original wording. Icons
-        // needing per-placement face rotation, alpha, or a missing texture
-        // asset are deliberately excluded (see the .hpp comment) -- this is
-        // not the full ~100-icon DirectionalCube set, only the unambiguous
-        // symmetric subset.
+        // see those files for each icon's exact original wording.
         struct SymmetricEntry
         {
             int Icon;
@@ -70,6 +70,146 @@ namespace GalaxyEggbert::CNA
             {254, true, false}, {255, true, false}, {256, true, false}, {257, true, false},
             {258, true, false}, {259, true, false}, {260, true, false},
             {364, true, false}, {365, true, false}, {366, true, false},
+        };
+
+        // The 4 ventilator/fan tiles: 4 side faces always textured; the
+        // remaining top/bottom pair is one "základna větráku" (fan base,
+        // flat fallback color) and one genuinely open face. Which of
+        // top/bottom is the base isn't stated in the questionnaire text
+        // itself -- resolved 2026-07-08 by the user looking at the actual
+        // crops again: icon 132 (FanUp) shows a visible pedestal touching
+        // the BOTTOM of the image, icon 135 (FanDown) shows a mount
+        // hanging from the TOP (mirrored), and 126/129 (FanLeft/FanRight,
+        // side-mounted on a wall bracket with no clear up/down cue) default
+        // to the same "base = bottom" reading as 132.
+        struct FanEntry
+        {
+            int Icon;
+            bool BaseIsTop; // false = base is bottom
+        };
+
+        constexpr FanEntry kFanEntries[] = {
+            {126, false}, {129, false}, {132, false}, {135, true},
+        };
+
+        // Icons needing exactly ONE of the 4 side faces textured (the rest
+        // some mix of flat color / open), where mobile-eggbert has NO
+        // per-placement rotation to read the facing from (confirmed
+        // 2026-07-08: mobile-eggbert's Decor cell is just `{ icon; }`, no
+        // orientation field -- see NEXT.md §3). Facing was instead
+        // determined, icon by icon, from the actual crop image: an image
+        // with a genuine asymmetric feature offset toward one edge uses that
+        // edge (2D top/bottom -> CubeFace::PosZ/NegZ, 2D left/right ->
+        // CubeFace::NegX/PosX -- same convention as the FanLeft/Right/Up/Down
+        // icons already confirm mobile-eggbert uses). An image with NO
+        // reliable directional cue (the large majority -- most of these are
+        // small symmetric decorative icons, not oriented objects) defaults
+        // to PosZ; a symmetric icon looks identical on any one face, so this
+        // is a harmless tie-break, not a guess about unknown content.
+        enum class Pattern
+        {
+            SingleFaceRestColor,             // 1 side tex; other 5 = flat color
+            SingleFaceTopColorRestOpen,      // 1 side tex; top = color; other 4 = open
+            SingleFaceTopBottomColorRestOpen,// 1 side tex; top+bottom = color; other 3 sides = open
+            SingleFaceRestOpen,              // 1 side tex; other 5 = open (fully passable)
+            AxisRestColor,                   // 2 opposite sides tex; other 4 = color
+            AxisPlusTopBottomOtherSidesColor,// 2 opposite sides + top + bottom tex; other 2 sides = color
+        };
+
+        struct DirectionalEntry
+        {
+            int Icon;
+            Pattern EntryPattern;
+            CubeFace Primary; // single-face patterns: the textured face.
+                              // Axis patterns: one face of the textured pair
+                              // (its opposite is inferred).
+        };
+
+        constexpr CubeFace Opposite(CubeFace f)
+        {
+            switch (f)
+            {
+                case CubeFace::PosZ: return CubeFace::NegZ;
+                case CubeFace::NegZ: return CubeFace::PosZ;
+                case CubeFace::PosX: return CubeFace::NegX;
+                case CubeFace::NegX: return CubeFace::PosX;
+                case CubeFace::PosY: return CubeFace::NegY;
+                default:             return CubeFace::PosY;
+            }
+        }
+
+        constexpr DirectionalEntry kDirectionalEntries[] = {
+            // Group A: single face + 5 sides flat color. Confident facing:
+            // icon 392 has a light trim strip on the LEFT edge of the crop,
+            // icon 393 the matching dark trim on the RIGHT edge (a real
+            // matched pair from the "architectural-kit" stone set) -- every
+            // other icon in this group is a small symmetric/abstract
+            // decoration with no reliable edge cue, so defaults to PosZ.
+            {3, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {4, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {5, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {6, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {8, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {9, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {10, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {11, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {12, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {13, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {14, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {48, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {186, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {187, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {188, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {189, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {190, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {191, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {192, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {390, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {391, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {392, Pattern::SingleFaceRestColor, CubeFace::NegX}, // light trim on the crop's left edge
+            {393, Pattern::SingleFaceRestColor, CubeFace::PosX}, // dark trim on the crop's right edge
+            {394, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {395, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {396, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {397, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+
+            // Group B: single face + top color + other 4 (3 sides + bottom)
+            // open. Icons 74/75's own wording only states the textured side
+            // + top color + bottom open, leaving the other 2 sides
+            // unstated; treated as open here to match this fully-specified
+            // pattern (the closest confirmed analog) rather than left
+            // undefined -- flag for re-confirmation if that turns out wrong.
+            {19, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+            {20, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+            {21, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+            {28, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+            {74, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+            {75, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+
+            // Group C: single face + top AND bottom color + other 3 sides open.
+            {245, Pattern::SingleFaceTopBottomColorRestOpen, CubeFace::PosZ},
+
+            // Group E: single face + all other 5 faces open (fully passable
+            // except through the one textured face).
+            {66, Pattern::SingleFaceRestOpen, CubeFace::PosZ},
+
+            // Group G: 2 opposite side faces textured (an axis, not a single
+            // face) + all other 4 faces (top/bottom + the other 2 sides)
+            // flat color. Icon 400's crop is a symmetric archway with no
+            // left/right vs. front/back cue -- defaults to the Z axis.
+            {400, Pattern::AxisRestColor, CubeFace::PosZ},
+
+            // Group H: 2 opposite sides + top + bottom all textured, other 2
+            // sides flat color. Icon 49's crop shows a clear horizontal
+            // axle/dumbbell shape spanning left-right -> X axis.
+            {49, Pattern::AxisPlusTopBottomOtherSidesColor, CubeFace::PosX},
+
+            // NOT YET ADDED: icons 15/16/17/18 ("2 protilehlé strany + shora
+            // barva + zdola průhledné + z zbylých 2 bočních stran jedna
+            // průhledná a druhá barva") need BOTH an axis choice AND which
+            // of the 2 remaining perpendicular sides is open vs. colored --
+            // their crops (diagonal wedge cuts) didn't give a confident read
+            // for either part as of 2026-07-08. See NEXT.md §8.
         };
     }
 
@@ -116,6 +256,119 @@ namespace GalaxyEggbert::CNA
             auto& bottom = outFaces[static_cast<int>(CubeFace::NegY)];
             bottom.Visible = entry.BottomColor;
             bottom.Uv = entry.BottomColor ? SwatchUv(tileUv, kBottomSwatchV) : bottom.Uv;
+
+            return true;
+        }
+
+        for (const auto& fan : kFanEntries)
+        {
+            if (fan.Icon != icon)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                outFaces[i].Visible = true;
+                outFaces[i].Uv = tileUv;
+            }
+
+            const auto baseFace = fan.BaseIsTop ? CubeFace::PosY : CubeFace::NegY;
+            const auto openFace = fan.BaseIsTop ? CubeFace::NegY : CubeFace::PosY;
+            outFaces[static_cast<int>(baseFace)].Visible = true;
+            outFaces[static_cast<int>(baseFace)].Uv =
+                SwatchUv(tileUv, fan.BaseIsTop ? kTopSwatchV : kBottomSwatchV);
+            outFaces[static_cast<int>(openFace)].Visible = false;
+            return true;
+        }
+
+        for (const auto& entry : kDirectionalEntries)
+        {
+            if (entry.Icon != icon)
+            {
+                continue;
+            }
+
+            // Start from "all open" and turn faces on as the pattern needs --
+            // simpler than tracking 6 independent flags per pattern.
+            for (auto& face : outFaces)
+            {
+                face.Visible = false;
+                face.Uv = tileUv;
+            }
+
+            const auto setColor = [&](CubeFace f, float vFrac)
+            {
+                auto& face = outFaces[static_cast<int>(f)];
+                face.Visible = true;
+                face.Uv = SwatchUv(tileUv, vFrac);
+            };
+            const auto setTex = [&](CubeFace f)
+            {
+                auto& face = outFaces[static_cast<int>(f)];
+                face.Visible = true;
+                face.Uv = tileUv;
+            };
+            const auto vFracFor = [](CubeFace f)
+            {
+                if (f == CubeFace::PosY) return kTopSwatchV;
+                if (f == CubeFace::NegY) return kBottomSwatchV;
+                return kMidSwatchV;
+            };
+
+            switch (entry.EntryPattern)
+            {
+                case Pattern::SingleFaceRestColor:
+                    setTex(entry.Primary);
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        const auto f = static_cast<CubeFace>(i);
+                        if (f != entry.Primary)
+                        {
+                            setColor(f, vFracFor(f));
+                        }
+                    }
+                    break;
+                case Pattern::SingleFaceTopColorRestOpen:
+                    setTex(entry.Primary);
+                    setColor(CubeFace::PosY, kTopSwatchV);
+                    break;
+                case Pattern::SingleFaceTopBottomColorRestOpen:
+                    setTex(entry.Primary);
+                    setColor(CubeFace::PosY, kTopSwatchV);
+                    setColor(CubeFace::NegY, kBottomSwatchV);
+                    break;
+                case Pattern::SingleFaceRestOpen:
+                    setTex(entry.Primary);
+                    break;
+                case Pattern::AxisRestColor:
+                    setTex(entry.Primary);
+                    setTex(Opposite(entry.Primary));
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        const auto f = static_cast<CubeFace>(i);
+                        if (f != entry.Primary && f != Opposite(entry.Primary))
+                        {
+                            setColor(f, vFracFor(f));
+                        }
+                    }
+                    break;
+                case Pattern::AxisPlusTopBottomOtherSidesColor:
+                    setTex(entry.Primary);
+                    setTex(Opposite(entry.Primary));
+                    setTex(CubeFace::PosY);
+                    setTex(CubeFace::NegY);
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        const auto f = static_cast<CubeFace>(i);
+                        if (f != entry.Primary && f != Opposite(entry.Primary) &&
+                            f != CubeFace::PosY && f != CubeFace::NegY)
+                        {
+                            setColor(f, kMidSwatchV);
+                        }
+                    }
+                    break;
+            }
 
             return true;
         }

@@ -159,6 +159,7 @@ namespace GalaxyEggbert::CNA
         m_lastAnimPhase = animPhase;
 
         Easy3D::CubeBatch animBatch;
+        std::vector<Easy3D::DirectionalCubeItem> animDirectionalItems;
         for (const auto& block : m_animBlocks)
         {
             const int icon = AnimIcon(block.base, animPhase);
@@ -169,10 +170,39 @@ namespace GalaxyEggbert::CNA
             }
             const Easy3D::CubeBatch::Vector3 center(block.x, block.y, block.z);
             const Easy3D::CubeBatch::Vector3 size(1.0f, 1.0f, 1.0f);
-            animBatch.Add(center, size, m_tileAtlas->GetTileUv(icon));
+            const auto tileUv = m_tileAtlas->GetTileUv(icon);
+
+            // The 4 fan tiles are both animated (blade spin) AND, per
+            // GEDirectionalCubeTiles.cpp, DirectionalCube (base + open face)
+            // -- check the table here too, or fan blocks would always fall
+            // through to a plain untextured-on-every-face UniformCube and
+            // the table entry would never actually be used (found
+            // 2026-07-08 via a live block/vertex-count mismatch on the fan
+            // demo block in worlds3d/world001.vwr). Looked up by block.base
+            // (the animation group's base icon, e.g. FanLeft=126), NOT by
+            // icon (the current frame, e.g. 126/127/128) -- the table only
+            // has an entry for the base icon, and the face
+            // pattern/visibility must stay constant across the animation;
+            // only tileUv (the actually-sampled texture) should change
+            // frame to frame.
+            Easy3D::DirectionalCubeFace directionalFaces[6];
+            if (TryGetDirectionalCubeFaces(static_cast<int>(block.base), tileUv, directionalFaces))
+            {
+                Easy3D::DirectionalCubeItem item;
+                item.Center = center;
+                item.Size = size;
+                for (int face = 0; face < 6; ++face)
+                {
+                    item.Faces[face] = directionalFaces[face];
+                }
+                animDirectionalItems.push_back(item);
+                continue;
+            }
+
+            animBatch.Add(center, size, tileUv);
         }
 
-        if (animBatch.Empty())
+        if (animBatch.Empty() && animDirectionalItems.empty())
         {
             // All animated tiles are in a hidden frame this phase (e.g. Temp's
             // 2 blank frames out of 20) — avoid constructing a zero-size GPU
@@ -184,6 +214,10 @@ namespace GalaxyEggbert::CNA
         std::vector<Easy3D::CubeVertex> animVertices;
         std::vector<std::uint32_t> animIndices;
         Easy3D::BuildCubeMesh(animBatch, animVertices, animIndices);
+        for (const auto& item : animDirectionalItems)
+        {
+            Easy3D::AppendDirectionalCubeMesh(item, animVertices, animIndices);
+        }
         m_animRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, animVertices, animIndices);
     }
 
