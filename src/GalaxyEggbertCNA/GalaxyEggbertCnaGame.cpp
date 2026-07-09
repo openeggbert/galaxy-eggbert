@@ -404,6 +404,9 @@ namespace GalaxyEggbert::CNA
 
             const float yaw = blupi_.GetYaw();
 
+            Easy3D::Camera3D::Vector3 rawEye;
+            Easy3D::Camera3D::Vector3 rawTarget;
+
             if (cameraMode_ == CameraMode::FirstPerson)
             {
                 // First-person/player-view camera (2026-07-05): look from
@@ -419,12 +422,11 @@ namespace GalaxyEggbert::CNA
                 constexpr float kLookUpTilt = 2.5f;
                 const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
                 const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
-                const Easy3D::Camera3D::Vector3 eye(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
-                camera_.SetPosition(eye);
-                camera_.SetTarget(Easy3D::Camera3D::Vector3(
-                    eye.X + std::sin(yaw) * kLookDistance,
-                    eye.Y + lookYOffset,
-                    eye.Z - std::cos(yaw) * kLookDistance));
+                rawEye = Easy3D::Camera3D::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
+                rawTarget = Easy3D::Camera3D::Vector3(
+                    rawEye.X + std::sin(yaw) * kLookDistance,
+                    rawEye.Y + lookYOffset,
+                    rawEye.Z - std::cos(yaw) * kLookDistance);
             }
             else
             {
@@ -437,14 +439,38 @@ namespace GalaxyEggbert::CNA
                 constexpr float kChaseDistance = 4.0f;
                 constexpr float kChaseHeight = 2.2f;
                 constexpr float kChaseLookHeight = 1.0f;
-                const Easy3D::Camera3D::Vector3 target(
+                rawTarget = Easy3D::Camera3D::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
-                camera_.SetPosition(Easy3D::Camera3D::Vector3(
-                    target.X - std::sin(yaw) * kChaseDistance,
-                    target.Y + kChaseHeight - kChaseLookHeight,
-                    target.Z + std::cos(yaw) * kChaseDistance));
-                camera_.SetTarget(target);
+                rawEye = Easy3D::Camera3D::Vector3(
+                    rawTarget.X - std::sin(yaw) * kChaseDistance,
+                    rawTarget.Y + kChaseHeight - kChaseLookHeight,
+                    rawTarget.Z + std::cos(yaw) * kChaseDistance);
             }
+
+            // Exponential damping toward the raw eye/target computed above
+            // (2026-07-09) -- reported live: snapping the camera straight to
+            // Blupi's position/facing every frame moves too fast/feels
+            // jerky, especially on turns. kCameraDampingPerSecond is the
+            // fraction of the remaining distance closed per second; framerate-
+            // independent via the standard `1 - exp(-rate * dt)` alpha
+            // (not a plain `rate * dt` lerp, which would vary with
+            // framerate). Snaps instantly on the very first frame so
+            // load-time doesn't start with a lerp-in from the origin.
+            constexpr float kCameraDampingPerSecond = 8.0f;
+            if (!cameraSmoothedInitialized_)
+            {
+                cameraEyeSmoothed_ = rawEye;
+                cameraTargetSmoothed_ = rawTarget;
+                cameraSmoothedInitialized_ = true;
+            }
+            else
+            {
+                const float alpha = 1.0f - std::exp(-kCameraDampingPerSecond * dt);
+                cameraEyeSmoothed_ = Easy3D::Camera3D::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
+                cameraTargetSmoothed_ = Easy3D::Camera3D::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
+            }
+            camera_.SetPosition(cameraEyeSmoothed_);
+            camera_.SetTarget(cameraTargetSmoothed_);
 
             // Third-person placeholder model animation clip (2026-07-09) --
             // advanced regardless of camera mode so switching into

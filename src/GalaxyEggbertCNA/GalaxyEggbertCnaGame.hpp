@@ -58,6 +58,18 @@ namespace GalaxyEggbert::CNA
         // Drives terrainEffect_'s View/Projection every frame.
         Easy3D::Camera3D camera_;
 
+        // Smoothed camera eye/target (2026-07-09) -- both camera modes below
+        // compute a raw "desired" eye/target from Blupi's live
+        // position/yaw every frame; snapping camera_ straight to that
+        // value feels too fast/jerky (reported live). Instead the raw
+        // value is exponentially damped toward camera_'s actual
+        // position/target each frame (see kCameraDampingPerSecond in the
+        // .cpp). Initialized lazily on the first Update() so load-time
+        // doesn't spend a visible lerp-in from the origin.
+        bool cameraSmoothedInitialized_ = false;
+        Easy3D::Camera3D::Vector3 cameraEyeSmoothed_{0.0f, 0.0f, 0.0f};
+        Easy3D::Camera3D::Vector3 cameraTargetSmoothed_{0.0f, 0.0f, 0.0f};
+
         // Parses worlds/world001.txt (plan.md Phase 4).
         GEWorldRuntime worldRuntime_;
 

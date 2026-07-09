@@ -225,6 +225,40 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Smoothed camera + fixed FanLeft/FanRight's base/open face axis (2026-07-09).** User report:
+  the camera moves too fast/snaps, and the horizontal fans (větráky) need work.
+  - **Camera damping**: both `FirstPerson` and `ThirdPersonModel` cameras in
+    `GalaxyEggbertCnaGame::Update()` used to call `camera_.SetPosition()`/`SetTarget()` straight from
+    Blupi's live position/yaw every frame — an instant snap, not a real camera. Each branch now only
+    computes a "raw" desired eye/target; both feed into one shared, framerate-independent exponential
+    damping step (`1 - exp(-kCameraDampingPerSecond * dt)`, `kCameraDampingPerSecond = 8`) that lerps
+    `camera_`'s actual position/target toward the raw value. New `cameraEyeSmoothed_`/
+    `cameraTargetSmoothed_`/`cameraSmoothedInitialized_` members hold the smoothed state across
+    frames; the first `Update()` snaps instantly (no lerp-in from the origin at load).
+  - **Fan base/open axis fix**: `GEDirectionalCubeTiles.cpp`'s `kFanEntries` hardcoded the
+    "base"/"open" face pair to the Y axis (top/bottom) for all 4 fan tiles. That's correct for
+    FanUp (132, base at bottom, open at top) and FanDown (135, base at top, open at bottom) — both
+    unchanged here — but wrong for FanLeft (126)/FanRight (129), which blow horizontally and had
+    defaulted to the same Y-axis treatment for lack of an up/down cue in their crops (2026-07-08).
+    Fixed: `FanEntry` now stores explicit `BaseFace`/`OpenFace` `CubeFace` values instead of a
+    `BaseIsTop` bool, and the fan-processing loop iterates all 6 `CubeFace` values (was hardcoded to
+    indices 0-3, the Y-axis case's 4 side faces) skipping the entry's own base/open pair. FanLeft
+    now uses `PosX` (base, blue-tinted swatch) / `NegX` (open, blows left); FanRight uses `NegX` base
+    / `PosX` open (blows right) — matching the same left→`NegX`/right→`PosX` convention this same
+    file already documents for `kDirectionalEntries`. The horizontal base face has no "shora"/"zdola"
+    wording to anchor a swatch row to, so it uses `kMidSwatchV` instead of `kTopSwatchV`/
+    `kBottomSwatchV`.
+  - Also confirmed, not changed: fan tile animation (3-frame cycling per icon, `GETerrainRenderer.cpp`
+    lines ~131-134) was already correct and independent of this axis fix; the "blue tint" swatch
+    color was already genuinely blue (verified by direct pixel sampling in the prior session), so the
+    only real defect was the axis choice.
+  - **Verified**: clean build; `GalaxyEggbertWorldsTests` (63/63); `VerifyBlupiMovement`/
+    `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`); live headless run
+    with no crash/errors and the existing terrain-visibility diagnostic still reporting real textured
+    samples; debug-camera repositioning (to inspect the sample world's `kFanEntries` demo row) and a
+    temporary world-scan print used to confirm block coordinates, both reverted before commit
+    (confirmed via `git diff`).
+
 - **Fixed real billboard transparency — element.png/object-m.png/explo.png/blupi.png icon sheets
   render with solid opaque black squares instead of transparent backgrounds (2026-07-09).** Found
   live from a user screenshot: every `MoveObject` billboard showed a black box around its sprite.

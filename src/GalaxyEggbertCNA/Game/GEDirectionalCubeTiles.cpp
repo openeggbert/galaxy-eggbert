@@ -66,24 +66,37 @@ namespace GalaxyEggbert::CNA
             {107, false, true},
         };
 
-        // The 4 ventilator/fan tiles: 4 side faces always textured; the
-        // remaining top/bottom pair is one "základna větráku" (fan base,
-        // flat fallback color) and one genuinely open face. Which of
-        // top/bottom is the base isn't stated in the questionnaire text
-        // itself -- resolved 2026-07-08 by the user looking at the actual
-        // crops again: icon 132 (FanUp) shows a visible pedestal touching
-        // the BOTTOM of the image, icon 135 (FanDown) shows a mount
-        // hanging from the TOP (mirrored), and 126/129 (FanLeft/FanRight,
-        // side-mounted on a wall bracket with no clear up/down cue) default
-        // to the same "base = bottom" reading as 132.
+        // The 4 ventilator/fan tiles: 4 of the 6 faces always textured; the
+        // remaining opposite pair is one "základna větráku" (fan base, flat
+        // fallback color) and one genuinely open face (where the air exits).
+        // The axis of that pair follows the fan's real blow direction, not
+        // always top/bottom: FanUp (132) blows up (base at bottom, open at
+        // top) and FanDown (135) blows down (base at top, open at bottom),
+        // both confirmed 2026-07-08 from the actual crops (pedestal
+        // touching the bottom of 132's image; mount hanging from the top of
+        // 135's, mirrored). FanLeft (126)/FanRight (129) blow horizontally,
+        // so their base/open pair is the X axis, not Y (fixed 2026-07-09 --
+        // previously both defaulted to the vertical fans' Y-axis treatment
+        // for lack of an up/down cue, which put the open/blowing face on
+        // top instead of facing sideways); NegX/PosX = left/right matches
+        // the same left/right convention documented below for
+        // kDirectionalEntries. The base face's flat-color swatch uses
+        // kTopSwatchV/kBottomSwatchV when the base is Y-aligned (matching
+        // its "shora"/"zdola" wording) and kMidSwatchV for the X-aligned
+        // 126/129 base, which has no such wording to anchor to.
         struct FanEntry
         {
             int Icon;
-            bool BaseIsTop; // false = base is bottom
+            CubeFace BaseFace;
+            CubeFace OpenFace;
+            float BaseSwatchV;
         };
 
         constexpr FanEntry kFanEntries[] = {
-            {126, false}, {129, false}, {132, false}, {135, true},
+            {126, CubeFace::PosX, CubeFace::NegX, kMidSwatchV},    // FanLeft: blows toward -X
+            {129, CubeFace::NegX, CubeFace::PosX, kMidSwatchV},    // FanRight: blows toward +X
+            {132, CubeFace::NegY, CubeFace::PosY, kBottomSwatchV}, // FanUp: blows up
+            {135, CubeFace::PosY, CubeFace::NegY, kTopSwatchV},    // FanDown: blows down
         };
 
         // Icons needing exactly ONE of the 4 side faces textured (the rest
@@ -275,18 +288,20 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < 6; ++i)
             {
+                const auto face = static_cast<CubeFace>(i);
+                if (face == fan.BaseFace || face == fan.OpenFace)
+                {
+                    continue;
+                }
                 outFaces[i].Visible = true;
                 outFaces[i].Uv = tileUv;
             }
 
-            const auto baseFace = fan.BaseIsTop ? CubeFace::PosY : CubeFace::NegY;
-            const auto openFace = fan.BaseIsTop ? CubeFace::NegY : CubeFace::PosY;
-            outFaces[static_cast<int>(baseFace)].Visible = true;
-            outFaces[static_cast<int>(baseFace)].Uv =
-                SwatchUv(tileUv, fan.BaseIsTop ? kTopSwatchV : kBottomSwatchV);
-            outFaces[static_cast<int>(openFace)].Visible = false;
+            outFaces[static_cast<int>(fan.BaseFace)].Visible = true;
+            outFaces[static_cast<int>(fan.BaseFace)].Uv = SwatchUv(tileUv, fan.BaseSwatchV);
+            outFaces[static_cast<int>(fan.OpenFace)].Visible = false;
             return true;
         }
 
