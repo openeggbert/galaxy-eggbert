@@ -215,6 +215,36 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Populated the sample world with all 67 remaining confirmed/named `ObjectType`s (2026-07-09,
+  user request, §8 old task 4 — "populate the rest of the ~68 confirmed types").** The storage
+  mechanism itself (previous entry below) needed no changes — placing a new type is pure data
+  entry, one `PlaceMoveObject` call per type. Added a `CatalogEntry{type, name}` table in
+  `tools/GenerateSampleWorld3D.cpp` covering every named entry in
+  `include/GalaxyEggbert/def/ObjectType.hpp` except `ObjectType0` (null slot) and the
+  "Unidentified/reserved" block (kept contiguous for level-file round-trips only, no confirmed
+  real behavior to place faithfully) — 47/48 (platform-lift variants), 2/3/96/97 (patrol/follow
+  enemies), 4 (bulldozer), 5/7/21/39 (collectibles), 49/50/51 (keys), 13/19/24/25/26/28/29/30/31/
+  40/46/55 (vehicle/power-up pickups), 8/9/10/11/12/36/37/38/41/42/53/90/91/92/93/98/99/100
+  (explosions/effects, including `ObjectType12` = crate — the first actual crate placed in the demo
+  world), 14/15/34/35 (water/goo effects), 23 (projectile), 16/17/18/20/32/33/44/54 (patrol walker
+  enemies), 22/27/52/56/57/58 (moving level objects), 200/201/202/203 (Blupi skin variants). Laid
+  out in a dedicated 9-column × 8-row grid (grid x=10.., z=75.., 3 units apart, y=1 fixed height,
+  no path — `posEnd == posStart` for all of them, matching the egg's simplification, since
+  rendering doesn't consume `posEnd` yet regardless) — far from every other demo feature and
+  Blupi's tested spawn/staircase/wall-collision path. Types 12/47/48 join the existing type-1 lift
+  in `GEObjectIcons::IsUniformCubeObject`'s `UniformCube` path; the other 64 render as billboards.
+  **Verified**: clean build; `VerifyBlupiMovement` all-pass against the regenerated world (2838
+  blocks, unchanged — these are `MoveObject`s, not terrain); a live run of the default `.vwr` world
+  now reports "69 MoveObject(s) parsed for billboard rendering" (67 catalog + the pre-existing egg
+  + lift, exactly as expected) and "4 platform-lift/crate cube object(s) built" (types 1/12/47/48,
+  exactly as expected) — deterministic proof the full catalog round-trips correctly, with no
+  crash. Several temporary debug-camera surveys (reverted before committing) directly confirmed
+  multiple distinct catalog entries rendering with correct, recognizable textures at different
+  positions in the grid (the crate's wood-crate texture, two tread-textured lift variants with
+  distinct icon content) — not all 67 were individually eyeballed (impractical at this scale, and
+  unnecessary: the exact-count match already proves every single one loaded and dispatched to the
+  right render path; per-type icon *correctness* was separately proven for the general billboard/
+  `UniformCube` machinery well before this task).
 - **MoveObjects (pickups, enemies, platform lifts, crates) can now be embedded directly in the 3D
   `.vwr` world format itself (2026-07-09, user request, not from §8's numbered list) — no more
   requiring a mobile-eggbert `.txt` file to see any of them render.** Previously only terrain
@@ -980,24 +1010,14 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    meaningfully reduced.
 3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-4. **Optional: populate `tools/GenerateSampleWorld3D.cpp` with more of the ~70 confirmed real-
-   behavior `ObjectType`s** (user asked for "all confirmed MoveObject types" when the 3D-format
-   storage mechanism itself was designed, §3, 2026-07-09) — the mechanism now supports any
-   `ObjectType` generically (it just stores the numeric id + position), so this is pure data-entry
-   (one `PlaceMoveObject` call per type, picking a real-behavior type from
-   `mobile-eggbert-reference/03-objects.md`'s catalog) rather than new capability work, similar in
-   shape to the `DirectionalCube`/`InnerFlatPlate` per-icon backfills. Only 2 types (egg, platform
-   lift) are placed so far, to prove the mechanism round-trips a static AND a moving-path object.
-   Low priority — every type already renders correctly via the existing `GEObjectIcons`/billboard/
-   `UniformCube` code paths when loaded from a real mobile-eggbert `.txt` file; this task is purely
-   about making them visible in the synthetic `.vwr` demo world too.
 
 Everything else that had accumulated in this section is done (2026-07-09): `GEInnerFlatPlateTiles`
 axis spot-check found and fixed icons 368-372 (§3); `BigDecor:` billboard rendering,
 platform-lift/crate `UniformCube` objects, `GalaxyEggbertWorldsTests` re-verification, the
-clean-exit-path investigation, and 3D-format MoveObject storage are all complete (§3). Task 1 (6
-remaining `DirectionalCube` icons) and task 2 (seam-line artifact) above are the only substantive
-open items, plus tasks 3-4 (both explicitly not urgent).
+clean-exit-path investigation, 3D-format MoveObject storage, and populating the sample world with
+all 67 remaining confirmed `ObjectType`s are all complete (§3). Task 1 (6 remaining
+`DirectionalCube` icons) and task 2 (seam-line artifact) above are the only substantive open items,
+plus task 3 (explicitly not urgent).
 
 ## 9. Do not do yet
 

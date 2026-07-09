@@ -203,6 +203,123 @@ int main(int argc, char** argv)
         PlaceMoveObject(world, lift);
     }
 
+    // Full ObjectType catalog demo (2026-07-09, user request: "all confirmed
+    // MoveObject types"): one static placement each for every remaining
+    // named/confirmed-real-behavior ObjectType in include/GalaxyEggbert/def/
+    // ObjectType.hpp (67 of the ~69 total named entries -- ObjectType1/6
+    // already placed above). Excludes ObjectType0 (null/inactive slot) and
+    // the "Unidentified/reserved" block (kept contiguous for level-file
+    // round-trips only, no confirmed real behavior -- would just be a guess
+    // to place them). A fresh, dedicated grid (z=75-96, well past every
+    // other demo/terrain feature and Blupi's tested spawn/staircase/wall-
+    // collision path) laid out 9 columns x 8 rows, 3 grid units apart, so
+    // each renders without overlapping its neighbors in a survey screenshot.
+    // Every entry uses the same simplification as the egg above (posEnd ==
+    // posStart, no path) -- rendering doesn't consume posEnd yet regardless
+    // (see GalaxyEggbertCnaGame.cpp's billboard/UniformCube draw code), and
+    // most of these types have no confirmed real path shape to encode
+    // faithfully anyway. Types 12/47/48 (crate, platform-lift variants)
+    // render as UniformCube like the type-1 lift above (GEObjectIcons::
+    // IsUniformCubeObject); everything else renders as a billboard.
+    {
+        struct CatalogEntry { ObjectType type; const char* name; };
+        static const CatalogEntry kCatalog[] = {
+            {ObjectType::ObjectType47, "platform lift, rightward carry bonus"},
+            {ObjectType::ObjectType48, "platform lift, leftward carry bonus"},
+            {ObjectType::ObjectType2,  "standard patrol enemy"},
+            {ObjectType::ObjectType3,  "patrol enemy variant"},
+            {ObjectType::ObjectType96, "follow enemy variant 1"},
+            {ObjectType::ObjectType97, "follow enemy variant 2"},
+            {ObjectType::ObjectType4,  "bulldozer"},
+            {ObjectType::ObjectType5,  "treasure"},
+            {ObjectType::ObjectType7,  "level-exit goal marker"},
+            {ObjectType::ObjectType21, "secret-level exit marker"},
+            {ObjectType::ObjectType39, "sparkle trail"},
+            {ObjectType::ObjectType49, "key 1"},
+            {ObjectType::ObjectType50, "key 2"},
+            {ObjectType::ObjectType51, "key 3"},
+            {ObjectType::ObjectType13, "helicopter"},
+            {ObjectType::ObjectType19, "jeep"},
+            {ObjectType::ObjectType24, "skateboard"},
+            {ObjectType::ObjectType25, "shield"},
+            {ObjectType::ObjectType26, "suction-cup power-up"},
+            {ObjectType::ObjectType28, "tank"},
+            {ObjectType::ObjectType29, "bullet ammo pack"},
+            {ObjectType::ObjectType30, "drink power-up"},
+            {ObjectType::ObjectType31, "charge/cloud power-up"},
+            {ObjectType::ObjectType40, "mirror/invert power-up"},
+            {ObjectType::ObjectType46, "balloon"},
+            {ObjectType::ObjectType55, "dynamite stick"},
+            {ObjectType::ObjectType8,  "primary explosion"},
+            {ObjectType::ObjectType9,  "secondary small explosion"},
+            {ObjectType::ObjectType10, "tertiary explosion"},
+            {ObjectType::ObjectType11, "fan-hit shockwave"},
+            {ObjectType::ObjectType12, "crate"},
+            {ObjectType::ObjectType36, "pollution/cloud puff"},
+            {ObjectType::ObjectType37, "clear/dissipate effect"},
+            {ObjectType::ObjectType38, "electric arc"},
+            {ObjectType::ObjectType41, "invert-start particle burst"},
+            {ObjectType::ObjectType42, "invert-stop particle burst"},
+            {ObjectType::ObjectType53, "tentacle hazard"},
+            {ObjectType::ObjectType90, "electric spark"},
+            {ObjectType::ObjectType91, "small flash"},
+            {ObjectType::ObjectType92, "long energy arc"},
+            {ObjectType::ObjectType93, "tiny flash"},
+            {ObjectType::ObjectType98, "water splash variant 1"},
+            {ObjectType::ObjectType99, "water splash variant 2"},
+            {ObjectType::ObjectType100,"water splash variant 3"},
+            {ObjectType::ObjectType14, "water plouf splash"},
+            {ObjectType::ObjectType15, "water bubble rising"},
+            {ObjectType::ObjectType34, "goo/glue particle"},
+            {ObjectType::ObjectType35, "small plouf splash"},
+            {ObjectType::ObjectType23, "fired projectile"},
+            {ObjectType::ObjectType16, "spider/arthropod"},
+            {ObjectType::ObjectType17, "fish"},
+            {ObjectType::ObjectType18, "patrol variant"},
+            {ObjectType::ObjectType20, "bird"},
+            {ObjectType::ObjectType32, "blupih"},
+            {ObjectType::ObjectType33, "blupit"},
+            {ObjectType::ObjectType44, "wasp/bee"},
+            {ObjectType::ObjectType54, "large creature"},
+            {ObjectType::ObjectType22, "door opening animation"},
+            {ObjectType::ObjectType27, "magic track sparkle"},
+            {ObjectType::ObjectType52, "bridge construction"},
+            {ObjectType::ObjectType56, "dynamite fuse"},
+            {ObjectType::ObjectType57, "shield trail sparkle"},
+            {ObjectType::ObjectType58, "shield disappear effect"},
+            {ObjectType::ObjectType200,"Blupi skin: default"},
+            {ObjectType::ObjectType201,"Blupi skin: variant 1"},
+            {ObjectType::ObjectType202,"Blupi skin: variant 2"},
+            {ObjectType::ObjectType203,"Blupi skin: variant 3"},
+        };
+
+        constexpr int kCatalogCols = 9;
+        constexpr int kCatalogBaseX = 10;
+        constexpr int kCatalogBaseZ = 75;
+        constexpr int kCatalogSpacing = 3;
+        constexpr float kCatalogY = 1.0f;
+
+        int index = 0;
+        for (const CatalogEntry& entry : kCatalog)
+        {
+            const int col = index % kCatalogCols;
+            const int row = index / kCatalogCols;
+            const float x = static_cast<float>(kCatalogBaseX + col * kCatalogSpacing);
+            const float z = static_cast<float>(kCatalogBaseZ + row * kCatalogSpacing);
+
+            MoveObjectRecord record;
+            record.type = entry.type;
+            record.posStartX = x; record.posStartY = kCatalogY; record.posStartZ = z;
+            record.posEndX = x; record.posEndY = kCatalogY; record.posEndZ = z;
+            PlaceMoveObject(world, record);
+            ++index;
+        }
+
+        std::cout << "GenerateSampleWorld3D: placed " << index
+                  << " catalog MoveObject(s) (grid x=" << kCatalogBaseX << ".., z=" << kCatalogBaseZ
+                  << "..)." << std::endl;
+    }
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is
