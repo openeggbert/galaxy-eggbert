@@ -9,6 +9,13 @@ not bulk material. Treat this file's "resolved" markers on rendering-adjacent it
 narration of what was believed on 2026-07-05, not current fact — `15-3d-render-mapping-design.md`
 §10 is the current source of truth.
 
+**Status update (2026-07-09):** the render-mode *decisions* recorded below as "resolved" are now
+also fully *implemented* in `GalaxyEggbertCNA`, not just decided — all 4 confirmed render modes
+(`UniformCube`/`Billboard`/`DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/
+`TripleCrossBillboard`), water, `BigDecor` billboards, and platform-lift/crate `UniformCube`
+objects are complete (`NEXT.md` §3). This file's own "resolved" markers below still only describe
+the design decision, not code status — check `NEXT.md` for what's actually shipped.
+
 - ~~How should mobile-eggbert's objects/elements (all `ObjectType`s, `03-objects.md`) be rendered
   in 3D at all?~~ **Resolved — approved 2026-07-05, terrain-side correction 2026-07-06** — see
   `15-3d-render-mapping-design.md`: default `Billboard` for ~68 of ~70 real `ObjectType`s, with

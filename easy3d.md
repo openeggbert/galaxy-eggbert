@@ -11,6 +11,15 @@ facts, rationale, and recommendations captured below are preserved as the histor
 those decisions were made; do not read "not yet built"/"does not exist" statements below as
 describing the current state — check `NEXT.md` for that.
 
+**Status update (2026-07-08):** `GalaxyEggbertSimple3D` (referred to throughout this document as
+"the current Simple3D path") is now historical reference only — it is not built, fixed, or
+maintained going forward (see `CLAUDE.md`'s "Current Direction Lock"). By 2026-07-09,
+`GalaxyEggbertCNA` reached terrain/object rendering parity with everything terrain/object-related
+this document analyzes (all 4 tile render modes, water, `MoveObject`/`BigDecor` billboards,
+platform-lift/crate objects, face culling) — the remaining gap to Simple3D is Blupi's visible
+sprite, HUD, sound, and gameplay logic (§12's open questions below are mostly resolved by now; see
+inline annotations).
+
 ---
 
 ## 1. Executive Summary
@@ -545,19 +554,36 @@ with `E3D-MIG-*` IDs. Summary of phases:
 
 1. **Target/source-tree naming:** confirm or override the recommendation in §9
    (`GalaxyEggbertCNA` / `src/GalaxyEggbertCNA/`) vs. the `Easy3D`-named alternative.
+
+   > **Resolved (2026-07-01):** `GalaxyEggbertCNA` / `src/GalaxyEggbertCNA/`, exactly as
+   > recommended — this is what actually got built.
 2. **Mobile Eggbert library target:** would you like to separately approve a future
    mobile-eggbert-side task to add an `add_library()` target (e.g. for `Tables`, `Def`,
    `GameData`, `ObjectType`/`SoundChannel` enums only — not `Decor`/`Pixmap`/`Sound`) so those
    pieces can be linked instead of copied? This would need to be its own approved task against
    `../mobile-eggbert`, not part of this migration.
+
+   > **Still open as of 2026-07-09** (`plan.md` `E3D-MIG-015`) — mobile-eggbert has no
+   > `add_library()` target today; nothing has changed here. Not blocking current work, since
+   > `ObjectType`/`SoundChannel` turned out to already be numerically identical (see Q4 below) —
+   > no reuse-via-linking is actually needed yet.
 3. **Asset strategy:** sibling-path read at runtime, build-time copy, or symlink, for reusing
    `../mobile-eggbert/Content/*` and `../mobile-eggbert/worlds/*` (§9, CMake integration notes)?
+
+   > **Resolved (2026-07-01, implemented `E3D-MIG-030`):** build-time copy, via a `POST_BUILD`
+   > `copy_directory` step in `CMakeLists.txt` — exactly the recommended default. Symlinks were
+   > rejected as fragile on Windows/CI, matching this document's own §9 leaning.
 4. **Copy-with-approval items:** do you want to proceed (in a future task) with copying
    `ObjectType`, `SoundChannel`, `Def` constants, and/or `GameData`'s byte layout into
    `include/GalaxyEggbert/` verbatim, given galaxy-eggbert already has its own
    `include/GalaxyEggbert/def/ObjectType.hpp` and `SoundChannel.hpp`? These need a parity check
    against mobile-eggbert's versions — are they already identical, or do they need to be
    reconciled?
+
+   > **`ObjectType`/`SoundChannel` resolved (2026-07-01, `E3D-MIG-039`):** already identical —
+   > both sides declare the same 204/93 numeric IDs, verified programmatically. No copying needed;
+   > nothing was changed in either repository. **`GameData`'s byte layout is still open** — see Q7
+   > below, unchanged.
 5. **Where should the Easy3D rendering gap (§7.3) be filled** — inside `../easy-3d` itself (its
    own roadmap Phase 3/4), or as a thin adapter living only in `GalaxyEggbertCNA`? This affects
    whether `../easy-3d` needs a follow-up task of its own.
@@ -576,9 +602,19 @@ with `E3D-MIG-*` IDs. Summary of phases:
    `CLAUDE.md`/`NEXT.md`/`plan.md` be updated now to describe the CNA/Easy3D target as the
    near-term direction (while noting it isn't buildable yet)? This task updates `plan.md` per its
    instructions but leaves `README.md`/`CLAUDE.md`/`NEXT.md` untouched pending your decision.
+
+   > **Resolved, long since overtaken by events:** the second option, and then some —
+   > `CLAUDE.md`/`NEXT.md`/`plan.md`/`README.md` all now consistently describe `GalaxyEggbertCNA`
+   > as the actively developed target (not just "near-term direction") and
+   > `GalaxyEggbertSimple3D` as historical reference only (locked 2026-07-05, Simple3D frozen
+   > 2026-07-08) — a full documentation pass across all of these plus `ANDROID.md`/`WINDOWS.md`
+   > confirmed this consistency 2026-07-09.
 7. **Save-data compatibility:** is byte-level save compatibility with mobile-eggbert's
    `GameData` format (640-byte layout) actually a goal, or is a fresh save format acceptable for
    galaxy-eggbert? This affects whether §5.6's reuse strategy is worth pursuing at all.
+
+   > **Still open as of 2026-07-09** — no save system exists yet in `GalaxyEggbertCNA` at all
+   > (Phase 9/10 in `plan.md`, not started), so this hasn't needed answering yet.
 8. **Lua:** confirmed out of scope for the first migration per the task brief — no action needed
    now, but flagging that `docs/QUESTIONS.md` in `../easy-3d` treats it as open too, so the two
    repos' timelines should probably be discussed together later.

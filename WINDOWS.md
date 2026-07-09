@@ -28,8 +28,11 @@ copies runtime DLLs (`libwinpthread-1.dll`, or `SDL3.dll`/`SDL3_image.dll`/`SDL3
 environment on a machine without those DLLs on `PATH` will fail to launch. The sibling `../cna`
 repository's `cmake/ThirdPartySDL.cmake` already provides reusable helper functions for exactly
 this (`cna_copy_mingw_runtime(target)`, `cna_copy_sdl_runtime(target)`), but this repo's
-`CMakeLists.txt` does not currently call them for either target. Wiring these up is a real,
-open task, not yet scheduled — see `NEXT.md` for the current task list.
+`CMakeLists.txt` does not currently call them for either target. Wiring these up is a real, open
+gap — not currently tracked in `NEXT.md` (which is scoped to `GalaxyEggbertCNA`'s active
+Linux-focused development), so raise it explicitly if a portable Windows build is actually needed.
+Lower priority for `GalaxyEggbertSimple3D` specifically, since that target is historical reference
+only as of 2026-07-08 and not built/fixed going forward (see `CLAUDE.md`).
 
 ### Linux / Web / Android
 

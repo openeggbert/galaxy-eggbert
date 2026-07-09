@@ -16,7 +16,8 @@ Default world configuration:
 - chunk storage: local palette + adaptive bit-packing,
 - world file magic: `VWR1`,
 - chunk payload magic: `VCH1`,
-- empty chunks are skipped in the world file.
+- empty chunks are skipped in the world file (a chunk counts as empty only when it is **both**
+  all-air **and** has no sparse extra metadata — see "Empty Chunks" below).
 
 The default `100³` world is only the first practical configuration. The format should not be treated as permanently limited to this size. Future versions may support larger or non-cubic worlds by storing `chunksX`, `chunksY`, and `chunksZ` separately.
 
@@ -197,6 +198,14 @@ No palette and no packed block data are stored for empty chunks.
 
 This is important because many 3D worlds contain large empty areas.
 
+**"Empty" means both conditions hold, not just an all-air block palette:** a chunk with real
+blocks is obviously not empty, but a chunk that is *entirely air* still counts as non-empty if it
+carries any sparse extra metadata (see "Extra Metadata Section" below) — for example a `MoveObject`
+anchored on an otherwise-bare chunk. Found and fixed as a real bug (2026-07-09): the runtime
+`Chunk::isEmpty()` originally checked only the block palette, so `World::saveToFile()` silently
+dropped a chunk's metadata whenever that chunk had no real blocks. `Chunk::isEmpty()` now also
+requires `extraMetadata.empty()`.
+
 ## Chunk Payload `VCH1`
 
 The chunk payload is used inside the world file, but it can also be serialized separately.
@@ -276,6 +285,22 @@ localBlockIndex = localX + localY * chunkSize + localZ * chunkSize * chunkSize;
 ```
 
 The first palette index is stored in the least significant bits of the first `uint64_t` word.
+
+### Real usage example: embedding MoveObjects (2026-07-09)
+
+`GalaxyEggbert::MoveObjectRecord` (`include/GalaxyEggbert/MoveObjectRecord.hpp`, engine-agnostic)
+is the first real consumer of sparse extra metadata: it encodes a moving/interactive object
+(pickup, enemy, platform lift, crate — anything Galaxy Eggbert's `ObjectType` enum names) as a
+fixed 29-byte payload (`[objectType: 1 byte][posStartX,Y,Z: 3× float32][posEndX,Y,Z: 3× float32]
+[speed: float32]`) under a single reserved `metadataType = 1`, anchored at
+`floor(posStartX/Y/Z)` — the anchor block only buckets the record for storage; the payload itself
+carries the exact float position, so nothing is lost to the block grid's integer resolution.
+`World::setBlockExtraMetadata(x, y, z, metadataType, payload)` and
+`World::collectExtraMetadata(metadataType)` are thin `World`-level wrappers (added the same day)
+around `Chunk::setExtraMetadata`/`extraMetadata()` so callers don't have to compute chunk/local
+indices themselves. See `PlaceMoveObject()`/`CollectMoveObjects()` in `MoveObjectRecord.cpp` for
+the full encode/decode, and `GEWorldRuntime::LoadFromVwrFile()` (CNA) for how a loaded world turns
+these back into renderable objects.
 
 ## World File `VWR1`
 
@@ -450,6 +475,15 @@ for each solid block:
     if neighbor is air or outside world:
       emit one quad
 ```
+
+**Implemented (2026-07-09)** for `GalaxyEggbertCNA`'s static (non-animated) terrain path —
+`GETerrainRenderer::IsOccluderBlock()` is a conservative version of the "neighbor is air or
+outside world" check above (a face is also kept, not culled, if the neighbor uses a
+holed/special-geometry render mode or needs alpha blending, since those aren't guaranteed to
+fully cover the shared face). Cut the default sample world's terrain mesh from 67788 to 23012
+vertices (66%). The animated/water paths do not use this yet — deliberately scoped out, since
+those tend to be sparse decorative elements rather than the bulk fills this optimization targets
+most.
 
 Later optimizations:
 

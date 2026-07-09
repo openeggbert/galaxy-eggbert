@@ -3,6 +3,17 @@
 This document explains how to build, install, and run galaxy-eggbert as an
 Android APK using SDL3, the Android NDK, and CMake.
 
+> **Known gap, found 2026-07-09, not yet fixed:** `android/app/build.gradle`'s
+> `externalNativeBuild.cmake.arguments` does not pass
+> `-DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`. With the root
+> `CMakeLists.txt`'s current defaults (`GALAXY_EGGBERT_BUILD_SIMPLE3D` still `ON`,
+> `GALAXY_EGGBERT_BUILD_CNA` still `OFF`), `./gradlew assembleDebug` today would attempt to build
+> the historical-reference-only `GalaxyEggbertSimple3D` target (see `CLAUDE.md`'s "Current
+> Direction Lock" — that target is not built/fixed/maintained as of 2026-07-08), not
+> `GalaxyEggbertCNA`. This whole document was written assuming the intended CNA target builds;
+> until the Gradle args are fixed, follow it with that caveat in mind. See `NEXT.md` for current
+> status of this gap.
+
 ---
 
 ## Prerequisites

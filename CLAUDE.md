@@ -12,10 +12,15 @@ will run only on CNA long-term, and Simple3D will be gradually removed as `Galax
 matures.
 
 The **long-term implementation**, `GalaxyEggbertCNA`, now exists as an early-stage, opt-in build
-target (`src/GalaxyEggbertCNA/`) — it builds, opens a window, and renders real, textured,
-animated 3D terrain from a hand-authored world, but has no Blupi/object rendering, HUD, sound, or
-gameplay yet, and is far from feature parity with `GalaxyEggbertSimple3D`. See `NEXT.md` §2 for
-its current status and "Current Direction Lock" below for the rules governing it.
+target (`src/GalaxyEggbertCNA/`) — it builds, opens a window, and renders real, textured, animated
+3D terrain from a hand-authored world (all 4 confirmed tile render modes — `DirectionalCube`,
+`InnerPillarBox`, `InnerFlatPlate`, `TripleCrossBillboard` — plus water, complete as of
+2026-07-09), `MoveObject`/`BigDecor` billboards and platform-lift/crate `UniformCube` objects
+(also embeddable directly in the 3D `.vwr` format itself, not just parsed from mobile-eggbert
+`.txt` files), and face-culls its static terrain mesh. It still has **no visible Blupi (an
+invisible collision point only), no HUD, no sound, and no real gameplay logic** — those remain,
+and it is still far from feature parity with `GalaxyEggbertSimple3D` on that front. See `NEXT.md`
+§2 for its current status and "Current Direction Lock" below for the rules governing it.
 
 ## Current Direction Lock
 

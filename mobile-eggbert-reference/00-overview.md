@@ -34,12 +34,17 @@ a real 1px-grid-offset bug. **All of `DOC-001`-`DOC-006` are now done** — see 
 status note below for specifics. Each file notes its own completeness status at the top; this
 section only summarizes.
 
-**What's still open:** `DOC-007` — a real, unfixed engine bug in `GalaxyEggbertSimple3D`'s
-`GEDecorSystem.cpp`: it hardcodes `element.png` for every `ObjectType`, but real level data shows
-types `1`/`12` need `object-m.png` and types `32`/`33` (`blupih`/`blupit`) need `blupi1.png` (type
-`47`'s equivalent bug was fixed separately as `S3D-4`, Chenille — see `plan.md` §13 — but `1`/`12`/
-`32`/`33` are not). This is a code fix, not a documentation task, and is out of scope for this
-reference tree.
+**What's still open:** `DOC-007` — a real engine bug: hardcoding `element.png` for every
+`ObjectType`, when real level data shows types `1`/`12` need `object-m.png` and types `32`/`33`
+(`blupih`/`blupit`) need `blupi1.png` (type `47`'s equivalent bug was fixed separately as
+`S3D-4`, Chenille — see `plan.md` §13). In `GalaxyEggbertSimple3D`'s `GEDecorSystem.cpp` this
+remains **unfixed and will not be fixed** — that target is historical reference only as of
+2026-07-08, not built/fixed going forward (see `CLAUDE.md`). In `GalaxyEggbertCNA`'s
+`GEObjectIcons.cpp`, the equivalent gap is **partially fixed (2026-07-09)**: types `1`/`12`/`47`/
+`48` (platform lifts, crates) now correctly source `object-m.png`, via a different mechanism —
+they render as solid `UniformCube` objects instead of `element.png` billboards at all (see
+`NEXT.md` §3) — but types `32`/`33` still incorrectly render from `element.png`. This is a code
+fix, not a documentation task, and is out of scope for this reference tree.
 
 **Two real engine bugs were found and fixed during the `DOC-100`-`DOC-267` audit** (not just
 documentation corrections — see `plan.md` §13 "Simple3D Migration Milestones" for full detail):
@@ -56,7 +61,7 @@ tracked file-by-file in `plan.md` §16.3 (`DOC-230`-`DOC-234`).
 |---|---|---|
 | `00-overview.md` | This file — scope, index, status | — |
 | `01-world-file-format.md` | The `.txt` level file format (header, `Decor:`, `BigDecor:`, `MoveObject:`) | Believed complete — all sections of the format have been identified |
-| `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete for cataloging** — all 441 addressable icons accounted for (`DOC-002`); all 313 full crops regenerated with the corrected grid formula after the `S3D-2` bug was found (`DOC-230`). **Render-mode labeling added 2026-07-06** — 171 icons flagged in `15-3d-render-mapping-design.md` §10 now carry an inline Billboard/ThinMechanical/special-surface/architectural-kit/needs-identification note; not yet implemented in code, not yet adversarially verified |
+| `02-tiles.md` | Every tile/block icon in `object-m.png` | **Complete for cataloging** — all 441 addressable icons accounted for (`DOC-002`); all 313 full crops regenerated with the corrected grid formula after the `S3D-2` bug was found (`DOC-230`). **Render-mode labeling added 2026-07-06** — 171 icons flagged in `15-3d-render-mapping-design.md` §10 now carry an inline Billboard/ThinMechanical/special-surface/architectural-kit/needs-identification note. **All 4 confirmed render modes are now implemented and wired up in `GalaxyEggbertCNA` (`DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard`, ~175 icons, completed 2026-07-09) — see `NEXT.md` §3, not just this catalog anymore** |
 | `03-objects.md` | Every `ObjectType` (204 IDs) | **Complete for classification** (`DOC-003`) — 29 real+used, 41 real+unused-in-shipped-levels, 1 ambiguous, 133 vestigial; all 67 cropped icons re-verified, 7 regenerated for the `S3D-2` grid bug (`DOC-231`) |
 | `04-enemy-behavior.md` | The enemy/object movement & collision model | Architectural overview, **plus per-type enemy behavior** (patrol/attack/contact/death detail for each real enemy `ObjectType`) added `DOC-305` (2026-07-05) |
 | `05-backgrounds.md` | Background/sky region images | **Complete** — `region=` → filename mapping found and verified against all 78 levels, all 28 level backgrounds thumbnailed, all 10 non-level UI-screen backgrounds documented (`DOC-006`/`DOC-247`-`DOC-257`) |
@@ -69,7 +74,7 @@ tracked file-by-file in `plan.md` §16.3 (`DOC-230`-`DOC-234`).
 | `12-hazards-and-interactables.md` | What happens when Blupi touches each hazard/interactive tile (lava, spikes, saw, crusher, spring, teleporter, water, fan, etc.) | New (`DOC-302`, 2026-07-05) |
 | `13-object-pickups.md` | Pickup/power-up `ObjectType` mechanics (treasure, keys, shield, drink, charge, mirror, vehicles, etc.) | New (`DOC-304`, 2026-07-05) |
 | `14-crates-lifts-bridges-effects.md` | Crate push, platform lifts, dynamite, bridge construction, destruction/death effects | New (`DOC-306`, 2026-07-05) |
-| `15-3d-render-mapping-design.md` | Render-mode mapping (billboard vs. cube) for every block type/`ObjectType`, plus doors/`BigDecor`/animation-metadata/backgrounds/teleporter-pairing | `ObjectType` side **approved** (2026-07-05); terrain-tile side **substantially revised 2026-07-06** after a systematic re-check found ~100 tiles misclassified as `UniformCube` — see §10, not yet re-approved in its expanded form |
+| `15-3d-render-mapping-design.md` | Render-mode mapping (billboard vs. cube) for every block type/`ObjectType`, plus doors/`BigDecor`/animation-metadata/backgrounds/teleporter-pairing | `ObjectType` side **approved** (2026-07-05); terrain-tile side **substantially revised 2026-07-06** after a systematic re-check found ~100 tiles misclassified as `UniformCube` — see §10. **The expanded design is now fully implemented in code** (2026-07-08/09, all 4 render modes + water + billboards, `NEXT.md` §3) — the individual per-icon facing/axis calls came from direct, iterative user review (crop-by-crop), not a single up-front formal re-approval of this document |
 
 ## How images were generated
 
