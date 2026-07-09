@@ -102,11 +102,15 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   troubleshooting U3D/Simple3D. Today's `GEWorldRuntime.cpp` fallback-world edit (§3) is a
   syntactically trivial enum-constant swap and was not run-verified for this reason; that is
   accepted, not a gap to close.
-- `GalaxyEggbertWorldsTests` — not rebuilt/re-run this session; last confirmed 54/54 via
-  `ctest --test-dir build` on 2026-07-07. The `cmake-build-debug` profile's `ctest` discovery
-  issue (`GalaxyEggbertWorldsTests_NOT_BUILT`) was also last checked 2026-07-07, not re-verified.
-  Note: that `build` tree configures Simple3D too (default ON) — re-verifying this needs a
-  `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF` tree per §9, not the existing `build`/`cmake-build-debug`.
+- `GalaxyEggbertWorldsTests` — **re-verified today (2026-07-09, §3): still 54/54**, built and run
+  from `build-cna` (Simple3D-OFF, per §9). `ctest --test-dir build-cna` also runs 5 unrelated
+  `easy-gl`/`meta-gl` dependency-subproject tests that show as "Not Run" (their executables were
+  never built — nothing in this session's `cmake --build ... --target GalaxyEggbertWorldsTests`
+  requested them) — pre-existing, unrelated to `GalaxyEggbertWorldsTests` itself; isolated via
+  `ctest --test-dir build-cna -I 1,54` to confirm the real 54/54 result cleanly. The old
+  `cmake-build-debug` profile's separate `ctest` discovery issue
+  (`GalaxyEggbertWorldsTests_NOT_BUILT`) was not re-checked (that tree configures Simple3D, which
+  is not to be built per §9) — not a gap, since `build-cna` is now the correct tree to use anyway.
 
 ### Test status
 - `../easy-3d`'s CNA-linked suite — **6/6 passed today (2026-07-08)**, including the new
@@ -201,6 +205,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Re-verified `GalaxyEggbertWorldsTests` (2026-07-09, §8 old task 3) — still 54/54, no code
+  changes needed.** Last checked 2026-07-07; built and ran from `build-cna` (the Simple3D-OFF
+  tree, per §9 — not the broken `cmake-build-debug`). `ctest --test-dir build-cna` also discovers
+  5 `easy-gl`/`meta-gl` dependency-subproject tests that report "Not Run" since their executables
+  were never built by this session's targeted build — unrelated pre-existing noise, isolated via
+  `ctest --test-dir build-cna -I 1,54` (the `GalaxyEggbertWorldsTests` test-number range) to
+  confirm the real result cleanly: 100% (54/54) passed.
 - **Implemented the platform-lift/crate `UniformCube` object path for CNA (2026-07-09, §8 old
   task 3, `mobile-eggbert-reference/15-3d-render-mapping-design.md` §5's two confirmed "render as
   a cube, not a billboard" exceptions).** Platform lifts (`ObjectType1`/`47`/`48` — Blupi
@@ -575,7 +586,7 @@ render-mechanism work remains on the list; §8's remaining tasks are verificatio
 | incomplete | 6 confirmed `DirectionalCube` icons still unwired: 108-109 (need icon 107's grass texture plus more per-side work), 15-18 (ambiguous crop read) — see §8 task 1. |
 | **found 2026-07-08, not yet root-caused** | **Thin blue (sky-clear-color) seam lines visible along block edges in `GalaxyEggbertCNA`**, reported by user via a live screenshot of the `RockPile` staircase at a close/oblique angle — pre-existing, NOT caused by today's DirectionalCube/water/alpha work (confirmed: seams reproduce on the plain-`UniformCube` staircase, unrelated code path). A reproduction attempt showed the same grid-pattern seams at block boundaries, though as dark lines rather than blue in that specific attempt — exact camera angle/distance and possibly MSAA/edge-antialiasing state seem to matter. No fix attempted yet — see §8 task 2. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards/cubes, no HUD, no sound, no gameplay logic, no interactive object system (expected at this phase) — platform lifts/crates render but don't move or respond to Blupi yet. |
-| unverified this session | `GalaxyEggbertWorldsTests` 54/54 pass and the `cmake-build-debug` `ctest` discovery issue — both last checked 2026-07-07, not re-run today. |
+| resolved (re-verified 2026-07-09) | `GalaxyEggbertWorldsTests` — 54/54 still pass (via `build-cna`, see §7). The `cmake-build-debug` `ctest` discovery issue is unrelated to that tree and not re-checked (not to be built, per §9). |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every `ObjectType` billboard, even though types 1/12 need `object-m.png` and 32/33 need `blupi1.png` (`DOC-007`, same gap in both targets). |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
@@ -720,14 +731,21 @@ cmake -S . -B build
 cmake --build build --target GalaxyEggbertSimple3D -j2
 ./build/GalaxyEggbertSimple3D
 
-# Build + run world-model unit tests:
+# Build + run world-model unit tests (prefer build-cna, see below -- this `build` tree also
+# configures Simple3D, which is not to be built per §9):
 cmake --build build --target GalaxyEggbertWorldsTests -j2
-ctest --test-dir build --output-on-failure          # 54/54 expected (last confirmed 2026-07-07)
+ctest --test-dir build --output-on-failure
 
 # Configure + build the CNA target (opt-in, off by default):
 cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
 cmake --build build-cna --target GalaxyEggbertCNA -j2
 cd build-cna && ./GalaxyEggbertCNA        # must run from its own build dir (relative asset paths)
+
+# Build + run world-model unit tests from the Simple3D-OFF tree (preferred -- 54/54 expected,
+# last confirmed 2026-07-09; -I 1,54 isolates GalaxyEggbertWorldsTests from unrelated easy-gl/
+# meta-gl dependency-subproject tests ctest also discovers in this tree):
+cmake --build build-cna --target GalaxyEggbertWorldsTests -j2
+ctest --test-dir build-cna -I 1,54 --output-on-failure
 
 # Regenerate the hand-authored 3D sample world (after tools/GenerateSampleWorld3D.cpp changes):
 cmake --build build-cna --target GenerateSampleWorld3D -j2
@@ -794,16 +812,11 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `GraphicsDeviceManager`/EasyGL backend for MSAA defaults. **Verification:** a live screenshot at
    the same close/oblique staircase angle before/after, confirming the seams are gone or
    meaningfully reduced.
-3. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
-   Use a Simple3D-OFF tree (e.g. `build-cna`, or a fresh configure with
-   `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`) — do **not** use `cmake-build-debug`, which configures
-   Simple3D/U3D and is currently broken for unrelated reasons the user has said not to fix (§9).
-   **Verification:** `ctest --test-dir <tree> --output-on-failure`.
-4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
+3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-5. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
+4. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
    a forced kill/timeout) and confirm the process exits 0 with no leaked resources.
-6. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
+5. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
    different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
    367), all consistent with "no reliable cue, default is fine," but not exhaustive like
    `DirectionalCube`'s per-icon backfill was. Low priority — the default already renders correctly,
