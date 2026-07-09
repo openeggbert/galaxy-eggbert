@@ -307,7 +307,9 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
   chunk-radius streaming will be needed once real worlds are built, not deferred until a problem
   appears. Not yet implemented — scheduled means "on the list to actually do," not done. Natural
   prerequisite/co-requisite: `GETerrainRenderer`'s face-culling/occlusion gap (noted under
-  E3D-MIG-058) — a denser world needs both.
+  E3D-MIG-058) — a denser world needs both. **Update (2026-07-09):** the face-culling half is now
+  done for the static terrain path (E3D-MIG-508 below) — chunk-radius streaming itself is still
+  not implemented.
 - [x] E3D-MIG-059 — Done (2026-07-03). Fixed a real bug found while writing
   `mobile-eggbert-2d-reference.md` §2.3: neither `GEWorldRuntime` (Simple3D nor CNA) recognized the
   `BigDecor:` section of mobile-eggbert level files — its 100 rows were silently skipped because
@@ -325,6 +327,73 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
   empty" note); also confirmed no regression in the main grid (`world001.txt` still parses exactly
   594 non-air blocks, matching the value established earlier this session). `GalaxyEggbertCNA`
   rebuilt clean; `GalaxyEggbertWorldsTests` still 54/54.
+  **Update (2026-07-09): the "does not render it anywhere" note above is now outdated** — see
+  E3D-MIG-505 below, `BigDecor:` is rendered as billboards now too.
+
+### Phase 5B — Tile render-mode completion, object/BigDecor rendering, and polish (2026-07-08/09)
+
+Not part of the original Phase 5 scope above — added once real hand-authored 3D worlds surfaced
+~100 confirmed icons needing something other than a plain textured `UniformCube` (round-2/round-3
+tile questionnaires, `mobile-eggbert-reference/`). Each entry below is intentionally terse — full
+design reasoning, verification detail (screenshots, exact vertex/triangle math, live-run output)
+and dated history live in `NEXT.md` §3, which is the actively maintained record for this work;
+this section just marks each item done for `plan.md`'s own tracking purposes.
+
+- [x] E3D-MIG-500 — `DirectionalCube` render mode: a cube where each of 6 faces independently
+  picks visibility + UV (`Easy3D::DirectionalCubeItem`/`AppendDirectionalCubeMesh`, `../easy-3d`).
+  All ~99 confirmed icons wired up (completed 2026-07-09), including the 4 fan tiles, icons 30/31
+  (real per-pixel texture alpha, routed through a dedicated static-but-transparent pass), and icon
+  107/108/109's grass-top overlay (separate `textures3d/grass_top.png` asset + a horizontal
+  `PlateAxis::Y` plate, since `object-m.png` can't be extended). See `NEXT.md` §3 (multiple dated
+  entries, 2026-07-08 and 2026-07-09).
+- [x] E3D-MIG-501 — `InnerPillarBox` render mode (reuses `DirectionalCubeItem` with a smaller
+  `Size`, no new Easy3D geometry). 3/3 confirmed icons wired up.
+- [x] E3D-MIG-502 — `InnerFlatPlate` render mode (`Easy3D::PlateItem`/`AppendPlateMesh`, a
+  double-sided quad). 63/63 confirmed icons wired up; icons 368-372 use a horizontal
+  (`PlateAxis::Y`) axis per a crop spot-check, the other 58 use the default vertical axis.
+- [x] E3D-MIG-503 — `TripleCrossBillboard` render mode (`Easy3D::TripleCrossItem`/
+  `AppendTripleCrossMesh`, 3 double-sided planes 60° apart). 10/10 confirmed icons wired up.
+- [x] E3D-MIG-504 — Water render mode: `Water1`/`Water2` render as a semi-transparent
+  alpha-blended `UniformCube` (user's chosen design) instead of a solid opaque animated cube, via
+  a dedicated `BlendState::NonPremultiplied`/`DepthStencilState::DepthRead` pass in
+  `GETerrainRenderer::Draw()`.
+- [x] E3D-MIG-505 — `BigDecor:` cells now render as billboards (completes the "parse only" gap
+  E3D-MIG-059 above left open) — same camera-facing billboard technique as `MoveObject`s
+  (E3D-MIG-070 below), `object-m.png`/`GETileAtlas` instead of `element.png`, since `BigDecor`
+  shares the main terrain grid's icon vocabulary.
+- [x] E3D-MIG-506 — Platform-lift/crate object rendering: `ObjectType1`/`12`/`47`/`48` (platform
+  lifts, crates) render as a solid `UniformCube` object instead of a billboard, per
+  `mobile-eggbert-reference/15-3d-render-mapping-design.md` §5's two confirmed exceptions —
+  `GEObjectIcons::IsUniformCubeObject()`.
+- [x] E3D-MIG-507 — MoveObjects can now be embedded directly in the 3D `.vwr` world format itself,
+  not just parsed from mobile-eggbert `.txt` files. `GalaxyEggbert::MoveObjectRecord`/
+  `PlaceMoveObject`/`CollectMoveObjects` (`include/GalaxyEggbert/MoveObjectRecord.hpp`,
+  engine-agnostic) encode a `MoveObject` as a fixed-size payload in `Worlds::World`'s existing
+  sparse block-extra-metadata mechanism (`Worlds::Chunk::setExtraMetadata`), anchored at
+  `floor(posStart)` in the world's own raw grid space. `GEWorldRuntime::LoadFromVwrFile()` now
+  populates `GetMobileObjects()` from this too — no rendering-side changes needed, the existing
+  billboard/`UniformCube` code already consumes `GetMobileObjects()` generically. Found and fixed
+  a real pre-existing data-loss bug along the way: `Worlds::Chunk::isEmpty()` ignored
+  `extraMetadata_`, so `World::saveToFile()` silently dropped metadata on an otherwise-all-air
+  chunk. The sample world (`tools/GenerateSampleWorld3D.cpp`) now places one instance of every one
+  of the 69 confirmed real-behavior `ObjectType`s (all named entries in
+  `include/GalaxyEggbert/def/ObjectType.hpp` except the null slot and the reserved/unidentified
+  block), in a dedicated grid, for visual review.
+- [x] E3D-MIG-508 — Face culling for `GETerrainRenderer`'s static (non-animated) terrain path: a
+  block only emits a face when `IsOccluderBlock()` confirms the neighbor on that side isn't
+  definitely a plain opaque cube. Default sample world's terrain mesh: 67788→23012 vertices (66%
+  reduction). Animated/water paths are NOT face-culled yet (deliberate scope limit — sparse
+  decorative elements, not bulk fills).
+- [x] E3D-MIG-509 — Root-caused and substantially (not fully) fixed a seam-line artifact (thin
+  blue/dark lines along block edges at oblique/close angles): `GETileAtlas::GetTileUv()` had no
+  UV inset, so bilinear filtering bled the atlas's 1px inter-tile gap in. Fixed by reusing
+  `BlockTypes::tileUV()`'s already-proven half-texel inset — a fix that already existed in
+  `GalaxyEggbertSimple3D`'s `GETerrainRenderer.cpp` and simply never carried over when CNA's
+  `GETileAtlas` was written independently (see the new top-level `missing.md`, which now tracks
+  this class of "fix existed in Simple3D, never ported to CNA" bug going forward). Measured:
+  fully-transparent seam pixels in a reproduction screenshot dropped 60% (1217→486), not to zero —
+  residual transparency's cause (ordinary silhouette antialiasing? inset still slightly short at
+  extreme angles?) is an open, low-priority follow-up (`NEXT.md` §8).
 
 ### Phase 6 — Blupi first version
 
@@ -349,17 +418,25 @@ in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
   pipeline runs with no crash): `terrain visibility check — 25/25` (close-up follow-cam fills the
   screen with floor, as expected at spawn). No sprite/visual yet (`E3D-MIG-061..063`), no animation
   state machine (`E3D-MIG-064`).
-- [ ] E3D-MIG-061 — CPU-side vertex builder for `Easy3D::BillboardBatch` items.
-- [ ] E3D-MIG-062 — CNA renderer adapter for billboard-batch vertex data.
-- [ ] E3D-MIG-063 — Render Blupi as a 2D billboard using `blupi.png`/`blupi1.png` frames — no 3D model required.
+- [x] E3D-MIG-061 — Done (2026-07-06, `Easy3D::BillboardBatch`/`BuildBillboardMesh` in
+  `../easy-3d`). Built for `MoveObject`/`BigDecor` billboards (E3D-MIG-070/E3D-MIG-505), not yet
+  used for Blupi himself — see E3D-MIG-063, still open.
+- [x] E3D-MIG-062 — Done (2026-07-06, `Easy3D::BillboardMeshRenderer` in `../easy-3d`). Same
+  status note as E3D-MIG-061 — the adapter exists and is used for other billboards, not yet for
+  Blupi.
+- [ ] E3D-MIG-063 — Render Blupi as a 2D billboard using `blupi.png`/`blupi1.png` frames — no 3D model required. **Still open (2026-07-09):** Blupi remains an invisible collision-only point (`GEBlupiController`) plus a 2D screen-space HUD indicator — no in-world sprite yet, even though the billboard machinery this needs (E3D-MIG-061/062) has existed since 2026-07-06.
 - [ ] E3D-MIG-064 — Port Blupi's state machine (Stop/March/Jump/Air/Down/Up) using `table_blupi` frame indices as reference (copy/adapt requires approval per `easy3d.md` §5.4/§5.7 — confirm scope before transcribing table data).
 - [ ] E3D-MIG-065 — (Optional, later) 3D Blupi model.
 - [ ] E3D-MIG-066 — (Optional, later) Camera mode switching.
 
 ### Phase 7 — Object/decor first version
 
-- [ ] E3D-MIG-070 — Render pickups/enemies as billboards from `element.png`.
-- [ ] E3D-MIG-071 — Reuse `ObjectType` IDs (pending E3D-MIG-039 parity check) for object identification.
+- [x] E3D-MIG-070 — Done (2026-07-06, extended 2026-07-09 with the platform-lift/crate
+  `UniformCube` exception — E3D-MIG-506). Pickups/enemies render as billboards from `element.png`
+  via `GEObjectIcons`/`GetElementIconUv`.
+- [x] E3D-MIG-071 — Done. `ObjectType` IDs are used directly for object identification throughout
+  (`MobileObjSpec`/`MoveObjectRecord`/`GEObjectIcons`) — the E3D-MIG-039 parity check this was
+  pending on passed (exact ID parity, no mismatches).
 - [ ] E3D-MIG-072 — Use mobile-eggbert's `Decor.cpp` as canonical behavior reference for per-object-type movement/collision — reference only, no direct linking or copying (`easy3d.md` §5.2, §6.4).
 - [ ] E3D-MIG-073 — Keep gameplay faithful — no invented mechanics; cross-check every behavior against mobile-eggbert before implementing.
 - [ ] E3D-MIG-074 — `[?]` Before implementing any object behavior that seems to require exposing internal `Decor` state, stop and discuss with the user (`easy3d.md` §5.2).
