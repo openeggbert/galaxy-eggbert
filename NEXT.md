@@ -17,8 +17,8 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   long-term target**, opt-in and pre-parity. Opens a window, loads a genuinely 3D hand-authored
   `.vwr` world (`worlds3d/world001.vwr`), renders real textured/animated terrain (one cube per
   non-air cell), moves an invisible collision-only Blupi with tank controls, and renders parsed
-  `MoveObject`s (pickups/enemies) as real textured billboards. No 3D Blupi model, no HUD, no sound,
-  no gameplay logic yet.
+  `MoveObject`s and `BigDecor:` cells (pickups/enemies/decor) as real textured billboards. No 3D
+  Blupi model, no HUD, no sound, no gameplay logic yet.
 
 **Important architectural decisions:**
 
@@ -85,10 +85,9 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 2. Current status
 
 ### Build status
-- `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-08)**, after implementing
-  `InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` (§3, the last of this session's 4
-  render-mode implementations). Built `GenerateSampleWorld3D`, `VerifyBlupiMovement`, and
-  `GalaxyEggbertCNA` itself from `build-cna/` — all succeeded.
+- `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-09)**, after implementing
+  `BigDecor:` billboard rendering (§3). Built `GalaxyEggbertCNA`, `VerifyBlupiMovement`, and the
+  new `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
 - `../easy-3d` — **CNA-linked build rebuilt and all 6/6 tests passed today (2026-07-08)**, after
   adding `AppendPlateMesh`/`PlateItem`/`AppendTripleCrossMesh`/`TripleCrossItem` to
   `CubeMesh.hpp/.cpp` (§3, on top of the earlier `AppendDirectionalCubeMesh` addition same day).
@@ -182,8 +181,9 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   stone — see §3).
 
 ### What does not work yet
-- `GalaxyEggbertCNA`: no visible 3D Blupi, no `BigDecor` rendering, no platform-lift/crate
-  `UniformCube` object path, no HUD, no sound, no real gameplay logic (all expected at this phase).
+- `GalaxyEggbertCNA`: no visible 3D Blupi, no platform-lift/crate `UniformCube` object path, no
+  HUD, no sound, no real gameplay logic (all expected at this phase). `BigDecor:` rendering is now
+  implemented (2026-07-09, §3).
 - **All 4 confirmed render modes are now implemented; 169 of ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — only 6 `DirectionalCube` icons remain (108-109 need the same grass
@@ -199,6 +199,44 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented `BigDecor:` billboard rendering for CNA (2026-07-09, §8 old task 3).** Parsing was
+  already done (`GEWorldRuntime::LoadFromMobileEggbertFile()` fully parses `BigDecor:` into
+  `bigDecor_`, confirmed from source reading — the task description was stale about that); only
+  rendering was missing. `GalaxyEggbertCnaGame` gained `bigDecorCells_`/`bigDecorEffect_`/
+  `bigDecorMeshRenderer_`, modeled directly on the existing `MoveObject` billboard pattern but
+  reusing `terrainTexture_`/`tileAtlas_.GetTileUv()` instead of `objectTexture_`/
+  `GetElementIconUv()`, since `BigDecor` shares the main terrain grid's icon vocabulary
+  (`object-m.png`), not `element.png`. `LoadContent()` filters the full 100×100 `GetBigDecor()`
+  grid once into `bigDecorCells_` (non-air only) so `Draw()` doesn't rescan 10000 cells every
+  frame; `Draw()` rebuilds the camera-facing billboard mesh every frame, same reasoning as the
+  `MoveObject` billboards.
+  - **Found and fixed a real segfault** (live-tested before committing): `LoadFromVwrFile()` (the
+    default `.vwr` world-loading path) clears `bigDecor_` to empty (`.clear()`) — only
+    `LoadFromMobileEggbertFile()` populates the full 10000-element grid. The first version of the
+    cell-caching loop indexed `bigDecor[row*100+col]` unconditionally for row/col 0..99 with no
+    bounds check, an out-of-bounds `operator[]` read on the empty vector when loading the default
+    world — caught by an actual live run (crashed right after "0 MoveObject(s)..." printed, before
+    "...BigDecor cell(s)..." could print). Fixed by guarding the scan behind
+    `bigDecor.size() == 100*100`, skipping it entirely for `.vwr`-sourced worlds (which have no
+    `BigDecor` concept at all). This is now covered by an explicit regression case in the new
+    verification tool (below), not just tribal knowledge in a comment.
+  - **New `tools/VerifyBigDecorParsingCna.cpp`** (registered in `CMakeLists.txt`, mirrors
+    `VerifyMoveObjectTypesCna.cpp`'s pattern): checks 3 real non-air `BigDecor:` cells in
+    `../mobile-eggbert/worlds/world013.txt` (icons 25/18/16 at specific row/col, found by directly
+    parsing the `.txt` grid) land at the expected grid position via `GetBigDecor()`, plus a
+    sanity check that `LoadFromVwrFile()`'s world source has an empty `BigDecor` grid as
+    expected — exercising the segfault-fix guard directly. All 4 checks pass.
+  - **Verified**: clean build; `VerifyBlupiMovement` all-pass against the default `.vwr` world
+    (unchanged, 2837 blocks); a live 8s headless run of the default world no longer crashes (was
+    SIGSEGV before the fix) and prints "0 BigDecor cell(s) parsed for billboard rendering." (the
+    default world has none, as expected); a temporary debug swap to
+    `LoadFromMobileEggbertFile("worlds/world013.txt")` plus a repositioned spawn (both reverted
+    before committing, confirmed via empty `git diff` on this point) loaded a real level with 14
+    non-air `BigDecor` cells (20 raw non-zero grid entries, 6 of which map to `Air` via
+    `fromMobileIconId`'s passable/decorative filter — expected, not a bug) and a live screenshot
+    showed two billboards rendering with real, distinct textures at the correct position, standing
+    up from the terrain as expected. `VerifyMoveObjectTypesCna` re-run as an unrelated-regression
+    check, still 12/12 pass.
 - **Generated and wired up a grass-top texture for icon 107 (2026-07-08, §8 task 3, user's chosen
   approach: procedurally generate rather than source externally).** `object-m.png` can't be
   extended with a new region — `GalaxyEggbertCNA`'s build re-copies it fresh from
@@ -488,8 +526,9 @@ across the 4 tile-identification modes, plus water. What remains is narrow: 6 sp
 `DirectionalCube` icons each blocked on a distinct small thing (icons 108-109 need more per-side
 work beyond the grass texture, or a genuinely ambiguous crop for icons 15-18 — §8 task 1), not a
 new render-mode mechanism. A newly found (2026-07-08) but not yet root-caused rendering artifact —
-thin blue seam lines at block edges, see §5 — is §8 task 2. The next *new* mechanism work beyond
-that is `BigDecor`/platform-lift object rendering (§8 tasks 3-4).
+thin blue seam lines at block edges, see §5 — is §8 task 2. `BigDecor:` billboard rendering is now
+implemented (2026-07-09, §3). The next *new* mechanism work is the platform-lift/crate
+`UniformCube` object path (§8 task 3).
 
 ## 5. Known bugs and limitations
 
@@ -497,7 +536,7 @@ that is `BigDecor`/platform-lift object rendering (§8 tasks 3-4).
 |---|---|
 | incomplete | 6 confirmed `DirectionalCube` icons still unwired: 108-109 (need icon 107's grass texture plus more per-side work), 15-18 (ambiguous crop read) — see §8 task 1. |
 | **found 2026-07-08, not yet root-caused** | **Thin blue (sky-clear-color) seam lines visible along block edges in `GalaxyEggbertCNA`**, reported by user via a live screenshot of the `RockPile` staircase at a close/oblique angle — pre-existing, NOT caused by today's DirectionalCube/water/alpha work (confirmed: seams reproduce on the plain-`UniformCube` staircase, unrelated code path). A reproduction attempt showed the same grid-pattern seams at block boundaries, though as dark lines rather than blue in that specific attempt — exact camera angle/distance and possibly MSAA/edge-antialiasing state seem to matter. No fix attempted yet — see §8 task 2. |
-| incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards, no HUD, no sound, no gameplay logic (expected at this phase). No `BigDecor` rendering (parsed only). No platform-lift/crate `UniformCube` object path. |
+| incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards, no HUD, no sound, no gameplay logic (expected at this phase). No platform-lift/crate `UniformCube` object path. |
 | unverified this session | `GalaxyEggbertWorldsTests` 54/54 pass and the `cmake-build-debug` `ctest` discovery issue — both last checked 2026-07-07, not re-run today. |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every `ObjectType` billboard, even though types 1/12 need `object-m.png` and 32/33 need `blupi1.png` (`DOC-007`, same gap in both targets). |
@@ -550,7 +589,15 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETil
                                 GEInnerPillarBoxTiles (3 of 3), GEInnerFlatPlateTiles (63 of 63),
                                 GETripleCrossBillboardTiles (10 of 10), GESwatchUv (shared "flat
                                 fallback color" sampling helper), GEBlupiController, GEObjectIcons,
-                                an Easy3D::Camera3D (first-person).
+                                an Easy3D::Camera3D (first-person). GalaxyEggbertCnaGame also owns
+                                bigDecorCells_/bigDecorEffect_/bigDecorMeshRenderer_ (added
+                                2026-07-09, §3) — BigDecor: cells rendered as camera-facing
+                                billboards via terrainTexture_/tileAtlas_, same technique as the
+                                MoveObject billboards but object-m.png's icon vocabulary instead of
+                                element.png's. Only ever non-empty when a world was loaded via
+                                LoadFromMobileEggbertFile() — the default .vwr world's GetBigDecor()
+                                is empty (LoadFromVwrFile() clears it), guarded explicitly since a
+                                2026-07-09 segfault (see §3).
 
 tools/GenerateSampleWorld3D.cpp — builds worlds3d/world001.vwr. Ground floor/staircase/platform
                                 use RockPile, walls/pillars use BrickWall (no more Ground/StoneA/
@@ -643,9 +690,10 @@ cmake --build build-cna --target GenerateSampleWorld3D -j2
 ./build-cna/GenerateSampleWorld3D worlds3d/world001.vwr
 
 # Scripted verification tools (engine-agnostic, no CNA link needed):
-cmake --build build-cna --target VerifyBlupiMovement VerifyMoveObjectTypesCna -j2
+cmake --build build-cna --target VerifyBlupiMovement VerifyMoveObjectTypesCna VerifyBigDecorParsingCna -j2
 ./build-cna/VerifyBlupiMovement          # Blupi collision/step-up/gravity vs. worlds3d/world001.vwr
 ./build-cna/VerifyMoveObjectTypesCna     # MoveObject parsing vs. 12 real mobile-eggbert level files
+./build-cna/VerifyBigDecorParsingCna     # BigDecor: parsing vs. real mobile-eggbert level files (run from repo root, not build-cna — uses ../mobile-eggbert relative paths)
 
 # easy-3d: default (headers-only) build + tests
 cmake -S ../easy-3d -B /tmp/e3d-build -DEASY3D_CNA_DIR=../cna
@@ -702,24 +750,19 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `GraphicsDeviceManager`/EasyGL backend for MSAA defaults. **Verification:** a live screenshot at
    the same close/oblique staircase angle before/after, confirming the seams are gone or
    meaningfully reduced.
-3. **`BigDecor` billboard rendering for CNA** — `GEWorldRuntime` doesn't parse `BigDecor:` for CNA
-   at all yet (Simple3D already does — reference its parsing logic read-only, do not build/run
-   Simple3D itself, see §9). Recommended render mode: `Billboard`. **Files:**
-   `src/GalaxyEggbertCNA/Game/GEWorldRuntime.*`, `GalaxyEggbertCnaGame.cpp`. **Verification:** a
-   tool mirroring `VerifyMoveObjectTypesCna.cpp` against a real level with known `BigDecor:` cells.
-4. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
+3. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
    `CubeMesh`/`CubeMeshRenderer` machinery for the two approved "objects are cubes, not billboards"
    exceptions. **Files:** `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp`.
-5. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
+4. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
    Use a Simple3D-OFF tree (e.g. `build-cna`, or a fresh configure with
    `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`) — do **not** use `cmake-build-debug`, which configures
    Simple3D/U3D and is currently broken for unrelated reasons the user has said not to fix (§9).
    **Verification:** `ctest --test-dir <tree> --output-on-failure`.
-6. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
+5. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-7. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
+6. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
    a forced kill/timeout) and confirm the process exits 0 with no leaked resources.
-8. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
+7. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
    different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
    367), all consistent with "no reliable cue, default is fine," but not exhaustive like
    `DirectionalCube`'s per-icon backfill was. Low priority — the default already renders correctly,

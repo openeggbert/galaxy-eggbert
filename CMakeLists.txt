@@ -414,6 +414,19 @@ target_include_directories(VerifyMoveObjectTypesCna PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# Same engine-agnostic-parser rationale as VerifyMoveObjectTypesCna above,
+# for BigDecor: section parsing (NEXT.md §8 task 3) instead of MoveObject:.
+add_executable(VerifyBigDecorParsingCna
+        tools/VerifyBigDecorParsingCna.cpp
+        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        ${GE_SHARED_SOURCES}
+)
+
+target_include_directories(VerifyBigDecorParsingCna PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
 # =============================================================================
 # Doxygen
 # =============================================================================

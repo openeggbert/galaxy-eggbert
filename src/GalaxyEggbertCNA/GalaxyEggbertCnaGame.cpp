@@ -125,6 +125,46 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: " << worldRuntime_.GetMobileObjects().size()
                   << " MoveObject(s) parsed for billboard rendering." << std::endl;
 
+        // Billboard rendering for BigDecor: cells (NEXT.md §8 task 3) —
+        // reuses terrainTexture_ (object-m.png), same icon vocabulary as the
+        // main terrain grid, via a dedicated effect (BasicEffect only binds
+        // one texture at a time). Filtered once here into bigDecorCells_ so
+        // Draw() doesn't re-scan the full 100x100 grid every frame.
+        bigDecorEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        bigDecorEffect_->VertexColorEnabled = false;
+        bigDecorEffect_->setTextureEnabledProperty(true);
+        bigDecorEffect_->setTextureProperty(&terrainTexture_);
+
+        const auto& bigDecor = worldRuntime_.GetBigDecor();
+        constexpr int kBigDecorGridSize = 100;
+        // LoadFromVwrFile() (the default world source) clears bigDecor_ to
+        // empty -- only LoadFromMobileEggbertFile() populates the full
+        // 100x100 grid. Guard against indexing an empty vector (segfault,
+        // found live 2026-07-09): only scan when the grid is actually the
+        // expected full size.
+        if (bigDecor.size() == static_cast<std::size_t>(kBigDecorGridSize) * kBigDecorGridSize)
+        {
+            for (int row = 0; row < kBigDecorGridSize; ++row)
+            {
+                for (int col = 0; col < kBigDecorGridSize; ++col)
+                {
+                    const std::uint16_t icon = bigDecor[
+                        static_cast<std::size_t>(row) * kBigDecorGridSize + static_cast<std::size_t>(col)];
+                    if (icon == GalaxyEggbert::BlockTypes::Air)
+                    {
+                        continue;
+                    }
+                    bigDecorCells_.push_back({
+                        static_cast<float>(col - GEWorldRuntime::kWorldCenterX),
+                        static_cast<float>(row - GEWorldRuntime::kWorldCenterZ),
+                        icon,
+                    });
+                }
+            }
+        }
+        std::cout << "GalaxyEggbertCNA: " << bigDecorCells_.size()
+                  << " BigDecor cell(s) parsed for billboard rendering." << std::endl;
+
         // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
         // inside worlds3d/world001.vwr's ground floor). The .vwr format
         // carries no spawn point itself (see LoadFromVwrFile()), so this is
@@ -332,6 +372,45 @@ namespace GalaxyEggbert::CNA
                 objectEffect_->Projection = camera_.GetProjectionMatrix();
                 objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 objectMeshRenderer_->Draw(device, *objectEffect_);
+            }
+        }
+
+        // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
+        // (NEXT.md §8 task 3) — same camera-facing billboard technique as
+        // MoveObjects above, but object-m.png (via tileAtlas_) instead of
+        // element.png, since BigDecor shares the main terrain grid's icon
+        // vocabulary. Only ever non-empty when a world was loaded via
+        // LoadFromMobileEggbertFile() — the default .vwr world has no
+        // BigDecor concept, so this is a no-op in that case.
+        if (bigDecorEffect_ && !bigDecorCells_.empty())
+        {
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto cameraRight = invView.getRightProperty();
+            const auto cameraUp = invView.getUpProperty();
+
+            Easy3D::BillboardBatch batch;
+            constexpr float kBigDecorSize = 1.0f;
+            constexpr float kBigDecorGroundOffset = 1.0f; // matches kObjectGroundOffset above
+            for (const auto& cell : bigDecorCells_)
+            {
+                const auto uv = tileAtlas_.GetTileUv(static_cast<int>(cell.icon));
+                batch.Add(
+                    Microsoft::Xna::Framework::Vector3(cell.worldX, kBigDecorGroundOffset, cell.worldZ),
+                    Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize),
+                    uv);
+            }
+
+            std::vector<Easy3D::BillboardVertex> vertices;
+            std::vector<std::uint32_t> indices;
+            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
+
+            if (!indices.empty())
+            {
+                bigDecorMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                bigDecorEffect_->View = camera_.GetViewMatrix();
+                bigDecorEffect_->Projection = camera_.GetProjectionMatrix();
+                bigDecorEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                bigDecorMeshRenderer_->Draw(device, *bigDecorEffect_);
             }
         }
 

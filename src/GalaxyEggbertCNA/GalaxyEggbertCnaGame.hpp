@@ -13,7 +13,9 @@
 #include <Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace GalaxyEggbert::CNA
 {
@@ -89,5 +91,30 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D objectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMeshRenderer_;
+
+        // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
+        // (NEXT.md §8 task 3, mobile-eggbert-reference/
+        // 01-world-file-format.md §2.3 / 15-3d-render-mapping-design.md
+        // §9.2 — confirmed non-colliding, Billboard render mode). Unlike
+        // MoveObjects, BigDecor uses the SAME icon vocabulary as the main
+        // terrain grid (object-m.png via tileAtlas_), not element.png — so
+        // this reuses terrainTexture_ through its own dedicated effect
+        // (BasicEffect only binds one texture at a time). Only ever
+        // non-empty when a world was loaded via LoadFromMobileEggbertFile()
+        // (the default .vwr world has no BigDecor concept). bigDecorCells_
+        // is the filtered (non-air) cell list, computed once in
+        // LoadContent() from the fixed 100x100 grid so Draw() doesn't have
+        // to re-scan all 10000 cells every frame — only the camera-facing
+        // billboard mesh itself is rebuilt per frame, same reason as
+        // objectMeshRenderer_ above.
+        struct BigDecorCell
+        {
+            float worldX;
+            float worldZ;
+            std::uint16_t icon;
+        };
+        std::vector<BigDecorCell> bigDecorCells_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> bigDecorEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> bigDecorMeshRenderer_;
     };
 }
