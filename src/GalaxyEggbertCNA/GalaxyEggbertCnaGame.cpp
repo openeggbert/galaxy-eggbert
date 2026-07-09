@@ -414,28 +414,14 @@ namespace GalaxyEggbert::CNA
                 backgroundEffect_->View = camera_.GetViewMatrix();
                 backgroundEffect_->Projection = camera_.GetProjectionMatrix();
                 backgroundEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-                // CullNone, restored right after (missing.md, found live
-                // 2026-07-09): Easy3D::AppendBillboardMesh's fixed winding
-                // (BL,BR,TR / BL,TR,TL) is back-facing under this engine's
-                // default CullCounterClockwise state for a billboard whose
-                // camera sits at Position - Forward*distance looking toward
-                // it (confirmed by direct experiment: invisible with the
-                // default cull state, visible with CullNone, at both a near
-                // and the real far test distance). This is very likely a
-                // pre-existing defect affecting EVERY Easy3D billboard, not
-                // just this one -- MoveObjects/BigDecor/etc. were probably
-                // never actually visible on screen either, just never
-                // caught because none were in view in any screenshot taken
-                // so far. Deliberately NOT fixed at the Easy3D source here
-                // (a winding change there is pinned by easy-3d's own
-                // test_billboard_mesh.cpp and would need care/re-verification
-                // across every billboard consumer) -- flagged in missing.md
-                // as a separate, higher-value follow-up instead. Scoped
-                // locally to just this draw call so it can't affect any
-                // other renderer's culling.
-                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullNone);
+                // No CullNone override needed here anymore -- fixed at the
+                // source (2026-07-09, NEXT.md §8 task 0): Easy3D::
+                // AppendBillboardMesh's winding was back-facing under this
+                // engine's default CullCounterClockwise state; reversed
+                // there (../easy-3d/src/BillboardMesh.cpp) so every
+                // billboard consumer, not just this one, renders correctly
+                // under the default cull state.
                 backgroundMeshRenderer_->Draw(device, *backgroundEffect_);
-                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
             }
         }
 

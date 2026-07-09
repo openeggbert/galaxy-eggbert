@@ -221,6 +221,33 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed `Easy3D::AppendBillboardMesh`'s backface-culling bug at the source (2026-07-09, §8 task
+  0) — `MoveObjects`/`BigDecor` billboards are now actually visible on screen, not just correct in
+  vertex math.** Direct follow-up to the discovery in the previous entry below. Reversed the fixed
+  triangle winding (`0,1,2 / 0,2,3` → `0,2,1 / 0,3,2`, vertex data/UVs unchanged) in
+  `../easy-3d/src/BillboardMesh.cpp` (committed there separately, `easy-3d@a26df1a`, own repo/remote
+  — not a galaxy-eggbert submodule); updated the pinned `easy-3d/tests/test_billboard_mesh.cpp`
+  assertions to match (`easy3d_test_billboard_mesh`: OK, run standalone with
+  `-DEASY3D_LINK_CNA=ON`). Removed the local `RasterizerState::CullNone` workaround from the
+  background quad (§3 above) — it renders identically without it now, confirming the source fix
+  works. **Correction to the previous entry's live confirmation**: the debug-camera check that
+  seemed to show "only cube objects visible" was itself flawed — the sample world's MoveObject
+  catalog (`GenerateSampleWorld3D.cpp`) happens to place the 2 `UniformCube` types (`47`/`48`) at
+  the very first 2 grid slots, so a narrow camera view centered there was never going to show
+  billboards regardless of whether they worked. Re-tested with a wider view over more catalog
+  slots: a billboard-rendered object is now visible alongside the cubes (was not, pre-fix, per the
+  original SpriteBatch/background investigation). Real root cause was still correctly identified
+  (confirmed unambiguously via the background quad's clean before/after: required `CullNone` before
+  this fix, renders correctly without it after) — only the *supporting* catalog-camera evidence in
+  the previous entry was weaker than claimed.
+  - **Verified**: `easy3d_test_billboard_mesh` passes (standalone easy-3d build,
+    `-DEASY3D_LINK_CNA=ON`); `GalaxyEggbertCNA` clean build/live run (no crash, background still
+    renders correctly without `CullNone`); `GalaxyEggbertWorldsTests` (63/63),
+    `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+    PASSED`); temporary debug-camera repositioning (twice, to find a view that actually covers
+    billboard-type catalog slots) used to confirm live, reverted before commit (empty `git diff` on
+    that line).
+
 - **Real mobile-eggbert background images now render in `GalaxyEggbertCNA`, plus a world-level
   `skyRegion` `.vwr` header field to select them — breaking format change (2026-07-09).** User
   request: analyze how to bring mobile-eggbert backgrounds into Galaxy Eggbert (their own hypothesis:
@@ -993,7 +1020,7 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 
 | Status | Issue |
 |---|---|
-| **found live 2026-07-09, workaround scoped to one draw call, not fixed at the source** | **`Easy3D::AppendBillboardMesh`'s fixed vertex winding is back-facing under `GalaxyEggbertCNA`'s default `CullCounterClockwise` rasterizer state** — very likely means every `MoveObject`/`BigDecor` billboard has been invisible on screen this whole session, only ever verified via vertex/index math and non-crash live runs, never actually visually confirmed (nothing was in view in any screenshot taken before). Confirmed directly: debug camera pointed at the sample world's MoveObject catalog showed only the 2 `UniformCube`-rendered platform lifts; all nearby billboard-rendered objects were invisible. Discovered incidentally while implementing the real-PNG background quad (§3, 2026-07-09) — worked around locally for just that one quad (`RasterizerState::CullNone`, explicitly restored right after), NOT fixed globally: the winding is pinned by `easy-3d`'s own `test_billboard_mesh.cpp`, and a real fix needs re-verifying every billboard consumer, not a drive-by change. See §8 for the follow-up task. |
+| resolved (2026-07-09) | `Easy3D::AppendBillboardMesh`'s fixed vertex winding was back-facing under `GalaxyEggbertCNA`'s default `CullCounterClockwise` rasterizer state, making `MoveObject`/`BigDecor` billboards invisible on screen despite correct vertex/index math. Fixed at the source (`easy-3d@a26df1a`, winding reversed, pinned test updated) — no more per-call `RasterizerState::CullNone` workaround needed anywhere, confirmed via the background quad rendering identically without it (§3). |
 | resolved (2026-07-09) | All ~99 confirmed `DirectionalCube` icons wired up — the last 6 (15-18, 108-109) used this session's ambiguous-icon default since their crops didn't give a confident facing read (§3). |
 | root-caused and substantially mitigated (2026-07-09), not fully eliminated | **Thin blue (sky-clear-color) seam lines along block edges in `GalaxyEggbertCNA`**, originally reported 2026-07-08. Root cause: `GETileAtlas::GetTileUv()` had no UV inset, so bilinear filtering bled the atlas's 1px inter-tile gap in at oblique/close angles (§3) — fixed by reusing `BlockTypes::tileUV()`'s already-proven half-texel inset (previously used only by the historical Simple3D target, never ported to CNA). Measured fix: fully-transparent "hole" pixels at a reproduction screenshot dropped 60% (1217→486 of 384000 total pixels). Residual transparency remains, plausibly ordinary MSAA/silhouette antialiasing (a separate, likely-benign effect) or an inset that's still slightly too small at extreme grazing angles — not investigated further; see §3 for exact numbers. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards/cubes, no HUD, no sound, no gameplay logic, no interactive object system (expected at this phase) — platform lifts/crates render but don't move or respond to Blupi yet. |
@@ -1228,17 +1255,6 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-0. **High-value follow-up: fix `Easy3D::AppendBillboardMesh`'s winding at the source** (§3/§5,
-   found live 2026-07-09) so `MoveObjects`/`BigDecor` billboards render without needing a per-call
-   `RasterizerState::CullNone` workaround like the background quad currently uses. Likely a 2-line
-   fix (swap the two triangles' vertex order in `easy-3d/src/BillboardMesh.cpp`), but needs care:
-   `easy-3d/tests/test_billboard_mesh.cpp` asserts the current index order (`indices[0..2] ==
-   0,1,2`) and would need updating to match, and — more importantly — every existing billboard
-   consumer (`MoveObjects`, `BigDecor`, the explo/blupi variants) needs re-verification after the
-   fix, since this session's prior "verified" billboard renders were only checked via vertex/index
-   math and non-crash live runs, never an actual visual confirmation that they appear on screen.
-   High value because, if the analysis is right, this has been silently hiding a large chunk of
-   already-implemented rendering work (pickups, enemies, effects) all session.
 1. **Follow-up: `ObjectType38` (electric arc), the last confirmed `ObjectType` still without a real
    icon** (§3/§5). Real behavior needs BOTH `blupi1.png` (ticks 0-29) and `element.png` (ticks
    30-89) in one animation, but `03-objects.md` explicitly flags the element.png-only
