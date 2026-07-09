@@ -19,6 +19,33 @@
 
 namespace GalaxyEggbert::CNA
 {
+    namespace
+    {
+        // Placeholder-model animation mapping (2026-07-09, NEXT.md §3) --
+        // avatars3d/blupi_placeholder/'s 3 clips (Survey/Walk/Run) don't
+        // correspond to GEBlupiController::AnimState's 5 states at all, so
+        // this is a rough best-effort substitution, not a faithful
+        // behavioral mapping -- see avatars3d/blupi_placeholder/README.md's
+        // own mapping table for the reasoning per state. Swap out entirely
+        // once a real Blupi model with real matching clips exists.
+        const std::string& BlupiAnimStateToPlaceholderClipName(GEBlupiController::AnimState state)
+        {
+            static const std::string kSurvey = "Survey";
+            static const std::string kWalk = "Walk";
+            static const std::string kRun = "Run";
+            switch (state)
+            {
+                case GEBlupiController::AnimState::March: return kWalk;
+                case GEBlupiController::AnimState::Jump:  return kRun;
+                case GEBlupiController::AnimState::Stop:
+                case GEBlupiController::AnimState::Down:
+                case GEBlupiController::AnimState::Up:
+                default:
+                    return kSurvey;
+            }
+        }
+    }
+
     GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
     {
         Game::getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)");
@@ -263,6 +290,50 @@ namespace GalaxyEggbert::CNA
                       << " platform-lift/crate cube object(s) found." << std::endl;
         }
 
+        // Third-person-mode 3D model (2026-07-09, NEXT.md §3) -- CNA's
+        // AvatarRenderer real-rendering extension, see this class's own
+        // header comment and ../cna/docs/avatar-real-rendering-ext.md.
+        // ContentManager's RootDirectory is pointed at avatars3d/ (not the
+        // default "Content", which is mobile-eggbert's own tree, fully
+        // re-copied fresh on every build -- see the textures3d/ comment
+        // above for the same reasoning) so Load<>'s asset name is relative
+        // to avatars3d/ itself. Currently unused elsewhere in this class,
+        // so repointing its RootDirectory here can't break anything else.
+        {
+            const std::string blupiModelManifest = "avatars3d/blupi_placeholder/avatar.skinnedmodel.json";
+            if (std::filesystem::exists(blupiModelManifest))
+            {
+                auto& content = getContentProperty();
+                content.setRootDirectoryProperty("avatars3d");
+                blupiModel_ = content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
+                    "blupi_placeholder/avatar");
+
+                blupiAvatarRenderer_ = std::make_unique<Microsoft::Xna::Framework::GamerServices::AvatarRenderer>(nullptr);
+                blupiAvatarRenderer_->EnableRealRenderingEXT(device, blupiModel_);
+                // LightColor/AmbientLightColor/LightDirection default to
+                // black (matching the real, never-drawing XNA Avatar API's
+                // untouched value-type defaults) -- DrawRealEXT renders
+                // nothing visible until these are set (see the doc above).
+                blupiAvatarRenderer_->setAmbientLightColorProperty(
+                    Microsoft::Xna::Framework::Vector3(0.35f, 0.35f, 0.35f));
+                blupiAvatarRenderer_->setLightColorProperty(
+                    Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
+                blupiAvatarRenderer_->setLightDirectionProperty(
+                    Microsoft::Xna::Framework::Vector3(-0.4f, -0.6f, -0.7f));
+                blupiModelLoaded_ = true;
+                std::cout << "GalaxyEggbertCNA: third-person placeholder model loaded — "
+                             "avatars3d/blupi_placeholder/ ('C' toggles first-/third-person)."
+                          << std::endl;
+            }
+            else
+            {
+                std::cout << "GalaxyEggbertCNA: no third-person model found ("
+                          << blupiModelManifest
+                          << " not found) — third-person camera mode unavailable, staying first-person."
+                          << std::endl;
+            }
+        }
+
         // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
         // inside worlds3d/world001.vwr's ground floor). The .vwr format
         // carries no spawn point itself (see LoadFromVwrFile()), so this is
@@ -316,27 +387,82 @@ namespace GalaxyEggbert::CNA
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, dt);
 
-            // First-person/player-view camera (2026-07-05): no 3D Blupi
-            // model exists yet, so there is nothing for a third-person
-            // camera to show — look from Blupi's eye position in his
-            // current facing direction instead (see GEBlupiController's
-            // GetYaw() convention: 0 rad = facing -Z). Crouching lowers the
-            // eye height; looking up tilts the look target upward — neither
-            // is a real head/body pose (no 3D model yet), just a rough
-            // camera-only stand-in for the animation-indicator state.
-            constexpr float kEyeHeight = 0.75f;
-            constexpr float kCrouchEyeHeight = 0.4f;
-            constexpr float kLookDistance = 5.0f;
-            constexpr float kLookUpTilt = 2.5f;
+            // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
+            // detected (same pattern as demo_avatar's Space-toggle) so a
+            // held key doesn't flip modes every frame. Only actually
+            // switches to third-person if a model loaded successfully
+            // (blupiModelLoaded_) -- otherwise silently stays first-person,
+            // there being nothing to show in third-person.
+            const bool cameraModeKeyDown = keys.IsKeyDown(Keys::C);
+            if (cameraModeKeyDown && !cameraModeKeyWasDown_ && blupiModelLoaded_)
+            {
+                cameraMode_ = (cameraMode_ == CameraMode::FirstPerson)
+                                  ? CameraMode::ThirdPersonModel
+                                  : CameraMode::FirstPerson;
+            }
+            cameraModeKeyWasDown_ = cameraModeKeyDown;
+
             const float yaw = blupi_.GetYaw();
-            const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
-            const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
-            const Easy3D::Camera3D::Vector3 eye(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
-            camera_.SetPosition(eye);
-            camera_.SetTarget(Easy3D::Camera3D::Vector3(
-                eye.X + std::sin(yaw) * kLookDistance,
-                eye.Y + lookYOffset,
-                eye.Z - std::cos(yaw) * kLookDistance));
+
+            if (cameraMode_ == CameraMode::FirstPerson)
+            {
+                // First-person/player-view camera (2026-07-05): look from
+                // Blupi's eye position in his current facing direction (see
+                // GEBlupiController's GetYaw() convention: 0 rad = facing
+                // -Z). Crouching lowers the eye height; looking up tilts the
+                // look target upward — neither is a real head/body pose
+                // (still no first-person 3D model), just a rough
+                // camera-only stand-in for the animation-indicator state.
+                constexpr float kEyeHeight = 0.75f;
+                constexpr float kCrouchEyeHeight = 0.4f;
+                constexpr float kLookDistance = 5.0f;
+                constexpr float kLookUpTilt = 2.5f;
+                const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
+                const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
+                const Easy3D::Camera3D::Vector3 eye(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
+                camera_.SetPosition(eye);
+                camera_.SetTarget(Easy3D::Camera3D::Vector3(
+                    eye.X + std::sin(yaw) * kLookDistance,
+                    eye.Y + lookYOffset,
+                    eye.Z - std::cos(yaw) * kLookDistance));
+            }
+            else
+            {
+                // Third-person chase camera (2026-07-09) -- sits behind and
+                // above Blupi (opposite his facing direction, same sin/-cos
+                // yaw convention as the first-person target above) looking
+                // slightly down at him. A fixed offset, not a real
+                // spring-arm/collision-aware orbit camera -- sufficient to
+                // show the placeholder model, not a final camera design.
+                constexpr float kChaseDistance = 4.0f;
+                constexpr float kChaseHeight = 2.2f;
+                constexpr float kChaseLookHeight = 1.0f;
+                const Easy3D::Camera3D::Vector3 target(
+                    blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
+                camera_.SetPosition(Easy3D::Camera3D::Vector3(
+                    target.X - std::sin(yaw) * kChaseDistance,
+                    target.Y + kChaseHeight - kChaseLookHeight,
+                    target.Z + std::cos(yaw) * kChaseDistance));
+                camera_.SetTarget(target);
+            }
+
+            // Third-person placeholder model animation clip (2026-07-09) --
+            // advanced regardless of camera mode so switching into
+            // third-person mid-animation starts at a sensible position, not
+            // always frame 0. Resets on a clip change since clips have very
+            // different durations (Walk ~0.7s vs Survey ~3.4s) and
+            // continuing from an old position could already be past a
+            // shorter new clip's own end.
+            if (blupiModelLoaded_)
+            {
+                const std::string& clipName = BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
+                if (clipName != blupiActiveClipName_)
+                {
+                    blupiActiveClipName_ = clipName;
+                    blupiClipTimeSeconds_ = 0.0;
+                }
+                blupiClipTimeSeconds_ += static_cast<double>(dt);
+            }
         }
     }
 
@@ -468,6 +594,35 @@ namespace GalaxyEggbert::CNA
                 grassEffect_->Projection = camera_.GetProjectionMatrix();
                 grassEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 terrainRenderer_->DrawGrass(device, *grassEffect_);
+            }
+
+            // Third-person placeholder 3D model (2026-07-09, NEXT.md §3) --
+            // only drawn in third-person mode (first-person mode has
+            // nothing to show, same reasoning as the pre-2026-07-09 comment
+            // this replaced). World transform bakes in a coarse scale (the
+            // placeholder fox mesh is ~79 units tall in its own space,
+            // scaled down to roughly Blupi's ~1.6-unit eye-height scale --
+            // see avatars3d/blupi_placeholder/README.md; not verified against
+            // a real Blupi model yet, since none exists) and a yaw rotation
+            // to face Blupi's movement direction -- exact forward-facing
+            // alignment for this specific placeholder asset hasn't been
+            // visually verified, a real Blupi model may need a different
+            // constant rotation offset here.
+            if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiAvatarRenderer_)
+            {
+                constexpr float kPlaceholderModelScale = 0.02f;
+                const auto world =
+                    Microsoft::Xna::Framework::Matrix::CreateScale(kPlaceholderModelScale) *
+                    Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
+                    Microsoft::Xna::Framework::Matrix::CreateTranslation(
+                        blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                blupiAvatarRenderer_->setWorldProperty(world);
+                blupiAvatarRenderer_->setViewProperty(camera_.GetViewMatrix());
+                blupiAvatarRenderer_->setProjectionProperty(camera_.GetProjectionMatrix());
+                blupiAvatarRenderer_->DrawRealEXT(
+                    blupiActiveClipName_,
+                    System::TimeSpan::FromSeconds(blupiClipTimeSeconds_),
+                    /*loop=*/true);
             }
 
             static bool terrainPixelPrinted = false;

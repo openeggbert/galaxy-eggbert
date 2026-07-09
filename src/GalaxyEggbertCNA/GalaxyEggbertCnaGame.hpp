@@ -9,13 +9,16 @@
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
 #include <Easy3D/CubeMeshRenderer.hpp>
+#include <Microsoft/Xna/Framework/GamerServices/AvatarRenderer.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
+#include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace GalaxyEggbert::CNA
@@ -23,10 +26,17 @@ namespace GalaxyEggbert::CNA
     // Direct CNA + Easy3D target: loads a hand-authored .vwr world, renders
     // real textured/animated 3D terrain, and moves an invisible,
     // collision-only Blupi placeholder through it (see NEXT.md for current
-    // status). No 3D Blupi model exists yet (2026-07-05) — the camera is
-    // first-person (nothing to show in third-person), and Blupi's current
-    // animation state is signaled via a small 2D indicator in the
-    // screen's bottom-right corner instead of an in-world sprite.
+    // status). Two camera modes now exist (2026-07-09): first-person
+    // (default, unchanged since 2026-07-05 -- Blupi's current animation
+    // state shown via a small 2D indicator in the screen's bottom-right
+    // corner instead of an in-world sprite) and third-person, showing a
+    // real GPU-skinned 3D model via CNA's AvatarRenderer real-rendering
+    // extension (see ../cna/docs/avatar-real-rendering-ext.md) -- currently
+    // a temporary placeholder model (avatars3d/blupi_placeholder/, see its
+    // own README.md), not yet a real Blupi model. "C" toggles between modes
+    // (same key Simple3D already used for its own, differently-scoped
+    // camera-mode toggle -- perspective/isometric there, first/third-person
+    // here; same "switch camera view" idea).
     class GalaxyEggbertCnaGame final : public Microsoft::Xna::Framework::Game
     {
     public:
@@ -39,6 +49,12 @@ namespace GalaxyEggbert::CNA
         GetTypeNameHPP()
 
     private:
+        // Camera mode (2026-07-09, NEXT.md §3) -- toggled by "C", edge-
+        // detected the same way as the demo_avatar example's Space-toggle
+        // (cameraModeKeyWasDown_ below) so a held key doesn't rapid-fire.
+        enum class CameraMode : std::uint8_t { FirstPerson, ThirdPersonModel };
+        CameraMode cameraMode_ = CameraMode::FirstPerson;
+        bool cameraModeKeyWasDown_ = false;
         // Drives terrainEffect_'s View/Projection every frame.
         Easy3D::Camera3D camera_;
 
@@ -205,5 +221,28 @@ namespace GalaxyEggbert::CNA
         // objects).
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectCubeEffect_;
         std::unique_ptr<Easy3D::CubeMeshRenderer> objectCubeMeshRenderer_;
+
+        // Third-person-mode 3D model (2026-07-09, NEXT.md §3) -- CNA's
+        // AvatarRenderer real-rendering extension (../cna/docs/
+        // avatar-real-rendering-ext.md), loaded via getContentProperty()
+        // with its RootDirectory pointed at avatars3d/ (see LoadContent()).
+        // Currently loads avatars3d/blupi_placeholder/ (see its own
+        // README.md) -- a temporary CC0/CC-BY placeholder, not a real Blupi
+        // model. blupiModelLoaded_ guards against avatars3d/ being absent
+        // (e.g. a build that never ran the CMake copy step) -- degrades to
+        // staying in first-person mode rather than crashing.
+        std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT> blupiModel_;
+        std::unique_ptr<Microsoft::Xna::Framework::GamerServices::AvatarRenderer> blupiAvatarRenderer_;
+        bool blupiModelLoaded_ = false;
+
+        // Tracks which clip is currently playing so blupiClipTimeSeconds_
+        // resets to 0 on a change instead of continuing from a position that
+        // may be past the new clip's own duration (clips have different
+        // lengths -- Walk is ~0.7s, Survey ~3.4s, see avatars3d/
+        // blupi_placeholder/README.md). Accumulated in Update() regardless
+        // of camera mode so switching into third-person mid-animation
+        // starts a clip at a sensible position, not always frame 0.
+        std::string blupiActiveClipName_;
+        double blupiClipTimeSeconds_ = 0.0;
     };
 }

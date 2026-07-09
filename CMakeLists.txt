@@ -306,6 +306,22 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         target_link_libraries(GalaxyEggbertCNA PRIVATE CNA SHARP_RUNTIME)
     endif()
 
+    # CNA_GamerServices (Microsoft::Xna::Framework::GamerServices/*.cpp,
+    # includes AvatarRenderer's real-rendering extension) is a separate
+    # static library gated behind CNA_ENABLE_NET (default ON) -- see CNA's
+    # own CMakeLists.txt. Needed for the third-person placeholder model
+    # (NEXT.md §3, 2026-07-09), whose code unconditionally references
+    # AvatarRenderer/SkinnedModelEXT symbols (the std::filesystem::exists()
+    # guard in LoadContent() is a runtime check on avatars3d/ being present,
+    # not a way to avoid linking these symbols) -- if CNA_ENABLE_NET=OFF,
+    # this target fails to link, it does not gracefully degrade. TARGET
+    # check here just avoids a hard CMake configure-time error referencing a
+    # nonexistent target; CNA_ENABLE_NET defaults ON so this is the normal
+    # path in practice.
+    if(TARGET CNA_GamerServices)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE CNA_GamerServices)
+    endif()
+
     # Prefer the easy3d::easy3d alias if present.
     if(TARGET easy3d::easy3d)
         target_link_libraries(GalaxyEggbertCNA PRIVATE easy3d::easy3d)
@@ -376,6 +392,22 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                 "${CMAKE_CURRENT_SOURCE_DIR}/textures3d"
                 "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/textures3d"
             COMMENT "Copying textures3d/ next to GalaxyEggbertCNA"
+        )
+    endif()
+
+    # Third-person-mode 3D character model(s) (NEXT.md §3, 2026-07-09) --
+    # loaded via CNA's ContentManager, whose RootDirectory is pointed at this
+    # directory in LoadContent() (not "Content", to avoid the mobile-eggbert
+    # Content/ wipe-and-recopy issue above). Currently just a temporary
+    # placeholder (avatars3d/blupi_placeholder/, see its own README.md) until
+    # a real 3D Blupi model exists. Same copy-next-to-binary pattern as
+    # worlds3d//textures3d above.
+    if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/avatars3d")
+        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_CURRENT_SOURCE_DIR}/avatars3d"
+                "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/avatars3d"
+            COMMENT "Copying avatars3d/ next to GalaxyEggbertCNA"
         )
     endif()
 

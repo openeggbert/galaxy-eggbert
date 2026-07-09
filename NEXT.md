@@ -191,7 +191,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   (`Content/backgrounds/decorNNN.png`) behind the scene, selected per-world via the new `.vwr` v2
   `skyRegion` header field (2026-07-09, §3) — not a derived/flat color, and not a full 3D skybox,
   just a large camera-facing backdrop plane; falls back to a flat clear color if the region has no
-  real background file.
+  real background file. Also now has a second, third-person camera mode ("C" to toggle,
+  2026-07-09, §3) showing a real GPU-skinned 3D model via CNA's `AvatarRenderer` extension —
+  currently a temporary CC0/CC-BY placeholder (`avatars3d/blupi_placeholder/`), not a real Blupi
+  model yet.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -201,10 +204,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   stone — see §3).
 
 ### What does not work yet
-- `GalaxyEggbertCNA`: no visible 3D Blupi, no HUD, no sound, no real gameplay logic (all expected
-  at this phase — no interactive object system yet, so platform lifts/crates render correctly but
-  don't move or respond to Blupi). `BigDecor:` rendering and the platform-lift/crate `UniformCube`
-  object path are now both implemented (2026-07-09, §3).
+- `GalaxyEggbertCNA`: no real Blupi model yet (a temporary placeholder exists in third-person mode
+  only, §3), no HUD, no sound, no real gameplay logic (all expected at this phase — no interactive
+  object system yet, so platform lifts/crates render correctly but don't move or respond to Blupi).
+  `BigDecor:` rendering and the platform-lift/crate `UniformCube` object path are now both
+  implemented (2026-07-09, §3).
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — the last 6 `DirectionalCube` icons (15-18, 108-109) were backfilled
@@ -220,6 +224,55 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Third-person camera mode with a real GPU-skinned 3D model, via CNA's `AvatarRenderer` real-
+  rendering extension — first version, placeholder model (2026-07-09).** User request: analyze how
+  to add a real 3D Blupi model with animations alongside the existing first-person mode (their own
+  guess: probably glTF), and implement the camera-mode-switching infrastructure now using a free
+  placeholder model, before a real Blupi model exists.
+  - **Format answer**: glTF/GLB is correct, but only as the *authoring* format, not what
+    `GalaxyEggbertCNA` loads at runtime. CNA already has a complete, previously-unused (by
+    galaxy-eggbert) GPU-skinned animation system —`SkinnedModelEXT`/`SkinnedEffect`/`AvatarRenderer`
+    (`../cna/docs/avatar-real-rendering-ext.md`, proven end-to-end in `../cna/examples/demo_avatar/`)
+    — with its own native `.skinnedmodel.json`/`.skeleton.bin`/`.clip.bin` bundle format, produced
+    *offline* from a glTF/GLB source via `../cna/tools/avatar_asset_pipeline/convert_avatar.py
+    --embedded-clips` (a one-time, not-run-by-the-engine conversion step). This was a genuinely
+    unexpected, much-better-than-assumed finding — not "build a new engine subsystem," but "wire up
+    an existing one for the first time."
+  - **Placeholder model**: Khronos glTF-Sample-Models "Fox" (CC0 model by PixelMannen, CC-BY 4.0
+    rig/animation by @tomkranis — attribution given in `avatars3d/blupi_placeholder/README.md`),
+    3 embedded clips (Survey/Walk/Run). Its single mesh primitive had no index accessor (non-indexed
+    geometry), which `convert_avatar.py` doesn't handle — patched with a synthetic sequential index
+    buffer before conversion (no geometry change) rather than modifying CNA's own tooling. Converted
+    successfully: 24 bones, 1 part, 3 clips. Committed to `avatars3d/blupi_placeholder/` (new
+    top-level dir, copied next to the binary via a new CMake `POST_BUILD` step, same pattern as
+    `worlds3d/`/`textures3d/`).
+  - **Camera-mode toggle**: "C" (edge-detected) switches `GalaxyEggbertCnaGame`'s new
+    `cameraMode_` between `FirstPerson` (unchanged default) and `ThirdPersonModel` — only actually
+    switches if the model loaded (`blupiModelLoaded_`), else silently stays first-person. Third-
+    person is a fixed-offset chase camera (behind + above Blupi, looking at him), not a real spring-
+    arm/collision-aware orbit camera. `GEBlupiController::AnimState` (Stop/March/Jump/Down/Up) maps
+    to the placeholder's 3 clips via a rough, explicitly-documented best-effort substitution (no
+    real correspondence exists) — see `BlupiAnimStateToPlaceholderClipName()` and the placeholder's
+    own README for the exact mapping table.
+  - **Build wiring**: `AvatarRenderer` lives in a separate `CNA_GamerServices` static library, gated
+    behind CNA's own `CNA_ENABLE_NET` option (default `ON`) — not linked by `GalaxyEggbertCNA`
+    before this; added `target_link_libraries(GalaxyEggbertCNA PRIVATE CNA_GamerServices)`. Model
+    loaded via `ContentManager` with its `RootDirectory` repointed at `avatars3d/` (previously
+    unused by this class — `getContentProperty()` had zero prior call sites — so repointing it
+    can't conflict with anything).
+  - **Verified**: clean build (after the `CNA_GamerServices` link fix); live run, no crash, model
+    loads successfully (`third-person placeholder model loaded`); temporarily forced
+    `cameraMode_`'s default to `ThirdPersonModel` to visually confirm the model actually renders
+    (textured, lit, roughly correctly positioned/scaled — not just "no crash") before reverting the
+    default back to `FirstPerson` (confirmed via empty `git diff` on that line); default first-person
+    view re-confirmed unchanged after the revert. `GalaxyEggbertWorldsTests` (63/63),
+    `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+    PASSED`). **Not independently verified**: the exact placeholder scale (0.02, hand-picked from the
+    Fox's ~79-unit native height vs. Blupi's ~1.6-unit eye-height scale) and rotation-offset
+    alignment (whether the model's own rest-pose "forward" actually matches
+    `GEBlupiController::GetYaw()`'s facing convention) — cosmetic tuning, not correctness, and
+    explicitly moot once a real Blupi model replaces this placeholder anyway.
 
 - **`UniformCube` platform-lift/crate objects now animate too, closing §8's optional follow-up
   (2026-07-09).** Direct continuation of the previous entry below — the one remaining icon lookup
@@ -1324,6 +1377,16 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
+0. **Follow-up: replace `avatars3d/blupi_placeholder/` with a real Blupi model, once one exists**
+   (§3, 2026-07-09). Not urgent — the placeholder proves the third-person camera mode/`AvatarRenderer`
+   wiring works end-to-end, but a fox is obviously not Blupi. When a real model exists (exported as
+   glTF/GLB, ideally with named clips matching `GEBlupiController::AnimState`'s 5 states so
+   `BlupiAnimStateToPlaceholderClipName()`'s rough substitution can become a real 1:1 mapping):
+   convert via `../cna/tools/avatar_asset_pipeline/convert_avatar.py --embedded-clips` (or
+   `--body`/`--clip` if clips are separate files), replace `avatars3d/blupi_placeholder/` wholesale,
+   and re-verify/tune `kPlaceholderModelScale` and the yaw rotation offset in
+   `GalaxyEggbertCnaGame::Draw()` against the real model's actual proportions and rest-pose facing
+   direction (both were hand-picked/unverified for the fox placeholder, see §3).
 1. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
    (§3/§5 — 60% reduction in fully-transparent seam pixels, not 100%). Two untested hypotheses: (a)
    ordinary MSAA/silhouette-edge antialiasing producing genuine partial pixel coverage at any

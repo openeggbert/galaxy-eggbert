@@ -1,0 +1,26 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "fox1",
+      "vertices": "fox1.verts.bin",
+      "indices": "fox1.idx.bin",
+      "vertexStride": 52,
+      "texture": "fox1.png"
+    }
+  ],
+  "animations": [
+    {
+      "name": "Survey",
+      "clip": "clips/Survey.clip.bin"
+    },
+    {
+      "name": "Walk",
+      "clip": "clips/Walk.clip.bin"
+    },
+    {
+      "name": "Run",
+      "clip": "clips/Run.clip.bin"
+    }
+  ]
+}
