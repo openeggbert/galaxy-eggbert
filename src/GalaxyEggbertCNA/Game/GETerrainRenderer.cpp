@@ -180,6 +180,64 @@ namespace GalaxyEggbert::CNA
         {
             return icon == 107;
         }
+
+        // True if @p icon uses one of the "new geometry" render modes
+        // (AppendSpecialGeometry above) -- these are smaller than a full
+        // block or leave faces intentionally open, so they must never be
+        // treated as occluders by IsOccluderBlock below.
+        bool IsSpecialGeometryIcon(int icon)
+        {
+            Easy3D::DirectionalCubeFace unusedFaces[6];
+            return TryGetDirectionalCubeFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
+                   TryGetInnerPillarBoxFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
+                   IsInnerFlatPlateIcon(icon) ||
+                   IsTripleCrossBillboardIcon(icon);
+        }
+
+        // Face-culling occlusion test (NEXT.md §8 -- "add face-culling/
+        // occlusion to GETerrainRenderer"): true only for a block that is
+        // guaranteed to be a plain, fully opaque 1x1x1 cube on every side --
+        // non-air, in bounds, not water, not animated (some animated icons
+        // use special/holed geometry -- see AppendSpecialGeometry -- and
+        // conservatively excluding ALL of them, not just the holed ones,
+        // keeps this check simple and never over-culls), not alpha-blended,
+        // and not itself a special-geometry icon. Deliberately conservative:
+        // a face is only culled when its neighbor is DEFINITELY solid on
+        // that side, never a guess -- worth revisiting later for e.g.
+        // DirectionalCube neighbors (their own per-face pattern is already
+        // known via TryGetDirectionalCubeFaces, so they COULD occlude on
+        // their opaque faces), but that's extra complexity for a case this
+        // task doesn't need yet (§8's own note: "not needed at the current
+        // ~2700-block scale").
+        bool IsOccluderBlock(const Worlds::World& world, int blocksPerAxis, int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0 || x >= blocksPerAxis || y >= blocksPerAxis || z >= blocksPerAxis)
+            {
+                return false;
+            }
+
+            const auto block = world.getBlock(static_cast<std::uint16_t>(x),
+                                               static_cast<std::uint16_t>(y),
+                                               static_cast<std::uint16_t>(z));
+            if (block.isAir())
+            {
+                return false;
+            }
+
+            const std::uint16_t animBase = GalaxyEggbert::BlockTypes::tileAnimBase(block.type());
+            if (IsWater(animBase) || IsAnimated(animBase))
+            {
+                return false;
+            }
+
+            const int icon = static_cast<int>(block.type());
+            if (NeedsAlphaBlend(icon) || IsSpecialGeometryIcon(icon))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     GETerrainRenderer::GETerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -187,7 +245,6 @@ namespace GalaxyEggbert::CNA
                                          const GETileAtlas& tileAtlas)
         : m_tileAtlas(&tileAtlas)
     {
-        Easy3D::CubeBatch staticBatch;
         std::vector<Easy3D::CubeVertex> staticVertices;
         std::vector<std::uint32_t> staticIndices;
         std::vector<Easy3D::CubeVertex> transparentStaticVertices;
@@ -268,7 +325,34 @@ namespace GalaxyEggbert::CNA
                         continue;
                     }
 
-                    staticBatch.Add(center, Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f), tileUv);
+                    // Face culling (NEXT.md §8): only emit a face when its
+                    // neighbor doesn't fully occlude it (see IsOccluderBlock).
+                    // Uses the same DirectionalCubeItem geometry AppendSpecialGeometry
+                    // already uses for holed render modes -- with all 6 faces
+                    // Visible and the same Uv, it's byte-for-byte equivalent
+                    // to a plain UniformCube (confirmed by ../easy-3d's own
+                    // "all-visible-faces parity with AppendCubeMesh" test),
+                    // so this doesn't change anything for a block with no
+                    // solid neighbor (e.g. every isolated demo block in this
+                    // sample world) -- only interior faces between two solid
+                    // blocks (the common case in bulk fills like the ground
+                    // floor/walls/staircase) actually get culled.
+                    Easy3D::DirectionalCubeItem item;
+                    item.Center = center;
+                    item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosZ)] =
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1), tileUv};
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegZ)] =
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z - 1), tileUv};
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosX)] =
+                        {!IsOccluderBlock(world, blocksPerAxis, x + 1, y, z), tileUv};
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegX)] =
+                        {!IsOccluderBlock(world, blocksPerAxis, x - 1, y, z), tileUv};
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosY)] =
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z), tileUv};
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegY)] =
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z), tileUv};
+                    Easy3D::AppendDirectionalCubeMesh(item, staticVertices, staticIndices);
                 }
             }
         }
@@ -280,12 +364,6 @@ namespace GalaxyEggbert::CNA
             m_centroidZ = static_cast<float>(sumZ / m_blockCount);
         }
 
-        // Appended after the special-geometry blocks above, not merged into
-        // one pass: AppendCubeMesh/AppendDirectionalCubeMesh/AppendPlateMesh/
-        // AppendTripleCrossMesh all offset indices by the vertex count
-        // already present, so concatenation order doesn't matter for
-        // correctness.
-        Easy3D::BuildCubeMesh(staticBatch, staticVertices, staticIndices);
         m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
 
         if (!transparentStaticVertices.empty())

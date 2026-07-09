@@ -88,10 +88,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### Build status
 - `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-09)**, after implementing
-  3D-format MoveObject storage (§3, on top of the platform-lift/crate `UniformCube` object path and
-  `BigDecor:` billboard rendering earlier the same day). Built `GalaxyEggbertCNA`,
-  `GalaxyEggbertWorldsTests`, `VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, and
-  `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
+  face culling for the static terrain path (§3 — 67788→23012 vertices on the default world, a real
+  66% reduction), on top of 3D-format MoveObject storage + full `ObjectType` catalog population,
+  the platform-lift/crate `UniformCube` object path, and `BigDecor:` billboard rendering, all
+  earlier the same day. Built `GalaxyEggbertCNA`, `GalaxyEggbertWorldsTests`, `VerifyBlupiMovement`,
+  `VerifyMoveObjectTypesCna`, and `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
 - `../easy-3d` — **CNA-linked build rebuilt and all 6/6 tests passed today (2026-07-08)**, after
   adding `AppendPlateMesh`/`PlateItem`/`AppendTripleCrossMesh`/`TripleCrossItem` to
   `CubeMesh.hpp/.cpp` (§3, on top of the earlier `AppendDirectionalCubeMesh` addition same day).
@@ -215,6 +216,43 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented face-culling/occlusion for `GETerrainRenderer`'s static terrain mesh (2026-07-09,
+  §8 old task 3).** Scoped to the plain, non-animated `UniformCube` path only (the dominant case
+  for bulk terrain — ground floor, walls, staircase) — the animated/water paths are untouched, a
+  deliberate scope limit (see below). Every plain block now computes real per-face visibility by
+  checking its 6 neighbors via a new `IsOccluderBlock()` — a neighbor only counts as a face
+  occluder when it's **definitely** a plain, fully opaque 1×1×1 cube itself: non-air, in bounds,
+  not water, not animated (conservatively — some animated icons ARE full cubes, but excluding all
+  of them keeps the check simple and never over-culls), not alpha-blended, and not itself a
+  special-geometry icon (`DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard`
+  — smaller-than-block or intentionally holed, must never occlude a neighbor). Reuses
+  `Easy3D::DirectionalCubeItem`/`AppendDirectionalCubeMesh` (already used for holed render modes)
+  instead of the old `Easy3D::CubeBatch`/`BuildCubeMesh` path — with all 6 faces `Visible=true` and
+  the same `Uv` on each, it's byte-for-byte equivalent to the old plain-cube output (`../easy-3d`'s
+  own test suite already guarantees this "all-visible-faces parity with `AppendCubeMesh`"), so a
+  block with no solid neighbor (every isolated demo block in this sample world) renders identically
+  to before — only genuinely interior faces between two solid blocks get culled. `staticBatch`/
+  `Easy3D::CubeBatch` usage removed from the constructor entirely (dead code once every plain block
+  routes through the per-face path).
+  - **Verified**: clean build; a live run of the default `.vwr` world shows the terrain mesh vertex
+    count dropping from 67788 to **23012** (66% reduction) and triangles from 33894 to **11506**
+    — real, substantial savings from the ground floor/staircase/walls' interior faces, exactly the
+    kind of bulk fill this task exists for. `VerifyBlupiMovement` all-pass (face culling only
+    changes what's drawn, never `World::getBlock()`-based collision, so this couldn't affect
+    physics even in principle) and `GalaxyEggbertWorldsTests` 61/61 unaffected (engine-agnostic,
+    untouched by this CNA-only rendering change). Two close-up screenshots (reverted debug camera
+    positions) — one of the default spawn view, one an oblique close-up of the staircase/wall
+    corner (deliberately chosen as the densest, most culling-affected region) — confirmed no
+    visible holes, gaps, or missing faces anywhere; every surface a player could actually see still
+    renders solid.
+  - **Deliberately not done**: face culling for the animated/water paths (`RebuildAnimatedRenderer`,
+    covering lava/spike/crusher/saw/fan/temp/marine/water) — these are typically sparse decorative
+    elements, not bulk fills, so the payoff is much smaller, and correctly reasoning about which
+    animation frames are "definitely full cubes" (some are, some use special/holed geometry) adds
+    real complexity for comparatively little benefit. `IsOccluderBlock()` already treats every
+    animated/water neighbor as non-occluding unconditionally, so this is safe (never over-culls at
+    the boundary between static and animated terrain) — just leaves animated regions unoptimized. A
+    natural follow-up if a future world's animated-tile density ever warrants it.
 - **Populated the sample world with all 67 remaining confirmed/named `ObjectType`s (2026-07-09,
   user request, §8 old task 4 — "populate the rest of the ~68 confirmed types").** The storage
   mechanism itself (previous entry below) needed no changes — placing a new type is pure data
@@ -758,7 +796,7 @@ render-mechanism work remains on the list; §8's remaining tasks are verificatio
 | needs verification | Simple3D: stomp bounce height (`kJumpSpeed * 0.65f`) vs. mobile-eggbert's real feel. |
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; mobile-eggbert links crate stacks vertically (`SearchLinkCaisse`) — whether galaxy-eggbert's port does too is unconfirmed. |
 | risky assumption | `GalaxyEggbertCNA`'s world/texture loader uses relative paths — only works when run from its own build directory. |
-| incomplete | `GETerrainRenderer` (CNA) has no face-culling/occlusion — fine at ~2700 blocks, will need revisiting for denser worlds. |
+| incomplete | `GETerrainRenderer` (CNA) face culling only covers the plain static `UniformCube` path (2026-07-09, §3) — the animated/water paths render every face unconditionally, fine while those are sparse decorative elements rather than bulk fills. |
 
 ## 6. Architecture notes
 
@@ -816,7 +854,12 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETil
                                 tables in order — DirectionalCube, InnerPillarBox, InnerFlatPlate,
                                 TripleCrossBillboard — falling back to plain UniformCube; both the
                                 opaque-animated and water paths call the same helper, keyed by
-                                animation-group base icon, not the current frame's icon),
+                                animation-group base icon, not the current frame's icon; the
+                                static-opaque path's plain-UniformCube fallback now face-culls via
+                                IsOccluderBlock() (2026-07-09, §3) -- a real DirectionalCubeItem
+                                with all 6 faces Visible/same Uv, not the old CubeBatch path, so a
+                                face is only omitted when a definitely-solid neighbor covers it;
+                                the animated/water paths are NOT face-culled yet, see §8 task 3),
                                 GEDirectionalCubeTiles (93 of ~99 confirmed DirectionalCube icons),
                                 GEInnerPillarBoxTiles (3 of 3), GEInnerFlatPlateTiles (63 of 63 --
                                 58 use the default PlateAxis::Z, icons 368-372 use PlateAxis::Y
@@ -1008,16 +1051,21 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `GraphicsDeviceManager`/EasyGL backend for MSAA defaults. **Verification:** a live screenshot at
    the same close/oblique staircase angle before/after, confirming the seams are gone or
    meaningfully reduced.
-3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
-   needed at the current ~2700-block scale.
+3. **Optional: extend face culling (§3, 2026-07-09) to the animated/water paths** in
+   `RebuildAnimatedRenderer` — currently every animated/water block emits all 6 faces
+   unconditionally regardless of neighbors. Low priority: these are typically sparse decorative
+   elements (fans, lava pockets, water pools), not bulk fills, so the payoff is much smaller than
+   the static-path win already banked, and correctly distinguishing "definitely a full cube this
+   frame" from "uses holed geometry this frame" per animated icon adds real complexity.
 
 Everything else that had accumulated in this section is done (2026-07-09): `GEInnerFlatPlateTiles`
 axis spot-check found and fixed icons 368-372 (§3); `BigDecor:` billboard rendering,
 platform-lift/crate `UniformCube` objects, `GalaxyEggbertWorldsTests` re-verification, the
-clean-exit-path investigation, 3D-format MoveObject storage, and populating the sample world with
-all 67 remaining confirmed `ObjectType`s are all complete (§3). Task 1 (6 remaining
-`DirectionalCube` icons) and task 2 (seam-line artifact) above are the only substantive open items,
-plus task 3 (explicitly not urgent).
+clean-exit-path investigation, 3D-format MoveObject storage, populating the sample world with all
+67 remaining confirmed `ObjectType`s, and face culling for the static terrain path (67788→23012
+vertices, a real 66% reduction) are all complete (§3). Task 1 (6 remaining `DirectionalCube`
+icons) and task 2 (seam-line artifact) above are the only substantive open items, plus task 3
+(explicitly optional/low-priority).
 
 ## 9. Do not do yet
 
