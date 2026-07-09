@@ -614,7 +614,7 @@ render-mechanism work remains on the list; §8's remaining tasks are verificatio
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
 | unknown | Simple3D Android/Web builds untested since the last engine change. |
-| **found 2026-07-09, not fixed (out of scope: ../cna/SDL, not galaxy-eggbert code)** | **`GalaxyEggbertCNA` exits with code 1, not 0, when closed via a real window-manager close request** (verified via `xdotool windowclose` against a real X11 window under Xvfb, see §3/§7) — reproducible 100% (2/2 runs, identical X error each time): an `X Error of failed request: BadWindow (invalid Window parameter)` on the `XInputExtension` major opcode, referencing the just-closed window's resource id, printed right after the final frame's `Draw()` output. No leaked process/zombie afterward — the process does fully terminate, just with the wrong exit code. Root cause is inside SDL's own X11 backend window-teardown sequence (CNA's `Game::Exit()` is a 2-line flag-setter; galaxy-eggbert's `GalaxyEggbertCnaGame`/`main.cpp` do no custom shutdown), not reachable without modifying `../cna`/SDL, which needs explicit approval per `CLAUDE.md`. |
+| **accepted as a known limitation (found 2026-07-09, user declined to approve a `../cna`/SDL fix 2026-07-09)** | **`GalaxyEggbertCNA` exits with code 1, not 0, when closed via a real window-manager close request** (verified via `xdotool windowclose` against a real X11 window under Xvfb, see §3/§7) — reproducible 100% (2/2 runs, identical X error each time): an `X Error of failed request: BadWindow (invalid Window parameter)` on the `XInputExtension` major opcode, referencing the just-closed window's resource id, printed right after the final frame's `Draw()` output. No leaked process/zombie afterward — the process does fully terminate, just with the wrong exit code. Root cause is inside SDL's own X11 backend window-teardown sequence (CNA's `Game::Exit()` is a 2-line flag-setter; galaxy-eggbert's `GalaxyEggbertCnaGame`/`main.cpp` do no custom shutdown) — fixing it needs `../cna`/SDL changes, which needs explicit approval per `CLAUDE.md`; asked, user chose to leave this as a known limitation rather than approve that work. **Do not attempt a fix without new, explicit approval.** |
 | needs verification | Simple3D: stomp bounce height (`kJumpSpeed * 0.65f`) vs. mobile-eggbert's real feel. |
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; mobile-eggbert links crate stacks vertically (`SearchLinkCaisse`) — whether galaxy-eggbert's port does too is unconfirmed. |
 | risky assumption | `GalaxyEggbertCNA`'s world/texture loader uses relative paths — only works when run from its own build directory. |
@@ -847,15 +847,7 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    meaningfully reduced.
 3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-4. **Fix (or formally hand off) the clean-exit-path bug found 2026-07-09 (§3/§5)** —
-   `GalaxyEggbertCNA` exits with code 1, not 0, on a real window-manager close (`BadWindow`/
-   `XInputExtension` X error during SDL's own window-teardown, traced to `../cna`'s SDL layer, not
-   galaxy-eggbert code). Needs explicit user approval before touching `../cna`/SDL per `CLAUDE.md`
-   — do not attempt a fix without that approval; this task is really "get the go-ahead, or accept
-   as a known limitation." **Verification (already done, reusable):** `Xvfb :99` +
-   `DISPLAY=:99 SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA &`, `xdotool search --name "Galaxy Eggbert"`,
-   `xdotool windowclose <id>`, `wait $!; echo $?` — expect `0` once/if fixed.
-5. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
+4. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
    different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
    367), all consistent with "no reliable cue, default is fine," but not exhaustive like
    `DirectionalCube`'s per-icon backfill was. Low priority — the default already renders correctly,
@@ -871,7 +863,9 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 - No deleting/removing any `GalaxyEggbertSimple3D` code without an explicit removal task.
 - No modifications to `../mobile-eggbert`, `../cna`, or `../simple-3d` without explicit user
   approval for that specific change. `../easy-3d` has standing permission (still scoped to small,
-  generic 3D-batching helpers).
+  generic 3D-batching helpers). **Concrete case (2026-07-09, §5): the clean-exit-path exit-code-1
+  bug is a confirmed `../cna`/SDL issue — user was asked and declined to approve a fix, so it stays
+  a documented known limitation. Do not attempt to fix it without new, explicit approval.**
 - No `.txt → .vwr` (or any) automated 2D-to-3D world converter — rejected.
 - No Easy3D scope creep — no ECS, scene graph, physics, resource cache, editor, or Lua.
 - No mass refactor of `include/GalaxyEggbert/Worlds/` unless a failing unit test justifies it.
