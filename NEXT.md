@@ -205,6 +205,28 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Verified `GalaxyEggbertCNA`'s clean-exit path (2026-07-09, §8 old task 4) — found a real,
+  reproducible bug, not fixed (out of scope: SDL/`../cna`, not galaxy-eggbert code).** Previously
+  only forced-kill/timeout was tested (§5). Found that this session's sandbox already has an
+  isolated `Xvfb :99` virtual display plus `xdotool` available — used them to do a genuine
+  window-manager close test: launched `GalaxyEggbertCNA` with `DISPLAY=:99 SDL_VIDEODRIVER=x11`
+  (the default video driver under a bare `DISPLAY=:99` env turned out NOT to create a real X11
+  window at all — `SDL_VIDEODRIVER=x11` was needed to force it, confirmed via `xwininfo -tree`
+  showing 0 windows without it vs. a real "Galaxy Eggbert (CNA)" window with it), found its window
+  via `xdotool search --name`, then `xdotool windowclose <id>` (sends a real ICCCM
+  `WM_DELETE_WINDOW` ClientMessage, which SDL translates to `SDL_EVENT_QUIT` →
+  `Game::Exit()`) instead of an external `SIGTERM`/`timeout` kill. Result: the process **exits
+  with code 1, not 0** — reproducible identically 2/2 runs, same `X Error of failed request:
+  BadWindow (invalid Window parameter)` on the `XInputExtension` major opcode referencing the
+  just-destroyed window's resource id, printed immediately after the final `Draw()` frame's
+  output. No leaked process/zombie afterward (checked `ps aux` post-exit) — the process does fully
+  terminate, just with the wrong exit code. Traced `Game::Exit()` in `../cna`'s `Game.cpp`
+  (read-only) to confirm it's a 2-line flag-setter (`RunApplication = false; suppressDraw_ =
+  true;`) — the actual X11 window-teardown/XInput cleanup that provokes the error happens deeper
+  in SDL's own X11 backend, not in any galaxy-eggbert or even CNA-level code path, so fixing this
+  would mean modifying `../cna` or SDL, which needs explicit user approval per `CLAUDE.md` and
+  wasn't sought for this verification task. Documented as a new confirmed bug in §5 rather than
+  attempted.
 - **Re-verified `GalaxyEggbertWorldsTests` (2026-07-09, §8 old task 3) — still 54/54, no code
   changes needed.** Last checked 2026-07-07; built and ran from `build-cna` (the Simple3D-OFF
   tree, per §9 — not the broken `cmake-build-debug`). `ctest --test-dir build-cna` also discovers
@@ -592,7 +614,7 @@ render-mechanism work remains on the list; §8's remaining tasks are verificatio
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
 | unknown | Simple3D Android/Web builds untested since the last engine change. |
-| unknown | `GalaxyEggbertCNA`'s clean-exit-on-window-close path not separately exercised (only forced-kill/timeout tested). |
+| **found 2026-07-09, not fixed (out of scope: ../cna/SDL, not galaxy-eggbert code)** | **`GalaxyEggbertCNA` exits with code 1, not 0, when closed via a real window-manager close request** (verified via `xdotool windowclose` against a real X11 window under Xvfb, see §3/§7) — reproducible 100% (2/2 runs, identical X error each time): an `X Error of failed request: BadWindow (invalid Window parameter)` on the `XInputExtension` major opcode, referencing the just-closed window's resource id, printed right after the final frame's `Draw()` output. No leaked process/zombie afterward — the process does fully terminate, just with the wrong exit code. Root cause is inside SDL's own X11 backend window-teardown sequence (CNA's `Game::Exit()` is a 2-line flag-setter; galaxy-eggbert's `GalaxyEggbertCnaGame`/`main.cpp` do no custom shutdown), not reachable without modifying `../cna`/SDL, which needs explicit approval per `CLAUDE.md`. |
 | needs verification | Simple3D: stomp bounce height (`kJumpSpeed * 0.65f`) vs. mobile-eggbert's real feel. |
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; mobile-eggbert links crate stacks vertically (`SearchLinkCaisse`) — whether galaxy-eggbert's port does too is unconfirmed. |
 | risky assumption | `GalaxyEggbertCNA`'s world/texture loader uses relative paths — only works when run from its own build directory. |
@@ -768,6 +790,17 @@ cmake --build /tmp/e3d-build-cna -j2 && ctest --test-dir /tmp/e3d-build-cna --ou
 # Reference: mobile-eggbert animation tables / gameplay logic (read-only)
 grep -n "table_decor\|table_blupi" ../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp
 less ../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp
+
+# Real window-manager-close test (found 2026-07-09, §3/§5 — this environment already has an
+# isolated Xvfb :99 running plus xdotool installed; DISPLAY=:99 alone does NOT create a real X11
+# window, SDL_VIDEODRIVER=x11 is required to force one):
+cd build-cna
+DISPLAY=:99 SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA &
+GAME_PID=$!
+sleep 2
+WIN_ID=$(DISPLAY=:99 xdotool search --name "Galaxy Eggbert")
+DISPLAY=:99 xdotool windowclose "$WIN_ID"   # real WM_DELETE_WINDOW -> SDL_EVENT_QUIT -> Game::Exit()
+wait "$GAME_PID"; echo "EXIT_CODE=$?"       # currently 1, not 0 -- see §5's known-bug entry
 ```
 
 No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format tooling to run.
@@ -814,8 +847,14 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    meaningfully reduced.
 3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-4. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
-   a forced kill/timeout) and confirm the process exits 0 with no leaked resources.
+4. **Fix (or formally hand off) the clean-exit-path bug found 2026-07-09 (§3/§5)** —
+   `GalaxyEggbertCNA` exits with code 1, not 0, on a real window-manager close (`BadWindow`/
+   `XInputExtension` X error during SDL's own window-teardown, traced to `../cna`'s SDL layer, not
+   galaxy-eggbert code). Needs explicit user approval before touching `../cna`/SDL per `CLAUDE.md`
+   — do not attempt a fix without that approval; this task is really "get the go-ahead, or accept
+   as a known limitation." **Verification (already done, reusable):** `Xvfb :99` +
+   `DISPLAY=:99 SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA &`, `xdotool search --name "Galaxy Eggbert"`,
+   `xdotool windowclose <id>`, `wait $!; echo $?` — expect `0` once/if fixed.
 5. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
    different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
    367), all consistent with "no reliable cue, default is fine," but not exhaustive like
