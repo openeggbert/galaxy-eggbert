@@ -242,6 +242,19 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     message(STATUS "CNA source: ${CNA_HOME}")
     message(STATUS "easy-3d source: ${EASY3D_HOME}")
 
+    # Default graphics backend for GalaxyEggbertCNA (2026-07-09) -- CNA's own
+    # CMakeLists.txt defaults CNA_GRAPHICS_BACKEND to EASYGL on Linux; this
+    # sets it to VULKAN instead, BEFORE add_subdirectory(CNA_HOME) below runs
+    # CNA's own (unforced, so lower-priority) default `set(... CACHE ...)`.
+    # A plain (non-FORCE) `set(... CACHE ...)` only takes effect the FIRST
+    # time a cache variable is populated, so this still respects an explicit
+    # `-DCNA_GRAPHICS_BACKEND=...` on the configure command line or an
+    # existing build directory's cache -- it only changes the *default* for
+    # a fresh configure, per the user's ask (2026-07-09) to try Vulkan and
+    # compare against the EasyGL-backend rendering investigated the same day.
+    set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING
+        "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
+
     # Add CNA first: easy-3d's own CMakeLists.txt auto-detects an existing
     # `CNA` target from the parent project and links against it instead of
     # building its own copy (see easy-3d/CMakeLists.txt "Resolve CNA linkage").

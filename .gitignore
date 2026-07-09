@@ -5,6 +5,7 @@ build-windows/
 cmake-build-web/*
 /build/
 /build-cna/
+/build-cna-vulkan/
 # Android signing — never commit private keys or passwords
 *.keystore
 *.jks

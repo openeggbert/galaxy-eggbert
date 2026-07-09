@@ -225,6 +225,49 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **GalaxyEggbertCNA now defaults to the Vulkan graphics backend instead of EasyGL (2026-07-09),
+  and an isolated-geometry unit test ruled out a DirectionalCube face-winding bug.** User request,
+  in response to the ongoing "still see inside the cube" investigation: try building/running on
+  Vulkan to see whether the issue is backend-specific.
+  - **CMakeLists.txt change**: added `set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING ...)` right
+    before `add_subdirectory(CNA_HOME)`, deliberately WITHOUT `FORCE` so an explicit
+    `-DCNA_GRAPHICS_BACKEND=...` (or an existing build dir's cache) still wins — this only changes
+    the *default* CNA picks for a fresh configure (previously EASYGL on Linux, CNA's own default).
+    New build dir: `cmake -S . -B build-cna-vulkan -DGALAXY_EGGBERT_BUILD_CNA=ON
+    -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`. Requires the Vulkan SDK/loader + a driver (present in this
+    environment: `libvulkan-dev`, `mesa-vulkan-drivers`, AMD Radeon 780M/RADV). Builds clean, all 63
+    `GalaxyEggbertWorldsTests` pass identically.
+  - **Result: identical visual bug on both backends** — user confirmed live ("vypada stejne jako na
+    easy gl"/"looks the same as on EasyGL"). This is a real, useful negative result: it rules out a
+    backend-specific GPU driver or graphics-API bug (OpenGL/EasyGL vs. Vulkan are two completely
+    independent implementations under CNA), meaning whatever is causing the "see inside the cube"
+    perception lives in shared, backend-agnostic code -- either `Easy3D::CubeMesh`'s geometry
+    construction (shared by both backends) or `GalaxyEggbertCNA`/`GETerrainRenderer`'s own tile/
+    blend logic.
+  - **Isolated-geometry test (built and torn down the same day, not committed)**: a standalone
+    `Game` subclass built 4 fully-isolated `DirectionalCubeItem`s directly via
+    `Easy3D::AppendDirectionalCubeMesh` (bypassing `GETerrainRenderer`/`GEWorldRuntime` entirely),
+    with `RasterizerState::CullNone` and depth testing OFF to eliminate every other variable: a
+    control full 6-face cube, `CubeFace::NegX` with a full tile UV (matching icon 49's confirmed-
+    working pattern), `NegX` with a `SwatchUv`-cropped UV (matching the fan's "base" face
+    assignment), and `CubeFace::PosZ` with the same crop. All 4 rendered as solid, correctly-shaped,
+    opaque quads (visually confirmed via a zoomed screenshot crop) — no winding/culling bug found at
+    the geometry level, for either face orientation or UV size. (A same-day earlier attempt at this
+    exact test wrongly reported `NegX` as invisible -- traced to the test's own camera sitting just
+    outside the view frustum, not a real rendering defect; re-verified after widening the camera.)
+  - **Not yet found**: the actual root cause of "vidím texturu jen zevnitř" / "stále vidím dovnitř
+    krychlí" remains open. A default-spawn screenshot (both backends) of the sample world's Platform
+    grate (icon 200, `worlds3d/world001.vwr` via `tools/GenerateSampleWorld3D.cpp` line ~112) was
+    inspected closely and, once zoomed in past thumbnail resolution, turned out to be correctly
+    rendered (individual baluster-shaped pillars with genuine gaps showing the floor behind them,
+    not a black void) -- another false lead from insufficient zoom, not a confirmed bug site. Needs
+    a specific screenshot from the user's own live session pinpointing exactly where/what they still
+    see wrong, since every angle tested here (isolated unit test, default spawn, multiple debug-
+    camera positions in the demo row) has rendered correctly on inspection.
+  - **Verified**: `GalaxyEggbertWorldsTests` (63/63) on both `build-cna` (EasyGL) and
+    `build-cna-vulkan` (Vulkan); live headless runs on both, no crashes/errors, matching terrain-
+    visibility diagnostics.
+
 - **Fixed FanLeft/FanRight's base/open faces (reported reversed after the axis fix), rotated their
   newly-textured top face 180 degrees, reverted Fan's animation divisor (reported too fast), and
   root-caused why "elementy" still looked slow (2026-07-09).** Direct live follow-up to the axis fix
