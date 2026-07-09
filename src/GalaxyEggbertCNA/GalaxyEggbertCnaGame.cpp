@@ -133,6 +133,34 @@ namespace GalaxyEggbert::CNA
         objectMPngEffect_->setTextureEnabledProperty(true);
         objectMPngEffect_->setTextureProperty(&terrainTexture_);
 
+        // Billboard rendering for the 12 explo.png-sourced MoveObjects
+        // (GEObjectIcons::IsExploPngSourced, NEXT.md §3) -- explo.png isn't
+        // loaded anywhere else in GalaxyEggbertCNA, so this is a genuinely
+        // new texture load (already copied next to this binary at build
+        // time, same mechanism as element.png/object-m.png).
+        exploTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/explo.png", device);
+        exploEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        exploEffect_->VertexColorEnabled = false;
+        exploEffect_->setTextureEnabledProperty(true);
+        exploEffect_->setTextureProperty(&exploTexture_);
+
+        // Billboard rendering for the 4 Blupi-skin MoveObjects
+        // (GEObjectIcons::IsBlupiPngSourced, NEXT.md §3) -- separate
+        // Texture2D instances from blupiIconTexture_ above even though
+        // ObjectType200 loads the same blupi.png file, since that one is
+        // owned by the 2D SpriteBatch HUD path, not this 3D BasicEffect path.
+        blupiObjectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi.png", device);
+        blupiObjectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        blupiObjectEffect_->VertexColorEnabled = false;
+        blupiObjectEffect_->setTextureEnabledProperty(true);
+        blupiObjectEffect_->setTextureProperty(&blupiObjectTexture_);
+
+        blupi1ObjectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi1.png", device);
+        blupi1ObjectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        blupi1ObjectEffect_->VertexColorEnabled = false;
+        blupi1ObjectEffect_->setTextureEnabledProperty(true);
+        blupi1ObjectEffect_->setTextureProperty(&blupi1ObjectTexture_);
+
         // Billboard rendering for BigDecor: cells (NEXT.md §8 task 3) —
         // reuses terrainTexture_ (object-m.png), same icon vocabulary as the
         // main terrain grid, via a dedicated effect (BasicEffect only binds
@@ -419,12 +447,15 @@ namespace GalaxyEggbert::CNA
             {
                 // Platform lifts/crates render as solid cubes (see
                 // objectCubeMeshRenderer_/NEXT.md §8 task 3), not billboards
-                // -- skip here so they aren't drawn twice. object-m.png-
-                // sourced types (see objectMPngMeshRenderer_ below) are also
-                // skipped here -- GetElementIconUv() would compute the wrong
-                // UV rect for them (element.png icon-index domain, not
-                // object-m.png's).
-                if (IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type))
+                // -- skip here so they aren't drawn twice. object-m.png-,
+                // explo.png-, and blupi.png/blupi1.png-sourced types (see
+                // objectMPngMeshRenderer_/exploMeshRenderer_/
+                // blupiObjectMeshRenderer_/blupi1ObjectMeshRenderer_ below)
+                // are also skipped here -- GetElementIconUv() would compute
+                // the wrong UV rect for them (element.png icon-index domain,
+                // not theirs).
+                if (IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type) ||
+                    IsExploPngSourced(obj.type) || IsBlupiPngSourced(obj.type))
                 {
                     continue;
                 }
@@ -490,6 +521,104 @@ namespace GalaxyEggbert::CNA
                 objectMPngEffect_->Projection = camera_.GetProjectionMatrix();
                 objectMPngEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 objectMPngMeshRenderer_->Draw(device, *objectMPngEffect_);
+            }
+        }
+
+        // Billboard rendering for the 12 explo.png-sourced MoveObjects
+        // (GEObjectIcons::IsExploPngSourced, NEXT.md §3, 2026-07-09) --
+        // same camera-facing billboard technique as the batches above, but
+        // exploTexture_ (a genuinely new texture) via exploEffect_, and
+        // GetExploIconUv() instead of GetElementIconUv()/tileAtlas_.
+        if (exploEffect_ && !worldRuntime_.GetMobileObjects().empty())
+        {
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto cameraRight = invView.getRightProperty();
+            const auto cameraUp = invView.getUpProperty();
+
+            Easy3D::BillboardBatch batch;
+            constexpr float kObjectSize = 1.0f;
+            constexpr float kObjectGroundOffset = 1.0f; // matches the batches above
+            for (const auto& obj : worldRuntime_.GetMobileObjects())
+            {
+                if (!IsExploPngSourced(obj.type))
+                {
+                    continue;
+                }
+                const int icon = GetObjIcon(obj.type, 0);
+                const auto uv = GetExploIconUv(icon);
+                batch.Add(
+                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
+                    Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+            }
+
+            std::vector<Easy3D::BillboardVertex> vertices;
+            std::vector<std::uint32_t> indices;
+            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
+
+            if (!indices.empty())
+            {
+                exploMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                exploEffect_->View = camera_.GetViewMatrix();
+                exploEffect_->Projection = camera_.GetProjectionMatrix();
+                exploEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                exploMeshRenderer_->Draw(device, *exploEffect_);
+            }
+        }
+
+        // Billboard rendering for the 4 Blupi-skin MoveObjects
+        // (GEObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
+        // ObjectType200 via blupiObjectEffect_ (blupi.png), ObjectType201/
+        // 202/203 via blupi1ObjectEffect_ (blupi1.png,
+        // GEObjectIcons::UsesBlupi1Texture) -- two separate batches since
+        // BasicEffect only binds one texture at a time.
+        if (blupiObjectEffect_ && blupi1ObjectEffect_ && !worldRuntime_.GetMobileObjects().empty())
+        {
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto cameraRight = invView.getRightProperty();
+            const auto cameraUp = invView.getUpProperty();
+
+            Easy3D::BillboardBatch blupiBatch;
+            Easy3D::BillboardBatch blupi1Batch;
+            constexpr float kObjectSize = 1.0f;
+            constexpr float kObjectGroundOffset = 1.0f; // matches the batches above
+            for (const auto& obj : worldRuntime_.GetMobileObjects())
+            {
+                if (!IsBlupiPngSourced(obj.type))
+                {
+                    continue;
+                }
+                const int icon = GetObjIcon(obj.type, 0);
+                const auto uv = GetBlupiIconUv(icon);
+                auto& batch = UsesBlupi1Texture(obj.type) ? blupi1Batch : blupiBatch;
+                batch.Add(
+                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
+                    Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+            }
+
+            std::vector<Easy3D::BillboardVertex> blupiVertices;
+            std::vector<std::uint32_t> blupiIndices;
+            Easy3D::BuildBillboardMesh(blupiBatch, cameraRight, cameraUp, blupiVertices, blupiIndices);
+            if (!blupiIndices.empty())
+            {
+                blupiObjectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, blupiVertices, blupiIndices);
+                blupiObjectEffect_->View = camera_.GetViewMatrix();
+                blupiObjectEffect_->Projection = camera_.GetProjectionMatrix();
+                blupiObjectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                blupiObjectMeshRenderer_->Draw(device, *blupiObjectEffect_);
+            }
+
+            std::vector<Easy3D::BillboardVertex> blupi1Vertices;
+            std::vector<std::uint32_t> blupi1Indices;
+            Easy3D::BuildBillboardMesh(blupi1Batch, cameraRight, cameraUp, blupi1Vertices, blupi1Indices);
+            if (!blupi1Indices.empty())
+            {
+                blupi1ObjectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, blupi1Vertices, blupi1Indices);
+                blupi1ObjectEffect_->View = camera_.GetViewMatrix();
+                blupi1ObjectEffect_->Projection = camera_.GetProjectionMatrix();
+                blupi1ObjectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                blupi1ObjectMeshRenderer_->Draw(device, *blupi1ObjectEffect_);
             }
         }
 

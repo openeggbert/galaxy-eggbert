@@ -22,15 +22,29 @@ namespace GalaxyEggbert::CNA
     // the element.png sheet layout; the caller picks the right sheet/UV
     // function based on those two predicates.
     //
-    // Coverage (2026-07-09, NEXT.md §3): 49 of 69 confirmed ObjectTypes now
-    // have a real icon (up from 31) -- the 14 Category B types added this
-    // pass, plus the pre-existing 31 and the 4 already-cube-routed types.
-    // Still default: return 0 (wrong/placeholder icon): 12 explo.png-sourced
-    // types (8/9/10/11/53/90/91/92/93/98/99/100), 4 blupi.png/blupi1.png
-    // Blupi-skin types (200/201/202/203), and ObjectType38's two-channel
-    // electric arc -- all deliberately deferred, see NEXT.md §8. Genuinely
-    // no icon exists in mobile-eggbert source data for ObjectType0/18/22/58
-    // -- default: return 0 is correct for those, not a gap.
+    // Coverage (2026-07-09, NEXT.md §3): 65 of 69 confirmed ObjectTypes now
+    // have a real icon (up from 31) -- 13 element.png-native + 5
+    // object-m.png-sourced Category B types added in an earlier pass this
+    // session, 12 explo.png-sourced + 4 blupi.png/blupi1.png-sourced
+    // (ObjectType14/15/31/35/52, 8/9/10/11/53/90/91/92/93/98/99/100,
+    // 200/201/202/203 -- see IsExploPngSourced/IsBlupiPngSourced below for
+    // the non-element.png ones) added in this pass, plus the pre-existing 31
+    // and the 4 already-cube-routed types. Still default: return 0
+    // (wrong/placeholder icon): only ObjectType38's two-channel electric arc
+    // (needs BOTH blupi1.png and element.png in one animation --
+    // 03-objects.md flags the element.png-only simplification as
+    // undecided, see NEXT.md §8). Genuinely no icon exists in mobile-eggbert
+    // source data for ObjectType0/18/22/58 -- default: return 0 is correct
+    // for those, not a gap.
+    //
+    // 53/92 (explo.png) and 98/99/100 (explo.png) return their documented
+    // first-frame icon only (no cycling): 53's 45 frames and 92's 128 frames
+    // would run off explo.png's 100-icon grid under a naive consecutive-icon
+    // assumption (same reasoning as element.png's 56/57 and object-m.png's
+    // 52 above); 99/100 additionally have real leading invisible (-1)
+    // frames that a static first-real-frame icon can't represent without a
+    // per-instance animation timer, which doesn't exist yet (GetObjIcon is
+    // always called with phase=0 today, see GalaxyEggbertCnaGame.cpp).
     int GetObjIcon(ObjectType type, int phase);
 
     // element.png UV rect for a given icon: 600x1740 px, 60x60 px tiles, 10
@@ -58,4 +72,39 @@ namespace GalaxyEggbert::CNA
     // returns for these types is an object-m.png index -- look it up via
     // GETileAtlas::GetTileUv(), NOT GetElementIconUv().
     bool IsObjectMPngSourced(ObjectType type);
+
+    // explo.png UV rect for a given icon: 1440x1440 px, 144x144 px tiles, 10
+    // columns x 10 rows (100 icons, 0-99), no gap (confirmed by direct file
+    // inspection -- dimensions divide evenly, same as element.png; see
+    // mobile-eggbert-reference/08-animations.md §4 for the per-tile size).
+    ObjectIconUv GetExploIconUv(int icon);
+
+    // True for the 12 confirmed Category B ObjectTypes sourced from
+    // explo.png (explosions/visual effects: ObjectType8/9/10/11/53/90/91/
+    // 92/93/98/99/100; mobile-eggbert-reference/03-objects.md, added
+    // 2026-07-09). The icon GetObjIcon() returns for these types is an
+    // explo.png index -- look it up via GetExploIconUv(), NOT
+    // GetElementIconUv() or GETileAtlas::GetTileUv().
+    bool IsExploPngSourced(ObjectType type);
+
+    // blupi.png/blupi1.png UV rect for a given icon: 600x2040 px, 60x60 px
+    // tiles, 10 columns x 34 rows (340 icons, 0-339), no gap (confirmed by
+    // direct file inspection; both sheets share the identical layout --
+    // mobile-eggbert-reference/03-objects.md line 228).
+    ObjectIconUv GetBlupiIconUv(int icon);
+
+    // True for the 4 confirmed Blupi-skin ObjectTypes (ObjectType200/201/
+    // 202/203, mobile-eggbert-reference/03-objects.md, added 2026-07-09).
+    // The icon GetObjIcon() returns for these types is a blupi.png/
+    // blupi1.png index -- look it up via GetBlupiIconUv().
+    bool IsBlupiPngSourced(ObjectType type);
+
+    // True for the 3 of the 4 Blupi-skin types (ObjectType201/202/203) that
+    // source blupi1.png instead of blupi.png (ObjectType200 uses blupi.png
+    // itself). Per 03-objects.md, Blupi1_11/_12/_13 all read the identical
+    // blupi1.png pixels in a raw crop -- any tint difference between
+    // 201/202/203 is applied at render time in mobile-eggbert, not
+    // reproduced here (no per-instance tinting exists in GalaxyEggbertCNA
+    // yet), so all 3 render identically to each other today.
+    bool UsesBlupi1Texture(ObjectType type);
 }

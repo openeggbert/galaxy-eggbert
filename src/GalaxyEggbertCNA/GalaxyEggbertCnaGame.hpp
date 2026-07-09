@@ -102,6 +102,32 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectMPngEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMPngMeshRenderer_;
 
+        // Billboard rendering for the 12 confirmed explo.png-sourced
+        // MoveObjects (GEObjectIcons::IsExploPngSourced, NEXT.md §3,
+        // 2026-07-09) -- explosions/visual effects, a genuinely new texture
+        // (not previously loaded anywhere in GalaxyEggbertCNA), same
+        // camera-facing billboard technique as objectMeshRenderer_ above.
+        Microsoft::Xna::Framework::Graphics::Texture2D exploTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> exploEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> exploMeshRenderer_;
+
+        // Billboard rendering for the 4 confirmed Blupi-skin MoveObjects
+        // (GEObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
+        // ObjectType200 sources blupi.png, ObjectType201/202/203 source
+        // blupi1.png (GEObjectIcons::UsesBlupi1Texture) -- two separate
+        // textures/effects/renderers since BasicEffect only binds one
+        // texture at a time. blupiObjectTexture_/blupiObjectEffect_ are
+        // deliberately separate from the existing blupiIconTexture_/
+        // blupiIconBatch_ above (that pair is 2D SpriteBatch-coupled for
+        // the HUD indicator, not reusable for this 3D BasicEffect path),
+        // even though both load the same blupi.png file.
+        Microsoft::Xna::Framework::Graphics::Texture2D blupiObjectTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiObjectEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiObjectMeshRenderer_;
+        Microsoft::Xna::Framework::Graphics::Texture2D blupi1ObjectTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupi1ObjectEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupi1ObjectMeshRenderer_;
+
         // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
         // (NEXT.md §8 task 3, mobile-eggbert-reference/
         // 01-world-file-format.md §2.3 / 15-3d-render-mapping-design.md

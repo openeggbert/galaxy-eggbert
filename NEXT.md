@@ -217,6 +217,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Filled in the remaining 16 `ObjectType`s missing from `GEObjectIcons::GetObjIcon()` — icon
+  coverage 49/69 → 65/69 confirmed types (2026-07-09).** Direct continuation of the previous entry
+  below's follow-up (§8 task 1).
+  - **12 `explo.png`-sourced types added** (8/9/10/11/53/90/91/92/93/98/99/100 — explosions/visual
+    effects): `explo.png` wasn't loaded anywhere in `GalaxyEggbertCNA` before this, so this is a
+    genuinely new texture (confirmed by direct file inspection: 1440×1440 px, 144×144 px tiles, 10
+    cols x 10 rows, 100 icons 0-99 — matches `08-animations.md`'s 144×144/10-col claim and pins
+    down the previously-unconfirmed row count). Added `GEObjectIcons::IsExploPngSourced()` +
+    `GetExploIconUv()`, and a third billboard render path in `GalaxyEggbertCnaGame.cpp`
+    (`exploTexture_`/`exploEffect_`/`exploMeshRenderer_`). `53`/`92` (45/128 documented frames)
+    would run off the 100-icon grid under a consecutive-icon cycle — first-frame icon only, same
+    reasoning as `56`/`57`/`52` in the previous pass. `99`/`100` also return their first REAL-frame
+    icon only (both have real leading invisible ticks in mobile-eggbert — a fall-height delay before
+    the splash appears — that a static return can't represent without a per-instance animation
+    timer, which doesn't exist yet: `GetObjIcon` is always called with `phase=0` today).
+  - **4 Blupi-skin types added** (200/201/202/203): confirmed by direct file inspection that
+    `blupi.png`/`blupi1.png` are both 600×2040 px, 60×60 tiles, 10 cols x 34 rows, 340 icons,
+    identical layout (matches `03-objects.md` line 228). Added `GEObjectIcons::IsBlupiPngSourced()`
+    + `UsesBlupi1Texture()` + `GetBlupiIconUv()`. `ObjectType200` sources `blupi.png`,
+    `201`/`202`/`203` source `blupi1.png` — two separate textures/effects/renderers
+    (`blupiObjectTexture_`/`blupiObjectEffect_`/`blupiObjectMeshRenderer_` and their `blupi1Object*`
+    counterparts), deliberately NOT reusing the existing `blupiIconTexture_` (that one is owned by
+    the 2D SpriteBatch HUD indicator, not this 3D `BasicEffect` path) even though `200` loads the
+    same file. No per-instance tinting exists yet, so `201`/`202`/`203` render identically to each
+    other (matches mobile-eggbert's own raw-crop behavior — tint is a render-time effect there too,
+    confirmed via `Pixmap::GetBitmap()` returning identical bitmaps for all three channels).
+  - **Deliberately still NOT added, still `default: return 0`**: `ObjectType38` (electric arc) —
+    the only remaining gap. Real behavior needs BOTH `blupi1.png` and `element.png` in one animation
+    (ticks 0-29 vs 30-89); `03-objects.md` explicitly flags the element.png-only simplification as
+    undecided, so this needs a decision (accept the simplification and build a genuinely dual-
+    texture billboard, or leave it out) before implementing — a smaller, standalone follow-up (see
+    §8), not blocked on any missing data the way the explo.png/blupi.png types were.
+  - **Verified**: clean build; live run (no crash, `69 MoveObject(s) parsed`, screenshot written);
+    `GalaxyEggbertWorldsTests` (61/61), `VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`,
+    `VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`, run from repo root); UV-math sanity check
+    (icon 99 on `explo.png`'s grid lands exactly at UV (0.9,0.9)-(1.0,1.0), confirming the 100-icon
+    bound). Final coverage: 65/69 confirmed `ObjectType`s have a real icon — only `ObjectType38`
+    remains, plus the 4 types (`0`/`18`/`22`/`58`) that correctly have no icon in source data.
+
 - **Filled in 18 of the 38 `ObjectType`s missing from `GEObjectIcons::GetObjIcon()` — icon coverage
   31/69 → 49/69 confirmed types (2026-07-09).** Prompted by the user asking whether all
   mobile-eggbert objects/elements can now be rendered — answer at the time was no: infrastructure
@@ -903,7 +942,7 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 | resolved (re-verified 2026-07-09) | `GalaxyEggbertWorldsTests` — 54/54 still pass (via `build-cna`, see §7). The `cmake-build-debug` `ctest` discovery issue is unrelated to that tree and not re-checked (not to be built, per §9). |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every remaining `ObjectType` billboard, even though types 32/33 need `blupi1.png` (`DOC-007`). Types 1/12/47/48 (as `UniformCube`s) and 14/15/31/35/52 (as `IsObjectMPngSourced` billboards) are no longer part of this gap in `GalaxyEggbertCNA` — they correctly source `object-m.png` instead (2026-07-09, §3); `GalaxyEggbertSimple3D`'s equivalent bug remains unfixed (historical reference only, not built/fixed going forward). |
-| incomplete | `GEObjectIcons::GetObjIcon()` icon coverage is 49/69 confirmed `ObjectType`s (up from 31, 2026-07-09, §3). Still `default: return 0` (wrong/placeholder icon): `38` (electric arc, two-channel `blupi1.png`+`element.png`, simplification undecided), 12 `explo.png`-sourced types, 4 `blupi.png`/`blupi1.png`-sourced Blupi-skin types — see §8 for the follow-up task. `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them). |
+| incomplete | `GEObjectIcons::GetObjIcon()` icon coverage is 65/69 confirmed `ObjectType`s (up from 31, 2026-07-09, §3). Only `38` (electric arc, two-channel `blupi1.png`+`element.png`, simplification undecided) is still `default: return 0` — see §8 for the follow-up task. `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them). |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
 | unknown | Simple3D Android/Web builds untested since the last engine change. |
@@ -1131,21 +1170,15 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Follow-up: the 16 remaining `ObjectType`s still without a real icon** (§3/§5 — 12
-   `explo.png`-sourced: 8/9/10/11/53/90/91/92/93/98/99/100; 4 `blupi.png`/`blupi1.png`-sourced Blupi
-   skins: 200/201/202/203). Larger/separately-scoped than the 2026-07-09 fill-in because both need a
-   brand-new texture load (`explo.png` isn't loaded anywhere in CNA today; `blupi.png` is loaded
-   only for the 2D SpriteBatch HUD indicator, not usable directly for 3D billboards) plus a new
-   UV-computation function (`explo.png` is confirmed 144×144 px/tile, 10 cols, per
-   `mobile-eggbert-reference/08-animations.md`, but total row count/icon-count isn't confirmed yet;
-   `blupi.png` is confirmed 600×2040 px, 60×60 tiles, 10 cols, `03-objects.md` line 228). `98`/`99`/
-   `100` (water splash variants) additionally have leading invisible (`-1`) frames documented as a
-   fall-height delay — a real per-frame detail this session's simple consecutive-cycle approach
-   can't represent without knowing the actual frame array. `ObjectType38` (electric arc) is a
-   smaller, separate case: real behavior needs BOTH `blupi1.png` and `element.png` in one animation
-   (ticks 0-29 vs 30-89) — `03-objects.md` explicitly flags the element.png-only simplification as
-   undecided, so this needs a decision (accept the simplification, or build real dual-texture
-   billboard support) before implementing, not just data-gathering.
+1. **Follow-up: `ObjectType38` (electric arc), the last confirmed `ObjectType` still without a real
+   icon** (§3/§5). Real behavior needs BOTH `blupi1.png` (ticks 0-29) and `element.png` (ticks
+   30-89) in one animation, but `03-objects.md` explicitly flags the element.png-only
+   simplification as undecided — needs a decision first (accept the simplification and return an
+   element.png-only icon like the other Category B types, or build genuine dual-texture billboard
+   support — no existing render path draws two textures on one billboard) before implementing, not
+   just data-gathering. Low priority/small scope: one type, already-loaded textures
+   (`blupiObjectEffect_`/`blupi1ObjectEffect_` and the element.png path both exist), the only real
+   question is the design decision above.
 2. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
    (§3/§5 — 60% reduction in fully-transparent seam pixels, not 100%). Two untested hypotheses: (a)
    ordinary MSAA/silhouette-edge antialiasing producing genuine partial pixel coverage at any

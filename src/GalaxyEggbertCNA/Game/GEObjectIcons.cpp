@@ -112,6 +112,37 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType44: return kGuepeLeft[(p / 6) % 6];
             case ObjectType::ObjectType54: return kCreature[(p / 6) % 8];
             case ObjectType::ObjectType96: return kFollow1[(p / 3) % 26];
+
+            // explo.png-sourced Category B types (2026-07-09) -- explosions/
+            // visual effects, 100-icon grid (0-99). Icon numbers are only
+            // meaningful via GetExploIconUv() -- see IsExploPngSourced().
+            // 53/92 return their first-frame icon only (documented frame
+            // count would exceed the 100-icon grid under a naive
+            // consecutive-icon assumption, same reasoning as 56/57/52
+            // above); 98 cycles normally (90+9=99 fits exactly); 99/100
+            // also return their first REAL-frame icon only (both have real
+            // leading invisible ticks in mobile-eggbert that a static
+            // return can't represent -- see GetObjIcon's header comment).
+            case ObjectType::ObjectType8:   return 0 + (p / 6) % 39;
+            case ObjectType::ObjectType9:   return 12 + (p / 6) % 20;
+            case ObjectType::ObjectType10:  return 32 + (p / 6) % 20;
+            case ObjectType::ObjectType11:  return 12 + (p / 6) % 9;
+            case ObjectType::ObjectType53:  return 86; // 45 frames would exceed the sheet (86+44=130 > 99)
+            case ObjectType::ObjectType90:  return 54 + (p / 6) % 12;
+            case ObjectType::ObjectType91:  return 54 + (p / 6) % 6;
+            case ObjectType::ObjectType92:  return 60; // 128 frames would exceed the sheet (60+127=187 > 99)
+            case ObjectType::ObjectType93:  return 7 + (p / 6) % 5;
+            case ObjectType::ObjectType98:  return 90 + (p / 6) % 10;
+            case ObjectType::ObjectType99:  return 90; // first real frame after 3 documented invisible ticks
+            case ObjectType::ObjectType100: return 90; // first real frame after 8 documented invisible ticks
+
+            // blupi.png/blupi1.png-sourced Blupi-skin types (2026-07-09) --
+            // 340-icon grid (0-339). Icon numbers are only meaningful via
+            // GetBlupiIconUv() -- see IsBlupiPngSourced()/UsesBlupi1Texture().
+            case ObjectType::ObjectType200: return 257 + (p / 6) % 6;
+            case ObjectType::ObjectType201: return 257 + (p / 6) % 6;
+            case ObjectType::ObjectType202: return 257 + (p / 6) % 6;
+            case ObjectType::ObjectType203: return 257 + (p / 6) % 6;
             default:                       return 0;
         }
     }
@@ -151,6 +182,85 @@ namespace GalaxyEggbert::CNA
         constexpr int kCols = 10;
         constexpr float kSheetW = 600.0f;
         constexpr float kSheetH = 1740.0f;
+        const int col = icon % kCols;
+        const int row = icon / kCols;
+        const float u0 = static_cast<float>(col * kTilePx) / kSheetW;
+        const float v0 = static_cast<float>(row * kTilePx) / kSheetH;
+        const float u1 = static_cast<float>(col * kTilePx + kTilePx) / kSheetW;
+        const float v1 = static_cast<float>(row * kTilePx + kTilePx) / kSheetH;
+        return ObjectIconUv{u0, v0, u1, v1};
+    }
+
+    bool IsExploPngSourced(ObjectType type)
+    {
+        switch (type)
+        {
+            case ObjectType::ObjectType8:
+            case ObjectType::ObjectType9:
+            case ObjectType::ObjectType10:
+            case ObjectType::ObjectType11:
+            case ObjectType::ObjectType53:
+            case ObjectType::ObjectType90:
+            case ObjectType::ObjectType91:
+            case ObjectType::ObjectType92:
+            case ObjectType::ObjectType93:
+            case ObjectType::ObjectType98:
+            case ObjectType::ObjectType99:
+            case ObjectType::ObjectType100:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    ObjectIconUv GetExploIconUv(int icon)
+    {
+        constexpr int kTilePx = 144;
+        constexpr int kCols = 10;
+        constexpr float kSheetW = 1440.0f;
+        constexpr float kSheetH = 1440.0f;
+        const int col = icon % kCols;
+        const int row = icon / kCols;
+        const float u0 = static_cast<float>(col * kTilePx) / kSheetW;
+        const float v0 = static_cast<float>(row * kTilePx) / kSheetH;
+        const float u1 = static_cast<float>(col * kTilePx + kTilePx) / kSheetW;
+        const float v1 = static_cast<float>(row * kTilePx + kTilePx) / kSheetH;
+        return ObjectIconUv{u0, v0, u1, v1};
+    }
+
+    bool IsBlupiPngSourced(ObjectType type)
+    {
+        switch (type)
+        {
+            case ObjectType::ObjectType200:
+            case ObjectType::ObjectType201:
+            case ObjectType::ObjectType202:
+            case ObjectType::ObjectType203:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool UsesBlupi1Texture(ObjectType type)
+    {
+        switch (type)
+        {
+            case ObjectType::ObjectType201:
+            case ObjectType::ObjectType202:
+            case ObjectType::ObjectType203:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    ObjectIconUv GetBlupiIconUv(int icon)
+    {
+        constexpr int kTilePx = 60;
+        constexpr int kCols = 10;
+        constexpr float kSheetW = 600.0f;
+        constexpr float kSheetH = 2040.0f;
         const int col = icon % kCols;
         const int row = icon / kCols;
         const float u0 = static_cast<float>(col * kTilePx) / kSheetW;
