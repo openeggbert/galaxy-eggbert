@@ -176,12 +176,10 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 - Web (Emscripten): SDL_Renderer backend, experimental — the CMake plumbing for it has not been
   confirmed to exist for `GalaxyEggbertCNA` specifically (no Emscripten-specific handling found in
   its part of `CMakeLists.txt` as of 2026-07-05).
-- Android: intended, see `ANDROID.md` — but **the Android Gradle build does not currently pass
-  `-DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`** to CMake, so with the
-  defaults in `CMakeLists.txt` (`GALAXY_EGGBERT_BUILD_SIMPLE3D` still `ON` by default,
-  `GALAXY_EGGBERT_BUILD_CNA` still `OFF`) it would currently attempt to build the historical-only
-  `GalaxyEggbertSimple3D` target, not `GalaxyEggbertCNA` — found 2026-07-09, not yet fixed; see
-  `NEXT.md`.
+- Android: intended, see `ANDROID.md`. The Gradle build doesn't pass explicit
+  `GALAXY_EGGBERT_BUILD_*` CMake args, but that's no longer a problem — `CMakeLists.txt`'s
+  defaults were flipped 2026-07-09 (`GALAXY_EGGBERT_BUILD_CNA` now `ON`,
+  `GALAXY_EGGBERT_BUILD_SIMPLE3D` now `OFF`), so it now correctly targets `GalaxyEggbertCNA`.
 
 `GalaxyEggbertCNA` builds and renders real terrain, objects, and `BigDecor` on Linux today, but is
 not yet at gameplay parity (no Blupi/HUD/sound/gameplay logic) and its non-Linux backends are
