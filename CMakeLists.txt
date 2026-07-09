@@ -30,12 +30,21 @@ set(GE_SHARED_SOURCES
 # =============================================================================
 # Simple3D port target — GalaxyEggbertSimple3D
 #
+# Historical reference only as of 2026-07-08 (see CLAUDE.md's "Current Direction Lock") — not
+# built, fixed, or maintained going forward; its build is currently broken in this environment
+# (missing/incompatible U3D prebuilt) and that is intentionally left unfixed. Default flipped to
+# OFF 2026-07-09 so a plain `cmake -S . -B build` no longer tries to build it (found via a real
+# bug: the Android Gradle build never overrides this option, so it was silently attempting to
+# build this broken/frozen target instead of GalaxyEggbertCNA). The target definition itself is
+# untouched — pass -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON explicitly if you deliberately want to try
+# it (e.g. after fixing the U3D prebuilt yourself).
+#
 # Build with:
 #   cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
 #   cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
 # =============================================================================
 
-option(GALAXY_EGGBERT_BUILD_SIMPLE3D "Build the Simple3D port target" ON)
+option(GALAXY_EGGBERT_BUILD_SIMPLE3D "Build the Simple3D port target (historical reference only, not maintained -- see CLAUDE.md)" OFF)
 
 if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
 
@@ -191,18 +200,20 @@ endif() # GALAXY_EGGBERT_BUILD_SIMPLE3D
 # Direct CNA + Easy3D target — GalaxyEggbertCNA (long-term direction, see CLAUDE.md
 # "Current Direction Lock")
 #
-# OFF by default; does not affect the default build. Early-stage: renders real,
-# textured, animated 3D terrain from a hand-authored world, with an invisible
-# collision-only Blupi — no Blupi/object rendering, HUD, or sound yet. See
-# NEXT.md for current status (easy3d.md/plan.md "Direct CNA + Easy3D Migration"
-# for the original analysis and task list).
+# ON by default as of 2026-07-09 (flipped alongside GALAXY_EGGBERT_BUILD_SIMPLE3D's default
+# flipping to OFF above, so a plain `cmake -S . -B build` builds something meaningful again) --
+# this is now the actively developed target: renders real, textured, animated 3D terrain (all 4
+# confirmed tile render modes + water), MoveObject/BigDecor billboards and platform-lift/crate
+# objects, face-culled terrain. Still an invisible collision-only Blupi -- no visible Blupi
+# character, HUD, or sound yet. See NEXT.md for current status (easy3d.md/plan.md "Direct CNA +
+# Easy3D Migration" for the original analysis and task list).
 #
 # Build with:
 #   cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
 #   cmake --build build-cna --target GalaxyEggbertCNA
 # =============================================================================
 
-option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + Easy3D Galaxy Eggbert target" OFF)
+option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + Easy3D Galaxy Eggbert target (actively developed -- see CLAUDE.md)" ON)
 
 if(GALAXY_EGGBERT_BUILD_CNA)
 
