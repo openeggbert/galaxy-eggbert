@@ -700,6 +700,18 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Real alpha transparency for every billboard drawn below (2026-07-09,
+        // found live: element.png/object-m.png/explo.png/blupi.png icon
+        // sheets all have a real, correct RGBA alpha channel -- confirmed by
+        // direct pixel inspection, element.png's background pixels are
+        // (0,0,0,0) -- but nothing before this enabled blending, so the GPU
+        // ignored alpha and drew each billboard's transparent background as
+        // solid opaque black. AlphaBlend restored to Opaque right after the
+        // last billboard batch below (BigDecor) so it doesn't affect the
+        // unrelated 2D SpriteBatch HUD indicator or any future opaque draw
+        // call after this point.
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7, first pass 2026-07-06) —
         // now animated via each MobileObjSpec's real per-instance phase
@@ -943,6 +955,12 @@ namespace GalaxyEggbert::CNA
                 bigDecorMeshRenderer_->Draw(device, *bigDecorEffect_);
             }
         }
+
+        // Restore opaque state after the AlphaBlend block above (billboards
+        // only) -- the 2D SpriteBatch indicator below manages its own blend
+        // state per Begin()/End() regardless, but this keeps device state
+        // predictable for anything drawn after this point in the future.
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
 
         // Interim 2D Blupi animation-state indicator, bottom-right corner
         // (no 3D model yet, 2026-07-05 — see GalaxyEggbertCnaGame.hpp).

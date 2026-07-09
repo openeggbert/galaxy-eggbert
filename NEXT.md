@@ -225,6 +225,22 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed real billboard transparency — element.png/object-m.png/explo.png/blupi.png icon sheets
+  render with solid opaque black squares instead of transparent backgrounds (2026-07-09).** Found
+  live from a user screenshot: every `MoveObject` billboard showed a black box around its sprite.
+  Confirmed via direct pixel inspection that `element.png`'s background pixels are real, correct
+  `(0,0,0,0)` RGBA — the texture data was never the problem. No billboard/object effect
+  (`objectEffect_`, `objectMPngEffect_`, `exploEffect_`, `blupiObjectEffect_`/`blupi1ObjectEffect_`,
+  `bigDecorEffect_`) ever enabled blending, so the GPU ignored alpha and drew the fully-transparent
+  background pixels as opaque black. Fixed by bracketing the whole billboard-drawing region in
+  `Draw()` with `device.setBlendStateProperty(BlendState::AlphaBlend)`, restored to `BlendState::
+  Opaque` right after (before the unrelated 2D SpriteBatch HUD indicator). Does not touch
+  `terrainEffect_`/`objectCubeEffect_` (opaque geometry, drawn in a separate, untouched block).
+  **Verified**: clean build; live run (no crash, default first-person view visually unchanged);
+  debug-camera check confirms a billboard (crate/chest sprite) now renders with no black box, real
+  transparency against the background; `GalaxyEggbertWorldsTests` (63/63); debug-camera
+  repositioning reverted before commit (empty `git diff` on that line).
+
 - **Third-person camera mode with a real GPU-skinned 3D model, via CNA's `AvatarRenderer` real-
   rendering extension — first version, placeholder model (2026-07-09).** User request: analyze how
   to add a real 3D Blupi model with animations alongside the existing first-person mode (their own
