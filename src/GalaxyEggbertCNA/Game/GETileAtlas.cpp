@@ -2,38 +2,32 @@
 
 #include "GalaxyEggbert/BlockTypes.hpp"
 
-#include <string>
-
 namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        constexpr std::string_view kTilePrefix = "tile";
-    }
-
-    GETileAtlas::GETileAtlas()
-        : m_atlas(BlockTypes::kSheetW, BlockTypes::kSheetH)
-    {
-        // Row-major grid registration matches BlockTypes' own
-        // icon = row * kSheetCols + col convention exactly, so the AddGrid
-        // frame index equals the block type / icon index directly.
-        // startX/startY/spacingX/spacingY = kSheetGap: object-m.png is packed on a
-        // 65px pitch (64px icon + 1px gap), not a flat 64px grid — see
-        // BlockTypes::kSheetGap / tileUV()'s comment for how this was found.
-        const int rows = (BlockTypes::kSheetH - BlockTypes::kSheetGap) /
-                         (BlockTypes::kTileSize + BlockTypes::kSheetGap);
-        m_atlas.AddGrid(kTilePrefix, BlockTypes::kTileSize, BlockTypes::kTileSize,
-                         BlockTypes::kSheetCols, rows,
-                         BlockTypes::kSheetGap, BlockTypes::kSheetGap,
-                         BlockTypes::kSheetGap, BlockTypes::kSheetGap);
+        // Total registered icon slots in object-m.png's grid (20 cols x 22
+        // rows = 440, icons 0..439) -- same row computation GETileAtlas's
+        // old Easy3D::TextureAtlas-based constructor used, kept here purely
+        // as a bounds check now that tileUV() itself doesn't validate icon
+        // range.
+        const int kIconRows = (BlockTypes::kSheetH - BlockTypes::kSheetGap) /
+                              (BlockTypes::kTileSize + BlockTypes::kSheetGap);
+        const int kIconCount = BlockTypes::kSheetCols * kIconRows;
     }
 
     Easy3D::UvRect GETileAtlas::GetTileUv(int blockType) const
     {
-        if (blockType <= 0)
+        if (blockType <= 0 || blockType >= kIconCount)
         {
             return {};
         }
-        return m_atlas.GetUvOrDefault(std::string(kTilePrefix) + "_" + std::to_string(blockType));
+
+        float uOff = 0.0f;
+        float vOff = 0.0f;
+        float uScale = 0.0f;
+        float vScale = 0.0f;
+        BlockTypes::tileUV(blockType, uOff, vOff, uScale, vScale);
+        return Easy3D::UvRect{uOff, vOff, uOff + uScale, vOff + vScale};
     }
 }

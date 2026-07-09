@@ -216,6 +216,42 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Found and (substantially, not 100%) fixed the thin blue/dark seam-line artifact (2026-07-09,
+  §8 task 2).** Root cause: `GETileAtlas::GetTileUv()` (CNA) computed each tile's UV rect at the
+  exact pixel boundary, with no inset — bilinear texture filtering at oblique/close angles samples
+  slightly outside that exact rect, bleeding in the atlas's 1px inter-tile gap (mostly transparent
+  pixels) and producing partially/fully transparent output right at tile edges, which reads as a
+  "seam" showing the sky-blue clear color through. **This exact bug was already found, precisely
+  diagnosed, and fixed once before** — in `GalaxyEggbertSimple3D`'s `GETerrainRenderer.cpp`, via
+  `BlockTypes::tileUV()` (`include/GalaxyEggbert/BlockTypes.hpp`), which applies a documented
+  half-texel UV inset for exactly this reason. CNA's `GETileAtlas` never used it — it independently
+  reimplemented UV lookup via a plain `Easy3D::TextureAtlas` grid registration (correct on tile
+  *pitch*, i.e. no cross-tile pixel drift, but missing the additional inset) when it was written,
+  so the fix simply never carried over. Rewrote `GETileAtlas::GetTileUv()` to call
+  `BlockTypes::tileUV()` directly instead (same proven math, not a new implementation) — removed
+  the now-unused `Easy3D::TextureAtlas m_atlas` member and its `AddGrid()`-based constructor
+  entirely (dead code once nothing calls into it), kept a plain bounds check (`0 < blockType <
+  20×22`) so out-of-range icons still return an empty `UvRect` as before.
+  - **Verified precisely, not just "looks about the same"**: a controlled before/after comparison
+    (`git stash` isolating just this fix, same debug-camera position, same close/oblique staircase
+    angle the user's original report used) found the artifact is a measurable, real effect, not a
+    subjective one — raw pixel sampling at the exact seam location showed **fully transparent
+    (alpha=0) "hole" pixels in the unfixed build that become non-zero (alpha≈3-4%) after the fix**
+    at the same coordinates. A full-screenshot statistical comparison (800×480 = 384000 pixels)
+    found: pixels with alpha<255 (any non-full-opacity) dropped from 27839 to 19448 (-30%);
+    alpha<100 from 6621 to 4953 (-25%); alpha<10 (near-fully-transparent) from 1752 to 1027 (-41%);
+    **alpha<1 (fully-transparent "holes" — the actual visible blue-seam pixels) from 1217 to 486,
+    a 60% reduction.** `VerifyBlupiMovement` and `GalaxyEggbertWorldsTests` (61/61) both unaffected
+    (this only changes UV math, not geometry or collision).
+  - **Not fully eliminated — residual transparency remains** (alpha<1 dropped 60%, not to zero).
+    Plausible remaining causes, not yet investigated further: (a) standard MSAA/silhouette-edge
+    antialiasing produces genuine partial pixel coverage at any triangle edge regardless of texture
+    UVs — likely a separate, benign effect this fix was never going to eliminate; (b) the half-texel
+    inset may not be quite enough at the most extreme grazing angles/highest mip levels, where the
+    sampled footprint can exceed half a texel. Downgraded from "not yet root-caused" to "root-caused
+    and substantially mitigated" in §5 rather than closed outright — a future pass could try a
+    larger inset or investigate mip-level-specific behavior if the residual seam still bothers
+    someone in practice.
 - **Implemented face-culling/occlusion for `GETerrainRenderer`'s static terrain mesh (2026-07-09,
   §8 old task 3).** Scoped to the plain, non-animated `UniformCube` path only (the dominant case
   for bulk terrain — ground floor, walls, staircase) — the animated/water paths are untouched, a
@@ -784,7 +820,7 @@ render-mechanism work remains on the list; §8's remaining tasks are verificatio
 | Status | Issue |
 |---|---|
 | incomplete | 6 confirmed `DirectionalCube` icons still unwired: 108-109 (need icon 107's grass texture plus more per-side work), 15-18 (ambiguous crop read) — see §8 task 1. |
-| **found 2026-07-08, not yet root-caused** | **Thin blue (sky-clear-color) seam lines visible along block edges in `GalaxyEggbertCNA`**, reported by user via a live screenshot of the `RockPile` staircase at a close/oblique angle — pre-existing, NOT caused by today's DirectionalCube/water/alpha work (confirmed: seams reproduce on the plain-`UniformCube` staircase, unrelated code path). A reproduction attempt showed the same grid-pattern seams at block boundaries, though as dark lines rather than blue in that specific attempt — exact camera angle/distance and possibly MSAA/edge-antialiasing state seem to matter. No fix attempted yet — see §8 task 2. |
+| root-caused and substantially mitigated (2026-07-09), not fully eliminated | **Thin blue (sky-clear-color) seam lines along block edges in `GalaxyEggbertCNA`**, originally reported 2026-07-08. Root cause: `GETileAtlas::GetTileUv()` had no UV inset, so bilinear filtering bled the atlas's 1px inter-tile gap in at oblique/close angles (§3) — fixed by reusing `BlockTypes::tileUV()`'s already-proven half-texel inset (previously used only by the historical Simple3D target, never ported to CNA). Measured fix: fully-transparent "hole" pixels at a reproduction screenshot dropped 60% (1217→486 of 384000 total pixels). Residual transparency remains, plausibly ordinary MSAA/silhouette antialiasing (a separate, likely-benign effect) or an inset that's still slightly too small at extreme grazing angles — not investigated further; see §3 for exact numbers. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards/cubes, no HUD, no sound, no gameplay logic, no interactive object system (expected at this phase) — platform lifts/crates render but don't move or respond to Blupi yet. |
 | resolved (re-verified 2026-07-09) | `GalaxyEggbertWorldsTests` — 54/54 still pass (via `build-cna`, see §7). The `cmake-build-debug` `ctest` discovery issue is unrelated to that tree and not re-checked (not to be built, per §9). |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
@@ -1034,23 +1070,15 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    **Files:** `src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp`. **Verification:** a live
    screenshot per batch added to the sample world plus a `VerifyBlupiMovement` regression check
    and the vertex/triangle-count arithmetic check (matches the pattern in §3's 2026-07-08 entries).
-2. **Investigate the thin blue seam-line artifact along block edges** (found 2026-07-08 by the
-   user via a live screenshot of the `RockPile` staircase at a close/oblique angle — see §5).
-   Confirmed NOT caused by today's DirectionalCube/InnerPillarBox/InnerFlatPlate/TripleCross/water
-   work (reproduces on the plain-`UniformCube` staircase, a code path untouched today). A
-   reproduction attempt at a similar oblique angle showed the same grid-pattern seams at block
-   boundaries but as dark lines, not blue — suggests camera angle/distance and possibly
-   MSAA/multisampling state matter. Leads to check: (a) whether `GraphicsDeviceManager`/backend
-   MSAA is enabled by default and controllable from `GalaxyEggbertCnaGame.cpp` (no explicit
-   `MultiSample`/`AntiAlias` config found there today — likely a CNA/EasyGL-backend default), (b)
-   whether it's specific to RockPile's high-contrast embossed texture making a subtle universal
-   seam more visible, (c) whether adjacent-block edges are genuinely coincident in the mesh (they
-   should be, per `AppendCubeMesh`'s corner math) or whether there's a real geometric gap. **Files:**
-   likely `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp` (`GraphicsDeviceManager` setup) or
-   `../easy-3d`'s `CubeMesh.cpp`; may also need reading (not modifying without approval) `../cna`'s
-   `GraphicsDeviceManager`/EasyGL backend for MSAA defaults. **Verification:** a live screenshot at
-   the same close/oblique staircase angle before/after, confirming the seams are gone or
-   meaningfully reduced.
+2. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
+   (§3/§5 — 60% reduction in fully-transparent seam pixels, not 100%). Two untested hypotheses: (a)
+   ordinary MSAA/silhouette-edge antialiasing producing genuine partial pixel coverage at any
+   triangle edge, independent of texture UVs — likely benign and possibly not worth chasing further;
+   (b) the half-texel inset (`BlockTypes::tileUV()`) isn't quite enough at the most extreme grazing
+   angles/highest mip levels. Low priority — the fix already shipped a large, measured improvement;
+   this is about closing the remaining gap, not an open regression. **Verification:** repeat the
+   pixel-level before/after methodology from §3 (raw pixel sampling + alpha<1 count across a full
+   screenshot) at the same close/oblique staircase angle.
 3. **Optional: extend face culling (§3, 2026-07-09) to the animated/water paths** in
    `RebuildAnimatedRenderer` — currently every animated/water block emits all 6 faces
    unconditionally regardless of neighbors. Low priority: these are typically sparse decorative
@@ -1062,10 +1090,11 @@ Everything else that had accumulated in this section is done (2026-07-09): `GEIn
 axis spot-check found and fixed icons 368-372 (§3); `BigDecor:` billboard rendering,
 platform-lift/crate `UniformCube` objects, `GalaxyEggbertWorldsTests` re-verification, the
 clean-exit-path investigation, 3D-format MoveObject storage, populating the sample world with all
-67 remaining confirmed `ObjectType`s, and face culling for the static terrain path (67788→23012
-vertices, a real 66% reduction) are all complete (§3). Task 1 (6 remaining `DirectionalCube`
-icons) and task 2 (seam-line artifact) above are the only substantive open items, plus task 3
-(explicitly optional/low-priority).
+67 remaining confirmed `ObjectType`s, face culling for the static terrain path (67788→23012
+vertices, a real 66% reduction), and the seam-line artifact (root-caused, 60% reduction in
+fully-transparent seam pixels — not fully eliminated, remainder is task 2) are all complete (§3).
+Task 1 (6 remaining `DirectionalCube` icons) is the only substantive open item requiring the
+user's direct crop-image judgment; tasks 2-3 are both explicitly optional/low-priority polish.
 
 ## 9. Do not do yet
 
