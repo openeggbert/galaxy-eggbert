@@ -20,9 +20,15 @@ namespace GalaxyEggbert::Worlds {
  */
 struct VoxelConfig final {
     /**
-     * @brief Binary format version written to chunk/world files.
+     * @brief Binary format version written to the `.vwr` world file header
+     * (`World::saveToFile`/`loadFromFile` -- the `VWR1` header's own
+     * `version` byte, distinct from `Chunk`'s independently-versioned
+     * payload format). Bumped 1 -> 2 (2026-07-09, breaking change, not
+     * backward compatible -- old v1 `.vwr` files fail to load and must be
+     * regenerated) to add a `skyRegion` world header field plus 4 more
+     * reserved fields for future world-level metadata; see `World Format.md`.
      */
-    static constexpr std::uint8_t FormatVersion = 1;
+    static constexpr std::uint8_t FormatVersion = 2;
 
     /**
      * @brief Number of blocks along one axis of a chunk.

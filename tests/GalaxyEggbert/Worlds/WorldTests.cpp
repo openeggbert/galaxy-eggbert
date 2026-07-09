@@ -176,6 +176,36 @@ TEST(WorldSerializationTests, SaveAndLoadPreservesSparseAndBoundaryBlocks) {
     removeFileNoThrow(filePath);
 }
 
+TEST(WorldSerializationTests, SaveAndLoadPreservesSkyRegion) {
+    const auto filePath = makeTempPath(".vwr");
+
+    World world;
+    EXPECT_EQ(world.skyRegion(), 0u);
+    world.setSkyRegion(7);
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_EQ(loaded.skyRegion(), 7u);
+
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, LoadRejectsV1FormatVersion) {
+    const auto filePath = makeTempPath(".vwr");
+    {
+        World world;
+        world.saveToFile(filePath);
+    }
+
+    std::string bytes = readAllBytes(filePath);
+    ASSERT_GE(bytes.size(), 5u);
+    bytes[4] = static_cast<char>(1); // pretend this is a pre-2026-07-09 v1 file
+    writeAllBytes(filePath, bytes);
+
+    EXPECT_THROW(static_cast<void>(World::loadFromFile(filePath)), std::runtime_error);
+    removeFileNoThrow(filePath);
+}
+
 TEST(WorldSerializationTests, SaveAndLoadEmptyWorldKeepsAirChunks) {
     const auto filePath = makeTempPath(".vwr");
 

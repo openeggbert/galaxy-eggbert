@@ -204,7 +204,10 @@ namespace GalaxyEggbert::CNA
 
         spawnTileX_ = 0;
         spawnTileZ_ = 0;
-        skyRegion_ = 0;
+        // .vwr header v2 (2026-07-09) carries a real skyRegion field now --
+        // unlike spawn point (still no .vwr equivalent), this one no longer
+        // needs to reset to 0.
+        skyRegion_ = static_cast<int>(world_->skyRegion());
         bigDecor_.clear();
 
         // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects

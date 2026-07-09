@@ -22,6 +22,13 @@ int main(int argc, char** argv)
 
     World world;
 
+    // Real background image demo (NEXT.md §3, 2026-07-09) -- region 3 is a
+    // real mobile-eggbert region (Content/backgrounds/decor003.png), not
+    // the region=0 default, so this world visibly exercises the new
+    // skyRegion header field/GalaxyEggbertCnaGame background-loading path
+    // instead of silently matching the fallback.
+    world.setSkyRegion(3);
+
     const auto fill = [&world](int x0, int x1, int y0, int y1, int z0, int z1, std::uint16_t type)
     {
         for (int x = x0; x <= x1; ++x)
@@ -365,7 +372,8 @@ int main(int argc, char** argv)
     }
 
     std::cout << "GenerateSampleWorld3D: wrote " << outPath << " -- " << nonAir
-              << " non-air blocks, Y range [" << minY << ", " << maxY << "]"
+              << " non-air blocks, Y range [" << minY << ", " << maxY << "], skyRegion="
+              << reloaded.skyRegion()
               << " (round-trip verified via World::loadFromFile)." << std::endl;
 
     return 0;

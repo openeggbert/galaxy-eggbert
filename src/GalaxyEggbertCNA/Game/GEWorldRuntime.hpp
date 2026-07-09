@@ -44,9 +44,12 @@ namespace GalaxyEggbert::CNA
         bool LoadFromMobileEggbertFile(const std::string& path);
 
         // Loads a genuinely 3D, hand-authored world from the engine-agnostic
-        // `.vwr` binary format (plan.md E3D-MIG-058). Unlike
-        // LoadFromMobileEggbertFile(), the format carries no spawn/sky-region
-        // header, so those reset to 0. Returns true on success; on failure
+        // `.vwr` binary format (plan.md E3D-MIG-058). Since header v2
+        // (2026-07-09, NEXT.md §3), the format carries a real skyRegion
+        // field (Worlds::World::skyRegion(), see World Format.md) -- unlike
+        // LoadFromMobileEggbertFile()'s region= parsing, this is a genuine
+        // binary header field, not text. Spawn point still has no `.vwr`
+        // equivalent and resets to 0. Returns true on success; on failure
         // the world is left empty (all air).
         bool LoadFromVwrFile(const std::string& path);
 

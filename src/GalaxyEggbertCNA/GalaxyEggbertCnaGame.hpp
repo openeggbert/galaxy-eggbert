@@ -45,6 +45,42 @@ namespace GalaxyEggbert::CNA
         // Parses worlds/world001.txt (plan.md Phase 4).
         GEWorldRuntime worldRuntime_;
 
+        // Real mobile-eggbert background image for worldRuntime_'s skyRegion
+        // (2026-07-09, NEXT.md §3 -- mobile-eggbert-reference/
+        // 05-backgrounds.md/15-3d-render-mapping-design.md §9.5). Drawn as a
+        // single huge camera-facing billboard quad placed far behind the
+        // scene (same BillboardBatch/BuildBillboardMesh/BillboardMeshRenderer
+        // technique already used for MoveObjects/BigDecor, just one giant
+        // quad sized to fill the whole view frustum at that distance) --
+        // NOT a 2D SpriteBatch overlay. Tried SpriteBatch first (drawn
+        // full-screen before the 3D scene, relying on it not writing depth);
+        // that broke live (2026-07-09): EasyGLSpriteBatchBackend::Begin()
+        // enables alpha blending and never restores it on End(), and more
+        // fundamentally the SpriteBatch/BasicEffect draw paths turned out
+        // not to compose safely when SpriteBatch runs BEFORE 3D draws in the
+        // same frame (only ever exercised the other order before, e.g.
+        // blupiIconBatch_ drawn last) -- the background ended up covering
+        // the entire screen with no terrain visible at all. A real,
+        // depth-tested 3D quad sidesteps this entirely: normal opaque 3D
+        // terrain, being closer, correctly occludes it via the depth buffer
+        // like any other geometry, no draw-order fragility. This
+        // deliberately does NOT attempt a true wraparound 3D skybox --
+        // §9.5 already found the source art (a flat 640x480 image designed
+        // for a fixed 2D side-camera) a poor fit for that; one large flat
+        // backdrop plane facing the camera is a different, smaller step
+        // than projecting the image onto real skybox geometry.
+        // `Content/backgrounds/decorNNN.png` is already copied next to this
+        // binary (existing mobile-eggbert Content/ copy, CMakeLists.txt) --
+        // no new asset-pipeline work needed. backgroundTexture_/Effect_ stay
+        // default-constructed (unloaded) if the region's file doesn't exist
+        // (e.g. one of the 4 ids no real level ever uses) or before
+        // LoadContent() runs; Draw() falls back to the flat device.Clear()
+        // color in that case.
+        Microsoft::Xna::Framework::Graphics::Texture2D backgroundTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> backgroundEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> backgroundMeshRenderer_;
+        bool backgroundLoaded_ = false;
+
         // Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
         GETileAtlas tileAtlas_;
 

@@ -10,7 +10,9 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <set>
 #include <vector>
@@ -80,6 +82,42 @@ namespace GalaxyEggbert::CNA
         // Static terrain mesh for the loaded world (plan.md E3D-MIG-054) —
         // one CubeBatch item per non-air cell, textured via GETileAtlas.
         auto& device = getGraphicsDeviceProperty();
+
+        // Real mobile-eggbert background image for this world's skyRegion
+        // (NEXT.md §3, 2026-07-09) -- direct filename formula, same
+        // convention as mobile-eggbert's own Decor::LoadImages()
+        // (05-backgrounds.md): "decor" + 3-digit zero-padded region id.
+        // Content/backgrounds/ is already copied next to this binary (see
+        // the mobile-eggbert Content/ POST_BUILD copy, CMakeLists.txt). Only
+        // 28 of the 32 possible region ids (0-31) have a real file -- the 4
+        // missing ones are confirmed never used by any real level
+        // (05-backgrounds.md), but a hand-authored .vwr world could still
+        // reference one, so this must degrade gracefully, not throw.
+        {
+            char backgroundPath[64];
+            std::snprintf(backgroundPath, sizeof(backgroundPath),
+                          "Content/backgrounds/decor%03u.png", worldRuntime_.GetSkyRegion());
+            if (std::filesystem::exists(backgroundPath))
+            {
+                backgroundTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(backgroundPath, device);
+                backgroundEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+                backgroundEffect_->VertexColorEnabled = false;
+                backgroundEffect_->setTextureEnabledProperty(true);
+                backgroundEffect_->setTextureProperty(&backgroundTexture_);
+                backgroundLoaded_ = true;
+                std::cout << "GalaxyEggbertCNA: background loaded — " << backgroundPath << " ("
+                          << backgroundTexture_.getWidthProperty() << "x"
+                          << backgroundTexture_.getHeightProperty() << " px, region "
+                          << worldRuntime_.GetSkyRegion() << ")." << std::endl;
+            }
+            else
+            {
+                std::cout << "GalaxyEggbertCNA: no background image for region "
+                          << worldRuntime_.GetSkyRegion() << " (" << backgroundPath
+                          << " not found) — falling back to flat clear color." << std::endl;
+            }
+        }
+
         terrainRenderer_ = std::make_unique<GETerrainRenderer>(device, world, tileAtlas_);
 
         // object-m.png was already copied next to this binary at build time
@@ -328,6 +366,79 @@ namespace GalaxyEggbert::CNA
         device.Clear(0.392f, 0.584f, 0.929f, 1.0f);
         device.SetDepthTestEnabled(true);
 
+        // Real background image backdrop (NEXT.md §3, 2026-07-09) -- one
+        // huge camera-facing billboard quad placed far behind the scene
+        // (see backgroundMeshRenderer_'s header comment for why this
+        // replaced an earlier SpriteBatch attempt). Sized so its edges sit
+        // outside the view frustum at kBackgroundDistance regardless of
+        // window aspect ratio (kBackgroundMargin > 1 covers the
+        // diagonal/aspect slop), so it always fills the whole screen behind
+        // real geometry. Rebuilt every frame like the other billboards
+        // since it must keep following the camera. Falls back to the flat
+        // device.Clear() color above when no background loaded
+        // (backgroundLoaded_ false -- see LoadContent()).
+        if (backgroundLoaded_ && backgroundEffect_)
+        {
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto cameraRight = invView.getRightProperty();
+            const auto cameraUp = invView.getUpProperty();
+
+            constexpr float kBackgroundDistance = 900.0f; // < camera_'s 1000.0f far plane
+            constexpr float kBackgroundMargin = 1.3f;
+            const float halfHeight = kBackgroundDistance *
+                std::tan(camera_.GetFieldOfView() * 0.5f) * kBackgroundMargin;
+            const float halfWidth = halfHeight * camera_.GetAspectRatio();
+
+            const auto& camPos = camera_.GetPosition();
+            const auto& camTarget = camera_.GetTarget();
+            Microsoft::Xna::Framework::Vector3 forward(
+                camTarget.X - camPos.X, camTarget.Y - camPos.Y, camTarget.Z - camPos.Z);
+            forward.Normalize();
+            const Microsoft::Xna::Framework::Vector3 quadCenter(
+                camPos.X + forward.X * kBackgroundDistance,
+                camPos.Y + forward.Y * kBackgroundDistance,
+                camPos.Z + forward.Z * kBackgroundDistance);
+
+            Easy3D::BillboardBatch batch;
+            batch.Add(quadCenter,
+                      Microsoft::Xna::Framework::Vector2(halfWidth * 2.0f, halfHeight * 2.0f),
+                      Easy3D::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+
+            std::vector<Easy3D::BillboardVertex> vertices;
+            std::vector<std::uint32_t> indices;
+            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
+
+            if (!indices.empty())
+            {
+                backgroundMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                backgroundEffect_->View = camera_.GetViewMatrix();
+                backgroundEffect_->Projection = camera_.GetProjectionMatrix();
+                backgroundEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                // CullNone, restored right after (missing.md, found live
+                // 2026-07-09): Easy3D::AppendBillboardMesh's fixed winding
+                // (BL,BR,TR / BL,TR,TL) is back-facing under this engine's
+                // default CullCounterClockwise state for a billboard whose
+                // camera sits at Position - Forward*distance looking toward
+                // it (confirmed by direct experiment: invisible with the
+                // default cull state, visible with CullNone, at both a near
+                // and the real far test distance). This is very likely a
+                // pre-existing defect affecting EVERY Easy3D billboard, not
+                // just this one -- MoveObjects/BigDecor/etc. were probably
+                // never actually visible on screen either, just never
+                // caught because none were in view in any screenshot taken
+                // so far. Deliberately NOT fixed at the Easy3D source here
+                // (a winding change there is pinned by easy-3d's own
+                // test_billboard_mesh.cpp and would need care/re-verification
+                // across every billboard consumer) -- flagged in missing.md
+                // as a separate, higher-value follow-up instead. Scoped
+                // locally to just this draw call so it can't affect any
+                // other renderer's culling.
+                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullNone);
+                backgroundMeshRenderer_->Draw(device, *backgroundEffect_);
+                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+            }
+        }
+
         if (terrainRenderer_ && terrainEffect_)
         {
             terrainEffect_->View = camera_.GetViewMatrix();
@@ -386,7 +497,19 @@ namespace GalaxyEggbert::CNA
                         Microsoft::Xna::Framework::Color pixel(0, 0, 0, 0);
                         device.GetBackBufferData(&sample, &pixel, 0, 1);
                         // Sky-blue clear color is (100, 149, 237); anything
-                        // clearly different is terrain.
+                        // clearly different is terrain. Note (2026-07-09):
+                        // when a real background image is loaded
+                        // (backgroundLoaded_), sampled points can also
+                        // legitimately differ from this flat reference by
+                        // showing real sky/background art instead of solid
+                        // blue -- this diagnostic's "non-background" count
+                        // is a looser signal in that case (it can no longer
+                        // assume everything non-blue is terrain), but is
+                        // still useful together with distinctTerrainColors:
+                        // real terrain plus a real photographic-ish
+                        // background both produce many distinct colors,
+                        // while a genuinely broken texture sample (a flat
+                        // fallback tint) would not.
                         if (std::abs(static_cast<int>(pixel.getRProperty()) - 100) > 10 ||
                             std::abs(static_cast<int>(pixel.getGProperty()) - 149) > 10 ||
                             std::abs(static_cast<int>(pixel.getBProperty()) - 237) > 10)

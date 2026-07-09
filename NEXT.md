@@ -187,7 +187,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   `MoveObject:` lines, or now embedded directly in the `.vwr` format itself via
   `GalaxyEggbert::MoveObjectRecord` (2026-07-09, §3). Also now writes `screenshot.png` next to the
   binary on its first rendered frame (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block)
-  for visual verification.
+  for visual verification. Also now renders the real mobile-eggbert background image
+  (`Content/backgrounds/decorNNN.png`) behind the scene, selected per-world via the new `.vwr` v2
+  `skyRegion` header field (2026-07-09, §3) — not a derived/flat color, and not a full 3D skybox,
+  just a large camera-facing backdrop plane; falls back to a flat clear color if the region has no
+  real background file.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -216,6 +220,59 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Real mobile-eggbert background images now render in `GalaxyEggbertCNA`, plus a world-level
+  `skyRegion` `.vwr` header field to select them — breaking format change (2026-07-09).** User
+  request: analyze how to bring mobile-eggbert backgrounds into Galaxy Eggbert (their own hypothesis:
+  probably new world-format metadata), then implement it rendering the real PNG, not a derived flat
+  color, with an explicit breaking `.vwr` format change and 4 new reserved header fields.
+  - **`.vwr` header v2, breaking change**: `VoxelConfig::FormatVersion` 1 → 2;
+    `World::loadFromFile` now rejects any non-`2` version outright (`std::runtime_error`) — **old v1
+    `.vwr` files no longer load and must be regenerated** (not a silent dual v1/v2 reader, a hard
+    cutover, per explicit user request). Header grew 32 → 40 bytes: one of the 3 old reserved
+    `uint32` fields became a real `skyRegion` field (`World::skyRegion()`/`setSkyRegion()`, direct
+    pass-through of mobile-eggbert's `region=` value, 0-31), and 4 brand-new reserved `uint32` fields
+    were added on top (old reserved fields were read-but-discarded and not validated even before this
+    change, so repurposing one was safe for old files' zeroed bytes — but the version bump still
+    rejects them outright per the user's explicit "break compatibility" instruction, rather than
+    silently reinterpreting). 4 reserved fields chosen as a round, modest amount of headroom for
+    plausible near-future world-level metadata (e.g. spawn point, still with no `.vwr` equivalent)
+    without needing another version bump soon — see `World Format.md`. `GEWorldRuntime::LoadFromVwrFile()`
+    now reads the real field instead of always resetting to 0. `tools/GenerateSampleWorld3D.cpp` sets
+    `skyRegion=3` and `worlds3d/world001.vwr` was regenerated (required — old file no longer loads).
+  - **Rendering, real PNG not a color**: first attempt drew `Content/backgrounds/decorNNN.png` as a
+    full-screen `SpriteBatch` backdrop before the 3D scene each frame — broke live:
+    `EasyGLSpriteBatchBackend::Begin()` enables alpha blending and never restores it on `End()`, and
+    more fundamentally `SpriteBatch`/`BasicEffect` draws don't compose safely when `SpriteBatch` runs
+    *before* 3D draws in the same frame (every existing usage, `blupiIconBatch_`, only ever ran it
+    last) — the background ended up covering the whole screen with zero terrain visible. Replaced
+    with the same proven `BillboardBatch`/`BuildBillboardMesh`/`BillboardMeshRenderer` technique
+    already used for `MoveObjects`/`BigDecor`: one huge camera-facing quad (sized from FOV/aspect to
+    fill the whole frustum with margin) placed 900 units in front of the camera (< the 1000-unit far
+    plane), rebuilt every frame to keep following the camera — real depth-tested 3D geometry, so
+    opaque terrain naturally occludes it via the depth buffer with no draw-order fragility.
+  - **Major incidental discovery, confirmed live**: this exposed a real, previously-undiscovered
+    backface-culling bug likely affecting EVERY Easy3D billboard (`MoveObjects`, `BigDecor`, not just
+    this new background quad) — `Easy3D::AppendBillboardMesh`'s fixed vertex winding is back-facing
+    under this engine's default `CullCounterClockwise` rasterizer state for a camera-facing quad in
+    front of the camera. Confirmed directly: with the debug camera pointed at the sample world's
+    MoveObject catalog grid, only the 2 `UniformCube`-rendered platform lifts were visible — every
+    nearby billboard-rendered object (the vast majority of the 65 mapped `ObjectType` icons) was
+    invisible. Worked around locally for just the background quad (`RasterizerState::CullNone`,
+    explicitly restored to `CullCounterClockwise` right after so no other draw call is affected) —
+    deliberately NOT fixed at the `Easy3D::BillboardMesh.cpp` source in this pass, since that winding
+    is pinned by `easy-3d`'s own `test_billboard_mesh.cpp` and a global fix needs its own
+    care/re-verification across every billboard consumer, not a side effect of a background-rendering
+    task. Tracked as a new, high-value follow-up in §5/§8 — **likely explains why MoveObjects/BigDecor
+    have never visibly appeared correct in any screenshot taken this session**, only verified via
+    vertex/index math and non-crash live runs until now.
+  - **Verified**: clean build; live run (no crash, background PNG visibly loads and renders through
+    open sky, terrain/objects still correctly occlude it, screenshot confirms real
+    `Content/backgrounds/decor003.png` art visible, not a flat color); `GalaxyEggbertWorldsTests`
+    (63/63, 2 new: `SaveAndLoadPreservesSkyRegion`, `LoadRejectsV1FormatVersion`),
+    `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+    PASSED`); temporary debug-camera repositioning used to directly confirm the billboard-culling
+    finding, reverted before commit (confirmed via empty `git diff` on that line).
 
 - **Filled in the remaining 16 `ObjectType`s missing from `GEObjectIcons::GetObjIcon()` — icon
   coverage 49/69 → 65/69 confirmed types (2026-07-09).** Direct continuation of the previous entry
@@ -936,6 +993,7 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 
 | Status | Issue |
 |---|---|
+| **found live 2026-07-09, workaround scoped to one draw call, not fixed at the source** | **`Easy3D::AppendBillboardMesh`'s fixed vertex winding is back-facing under `GalaxyEggbertCNA`'s default `CullCounterClockwise` rasterizer state** — very likely means every `MoveObject`/`BigDecor` billboard has been invisible on screen this whole session, only ever verified via vertex/index math and non-crash live runs, never actually visually confirmed (nothing was in view in any screenshot taken before). Confirmed directly: debug camera pointed at the sample world's MoveObject catalog showed only the 2 `UniformCube`-rendered platform lifts; all nearby billboard-rendered objects were invisible. Discovered incidentally while implementing the real-PNG background quad (§3, 2026-07-09) — worked around locally for just that one quad (`RasterizerState::CullNone`, explicitly restored right after), NOT fixed globally: the winding is pinned by `easy-3d`'s own `test_billboard_mesh.cpp`, and a real fix needs re-verifying every billboard consumer, not a drive-by change. See §8 for the follow-up task. |
 | resolved (2026-07-09) | All ~99 confirmed `DirectionalCube` icons wired up — the last 6 (15-18, 108-109) used this session's ambiguous-icon default since their crops didn't give a confident facing read (§3). |
 | root-caused and substantially mitigated (2026-07-09), not fully eliminated | **Thin blue (sky-clear-color) seam lines along block edges in `GalaxyEggbertCNA`**, originally reported 2026-07-08. Root cause: `GETileAtlas::GetTileUv()` had no UV inset, so bilinear filtering bled the atlas's 1px inter-tile gap in at oblique/close angles (§3) — fixed by reusing `BlockTypes::tileUV()`'s already-proven half-texel inset (previously used only by the historical Simple3D target, never ported to CNA). Measured fix: fully-transparent "hole" pixels at a reproduction screenshot dropped 60% (1217→486 of 384000 total pixels). Residual transparency remains, plausibly ordinary MSAA/silhouette antialiasing (a separate, likely-benign effect) or an inset that's still slightly too small at extreme grazing angles — not investigated further; see §3 for exact numbers. |
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards/cubes, no HUD, no sound, no gameplay logic, no interactive object system (expected at this phase) — platform lifts/crates render but don't move or respond to Blupi yet. |
@@ -1170,6 +1228,17 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
+0. **High-value follow-up: fix `Easy3D::AppendBillboardMesh`'s winding at the source** (§3/§5,
+   found live 2026-07-09) so `MoveObjects`/`BigDecor` billboards render without needing a per-call
+   `RasterizerState::CullNone` workaround like the background quad currently uses. Likely a 2-line
+   fix (swap the two triangles' vertex order in `easy-3d/src/BillboardMesh.cpp`), but needs care:
+   `easy-3d/tests/test_billboard_mesh.cpp` asserts the current index order (`indices[0..2] ==
+   0,1,2`) and would need updating to match, and — more importantly — every existing billboard
+   consumer (`MoveObjects`, `BigDecor`, the explo/blupi variants) needs re-verification after the
+   fix, since this session's prior "verified" billboard renders were only checked via vertex/index
+   math and non-crash live runs, never an actual visual confirmation that they appear on screen.
+   High value because, if the analysis is right, this has been silently hiding a large chunk of
+   already-implemented rendering work (pickups, enemies, effects) all session.
 1. **Follow-up: `ObjectType38` (electric arc), the last confirmed `ObjectType` still without a real
    icon** (§3/§5). Real behavior needs BOTH `blupi1.png` (ticks 0-29) and `element.png` (ticks
    30-89) in one animation, but `03-objects.md` explicitly flags the element.png-only

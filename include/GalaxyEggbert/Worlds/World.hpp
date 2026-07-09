@@ -50,6 +50,19 @@ public:
     [[nodiscard]] std::size_t chunkCount() const noexcept;
 
     /**
+     * @brief Returns the world-level sky/background region id (2026-07-09,
+     * format v2), a direct pass-through of mobile-eggbert's level-header
+     * `region=` field (0-31) -- selects `Content/backgrounds/decorNNN.png`.
+     * Defaults to 0 for worlds that never call @ref setSkyRegion.
+     */
+    [[nodiscard]] std::uint32_t skyRegion() const noexcept { return skyRegion_; }
+
+    /**
+     * @brief Sets the world-level sky/background region id (see @ref skyRegion).
+     */
+    void setSkyRegion(std::uint32_t skyRegion) noexcept { skyRegion_ = skyRegion; }
+
+    /**
      * @brief Reads a block at world-space coordinates.
      *
      * @param x World X coordinate in range <tt>[0, blocksPerAxis())</tt>.
@@ -143,10 +156,13 @@ public:
         std::uint16_t metadataType) const;
 
     /**
-     * @brief Saves the world in the `.vwr` binary file format.
+     * @brief Saves the world in the `.vwr` binary file format (header v2,
+     * 2026-07-09).
      *
-     * The file stores a world header (`VWR1` magic, format settings, chunk count,
-     * table offsets), a chunk table, and serialized non-empty chunk payloads.
+     * The file stores a world header (`VWR1` magic, format settings, chunk
+     * count, table offsets, @ref skyRegion, and 4 reserved fields for future
+     * world-level metadata), a chunk table, and serialized non-empty chunk
+     * payloads.
      *
      * @param path Destination file path.
      * @throws std::runtime_error If file creation or serialization fails.
@@ -155,6 +171,10 @@ public:
 
     /**
      * @brief Loads a world from the `.vwr` binary file format.
+     *
+     * Breaking change (2026-07-09): only header v2 is accepted -- v1 `.vwr`
+     * files (written before @ref skyRegion existed) fail to load with
+     * `std::runtime_error` and must be regenerated.
      *
      * @param path Source world file path.
      * @return Deserialized world.
@@ -166,6 +186,7 @@ public:
 private:
     std::uint8_t chunksPerAxis_;
     std::vector<Chunk> chunks_;
+    std::uint32_t skyRegion_ = 0;
 
     /**
      * @brief Converts chunk-grid coordinates to a linear vector index.

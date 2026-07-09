@@ -314,7 +314,42 @@ CHUNK DATA...
 
 ## World Header
 
-Current v1 layout:
+**Breaking change (2026-07-09):** header bumped v1 -> v2 to add a world-level
+`skyRegion` field (background/sky selector, see "World-level sky region"
+below) plus 4 more reserved fields for future world-level metadata (e.g. a
+spawn point, which still has no `.vwr` equivalent). This is a deliberate,
+non-backward-compatible break, not a silent reinterpretation of the old
+reserved bytes: `VoxelConfig::FormatVersion` is now `2`, and
+`World::loadFromFile` rejects any file whose header `version` byte isn't
+exactly `2` with `std::runtime_error` — **old v1 `.vwr` files no longer
+load and must be regenerated** (e.g. via `tools/GenerateSampleWorld3D.cpp`).
+This mirrors `Chunk`'s own independently-versioned payload format bump
+(v1 -> v2, "Chunk Payload" above) in spirit, but is a hard cutover rather
+than dual v1/v2 support, since `.vwr` world files (unlike chunk payloads
+nested inside them) are meant to be regenerated from source data, not
+archived indefinitely.
+
+Current v2 layout:
+
+| Offset | Size | Field            | Meaning                                                  |
+| -----: | ---: | ---------------- | --------------------------------------------------------- |
+|      0 |    4 | magic            | ASCII `VWR1`                                               |
+|      4 |    1 | version          | `2`                                                         |
+|      5 |    1 | chunkSize        | `10`                                                        |
+|      6 |    1 | chunksPerAxis    | usually `10`                                                |
+|      7 |    1 | flags            | `0` in v2                                                   |
+|      8 |    4 | chunkCount       | `chunksPerAxis³`                                            |
+|     12 |    4 | chunkTableOffset | usually `40` (the v2 header size)                           |
+|     16 |    4 | chunkDataOffset  | start of the chunk data section                             |
+|     20 |    4 | skyRegion        | world-level sky/background region id, 0-31 (see below)      |
+|     24 |    4 | reserved         | must be `0`                                                 |
+|     28 |    4 | reserved         | must be `0`                                                 |
+|     32 |    4 | reserved         | must be `0`                                                 |
+|     36 |    4 | reserved         | must be `0`                                                 |
+
+Header size: 40 bytes (up from 32 in v1).
+
+Legacy v1 layout, for historical reference only (no longer readable):
 
 | Offset | Size | Field            | Meaning                         |
 | -----: | ---: | ---------------- | ------------------------------- |
@@ -330,9 +365,30 @@ Current v1 layout:
 |     24 |    4 | reserved         | must be `0`                     |
 |     28 |    4 | reserved         | must be `0`                     |
 
-Header size: 32 bytes.
+### World-level sky region
+
+`skyRegion` (`World::skyRegion()`/`setSkyRegion()`) is a direct pass-through
+of mobile-eggbert's level-header `region=` field (0-31,
+`mobile-eggbert-reference/05-backgrounds.md`) — it selects
+`Content/backgrounds/decorNNN.png` as this world's background image
+(`GalaxyEggbertCnaGame`, NEXT.md §3, 2026-07-09). Defaults to `0` for worlds
+that never call `setSkyRegion` (including every world loaded from a v1 file,
+though those no longer load at all post-break). Only 28 of the 32 possible
+ids (0-31) have a real background file — a hand-authored world referencing
+one of the 4 missing ids, or any value a real level never uses, degrades
+gracefully to a flat fallback clear color at render time rather than
+failing to load.
 
 ## Recommended Future World Header
+
+**Note (2026-07-09):** this section is still a hypothetical, unbuilt future
+version aimed at non-cubic worlds specifically. The actual first breaking
+header change that shipped took a smaller, unrelated route (see "World
+Header" above) -- reusing/expanding the v1 header's existing reserved
+fields for `skyRegion` and future world-level metadata, not the
+`chunksX`/`chunksY`/`chunksZ` restructuring described below. Both are valid
+independent future directions; they aren't in conflict, just don't confuse
+this section's "v2" with the real, already-shipped header v2 above.
 
 For bigger or non-cubic worlds, a future version should store chunk counts per axis:
 
