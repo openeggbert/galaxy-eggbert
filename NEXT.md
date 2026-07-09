@@ -86,8 +86,9 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### Build status
 - `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-09)**, after implementing
-  `BigDecor:` billboard rendering (§3). Built `GalaxyEggbertCNA`, `VerifyBlupiMovement`, and the
-  new `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
+  the platform-lift/crate `UniformCube` object path (§3, on top of `BigDecor:` billboard rendering
+  earlier the same day). Built `GalaxyEggbertCNA`, `VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`,
+  and `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
 - `../easy-3d` — **CNA-linked build rebuilt and all 6/6 tests passed today (2026-07-08)**, after
   adding `AppendPlateMesh`/`PlateItem`/`AppendTripleCrossMesh`/`TripleCrossItem` to
   `CubeMesh.hpp/.cpp` (§3, on top of the earlier `AppendDirectionalCubeMesh` addition same day).
@@ -181,9 +182,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   stone — see §3).
 
 ### What does not work yet
-- `GalaxyEggbertCNA`: no visible 3D Blupi, no platform-lift/crate `UniformCube` object path, no
-  HUD, no sound, no real gameplay logic (all expected at this phase). `BigDecor:` rendering is now
-  implemented (2026-07-09, §3).
+- `GalaxyEggbertCNA`: no visible 3D Blupi, no HUD, no sound, no real gameplay logic (all expected
+  at this phase — no interactive object system yet, so platform lifts/crates render correctly but
+  don't move or respond to Blupi). `BigDecor:` rendering and the platform-lift/crate `UniformCube`
+  object path are now both implemented (2026-07-09, §3).
 - **All 4 confirmed render modes are now implemented; 169 of ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — only 6 `DirectionalCube` icons remain (108-109 need the same grass
@@ -199,6 +201,42 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented the platform-lift/crate `UniformCube` object path for CNA (2026-07-09, §8 old
+  task 3, `mobile-eggbert-reference/15-3d-render-mapping-design.md` §5's two confirmed "render as
+  a cube, not a billboard" exceptions).** Platform lifts (`ObjectType1`/`47`/`48` — Blupi
+  physically stands and rides on top, a flat billboard would look wrong for something
+  load-bearing) and crates (`ObjectType12` — a pushable box is naturally a cube in every
+  direction) both source `object-m.png` (confirmed via `03-objects.md`'s `channel=1`/
+  `PixmapChannel::Object` entries), the same sheet terrain already uses — not `element.png` like
+  every other `MoveObject` billboard.
+  - Added `GEObjectIcons::IsUniformCubeObject(ObjectType)` (true for types 1/12/47/48 only).
+    **Also fixed a real pre-existing gap while wiring this up**: `GetObjIcon()`'s switch had no
+    case for `ObjectType48` at all (fell through to `default: return 0`) — added `kChenillei`
+    (`{316,315,314,313,312,311}`, the reverse-order `table_chenillei` track per `03-objects.md`'s
+    `"table_chenillei[0]=316"` note) and the missing `case ObjectType48`.
+  - `GalaxyEggbertCnaGame` gained `objectCubeEffect_`/`objectCubeMeshRenderer_`, built **once** in
+    `LoadContent()` (unlike the billboard renderers, a world-space cube's vertices don't depend on
+    the camera) by looping `worldRuntime_.GetMobileObjects()`, calling
+    `Easy3D::AppendCubeMesh()` per matching object with `Center = (posStartX, posStartY +
+    kObjectCubeGroundOffset, posStartZ)` — the same `+1.0f` ground-offset convention the existing
+    MoveObject billboards already use at the same position, so a cube object sits exactly where an
+    already-visually-verified billboard would. The billboard-building loop now skips
+    `IsUniformCubeObject()` types so they aren't drawn twice; `Draw()` renders the cube mesh in the
+    same opaque pass as the main terrain (right after `terrainRenderer_->Draw()`), same texture
+    (`terrainTexture_`) via its own effect instance.
+  - **Verified**: clean build; `VerifyBlupiMovement` all-pass against the unchanged default `.vwr`
+    world (prints "0 platform-lift/crate cube object(s) built." there, as expected — no
+    `MoveObject`s at all in that hand-authored world); `VerifyMoveObjectTypesCna` re-run as an
+    unrelated-regression check, still 12/12 pass. A temporary debug swap to
+    `LoadFromMobileEggbertFile("worlds/world022.txt")` (which has both types — 8 platform lifts, 15
+    crates, confirmed by direct `grep -c` against the source `.txt`) plus two repositioned-camera
+    screenshots (both reverted before committing) showed: (1) two crates rendering as genuine
+    textured 3D cubes (visibly different shading per face, not a flat sprite) next to a brick wall
+    section, and (2) the platform lift rendering as a solid cube using icon 29's real texture (a
+    teal/blue funnel shape, cross-checked directly against
+    `mobile-eggbert-reference/images/tile-full-029.png` to confirm the match). The live count line
+    read "23 platform-lift/crate cube object(s) built." — exactly 8+15, deterministic proof the
+    per-type filter is neither over- nor under-matching.
 - **Implemented `BigDecor:` billboard rendering for CNA (2026-07-09, §8 old task 3).** Parsing was
   already done (`GEWorldRuntime::LoadFromMobileEggbertFile()` fully parses `BigDecor:` into
   `bigDecor_`, confirmed from source reading — the task description was stale about that); only
@@ -526,9 +564,9 @@ across the 4 tile-identification modes, plus water. What remains is narrow: 6 sp
 `DirectionalCube` icons each blocked on a distinct small thing (icons 108-109 need more per-side
 work beyond the grass texture, or a genuinely ambiguous crop for icons 15-18 — §8 task 1), not a
 new render-mode mechanism. A newly found (2026-07-08) but not yet root-caused rendering artifact —
-thin blue seam lines at block edges, see §5 — is §8 task 2. `BigDecor:` billboard rendering is now
-implemented (2026-07-09, §3). The next *new* mechanism work is the platform-lift/crate
-`UniformCube` object path (§8 task 3).
+thin blue seam lines at block edges, see §5 — is §8 task 2. `BigDecor:` billboard rendering and the
+platform-lift/crate `UniformCube` object path are now both implemented (2026-07-09, §3) — no new
+render-mechanism work remains on the list; §8's remaining tasks are verification/polish/cleanup.
 
 ## 5. Known bugs and limitations
 
@@ -536,7 +574,7 @@ implemented (2026-07-09, §3). The next *new* mechanism work is the platform-lif
 |---|---|
 | incomplete | 6 confirmed `DirectionalCube` icons still unwired: 108-109 (need icon 107's grass texture plus more per-side work), 15-18 (ambiguous crop read) — see §8 task 1. |
 | **found 2026-07-08, not yet root-caused** | **Thin blue (sky-clear-color) seam lines visible along block edges in `GalaxyEggbertCNA`**, reported by user via a live screenshot of the `RockPile` staircase at a close/oblique angle — pre-existing, NOT caused by today's DirectionalCube/water/alpha work (confirmed: seams reproduce on the plain-`UniformCube` staircase, unrelated code path). A reproduction attempt showed the same grid-pattern seams at block boundaries, though as dark lines rather than blue in that specific attempt — exact camera angle/distance and possibly MSAA/edge-antialiasing state seem to matter. No fix attempted yet — see §8 task 2. |
-| incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards, no HUD, no sound, no gameplay logic (expected at this phase). No platform-lift/crate `UniformCube` object path. |
+| incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards/cubes, no HUD, no sound, no gameplay logic, no interactive object system (expected at this phase) — platform lifts/crates render but don't move or respond to Blupi yet. |
 | unverified this session | `GalaxyEggbertWorldsTests` 54/54 pass and the `cmake-build-debug` `ctest` discovery issue — both last checked 2026-07-07, not re-run today. |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every `ObjectType` billboard, even though types 1/12 need `object-m.png` and 32/33 need `blupi1.png` (`DOC-007`, same gap in both targets). |
@@ -597,7 +635,13 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETil
                                 element.png's. Only ever non-empty when a world was loaded via
                                 LoadFromMobileEggbertFile() — the default .vwr world's GetBigDecor()
                                 is empty (LoadFromVwrFile() clears it), guarded explicitly since a
-                                2026-07-09 segfault (see §3).
+                                2026-07-09 segfault (see §3). Also owns objectCubeEffect_/
+                                objectCubeMeshRenderer_ (added 2026-07-09, §3) — the platform-lift/
+                                crate UniformCube object path, built once (not per-frame) from
+                                worldRuntime_.GetMobileObjects() filtered by
+                                GEObjectIcons::IsUniformCubeObject(), same terrainTexture_ sheet as
+                                BigDecor/terrain. MoveObjects of these types are skipped in the
+                                billboard-building loop so they aren't drawn twice.
 
 tools/GenerateSampleWorld3D.cpp — builds worlds3d/world001.vwr. Ground floor/staircase/platform
                                 use RockPile, walls/pillars use BrickWall (no more Ground/StoneA/
@@ -750,19 +794,16 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `GraphicsDeviceManager`/EasyGL backend for MSAA defaults. **Verification:** a live screenshot at
    the same close/oblique staircase angle before/after, confirming the seams are gone or
    meaningfully reduced.
-3. **Platform-lift/crate `UniformCube` object path for CNA** — reuse existing terrain
-   `CubeMesh`/`CubeMeshRenderer` machinery for the two approved "objects are cubes, not billboards"
-   exceptions. **Files:** `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp`.
-4. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
+3. **Re-verify `GalaxyEggbertWorldsTests` (54/54)** — last checked 2026-07-07, not re-run since.
    Use a Simple3D-OFF tree (e.g. `build-cna`, or a fresh configure with
    `-DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`) — do **not** use `cmake-build-debug`, which configures
    Simple3D/U3D and is currently broken for unrelated reasons the user has said not to fix (§9).
    **Verification:** `ctest --test-dir <tree> --output-on-failure`.
-5. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
+4. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-6. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
+5. **Verify `GalaxyEggbertCNA`'s clean-exit path** — close the window via the window manager (not
    a forced kill/timeout) and confirm the process exits 0 with no leaked resources.
-7. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
+6. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
    different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
    367), all consistent with "no reliable cue, default is fine," but not exhaustive like
    `DirectionalCube`'s per-icon backfill was. Low priority — the default already renders correctly,

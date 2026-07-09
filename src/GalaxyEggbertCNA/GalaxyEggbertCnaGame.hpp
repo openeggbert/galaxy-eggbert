@@ -8,6 +8,7 @@
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
+#include <Easy3D/CubeMeshRenderer.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp>
@@ -116,5 +117,19 @@ namespace GalaxyEggbert::CNA
         std::vector<BigDecorCell> bigDecorCells_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> bigDecorEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> bigDecorMeshRenderer_;
+
+        // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3,
+        // mobile-eggbert-reference/15-3d-render-mapping-design.md §5's two
+        // confirmed "render as a cube, not a billboard" exceptions:
+        // ObjectType1/47/48 platform lifts and ObjectType12 crates, see
+        // GEObjectIcons::IsUniformCubeObject). Reuses terrainTexture_
+        // (object-m.png, the confirmed-correct sheet for these types) via
+        // its own effect, same reason as bigDecorEffect_ above. Built once
+        // in LoadContent() (static phase only, same simplification as the
+        // MoveObject billboards — no per-instance animation timers yet), NOT
+        // rebuilt per frame like the billboard renderers, since a
+        // world-space cube's vertices don't depend on the camera.
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectCubeEffect_;
+        std::unique_ptr<Easy3D::CubeMeshRenderer> objectCubeMeshRenderer_;
     };
 }

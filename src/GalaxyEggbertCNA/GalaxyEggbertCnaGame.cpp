@@ -165,6 +165,49 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: " << bigDecorCells_.size()
                   << " BigDecor cell(s) parsed for billboard rendering." << std::endl;
 
+        // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3) --
+        // reuses terrainTexture_ (object-m.png), the confirmed-correct sheet
+        // for these ObjectTypes (see GEObjectIcons::IsUniformCubeObject).
+        // Built once here, not per frame, since these are static-phase-only
+        // cubes whose vertices don't depend on the camera (unlike the
+        // billboards above). Center.Y uses the same "+kObjectGroundOffset"
+        // convention as the MoveObject billboards (kObjectGroundOffset=1.0f
+        // below in Draw()) so a cube object sits on the ground exactly like
+        // an already-verified-correct billboard would at the same position.
+        {
+            objectCubeEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+            objectCubeEffect_->VertexColorEnabled = false;
+            objectCubeEffect_->setTextureEnabledProperty(true);
+            objectCubeEffect_->setTextureProperty(&terrainTexture_);
+
+            constexpr float kObjectCubeGroundOffset = 1.0f; // matches kObjectGroundOffset in Draw()
+            std::vector<Easy3D::CubeVertex> cubeVertices;
+            std::vector<std::uint32_t> cubeIndices;
+            int cubeObjectCount = 0;
+            for (const auto& obj : worldRuntime_.GetMobileObjects())
+            {
+                if (!IsUniformCubeObject(obj.type))
+                {
+                    continue;
+                }
+                ++cubeObjectCount;
+                const int icon = GetObjIcon(obj.type, 0);
+                Easy3D::CubeItem item;
+                item.Center = Easy3D::CubeBatch::Vector3(
+                    obj.posStartX, obj.posStartY + kObjectCubeGroundOffset, obj.posStartZ);
+                item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
+                item.Uv = tileAtlas_.GetTileUv(icon);
+                Easy3D::AppendCubeMesh(item, cubeVertices, cubeIndices);
+            }
+
+            if (!cubeIndices.empty())
+            {
+                objectCubeMeshRenderer_ = std::make_unique<Easy3D::CubeMeshRenderer>(device, cubeVertices, cubeIndices);
+            }
+            std::cout << "GalaxyEggbertCNA: " << cubeObjectCount
+                      << " platform-lift/crate cube object(s) built." << std::endl;
+        }
+
         // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
         // inside worlds3d/world001.vwr's ground floor). The .vwr format
         // carries no spawn point itself (see LoadFromVwrFile()), so this is
@@ -255,6 +298,19 @@ namespace GalaxyEggbert::CNA
             terrainEffect_->Projection = camera_.GetProjectionMatrix();
             terrainEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             terrainRenderer_->Draw(device, *terrainEffect_);
+
+            if (objectCubeMeshRenderer_ && objectCubeEffect_)
+            {
+                // Platform-lift/crate UniformCube objects (NEXT.md §8 task 3)
+                // -- opaque, drawn alongside the main terrain pass, same
+                // texture sheet (terrainTexture_) as terrainEffect_ but its
+                // own effect instance since World/View/Projection are set
+                // independently per draw call.
+                objectCubeEffect_->View = camera_.GetViewMatrix();
+                objectCubeEffect_->Projection = camera_.GetProjectionMatrix();
+                objectCubeEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                objectCubeMeshRenderer_->Draw(device, *objectCubeEffect_);
+            }
 
             if (grassEffect_)
             {
@@ -353,6 +409,13 @@ namespace GalaxyEggbert::CNA
             constexpr float kObjectGroundOffset = 1.0f; // matches blupi_'s own ground-standing height
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
+                // Platform lifts/crates render as solid cubes (see
+                // objectCubeMeshRenderer_/NEXT.md §8 task 3), not billboards
+                // -- skip here so they aren't drawn twice.
+                if (IsUniformCubeObject(obj.type))
+                {
+                    continue;
+                }
                 const int icon = GetObjIcon(obj.type, 0);
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(

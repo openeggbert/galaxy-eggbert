@@ -19,6 +19,10 @@ namespace GalaxyEggbert::CNA
                                               263,264,264,265,265,265,264,264,263,262,
                                               261,260,259,258,257,257};
         static const int kChenille[6]     = {311,312,313,314,315,316};
+        // table_chenillei (ObjectType48's "leftward carry" reverse-direction
+        // track, mobile-eggbert-reference/03-objects.md: "table_chenillei[0]
+        // =316") -- same 6 icons as table_chenille, reverse order.
+        static const int kChenillei[6]    = {316,315,314,313,312,311};
         static const int kCleGeneric[12]  = {122,123,124,125,126,127,128,127,126,125,124,123};
         static const int kSkate[34]       = {129,129,129,129,130,130,130,131,131,132,
                                               132,133,133,134,134,134,135,135,135,135,
@@ -55,11 +59,26 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType26: return kPower[(p / 6) % 8];
             case ObjectType::ObjectType40: return kInvert[(p / 4) % 20];
             case ObjectType::ObjectType47: return kChenille[(p / 6) % 6];
+            case ObjectType::ObjectType48: return kChenillei[(p / 6) % 6];
             case ObjectType::ObjectType32: return kBlupihLeft[(p / 6) % 8];
             case ObjectType::ObjectType44: return kGuepeLeft[(p / 6) % 6];
             case ObjectType::ObjectType54: return kCreature[(p / 6) % 8];
             case ObjectType::ObjectType96: return kFollow1[(p / 3) % 26];
             default:                       return 0;
+        }
+    }
+
+    bool IsUniformCubeObject(ObjectType type)
+    {
+        switch (type)
+        {
+            case ObjectType::ObjectType1:
+            case ObjectType::ObjectType12:
+            case ObjectType::ObjectType47:
+            case ObjectType::ObjectType48:
+                return true;
+            default:
+                return false;
         }
     }
 
