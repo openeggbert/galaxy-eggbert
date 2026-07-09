@@ -61,14 +61,6 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
             case ObjectType::ObjectType57: return 274; // 20 frames would exceed the sheet (274+19=293 > 289) -- first-frame only
             case ObjectType::ObjectType97: return 256 + (p / 6) % 5;
-            // ObjectType38 (electric arc) deliberately NOT added: real
-            // behavior is two-channel (blupi1.png ticks 0-29, element.png
-            // ticks 30-89) and 03-objects.md flags the element.png-only
-            // simplification as "under consideration", not decided --
-            // returning a wrong-channel icon would be worse than the
-            // existing default:0 fallback. Deferred to the same follow-up
-            // as the explo.png/blupi.png types below.
-
             // object-m.png-sourced Category B types (2026-07-09) -- these
             // are NOT element.png icons; GetElementIconUv() would compute
             // the wrong UV rect for them. The icon numbers below are only
@@ -143,6 +135,27 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType201: return 257 + (p / 6) % 6;
             case ObjectType::ObjectType202: return 257 + (p / 6) % 6;
             case ObjectType::ObjectType203: return 257 + (p / 6) % 6;
+
+            // ObjectType38 (electric arc, 2026-07-09) -- real behavior is
+            // two-channel (blupi1.png ticks 0-29, then element.png ticks
+            // 30-89), and 03-objects.md flags the element.png-only
+            // simplification as "under consideration", not decided. That
+            // question turns out to be moot today: GetObjIcon() is always
+            // called with phase=0 (no per-instance animation timers exist
+            // yet, see this file's header comment), and tick 0 falls
+            // squarely in the blupi1.png channel -- 03-objects.md's own
+            // crop for this type is explicitly labeled
+            // "electro-blupi1channel.png" at icon 266, i.e. icon 266 on
+            // blupi1.png's grid (via GetBlupiIconUv()), not element.png's.
+            // So this is the correct, faithful icon for the only phase that
+            // ever renders right now -- not a channel-blind guess. The
+            // element.png channel (ticks 30-89) genuinely has no
+            // representation yet and needs a real per-instance animation
+            // timer (plus true dual-texture billboard support, since a
+            // single MoveObject would need to switch sheets mid-animation)
+            // before it can be added -- tracked as a residual gap, not
+            // silently dropped.
+            case ObjectType::ObjectType38:  return 266;
             default:                       return 0;
         }
     }
@@ -236,6 +249,7 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType201:
             case ObjectType::ObjectType202:
             case ObjectType::ObjectType203:
+            case ObjectType::ObjectType38:
                 return true;
             default:
                 return false;
@@ -249,6 +263,7 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType201:
             case ObjectType::ObjectType202:
             case ObjectType::ObjectType203:
+            case ObjectType::ObjectType38:
                 return true;
             default:
                 return false;

@@ -22,20 +22,22 @@ namespace GalaxyEggbert::CNA
     // the element.png sheet layout; the caller picks the right sheet/UV
     // function based on those two predicates.
     //
-    // Coverage (2026-07-09, NEXT.md §3): 65 of 69 confirmed ObjectTypes now
-    // have a real icon (up from 31) -- 13 element.png-native + 5
-    // object-m.png-sourced Category B types added in an earlier pass this
-    // session, 12 explo.png-sourced + 4 blupi.png/blupi1.png-sourced
-    // (ObjectType14/15/31/35/52, 8/9/10/11/53/90/91/92/93/98/99/100,
-    // 200/201/202/203 -- see IsExploPngSourced/IsBlupiPngSourced below for
-    // the non-element.png ones) added in this pass, plus the pre-existing 31
-    // and the 4 already-cube-routed types. Still default: return 0
-    // (wrong/placeholder icon): only ObjectType38's two-channel electric arc
-    // (needs BOTH blupi1.png and element.png in one animation --
-    // 03-objects.md flags the element.png-only simplification as
-    // undecided, see NEXT.md §8). Genuinely no icon exists in mobile-eggbert
-    // source data for ObjectType0/18/22/58 -- default: return 0 is correct
-    // for those, not a gap.
+    // Coverage (2026-07-09, NEXT.md §3): 66 confirmed ObjectTypes now have a
+    // real icon (up from 65, 65 up from 31 earlier this session) -- the
+    // latest addition is ObjectType38's electric arc (also blupi1.png-
+    // sourced, see IsBlupiPngSourced/UsesBlupi1Texture below). Its real
+    // behavior is two-channel (blupi1.png ticks 0-29, then element.png
+    // ticks 30-89), and 03-objects.md flags the element.png-only
+    // simplification as "under consideration" -- but that question turns
+    // out to be moot today: GetObjIcon is always called with phase=0 (no
+    // per-instance animation timers exist yet), and tick 0 is unambiguously
+    // the blupi1.png channel, icon 266, per 03-objects.md's own
+    // "...blupi1channel.png" crop label. The element.png channel (ticks
+    // 30-89) has no representation yet and needs a real animation timer
+    // plus true dual-texture billboard support first -- a residual gap for
+    // later, not a decision blocker today. Genuinely no icon exists in
+    // mobile-eggbert source data for ObjectType0/18/22/58 -- default:
+    // return 0 is correct for those, not a gap.
     //
     // 53/92 (explo.png) and 98/99/100 (explo.png) return their documented
     // first-frame icon only (no cycling): 53's 45 frames and 92's 128 frames
@@ -94,17 +96,20 @@ namespace GalaxyEggbert::CNA
     ObjectIconUv GetBlupiIconUv(int icon);
 
     // True for the 4 confirmed Blupi-skin ObjectTypes (ObjectType200/201/
-    // 202/203, mobile-eggbert-reference/03-objects.md, added 2026-07-09).
-    // The icon GetObjIcon() returns for these types is a blupi.png/
-    // blupi1.png index -- look it up via GetBlupiIconUv().
+    // 202/203, mobile-eggbert-reference/03-objects.md, added 2026-07-09)
+    // plus ObjectType38's electric arc (added same day -- its blupi1.png
+    // channel is the only one rendered today, see GetObjIcon()'s header
+    // comment). The icon GetObjIcon() returns for these types is a
+    // blupi.png/blupi1.png index -- look it up via GetBlupiIconUv().
     bool IsBlupiPngSourced(ObjectType type);
 
-    // True for the 3 of the 4 Blupi-skin types (ObjectType201/202/203) that
-    // source blupi1.png instead of blupi.png (ObjectType200 uses blupi.png
-    // itself). Per 03-objects.md, Blupi1_11/_12/_13 all read the identical
-    // blupi1.png pixels in a raw crop -- any tint difference between
-    // 201/202/203 is applied at render time in mobile-eggbert, not
-    // reproduced here (no per-instance tinting exists in GalaxyEggbertCNA
-    // yet), so all 3 render identically to each other today.
+    // True for the ObjectTypes that source blupi1.png instead of blupi.png:
+    // the 3 of the 4 Blupi-skin types (ObjectType201/202/203 -- ObjectType200
+    // uses blupi.png itself) plus ObjectType38's electric arc. Per
+    // 03-objects.md, Blupi1_11/_12/_13 all read the identical blupi1.png
+    // pixels in a raw crop -- any tint difference between 201/202/203 is
+    // applied at render time in mobile-eggbert, not reproduced here (no
+    // per-instance tinting exists in GalaxyEggbertCNA yet), so all 3 render
+    // identically to each other today.
     bool UsesBlupi1Texture(ObjectType type);
 }

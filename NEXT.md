@@ -221,6 +221,22 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **`ObjectType38` (electric arc) now has a real icon — 65/69 → 66/69, closing the icon-coverage
+  follow-up from §8 task 1 (2026-07-09).** The "element.png-only simplification, undecided" question
+  §8 flagged turned out to be moot: `GetObjIcon()` is always called with `phase=0` (no per-instance
+  animation timers exist yet), and tick 0 of the real two-channel animation (`blupi1.png` ticks
+  0-29, then `element.png` ticks 30-89) is unambiguously the `blupi1.png` channel — confirmed via
+  `03-objects.md`'s own crop filename for this type, explicitly labeled
+  `object-type038-icon266-electro-blupi1channel.png`, i.e. icon 266 on `blupi1.png`'s grid, not
+  element.png's. Added `ObjectType38` to `IsBlupiPngSourced()`/`UsesBlupi1Texture()` (reusing the
+  existing `blupi1ObjectEffect_` render path from the background-image work, no new infrastructure)
+  and a `GetObjIcon()` case returning `266`. The `element.png` channel (ticks 30-89) still has no
+  representation — needs a real animation timer plus genuine dual-texture billboard support first —
+  left as an explicit residual gap, not silently dropped. **Verified**: clean build; live run (no
+  crash, `69 MoveObject(s) parsed`, screenshot written); `GalaxyEggbertWorldsTests` (63/63),
+  `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+  PASSED`).
+
 - **Fixed `Easy3D::AppendBillboardMesh`'s backface-culling bug at the source (2026-07-09, §8 task
   0) — `MoveObjects`/`BigDecor` billboards are now actually visible on screen, not just correct in
   vertex math.** Direct follow-up to the discovery in the previous entry below. Reversed the fixed
@@ -1027,7 +1043,7 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 | resolved (re-verified 2026-07-09) | `GalaxyEggbertWorldsTests` — 54/54 still pass (via `build-cna`, see §7). The `cmake-build-debug` `ctest` discovery issue is unrelated to that tree and not re-checked (not to be built, per §9). |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every remaining `ObjectType` billboard, even though types 32/33 need `blupi1.png` (`DOC-007`). Types 1/12/47/48 (as `UniformCube`s) and 14/15/31/35/52 (as `IsObjectMPngSourced` billboards) are no longer part of this gap in `GalaxyEggbertCNA` — they correctly source `object-m.png` instead (2026-07-09, §3); `GalaxyEggbertSimple3D`'s equivalent bug remains unfixed (historical reference only, not built/fixed going forward). |
-| incomplete | `GEObjectIcons::GetObjIcon()` icon coverage is 65/69 confirmed `ObjectType`s (up from 31, 2026-07-09, §3). Only `38` (electric arc, two-channel `blupi1.png`+`element.png`, simplification undecided) is still `default: return 0` — see §8 for the follow-up task. `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them). |
+| resolved (2026-07-09) | `GEObjectIcons::GetObjIcon()` icon coverage is now 66/69 confirmed `ObjectType`s (up from 31 at session start). `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them) — no known gaps remain among confirmed types. `38` (electric arc)'s real two-channel behavior is only partially represented: `blupi1.png` (ticks 0-29, the only phase ever rendered today) is correct, but `element.png` (ticks 30-89) has no representation yet — needs a real per-instance animation timer plus dual-texture billboard support, tracked as a residual follow-up, not a coverage gap in the current phase=0-only rendering model. |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
 | unknown | Simple3D Android/Web builds untested since the last engine change. |
@@ -1255,15 +1271,13 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Follow-up: `ObjectType38` (electric arc), the last confirmed `ObjectType` still without a real
-   icon** (§3/§5). Real behavior needs BOTH `blupi1.png` (ticks 0-29) and `element.png` (ticks
-   30-89) in one animation, but `03-objects.md` explicitly flags the element.png-only
-   simplification as undecided — needs a decision first (accept the simplification and return an
-   element.png-only icon like the other Category B types, or build genuine dual-texture billboard
-   support — no existing render path draws two textures on one billboard) before implementing, not
-   just data-gathering. Low priority/small scope: one type, already-loaded textures
-   (`blupiObjectEffect_`/`blupi1ObjectEffect_` and the element.png path both exist), the only real
-   question is the design decision above.
+1. **Optional follow-up: `ObjectType38`'s `element.png` channel (ticks 30-89)** — the electric
+   arc's `blupi1.png` channel (ticks 0-29) now renders correctly (§3, 2026-07-09), but the
+   animation's second half has no representation, since `GetObjIcon()` is always called with
+   `phase=0` today (no per-instance animation timers exist). Needs a real animation timer plus
+   genuine dual-texture billboard support (no existing render path draws two textures on one
+   `MoveObject` mid-animation) — a real, if small, new capability, not just a data-gathering task.
+   Low priority: cosmetic completeness for one already-functional type.
 2. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
    (§3/§5 — 60% reduction in fully-transparent seam pixels, not 100%). Two untested hypotheses: (a)
    ordinary MSAA/silhouette-edge antialiasing producing genuine partial pixel coverage at any
