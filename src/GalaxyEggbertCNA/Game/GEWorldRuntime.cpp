@@ -239,11 +239,22 @@ namespace GalaxyEggbert::CNA
 
     void GEWorldRuntime::Update(float dt)
     {
+        // Raw animation tick (2026-07-09, fixed from a flat 6fps clock
+        // shared by every animated tile type -- reported live as "elements
+        // animate too slowly"). Now advances at mobile-eggbert's real
+        // reference tick rate, 20 ticks/sec (Config::ScaleTime(1)==1,
+        // Decor.cpp/Config.hpp) -- the SAME base rate MobileObjSpec::phase
+        // below already uses. GETerrainRenderer::AnimIcon() divides this raw
+        // tick by each tile type's own real divisor (Decor.cpp's per-type
+        // ScaleDiv(N), e.g. Saw/Fan tick every raw tick == 50ms, Lava every
+        // 2 == 100ms, Water1/Crusher every 3 == 150ms, Spike/Temp every 4 ==
+        // 200ms) -- a flat 166ms/frame for all of them was simply wrong, not
+        // just a stylistic simplification.
         animTimer_ += dt;
-        static constexpr float kAnimPeriod = 1.0f / 6.0f;
-        while (animTimer_ >= kAnimPeriod)
+        static constexpr float kAnimTickPeriod = 1.0f / 20.0f;
+        while (animTimer_ >= kAnimTickPeriod)
         {
-            animTimer_ -= kAnimPeriod;
+            animTimer_ -= kAnimTickPeriod;
             ++animPhase_;
         }
 

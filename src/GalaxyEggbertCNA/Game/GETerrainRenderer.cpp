@@ -116,9 +116,35 @@ namespace GalaxyEggbert::CNA
                                            325,325,326,326,327,329,328,328,-1,-1};
         constexpr int kAnimMarine[11]  = {203,204,205,206,207,208,207,206,205,204,203};
 
-        int AnimIcon(std::uint16_t base, int phase)
+        // Real per-type tick divisor against the 20fps raw tick
+        // (GEWorldRuntime::GetAnimPhase(), fixed 2026-07-09 -- see its own
+        // comment) -- mobile-eggbert's real Decor.cpp tile-animation logic
+        // (table_decor_scie/lave/eau1/eau2/ecraseur/piege1/piege2/temp,
+        // ventg/ventd/venth/ventb) divides the same 20fps base tick per
+        // type via Config::ScaleDiv(N), NOT a flat rate shared by every
+        // animated tile. Water2/Marine's real divisor also varies per-
+        // instance (3 + position%3, a visual ripple-offset detail) -- not
+        // modeled here, every instance of a given type shares one phase;
+        // only the base speed (the part of "too slow" that's actually
+        // wrong) is fixed.
+        int AnimDivisor(std::uint16_t base)
         {
             using namespace GalaxyEggbert::BlockTypes;
+            switch (base)
+            {
+                case Saw:                                              return 1; // 50ms/frame
+                case FanLeft: case FanRight: case FanUp: case FanDown:  return 1; // 50ms/frame
+                case Lava:                                              return 2; // 100ms/frame
+                case Water1: case Crusher: case Water2: case Marine:    return 3; // 150ms/frame
+                case Spike: case Temp:                                  return 4; // 200ms/frame
+                default:                                                return 3;
+            }
+        }
+
+        int AnimIcon(std::uint16_t base, int rawTick)
+        {
+            using namespace GalaxyEggbert::BlockTypes;
+            const int phase = rawTick / AnimDivisor(base);
             switch (base)
             {
                 case Lava:     return kAnimLava[phase % 8];
@@ -458,24 +484,29 @@ namespace GalaxyEggbert::CNA
         {
             m_staticRenderer->Draw(device, effect);
         }
-        if (m_animRenderer)
-        {
-            m_animRenderer->Draw(device, effect);
-        }
-        if (m_waterRenderer || m_transparentStaticRenderer)
+        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
-            // NEXT.md §8): drawn last, with alpha blending and depth WRITES
-            // disabled (but depth TESTING still on, via DepthRead) so
-            // transparent geometry composites correctly over opaque terrain
-            // already in the depth buffer without blocking whatever's drawn
-            // after it. object-m.png has real per-pixel alpha (confirmed
-            // 2026-07-08); NonPremultiplied matches its un-premultiplied
-            // RGB. Covers both water (animated) and the static-but-
-            // transparent icons 30/31 -- same blend/depth state either way,
-            // so one state change covers both draws. State is restored to
-            // Opaque/Default afterward so the caller's own state isn't
-            // disturbed.
+            // NEXT.md §8, extended 2026-07-09 to also cover m_animRenderer):
+            // drawn last, with alpha blending and depth WRITES disabled (but
+            // depth TESTING still on, via DepthRead) so transparent geometry
+            // composites correctly over opaque terrain already in the depth
+            // buffer without blocking whatever's drawn after it. object-m.png
+            // has real per-pixel alpha (confirmed 2026-07-08); NonPremultiplied
+            // matches its un-premultiplied RGB. m_animRenderer (lava/crusher/
+            // saw/spike/fan/marine/temp) moved into this pass 2026-07-09 --
+            // it used to draw opaque like m_staticRenderer, which was wrong:
+            // direct pixel sampling of object-m.png shows these tiles'
+            // textures are 44-81% transparent pixels (not the near-opaque
+            // case icons 30/31 originally motivated this pass for), so
+            // drawing them opaque rendered most of each tile's transparent
+            // background as solid black -- reported live as "instead of
+            // transparency there's black, you can see inside the cube."
+            // Covers water (animated), the static-but-transparent icons
+            // 30/31, AND the animated non-water set -- same blend/depth
+            // state for all three, so one state change covers all draws.
+            // State is restored to Opaque/Default afterward so the caller's
+            // own state isn't disturbed.
             using Microsoft::Xna::Framework::Graphics::BlendState;
             using Microsoft::Xna::Framework::Graphics::DepthStencilState;
             device.setBlendStateProperty(BlendState::NonPremultiplied);
@@ -483,6 +514,10 @@ namespace GalaxyEggbert::CNA
             if (m_transparentStaticRenderer)
             {
                 m_transparentStaticRenderer->Draw(device, effect);
+            }
+            if (m_animRenderer)
+            {
+                m_animRenderer->Draw(device, effect);
             }
             if (m_waterRenderer)
             {

@@ -225,6 +225,43 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed animated-terrain speed (flat 6fps -> real per-type divisors) and animated-terrain
+  transparency (opaque -> alpha-blended) (2026-07-09).** User report, after the billboard alpha fix
+  and fan-axis fix above: element animations are *still* too slow and terrain cubes *still* show
+  black-instead-of-transparent / "see inside the cube." Both prior fixes addressed real but
+  different bugs (MoveObject billboards, fan face axis) — these two were never actually
+  root-caused. Investigated fresh (dedicated fork):
+  - **Too slow, confirmed**: `GEWorldRuntime::Update()` advanced one shared `animPhase_` at a flat
+    6fps (166ms/frame) for every animated tile type. Real mobile-eggbert (`../mobile-eggbert`
+    `Decor.cpp`) divides a 20fps base tick per-type via `Config::ScaleDiv(N)` — Saw and all 4 Fan
+    variants tick every **50ms** (divisor 1, 3.3x faster than the old flat rate — the fan axis fix
+    above made the *direction* right but not the *speed*), Lava every 100ms (divisor 2), Water1/
+    Crusher/Water2/Marine every 150ms (divisor 3), Spike/Temp every 200ms (divisor 4). Fixed:
+    `GEWorldRuntime`'s raw tick now advances at the real 20fps base (same rate `MobileObjSpec::phase`
+    already used) instead of a precomputed 6fps phase; `GETerrainRenderer.cpp`'s new `AnimDivisor()`
+    divides that raw tick per-type before indexing each type's frame table in `AnimIcon()`. Water2/
+    Marine's real per-*instance* ripple offset (`3 + position%3`) is not modeled — every instance of
+    a type still shares one phase; only the wrong base speed (the actual "too slow" complaint) is
+    fixed.
+  - **Black instead of transparent, confirmed — different cause than the earlier (correct, but
+    incomplete) terrain investigation found**: `GETerrainRenderer::Draw()`'s animated-but-non-water
+    tiles (`m_animRenderer` — lava/crusher/saw/spike/fan/marine/temp) drew fully opaque, never
+    entering the alpha-blend pass that icons 30/31 and water already used. Direct pixel sampling of
+    `object-m.png` shows these tiles are genuinely 44-81% transparent pixels (lava 62%, crusher
+    53-66%, saw 69%, temp 81%, marine 75%, fan side faces 44%) — not the near-opaque case icons 30/31
+    originally motivated that pass for. Drawing them opaque rendered most of each tile as solid
+    black. Fixed: `m_animRenderer` now draws inside the existing `NonPremultiplied`/`DepthRead`
+    alpha-blend block alongside water and icons 30/31, instead of in the earlier opaque block.
+    DirectionalCube face winding/culling and the "open face" geometry-omission mechanism were
+    re-verified and are NOT implicated — both correct, as the prior session already found.
+  - **Verified**: clean build; `GalaxyEggbertWorldsTests` (63/63); `VerifyBlupiMovement`/
+    `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`, run from repo
+    root); live headless run, no crash/errors, terrain-visibility diagnostic unchanged (still real
+    textured samples); debug-camera screenshot of the sample world's fan/demo row before vs. after
+    shows the background bleeding through gaps between tile shapes instead of solid black, confirming
+    the alpha-blend fix visually; debug-camera repositioning reverted before commit (confirmed via
+    `git diff`).
+
 - **Smoothed camera + fixed FanLeft/FanRight's base/open face axis (2026-07-09).** User report:
   the camera moves too fast/snaps, and the horizontal fans (větráky) need work.
   - **Camera damping**: both `FirstPerson` and `ThirdPersonModel` cameras in

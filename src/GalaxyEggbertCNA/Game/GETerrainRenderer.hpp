@@ -17,12 +17,14 @@ namespace GalaxyEggbert::CNA
     // the small set of non-animated blocks that ALSO need alpha blending
     // (icons 30/31 -- see Draw()'s comment), a third for the icon-107
     // grass-top overlay (its own texture, drawn via DrawGrass() with a
-    // separate effect), plus a fourth CubeMeshRenderer for the opaque
-    // animated subset (lava/crusher/saw/spike/fan/marine/temp) and a fifth
-    // for the water subset (Water1/Water2 -- animated AND alpha-blended),
-    // the latter two rebuilt whenever Update() is given a new animation
-    // phase (plan.md E3D-MIG-054/055). One 1x1x1 cube per block, textured
-    // via GETileAtlas.
+    // separate effect), plus a fourth CubeMeshRenderer for the animated,
+    // alpha-blended subset (lava/crusher/saw/spike/fan/marine/temp -- drawn
+    // opaque before 2026-07-09, fixed once object-m.png pixel sampling
+    // showed these tiles are 44-81% transparent, not near-opaque like icons
+    // 30/31) and a fifth for the water subset (Water1/Water2 -- animated AND
+    // alpha-blended), the latter two rebuilt whenever Update() is given a
+    // new animation phase (plan.md E3D-MIG-054/055). One 1x1x1 cube per
+    // block, textured via GETileAtlas.
     class GETerrainRenderer
     {
     public:

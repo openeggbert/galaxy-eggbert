@@ -62,19 +62,24 @@ namespace GalaxyEggbert::CNA
         // the world is left empty (all air).
         bool LoadFromVwrFile(const std::string& path);
 
-        // Advances the animated-tile clock (6 fps tick, matching Simple3D's
-        // GEWorldRuntime::Update() and mobile-eggbert's animated tile rate)
-        // and every MobileObjSpec's per-instance phase (20 fps tick,
-        // mobile-eggbert's original reference rate for MoveObject
-        // animation -- a different, faster rate than the tile clock; these
-        // are two genuinely different animation systems in mobile-eggbert
-        // itself, not a galaxy-eggbert simplification).
+        // Advances the animated-tile raw tick (20 fps, matching
+        // mobile-eggbert's real Config::ScaleTime(1) reference rate -- fixed
+        // 2026-07-09 from an incorrect flat 6 fps shared by every tile type;
+        // GETerrainRenderer::AnimIcon() now divides this raw tick by each
+        // tile type's own real per-type divisor, see Update()'s .cpp
+        // comment) and every MobileObjSpec's per-instance phase (same 20 fps
+        // base rate, mobile-eggbert's original reference rate for
+        // MoveObject animation).
         void Update(float dt);
 
         [[nodiscard]] const Worlds::World& GetWorld() const { return *world_; }
         [[nodiscard]] int GetSpawnTileX() const { return spawnTileX_; }
         [[nodiscard]] int GetSpawnTileZ() const { return spawnTileZ_; }
         [[nodiscard]] int GetSkyRegion() const { return skyRegion_; }
+        // Raw 20fps animation tick (2026-07-09) -- NOT a ready-to-index
+        // frame number; GETerrainRenderer::AnimIcon() divides it by each
+        // tile type's own real tick divisor before indexing that type's
+        // frame table. See Update()'s comment for why.
         [[nodiscard]] int GetAnimPhase() const { return animPhase_; }
 
         // BigDecor: is a second 100x100 background tile layer in
