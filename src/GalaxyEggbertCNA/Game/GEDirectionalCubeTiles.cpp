@@ -108,6 +108,9 @@ namespace GalaxyEggbert::CNA
             SingleFaceRestOpen,              // 1 side tex; other 5 = open (fully passable)
             AxisRestColor,                   // 2 opposite sides tex; other 4 = color
             AxisPlusTopBottomOtherSidesColor,// 2 opposite sides + top + bottom tex; other 2 sides = color
+            AxisTopColorBottomOpenSideColorSideOpen, // 2 opposite sides tex (axis); top = color;
+                                              // bottom = open; of the other axis' 2 sides, one =
+                                              // color, one = open (icons 15-18).
         };
 
         struct DirectionalEntry
@@ -198,16 +201,27 @@ namespace GalaxyEggbert::CNA
             // axle/dumbbell shape spanning left-right -> X axis.
             {49, Pattern::AxisPlusTopBottomOtherSidesColor, CubeFace::PosX},
 
-            // NOT YET ADDED: icons 15/16/17/18 ("2 protilehlé strany + shora
-            // barva + zdola průhledné + z zbylých 2 bočních stran jedna
-            // průhledná a druhá barva") need BOTH an axis choice AND which
-            // of the 2 remaining perpendicular sides is open vs. colored --
-            // their crops (diagonal wedge cuts) didn't give a confident read
-            // for either part as of 2026-07-08. See NEXT.md §8.
+            // Group I: icons 15/16/17/18 ("2 protilehlé strany + shora barva
+            // + zdola průhledné + z zbylých 2 bočních stran jedna průhledná
+            // a druhá barva"). Their crops (diagonal wedge cuts with a
+            // small machine-piece detail) didn't give a confident axis or
+            // side-asymmetry read even after direct user review on
+            // 2026-07-09 (confirmed only that icons 15/17 are a horizontal
+            // mirror pair of each other, which doesn't resolve either
+            // question for a SINGLE block's own 6 faces) -- defaults to the
+            // Z axis (matching this table's other axis defaults, e.g. icon
+            // 400) with NegX = open, PosX = color, per the user's explicit
+            // go-ahead to use the same tie-break approach as every other
+            // ambiguous icon in this table.
+            {15, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
+            {16, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
+            {17, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
+            {18, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
         };
     }
 
     bool TryGetDirectionalCubeFaces(int icon, const Easy3D::UvRect& tileUv,
+                                    const Easy3D::UvRect& icon107Uv,
                                     Easy3D::DirectionalCubeFace (&outFaces)[6])
     {
         using Easy3D::CubeFace;
@@ -362,8 +376,65 @@ namespace GalaxyEggbert::CNA
                         }
                     }
                     break;
+                case Pattern::AxisTopColorBottomOpenSideColorSideOpen:
+                {
+                    setTex(entry.Primary);
+                    setTex(Opposite(entry.Primary));
+                    setColor(CubeFace::PosY, kTopSwatchV);
+                    // Bottom (NegY) stays open -- already false from the
+                    // "start all open" init above.
+                    const bool primaryIsZAxis =
+                        (entry.Primary == CubeFace::PosZ || entry.Primary == CubeFace::NegZ);
+                    const CubeFace colorSide = primaryIsZAxis ? CubeFace::PosX : CubeFace::PosZ;
+                    // The other axis' remaining face (NegX if primary is Z,
+                    // NegZ if primary is X) stays open -- already false.
+                    setColor(colorSide, kMidSwatchV);
+                    break;
+                }
             }
 
+            return true;
+        }
+
+        // Icons 108/109: "krychle, 2 boční strany vlastní textura, 1 boční
+        // strana textura ikony 107, 1 boční strana průhledná, zdola hnědá
+        // plná barva, shora samostatná textura trávy". Top is intentionally
+        // left OPEN here (Visible=false), same reasoning as icon 107 itself
+        // -- the real top surface is GETerrainRenderer's separate grass-top
+        // overlay plate (IsGrassTopIcon()/m_grassRenderer), not this table.
+        // Facing (which 2 adjacent sides get the icon's own texture, which 1
+        // gets icon 107's, which 1 is open) has no confirmed cue in the
+        // questionnaire text and the crops didn't resolve it even after
+        // direct user review on mobile (2026-07-09) -- defaults to a fixed,
+        // consistent assignment (PosZ+NegZ = own texture, PosX = icon 107's
+        // texture, NegX = open), the same tie-break approach as every other
+        // ambiguous icon in this table, per the user's explicit go-ahead.
+        // Handled outside kDirectionalEntries/Pattern since it's the only
+        // entry needing a SECOND icon's texture (icon107Uv) -- not worth a
+        // new Pattern case for 2 icons.
+        if (icon == 108 || icon == 109)
+        {
+            for (auto& face : outFaces)
+            {
+                face.Visible = false;
+                face.Uv = tileUv;
+            }
+
+            outFaces[static_cast<int>(CubeFace::PosZ)].Visible = true;
+            outFaces[static_cast<int>(CubeFace::NegZ)].Visible = true;
+
+            auto& icon107Face = outFaces[static_cast<int>(CubeFace::PosX)];
+            icon107Face.Visible = true;
+            icon107Face.Uv = icon107Uv;
+
+            // NegX stays open (already false from the loop above).
+
+            auto& bottom = outFaces[static_cast<int>(CubeFace::NegY)];
+            bottom.Visible = true;
+            bottom.Uv = SwatchUv(tileUv, kBottomSwatchV);
+
+            // Top (PosY) stays open -- the real grass top is drawn
+            // separately, see this block's comment above.
             return true;
         }
 

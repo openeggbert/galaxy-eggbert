@@ -177,6 +177,24 @@ int main(int argc, char** argv)
     // from Blupi's tested spawn/staircase/wall-collision path).
     fill(82, 82, 3, 3, 42, 42, static_cast<std::uint16_t>(368));
 
+    // Icons 15/16/17/18 demo (2026-07-09, §8 task 1 complete -- last 6
+    // DirectionalCube icons backfilled): axis + open/color side pair,
+    // defaulted per the user's explicit go-ahead (crops didn't give a
+    // confident read even after direct review). Same off-path row (y=3,
+    // z=42) as the other DirectionalCube demos above.
+    fill(92, 92, 3, 3, 42, 42, static_cast<std::uint16_t>(15));
+    fill(94, 94, 3, 3, 42, 42, static_cast<std::uint16_t>(16));
+    fill(96, 96, 3, 3, 42, 42, static_cast<std::uint16_t>(17));
+    fill(98, 98, 3, 3, 42, 42, static_cast<std::uint16_t>(18));
+
+    // Icons 108/109 demo (2026-07-09, §8 task 1 complete): own texture + 2
+    // sides, icon 107's texture on 1 side, 1 side open, grass top overlay
+    // (same as icon 107) -- placed on the ground floor next to the icon-107
+    // patch so the real grass-top surface is naturally visible from a
+    // normal standing view, same reasoning as icon 107's own placement.
+    fill(38, 38, 0, 0, 35, 35, static_cast<std::uint16_t>(108));
+    fill(39, 39, 0, 0, 35, 35, static_cast<std::uint16_t>(109));
+
     // MoveObject demo (2026-07-09): the first 2 objects embedded directly in
     // the 3D .vwr format itself, via Worlds::World's block-extra-metadata
     // mechanism (GalaxyEggbert::MoveObjectRecord/PlaceMoveObject) rather than

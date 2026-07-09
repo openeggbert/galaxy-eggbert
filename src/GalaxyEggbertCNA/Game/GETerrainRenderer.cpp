@@ -44,12 +44,13 @@ namespace GalaxyEggbert::CNA
         // frame), while @p tileUv is always the currently-sampled frame's
         // actual texture (see GETerrainRenderer::Update's fan-tile comment).
         bool AppendSpecialGeometry(int lookupIcon, const Easy3D::UvRect& tileUv,
+                                   const Easy3D::UvRect& icon107Uv,
                                    const Easy3D::CubeBatch::Vector3& center,
                                    std::vector<Easy3D::CubeVertex>& vertices,
                                    std::vector<std::uint32_t>& indices)
         {
             Easy3D::DirectionalCubeFace directionalFaces[6];
-            if (TryGetDirectionalCubeFaces(lookupIcon, tileUv, directionalFaces))
+            if (TryGetDirectionalCubeFaces(lookupIcon, tileUv, icon107Uv, directionalFaces))
             {
                 Easy3D::DirectionalCubeItem item;
                 item.Center = center;
@@ -178,7 +179,10 @@ namespace GalaxyEggbert::CNA
 
         bool IsGrassTopIcon(int icon)
         {
-            return icon == 107;
+            // Icons 108/109 (2026-07-09) reuse icon 107's real top surface
+            // too -- their own DirectionalCube entry (GEDirectionalCubeTiles.cpp)
+            // leaves PosY open on purpose, same reasoning as icon 107 itself.
+            return icon == 107 || icon == 108 || icon == 109;
         }
 
         // True if @p icon uses one of the "new geometry" render modes
@@ -188,7 +192,7 @@ namespace GalaxyEggbert::CNA
         bool IsSpecialGeometryIcon(int icon)
         {
             Easy3D::DirectionalCubeFace unusedFaces[6];
-            return TryGetDirectionalCubeFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
+            return TryGetDirectionalCubeFaces(icon, Easy3D::UvRect{}, Easy3D::UvRect{}, unusedFaces) ||
                    TryGetInnerPillarBoxFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
                    IsInnerFlatPlateIcon(icon) ||
                    IsTripleCrossBillboardIcon(icon);
@@ -245,6 +249,10 @@ namespace GalaxyEggbert::CNA
                                          const GETileAtlas& tileAtlas)
         : m_tileAtlas(&tileAtlas)
     {
+        // Icons 108/109's DirectionalCube entry reuses icon 107's own side
+        // texture (GEDirectionalCubeTiles.cpp) -- computed once here since
+        // it never changes, threaded through AppendSpecialGeometry.
+        const auto icon107Uv = tileAtlas.GetTileUv(107);
         std::vector<Easy3D::CubeVertex> staticVertices;
         std::vector<std::uint32_t> staticIndices;
         std::vector<Easy3D::CubeVertex> transparentStaticVertices;
@@ -299,7 +307,7 @@ namespace GalaxyEggbert::CNA
                         // goes straight into its own static-but-transparent
                         // buffer, built once here and never rebuilt by
                         // Update() (same lifecycle as m_staticRenderer).
-                        AppendSpecialGeometry(icon, tileUv, center, transparentStaticVertices, transparentStaticIndices);
+                        AppendSpecialGeometry(icon, tileUv, icon107Uv, center, transparentStaticVertices, transparentStaticIndices);
                         continue;
                     }
 
@@ -320,7 +328,7 @@ namespace GalaxyEggbert::CNA
                         Easy3D::AppendPlateMesh(grassItem, grassVertices, grassIndices);
                     }
 
-                    if (AppendSpecialGeometry(icon, tileUv, center, staticVertices, staticIndices))
+                    if (AppendSpecialGeometry(icon, tileUv, icon107Uv, center, staticVertices, staticIndices))
                     {
                         continue;
                     }
@@ -387,6 +395,7 @@ namespace GalaxyEggbert::CNA
         Easy3D::CubeBatch batch;
         std::vector<Easy3D::CubeVertex> vertices;
         std::vector<std::uint32_t> indices;
+        const auto icon107Uv = m_tileAtlas->GetTileUv(107);
         for (const auto& block : blocks)
         {
             const int icon = AnimIcon(block.base, animPhase);
@@ -408,7 +417,7 @@ namespace GalaxyEggbert::CNA
             // demo block: without this, fan blocks always fell through to a
             // plain untextured-on-every-face UniformCube and their
             // GEDirectionalCubeTiles entry was silently dead code.
-            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, center, vertices, indices))
+            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, icon107Uv, center, vertices, indices))
             {
                 continue;
             }
