@@ -88,7 +88,7 @@ std::array<Block, Chunk::Volume> Chunk::unpackBlocks() const {
 }
 
 bool Chunk::isEmpty() const noexcept {
-    return palette_.size() == 1 && palette_.front().isAir();
+    return palette_.size() == 1 && palette_.front().isAir() && extraMetadata_.empty();
 }
 
 bool Chunk::isUniform() const noexcept {

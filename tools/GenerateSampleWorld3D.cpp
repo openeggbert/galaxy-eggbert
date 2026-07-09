@@ -1,4 +1,5 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -175,6 +176,32 @@ int main(int argc, char** argv)
     // for them. Same off-path reasoning as the rest of this row (y=3, away
     // from Blupi's tested spawn/staircase/wall-collision path).
     fill(82, 82, 3, 3, 42, 42, static_cast<std::uint16_t>(368));
+
+    // MoveObject demo (2026-07-09): the first 2 objects embedded directly in
+    // the 3D .vwr format itself, via Worlds::World's block-extra-metadata
+    // mechanism (GalaxyEggbert::MoveObjectRecord/PlaceMoveObject) rather than
+    // a mobile-eggbert .txt file -- proves GEWorldRuntime::LoadFromVwrFile()
+    // now populates GetMobileObjects() too, not just GetWorld(). One static
+    // pickup (egg, no path) and one moving object (platform lift, real
+    // posStart != posEnd) to exercise both cases. Same off-path row (y=3,
+    // z=42) as the render-mode demo blocks above.
+    {
+        // Positions are raw grid coordinates (same space as fill()'s x/y/z
+        // above), NOT the CNA-side "-kWorldCenterX/Z" render/camera space --
+        // see MoveObjectRecord.hpp's doc comment. Grid x=84/86 sits right
+        // next to the icon-368 demo block (grid x=82) on the same z=42 row.
+        MoveObjectRecord egg;
+        egg.type = ObjectType::ObjectType6; // extra-life egg
+        egg.posStartX = 84.0f; egg.posStartY = 3.0f; egg.posStartZ = 42.0f;
+        egg.posEndX = 84.0f; egg.posEndY = 3.0f; egg.posEndZ = 42.0f;
+        PlaceMoveObject(world, egg);
+
+        MoveObjectRecord lift;
+        lift.type = ObjectType::ObjectType1; // standard platform lift
+        lift.posStartX = 86.0f; lift.posStartY = 3.0f; lift.posStartZ = 42.0f;
+        lift.posEndX = 86.0f; lift.posEndY = 6.0f; lift.posEndZ = 42.0f;
+        PlaceMoveObject(world, lift);
+    }
 
     world.saveToFile(outPath);
 

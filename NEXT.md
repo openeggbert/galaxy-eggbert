@@ -16,9 +16,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - `GalaxyEggbertCNA` (built directly on **CNA** + **Easy3D** helper library) — the **new
   long-term target**, opt-in and pre-parity. Opens a window, loads a genuinely 3D hand-authored
   `.vwr` world (`worlds3d/world001.vwr`), renders real textured/animated terrain (one cube per
-  non-air cell), moves an invisible collision-only Blupi with tank controls, and renders parsed
-  `MoveObject`s and `BigDecor:` cells (pickups/enemies/decor) as real textured billboards. No 3D
-  Blupi model, no HUD, no sound, no gameplay logic yet.
+  non-air cell), moves an invisible collision-only Blupi with tank controls, and renders
+  `MoveObject`s and `BigDecor:` cells (pickups/enemies/decor) as real textured billboards (plus
+  `UniformCube`s for platform lifts/crates). **MoveObjects can now be embedded directly in the
+  `.vwr` format itself** (2026-07-09, §3) — no mobile-eggbert `.txt` file needed to see any of
+  them render. No 3D Blupi model, no HUD, no sound, no gameplay logic yet.
 
 **Important architectural decisions:**
 
@@ -86,9 +88,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### Build status
 - `GalaxyEggbertCNA` — **last confirmed clean build+run today (2026-07-09)**, after implementing
-  the platform-lift/crate `UniformCube` object path (§3, on top of `BigDecor:` billboard rendering
-  earlier the same day). Built `GalaxyEggbertCNA`, `VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`,
-  and `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
+  3D-format MoveObject storage (§3, on top of the platform-lift/crate `UniformCube` object path and
+  `BigDecor:` billboard rendering earlier the same day). Built `GalaxyEggbertCNA`,
+  `GalaxyEggbertWorldsTests`, `VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, and
+  `VerifyBigDecorParsingCna` from `build-cna/` — all succeeded.
 - `../easy-3d` — **CNA-linked build rebuilt and all 6/6 tests passed today (2026-07-08)**, after
   adding `AppendPlateMesh`/`PlateItem`/`AppendTripleCrossMesh`/`TripleCrossItem` to
   `CubeMesh.hpp/.cpp` (§3, on top of the earlier `AppendDirectionalCubeMesh` addition same day).
@@ -102,17 +105,20 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   troubleshooting U3D/Simple3D. Today's `GEWorldRuntime.cpp` fallback-world edit (§3) is a
   syntactically trivial enum-constant swap and was not run-verified for this reason; that is
   accepted, not a gap to close.
-- `GalaxyEggbertWorldsTests` — **re-verified today (2026-07-09, §3): still 54/54**, built and run
-  from `build-cna` (Simple3D-OFF, per §9). `ctest --test-dir build-cna` also runs 5 unrelated
-  `easy-gl`/`meta-gl` dependency-subproject tests that show as "Not Run" (their executables were
-  never built — nothing in this session's `cmake --build ... --target GalaxyEggbertWorldsTests`
-  requested them) — pre-existing, unrelated to `GalaxyEggbertWorldsTests` itself; isolated via
-  `ctest --test-dir build-cna -I 1,54` to confirm the real 54/54 result cleanly. The old
+- `GalaxyEggbertWorldsTests` — **61/61 passing (2026-07-09, up from 54, §3)**, built and run from
+  `build-cna` (Simple3D-OFF, per §9). Prefer running the binary directly
+  (`./build-cna/GalaxyEggbertWorldsTests`) over `ctest --test-dir build-cna`, which also discovers
+  5 unrelated `easy-gl`/`meta-gl` dependency-subproject tests that show as "Not Run" (their
+  executables were never built by this session's targeted builds) — running the binary directly
+  avoids that noise entirely rather than needing a `ctest -I` range workaround. The old
   `cmake-build-debug` profile's separate `ctest` discovery issue
   (`GalaxyEggbertWorldsTests_NOT_BUILT`) was not re-checked (that tree configures Simple3D, which
   is not to be built per §9) — not a gap, since `build-cna` is now the correct tree to use anyway.
 
 ### Test status
+- `GalaxyEggbertWorldsTests` — **61/61 passed today (2026-07-09)**, up from 54 — 7 new tests for
+  the `World` block-extra-metadata API and `MoveObjectRecord` (§3), including a regression test
+  for the `Chunk::isEmpty()` data-loss bug found and fixed the same session.
 - `../easy-3d`'s CNA-linked suite — **6/6 passed today (2026-07-08)**, including the new
   `cube_mesh` cases for `AppendDirectionalCubeMesh` (all-visible-faces parity with
   `AppendCubeMesh`, the icon-200 4-side/no-top-bottom case, all-invisible produces nothing,
@@ -174,9 +180,12 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   cube fully transparent, a smaller inner box textured), `InnerFlatPlate` (63 of 63 — outer cube
   transparent, a single double-sided plate), `TripleCrossBillboard` (10 of 10 — 3 double-sided
   planes 60° apart through the block's center). Tank-control Blupi (invisible collision point),
-  first-person camera + 2D animation-state HUD indicator, renders `MoveObject`s as billboards.
-  Also now writes `screenshot.png` next to the binary on its first rendered frame
-  (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block) for visual verification.
+  first-person camera + 2D animation-state HUD indicator, renders `MoveObject`s as billboards (or
+  `UniformCube`s for platform lifts/crates) — sourced either from a mobile-eggbert `.txt` file's
+  `MoveObject:` lines, or now embedded directly in the `.vwr` format itself via
+  `GalaxyEggbert::MoveObjectRecord` (2026-07-09, §3). Also now writes `screenshot.png` next to the
+  binary on its first rendered frame (`GalaxyEggbertCnaGame::Draw`'s existing one-shot debug block)
+  for visual verification.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -206,6 +215,77 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **MoveObjects (pickups, enemies, platform lifts, crates) can now be embedded directly in the 3D
+  `.vwr` world format itself (2026-07-09, user request, not from §8's numbered list) — no more
+  requiring a mobile-eggbert `.txt` file to see any of them render.** Previously only terrain
+  blocks were representable in `.vwr`; `GetMobileObjects()` was always empty for a `.vwr`-sourced
+  world (only `BigDecor:` had this limitation documented — MoveObjects had it too, silently).
+  - **Design (confirmed with user first)**: reuse `Worlds::Chunk`'s existing sparse
+    `ChunkBlockMetadataRecord` mechanism (`setExtraMetadata`/`extraMetadata()`,
+    `(localBlockIndex, metadataType) → arbitrary payload bytes`, already round-trip serialized) —
+    **not** a new top-level file section. New engine-agnostic `GalaxyEggbert::MoveObjectRecord`
+    (`include/GalaxyEggbert/MoveObjectRecord.hpp` + `.cpp`, deliberately outside `Worlds/` so that
+    tree stays uncoupled from `ObjectType`) mirrors `MobileObjSpec`'s already-simplified shape
+    (`type`, `posStart`/`posEnd` X/Y/Z, `speed` — no separate step/timing fields). `PlaceMoveObject`
+    encodes a fixed 29-byte payload (`objectType` + 7 float32s) anchored at
+    `floor(posStartX/Y/Z)`; `CollectMoveObjects` decodes every such record in a `World`. Reserved
+    `metadataType = 1` for all MoveObjectRecord payloads. **Positions are `Worlds::World`'s own raw
+    grid space** (`[0, blocksPerAxis())`), matching `World::setBlock`'s coordinate convention —
+    *not* the CNA-side `-kWorldCenterX/Z` render/camera-centered space `MobileObjSpec` uses
+    (documented prominently in the header after getting this backwards once, see below).
+  - **New `World` API**: `setBlockExtraMetadata(x,y,z,type,payload)` and
+    `collectExtraMetadata(type) → vector<{x,y,z,type,payload}>` (resolves chunk-local indices back
+    to world coordinates) — thin wrappers so callers don't duplicate chunk/local-index math.
+    Required exposing `Chunk::linearIndex()` as `public` (was `private`) — a pure visibility change,
+    no behavior change.
+  - **Found and fixed a real, pre-existing data-loss bug while testing the round trip**:
+    `Chunk::isEmpty()` only checked the block palette (`palette_.size()==1 && palette_.front().isAir()`),
+    completely ignoring `extraMetadata_`. `World::saveToFile()` uses `isEmpty()` to skip serializing
+    a chunk entirely — so a chunk that was all-air but carried sparse metadata (exactly the
+    MoveObject-on-an-otherwise-empty-chunk case) had its metadata **silently dropped on save**, an
+    old bug unrelated to today's new code that just happened to be the first thing to actually
+    combine metadata with an all-air chunk through the file-level API (`Chunk`'s own direct
+    `write`/`read` round-trip test bypassed `isEmpty()` entirely, so it never caught this). Fixed:
+    `isEmpty()` now also requires `extraMetadata_.empty()`. Added
+    `ChunkTests.AllAirChunkWithExtraMetadataIsNotEmpty` as a direct regression test, plus
+    `WorldSerializationTests.SaveAndLoadPreservesBlockExtraMetadata` for the file-level case that
+    surfaced it. No other `isEmpty()` caller (Simple3D's `GETerrainRenderer.cpp` render-skip
+    optimization) is affected by the stricter definition.
+  - **Also made and fixed a real coordinate-space bug of my own while wiring up the sample-world
+    demo**: first attempt stored `MoveObjectRecord` positions in the CNA-side centered
+    (`-kWorldCenterX/Z`) convention directly (matching `MobileObjSpec`'s own space, since that's
+    what rendering consumes) — `PlaceMoveObject` immediately threw `std::out_of_range` on a
+    negative/large coordinate, since `World::setBlockExtraMetadata` validates against raw grid
+    bounds `[0, blocksPerAxis())`. Fixed by keeping `MoveObjectRecord` in `World`'s own raw grid
+    space (consistent with every other `Worlds::World` coordinate in the codebase) and applying the
+    `-kWorldCenterX/Z` shift once, in `GEWorldRuntime::LoadFromVwrFile()`'s
+    `MoveObjectRecord`→`MobileObjSpec` conversion loop (same shift the `.txt` loader and
+    `GetBigDecor()` conversion already apply) — documented prominently in
+    `MoveObjectRecord.hpp` to prevent recurrence.
+  - **`GEWorldRuntime::LoadFromVwrFile()`** now populates `mobileObjects_` via `CollectMoveObjects()`
+    (previously always cleared to empty for `.vwr` sources) — `GetMobileObjects()` works identically
+    from either load source now; no rendering-side changes needed at all (`GalaxyEggbertCnaGame`'s
+    existing billboard/`UniformCube`-object code already consumes `GetMobileObjects()` generically).
+  - Added 2 demo `MoveObjectRecord`s to `tools/GenerateSampleWorld3D.cpp` next to the icon-368 demo
+    block: `ObjectType6` (egg, static, `posStart==posEnd`) and `ObjectType1` (platform lift, real
+    `posStart != posEnd` — proves the "moving object" case round-trips too, though nothing consumes
+    the path/interpolates motion yet — no interactive-object system exists, per §5).
+  - **Verified**: `GalaxyEggbertWorldsTests` 61/61 (54 original + 7 new — 2 `World`
+    extra-metadata tests, 1 `World` file round-trip test, 3 `MoveObjectRecord` tests, 1 `Chunk`
+    regression test); `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna`
+    all still pass (unrelated-regression checks); a live run of the default `.vwr` world now prints
+    "2 MoveObject(s) parsed for billboard rendering" and "1 platform-lift/crate cube object(s)
+    built" (previously always 0/0 for `.vwr` sources) with **no crash** — the platform lift's cube
+    was directly screenshotted and clearly visible (2 faces of its icon-29 texture, matching the
+    already-confirmed-correct platform-lift rendering from earlier today). The egg's specific
+    billboard was not independently isolated in a screenshot (camera-framing proved fiddly in the
+    sparse synthetic demo world — a billboard directly below eye level falls out of frame faster
+    than expected, see §5's seam-artifact-adjacent note on camera FOV math) but the data path is
+    proven correct two other ways: a temporary debug print confirmed the exact right position/type
+    reaches `GEWorldRuntime` (`type=6 pos=(34,3,-8)`), and loading a real mobile-eggbert level
+    (`world022.txt`, which also has `type=6` objects) during the same investigation showed a
+    billboard rendering with real, distinct texture content at that position — proving the
+    billboard-rendering code path itself works correctly, independent of the new storage mechanism.
 - **`GEInnerFlatPlateTiles` axis spot-check (2026-07-09, §8 old task 5): found and fixed one real
   case, icons 368-372.** Built a labeled contact-sheet montage (via `montage`/`convert`) of all 58
   not-yet-individually-checked `InnerFlatPlate` crops (the earlier sample of 5 — 77, 110, 114, 264,
@@ -656,7 +736,28 @@ render-mechanism work remains on the list; §8's remaining tasks are verificatio
 ```
 include/GalaxyEggbert/Worlds/, src/GalaxyEggbert/Worlds/   — engine-agnostic voxel World (100×100
                                                                grid), Block/Chunk, .vwr save format.
-                                                               Shared by BOTH targets.
+                                                               Shared by BOTH targets. Chunk's sparse
+                                                               ChunkBlockMetadataRecord mechanism
+                                                               (setExtraMetadata/extraMetadata(),
+                                                               World::setBlockExtraMetadata/
+                                                               collectExtraMetadata wrappers added
+                                                               2026-07-09) stores arbitrary per-block
+                                                               payloads -- now actively used by
+                                                               MoveObjectRecord (below), not just
+                                                               theoretical capability.
+include/GalaxyEggbert/MoveObjectRecord.hpp,
+src/GalaxyEggbert/MoveObjectRecord.cpp                      — engine-agnostic (added 2026-07-09,
+                                                               §3), deliberately outside Worlds/:
+                                                               encodes/decodes a MoveObject
+                                                               (pickup/enemy/lift/crate) as a
+                                                               World block-extra-metadata payload
+                                                               (metadataType=1), anchored at
+                                                               floor(posStart) in World's own RAW
+                                                               GRID space (not CNA's centered render
+                                                               space -- see its own doc comment).
+                                                               PlaceMoveObject()/CollectMoveObjects().
+                                                               Shared by BOTH targets (only CNA's
+                                                               GEWorldRuntime consumes it so far).
 include/GalaxyEggbert/BlockTypes.hpp                        — tile type constants; block type =
                                                                icon index in object-m.png. Now
                                                                includes RockPile(35)/BrickWall(261)
@@ -795,11 +896,11 @@ cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIM
 cmake --build build-cna --target GalaxyEggbertCNA -j2
 cd build-cna && ./GalaxyEggbertCNA        # must run from its own build dir (relative asset paths)
 
-# Build + run world-model unit tests from the Simple3D-OFF tree (preferred -- 54/54 expected,
-# last confirmed 2026-07-09; -I 1,54 isolates GalaxyEggbertWorldsTests from unrelated easy-gl/
-# meta-gl dependency-subproject tests ctest also discovers in this tree):
+# Build + run world-model unit tests from the Simple3D-OFF tree (preferred -- 61/61 expected,
+# last confirmed 2026-07-09; run the binary directly, not `ctest --test-dir build-cna`, which also
+# discovers unrelated easy-gl/meta-gl dependency-subproject tests in this tree):
 cmake --build build-cna --target GalaxyEggbertWorldsTests -j2
-ctest --test-dir build-cna -I 1,54 --output-on-failure
+./build-cna/GalaxyEggbertWorldsTests
 
 # Regenerate the hand-authored 3D sample world (after tools/GenerateSampleWorld3D.cpp changes):
 cmake --build build-cna --target GenerateSampleWorld3D -j2
@@ -879,13 +980,24 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    meaningfully reduced.
 3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
+4. **Optional: populate `tools/GenerateSampleWorld3D.cpp` with more of the ~70 confirmed real-
+   behavior `ObjectType`s** (user asked for "all confirmed MoveObject types" when the 3D-format
+   storage mechanism itself was designed, §3, 2026-07-09) — the mechanism now supports any
+   `ObjectType` generically (it just stores the numeric id + position), so this is pure data-entry
+   (one `PlaceMoveObject` call per type, picking a real-behavior type from
+   `mobile-eggbert-reference/03-objects.md`'s catalog) rather than new capability work, similar in
+   shape to the `DirectionalCube`/`InnerFlatPlate` per-icon backfills. Only 2 types (egg, platform
+   lift) are placed so far, to prove the mechanism round-trips a static AND a moving-path object.
+   Low priority — every type already renders correctly via the existing `GEObjectIcons`/billboard/
+   `UniformCube` code paths when loaded from a real mobile-eggbert `.txt` file; this task is purely
+   about making them visible in the synthetic `.vwr` demo world too.
 
 Everything else that had accumulated in this section is done (2026-07-09): `GEInnerFlatPlateTiles`
 axis spot-check found and fixed icons 368-372 (§3); `BigDecor:` billboard rendering,
-platform-lift/crate `UniformCube` objects, `GalaxyEggbertWorldsTests` re-verification, and the
-clean-exit-path investigation are all complete (§3). Task 1 (6 remaining `DirectionalCube` icons)
-and task 2 (seam-line artifact) above are the only substantive open items, plus this task 3
-(explicitly not urgent).
+platform-lift/crate `UniformCube` objects, `GalaxyEggbertWorldsTests` re-verification, the
+clean-exit-path investigation, and 3D-format MoveObject storage are all complete (§3). Task 1 (6
+remaining `DirectionalCube` icons) and task 2 (seam-line artifact) above are the only substantive
+open items, plus tasks 3-4 (both explicitly not urgent).
 
 ## 9. Do not do yet
 

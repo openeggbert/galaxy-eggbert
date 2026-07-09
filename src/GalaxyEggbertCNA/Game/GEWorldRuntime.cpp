@@ -1,6 +1,7 @@
 #include "GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <algorithm>
@@ -205,7 +206,31 @@ namespace GalaxyEggbert::CNA
         spawnTileZ_ = 0;
         skyRegion_ = 0;
         bigDecor_.clear();
+
+        // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects
+        // CAN be embedded directly in the 3D .vwr format itself, via
+        // Worlds::World's block-extra-metadata mechanism (see
+        // GalaxyEggbert::MoveObjectRecord, NEXT.md §8 -- "3D world format
+        // move-object storage"). Convert each engine-agnostic
+        // MoveObjectRecord (raw grid-space floats, see its own doc comment)
+        // into this class's own MobileObjSpec shape, applying the same
+        // kWorldCenterX/Z shift the .txt loader and GetBigDecor() callers
+        // already apply -- MobileObjSpec's positions are render/camera
+        // space, not raw grid space. Y is never shifted (matches BigDecor).
         mobileObjects_.clear();
+        for (const auto& record : CollectMoveObjects(*world_))
+        {
+            MobileObjSpec spec;
+            spec.type = record.type;
+            spec.posStartX = record.posStartX - static_cast<float>(kWorldCenterX);
+            spec.posStartY = record.posStartY;
+            spec.posStartZ = record.posStartZ - static_cast<float>(kWorldCenterZ);
+            spec.posEndX = record.posEndX - static_cast<float>(kWorldCenterX);
+            spec.posEndY = record.posEndY;
+            spec.posEndZ = record.posEndZ - static_cast<float>(kWorldCenterZ);
+            spec.speed = record.speed;
+            mobileObjects_.push_back(spec);
+        }
         return true;
     }
 

@@ -54,6 +54,18 @@ TEST(ChunkTests, DefaultChunkIsUniformEmptyAndClean) {
     EXPECT_EQ(chunk.bitsPerBlock(), 1);
 }
 
+TEST(ChunkTests, AllAirChunkWithExtraMetadataIsNotEmpty) {
+    Chunk chunk;
+    ASSERT_TRUE(chunk.isEmpty());
+
+    chunk.setExtraMetadata(0, 1, {0xAB});
+    EXPECT_FALSE(chunk.isEmpty());
+    EXPECT_TRUE(chunk.isUniform());
+
+    chunk.removeExtraMetadata(0, 1);
+    EXPECT_TRUE(chunk.isEmpty());
+}
+
 TEST(ChunkTests, CreateUniformCreatesExpectedBlockContent) {
     const Block stone = Block::make(3, 2);
     const Chunk chunk = Chunk::createUniform(stone);

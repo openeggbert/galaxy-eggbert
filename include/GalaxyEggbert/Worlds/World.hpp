@@ -103,6 +103,46 @@ public:
                                std::uint8_t chunkZ);
 
     /**
+     * @brief One sparse extra-metadata record resolved to world-space coordinates
+     * (see @ref collectExtraMetadata).
+     */
+    struct BlockExtraMetadataRecord final {
+        std::uint16_t x = 0;
+        std::uint16_t y = 0;
+        std::uint16_t z = 0;
+        std::uint16_t metadataType = 0;
+        std::vector<std::uint8_t> payload;
+    };
+
+    /**
+     * @brief Adds or replaces sparse extra metadata for the block at world-space
+     * coordinates (see @ref Chunk::setExtraMetadata).
+     *
+     * @param x World X coordinate in range <tt>[0, blocksPerAxis())</tt>.
+     * @param y World Y coordinate in range <tt>[0, blocksPerAxis())</tt>.
+     * @param z World Z coordinate in range <tt>[0, blocksPerAxis())</tt>.
+     * @param metadataType Type discriminator of the payload.
+     * @param payload Type-specific raw bytes; payload length must fit into <tt>uint16_t</tt>.
+     * @throws std::out_of_range If coordinates are outside world bounds.
+     * @throws std::runtime_error If @p payload is too large for on-disk encoding.
+     */
+    void setBlockExtraMetadata(std::uint16_t x,
+                               std::uint16_t y,
+                               std::uint16_t z,
+                               std::uint16_t metadataType,
+                               std::vector<std::uint8_t> payload);
+
+    /**
+     * @brief Collects every sparse extra-metadata record of a given type across
+     * the whole world, with local block indices resolved back to world-space
+     * coordinates.
+     *
+     * @param metadataType Type discriminator to filter by.
+     */
+    [[nodiscard]] std::vector<BlockExtraMetadataRecord> collectExtraMetadata(
+        std::uint16_t metadataType) const;
+
+    /**
      * @brief Saves the world in the `.vwr` binary file format.
      *
      * The file stores a world header (`VWR1` magic, format settings, chunk count,

@@ -1,5 +1,6 @@
 #include "GalaxyEggbert/Worlds/World.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -9,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -95,6 +97,57 @@ TEST(WorldTests, ChunkCoordinateValidationRejectsOutOfRange) {
     EXPECT_THROW(static_cast<void>(world.chunk(limit, 0, 0)), std::out_of_range);
     EXPECT_THROW(static_cast<void>(world.chunk(0, limit, 0)), std::out_of_range);
     EXPECT_THROW(static_cast<void>(world.chunk(0, 0, limit)), std::out_of_range);
+}
+
+TEST(WorldTests, SetAndCollectBlockExtraMetadataAcrossChunkBoundaries) {
+    World world;
+    world.setBlockExtraMetadata(9, 9, 9, 7, {0x01, 0x02});
+    world.setBlockExtraMetadata(10, 10, 10, 7, {0x03});
+    world.setBlockExtraMetadata(50, 20, 70, 8, {0xAA, 0xBB, 0xCC});
+
+    const auto typeSeven = world.collectExtraMetadata(7);
+    ASSERT_EQ(typeSeven.size(), 2u);
+    const bool hasEdgeA = std::any_of(typeSeven.begin(), typeSeven.end(), [](const auto& r) {
+        return r.x == 9 && r.y == 9 && r.z == 9 && r.payload == std::vector<std::uint8_t>{0x01, 0x02};
+    });
+    const bool hasEdgeB = std::any_of(typeSeven.begin(), typeSeven.end(), [](const auto& r) {
+        return r.x == 10 && r.y == 10 && r.z == 10 && r.payload == std::vector<std::uint8_t>{0x03};
+    });
+    EXPECT_TRUE(hasEdgeA);
+    EXPECT_TRUE(hasEdgeB);
+
+    const auto typeEight = world.collectExtraMetadata(8);
+    ASSERT_EQ(typeEight.size(), 1u);
+    EXPECT_EQ(typeEight[0].x, 50);
+    EXPECT_EQ(typeEight[0].y, 20);
+    EXPECT_EQ(typeEight[0].z, 70);
+    EXPECT_EQ(typeEight[0].payload, (std::vector<std::uint8_t>{0xAA, 0xBB, 0xCC}));
+
+    EXPECT_TRUE(world.collectExtraMetadata(9).empty());
+}
+
+TEST(WorldTests, SetBlockExtraMetadataRejectsOutOfRangeCoordinates) {
+    World world;
+    const auto limit = world.blocksPerAxis();
+    EXPECT_THROW(world.setBlockExtraMetadata(limit, 0, 0, 1, {}), std::out_of_range);
+}
+
+TEST(WorldSerializationTests, SaveAndLoadPreservesBlockExtraMetadata) {
+    const auto filePath = makeTempPath(".vwr");
+
+    World world;
+    world.setBlockExtraMetadata(3, 4, 5, 42, {0x10, 0x20, 0x30});
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    const auto records = loaded.collectExtraMetadata(42);
+    ASSERT_EQ(records.size(), 1u);
+    EXPECT_EQ(records[0].x, 3);
+    EXPECT_EQ(records[0].y, 4);
+    EXPECT_EQ(records[0].z, 5);
+    EXPECT_EQ(records[0].payload, (std::vector<std::uint8_t>{0x10, 0x20, 0x30}));
+
+    removeFileNoThrow(filePath);
 }
 
 TEST(WorldSerializationTests, SaveAndLoadPreservesSparseAndBoundaryBlocks) {

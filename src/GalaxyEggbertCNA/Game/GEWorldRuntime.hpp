@@ -70,12 +70,15 @@ namespace GalaxyEggbert::CNA
         // concept).
         [[nodiscard]] const std::vector<std::uint16_t>& GetBigDecor() const { return bigDecor_; }
 
-        // MoveObject: records (pickups, enemies, effects) parsed from a
-        // mobile-eggbert .txt file — not yet rendered anywhere. Recommended
-        // treatment per ObjectType: Billboard by default, UniformCube for
-        // platform lifts + crates — see 15-3d-render-mapping-design.md §5.
-        // Empty when loaded from a `.vwr` file (hand-authored 3D worlds have
-        // no MoveObject concept yet).
+        // MoveObject records (pickups, enemies, platform lifts, crates) --
+        // from a mobile-eggbert .txt file's MoveObject: lines, OR from a
+        // hand-authored `.vwr` world's embedded GalaxyEggbert::MoveObjectRecord
+        // entries (2026-07-09, see MoveObjectRecord.hpp -- unlike BigDecor:,
+        // MoveObjects ARE representable directly in the 3D format itself, via
+        // Worlds::World's block-extra-metadata mechanism). Rendered as
+        // Billboard by default, UniformCube for platform lifts + crates --
+        // see 15-3d-render-mapping-design.md §5 and
+        // GEObjectIcons::IsUniformCubeObject.
         [[nodiscard]] const std::vector<MobileObjSpec>& GetMobileObjects() const { return mobileObjects_; }
 
     private:

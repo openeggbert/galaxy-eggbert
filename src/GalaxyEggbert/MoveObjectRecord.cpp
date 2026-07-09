@@ -1,0 +1,86 @@
+#include "GalaxyEggbert/MoveObjectRecord.hpp"
+
+#include <cmath>
+#include <cstring>
+#include <stdexcept>
+
+namespace GalaxyEggbert {
+
+namespace {
+
+void AppendU8(std::vector<std::uint8_t>& out, std::uint8_t value) {
+    out.push_back(value);
+}
+
+void AppendFloatLE(std::vector<std::uint8_t>& out, float value) {
+    std::uint32_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    out.push_back(static_cast<std::uint8_t>(bits & 0xFF));
+    out.push_back(static_cast<std::uint8_t>((bits >> 8) & 0xFF));
+    out.push_back(static_cast<std::uint8_t>((bits >> 16) & 0xFF));
+    out.push_back(static_cast<std::uint8_t>((bits >> 24) & 0xFF));
+}
+
+float ReadFloatLE(const std::vector<std::uint8_t>& payload, std::size_t offset) {
+    std::uint32_t bits = static_cast<std::uint32_t>(payload[offset])
+        | (static_cast<std::uint32_t>(payload[offset + 1]) << 8)
+        | (static_cast<std::uint32_t>(payload[offset + 2]) << 16)
+        | (static_cast<std::uint32_t>(payload[offset + 3]) << 24);
+    float value = 0.0f;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+// [objectType: 1 byte][posStartX,Y,Z: 3x float32][posEndX,Y,Z: 3x float32]
+// [speed: float32] = 29 bytes total, fixed size (no variable-length fields).
+constexpr std::size_t kPayloadSize = 1 + 3 * 4 + 3 * 4 + 4;
+
+std::vector<std::uint8_t> EncodeMoveObjectRecord(const MoveObjectRecord& record) {
+    std::vector<std::uint8_t> payload;
+    payload.reserve(kPayloadSize);
+    AppendU8(payload, static_cast<std::uint8_t>(record.type));
+    AppendFloatLE(payload, record.posStartX);
+    AppendFloatLE(payload, record.posStartY);
+    AppendFloatLE(payload, record.posStartZ);
+    AppendFloatLE(payload, record.posEndX);
+    AppendFloatLE(payload, record.posEndY);
+    AppendFloatLE(payload, record.posEndZ);
+    AppendFloatLE(payload, record.speed);
+    return payload;
+}
+
+MoveObjectRecord DecodeMoveObjectRecord(const std::vector<std::uint8_t>& payload) {
+    if (payload.size() != kPayloadSize) {
+        throw std::runtime_error("MoveObjectRecord payload has an unexpected size");
+    }
+
+    MoveObjectRecord record;
+    record.type = static_cast<ObjectType>(payload[0]);
+    record.posStartX = ReadFloatLE(payload, 1);
+    record.posStartY = ReadFloatLE(payload, 5);
+    record.posStartZ = ReadFloatLE(payload, 9);
+    record.posEndX = ReadFloatLE(payload, 13);
+    record.posEndY = ReadFloatLE(payload, 17);
+    record.posEndZ = ReadFloatLE(payload, 21);
+    record.speed = ReadFloatLE(payload, 25);
+    return record;
+}
+
+}
+
+void PlaceMoveObject(Worlds::World& world, const MoveObjectRecord& record) {
+    const auto anchorX = static_cast<std::uint16_t>(std::floor(record.posStartX));
+    const auto anchorY = static_cast<std::uint16_t>(std::floor(record.posStartY));
+    const auto anchorZ = static_cast<std::uint16_t>(std::floor(record.posStartZ));
+    world.setBlockExtraMetadata(anchorX, anchorY, anchorZ, kMoveObjectMetadataType, EncodeMoveObjectRecord(record));
+}
+
+std::vector<MoveObjectRecord> CollectMoveObjects(const Worlds::World& world) {
+    std::vector<MoveObjectRecord> records;
+    for (const auto& resolved : world.collectExtraMetadata(kMoveObjectMetadataType)) {
+        records.push_back(DecodeMoveObjectRecord(resolved.payload));
+    }
+    return records;
+}
+
+}

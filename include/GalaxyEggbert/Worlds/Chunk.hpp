@@ -126,7 +126,12 @@ public:
     [[nodiscard]] std::array<Block, Volume> unpackBlocks() const;
 
     /**
-     * @brief Checks whether the chunk is entirely air.
+     * @brief Checks whether the chunk is entirely air AND carries no sparse
+     * extra metadata (see @ref extraMetadata). World::saveToFile() uses this
+     * to skip serializing a chunk entirely -- a chunk with metadata but only
+     * air blocks (e.g. a MoveObject anchored on an otherwise-empty chunk)
+     * must NOT be considered empty, or its metadata is silently lost on
+     * save/load (found and fixed 2026-07-09).
      */
     [[nodiscard]] bool isEmpty() const noexcept;
 
@@ -187,6 +192,21 @@ public:
                              std::uint16_t metadataType);
 
     /**
+     * @brief Converts local 3D chunk coordinates to the linear block index
+     * used by @ref setExtraMetadata / @ref ChunkBlockMetadataRecord::localBlockIndex.
+     *
+     * Public so callers outside this class (e.g. @ref World) can address a
+     * specific block's extra metadata without duplicating this layout.
+     *
+     * @param localX Local X coordinate in range <tt>[0, Size)</tt>.
+     * @param localY Local Y coordinate in range <tt>[0, Size)</tt>.
+     * @param localZ Local Z coordinate in range <tt>[0, Size)</tt>.
+     */
+    [[nodiscard]] static std::size_t linearIndex(std::uint8_t localX,
+                                                 std::uint8_t localY,
+                                                 std::uint8_t localZ);
+
+    /**
      * @brief Removes all sparse metadata records from this chunk.
      */
     void clearExtraMetadata();
@@ -218,13 +238,6 @@ private:
     std::vector<ChunkBlockMetadataRecord> extraMetadata_;
     std::uint8_t bitsPerBlock_ = 1;
     bool dirty_ = false;
-
-    /**
-     * @brief Converts local 3D coordinates to linear storage index.
-     */
-    static std::size_t linearIndex(std::uint8_t localX,
-                                   std::uint8_t localY,
-                                   std::uint8_t localZ);
 
     /**
      * @brief Validates local linear block index inside this chunk.

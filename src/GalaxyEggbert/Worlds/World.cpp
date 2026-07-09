@@ -116,6 +116,59 @@ void World::setBlock(std::uint16_t x,
     chunk(chunkX, chunkY, chunkZ).setBlock(localX, localY, localZ, blockValue);
 }
 
+void World::setBlockExtraMetadata(std::uint16_t x,
+                                  std::uint16_t y,
+                                  std::uint16_t z,
+                                  std::uint16_t metadataType,
+                                  std::vector<std::uint8_t> payload) {
+    validateBlockPosition(x, y, z);
+
+    const auto chunkX = static_cast<std::uint8_t>(x / VoxelConfig::ChunkSize);
+    const auto chunkY = static_cast<std::uint8_t>(y / VoxelConfig::ChunkSize);
+    const auto chunkZ = static_cast<std::uint8_t>(z / VoxelConfig::ChunkSize);
+
+    const auto localX = static_cast<std::uint8_t>(x % VoxelConfig::ChunkSize);
+    const auto localY = static_cast<std::uint8_t>(y % VoxelConfig::ChunkSize);
+    const auto localZ = static_cast<std::uint8_t>(z % VoxelConfig::ChunkSize);
+
+    const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(localX, localY, localZ));
+    chunk(chunkX, chunkY, chunkZ).setExtraMetadata(localBlockIndex, metadataType, std::move(payload));
+}
+
+std::vector<World::BlockExtraMetadataRecord> World::collectExtraMetadata(std::uint16_t metadataType) const {
+    std::vector<BlockExtraMetadataRecord> records;
+
+    for (std::uint16_t chunkZ = 0; chunkZ < chunksPerAxis_; ++chunkZ) {
+        for (std::uint16_t chunkY = 0; chunkY < chunksPerAxis_; ++chunkY) {
+            for (std::uint16_t chunkX = 0; chunkX < chunksPerAxis_; ++chunkX) {
+                const Chunk& currentChunk = chunk(static_cast<std::uint8_t>(chunkX),
+                                                  static_cast<std::uint8_t>(chunkY),
+                                                  static_cast<std::uint8_t>(chunkZ));
+                for (const ChunkBlockMetadataRecord& record : currentChunk.extraMetadata()) {
+                    if (record.metadataType != metadataType) {
+                        continue;
+                    }
+
+                    const auto localIndex = record.localBlockIndex;
+                    const auto localX = static_cast<std::uint16_t>(localIndex % VoxelConfig::ChunkSize);
+                    const auto localY = static_cast<std::uint16_t>((localIndex / VoxelConfig::ChunkSize) % VoxelConfig::ChunkSize);
+                    const auto localZ = static_cast<std::uint16_t>(localIndex / (VoxelConfig::ChunkSize * VoxelConfig::ChunkSize));
+
+                    BlockExtraMetadataRecord resolved;
+                    resolved.x = static_cast<std::uint16_t>(chunkX * VoxelConfig::ChunkSize + localX);
+                    resolved.y = static_cast<std::uint16_t>(chunkY * VoxelConfig::ChunkSize + localY);
+                    resolved.z = static_cast<std::uint16_t>(chunkZ * VoxelConfig::ChunkSize + localZ);
+                    resolved.metadataType = record.metadataType;
+                    resolved.payload = record.payload;
+                    records.push_back(std::move(resolved));
+                }
+            }
+        }
+    }
+
+    return records;
+}
+
 const Chunk& World::chunk(std::uint8_t chunkX,
                           std::uint8_t chunkY,
                           std::uint8_t chunkZ) const {
