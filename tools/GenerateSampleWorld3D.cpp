@@ -167,6 +167,15 @@ int main(int argc, char** argv)
     // z=50 and x<=29).
     fill(35, 37, 0, 0, 35, 37, static_cast<std::uint16_t>(107));
 
+    // Icon 368 demo (2026-07-09, §8 task 4 -- InnerFlatPlate axis spot-check):
+    // GEInnerFlatPlateTiles's confirmed InnerFlatPlate icons all defaulted to
+    // a vertical (Z-axis) plate, but icons 368-372's crops show a clearly
+    // horizontal, ground-lying shape unlike the other 58 icons' vertical
+    // frame/bracket look -- GetInnerFlatPlateAxis() now returns PlateAxis::Y
+    // for them. Same off-path reasoning as the rest of this row (y=3, away
+    // from Blupi's tested spawn/staircase/wall-collision path).
+    fill(82, 82, 3, 3, 42, 42, static_cast<std::uint16_t>(368));
+
     world.saveToFile(outPath);
 
     // Round-trip verification: reload and report real stats, proving this is

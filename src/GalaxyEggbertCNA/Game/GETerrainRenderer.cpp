@@ -83,7 +83,7 @@ namespace GalaxyEggbert::CNA
                 item.Width = kInnerFlatPlateWidth;
                 item.Height = kInnerFlatPlateHeight;
                 item.Uv = tileUv;
-                item.Axis = Easy3D::PlateAxis::Z;
+                item.Axis = GetInnerFlatPlateAxis(lookupIcon);
                 Easy3D::AppendPlateMesh(item, vertices, indices);
                 return true;
             }

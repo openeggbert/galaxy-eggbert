@@ -194,10 +194,11 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — only 6 `DirectionalCube` icons remain (108-109 need the same grass
   texture as 107 plus more per-side work, 15-18 need a two-part axis+side-asymmetry read their
-  crops didn't give a confident answer for; see §8 task 1). `InnerFlatPlate`'s 63 icons all default
-  to the same fixed plate axis/size (only a small sample of crops was individually checked, see
-  §3) — good enough to render correctly, but not each icon's exact axis independently confirmed
-  the way `DirectionalCube`'s icons were.
+  crops didn't give a confident answer for; see §8 task 1). `InnerFlatPlate`'s 63 icons: 58 use the
+  same fixed default axis/size, 5 (icons 368-372) now use a horizontal axis per a 2026-07-09 crop
+  spot-check (§3) — all 63 crops have now been reviewed at least once (via a montage), not just a
+  sample, though the size (not just axis) of any of the 58 defaults hasn't been independently
+  double-checked per icon the way `DirectionalCube`'s icons were.
 - Simple3D: build is currently broken in this environment (missing/incompatible U3D prebuilt, see
   §2) — **not to be fixed**, per user 2026-07-08: Simple3D is historical reference only now (§9).
 
@@ -205,6 +206,35 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **`GEInnerFlatPlateTiles` axis spot-check (2026-07-09, §8 old task 5): found and fixed one real
+  case, icons 368-372.** Built a labeled contact-sheet montage (via `montage`/`convert`) of all 58
+  not-yet-individually-checked `InnerFlatPlate` crops (the earlier sample of 5 — 77, 110, 114, 264,
+  367 — had found no cue) to review them efficiently in a couple of screens instead of one-by-one.
+  53 of the 58 are consistent with the existing vertical (`PlateAxis::Z`) default — small
+  bracket/frame-shaped decorations meant to be viewed face-on, same pattern as the original sample.
+  **Icons 368-372 stood out clearly**: an elongated, horizontally-lying segmented shape sitting
+  mid-tile, visually distinct from every other icon in the set — plausible either as mobile-eggbert
+  reference docs' code-traced "`table_bridge` construction-frame" identity (`02-tiles.md`) or the
+  round-3 questionnaire's crop-only "okraj hroudy hlíny" (dirt-clump edge) reading, and both
+  readings point the same way: a ground-lying element, not a wall-mounted signpost. The
+  questionnaire's own `InnerFlatPlate` answer for these 5 doesn't specify an axis at all (same gap
+  as the other 58), so this is a legitimate crop-read fill-in, not a re-litigation of the confirmed
+  render mode — same technique already used throughout this session for `DirectionalCube` facing.
+  Added `GEInnerFlatPlateTiles::GetInnerFlatPlateAxis(int)` (new, alongside the existing
+  `IsInnerFlatPlateIcon`) returning `PlateAxis::Y` for icons 368-372 and `PlateAxis::Z` for the
+  other 58; `GETerrainRenderer.cpp`'s `AppendSpecialGeometry()` now calls it instead of
+  hardcoding `PlateAxis::Z`. Added an icon-368 demo block to `tools/GenerateSampleWorld3D.cpp`.
+  **Verified**: clean build; `VerifyBlupiMovement` all-pass against the regenerated world (2838
+  blocks, +1); live run's vertex/triangle counts (67788/33894) are exactly +8/+4 over the previous
+  baseline (one `InnerFlatPlate` block's fixed geometry cost — 8 vertices/4 triangles regardless of
+  axis, per `AppendPlateMesh`'s doc comment — deterministic proof the axis change didn't alter
+  geometry count, only orientation); a temporary debug camera reposition (reverted before
+  committing, confirmed via empty `git diff` on that file) — first attempt used too steep a
+  downward angle and missed the plate's frustum (0/25 background-sample points, blank sky in the
+  screenshot, a real dead-end worth recording: a purely level-look camera needs `atan(ΔY/distance)`
+  within the ~22.5° half-FOV to see a horizontal plate below eye level) — a corrected
+  angle/distance then clearly showed the plate rendering horizontally (visible from above, matching
+  the crop's lying-down shape) instead of the old vertical treatment.
 - **Verified `GalaxyEggbertCNA`'s clean-exit path (2026-07-09, §8 old task 4) — found a real,
   reproducible bug, not fixed (out of scope: SDL/`../cna`, not galaxy-eggbert code).** Previously
   only forced-kill/timeout was tested (§5). Found that this session's sandbox already has an
@@ -657,7 +687,9 @@ src/GalaxyEggbertCNA/        — GalaxyEggbertCnaGame owns GEWorldRuntime, GETil
                                 opaque-animated and water paths call the same helper, keyed by
                                 animation-group base icon, not the current frame's icon),
                                 GEDirectionalCubeTiles (93 of ~99 confirmed DirectionalCube icons),
-                                GEInnerPillarBoxTiles (3 of 3), GEInnerFlatPlateTiles (63 of 63),
+                                GEInnerPillarBoxTiles (3 of 3), GEInnerFlatPlateTiles (63 of 63 --
+                                58 use the default PlateAxis::Z, icons 368-372 use PlateAxis::Y
+                                per a 2026-07-09 crop spot-check, §3),
                                 GETripleCrossBillboardTiles (10 of 10), GESwatchUv (shared "flat
                                 fallback color" sampling helper), GEBlupiController, GEObjectIcons,
                                 an Easy3D::Camera3D (first-person). GalaxyEggbertCnaGame also owns
@@ -847,11 +879,13 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    meaningfully reduced.
 3. **Add face-culling/occlusion to `GETerrainRenderer`** — needed once worlds get denser; not
    needed at the current ~2700-block scale.
-4. **Optional polish: spot-check more of `GEInnerFlatPlateTiles`'s 63 icons' crops** for a
-   different axis/size than the current uniform default — only 5 were sampled (77, 110, 114, 264,
-   367), all consistent with "no reliable cue, default is fine," but not exhaustive like
-   `DirectionalCube`'s per-icon backfill was. Low priority — the default already renders correctly,
-   this would only improve fidelity for any icon that turns out to need a different axis.
+
+Everything else that had accumulated in this section is done (2026-07-09): `GEInnerFlatPlateTiles`
+axis spot-check found and fixed icons 368-372 (§3); `BigDecor:` billboard rendering,
+platform-lift/crate `UniformCube` objects, `GalaxyEggbertWorldsTests` re-verification, and the
+clean-exit-path investigation are all complete (§3). Task 1 (6 remaining `DirectionalCube` icons)
+and task 2 (seam-line artifact) above are the only substantive open items, plus this task 3
+(explicitly not urgent).
 
 ## 9. Do not do yet
 

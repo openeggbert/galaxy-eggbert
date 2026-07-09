@@ -26,4 +26,19 @@ namespace GalaxyEggbert::CNA
         return std::find(std::begin(kInnerFlatPlateIcons), std::end(kInnerFlatPlateIcons), icon) !=
                std::end(kInnerFlatPlateIcons);
     }
+
+    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon)
+    {
+        switch (icon)
+        {
+            case 368:
+            case 369:
+            case 370:
+            case 371:
+            case 372:
+                return Easy3D::PlateAxis::Y;
+            default:
+                return Easy3D::PlateAxis::Z;
+        }
+    }
 }
