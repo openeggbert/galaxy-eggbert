@@ -93,6 +93,15 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMeshRenderer_;
 
+        // Billboard rendering for the 5 confirmed object-m.png-sourced
+        // MoveObjects (GEObjectIcons::IsObjectMPngSourced, NEXT.md §3,
+        // 2026-07-09) -- same camera-facing billboard technique as
+        // objectMeshRenderer_ above, but reuses terrainTexture_
+        // (object-m.png) via its own dedicated effect (BasicEffect only
+        // binds one texture at a time), same reason as bigDecorEffect_.
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectMPngEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMPngMeshRenderer_;
+
         // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
         // (NEXT.md §8 task 3, mobile-eggbert-reference/
         // 01-world-file-format.md §2.3 / 15-3d-render-mapping-design.md

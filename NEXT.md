@@ -217,6 +217,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Filled in 18 of the 38 `ObjectType`s missing from `GEObjectIcons::GetObjIcon()` — icon coverage
+  31/69 → 49/69 confirmed types (2026-07-09).** Prompted by the user asking whether all
+  mobile-eggbert objects/elements can now be rendered — answer at the time was no: infrastructure
+  (storage/placement/render-path-selection) was complete for all 69 confirmed `ObjectType`s, but
+  only 31 had a real icon; the other 38 fell through `GetObjIcon()`'s `default: return 0` (a
+  wrong/placeholder icon). Confirmed via `grep` that `GalaxyEggbertSimple3D`'s own
+  `GEDecorSystem::GetObjIcon()` has the identical 31 cases — this was a genuine original gap in
+  both targets, not a porting gap, so there was nothing to port; new entries are grounded in
+  `mobile-eggbert-reference/03-objects.md`'s already-approved Category B table (icon + frame count
+  only, `table_X[0]=N` notation — not a `Tables.cpp` per-frame array transcription).
+  - **13 element.png-native types added** (23/27/28/29/34/36/37/39/41/42/56/57/97 — of the 14
+    element.png-native candidates, `38`'s electric arc was deliberately excluded, see below):
+    consecutive-icon-cycle formulas matching
+    this function's existing simple-animation convention, except `56`/`57` where the documented
+    frame count would run off element.png's 290-icon grid (253+99=352, 274+19=293) — those return
+    the documented first-frame icon only (no animation) rather than guessing an unverifiable cycle.
+  - **5 object-m.png-sourced types added** (14/15/31/35/52 — water plouf/bubble, charge power-up,
+    bridge construction): these are billboards, not `UniformCube`s, but need `object-m.png`, not
+    `element.png` — same problem `IsUniformCubeObject` solved for the 4 cube types. Added a new
+    `GEObjectIcons::IsObjectMPngSourced(ObjectType)` predicate and a second billboard render path in
+    `GalaxyEggbertCnaGame.cpp` (`objectMPngEffect_`/`objectMPngMeshRenderer_`, mirroring
+    `bigDecorEffect_`) that looks up UVs via `tileAtlas_.GetTileUv()` instead of
+    `GetElementIconUv()`. `52` (bridge, 157 documented frames) would exceed object-m.png's 440-icon
+    grid (365+156=521) — first-frame icon only, same reasoning as `56`/`57` above.
+  - **Deliberately NOT added, still `default: return 0`** (documented as a follow-up, not a silent
+    drop — see §8): `38` (electric arc — real behavior is two-channel, `blupi1.png` ticks 0-29 then
+    `element.png` ticks 30-89; `03-objects.md` flags the element.png-only simplification as "under
+    consideration," not decided, so a wrong-channel guess would be worse than the existing
+    fallback); 12 `explo.png`-sourced types (8/9/10/11/53/90/91/92/93/98/99/100 — needs a brand-new
+    texture load + UV function, `explo.png` isn't loaded anywhere in CNA today); 4
+    `blupi.png`/`blupi1.png`-sourced types (200/201/202/203, Blupi skin variants — same "new texture
+    usage" reason). `0`/`18`/`22`/`58` correctly stay `default: return 0` — confirmed no fixed icon
+    exists in mobile-eggbert source data for any of them (not a gap).
+  - **Verified**: clean build; live run (`./GalaxyEggbertCNA`, no crash, `69 MoveObject(s) parsed`,
+    screenshot written); `GalaxyEggbertWorldsTests` (61/61), `VerifyBlupiMovement`,
+    `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`, run from the
+    repo root — these 3 binaries resolve `../mobile-eggbert/...` relative to their *working
+    directory*, not their own location, a pre-existing quirk unrelated to this change).
+
 - **Backfilled the last 6 confirmed `DirectionalCube` icons — 15/16/17/18/108/109 — completing §8
   task 1 (2026-07-09).** All ~99 confirmed `DirectionalCube` icons are now wired up.
   - **Icons 15-18** ("2 protilehlé strany + shora barva + zdola průhledné + z zbylých 2 bočních
@@ -863,7 +902,8 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 | incomplete | `GalaxyEggbertCNA`: no Blupi/object-behavior rendering beyond billboards/cubes, no HUD, no sound, no gameplay logic, no interactive object system (expected at this phase) — platform lifts/crates render but don't move or respond to Blupi yet. |
 | resolved (re-verified 2026-07-09) | `GalaxyEggbertWorldsTests` — 54/54 still pass (via `build-cna`, see §7). The `cmake-build-debug` `ctest` discovery issue is unrelated to that tree and not re-checked (not to be built, per §9). |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
-| incomplete | `element.png` used for every remaining `ObjectType` billboard, even though types 32/33 need `blupi1.png` (`DOC-007`). Types 1/12/47/48 are no longer part of this gap in `GalaxyEggbertCNA` — they render as `UniformCube` objects from `object-m.png` instead of `element.png` billboards at all (2026-07-09, §3); `GalaxyEggbertSimple3D`'s equivalent bug remains unfixed (historical reference only, not built/fixed going forward). |
+| incomplete | `element.png` used for every remaining `ObjectType` billboard, even though types 32/33 need `blupi1.png` (`DOC-007`). Types 1/12/47/48 (as `UniformCube`s) and 14/15/31/35/52 (as `IsObjectMPngSourced` billboards) are no longer part of this gap in `GalaxyEggbertCNA` — they correctly source `object-m.png` instead (2026-07-09, §3); `GalaxyEggbertSimple3D`'s equivalent bug remains unfixed (historical reference only, not built/fixed going forward). |
+| incomplete | `GEObjectIcons::GetObjIcon()` icon coverage is 49/69 confirmed `ObjectType`s (up from 31, 2026-07-09, §3). Still `default: return 0` (wrong/placeholder icon): `38` (electric arc, two-channel `blupi1.png`+`element.png`, simplification undecided), 12 `explo.png`-sourced types, 4 `blupi.png`/`blupi1.png`-sourced Blupi-skin types — see §8 for the follow-up task. `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them). |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
 | unknown | Simple3D Android/Web builds untested since the last engine change. |
@@ -1091,10 +1131,22 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-Everything that had accumulated in this section is done as of 2026-07-09, all optional/low
-priority:
-
-1. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
+1. **Follow-up: the 16 remaining `ObjectType`s still without a real icon** (§3/§5 — 12
+   `explo.png`-sourced: 8/9/10/11/53/90/91/92/93/98/99/100; 4 `blupi.png`/`blupi1.png`-sourced Blupi
+   skins: 200/201/202/203). Larger/separately-scoped than the 2026-07-09 fill-in because both need a
+   brand-new texture load (`explo.png` isn't loaded anywhere in CNA today; `blupi.png` is loaded
+   only for the 2D SpriteBatch HUD indicator, not usable directly for 3D billboards) plus a new
+   UV-computation function (`explo.png` is confirmed 144×144 px/tile, 10 cols, per
+   `mobile-eggbert-reference/08-animations.md`, but total row count/icon-count isn't confirmed yet;
+   `blupi.png` is confirmed 600×2040 px, 60×60 tiles, 10 cols, `03-objects.md` line 228). `98`/`99`/
+   `100` (water splash variants) additionally have leading invisible (`-1`) frames documented as a
+   fall-height delay — a real per-frame detail this session's simple consecutive-cycle approach
+   can't represent without knowing the actual frame array. `ObjectType38` (electric arc) is a
+   smaller, separate case: real behavior needs BOTH `blupi1.png` and `element.png` in one animation
+   (ticks 0-29 vs 30-89) — `03-objects.md` explicitly flags the element.png-only simplification as
+   undecided, so this needs a decision (accept the simplification, or build real dual-texture
+   billboard support) before implementing, not just data-gathering.
+2. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
    (§3/§5 — 60% reduction in fully-transparent seam pixels, not 100%). Two untested hypotheses: (a)
    ordinary MSAA/silhouette-edge antialiasing producing genuine partial pixel coverage at any
    triangle edge, independent of texture UVs — likely benign and possibly not worth chasing further;
@@ -1103,7 +1155,7 @@ priority:
    this is about closing the remaining gap, not an open regression. **Verification:** repeat the
    pixel-level before/after methodology from §3 (raw pixel sampling + alpha<1 count across a full
    screenshot) at the same close/oblique staircase angle.
-2. **Optional: extend face culling (§3, 2026-07-09) to the animated/water paths** in
+3. **Optional: extend face culling (§3, 2026-07-09) to the animated/water paths** in
    `RebuildAnimatedRenderer` — currently every animated/water block emits all 6 faces
    unconditionally regardless of neighbors. Low priority: these are typically sparse decorative
    elements (fans, lava pockets, water pools), not bulk fills, so the payoff is much smaller than

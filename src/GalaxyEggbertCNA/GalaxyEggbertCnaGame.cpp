@@ -125,6 +125,14 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: " << worldRuntime_.GetMobileObjects().size()
                   << " MoveObject(s) parsed for billboard rendering." << std::endl;
 
+        // Billboard rendering for the 5 object-m.png-sourced MoveObjects
+        // (GEObjectIcons::IsObjectMPngSourced, NEXT.md §3) -- reuses
+        // terrainTexture_ (object-m.png), same reasoning as bigDecorEffect_.
+        objectMPngEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+        objectMPngEffect_->VertexColorEnabled = false;
+        objectMPngEffect_->setTextureEnabledProperty(true);
+        objectMPngEffect_->setTextureProperty(&terrainTexture_);
+
         // Billboard rendering for BigDecor: cells (NEXT.md §8 task 3) —
         // reuses terrainTexture_ (object-m.png), same icon vocabulary as the
         // main terrain grid, via a dedicated effect (BasicEffect only binds
@@ -411,8 +419,12 @@ namespace GalaxyEggbert::CNA
             {
                 // Platform lifts/crates render as solid cubes (see
                 // objectCubeMeshRenderer_/NEXT.md §8 task 3), not billboards
-                // -- skip here so they aren't drawn twice.
-                if (IsUniformCubeObject(obj.type))
+                // -- skip here so they aren't drawn twice. object-m.png-
+                // sourced types (see objectMPngMeshRenderer_ below) are also
+                // skipped here -- GetElementIconUv() would compute the wrong
+                // UV rect for them (element.png icon-index domain, not
+                // object-m.png's).
+                if (IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type))
                 {
                     continue;
                 }
@@ -435,6 +447,49 @@ namespace GalaxyEggbert::CNA
                 objectEffect_->Projection = camera_.GetProjectionMatrix();
                 objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 objectMeshRenderer_->Draw(device, *objectEffect_);
+            }
+        }
+
+        // Billboard rendering for the 5 object-m.png-sourced MoveObjects
+        // (GEObjectIcons::IsObjectMPngSourced, NEXT.md §3, 2026-07-09) --
+        // same camera-facing billboard technique as the element.png batch
+        // above, but reuses terrainTexture_ (object-m.png) via
+        // objectMPngEffect_, and looks up UVs through tileAtlas_ instead of
+        // GetElementIconUv() (same icon-index domain as terrain/BigDecor).
+        if (objectMPngEffect_ && !worldRuntime_.GetMobileObjects().empty())
+        {
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto cameraRight = invView.getRightProperty();
+            const auto cameraUp = invView.getUpProperty();
+
+            Easy3D::BillboardBatch batch;
+            constexpr float kObjectSize = 1.0f;
+            constexpr float kObjectGroundOffset = 1.0f; // matches the element.png batch above
+            for (const auto& obj : worldRuntime_.GetMobileObjects())
+            {
+                if (!IsObjectMPngSourced(obj.type))
+                {
+                    continue;
+                }
+                const int icon = GetObjIcon(obj.type, 0);
+                const auto uv = tileAtlas_.GetTileUv(icon);
+                batch.Add(
+                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
+                    uv);
+            }
+
+            std::vector<Easy3D::BillboardVertex> vertices;
+            std::vector<std::uint32_t> indices;
+            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
+
+            if (!indices.empty())
+            {
+                objectMPngMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                objectMPngEffect_->View = camera_.GetViewMatrix();
+                objectMPngEffect_->Projection = camera_.GetProjectionMatrix();
+                objectMPngEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                objectMPngMeshRenderer_->Draw(device, *objectMPngEffect_);
             }
         }
 

@@ -33,6 +33,54 @@ namespace GalaxyEggbert::CNA
                                               187,187,187,194,193,192,191,190,189,188};
         switch (type)
         {
+            // Category B fill-in (2026-07-09, NEXT.md §3): real behavior
+            // confirmed in mobile-eggbert but never level-placed, so these
+            // had no icon at all before (fell through to default: return 0,
+            // a wrong/placeholder icon). Sourced from
+            // mobile-eggbert-reference/03-objects.md's Category B table
+            // (icon + frame count only -- table_X[0]=N notation -- not a
+            // Tables.cpp per-frame array transcription). Where the
+            // documented frame count stays within element.png's 290-icon
+            // grid (29 rows x 10 cols), a consecutive-icon cycle is used,
+            // matching this function's existing convention for simple
+            // animations (e.g. ObjectType2/6/7 above). Where it doesn't
+            // (56/57), the real per-frame layout isn't known without reading
+            // Tables.cpp, so only the documented first-frame icon is
+            // returned (no animation) rather than guessing a cycle that
+            // would run off the sheet.
+            case ObjectType::ObjectType23: return 176;
+            case ObjectType::ObjectType27: return 152 + (p / 6) % 24;
+            case ObjectType::ObjectType28: return 167;
+            case ObjectType::ObjectType29: return 177;
+            case ObjectType::ObjectType34: return 168 + (p / 6) % 25;
+            case ObjectType::ObjectType36: return 179 + (p / 6) % 8;
+            case ObjectType::ObjectType37: return 40 + (p / 6) % 70;
+            case ObjectType::ObjectType39: return 166 + (p / 6) % 11;
+            case ObjectType::ObjectType41: return 179 + (p / 6) % 8;
+            case ObjectType::ObjectType42: return 186 + (p / 6) % 8;
+            case ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
+            case ObjectType::ObjectType57: return 274; // 20 frames would exceed the sheet (274+19=293 > 289) -- first-frame only
+            case ObjectType::ObjectType97: return 256 + (p / 6) % 5;
+            // ObjectType38 (electric arc) deliberately NOT added: real
+            // behavior is two-channel (blupi1.png ticks 0-29, element.png
+            // ticks 30-89) and 03-objects.md flags the element.png-only
+            // simplification as "under consideration", not decided --
+            // returning a wrong-channel icon would be worse than the
+            // existing default:0 fallback. Deferred to the same follow-up
+            // as the explo.png/blupi.png types below.
+
+            // object-m.png-sourced Category B types (2026-07-09) -- these
+            // are NOT element.png icons; GetElementIconUv() would compute
+            // the wrong UV rect for them. The icon numbers below are only
+            // meaningful when looked up via GETileAtlas::GetTileUv()
+            // (object-m.png's 440-icon grid) -- see IsObjectMPngSourced()
+            // and GalaxyEggbertCnaGame.cpp's dedicated dispatch, mirroring
+            // the existing IsUniformCubeObject() precedent.
+            case ObjectType::ObjectType14: return 99 + (p / 6) % 7;
+            case ObjectType::ObjectType15: return 103 + (p / 6) % 20;
+            case ObjectType::ObjectType31: return 238 + (p / 6) % 6;
+            case ObjectType::ObjectType35: return 244 + (p / 6) % 3;
+            case ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
             case ObjectType::ObjectType1:  return 29;
             case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;
             case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;
@@ -76,6 +124,21 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType12:
             case ObjectType::ObjectType47:
             case ObjectType::ObjectType48:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool IsObjectMPngSourced(ObjectType type)
+    {
+        switch (type)
+        {
+            case ObjectType::ObjectType14:
+            case ObjectType::ObjectType15:
+            case ObjectType::ObjectType31:
+            case ObjectType::ObjectType35:
+            case ObjectType::ObjectType52:
                 return true;
             default:
                 return false;
