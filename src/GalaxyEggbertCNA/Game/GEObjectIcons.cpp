@@ -31,6 +31,25 @@ namespace GalaxyEggbert::CNA
         static const int kPower[8]        = {136,137,138,139,140,141,142,143};
         static const int kInvert[20]      = {187,187,187,188,189,190,191,192,193,194,
                                               187,187,187,194,193,192,191,190,189,188};
+        // table_electro (ObjectType38, electric arc) -- transcribed from
+        // mobile-eggbert's Tables.cpp with explicit user approval
+        // (2026-07-09, NEXT.md §3), the real 90-tick table: ticks 0-29
+        // alternate 266/267 (blupi1.png channel), ticks 30-89 cycle through
+        // element.png icons 40-47 (Decor.cpp confirms the channel switch at
+        // tick 30). Real mobile-eggbert behavior is a one-shot (the object
+        // despawns once phase>=90) -- simplified here to a continuous
+        // `% 90` loop, matching this function's existing convention for
+        // every other multi-frame type (e.g. kFollow1/kSkate above).
+        static const int kElectro[90] = {
+            266,267,266,267,266,267,266,267,266,267,
+            266,267,266,267,266,267,266,267,266,267,
+            266,267,266,267,266,267,266,267,266,267,
+             40, 40, 40, 40, 41, 41, 41, 41, 40, 40,
+             40, 40, 40, 40, 40, 41, 41, 41, 40, 40,
+             40, 40, 40, 40, 40, 41, 41, 41, 40, 40,
+             42, 42, 42, 43, 43, 43, 44, 44, 44, 45,
+             45, 45, 46, 46, 47, 47, 46, 46, 47, 47,
+             46, 46, 47, 47, 46, 46, 47, 47, 46, 46};
         switch (type)
         {
             // Category B fill-in (2026-07-09, NEXT.md §3): real behavior
@@ -136,26 +155,14 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType202: return 257 + (p / 6) % 6;
             case ObjectType::ObjectType203: return 257 + (p / 6) % 6;
 
-            // ObjectType38 (electric arc, 2026-07-09) -- real behavior is
-            // two-channel (blupi1.png ticks 0-29, then element.png ticks
-            // 30-89), and 03-objects.md flags the element.png-only
-            // simplification as "under consideration", not decided. That
-            // question turns out to be moot today: GetObjIcon() is always
-            // called with phase=0 (no per-instance animation timers exist
-            // yet, see this file's header comment), and tick 0 falls
-            // squarely in the blupi1.png channel -- 03-objects.md's own
-            // crop for this type is explicitly labeled
-            // "electro-blupi1channel.png" at icon 266, i.e. icon 266 on
-            // blupi1.png's grid (via GetBlupiIconUv()), not element.png's.
-            // So this is the correct, faithful icon for the only phase that
-            // ever renders right now -- not a channel-blind guess. The
-            // element.png channel (ticks 30-89) genuinely has no
-            // representation yet and needs a real per-instance animation
-            // timer (plus true dual-texture billboard support, since a
-            // single MoveObject would need to switch sheets mid-animation)
-            // before it can be added -- tracked as a residual gap, not
-            // silently dropped.
-            case ObjectType::ObjectType38:  return 266;
+            // ObjectType38 (electric arc, 2026-07-09) -- now animated with
+            // real per-instance phase (MobileObjSpec::phase,
+            // GEWorldRuntime::Update()): returns the real table_electro
+            // icon for whichever channel is active at this tick (icon 266/
+            // 267 while p%90<30 on blupi1.png, 40-47 afterward on
+            // element.png) -- see IsBlupiPngSourcedAtPhase() below for the
+            // matching per-instance channel dispatch used by the renderer.
+            case ObjectType::ObjectType38:  return kElectro[p % 90];
             default:                       return 0;
         }
     }
@@ -268,6 +275,17 @@ namespace GalaxyEggbert::CNA
             default:
                 return false;
         }
+    }
+
+    bool IsBlupiPngSourcedAtPhase(ObjectType type, int phase)
+    {
+        if (type == ObjectType::ObjectType38)
+        {
+            // Matches Decor.cpp's channel switch (~line 8997): blupi1.png
+            // for the first 30 of the 90-tick cycle, element.png after.
+            return (phase % 90) < 30;
+        }
+        return IsBlupiPngSourced(type);
     }
 
     ObjectIconUv GetBlupiIconUv(int icon)

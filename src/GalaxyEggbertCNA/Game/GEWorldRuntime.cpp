@@ -246,5 +246,17 @@ namespace GalaxyEggbert::CNA
             animTimer_ -= kAnimPeriod;
             ++animPhase_;
         }
+
+        // MoveObject per-instance animation phase (2026-07-09) -- 20fps
+        // reference tick rate, matching mobile-eggbert's Config::ScaleTime(1)
+        // base (Decor.cpp's MoveObject phase fields advance by 1 per tick at
+        // that reference rate; ScaleTime()/ScaleDiv() only rescale it for
+        // other target FPS values, see Config.hpp).
+        constexpr float kMoveObjectPhaseTicksPerSecond = 20.0f;
+        const float phaseDelta = dt * kMoveObjectPhaseTicksPerSecond;
+        for (auto& obj : mobileObjects_)
+        {
+            obj.phase += phaseDelta;
+        }
     }
 }

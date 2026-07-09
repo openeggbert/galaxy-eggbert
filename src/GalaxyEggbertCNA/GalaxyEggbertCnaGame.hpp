@@ -196,10 +196,14 @@ namespace GalaxyEggbert::CNA
         // GEObjectIcons::IsUniformCubeObject). Reuses terrainTexture_
         // (object-m.png, the confirmed-correct sheet for these types) via
         // its own effect, same reason as bigDecorEffect_ above. Built once
-        // in LoadContent() (static phase only, same simplification as the
-        // MoveObject billboards — no per-instance animation timers yet), NOT
-        // rebuilt per frame like the billboard renderers, since a
-        // world-space cube's vertices don't depend on the camera.
+        // in LoadContent() with a fixed phase=0 icon, deliberately NOT
+        // rebuilt per frame like the billboard renderers (a world-space
+        // cube's vertices don't depend on the camera, so there's no other
+        // reason to rebuild it) -- unlike the billboards (2026-07-09, real
+        // per-instance MobileObjSpec::phase), these cubes still don't
+        // animate, since animating their texture would need re-uploading
+        // UV data every frame too, a separate change from the billboard
+        // phase work.
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectCubeEffect_;
         std::unique_ptr<Easy3D::CubeMeshRenderer> objectCubeMeshRenderer_;
     };

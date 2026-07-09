@@ -221,6 +221,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Real per-instance MoveObject animation timers, and `ObjectType38`'s (electric arc) full
+  two-channel behavior, sourced directly from mobile-eggbert with explicit user approval
+  (2026-07-09).** Direct continuation of the previous entry below — closes its "element.png channel
+  has no representation yet, needs a real animation timer" residual gap.
+  - **`MobileObjSpec::phase`** (`GEWorldRuntime.hpp`): new per-instance `float` field, advanced by
+    `GEWorldRuntime::Update(dt)` at 20 ticks/second — mobile-eggbert's own reference tick rate for
+    MoveObject animation (`Config::ScaleTime(1)==1` at that rate; a genuinely different, faster rate
+    than the shared 6fps terrain-tile clock — two distinct animation systems in mobile-eggbert
+    itself, not a galaxy-eggbert simplification). Every `GetObjIcon(obj.type, 0)` call site in
+    `GalaxyEggbertCnaGame.cpp`'s per-frame billboard loops now passes `static_cast<int>(obj.phase)`
+    instead of a hardcoded `0` — every phase-indexed formula already written in `GetObjIcon()` this
+    session (most with comments anticipating exactly this) now actually animates, not just
+    `ObjectType38`. The once-built `UniformCube` platform-lift/crate path intentionally still uses
+    phase=0 (built once in `LoadContent()`, not rebuilt per frame — animating it would need
+    per-frame UV re-upload, a separate, not-yet-done change).
+  - **`table_electro[90]`**: the real mobile-eggbert animation table (`Tables.cpp`) transcribed with
+    explicit user approval this turn ("30-89 animační timery najdeš v mobile eggbertu") — ticks 0-29
+    alternate icons 266/267 on `blupi1.png`, ticks 30-89 cycle icons 40-47 on `element.png`, matching
+    `Decor.cpp`'s exact channel-switch logic (`~line 8988-9004`: `phase < ScaleTime(30)` →
+    `PixmapChannel::Blupi1_12`, else `PixmapChannel::Element`). Real mobile-eggbert behavior is a
+    one-shot (the object despawns once `phase>=90`) — simplified to a continuous `% 90` loop here,
+    matching every other multi-frame type's existing convention in this function.
+  - **`IsBlupiPngSourcedAtPhase(type, phase)`** (new): the phase-aware sibling of the existing
+    phase-blind `IsBlupiPngSourced()`. For `ObjectType200`-`203` identical (always `blupi`-sourced).
+    For `ObjectType38`, true only while `phase % 90 < 30` — the renderer needs this because a single
+    `MoveObject` now genuinely switches texture sheets mid-animation, something no render path could
+    do before. Both the element.png billboard loop's skip condition and the blupi-billboard loop's
+    inclusion condition in `GalaxyEggbertCnaGame.cpp` now use this instead of the plain, phase-blind
+    predicate, so `ObjectType38` correctly migrates from the `blupi1ObjectMeshRenderer_` batch to the
+    plain `objectMeshRenderer_`/element.png batch partway through its cycle every frame.
+  - **Verified**: clean build; live run (no crash across an 8-second run, ~1.8 full 90-tick cycles at
+    the real 20 ticks/sec rate); `GalaxyEggbertWorldsTests` (63/63),
+    `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+    PASSED`); debug-camera repositioning toward `ObjectType38`'s catalog slot attempted for a direct
+    visual confirmation, but couldn't reliably pinpoint the small billboard at that distance/angle in
+    a screenshot — correctness relies on the code-level match against `Decor.cpp`/`Tables.cpp`'s
+    exact logic and values (not just a plausible guess) plus the crash-free multi-cycle live run,
+    not a visual confirmation this time. Reverted before commit (empty `git diff` on that line).
+
 - **`ObjectType38` (electric arc) now has a real icon — 65/69 → 66/69, closing the icon-coverage
   follow-up from §8 task 1 (2026-07-09).** The "element.png-only simplification, undecided" question
   §8 flagged turned out to be moot: `GetObjIcon()` is always called with `phase=0` (no per-instance
@@ -1043,7 +1082,7 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 | resolved (re-verified 2026-07-09) | `GalaxyEggbertWorldsTests` — 54/54 still pass (via `build-cna`, see §7). The `cmake-build-debug` `ctest` discovery issue is unrelated to that tree and not re-checked (not to be built, per §9). |
 | not to be fixed (per user, 2026-07-08) | Simple3D build fails at `find_package(Urho3D)` — U3D prebuilt missing/incompatible. `GalaxyEggbertSimple3D` is treated as historical reference only going forward; do not spend effort rebuilding/fixing it (see §2). |
 | incomplete | `element.png` used for every remaining `ObjectType` billboard, even though types 32/33 need `blupi1.png` (`DOC-007`). Types 1/12/47/48 (as `UniformCube`s) and 14/15/31/35/52 (as `IsObjectMPngSourced` billboards) are no longer part of this gap in `GalaxyEggbertCNA` — they correctly source `object-m.png` instead (2026-07-09, §3); `GalaxyEggbertSimple3D`'s equivalent bug remains unfixed (historical reference only, not built/fixed going forward). |
-| resolved (2026-07-09) | `GEObjectIcons::GetObjIcon()` icon coverage is now 66/69 confirmed `ObjectType`s (up from 31 at session start). `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them) — no known gaps remain among confirmed types. `38` (electric arc)'s real two-channel behavior is only partially represented: `blupi1.png` (ticks 0-29, the only phase ever rendered today) is correct, but `element.png` (ticks 30-89) has no representation yet — needs a real per-instance animation timer plus dual-texture billboard support, tracked as a residual follow-up, not a coverage gap in the current phase=0-only rendering model. |
+| resolved (2026-07-09) | `GEObjectIcons::GetObjIcon()` icon coverage is now 66/69 confirmed `ObjectType`s (up from 31 at session start), and (as of the same day, a later pass) every `MoveObject` billboard actually animates via a real per-instance phase timer, not just a frozen phase=0 snapshot — including `38` (electric arc)'s full two-channel behavior (`blupi1.png` ticks 0-29, `element.png` ticks 30-89, real `table_electro` data). `0`/`18`/`22`/`58` are correctly `default: return 0` (no icon exists in source data for them) — no known gaps remain among confirmed types or their animation. |
 | incomplete | Simple3D: no per-zone fog, only `SetClearColor` per sky region. |
 | incomplete | 7 `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/dynamite) spawn with correct icons in Simple3D but have no real gameplay behavior on pickup/contact. |
 | unknown | Simple3D Android/Web builds untested since the last engine change. |
@@ -1271,14 +1310,7 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
-1. **Optional follow-up: `ObjectType38`'s `element.png` channel (ticks 30-89)** — the electric
-   arc's `blupi1.png` channel (ticks 0-29) now renders correctly (§3, 2026-07-09), but the
-   animation's second half has no representation, since `GetObjIcon()` is always called with
-   `phase=0` today (no per-instance animation timers exist). Needs a real animation timer plus
-   genuine dual-texture billboard support (no existing render path draws two textures on one
-   `MoveObject` mid-animation) — a real, if small, new capability, not just a data-gathering task.
-   Low priority: cosmetic completeness for one already-functional type.
-2. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
+1. **Optional: investigate the residual seam transparency left after the 2026-07-09 UV-inset fix**
    (§3/§5 — 60% reduction in fully-transparent seam pixels, not 100%). Two untested hypotheses: (a)
    ordinary MSAA/silhouette-edge antialiasing producing genuine partial pixel coverage at any
    triangle edge, independent of texture UVs — likely benign and possibly not worth chasing further;
@@ -1287,12 +1319,20 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    this is about closing the remaining gap, not an open regression. **Verification:** repeat the
    pixel-level before/after methodology from §3 (raw pixel sampling + alpha<1 count across a full
    screenshot) at the same close/oblique staircase angle.
-3. **Optional: extend face culling (§3, 2026-07-09) to the animated/water paths** in
+2. **Optional: extend face culling (§3, 2026-07-09) to the animated/water paths** in
    `RebuildAnimatedRenderer` — currently every animated/water block emits all 6 faces
    unconditionally regardless of neighbors. Low priority: these are typically sparse decorative
    elements (fans, lava pockets, water pools), not bulk fills, so the payoff is much smaller than
    the static-path win already banked, and correctly distinguishing "definitely a full cube this
    frame" from "uses holed geometry this frame" per animated icon adds real complexity.
+3. **Optional: animate the `UniformCube` platform-lift/crate objects too** (§3, 2026-07-09) — now
+   that `MoveObject` billboards have real per-instance phase timers, the cube path
+   (`objectCubeMeshRenderer_`) is the one remaining icon lookup still frozen at phase=0, since it's
+   built once in `LoadContent()`, not rebuilt per frame like the billboards. Types 47/48 (chenille
+   caterpillar-track lifts) have real phase-cycling formulas already (`kChenille`/`kChenillei`) that
+   currently never advance. Would need per-frame UV re-upload for these cubes (or rebuilding them
+   like the billboards), a real if small change. Low priority: cosmetic, only affects 2 of the 4 cube
+   types (1/12 are static single-icon regardless).
 
 Also done (2026-07-09): all 6 remaining `DirectionalCube` icons (15-18, 108-109, §3) backfilled —
 `DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` are now ALL fully

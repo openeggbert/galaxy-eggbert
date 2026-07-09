@@ -24,29 +24,36 @@ namespace GalaxyEggbert::CNA
     //
     // Coverage (2026-07-09, NEXT.md §3): 66 confirmed ObjectTypes now have a
     // real icon (up from 65, 65 up from 31 earlier this session) -- the
-    // latest addition is ObjectType38's electric arc (also blupi1.png-
-    // sourced, see IsBlupiPngSourced/UsesBlupi1Texture below). Its real
-    // behavior is two-channel (blupi1.png ticks 0-29, then element.png
-    // ticks 30-89), and 03-objects.md flags the element.png-only
-    // simplification as "under consideration" -- but that question turns
-    // out to be moot today: GetObjIcon is always called with phase=0 (no
-    // per-instance animation timers exist yet), and tick 0 is unambiguously
-    // the blupi1.png channel, icon 266, per 03-objects.md's own
-    // "...blupi1channel.png" crop label. The element.png channel (ticks
-    // 30-89) has no representation yet and needs a real animation timer
-    // plus true dual-texture billboard support first -- a residual gap for
-    // later, not a decision blocker today. Genuinely no icon exists in
-    // mobile-eggbert source data for ObjectType0/18/22/58 -- default:
-    // return 0 is correct for those, not a gap.
+    // latest addition is ObjectType38's electric arc, sourced from
+    // mobile-eggbert's real `table_electro[90]` (Tables.cpp, transcribed
+    // with explicit user approval), its 90-tick one-shot cycle simplified
+    // to a continuous `% 90` loop like every other multi-frame type here.
     //
-    // 53/92 (explo.png) and 98/99/100 (explo.png) return their documented
-    // first-frame icon only (no cycling): 53's 45 frames and 92's 128 frames
-    // would run off explo.png's 100-icon grid under a naive consecutive-icon
-    // assumption (same reasoning as element.png's 56/57 and object-m.png's
-    // 52 above); 99/100 additionally have real leading invisible (-1)
-    // frames that a static first-real-frame icon can't represent without a
-    // per-instance animation timer, which doesn't exist yet (GetObjIcon is
-    // always called with phase=0 today, see GalaxyEggbertCnaGame.cpp).
+    // Per-instance animation timers now exist (2026-07-09,
+    // MobileObjSpec::phase / GEWorldRuntime::Update(), 20fps reference
+    // tick rate matching mobile-eggbert's own Config::ScaleTime(1) base) --
+    // GetObjIcon() is no longer always called with phase=0, so every
+    // phase-indexed formula in this function actually animates now, not
+    // just ObjectType38. ObjectType38 is also the one type whose CHANNEL
+    // (which texture sheet) depends on phase, not just its icon within a
+    // fixed sheet: blupi1.png for ticks 0-29 of its cycle, element.png for
+    // 30-89 (Decor.cpp confirms the switch). GetObjIcon() itself always
+    // returns the correct icon for whichever channel is active --
+    // IsBlupiPngSourcedAtPhase() below is what a renderer must additionally
+    // check to pick the right texture/UV function per instance, per frame.
+    // Genuinely no icon exists in mobile-eggbert source data for
+    // ObjectType0/18/22/58 -- default: return 0 is correct for those, not a
+    // gap.
+    //
+    // 53/92 (explo.png) still return their documented first-frame icon
+    // only, now genuinely for the original reason (not just a phase=0
+    // artifact): their 45/128 documented frames would run off explo.png's
+    // 100-icon grid under a naive consecutive-icon assumption, same as
+    // element.png's 56/57 and object-m.png's 52. 99/100 (explo.png) also
+    // stay static: their real leading invisible (-1) frames still can't be
+    // represented by a single per-tick icon return without a richer
+    // "sometimes render nothing" mechanism, which doesn't exist yet even
+    // though phase itself now advances.
     int GetObjIcon(ObjectType type, int phase);
 
     // element.png UV rect for a given icon: 600x1740 px, 60x60 px tiles, 10
@@ -97,19 +104,37 @@ namespace GalaxyEggbert::CNA
 
     // True for the 4 confirmed Blupi-skin ObjectTypes (ObjectType200/201/
     // 202/203, mobile-eggbert-reference/03-objects.md, added 2026-07-09)
-    // plus ObjectType38's electric arc (added same day -- its blupi1.png
-    // channel is the only one rendered today, see GetObjIcon()'s header
-    // comment). The icon GetObjIcon() returns for these types is a
-    // blupi.png/blupi1.png index -- look it up via GetBlupiIconUv().
+    // plus ObjectType38's electric arc (added same day). The icon
+    // GetObjIcon() returns for these types is a blupi.png/blupi1.png index
+    // -- look it up via GetBlupiIconUv(). NOTE: ObjectType38 is only
+    // blupi.png-sourced part of the time (its real behavior is two-channel)
+    // -- this predicate alone is phase-blind and returns true for it
+    // unconditionally; renderers that need the correct per-instance,
+    // per-tick answer must use IsBlupiPngSourcedAtPhase() below instead.
     bool IsBlupiPngSourced(ObjectType type);
 
-    // True for the ObjectTypes that source blupi1.png instead of blupi.png:
-    // the 3 of the 4 Blupi-skin types (ObjectType201/202/203 -- ObjectType200
-    // uses blupi.png itself) plus ObjectType38's electric arc. Per
-    // 03-objects.md, Blupi1_11/_12/_13 all read the identical blupi1.png
-    // pixels in a raw crop -- any tint difference between 201/202/203 is
-    // applied at render time in mobile-eggbert, not reproduced here (no
-    // per-instance tinting exists in GalaxyEggbertCNA yet), so all 3 render
-    // identically to each other today.
+    // Phase-aware version of IsBlupiPngSourced() (2026-07-09) -- for
+    // ObjectType200/201/202/203 identical to IsBlupiPngSourced() (always
+    // true, they never switch sheets). For ObjectType38 (electric arc, a
+    // real two-channel animation: blupi1.png for the first 30 of its
+    // 90-tick cycle, element.png afterward, Decor.cpp ~line 8997), only
+    // true while @p phase's tick is within that blupi1.png window --
+    // GetObjIcon() already returns the matching correct icon for either
+    // channel at any phase, but the CALLER still has to pick the right
+    // texture/UV function (GetBlupiIconUv() vs GetElementIconUv()) via this
+    // predicate, since a single MoveObject switches sheets mid-animation.
+    bool IsBlupiPngSourcedAtPhase(ObjectType type, int phase);
+
+    // True for the ObjectTypes that source blupi1.png instead of blupi.png
+    // whenever they ARE blupi-sourced (see IsBlupiPngSourcedAtPhase() for
+    // whether they currently are): the 3 of the 4 Blupi-skin types
+    // (ObjectType201/202/203 -- ObjectType200 uses blupi.png itself) plus
+    // ObjectType38's electric arc (always blupi1.png, never blupi.png,
+    // during its blupi-sourced window). Per 03-objects.md, Blupi1_11/_12/
+    // _13 all read the identical blupi1.png pixels in a raw crop -- any
+    // tint difference between 201/202/203 is applied at render time in
+    // mobile-eggbert, not reproduced here (no per-instance tinting exists
+    // in GalaxyEggbertCNA yet), so all 3 render identically to each other
+    // today.
     bool UsesBlupi1Texture(ObjectType type);
 }

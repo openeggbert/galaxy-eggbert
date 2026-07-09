@@ -22,6 +22,15 @@ namespace GalaxyEggbert::CNA
         float posStartX = 0.0f, posStartY = 0.0f, posStartZ = 0.0f;
         float posEndX = 0.0f, posEndY = 0.0f, posEndZ = 0.0f;
         float speed = 1.5f;
+
+        // Per-instance animation tick counter (2026-07-09, NEXT.md §3),
+        // advanced by GEWorldRuntime::Update() at mobile-eggbert's original
+        // 20fps reference tick rate (Config::ScaleTime(1)==1 at that rate,
+        // Decor.cpp/Config.hpp) so GetObjIcon()'s existing phase-indexed
+        // formulas -- most of them already written anticipating this, per
+        // their own "no per-instance animation timers exist yet" comments
+        // -- finally animate instead of being frozen at phase=0.
+        float phase = 0.0f;
     };
 
     // Minimal mobile-eggbert .txt world-file loader for the CNA/Easy3D target.
@@ -53,8 +62,13 @@ namespace GalaxyEggbert::CNA
         // the world is left empty (all air).
         bool LoadFromVwrFile(const std::string& path);
 
-        // Advances the animated-tile clock. 6 fps tick, matching Simple3D's
-        // GEWorldRuntime::Update() and mobile-eggbert's animated tile rate.
+        // Advances the animated-tile clock (6 fps tick, matching Simple3D's
+        // GEWorldRuntime::Update() and mobile-eggbert's animated tile rate)
+        // and every MobileObjSpec's per-instance phase (20 fps tick,
+        // mobile-eggbert's original reference rate for MoveObject
+        // animation -- a different, faster rate than the tile clock; these
+        // are two genuinely different animation systems in mobile-eggbert
+        // itself, not a galaxy-eggbert simplification).
         void Update(float dt);
 
         [[nodiscard]] const Worlds::World& GetWorld() const { return *world_; }

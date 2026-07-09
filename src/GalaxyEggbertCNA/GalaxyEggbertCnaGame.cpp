@@ -536,10 +536,13 @@ namespace GalaxyEggbert::CNA
 
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7, first pass 2026-07-06) —
-        // static phase only (no per-instance animation timers yet), element.png
-        // only (see GEObjectIcons.hpp's known-limitation note re: DOC-007).
-        // Rebuilt every frame since billboard vertex positions depend on the
-        // camera (Easy3D::BillboardMeshRenderer's header comment).
+        // now animated via each MobileObjSpec's real per-instance phase
+        // (2026-07-09, GEWorldRuntime::Update()), element.png only (see
+        // GEObjectIcons.hpp's known-limitation note re: DOC-007). Rebuilt
+        // every frame since billboard vertex positions depend on the camera
+        // (Easy3D::BillboardMeshRenderer's header comment) -- convenient,
+        // since it also means the icon lookup naturally re-runs every frame
+        // with the latest phase.
         if (objectEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
             // Camera-facing basis: the inverse view matrix's Right/Up rows
@@ -562,13 +565,17 @@ namespace GalaxyEggbert::CNA
                 // blupiObjectMeshRenderer_/blupi1ObjectMeshRenderer_ below)
                 // are also skipped here -- GetElementIconUv() would compute
                 // the wrong UV rect for them (element.png icon-index domain,
-                // not theirs).
+                // not theirs). IsBlupiPngSourcedAtPhase (not the plain,
+                // phase-blind IsBlupiPngSourced) since ObjectType38 spends
+                // part of its cycle on element.png -- this loop must pick it
+                // up during that window, not skip it forever.
+                const int objPhase = static_cast<int>(obj.phase);
                 if (IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type) ||
-                    IsExploPngSourced(obj.type) || IsBlupiPngSourced(obj.type))
+                    IsExploPngSourced(obj.type) || IsBlupiPngSourcedAtPhase(obj.type, objPhase))
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, 0);
+                const int icon = GetObjIcon(obj.type, objPhase);
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
@@ -611,7 +618,7 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, 0);
+                const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                 const auto uv = tileAtlas_.GetTileUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
@@ -653,7 +660,7 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, 0);
+                const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                 const auto uv = GetExploIconUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
@@ -693,11 +700,12 @@ namespace GalaxyEggbert::CNA
             constexpr float kObjectGroundOffset = 1.0f; // matches the batches above
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
-                if (!IsBlupiPngSourced(obj.type))
+                const int objPhase = static_cast<int>(obj.phase);
+                if (!IsBlupiPngSourcedAtPhase(obj.type, objPhase))
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, 0);
+                const int icon = GetObjIcon(obj.type, objPhase);
                 const auto uv = GetBlupiIconUv(icon);
                 auto& batch = UsesBlupi1Texture(obj.type) ? blupi1Batch : blupiBatch;
                 batch.Add(
