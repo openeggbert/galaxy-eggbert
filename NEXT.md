@@ -221,6 +221,20 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **`UniformCube` platform-lift/crate objects now animate too, closing §8's optional follow-up
+  (2026-07-09).** Direct continuation of the previous entry below — the one remaining icon lookup
+  still frozen at phase=0. `CubeMeshRenderer` has no in-place UV update API (only construction from
+  vertex/index data, unlike a texture-only re-upload), so the cube mesh is now rebuilt every frame in
+  `Draw()` (moved out of the one-time `LoadContent()` build) using each `MobileObjSpec`'s real
+  per-instance `phase` — same pattern the billboard renderers already used. Types 47/48's
+  `kChenille`/`kChenillei` caterpillar-track icon cycles now actually advance; types 1/12 are
+  unaffected (static single-icon regardless of phase). Cheap in practice: only a handful of cube
+  objects in the sample world. **Verified**: clean build; live run (no crash, `4 platform-lift/crate
+  cube object(s) found`); debug-camera check confirms the 2 cube objects still render correctly, no
+  visual regression from the LoadContent()→Draw() move; `GalaxyEggbertWorldsTests` (63/63),
+  `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+  PASSED`); debug-camera repositioning reverted before commit (empty `git diff` on that line).
+
 - **Real per-instance MoveObject animation timers, and `ObjectType38`'s (electric arc) full
   two-channel behavior, sourced directly from mobile-eggbert with explicit user approval
   (2026-07-09).** Direct continuation of the previous entry below — closes its "element.png channel
@@ -1325,14 +1339,6 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    elements (fans, lava pockets, water pools), not bulk fills, so the payoff is much smaller than
    the static-path win already banked, and correctly distinguishing "definitely a full cube this
    frame" from "uses holed geometry this frame" per animated icon adds real complexity.
-3. **Optional: animate the `UniformCube` platform-lift/crate objects too** (§3, 2026-07-09) — now
-   that `MoveObject` billboards have real per-instance phase timers, the cube path
-   (`objectCubeMeshRenderer_`) is the one remaining icon lookup still frozen at phase=0, since it's
-   built once in `LoadContent()`, not rebuilt per frame like the billboards. Types 47/48 (chenille
-   caterpillar-track lifts) have real phase-cycling formulas already (`kChenille`/`kChenillei`) that
-   currently never advance. Would need per-frame UV re-upload for these cubes (or rebuilding them
-   like the billboards), a real if small change. Low priority: cosmetic, only affects 2 of the 4 cube
-   types (1/12 are static single-icon regardless).
 
 Also done (2026-07-09): all 6 remaining `DirectionalCube` icons (15-18, 108-109, §3) backfilled —
 `DirectionalCube`/`InnerPillarBox`/`InnerFlatPlate`/`TripleCrossBillboard` are now ALL fully

@@ -195,15 +195,14 @@ namespace GalaxyEggbert::CNA
         // ObjectType1/47/48 platform lifts and ObjectType12 crates, see
         // GEObjectIcons::IsUniformCubeObject). Reuses terrainTexture_
         // (object-m.png, the confirmed-correct sheet for these types) via
-        // its own effect, same reason as bigDecorEffect_ above. Built once
-        // in LoadContent() with a fixed phase=0 icon, deliberately NOT
-        // rebuilt per frame like the billboard renderers (a world-space
-        // cube's vertices don't depend on the camera, so there's no other
-        // reason to rebuild it) -- unlike the billboards (2026-07-09, real
-        // per-instance MobileObjSpec::phase), these cubes still don't
-        // animate, since animating their texture would need re-uploading
-        // UV data every frame too, a separate change from the billboard
-        // phase work.
+        // its own effect, same reason as bigDecorEffect_ above. Rebuilt
+        // every frame in Draw() (2026-07-09) using each MobileObjSpec's
+        // real per-instance phase, same reason and pattern as the
+        // billboard renderers below -- CubeMeshRenderer has no in-place UV
+        // update API, only construction from vertex/index data, so a fresh
+        // mesh each frame is the only way for types 47/48's chenille icon
+        // formulas to actually animate (cheap here, only a handful of cube
+        // objects).
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectCubeEffect_;
         std::unique_ptr<Easy3D::CubeMeshRenderer> objectCubeMeshRenderer_;
     };
