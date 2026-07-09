@@ -75,28 +75,40 @@ namespace GalaxyEggbert::CNA
         // both confirmed 2026-07-08 from the actual crops (pedestal
         // touching the bottom of 132's image; mount hanging from the top of
         // 135's, mirrored). FanLeft (126)/FanRight (129) blow horizontally,
-        // so their base/open pair is the X axis, not Y (fixed 2026-07-09 --
-        // previously both defaulted to the vertical fans' Y-axis treatment
-        // for lack of an up/down cue, which put the open/blowing face on
-        // top instead of facing sideways); NegX/PosX = left/right matches
-        // the same left/right convention documented below for
-        // kDirectionalEntries. The base face's flat-color swatch uses
-        // kTopSwatchV/kBottomSwatchV when the base is Y-aligned (matching
-        // its "shora"/"zdola" wording) and kMidSwatchV for the X-aligned
-        // 126/129 base, which has no such wording to anchor to.
+        // so their base/open pair is the X axis, not Y (axis fixed
+        // 2026-07-09; NegX/PosX = left/right matches the same left/right
+        // convention documented below for kDirectionalEntries). Which of
+        // NegX/PosX is base vs. open was reported backwards live after that
+        // first fix and corrected here the same day: base (blue) is now the
+        // face AWAY from the blow direction, open (transparent) is the face
+        // the fan blows toward. Putting a real texture on PosY/NegY for the
+        // first time (previously those 2 faces were only ever used for
+        // SwatchUv flat colors, never a directional texture) also exposed
+        // that face's UV corner order doesn't read upright there -- reported
+        // live as the top face needing a 180 degree turn; RotateTop180
+        // below flips PosY's UV rect (U0<->U1, V0<->V1: a true 180 degree
+        // turn of the sampled texture, not a mirror) for the 2 fans where
+        // PosY is one of the always-textured faces. The base face's
+        // flat-color swatch uses kTopSwatchV/kBottomSwatchV when the base is
+        // Y-aligned (matching its "shora"/"zdola" wording) and kMidSwatchV
+        // for the X-aligned 126/129 base, which has no such wording to
+        // anchor to -- confirmed by direct pixel sampling of object-m.png to
+        // be fully opaque at that sample point either way, ruling out a
+        // swatch-alpha cause for any transparency complaint.
         struct FanEntry
         {
             int Icon;
             CubeFace BaseFace;
             CubeFace OpenFace;
             float BaseSwatchV;
+            bool RotateTop180 = false;
         };
 
         constexpr FanEntry kFanEntries[] = {
-            {126, CubeFace::PosX, CubeFace::NegX, kMidSwatchV},    // FanLeft: blows toward -X
-            {129, CubeFace::NegX, CubeFace::PosX, kMidSwatchV},    // FanRight: blows toward +X
-            {132, CubeFace::NegY, CubeFace::PosY, kBottomSwatchV}, // FanUp: blows up
-            {135, CubeFace::PosY, CubeFace::NegY, kTopSwatchV},    // FanDown: blows down
+            {126, CubeFace::NegX, CubeFace::PosX, kMidSwatchV, true},  // FanLeft: blows toward -X
+            {129, CubeFace::PosX, CubeFace::NegX, kMidSwatchV, true},  // FanRight: blows toward +X
+            {132, CubeFace::NegY, CubeFace::PosY, kBottomSwatchV, false}, // FanUp: blows up
+            {135, CubeFace::PosY, CubeFace::NegY, kTopSwatchV, false},    // FanDown: blows down
         };
 
         // Icons needing exactly ONE of the 4 side faces textured (the rest
@@ -302,6 +314,12 @@ namespace GalaxyEggbert::CNA
             outFaces[static_cast<int>(fan.BaseFace)].Visible = true;
             outFaces[static_cast<int>(fan.BaseFace)].Uv = SwatchUv(tileUv, fan.BaseSwatchV);
             outFaces[static_cast<int>(fan.OpenFace)].Visible = false;
+
+            if (fan.RotateTop180)
+            {
+                auto& top = outFaces[static_cast<int>(CubeFace::PosY)];
+                top.Uv = Easy3D::UvRect{top.Uv.U1, top.Uv.V1, top.Uv.U0, top.Uv.V0};
+            }
             return true;
         }
 

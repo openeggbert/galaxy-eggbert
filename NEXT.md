@@ -225,6 +225,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed FanLeft/FanRight's base/open faces (reported reversed after the axis fix), rotated their
+  newly-textured top face 180 degrees, reverted Fan's animation divisor (reported too fast), and
+  root-caused why "elementy" still looked slow (2026-07-09).** Direct live follow-up to the axis fix
+  and the per-type divisor fix, both above.
+  - **Base/open reversed, confirmed and fixed**: `kFanEntries`' `BaseFace`/`OpenFace` for FanLeft
+    (126)/FanRight (129) were swapped (base is now the face AWAY from the blow direction, open is
+    the face the fan blows toward) — the opposite of the first axis fix's assignment, corrected the
+    same day after live visual feedback.
+  - **Top face 180 degree rotation, added**: putting a real texture on `CubeFace::PosY` for the
+    first time (previously only ever holding `SwatchUv` flat colors, never a directional texture)
+    exposed that face's UV corner order doesn't read upright there. New `FanEntry::RotateTop180`
+    flips `PosY`'s `UvRect` (`U0<->U1`, `V0<->V1` — a true 180 degree turn, not a mirror, per
+    `AppendFace`'s corner-to-UV mapping) for the 2 fans where `PosY` is now one of the
+    always-textured faces.
+  - **Swatch alpha ruled out as a "see inside" cause**: direct pixel sampling of `object-m.png` at
+    icon 126/129's `kMidSwatchV` sample point confirms full opacity (alpha 255) either way — the
+    base/blue face was never at risk of the animated-tile alpha-blend fix (above) making it
+    see-through too.
+  - **Fan divisor reverted, root cause of the original mismatch found**: the terrain-speed fix above
+    matched Fan's divisor to `table_decor_ventg/ventd/venth/ventb`'s divisor 1 (50ms) — reported live
+    as "now too fast." Re-reading `Decor.cpp` directly: those 4 tables animate icons **110-125**, a
+    separate wind "particle stream" decor effect — NOT the FanLeft/Right/Up/Down BLOCK icons
+    (126-137) this file actually renders, which have no dedicated `table_decor_*` entry in
+    `Decor.cpp` at all. Reverted Fan to divisor 3 (150ms, same as Water1/Crusher/Marine) for lack of
+    a real per-type source value — same-day mismatch, not a persisting unknown.
+  - **"elementy" still slow, investigated but not further changed**: directly cross-checked every
+    other animated type's new divisor against its real `Decor.cpp` source line (`table_decor_lave`
+    div 2, `_eau1`/`_ecraseur`/`table_marine` div 3, `_piege1`/`_temp` div 4, `_scie` div 1) — all
+    match exactly, unlike the fan mismatch above. No further code bug found for this complaint;
+    flagged to the user as needing a specific icon/screenshot to keep investigating, since the
+    verified-correct rates ARE mobile-eggbert's real (slow, by original-hardware design) rates and
+    matching them exactly is what "faithful remake" requires — further speedup without new evidence
+    of an actual bug would violate that rule.
+  - **Verified**: clean build; `GalaxyEggbertWorldsTests` (63/63); `VerifyBlupiMovement`/
+    `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`); live
+    debug-camera screenshots (reverted before commit, confirmed via `git diff`) of FanLeft from
+    outside its base (west) face show a solid opaque blue riveted metal panel, distinct from the
+    grille-textured side faces — visually consistent with the corrected face assignment.
+
 - **Fixed animated-terrain speed (flat 6fps -> real per-type divisors) and animated-terrain
   transparency (opaque -> alpha-blended) (2026-07-09).** User report, after the billboard alpha fix
   and fan-axis fix above: element animations are *still* too slow and terrain cubes *still* show
