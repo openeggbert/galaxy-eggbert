@@ -248,6 +248,54 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **ROOT-CAUSED AND FIXED the "front/top/side faces don't render" family of bugs (2026-07-10,
+  `../easy-3d` commit `44393f5`): `Easy3D::CubeMesh` wound its 4 side faces backwards for XNA.**
+  User re-reported the missing-faces symptom with two screenshots (a brick pillar showing only
+  2 faces, a staircase see-through to the background from the side) and noted a separate CNA app
+  (MeshCraft) shows similar artifacts, suggesting the bug lives in CNA — analysis found otherwise:
+  - **CNA's culling is correct.** Under XNA's default `RasterizerState::CullCounterClockwise`, the
+    triangles that survive are the ones that appear **visually clockwise on screen** — verified
+    three independent ways: (1) CNA's own contrast-checked `easygl_rasterizerstate_cullmode_test`
+    (runs on both backends, checks both windings under all 3 cull modes) asserts exactly this;
+    (2) real XNA/FNA semantics — FNA SpriteBatch quads are visually CW under that same default,
+    as is XNA's canonical tutorial triangle; (3) live in galaxy-eggbert itself — billboards were
+    invisible until re-wound to visually-CW (`easy-3d@a26df1a`), through the same
+    BasicEffect/default-rasterizer path terrain uses. Also checked: CNA's `feature/graphics`
+    branch (125 commits ahead, separate `../cna_graphics` checkout) does NOT touch the cull
+    mapping — the suspected "maybe already fixed there" turned out to be a no.
+  - **The actual defect**: `Easy3D::CubeMesh`'s `ComputeFaceCorners` wound all faces with the
+    OpenGL-textbook **CCW-from-outside** convention — the exact opposite of XNA's. Every cube
+    side face was therefore culled whenever viewed from outside; scenes "looked right" only
+    because closed cubes showed the **mirrored interiors of their opposite faces** instead
+    (indistinguishable on symmetric brick/stone textures). It broke visibly wherever no opposite
+    face covered the sightline: pillar front faces missing, staircase side views see-through to
+    the background (sightlines exiting through the top faces' culled undersides). Cross-product
+    math on the corner table proved the post-`8ab3854` state was internally inconsistent (4 side
+    faces CCW-from-outside, ±Y CW-from-outside) — geometrically impossible for all 6 to render
+    correctly under any one-sided cull, which was the key tell.
+  - **The two earlier easy-3d reversals (`a26df1a` billboards, `8ab3854` ±Y) were partial fixes
+    of this same root cause** — both "empirically fixed, not root-caused" per their own comments.
+    This completes the set: all 6 cube faces are now CW-from-outside (XNA front-face convention).
+    The chosen corner order (top-left, top-right, bottom-right, bottom-left as seen from outside)
+    also lands U0-left/V0-top on the visible face, so side-face textures now render upright and
+    unmirrored — previously walls showed tiles flipped via the mirrored far face (unnoticeable on
+    bricks, but it means every "looks right" judgment ever made on a side face was made on the
+    wrong face).
+  - **Verified live** (temporary spawn overrides, reverted): the pillar now renders convex with
+    both near faces + correct perspective; the staircase side view is solid stone with no
+    see-through; the tunnel fan's outer face renders upright and readable (fan blades + button
+    panel). Full suite passes (63/63 unit tests + all 4 verify tools), live runs clean on both
+    EasyGL and Vulkan (25/25 terrain samples each). easy-3d's own tests updated (winding
+    regression test now pins all 6 inward normals with the real rationale) and pass 6/6.
+  - **Follow-ups flagged**: (1) the `texture-distance-washout-bug.md` investigation must be
+    re-run — its "geometry/winding proven correct" conclusion was reached while side faces were
+    showing their mirrored opposites (addendum added to that doc); (2) the FanLeft/FanRight
+    base/open face assignments were tuned by live user feedback *under* the winding bug
+    (2026-07-10) and may now be swapped/mirrored — the tunnel fan looks correct in the
+    verification screenshot, but the user should re-check fans in play; (3) MeshCraft's own
+    similar artifacts are consistent with the same GL-convention winding mistake in its own
+    mesher (not analyzed, per user request — but CNA itself needs no fix).
+
 - **Fixed two real, user-reported bugs (2026-07-11): the animation-state icon disappearing
   after ~1s, and a sound-related crash after a while of play.**
   - **Icon disappearing**: `device.SetDepthTestEnabled(true)` (set once near the top of
@@ -1952,6 +2000,9 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 
 | Status | Issue |
 |---|---|
+| **resolved (2026-07-10, root-caused)** | **"Front/top/side faces don't render" — `Easy3D::CubeMesh` wound its cube faces with the OpenGL CCW-from-outside convention, but CNA implements genuine XNA culling (visually-clockwise triangles survive the default `CullCounterClockwise`), so every side face was invisible from outside; scenes showed the mirrored interiors of opposite faces instead, breaking visibly wherever no opposite face covered the sightline (pillars missing front faces, staircases see-through to background).** Fixed at the source (`easy-3d@44393f5` — all 6 faces now CW-from-outside, completing what `a26df1a`/`8ab3854` started empirically); side-face textures now also render upright/unmirrored. Verified live on both backends (§3). CNA itself needs no fix — its cull semantics match real XNA, confirmed against its own cullmode golden test and FNA SpriteBatch winding; CNA `feature/graphics` doesn't change culling either. |
+| **needs re-test after the winding fix (2026-07-10)** | The **texture distance washout** investigation (`texture-distance-washout-bug.md`) was conducted while side faces showed their mirrored opposites — its "geometry/winding proven correct" conclusion is void and the repro must be re-run on top of `easy-3d@44393f5` before resuming (addendum added to the doc). The washout symptom may or may not still exist. |
+| **needs user re-check (2026-07-10)** | FanLeft/FanRight base/open face assignments (`GEDirectionalCubeTiles.cpp`) were tuned via live user feedback *while the winding bug was active* — i.e., judged on mirrored opposite faces. The tunnel fan's outer face looks correct in the post-fix verification screenshot, but fans should be re-checked in play and the assignments swapped back if wrong. |
 | resolved (2026-07-09) | `Easy3D::AppendBillboardMesh`'s fixed vertex winding was back-facing under `GalaxyEggbertCNA`'s default `CullCounterClockwise` rasterizer state, making `MoveObject`/`BigDecor` billboards invisible on screen despite correct vertex/index math. Fixed at the source (`easy-3d@a26df1a`, winding reversed, pinned test updated) — no more per-call `RasterizerState::CullNone` workaround needed anywhere, confirmed via the background quad rendering identically without it (§3). |
 | resolved (2026-07-09) | All ~99 confirmed `DirectionalCube` icons wired up — the last 6 (15-18, 108-109) used this session's ambiguous-icon default since their crops didn't give a confident facing read (§3). |
 | root-caused and substantially mitigated (2026-07-09), not fully eliminated | **Thin blue (sky-clear-color) seam lines along block edges in `GalaxyEggbertCNA`**, originally reported 2026-07-08. Root cause: `GETileAtlas::GetTileUv()` had no UV inset, so bilinear filtering bled the atlas's 1px inter-tile gap in at oblique/close angles (§3) — fixed by reusing `BlockTypes::tileUV()`'s already-proven half-texel inset (previously used only by the historical Simple3D target, never ported to CNA). Measured fix: fully-transparent "hole" pixels at a reproduction screenshot dropped 60% (1217→486 of 384000 total pixels). Residual transparency remains, plausibly ordinary MSAA/silhouette antialiasing (a separate, likely-benign effect) or an inset that's still slightly too small at extreme grazing angles — not investigated further; see §3 for exact numbers. |

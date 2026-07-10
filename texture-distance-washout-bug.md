@@ -1,5 +1,17 @@
 # Texture distance washout bug (unresolved, 2026-07-10)
 
+> **Addendum 2026-07-10 (later the same day): re-test required.** The real root cause of the
+> "missing walls" family of reports was found after this document was written: `Easy3D::CubeMesh`
+> wound all cube **side faces** with the OpenGL CCW-from-outside convention, while CNA implements
+> genuine XNA culling (visually-clockwise triangles survive `CullCounterClockwise`) — so every
+> side face was invisible from outside, and what actually rendered in its place was the mirrored
+> interior of the block's *opposite* face (`../easy-3d` commit `44393f5`, `NEXT.md` §3). That
+> means **everything this investigation observed on side faces was observed on the wrong face**
+> (the far face's interior, one block deeper and mirrored), including this document's claim below
+> that geometry/winding was "proven correct." The distance-washout symptom itself may still be a
+> real, separate sampling bug — but the reproduction must be re-run on top of the winding fix
+> before any of the conclusions below are trusted or the investigation resumed.
+
 ## Summary
 
 A real, confirmed rendering bug in `GalaxyEggbertCNA`: a block face's texture renders correctly
