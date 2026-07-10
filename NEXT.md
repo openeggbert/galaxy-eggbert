@@ -205,13 +205,17 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### What does not work yet
 - `GalaxyEggbertCNA`: no real Blupi model yet (a temporary placeholder exists in third-person mode
-  only, §3), no HUD, no enemy hit/stomp/hazard, no riding a moving platform lift (collision only
-  tests the static terrain grid, not `MobileObjSpec` objects). A first interactive-object system
-  now exists (2026-07-10, §3, `GEInteractionSystem`): platform lift patrol movement, crate push, and
+  only, §3; billboard rendering explicitly rejected 2026-07-10, see §3/plan.md `E3D-MIG-063`), no
+  enemy hit/stomp/hazard, no riding a moving platform lift (collision only tests the static
+  terrain grid, not `MobileObjSpec` objects). A first interactive-object system now exists
+  (2026-07-10, §3, `GEInteractionSystem`): platform lift patrol movement, crate push, and
   treasure/egg/key/level-exit pickup collection (with the real mobile-eggbert sound + removal
   behavior) all genuinely work — see §3 for exactly what is/isn't covered. `BigDecor:` rendering and
   the platform-lift/crate `UniformCube` object path are implemented (2026-07-09, §3). Real sound
-  playback exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV files.
+  playback exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV files. A basic
+  lives foundation + fall-off-world death (2026-07-11, §3) exists but is wired to nothing else yet
+  (no enemy/hazard contact calls `LoseLife()`). HUD is now minimal icon-based only (2026-07-11,
+  §3: life icons, key icons) — no text rendering exists, so no numeric treasure counter/score.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — the last 6 `DirectionalCube` icons (15-18, 108-109) were backfilled
@@ -227,6 +231,58 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Rewrote `plan.md` for the Direct CNA + Easy3D direction, then added a lives foundation +
+  basic icon-based HUD to `GalaxyEggbertCNA` (2026-07-10/11).** User request: start working
+  through `plan.md`'s backlog.
+  - **`plan.md` rewrite**: it still planned around the dead Simple3D → U3D/Urho3D/Nova3D
+    direction. Rewrote around CNA + Easy3D, grounded in the full `mobile-eggbert-reference/`
+    behavioral spec and this file's current status. Dropped the `S3D-*` Simple3D milestones and a
+    ~940-line historical documentation-regeneration log (both still in git history); kept and
+    re-scoped the ~700-item mobile-eggbert feature-parity checklist against `GalaxyEggbertCNA`
+    specifically (old checkboxes recorded Simple3D's status, irrelevant to CNA's); added new
+    forward-looking phases (tile geometry decisions, enemy AI/combat, hazards, full crate/lift
+    fidelity, doors/keys, secret powers/vehicles/remaining pickups) with no prior home in the plan.
+  - **User caught a real design flaw**: `plan.md`'s `E3D-MIG-063` planned to render Blupi himself
+    as a billboard. A billboard always rotates to face the camera — under a free-orbiting
+    third-person camera Blupi would always visually "face the player" regardless of his actual
+    movement direction, since `blupi.png` only has left/right side-view frames drawn for one fixed
+    angle (the same defect already flagged for enemy billboards). Decided: reject the billboard
+    approach outright. First-person (default camera) never sees Blupi's own model anyway; third-
+    person keeps its placeholder Fox model until a real 3D model (`E3D-MIG-069`, now non-optional)
+    is scoped.
+  - **Lives foundation** (`GEInteractionSystem::Lives()`/`LoseLife()`, plan.md `E3D-MIG-130`):
+    starts at 3 (real `GameData` default), egg pickup now grants +1 up to the existing
+    `MAX_EGG_COUNT=10` cap (previously tracked but not actually applied to a life count), and
+    `LoseLife()` replicates the real `DoorsLost()` behavior — resets to 3 on game-over rather than
+    a permanent depletion (no real Lost-screen UI exists yet to make game-over itself visible, so
+    a `GameOverCount()` diagnostic exists for a caller/verification tool to observe it happened).
+  - **Fall-off-world death** (plan.md `E3D-MIG-067` subset): the one hazard needing no per-tile-
+    type work at all — mobile-eggbert-reference/10-blupi-mechanics.md §8 confirms it's checked
+    before hazard tiles are even considered. `GalaxyEggbertCnaGame::Update()` now checks Blupi's Y
+    against a threshold (a simplification of the real grid-row check, safely below every real
+    floor/hazard in the sample world), and on trigger: channel 8 (`07-sounds.md`'s real shared
+    "you died" sound for exactly this cause), `interaction_.LoseLife()`, respawn at the fixed spawn
+    point (not yet the real 10-slot last-safe-position FIFO). No other hazard/enemy type calls
+    `LoseLife()` yet — this is the only wired death cause.
+  - **Basic icon-based HUD** (plan.md HUD-001/005/006/007): life icons (`blupi.png` icon 48,
+    Blupi's head) one per life, bottom-left; key icons (`element.png` 215/222/229, red/green/blue)
+    top-left, shown only while held. No text rendering exists anywhere yet (no `text.png`
+    glyph-atlas layout has been identified — see plan.md MENU-083..087), so numeric HUD elements
+    (treasure "N/total" counter, score, timer) remain unimplemented; counts are shown via icon
+    repetition instead. Reuses `blupiIconBatch_`/`blupiIconTexture_` and the already-loaded
+    `objectTexture_` (element.png) — no new texture loads.
+  - **New diagnostic**: a second one-shot screenshot, `screenshot_hud.png`, written after the full
+    frame (including the new HUD/billboards) — the pre-existing `screenshot.png` is captured
+    earlier, right after the opaque terrain pass, and deliberately doesn't include HUD/billboards.
+  - **Verification**: `VerifyInteractionSystem` extended with lives/game-over assertions (found and
+    fixed a real bug in the new test itself while writing it — a `for (int i = 0; i < interaction.
+    Lives(); ++i)` loop re-evaluated `Lives()` every iteration, so it under-counted once `LoseLife()`
+    started changing it mid-loop; fixed by snapshotting the count once before the loop). Full suite
+    re-run and passing: `GalaxyEggbertWorldsTests` 63/63, `VerifyBlupiMovement`,
+    `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`. Live headless
+    runs on both `build-cna` (EasyGL) and `build-cna-vulkan` confirmed clean (no errors/exceptions,
+    matching block/object/sound counts), `screenshot_hud.png` visually confirms life icons render.
 
 - **Added the first interactive-object system to `GalaxyEggbertCNA` (2026-07-10) — platform lift
   patrol, crate push, and pickup collection now actually work.** User request: start the

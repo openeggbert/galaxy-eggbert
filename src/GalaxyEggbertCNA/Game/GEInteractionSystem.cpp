@@ -214,6 +214,7 @@ namespace GalaxyEggbert::CNA
                     if (lifeEggCount_ < kMaxEggCount)
                     {
                         ++lifeEggCount_;
+                        ++lives_;
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                         obj.active = false;
                     }
@@ -241,6 +242,18 @@ namespace GalaxyEggbert::CNA
         if (!touchingExitThisFrame)
         {
             exitContactActive_ = false;
+        }
+    }
+
+    void GEInteractionSystem::LoseLife()
+    {
+        --lives_;
+        if (lives_ <= 0)
+        {
+            // Real DoorsLost() (Decor.cpp:11716) resets m_nbVies back to 3
+            // on game-over rather than a permanent depletion.
+            lives_ = 3;
+            ++gameOverCount_;
         }
     }
 }

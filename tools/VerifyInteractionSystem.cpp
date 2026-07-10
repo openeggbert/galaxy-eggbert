@@ -92,10 +92,29 @@ int main(int argc, char** argv)
         check(interaction.LifeEggCount() == 1, "egg collected exactly once (LifeEggCount == 1)");
         const auto* after = findFirst(ObjectType::ObjectType6);
         check(after == nullptr || !after->active, "collected egg is no longer active (stops rendering)");
+        check(interaction.Lives() == 4, "egg pickup granted a life (Lives() == 4, started at 3)");
     }
     else
     {
         check(false, "found an egg (ObjectType6) in the sample world");
+    }
+
+    // 1.5 Lives -- LoseLife() decrements, and real DoorsLost() behavior
+    // resets to 3 (not a permanent depletion) once it reaches 0, tracked
+    // via GameOverCount() since no Lost-screen UI exists yet to observe it
+    // any other way.
+    {
+        const int livesBefore = interaction.Lives(); // 4, from the egg above
+        interaction.LoseLife();
+        check(interaction.Lives() == livesBefore - 1, "LoseLife() decrements Lives() by exactly 1");
+        check(interaction.GameOverCount() == 0, "GameOverCount() stays 0 while Lives() > 0");
+        const int livesToLose = interaction.Lives(); // fixed snapshot -- Lives() itself changes below
+        for (int i = 0; i < livesToLose; ++i)
+        {
+            interaction.LoseLife();
+        }
+        check(interaction.Lives() == 3, "Lives() resets to 3 on game-over, not a permanent depletion");
+        check(interaction.GameOverCount() == 1, "GameOverCount() increments exactly once on game-over");
     }
 
     if (const auto* chest = findFirst(ObjectType::ObjectType5))

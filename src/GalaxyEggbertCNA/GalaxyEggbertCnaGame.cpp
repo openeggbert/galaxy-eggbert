@@ -430,6 +430,27 @@ namespace GalaxyEggbert::CNA
             }
             jumpKeyWasDown_ = jumpPressed;
 
+            // Fall-off-world death (2026-07-11, plan.md E3D-MIG-067 subset)
+            // -- mobile-eggbert-reference/10-blupi-mechanics.md §8: "Walking
+            // off the world's bottom row ... -> Clear2", checked before the
+            // rest of the frame runs; channel 8 is the real shared "you
+            // died" sound for exactly this cause (07-sounds.md). kFallDeathY
+            // is a simplification of the real grid-row check -- this
+            // world's real floors/hazards all sit at Y>=0 (the sample
+            // world's water/pit hazard is only 1 block deep), so any Y
+            // clearly below that means Blupi fell through a hole with
+            // nothing under it, not a legitimate low point in the level.
+            // Respawns at the fixed spawn point, NOT the real 10-slot
+            // "last safe position" FIFO (m_blupiValidPos, still open, full
+            // E3D-MIG-067) -- a known simplification.
+            constexpr float kFallDeathY = -5.0f;
+            if (blupi_.GetY() < kFallDeathY)
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel8);
+                interaction_.LoseLife();
+                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+            }
+
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
             // -- platform lift patrol, crate push, pickup collection. Runs
             // after blupi_.Step() so blupi_'s position is this frame's
@@ -1067,6 +1088,109 @@ namespace GalaxyEggbert::CNA
             blupiIconBatch_->Draw(blupiIconTexture_, destRect, srcRect,
                                    Microsoft::Xna::Framework::Color::White);
             blupiIconBatch_->End();
+        }
+
+        // Basic icon-based HUD (2026-07-11, plan.md §2.3 HUD-001/005/006/007)
+        // -- no text rendering exists yet (no font-glyph layout for
+        // Content/icons/text.png has been identified, see MENU-083..087),
+        // so counts are shown as icon repetition (life icons) rather than
+        // "N/total" text, and everything else needing text (treasure
+        // counter, score, etc.) is deferred until that exists. Reuses
+        // blupiIconBatch_/blupiIconTexture_ (blupi.png) for life icons and
+        // objectTexture_ (element.png, already loaded for MoveObject
+        // billboards) for key icons -- both are plain Texture2D instances,
+        // usable by SpriteBatch regardless of which other draw path also
+        // references them.
+        if (blupiIconBatch_)
+        {
+            const auto& viewport = device.getViewportProperty();
+            const int screenH = viewport.getHeightProperty();
+
+            blupiIconBatch_->Begin();
+
+            // HUD-001: life icons (blupi.png icon 48, Blupi's head) x
+            // Lives(), bottom-left row. Same 60px/10-col tile convention as
+            // the animation-state indicator above.
+            {
+                constexpr int kTilePx = 60;
+                constexpr int kCols = 10;
+                constexpr int kLifeIcon = 48;
+                constexpr int kOnScreenSize = 40;
+                constexpr int kSpacing = 44;
+                constexpr int kMargin = 8;
+                const int col = kLifeIcon % kCols;
+                const int row = kLifeIcon / kCols;
+                const Microsoft::Xna::Framework::Rectangle srcRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
+                const int y = screenH - kOnScreenSize - kMargin;
+                const int lives = interaction_.Lives();
+                for (int i = 0; i < lives; ++i)
+                {
+                    const Microsoft::Xna::Framework::Rectangle destRect(
+                        kMargin + i * kSpacing, y, kOnScreenSize, kOnScreenSize);
+                    blupiIconBatch_->Draw(blupiIconTexture_, destRect, srcRect,
+                                           Microsoft::Xna::Framework::Color::White);
+                }
+            }
+
+            // HUD-005/006/007: key icons (element.png icons 215/222/229 --
+            // red/green/blue), top-left row, only drawn while held. Same
+            // 60px/10-col tile convention as GetElementIconUv().
+            {
+                constexpr int kTilePx = 60;
+                constexpr int kCols = 10;
+                constexpr int kOnScreenSize = 36;
+                constexpr int kSpacing = 40;
+                constexpr int kMargin = 8;
+                const struct { int icon; int count; } kKeys[3] = {
+                    {215, interaction_.Key1Count()},
+                    {222, interaction_.Key2Count()},
+                    {229, interaction_.Key3Count()},
+                };
+                int slot = 0;
+                for (const auto& key : kKeys)
+                {
+                    if (key.count <= 0)
+                    {
+                        continue;
+                    }
+                    const int col = key.icon % kCols;
+                    const int row = key.icon / kCols;
+                    const Microsoft::Xna::Framework::Rectangle srcRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
+                    const Microsoft::Xna::Framework::Rectangle destRect(
+                        kMargin + slot * kSpacing, kMargin, kOnScreenSize, kOnScreenSize);
+                    blupiIconBatch_->Draw(objectTexture_, destRect, srcRect,
+                                           Microsoft::Xna::Framework::Color::White);
+                    ++slot;
+                }
+            }
+
+            blupiIconBatch_->End();
+        }
+
+        // One-shot full-frame screenshot, taken here (2026-07-11) rather
+        // than reusing the terrain-only screenshot.png above (captured
+        // right after the opaque terrain pass, before billboards/HUD) --
+        // that one is a deliberately earlier terrain-geometry diagnostic,
+        // not meant to also cover the 2D HUD added above. This one runs
+        // after every draw call in the frame, including the new HUD, so it
+        // can be inspected for visual HUD verification the same way
+        // screenshot.png already is for terrain.
+        static bool hudScreenshotWritten = false;
+        if (!hudScreenshotWritten)
+        {
+            hudScreenshotWritten = true;
+            const auto& viewport = device.getViewportProperty();
+            const int w = viewport.getWidthProperty();
+            const int h = viewport.getHeightProperty();
+            std::vector<Microsoft::Xna::Framework::Color> backBuffer(
+                static_cast<std::size_t>(w) * static_cast<std::size_t>(h),
+                Microsoft::Xna::Framework::Color(0, 0, 0, 0));
+            device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
+            Microsoft::Xna::Framework::Graphics::Texture2D hudScreenshot(device, w, h);
+            hudScreenshot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
+            hudScreenshot.SaveAsPng("screenshot_hud.png");
+            std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
+                      << std::endl;
         }
     }
 

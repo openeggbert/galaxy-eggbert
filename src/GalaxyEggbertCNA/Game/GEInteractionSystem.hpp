@@ -25,12 +25,20 @@ namespace GalaxyEggbert::CNA
     // so this is a fresh, minimal implementation operating directly on
     // GEWorldRuntime's MobileObjSpec list and Blupi's live position.
     //
+    // A basic lives foundation now exists (2026-07-11, LoseLife()/Lives()
+    // below, plan.md E3D-MIG-130) -- just the counter and its real
+    // reset-to-3-on-zero behavior, wired so far only to the one
+    // always-active hazard that needed no per-tile-type work at all
+    // (falling off the world, see GalaxyEggbertCnaGame::Update()). This
+    // does NOT yet unblock full hazard/enemy contact below -- those still
+    // need their own per-type behavior (Phase 14/13), not just a lives
+    // counter to decrement.
+    //
     // NOT yet implemented (deliberately, not an oversight):
     //  - Enemy hit/stomp/hazard (ObjectType2/3/16/17/20/32/33/44/54/96) --
-    //    mobile-eggbert's real hazard/stomp behavior only means something
-    //    once a lives/gauge/respawn system exists, and none does yet in
-    //    GalaxyEggbertCNA; a stomp animation with no lives to lose would be
-    //    inventing a hollow, partial version of the mechanic.
+    //    real per-type behavior (patrol/attack/contact rules) doesn't exist
+    //    yet, not just the lives system it would have needed (that part is
+    //    now done, see above).
     //  - Riding a moving platform lift (ObjectType1/47/48) -- platforms now
     //    genuinely patrol (see Update()), but GEBlupiController's collision
     //    only tests the static terrain grid, not MobileObjSpec objects, so
@@ -62,6 +70,26 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int Key3Count() const noexcept { return keys3_; }
         [[nodiscard]] int LifeEggCount() const noexcept { return lifeEggCount_; }
 
+        // Real mobile-eggbert m_nbVies (lives) tracking (2026-07-11, plan.md
+        // E3D-MIG-130): starts at 3 (GameData default,
+        // mobile-eggbert-reference/11-save-and-progression.md), incremented
+        // by egg pickups up to MAX_EGG_COUNT=10 (see the ObjectType6 case in
+        // Update() -- lifeEggCount_ above is both "eggs collected so far"
+        // and the gate counter, same single value mobile-eggbert itself
+        // uses). Call LoseLife() on any death; a caller decides which sound
+        // channel fits the specific death cause (channel 8 generic/fall/
+        // lava/electric, 26 drowning, 51 glue per
+        // mobile-eggbert-reference/07-sounds.md) and plays it itself --
+        // LoseLife() only manages the counter.
+        void LoseLife();
+        [[nodiscard]] int Lives() const noexcept { return lives_; }
+        // Diagnostic only: real DoorsLost() (Decor.cpp:11716) resets
+        // m_nbVies back to 3 on game-over rather than a permanent
+        // depletion -- no real Lost-screen UI exists yet (plan.md
+        // MENU-053..057) to make a game-over user-visible, so this counter
+        // is how a caller/verification tool can observe it happened.
+        [[nodiscard]] int GameOverCount() const noexcept { return gameOverCount_; }
+
     private:
         int treasuresCollected_ = 0;
         int totalTreasures_ = -1; // computed lazily on first Update() call
@@ -70,10 +98,12 @@ namespace GalaxyEggbert::CNA
         int keys1_ = 0;
         int keys2_ = 0;
         int keys3_ = 0;
-        // Mirrors mobile-eggbert's m_nbVies for the one thing that matters
-        // here (egg pickup's MAX_EGG_COUNT=10 gate) -- not a real lives/
-        // gauge system (no game-over, no HUD), just the counter that gate
-        // needs to be faithful.
+        // Eggs collected so far -- also the MAX_EGG_COUNT=10 gate counter
+        // (mobile-eggbert uses a single m_nbVies-driven value for both;
+        // kept separate here only so lives_ can start at its own real
+        // default of 3 while this stays a pure 0..10 egg tally).
         int lifeEggCount_ = 0;
+        int lives_ = 3; // real GameData default (11-save-and-progression.md)
+        int gameOverCount_ = 0;
     };
 }

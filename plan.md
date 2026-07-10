@@ -43,6 +43,13 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
   treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
   sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
+- **Lives + fall death** (`E3D-MIG-130`/`067` subset, 2026-07-11): `lives_` starts at 3, eggs
+  grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real `DoorsLost()` behavior, not
+  a permanent depletion). Wired to one real hazard: falling off the world (real Clear2 case,
+  channel 8 death sound, respawn at the fixed spawn point — not yet the real 10-slot
+  last-safe-position FIFO). No other hazard/enemy contact calls `LoseLife()` yet.
+- **Basic HUD** (2026-07-11): icon-based only (no text rendering exists) — life icons
+  (bottom-left, one per life) and key icons (top-left, shown only while held).
 - **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
   real per-channel volume/conflict table, wired to jump/land/footstep.
 - **Camera**: first-person default + third-person (placeholder GPU-skinned model) toggle,
@@ -60,9 +67,13 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   explicitly rejected 2026-07-10 (a billboard always faces the camera, which would look wrong for
   the fixed-angle `blupi.png` sprite under a free third-person orbit); a real 3D model
   (`E3D-MIG-069`) is now the only planned path to a visible Blupi, third-person only.
-- **No HUD** beyond the temporary debug indicator.
+- **HUD is minimal** — icon-based only (life icons bottom-left, key icons top-left when held),
+  no text rendering exists (no `text.png` glyph layout identified yet), so no numeric treasure
+  counter/score/timer.
 - **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
-  deferred pending a lives/gauge/respawn system that doesn't exist yet.
+  deferred pending full per-type hazard/enemy behavior (Phase 13/14). A basic lives foundation
+  now exists (`E3D-MIG-130`, 2026-07-11) and is wired to the one hazard needing no per-type work
+  (falling off the world), but that's it — enemy contact still does nothing.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -171,10 +182,14 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       engine-appropriate approximation, not yet cross-checked against these real values.
 - [ ] `066` Turning-duration-per-mode table (Normal/Air 6 ticks, Overcraft/Jeep 7, Helicopter/
       Swim/Surf/Suspended 10, Tank 12, Skateboard 14).
-- [ ] `067` Death/respawn: hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1,
-      Fan→Clear1/Clear2 coinflip, Trap/Drip→Glu), fixed animation durations, 10-slot
-      "safe position" FIFO respawn (oldest entry used, ~0.5s buffer), fall->1000px = instant
-      fatal bypassing lives. Depends on `E3D-MIG-150` (lives/gauge foundation).
+- [~] `067` Death/respawn: **fall-off-world case done** (2026-07-11, real Clear2 case — no
+      per-tile-type work needed, checked before hazard tiles per the real source too) —
+      `GalaxyEggbertCnaGame::Update()` triggers `LoseLife()` + channel 8 sound + fixed-point
+      respawn when Y drops below a threshold. Still missing: the full hazard→action table
+      (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/Clear2 coinflip, Trap/Drip→Glu, each
+      depends on its own hazard from Phase 14), fixed per-action animation durations, the real
+      10-slot "safe position" FIFO respawn (oldest entry used, ~0.5s buffer — currently a single
+      fixed spawn point), fall->1000px = instant fatal bypassing lives.
 - [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
       small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
 - [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful
@@ -219,9 +234,11 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 
 ### Phase 9 — HUD (`E3D-MIG-090`-`093`)
 
-- [ ] `090`-`093` Minimal lives/world/treasure HUD using CNA `SpriteBatch`, reusing real HUD
-      assets (`pad.png`, `jauge.png`). Avoid building a UI framework — a HUD is a handful of
-      sprite draws keyed to game state, not a system. Not started.
+- [~] `090`-`093` Minimal lives/world/treasure HUD using CNA `SpriteBatch`. **Started 2026-07-11**:
+      life icons + key icons (see `## 2.3 HUD-001/005/006/007`), reusing existing textures already
+      loaded elsewhere (`blupi.png`, `element.png`), not `pad.png`/`jauge.png` yet. Avoid building
+      a UI framework — a HUD is a handful of sprite draws keyed to game state, not a system.
+      Treasure/world/score text still needs `pad.png`/`jauge.png` plus text rendering, not started.
 
 ### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
 
@@ -247,11 +264,11 @@ Nothing here is started. mobile-eggbert-reference/04-enemy-behavior.md and
 /12-hazards-and-interactables.md are the source of truth; do not invent stomp/hit feel not
 documented there.
 
-- [ ] `130` Lives/gauge/respawn foundation — a prerequisite for ANY enemy contact having a
-      real consequence (currently deliberately absent, per `GEInteractionSystem`'s own scope
-      note: "a stomp animation with no lives to lose would be inventing a hollow, partial
-      version of the mechanic"). Default 3 lives, cap raised via eggs (already tracked,
-      `MAX_EGG_COUNT=10`).
+- [x] `130` Lives/gauge/respawn **foundation** done (2026-07-11): `GEInteractionSystem::Lives()`/
+      `LoseLife()`, default 3, +1 per egg up to `MAX_EGG_COUNT=10`, real reset-to-3-on-zero
+      (`DoorsLost()`) behavior — verified via `VerifyInteractionSystem`. This only unblocks per-type
+      enemy work (`131`-`137`) and hazards (Phase 14) to actually call `LoseLife()` — none of them
+      do yet (still `[ ]` below), so enemy contact still does nothing.
 - [ ] `131` Shared patrol-turn cycle (4-phase dwell/walk/dwell/walk, direction mirrored by
       posStart.X vs posEnd.X) — most enemy types share this, implement once, reuse.
 - [ ] `132` Generic hazard types 2/3 (simple icon-cycling, kill-on-contact; type3 has
@@ -571,13 +588,13 @@ otherwise noted.
 CNA has no real HUD yet — only a temporary 2D debug anim-state indicator. Every item below is
 reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 
-- [ ] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row
-- [ ] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout
-- [ ] HUD-003 — Treasure counter "N/total" text, bottom-centre panel
+- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11)
+- [ ] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout; current CNA impl (HUD-001) draws one icon per life uncapped, no overflow text (no text rendering exists at all yet, see MENU-083..087)
+- [ ] HUD-003 — Treasure counter "N/total" text, bottom-centre panel — blocked on text rendering (no `text.png` glyph layout identified yet)
 - [ ] HUD-004 — Panel background behind treasure counter (pad.png icon 15, opacity 0.6)
-- [ ] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held
-- [ ] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held
-- [ ] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held
+- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11, top-left row, not the original's unspecified position)
+- [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held (CNA, 2026-07-11)
+- [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held (CNA, 2026-07-11)
 - [ ] HUD-008 — Shield timer gauge (jauge.png yellow fill) — visible when shield active
 - [ ] HUD-009 — Score display (text label, top-right area)
 - [ ] HUD-010 — World name + elapsed level timer
