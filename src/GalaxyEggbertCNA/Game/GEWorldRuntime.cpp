@@ -136,6 +136,10 @@ namespace GalaxyEggbert::CNA
                     spec.posEndX += 2.0f;
                 }
 
+                spec.currentX = spec.posStartX;
+                spec.currentY = spec.posStartY;
+                spec.currentZ = spec.posStartZ;
+
                 mobileObjects_.push_back(spec);
                 continue;
             }
@@ -232,6 +236,9 @@ namespace GalaxyEggbert::CNA
             spec.posEndY = record.posEndY;
             spec.posEndZ = record.posEndZ - static_cast<float>(kWorldCenterZ);
             spec.speed = record.speed;
+            spec.currentX = spec.posStartX;
+            spec.currentY = spec.posStartY;
+            spec.currentZ = spec.posStartZ;
             mobileObjects_.push_back(spec);
         }
         return true;

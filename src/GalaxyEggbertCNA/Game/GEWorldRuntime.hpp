@@ -31,6 +31,21 @@ namespace GalaxyEggbert::CNA
         // their own "no per-instance animation timers exist yet" comments
         // -- finally animate instead of being frozen at phase=0.
         float phase = 0.0f;
+
+        // Live state (2026-07-10, interactive object system -- see
+        // GEInteractionSystem). current{X,Y,Z} start equal to posStart and
+        // move independently for patrolling platforms (ObjectType1/47/48)
+        // and pushed crates (ObjectType12); rendering uses these, not
+        // posStart, so movement is actually visible. direction is the
+        // patrol direction (+1 = heading toward posEnd, -1 = heading back
+        // toward posStart), matching GalaxyEggbertSimple3D's own
+        // GEDecorSystem::ObjState::direction. active is false once a
+        // one-shot pickup (egg/key) has been collected -- posStart/posEnd
+        // stay untouched either way, since they're the object's real path
+        // bounds, not its current position.
+        float currentX = 0.0f, currentY = 0.0f, currentZ = 0.0f;
+        float direction = 1.0f;
+        bool active = true;
     };
 
     // Minimal mobile-eggbert .txt world-file loader for the CNA/Easy3D target.
@@ -102,6 +117,11 @@ namespace GalaxyEggbert::CNA
         // see 15-3d-render-mapping-design.md §5 and
         // GEObjectIcons::IsUniformCubeObject.
         [[nodiscard]] const std::vector<MobileObjSpec>& GetMobileObjects() const { return mobileObjects_; }
+
+        // Mutable access for GEInteractionSystem (2026-07-10) -- patrol
+        // movement, crate push, and pickup collection all need to modify
+        // live object state in place every frame.
+        [[nodiscard]] std::vector<MobileObjSpec>& GetMobileObjectsMutable() { return mobileObjects_; }
 
     private:
         std::unique_ptr<Worlds::World> world_;

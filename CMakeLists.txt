@@ -286,6 +286,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         src/GalaxyEggbertCNA/Game/GESound.cpp
+        src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -426,6 +427,33 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     endif()
 
     message(STATUS "GalaxyEggbertCNA target enabled (renders terrain, no gameplay yet).")
+
+    # Scripted verification for GEInteractionSystem (2026-07-10, platform
+    # lift patrol/crate push/pickup collection) against the real
+    # worlds3d/world001.vwr sample world. Needs CNA linked (GESound touches
+    # Microsoft::Xna::Framework::Audio types) but not easy3d/SDL3main --
+    # GESound::LoadContent() is never called, so no live audio device is
+    # exercised at runtime, only symbols resolved at link time. Run from the
+    # repo root (relative default path "worlds3d/world001.vwr"), same
+    # quirk as VerifyBlupiMovement.
+    add_executable(VerifyInteractionSystem
+        tools/VerifyInteractionSystem.cpp
+        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        src/GalaxyEggbertCNA/Game/GESound.cpp
+        src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
+        ${GE_SHARED_SOURCES}
+    )
+    target_include_directories(VerifyInteractionSystem PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+    )
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
+        target_link_libraries(VerifyInteractionSystem PRIVATE
+            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
+            SHARP_RUNTIME)
+    else()
+        target_link_libraries(VerifyInteractionSystem PRIVATE CNA SHARP_RUNTIME)
+    endif()
 
 endif() # GALAXY_EGGBERT_BUILD_CNA
 

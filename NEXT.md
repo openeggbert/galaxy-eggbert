@@ -205,13 +205,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### What does not work yet
 - `GalaxyEggbertCNA`: no real Blupi model yet (a temporary placeholder exists in third-person mode
-  only, §3), no HUD, no real gameplay logic (all expected at this phase — no interactive object
-  system yet, so platform lifts/crates render correctly but don't move or respond to Blupi, and
-  pickup/key/hazard sounds aren't wireable yet either — see below). `BigDecor:` rendering and the
-  platform-lift/crate `UniformCube` object path are now both implemented (2026-07-09, §3). Real
-  sound playback now exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV
-  files, wired up for the 3 events that ARE currently triggerable: jump, landing, and a footstep
-  loop while marching.
+  only, §3), no HUD, no enemy hit/stomp/hazard, no riding a moving platform lift (collision only
+  tests the static terrain grid, not `MobileObjSpec` objects). A first interactive-object system
+  now exists (2026-07-10, §3, `GEInteractionSystem`): platform lift patrol movement, crate push, and
+  treasure/egg/key/level-exit pickup collection (with the real mobile-eggbert sound + removal
+  behavior) all genuinely work — see §3 for exactly what is/isn't covered. `BigDecor:` rendering and
+  the platform-lift/crate `UniformCube` object path are implemented (2026-07-09, §3). Real sound
+  playback exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV files.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — the last 6 `DirectionalCube` icons (15-18, 108-109) were backfilled
@@ -227,6 +227,62 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Added the first interactive-object system to `GalaxyEggbertCNA` (2026-07-10) — platform lift
+  patrol, crate push, and pickup collection now actually work.** User request: start the
+  interactive-object system. New `src/GalaxyEggbertCNA/Game/GEInteractionSystem.{hpp,cpp}`.
+  - **`MobileObjSpec` gained live state** (`GEWorldRuntime.hpp`): `current{X,Y,Z}` (starts equal to
+    posStart, moves independently — every render loop in `GalaxyEggbertCnaGame.cpp` now reads these
+    instead of the static `posStart{X,Y,Z}`, so movement is actually visible), `direction` (patrol
+    ping-pong), `active` (false once a one-shot pickup is collected — skipped by every render loop
+    too, so it stops rendering). `GetMobileObjectsMutable()` added alongside the existing const
+    accessor.
+  - **A real, live bug found and fixed the same session it was introduced**: the platform lift added
+    in today's earlier world-redesign commit was placed via a `place()` helper that always sets
+    `posEnd == posStart` — zero patrol range, so it would have sat permanently stationary despite
+    the new patrol code. Caught by the new `VerifyInteractionSystem` tool (see below), not by eye;
+    fixed in `tools/GenerateSampleWorld3D.cpp` with a real path (plateau y=4 to crow's-nest y=8),
+    `.vwr` regenerated.
+  - **A real `ObjectType12` identity question resolved before implementing crate push**: `mobile-
+    eggbert-reference/03-objects.md` labels `ObjectType12` "Explosion/visual effect", which would
+    have made "crate push" an invented mechanic for a wrong type. Resolved by checking
+    `GalaxyEggbertSimple3D`'s already-shipped, real `GEDecorSystem.cpp`, whose crate-push code
+    explicitly cites the real mobile-eggbert function name `TestPushCaisse` for `ObjectType12` —
+    trusted over the reference doc's icon/channel-only guess, since it cites an actual verified
+    function name, not an inference.
+  - **Behavior ported from 2 sources, not 1**: patrol ping-pong movement and crate push (X-axis
+    only, adjacency/lane/floor-support/occupancy checks, 0.4s-equivalent cooldown via per-frame
+    re-checking) come from `GEDecorSystem.cpp`'s proven logic. Pickup semantics (which sound, whether
+    the object is actually removed) come from the more carefully-researched `mobile-eggbert-
+    reference/13-object-pickups.md`/`07-sounds.md` instead, which **corrects 2 real mistakes**
+    `GEDecorSystem.cpp`/its own `GESound` shortcuts would have propagated: (1) mobile-eggbert deletes
+    every pickup immediately on contact ("the world object is deleted immediately" — Simple3D's
+    `GEDecorSystem` never actually removes treasure/exit, apparently a real gap in that code, not
+    intentional), so treasure now correctly disappears too, unlike Simple3D; (2) the real sound
+    channels are 11 (treasure/key, or 19 for the set-completing treasure) and 3 (egg), not `GESound`'s
+    own `PlayCollect()`/`PlayKey()` → channel 10 and `PlayLife()` → channel 42 (42 is Shield
+    activation, unrelated) — this implementation calls `sound.Play(SoundChannel::SoundChannelN)`
+    directly with the correct channels rather than reusing those specific shortcuts. Egg pickup also
+    replicates the real `MAX_EGG_COUNT = 10` cap (`Decor.cpp:96` — at the cap, touching an egg does
+    nothing at all, not even removed). Level-exit goal is gated on having all treasure (win fanfare,
+    channel 14, vs. rejection sound, channel 13), debounced to fire once per contact rather than
+    every frame, and — unlike the pickups — stays active/visible, since it's a goal marker you touch,
+    not a consumable.
+  - **Explicitly NOT implemented yet** (see `GEInteractionSystem.hpp`'s class comment for the full
+    reasoning): enemy hit/stomp/hazard (no lives/gauge/respawn system exists to make it meaningful),
+    riding a moving platform lift (`GEBlupiController`'s collision only tests the static terrain
+    grid, not `MobileObjSpec` objects — needs its own collision-system work), and every `IsPickup()`
+    type beyond treasure/egg/keys/exit (helicopter, shield, drink, vehicles, etc. — not placed in
+    today's sample world, deferred).
+  - **New `tools/VerifyInteractionSystem.cpp`** (registered in `CMakeLists.txt`, links `CNA` for
+    `GESound`'s audio types but never calls `LoadContent()` so no live audio device is exercised) —
+    scripted checks against the real sample world: platform lift `currentY` actually changes over
+    simulated time, egg/chest/key each collect exactly once (counter increments, `active` flips
+    false, doesn't re-trigger on subsequent frames), crate `currentX` increases after a simulated
+    push approach. This is what caught the platform-lift zero-patrol-range bug above.
+  - **Verified**: clean build; `GalaxyEggbertWorldsTests` (63/63); `VerifyBlupiMovement`/
+    `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna`/`VerifyInteractionSystem` (all `ALL CHECKS
+    PASSED`); live headless run, no crash/errors, matching MoveObject/block counts.
 
 - **Added real sound playback to `GalaxyEggbertCNA` (2026-07-10) — first sound support on this
   target.** User request: reuse mobile-eggbert's sounds directly, then integrate them. New

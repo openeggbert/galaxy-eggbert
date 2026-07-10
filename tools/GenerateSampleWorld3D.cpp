@@ -191,10 +191,21 @@ int main(int argc, char** argv)
         PlaceMoveObject(world, record);
     };
 
-    // The 2 platform lifts placed above as real terrain features (staircase
-    // hill lift, tunnel is flat so no lift there) -- the actual MoveObject
-    // records driving them.
-    place(ObjectType::ObjectType1, 50.0f, 4.0f, 28.0f); // plateau -> crow's-nest lift
+    // The one platform lift in this world (north hill's plateau -> crow's-
+    // nest, see the fill() calls above) -- the actual MoveObject record
+    // driving it. Uses PlaceMoveObject directly, NOT the place() helper
+    // above, since a lift needs a real posStart != posEnd patrol path --
+    // place() always sets them equal (fixed 2026-07-10: this lift was
+    // originally placed via place(), giving it zero patrol range and
+    // making it sit permanently stationary despite GEInteractionSystem's
+    // real patrol movement, caught by tools/VerifyInteractionSystem.cpp).
+    {
+        MoveObjectRecord lift;
+        lift.type = ObjectType::ObjectType1;
+        lift.posStartX = 50.0f; lift.posStartY = 4.0f; lift.posStartZ = 28.0f;
+        lift.posEndX = 50.0f;   lift.posEndY = 8.0f;   lift.posEndZ = 28.0f;
+        PlaceMoveObject(world, lift);
+    }
 
     // North hill: 2 eggs + 1 chest along the ascent, 1 wasp patrolling the
     // plateau, 1 more chest + the level-exit goal in the crow's-nest.

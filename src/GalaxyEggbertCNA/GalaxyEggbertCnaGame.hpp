@@ -6,6 +6,7 @@
 #include "Game/GEBlupiController.hpp"
 #include "Game/GEObjectIcons.hpp"
 #include "Game/GESound.hpp"
+#include "Game/GEInteractionSystem.hpp"
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
@@ -149,6 +150,10 @@ namespace GalaxyEggbert::CNA
         GESound sound_;
         bool jumpKeyWasDown_ = false;
         float stepSoundTimer_ = 0.0f;
+
+        // Platform lift patrol, crate push, and pickup collection
+        // (2026-07-10, see GEInteractionSystem.hpp).
+        GEInteractionSystem interaction_;
 
         // Interim 2D animation-state indicator (bottom-right corner) while
         // no 3D Blupi model exists (2026-07-05) — blupi.png, drawn via

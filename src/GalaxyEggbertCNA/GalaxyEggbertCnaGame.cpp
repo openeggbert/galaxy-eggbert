@@ -394,15 +394,14 @@ namespace GalaxyEggbert::CNA
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
+            const float blupiXBeforeStep = blupi_.GetX();
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, dt);
 
-            // Real mobile-eggbert jump/land/footstep sounds (2026-07-10) --
-            // the only Blupi-movement sound events currently triggerable;
-            // there's no interactive-object system yet for pickup/hazard/key
-            // sounds (see GESound.hpp). jumpPressed is edge-detected the same
-            // way "C" is below, gated on wasOnGround so holding the key while
-            // airborne doesn't replay the jump sound.
+            // Real mobile-eggbert jump/land/footstep sounds (2026-07-10).
+            // jumpPressed is edge-detected the same way "C" is below, gated
+            // on wasOnGround so holding the key while airborne doesn't
+            // replay the jump sound.
             if (jumpPressed && !jumpKeyWasDown_ && wasOnGround)
             {
                 sound_.PlayJump();
@@ -430,6 +429,15 @@ namespace GalaxyEggbert::CNA
                 stepSoundTimer_ = 0.0f;
             }
             jumpKeyWasDown_ = jumpPressed;
+
+            // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
+            // -- platform lift patrol, crate push, pickup collection. Runs
+            // after blupi_.Step() so blupi_'s position is this frame's
+            // final value; blupiXBeforeStep lets the interaction system
+            // infer movement direction for crate push without
+            // GEBlupiController needing a velocity accessor.
+            interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                 blupi_.GetX() - blupiXBeforeStep, sound_);
 
             // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
             // detected (same pattern as demo_avatar's Space-toggle) so a
@@ -629,14 +637,14 @@ namespace GalaxyEggbert::CNA
                 std::vector<std::uint32_t> cubeIndices;
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
-                    if (!IsUniformCubeObject(obj.type))
+                    if (!IsUniformCubeObject(obj.type) || !obj.active)
                     {
                         continue;
                     }
                     const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                     Easy3D::CubeItem item;
                     item.Center = Easy3D::CubeBatch::Vector3(
-                        obj.posStartX, obj.posStartY + kObjectCubeGroundOffset, obj.posStartZ);
+                        obj.currentX, obj.currentY + kObjectCubeGroundOffset, obj.currentZ);
                     item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
                     item.Uv = tileAtlas_.GetTileUv(icon);
                     Easy3D::AppendCubeMesh(item, cubeVertices, cubeIndices);
@@ -818,7 +826,7 @@ namespace GalaxyEggbert::CNA
                 // part of its cycle on element.png -- this loop must pick it
                 // up during that window, not skip it forever.
                 const int objPhase = static_cast<int>(obj.phase);
-                if (IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type) ||
+                if (!obj.active || IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type) ||
                     IsExploPngSourced(obj.type) || IsBlupiPngSourcedAtPhase(obj.type, objPhase))
                 {
                     continue;
@@ -826,7 +834,7 @@ namespace GalaxyEggbert::CNA
                 const int icon = GetObjIcon(obj.type, objPhase);
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -862,14 +870,14 @@ namespace GalaxyEggbert::CNA
             constexpr float kObjectGroundOffset = 1.0f; // matches the element.png batch above
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
-                if (!IsObjectMPngSourced(obj.type))
+                if (!obj.active || !IsObjectMPngSourced(obj.type))
                 {
                     continue;
                 }
                 const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                 const auto uv = tileAtlas_.GetTileUv(icon);
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     uv);
             }
@@ -904,14 +912,14 @@ namespace GalaxyEggbert::CNA
             constexpr float kObjectGroundOffset = 1.0f; // matches the batches above
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
-                if (!IsExploPngSourced(obj.type))
+                if (!obj.active || !IsExploPngSourced(obj.type))
                 {
                     continue;
                 }
                 const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                 const auto uv = GetExploIconUv(icon);
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -949,7 +957,7 @@ namespace GalaxyEggbert::CNA
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 const int objPhase = static_cast<int>(obj.phase);
-                if (!IsBlupiPngSourcedAtPhase(obj.type, objPhase))
+                if (!obj.active || !IsBlupiPngSourcedAtPhase(obj.type, objPhase))
                 {
                     continue;
                 }
@@ -957,7 +965,7 @@ namespace GalaxyEggbert::CNA
                 const auto uv = GetBlupiIconUv(icon);
                 auto& batch = UsesBlupi1Texture(obj.type) ? blupi1Batch : blupiBatch;
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.posStartX, obj.posStartY + kObjectGroundOffset, obj.posStartZ),
+                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
