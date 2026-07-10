@@ -225,6 +225,34 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **New confirmed bug, NOT yet fixed: side-face textures wash out to a flat, wrong gray at a
+  distance (2026-07-10).** Live follow-up after the `+Y`/`-Y` winding fix directly below — user
+  reported "two side walls missing" on a fresh screenshot of the sample-world demo row. Investigated
+  and found something more specific than missing geometry:
+  - Debug prints confirmed the affected face (icon 25, `NegZ`) has `Visible=true` and a correct UV
+    rect that maps to the real, detailed source texture (confirmed via direct `object-m.png` pixel
+    sampling — a blue/white-striped/dark-barred design, no flat gray anywhere in it).
+  - A live A/B distance test on the exact same face (camera on the same line, only distance changed)
+    showed the real texture rendering correctly at ~5 units, degrading to a uniform flat
+    `(211,211,211)` gray at ~12 units — confirmed via direct rendered-pixel sampling, not just visual
+    impression.
+  - **Ruled out**: geometry/winding (already proven correct — this is a texture-sampling symptom, the
+    face's shape/position is right), classic texture-atlas mip-bleed (the atlas texture's `MinFilter`
+    is plain `Linear`, not a mipmap variant — no mip chain is even generated, per `../easy-gl`'s
+    `Texture.cpp`), fog (`BasicEffect::fogEnabled_` defaults `false` and galaxy-eggbert never sets it).
+  - **Not yet root-caused.** Went as far as tracing `../cna`'s EasyGL backend's
+    `ApplySamplerState`/`Texture.cpp` (texture creation always sets non-mipmap `Linear` min/mag
+    filter + `ClampToEdge`; the default `SamplerState` filter value also resolves to non-mipmap
+    `Linear` there, not a mipmap variant as first suspected — that specific theory was checked and
+    disproven, not confirmed). The exact mechanism causing a *correct* nearby sample to degrade into a
+    flat, unrelated color specifically as view distance increases remains unexplained. Going further
+    means debugging `../cna`'s own graphics backend, which — per project memory — a separate Claude
+    Code agent is actively working on in a sibling directory; deliberately stopped here rather than
+    touching that repo without checking with the user first.
+  - All debug prints and camera overrides used for this investigation were reverted before finishing
+    (confirmed via `git diff`/`git status` — clean, nothing committed for this entry, investigation
+    only).
+
 - **Found and fixed the real "see inside the cube" root cause: `+Y`/`-Y` `Easy3D::CubeMesh` faces
   were wound backwards, invisible under CNA's real default cull state (2026-07-10, fixed in
   `../easy-3d`).** The prior day's isolated-geometry test (below) only used `RasterizerState::
