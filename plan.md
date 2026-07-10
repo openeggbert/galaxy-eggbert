@@ -56,8 +56,10 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
 ### Not yet working
 
 - **No visible Blupi** — collision-only point in first-person (a temporary 2D sprite HUD
-  indicator stands in); third-person has only a placeholder Fox model. This is the single
-  biggest open gap.
+  indicator stands in); third-person has only a placeholder Fox model. Billboard rendering was
+  explicitly rejected 2026-07-10 (a billboard always faces the camera, which would look wrong for
+  the fixed-angle `blupi.png` sprite under a free third-person orbit); a real 3D model
+  (`E3D-MIG-069`) is now the only planned path to a visible Blupi, third-person only.
 - **No HUD** beyond the temporary debug indicator.
 - **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
   deferred pending a lives/gauge/respawn system that doesn't exist yet.
@@ -147,12 +149,21 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `BlupiRect`/`BlupiAdjust`/`BlupiBloque` system. Verified via `VerifyBlupiMovement`.
 - [x] `061`/`062` `Easy3D::BillboardBatch`/`BillboardMeshRenderer` exist, used for
       `MoveObject`/`BigDecor` billboards.
-- [ ] `063` **Render Blupi himself** as a billboard using `blupi.png`/`blupi1.png` — the
-      machinery has existed since 2026-07-06 and has never been wired to Blupi. Single most
-      consequential open gap in the whole project.
-- [ ] `064` `[?]` Blupi animation-state machine (`AnimState` → real per-tick sprite frame) via
-      `table_blupi` — needs explicit user approval to transcribe table data per `easy3d.md`
-      §5.4/§5.7 (load-bearing animation-frame data, not casual "just data").
+- [x] `063` **Rejected 2026-07-10, decided by user**: do NOT render Blupi himself as a billboard.
+      `blupi.png`/`blupi1.png` only have left/right side-view frames drawn for one fixed viewing
+      angle; a billboard always rotates to face the camera, so under a free-orbiting third-person
+      camera Blupi would visibly always "face the player" regardless of his real movement
+      direction or the camera's actual angle — the same defect already flagged for enemy
+      billboards at `E3D-MIG-179`, just worse here because the player directly controls the
+      camera around Blupi. First-person (the default camera) never sees Blupi's own model at all,
+      so no billboard is needed there either. Superseded by `069` (real 3D model, third-person
+      only) — until that exists, third-person keeps its placeholder Fox model, and first-person
+      stays invisible-collision-point-only. Do not revisit without a new user decision.
+- [ ] `064` Blupi animation-state machine (`AnimState` → real state timing) via `table_blupi` —
+      re-scoped 2026-07-10: no longer about selecting 2D sprite frames (billboard rejected, see
+      `063`), instead about driving a real 3D model's animation clips once `069` exists. Still
+      needs explicit user approval to transcribe `table_blupi`'s timing/state data per
+      `easy3d.md` §5.4/§5.7 (load-bearing data, not casual "just data"). Blocked on `069`.
 - [ ] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
       +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
       Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to
@@ -166,8 +177,11 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       fatal bypassing lives. Depends on `E3D-MIG-150` (lives/gauge foundation).
 - [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
       small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
-- [ ] `069` `[?]` 3D Blupi model (optional, later) and camera-mode switching refinement —
-      explicitly not required for first playable gameplay parity.
+- [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful
+      Blupi per the `063` decision, not merely optional polish. First-person intentionally stays
+      without a visible model (matches the existing default camera; the player never sees it).
+      No timeline set; the current placeholder Fox model remains the third-person stand-in until
+      this is scoped.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
@@ -1327,7 +1341,10 @@ doesn't silently re-open them or silently guess an answer:
   render, `E3D-MIG-515`, is currently plannable without it).
 - `[?]` **Enemy billboard walk-cycle direction mismatch** — enemy sprites only have left/right
   side-view frames; no resolution proposed for how they should look when viewed at an oblique
-  angle in true 3D (`E3D-MIG-179`).
+  angle in true 3D (`E3D-MIG-179`). The equivalent question for Blupi himself is **resolved**
+  (2026-07-10): billboard rejected outright, real 3D model required instead (`E3D-MIG-069`) —
+  but enemies don't have that option yet (no enemy 3D models exist or are planned), so this
+  remains genuinely open for them.
 - The **7 partial-support `ObjectType`s** (jeep/secret-exit/skateboard/suction-cup/mirror/
   balloon/dynamite) already have fully-documented behavior (see `13-object-pickups.md`) and are
   simply not yet prioritized — folded into `E3D-MIG-171`-`176`, not a research gap, just an
