@@ -1403,3 +1403,61 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 - Don't silently narrow "all X" / "complete" scoping — ask first if a task's true scope is
   ambiguous.
 - Commit after each discrete task; push only when explicitly requested per-instance.
+
+---
+
+## 6. Development Tooling — 3D World Editor
+
+Not a mobile-eggbert feature, so the faithful-remake rule (`## 0`/`CLAUDE.md`) doesn't govern
+this section — it's a content-creation tool for building `.vwr` worlds, the same category as the
+already-existing `tools/GenerateSampleWorld3D.cpp` (a fixed, hand-coded C++ generator) and
+`tools/VerifyBlupiMovement.cpp`-style scripted verification tools. It does not conflict with the
+standing "no `.txt`→`.vwr` auto-converter" rule (`## 5`) — that rule rejects *automatic*
+conversion from flat 2D data; an interactive editor is exactly the "hand-authored" tool that rule
+already assumes exists. Today, hand-authoring a `.vwr` world means writing/editing C++ calls in
+`GenerateSampleWorld3D.cpp` and rebuilding — real but slow and error-prone (see plan.md's own
+`E3D-MIG-058` history: a real data-loss bug, `Chunk::isEmpty()` ignoring `extraMetadata_`, and a
+real zero-patrol-range lift bug were both introduced this way and only caught by scripted
+verification after the fact, not while authoring). An interactive editor is aimed at that gap.
+
+Much of the needed infrastructure already exists and should be reused, not rebuilt:
+`GalaxyEggbert::Worlds::World::loadFromFile()`/`saveToFile()` (engine-agnostic, already tested,
+`.vwr` format), `GETerrainRenderer`/`GETileAtlas` (already renders any loaded `World`),
+`Easy3D::Camera3D`, and `GalaxyEggbert::MoveObjectRecord`'s embed-in-`.vwr` mechanism (already
+used by `GenerateSampleWorld3D.cpp`). The editor is new UI/interaction code on top of these, not a
+new rendering or file-format stack.
+
+- [ ] `EDITOR-000` `[?]` Decide target shape: a separate executable (`GalaxyEggbertEditor3D`,
+      own `main.cpp`, own CMake target under `tools/` or a new `src/GalaxyEggbertEditor/` tree —
+      matches the existing `VerifyXxx`/`GenerateSampleWorld3D` precedent of dedicated tool
+      targets) vs. an in-game mode toggle inside `GalaxyEggbertCNA` itself (shares the binary,
+      but mixes editor UI/controls into the shipping game's control scheme and input handling).
+      Recommend the separate-executable shape for the same reason the verification tools are
+      separate: keeps `GalaxyEggbertCnaGame` free of editor-only state and input branches.
+- [ ] `EDITOR-001` Free-fly camera (WASD + mouse look, detached from any Blupi controller) —
+      reuses `Easy3D::Camera3D` directly, no new camera math needed beyond input-driven
+      position/yaw/pitch (`GEBlupiController`'s tank-control scheme is Blupi-specific, not
+      reusable here).
+- [ ] `EDITOR-002` Load/save `.vwr` via the existing engine-agnostic `World::loadFromFile()`/
+      `saveToFile()` — no new format or parser work; this is already a tested, working API
+      (`GalaxyEggbertWorldsTests`).
+- [ ] `EDITOR-003` Render the loaded world via the existing `GETerrainRenderer`/`GETileAtlas` —
+      reuse `GalaxyEggbertCnaGame::LoadContent()`'s terrain-setup code as a template, don't
+      reimplement it.
+- [ ] `EDITOR-004` Block picking: raycast from the camera through the mouse cursor into the voxel
+      grid to find which cell (and which face) the cursor is over — genuinely new work, no
+      existing raycast helper in Easy3D or CNA to reuse.
+- [ ] `EDITOR-005` Place/remove a block at the picked cell using a `BlockType` chosen from a
+      palette (see `EDITOR-008`).
+- [ ] `EDITOR-006` `MoveObject` placement/editing: add/move/remove `ObjectType` instances,
+      including setting `posStart`/`posEnd`/`speed` for platform lifts — via
+      `GalaxyEggbert::MoveObjectRecord`'s existing embed mechanism, not a new data model.
+- [ ] `EDITOR-007` Sky region selection (sets the `.vwr` v2 `skyRegion` header field used by
+      `GalaxyEggbertCnaGame`'s real background-image rendering, `E3D-MIG-05x`).
+- [ ] `EDITOR-008` Minimal on-screen tile/object-type palette UI — reuses the icon-drawing
+      `SpriteBatch` approach already used for the game's own HUD (`## 2.3`, 2026-07-11), not a
+      new UI framework; a scrollable/paged icon grid, not text-driven.
+- [ ] `EDITOR-009` Undo/redo — optional, later; not required for a usable first version.
+- [ ] `EDITOR-010` Multi-block brush/fill tool, mirroring `GenerateSampleWorld3D.cpp`'s own
+      `fill()` helper interactively (drag a box, apply one `BlockType` to the whole region) —
+      optional, later.
