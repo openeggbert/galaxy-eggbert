@@ -245,6 +245,37 @@ int main(int argc, char** argv)
         check(getSawType() == BlockTypes::SawStopped, "linked saw is SawStopped again (safe)");
     }
 
+    // 7. Shared kill list widened beyond ObjectType2/3 (plan.md E3D-MIG-132,
+    // 2026-07-11) -- none of the other 6 real member types (4/16/17/20/
+    // 96/97) are placed in the sample world, so a spider (16) is injected
+    // directly into the loaded world's MobileObjSpec list to prove
+    // GEInteractionSystem::Update() treats it exactly like ObjectType2/3
+    // (contact kills Blupi, destroys the spider) without needing a real
+    // level placement first.
+    {
+        MobileObjSpec spider;
+        spider.type = ObjectType::ObjectType16;
+        spider.posStartX = spider.posEndX = spider.currentX = 5.0f;
+        spider.posStartY = spider.posEndY = spider.currentY = 1.0f;
+        spider.posStartZ = spider.posEndZ = spider.currentZ = 5.0f;
+        world.GetMobileObjectsMutable().push_back(spider);
+
+        const int livesBeforeSpider = interaction.Lives();
+        interaction.Update(dt, world, 5.0f, 1.0f, 5.0f, 0.0f, sound);
+        check(interaction.DiedThisFrame(), "DiedThisFrame() is true touching an injected spider (ObjectType16)");
+        check(interaction.Lives() == livesBeforeSpider - 1, "spider contact costs exactly 1 life, same as ObjectType2/3");
+
+        bool spiderStillActive = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType16)
+            {
+                spiderStillActive = obj.active;
+            }
+        }
+        check(!spiderStillActive, "the spider that killed Blupi is destroyed, same as ObjectType2/3");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

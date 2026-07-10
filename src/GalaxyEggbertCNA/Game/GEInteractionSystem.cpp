@@ -19,12 +19,40 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
-        // ObjectType2/ObjectType3 -- generic patrol hazards, real shared kill
-        // list per mobile-eggbert-reference/04-enemy-behavior.md (verified
-        // directly against Decor.cpp:5782-5816 for this task).
+        // The real shared kill list (Decor.cpp:5782-5816, verified directly
+        // against source for this task): ObjectType2/3 (generic patrol
+        // hazards), 4 (bulldozer), 16 (spider), 17 (fish), 20 (bird), 96/97
+        // (follower, both dormant and awake) all use the exact same contact-
+        // death check -- the only difference in that source block is purely
+        // cosmetic (17/20 get a bigger screen-shake + a different explosion
+        // ObjectType than the rest), not a behavioral difference in whether
+        // or how Blupi dies, so this deliberately does NOT split them into
+        // separate per-type checks. Real per-type quirks that ARE modeled:
+        // type3's duck-immunity (see the blupiCrouching check below). Real
+        // per-type quirks NOT modeled: type17/20's bigger explosion effect
+        // (cosmetic), type2's wider "thrown object" anticipation box and
+        // taunt-suppression (cosmetic/reaction polish), type16's always-
+        // self-destroys/no-turn-table framing (already true here since
+        // every hazard here is destroyed on contact), follower 96/97's real
+        // homing-toward-Blupi movement AI (a separate, NOT-yet-implemented
+        // feature from this contact-death check -- an un-homing follower
+        // still correctly kills Blupi on contact if he touches it).
         bool IsGenericHazard(ObjectType t)
         {
-            return t == ObjectType::ObjectType2 || t == ObjectType::ObjectType3;
+            switch (t)
+            {
+                case ObjectType::ObjectType2:
+                case ObjectType::ObjectType3:
+                case ObjectType::ObjectType4:
+                case ObjectType::ObjectType16:
+                case ObjectType::ObjectType17:
+                case ObjectType::ObjectType20:
+                case ObjectType::ObjectType96:
+                case ObjectType::ObjectType97:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         // Matches GalaxyEggbertSimple3D's GEDecorSystem (AddTriggerSphere(0.7f)).

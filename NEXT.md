@@ -215,12 +215,14 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   the same 93 real mobile-eggbert WAV files. A basic lives foundation exists (2026-07-11, §3), and
   all 5 real terrain hazard tiles are now implemented: 4 lethal (fall-off-world death, lava,
   spikes, Blitz, saw — the last with a real switch-linking mechanic,
-  `GEWorldRuntime::TryActivateSwitch()`) plus the generic `ObjectType2`/`3` patrol-hazard
-  contact-kill, and Crusher (non-lethal, a squash state,
-  `GEBlupiController::TriggerCrush()`/`IsEcrased()`). All 9 named enemy types (spider/fish/bird/
-  blupih/blupit/wasp/creature/follower) still do nothing on contact (Phase 13) — that's the one
-  remaining "touching something hurts you" gap. HUD is now minimal icon-based only (2026-07-11,
-  §3: life icons, key icons) — no text rendering exists, so no numeric treasure counter/score.
+  `GEWorldRuntime::TryActivateSwitch()`), and Crusher (non-lethal, a squash state,
+  `GEBlupiController::TriggerCrush()`/`IsEcrased()`). The real shared kill list now covers 8
+  `ObjectType`s (2/3/4/16/17/20/96/97 — patrol hazards, bulldozer, spider, fish, bird, follower,
+  2026-07-11 §3) — the remaining 4 named enemy types (blupih/blupit/wasp/large creature) each
+  need real per-type behavior beyond a plain contact check, and follower 96/97's real homing
+  movement is a separate still-open feature from its now-working contact-kill. HUD is now
+  minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
+  no numeric treasure counter/score.
   No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
   2026-07-11, not started)
   — worlds are still hand-authored by editing `tools/GenerateSampleWorld3D.cpp`.
@@ -239,6 +241,34 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Widened the generic hazard contact-kill to the real full shared kill list (2026-07-11),
+  starting Phase 13 (named enemy behavior).** Re-reading `Decor.cpp:5782-5816` while
+  double-checking the earlier ObjectType2/3 work revealed that source block is the real shared
+  contact-death check for **8 types**, not 2: `ObjectType2`/`3` (already covered) plus `4`
+  (bulldozer), `16` (spider), `17` (fish), `20` (bird), and `96`/`97` (follower, both dormant and
+  awake). The only difference the real source makes between them is purely cosmetic (17/20 get a
+  bigger screen-shake + a different explosion `ObjectType`), not behavioral — so
+  `GEInteractionSystem`'s `IsGenericHazard()` now covers all 8 with one check instead of 8
+  separate branches that would all do the identical thing.
+  - Real per-type quirks NOT modeled (documented, not oversights): type2's wider "thrown object"
+    anticipation box, type17/20's bigger explosion effect, spider's specific 9-frame crawl (may
+    already be covered by existing generic animation handling, not separately verified), and
+    **follower 96/97's real homing-toward-Blupi movement** — a genuinely separate feature from
+    contact-death; followers are currently just static/patrol `MobileObjSpec`s like any other
+    placed object, so an un-homing follower still correctly kills Blupi if he walks into it, but
+    it won't chase him.
+  - Added a real spider (`ObjectType16`) placement to `worlds3d/world001.vwr`'s south tunnel so
+    this is genuinely playable, not just proven by a synthetic-injection test.
+  - **Verification**: a new `VerifyInteractionSystem` block injects a synthetic `ObjectType16`
+    instance directly into the loaded world's `MobileObjSpec` list (via the existing
+    `GetMobileObjectsMutable()` accessor) to prove the widened check works before the real
+    placement above existed — confirms 1 life lost and the spider destroyed, identical to the
+    already-verified `ObjectType2`/`3` behavior. Full suite and both backends' live runs
+    re-confirmed clean.
+  - Remaining Phase 13 work: blupih/blupit (need real projectile-spawn logic, not a plain contact
+    check), wasp (non-lethal status effect instead of a kill), the large creature (lethal only
+    during a specific window), and follower 96/97's homing AI.
 
 - **Implemented the Saw hazard and its real switch-linking mechanic (2026-07-11), completing all
   5 real terrain hazard tiles.** Continuing "these bigger tasks" per the user's explicit request.

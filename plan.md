@@ -79,12 +79,16 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
 - **HUD is minimal** — icon-based only (life icons bottom-left, key icons top-left when held),
   no text rendering exists (no `text.png` glyph layout identified yet), so no numeric treasure
   counter/score/timer.
-- **Enemy combat is minimal** — only the generic ObjectType2/3 patrol-hazard contact-kill exists
-  (`E3D-MIG-132`, 2026-07-11); the 9 named enemy types (spider/fish/bird/blupih/blupit/wasp/
-  creature/follower) each need their own real attack/contact behavior (Phase 13) and do nothing
-  on contact yet. All 5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are
-  implemented (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the
-  lives foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
+- **Enemy combat covers the real shared kill list** — contact with `ObjectType`
+  2/3/4/16/17/20/96/97 (patrol hazards, bulldozer, spider, fish, bird, follower) kills Blupi
+  (`E3D-MIG-132`, widened 2026-07-11 from just 2/3 after finding they're all one real shared
+  check in `Decor.cpp`). The remaining 4 named types (blupih/blupit/wasp/large creature) each
+  need real per-type behavior beyond a plain contact check (projectiles, a non-lethal status
+  effect, a lethal-only-sometimes window) — Phase 13's still-open remainder. Follower 96/97's
+  real homing-toward-Blupi movement is also still open (contact-kill works, the AI doesn't). All
+  5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are implemented
+  (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
+  foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
   Crusher non-lethal (a squash state).
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
@@ -283,30 +287,46 @@ documented there.
       do yet (still `[ ]` below), so enemy contact still does nothing.
 - [ ] `131` Shared patrol-turn cycle (4-phase dwell/walk/dwell/walk, direction mirrored by
       posStart.X vs posEnd.X) — most enemy types share this, implement once, reuse.
-- [~] `132` **Generic hazard types 2/3 contact-kill done 2026-07-11** in `GEInteractionSystem`
-      (verified against `Decor.cpp:5782-5816` directly, not just the reference doc): touching
-      either kills Blupi (`LoseLife()`) and destroys the hazard, real duck-immunity for type3
-      modeled via a `blupiCrouching` parameter. Real death sound is a 50/50 coinflip between
-      channel 74 and silence (`BlupiDead`'s own `Clear2`-branch-only `PlaySound`) — simplified to
-      always channel 74, not modeled as a coinflip. NOT done: type3's top-half-only hitbox and
-      type2's "thrown object" wider anticipation box / taunt-suppression quirks (contact radius
-      is a plain sphere, same simplification as every pickup type above, not a tile-rectangle
-      overlap). New `GEInteractionSystem::DiedThisFrame()` lets the caller apply respawn (the
-      system itself has no access to `GEBlupiController`). Icon-cycling animation itself was
-      already implemented earlier (billboard rendering, NEXT.md §3) — this task was only ever
-      about the contact/kill behavior.
-- [ ] `133` Crawler/flyer types 16 (spider, 9-frame crawl, always self-destroys),
-      17 (fish, bigger explosion, narrowed hitbox, not taunt-capable),
-      20 (bird, same as fish but taunt-capable).
+- [~] `132` **Shared kill-list contact-kill done 2026-07-11** in `GEInteractionSystem`, **widened
+      2026-07-11** beyond just types 2/3 (verified against `Decor.cpp:5782-5816` directly, not
+      just the reference doc — that source block IS the real shared contact check for exactly 8
+      types: `ObjectType2`/`3`/`4`(bulldozer)/`16`(spider)/`17`(fish)/`20`(bird)/`96`/`97`
+      (follower, both dormant and awake) — the only real difference between them is a purely
+      cosmetic bigger-screen-shake for 17/20, not a behavioral one, so `IsGenericHazard()`
+      covers all 8 with one check). Touching any of them kills Blupi (`LoseLife()`) and destroys
+      the hazard; real duck-immunity for type3 specifically modeled via a `blupiCrouching`
+      parameter. Real death sound is a 50/50 coinflip between channel 74 and silence
+      (`BlupiDead`'s own `Clear2`-branch-only `PlaySound`) — simplified to always channel 74, not
+      modeled as a coinflip. NOT done: type3's top-half-only hitbox, type2's "thrown object"
+      wider anticipation box/taunt-suppression, type17/20's bigger explosion effect (all
+      cosmetic — contact radius is a plain sphere, same simplification as every pickup type
+      above), and follower 96/97's real homing-toward-Blupi movement (a genuinely separate
+      feature — an un-homing follower still correctly kills on contact). New
+      `GEInteractionSystem::DiedThisFrame()` lets the caller apply respawn (the system itself has
+      no access to `GEBlupiController`). Icon-cycling animation for all these types was already
+      implemented earlier (billboard rendering, NEXT.md §3) — this task was only ever about the
+      contact/kill behavior. A spider (`ObjectType16`) is now placed in `worlds3d/world001.vwr`'s
+      south tunnel so this is genuinely playable, not just tested via a synthetic injection.
+- [~] `133` Crawler/flyer types 16 (spider), 17 (fish), 20 (bird) — **contact-kill done**, folded
+      into `E3D-MIG-132`'s widened shared kill list (2026-07-11). NOT done: spider's real 9-frame
+      crawl (may already fall out of existing generic animation handling, not verified per-type),
+      fish/bird's narrowed hitbox and bigger-explosion effect, bird's taunt-capability (spider/
+      fish are not taunt-capable, per the reference doc — no taunt system exists at all yet, so
+      this distinction is currently moot either way).
 - [ ] `134` Stationary shooters 32 (blupih, vertical projectile ObjectType23) and
       33 (blupit, two horizontal projectiles bracketing the turn) — both Cloud-vulnerable, body
-      contact not lethal (only the projectile is).
+      contact not lethal (only the projectile is). NOT part of the shared kill list (`132`) —
+      these two need their own projectile-spawn logic, not a plain contact check.
 - [ ] `135` Type 44 (wasp) — does NOT kill, inflates a 100-tick "balloon" status
       (`m_blupiBalloon`, distinct from vehicle `m_blupiOver` despite the similar real name).
 - [ ] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
       vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon.
-- [ ] `137` Types 96/97 (follower) — dormant until a padded wake-box triggers, then 1px/tick
-      homing, self-destructs if path blocked.
+- [~] `137` Types 96/97 (follower) — **contact-kill done**, folded into `E3D-MIG-132`'s widened
+      shared kill list (2026-07-11), covering both the dormant (96) and awake (97) state
+      identically, matching the real shared kill-list check. NOT done: the real dormant-until-a-
+      padded-wake-box, then 1px/tick homing-toward-Blupi movement — followers are currently just
+      static/patrol `MobileObjSpec`s like any other placed object, this is a genuinely separate
+      feature from the contact-death this pass covered.
 
 ### Phase 14 — Hazards (`E3D-MIG-140`-`149`)
 

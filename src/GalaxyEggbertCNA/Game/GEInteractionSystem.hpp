@@ -34,24 +34,38 @@ namespace GalaxyEggbert::CNA
     // need their own per-type behavior (Phase 14/13), not just a lives
     // counter to decrement.
     //
-    // Generic hazard contact (ObjectType2/3) now works (2026-07-11, plan.md
-    // E3D-MIG-132) -- touching either kills Blupi and destroys the hazard,
-    // per mobile-eggbert-reference/04-enemy-behavior.md's "ObjectType2/
-    // ObjectType3 -- generic patrol hazards" section, itself verified
-    // directly against the real Decor.cpp source for this task (the real
-    // death sound is a 50/50 coinflip between channel 74 and silence --
-    // BlupiDead(Clear1, Clear2)'s own Clear2 branch plays channel 74,
-    // Clear1 plays nothing -- simplified here to always channel 74, a
-    // documented approximation of the coinflip rather than an invented
-    // value). Type3's real duck-immunity (skipped while Blupi's action is
-    // Down) IS modeled via the blupiCrouching parameter below; type2's
-    // "thrown object" wider anticipation box and taunt-suppression quirks
-    // are NOT (cosmetic/reaction polish, not required for the kill itself).
+    // Shared kill-list contact (2026-07-11, plan.md E3D-MIG-132, widened
+    // 2026-07-11) now works for ObjectType 2/3/4/16/17/20/96/97 -- touching
+    // any of them kills Blupi and destroys it. Verified directly against
+    // the real Decor.cpp:5782-5816 source: that one code block IS the real
+    // shared contact check for exactly this set of 8 types (2=patrol
+    // hazard, 3=patrol hazard, 4=bulldozer, 16=spider, 17=fish, 20=bird,
+    // 96/97=follower dormant/awake) -- the only difference the real source
+    // makes between them is purely cosmetic (17/20 get a bigger screen-
+    // shake + a different explosion ObjectType), not a behavioral
+    // difference in whether/how Blupi dies, so IsGenericHazard() covers all
+    // 8 with one check rather than splitting them into separate per-type
+    // branches that would all do the same thing. Real death sound is a
+    // 50/50 coinflip between channel 74 and silence -- BlupiDead(Clear1,
+    // Clear2)'s own Clear2 branch plays channel 74, Clear1 plays nothing --
+    // simplified here to always channel 74, a documented approximation of
+    // the coinflip rather than an invented value. Type3's real duck-
+    // immunity (skipped while Blupi's action is Down) IS modeled via the
+    // blupiCrouching parameter below; every other per-type quirk (type2's
+    // wider "thrown object" anticipation box, type17/20's bigger
+    // explosion, follower 96/97's real homing-toward-Blupi movement AI) is
+    // NOT modeled -- cosmetic/reaction polish or a genuinely separate
+    // feature (homing), not required for the kill itself.
     //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Every other enemy type (16/17/20/32/33/44/54/96) -- each has real
-    //    per-type animation/attack/contact rules beyond a plain kill-on-
-    //    touch (Phase 13), not attempted here.
+    //  - Every enemy type OUTSIDE the shared kill list above (32/33/44/54)
+    //    -- each has real per-type attack/contact rules of its own (Phase
+    //    13: blupih/blupit fire projectiles, wasp inflates a status instead
+    //    of killing, the large creature has its own lethality window), not
+    //    a plain kill-on-touch, so none of them belong in IsGenericHazard().
+    //  - Follower 96/97's real homing-toward-Blupi movement (Phase 13) --
+    //    they're currently just static/patrol MoveObjects like any other;
+    //    only their contact-death is covered here.
     //  - Riding a moving platform lift (ObjectType1/47/48) -- platforms now
     //    genuinely patrol (see Update()), but GEBlupiController's collision
     //    only tests the static terrain grid, not MobileObjSpec objects, so

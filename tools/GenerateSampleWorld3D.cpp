@@ -226,12 +226,15 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType7, 49.0f, 9.0f, 28.0f);  // level-exit goal, in the crow's-nest
 
     // South tunnel: 4 crates blocking/lining the path, 1 patrol enemy, 1
-    // chest tucked at the grate/pit end, 1 key past the water hazard.
+    // spider (real shared kill-list contact-death, plan.md E3D-MIG-132
+    // widened 2026-07-11), 1 chest tucked at the grate/pit end, 1 key past
+    // the water hazard.
     place(ObjectType::ObjectType12, 35.0f, 1.0f, 67.0f);
     place(ObjectType::ObjectType12, 38.0f, 1.0f, 67.0f);
     place(ObjectType::ObjectType12, 52.0f, 1.0f, 67.0f);
     place(ObjectType::ObjectType12, 63.0f, 1.0f, 67.0f);
     place(ObjectType::ObjectType2, 41.0f, 1.0f, 67.0f);   // standard patrol enemy
+    place(ObjectType::ObjectType16, 57.0f, 1.0f, 67.0f);  // spider
     place(ObjectType::ObjectType49, 44.0f, 1.0f, 67.0f);  // key 1, guarding the water crossing
     place(ObjectType::ObjectType5, 25.0f, 1.0f, 67.0f);   // chest, over the grate
 
