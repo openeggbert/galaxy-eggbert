@@ -155,6 +155,52 @@ int main(int argc, char** argv)
             crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         }
         check(!crushed.IsEcrased(), "squash state auto-recovers after kEcraseDuration seconds");
+
+        // Wasp "balloon" status (plan.md E3D-MIG-135) -- TriggerBalloon()/
+        // IsBallooned()/PopBalloon(), same synthetic world (falling
+        // behavior only, doesn't need any particular ground block).
+        GEBlupiController ballooned;
+        ballooned.SetPosition(0.0f, 20.0f, 0.0f);
+        check(ballooned.TriggerBalloon(), "TriggerBalloon() returns true on a genuinely new trigger");
+        check(ballooned.IsBallooned(), "IsBallooned() is true immediately after TriggerBalloon()");
+        check(!ballooned.TriggerBalloon(), "TriggerBalloon() is a no-op (returns false) while already ballooned");
+
+        // Reduced gravity while ballooned: falls less over the same number
+        // of steps than a normal Blupi dropped from the same height.
+        GEBlupiController falling;
+        falling.SetPosition(0.0f, 20.0f, 0.0f);
+        constexpr int kFallSteps = 30; // ~0.5s, short enough neither instance reaches the ground
+        for (int i = 0; i < kFallSteps; ++i)
+        {
+            ballooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            falling.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        }
+        check(ballooned.GetY() > falling.GetY(),
+              "ballooned Blupi falls slower than normal (reduced gravity, approximates 'floats')");
+
+        // PopBalloon() clears the status early and forces Blupi briefly
+        // airborne, matching the real m_blupiAir=true on a hazard pop.
+        ballooned.PopBalloon();
+        check(!ballooned.IsBallooned(), "PopBalloon() clears the balloon status immediately");
+        check(!ballooned.IsOnGround(), "PopBalloon() forces Blupi airborne (real m_blupiAir=true)");
+
+        // PopBalloon() while NOT ballooned is a documented no-op.
+        GEBlupiController notBallooned;
+        notBallooned.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+        notBallooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        notBallooned.PopBalloon();
+        check(notBallooned.IsOnGround(), "PopBalloon() is a no-op while not ballooned (still grounded)");
+
+        // Auto-recovery after kBalloonDuration seconds.
+        GEBlupiController recovering;
+        recovering.SetPosition(0.0f, 20.0f, 0.0f);
+        recovering.TriggerBalloon();
+        const int stepsToRecoverBalloon = static_cast<int>(GEBlupiController::kBalloonDuration / dt) + 5;
+        for (int i = 0; i < stepsToRecoverBalloon && recovering.IsBallooned(); ++i)
+        {
+            recovering.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        }
+        check(!recovering.IsBallooned(), "balloon status auto-recovers after kBalloonDuration seconds");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

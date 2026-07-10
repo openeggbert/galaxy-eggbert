@@ -57,12 +57,28 @@ namespace GalaxyEggbert::CNA
     // NOT modeled -- cosmetic/reaction polish or a genuinely separate
     // feature (homing), not required for the kill itself.
     //
+    // Wasp (ObjectType44) "balloon" status now works (2026-07-11, plan.md
+    // E3D-MIG-135), verified directly against Decor.cpp:5826-5863 (trigger)
+    // and 5766-5781 (the balloon-pop interaction with hazards). Contact
+    // does NOT kill Blupi or destroy the wasp -- it signals
+    // BalloonTouchedThisFrame() every frame Blupi overlaps it; the real
+    // `!m_blupiBalloon` re-trigger guard lives in
+    // GEBlupiController::TriggerBalloon() itself (idempotent, same pattern
+    // as TriggerCrush()), not here, since GEInteractionSystem has no access
+    // to Blupi's current balloon state. While ballooned (the caller passes
+    // this in via blupiBallooned), touching one of exactly 4 of the 8
+    // shared-kill-list types (3/16/96/97 -- NOT 2/4/17/20, confirmed by the
+    // real source's if/else-if chain: the pop check for 3/16/96/97 comes
+    // FIRST and is mutually exclusive with the kill check right after it,
+    // but 2/4/17/20 only ever reach the kill check) pops the balloon
+    // instead of killing -- signaled via BalloonPoppedThisFrame(), same
+    // caller-applies-the-actual-state-change split as DiedThisFrame().
+    //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Every enemy type OUTSIDE the shared kill list above (32/33/44/54)
-    //    -- each has real per-type attack/contact rules of its own (Phase
-    //    13: blupih/blupit fire projectiles, wasp inflates a status instead
-    //    of killing, the large creature has its own lethality window), not
-    //    a plain kill-on-touch, so none of them belong in IsGenericHazard().
+    //  - Every enemy type OUTSIDE the shared kill list and wasp above
+    //    (32/33/54) -- each has real per-type attack/contact rules of its
+    //    own (Phase 13: blupih/blupit fire projectiles, the large creature
+    //    has its own lethality window), not a plain kill-on-touch.
     //  - Follower 96/97's real homing-toward-Blupi movement (Phase 13) --
     //    they're currently just static/patrol MoveObjects like any other;
     //    only their contact-death is covered here.
@@ -87,15 +103,29 @@ namespace GalaxyEggbert::CNA
         // caller computes this itself from before/after Step() positions).
         // blupiCrouching gates type3's real duck-immunity, default false so
         // existing callers/tests that don't care about it are unaffected.
-        // If this call kills Blupi via enemy contact, DiedThisFrame()
-        // returns true for the rest of this frame only -- GEInteractionSystem
-        // has no access to GEBlupiController, so the caller is the one that
-        // must actually respawn Blupi (see GalaxyEggbertCnaGame::Update()).
+        // blupiBallooned (default false, same reason) gates whether
+        // touching a 3/16/96/97 hazard pops the balloon instead of
+        // killing -- the caller reads this back from
+        // GEBlupiController::IsBallooned() before calling Update(), same
+        // as blupiCrouching's own GetAnimState()-derived source. If this
+        // call kills Blupi via enemy contact, DiedThisFrame() returns true
+        // for the rest of this frame only -- GEInteractionSystem has no
+        // access to GEBlupiController, so the caller is the one that must
+        // actually respawn Blupi (see GalaxyEggbertCnaGame::Update()).
         void Update(float dt, GEWorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
-                    GESound& sound, bool blupiCrouching = false);
+                    GESound& sound, bool blupiCrouching = false, bool blupiBallooned = false);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
+        // Wasp contact (see the class comment above) -- true every frame
+        // Blupi overlaps a wasp, NOT debounced to once per contact (the
+        // real `!m_blupiBalloon` re-trigger guard lives in
+        // GEBlupiController::TriggerBalloon() instead).
+        [[nodiscard]] bool BalloonTouchedThisFrame() const noexcept { return balloonTouchedThisFrame_; }
+        // True the one frame a 3/16/96/97 hazard was popped instead of
+        // killing (see the class comment above) -- the caller must call
+        // GEBlupiController::PopBalloon() itself.
+        [[nodiscard]] bool BalloonPoppedThisFrame() const noexcept { return balloonPoppedThisFrame_; }
 
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
@@ -141,5 +171,7 @@ namespace GalaxyEggbert::CNA
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int gameOverCount_ = 0;
         bool diedThisFrame_ = false; // reset at the top of every Update() call
+        bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
+        bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
     };
 }

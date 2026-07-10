@@ -218,9 +218,12 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   `GEWorldRuntime::TryActivateSwitch()`), and Crusher (non-lethal, a squash state,
   `GEBlupiController::TriggerCrush()`/`IsEcrased()`). The real shared kill list now covers 8
   `ObjectType`s (2/3/4/16/17/20/96/97 — patrol hazards, bulldozer, spider, fish, bird, follower,
-  2026-07-11 §3) — the remaining 4 named enemy types (blupih/blupit/wasp/large creature) each
-  need real per-type behavior beyond a plain contact check, and follower 96/97's real homing
-  movement is a separate still-open feature from its now-working contact-kill. HUD is now
+  2026-07-11 §3), and the wasp (44, 2026-07-11 §3) inflicts a non-lethal "balloon" status
+  instead (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`) that changes how
+  4 of those 8 shared-kill types behave (pop instead of kill) — the remaining 3 named enemy
+  types (blupih/blupit/large creature) each need real per-type behavior beyond a plain contact
+  check, and follower 96/97's real homing movement is a separate still-open feature from its
+  now-working contact-kill/pop. HUD is now
   minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
   no numeric treasure counter/score.
   No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
@@ -241,6 +244,52 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented the wasp's "balloon" status and its hazard-pop interaction (2026-07-11).**
+  Continuing Phase 13, still on "these bigger tasks" per the user's standing request.
+  - **Verified directly against `Decor.cpp:5826-5863`** (the trigger) **and `5766-5781`** (the
+    interaction with other hazards while ballooned) — not just the reference doc.
+  - **New `GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`**: same
+    idempotent-re-trigger-guard shape as `TriggerCrush()` (a no-op while already ballooned,
+    matching the real `!m_blupiBalloon` check), real ~10s duration (**a real finding**: the
+    "100-tick" figure in the reference doc is the raw counter value, not literal ticks — it
+    decrements every `Config::ScaleTime(2)` ticks, the exact same pattern as Crusher's own
+    timer, so the real duration is 10s, not 5s as a literal reading would suggest). Reduced
+    gravity while active approximates "floats rather than dying" — the real source sets this up
+    as a pure status flag other code branches key off of, no specific fall-speed constant to
+    transcribe.
+  - **Contact does not kill Blupi or destroy the wasp** — `GEInteractionSystem` gained
+    `BalloonTouchedThisFrame()` (signaled every frame Blupi overlaps a wasp; the real
+    once-per-trigger guard lives in `TriggerBalloon()` itself, not here, since
+    `GEInteractionSystem` has no access to Blupi's current balloon state).
+  - **The real hazard-pop interaction is implemented, not just the status flag**: while
+    ballooned, touching exactly 4 of the 8 shared-kill-list types — `3`/`16`/`96`/`97`, confirmed
+    via the real source's if/else-if chain (the pop check comes first and is mutually exclusive
+    with the kill check right after it) — pops the balloon instead of killing, and does **not**
+    destroy the popping hazard either (the real pop branch has no `ObjectDelete` call, a detail
+    that would have been easy to get wrong by assuming symmetry with the kill branch). Types
+    `2`/`4`/`17`/`20` are never eligible for the pop branch at all — they still kill Blupi even
+    while ballooned. New `IsBalloonPoppableHazard()` helper and `BalloonPoppedThisFrame()` signal
+    implement this precisely.
+  - Real entry sound (channel 40) and recovery sound (channel 41 — **confirmed the same channel
+    Crusher's own recovery already uses**, so this is a generic "timed status expired" cue, not
+    hazard-specific) are both wired; the recovery sound is played from a single
+    before/after `IsBallooned()` comparison at the end of `Update()` (not right after `Step()`,
+    unlike the analogous Crusher check) since the balloon can end either from `Step()`'s own
+    natural timeout or from `interaction_.Update()` calling `PopBalloon()` later the same frame —
+    one comparison point catches both causes correctly.
+  - Already playable — a wasp was already placed on the north-hill plateau in
+    `worlds3d/world001.vwr` from an earlier session's world-redesign work, no new placement
+    needed.
+  - **Verification**: 9 new `VerifyBlupiMovement` assertions (trigger/idempotency/reduced-
+    gravity/pop/auto-recovery) and 9 new `VerifyInteractionSystem` assertions (wasp/follower/
+    bulldozer injected synthetically, proving the pop-vs-kill split is type-correct). Found and
+    fixed a real test-design bug while writing the bulldozer assertion: `VerifyInteractionSystem`
+    shares one `GEInteractionSystem` instance across the whole file, so by the time this section
+    ran, `Lives()` had already been driven down by earlier sections' deaths — the naive
+    `Lives() == before - 1` assertion could legitimately wrap through another game-over reset
+    instead, same as the already-handled case earlier in the file; fixed by accepting either
+    outcome. Full suite and both backends' live runs re-confirmed clean.
 
 - **Widened the generic hazard contact-kill to the real full shared kill list (2026-07-11),
   starting Phase 13 (named enemy behavior).** Re-reading `Decor.cpp:5782-5816` while

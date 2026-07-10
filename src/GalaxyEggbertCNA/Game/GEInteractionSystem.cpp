@@ -55,6 +55,26 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Real balloon-pop subset (Decor.cpp:5766-5781): exactly types
+        // 3/16/96/97, NOT the full 8-type IsGenericHazard() list -- 2/4/17/20
+        // still kill Blupi even while ballooned, per the real source's
+        // if/else-if chain (the pop check comes first and is mutually
+        // exclusive with the kill check; only these 4 types are ever
+        // eligible for the pop branch at all).
+        bool IsBalloonPoppableHazard(ObjectType t)
+        {
+            switch (t)
+            {
+                case ObjectType::ObjectType3:
+                case ObjectType::ObjectType16:
+                case ObjectType::ObjectType96:
+                case ObjectType::ObjectType97:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         // Matches GalaxyEggbertSimple3D's GEDecorSystem (AddTriggerSphere(0.7f)).
         constexpr float kPickupRadius = 0.7f;
         constexpr float kMaxEggCount = 10; // real mobile-eggbert MAX_EGG_COUNT (Decor.cpp:96)
@@ -67,9 +87,11 @@ namespace GalaxyEggbert::CNA
 
     void GEInteractionSystem::Update(float dt, GEWorldRuntime& worldRuntime,
                                       float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
-                                      GESound& sound, bool blupiCrouching)
+                                      GESound& sound, bool blupiCrouching, bool blupiBallooned)
     {
         diedThisFrame_ = false;
+        balloonTouchedThisFrame_ = false;
+        balloonPoppedThisFrame_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -174,15 +196,37 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
-            // Generic hazard contact (ObjectType2/3, plan.md E3D-MIG-132) --
-            // real shared kill list: BlupiDead(Clear1, Clear2) + the hazard
-            // itself is destroyed (converted to an explosion). Type3's real
-            // duck-immunity (MoveObjectDetect skips it entirely while
-            // Blupi's action is Down) is modeled via blupiCrouching; type2
-            // has no such immunity. Real death sound is a 50/50 coinflip
-            // (BlupiDead's own Clear2 branch plays channel 74, Clear1 plays
-            // nothing, per Decor.cpp:6547-6614) -- simplified to always
-            // channel 74 rather than modeling the coinflip.
+            // Wasp (ObjectType44, plan.md E3D-MIG-135) -- does NOT kill or
+            // destroy itself; contact signals BalloonTouchedThisFrame() so
+            // the caller can attempt GEBlupiController::TriggerBalloon()
+            // (idempotent there, not here -- see the class comment).
+            if (obj.type == ObjectType::ObjectType44)
+            {
+                const float wdx = obj.currentX - blupiX;
+                const float wdy = obj.currentY - blupiY;
+                const float wdz = obj.currentZ - blupiZ;
+                if (wdx * wdx + wdy * wdy + wdz * wdz < kHazardContactRadius * kHazardContactRadius)
+                {
+                    balloonTouchedThisFrame_ = true;
+                }
+                continue;
+            }
+
+            // Generic hazard contact (ObjectType2/3/4/16/17/20/96/97, plan.md
+            // E3D-MIG-132) -- real shared kill list: BlupiDead(Clear1,
+            // Clear2) + the hazard itself is destroyed (converted to an
+            // explosion). Type3's real duck-immunity (MoveObjectDetect
+            // skips it entirely while Blupi's action is Down) is modeled
+            // via blupiCrouching; the others have no such immunity. Real
+            // death sound is a 50/50 coinflip (BlupiDead's own Clear2
+            // branch plays channel 74, Clear1 plays nothing, per
+            // Decor.cpp:6547-6614) -- simplified to always channel 74
+            // rather than modeling the coinflip. While ballooned, exactly
+            // 4 of these 8 types (3/16/96/97, IsBalloonPoppableHazard())
+            // pop the balloon instead of killing (real channel 41 is
+            // played by GEBlupiController's own IsBallooned() before/after
+            // comparison in the caller, not here -- see PopBalloon()'s
+            // comment) -- 2/4/17/20 still kill even while ballooned.
             if (IsGenericHazard(obj.type))
             {
                 if (obj.type == ObjectType::ObjectType3 && blupiCrouching)
@@ -194,10 +238,17 @@ namespace GalaxyEggbert::CNA
                 const float hdz = obj.currentZ - blupiZ;
                 if (hdx * hdx + hdy * hdy + hdz * hdz < kHazardContactRadius * kHazardContactRadius)
                 {
-                    obj.active = false;
-                    LoseLife();
-                    diedThisFrame_ = true;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                    if (blupiBallooned && IsBalloonPoppableHazard(obj.type))
+                    {
+                        balloonPoppedThisFrame_ = true;
+                    }
+                    else
+                    {
+                        obj.active = false;
+                        LoseLife();
+                        diedThisFrame_ = true;
+                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                    }
                 }
                 continue;
             }

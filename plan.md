@@ -79,13 +79,16 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
 - **HUD is minimal** — icon-based only (life icons bottom-left, key icons top-left when held),
   no text rendering exists (no `text.png` glyph layout identified yet), so no numeric treasure
   counter/score/timer.
-- **Enemy combat covers the real shared kill list** — contact with `ObjectType`
-  2/3/4/16/17/20/96/97 (patrol hazards, bulldozer, spider, fish, bird, follower) kills Blupi
-  (`E3D-MIG-132`, widened 2026-07-11 from just 2/3 after finding they're all one real shared
-  check in `Decor.cpp`). The remaining 4 named types (blupih/blupit/wasp/large creature) each
-  need real per-type behavior beyond a plain contact check (projectiles, a non-lethal status
-  effect, a lethal-only-sometimes window) — Phase 13's still-open remainder. Follower 96/97's
-  real homing-toward-Blupi movement is also still open (contact-kill works, the AI doesn't). All
+- **Enemy combat covers the real shared kill list plus the wasp's balloon status** — contact
+  with `ObjectType` 2/3/4/16/17/20/96/97 kills Blupi (`E3D-MIG-132`, widened 2026-07-11 from just
+  2/3 after finding they're all one real shared check in `Decor.cpp`); wasp (44,
+  `E3D-MIG-135`, 2026-07-11) transforms him into a non-lethal "balloon" status instead
+  (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`), which in turn changes
+  how exactly 4 of those 8 shared-kill types (`3`/`16`/`96`/`97`) behave — they pop the balloon
+  instead of killing while it's active. The remaining 3 named types (blupih/blupit/large
+  creature) each need real per-type behavior beyond a plain contact check (projectile-spawning,
+  a lethal-only-sometimes window) — Phase 13's still-open remainder. Follower 96/97's real
+  homing-toward-Blupi movement is also still open (contact-kill/pop works, the AI doesn't). All
   5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are implemented
   (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
   foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
@@ -317,8 +320,25 @@ documented there.
       33 (blupit, two horizontal projectiles bracketing the turn) — both Cloud-vulnerable, body
       contact not lethal (only the projectile is). NOT part of the shared kill list (`132`) —
       these two need their own projectile-spawn logic, not a plain contact check.
-- [ ] `135` Type 44 (wasp) — does NOT kill, inflates a 100-tick "balloon" status
-      (`m_blupiBalloon`, distinct from vehicle `m_blupiOver` despite the similar real name).
+- [x] `135` **Type 44 (wasp) done 2026-07-11** — verified directly against `Decor.cpp:5826-5863`
+      (trigger) and `5766-5781` (hazard-pop interaction), not just the reference doc. New
+      `GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()` (real
+      `!m_blupiBalloon` re-trigger guard, real ~10s duration — same `m_blupiTimeShield=100`/
+      decrement-every-`ScaleTime(2)`-ticks pattern as Crusher, NOT literally "100 ticks" —
+      reduced gravity while active, an approximation of "floats rather than dying" since the
+      real source doesn't cleanly transcribe to a specific fall-speed constant). Contact does
+      NOT kill Blupi or destroy the wasp (`GEInteractionSystem::BalloonTouchedThisFrame()`).
+      **Real hazard-pop interaction implemented**: while ballooned, touching exactly 4 of the 8
+      shared-kill-list types (`3`/`16`/`96`/`97` — confirmed via the real source's if/else-if
+      chain, NOT all 8) pops the balloon instead of killing, and does NOT destroy the popping
+      hazard either (the real pop branch has no `ObjectDelete` call) — `2`/`4`/`17`/`20` still
+      kill through the balloon. Real entry/recovery sound channels 40/41 (channel 41 shared with
+      Crusher's own recovery, confirming it's a generic "status expired" cue, not
+      hazard-specific). Already playable via the wasp already placed on the north-hill plateau
+      in `worlds3d/world001.vwr`. Verified via 9 new `VerifyBlupiMovement` state-machine
+      assertions and 9 new `VerifyInteractionSystem` assertions (wasp/follower/bulldozer
+      interaction, injected synthetically since none but the wasp itself is placed in the real
+      world).
 - [ ] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
       vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon.
 - [~] `137` Types 96/97 (follower) — **contact-kill done**, folded into `E3D-MIG-132`'s widened

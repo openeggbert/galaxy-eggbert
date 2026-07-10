@@ -276,6 +276,77 @@ int main(int argc, char** argv)
         check(!spiderStillActive, "the spider that killed Blupi is destroyed, same as ObjectType2/3");
     }
 
+    // 8. Wasp (ObjectType44) balloon status and its hazard-pop interaction
+    // (plan.md E3D-MIG-135) -- none of these types are placed in the real
+    // sample world either, so all 3 are injected directly.
+    {
+        MobileObjSpec wasp;
+        wasp.type = ObjectType::ObjectType44;
+        wasp.posStartX = wasp.posEndX = wasp.currentX = 10.0f;
+        wasp.posStartY = wasp.posEndY = wasp.currentY = 1.0f;
+        wasp.posStartZ = wasp.posEndZ = wasp.currentZ = 10.0f;
+        world.GetMobileObjectsMutable().push_back(wasp);
+
+        const int livesBeforeWasp = interaction.Lives();
+        interaction.Update(dt, world, 10.0f, 1.0f, 10.0f, 0.0f, sound);
+        check(interaction.BalloonTouchedThisFrame(), "BalloonTouchedThisFrame() is true touching a wasp");
+        check(!interaction.DiedThisFrame(), "touching a wasp does not kill Blupi");
+        check(interaction.Lives() == livesBeforeWasp, "touching a wasp costs no life");
+        bool waspStillActive = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType44) waspStillActive = obj.active;
+        }
+        check(waspStillActive, "the wasp itself is not destroyed by contact (unlike the shared kill list)");
+
+        // Follower (96) -- one of the 4 real balloon-poppable types
+        // (IsBalloonPoppableHazard()): while ballooned, contact pops the
+        // balloon instead of killing, and does NOT destroy the follower
+        // either (the real Decor.cpp:5766-5781 pop branch has no
+        // ObjectDelete call at all).
+        MobileObjSpec follower;
+        follower.type = ObjectType::ObjectType96;
+        follower.posStartX = follower.posEndX = follower.currentX = 15.0f;
+        follower.posStartY = follower.posEndY = follower.currentY = 1.0f;
+        follower.posStartZ = follower.posEndZ = follower.currentZ = 15.0f;
+        world.GetMobileObjectsMutable().push_back(follower);
+
+        const int livesBeforeFollower = interaction.Lives();
+        interaction.Update(dt, world, 15.0f, 1.0f, 15.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
+        check(interaction.BalloonPoppedThisFrame(), "BalloonPoppedThisFrame() is true touching a follower while ballooned");
+        check(!interaction.DiedThisFrame(), "the pop happens instead of a kill while ballooned");
+        check(interaction.Lives() == livesBeforeFollower, "a popped balloon costs no life");
+        bool followerStillActive = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType96) followerStillActive = obj.active;
+        }
+        check(followerStillActive, "the follower that popped the balloon is NOT destroyed (real behavior has no ObjectDelete here)");
+
+        // Bulldozer (4) -- NOT in IsBalloonPoppableHazard()'s 4-type subset
+        // -- still kills even while ballooned, per the real source's
+        // if/else-if chain (the pop check only ever matches 3/16/96/97).
+        MobileObjSpec bulldozer;
+        bulldozer.type = ObjectType::ObjectType4;
+        bulldozer.posStartX = bulldozer.posEndX = bulldozer.currentX = 20.0f;
+        bulldozer.posStartY = bulldozer.posEndY = bulldozer.currentY = 1.0f;
+        bulldozer.posStartZ = bulldozer.posEndZ = bulldozer.currentZ = 20.0f;
+        world.GetMobileObjectsMutable().push_back(bulldozer);
+
+        // Lives() may already be down to 1 from earlier sections in this
+        // same shared `interaction` instance -- a real life lost here can
+        // therefore legitimately wrap back to 3 via the same game-over
+        // reset already verified earlier, not just decrement by 1.
+        const int livesBeforeBulldozer = interaction.Lives();
+        const int gameOverCountBeforeBulldozer = interaction.GameOverCount();
+        interaction.Update(dt, world, 20.0f, 1.0f, 20.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
+        check(interaction.DiedThisFrame(), "bulldozer (type 4) still kills Blupi even while ballooned");
+        const bool bulldozerCostALife =
+            (interaction.Lives() == livesBeforeBulldozer - 1) ||
+            (interaction.GameOverCount() == gameOverCountBeforeBulldozer + 1 && interaction.Lives() == 3);
+        check(bulldozerCostALife, "bulldozer contact costs 1 life despite blupiBallooned=true (accounting for a possible game-over wrap)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

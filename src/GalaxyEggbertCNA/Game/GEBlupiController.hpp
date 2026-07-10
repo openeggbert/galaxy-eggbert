@@ -51,6 +51,20 @@ namespace GalaxyEggbert::CNA
         static constexpr float kEcraseDuration = 10.0f;
         static constexpr float kEcraseSpeedMultiplier = 0.5f;
 
+        // Wasp "balloon" status (plan.md E3D-MIG-135, `m_blupiBalloon` per
+        // mobile-eggbert-reference/04-enemy-behavior.md's ObjectType44
+        // section, verified directly against Decor.cpp:5826-5863 (trigger)
+        // and the recovery block right before Decor.cpp:5549 (same
+        // m_blupiTimeShield=100/decremented-every-ScaleTime(2)-ticks
+        // pattern as Crusher -- same real 10s duration, NOT the "100-tick"
+        // read literally as 100 raw ticks). kBalloonGravityMultiplier is an
+        // approximation of "Blupi floats rather than dying" -- the real
+        // source sets this up as a status flag other code branches key off
+        // of; the specific floaty-fall-speed feel isn't itself transcribed
+        // from a located constant.
+        static constexpr float kBalloonDuration = 10.0f;
+        static constexpr float kBalloonGravityMultiplier = 0.2f;
+
         enum class AnimState : std::uint8_t { Stop, March, Jump, Down, Up };
 
         void SetPosition(float x, float y, float z) noexcept;
@@ -85,6 +99,26 @@ namespace GalaxyEggbert::CNA
         // state either way.
         bool TriggerCrush() noexcept;
         [[nodiscard]] bool IsEcrased() const noexcept { return m_ecrase; }
+
+        // Enters the balloon status (real m_blupiBalloon=true): zeroes
+        // velocity, starts the kBalloonDuration recovery countdown. A
+        // no-op (returns false) while already ballooned, matching the real
+        // `!m_blupiBalloon` re-trigger guard in the wasp contact check --
+        // lets the caller play the real entry sound (channel 40) only on
+        // an actual new trigger. Step() applies reduced gravity while
+        // ballooned and auto-clears it on timeout.
+        bool TriggerBalloon() noexcept;
+        [[nodiscard]] bool IsBallooned() const noexcept { return m_balloon; }
+
+        // Pops the balloon early (real behavior when a type 3/16/96/97
+        // hazard is touched while ballooned, Decor.cpp:5766-5781): clears
+        // the status immediately (same real recovery sound, channel 41, as
+        // a natural timeout -- both are observable via the same
+        // before/after IsBallooned() comparison, no separate signal
+        // needed) and forces Blupi briefly airborne (real m_blupiAir=true)
+        // instead of the hazard killing him. A no-op if not currently
+        // ballooned.
+        void PopBalloon() noexcept;
 
         // Facing angle in radians, 0 = looking toward -Z. Updated every Step()
         // by turnInput (see below) — unlike a strafe-style controller, yaw is
@@ -127,5 +161,8 @@ namespace GalaxyEggbert::CNA
 
         bool m_ecrase = false;
         float m_ecraseTimer = 0.0f;
+
+        bool m_balloon = false;
+        float m_balloonTimer = 0.0f;
     };
 }

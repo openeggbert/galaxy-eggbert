@@ -70,6 +70,29 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerBalloon() noexcept
+    {
+        if (m_balloon)
+        {
+            return false;
+        }
+        m_balloon = true;
+        m_balloonTimer = kBalloonDuration;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
+    void GEBlupiController::PopBalloon() noexcept
+    {
+        if (!m_balloon)
+        {
+            return;
+        }
+        m_balloon = false;
+        m_balloonTimer = 0.0f;
+        m_onGround = false; // real m_blupiAir = true
+    }
+
     std::uint16_t GEBlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
     {
         if (!m_onGround)
@@ -162,7 +185,20 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        m_velocityY = std::max(m_velocityY - kGravity * dt, kFallLimit);
+        if (m_balloon)
+        {
+            m_balloonTimer -= dt;
+            if (m_balloonTimer <= 0.0f)
+            {
+                m_balloon = false;
+                m_balloonTimer = 0.0f;
+            }
+        }
+
+        // Wasp "balloon" status: reduced gravity while active (kBalloonGravityMultiplier's own
+        // comment explains this is an approximation of "floats rather than dying").
+        const float effectiveGravity = m_balloon ? kGravity * kBalloonGravityMultiplier : kGravity;
+        m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
         float newY = m_y + m_velocityY * dt;
 
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());

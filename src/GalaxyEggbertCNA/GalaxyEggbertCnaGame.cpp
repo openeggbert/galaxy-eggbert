@@ -395,6 +395,11 @@ namespace GalaxyEggbert::CNA
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
             const bool wasEcrased = blupi_.IsEcrased();
+            // Compared at the very end of Update() (not right after Step(),
+            // like wasEcrased above) since the balloon can also end via
+            // interaction_.Update() -> PopBalloon() later this same frame,
+            // not just Step()'s own natural-timeout countdown.
+            const bool wasBallooned = blupi_.IsBallooned();
             const float blupiXBeforeStep = blupi_.GetX();
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, dt);
@@ -591,15 +596,18 @@ namespace GalaxyEggbert::CNA
             actionKeyWasDown_ = actionPressed;
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
-            // -- platform lift patrol, crate push, pickup collection, and
-            // (2026-07-11) generic hazard contact (ObjectType2/3). Runs
-            // after blupi_.Step() so blupi_'s position is this frame's
-            // final value; blupiXBeforeStep lets the interaction system
-            // infer movement direction for crate push without
-            // GEBlupiController needing a velocity accessor. crouchHeld
-            // gates ObjectType3's real duck-immunity.
+            // -- platform lift patrol, crate push, pickup collection,
+            // generic hazard contact (ObjectType2/3/4/16/17/20/96/97), and
+            // (2026-07-11) the wasp's balloon status. Runs after
+            // blupi_.Step() so blupi_'s position is this frame's final
+            // value; blupiXBeforeStep lets the interaction system infer
+            // movement direction for crate push without GEBlupiController
+            // needing a velocity accessor. crouchHeld gates ObjectType3's
+            // real duck-immunity; blupi_.IsBallooned() gates whether a
+            // 3/16/96/97 hazard pops the balloon instead of killing.
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                 blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld);
+                                 blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
+                                 blupi_.IsBallooned());
 
             // GEInteractionSystem has no access to GEBlupiController, so it
             // can only report that a hazard-contact death happened this
@@ -609,6 +617,29 @@ namespace GalaxyEggbert::CNA
             if (interaction_.DiedThisFrame())
             {
                 blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+            }
+
+            // Wasp balloon status (plan.md E3D-MIG-135) -- TriggerBalloon()
+            // is idempotent (a no-op while already ballooned, matching the
+            // real `!m_blupiBalloon` re-trigger guard), so only play the
+            // real entry sound (channel 40) on an actual new trigger.
+            if (interaction_.BalloonTouchedThisFrame() && blupi_.TriggerBalloon())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel40);
+            }
+            if (interaction_.BalloonPoppedThisFrame())
+            {
+                blupi_.PopBalloon();
+            }
+            // Real recovery sound (channel 41) covers BOTH a natural
+            // Step()-driven timeout AND the hazard-triggered pop just above
+            // -- both funnel through the same IsBallooned() true->false
+            // transition, so one comparison at the end of Update() (not
+            // right after Step(), unlike wasEcrased's own check) catches
+            // either cause.
+            if (wasBallooned && !blupi_.IsBallooned())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
             }
 
             // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
