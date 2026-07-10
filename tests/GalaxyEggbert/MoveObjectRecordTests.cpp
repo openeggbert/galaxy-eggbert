@@ -31,6 +31,10 @@ TEST(MoveObjectRecordTests, PlaceAndCollectRoundTripsAllFields) {
     lift.posEndY = 8.0f;
     lift.posEndZ = 10.75f;
     lift.speed = 2.0f;
+    lift.stepAdvanceTicks = 25.0f;
+    lift.stepRecedeTicks = 30.0f;
+    lift.timeStopStartTicks = 15.0f;
+    lift.timeStopEndTicks = 20.0f;
     PlaceMoveObject(world, lift);
 
     const auto collected = CollectMoveObjects(world);
@@ -44,7 +48,8 @@ TEST(MoveObjectRecordTests, PlaceAndCollectRoundTripsAllFields) {
     const bool hasLift = std::any_of(collected.begin(), collected.end(), [](const MoveObjectRecord& r) {
         return r.type == ObjectType::ObjectType1 && r.posStartX == 60.5f && r.posStartY == 2.25f
             && r.posStartZ == 10.75f && r.posEndX == 60.5f && r.posEndY == 8.0f && r.posEndZ == 10.75f
-            && r.speed == 2.0f;
+            && r.speed == 2.0f && r.stepAdvanceTicks == 25.0f && r.stepRecedeTicks == 30.0f
+            && r.timeStopStartTicks == 15.0f && r.timeStopEndTicks == 20.0f;
     });
     EXPECT_TRUE(hasEgg);
     EXPECT_TRUE(hasLift);

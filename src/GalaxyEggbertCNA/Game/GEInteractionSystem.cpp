@@ -19,6 +19,81 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
+        // Real shared patrol-turn mechanic (plan.md E3D-MIG-131,
+        // `Decor::MoveObjectStepLine`, verified directly against
+        // Decor.cpp:8005-8141): a 4-phase cycle -- 1=dwell at posStart for
+        // timeStopStartTicks, 2=advance to posEnd over stepAdvanceTicks,
+        // 3=dwell at posEnd for timeStopEndTicks, 4=recede back over
+        // stepRecedeTicks, then loop to 1. The real position update is
+        // linear interpolation on the elapsed-time fraction (not per-tick
+        // accumulation), so it can't drift -- reproduced here with a
+        // normalized `t` in [0,1] rather than the real integer pixel math,
+        // same effect. Ticks are at the 20Hz reference rate (same
+        // convention as MobileObjSpec::phase). Applies to every MoveObject
+        // EXCEPT platform lifts/crates, which keep their own existing
+        // speed-based ping-pong patrol (see the two branches above) --
+        // callers gate that exclusion, not this function. A no-op if
+        // posStart==posEnd is the caller's responsibility too (matches the
+        // real guard exactly -- see Update()'s call site).
+        void AdvancePatrolStep(MobileObjSpec& obj, float dt)
+        {
+            constexpr float kTicksPerSecond = 20.0f;
+            const float dtTicks = dt * kTicksPerSecond;
+            switch (obj.patrolStep)
+            {
+                case 1: // dwell at posStart
+                    obj.patrolTime += dtTicks;
+                    if (obj.patrolTime >= obj.timeStopStartTicks)
+                    {
+                        obj.patrolStep = 2;
+                        obj.patrolTime = 0.0f;
+                    }
+                    break;
+                case 2: // advance posStart -> posEnd
+                {
+                    obj.patrolTime += dtTicks;
+                    const float t = (obj.stepAdvanceTicks > 0.0f)
+                        ? std::min(obj.patrolTime / obj.stepAdvanceTicks, 1.0f) : 1.0f;
+                    obj.currentX = obj.posStartX + (obj.posEndX - obj.posStartX) * t;
+                    obj.currentY = obj.posStartY + (obj.posEndY - obj.posStartY) * t;
+                    obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
+                    if (t >= 1.0f)
+                    {
+                        obj.patrolStep = 3;
+                        obj.patrolTime = 0.0f;
+                    }
+                    break;
+                }
+                case 3: // dwell at posEnd
+                    obj.patrolTime += dtTicks;
+                    if (obj.patrolTime >= obj.timeStopEndTicks)
+                    {
+                        obj.patrolStep = 4;
+                        obj.patrolTime = 0.0f;
+                    }
+                    break;
+                case 4: // recede posEnd -> posStart
+                {
+                    obj.patrolTime += dtTicks;
+                    const float t = (obj.stepRecedeTicks > 0.0f)
+                        ? std::min(obj.patrolTime / obj.stepRecedeTicks, 1.0f) : 1.0f;
+                    obj.currentX = obj.posEndX + (obj.posStartX - obj.posEndX) * t;
+                    obj.currentY = obj.posEndY + (obj.posStartY - obj.posEndY) * t;
+                    obj.currentZ = obj.posEndZ + (obj.posStartZ - obj.posEndZ) * t;
+                    if (t >= 1.0f)
+                    {
+                        obj.patrolStep = 1;
+                        obj.patrolTime = 0.0f;
+                    }
+                    break;
+                }
+                default:
+                    obj.patrolStep = 1;
+                    obj.patrolTime = 0.0f;
+                    break;
+            }
+        }
+
         // The real shared kill list (Decor.cpp:5782-5816, verified directly
         // against source for this task): ObjectType2/3 (generic patrol
         // hazards), 4 (bulldozer), 16 (spider), 17 (fish), 20 (bird), 96/97
@@ -194,6 +269,18 @@ namespace GalaxyEggbert::CNA
                     }
                 }
                 continue;
+            }
+
+            // Real shared patrol-turn mechanic (plan.md E3D-MIG-131) --
+            // every remaining MoveObject type (enemies, pickups, etc., NOT
+            // lifts/crates handled above). Does NOT `continue`: the wasp/
+            // hazard/pickup contact checks below must see this frame's
+            // freshly-updated currentX/Y/Z, not last frame's position. A
+            // no-op if posStart==posEnd, matching the real guard exactly
+            // (stationary objects never advance patrolStep/patrolTime).
+            if (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY || obj.posStartZ != obj.posEndZ)
+            {
+                AdvancePatrolStep(obj, dt);
             }
 
             // Wasp (ObjectType44, plan.md E3D-MIG-135) -- does NOT kill or

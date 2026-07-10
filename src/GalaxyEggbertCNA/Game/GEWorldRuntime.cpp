@@ -111,9 +111,11 @@ namespace GalaxyEggbert::CNA
                 section = Section::None;
 
                 int type = 0, psx = 0, psy = 0, pex = 0, pey = 0, stepAdv = 1;
+                int stepRec = 1, stopStart = 0, stopEnd = 0;
                 std::sscanf(line.c_str(),
-                    "MoveObject: type=%d stepAdvance=%d %*s %*s %*s posStart=%d;%d posEnd=%d;%d",
-                    &type, &stepAdv, &psx, &psy, &pex, &pey);
+                    "MoveObject: type=%d stepAdvance=%d stepRecede=%d timeStopStart=%d timeStopEnd=%d "
+                    "posStart=%d;%d posEnd=%d;%d",
+                    &type, &stepAdv, &stepRec, &stopStart, &stopEnd, &psx, &psy, &pex, &pey);
 
                 if (!IsSupportedMoveObjectType(type))
                 {
@@ -129,6 +131,18 @@ namespace GalaxyEggbert::CNA
                 spec.posEndY = 0.0f;
                 spec.posEndZ = static_cast<float>(pey) / kMobileTileSize - kWorldCenterZ;
                 spec.speed = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
+                // Real patrol-timing fields (plan.md E3D-MIG-131), used by
+                // every MoveObject type except platform lifts/crates (which
+                // keep the speed-based ping-pong `spec.speed` above feeds).
+                // Real files always have all 4 present (01-world-file-format.md
+                // §4's full field list) -- 1/1/0/0 (stepAdv/stepRec's real
+                // minimum/timeStop's real default) if sscanf somehow didn't
+                // match, not zero (a zero stepAdvanceTicks would divide by
+                // zero in AdvancePatrolStep()).
+                spec.stepAdvanceTicks = static_cast<float>(std::max(stepAdv, 1));
+                spec.stepRecedeTicks = static_cast<float>(std::max(stepRec, 1));
+                spec.timeStopStartTicks = static_cast<float>(std::max(stopStart, 0));
+                spec.timeStopEndTicks = static_cast<float>(std::max(stopEnd, 0));
 
                 if (IsPatrolMoveObjectType(type) &&
                     spec.posStartX == spec.posEndX && spec.posStartZ == spec.posEndZ)
@@ -237,6 +251,10 @@ namespace GalaxyEggbert::CNA
             spec.posEndY = record.posEndY;
             spec.posEndZ = record.posEndZ - static_cast<float>(kWorldCenterZ);
             spec.speed = record.speed;
+            spec.stepAdvanceTicks = record.stepAdvanceTicks;
+            spec.stepRecedeTicks = record.stepRecedeTicks;
+            spec.timeStopStartTicks = record.timeStopStartTicks;
+            spec.timeStopEndTicks = record.timeStopEndTicks;
             spec.currentX = spec.posStartX;
             spec.currentY = spec.posStartY;
             spec.currentZ = spec.posStartZ;

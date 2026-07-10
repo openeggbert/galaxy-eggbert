@@ -220,10 +220,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   `ObjectType`s (2/3/4/16/17/20/96/97 — patrol hazards, bulldozer, spider, fish, bird, follower,
   2026-07-11 §3), and the wasp (44, 2026-07-11 §3) inflicts a non-lethal "balloon" status
   instead (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`) that changes how
-  4 of those 8 shared-kill types behave (pop instead of kill) — the remaining 3 named enemy
-  types (blupih/blupit/large creature) each need real per-type behavior beyond a plain contact
-  check, and follower 96/97's real homing movement is a separate still-open feature from its
-  now-working contact-kill/pop. HUD is now
+  4 of those 8 shared-kill types behave (pop instead of kill). Every `MoveObject` (except lifts/
+  crates) now genuinely patrols via the real shared 4-phase dwell/advance/dwell/recede cycle
+  (2026-07-11 §3, `AdvancePatrolStep()`) instead of sitting frozen — the real prerequisite the
+  remaining 3 named enemy types (blupih/blupit/large creature) need for their own dwell-frame-
+  timed attacks/lethality windows, though none of the 3 is implemented yet. Follower 96/97's real
+  homing-toward-Blupi movement is also still a separate open feature (contact-kill/pop and real
+  patrol motion both work, the Blupi-homing AI specifically doesn't). HUD is now
   minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
   no numeric treasure counter/score.
   No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
@@ -244,6 +247,55 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented the real shared patrol-turn state machine, unblocking blupih/blupit/large-
+  creature (2026-07-11).** The "bigger task" flagged when the wasp work finished — the
+  prerequisite most of Phase 13's remaining named enemy types actually need.
+  - **Verified directly against `Decor.cpp:8005-8141`** (`Decor::MoveObjectStepLine`), not just
+    the reference doc: a real 4-phase cycle — dwell at `posStart` for `timeStopStart` ticks,
+    advance to `posEnd` over `stepAdvance` ticks, dwell at `posEnd` for `timeStopEnd` ticks,
+    recede back over `stepRecede` ticks, then loop — driven by 4 real per-instance fields that
+    were already fully documented in `01-world-file-format.md`'s field table but never actually
+    parsed/stored/simulated anywhere in `GalaxyEggbertCNA`.
+  - **New `AdvancePatrolStep()`** in `GEInteractionSystem.cpp` implements this exactly, using
+    normalized linear interpolation on the elapsed-time fraction (equivalent to the real integer-
+    pixel math — can't drift, same reason the real source uses it) at the real 20Hz reference
+    tick rate. Applies to every `MoveObject` except platform lifts/crates, which keep their
+    existing separate speed-based ping-pong patrol untouched — a deliberate scope choice (already
+    shipped/tested, the visual difference for symmetric timing is likely small), not an
+    oversight; worth revisiting if that assumption turns out wrong once more content is authored.
+  - **Real breaking format change**: `MoveObjectRecord`'s binary payload grew from 29 to 45 bytes
+    to carry the 4 new timing fields (`stepAdvanceTicks`/`stepRecedeTicks`/
+    `timeStopStartTicks`/`timeStopEndTicks`), with placeholder defaults (2s dwell/3s traversal)
+    for hand-authored `.vwr` worlds that don't set them explicitly — real values are level-
+    authored per instance, not a per-type constant, so there's no "real" default to transcribe.
+    `worlds3d/world001.vwr` regenerated. The mobile-eggbert `.txt` parser
+    (`LoadFromMobileEggbertFile`) also now actually captures `stepRecede`/`timeStopStart`/
+    `timeStopEnd` instead of discarding them with `%*s` — a real fix, not just new capability:
+    real levels' patrol-hazard/enemy `MoveObject`s were previously frozen at `posStart` forever
+    even when loaded from a real mobile-eggbert file, not just in hand-authored `.vwr` worlds.
+  - Direction-mirrored animation-table selection (which visual table is picked by `posStart.X >
+    posEnd.X`) is NOT modeled — no directional walk/turn sprite tables exist for these types yet,
+    only simple icon-cycling, so there's nothing for this to select between yet.
+  - **This is the real prerequisite `E3D-MIG-134`/`136` (blupih/blupit's dwell-frame-timed
+    projectile attacks, the large creature's turn-dwell-gated lethality) both need** — neither
+    was attempted in this same pass (both still need their own additional logic beyond just the
+    step/time state now being tracked), but both are now unblocked rather than blocked on missing
+    infrastructure.
+  - **Verification**: found and fixed a real bug in the new `VerifyInteractionSystem` test while
+    writing it — the first version used a zero-dwell patrol object and checked position at a
+    fixed frame count, but with zero dwell the object immediately starts receding the instant it
+    reaches `posEnd` (no stable resting point to sample), so a frame count chosen to land "after
+    the advance" actually landed partway through the *next* recede phase, producing a confusing
+    partial-distance reading instead of a clean pass/fail. Fixed by using a symmetric ~4s cycle
+    with real (non-zero) dwell at both ends, giving wide, timing-forgiving sampling windows.
+    Extended `MoveObjectRecordTests`' existing round-trip test to cover the 4 new fields too.
+    Full suite and both backends' live runs re-confirmed clean -- the app itself loaded and ran
+    correctly under Vulkan (identical block/object/sound counts to EasyGL, no errors), but
+    `timeout 8` didn't actually terminate that particular run (still running 5+ minutes later,
+    had to `kill -9` it manually) -- a one-off process-cleanup quirk, not a regression from this
+    change (every earlier `timeout`-bounded run this session, including Vulkan ones, worked as
+    expected).
 
 - **Implemented the wasp's "balloon" status and its hazard-pop interaction (2026-07-11).**
   Continuing Phase 13, still on "these bigger tasks" per the user's standing request.

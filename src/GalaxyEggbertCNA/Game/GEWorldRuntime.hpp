@@ -47,6 +47,21 @@ namespace GalaxyEggbert::CNA
         float currentX = 0.0f, currentY = 0.0f, currentZ = 0.0f;
         float direction = 1.0f;
         bool active = true;
+
+        // Real shared patrol-turn timing (2026-07-11, plan.md E3D-MIG-131,
+        // `Decor::MoveObjectStepLine` -- see GEInteractionSystem.cpp's
+        // AdvancePatrolStep() for the state machine that uses these).
+        // Ticks are at the real 20Hz reference rate, same convention as
+        // `phase` above. Does NOT apply to platform lifts/crates (types 1/
+        // 12/47/48), which keep their own existing speed-based ping-pong
+        // patrol in GEInteractionSystem -- these fields are only consumed
+        // for every other MoveObject type.
+        float stepAdvanceTicks = 60.0f;
+        float stepRecedeTicks = 60.0f;
+        float timeStopStartTicks = 40.0f;
+        float timeStopEndTicks = 40.0f;
+        int patrolStep = 1; // 1=dwell@start, 2=advance, 3=dwell@end, 4=recede
+        float patrolTime = 0.0f; // ticks elapsed within the current patrolStep
     };
 
     // Minimal mobile-eggbert .txt world-file loader for the CNA/Easy3D target.

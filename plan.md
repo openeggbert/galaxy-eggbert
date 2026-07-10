@@ -85,10 +85,13 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   `E3D-MIG-135`, 2026-07-11) transforms him into a non-lethal "balloon" status instead
   (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`), which in turn changes
   how exactly 4 of those 8 shared-kill types (`3`/`16`/`96`/`97`) behave — they pop the balloon
-  instead of killing while it's active. The remaining 3 named types (blupih/blupit/large
-  creature) each need real per-type behavior beyond a plain contact check (projectile-spawning,
-  a lethal-only-sometimes window) — Phase 13's still-open remainder. Follower 96/97's real
-  homing-toward-Blupi movement is also still open (contact-kill/pop works, the AI doesn't). All
+  instead of killing while it's active. Every `MoveObject` (except lifts/crates) now genuinely
+  patrols using the real shared 4-phase dwell/advance/dwell/recede cycle (`E3D-MIG-131`,
+  2026-07-11, `AdvancePatrolStep()`) instead of sitting frozen at `posStart` — the real
+  prerequisite the remaining 3 named types (blupih/blupit/large creature) need for their own
+  dwell-frame-timed attacks/lethality windows, though none of the 3 were implemented in this
+  same pass. Follower 96/97's real homing-toward-Blupi movement is also still open (contact-
+  kill/pop and now real patrol motion both work, the Blupi-homing AI specifically doesn't). All
   5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are implemented
   (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
   foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
@@ -288,8 +291,29 @@ documented there.
       (`DoorsLost()`) behavior — verified via `VerifyInteractionSystem`. This only unblocks per-type
       enemy work (`131`-`137`) and hazards (Phase 14) to actually call `LoseLife()` — none of them
       do yet (still `[ ]` below), so enemy contact still does nothing.
-- [ ] `131` Shared patrol-turn cycle (4-phase dwell/walk/dwell/walk, direction mirrored by
-      posStart.X vs posEnd.X) — most enemy types share this, implement once, reuse.
+- [~] `131` **Shared patrol-turn cycle done 2026-07-11** — verified directly against
+      `Decor.cpp:8005-8141` (`Decor::MoveObjectStepLine`), not just the reference doc. New
+      `AdvancePatrolStep()` in `GEInteractionSystem.cpp` implements the real 4-phase state
+      machine exactly (dwell@`posStart` for `timeStopStartTicks` → advance to `posEnd` over
+      `stepAdvanceTicks` → dwell@`posEnd` for `timeStopEndTicks` → recede over
+      `stepRecedeTicks` → loop), using normalized linear interpolation (equivalent to the real
+      integer-pixel math, can't drift) at the real 20Hz reference tick rate. Applies to every
+      `MoveObject` except platform lifts/crates, which keep their existing separate speed-based
+      ping-pong patrol untouched (a deliberate scope choice, not an oversight — lifts are
+      already shipped/tested and the visual difference for a symmetric-timing ping-pong is
+      likely small; revisit if that assumption turns out wrong). This is the real prerequisite
+      `E3D-MIG-134`/`136` (blupih/blupit's dwell-frame-timed attacks, the large creature's
+      turn-dwell-gated lethality) both need — neither was attempted in this same pass, but both
+      are now unblocked. **Real breaking format change**: `MoveObjectRecord`'s binary payload
+      grew from 29 to 45 bytes to carry the 4 new timing fields (defaults: 2s dwell/3s traversal,
+      a placeholder for hand-authored worlds, not a transcribed real per-type constant — real
+      values are level-authored per instance); `worlds3d/world001.vwr` regenerated. Direction-
+      mirrored animation-table selection (which visual table is picked by `posStart.X >
+      posEnd.X`) is NOT modeled — no directional walk/turn sprite tables exist for these types
+      yet, only simple icon-cycling. Verified via a new `VerifyInteractionSystem` test (a
+      synthetic patrol object with a symmetric ~4s cycle, sampled mid-dwell at each end for
+      timing-forgiving checkpoints) and an extended `MoveObjectRecordTests` round-trip
+      assertion.
 - [~] `132` **Shared kill-list contact-kill done 2026-07-11** in `GEInteractionSystem`, **widened
       2026-07-11** beyond just types 2/3 (verified against `Decor.cpp:5782-5816` directly, not
       just the reference doc — that source block IS the real shared contact check for exactly 8
@@ -319,7 +343,9 @@ documented there.
 - [ ] `134` Stationary shooters 32 (blupih, vertical projectile ObjectType23) and
       33 (blupit, two horizontal projectiles bracketing the turn) — both Cloud-vulnerable, body
       contact not lethal (only the projectile is). NOT part of the shared kill list (`132`) —
-      these two need their own projectile-spawn logic, not a plain contact check.
+      these two need their own projectile-spawn logic, not a plain contact check. Prerequisite
+      (`131`, dwell-frame timing) is now done — real attack timing ("at dwell-frame 21 exactly"
+      during `patrolStep` 1 or 3) is implementable, not attempted yet.
 - [x] `135` **Type 44 (wasp) done 2026-07-11** — verified directly against `Decor.cpp:5826-5863`
       (trigger) and `5766-5781` (hazard-pop interaction), not just the reference doc. New
       `GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()` (real
@@ -341,6 +367,9 @@ documented there.
       world).
 - [ ] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
       vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon.
+      Prerequisite (`131`, `patrolStep`) is now done — the real gate ("only registers while
+      `step != 2 && step != 4`", i.e. `patrolStep` 1 or 3, not mid-walk) is implementable, not
+      attempted yet.
 - [~] `137` Types 96/97 (follower) — **contact-kill done**, folded into `E3D-MIG-132`'s widened
       shared kill list (2026-07-11), covering both the dormant (96) and awake (97) state
       identically, matching the real shared kill-list check. NOT done: the real dormant-until-a-

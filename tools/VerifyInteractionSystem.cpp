@@ -347,6 +347,68 @@ int main(int argc, char** argv)
         check(bulldozerCostALife, "bulldozer contact costs 1 life despite blupiBallooned=true (accounting for a possible game-over wrap)");
     }
 
+    // 9. Real shared patrol-turn mechanic (plan.md E3D-MIG-131) -- a
+    // synthetic patrol object with a symmetric 4-phase cycle (dwell 20
+    // ticks / advance 20 ticks / dwell 20 ticks / recede 20 ticks, each
+    // ~1s = 60 frames at dt=1/60, full cycle 240 frames) so both the
+    // "resting at posEnd" dwell and the "resting at posStart" dwell give
+    // wide, timing-forgiving sampling windows rather than needing a
+    // frame-exact checkpoint on a instantaneous transition. Blupi is kept
+    // far away (999,999,999) throughout so no contact/hazard/pickup check
+    // ever fires and interferes with the position readings.
+    {
+        MobileObjSpec patroller;
+        patroller.type = ObjectType::ObjectType17; // fish -- type doesn't matter, only its position does here
+        patroller.posStartX = 0.0f; patroller.posEndX = 10.0f;
+        patroller.posStartY = patroller.posEndY = 1.0f;
+        patroller.posStartZ = patroller.posEndZ = 30.0f; // a Z not used by anything else in the sample world
+        patroller.currentX = patroller.posStartX;
+        patroller.currentY = patroller.posStartY;
+        patroller.currentZ = patroller.posStartZ;
+        patroller.stepAdvanceTicks = 20.0f;
+        patroller.stepRecedeTicks = 20.0f;
+        patroller.timeStopStartTicks = 20.0f;
+        patroller.timeStopEndTicks = 20.0f;
+        world.GetMobileObjectsMutable().push_back(patroller);
+
+        const auto getPatrollerX = [&world]() -> float
+        {
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                if (obj.type == ObjectType::ObjectType17 && obj.posStartX == 0.0f && obj.posEndX == 10.0f)
+                {
+                    return obj.currentX;
+                }
+            }
+            return -999.0f;
+        };
+
+        check(getPatrollerX() == 0.0f, "patrol object starts at posStartX");
+
+        // Frame 150 of a 240-frame cycle (dwell-start [0,60), advance
+        // [60,120), dwell-end [120,180)) falls solidly inside the
+        // dwell-end window -- comfortably past the moment it first
+        // reaches posEndX, comfortably before it starts receding.
+        for (int i = 0; i < 150; ++i)
+        {
+            interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+        }
+        const float xAtDwellEnd = getPatrollerX();
+        std::cout << "Patrol object X at frame 150 (mid dwell-end): " << xAtDwellEnd << " (posEnd=10)" << std::endl;
+        check(xAtDwellEnd > 9.0f, "patrol object reaches and holds at posEndX during its dwell-end window");
+
+        // Frame 300 total = frame 60 of a fresh 240-frame cycle -- just
+        // past dwell-start [0,60) ending, so it's back near posStartX
+        // (advance has barely begun).
+        for (int i = 0; i < 150; ++i)
+        {
+            interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+        }
+        const float xAtDwellStart = getPatrollerX();
+        std::cout << "Patrol object X at frame 300 (back at dwell-start): " << xAtDwellStart << " (posStart=0)" << std::endl;
+        check(xAtDwellStart < 1.0f, "patrol object completes the full cycle and returns to posStartX");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

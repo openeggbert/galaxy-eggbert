@@ -14,10 +14,11 @@ namespace GalaxyEggbert {
 // not a separate top-level file section. Mirrors the simplified shape both
 // GalaxyEggbertSimple3D's and GalaxyEggbertCNA's own MobileObjSpec already
 // use for mobile-eggbert .txt-loaded MoveObject: lines (type, posStart,
-// posEnd, speed -- no separate step/timing fields; posEnd == posStart means
-// the object doesn't move). Kept engine-agnostic (plain floats, no CNA/XNA
-// or Simple3D/U3D vector types) so both targets can convert it into their
-// own local MobileObjSpec-equivalent struct.
+// posEnd, speed, plus the real patrol-timing fields below, 2026-07-11 --
+// posEnd == posStart means the object doesn't move, matching the real
+// guard). Kept engine-agnostic (plain floats, no CNA/XNA or Simple3D/U3D
+// vector types) so both targets can convert it into their own local
+// MobileObjSpec-equivalent struct.
 //
 // IMPORTANT: positions here are in Worlds::World's own RAW GRID space
 // (range [0, world.blocksPerAxis()), same as World::setBlock's x/y/z) --
@@ -31,6 +32,24 @@ struct MoveObjectRecord final {
     float posStartX = 0.0f, posStartY = 0.0f, posStartZ = 0.0f;
     float posEndX = 0.0f, posEndY = 0.0f, posEndZ = 0.0f;
     float speed = 1.5f;
+
+    // Real shared patrol-turn timing fields (plan.md E3D-MIG-131,
+    // `Decor::MoveObjectStepLine` per mobile-eggbert-reference/
+    // 04-enemy-behavior.md/01-world-file-format.md §4, verified directly
+    // against Decor.cpp:8005-8141): a 4-phase cycle -- dwell at posStart
+    // for timeStopStartTicks, advance to posEnd over stepAdvanceTicks,
+    // dwell at posEnd for timeStopEndTicks, recede back over
+    // stepRecedeTicks, then loop. Ticks are at the real 20Hz reference
+    // rate (same convention as MobileObjSpec::phase). Real values are
+    // level-authored per placed instance, not a per-type constant
+    // (01-world-file-format.md's own field table) -- these defaults (2s
+    // dwell, 3s traversal) are a reasonable placeholder for hand-authored
+    // .vwr worlds that don't set them explicitly, not a transcribed real
+    // constant.
+    float stepAdvanceTicks = 60.0f;
+    float stepRecedeTicks = 60.0f;
+    float timeStopStartTicks = 40.0f;
+    float timeStopEndTicks = 40.0f;
 };
 
 // metadataType discriminator reserved for MoveObjectRecord payloads in
