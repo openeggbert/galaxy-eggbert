@@ -342,6 +342,15 @@ namespace GalaxyEggbert::CNA
         // fixed terrain-centroid shot.
         blupi_.SetPosition(0.0f, 1.0f, 0.0f);
 
+        // Real mobile-eggbert sound playback (2026-07-10, see GESound.hpp) --
+        // loads whichever of Content/sounds/sound000.wav..sound092.wav
+        // actually exist (already copied next to the binary by the
+        // mobile-eggbert Content/ POST_BUILD step, same as icons/
+        // backgrounds).
+        sound_.LoadContent();
+        std::cout << "GalaxyEggbertCNA: sound loaded — " << sound_.LoadedCount() << "/"
+                  << GESound::kNumChannels << " channel(s)." << std::endl;
+
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
                   << terrainRenderer_->BlockCount() << " blocks ("
                   << terrainRenderer_->AnimatedBlockCount() << " animated, "
@@ -384,8 +393,43 @@ namespace GalaxyEggbert::CNA
             [[maybe_unused]] const bool actionPressed = keys.IsKeyDown(Keys::Space);
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
+            const bool wasOnGround = blupi_.IsOnGround();
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, dt);
+
+            // Real mobile-eggbert jump/land/footstep sounds (2026-07-10) --
+            // the only Blupi-movement sound events currently triggerable;
+            // there's no interactive-object system yet for pickup/hazard/key
+            // sounds (see GESound.hpp). jumpPressed is edge-detected the same
+            // way "C" is below, gated on wasOnGround so holding the key while
+            // airborne doesn't replay the jump sound.
+            if (jumpPressed && !jumpKeyWasDown_ && wasOnGround)
+            {
+                sound_.PlayJump();
+            }
+            if (!wasOnGround && blupi_.IsOnGround())
+            {
+                sound_.PlayLand();
+            }
+            if (blupi_.GetAnimState() == GEBlupiController::AnimState::March)
+            {
+                // kStepSoundInterval is a reasonable-sounding approximation,
+                // NOT sourced from mobile-eggbert's real march-cycle timing
+                // (unverified against Decor.cpp/Tables.cpp) -- revisit once
+                // that's checked, same as kMarchFrames' own animation timing.
+                constexpr float kStepSoundInterval = 0.3f;
+                stepSoundTimer_ += dt;
+                if (stepSoundTimer_ >= kStepSoundInterval)
+                {
+                    stepSoundTimer_ -= kStepSoundInterval;
+                    sound_.PlayStep();
+                }
+            }
+            else
+            {
+                stepSoundTimer_ = 0.0f;
+            }
+            jumpKeyWasDown_ = jumpPressed;
 
             // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
             // detected (same pattern as demo_avatar's Space-toggle) so a

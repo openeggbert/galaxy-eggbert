@@ -5,6 +5,7 @@
 #include "Game/GETerrainRenderer.hpp"
 #include "Game/GEBlupiController.hpp"
 #include "Game/GEObjectIcons.hpp"
+#include "Game/GESound.hpp"
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
@@ -139,6 +140,15 @@ namespace GalaxyEggbert::CNA
         // its facing. No 3D sprite yet (E3D-MIG-061..063) — see blupiIcon_
         // below for the interim 2D stand-in.
         GEBlupiController blupi_;
+
+        // Real mobile-eggbert sound playback (2026-07-10, see GESound.hpp).
+        // jumpKeyWasDown_ edge-detects the jump key the same way
+        // cameraModeKeyWasDown_ edge-detects "C" above; stepSoundTimer_
+        // paces footstep sounds while marching (reset whenever Blupi isn't
+        // marching, so it doesn't fire immediately on the next step).
+        GESound sound_;
+        bool jumpKeyWasDown_ = false;
+        float stepSoundTimer_ = 0.0f;
 
         // Interim 2D animation-state indicator (bottom-right corner) while
         // no 3D Blupi model exists (2026-07-05) — blupi.png, drawn via

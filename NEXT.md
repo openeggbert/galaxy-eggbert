@@ -205,10 +205,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### What does not work yet
 - `GalaxyEggbertCNA`: no real Blupi model yet (a temporary placeholder exists in third-person mode
-  only, §3), no HUD, no sound, no real gameplay logic (all expected at this phase — no interactive
-  object system yet, so platform lifts/crates render correctly but don't move or respond to Blupi).
-  `BigDecor:` rendering and the platform-lift/crate `UniformCube` object path are now both
-  implemented (2026-07-09, §3).
+  only, §3), no HUD, no real gameplay logic (all expected at this phase — no interactive object
+  system yet, so platform lifts/crates render correctly but don't move or respond to Blupi, and
+  pickup/key/hazard sounds aren't wireable yet either — see below). `BigDecor:` rendering and the
+  platform-lift/crate `UniformCube` object path are now both implemented (2026-07-09, §3). Real
+  sound playback now exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV
+  files, wired up for the 3 events that ARE currently triggerable: jump, landing, and a footstep
+  loop while marching.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — the last 6 `DirectionalCube` icons (15-18, 108-109) were backfilled
@@ -224,6 +227,37 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Added real sound playback to `GalaxyEggbertCNA` (2026-07-10) — first sound support on this
+  target.** User request: reuse mobile-eggbert's sounds directly, then integrate them. New
+  `src/GalaxyEggbertCNA/Game/GESound.{hpp,cpp}`.
+  - **Assets**: the same 93 real WAV files (`Content/sounds/sound000.wav..sound092.wav`) already
+    copied build-time from mobile-eggbert alongside icons/backgrounds (`CLAUDE.md`'s asset-reuse
+    table already lists sounds as approved direct reuse) — no new asset-copying setup needed, they
+    were already landing next to the binary.
+  - **Playback**: CNA's real `Microsoft::Xna::Framework::Audio::SoundEffect`/`SoundEffectInstance`
+    (the same API `../cna/examples/demo_sound` uses), loaded via the direct-path `SoundEffect(path)`
+    constructor — not `ContentManager`, since that's already repointed to `avatars3d/` for the
+    third-person placeholder model and repointing it again for `Content/sounds/` would conflict.
+  - **Data reused, not re-transcribed**: the per-channel volume table and conflict policy (a channel
+    already playing isn't restarted, except channel 10) are the exact same real mobile-eggbert data
+    already in `GalaxyEggbertSimple3D`'s shipped `GESound.cpp` (itself "ported verbatim from
+    mobile-eggbert Sound.hpp tableVolumePitch") — copied as the same real data, not freshly
+    transcribed. Pitch is intentionally NOT applied (matches Simple3D's own "(ignored in Simple3D)"
+    simplification) — the table's pitch encoding/units were never independently verified against
+    real mobile-eggbert source, so applying it blind risked audibly wrong pitch shifts.
+  - **Wired up**: the only 3 events currently triggerable given CNA has no interactive-object system
+    yet — jump (`SoundChannel1`, edge-detected on the jump key, gated on `wasOnGround`), landing
+    (`SoundChannel4`, `onGround` false→true transition), and a footstep loop while marching
+    (`SoundChannel3`, paced by a `kStepSoundInterval` — explicitly flagged in-code as a
+    reasonable-sounding approximation, NOT verified against mobile-eggbert's real march-cycle
+    timing). Pickup/key/hazard sounds aren't wireable yet (see Simple3D's `GESound` for the full
+    real channel list once the interactive-object system exists).
+  - **Verified**: clean build on both `build-cna` (EasyGL) and `build-cna-vulkan` (Vulkan);
+    `GalaxyEggbertWorldsTests` (63/63); `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/
+    `VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`); live headless runs on both backends report
+    "sound loaded — 93/93 channel(s)"; a temporary smoke test called `PlayJump()`/`PlayStep()`/
+    `PlayLand()` directly and confirmed no crash/exception before being removed.
 
 - **Redesigned `worlds3d/world001.vwr` from a tech-demo showroom into an actual small playable
   level (2026-07-10).** User request: "should look like a normal future Galaxy Eggbert world —
