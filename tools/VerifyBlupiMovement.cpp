@@ -103,6 +103,16 @@ int main(int argc, char** argv)
         airborne.SetPosition(static_cast<float>(kLavaX) - 50.0f, 20.0f, static_cast<float>(kLavaZ) - 50.0f);
         check(airborne.GetGroundBlockType(synthetic) == BlockTypes::Air,
               "GetGroundBlockType() returns Air while airborne, even directly above lava");
+
+        // Spikes (plan.md E3D-MIG-141) -- same synthetic world, one more block.
+        constexpr std::uint16_t kSpikeX = 30, kSpikeZ = 30;
+        synthetic.setBlock(kSpikeX, 0, kSpikeZ, Worlds::Block::make(BlockTypes::Spike));
+        GEBlupiController onSpike;
+        onSpike.SetPosition(static_cast<float>(kSpikeX) - 50.0f, 1.0f, static_cast<float>(kSpikeZ) - 50.0f);
+        onSpike.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(onSpike.IsOnGround(), "Blupi stands on a spike block rather than falling through it");
+        check(onSpike.GetGroundBlockType(synthetic) == BlockTypes::Spike,
+              "GetGroundBlockType() identifies spikes correctly (E3D-MIG-141 hazard detection)");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

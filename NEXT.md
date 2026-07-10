@@ -235,6 +235,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented the spikes hazard (2026-07-11).** Autonomous continuation of `plan.md`'s backlog
+  (user request: pick tasks autonomously). Same shape as the just-added lava hazard
+  (`GetGroundBlockType() == Spike` → shared `triggerDeath()`), but real channel 51 (the Glu-death
+  sound), not lava/fall's channel 8 — `triggerDeath()` now takes the channel as a parameter.
+  Real vehicle+focus-gated immunity and the narrow central x-band restriction within the tile are
+  both NOT modeled: neither vehicles nor a "focus" concept exist in `GalaxyEggbertCNA` yet
+  (Phase 17), and the single-point 3D collision model has no sub-tile position to test against —
+  both are documented simplifications, not oversights. Drip (icons 404/410, grouped with spikes
+  in `plan.md`'s `E3D-MIG-141`) deliberately NOT implemented — those icons aren't even a
+  `BlockTypes` constant yet, blocked on the still-undecided `ThinMechanical` render geometry
+  (`E3D-MIG-510`). New synthetic-world test in `VerifyBlupiMovement`; full suite + both backends'
+  live runs re-confirmed clean.
+
 - **Planned a 3D world editor tool in `plan.md`, then implemented the lava hazard
   (2026-07-11).** User request: add the editor to `plan.md`, then continue the backlog.
   - **`plan.md` §6 "Development Tooling — 3D World Editor"** (new): a phased task list

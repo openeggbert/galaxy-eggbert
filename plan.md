@@ -43,13 +43,14 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
   treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
   sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
-- **Lives + fall death + lava** (`E3D-MIG-130`/`067`/`140`, 2026-07-11): `lives_` starts at 3,
-  eggs grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real `DoorsLost()` behavior,
-  not a permanent depletion). Wired to two real hazards needing no per-type gating/timing logic:
-  falling off the world (real Clear2 case) and lava (`GEBlupiController::GetGroundBlockType()`,
-  deterministic, no immunity) — both play the shared channel 8 death sound and respawn at the
-  fixed spawn point (not yet the real 10-slot last-safe-position FIFO). No enemy contact or the
-  other 4 hazard tiles (spikes/crusher/saw/blitz) call `LoseLife()` yet.
+- **Lives + fall death + lava + spikes** (`E3D-MIG-130`/`067`/`140`/`141`, 2026-07-11): `lives_`
+  starts at 3, eggs grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real
+  `DoorsLost()` behavior, not a permanent depletion). Wired to three real hazards via
+  `GEBlupiController::GetGroundBlockType()`: falling off the world and lava (deterministic, real
+  channel 8) and spikes (deterministic here — real vehicle+focus immunity not modeled since
+  neither concept exists yet, real channel 51). Vehicle immunity/sub-tile x-band restrictions and
+  the real 10-slot last-safe-position FIFO respawn are known simplifications. No enemy contact or
+  the remaining 3 hazard tiles (crusher/saw/blitz) call `LoseLife()` yet.
 - **Basic HUD** (2026-07-11): icon-based only (no text rendering exists) — life icons
   (bottom-left, one per life) and key icons (top-left, shown only while held).
 - **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
@@ -74,9 +75,9 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   counter/score/timer.
 - **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
   deferred pending full per-type enemy behavior (Phase 13). A basic lives foundation now exists
-  (`E3D-MIG-130`, 2026-07-11), wired to fall-off-world death and lava (`E3D-MIG-140`, 2026-07-11)
-  — the two hazards needing no per-type gating/timing logic — but enemy contact and the other 4
-  hazard tiles (spikes/crusher/saw/blitz, `E3D-MIG-141`-`144`) still do nothing.
+  (`E3D-MIG-130`, 2026-07-11), wired to fall-off-world death, lava, and spikes (`E3D-MIG-140`/
+  `141`, 2026-07-11) — but enemy contact and the remaining 3 hazard tiles (crusher/saw/blitz,
+  `E3D-MIG-142`-`144`) still do nothing.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -302,7 +303,15 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       `BlockTypes::isHazard()` (a Simple3D-only uniform "any hazard kills" shortcut) — Spike/
       Crusher/Saw/Blitz each have real gating/timing conditions that helper ignores, so each stays
       its own dedicated task (`141`-`144`), not folded into one generic hazard check.
-- [ ] `141` Spikes (373) / Drip (404/410) — vehicle+focus-gated immunity.
+- [~] `141` **Spikes (373) done 2026-07-11**, same shape as `140` (`GetGroundBlockType() ==
+      Spike` → `triggerDeath()`, real channel 51 not channel 8 — the Glu-death sound). Real
+      vehicle+focus-gated immunity NOT modeled — neither vehicles nor a focus concept exist in
+      CNA yet (Phase 17); currently unconditional, same simplification as lava, revisit once
+      vehicles exist. Real narrow central x-band restriction within the tile also NOT modeled —
+      no sub-tile position exists in the current single-point 3D collision. Verified via a
+      synthetic-world test in `VerifyBlupiMovement`. **Drip (404/410) NOT done** — blocked on the
+      `ThinMechanical` render-geometry decision (`E3D-MIG-510`, still `[?]`), since those icons
+      aren't a placeable/renderable `BlockTypes` constant yet.
 - [ ] `142` Saw (378/379) — switch-togglable via `ActiveSwitch`, real 41-cell trigger window.
 - [ ] `143` Crusher (317) — NOT instant death, a survivable squash state with a real
       recovery timer, no vehicle immunity.

@@ -431,19 +431,20 @@ namespace GalaxyEggbert::CNA
             jumpKeyWasDown_ = jumpPressed;
 
             // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
-            // subset) -- channel 8 is the real shared "you died" sound for
-            // every fatal hazard covered so far (fall-off-world, lava; see
-            // 07-sounds.md's own "one shared sound across all death
-            // causes" note, drowning/glue are the only real exceptions and
-            // neither is implemented yet). Respawns at the fixed spawn
-            // point, NOT the real 10-slot "last safe position" FIFO
-            // (m_blupiValidPos, still open, full E3D-MIG-067) -- a known
-            // simplification. A future hazard with its own distinct sound
-            // (drowning ch.26, glue ch.51) would call LoseLife() directly
-            // instead of this helper, not extend it with a channel param.
-            const auto triggerDeath = [this]()
+            // subset) -- takes the real death sound channel for the
+            // specific cause (channel 8: fall-off-world/lava, the real
+            // shared "you died" sound per 07-sounds.md; channel 51: spikes/
+            // drip/saw's real Glu-death sound, distinct from channel 8's).
+            // Respawns at the fixed spawn point, NOT the real 10-slot
+            // "last safe position" FIFO (m_blupiValidPos, still open, full
+            // E3D-MIG-067) -- a known simplification. Also does not yet
+            // distinguish death *animations* (Clear1-8/Glu each have their
+            // own real fixed duration and revival behavior, 10-blupi-
+            // mechanics.md §8) -- every cause here is instant, no animation
+            // state exists yet for any of them.
+            const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel)
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel8);
+                sound_.Play(channel);
                 interaction_.LoseLife();
                 blupi_.SetPosition(0.0f, 1.0f, 0.0f);
             };
@@ -460,7 +461,7 @@ namespace GalaxyEggbert::CNA
             constexpr float kFallDeathY = -5.0f;
             if (blupi_.GetY() < kFallDeathY)
             {
-                triggerDeath();
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
             }
 
             // Lava hazard (plan.md E3D-MIG-140) -- deterministic death, no
@@ -468,21 +469,39 @@ namespace GalaxyEggbert::CNA
             // 12-hazards-and-interactables.md: "Lava(icon 68): deterministic
             // Clear3, no vehicle immunity, no focus requirement" -- the
             // simplest of the 5 real isHazard() tile types to implement
-            // faithfully for exactly that reason; Spike/Crusher/Saw/Blitz
-            // each have real gating/timing conditions BlockTypes::isHazard()
-            // does NOT encode (that helper is Simple3D-only, a uniform
-            // "any hazard kills" shortcut -- not reused here since it would
-            // be unfaithful for those 4 types), so each gets its own
-            // dedicated task (E3D-MIG-141..144) instead of one generic
-            // "hazard" check. GetGroundBlockType() already gates on
-            // IsOnGround() -- Lava tiles are solid/walkable-on in this
-            // engine (Blupi stands on lava rather than falling through it,
-            // matching the real 2D game -- see BlockTypes.hpp's
-            // isMobileTransparent() comment on why Lava is deliberately
-            // kept solid despite being quart-passable in the real source).
+            // faithfully for exactly that reason; Crusher/Saw/Blitz each
+            // have real gating/timing conditions BlockTypes::isHazard() does
+            // NOT encode (that helper is Simple3D-only, a uniform "any
+            // hazard kills" shortcut -- not reused here since it would be
+            // unfaithful for those types), so each gets its own dedicated
+            // task (E3D-MIG-142..144) instead of one generic "hazard" check.
+            // GetGroundBlockType() already gates on IsOnGround() -- Lava
+            // tiles are solid/walkable-on in this engine (Blupi stands on
+            // lava rather than falling through it, matching the real 2D
+            // game -- see BlockTypes.hpp's isMobileTransparent() comment on
+            // why Lava is deliberately kept solid despite being
+            // quart-passable in the real source).
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
             {
-                triggerDeath();
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+            }
+
+            // Spikes hazard (plan.md E3D-MIG-141) -- real channel 51 (the
+            // Glu-death sound, distinct from lava/fall's channel 8, per
+            // 07-sounds.md). Real behavior (12-hazards-and-interactables.md)
+            // gates this on vehicle immunity (Over/Jeep/Tank protect,
+            // unlike lava) and requires m_blupiFocus -- neither vehicles
+            // nor a focus concept exist in GalaxyEggbertCNA yet (Phase 17),
+            // so this is currently unconditional, same simplification as
+            // lava; revisit once vehicles exist. The real check also
+            // restricts to a narrow central x-band within the tile
+            // (`pos.X%64` roughly 15-49, touching the tile's edges doesn't
+            // count) -- not modeled, since GEBlupiController's single-point
+            // 3D collision has no sub-tile position within a cell to test
+            // against; the whole tile is lethal here.
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
+            {
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
             }
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
