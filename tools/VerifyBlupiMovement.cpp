@@ -1,5 +1,7 @@
 #include "Game/GEBlupiController.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <filesystem>
@@ -71,6 +73,37 @@ int main(int argc, char** argv)
     std::cout << "Faller landed at y=" << faller.GetY() << std::endl;
     check(faller.IsOnGround(), "falls under gravity and lands");
     check(faller.GetY() < 5.0f, "lands far below the y=20 drop height (real gravity, not a snap)");
+
+    // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --
+    // a small synthetic world (not worlds3d/world001.vwr, which has no lava
+    // placed yet) with one lava block and one ordinary ground block,
+    // isolated from anything else this tool tests against.
+    {
+        Worlds::World synthetic;
+        constexpr std::uint16_t kGroundX = 10, kGroundZ = 10;
+        constexpr std::uint16_t kLavaX = 20, kLavaZ = 20;
+        synthetic.setBlock(kGroundX, 0, kGroundZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kLavaX, 0, kLavaZ, Worlds::Block::make(BlockTypes::Lava));
+
+        GEBlupiController onGround;
+        onGround.SetPosition(static_cast<float>(kGroundX) - 50.0f /* kWorldCenterX */,
+                              1.0f, static_cast<float>(kGroundZ) - 50.0f /* kWorldCenterZ */);
+        onGround.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(onGround.GetGroundBlockType(synthetic) == BlockTypes::Ground,
+              "GetGroundBlockType() identifies ordinary ground correctly");
+
+        GEBlupiController onLava;
+        onLava.SetPosition(static_cast<float>(kLavaX) - 50.0f, 1.0f, static_cast<float>(kLavaZ) - 50.0f);
+        onLava.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(onLava.IsOnGround(), "Blupi stands on a lava block rather than falling through it");
+        check(onLava.GetGroundBlockType(synthetic) == BlockTypes::Lava,
+              "GetGroundBlockType() identifies lava correctly (E3D-MIG-140 hazard detection)");
+
+        GEBlupiController airborne;
+        airborne.SetPosition(static_cast<float>(kLavaX) - 50.0f, 20.0f, static_cast<float>(kLavaZ) - 50.0f);
+        check(airborne.GetGroundBlockType(synthetic) == BlockTypes::Air,
+              "GetGroundBlockType() returns Air while airborne, even directly above lava");
+    }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

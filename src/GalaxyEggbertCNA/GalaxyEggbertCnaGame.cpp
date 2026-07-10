@@ -430,25 +430,59 @@ namespace GalaxyEggbert::CNA
             }
             jumpKeyWasDown_ = jumpPressed;
 
-            // Fall-off-world death (2026-07-11, plan.md E3D-MIG-067 subset)
-            // -- mobile-eggbert-reference/10-blupi-mechanics.md §8: "Walking
-            // off the world's bottom row ... -> Clear2", checked before the
-            // rest of the frame runs; channel 8 is the real shared "you
-            // died" sound for exactly this cause (07-sounds.md). kFallDeathY
-            // is a simplification of the real grid-row check -- this
-            // world's real floors/hazards all sit at Y>=0 (the sample
-            // world's water/pit hazard is only 1 block deep), so any Y
-            // clearly below that means Blupi fell through a hole with
-            // nothing under it, not a legitimate low point in the level.
-            // Respawns at the fixed spawn point, NOT the real 10-slot
-            // "last safe position" FIFO (m_blupiValidPos, still open, full
-            // E3D-MIG-067) -- a known simplification.
-            constexpr float kFallDeathY = -5.0f;
-            if (blupi_.GetY() < kFallDeathY)
+            // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
+            // subset) -- channel 8 is the real shared "you died" sound for
+            // every fatal hazard covered so far (fall-off-world, lava; see
+            // 07-sounds.md's own "one shared sound across all death
+            // causes" note, drowning/glue are the only real exceptions and
+            // neither is implemented yet). Respawns at the fixed spawn
+            // point, NOT the real 10-slot "last safe position" FIFO
+            // (m_blupiValidPos, still open, full E3D-MIG-067) -- a known
+            // simplification. A future hazard with its own distinct sound
+            // (drowning ch.26, glue ch.51) would call LoseLife() directly
+            // instead of this helper, not extend it with a channel param.
+            const auto triggerDeath = [this]()
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel8);
                 interaction_.LoseLife();
                 blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+            };
+
+            // Fall-off-world death -- mobile-eggbert-reference/
+            // 10-blupi-mechanics.md §8: "Walking off the world's bottom
+            // row ... -> Clear2", checked before the rest of the frame
+            // runs. kFallDeathY is a simplification of the real grid-row
+            // check -- this world's real floors/hazards all sit at Y>=0
+            // (the sample world's water/pit hazard is only 1 block deep),
+            // so any Y clearly below that means Blupi fell through a hole
+            // with nothing under it, not a legitimate low point in the
+            // level.
+            constexpr float kFallDeathY = -5.0f;
+            if (blupi_.GetY() < kFallDeathY)
+            {
+                triggerDeath();
+            }
+
+            // Lava hazard (plan.md E3D-MIG-140) -- deterministic death, no
+            // immunity of any kind (mobile-eggbert-reference/
+            // 12-hazards-and-interactables.md: "Lava(icon 68): deterministic
+            // Clear3, no vehicle immunity, no focus requirement" -- the
+            // simplest of the 5 real isHazard() tile types to implement
+            // faithfully for exactly that reason; Spike/Crusher/Saw/Blitz
+            // each have real gating/timing conditions BlockTypes::isHazard()
+            // does NOT encode (that helper is Simple3D-only, a uniform
+            // "any hazard kills" shortcut -- not reused here since it would
+            // be unfaithful for those 4 types), so each gets its own
+            // dedicated task (E3D-MIG-141..144) instead of one generic
+            // "hazard" check. GetGroundBlockType() already gates on
+            // IsOnGround() -- Lava tiles are solid/walkable-on in this
+            // engine (Blupi stands on lava rather than falling through it,
+            // matching the real 2D game -- see BlockTypes.hpp's
+            // isMobileTransparent() comment on why Lava is deliberately
+            // kept solid despite being quart-passable in the real source).
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
+            {
+                triggerDeath();
             }
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)

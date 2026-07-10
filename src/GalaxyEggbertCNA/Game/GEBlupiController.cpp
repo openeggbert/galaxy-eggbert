@@ -1,6 +1,7 @@
 #include "GEBlupiController.hpp"
 #include "GEWorldRuntime.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <algorithm>
@@ -55,6 +56,25 @@ namespace GalaxyEggbert::CNA
             }
         }
         return 0;
+    }
+
+    std::uint16_t GEBlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
+    {
+        if (!m_onGround)
+        {
+            return GalaxyEggbert::BlockTypes::Air;
+        }
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+        const int gy = static_cast<int>(std::lround(m_y)) - 1;
+        if (gy < 0 || gy >= blocksPerAxis)
+        {
+            return GalaxyEggbert::BlockTypes::Air;
+        }
+        return world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                               static_cast<std::uint16_t>(gz))
+            .type();
     }
 
     void GEBlupiController::TryMoveAxis(const Worlds::World& world, float ddx, float ddz)

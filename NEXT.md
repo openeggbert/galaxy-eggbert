@@ -213,9 +213,12 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   behavior) all genuinely work — see §3 for exactly what is/isn't covered. `BigDecor:` rendering and
   the platform-lift/crate `UniformCube` object path are implemented (2026-07-09, §3). Real sound
   playback exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV files. A basic
-  lives foundation + fall-off-world death (2026-07-11, §3) exists but is wired to nothing else yet
-  (no enemy/hazard contact calls `LoseLife()`). HUD is now minimal icon-based only (2026-07-11,
+  lives foundation exists (2026-07-11, §3), wired to 2 real hazards needing no per-type gating
+  logic (fall-off-world death, lava) — the other 4 hazard tiles (spikes/crusher/saw/blitz) and
+  all enemy contact still call nothing. HUD is now minimal icon-based only (2026-07-11,
   §3: life icons, key icons) — no text rendering exists, so no numeric treasure counter/score.
+  No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned 2026-07-11, not started)
+  — worlds are still hand-authored by editing `tools/GenerateSampleWorld3D.cpp`.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
   `TripleCrossBillboard`) — the last 6 `DirectionalCube` icons (15-18, 108-109) were backfilled
@@ -231,6 +234,44 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Planned a 3D world editor tool in `plan.md`, then implemented the lava hazard
+  (2026-07-11).** User request: add the editor to `plan.md`, then continue the backlog.
+  - **`plan.md` §6 "Development Tooling — 3D World Editor"** (new): a phased task list
+    (`EDITOR-000`-`010`) for an interactive tool to build `.vwr` worlds, replacing today's
+    workflow of hand-editing C++ calls in `tools/GenerateSampleWorld3D.cpp` and rebuilding — real
+    but slow and error-prone (that workflow already produced 2 real bugs this session: the
+    `extraMetadata_` data-loss bug and the zero-patrol-range lift bug, both only caught by
+    scripted verification after the fact). Not a mobile-eggbert feature, so the faithful-remake
+    rule doesn't govern it; doesn't conflict with the standing "no `.txt`→`.vwr` auto-converter"
+    rule either (that rejects *automatic* conversion, this is the *interactive hand-authoring*
+    tool that rule already assumes exists). Built on infrastructure that already exists and
+    should be reused: `World::loadFromFile()`/`saveToFile()`, `GETerrainRenderer`/`GETileAtlas`,
+    `Easy3D::Camera3D`, `MoveObjectRecord`'s embed mechanism — only block-picking (raycast) and a
+    palette UI are genuinely new work. Not started yet.
+  - **Lava hazard** (plan.md `E3D-MIG-140`): the simplest of the 5 real `isHazard()` tile types to
+    implement faithfully — deterministic death, no immunity of any kind, per
+    `mobile-eggbert-reference/12-hazards-and-interactables.md`. New
+    `GEBlupiController::GetGroundBlockType()` (returns the block type directly beneath Blupi's
+    feet, `Air` if not grounded or out of range) lets `GalaxyEggbertCnaGame::Update()` detect
+    standing on lava without duplicating grid-conversion math, and lets a tool test the detection
+    logic directly without a live `Game`/`GraphicsDevice`. Triggers the same death consequence as
+    the fall-off-world case (both now share a `triggerDeath()` lambda: channel 8 sound,
+    `LoseLife()`, respawn at the fixed spawn point).
+  - **Deliberately does NOT reuse `BlockTypes::isHazard()`** — a `GalaxyEggbertSimple3D`-only
+    helper (found unused in `GalaxyEggbertCNA` before this change) that treats Lava/Spike/
+    Crusher/Saw/Blitz as uniformly instant-death. Per `12-hazards-and-interactables.md`,
+    Spike/Drip have vehicle+focus-gated immunity, Crusher is a *survivable* squash state (not
+    instant death at all), Saw is switch-togglable, and Blitz is only lethal on even-ticks of a
+    100-tick cycle — reusing the uniform helper would have been unfaithful for all 4. Each stays
+    its own dedicated `plan.md` task (`E3D-MIG-141`-`144`), not folded into one generic check.
+  - **Verification**: new synthetic-world test in `VerifyBlupiMovement.cpp` (a small
+    programmatically-built `World`, not `worlds3d/world001.vwr`, which has no lava placed yet) —
+    confirms `GetGroundBlockType()` correctly identifies ordinary ground vs. lava vs. airborne
+    (including directly above lava while jumping, which must NOT trigger death). Full suite
+    re-run and passing: `GalaxyEggbertWorldsTests` 63/63, `VerifyBlupiMovement` (now 8 checks),
+    `VerifyInteractionSystem`, live headless runs on both `build-cna` (EasyGL) and
+    `build-cna-vulkan` clean (no errors/exceptions).
 
 - **Rewrote `plan.md` for the Direct CNA + Easy3D direction, then added a lives foundation +
   basic icon-based HUD to `GalaxyEggbertCNA` (2026-07-10/11).** User request: start working

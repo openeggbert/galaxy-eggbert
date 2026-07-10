@@ -51,6 +51,16 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] float GetZ() const noexcept { return m_z; }
         [[nodiscard]] bool IsOnGround() const noexcept { return m_onGround; }
 
+        // Block type directly beneath Blupi's feet, or Air (0) if not
+        // grounded or the query position is out of grid range -- lets
+        // callers implement ground-contact hazards (e.g. lava, which is
+        // deliberately kept solid/walkable-on in this engine, see
+        // BlockTypes.hpp's isMobileTransparent() comment) without
+        // duplicating the grid-conversion math, and lets tools test the
+        // detection logic directly (see tools/VerifyBlupiMovement.cpp)
+        // without a live Game/GraphicsDevice.
+        [[nodiscard]] std::uint16_t GetGroundBlockType(const Worlds::World& world) const noexcept;
+
         // Facing angle in radians, 0 = looking toward -Z. Updated every Step()
         // by turnInput (see below) — unlike a strafe-style controller, yaw is
         // driven directly by turning, not derived from movement direction.

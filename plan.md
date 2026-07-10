@@ -43,11 +43,13 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
   treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
   sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
-- **Lives + fall death** (`E3D-MIG-130`/`067` subset, 2026-07-11): `lives_` starts at 3, eggs
-  grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real `DoorsLost()` behavior, not
-  a permanent depletion). Wired to one real hazard: falling off the world (real Clear2 case,
-  channel 8 death sound, respawn at the fixed spawn point — not yet the real 10-slot
-  last-safe-position FIFO). No other hazard/enemy contact calls `LoseLife()` yet.
+- **Lives + fall death + lava** (`E3D-MIG-130`/`067`/`140`, 2026-07-11): `lives_` starts at 3,
+  eggs grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real `DoorsLost()` behavior,
+  not a permanent depletion). Wired to two real hazards needing no per-type gating/timing logic:
+  falling off the world (real Clear2 case) and lava (`GEBlupiController::GetGroundBlockType()`,
+  deterministic, no immunity) — both play the shared channel 8 death sound and respawn at the
+  fixed spawn point (not yet the real 10-slot last-safe-position FIFO). No enemy contact or the
+  other 4 hazard tiles (spikes/crusher/saw/blitz) call `LoseLife()` yet.
 - **Basic HUD** (2026-07-11): icon-based only (no text rendering exists) — life icons
   (bottom-left, one per life) and key icons (top-left, shown only while held).
 - **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
@@ -71,9 +73,10 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   no text rendering exists (no `text.png` glyph layout identified yet), so no numeric treasure
   counter/score/timer.
 - **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
-  deferred pending full per-type hazard/enemy behavior (Phase 13/14). A basic lives foundation
-  now exists (`E3D-MIG-130`, 2026-07-11) and is wired to the one hazard needing no per-type work
-  (falling off the world), but that's it — enemy contact still does nothing.
+  deferred pending full per-type enemy behavior (Phase 13). A basic lives foundation now exists
+  (`E3D-MIG-130`, 2026-07-11), wired to fall-off-world death and lava (`E3D-MIG-140`, 2026-07-11)
+  — the two hazards needing no per-type gating/timing logic — but enemy contact and the other 4
+  hazard tiles (spikes/crusher/saw/blitz, `E3D-MIG-141`-`144`) still do nothing.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -291,7 +294,14 @@ documented there.
 Nothing here is started. Full spec: `mobile-eggbert-reference/12-hazards-and-interactables.md`.
 Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/blitz/fan do not.
 
-- [ ] `140` Lava (icon 68) — deterministic death, no immunity of any kind.
+- [x] `140` Lava (icon 68) — deterministic death, no immunity of any kind. Done 2026-07-11:
+      `GEBlupiController::GetGroundBlockType()` (new, testable helper) detects standing on a lava
+      block, `GalaxyEggbertCnaGame::Update()` triggers the same death consequence as
+      `E3D-MIG-067`'s fall-off-world case (shared `triggerDeath()` lambda, channel 8). Verified via
+      a new synthetic-world test in `VerifyBlupiMovement`. Deliberately does NOT reuse
+      `BlockTypes::isHazard()` (a Simple3D-only uniform "any hazard kills" shortcut) — Spike/
+      Crusher/Saw/Blitz each have real gating/timing conditions that helper ignores, so each stays
+      its own dedicated task (`141`-`144`), not folded into one generic hazard check.
 - [ ] `141` Spikes (373) / Drip (404/410) — vehicle+focus-gated immunity.
 - [ ] `142` Saw (378/379) — switch-togglable via `ActiveSwitch`, real 41-cell trigger window.
 - [ ] `143` Crusher (317) — NOT instant death, a survivable squash state with a real
