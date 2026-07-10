@@ -43,31 +43,35 @@ int main(int argc, char** argv)
     // tools/GenerateSampleWorld3D.cpp's "plateau -> crow's-nest lift") should
     // patrol: its currentY should move away from its start position after
     // enough Update() ticks, well before it could possibly have reached the
-    // far end and ping-ponged back to the exact start value.
-    float liftStartY = -1.0f;
-    for (const auto& obj : world.GetMobileObjects())
+    // far end and ping-ponged back to the exact start value. Selected by
+    // posStart != posEnd, not just by type -- the exhibition area
+    // (2026-07-10) also places a STATIC ObjectType1 exhibit (posEnd ==
+    // posStart, deliberately not patrolling), and CollectMoveObjects'
+    // ordering is spatial (chunk order), so plain "first ObjectType1"
+    // could find the stationary exhibit instead.
+    const auto findPatrollingLift = [&world]() -> const MobileObjSpec*
     {
-        if (obj.type == ObjectType::ObjectType1)
+        for (const auto& obj : world.GetMobileObjects())
         {
-            liftStartY = obj.currentY;
-            break;
+            if (obj.type == ObjectType::ObjectType1 &&
+                (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY ||
+                 obj.posStartZ != obj.posEndZ))
+            {
+                return &obj;
+            }
         }
-    }
-    check(liftStartY >= 0.0f, "found the platform lift (ObjectType1) in the sample world");
+        return nullptr;
+    };
+    const auto* patrollingLift = findPatrollingLift();
+    const float liftStartY = patrollingLift ? patrollingLift->currentY : -1.0f;
+    check(patrollingLift != nullptr, "found the patrolling platform lift (ObjectType1) in the sample world");
 
     for (int i = 0; i < 30; ++i)
     {
         interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound); // Blupi far away
     }
-    float liftYAfter = liftStartY;
-    for (const auto& obj : world.GetMobileObjects())
-    {
-        if (obj.type == ObjectType::ObjectType1)
-        {
-            liftYAfter = obj.currentY;
-            break;
-        }
-    }
+    const auto* liftAfter = findPatrollingLift();
+    const float liftYAfter = liftAfter ? liftAfter->currentY : liftStartY;
     std::cout << "Lift Y after 0.5s: " << liftYAfter << " (started at " << liftStartY << ")" << std::endl;
     check(std::fabs(liftYAfter - liftStartY) > 0.05f, "platform lift patrols (currentY changed)");
 

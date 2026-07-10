@@ -462,13 +462,20 @@ endif() # GALAXY_EGGBERT_BUILD_CNA
 # Tools (engine-independent — pure C++ data model, no graphics)
 # =============================================================================
 
+# GEObjectIcons.hpp/.cpp is engine-agnostic (only depends on def/
+# ObjectType.hpp) despite living under src/GalaxyEggbertCNA/ -- linked here
+# so the exhibition area can enumerate every ObjectType the renderer has an
+# icon for (GetObjIcon), instead of duplicating that list by hand (same
+# precedent as VerifyBlupiMovement linking GEBlupiController.cpp below).
 add_executable(GenerateSampleWorld3D
         tools/GenerateSampleWorld3D.cpp
+        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         ${GE_SHARED_SOURCES}
 )
 
 target_include_directories(GenerateSampleWorld3D PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
 # GEBlupiController.hpp/.cpp are deliberately engine-agnostic (only depend on

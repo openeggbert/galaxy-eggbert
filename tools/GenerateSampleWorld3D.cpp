@@ -1,3 +1,5 @@
+#include "Game/GEObjectIcons.hpp"
+
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -243,6 +245,61 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType5, 8.0f, 11.0f, 50.0f);
     place(ObjectType::ObjectType54, 14.0f, 11.0f, 50.0f); // large creature
     place(ObjectType::ObjectType2, 18.0f, 11.0f, 49.0f);
+
+    // ------------------------------------------------------------------
+    // Exhibition area (2026-07-10, user request): a museum of everything
+    // the renderer supports, for visual inspection in-game.
+    //
+    // Tile exhibition -- the ENTIRE icon range 1..440 on a flat slab in
+    // the previously-empty north strip (z=1..24), one block per icon at a
+    // 2-cell pitch so every block stands free (all 5 visible faces
+    // exposed) and each renders via whatever mode the terrain renderer
+    // assigns it (DirectionalCube / InnerPillarBox / InnerFlatPlate /
+    // TripleCrossBillboard / water pass / plain UniformCube fallback).
+    // Hazard tiles (lava/spikes/saw/Blitz) are genuinely lethal to step
+    // ON here, same as anywhere else -- walk the aisles, don't climb the
+    // exhibits. Reachable by jumping down from the north hill plateau's
+    // north edge (a 4-block drop, well short of the fall-death limit).
+    // ------------------------------------------------------------------
+    fill(1, 98, 0, 0, 1, 24, BlockTypes::RockPile); // exhibition floor
+    for (int icon = 1; icon <= 440; ++icon)
+    {
+        const int idx = icon - 1;
+        const int col = idx % 48;
+        const int row = idx / 48;
+        world.setBlock(static_cast<std::uint16_t>(3 + col * 2), 1,
+                       static_cast<std::uint16_t>(3 + row * 2),
+                       Block::make(static_cast<std::uint16_t>(icon)));
+    }
+
+    // Object exhibition -- every ObjectType the renderer has an icon for
+    // (enumerated via GEObjectIcons::GetObjIcon, the renderer's own
+    // source of truth, rather than a hand-duplicated list), on a second
+    // slab east of the corridor's end (x=76..97 adjoins the corridor at
+    // x=75, so it's a seamless walk east from the tested path). Static
+    // exhibits: posEnd == posStart, so nothing patrols. Their real
+    // behaviors stay live -- exhibition pickups are collectable (the
+    // chest exhibit raises the level's treasure total), the shared-kill-
+    // list hazards kill on touch, the wasp balloons -- which is itself
+    // part of the exhibition.
+    fill(76, 97, 0, 0, 25, 63, BlockTypes::RockPile); // object-exhibition floor
+    {
+        int slot = 0;
+        for (int t = 1; t <= 203; ++t)
+        {
+            const auto type = static_cast<ObjectType>(t);
+            if (GalaxyEggbert::CNA::GetObjIcon(type, 0) == 0)
+            {
+                continue; // no icon in source data (e.g. 0/18/22/58) -- nothing to exhibit
+            }
+            const int col = slot % 7;
+            const int row = slot / 7;
+            place(type, static_cast<float>(78 + col * 3), 1.0f, static_cast<float>(27 + row * 3));
+            ++slot;
+        }
+        std::cout << "GenerateSampleWorld3D: exhibition placed -- 440 tile icons, "
+                  << slot << " object types." << std::endl;
+    }
 
     world.saveToFile(outPath);
 

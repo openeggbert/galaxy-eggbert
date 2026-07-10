@@ -248,6 +248,31 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Added an exhibition area to the sample world (2026-07-10, user request): a browsable museum
+  of everything the renderer supports.** `tools/GenerateSampleWorld3D.cpp` gained two new slabs
+  in previously-empty space, world regenerated (2470 → 6120 non-air blocks, 18 → 82
+  `MoveObject`s):
+  - **Tile exhibition** (north strip, grid z=1..24): the ENTIRE icon range 1..440, one
+    freestanding block per icon at a 2-cell pitch, each rendering via whatever mode the terrain
+    renderer assigns it (DirectionalCube/InnerPillarBox/InnerFlatPlate/TripleCrossBillboard/
+    water/UniformCube fallback). Hazard tiles are genuinely lethal to step ON — part of the
+    exhibition. Reachable by jumping down from the north-hill plateau's north edge (4-block
+    drop, well short of the fall-death limit).
+  - **Object exhibition** (east slab, grid x=76..97 z=25..63, seamlessly walkable from the
+    corridor's east end): every `ObjectType` the renderer has an icon for — 64 types, enumerated
+    at generation time via `GEObjectIcons::GetObjIcon` (the renderer's own source of truth,
+    linked into the generator the same way `VerifyBlupiMovement` links `GEBlupiController`)
+    instead of a hand-duplicated list. Static exhibits (`posEnd == posStart`, nothing patrols),
+    but real behaviors stay live: exhibition pickups are collectable (the chest exhibit raises
+    the level's treasure total to 5), shared-kill-list hazards kill on touch, the wasp balloons.
+  - `VerifyInteractionSystem`'s lift check now selects the lift with `posStart != posEnd`
+    (the exhibition adds a deliberately-static `ObjectType1` exhibit, and `CollectMoveObjects`
+    ordering is spatial, so "first ObjectType1" could find the stationary one). Full suite +
+    both backends re-verified clean.
+  - Incidental observation: the unresolved texture-distance-washout bug is STRONGLY visible on
+    the tile exhibition (rows fade to white within ~10 units) — the exhibition doubles as a
+    ready-made reproduction field for that investigation (§5).
+
 - **Root-caused the SECOND (real) cause of the disappearing HUD, replaced the SpriteBatch HUD
   with a real mobile-eggbert-faithful 3D-quad HUD (`GEHud`), and added mouse drag-look + F11
   fullscreen (2026-07-10).** User re-reported "the icon shows for a second, then disappears"
