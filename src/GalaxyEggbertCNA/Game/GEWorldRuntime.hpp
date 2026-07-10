@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -88,6 +89,26 @@ namespace GalaxyEggbert::CNA
         void Update(float dt);
 
         [[nodiscard]] const Worlds::World& GetWorld() const { return *world_; }
+
+        // Real switch/saw linking (plan.md E3D-MIG-142, `Decor::ActiveSwitch`
+        // per mobile-eggbert-reference/12-hazards-and-interactables.md,
+        // verified directly against Decor.cpp:7131-7148). Call on an
+        // edge-detected action-button press while Blupi is grounded; a
+        // no-op (returns `std::nullopt`) unless he's standing directly on a
+        // switch tile (`BlockTypes::Switch`/`SwitchOff`). On an actual
+        // toggle: flips the switch tile's own block between the two (real
+        // behavior: always toggles to the opposite of its current state,
+        // this call itself has no separate "which way" parameter), then
+        // scans a fixed 41-cell window (this switch's X ±20, same Y and Z
+        // -- BlockTypes.hpp's own `isSwitch()` comment already documents
+        // this exact real mapping) toggling every matching Saw/SawStopped
+        // block it finds to match the new switch state. Returns the new
+        // switch state (`true` = now on/`Switch`, `false` = now off/
+        // `SwitchOff`) so the caller can play the matching real sound
+        // (channel 77 "on"/76 "off") -- this method has no `GESound&`
+        // parameter, same separation as `GEInteractionSystem`'s `LoseLife()`.
+        std::optional<bool> TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
+                                               bool blupiOnGround);
         [[nodiscard]] int GetSpawnTileX() const { return spawnTileX_; }
         [[nodiscard]] int GetSpawnTileZ() const { return spawnTileZ_; }
         [[nodiscard]] int GetSkyRegion() const { return skyRegion_; }

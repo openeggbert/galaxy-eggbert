@@ -2,6 +2,8 @@
 #include "Game/GESound.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
+
 #include <cmath>
 #include <iostream>
 
@@ -208,6 +210,40 @@ int main(int argc, char** argv)
     check(!GEWorldRuntime::IsCrusherActiveAtPhase(9), "Crusher inactive at phase 9 (9/3=3, just past the window)");
     check(!GEWorldRuntime::IsCrusherActiveAtPhase(29), "Crusher inactive at phase 29 (29/3=9, end of the off window)");
     check(GEWorldRuntime::IsCrusherActiveAtPhase(30), "Crusher active at phase 30 (30/3=10, cycle wraps)");
+
+    // 6. GEWorldRuntime::TryActivateSwitch() (plan.md E3D-MIG-142) -- the
+    // sample world places a switch (starts SwitchOff) at grid (65,0,67) and
+    // a linked saw (starts SawStopped) at grid (70,0,67), 5 cells apart
+    // (within the real +-20 window). Grid (65,0,67) in raw grid space is
+    // blupi position (15,1,67-50)=(15,1,17) in the render/camera space
+    // TryActivateSwitch() (and blupi_.GetX/Y/Z()) actually use -- see
+    // GEWorldRuntime::kWorldCenterX/Z and GenerateSampleWorld3D.cpp's own
+    // "raw grid coordinates" comment.
+    {
+        constexpr float kSwitchBlupiX = 15.0f, kSwitchBlupiY = 1.0f, kSwitchBlupiZ = 17.0f;
+        const auto getSwitchType = [&world]()
+        { return world.GetWorld().getBlock(65, 0, 67).type(); };
+        const auto getSawType = [&world]()
+        { return world.GetWorld().getBlock(70, 0, 67).type(); };
+
+        check(getSwitchType() == BlockTypes::SwitchOff, "switch starts SwitchOff, matching the saw's SawStopped start");
+        check(getSawType() == BlockTypes::SawStopped, "linked saw starts SawStopped (safe)");
+
+        check(!world.TryActivateSwitch(0.0f, 1.0f, 0.0f, true).has_value(),
+              "TryActivateSwitch() is a no-op away from any switch tile");
+        check(!world.TryActivateSwitch(kSwitchBlupiX, kSwitchBlupiY, kSwitchBlupiZ, false).has_value(),
+              "TryActivateSwitch() is a no-op while airborne, even standing over a switch's column");
+
+        const auto turnedOn = world.TryActivateSwitch(kSwitchBlupiX, kSwitchBlupiY, kSwitchBlupiZ, true);
+        check(turnedOn.has_value() && *turnedOn, "TryActivateSwitch() turns the switch on (SwitchOff -> Switch)");
+        check(getSwitchType() == BlockTypes::Switch, "switch tile itself is now Switch (on)");
+        check(getSawType() == BlockTypes::Saw, "linked saw 5 cells away is now Saw (active/dangerous)");
+
+        const auto turnedOff = world.TryActivateSwitch(kSwitchBlupiX, kSwitchBlupiY, kSwitchBlupiZ, true);
+        check(turnedOff.has_value() && !*turnedOff, "TryActivateSwitch() toggles back off on a second press");
+        check(getSwitchType() == BlockTypes::SwitchOff, "switch tile is SwitchOff again");
+        check(getSawType() == BlockTypes::SawStopped, "linked saw is SawStopped again (safe)");
+    }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

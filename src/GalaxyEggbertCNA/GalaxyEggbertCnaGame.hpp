@@ -151,6 +151,11 @@ namespace GalaxyEggbert::CNA
         bool jumpKeyWasDown_ = false;
         float stepSoundTimer_ = 0.0f;
 
+        // Switch/saw linking (plan.md E3D-MIG-142, see GEWorldRuntime::
+        // TryActivateSwitch()) -- Space ("Action", already read as
+        // actionPressed) edge-detected the same way jumpKeyWasDown_ is.
+        bool actionKeyWasDown_ = false;
+
         // Platform lift patrol, crate push, and pickup collection
         // (2026-07-10, see GEInteractionSystem.hpp).
         GEInteractionSystem interaction_;

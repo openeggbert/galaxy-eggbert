@@ -390,7 +390,7 @@ namespace GalaxyEggbert::CNA
             if (keys.IsKeyDown(Keys::Up))    moveInput += 1.0f;
             if (keys.IsKeyDown(Keys::Down))  moveInput -= 1.0f;
             const bool jumpPressed = keys.IsKeyDown(Keys::LeftControl);
-            [[maybe_unused]] const bool actionPressed = keys.IsKeyDown(Keys::Space);
+            const bool actionPressed = keys.IsKeyDown(Keys::Space);
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
@@ -555,6 +555,40 @@ namespace GalaxyEggbert::CNA
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel70);
             }
+
+            // Saw hazard (plan.md E3D-MIG-142) -- real channel 75 (the
+            // "cut apart" death cue, distinct from every other hazard's
+            // sound so far), deterministic, no immunity simplification
+            // beyond what every hazard here already lacks (vehicles/focus
+            // don't exist yet). Only the active icon (`Saw`, 378) is
+            // lethal -- the stopped variant (`SawStopped`, 379) is a
+            // separate BlockTypes value, so GetGroundBlockType()'s exact
+            // match already excludes it with no extra check needed. A saw
+            // starts active or stopped per however the world was authored;
+            // TryActivateSwitch() below is what flips it between the two.
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
+            {
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75);
+            }
+
+            // Switches (plan.md E3D-MIG-142, see GEWorldRuntime::
+            // TryActivateSwitch()'s own comment for the real 41-cell
+            // switch-to-saw linking) -- Space ("Action"), edge-detected the
+            // same way jumpPressed is above so holding it doesn't retoggle
+            // every frame. `wasEcrased`/`wasOnGround`-style capture isn't
+            // needed here: TryActivateSwitch() itself is the single
+            // authoritative check (grounded + standing on a switch tile),
+            // no separate before/after state to compare.
+            if (actionPressed && !actionKeyWasDown_)
+            {
+                if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
+                        blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
+                {
+                    sound_.Play(*turnedOn ? GalaxyEggbert::SoundChannel::SoundChannel77
+                                          : GalaxyEggbert::SoundChannel::SoundChannel76);
+                }
+            }
+            actionKeyWasDown_ = actionPressed;
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
             // -- platform lift patrol, crate push, pickup collection, and

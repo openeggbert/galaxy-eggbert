@@ -5,6 +5,7 @@
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <exception>
@@ -254,6 +255,64 @@ namespace GalaxyEggbert::CNA
     {
         const int cycle = (((animPhase / 3) % 10) + 10) % 10; // defensive: handle a negative phase
         return cycle <= 2;
+    }
+
+    std::optional<bool> GEWorldRuntime::TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
+                                                            bool blupiOnGround)
+    {
+        if (!blupiOnGround)
+        {
+            return std::nullopt;
+        }
+        const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
+        const int gx = std::clamp(static_cast<int>(std::lround(blupiX)) + kWorldCenterX, 0, blocksPerAxis - 1);
+        const int gz = std::clamp(static_cast<int>(std::lround(blupiZ)) + kWorldCenterZ, 0, blocksPerAxis - 1);
+        const int gy = static_cast<int>(std::lround(blupiY)) - 1;
+        if (gy < 0 || gy >= blocksPerAxis)
+        {
+            return std::nullopt;
+        }
+
+        const auto switchType = world_->getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                   static_cast<std::uint16_t>(gz))
+                                     .type();
+        if (switchType != GalaxyEggbert::BlockTypes::Switch && switchType != GalaxyEggbert::BlockTypes::SwitchOff)
+        {
+            return std::nullopt;
+        }
+
+        // Real behavior: always toggles to the opposite of its current
+        // state (Decor.cpp's own call site passes `currentIcon == 385`).
+        const bool turningOn = (switchType == GalaxyEggbert::BlockTypes::SwitchOff);
+        world_->setBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                          static_cast<std::uint16_t>(gz),
+                          Worlds::Block::make(turningOn ? GalaxyEggbert::BlockTypes::Switch
+                                                         : GalaxyEggbert::BlockTypes::SwitchOff));
+
+        // Real 41-cell window (Decor.cpp:7138-7147): this switch's X ±20,
+        // same Y and Z -- BlockTypes.hpp's own isSwitch() comment already
+        // documents this exact mapping.
+        const std::uint16_t sawFrom = turningOn ? GalaxyEggbert::BlockTypes::SawStopped
+                                                 : GalaxyEggbert::BlockTypes::Saw;
+        const std::uint16_t sawTo = turningOn ? GalaxyEggbert::BlockTypes::Saw
+                                               : GalaxyEggbert::BlockTypes::SawStopped;
+        for (int sx = gx - 20; sx <= gx + 20; ++sx)
+        {
+            if (sx < 0 || sx >= blocksPerAxis)
+            {
+                continue;
+            }
+            const auto sawBlock = world_->getBlock(static_cast<std::uint16_t>(sx),
+                                                     static_cast<std::uint16_t>(gy),
+                                                     static_cast<std::uint16_t>(gz));
+            if (sawBlock.type() == sawFrom)
+            {
+                world_->setBlock(static_cast<std::uint16_t>(sx), static_cast<std::uint16_t>(gy),
+                                  static_cast<std::uint16_t>(gz), Worlds::Block::make(sawTo));
+            }
+        }
+
+        return turningOn;
     }
 
     void GEWorldRuntime::Update(float dt)

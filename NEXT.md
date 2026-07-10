@@ -212,14 +212,16 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   (with the real mobile-eggbert sound + removal behavior) all genuinely work — see §3 for exactly
   what is/isn't covered. `BigDecor:` rendering and the platform-lift/crate `UniformCube` object
   path are implemented (2026-07-09, §3). Real sound playback exists (2026-07-10, §3, `GESound`) —
-  the same 93 real mobile-eggbert WAV files. A basic lives foundation exists (2026-07-11, §3),
-  wired to 4 lethal terrain hazards (fall-off-world death, lava, spikes, Blitz) and the generic
-  `ObjectType2`/`3` patrol-hazard contact-kill; Crusher (2026-07-11, §3) is non-lethal (a squash
-  state, `GEBlupiController::TriggerCrush()`/`IsEcrased()`) — the remaining 1 terrain hazard tile
-  (saw, needs a full switch/toggle system) and all 9 named enemy types (spider/fish/bird/blupih/
-  blupit/wasp/creature/follower) still do nothing on contact. HUD is now minimal icon-based only
-  (2026-07-11, §3: life icons, key icons) — no text rendering exists, so no numeric treasure
-  counter/score. No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
+  the same 93 real mobile-eggbert WAV files. A basic lives foundation exists (2026-07-11, §3), and
+  all 5 real terrain hazard tiles are now implemented: 4 lethal (fall-off-world death, lava,
+  spikes, Blitz, saw — the last with a real switch-linking mechanic,
+  `GEWorldRuntime::TryActivateSwitch()`) plus the generic `ObjectType2`/`3` patrol-hazard
+  contact-kill, and Crusher (non-lethal, a squash state,
+  `GEBlupiController::TriggerCrush()`/`IsEcrased()`). All 9 named enemy types (spider/fish/bird/
+  blupih/blupit/wasp/creature/follower) still do nothing on contact (Phase 13) — that's the one
+  remaining "touching something hurts you" gap. HUD is now minimal icon-based only (2026-07-11,
+  §3: life icons, key icons) — no text rendering exists, so no numeric treasure counter/score.
+  No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
   2026-07-11, not started)
   — worlds are still hand-authored by editing `tools/GenerateSampleWorld3D.cpp`.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
@@ -237,6 +239,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented the Saw hazard and its real switch-linking mechanic (2026-07-11), completing all
+  5 real terrain hazard tiles.** Continuing "these bigger tasks" per the user's explicit request.
+  - **Verified directly against `mobile-eggbert/.../Decor.cpp:7131-7148`** (not just the
+    reference doc): `ActiveSwitch(bState, cel)` toggles the switch tile's own icon (384
+    on/385 off), plays channel 77 ("on") or 76 ("off"), then scans a **fixed 41-cell window**
+    (the switch's X ±20, same Y and Z) toggling every matching Saw (378 active) /SawStopped (379)
+    tile it finds to match.
+  - **New `GEWorldRuntime::TryActivateSwitch(blupiX, blupiY, blupiZ, blupiOnGround)`**: a no-op
+    (`std::nullopt`) unless Blupi is grounded and standing directly on a switch tile; otherwise
+    toggles it to the opposite state and performs the real 41-cell saw scan, returning the new
+    state so the caller can play the matching sound. Wired to Space ("Action", edge-detected the
+    same way jump is) in `GalaxyEggbertCnaGame::Update()` — this key was read since 2026-07-05
+    but never used until now.
+  - **The real X ±20/same-Y/same-Z mapping was already documented in `BlockTypes.hpp`'s existing
+    `isSwitch()` comment before this task started** — confirming it as the established convention
+    for translating this specific 2D mechanic into the 3D grid, not a fresh design decision made
+    here.
+  - **Saw contact death** (the other half of `E3D-MIG-142`, alongside the switch mechanic):
+    reuses the existing `triggerDeath()` pattern with the real channel 75 (the "cut apart" cue) —
+    only the active `Saw` type is lethal, `SawStopped` is a separate `BlockTypes` value so
+    `GetGroundBlockType()`'s exact match already excludes it with no extra logic needed.
+  - **Added a real switch+saw pair to `worlds3d/world001.vwr`'s south tunnel** (grid (65,0,67)
+    switch, (70,0,67) saw, 5 cells apart, within the real ±20 window) — the saw starts safe
+    (`SawStopped`) until the switch is pressed, so this is a genuinely playable interactive
+    element in the sample world, not just something proven by a unit test.
+  - **Verification**: 9 new `VerifyInteractionSystem` assertions against that real placement
+    (no-op away from any switch, no-op while airborne, on-toggle, off-toggle, and the linked
+    saw's state checked after each). Found a stale-build-artifact issue while testing: regenerating
+    `worlds3d/world001.vwr` at the repo root didn't automatically refresh the copy next to
+    `build-cna`'s binaries (the CMake `POST_BUILD` copy step only reliably re-runs when the
+    target that owns it actually recompiles, not just because a data file it doesn't track by an
+    explicit dependency changed) — resolved by copying the regenerated file directly; not a
+    product bug, a build-tooling quirk to remember for next time a `worlds3d/` regeneration
+    doesn't seem to take effect. Full suite and both backends' live runs re-confirmed clean.
+  - All 5 of `BlockTypes::isHazard()`'s real terrain tile types (lava, spikes, Crusher, saw,
+    Blitz) are now implemented. Only named-enemy contact (Phase 13, spider/fish/bird/blupih/
+    blupit/wasp/creature/follower) remains as unimplemented "touching something hurts you"
+    behavior.
 
 - **Implemented the Crusher hazard (2026-07-11).** Autonomous continuation of `plan.md`'s
   backlog, at the user's explicit request to keep going on "these bigger tasks" (Crusher/Saw,

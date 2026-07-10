@@ -169,6 +169,15 @@ int main(int argc, char** argv)
     // water pass, 2026-07-08 design decision) partway along the tunnel.
     fill(45, 46, 0, 0, 66, 68, BlockTypes::Water1);
 
+    // A switch/saw pair (plan.md E3D-MIG-142, 2026-07-11) -- real linking is
+    // "same Y and Z, X within +-20" (Decor.cpp:7131-7148), both satisfied
+    // here (5 cells apart, same floor row). Switch starts SwitchOff (closed/
+    // safe) so the saw starts SawStopped (safe) to match -- pressing Action
+    // on the switch is what makes the saw an active hazard, a real
+    // interactive element instead of a passive specimen.
+    world.setBlock(65, 0, 67, Block::make(BlockTypes::SwitchOff));
+    world.setBlock(70, 0, 67, Block::make(BlockTypes::SawStopped));
+
     // ------------------------------------------------------------------
     // Real MoveObject population -- ObjectTypes and rough density chosen to
     // match real mobile-eggbert levels, not invented: checked directly
