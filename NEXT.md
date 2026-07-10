@@ -225,6 +225,53 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Redesigned `worlds3d/world001.vwr` from a tech-demo showroom into an actual small playable
+  level (2026-07-10).** User request: "should look like a normal future Galaxy Eggbert world —
+  Blupi walking through, collecting chests, facing enemies, collecting eggs — no 60x60 flat area,
+  needs real underground/height variation and movable blocks; look at mobile-eggbert's 2D worlds for
+  inspiration, but this is 3D." Implemented in `tools/GenerateSampleWorld3D.cpp`, regenerated the
+  `.vwr`.
+  - **What changed**: the old 41x41 flat `RockPile` floor is gone, replaced by a narrow walkable
+    path. A new terraced north hill (5 steps up to a small plateau, then a second platform lift up
+    to a "crow's-nest") adds real height variation. A new south tunnel is a genuinely enclosed
+    corridor — floor, side walls, AND a ceiling (grid y 1-3), not just a lower Y — since the world
+    grid can't go negative; enclosure is what reads as "underground", the same way a real cave does
+    regardless of absolute elevation. The staircase/wall-collision room from before is unchanged.
+  - **What's populated, and why those exact numbers**: not invented — checked real MoveObject:
+    type= counts directly across `../mobile-eggbert/worlds/world011/013/014/021/022/023.txt` (188
+    real objects total). Crates (`ObjectType12`) are the single most common type in real levels (35
+    of 188), then standard patrol enemies (`ObjectType2`, 31), eggs (`ObjectType6`, 22), chests
+    (`ObjectType5`, 21), platform lifts (`ObjectType1`, 20). The new world places 4 crates lining the
+    tunnel, 4 eggs, 4 chests, 2 platform lifts (the existing staircase-area one is untouched, plus
+    the new hill one), 3 enemies (1 standard patrol `ObjectType2` x2, 1 wasp `ObjectType44`, 1 large
+    creature `ObjectType54`), 1 key (`ObjectType49`), and 1 level-exit goal (`ObjectType7`) in the
+    crow's-nest — a real, level-shaped mix, not the old flat 67-type catalog dump.
+  - **What was removed**: the old isolated "demo row" of ~14 one-of-each render-mode specimen
+    blocks (icons 2/25/126/392/49/76/384/77/53/368/15/16/17/18) and the mega-grid placing all 67
+    confirmed `ObjectType`s side by side. A few were relocated into real structural roles instead of
+    dropped outright: the platform grate (icon 200) is now a real floor grate over a shallow pit at
+    the tunnel's west end, 2 fans (`FanLeft`/`FanRight`) are built into the tunnel's south wall as
+    ventilation, the water hazard (`Water1`) sits on the tunnel floor, and the grass-top demo (icons
+    107/108/109) moved from a flat floor patch onto the new hilltop, where grass actually makes
+    sense. The rest (11 single-face/axis specimen icons with no obvious structural role) were cut
+    rather than force-fit somewhere — a scope reduction the user's own request asked for, not a
+    silent one.
+  - **What's UNCHANGED, deliberately**: the exact spawn point, staircase (grid x 29..20, z 45-54),
+    and the wall-collision corridor out to grid x=5 — `tools/VerifyBlupiMovement.cpp` hardcodes
+    precise coordinates against this one path, so it stays geometrically identical; only the
+    surrounding area (previously a flat 41x41 plain) was free to redesign. The walled room on the
+    hill is also unchanged, just no longer empty — it now has 1 chest guarded by a large creature and
+    1 more patrol enemy near the doorway.
+  - **Verified**: clean build (`build-cna` EasyGL and `build-cna-vulkan` Vulkan); `GalaxyEggbertWorldsTests`
+    (63/63, engine-agnostic, unaffected by world content either way); `VerifyBlupiMovement` (all
+    checks pass — the tested corridor's exact behavior, Y thresholds, and wall-collision X are all
+    unchanged); `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (unaffected, test against real
+    mobile-eggbert `.txt` files directly, not this `.vwr`); live headless runs on both backends
+    confirm the new block/MoveObject counts (2470 blocks, was 2842; 17 MoveObjects, was 69) and no
+    crashes/errors; debug-camera screenshots of the hill/plateau/crow's-nest, a wide overview, and
+    the tunnel interior all show the new terrain rendering as intended; all debug camera overrides
+    reverted before commit (confirmed via `git diff`).
+
 - **Fixed ObjectType5/6/7's animation divisors — mistranscribed as each real value x3, so the
   treasure chest and 2 neighboring collectibles animated 3x too slowly (2026-07-10).** User report:
   "the electric-arc billboard's slowness is faithful to mobile-eggbert (confirmed, see the entry
