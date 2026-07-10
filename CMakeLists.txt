@@ -287,6 +287,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         src/GalaxyEggbertCNA/Game/GESound.cpp
         src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
+        src/GalaxyEggbertCNA/Game/GEHud.cpp
         ${GE_SHARED_SOURCES}
     )
 

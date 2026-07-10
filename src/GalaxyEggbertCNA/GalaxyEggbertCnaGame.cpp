@@ -6,8 +6,10 @@
 #include <Easy3D/BillboardMesh.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
+#include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -49,6 +51,10 @@ namespace GalaxyEggbert::CNA
     GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
     {
         Game::getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)");
+        // Standard XNA pattern: the manager must be constructed in the game
+        // constructor (before Run() initializes the device). Only used for
+        // F11's ToggleFullScreen() so far.
+        graphics_ = std::make_unique<Microsoft::Xna::Framework::GraphicsDeviceManager>(this);
     }
 
     void GalaxyEggbertCnaGame::LoadContent()
@@ -174,11 +180,10 @@ namespace GalaxyEggbert::CNA
         grassEffect_->setTextureEnabledProperty(true);
         grassEffect_->setTextureProperty(&grassTexture_);
 
-        // Interim 2D Blupi animation-state indicator (no 3D model yet,
-        // 2026-07-05) — same blupi.png already copied next to this binary
-        // for the eventual billboard (E3D-MIG-061..063).
-        blupiIconTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi.png", device);
-        blupiIconBatch_ = std::make_unique<Microsoft::Xna::Framework::Graphics::SpriteBatch>(device);
+        // Real mobile-eggbert bottom HUD + the interim animation-state
+        // indicator (2026-07-10, see GEHud.hpp -- loads its own texture
+        // instances, including text.png/pad.png which nothing else loads).
+        hud_.LoadContent(device);
 
         // Billboard rendering for MoveObjects (15-3d-render-mapping-design.md
         // §5/§7) — element.png, same asset already used by GalaxyEggbertSimple3D.
@@ -657,7 +662,56 @@ namespace GalaxyEggbert::CNA
             }
             cameraModeKeyWasDown_ = cameraModeKeyDown;
 
-            const float yaw = blupi_.GetYaw();
+            // F11 fullscreen toggle (2026-07-10, user request), edge-
+            // detected like "C" above.
+            const bool fullscreenKeyDown = keys.IsKeyDown(Keys::F11);
+            if (fullscreenKeyDown && !fullscreenKeyWasDown_ && graphics_)
+            {
+                graphics_->ToggleFullScreen();
+            }
+            fullscreenKeyWasDown_ = fullscreenKeyDown;
+
+            // Mouse drag-look (2026-07-10, user request): holding the left
+            // button and dragging rotates the camera around Blupi without
+            // turning him (yaw offset + clamped pitch offset on top of his
+            // facing). Any movement input decays the offsets smoothly back
+            // to zero, returning the camera behind him -- "look around,
+            // then it snaps back when you walk". Drag (not free mouselook)
+            // so it maps 1:1 onto touch input too (SDL reports touch drags
+            // as mouse drags).
+            {
+                using Microsoft::Xna::Framework::Input::ButtonState;
+                using Microsoft::Xna::Framework::Input::Mouse;
+                const auto mouse = Mouse::GetState();
+                const int mouseX = mouse.getXProperty();
+                const int mouseY = mouse.getYProperty();
+                const bool lookHeld = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+                if (lookHeld && mouseLookActive_)
+                {
+                    constexpr float kLookRadiansPerPixel = 0.008f;
+                    constexpr float kPitchLimit = 1.2f;
+                    lookYawOffset_ += static_cast<float>(mouseX - lastMouseX_) * kLookRadiansPerPixel;
+                    lookPitchOffset_ += static_cast<float>(mouseY - lastMouseY_) * kLookRadiansPerPixel;
+                    lookPitchOffset_ = std::clamp(lookPitchOffset_, -kPitchLimit, kPitchLimit);
+                }
+                mouseLookActive_ = lookHeld;
+                lastMouseX_ = mouseX;
+                lastMouseY_ = mouseY;
+
+                if ((moveInput != 0.0f || turnInput != 0.0f) && !lookHeld)
+                {
+                    // Same framerate-independent exponential decay shape as
+                    // the camera damping below.
+                    constexpr float kLookReturnPerSecond = 5.0f;
+                    const float keep = std::exp(-kLookReturnPerSecond * dt);
+                    lookYawOffset_ *= keep;
+                    lookPitchOffset_ *= keep;
+                    if (std::fabs(lookYawOffset_) < 0.001f) lookYawOffset_ = 0.0f;
+                    if (std::fabs(lookPitchOffset_) < 0.001f) lookPitchOffset_ = 0.0f;
+                }
+            }
+
+            const float yaw = blupi_.GetYaw() + lookYawOffset_;
 
             Easy3D::Camera3D::Vector3 rawEye;
             Easy3D::Camera3D::Vector3 rawTarget;
@@ -678,9 +732,12 @@ namespace GalaxyEggbert::CNA
                 const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
                 const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
                 rawEye = Easy3D::Camera3D::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
+                // Mouse-look pitch: positive offset (drag down) tilts the
+                // view down, standard non-inverted feel. Yaw offset is
+                // already folded into `yaw` above.
                 rawTarget = Easy3D::Camera3D::Vector3(
                     rawEye.X + std::sin(yaw) * kLookDistance,
-                    rawEye.Y + lookYOffset,
+                    rawEye.Y + lookYOffset - std::sin(lookPitchOffset_) * kLookDistance,
                     rawEye.Z - std::cos(yaw) * kLookDistance);
             }
             else
@@ -692,14 +749,20 @@ namespace GalaxyEggbert::CNA
                 // spring-arm/collision-aware orbit camera -- sufficient to
                 // show the placeholder model, not a final camera design.
                 constexpr float kChaseDistance = 4.0f;
-                constexpr float kChaseHeight = 2.2f;
                 constexpr float kChaseLookHeight = 1.0f;
+                // Base elevation reproduces the previous fixed offset
+                // (height 1.2 over distance 4); mouse-look pitch orbits the
+                // camera up/down around Blupi on top of it (drag down =
+                // camera rises, view tilts down -- same direction sense as
+                // the first-person branch).
+                constexpr float kBaseElevation = 0.29f;
+                const float elevation = std::clamp(kBaseElevation + lookPitchOffset_, -1.2f, 1.45f);
                 rawTarget = Easy3D::Camera3D::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
                 rawEye = Easy3D::Camera3D::Vector3(
-                    rawTarget.X - std::sin(yaw) * kChaseDistance,
-                    rawTarget.Y + kChaseHeight - kChaseLookHeight,
-                    rawTarget.Z + std::cos(yaw) * kChaseDistance);
+                    rawTarget.X - std::sin(yaw) * kChaseDistance * std::cos(elevation),
+                    rawTarget.Y + kChaseDistance * std::sin(elevation),
+                    rawTarget.Z + std::cos(yaw) * kChaseDistance * std::cos(elevation));
             }
 
             // Exponential damping toward the raw eye/target computed above
@@ -1238,139 +1301,31 @@ namespace GalaxyEggbert::CNA
         }
 
         // Restore opaque state after the AlphaBlend block above (billboards
-        // only) -- the 2D SpriteBatch indicator below manages its own blend
-        // state per Begin()/End() regardless, but this keeps device state
-        // predictable for anything drawn after this point in the future.
+        // only) -- GEHud manages its own blend state, but this keeps device
+        // state predictable for anything drawn after this point.
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
 
-        // Real bug fix (2026-07-11, reported live: "the animation icon is
-        // visible for about the first second, then disappears"). Depth
-        // testing was left enabled (device.SetDepthTestEnabled(true) near
-        // the top of this function, for the 3D scene) all the way through
-        // the 2D SpriteBatch overlay draws below -- the icon's screen-space
-        // quad was being depth-tested against whatever 3D geometry already
-        // wrote to that pixel's depth buffer. Right at spawn, looking down
-        // an open area, the depth buffer at that screen corner happens to
-        // be far/empty enough for the icon to still pass; as soon as the
-        // camera turns toward nearer terrain/walls, the same screen
-        // position gets a much closer depth value and the icon silently
-        // fails the depth test -- explaining the exact "shows briefly,
-        // then vanishes" symptom. Real CNA convention for 3D-then-2D-
-        // overlay draws (confirmed directly against
-        // ../cna/examples/demo_avatar_appearance_tint_studio/src/
-        // TintStudioDemo.cpp's own Draw(), which sets this to `true` for
-        // its 3D avatar and explicitly back to `false` right before its
-        // own SpriteBatch::Begin()) is to disable depth testing before any
-        // 2D overlay pass -- applied here for both SpriteBatch blocks
-        // below (the debug indicator and the HUD). No need to re-enable
-        // it afterward; Draw() sets it back to true at the top of every
-        // frame regardless.
+        // HUD quads must not be depth-tested against the 3D scene (Draw()
+        // re-enables depth at the top of every frame regardless).
         device.SetDepthTestEnabled(false);
 
-        // Interim 2D Blupi animation-state indicator, bottom-right corner
-        // (no 3D model yet, 2026-07-05 — see GalaxyEggbertCnaGame.hpp).
-        // blupi.png: 60x60 px tiles, 10 columns per row (matches
-        // GalaxyEggbertSimple3D::GEBlupiController's kTilePx/kCols).
-        if (blupiIconBatch_)
-        {
-            constexpr int kTilePx = 60;
-            constexpr int kCols = 10;
-            constexpr int kOnScreenSize = 96;
-            constexpr int kMargin = 8;
-
-            const int icon = blupi_.GetAnimIcon();
-            const int col = icon % kCols;
-            const int row = icon / kCols;
-            const Microsoft::Xna::Framework::Rectangle srcRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
-
-            const auto& viewport = device.getViewportProperty();
-            const int screenW = viewport.getWidthProperty();
-            const int screenH = viewport.getHeightProperty();
-            const Microsoft::Xna::Framework::Rectangle destRect(
-                screenW - kOnScreenSize - kMargin, screenH - kOnScreenSize - kMargin,
-                kOnScreenSize, kOnScreenSize);
-
-            blupiIconBatch_->Begin();
-            blupiIconBatch_->Draw(blupiIconTexture_, destRect, srcRect,
-                                   Microsoft::Xna::Framework::Color::White);
-            blupiIconBatch_->End();
-        }
-
-        // Basic icon-based HUD (2026-07-11, plan.md §2.3 HUD-001/005/006/007)
-        // -- no text rendering exists yet (no font-glyph layout for
-        // Content/icons/text.png has been identified, see MENU-083..087),
-        // so counts are shown as icon repetition (life icons) rather than
-        // "N/total" text, and everything else needing text (treasure
-        // counter, score, etc.) is deferred until that exists. Reuses
-        // blupiIconBatch_/blupiIconTexture_ (blupi.png) for life icons and
-        // objectTexture_ (element.png, already loaded for MoveObject
-        // billboards) for key icons -- both are plain Texture2D instances,
-        // usable by SpriteBatch regardless of which other draw path also
-        // references them.
-        if (blupiIconBatch_)
+        // Real mobile-eggbert bottom HUD + interim animation-state
+        // indicator (2026-07-10, see GEHud.hpp for the full layout AND for
+        // why this is real 3D quads instead of SpriteBatch -- CNA's Vulkan
+        // backend records every SpriteBatch batch before every 3D draw, so
+        // a sprite HUD is always painted over by the scene; that was the
+        // real cause of the twice-reported "icon visible for a second,
+        // then gone" bug, which the earlier depth-test fix addressed only
+        // for EasyGL). Drawn LAST so it wins submission order on both
+        // backends.
         {
             const auto& viewport = device.getViewportProperty();
-            const int screenH = viewport.getHeightProperty();
-
-            blupiIconBatch_->Begin();
-
-            // HUD-001: life icons (blupi.png icon 48, Blupi's head) x
-            // Lives(), bottom-left row. Same 60px/10-col tile convention as
-            // the animation-state indicator above.
-            {
-                constexpr int kTilePx = 60;
-                constexpr int kCols = 10;
-                constexpr int kLifeIcon = 48;
-                constexpr int kOnScreenSize = 40;
-                constexpr int kSpacing = 44;
-                constexpr int kMargin = 8;
-                const int col = kLifeIcon % kCols;
-                const int row = kLifeIcon / kCols;
-                const Microsoft::Xna::Framework::Rectangle srcRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
-                const int y = screenH - kOnScreenSize - kMargin;
-                const int lives = interaction_.Lives();
-                for (int i = 0; i < lives; ++i)
-                {
-                    const Microsoft::Xna::Framework::Rectangle destRect(
-                        kMargin + i * kSpacing, y, kOnScreenSize, kOnScreenSize);
-                    blupiIconBatch_->Draw(blupiIconTexture_, destRect, srcRect,
-                                           Microsoft::Xna::Framework::Color::White);
-                }
-            }
-
-            // HUD-005/006/007: key icons (element.png icons 215/222/229 --
-            // red/green/blue), top-left row, only drawn while held. Same
-            // 60px/10-col tile convention as GetElementIconUv().
-            {
-                constexpr int kTilePx = 60;
-                constexpr int kCols = 10;
-                constexpr int kOnScreenSize = 36;
-                constexpr int kSpacing = 40;
-                constexpr int kMargin = 8;
-                const struct { int icon; int count; } kKeys[3] = {
-                    {215, interaction_.Key1Count()},
-                    {222, interaction_.Key2Count()},
-                    {229, interaction_.Key3Count()},
-                };
-                int slot = 0;
-                for (const auto& key : kKeys)
-                {
-                    if (key.count <= 0)
-                    {
-                        continue;
-                    }
-                    const int col = key.icon % kCols;
-                    const int row = key.icon / kCols;
-                    const Microsoft::Xna::Framework::Rectangle srcRect(col * kTilePx, row * kTilePx, kTilePx, kTilePx);
-                    const Microsoft::Xna::Framework::Rectangle destRect(
-                        kMargin + slot * kSpacing, kMargin, kOnScreenSize, kOnScreenSize);
-                    blupiIconBatch_->Draw(objectTexture_, destRect, srcRect,
-                                           Microsoft::Xna::Framework::Color::White);
-                    ++slot;
-                }
-            }
-
-            blupiIconBatch_->End();
+            hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                      interaction_.Lives(),
+                      interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
+                      interaction_.Key3Count() > 0,
+                      interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
+                      blupi_.GetAnimIcon());
         }
 
         // One-shot full-frame screenshot, taken here (2026-07-11) rather

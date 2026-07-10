@@ -7,6 +7,7 @@
 #include "Game/GEObjectIcons.hpp"
 #include "Game/GESound.hpp"
 #include "Game/GEInteractionSystem.hpp"
+#include "Game/GEHud.hpp"
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
@@ -15,7 +16,7 @@
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
-#include <Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp>
+#include <Microsoft/Xna/Framework/GraphicsDeviceManager.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <cstdint>
@@ -160,12 +161,34 @@ namespace GalaxyEggbert::CNA
         // (2026-07-10, see GEInteractionSystem.hpp).
         GEInteractionSystem interaction_;
 
-        // Interim 2D animation-state indicator (bottom-right corner) while
-        // no 3D Blupi model exists (2026-07-05) — blupi.png, drawn via
-        // SpriteBatch, not a 3D billboard. Lazily constructed in
-        // LoadContent() since SpriteBatch needs a live GraphicsDevice.
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> blupiIconBatch_;
-        Microsoft::Xna::Framework::Graphics::Texture2D blupiIconTexture_;
+        // Real mobile-eggbert bottom HUD + the interim animation-state
+        // indicator (2026-07-10, see GEHud.hpp) -- replaces the earlier
+        // SpriteBatch-based HUD entirely: on CNA's Vulkan backend every
+        // SpriteBatch batch is recorded BEFORE every 3D draw within the
+        // frame, so a sprite HUD gets painted over by the 3D scene (the
+        // "icon visible for a second, then gone" live report); GEHud draws
+        // real 3D quads instead, recorded in genuine submission order on
+        // both backends.
+        GEHud hud_;
+
+        // Mouse drag-look (2026-07-10, user request): while the left
+        // button is held, mouse deltas rotate the camera around Blupi
+        // (yaw + pitch offsets on top of his facing); as soon as Blupi
+        // gets movement input, the offsets decay smoothly back to zero so
+        // the camera returns behind him. Works for both camera modes and
+        // maps to touch-drag as well (SDL reports touch as mouse).
+        float lookYawOffset_ = 0.0f;
+        float lookPitchOffset_ = 0.0f;
+        int lastMouseX_ = 0;
+        int lastMouseY_ = 0;
+        bool mouseLookActive_ = false;
+
+        // F11 fullscreen toggle (2026-07-10, user request), edge-detected
+        // like the other key toggles. GraphicsDeviceManager is constructed
+        // in the game constructor (standard XNA pattern) purely for
+        // ToggleFullScreen() -- nothing else uses it yet.
+        std::unique_ptr<Microsoft::Xna::Framework::GraphicsDeviceManager> graphics_;
+        bool fullscreenKeyWasDown_ = false;
 
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7) — element.png, static phase

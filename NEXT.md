@@ -248,6 +248,50 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Root-caused the SECOND (real) cause of the disappearing HUD, replaced the SpriteBatch HUD
+  with a real mobile-eggbert-faithful 3D-quad HUD (`GEHud`), and added mouse drag-look + F11
+  fullscreen (2026-07-10).** User re-reported "the icon shows for a second, then disappears"
+  after the earlier depth-test fix — that fix was real but only cured EasyGL.
+  - **The Vulkan cause (found by frame-150 screenshot instrumentation on both backends — EasyGL
+    kept the HUD, Vulkan lost it): CNA's Vulkan backend records ALL SpriteBatch batches BEFORE
+    all 3D draws within each frame's render pass** (`VulkanGraphicsBackend::RecordCommandBuffer`
+    calls `drawSpritesFor(...)` then `draw3DFor(...)`; the 2D pipeline has depth test AND write
+    disabled), so any sprite HUD is painted over by the 3D scene regardless of what the game
+    does. `feature/graphics` has the same ordering (its Task 803 SpriteBatch fix addresses a
+    different, DepthStencilState-defaulting issue). Fixing the ordering itself is a CNA change
+    (needs approval, flagged in §5) — galaxy-eggbert instead **stopped using SpriteBatch
+    entirely**: the new `GEHud` draws real 3D quads (BasicEffect + orthographic pixel-space
+    projection via the existing `Easy3D::BillboardMeshRenderer` path), submitted last in the
+    frame — genuine 3D draws are recorded in true submission order on both backends. Verified by
+    the same frame-150 instrumentation: HUD now present on Vulkan at frame 150.
+  - **`GEHud` replicates the real mobile-eggbert bottom HUD** (verified directly against
+    `Decor::DrawInfo`, `Decor.cpp:1185-1249`, in its original 640×480 reference space, uniformly
+    scaled/centered to the real viewport): one `blupi.png` icon 48 per life at (210,417)
+    advancing X+=16 (the real fanned row), held keys as `element.png` 215/222/229 at
+    (520/530/540, 418), and the treasure counter — `pad.png` icon-15 panel over
+    (410,445)-(510,480) with centered "N/M" text at (460,450). **First real text rendering**:
+    glyphs come from `Content/icons/text.png`, whose sheet index IS the character's ASCII code
+    for the printable range — read directly off the asset's own 16-column/32px grid layout
+    (row 2 starts with ' ' at index 32, row 3 with '0' at 48), NOT transcribed from
+    mobile-eggbert's `table_char` (per CLAUDE.md's no-table-copying rule; the proportional
+    advance widths in `table_char_width` are likewise not copied — a fixed 17px digit advance is
+    a documented approximation). The interim bottom-right animation-state indicator also moved
+    into `GEHud`.
+  - **One CNA quirk found and worked around**: a `BasicEffect` draw with `Alpha < 1` renders
+    fine on EasyGL but not at all on Vulkan (verified empirically — the identical panel quad
+    appears at 1.0, vanishes at 0.6). The treasure panel therefore uses opacity 1.0 for now
+    instead of the real 0.6 (documented at the constant; restore once fixed in CNA — §5).
+  - **Mouse drag-look** (user request): holding LMB and dragging rotates the camera around Blupi
+    (yaw offset + clamped pitch offset on top of his facing) in both camera modes — orbit in
+    third-person, head-turn in first-person; any movement input decays the offsets smoothly back
+    to zero so the camera returns behind him. Drag-based (not free mouselook) so it maps 1:1
+    onto touch input. **F11** toggles fullscreen via a `GraphicsDeviceManager` (now constructed
+    in the game constructor, standard XNA pattern). Neither could be functionally verified
+    headlessly — user should test both live.
+  - Camera-follow damping itself was left unchanged (the "camera should react with a delay"
+    request — it already lags via `kCameraDampingPerSecond=8`; retune later if it still feels
+    stiff in play).
+
 - **ROOT-CAUSED AND FIXED the "front/top/side faces don't render" family of bugs (2026-07-10,
   `../easy-3d` commit `44393f5`): `Easy3D::CubeMesh` wound its 4 side faces backwards for XNA.**
   User re-reported the missing-faces symptom with two screenshots (a brick pillar showing only
@@ -2000,6 +2044,8 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 
 | Status | Issue |
 |---|---|
+| **CNA bug, worked around in galaxy-eggbert (2026-07-10) — needs an upstream CNA fix (approval required)** | **CNA's Vulkan backend records all SpriteBatch batches BEFORE all 3D draws within each frame** (`RecordCommandBuffer`: `drawSpritesFor` then `draw3DFor`, 2D pipeline depth test+write disabled), so a sprite HUD drawn after the 3D scene is painted over by it — the real cause of the twice-reported "HUD icon visible for a second, then gone" (EasyGL draws in submission order and only had the separate, already-fixed depth-test issue). `feature/graphics` has the same ordering. galaxy-eggbert no longer uses SpriteBatch at all (`GEHud` draws real 3D quads), so it is no longer affected — but any future SpriteBatch use would be. |
+| **CNA quirk, worked around (2026-07-10)** | A `BasicEffect` draw with `Alpha < 1` renders on EasyGL but not at all on CNA's Vulkan backend (verified: identical quad appears at Alpha=1.0, vanishes at 0.6). `GEHud`'s treasure panel uses 1.0 instead of the real mobile-eggbert 0.6 until this is fixed upstream (documented at `kPanelOpacity`). |
 | **resolved (2026-07-10, root-caused)** | **"Front/top/side faces don't render" — `Easy3D::CubeMesh` wound its cube faces with the OpenGL CCW-from-outside convention, but CNA implements genuine XNA culling (visually-clockwise triangles survive the default `CullCounterClockwise`), so every side face was invisible from outside; scenes showed the mirrored interiors of opposite faces instead, breaking visibly wherever no opposite face covered the sightline (pillars missing front faces, staircases see-through to background).** Fixed at the source (`easy-3d@44393f5` — all 6 faces now CW-from-outside, completing what `a26df1a`/`8ab3854` started empirically); side-face textures now also render upright/unmirrored. Verified live on both backends (§3). CNA itself needs no fix — its cull semantics match real XNA, confirmed against its own cullmode golden test and FNA SpriteBatch winding; CNA `feature/graphics` doesn't change culling either. |
 | **needs re-test after the winding fix (2026-07-10)** | The **texture distance washout** investigation (`texture-distance-washout-bug.md`) was conducted while side faces showed their mirrored opposites — its "geometry/winding proven correct" conclusion is void and the repro must be re-run on top of `easy-3d@44393f5` before resuming (addendum added to the doc). The washout symptom may or may not still exist. |
 | **needs user re-check (2026-07-10)** | FanLeft/FanRight base/open face assignments (`GEDirectionalCubeTiles.cpp`) were tuned via live user feedback *while the winding bug was active* — i.e., judged on mirrored opposite faces. The tunnel fan's outer face looks correct in the post-fix verification screenshot, but fans should be re-checked in play and the assignments swapped back if wrong. |

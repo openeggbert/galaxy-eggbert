@@ -728,13 +728,13 @@ otherwise noted.
 CNA has no real HUD yet — only a temporary 2D debug anim-state indicator. Every item below is
 reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 
-- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11)
-- [ ] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout; current CNA impl (HUD-001) draws one icon per life uncapped, no overflow text (no text rendering exists at all yet, see MENU-083..087)
-- [ ] HUD-003 — Treasure counter "N/total" text, bottom-centre panel — blocked on text rendering (no `text.png` glyph layout identified yet)
-- [ ] HUD-004 — Panel background behind treasure counter (pad.png icon 15, opacity 0.6)
-- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11, top-left row, not the original's unspecified position)
-- [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held (CNA, 2026-07-11)
-- [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held (CNA, 2026-07-11)
+- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11; since 2026-07-10 at the REAL `DrawInfo` position (210,417), X+=16, via `GEHud`)
+- [ ] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout; current CNA impl draws one icon per life uncapped (real `DrawInfo` is also uncapped — re-verify whether any cap exists at all before implementing one)
+- [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel (CNA, 2026-07-10, `GEHud`): real position (460,450), glyphs from `text.png` whose sheet index IS the ASCII code (read off the asset, not `table_char`); fixed 17px advance approximates the real proportional widths
+- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15) (CNA, 2026-07-10, `GEHud`) — at opacity 1.0 instead of the real 0.6 for now (CNA Vulkan drops `BasicEffect` draws with Alpha<1, see NEXT.md §5)
+- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11; since 2026-07-10 at the REAL position (520,418) via `GEHud`)
+- [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held (CNA, 2026-07-11; real position (530,418))
+- [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held (CNA, 2026-07-11; real position (540,418))
 - [ ] HUD-008 — Shield timer gauge (jauge.png yellow fill) — visible when shield active
 - [ ] HUD-009 — Score display (text label, top-right area)
 - [ ] HUD-010 — World name + elapsed level timer
