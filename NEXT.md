@@ -16,11 +16,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - `GalaxyEggbertCNA` (built directly on **CNA** + **Easy3D** helper library) — the **new
   long-term target**, opt-in and pre-parity. Opens a window, loads a genuinely 3D hand-authored
   `.vwr` world (`worlds3d/world001.vwr`), renders real textured/animated terrain (one cube per
-  non-air cell), moves an invisible collision-only Blupi with tank controls, and renders
-  `MoveObject`s and `BigDecor:` cells (pickups/enemies/decor) as real textured billboards (plus
-  `UniformCube`s for platform lifts/crates). **MoveObjects can now be embedded directly in the
-  `.vwr` format itself** (2026-07-09, §3) — no mobile-eggbert `.txt` file needed to see any of
-  them render. No 3D Blupi model, no HUD, no sound, no gameplay logic yet.
+  non-air cell), moves an invisible collision-only Blupi with tank controls (plus mouse/touch
+  drag-look and F11 fullscreen, 2026-07-10), and renders `MoveObject`s and `BigDecor:` cells
+  (pickups/enemies/decor) as real textured billboards (plus `UniformCube`s for platform
+  lifts/crates). **MoveObjects can now be embedded directly in the `.vwr` format itself**
+  (2026-07-09, §3) — no mobile-eggbert `.txt` file needed to see any of them render. **As of
+  2026-07-10/11, `GalaxyEggbertCNA` also has: a real mobile-eggbert-faithful 3D-quad HUD
+  (`GEHud`, lives/keys/treasure), sound (93/93 channels), and a growing real interactive-object/
+  gameplay system** (`GEInteractionSystem`/`GEBlupiController`/`GEWorldRuntime`) covering pickup
+  collection, platform-lift/crate patrol+push, all 5 real terrain hazards (lava/spikes/blitz/
+  saw+switches/crusher), the real shared enemy kill-list (8 types), the wasp's balloon status, the
+  real shared patrol-turn state machine, and blupih/blupit's projectile attacks — see §2/§3 for
+  detail and `plan.md` Phase 13/14 for what's still open. No 3D Blupi model yet (still an
+  invisible collision point).
 
 **Important architectural decisions:**
 
@@ -2084,23 +2092,38 @@ Most recent first. Full history: `git log`.
 
 ## 4. Current blocker / main problem
 
-**No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly as of today's fix, and
-`VerifyBlupiMovement` passes. The previously-reported missing-`rules.ninja` build issue did not
-reproduce this session.
+**No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
+backends as of the most recent commit (`64c7ec6`, 2026-07-11), all 63/63 `GalaxyEggbertWorldsTests`
+pass, and all 4 verify tools (`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`,
+`VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
-**Tile-identification implementation is complete.** Tile identification itself (the multi-session
-"active thread" through 2026-07-06/07) completed 2026-07-06/07 (§1); all 4 confirmed render modes
-(`DirectionalCube`, `InnerPillarBox`, `InnerFlatPlate`, `TripleCrossBillboard`) are implemented and
-wired into `GETerrainRenderer`, the water render mode is implemented (semi-transparent
-alpha-blended cube, the user's chosen design), icon 107 has a real procedurally-generated
-grass-top texture, and — as of 2026-07-09 — **every one of the ~175 total confirmed icons across
-all 4 modes is wired up**, including the last 6 `DirectionalCube` icons (15-18, 108-109), which
-used this session's established ambiguous-icon default since their crops didn't resolve a facing
-decision even after direct user review (§3). The previously-reported seam-line artifact is
-root-caused and substantially (60%) mitigated, not fully eliminated (§5, §8 task 1). `BigDecor:`
-billboard rendering, the platform-lift/crate `UniformCube` object path, 3D-format MoveObject
-storage, and static-terrain face culling are all implemented too — no render-mechanism work
-remains on the list; §8's remaining tasks are both explicitly optional/low-priority polish.
+**Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
+work remains outstanding; §8's remaining tasks are optional/low-priority polish. **The active work
+has since moved on to real gameplay logic** (`plan.md` §2 Feature Parity Checklist), currently deep
+in Phase 13 (Enemy AI) and Phase 14 (Hazards):
+
+- **Done**: lives/respawn foundation (`130`), the real shared patrol-turn state machine (`131`,
+  unblocks `134`/`136`), the widened shared enemy kill-list covering 8 types (`132`/`133`/`137`
+  contact-death), the wasp's balloon status + hazard-pop interaction (`135`), blupih/blupit's
+  projectile attacks (`134`, just finished — see §3's most recent entry), and all 5 real terrain
+  hazards (lava/spikes/blitz/saw+switches/crusher, `140`-`144`). Also done outside Phase 13/14: the
+  real mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11 fullscreen, the `CubeMesh` winding
+  root-cause fix, and the sample world's tile+object exhibition areas.
+- **Next up (picked from `plan.md` as the natural continuation of Phase 13, not yet started)**:
+  **`E3D-MIG-136`, the large creature (`ObjectType54`)** — lethal only while paused mid-turn
+  (`patrolStep` 1 or 3, now implementable since `131` landed), destroys the player's current
+  vehicle or fatally grabs Blupi, is never destroyed itself, and always shows its taunt icon. It's
+  already placed in `worlds3d/world001.vwr` (the walled room's guardian) but currently has no
+  special behavior beyond the generic patrol/animation every `MobileObjSpec` gets — see
+  `Decor.cpp:5867-5913` and `mobile-eggbert-reference/04-enemy-behavior.md`'s `ObjectType54`
+  section (already read this session, see the "large creature" note there).
+- **Also open in Phase 13**: follower (96/97)'s real dormant-until-a-padded-wake-box,
+  1px/tick homing-toward-Blupi movement (contact-death already works; homing is a separate,
+  not-yet-attempted feature).
+- **Also open in Phase 14**: spring (`145`), the vanishing/temp tile (`146`), teleporters (`147`),
+  the water breath gauge (`148`), and fans (`149`) — none has a code prerequisite blocking it.
+- Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
+  are not started at all — see `plan.md` for the itemized task lists.
 
 ## 5. Known bugs and limitations
 
