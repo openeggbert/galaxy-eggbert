@@ -394,6 +394,7 @@ namespace GalaxyEggbert::CNA
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
+            const bool wasEcrased = blupi_.IsEcrased();
             const float blupiXBeforeStep = blupi_.GetX();
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, dt);
@@ -429,6 +430,18 @@ namespace GalaxyEggbert::CNA
                 stepSoundTimer_ = 0.0f;
             }
             jumpKeyWasDown_ = jumpPressed;
+
+            // Crusher squash recovery sound (real channel 41, per
+            // Decor.cpp:5180-5197 -- the same "buff expired" channel other
+            // timed states reuse on their own recovery, not a dedicated
+            // crusher-only sound). Entry sound (channel 70) is played at the
+            // trigger site below instead, since only that call site knows
+            // whether this is a genuinely new trigger (TriggerCrush()
+            // returns false, a no-op, if already squashed).
+            if (wasEcrased && !blupi_.IsEcrased())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+            }
 
             // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
             // subset) -- takes the real death sound channel for the
@@ -524,6 +537,23 @@ namespace GalaxyEggbert::CNA
                 GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+            }
+
+            // Crusher hazard (plan.md E3D-MIG-143) -- unlike every hazard
+            // above, this is NOT lethal: it squashes Blupi (reduced move
+            // speed, no jump, ~10s auto-recovery) rather than costing a
+            // life. Real `IsEcraseur()`'s 3-out-of-10 danger window is
+            // approximated via `IsCrusherActiveAtPhase()` (see its own
+            // comment for why the real unnormalized timer has no exact
+            // equivalent here). `TriggerCrush()` itself is idempotent (a
+            // no-op while already squashed, matching the real
+            // `!m_blupiEcrase` re-trigger guard) -- only play the real
+            // entry sound (channel 70) when it actually starts a NEW squash.
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
+                GEWorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
+                blupi_.TriggerCrush())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel70);
             }
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)

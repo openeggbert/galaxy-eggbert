@@ -58,6 +58,18 @@ namespace GalaxyEggbert::CNA
         return 0;
     }
 
+    bool GEBlupiController::TriggerCrush() noexcept
+    {
+        if (m_ecrase)
+        {
+            return false;
+        }
+        m_ecrase = true;
+        m_ecraseTimer = kEcraseDuration;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
     std::uint16_t GEBlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
     {
         if (!m_onGround)
@@ -115,11 +127,15 @@ namespace GalaxyEggbert::CNA
             m_yaw += turnInput * kTurnSpeed * dt;
         }
 
+        // Crusher squash state: real behavior allows movement at reduced
+        // speed but blocks jump entirely while squashed.
+        const float effectiveMoveSpeed = m_ecrase ? kMoveSpeed * kEcraseSpeedMultiplier : kMoveSpeed;
+
         const bool moving = (moveInput != 0.0f);
         if (moving)
         {
-            const float dx = std::sin(m_yaw) * moveInput * kMoveSpeed * dt;
-            const float dz = -std::cos(m_yaw) * moveInput * kMoveSpeed * dt;
+            const float dx = std::sin(m_yaw) * moveInput * effectiveMoveSpeed * dt;
+            const float dz = -std::cos(m_yaw) * moveInput * effectiveMoveSpeed * dt;
             if (dx != 0.0f)
             {
                 TryMoveAxis(world, dx, 0.0f);
@@ -130,10 +146,20 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        if (m_onGround && jumpPressed)
+        if (m_onGround && jumpPressed && !m_ecrase)
         {
             m_velocityY = kJumpSpeed;
             m_onGround = false;
+        }
+
+        if (m_ecrase)
+        {
+            m_ecraseTimer -= dt;
+            if (m_ecraseTimer <= 0.0f)
+            {
+                m_ecrase = false;
+                m_ecraseTimer = 0.0f;
+            }
         }
 
         m_velocityY = std::max(m_velocityY - kGravity * dt, kFallLimit);

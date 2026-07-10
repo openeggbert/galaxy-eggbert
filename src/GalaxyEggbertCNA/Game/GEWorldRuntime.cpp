@@ -250,6 +250,12 @@ namespace GalaxyEggbert::CNA
         return cycle % 2 == 0 && cycle < 50;
     }
 
+    bool GEWorldRuntime::IsCrusherActiveAtPhase(int animPhase) noexcept
+    {
+        const int cycle = (((animPhase / 3) % 10) + 10) % 10; // defensive: handle a negative phase
+        return cycle <= 2;
+    }
+
     void GEWorldRuntime::Update(float dt)
     {
         // Raw animation tick (2026-07-09, fixed from a flat 6fps clock

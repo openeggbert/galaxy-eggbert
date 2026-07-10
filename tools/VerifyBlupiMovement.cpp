@@ -4,6 +4,7 @@
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 
@@ -113,6 +114,47 @@ int main(int argc, char** argv)
         check(onSpike.IsOnGround(), "Blupi stands on a spike block rather than falling through it");
         check(onSpike.GetGroundBlockType(synthetic) == BlockTypes::Spike,
               "GetGroundBlockType() identifies spikes correctly (E3D-MIG-141 hazard detection)");
+
+        // Crusher squash state (plan.md E3D-MIG-143) -- TriggerCrush()/
+        // IsEcrased()/recovery, standing on the same ordinary ground block
+        // used above (the trigger *condition* -- Crusher block + active
+        // cycle -- is GalaxyEggbertCnaGame's job, tested separately in
+        // GEWorldRuntime::IsCrusherActiveAtPhase(); this only tests
+        // GEBlupiController's own state machine once triggered).
+        GEBlupiController crushed;
+        crushed.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+        crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(crushed.TriggerCrush(), "TriggerCrush() returns true on a genuinely new trigger");
+        check(crushed.IsEcrased(), "IsEcrased() is true immediately after TriggerCrush()");
+        check(!crushed.TriggerCrush(), "TriggerCrush() is a no-op (returns false) while already squashed");
+
+        // Reduced move speed while squashed: same moveInput/dt, less
+        // distance covered than an un-squashed Blupi over one Step(). At
+        // yaw=0 (the default), forward movement changes Z, not X.
+        const float zBeforeCrushedMove = crushed.GetZ();
+        crushed.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+        const float crushedDelta = std::fabs(crushed.GetZ() - zBeforeCrushedMove);
+
+        GEBlupiController normal;
+        normal.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+        normal.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        const float zBeforeNormalMove = normal.GetZ();
+        normal.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+        const float normalDelta = std::fabs(normal.GetZ() - zBeforeNormalMove);
+        check(crushedDelta > 0.0f && crushedDelta < normalDelta,
+              "squashed Blupi moves slower than normal, but still moves (not fully immobilized)");
+
+        // Jump blocked while squashed.
+        crushed.Step(synthetic, 0.0f, 0.0f, true, false, false, dt);
+        check(crushed.IsOnGround(), "jump input is ignored while squashed (still on ground, not launched)");
+
+        // Auto-recovery after kEcraseDuration seconds.
+        const int stepsToRecover = static_cast<int>(GEBlupiController::kEcraseDuration / dt) + 5;
+        for (int i = 0; i < stepsToRecover && crushed.IsEcrased(); ++i)
+        {
+            crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        }
+        check(!crushed.IsEcrased(), "squash state auto-recovers after kEcraseDuration seconds");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -108,6 +108,19 @@ namespace GalaxyEggbert::CNA
         // tools/VerifyInteractionSystem.cpp.
         [[nodiscard]] static bool IsBlitzActiveAtPhase(int animPhase) noexcept;
 
+        // Real Crusher hazard timing (plan.md E3D-MIG-143, `Decor::
+        // IsEcraseur` per mobile-eggbert-reference/12-hazards-and-
+        // interactables.md, verified directly against Decor.cpp:7277-7288:
+        // `m_time/3 % 10 <= 2`). The real check runs on `m_time` (a raw,
+        // NOT `Config::ScaleDiv`-normalized frame counter -- an explicit
+        // exception the reference doc calls out, unlike every other timer)
+        // rather than this class's 20-ticks/sec `animPhase_` -- approximated
+        // here by reusing `animPhase_` for the same divisor shape (still a
+        // ~30% duty cycle), since the real unnormalized rate has no clean
+        // equivalent at a fixed reference tick rate. Static/pure, same
+        // reasoning as IsBlitzActiveAtPhase() above.
+        [[nodiscard]] static bool IsCrusherActiveAtPhase(int animPhase) noexcept;
+
         // BigDecor: is a second 100x100 background tile layer in
         // mobile-eggbert level files (see mobile-eggbert-2d-reference.md
         // §2.3) — parsed and stored here (same icon-id-to-block-type

@@ -213,13 +213,14 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   what is/isn't covered. `BigDecor:` rendering and the platform-lift/crate `UniformCube` object
   path are implemented (2026-07-09, §3). Real sound playback exists (2026-07-10, §3, `GESound`) —
   the same 93 real mobile-eggbert WAV files. A basic lives foundation exists (2026-07-11, §3),
-  wired to 4 terrain hazards (fall-off-world death, lava, spikes, Blitz) and the generic
-  `ObjectType2`/`3` patrol-hazard contact-kill — the remaining 2 terrain hazard tiles (crusher/
-  saw, both need real machinery beyond a ground-block check) and all 9 named enemy types
-  (spider/fish/bird/blupih/blupit/wasp/creature/follower) still do nothing on contact. HUD is now
-  minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
-  no numeric treasure counter/score. No 3D world editor exists yet either (plan.md §6,
-  `EDITOR-*`, planned 2026-07-11, not started)
+  wired to 4 lethal terrain hazards (fall-off-world death, lava, spikes, Blitz) and the generic
+  `ObjectType2`/`3` patrol-hazard contact-kill; Crusher (2026-07-11, §3) is non-lethal (a squash
+  state, `GEBlupiController::TriggerCrush()`/`IsEcrased()`) — the remaining 1 terrain hazard tile
+  (saw, needs a full switch/toggle system) and all 9 named enemy types (spider/fish/bird/blupih/
+  blupit/wasp/creature/follower) still do nothing on contact. HUD is now minimal icon-based only
+  (2026-07-11, §3: life icons, key icons) — no text rendering exists, so no numeric treasure
+  counter/score. No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
+  2026-07-11, not started)
   — worlds are still hand-authored by editing `tools/GenerateSampleWorld3D.cpp`.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
@@ -236,6 +237,46 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented the Crusher hazard (2026-07-11).** Autonomous continuation of `plan.md`'s
+  backlog, at the user's explicit request to keep going on "these bigger tasks" (Crusher/Saw,
+  which need real machinery beyond the simple ground-block-check pattern the earlier
+  lava/spikes/Blitz hazards used). Crusher is the first *non-lethal* hazard implemented — unlike
+  every prior hazard, touching it squashes Blupi rather than costing a life.
+  - **Verified directly against `mobile-eggbert/.../Decor.cpp:5549-5597`, `5180-5197`, and
+    `7277-7288`** (not just `mobile-eggbert-reference/12-hazards-and-interactables.md`, though
+    that pointed at the right lines).
+  - **New `GEBlupiController::TriggerCrush()`/`IsEcrased()`**: real `!m_blupiEcrase` re-trigger
+    guard (idempotent — a no-op, returns `false`, while already squashed), reduced move speed
+    (`kEcraseSpeedMultiplier=0.5`, a documented approximation — the real movement table's "×4 of
+    `m_blupiSpeedX`" figure doesn't cleanly convert to a fraction of `kMoveSpeed` without further
+    research), jump blocked entirely while squashed, ~10s auto-recovery
+    (`kEcraseDuration=10.0f`, matches the real 100-ticks-decremented-every-2nd-tick duration
+    exactly, just as a plain real-time countdown instead of a tick-based decrement). Real entry
+    sound (channel 70) and recovery sound (channel 41 — **a real finding**: the same "buff
+    expired" channel other timed states like balloon already reuse on their own recovery, not a
+    dedicated crusher-only sound) are both wired.
+  - **New `GEWorldRuntime::IsCrusherActiveAtPhase()`** approximates the real 3-out-of-10 danger
+    window (`m_time/3%10<=2`, confirmed directly from `Decor.cpp:7277-7288`). **A genuinely
+    unusual real-source detail found while reading it**: unlike every other timer in the game
+    (including Blitz's, added earlier this session), this one runs on `m_time` — a raw frame
+    counter that is explicitly NOT passed through `Config::ScaleDiv`, so its real-world duration
+    isn't normalized to a fixed reference tick rate the way virtually everything else is. Since
+    this class's `animPhase_` only exists at a fixed 20-ticks/sec rate, there's no exact
+    equivalent — approximated by reusing `animPhase_` for the same divisor shape (still a ~30%
+    duty cycle), documented as a simplification rather than treated as exactly faithful.
+  - No vehicle/focus gating modeled — same reason as spikes (neither concept exists in
+    `GalaxyEggbertCNA` yet, Phase 17).
+  - **Verification**: a new `VerifyBlupiMovement` block exercising `GEBlupiController`'s squash
+    state machine directly (trigger/idempotency/reduced-speed/jump-blocked/auto-recovery) — found
+    and fixed a real bug in the test itself while writing it (checked `GetX()` deltas for forward
+    movement, but at the default yaw=0 forward movement changes `Z`, not `X` — the "reduced
+    speed" assertion failed until switched to `GetZ()`). Plus 5 new `VerifyInteractionSystem`
+    phase-boundary assertions for `IsCrusherActiveAtPhase()`. Full suite and both backends' live
+    runs re-confirmed clean.
+  - Saw (the one remaining terrain hazard tile) needs a full switch/toggle system
+    (`Decor::ActiveSwitch`, action-button handling, world-grid icon mutation) — a bigger, separate
+    piece of work, not attempted in this same pass.
 
 - **Implemented the first enemy contact behavior: generic hazard types 2/3 (2026-07-11).**
   Autonomous continuation of `plan.md`'s backlog — the first `GalaxyEggbertCNA` behavior where

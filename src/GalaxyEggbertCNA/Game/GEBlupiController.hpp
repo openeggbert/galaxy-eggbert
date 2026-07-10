@@ -37,6 +37,20 @@ namespace GalaxyEggbert::CNA
         static constexpr float kStepLimit = 1.0f;
         static constexpr float kAnimFps   = 8.0f; // matches Simple3D::GEBlupiController
 
+        // Crusher squash state (plan.md E3D-MIG-143, `m_blupiEcrase` per
+        // mobile-eggbert-reference/12-hazards-and-interactables.md, verified
+        // directly against Decor.cpp:5549-5597/5180-5197). Real duration:
+        // m_blupiTimeShield set to 100, decremented every Config::ScaleTime(2)
+        // ticks -> 200 normalized ticks at the 20Hz reference rate = 10s;
+        // modeled here as a plain 10s real-time countdown rather than the
+        // tick-based decrement, same total duration. kEcraseSpeedMultiplier
+        // is an approximation, not a transcribed constant -- the real
+        // table (10-blupi-mechanics.md's vehicle/mode movement table) gives
+        // a "grounded x4 of m_blupiSpeedX" figure that doesn't cleanly
+        // convert to a fraction of kMoveSpeed without further research.
+        static constexpr float kEcraseDuration = 10.0f;
+        static constexpr float kEcraseSpeedMultiplier = 0.5f;
+
         enum class AnimState : std::uint8_t { Stop, March, Jump, Down, Up };
 
         void SetPosition(float x, float y, float z) noexcept;
@@ -60,6 +74,17 @@ namespace GalaxyEggbert::CNA
         // detection logic directly (see tools/VerifyBlupiMovement.cpp)
         // without a live Game/GraphicsDevice.
         [[nodiscard]] std::uint16_t GetGroundBlockType(const Worlds::World& world) const noexcept;
+
+        // Enters the crusher-squash state (real m_blupiEcrase=true): zeroes
+        // velocity, starts the kEcraseDuration recovery countdown. A no-op
+        // (returns false) if already squashed, matching the real
+        // `!m_blupiEcrase` re-trigger guard -- lets the caller play the
+        // real entry sound (channel 70) only on an actual new trigger, not
+        // every frame Blupi stands on an active crusher. Step() handles the
+        // countdown and auto-clears it; IsEcrased() reflects the current
+        // state either way.
+        bool TriggerCrush() noexcept;
+        [[nodiscard]] bool IsEcrased() const noexcept { return m_ecrase; }
 
         // Facing angle in radians, 0 = looking toward -Z. Updated every Step()
         // by turnInput (see below) — unlike a strafe-style controller, yaw is
@@ -99,5 +124,8 @@ namespace GalaxyEggbert::CNA
         AnimState m_animState = AnimState::Stop;
         int m_animPhase = 0;
         float m_animTimer = 0.0f;
+
+        bool m_ecrase = false;
+        float m_ecraseTimer = 0.0f;
     };
 }

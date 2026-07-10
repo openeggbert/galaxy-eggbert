@@ -43,17 +43,20 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
   treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
   sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
-- **Lives + fall death + lava + spikes + Blitz** (`E3D-MIG-130`/`067`/`140`/`141`/`144`,
-  2026-07-11): `lives_` starts at 3, eggs grant +1 up to the cap, `LoseLife()` resets to 3 on
-  game-over (real `DoorsLost()` behavior, not a permanent depletion). Wired to four real hazards
-  via `GEBlupiController::GetGroundBlockType()`: falling off the world, lava, and Blitz
-  (deterministic, real channel 8, no simplification needed for Blitz — its real 100-tick flicker
-  cycle is faithfully replicated by `GEWorldRuntime::IsBlitzActiveAtPhase()`) and spikes
-  (deterministic here — real vehicle+focus immunity not modeled since neither concept exists yet,
-  real channel 51). Vehicle immunity/sub-tile x-band restrictions and the real 10-slot
-  last-safe-position FIFO respawn are known simplifications. No enemy contact or the remaining 2
-  hazard tiles (crusher/saw, both need real machinery — a survivable squash state and a switch/
-  toggle system respectively — beyond a simple ground-block check) call `LoseLife()` yet.
+- **Lives + fall death + lava + spikes + Blitz + generic enemy contact**
+  (`E3D-MIG-130`/`067`/`140`/`141`/`144`/`132`, 2026-07-11): `lives_` starts at 3, eggs grant +1
+  up to the cap, `LoseLife()` resets to 3 on game-over (real `DoorsLost()` behavior, not a
+  permanent depletion). Wired to fall-off-world death, lava, Blitz (all deterministic, real
+  channel 8), spikes (real channel 51, vehicle+focus immunity not modeled since neither concept
+  exists yet), and generic `ObjectType2`/`3` patrol-hazard contact (real channel 74, the 50/50
+  death-sound coinflip simplified to always-play). Vehicle immunity/sub-tile x-band restrictions
+  and the real 10-slot last-safe-position FIFO respawn are known simplifications. No named enemy
+  type (Phase 13) or the remaining 1 terrain hazard tile (saw, needs a full switch/toggle system)
+  calls `LoseLife()` yet.
+- **Crusher squash state** (`E3D-MIG-143`, 2026-07-11): non-lethal, unlike every hazard above —
+  `GEBlupiController::TriggerCrush()`/`IsEcrased()` (reduced move speed, jump blocked, ~10s
+  auto-recovery, real entry/recovery sound channels 70/41), gated on `GEWorldRuntime::
+  IsCrusherActiveAtPhase()` (approximates the real 3-out-of-10 danger window).
 - **Basic HUD** (2026-07-11): icon-based only (no text rendering exists) — life icons
   (bottom-left, one per life) and key icons (top-left, shown only while held).
 - **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
@@ -81,8 +84,9 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   creature/follower) each need their own real attack/contact behavior (Phase 13) and do nothing
   on contact yet. A basic lives foundation exists (`E3D-MIG-130`, 2026-07-11), wired to
   fall-off-world death, lava, spikes, Blitz, and generic hazard contact (`E3D-MIG-140`/`141`/
-  `144`/`132`, 2026-07-11) — the remaining 2 terrain hazard tiles (crusher/saw, `E3D-MIG-142`/
-  `143`) still do nothing either.
+  `144`/`132`, 2026-07-11); Crusher (`E3D-MIG-143`, 2026-07-11) is non-lethal (a squash state, not
+  a `LoseLife()` call) — the remaining 1 terrain hazard tile (saw, needs a full switch/toggle
+  system) still does nothing.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -328,8 +332,22 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       `ThinMechanical` render-geometry decision (`E3D-MIG-510`, still `[?]`), since those icons
       aren't a placeable/renderable `BlockTypes` constant yet.
 - [ ] `142` Saw (378/379) — switch-togglable via `ActiveSwitch`, real 41-cell trigger window.
-- [ ] `143` Crusher (317) — NOT instant death, a survivable squash state with a real
-      recovery timer, no vehicle immunity.
+- [x] `143` **Crusher (317) done 2026-07-11** — verified directly against `Decor.cpp:5549-5597`/
+      `5180-5197`/`7277-7288` (not just the reference doc). New `GEBlupiController::TriggerCrush()`/
+      `IsEcrased()`: real `!m_blupiEcrase` re-trigger guard (idempotent, returns false if already
+      squashed), reduced move speed (`kEcraseSpeedMultiplier=0.5`, an approximation — the real
+      table's "×4 of m_blupiSpeedX" figure doesn't cleanly convert to a fraction of `kMoveSpeed`),
+      jump blocked entirely, ~10s auto-recovery (`kEcraseDuration`, matches the real
+      100-ticks-at-every-2nd-tick duration exactly, just as a plain countdown instead of a
+      tick-based decrement). Real entry sound (channel 70) and recovery sound (channel 41,
+      confirmed shared with other buff-expiry code, not crusher-specific) both wired. New
+      `GEWorldRuntime::IsCrusherActiveAtPhase()` approximates the real 3-out-of-10 danger window
+      (`m_time/3%10<=2`) — the real check runs on an explicitly non-FPS-normalized raw frame
+      counter (a documented real-source quirk), which has no exact equivalent at this class's
+      fixed 20-ticks/sec reference rate, so the same divisor shape is reused against that instead.
+      No vehicle/focus gating modeled (same reason as spikes — neither concept exists yet).
+      Verified via a `VerifyBlupiMovement` state-machine test (trigger/idempotency/speed/jump-
+      block/recovery) and 5 `VerifyInteractionSystem` cycle-phase assertions.
 - [x] `144` **Blitz (305) done 2026-07-11** — new `GEWorldRuntime::IsBlitzActiveAtPhase(int)`
       (static/pure, tested directly) replicates the real 100-tick flicker cycle exactly (lethal
       only on even ticks of the first half, 25% duty), using the same 20-ticks/sec `animPhase_`
