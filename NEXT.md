@@ -248,6 +248,49 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed two real, user-reported bugs (2026-07-11): the animation-state icon disappearing
+  after ~1s, and a sound-related crash after a while of play.**
+  - **Icon disappearing**: `device.SetDepthTestEnabled(true)` (set once near the top of
+    `Draw()`, for the 3D scene) was never disabled before the 2D `SpriteBatch` overlay draws at
+    the end of the function — the icon's screen-space quad was being depth-tested against
+    whatever 3D geometry had already written to that pixel's depth buffer. Right at spawn,
+    looking down an open area, the depth buffer at that screen corner happens to be far/empty
+    enough for the icon to still pass; as soon as the camera turns toward nearer terrain/walls,
+    the same screen position gets a much closer depth value and the icon silently fails the
+    depth test — matching the exact reported symptom ("visible for about the first second, then
+    disappears"). Fixed by calling `device.SetDepthTestEnabled(false)` right before both
+    `SpriteBatch` blocks (the debug indicator and the HUD), matching the real, confirmed CNA
+    convention for 3D-then-2D-overlay draws (`../cna/examples/demo_avatar_appearance_tint_studio/
+    src/TintStudioDemo.cpp`'s own `Draw()` does exactly this). Verified two ways: (1) frame-1
+    screenshot unchanged/still correct, (2) a temporary spawn reposition right in front of a
+    brick wall (reverted after the check) — the icon rendered correctly on top of close-up
+    geometry, the exact scenario that would have failed before the fix.
+  - **Sound crash**: the user supplied a debugger backtrace (from their own build) pinpointing
+    `GESound::PlayStep` → `GESound::Play` → `SoundEffectInstance::setIsLoopedProperty`, which
+    throws `System::InvalidOperationException` if the instance has already been played
+    (`SoundEffectInstance.hpp`'s own doc comment: "@throws ... if the instance has already been
+    played" — `hasStarted_` is set the first time `Play()` runs and never reset, not even by
+    `Stop()`). `GESound::Play()` called `setIsLoopedProperty()` unconditionally on every call,
+    including when reusing an already-started instance (the existing "channel already playing,
+    reuse the instance" branch) — the second time ANY channel played (e.g. the second footstep
+    while walking), it threw, uncaught, and crashed the whole game. Fixed by only calling
+    `setIsLoopedProperty()` once, right after actually constructing a fresh instance. **Verified
+    empirically, not just by inspection**: before the fix, 3 consecutive live runs (no keyboard
+    input, so some sound source other than footsteps must have been double-playing even
+    passively) all crashed identically; after the fix, 3 consecutive runs all completed cleanly.
+    No automated regression test added — `GESound::LoadContent()` needs a real audio device,
+    which every existing scripted verification tool deliberately avoids exercising (see
+    `VerifyInteractionSystem`'s own `GESound` comment); the empirical live-run check is the
+    verification here instead.
+  - Both fixes are engine-agnostic C++ logic, not backend-specific — re-confirmed clean on both
+    EasyGL and Vulkan. **A separate, likely pre-existing Vulkan-specific oddity was spotted while
+    checking**: the second diagnostic screenshot (`screenshot_hud.png`, captured at the very end
+    of the frame) shows a plain blue background with no terrain and un-blended white boxes
+    around every billboard under Vulkan specifically, even though the earlier same-frame
+    terrain-visibility pixel-sample check (a more rigorous check than eyeballing a screenshot)
+    reports 25/25 samples showing real terrain color. Not investigated further — out of scope
+    for this fix, flagged for a future pass.
+
 - **Implemented the real shared patrol-turn state machine, unblocking blupih/blupit/large-
   creature (2026-07-11).** The "bigger task" flagged when the wasp work finished — the
   prerequisite most of Phase 13's remaining named enemy types actually need.
@@ -1925,6 +1968,9 @@ remains on the list; §8's remaining tasks are both explicitly optional/low-prio
 | needs verification | Simple3D: crate push floor-support check only tested at y=0; mobile-eggbert links crate stacks vertically (`SearchLinkCaisse`) — whether galaxy-eggbert's port does too is unconfirmed. |
 | risky assumption | `GalaxyEggbertCNA`'s world/texture loader uses relative paths — only works when run from its own build directory. |
 | incomplete | `GETerrainRenderer` (CNA) face culling only covers the plain static `UniformCube` path (2026-07-09, §3) — the animated/water paths render every face unconditionally, fine while those are sparse decorative elements rather than bulk fills. |
+| resolved (2026-07-11) | `GalaxyEggbertCNA`'s animation-state icon (bottom-right corner) disappeared after ~1s of play — depth testing was never disabled before the 2D `SpriteBatch` overlay draws, so the icon's screen-space quad was depth-tested against whatever 3D geometry had already written to that pixel once the camera turned toward nearby terrain/walls. Fixed by disabling depth test before both `SpriteBatch` blocks (§3). |
+| resolved (2026-07-11) | `GalaxyEggbertCNA` crashed after a while of play with an uncaught `System::InvalidOperationException` from `SoundEffectInstance::setIsLoopedProperty` (user-supplied debugger backtrace pinpointed `GESound::PlayStep`/`Play`) — that call is only valid before an instance's first `Play()`, but `GESound::Play()` called it unconditionally even when reusing an already-started instance. Fixed by only calling it once, right after constructing a fresh instance (§3). Verified empirically (3/3 live runs crashed before the fix, 3/3 clean after) rather than via an automated test, since exercising `GESound::LoadContent()` needs a real audio device every other scripted verification tool deliberately avoids. |
+| needs investigation | `GalaxyEggbertCNA` under Vulkan specifically: the end-of-frame diagnostic screenshot (`screenshot_hud.png`) shows a plain blue background with no visible terrain and un-blended white boxes around every billboard, even though the same frame's earlier terrain-visibility pixel-sample check reports 25/25 real terrain color. Found 2026-07-11 while verifying an unrelated fix; not investigated — may be a `GetBackBufferData`/swapchain timing quirk specific to calling it twice in one frame under Vulkan, or something else entirely. EasyGL's equivalent screenshot is unaffected. |
 
 ## 6. Architecture notes
 

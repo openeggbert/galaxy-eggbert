@@ -1243,6 +1243,30 @@ namespace GalaxyEggbert::CNA
         // predictable for anything drawn after this point in the future.
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
 
+        // Real bug fix (2026-07-11, reported live: "the animation icon is
+        // visible for about the first second, then disappears"). Depth
+        // testing was left enabled (device.SetDepthTestEnabled(true) near
+        // the top of this function, for the 3D scene) all the way through
+        // the 2D SpriteBatch overlay draws below -- the icon's screen-space
+        // quad was being depth-tested against whatever 3D geometry already
+        // wrote to that pixel's depth buffer. Right at spawn, looking down
+        // an open area, the depth buffer at that screen corner happens to
+        // be far/empty enough for the icon to still pass; as soon as the
+        // camera turns toward nearer terrain/walls, the same screen
+        // position gets a much closer depth value and the icon silently
+        // fails the depth test -- explaining the exact "shows briefly,
+        // then vanishes" symptom. Real CNA convention for 3D-then-2D-
+        // overlay draws (confirmed directly against
+        // ../cna/examples/demo_avatar_appearance_tint_studio/src/
+        // TintStudioDemo.cpp's own Draw(), which sets this to `true` for
+        // its 3D avatar and explicitly back to `false` right before its
+        // own SpriteBatch::Begin()) is to disable depth testing before any
+        // 2D overlay pass -- applied here for both SpriteBatch blocks
+        // below (the debug indicator and the HUD). No need to re-enable
+        // it afterward; Draw() sets it back to true at the top of every
+        // frame regardless.
+        device.SetDepthTestEnabled(false);
+
         // Interim 2D Blupi animation-state indicator, bottom-right corner
         // (no 3D model yet, 2026-07-05 — see GalaxyEggbertCnaGame.hpp).
         // blupi.png: 60x60 px tiles, 10 columns per row (matches

@@ -94,9 +94,24 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
+        // Real bug fix (2026-07-11, reported live via a debugger backtrace:
+        // crashes after a while with `System::InvalidOperationException`
+        // from `SoundEffectInstance::setIsLoopedProperty`, thrown from
+        // inside `GESound::Play`/`PlayStep`). setIsLoopedProperty() is only
+        // valid BEFORE an instance's first Play() call -- its own
+        // `hasStarted_` guard, set the first time Play() runs, is never
+        // reset, not even by Stop() (see SoundEffectInstance.hpp's own
+        // doc comment on setIsLoopedProperty: "@throws ... if the instance
+        // has already been played"). This code used to call it
+        // unconditionally on every Play(), including on a reused,
+        // already-started instance (the `else` branch below) -- the very
+        // first *second* play of any channel (e.g. the second footstep
+        // while walking) threw, uncaught, and crashed the whole game. Only
+        // set it once, right after actually constructing a fresh instance.
         if (!ch.instance)
         {
             ch.instance = std::make_unique<SoundEffectInstance>(ch.effect->CreateInstance());
+            ch.instance->setIsLoopedProperty(loop);
         }
         else
         {
@@ -105,7 +120,6 @@ namespace GalaxyEggbert::CNA
 
         const float volume = kVolumePitch[static_cast<std::size_t>(idx) * 2];
         ch.instance->setVolumeProperty(volume);
-        ch.instance->setIsLoopedProperty(loop);
         ch.instance->Play();
     }
 
