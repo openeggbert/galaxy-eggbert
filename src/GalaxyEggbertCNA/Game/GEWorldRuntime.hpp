@@ -105,6 +105,14 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] const Worlds::World& GetWorld() const { return *world_; }
 
+        // Mutable access for test tooling (2026-07-10, plan.md E3D-MIG-134)
+        // -- lets a verification tool carve a small guaranteed-shape test
+        // column (e.g. a ledge over a pit) for blupih/blupit's real
+        // downward/horizontal raycast, without depending on incidental
+        // terrain shape elsewhere in the loaded world. Same mutability
+        // precedent as GetMobileObjectsMutable() below.
+        [[nodiscard]] Worlds::World& GetWorldMutable() { return *world_; }
+
         // Real switch/saw linking (plan.md E3D-MIG-142, `Decor::ActiveSwitch`
         // per mobile-eggbert-reference/12-hazards-and-interactables.md,
         // verified directly against Decor.cpp:7131-7148). Call on an

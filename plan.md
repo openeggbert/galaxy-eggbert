@@ -340,12 +340,31 @@ documented there.
       fish/bird's narrowed hitbox and bigger-explosion effect, bird's taunt-capability (spider/
       fish are not taunt-capable, per the reference doc — no taunt system exists at all yet, so
       this distinction is currently moot either way).
-- [ ] `134` Stationary shooters 32 (blupih, vertical projectile ObjectType23) and
-      33 (blupit, two horizontal projectiles bracketing the turn) — both Cloud-vulnerable, body
-      contact not lethal (only the projectile is). NOT part of the shared kill list (`132`) —
-      these two need their own projectile-spawn logic, not a plain contact check. Prerequisite
-      (`131`, dwell-frame timing) is now done — real attack timing ("at dwell-frame 21 exactly"
-      during `patrolStep` 1 or 3) is implementable, not attempted yet.
+- [x] `134` **Stationary shooters done 2026-07-11** — verified directly against
+      `Decor.cpp:8878-8969` (attack timing) and `7794-7869`/`8095-8098` (the real `ObjectStart`
+      raycast/travel-distance encoding and a fired projectile's self-destruct-on-arrival special
+      case). Blupih (32) drops one `ObjectType23` straight down at dwell-frame 21; blupit (33)
+      fires two horizontal shots per turn-dwell, frame 3 away from the upcoming walk direction and
+      frame 21 toward it (**correction vs. this file's own earlier prose summary**, which had the
+      two frames backwards — re-verified twice against the exact source condition/speed-sign
+      pair). New `SearchAirDistance()` in `GEInteractionSystem.cpp` is a real grid-cell raycast
+      (one cell == one real 64px tile) reproducing `SearchDistRight`'s "count clear cells to the
+      next wall" behavior, including the real "0 distance = cancelled, but the attack sound still
+      plays anyway" nuance (`ObjectStart` returns a valid slot even on that path — its `!= -1`
+      sound gate only ever checks for a free object-pool slot). `stepAdvanceTicks = 5 * dist` is a
+      direct, non-approximated transcription of the real `ScaleTime(abs(speed*dist/64))` formula,
+      not an invented pacing constant. Body contact is deliberately NOT lethal (not in
+      `IsGenericHazard()`) — only the fired projectile is, always fatal on contact (real
+      shield/hide/superblupi immunity gates NOT modeled, same simplification as every other hazard
+      — none of those concepts exist in this engine yet). New `GEWorldRuntime::GetWorldMutable()`
+      accessor added for test tooling (hand-carving a guaranteed-shape ledge-over-a-pit/walled
+      corridor rather than depending on incidental terrain shape elsewhere). A real, playable
+      blupih ("turret perch", 3x3 ledge with a notch over a 3-cell drop) and blupit ("sentry
+      corridor", walled passage) were added to `worlds3d/world001.vwr` south of the tunnel — the
+      blupih's `posEnd`-side dwell sits over solid ledge (a real "no room" cancellation, not a
+      bug), so a full cycle shows both a live shot and a cancelled one. Verified via 10 new
+      `VerifyInteractionSystem` assertions (vertical raycast distance, contact-kill, "no room"
+      cancellation, both horizontal shots' distances and directions).
 - [x] `135` **Type 44 (wasp) done 2026-07-11** — verified directly against `Decor.cpp:5826-5863`
       (trigger) and `5766-5781` (hazard-pop interaction), not just the reference doc. New
       `GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()` (real

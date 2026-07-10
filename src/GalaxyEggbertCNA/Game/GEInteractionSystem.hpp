@@ -74,11 +74,28 @@ namespace GalaxyEggbert::CNA
     // instead of killing -- signaled via BalloonPoppedThisFrame(), same
     // caller-applies-the-actual-state-change split as DiedThisFrame().
     //
+    // Blupih/blupit (ObjectType32/33) stationary shooters now work
+    // (2026-07-10, plan.md E3D-MIG-134), verified directly against
+    // Decor.cpp:8878-8969 (attack timing) and 7794-7869 (the real
+    // ObjectStart raycast/travel-distance encoding). Their own body is
+    // NOT a damage path (not in IsGenericHazard()) -- only their fired
+    // ObjectType23 projectile is, spawned during a turn-dwell (patrolStep
+    // 1 or 3) at the real dwell-frame(s): blupih drops one straight down
+    // at frame 21, blupit fires two horizontal shots bracketing the turn
+    // (frame 3 away from the upcoming walk direction, frame 21 toward it
+    // -- see FireBlupitShot's comment for a correction against this
+    // class's own reference-doc summary, which had the two frames
+    // backwards). The projectile's travel distance is a real grid
+    // raycast (SearchAirDistance in the .cpp) to the next solid cell,
+    // NOT aimed at Blupi (the real source never aims either). Contact
+    // with the projectile is always fatal, same simplification (no
+    // shield/hide/superblupi gating, none of those exist yet) as every
+    // other hazard here.
+    //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Every enemy type OUTSIDE the shared kill list and wasp above
-    //    (32/33/54) -- each has real per-type attack/contact rules of its
-    //    own (Phase 13: blupih/blupit fire projectiles, the large creature
-    //    has its own lethality window), not a plain kill-on-touch.
+    //  - Type 54 (large creature) -- its own lethality window (only
+    //    while paused mid-turn) is a separate task from blupih/blupit
+    //    above.
     //  - Follower 96/97's real homing-toward-Blupi movement (Phase 13) --
     //    they're currently just static/patrol MoveObjects like any other;
     //    only their contact-death is covered here.

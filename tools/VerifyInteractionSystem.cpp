@@ -3,6 +3,7 @@
 #include "Game/GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <cmath>
 #include <iostream>
@@ -411,6 +412,185 @@ int main(int argc, char** argv)
         const float xAtDwellStart = getPatrollerX();
         std::cout << "Patrol object X at frame 300 (back at dwell-start): " << xAtDwellStart << " (posStart=0)" << std::endl;
         check(xAtDwellStart < 1.0f, "patrol object completes the full cycle and returns to posStartX");
+    }
+
+    // 10. Blupih (ObjectType32) stationary shooter (plan.md E3D-MIG-134) --
+    // verified against Decor.cpp:8878-8886. A hand-carved "ledge over a
+    // pit" test column (rather than relying on the sample world's
+    // incidental terrain shape) proves the real downward SearchDistRight
+    // raycast: air from y=1..14, solid floor at y=0, blupih placed at
+    // y=15 should drop a real ObjectType23 that travels 14 cells down
+    // (posEndY == 1, one cell above the floor -- SearchDistRight stops
+    // just short of the wall it found, never inside it).
+    {
+        constexpr int kGX = 95, kGZ = 95; // far corner, unused by anything else in the sample world
+        auto& mutableWorld = world.GetWorldMutable();
+        mutableWorld.setBlock(kGX, 0, kGZ, Worlds::Block::make(BlockTypes::Ground));
+        for (int gy = 1; gy <= 20; ++gy)
+        {
+            mutableWorld.setBlock(kGX, static_cast<std::uint16_t>(gy), kGZ, Worlds::Block::make(BlockTypes::Air));
+        }
+        const float bhX = static_cast<float>(kGX) - GEWorldRuntime::kWorldCenterX;
+        const float bhZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
+
+        MobileObjSpec blupih;
+        blupih.type = ObjectType::ObjectType32;
+        blupih.posStartX = bhX; blupih.posEndX = bhX + 0.001f; // nonzero delta only to satisfy the patrol gate
+        blupih.posStartY = blupih.posEndY = 15.0f;
+        blupih.posStartZ = blupih.posEndZ = bhZ;
+        blupih.currentX = bhX; blupih.currentY = 15.0f; blupih.currentZ = bhZ;
+        world.GetMobileObjectsMutable().push_back(blupih);
+
+        // Matched on posStartX/Z, not just type -- the sample world now
+        // also places a REAL blupih (plan.md E3D-MIG-134, tools/
+        // GenerateSampleWorld3D.cpp's "turret perch") that can fire its own
+        // projectile within this same ~70-frame window, so a global
+        // ObjectType23 count would be flaky.
+        const auto countBulletsAt = [&world](float x, float z)
+        {
+            int n = 0;
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                if (obj.type == ObjectType::ObjectType23 && obj.active && obj.posStartX == x && obj.posStartZ == z)
+                {
+                    ++n;
+                }
+            }
+            return n;
+        };
+        const int bulletCountBefore = countBulletsAt(bhX, bhZ);
+
+        // timeStopStartTicks defaults to 40 (> 21), so dwell-frame 21 is
+        // crossed well before the object could ever leave patrolStep 1 --
+        // 70 frames at dt=1/60 (20 ticks/s) covers ~23.3 ticks.
+        for (int i = 0; i < 70; ++i)
+        {
+            interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+        }
+
+        const MobileObjSpec* bullet = nullptr;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType23 && obj.active && obj.posStartZ == bhZ && obj.posStartX == bhX)
+            {
+                bullet = &obj;
+            }
+        }
+        check(bullet != nullptr, "blupih dropped a real ObjectType23 projectile at dwell-frame 21");
+        if (bullet)
+        {
+            std::cout << "Blupih bullet posEndY: " << bullet->posEndY << " (expected 1, floor at y=0)" << std::endl;
+            check(std::fabs(bullet->posEndY - 1.0f) < 0.01f,
+                  "blupih's projectile travel distance matches the real grid raycast (lands at y=1, just above the floor)");
+        }
+
+        // Contact-kill: the bullet is now a live patrolStep==2 object,
+        // barely moved off Y=15 yet -- positioning Blupi right where it
+        // spawned should register a kill this frame.
+        const int livesBeforeBullet = interaction.Lives();
+        interaction.Update(dt, world, bhX, 15.0f, bhZ, 0.0f, sound);
+        check(interaction.DiedThisFrame(), "blupih's projectile is fatal on contact");
+        const bool bulletCostALife =
+            (interaction.Lives() == livesBeforeBullet - 1) || (interaction.Lives() == 3 && livesBeforeBullet <= 1);
+        check(bulletCostALife, "blupih's projectile contact costs exactly 1 life");
+
+        const int bulletCountAfterContact = countBulletsAt(bhX, bhZ);
+        check(bulletCountAfterContact == bulletCountBefore, "the projectile that killed Blupi is destroyed (no longer active)");
+
+        // "No room" cancellation: a second blupih placed directly on solid
+        // ground (nothing but the floor immediately below it) should NOT
+        // drop a visible projectile at all -- real ObjectStart still
+        // returns a valid slot on this path (see SearchAirDistance's own
+        // comment), it's just immediately voided.
+        MobileObjSpec blupihFlush;
+        blupihFlush.type = ObjectType::ObjectType32;
+        blupihFlush.posStartX = bhX; blupihFlush.posEndX = bhX + 0.001f;
+        blupihFlush.posStartY = blupihFlush.posEndY = 1.0f; // directly above the y=0 floor, no gap
+        blupihFlush.posStartZ = blupihFlush.posEndZ = bhZ;
+        blupihFlush.currentX = bhX; blupihFlush.currentY = 1.0f; blupihFlush.currentZ = bhZ;
+        world.GetMobileObjectsMutable().push_back(blupihFlush);
+
+        for (int i = 0; i < 70; ++i)
+        {
+            interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+        }
+        // Matches on posStartX/Z too, not just Y -- the object exhibition
+        // (tools/GenerateSampleWorld3D.cpp) places one static (posStart==
+        // posEnd, non-fired) exhibit per real ObjectType with a non-zero
+        // icon, and ObjectType23 (icon 176) is one of them, incidentally
+        // also at Y=1 elsewhere in the world -- a Y-only filter would
+        // wrongly match that unrelated static display item.
+        int newBulletsFromFlush = 0;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType23 && obj.active &&
+                obj.posStartY == 1.0f && obj.posStartX == bhX && obj.posStartZ == bhZ)
+            {
+                ++newBulletsFromFlush;
+            }
+        }
+        check(newBulletsFromFlush == 0, "a blupih flush against solid ground drops no projectile (no room to fall)");
+    }
+
+    // 11. Blupit (ObjectType33) stationary shooter (plan.md E3D-MIG-134) --
+    // verified against Decor.cpp:8928-8969. A hand-carved corridor with
+    // asymmetric wall distances (14 cells left, 9 right) lets the two
+    // real shots (dwell-frame 3 away from the upcoming walk direction,
+    // dwell-frame 21 toward it) be told apart unambiguously by their
+    // landing X.
+    {
+        constexpr int kCorridorGY = 1, kCorridorGZ = 40;
+        constexpr int kMidGX = 85, kLeftWallGX = 70, kRightWallGX = 95;
+        auto& mutableWorld = world.GetWorldMutable();
+        for (int gx = kLeftWallGX + 1; gx < kRightWallGX; ++gx)
+        {
+            mutableWorld.setBlock(static_cast<std::uint16_t>(gx), kCorridorGY, kCorridorGZ,
+                                   Worlds::Block::make(BlockTypes::Air));
+        }
+        mutableWorld.setBlock(kLeftWallGX, kCorridorGY, kCorridorGZ, Worlds::Block::make(BlockTypes::Ground));
+        mutableWorld.setBlock(kRightWallGX, kCorridorGY, kCorridorGZ, Worlds::Block::make(BlockTypes::Ground));
+
+        const float btX = static_cast<float>(kMidGX) - GEWorldRuntime::kWorldCenterX;
+        const float btZ = static_cast<float>(kCorridorGZ) - GEWorldRuntime::kWorldCenterZ;
+
+        MobileObjSpec blupit;
+        blupit.type = ObjectType::ObjectType33;
+        // posStartX < posEndX && patrolStep starts at 1 -> aboutToWalkRight
+        // == true -> frame 3 fires LEFT (away), frame 21 fires RIGHT (toward).
+        blupit.posStartX = btX; blupit.posEndX = btX + 0.001f;
+        blupit.posStartY = blupit.posEndY = static_cast<float>(kCorridorGY);
+        blupit.posStartZ = blupit.posEndZ = btZ;
+        blupit.currentX = btX; blupit.currentY = static_cast<float>(kCorridorGY); blupit.currentZ = btZ;
+        world.GetMobileObjectsMutable().push_back(blupit);
+
+        for (int i = 0; i < 70; ++i)
+        {
+            interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+        }
+
+        const MobileObjSpec* leftBullet = nullptr;
+        const MobileObjSpec* rightBullet = nullptr;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType23 && obj.active && obj.posStartZ == btZ && obj.posStartX == btX)
+            {
+                if (obj.posEndX < btX) leftBullet = &obj; else rightBullet = &obj;
+            }
+        }
+        check(leftBullet != nullptr, "blupit's dwell-frame-3 shot (away from upcoming travel) exists, fired LEFT");
+        check(rightBullet != nullptr, "blupit's dwell-frame-21 shot (toward upcoming travel) exists, fired RIGHT");
+        if (leftBullet)
+        {
+            std::cout << "Blupit left-shot posEndX: " << leftBullet->posEndX << " (expected " << (btX - 14.0f) << ")" << std::endl;
+            check(std::fabs(leftBullet->posEndX - (btX - 14.0f)) < 0.01f,
+                  "left-shot travels the real raycast distance to the left wall (14 cells)");
+        }
+        if (rightBullet)
+        {
+            std::cout << "Blupit right-shot posEndX: " << rightBullet->posEndX << " (expected " << (btX + 9.0f) << ")" << std::endl;
+            check(std::fabs(rightBullet->posEndX - (btX + 9.0f)) < 0.01f,
+                  "right-shot travels the real raycast distance to the right wall (9 cells)");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

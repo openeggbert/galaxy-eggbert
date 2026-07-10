@@ -247,6 +247,49 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType2, 18.0f, 11.0f, 49.0f);
 
     // ------------------------------------------------------------------
+    // Blupih/blupit stationary shooters (plan.md E3D-MIG-134, 2026-07-11) --
+    // a real placement, not just the static (posStart==posEnd, never fires)
+    // exhibition specimen below, so the actual projectile attack is
+    // genuinely playable. Both need place()-shaped placements REJECTED --
+    // firing is gated on the real turn-dwell cycle, which never advances at
+    // all when posStart==posEnd (same real guard the platform lift needed
+    // above), so both use PlaceMoveObject directly with a small but
+    // non-zero patrol range, in a previously-empty area south of the tunnel.
+    // ------------------------------------------------------------------
+    // Blupih perch: a 3x3 ledge with a notch open straight down to a floor
+    // 3 cells below, so its dwell-frame-21 downward shot (Decor.cpp:8878-
+    // 8886) has real room to fall and land. Only the posStart-side dwell
+    // sits over the notch (posEnd sits back on solid ledge, so that half of
+    // the cycle drops nothing -- a real "no room" cancellation per
+    // SearchAirDistance's own comment, not a bug), so watching one full
+    // cycle shows both a live shot and a cancelled one.
+    fill(84, 86, 3, 3, 79, 81, BlockTypes::RockPile);
+    world.setBlock(85, 3, 80, Block::make(BlockTypes::Air));       // notch: clear shot straight down
+    world.setBlock(85, 0, 80, Block::make(BlockTypes::RockPile));  // landing floor, 3 cells below
+    {
+        MoveObjectRecord blupih;
+        blupih.type = ObjectType::ObjectType32;
+        blupih.posStartX = 85.0f; blupih.posStartY = 4.0f; blupih.posStartZ = 80.0f; // over the notch
+        blupih.posEndX = 86.0f;   blupih.posEndY = 4.0f;   blupih.posEndZ = 80.0f;   // over solid ledge
+        PlaceMoveObject(world, blupih);
+    }
+
+    // Blupit sentry corridor: a narrow walled passage so its two real
+    // horizontal shots (dwell-frame 3 away from the upcoming walk
+    // direction, dwell-frame 21 toward it, Decor.cpp:8928-8969) travel
+    // toward and land against real walls instead of an unbounded plain.
+    fill(78, 92, 0, 0, 85, 85, BlockTypes::RockPile);
+    world.setBlock(78, 1, 85, Block::make(BlockTypes::BrickWall)); // west wall
+    world.setBlock(92, 1, 85, Block::make(BlockTypes::BrickWall)); // east wall
+    {
+        MoveObjectRecord blupit;
+        blupit.type = ObjectType::ObjectType33;
+        blupit.posStartX = 84.0f; blupit.posStartY = 1.0f; blupit.posStartZ = 85.0f;
+        blupit.posEndX = 85.0f;   blupit.posEndY = 1.0f;   blupit.posEndZ = 85.0f;
+        PlaceMoveObject(world, blupit);
+    }
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //

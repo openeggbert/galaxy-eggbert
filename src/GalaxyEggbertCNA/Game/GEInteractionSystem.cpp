@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
+#include <algorithm>
 #include <cmath>
 
 namespace GalaxyEggbert::CNA
@@ -35,9 +36,10 @@ namespace GalaxyEggbert::CNA
         // callers gate that exclusion, not this function. A no-op if
         // posStart==posEnd is the caller's responsibility too (matches the
         // real guard exactly -- see Update()'s call site).
+        constexpr float kTicksPerSecond = 20.0f;
+
         void AdvancePatrolStep(MobileObjSpec& obj, float dt)
         {
-            constexpr float kTicksPerSecond = 20.0f;
             const float dtTicks = dt * kTicksPerSecond;
             switch (obj.patrolStep)
             {
@@ -59,8 +61,22 @@ namespace GalaxyEggbert::CNA
                     obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
                     if (t >= 1.0f)
                     {
-                        obj.patrolStep = 3;
-                        obj.patrolTime = 0.0f;
+                        // Real per-type special case at this exact junction
+                        // (Decor.cpp:8095-8098): a fired projectile
+                        // (ObjectType23) does NOT dwell at posEnd like every
+                        // other MoveObject -- it self-destructs the instant
+                        // it reaches the end of its pre-computed clear path
+                        // (real: type reset to ObjectType0; here: active=false,
+                        // this class's existing "destroyed" convention).
+                        if (obj.type == ObjectType::ObjectType23)
+                        {
+                            obj.active = false;
+                        }
+                        else
+                        {
+                            obj.patrolStep = 3;
+                            obj.patrolTime = 0.0f;
+                        }
                     }
                     break;
                 }
@@ -150,6 +166,139 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // True once during the frame `prevTicks` crosses `threshold` --
+        // real mobile-eggbert fires blupih/blupit's shots on an exact tick
+        // equality (`time == Config::ScaleTime(N)`), which a continuously-
+        // accumulated float can step past without ever equaling; this is
+        // the same "fires exactly once" edge-detection shape used
+        // elsewhere in this codebase for tick-gated events.
+        bool CrossedTick(float prevTicks, float dtTicks, float threshold)
+        {
+            return prevTicks < threshold && (prevTicks + dtTicks) >= threshold;
+        }
+
+        // Real ObjectStart's SearchDistRight-driven travel distance
+        // (Decor.cpp:7794-7869, "@note" comment): casts from
+        // (gx,gy,gz) one cell at a time in direction (dx,dy,dz), counting
+        // consecutive AIR cells until the first solid cell or the world
+        // edge. Returns 0 if the very first stepped-to cell is already
+        // solid (the real "num3==0" case) -- the caller cancels the shot
+        // (no visible projectile) but, per the real ObjectStart code, still
+        // plays the attack sound (its `!= -1` sound gate only checks for a
+        // free object-pool slot, never whether the raycast found room to
+        // travel -- `ObjectStart` returns a valid, non -1 index even on
+        // this early-cancel path). One grid cell here == one real 64px
+        // mobile-eggbert tile, matching this file's existing world<->grid
+        // conversion convention (see GEWorldRuntime's kMobileTileSize use).
+        int SearchAirDistance(const Worlds::World& world, int gx, int gy, int gz, int dx, int dy, int dz)
+        {
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            int x = gx;
+            int y = gy;
+            int z = gz;
+            int dist = 0;
+            while (true)
+            {
+                x += dx;
+                y += dy;
+                z += dz;
+                if (x < 0 || x >= blocksPerAxis || y < 0 || y >= blocksPerAxis || z < 0 || z >= blocksPerAxis)
+                {
+                    break;
+                }
+                if (!world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                     static_cast<std::uint16_t>(z)).isAir())
+                {
+                    break;
+                }
+                ++dist;
+            }
+            return dist;
+        }
+
+        // Converts a live object's world-space position to a clamped grid
+        // cell, matching GEBlupiController's own kWorldCenterX/Z + lround
+        // convention exactly (duplicated here rather than exposed from
+        // GEBlupiController, which keeps its own version private).
+        void ToGridCell(const Worlds::World& world, float wx, float wy, float wz, int& gx, int& gy, int& gz)
+        {
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            gx = std::clamp(static_cast<int>(std::lround(wx)) + GEWorldRuntime::kWorldCenterX, 0, blocksPerAxis - 1);
+            gy = std::clamp(static_cast<int>(std::lround(wy)), 0, blocksPerAxis - 1);
+            gz = std::clamp(static_cast<int>(std::lround(wz)) + GEWorldRuntime::kWorldCenterZ, 0, blocksPerAxis - 1);
+        }
+
+        // Spawns a fired-projectile MobileObjSpec (ObjectType23) travelling
+        // `dist` grid cells from `obj`'s own position in direction
+        // (dirX,dirY,dirZ) (a unit axis vector) -- shared by blupih (straight
+        // down) and blupit (horizontal) below. stepAdvanceTicks reuses the
+        // real ObjectStart formula directly (Decor.cpp:7866:
+        // `ScaleTime(abs(speed*dist/64))`, speed magnitude 5 for both real
+        // callers here): since one grid cell already equals one real 64px
+        // tile, `dist` (in cells) IS the real formula's `dist/64` term, so
+        // `5.0f * dist` ticks is a direct, non-approximated transcription,
+        // not an invented pacing constant. patrolStep starts at 2 (advance),
+        // skipping the dwell entirely, matching real ObjectStart's own
+        // `step=2; time=0` initialization (a fresh shot never dwells at its
+        // spawn point).
+        MobileObjSpec MakeBullet(const MobileObjSpec& obj, float dirX, float dirY, float dirZ, int dist)
+        {
+            MobileObjSpec bullet;
+            bullet.type = ObjectType::ObjectType23;
+            bullet.posStartX = bullet.currentX = obj.currentX;
+            bullet.posStartY = bullet.currentY = obj.currentY;
+            bullet.posStartZ = bullet.currentZ = obj.currentZ;
+            bullet.posEndX = obj.currentX + dirX * static_cast<float>(dist);
+            bullet.posEndY = obj.currentY + dirY * static_cast<float>(dist);
+            bullet.posEndZ = obj.currentZ + dirZ * static_cast<float>(dist);
+            bullet.patrolStep = 2;
+            bullet.patrolTime = 0.0f;
+            bullet.stepAdvanceTicks = 5.0f * static_cast<float>(dist);
+            return bullet;
+        }
+
+        // Blupih (ObjectType32, plan.md E3D-MIG-134) attack: verified
+        // directly against Decor.cpp:8878-8886 -- during a turn-dwell
+        // (step 1 or 3), at dwell-frame 21 exactly, drops one ObjectType23
+        // straight down via `ObjectStart(pos, ObjectType23, 55)` (the real
+        // speed encoding's >50 branch always means "straight down",
+        // magnitude 55-50=5 -- see SearchAirDistance's own comment for why
+        // aiming at Blupi is never modeled: it isn't real behavior).
+        void FireBlupihShot(const MobileObjSpec& obj, const Worlds::World& world, GESound& sound,
+                             std::vector<MobileObjSpec>& pendingSpawns)
+        {
+            int gx, gy, gz;
+            ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
+            const int dist = SearchAirDistance(world, gx, gy, gz, 0, -1, 0);
+            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
+            if (dist > 0)
+            {
+                pendingSpawns.push_back(MakeBullet(obj, 0.0f, -1.0f, 0.0f, dist));
+            }
+        }
+
+        // Blupit (ObjectType33, plan.md E3D-MIG-134) attack: verified
+        // directly against Decor.cpp:8928-8969 -- fires two horizontal
+        // shots per turn-dwell bracketing the turn, one at dwell-frame 3,
+        // one at dwell-frame 21 (see the two CrossedTick() call sites in
+        // Update() below, which pick `dirXSign` for each per the real
+        // if/else condition and pass it here). Just the raycast+spawn+sound
+        // half of the real ObjectStart call, mirroring FireBlupihShot's
+        // shape for the horizontal case.
+        void FireBlupitShot(const MobileObjSpec& obj, float dirXSign, const Worlds::World& world,
+                             GESound& sound, std::vector<MobileObjSpec>& pendingSpawns)
+        {
+            int gx, gy, gz;
+            ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
+            const int dirSign = (dirXSign > 0.0f) ? 1 : -1;
+            const int dist = SearchAirDistance(world, gx, gy, gz, dirSign, 0, 0);
+            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
+            if (dist > 0)
+            {
+                pendingSpawns.push_back(MakeBullet(obj, dirXSign, 0.0f, 0.0f, dist));
+            }
+        }
+
         // Matches GalaxyEggbertSimple3D's GEDecorSystem (AddTriggerSphere(0.7f)).
         constexpr float kPickupRadius = 0.7f;
         constexpr float kMaxEggCount = 10; // real mobile-eggbert MAX_EGG_COUNT (Decor.cpp:96)
@@ -183,6 +332,14 @@ namespace GalaxyEggbert::CNA
         }
 
         bool touchingExitThisFrame = false;
+        // Fired projectiles (ObjectType23) spawned by blupih/blupit this
+        // frame -- collected here rather than appended to `objects`
+        // directly, since this loop holds references into that same
+        // vector and a mid-loop push_back could reallocate and invalidate
+        // them. Flushed into `objects` (reusing an inactive slot first,
+        // matching the real fixed-pool MoveObjectFree()'s slot-reuse
+        // semantics rather than growing unboundedly) after the loop below.
+        std::vector<MobileObjSpec> pendingSpawns;
 
         for (auto& obj : objects)
         {
@@ -280,7 +437,71 @@ namespace GalaxyEggbert::CNA
             // (stationary objects never advance patrolStep/patrolTime).
             if (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY || obj.posStartZ != obj.posEndZ)
             {
+                const int prevPatrolStep = obj.patrolStep;
+                const float prevPatrolTime = obj.patrolTime;
                 AdvancePatrolStep(obj, dt);
+
+                // Stationary shooters (ObjectType32 blupih / 33 blupit,
+                // plan.md E3D-MIG-134) -- attack timing is gated on the
+                // dwell step (1 or 3) and exact dwell-frame BEFORE this
+                // frame's AdvancePatrolStep() call, using CrossedTick() on
+                // the pre-call patrolTime -- not the post-call value, which
+                // may already belong to a different patrolStep if the
+                // dwell happened to end this same frame.
+                if (prevPatrolStep == 1 || prevPatrolStep == 3)
+                {
+                    const float dtTicks = dt * kTicksPerSecond;
+                    if (obj.type == ObjectType::ObjectType32 && CrossedTick(prevPatrolTime, dtTicks, 21.0f))
+                    {
+                        FireBlupihShot(obj, world, sound, pendingSpawns);
+                    }
+                    else if (obj.type == ObjectType::ObjectType33)
+                    {
+                        const bool aboutToWalkRight =
+                            (obj.posStartX < obj.posEndX && prevPatrolStep == 1) ||
+                            (obj.posStartX > obj.posEndX && prevPatrolStep == 3);
+                        if (CrossedTick(prevPatrolTime, dtTicks, 3.0f))
+                        {
+                            FireBlupitShot(obj, aboutToWalkRight ? -1.0f : 1.0f, world, sound, pendingSpawns);
+                        }
+                        if (CrossedTick(prevPatrolTime, dtTicks, 21.0f))
+                        {
+                            FireBlupitShot(obj, aboutToWalkRight ? 1.0f : -1.0f, world, sound, pendingSpawns);
+                        }
+                    }
+                }
+            }
+
+            // Blupih/blupit's own body (ObjectType32/33) is deliberately
+            // NOT in IsGenericHazard() -- real mobile-eggbert never treats
+            // walking into their body as a damage path, only their fired
+            // projectile is harmful (see FireBlupihShot/FireBlupitShot
+            // above). Falls through to the final pickup-type filter below,
+            // which already excludes them (no separate `continue` needed).
+
+            // Fired projectile contact (ObjectType23, plan.md E3D-MIG-134):
+            // verified directly against Decor.cpp:5914-5947 -- always fatal
+            // (real Glu/glue-style death) and destroys the bullet itself.
+            // Real shield/hide/superblupi/win-and-death-action immunity
+            // gates are NOT modeled -- none of those concepts exist in this
+            // engine yet (same simplification already applied to every
+            // other hazard above). Real death has no distinct sound call of
+            // its own (StartSploutchGlu only spawns silent splash-effect
+            // debris) -- channel 74 reused here for consistency with this
+            // class's existing hazard-death sound approximation.
+            if (obj.type == ObjectType::ObjectType23)
+            {
+                const float bdx = obj.currentX - blupiX;
+                const float bdy = obj.currentY - blupiY;
+                const float bdz = obj.currentZ - blupiZ;
+                if (bdx * bdx + bdy * bdy + bdz * bdz < kHazardContactRadius * kHazardContactRadius)
+                {
+                    obj.active = false;
+                    LoseLife();
+                    diedThisFrame_ = true;
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                }
+                continue;
             }
 
             // Wasp (ObjectType44, plan.md E3D-MIG-135) -- does NOT kill or
@@ -450,6 +671,29 @@ namespace GalaxyEggbert::CNA
         if (!touchingExitThisFrame)
         {
             exitContactActive_ = false;
+        }
+
+        // Flush this frame's blupih/blupit shots into the live object list
+        // (deferred from the loop above, see pendingSpawns' own comment) --
+        // reuse an inactive slot first, matching the real fixed-pool
+        // MoveObjectFree()'s slot-reuse semantics rather than growing
+        // `objects` unboundedly every time a shooter fires.
+        for (auto& spec : pendingSpawns)
+        {
+            bool placed = false;
+            for (auto& slot : objects)
+            {
+                if (!slot.active)
+                {
+                    slot = spec;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed)
+            {
+                objects.push_back(spec);
+            }
         }
     }
 

@@ -248,6 +248,43 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented blupih/blupit stationary shooters (2026-07-11, plan.md `E3D-MIG-134`, picked as
+  the next task off `plan.md`).** Verified directly against `Decor.cpp:8878-8969` (attack timing)
+  and `7794-7869`/`8095-8098` (the real `ObjectStart` raycast/travel-distance encoding and a fired
+  projectile's self-destruct-on-arrival special case) — not just the reference doc, which had one
+  detail backwards (see below).
+  - Blupih (`ObjectType32`) drops one `ObjectType23` projectile straight down at dwell-frame 21
+    during a turn-dwell (`patrolStep` 1 or 3). Blupit (`ObjectType33`) fires two horizontal shots
+    per turn-dwell: frame 3 away from the upcoming walk direction, frame 21 toward it.
+    **Correction vs. this repo's own `mobile-eggbert-reference/04-enemy-behavior.md`**, which
+    described frame 3 as "aimed toward the side it's about to walk" — the actual source does the
+    opposite (re-verified twice against the exact if/else condition and speed sign).
+  - New `SearchAirDistance()` (`GEInteractionSystem.cpp`) is a real grid-cell raycast (one cell ==
+    one real 64px tile) reproducing `SearchDistRight`'s "count clear cells to the next wall"
+    behavior, including a real, easy-to-miss nuance: a 0-distance result (no room to travel) still
+    plays the attack sound — `ObjectStart` returns a valid slot even on that cancelled path, and
+    its sound gate only ever checks for a free object-pool slot, never whether the raycast found
+    room. `stepAdvanceTicks = 5 * dist` is a direct transcription of the real
+    `ScaleTime(abs(speed*dist/64))` formula (one grid cell already equals the real formula's
+    `dist/64` term), not an invented pacing constant.
+  - Body contact is deliberately NOT lethal (blupih/blupit are NOT in `IsGenericHazard()`) — only
+    the fired projectile is, always fatal on contact (real shield/hide/superblupi immunity gates
+    NOT modeled, same simplification as every other hazard so far — none of those concepts exist
+    in this engine yet).
+  - New `GEWorldRuntime::GetWorldMutable()` accessor (mirrors the existing
+    `GetMobileObjectsMutable()` precedent) so test tooling can hand-carve a guaranteed-shape test
+    column (ledge-over-a-pit, walled corridor) instead of depending on incidental terrain shape
+    elsewhere in the loaded world.
+  - Added a real, playable blupih ("turret perch": a 3x3 ledge with a notch open over a 3-cell
+    drop) and blupit ("sentry corridor": a narrow walled passage) to `worlds3d/world001.vwr`,
+    south of the tunnel (previously-empty space) — not just unit-tested. The blupih's `posEnd`-side
+    dwell sits back over solid ledge, so one shot per full cycle is a real "no room" cancellation,
+    not a bug; watching a full cycle shows both a live shot and a cancelled one.
+  - Verified via 10 new `VerifyInteractionSystem` assertions (vertical raycast distance and
+    contact-kill, the "no room" cancellation case, both horizontal shots' distances/directions via
+    a hand-carved asymmetric corridor) + full suite (63/63 unit tests, all 4 verify tools) + live
+    headless runs on both EasyGL and Vulkan backends.
+
 - **Added an exhibition area to the sample world (2026-07-10, user request): a browsable museum
   of everything the renderer supports.** `tools/GenerateSampleWorld3D.cpp` gained two new slabs
   in previously-empty space, world regenerated (2470 → 6120 non-air blocks, 18 → 82
