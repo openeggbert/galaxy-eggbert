@@ -145,6 +145,28 @@ int main(int argc, char** argv)
         check(false, "found a key (ObjectType49) in the sample world");
     }
 
+    // 2.5. Generic hazard contact (ObjectType2, plan.md E3D-MIG-132) -- the
+    // sample world places one at world (41,1,67) and one at (18,11,49);
+    // walking onto either should kill Blupi (lives lost, hazard destroyed,
+    // DiedThisFrame() true for that one Update() call only).
+    if (const auto* hazard = findFirst(ObjectType::ObjectType2))
+    {
+        const float hx = hazard->currentX, hy = hazard->currentY, hz = hazard->currentZ;
+        const int livesBeforeHazard = interaction.Lives();
+        interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
+        check(interaction.DiedThisFrame(), "DiedThisFrame() is true the frame Blupi touches a generic hazard");
+        check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
+        const auto* afterHazard = findFirst(ObjectType::ObjectType2);
+        check(afterHazard == nullptr || !afterHazard->active,
+              "the hazard that killed Blupi is destroyed (no longer active)");
+        interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
+        check(!interaction.DiedThisFrame(), "DiedThisFrame() is false again the very next frame");
+    }
+    else
+    {
+        check(false, "found a generic hazard (ObjectType2) in the sample world");
+    }
+
     // 3. Crate push (ObjectType12) -- position Blupi immediately west of a
     // crate and simulate walking east into it (a positive per-frame X
     // delta); the crate's currentX should increase.

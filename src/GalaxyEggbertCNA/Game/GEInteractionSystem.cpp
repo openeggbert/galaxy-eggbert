@@ -19,15 +19,29 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
+        // ObjectType2/ObjectType3 -- generic patrol hazards, real shared kill
+        // list per mobile-eggbert-reference/04-enemy-behavior.md (verified
+        // directly against Decor.cpp:5782-5816 for this task).
+        bool IsGenericHazard(ObjectType t)
+        {
+            return t == ObjectType::ObjectType2 || t == ObjectType::ObjectType3;
+        }
+
         // Matches GalaxyEggbertSimple3D's GEDecorSystem (AddTriggerSphere(0.7f)).
         constexpr float kPickupRadius = 0.7f;
         constexpr float kMaxEggCount = 10; // real mobile-eggbert MAX_EGG_COUNT (Decor.cpp:96)
+        // The real contact hitbox is a tile-based rectangle overlap
+        // (MoveObjectDetect), not a radius -- kPickupRadius is reused here
+        // as the closest existing documented approximation, same
+        // simplification already applied to every pickup type above.
+        constexpr float kHazardContactRadius = kPickupRadius;
     }
 
     void GEInteractionSystem::Update(float dt, GEWorldRuntime& worldRuntime,
                                       float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
-                                      GESound& sound)
+                                      GESound& sound, bool blupiCrouching)
     {
+        diedThisFrame_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -128,6 +142,34 @@ namespace GalaxyEggbert::CNA
                             }
                         }
                     }
+                }
+                continue;
+            }
+
+            // Generic hazard contact (ObjectType2/3, plan.md E3D-MIG-132) --
+            // real shared kill list: BlupiDead(Clear1, Clear2) + the hazard
+            // itself is destroyed (converted to an explosion). Type3's real
+            // duck-immunity (MoveObjectDetect skips it entirely while
+            // Blupi's action is Down) is modeled via blupiCrouching; type2
+            // has no such immunity. Real death sound is a 50/50 coinflip
+            // (BlupiDead's own Clear2 branch plays channel 74, Clear1 plays
+            // nothing, per Decor.cpp:6547-6614) -- simplified to always
+            // channel 74 rather than modeling the coinflip.
+            if (IsGenericHazard(obj.type))
+            {
+                if (obj.type == ObjectType::ObjectType3 && blupiCrouching)
+                {
+                    continue;
+                }
+                const float hdx = obj.currentX - blupiX;
+                const float hdy = obj.currentY - blupiY;
+                const float hdz = obj.currentZ - blupiZ;
+                if (hdx * hdx + hdy * hdy + hdz * hdz < kHazardContactRadius * kHazardContactRadius)
+                {
+                    obj.active = false;
+                    LoseLife();
+                    diedThisFrame_ = true;
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
                 }
                 continue;
             }

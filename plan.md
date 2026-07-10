@@ -76,11 +76,13 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
 - **HUD is minimal** — icon-based only (life icons bottom-left, key icons top-left when held),
   no text rendering exists (no `text.png` glyph layout identified yet), so no numeric treasure
   counter/score/timer.
-- **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
-  deferred pending full per-type enemy behavior (Phase 13). A basic lives foundation now exists
-  (`E3D-MIG-130`, 2026-07-11), wired to fall-off-world death, lava, spikes, and Blitz
-  (`E3D-MIG-140`/`141`/`144`, 2026-07-11) — but enemy contact and the remaining 2 hazard tiles
-  (crusher/saw, `E3D-MIG-142`/`143`) still do nothing.
+- **Enemy combat is minimal** — only the generic ObjectType2/3 patrol-hazard contact-kill exists
+  (`E3D-MIG-132`, 2026-07-11); the 9 named enemy types (spider/fish/bird/blupih/blupit/wasp/
+  creature/follower) each need their own real attack/contact behavior (Phase 13) and do nothing
+  on contact yet. A basic lives foundation exists (`E3D-MIG-130`, 2026-07-11), wired to
+  fall-off-world death, lava, spikes, Blitz, and generic hazard contact (`E3D-MIG-140`/`141`/
+  `144`/`132`, 2026-07-11) — the remaining 2 terrain hazard tiles (crusher/saw, `E3D-MIG-142`/
+  `143`) still do nothing either.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -278,8 +280,18 @@ documented there.
       do yet (still `[ ]` below), so enemy contact still does nothing.
 - [ ] `131` Shared patrol-turn cycle (4-phase dwell/walk/dwell/walk, direction mirrored by
       posStart.X vs posEnd.X) — most enemy types share this, implement once, reuse.
-- [ ] `132` Generic hazard types 2/3 (simple icon-cycling, kill-on-contact; type3 has
-      duck-immunity + top-half-only hitbox).
+- [~] `132` **Generic hazard types 2/3 contact-kill done 2026-07-11** in `GEInteractionSystem`
+      (verified against `Decor.cpp:5782-5816` directly, not just the reference doc): touching
+      either kills Blupi (`LoseLife()`) and destroys the hazard, real duck-immunity for type3
+      modeled via a `blupiCrouching` parameter. Real death sound is a 50/50 coinflip between
+      channel 74 and silence (`BlupiDead`'s own `Clear2`-branch-only `PlaySound`) — simplified to
+      always channel 74, not modeled as a coinflip. NOT done: type3's top-half-only hitbox and
+      type2's "thrown object" wider anticipation box / taunt-suppression quirks (contact radius
+      is a plain sphere, same simplification as every pickup type above, not a tile-rectangle
+      overlap). New `GEInteractionSystem::DiedThisFrame()` lets the caller apply respawn (the
+      system itself has no access to `GEBlupiController`). Icon-cycling animation itself was
+      already implemented earlier (billboard rendering, NEXT.md §3) — this task was only ever
+      about the contact/kill behavior.
 - [ ] `133` Crawler/flyer types 16 (spider, 9-frame crawl, always self-destroys),
       17 (fish, bigger explosion, narrowed hitbox, not taunt-capable),
       20 (bird, same as fish but taunt-capable).

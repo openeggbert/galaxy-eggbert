@@ -527,13 +527,25 @@ namespace GalaxyEggbert::CNA
             }
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
-            // -- platform lift patrol, crate push, pickup collection. Runs
+            // -- platform lift patrol, crate push, pickup collection, and
+            // (2026-07-11) generic hazard contact (ObjectType2/3). Runs
             // after blupi_.Step() so blupi_'s position is this frame's
             // final value; blupiXBeforeStep lets the interaction system
             // infer movement direction for crate push without
-            // GEBlupiController needing a velocity accessor.
+            // GEBlupiController needing a velocity accessor. crouchHeld
+            // gates ObjectType3's real duck-immunity.
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                 blupi_.GetX() - blupiXBeforeStep, sound_);
+                                 blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld);
+
+            // GEInteractionSystem has no access to GEBlupiController, so it
+            // can only report that a hazard-contact death happened this
+            // frame (DiedThisFrame()) -- respawn is applied here, same
+            // fixed spawn point as the terrain-hazard deaths above (not yet
+            // the real 10-slot last-safe-position FIFO).
+            if (interaction_.DiedThisFrame())
+            {
+                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+            }
 
             // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
             // detected (same pattern as demo_avatar's Space-toggle) so a

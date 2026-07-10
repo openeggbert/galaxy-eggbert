@@ -34,11 +34,24 @@ namespace GalaxyEggbert::CNA
     // need their own per-type behavior (Phase 14/13), not just a lives
     // counter to decrement.
     //
+    // Generic hazard contact (ObjectType2/3) now works (2026-07-11, plan.md
+    // E3D-MIG-132) -- touching either kills Blupi and destroys the hazard,
+    // per mobile-eggbert-reference/04-enemy-behavior.md's "ObjectType2/
+    // ObjectType3 -- generic patrol hazards" section, itself verified
+    // directly against the real Decor.cpp source for this task (the real
+    // death sound is a 50/50 coinflip between channel 74 and silence --
+    // BlupiDead(Clear1, Clear2)'s own Clear2 branch plays channel 74,
+    // Clear1 plays nothing -- simplified here to always channel 74, a
+    // documented approximation of the coinflip rather than an invented
+    // value). Type3's real duck-immunity (skipped while Blupi's action is
+    // Down) IS modeled via the blupiCrouching parameter below; type2's
+    // "thrown object" wider anticipation box and taunt-suppression quirks
+    // are NOT (cosmetic/reaction polish, not required for the kill itself).
+    //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Enemy hit/stomp/hazard (ObjectType2/3/16/17/20/32/33/44/54/96) --
-    //    real per-type behavior (patrol/attack/contact rules) doesn't exist
-    //    yet, not just the lives system it would have needed (that part is
-    //    now done, see above).
+    //  - Every other enemy type (16/17/20/32/33/44/54/96) -- each has real
+    //    per-type animation/attack/contact rules beyond a plain kill-on-
+    //    touch (Phase 13), not attempted here.
     //  - Riding a moving platform lift (ObjectType1/47/48) -- platforms now
     //    genuinely patrol (see Update()), but GEBlupiController's collision
     //    only tests the static terrain grid, not MobileObjSpec objects, so
@@ -58,9 +71,17 @@ namespace GalaxyEggbert::CNA
         // minus blupiX last frame), used as a stand-in for Simple3D's
         // blupiVelX (GEBlupiController exposes no velocity accessor; the
         // caller computes this itself from before/after Step() positions).
+        // blupiCrouching gates type3's real duck-immunity, default false so
+        // existing callers/tests that don't care about it are unaffected.
+        // If this call kills Blupi via enemy contact, DiedThisFrame()
+        // returns true for the rest of this frame only -- GEInteractionSystem
+        // has no access to GEBlupiController, so the caller is the one that
+        // must actually respawn Blupi (see GalaxyEggbertCnaGame::Update()).
         void Update(float dt, GEWorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
-                    GESound& sound);
+                    GESound& sound, bool blupiCrouching = false);
+
+        [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
 
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
@@ -105,5 +126,6 @@ namespace GalaxyEggbert::CNA
         int lifeEggCount_ = 0;
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int gameOverCount_ = 0;
+        bool diedThisFrame_ = false; // reset at the top of every Update() call
     };
 }

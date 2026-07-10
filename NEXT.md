@@ -206,18 +206,20 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ### What does not work yet
 - `GalaxyEggbertCNA`: no real Blupi model yet (a temporary placeholder exists in third-person mode
   only, §3; billboard rendering explicitly rejected 2026-07-10, see §3/plan.md `E3D-MIG-063`), no
-  enemy hit/stomp/hazard, no riding a moving platform lift (collision only tests the static
-  terrain grid, not `MobileObjSpec` objects). A first interactive-object system now exists
-  (2026-07-10, §3, `GEInteractionSystem`): platform lift patrol movement, crate push, and
-  treasure/egg/key/level-exit pickup collection (with the real mobile-eggbert sound + removal
-  behavior) all genuinely work — see §3 for exactly what is/isn't covered. `BigDecor:` rendering and
-  the platform-lift/crate `UniformCube` object path are implemented (2026-07-09, §3). Real sound
-  playback exists (2026-07-10, §3, `GESound`) — the same 93 real mobile-eggbert WAV files. A basic
-  lives foundation exists (2026-07-11, §3), wired to 2 real hazards needing no per-type gating
-  logic (fall-off-world death, lava) — the other 4 hazard tiles (spikes/crusher/saw/blitz) and
-  all enemy contact still call nothing. HUD is now minimal icon-based only (2026-07-11,
-  §3: life icons, key icons) — no text rendering exists, so no numeric treasure counter/score.
-  No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned 2026-07-11, not started)
+  riding a moving platform lift (collision only tests the static terrain grid, not `MobileObjSpec`
+  objects). A first interactive-object system now exists (2026-07-10, §3, `GEInteractionSystem`):
+  platform lift patrol movement, crate push, and treasure/egg/key/level-exit pickup collection
+  (with the real mobile-eggbert sound + removal behavior) all genuinely work — see §3 for exactly
+  what is/isn't covered. `BigDecor:` rendering and the platform-lift/crate `UniformCube` object
+  path are implemented (2026-07-09, §3). Real sound playback exists (2026-07-10, §3, `GESound`) —
+  the same 93 real mobile-eggbert WAV files. A basic lives foundation exists (2026-07-11, §3),
+  wired to 4 terrain hazards (fall-off-world death, lava, spikes, Blitz) and the generic
+  `ObjectType2`/`3` patrol-hazard contact-kill — the remaining 2 terrain hazard tiles (crusher/
+  saw, both need real machinery beyond a ground-block check) and all 9 named enemy types
+  (spider/fish/bird/blupih/blupit/wasp/creature/follower) still do nothing on contact. HUD is now
+  minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
+  no numeric treasure counter/score. No 3D world editor exists yet either (plan.md §6,
+  `EDITOR-*`, planned 2026-07-11, not started)
   — worlds are still hand-authored by editing `tools/GenerateSampleWorld3D.cpp`.
 - **All 4 confirmed render modes are now implemented; ALL ~175 total confirmed icons across all
   4 are wired up** (99 `DirectionalCube` + 3 `InnerPillarBox` + 63 `InnerFlatPlate` + 10
@@ -234,6 +236,35 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented the first enemy contact behavior: generic hazard types 2/3 (2026-07-11).**
+  Autonomous continuation of `plan.md`'s backlog — the first `GalaxyEggbertCNA` behavior where
+  touching a `MoveObject` (not a terrain tile) actually harms Blupi.
+  - **Real behavior verified directly against `mobile-eggbert/.../Decor.cpp:5782-5816`/
+    `6547-6614`** (not just `mobile-eggbert-reference/04-enemy-behavior.md`, though that's what
+    pointed at the right lines): `ObjectType2`/`ObjectType3` share a kill list — contact kills
+    Blupi and destroys the hazard. **A real finding from reading the source directly**: the death
+    sound is a genuine 50/50 coinflip (`BlupiDead(Clear1, Clear2)` picks one of the two
+    randomly), and `BlupiDead()` itself only plays a sound (channel 74) on the `Clear2` branch —
+    `Clear1` plays nothing. Simplified to always channel 74 rather than modeling the coinflip
+    (documented, not an invented value — channel 74 is real and correct roughly half the time).
+  - **Type3's real duck-immunity IS modeled**: `GEInteractionSystem::Update()` gained a
+    `blupiCrouching` parameter (default `false`, so every existing caller/test is unaffected),
+    skipping type3 contact entirely while true, matching `MoveObjectDetect`'s real behavior.
+    Type2's own quirks (wider "anticipation" hitbox, taunt-suppression, described in the
+    reference doc as possibly "a thrown/rolling hazard rather than a walking creature") are NOT
+    modeled — cosmetic/reaction polish, not required for the kill itself.
+  - **New `GEInteractionSystem::DiedThisFrame()`**: the system has no access to
+    `GEBlupiController` (only raw position floats), so it can decrement lives/destroy the hazard/
+    play the sound itself, but can't respawn Blupi — `GalaxyEggbertCnaGame::Update()` checks this
+    flag after calling `interaction_.Update()` and applies the same fixed-spawn-point respawn the
+    terrain hazards already use.
+  - **Verification**: new assertions in `VerifyInteractionSystem` against the real sample world's
+    two placed `ObjectType2` instances — confirms exactly 1 life lost, the hazard is destroyed
+    (not double-counted), and `DiedThisFrame()` correctly clears itself the very next frame (not
+    sticky). Full suite + both backends' live runs re-confirmed clean.
+  - Every other enemy type (spider/fish/bird/blupih/blupit/wasp/creature/follower) still needs
+    its own real per-type behavior (Phase 13) — this covers only the generic 2/3 case.
 
 - **Implemented the Blitz hazard (2026-07-11).** Autonomous continuation of `plan.md`'s backlog.
   Unlike lava/spikes, Blitz needed no immunity-related simplification to implement faithfully —
