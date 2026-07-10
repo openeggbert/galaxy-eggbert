@@ -225,6 +225,44 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Found and fixed the real "see inside the cube" root cause: `+Y`/`-Y` `Easy3D::CubeMesh` faces
+  were wound backwards, invisible under CNA's real default cull state (2026-07-10, fixed in
+  `../easy-3d`).** The prior day's isolated-geometry test (below) only used `RasterizerState::
+  CullNone`, which masked exactly this — both windings render under `CullNone`, so it could never
+  have caught a real backface issue. Root-caused after the user pointed at a live screenshot
+  (`Screenshot From 2026-07-09 22-36-25.png`) and, once I couldn't spot it myself even zoomed in, at
+  a freestanding decorative pillar's missing top face specifically ("nevidím... horní stěnu té
+  krychle") — reproduced live from 2 angles (near-vertical top-down: a hollow square showing the
+  floor "through" the pillar; a normal eye-level angle: the 2 visible side faces meeting at a point
+  instead of a flat cap). A debug print confirmed `GETerrainRenderer`'s occlusion-culling logic
+  computed `PosY.Visible=true` correctly for the pillar's top cell — ruling out
+  `GETerrainRenderer.cpp`/`GEDirectionalCubeTiles.cpp` entirely and pointing at `Easy3D::CubeMesh`'s
+  geometry itself.
+  - **Fix** (`../easy-3d/src/CubeMesh.cpp`): reversed the `+Y`/`-Y` corner order in
+    `ComputeFaceCorners`. The 4 side faces (`+-X`/`+-Z`) already used "CCW as seen from outside" and
+    render correctly; `+Y`/`-Y` used the SAME textbook convention, which is exactly what silently
+    failed to rasterize. The fix makes `+Y`/`-Y` the opposite of textbook-CCW — not yet root-caused
+    at the view-matrix/projection level (a plausible but unconfirmed guess: an up-axis-specific
+    handedness quirk, `../cna-craft`'s `ChunkMesher.cpp` documents CNA as left-handed elsewhere), but
+    empirically confirmed correct on both EasyGL and Vulkan.
+  - **New regression test** (`../easy-3d/tests/test_cube_mesh.cpp`): checks all 6 `CubeFace` values'
+    actual triangle winding against the empirically-correct expected normal (not the textbook one for
+    `+Y`/`-Y`) — every previous `AppendDirectionalCubeMesh` test only checked vertex/index counts and
+    position bounds, never real winding, which is why this shipped unnoticed. Documented clearly so a
+    future "textbook consistency" cleanup doesn't silently reintroduce the bug.
+  - **Verified**: `easy3d_test_cube_mesh` and the rest of `../easy-3d`'s test suite (built with
+    `-DEASY3D_BUILD_TESTS=ON -DEASY3D_LINK_CNA=ON`) all pass; `GalaxyEggbertWorldsTests` (63/63);
+    `VerifyBlupiMovement`/`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS
+    PASSED`); live debug-camera screenshots of the same pillar, before/after, on BOTH `build-cna`
+    (EasyGL) and `build-cna-vulkan` (Vulkan) — identical fix confirmed on both backends (hollow
+    square → solid brick top face); default-spawn screenshot re-checked for regressions (floor/
+    platform/walls all still render correctly); debug prints and camera overrides reverted before
+    commit (confirmed via `git diff`).
+  - **Also reported live, not yet reproduced**: grass-topped cubes are walkable-through (no
+    collision) — `GEBlupiController::IsSolidAt` has zero icon-specific exceptions (`!isAir()` only),
+    so no obvious code-level cause found yet; needs the specific block's coordinates/icon to
+    investigate further. User called this "probably a different problem" from the winding fix above.
+
 - **GalaxyEggbertCNA now defaults to the Vulkan graphics backend instead of EasyGL (2026-07-09),
   and an isolated-geometry unit test ruled out a DirectionalCube face-winding bug.** User request,
   in response to the ongoing "still see inside the cube" investigation: try building/running on
