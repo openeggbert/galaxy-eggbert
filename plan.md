@@ -1,529 +1,425 @@
-# Galaxy Eggbert — Comprehensive Feature Plan
+# Galaxy Eggbert — Plan
 
-3D faithful remake of **mobile-eggbert** (C++ port of *Speedy Blupi*, Windows Phone XNA 2013).
+**Galaxy Eggbert is a faithful 3D remake of mobile-eggbert. Nothing more.** Before adding any
+task to this plan, verify the feature exists in mobile-eggbert. Do not add invented mechanics
+(coins, time bonuses, coyote time, combo multipliers, etc.) — see `CLAUDE.md` for the full rule
+and current examples.
 
-**Faithful remake rule:** Implement only what exists in mobile-eggbert.
-3D-specific adaptations (camera, billboard sprites, blob shadow, auto step-up) are allowed.
+Mission numbering (mobile-eggbert data, still accurate): 1 = intro hub, 10 = world1 hub,
+11-19 = world1 levels, 20 = world2 hub, 21-29 = world2 levels, ... 78 worlds total.
 
-**Inspiration rule:** Be inspired by Decor.cpp logic; do not port it verbatim.
+Legend: `[x]` done · `[ ]` todo · `[~]` partial · `[?]` requires user decision.
 
-**Rendering:** Simple3D API → U3D/Urho3D. Animations via billboard sprites from same PNGs as mobile-eggbert.
-
-> **Direction update (2026-07-01):** The Simple3D → U3D/Nova3D engine direction described above
-> and throughout sections 1–14 below is **superseded** as the long-term target. The new target
-> direction is **direct CNA + Easy3D**, with mobile-eggbert used read-only as reference/asset
-> source. See `easy3d.md` for the full analysis and the **"Direct CNA + Easy3D Migration"**
-> section below for the task list. Sections 1–14 remain valid as historical/current reference for
-> `GalaxyEggbertSimple3D`, which is **not** being deleted — it stays as the working faithful-remake
-> reference until the CNA/Easy3D target reaches parity.
-
-**Mission numbering:** 1=intro hub, 10=world1 hub, 11-19=world1 levels, 20=world2 hub, 21-29=world2 levels, … (78 worlds total in mobile-eggbert).
-
-Legend: `[x]` done · `[ ]` todo · `[~]` partial / revision needed
-
----
-
-## Direct CNA + Easy3D Migration
-
-**Superseding direction (2026-07-01).** Full analysis: `easy3d.md`. This section is the task
-list; `easy3d.md` has the reasoning, evidence, and open questions behind each task.
-
-Target architecture: `Galaxy Eggbert → CNA directly`, with `Easy3D` used beside CNA for small
-reusable helpers (cameras, texture atlas, billboard/cube batching, debug draw). Easy3D does not
-hide CNA. `mobile-eggbert` is read-only reference/asset source — no code or data is copied from
-it without explicit user approval, task by task.
-
-The old Simple3D/U3D/Nova3D direction (sections 1–14 above) is superseded but **not discarded**:
-`GalaxyEggbertSimple3D` stays intact and buildable as historical reference and as the current
-faithful-remake gameplay checklist until the new target reaches parity.
-
-Legend: `[x]` done · `[ ]` todo · `[~]` partial · `[?]` requires user decision before starting
-
-### Phase 0 — Documentation and direction lock
-
-- [x] E3D-MIG-000 — Create `easy3d.md` analysis document.
-- [x] E3D-MIG-001 — Mark Simple3D/Nova3D direction as superseded by Direct CNA + Easy3D (this section + note above).
-- [x] E3D-MIG-002 — Document Mobile Eggbert as read-only for Galaxy migration.
-- [x] E3D-MIG-003 — Document that Easy3D is a CNA helper and must not hide CNA.
-- [x] E3D-MIG-004 — Document no Lua in first migration phase.
-- [x] E3D-MIG-005 — Reconciled: `README.md`, `CLAUDE.md`, and `NEXT.md` now consistently describe `GalaxyEggbertSimple3D` as current/working and `GalaxyEggbertCNA` as planned/not-yet-implemented (documentation cleanup pass, 2026-07-01). `README.md`'s CNA build instructions were not rolled back — they were relabeled as "planned" and retargeted to `GalaxyEggbertCNA` instead of implying `GalaxyEggbert` builds today.
-
-### Next implementation batch — CNA target skeleton
-
-**Done (2026-07-01).** This was the immediate next implementation task after the
-documentation-cleanup pass (tracked in `NEXT.md` §0/§0a for full build commands and verification
-results). It was a focused pull of the skeleton-only items already listed in Phase 2 below
-(`E3D-MIG-020..026`), called out here separately so the very next actionable step was unambiguous.
-No gameplay, no asset pipeline, no renderer beyond the minimum — just a window that clears to a
-solid color.
-
-- [x] E3D-MIG-NEXT-001 — Add `GALAXY_EGGBERT_BUILD_CNA` option, default OFF.
-- [x] E3D-MIG-NEXT-002 — Add `src/GalaxyEggbertCNA/` skeleton.
-- [x] E3D-MIG-NEXT-003 — Add `GalaxyEggbertCNA` executable target linking CNA and easy3d.
-- [x] E3D-MIG-NEXT-004 — Minimal CNA game/window/clear-color loop.
-- [x] E3D-MIG-NEXT-005 — Verify `GalaxyEggbertSimple3D` still builds unchanged.
-- [x] E3D-MIG-NEXT-006 — Verify `GalaxyEggbertWorldsTests` still pass.
-
-### Phase 1 — Repository integration investigation
-
-- [x] E3D-MIG-010 — Inspect CNA CMake target and include/link requirements (via mobile-eggbert's usage and Easy3D's `EASY3D_CNA_DIR`/`EASY3D_LINK_CNA` options).
-- [x] E3D-MIG-011 — Inspect Easy3D CMake target and include/link requirements (target `easy3d`, alias `easy3d::easy3d`, auto-detects parent `CNA` target).
-- [x] E3D-MIG-012 — Inspect whether Mobile Eggbert exposes a reusable library target — confirmed **no**, only `add_executable(WindowsPhoneSpeedyBlupi ...)`.
-- [~] E3D-MIG-013 — Asset path strategy **decided, not yet implemented**: first implementation will use a **build-time copy** from `../mobile-eggbert/Content` and `../mobile-eggbert/worlds` into the Galaxy Eggbert build/runtime output (reproducible builds, no dependency on a sibling checkout existing at runtime). A later, optional convenience mode may add sibling-path runtime read for local development. Symlinks were considered and rejected as fragile on Windows/CI. **The copy mechanism itself (CMake custom command, etc.) is future work — not implemented in this task; see Phase 3.**
-- [x] E3D-MIG-014 — Decided: source tree `src/GalaxyEggbertCNA/`, target `GalaxyEggbertCNA`, build option `GALAXY_EGGBERT_BUILD_CNA` (default OFF). Recorded consistently in `easy3d.md` §9, `README.md`, `CLAUDE.md`, and `NEXT.md`.
-- [ ] E3D-MIG-015 — `[?]` Decide whether to ask mobile-eggbert maintainers (i.e. request user approval) for a future `add_library()` target covering `Tables`/`Def`/`GameData`/`ObjectType`/`SoundChannel` only (`easy3d.md` §12 Q2).
-
-### Phase 2 — New target skeleton
-
-**Done (2026-07-01).** Full verification and build commands recorded in `NEXT.md` §0a.
-
-- [x] E3D-MIG-020 — Add new CMake option (default OFF initially) to build the new target, e.g. `GALAXY_EGGBERT_BUILD_CNA`.
-- [x] E3D-MIG-021 — `add_subdirectory(../cna)` then `add_subdirectory(../easy-3d)` from galaxy-eggbert's `CMakeLists.txt`. (Confirmed this order matters: Easy3D auto-detects and links the parent-provided `CNA` target instead of building its own copy.)
-- [x] E3D-MIG-022 — Create `src/GalaxyEggbertCNA/` tree (skeleton: `main.cpp`, `GalaxyEggbertCnaGame.hpp/.cpp`, namespace `GalaxyEggbert::CNA`).
-- [x] E3D-MIG-023 — Add `add_executable(GalaxyEggbertCNA ...)` linking `CNA` and `easy3d` (via the `easy3d::easy3d` alias).
-- [x] E3D-MIG-024 — Minimal CNA `Game` subclass: open a window, run the loop, clear to a solid color. No gameplay. Verified by a 3-second smoke run (window created, EasyGL/OpenGL ES 3.2 backend initialized, no crash).
-- [x] E3D-MIG-025 — Confirm `GalaxyEggbertSimple3D` target and `GALAXY_EGGBERT_BUILD_SIMPLE3D` option still build unaffected. Confirmed: default `build/` config (option untouched/OFF) builds `GalaxyEggbertSimple3D` clean, source unchanged.
-- [x] E3D-MIG-026 — Confirm `GalaxyEggbertWorldsTests` still builds and 54/54 tests pass unaffected. Confirmed via `ctest --test-dir build --output-on-failure`.
-
-### Phase 3 — Asset path and Mobile Eggbert reuse
-
-**Done (2026-07-01).** Full verification recorded in `NEXT.md` §0b. mobile-eggbert was only read
-from, never modified.
-
-- [x] E3D-MIG-030 — Implemented the asset path strategy decided in E3D-MIG-013: `GalaxyEggbertCNA`'s
-  `CMakeLists.txt` block now copies `../mobile-eggbert/Content/` and `../mobile-eggbert/worlds/`
-  next to the built binary via a `POST_BUILD` `copy_directory` command (new `MOBILE_EGGBERT_HOME`
-  cache variable, defaults to `../mobile-eggbert`, mirroring the existing `CNA_HOME`/`EASY3D_HOME`
-  pattern). The copy destination is inside the git-ignored `build-cna/` output directory — nothing
-  from mobile-eggbert is committed into this repository. Missing source directories produce a
-  `WARNING`, not a hard failure (the code skeleton still builds without assets present).
-- [x] E3D-MIG-031 — Reuse `Content/icons/blupi.png`. Copied wholesale with the rest of `Content/icons/` (verified present).
-- [x] E3D-MIG-032 — Reuse `Content/icons/object-m.png`. Copied wholesale (verified present).
-- [x] E3D-MIG-033 — Reuse `Content/icons/element.png`. Copied wholesale (verified present).
-- [x] E3D-MIG-034 — Reuse `Content/icons/pad.png`. Copied wholesale (verified present).
-- [x] E3D-MIG-035 — Reuse `Content/icons/jauge.png`. Copied wholesale (verified present).
-- [x] E3D-MIG-036 — Reuse `Content/icons/explo.png`. Copied wholesale (verified present).
-- [x] E3D-MIG-037 — Reuse `Content/sounds/soundNNN.wav` (93 files). Verified: 93/93 present after build.
-- [x] E3D-MIG-038 — Reuse `worlds/worldXXX.txt` (78 files). Verified: 78/78 present after build, `world001.txt` byte-identical to mobile-eggbert's copy (`diff -q`).
-- [x] E3D-MIG-039 — Cross-checked galaxy-eggbert's `include/GalaxyEggbert/def/ObjectType.hpp` and
-  `SoundChannel.hpp` against mobile-eggbert's `decor/ObjectType.hpp` and `def/SoundChannel.hpp`.
-  **Result: exact ID parity, no mismatches.** `ObjectType`: both sides declare the identical set of
-  204 numeric IDs (0–203, with the same internal gaps). `SoundChannel`: both sides declare 0–92
-  identically. Verified programmatically (extracted and diffed the full numeric ID sets, not just
-  spot-checked) — not just visual inspection. **No action needed; nothing was changed in either
-  repository.**
-
-Note: only `Content/` and `worlds/` are made available on disk next to `GalaxyEggbertCNA`.
-Nothing in `GalaxyEggbertCNA` code loads, parses, or renders any of these files yet — that starts
-in Phase 4 (world loading) and Phase 5+ (terrain/Blupi rendering).
-
-### Phase 4 — World loading
-
-**Done (2026-07-01).** Full verification recorded in `NEXT.md` §0c.
-
-- [x] E3D-MIG-040 — Confirmed `GalaxyEggbert::Worlds` (the engine-agnostic `include/GalaxyEggbert/Worlds/` + `src/GalaxyEggbert/Worlds/` tree) links into `GalaxyEggbertCNA` unchanged. `GE_SHARED_SOURCES` was hoisted from inside the `GALAXY_EGGBERT_BUILD_SIMPLE3D` block to top-level `CMakeLists.txt` scope so both targets reuse the same source list; `GalaxyEggbertSimple3D` re-verified unaffected after the move (54/54 `GalaxyEggbertWorldsTests` still pass).
-- [x] E3D-MIG-041 — `GalaxyEggbertCnaGame::LoadContent()` loads `worlds/world001.txt` end-to-end (parse only — nothing renders it). Verified by running the binary: `spawn tile (12, 92), sky region 0, 594 non-air blocks`.
-- [x] E3D-MIG-042 — Cross-checked parsed grid dimensions/tile codes. **Caveat, stated honestly:** this was cross-checked against an independent from-scratch Python re-implementation of the parser (spawn tile, sky region, raw grid cell count, and the `BlockTypes::kPassable` filtering), not a live re-run of the `GalaxyEggbertSimple3D` binary — modifying Simple3D to add diagnostic output was out of scope (hard rule: do not modify `src/GalaxyEggbertSimple3D/`), and Simple3D's existing `GEWorldRuntime::LoadFromMobileEggbertFile()` uses the identical shared `World`/`BlockTypes` code already, so a second C++ run would not be a truly independent check. The Python script mechanically extracts the `kPassable[441]` table from `BlockTypes.hpp` (not hand-transcribed) and reimplements the header + grid parsing with different control flow, run against the real `build-cna/worlds/world001.txt`. Result: **exact match** — spawn tile `(12, 92)`, sky region `0`, `594` non-air blocks (out of `612` raw non-zero Decor cells before transparency filtering) on both sides.
-- [x] E3D-MIG-043 — Minimal `GEWorldRuntime` for CNA: `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`, namespace `GalaxyEggbert::CNA`. Modeled on (header/region parsing shape, `Decor:`/`MoveObject:` line handling, `BlockTypes::fromMobileIconId` + `World::setBlock` usage) but not copied from `GESimple3D::GEWorldRuntime` — independently written, smaller (no `MobileObjSpec`/object parsing, that's Phase 7; no Simple3D types).
-
-### Phase 5 — Easy3D terrain path
-
-- [x] E3D-MIG-050 — Decided (2026-07-02): both the CPU-side vertex-builder gap (Easy3D's own
-  Phase 3) and the CNA renderer-adapter gap (Phase 4) get filled **inside `../easy-3d` itself**,
-  not as a `GalaxyEggbertCNA`-local adapter. Matches easy-3d's own `docs/ROADMAP.md` Phase 3/4 and
-  `NEXT.md` §8 item 8, which already scope this in detail (proposed files
-  `include/Easy3D/BillboardMesh.hpp`, `CubeMesh.hpp`). Reasoning: turning a `BillboardItem`/
-  `CubeItem`/`DebugLine`/`DebugBox` into vertex/index arrays, and turning those into CNA
-  `GraphicsDevice` draw calls, is generic 3D-batching plumbing with zero Eggbert-specific knowledge
-  (no `ObjectType`, no tile IDs, no gameplay) — exactly the "boring, testable... billboard/cube
-  batching, texture atlas, debug drawing" helper role `easy-3d/docs/ARCHITECTURE.md` assigns to
-  Easy3D, and reusable beyond this one game. Everything Eggbert-specific (which UV rect maps to
-  which `ObjectType`/tile ID, which world cell gets a `CubeItem`, animated-tile frame selection)
-  stays in `GalaxyEggbertCNA`, which only calls Easy3D's new vertex-builder/adapter functions with
-  that data — mirroring the existing `TextureAtlas` split (Easy3D stores UV rects by name; Galaxy
-  Eggbert decides what name means what tile). **Caveat:** this records *where the code should
-  live*, not a green light to start editing `../easy-3d` — implementing E3D-MIG-051/052 modifies a
-  sibling repo, which `NEXT.md`'s "Do not do yet" list requires explicit user approval for before
-  any code is written there.
-- [x] E3D-MIG-051 — Done (2026-07-02, user approved). Implemented `Easy3D::CubeVertex` +
-  `AppendCubeMesh`/`BuildCubeMesh` **inside `../easy-3d`**
-  (`include/Easy3D/CubeMesh.hpp`/`src/CubeMesh.cpp`) per E3D-MIG-050: turns `CubeBatch` items into
-  24 vertices + 36 indices per cube (one UV per face — 4 vertices per face rather than 8 shared
-  corners, since a shared corner can't hold 3 different per-face UVs), CCW-wound as seen from
-  outside. New CNA-link-gated `tests/test_cube_mesh.cpp` in easy-3d. Verified: easy-3d default
-  build 2/2 tests, CNA-linked build 5/5 tests; `GalaxyEggbertCNA` still builds clean against the
-  updated `easy3d`; `GalaxyEggbertWorldsTests` still 54/54 (unaffected, unrelated tree). Full
-  detail recorded in `../easy-3d/NEXT.md` §3/§8 item 8.
-- [x] E3D-MIG-052 — Done (2026-07-02, user approved). CNA draw-path decision: real, working,
-  tested indexed-3D drawing already exists in CNA (`VertexBuffer`+`IndexBuffer`+`BasicEffect`+
-  `GraphicsDevice::DrawIndexedPrimitives`), proven by CNA's own `examples/house3d_demo.cpp` — build
-  GPU buffers once, `SetVertexBuffer`/`Indices`/`DrawIndexedPrimitives` per frame inside a
-  `pass.Apply()` loop. `SpriteBatch` is 2D-only, not usable. New `Easy3D::CubeMeshRenderer`
-  (`include/Easy3D/CubeMeshRenderer.hpp` + `src/CubeMeshRenderer.cpp` in `../easy-3d`): constructor
-  uploads a `CubeMesh`'s `CubeVertex`/index arrays to GPU (converting `CubeVertex{Position,Uv}` to
-  CNA's `VertexPositionTexture{Position,TextureCoordinate}` — an exact 1:1 field match), 32-bit
-  `IndexBuffer` (matches `CubeMesh`'s `uint32_t` indices); `Draw(GraphicsDevice&, BasicEffect&)`
-  issues the indexed draw call, following `house3d_demo.cpp`'s exact pattern. The caller owns and
-  configures the `BasicEffect` (World/View/Projection/Texture) — the adapter knows nothing about
-  tiles, gameplay, or cameras, matching E3D-MIG-050's split. Found and fixed a real bug while
-  wiring this up: `../easy-3d`'s "headers-only" default build (no CNA linked) didn't have
-  `../sharp-runtime/include` on its path, so anything pulling `GraphicsDevice.hpp`/
-  `BasicEffect.hpp` (which need `Color.hpp` → `SharpRuntime/SharpRuntimeHelper.hpp`) failed to
-  compile there — unlike the shallow `Vector2`/`Vector3`/`Matrix` headers `Camera3D`/`CubeBatch`
-  already used. Added a `EASY3D_SHARP_RUNTIME_DIR` cache variable (mirrors the existing
-  `EASY3D_CNA_DIR` pattern) to `../easy-3d/CMakeLists.txt`, fixing the default build without
-  affecting the CNA-linked path (which already gets it transitively through the `CNA` target).
-  New `tests/test_cube_mesh_renderer.cpp` in `../easy-3d` — **compile-check only, always** (not
-  gated by `EASY3D_CNA_LINKED` like the other tests), since `CubeMeshRenderer`'s constructor needs
-  a live `GraphicsDevice&`, which only exists once a real CNA `Game` has opened a window — not
-  something a plain `main()` can produce. **Genuine runtime verification instead came from the real
-  target:** wired a temporary debug cube (one hardcoded `CubeItem`, `GETileAtlas`'s Ground UV) into
-  `GalaxyEggbertCnaGame` (galaxy-eggbert), ran the actual windowed binary, and read back the
-  center-screen pixel via `GraphicsDevice::GetBackBufferData` (mirroring CNA's own
-  `easygl_vertex_formats_test.cpp` pattern) — printed `debug cube center pixel RGBA = (255, 255,
-  255, 255)`, clearly distinct from the sky-blue clear color, confirming a real `DrawIndexedPrimitives`
-  call actually rasterized pixels. Verified: `../easy-3d` default build (2/2 tests, plus the new
-  compile-check) and CNA-linked build (5/5 tests, unaffected) both green;
-  `GalaxyEggbertCNA` rebuilt clean and the debug-cube pixel readback above confirms it end-to-end.
-  This debug cube is temporary scaffolding (labeled as such in code) — E3D-MIG-054 replaces it with
-  real per-world-cell terrain.
-- [x] E3D-MIG-053 — Done (2026-07-02). New `GalaxyEggbert::CNA::GETileAtlas`
-  (`src/GalaxyEggbertCNA/Game/GETileAtlas.hpp/.cpp`): builds an `Easy3D::TextureAtlas` sized to
-  `BlockTypes::kSheetW`/`kSheetH` and registers the full `object-m.png` grid via `AddGrid` (rows
-  computed as `ceil(kSheetH / kTileSize)`); `GetTileUv(blockType)` returns the UV rect for a block
-  type, exploiting that `AddGrid`'s row-major frame numbering is mathematically identical to
-  `BlockTypes`' own `icon = row * kSheetCols + col` convention, so frame index == block type
-  directly (no separate mapping table). Wired into `GalaxyEggbertCnaGame::LoadContent()`
-  (prints UV for Ground/Lava/Wall to stdout, data-only — nothing queues a `CubeBatch` item yet).
-  **Verification note:** `GalaxyEggbertCNA`'s full CNA-linked build is currently broken by an
-  unrelated, external issue — `../sharp-runtime`'s `IAsyncResult` interface was extended
-  (uncommitted change in that repo, not mine) and `../cna`'s `StorageDevice` hasn't been updated to
-  match, so the whole `CNA` static library fails to compile. This is outside this task's scope
-  (neither `../cna` nor `../sharp-runtime` is approved for modification here) and appears to be a
-  concurrent, in-progress change by another session. Because `GETileAtlas` has zero functional
-  dependency on CNA (only touches CNA-free `Easy3D::TextureAtlas` + header-only `BlockTypes`),
-  it was verified independently instead: a standalone compile+link (bypassing the broken parts of
-  CNA entirely) confirmed `GetTileUv()` for Air/negative/out-of-range → all-zero, named tile types
-  match independently recomputed UVs, row-wrap and distinct-icon behavior correct. Separately,
-  `-fsyntax-only` confirmed `GalaxyEggbertCnaGame.cpp`'s actual CNA/easy-3d usage compiles cleanly
-  against the real headers. **Update (2026-07-02, later same day):** `../cna` shipped
-  `e1939bc` ("fix(StorageDevice): implement IAsyncResult's new AsyncState/AsyncWaitHandle"),
-  resolving the external breakage. Rebuilt `GalaxyEggbertCNA` clean and ran it: printed UV values
-  for Ground/Lava/Wall match the standalone independent verification exactly, and the world-load
-  line (spawn tile (12, 92), sky region 0, 594 non-air blocks) is unregressed. Full build+run
-  re-verification is done — no longer owed.
-- [x] E3D-MIG-054 — Done (2026-07-02). New `GalaxyEggbert::CNA::GETerrainRenderer`
-  (`src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`): walks the full 100x100 `World` grid,
-  queues one `Easy3D::CubeBatch` item (1x1x1, world position `(x - kWorldCenterX, 0, z -
-  kWorldCenterZ)`, UV from `GETileAtlas`) per non-air block, builds it through
-  `Easy3D::BuildCubeMesh`, and owns an `Easy3D::CubeMeshRenderer` for it — a static, one-shot
-  upload (no per-frame rebuild, matching `house3d_demo.cpp`'s own pattern and this phase's
-  "non-animated" scope). Also tracks the block-position centroid (`CentroidX()`/`CentroidZ()`),
-  used to aim the camera reliably (the spawn tile itself is usually the open-air cell Blupi stands
-  in, not a solid block, so it's not a reliable look-at target). Replaced the temporary
-  `E3D-MIG-052` debug cube in `GalaxyEggbertCnaGame` entirely — camera now targets the terrain
-  centroid from a high angled overhead position; `Draw()` also enables depth testing
-  (`SetDepthTestEnabled(true)`, needed now that many cubes can occlude each other, matching
-  `house3d_demo.cpp`). **Verified:** rebuilt `GalaxyEggbertCNA` clean and ran it —
-  `terrain mesh uploaded — 594 blocks, 14256 vertices, 7128 triangles` (594×24=14256,
-  594×12=7128, exact match to the already-verified non-air-block count); a 5x5 grid pixel-sampling
-  check (more robust than a single center pixel, which can miss terrain if it falls between blocks)
-  found `13/25 sampled screen points show non-background (terrain) color` — genuine, non-vacuous
-  confirmation that real per-block terrain, not a placeholder, is on screen. **Follow-up, done same
-  day (2026-07-02):** loaded `object-m.png` directly via CNA's own
-  `Texture2D(assetName, GraphicsDevice&)` constructor (against the already build-time-copied
-  `Content/icons/object-m.png`) and bound it to `terrainEffect_`
-  (`setTextureEnabledProperty(true)`/`setTextureProperty(&terrainTexture_)`) — **not** via
-  mobile-eggbert's `Pixmap` class, which the user initially suggested reusing; declined because
-  (a) mobile-eggbert has no CMake library target to link at all today, and (b) `Pixmap` is
-  confirmed 2D-`SpriteBatch`-coupled in `easy3d.md` §5.2, not usable for this 3D `BasicEffect`
-  path — CNA's native `Texture2D` already does exactly what's needed with no mobile-eggbert
-  dependency. Verified: texture loads at `1301x1431 px` (matches `BlockTypes::kSheetW`/`kSheetH`
-  exactly); re-ran the pixel-sampling check — `13/25` terrain-covered points still, now with
-  **5 distinct colors** among them (proof the texture is genuinely sampled per-pixel, not a flat
-  fallback).
-- [x] E3D-MIG-055 — Done (2026-07-03). Added animated-tile support to `GalaxyEggbertCNA`
-  (lava/crusher/saw/spike/water1/water2/fan×4/marine/temp) by porting the frame tables and
-  `animIcon`/`isAnimated` logic 1:1 from `GalaxyEggbertSimple3D`'s already-shipped
-  `GETerrainRenderer.cpp` (same galaxy-eggbert repo; not a fresh mobile-eggbert transcription —
-  those tables were already approved/committed for Simple3D). Design (user-approved): periodic
-  rebuild of just the animated subset, not shader-side UV animation — `GETerrainRenderer` now
-  splits blocks into a static `CubeMeshRenderer` (built once, unchanged) and an animated subset
-  tracked as `(x, z, animBase)`, rebuilt into a second `CubeMeshRenderer` only when
-  `GEWorldRuntime::GetAnimPhase()` changes (`GETerrainRenderer::Update()`). Added
-  `GEWorldRuntime::Update(dt)`/`GetAnimPhase()` to CNA's `GEWorldRuntime`, mirroring Simple3D's 6
-  fps `kAnimPeriod` exactly. `GalaxyEggbertCnaGame` gained an `Update(GameTime&)` override driving
-  both. Verified two ways: (1) `worlds/world001.txt` has 0 animated tiles — ran 8s (~48 rebuild
-  cycles at 6 fps) with no crash, proving the empty-animated-set path is safe; (2) swapped in
-  mobile-eggbert's `world024.txt` (137 animated blocks) as a build-artifact-only substitution (not
-  committed, restored after) — ran 8s with no crash, `1887 blocks (137 animated), 45288 vertices`
-  uploaded, terrain visibility check still found textured pixels on screen. Guarded the one new
-  edge case (all animated tiles hidden in the same phase, e.g. Temp's 2 blank frames of 20) by
-  skipping `CubeMeshRenderer` construction instead of building a zero-size GPU buffer. Files:
-  `src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`,
-  `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`,
-  `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`. No `../easy-3d`/`../mobile-eggbert` changes
-  needed.
-- [x] E3D-MIG-058 — Done (2026-07-03). User flagged that `GalaxyEggbertCNA` loading
-  mobile-eggbert's flat 2D `.txt` files is not the intended end-state for galaxy-eggbert's world
-  data — mobile-eggbert 2D layouts are reference/inspiration only; galaxy-eggbert needs at least
-  one genuinely 3D, hand-authored `.vwr` world. Full pipeline now done, in two parts:
-  1. **World generation.** Added `tools/GenerateSampleWorld3D.cpp` (new CMake target
-     `GenerateSampleWorld3D`, engine-agnostic — only depends on `include/GalaxyEggbert/Worlds/`):
-     builds a small structure with real Y variation (ground floor, a 10-step solid ascending
-     staircase, a raised platform, a walled room with a doorway, two pillars) using the existing
-     tested `World::setBlock()`/`saveToFile()` API, round-trip-verified via `World::loadFromFile()`.
-     Ran it once and committed the output: `worlds3d/world001.vwr` — 2749 non-air blocks, Y range
-     [0, 13].
-  2. **Wiring, per user decisions (asked via `AskUserQuestion` and answered):** kept
-     `GEWorldRuntime::LoadFromMobileEggbertFile` in the code as a secondary/reference path (not
-     removed); added `GEWorldRuntime::LoadFromVwrFile()` (thin wrapper over
-     `Worlds::World::loadFromFile()`; `.vwr` carries no spawn/sky-region header, so those reset to
-     0) and made `GalaxyEggbertCnaGame::LoadContent()` call it by default instead of the
-     mobile-eggbert `.txt` loader. Fixed the real prerequisite gap found while investigating:
-     `GETerrainRenderer` (CNA) previously only ever read `world.getBlock(x, 0, z)` — a single Y
-     layer — so it could not render a multi-Y world at all; it now walks every Y layer
-     (`0..blocksPerAxis()-1`). Added a `CentroidY()` (alongside the existing X/Z) and updated the
-     camera framing in `GalaxyEggbertCnaGame` to target the full 3D centroid instead of assuming
-     Y=0. Added `worlds3d/` to the CMake asset-copy step for `GalaxyEggbertCNA`. **Verified with a
-     real run:** `loaded worlds3d/world001.vwr — 2749 non-air blocks, Y range [0, 13]` →
-     `terrain mesh uploaded — 2749 blocks (0 animated), 65976 vertices, 32988 triangles` →
-     terrain visibility check found `21/25` sampled points showing textured terrain color with 10
-     distinct colors; ran 8s with no crash. Known follow-up (not blocking, noted for later): no
-     face-culling/occlusion — fine at this structure's size (2749 blocks) but will matter for
-     denser/taller hand-authored worlds. Files: `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`,
-     `src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp/.cpp`,
-     `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.hpp/.cpp`, `CMakeLists.txt`,
-     `tools/GenerateSampleWorld3D.cpp`, `worlds3d/world001.vwr`.
-- [ ] E3D-MIG-056 — Do not add MeshCraft or any mesh-import path.
-- [ ] E3D-MIG-057 — **Scheduled** (status changed 2026-07-03, user override of the original "not
-  scheduled" call). Chunk-radius world loading/streaming — load/render only the current +
-  neighboring chunks instead of the whole `World` at once. Original 2026-07-03 reasoning for
-  deferring it: `world001`-derived worlds only had ~594–2749 blocks, trivial for any GPU, and
-  mobile-eggbert itself has no chunk-radius concept. **User override, same day:** that reasoning
-  was based on the current placeholder sample world only — galaxy-eggbert's real hand-authored 3D
-  worlds are intended to be much denser and more genuinely three-dimensional than any mobile-eggbert
-  2D level (Blupi moving through real volume, not just a mostly-flat plane with a staircase), so
-  chunk-radius streaming will be needed once real worlds are built, not deferred until a problem
-  appears. Not yet implemented — scheduled means "on the list to actually do," not done. Natural
-  prerequisite/co-requisite: `GETerrainRenderer`'s face-culling/occlusion gap (noted under
-  E3D-MIG-058) — a denser world needs both. **Update (2026-07-09):** the face-culling half is now
-  done for the static terrain path (E3D-MIG-508 below) — chunk-radius streaming itself is still
-  not implemented.
-- [x] E3D-MIG-059 — Done (2026-07-03). Fixed a real bug found while writing
-  `mobile-eggbert-2d-reference.md` §2.3: neither `GEWorldRuntime` (Simple3D nor CNA) recognized the
-  `BigDecor:` section of mobile-eggbert level files — its 100 rows were silently skipped because
-  the row counter had already reached 100 from the main `Decor:` grid. Refactored both
-  `GEWorldRuntime::LoadFromMobileEggbertFile` implementations
-  (`src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.hpp/.cpp`,
-  `src/GalaxyEggbertCNA/Game/GEWorldRuntime.hpp/.cpp`) to track section state explicitly
-  (`None`/`Decor`/`BigDecor`) instead of one shared row counter, and added a `GetBigDecor()`
-  accessor (flat row-major `vector<uint16_t>`, same icon→block-type conversion as the main grid).
-  Deliberately **parses and stores only** — does not render it anywhere, since how to represent
-  `BigDecor` in 3D is still an open question (`mobile-eggbert-2d-reference.md` §9), not something to
-  invent here. Verified with a new tool, `tools/VerifyBigDecorParsing.cpp` (added to `CMakeLists.txt`
-  inside the `GALAXY_EGGBERT_BUILD_SIMPLE3D` block): confirmed `world013.txt` now parses 14 non-air
-  `BigDecor` cells (previously 0) and `world001.txt` parses 2 (matches the doc's "effectively
-  empty" note); also confirmed no regression in the main grid (`world001.txt` still parses exactly
-  594 non-air blocks, matching the value established earlier this session). `GalaxyEggbertCNA`
-  rebuilt clean; `GalaxyEggbertWorldsTests` still 54/54.
-  **Update (2026-07-09): the "does not render it anywhere" note above is now outdated** — see
-  E3D-MIG-505 below, `BigDecor:` is rendered as billboards now too.
-
-### Phase 5B — Tile render-mode completion, object/BigDecor rendering, and polish (2026-07-08/09)
-
-Not part of the original Phase 5 scope above — added once real hand-authored 3D worlds surfaced
-~100 confirmed icons needing something other than a plain textured `UniformCube` (round-2/round-3
-tile questionnaires, `mobile-eggbert-reference/`). Each entry below is intentionally terse — full
-design reasoning, verification detail (screenshots, exact vertex/triangle math, live-run output)
-and dated history live in `NEXT.md` §3, which is the actively maintained record for this work;
-this section just marks each item done for `plan.md`'s own tracking purposes.
-
-- [x] E3D-MIG-500 — `DirectionalCube` render mode: a cube where each of 6 faces independently
-  picks visibility + UV (`Easy3D::DirectionalCubeItem`/`AppendDirectionalCubeMesh`, `../easy-3d`).
-  All ~99 confirmed icons wired up (completed 2026-07-09), including the 4 fan tiles, icons 30/31
-  (real per-pixel texture alpha, routed through a dedicated static-but-transparent pass), and icon
-  107/108/109's grass-top overlay (separate `textures3d/grass_top.png` asset + a horizontal
-  `PlateAxis::Y` plate, since `object-m.png` can't be extended). See `NEXT.md` §3 (multiple dated
-  entries, 2026-07-08 and 2026-07-09).
-- [x] E3D-MIG-501 — `InnerPillarBox` render mode (reuses `DirectionalCubeItem` with a smaller
-  `Size`, no new Easy3D geometry). 3/3 confirmed icons wired up.
-- [x] E3D-MIG-502 — `InnerFlatPlate` render mode (`Easy3D::PlateItem`/`AppendPlateMesh`, a
-  double-sided quad). 63/63 confirmed icons wired up; icons 368-372 use a horizontal
-  (`PlateAxis::Y`) axis per a crop spot-check, the other 58 use the default vertical axis.
-- [x] E3D-MIG-503 — `TripleCrossBillboard` render mode (`Easy3D::TripleCrossItem`/
-  `AppendTripleCrossMesh`, 3 double-sided planes 60° apart). 10/10 confirmed icons wired up.
-- [x] E3D-MIG-504 — Water render mode: `Water1`/`Water2` render as a semi-transparent
-  alpha-blended `UniformCube` (user's chosen design) instead of a solid opaque animated cube, via
-  a dedicated `BlendState::NonPremultiplied`/`DepthStencilState::DepthRead` pass in
-  `GETerrainRenderer::Draw()`.
-- [x] E3D-MIG-505 — `BigDecor:` cells now render as billboards (completes the "parse only" gap
-  E3D-MIG-059 above left open) — same camera-facing billboard technique as `MoveObject`s
-  (E3D-MIG-070 below), `object-m.png`/`GETileAtlas` instead of `element.png`, since `BigDecor`
-  shares the main terrain grid's icon vocabulary.
-- [x] E3D-MIG-506 — Platform-lift/crate object rendering: `ObjectType1`/`12`/`47`/`48` (platform
-  lifts, crates) render as a solid `UniformCube` object instead of a billboard, per
-  `mobile-eggbert-reference/15-3d-render-mapping-design.md` §5's two confirmed exceptions —
-  `GEObjectIcons::IsUniformCubeObject()`.
-- [x] E3D-MIG-507 — MoveObjects can now be embedded directly in the 3D `.vwr` world format itself,
-  not just parsed from mobile-eggbert `.txt` files. `GalaxyEggbert::MoveObjectRecord`/
-  `PlaceMoveObject`/`CollectMoveObjects` (`include/GalaxyEggbert/MoveObjectRecord.hpp`,
-  engine-agnostic) encode a `MoveObject` as a fixed-size payload in `Worlds::World`'s existing
-  sparse block-extra-metadata mechanism (`Worlds::Chunk::setExtraMetadata`), anchored at
-  `floor(posStart)` in the world's own raw grid space. `GEWorldRuntime::LoadFromVwrFile()` now
-  populates `GetMobileObjects()` from this too — no rendering-side changes needed, the existing
-  billboard/`UniformCube` code already consumes `GetMobileObjects()` generically. Found and fixed
-  a real pre-existing data-loss bug along the way: `Worlds::Chunk::isEmpty()` ignored
-  `extraMetadata_`, so `World::saveToFile()` silently dropped metadata on an otherwise-all-air
-  chunk. The sample world (`tools/GenerateSampleWorld3D.cpp`) now places one instance of every one
-  of the 69 confirmed real-behavior `ObjectType`s (all named entries in
-  `include/GalaxyEggbert/def/ObjectType.hpp` except the null slot and the reserved/unidentified
-  block), in a dedicated grid, for visual review.
-- [x] E3D-MIG-508 — Face culling for `GETerrainRenderer`'s static (non-animated) terrain path: a
-  block only emits a face when `IsOccluderBlock()` confirms the neighbor on that side isn't
-  definitely a plain opaque cube. Default sample world's terrain mesh: 67788→23012 vertices (66%
-  reduction). Animated/water paths are NOT face-culled yet (deliberate scope limit — sparse
-  decorative elements, not bulk fills).
-- [x] E3D-MIG-509 — Root-caused and substantially (not fully) fixed a seam-line artifact (thin
-  blue/dark lines along block edges at oblique/close angles): `GETileAtlas::GetTileUv()` had no
-  UV inset, so bilinear filtering bled the atlas's 1px inter-tile gap in. Fixed by reusing
-  `BlockTypes::tileUV()`'s already-proven half-texel inset — a fix that already existed in
-  `GalaxyEggbertSimple3D`'s `GETerrainRenderer.cpp` and simply never carried over when CNA's
-  `GETileAtlas` was written independently (see the new top-level `missing.md`, which now tracks
-  this class of "fix existed in Simple3D, never ported to CNA" bug going forward). Measured:
-  fully-transparent seam pixels in a reproduction screenshot dropped 60% (1217→486), not to zero —
-  residual transparency's cause (ordinary silhouette antialiasing? inset still slightly short at
-  extreme angles?) is an open, low-priority follow-up (`NEXT.md` §8).
-
-### Phase 6 — Blupi first version
-
-- [x] E3D-MIG-060 — Done (2026-07-03). Added `GalaxyEggbert::CNA::GEBlupiController`
-  (`src/GalaxyEggbertCNA/Game/GEBlupiController.hpp/.cpp`): invisible, collision-only movement —
-  arrow keys move (world-axis-aligned), Space jumps, grid-based collision against `Worlds::World`
-  with step-up traversal (climbs up to 1 block, matching `CLAUDE.md`'s allowed 3D adaptations) and
-  gravity/landing. Constants (`kMoveSpeed=5.5`, `kJumpSpeed=12`, `kGravity=25`, `kFallLimit=-10`)
-  match Simple3D's already-approved `GEBlupiController` values. Deliberately engine-agnostic (only
-  depends on `GalaxyEggbert::Worlds::World`, no CNA types) so it is independently testable — added
-  `tools/VerifyBlupiMovement.cpp` (new CMake tool target, no CNA link needed either) which scripts
-  input against the real `worlds3d/world001.vwr` and checks: spawns grounded, climbs the staircase
-  via step-up (Y 1→11), is blocked by the room's west wall (doesn't clip through), and falls under
-  real gravity from height and lands. All checks passed. This surfaced and fixed a real bug in
-  `tools/GenerateSampleWorld3D.cpp`: the platform floor fill included x=20, double-stacking a block
-  on top of the staircase's own last step and creating an unclimbable 2-block cliff — narrowed the
-  fill range to x=5..19; regenerated `worlds3d/world001.vwr` (2729 blocks now, was 2749) and
-  re-verified. Wired into `GalaxyEggbertCnaGame`: spawns Blupi at world (0,1,0) (the ground floor);
-  `Update()` polls `Keyboard::GetState()` (arrows + Space) and calls `Step()`; the camera now
-  follows Blupi's live position every frame instead of a fixed terrain-centroid shot. Verified with
-  a real run (no live keypresses in headless CI, so Blupi stays at spawn, but confirms the full
-  pipeline runs with no crash): `terrain visibility check — 25/25` (close-up follow-cam fills the
-  screen with floor, as expected at spawn). No sprite/visual yet (`E3D-MIG-061..063`), no animation
-  state machine (`E3D-MIG-064`).
-- [x] E3D-MIG-061 — Done (2026-07-06, `Easy3D::BillboardBatch`/`BuildBillboardMesh` in
-  `../easy-3d`). Built for `MoveObject`/`BigDecor` billboards (E3D-MIG-070/E3D-MIG-505), not yet
-  used for Blupi himself — see E3D-MIG-063, still open.
-- [x] E3D-MIG-062 — Done (2026-07-06, `Easy3D::BillboardMeshRenderer` in `../easy-3d`). Same
-  status note as E3D-MIG-061 — the adapter exists and is used for other billboards, not yet for
-  Blupi.
-- [ ] E3D-MIG-063 — Render Blupi as a 2D billboard using `blupi.png`/`blupi1.png` frames — no 3D model required. **Still open (2026-07-09):** Blupi remains an invisible collision-only point (`GEBlupiController`) plus a 2D screen-space HUD indicator — no in-world sprite yet, even though the billboard machinery this needs (E3D-MIG-061/062) has existed since 2026-07-06.
-- [ ] E3D-MIG-064 — Port Blupi's state machine (Stop/March/Jump/Air/Down/Up) using `table_blupi` frame indices as reference (copy/adapt requires approval per `easy3d.md` §5.4/§5.7 — confirm scope before transcribing table data).
-- [ ] E3D-MIG-065 — (Optional, later) 3D Blupi model.
-- [ ] E3D-MIG-066 — (Optional, later) Camera mode switching.
-
-### Phase 7 — Object/decor first version
-
-- [x] E3D-MIG-070 — Done (2026-07-06, extended 2026-07-09 with the platform-lift/crate
-  `UniformCube` exception — E3D-MIG-506). Pickups/enemies render as billboards from `element.png`
-  via `GEObjectIcons`/`GetElementIconUv`.
-- [x] E3D-MIG-071 — Done. `ObjectType` IDs are used directly for object identification throughout
-  (`MobileObjSpec`/`MoveObjectRecord`/`GEObjectIcons`) — the E3D-MIG-039 parity check this was
-  pending on passed (exact ID parity, no mismatches).
-- [ ] E3D-MIG-072 — Use mobile-eggbert's `Decor.cpp` as canonical behavior reference for per-object-type movement/collision — reference only, no direct linking or copying (`easy3d.md` §5.2, §6.4).
-- [ ] E3D-MIG-073 — Keep gameplay faithful — no invented mechanics; cross-check every behavior against mobile-eggbert before implementing.
-- [ ] E3D-MIG-074 — `[?]` Before implementing any object behavior that seems to require exposing internal `Decor` state, stop and discuss with the user (`easy3d.md` §5.2).
-
-### Phase 8 — Sound
-
-- [ ] E3D-MIG-080 — Thin CNA `SoundEffect`/`SoundEffectInstance` wrapper for `GalaxyEggbertCNA`, informed by but not copied from mobile-eggbert's `Sound`/`ISound`.
-- [ ] E3D-MIG-081 — Reuse `sound*.wav` files directly.
-- [ ] E3D-MIG-082 — Reuse/cross-check `SoundChannel` indices (pending E3D-MIG-039).
-- [ ] E3D-MIG-083 — 93-channel playback parity with the Simple3D port's existing sound system (per-channel volume, loop support).
-
-### Phase 9 — HUD
-
-- [ ] E3D-MIG-090 — Start minimal: lives, world, treasure count only.
-- [ ] E3D-MIG-091 — Reuse mobile-eggbert HUD assets (`jauge.png`, `pad.png`, `text.png`, `button.png`).
-- [ ] E3D-MIG-092 — Use CNA `SpriteBatch` (or an Easy3D HUD helper only if one already exists — do not build a new one speculatively).
-- [ ] E3D-MIG-093 — Avoid building a full UI framework in Easy3D or Galaxy Eggbert.
-
-### Phase 10 — Gameplay parity
-
-- [ ] E3D-MIG-100 — Port pickups (treasure/keys/shield/egg/drink) — behavior reference: mobile-eggbert `Decor.cpp` + existing Simple3D port.
-- [ ] E3D-MIG-101 — Port hazard/kill detection (lava/spike/saw/crusher).
-- [ ] E3D-MIG-102 — Port enemy stomp + score.
-- [ ] E3D-MIG-103 — Port respawn invincibility.
-- [ ] E3D-MIG-104 — Port exit-gate logic.
-- [ ] E3D-MIG-105 — Port crate push (ObjectType12) and platform patrol, matching the Simple3D port's already-fixed behavior.
-- [ ] E3D-MIG-106 — Save/load — decide scope per `easy3d.md` §12 Q7 (byte-compatible with mobile-eggbert `GameData`, or fresh format).
-- [ ] E3D-MIG-107 — No new gameplay mechanics — every item on this list must trace back to confirmed mobile-eggbert behavior.
-
-### Phase 11 — Retire Simple3D path (later)
-
-- [ ] E3D-MIG-110 — Do not delete `GalaxyEggbertSimple3D` now.
-- [ ] E3D-MIG-111 — Retire it only after `GalaxyEggbertCNA` reaches playable parity with sections 1–14 above.
-- [ ] E3D-MIG-112 — Keep it as historical reference until then; re-evaluate with the user before any deletion.
-
-### Phase 12 — Optional future
-
-- [ ] E3D-MIG-120 — Optional 3D Blupi model.
-- [ ] E3D-MIG-121 — Optional camera mode switching.
-- [ ] E3D-MIG-122 — Optional Lua discussion (undecided, out of scope for first migration — coordinate timing with `../easy-3d`'s own open Lua question).
-- [ ] E3D-MIG-123 — Optional Easy3D renderer polish, once the minimal adapters from Phase 5/6 exist.
-- [ ] E3D-MIG-124 — None of the above are part of the first playable migration.
-
-**Decided (2026-07-01, rejected — do not revisit without explicit user request):** no
-`mobile-eggbert .txt → galaxy-eggbert .vwr` auto-converter tool. Mobile-eggbert levels are flat
-(Y=0); mechanically expanding that into `.vwr`'s native 3D format produces a mostly-empty,
-unplayable shape — "a curiosity, not something to play." The existing pattern (parse `.txt` live
-at runtime into a flat `World`, render with 3D tech — Phase 4/5) stays as the faithful-remake
-content source. Genuinely 3D-designed worlds (real verticality) are separate future work,
-hand-authored by the user or Claude — not derived from mobile-eggbert data by any tool.
+This document was substantially rewritten 2026-07-10. The previous version planned around the
+old Simple3D → U3D/Urho3D/Nova3D direction, which is now dead (superseded 2026-07-05, hardened
+2026-07-08 — see `CLAUDE.md` "Current Direction Lock"). All Simple3D/U3D/Nova3D-specific content
+(the old `S3D-*` milestone section, Android/Nova3D build tasks, and ~940 lines of a
+documentation-regeneration bug-fix log) has been dropped from this file; it remains available in
+git history (any commit before this rewrite) if ever needed. The mobile-eggbert feature-parity
+checklist (menu/HUD/Blupi/tiles/enemies/pickups/score/sound/camera/save/visual — formerly scored
+against Simple3D's implementation) has been carried forward but had every status mark **reset**
+against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing on CNA's — see
+`## 2` below.
 
 ---
 
-## 1. Engine & Build
+## 0. Current Status Snapshot (2026-07-10)
 
-- [x] BUILD-001 — CMake target `GalaxyEggbertSimple3D` builds on Linux (U3D backend)
-- [x] BUILD-002 — `GALAXY_EGGBERT_BUILD_SIMPLE3D` defaults to `ON`
-- [x] BUILD-003 — Web build (Emscripten / WebAssembly) — `GalaxyEggbertSimple3D.html`
-- [ ] BUILD-004 — Android build (blocked: U3D has no Android support; revisit with Nova3D)
-- [ ] BUILD-005 — Windows cross-compile (MinGW-w64) verified after S3D-9
-- [ ] BUILD-006 — Nova3D backend switch: `cmake -S . -B build-nova3d -DSIMPLE3D_ENGINE=NOVA3D`
-- [x] BUILD-007 — `GalaxyEggbertWorldsTests` (54 unit tests) builds and all pass
-- [ ] BUILD-008 — `ctest --test-dir cmake-build-debug` discovers and runs 54 world tests
-- [ ] BUILD-009 — CI: automated build on push (GitHub Actions, Linux + Web targets)
-- [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets)
+`GalaxyEggbertCNA` is the sole actively-built/maintained target. Full detail lives in `NEXT.md`
+(updated continuously); this is a compact summary for planning purposes.
+
+### Working
+
+- **Terrain**: all 4 confirmed tile render modes (`DirectionalCube`, `InnerPillarBox`,
+  `InnerFlatPlate`, `TripleCrossBillboard`) + water (alpha-blended `UniformCube`), ~175/175
+  confirmed icons wired, real per-type animation timing (`Decor.cpp Config::ScaleDiv()`
+  divisors — NOT a uniform rate), face culling on the static-opaque path (66% vertex reduction
+  on the sample world).
+- **Objects**: `MoveObject`/`BigDecor` render as real textured billboards, animated via real
+  per-instance phase timers; platform lifts and crates (`ObjectType1/12/47/48`) render as solid
+  `UniformCube`s instead, per the confirmed two exceptions to the billboard default. Embeddable
+  directly in the 3D `.vwr` format, not just parsed from mobile-eggbert `.txt`.
+- **Interactive objects** (`GEInteractionSystem`, 2026-07-10): platform lift ping-pong patrol;
+  crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
+  treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
+  sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
+- **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
+  real per-channel volume/conflict table, wired to jump/land/footstep.
+- **Camera**: first-person default + third-person (placeholder GPU-skinned model) toggle,
+  framerate-independent damping.
+- **World format**: real `.vwr` v2 format (multi-Y-layer, embeddable `MoveObject`s, `skyRegion`
+  header field selecting a real background), plus a secondary `.txt`-parsing path for reference.
+- **Verification**: `GalaxyEggbertWorldsTests` (63/63), `VerifyBlupiMovement`,
+  `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem` — all
+  scripted/non-interactive, all passing.
+
+### Not yet working
+
+- **No visible Blupi** — collision-only point in first-person (a temporary 2D sprite HUD
+  indicator stands in); third-person has only a placeholder Fox model. This is the single
+  biggest open gap.
+- **No HUD** beyond the temporary debug indicator.
+- **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
+  deferred pending a lives/gauge/respawn system that doesn't exist yet.
+- **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
+  terrain grid, not `MobileObjSpec` objects.
+- **No linked-crate stacks** — crate push is single-crate only.
+- **No save/progression system** at all.
+- Every pickup/vehicle/buff type beyond treasure/egg/keys/exit (helicopter, jeep, skateboard,
+  tank, overcraft, balloon, shield, suction-cup, drink, charge/cloud, mirror, dynamite, bullets).
+- `ThinMechanical` tile geometry (saws, springs, switches, fans, bridge, pipes, grates — ~25
+  icons) — geometry not decided. Distinct water/liquid surface treatment. New "thin-bar"
+  geometry (icon 202). Architectural kit modular assembly (~6 icons).
+- Secret powers (`Sp0`-`Sp7`, icons 158-165) — not rendered, and behavior is undocumented
+  anywhere yet (open research question, see `## 4`).
+
+### Known open bugs
+
+- **Texture distance washout** — real texture degrades to flat gray at ~12 units distance.
+  Winding/mip-bleed/fog ruled out. Root cause not found; trail leads into `../cna`'s EasyGL
+  backend, deliberately left there (another agent's active work area). Written up in
+  `texture-distance-washout-bug.md`.
+- **Exit code 1 on real window-manager close** — 100% reproducible `X Error: BadWindow` from
+  SDL's own X11 teardown, root cause inside `../cna`/SDL. User explicitly declined a fix
+  (2026-07-09); accepted as a known limitation, do not attempt without new approval.
+- **Residual seam-line transparency** — 60%-mitigated (UV atlas half-texel inset), not fully
+  eliminated. Two untested hypotheses (MSAA edge AA, inset too small at extreme angles).
+- **Grass-topped cubes reported walkable-through** (no collision) — reported live, not yet
+  reproduced (no specific coordinates given).
 
 ---
 
-## 2. Menu & Screens (PRIORITY)
+## 1. Architecture — Direct CNA + Easy3D
 
-Menu screens use the same PNG backgrounds as mobile-eggbert (`Content/backgrounds/*.png`, `Content/icons/*.png`).
-Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::Label` overlays.
+```text
+Galaxy Eggbert
+  -> CNA directly
+  -> Easy3D beside CNA (small helpers only — cameras, texture atlas, billboard/cube batching)
+  -> mobile-eggbert used read-only as reference / asset / data source
+```
 
-### 2.1 Phase: First / Wait (loading screen)
+Easy3D does not hide CNA and must not grow into a scene graph/ECS/engine (see `easy3d.md` §7).
+mobile-eggbert is read-only; `GalaxyEggbertSimple3D` stays intact but historical
+(never build/fix it as of 2026-07-08). Full rules: `CLAUDE.md` "Current Direction Lock".
 
-- [ ] MENU-001 — Render `wait.png` as full-screen `UI::Image` during boot loading phase
+### Phases 0–5B: done (2026-07-01 through 2026-07-09)
+
+All of documentation/direction-lock (`E3D-MIG-000`-`005`), CNA target skeleton
+(`E3D-MIG-NEXT-001`-`006`), repository integration investigation (`E3D-MIG-010`-`014`; `015`
+`[?]` still open — asking mobile-eggbert maintainers for a future shared library target),
+target skeleton (`E3D-MIG-020`-`026`), asset reuse via build-time copy
+(`E3D-MIG-030`-`039`), world loading (`E3D-MIG-040`-`043`), the Easy3D terrain path
+(`E3D-MIG-050`-`055`, `058`, `059`), and tile-render-mode completion / object rendering / face
+culling (`E3D-MIG-500`-`509`) are complete. Full task-by-task detail: git history (this file,
+pre-2026-07-10 rewrite) or `NEXT.md`'s dated log.
+
+Standing rules from this era, still in force: no MeshCraft/mesh-import path
+(`E3D-MIG-056`); chunk-radius streaming still not implemented, scheduled not deferred
+(`E3D-MIG-057`, face culling is a partial substitute).
+
+### Phase 5C — Remaining tile geometry decisions (`E3D-MIG-510`-`516`)
+
+- [ ] `510` `[?]` Decide `ThinMechanical` render geometry for the ~25 icons that are neither
+      bulk cubes nor simple planes: saws, springs, switches, fans (bodies, not the already-solved
+      head icons), bridge segments, pipes, grates. See `mobile-eggbert-reference/15-3d-render-mapping-design.md`
+      §10.3 for the itemized list.
+- [ ] `511` Implement `ThinMechanical` once `510` is decided.
+- [ ] `512` `[?]` Decide water/liquid surface treatment distinct from the current alpha-blended
+      cube (real behavior: flat surface with wavy edge; water is the single most common tile
+      family, 25-38/78 real files).
+- [ ] `513` Implement the "thin-bar" geometry for icon 202 (thin rectangular prism, walkable top,
+      4 long faces textured, blue end-caps) — a genuinely new shape, not a variant of an existing
+      mode.
+- [ ] `514` `[?]` Decide architectural-kit assembly approach for icons 391-395/397/400
+      (arch/window/door-jamb fragments) — likely needs coordinated multi-block placement logic,
+      not a single per-icon render mode.
+- [ ] `515` Render secret powers (`Sp0`-`Sp7`, icons 158-165) — gold-pedestal `Billboard`, per
+      the existing render-mode default. Blocked on `E3D-MIG-190` (behavior research) for
+      anything beyond static rendering.
+- [ ] `516` Render closed doors (icons 334-336) as `Billboard` (red pillar/bollard shape) — NOT
+      `UniformCube`, corrects an earlier wrong assumption in `15-3d-render-mapping-design.md`
+      §9.1. Full door behavior is `E3D-MIG-160`.
+
+### Phase 6 — Blupi, visible and complete (`E3D-MIG-060`-`069`)
+
+- [x] `060` Collision-only movement, step-up traversal, gravity (`GEBlupiController`) — an
+      engine-appropriate 3D grid system, explicitly NOT a transcription of the 2D
+      `BlupiRect`/`BlupiAdjust`/`BlupiBloque` system. Verified via `VerifyBlupiMovement`.
+- [x] `061`/`062` `Easy3D::BillboardBatch`/`BillboardMeshRenderer` exist, used for
+      `MoveObject`/`BigDecor` billboards.
+- [ ] `063` **Render Blupi himself** as a billboard using `blupi.png`/`blupi1.png` — the
+      machinery has existed since 2026-07-06 and has never been wired to Blupi. Single most
+      consequential open gap in the whole project.
+- [ ] `064` `[?]` Blupi animation-state machine (`AnimState` → real per-tick sprite frame) via
+      `table_blupi` — needs explicit user approval to transcribe table data per `easy3d.md`
+      §5.4/§5.7 (load-bearing animation-frame data, not casual "just data").
+- [ ] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
+      +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
+      Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to
+      CNA's real framerate. Current `GEBlupiController` constants are an independent
+      engine-appropriate approximation, not yet cross-checked against these real values.
+- [ ] `066` Turning-duration-per-mode table (Normal/Air 6 ticks, Overcraft/Jeep 7, Helicopter/
+      Swim/Surf/Suspended 10, Tank 12, Skateboard 14).
+- [ ] `067` Death/respawn: hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1,
+      Fan→Clear1/Clear2 coinflip, Trap/Drip→Glu), fixed animation durations, 10-slot
+      "safe position" FIFO respawn (oldest entry used, ~0.5s buffer), fall->1000px = instant
+      fatal bypassing lives. Depends on `E3D-MIG-150` (lives/gauge foundation).
+- [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
+      small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
+- [ ] `069` `[?]` 3D Blupi model (optional, later) and camera-mode switching refinement —
+      explicitly not required for first playable gameplay parity.
+
+### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
+
+- [x] `070` Pickups/enemies render as billboards from real sprite sheets (`element.png`/
+      `object-m.png`/`blupi1.png` per `ObjectType`, not a single shared sheet); platform-lift/
+      crate `UniformCube` exception (`506`) folded in.
+- [x] `071` `ObjectType` IDs used directly throughout, confirmed exact ID parity with
+      mobile-eggbert (204 IDs).
+- [ ] `072`/`073`/`074` Standing rules, not one-shot tasks: `Decor.cpp` is reference only (never
+      link/copy); no invented mechanics, cross-check every behavior against
+      `mobile-eggbert-reference/`; stop and ask before exposing internal `Decor` state.
+
+### Phase 8 — Sound (`E3D-MIG-080`-`089`)
+
+- [x] `080`/`081` `GESound` class, real `SoundEffect`/`SoundEffectInstance` CNA API, all 93 real
+      `.wav` files load, real per-channel volume/conflict table (channel 10 exempted from the
+      no-overlap rule, matching real behavior). Wired to jump/land/footstep.
+- [~] `082` Channel-index parity confirmed exact; pitch intentionally NOT applied yet
+      (unverified encoding/units).
+- [ ] `083` `[?]` `Config::ScaleTime()`'s real scale factor is unresolved anywhere in the
+      research — needed to correctly pace any tick-domain timing (this blocks precise footstep
+      interval, buff-warning timing, etc. beyond current approximations).
+- [ ] `084` `SoundEnviron()` terrain-specific footstep/head-bump remapping — 7 terrain-specific
+      channel pairs (78-91) keyed by tile-icon range underfoot, replacing today's generic
+      channels.
+- [ ] `085` Idle "fidget" periodic sounds — channels 36/37/46-49/65 trigger on
+      `m_blupiPhase % N`, not simple one-shot events; easy to miss in a naive port.
+- [ ] `086` Buff activate/expire-warning channel pairs: Shield 42/43(warn@10), Power 44/45(w@20),
+      Cloud 55/56(w@25)+58(pickup-start), Hide 57/62/63(w@20), Mirror 66/67(none). Depends on
+      the buffs themselves (`E3D-MIG-190`).
+- [ ] `087` Corrected pickup sound channels are already applied in `GEInteractionSystem`
+      (treasure/key 11 or 19, egg 3) — extend the same rigor to every future pickup/enemy/hazard
+      sound trigger rather than reusing `GESound`'s convenience shortcuts (`PlayCollect`/
+      `PlayLife`) which were found to be imprecise.
+
+### Phase 9 — HUD (`E3D-MIG-090`-`093`)
+
+- [ ] `090`-`093` Minimal lives/world/treasure HUD using CNA `SpriteBatch`, reusing real HUD
+      assets (`pad.png`, `jauge.png`). Avoid building a UI framework — a HUD is a handful of
+      sprite draws keyed to game state, not a system. Not started.
+
+### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
+
+- [~] `100` Pickups: treasure/egg/exit/keys done (`GEInteractionSystem`, 2026-07-10); every
+      other pickup type not started (see `E3D-MIG-170`s).
+- [ ] `101` Hazard/kill detection — not started, see `E3D-MIG-140`s.
+- [ ] `102` Enemy stomp + any associated score/counter — not started, see `E3D-MIG-130`s.
+- [ ] `103` Respawn invincibility window after death — not started, depends on `E3D-MIG-067`.
+- [x] `104` Exit-gate logic: gated on `treasuresCollected_ >= totalTreasures_`, win/reject sound
+      channels, debounced to fire once per contact.
+- [~] `105` Crate-push + platform-patrol: basic single-crate push and lift ping-pong patrol done;
+      linked-crate stacks, boarding/riding, vertigo/shift-off, conveyor nudge not started — see
+      `E3D-MIG-150`s.
+- [ ] `106` `[?]` Save/load — scope still TBD (`easy3d.md` §12 Q7: byte-level format
+      compatibility with mobile-eggbert saves is an open question, not a default). See
+      `## 2 §11 SAVE-*` for the full conceptual checklist.
+- [ ] `107` Standing rule: no new mechanics — every gameplay task in this plan must trace to a
+      documented mobile-eggbert behavior.
+
+### Phase 13 — Enemy AI & combat (`E3D-MIG-130`-`137`)
+
+Nothing here is started. mobile-eggbert-reference/04-enemy-behavior.md and
+/12-hazards-and-interactables.md are the source of truth; do not invent stomp/hit feel not
+documented there.
+
+- [ ] `130` Lives/gauge/respawn foundation — a prerequisite for ANY enemy contact having a
+      real consequence (currently deliberately absent, per `GEInteractionSystem`'s own scope
+      note: "a stomp animation with no lives to lose would be inventing a hollow, partial
+      version of the mechanic"). Default 3 lives, cap raised via eggs (already tracked,
+      `MAX_EGG_COUNT=10`).
+- [ ] `131` Shared patrol-turn cycle (4-phase dwell/walk/dwell/walk, direction mirrored by
+      posStart.X vs posEnd.X) — most enemy types share this, implement once, reuse.
+- [ ] `132` Generic hazard types 2/3 (simple icon-cycling, kill-on-contact; type3 has
+      duck-immunity + top-half-only hitbox).
+- [ ] `133` Crawler/flyer types 16 (spider, 9-frame crawl, always self-destroys),
+      17 (fish, bigger explosion, narrowed hitbox, not taunt-capable),
+      20 (bird, same as fish but taunt-capable).
+- [ ] `134` Stationary shooters 32 (blupih, vertical projectile ObjectType23) and
+      33 (blupit, two horizontal projectiles bracketing the turn) — both Cloud-vulnerable, body
+      contact not lethal (only the projectile is).
+- [ ] `135` Type 44 (wasp) — does NOT kill, inflates a 100-tick "balloon" status
+      (`m_blupiBalloon`, distinct from vehicle `m_blupiOver` despite the similar real name).
+- [ ] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
+      vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon.
+- [ ] `137` Types 96/97 (follower) — dormant until a padded wake-box triggers, then 1px/tick
+      homing, self-destructs if path blocked.
+
+### Phase 14 — Hazards (`E3D-MIG-140`-`149`)
+
+Nothing here is started. Full spec: `mobile-eggbert-reference/12-hazards-and-interactables.md`.
+Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/blitz/fan do not.
+
+- [ ] `140` Lava (icon 68) — deterministic death, no immunity of any kind.
+- [ ] `141` Spikes (373) / Drip (404/410) — vehicle+focus-gated immunity.
+- [ ] `142` Saw (378/379) — switch-togglable via `ActiveSwitch`, real 41-cell trigger window.
+- [ ] `143` Crusher (317) — NOT instant death, a survivable squash state with a real
+      recovery timer, no vehicle immunity.
+- [ ] `144` Blitz (305, emitter 304 cosmetic) — 100-tick flicker, lethal only on even-ticks of
+      the first half (25% duty), no immunity of any kind.
+- [ ] `145` Spring (211) — dismounts vehicles first, then launches per Jump/Power combo (shares
+      values with `E3D-MIG-065`'s direct-jump table).
+- [ ] `146` Temp/vanishing tile (324) — NOT a kill-check, a 90%-solid/10%-passable oscillation
+      Blupi can fall through during 2 transparent frames per cycle.
+- [ ] `147` Teleporter (330-333) — narrow trigger band, 128-tick delay, implicit pairing by
+      shared icon value (first-match scan, requires exactly 2 instances per value).
+- [ ] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge, vehicles
+      forcibly dismounted on entry.
+- [ ] `149` Fans (126-137, only the 4 head icons already rendered are lethal) — consumes itself
+      (permanently clears the air column it blows through), kills only if unshielded+focused.
+
+### Phase 15 — Crates, lifts, bridges, effects: full fidelity (`E3D-MIG-150`-`158`)
+
+Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spec:
+`mobile-eggbert-reference/14-crates-lifts-bridges-effects.md`.
+
+- [ ] `150` Linked-crate flood-fill (`SearchLinkCaisse` equivalent) — stacks push atomically as
+      a group, not single-crate; reduced push speed scales with stack size.
+- [ ] `151` Crate "pop" push variant (landing-into-crate, different base speed) and the real
+      20-tick speed ramp-up (vs. today's simplified constant-speed push).
+- [ ] `152` Platform boarding via swept-probe detection (avoid tunneling on fast falls) and
+      continuous per-tick foot-strip re-test while riding (not just an initial catch) — this is
+      the prerequisite for "riding a moving platform" at all, since `GEBlupiController`
+      currently only tests the static terrain grid.
+- [ ] `153` Vertigo edge-detection with auto-slide-off for wide/shiftable lift platforms
+      (icons 311-316).
+- [ ] `154` Conveyor nudge (±2px/tick) for caterpillar-track types 47/48, on top of their
+      existing patrol.
+- [ ] `155` Dynamite — 9 separate blast calls at fixed ticks with asymmetric per-blast
+      (dx,dy) scatter, each destroying enemies/crates/objects in a 128×128px area.
+- [ ] `156` Helicopter-destruction / debris pool (ballistic pop-then-drop physics), shared by
+      crate destruction too.
+- [ ] `157` Bridge live collision toggle — `table_bridge` overwrites the actual terrain grid
+      cell every tick across a 157-tick build sequence (solid only ticks 0-15/152-156); the
+      earlier "purely cosmetic" assumption was wrong.
+- [ ] `158` "Voyage" pickup-reward pattern: several pickups (treasure/egg/3 keys/dynamite)
+      already delete-on-contact (done, `E3D-MIG-100`/`158` supersedes the old assumption) but
+      should defer the actual reward (count++, flag) until a HUD-fly animation completes — not
+      yet implemented, current impl applies the reward immediately.
+
+### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
+
+Not started. Full spec: `mobile-eggbert-reference/06-doors.md`.
+
+- [ ] `160` Door open sequence: icon removed, transient sliding-up ObjectType22 over 50 ticks,
+      real sound channel — a pure slide, not a fade/shatter/swing.
+- [ ] `161` Key pickup deferred to voyage-completion (shares `E3D-MIG-158`'s pattern); keys are
+      persistent (not consumed on pickup) but consumed one-per-door on use.
+- [ ] `162` Treasure-gated doors (icon family 421+N = needs N treasures) — opens ALL qualifying
+      doors level-wide simultaneously on any treasure pickup, not just the nearest.
+- [ ] `163` Render closed doors as `Billboard` — tracked in `E3D-MIG-516`, cross-referenced here.
+- [ ] `164` `AdaptDoors` hub-screen logic (gold-flag reveals, icon swaps) — depends on hub/menu
+      screens existing (`## 2 §2 MENU-*`), lower priority.
+- [ ] `165` World-entry-screen door logic (opens matching sublevel doors, snaps Blupi facing) —
+      same menu dependency as `164`.
+
+### Phase 17 — Secret powers, vehicles, buffs, remaining pickups (`E3D-MIG-170`-`179`)
+
+Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
+`10-blupi-mechanics.md`.
+
+- [ ] `170` `[?]` Research secret-power (`Sp0`-`Sp7`) behavior — currently unclassified in every
+      reference doc; must be resolved before implementing (only the icon/render side,
+      `E3D-MIG-515`, is currently plannable).
+- [ ] `171` Vehicle mounts: Helicopter(13), Jeep(19), Skateboard(24), Tank(28), Overcraft(46,
+      inverted accel — only accelerates over gaps), Balloon(buoyancy drift) — shared guard:
+      blocked only while riding another vehicle or swim/surf/suspend.
+- [ ] `172` Shared power-up timer (Shield/Power/Cloud/Hide all use `m_blupiTimeShield`, differing
+      decrement rates and thus differing real durations despite the same start value) and their
+      warning-sound thresholds.
+- [ ] `173` Suction-cup(26) and Drink(30) — both two-stage pickups (grab sound, then a delayed
+      buff-activate sound ~32 ticks later).
+- [ ] `174` Charge/Cloud(31) — gated against ALL other buffs including itself (loosest-guard
+      opposite is Mirror/Invert(40), gated only against Hide).
+- [ ] `175` Bullet pack(29) — auto-pickup, cap 10, immediate (not voyage-deferred) unlike most
+      other pickups.
+- [ ] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups.
+- [ ] `177` Ecrase/pancake collision-box mode and Suspended (hanging, no accel ramp) movement
+      mode — the two collision/movement modes not covered by `E3D-MIG-171`'s vehicle list.
+- [ ] `178` Vehicle/mode-specific movement table (max speed/accel/vertical behavior per mode) —
+      needed once any vehicle from `171` is implemented.
+- [ ] `179` `[?]` Enemy billboard walk-cycle direction mismatch — enemy sprites only have
+      left/right side-view frames; viewed at an oblique 3D angle this will look visibly wrong
+      (already observed for Blupi, mooted there by the first-person camera, but NOT mooted for
+      enemies since the player does see them from arbitrary angles). No resolution proposed yet.
+
+### Phase 11 — Retire Simple3D path (later) (`E3D-MIG-110`-`112`)
+
+- [ ] Don't delete Simple3D now; retire only once CNA reaches playable parity. Note:
+      `CLAUDE.md` (2026-07-08) has already tightened this — Simple3D is "historical reference
+      only," never built/fixed, tighter than this phase's original premise. Re-evaluate deletion
+      with the user before acting, per CLAUDE.md's explicit-removal-task requirement.
+
+### Phase 12 — Optional future (`E3D-MIG-120`-`124`)
+
+- [ ] Optional 3D Blupi model, camera-mode-switching polish, Lua discussion (undecided, not
+      requested), Easy3D renderer polish. None of these are required for first playable
+      gameplay parity.
+
+---
+
+## 2. Feature Parity Checklist
+
+Enumerates every mobile-eggbert feature that must eventually exist in some form in
+`GalaxyEggbertCNA`. Status marks below reflect CNA specifically — they were reset
+2026-07-10 (see the note at the top of this file); GalaxyEggbertSimple3D's historical
+status has no bearing here. Where a task's assumption was found to be wrong by more
+recent `mobile-eggbert-reference/` research, a correction note is inlined.
+
+### 2.1 Engine & Build
+
+CNA is the sole long-term target (see CLAUDE.md "Current Direction Lock"). Its CMake wiring is
+already done and working: `-DGALAXY_EGGBERT_BUILD_CNA=ON` (default `ON`), target `GalaxyEggbertCNA`,
+builds cleanly under `build-cna` and `build-cna-vulkan`. The tasks below are re-scoped to CNA;
+anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is dropped.
+
+- [x] BUILD-001 — CMake target `GalaxyEggbertCNA` builds on Linux (CNA backend) (CNA, 2026-07-10)
+- [x] BUILD-002 — `GALAXY_EGGBERT_BUILD_CNA` option wired and defaults to `ON` (CNA, 2026-07-10)
+- [ ] BUILD-003 — Web build (Emscripten / WebAssembly) for `GalaxyEggbertCNA` — not attempted yet
+- [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
+- [ ] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — re-verify current count under CNA-only build (was 54, see TEST-001 note in §13)
+- [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests
+- [ ] BUILD-009 — CI: automated build on push (GitHub Actions), CNA target only (Linux; Web once BUILD-003 exists)
+- [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets) for `GalaxyEggbertCNA`
+
+Dropped (dead Simple3D/U3D/Nova3D/Android direction, do not carry forward): old BUILD-001..002 as
+originally scoped to `GalaxyEggbertSimple3D`/U3D, old BUILD-004 (Android via U3D/Nova3D), old
+BUILD-006 (Nova3D backend switch).
+
+---
+
+### 2.2 Menu & Screens (PRIORITY)
+
+Menu screens use the same PNG backgrounds as mobile-eggbert (`Content/backgrounds/*.png`,
+`Content/icons/*.png`). All statuses below reset to reflect `GalaxyEggbertCNA`, which has not
+started on HUD/menu work — see CLAUDE.md and NEXT.md. Every item that was previously `[x]`
+reflected `GalaxyEggbertSimple3D` only (historical reference now) and is reset to `[ ]` unless
+otherwise noted.
+
+#### 2.1 Phase: First / Wait (loading screen)
+
+- [ ] MENU-001 — Render `wait.png` as full-screen image during boot loading phase
 - [ ] MENU-002 — Display animated loading gauge (`jauge.png`, yellow fill) at bottom-centre, same position as mobile-eggbert (196, 426 in 640×480 space)
 - [ ] MENU-003 — Gauge fills from 0→100% as resources load (replicate `DrawWaitProgress` logic)
 - [ ] MENU-004 — Transition from Wait → Init after loading completes (≥1 s minimum)
 - [ ] MENU-005 — Hide wait gauge if resuming a saved game (ContinueMission path)
 
-### 2.2 Phase: Init (main menu / gamer select)
+#### 2.2 Phase: Init (main menu / gamer select)
 
-- [x] MENU-006 — Render `init.png` as full-screen background
-- [x] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from top on enter, ease-out quadratic over 1 s
-- [x] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (0.5→1.0 with fade-in) over 1 s
-- [x] MENU-009 — Three gamer-slot buttons (A / B / C): render from `pad.png` (cell 140×140), correct screen positions, selected slot highlighted with alternate icon
+- [ ] MENU-006 — Render `init.png` as full-screen background
+- [ ] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from top on enter, ease-out quadratic over 1 s
+- [ ] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (0.5→1.0 with fade-in) over 1 s
+- [ ] MENU-009 — Three gamer-slot buttons (A / B / C): render from `pad.png` (cell 140×140), correct screen positions, selected slot highlighted with alternate icon
 - [ ] MENU-010 — Each gamer slot shows: name ("Gamer A/B/C"), lives count, main doors opened, secondary doors opened (text next to button, 0.7 scale)
 - [ ] MENU-011 — "PLAY" button (`InitPlay` glyph) with label below
 - [ ] MENU-012 — "SETUP" button (`InitSetup` glyph) with label to the right
@@ -533,10 +429,10 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-016 — Keyboard Back / Escape → exit game (from Init phase)
 - [ ] MENU-017 — Animated fade-out when transitioning from Init → Play (speedyblupi.png slides out, blupiyoupie.png zooms out)
 - [ ] MENU-018 — Animated fade-out when transitioning from Init → MainSetup (speedyblupi.png slides right, gear appears)
-- [x] MENU-019 — Gamer selection persisted (GameData byte 2)
-- [x] MENU-020 — Gamer slot info (lives, lastWorld, doors) read from GameData
+- [ ] MENU-019 — Gamer selection persisted (GameData byte 2) — SAVE system not started on CNA, see §11
+- [ ] MENU-020 — Gamer slot info (lives, lastWorld, doors) read from GameData
 
-### 2.3 Phase: Play (active gameplay)
+#### 2.3 Phase: Play (active gameplay)
 
 - [ ] MENU-021 — Hide all menu UI elements during Play phase
 - [ ] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — top-right corner icon from `button.png`
@@ -544,11 +440,11 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-024 — On-screen "JUMP" button (`PlayJump`) visible during Play
 - [ ] MENU-025 — On-screen "ACTION" button (`PlayAction`) visible during Play
 - [ ] MENU-026 — On-screen "DOWN" button (`PlayDown`) visible during Play (when applicable)
-- [x] MENU-027 — Keyboard: Back/Escape during Play → Pause phase
+- [ ] MENU-027 — Keyboard: Back/Escape during Play → Pause phase
 
-### 2.4 Phase: Pause
+#### 2.4 Phase: Pause
 
-- [x] MENU-028 — Render `pause.png` as full-screen background
+- [ ] MENU-028 — Render `pause.png` as full-screen background
 - [ ] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190)
 - [ ] MENU-030 — "MENU" button (`PauseMenu`) with label below
 - [ ] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1
@@ -561,7 +457,7 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-038 — Animated fade-out from Pause → Play (blupiyoupie.png zooms out)
 - [ ] MENU-039 — Animated slide-out when Pause → PlaySetup (blupiyoupie.png slides right)
 
-### 2.5 Phase: Resume (saved game continue prompt)
+#### 2.5 Phase: Resume (saved game continue prompt)
 
 - [ ] MENU-040 — Render `pause.png` background (same as Pause)
 - [ ] MENU-041 — Render `blupiyoupie.png` with rotation spring animation
@@ -570,9 +466,9 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-044 — Resume phase triggers when app reactivates with a saved mid-game state
 - [ ] MENU-045 — Keyboard Back during Resume → Init
 
-### 2.6 Phase: Win
+#### 2.6 Phase: Win
 
-- [x] MENU-046 — Render `win.png` as full-screen background
+- [ ] MENU-046 — Render `win.png` as full-screen background
 - [ ] MENU-047 — Render `blupiyoupie.png` with pulsating scale (sin wave animation, amplitude 1.0±0.5)
 - [ ] MENU-048 — "RETURN" button (`WinLostReturn`) → Init
 - [ ] MENU-049 — Display mission elapsed time in text overlay
@@ -580,17 +476,17 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-051 — Display "NEW RECORD!" text if score exceeds saved high score
 - [ ] MENU-052 — Auto-advance to next level after N seconds (optional: like mobile-eggbert)
 
-### 2.7 Phase: Lost (game over)
+#### 2.7 Phase: Lost (game over)
 
-- [x] MENU-053 — Render `lost.png` as full-screen background
+- [ ] MENU-053 — Render `lost.png` as full-screen background
 - [ ] MENU-054 — Render `blupiyoupie.png` with spin animation (6× rotation, quadratic ease-in, same as mobile-eggbert)
 - [ ] MENU-055 — "RETURN" button (`WinLostReturn`) → Init
 - [ ] MENU-056 — Display lives remaining and score
 - [ ] MENU-057 — If 0 lives: "GAME OVER" text; if lives remain: "TRY AGAIN" hint
 
-### 2.8 Phase: MainSetup / PlaySetup (settings)
+#### 2.8 Phase: MainSetup / PlaySetup (settings)
 
-- [x] MENU-058 — Render `setup.png` as full-screen background
+- [ ] MENU-058 — Render `setup.png` as full-screen background
 - [ ] MENU-059 — Render `speedyblupi.png` sliding in from left (ease-out quadratic)
 - [ ] MENU-060 — Render two rotating `gear.png` icons (one CW, one CCW, varying speeds)
 - [ ] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state
@@ -603,14 +499,14 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing)
 - [ ] MENU-069 — Keyboard Back during Setup → Init
 
-### 2.9 Phase: Ranking
+#### 2.9 Phase: Ranking
 
 - [ ] MENU-070 — Render `pause.png` background (same as Pause/Resume)
 - [ ] MENU-071 — Display high-score table for all 3 gamer slots (name, score, doors opened)
 - [ ] MENU-072 — "BACK" button (`RankingContinue`) → Init
 - [ ] MENU-073 — Highlight current gamer row
 
-### 2.10 Phase: Trial (purchase prompt — low priority for open-source port)
+#### 2.10 Phase: Trial (purchase prompt — low priority for open-source port)
 
 - [ ] MENU-074 — Render `trial.png` background
 - [ ] MENU-075 — Display trial text lines (TX_TRIAL1..6)
@@ -618,14 +514,14 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-077 — "CANCEL" button (`TrialCancel`) → Init
 - [ ] MENU-078 — Trial mode guard: if mission > 20 and mission % 10 > 1 → Trial (replicate mobile-eggbert trial logic)
 
-### 2.11 Level Intro / Mission Title
+#### 2.11 Level Intro / Mission Title
 
 - [ ] MENU-079 — Level intro title card: world name text, 3 s duration (fade-in 0.5s, hold 2s, fade-out 0.5s)
 - [ ] MENU-080 — Training level hint bar: show tutorial text from `table_training1..4` based on Blupi position
 - [ ] MENU-081 — Training hint rendered as overlay bar (pad.png icon 15 background, text centred)
 - [ ] MENU-082 — Training hint auto-scales down if text is too wide (min 0.5×)
 
-### 2.12 Button Font & Text Rendering
+#### 2.12 Button Font & Text Rendering
 
 - [ ] MENU-083 — Render button labels using `text.png` font sheet (32×32 per glyph)
 - [ ] MENU-084 — `Text::DrawText` equivalent: render text string using glyph atlas
@@ -633,14 +529,14 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] MENU-086 — Text scaling (0.45×, 0.7×, 1.0×) used for different label sizes
 - [ ] MENU-087 — Localised strings (MyResource strings): port key TX_ constants for button labels
 
-### 2.13 Phase Transitions & Animations
+#### 2.13 Phase Transitions & Animations
 
 - [ ] MENU-088 — Fade-out animation between animated phases (20-frame linear fade, Config::ScaleTime(20))
 - [ ] MENU-089 — `fadeOutPhase` deferred transition: start animation, complete transition after 20 frames
 - [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start)
 - [ ] MENU-091 — Phase time counter reset on each phase entry
 
-### 2.14 Cheat Menu (hidden)
+#### 2.14 Cheat Menu (hidden)
 
 - [ ] MENU-092 — Cheat gesture recognition: sequence of 6 button glyphs (Cheat11..Cheat32) unlocks cheat menu
 - [ ] MENU-093 — Cheat menu overlay: 9 cheat action buttons (Cheat1..Cheat9)
@@ -656,22 +552,25 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ---
 
-## 3. HUD (Heads-Up Display)
+### 2.3 HUD (Heads-Up Display)
 
-- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row
-- [~] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout
-- [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel
-- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15, opacity 0.6)
-- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held
-- [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held
-- [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held
-- [x] HUD-008 — Shield timer gauge (jauge.png yellow fill) — visible when shield active
-- [x] HUD-009 — Score display (text label, top-right area)
-- [x] HUD-010 — World name + elapsed level timer
-- [x] HUD-011 — Game speed indicator label (SLOW / NORMAL / FAST)
-- [x] HUD-012 — Gauge sprite (jauge.png) bottom-left area
-- [x] HUD-013 — Hit flash: red full-screen overlay panel, 0.4 s fade on damage
-- [x] HUD-014 — Camera shake on hit (wired but shake amount is no-op — see CAM-006)
+CNA has no real HUD yet — only a temporary 2D debug anim-state indicator. Every item below is
+reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
+
+- [ ] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row
+- [ ] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout
+- [ ] HUD-003 — Treasure counter "N/total" text, bottom-centre panel
+- [ ] HUD-004 — Panel background behind treasure counter (pad.png icon 15, opacity 0.6)
+- [ ] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held
+- [ ] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held
+- [ ] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held
+- [ ] HUD-008 — Shield timer gauge (jauge.png yellow fill) — visible when shield active
+- [ ] HUD-009 — Score display (text label, top-right area)
+- [ ] HUD-010 — World name + elapsed level timer
+- [ ] HUD-011 — Game speed indicator label (SLOW / NORMAL / FAST)
+- [ ] HUD-012 — Gauge sprite (jauge.png) bottom-left area
+- [ ] HUD-013 — Hit flash: red full-screen overlay panel, 0.4 s fade on damage
+- [ ] HUD-014 — Camera shake on hit
 - [ ] HUD-015 — Bullet counter: element.png icon 176 × m_blupiBullet, small row near bottom-right
 - [ ] HUD-016 — Dynamite count: element.png icon 252 shown when m_blupiDynamite > 0
 - [ ] HUD-017 — Perso (persona) counter: button.png icon 108 + "= N" text when m_blupiPerso > 0
@@ -687,21 +586,28 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ---
 
-## 4. Blupi Character
+### 2.4 Blupi Character
 
-### 4.1 Physics & Movement
+CNA's `GEBlupiController` currently has grid-based collision, step-up traversal, gravity, and a
+minimal `AnimState` (Stop/March/Jump/Down/Up) — collision-only, not a transcription of the 2D
+`BlupiRect`/`BlupiAdjust`/`BlupiBloque` system. Blupi has **no visible billboard/model in
+first-person** yet (only a temporary 2D sprite HUD indicator plus an optional third-person
+placeholder Fox model) — this is the single biggest open gap in the whole project. All items below
+reset to `[ ]` except the small set with direct CNA evidence.
 
-- [x] BLUPI-001 — Gravity applied every frame (m_blupiVitesseY increases downward)
-- [x] BLUPI-002 — Jump: upward velocity on Left Ctrl press; air flag set
-- [x] BLUPI-003 — Walk left/right: arrow keys set horizontal speed
-- [x] BLUPI-004 — Crouch: Left Shift sets Down state
-- [x] BLUPI-005 — Look up / glide: Right Shift in air → reduced gravity, capped fall speed
-- [x] BLUPI-006 — Auto step-up: 1-tile ledges climbed automatically *(3D adaptation)*
-- [x] BLUPI-007 — AABB tile collision via CharacterController
-- [x] BLUPI-008 — Respawn at blupiStart on death
-- [x] BLUPI-009 — Respawn invincibility: 2 s grace period after death
-- [x] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide)
-- [x] BLUPI-011 — Blob shadow (scans downward, scales with height) *(3D adaptation)*
+#### 4.1 Physics & Movement
+
+- [x] BLUPI-001 — Gravity applied every frame (CNA, 2026-07-10)
+- [x] BLUPI-002 — Jump: upward impulse on jump input; air flag set (CNA, 2026-07-10)
+- [x] BLUPI-003 — Walk left/right: input sets horizontal speed (CNA, 2026-07-10)
+- [ ] BLUPI-004 — Crouch: Left Shift sets Down state
+- [ ] BLUPI-005 — Look up / glide: Right Shift in air → reduced gravity, capped fall speed
+- [x] BLUPI-006 — Auto step-up: 1-tile ledges climbed automatically (CNA, 2026-07-10) *(3D adaptation)*
+- [x] BLUPI-007 — Grid-based tile collision (CNA, 2026-07-10) — collision-only, not the 2D AABB/CharacterController transcription
+- [ ] BLUPI-008 — Respawn at blupiStart on death
+- [ ] BLUPI-009 — Respawn invincibility: 2 s grace period after death
+- [ ] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide)
+- [ ] BLUPI-011 — Blob shadow (scans downward, scales with height) *(3D adaptation)*
 - [ ] BLUPI-012 — Sub-pixel accumulator (m_blupiSubPixelX/Y) — prevents drift at high FPS
 - [ ] BLUPI-013 — BlupiBloque: directional collision query (can I move here?)
 - [ ] BLUPI-014 — BlupiAdjust: push Blupi out of penetrated tiles after movement
@@ -713,23 +619,23 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] BLUPI-020 — m_blupiFifoPos[10]: history of last 10 positions (used for teleporter exit placement)
 - [ ] BLUPI-021 — Blupi "front" flag (m_blupiFront): determines draw order vs objects
 
-### 4.2 BlupiAction State Machine (87 states)
+#### 4.2 BlupiAction State Machine (87 states)
 
-- [x] BLUPI-022 — None (uninitialised)
-- [x] BLUPI-023 — Stop (idle standing)
-- [x] BLUPI-024 — March (walking)
-- [x] BLUPI-025 — Turn (turning around)
-- [x] BLUPI-026 — Jump (jumping)
-- [x] BLUPI-027 — Air (airborne / falling)
-- [x] BLUPI-028 — Down (crouch)
-- [x] BLUPI-029 — Up (look-up / glide)
+- [x] BLUPI-022 — None (uninitialised) (CNA, 2026-07-10 — trivial default state)
+- [x] BLUPI-023 — Stop (idle standing) (CNA, 2026-07-10)
+- [x] BLUPI-024 — March (walking) (CNA, 2026-07-10)
+- [ ] BLUPI-025 — Turn (turning around)
+- [x] BLUPI-026 — Jump (jumping) (CNA, 2026-07-10)
+- [ ] BLUPI-027 — Air (airborne / falling) — note: CNA AnimState list is Stop/March/Jump/Down/Up; confirm Air is distinct before marking
+- [x] BLUPI-028 — Down (crouch) (CNA, 2026-07-10 — state exists in AnimState enum; verify crouch logic itself, see BLUPI-004)
+- [x] BLUPI-029 — Up (look-up / glide) (CNA, 2026-07-10 — state exists in AnimState enum; verify glide logic itself, see BLUPI-005)
 - [ ] BLUPI-030 — Vertigo (hanging on ledge in fear — ACTION_VERTIGO)
 - [ ] BLUPI-031 — Recede (moving backward — ACTION_RECEDE)
 - [ ] BLUPI-032 — Advance (moving forward — ACTION_ADVANCE)
 - [ ] BLUPI-033 — Clear1..Clear8 (clearing animations — used for special level events)
 - [ ] BLUPI-034 — Set (placing object — ACTION_SET)
 - [ ] BLUPI-035 — Win (level-win celebration animation)
-- [x] BLUPI-036 — Push (pushing a crate — ACTION_PUSH) — state exists but logic not wired
+- [ ] BLUPI-036 — Push (pushing a crate — ACTION_PUSH)
 - [ ] BLUPI-037 — StopHelico (helicopter hover)
 - [ ] BLUPI-038 — MarchHelico (helicopter fly forward)
 - [ ] BLUPI-039 — TurnHelico (helicopter turn)
@@ -771,17 +677,17 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] BLUPI-075 — SlowdownSkate (skateboard braking)
 - [ ] BLUPI-076 — TakeDynamite / PutDynamite (dynamite pickup/place)
 
-### 4.3 Blupi Sprite Animation
+#### 4.3 Blupi Sprite Animation
 
-- [x] BLUPI-077 — Frame tables from `table_blupi` (2911 entries)
-- [x] BLUPI-078 — Billboard sprite from `blupi.png` (60×60 px cells)
-- [x] BLUPI-079 — Direction flipping: mirror sprite when moving right (table_mirror)
+- [ ] BLUPI-077 — Frame tables from `table_blupi` (2911 entries)
+- [ ] BLUPI-078 — Billboard sprite from `blupi.png` (60×60 px cells) — CNA has no visible first-person Blupi yet; only a temporary 2D sprite HUD indicator / optional third-person placeholder model
+- [ ] BLUPI-079 — Direction flipping: mirror sprite when moving right (table_mirror)
 - [ ] BLUPI-080 — All 87 BlupiAction frames resolved from table_blupi via action+phase+dir lookup
 - [ ] BLUPI-081 — `blupi1.png` alternate skin channel (Blupi1_11/12/13 variants for ObjectType200-203)
-- [x] BLUPI-082 — Shield tint: cyan/blue sprite overlay when m_blupiShield active
-- [x] BLUPI-083 — Shield blink at < 1.5 s remaining (blink 10 Hz)
+- [ ] BLUPI-082 — Shield tint: cyan/blue sprite overlay when m_blupiShield active
+- [ ] BLUPI-083 — Shield blink at < 1.5 s remaining (blink 10 Hz)
 
-### 4.4 Vehicle Modes (each = new movement model + sprite sheet section)
+#### 4.4 Vehicle Modes (each = new movement model + sprite sheet section)
 
 - [ ] BLUPI-084 — Helicopter mode (m_blupiHelico): 8-direction flight, no gravity, propeller sound loop (ch16/ch18)
 - [ ] BLUPI-085 — Helicopter boarding: touch ObjectType13 → sets m_blupiHelico, removes object
@@ -804,9 +710,9 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] BLUPI-102 — Motor sound crossfade: one-shot start/stop sounds + looped motor sound
 - [ ] BLUPI-103 — m_blupiMotorHigh: pitch variant selection (fast vs slow motor)
 
-### 4.5 Blupi Special States & Power-ups
+#### 4.5 Blupi Special States & Power-ups
 
-- [x] BLUPI-104 — Shield (m_blupiShield): 5 s invincibility from ObjectType25; bypasses all hazards
+- [ ] BLUPI-104 — Shield (m_blupiShield): 5 s invincibility from ObjectType25; bypasses all hazards
 - [ ] BLUPI-105 — Shield timer (m_blupiTimeShield): counts down 0→100 ticks; gauge shows progress
 - [ ] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active)
 - [ ] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers
@@ -821,40 +727,44 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] BLUPI-116 — Ecrase mode (m_blupiEcrase): crushed flat under object (StopEcrase/MarchEcrase)
 - [ ] BLUPI-117 — m_blupiPerso: persona counter (shown in HUD as button icon 108 + count)
 
-### 4.6 Blupi Death & Respawn
+#### 4.6 Blupi Death & Respawn
 
-- [x] BLUPI-118 — Death: BlupiDead() triggers explosion effect, resets lives-1, respawn
-- [x] BLUPI-119 — Death freeze: 1 s input lock before respawn
+- [ ] BLUPI-118 — Death: BlupiDead() triggers explosion effect, resets lives-1, respawn
+- [ ] BLUPI-119 — Death freeze: 1 s input lock before respawn
 - [ ] BLUPI-120 — Drown death: different animation (ACTION_DROWN) in deep water
 - [ ] BLUPI-121 — Electro death: ACTION_ELECTRO animation + electric shake
 - [ ] BLUPI-122 — Glu death: Blupi stuck (ACTION_GLU) for several frames then die
 - [ ] BLUPI-123 — Charge death: enemy charge-hit animation (ACTION_CHARGE)
 - [ ] BLUPI-124 — Ouf recovery: after close call, play one of Ouf1a..Ouf5 animations
 - [ ] BLUPI-125 — Mockery: enemies mock Blupi (ACTION_MOCKERY/i/p) for m_blupiTimeMockery ticks
-- [x] BLUPI-126 — Stomp kill: velY < -1.0 on contact with enemy → BounceUp() + kill enemy
-- [x] BLUPI-127 — BounceUp: upward impulse kJumpSpeed × 0.65
+- [ ] BLUPI-126 — Stomp kill: velY < -1.0 on contact with enemy → BounceUp() + kill enemy — blocked on ENEMY-* work (no enemy hit detection in CNA yet)
+- [ ] BLUPI-127 — BounceUp: upward impulse kJumpSpeed × 0.65
 
-### 4.7 Blupi Sounds
+#### 4.7 Blupi Sounds
 
-- [x] BLUPI-128 — Jump sound: ch1 on jump
-- [x] BLUPI-129 — Footstep sound: ch3 per march stride (surface-dependent via SoundEnviron)
-- [x] BLUPI-130 — Landing sound: ch4 on ground contact
-- [x] BLUPI-131 — Stomp kill sound: ch5
-- [x] BLUPI-132 — Death sound: ch8
-- [ ] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile type
+CNA's `GESound` loads all 93 real .wav files with the real per-channel volume/conflict table and
+is wired to jump/land/footstep events, so the base plumbing exists — but per-item wiring below is
+re-verified individually since it is not a full port yet.
+
+- [x] BLUPI-128 — Jump sound: ch1 on jump (CNA, 2026-07-10)
+- [x] BLUPI-129 — Footstep sound: ch3 per march stride (CNA, 2026-07-10 — plain footstep wiring only; surface-dependent remap NOT done, see BLUPI-133)
+- [x] BLUPI-130 — Landing sound: ch4 on ground contact (CNA, 2026-07-10)
+- [ ] BLUPI-131 — Stomp kill sound: ch5 — blocked on enemy stomp detection, see BLUPI-126
+- [ ] BLUPI-132 — Death sound: ch8
+- [ ] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile type — NOT done in CNA (7 terrain pairs, channels 78-91)
 - [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient)
 - [ ] BLUPI-135 — Swim bubble sound: ch37
 - [ ] BLUPI-136 — Glide sound: ch41
 - [ ] BLUPI-137 — Teleport in/out sounds: ch9 / ch12
 - [ ] BLUPI-138 — Shield-on sound: ch50 when shield activated
-- [x] BLUPI-139 — Shield-off sound: ch44 when shield expires
+- [ ] BLUPI-139 — Shield-off sound: ch44 when shield expires
 - [ ] BLUPI-140 — Dynamite pickup/place sounds: ch52
 - [ ] BLUPI-141 — Tank fire sound: ch53
 - [ ] BLUPI-142 — Switch activate: ch76/ch77 (off/on)
 - [ ] BLUPI-143 — Rope suspend sounds: ch47 (attach), ch65 (detach)
 - [ ] BLUPI-144 — Drink sound: ch58 on Drink action
-- [ ] BLUPI-145 — Key pickup sound: ch11
-- [x] BLUPI-146 — Life / egg pickup sound: ch42
+- [ ] BLUPI-145 — Key pickup sound: ch11 — see PICKUP-004/005/006, PICKUP-071 (CNA has this wired at the pickup level)
+- [ ] BLUPI-146 — Life / egg pickup sound: ch42 — see PICKUP-002/072, egg pickup uses ch3 per corrected channel table below, not ch42; re-verify against real `Decor.cpp`
 - [ ] BLUPI-147 — Sucette pickup sound: ch62
 - [ ] BLUPI-148 — Balloon motor sounds: ch28/ch30 (start/stop), ch29/ch31 (loop low/high)
 - [ ] BLUPI-149 — Electro sounds: ch38 (long arc) / ch90 (spark)
@@ -865,52 +775,67 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 
 ---
 
-## 5. Tile Types & Terrain
+### 2.5 Tile Types & Terrain
 
-### 5.1 World Loading
+CNA's terrain system is comparatively advanced: all 4 confirmed render modes shipped
+(`DirectionalCube`, `InnerPillarBox`, `InnerFlatPlate`, `TripleCrossBillboard`) plus water as
+alpha-blended cubes, ~175/175 confirmed icons, animated-tile timing using real per-type divisors,
+`BigDecor` billboards, and face culling on the static terrain mesh. `ThinMechanical` mode geometry
+(saws/springs/switches/fans/bridge/pipes/grates, ~25 icons) is a not-yet-made decision, not an
+in-progress item.
 
-- [x] TILE-001 — Load world from mobile-eggbert `.txt` format (100×100 grid)
-- [x] TILE-002 — 100×100 decor grid rendered as 3D cubes (1 cube per occupied tile)
-- [x] TILE-003 — Tile textures from `object-m.png` (20 cols, 64×64 px; icon ID = block type)
-- [x] TILE-004 — Correct tile passability via `table_decor_quart` (decorative → Air)
-- [x] TILE-005 — 5 worlds (Grassland, Forest, Ice Caves, Lava Fields, Space Station)
-- [x] TILE-006 — Level progression: win → next world, wraps at world 5
-- [x] TILE-007 — Terrain depth fill (cliff edges extrude 3 dark fill blocks downward) *(3D)*
-- [x] TILE-008 — Sky dome per world (`backgrounds/decorNNN.png`)
-- [x] TILE-009 — Per-world sky colour (ambient + fog)
-- [x] TILE-010 — `blupiPos=` header parsed → Blupi spawn position
-- [x] TILE-011 — `region=` header parsed → background texture selection
-- [x] TILE-012 — `music=` header parsed → ambient music track
+#### 5.1 World Loading
 
-### 5.2 Animated Tiles
+- [x] TILE-001 — Load world from mobile-eggbert `.txt` format (100×100 grid) (CNA, 2026-07-10)
+- [x] TILE-002 — 100×100 decor grid rendered as 3D geometry per the 4 confirmed render modes (CNA, 2026-07-10) — note: not "1 cube per tile" as originally phrased; CNA uses per-type render modes, not a uniform cube
+- [x] TILE-003 — Tile textures from `object-m.png`, correct 65px-pitch atlas (65px = 64px icon + 1px gap, 1px leading margin) (CNA, 2026-07-10)
+- [x] TILE-004 — Correct tile passability distinguishing decorative vs. solid tiles (CNA, 2026-07-10)
+- [ ] TILE-005 — 5 worlds (Grassland, Forest, Ice Caves, Lava Fields, Space Station) hand-authored as real 3D `.vwr` worlds — only a small sample world exists so far, not all 5
+- [ ] TILE-006 — Level progression: win → next world, wraps at world 5
+- [ ] TILE-007 — Terrain depth fill (cliff edges extrude dark fill blocks downward) *(3D)*
+- [ ] TILE-008 — Sky dome per world (`backgrounds/decorNNN.png`)
+- [ ] TILE-009 — Per-world sky colour (ambient + fog)
+- [x] TILE-010 — Blupi spawn position parsed from world data (CNA, 2026-07-10 — collision point spawn only, no visible Blupi, see BLUPI-078)
+- [ ] TILE-011 — `region=` header parsed → background texture selection
+- [ ] TILE-012 — `music=` header parsed → ambient music track
 
-- [x] TILE-013 — animPhase_ counter: 6 fps tick counter in GEWorldRuntime
-- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}) — kills on contact
-- [x] TILE-015 — Crusher tiles (10-frame: {317..323...}) — kills in frames 5-9
-- [x] TILE-016 — Saw tiles (6-frame: {378..383}) — kills on contact
-- [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1) — kills on contact
-- [x] TILE-018 — Water1 tiles (6-frame: {92..95,94,93}) — animated decoration
-- [x] TILE-019 — Water2 tiles (6-frame: {91,96..98,97,96}) — animated decoration
+#### 5.2 Animated Tiles
+
+CNA uses real per-type divisors from `Decor.cpp Config::ScaleDiv()`, not a uniform tick rate:
+Saw/Fan div 1 (50ms), Lava div 2 (100ms), Water1/Crusher/Water2/Marine div 3 (150ms), Spike/Temp
+div 4 (200ms). Any task below that previously assumed a uniform "6 fps" animation rate is corrected
+accordingly.
+
+- [x] TILE-013 — Per-type animation phase timing using real `ScaleDiv()` divisors, not a uniform tick counter (CNA, 2026-07-10 — corrected from the old uniform-6fps assumption)
+- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}), div 2 / 100ms (CNA, 2026-07-10) — kill-on-contact behavior itself blocked on hazard/lives system, see §6/§8
+- [x] TILE-015 — Crusher tiles (10-frame: {317..323...}), div 3 / 150ms (CNA, 2026-07-10 — animation only; kill-in-frames-5-9 hazard logic NOT done)
+- [x] TILE-016 — Saw tiles (6-frame: {378..383}), div 1 / 50ms (CNA, 2026-07-10 — animation only; kill-on-contact NOT done)
+- [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1), div 4 / 200ms (CNA, 2026-07-10 — animation only; kill-on-contact NOT done)
+- [x] TILE-018 — Water1 tiles (6-frame: {92..95,94,93}), div 3 / 150ms (CNA, 2026-07-10 — animated decoration, alpha-blended cube, not wavy-edge surface)
+- [x] TILE-019 — Water2 tiles (6-frame: {91,96..98,97,96}), div 3 / 150ms (CNA, 2026-07-10 — same caveat as TILE-018)
 - [ ] TILE-020 — Ventilator/fan Up tiles (icons 126-128, 3-frame: table_decor_ventillog)
 - [ ] TILE-021 — Ventilator/fan Down tiles (icons 129-131, 3-frame: table_decor_ventillod)
 - [ ] TILE-022 — Ventilator/fan Right tiles (icons 132-134, 3-frame: table_decor_ventilloh)
 - [ ] TILE-023 — Ventilator/fan Left tiles (icons 135-137, 3-frame: table_decor_ventillob)
 - [ ] TILE-024 — Water drip tiles (icons: table_decor_goutte, 48-frame)
-- [ ] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame)
-- [ ] TILE-026 — Marine tile (icon 203: table_marine, 11 frames, Object channel)
-- [ ] TILE-027 — GETerrainRenderer::Update called every frame with animPhase for all animated tiles
+- [ ] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame), div 4 / 200ms
+- [ ] TILE-026 — Marine tile (icon 203: table_marine, 11 frames, Object channel), div 3 / 150ms
+- [x] TILE-027 — Terrain renderer's per-frame animation-phase update loop covers all animated tile types (CNA, 2026-07-10)
 
-### 5.3 Interactive / Hazard Tiles
+#### 5.3 Interactive / Hazard Tiles
 
-- [x] TILE-028 — Lava (icon 68-72): kill Blupi on contact (IsLave)
-- [x] TILE-029 — Spike (icon 373/347): kill Blupi on contact (IsPiege)
-- [x] TILE-030 — Crusher (icon 317-323): kill only when fully extended (IsEcraseur, phase 5-9)
-- [x] TILE-031 — Saw (icon 378-383): kill Blupi on contact (IsScie)
+None of these have hazard/gameplay logic wired in CNA yet — only static/animated rendering exists
+where noted in §5.2. Blupi's collision does not test hazard tiles at all yet.
+
+- [ ] TILE-028 — Lava (icon 68-72): kill Blupi on contact (IsLave)
+- [ ] TILE-029 — Spike (icon 373/347): kill Blupi on contact (IsPiege)
+- [ ] TILE-030 — Crusher (icon 317-323): kill only when fully extended (IsEcraseur, phase 5-9)
+- [ ] TILE-031 — Saw (icon 378-383): kill Blupi on contact (IsScie)
 - [ ] TILE-032 — Water drip (IsGoutte): triggers glu/slow effect when hit
 - [ ] TILE-033 — Blitz/lightning tile (IsBlitz): electric instant death
 - [ ] TILE-034 — Spring/ressort tile (IsRessort): launch Blupi upward
 - [ ] TILE-035 — Temp tile (IsTemp): brief passability change (bridge-like)
-- [ ] TILE-036 — Door tile (IsDoor): locked door, opened by matching key (DoorKeyFlags)
+- [ ] TILE-036 — Door tile (IsDoor): locked door, opened by matching key (DoorKeyFlags) — note: closed doors should render as `Billboard` (red pillar/bollard shape), NOT `UniformCube`
 - [ ] TILE-037 — Teleporter tile (IsTeleporte / SearchTeleporte): pair of tiles, teleport Blupi
 - [ ] TILE-038 — Switch tile (IsSwitch / ActiveSwitch): toggles state of linked door/bridge
 - [ ] TILE-039 — Bridge tile (IsBridge): builds a bridge (ObjectType52 animation)
@@ -921,49 +846,58 @@ Each screen = full-screen `UI::Image` background + Simple3D `UI::Button` / `UI::
 - [ ] TILE-044 — Out-of-water exit (IsOutWater): exit swim mode when reaching dry tile
 - [ ] TILE-045 — Barre / barrier tile (GetTypeBarre): blocks certain vehicle types
 
-### 5.4 Tile Adaptation (visual smoothing)
+#### 5.4 Tile Adaptation (visual smoothing)
 
 - [ ] TILE-046 — `table_adapt_decor` (144 entries): smooth corner blending based on neighbour mask
 - [ ] TILE-047 — `table_adapt_fromage` (32 entries): cheese tile corner blending
 - [ ] TILE-048 — `table_decor_quart` (7056 entries): full tile replacement lookup by neighbour mask
 
-### 5.5 Background & Sky
+#### 5.5 Background & Sky
 
-- [x] TILE-049 — Background sky PNG per region (`decor000.png`..`decor031.png`, not all consecutive)
-- [x] TILE-050 — 5 sky colour palettes (ambient + fog per world region)
+- [ ] TILE-049 — Background sky PNG per region (`decor000.png`..`decor031.png`, not all consecutive)
+- [ ] TILE-050 — 5 sky colour palettes (ambient + fog per world region)
 - [ ] TILE-051 — Per-zone fog colour changes mid-level (region changes between areas)
 - [ ] TILE-052 — Lightning tile visual effect (icon 66-68 drawn 13 px higher, ch69 sound)
 
+#### 5.6 Open Rendering-Mode Decisions (CNA-specific, new)
+
+- [ ] TILE-053 — Decide and implement `ThinMechanical` render-mode geometry for saws/springs/switches/fans/bridge/pipes/grates (~25 icons) — decision not yet made
+- [ ] TILE-054 — Distinct water/liquid surface treatment (wavy-edge surface) to replace the current alpha-blended-cube placeholder
+- [ ] TILE-055 — "Thin-bar" new geometry for icon 202
+- [ ] TILE-056 — Architectural kit modular assembly
+- [ ] TILE-057 — Secret-power (Sp0-7) billboard rendering and behavior — behavior itself is undocumented anywhere, research needed first
+
 ---
 
-## 6. Enemy AI
+### 2.6 Enemy AI
 
-All enemies use billboard sprites from `element.png` (64×64 px cells).
+**Not started in CNA at all** — no enemy hit/stomp/hazard detection of any kind exists yet; this is
+explicitly deferred pending a lives/gauge system (see §8). All items reset to `[ ]`.
 
-### 6.1 Common Enemy Behaviour
+#### 6.1 Common Enemy Behaviour
 
-- [x] ENEMY-001 — Patrol movement: oscillate between posStart and posEnd at constant speed
-- [x] ENEMY-002 — Stationary enemies get ±2 tile default patrol range
-- [x] ENEMY-003 — Directional sprites: flipX when moving right (`table_mirror`)
-- [x] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact
-- [x] ENEMY-005 — Enemy respawns at posStart after 5 s (kill timer)
-- [x] ENEMY-006 — Blob shadow under enemies *(3D adaptation)*
-- [x] ENEMY-007 — Y-proximity check: aerial enemies don't hit ground-level Blupi
+- [ ] ENEMY-001 — Patrol movement: oscillate between posStart and posEnd at constant speed
+- [ ] ENEMY-002 — Stationary enemies get ±2 tile default patrol range
+- [ ] ENEMY-003 — Directional sprites: flipX when moving right (`table_mirror`)
+- [ ] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact
+- [ ] ENEMY-005 — Enemy respawns at posStart after 5 s (kill timer)
+- [ ] ENEMY-006 — Blob shadow under enemies *(3D adaptation)*
+- [ ] ENEMY-007 — Y-proximity check: aerial enemies don't hit ground-level Blupi
 - [ ] ENEMY-008 — `MoveObjectStepLine`: advance/recede speed + end-dwell timer logic
-- [ ] ENEMY-009 — `MoveObjectStepIcon`: per-type animation phase counter update
+- [ ] ENEMY-009 — `MoveObjectStepIcon`: per-type animation phase counter update — note: object animation rate is NOT confirmed to be throttled to 6fps as older assumptions had it; re-verify against real `Decor.cpp` before implementing
 
-### 6.2 Per-Type Enemy Implementation
+#### 6.2 Per-Type Enemy Implementation
 
-- [x] ENEMY-010 — ObjectType2: patrol enemy A (table_robot_left/right, icons 12-20 in element.png)
-- [x] ENEMY-011 — ObjectType3: patrol enemy B (icons 48-56 in element.png)
-- [x] ENEMY-012 — ObjectType4: bulldozer (table_bulldozer_left/right, turn2l/r)
+- [ ] ENEMY-010 — ObjectType2: patrol enemy A (table_robot_left/right, icons 12-20 in element.png)
+- [ ] ENEMY-011 — ObjectType3: patrol enemy B (icons 48-56 in element.png)
+- [ ] ENEMY-012 — ObjectType4: bulldozer (table_bulldozer_left/right, turn2l/r)
 - [ ] ENEMY-013 — ObjectType4: bulldozer charge behaviour on Blupi contact (distinct from simple patrol)
-- [x] ENEMY-014 — ObjectType16: spider (icons 69-77, vertical oscillation hang↔drop)
-- [x] ENEMY-015 — ObjectType17: fish (table_poisson_left/right, patrol in water)
+- [ ] ENEMY-014 — ObjectType16: spider (icons 69-77, vertical oscillation hang↔drop)
+- [ ] ENEMY-015 — ObjectType17: fish (table_poisson_left/right, patrol in water)
 - [ ] ENEMY-016 — ObjectType17: turn animation (table_poisson_turn2l/r, 48 frames each)
-- [x] ENEMY-017 — ObjectType20: bird (table_oiseau_left/right, aerial Y=3.0 patrol)
+- [ ] ENEMY-017 — ObjectType20: bird (table_oiseau_left/right, aerial Y=3.0 patrol)
 - [ ] ENEMY-018 — ObjectType20: turn animation (table_oiseau_turn2l/r, 10 frames each)
-- [x] ENEMY-019 — ObjectType33: blupit (table_blupit_left/right)
+- [ ] ENEMY-019 — ObjectType33: blupit (table_blupit_left/right)
 - [ ] ENEMY-020 — ObjectType33: blupit fires ObjectType23 projectile at phase 3 and phase 21 during turn
 - [ ] ENEMY-021 — ObjectType32: blupih (table_blupih_left/right, turn2l/r)
 - [ ] ENEMY-022 — ObjectType32: blupih fires ObjectType23 projectile during turn animation
@@ -977,16 +911,20 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] ENEMY-030 — ObjectType97: follow enemy 2 (table_follow2, 5 frames) — tracks exact position
 - [ ] ENEMY-031 — ObjectType96/97: MoveObjectFollow() logic — path toward Blupi
 
-### 6.3 Projectiles
+Note: `ObjectType32`/`33` (blupih/blupit) need `blupi1.png`, not `element.png` — if any prior
+assumption used a single shared sprite sheet for all enemies, that assumption is wrong; see
+ObjectType-to-sheet corrections repeated in §7.
+
+#### 6.3 Projectiles
 
 - [ ] ENEMY-032 — ObjectType23: fired projectile (icon 176 from element.png) — spawned by blupih/blupit
 - [ ] ENEMY-033 — Projectile travels toward Blupi position, expires after 55 frames
 - [ ] ENEMY-034 — Projectile hit detection: damage Blupi if shield inactive
 - [ ] ENEMY-035 — Projectile sound (ch27 on fire?)
 
-### 6.4 Enemy Sounds
+#### 6.4 Enemy Sounds
 
-- [ ] ENEMY-036 — Stomp kill sound: ch5 (already wired)
+- [ ] ENEMY-036 — Stomp kill sound: ch5
 - [ ] ENEMY-037 — Bulldozer turn sound (ch33)
 - [ ] ENEMY-038 — Enemy destruction sound varies by type
 - [ ] ENEMY-039 — Wasp/bee movement sound (ch72/ch73)
@@ -994,18 +932,33 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 
 ---
 
-## 7. Pickups & Objects
+### 2.7 Pickups & Objects
 
-### 7.1 Static Collectibles
+CNA has a working first interactive-object system (`GEInteractionSystem`): treasure(5)/egg(6)/
+exit(7)/keys(49-51) pickup collection works with real removal-on-contact semantics, real sound
+channels (11/19 for treasure/key, 3 for egg — corrected below), `MAX_EGG_COUNT=10` cap, and exit
+gated on treasures-collected. Crates/lifts also have real substance: `ObjectType1/12/47/48` render
+as real cubes; platform lifts patrol (ping-pong between posStart/posEnd); crates can be pushed
+(X-axis only, single-crate, with adjacency/floor-support/occupancy checks). Everything else in this
+section is not yet done.
 
-- [x] PICKUP-001 — ObjectType5: treasure (icons 0-11, element.png) — +10 score, required for exit
-- [x] PICKUP-002 — ObjectType6: egg (icons 21-28) — +1 life (cap 9), ch42 sound
-- [x] PICKUP-003 — ObjectType7: exit goal (icons 29-36) — triggers Win when all treasures collected
-- [x] PICKUP-004 — ObjectType49: red key (table_cle1, 12 frames) — sets Key1 flag, +50 score, ch11
-- [x] PICKUP-005 — ObjectType50: green key (table_cle2, 12 frames) — sets Key2 flag, +50 score
-- [x] PICKUP-006 — ObjectType51: blue key (table_cle3, 12 frames) — sets Key3 flag, +50 score
-- [x] PICKUP-007 — ObjectType25: shield orb (table_shield, 16 frames) — 5 s invincibility, ch50
-- [x] PICKUP-008 — ObjectType30: drink (icon 178) — +1 life (cap 9), ch42 sound
+**Sound-channel correction, applies throughout this section:** treasure/key pickup = Channel 11 (or
+19 if the pickup completes a set), egg = Channel 3 — not the older generic "ch42 collect" /
+"ch10 always-restarts" assumptions used below in some line items; where a line item's channel
+number below conflicts with this, the corrected value governs. **Sprite-sheet correction:**
+`ObjectType1`/`12` need `object-m.png`, not `element.png`; `ObjectType32`/`33` need `blupi1.png`,
+not `element.png` — any task assuming one shared sheet for all pickups/objects is wrong.
+
+#### 7.1 Static Collectibles
+
+- [x] PICKUP-001 — ObjectType5: treasure — collection/removal-on-contact works, required for exit gating (CNA, 2026-07-10) — score/HUD-fly-animation still TBD, see PICKUP-049/HUD-025
+- [x] PICKUP-002 — ObjectType6: egg — collection works, MAX_EGG_COUNT=10 cap (CNA, 2026-07-10) — note: real channel is ch3, not ch42 as originally listed
+- [x] PICKUP-003 — ObjectType7: exit goal — gated on treasures-collected (CNA, 2026-07-10)
+- [x] PICKUP-004 — ObjectType49: red key — sets Key1 flag, real sound channel (11, or 19 if set-completing) (CNA, 2026-07-10)
+- [x] PICKUP-005 — ObjectType50: green key — sets Key2 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
+- [x] PICKUP-006 — ObjectType51: blue key — sets Key3 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
+- [ ] PICKUP-007 — ObjectType25: shield orb (table_shield, 16 frames) — 5 s invincibility, ch50
+- [ ] PICKUP-008 — ObjectType30: drink (icon 178) — +1 life (cap 9), ch42 sound (re-verify channel against real Decor.cpp, per correction note above)
 - [ ] PICKUP-009 — ObjectType21: secret exit (table_cle, 12 frames) — sets m_bFoundCle, triggers Win
 - [ ] PICKUP-010 — ObjectType31: cloud power-up (table_charge, 6 frames, Object channel) — m_blupiCloud 100 ticks
 - [ ] PICKUP-011 — ObjectType40: invert power-up (table_invert, 20 frames) — m_blupiInvert 100 ticks + particle burst
@@ -1018,38 +971,39 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] PICKUP-018 — ObjectType24: skateboard (table_skate, 34 frames) — ACTION_TakeSkate
 - [ ] PICKUP-019 — ObjectType46: balloon (icon 208) — sets m_blupiOver / m_blupiBalloon
 
-### 7.2 Platform Lifts
+#### 7.2 Platform Lifts
 
-- [x] PICKUP-020 — ObjectType1: platform lift (moves posStart↔posEnd, carries Blupi)
-- [ ] PICKUP-021 — ObjectType47: platform lift rightward carry (+2 px/frame horizontal to Blupi when riding)
-- [ ] PICKUP-022 — ObjectType48: platform lift leftward carry (-2 px/frame horizontal)
-- [ ] PICKUP-023 — AscenseurDetect: detect lift below Blupi within height threshold
+- [x] PICKUP-020 — ObjectType1: platform lift patrols posStart↔posEnd (CNA, 2026-07-10) — note: does NOT yet carry Blupi; Blupi's collision doesn't test moving objects at all, see PICKUP-023
+- [ ] PICKUP-021 — ObjectType47: platform lift rightward carry (+2 px/frame horizontal to Blupi when riding) — blocked on PICKUP-023 (platform boarding/riding)
+- [ ] PICKUP-022 — ObjectType48: platform lift leftward carry (-2 px/frame horizontal) — same blocker
+- [ ] PICKUP-023 — Platform boarding/riding: Blupi's collision must test moving objects, not just static terrain — NOT done, root blocker for this whole subsection
 - [ ] PICKUP-024 — AscenseurVertigo: Blupi hangs on edge of platform (Vertigo state)
 - [ ] PICKUP-025 — AscenseurShift: shift Blupi with moving platform
 - [ ] PICKUP-026 — AscenseurSynchro: synchronise multiple lifts
 - [ ] PICKUP-027 — m_blupiTimeNoAsc: cooldown preventing immediate re-entry
 
-### 7.3 Crates (ObjectType12)
+#### 7.3 Crates (ObjectType12)
 
-- [~] PICKUP-028 — ObjectType12: crate renders (static billboard) — revision: push mechanic needed
-- [ ] PICKUP-029 — Crate push: walking into a crate → push 1 tile horizontally (ACTION_PUSH)
-- [ ] PICKUP-030 — Crate stops when hitting a wall or another crate
-- [ ] PICKUP-031 — Crates can be stacked (UpdateCaisse / SearchLinkCaisse)
+- [x] PICKUP-028 — ObjectType12: crate renders as a real cube (CNA, 2026-07-10) — was previously a static billboard placeholder in Simple3D; CNA's is a real `UniformCube`
+- [x] PICKUP-029 — Crate push: walking into a crate pushes it 1 tile, X-axis only, single-crate (CNA, 2026-07-10) — Y-axis / non-X pushing NOT done
+- [x] PICKUP-030 — Crate stops when hitting a wall or another crate (adjacency/floor-support/occupancy checks) (CNA, 2026-07-10)
+- [ ] PICKUP-031 — Crates can be stacked and linked crates push as a group (flood-fill; UpdateCaisse / SearchLinkCaisse) — NOT done, current push is single-crate only
 - [ ] PICKUP-032 — m_rankCaisse / m_nbRankCaisse: array of crate object indices
 - [ ] PICKUP-033 — TestPushCaisse: check if push is valid (clear path)
 - [ ] PICKUP-034 — CaisseInFront: detect crate directly in front of Blupi
 - [ ] PICKUP-035 — SmallShake on crate land / impact
+- [ ] PICKUP-035b — Conveyor nudge for ObjectType47/48 (new item, CNA-specific gap noted in project status: crates on conveyor-lift tiles should be nudged, not yet implemented)
 
-### 7.4 Doors & Keys
+#### 7.4 Doors & Keys
 
 - [ ] PICKUP-036 — DoorKeyFlags: 3-bit flag (Key1 / Key2 / Key3)
-- [ ] PICKUP-037 — Door tile (IsDoor): opens when Blupi touches and holds matching key
+- [ ] PICKUP-037 — Door tile (IsDoor): opens when Blupi touches and holds matching key — render mode correction: closed doors are `Billboard` (red pillar/bollard), NOT `UniformCube`
 - [ ] PICKUP-038 — InitializeDoors: restore door states from GameData on level load
 - [ ] PICKUP-039 — MemorizeDoors: save door states to GameData on level exit
 - [ ] PICKUP-040 — Door open animation: ObjectType22 (3-phase animation, self-removes)
 - [ ] PICKUP-041 — Door open sound: ch7
 
-### 7.5 Visual Effects (transient objects)
+#### 7.5 Visual Effects (transient objects)
 
 - [ ] PICKUP-042 — ObjectType8: primary explosion (table_explo1, explo.png Explosion channel)
 - [ ] PICKUP-043 — ObjectType9: small explosion (table_explo2, 20 frames)
@@ -1058,7 +1012,7 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] PICKUP-046 — ObjectType36: pollution puff (table_pollution, 8 frames, 16-tick lifetime)
 - [ ] PICKUP-047 — ObjectType37: clear effect (table_clear, 70 frames)
 - [ ] PICKUP-048 — ObjectType38: electric arc (table_electro, 90 frames, starts Blupi1_12 channel)
-- [ ] PICKUP-049 — ObjectType39: treasure sparkle (table_tresortrack, 11 frames) — spawned on pickup
+- [ ] PICKUP-049 — ObjectType39: treasure sparkle (table_tresortrack, 11 frames) — spawned on pickup; part of the not-yet-done voyage-deferred HUD-fly animation (current impl deletes/counts pickups immediately instead of deferring to a flight animation)
 - [ ] PICKUP-050 — ObjectType41/42: invert start/stop particles (table_invertstart/stop, 8 frames × 4 dirs)
 - [ ] PICKUP-051 — ObjectType53: tentacle hazard (table_tentacule, 45 frames, 90-tick lifetime)
 - [ ] PICKUP-052 — ObjectType57: shield trail (table_shieldtrack, 20 frames)
@@ -1074,7 +1028,7 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] PICKUP-062 — ObjectType34: goo particle (table_glu, 25-frame looping element) — sticks to geometry
 - [ ] PICKUP-063 — ObjectType35: small plouf (table_tiplouf, 3 frames)
 
-### 7.6 Special Level Objects
+#### 7.6 Special Level Objects
 
 - [ ] PICKUP-064 — ObjectType52: bridge construction (table_bridge, 157 frames) — also updates static decor
 - [ ] PICKUP-065 — ObjectType56: dynamite fuse (table_dynamitef, 100 frames) — triggers DynamiteStart() at phases 50-69
@@ -1083,16 +1037,20 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] PICKUP-068 — ObjectType200: costume select pickup → triggers player-select voyage when touched
 - [ ] PICKUP-069 — ObjectType201-203: damage Blupi on contact if shield/hide/SuperBlupi inactive
 
-### 7.7 Pickup Sounds
+#### 7.7 Pickup Sounds
 
-- [x] PICKUP-070 — Treasure collect: ch10 (always restarts)
-- [x] PICKUP-071 — Key pickup: ch11
-- [x] PICKUP-072 — Life pickup (egg/drink): ch42
-- [x] PICKUP-073 — Shield pickup: ch50 (already wired in GESound)
-- [x] PICKUP-074 — Win/exit sound: ch57
+Per the channel correction above (treasure/key = ch11 or ch19 if set-completing; egg = ch3), the
+line items below are corrected in place rather than reset blindly to old (possibly wrong) channel
+numbers.
+
+- [x] PICKUP-070 — Treasure collect sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — corrected from the old "ch10 always restarts" assumption
+- [x] PICKUP-071 — Key pickup sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — same channel as treasure, corrected from old ch11-only assumption (still ch11, but conflict/set-completing behavior added)
+- [x] PICKUP-072 — Egg pickup sound wired: ch3 (CNA, 2026-07-10) — corrected from the old "ch42" assumption; drink pickup (PICKUP-008) channel still needs separate verification
+- [ ] PICKUP-073 — Shield pickup: ch50
+- [ ] PICKUP-074 — Win/exit sound: ch57
 - [ ] PICKUP-075 — Door open: ch7
 - [ ] PICKUP-076 — Switch activate (on): ch77; switch deactivate: ch76
-- [ ] PICKUP-077 — Explosion sounds: ch10 (collect), ch39 (key sparkle), ch40 (explosion)
+- [ ] PICKUP-077 — Explosion sounds: ch40 (explosion); re-verify ch10/ch39 assignments against real Decor.cpp given the treasure/key channel correction above
 - [ ] PICKUP-078 — Water plouf: ch23
 - [ ] PICKUP-079 — Water bubble: ch24
 - [ ] PICKUP-080 — Water small plouf: ch64
@@ -1106,17 +1064,21 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 
 ---
 
-## 8. Score & Progression
+### 2.8 Score & Progression
 
-- [x] SCORE-001 — +10 score per treasure collected
-- [x] SCORE-002 — +25 score per enemy stomped
-- [x] SCORE-003 — +50 score per key collected
-- [ ] SCORE-004 — +50 score per egg collected (mobile-eggbert: ch42 + life + score)
+Not started in CNA beyond what's implied by the interactive-object system's counting (treasures
+collected, egg cap). No score numbers, HUD display, win/lose screen, or save-linked progression
+exist yet. All items reset to `[ ]`.
+
+- [ ] SCORE-001 — +10 score per treasure collected
+- [ ] SCORE-002 — +25 score per enemy stomped
+- [ ] SCORE-003 — +50 score per key collected
+- [ ] SCORE-004 — +50 score per egg collected (mobile-eggbert: ch3 + life + score — channel corrected, see §7 note)
 - [ ] SCORE-005 — +50 score per drink collected
-- [x] SCORE-006 — +100 bonus when all treasures collected (all-treasures bonus)
-- [x] SCORE-007 — High score per gamer slot persisted
-- [x] SCORE-008 — Level elapsed timer displayed in HUD
-- [x] SCORE-009 — Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)
+- [ ] SCORE-006 — +100 bonus when all treasures collected (all-treasures bonus)
+- [ ] SCORE-007 — High score per gamer slot persisted
+- [ ] SCORE-008 — Level elapsed timer displayed in HUD
+- [ ] SCORE-009 — Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)
 - [ ] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes (from mobile-eggbert enum)
 - [ ] SCORE-011 — Slow game speed: alternate-frame skip (`slow_frame` toggle in game loop)
 - [ ] SCORE-012 — Win screen: display total score, elapsed time, new-record indicator
@@ -1131,32 +1093,46 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 
 ---
 
-## 9. Sound System
+### 2.9 Sound System
 
-- [x] SOUND-001 — 93 WAV files (`sounds/sound000.wav`..`sound092.wav`) loaded
-- [x] SOUND-002 — Per-channel volume from tableVolumePitch (GESound)
-- [x] SOUND-003 — Sound on/off toggle (persisted in GameData byte 3)
-- [x] SOUND-004 — Sound loop support: `loop=true` flag passes to `Game::PlaySound(loop)` in Simple3D
+CNA has real substance here: `GESound` loads all 93 real .wav files via CNA's own
+`SoundEffect`/`SoundEffectInstance` API, reuses the real per-channel volume/conflict table, and is
+wired to jump/land/footstep events. Not done: pitch application, `SoundEnviron()` terrain-specific
+footstep/bump remapping (7 terrain pairs, channels 78-91), idle "fidget" periodic sounds (channels
+36/37/46-49/65), buff activate/expire-warning channel pairs.
+
+- [x] SOUND-001 — 93 WAV files (`sounds/sound000.wav`..`sound092.wav`) loaded (CNA, 2026-07-10)
+- [x] SOUND-002 — Per-channel volume/conflict table reused from the real data (CNA, 2026-07-10)
+- [ ] SOUND-003 — Sound on/off toggle (persisted in GameData byte 3) — blocked on §11 Save Data, not started
+- [x] SOUND-004 — Sound loop support via `SoundEffectInstance` (CNA, 2026-07-10)
 - [ ] SOUND-005 — Positional (panned) audio: volume/balance based on screen X position (SoundEnviron)
-- [ ] SOUND-006 — SoundEnviron: maps ch3/ch4 footstep to tile-surface variant (ch78-91)
+- [ ] SOUND-006 — SoundEnviron: maps ch3/ch4 footstep to tile-surface variant (ch78-91) — NOT done (7 terrain pairs)
 - [ ] SOUND-007 — Vehicle motor loop: ch16/ch18 (helicopter high/low), ch29/ch31 (jeep/tank/over)
 - [ ] SOUND-008 — Motor sound crossfade: start sound (ch15/ch28) + stop sound (ch17/ch30)
 - [ ] SOUND-009 — PosSound: update panned position of active motor loop each frame
-- [ ] SOUND-010 — Ambient sound: all 72 gameplay channels wired to correct game events (see full list)
+- [ ] SOUND-010 — Ambient sound: all 72 gameplay channels wired to correct game events (see full list below)
+- [ ] SOUND-010b — Pitch application per tableVolumePitch (new item — noted explicitly as NOT done in CNA despite the volume/conflict table being reused)
+- [ ] SOUND-010c — Idle "fidget" periodic sounds (channels 36/37/46-49/65) (new item — explicitly NOT done)
+- [ ] SOUND-010d — Buff activate/expire-warning channel pairs (new item — explicitly NOT done)
 
-### Complete Sound Channel Wire-up (0=reserved, 1-92=game SFX)
+#### Complete Sound Channel Wire-up (0=reserved, 1-92=game SFX)
 
-- [x] SOUND-011 — ch1: jump
+Base loading/volume plumbing exists for all channels (SOUND-001/002); the marks below track
+whether each channel is actually wired to a real game event yet. Corrected per §7: treasure/key =
+ch11 (ch19 if set-completing), egg = ch3 (not ch42 as some entries below still assumed under the
+old scheme — cross-check against §7 when wiring these).
+
+- [x] SOUND-011 — ch1: jump (CNA, 2026-07-10)
 - [ ] SOUND-012 — ch2: unknown (research needed)
-- [x] SOUND-013 — ch3: footstep (surface-dependent)
-- [x] SOUND-014 — ch4: landing
-- [x] SOUND-015 — ch5: stomp kill
+- [x] SOUND-013 — ch3: footstep AND/OR egg pickup — note: ch3 is used for both footstep (BLUPI-129) and egg pickup (PICKUP-072) in the real data; confirm both wire-ups are distinct calls, not a collision (CNA, 2026-07-10 for footstep)
+- [x] SOUND-014 — ch4: landing (CNA, 2026-07-10)
+- [ ] SOUND-015 — ch5: stomp kill — blocked on enemy hit detection
 - [ ] SOUND-016 — ch6: unknown
 - [ ] SOUND-017 — ch7: door open
-- [x] SOUND-018 — ch8: death / hit
+- [ ] SOUND-018 — ch8: death / hit
 - [ ] SOUND-019 — ch9: teleport in
-- [x] SOUND-020 — ch10: collect (always restarts)
-- [x] SOUND-021 — ch11: key pickup
+- [ ] SOUND-020 — ch10: collect (re-verify against corrected ch11/ch3 treasure/egg channels — may be unused/different purpose)
+- [x] SOUND-021 — ch11: key pickup AND treasure pickup (CNA, 2026-07-10 — corrected: shared by both per real data)
 - [ ] SOUND-022 — ch12: teleport out
 - [ ] SOUND-023 — ch13: bridge build phase 1
 - [ ] SOUND-024 — ch14: bridge build phase 2
@@ -1164,7 +1140,7 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] SOUND-026 — ch16: helicopter motor high (loop)
 - [ ] SOUND-027 — ch17: helicopter motor stop
 - [ ] SOUND-028 — ch18: helicopter motor low (loop)
-- [ ] SOUND-029 — ch19: teleport (alternate)
+- [x] SOUND-029 — ch19: treasure/key pickup, set-completing variant (CNA, 2026-07-10 — new correct meaning, was previously listed as generic "teleport (alternate)")
 - [ ] SOUND-030 — ch20: bridge completed
 - [ ] SOUND-031 — ch21: secret exit found
 - [ ] SOUND-032 — ch22: unknown
@@ -1181,20 +1157,20 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] SOUND-043 — ch33: bulldozer turn
 - [ ] SOUND-044 — ch34: unknown
 - [ ] SOUND-045 — ch35: unknown
-- [ ] SOUND-046 — ch36: water walk ambient
-- [ ] SOUND-047 — ch37: swim bubble
+- [ ] SOUND-046 — ch36: water walk ambient (idle fidget channel, see SOUND-010c)
+- [ ] SOUND-047 — ch37: swim bubble (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-048 — ch38: electric arc (long)
 - [ ] SOUND-049 — ch39: key sparkle effect
 - [ ] SOUND-050 — ch40: explosion
-- [x] SOUND-051 — ch41: glide
-- [x] SOUND-052 — ch42: life/egg/drink pickup
+- [ ] SOUND-051 — ch41: glide
+- [ ] SOUND-052 — ch42: life/drink pickup (egg corrected to ch3, see PICKUP-072 — ch42 role needs re-verification, may be drink-only)
 - [ ] SOUND-053 — ch43: unknown
-- [x] SOUND-054 — ch44: shield off
+- [ ] SOUND-054 — ch44: shield off
 - [ ] SOUND-055 — ch45: unknown
-- [ ] SOUND-056 — ch46: balloon mode sound
-- [ ] SOUND-057 — ch47: suspend attach
-- [ ] SOUND-058 — ch48: shield sparkle
-- [ ] SOUND-059 — ch49: shield loop (looped while active)
+- [ ] SOUND-056 — ch46: balloon mode sound (idle fidget channel, see SOUND-010c)
+- [ ] SOUND-057 — ch47: suspend attach (idle fidget channel, see SOUND-010c)
+- [ ] SOUND-058 — ch48: shield sparkle (idle fidget channel, see SOUND-010c)
+- [ ] SOUND-059 — ch49: shield loop (looped while active) (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-060 — ch50: shield pickup
 - [ ] SOUND-061 — ch51: glu/glue splash
 - [ ] SOUND-062 — ch52: dynamite / impact
@@ -1202,7 +1178,7 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] SOUND-064 — ch54: long explosion (creature death?)
 - [ ] SOUND-065 — ch55: unknown
 - [ ] SOUND-066 — ch56: unknown
-- [x] SOUND-067 — ch57: exit open / win
+- [ ] SOUND-067 — ch57: exit open / win
 - [ ] SOUND-068 — ch58: drink pickup
 - [ ] SOUND-069 — ch59: unknown
 - [ ] SOUND-070 — ch60: pickup/collect (variant)
@@ -1210,7 +1186,7 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] SOUND-072 — ch62: sucette / suction-cup
 - [ ] SOUND-073 — ch63: unknown
 - [ ] SOUND-074 — ch64: small water plouf
-- [ ] SOUND-075 — ch65: suspend detach / rope release
+- [ ] SOUND-075 — ch65: suspend detach / rope release (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-076 — ch66: unknown
 - [ ] SOUND-077 — ch67: unknown
 - [ ] SOUND-078 — ch68: unknown
@@ -1223,41 +1199,49 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] SOUND-085 — ch75: teleport out (Blupi exit)
 - [ ] SOUND-086 — ch76: switch deactivate
 - [ ] SOUND-087 — ch77: switch activate
-- [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (mapped by SoundEnviron)
+- [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (7 terrain pairs, mapped by SoundEnviron) — see SOUND-006
 - [ ] SOUND-089 — ch92: follow-enemy sound
 - [ ] SOUND-090 — Sound enable/disable respects enabled_ flag (all channels silenced when off)
 
 ---
 
-## 10. Camera *(3D-specific)*
+### 2.10 Camera *(3D-specific)*
 
-- [x] CAM-001 — 3rd-person orbit following Blupi (GECameraRig)
-- [x] CAM-002 — RMB pitch control
-- [x] CAM-003 — Scroll-wheel zoom (smooth lerp)
-- [x] CAM-004 — Pitch auto-reset to 20° when RMB released
-- [x] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera position)
-- [x] CAM-006 — FOV 65°
-- [ ] CAM-007 — Camera shake: SmallShake (minor impacts: crate land, small explosions)
-- [ ] CAM-008 — Camera shake: BigShake (fan-blade hit, large explosion) — triggered by ObjectType11
-- [ ] CAM-009 — Camera shake: ElectricShake (ObjectType90 electric spark contact)
-- [ ] CAM-010 — Camera shake: table_decor_action per-frame (dx, dy) offsets × 3 multiplier
-- [ ] CAM-011 — Camera shake: fixed N-frame duration, self-clears to None after last frame
-- [ ] CAM-012 — GECameraRig::StartShake(DecorAction) implementation in Simple3D
-- [ ] CAM-013 — HotSpot zoom: MoveHotSpot() eases camera zoom toward target
-- [ ] CAM-014 — HotSpot target: m_hotSpotFinalZoom/X/Y interpolated over N frames
-- [ ] CAM-015 — HotSpot: triggered on special events (secret exit found, level end zoom)
-- [ ] CAM-016 — SCROLL_MARGX = 80 px / SCROLL_MARGY = 40 px viewport scroll margins
-- [ ] CAM-017 — Smooth scroll: camera eases toward Blupi at SCROLL_SPEED = 8 px/tick
+Camera is relatively more advanced than other CNA systems: first-person default plus third-person
+toggle (real GPU-skinned placeholder model, "C" key) with exponential framerate-independent
+damping already work.
+
+- [x] CAM-001 — First-person default view with third-person toggle ("C" key, GPU-skinned placeholder model) (CNA, 2026-07-10) — note: replaces the old Simple3D-era "3rd-person orbit is the only mode" framing; CNA defaults first-person
+- [ ] CAM-002 — RMB pitch control
+- [ ] CAM-003 — Scroll-wheel zoom (smooth lerp)
+- [ ] CAM-004 — Pitch auto-reset to a default angle when RMB released
+- [ ] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera position)
+- [x] CAM-006 — Exponential, framerate-independent damping on camera follow (CNA, 2026-07-10)
+- [ ] CAM-007 — FOV tuned/finalized (verify current FOV value against original 65° reference)
+- [ ] CAM-008 — Camera shake: SmallShake (minor impacts: crate land, small explosions)
+- [ ] CAM-009 — Camera shake: BigShake (fan-blade hit, large explosion) — triggered by ObjectType11
+- [ ] CAM-010 — Camera shake: ElectricShake (ObjectType90 electric spark contact)
+- [ ] CAM-011 — Camera shake: table_decor_action per-frame (dx, dy) offsets × 3 multiplier
+- [ ] CAM-012 — Camera shake: fixed N-frame duration, self-clears to None after last frame
+- [ ] CAM-013 — Camera shake implementation ported into CNA/Easy3D (StartShake equivalent)
+- [ ] CAM-014 — HotSpot zoom: MoveHotSpot() eases camera zoom toward target
+- [ ] CAM-015 — HotSpot target: m_hotSpotFinalZoom/X/Y interpolated over N frames
+- [ ] CAM-016 — HotSpot: triggered on special events (secret exit found, level end zoom)
+- [ ] CAM-017 — SCROLL_MARGX = 80 px / SCROLL_MARGY = 40 px viewport scroll margins (2D-era concept — evaluate whether a 3D-equivalent framing margin applies at all before implementing)
+- [ ] CAM-018 — Smooth scroll: camera eases toward Blupi at SCROLL_SPEED = 8 px/tick (2D-era concept — likely superseded by CAM-006's damping; evaluate before implementing separately)
 
 ---
 
-## 11. Save Data
+### 2.11 Save Data
 
-- [x] SAVE-001 — GameData: 640-byte flat binary format, binary-compatible with mobile-eggbert
-- [x] SAVE-002 — Global header (10 bytes): version, selectedGamer, sounds, jumpRight, autoZoom, accelActive
-- [x] SAVE-003 — 3 gamer slots × 210 bytes: lives (byte 0), lastWorld (byte 1), doors[200] (bytes 10-209)
-- [x] SAVE-004 — Auto-save on win / lost / quit / reset / gamer-select
-- [x] SAVE-005 — `Simple3D::SaveData` used for persistence
+**Not started at all in CNA.** Every item resets to `[ ]`; the old Simple3D save-format work does
+not carry over as evidence of anything CNA does today.
+
+- [ ] SAVE-001 — GameData: 640-byte flat binary format, binary-compatible with mobile-eggbert
+- [ ] SAVE-002 — Global header (10 bytes): version, selectedGamer, sounds, jumpRight, autoZoom, accelActive
+- [ ] SAVE-003 — 3 gamer slots × 210 bytes: lives (byte 0), lastWorld (byte 1), doors[200] (bytes 10-209)
+- [ ] SAVE-004 — Auto-save on win / lost / quit / reset / gamer-select
+- [ ] SAVE-005 — Persistence mechanism chosen and wired for CNA (CNA has no equivalent of Simple3D's `Simple3D::SaveData` yet — this needs its own CNA-appropriate API, not a straight port)
 - [ ] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors)
 - [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub worlds)
 - [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per gamer slot
@@ -1268,17 +1252,23 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] SAVE-013 — AutoZoom setting (byte 5)
 - [ ] SAVE-014 — Ranking mode persisted when isRankingMode is active
 
+Reuse of the byte-level layout for save compatibility with mobile-eggbert is still an open question
+(see `easy3d.md` §12 Q7) — do not assume SAVE-001's binary-compatible framing until that's decided.
+
 ---
 
-## 12. Visual Polish *(3D-specific and faithful to mobile-eggbert)*
+### 2.12 Visual Polish *(3D-specific and faithful to mobile-eggbert)*
 
-- [x] VISUAL-001 — Blob shadow under Blupi (scales with height, disabled in helicopter/balloon)
-- [x] VISUAL-002 — Blob shadow under enemies (disabled for birds)
-- [x] VISUAL-003 — Pickup bobbing: sine-wave Y offset on collectibles
-- [x] VISUAL-004 — Score popups: rising "+N" text, 1 s fade at collection position
-- [x] VISUAL-005 — Respawn flash: Blupi billboard blinks at 10 Hz for 2 s after respawn
-- [x] VISUAL-006 — Shield tint: cyan sprite when m_blupiShield active
-- [x] VISUAL-007 — Shield blink at < 1.5 s remaining
+Everything here depends on systems (Blupi visibility, enemies, pickups, camera shake) that are
+themselves mostly not started in CNA yet. All items reset to `[ ]`.
+
+- [ ] VISUAL-001 — Blob shadow under Blupi (scales with height, disabled in helicopter/balloon)
+- [ ] VISUAL-002 — Blob shadow under enemies (disabled for birds)
+- [ ] VISUAL-003 — Pickup bobbing: sine-wave Y offset on collectibles
+- [ ] VISUAL-004 — Score popups: rising "+N" text, 1 s fade at collection position
+- [ ] VISUAL-005 — Respawn flash: Blupi billboard blinks at 10 Hz for 2 s after respawn
+- [ ] VISUAL-006 — Shield tint: cyan sprite when m_blupiShield active
+- [ ] VISUAL-007 — Shield blink at < 1.5 s remaining
 - [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px, Explosion channel)
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
@@ -1293,1255 +1283,89 @@ All enemies use billboard sprites from `element.png` (64×64 px cells).
 - [ ] VISUAL-019 — Bridge construction animation: ObjectType52 (157 frames) modifies static decor
 - [ ] VISUAL-020 — Dynamite fuse animation: ObjectType56 (100 frames) with blast events at phases 50-69
 - [ ] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png)
-- [ ] VISUAL-022 — Sky gradient per world region (SetSkyGradient with zenith/horizon colours)
-- [ ] VISUAL-023 — Per-world fog (SetFogEnabled + SetFogColor + SetFogRange per region)
+- [ ] VISUAL-022 — Sky gradient per world region (zenith/horizon colours)
+- [ ] VISUAL-023 — Per-world fog (fog color + fog range per region)
 - [ ] VISUAL-024 — Lightning visual: tiles 66-68 draw 13 px higher; ch69 sound
 - [ ] VISUAL-025 — "EXIT OPEN!" text pop-up with sparkle effect when exit unlocks
 
 ---
 
-## 13. Simple3D Migration Milestones
+### 2.13 Tests & Quality
 
-- [x] S3D-1 — Port skeleton: app entry, world loading, placeholder terrain, Blupi CharacterController, basic HUD, camera, sound, CMake target
-- [x] S3D-2 — Terrain visual fidelity: tile atlas UV per block type. **Bug found + fixed
-  (2026-07-04, while regenerating `mobile-eggbert-reference/tile-anim-lava.gif` for `DOC-101`):**
-  `BlockTypes::tileUV()` (`include/GalaxyEggbert/BlockTypes.hpp`, shared by `GalaxyEggbertSimple3D`
-  and `GalaxyEggbertCNA`) assumed a flat, contiguous 64px grid in `object-m.png`. The real sheet
-  (confirmed from mobile-eggbert's own `Pixmap::GetSrcRectangle`, `PixmapChannel::Object` case:
-  `srcGap=1`) is packed on a **65px pitch** (64px icon + 1px gap) with a 1px leading margin —
-  `pixelX = 1 + col*65`, not `col*64`. The missing gap caused a cumulative 1px/column/row drift:
-  by icon 68 (Lava, col 8 row 3) the sampled box was already off by (9px, 4px), bleeding in ~4px
-  of the icon-above's content (a blue warning-sign icon) and cutting a visible seam partway
-  through the tile — this is what the user spotted as "a thick blue line and the lava looking cut
-  ~20% from the left" in a `GalaxyEggbertCNA` screenshot. Fixed by adding `BlockTypes::kSheetGap=1`
-  and using it in `tileUV()`'s pixel-offset math, and passing the same gap as
-  `startX/startY/spacingX/spacingY` to `Easy3D::TextureAtlas::AddGrid` in
-  `src/GalaxyEggbertCNA/Game/GETileAtlas.cpp` (which already supported gap/offset parameters —
-  no `../easy-3d` change needed); also corrected `GETileAtlas`'s row count from the old
-  ceil(1431/64)=23 to the pitch-aware floor((1431-1)/65)=22 (the highest named `BlockTypes` icon
-  constant is 413, well within the 22-row range, so nothing used the extra bogus row). **Verified**:
-  both `GalaxyEggbertSimple3D` and `GalaxyEggbertCNA` rebuild clean; `GalaxyEggbertWorldsTests`
-  still 54/54; a real `GalaxyEggbertCNA` run logs UV values matching the corrected formula by hand
-  (`Lava (68) UV = (0.400461, 0.136967)-(0.449654, 0.181691)`, i.e. pixel origin ≈(521,196), matching
-  `1+8*65=521, 1+3*65=196`) and its built-in terrain-visibility check still shows real, multi-color
-  textured terrain (25/25 sampled points, 7 distinct colors) — no crash, no flat-fallback regression.
-  Independently, cropping the same corrected pixel math for the `tile-anim-lava.gif` doc frames
-  produced clean images with no blue bleed/seam (see `DOC-101`).
-- [x] S3D-3 — Blupi billboard animation from `blupi.png`
-- [x] S3D-4 — Decor object visuals: enemy + pickup billboard sprites from `element.png`. **Bug
-  found + fixed (2026-07-04, while regenerating `object-anim-type47-chenille.gif` for
-  `DOC-214`):** `ObjectType47` (Chenille — the moving-track lift platform)'s icon table
-  (`GEDecorSystem.cpp`'s `kChenille = {311,312,313,314,315,316}`) indexes `object-m.png`, not
-  `element.png` like every other object sprite — those icon values are out of bounds for
-  `element.png` (600×1740px, 60px tiles → max valid icon 289) but show the real tracked-platform
-  texture on `object-m.png` at its actual 65px gap-aware pitch (`BlockTypes::kSheetGap`, `S3D-2`).
-  `MakeSprite()`/`Update()` unconditionally bound `"icons/element.png"` for every platform/enemy
-  sprite, so any level placing a Chenille lift would sample past the end of `element.png` instead
-  of the intended texture. **Confirmed this is not theoretical**: `ObjectType47` appears in real
-  mobile-eggbert levels (`world051.txt` ×10, `world103.txt` ×7, several others). Fixed by
-  special-casing `ObjectType47` in `MakeSprite()`/`Update()` to bind `object-m.png` and compute its
-  UV rect via `BlockTypes::kTileSize/kSheetGap/kSheetCols` instead of `element.png`'s plain
-  60px/10-col grid. **Verification caveat, stated honestly**: could not rebuild
-  `GalaxyEggbertSimple3D` to confirm compilation — `../simple-3d` had been moved into
-  `/rv/data/archive/trash/2026/` mid-session (restored, with explicit user approval, back to
-  `../simple-3d`), and once restored, U3D's own prebuilt `cmake-build-debug` (a separate,
-  pre-existing dependency at `/rv/data/library/github.com/u3d-community/U3D/`) turned out to be
-  missing entirely — rebuilding it from source is a large, slow operation the user explicitly
-  chose to skip rather than doing right now. This change is therefore **verified by static review
-  only** (matches the file's existing patterns exactly; `BlockTypes::kTileSize`/`kSheetGap`/
-  `kSheetCols` are pre-existing, already-used constants; no new syntax introduced beyond a
-  conditional branch and one small file-local helper function) — not by an actual compile. Should
-  be confirmed with a real build once U3D is available again.
-- [x] S3D-5 — HUD images: gauge sprite, life icons, key icons, hit flash panel
-- [x] S3D-6 — Phase/menu port: Init gamer select with per-slot data, Settings screen, SaveData
-- [x] S3D-7 — Sound channel parity: 93 channels, per-channel volume, no-restart policy
-- [x] S3D-8 — Web build verified (Emscripten)
-- [x] S3D-9 — Remove legacy Urho3D direct target; src/GalaxyEggbert/Game/ deleted
-- [ ] S3D-10 — Full menu system (all phases with background PNGs and correct transitions)
-- [ ] S3D-11 — Vehicle modes: helicopter, jeep, tank (boarding + physics + motor sounds)
-- [ ] S3D-12 — Skateboard mode: faster movement + jump + table_skate animation
-- [ ] S3D-13 — Swimming / surfing modes
-- [ ] S3D-14 — Full enemy AI (all ObjectTypes with correct turn animations and projectiles)
-- [ ] S3D-15 — Explosion / effect billboard system (explo.png objects)
-- [ ] S3D-16 — Dynamite mechanic (pickup + place + fuse + blast)
-- [ ] S3D-17 — All 78 world files playable end-to-end
-- [ ] S3D-18 — Camera shake implementation
-- [ ] S3D-19 — Crate push mechanic
-- [ ] S3D-20 — Positional audio (panned sound by screen X position)
-- [ ] S3D-21 — Nova3D backend switch (`-DSIMPLE3D_ENGINE=NOVA3D`)
-- [ ] S3D-22 — Android build
+- [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest) — re-verify current pass count in this build (documented elsewhere as 63/63; a raw `TEST(...)` grep in this pass counted 60 macros, likely a counting-method difference, not a regression — reconcile before quoting a number in docs)
+- [ ] TEST-002 — ctest discovery in the CNA build dir (gtest_discover_tests fix)
+- [ ] TEST-003 — Test: all mobile-eggbert world files parse without error
+- [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs, including the corrected 65px-pitch/1px-gap math (see plan §1 history / NEXT.md for the tileUV pitch bug)
+- [ ] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip
+- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — blocked on §11 Save Data being started at all
+- [ ] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw/Fan div 1, Lava div 2, Water1/Crusher/Water2/Marine div 3, Spike/Temp div 4) — supersedes the old "matches mobile-eggbert table indices at known times" framing, which assumed a uniform rate
+- [ ] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected (covers the same ground as the existing `VerifyInteractionSystem` tool, but as an automated/CI-checked test rather than a manual verification binary)
+- [ ] TEST-009 — Test (new): crate push validity (adjacency/floor-support/occupancy checks) and platform-lift ping-pong patrol motion, independent of the manual `VerifyMoveObjectTypesCna`/`VerifyBlupiMovement` tools
+- [ ] TEST-010 — Test (new): `BigDecor` billboard parsing round-trip, independent of the manual `VerifyBigDecorParsingCna` tool
 
----
+## 3. Open Questions
 
-## 14. Tests & Quality
+Carried forward from prior research passes; none resolved yet, listed here so future work
+doesn't silently re-open them or silently guess an answer:
 
-- [x] TEST-001 — GalaxyEggbertWorldsTests: 54 unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest)
-- [ ] TEST-002 — ctest discovery in cmake-build-debug (gtest_discover_tests fix)
-- [ ] TEST-003 — Test: all 78 world files parse without error
-- [ ] TEST-004 — Test: BlockTypes::tileUV returns valid UV for all known icon IDs
-- [ ] TEST-005 — Test: GEWorldRuntime::LoadFromMobileEggbertFile round-trip
-- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format)
-- [ ] TEST-007 — Test: animPhase_ matches mobile-eggbert table indices at known times
+- `[?]` **`Config::ScaleTime()`'s real scale factor** — unresolved anywhere in the research so
+  far. Blocks precise conversion of tick-domain durations to real seconds across multiple
+  systems: footstep interval (`E3D-MIG-083`), door-slide duration (`E3D-MIG-160`), teleporter
+  delay (`E3D-MIG-147`), dynamite fuse (`E3D-MIG-155`).
+- `[?]` **`explo1`-`explo8` → `ObjectType` trigger mapping** — which explosion animation fires
+  for which object/hazard is many-to-one or context-dependent; not traced anywhere yet.
+- `[?]` **Icon 95** — ambiguous, boundary-only reference in mobile-eggbert source, intentionally
+  left unresolved by the reference documentation.
+- `[?]` **`E3D-MIG-015`**: whether to ask mobile-eggbert maintainers for a future
+  `add_library()` target covering `Tables`/`Def`/`GameData`/`ObjectType`/`SoundChannel` — still
+  open, would need explicit user approval as a separate task even if pursued.
+- `[?]` **Save-format byte compatibility** (`easy3d.md` §12 Q7) — whether galaxy-eggbert should
+  ever read/write mobile-eggbert's real save byte layout, vs. a fresh format. Not a default
+  either way; decide when `E3D-MIG-106` is actually scoped.
+- `[?]` **Secret power (`Sp0`-`Sp7`) behavior** — unclassified in every reference document so
+  far; needs dedicated research before `E3D-MIG-170` can be implemented (only the static
+  render, `E3D-MIG-515`, is currently plannable without it).
+- `[?]` **Enemy billboard walk-cycle direction mismatch** — enemy sprites only have left/right
+  side-view frames; no resolution proposed for how they should look when viewed at an oblique
+  angle in true 3D (`E3D-MIG-179`).
+- The **7 partial-support `ObjectType`s** (jeep/secret-exit/skateboard/suction-cup/mirror/
+  balloon/dynamite) already have fully-documented behavior (see `13-object-pickups.md`) and are
+  simply not yet prioritized — folded into `E3D-MIG-171`-`176`, not a research gap, just an
+  ordering decision.
 
----
+## 4. Documentation Status
 
-## 15. Documentation — mobile-eggbert 2D reference (complete)
+- `mobile-eggbert-reference/00-overview.md` through `15-3d-render-mapping-design.md` — complete,
+  approved 2026-07-05 as a prose behavioral specification (not pseudocode, not verbatim
+  transcription). This is the primary source of truth for *behavior* going forward; this plan
+  intentionally does not re-duplicate constants already documented there beyond what's needed
+  for task-level scoping.
+- Tile-identification questionnaires (`questionnaire-*.md`) — complete as of the round-3 pass
+  (97 previously unused/unnamed icons resolved); no further identification rounds are planned
+  unless a specific icon's behavior is later found to be wrong.
+- The old `DOC-001`-`DOC-007` documentation-tracking checklist and the ~940-line `DOC-100`-
+  `DOC-267` documentation-regeneration bug-fix log have been removed from this file as pure
+  historical logs with no forward-looking content — available in git history (any commit before
+  this 2026-07-10 rewrite) if ever needed.
 
-User feedback 2026-07-03: the first pass at `mobile-eggbert-2d-reference.md` (single file, 461
-lines) was a representative sample, not a complete catalog — "všechny animace, všechny typy bloků"
-(all animations, all block types). Restructured into `mobile-eggbert-reference/` (multi-file, one
-concern per file, `images/` subfolder) and tracked as explicit, individually completable tasks
-below. Each file's own top-of-file status note tracks its completion state — check there for
-current progress, not just this list.
+## 5. Retired / Not Doing
 
-- [x] DOC-001 — Done (2026-07-03). Split the single `mobile-eggbert-2d-reference.md` into
-  `mobile-eggbert-reference/00-overview.md` through `09-open-questions.md` (10 files) +
-  `mobile-eggbert-reference/images/` (moved via `git mv`, history preserved). Verified
-  programmatically: all 85 image references across all files resolve to real files, and all 85
-  actual image files are referenced somewhere (no orphans, no broken links).
-- [x] DOC-002 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16), re-closed 2026-07-04
-  (`DOC-230`).** All 313 `tile-full-*.png` crops turned out to have a real bug, not just doc
-  staleness: they were generated with `x = col*65, y = row*65` (no leading margin), the same
-  off-by-one root cause as the `S3D-2` engine bug the Lava GIF's blue seam exposed. Confirmed via
-  `compare -metric AE` = 0 against the old formula (pixel-exact match) before regenerating all 313
-  with the corrected `x = 1+col*65, y = 1+row*65`. See `DOC-230` below and `02-tiles.md`'s "How
-  these images were generated" section for the full writeup. History below kept as-is.
-  ~~Done (2026-07-03). All 441 addressable icons (0–440) accounted for in `02-tiles.md`:~~
-  313 with a full 64×64 crop (every named/behavioral icon plus every icon confirmed used in at
-  least one of the 78 real level files), remaining 128 unused/unnamed icons listed compactly by
-  range (passability + mechanical alpha-based visual signal, not fabricated names). Built via a
-  script (parses `BlockTypes::kPassable[441]` programmatically, batch-crops all icons with
-  ImageMagick, scans real `Decor:`/`BigDecor:` grid sections across all 78 world files for genuine
-  usage counts — not hand-typed). Real findings: (1) icon 440 has no real pixel data — the sheet
-  only has 22 full 65px-stride rows (1430 of 1431px), so real icons are 0–439; (2) animated
-  sub-frame icons (e.g. `Crusher` 318–323, `Saw` 379–383) are *never* placed directly in level
-  files — only the base/first frame is, confirming `BlockTypes::tileAnimBase()`'s design assumption
-  independently; (3) three named icons (`Water2`=96, `Spring`=211, `SwitchOff`=385) have 0/78 usage
-  in the shipped level set (double-checked with a raw grep to rule out a parsing bug) — still
-  functionally real, just never authored into any shipped level. Verified: all 372 image
-  references across the whole `mobile-eggbert-reference/` tree resolve to real files, zero
-  orphaned images, spot-checked crops for real pixel dimensions/content. Old per-name image files
-  superseded by `images/tile-full-NNN.png` (single source of truth) except the 3 door crops still
-  referenced by `06-doors.md`. **Follow-up fix (same day, coordinator's own verification pass):**
-  found the "128 unused/unnamed" compact-range table used coarse, loosely-worded ranges (e.g.
-  "166–205") that numerically overlapped icons already documented above (79 icons double-counted,
-  e.g. `Wall`=183 sat inside that range) — total coverage (441/441) was never actually wrong, but
-  the range boundaries were imprecise. Regenerated the 128-icon set as exact non-overlapping ranges
-  (independently re-cropped, re-measured, re-merged only on consecutive-and-same-category runs);
-  verified programmatically: 313 + 128 = 441, zero overlap, zero gaps.
-- [x] DOC-003 — **Reopened 2026-07-03 (GIF ghosting bug + full audit, see §16), re-closed
-  2026-07-04 (`DOC-231`).** The 0–203 classification itself was unaffected (that's a text/grep
-  result, not an image), but 7 of the 67 icon crops had a real bug: the ones sourced from
-  `object-m.png` (`14`, `15`, `31`, `35`, `47`, `48`, `52`) had the same `S3D-2`/`DOC-230`
-  leading-margin bug. Confirmed pixel-exact against the old formula before regenerating with the
-  corrected one. The other 60 crops (`element.png`/`blupi.png`/`blupi1.png`/`explo.png`) confirmed
-  unaffected — those sheets' dimensions divide evenly into their tile grid (no gap/margin). See
-  `03-objects.md`'s new `DOC-231` note. History below kept as-is.
-  Done (2026-07-03). Every `ObjectType` ID 0–203 classified into exactly one of 4
-  categories, verified programmatically (script partitioned all 204 IDs, asserted no overlap/gap):
-  **A** (29 IDs) — real `Decor.cpp` logic AND placed in ≥1 of the 78 shipped levels; **B** (41 IDs)
-  — real logic confirmed (via direct grep of `Decor::MoveObjectStepIcon`, lines ~8192–9057, plus
-  the rest of `Decor.cpp`/`Tables.cpp`) but never level-placed (mostly dynamically-spawned effects:
-  explosions, splashes, door-open animation, etc.); **C** (1 ID, `95`) — appears only as a
-  range-boundary literal in comparisons, never a direct `type==` check, left ambiguous rather than
-  guessed; **D** (133 IDs) — zero references anywhere in `Decor.cpp`/`Tables.cpp`, genuinely
-  vestigial (`43`, `45`, `59-89`, `94`, `101-199`). Cropped icons for the 12 types added by the
-  earlier `MoveObject` fix (bringing total cropped from 18 to 30). **Real bug found, not fixed
-  (documented in `03-objects.md`, tracked as `DOC-007` below)**: `GEDecorSystem.cpp` assumes every
-  `ObjectType` draws via `element.png`, but real level data's `channel=` field shows types `1`,
-  `12`, `47` actually use `PixmapChannel::Object` (`object-m.png`), and types `32`/`33` (`blupih`/
-  `blupit`) use `PixmapChannel::Blupi1_11/12/13` (`blupi1.png`) — confirmed by grepping real
-  `MoveObject:` lines across all 78 world files, not assumed. `47`'s `table_chenille` icon values
-  (311–316) are additionally out-of-bounds for `element.png` (which only holds icons 0–289) —
-  reproduced the ImageMagick crop error directly. `33` is one of the *original* 18 "confirmed"
-  types, meaning this bug predates today's session. Files: `mobile-eggbert-reference/03-objects.md`,
-  `00-overview.md`, 12 new + 1 corrected image crop in `images/`.
-  **Follow-up (same day)**: user pointed out that skipping icon crops for Category B (41 IDs, real
-  behavior but never level-placed) as "lower value" was exactly the kind of silent scope cut they'd
-  already flagged — cropped 37 of 41 (the other 4 — `0`, `18`, `22`, `58` — genuinely have no
-  icon-assignment logic anywhere in `Decor.cpp`, documented as such rather than guessed). Found 6
-  more sprite-channel corrections along the way: `14`/`15`/`31`/`35`/`48`/`52` use `object-m.png`
-  (not `element.png`), and `38` switches from `blupi1.png` (first 30 ticks) to `element.png`.
-  Verified: all 440 image references in `mobile-eggbert-reference/` resolve, zero orphans.
-- [ ] DOC-007 — Fix the `ObjectType` sprite-channel bug found by `DOC-003`: `GEDecorSystem.cpp`
-  (Simple3D) hardcodes `element.png` for every object type; types `1`/`12`/`47` need
-  `object-m.png`, types `32`/`33` need `blupi1.png` (variant selected by the level file's own
-  `channel=` field — not a fixed choice per type, per real data showing `32`/`33` use different
-  `Blupi1_1{1,2,3}` variants in different levels). Likely fix: read `.channel` from the parsed
-  `MoveObjectSpec` (already captured from the level file — see `01-world-file-format.md`) instead
-  of assuming `Element` unconditionally in `GEDecorSystem`. Needs its own verification (visual
-  check or a scripted crop-and-compare against the correct sheet) before considering it done.
-- [x] DOC-004 — **Reopened a second time, 2026-07-03 (GIF ghosting bug, see §16.1/§16.2), re-closed
-  2026-07-04.** All 129 animated GIFs (`DOC-101`–`DOC-229`) regenerated and verified with the fixed
-  `make-gif.sh` (`-dispose Background` + binary-alpha threshold). History below kept as-is. The user
-  found by visual inspection that the GIFs themselves are corrupted: each frame accumulates the
-  previous frame's opaque pixels instead of clearing (e.g. frame 2 shows frame 1 ghosted into its
-  background). Confirmed via alpha-channel analysis on coalesced frames: `blupi-action-02-march.gif`
-  mean alpha rises monotonically and plateaus (80.0→85→86.2→86.3→86.6→86.7) instead of fluctuating
-  with the real walk-cycle silhouette; same pattern confirmed in `object-anim-type05-treasure.gif`
-  (133.7→...→153.6, plateaus) and `explosion-anim-explo1.gif` (9.3→...→161.9, plateaus). Tile
-  animations (`tile-anim-temp.gif`) show NO such pattern (alpha correctly oscillates and hits exactly
-  0 on the two real blank frames) — but since tile frames are fully opaque, this test can't rule out
-  a shared root cause being invisible there; do not assume tiles are exempt without dedicated
-  verification (`DOC-101`–`DOC-112`). All 129 animated GIFs need regeneration with fixed tooling —
-  see §16 for the full task breakdown. Nothing in this "done" entry below is trustworthy for the
-  actual `.gif` files; the frame-data research (which icons, which order, which sheet) is still
-  correct and doesn't need redoing, only the final GIF assembly step.
-  **Previous "done" note (2026-07-03), after being reopened once same day.** User caught a real
-  completeness gap in the first "done" pass (kept below for history), then this was fixed by parsing
-  `Tables::table_blupi[2911]` (`../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp`) directly
-  and programmatically — a flat record list `{actionId, frameCount, holdLimit, icon_0..icon_N}`
-  terminated by `actionId==0`, the same structure `Decor::BlupiSearchIcon()` (`Decor.cpp` ~line 2390)
-  consumes at runtime. Result: **84 of the 87 real `BlupiAction` values now have a documented,
-  GIF-illustrated animation** in `08-animations.md` §2, grouped into 23 categories (Core movement,
-  Helicopter/Jeep/Tank/Skate/Surf/Nage modes, hazard contact, relief "Ouf" animations, Clear/erasing
-  variants, etc.). 3 actions (`Set`=12, `Recedeq`=70, `Advanceq`=71) have no direct `table_blupi`
-  record — noted honestly as "no record found", not guessed (mobile-eggbert's own doc comment
-  suggests a stage-1 action-remapping step may redirect these before the table lookup runs; not
-  traced in this pass). Channel selection (`blupi.png` vs `element.png`) and the `-1` "invisible
-  frame" convention (same as `Temp` tile) were both confirmed directly from `BlupiSearchIcon()`, not
-  assumed. **Independent verification**: the parsed data reproduces `GEBlupiController.cpp`'s
-  existing `March`/`Jump`/`Air`/`SwimIdle`/`SwimMove` arrays byte-for-byte, confirming both the new
-  parser and the original partial port are correct — the gap was purely that 82 other real actions
-  were outside that port's scope. Whole-tree image-integrity check: 519 image references, 519 real
-  files, zero orphans, zero broken links. Frame counts spot-checked with `identify` (Stop=330,
-  March=6, Teleporte=128, all exact). **Explicitly out of scope for this fix, not done**: the 40
-  `ObjectType` icon crops from `DOC-003`'s Category B that the user separately approved — still
-  pending.
-  ---
-  Original (reopened) entry, kept for history:
-  the Blupi section only covers the **8 `BlupiState` values `GEBlupiController.cpp` (galaxy-eggbert's
-  own Simple3D port) implements** (Stop/March/Jump/Air/Down/Up/SwimIdle/SwimMove — 5 animated + 3
-  static), not mobile-eggbert's real `BlupiAction` enum
-  (`../mobile-eggbert/include/WindowsPhoneSpeedyBlupi/def/BlupiAction.hpp`), which has **87 real
-  states** (`None`=0 + 87 actions 1–87): Stop/March/Turn/Jump/Air/Down/Up/Vertigo/Recede/Advance/
-  Win/Push, plus full Stop/March/Turn triads per mode (Helico, Nage/swim, Surf, Jeep, Tank, Skate,
-  Over/flattened, Ecrase/crushed), Drown, Glu, Electro, Charge, Teleporte, TakeDynamite/PutDynamite,
-  8 `Clear1`–`8` variants, `Ouf1a`–`Ouf5` relief animations, `Mockery`/`Mockeryi`/`Mockeryp`, and
-  more — see the file for the full list. **Root cause**: both the generating fork and the
-  coordinator's own verification treated galaxy-eggbert's already-ported subset as if it were
-  mobile-eggbert's complete state machine, instead of checking the real upstream enum directly —
-  the same class of mistake as `DOC-003`'s sprite-channel bug (trusting a partial port as ground
-  truth) but in the completeness-checking process itself, not just the data. Verification in this
-  pass checked internal consistency (do frame/image counts add up) but not external completeness
-  (does the *scope* match the real source) — a gap in the verification method itself, worth
-  remembering for future `DOC-*` passes.
-  Previous (incomplete) summary, kept for history: expanded `08-animations.md` from 31 to 71 animated sequences: 8
-  explosion tables (`table_explo1`–`8`, transcribed from `Tables.cpp`, `-1` frames rendered
-  transparent same as `Temp`'s vanish frames), a 10-frame door slide-up composite (positional, not
-  a frame-cycle), and 10 GIFs for 9 of the 12 newly-supported `ObjectType`s (`19`/`46`/`55` are
-  static icons, no animation; `96` has dormant+awake states = 2 GIFs). Applied `DOC-003`'s
-  sprite-sheet correction: `32` (blupih) cropped from `blupi1.png`, `47` (chenille track) from
-  `object-m.png`, not `element.png` — cross-checked the other 7 new types' real `channel=` field
-  across all 78 world files and confirmed `element.png` (channel=10) is correct for those. Ran a
-  full `Tables.cpp` sweep (grep for every `table_*` identifier) and categorized all ~100 found:
-  covered / deferred-with-reason (mostly directional-variant tables for enemies whose one direction
-  is already shown, and effects for `ObjectType`s confirmed vestigial-in-real-levels by `DOC-003`) /
-  out-of-scope (non-visual parameter tables like `table_decor_quart`, `table_vitesse_*`,
-  `table_training*`) — nothing silently dropped. **Real finding, not fixed here**: object animations
-  (`GEDecorSystem::Update()`) have no throttled timer (unlike tiles/Blupi, which do) — `st.animPhase`
-  increments every `Update()` call with no rate cap found in `GalaxyEggbertSimple3D`, so the "6 fps ÷
-  divisor" duration figures for the original 14 object animations (and any new ones added this pass)
-  are unconfirmed and likely off by ~10x if the real frame rate is closer to 60 fps; flagged
-  prominently in `08-animations.md` rather than left as an uncorrected assumption. Verified: all 403
-  image references across `mobile-eggbert-reference/` resolve to real files (zero orphans/broken
-  links), all 19 new GIFs' frame counts checked with `identify` against the source table lengths
-  (all exact matches).
-- [x] DOC-005 — Complete sound catalog. **Done 2026-07-04** via `DOC-235`–`DOC-246` (§16.4): all 93
-  `SoundChannel` entries documented with their real in-game trigger in `07-sounds.md`, cross-checked
-  against `SoundChannel.hpp`, all 93 `.wav` files verified accounted for.
-- [x] DOC-006 — Complete backgrounds catalog. **Done 2026-07-04** via `DOC-247`–`DOC-257` (§16.5):
-  the `region=` → filename mapping found (direct formula in `Decor::LoadImages()`, no lookup table)
-  and verified against all 78 levels, all 28 level backgrounds thumbnailed, all 10 non-level
-  UI-screen backgrounds documented.
+Standing rules, not one-shot tasks — durable until explicitly revisited with the user:
 
-## 16. Documentation rework (2026-07-03) — GIF ghosting bug + full completeness audit
-
-**Status: COMPLETE (2026-07-04).** All 168 tasks (`DOC-100`-`DOC-267`) done: 129 GIFs regenerated,
-320 sprite crops fixed for a real leading-margin grid bug (`S3D-2`), 2 real engine bugs found and
-fixed (`S3D-2`, `S3D-4`), the full 93-channel sound catalog documented, the full background catalog
-documented (including resolving the `region=` mapping), and a final read-through of all 10 files
-found and fixed several stale claims. See `DOC-267`'s entry below for the closing summary.
-
-**Nothing in `mobile-eggbert-reference/` was being treated as actually finished when this section
-started.** The user
-inspected `08-animations.md`'s GIFs directly and found a real rendering bug: each frame keeps the
-previous frame's opaque pixels instead of clearing before drawing the next one — visually, frame 2
-shows frame 1 ghosted into its background, frame 3 shows frames 1+2, etc. Confirmed programmatically
-(coalesce each GIF, measure mean alpha per frame): `blupi-action-02-march.gif` goes
-80.0→85→86.2→86.3→86.6→86.7 and plateaus — a real walk cycle's alpha should fluctuate with the leg
-positions, not monotonically converge. Same pattern in `object-anim-type05-treasure.gif`
-(133.7→...→153.6, plateaus) and `explosion-anim-explo1.gif` (9.3→...→161.9, plateaus). Tile
-animations (`tile-anim-temp.gif`) do NOT show this pattern — alpha correctly oscillates and hits
-exactly 0 on the genuinely-blank frames — but since tile content is fully opaque, this test cannot
-rule out the same root cause being invisible there, so tiles are not assumed exempt.
-
-The user also asked, separately, whether `DOC-002`/`DOC-003`'s "complete" claims can be trusted at
-all given this — see those entries above, now marked reopened: their *text/data* content (icon
-classifications, frame tables, channel corrections) is not affected by a GIF-specific bug and
-doesn't need redoing, but every generated *image file* is being re-verified rather than assumed
-correct, given how many distinct bugs (channel mismatches, the Blupi partial-port gap, now this)
-have turned up in this same effort so far.
-
-**Per the user's explicit instruction**: this is broken into ~170 small, single-purpose tasks so the
-rework can actually be done properly and incrementally, not batched into a few large opaque passes
-the way the original `DOC-002`–`DOC-004` work was (which is part of how these gaps went undetected —
-large multi-hundred-tool-call passes are hard to spot-check as thoroughly as many small ones).
-`DOC-100` (the root-cause fix) blocks every GIF-regeneration task below it; nothing else in this
-section has a hard ordering dependency, but doing the static-asset re-verification (§16.3) before or
-alongside the GIF work is reasonable since neither blocks the other.
-
-### 16.1 Root cause
-- [x] DOC-100 — Diagnosed and fixed the GIF-assembly ghosting/disposal bug. **Root cause:** the
-  prior workflow assembled frames with plain `convert -delay D -loop 0 frame*.png out.gif`, which
-  leaves every frame's GIF disposal method as `Undefined` (`identify -format "%D"` on the existing
-  broken GIFs confirms this). With disposal `Undefined`/`None`, a GIF decoder composites each new
-  frame on top of whatever is still on the canvas from the previous frame instead of clearing to
-  background first — so any frame with transparent/semi-transparent pixels lets prior opaque
-  pixels bleed through, and per-frame mean alpha climbs (then plateaus once compounded pixels
-  saturate at alpha=255), matching the originally-reported symptom exactly. **Fix:** add
-  `-dispose Background` so each frame is cleared to a transparent canvas before the next is drawn.
-  **Verified** with a synthetic repro (6 semi-transparent frames, same shape as a real sprite
-  crop): the broken path reproduced the reported pattern (mean alpha 17.6→21.3→24.9→28.5→32.1→35.7,
-  monotonic climb); the fixed path (`-dispose Background`) gave a flat 17.6 on every coalesced
-  frame, i.e. each frame now matches its real source data with zero accumulation. Landed as a
-  reusable wrapper, `mobile-eggbert-reference/tools/make-gif.sh` (`make-gif.sh <delay> <out.gif>
-  <frame1.png> [frame2.png ...]`), so `DOC-101`–`DOC-267` use the fixed tool instead of ad hoc
-  `convert` invocations (the ad hoc-command pattern is how the bug was introduced in the first
-  place). Real sprite-sheet GIFs (`blupi-action-*`, `tile-anim-*`, etc.) are not regenerated by
-  this task — that is `DOC-101` onward; this task only fixes and verifies the tool itself.
-
-### 16.2 Regenerate animated GIFs with the fixed tooling (129 tasks, one per sequence)
-
-Tile animations (12) — no ghosting symptom observed via alpha testing, but content is fully
-opaque so the test can't rule out a shared root cause being invisible there; regenerate
-defensively with the fixed tooling and re-verify rather than assuming these are exempt.
-
-- [x] DOC-101 — Regenerated + verified `tile-anim-lava.gif` (animated tile: Lava). Frames are the 8
-  real `kAnimLava` icons (`GETerrainRenderer.cpp`: `{68,69,70,71,72,71,70,69}`), cropped directly
-  from `../mobile-eggbert/Content/icons/object-m.png` at `64x64`, assembled with the fixed
-  `mobile-eggbert-reference/tools/make-gif.sh` at 17-centisecond delay (167 ms, matches
-  `08-animations.md`'s existing table). **First crop attempt used the naive `col*64,row*64` pixel
-  math and turned up a second, independent bug**: a thick blue bar bled in at the top of every
-  frame and a vertical seam cut across the flame ~20% from the left (user caught this from a
-  screenshot). Root cause + fix is the `S3D-2` gap/pitch bug above — `object-m.png` is packed on a
-  65px pitch (64px + 1px gap), not flat 64px. **Final crop uses the corrected
-  `1 + col*65, 1 + row*65` pixel math** (same formula now codified in `BlockTypes::tileUV()`) —
-  clean frames, no bleed, no seam. **Verified**: coalesced-frame alpha-mean tracks the corrected
-  per-frame source crops almost exactly (e.g. frame 4/icon 72, the one visually distinct frame:
-  99.17 coalesced vs 99.00 source-crop; mirrored frames 1↔7, 2↔6, 3↔5 match each other within
-  noise) — no monotonic climb, i.e. the DOC-100 ghosting fix holds on the corrected crops too. The
-  **old** committed GIF, re-coalesced for comparison, was uniformly ~8-10 alpha points higher
-  across all 8 frames than the (naive-crop) true source at the time — confirms the ghosting bug was
-  present here too, just smaller in magnitude than the Blupi-sprite cases because lava tile content
-  is mostly opaque (little transparent area to accumulate through), matching the
-  `08-animations.md` caveat that this test "can't rule out the same root cause being invisible" on
-  opaque tile content.
-- [x] DOC-102 — Regenerated + verified `tile-anim-spike.gif` (animated tile: Spike). Frames are the
-  16 real `kAnimSpike` icons (`GETerrainRenderer.cpp`:
-  `{374,374,373,347,373,374,374,374,373,347,347,373,374,374,374,374}` — 3 distinct icons: 374
-  extended, 373 mid, 347 retracted), cropped with the corrected `1 + col*65, 1 + row*65` pixel math
-  (`S3D-2`) — this set stress-tested the gap fix at high row indices (row 17-18 of 22; the old
-  buggy 64px-flat math would have been off by ~17-18px here), assembled with
-  `mobile-eggbert-reference/tools/make-gif.sh`. **Verified**: coalesced-frame alpha-mean
-  (252.88 for icon 374/373, 252.63 for icon 347) tracks the source crops (253.285/253.082) almost
-  exactly with no monotonic climb; visually matches the old committed GIF's green-spike look (icon
-  mapping confirmed correct), just without any bleed/seam.
-- [x] DOC-103 — Regenerated + verified `tile-anim-crusher.gif` (animated tile: Crusher). Frames are
-  the 10 real `kAnimCrusher` icons (`GETerrainRenderer.cpp`: `{317,317,318,319,320,321,322,323,
-  323,323}`), cropped with the corrected `1+col*65,1+row*65` pixel math (`S3D-2`) and assembled
-  with `make-gif.sh`. Stress-tested two more edge cases: icon 319 sits in the last column (col 19,
-  x=1236, right edge at x=1300 — fits within `kSheetW`=1301 with exactly 1px to spare) and icon 320
-  wraps to column 0 of the next row, both landing cleanly with no cropping error. **Verified**:
-  coalesced-frame alpha-mean tracks the source crops closely (108.2→99.2→89.8→78.2→69.7→61.3→52.5,
-  matching the real per-icon values 108.9→98.6→89.3→78.8→70.3→60.7→52.0) — this is a genuine
-  content decrease (piston retracting, more transparent background revealed each frame), distinct
-  in shape from the ghosting bug's spurious monotonic *increase*-then-plateau.
-- [x] DOC-104 — Regenerated + verified `tile-anim-saw.gif` (animated tile: Saw). Frames are the 6
-  real `kAnimSaw` icons (`GETerrainRenderer.cpp`: `{378,379,380,381,382,383}` — a rotating blade),
-  cropped with the corrected `1+col*65,1+row*65` pixel math (`S3D-2`) and assembled with
-  `make-gif.sh`. Another row-wrap edge case (icon 379 col 19 row 18 → icon 380 col 0 row 19), row
-  19 of 22 — all clean. **Verified**: coalesced-frame alpha-mean (75.8/74.9/74.8/75.4/74.6/75.1)
-  tracks the source crops (75.75/74.85/74.55/75.33/74.67/74.79) closely, roughly flat as expected
-  for a symmetric rotating shape — no accumulation.
-- [x] DOC-105 — Regenerated + verified `tile-anim-water1.gif` (animated tile: Water1). Found and
-  fixed a **second, independent tooling bug** while doing this task: Water1's source icons (92-95)
-  are genuinely translucent (alpha 0-127, never above ~50%, matching a see-through water surface).
-  GIF only supports binary transparency, so ImageMagick's `convert` must collapse each pixel to
-  fully transparent or fully opaque; for this near-uniform low-alpha content its automatic
-  per-image heuristic collapsed the **entire frame** to a single fully-transparent color
-  (`colors=1`) — confirmed the **already-committed** `tile-anim-water1.gif` had this exact defect
-  too (pre-existing, not introduced this session). A near-identical tile, Water2 (similar ~100/255
-  alpha), did *not* collapse — confirms the heuristic is inconsistent, not a clean/predictable
-  threshold. **User decision (2026-07-04):** since GIF cannot represent partial alpha at all here
-  regardless of approach, show the sprite's real saturated color (fully opaque wherever alpha>0)
-  rather than pre-blending against an arbitrarily-chosen backdrop color (rejected alternative —
-  the blended look would only be "correct" for one specific, made-up background color, not
-  whatever the doc page actually renders against). Landed in `make-gif.sh`: each frame now gets
-  `-channel A -threshold 1% +channel` before assembly. **Verified no regression on already-shipped
-  GIFs**: re-ran `tile-anim-lava.gif`'s frames through the updated script — coalesced alpha-mean
-  shifted by only ~2-3/255 (edge anti-aliasing very slightly harder), visually unchanged; the
-  already-committed lava/spike/crusher/saw GIFs were left as-is (they never exhibited the
-  collapse-to-one-color symptom, so redoing them isn't necessary). **Water1 verified**: `colors`
-  per frame went from `1` (broken) to `89`-`100` (real content), coalesced alpha-mean ~241-246/255
-  (near-fully-opaque, matching the forced-opaque intent), visually a clean, always-visible water
-  surface with no black/blue bleed.
-- [x] DOC-106 — Regenerated + verified `tile-anim-water2.gif` (animated tile: Water2). Frames are
-  the 6 real `kAnimWater2` icons (`GETerrainRenderer.cpp`: `{91,96,97,98,97,96}`), cropped with the
-  corrected pixel math and assembled with the (now translucency-aware, `DOC-105`) `make-gif.sh`.
-  **Initially looked like a regression** — coalesced-frame alpha-mean came back as 0 despite
-  `colors=42-48` — but this was a false alarm in the *test methodology*, not the image: unlike
-  Water1, Water2's source crop has **no fully-transparent region at all** (alpha uniformly
-  100-104/255 across the entire 64x64 cell — a full-bleed underwater fill, not a wave-shaped
-  surface silhouette), so after the `DOC-105` opacity fix every pixel legitimately becomes fully
-  opaque with no transparency left to report; when ImageMagick then writes that as a plain
-  (alpha-free) indexed PNG for the coalesce-test, `%[fx:mean.a]` reports 0 for images with no
-  alpha channel at all, which is where the false "0" came from. Confirmed by direct pixel query on
-  the real output GIF (solid color at both center and corner, as expected for a full-tile fill) and
-  a visual comparison to the previously-committed GIF (same solid light-blue look, no regression).
-- [x] DOC-107 — Regenerated + verified `tile-anim-temp.gif` (animated tile: Temp). Frames are the
-  20 real `kAnimTemp` values (`GETerrainRenderer.cpp`:
-  `{328,328,327,327,326,326,325,325,324,324,325,325,326,326,327,329,328,328,-1,-1}`), 18 real
-  icons cropped with the corrected pixel math + the 2 trailing `-1` sentinels rendered as genuinely
-  blank 64×64 transparent frames (`convert -size 64x64 xc:none`, not cropped from the sheet —
-  matches this file's own pre-existing documented convention that `-1` = a real invisible frame,
-  not a skip), assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean traces a
-  clean pulse (47.8→84.0→112.1→130.1→141.9→…→47.8→**0, 0**) matching the source icons' real alpha
-  progression (46.5→79.6→…→137.4→…→46.5) with the two invisible frames correctly landing at exactly
-  0 — no ghosting, no bleed on any of the 6 distinct sheet positions used.
-- [x] DOC-108 — Regenerated + verified `tile-anim-marine.gif` (animated tile: Marine). Frames are
-  the 11 real `kAnimMarine` icons (`GETerrainRenderer.cpp`: `{203,204,205,206,207,208,207,206,205,
-  204,203}` — a seaweed/plant sway), cropped with the corrected pixel math and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
-  (63.1→61.1→59.5→58.6→58.3→59.5→58.3→58.6→59.5→61.1→63.1) matching the real per-icon values
-  (53.4→52.8→50.9→49.9→50.1→51.9→50.1→49.9→50.9→52.8→53.4) — no ghosting, no bleed.
-- [x] DOC-109 — Regenerated + verified `tile-anim-fanleft.gif` (animated tile: FanLeft). Frames are
-  the 3 real icons (`GETerrainRenderer.cpp`: `FanLeft = 126 + (phase % 3)` → 126,127,128), cropped
-  with the corrected pixel math and assembled with `make-gif.sh`. **Verified**: coalesced-frame
-  alpha-mean (143.1/143.4/139.7) tracks the source crops (136.4/136.5/133.2) closely — no
-  ghosting.
-- [x] DOC-110 — Regenerated + verified `tile-anim-fanright.gif` (animated tile: FanRight). Frames
-  are the 3 real icons (`GETerrainRenderer.cpp`: `FanRight = 129 + (phase % 3)` → 129,130,131),
-  cropped with the corrected pixel math and assembled with `make-gif.sh`. **Verified**:
-  coalesced-frame alpha-mean (144.4/144.4/140.8) tracks the source crops (137.9/138.2/134.8)
-  closely — no ghosting.
-- [x] DOC-111 — Regenerated + verified `tile-anim-fanup.gif` (animated tile: FanUp). Frames are
-  the 3 real icons (`GETerrainRenderer.cpp`: `FanUp = 132 + (phase % 3)` → 132,133,134), cropped
-  with the corrected pixel math and assembled with `make-gif.sh`. **Verified**: coalesced-frame
-  alpha-mean (141.8/141.8/138.3) tracks the source crops (134.2/134.4/131.0) closely — no
-  ghosting.
-- [x] DOC-112 — Regenerated + verified `tile-anim-fandown.gif` (animated tile: FanDown, last of
-  the 12 tile animations). Frames are the 3 real icons (`GETerrainRenderer.cpp`:
-  `FanDown = 135 + (phase % 3)` → 135,136,137), cropped with the corrected pixel math and
-  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (145.9/145.9/142.3)
-  tracks the source crops (139.7/139.9/136.6) closely — no ghosting. All 12 tile animations
-  (`DOC-101`-`DOC-112`) are now regenerated and verified; `DOC-113` onward moves to the 87 real
-  Blupi action animations.
-
-Blupi actions (84) — **confirmed ghosting**, all need regeneration.
-
-- [x] DOC-113 — Regenerated + verified `blupi-action-01-stop.gif` (`BlupiAction::Stop`=1). First
-  of the 84-Blupi-action batch — landed a new reusable tool,
-  `mobile-eggbert-reference/tools/extract-blupi-action.py`, which reads
-  `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp` **live** at run time and parses
-  `table_blupi`'s record format (`{actionId, frameCount, holdLimit, icons...}`, confirmed directly
-  from `Decor::BlupiSearchIcon()`'s loop, `Decor.cpp` ~line 2393) — it does not copy/transcribe the
-  table into galaxy-eggbert, same "read live, don't copy" pattern as `make-gif.sh` reading sprite
-  sheets (per `CLAUDE.md`'s mobile-eggbert reuse rules). Action 1 has **330 real frames**
-  (frameCount=330, holdLimit=0 — matches the already-committed GIF's frame count and 08-animations.md's
-  documented table exactly, confirming both the parser and the pre-existing doc entry are correct),
-  mostly icon 0 (Blupi's neutral standing pose on `blupi.png`, 60×60 cells, no gap — confirmed via
-  mobile-eggbert's own `Pixmap::GetSrcRectangle`, `PixmapChannel::Blupi`: `srcGap=0`, so no
-  gap-math needed here unlike `object-m.png`) interspersed with blink/idle-gesture icons (23, 133,
-  135-138). Cropped all 330 frames, assembled with `make-gif.sh` at delay 13 (125 ms, matches the
-  doc's confirmed 8fps Blupi tick). **Verified**: coalesced-frame alpha-mean spot-checked across
-  the full cycle (frames 0,1,5,50,100,150,200,250,300,329) stays in a tight, non-monotonic
-  ~79-86/255 range — no ghosting even across this much longer sequence.
-- [x] DOC-114 — Regenerated + verified `blupi-action-02-march.gif` (`BlupiAction::March`=2). This
-  is the exact GIF that first surfaced the `DOC-100` ghosting bug (originally reported climbing
-  80.0→85→86.2→86.3→86.6→86.7 then plateauing). 6 real frames (icons 5-10, via
-  `extract-blupi-action.py`), cropped from `blupi.png` (60×60, no gap) and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean now fluctuates
-  (85.9→81.8→83.7→85.4→81.9→83.9) matching the real per-icon values (80.5→76.9→78.7→80.2→76.8→78.5)
-  — no monotonic climb, confirming `DOC-100`'s fix resolves the original bug report.
-- [x] DOC-115 — Regenerated + verified `blupi-action-03-turn.gif` (`BlupiAction::Turn`=3). 6 real
-  frames (icons `1,1,2,2,3,3`, via `extract-blupi-action.py`), cropped from `blupi.png` and
-  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (86.3/86.3/87.1/87.1/
-  86.1/86.1) exactly matches the paired-icon pattern of the source crops (79.7/79.7/78.6/78.6/
-  79.3/79.3) — no accumulation.
-- [x] DOC-116 — Regenerated + verified `blupi-action-04-jump.gif` (`BlupiAction::Jump`=4). 3 real
-  frames (icons 17,18,19), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean (76.8/79.6/80.1) tracks the source crops
-  (72.0/74.5/75.1) closely — no ghosting.
-- [x] DOC-117 — Regenerated + verified `blupi-action-05-air.gif` (`BlupiAction::Air`=5). 5 real
-  frames (icons 169,26,170,170,27; `holdLimit=4` — a one-shot hold on the last frame in real
-  gameplay, per `BlupiSearchIcon()`'s clamp logic, but shown as a looping 5-frame cycle here,
-  matching this doc's existing convention of showing every real frame an action can produce, same
-  as other already-cataloged holdLimit actions). Cropped from `blupi.png`, assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean (79.3/79.1/80.0/80.0/81.8) tracks the
-  source crops (74.1/74.0/74.7/74.7/76.0) closely — no ghosting.
-- [x] DOC-118 — Regenerated + verified `blupi-action-06-down.gif` (`BlupiAction::Down`=6). 3 real
-  frames (icons 33,34,35), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean (84.3/82.8/80.4) tracks the source crops
-  (79.3/78.5/76.0) closely — no ghosting.
-- [x] DOC-119 — Regenerated + verified `blupi-action-07-up.gif` (`BlupiAction::Up`=7). Single real
-  frame (icon 44, `frameCount=1`), cropped from `blupi.png` and assembled with `make-gif.sh`
-  (single-frame GIF, no ghosting possible by construction). **Verified**: coalesced alpha-mean
-  (85.3) matches the source crop (80.0) — visually a clean "looking up" pose.
-- [x] DOC-120 — Regenerated + verified `blupi-action-08-vertigo.gif` (`BlupiAction::Vertigo`=8).
-  8 real frames (icons 0,169,26,170,27,171,28,172), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean tracks the source crops closely
-  (e.g. 79.9→80.0, 82.8→76.3) — no ghosting.
-- [x] DOC-121 — Regenerated + verified `blupi-action-09-recede.gif` (`BlupiAction::Recede`=9). 6
-  real frames (icons 5-10 — same icon set as `March`, direction is a separate flip flag, not a
-  different icon set), cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**:
-  coalesced-frame alpha-mean tracks the source crops closely — no ghosting.
-- [x] DOC-122 — Regenerated + verified `blupi-action-10-advance.gif` (`BlupiAction::Advance`=10).
-  6 real frames (icons 5-10, same icon set as `March`/`Recede`), cropped from `blupi.png` and
-  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches the same pattern
-  as `March`/`Recede` — no ghosting.
-- [x] DOC-123 — Regenerated + verified `blupi-action-11-clear1.gif` (`BlupiAction::Clear1`=11).
-  70 real frames (icons 40-47, a "smoke puff" disappear effect), **first action in this batch using
-  `element.png`** (not `blupi.png` — per the confirmed rule: only `Clear1`/`Clear2`/`Clear3`/`Glu`/
-  `Electro` use `element.png`), cropped and assembled with `make-gif.sh`. **Verified**:
-  coalesced-frame alpha-mean spot-checked across the cycle (77.3→77.3→69.6→21.4→37.4→40.9→40.9) is
-  a real decreasing-then-settling dissipation pattern, not a ghosting climb-then-plateau — no bug.
-- [x] DOC-124 — Regenerated + verified `blupi-action-13-win.gif` (`BlupiAction::Win`=13). 6 real
-  frames (icons 41,41,42,42,43,43), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean (84.6/84.6/86.4/86.4/87.6/87.6) matches the source
-  crops' paired pattern with a gentle real trend, not a ghosting climb — no bug.
-- [x] DOC-125 — Regenerated + verified `blupi-action-14-push.gif` (`BlupiAction::Push`=14). 6 real
-  frames (icons 49-54), cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**:
-  coalesced-frame alpha-mean fluctuates (82.1/80.6/79.9/82.8/80.3/81.0) matching the real per-icon
-  values — no ghosting.
-- [x] DOC-126 — Regenerated + verified `blupi-action-15-stophelico.gif` (`BlupiAction::StopHelico`=15).
-  Single real frame (icon 61, `frameCount=1`), cropped from `blupi.png` and assembled with
-  `make-gif.sh` (no ghosting possible with a single frame). **Verified**: coalesced alpha-mean
-  matches the source crop.
-- [x] DOC-127 — Regenerated + verified `blupi-action-16-marchhelico.gif` (`BlupiAction::MarchHelico`=16).
-  8 real frames (icons 61,62,63,62,61,64,65,64), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern matching the
-  source crops — no ghosting.
-- [x] DOC-128 — Regenerated + verified `blupi-action-17-turnhelico.gif` (`BlupiAction::TurnHelico`=17).
-  10 real frames (icons 71,71,72,72,73,73,74,74,75,75), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is an exact paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-129 — Regenerated + verified `blupi-action-18-stopnage.gif` (`BlupiAction::StopNage`=18).
-  10 real frames (icons 76×6, 77×4), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean is flat per icon (77.9 then 79.2) matching the source
-  crops exactly — no ghosting.
-- [x] DOC-130 — Regenerated + verified `blupi-action-19-marchnage.gif` (`BlupiAction::MarchNage`=19).
-  14 real frames (icons 76-81 and 39, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-131 — Regenerated + verified `blupi-action-20-turnnage.gif` (`BlupiAction::TurnNage`=20).
-  10 real frames (icons 88-92, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-132 — Regenerated + verified `blupi-action-21-stopsurf.gif` (`BlupiAction::StopSurf`=21).
-  12 real frames (icons 93-98, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired, gently-progressing
-  pattern matching the source crops — no ghosting.
-- [x] DOC-133 — Regenerated + verified `blupi-action-22-marchsurf.gif` (`BlupiAction::MarchSurf`=22).
-  12 real frames (icons 93-98, same icon set as `StopSurf`), cropped from `blupi.png` and assembled
-  with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches `StopSurf`'s pattern exactly
-  (same source icons) — no ghosting.
-- [x] DOC-134 — Regenerated + verified `blupi-action-23-turnsurf.gif` (`BlupiAction::TurnSurf`=23).
-  10 real frames (icons 105-109, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-135 — Regenerated + verified `blupi-action-24-drown.gif` (`BlupiAction::Drown`=24). 90
-  real frames (icons in range 76-98, via `extract-blupi-action.py`), cropped from `blupi.png` and
-  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across the
-  full cycle stays in a tight ~77.7-79.3/255 range — no ghosting even across this long sequence.
-- [x] DOC-136 — Regenerated + verified `blupi-action-25-stopjeep.gif` (`BlupiAction::StopJeep`=25).
-  8 real frames (icons 111,111,110,110,111,111,112,112), cropped from `blupi.png` and assembled
-  with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching
-  the source crops — no ghosting.
-- [x] DOC-137 — Regenerated + verified `blupi-action-26-marchjeep.gif` (`BlupiAction::MarchJeep`=26).
-  8 real frames (icons 111,111,110,110,111,111,112,112, same icon set as `StopJeep`), cropped from
-  `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches
-  `StopJeep`'s pattern exactly — no ghosting.
-- [x] DOC-138 — Regenerated + verified `blupi-action-27-turnjeep.gif` (`BlupiAction::TurnJeep`=27).
-  7 real frames (icons 112-118), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
-- [x] DOC-139 — Regenerated + verified `blupi-action-28-stoppop.gif` (`BlupiAction::StopPop`=28).
-  6 real frames (icons 122×3, 125×3), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean is flat per icon matching the source crops — no
-  ghosting.
-- [x] DOC-140 — Regenerated + verified `blupi-action-29-pop.gif` (`BlupiAction::Pop`=29). 6 real
-  frames (icons 126,125,124,123,122,121 — same set as `StopPop` but descending, one per frame),
-  cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
-  alpha-mean fluctuates matching the source crops — no ghosting.
-- [x] DOC-141 — Regenerated + verified `blupi-action-30-bye.gif` (`BlupiAction::Bye`=30). 12 real
-  frames (icons 25,29,46,47,46,29 each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-142 — Regenerated + verified `blupi-action-31-stopsuspend.gif` (`BlupiAction::StopSuspend`=31).
-  328 real frames (icons in range 143-164, via `extract-blupi-action.py`), cropped from `blupi.png`
-  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across
-  the full cycle stays in a tight ~84.6-91.6/255 range — no ghosting even across this long
-  sequence.
-- [x] DOC-143 — Regenerated + verified `blupi-action-32-marchsuspend.gif` (`BlupiAction::MarchSuspend`=32).
-  12 real frames (icons 143-146, each paired, in a rock-back-and-forth pattern), cropped from
-  `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a
-  clean paired pattern matching the source crops — no ghosting.
-- [x] DOC-144 — Regenerated + verified `blupi-action-33-turnsuspend.gif` (`BlupiAction::TurnSuspend`=33).
-  10 real frames (icons 151-155, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-145 — Regenerated + verified `blupi-action-34-jumpsuspend.gif` (`BlupiAction::JumpSuspend`=34).
-  10 real frames (icons 157×2, 165×4, 166×4), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is flat per icon matching the source
-  crops exactly — no ghosting.
-- [x] DOC-146 — Regenerated + verified `blupi-action-35-hide.gif` (`BlupiAction::Hide`=35). 9 real
-  frames (icons 276-284), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
-- [x] DOC-147 — Regenerated + verified `blupi-action-36-jumpaie.gif` (`BlupiAction::JumpAie`=36).
-  32 real frames (icons 135,177-180 mirrored, 135), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across the cycle stays in a
-  tight ~79.2-86.0/255 range — no ghosting.
-- [x] DOC-148 — Regenerated + verified `blupi-action-37-stopskate.gif` (`BlupiAction::StopSkate`=37).
-  140 real frames (icons in range 182-211, via `extract-blupi-action.py`), cropped from `blupi.png`
-  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across
-  the full cycle stays in a tight ~93.2-99.6/255 range — no ghosting even across this long
-  sequence.
-- [x] DOC-149 — Regenerated + verified `blupi-action-38-marchskate.gif` (`BlupiAction::MarchSkate`=38).
-  96 real frames (icons from `blupi.png`, via `extract-blupi-action.py`), cropped and assembled
-  with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked across the cycle stays
-  flat/tight — no ghosting.
-- [x] DOC-150 — Regenerated + verified `blupi-action-39-turnskate.gif` (`BlupiAction::TurnSkate`=39).
-  14 real frames (icons 194-200, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-151 — Regenerated + verified `blupi-action-40-jumpskate.gif` (`BlupiAction::JumpSkate`=40).
-  3 real frames (icons 210,211,212), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
-- [x] DOC-152 — Regenerated + verified `blupi-action-41-airskate.gif` (`BlupiAction::AirSkate`=41).
-  8 real frames (icons 213,214,215 mirrored), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-153 — Regenerated + verified `blupi-action-42-takeskate.gif` (`BlupiAction::TakeSkate`=42).
-  20 real frames (icons 17,18,19,1,215,214,213,212,211,210, each paired), cropped from `blupi.png`
-  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired
-  pattern matching the source crops — no ghosting.
-- [x] DOC-154 — Regenerated + verified `blupi-action-43-deposeskate.gif` (`BlupiAction::DeposeSkate`=43).
-  20 real frames (same icon set as `TakeSkate` but reversed order), cropped from `blupi.png` and
-  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches `TakeSkate`'s
-  pattern reversed — no ghosting.
-- [x] DOC-155 — Regenerated + verified `blupi-action-44-ouf1a.gif` (`BlupiAction::Ouf1a`=44). 29
-  real frames (icons 1,222-225 mirrored,1), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight
-  ~86.3-87.7/255 range — no ghosting.
-- [x] DOC-156 — Regenerated + verified `blupi-action-45-ouf1b.gif` (`BlupiAction::Ouf1b`=45). 29
-  real frames (identical icon set to `Ouf1a`), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches `Ouf1a`'s pattern exactly — no
-  ghosting.
-- [x] DOC-157 — Regenerated + verified `blupi-action-46-ouf2.gif` (`BlupiAction::Ouf2`=46). 32
-  real frames (icons 1,227-229 mirrored,1), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight
-  ~86.3-87.7/255 range — no ghosting.
-- [x] DOC-158 — Regenerated + verified `blupi-action-47-ouf3.gif` (`BlupiAction::Ouf3`=47). 34
-  real frames (icons 135-137,230-231 mirrored), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight range — no
-  ghosting.
-- [x] DOC-159 — Regenerated + verified `blupi-action-48-ouf4.gif` (`BlupiAction::Ouf4`=48). 40
-  real frames (icons 0,135-137,232/233 alternating,137-135,0), cropped from `blupi.png` and
-  assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a
-  tight range — no ghosting.
-- [x] DOC-160 — Regenerated + verified `blupi-action-49-sucette.gif` (`BlupiAction::Sucette`=49).
-  32 real frames (icons 234-236 mirrored, repeating), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight range — no
-  ghosting.
-- [x] DOC-161 — Regenerated + verified `blupi-action-50-stoptank.gif` (`BlupiAction::StopTank`=50).
-  64 real frames (icons in range 237-241, via `extract-blupi-action.py`), cropped from `blupi.png`
-  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in
-  a tight range — no ghosting.
-- [x] DOC-162 — Regenerated + verified `blupi-action-51-marchtank.gif` (`BlupiAction::MarchTank`=51).
-  8 real frames (icons 238,237,238,239 each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-163 — Regenerated + verified `blupi-action-52-turntank.gif` (`BlupiAction::TurnTank`=52).
-  12 real frames (icons 238-249, one per frame), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
-  ghosting.
-- [x] DOC-164 — Regenerated + verified `blupi-action-53-firetank.gif` (`BlupiAction::FireTank`=53).
-  6 real frames (icons 251×2, 238×4), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean is flat per icon matching the source crops — no
-  ghosting.
-- [x] DOC-165 — Regenerated + verified `blupi-action-54-glu.gif` (`BlupiAction::Glu`=54). 25 real
-  frames (icons in range 168-171), **uses `element.png`** (per the confirmed channel rule), cropped
-  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in
-  a tight ~100.0-102.4/255 range — no ghosting.
-- [x] DOC-166 — Regenerated + verified `blupi-action-55-drink.gif` (`BlupiAction::Drink`=55). 4
-  real frames (icons 253,253,254,254), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean is flat per icon matching the source crops — no
-  ghosting.
-- [x] DOC-167 — Regenerated + verified `blupi-action-56-charge.gif` (`BlupiAction::Charge`=56). 64
-  real frames (icons in range 0-4,268-270, via `extract-blupi-action.py`), cropped from `blupi.png`
-  and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in
-  a tight range — no ghosting.
-- [x] DOC-168 — Regenerated + verified `blupi-action-57-electro.gif` (`BlupiAction::Electro`=57).
-  90 real frames, **the only action with a genuine per-frame channel switch**: icons 266/267
-  (frames 0-29, `blupi.png`, the electric-shock jolt) then icons 40-47 (frames 30-89, `element.png`,
-  a black silhouette) — confirmed against the documented rule "Electro only while icon<266 uses
-  `element.png`". Verified visually that both segments crop cleanly from their respective sheets
-  (checked frame 0 = shocked Blupi on `blupi.png`, frame 30 = black silhouette on `element.png`).
-  **Verified**: coalesced-frame alpha-mean shows a real content jump at the channel boundary
-  (~133→~77) — a genuine transition, not ghosting; both segments individually fluctuate normally.
-- [x] DOC-169 — Regenerated + verified `blupi-action-58-helicoglu.gif` (`BlupiAction::HelicoGlu`=58).
-  14 real frames (icons 271-274 mirrored), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-170 — Regenerated + verified `blupi-action-59-turnair.gif` (`BlupiAction::TurnAir`=59).
-  6 real frames (icons 3,2,1 each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-171 — Regenerated + verified `blupi-action-60-stopmarch.gif` (`BlupiAction::StopMarch`=60).
-  3 real frames (icons 19,18,19), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean matches the source crops — no ghosting.
-- [x] DOC-172 — Regenerated + verified `blupi-action-61-stopjump.gif` (`BlupiAction::StopJump`=61).
-  5 real frames (icons 34,35,34,34,33), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean matches the source crops — no ghosting.
-- [x] DOC-173 — Regenerated + verified `blupi-action-62-stopjumph.gif` (`BlupiAction::StopJumph`=62).
-  2 real frames (icons 35,34), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean matches the source crops — no ghosting.
-- [x] DOC-174 — Regenerated + verified `blupi-action-63-mockery.gif` (`BlupiAction::Mockery`=63).
-  92 real frames (icons 263-265 mirrored for the first 32, then 0/23/133 idle-gesture pattern),
-  cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
-  alpha-mean spot-checked stays tight/flat — no ghosting.
-- [x] DOC-175 — Regenerated + verified `blupi-action-64-mockeryi.gif` (`BlupiAction::Mockeryi`=64).
-  104 real frames, cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**:
-  coalesced-frame alpha-mean spot-checked stays tight/flat — no ghosting.
-- [x] DOC-176 — Regenerated + verified `blupi-action-65-ouf5.gif` (`BlupiAction::Ouf5`=65). 44
-  real frames (icons 1,288-290 mirrored,1), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight range — no
-  ghosting.
-- [x] DOC-177 — Regenerated + verified `blupi-action-66-balloon.gif` (`BlupiAction::Balloon`=66).
-  16 real frames (icons 291-295 mirrored, each paired), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean paired pattern matching the
-  source crops — no ghosting.
-- [x] DOC-178 — Regenerated + verified `blupi-action-67-stopover.gif` (`BlupiAction::StopOver`=67).
-  Single real frame (icon 315, `frameCount=1`), cropped from `blupi.png` and assembled with
-  `make-gif.sh` (no ghosting possible with a single frame). **Verified**: coalesced alpha-mean
-  matches the source crop.
-- [x] DOC-179 — Regenerated + verified `blupi-action-68-marchover.gif` (`BlupiAction::MarchOver`=68).
-  12 real frames (icons 296-302 mirrored), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops —
-  no ghosting.
-- [x] DOC-180 — Regenerated + verified `blupi-action-69-turnover.gif` (`BlupiAction::TurnOver`=69).
-  7 real frames (icons 296,310-314,303), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean fluctuates smoothly matching the source
-  crops — no ghosting.
-- [x] DOC-181 — Regenerated + verified `blupi-action-72-stopecrase.gif` (`BlupiAction::StopEcrase`=72).
-  Single real frame (icon 320, `frameCount=1`), cropped from `blupi.png` and assembled with
-  `make-gif.sh` (no ghosting possible with a single frame). **Verified**: coalesced alpha-mean
-  matches the source crop.
-- [x] DOC-182 — Regenerated + verified `blupi-action-73-marchecrase.gif` (`BlupiAction::MarchEcrase`=73).
-  24 real frames (icons 317-323 mirrored), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean stays in a tight range — no ghosting.
-- [x] DOC-183 — Regenerated + verified `blupi-action-74-teleporte.gif` (`BlupiAction::Teleporte`=74).
-  128 real frames including 67 `-1` invisible-frame sentinels (rendered as genuinely blank 60×60
-  transparent frames, same convention as `Temp`/`Ouf4`) — first interspersed with flickering real
-  content (a teleport flicker effect) starting around frame 48, then a solid run of `-1` to the
-  end, cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
-  alpha-mean transitions from real content (~86.3-86.7/255) to exactly 0 once the solid `-1` run
-  starts (~frame 75) — matches the teleport vanish behavior, no ghosting.
-- [x] DOC-184 — Regenerated + verified `blupi-action-75-clear2.gif` (`BlupiAction::Clear2`=75). Real
-  data is `frameCount=1`, icon `-1` — a single genuinely-blank frame (not a bug: the already-committed
-  GIF is also `colors=1`/fully transparent, confirming this action has no visible representation
-  in mobile-eggbert's own table). Rendered as a blank 60×60 transparent frame via `make-gif.sh`
-  for tooling consistency with the rest of the batch. **Verified**: matches the pre-existing GIF's
-  blank state exactly.
-- [x] DOC-185 — Regenerated + verified `blupi-action-76-clear3.gif` (`BlupiAction::Clear3`=76). 70
-  real frames (icons 40/41 for 30 frames, **uses `element.png`**, then 40 trailing `-1` blank
-  frames), cropped and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean
-  transitions from real content (~77.3/255) to exactly 0 at frame 30 — no ghosting.
-- [x] DOC-186 — Regenerated + verified `blupi-action-77-clear4.gif` (`BlupiAction::Clear4`=77). 110
-  real frames (icons in range 324-334, via `extract-blupi-action.py`), **uses `blupi.png`**
-  (Clear4 is not in the `element.png` exception list despite its name — matches the confirmed
-  rule), cropped and assembled with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean stays
-  in a real, non-monotonic range — no ghosting.
-- [x] DOC-187 — Regenerated + verified `blupi-action-78-clear5.gif` (`BlupiAction::Clear5`=78).
-  Same as `Clear2`: real data is `frameCount=1`, icon `-1` — a single genuinely-blank frame
-  (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for tooling
-  consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
-- [x] DOC-188 — Regenerated + verified `blupi-action-79-clear6.gif` (`BlupiAction::Clear6`=79).
-  Same as `Clear2`/`Clear5`: real data is `frameCount=1`, icon `-1` — a single genuinely-blank
-  frame (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for
-  tooling consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
-- [x] DOC-189 — Regenerated + verified `blupi-action-80-clear7.gif` (`BlupiAction::Clear7`=80). Same
-  as `Clear2`/`Clear5`/`Clear6`: `frameCount=1`, icon `-1` — a single genuinely-blank frame
-  (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for tooling
-  consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
-- [x] DOC-190 — Regenerated + verified `blupi-action-81-clear8.gif` (`BlupiAction::Clear8`=81). Same
-  as `Clear2`/`Clear5`/`Clear6`/`Clear7`: `frameCount=1`, icon `-1` — a single genuinely-blank frame
-  (confirmed the already-committed GIF is also `colors=1`). Rendered via `make-gif.sh` for tooling
-  consistency. **Verified**: matches the pre-existing GIF's blank state exactly.
-- [x] DOC-191 — Regenerated + verified `blupi-action-82-switch.gif` (`BlupiAction::Switch`=82). 10
-  real frames (icons 0,268,268,269,269,269,269,268,268,0), cropped from `blupi.png` and assembled
-  with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean matches the source crops closely —
-  no ghosting.
-- [x] DOC-192 — Regenerated + verified `blupi-action-83-mockeryp.gif` (`BlupiAction::Mockeryp`=83).
-  60 real frames (icons 1,288-290 mirrored,1), cropped from `blupi.png` and assembled with
-  `make-gif.sh`. **Verified**: coalesced-frame alpha-mean spot-checked stays in a tight range — no
-  ghosting.
-- [x] DOC-193 — Regenerated + verified `blupi-action-84-non.gif` (`BlupiAction::Non`=84). 18 real
-  frames (icons 1,226-229 mirrored,1), cropped from `blupi.png` and assembled with `make-gif.sh`.
-  **Verified**: coalesced-frame alpha-mean stays in a tight range — no ghosting.
-- [x] DOC-194 — Regenerated + verified `blupi-action-85-slowdownskate.gif` (`BlupiAction::SlowdownSkate`=85).
-  Single real frame (icon 211, `frameCount=1`), cropped from `blupi.png` and assembled with
-  `make-gif.sh` (no ghosting possible with a single frame). **Verified**: coalesced alpha-mean
-  matches the source crop.
-- [x] DOC-195 — Regenerated + verified `blupi-action-86-takedynamite.gif` (`BlupiAction::TakeDynamite`=86).
-  18 real frames (icons 1,2,41-43,42,41,2,1 each paired), cropped from `blupi.png` and assembled
-  with `make-gif.sh`. **Verified**: coalesced-frame alpha-mean is a clean symmetric pattern — no
-  ghosting.
-- [x] DOC-196 — Regenerated + verified `blupi-action-87-putdynamite.gif` (`BlupiAction::PutDynamite`=87,
-  **the last of the 84-Blupi-action batch**). 26 real frames (icons 135,137,230/231 mirrored,137,135),
-  cropped from `blupi.png` and assembled with `make-gif.sh`. **Verified**: coalesced-frame
-  alpha-mean stays in a tight range — no ghosting. **All 84 Blupi action GIFs
-  (`DOC-113`-`DOC-196`) are now regenerated and verified.**
-
-Object/pickup/enemy animations (24) — **confirmed ghosting** (spot-checked via `treasure`),
-all need regeneration.
-
-- [x] DOC-197 — Regenerated + verified `object-anim-type02-patrolA.gif` (`ObjectType2`). 9 real
-  frames (icons 12-20, from `GEDecorSystem::GetObjIcon()`'s `12 + (p/6)%9` formula — already-ported
-  Simple3D code, not a fresh mobile-eggbert transcription), **uses `element.png`**, cropped and
-  assembled with `make-gif.sh` at delay 100 (matches the pre-existing GIF's rate — the doc's own
-  flagged timing-accuracy caveat for object anims is a separate concern, not touched here).
-  **Verified**: coalesced-frame alpha-mean tracks the source crops closely (small ~4-5/255 bump
-  from the `DOC-105` opacity-forcing fix, same magnitude as already seen on tile anims) — no
-  ghosting.
-- [x] DOC-198 — Regenerated + verified `object-anim-type03-patrolB.gif` (`ObjectType3`). 9 real
-  frames (icons 48-56, from `48 + (p/6)%9`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 100. **Verified**: coalesced-frame alpha-mean tracks the source crops
-  closely (numerically identical to `patrolA`'s pattern — same alpha coverage, distinct silhouette
-  confirmed visually) — no ghosting.
-- [x] DOC-199 — Regenerated + verified `object-anim-type04-bulldozer.gif` (`ObjectType4`). 8 real
-  frames (icons 66,66,67,67,66,66,65,65, `kBulldozer`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean is a clean paired pattern
-  matching the source crops — no ghosting.
-- [x] DOC-200 — Regenerated + verified `object-anim-type05-treasure.gif` (`ObjectType5`). **This is
-  the exact GIF that first surfaced the `DOC-100` ghosting bug report** (originally logged
-  "133.7→...→153.6, plateaus"). 22 real frames (icons 0-10 ping-ponged, from
-  `q<11 ? q : (21-q)`), `element.png` (confirmed a treasure-chest sprite via direct pixel check),
-  cropped and assembled with `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean
-  is now a clean mirrored ping-pong pattern (~127-141/255, frame0≈frame21, frame10≈frame11 at the
-  turnaround) — confirms `DOC-100`'s fix resolves this exact originally-reported case.
-- [x] DOC-201 — Regenerated + verified `object-anim-type06-egg.gif` (`ObjectType6`). 8 real frames
-  (icons 21-28, from `21 + (p/12)%8`), `element.png`, cropped and assembled with `make-gif.sh` at
-  delay 200 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame alpha-mean is a
-  clean symmetric pattern (66.0→58.1→44.9→58.3→66.0→58.2→45.0→58.0) — no ghosting.
-- [x] DOC-202 — Regenerated + verified `object-anim-type07-exit.gif` (`ObjectType7`). 8 real frames
-  (icons 29-36, from `29 + (p/9)%8`), `element.png`, cropped and assembled with `make-gif.sh` at
-  delay 150. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
-  ghosting.
-- [x] DOC-203 — Regenerated + verified `object-anim-type16-spider.gif` (`ObjectType16`). 9 real
-  frames (icons 69-77, from `69 + (p/3)%9`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 50 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
-  alpha-mean fluctuates matching the source crops — no ghosting.
-- [x] DOC-204 — Regenerated + verified `object-anim-type17-fish.gif` (`ObjectType17`). 8 real
-  frames (icons 82,82,81,81,82,82,83,83, `kFish`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 100. **Verified**: coalesced-frame alpha-mean is a clean paired pattern
-  matching the source crops — no ghosting.
-- [x] DOC-205 — Regenerated + verified `object-anim-type20-bird.gif` (`ObjectType20`). 8 real
-  frames (icons 98-105, `kBird`), `element.png`, cropped and assembled with `make-gif.sh` at delay
-  100. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
-  ghosting.
-- [x] DOC-206 — Regenerated + verified `object-anim-type21-secretexit.gif` (`ObjectType21`). 12
-  real frames (icons 122-128 mirrored, `kCleGeneric`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
-  alpha-mean is a clean mirrored pattern matching the source crops — no ghosting.
-- [x] DOC-207 — Regenerated + verified `object-anim-type24-skateboard.gif` (`ObjectType24`). 34
-  real frames (icons 129-135 mirrored, `kSkate`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
-  source crops — no ghosting.
-- [x] DOC-208 — Regenerated + verified `object-anim-type25-shield.gif` (`ObjectType25`). 8 real
-  frames (icons 144-151, `kShield`), `element.png`, cropped and assembled with `make-gif.sh` at
-  delay 100. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
-  ghosting.
-- [x] DOC-209 — Regenerated + verified `object-anim-type26-suctioncup.gif` (`ObjectType26`). 8 real
-  frames (icons 136-143, `kPower`), `element.png`, cropped and assembled with `make-gif.sh` at
-  delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the source crops — no
-  ghosting.
-- [x] DOC-210 — Regenerated + verified `object-anim-type32-blupih.gif` (`ObjectType32`). 8 real
-  frames (icons 66,67,68,67,66,69,70,69, `kBlupihLeft`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
-  source crops — no ghosting.
-- [x] DOC-211 — Regenerated + verified `object-anim-type33-blupit.gif` (`ObjectType33`). 8 real
-  frames (icons 249,249,250,250,249,249,248,248, `kBlupit`), `element.png`, cropped and assembled
-  with `make-gif.sh` at delay 100. **Verified**: coalesced-frame alpha-mean is a clean paired
-  pattern matching the source crops — no ghosting.
-- [x] DOC-212 — Regenerated + verified `object-anim-type40-mirrorinvert.gif` (`ObjectType40`). 20
-  real frames (icons 187-194 mirrored, `kInvert`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean stays in a tight range — no
-  ghosting.
-- [x] DOC-213 — Regenerated + verified `object-anim-type44-wasp.gif` (`ObjectType44`). 6 real
-  frames (icons 195-198 mirrored, `kGuepeLeft`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
-  source crops — no ghosting.
-- [x] DOC-214 — Regenerated + verified `object-anim-type47-chenille.gif` (`ObjectType47`). 6 real
-  frames (icons 311-316, `kChenille`). **Found + fixed a real engine bug along the way**: these
-  icons are actually `object-m.png` coordinates (a tracked-platform texture, confirmed visually),
-  not `element.png` like every other object sprite — `element.png` is only 600×1740px/60px tiles
-  (max valid icon 289), so `GEDecorSystem.cpp`'s renderer was reading past the end of the wrong
-  sheet. Full writeup + the shipped-game fix: `plan.md`'s `S3D-4`. This GIF is cropped from
-  `object-m.png` at the corrected `1+col*65,1+row*65` pitch (`S3D-2`), assembled with
-  `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). **Verified**: coalesced-frame
-  alpha-mean tracks the source crops closely (~91.9-92.9/255 vs ~82.6-83.4/255 source, the usual
-  small `DOC-105` opacity-forcing bump) — no ghosting.
-- [x] DOC-215 — Regenerated + verified `object-anim-type49-key1.gif` (`ObjectType49`). 12 real
-  frames (icons 209-215 mirrored, `kCle1`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
-  matching the source crops — no ghosting.
-- [x] DOC-216 — Regenerated + verified `object-anim-type50-key2.gif` (`ObjectType50`). 12 real
-  frames (icons 216-222 mirrored, `kCle2`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean matches the source crops
-  closely — no ghosting.
-- [x] DOC-217 — Regenerated + verified `object-anim-type51-key3.gif` (`ObjectType51`). 12 real
-  frames (icons 223-229 mirrored, `kCle3`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 150. **Verified**: coalesced-frame alpha-mean matches the source crops
-  closely — no ghosting.
-- [x] DOC-218 — Regenerated + verified `object-anim-type54-largecreature.gif` (`ObjectType54`).
-  8 real frames (icons 247-251 mirrored, `kCreature`), `element.png`, cropped and assembled with
-  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean is a clean mirrored pattern
-  matching the source crops — no ghosting.
-- [x] DOC-219 — Regenerated + verified `object-anim-type96-follower-awake.gif` (`ObjectType96`
-  awake state, `GetFollowerAwakeIcon()`). 5 real frames (icons 256,258,260,262,264, `kFollow2`),
-  `element.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
-  coalesced-frame alpha-mean fluctuates matching the source crops — no ghosting.
-- [x] DOC-220 — Regenerated + verified `object-anim-type96-follower-dormant.gif` (`ObjectType96`
-  dormant state, `kFollow1`). 26 real frames (icons 256-265 mirrored), `element.png`, cropped and
-  assembled with `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean spot-checked
-  stays in a tight range — no ghosting.
-
-Explosions (8) — **confirmed ghosting** (spot-checked via `explo1`), all need regeneration.
-
-- [x] DOC-221 — Regenerated + verified `explosion-anim-explo1.gif` (`GEExploSystem::kTable`, ported
-  from mobile-eggbert's `table_explo1`). **This is the second GIF that originally confirmed the
-  `DOC-100` ghosting bug report** (logged "9.3→...→161.9, plateaus"). 39 real frames (icons 0-11,
-  first of 8 explosion animations), **uses `explo.png`** (1440×1440px, 144px cells, 10 cols, no
-  gap — confirmed from mobile-eggbert's own `Pixmap.cpp`, `PixmapChannel::Explosion`: `srcGap=0`),
-  cropped and assembled with `make-gif.sh` at delay 17 (matches the pre-existing GIF's rate). Note:
-  galaxy-eggbert's already-shipped `GEExploSystem` uses a fixed 144×144 cell for every frame
-  (`kCellPx`), not mobile-eggbert's real per-frame varying size from `table_explo_size` — an
-  already-approved simplification, not something this task changes. **Verified**: coalesced-frame
-  alpha-mean is now a real fluctuating pattern (10.1→147.2→147.2→104.6→25.1) instead of a
-  monotonic climb-then-plateau — confirms `DOC-100`'s fix resolves this exact originally-reported
-  case too.
-- [x] DOC-222 — Regenerated + verified `explosion-anim-explo2.gif` (mobile-eggbert's
-  `table_explo2`, read live from `Tables.cpp` for this doc task — not yet ported into
-  galaxy-eggbert's `GEExploSystem`, not copied into the repo). 20 real frames (icons 12-15, with
-  6 `-1` blank-frame sentinels — "scattered debris" per the source comment), `explo.png`, cropped
-  (144×144, no gap) and assembled with `make-gif.sh` at delay 17. **Verified**: coalesced-frame
-  alpha-mean correctly lands at exactly 0 on the `-1` frames and fluctuates realistically
-  elsewhere — no ghosting.
-- [x] DOC-223 — Regenerated + verified `explosion-anim-explo3.gif` (mobile-eggbert's
-  `table_explo3`, read live, not yet ported into galaxy-eggbert). 20 real frames (icons 32/34/35,
-  "smoke puff" per the source comment), `explo.png`, cropped and assembled with `make-gif.sh` at
-  delay 17. **Verified**: coalesced-frame alpha-mean matches the repeating source pattern — no
-  ghosting.
-- [x] DOC-224 — Regenerated + verified `explosion-anim-explo4.gif` (mobile-eggbert's
-  `table_explo4`, read live, not yet ported into galaxy-eggbert). 9 real frames (icons 7-15,
-  "short impact flash" per the source comment), `explo.png`, cropped and assembled with
-  `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean fluctuates matching the
-  source pattern — no ghosting.
-- [x] DOC-225 — Regenerated + verified `explosion-anim-explo5.gif` (mobile-eggbert's
-  `table_explo5`, read live, not yet ported into galaxy-eggbert). 12 real frames (icons 54-59
-  alternating with `-1`, "strobing fragments" per the source comment), `explo.png`, cropped and
-  assembled with `make-gif.sh` at delay 17. **Verified**: coalesced-frame alpha-mean correctly
-  alternates real-content/exactly-0 — no ghosting.
-- [x] DOC-226 — Regenerated + verified `explosion-anim-explo6.gif` (mobile-eggbert's
-  `table_explo6`, read live, not yet ported into galaxy-eggbert). 6 real frames (icons 54-59,
-  same icon set as `explo5` without the strobe blanks, "dense burst" per the source comment),
-  `explo.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
-  coalesced-frame alpha-mean matches `explo5`'s non-blank values exactly — no ghosting.
-- [x] DOC-227 — Regenerated + verified `explosion-anim-explo7.gif` (mobile-eggbert's
-  `table_explo7`, read live, not yet ported into galaxy-eggbert). 128 real frames (icons 60-65
-  with many `-1` sentinels including a trailing fade-out run, "large multi-particle scatter" per
-  the source comment), `explo.png`, cropped and assembled with `make-gif.sh` at delay 17.
-  **Verified**: coalesced-frame alpha-mean spot-checked lands at exactly 0 on `-1` frames
-  (including the trailing fade-out) and stays low/consistent on real frames (~2/255, matching a
-  sparse particle-scatter look) — no ghosting.
-- [x] DOC-228 — Regenerated + verified `explosion-anim-explo8.gif` (mobile-eggbert's
-  `table_explo8`, read live, not yet ported into galaxy-eggbert; **last of the 8 explosion
-  animations**). 5 real frames (icons 7-11, "dying-ember tail" per the source comment),
-  `explo.png`, cropped and assembled with `make-gif.sh` at delay 17. **Verified**:
-  coalesced-frame alpha-mean is a clean fade (104.6→67.2→53.5→44.4→25.1) — no ghosting. **All 8
-  explosion animations (`DOC-221`-`DOC-228`) are now regenerated and verified.**
-
-Door (1) — same DOC-004 pass as explosions, assume affected until verified.
-
-- [x] DOC-229 — Regenerated + verified `door-slide.gif` (10-frame positional composite —
-  **the very last of the 129 GIF-regeneration tasks**). Per the doc's own text, this is an
-  illustrative approximation (not derived from any ported galaxy-eggbert code — doors haven't
-  been ported yet, per `09-open-questions.md`), not a frame-cycle: `Door1` (icon 334, cropped
-  from `object-m.png` at the corrected `1+col*65,1+row*65` pitch) composited onto a 64×128
-  transparent canvas at 10 linearly-interpolated Y offsets (64→-64px), sliding it from fully
-  visible in the lower half up and out of frame. Assembled with `make-gif.sh` at delay 17
-  (matches the pre-existing GIF's rate). **Verified**: coalesced-frame alpha-mean stays constant
-  while the door is fully in-frame (frames 0-4), then decreases smoothly as it clips off the top
-  edge (frames 5-8), reaching exactly 0 once fully off-screen (frame 9) — a genuine progressive
-  clip, not ghosting. **All 129 animated GIFs (`DOC-101`-`DOC-229`) are now regenerated and
-  verified — the GIF-regeneration portion of the `mobile-eggbert-reference/` rework is
-  complete.**
-### 16.3 Static (non-animated) asset re-verification
-
-Not confirmed broken (single-frame images have no compositing/disposal to go wrong), but
-given the repeated sprite-channel bugs already found this session (11 `ObjectType`s drawing
-from the wrong sheet), these deserve a real re-check, not an assumption they're fine.
-
-- [x] DOC-230 — Re-verified all 313 `tile-full-*.png` crops: found a real bug (not just doc
-  staleness) — every crop used the old `x=col*65, y=row*65` formula (no 1px leading margin), the
-  same root cause as the `S3D-2` engine bug. Confirmed pixel-exact against the old formula
-  (`compare -metric AE`=0) before regenerating all 313 with the corrected `x=1+col*65,
-  y=1+row*65`. Spot-checked `tile-full-068.png` (Lava, no more blue seam) and `tile-full-437.png`
-  (last file, row/col boundary, complete un-truncated sprite). Updated `02-tiles.md`'s generation
-  formula and icon-440/sheet-dimension findings to match. See `DOC-002` above.
-- [x] DOC-231 — Re-verified all 67 `object-type*.png` static icons. Channel/sheet classification
-  (which sheet each ID uses) was already correct from the earlier `DOC-003` pass; the real find was
-  a grid-math bug, not a channel bug: the 7 crops sourced from `object-m.png` (`14`, `15`, `31`,
-  `35`, `47`, `48`, `52`) had the `DOC-230`/`S3D-2` leading-margin bug (confirmed pixel-exact
-  against the old formula) and were regenerated with the corrected `x=1+col*65, y=1+row*65`. The
-  other 60 (`element.png`/`blupi.png`/`blupi1.png`/`explo.png`) confirmed unaffected by direct
-  `identify` measurement (600×1740/600×2040/1440×1440 all divide evenly into their tile size, no
-  gap or leading margin exists on those sheets).
-- [x] DOC-232 — Re-verified the 4 `blupi-icon*.png` representative frames against the full
-  `table_blupi` parse (`extract-blupi-action.py`) and the flat `blupi.png` grid (600×2040, exact
-  multiple of 60×60 — no gap/margin, confirmed pixel-exact, AE=0). Turned out to already be
-  meaningful: icon 0 = `BlupiAction::Stop`'s frame, icon 1 = `Turn`'s first frame, icons 5/10 =
-  `March`'s first/last frame (a 6-frame walk cycle 5–10). No regeneration or reselection needed.
-- [x] DOC-233 — Re-verified the 3 `bg-decor*.png` background thumbnails. Plain resizes of the full
-  `decorNNN.png` (640×480 → 240×180), not sprite-sheet crops — never subject to the leading-margin
-  bug. Pixel-exact (AE=0) against a fresh resize; `bg-decorNNN` ↔ `decorNNN` numbering confirmed
-  direct, no off-by-one.
-- [x] DOC-234 — Re-verified the 3 door crops (`tile-334/335/336-Door*.png`). All 3 had the
-  `DOC-230`/`S3D-2` leading-margin bug (confirmed pixel-exact against the old formula) and were
-  regenerated with the corrected `x=1+col*65, y=1+row*65`.
-
-### 16.4 DOC-005 — Complete sound catalog (93 channels), broken into batches
-
-- [x] DOC-235 — Researched and documented `SoundChannel` 0-9 in `07-sounds.md`. Real findings:
-  channel 0 is a reserved "no sound"/silence sentinel (not a real effect, matches the header's own
-  comment); channel 2 is **provably unused** (zero references anywhere in `Decor.cpp`/
-  `Tables.cpp`/`InputPad.cpp`); channels 3/4 are generic footstep/landing and head-bump sounds
-  remapped per-terrain via `Decor::SoundEnviron()` (cross-references channels 78-91, a later
-  batch); channel 3 is also reused as a generic pickup/reward confirmation chime in
-  `Decor::VoyageStep()`. Also corrected `07-sounds.md`'s inaccurate claim that
-  `SoundChannel.hpp` has a "name-only list" — it has no names/comments at all, just the bare
-  numeric enum.
-- [x] DOC-236 — Researched and documented `SoundChannel` 10-19 in `07-sounds.md`. Real findings:
-  channel 10 is a small explosion/kill-impact sound, special-cased in `Sound::PlayImage` to be the
-  one channel allowed to overlap itself; channels 15-18 are the helicopter engine's
-  start/loop-high/stop/loop-low quartet (jeep/tank/overcraft's equivalent quartet is 28-31, a later
-  batch); channels 13/14 are the goal-reached "not enough treasure"/"win" pair; channel 19 is a
-  special upgrade of channel 11's treasure fanfare for the last treasure specifically.
-- [x] DOC-237 — Researched and documented `SoundChannel` 20-29 in `07-sounds.md`. Real find:
-  channel 26 (drowning) is a **distinct** death sound from channel 8's generic lava/electric/fall
-  death sound, not a reuse — the oxygen-meter-depleted death path plays its own dedicated cue.
-  Also confirmed channels 28/29 as the jeep/tank/overcraft motor quartet's start/loop-high half
-  (mirrors 15/16 for the helicopter, channels 0-9 batch); channels 20/21 are the Down/Up climb
-  end/start sounds (channel 7 already covered Down-start).
-- [x] DOC-238 — Researched and documented `SoundChannel` 30-39 in `07-sounds.md`. Real finds:
-  channel 32 (world-exit tile) is distinct from channel 14 (goal-reached win fanfare) — two
-  different "leave the level" events with different sounds; channels 36/37 are genuinely periodic
-  idle-animation ticks (triggered on `m_blupiPhase % N`), not simple one-shot state transitions
-  like most other channels — flagged so a future port doesn't miss them. Also completes the
-  jeep/tank/overcraft motor quartet (30/31, stop/loop-low) and confirms channel 33 as the door
-  sound already known from `06-doors.md`.
-- [x] DOC-239 — Researched and documented `SoundChannel` 40-49 in `07-sounds.md`. Real find:
-  channels 46-49 (plus 65, a later batch) turn out to be a whole family of distinct "bored idle"
-  reaction-animation sounds (`Ouf1a/1b/3/4/5`, `Mockery/i/p`) chosen by how long Blupi has stood
-  still — not independent one-off effects. Also confirmed a matched shield/power "about to expire"
-  warning pair (43/45) and the Charge/Shield/Power power-up activation sounds (40/42/44).
-- [x] DOC-240 — Researched and documented `SoundChannel` 50-59 in `07-sounds.md`. **Self-correction
-  found mid-batch**: channel 40 (documented in `DOC-239`) was mis-attributed to the `ObjectType31`
-  Charge/Cloud pickup — the real trigger for that is channel 58 (this batch); channel 40 is actually
-  the wasp/bee (`ObjectType44`) sting effect, which inflates Blupi into a temporary "puffed up"
-  debuff via `m_blupiBalloon`. Fixed both entries in `07-sounds.md`. Also a genuine naming-collision
-  finding: `m_blupiBalloon` (the debuff flag) is unrelated to `ObjectType46`'s "balloon" vehicle
-  pickup, which actually sets `m_blupiOver` and plays no sound at all. Other real finds: channel 51
-  is a third dedicated death sound (glue traps, distinct from channels 8 and 26); channels 50/44,
-  57/62, 58/55 are three matching pickup-start/buff-complete sound pairs for the "drink-like"
-  power-ups (Sucette, Drink, Charge), mirroring the vehicle-motor start/loop pattern for buffs
-  instead of engines.
-- [x] DOC-241 — Researched and documented `SoundChannel` 60-69 in `07-sounds.md`. Real finds:
-  channel 68 is provably unused (zero references, the second such gap after channel 2); channel 63
-  completes the 4-member "about to expire" warning family (43/45/56/63, one per buff type); channel
-  67 (mirror/invert expiry) has no matching warning stage, just a direct pop, unlike the other 3
-  buffs. Also confirms channel 61 as a Blupi skin/persona-swap sound and channel 69 as an ambient
-  lightning-zap cue synced to a 100-tick flicker cycle.
-- [x] DOC-242 — Researched and documented `SoundChannel` 70-79 in `07-sounds.md`. Real finds:
-  channels 78/79 are the first confirmed pair of the 7 `SoundEnviron()` terrain remaps promised in
-  the channels 0-9 batch; channel 70 (crusher-trap onset) pairs with channel 41's recovery pop from
-  an earlier batch; channels 74/75 are two distinct death-sequence cues (angel-ascent vs.
-  cut-apart) for different death causes; channels 76/77 are a switch on/off click pair.
-- [x] DOC-243 — Researched and documented `SoundChannel` 80-89 in `07-sounds.md`. All 10 are
-  `Decor::SoundEnviron()` terrain-specific footstep/head-bump remaps, confirmed directly from the
-  function body (5 more icon-range pairs, completing 6 of 7 total alongside 78/79 from the previous
-  batch); the last pair (90/91) lands in the final batch, `DOC-244`.
-- [x] DOC-244 — Researched and documented `SoundChannel` 90-92, closing out the 93-channel catalog.
-  Channels 90/91 complete the 7th/last `SoundEnviron()` terrain remap pair (obstacle icons
-  107-109); channel 92 is the `ObjectType96` follower's wake-up sound, confirming the
-  dormant→awake transition documented in `03-objects.md` and correctly silenced while
-  `m_blupiHide` is active.
-- [x] DOC-245 — Cross-checked the completed catalog against `SoundChannel.hpp`. Confirmed exactly
-  93 sequential entries (`SoundChannel0`-`SoundChannel92`, zero gaps) with no per-channel
-  names/comments (already noted). The header's top comment ("Channels 1–92 are game sound
-  effects") is slightly overbroad — channels 2 and 68 are numbered as effects but are provably
-  unused; not a bug, just worth recording so a future port doesn't assume every channel is wired
-  up somewhere.
-- [x] DOC-246 — Verified all 93 `.wav` files in `../mobile-eggbert/Content/sounds/` (`sound000.wav`
-  through `sound092.wav`) are accounted for 1:1 against the 93 documented channels — programmatic
-  diff against the expected `0..92` sequence found zero gaps and zero extras; all files non-empty.
-  This closes `DOC-005` (the full sound catalog) entirely.
-
-### 16.5 DOC-006 — Complete backgrounds catalog (38 images) + resolve region= mapping
-
-- [x] DOC-247 — Found the real mapping code: it's directly in `Decor.cpp`, not hidden in
-  higher-level UI/game-state code as suspected. `Decor::LoadImages()` (~line 245) builds the
-  filename directly as `"decor" + zero-padded-3-digit(m_region)`; `m_region` is read straight from
-  the level file's `region=` field (`Decor.cpp` ~line 11323, `Worlds::GetIntField`). No lookup
-  table, no indirection — `region=N` always means `decorNNN.png`. Also found the 10 non-level
-  UI-screen backgrounds (`init`/`lost`/`pause`/`setup`/`speedyblupi`/`trial`/`wait`/`win` plus the
-  already-known `blupiyoupie`/`gear`) are loaded by literal name from `Game1.cpp`, never through
-  this `region=` path — corrects the earlier doc, which only mentioned 2 of these 10.
-- [x] DOC-248 — Cross-checked the resolved mapping against all 78 real level files: extracted every
-  `region=` value (28 distinct values used) and confirmed every one has a real, existing
-  `decorNNN.png` — zero missing backgrounds are ever referenced. The 4 "missing" ids (005, 014,
-  017, 023) are exactly the ones no level uses.
-- [x] DOC-249 — Thumbnailed + verified `decor000`-`decor003` (no missing ids in this range;
-  000-002 already existed from `DOC-233`, added `decor003`). Pixel-exact against a fresh resize.
-- [x] DOC-250 — Thumbnailed + verified `decor004`, `006`, `007` (skipped missing id `005`).
-  Pixel-exact against a fresh resize.
-- [x] DOC-251 — Thumbnailed + verified `decor008`-`decor011` (no missing ids in this range).
-  Pixel-exact against a fresh resize.
-- [x] DOC-252 — Thumbnailed + verified `decor012`, `013`, `015` (skipped missing id `014`).
-  Pixel-exact against a fresh resize; `decor015` is genuinely grayscale, not a bug.
-- [x] DOC-253 — Thumbnailed + verified `decor016`, `018`, `019` (skipped missing id `017`).
-  Pixel-exact against a fresh resize.
-- [x] DOC-254 — Thumbnailed + verified `decor020`-`022` (skipped missing id `023`). Pixel-exact
-  against a fresh resize.
-- [x] DOC-255 — Thumbnailed + verified `decor024`-`027` (no missing ids in this range).
-  Pixel-exact against a fresh resize.
-- [x] DOC-256 — Thumbnailed + verified `decor028`-`031` (no missing ids in this range).
-  Pixel-exact against a fresh resize. This completes all 28 level-background thumbnails.
-- [x] DOC-257 — Documented all 10 non-level UI-screen backgrounds (not just `blupiyoupie`/`gear` as
-  originally scoped — found 8 more). 7 (`wait`/`init`/`pause`/`lost`/`win`/`setup`/`trial`) are
-  loaded by literal name via the same `BackgroundCache()` levels use, keyed off `Game1::SetPhase()`'s
-  `Def::Phase` switch; 3 (`speedyblupi`/`blupiyoupie`/`gear`) are loaded once at startup into their
-  own dedicated texture slots and drawn as logo/menu-chrome overlays (`DrawBackgroundFade()`,
-  `DrawButtonsBackground()`), not full-screen phase backgrounds. This closes `DOC-006` entirely.
-
-### 16.6 Markdown file completeness re-review (one real read-through per file)
-
-- [x] DOC-258 — Full read-through of `00-overview.md`. No image references in this file (nothing to
-  check for broken links). Found and fixed a large stale block: the "Status" section still
-  described the 2026-07-03 pre-rework state (partial coverage, DOC-005/006 "pending") and the file
-  table still said `05-backgrounds.md` was "Partial... unresolved" and `07-sounds.md` was "Not yet
-  expanded" — both now complete. Rewrote the status section and file table to reflect current
-  reality, and added a clear callout for `DOC-007` (the one real engine bug still open, not a doc
-  task). Also found `plan.md`'s own top-level `DOC-004`/`DOC-005`/`DOC-006` entries (§15) were still
-  marked `[ ]` even though their real completion happened via `DOC-100`-`DOC-229`/`DOC-235`-`DOC-246`/
-  `DOC-247`-`DOC-257` — marked all three `[x]` with a pointer to where the real work landed.
-- [x] DOC-259 — Full read-through of `01-world-file-format.md`. No image references in this file
-  (nothing to check for broken links). No staleness found: the `region=` field's cross-reference to
-  `05-backgrounds.md` is still accurate now that that file is complete (correctly notes
-  galaxy-eggbert's own engine doesn't consume `region=` yet — that's a separate, still-true fact
-  from mobile-eggbert's own mapping now being fully documented). No changes needed.
-- [x] DOC-260 — Full read-through of `02-tiles.md`. Verified all 313 image references resolve
-  (programmatic check). Clarified the top status line to distinguish classification date
-  (2026-07-03) from crop-regeneration date (2026-07-04, `DOC-230`). Found the 128 unused/unnamed
-  icons' "visual signal" alpha values were computed with the pre-`S3D-2` crop formula and never
-  recomputed — added a note explaining why (not load-bearing, spot-checked 3 icons against the
-  corrected formula and confirmed no sparse/solid category flips: 233→237, 86→91, 97→100).
-- [x] DOC-261 — Full read-through of `03-objects.md`. Verified all 71 image references resolve
-  (programmatic check). Found a real staleness bug: the sprite-channel bug table still said
-  `ObjectType47`'s bug was "not fixed in this pass" for all 5 types, but `47` was actually fixed
-  separately as `S3D-4` (2026-07-04) — updated the table to show `47` fixed and `1`/`12`/`32`/`33`
-  still open (`DOC-007`), and corrected the summary paragraph's "5 ObjectTypes" claim to "4".
-- [x] DOC-262 — Full read-through of `04-enemy-behavior.md`. No image references in this file
-  (nothing to check for broken links). Verified the follower-pattern claims (2.5-unit wake
-  distance, `kFollow1`/`kFollow2` table names) still match `GEDecorSystem.cpp` — unaffected by the
-  `S3D-4` Chenille fix, which only touched `ObjectType47`. Tightened one stale-sounding phrase
-  referring to `DOC-003` as still in progress (it's complete). No other changes needed.
-- [x] DOC-263 — Full read-through of `05-backgrounds.md`. Verified all 28 image references
-  resolve. This file was substantially rewritten fresh during `DOC-247`-`DOC-257` this session, so
-  it was already internally consistent — no stale claims found, no changes needed.
-- [x] DOC-264 — Full read-through of `06-doors.md`. Verified all 3 image references resolve
-  (post-`DOC-234` regeneration). Content is internally consistent — the `SoundChannel33` door
-  reference matches `DOC-236`'s independent sound-catalog finding exactly. No stale claims found.
-- [x] DOC-265 — Full read-through of `07-sounds.md` (no images in this file — text-only channel
-  catalog). Verified all 93 channel numbers appear exactly once (programmatic diff against 0-92,
-  exact match). Fixed two small internal-consistency slips: a "documented in a later batch"
-  forward-reference for channel 65 that should have pointed to the now-written section, and a
-  "Remaining sound work" phrasing for `DOC-245`/`DOC-246` that read as still-pending even though
-  both are done immediately below it.
-- [x] DOC-266 — Full read-through of `08-animations.md`. Verified all 129 GIF references resolve
-  (programmatic check). Found a real gap: despite being the file whose 129 GIFs were directly
-  affected, it had **zero mention anywhere** of the `DOC-100`-`DOC-229` ghosting-bug fix — added a
-  dedicated paragraph documenting the bug, the `make-gif.sh` fix, the translucency fix, and
-  cross-references to the `S3D-2`/`S3D-4` engine bugs the regeneration surfaced. §6/§7's open-items
-  lists were checked and remain accurate (unaffected by the GIF regeneration).
-- [x] DOC-267 — Full read-through of `09-open-questions.md` (no images in this file). Found two
-  real stale entries and fixed both: the `region=` mapping item still said "unresolved" (it was
-  resolved by `DOC-247`/`DOC-248` — rewrote it as a resolved-research/open-design-question split),
-  and the `ObjectType` item still said "~175 still-unresearched IDs" when `03-objects.md`'s
-  classification of all 204 IDs is complete (`DOC-003`) — rewrote to reflect the real remaining
-  question (the 7 partial-support types, not "unresearched" ones). Also fixed an off-by-one: the
-  partial-support list was labeled "8" but only 7 types are named. **This closes `DOC-267`, the
-  last task of the entire `DOC-100`-`DOC-267` documentation rework.**
-
----
-
-## 17. Independent review pass, CLAUDE.md/repo-wide staleness fix, and gameplay-behavior spec (2026-07-05)
-
-**Status: COMPLETE.** Three sequential efforts, all user-requested, all committed 2026-07-05.
-
-**`DOC-268`-`DOC-276` — independent review pass over the `DOC-100`-`DOC-267` rework.** The user
-asked for a genuinely independent second check before trusting the rework as ground truth. 6
-parallel agents re-verified all 10 `mobile-eggbert-reference/*.md` files against
-`../mobile-eggbert` source, galaxy-eggbert's own code, and the image/GIF assets on disk. Found and
-fixed 13 real errors across 5 files (00-overview.md, 03-objects.md, 04-enemy-behavior.md,
-06-doors.md, 09-open-questions.md came back clean) — see `NEXT.md` §3 for the full per-file list
-(wrong draw-site claims, incomplete sound triggers, a mislabeled excerpt, a Crusher/Saw file-count
-copy-paste error, an inverted Water1/Water2 categorization, a miscategorized tile constant, a wrong
-animation-count summary, a swapped table attribution).
-
-**`DOC-278` — `CLAUDE.md` staleness fix, then a repo-wide doc sweep.** The review above surfaced
-that `CLAUDE.md` itself still claimed `GalaxyEggbertCNA` "does not exist yet" — fixed. The user
-then asked to sweep every `.md` file in the repo (not just the reference tree) for the same kind of
-staleness. Found and fixed: `NEXT.md`'s own stale camera-shake bug entry (it's real and working);
-deleted 3 completed Simple3D-migration docs (`docs/simple3d_migration.md`,
-`docs/simple3d_migration_task.md`, `docs/SIMPLE3D_GAPS.md`) plus 2 vestigial dead headers, all
-describing a legacy Urho3D tree that no longer exists; fixed `easy3d.md`'s dangling references and
-added a dated-snapshot status banner; rewrote `WINDOWS.md` to match the actual CMake build (not
-fictional helper functions); fixed `README.md`'s matching CNA-staleness and wrong CMake option
-names; fixed `ANDROID.md`'s stale NDK version/clone-path/ABI claims; fixed `World Format.md`'s
-broken example header path and a missing struct field; fixed two stale "skeleton" comments in
-`CMakeLists.txt`.
-
-**`DOC-300`-`DOC-306` — first prose gameplay-behavior spec.** The user asked whether all
-objects/animations were "completely" documented; told that the existing catalog covers *what
-exists* but not *how it behaves* (`Decor.cpp` was reference-only, no-transcription per this file's
-own §5 rules), the user gave scoped approval: prose behavior + key numeric constants (not
-pseudocode, not verbatim code) for `ObjectType` Category A+B and core Blupi mechanics, recorded in
-`CLAUDE.md`. 7 parallel agents drafted 5 new files (`10-blupi-mechanics.md`,
-`11-save-and-progression.md`, `12-hazards-and-interactables.md`, `13-object-pickups.md`,
-`14-crates-lifts-bridges-effects.md`) and extended 2 existing ones (`04-enemy-behavior.md`,
-`06-doors.md`); 7 independent agents then adversarially verified each against
-`Decor.cpp`/`GameData.cpp`/`Game1.cpp`, finding and fixing ~20 real errors. Two findings stood out:
-bridge tiles genuinely lose floor support during most of their construction animation (a draft
-claim that they were "purely cosmetic" was reversed by verification, which also caught a
-pre-existing `02-tiles.md` error on the same tile); and mobile-eggbert genuinely supports vertical
-crate-stack linking, narrowing the scope of `NEXT.md`'s existing "stacked crates untested"
-limitation note. Also fixed two cross-file classification errors this surfaced in `03-objects.md`
-(`ObjectType46` is "Overcraft" not "balloon"; `ObjectType18` is vestigial, not a "patrol walker
-enemy"). This is documentation only — porting any of it into actual game code remains a separate,
-per-feature decision each time.
-
----
-
-*Total tasks: ~865 (~650 gameplay/engine + ~168 documentation-rework tasks in §16, `DOC-100`–`DOC-267`, + ~9 review/staleness tasks + 7 gameplay-behavior-spec tasks in §17, `DOC-268`–`DOC-306`). Sections by size: Sound (80), Blupi (150), Menu (102), Pickups (90), Tiles (52), Enemy (40), HUD (26), Score (20), Camera (17), Save (14), Visual (25), Build (10), Tests (7), S3D milestones (22), Documentation rework (168), Review/staleness/behavior-spec (16).*
+- No Simple3D/U3D/Nova3D work of any kind — no bug fixes, no build-environment troubleshooting.
+  `GalaxyEggbertSimple3D` is historical/behavioral reference only (2026-07-08).
+- No modifying `../mobile-eggbert`, ever, even temporarily/for analysis — copy a file into
+  galaxy-eggbert first if a working copy is genuinely needed.
+- No copying mobile-eggbert code or data (tables, enums, save-format byte layout, sprite/frame
+  logic) into Galaxy Eggbert without explicit per-instance user approval, even if it looks like
+  "just data."
+- No `.txt`→`.vwr` auto-converter tool — real 3D worlds must be hand-authored; a flat-Y
+  auto-conversion would produce an unplayable curiosity, not a real level.
+- No MeshCraft, Mesh World, or further Simple3D features re-entering the active target path.
+- No Lua unless explicitly requested by the user.
+- No Easy3D scope creep — no ECS, scene graph, or engine; small generic 3D-batching helpers only.
+- No new gameplay mechanics — every task in `## 1`/`## 2` traces to a documented mobile-eggbert
+  behavior; if it doesn't, it doesn't belong in this plan.
+- Don't silently narrow "all X" / "complete" scoping — ask first if a task's true scope is
+  ambiguous.
+- Commit after each discrete task; push only when explicitly requested per-instance.
