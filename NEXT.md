@@ -235,6 +235,23 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented the Blitz hazard (2026-07-11).** Autonomous continuation of `plan.md`'s backlog.
+  Unlike lava/spikes, Blitz needed no immunity-related simplification to implement faithfully —
+  `mobile-eggbert-reference/12-hazards-and-interactables.md` confirms "No vehicle immunity — same
+  lethality profile as lava", so the only real behavior to replicate was its 100-tick flicker
+  timing (`Decor::BlitzActif`): lethal only on even ticks within the first half of the cycle (25%
+  duty, ~2.5s of a ~5s period). New `GEWorldRuntime::IsBlitzActiveAtPhase(int)` — static/pure,
+  reuses the same 20-ticks/sec `animPhase_` the per-tile animation-divisor system already
+  advances at (`Config::ScaleTime(1)`, no new timing mechanism needed) — lets
+  `GalaxyEggbertCnaGame` gate the death check on it, and lets a tool test the cycle math directly
+  without a live `Game`/`GraphicsDevice`. The real cosmetic emitter tile (icon 304, times a zap
+  sound cue only) is NOT implemented — audio polish, not the hazard itself. Verified via 6
+  phase-value assertions in `VerifyInteractionSystem` (0/1/48/50/99/100, covering both parities
+  and both cycle halves, plus the wraparound at 100). Full suite + both backends' live runs
+  re-confirmed clean. Remaining hazard tiles (crusher, saw) both need real machinery beyond a
+  simple ground-block check — a survivable squash state and a switch/toggle system respectively
+  — so neither was attempted in this same pass.
+
 - **Implemented the spikes hazard (2026-07-11).** Autonomous continuation of `plan.md`'s backlog
   (user request: pick tasks autonomously). Same shape as the just-added lava hazard
   (`GetGroundBlockType() == Spike` → shared `triggerDeath()`), but real channel 51 (the Glu-death

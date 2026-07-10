@@ -97,6 +97,17 @@ namespace GalaxyEggbert::CNA
         // frame table. See Update()'s comment for why.
         [[nodiscard]] int GetAnimPhase() const { return animPhase_; }
 
+        // Real Blitz hazard timing (plan.md E3D-MIG-144, `Decor::BlitzActif`
+        // per mobile-eggbert-reference/12-hazards-and-interactables.md): a
+        // 100-tick cycle at this class's own 20-ticks/sec reference rate
+        // (see Update()'s animPhase_ comment) -- lethal only on even ticks
+        // within the first half of the cycle (a ~2.5s flicker at 25% duty
+        // cycle), then fully inactive for the second half. Static/pure
+        // (only needs an animPhase_ value, not a live instance) so a tool
+        // can test the cycle math directly -- see
+        // tools/VerifyInteractionSystem.cpp.
+        [[nodiscard]] static bool IsBlitzActiveAtPhase(int animPhase) noexcept;
+
         // BigDecor: is a second 100x100 background tile layer in
         // mobile-eggbert level files (see mobile-eggbert-2d-reference.md
         // §2.3) — parsed and stored here (same icon-id-to-block-type

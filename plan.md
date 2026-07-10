@@ -43,14 +43,17 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
   treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
   sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
-- **Lives + fall death + lava + spikes** (`E3D-MIG-130`/`067`/`140`/`141`, 2026-07-11): `lives_`
-  starts at 3, eggs grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real
-  `DoorsLost()` behavior, not a permanent depletion). Wired to three real hazards via
-  `GEBlupiController::GetGroundBlockType()`: falling off the world and lava (deterministic, real
-  channel 8) and spikes (deterministic here — real vehicle+focus immunity not modeled since
-  neither concept exists yet, real channel 51). Vehicle immunity/sub-tile x-band restrictions and
-  the real 10-slot last-safe-position FIFO respawn are known simplifications. No enemy contact or
-  the remaining 3 hazard tiles (crusher/saw/blitz) call `LoseLife()` yet.
+- **Lives + fall death + lava + spikes + Blitz** (`E3D-MIG-130`/`067`/`140`/`141`/`144`,
+  2026-07-11): `lives_` starts at 3, eggs grant +1 up to the cap, `LoseLife()` resets to 3 on
+  game-over (real `DoorsLost()` behavior, not a permanent depletion). Wired to four real hazards
+  via `GEBlupiController::GetGroundBlockType()`: falling off the world, lava, and Blitz
+  (deterministic, real channel 8, no simplification needed for Blitz — its real 100-tick flicker
+  cycle is faithfully replicated by `GEWorldRuntime::IsBlitzActiveAtPhase()`) and spikes
+  (deterministic here — real vehicle+focus immunity not modeled since neither concept exists yet,
+  real channel 51). Vehicle immunity/sub-tile x-band restrictions and the real 10-slot
+  last-safe-position FIFO respawn are known simplifications. No enemy contact or the remaining 2
+  hazard tiles (crusher/saw, both need real machinery — a survivable squash state and a switch/
+  toggle system respectively — beyond a simple ground-block check) call `LoseLife()` yet.
 - **Basic HUD** (2026-07-11): icon-based only (no text rendering exists) — life icons
   (bottom-left, one per life) and key icons (top-left, shown only while held).
 - **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
@@ -75,9 +78,9 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   counter/score/timer.
 - **No enemy combat** — no hit/stomp/hazard detection of any kind for any enemy type; explicitly
   deferred pending full per-type enemy behavior (Phase 13). A basic lives foundation now exists
-  (`E3D-MIG-130`, 2026-07-11), wired to fall-off-world death, lava, and spikes (`E3D-MIG-140`/
-  `141`, 2026-07-11) — but enemy contact and the remaining 3 hazard tiles (crusher/saw/blitz,
-  `E3D-MIG-142`-`144`) still do nothing.
+  (`E3D-MIG-130`, 2026-07-11), wired to fall-off-world death, lava, spikes, and Blitz
+  (`E3D-MIG-140`/`141`/`144`, 2026-07-11) — but enemy contact and the remaining 2 hazard tiles
+  (crusher/saw, `E3D-MIG-142`/`143`) still do nothing.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -315,8 +318,13 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
 - [ ] `142` Saw (378/379) — switch-togglable via `ActiveSwitch`, real 41-cell trigger window.
 - [ ] `143` Crusher (317) — NOT instant death, a survivable squash state with a real
       recovery timer, no vehicle immunity.
-- [ ] `144` Blitz (305, emitter 304 cosmetic) — 100-tick flicker, lethal only on even-ticks of
-      the first half (25% duty), no immunity of any kind.
+- [x] `144` **Blitz (305) done 2026-07-11** — new `GEWorldRuntime::IsBlitzActiveAtPhase(int)`
+      (static/pure, tested directly) replicates the real 100-tick flicker cycle exactly (lethal
+      only on even ticks of the first half, 25% duty), using the same 20-ticks/sec `animPhase_`
+      the per-tile animation-divisor system already advances at — no simplification needed here,
+      real channel 8, no immunity of any kind (matches lava, unlike spikes). Emitter tile (304,
+      cosmetic zap-sound timing only) NOT implemented — audio polish, not the hazard itself.
+      Verified via 6 phase-value assertions in `VerifyInteractionSystem`.
 - [ ] `145` Spring (211) — dismounts vehicles first, then launches per Jump/Power combo (shares
       values with `E3D-MIG-065`'s direct-jump table).
 - [ ] `146` Temp/vanishing tile (324) — NOT a kill-check, a 90%-solid/10%-passable oscillation

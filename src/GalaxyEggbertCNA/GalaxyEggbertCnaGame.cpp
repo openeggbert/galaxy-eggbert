@@ -504,6 +504,28 @@ namespace GalaxyEggbert::CNA
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
             }
 
+            // Blitz hazard (plan.md E3D-MIG-144) -- real channel 8, same
+            // lethality profile as lava per mobile-eggbert-reference/
+            // 12-hazards-and-interactables.md ("No vehicle immunity --
+            // same lethality profile as lava; only Shield/Hide/SuperBlupi
+            // protect, and there is no focus requirement") -- unlike
+            // spikes/drip/saw, Blitz needed no immunity simplification to
+            // implement faithfully. Real `BlitzActif()`: a 100-tick cycle
+            // at the same 20-ticks/sec reference rate worldRuntime_'s
+            // GetAnimPhase() already advances at (Config::ScaleTime(1),
+            // matching the real per-tile animation-divisor rate), lethal
+            // only on even ticks within the first half (`num%2==0 &&
+            // num<50` -- a rapid flicker for ~2.5s, 25% duty cycle over the
+            // full ~5s period, then fully inactive for the second half).
+            // The real cosmetic emitter tile (icon 304, sits one cell
+            // above 305, times a zap sound cue only) is NOT implemented --
+            // audio-only polish, not the hazard itself.
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
+                GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
+            {
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+            }
+
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
             // -- platform lift patrol, crate push, pickup collection. Runs
             // after blupi_.Step() so blupi_'s position is this frame's
