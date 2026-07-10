@@ -103,9 +103,13 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType20: return kBird[(p / 6) % 8];
             case ObjectType::ObjectType30: return 178;
             case ObjectType::ObjectType33: return kBlupit[(p / 6) % 8];
-            case ObjectType::ObjectType5: { int q = (p / 9) % 22; return (q < 11) ? q : (21 - q); }
-            case ObjectType::ObjectType6:  return 21 + (p / 12) % 8;
-            case ObjectType::ObjectType7:  return 29 + (p /  9) % 8;
+            // ObjectType5/6/7's real divisors (Decor.cpp: ScaleDiv(3), ScaleDiv(4),
+            // ScaleDiv(3) respectively) were mistranscribed as 9/12/9 (each real
+            // value x3) -- fixed 2026-07-10, reported live as "truhla" (the
+            // ObjectType5 treasure chest) animating 3x too slowly.
+            case ObjectType::ObjectType5: { int q = (p / 3) % 22; return (q < 11) ? q : (21 - q); }
+            case ObjectType::ObjectType6:  return 21 + (p / 4) % 8;
+            case ObjectType::ObjectType7:  return 29 + (p / 3) % 8;
             case ObjectType::ObjectType49: return kCle1[(p / 9) % 12];
             case ObjectType::ObjectType50: return kCle2[(p / 9) % 12];
             case ObjectType::ObjectType51: return kCle3[(p / 9) % 12];

@@ -225,6 +225,30 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed ObjectType5/6/7's animation divisors — mistranscribed as each real value x3, so the
+  treasure chest and 2 neighboring collectibles animated 3x too slowly (2026-07-10).** User report:
+  "the electric-arc billboard's slowness is faithful to mobile-eggbert (confirmed, see the entry
+  below) — but the chest ('truhla') isn't this slow in real mobile-eggbert." Dispatched a fresh,
+  independent re-verification against the real mobile-eggbert source rather than trusting the
+  earlier session's own transcription:
+  - `ObjectType38` (the one investigated for the "slow" report) is confirmed to really be
+    `Decor.cpp`'s electric-arc effect, not the chest — its `kElectro[90]` table and divisor (every
+    tick, `ScaleDiv(1)`) both match real mobile-eggbert byte-for-byte; that animation's chunky look
+    (each icon held for 2-5 ticks per the table's own real, repeated entries) is genuinely faithful,
+    not a bug.
+  - The real "truhla" is `ObjectType5` ("Collectible (treasure)", `mobile-eggbert-reference/
+    03-objects.md`). Real `Decor.cpp:8297-8304` divides its phase by `Config::ScaleDiv(3)`;
+    `GEObjectIcons.cpp` had `(p / 9) % 22` — divisor 9, exactly 3x the real value 3. The same
+    transcription error (real value x3) was found on both neighbors: `ObjectType6` ("extra-life
+    egg", real `ScaleDiv(4)` at `Decor.cpp:8309`, had `/12`) and `ObjectType7` ("level-exit goal",
+    real `ScaleDiv(3)` at `Decor.cpp:8313`, had `/9`) — a systematic error across all 3, not 3
+    independent mistakes.
+  - **Fix** (`GEObjectIcons.cpp`): `ObjectType5` `/9`→`/3`, `ObjectType6` `/12`→`/4`, `ObjectType7`
+    `/9`→`/3`.
+  - **Verified**: clean build; `GalaxyEggbertWorldsTests` (63/63); `VerifyBlupiMovement`/
+    `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` (all `ALL CHECKS PASSED`); live headless
+    run, no crash/errors.
+
 - **New confirmed bug, NOT yet fixed: side-face textures wash out to a flat, wrong gray at a
   distance (2026-07-10).** Live follow-up after the `+Y`/`-Y` winding fix directly below — user
   reported "two side walls missing" on a fresh screenshot of the sample-world demo row. Investigated
