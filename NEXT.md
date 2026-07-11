@@ -260,6 +260,36 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Third round of live feedback with an actual screenshot (2026-07-11, plan.md `E3D-MIG-142`/
+  `147`/`149`): fixed the Saw's ANCHOR direction and reverted the teleporter tip to a genuine
+  pyramid.** User (Czech, verbatim, with `Screenshot From 2026-07-11 16-35-24.png`): "ta pila je
+  obracene reze do zeme ale mela by rezat nahoru dale ty teleportery zadni teleporter se renderuje
+  dopredu je to rozbite ... renderovani teleporteru je jen z casti v poradku ... dale je [vidět] ze
+  ty hroty 4 textury trojuhelniku nejsou dole svazane k sobe" — found the screenshot locally
+  (`/home/robertvokac/Pictures/Screenshots/`) and inspected it directly.
+  - **Saw**: the previous fix (bottom-anchored, flush with the block's own `-0.5` bottom face) was
+    still wrong — neighboring floor tiles' own walkable surface sits at `+0.5` (their solid tops),
+    not `-0.5`, so the blade sat entirely BELOW the visible floor line, reading as buried/cutting
+    into the ground rather than poking up where Blupi actually walks. Re-anchored to the block's
+    TOP face instead, extending downward from there — confirmed live (screenshot shows the blade
+    now at the top of its recessed "pit," flush with the surrounding floor, not at the bottom).
+  - **Teleporter tip**: reverted from the non-tapering box (added in round 2) back to a genuine
+    tapering pyramid — `Easy3D::PyramidTipItem`/`AppendPyramidTipMesh()` re-added to `../easy-3d`
+    (removed in round 2, now restored with its own test). The box's 4 flat side faces (each
+    showing a triangle via an alpha cutout) don't share a common vertex the way a real pyramid's 4
+    triangular faces do, so adjacent faces' triangle graphics visibly failed to connect at the
+    block's 4 vertical edges — confirmed directly in the screenshot. A genuine pyramid's faces
+    share one apex vertex by construction, so it's structurally seamless; combined with the
+    already-fixed alpha blending (round 2, unrelated to box-vs-pyramid), this also keeps the
+    "black background" fix. Verified live: both real gameplay teleporter rooms AND the exact
+    exhibition row shown in the user's own screenshot now render cleanly (no black, no seams,
+    proper single-point convergence) on a fresh screenshot at the same location.
+  - The "zadní teleporter renderuje dopředu" (rear teleporter renders forward) glitch was not
+    independently reproduced after the pyramid revert — both real teleporter rooms and the
+    exhibition row all rendered correctly, so it's treated as a symptom of the box design (same
+    root cause as the seam issue) rather than a separate bug, though not 100% conclusively ruled
+    out as distinct.
+
 - **Fixed the Saw's plate positioning + added per-placement rotation metadata (2026-07-11, plan.md
   `E3D-MIG-142`/`149`), per a second round of live user feedback on the render-mode fix above.**
   User (Czech, verbatim): "ta pila ma byt obracene u zeme a ne ve vzduchu nyni je to nesmysl pila
@@ -2683,17 +2713,19 @@ open floor unreachable via normal walking). It bit twice more this session (find
 building the fan hazard, then again while live-verifying the Saw render-mode fix below — same
 south tunnel both times) — worth fixing properly if a THIRD task needs to walk-test something
 inside that tunnel. `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (Saw ground-anchoring + per-placement rotation metadata,
-2026-07-11, see §3's newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify
-tools (`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
+backends as of the most recent work (Saw anchor direction fix + teleporter tip reverted to a
+pyramid, 2026-07-11, see §3's newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5
+verify tools (`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
 `VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
 `-DEASY3D_LINK_CNA=ON`) pass.
 
 **Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
-teleporter's own extra box-tip attachment geometry (a 5th, narrowly-scoped attachment, not one of
-the 4 confirmed modes — NOT a pyramid, see §3 for the live-feedback corrections) and Saw/SawStopped
-now correctly wired into the `InnerFlatPlate` table with ground-anchored positioning and
-per-placement rotation metadata (see §3's 2 newest entries) — no render-mechanism
+teleporter's own extra pyramid-tip attachment geometry (a 5th, narrowly-scoped attachment, not one
+of the 4 confirmed modes — went through a non-tapering box detour, reverted back to a pyramid
+after a screenshot showed the box's 4 faces didn't visually connect at the bottom, see §3 for the
+full 3-round live-feedback history) and Saw/SawStopped now correctly wired into the
+`InnerFlatPlate` table with top-anchored (floor-level) positioning and per-placement rotation
+metadata (see §3's 3 newest entries) — no render-mechanism
 work remains outstanding on the confirmed-icon front. **All 5 items from the 2026-07-11
 live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10 done** —
 only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage swimming)
@@ -3060,13 +3092,18 @@ polish):**
 
 **2 tasks queued by the user (2026-07-11):**
 
-1. **DONE (2026-07-11): fixed the Saw tile's render mode, in 2 rounds of live user feedback.**
-   See §3's 2 newest entries and `plan.md`'s `E3D-MIG-142`/`149` entries for full detail —
-   Saw/SawStopped now use `InnerFlatPlate` with a short, ground-anchored plate (not the shared
-   full-height centered look) and a per-PLACEMENT rotation metadata bit (not a hardcoded per-icon
-   axis), superseding the old undecided "ThinMechanical" categorization. Also surfaced (twice)
-   the tracked `GroundHeightAt()` ceiling limitation (§5) while live-verifying — the switch+saw
-   pair sits inside the same roofed tunnel interior the fan hazard task already hit this same
+1. **DONE (2026-07-11): fixed the Saw tile's render mode AND the teleporter tip, across 3 rounds
+   of live user feedback (the 3rd with an actual screenshot).** See §3's 3 newest entries and
+   `plan.md`'s `E3D-MIG-142`/`147`/`149` entries for full detail — Saw/SawStopped now use
+   `InnerFlatPlate` with a short plate anchored to the block's TOP face (floor level, where
+   Blupi's feet are — round 1 wrongly bottom-anchored it, sinking it below the visible floor) and
+   a per-PLACEMENT rotation metadata bit (not a hardcoded per-icon axis), superseding the old
+   undecided "ThinMechanical" categorization. The teleporter tip went pyramid → box → back to
+   pyramid (the box's 4 flat faces didn't share a vertex, so their triangle-shaped alpha cutouts
+   visibly failed to connect at the block's edges — confirmed directly in the user's screenshot;
+   a real pyramid's faces share one apex by construction). Also surfaced (twice) the tracked
+   `GroundHeightAt()` ceiling limitation (§5) while live-verifying the Saw — the switch+saw pair
+   sits inside the same roofed tunnel interior the fan hazard task already hit this same
    limitation in.
 2. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
    verbatim): "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten

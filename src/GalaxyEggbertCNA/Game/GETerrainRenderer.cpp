@@ -45,21 +45,23 @@ namespace GalaxyEggbert::CNA
         constexpr float kTripleCrossWidth = 0.8f;
         constexpr float kTripleCrossHeight = 1.0f;
 
-        // Saw/SawStopped (2026-07-11, user feedback: "pila ma byt obracene
-        // u zeme a ne ve vzduchu, nyni je to nesmysl" -- the saw should sit
-        // AT ground level, not floating mid-block like every other
-        // confirmed InnerFlatPlate icon, which are small centered props
-        // (signposts/screens) where filling most of the block height AND
-        // centering both make sense). A short (not the shared 0.9 height --
-        // a full-height panel still reads as "floating" even bottom-
-        // anchored, since its top would sit almost as high as a
-        // neighboring floor tile's own top), ground-anchored blade instead:
-        // bottom flush with the block's own bottom face, so it reads as a
-        // blade emerging from a floor-level slot, matching a real circular
-        // saw hazard rather than a wall-height panel. A Saw-specific
-        // positioning override, not a change to the shared InnerFlatPlate
-        // default (every other confirmed icon keeps the original
-        // full-height centered look).
+        // Saw/SawStopped (2026-07-11, user feedback, 2 rounds): the saw
+        // should sit AT the walkable floor plane, not floating mid-block
+        // like every other confirmed InnerFlatPlate icon (small centered
+        // props -- signposts/screens -- where filling most of the block
+        // height AND centering both make sense), and NOT sunk below it
+        // either. Round 1 tried bottom-anchoring (flush with the block's
+        // own -0.5 bottom face) -- still wrong, since neighboring floor
+        // tiles' own walkable surface sits at +0.5 (their solid tops), not
+        // -0.5, so a bottom-anchored blade sits entirely BELOW the visible
+        // floor line, reading as buried/cutting into the ground. Round 2:
+        // anchored to the block's TOP face instead (matching where Blupi's
+        // feet actually are), extending downward from there. Short (not
+        // the shared 0.9 height -- a full-height panel reads as a wall
+        // panel regardless of anchor), so it reads as a blade emerging
+        // from a floor-level slot. A Saw-specific positioning override,
+        // not a change to the shared InnerFlatPlate default (every other
+        // confirmed icon keeps the original full-height centered look).
         constexpr float kSawPlateHeight = 0.5f;
 
         bool IsGroundAnchoredPlateIcon(int icon)
@@ -71,21 +73,33 @@ namespace GalaxyEggbert::CNA
         // (spike/tip) hanging below the block, per direct user Q&A live in
         // session 2026-07-11 ("pod teleporterem by měl být prostor... zbytek
         // ten hrot teleporteru by měl být renderován pod teleporterem").
-        // REVISED same day (second live Q&A pass): the first attempt modeled
-        // this as a tapering pyramid, but a live screenshot showed solid
-        // BLACK filling the lower/wider portion of each triangular face --
-        // the real underlying graphic is straight-sided (a "čtyřhranol",
-        // four-sided/rectangular prism), not a cone tapering to a point, so
-        // a triangle's wide base picked up the icon's plain black background
-        // surrounding the actual post artwork. Rebuilt as a second, narrower
-        // DirectionalCube box (same primitive/approach as InnerPillarBox,
-        // just a one-off attachment rather than a confirmed render-mode
-        // table entry) hanging below the main cube -- 4 straight side faces,
-        // no tapering, so every mapped texel is the real texture, not a
-        // stretched/out-of-bounds sample. Base spans most of the block's
-        // footprint, height stops just short of a full block-height so it
-        // never pokes through a floor one cell below an open teleporter room.
-        constexpr float kTipWidth = 0.6f;
+        // Went through 3 rounds of live user feedback the same day:
+        // (1) first modeled as a tapering pyramid -- a live screenshot
+        //     showed solid BLACK filling the lower/wider portion of each
+        //     triangular face, which read as a straight-sided shape
+        //     ("čtyřhranol") rather than a cone;
+        // (2) rebuilt as a non-tapering box (4 straight `DirectionalCube`
+        //     side faces) -- this also (separately) surfaced that the
+        //     "black" was actually real alpha=0 transparency being
+        //     rendered opaque (fixed via `NeedsAlphaBlend`, unrelated to
+        //     the box-vs-pyramid choice), but the box itself then showed a
+        //     new problem: its 4 flat side faces (each showing a triangle
+        //     via an alpha cutout) don't share a common vertex the way a
+        //     real pyramid's 4 triangular faces do, so adjacent faces'
+        //     triangle graphics visibly failed to connect at the block's 4
+        //     vertical edges ("ty hroty 4 textury trojúhelníku nejsou dole
+        //     svázané k sobě");
+        // (3) reverted to a genuine tapering pyramid (`Easy3D::
+        //     PyramidTipItem`/`AppendPyramidTipMesh()`, re-added to
+        //     `../easy-3d` after round 1 had removed it) -- now combined
+        //     with the alpha-blend fix from round 2, which independently
+        //     fixes the original "black background" problem regardless of
+        //     shape, so the pyramid's structurally-shared apex vertex
+        //     gives a seamless cone with no black and no seams.
+        // Base spans most of the block's footprint, height stops just
+        // short of a full block-height so it never pokes through a floor
+        // one cell below an open teleporter room.
+        constexpr float kTipBaseSize = 0.7f;
         constexpr float kTipHeight = 0.6f;
 
         bool IsTeleporterTipIcon(int icon)
@@ -145,23 +159,12 @@ namespace GalaxyEggbert::CNA
 
                 if (IsTeleporterTipIcon(lookupIcon))
                 {
-                    const auto tipUv = TeleporterTipUv(tileUv);
-                    Easy3D::DirectionalCubeItem tip;
-                    tip.Center = Easy3D::CubeBatch::Vector3(center.X, center.Y - 0.5f - kTipHeight * 0.5f, center.Z);
-                    tip.Size = Easy3D::CubeBatch::Vector3(kTipWidth, kTipHeight, kTipWidth);
-                    // Only the 4 straight side faces are visible -- top sits
-                    // flush against the main cube's own bottom face (never
-                    // seen), bottom is a rarely-seen cap not worth a texture
-                    // decision for.
-                    for (int face = 0; face < 6; ++face)
-                    {
-                        tip.Faces[face].Visible = false;
-                    }
-                    tip.Faces[static_cast<int>(Easy3D::CubeFace::PosZ)] = {true, tipUv};
-                    tip.Faces[static_cast<int>(Easy3D::CubeFace::NegZ)] = {true, tipUv};
-                    tip.Faces[static_cast<int>(Easy3D::CubeFace::PosX)] = {true, tipUv};
-                    tip.Faces[static_cast<int>(Easy3D::CubeFace::NegX)] = {true, tipUv};
-                    Easy3D::AppendDirectionalCubeMesh(tip, vertices, indices);
+                    Easy3D::PyramidTipItem tip;
+                    tip.Center = Easy3D::CubeBatch::Vector3(center.X, center.Y - 0.5f, center.Z);
+                    tip.BaseSize = kTipBaseSize;
+                    tip.Height = kTipHeight;
+                    tip.Uv = TeleporterTipUv(tileUv);
+                    Easy3D::AppendPyramidTipMesh(tip, vertices, indices);
                 }
 
                 return true;
@@ -189,17 +192,24 @@ namespace GalaxyEggbert::CNA
                 item.Axis = GetInnerFlatPlateAxis(lookupIcon, plateRotated);
                 if (IsGroundAnchoredPlateIcon(lookupIcon))
                 {
-                    // Saw specifically (2026-07-11, user feedback: "pila ma
-                    // byt obracene u zeme a ne ve vzduchu" -- a short,
-                    // floor-mounted blade, not the shared full-height
-                    // centered look every other InnerFlatPlate icon uses):
-                    // shorter than the shared kInnerFlatPlateHeight, bottom
-                    // edge flush with the block's own bottom face, so it
-                    // reads as emerging from a floor-level slot rather than
-                    // a wall-height panel floating mid-block.
+                    // Saw specifically (2026-07-11, user feedback -- 2nd
+                    // round: "pila je obracene reze do zeme ale mela by
+                    // rezat nahoru", i.e. it was anchored to the block's
+                    // own BOTTOM face, sinking the whole blade below the
+                    // walkable floor plane of every neighboring tile
+                    // (their solid tops sit at +0.5, not this block's own
+                    // -0.5) -- it read as buried, cutting DOWN into the
+                    // ground instead of poking UP into the space Blupi
+                    // actually walks through. Anchored to the block's TOP
+                    // face instead (matching the neighboring floor tiles'
+                    // own walkable surface, where Blupi's feet are),
+                    // extending downward from there -- shorter than the
+                    // shared kInnerFlatPlateHeight so it still reads as a
+                    // blade emerging from a floor-level slot, not a
+                    // wall-height panel.
                     item.Height = kSawPlateHeight;
                     item.Center = Easy3D::CubeBatch::Vector3(
-                        center.X, center.Y - 0.5f + kSawPlateHeight * 0.5f, center.Z);
+                        center.X, center.Y + 0.5f - kSawPlateHeight * 0.5f, center.Z);
                 }
                 else
                 {

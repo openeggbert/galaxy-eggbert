@@ -142,6 +142,23 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   render path instead of the opaque one. Verified live via headless EasyGL screenshots at multiple
   angles/distances — renders correctly: blue cube sides with the real dots/emblem-letter texture,
   a clean genuinely-transparent teal spike hanging below with no black anywhere.
+  **Reverted back to a pyramid the SAME day (3rd live feedback round, with an actual attached
+  screenshot this time — `Screenshot From 2026-07-11 16-35-24.png`, found locally under
+  `/home/robertvokac/Pictures/Screenshots/` and inspected directly)**: the box's 4 flat side faces
+  (each showing a triangle via an alpha cutout) don't share a common vertex the way a real
+  pyramid's 4 triangular faces do, so adjacent faces' triangle graphics visibly failed to connect
+  at the block's 4 vertical edges ("ty hroty 4 textury trojúhelníku nejsou dole svázané k sobě",
+  confirmed directly in the screenshot). `PyramidTipItem`/`AppendPyramidTipMesh()` re-added to
+  `../easy-3d` (hpp/cpp + its own test, same code as the original round-1 version) — a genuine
+  pyramid's 4 faces share one apex vertex by construction, so it's structurally seamless; combined
+  with the already-fixed alpha blending (round 2, unrelated to the box-vs-pyramid choice), this
+  keeps the earlier "black background" fix too. The user's screenshot also reported "zadní
+  teleporter renderuje dopředu, je to rozbité" (the rear teleporter renders forward, broken) —
+  not independently reproduced after the pyramid revert (both real teleporter rooms and the exact
+  exhibition row shown in the screenshot rendered cleanly on a fresh screenshot at the same
+  location), treated as a symptom of the box design rather than a confirmed separate bug. Full
+  5-tool suite + both backends + easy-3d's own test suite (including the re-added pyramid test)
+  all re-verified.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -632,6 +649,14 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       save/load (standalone check), full 5-tool suite + both backends re-verified, and live via
       headless EasyGL screenshots at multiple distances — the blade now sits low near the floor
       with visible wall space above it, clearly different from the earlier centered look.
+      **Anchor direction fixed again same day (3rd live user feedback round, with an actual
+      screenshot this time)**: the round-2 fix bottom-anchored the plate to the block's own `-0.5`
+      face, but neighboring floor tiles' own walkable surface sits at `+0.5` (their solid tops),
+      not `-0.5` — the blade sat entirely BELOW the visible floor line, reading as buried/cutting
+      into the ground ("řeže do země") instead of poking up where Blupi walks ("měla by řezat
+      nahoru"). Re-anchored to the block's TOP face instead (`center.Y + 0.5f - kSawPlateHeight *
+      0.5f`), extending downward from there. Confirmed live: the screenshot shows the blade now at
+      the top of its recessed "pit," flush with the surrounding floor, not at the bottom.
 - [x] `143` **Crusher (317) done 2026-07-11** — verified directly against `Decor.cpp:5549-5597`/
       `5180-5197`/`7277-7288` (not just the reference doc). New `GEBlupiController::TriggerCrush()`/
       `IsEcrased()`: real `!m_blupiEcrase` re-trigger guard (idempotent, returns false if already

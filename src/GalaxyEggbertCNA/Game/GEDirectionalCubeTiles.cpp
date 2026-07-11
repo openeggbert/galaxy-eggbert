@@ -76,14 +76,18 @@ namespace GalaxyEggbert::CNA
             // post graphic) is ALSO used for a separate, genuinely 3D "tip"
             // attachment hanging below the block -- GETerrainRenderer's own
             // IsTeleporterTipIcon()/TeleporterTipUv(), an extra
-            // DirectionalCubeMesh append (a narrower straight-sided box, NOT
-            // a tapering pyramid -- revised the same day after a live
-            // screenshot showed black background bleeding into a pyramid's
-            // wide triangle bases, since the real graphic is a rectangular
-            // post, not a cone) inlined into AppendSpecialGeometry right
-            // after this table's own cube append, not this table -- so the
-            // side faces showing that same post graphic squished onto their
-            // own flat surface (from using the whole-tile UV here, the same
+            // AppendPyramidTipMesh call (a genuine tapering pyramid --
+            // went through a non-tapering box in between, but the box's 4
+            // flat faces didn't share a common vertex the way a real
+            // pyramid's do, so adjacent faces' triangle-shaped alpha
+            // cutouts visibly failed to connect at the block's 4 vertical
+            // edges; reverted to a pyramid, now combined with the
+            // alpha-blend fix from the box round, which independently
+            // fixed the original "black background" issue regardless of
+            // shape) inlined into AppendSpecialGeometry right after this
+            // table's own cube append, not this table -- so the side faces
+            // showing that same post graphic squished onto their own flat
+            // surface (from using the whole-tile UV here, the same
             // convention every other entry in this table uses) is accepted
             // as a minor first-pass cosmetic overlap, not fixed with a
             // custom sub-rect UV here.
