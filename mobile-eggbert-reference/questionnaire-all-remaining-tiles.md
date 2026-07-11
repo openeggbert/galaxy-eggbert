@@ -4222,6 +4222,16 @@ Odpověď: Saw (souhlasí s dřívější poznámkou)
 **Render mód?**
 Odpověď: NENÍ ThinMechanical. Billboard
 
+**REVIZE 2026-07-11** (přímý live pokyn uživatele, upřesňuje odpověď výše):
+konkrétně "InnerFlatPlate" (jeden z již implementovaných render módů) --
+"pila bude staticky billboard tedy uprostred daneho bloku se textura
+nanese na obe strany jakoby neviditelen desky v puli krychle" -- textura
+na obou stranách neviditelné desky uprostřed bloku, ne TripleCrossBillboard
+(3 roviny po 60°). `GetInnerFlatPlateAxis()` vrací `PlateAxis::X` pro tuto
+ikonu konkrétně (ne obvyklý Z default), protože jediné reálné umístění
+(dvojice switch+saw, `worlds3d/world001.vwr`) sedí v chodbě, kterou Blupi
+prochází podél osy X. Viz plan.md E3D-MIG-149/142 a 02-tiles.md.
+
 ---
 
 ## Icon 379
@@ -4238,6 +4248,8 @@ Odpověď: SawStopped (souhlasí s dřívější poznámkou)
 
 **Render mód?**
 Odpověď: NENÍ ThinMechanical. Billboard
+
+**REVIZE 2026-07-11**: viz revize u icon 378 výše (stejná rodina Saw/SawStopped).
 
 ---
 

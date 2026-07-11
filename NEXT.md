@@ -260,6 +260,35 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed the Saw tile's render mode (2026-07-11, plan.md `E3D-MIG-142`/`149`), per live user
+  feedback.** User (Czech, verbatim): "ta pila saw se renderuje spatne nema to byt na krychly pila
+  bude staticky billboard tedy uprosred daneho bloku se textura nanese na obe strany jakoby
+  neviditelen desky v puli krychle" — Saw/SawStopped (378/379) were falling through every
+  special-geometry table into the generic fully-textured `UniformCube` fallback.
+  - Added both icons to `GEInnerFlatPlateTiles.cpp`'s confirmed table (genuinely thin
+    double-sided plate through the block's middle, outer 6 faces never drawn), superseding an
+    earlier session's undecided "ThinMechanical" placeholder categorization —
+    `mobile-eggbert-reference/02-tiles.md`/`questionnaire-all-remaining-tiles.md` both updated to
+    record the revision (note: an even earlier pass had already answered "Billboard, not
+    ThinMechanical" — this revision specifies exactly which billboard-family mode, not a
+    contradiction).
+  - `GetInnerFlatPlateAxis()` special-cases Saw/SawStopped to `PlateAxis::X` (every other
+    confirmed `InnerFlatPlate` icon uses a `PlateAxis::Z` default) — the one real placement (the
+    switch+saw pair, `worlds3d/world001.vwr`) sits in a corridor Blupi walks along X, and a
+    Z-axis plate is invisible edge-on from that approach. Real mobile-eggbert's 2D sprite has no
+    axis concept at all, so this is a 3D placement adaptation, not a faithfulness question.
+  - **Verifying this live surfaced a real debugging trap worth recording**: the switch+saw pair
+    sits inside the south tunnel's roofed interior, which is exactly where the pre-existing
+    `GroundHeightAt()` ceiling limitation (§5) applies — `blupi_`'s own Y kept resolving to 4 (on
+    top of the roof) instead of 1 (the real floor) every time a debug spawn was placed there via
+    `SetPosition()`, silently invalidating over a dozen camera-angle attempts before this was
+    diagnosed via a `[CAM DEBUG]` log line comparing intended vs. actual camera pose. Worked
+    around for this one screenshot by setting `camera_`'s position/target directly, independent
+    of `blupi_`'s corrupted Y (reverted before committing, same as all debug instrumentation).
+  - Final live screenshot confirms a genuine thin plate showing the real jagged circular-blade
+    texture, with the tunnel's red wall visible around/through it (proving the cube's outer faces
+    are truly not drawn, not just retextured). Full 5-tool suite + both backends re-verified.
+
 - **Fixed the teleporter tip's shape AND a real transparency bug (2026-07-11, plan.md
   `E3D-MIG-147`, live user re-check after the earlier pyramid-tip pass).** User reported the
   earlier pyramid-tip geometry showed black filling the lower/wider part of each triangular face,
@@ -2613,31 +2642,29 @@ Most recent first. Full history: `git log`.
 **No code blocker**, but a real, deeper architectural collision limitation was found and tracked,
 not fixed — see §5's newest row (`GroundHeightAt()` treats a column's topmost solid block as the
 floor no matter Blupi's own height, making any roofed/enclosed interior with a ceiling above an
-open floor unreachable via normal walking). `GalaxyEggbertCNA` builds and runs cleanly on both the
-EasyGL and Vulkan backends as of the most recent work (teleporter tip shape+alpha fix, 2026-07-11,
-see §3's newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools
-(`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
-`VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
-`-DEASY3D_LINK_CNA=ON`) pass.
+open floor unreachable via normal walking). It bit twice more this session (finding it while
+building the fan hazard, then again while live-verifying the Saw render-mode fix below — same
+south tunnel both times) — worth fixing properly if a THIRD task needs to walk-test something
+inside that tunnel. `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
+backends as of the most recent work (Saw render-mode fix, 2026-07-11, see §3's newest entry), all
+63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools (`VerifyBlupiMovement`,
+`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`, plus
+`../easy-3d/tests/test_cube_mesh.cpp` built with `-DEASY3D_LINK_CNA=ON`) pass.
 
 **Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
 teleporter's own extra box-tip attachment geometry (a 5th, narrowly-scoped attachment, not one of
-the 4 confirmed modes — NOT a pyramid, see §3's newest entry for the two live-feedback corrections)
-— no render-mechanism work remains outstanding on the confirmed-icon front. **All 5 items from the
-2026-07-11 live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10
-done** — only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage
-swimming) rather than a hazard-timer variant like every other Phase 14 item so far, deliberately
-not started yet given that larger scope. Phase 13 (Enemy AI & combat) is fully complete.
+the 4 confirmed modes — NOT a pyramid, see §3 for the live-feedback corrections) and Saw/SawStopped
+now correctly wired into the `InnerFlatPlate` table (see §3's newest entry) — no render-mechanism
+work remains outstanding on the confirmed-icon front. **All 5 items from the 2026-07-11
+live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10 done** —
+only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage swimming)
+rather than a hazard-timer variant like every other Phase 14 item so far, deliberately not started
+yet given that larger scope. Phase 13 (Enemy AI & combat) is fully complete.
 
-**2 new tasks queued by the user, not yet started (see §8's newest items for full detail)**:
-1. **Fix the Saw tile's render mode** — currently rendered as a cube, but the user says it should
-   be a static billboard (`InnerFlatPlate`-style: texture on both sides of an invisible plate
-   through the middle of the block), same as other confirmed `InnerFlatPlate` icons already use.
-2. **Add more platform lifts to the demo world**, and fix the existing one, which is positioned
-   under a plate/board such that it moves THROUGH solid geometry (clips, not usable/visible as
-   intended).
-
-Pick up in that order (Saw fix first, it's smaller) unless the user redirects.
+**1 task still queued by the user, not yet started (see §8's newest items for full detail)**:
+- **Add more platform lifts to the demo world**, and fix the existing one, which is positioned
+  under a plate/board such that it moves THROUGH solid geometry (clips, not usable/visible as
+  intended). The Saw render-mode fix above was the other queued item — now done.
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2691,7 +2718,7 @@ Pick up in that order (Saw fix first, it's smaller) unless the user redirects.
 | resolved (2026-07-11) | `GalaxyEggbertCNA`'s animation-state icon (bottom-right corner) disappeared after ~1s of play — depth testing was never disabled before the 2D `SpriteBatch` overlay draws, so the icon's screen-space quad was depth-tested against whatever 3D geometry had already written to that pixel once the camera turned toward nearby terrain/walls. Fixed by disabling depth test before both `SpriteBatch` blocks (§3). |
 | resolved (2026-07-11) | `GalaxyEggbertCNA` crashed after a while of play with an uncaught `System::InvalidOperationException` from `SoundEffectInstance::setIsLoopedProperty` (user-supplied debugger backtrace pinpointed `GESound::PlayStep`/`Play`) — that call is only valid before an instance's first `Play()`, but `GESound::Play()` called it unconditionally even when reusing an already-started instance. Fixed by only calling it once, right after constructing a fresh instance (§3). Verified empirically (3/3 live runs crashed before the fix, 3/3 clean after) rather than via an automated test, since exercising `GESound::LoadContent()` needs a real audio device every other scripted verification tool deliberately avoids. |
 | needs investigation | `GalaxyEggbertCNA` under Vulkan specifically: the end-of-frame diagnostic screenshot (`screenshot_hud.png`) shows a plain blue background with no visible terrain and un-blended white boxes around every billboard, even though the same frame's earlier terrain-visibility pixel-sample check reports 25/25 real terrain color. Found 2026-07-11 while verifying an unrelated fix; not investigated — may be a `GetBackBufferData`/swapchain timing quirk specific to calling it twice in one frame under Vulkan, or something else entirely. EasyGL's equivalent screenshot is unaffected. |
-| **real architectural limitation, found 2026-07-11 while building the fan hazard (plan.md `E3D-MIG-149`), not fixed** | **`GEBlupiController::GroundHeightAt()` always resolves a column's "floor" as the single TOPMOST solid block in that entire column** (scanning from the top of the world downward), with no concept of "the nearest solid surface AT OR BELOW my own current height." A solid ceiling anywhere above an otherwise-open interior (e.g. the south tunnel's own `y=3` `BrickWall` roof over its walkable `y=1` interior) makes that interior's REAL floor completely unreachable via normal walking — `TryMoveAxis`'s target-column check sees the ceiling as the floor (`y=4`, not `y=1`) and blocks the step-up, or a raw `SetPosition()` teleport into the interior resolves `onGround` at the ceiling's height instead of the real floor beneath it. Same root cause as the original (later-fixed) teleporter bug — a floating solid block anywhere above Blupi in a column poisons that whole column's ground-height query — except triggered by a ceiling instead of a pillar, and NOT fixed here (unlike the teleporter/fan icons themselves, which are narrowly excluded from the solid-block scan): a general fix needs the scan to consider Blupi's own current Y, not just "topmost solid in the column," which could subtly affect every other already-shipped hazard/mechanic's collision behavior and wasn't attempted given the scope. Confirmed via a standalone scripted walk test (not just single-position `Step()` calls, which is all every hazard's own existing verification — including the tunnel's own already-shipped switch/saw pair — actually exercises; none of them walk-tested entering that specific enclosed interior either). Worked around for the fan task by placing its 2 reachable hazard instances in open-sky rooms (matching the teleporter's own precedent) instead of the tunnel's roofed interior — see `tools/GenerateSampleWorld3D.cpp`'s fan-alcove comment. **Any future placement of a walk-under/floating hazard inside a roofed/enclosed space should avoid this until fixed.** |
+| **real architectural limitation, found 2026-07-11 while building the fan hazard (plan.md `E3D-MIG-149`), not fixed** | **`GEBlupiController::GroundHeightAt()` always resolves a column's "floor" as the single TOPMOST solid block in that entire column** (scanning from the top of the world downward), with no concept of "the nearest solid surface AT OR BELOW my own current height." A solid ceiling anywhere above an otherwise-open interior (e.g. the south tunnel's own `y=3` `BrickWall` roof over its walkable `y=1` interior) makes that interior's REAL floor completely unreachable via normal walking — `TryMoveAxis`'s target-column check sees the ceiling as the floor (`y=4`, not `y=1`) and blocks the step-up, or a raw `SetPosition()` teleport into the interior resolves `onGround` at the ceiling's height instead of the real floor beneath it. Same root cause as the original (later-fixed) teleporter bug — a floating solid block anywhere above Blupi in a column poisons that whole column's ground-height query — except triggered by a ceiling instead of a pillar, and NOT fixed here (unlike the teleporter/fan icons themselves, which are narrowly excluded from the solid-block scan): a general fix needs the scan to consider Blupi's own current Y, not just "topmost solid in the column," which could subtly affect every other already-shipped hazard/mechanic's collision behavior and wasn't attempted given the scope. Confirmed via a standalone scripted walk test (not just single-position `Step()` calls, which is all every hazard's own existing verification — including the tunnel's own already-shipped switch/saw pair — actually exercises; none of them walk-tested entering that specific enclosed interior either). Worked around for the fan task by placing its 2 reachable hazard instances in open-sky rooms (matching the teleporter's own precedent) instead of the tunnel's roofed interior — see `tools/GenerateSampleWorld3D.cpp`'s fan-alcove comment. **Any future placement of a walk-under/floating hazard inside a roofed/enclosed space should avoid this until fixed.** **Hit again 2026-07-11 (same day) live-verifying the Saw render-mode fix** — the switch+saw pair sits in this exact same tunnel interior; a debug `SetPosition()` there again resolved `blupi_`'s Y to 4 (roof-top) instead of 1 (real floor), silently invalidating over a dozen camera-angle attempts before being diagnosed via a `[CAM DEBUG]` log comparing intended vs. actual camera pose — worked around that time by setting `camera_`'s position/target directly for the one verification screenshot, bypassing `blupi_`'s corrupted Y entirely. Two independent hits in one session on the same tunnel is a good sign this is worth fixing properly before a third task needs to walk-test anything inside it. |
 
 ## 6. Architecture notes
 
@@ -2992,21 +3019,14 @@ polish):**
   black. `PyramidTipItem`/`AppendPyramidTipMesh()` removed entirely from `../easy-3d` (unused after
   the box replacement).
 
-**2 new tasks queued by the user (2026-07-11), not yet started — next up, in this order:**
+**2 tasks queued by the user (2026-07-11):**
 
-1. **Fix the Saw tile's render mode.** User (Czech, verbatim): "ta pila saw se renderuje spatne
-   nema to byt na krychly pila bude staticky billboard tedy uprosred daneho bloku se textura
-   nanese na obe strany jakoby neviditelen desky v puli krychle" — the Saw tile (icons
-   378/379/`BlockTypes::Saw`/`SawStopped`) currently renders on a cube, but should be a static
-   billboard: the texture applied to both sides of an invisible plate through the middle of the
-   block, matching the existing confirmed `InnerFlatPlate` render mode (see
-   `GEInnerFlatPlateTiles.cpp` for the pattern — several other icons already use exactly this).
-   Move Saw/SawStopped's entries from wherever they currently render (check
-   `GEDirectionalCubeTiles.cpp` first) into `GEInnerFlatPlateTiles.cpp`'s table instead. The
-   existing switch+saw pair in the sample world (`worlds3d/world001.vwr`, plan.md `E3D-MIG-142`)
-   is real, playable, reachable terrain — good for live verification without needing a new
-   placement. Verify live via screenshot, update `02-tiles.md`/questionnaire docs if they
-   currently record Saw's render mode differently, rebuild+test both backends, commit+push.
+1. **DONE (2026-07-11): fixed the Saw tile's render mode.** See §3's newest entry and `plan.md`'s
+   `E3D-MIG-142`/`149` entries for full detail — Saw/SawStopped now use `InnerFlatPlate` with a
+   `PlateAxis::X` override, superseding the old undecided "ThinMechanical" categorization. Also
+   surfaced (again) the tracked `GroundHeightAt()` ceiling limitation (§5) while live-verifying —
+   the switch+saw pair sits inside the same roofed tunnel interior the fan hazard task already
+   hit this same limitation in.
 2. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
    verbatim): "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
    soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu" — the

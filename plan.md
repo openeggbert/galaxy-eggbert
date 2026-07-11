@@ -594,6 +594,23 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       saw starts safe (`SawStopped`) until the switch is pressed. Verified via 9 new
       `VerifyInteractionSystem` assertions against that real placement (no-op off-switch, no-op
       airborne, on-toggle, off-toggle, and the linked saw's state each time).
+      **Render mode fixed (2026-07-11, same day, live user re-check)**: Saw/SawStopped
+      (378/379) were rendering as plain `UniformCube`s (falling through every special-geometry
+      table) — user reported "nema to byt na krychly" (shouldn't be on a cube). Added both icons
+      to `GEInnerFlatPlateTiles.cpp`'s confirmed table (a genuinely thin double-sided plate
+      through the block's middle, outer 6 faces never drawn), superseding an earlier
+      questionnaire pass' undecided "ThinMechanical" placeholder categorization —
+      `mobile-eggbert-reference/02-tiles.md`/`questionnaire-all-remaining-tiles.md` both updated.
+      `GetInnerFlatPlateAxis()` special-cases Saw/SawStopped to `PlateAxis::X` (not the usual Z
+      default) since the one real placement (this switch+saw pair) sits in a corridor Blupi
+      walks along X — a Z-axis plate is invisible edge-on from that approach (confirmed live).
+      Verified live via a headless EasyGL screenshot at the real placement (temporary camera-pose
+      debug override, reverted before committing, needed because this exact spot also triggers
+      the tunnel-ceiling `GroundHeightAt()` limitation tracked in `NEXT.md` §5 — Blupi's own Y
+      resolves onto the roof there, so the debug camera had to be positioned independently of
+      `blupi_`'s corrupted Y for this one screenshot) — confirms a genuine thin plate showing the
+      real jagged circular-blade texture, with the tunnel's red wall visible around/through it
+      (proving the cube's outer faces are truly not drawn).
 - [x] `143` **Crusher (317) done 2026-07-11** — verified directly against `Decor.cpp:5549-5597`/
       `5180-5197`/`7277-7288` (not just the reference doc). New `GEBlupiController::TriggerCrush()`/
       `IsEcrased()`: real `!m_blupiEcrase` re-trigger guard (idempotent, returns false if already
