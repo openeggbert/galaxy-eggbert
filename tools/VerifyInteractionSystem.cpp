@@ -830,6 +830,63 @@ int main(int argc, char** argv)
     check(GEWorldRuntime::IsTempPassableAtPhase(79), "Temp passable at phase 79 (bucket 19, window end)");
     check(!GEWorldRuntime::IsTempPassableAtPhase(80), "Temp solid at phase 80 (cycle wraps back to bucket 0)");
 
+    // 16. GEWorldRuntime::FindTeleportDestination() (plan.md E3D-MIG-147) --
+    // a hand-carved pair of pillars far apart (unused Y=20, well above the
+    // sample world's real Y range [0,13]), plus a lone pillar with no
+    // partner anywhere, to prove both the successful-match and no-match
+    // (real "regains control in place") paths. Uses arbitrary non-real
+    // icon values (998/999, outside both the real 330-333 teleporter
+    // range and the tile exhibition's 1..440 coverage) rather than real
+    // Teleport* constants -- the sample world now has a REAL matched
+    // Teleport1 pair of its own (tools/GenerateSampleWorld3D.cpp's
+    // teleporter rooms), which would otherwise be found instead of this
+    // test's own synthetic pillars. FindTeleportDestination() itself
+    // doesn't care whether the value is a real teleporter icon; it just
+    // scans for another cell of the same type.
+    {
+        auto& mutableWorld = world.GetWorldMutable();
+        constexpr std::uint16_t kTestIcon = 998;
+        constexpr int kEntryGX = 85, kEntryGY = 20, kEntryGZ = 10;
+        constexpr int kExitGX = 15, kExitGY = 20, kExitGZ = 60;
+        mutableWorld.setBlock(kEntryGX, kEntryGY, kEntryGZ, Worlds::Block::make(kTestIcon));
+        mutableWorld.setBlock(kExitGX, kExitGY, kExitGZ, Worlds::Block::make(kTestIcon));
+
+        const float entryX = static_cast<float>(kEntryGX) - GEWorldRuntime::kWorldCenterX;
+        const float entryY = static_cast<float>(kEntryGY);
+        const float entryZ = static_cast<float>(kEntryGZ) - GEWorldRuntime::kWorldCenterZ;
+
+        float destX = -999.0f, destY = -999.0f, destZ = -999.0f;
+        const bool found = world.FindTeleportDestination(kTestIcon, entryX, entryY, entryZ,
+                                                            destX, destY, destZ);
+        check(found, "FindTeleportDestination() finds the paired pillar elsewhere in the grid");
+        const float expectedDestX = static_cast<float>(kExitGX) - GEWorldRuntime::kWorldCenterX;
+        const float expectedDestY = static_cast<float>(kExitGY);
+        const float expectedDestZ = static_cast<float>(kExitGZ - 1) - GEWorldRuntime::kWorldCenterZ;
+        std::cout << "Teleport destination: (" << destX << "," << destY << "," << destZ << ") expected ("
+                  << expectedDestX << "," << expectedDestY << "," << expectedDestZ << ")" << std::endl;
+        check(std::fabs(destX - expectedDestX) < 0.01f && std::fabs(destY - expectedDestY) < 0.01f &&
+                  std::fabs(destZ - expectedDestZ) < 0.01f,
+              "the destination is the OTHER (exit) pillar's position, offset one cell in -Z, not the entry pillar");
+
+        // No match anywhere -- a lone pillar with no partner. Uses an
+        // arbitrary non-real icon value (999, well outside the real
+        // 330-333 teleporter range and the tile exhibition's own 1..440
+        // coverage, but still within Block's 12-bit type range) rather
+        // than a real Teleport* constant, since the sample world's tile
+        // exhibition already places exactly one specimen of every real
+        // icon 1..440 (including all 4 real teleporter icons) -- a real
+        // icon would never actually be "lone" in this loaded world.
+        // FindTeleportDestination() itself doesn't care whether the value
+        // is a real teleporter icon; it just scans for another cell of the
+        // same type.
+        constexpr std::uint16_t kLonelyIcon = 999;
+        mutableWorld.setBlock(50, 20, 50, Worlds::Block::make(kLonelyIcon));
+        float lonelyDestX, lonelyDestY, lonelyDestZ;
+        const bool foundLonely = world.FindTeleportDestination(kLonelyIcon, 0.0f, 20.0f, 0.0f,
+                                                                  lonelyDestX, lonelyDestY, lonelyDestZ);
+        check(!foundLonely, "FindTeleportDestination() returns false for a lone teleporter with no partner anywhere");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

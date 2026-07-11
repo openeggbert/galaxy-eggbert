@@ -339,6 +339,46 @@ namespace GalaxyEggbert::CNA
         return turningOn;
     }
 
+    bool GEWorldRuntime::FindTeleportDestination(std::uint16_t icon, float blupiX, float blupiY, float blupiZ,
+                                                   float& destX, float& destY, float& destZ) const
+    {
+        // See this method's own header comment for why a distance-from-
+        // Blupi radius replaces the real source's exact entry-tile
+        // equality check.
+        constexpr float kEntryExclusionRadius = 1.5f;
+        const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
+
+        for (int gx = 0; gx < blocksPerAxis; ++gx)
+        {
+            for (int gy = 0; gy < blocksPerAxis; ++gy)
+            {
+                for (int gz = 0; gz < blocksPerAxis; ++gz)
+                {
+                    if (world_->getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                          static_cast<std::uint16_t>(gz))
+                            .type() != icon)
+                    {
+                        continue;
+                    }
+                    const float candX = static_cast<float>(gx) - static_cast<float>(kWorldCenterX);
+                    const float candZ = static_cast<float>(gz) - static_cast<float>(kWorldCenterZ);
+                    const float dx = candX - blupiX;
+                    const float dy = static_cast<float>(gy) - blupiY;
+                    const float dz = candZ - blupiZ;
+                    if (dx * dx + dy * dy + dz * dz < kEntryExclusionRadius * kEntryExclusionRadius)
+                    {
+                        continue;
+                    }
+                    destX = candX;
+                    destY = static_cast<float>(gy);
+                    destZ = static_cast<float>(gz - 1) - static_cast<float>(kWorldCenterZ);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void GEWorldRuntime::Update(float dt)
     {
         // Raw animation tick (2026-07-09, fixed from a flat 6fps clock

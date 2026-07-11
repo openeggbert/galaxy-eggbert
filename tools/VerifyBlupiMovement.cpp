@@ -274,6 +274,65 @@ int main(int argc, char** argv)
               "Blupi falls through the Temp tile onto the real ground one cell below once it's passable");
         check(onTemp.GetGroundBlockType(synthetic) == BlockTypes::Ground,
               "Blupi now stands on the real Ground block beneath, not the Temp tile");
+
+        // Teleporter (plan.md E3D-MIG-147) -- a real Ground floor (Y=0)
+        // with a solid Teleport1 pillar one cell IN FRONT of Blupi (grid
+        // Z-1, since default yaw=0 faces -Z), matching how a solid pillar
+        // must be approached in this engine (see
+        // GetBlockTypeInFront()'s own comment for why "above" doesn't work
+        // here).
+        constexpr std::uint16_t kTeleX = 42, kTeleZ = 42;
+        synthetic.setBlock(kTeleX, 0, kTeleZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kTeleX, 1, static_cast<std::uint16_t>(kTeleZ - 1), Worlds::Block::make(BlockTypes::Teleport1));
+
+        GEBlupiController onTeleporter;
+        onTeleporter.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
+        onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt); // default yaw=0, faces -Z
+        check(onTeleporter.GetBlockTypeInFront(synthetic) == BlockTypes::Teleport1,
+              "GetBlockTypeInFront() identifies the teleporter pillar Blupi is facing (E3D-MIG-147 detection)");
+
+        check(onTeleporter.TriggerTeleport(BlockTypes::Teleport1), "TriggerTeleport() returns true while grounded");
+        check(onTeleporter.IsTeleporting(), "IsTeleporting() is true immediately after TriggerTeleport()");
+        check(onTeleporter.GetTeleportIcon() == BlockTypes::Teleport1, "GetTeleportIcon() remembers which icon triggered it");
+        check(!onTeleporter.TriggerTeleport(BlockTypes::Teleport1),
+              "TriggerTeleport() is a no-op (returns false) while already teleporting");
+
+        // Fully frozen during transit: turning/moving input has no effect
+        // at all (real m_blupiFocus=false blocks essentially every other
+        // per-frame input block).
+        const float xBeforeFrozenStep = onTeleporter.GetX();
+        const float yawBeforeFrozenStep = onTeleporter.GetYaw();
+        onTeleporter.Step(synthetic, 1.0f, 1.0f, true, false, false, dt);
+        check(onTeleporter.GetX() == xBeforeFrozenStep && onTeleporter.GetYaw() == yawBeforeFrozenStep,
+              "Blupi is fully frozen (no movement or turning) while teleporting");
+
+        // Auto-completion after kTeleportDuration seconds.
+        const int stepsToTeleport = static_cast<int>(GEBlupiController::kTeleportDuration / dt) + 5;
+        for (int i = 0; i < stepsToTeleport && onTeleporter.IsTeleporting(); ++i)
+        {
+            onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        }
+        check(!onTeleporter.IsTeleporting(), "teleport transit auto-completes after kTeleportDuration seconds");
+
+        // Real gate: grounded, not ballooned, not squashed.
+        GEBlupiController airborneTeleport;
+        airborneTeleport.SetPosition(0.0f, 20.0f, 0.0f);
+        check(!airborneTeleport.TriggerTeleport(BlockTypes::Teleport1),
+              "TriggerTeleport() is a no-op while airborne (real !m_blupiAir gate)");
+
+        GEBlupiController ballooned2;
+        ballooned2.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
+        ballooned2.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        ballooned2.TriggerBalloon();
+        check(!ballooned2.TriggerTeleport(BlockTypes::Teleport1),
+              "TriggerTeleport() is a no-op while ballooned (real !m_blupiBalloon gate)");
+
+        GEBlupiController crushed2;
+        crushed2.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
+        crushed2.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        crushed2.TriggerCrush();
+        check(!crushed2.TriggerTeleport(BlockTypes::Teleport1),
+              "TriggerTeleport() is a no-op while squashed (real !m_blupiEcrase gate)");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -256,6 +256,65 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - Simple3D: build is currently broken in this environment (missing/incompatible U3D prebuilt, see
   §2) — **not to be fixed**, per user 2026-07-08: Simple3D is historical reference only now (§9).
 
+## 3. Recent changes
+
+Most recent first. Full history: `git log`.
+
+- **Implemented the teleporter (2026-07-11, plan.md `E3D-MIG-147`, picked as the natural
+  continuation of Phase 14 after Temp).** Verified directly against `Decor.cpp:7378-7394`
+  (`IsTeleporte`), `5593-5606` (trigger), `6349-6358` (completion), and `7406-7429`
+  (`SearchTeleporte`, pairing).
+  - **A real architectural mismatch was found and resolved**: the real check tests the tile one
+    row ABOVE Blupi's feet, which relies on real mobile-eggbert's genuinely per-tile-independent
+    2D collision (a tile's solidity has no bearing on the tile below it in the same column). This
+    engine's simplified 3D collision instead treats the TOPMOST solid block in a column as that
+    whole column's floor (`GroundHeightAt`), which makes "a solid tile floating directly above
+    Blupi's own open, walkable column" physically unreachable here — confirmed empirically (a
+    first attempt placed a pillar directly above a floor block in the same test column; Blupi
+    landed ON the pillar at Y=3, not at Y=1 beneath it as intended). Resolved by checking the
+    cell Blupi is FACING instead — new `GEBlupiController::GetBlockTypeInFront()` (yaw-based,
+    mirrors `Step()`'s own forward-vector convention) — a natural 3D adaptation: solid teleporter
+    pillars (already documented in `BlockTypes.hpp` as "solid pillars") are wall-mounted archways
+    you walk UP TO, not overhead tiles you walk UNDER, fully reachable via this engine's normal
+    horizontal collision (which has no ceiling/headroom concept to conflict with).
+  - New `GEBlupiController::TriggerTeleport(icon)`/`IsTeleporting()`/`GetTeleportIcon()` —
+    idempotent, same shape as `TriggerCrush()`/`TriggerBalloon()`/`TriggerSpringBounce()`, gated
+    on grounded + not ballooned/squashed (real `!m_blupiAir && !m_blupiBalloon && !m_blupiEcrase`
+    — vehicles/focus aren't modeled). Real `kTeleportDuration=6.4s` (`Config::ScaleTime(128)` at
+    the 20Hz reference rate, a direct transcription, not an approximation). While teleporting,
+    `Step()` fully freezes Blupi via an early return (no turning/movement/jump/gravity at all) —
+    matches the real source's own effective behavior, since `m_blupiFocus=false` gates
+    essentially every other per-frame block and nothing sets `m_blupiAir` during the transit.
+  - New `GEWorldRuntime::FindTeleportDestination()` (real `SearchTeleporte`) — a full-grid scan
+    for another cell of the same icon, excluding candidates within a fixed radius of Blupi's own
+    position (replacing the real source's exact entry-tile-equality skip, since this engine's
+    "adjacent, not inside/above" entry convention doesn't map to an exact tile match the way the
+    real 2D "you're standing right there" check does). Returns the matched pillar's own position
+    offset one cell in -Z (a fixed, documented landing convention — level data must place a
+    walkable cell there, mirroring the real "keep teleporter icons in matched pairs" authoring
+    requirement, which this project's own placement below follows). Real cosmetic entry/arrival
+    particle effects (`ObjectType92`/`27`) are NOT modeled, same simplification as every other
+    hazard/enemy's own real particle effects throughout this session; real channel 71 covers both
+    entry and arrival.
+  - **Real playable placement, not just proven synthetically**: two small rooms south of the
+    tunnel (previously-empty space), each a short walkway ending in a wall with exactly ONE
+    `Teleport1` cell embedded in otherwise-`BrickWall` (deliberately not a whole teleporter wall —
+    a wide multi-cell match would risk self-matching within the same room instead of finding the
+    other one, a real risk this task's own test setup ran into first and fixed the same way).
+    Icon 330 is deliberately excluded from the tile exhibition's generic per-icon loop to
+    guarantee exactly 2 total occurrences in the world; icons 331-333 remain in the exhibition as
+    genuine lone specimens, faithfully demonstrating the real "no partner found -> regains control
+    in place" no-op path.
+  - **Verification**: 10 new `VerifyBlupiMovement` assertions (facing-detection, trigger/
+    idempotency/gating, full freeze during transit, auto-completion after 6.4s) and 3 new
+    `VerifyInteractionSystem` assertions (matched-pair destination lookup and the no-partner-found
+    path) — both using non-real test icon values (998/999) to avoid interference from the sample
+    world's own real teleporter pair, a real test-authoring fix needed after the pair was added
+    (the first version used real `Teleport1`/`Teleport2` constants and started failing once the
+    real placement existed in the loaded world). Full suite (63/63 unit tests, all 4 verify tools)
+    and live headless runs on both EasyGL and Vulkan backends all clean (6257-block/84-MoveObject
+    world load, up from 6146, on both).
+
 - **Implemented the Temp/vanishing tile (2026-07-11, plan.md `E3D-MIG-146`, picked as the natural
   continuation of Phase 14 after spring).** Verified directly against `Decor.cpp:7503-7538`
   (`IsPassIcon`/`IsBlocIcon`'s icon-324 special case).
@@ -2263,13 +2322,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (Temp/vanishing tile, 2026-07-11, see §3's newest entry), all
+backends as of the most recent work (teleporter, 2026-07-11, see §3's newest entry), all
 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
 work remains outstanding; §8's remaining tasks are optional/low-priority polish. **Phase 13
-(Enemy AI & combat) is fully complete; Phase 14 (Hazards) is now 7/10 done:**
+(Enemy AI & combat) is fully complete; Phase 14 (Hazards) is now 8/10 done:**
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2278,21 +2337,27 @@ work remains outstanding; §8's remaining tasks are optional/low-priority polish
   (`136`), and follower wake+homing (`137`). Also done outside Phase 13/14: the real
   mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11 fullscreen, the `CubeMesh` winding
   root-cause fix, and the sample world's tile+object exhibition areas.
-- **Done (Phase 14, 7/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
-  crusher, `140`-`144`), the spring/bounce tile (`145`), and the Temp/vanishing tile (`146`, just
-  finished — see §3's most recent entry, the first Phase 14 mechanic threaded directly into
-  `GEBlupiController::Step()`'s own collision scan rather than checked post-hoc via
-  `GetGroundBlockType()`).
+- **Done (Phase 14, 8/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
+  crusher, `140`-`144`), the spring/bounce tile (`145`), the Temp/vanishing tile (`146`), and the
+  teleporter (`147`, just finished — see §3's most recent entry; the first Phase 14 mechanic that
+  needed a genuine 3D-adaptation redesign, since the real "tile above Blupi" detection turned out
+  to be physically unreachable in this engine's collision model — resolved via
+  `GetBlockTypeInFront()` instead).
 - **Next up (picked from `plan.md` as the natural continuation, not yet started)**: **Phase 14's
-  remaining 3 mechanics** — teleporters (`147`, icons 330-333, narrow trigger band + 128-tick
-  delay + implicit pairing by shared icon value, `Decor::SearchTeleporte` ~7406), the water breath
-  gauge (`148`, icons 91/92, a 3-state Surf/Nage/dry machine with a ~25s gauge), and fans (`149`,
-  icons 126-137 — only the 4 head icons already rendered are lethal, consumes itself by
-  permanently clearing the air column it blows through). None has a code prerequisite blocking it
-  — teleporters (`147`) are a reasonable next pick: a self-contained trigger+relocate mechanic,
-  closer in shape to the switch-linking work already done (`GEWorldRuntime::TryActivateSwitch()`)
-  than the water gauge (needs a new persistent-meter concept) or fans (interacts with the terrain
-  grid itself, consuming a cell permanently).
+  remaining 2 mechanics** — the water breath gauge (`148`, icons 91/92, a 3-state Surf/Nage/dry
+  machine with a ~25s gauge, `Decor.cpp` ~7462-7529 per
+  `mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Water depth state machine"
+  section) and fans (`149`, icons 126-137 — only the 4 head icons already rendered are lethal,
+  consumes itself by permanently clearing the air column it blows through). Neither has a code
+  prerequisite blocking it. The water gauge is the larger of the two (a new 3-state body-state
+  machine plus a persistent HUD-driven countdown, similar in shape to how Crusher/Balloon already
+  added timed status flags to `GEBlupiController`, but with a `GEHud` integration this session
+  hasn't needed yet); fans are more self-contained (a single terrain-driven lethality check plus
+  a one-shot "consume the air column" world mutation, closer in shape to `TryActivateSwitch()`'s
+  existing world-mutation precedent) — fans may be the smaller next pick if minimizing new-concept
+  surface area per task is preferred, though the water gauge is more central to core traversal
+  (water areas already exist conceptually, just not yet dangerous) if breadth-first coverage is
+  preferred instead.
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 

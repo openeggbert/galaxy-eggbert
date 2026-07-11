@@ -400,6 +400,7 @@ namespace GalaxyEggbert::CNA
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
             const bool wasEcrased = blupi_.IsEcrased();
+            const bool wasTeleporting = blupi_.IsTeleporting();
             // Compared at the very end of Update() (not right after Step(),
             // like wasEcrased above) since the balloon can also end via
             // interaction_.Update() -> PopBalloon() later this same frame,
@@ -464,6 +465,30 @@ namespace GalaxyEggbert::CNA
             if (wasEcrased && !blupi_.IsEcrased())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+            }
+
+            // Teleporter transit completion (plan.md E3D-MIG-147, real
+            // Decor.cpp:6349-6358) -- fires the one frame the kTeleportDuration
+            // countdown naturally elapses inside Step() (blupi_ was fully
+            // frozen for the whole transit, so this is the only way it ends,
+            // unlike balloon's PopBalloon() interrupt path). Looks up the
+            // paired destination via the same icon TriggerTeleport() was
+            // called with; relocates Blupi there and plays the real arrival
+            // sound (channel 71, reused -- the real source's two
+            // ObjectType27 arrival-particle bursts are cosmetic, not
+            // modeled, same as every other hazard's real particle effects).
+            // If no paired cell exists anywhere in the grid, real behavior
+            // is "regains control in place" -- a silent no-op, which is
+            // already true here since blupi_'s position was never touched.
+            if (wasTeleporting && !blupi_.IsTeleporting())
+            {
+                float destX, destY, destZ;
+                if (worldRuntime_.FindTeleportDestination(blupi_.GetTeleportIcon(), blupi_.GetX(), blupi_.GetY(),
+                                                            blupi_.GetZ(), destX, destY, destZ))
+                {
+                    blupi_.SetPosition(destX, destY, destZ);
+                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
+                }
             }
 
             // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
@@ -608,6 +633,30 @@ namespace GalaxyEggbert::CNA
                 blupi_.TriggerSpringBounce(jumpPressed))
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+            }
+
+            // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified
+            // directly against Decor.cpp:7378-7394/5593-5606) -- checked
+            // one cell IN FRONT of Blupi (GetBlockTypeInFront(), not
+            // GetGroundBlockType()), a natural 3D adaptation of the real
+            // "one row above his feet" detection (see GetBlockTypeInFront's
+            // own comment for why "above" is physically unreachable in
+            // this engine's simplified column-based collision). The real
+            // narrow 7px-wide left-edge sub-tile band is NOT modeled -- no
+            // sub-tile position exists in this engine's single-point
+            // collision, same simplification already applied to spikes'
+            // own real sub-tile band. Real gate (`!m_blupiHelico/Over/
+            // Balloon/Ecrase/Jeep/Tank/Skate && !m_blupiAir &&
+            // m_blupiFocus`) is checked inside TriggerTeleport() itself
+            // (grounded, not ballooned/squashed -- vehicles/focus aren't
+            // modeled). Idempotent, same shape as every other Trigger*()
+            // here, so channel 71 only plays on an actual new trigger.
+            const auto frontIcon = blupi_.GetBlockTypeInFront(worldRuntime_.GetWorld());
+            if ((frontIcon == GalaxyEggbert::BlockTypes::Teleport1 || frontIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
+                 frontIcon == GalaxyEggbert::BlockTypes::Teleport3 || frontIcon == GalaxyEggbert::BlockTypes::Teleport4) &&
+                blupi_.TriggerTeleport(frontIcon))
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
             }
 
             // Switches (plan.md E3D-MIG-142, see GEWorldRuntime::

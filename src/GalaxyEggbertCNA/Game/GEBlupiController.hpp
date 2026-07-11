@@ -83,6 +83,12 @@ namespace GalaxyEggbert::CNA
         static constexpr float kSpringBounceHeld = kJumpSpeed * (19.0f / 16.0f);
         static constexpr float kSpringBounceNotHeld = kJumpSpeed * (10.0f / 16.0f);
 
+        // Teleporter transit duration (plan.md E3D-MIG-147, icons 330-333,
+        // verified directly against Decor.cpp:6349, `Config::ScaleTime(128)`
+        // -- 128 ticks at the real 20Hz reference rate = 6.4s exactly, a
+        // direct transcription, not an approximation).
+        static constexpr float kTeleportDuration = 6.4f;
+
         enum class AnimState : std::uint8_t { Stop, March, Jump, Down, Up };
 
         void SetPosition(float x, float y, float z) noexcept;
@@ -106,6 +112,32 @@ namespace GalaxyEggbert::CNA
         // detection logic directly (see tools/VerifyBlupiMovement.cpp)
         // without a live Game/GraphicsDevice.
         [[nodiscard]] std::uint16_t GetGroundBlockType(const Worlds::World& world) const noexcept;
+
+        // Block type directly in front of Blupi -- one grid cell ahead in
+        // his current facing direction, at his own feet height. Used for
+        // the real Teleporter trigger check (plan.md E3D-MIG-147). The
+        // real check (Decor.cpp:7378-7394) tests one 2D tile-row ABOVE
+        // Blupi's feet, which relies on real mobile-eggbert's genuinely
+        // per-tile-independent 2D collision (a tile's solidity has no
+        // bearing on the tile below it in the same column). This engine's
+        // simplified 3D collision instead treats the TOPMOST solid block
+        // in a column as that whole column's floor (GroundHeightAt), which
+        // makes "a solid tile floating directly above Blupi's own open,
+        // walkable column" physically unreachable here -- confirmed by
+        // hand: placing a solid pillar one cell above a floor in the same
+        // column makes Blupi land ON the pillar (or be blocked from
+        // stepping into that column at all), never rest beneath it.
+        // Checking the cell Blupi is FACING instead is the natural 3D
+        // adaptation: solid teleporter pillars (BlockTypes.hpp) are wall-
+        // mounted archways you walk UP TO, not overhead tiles you walk
+        // UNDER -- fully reachable via this engine's normal horizontal
+        // collision (which has no ceiling/headroom concept to conflict
+        // with). Unlike GetGroundBlockType(), this is NOT gated on
+        // IsOnGround() -- the real IsTeleporte() check itself is
+        // unconditional; the grounded requirement comes from the separate
+        // trigger-site gate in TriggerTeleport() below, not from this
+        // query itself.
+        [[nodiscard]] std::uint16_t GetBlockTypeInFront(const Worlds::World& world) const noexcept;
 
         // Enters the crusher-squash state (real m_blupiEcrase=true): zeroes
         // velocity, starts the kEcraseDuration recovery countdown. A no-op
@@ -147,6 +179,26 @@ namespace GalaxyEggbert::CNA
         // spring. jumpHeld selects which of the two real magnitudes applies
         // (see kSpringBounceHeld/kSpringBounceNotHeld above).
         bool TriggerSpringBounce(bool jumpHeld) noexcept;
+
+        // Enters the teleport-transit state (plan.md E3D-MIG-147, real
+        // `BlupiAction::Teleporte`: `m_blupiVitesseX/Y=0`,
+        // `m_blupiFocus=false`) -- freezes Blupi completely (no movement/
+        // turning/jump/gravity at all, see Step()) for kTeleportDuration
+        // seconds. Real gate: grounded and not already in transit
+        // (`!m_blupiAir`), and not ballooned/squashed (`!m_blupiBalloon &&
+        // !m_blupiEcrase` -- vehicles aren't modeled, so those clauses of
+        // the real gate don't apply). A no-op (returns false) if any of
+        // those aren't met, matching the same idempotent-re-trigger shape
+        // as TriggerCrush()/TriggerBalloon()/TriggerSpringBounce() -- lets
+        // the caller play the real entry sound (channel 71) only on an
+        // actual new trigger. `icon` (330-333) is remembered so the caller
+        // can look up the paired destination via
+        // GEWorldRuntime::FindTeleportDestination() once IsTeleporting()
+        // naturally clears (a before/after comparison across Step(), same
+        // pattern already used for the balloon/crusher recovery sounds).
+        bool TriggerTeleport(std::uint16_t icon) noexcept;
+        [[nodiscard]] bool IsTeleporting() const noexcept { return m_teleporting; }
+        [[nodiscard]] std::uint16_t GetTeleportIcon() const noexcept { return m_teleportIcon; }
 
         // Facing angle in radians, 0 = looking toward -Z. Updated every Step()
         // by turnInput (see below) — unlike a strafe-style controller, yaw is
@@ -203,5 +255,9 @@ namespace GalaxyEggbert::CNA
 
         bool m_balloon = false;
         float m_balloonTimer = 0.0f;
+
+        bool m_teleporting = false;
+        float m_teleportTimer = 0.0f;
+        std::uint16_t m_teleportIcon = 0;
     };
 }

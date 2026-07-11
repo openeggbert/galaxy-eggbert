@@ -108,7 +108,15 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   (`E3D-MIG-146`, 2026-07-11) — solid 90% of the time, passable (Blupi falls through) the other
   10% on a real 20-value phase cycle; unlike every other mechanic here, it's threaded directly
   into `GEBlupiController::Step()`'s own collision scan (a new `tempPassable` parameter) rather
-  than checked post-hoc, since it changes whether the tile IS the ground at all.
+  than checked post-hoc, since it changes whether the tile IS the ground at all. **The teleporter
+  is also done** (`E3D-MIG-147`, 2026-07-11) — a real architectural mismatch surfaced and
+  resolved: the real "one tile above Blupi" detection is physically unreachable in this engine's
+  simplified column-based collision (a solid tile above open floor in the same column always
+  becomes that column's floor), so detection uses the cell Blupi is FACING instead
+  (`GetBlockTypeInFront()`), a natural 3D adaptation of "walk up to a wall-mounted archway."
+  `TriggerTeleport()` freezes Blupi for a real 6.4s, then `GEWorldRuntime::
+  FindTeleportDestination()` relocates him to the paired pillar elsewhere in the grid (or leaves
+  him in place if no partner exists, matching real behavior).
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -554,8 +562,54 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       onto a real floor beneath once passable) and 5 new `VerifyInteractionSystem` phase-boundary
       assertions, + full suite (63/63 unit tests, all verify tools) + live headless runs on both
       EasyGL and Vulkan backends.
-- [ ] `147` Teleporter (330-333) — narrow trigger band, 128-tick delay, implicit pairing by
-      shared icon value (first-match scan, requires exactly 2 instances per value).
+- [x] `147` Teleporter (330-333) — narrow trigger band, 128-tick delay, implicit pairing by
+      shared icon value (first-match scan, requires exactly 2 instances per value). Done
+      2026-07-11: verified directly against `Decor.cpp:7378-7394` (`IsTeleporte`), `5593-5606`
+      (trigger), `6349-6358` (completion), and `7406-7429` (`SearchTeleporte`, pairing).
+      - **Real architectural mismatch found and resolved**: the real check tests the tile one
+        row ABOVE Blupi's feet (`pos.Y-60`), which relies on real mobile-eggbert's genuinely
+        per-tile-independent 2D collision (a tile's solidity has no bearing on the tile below it
+        in the same column). This engine's simplified 3D collision instead treats the TOPMOST
+        solid block in a column as that whole column's floor (`GroundHeightAt`), which makes "a
+        solid tile floating directly above Blupi's own open, walkable column" physically
+        unreachable — confirmed empirically (a first attempt placed the pillar directly above a
+        floor block in the same column; Blupi landed ON the pillar, not beneath it). Resolved by
+        checking the cell Blupi is FACING instead (new `GEBlupiController::GetBlockTypeInFront()`,
+        yaw-based, mirrors the existing forward-vector convention in `Step()`) — a natural 3D
+        adaptation: solid teleporter pillars are wall-mounted archways you walk UP TO, not
+        overhead tiles you walk UNDER, fully reachable via normal horizontal collision.
+      - New `GEBlupiController::TriggerTeleport(icon)`/`IsTeleporting()`/`GetTeleportIcon()`:
+        idempotent (same shape as `TriggerCrush`/`TriggerBalloon`/`TriggerSpringBounce`), gated on
+        grounded + not ballooned/squashed (real `!m_blupiAir && !m_blupiBalloon && !m_blupiEcrase`
+        — vehicles/focus aren't modeled). Real `kTeleportDuration=6.4s` (`Config::ScaleTime(128)`
+        at the 20Hz reference rate, a direct transcription). While teleporting, `Step()` fully
+        freezes Blupi (no turning/movement/jump/gravity at all) via an early return — matches the
+        real source's own effective behavior (`m_blupiFocus=false` gates essentially every other
+        per-frame block, and nothing sets `m_blupiAir` during the transit).
+      - New `GEWorldRuntime::FindTeleportDestination()` (real `SearchTeleporte`): a full-grid scan
+        for another cell of the same icon, excluding candidates within a fixed radius of Blupi's
+        own position (replacing the real source's exact entry-tile-equality skip, since this
+        engine's "adjacent, not inside/above" entry convention doesn't map to an exact tile
+        match). Returns the matched pillar's own position offset one cell in -Z (a fixed,
+        documented landing convention — level data must place a walkable cell there, mirroring
+        the real "keep teleporter icons in matched pairs" authoring requirement). Real cosmetic
+        entry/arrival particle effects (`ObjectType92`/`27`) are NOT modeled — same simplification
+        as every other hazard/enemy's own real particle effects throughout this session; real
+        channel 71 is reused for both entry and arrival.
+      - Real playable placement: two small rooms south of the tunnel (previously-empty space),
+        each a short walkway ending in a wall with exactly one `Teleport1` cell embedded in
+        otherwise-`BrickWall` (not a whole teleporter wall — a wide multi-cell match would risk
+        self-matching within the same room instead of finding the other one). Icon 330 is
+        deliberately excluded from the tile exhibition's generic per-icon loop to guarantee
+        exactly 2 total occurrences; icons 331-333 remain in the exhibition as genuine lone
+        specimens, faithfully demonstrating the real "no partner found" no-op path.
+      - Verified via 10 new `VerifyBlupiMovement` assertions (facing-detection, trigger/
+        idempotency/gating, full freeze during transit, auto-completion) and 3 new
+        `VerifyInteractionSystem` assertions (matched-pair destination lookup using non-real test
+        icon values to avoid interference from the sample world's own real pair, and the
+        no-partner-found path) + full suite (63/63 unit tests, all verify tools) + live headless
+        runs on both EasyGL and Vulkan backends (6257-block/84-MoveObject world load, up from
+        6146, on both).
 - [ ] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge, vehicles
       forcibly dismounted on entry.
 - [ ] `149` Fans (126-137, only the 4 head icons already rendered are lethal) — consumes itself

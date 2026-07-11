@@ -308,6 +308,28 @@ int main(int argc, char** argv)
     }
 
     // ------------------------------------------------------------------
+    // Teleporter pair (plan.md E3D-MIG-147, 2026-07-11) -- two small
+    // rooms, each a short walkway ending in a wall with exactly one
+    // Teleport1 (icon 330) cell embedded in it (surrounded by BrickWall,
+    // NOT a whole Teleport1 wall -- GEWorldRuntime::FindTeleportDestination()
+    // matches by exact block type, so a wide multi-cell teleporter wall
+    // would risk matching another cell of the SAME room instead of the
+    // other room, see that method's own comment). Reachable by walking
+    // into either room and facing its wall (GEBlupiController::
+    // GetBlockTypeInFront()) -- south of the tunnel, previously-empty
+    // space. Symmetric orientation (both walls face -Z, floor to the
+    // south of each) so FindTeleportDestination()'s fixed -1-Z landing
+    // offset lands on real, walkable floor in both directions.
+    // ------------------------------------------------------------------
+    fill(10, 16, 0, 0, 71, 75, BlockTypes::RockPile); // room A floor
+    fill(10, 16, 1, 3, 76, 76, BlockTypes::BrickWall); // room A wall
+    world.setBlock(13, 1, 76, Block::make(BlockTypes::Teleport1));
+
+    fill(30, 36, 0, 0, 71, 75, BlockTypes::RockPile); // room B floor
+    fill(30, 36, 1, 3, 76, 76, BlockTypes::BrickWall); // room B wall
+    world.setBlock(33, 1, 76, Block::make(BlockTypes::Teleport1));
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //
@@ -325,6 +347,18 @@ int main(int argc, char** argv)
     fill(1, 98, 0, 0, 1, 24, BlockTypes::RockPile); // exhibition floor
     for (int icon = 1; icon <= 440; ++icon)
     {
+        // Icon 330 (Teleport1) is deliberately skipped here -- it already
+        // has a real, matched pair placed above (the teleporter rooms),
+        // and a 3rd stray occurrence would risk breaking that pairing
+        // (see FindTeleportDestination()'s own comment on why a wide/
+        // ambiguous set of same-icon cells is a real risk). Icons 331-333
+        // (Teleport2-4) are still exhibited normally as lone specimens,
+        // faithfully demonstrating the real "no partner found -> regains
+        // control in place" behavior.
+        if (icon == BlockTypes::Teleport1)
+        {
+            continue;
+        }
         const int idx = icon - 1;
         const int col = idx % 48;
         const int row = idx / 48;
@@ -358,7 +392,8 @@ int main(int argc, char** argv)
             place(type, static_cast<float>(78 + col * 3), 1.0f, static_cast<float>(27 + row * 3));
             ++slot;
         }
-        std::cout << "GenerateSampleWorld3D: exhibition placed -- 440 tile icons, "
+        std::cout << "GenerateSampleWorld3D: exhibition placed -- 439 tile icons in the exhibition slab "
+                     "(icon 330 excluded, see the teleporter rooms above), "
                   << slot << " object types." << std::endl;
     }
 

@@ -132,6 +132,35 @@ namespace GalaxyEggbert::CNA
         // parameter, same separation as `GEInteractionSystem`'s `LoseLife()`.
         std::optional<bool> TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
                                                bool blupiOnGround);
+
+        // Real teleporter pairing (plan.md E3D-MIG-147, `Decor::
+        // SearchTeleporte` per Decor.cpp:7406-7429): a linear scan of the
+        // entire grid for the first OTHER cell whose type equals `icon`
+        // (330-333), excluding any candidate within `kEntryExclusionRadius`
+        // grid units of `blupiX`/`Y`/`Z` (his position when he entered --
+        // he's fully frozen for the whole real transit, so this is still
+        // his position at completion time too) to skip the entry pillar he
+        // just triggered. The real source uses an exact ~0.625-grid-unit/
+        // 40-real-px distance threshold from the entry TILE's own position;
+        // this uses a slightly larger radius from Blupi's own position
+        // instead (he stands adjacent to, not inside, the solid entry
+        // pillar -- see `GEBlupiController::GetBlockTypeInFront()`'s own
+        // comment for why "adjacent" replaces the real "inside/above" — so
+        // the exact tile-equality skip the real source uses doesn't
+        // directly translate; a radius comfortably larger than "one cell
+        // away from Blupi" but far smaller than realistic inter-pillar
+        // level-design spacing achieves the same real intent). On a match,
+        // fills `destX`/`Y`/`Z` with the matched pillar's own position,
+        // offset one grid cell in -Z (a fixed, documented landing offset --
+        // level data must place a walkable cell there, same authoring
+        // responsibility the real "keep teleporter icons in matched
+        // pairs" warning already implies) -- and returns true. Returns
+        // false if no other cell shares the icon anywhere in the grid
+        // (real: Blupi simply regains control in place, a silent no-op --
+        // the caller doesn't need to do anything different, since his
+        // position was never touched during the transit).
+        [[nodiscard]] bool FindTeleportDestination(std::uint16_t icon, float blupiX, float blupiY, float blupiZ,
+                                                     float& destX, float& destY, float& destZ) const;
         [[nodiscard]] int GetSpawnTileX() const { return spawnTileX_; }
         [[nodiscard]] int GetSpawnTileZ() const { return spawnTileZ_; }
         [[nodiscard]] int GetSkyRegion() const { return skyRegion_; }

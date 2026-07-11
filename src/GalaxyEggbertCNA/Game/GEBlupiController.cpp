@@ -116,6 +116,19 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerTeleport(std::uint16_t icon) noexcept
+    {
+        if (m_teleporting || !m_onGround || m_balloon || m_ecrase)
+        {
+            return false;
+        }
+        m_teleporting = true;
+        m_teleportTimer = kTeleportDuration;
+        m_teleportIcon = icon;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
     std::uint16_t GEBlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
     {
         if (!m_onGround)
@@ -126,6 +139,25 @@ namespace GalaxyEggbert::CNA
         const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
         const int gy = static_cast<int>(std::lround(m_y)) - 1;
+        if (gy < 0 || gy >= blocksPerAxis)
+        {
+            return GalaxyEggbert::BlockTypes::Air;
+        }
+        return world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                               static_cast<std::uint16_t>(gz))
+            .type();
+    }
+
+    std::uint16_t GEBlupiController::GetBlockTypeInFront(const Worlds::World& world) const noexcept
+    {
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        // Same forward-vector convention as Step()'s own movement code
+        // (sin(yaw), -cos(yaw)) -- one grid cell ahead of Blupi's position.
+        const float aheadX = m_x + std::sin(m_yaw);
+        const float aheadZ = m_z - std::cos(m_yaw);
+        const int gx = ClampGrid(static_cast<int>(std::lround(aheadX + kWorldCenterX)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::lround(aheadZ + kWorldCenterZ)), blocksPerAxis);
+        const int gy = static_cast<int>(std::lround(m_y));
         if (gy < 0 || gy >= blocksPerAxis)
         {
             return GalaxyEggbert::BlockTypes::Air;
@@ -164,6 +196,25 @@ namespace GalaxyEggbert::CNA
                                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
                                   bool tempPassable)
     {
+        // Teleport transit (plan.md E3D-MIG-147): real BlupiAction::
+        // Teleporte zeroes velocity once at trigger and drops m_blupiFocus,
+        // which gates essentially every other per-frame input/gravity
+        // block in the real source -- since he's grounded (not
+        // m_blupiAir) when a teleport starts and nothing sets m_blupiAir
+        // during it, he stays fully motionless for the whole transit. This
+        // early-return reproduces that exactly: no turning, movement,
+        // jumping, or gravity while teleporting, just the countdown.
+        if (m_teleporting)
+        {
+            m_teleportTimer -= dt;
+            if (m_teleportTimer <= 0.0f)
+            {
+                m_teleporting = false;
+                m_teleportTimer = 0.0f;
+            }
+            return;
+        }
+
         // Tank controls (matches GalaxyEggbertSimple3D's "Move" axis
         // handling): turning changes yaw directly; movement is always along
         // the current facing direction, never a free strafe. 0 rad = facing
