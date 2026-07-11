@@ -3569,6 +3569,13 @@ Odpověď: Teleport1 (souhlasí s dřívější poznámkou)
 **Render mód?**
 Odpověď: Billboard
 
+**REVIZE 2026-07-11** (přímý live pokyn uživatele, nahrazuje odpověď výše):
+DirectionalCube (modré pozadí na všech 4 stranách krychle) + samostatný 3D
+hrot ("pyramid-tip") visící pod blokem, postavený ze čtverce nahoře a 4
+trojúhelníků svažujících se do špičky dole, texturovaný spodní ~2/3 stejné
+dlaždice (kuželová/hrotová grafika). Viz plan.md E3D-MIG-147 a
+02-tiles.md.
+
 ---
 
 ## Icon 331
@@ -3585,6 +3592,8 @@ Odpověď: Teleport2 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
 Odpověď: Billboard
+
+**REVIZE 2026-07-11**: viz revize u icon 330 výše (stejná rodina Teleport1-4).
 
 ---
 
@@ -3603,6 +3612,8 @@ Odpověď: Teleport3 (souhlasí s dřívější poznámkou)
 **Render mód?**
 Odpověď: Billboard
 
+**REVIZE 2026-07-11**: viz revize u icon 330 výše (stejná rodina Teleport1-4).
+
 ---
 
 ## Icon 333
@@ -3619,6 +3630,8 @@ Odpověď: Teleport4 (souhlasí s dřívější poznámkou)
 
 **Render mód?**
 Odpověď: Billboard
+
+**REVIZE 2026-07-11**: viz revize u icon 330 výše (stejná rodina Teleport1-4).
 
 ---
 

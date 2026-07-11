@@ -260,6 +260,49 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Added the teleporter pyramid-tip render geometry (2026-07-11, plan.md `E3D-MIG-147`, last
+  item of the same user-reported live-playtest feedback batch as the teleporter/fall-death/
+  respawn fixes above).** The user's live description of the real icon 330-333 crop ("kolem
+  textury teleporteru je černá barva, část teleporteru červené/žluté tlačítko a písmeno alfa...
+  modré pozadí by měla být stále renderována na stranu krychle, ale zbytek ten hrot teleporteru by
+  měl být renderován pod teleporterem, nanést se na 3d model čtverec a pod ním 4 trojúhelníky")
+  both confirmed the existing `DirectionalCube` treatment for the pillar's 4 sides and specified a
+  brand-new attachment: a separate 3D "hrot" (tip/spike) hanging below the block.
+  - **New Easy3D primitive**: `Easy3D::PyramidTipItem`/`AppendPyramidTipMesh()`
+    (`../easy-3d/include/Easy3D/CubeMesh.hpp`, `../easy-3d/src/CubeMesh.cpp`) — an inverted square
+    pyramid (1 square top face, matching `AppendFace`'s -Y winding, + 4 triangular sides tapering
+    to a single apex point below): 16 vertices, 18 indices (`AppendFace` always emits 4 fresh
+    vertices for the square; none are shared with the 4×3 fresh triangle vertices — the doc
+    comment's first draft incorrectly said 8, corrected during test-writing). Winding hand-verified
+    via cross product, reusing the exact same corner order as `ComputeFaceCorners`'s own -Y face
+    (already proven correct elsewhere in the file).
+  - **New unit test** in `../easy-3d/tests/test_cube_mesh.cpp` — vertex/index counts, the square
+    face sitting flush at `Center.Y`, all 4 apex vertices at the expected position, and the square
+    face's winding. This test only actually RUNS when built with `-DEASY3D_LINK_CNA=ON` (plain
+    `easy3d_test_cube_mesh_compilecheck` only type-checks it) — built and ran it standalone this
+    way to confirm: `easy3d cube mesh test: OK`.
+  - **Wired into `GETerrainRenderer.cpp`**: new `IsPyramidTipIcon()` (icons 330-333) and
+    `PyramidTipUv()` (crops the tile's own UV rect to its lower ~2/3 — the dark cone/spike part;
+    the top ~1/3 is the flat dots+letter panel, not reused for the tip) helpers, plus an
+    `AppendPyramidTipMesh` call inlined into `AppendSpecialGeometry()` right after the teleporter's
+    existing `DirectionalCube` append (`kPyramidTipBaseSize=0.7`, `kPyramidTipHeight=0.6`, centered
+    at the cube's bottom face).
+  - **Revised `GEDirectionalCubeTiles.cpp`'s icon 330-333 comment** and both
+    `mobile-eggbert-reference/02-tiles.md` and `questionnaire-all-remaining-tiles.md` (added
+    dated revision notes, kept the original "Billboard" answer visible for history) to record that
+    this session's live "cube + tip" description supersedes an earlier session's questionnaire
+    pass, which had called the same 4 icons "Billboard".
+  - **Verified live**: regenerated `worlds3d/world001.vwr`, rebuilt `GalaxyEggbertCNA` on both
+    backends (EasyGL/Vulkan) and all 5 verification tools (all pass), then took a headless EasyGL
+    screenshot at the sample world's teleporter room (temporary spawn-position debug override,
+    reverted before committing) — confirms correct rendering: blue cube sides with the real
+    dots/emblem-letter texture, a distinct dark teal cone hanging cleanly below the pillar with a
+    visible gap above the floor (no clipping).
+  - Known first-pass cosmetic tradeoff (documented in `GEDirectionalCubeTiles.cpp`, accepted, not
+    fixed here): the cube's 4 side faces still use the WHOLE tile UV (existing convention for every
+    entry in that table), so they show a squished copy of the same cone graphic the tip already
+    renders in 3D — a minor overlap, not a correctness bug.
+
 - **Fixed fall-death TIMING — it fired almost instantly, should take several seconds
   (2026-07-11, plan.md `E3D-MIG-067`, found while verifying the last-safe-position respawn task
   below, same overall feedback batch).** The user recalled real mobile-eggbert giving a real,
@@ -2472,20 +2515,25 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (last-safe-position respawn, 2026-07-11, see §3's newest
-entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
-`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
+backends as of the most recent work (teleporter pyramid-tip render geometry, 2026-07-11, see §3's
+newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools
+(`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
+`VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
+`-DEASY3D_LINK_CNA=ON`) pass.
 
-**Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
-work remains outstanding. **3 of the 5 items from the 2026-07-11 live-playtest user feedback batch
-are now fixed**: the teleporter (froze Blupi permanently), fall-off-world death (was silently
-unreachable), and last-safe-position respawn (was always the fixed spawn point) — see §3's 3
-newest entries. **A NEW item was opened while verifying the last one**: fall-death currently fires
-almost instantly rather than after a multi-second fall like the user recalls from real
-mobile-eggbert — needs research against the real absolute-grid-row death check before fixing (§8).
-**2 more original items remain** (teleporter render geometry, animation-indicator richness, both
-P3) — see §8. These all still take priority over continuing Phase 14's remaining water-gauge/fans
-tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/10 done:
+**Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
+teleporter's own extra pyramid-tip attachment geometry (a 5th, narrowly-scoped primitive, not one
+of the 4 confirmed modes) — no render-mechanism work remains outstanding. **All 5 items from the
+2026-07-11 live-playtest user feedback batch are now fixed**: the teleporter (froze Blupi
+permanently → walks under a floating pillar and relocates correctly), fall-off-world death (was
+silently unreachable → now fires after a real multi-second fall), last-safe-position respawn (was
+always the fixed spawn point → real 10-slot FIFO), fall-death timing (fired almost instantly →
+now ~6.2s, matching researched real constants), and the teleporter's pyramid-tip render geometry
+(cube-only → cube + a genuine hanging 3D spike, texture-cropped to match) — see §3's 5 newest
+entries. **Only 1 item remains from that batch**: expanding the bottom-right Blupi animation
+indicator (P3, needs scoping — see §8). This still takes priority over continuing Phase 14's
+remaining water-gauge/fans tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14
+(Hazards) is 8/10 done:
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2496,14 +2544,13 @@ tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/1
   root-cause fix, and the sample world's tile+object exhibition areas.
 - **Done (Phase 14, 8/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
   crusher, `140`-`144`), the spring/bounce tile (`145`), the Temp/vanishing tile (`146`), and the
-  teleporter (`147`, just finished — see §3's most recent entry; the first Phase 14 mechanic that
-  needed a genuine 3D-adaptation redesign, since the real "tile above Blupi" detection turned out
-  to be physically unreachable in this engine's collision model — resolved via
-  `GetBlockTypeInFront()` instead).
-- **Next up: §8's new user-reported P1 items (teleporter fix, fall-death fix), then P2 (last-safe-
-  position respawn), then P3 (teleporter render geometry, animation indicator).** Phase 14's
-  remaining 2 mechanics (water breath gauge `148`, fans `149`) are deferred until those are done —
-  see §8 for detail on each.
+  teleporter (`147`, including its render geometry — see §3's newest entry; the first Phase 14
+  mechanic that needed a genuine 3D-adaptation redesign, since the real "tile above Blupi"
+  detection turned out to require teleporter icons to be non-solid for collision, resolved via
+  `IsTeleporterIcon()`'s exclusion in `GroundHeightAt()` rather than the original solid-pillar/
+  facing-based workaround, which shipped a real live bug before being fixed).
+- **Next up: §8's remaining P3 item (expand the animation indicator)**, then Phase 14's remaining
+  2 mechanics (water breath gauge `148`, fans `149`) — see §8 for detail on each.
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 
@@ -2789,16 +2836,25 @@ polish):**
   summary). `kFallDeathY` moved from `-5.0f` to `-60.0f`, giving a comparable ~6.2s fall using
   this engine's own gravity constants — verified live at 6.72s. See §3's newest entry for full
   detail.
-- **P3 — Add teleporter pyramid-tip render geometry.** User's detailed description of the real
-  icon 330-333 crop: black border, a red/yellow button + an alpha-letter symbol, a blue background
-  on the cube's side faces (existing `DirectionalCube` treatment is fine for that part), PLUS a
-  "hrot" (tip/spike) shape below the main cube — a flat square plate, then 4 triangles beneath it
-  converging to a point (an inverted-pyramid/stalactite shape hanging under the teleporter). This
-  is a genuinely new geometry primitive, not covered by any of the 4 existing render modes — needs
-  a new Easy3D mesh builder (e.g. `AppendPyramidTipMesh`/`PyramidTipItem`) wired into
-  `GETerrainRenderer`'s per-icon special-geometry table, same pattern as the other 4. Confirm exact
-  proportions with the user if the crop image itself leaves any ambiguity — this is real per-icon
-  Q&A, same standing invariant as every other confirmed render-mode assignment.
+- **P3 — DONE (2026-07-11): teleporter pyramid-tip render geometry added.** New Easy3D primitive
+  `Easy3D::PyramidTipItem`/`AppendPyramidTipMesh()` (`../easy-3d/{include,src}/Easy3D/
+  CubeMesh.{hpp,cpp}`) — a square top face + 4 triangles tapering to an apex below (16 vertices, 18
+  indices; winding hand-verified via cross product, reusing `ComputeFaceCorners`' own -Y face
+  corner order), unit-tested in `../easy-3d/tests/test_cube_mesh.cpp` (vertex/index counts, apex
+  position, winding — run via `-DEASY3D_LINK_CNA=ON`, since plain compile-checking doesn't execute
+  assertions). Wired into `GETerrainRenderer.cpp`'s `AppendSpecialGeometry()`, appended right after
+  the teleporter's existing `DirectionalCube` cube (new `IsPyramidTipIcon()`/`PyramidTipUv()`
+  helpers) — the tip hangs from the cube's bottom face (`Center.Y - 0.5`), `BaseSize=0.7`,
+  `Height=0.6`, textured with the tile's own lower ~2/3 (the dark cone/spike graphic; the top ~1/3
+  is the flat dots+letter panel and isn't reused here). Also revised
+  `GEDirectionalCubeTiles.cpp`'s icon 330-333 table entries and both
+  `mobile-eggbert-reference/02-tiles.md` and `questionnaire-all-remaining-tiles.md` to record that
+  this session's live "krychle + hrot" (cube + tip) description supersedes an earlier session's
+  "Billboard" questionnaire answer for the same 4 icons. Verified live via a headless EasyGL
+  screenshot at the sample world's teleporter room (temporary spawn-position debug override,
+  reverted before committing) — renders correctly: blue cube sides with the real dots/emblem-letter
+  texture, a distinct dark teal cone hanging cleanly below without clipping the floor. See
+  `plan.md`'s `E3D-MIG-147` entry for full detail.
 - **P3 — Expand the bottom-right Blupi animation indicator.** Currently only 5 coarse states
   (Stop/March/Jump/Down/Up), a deliberate simplification from when this indicator was built as a
   debug stand-in (no real Blupi model exists yet — this was always an interim stopgap, not a

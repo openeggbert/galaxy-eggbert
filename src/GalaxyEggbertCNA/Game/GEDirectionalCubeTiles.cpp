@@ -64,6 +64,29 @@ namespace GalaxyEggbert::CNA
             // icon 107's own texture is genuinely grass-on-top-of-dirt
             // (confirmed by looking at its crop).
             {107, false, true},
+            // Teleporter pillars (330-333, plan.md E3D-MIG-147, revised
+            // 2026-07-11 per direct user Q&A live in this session --
+            // supersedes the older questionnaire's "Billboard" answer, see
+            // 02-tiles.md's own updated note): 4 sides always show the
+            // real texture (confirmed: "modré pozadí by měla být stále
+            // renderována na stranu krychle" -- blue background on the
+            // cube's side), top/bottom flat fallback color (a "solid
+            // pillar" per every prior questionnaire pass, no open-face cue
+            // anywhere). The lower ~2/3 of this same texture (the dark
+            // cone/spike graphic) is ALSO used for a separate, genuinely
+            // 3D pyramid-tip attachment hanging below the block --
+            // GETerrainRenderer's own IsPyramidTipIcon()/PyramidTipUv(), an
+            // extra AppendPyramidTipMesh call inlined into
+            // AppendSpecialGeometry right after the DirectionalCube append,
+            // not this table -- so the side faces showing that same cone
+            // squished onto their own flat surface (from using the
+            // whole-tile UV here, the same convention every other entry in
+            // this table uses) is accepted as a minor first-pass cosmetic
+            // overlap, not fixed with a custom sub-rect UV here.
+            {GalaxyEggbert::BlockTypes::Teleport1, true, true},
+            {GalaxyEggbert::BlockTypes::Teleport2, true, true},
+            {GalaxyEggbert::BlockTypes::Teleport3, true, true},
+            {GalaxyEggbert::BlockTypes::Teleport4, true, true},
         };
 
         // The 4 ventilator/fan tiles: 4 of the 6 faces always textured; the

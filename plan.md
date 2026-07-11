@@ -120,6 +120,19 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   the cell Blupi was FACING instead, worked around rather than solved the real collision mismatch,
   and shipped a real bug — Blupi froze permanently and was never relocated, caught only by live
   playtesting, not the unit tests written for that design — since fixed and re-verified live.)
+  **Its render geometry is also done** (same task, 2026-07-11): the pillar itself is a
+  `DirectionalCube` (`GEDirectionalCubeTiles.cpp`, textured on all 4 sides, flat top/bottom —
+  supersedes an earlier questionnaire pass' "Billboard" call, revised live per direct user
+  description of the real crop: `mobile-eggbert-reference/02-tiles.md`/
+  `questionnaire-all-remaining-tiles.md` both updated), plus a new Easy3D primitive
+  (`Easy3D::PyramidTipItem`/`AppendPyramidTipMesh()`, `../easy-3d/{include,src}/Easy3D/
+  CubeMesh.{hpp,cpp}`, unit-tested in `../easy-3d/tests/test_cube_mesh.cpp`) for the hanging
+  cone/spike beneath the pillar — a square top face + 4 triangles tapering to an apex, textured
+  with the tile's own lower ~2/3 (`GETerrainRenderer.cpp`'s `PyramidTipUv()`), wired into
+  `AppendSpecialGeometry()` right after the `DirectionalCube` append. Verified live via a headless
+  EasyGL screenshot at the sample world's teleporter room — renders correctly: blue cube sides
+  with the real dots/emblem-letter texture, dark cone hanging cleanly below without clipping the
+  floor.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
