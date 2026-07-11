@@ -276,11 +276,24 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       13 distinct positions exceeding the 10-slot capacity). Still missing: the full
       hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/Clear2 coinflip,
       Trap/Drip→Glu, each depends on its own hazard from Phase 14), fixed per-action animation
-      durations, fall->1000px = instant fatal bypassing lives. **A further user-reported item
-      opened from this same task**: fall-death currently triggers almost instantly (<1s) after
-      falling through a gap, not after several seconds like the user recalls from real
-      mobile-eggbert — tracked separately, needs research against the real
-      absolute-grid-row death check and gravity constants before fixing (not yet started).
+      durations, fall->1000px = instant fatal bypassing lives. **Fall-death TIMING is also now
+      fixed (2026-07-11, same feedback batch)**: the old `kFallDeathY=-5.0f` gave a sub-1-second
+      death, which the user correctly recalled as unfaithful (real mobile-eggbert gives a real,
+      noticeable multi-second fall). Root-caused by directly inspecting a real level
+      (`../mobile-eggbert/worlds/world001.txt`): its real terrain (`Decor:` grid) occupies only
+      rows 0-21, leaving a deliberate ~77-row (~4928px) empty margin before the real row-99 death
+      check (`(end.Y+30)/64 >= 99`, `Decor.cpp:2754`) ever fires — not a tight threshold. Also
+      re-verified the real gravity constants directly (`Decor.cpp:2966-2968`): terminal fall
+      velocity is actually 21, not literally 20 (the un-clamped `+=2.0` increment overshoots the
+      `<20` gate by one step), i.e. 840 real px/sec (13.125 tiles/sec) at the 20Hz reference rate.
+      Falling that observed real margin at these real constants takes ~6.1s. `kFallDeathY` moved
+      to `-60.0f` (from `-5.0f`), reproducing a comparable ~6.2s fall using this engine's own
+      already-tuned `kGravity=25`/`kFallLimit=-10` (not the real tick-domain values, which aren't
+      cross-checked against this engine's own constants per `065`) — matched as an equivalent
+      NUMBER OF SECONDS, not the same literal unit distance, since this world's own terrain
+      (Y 0-13) is far shorter than a real level's. Verified live (temporary debug instrumentation,
+      reverted before committing): death fired at 6.72s over a genuinely floorless column,
+      matching the researched estimate closely.
 - [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
       small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
 - [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful

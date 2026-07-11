@@ -514,12 +514,40 @@ namespace GalaxyEggbert::CNA
             // 10-blupi-mechanics.md §8: "Walking off the world's bottom
             // row ... -> Clear2", checked before the rest of the frame
             // runs. kFallDeathY is a simplification of the real grid-row
-            // check -- this world's real floors/hazards all sit at Y>=0
-            // (the sample world's water/pit hazard is only 1 block deep),
-            // so any Y clearly below that means Blupi fell through a hole
-            // with nothing under it, not a legitimate low point in the
-            // level.
-            constexpr float kFallDeathY = -5.0f;
+            // check (`(end.Y+30)/64 >= 99`, Decor.cpp:2754) -- this world's
+            // real floors/hazards all sit at Y>=0 (the sample world's
+            // water/pit hazard is only 1 block deep), so any Y clearly
+            // below that means Blupi fell through a hole with nothing
+            // under it, not a legitimate low point in the level.
+            //
+            // **-60.0f, not -5.0f (user-reported, 2026-07-11): the real
+            // fall is NOT near-instant.** Directly inspected
+            // `../mobile-eggbert/worlds/world001.txt`: its real terrain
+            // (`Decor:` grid) occupies only rows 0-21, leaving rows 22-98
+            // (77 rows, ~4928 real px) of completely empty grid before the
+            // real row-99 death check ever fires -- a deliberate, generous
+            // "pit of doom" margin, not a tight threshold. Verified real
+            // gravity directly against Decor.cpp:2966-2968 (`end.Y +=
+            // (int)(m_blupiVitesseY * 2.0); if (m_blupiVitesseY < 20.0)
+            // m_blupiVitesseY += 2.0;`, starting at 1.0): terminal velocity
+            // is actually 21, not literally 20 (the uncapped +2 increment
+            // overshoots the `<20` gate by one step) -- 840 real px/sec
+            // (13.125 tiles/sec) at the real 20Hz reference rate. Falling
+            // that observed ~4928px margin at these real constants takes
+            // ~6.1s (the real ramp-up to terminal covers the first ~200px
+            // in 0.5s, the remaining ~4728px at 840px/s takes ~5.6s) --
+            // several seconds, matching the user's recollection of a real,
+            // noticeable fall, not the sub-1-second death the old -5.0f
+            // threshold gave with this engine's own gravity. -60.0f
+            // reproduces a comparable ~6.2s fall using this engine's own
+            // already-tuned kGravity=25/kFallLimit=-10 (not the real
+            // tick-domain values, which aren't cross-checked against this
+            // engine's own constants per plan.md `065`) -- an equivalent
+            // NUMBER OF SECONDS, not the same literal unit distance, since
+            // this world's own terrain (Y 0-13) is far shorter than a real
+            // level's, so matching real "feel" (a real fall you notice)
+            // makes more sense here than matching the real absolute margin.
+            constexpr float kFallDeathY = -60.0f;
             if (blupi_.GetY() < kFallDeathY)
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);

@@ -119,9 +119,16 @@ animation, `Decor.cpp:3212-3223`) — while active it raises both the direct-jum
 spring-bounce initial speed, as shown above.
 
 **Gravity**, applied only while `m_blupiAir` is set (`Decor.cpp:2948-3041`): `m_blupiVitesseY`
-increases by `2.0` every tick until it reaches `20.0` (terminal — the increment stops there,
-`Decor.cpp:2968`/`2976`), while the actual per-tick vertical displacement is **twice** that velocity
-value (`end.Y += vitesseY * 2.0`). Hitting a ceiling while still ascending (`flag3` true and
+increases by `2.0` every tick while it is still below `20.0` (`Decor.cpp:2968`/`2976`), while the
+actual per-tick vertical displacement is **twice** that velocity value (`end.Y += vitesseY * 2.0`).
+**Correction (2026-07-11, re-verified directly against source while researching real fall-death
+timing)**: the check is `if (vitesseY < 20.0) vitesseY += 2.0`, tested BEFORE incrementing — since
+`m_blupiVitesseY` starts at `1.0` and only ever takes odd values (`1, 3, 5, ..., 19`), the last
+qualifying increment happens at `19.0` (still `< 20.0`), landing on `21.0`, which then fails the
+`< 20.0` test and stops. **Real terminal velocity is therefore `21.0`, not `20.0`** — the velocity
+never actually lands on the number the check compares against, an easy-to-miss off-by-one in the
+increment logic. At the real 20Hz reference rate this is `21.0 * 2.0 * 20 = 840` real px/sec
+(13.125 tiles/sec). Hitting a ceiling while still ascending (`flag3` true and
 `vitesseY < 0.0`) stops the ascent (`vitesseY` reset to `1.0`); if the upward speed exceeded `14.0`
 in magnitude, it additionally sets a "hurt" flag (`m_blupiJumpAie`) and plays a head-bump sound
 instead of the plain one (`Decor.cpp:2950-2963`). Landing (`vitesseY >= 0.0` and ground detected)

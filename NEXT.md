@@ -260,6 +260,44 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed fall-death TIMING — it fired almost instantly, should take several seconds
+  (2026-07-11, plan.md `E3D-MIG-067`, found while verifying the last-safe-position respawn task
+  below, same overall feedback batch).** The user recalled real mobile-eggbert giving a real,
+  noticeable multi-second fall (unsure of the exact duration) rather than near-instant death, and
+  asked me to verify against the source rather than guess.
+  - **Root-caused by directly inspecting a real level file**
+    (`../mobile-eggbert/worlds/world001.txt`): its real terrain (`Decor:` grid) occupies only rows
+    0-21 of the real 100-row grid, leaving a deliberate ~77-row (~4928 real px) completely empty
+    margin before the real row-99 death check (`(end.Y+30)/64 >= 99`, `Decor.cpp:2754`) ever
+    fires — a generous "pit of doom" buffer, not a tight threshold, confirming the user's
+    recollection was correct.
+  - **Also re-verified the real gravity constants directly** (`Decor.cpp:2966-2968`: `end.Y +=
+    (int)(m_blupiVitesseY * 2.0); if (m_blupiVitesseY < 20.0) m_blupiVitesseY += 2.0;`, starting
+    at 1.0) — a genuinely new finding: real terminal fall velocity is actually 21, not literally
+    20 as the existing reference doc's rounded summary suggested (the un-clamped `+=2.0`
+    increment overshoots the `<20` gate by one step) — 840 real px/sec (13.125 tiles/sec) at the
+    real 20Hz reference rate.
+  - Falling the observed real ~4928px margin at these real constants computes to ~6.1 seconds
+    (a ~0.5s ramp-up covering the first ~200px, then ~5.6s more at terminal velocity for the
+    remaining distance) — several seconds, matching the user's general recollection even if not
+    their exact "~4s" guess, and light-years from the old sub-1-second death.
+  - **Fix**: `GalaxyEggbertCnaGame.cpp`'s `kFallDeathY` moved from `-5.0f` to `-60.0f`. This
+    reproduces a comparable ~6.2s fall using THIS engine's own already-tuned
+    `kGravity=25`/`kFallLimit=-10` (not the real tick-domain values, which per plan.md `065`
+    aren't cross-checked against this engine's own constants) — matched as an equivalent NUMBER
+    OF SECONDS, not the same literal unit distance, since this hand-authored world's own terrain
+    (Y range [0,13]) is far shorter than a real level's, so matching the real game's FEEL (a fall
+    you genuinely notice) makes more sense here than matching its absolute pixel margin.
+  - **Verified live** (temporary debug instrumentation — a spawn override over a genuinely
+    floorless column, plus death-detection logging via a lives-counter comparison, both reverted
+    before committing): death fired at 6.72 seconds, closely matching the researched ~6.1-6.2s
+    estimate, and the last-safe-position respawn (the task that surfaced this issue) correctly
+    kicked in afterward.
+  - No new automated test — `kFallDeathY` lives in `GalaxyEggbertCnaGame.cpp`, which the existing
+    unit-testable surface (`GEBlupiController`/`GEWorldRuntime`/`GEInteractionSystem`) doesn't
+    cover; the live verification above is the check for this one, same as the exit-code/window-
+    close investigation's own precedent for game-loop-level behavior.
+
 - **Implemented the real last-safe-position FIFO respawn (2026-07-11, plan.md `E3D-MIG-067`,
   same user-reported feedback batch as the teleporter/fall-death fixes).** Verified directly
   against `Decor.cpp:6467-6478` (the update gate) and `6654-6673` (`BlupiAddFifo`).
@@ -2742,21 +2780,15 @@ polish):**
   fires correctly). See §3's newest entry for full detail.
 - **P2 — DONE (2026-07-11): real last-safe-position FIFO respawn implemented.** See §3's newest
   entry for full detail.
-- **P1 — NEW (2026-07-11, found while verifying the above): fall-death fires almost instantly,
-  should take several seconds.** User recalls real mobile-eggbert's fall takes noticeably longer
-  (maybe ~4s, unconfirmed) before death, but the current `kFallDeathY=-5.0f` threshold combined
-  with `GEBlupiController`'s gravity constants means death fires in well under 1 second after
-  falling through a typical gap near ground level. The real mechanism (already partially
-  researched, see `mobile-eggbert-reference/10-blupi-mechanics.md`) is an ABSOLUTE grid-row check
-  (`(end.Y+30)/64 >= 99`, reaching row 99 of the real 100-row/6400px world), not a fixed timer —
-  so the real "how long" depends on how far above row 99 real levels' terrain typically sits,
-  combined with the real gravity/terminal-velocity constants. Needs: (1) pin down the real
-  gravity/terminal-velocity numbers precisely against `Decor.cpp` directly (the reference doc
-  summary — "+2.0/tick to terminal 20.0" — needs re-confirming at the source), (2) look at a real
-  mobile-eggbert level file to estimate a realistic fall distance/duration, (3) decide the right
-  3D adaptation (likely moving `kFallDeathY` much lower, or a different approach entirely) to
-  give a multi-second forgiving fall before death, matching real game feel — don't just guess a
-  duration.
+- **P1 — DONE (2026-07-11): fall-death timing fixed.** Was firing in well under 1 second after
+  falling through a gap; the user correctly recalled the real game gives a real, multi-second
+  fall. Root-caused against a real level file (`../mobile-eggbert/worlds/world001.txt` has a
+  deliberate ~77-row/~4928px empty margin below its real terrain before the real row-99 death
+  check fires) and the real gravity constants (`Decor.cpp:2966-2968` — terminal velocity is
+  actually 21, not 20, a genuinely new correction to the existing reference doc's rounded
+  summary). `kFallDeathY` moved from `-5.0f` to `-60.0f`, giving a comparable ~6.2s fall using
+  this engine's own gravity constants — verified live at 6.72s. See §3's newest entry for full
+  detail.
 - **P3 — Add teleporter pyramid-tip render geometry.** User's detailed description of the real
   icon 330-333 crop: black border, a red/yellow button + an alpha-letter symbol, a blue background
   on the cube's side faces (existing `DirectionalCube` treatment is fine for that part), PLUS a
