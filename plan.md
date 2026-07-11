@@ -94,8 +94,10 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   blupih drops a projectile straight down, blupit fires two horizontal shots, both only during
   turn-dwell; the large creature grabs Blupi (fatal, real balloon immunity modeled, never
   destroyed itself) only during its own turn-dwell, safe to touch mid-walk. Follower 96/97's real
-  homing-toward-Blupi movement is the only Phase 13 piece still open (contact-kill/pop and real
-  patrol motion both work, the Blupi-homing AI specifically doesn't). All
+  dormant-until-a-padded-wake-box, then 1px/tick homing-toward-Blupi movement (`E3D-MIG-137`,
+  2026-07-11) is also done, completing Phase 13 — contact-kill/pop already worked, and a dormant
+  follower now genuinely wakes and chases, self-destructing if its path is ever blocked rather
+  than passing through solid terrain. All
   5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are implemented
   (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
   foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
@@ -407,12 +409,27 @@ documented there.
       patrolStep 2/4, lethal at 1/3, creature survives, balloon immunity, real placement has a
       patrol range) + full suite (63/63 unit tests, all verify tools) + live headless runs on both
       EasyGL and Vulkan backends.
-- [~] `137` Types 96/97 (follower) — **contact-kill done**, folded into `E3D-MIG-132`'s widened
+- [x] `137` Types 96/97 (follower) — **contact-kill done**, folded into `E3D-MIG-132`'s widened
       shared kill list (2026-07-11), covering both the dormant (96) and awake (97) state
-      identically, matching the real shared kill-list check. NOT done: the real dormant-until-a-
-      padded-wake-box, then 1px/tick homing-toward-Blupi movement — followers are currently just
-      static/patrol `MobileObjSpec`s like any other placed object, this is a genuinely separate
-      feature from the contact-death this pass covered.
+      identically, matching the real shared kill-list check. **Wake + homing done 2026-07-11**,
+      completing Phase 13: verified directly against `Decor.cpp:9646-9678` (the wake box) and
+      `8025-8064` (the homing step). A dormant `96` wakes into the homing `97` once Blupi is
+      within its padded detection box (real 100px-padded rect approximated as a circular distance
+      check, same simplification as every other proximity test in `GEInteractionSystem`; real
+      channel 92 wake sound). Once awake it steps X and Y independently (Chebyshev-style, not a
+      normalized diagonal) toward Blupi's live position at the real 1px/tick speed (≈0.3125 grid-
+      units/sec); Z is left untouched (real mobile-eggbert has no Z axis, matching blupih/blupit's
+      own shots). Self-destructs (real channel 10, no debris object spawned — no one-shot decorative-
+      effect system exists yet) if its next step would land in a solid cell, rather than continuing
+      to home, approximated as a single-point solid check at the destination cell (real `TestPath`
+      sweeps a rectangle). The object exhibition's existing static `ObjectType96` specimen already
+      makes this genuinely playable (open ground, no dedicated placement needed the way blupih/
+      blupit/the large creature needed hand-carved terrain). Verified via 3 new
+      `VerifyInteractionSystem` assertions (wake transition, gradual 1s homing progress in open
+      air, blocked-path self-destruct) + full suite (63/63 unit tests, all verify tools) + live
+      headless runs on both EasyGL and Vulkan backends.
+
+**Phase 13 (Enemy AI & combat) is now complete.**
 
 ### Phase 14 — Hazards (`E3D-MIG-140`-`149`)
 

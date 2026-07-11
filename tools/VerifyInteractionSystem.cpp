@@ -305,26 +305,37 @@ int main(int argc, char** argv)
         check(waspStillActive, "the wasp itself is not destroyed by contact (unlike the shared kill list)");
 
         // Follower (96) -- one of the 4 real balloon-poppable types
-        // (IsBalloonPoppableHazard()): while ballooned, contact pops the
+        // (IsBalloonPoppableHazard(), which covers both the dormant 96 and
+        // awake 97 state identically): while ballooned, contact pops the
         // balloon instead of killing, and does NOT destroy the follower
         // either (the real Decor.cpp:5766-5781 pop branch has no
-        // ObjectDelete call at all).
+        // ObjectDelete call at all). Placed at Y=20 -- well above the
+        // sample world's real Y range [0,13] -- so it (and the touching
+        // Blupi position below) can never coincide with real solid terrain;
+        // since kFollowerWakeRadius > kHazardContactRadius, touching a
+        // dormant follower always wakes it too (plan.md E3D-MIG-137), so
+        // this contact is expected to also promote it to 97 before the pop
+        // check runs, same frame.
         MobileObjSpec follower;
         follower.type = ObjectType::ObjectType96;
         follower.posStartX = follower.posEndX = follower.currentX = 15.0f;
-        follower.posStartY = follower.posEndY = follower.currentY = 1.0f;
+        follower.posStartY = follower.posEndY = follower.currentY = 20.0f;
         follower.posStartZ = follower.posEndZ = follower.currentZ = 15.0f;
         world.GetMobileObjectsMutable().push_back(follower);
 
         const int livesBeforeFollower = interaction.Lives();
-        interaction.Update(dt, world, 15.0f, 1.0f, 15.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
+        interaction.Update(dt, world, 15.0f, 20.0f, 15.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
         check(interaction.BalloonPoppedThisFrame(), "BalloonPoppedThisFrame() is true touching a follower while ballooned");
         check(!interaction.DiedThisFrame(), "the pop happens instead of a kill while ballooned");
         check(interaction.Lives() == livesBeforeFollower, "a popped balloon costs no life");
         bool followerStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType96) followerStillActive = obj.active;
+            if ((obj.type == ObjectType::ObjectType96 || obj.type == ObjectType::ObjectType97) &&
+                obj.posStartX == 15.0f && obj.currentZ == 15.0f)
+            {
+                followerStillActive = obj.active;
+            }
         }
         check(followerStillActive, "the follower that popped the balloon is NOT destroyed (real behavior has no ObjectDelete here)");
 
@@ -688,6 +699,125 @@ int main(int argc, char** argv)
     }
     check(placedCreature != nullptr,
           "found a patrolling large creature (ObjectType54, posStartX != posEndX) in the sample world");
+
+    // 14. Follower (ObjectType96/97) wake + homing + blocked-path self-
+    // destruct (plan.md E3D-MIG-137) -- verified against Decor.cpp:
+    // 9646-9678 (the wake box) and 8025-8064 (the homing step). Both
+    // scenarios use grid Y=20, well above the sample world's real Y range
+    // [0,13], and a Z unused by anything else, so nothing pre-existing can
+    // interfere.
+    {
+        // 14a. Wake + gradual homing progress in open air: a dormant
+        // follower placed 1.5 grid units from Blupi (within
+        // kFollowerWakeRadius ~2.06, so it wakes on contact) should wake
+        // (type -> 97) and creep toward Blupi over many small per-frame
+        // steps -- NOT teleport there in one frame (real speed is a slow
+        // 1 real px/tick).
+        constexpr int kGX = 10, kGY = 20, kGZ = 95;
+        const float fX = static_cast<float>(kGX) - GEWorldRuntime::kWorldCenterX;
+        const float fY = static_cast<float>(kGY);
+        const float fZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float targetX = fX + 1.5f; // within wake radius, open air the whole way
+
+        MobileObjSpec dormant;
+        dormant.type = ObjectType::ObjectType96;
+        dormant.posStartX = dormant.posEndX = dormant.currentX = fX;
+        dormant.posStartY = dormant.posEndY = dormant.currentY = fY;
+        dormant.posStartZ = dormant.posEndZ = dormant.currentZ = fZ;
+        world.GetMobileObjectsMutable().push_back(dormant);
+
+        // Matched by currentZ alone (invariant -- homing never touches Z),
+        // NOT posStartX, which the homing step itself overwrites every
+        // frame it moves.
+        const auto findFollowerAt = [&world](float z) -> const MobileObjSpec*
+        {
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                if ((obj.type == ObjectType::ObjectType96 || obj.type == ObjectType::ObjectType97) &&
+                    obj.currentZ == z)
+                {
+                    return &obj;
+                }
+            }
+            return nullptr;
+        };
+
+        interaction.Update(dt, world, targetX, fY, fZ, 0.0f, sound);
+        const auto* afterFirstFrame = findFollowerAt(fZ);
+        check(afterFirstFrame != nullptr && afterFirstFrame->type == ObjectType::ObjectType97,
+              "a dormant follower (96) wakes into the homing type (97) once Blupi is within its wake box");
+
+        for (int i = 0; i < 59; ++i)
+        {
+            interaction.Update(dt, world, targetX, fY, fZ, 0.0f, sound);
+        }
+        const auto* afterOneSecond = findFollowerAt(fZ);
+        std::cout << "Follower X after 1s homing: " << (afterOneSecond ? afterOneSecond->currentX : -999.0f)
+                  << " (started at " << fX << ", target " << targetX << ")" << std::endl;
+        check(afterOneSecond != nullptr && afterOneSecond->active,
+              "the homing follower is still alive after 1s of unobstructed homing");
+        if (afterOneSecond)
+        {
+            const float advanced = afterOneSecond->currentX - fX;
+            check(advanced > 0.2f && advanced < 0.4f,
+                  "the follower creeps toward Blupi at the real ~0.3125 grid-units/sec homing speed, not instantly");
+            check(afterOneSecond->currentX < targetX,
+                  "the follower has NOT yet reached Blupi after 1s (real speed is slow, not a teleport)");
+        }
+    }
+    {
+        // 14b. Blocked-path self-destruct: a follower already awake (97),
+        // one grid unit from a solid wall with Blupi positioned beyond it,
+        // should self-destruct (active -> false) the moment its next step
+        // would land inside the wall, rather than passing through it.
+        constexpr int kGX = 10, kGY = 20, kGZ = 90, kWallGX = 11;
+        auto& mutableWorld = world.GetWorldMutable();
+        mutableWorld.setBlock(static_cast<std::uint16_t>(kWallGX), static_cast<std::uint16_t>(kGY),
+                               static_cast<std::uint16_t>(kGZ), Worlds::Block::make(BlockTypes::Ground));
+
+        const float fX = static_cast<float>(kGX) - GEWorldRuntime::kWorldCenterX;
+        const float fY = static_cast<float>(kGY);
+        const float fZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float beyondWallX = static_cast<float>(kWallGX + 5) - GEWorldRuntime::kWorldCenterX;
+
+        MobileObjSpec homing;
+        homing.type = ObjectType::ObjectType97; // already awake
+        homing.posStartX = homing.posEndX = homing.currentX = fX;
+        homing.posStartY = homing.posEndY = homing.currentY = fY;
+        homing.posStartZ = homing.posEndZ = homing.currentZ = fZ;
+        world.GetMobileObjectsMutable().push_back(homing);
+
+        // Identified by type97 + this scenario's unique fZ (distinct from
+        // 14a's fZ above) -- posStartZ never changes for this object
+        // (homing only ever touches X/Y), so this stays a valid match even
+        // after self-destruct sets active=false.
+        const auto findHoming = [&world, fZ]() -> const MobileObjSpec*
+        {
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                if (obj.type == ObjectType::ObjectType97 && obj.posStartZ == fZ)
+                {
+                    return &obj;
+                }
+            }
+            return nullptr;
+        };
+
+        bool selfDestructed = false;
+        int framesToDestruct = -1;
+        for (int i = 0; i < 250 && !selfDestructed; ++i)
+        {
+            interaction.Update(dt, world, beyondWallX, fY, fZ, 0.0f, sound);
+            const auto* current = findHoming();
+            if (current != nullptr && !current->active)
+            {
+                selfDestructed = true;
+                framesToDestruct = i;
+            }
+        }
+        std::cout << "Follower self-destructed after " << framesToDestruct << " frame(s) approaching the wall" << std::endl;
+        check(selfDestructed, "a homing follower self-destructs when its next step would land inside solid terrain");
+    }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

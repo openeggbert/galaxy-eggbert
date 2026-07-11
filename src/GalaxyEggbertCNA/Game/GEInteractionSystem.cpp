@@ -228,6 +228,16 @@ namespace GalaxyEggbert::CNA
             gz = std::clamp(static_cast<int>(std::lround(wz)) + GEWorldRuntime::kWorldCenterZ, 0, blocksPerAxis - 1);
         }
 
+        // Matches GEBlupiController::IsSolidAt's own logic exactly
+        // (duplicated here rather than exposed from GEBlupiController,
+        // which keeps it private -- same reason ToGridCell above is its
+        // own copy rather than a shared call).
+        bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz)
+        {
+            return !world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                    static_cast<std::uint16_t>(gz)).isAir();
+        }
+
         // Spawns a fired-projectile MobileObjSpec (ObjectType23) travelling
         // `dist` grid cells from `obj`'s own position in direction
         // (dirX,dirY,dirZ) (a unit axis vector) -- shared by blupih (straight
@@ -307,6 +317,27 @@ namespace GalaxyEggbert::CNA
         // as the closest existing documented approximation, same
         // simplification already applied to every pickup type above.
         constexpr float kHazardContactRadius = kPickupRadius;
+
+        // Follower wake box (ObjectType96, plan.md E3D-MIG-137, real
+        // Decor.cpp:9646-9678 MoveObjectFollow): the real check is an
+        // axis-aligned rect test (the follower's own tile padded +-100px
+        // on all sides vs. a narrow ~28px-wide strip through Blupi's
+        // default hitbox) -- approximated here as a circular distance
+        // check, same simplification as every other proximity test in
+        // this file. 100px real padding + a 32px half-tile (the real rect
+        // is measured from the follower's TILE edges, not its center)
+        // converts to grid units via the same 64px/cell convention used
+        // throughout this file (SearchAirDistance etc.).
+        constexpr float kFollowerWakeRadius = (100.0f + 32.0f) / 64.0f;
+
+        // Real follower homing speed (ObjectType97, Decor.cpp:8025-8044):
+        // exactly 1 real px/tick, independently per axis (a Chebyshev-
+        // style step-toward, NOT a normalized diagonal), at the same 20Hz
+        // reference tick rate MoveObjectStepLine itself runs at (matching
+        // AdvancePatrolStep's own convention) -- a direct, non-
+        // approximated transcription via the same 64px/cell grid
+        // conversion used throughout this file.
+        constexpr float kFollowerHomingSpeed = 20.0f / 64.0f;
     }
 
     void GEInteractionSystem::Update(float dt, GEWorldRuntime& worldRuntime,
@@ -426,6 +457,83 @@ namespace GalaxyEggbert::CNA
                     }
                 }
                 continue;
+            }
+
+            // Follower wake-up (ObjectType96 -> 97, plan.md E3D-MIG-137,
+            // real Decor.cpp:9646-9678 `MoveObjectFollow`) -- a dormant
+            // follower promotes to the homing type the instant Blupi comes
+            // within its padded detection box, playing its wake sound
+            // (real channel 92) exactly once at the transition. Does NOT
+            // `continue` -- a follower that wakes this exact frame also
+            // takes its first homing step this same frame, below.
+            if (obj.type == ObjectType::ObjectType96)
+            {
+                const float fwdx = obj.currentX - blupiX;
+                const float fwdy = obj.currentY - blupiY;
+                const float fwdz = obj.currentZ - blupiZ;
+                if (fwdx * fwdx + fwdy * fwdy + fwdz * fwdz < kFollowerWakeRadius * kFollowerWakeRadius)
+                {
+                    obj.type = ObjectType::ObjectType97;
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel92);
+                }
+            }
+
+            // Follower homing (ObjectType97, plan.md E3D-MIG-137, real
+            // Decor.cpp:8025-8064) -- once awake, steps X and Y
+            // independently (Chebyshev-style, NOT a normalized diagonal)
+            // toward Blupi's live position every frame at
+            // kFollowerHomingSpeed. currentZ is deliberately left
+            // untouched -- real mobile-eggbert has no Z axis at all, only
+            // X (horizontal) and Y (vertical) exist in the source this is
+            // ported from, matching blupih/blupit's own shots, which never
+            // touch Z either. Collapses posStart/posEnd to the new
+            // position every successful step (matching the real source's
+            // own `posStart = posEnd = end`), which naturally makes the
+            // generic patrol-turn block below a no-op for this object (its
+            // own `posStart != posEnd` guard), exactly like the real
+            // source's generic dwell/advance/dwell/recede block becomes a
+            // no-op immediately after this same real function's homing
+            // branch runs -- no separate type exclusion needed.
+            //
+            // Blocked-path self-destruct (real: `TestPath` fails ->
+            // `ObjectDelete` + a real `ObjectType9` explosion + channel 10)
+            // is modeled as a single-point solid check at the destination
+            // cell via `GEBlupiController::IsSolidAt` (this file's own
+            // existing tile-grid convention, e.g. `SearchAirDistance`) --
+            // real `TestPath` sweeps a rectangle, not a point, same
+            // simplification as every other collision check in this file.
+            // The cosmetic `ObjectType9` debris object is deliberately NOT
+            // spawned -- no one-shot/auto-expiring decorative-effect
+            // system exists in this engine at all yet (every hazard death
+            // above already omits its own real debris/shake effects for
+            // the same reason); only the death itself and its sound are
+            // ported. `continue`s on self-destruct so an already-destroyed
+            // follower can't also register a contact-kill against Blupi
+            // this same frame via the generic hazard check below; falls
+            // through (no `continue`) on a successful step, since that
+            // check is exactly how a follower that catches up to Blupi is
+            // supposed to kill him.
+            if (obj.type == ObjectType::ObjectType97)
+            {
+                float endX = obj.currentX;
+                float endY = obj.currentY;
+                const float stepAmount = kFollowerHomingSpeed * dt;
+                if (endX < blupiX) endX = std::min(endX + stepAmount, blupiX);
+                else if (endX > blupiX) endX = std::max(endX - stepAmount, blupiX);
+                if (endY < blupiY) endY = std::min(endY + stepAmount, blupiY);
+                else if (endY > blupiY) endY = std::max(endY - stepAmount, blupiY);
+
+                int fgx, fgy, fgz;
+                ToGridCell(world, endX, endY, obj.currentZ, fgx, fgy, fgz);
+                if (IsSolidAt(world, fgx, fgy, fgz))
+                {
+                    obj.active = false;
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                    continue;
+                }
+                obj.currentX = obj.posStartX = obj.posEndX = endX;
+                obj.currentY = obj.posStartY = obj.posEndY = endY;
+                obj.posStartZ = obj.posEndZ = obj.currentZ;
             }
 
             // Real shared patrol-turn mechanic (plan.md E3D-MIG-131) --

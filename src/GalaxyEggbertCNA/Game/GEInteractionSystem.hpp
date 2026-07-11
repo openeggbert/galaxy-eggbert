@@ -107,10 +107,20 @@ namespace GalaxyEggbert::CNA
     // real no-vehicle death branch. The real unconditional taunt icon is
     // also NOT modeled -- no idle-taunt animation system exists at all.
     //
+    // Follower (ObjectType96/97) real homing now works too (2026-07-11,
+    // plan.md E3D-MIG-137, the last open item in Phase 13), verified
+    // directly against Decor.cpp:9646-9678 (the wake box) and 8025-8064
+    // (the homing step). A dormant 96 wakes into the homing 97 once Blupi
+    // is within its padded detection box (approximated as a circular
+    // distance check, real channel 92 wake sound); once awake it steps X
+    // and Y independently toward Blupi's live position at a real 1px/tick
+    // (Z is left untouched -- no such axis exists in the real 2D source),
+    // and self-destructs (real channel 10, no debris object spawned -- no
+    // decorative-effect system exists yet) if its next step would land in
+    // a solid cell, rather than continuing to home. Contact-kill/pop was
+    // already covered by the shared kill list before this.
+    //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Follower 96/97's real homing-toward-Blupi movement (Phase 13) --
-    //    they're currently just static/patrol MoveObjects like any other;
-    //    only their contact-death is covered here.
     //  - Riding a moving platform lift (ObjectType1/47/48) -- platforms now
     //    genuinely patrol (see Update()), but GEBlupiController's collision
     //    only tests the static terrain grid, not MobileObjSpec objects, so

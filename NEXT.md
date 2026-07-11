@@ -26,9 +26,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   gameplay system** (`GEInteractionSystem`/`GEBlupiController`/`GEWorldRuntime`) covering pickup
   collection, platform-lift/crate patrol+push, all 5 real terrain hazards (lava/spikes/blitz/
   saw+switches/crusher), the real shared enemy kill-list (8 types), the wasp's balloon status, the
-  real shared patrol-turn state machine, blupih/blupit's projectile attacks, and the large
-  creature's turn-dwell-gated grab — see §2/§3 for detail and `plan.md` Phase 13/14 for what's
-  still open. No 3D Blupi model yet (still an invisible collision point).
+  real shared patrol-turn state machine, blupih/blupit's projectile attacks, the large
+  creature's turn-dwell-gated grab, and follower wake+homing — **Phase 13 (Enemy AI & combat) is
+  now fully complete**; see §2/§3 for detail and `plan.md` Phase 14 for what's still open. No 3D
+  Blupi model yet (still an invisible collision point).
 
 **Important architectural decisions:**
 
@@ -236,8 +237,8 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   `ObjectType23` projectiles during turn-dwell (their own body is harmless), and the large
   creature (`ObjectType54`) is lethal only during its own turn-dwell (safe mid-walk), never
   destroyed itself, with real balloon immunity modeled. Follower 96/97's real
-  homing-toward-Blupi movement is now the only open item in Phase 13 (contact-kill/pop and real
-  patrol motion both work, the Blupi-homing AI specifically doesn't). HUD is now
+  dormant-until-a-padded-wake-box, then 1px/tick homing-toward-Blupi movement is also done
+  (2026-07-11 §3) — **Phase 13 (Enemy AI & combat) is now fully complete.** HUD is now
   minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
   no numeric treasure counter/score.
   No 3D world editor exists yet either (plan.md §6, `EDITOR-*`, planned
@@ -258,6 +259,54 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented follower (`ObjectType96`/`97`) wake + homing (2026-07-11, plan.md `E3D-MIG-137`),
+  completing Phase 13 (Enemy AI & combat) entirely.** Verified directly against
+  `Decor.cpp:9646-9678` (`MoveObjectFollow`, the wake box) and `8025-8064`
+  (`MoveObjectStepLine`'s `ObjectType97` branch, the homing step).
+  - A dormant `96` promotes to the homing `97` the instant Blupi comes within its padded
+    detection box, playing the real wake sound (channel 92) exactly once at the transition. Real
+    box is an axis-aligned rect test (the follower's tile padded ±100px on all sides vs. a narrow
+    strip through Blupi's own hitbox) — approximated as a circular distance check
+    (`kFollowerWakeRadius`, ≈2.06 grid units: 100px padding + a 32px half-tile converted via the
+    same 64px/cell convention used throughout `GEInteractionSystem`), same simplification as every
+    other proximity test in that file.
+  - Once awake, it steps X and Y independently (Chebyshev-style — each axis moves toward Blupi on
+    its own, NOT a normalized diagonal) toward Blupi's live position at the real speed of exactly
+    1 real px/tick (`kFollowerHomingSpeed` ≈0.3125 grid-units/sec, a direct, non-approximated
+    transcription via the 64px/cell conversion). `currentZ` is deliberately left untouched — real
+    mobile-eggbert has no Z axis at all (only X/horizontal and Y/vertical exist in the 2D source),
+    matching blupih/blupit's own shots, which never touch Z either.
+  - **Self-destructs rather than passing through walls**: if the next step would land in a solid
+    cell (checked via a local single-point `IsSolidAt` duplicate of `GEBlupiController`'s own
+    private helper, same precedent as `ToGridCell`'s existing duplication), the follower goes
+    inactive and plays the real explosion sound (channel 10) — the cosmetic `ObjectType9` debris
+    object itself is NOT spawned, since no one-shot/auto-expiring decorative-effect system exists
+    in this engine at all yet (every hazard death so far already omits its own real debris/shake
+    effects for the same reason).
+  - Collapses `posStart`/`posEnd` to the new position on every successful step (matching the real
+    source's own `posStart = posEnd = end`), which naturally makes the generic shared patrol-turn
+    block (`AdvancePatrolStep()`, `E3D-MIG-131`) a no-op for a homing follower via its own existing
+    `posStart != posEnd` guard — no separate type exclusion needed, mirroring how the real source's
+    generic dwell/advance/dwell/recede block becomes a no-op immediately after this same real
+    function's homing branch runs.
+  - Contact-kill/pop against the shared kill list was already covered (folded into `E3D-MIG-132`'s
+    widened check) — this pass only adds the movement itself.
+  - The object exhibition's existing static `ObjectType96` specimen (open ground, no adjacent
+    walls) already makes this genuinely playable in the sample world — no dedicated hand-carved
+    placement was needed the way blupih/blupit/the large creature needed specific terrain shapes.
+  - **Verification**: 3 new `VerifyInteractionSystem` assertions (wake transition on contact,
+    gradual ~0.3125-units/sec homing progress over 1s of unobstructed open air — proving it creeps
+    rather than teleports, and a hand-carved one-wall corridor proving the blocked-path self-
+    destruct) — the first attempt at these caught two real test-authoring bugs: (1) the existing
+    wasp-balloon test's synthetic follower injection happened to sit inside real solid tunnel-wall
+    geometry at its arbitrary test coordinates, which the new homing logic's blocked-path check
+    now actually notices (fixed by moving it to Y=20, above the sample world's real Y range
+    [0,13]); (2) a lookup helper matched a homing follower by its `posStartX`, which the homing
+    step itself overwrites every frame it moves — fixed to match by `currentZ` instead, which
+    homing never touches. Full suite (63/63 unit tests, all 4 verify tools) and live headless runs
+    on both EasyGL and Vulkan backends all clean (identical 6146-block/84-MoveObject world load on
+    both, unchanged from the large creature task since no new world placement was needed).
 
 - **Implemented the large creature's (`ObjectType54`) turn-dwell-gated grab (2026-07-11, plan.md
   `E3D-MIG-136`, the natural continuation of Phase 13 after blupih/blupit).** Verified directly
@@ -2137,35 +2186,32 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (large creature, 2026-07-11, see §3's newest entry), all
+backends as of the most recent work (follower wake+homing, 2026-07-11, see §3's newest entry), all
 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
-work remains outstanding; §8's remaining tasks are optional/low-priority polish. **The active work
-has since moved on to real gameplay logic** (`plan.md` §2 Feature Parity Checklist), currently deep
-in Phase 13 (Enemy AI) and Phase 14 (Hazards):
+work remains outstanding; §8's remaining tasks are optional/low-priority polish. **Phase 13
+(Enemy AI & combat) is now fully complete** (`plan.md` §2 Feature Parity Checklist) — the active
+work moves on to Phase 14 (Hazards), which is otherwise already 5/10 done:
 
-- **Done**: lives/respawn foundation (`130`), the real shared patrol-turn state machine (`131`,
-  unblocked `134`/`136`), the widened shared enemy kill-list covering 8 types (`132`/`133`/`137`
-  contact-death), the wasp's balloon status + hazard-pop interaction (`135`), blupih/blupit's
-  projectile attacks (`134`), the large creature's turn-dwell-gated grab (`136`, just finished —
-  see §3's most recent entry), and all 5 real terrain hazards (lava/spikes/blitz/saw+switches/
-  crusher, `140`-`144`). Also done outside Phase 13/14: the real mobile-eggbert-faithful `GEHud`,
-  sound, mouse-look + F11 fullscreen, the `CubeMesh` winding root-cause fix, and the sample
-  world's tile+object exhibition areas.
-- **Next up (picked from `plan.md` as the natural continuation of Phase 13, not yet started)**:
-  **`E3D-MIG-137`'s remaining half, follower (`ObjectType96`/`97`) homing** — contact-kill/pop
-  already works (folded into `132`'s widened shared kill list), but the real dormant-until-a-
-  padded-wake-box (±100px on all sides, `Decor.cpp:9658-9671`) then 1px/tick homing-toward-Blupi
-  movement (`Decor.cpp:8029-8044`, self-destructs into an `ObjectType9` explosion if its next step
-  is blocked, `8049-8064`) is a genuinely separate feature — followers are currently just static/
-  patrol `MobileObjSpec`s like any other placed object. This is the last open item in Phase 13;
-  after it, Phase 13 (Enemy AI) is complete. See `mobile-eggbert-reference/04-enemy-behavior.md`'s
-  "The follower pattern" section (already researched, re-verified 2026-07-05/2026-07-11) for the
-  full spec.
-- **Also open in Phase 14**: spring (`145`), the vanishing/temp tile (`146`), teleporters (`147`),
-  the water breath gauge (`148`), and fans (`149`) — none has a code prerequisite blocking it.
+- **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
+  state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
+  types (`132`/`133`/`137` contact-death), the wasp's balloon status + hazard-pop interaction
+  (`135`), blupih/blupit's projectile attacks (`134`), the large creature's turn-dwell-gated grab
+  (`136`), and follower wake+homing (`137`, just finished — see §3's most recent entry). Also done
+  outside Phase 13/14: the real mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11
+  fullscreen, the `CubeMesh` winding root-cause fix, and the sample world's tile+object exhibition
+  areas.
+- **Done (Phase 14, partial)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
+  crusher, `140`-`144`).
+- **Next up (picked from `plan.md` as the natural continuation now that Phase 13 is closed, not
+  yet started)**: **Phase 14's remaining hazards** — spring (`145`), the vanishing/temp tile
+  (`146`), teleporters (`147`), the water breath gauge (`148`), and fans (`149`). None has a code
+  prerequisite blocking it; pick whichever has the clearest spec in
+  `mobile-eggbert-reference/12-hazards-and-interactables.md` as the natural next pick (spring is a
+  reasonable default — a single-purpose, self-contained bounce mechanic, similar in shape to the
+  hazards already done).
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 
