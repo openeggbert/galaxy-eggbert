@@ -231,11 +231,31 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 - [~] `067` Death/respawn: **fall-off-world case done** (2026-07-11, real Clear2 case — no
       per-tile-type work needed, checked before hazard tiles per the real source too) —
       `GalaxyEggbertCnaGame::Update()` triggers `LoseLife()` + channel 8 sound + fixed-point
-      respawn when Y drops below a threshold. Still missing: the full hazard→action table
-      (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/Clear2 coinflip, Trap/Drip→Glu, each
-      depends on its own hazard from Phase 14), fixed per-action animation durations, the real
-      10-slot "safe position" FIFO respawn (oldest entry used, ~0.5s buffer — currently a single
-      fixed spawn point), fall->1000px = instant fatal bypassing lives.
+      respawn when Y drops below a threshold. **Real bug found and fixed (2026-07-11, user-
+      reported via live playtest, same feedback batch as the teleporter fix)**: this check was
+      unreachable via normal walking. Root cause: `GEBlupiController::GroundHeightAt()`'s "no
+      solid block anywhere in this column" fallback returned `0`, silently treated as solid
+      ground at Y=0 by both its callers (the main landing check and `TryMoveAxis`'s step-up
+      gate) — confirmed live (temporary debug instrumentation, reverted before committing):
+      dropped from Y=20 over a genuinely floorless column, Blupi fell to exactly Y=0.000 and
+      stopped (`onGround=true`) instead of continuing to fall. Fixed by introducing an explicit
+      `kNoGround` sentinel (-1, unambiguously distinct from every real returned height, which is
+      always >= 1) that the landing check now explicitly excludes from the clamp condition —
+      `TryMoveAxis`'s step-up gate needed no change, since `-1 <= m_y + kStepLimit` and
+      `-1 > m_y` already evaluate correctly as "allow the move, don't snap up" without special-
+      casing. Re-verified live after the fix: Blupi now falls straight through (Y went negative,
+      observed down to -8 during a 3s drop) and the existing fall-death channel 8/respawn fires
+      correctly once he crosses the threshold. `tools/VerifyBlupiMovement.cpp`'s own "faller"
+      test (added for `E3D-MIG-060`) had been drop-testing over a location with NO real floor the
+      whole time, meaning it was unknowingly asserting on the buggy fallback behavior — moved to
+      a location with a real floor to test genuine gravity/landing, and added a new, separate
+      test (2 new assertions) that drops over a genuinely floorless column and asserts Blupi
+      never lands and his Y goes negative — a direct regression test for this exact bug. Still
+      missing: the full hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/
+      Clear2 coinflip, Trap/Drip→Glu, each depends on its own hazard from Phase 14), fixed
+      per-action animation durations, the real 10-slot "safe position" FIFO respawn (oldest entry
+      used, ~0.5s buffer — currently a single fixed spawn point, next user-reported task), fall
+      ->1000px = instant fatal bypassing lives.
 - [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
       small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
 - [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful

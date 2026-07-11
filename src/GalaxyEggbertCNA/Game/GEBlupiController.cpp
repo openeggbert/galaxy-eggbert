@@ -95,7 +95,10 @@ namespace GalaxyEggbert::CNA
                 return y + 1;
             }
         }
-        return 0;
+        // No solid block anywhere in this column -- see kNoGround's own
+        // comment for why this must not be treated as solid ground at
+        // Y=0.
+        return kNoGround;
     }
 
     bool GEBlupiController::TriggerCrush() noexcept
@@ -305,7 +308,12 @@ namespace GalaxyEggbert::CNA
         const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
         const int groundY = GroundHeightAt(world, gx, gz, tempPassable);
 
-        if (newY <= static_cast<float>(groundY))
+        // kNoGround (no solid block anywhere in this column) must never
+        // clamp Blupi to a fake floor -- he keeps falling under gravity
+        // indefinitely, same as walking off any other ledge with a real
+        // drop, letting GalaxyEggbertCnaGame::Update()'s kFallDeathY check
+        // eventually catch it (plan.md E3D-MIG-067).
+        if (groundY != kNoGround && newY <= static_cast<float>(groundY))
         {
             newY = static_cast<float>(groundY);
             m_velocityY = 0.0f;

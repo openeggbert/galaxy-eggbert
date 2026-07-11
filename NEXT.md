@@ -260,6 +260,37 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed fall-off-world death, unreachable via normal walking until now (2026-07-11, plan.md
+  `E3D-MIG-067`, user-reported in the same live-playtest feedback batch as the teleporter bug).**
+  - **Root cause**: `GEBlupiController::GroundHeightAt()`'s fallback for "no solid block anywhere
+    in this column" returned `0`, which both its callers (the main vertical landing check in
+    `Step()`, and `TryMoveAxis`'s horizontal step-up gate) silently treated as solid ground AT
+    Y=0 rather than "there is no floor, keep falling." Confirmed live with temporary debug
+    instrumentation (a spawn override placing Blupi over a genuinely floorless column, plus a
+    periodic stdout position log — both reverted before committing): dropped from Y=20, Blupi
+    fell smoothly down to exactly Y=0.000 and then stopped dead (`onGround=true`) instead of
+    continuing to fall — meaning the already-implemented `kFallDeathY=-5.0f` check
+    (`GalaxyEggbertCnaGame::Update()`) was never actually reachable through ordinary play.
+  - **Fix**: a new `kNoGround` sentinel (`-1`, unambiguously distinct from every real returned
+    height, which is always `>= 1`) that `GroundHeightAt()` now returns instead of `0`, with the
+    main landing check explicitly excluding it from the clamp condition. `TryMoveAxis`'s own
+    step-up gate needed no change at all — `-1 <= m_y + kStepLimit` and `-1 > m_y` already
+    evaluate correctly as "allow walking into the column, don't snap up onto a fake floor"
+    without any special-casing, a pleasant surprise that kept the fix small.
+  - **Re-verified live after the fix**: the same drop now shows Blupi's Y genuinely going
+    negative (observed down to -8 over a 3-second fall) and the existing fall-death sound/respawn
+    firing correctly once he crosses the threshold.
+  - **A real, second-order bug found in the process**: `tools/VerifyBlupiMovement.cpp`'s own
+    "faller" test (from `E3D-MIG-060`, one of the very first collision tests written for this
+    engine) had been dropping Blupi over a location with NO real floor the entire time — meaning
+    it was unknowingly asserting on the OLD BUGGY fallback behavior all along, and would have
+    started failing the moment the real fix landed. Moved it to a location with a genuine floor
+    (to keep testing real gravity/landing physics), and added a new, separate test asserting the
+    opposite property at the original location: Blupi now correctly never lands there and his Y
+    goes negative — a direct regression test for this exact bug.
+  - Full suite (63/63 unit tests, all 4 verify tools) and live headless runs on both EasyGL and
+    Vulkan backends all clean.
+
 - **Fixed the teleporter for real (2026-07-11), redesigning it the same day it shipped, after a
   live-playtest user bug report.** The user tested `E3D-MIG-147` (below) and reported it freezes
   Blupi permanently and never transports him. Re-verified directly against `Decor.cpp:7378-7394`/
@@ -2364,18 +2395,18 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (teleporter fix, 2026-07-11, see §3's newest entry), all
-63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
+backends as of the most recent work (fall-off-world death fix, 2026-07-11, see §3's newest entry),
+all 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
-work remains outstanding. **The teleporter's real, user-reported bug (found 2026-07-11 during live
-playtest — froze Blupi permanently, never transported him) is now fixed** (see §3's newest entry;
-§8's P1 items still list it as the top of a batch of user-reported feedback for record-keeping,
-now marked done) — **4 more user-reported items remain**: fall-off-world death (also suspected
-broken, not yet confirmed/fixed), last-safe-position respawn, teleporter render geometry, and
-animation-indicator richness. These take priority over continuing Phase 14's remaining water-
-gauge/fans tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/10 done:
+work remains outstanding. **Both P1 items from the 2026-07-11 live-playtest user feedback batch
+are now fixed**: the teleporter (froze Blupi permanently) and fall-off-world death (was silently
+unreachable — see §3's two newest entries). **3 more user-reported items remain, in priority
+order**: last-safe-position respawn (P2), then teleporter render geometry and animation-indicator
+richness (both P3) — see §8. These still take priority over continuing Phase 14's remaining
+water-gauge/fans tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is
+8/10 done:
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2663,15 +2694,11 @@ polish):**
   confirmed the exact 6.4s transit timing, correct destination coordinates, and no re-trigger
   loop), not just via unit tests, since the unit tests for the FIRST (broken) design all passed
   despite the real bug. See `plan.md`'s `E3D-MIG-147` entry for full detail.
-- **P1 — Fix fall-off-world death (currently likely unreachable via normal walking).** Suspected
-  root cause: `GEBlupiController::GroundHeightAt()`'s "no solid block anywhere in this column"
-  fallback returns `0` (treated as solid ground at Y=0), not "keep falling indefinitely" — meaning
-  Blupi's Y can probably never actually drop below 0 through normal gravity/landing resolution,
-  making the existing `kFallDeathY=-5.0f` check (`GalaxyEggbertCnaGame::Update()`, `E3D-MIG-067`)
-  unreachable in practice. Confirm with a live test (walk off the authored terrain into open
-  space) before fixing — re-verify the real mobile-eggbert fall-death mechanic against
-  `Decor.cpp`/the reference doc rather than assuming. Any fix to `GroundHeightAt`'s fallback
-  affects every column in the whole 100×100×100 grid, so re-run the full suite carefully.
+- **P1 — DONE (2026-07-11): fall-off-world death fixed.** Was confirmed unreachable via normal
+  walking (`GEBlupiController::GroundHeightAt()`'s "no solid block in this column" fallback
+  silently acted as solid ground at Y=0) — fixed via a new `kNoGround` sentinel, verified live
+  (Blupi now genuinely falls, goes Y-negative, and the existing `kFallDeathY=-5.0f` death/respawn
+  fires correctly). See §3's newest entry for full detail.
 - **P2 — Implement the real last-safe-position respawn** (replace the fixed spawn-point respawn
   used by every death cause today). Already a documented known simplification
   (`E3D-MIG-067`'s open "real 10-slot last-safe-position FIFO (`m_blupiValidPos`)" item) — re-verify

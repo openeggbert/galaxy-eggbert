@@ -63,10 +63,18 @@ int main(int argc, char** argv)
     std::cout << "After walking into wall: x=" << blupi.GetX() << std::endl;
     check(blupi.GetX() > -45.0f, "wall blocks horizontal movement (did not clip through x=-45 wall)");
 
-    // 4. Drop from height over an empty column (world x=40 -- outside any
-    // placed structure) and confirm gravity + landing works.
+    // 4. Drop from height over the tested corridor's real floor (world
+    // (10,*,0), raw grid (60,*,50) -- inside fill(20,75,0,0,48,52,RockPile))
+    // and confirm gravity + landing works. NOT world (40,*,40) (outside any
+    // placed structure) as this test originally used -- plan.md
+    // E3D-MIG-067's fall-off-world fix (2026-07-11) means a genuinely
+    // floorless column now correctly free-falls forever rather than
+    // "landing" at a fake Y=0 floor, so this test needs a location with a
+    // REAL floor to verify actual gravity/landing physics; the empty-
+    // column case is covered separately below (GroundHeightAt() returning
+    // kNoGround).
     GEBlupiController faller;
-    faller.SetPosition(40.0f, 20.0f, 40.0f);
+    faller.SetPosition(10.0f, 20.0f, 0.0f);
     for (int i = 0; i < 200 && !faller.IsOnGround(); ++i)
     {
         faller.Step(world, 0.0f, 0.0f, false, false, false, dt);
@@ -74,6 +82,30 @@ int main(int argc, char** argv)
     std::cout << "Faller landed at y=" << faller.GetY() << std::endl;
     check(faller.IsOnGround(), "falls under gravity and lands");
     check(faller.GetY() < 5.0f, "lands far below the y=20 drop height (real gravity, not a snap)");
+    check(faller.GetY() >= 0.0f, "lands on the real corridor floor, not the removed fake Y=0 fallback");
+
+    // 4b. Fall-off-world (plan.md E3D-MIG-067, fixed 2026-07-11): drop over
+    // a genuinely floorless column (world (40,*,40), raw grid (90,*,90) --
+    // outside any placed structure in this world) and confirm Blupi falls
+    // straight through, well past the old buggy Y=0 "floor", rather than
+    // stopping there. This is a direct regression test for a real bug
+    // found via live playtest: GroundHeightAt()'s old `return 0` fallback
+    // for "no solid block in this column" was silently treated as solid
+    // ground, making Blupi stop dead at Y=0.000 in open space with
+    // nothing beneath him -- confirmed live before this fix (onGround
+    // became true at exactly Y=0), and unreachable via any existing test
+    // before this one, since every other drop test in this file lands on
+    // a real floor.
+    GEBlupiController fallsForever;
+    fallsForever.SetPosition(40.0f, 20.0f, 40.0f);
+    for (int i = 0; i < 180; ++i) // 3s -- comfortably past the y=20->y<0 fall time seen live (~2.25s)
+    {
+        fallsForever.Step(world, 0.0f, 0.0f, false, false, false, dt);
+    }
+    std::cout << "Fell-forever Y after 3s over an empty column: " << fallsForever.GetY() << std::endl;
+    check(!fallsForever.IsOnGround(), "Blupi never lands over a genuinely floorless column (no fake Y=0 floor)");
+    check(fallsForever.GetY() < 0.0f,
+          "Blupi's Y drops below 0 over a floorless column, proving he's NOT clamped to a fake floor there");
 
     // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --
     // a small synthetic world (not worlds3d/world001.vwr, which has no lava

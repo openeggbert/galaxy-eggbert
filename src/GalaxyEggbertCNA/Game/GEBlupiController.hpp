@@ -230,6 +230,15 @@ namespace GalaxyEggbert::CNA
                   bool tempPassable = false);
 
     private:
+        // Sentinel GroundHeightAt() returns when a column has no solid
+        // block anywhere (plan.md E3D-MIG-067) -- distinct from every real
+        // returned height (always >= 1, since it's y+1 for a solid block
+        // at y>=0). Callers must treat this as "keep falling", not as
+        // solid ground at Y=0 (a real bug found and fixed 2026-07-11: the
+        // old `return 0` fallback silently acted as a floor, making
+        // Blupi's fall-off-world death unreachable via normal walking).
+        static constexpr int kNoGround = -1;
+
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
         [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable);
         void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
