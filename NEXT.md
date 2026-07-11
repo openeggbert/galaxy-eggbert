@@ -2607,8 +2607,9 @@ fully-transparent seam pixels) are all complete.
   6 previously-open `DirectionalCube` icons (15-18, 108-109, backfilled with a default 2026-07-09,
   §3). Water's render mode is decided and implemented (2026-07-08, §3) — not open anymore.
 - Commit after each finished task (standing instruction) — one commit per task, not batched.
-  **Pushing** to `origin/develop` is still NOT standing authorization — only push on explicit
-  request each time.
+  **Pushing** to `origin/develop` is now standing authorization too (updated 2026-07-11, per
+  user: "pushni (vzdy automaticky)") — push to `origin/develop` automatically right after each
+  commit, no need to ask each time.
 
 ## 10. Resume prompt
 
