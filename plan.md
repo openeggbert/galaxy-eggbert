@@ -601,16 +601,37 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       through the block's middle, outer 6 faces never drawn), superseding an earlier
       questionnaire pass' undecided "ThinMechanical" placeholder categorization —
       `mobile-eggbert-reference/02-tiles.md`/`questionnaire-all-remaining-tiles.md` both updated.
-      `GetInnerFlatPlateAxis()` special-cases Saw/SawStopped to `PlateAxis::X` (not the usual Z
-      default) since the one real placement (this switch+saw pair) sits in a corridor Blupi
-      walks along X — a Z-axis plate is invisible edge-on from that approach (confirmed live).
-      Verified live via a headless EasyGL screenshot at the real placement (temporary camera-pose
-      debug override, reverted before committing, needed because this exact spot also triggers
-      the tunnel-ceiling `GroundHeightAt()` limitation tracked in `NEXT.md` §5 — Blupi's own Y
-      resolves onto the roof there, so the debug camera had to be positioned independently of
-      `blupi_`'s corrupted Y for this one screenshot) — confirms a genuine thin plate showing the
-      real jagged circular-blade texture, with the tunnel's red wall visible around/through it
+      `GetInnerFlatPlateAxis()` initially special-cased Saw/SawStopped to `PlateAxis::X` (not the
+      usual Z default) since the one real placement (this switch+saw pair) sits in a corridor
+      Blupi walks along X — a Z-axis plate is invisible edge-on from that approach (confirmed
+      live). Verified live via a headless EasyGL screenshot at the real placement (temporary
+      camera-pose debug override, reverted before committing, needed because this exact spot also
+      triggers the tunnel-ceiling `GroundHeightAt()` limitation tracked in `NEXT.md` §5 — Blupi's
+      own Y resolves onto the roof there, so the debug camera had to be positioned independently
+      of `blupi_`'s corrupted Y for this one screenshot) — confirms a genuine thin plate showing
+      the real jagged circular-blade texture, with the tunnel's red wall visible around/through it
       (proving the cube's outer faces are truly not drawn).
+      **Positioning + rotation revised again same day (second live user feedback round)**: the
+      plate was centered mid-block, reading as "floating" rather than a floor-mounted blade —
+      fixed with a Saw-specific `kSawPlateHeight=0.5` (shorter than the shared
+      `kInnerFlatPlateHeight=0.9`) bottom-anchored at the block's own bottom face
+      (`IsGroundAnchoredPlateIcon()`), leaving every other confirmed `InnerFlatPlate` icon
+      unaffected. The hardcoded `PlateAxis::X` icon default was ALSO wrong in principle (correct
+      only for this one placement's corridor direction, not for a future Saw in a Z-running
+      corridor) — replaced with new `GEPlateRotationMetadata.hpp/.cpp`
+      (`src/GalaxyEggbertCNA/Game/`, deliberately Easy3D/CNA-independent so world-authoring tools
+      can set it without linking Easy3D, matching `GEBlupiController`/`GEWorldRuntime`'s own
+      precedent), a 1-byte per-PLACEMENT "rotated 90°" flag stored via `Worlds::World`'s existing
+      sparse block extra-metadata mechanism (`kPlateRotationMetadataType=2`, next after
+      `MoveObjectRecord`'s own `kMoveObjectMetadataType=1`). Saw's own icon default reverted to
+      the shared `Z` axis; `GetInnerFlatPlateAxis()` now takes a `rotated` bool and swaps X<->Z.
+      `GETerrainRenderer` collects all rotated positions once per (re)build into a packed-key hash
+      set for O(1) lookup across its 3 `AppendSpecialGeometry()` call sites.
+      `tools/GenerateSampleWorld3D.cpp` now calls `SetPlateRotated(world, 70, 0, 67, true)`
+      explicitly for the real switch+saw pair. Verified: metadata round-trips through `.vwr`
+      save/load (standalone check), full 5-tool suite + both backends re-verified, and live via
+      headless EasyGL screenshots at multiple distances — the blade now sits low near the floor
+      with visible wall space above it, clearly different from the earlier centered look.
 - [x] `143` **Crusher (317) done 2026-07-11** — verified directly against `Decor.cpp:5549-5597`/
       `5180-5197`/`7277-7288` (not just the reference doc). New `GEBlupiController::TriggerCrush()`/
       `IsEcrased()`: real `!m_blupiEcrase` re-trigger guard (idempotent, returns false if already

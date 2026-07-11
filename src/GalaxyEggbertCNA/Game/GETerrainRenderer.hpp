@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 namespace GalaxyEggbert::CNA
@@ -90,6 +91,13 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::CubeMeshRenderer> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;
         std::vector<AnimBlock> m_waterBlocks;
+        // Positions with InnerFlatPlate rotation metadata set (plan.md
+        // E3D-MIG-149, 2026-07-11 -- see GEInnerFlatPlateTiles.hpp's
+        // kPlateRotationMetadataType comment), collected once here so
+        // per-block lookups during (re)builds are O(1) instead of an
+        // extra world query per block. Packed key: (x<<20)|(y<<10)|z,
+        // matching PackPlatePositionKey() in the .cpp.
+        std::unordered_set<std::uint32_t> m_rotatedPlatePositions;
         const GETileAtlas* m_tileAtlas = nullptr;
         int m_blockCount = 0;
         float m_centroidX = 0.0f;

@@ -1,4 +1,5 @@
 #include "Game/GEObjectIcons.hpp"
+#include "Game/GEPlateRotationMetadata.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -180,6 +181,12 @@ int main(int argc, char** argv)
     // interactive element instead of a passive specimen.
     world.setBlock(65, 0, 67, Block::make(BlockTypes::SwitchOff));
     world.setBlock(70, 0, 67, Block::make(BlockTypes::SawStopped));
+    // Saw's default InnerFlatPlate axis is Z (same as every other confirmed
+    // icon) -- this placement's own corridor runs along X, so it needs the
+    // per-instance 90-degree rotation metadata (plan.md E3D-MIG-149,
+    // 2026-07-11, GEInnerFlatPlateTiles.hpp's kPlateRotationMetadataType),
+    // not a hardcoded per-icon override.
+    GalaxyEggbert::CNA::SetPlateRotated(world, 70, 0, 67, true);
 
     // ------------------------------------------------------------------
     // Real MoveObject population -- ObjectTypes and rough density chosen to

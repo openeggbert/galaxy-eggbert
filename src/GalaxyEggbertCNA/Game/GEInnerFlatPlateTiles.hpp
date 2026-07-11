@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GEPlateRotationMetadata.hpp"
+
 #include <Easy3D/CubeMesh.hpp>
 
 namespace GalaxyEggbert::CNA
@@ -28,8 +30,11 @@ namespace GalaxyEggbert::CNA
     // for those 5 only.
     bool IsInnerFlatPlateIcon(int icon);
 
-    // PlateAxis::Z for every confirmed icon except 368-372 (PlateAxis::Y --
-    // see the reasoning above). Only meaningful when IsInnerFlatPlateIcon()
-    // is true.
-    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon);
+    // The icon's own default axis (PlateAxis::Z for every confirmed icon
+    // except 368-372's PlateAxis::Y -- see the reasoning above), with an
+    // X<->Z swap applied when @p rotated is true (see
+    // GEPlateRotationMetadata.hpp's kPlateRotationMetadataType comment, the
+    // mechanism a caller uses to look up @p rotated for a given block).
+    // Only meaningful when IsInnerFlatPlateIcon() is true.
+    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated);
 }

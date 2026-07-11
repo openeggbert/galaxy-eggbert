@@ -282,6 +282,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GESwatchUv.cpp
         src/GalaxyEggbertCNA/Game/GEInnerPillarBoxTiles.cpp
         src/GalaxyEggbertCNA/Game/GEInnerFlatPlateTiles.cpp
+        src/GalaxyEggbertCNA/Game/GEPlateRotationMetadata.cpp
         src/GalaxyEggbertCNA/Game/GETripleCrossBillboardTiles.cpp
         src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
@@ -470,6 +471,7 @@ endif() # GALAXY_EGGBERT_BUILD_CNA
 add_executable(GenerateSampleWorld3D
         tools/GenerateSampleWorld3D.cpp
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+        src/GalaxyEggbertCNA/Game/GEPlateRotationMetadata.cpp
         ${GE_SHARED_SOURCES}
 )
 

@@ -43,8 +43,9 @@ namespace GalaxyEggbert::CNA
                std::end(kInnerFlatPlateIcons);
     }
 
-    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon)
+    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated)
     {
+        Easy3D::PlateAxis axis;
         switch (icon)
         {
             case 368:
@@ -52,24 +53,27 @@ namespace GalaxyEggbert::CNA
             case 370:
             case 371:
             case 372:
-                return Easy3D::PlateAxis::Y;
-            // Saw/SawStopped (378/379): unlike the other confirmed
-            // InnerFlatPlate icons (small decorations with no reliable
-            // orientation cue, hence the harmless Z-axis tie-break below),
-            // Saw's one real gameplay placement (plan.md E3D-MIG-142's
-            // switch+saw pair, worlds3d/world001.vwr) sits in a corridor
-            // Blupi walks along X, not Z -- a Z-axis plate is invisible
-            // edge-on from that approach (confirmed live, 2026-07-11).
-            // Real mobile-eggbert's own 2D sprite has no axis concept at
-            // all (always face-on to the player), so this is a genuine 3D
-            // placement adaptation, not a faithfulness question -- X is
-            // chosen because it's the one axis that's actually correct for
-            // the one real placement that exists today.
-            case GalaxyEggbert::BlockTypes::Saw:
-            case GalaxyEggbert::BlockTypes::SawStopped:
-                return Easy3D::PlateAxis::X;
+                axis = Easy3D::PlateAxis::Y;
+                break;
             default:
-                return Easy3D::PlateAxis::Z;
+                axis = Easy3D::PlateAxis::Z;
+                break;
         }
+        // 90-degree rotation (2026-07-11, user feedback) -- e.g. Saw needs
+        // to face whichever way its OWN corridor runs, which varies per
+        // placement, not per icon (real mobile-eggbert's 2D sprite has no
+        // axis concept at all). PlateAxis::Y is left unchanged -- no
+        // rotation-eligible horizontal-plate icon exists yet, and rotating
+        // one 90 degrees around its own vertical normal isn't a simple
+        // axis-enum swap the way X<->Z is.
+        if (rotated && axis == Easy3D::PlateAxis::X)
+        {
+            axis = Easy3D::PlateAxis::Z;
+        }
+        else if (rotated && axis == Easy3D::PlateAxis::Z)
+        {
+            axis = Easy3D::PlateAxis::X;
+        }
+        return axis;
     }
 }

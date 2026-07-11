@@ -14,6 +14,8 @@
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 
+#include <cmath>
+
 namespace GalaxyEggbert::CNA
 {
     namespace
@@ -24,6 +26,16 @@ namespace GalaxyEggbert::CNA
         constexpr int kWorldCenterX = GEWorldRuntime::kWorldCenterX;
         constexpr int kWorldCenterZ = GEWorldRuntime::kWorldCenterZ;
 
+        // Packs raw grid coordinates (0..blocksPerAxis-1, comfortably under
+        // 1024 each) into one key for m_rotatedPlatePositions' hash set --
+        // see GETerrainRenderer.hpp's own comment.
+        std::uint32_t PackPlatePositionKey(int x, int y, int z)
+        {
+            return (static_cast<std::uint32_t>(x) << 20) |
+                   (static_cast<std::uint32_t>(y) << 10) |
+                   static_cast<std::uint32_t>(z);
+        }
+
         // InnerFlatPlate/TripleCrossBillboard geometry sizing — "spans most
         // of the block" per the questionnaire wording, leaving a visible
         // margin so the plate/cross doesn't clip through neighboring blocks'
@@ -32,6 +44,28 @@ namespace GalaxyEggbert::CNA
         constexpr float kInnerFlatPlateHeight = 0.9f;
         constexpr float kTripleCrossWidth = 0.8f;
         constexpr float kTripleCrossHeight = 1.0f;
+
+        // Saw/SawStopped (2026-07-11, user feedback: "pila ma byt obracene
+        // u zeme a ne ve vzduchu, nyni je to nesmysl" -- the saw should sit
+        // AT ground level, not floating mid-block like every other
+        // confirmed InnerFlatPlate icon, which are small centered props
+        // (signposts/screens) where filling most of the block height AND
+        // centering both make sense). A short (not the shared 0.9 height --
+        // a full-height panel still reads as "floating" even bottom-
+        // anchored, since its top would sit almost as high as a
+        // neighboring floor tile's own top), ground-anchored blade instead:
+        // bottom flush with the block's own bottom face, so it reads as a
+        // blade emerging from a floor-level slot, matching a real circular
+        // saw hazard rather than a wall-height panel. A Saw-specific
+        // positioning override, not a change to the shared InnerFlatPlate
+        // default (every other confirmed icon keeps the original
+        // full-height centered look).
+        constexpr float kSawPlateHeight = 0.5f;
+
+        bool IsGroundAnchoredPlateIcon(int icon)
+        {
+            return icon == GalaxyEggbert::BlockTypes::Saw || icon == GalaxyEggbert::BlockTypes::SawStopped;
+        }
 
         // Teleporter pillars (330-333, plan.md E3D-MIG-147): the "hrot"
         // (spike/tip) hanging below the block, per direct user Q&A live in
@@ -86,9 +120,14 @@ namespace GalaxyEggbert::CNA
         // the render-mode/face-pattern lookup doesn't change frame to
         // frame), while @p tileUv is always the currently-sampled frame's
         // actual texture (see GETerrainRenderer::Update's fan-tile comment).
+        // @p plateRotated is only consulted for the InnerFlatPlate branch
+        // (see GEInnerFlatPlateTiles.hpp's kPlateRotationMetadataType) --
+        // callers pass whether THIS block's own position has rotation
+        // metadata set, false for anything not even a candidate.
         bool AppendSpecialGeometry(int lookupIcon, const Easy3D::UvRect& tileUv,
                                    const Easy3D::UvRect& icon107Uv,
                                    const Easy3D::CubeBatch::Vector3& center,
+                                   bool plateRotated,
                                    std::vector<Easy3D::CubeVertex>& vertices,
                                    std::vector<std::uint32_t>& indices)
         {
@@ -145,11 +184,28 @@ namespace GalaxyEggbert::CNA
             if (IsInnerFlatPlateIcon(lookupIcon))
             {
                 Easy3D::PlateItem item;
-                item.Center = center;
                 item.Width = kInnerFlatPlateWidth;
-                item.Height = kInnerFlatPlateHeight;
                 item.Uv = tileUv;
-                item.Axis = GetInnerFlatPlateAxis(lookupIcon);
+                item.Axis = GetInnerFlatPlateAxis(lookupIcon, plateRotated);
+                if (IsGroundAnchoredPlateIcon(lookupIcon))
+                {
+                    // Saw specifically (2026-07-11, user feedback: "pila ma
+                    // byt obracene u zeme a ne ve vzduchu" -- a short,
+                    // floor-mounted blade, not the shared full-height
+                    // centered look every other InnerFlatPlate icon uses):
+                    // shorter than the shared kInnerFlatPlateHeight, bottom
+                    // edge flush with the block's own bottom face, so it
+                    // reads as emerging from a floor-level slot rather than
+                    // a wall-height panel floating mid-block.
+                    item.Height = kSawPlateHeight;
+                    item.Center = Easy3D::CubeBatch::Vector3(
+                        center.X, center.Y - 0.5f + kSawPlateHeight * 0.5f, center.Z);
+                }
+                else
+                {
+                    item.Height = kInnerFlatPlateHeight;
+                    item.Center = center;
+                }
                 Easy3D::AppendPlateMesh(item, vertices, indices);
                 return true;
             }
@@ -367,6 +423,10 @@ namespace GalaxyEggbert::CNA
         // texture (GEDirectionalCubeTiles.cpp) -- computed once here since
         // it never changes, threaded through AppendSpecialGeometry.
         const auto icon107Uv = tileAtlas.GetTileUv(107);
+        for (const auto& pos : CollectRotatedPlatePositions(world))
+        {
+            m_rotatedPlatePositions.insert(PackPlatePositionKey(pos[0], pos[1], pos[2]));
+        }
         std::vector<Easy3D::CubeVertex> staticVertices;
         std::vector<std::uint32_t> staticIndices;
         std::vector<Easy3D::CubeVertex> transparentStaticVertices;
@@ -414,6 +474,7 @@ namespace GalaxyEggbert::CNA
                     const Easy3D::CubeBatch::Vector3 center(worldX, worldY, worldZ);
                     const int icon = static_cast<int>(block.type());
                     const auto tileUv = tileAtlas.GetTileUv(icon);
+                    const bool plateRotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
 
                     if (NeedsAlphaBlend(icon))
                     {
@@ -421,7 +482,7 @@ namespace GalaxyEggbert::CNA
                         // goes straight into its own static-but-transparent
                         // buffer, built once here and never rebuilt by
                         // Update() (same lifecycle as m_staticRenderer).
-                        AppendSpecialGeometry(icon, tileUv, icon107Uv, center, transparentStaticVertices, transparentStaticIndices);
+                        AppendSpecialGeometry(icon, tileUv, icon107Uv, center, plateRotated, transparentStaticVertices, transparentStaticIndices);
                         continue;
                     }
 
@@ -442,7 +503,7 @@ namespace GalaxyEggbert::CNA
                         Easy3D::AppendPlateMesh(grassItem, grassVertices, grassIndices);
                     }
 
-                    if (AppendSpecialGeometry(icon, tileUv, icon107Uv, center, staticVertices, staticIndices))
+                    if (AppendSpecialGeometry(icon, tileUv, icon107Uv, center, plateRotated, staticVertices, staticIndices))
                     {
                         continue;
                     }
@@ -520,6 +581,14 @@ namespace GalaxyEggbert::CNA
             }
             const Easy3D::CubeBatch::Vector3 center(block.x, block.y, block.z);
             const auto tileUv = m_tileAtlas->GetTileUv(icon);
+            // Recover raw grid coordinates (block.x/y/z are already
+            // world-space, offset by -kWorldCenterX/Z) for the rotation
+            // metadata lookup -- same packed key the constructor built
+            // m_rotatedPlatePositions with.
+            const int rawX = std::lround(block.x) + kWorldCenterX;
+            const int rawY = std::lround(block.y);
+            const int rawZ = std::lround(block.z) + kWorldCenterZ;
+            const bool plateRotated = m_rotatedPlatePositions.count(PackPlatePositionKey(rawX, rawY, rawZ)) != 0;
 
             // Looked up by block.base (the animation group's fixed base
             // icon, e.g. FanLeft=126), NOT by icon (the current frame, e.g.
@@ -531,7 +600,7 @@ namespace GalaxyEggbert::CNA
             // demo block: without this, fan blocks always fell through to a
             // plain untextured-on-every-face UniformCube and their
             // GEDirectionalCubeTiles entry was silently dead code.
-            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, icon107Uv, center, vertices, indices))
+            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, icon107Uv, center, plateRotated, vertices, indices))
             {
                 continue;
             }

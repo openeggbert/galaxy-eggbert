@@ -260,6 +260,43 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed the Saw's plate positioning + added per-placement rotation metadata (2026-07-11, plan.md
+  `E3D-MIG-142`/`149`), per a second round of live user feedback on the render-mode fix above.**
+  User (Czech, verbatim): "ta pila ma byt obracene u zeme a ne ve vzduchu nyni je to nesmysl pila
+  bude vzdy u zeme jenom pomoci metadat bude v bloku ulozen smera jeden bit bude stacit tedy zda
+  otocit o 90 stupnu" — two real, separate issues.
+  - **Ground anchoring**: the plate was centered mid-block like every other confirmed
+    `InnerFlatPlate` icon (signposts/screens, where that's correct), reading as "floating" for a
+    blade that should emerge from a floor-level slot. Fixed with a Saw-specific
+    `kSawPlateHeight=0.5` (shorter than the shared `kInnerFlatPlateHeight=0.9` — a full-height
+    panel still reads as floating even bottom-anchored, since its top would sit almost as high as
+    a neighboring floor tile's own top) and bottom-anchored positioning (`IsGroundAnchoredPlateIcon()`
+    in `GETerrainRenderer.cpp`) — flush with the block's own bottom face. Every other confirmed
+    `InnerFlatPlate` icon is unaffected (still full-height and centered).
+  - **Per-placement rotation metadata**: the earlier fix hardcoded Saw's own default axis to `X`
+    (matching this one placement's corridor), but that's wrong for any future Saw placed in a
+    Z-running corridor — real mobile-eggbert's 2D sprite has no axis concept at all to derive a
+    single correct per-icon default from. New `GEPlateRotationMetadata.hpp/.cpp`
+    (`src/GalaxyEggbertCNA/Game/`, deliberately Easy3D/CNA-independent, matching
+    `GEBlupiController`/`GEWorldRuntime`'s own established precedent for this tree) stores a
+    1-byte "rotated 90°" flag as sparse block extra-metadata (reusing `Worlds::World`'s existing
+    `setBlockExtraMetadata`/`collectExtraMetadata` mechanism, already proven by
+    `MoveObjectRecord`'s own use of it — `kPlateRotationMetadataType=2`, next after
+    `kMoveObjectMetadataType=1`). Saw's own default axis reverted to the shared `Z` default;
+    `GetInnerFlatPlateAxis()` now takes a `rotated` bool and swaps X<->Z when true.
+    `GETerrainRenderer` collects every rotated position once per (re)build
+    (`CollectRotatedPlatePositions()`) into a packed-key hash set for O(1) per-block lookup across
+    all 3 `AppendSpecialGeometry()` call sites (static/transparent-static/animated — Saw itself is
+    always animated, so only the 3rd call site actually exercises this for it today).
+    `tools/GenerateSampleWorld3D.cpp`'s real switch+saw pair now calls `SetPlateRotated(world, 70,
+    0, 67, true)` explicitly instead of relying on a hardcoded icon default.
+  - Verified: metadata round-trips through `.vwr` save/load (confirmed via a standalone check —
+    `CollectRotatedPlatePositions()` correctly returns the one rotated position after a fresh
+    `loadFromFile()`), full 5-tool suite + both backends re-verified, and live via headless EasyGL
+    screenshots at multiple distances (temporary camera-pose debug override, reverted before
+    committing) — the blade now sits low near the floor with visible wall space above it, a
+    clearly different and correct silhouette from the earlier "floating full-height panel" state.
+
 - **Fixed the Saw tile's render mode (2026-07-11, plan.md `E3D-MIG-142`/`149`), per live user
   feedback.** User (Czech, verbatim): "ta pila saw se renderuje spatne nema to byt na krychly pila
   bude staticky billboard tedy uprosred daneho bloku se textura nanese na obe strany jakoby
@@ -2646,15 +2683,17 @@ open floor unreachable via normal walking). It bit twice more this session (find
 building the fan hazard, then again while live-verifying the Saw render-mode fix below — same
 south tunnel both times) — worth fixing properly if a THIRD task needs to walk-test something
 inside that tunnel. `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (Saw render-mode fix, 2026-07-11, see §3's newest entry), all
-63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools (`VerifyBlupiMovement`,
-`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`, plus
-`../easy-3d/tests/test_cube_mesh.cpp` built with `-DEASY3D_LINK_CNA=ON`) pass.
+backends as of the most recent work (Saw ground-anchoring + per-placement rotation metadata,
+2026-07-11, see §3's newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify
+tools (`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
+`VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
+`-DEASY3D_LINK_CNA=ON`) pass.
 
 **Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
 teleporter's own extra box-tip attachment geometry (a 5th, narrowly-scoped attachment, not one of
 the 4 confirmed modes — NOT a pyramid, see §3 for the live-feedback corrections) and Saw/SawStopped
-now correctly wired into the `InnerFlatPlate` table (see §3's newest entry) — no render-mechanism
+now correctly wired into the `InnerFlatPlate` table with ground-anchored positioning and
+per-placement rotation metadata (see §3's 2 newest entries) — no render-mechanism
 work remains outstanding on the confirmed-icon front. **All 5 items from the 2026-07-11
 live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10 done** —
 only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage swimming)
@@ -3021,12 +3060,14 @@ polish):**
 
 **2 tasks queued by the user (2026-07-11):**
 
-1. **DONE (2026-07-11): fixed the Saw tile's render mode.** See §3's newest entry and `plan.md`'s
-   `E3D-MIG-142`/`149` entries for full detail — Saw/SawStopped now use `InnerFlatPlate` with a
-   `PlateAxis::X` override, superseding the old undecided "ThinMechanical" categorization. Also
-   surfaced (again) the tracked `GroundHeightAt()` ceiling limitation (§5) while live-verifying —
-   the switch+saw pair sits inside the same roofed tunnel interior the fan hazard task already
-   hit this same limitation in.
+1. **DONE (2026-07-11): fixed the Saw tile's render mode, in 2 rounds of live user feedback.**
+   See §3's 2 newest entries and `plan.md`'s `E3D-MIG-142`/`149` entries for full detail —
+   Saw/SawStopped now use `InnerFlatPlate` with a short, ground-anchored plate (not the shared
+   full-height centered look) and a per-PLACEMENT rotation metadata bit (not a hardcoded per-icon
+   axis), superseding the old undecided "ThinMechanical" categorization. Also surfaced (twice)
+   the tracked `GroundHeightAt()` ceiling limitation (§5) while live-verifying — the switch+saw
+   pair sits inside the same roofed tunnel interior the fan hazard task already hit this same
+   limitation in.
 2. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
    verbatim): "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
    soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu" — the
