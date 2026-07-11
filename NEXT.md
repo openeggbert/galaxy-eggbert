@@ -260,6 +260,39 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented the fan hazard (2026-07-11, plan.md `E3D-MIG-149`), the last of Phase 14's original
+  10 mechanics besides the water breath gauge (`148`).** Verified directly against real
+  `Decor::IsVentillo` source (`Decor.cpp:7667-7752`), which found and corrected a real inaccuracy
+  in `mobile-eggbert-reference/12-hazards-and-interactables.md`'s own prior summary (icons
+  127/128/130/131/133/134/136/137 are the 4 head icons' own idle animation frames, NOT "air-column/
+  trail tiles" as previously documented — the real trail-continuation icons are 110/114/118/122, a
+  wholly separate not-yet-render-decided tile family never placed anywhere yet, so only the
+  head-tile consumption is ported, not the further trail-walk).
+  - New `GEWorldRuntime::TryConsumeFan()`: checked one cell above Blupi (matching
+    `GetBlockTypeAbove()`'s convention), detects a real fan head icon, clears it to `Air`
+    (`ModifDecor(pos,-1)`), and returns the icon so the caller can trigger death (real channel 10).
+    Fan head icons are now always non-solid for collision (`GroundHeightAt`'s own new
+    `BlockTypes::isFan()` skip). Real sub-tile-band gating and focus/shield/hide/SuperBlupi
+    immunity are not modeled — contact anywhere in the cell is unconditionally lethal.
+  - **Found a real, deeper collision-architecture limitation while verifying this live (not fixed,
+    see §5): `GroundHeightAt()` always resolves a column's floor as the single topmost solid block
+    in the WHOLE column**, with no concept of "nearest solid surface at or below Blupi's own
+    height. The sample world's south tunnel has a solid ceiling over its own walkable interior —
+    that interior's real floor is completely unreachable via normal walking as a result (same root
+    cause as the original teleporter bug, this time triggered by a ceiling instead of a pillar).
+    Not caught by any earlier test in this session (including the same tunnel's own already-shipped
+    switch/saw pair) because none of them walk-tested a genuine multi-column path into that
+    specific enclosed interior. Worked around by placing the fan hazard in 2 new open rooms (no
+    walls/ceiling, same pattern as the teleporter rooms) instead of the tunnel's own roofed
+    interior, which keeps its 2 fans as pure visual confirmation only.
+  - New tests in `VerifyBlupiMovement.cpp` (fan non-solid collision) and
+    `VerifyInteractionSystem.cpp` (`TryConsumeFan()` behavior) — both pass, plus the full 5-tool
+    suite and both backends re-verified. Verified live end-to-end via a headless EasyGL run with
+    temporary debug instrumentation (reverted before committing): Blupi genuinely walked into the
+    open fan room at `onGround=true`, the fan triggered at the correct position, lives dropped
+    3→2, the fan tile became `Air`, and the FIFO respawn correctly kicked in afterward. See
+    `plan.md`'s `E3D-MIG-149` entry for full detail.
+
 - **Expanded the bottom-right Blupi animation indicator further with StopEcrase/MarchEcrase/
   Balloon/Teleporting (2026-07-11, plan.md `E3D-MIG-064`), after the user approved transcribing
   their real `table_blupi` icon-frame records.** See §8's newest item and `plan.md`'s `E3D-MIG-064`
@@ -2551,26 +2584,22 @@ Most recent first. Full history: `git log`.
 
 ## 4. Current blocker / main problem
 
-**No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (animation indicator Jump/Air split, 2026-07-11, see §3's
-newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools
-(`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
-`VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
-`-DEASY3D_LINK_CNA=ON`) pass.
+**No code blocker**, but a real, deeper architectural collision limitation was found and tracked,
+not fixed — see §5's newest row (`GroundHeightAt()` treats a column's topmost solid block as the
+floor no matter Blupi's own height, making any roofed/enclosed interior with a ceiling above an
+open floor unreachable via normal walking). `GalaxyEggbertCNA` builds and runs cleanly on both the
+EasyGL and Vulkan backends as of the most recent work (fan hazard, 2026-07-11, see §3's newest
+entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools (`VerifyBlupiMovement`,
+`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`, plus
+`../easy-3d/tests/test_cube_mesh.cpp` built with `-DEASY3D_LINK_CNA=ON`) pass.
 
 **Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
 teleporter's own extra pyramid-tip attachment geometry (a 5th, narrowly-scoped primitive, not one
 of the 4 confirmed modes) — no render-mechanism work remains outstanding. **All 5 items from the
-2026-07-11 live-playtest user feedback batch are now addressed**: the teleporter (froze Blupi
-permanently → walks under a floating pillar and relocates correctly), fall-off-world death (was
-silently unreachable → now fires after a real multi-second fall), last-safe-position respawn (was
-always the fixed spawn point → real 10-slot FIFO), fall-death timing (fired almost instantly →
-now ~6.2s, matching researched real constants), the teleporter's pyramid-tip render geometry
-(cube-only → cube + a genuine hanging 3D spike, texture-cropped to match), and the animation
-indicator (gained a real Jump/Air split, then StopEcrase/MarchEcrase/Balloon/Teleporting once the
-user approved transcribing their `table_blupi` data) — see §3's 7 newest entries. **No open task
-of mine remains from that batch.** Next available work is Phase 14's remaining water-gauge/fans
-tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/10 done:
+2026-07-11 live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10
+done** — only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage
+swimming) rather than a hazard-timer variant like every other Phase 14 item so far, deliberately
+not started yet given that larger scope. Phase 13 (Enemy AI & combat) is fully complete:
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2579,15 +2608,20 @@ tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/1
   (`136`), and follower wake+homing (`137`). Also done outside Phase 13/14: the real
   mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11 fullscreen, the `CubeMesh` winding
   root-cause fix, and the sample world's tile+object exhibition areas.
-- **Done (Phase 14, 8/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
-  crusher, `140`-`144`), the spring/bounce tile (`145`), the Temp/vanishing tile (`146`), and the
-  teleporter (`147`, including its render geometry — see §3's newest entry; the first Phase 14
-  mechanic that needed a genuine 3D-adaptation redesign, since the real "tile above Blupi"
-  detection turned out to require teleporter icons to be non-solid for collision, resolved via
-  `IsTeleporterIcon()`'s exclusion in `GroundHeightAt()` rather than the original solid-pillar/
-  facing-based workaround, which shipped a real live bug before being fixed).
-- **Next up: §8's remaining P3 item (expand the animation indicator)**, then Phase 14's remaining
-  2 mechanics (water breath gauge `148`, fans `149`) — see §8 for detail on each.
+- **Done (Phase 14, 9/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
+  crusher, `140`-`144`), the spring/bounce tile (`145`), the Temp/vanishing tile (`146`), the
+  teleporter (`147`, including its render geometry; the first Phase 14 mechanic that needed a
+  genuine 3D-adaptation redesign, since the real "tile above Blupi" detection turned out to
+  require teleporter icons to be non-solid for collision, resolved via `IsTeleporterIcon()`'s
+  exclusion in `GroundHeightAt()` rather than the original solid-pillar/facing-based workaround,
+  which shipped a real live bug before being fixed), and fans (`149`, see §3's newest entry —
+  found and worked around a related, deeper `GroundHeightAt()` limitation with roofed interiors,
+  tracked in §5, not fixed).
+- **Next up: Phase 14's last remaining mechanic, the water breath gauge (`148`)** — a genuinely new
+  movement mode (Surf/Nage swimming state machine), not a hazard-timer variant like every other
+  Phase 14 item, so likely needs more scoping/design work than this session's other single-task
+  cycles. See `mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Water depth state
+  machine" section for the real behavior spec.
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 
@@ -2619,6 +2653,7 @@ tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/1
 | resolved (2026-07-11) | `GalaxyEggbertCNA`'s animation-state icon (bottom-right corner) disappeared after ~1s of play — depth testing was never disabled before the 2D `SpriteBatch` overlay draws, so the icon's screen-space quad was depth-tested against whatever 3D geometry had already written to that pixel once the camera turned toward nearby terrain/walls. Fixed by disabling depth test before both `SpriteBatch` blocks (§3). |
 | resolved (2026-07-11) | `GalaxyEggbertCNA` crashed after a while of play with an uncaught `System::InvalidOperationException` from `SoundEffectInstance::setIsLoopedProperty` (user-supplied debugger backtrace pinpointed `GESound::PlayStep`/`Play`) — that call is only valid before an instance's first `Play()`, but `GESound::Play()` called it unconditionally even when reusing an already-started instance. Fixed by only calling it once, right after constructing a fresh instance (§3). Verified empirically (3/3 live runs crashed before the fix, 3/3 clean after) rather than via an automated test, since exercising `GESound::LoadContent()` needs a real audio device every other scripted verification tool deliberately avoids. |
 | needs investigation | `GalaxyEggbertCNA` under Vulkan specifically: the end-of-frame diagnostic screenshot (`screenshot_hud.png`) shows a plain blue background with no visible terrain and un-blended white boxes around every billboard, even though the same frame's earlier terrain-visibility pixel-sample check reports 25/25 real terrain color. Found 2026-07-11 while verifying an unrelated fix; not investigated — may be a `GetBackBufferData`/swapchain timing quirk specific to calling it twice in one frame under Vulkan, or something else entirely. EasyGL's equivalent screenshot is unaffected. |
+| **real architectural limitation, found 2026-07-11 while building the fan hazard (plan.md `E3D-MIG-149`), not fixed** | **`GEBlupiController::GroundHeightAt()` always resolves a column's "floor" as the single TOPMOST solid block in that entire column** (scanning from the top of the world downward), with no concept of "the nearest solid surface AT OR BELOW my own current height." A solid ceiling anywhere above an otherwise-open interior (e.g. the south tunnel's own `y=3` `BrickWall` roof over its walkable `y=1` interior) makes that interior's REAL floor completely unreachable via normal walking — `TryMoveAxis`'s target-column check sees the ceiling as the floor (`y=4`, not `y=1`) and blocks the step-up, or a raw `SetPosition()` teleport into the interior resolves `onGround` at the ceiling's height instead of the real floor beneath it. Same root cause as the original (later-fixed) teleporter bug — a floating solid block anywhere above Blupi in a column poisons that whole column's ground-height query — except triggered by a ceiling instead of a pillar, and NOT fixed here (unlike the teleporter/fan icons themselves, which are narrowly excluded from the solid-block scan): a general fix needs the scan to consider Blupi's own current Y, not just "topmost solid in the column," which could subtly affect every other already-shipped hazard/mechanic's collision behavior and wasn't attempted given the scope. Confirmed via a standalone scripted walk test (not just single-position `Step()` calls, which is all every hazard's own existing verification — including the tunnel's own already-shipped switch/saw pair — actually exercises; none of them walk-tested entering that specific enclosed interior either). Worked around for the fan task by placing its 2 reachable hazard instances in open-sky rooms (matching the teleporter's own precedent) instead of the tunnel's roofed interior — see `tools/GenerateSampleWorld3D.cpp`'s fan-alcove comment. **Any future placement of a walk-under/floating hazard inside a roofed/enclosed space should avoid this until fixed.** |
 
 ## 6. Architecture notes
 
@@ -2901,6 +2936,16 @@ polish):**
   `GalaxyEggbertCNA` yet, so their animations are out of scope regardless of data-transcription
   approval; revisit if/when any of those mechanics get implemented. See §3's 2 newest entries and
   `plan.md`'s `E3D-MIG-064` entry for full detail.
+
+**With the whole 2026-07-11 feedback batch above done, resumed Phase 14's own remaining mechanics
+(not part of that batch, picked next per §4):**
+
+- **DONE (2026-07-11): fan hazard (`E3D-MIG-149`).** See §3's newest entry and `plan.md`'s
+  `E3D-MIG-149` entry for full detail — includes a real, deeper `GroundHeightAt()` collision
+  limitation found and tracked (not fixed) in §5, discovered while live-verifying this task.
+- **Remaining: water breath gauge (`E3D-MIG-148`)** — Phase 14's last mechanic, a genuinely new
+  Surf/Nage swimming movement mode rather than a hazard-timer variant, likely needs more scoping
+  than a single-task cycle.
 
 Older, lower-priority polish tasks (unaffected by the above, still valid, just less urgent now):
 

@@ -697,6 +697,24 @@ namespace GalaxyEggbert::CNA
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
             }
 
+            // Fan hazard (plan.md E3D-MIG-149, see GEWorldRuntime::
+            // TryConsumeFan()'s own comment for the real IsVentillo() source
+            // this ports, and for why only the head-tile consumption is
+            // implemented, not the real trail-walk). Real "kills only if
+            // m_blupiFocus && unshielded/unhidden/not-SuperBlupi" is
+            // currently unconditional -- none of those buff/focus concepts
+            // exist in this engine yet, same simplification as every other
+            // hazard's immunity gating this session. Real channel 10 (the
+            // fan's own contact sound, distinct from lava/spike/blitz's
+            // channel 8/51) plays via triggerDeath() itself, same pattern
+            // as every hazard above. Real cosmetic ObjectType11 particle
+            // burst + BigShake screen effect are NOT modeled -- no particle
+            // system exists.
+            if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
+            {
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
+            }
+
             // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
             // see GEBlupiController::UpdateSafePosition()'s own comment) --
             // "safe" here additionally means not standing on any of the 5

@@ -339,6 +339,30 @@ namespace GalaxyEggbert::CNA
         return turningOn;
     }
 
+    std::optional<std::uint16_t> GEWorldRuntime::TryConsumeFan(float blupiX, float blupiY, float blupiZ)
+    {
+        const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
+        const int gx = std::clamp(static_cast<int>(std::lround(blupiX)) + kWorldCenterX, 0, blocksPerAxis - 1);
+        const int gz = std::clamp(static_cast<int>(std::lround(blupiZ)) + kWorldCenterZ, 0, blocksPerAxis - 1);
+        const int gy = static_cast<int>(std::lround(blupiY)) + 1; // one cell above, matching GetBlockTypeAbove()
+        if (gy < 0 || gy >= blocksPerAxis)
+        {
+            return std::nullopt;
+        }
+
+        const auto icon = world_->getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                            static_cast<std::uint16_t>(gz))
+                               .type();
+        if (!GalaxyEggbert::BlockTypes::isFan(icon))
+        {
+            return std::nullopt;
+        }
+
+        world_->setBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                          static_cast<std::uint16_t>(gz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+        return icon;
+    }
+
     bool GEWorldRuntime::FindTeleportDestination(std::uint16_t icon, float blupiX, float blupiY, float blupiZ,
                                                    float& destX, float& destY, float& destZ) const
     {

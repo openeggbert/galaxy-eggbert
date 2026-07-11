@@ -121,6 +121,18 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
+                // Fan head icons (plan.md E3D-MIG-149): ALWAYS non-solid,
+                // same reasoning and same real per-tile-independent-
+                // collision precedent as the teleporter pillar above --
+                // real mobile-eggbert's IsVentillo() check requires Blupi
+                // to actually be AT the fan's own tile, which is
+                // unreachable here unless the fan (and anything else
+                // occupying its column) stops blocking the column's
+                // ground-height resolution.
+                if (GalaxyEggbert::BlockTypes::isFan(blockType))
+                {
+                    continue;
+                }
                 return y + 1;
             }
         }

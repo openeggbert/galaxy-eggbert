@@ -451,6 +451,28 @@ int main(int argc, char** argv)
         check(!crushed2.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while squashed (real !m_blupiEcrase gate)");
 
+        // Fan hazard collision (plan.md E3D-MIG-149) -- same non-solid
+        // architecture as the teleporter above: a real Ground floor (Y=0)
+        // with a FanLeft head FLOATING one cell above Blupi's standing
+        // height (Y=2), matching the real placement convention already
+        // established for the teleporter (GEWorldRuntime::TryConsumeFan()'s
+        // own comment). Fan head icons are always non-solid for collision
+        // (GroundHeightAt's own BlockTypes::isFan() skip), so Blupi must
+        // land on the REAL floor beneath it (Y=1), not be blocked by or
+        // land on top of the fan.
+        constexpr std::uint16_t kFanX = 44, kFanZ = 44;
+        synthetic.setBlock(kFanX, 0, kFanZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kFanX, 2, kFanZ, Worlds::Block::make(BlockTypes::FanLeft));
+
+        GEBlupiController underFan;
+        underFan.SetPosition(static_cast<float>(kFanX) - 50.0f, 1.0f, static_cast<float>(kFanZ) - 50.0f);
+        underFan.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        std::cout << "Blupi Y beneath the floating fan: " << underFan.GetY() << std::endl;
+        check(underFan.IsOnGround() && std::fabs(underFan.GetY() - 1.0f) < 0.01f,
+              "Blupi stands on the real floor beneath the floating fan, not on/blocked by it");
+        check(underFan.GetBlockTypeAbove(synthetic) == BlockTypes::FanLeft,
+              "GetBlockTypeAbove() identifies the fan head one cell above Blupi (E3D-MIG-149 detection)");
+
         // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067) --
         // a 13-wide flat strip so Blupi can occupy 13 distinct safe grid
         // positions in a row (more than the 10-slot capacity), to prove

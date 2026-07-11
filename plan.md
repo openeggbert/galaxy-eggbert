@@ -737,8 +737,55 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         (6245-block/84-MoveObject world load).
 - [ ] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge, vehicles
       forcibly dismounted on entry.
-- [ ] `149` Fans (126-137, only the 4 head icons already rendered are lethal) — consumes itself
-      (permanently clears the air column it blows through), kills only if unshielded+focused.
+- [x] `149` Fans (126-137, only the 4 head icons already rendered are lethal) — consumes itself
+      (permanently clears the air column it blows through), kills only if unshielded+focused. Done
+      2026-07-11, verified directly against `Decor::IsVentillo` (`Decor.cpp:7667-7752`, not just
+      `12-hazards-and-interactables.md`'s own prior summary, which mischaracterized icons
+      127/128/130/131/133/134/136/137 as the fan's "air-column/trail tiles" -- those are actually
+      just the 4 head icons' own idle animation frames; the REAL trail-continuation icons
+      (110/114/118/122) belong to a separate, not-yet-render-decided tile family never placed in
+      any inspected level, so the trail-walk beyond the head tile itself is NOT ported -- doc
+      corrected).
+      - New `GEWorldRuntime::TryConsumeFan(blupiX, blupiY, blupiZ)`: checked one cell ABOVE Blupi
+        (matching `GetBlockTypeAbove()`'s convention, same placement pattern the teleporter
+        established), a no-op unless that cell is a real fan head icon
+        (`BlockTypes::isFan()`); on a match, immediately clears it to `Air` (real
+        `ModifDecor(pos, -1)` on the head tile) and returns the icon. Fan head icons are ALWAYS
+        non-solid for collision (`GEBlupiController::GroundHeightAt`'s own new `isFan()` skip,
+        same architecture as the teleporter pillar). Real sub-tile-band gating and
+        focus/shield/hide/SuperBlupi immunity are NOT modeled (no sub-tile position or those buff
+        concepts exist yet) -- contact anywhere in the cell is unconditionally lethal, same
+        simplification as every other hazard this session. Real channel 10 plays via the existing
+        `triggerDeath()` lambda; the real particle/screen-shake effects are NOT modeled (no
+        particle system exists).
+      - **Found a real, deeper architectural collision limitation while verifying this live** (not
+        fixed, tracked in `NEXT.md` §5): `GEBlupiController::GroundHeightAt()` always resolves a
+        column's floor as the single TOPMOST solid block in the ENTIRE column, with no concept of
+        "nearest solid surface at or below Blupi's own current height." The sample world's south
+        tunnel has a solid `BrickWall` ceiling (`y=3`) over its own open, walkable `y=1` interior
+        -- meaning that interior's real floor is completely unreachable via normal walking (a
+        `SetPosition()` teleport there resolves `onGround` at the CEILING's height, `y=4`, not the
+        real floor; `TryMoveAxis` blocks any lateral step into that column for the same reason).
+        Same root cause as the original teleporter bug (a floating solid block anywhere above
+        Blupi in a column poisons the whole column's ground-height query), just triggered by a
+        ceiling instead of a pillar. Confirmed via a standalone scripted walk test -- notably, NOT
+        caught by any existing test in this session, including the same tunnel's own already-
+        shipped switch/saw pair (`142`), because every prior hazard test used single-position
+        `Step()` calls or direct `GEWorldRuntime` queries, never a genuine multi-column walk into
+        that specific enclosed interior.
+      - **Consequently, the fan hazard is placed in 2 new small OPEN rooms** (no walls/ceiling at
+        all, same pattern as the teleporter rooms), NOT the tunnel's own roofed interior (which
+        still has 2 fans placed, but as pure visual/render confirmation only, unreachable as a
+        hazard until the ceiling limitation above is fixed).
+      - New tests: `VerifyBlupiMovement.cpp` (fan head is non-solid, real floor beneath it
+        reachable, `GetBlockTypeAbove()` detection) and `VerifyInteractionSystem.cpp`
+        (`TryConsumeFan()` no-op away from any fan, detects+consumes+returns the icon, no-op the
+        second time). Verified live end-to-end via a headless EasyGL run with temporary debug
+        instrumentation (spawn in the open fan room + forced forward movement + periodic
+        lives/position/fan-block-type logging, reverted before committing): Blupi walked in at a
+        real `onGround=true`/`y=1` the whole approach, the fan triggered at the correct position,
+        lives dropped 3→2, the fan tile became `Air`, and the FIFO respawn correctly kicked in
+        afterward.
 
 ### Phase 15 — Crates, lifts, bridges, effects: full fidelity (`E3D-MIG-150`-`158`)
 

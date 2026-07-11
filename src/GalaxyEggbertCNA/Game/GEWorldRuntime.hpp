@@ -133,6 +133,42 @@ namespace GalaxyEggbert::CNA
         std::optional<bool> TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
                                                bool blupiOnGround);
 
+        // Real fan hazard (plan.md E3D-MIG-149, `Decor::IsVentillo` per
+        // Decor.cpp:7667-7752, verified directly against source -- NOT just
+        // mobile-eggbert-reference/12-hazards-and-interactables.md's own
+        // summary, which mischaracterizes icons 127/128/130/131/133/134/
+        // 136/137 as the fan's "air-column/trail tiles": those are actually
+        // just the 4 head icons' own idle animation frames
+        // (`BlockTypes::tileAnimBase()` already maps them back to their
+        // base FanLeft/Right/Up/Down type, so they never appear as a
+        // placed block's own stored type). The REAL trail-continuation
+        // icons IsVentillo walks/clears are 110/114/118/122 -- part of a
+        // wholly separate, not-yet-render-decided "wind-vent particle
+        // stream" tile family (icons 110-125, per
+        // mobile-eggbert-reference/08-animations.md §6's own "deferred"
+        // list) with no `BlockTypes` constant and never placed anywhere in
+        // this engine yet. Consequently this only ports the part that IS
+        // reachable today: checked one cell ABOVE Blupi's own position
+        // (matching `GetBlockTypeAbove()`'s convention, real check is
+        // "Blupi's own current tile" but this engine's fan placements sit
+        // one cell above the walkable floor, same convention the
+        // teleporter already established) -- a no-op (`std::nullopt`)
+        // unless that cell is one of the 4 real fan head icons
+        // (`BlockTypes::isFan()`). On a match: immediately clears that cell
+        // to `Air` (real `ModifDecor(pos, -1)` on the head tile itself,
+        // unconditional per the real source) and returns the icon that was
+        // there. The real trail-walk beyond the head tile is NOT ported
+        // (no confirmed trail tiles exist to walk). Real sub-tile-band
+        // gating (only the mouth-facing half of the tile counts) and
+        // focus/shield/hide/SuperBlupi immunity are NOT modeled -- no
+        // sub-tile position or those buff concepts exist in this engine
+        // yet, same simplification already applied to spikes/teleporter/
+        // every other hazard this session -- so contact anywhere in the
+        // cell is unconditionally lethal (caller's job). No grounded gate
+        // (unlike `TryActivateSwitch`) -- the real `IsVentillo` check has
+        // none either.
+        [[nodiscard]] std::optional<std::uint16_t> TryConsumeFan(float blupiX, float blupiY, float blupiZ);
+
         // Real teleporter pairing (plan.md E3D-MIG-147, `Decor::
         // SearchTeleporte` per Decor.cpp:7406-7429): a linear scan of the
         // entire grid for the first OTHER cell whose type equals `icon`

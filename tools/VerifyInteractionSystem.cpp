@@ -892,6 +892,40 @@ int main(int argc, char** argv)
         check(!foundLonely, "FindTeleportDestination() returns false for a lone teleporter with no partner anywhere");
     }
 
+    // 17. GEWorldRuntime::TryConsumeFan() (plan.md E3D-MIG-149) -- a
+    // synthetic FanLeft placed at an unused Y=20 height, well clear of the
+    // sample world's own 2 real fan placements (embedded in the tunnel
+    // wall as pure visual/render confirmation, not yet a reachable
+    // hazard placement). Uses the real BlockTypes::FanLeft constant, unlike
+    // FindTeleportDestination()'s type-agnostic scan above -- TryConsumeFan()
+    // checks against BlockTypes::isFan() specifically, so a fake icon value
+    // wouldn't exercise it.
+    {
+        auto& mutableWorld = world.GetWorldMutable();
+        constexpr int kFanGX = 40, kFanGY = 20, kFanGZ = 40;
+        mutableWorld.setBlock(kFanGX, kFanGY, kFanGZ, Worlds::Block::make(BlockTypes::FanLeft));
+
+        const float fanX = static_cast<float>(kFanGX) - GEWorldRuntime::kWorldCenterX;
+        const float fanZ = static_cast<float>(kFanGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float belowFanY = static_cast<float>(kFanGY - 1); // one cell below, matching GetBlockTypeAbove()'s convention
+
+        check(!world.TryConsumeFan(0.0f, 1.0f, 0.0f).has_value(),
+              "TryConsumeFan() is a no-op away from any fan");
+        check(!world.TryConsumeFan(fanX, belowFanY - 5.0f, fanZ).has_value(),
+              "TryConsumeFan() is a no-op checking a different (non-fan) cell in the same column");
+
+        const auto consumed = world.TryConsumeFan(fanX, belowFanY, fanZ);
+        check(consumed.has_value() && *consumed == BlockTypes::FanLeft,
+              "TryConsumeFan() detects and returns the fan head icon one cell above Blupi");
+        check(mutableWorld.getBlock(static_cast<std::uint16_t>(kFanGX), static_cast<std::uint16_t>(kFanGY),
+                                     static_cast<std::uint16_t>(kFanGZ))
+                      .type() == BlockTypes::Air,
+              "the fan tile is consumed (cleared to Air) on contact, real ModifDecor(pos, -1)");
+
+        check(!world.TryConsumeFan(fanX, belowFanY, fanZ).has_value(),
+              "TryConsumeFan() is a no-op the second time -- the fan is already consumed");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

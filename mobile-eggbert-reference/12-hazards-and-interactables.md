@@ -205,17 +205,26 @@ depths near the surface launches Blupi up and clear of the water (-16 with `Powe
 ## Fan tiles (`Decor::IsVentillo`, `Decor.cpp` ~7667)
 
 Icons 126–137 form a fan: only the four **head** icons (126 left, 129 right, 132 up, 135 down) can
-ever be lethal; the remaining icons are the fan's visible air-column/trail tiles and are always
-harmless to touch — only standing directly in front of the fan's mouth (in the correct half of the
-head tile, matching its blow direction) counts. When triggered, the effect is unconditional
-regardless of Blupi's invulnerability state: it **consumes the fan** — walks the air column
-tile-by-tile in the blow direction and permanently clears every matching tile
-(`ModifDecor(pos, -1)`), so passing through a fan's blast removes that fan's visual column from the
-map for good — and always triggers an `ObjectType11` particle burst plus a `BigShake` screen effect
-and `SoundChannel10`, even if Blupi survives. Only if `m_blupiFocus` is true and Blupi is not
-Shielded/Hidden/SuperBlupi does it additionally kill him via `BlupiDead(Clear1, Clear2)` (a 50/50
-random pick between the two) (`Decor.cpp` ~5459–5475). A shielded Blupi walking through a fan thus
-still pops it but survives.
+ever be lethal; the remaining icons in that range (127/128/130/131/133/134/136/137) are just the 4
+head icons' own idle animation frames, always harmless (real `IsVentillo`'s `switch` falls through
+to a no-op `break` for all of them) — **NOT the fan's air-column/trail tiles**, correcting this
+doc's own earlier characterization (2026-07-11, re-verified directly against `Decor.cpp:7667-7752`
+while implementing `plan.md` `E3D-MIG-149`, not just this doc's prior summary). Detection is
+checked at Blupi's OWN current tile (not a tile in front of him), restricted to a narrow sub-tile
+band matching the head's blow direction (e.g. icon 126/FanLeft: only the tile's left ~1/4,
+`pos.X%64<=16`). When triggered, the effect is unconditional regardless of Blupi's invulnerability
+state: it **consumes the fan** — clears the head tile itself immediately
+(`ModifDecor(pos, -1)`), then walks further tiles one full 64px step at a time in the blow
+direction, continuing ONLY while each next tile's icon exactly matches a specific real
+trail-continuation value (110 for FanLeft, 114 for FanRight, 118 for FanUp, 122 for FanDown) —
+these 4 values belong to a wholly separate, not-yet-render-decided "wind-vent particle stream" tile
+family (icons 110-125, see `08-animations.md` §6's own "deferred" list), with no galaxy-eggbert
+`BlockTypes` constant and never placed in any level this project has inspected yet. Passing through
+a fan's blast removes that fan's visual column from the map for good — and always triggers an
+`ObjectType11` particle burst plus a `BigShake` screen effect and `SoundChannel10`, even if Blupi
+survives. Only if `m_blupiFocus` is true and Blupi is not Shielded/Hidden/SuperBlupi does it
+additionally kill him via `BlupiDead(Clear1, Clear2)` (a 50/50 random pick between the two)
+(`Decor.cpp` ~5459–5475). A shielded Blupi walking through a fan thus still pops it but survives.
 
 ## Passable vs. blocking classification (`IsPassIcon` ~7503, `IsBlocIcon` ~7522)
 

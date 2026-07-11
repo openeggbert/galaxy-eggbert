@@ -155,8 +155,9 @@ int main(int argc, char** argv)
     // Two fans built into the tunnel's south wall as real ventilation
     // (FanLeft/FanRight, icons 126/129 -- confirmed 4 side faces textured,
     // base flat-color, open face matching the real horizontal blow
-    // direction, fixed 2026-07-09/10) -- relocated from the old isolated
-    // demo row into an actual wall feature instead of a standalone specimen.
+    // direction, fixed 2026-07-09/10) -- purely a visual/render placement,
+    // NOT the reachable hazard placement (see the two open fan alcoves
+    // near the teleporter rooms below, plan.md E3D-MIG-149).
     world.setBlock(30, 2, 65, Block::make(BlockTypes::FanLeft));
     world.setBlock(60, 2, 65, Block::make(BlockTypes::FanRight));
 
@@ -327,6 +328,43 @@ int main(int argc, char** argv)
 
     fill(30, 36, 0, 0, 71, 77, BlockTypes::RockPile); // room B floor
     world.setBlock(33, 2, 74, Block::make(BlockTypes::Teleport1)); // floating pillar, walk beneath it
+
+    // ------------------------------------------------------------------
+    // Fan hazard pair (plan.md E3D-MIG-149, 2026-07-11) -- two more small
+    // OPEN rooms, same "no walls/ceiling at all" pattern as the teleporter
+    // rooms directly above, each with a fan head FLOATING one cell above
+    // the walkable floor. Deliberately NOT placed inside the south
+    // tunnel's own enclosed/roofed interior (where the 2 purely-visual
+    // fan placements above sit) -- a real, pre-existing
+    // GEBlupiController::GroundHeightAt() limitation was found while
+    // building this task: it always resolves a column's "floor" as the
+    // SINGLE topmost solid block in that ENTIRE column (scanning from the
+    // top of the world down), with no concept of "the nearest solid
+    // surface AT OR BELOW my own current height" -- so a solid ceiling
+    // anywhere above an open interior (like the tunnel's own y=3
+    // BrickWall roof) makes that interior's REAL floor (y=1, resting on
+    // y=0 RockPile) completely unreachable via normal walking: Blupi gets
+    // resolved onto TOP of the ceiling (y=4) instead, the same failure
+    // mode already documented for a floating solid pillar (the ORIGINAL
+    // teleporter bug, see that placement's own comment above) but here
+    // triggered by a ceiling rather than a pillar. Confirmed live via a
+    // standalone scripted walk test (not just single-position Step()
+    // calls, which is all every other hazard's own verification in this
+    // session actually exercised, including the tunnel's own already-
+    // shipped switch/saw pair -- none of them walk-tested entering this
+    // specific enclosed interior either). This is a real, deeper
+    // collision-architecture limitation affecting ANY roofed/enclosed
+    // space, not something fixed here -- see NEXT.md §5 for the tracked
+    // limitation. Sidestepped for THIS task the same way the teleporter's
+    // own redesign sidestepped a different collision limitation: choosing
+    // an open-sky placement instead of attempting a collision-system
+    // rewrite.
+    // ------------------------------------------------------------------
+    fill(10, 16, 0, 0, 79, 85, BlockTypes::RockPile); // fan room A floor
+    world.setBlock(13, 2, 82, Block::make(BlockTypes::FanLeft)); // floating fan, walk beneath it
+
+    fill(30, 36, 0, 0, 79, 85, BlockTypes::RockPile); // fan room B floor
+    world.setBlock(33, 2, 82, Block::make(BlockTypes::FanRight)); // floating fan, walk beneath it
 
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
