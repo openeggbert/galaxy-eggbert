@@ -260,6 +260,32 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed the teleporter tip's shape AND a real transparency bug (2026-07-11, plan.md
+  `E3D-MIG-147`, live user re-check after the earlier pyramid-tip pass).** User reported the
+  earlier pyramid-tip geometry showed black filling the lower/wider part of each triangular face,
+  and clarified the real shape is a "čtyřhranol" (four-sided/rectangular prism), not a cone
+  tapering to a point.
+  - **Root-caused with a direct pixel/alpha-channel inspection of `object-m.png`**: the "black"
+    area is genuine alpha=0 (fully transparent) around the real teal cone/spike graphic, not
+    painted black — confirmed via a small script sampling specific pixels (e.g. `(10,50)` reads
+    `[0,0,0,0]`, `(32,50)` reads `[31,90,109,255]`). The pyramid's tapering triangles had also been
+    stretching UV coordinates across areas the real (non-tapering) artwork was never meant to
+    cover, compounding the same underlying transparency bug.
+  - **Shape fix**: replaced `Easy3D::PyramidTipItem`/`AppendPyramidTipMesh()` (removed entirely
+    from `../easy-3d` — hpp/cpp/test, since nothing else used it) with a second, narrower
+    `Easy3D::DirectionalCubeItem` box (4 straight side faces only, no tapering) appended right
+    after the teleporter's own cube in `GETerrainRenderer.cpp`'s `AppendSpecialGeometry()` — the
+    same primitive/approach `InnerPillarBox` already established elsewhere, just a one-off
+    attachment rather than a confirmed render-mode table entry.
+  - **Transparency fix**: added Teleport1-4 to `NeedsAlphaBlend()` (previously only icons 30/31),
+    routing the whole teleporter icon — cube sides AND the new tip box, both using the same
+    texture — through the existing alpha-blended transparent-static render path
+    (`BlendState::NonPremultiplied`) instead of the opaque one.
+  - Verified live via headless EasyGL screenshots at multiple camera distances/angles (temporary
+    debug spawn overrides, reverted before committing): the tip now shows a clean, properly
+    alpha-blended teal spike with genuine see-through transparency where the source art is
+    transparent, no black anywhere. Full 5-tool suite + both backends re-verified.
+
 - **Implemented the fan hazard (2026-07-11, plan.md `E3D-MIG-149`), the last of Phase 14's original
   10 mechanics besides the water breath gauge (`148`).** Verified directly against real
   `Decor::IsVentillo` source (`Decor.cpp:7667-7752`), which found and corrected a real inaccuracy

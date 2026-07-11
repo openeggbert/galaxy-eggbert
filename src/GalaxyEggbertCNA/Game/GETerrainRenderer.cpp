@@ -34,16 +34,27 @@ namespace GalaxyEggbert::CNA
         constexpr float kTripleCrossHeight = 1.0f;
 
         // Teleporter pillars (330-333, plan.md E3D-MIG-147): the "hrot"
-        // (spike/cone) hanging below the block, per direct user Q&A live in
+        // (spike/tip) hanging below the block, per direct user Q&A live in
         // session 2026-07-11 ("pod teleporterem by měl být prostor... zbytek
-        // ten hrot teleporteru by měl být renderován pod teleporterem"). Base
-        // spans most of the block's footprint, tapering down just short of a
-        // full block-height so it never pokes through a floor one cell below
-        // an open teleporter room.
-        constexpr float kPyramidTipBaseSize = 0.7f;
-        constexpr float kPyramidTipHeight = 0.6f;
+        // ten hrot teleporteru by měl být renderován pod teleporterem").
+        // REVISED same day (second live Q&A pass): the first attempt modeled
+        // this as a tapering pyramid, but a live screenshot showed solid
+        // BLACK filling the lower/wider portion of each triangular face --
+        // the real underlying graphic is straight-sided (a "čtyřhranol",
+        // four-sided/rectangular prism), not a cone tapering to a point, so
+        // a triangle's wide base picked up the icon's plain black background
+        // surrounding the actual post artwork. Rebuilt as a second, narrower
+        // DirectionalCube box (same primitive/approach as InnerPillarBox,
+        // just a one-off attachment rather than a confirmed render-mode
+        // table entry) hanging below the main cube -- 4 straight side faces,
+        // no tapering, so every mapped texel is the real texture, not a
+        // stretched/out-of-bounds sample. Base spans most of the block's
+        // footprint, height stops just short of a full block-height so it
+        // never pokes through a floor one cell below an open teleporter room.
+        constexpr float kTipWidth = 0.6f;
+        constexpr float kTipHeight = 0.6f;
 
-        bool IsPyramidTipIcon(int icon)
+        bool IsTeleporterTipIcon(int icon)
         {
             return icon == GalaxyEggbert::BlockTypes::Teleport1 ||
                    icon == GalaxyEggbert::BlockTypes::Teleport2 ||
@@ -51,14 +62,15 @@ namespace GalaxyEggbert::CNA
                    icon == GalaxyEggbert::BlockTypes::Teleport4;
         }
 
-        // The pyramid tip reuses the teleporter's own tile texture, cropped
-        // to its lower two-thirds (the dark cone/spike graphic) -- confirmed
-        // by direct inspection of the real icon crop (icon330.png etc.): the
-        // top third is the flat panel (colored dots + emblem letter), the
-        // bottom two-thirds is the cone itself. V grows downward in this
-        // atlas (tileUV's vOff comes straight from the row's top pixel), so
-        // "lower" means the higher-V end of the tile's own rect.
-        Easy3D::UvRect PyramidTipUv(const Easy3D::UvRect& tileUv)
+        // The tip's 4 side faces reuse the teleporter's own tile texture,
+        // cropped to its lower two-thirds (the dark post graphic) --
+        // confirmed by direct inspection of the real icon crop (icon330.png
+        // etc.): the top third is the flat panel (colored dots + emblem
+        // letter), the bottom two-thirds is the post itself. V grows
+        // downward in this atlas (tileUV's vOff comes straight from the
+        // row's top pixel), so "lower" means the higher-V end of the tile's
+        // own rect.
+        Easy3D::UvRect TeleporterTipUv(const Easy3D::UvRect& tileUv)
         {
             const float v0 = tileUv.V0 + (tileUv.V1 - tileUv.V0) / 3.0f;
             return Easy3D::UvRect{tileUv.U0, v0, tileUv.U1, tileUv.V1};
@@ -92,14 +104,25 @@ namespace GalaxyEggbert::CNA
                 }
                 Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
 
-                if (IsPyramidTipIcon(lookupIcon))
+                if (IsTeleporterTipIcon(lookupIcon))
                 {
-                    Easy3D::PyramidTipItem tip;
-                    tip.Center = Easy3D::CubeBatch::Vector3(center.X, center.Y - 0.5f, center.Z);
-                    tip.BaseSize = kPyramidTipBaseSize;
-                    tip.Height = kPyramidTipHeight;
-                    tip.Uv = PyramidTipUv(tileUv);
-                    Easy3D::AppendPyramidTipMesh(tip, vertices, indices);
+                    const auto tipUv = TeleporterTipUv(tileUv);
+                    Easy3D::DirectionalCubeItem tip;
+                    tip.Center = Easy3D::CubeBatch::Vector3(center.X, center.Y - 0.5f - kTipHeight * 0.5f, center.Z);
+                    tip.Size = Easy3D::CubeBatch::Vector3(kTipWidth, kTipHeight, kTipWidth);
+                    // Only the 4 straight side faces are visible -- top sits
+                    // flush against the main cube's own bottom face (never
+                    // seen), bottom is a rarely-seen cap not worth a texture
+                    // decision for.
+                    for (int face = 0; face < 6; ++face)
+                    {
+                        tip.Faces[face].Visible = false;
+                    }
+                    tip.Faces[static_cast<int>(Easy3D::CubeFace::PosZ)] = {true, tipUv};
+                    tip.Faces[static_cast<int>(Easy3D::CubeFace::NegZ)] = {true, tipUv};
+                    tip.Faces[static_cast<int>(Easy3D::CubeFace::PosX)] = {true, tipUv};
+                    tip.Faces[static_cast<int>(Easy3D::CubeFace::NegX)] = {true, tipUv};
+                    Easy3D::AppendDirectionalCubeMesh(tip, vertices, indices);
                 }
 
                 return true;
@@ -243,9 +266,20 @@ namespace GalaxyEggbert::CNA
         // need genuine alpha blending to render correctly if ever placed.
         // Not animated, so they don't go through m_animBlocks/m_waterBlocks
         // -- routed to their own static-but-transparent renderer instead.
+        //
+        // Teleporter pillars (330-333) added 2026-07-11: direct pixel
+        // inspection of the real icon crop (confirmed via a small script
+        // sampling object-m.png's alpha channel) found the "black" area the
+        // user reported around the post/tip graphic is genuine alpha=0
+        // (fully transparent), not painted black -- rendering it opaque was
+        // the actual bug, same category as icons 30/31 above, not a
+        // geometry problem (the tip's pyramid-vs-prism shape was a separate,
+        // real issue, already fixed independently -- see AppendSpecialGeometry).
         bool NeedsAlphaBlend(int icon)
         {
-            return icon == 30 || icon == 31;
+            return icon == 30 || icon == 31 ||
+                   icon == GalaxyEggbert::BlockTypes::Teleport1 || icon == GalaxyEggbert::BlockTypes::Teleport2 ||
+                   icon == GalaxyEggbert::BlockTypes::Teleport3 || icon == GalaxyEggbert::BlockTypes::Teleport4;
         }
 
         // Icon 107: confirmed DirectionalCube with its top face intentionally

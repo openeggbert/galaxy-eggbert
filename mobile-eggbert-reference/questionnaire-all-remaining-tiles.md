@@ -3571,10 +3571,21 @@ Odpověď: Billboard
 
 **REVIZE 2026-07-11** (přímý live pokyn uživatele, nahrazuje odpověď výše):
 DirectionalCube (modré pozadí na všech 4 stranách krychle) + samostatný 3D
-hrot ("pyramid-tip") visící pod blokem, postavený ze čtverce nahoře a 4
-trojúhelníků svažujících se do špičky dole, texturovaný spodní ~2/3 stejné
-dlaždice (kuželová/hrotová grafika). Viz plan.md E3D-MIG-147 a
-02-tiles.md.
+hrot visící pod blokem, texturovaný spodní ~2/3 stejné dlaždice
+(kuželová/hrotová grafika).
+
+**REVIZE #2, 2026-07-11** (druhý live pokyn uživatele téhož dne): hrot
+NENÍ jehlan (pyramida) zužující se do bodu — je to "čtyřhranol" (rovný
+čtyřboký hranol/box, bez zužování). První verze (jehlan) na screenshotu
+ukazovala černou plochu ve spodní/širší části trojúhelníků.
+
+**REVIZE #3, 2026-07-11**: ta "černá barva" nebyla vůbec problém tvaru —
+přímá kontrola alfa kanálu `object-m.png` (skript vzorkující konkrétní
+pixely) potvrdila, že jde o skutečnou průhlednost (alpha=0) kolem
+skutečné tyrkysové kuželové grafiky, ne o vymalovanou černou. Kostka i
+hrot teď používají skutečné alpha blending (dřív jen ikony 30/31).
+
+Viz plan.md E3D-MIG-147 a 02-tiles.md.
 
 ---
 

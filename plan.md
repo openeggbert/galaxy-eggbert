@@ -124,15 +124,24 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   `DirectionalCube` (`GEDirectionalCubeTiles.cpp`, textured on all 4 sides, flat top/bottom —
   supersedes an earlier questionnaire pass' "Billboard" call, revised live per direct user
   description of the real crop: `mobile-eggbert-reference/02-tiles.md`/
-  `questionnaire-all-remaining-tiles.md` both updated), plus a new Easy3D primitive
-  (`Easy3D::PyramidTipItem`/`AppendPyramidTipMesh()`, `../easy-3d/{include,src}/Easy3D/
-  CubeMesh.{hpp,cpp}`, unit-tested in `../easy-3d/tests/test_cube_mesh.cpp`) for the hanging
-  cone/spike beneath the pillar — a square top face + 4 triangles tapering to an apex, textured
-  with the tile's own lower ~2/3 (`GETerrainRenderer.cpp`'s `PyramidTipUv()`), wired into
-  `AppendSpecialGeometry()` right after the `DirectionalCube` append. Verified live via a headless
-  EasyGL screenshot at the sample world's teleporter room — renders correctly: blue cube sides
-  with the real dots/emblem-letter texture, dark cone hanging cleanly below without clipping the
-  floor.
+  `questionnaire-all-remaining-tiles.md` both updated), plus a "tip" attachment hanging below the
+  pillar, textured with the tile's own lower ~2/3 (`GETerrainRenderer.cpp`'s
+  `IsTeleporterTipIcon()`/`TeleporterTipUv()`), wired into `AppendSpecialGeometry()` right after
+  the `DirectionalCube` append. **Revised twice more the same day after live user re-checks**:
+  (1) the tip was first built as a tapering pyramid (`Easy3D::PyramidTipItem`/
+  `AppendPyramidTipMesh()`) — a live screenshot showed solid black filling each triangle's wide
+  base, and the user clarified the real shape is a "čtyřhranol" (four-sided/rectangular prism), so
+  it was rebuilt as a second, narrower `DirectionalCubeItem` box (4 straight side faces, no
+  tapering) instead — `PyramidTipItem`/`AppendPyramidTipMesh()` removed entirely from `../easy-3d`
+  (hpp/cpp/test), nothing else used it; (2) a direct pixel/alpha-channel inspection of
+  `object-m.png` (small script sampling specific pixels) found the "black" was actually genuine
+  alpha=0 transparency around the real teal cone graphic, not painted black — the box shape alone
+  didn't fix this, since the CUBE'S OWN side faces use the same texture and were equally affected;
+  fixed by adding Teleport1-4 to `GETerrainRenderer.cpp`'s `NeedsAlphaBlend()` (previously only
+  icons 30/31), routing the whole icon through the existing alpha-blended transparent-static
+  render path instead of the opaque one. Verified live via headless EasyGL screenshots at multiple
+  angles/distances — renders correctly: blue cube sides with the real dots/emblem-letter texture,
+  a clean genuinely-transparent teal spike hanging below with no black anywhere.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
