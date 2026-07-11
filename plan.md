@@ -79,19 +79,23 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
 - **HUD is minimal** — icon-based only (life icons bottom-left, key icons top-left when held),
   no text rendering exists (no `text.png` glyph layout identified yet), so no numeric treasure
   counter/score/timer.
-- **Enemy combat covers the real shared kill list plus the wasp's balloon status** — contact
-  with `ObjectType` 2/3/4/16/17/20/96/97 kills Blupi (`E3D-MIG-132`, widened 2026-07-11 from just
-  2/3 after finding they're all one real shared check in `Decor.cpp`); wasp (44,
+- **Enemy combat covers the real shared kill list, the wasp's balloon status, blupih/blupit's
+  projectile attacks, and the large creature's turn-dwell-gated grab** — contact with
+  `ObjectType` 2/3/4/16/17/20/96/97 kills Blupi (`E3D-MIG-132`, widened 2026-07-11 from just 2/3
+  after finding they're all one real shared check in `Decor.cpp`); wasp (44,
   `E3D-MIG-135`, 2026-07-11) transforms him into a non-lethal "balloon" status instead
   (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`), which in turn changes
   how exactly 4 of those 8 shared-kill types (`3`/`16`/`96`/`97`) behave — they pop the balloon
   instead of killing while it's active. Every `MoveObject` (except lifts/crates) now genuinely
   patrols using the real shared 4-phase dwell/advance/dwell/recede cycle (`E3D-MIG-131`,
   2026-07-11, `AdvancePatrolStep()`) instead of sitting frozen at `posStart` — the real
-  prerequisite the remaining 3 named types (blupih/blupit/large creature) need for their own
-  dwell-frame-timed attacks/lethality windows, though none of the 3 were implemented in this
-  same pass. Follower 96/97's real homing-toward-Blupi movement is also still open (contact-
-  kill/pop and now real patrol motion both work, the Blupi-homing AI specifically doesn't). All
+  prerequisite blupih/blupit (`E3D-MIG-134`, 2026-07-11) and the large creature (`E3D-MIG-136`,
+  2026-07-11) needed for their own dwell-frame-timed attacks/lethality windows, both now done:
+  blupih drops a projectile straight down, blupit fires two horizontal shots, both only during
+  turn-dwell; the large creature grabs Blupi (fatal, real balloon immunity modeled, never
+  destroyed itself) only during its own turn-dwell, safe to touch mid-walk. Follower 96/97's real
+  homing-toward-Blupi movement is the only Phase 13 piece still open (contact-kill/pop and real
+  patrol motion both work, the Blupi-homing AI specifically doesn't). All
   5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are implemented
   (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
   foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
@@ -384,11 +388,25 @@ documented there.
       assertions and 9 new `VerifyInteractionSystem` assertions (wasp/follower/bulldozer
       interaction, injected synthetically since none but the wasp itself is placed in the real
       world).
-- [ ] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
-      vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon.
-      Prerequisite (`131`, `patrolStep`) is now done — the real gate ("only registers while
-      `step != 2 && step != 4`", i.e. `patrolStep` 1 or 3, not mid-walk) is implementable, not
-      attempted yet.
+- [x] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
+      vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon. Done
+      2026-07-11: verified directly against `Decor.cpp:5867-5913`. Contact is lethal ONLY while
+      `patrolStep` is 1 or 3 (the real `step != 2 && step != 4` gate, now implementable since `131`
+      landed) — safe to touch while it's actually mid-walk. The creature is never destroyed by the
+      contact (no real `ObjectDelete` in that branch). Real balloon immunity IS modeled
+      (`blupiBallooned` blocks the whole branch, matching the real `!m_blupiBalloon` gate, no
+      separate pop path for this type unlike the 4 balloon-poppable hazards). Real shield/hide/
+      superBlupi/focus immunity and the real "destroys Blupi's vehicle instead of killing him"
+      branch are NOT modeled (no such concepts exist in this engine yet), so contact always takes
+      the real no-vehicle death branch (channel 51). The real unconditional taunt icon is also NOT
+      modeled — no idle-taunt animation system exists at all. The sample world's placement
+      (`tools/GenerateSampleWorld3D.cpp`'s walled-room guardian) was converted from a zero-range
+      `place()` call to a real `posStart != posEnd` patrol path (same real guard the platform lift
+      needed) so both the safe-mid-walk and lethal-turn-dwell windows are genuinely playable, not
+      just proven synthetically. Verified via 12 new `VerifyInteractionSystem` assertions (safe at
+      patrolStep 2/4, lethal at 1/3, creature survives, balloon immunity, real placement has a
+      patrol range) + full suite (63/63 unit tests, all verify tools) + live headless runs on both
+      EasyGL and Vulkan backends.
 - [~] `137` Types 96/97 (follower) — **contact-kill done**, folded into `E3D-MIG-132`'s widened
       shared kill list (2026-07-11), covering both the dormant (96) and awake (97) state
       identically, matching the real shared kill-list check. NOT done: the real dormant-until-a-

@@ -26,9 +26,9 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   gameplay system** (`GEInteractionSystem`/`GEBlupiController`/`GEWorldRuntime`) covering pickup
   collection, platform-lift/crate patrol+push, all 5 real terrain hazards (lava/spikes/blitz/
   saw+switches/crusher), the real shared enemy kill-list (8 types), the wasp's balloon status, the
-  real shared patrol-turn state machine, and blupih/blupit's projectile attacks — see §2/§3 for
-  detail and `plan.md` Phase 13/14 for what's still open. No 3D Blupi model yet (still an
-  invisible collision point).
+  real shared patrol-turn state machine, blupih/blupit's projectile attacks, and the large
+  creature's turn-dwell-gated grab — see §2/§3 for detail and `plan.md` Phase 13/14 for what's
+  still open. No 3D Blupi model yet (still an invisible collision point).
 
 **Important architectural decisions:**
 
@@ -230,10 +230,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   instead (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`) that changes how
   4 of those 8 shared-kill types behave (pop instead of kill). Every `MoveObject` (except lifts/
   crates) now genuinely patrols via the real shared 4-phase dwell/advance/dwell/recede cycle
-  (2026-07-11 §3, `AdvancePatrolStep()`) instead of sitting frozen — the real prerequisite the
-  remaining 3 named enemy types (blupih/blupit/large creature) need for their own dwell-frame-
-  timed attacks/lethality windows, though none of the 3 is implemented yet. Follower 96/97's real
-  homing-toward-Blupi movement is also still a separate open feature (contact-kill/pop and real
+  (2026-07-11 §3, `AdvancePatrolStep()`) instead of sitting frozen — the real prerequisite
+  blupih/blupit and the large creature needed for their own dwell-frame-timed attacks/lethality
+  windows, and both are now implemented too (2026-07-11 §3): blupih/blupit fire real
+  `ObjectType23` projectiles during turn-dwell (their own body is harmless), and the large
+  creature (`ObjectType54`) is lethal only during its own turn-dwell (safe mid-walk), never
+  destroyed itself, with real balloon immunity modeled. Follower 96/97's real
+  homing-toward-Blupi movement is now the only open item in Phase 13 (contact-kill/pop and real
   patrol motion both work, the Blupi-homing AI specifically doesn't). HUD is now
   minimal icon-based only (2026-07-11, §3: life icons, key icons) — no text rendering exists, so
   no numeric treasure counter/score.
@@ -255,6 +258,47 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Implemented the large creature's (`ObjectType54`) turn-dwell-gated grab (2026-07-11, plan.md
+  `E3D-MIG-136`, the natural continuation of Phase 13 after blupih/blupit).** Verified directly
+  against `Decor.cpp:5867-5913`.
+  - Contact is lethal ONLY while the creature is paused mid-turn (`patrolStep` 1 or 3, the real
+    `step != 2 && step != 4` gate, implementable now that `131`'s patrol-step state machine
+    exists) — walking into it while it's actually mid-walk (`patrolStep` 2 or 4) is completely
+    safe. This is the opposite shape from every hazard implemented so far: a *window* of safety
+    instead of unconditional lethality.
+  - The creature itself is never destroyed by the contact (no `ObjectDelete` in the real branch,
+    unlike the shared kill-list types) — it always survives to keep guarding.
+  - **Real balloon immunity is modeled**: `blupiBallooned` blocks the whole branch (matching the
+    real `!m_blupiBalloon` gate) — unlike the 4 balloon-poppable hazard types (3/16/96/97), there
+    is no separate pop path for type 54; contact while ballooned does nothing at all. This is the
+    one immunity flag from the real gate (`!m_blupiBalloon && !m_blupiShield && !m_blupiHide &&
+    !m_bSuperBlupi`, plus `m_blupiFocus`) that actually exists in this engine — the rest
+    (shield/hide/superBlupi/focus) don't, so they're not modeled, same simplification as every
+    other hazard.
+  - Real contact also destroys Blupi's current vehicle instead of killing him outright if he's
+    riding one (channel 10 + `SmallShake`) — NOT modeled, no vehicle concept exists yet, so
+    contact always takes the real no-vehicle branch (channel 51). The real unconditional taunt
+    icon (mockery `83` regardless of facing) is also NOT modeled — no idle-taunt animation system
+    exists in this engine at all yet (cosmetic, same status as type2's taunt-suppression).
+  - **Real breaking-adjacent fix, not just new capability**: the sample world's existing large
+    creature placement (`tools/GenerateSampleWorld3D.cpp`'s "walled room" guardian, added in an
+    earlier session) used the zero-patrol-range `place()` helper — same real guard the platform
+    lift and blupih/blupit needed their own dedicated `PlaceMoveObject` fix for earlier, since
+    `posStart == posEnd` means `patrolStep` never leaves 1, so the creature would have been either
+    always-lethal or (if the gate were read differently) permanently frozen rather than genuinely
+    demonstrating the safe/lethal window. Converted to a real 4-unit patrol path
+    (x=12..16, between the room's two decorative pillars, directly between the chest and the
+    doorway) so both windows are actually playable.
+  - **Verification**: 12 new `VerifyInteractionSystem` assertions (safe at `patrolStep` 2 and 4,
+    lethal at 1 and 3, creature survives its own lethal contact, balloon immunity blocks it
+    entirely with no pop, and the real placement has a genuine patrol range) — the last one caught
+    a real test-authoring bug first: naively selecting "first `ObjectType54`" found the object
+    exhibition's deliberately-static specimen instead of the playable guardian (`CollectMoveObjects`'s
+    spatial ordering, the exact same pitfall already documented for `findPatrollingLift`'s own
+    `ObjectType1` selection) — fixed by matching on `posStartX != posEndX` instead. Full suite
+    (63/63 unit tests, all verify tools) and live headless runs on both EasyGL and Vulkan backends
+    all clean (identical 6146-block/84-MoveObject world load on both).
 
 - **Implemented blupih/blupit stationary shooters (2026-07-11, plan.md `E3D-MIG-134`, picked as
   the next task off `plan.md`).** Verified directly against `Decor.cpp:8878-8969` (attack timing)
@@ -2093,9 +2137,9 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent commit (`64c7ec6`, 2026-07-11), all 63/63 `GalaxyEggbertWorldsTests`
-pass, and all 4 verify tools (`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`,
-`VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
+backends as of the most recent work (large creature, 2026-07-11, see §3's newest entry), all
+63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
+`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
 work remains outstanding; §8's remaining tasks are optional/low-priority polish. **The active work
@@ -2103,23 +2147,23 @@ has since moved on to real gameplay logic** (`plan.md` §2 Feature Parity Checkl
 in Phase 13 (Enemy AI) and Phase 14 (Hazards):
 
 - **Done**: lives/respawn foundation (`130`), the real shared patrol-turn state machine (`131`,
-  unblocks `134`/`136`), the widened shared enemy kill-list covering 8 types (`132`/`133`/`137`
+  unblocked `134`/`136`), the widened shared enemy kill-list covering 8 types (`132`/`133`/`137`
   contact-death), the wasp's balloon status + hazard-pop interaction (`135`), blupih/blupit's
-  projectile attacks (`134`, just finished — see §3's most recent entry), and all 5 real terrain
-  hazards (lava/spikes/blitz/saw+switches/crusher, `140`-`144`). Also done outside Phase 13/14: the
-  real mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11 fullscreen, the `CubeMesh` winding
-  root-cause fix, and the sample world's tile+object exhibition areas.
+  projectile attacks (`134`), the large creature's turn-dwell-gated grab (`136`, just finished —
+  see §3's most recent entry), and all 5 real terrain hazards (lava/spikes/blitz/saw+switches/
+  crusher, `140`-`144`). Also done outside Phase 13/14: the real mobile-eggbert-faithful `GEHud`,
+  sound, mouse-look + F11 fullscreen, the `CubeMesh` winding root-cause fix, and the sample
+  world's tile+object exhibition areas.
 - **Next up (picked from `plan.md` as the natural continuation of Phase 13, not yet started)**:
-  **`E3D-MIG-136`, the large creature (`ObjectType54`)** — lethal only while paused mid-turn
-  (`patrolStep` 1 or 3, now implementable since `131` landed), destroys the player's current
-  vehicle or fatally grabs Blupi, is never destroyed itself, and always shows its taunt icon. It's
-  already placed in `worlds3d/world001.vwr` (the walled room's guardian) but currently has no
-  special behavior beyond the generic patrol/animation every `MobileObjSpec` gets — see
-  `Decor.cpp:5867-5913` and `mobile-eggbert-reference/04-enemy-behavior.md`'s `ObjectType54`
-  section (already read this session, see the "large creature" note there).
-- **Also open in Phase 13**: follower (96/97)'s real dormant-until-a-padded-wake-box,
-  1px/tick homing-toward-Blupi movement (contact-death already works; homing is a separate,
-  not-yet-attempted feature).
+  **`E3D-MIG-137`'s remaining half, follower (`ObjectType96`/`97`) homing** — contact-kill/pop
+  already works (folded into `132`'s widened shared kill list), but the real dormant-until-a-
+  padded-wake-box (±100px on all sides, `Decor.cpp:9658-9671`) then 1px/tick homing-toward-Blupi
+  movement (`Decor.cpp:8029-8044`, self-destructs into an `ObjectType9` explosion if its next step
+  is blocked, `8049-8064`) is a genuinely separate feature — followers are currently just static/
+  patrol `MobileObjSpec`s like any other placed object. This is the last open item in Phase 13;
+  after it, Phase 13 (Enemy AI) is complete. See `mobile-eggbert-reference/04-enemy-behavior.md`'s
+  "The follower pattern" section (already researched, re-verified 2026-07-05/2026-07-11) for the
+  full spec.
 - **Also open in Phase 14**: spring (`145`), the vanishing/temp tile (`146`), teleporters (`147`),
   the water breath gauge (`148`), and fans (`149`) — none has a code prerequisite blocking it.
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)

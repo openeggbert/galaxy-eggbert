@@ -520,6 +520,49 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Large creature (ObjectType54, plan.md E3D-MIG-136) -- verified
+            // directly against Decor.cpp:5867-5913: contact is lethal ONLY
+            // while the creature is paused mid-turn (patrolStep 1 or 3, the
+            // real `step != 2 && step != 4` gate) -- unlike every hazard
+            // above, walking into it while it is actually mid-walk is
+            // completely safe. Real immunity is
+            // `!m_blupiBalloon && !m_blupiShield && !m_blupiHide &&
+            // !m_bSuperBlupi` (plus a `m_blupiFocus` gate); only the balloon
+            // half is modeled here (blupiBallooned), since shield/hide/
+            // superBlupi/focus don't exist in this engine yet, same
+            // simplification as every hazard above -- unlike the 4 balloon-
+            // POPPABLE types, contact while ballooned does nothing at all
+            // here (matches the real source: `!m_blupiBalloon` gates the
+            // whole branch, there's no separate pop path for type 54). The
+            // creature itself is never destroyed by this contact (no
+            // `ObjectDelete` in the real branch, unlike the shared kill-list
+            // types below) -- it always survives to keep guarding. Real
+            // contact also destroys Blupi's current vehicle instead of
+            // killing him outright if he's riding one (channel 10 +
+            // SmallShake) -- NOT modeled, no vehicle concept exists yet, so
+            // contact always takes the real no-vehicle branch instead
+            // (channel 51, Decor.cpp:5905's PlaySound call for that path).
+            // The real unconditional taunt icon (mockery `83` regardless of
+            // facing, Decor.cpp:9575-9578) is also NOT modeled -- no idle-
+            // taunt animation system exists in this engine at all yet
+            // (cosmetic, same as type2's taunt-suppression above).
+            if (obj.type == ObjectType::ObjectType54)
+            {
+                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned)
+                {
+                    const float gdx = obj.currentX - blupiX;
+                    const float gdy = obj.currentY - blupiY;
+                    const float gdz = obj.currentZ - blupiZ;
+                    if (gdx * gdx + gdy * gdy + gdz * gdz < kHazardContactRadius * kHazardContactRadius)
+                    {
+                        LoseLife();
+                        diedThisFrame_ = true;
+                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel51);
+                    }
+                }
+                continue;
+            }
+
             // Generic hazard contact (ObjectType2/3/4/16/17/20/96/97, plan.md
             // E3D-MIG-132) -- real shared kill list: BlupiDead(Clear1,
             // Clear2) + the hazard itself is destroyed (converted to an

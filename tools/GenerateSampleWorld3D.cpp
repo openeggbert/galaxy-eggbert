@@ -243,8 +243,26 @@ int main(int argc, char** argv)
     // Walled room on the hill: not just empty architecture -- 1 chest, 1
     // large creature guarding it, and 1 more standard enemy by the doorway.
     place(ObjectType::ObjectType5, 8.0f, 11.0f, 50.0f);
-    place(ObjectType::ObjectType54, 14.0f, 11.0f, 50.0f); // large creature
     place(ObjectType::ObjectType2, 18.0f, 11.0f, 49.0f);
+
+    // Large creature (ObjectType54, plan.md E3D-MIG-136, 2026-07-11) --
+    // needs a real posStart != posEnd patrol path, same reason the lift/
+    // blupih/blupit needed PlaceMoveObject directly above (place() always
+    // sets them equal, and the real turn-dwell lethality gate never
+    // advances past patrolStep 1 at all when it can't patrol). Patrols
+    // between the two decorative pillars (x=12..16, clear of both x=10
+    // pillars and the x=20 doorway), directly between the chest (x=8) and
+    // the doorway, so reaching the chest means passing it -- a genuine
+    // guardian, not just a specimen. Real behavior: safe to touch while it
+    // walks (patrolStep 2/4), lethal only during its turn-dwell
+    // (patrolStep 1/3, see GEInteractionSystem.cpp).
+    {
+        MoveObjectRecord creature;
+        creature.type = ObjectType::ObjectType54;
+        creature.posStartX = 12.0f; creature.posStartY = 11.0f; creature.posStartZ = 50.0f;
+        creature.posEndX = 16.0f;   creature.posEndY = 11.0f;   creature.posEndZ = 50.0f;
+        PlaceMoveObject(world, creature);
+    }
 
     // ------------------------------------------------------------------
     // Blupih/blupit stationary shooters (plan.md E3D-MIG-134, 2026-07-11) --

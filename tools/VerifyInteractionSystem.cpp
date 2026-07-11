@@ -593,6 +593,102 @@ int main(int argc, char** argv)
         }
     }
 
+    // 12. Large creature (ObjectType54) turn-dwell-gated lethality (plan.md
+    // E3D-MIG-136) -- verified against Decor.cpp:5867-5913. Injected
+    // directly with patrolStep manually forced to each phase (rather than
+    // waiting out a real patrol cycle), since only the phase at contact
+    // time matters, not how it got there.
+    {
+        MobileObjSpec creature;
+        creature.type = ObjectType::ObjectType54;
+        creature.posStartX = creature.currentX = 60.0f;
+        creature.posStartY = creature.currentY = 1.0f;
+        creature.posStartZ = creature.currentZ = 60.0f;
+        creature.posEndX = 60.0f; // posStart==posEnd is fine here -- this test
+        creature.posEndY = 1.0f;  // drives patrolStep by hand, not via
+        creature.posEndZ = 60.0f; // AdvancePatrolStep()'s own advance logic.
+        world.GetMobileObjectsMutable().push_back(creature);
+
+        const auto findCreature = [&world]() -> MobileObjSpec*
+        {
+            for (auto& obj : world.GetMobileObjectsMutable())
+            {
+                if (obj.type == ObjectType::ObjectType54 && obj.posStartX == 60.0f)
+                {
+                    return &obj;
+                }
+            }
+            return nullptr;
+        };
+
+        // Mid-walk (patrolStep 2): contact is completely safe.
+        if (auto* c = findCreature()) c->patrolStep = 2;
+        int livesBefore = interaction.Lives();
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
+        check(!interaction.DiedThisFrame(), "large creature contact is safe while it's mid-walk (patrolStep 2)");
+        check(interaction.Lives() == livesBefore, "no life lost touching the creature mid-walk");
+
+        // Also safe mid-recede (patrolStep 4).
+        if (auto* c = findCreature()) c->patrolStep = 4;
+        livesBefore = interaction.Lives();
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
+        check(!interaction.DiedThisFrame(), "large creature contact is safe while it's mid-recede (patrolStep 4)");
+        check(interaction.Lives() == livesBefore, "no life lost touching the creature mid-recede");
+
+        // Turn-dwell (patrolStep 1): contact is lethal, and the creature
+        // itself survives (unlike the shared kill-list types).
+        if (auto* c = findCreature()) c->patrolStep = 1;
+        livesBefore = interaction.Lives();
+        const int gameOverBefore = interaction.GameOverCount();
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
+        check(interaction.DiedThisFrame(), "large creature contact is lethal during turn-dwell (patrolStep 1)");
+        const bool costALife =
+            (interaction.Lives() == livesBefore - 1) ||
+            (interaction.GameOverCount() == gameOverBefore + 1 && interaction.Lives() == 3);
+        check(costALife, "turn-dwell contact costs exactly 1 life (accounting for a possible game-over wrap)");
+        const auto* afterDwell = findCreature();
+        check(afterDwell != nullptr && afterDwell->active,
+              "the large creature is NOT destroyed by the contact that killed Blupi (unlike the shared kill list)");
+
+        // Also lethal at the other dwell (patrolStep 3).
+        if (auto* c = findCreature()) c->patrolStep = 3;
+        livesBefore = interaction.Lives();
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
+        check(interaction.DiedThisFrame(), "large creature contact is also lethal at patrolStep 3 (the other dwell)");
+
+        // Balloon immunity (real `!m_blupiBalloon` gate) -- while
+        // ballooned, contact during turn-dwell does nothing at all (no
+        // kill, no pop -- unlike the 4 balloon-poppable hazard types).
+        if (auto* c = findCreature()) c->patrolStep = 1;
+        livesBefore = interaction.Lives();
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
+        check(!interaction.DiedThisFrame(), "large creature contact is harmless during turn-dwell while ballooned");
+        check(!interaction.BalloonPoppedThisFrame(), "large creature contact does not pop the balloon either (no pop path for type 54)");
+        check(interaction.Lives() == livesBefore, "no life lost touching the creature during turn-dwell while ballooned");
+    }
+
+    // 13. Real playable placement -- the sample world's own large creature
+    // (tools/GenerateSampleWorld3D.cpp's "walled room" guardian) has a real
+    // posStart != posEnd patrol path, unlike the old zero-range placement
+    // this replaced (same real guard the platform lift needed, see
+    // AdvancePatrolStep()'s own comment). Selected by posStartX != posEndX,
+    // NOT plain findFirst() -- the object exhibition area also places a
+    // deliberately-static ObjectType54 specimen (posStart==posEnd), and
+    // CollectMoveObjects' ordering is spatial, so "first ObjectType54"
+    // could find that one instead (the exact pitfall findPatrollingLift's
+    // own comment above already documents for ObjectType1).
+    const MobileObjSpec* placedCreature = nullptr;
+    for (const auto& obj : world.GetMobileObjects())
+    {
+        if (obj.type == ObjectType::ObjectType54 && obj.posStartX != obj.posEndX)
+        {
+            placedCreature = &obj;
+            break;
+        }
+    }
+    check(placedCreature != nullptr,
+          "found a patrolling large creature (ObjectType54, posStartX != posEndX) in the sample world");
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

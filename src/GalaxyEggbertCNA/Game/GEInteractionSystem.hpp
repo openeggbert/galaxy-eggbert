@@ -92,10 +92,22 @@ namespace GalaxyEggbert::CNA
     // shield/hide/superblupi gating, none of those exist yet) as every
     // other hazard here.
     //
+    // Large creature (ObjectType54) now works too (2026-07-11, plan.md
+    // E3D-MIG-136), verified directly against Decor.cpp:5867-5913. Contact
+    // is lethal ONLY while it is paused mid-turn (patrolStep 1 or 3, the
+    // real `step != 2 && step != 4` gate) -- safe to touch while it's
+    // actually walking. It is never destroyed by the contact (no real
+    // ObjectDelete in that branch). Real balloon immunity IS modeled
+    // (`blupiBallooned` blocks the whole branch, matching the real
+    // `!m_blupiBalloon` gate) -- unlike the 4 balloon-poppable hazard
+    // types, there is no separate pop path for it. Real shield/hide/
+    // superBlupi/focus immunity and the real "destroys Blupi's current
+    // vehicle instead of killing him" branch are NOT modeled (no such
+    // concepts exist in this engine yet), so contact always takes the
+    // real no-vehicle death branch. The real unconditional taunt icon is
+    // also NOT modeled -- no idle-taunt animation system exists at all.
+    //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Type 54 (large creature) -- its own lethality window (only
-    //    while paused mid-turn) is a separate task from blupih/blupit
-    //    above.
     //  - Follower 96/97's real homing-toward-Blupi movement (Phase 13) --
     //    they're currently just static/patrol MoveObjects like any other;
     //    only their contact-death is covered here.
@@ -122,9 +134,11 @@ namespace GalaxyEggbert::CNA
         // existing callers/tests that don't care about it are unaffected.
         // blupiBallooned (default false, same reason) gates whether
         // touching a 3/16/96/97 hazard pops the balloon instead of
-        // killing -- the caller reads this back from
-        // GEBlupiController::IsBallooned() before calling Update(), same
-        // as blupiCrouching's own GetAnimState()-derived source. If this
+        // killing, AND whether the large creature (54)'s turn-dwell
+        // contact is lethal at all (real `!m_blupiBalloon` gates that
+        // whole branch, no pop path for it) -- the caller reads this back
+        // from GEBlupiController::IsBallooned() before calling Update(),
+        // same as blupiCrouching's own GetAnimState()-derived source. If this
         // call kills Blupi via enemy contact, DiedThisFrame() returns true
         // for the rest of this frame only -- GEInteractionSystem has no
         // access to GEBlupiController, so the caller is the one that must
