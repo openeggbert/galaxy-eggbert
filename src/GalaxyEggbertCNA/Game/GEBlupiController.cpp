@@ -93,6 +93,17 @@ namespace GalaxyEggbert::CNA
         m_onGround = false; // real m_blupiAir = true
     }
 
+    bool GEBlupiController::TriggerSpringBounce(bool jumpHeld) noexcept
+    {
+        if (!m_onGround)
+        {
+            return false;
+        }
+        m_velocityY = jumpHeld ? kSpringBounceHeld : kSpringBounceNotHeld;
+        m_onGround = false;
+        return true;
+    }
+
     std::uint16_t GEBlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
     {
         if (!m_onGround)

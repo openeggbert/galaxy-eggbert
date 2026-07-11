@@ -65,6 +65,24 @@ namespace GalaxyEggbert::CNA
         static constexpr float kBalloonDuration = 10.0f;
         static constexpr float kBalloonGravityMultiplier = 0.2f;
 
+        // Spring bounce (plan.md E3D-MIG-145, icon 211 = BlockTypes::Spring,
+        // verified directly against Decor.cpp:2835-2911/7312-7320). Real
+        // bounce velocity depends on whether Jump is held at the moment of
+        // contact and whether the "Power" (SecretPower) state is active:
+        // held+Power=-25, held+noPower=-19, not-held+Power=-16,
+        // not-held+noPower=-10 (negative=upward in the real source's own
+        // convention) -- Power isn't modeled yet (Phase 17), so only the
+        // two noPower magnitudes apply here. kJumpSpeed itself has no
+        // documented real-value derivation (tuned by feel, not
+        // transcribed), so these preserve the REAL PROPORTION between the
+        // spring's two magnitudes and the real baseline ground-jump
+        // velocity (`IsNormalJump`'s held+noPower=-16) applied on top of
+        // this engine's own already-tuned kJumpSpeed -- the same technique
+        // GalaxyEggbertSimple3D's own stomp bounce already used
+        // (`kJumpSpeed * 0.65f`), not an independent re-derivation.
+        static constexpr float kSpringBounceHeld = kJumpSpeed * (19.0f / 16.0f);
+        static constexpr float kSpringBounceNotHeld = kJumpSpeed * (10.0f / 16.0f);
+
         enum class AnimState : std::uint8_t { Stop, March, Jump, Down, Up };
 
         void SetPosition(float x, float y, float z) noexcept;
@@ -119,6 +137,16 @@ namespace GalaxyEggbert::CNA
         // instead of the hazard killing him. A no-op if not currently
         // ballooned.
         void PopBalloon() noexcept;
+
+        // Launches Blupi upward off a spring tile (real gate: grounded and
+        // not already airborne -- swimming/surfing/suspended don't exist in
+        // this engine, so only `m_onGround` remains relevant). A no-op
+        // (returns false) while airborne, matching the real `!m_blupiAir`
+        // guard -- lets the caller only play the real bounce sound (channel
+        // 41) on an actual new trigger, not every frame Blupi stands on a
+        // spring. jumpHeld selects which of the two real magnitudes applies
+        // (see kSpringBounceHeld/kSpringBounceNotHeld above).
+        bool TriggerSpringBounce(bool jumpHeld) noexcept;
 
         // Facing angle in radians, 0 = looking toward -Z. Updated every Step()
         // by turnInput (see below) — unlike a strafe-style controller, yaw is

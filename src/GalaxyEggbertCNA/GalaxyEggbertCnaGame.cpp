@@ -417,7 +417,13 @@ namespace GalaxyEggbert::CNA
             {
                 sound_.PlayJump();
             }
-            if (!wasOnGround && blupi_.IsOnGround())
+            // Real mobile-eggbert also suppresses this generic landing-thud
+            // sound specifically when the landing spot is a spring
+            // (Decor.cpp ~2984, `if (!IsRessort(end))`) -- the bounce sound
+            // below covers it instead, since Blupi is about to launch back
+            // upward immediately rather than coming to rest.
+            if (!wasOnGround && blupi_.IsOnGround() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) != GalaxyEggbert::BlockTypes::Spring)
             {
                 sound_.PlayLand();
             }
@@ -579,6 +585,22 @@ namespace GalaxyEggbert::CNA
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75);
+            }
+
+            // Spring / bounce tile (plan.md E3D-MIG-145, icon 211,
+            // verified directly against Decor.cpp:2835-2911/7312-7320) --
+            // NOT a hazard, launches Blupi upward instead of costing a
+            // life. TriggerSpringBounce() is idempotent (a no-op while
+            // already airborne, matching the real `!m_blupiAir` guard), so
+            // only play the real bounce sound (channel 41) on an actual new
+            // trigger. Real vehicle-dismount-first branches (Helico/Over/
+            // Jeep/Tank/Skate) are NOT modeled -- no vehicle concept exists
+            // in this engine yet, same simplification as every hazard
+            // above.
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
+                blupi_.TriggerSpringBounce(jumpPressed))
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
             }
 
             // Switches (plan.md E3D-MIG-142, see GEWorldRuntime::

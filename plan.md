@@ -101,7 +101,10 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   5 real terrain hazard tiles (`BlockTypes::isHazard()`'s own bucket) are implemented
   (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
   foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
-  Crusher non-lethal (a squash state).
+  Crusher non-lethal (a squash state). **The spring/bounce tile is also done** (`E3D-MIG-145`,
+  2026-07-11) — the first Phase 14 mechanic that isn't a hazard: `GEBlupiController::
+  TriggerSpringBounce()` launches Blupi upward (one of two real magnitudes depending on whether
+  Jump is held on contact) instead of costing a life.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -492,8 +495,30 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       real channel 8, no immunity of any kind (matches lava, unlike spikes). Emitter tile (304,
       cosmetic zap-sound timing only) NOT implemented — audio polish, not the hazard itself.
       Verified via 6 phase-value assertions in `VerifyInteractionSystem`.
-- [ ] `145` Spring (211) — dismounts vehicles first, then launches per Jump/Power combo (shares
-      values with `E3D-MIG-065`'s direct-jump table).
+- [x] `145` Spring (211) — dismounts vehicles first, then launches per Jump/Power combo (shares
+      values with `E3D-MIG-065`'s direct-jump table). Done 2026-07-11: verified directly against
+      `Decor.cpp:2835-2911`/`7312-7320`. Not a hazard — launches Blupi upward instead of costing a
+      life, gated on grounded + not already airborne (real
+      `!m_blupiNage && !m_blupiSurf && !m_blupiSuspend && !m_blupiAir`, only the last clause is
+      relevant here since none of the other 3 states exist yet). New
+      `GEBlupiController::TriggerSpringBounce(bool jumpHeld)` (idempotent, same
+      no-op-while-already-triggered shape as `TriggerCrush()`/`TriggerBalloon()`) sets the real two
+      noPower magnitudes (held=-19, not-held=-10 in the real source's own down-positive
+      convention) — Power/SecretPower isn't modeled (Phase 17), so the two Power magnitudes
+      (-25/-16) don't apply. `kJumpSpeed` itself has no documented real-value derivation (tuned by
+      feel, not transcribed), so the two new constants (`kSpringBounceHeld`/
+      `kSpringBounceNotHeld`) preserve the REAL PROPORTION between the spring's magnitudes and the
+      real baseline ground-jump velocity (`IsNormalJump`'s held+noPower=-16) applied on top of
+      this engine's own already-tuned `kJumpSpeed` — the same technique
+      `GalaxyEggbertSimple3D`'s own stomp bounce already used (`kJumpSpeed * 0.65f`). Real vehicle-
+      dismount-first branches (Helico/Over/Jeep/Tank/Skate) are NOT modeled (no vehicle concept
+      exists yet, same simplification as every hazard so far). Also ported: the real generic
+      landing-thud suppression when landing specifically on a spring (`Decor.cpp` ~2984,
+      `if (!IsRessort(end))`), since the bounce sound (real channel 41) already covers it. Already
+      playable — icon 211 is part of the tile exhibition's full 1..440 icon range, no dedicated
+      placement needed. Verified via 6 new `VerifyBlupiMovement` assertions (ground detection,
+      trigger/idempotency, held-vs-not-held magnitude comparison) + full suite (63/63 unit tests,
+      all verify tools) + live headless runs on both EasyGL and Vulkan backends.
 - [ ] `146` Temp/vanishing tile (324) — NOT a kill-check, a 90%-solid/10%-passable oscillation
       Blupi can fall through during 2 transparent frames per cycle.
 - [ ] `147` Teleporter (330-333) — narrow trigger band, 128-tick delay, implicit pairing by

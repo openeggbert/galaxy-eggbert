@@ -260,6 +260,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented the spring/bounce tile (2026-07-11, plan.md `E3D-MIG-145`, the first Phase 14 pick
+  after Phase 13 closed out).** Verified directly against `Decor.cpp:2835-2911` (the trigger +
+  bounce) and `7312-7320` (`IsRessort`, icon 211 detection).
+  - **Not a hazard** — the first Phase 14 mechanic implemented so far that launches Blupi upward
+    instead of costing a life. Gated on grounded + not already airborne (real
+    `!m_blupiNage && !m_blupiSurf && !m_blupiSuspend && !m_blupiAir` — only the last clause is
+    relevant here, since swimming/surfing/suspended-on-a-bar don't exist in this engine yet).
+  - New `GEBlupiController::TriggerSpringBounce(bool jumpHeld)` — idempotent (a no-op while
+    already airborne, matching the real `!m_blupiAir` re-trigger guard), same shape as
+    `TriggerCrush()`/`TriggerBalloon()`. Sets one of two real magnitudes depending on whether Jump
+    is held at the moment of contact: held=-19, not-held=-10 in the real source's own down-
+    positive convention (the two Power/SecretPower-boosted magnitudes, -25/-16, don't apply since
+    Power isn't modeled yet, Phase 17).
+  - **A real, documented value-conversion technique**: `kJumpSpeed` (this engine's existing normal-
+    jump speed) has no documented real-pixel derivation anywhere in this codebase — it was tuned
+    by feel, not transcribed. Rather than inventing new absolute numbers for the spring, the two
+    new constants (`kSpringBounceHeld`/`kSpringBounceNotHeld`) preserve the REAL PROPORTION
+    between the spring's two magnitudes and the real baseline ground-jump velocity
+    (`IsNormalJump`'s held+noPower=-16) applied on top of `kJumpSpeed` — the same technique
+    `GalaxyEggbertSimple3D`'s own stomp bounce already used (`kJumpSpeed * 0.65f`), not a fresh
+    re-derivation.
+  - Real vehicle-dismount-first branches (Helico/Over/Jeep/Tank/Skate landing on a spring gets
+    forcibly dismounted before the bounce applies) are NOT modeled — no vehicle concept exists in
+    this engine yet, same simplification as every hazard/enemy implemented so far.
+  - Also ported: the real generic landing-thud sound is suppressed specifically when landing on a
+    spring (`Decor.cpp` ~2984, `if (!IsRessort(end))`) — the bounce sound (real channel 41)
+    already covers it, so playing both would be redundant.
+  - **Already playable with no new placement needed** — icon 211 is part of the tile exhibition's
+    full 1..440 icon range (added in an earlier session), so it already sits in the sample world as
+    a real walkable specimen; the new bounce behavior applies to it automatically. Deliberately did
+    NOT add a bespoke hand-carved placement the way blupih/blupit/the large creature needed specific
+    terrain shapes — a spring needs no special surrounding geometry to be demonstrable, unlike those.
+  - **Verification**: 6 new `VerifyBlupiMovement` assertions (ground-block detection, trigger
+    returns true while grounded, launches airborne immediately, no-op while already airborne, and a
+    held-vs-not-held magnitude comparison over 10 steps proving the held bounce launches noticeably
+    higher). Full suite (63/63 unit tests, all 4 verify tools) and live headless runs on both
+    EasyGL and Vulkan backends all clean (identical 6146-block/84-MoveObject world load on both,
+    unchanged since no new world placement was needed).
+
 - **Implemented follower (`ObjectType96`/`97`) wake + homing (2026-07-11, plan.md `E3D-MIG-137`),
   completing Phase 13 (Enemy AI & combat) entirely.** Verified directly against
   `Decor.cpp:9646-9678` (`MoveObjectFollow`, the wake box) and `8025-8064`
@@ -2186,32 +2225,35 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (follower wake+homing, 2026-07-11, see §3's newest entry), all
+backends as of the most recent work (spring/bounce tile, 2026-07-11, see §3's newest entry), all
 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
 work remains outstanding; §8's remaining tasks are optional/low-priority polish. **Phase 13
-(Enemy AI & combat) is now fully complete** (`plan.md` §2 Feature Parity Checklist) — the active
-work moves on to Phase 14 (Hazards), which is otherwise already 5/10 done:
+(Enemy AI & combat) is fully complete; Phase 14 (Hazards) is now 6/10 done:**
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
   types (`132`/`133`/`137` contact-death), the wasp's balloon status + hazard-pop interaction
   (`135`), blupih/blupit's projectile attacks (`134`), the large creature's turn-dwell-gated grab
-  (`136`), and follower wake+homing (`137`, just finished — see §3's most recent entry). Also done
-  outside Phase 13/14: the real mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11
-  fullscreen, the `CubeMesh` winding root-cause fix, and the sample world's tile+object exhibition
-  areas.
-- **Done (Phase 14, partial)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
-  crusher, `140`-`144`).
-- **Next up (picked from `plan.md` as the natural continuation now that Phase 13 is closed, not
-  yet started)**: **Phase 14's remaining hazards** — spring (`145`), the vanishing/temp tile
-  (`146`), teleporters (`147`), the water breath gauge (`148`), and fans (`149`). None has a code
-  prerequisite blocking it; pick whichever has the clearest spec in
-  `mobile-eggbert-reference/12-hazards-and-interactables.md` as the natural next pick (spring is a
-  reasonable default — a single-purpose, self-contained bounce mechanic, similar in shape to the
-  hazards already done).
+  (`136`), and follower wake+homing (`137`). Also done outside Phase 13/14: the real
+  mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11 fullscreen, the `CubeMesh` winding
+  root-cause fix, and the sample world's tile+object exhibition areas.
+- **Done (Phase 14, 6/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
+  crusher, `140`-`144`), and the spring/bounce tile (`145`, just finished — see §3's most recent
+  entry, the first Phase 14 mechanic that isn't a hazard).
+- **Next up (picked from `plan.md` as the natural continuation, not yet started)**: **Phase 14's
+  remaining 4 mechanics** — the vanishing/temp tile (`146`, icon 324, a 90%-solid/10%-passable
+  oscillation on a raw un-scaled `m_time`-driven 20-value cycle, `Decor.cpp` ~7323), teleporters
+  (`147`, icons 330-333, narrow trigger band + 128-tick delay + implicit pairing by shared icon
+  value, `Decor::SearchTeleporte` ~7406), the water breath gauge (`148`, icons 91/92, a 3-state
+  Surf/Nage/dry machine with a ~25s gauge), and fans (`149`, icons 126-137 — only the 4 head icons
+  already rendered are lethal, consumes itself by permanently clearing the air column it blows
+  through). None has a code prerequisite blocking it — `146` (Temp) is a reasonable next pick,
+  since its mechanic (an oscillating pass/block classification) is conceptually closest to Blitz's
+  already-implemented tick-cycle gating (`GEWorldRuntime::IsBlitzActiveAtPhase()`), making it the
+  most similar in shape to work already done in this codebase.
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 

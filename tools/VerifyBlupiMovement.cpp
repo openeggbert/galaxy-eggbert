@@ -201,6 +201,50 @@ int main(int argc, char** argv)
             recovering.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         }
         check(!recovering.IsBallooned(), "balloon status auto-recovers after kBalloonDuration seconds");
+
+        // Spring bounce (plan.md E3D-MIG-145) -- same synthetic world, one
+        // more block (icon 211 = BlockTypes::Spring). GetGroundBlockType()
+        // detection first (the trigger *condition* -- GalaxyEggbertCnaGame's
+        // job), then TriggerSpringBounce()'s own state machine in
+        // isolation, same split as the Crusher tests above.
+        constexpr std::uint16_t kSpringX = 40, kSpringZ = 40;
+        synthetic.setBlock(kSpringX, 0, kSpringZ, Worlds::Block::make(BlockTypes::Spring));
+        GEBlupiController onSpring;
+        onSpring.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
+        onSpring.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(onSpring.IsOnGround(), "Blupi stands on a spring block rather than falling through it");
+        check(onSpring.GetGroundBlockType(synthetic) == BlockTypes::Spring,
+              "GetGroundBlockType() identifies a spring correctly (E3D-MIG-145 hazard detection)");
+
+        check(onSpring.TriggerSpringBounce(/*jumpHeld=*/false),
+              "TriggerSpringBounce() returns true while grounded");
+        check(!onSpring.IsOnGround(), "the bounce launches Blupi airborne immediately");
+        check(!onSpring.TriggerSpringBounce(/*jumpHeld=*/false),
+              "TriggerSpringBounce() is a no-op (returns false) while already airborne");
+
+        // Held-jump bounce launches noticeably higher than a not-held
+        // bounce, matching the real source's two distinct magnitudes
+        // (-19 held vs -10 not-held, both noPower).
+        GEBlupiController bounceHeld;
+        bounceHeld.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
+        bounceHeld.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        bounceHeld.TriggerSpringBounce(/*jumpHeld=*/true);
+
+        GEBlupiController bounceNotHeld;
+        bounceNotHeld.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
+        bounceNotHeld.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        bounceNotHeld.TriggerSpringBounce(/*jumpHeld=*/false);
+
+        constexpr int kBounceSampleSteps = 10;
+        for (int i = 0; i < kBounceSampleSteps; ++i)
+        {
+            bounceHeld.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            bounceNotHeld.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        }
+        std::cout << "Spring bounce Y after " << kBounceSampleSteps << " steps: held=" << bounceHeld.GetY()
+                  << " notHeld=" << bounceNotHeld.GetY() << std::endl;
+        check(bounceHeld.GetY() > bounceNotHeld.GetY(),
+              "holding Jump on contact launches Blupi noticeably higher than not holding it");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
