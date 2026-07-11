@@ -109,14 +109,17 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   10% on a real 20-value phase cycle; unlike every other mechanic here, it's threaded directly
   into `GEBlupiController::Step()`'s own collision scan (a new `tempPassable` parameter) rather
   than checked post-hoc, since it changes whether the tile IS the ground at all. **The teleporter
-  is also done** (`E3D-MIG-147`, 2026-07-11) — a real architectural mismatch surfaced and
-  resolved: the real "one tile above Blupi" detection is physically unreachable in this engine's
-  simplified column-based collision (a solid tile above open floor in the same column always
-  becomes that column's floor), so detection uses the cell Blupi is FACING instead
-  (`GetBlockTypeInFront()`), a natural 3D adaptation of "walk up to a wall-mounted archway."
-  `TriggerTeleport()` freezes Blupi for a real 6.4s, then `GEWorldRuntime::
+  is also done** (`E3D-MIG-147`, 2026-07-11, redesigned same day per live-playtest user feedback)
+  — `TriggerTeleport()` freezes Blupi for a real 6.4s, then `GEWorldRuntime::
   FindTeleportDestination()` relocates him to the paired pillar elsewhere in the grid (or leaves
-  him in place if no partner exists, matching real behavior).
+  him in place if no partner exists, matching real behavior). Detection matches the real "one
+  tile above Blupi" geometry exactly (`GetBlockTypeAbove()`) — teleporter icons are always
+  non-solid for collision (`GroundHeightAt`'s own exclusion), so Blupi genuinely walks into the
+  open space beneath a floating pillar, reproducing real mobile-eggbert's per-tile-independent 2D
+  collision for this one purpose. (An earlier same-day attempt made the pillar solid and detected
+  the cell Blupi was FACING instead, worked around rather than solved the real collision mismatch,
+  and shipped a real bug — Blupi froze permanently and was never relocated, caught only by live
+  playtesting, not the unit tests written for that design — since fixed and re-verified live.)
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -564,20 +567,31 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       EasyGL and Vulkan backends.
 - [x] `147` Teleporter (330-333) — narrow trigger band, 128-tick delay, implicit pairing by
       shared icon value (first-match scan, requires exactly 2 instances per value). Done
-      2026-07-11: verified directly against `Decor.cpp:7378-7394` (`IsTeleporte`), `5593-5606`
-      (trigger), `6349-6358` (completion), and `7406-7429` (`SearchTeleporte`, pairing).
-      - **Real architectural mismatch found and resolved**: the real check tests the tile one
-        row ABOVE Blupi's feet (`pos.Y-60`), which relies on real mobile-eggbert's genuinely
-        per-tile-independent 2D collision (a tile's solidity has no bearing on the tile below it
-        in the same column). This engine's simplified 3D collision instead treats the TOPMOST
-        solid block in a column as that whole column's floor (`GroundHeightAt`), which makes "a
-        solid tile floating directly above Blupi's own open, walkable column" physically
-        unreachable — confirmed empirically (a first attempt placed the pillar directly above a
-        floor block in the same column; Blupi landed ON the pillar, not beneath it). Resolved by
-        checking the cell Blupi is FACING instead (new `GEBlupiController::GetBlockTypeInFront()`,
-        yaw-based, mirrors the existing forward-vector convention in `Step()`) — a natural 3D
-        adaptation: solid teleporter pillars are wall-mounted archways you walk UP TO, not
-        overhead tiles you walk UNDER, fully reachable via normal horizontal collision.
+      2026-07-11, **redesigned the same day after a live-playtest user bug report** (froze Blupi
+      permanently, never transported him): verified directly against `Decor.cpp:7378-7394`
+      (`IsTeleporte`), `5593-5606` (trigger), `6349-6358` (completion), and `7406-7429`
+      (`SearchTeleporte`, pairing).
+      - **Real architectural mismatch found, worked around, then genuinely solved.** The real
+        check tests the tile one row ABOVE Blupi's feet (`pos.Y-60`), relying on real mobile-
+        eggbert's genuinely per-tile-independent 2D collision (a tile's solidity has no bearing on
+        the tile below it in the same column). This engine's simplified 3D collision instead
+        treats the TOPMOST solid block in a column as that whole column's floor
+        (`GroundHeightAt`), which makes "a solid tile floating above Blupi's own open, walkable
+        column" physically unreachable — confirmed empirically (placing a solid pillar one cell
+        above a floor in the same column made Blupi land ON the pillar, not beneath it). The
+        FIRST attempt worked around this by detecting the cell Blupi FACES instead
+        (`GetBlockTypeInFront()`, a wall-mounted-archway design) — this shipped, passed its own
+        unit tests, but had a real, user-reported bug live: Blupi froze permanently and was never
+        relocated. Root cause wasn't fully diagnosed (the redesign superseded it directly, see
+        below) — the working theory is a live-game-specific interaction the synthetic unit tests
+        (built around the same design) didn't exercise. The SECOND, final attempt instead solves
+        the real collision mismatch directly: teleporter icons (330-333) are now ALWAYS non-solid
+        for collision (new `IsTeleporterIcon()` check inside `GroundHeightAt`'s solid-block scan),
+        so Blupi genuinely walks into the open space beneath a floating pillar — reproducing real
+        mobile-eggbert's per-tile-independent collision for this one purpose, without a general
+        per-cell-occupancy collision rewrite. Detection reverted to `GetBlockTypeAbove()` (one
+        cell above Blupi's own position), matching the real geometry exactly, not just adapting
+        around it.
       - New `GEBlupiController::TriggerTeleport(icon)`/`IsTeleporting()`/`GetTeleportIcon()`:
         idempotent (same shape as `TriggerCrush`/`TriggerBalloon`/`TriggerSpringBounce`), gated on
         grounded + not ballooned/squashed (real `!m_blupiAir && !m_blupiBalloon && !m_blupiEcrase`
@@ -589,27 +603,40 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       - New `GEWorldRuntime::FindTeleportDestination()` (real `SearchTeleporte`): a full-grid scan
         for another cell of the same icon, excluding candidates within a fixed radius of Blupi's
         own position (replacing the real source's exact entry-tile-equality skip, since this
-        engine's "adjacent, not inside/above" entry convention doesn't map to an exact tile
-        match). Returns the matched pillar's own position offset one cell in -Z (a fixed,
-        documented landing convention — level data must place a walkable cell there, mirroring
-        the real "keep teleporter icons in matched pairs" authoring requirement). Real cosmetic
-        entry/arrival particle effects (`ObjectType92`/`27`) are NOT modeled — same simplification
-        as every other hazard/enemy's own real particle effects throughout this session; real
-        channel 71 is reused for both entry and arrival.
-      - Real playable placement: two small rooms south of the tunnel (previously-empty space),
-        each a short walkway ending in a wall with exactly one `Teleport1` cell embedded in
-        otherwise-`BrickWall` (not a whole teleporter wall — a wide multi-cell match would risk
-        self-matching within the same room instead of finding the other one). Icon 330 is
-        deliberately excluded from the tile exhibition's generic per-icon loop to guarantee
-        exactly 2 total occurrences; icons 331-333 remain in the exhibition as genuine lone
-        specimens, faithfully demonstrating the real "no partner found" no-op path.
-      - Verified via 10 new `VerifyBlupiMovement` assertions (facing-detection, trigger/
-        idempotency/gating, full freeze during transit, auto-completion) and 3 new
-        `VerifyInteractionSystem` assertions (matched-pair destination lookup using non-real test
-        icon values to avoid interference from the sample world's own real pair, and the
-        no-partner-found path) + full suite (63/63 unit tests, all verify tools) + live headless
-        runs on both EasyGL and Vulkan backends (6257-block/84-MoveObject world load, up from
-        6146, on both).
+        engine's "one cell below, not exactly at" entry convention doesn't map to an exact tile
+        match). Lands Blupi one cell BELOW the matched pillar (Y), same real relationship as
+        entry, offset one cell in +Z from directly beneath it (NOT the pillar's exact X/Z) —
+        **a second real bug found and fixed live during this same task**: landing exactly beneath
+        the matched pillar immediately re-satisfied `GetBlockTypeAbove()`'s own trigger condition
+        again, producing an infinite teleport-back-and-forth ping-pong the instant Blupi arrived
+        (confirmed via temporary debug instrumentation — reverted before committing — showing
+        `teleporting=1` continuously across both the original transit AND an immediate second one
+        with no gap). Real cosmetic entry/arrival particle effects (`ObjectType92`/`27`) are NOT
+        modeled — same simplification as every other hazard/enemy's own real particle effects
+        throughout this session; real channel 71 is reused for both entry and arrival.
+      - Real playable placement: two small OPEN rooms south of the tunnel (previously-empty
+        space), each with exactly one `Teleport1` pillar FLOATING one cell above the walkable
+        floor (no walls at all — the pillar's own non-solid-for-collision status is what makes
+        this reachable). Not a wide multi-cell teleporter structure — `FindTeleportDestination()`
+        matches by exact block type, so more than one cell per room would risk self-matching
+        within the same room. Icon 330 is deliberately excluded from the tile exhibition's
+        generic per-icon loop to guarantee exactly 2 total occurrences; icons 331-333 remain in
+        the exhibition as genuine lone specimens, faithfully demonstrating the real "no partner
+        found" no-op path.
+      - **Verified live, not just via unit tests** — the specific gap that let the first design's
+        bug ship undetected. Temporary debug instrumentation (spawn override + periodic stdout
+        position/state log, reverted before committing) confirmed: (1) the original broken
+        design's exact failure mode is no longer reproducible, (2) the fixed design genuinely
+        transports Blupi at the correct 6.4s mark to the exact expected destination coordinates,
+        and (3) the ping-pong bug found along the way is also fixed (`teleporting=0` and a stable
+        position after arrival, no immediate re-trigger). Also verified via 10 updated
+        `VerifyBlupiMovement` assertions (a real regression test for the collision-solidity bug:
+        Blupi must land on the real floor beneath a floating pillar, not on/blocked by it) and 3
+        updated `VerifyInteractionSystem` assertions (matched-pair destination lookup accounting
+        for the new landing offset, using non-real test icon values to avoid interference from the
+        sample world's own real pair, and the no-partner-found path) + full suite (63/63 unit
+        tests, all verify tools) + live headless runs on both EasyGL and Vulkan backends
+        (6245-block/84-MoveObject world load).
 - [ ] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge, vehicles
       forcibly dismounted on entry.
 - [ ] `149` Fans (126-137, only the 4 head icons already rendered are lethal) — consumes itself

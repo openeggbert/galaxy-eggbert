@@ -637,24 +637,27 @@ namespace GalaxyEggbert::CNA
 
             // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified
             // directly against Decor.cpp:7378-7394/5593-5606) -- checked
-            // one cell IN FRONT of Blupi (GetBlockTypeInFront(), not
-            // GetGroundBlockType()), a natural 3D adaptation of the real
-            // "one row above his feet" detection (see GetBlockTypeInFront's
-            // own comment for why "above" is physically unreachable in
-            // this engine's simplified column-based collision). The real
-            // narrow 7px-wide left-edge sub-tile band is NOT modeled -- no
-            // sub-tile position exists in this engine's single-point
-            // collision, same simplification already applied to spikes'
-            // own real sub-tile band. Real gate (`!m_blupiHelico/Over/
-            // Balloon/Ecrase/Jeep/Tank/Skate && !m_blupiAir &&
-            // m_blupiFocus`) is checked inside TriggerTeleport() itself
-            // (grounded, not ballooned/squashed -- vehicles/focus aren't
-            // modeled). Idempotent, same shape as every other Trigger*()
-            // here, so channel 71 only plays on an actual new trigger.
-            const auto frontIcon = blupi_.GetBlockTypeInFront(worldRuntime_.GetWorld());
-            if ((frontIcon == GalaxyEggbert::BlockTypes::Teleport1 || frontIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
-                 frontIcon == GalaxyEggbert::BlockTypes::Teleport3 || frontIcon == GalaxyEggbert::BlockTypes::Teleport4) &&
-                blupi_.TriggerTeleport(frontIcon))
+            // one cell ABOVE Blupi (GetBlockTypeAbove()), matching the real
+            // detection geometry exactly. Teleporter icons are always
+            // non-solid for collision (GroundHeightAt's own
+            // IsTeleporterIcon() skip), so Blupi can genuinely walk into
+            // the open space beneath a floating pillar to trigger this,
+            // the same way real mobile-eggbert's per-tile-independent 2D
+            // collision lets him walk under one (see GetBlockTypeAbove()'s
+            // own comment). The real narrow 7px-wide left-edge sub-tile
+            // band is NOT modeled -- no sub-tile position exists in this
+            // engine's single-point collision, same simplification already
+            // applied to spikes' own real sub-tile band. Real gate
+            // (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate &&
+            // !m_blupiAir && m_blupiFocus`) is checked inside
+            // TriggerTeleport() itself (grounded, not ballooned/squashed --
+            // vehicles/focus aren't modeled). Idempotent, same shape as
+            // every other Trigger*() here, so channel 71 only plays on an
+            // actual new trigger.
+            const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
+            if ((aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
+                 aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4) &&
+                blupi_.TriggerTeleport(aboveIcon))
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
             }

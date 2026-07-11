@@ -276,20 +276,27 @@ int main(int argc, char** argv)
               "Blupi now stands on the real Ground block beneath, not the Temp tile");
 
         // Teleporter (plan.md E3D-MIG-147) -- a real Ground floor (Y=0)
-        // with a solid Teleport1 pillar one cell IN FRONT of Blupi (grid
-        // Z-1, since default yaw=0 faces -Z), matching how a solid pillar
-        // must be approached in this engine (see
-        // GetBlockTypeInFront()'s own comment for why "above" doesn't work
-        // here).
+        // with a Teleport1 pillar FLOATING one cell above Blupi's standing
+        // height (Y=2), matching the real "one tile above his feet"
+        // detection exactly. Teleporter icons are always non-solid for
+        // collision (GroundHeightAt's own IsTeleporterIcon() skip), so
+        // Blupi must land on the REAL floor beneath it (Y=1), not be
+        // blocked by or land on top of the floating pillar -- this is
+        // also a direct regression test for the bug this redesign fixed
+        // (an earlier attempt made teleporter pillars solid, which made
+        // Blupi land ON the pillar instead of the floor beneath it).
         constexpr std::uint16_t kTeleX = 42, kTeleZ = 42;
         synthetic.setBlock(kTeleX, 0, kTeleZ, Worlds::Block::make(BlockTypes::Ground));
-        synthetic.setBlock(kTeleX, 1, static_cast<std::uint16_t>(kTeleZ - 1), Worlds::Block::make(BlockTypes::Teleport1));
+        synthetic.setBlock(kTeleX, 2, kTeleZ, Worlds::Block::make(BlockTypes::Teleport1));
 
         GEBlupiController onTeleporter;
         onTeleporter.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
-        onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt); // default yaw=0, faces -Z
-        check(onTeleporter.GetBlockTypeInFront(synthetic) == BlockTypes::Teleport1,
-              "GetBlockTypeInFront() identifies the teleporter pillar Blupi is facing (E3D-MIG-147 detection)");
+        onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        std::cout << "Blupi Y beneath the floating teleporter pillar: " << onTeleporter.GetY() << std::endl;
+        check(onTeleporter.IsOnGround() && std::fabs(onTeleporter.GetY() - 1.0f) < 0.01f,
+              "Blupi stands on the real floor beneath the floating teleporter pillar, not on/blocked by it");
+        check(onTeleporter.GetBlockTypeAbove(synthetic) == BlockTypes::Teleport1,
+              "GetBlockTypeAbove() identifies the teleporter pillar one cell above Blupi (E3D-MIG-147 detection)");
 
         check(onTeleporter.TriggerTeleport(BlockTypes::Teleport1), "TriggerTeleport() returns true while grounded");
         check(onTeleporter.IsTeleporting(), "IsTeleporting() is true immediately after TriggerTeleport()");

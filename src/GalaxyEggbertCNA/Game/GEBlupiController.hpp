@@ -113,31 +113,27 @@ namespace GalaxyEggbert::CNA
         // without a live Game/GraphicsDevice.
         [[nodiscard]] std::uint16_t GetGroundBlockType(const Worlds::World& world) const noexcept;
 
-        // Block type directly in front of Blupi -- one grid cell ahead in
-        // his current facing direction, at his own feet height. Used for
-        // the real Teleporter trigger check (plan.md E3D-MIG-147). The
-        // real check (Decor.cpp:7378-7394) tests one 2D tile-row ABOVE
-        // Blupi's feet, which relies on real mobile-eggbert's genuinely
-        // per-tile-independent 2D collision (a tile's solidity has no
-        // bearing on the tile below it in the same column). This engine's
-        // simplified 3D collision instead treats the TOPMOST solid block
-        // in a column as that whole column's floor (GroundHeightAt), which
-        // makes "a solid tile floating directly above Blupi's own open,
-        // walkable column" physically unreachable here -- confirmed by
-        // hand: placing a solid pillar one cell above a floor in the same
-        // column makes Blupi land ON the pillar (or be blocked from
-        // stepping into that column at all), never rest beneath it.
-        // Checking the cell Blupi is FACING instead is the natural 3D
-        // adaptation: solid teleporter pillars (BlockTypes.hpp) are wall-
-        // mounted archways you walk UP TO, not overhead tiles you walk
-        // UNDER -- fully reachable via this engine's normal horizontal
-        // collision (which has no ceiling/headroom concept to conflict
-        // with). Unlike GetGroundBlockType(), this is NOT gated on
-        // IsOnGround() -- the real IsTeleporte() check itself is
-        // unconditional; the grounded requirement comes from the separate
-        // trigger-site gate in TriggerTeleport() below, not from this
-        // query itself.
-        [[nodiscard]] std::uint16_t GetBlockTypeInFront(const Worlds::World& world) const noexcept;
+        // Block type directly one cell ABOVE Blupi's own standing position
+        // (mirrors GetGroundBlockType()'s exact shape/signature, but looks
+        // up instead of down) -- used for the real Teleporter trigger check
+        // (plan.md E3D-MIG-147, Decor.cpp:7378-7394's `pos.Y - 60`, "one
+        // tile above Blupi"), matching the real detection geometry exactly.
+        // An earlier attempt found this genuinely unreachable in this
+        // engine's collision model (a solid pillar one cell above open
+        // floor in the same column made Blupi land ON the pillar, since
+        // GroundHeightAt treats the topmost solid block in a column as
+        // that column's floor) -- resolved by making teleporter icons
+        // ALWAYS non-solid for collision purposes (GroundHeightAt's own
+        // IsTeleporterIcon() skip, plan.md E3D-MIG-147 §3), reproducing
+        // real mobile-eggbert's genuinely per-tile-independent 2D
+        // collision (a tile's solidity has no bearing on the tile below
+        // it) well enough for this one purpose without a general
+        // per-cell-occupancy collision rewrite. Unlike GetGroundBlockType(),
+        // this is NOT gated on IsOnGround() -- the real IsTeleporte() check
+        // itself is unconditional; the grounded requirement comes from the
+        // separate trigger-site gate in TriggerTeleport() below, not from
+        // this query itself.
+        [[nodiscard]] std::uint16_t GetBlockTypeAbove(const Worlds::World& world) const noexcept;
 
         // Enters the crusher-squash state (real m_blupiEcrase=true): zeroes
         // velocity, starts the kEcraseDuration recovery countdown. A no-op

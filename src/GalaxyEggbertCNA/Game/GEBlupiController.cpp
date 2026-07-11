@@ -28,6 +28,15 @@ namespace GalaxyEggbert::CNA
         constexpr int kJumpFrames[]  = {17, 18, 19};
         constexpr int kDownFrames[]  = {33};
         constexpr int kUpFrames[]    = {44};
+
+        // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
+        // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
+        // phase-gated) -- see GroundHeightAt's own comment for why.
+        bool IsTeleporterIcon(std::uint16_t type)
+        {
+            return type == GalaxyEggbert::BlockTypes::Teleport1 || type == GalaxyEggbert::BlockTypes::Teleport2 ||
+                   type == GalaxyEggbert::BlockTypes::Teleport3 || type == GalaxyEggbert::BlockTypes::Teleport4;
+        }
     }
 
     void GEBlupiController::SetPosition(float x, float y, float z) noexcept
@@ -52,15 +61,34 @@ namespace GalaxyEggbert::CNA
         {
             if (IsSolidAt(world, gx, y, gz))
             {
+                const auto blockType = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
+                                                        static_cast<std::uint16_t>(gz))
+                                            .type();
                 // Vanishing/Temp tile (plan.md E3D-MIG-146): during its
                 // real passable window, it is NOT solid ground -- keep
                 // scanning downward instead of stopping here, so Blupi
                 // genuinely falls through to whatever (if anything) is
                 // beneath it, matching the real IsBlocIcon(324) becoming
                 // false for those 2 of 20 phase buckets.
-                if (tempPassable &&
-                    world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
-                                    static_cast<std::uint16_t>(gz)).type() == GalaxyEggbert::BlockTypes::Temp)
+                if (tempPassable && blockType == GalaxyEggbert::BlockTypes::Temp)
+                {
+                    continue;
+                }
+                // Teleporter pillar (plan.md E3D-MIG-147): ALWAYS non-solid
+                // for collision, not phase-gated like Temp. Real
+                // mobile-eggbert's collision is genuinely per-tile-
+                // independent (a tile's solidity has no bearing on the
+                // tile below it in the same column), which is how Blupi
+                // can walk directly beneath a solid-LOOKING teleporter
+                // pillar in the real game. This engine's simplified
+                // column-based collision (topmost solid block = that
+                // column's floor) would otherwise make Blupi land ON a
+                // floating pillar instead of standing in the open space
+                // beneath it -- confirmed empirically during this task.
+                // Excluding teleporter icons from ground-height resolution
+                // entirely reproduces the real walk-under behavior without
+                // a general per-cell-occupancy collision rewrite.
+                if (IsTeleporterIcon(blockType))
                 {
                     continue;
                 }
@@ -148,16 +176,12 @@ namespace GalaxyEggbert::CNA
             .type();
     }
 
-    std::uint16_t GEBlupiController::GetBlockTypeInFront(const Worlds::World& world) const noexcept
+    std::uint16_t GEBlupiController::GetBlockTypeAbove(const Worlds::World& world) const noexcept
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        // Same forward-vector convention as Step()'s own movement code
-        // (sin(yaw), -cos(yaw)) -- one grid cell ahead of Blupi's position.
-        const float aheadX = m_x + std::sin(m_yaw);
-        const float aheadZ = m_z - std::cos(m_yaw);
-        const int gx = ClampGrid(static_cast<int>(std::lround(aheadX + kWorldCenterX)), blocksPerAxis);
-        const int gz = ClampGrid(static_cast<int>(std::lround(aheadZ + kWorldCenterZ)), blocksPerAxis);
-        const int gy = static_cast<int>(std::lround(m_y));
+        const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+        const int gy = static_cast<int>(std::lround(m_y)) + 1;
         if (gy < 0 || gy >= blocksPerAxis)
         {
             return GalaxyEggbert::BlockTypes::Air;

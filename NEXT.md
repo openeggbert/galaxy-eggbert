@@ -260,6 +260,48 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fixed the teleporter for real (2026-07-11), redesigning it the same day it shipped, after a
+  live-playtest user bug report.** The user tested `E3D-MIG-147` (below) and reported it freezes
+  Blupi permanently and never transports him. Re-verified directly against `Decor.cpp:7378-7394`/
+  `5593-5606`/`6349-6358`/`7406-7429` a second time.
+  - **The user's own diagnosis was correct and is what fixed it**: the shipped design
+    (`GEBlupiController::GetBlockTypeInFront()`) checked the cell Blupi FACES — a workaround for a
+    real collision-model conflict (a solid pillar can't float above open floor in the same column
+    in this engine's simplified collision, confirmed empirically the first time this task was
+    attempted). The user explicitly asked for the REAL design instead: move the pillar one block
+    up, with open space beneath it, triggering when Blupi walks into that space. This is only
+    possible if the pillar itself doesn't participate in ground-height resolution at all — so
+    teleporter icons (330-333) are now ALWAYS non-solid for collision (new `IsTeleporterIcon()`
+    check inside `GEBlupiController::GroundHeightAt`'s solid-block scan), reproducing real mobile-
+    eggbert's genuinely per-tile-independent 2D collision for this one purpose. Detection reverted
+    to `GetBlockTypeAbove()` (one cell above Blupi's own position), matching the real geometry
+    exactly instead of adapting around it.
+  - **A second real bug was found and fixed in the same pass, before this was reported working**:
+    testing live (see below) revealed that landing exactly beneath the destination pillar
+    immediately re-satisfied the same trigger condition, producing an infinite teleport-back-and-
+    forth ping-pong the instant Blupi arrived. Fixed by offsetting `GEWorldRuntime::
+    FindTeleportDestination()`'s landing position one cell away (+Z) from directly beneath the
+    matched pillar, instead of landing exactly on top of/beneath it.
+  - Rebuilt the sample world's two teleporter rooms as open floors with a floating pillar overhead
+    (no walls at all needed anymore, since the pillar's own non-solid status is what makes it
+    reachable).
+  - **Verified live this time, not just via unit tests** — the exact gap that let the original bug
+    ship undetected (the first design's unit tests all passed despite the real live bug). Used
+    temporary debug instrumentation (a spawn-position override placing Blupi directly under the
+    Room A pillar, plus a periodic stdout log of position/grounded/teleporting state — both
+    reverted before committing) run headless for several seconds: confirmed the transit fires at
+    the correct ~6.4s mark, lands at the exact expected destination coordinates, and — after the
+    second fix — settles there with `teleporting=0` and a stable position, no re-trigger loop.
+  - Updated 10 `VerifyBlupiMovement` assertions (now includes a direct regression test: Blupi must
+    land on the real floor beneath a floating pillar, not on/blocked by it) and 3
+    `VerifyInteractionSystem` assertions (destination math updated for the new landing offset).
+    Full suite (63/63 unit tests, all 4 verify tools) and live headless runs on both EasyGL and
+    Vulkan backends all clean (6245-block/84-MoveObject world load).
+  - **This whole redesign was written down as a tracked task first** (per the user's explicit
+    request to capture all of their feedback as tasks before starting work) — see the other 4
+    tasks from the same feedback batch in §8 (fall-off-world death, last-safe-position respawn,
+    teleporter render geometry, animation-indicator richness), still open.
+
 - **Implemented the teleporter (2026-07-11, plan.md `E3D-MIG-147`, picked as the natural
   continuation of Phase 14 after Temp).** Verified directly against `Decor.cpp:7378-7394`
   (`IsTeleporte`), `5593-5606` (trigger), `6349-6358` (completion), and `7406-7429`
@@ -2322,13 +2364,18 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (teleporter, 2026-07-11, see §3's newest entry), all
+backends as of the most recent work (teleporter fix, 2026-07-11, see §3's newest entry), all
 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
-work remains outstanding; §8's remaining tasks are optional/low-priority polish. **Phase 13
-(Enemy AI & combat) is fully complete; Phase 14 (Hazards) is now 8/10 done:**
+work remains outstanding. **The teleporter's real, user-reported bug (found 2026-07-11 during live
+playtest — froze Blupi permanently, never transported him) is now fixed** (see §3's newest entry;
+§8's P1 items still list it as the top of a batch of user-reported feedback for record-keeping,
+now marked done) — **4 more user-reported items remain**: fall-off-world death (also suspected
+broken, not yet confirmed/fixed), last-safe-position respawn, teleporter render geometry, and
+animation-indicator richness. These take priority over continuing Phase 14's remaining water-
+gauge/fans tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/10 done:
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2343,21 +2390,10 @@ work remains outstanding; §8's remaining tasks are optional/low-priority polish
   needed a genuine 3D-adaptation redesign, since the real "tile above Blupi" detection turned out
   to be physically unreachable in this engine's collision model — resolved via
   `GetBlockTypeInFront()` instead).
-- **Next up (picked from `plan.md` as the natural continuation, not yet started)**: **Phase 14's
-  remaining 2 mechanics** — the water breath gauge (`148`, icons 91/92, a 3-state Surf/Nage/dry
-  machine with a ~25s gauge, `Decor.cpp` ~7462-7529 per
-  `mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Water depth state machine"
-  section) and fans (`149`, icons 126-137 — only the 4 head icons already rendered are lethal,
-  consumes itself by permanently clearing the air column it blows through). Neither has a code
-  prerequisite blocking it. The water gauge is the larger of the two (a new 3-state body-state
-  machine plus a persistent HUD-driven countdown, similar in shape to how Crusher/Balloon already
-  added timed status flags to `GEBlupiController`, but with a `GEHud` integration this session
-  hasn't needed yet); fans are more self-contained (a single terrain-driven lethality check plus
-  a one-shot "consume the air column" world mutation, closer in shape to `TryActivateSwitch()`'s
-  existing world-mutation precedent) — fans may be the smaller next pick if minimizing new-concept
-  surface area per task is preferred, though the water gauge is more central to core traversal
-  (water areas already exist conceptually, just not yet dangerous) if breadth-first coverage is
-  preferred instead.
+- **Next up: §8's new user-reported P1 items (teleporter fix, fall-death fix), then P2 (last-safe-
+  position respawn), then P3 (teleporter render geometry, animation indicator).** Phase 14's
+  remaining 2 mechanics (water breath gauge `148`, fans `149`) are deferred until those are done —
+  see §8 for detail on each.
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 
@@ -2607,6 +2643,62 @@ wait "$GAME_PID"; echo "EXIT_CODE=$?"       # currently 1, not 0 -- see §5's kn
 No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format tooling to run.
 
 ## 8. Next smallest tasks
+
+**User-reported live-playtest feedback (2026-07-11) — these supersede the Phase 14 water-gauge/
+fans pick as the current priority; work through them in this order (P1 items are real bugs, not
+polish):**
+
+- **P1 — DONE (2026-07-11): teleporter fixed.** Was broken (froze Blupi permanently, never
+  transported him) — root cause: the shipped design (`GEBlupiController::GetBlockTypeInFront()`,
+  from `E3D-MIG-147`) checked the cell Blupi is FACING, requiring a solid wall he walks up to.
+  Redesigned per the user's explicit direction back to the real "one tile above his feet" check:
+  teleporter icons (330-333) are now ALWAYS non-solid for collision (`GroundHeightAt`'s own
+  `IsTeleporterIcon()` skip), so Blupi genuinely walks into the open space beneath a floating
+  pillar; detection reverted to `GetBlockTypeAbove()`. **A second real bug was found and fixed in
+  the same pass**: landing exactly beneath the destination pillar immediately re-triggered another
+  teleport (an infinite ping-pong) — fixed by offsetting the landing position one cell away from
+  directly beneath the matched pillar. Rebuilt the sample-world teleporter rooms as open floors
+  with a floating pillar overhead (no walls). **Verified live this time** (temporary debug
+  instrumentation — spawn override + periodic position/state log, reverted before committing —
+  confirmed the exact 6.4s transit timing, correct destination coordinates, and no re-trigger
+  loop), not just via unit tests, since the unit tests for the FIRST (broken) design all passed
+  despite the real bug. See `plan.md`'s `E3D-MIG-147` entry for full detail.
+- **P1 — Fix fall-off-world death (currently likely unreachable via normal walking).** Suspected
+  root cause: `GEBlupiController::GroundHeightAt()`'s "no solid block anywhere in this column"
+  fallback returns `0` (treated as solid ground at Y=0), not "keep falling indefinitely" — meaning
+  Blupi's Y can probably never actually drop below 0 through normal gravity/landing resolution,
+  making the existing `kFallDeathY=-5.0f` check (`GalaxyEggbertCnaGame::Update()`, `E3D-MIG-067`)
+  unreachable in practice. Confirm with a live test (walk off the authored terrain into open
+  space) before fixing — re-verify the real mobile-eggbert fall-death mechanic against
+  `Decor.cpp`/the reference doc rather than assuming. Any fix to `GroundHeightAt`'s fallback
+  affects every column in the whole 100×100×100 grid, so re-run the full suite carefully.
+- **P2 — Implement the real last-safe-position respawn** (replace the fixed spawn-point respawn
+  used by every death cause today). Already a documented known simplification
+  (`E3D-MIG-067`'s open "real 10-slot last-safe-position FIFO (`m_blupiValidPos`)" item) — re-verify
+  the exact real mechanic against `Decor.cpp` before implementing (FIFO depth, sampling
+  conditions, what counts as "safe") rather than assuming a simplified single-last-position model.
+  Touches every `triggerDeath()`/`LoseLife()`-adjacent respawn call site in
+  `GalaxyEggbertCnaGame.cpp` plus `GEBlupiController` needs to track recent safe positions.
+- **P3 — Add teleporter pyramid-tip render geometry.** User's detailed description of the real
+  icon 330-333 crop: black border, a red/yellow button + an alpha-letter symbol, a blue background
+  on the cube's side faces (existing `DirectionalCube` treatment is fine for that part), PLUS a
+  "hrot" (tip/spike) shape below the main cube — a flat square plate, then 4 triangles beneath it
+  converging to a point (an inverted-pyramid/stalactite shape hanging under the teleporter). This
+  is a genuinely new geometry primitive, not covered by any of the 4 existing render modes — needs
+  a new Easy3D mesh builder (e.g. `AppendPyramidTipMesh`/`PyramidTipItem`) wired into
+  `GETerrainRenderer`'s per-icon special-geometry table, same pattern as the other 4. Confirm exact
+  proportions with the user if the crop image itself leaves any ambiguity — this is real per-icon
+  Q&A, same standing invariant as every other confirmed render-mode assignment.
+- **P3 — Expand the bottom-right Blupi animation indicator.** Currently only 5 coarse states
+  (Stop/March/Jump/Down/Up), a deliberate simplification from when this indicator was built as a
+  debug stand-in (no real Blupi model exists yet — this was always an interim stopgap, not a
+  design decision). Needs scoping with the user: which additional real `BlupiAction` states should
+  be reflected (real mobile-eggbert has many more — Turn, Glu, Electro, Win, Bye, Clear1-8,
+  Teleporte, etc., per `mobile-eggbert-reference/10-blupi-mechanics.md`) and which are actually
+  reachable in `GalaxyEggbertCNA` today. Don't invent animation frames not present in the real
+  `blupi.png` sheet — verify against `mobile-eggbert-reference/08-animations.md` first.
+
+Older, lower-priority polish tasks (unaffected by the above, still valid, just less urgent now):
 
 0. **Follow-up: replace `avatars3d/blupi_placeholder/` with a real Blupi model, once one exists**
    (§3, 2026-07-09). Not urgent — the placeholder proves the third-person camera mode/`AvatarRenderer`

@@ -369,9 +369,24 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
+                    // Land one cell away (+Z) from directly beneath the
+                    // matched pillar, not exactly under it -- landing
+                    // exactly beneath it would immediately satisfy
+                    // GetBlockTypeAbove()'s own trigger condition again
+                    // (confirmed live: an earlier version without this
+                    // offset produced an infinite teleport-back-and-forth
+                    // ping-pong the instant Blupi arrived, since the
+                    // destination room's own pillar was directly overhead
+                    // again). Real mobile-eggbert's own landing formula
+                    // (`newpos.X=i*64`) places Blupi at the matched tile's
+                    // own column too, so real levels most likely avoid
+                    // this by simply never placing a paired teleporter's
+                    // landing spot back under a triggering tile -- this
+                    // fixed offset is this project's own equivalent
+                    // authoring safeguard, not a literal transcription.
                     destX = candX;
-                    destY = static_cast<float>(gy);
-                    destZ = static_cast<float>(gz - 1) - static_cast<float>(kWorldCenterZ);
+                    destY = static_cast<float>(gy) - 1.0f;
+                    destZ = candZ + 1.0f;
                     return true;
                 }
             }

@@ -308,26 +308,25 @@ int main(int argc, char** argv)
     }
 
     // ------------------------------------------------------------------
-    // Teleporter pair (plan.md E3D-MIG-147, 2026-07-11) -- two small
-    // rooms, each a short walkway ending in a wall with exactly one
-    // Teleport1 (icon 330) cell embedded in it (surrounded by BrickWall,
-    // NOT a whole Teleport1 wall -- GEWorldRuntime::FindTeleportDestination()
-    // matches by exact block type, so a wide multi-cell teleporter wall
-    // would risk matching another cell of the SAME room instead of the
-    // other room, see that method's own comment). Reachable by walking
-    // into either room and facing its wall (GEBlupiController::
-    // GetBlockTypeInFront()) -- south of the tunnel, previously-empty
-    // space. Symmetric orientation (both walls face -Z, floor to the
-    // south of each) so FindTeleportDestination()'s fixed -1-Z landing
-    // offset lands on real, walkable floor in both directions.
+    // Teleporter pair (plan.md E3D-MIG-147, 2026-07-11, redesigned
+    // 2026-07-11 per live-playtest user feedback) -- two small open rooms,
+    // each with exactly one Teleport1 (icon 330) pillar FLOATING one cell
+    // above the walkable floor (teleporter icons are always non-solid for
+    // collision, GEBlupiController::GroundHeightAt's own IsTeleporterIcon()
+    // skip, so Blupi genuinely walks INTO the open space directly beneath
+    // it -- matching the real "one tile above his feet" detection exactly,
+    // GEBlupiController::GetBlockTypeAbove()). Not a wide multi-cell
+    // teleporter structure -- GEWorldRuntime::FindTeleportDestination()
+    // matches by exact block type, so more than one cell per room would
+    // risk matching another cell of the SAME room instead of the other
+    // one (see that method's own comment). South of the tunnel,
+    // previously-empty space.
     // ------------------------------------------------------------------
-    fill(10, 16, 0, 0, 71, 75, BlockTypes::RockPile); // room A floor
-    fill(10, 16, 1, 3, 76, 76, BlockTypes::BrickWall); // room A wall
-    world.setBlock(13, 1, 76, Block::make(BlockTypes::Teleport1));
+    fill(10, 16, 0, 0, 71, 77, BlockTypes::RockPile); // room A floor
+    world.setBlock(13, 2, 74, Block::make(BlockTypes::Teleport1)); // floating pillar, walk beneath it
 
-    fill(30, 36, 0, 0, 71, 75, BlockTypes::RockPile); // room B floor
-    fill(30, 36, 1, 3, 76, 76, BlockTypes::BrickWall); // room B wall
-    world.setBlock(33, 1, 76, Block::make(BlockTypes::Teleport1));
+    fill(30, 36, 0, 0, 71, 77, BlockTypes::RockPile); // room B floor
+    world.setBlock(33, 2, 74, Block::make(BlockTypes::Teleport1)); // floating pillar, walk beneath it
 
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything

@@ -851,8 +851,12 @@ int main(int argc, char** argv)
         mutableWorld.setBlock(kEntryGX, kEntryGY, kEntryGZ, Worlds::Block::make(kTestIcon));
         mutableWorld.setBlock(kExitGX, kExitGY, kExitGZ, Worlds::Block::make(kTestIcon));
 
+        // Blupi's position when he triggered: one cell BELOW the entry
+        // pillar (kEntryGY - 1), matching the real "stands in the open
+        // space beneath it" relationship (GEBlupiController::
+        // GetBlockTypeAbove()), not at the pillar's own height.
         const float entryX = static_cast<float>(kEntryGX) - GEWorldRuntime::kWorldCenterX;
-        const float entryY = static_cast<float>(kEntryGY);
+        const float entryY = static_cast<float>(kEntryGY - 1);
         const float entryZ = static_cast<float>(kEntryGZ) - GEWorldRuntime::kWorldCenterZ;
 
         float destX = -999.0f, destY = -999.0f, destZ = -999.0f;
@@ -860,13 +864,14 @@ int main(int argc, char** argv)
                                                             destX, destY, destZ);
         check(found, "FindTeleportDestination() finds the paired pillar elsewhere in the grid");
         const float expectedDestX = static_cast<float>(kExitGX) - GEWorldRuntime::kWorldCenterX;
-        const float expectedDestY = static_cast<float>(kExitGY);
-        const float expectedDestZ = static_cast<float>(kExitGZ - 1) - GEWorldRuntime::kWorldCenterZ;
+        const float expectedDestY = static_cast<float>(kExitGY - 1);
+        const float expectedDestZ = static_cast<float>(kExitGZ) - GEWorldRuntime::kWorldCenterZ + 1.0f;
         std::cout << "Teleport destination: (" << destX << "," << destY << "," << destZ << ") expected ("
                   << expectedDestX << "," << expectedDestY << "," << expectedDestZ << ")" << std::endl;
         check(std::fabs(destX - expectedDestX) < 0.01f && std::fabs(destY - expectedDestY) < 0.01f &&
                   std::fabs(destZ - expectedDestZ) < 0.01f,
-              "the destination is the OTHER (exit) pillar's position, offset one cell in -Z, not the entry pillar");
+              "the destination is one cell BELOW the exit pillar in Y and one cell +Z away from directly "
+              "beneath it, not the entry pillar and not an instant-re-trigger position");
 
         // No match anywhere -- a lone pillar with no partner. Uses an
         // arbitrary non-real icon value (999, well outside the real
