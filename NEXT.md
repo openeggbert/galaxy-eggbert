@@ -260,6 +260,22 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fourth round of live feedback (2026-07-11, plan.md `E3D-MIG-142`): the Saw blade is STILL
+  wrong, teleporter tip confirmed correct/settled.** User (Czech, verbatim, with
+  `Screenshot From 2026-07-11 17-56-53.png`): "synu zase jsi to zkurvil pila je spatne ... rovna
+  strana pily musi byt u zeme a kolo se zuby nahoru a ohledne tepeporteru to je beze zmeny priste
+  ty ohledne teleporteru napisu jak si to predstavuji" — the flat/straight side of the saw must be
+  at ground level, the wheel-with-teeth must point up; teleporter tip needs no further changes for
+  now (user will write a fresh, detailed spec for it next time if anything). **No code changed this
+  round** — the user explicitly asked to stop guessing live and document instead. New analysis
+  (not yet acted on): direct alpha-channel inspection of the real icon 378 crop found its actual
+  content occupies only the BOTTOM HALF of the 64×64 tile (`y:[32,63]` of 64, top half fully
+  transparent) — the current code passes the WHOLE tile's UV uncropped, and there's an unverified
+  theory that `Easy3D::AppendPlateMesh`'s corner/UV convention vertically flips whatever texture
+  it's given (world-bottom of the plate shows the source image's own top row, and vice versa).
+  Full technical writeup and recommended next steps are in §8's newest task entry — read that
+  before attempting another fix.
+
 - **Third round of live feedback with an actual screenshot (2026-07-11, plan.md `E3D-MIG-142`/
   `147`/`149`): fixed the Saw's ANCHOR direction and reverted the teleporter tip to a genuine
   pyramid.** User (Czech, verbatim, with `Screenshot From 2026-07-11 16-35-24.png`): "ta pila je
@@ -2706,36 +2722,49 @@ Most recent first. Full history: `git log`.
 
 ## 4. Current blocker / main problem
 
-**No code blocker**, but a real, deeper architectural collision limitation was found and tracked,
-not fixed — see §5's newest row (`GroundHeightAt()` treats a column's topmost solid block as the
-floor no matter Blupi's own height, making any roofed/enclosed interior with a ceiling above an
-open floor unreachable via normal walking). It bit twice more this session (finding it while
-building the fan hazard, then again while live-verifying the Saw render-mode fix below — same
-south tunnel both times) — worth fixing properly if a THIRD task needs to walk-test something
-inside that tunnel. `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (Saw anchor direction fix + teleporter tip reverted to a
-pyramid, 2026-07-11, see §3's newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5
-verify tools (`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
-`VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
-`-DEASY3D_LINK_CNA=ON`) pass.
+**Open issue: the Saw blade's ORIENTATION is still wrong after 3 fix attempts (4th round of live
+user feedback, 2026-07-11) — do not attempt a 4th blind fix, read §8's newest task entry's full
+technical analysis first.** User: "rovná strana pily musí být u země a kolo se zuby nahoru" (the
+flat/straight side of the saw must be at ground level, the wheel-with-teeth must point up). New
+finding not yet acted on: the real icon 378 texture's actual content occupies only the bottom half
+of its 64×64 tile, and there's an unverified theory that `Easy3D::AppendPlateMesh` vertically
+flips whatever texture it's given — see §3's newest entry and §8's newest task for the full
+writeup. **The teleporter tip is confirmed correct/settled** — same round of feedback said "beze
+změny" (no change) for it.
+
+Separately, a real, deeper architectural collision limitation was found and tracked, not fixed —
+see §5's relevant row (`GroundHeightAt()` treats a column's topmost solid block as the floor no
+matter Blupi's own height, making any roofed/enclosed interior with a ceiling above an open floor
+unreachable via normal walking). It bit twice this session (fan hazard task, then the Saw
+render-mode work — same south tunnel both times) — worth fixing properly if a THIRD task needs to
+walk-test something inside that tunnel. `GalaxyEggbertCNA` builds and runs cleanly on both the
+EasyGL and Vulkan backends as of the most recent work (Saw anchor direction fix + teleporter tip
+reverted to a pyramid, 2026-07-11, see §3's 2nd-newest entry), all 63/63
+`GalaxyEggbertWorldsTests` pass, and all 5 verify tools (`VerifyBlupiMovement`,
+`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`, plus
+`../easy-3d/tests/test_cube_mesh.cpp` built with `-DEASY3D_LINK_CNA=ON`) pass — none of these are
+affected by the still-open Saw orientation issue, which is purely visual/UV-mapping.
 
 **Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
 teleporter's own extra pyramid-tip attachment geometry (a 5th, narrowly-scoped attachment, not one
 of the 4 confirmed modes — went through a non-tapering box detour, reverted back to a pyramid
-after a screenshot showed the box's 4 faces didn't visually connect at the bottom, see §3 for the
-full 3-round live-feedback history) and Saw/SawStopped now correctly wired into the
-`InnerFlatPlate` table with top-anchored (floor-level) positioning and per-placement rotation
-metadata (see §3's 3 newest entries) — no render-mechanism
-work remains outstanding on the confirmed-icon front. **All 5 items from the 2026-07-11
-live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10 done** —
-only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage swimming)
-rather than a hazard-timer variant like every other Phase 14 item so far, deliberately not started
-yet given that larger scope. Phase 13 (Enemy AI & combat) is fully complete.
+after a screenshot showed the box's 4 faces didn't visually connect at the bottom, now confirmed
+settled by the user) and Saw/SawStopped wired into the `InnerFlatPlate` table with top-anchored
+(floor-level) positioning and per-placement rotation metadata, but its internal texture
+ORIENTATION is still wrong (see above) — no OTHER render-mechanism work remains outstanding on the
+confirmed-icon front. **All 5 items from the 2026-07-11 live-playtest user feedback batch are
+substantially addressed, except this one open Saw-orientation detail**, and **Phase 14 (Hazards)
+is now 9/10 done** — only the water breath gauge (`148`) remains, a genuinely new movement mode
+(Surf/Nage swimming) rather than a hazard-timer variant like every other Phase 14 item so far,
+deliberately not started yet given that larger scope. Phase 13 (Enemy AI & combat) is fully
+complete.
 
-**1 task still queued by the user, not yet started (see §8's newest items for full detail)**:
-- **Add more platform lifts to the demo world**, and fix the existing one, which is positioned
-  under a plate/board such that it moves THROUGH solid geometry (clips, not usable/visible as
-  intended). The Saw render-mode fix above was the other queued item — now done.
+**2 open items, see §8's newest task entries for full detail**:
+1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
+   a quick fix, see §3/§8's detailed writeup — don't guess again live without reading it first).
+2. **Add more platform lifts to the demo world**, and fix the existing one, which is positioned
+   under a plate/board such that it moves THROUGH solid geometry (clips, not usable/visible as
+   intended). Not yet started.
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -3090,22 +3119,74 @@ polish):**
   black. `PyramidTipItem`/`AppendPyramidTipMesh()` removed entirely from `../easy-3d` (unused after
   the box replacement).
 
-**2 tasks queued by the user (2026-07-11):**
+**3 tasks queued by the user (2026-07-11), 1 done + 1 paused + 1 not started:**
 
-1. **DONE (2026-07-11): fixed the Saw tile's render mode AND the teleporter tip, across 3 rounds
-   of live user feedback (the 3rd with an actual screenshot).** See §3's 3 newest entries and
-   `plan.md`'s `E3D-MIG-142`/`147`/`149` entries for full detail — Saw/SawStopped now use
-   `InnerFlatPlate` with a short plate anchored to the block's TOP face (floor level, where
-   Blupi's feet are — round 1 wrongly bottom-anchored it, sinking it below the visible floor) and
-   a per-PLACEMENT rotation metadata bit (not a hardcoded per-icon axis), superseding the old
-   undecided "ThinMechanical" categorization. The teleporter tip went pyramid → box → back to
-   pyramid (the box's 4 flat faces didn't share a vertex, so their triangle-shaped alpha cutouts
-   visibly failed to connect at the block's edges — confirmed directly in the user's screenshot;
-   a real pyramid's faces share one apex by construction). Also surfaced (twice) the tracked
-   `GroundHeightAt()` ceiling limitation (§5) while live-verifying the Saw — the switch+saw pair
-   sits inside the same roofed tunnel interior the fan hazard task already hit this same
-   limitation in.
-2. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
+1. **Teleporter tip: DONE, confirmed no further changes needed for now.** See §3's entries and
+   `plan.md`'s `E3D-MIG-147` entry for full detail — reverted from a non-tapering box back to a
+   genuine pyramid (the box's 4 flat faces didn't share a vertex, so their triangle-shaped alpha
+   cutouts visibly failed to connect at the block's edges). User's exact words on this (2026-07-11,
+   round 4): "ohledne tepeporteru to je beze zmeny priste ty ohledne teleporteru napisu jak si to
+   predstavuji" (regarding the teleporter, no change for now — next time I'll write up how I
+   picture it) — i.e., don't touch the teleporter tip again until the user provides a fresh,
+   detailed spec for it. Treat it as settled, not as "still broken."
+2. **Saw blade: STILL WRONG after 3 rounds of fixes — do NOT attempt another blind fix, see the
+   detailed analysis below before touching this again.** User (Czech, round 4, verbatim, with
+   `Screenshot From 2026-07-11 17-56-53.png`): "synu zase jsi to zkurvil pila je spatne ... ty to
+   nevidis rovna strana pily musi byt u zeme a kolo se zuby nahoru" — "you screwed it up again,
+   the saw is wrong ... you don't see it? the FLAT/STRAIGHT side of the saw must be at the ground,
+   and the WHEEL with teeth must be UP." The user explicitly asked to stop and document rather
+   than guess again live, so this task is paused pending either a clearer spec from the user or a
+   more careful investigation before the next attempt.
+   - **What's been tried so far** (all confirmed insufficient by live user feedback):
+     round 1 — added Saw/SawStopped to the `InnerFlatPlate` table (fixed "rendered as a plain
+     cube" — this part IS correct and unchanged since). Round 2 — shrank the plate
+     (`kSawPlateHeight=0.5`) and bottom-anchored it to the block's own `-0.5` face — user said it
+     looked buried ("cuts into the ground"). Round 3 — re-anchored to the block's TOP face
+     (`+0.5`, extending down) — user says it's STILL wrong, now specifically calling out
+     ORIENTATION (flat side vs. toothed wheel), not just vertical position.
+   - **New finding from this session, not yet acted on**: direct alpha-channel inspection of the
+     real icon 378 crop (`../mobile-eggbert/Content/icons/object-m.png`, 64×64 tile) shows the
+     non-transparent content's bounding box is `x:[3,59] y:[32,63]` — i.e., the actual
+     gear/blade graphic occupies ONLY THE BOTTOM HALF of the tile (`y>=32`); the top half is
+     fully transparent. The current code passes the WHOLE tile's UV uncropped
+     (`item.Uv = tileUv` in the generic `InnerFlatPlate` branch, no Saw-specific crop) — meaning
+     half the mapped texture space is empty.
+   - **A second, unverified but plausible theory**: `Easy3D::AppendPlateMesh`'s corner/UV mapping
+     (`corners[0]`/`[1]` = world BOTTOM, mapped to `V0`; `corners[2]`/`[3]` = world TOP, mapped to
+     `V1`) combined with this atlas's own convention (`V0` = the source image's TOP row, `V1` =
+     its BOTTOM row, confirmed elsewhere this session for the teleporter tip's own UV cropping)
+     means a `PlateItem` always renders its source image VERTICALLY FLIPPED: world-bottom shows
+     the image's own top, world-top shows the image's own bottom. Combined with the bbox finding
+     above (real content is in the image's bottom half, i.e. high V), this would put the actual
+     gear content at the plate's WORLD-TOP (matching where it's currently appearing, near/above
+     floor level) — but potentially mirrored vertically from its natural orientation, which could
+     explain "flat side up, teeth down" instead of the requested "flat side down, teeth up" if the
+     source graphic itself has an identifiable flat edge on one side of the gear (not conclusively
+     confirmed by the bbox alone — the crop visually reads as a gear/cog with teeth on the visible
+     arc; no obviously flat edge was identified by eye, but wasn't ruled out either — see the saved
+     crop for direct re-inspection: `icon378_onred.png` was generated this session, composited on
+     red to show the alpha boundary clearly, but not saved outside the scratchpad — regenerate via
+     the same script if needed, see this entry's own repo history / ask the user to describe the
+     crop again if unclear).
+   - **Also observed but not diagnosed**: the live screenshot shows the Saw's EXHIBITION specimen
+     (not the real switch+saw gameplay pair) overlapping/positioned oddly relative to a
+     neighboring exhibit (a "6" trophy) — possibly just an unfortunate camera angle, possibly a
+     sign the blade is now sitting too high given the exhibition's own per-icon spacing/pedestal
+     assumptions (which differ from the real gameplay placement's floor-embedded context). Worth
+     checking BOTH the exhibition specimen and the real gameplay placement when re-attempting this
+     fix, not just one.
+   - **Recommended next steps**: (1) re-inspect the real icon 378 crop very carefully for a
+     genuinely flat/straight edge (re-run the red-composite script, look closely, maybe ask the
+     user to point it out precisely if still ambiguous); (2) determine definitively whether
+     `AppendPlateMesh` really does vertically flip its source image (write a tiny standalone
+     check rendering a asymmetric test texture through it, or reason through `../easy-3d`'s
+     `AppendFace`/`ComputeFaceCorners` conventions directly); (3) if confirmed, either crop+flip
+     the Saw's own UV rect (a per-icon fix, like `TeleporterTipUv()`) or reconsider whether ANY
+     other `InnerFlatPlate` icon is silently also flipped but just never noticed (65 icons use
+     this same path — Saw is the first with a strongly asymmetric, orientation-sensitive graphic);
+     (4) get a live screenshot BEFORE claiming done this time, and compare the visible teeth
+     direction against the user's literal description before considering this resolved.
+3. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
    verbatim): "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
    soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu" — the
    sample world's existing platform lift (`ObjectType1`, the "crow's-nest" lift mentioned in §3's
