@@ -275,6 +275,12 @@ namespace GalaxyEggbert::CNA
         return cycle <= 2;
     }
 
+    bool GEWorldRuntime::IsTempPassableAtPhase(int animPhase) noexcept
+    {
+        const int cycle = (((animPhase / 4) % 20) + 20) % 20; // defensive: handle a negative phase
+        return cycle >= 18;
+    }
+
     std::optional<bool> GEWorldRuntime::TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
                                                             bool blupiOnGround)
     {

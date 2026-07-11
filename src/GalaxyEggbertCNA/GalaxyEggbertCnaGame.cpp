@@ -406,8 +406,15 @@ namespace GalaxyEggbert::CNA
             // not just Step()'s own natural-timeout countdown.
             const bool wasBallooned = blupi_.IsBallooned();
             const float blupiXBeforeStep = blupi_.GetX();
+            // Vanishing/Temp tile (plan.md E3D-MIG-146) -- computed once
+            // per frame from the same 20-ticks/sec animPhase_ every other
+            // per-tile timing cycle here already uses (Blitz/Crusher), then
+            // threaded into Step() itself (not a post-hoc GetGroundBlockType()
+            // check like every other hazard) since this changes whether the
+            // tile IS the ground at all, not just what Blupi is standing on.
+            const bool tempPassable = GEWorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase());
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
-                        crouchHeld, lookUpHeld, dt);
+                        crouchHeld, lookUpHeld, dt, tempPassable);
 
             // Real mobile-eggbert jump/land/footstep sounds (2026-07-10).
             // jumpPressed is edge-detected the same way "C" is below, gated

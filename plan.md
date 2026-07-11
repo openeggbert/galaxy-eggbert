@@ -104,7 +104,11 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   Crusher non-lethal (a squash state). **The spring/bounce tile is also done** (`E3D-MIG-145`,
   2026-07-11) — the first Phase 14 mechanic that isn't a hazard: `GEBlupiController::
   TriggerSpringBounce()` launches Blupi upward (one of two real magnitudes depending on whether
-  Jump is held on contact) instead of costing a life.
+  Jump is held on contact) instead of costing a life. **The Temp/vanishing tile is also done**
+  (`E3D-MIG-146`, 2026-07-11) — solid 90% of the time, passable (Blupi falls through) the other
+  10% on a real 20-value phase cycle; unlike every other mechanic here, it's threaded directly
+  into `GEBlupiController::Step()`'s own collision scan (a new `tempPassable` parameter) rather
+  than checked post-hoc, since it changes whether the tile IS the ground at all.
 - **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
@@ -519,8 +523,37 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       placement needed. Verified via 6 new `VerifyBlupiMovement` assertions (ground detection,
       trigger/idempotency, held-vs-not-held magnitude comparison) + full suite (63/63 unit tests,
       all verify tools) + live headless runs on both EasyGL and Vulkan backends.
-- [ ] `146` Temp/vanishing tile (324) — NOT a kill-check, a 90%-solid/10%-passable oscillation
-      Blupi can fall through during 2 transparent frames per cycle.
+- [x] `146` Temp/vanishing tile (324) — NOT a kill-check, a 90%-solid/10%-passable oscillation
+      Blupi can fall through during 2 transparent frames per cycle. Done 2026-07-11: verified
+      directly against `Decor.cpp:7503-7538` (`IsPassIcon`/`IsBlocIcon`'s icon-324 special case).
+      Solid for cycle buckets 0-17, passable (Blupi falls through) only for buckets 18-19 of a
+      raw, un-scaled `m_time`-driven 20-value cycle (`m_time / 4 % 20 >= 18`) — NOT
+      `Config::ScaleDiv`-normalized like almost every other timer in the source, an explicit
+      exception the reference doc calls out (same category as Crusher's own raw `m_time`). At
+      this project's Fps20 reference rate `Config::ScaleDiv(N) == N` exactly, so raw `m_time` and
+      `GEWorldRuntime`'s own 20-ticks/sec `animPhase_` are numerically identical — unlike
+      Crusher, this is an EXACT reuse, not an approximation. New static/pure
+      `GEWorldRuntime::IsTempPassableAtPhase(int)`, same shape as `IsBlitzActiveAtPhase`/
+      `IsCrusherActiveAtPhase`. No per-cell phase offset in the real source, so every Temp tile
+      in a level blinks in perfect lockstep.
+      Unlike every hazard/mechanic so far (all gated via a post-`Step()` `GetGroundBlockType()`
+      check), this changes whether the tile IS solid ground at all — a collision-shape question,
+      not a "what am I standing on" query — so it's threaded directly into
+      `GEBlupiController::Step()`'s new `tempPassable` parameter (default `false`, so every
+      existing call site is unaffected) down into `GroundHeightAt()`'s own solid-block scan
+      (skips a `Temp` cell and keeps scanning downward when passable, so Blupi genuinely falls
+      through to whatever's beneath, both for the main landing check and `TryMoveAxis`'s step-up
+      gate). `GEBlupiController` itself stays fully engine-agnostic/decoupled from
+      `GEWorldRuntime` (per its own class-comment design goal) — the caller
+      (`GalaxyEggbertCnaGame::Update()`) pre-computes the bool from
+      `GEWorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase())` once per frame and
+      passes it in, same pattern as `blupiCrouching`/`blupiBallooned` in
+      `GEInteractionSystem::Update()`. Already playable — icon 324 is part of the tile
+      exhibition's full 1..440 icon range, no dedicated placement needed. Verified via 4 new
+      `VerifyBlupiMovement` assertions (solid-window ground detection + a genuine fall-through
+      onto a real floor beneath once passable) and 5 new `VerifyInteractionSystem` phase-boundary
+      assertions, + full suite (63/63 unit tests, all verify tools) + live headless runs on both
+      EasyGL and Vulkan backends.
 - [ ] `147` Teleporter (330-333) — narrow trigger band, 128-tick delay, implicit pairing by
       shared icon value (first-match scan, requires exactly 2 instances per value).
 - [ ] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge, vehicles

@@ -166,14 +166,25 @@ namespace GalaxyEggbert::CNA
         // along the current facing direction — arrows are not a strafe pad.
         // crouchHeld (LShift)/lookUpHeld (RShift) mirror Simple3D's Down/Up
         // BlupiState and don't affect collision, only animation state and
-        // (via the CNA game's camera) eye height/look pitch.
+        // (via the CNA game's camera) eye height/look pitch. tempPassable
+        // (plan.md E3D-MIG-146, default false so existing callers/tests
+        // that don't place a Temp tile are unaffected) is the caller's
+        // pre-computed GEWorldRuntime::IsTempPassableAtPhase() result for
+        // this frame -- kept as a plain bool rather than a GEWorldRuntime
+        // dependency so this class stays engine-agnostic/scriptable (see
+        // the class comment). When true, any BlockTypes::Temp cell is
+        // treated as non-solid for ground-height purposes (both the main
+        // landing check and TryMoveAxis's step-up gate), so Blupi
+        // genuinely falls through a vanished Temp tile instead of standing
+        // on it.
         void Step(const Worlds::World& world, float turnInput, float moveInput,
-                  bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt);
+                  bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
+                  bool tempPassable = false);
 
     private:
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
-        [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz);
-        void TryMoveAxis(const Worlds::World& world, float ddx, float ddz);
+        [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable);
+        void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
         void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt);
 
         float m_x = 0.0f;

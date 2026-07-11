@@ -819,6 +819,17 @@ int main(int argc, char** argv)
         check(selfDestructed, "a homing follower self-destructs when its next step would land inside solid terrain");
     }
 
+    // 15. GEWorldRuntime::IsTempPassableAtPhase() (plan.md E3D-MIG-146) --
+    // real IsPassIcon/IsBlocIcon(324) cycle: solid for buckets 0-17,
+    // passable only for buckets 18-19 of a 20-value cycle at 4 phase
+    // ticks/bucket (`m_time / 4 % 20 >= 18`), so the passable window is
+    // phases 72-79 of every 80-phase cycle.
+    check(!GEWorldRuntime::IsTempPassableAtPhase(0), "Temp solid at phase 0 (cycle start, bucket 0)");
+    check(!GEWorldRuntime::IsTempPassableAtPhase(71), "Temp solid at phase 71 (bucket 17, just before the window)");
+    check(GEWorldRuntime::IsTempPassableAtPhase(72), "Temp passable at phase 72 (bucket 18, window start)");
+    check(GEWorldRuntime::IsTempPassableAtPhase(79), "Temp passable at phase 79 (bucket 19, window end)");
+    check(!GEWorldRuntime::IsTempPassableAtPhase(80), "Temp solid at phase 80 (cycle wraps back to bucket 0)");
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

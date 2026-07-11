@@ -245,6 +245,35 @@ int main(int argc, char** argv)
                   << " notHeld=" << bounceNotHeld.GetY() << std::endl;
         check(bounceHeld.GetY() > bounceNotHeld.GetY(),
               "holding Jump on contact launches Blupi noticeably higher than not holding it");
+
+        // Vanishing/Temp tile (plan.md E3D-MIG-146) -- a real Ground block
+        // (Y=0) with a Temp tile directly above it (Y=1), so
+        // tempPassable=true has a genuine lower floor to fall through TO,
+        // avoiding any ambiguity with GroundHeightAt's own "nothing solid
+        // anywhere in this column" fallback.
+        constexpr std::uint16_t kTempX = 45, kTempZ = 45;
+        synthetic.setBlock(kTempX, 0, kTempZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kTempX, 1, kTempZ, Worlds::Block::make(BlockTypes::Temp));
+
+        GEBlupiController onTemp;
+        onTemp.SetPosition(static_cast<float>(kTempX) - 50.0f, 2.0f, static_cast<float>(kTempZ) - 50.0f);
+        onTemp.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, /*tempPassable=*/false);
+        check(onTemp.IsOnGround(), "Blupi stands on a Temp tile during its solid (non-passable) window");
+        check(onTemp.GetGroundBlockType(synthetic) == BlockTypes::Temp,
+              "GetGroundBlockType() identifies a Temp tile correctly (E3D-MIG-146 detection)");
+
+        // During the real passable window (2 of 20 phase buckets), the SAME
+        // Temp tile stops being solid ground -- Blupi should fall through
+        // to the real Ground block one cell below instead of staying put.
+        for (int i = 0; i < 60 && !(onTemp.IsOnGround() && onTemp.GetY() < 1.9f); ++i)
+        {
+            onTemp.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, /*tempPassable=*/true);
+        }
+        std::cout << "Blupi Y after the Temp tile turns passable: " << onTemp.GetY() << std::endl;
+        check(std::fabs(onTemp.GetY() - 1.0f) < 0.1f,
+              "Blupi falls through the Temp tile onto the real ground one cell below once it's passable");
+        check(onTemp.GetGroundBlockType(synthetic) == BlockTypes::Ground,
+              "Blupi now stands on the real Ground block beneath, not the Temp tile");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

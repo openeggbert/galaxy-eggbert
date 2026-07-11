@@ -165,6 +165,27 @@ namespace GalaxyEggbert::CNA
         // reasoning as IsBlitzActiveAtPhase() above.
         [[nodiscard]] static bool IsCrusherActiveAtPhase(int animPhase) noexcept;
 
+        // Real vanishing/Temp tile timing (plan.md E3D-MIG-146, icon 324,
+        // `Decor::IsPassIcon`/`IsBlocIcon` per Decor.cpp:7503-7538, verified
+        // directly against source): solid 90% of the time, passable
+        // (Blupi falls through) only during the last 2 of a raw, un-scaled
+        // `m_time`-driven 20-value cycle (`m_time / 4 % 20 >= 18`) -- NOT
+        // `Config::ScaleDiv`-normalized, an explicit exception the
+        // reference doc calls out (same category as Crusher's own raw
+        // `m_time`, see IsCrusherActiveAtPhase's comment). At this
+        // project's Fps20 reference rate `Config::ScaleDiv(N) == N`
+        // exactly, so raw `m_time` and this class's own 20-ticks/sec
+        // `animPhase_` are numerically identical -- unlike Crusher, this
+        // is an exact reuse, not an approximation. No per-cell phase
+        // offset in the real source, so every Temp tile in a level blinks
+        // in perfect lockstep -- this is why a single phase-only, static/
+        // pure function (not a per-cell one) is correct here. Consumed by
+        // `GEBlupiController::Step()`'s `tempPassable` parameter, not by
+        // `GetGroundBlockType()` -- unlike lava/spikes/Blitz/saw/Crusher,
+        // this changes whether the tile IS the ground at all (a
+        // collision-shape question, not a "what am I standing on" query).
+        [[nodiscard]] static bool IsTempPassableAtPhase(int animPhase) noexcept;
+
         // BigDecor: is a second 100x100 background tile layer in
         // mobile-eggbert level files (see mobile-eggbert-2d-reference.md
         // §2.3) — parsed and stored here (same icon-id-to-block-type

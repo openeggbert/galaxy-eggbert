@@ -45,13 +45,25 @@ namespace GalaxyEggbert::CNA
                                static_cast<std::uint16_t>(gz)).isAir();
     }
 
-    int GEBlupiController::GroundHeightAt(const Worlds::World& world, int gx, int gz)
+    int GEBlupiController::GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable)
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         for (int y = blocksPerAxis - 1; y >= 0; --y)
         {
             if (IsSolidAt(world, gx, y, gz))
             {
+                // Vanishing/Temp tile (plan.md E3D-MIG-146): during its
+                // real passable window, it is NOT solid ground -- keep
+                // scanning downward instead of stopping here, so Blupi
+                // genuinely falls through to whatever (if anything) is
+                // beneath it, matching the real IsBlocIcon(324) becoming
+                // false for those 2 of 20 phase buckets.
+                if (tempPassable &&
+                    world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
+                                    static_cast<std::uint16_t>(gz)).type() == GalaxyEggbert::BlockTypes::Temp)
+                {
+                    continue;
+                }
                 return y + 1;
             }
         }
@@ -123,7 +135,7 @@ namespace GalaxyEggbert::CNA
             .type();
     }
 
-    void GEBlupiController::TryMoveAxis(const Worlds::World& world, float ddx, float ddz)
+    void GEBlupiController::TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable)
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         const float candidateX = m_x + ddx;
@@ -132,7 +144,7 @@ namespace GalaxyEggbert::CNA
         const int gx = ClampGrid(static_cast<int>(std::lround(candidateX + kWorldCenterX)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::lround(candidateZ + kWorldCenterZ)), blocksPerAxis);
 
-        const int targetGroundY = GroundHeightAt(world, gx, gz);
+        const int targetGroundY = GroundHeightAt(world, gx, gz, tempPassable);
 
         // Allow the move if the destination column's ground is at most
         // kStepLimit above the current feet Y (step-up); any amount lower
@@ -149,7 +161,8 @@ namespace GalaxyEggbert::CNA
     }
 
     void GEBlupiController::Step(const Worlds::World& world, float turnInput, float moveInput,
-                                  bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt)
+                                  bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
+                                  bool tempPassable)
     {
         // Tank controls (matches GalaxyEggbertSimple3D's "Move" axis
         // handling): turning changes yaw directly; movement is always along
@@ -172,11 +185,11 @@ namespace GalaxyEggbert::CNA
             const float dz = -std::cos(m_yaw) * moveInput * effectiveMoveSpeed * dt;
             if (dx != 0.0f)
             {
-                TryMoveAxis(world, dx, 0.0f);
+                TryMoveAxis(world, dx, 0.0f, tempPassable);
             }
             if (dz != 0.0f)
             {
-                TryMoveAxis(world, 0.0f, dz);
+                TryMoveAxis(world, 0.0f, dz, tempPassable);
             }
         }
 
@@ -215,7 +228,7 @@ namespace GalaxyEggbert::CNA
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
-        const int groundY = GroundHeightAt(world, gx, gz);
+        const int groundY = GroundHeightAt(world, gx, gz, tempPassable);
 
         if (newY <= static_cast<float>(groundY))
         {

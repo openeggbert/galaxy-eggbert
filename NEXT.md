@@ -256,9 +256,47 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 - Simple3D: build is currently broken in this environment (missing/incompatible U3D prebuilt, see
   §2) — **not to be fixed**, per user 2026-07-08: Simple3D is historical reference only now (§9).
 
-## 3. Recent changes
-
-Most recent first. Full history: `git log`.
+- **Implemented the Temp/vanishing tile (2026-07-11, plan.md `E3D-MIG-146`, picked as the natural
+  continuation of Phase 14 after spring).** Verified directly against `Decor.cpp:7503-7538`
+  (`IsPassIcon`/`IsBlocIcon`'s icon-324 special case).
+  - Solid for cycle buckets 0-17, passable (Blupi falls through, no damage) only for buckets 18-19
+    of a raw, un-scaled `m_time`-driven 20-value cycle (`m_time / 4 % 20 >= 18`) — NOT
+    `Config::ScaleDiv`-normalized like almost every other timer in the real source, an explicit
+    exception the reference doc calls out (same category as Crusher's own raw `m_time`). **A real
+    finding**: at this project's Fps20 reference rate, `Config::ScaleDiv(N) == N` exactly, so raw
+    `m_time` and `GEWorldRuntime`'s own 20-ticks/sec `animPhase_` are numerically identical —
+    unlike Crusher's own equivalent note, this is an EXACT reuse, not an approximation. New
+    static/pure `GEWorldRuntime::IsTempPassableAtPhase(int)`, same shape as
+    `IsBlitzActiveAtPhase`/`IsCrusherActiveAtPhase`. No per-cell phase offset in the real source,
+    so every Temp tile in a level blinks in perfect lockstep — a single global phase check is
+    correct, not a per-cell one.
+  - **Architecturally different from every hazard/mechanic implemented so far**: all of those are
+    checked post-`Step()` via `GetGroundBlockType()` (a "what am I standing on" query). Temp
+    changes whether the tile IS solid ground at all — a collision-shape question — so it had to be
+    threaded directly into the collision path itself: `GEBlupiController::Step()` gained a new
+    `tempPassable` parameter (default `false`, so every one of the ~20 existing call sites in
+    `VerifyBlupiMovement.cpp` is unaffected), passed down into the private `GroundHeightAt()`'s
+    own solid-block scan (skips a `Temp` cell and keeps scanning downward when passable, both for
+    the main landing check and `TryMoveAxis`'s step-up gate) — so Blupi genuinely falls through to
+    whatever's beneath, or keeps falling if there's nothing there.
+  - `GEBlupiController` itself stays fully engine-agnostic/decoupled from `GEWorldRuntime` (its
+    own stated class-comment design goal, so `Step()` stays scriptable without a live world
+    runtime) — the caller (`GalaxyEggbertCnaGame::Update()`) pre-computes the bool from
+    `GEWorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase())` once per frame and passes
+    it in, the same pattern already used for `blupiCrouching`/`blupiBallooned` in
+    `GEInteractionSystem::Update()`.
+  - Already playable with no new placement needed — icon 324 is part of the tile exhibition's full
+    1..440 icon range, so a real Temp specimen already sits in the sample world.
+  - **Verification**: 4 new `VerifyBlupiMovement` assertions (solid-window ground/type detection,
+    then a genuine fall-through onto a real Ground block placed one cell beneath, once passable —
+    the first attempt used a loop-exit condition (`GetY() > 1.5f`) that stopped too early, right as
+    Blupi started falling rather than once he'd actually landed; fixed to loop on
+    `!(IsOnGround() && GetY() < 1.9f)`, matching the file's own existing "faller" test's
+    `!IsOnGround()`-driven loop shape) and 5 new `VerifyInteractionSystem` phase-boundary
+    assertions (bucket 17 solid, 18/19 passable, wraps back to solid at bucket 0 of the next
+    80-phase cycle). Full suite (63/63 unit tests, all 4 verify tools) and live headless runs on
+    both EasyGL and Vulkan backends all clean (identical 6146-block/84-MoveObject world load on
+    both, unchanged since no new world placement was needed).
 
 - **Implemented the spring/bounce tile (2026-07-11, plan.md `E3D-MIG-145`, the first Phase 14 pick
   after Phase 13 closed out).** Verified directly against `Decor.cpp:2835-2911` (the trigger +
@@ -2225,13 +2263,13 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (spring/bounce tile, 2026-07-11, see §3's newest entry), all
+backends as of the most recent work (Temp/vanishing tile, 2026-07-11, see §3's newest entry), all
 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
 work remains outstanding; §8's remaining tasks are optional/low-priority polish. **Phase 13
-(Enemy AI & combat) is fully complete; Phase 14 (Hazards) is now 6/10 done:**
+(Enemy AI & combat) is fully complete; Phase 14 (Hazards) is now 7/10 done:**
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2240,20 +2278,21 @@ work remains outstanding; §8's remaining tasks are optional/low-priority polish
   (`136`), and follower wake+homing (`137`). Also done outside Phase 13/14: the real
   mobile-eggbert-faithful `GEHud`, sound, mouse-look + F11 fullscreen, the `CubeMesh` winding
   root-cause fix, and the sample world's tile+object exhibition areas.
-- **Done (Phase 14, 6/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
-  crusher, `140`-`144`), and the spring/bounce tile (`145`, just finished — see §3's most recent
-  entry, the first Phase 14 mechanic that isn't a hazard).
+- **Done (Phase 14, 7/10)**: all 5 real terrain hazard tiles (lava/spikes/blitz/saw+switches/
+  crusher, `140`-`144`), the spring/bounce tile (`145`), and the Temp/vanishing tile (`146`, just
+  finished — see §3's most recent entry, the first Phase 14 mechanic threaded directly into
+  `GEBlupiController::Step()`'s own collision scan rather than checked post-hoc via
+  `GetGroundBlockType()`).
 - **Next up (picked from `plan.md` as the natural continuation, not yet started)**: **Phase 14's
-  remaining 4 mechanics** — the vanishing/temp tile (`146`, icon 324, a 90%-solid/10%-passable
-  oscillation on a raw un-scaled `m_time`-driven 20-value cycle, `Decor.cpp` ~7323), teleporters
-  (`147`, icons 330-333, narrow trigger band + 128-tick delay + implicit pairing by shared icon
-  value, `Decor::SearchTeleporte` ~7406), the water breath gauge (`148`, icons 91/92, a 3-state
-  Surf/Nage/dry machine with a ~25s gauge), and fans (`149`, icons 126-137 — only the 4 head icons
-  already rendered are lethal, consumes itself by permanently clearing the air column it blows
-  through). None has a code prerequisite blocking it — `146` (Temp) is a reasonable next pick,
-  since its mechanic (an oscillating pass/block classification) is conceptually closest to Blitz's
-  already-implemented tick-cycle gating (`GEWorldRuntime::IsBlitzActiveAtPhase()`), making it the
-  most similar in shape to work already done in this codebase.
+  remaining 3 mechanics** — teleporters (`147`, icons 330-333, narrow trigger band + 128-tick
+  delay + implicit pairing by shared icon value, `Decor::SearchTeleporte` ~7406), the water breath
+  gauge (`148`, icons 91/92, a 3-state Surf/Nage/dry machine with a ~25s gauge), and fans (`149`,
+  icons 126-137 — only the 4 head icons already rendered are lethal, consumes itself by
+  permanently clearing the air column it blows through). None has a code prerequisite blocking it
+  — teleporters (`147`) are a reasonable next pick: a self-contained trigger+relocate mechanic,
+  closer in shape to the switch-linking work already done (`GEWorldRuntime::TryActivateSwitch()`)
+  than the water gauge (needs a new persistent-meter concept) or fans (interacts with the terrain
+  grid itself, consuming a cell permanently).
 - Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
   are not started at all — see `plan.md` for the itemized task lists.
 
