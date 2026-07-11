@@ -2614,18 +2614,30 @@ Most recent first. Full history: `git log`.
 not fixed — see §5's newest row (`GroundHeightAt()` treats a column's topmost solid block as the
 floor no matter Blupi's own height, making any roofed/enclosed interior with a ceiling above an
 open floor unreachable via normal walking). `GalaxyEggbertCNA` builds and runs cleanly on both the
-EasyGL and Vulkan backends as of the most recent work (fan hazard, 2026-07-11, see §3's newest
-entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools (`VerifyBlupiMovement`,
-`VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`, plus
-`../easy-3d/tests/test_cube_mesh.cpp` built with `-DEASY3D_LINK_CNA=ON`) pass.
+EasyGL and Vulkan backends as of the most recent work (teleporter tip shape+alpha fix, 2026-07-11,
+see §3's newest entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 5 verify tools
+(`VerifyBlupiMovement`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`,
+`VerifyInteractionSystem`, plus `../easy-3d/tests/test_cube_mesh.cpp` built with
+`-DEASY3D_LINK_CNA=ON`) pass.
 
 **Terrain-tile identification and all 4 confirmed render modes are complete** (§1), plus the
-teleporter's own extra pyramid-tip attachment geometry (a 5th, narrowly-scoped primitive, not one
-of the 4 confirmed modes) — no render-mechanism work remains outstanding. **All 5 items from the
+teleporter's own extra box-tip attachment geometry (a 5th, narrowly-scoped attachment, not one of
+the 4 confirmed modes — NOT a pyramid, see §3's newest entry for the two live-feedback corrections)
+— no render-mechanism work remains outstanding on the confirmed-icon front. **All 5 items from the
 2026-07-11 live-playtest user feedback batch are addressed**, and **Phase 14 (Hazards) is now 9/10
 done** — only the water breath gauge (`148`) remains, a genuinely new movement mode (Surf/Nage
 swimming) rather than a hazard-timer variant like every other Phase 14 item so far, deliberately
-not started yet given that larger scope. Phase 13 (Enemy AI & combat) is fully complete:
+not started yet given that larger scope. Phase 13 (Enemy AI & combat) is fully complete.
+
+**2 new tasks queued by the user, not yet started (see §8's newest items for full detail)**:
+1. **Fix the Saw tile's render mode** — currently rendered as a cube, but the user says it should
+   be a static billboard (`InnerFlatPlate`-style: texture on both sides of an invisible plate
+   through the middle of the block), same as other confirmed `InnerFlatPlate` icons already use.
+2. **Add more platform lifts to the demo world**, and fix the existing one, which is positioned
+   under a plate/board such that it moves THROUGH solid geometry (clips, not usable/visible as
+   intended).
+
+Pick up in that order (Saw fix first, it's smaller) unless the user redirects.
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2972,6 +2984,40 @@ polish):**
 - **Remaining: water breath gauge (`E3D-MIG-148`)** — Phase 14's last mechanic, a genuinely new
   Surf/Nage swimming movement mode rather than a hazard-timer variant, likely needs more scoping
   than a single-task cycle.
+- **DONE (2026-07-11): teleporter tip shape + real alpha-transparency bug fixed**, found via a live
+  user re-check of the render geometry above. See §3's newest entry and `plan.md`'s `E3D-MIG-147`
+  entry for full detail — the tip is now a straight-sided box (not a tapering pyramid), and the
+  whole teleporter icon (cube + tip) is now genuinely alpha-blended, since the "black" the user
+  saw was real alpha=0 transparency in the source texture being rendered opaque, not painted
+  black. `PyramidTipItem`/`AppendPyramidTipMesh()` removed entirely from `../easy-3d` (unused after
+  the box replacement).
+
+**2 new tasks queued by the user (2026-07-11), not yet started — next up, in this order:**
+
+1. **Fix the Saw tile's render mode.** User (Czech, verbatim): "ta pila saw se renderuje spatne
+   nema to byt na krychly pila bude staticky billboard tedy uprosred daneho bloku se textura
+   nanese na obe strany jakoby neviditelen desky v puli krychle" — the Saw tile (icons
+   378/379/`BlockTypes::Saw`/`SawStopped`) currently renders on a cube, but should be a static
+   billboard: the texture applied to both sides of an invisible plate through the middle of the
+   block, matching the existing confirmed `InnerFlatPlate` render mode (see
+   `GEInnerFlatPlateTiles.cpp` for the pattern — several other icons already use exactly this).
+   Move Saw/SawStopped's entries from wherever they currently render (check
+   `GEDirectionalCubeTiles.cpp` first) into `GEInnerFlatPlateTiles.cpp`'s table instead. The
+   existing switch+saw pair in the sample world (`worlds3d/world001.vwr`, plan.md `E3D-MIG-142`)
+   is real, playable, reachable terrain — good for live verification without needing a new
+   placement. Verify live via screenshot, update `02-tiles.md`/questionnaire docs if they
+   currently record Saw's render mode differently, rebuild+test both backends, commit+push.
+2. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
+   verbatim): "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
+   soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu" — the
+   sample world's existing platform lift (`ObjectType1`, the "crow's-nest" lift mentioned in §3's
+   2026-07-09 history, `tools/GenerateSampleWorld3D.cpp`) is positioned such that its patrol path
+   moves it through solid geometry (a plate/board it clips through), making it useless/not visibly
+   working as intended. Find its exact placement in `GenerateSampleWorld3D.cpp`, fix the patrol
+   path so it doesn't clip anything solid, then add more `ObjectType1` instances elsewhere in the
+   sample world for a richer demo (real mobile-eggbert levels place these reasonably often per the
+   density notes already in `GenerateSampleWorld3D.cpp`'s own comments). Verify live that lifts
+   patrol visibly without clipping, rebuild+test both backends, commit+push.
 
 Older, lower-priority polish tasks (unaffected by the above, still valid, just less urgent now):
 
