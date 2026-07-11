@@ -160,6 +160,46 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    void GEBlupiController::UpdateSafePosition(bool externallySafe) noexcept
+    {
+        if (!(m_onGround && !m_balloon && !m_ecrase && externallySafe))
+        {
+            return;
+        }
+        // Real order (Decor.cpp:6474-6477): m_blupiValidPos is set to the
+        // FIFO's oldest entry BEFORE the current position is pushed, not
+        // after -- this is what gives the "don't respawn exactly where
+        // you died" buffer, since the just-computed valid position always
+        // lags at least one FIFO slot behind wherever Blupi currently is.
+        if (m_safeFifoCount > 0)
+        {
+            m_validX = m_safeFifo[0][0];
+            m_validY = m_safeFifo[0][1];
+            m_validZ = m_safeFifo[0][2];
+        }
+        const bool isDuplicate = m_safeFifoCount > 0 &&
+                                  m_safeFifo[m_safeFifoCount - 1][0] == m_x &&
+                                  m_safeFifo[m_safeFifoCount - 1][1] == m_y &&
+                                  m_safeFifo[m_safeFifoCount - 1][2] == m_z;
+        if (isDuplicate)
+        {
+            return;
+        }
+        if (m_safeFifoCount < kSafeFifoCapacity)
+        {
+            m_safeFifo[static_cast<std::size_t>(m_safeFifoCount)] = {m_x, m_y, m_z};
+            ++m_safeFifoCount;
+        }
+        else
+        {
+            for (int i = 0; i < kSafeFifoCapacity - 1; ++i)
+            {
+                m_safeFifo[static_cast<std::size_t>(i)] = m_safeFifo[static_cast<std::size_t>(i) + 1];
+            }
+            m_safeFifo[kSafeFifoCapacity - 1] = {m_x, m_y, m_z};
+        }
+    }
+
     std::uint16_t GEBlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
     {
         if (!m_onGround)

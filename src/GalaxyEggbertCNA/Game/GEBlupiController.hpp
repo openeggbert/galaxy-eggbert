@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <array>
 #include <cstdint>
 
 namespace GalaxyEggbert::CNA
@@ -196,6 +197,31 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool IsTeleporting() const noexcept { return m_teleporting; }
         [[nodiscard]] std::uint16_t GetTeleportIcon() const noexcept { return m_teleportIcon; }
 
+        // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
+        // `Decor::BlupiAddFifo`/`m_blupiValidPos`, verified directly
+        // against Decor.cpp:6467-6478/6654-6673). Call once per frame
+        // (after Step()) with the caller's own "not on/under any
+        // recognized hazard" determination (`externallySafe`) -- this
+        // class only knows its own grounded/balloon/ecrase state, not
+        // terrain hazard tile types (checked via GetGroundBlockType() by
+        // the caller) or teleporter-trigger occupancy
+        // (GetBlockTypeAbove()). Real gate also includes vehicle/shield/
+        // hide/ledge-teeter/transport-riding/projectile-path checks --
+        // none of those concepts (or an occupancy grid for the last one)
+        // exist in this engine yet, same simplification as every other
+        // hazard/mechanic. Updates the tracked valid respawn position to
+        // the FIFO's OLDEST entry BEFORE pushing the current position
+        // (matching the real source's exact order, giving roughly the
+        // same "don't respawn exactly where you died" buffer), deduping
+        // consecutive identical positions the same way the real FIFO does
+        // (extended to all 3 axes here, since real mobile-eggbert's own
+        // 2-axis dedup is a direct consequence of it having no Z axis at
+        // all, not a deliberate 2-of-3 choice for a 3D engine).
+        void UpdateSafePosition(bool externallySafe) noexcept;
+        [[nodiscard]] float GetValidX() const noexcept { return m_validX; }
+        [[nodiscard]] float GetValidY() const noexcept { return m_validY; }
+        [[nodiscard]] float GetValidZ() const noexcept { return m_validZ; }
+
         // Facing angle in radians, 0 = looking toward -Z. Updated every Step()
         // by turnInput (see below) — unlike a strafe-style controller, yaw is
         // driven directly by turning, not derived from movement direction.
@@ -264,5 +290,17 @@ namespace GalaxyEggbert::CNA
         bool m_teleporting = false;
         float m_teleportTimer = 0.0f;
         std::uint16_t m_teleportIcon = 0;
+
+        static constexpr int kSafeFifoCapacity = 10;
+        std::array<std::array<float, 3>, kSafeFifoCapacity> m_safeFifo{};
+        int m_safeFifoCount = 0;
+        // Real default (Decor.cpp:356, m_blupiValidPos = m_blupiStartPos)
+        // -- matches this class's own m_x/m_y/m_z defaults, so a respawn
+        // before the FIFO has ever recorded a safe frame still lands
+        // somewhere sane (the spawn point) rather than an uninitialized
+        // origin.
+        float m_validX = 0.0f;
+        float m_validY = 1.0f;
+        float m_validZ = 0.0f;
     };
 }

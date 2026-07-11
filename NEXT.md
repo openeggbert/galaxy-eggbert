@@ -260,6 +260,45 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Implemented the real last-safe-position FIFO respawn (2026-07-11, plan.md `E3D-MIG-067`,
+  same user-reported feedback batch as the teleporter/fall-death fixes).** Verified directly
+  against `Decor.cpp:6467-6478` (the update gate) and `6654-6673` (`BlupiAddFifo`).
+  - New `GEBlupiController::UpdateSafePosition(bool externallySafe)`/`GetValidX/Y/Z()` — a real
+    10-slot FIFO of recent positions, updated once per frame while grounded and not ballooned/
+    squashed, plus a caller-supplied `externallySafe` flag (this class only knows its own
+    grounded/balloon/ecrase state, not terrain hazard types or teleporter-trigger occupancy — the
+    caller computes that from state it already has). Sets the tracked valid respawn position to
+    the FIFO's OLDEST entry BEFORE pushing the current one (the real order — this is exactly what
+    gives the "don't respawn right where you died" buffer), deduping consecutive identical
+    positions the same way the real FIFO does, extended to all 3 axes here (real mobile-eggbert's
+    own 2-axis dedup is a direct consequence of having no Z axis at all, not a deliberate 2-of-3
+    choice for a 3D engine).
+  - `GalaxyEggbertCnaGame::Update()` computes `externallySafe` from the SAME `GetGroundBlockType()`
+    (not on Lava/Spike/Saw/Temp/active-Blitz) and `GetBlockTypeAbove()` (not under a teleporter
+    trigger) checks already used for the hazard/teleporter logic — real vehicle/shield/hide/
+    ledge-teeter/transport-riding/projectile-path checks aren't modeled, same simplification as
+    every other mechanic so far.
+  - Every respawn call site (the shared `triggerDeath` lambda used by fall/lava/spikes/Blitz/saw,
+    and `GEInteractionSystem::DiedThisFrame()`'s handler for enemy/hazard-object contact) now uses
+    `GetValidX/Y/Z()` instead of the hardcoded spawn point `(0,1,0)`.
+  - **Verified live**: temporary debug instrumentation (forced continuous forward movement +
+    periodic position/valid-position logging, reverted before committing) confirmed the tracked
+    valid position genuinely lags behind Blupi's live position while walking, and correctly stops
+    updating the moment he walks into a wall and stays still (the dedup working as intended) — not
+    just synthetic-test behavior.
+  - 6 new `VerifyBlupiMovement` assertions (default-before-any-safe-frame equals the spawn point,
+    no-op while airborne, no-op when the caller reports unsafe, and the FIFO's lag/buffer
+    property across 13 distinct positions — more than the 10-slot capacity, proving the shift-out-
+    the-oldest behavior too). Full suite (63/63 unit tests, all 4 verify tools) and live headless
+    runs on both EasyGL and Vulkan backends all clean.
+  - **A further user-reported item opened from testing this fix**: fall-death currently fires
+    almost instantly (well under 1 second) after falling through a gap near ground level, but the
+    user recalls it taking noticeably longer (maybe ~4s) in real mobile-eggbert and isn't sure of
+    the exact real duration — tracked as a new, separate task (§8) since the real mechanism turns
+    out to be an absolute-grid-row check, not a fixed timer, so the real "how long" depends on
+    real gravity constants and how far real levels' terrain typically sits above that row; needs
+    research against `Decor.cpp`/a real level file before fixing, not yet started.
+
 - **Fixed fall-off-world death, unreachable via normal walking until now (2026-07-11, plan.md
   `E3D-MIG-067`, user-reported in the same live-playtest feedback batch as the teleporter bug).**
   - **Root cause**: `GEBlupiController::GroundHeightAt()`'s fallback for "no solid block anywhere
@@ -2395,18 +2434,20 @@ Most recent first. Full history: `git log`.
 ## 4. Current blocker / main problem
 
 **No code blocker.** `GalaxyEggbertCNA` builds and runs cleanly on both the EasyGL and Vulkan
-backends as of the most recent work (fall-off-world death fix, 2026-07-11, see §3's newest entry),
-all 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
+backends as of the most recent work (last-safe-position respawn, 2026-07-11, see §3's newest
+entry), all 63/63 `GalaxyEggbertWorldsTests` pass, and all 4 verify tools (`VerifyBlupiMovement`,
 `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`, `VerifyInteractionSystem`) pass.
 
 **Terrain-tile identification and all 4 render modes are complete** (§1) — no render-mechanism
-work remains outstanding. **Both P1 items from the 2026-07-11 live-playtest user feedback batch
-are now fixed**: the teleporter (froze Blupi permanently) and fall-off-world death (was silently
-unreachable — see §3's two newest entries). **3 more user-reported items remain, in priority
-order**: last-safe-position respawn (P2), then teleporter render geometry and animation-indicator
-richness (both P3) — see §8. These still take priority over continuing Phase 14's remaining
-water-gauge/fans tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is
-8/10 done:
+work remains outstanding. **3 of the 5 items from the 2026-07-11 live-playtest user feedback batch
+are now fixed**: the teleporter (froze Blupi permanently), fall-off-world death (was silently
+unreachable), and last-safe-position respawn (was always the fixed spawn point) — see §3's 3
+newest entries. **A NEW item was opened while verifying the last one**: fall-death currently fires
+almost instantly rather than after a multi-second fall like the user recalls from real
+mobile-eggbert — needs research against the real absolute-grid-row death check before fixing (§8).
+**2 more original items remain** (teleporter render geometry, animation-indicator richness, both
+P3) — see §8. These all still take priority over continuing Phase 14's remaining water-gauge/fans
+tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/10 done:
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2699,13 +2740,23 @@ polish):**
   silently acted as solid ground at Y=0) — fixed via a new `kNoGround` sentinel, verified live
   (Blupi now genuinely falls, goes Y-negative, and the existing `kFallDeathY=-5.0f` death/respawn
   fires correctly). See §3's newest entry for full detail.
-- **P2 — Implement the real last-safe-position respawn** (replace the fixed spawn-point respawn
-  used by every death cause today). Already a documented known simplification
-  (`E3D-MIG-067`'s open "real 10-slot last-safe-position FIFO (`m_blupiValidPos`)" item) — re-verify
-  the exact real mechanic against `Decor.cpp` before implementing (FIFO depth, sampling
-  conditions, what counts as "safe") rather than assuming a simplified single-last-position model.
-  Touches every `triggerDeath()`/`LoseLife()`-adjacent respawn call site in
-  `GalaxyEggbertCnaGame.cpp` plus `GEBlupiController` needs to track recent safe positions.
+- **P2 — DONE (2026-07-11): real last-safe-position FIFO respawn implemented.** See §3's newest
+  entry for full detail.
+- **P1 — NEW (2026-07-11, found while verifying the above): fall-death fires almost instantly,
+  should take several seconds.** User recalls real mobile-eggbert's fall takes noticeably longer
+  (maybe ~4s, unconfirmed) before death, but the current `kFallDeathY=-5.0f` threshold combined
+  with `GEBlupiController`'s gravity constants means death fires in well under 1 second after
+  falling through a typical gap near ground level. The real mechanism (already partially
+  researched, see `mobile-eggbert-reference/10-blupi-mechanics.md`) is an ABSOLUTE grid-row check
+  (`(end.Y+30)/64 >= 99`, reaching row 99 of the real 100-row/6400px world), not a fixed timer —
+  so the real "how long" depends on how far above row 99 real levels' terrain typically sits,
+  combined with the real gravity/terminal-velocity constants. Needs: (1) pin down the real
+  gravity/terminal-velocity numbers precisely against `Decor.cpp` directly (the reference doc
+  summary — "+2.0/tick to terminal 20.0" — needs re-confirming at the source), (2) look at a real
+  mobile-eggbert level file to estimate a realistic fall distance/duration, (3) decide the right
+  3D adaptation (likely moving `kFallDeathY` much lower, or a different approach entirely) to
+  give a multi-second forgiving fall before death, matching real game feel — don't just guess a
+  duration.
 - **P3 — Add teleporter pyramid-tip render geometry.** User's detailed description of the real
   icon 330-333 crop: black border, a red/yellow button + an alpha-letter symbol, a blue background
   on the cube's side faces (existing `DirectionalCube` treatment is fine for that part), PLUS a

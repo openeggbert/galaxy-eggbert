@@ -372,6 +372,56 @@ int main(int argc, char** argv)
         crushed2.TriggerCrush();
         check(!crushed2.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while squashed (real !m_blupiEcrase gate)");
+
+        // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067) --
+        // a 13-wide flat strip so Blupi can occupy 13 distinct safe grid
+        // positions in a row (more than the 10-slot capacity), to prove
+        // both that the FIFO tracks a lagged "safe" position and that it
+        // shifts out its oldest entry once full.
+        constexpr std::uint16_t kSafeStripZ = 60;
+        for (std::uint16_t x = 60; x <= 72; ++x)
+        {
+            synthetic.setBlock(x, 0, kSafeStripZ, Worlds::Block::make(BlockTypes::Ground));
+        }
+
+        GEBlupiController defaultValid;
+        check(defaultValid.GetValidX() == 0.0f && defaultValid.GetValidY() == 1.0f && defaultValid.GetValidZ() == 0.0f,
+              "GetValidX/Y/Z() default to the spawn point before any safe frame is ever recorded");
+
+        GEBlupiController airborneSafe;
+        airborneSafe.SetPosition(0.0f, 20.0f, 0.0f);
+        airborneSafe.UpdateSafePosition(/*externallySafe=*/true);
+        check(airborneSafe.GetValidX() == 0.0f && airborneSafe.GetValidZ() == 0.0f,
+              "UpdateSafePosition() is a no-op while airborne (still the spawn-point default)");
+
+        GEBlupiController unsafeCaller;
+        unsafeCaller.SetPosition(60.0f - 50.0f, 1.0f, static_cast<float>(kSafeStripZ) - 50.0f);
+        unsafeCaller.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        unsafeCaller.UpdateSafePosition(/*externallySafe=*/false);
+        check(unsafeCaller.GetValidX() == 0.0f && unsafeCaller.GetValidZ() == 0.0f,
+              "UpdateSafePosition() is a no-op when the caller reports externallySafe=false");
+
+        // Walk across 13 distinct grid positions (one per frame), each a
+        // real safe frame -- the FIFO holds only 10, so the tracked valid
+        // position should lag behind Blupi's current position by roughly
+        // that buffer, never equal to (or ahead of) wherever he currently
+        // is.
+        GEBlupiController safeWalker;
+        for (int i = 0; i < 13; ++i)
+        {
+            safeWalker.SetPosition(static_cast<float>(60 + i) - 50.0f, 1.0f,
+                                    static_cast<float>(kSafeStripZ) - 50.0f);
+            safeWalker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            safeWalker.UpdateSafePosition(/*externallySafe=*/true);
+        }
+        std::cout << "Safe walker at X=" << safeWalker.GetX() << ", valid respawn X=" << safeWalker.GetValidX()
+                  << std::endl;
+        check(safeWalker.GetValidX() < safeWalker.GetX(),
+              "the tracked valid respawn position lags behind Blupi's current position (the real 'buffer'), "
+              "not equal to or ahead of it");
+        check(safeWalker.GetX() - safeWalker.GetValidX() >= 9.0f,
+              "the lag is roughly the FIFO's 10-slot capacity, proving the oldest entry is what's used, "
+              "not just the immediately-prior one");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

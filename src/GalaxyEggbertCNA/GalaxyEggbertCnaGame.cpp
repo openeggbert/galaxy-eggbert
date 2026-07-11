@@ -496,18 +496,18 @@ namespace GalaxyEggbert::CNA
             // specific cause (channel 8: fall-off-world/lava, the real
             // shared "you died" sound per 07-sounds.md; channel 51: spikes/
             // drip/saw's real Glu-death sound, distinct from channel 8's).
-            // Respawns at the fixed spawn point, NOT the real 10-slot
-            // "last safe position" FIFO (m_blupiValidPos, still open, full
-            // E3D-MIG-067) -- a known simplification. Also does not yet
-            // distinguish death *animations* (Clear1-8/Glu each have their
-            // own real fixed duration and revival behavior, 10-blupi-
-            // mechanics.md §8) -- every cause here is instant, no animation
-            // state exists yet for any of them.
+            // Respawns at the real 10-slot "last safe position" FIFO
+            // (GEBlupiController::GetValidX/Y/Z(), plan.md E3D-MIG-067,
+            // done 2026-07-11) instead of the fixed spawn point. Does not
+            // yet distinguish death *animations* (Clear1-8/Glu each have
+            // their own real fixed duration and revival behavior,
+            // 10-blupi-mechanics.md §8) -- every cause here is instant, no
+            // animation state exists yet for any of them.
             const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel)
             {
                 sound_.Play(channel);
                 interaction_.LoseLife();
-                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
             };
 
             // Fall-off-world death -- mobile-eggbert-reference/
@@ -662,6 +662,30 @@ namespace GalaxyEggbert::CNA
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
             }
 
+            // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
+            // see GEBlupiController::UpdateSafePosition()'s own comment) --
+            // "safe" here additionally means not standing on any of the 5
+            // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp)
+            // and not currently under a teleporter trigger (`aboveIcon`,
+            // already computed above) -- the two categories of "unsafe
+            // tile" this engine can actually check for; real vehicle/
+            // shield/ledge-teeter/transport-riding/projectile-path checks
+            // aren't modeled (see UpdateSafePosition's own comment).
+            {
+                const auto safetyGroundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
+                const bool onHazardTile =
+                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Lava ||
+                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Spike ||
+                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Saw ||
+                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Temp ||
+                    (safetyGroundBlock == GalaxyEggbert::BlockTypes::Blitz &&
+                     GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
+                const bool underTeleporter =
+                    aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
+                    aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4;
+                blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter);
+            }
+
             // Switches (plan.md E3D-MIG-142, see GEWorldRuntime::
             // TryActivateSwitch()'s own comment for the real 41-cell
             // switch-to-saw linking) -- Space ("Action"), edge-detected the
@@ -697,12 +721,11 @@ namespace GalaxyEggbert::CNA
 
             // GEInteractionSystem has no access to GEBlupiController, so it
             // can only report that a hazard-contact death happened this
-            // frame (DiedThisFrame()) -- respawn is applied here, same
-            // fixed spawn point as the terrain-hazard deaths above (not yet
-            // the real 10-slot last-safe-position FIFO).
+            // frame (DiedThisFrame()) -- respawn is applied here, same real
+            // last-safe-position FIFO as the terrain-hazard deaths above.
             if (interaction_.DiedThisFrame())
             {
-                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
             }
 
             // Wasp balloon status (plan.md E3D-MIG-135) -- TriggerBalloon()

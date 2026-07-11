@@ -250,12 +250,37 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       whole time, meaning it was unknowingly asserting on the buggy fallback behavior — moved to
       a location with a real floor to test genuine gravity/landing, and added a new, separate
       test (2 new assertions) that drops over a genuinely floorless column and asserts Blupi
-      never lands and his Y goes negative — a direct regression test for this exact bug. Still
-      missing: the full hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/
-      Clear2 coinflip, Trap/Drip→Glu, each depends on its own hazard from Phase 14), fixed
-      per-action animation durations, the real 10-slot "safe position" FIFO respawn (oldest entry
-      used, ~0.5s buffer — currently a single fixed spawn point, next user-reported task), fall
-      ->1000px = instant fatal bypassing lives.
+      never lands and his Y goes negative — a direct regression test for this exact bug.
+      **The real 10-slot "safe position" FIFO respawn is also done** (2026-07-11, same
+      user-reported feedback batch): verified directly against `Decor.cpp:6467-6478`
+      (`m_blupiValidPos` update gate) and `6654-6673` (`BlupiAddFifo`). New
+      `GEBlupiController::UpdateSafePosition(bool externallySafe)`/`GetValidX/Y/Z()` — a real
+      10-slot FIFO of recent positions, updated once per frame while Blupi is grounded, not
+      ballooned/squashed, and the caller reports `externallySafe` (this class only knows its own
+      grounded/balloon/ecrase state, not terrain hazard tiles or teleporter-trigger occupancy, so
+      `GalaxyEggbertCnaGame::Update()` computes that from the same `GetGroundBlockType()`/
+      `GetBlockTypeAbove()` checks already used for the hazard/teleporter logic — real vehicle/
+      shield/ledge-teeter/transport-riding/projectile-path checks aren't modeled, same
+      simplification as everywhere else). Sets the tracked valid position to the FIFO's OLDEST
+      entry BEFORE pushing the current one (the real order, giving the "don't respawn exactly
+      where you died" buffer), with the same dedup-consecutive-duplicates shape as the real FIFO
+      but extended to all 3 axes (real mobile-eggbert's 2-axis dedup is a direct consequence of
+      having no Z axis at all, not a deliberate 2-of-3 choice for a 3D engine). Every respawn call
+      site (the shared `triggerDeath` lambda, and `GEInteractionSystem::DiedThisFrame()`'s
+      handler) now uses `GetValidX/Y/Z()` instead of the fixed spawn point. Verified live (forced
+      continuous forward movement + temporary debug logging, reverted before committing): the
+      tracked valid position correctly lagged behind Blupi's live position while walking, and
+      correctly stopped updating once he walked into a wall and stayed still (dedup working).
+      Added 6 new `VerifyBlupiMovement` assertions (default-before-any-safe-frame, no-op while
+      airborne, no-op when the caller reports unsafe, and the FIFO's lag/buffer behavior across
+      13 distinct positions exceeding the 10-slot capacity). Still missing: the full
+      hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/Clear2 coinflip,
+      Trap/Drip→Glu, each depends on its own hazard from Phase 14), fixed per-action animation
+      durations, fall->1000px = instant fatal bypassing lives. **A further user-reported item
+      opened from this same task**: fall-death currently triggers almost instantly (<1s) after
+      falling through a gap, not after several seconds like the user recalls from real
+      mobile-eggbert — tracked separately, needs research against the real
+      absolute-grid-row death check and gravity constants before fixing (not yet started).
 - [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
       small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
 - [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful
