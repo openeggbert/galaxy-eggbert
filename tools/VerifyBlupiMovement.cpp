@@ -205,12 +205,24 @@ int main(int argc, char** argv)
         check(crushed.IsEcrased(), "IsEcrased() is true immediately after TriggerCrush()");
         check(!crushed.TriggerCrush(), "TriggerCrush() is a no-op (returns false) while already squashed");
 
+        // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
+        // BlupiAction IDs 72/73, `table_blupi` icon data transcribed with
+        // explicit user approval): squashed+idle is StopEcrase, real icon
+        // 320.
+        crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(crushed.GetAnimState() == GEBlupiController::AnimState::StopEcrase,
+              "squashed and idle is the StopEcrase anim state");
+        check(crushed.GetAnimIcon() == 320, "StopEcrase anim icon is the real icon 320");
+
         // Reduced move speed while squashed: same moveInput/dt, less
         // distance covered than an un-squashed Blupi over one Step(). At
         // yaw=0 (the default), forward movement changes Z, not X.
         const float zBeforeCrushedMove = crushed.GetZ();
         crushed.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
         const float crushedDelta = std::fabs(crushed.GetZ() - zBeforeCrushedMove);
+        check(crushed.GetAnimState() == GEBlupiController::AnimState::MarchEcrase,
+              "squashed and moving switches to the MarchEcrase anim state");
+        check(crushed.GetAnimIcon() == 319, "MarchEcrase anim icon starts at the real first frame (icon 319)");
 
         GEBlupiController normal;
         normal.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
@@ -241,6 +253,16 @@ int main(int argc, char** argv)
         check(ballooned.TriggerBalloon(), "TriggerBalloon() returns true on a genuinely new trigger");
         check(ballooned.IsBallooned(), "IsBallooned() is true immediately after TriggerBalloon()");
         check(!ballooned.TriggerBalloon(), "TriggerBalloon() is a no-op (returns false) while already ballooned");
+
+        // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
+        // BlupiAction ID 66, `table_blupi` icon data transcribed with
+        // explicit user approval): ballooned is always the Balloon anim
+        // state, regardless of grounded/airborne (the real data has no
+        // separate air variant).
+        ballooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(ballooned.GetAnimState() == GEBlupiController::AnimState::Balloon,
+              "ballooned is the Balloon anim state");
+        check(ballooned.GetAnimIcon() == 291, "Balloon anim icon starts at the real first frame (icon 291)");
 
         // Reduced gravity while ballooned: falls less over the same number
         // of steps than a normal Blupi dropped from the same height.
@@ -380,6 +402,17 @@ int main(int argc, char** argv)
         check(onTeleporter.GetTeleportIcon() == BlockTypes::Teleport1, "GetTeleportIcon() remembers which icon triggered it");
         check(!onTeleporter.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op (returns false) while already teleporting");
+
+        // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
+        // BlupiAction ID 74, `table_blupi` icon data transcribed with
+        // explicit user approval): teleporting is always the Teleporting
+        // anim state. Real frame 0 is icon 1 (not -1), so no invisible-
+        // frame substitution is exercised at this specific phase -- see
+        // GetAnimIcon()'s own comment for that behavior.
+        onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(onTeleporter.GetAnimState() == GEBlupiController::AnimState::Teleporting,
+              "teleporting is the Teleporting anim state");
+        check(onTeleporter.GetAnimIcon() == 1, "Teleporting anim icon starts at the real first frame (icon 1)");
 
         // Fully frozen during transit: turning/moving input has no effect
         // at all (real m_blupiFocus=false blocks essentially every other

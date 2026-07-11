@@ -260,6 +260,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Expanded the bottom-right Blupi animation indicator further with StopEcrase/MarchEcrase/
+  Balloon/Teleporting (2026-07-11, plan.md `E3D-MIG-064`), after the user approved transcribing
+  their real `table_blupi` icon-frame records.** See §8's newest item and `plan.md`'s `E3D-MIG-064`
+  entry for full detail — includes a real bug found and fixed while wiring this up: `Step()`'s
+  `m_teleporting` early-return skipped `UpdateAnim()` entirely, so the new `Teleporting` state
+  would never have actually displayed during a real teleport.
+
 - **Expanded the bottom-right Blupi animation indicator with a Jump/Air split (2026-07-11, plan.md
   `E3D-MIG-064`, last item of the 2026-07-11 live-playtest feedback batch).** Investigated all 82
   real `BlupiAction` states beyond the indicator's original 5 (Stop/March/Jump/Down/Up) against
@@ -276,13 +283,19 @@ Most recent first. Full history: `git log`.
   frame-counted state machine. New assertions in `tools/VerifyBlupiMovement.cpp` (Jump→Air
   transition on the way up/down, exact icon values 17/169) — all pass, plus the existing suite
   still passes. Verified building on both backends.
-  **The other 3 candidate states (`Ecrase`/`Balloon`/`Teleporte`) are NOT added** — real states,
-  already mechanically tracked in `GEBlupiController`, but no pre-approved frame-icon source
-  exists anywhere in this repo for them (unlike `Air`'s Simple3D precedent); showing them for real
-  needs their actual `table_blupi` icon indices, a fresh mobile-eggbert data transcription that
-  CLAUDE.md requires explicit user approval for (sprite/frame data, not "just data" even though it
-  looks like a small lookup table) — asked the user 2026-07-11 whether to pursue that. See
-  `plan.md`'s `E3D-MIG-064` entry for full detail.
+  **User approved transcribing the other 3 candidate states (2026-07-11)**: `StopEcrase`(72)/
+  `MarchEcrase`(73)/`Balloon`(66)/`Teleporte`(74)'s real `table_blupi` icon-frame records
+  (parsed directly out of `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp` — frame
+  counts cross-checked exactly against `mobile-eggbert-reference/08-animations.md`'s
+  already-documented counts: 1/24/16/128, 67 of the 128 Teleporte frames being the real `-1`
+  "invisible" sentinel) are now added. `UpdateAnim()`'s precedence checks
+  `m_teleporting`/`m_balloon`/`m_ecrase` before the ground/air cascade (real `BlupiAction` has
+  only one animation per status regardless of grounded/airborne). **Found and fixed a real bug
+  while wiring `Teleporting` in**: `Step()`'s early-return for `m_teleporting` skipped
+  `UpdateAnim()` entirely, so the new state would never have actually displayed during a real
+  teleport — fixed. New `VerifyBlupiMovement.cpp` assertions cover all 3 states' exact icon
+  values; full 5-tool suite + both backends re-verified. See `plan.md`'s `E3D-MIG-064` entry for
+  full detail.
 
 - **Added the teleporter pyramid-tip render geometry (2026-07-11, plan.md `E3D-MIG-147`, last
   item of the same user-reported live-playtest feedback batch as the teleporter/fall-death/
@@ -2554,11 +2567,10 @@ silently unreachable → now fires after a real multi-second fall), last-safe-po
 always the fixed spawn point → real 10-slot FIFO), fall-death timing (fired almost instantly →
 now ~6.2s, matching researched real constants), the teleporter's pyramid-tip render geometry
 (cube-only → cube + a genuine hanging 3D spike, texture-cropped to match), and the animation
-indicator (gained a real Jump/Air split; further states are explicitly blocked on a pending user
-decision, not on remaining work of mine — see §8) — see §3's 6 newest entries. **A question is now
-pending for the user** (§8's newest item) rather than an open task of mine — until answered, the
-next available work is Phase 14's remaining water-gauge/fans tasks. Phase 13 (Enemy AI & combat)
-is fully complete; Phase 14 (Hazards) is 8/10 done:
+indicator (gained a real Jump/Air split, then StopEcrase/MarchEcrase/Balloon/Teleporting once the
+user approved transcribing their `table_blupi` data) — see §3's 7 newest entries. **No open task
+of mine remains from that batch.** Next available work is Phase 14's remaining water-gauge/fans
+tasks. Phase 13 (Enemy AI & combat) is fully complete; Phase 14 (Hazards) is 8/10 done:
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -2880,19 +2892,15 @@ polish):**
   reverted before committing) — renders correctly: blue cube sides with the real dots/emblem-letter
   texture, a distinct dark teal cone hanging cleanly below without clipping the floor. See
   `plan.md`'s `E3D-MIG-147` entry for full detail.
-- **P3 — PARTLY DONE (2026-07-11): expanded the bottom-right Blupi animation indicator with a
-  Jump/Air split.** See §3's newest entry for full detail — added the one state (`Air`, falling)
-  that had a pre-approved frame-data source already in this repo (ported from
-  `GalaxyEggbertSimple3D::GEBlupiController.cpp`, not a fresh mobile-eggbert transcription).
-  **Blocked on a user decision for anything further**: `Ecrase`/`Balloon`/`Teleporte` are the only
-  other real `BlupiAction` states this engine can actually reach today (all 3 already
-  mechanically tracked in `GEBlupiController`), but none has a pre-approved frame-icon source
-  anywhere in this repo — showing them for real needs their actual `table_blupi` icon indices, a
-  fresh mobile-eggbert data transcription needing explicit user approval per CLAUDE.md (asked
-  2026-07-11). Every other real `BlupiAction` (Turn, Glu, Electro, Win, Bye, Clear1-8, the vehicle/
-  swim/skateboard/tank/helicopter modes, etc.) is not reachable at all yet — those mechanics don't
-  exist in `GalaxyEggbertCNA`, so their animations are out of scope regardless of data-transcription
-  approval. See `plan.md`'s `E3D-MIG-064` entry for full detail.
+- **P3 — DONE (2026-07-11): expanded the bottom-right Blupi animation indicator.** Added `Air`
+  (falling, pre-approved Simple3D-ported frame data) plus, after explicit user approval to
+  transcribe the real `table_blupi` icon data, `StopEcrase`/`MarchEcrase`/`Balloon`/`Teleporting`
+  — every real `BlupiAction` state this engine can actually reach today is now reflected. Every
+  OTHER real `BlupiAction` (Turn, Glu, Electro, Win, Bye, Clear1-8, the vehicle/swim/skateboard/
+  tank/helicopter modes, etc.) is not reachable at all — those mechanics don't exist in
+  `GalaxyEggbertCNA` yet, so their animations are out of scope regardless of data-transcription
+  approval; revisit if/when any of those mechanics get implemented. See §3's 2 newest entries and
+  `plan.md`'s `E3D-MIG-064` entry for full detail.
 
 Older, lower-priority polish tasks (unaffected by the above, still valid, just less urgent now):
 

@@ -104,7 +104,28 @@ namespace GalaxyEggbert::CNA
         // frame data, already ported once via Simple3D so this reuses that
         // same pre-approved table rather than a fresh mobile-eggbert
         // transcription).
-        enum class AnimState : std::uint8_t { Stop, March, Jump, Air, Down, Up };
+        // StopEcrase/MarchEcrase/Balloon/Teleporting (real BlupiAction IDs
+        // 72/73/66/74) added 2026-07-11 with explicit user approval to
+        // transcribe their real `table_blupi` icon-frame data (plan.md
+        // E3D-MIG-064) -- unlike Jump/Air above, no pre-approved in-repo
+        // source existed for these, so their frame arrays (see
+        // GEBlupiController.cpp) are a fresh, narrowly-scoped transcription
+        // of exactly these 4 records from mobile-eggbert's
+        // Tables::table_blupi, not a wholesale table copy. Real
+        // `BlupiAction` only defines ONE animation per status regardless of
+        // grounded/airborne (no "AirEcrase"/"AirBalloon" variant exists),
+        // so this class's own m_ecrase/m_balloon/m_teleporting flags take
+        // precedence over the Jump/Air/Down/Up/March/Stop cascade below
+        // rather than combining with it (see UpdateAnim()). StopEcrase vs
+        // MarchEcrase is chosen by the same `moving` bool that already
+        // splits Stop/March, mirroring the real table's own idle/moving
+        // split for the squashed state (Balloon/Teleporting have no such
+        // split in the real data -- one state covers both).
+        enum class AnimState : std::uint8_t
+        {
+            Stop, March, Jump, Air, Down, Up,
+            StopEcrase, MarchEcrase, Balloon, Teleporting
+        };
 
         void SetPosition(float x, float y, float z) noexcept;
 

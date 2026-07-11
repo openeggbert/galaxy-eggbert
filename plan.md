@@ -244,11 +244,23 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       uses velocity sign (ascending vs falling) rather than Simple3D's fixed 3-frame trigger
       window, a natural adaptation to this class's continuous-velocity physics. Verified via new
       `tools/VerifyBlupiMovement.cpp` assertions (Jump→Air transition, exact icon values 17/169).
-      **This task's real blocker is unchanged**: any further indicator states beyond Stop/March/
-      Jump/Air/Down/Up (e.g. `Ecrase`/`Balloon`/`Teleporte`, all 3 already mechanically tracked in
-      `GEBlupiController` but with no pre-approved frame-icon source anywhere in this repo) would
-      need a fresh `table_blupi` transcription and therefore explicit user approval, same as this
-      task's original 3D-model scope — asked the user 2026-07-11, see `NEXT.md` §8.
+      **User approved the further transcription (2026-07-11)**: `StopEcrase`(72)/`MarchEcrase`(73)/
+      `Balloon`(66)/`Teleporte`(74)'s real `table_blupi` icon-frame records were parsed directly
+      out of `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp` (a small script, not by
+      hand) and added as `kStopEcraseFrames`/`kMarchEcraseFrames`/`kBalloonFrames`/
+      `kTeleportingFrames` in `GEBlupiController.cpp` — frame counts (1/24/16/128, 67 of the 128
+      Teleporte frames being the real `-1` "invisible" sentinel) cross-checked exactly against
+      `mobile-eggbert-reference/08-animations.md` §2's already-documented counts. `UpdateAnim()`'s
+      precedence now checks `m_teleporting`/`m_balloon`/`m_ecrase` BEFORE the ground/air cascade
+      (real `BlupiAction` has only one animation per status regardless of grounded/airborne, no
+      "AirEcrase" etc.); `StopEcrase` vs `MarchEcrase` still splits on the same `moving` bool as
+      `Stop`/`March`. **Found and fixed a real bug while wiring `Teleporting` in**: `Step()`'s
+      early-return for `m_teleporting` skipped `UpdateAnim()` entirely, so the new state would
+      never actually have displayed during a real teleport — now calls `UpdateAnim()` before that
+      return. `GetAnimIcon()`'s `-1`→icon-0 substitution for Teleporte's invisible frames is a
+      documented simplification (this debug HUD slot has no "draw nothing" mechanism), not a
+      fidelity claim. New `VerifyBlupiMovement.cpp` assertions cover all 3 states' exact icon
+      values; full suite + both backends re-verified.
 - [ ] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
       +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
       Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to

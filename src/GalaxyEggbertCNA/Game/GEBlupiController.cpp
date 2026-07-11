@@ -30,6 +30,34 @@ namespace GalaxyEggbert::CNA
         constexpr int kDownFrames[]  = {33};
         constexpr int kUpFrames[]    = {44};
 
+        // blupi.png icon indices for StopEcrase(72)/MarchEcrase(73)/
+        // Balloon(66)/Teleporting(74) -- a fresh, narrowly-scoped
+        // transcription of exactly these 4 mobile-eggbert
+        // Tables::table_blupi records, added 2026-07-11 with explicit user
+        // approval (plan.md E3D-MIG-064; unlike the 5 arrays above, no
+        // pre-approved in-repo source existed for these). -1 is the real
+        // "invisible frame" sentinel (same convention as the Temp tile,
+        // 02-tiles.md) -- GetAnimIcon() below substitutes icon 0 (the real
+        // idle/Stop pose) for it, a deliberate simplification since this
+        // debug HUD indicator has no "draw nothing this frame" mechanism,
+        // not a claim that icon 0 is what real mobile-eggbert shows there.
+        constexpr int kStopEcraseFrames[]  = {320};
+        constexpr int kMarchEcraseFrames[] = {
+            319, 319, 318, 318, 317, 317, 318, 318, 319, 319, 320, 320,
+            321, 321, 322, 322, 323, 323, 322, 322, 321, 321, 320, 320};
+        constexpr int kBalloonFrames[] = {
+            291, 291, 292, 292, 293, 293, 294, 294,
+            295, 295, 294, 294, 293, 293, 292, 292};
+        constexpr int kTeleportingFrames[] = {
+            1, 1, 2, 2, 3, 3, 4, 4, 270, 270, 269, 269, 268, 268, 0, 0,
+            1, 2, 3, 4, 270, 269, 268, 0, 1, 2, 3, 4, 270, 269, 268, 0,
+            1, 3, 270, 268, 2, 4, 269, 0, 1, 3, 270, 268, 2, 4, 269, 0,
+            -1, 3, 270, -1, 2, -1, 269, 0, 1, -1, -1, 268, -1, -1, 269, -1,
+            -1, -1, -1, 270, -1, -1, 2, -1, -1, -1, -1, -1, -1, 29, 46, 47,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+
         // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
         // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
         // phase-gated) -- see GroundHeightAt's own comment for why.
@@ -280,6 +308,11 @@ namespace GalaxyEggbert::CNA
                 m_teleporting = false;
                 m_teleportTimer = 0.0f;
             }
+            // The Teleporting anim state (plan.md E3D-MIG-064) still needs
+            // to advance during the freeze -- moving/crouchHeld/lookUpHeld
+            // don't matter here since m_teleporting takes top precedence in
+            // UpdateAnim()'s own cascade regardless of their values.
+            UpdateAnim(false, false, false, dt);
             return;
         }
 
@@ -371,16 +404,23 @@ namespace GalaxyEggbert::CNA
 
     void GEBlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt)
     {
-        // Precedence matches GalaxyEggbertSimple3D::GEBlupiController::UpdateState:
-        // airborne beats crouch/look-up beats moving beats idle. Airborne
-        // itself splits Jump (ascending) vs Air (falling/apex) by velocity
-        // sign -- see the AnimState enum's own comment for why this differs
-        // from Simple3D's frame-counted trigger window.
-        const AnimState newState = !m_onGround  ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
-                                  : crouchHeld   ? AnimState::Down
-                                  : lookUpHeld   ? AnimState::Up
-                                  : moving       ? AnimState::March
-                                                 : AnimState::Stop;
+        // Precedence: Teleporting/Balloon/Ecrase (each a real BlupiAction
+        // status with only ONE real animation regardless of grounded/
+        // airborne, see the AnimState enum's own comment) beat the normal
+        // ground/air cascade entirely, which otherwise matches
+        // GalaxyEggbertSimple3D::GEBlupiController::UpdateState: airborne
+        // beats crouch/look-up beats moving beats idle. Airborne itself
+        // splits Jump (ascending) vs Air (falling/apex) by velocity sign --
+        // see the AnimState enum's own comment for why this differs from
+        // Simple3D's frame-counted trigger window.
+        const AnimState newState = m_teleporting ? AnimState::Teleporting
+                                  : m_balloon     ? AnimState::Balloon
+                                  : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
+                                  : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
+                                  : crouchHeld    ? AnimState::Down
+                                  : lookUpHeld    ? AnimState::Up
+                                  : moving        ? AnimState::March
+                                                  : AnimState::Stop;
         if (newState != m_animState)
         {
             m_animState = newState;
@@ -412,6 +452,17 @@ namespace GalaxyEggbert::CNA
                 return kDownFrames[m_animPhase % (sizeof(kDownFrames) / sizeof(kDownFrames[0]))];
             case AnimState::Up:
                 return kUpFrames[m_animPhase % (sizeof(kUpFrames) / sizeof(kUpFrames[0]))];
+            case AnimState::StopEcrase:
+                return kStopEcraseFrames[m_animPhase % (sizeof(kStopEcraseFrames) / sizeof(kStopEcraseFrames[0]))];
+            case AnimState::MarchEcrase:
+                return kMarchEcraseFrames[m_animPhase % (sizeof(kMarchEcraseFrames) / sizeof(kMarchEcraseFrames[0]))];
+            case AnimState::Balloon:
+                return kBalloonFrames[m_animPhase % (sizeof(kBalloonFrames) / sizeof(kBalloonFrames[0]))];
+            case AnimState::Teleporting:
+            {
+                const int icon = kTeleportingFrames[m_animPhase % (sizeof(kTeleportingFrames) / sizeof(kTeleportingFrames[0]))];
+                return icon >= 0 ? icon : kStopFrames[0]; // -1 = real invisible frame, see kTeleportingFrames' own comment
+            }
             case AnimState::Stop:
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];
