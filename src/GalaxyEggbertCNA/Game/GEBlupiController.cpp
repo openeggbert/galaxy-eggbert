@@ -21,11 +21,12 @@ namespace GalaxyEggbert::CNA
 
         // blupi.png icon indices, ported from GalaxyEggbertSimple3D's own
         // already-approved GEBlupiController.cpp (kStopFrames/kMarchFrames/
-        // kJumpFrames/kDownFrames/kUpFrames) — not a fresh mobile-eggbert
-        // transcription.
+        // kJumpFrames/kDownFrames/kUpFrames/kAirFrames) — not a fresh
+        // mobile-eggbert transcription.
         constexpr int kStopFrames[]  = {0};
         constexpr int kMarchFrames[] = {5, 6, 7, 8, 9, 10};
         constexpr int kJumpFrames[]  = {17, 18, 19};
+        constexpr int kAirFrames[]   = {169, 26, 170, 170, 27};
         constexpr int kDownFrames[]  = {33};
         constexpr int kUpFrames[]    = {44};
 
@@ -371,8 +372,11 @@ namespace GalaxyEggbert::CNA
     void GEBlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt)
     {
         // Precedence matches GalaxyEggbertSimple3D::GEBlupiController::UpdateState:
-        // airborne beats crouch/look-up beats moving beats idle.
-        const AnimState newState = !m_onGround  ? AnimState::Jump
+        // airborne beats crouch/look-up beats moving beats idle. Airborne
+        // itself splits Jump (ascending) vs Air (falling/apex) by velocity
+        // sign -- see the AnimState enum's own comment for why this differs
+        // from Simple3D's frame-counted trigger window.
+        const AnimState newState = !m_onGround  ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld   ? AnimState::Down
                                   : lookUpHeld   ? AnimState::Up
                                   : moving       ? AnimState::March
@@ -402,6 +406,8 @@ namespace GalaxyEggbert::CNA
                 return kMarchFrames[m_animPhase % (sizeof(kMarchFrames) / sizeof(kMarchFrames[0]))];
             case AnimState::Jump:
                 return kJumpFrames[m_animPhase % (sizeof(kJumpFrames) / sizeof(kJumpFrames[0]))];
+            case AnimState::Air:
+                return kAirFrames[m_animPhase % (sizeof(kAirFrames) / sizeof(kAirFrames[0]))];
             case AnimState::Down:
                 return kDownFrames[m_animPhase % (sizeof(kDownFrames) / sizeof(kDownFrames[0]))];
             case AnimState::Up:

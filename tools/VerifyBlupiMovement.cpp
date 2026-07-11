@@ -107,6 +107,51 @@ int main(int argc, char** argv)
     check(fallsForever.GetY() < 0.0f,
           "Blupi's Y drops below 0 over a floorless column, proving he's NOT clamped to a fake floor there");
 
+    // 4c. Animation state: Jump (ascending) vs Air (falling) split
+    // (2026-07-11, plan.md E3D-MIG-064 -- expanding the bottom-right
+    // animation indicator beyond its original Stop/March/Jump/Down/Up
+    // debug-stopgap set). Real BlupiAction IDs 4 (Jump) and 5 (Air); Air's
+    // frame data is ported from GalaxyEggbertSimple3D::GEBlupiController's
+    // own already-approved kAirFrames, not a fresh mobile-eggbert
+    // transcription. Verifies the velocity-sign-based split this class
+    // uses (ascending = Jump, falling/apex = Air) in place of Simple3D's
+    // own frame-counted trigger window.
+    {
+        GEBlupiController anim;
+        anim.SetPosition(0.0f, 1.0f, 0.0f);
+        anim.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(anim.GetAnimState() == GEBlupiController::AnimState::Stop,
+              "grounded and idle starts in the Stop anim state");
+        check(anim.GetAnimIcon() == 0, "Stop anim icon is the real icon 0");
+
+        anim.Step(world, 0.0f, 0.0f, true, false, false, dt); // jumpPressed
+        check(!anim.IsOnGround(), "jump launches Blupi airborne");
+        check(anim.GetAnimState() == GEBlupiController::AnimState::Jump,
+              "freshly-launched jump (ascending, velocityY > 0) is the Jump anim state");
+        check(anim.GetAnimIcon() == 17, "Jump anim icon starts at the real first jump frame (icon 17)");
+
+        int stepsToApex = 0;
+        while (anim.GetAnimState() == GEBlupiController::AnimState::Jump && stepsToApex < 200)
+        {
+            anim.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToApex;
+        }
+        check(stepsToApex < 200, "reaches the jump apex (velocityY turns non-positive) within a bounded time");
+        check(anim.GetAnimState() == GEBlupiController::AnimState::Air,
+              "past the apex, falling (velocityY <= 0) switches to the Air anim state, not still Jump");
+        check(anim.GetAnimIcon() == 169, "Air anim icon starts at the real first air frame (icon 169)");
+
+        int stepsToLand = 0;
+        while (!anim.IsOnGround() && stepsToLand < 200)
+        {
+            anim.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToLand;
+        }
+        check(anim.IsOnGround(), "lands again after the jump arc completes");
+        check(anim.GetAnimState() == GEBlupiController::AnimState::Stop,
+              "back on the ground and idle returns to the Stop anim state, not stuck in Air");
+    }
+
     // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --
     // a small synthetic world (not worlds3d/world001.vwr, which has no lava
     // placed yet) with one lava block and one ordinary ground block,

@@ -90,7 +90,21 @@ namespace GalaxyEggbert::CNA
         // direct transcription, not an approximation).
         static constexpr float kTeleportDuration = 6.4f;
 
-        enum class AnimState : std::uint8_t { Stop, March, Jump, Down, Up };
+        // Jump vs Air mirrors GalaxyEggbertSimple3D::GEBlupiController's own
+        // already-shipped split (real BlupiAction IDs 4/5) -- Simple3D
+        // distinguishes them by a fixed 3-frame post-trigger window (its
+        // own discrete animPhase-counted state machine); this class instead
+        // uses velocity sign (m_velocityY > 0 = ascending = Jump, <= 0 =
+        // falling/apex = Air), a natural adaptation to this class's
+        // continuous-velocity physics rather than Simple3D's frame-counted
+        // one, while keeping the same real two-state distinction (2026-07-11,
+        // plan.md E3D-MIG-064 -- expanding the animation indicator beyond
+        // its original Stop/March/Jump/Down/Up debug-stopgap set, per
+        // mobile-eggbert-reference/08-animations.md §2's confirmed Air
+        // frame data, already ported once via Simple3D so this reuses that
+        // same pre-approved table rather than a fresh mobile-eggbert
+        // transcription).
+        enum class AnimState : std::uint8_t { Stop, March, Jump, Air, Down, Up };
 
         void SetPosition(float x, float y, float z) noexcept;
 

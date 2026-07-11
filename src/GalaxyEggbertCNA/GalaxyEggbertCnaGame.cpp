@@ -25,7 +25,8 @@ namespace GalaxyEggbert::CNA
     {
         // Placeholder-model animation mapping (2026-07-09, NEXT.md §3) --
         // avatars3d/blupi_placeholder/'s 3 clips (Survey/Walk/Run) don't
-        // correspond to GEBlupiController::AnimState's 5 states at all, so
+        // correspond to GEBlupiController::AnimState's states at all (6 as
+        // of 2026-07-11's Jump/Air split, plan.md E3D-MIG-064), so
         // this is a rough best-effort substitution, not a faithful
         // behavioral mapping -- see avatars3d/blupi_placeholder/README.md's
         // own mapping table for the reasoning per state. Swap out entirely
@@ -38,7 +39,8 @@ namespace GalaxyEggbert::CNA
             switch (state)
             {
                 case GEBlupiController::AnimState::March: return kWalk;
-                case GEBlupiController::AnimState::Jump:  return kRun;
+                case GEBlupiController::AnimState::Jump:
+                case GEBlupiController::AnimState::Air:   return kRun;
                 case GEBlupiController::AnimState::Stop:
                 case GEBlupiController::AnimState::Down:
                 case GEBlupiController::AnimState::Up:

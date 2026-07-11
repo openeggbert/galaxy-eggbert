@@ -234,6 +234,21 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `063`), instead about driving a real 3D model's animation clips once `069` exists. Still
       needs explicit user approval to transcribe `table_blupi`'s timing/state data per
       `easy3d.md` §5.4/§5.7 (load-bearing data, not casual "just data"). Blocked on `069`.
+      **Partial, narrower progress (2026-07-11)**: the separate bottom-right 2D debug animation
+      indicator (not this task's real 3D model target, but the same `AnimState` enum/frame-table
+      mechanism) gained a `Jump`/`Air` split (real `BlupiAction` IDs 4/5) — `GEBlupiController`
+      previously collapsed all airborne time into `Jump`. Frame data for `Air` (`{169, 26, 170,
+      170, 27}`) was NOT a fresh `table_blupi` transcription — it was ported from
+      `GalaxyEggbertSimple3D::GEBlupiController.cpp`'s own `kAirFrames`, already shipped/approved
+      in this same repo, so this one addition didn't need new approval. The state split itself
+      uses velocity sign (ascending vs falling) rather than Simple3D's fixed 3-frame trigger
+      window, a natural adaptation to this class's continuous-velocity physics. Verified via new
+      `tools/VerifyBlupiMovement.cpp` assertions (Jump→Air transition, exact icon values 17/169).
+      **This task's real blocker is unchanged**: any further indicator states beyond Stop/March/
+      Jump/Air/Down/Up (e.g. `Ecrase`/`Balloon`/`Teleporte`, all 3 already mechanically tracked in
+      `GEBlupiController` but with no pre-approved frame-icon source anywhere in this repo) would
+      need a fresh `table_blupi` transcription and therefore explicit user approval, same as this
+      task's original 3D-model scope — asked the user 2026-07-11, see `NEXT.md` §8.
 - [ ] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
       +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
       Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to
