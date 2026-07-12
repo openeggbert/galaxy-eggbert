@@ -503,6 +503,17 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType31, 56.0f, 1.0f, 92.0f); // charge (-> Cloud)
 
     // ------------------------------------------------------------------
+    // Vehicle demo (plan.md E3D-MIG-171, 2026-07-12) -- one Jeep pickup
+    // (the simplest confirmed ground vehicle) in a small open room, so
+    // mount/dismount and the real accel/decel speed ramp are genuinely
+    // playable, not just unit-tested. Action button mounts/dismounts it
+    // (real: requires the action button at contact, not an automatic
+    // walk-over pickup).
+    // ------------------------------------------------------------------
+    fill(61, 67, 0, 0, 87, 93, BlockTypes::RockPile); // vehicle-demo room floor
+    place(ObjectType::ObjectType19, 64.0f, 1.0f, 90.0f); // jeep
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //

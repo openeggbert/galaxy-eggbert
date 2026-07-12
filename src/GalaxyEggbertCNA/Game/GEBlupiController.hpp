@@ -148,6 +148,53 @@ namespace GalaxyEggbert::CNA
         static constexpr int kCloudWarnLevel = 25;
         static constexpr int kHideWarnLevel = 20;
 
+        // Vehicle mounts (plan.md E3D-MIG-171, real m_blupiHelico/Jeep/Tank/
+        // Skate/Over, verified against mobile-eggbert-reference/
+        // 10-blupi-mechanics.md §6/13-object-pickups.md's own "Vehicle
+        // mounts" section). Real per-mode horizontal max-speed/accel/decel
+        // are given in mobile-eggbert's own tick-domain px/tick units with
+        // no established px-to-this-engine conversion factor (unlike
+        // vertical fall distance, which had a real "match by feel duration"
+        // precedent) -- these constants instead preserve the REAL RELATIVE
+        // PROPORTION between vehicles (Jeep fastest at 20px/tick, Tank/
+        // Overcraft slowest confirmed ground/hover modes at 12, Skateboard
+        // 15, Helicopter's "normal" setting 16 -- "easy move" isn't
+        // modeled, always using the normal-setting figures), anchored to an
+        // arbitrary-but-reasonable "vehicles feel faster than walking"
+        // baseline (kJeepMaxSpeed = kMoveSpeed * 2.5), same technique
+        // already used for kSpringBounceHeld/NotHeld. Real accel=1.0/tick
+        // for every mode below happens to convert to the SAME engine accel
+        // (2.5 * kMoveSpeed) under this scaling -- not a coincidence, a
+        // consequence of anchoring proportionally; decel differs per mode
+        // since real decel rates differ (Tank stops fastest at 3.0/tick,
+        // Overcraft/Skateboard hold momentum longest at 1.0/tick, matching
+        // the doc's own "holds momentum longer" note).
+        static constexpr float kVehicleAccel = kMoveSpeed * 2.5f;
+        static constexpr float kJeepMaxSpeed = kMoveSpeed * 2.5f;       // real 20px/tick
+        static constexpr float kJeepDecel = kVehicleAccel * 2.0f;       // real decel 2.0/tick
+        static constexpr float kTankMaxSpeed = kMoveSpeed * 1.5f;       // real 12px/tick
+        static constexpr float kTankDecel = kVehicleAccel * 3.0f;       // real decel 3.0/tick
+        static constexpr float kOvercraftMaxSpeed = kMoveSpeed * 1.5f;  // real 12px/tick
+        static constexpr float kOvercraftDecel = kVehicleAccel * 1.0f;  // real decel 1.0/tick
+        static constexpr float kSkateboardMaxSpeed = kMoveSpeed * 1.875f; // real 15px/tick
+        static constexpr float kSkateboardDecel = kVehicleAccel * 1.0f; // real decel 1.0/tick
+        static constexpr float kHelicopterMaxSpeed = kMoveSpeed * 2.0f; // real 16px/tick (normal setting)
+        static constexpr float kHelicopterDecel = kVehicleAccel * 2.0f; // real decel 2.0/tick
+
+        // Vertical flight (Helicopter/Overcraft only -- Jeep/Tank/Skateboard
+        // use the existing ground gravity/jump path unchanged, matching the
+        // real source's own "uses the shared ground gravity/Air path" note
+        // for Skateboard, and this session's decision not to model Jeep/
+        // Tank's own real airborne-heavy-fall nuance). Real ascend/descend
+        // targets (Helicopter -10/+12 px/tick, Overcraft -5/+12) are scaled
+        // by the same technique as the horizontal speeds above, anchored to
+        // each vehicle's own already-scaled horizontal max speed.
+        static constexpr float kHelicopterAscendSpeed = kHelicopterMaxSpeed * (10.0f / 16.0f);
+        static constexpr float kHelicopterDescendSpeed = kHelicopterMaxSpeed * (12.0f / 16.0f);
+        static constexpr float kOvercraftAscendSpeed = kOvercraftMaxSpeed * (5.0f / 12.0f);
+        static constexpr float kOvercraftDescendSpeed = kOvercraftMaxSpeed * (12.0f / 12.0f);
+        static constexpr float kVehicleVerticalAccel = kVehicleAccel * 0.5f; // real accel 0.5/tick (both flying modes)
+
         // Jump vs Air mirrors GalaxyEggbertSimple3D::GEBlupiController's own
         // already-shipped split (real BlupiAction IDs 4/5) -- Simple3D
         // distinguishes them by a fixed 3-frame post-trigger window (its
@@ -198,6 +245,18 @@ namespace GalaxyEggbert::CNA
         // Shield, 26 Sucette->Power, 30 Drink->Hide, 31 Charge->Cloud),
         // confirmed directly in `Decor.cpp` ~6014-6087/~3048-3235.
         enum class SecretPower : std::uint8_t { None, Shield, Power, Cloud, Hide };
+
+        // Vehicle mounts (plan.md E3D-MIG-171). Real confirmed pickup->
+        // vehicle mapping (mobile-eggbert-reference/13-object-pickups.md):
+        // ObjectType13->Helicopter, 19->Jeep, 28->Tank, 24->Skateboard,
+        // 46->Overcraft (NOT "Balloon" despite ObjectType.hpp's own
+        // misleading doc comment -- 10-blupi-mechanics.md's own research
+        // found this is a confirmed real discrepancy: touching 46 sets
+        // `m_blupiOver`, the Overcraft flag, not a separate Balloon ride).
+        // The real standalone "Balloon" vehicle movement model exists in
+        // Decor.cpp but this session found no confirmed pickup that grants
+        // it, so it isn't included here.
+        enum class VehicleMode : std::uint8_t { None, Helicopter, Jeep, Tank, Skateboard, Overcraft };
 
         void SetPosition(float x, float y, float z) noexcept;
 
@@ -336,6 +395,32 @@ namespace GalaxyEggbert::CNA
         // Cloud@25/Hide@20) -- the caller plays the real per-power warning
         // channel (43/45/56/63) once, same one-shot shape as JustDrowned().
         [[nodiscard]] bool JustCrossedSecretPowerWarning() const noexcept { return m_secretPowerJustWarned; }
+
+        // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
+        // comment). Real gate: blocked only while already riding ANY other
+        // vehicle, or while Nage/Surf (real also excludes Suspended/Ecrase,
+        // Ecrase already blocks separately via its own state elsewhere) --
+        // NOT gated on Shield/Power (real note: "none of them check Shield
+        // or Power"). Zeroes horizontal velocity and silently cancels
+        // Cloud/Hide if active (matching the real "if Cloud or Hide was
+        // active it is silently cancelled" -- Shield/Power are left
+        // untouched). A no-op (returns false) if the gate fails, same
+        // idiom as every other Trigger*() here. inNage/inSurf are passed in
+        // by the caller (this class doesn't call itself recursively to
+        // check its own water state).
+        bool TriggerMount(VehicleMode mode, bool inNage, bool inSurf) noexcept;
+
+        // Voluntary dismount (real: action-button while riding, no fixed
+        // duration otherwise). A no-op if not currently in a vehicle.
+        // Zeroes horizontal velocity; the caller is responsible for
+        // spawning the vehicle pickup back into the world at Blupi's
+        // position (matching the real "deposits vehicle pickup back into
+        // the world" behavior) and playing any dismount sound -- this
+        // class has no access to GEWorldRuntime/MobileObjSpec.
+        void TriggerDismount() noexcept;
+
+        [[nodiscard]] VehicleMode GetVehicleMode() const noexcept { return m_vehicleMode; }
+        [[nodiscard]] bool IsInVehicle() const noexcept { return m_vehicleMode != VehicleMode::None; }
 
         // Launches Blupi upward off a spring tile (real gate: grounded and
         // not already airborne -- swimming/surfing/suspended don't exist in
@@ -495,6 +580,9 @@ namespace GalaxyEggbert::CNA
         int m_secretPowerLevel = 0;
         float m_secretPowerTimer = 0.0f;
         bool m_secretPowerJustWarned = false;
+
+        VehicleMode m_vehicleMode = VehicleMode::None;
+        float m_vehicleSpeed = 0.0f; // current ramped horizontal speed (real "vitesse"), signed by moveInput's own sign
 
         bool m_teleporting = false;
         float m_teleportTimer = 0.0f;

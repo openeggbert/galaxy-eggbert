@@ -107,6 +107,37 @@ int main(int argc, char** argv)
     check(fallsForever.GetY() < 0.0f,
           "Blupi's Y drops below 0 over a floorless column, proving he's NOT clamped to a fake floor there");
 
+    // 4c. Real bug found 2026-07-12 while live-testing vehicles (plan.md
+    // E3D-MIG-171): TryMoveAxis() silently froze ALL horizontal movement
+    // once Y fell far enough negative during a sustained fall (m_y below
+    // roughly -2), because its step-up check compared the destination
+    // column's ground height directly against m_y without accounting for
+    // "I'm currently far below because I'm falling, not because that's an
+    // unclimbable wall". Regression test: hold forward movement while
+    // falling over the same genuinely floorless column above for long
+    // enough that the old bug would have kicked in (well past y=-2), and
+    // confirm Z keeps changing throughout, not just for the first couple
+    // of frames.
+    GEBlupiController fallingMover;
+    fallingMover.SetPosition(40.0f, 20.0f, 40.0f);
+    fallingMover.SetYaw(0.0f); // facing -Z
+    float zSample1 = 0.0f, zSample2 = 0.0f;
+    float minYSeen = 20.0f;
+    for (int i = 0; i < 300; ++i) // 5s -- comfortably past y=-2 and well into the old bug's range
+    {
+        fallingMover.Step(world, 0.0f, 1.0f, false, false, false, dt);
+        minYSeen = std::min(minYSeen, fallingMover.GetY());
+        if (i == 30) zSample1 = fallingMover.GetZ();  // early in the fall (still above y=-2)
+        if (i == 299) zSample2 = fallingMover.GetZ(); // 5s later (he may have drifted onto real ground by now)
+    }
+    std::cout << "Falling mover Z: early=" << zSample1 << ", late=" << zSample2 << ", min Y seen="
+              << minYSeen << std::endl;
+    check(minYSeen < -2.0f,
+          "sanity: this drop genuinely goes deep enough (Y below -2) to trigger the old bug at some point");
+    check(zSample2 != zSample1,
+          "Z keeps changing over the course of a long fall while holding movement input (real bug: it used "
+          "to freeze solid once Y fell below about -2)");
+
     // 4c. Animation state: Jump (ascending) vs Air (falling) split
     // (2026-07-11, plan.md E3D-MIG-064 -- expanding the bottom-right
     // animation indicator beyond its original Stop/March/Jump/Down/Up
@@ -675,6 +706,109 @@ int main(int argc, char** argv)
             check(sawWarning, "JustCrossedSecretPowerWarning() fires once during Shield's real countdown");
             check(warning.GetSecretPowerLevel() == GEBlupiController::kShieldWarnLevel,
                   "the warning fires at exactly the real level-10 threshold, not some other level");
+        }
+
+        // Vehicle mounts (plan.md E3D-MIG-171) -- trigger gates, Cloud/Hide
+        // cancellation on mount (real: "if Cloud or Hide was active it is
+        // silently cancelled... Shield/Power are left untouched"), and the
+        // real per-mode horizontal accel/decel ramp + Helicopter's free
+        // vertical flight.
+        {
+            GEBlupiController jeep;
+            check(jeep.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false),
+                  "TriggerMount(Jeep) succeeds from no vehicle, not Nage/Surf");
+            check(jeep.IsInVehicle() && jeep.GetVehicleMode() == GEBlupiController::VehicleMode::Jeep,
+                  "IsInVehicle()/GetVehicleMode() reflect the new Jeep mount");
+            check(!jeep.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false),
+                  "TriggerMount() fails while already riding another vehicle (real: blocked while riding ANY vehicle)");
+
+            GEBlupiController nageRider;
+            check(!nageRider.TriggerMount(GEBlupiController::VehicleMode::Jeep, /*inNage=*/true, false),
+                  "TriggerMount() fails while Nage (real: blocked while swimming/surfing)");
+            GEBlupiController surfRider;
+            check(!surfRider.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, /*inSurf=*/true),
+                  "TriggerMount() fails while Surf too");
+
+            GEBlupiController cloudMounter;
+            cloudMounter.TriggerCloud();
+            check(cloudMounter.GetSecretPower() == GEBlupiController::SecretPower::Cloud,
+                  "sanity: Cloud is active before mounting");
+            cloudMounter.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            check(cloudMounter.GetSecretPower() == GEBlupiController::SecretPower::None,
+                  "mounting a vehicle silently cancels an active Cloud (real behavior)");
+
+            GEBlupiController shieldMounter;
+            shieldMounter.TriggerShield();
+            shieldMounter.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            check(shieldMounter.GetSecretPower() == GEBlupiController::SecretPower::Shield,
+                  "mounting a vehicle does NOT cancel Shield (real: 'none of them check Shield or Power')");
+
+            GEBlupiController dismounter;
+            dismounter.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+            dismounter.TriggerDismount();
+            check(!dismounter.IsInVehicle(), "TriggerDismount() clears the vehicle mode");
+            dismounter.TriggerDismount(); // no-op when not riding -- just confirming it doesn't crash
+            check(!dismounter.IsInVehicle(), "TriggerDismount() stays a no-op when called again while not riding");
+
+            // Real per-mode accel/decel ramp: Jeep's horizontal speed
+            // should climb from 0 toward its own max, not snap instantly.
+            // Verified by comparing the PER-FRAME delta near the start of
+            // the ramp (frame 1) against a later frame's delta (frame 10)
+            // -- a genuine accel ramp means the later delta is bigger
+            // (still speeding up); an instant snap-to-max-speed (like
+            // Blupi's own normal walk) would make every frame's delta
+            // identical from the very first one.
+            GEBlupiController jeepRamp;
+            jeepRamp.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            jeepRamp.SetYaw(0.0f); // facing -Z
+            float zBefore = jeepRamp.GetZ();
+            jeepRamp.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            const float firstFrameDelta = std::fabs(jeepRamp.GetZ() - zBefore);
+            for (int i = 0; i < 8; ++i)
+            {
+                jeepRamp.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            }
+            zBefore = jeepRamp.GetZ();
+            jeepRamp.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            const float laterFrameDelta = std::fabs(jeepRamp.GetZ() - zBefore);
+            std::cout << "Jeep per-frame delta: frame 1 = " << firstFrameDelta << ", frame 10 = "
+                      << laterFrameDelta << std::endl;
+            check(laterFrameDelta > firstFrameDelta * 1.5f,
+                  "Jeep's per-frame movement grows over the first several frames (a real accel ramp, "
+                  "not an instant snap to max speed)");
+
+            // Coasting: after releasing input, a vehicle should still be
+            // moving next frame (decelerating), not stop dead instantly
+            // like Blupi's own normal walk does.
+            const float zBeforeRelease = jeepRamp.GetZ();
+            jeepRamp.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(jeepRamp.GetZ() != zBeforeRelease,
+                  "a vehicle keeps coasting for at least one frame after input stops (real: decelerates, "
+                  "never stops instantly)");
+
+            // Helicopter flight: holding lookUp (real "Up") should ramp
+            // m_velocityY toward the real ascend target, climbing Y over
+            // several frames without needing to be grounded first.
+            GEBlupiController helicopter;
+            helicopter.SetPosition(0.0f, 5.0f, 0.0f);
+            helicopter.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            const float yStart = helicopter.GetY();
+            for (int i = 0; i < 30; ++i)
+            {
+                helicopter.Step(synthetic, 0.0f, 0.0f, false, /*crouchHeld=*/false, /*lookUpHeld=*/true, dt);
+            }
+            check(helicopter.GetY() > yStart, "holding lookUp while flying a Helicopter climbs Y over time");
+
+            GEBlupiController helicopterDescend;
+            helicopterDescend.SetPosition(0.0f, 12.0f, 0.0f);
+            helicopterDescend.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            const float yStartDescend = helicopterDescend.GetY();
+            for (int i = 0; i < 30; ++i)
+            {
+                helicopterDescend.Step(synthetic, 0.0f, 0.0f, false, /*crouchHeld=*/true, /*lookUpHeld=*/false, dt);
+            }
+            check(helicopterDescend.GetY() < yStartDescend,
+                  "holding crouch (real 'Down') while flying a Helicopter descends Y over time");
         }
     }
 

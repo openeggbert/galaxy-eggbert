@@ -262,6 +262,44 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Vehicle mounts implemented + a real, general falling-movement collision bug found and fixed
+  (2026-07-12, plan.md `E3D-MIG-171`, Phase 17 continued).** New `GEBlupiController::VehicleMode`
+  (Helicopter/Jeep/Tank/Skateboard/Overcraft) + `TriggerMount()`/`TriggerDismount()`, confirmed
+  against `mobile-eggbert-reference/10-blupi-mechanics.md` §6 and `13-object-pickups.md`'s
+  "Vehicle mounts" section: real pickup mapping `ObjectType13`->Helicopter, `19`->Jeep, `28`->
+  Tank, `24`->Skateboard, `46`->Overcraft (confirmed **not** "Balloon" — touching 46 just sets
+  `m_blupiOver`, a previously-documented discrepancy; no confirmed pickup grants a real standalone
+  Balloon vehicle, so it isn't modeled). Real gate: blocked only while already riding any vehicle
+  or while Nage/Surf swimming — confirmed real oddity that Shield/Power do NOT block mounting;
+  mounting silently cancels active Cloud/Hide but leaves Shield/Power untouched. Real per-mode
+  max-speed/accel/decel have no established px->engine conversion factor, so the REAL RELATIVE
+  proportions between vehicles were preserved instead (Jeep fastest, Tank/Overcraft slowest,
+  Skateboard/Helicopter between), anchored to an arbitrary "vehicles feel faster than walking"
+  baseline (same technique as `kSpringBounceHeld`). Helicopter/Overcraft get real free vertical
+  flight (ascend/descend reusing the same crouch/lookUp inputs that mean camera pitch on foot)
+  instead of gravity; Jeep/Tank/Skateboard reuse the existing ground gravity/jump path unchanged.
+  Mount/dismount scan-and-deposit logic lives in `GalaxyEggbertCnaGame.cpp` (not
+  `GEInteractionSystem`, which has no access to the `GEBlupiController`-only `VehicleMode` enum),
+  bound to the same action button as switches/dynamite. NOT modeled: standalone Balloon vehicle,
+  tilt easing, Overcraft's real altitude-cap/inverted-accel-over-gaps nuance, the real
+  floating-object auto-mount-without-a-button exception, per-vehicle hazard immunity. One Jeep
+  demo pickup added to the sample world.
+  **Found and fixed a real, pre-existing, non-vehicle-specific collision bug while live-testing
+  this**: `GEBlupiController::TryMoveAxis()` silently froze ALL horizontal movement once `m_y`
+  fell far enough negative during a sustained fall through a floorless column (past roughly -2) —
+  its step-up check compared the destination column's ground height directly against Blupi's own
+  deeply-negative Y, misreading "I'm far below because I'm falling" as "that's an unclimbable
+  wall." Every prior fall test only ever dropped straight down with zero horizontal input, so this
+  went undetected until vehicles made "hold a direction while falling for several seconds" an
+  actual gameplay scenario. Fixed by skipping the step-up restriction entirely while airborne
+  (`!m_onGround`) — it only makes sense while grounded. Verified live (Jeep drives continuously
+  across varied terrain, including off a ledge, with no freezing) and via a new dedicated
+  regression test. Verified overall: 15 new `VerifyBlupiMovement` assertions (mount/dismount
+  gates, Cloud/Hide-cancel-on-mount with Shield/Power preserved, real accel ramp, coasting,
+  Helicopter ascend/descend) + 1 new TryMoveAxis regression test + full suite (63/63 unit tests,
+  all verify tools, 116/116 in `VerifyBlupiMovement`) + live headless verification (temporary
+  debug instrumentation, reverted before committing) + both backends.
+
 - **Secret powers implemented + a real documentation error corrected (2026-07-12, plan.md
   `E3D-MIG-170`/`172`/`174`, Phase 17 start).** Direct `Decor.cpp` research (not just the
   reference doc) found the project's own earlier "Sp0-Sp7" icon research was WRONG: tile icons
@@ -2901,16 +2939,19 @@ long-standing "no riding a moving platform" gap), and dynamite (`155`, the real 
 are all done; `151`/`153`/`156`/`157`/`158` are deferred with documented reasons (see plan.md).
 **Phase 16 (doors & keys)** is substantially done: key-gated (`160`/`161`) and treasure-gated
 (`162`) doors both work; `163`-`165` deferred (render decision / hub-menu dependency). **Phase 17
-(secret powers/vehicles/buffs)** has its first 3 items done (`170`/`172`/`174`) — see §3's newest
-entry for a real documentation-error correction found along the way (the "Sp0-Sp7" tile-icon
-research was wrong; secret powers come from 4 separate pickups instead, now implemented, including
-real Shield/Hide hazard immunity retrofitted onto essentially every hazard from earlier this
-session). **Recommended next step: `E3D-MIG-171` (vehicle mounts)** — the clear next big Phase 17
-feature, a substantial standalone undertaking (6 vehicle types, each with its own movement model),
-better suited to a fresh, focused session than being squeezed into the tail of this one. Every
-remaining Phase 17 item after that is either blocked on vehicles (`173`'s full fidelity, `178`),
-needs a particle system that doesn't exist (`176`), is a `needs_human` visual decision (`179`), or
-is low-value without vehicles to consume it (`175`, bullet pack).
+(secret powers/vehicles/buffs)** now has 4 items done (`170`/`171`/`172`/`174`) — see §3's two
+newest entries for a real documentation-error correction found along the way (the "Sp0-Sp7"
+tile-icon research was wrong; secret powers come from 4 separate pickups instead, now
+implemented, including real Shield/Hide hazard immunity retrofitted onto essentially every hazard
+from earlier this session) and for vehicle mounts (`171`, all 5 confirmed non-Balloon vehicle
+types), which also surfaced and fixed a real general `TryMoveAxis()` falling-movement collision
+bug (unrelated to vehicles specifically, but only exposed by them). **Recommended next step:**
+investigate task #2, the teleporter duplicate-tip render bug (full user-reported detail already
+in §4 item 2 below and §8's task list — not yet investigated this session), since it's a
+fully-specified, already-reported real bug and Phase 17's remaining items are either low-value
+(`175` bullet pack), blocked on infrastructure that doesn't exist (`176` particle system), a
+`needs_human` visual decision (`179`), or under-researched enough to warrant their own scoping
+pass (`173`, `177`, `178`).
 
 **2 open items, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
@@ -3227,9 +3268,13 @@ priority notes below until this list is exhausted:**
 3. Phase 15 (`E3D-MIG-150`-`158`) — **substantially done** (150/152/154/155 done; 151/153/156/157/
    158 deferred with documented reasons, see plan.md).
 4. Phase 16 (`E3D-MIG-160`-`165`) — **substantially done** (160/161/162 done; 163/164/165 deferred).
-5. Phase 17 (`E3D-MIG-170`-`179`) — **in progress**: `170`/`172`/`174` done (secret powers + real
-   hazard immunity). Remaining: `171` (vehicles, substantial standalone feature), `173` (2-stage
-   pickup delay, deferred simplification), `175`-`178` (not started), `179` (needs_human, skip).
+5. Phase 17 (`E3D-MIG-170`-`179`) — **in progress**: `170`/`171`/`172`/`174` done (secret powers +
+   real hazard immunity + vehicle mounts, the latter also yielding a real, general
+   `TryMoveAxis()` falling-movement collision-bug fix — see §3's newest entry). Remaining: `173`
+   (2-stage pickup delay, deferred simplification), `175` (bullet pack, low value without more
+   vehicle/ammo integration), `176` (sparkle-fx, needs a particle system that doesn't exist),
+   `177` (Suspended movement mode, not yet researched), `178` (vehicle movement table, partly
+   covered by `171`'s own speed/accel constants), `179` (needs_human, skip).
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
    their 2026-07-12 direction, not attempted) and the teleporter double-tip bug (§4 item 2, not yet
    investigated).

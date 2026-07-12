@@ -1069,11 +1069,47 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       gating, hazard-immunity integration) + full suite (63/63 unit tests, all verify tools) +
       live headless verification (temporary debug instrumentation, reverted before committing) +
       both backends.
-- [ ] `171` Vehicle mounts: Helicopter(13), Jeep(19), Skateboard(24), Tank(28), Overcraft(46,
-      inverted accel — only accelerates over gaps), Balloon(buoyancy drift) — shared guard:
-      blocked only while riding another vehicle or swim/surf/suspend. NOT started — substantial
-      standalone feature (each vehicle needs its own movement/physics model), deferred to its own
-      task.
+- [x] `171` Vehicle mounts — done 2026-07-12, verified directly against `Decor.cpp` via
+      `mobile-eggbert-reference/10-blupi-mechanics.md` §6/`13-object-pickups.md`'s own "Vehicle
+      mounts" section. Confirmed real pickup->vehicle mapping: `ObjectType13`->Helicopter, `19`->
+      Jeep, `28`->Tank, `24`->Skateboard, `46`->Overcraft (**not** "Balloon" despite
+      `ObjectType.hpp`'s own misleading doc comment — `10-blupi-mechanics.md`'s own research
+      already found this exact discrepancy: touching `46` sets `m_blupiOver`, not a separate
+      Balloon ride; no confirmed pickup grants the real standalone Balloon vehicle, so it isn't
+      modeled). New `GEBlupiController::VehicleMode` + `TriggerMount()`/`TriggerDismount()`: real
+      gate (blocked while already riding ANY vehicle, or Nage/Surf; **not** gated on Shield/Power,
+      confirmed real oddity) and mount silently cancelling Cloud/Hide but leaving Shield/Power
+      untouched. Real per-mode horizontal max-speed/accel/decel have no established px-to-this-
+      engine conversion factor (unlike vertical fall distance) — preserved the REAL RELATIVE
+      proportions between vehicles instead (Jeep fastest, Tank/Overcraft slowest confirmed modes,
+      Skateboard/Helicopter between), anchored to an arbitrary-but-reasonable "vehicles feel
+      faster than walking" baseline, same technique as `kSpringBounceHeld`. Helicopter/Overcraft
+      get real free vertical flight (ascend/descend via the same crouch/lookUp inputs that mean
+      camera pitch on foot) instead of gravity; Jeep/Tank/Skateboard reuse the existing ground
+      gravity/jump path unchanged (matching the real source's own "uses the shared ground
+      gravity/Air path" note for Skateboard). Mount/dismount + the pickup-deposit-back-into-the-
+      world logic live directly in `GalaxyEggbertCnaGame.cpp` (not `GEInteractionSystem`, which
+      has no access to `GEBlupiController::VehicleMode`) — same action button as switches/
+      dynamite. NOT modeled: Balloon vehicle (no confirmed trigger), tilt easing (Jeep/Tank, no
+      visible 3D model to tilt anyway), Overcraft's real altitude-cap/inverted-accel-over-gaps
+      nuance (simplified to the same ramp as every other mode), the real Helicopter floating-
+      object auto-mount-without-a-button exception, and per-vehicle hazard immunity (e.g. real
+      Over/Jeep/Tank protect against spikes — already a documented gap from Phase 14). **Found and
+      fixed a real, pre-existing collision bug while live-testing this** (not vehicle-specific):
+      `GEBlupiController::TryMoveAxis()` silently froze ALL horizontal movement once `m_y` fell
+      far enough negative during a sustained fall through a floorless column (below roughly -2) —
+      the step-up check compared the destination's ground height directly against the falling
+      Blupi's own deeply-negative Y, misreading "I'm far below because I'm falling" as "that's an
+      unclimbable wall". Fixed by skipping the step-up restriction entirely while airborne
+      (`!m_onGround`) — it only makes sense while grounded/walking. Undetected until now because
+      every existing fall test dropped straight down with no horizontal input during the fall.
+      New demo (one Jeep) added to the sample world. Verified: 1 new regression test for the
+      TryMoveAxis fix + 15 new `VerifyBlupiMovement` assertions (mount/dismount gates, Cloud/Hide
+      cancellation vs. Shield/Power preserved, real accel ramp, coasting after input release,
+      Helicopter ascend/descend) + full suite (63/63 unit tests, all verify tools) + live headless
+      verification (temporary debug instrumentation — forced action press + held movement input
+      for several seconds, reverted before committing — confirmed continuous driving across
+      varied terrain with no freezing) + both backends.
 - [x] `172` Shared power-up timer — done 2026-07-12 alongside `170` above (single `SecretPower`
       state + shared gauge, decrementing at each power's own real rate: Shield 0.25s/level (25s
       total), Power 0.15s/level (15s), Cloud/Hide 0.2s/level (20s each) — all 4 direct

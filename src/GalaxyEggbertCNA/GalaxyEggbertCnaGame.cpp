@@ -826,6 +826,85 @@ namespace GalaxyEggbert::CNA
                 {
                     sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
                 }
+
+                // Vehicle mount/dismount (plan.md E3D-MIG-171) -- same
+                // action button. While already riding, dismounts (real:
+                // voluntary dismount, no fixed duration otherwise) and
+                // deposits the vehicle pickup back into the world at
+                // Blupi's position, matching the real "deposits vehicle
+                // pickup back into the world" behavior. While not riding,
+                // scans for a nearby active vehicle pickup (real confirmed
+                // mapping: ObjectType13->Helicopter, 19->Jeep, 28->Tank,
+                // 24->Skateboard, 46->Overcraft) and mounts it -- done
+                // directly here (not inside GEInteractionSystem::Update(),
+                // which has no access to GEBlupiController::VehicleMode)
+                // matching the same architecture as TryActivateSwitch/
+                // PlaceDynamite above. Real "requires the action button
+                // held/pressed at contact" gate is modeled via the same
+                // proximity radius every other pickup here uses; the real
+                // helicopter-only auto-mount-over-a-gap exception
+                // (`Decor::IsFloatingObject`) is NOT modeled.
+                if (blupi_.IsInVehicle())
+                {
+                    GalaxyEggbert::ObjectType depositType;
+                    switch (blupi_.GetVehicleMode())
+                    {
+                        case GEBlupiController::VehicleMode::Helicopter: depositType = GalaxyEggbert::ObjectType::ObjectType13; break;
+                        case GEBlupiController::VehicleMode::Jeep:        depositType = GalaxyEggbert::ObjectType::ObjectType19; break;
+                        case GEBlupiController::VehicleMode::Tank:        depositType = GalaxyEggbert::ObjectType::ObjectType28; break;
+                        case GEBlupiController::VehicleMode::Skateboard:  depositType = GalaxyEggbert::ObjectType::ObjectType24; break;
+                        default:                                          depositType = GalaxyEggbert::ObjectType::ObjectType46; break;
+                    }
+                    blupi_.TriggerDismount();
+                    auto& objects = worldRuntime_.GetMobileObjectsMutable();
+                    MobileObjSpec deposited;
+                    deposited.type = depositType;
+                    deposited.active = true;
+                    deposited.posStartX = deposited.posEndX = deposited.currentX = blupi_.GetX();
+                    deposited.posStartY = deposited.posEndY = deposited.currentY = blupi_.GetY();
+                    deposited.posStartZ = deposited.posEndZ = deposited.currentZ = blupi_.GetZ();
+                    bool placed = false;
+                    for (auto& slot : objects)
+                    {
+                        if (!slot.active)
+                        {
+                            slot = deposited;
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (!placed)
+                    {
+                        objects.push_back(deposited);
+                    }
+                }
+                else
+                {
+                    constexpr float kVehicleMountRadius = 1.1f;
+                    for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
+                    {
+                        if (!obj.active) continue;
+                        GEBlupiController::VehicleMode mode;
+                        switch (obj.type)
+                        {
+                            case GalaxyEggbert::ObjectType::ObjectType13: mode = GEBlupiController::VehicleMode::Helicopter; break;
+                            case GalaxyEggbert::ObjectType::ObjectType19: mode = GEBlupiController::VehicleMode::Jeep; break;
+                            case GalaxyEggbert::ObjectType::ObjectType28: mode = GEBlupiController::VehicleMode::Tank; break;
+                            case GalaxyEggbert::ObjectType::ObjectType24: mode = GEBlupiController::VehicleMode::Skateboard; break;
+                            case GalaxyEggbert::ObjectType::ObjectType46: mode = GEBlupiController::VehicleMode::Overcraft; break;
+                            default: continue;
+                        }
+                        const float mdx = obj.currentX - blupi_.GetX();
+                        const float mdy = obj.currentY - blupi_.GetY();
+                        const float mdz = obj.currentZ - blupi_.GetZ();
+                        if (mdx * mdx + mdy * mdy + mdz * mdz < kVehicleMountRadius * kVehicleMountRadius &&
+                            blupi_.TriggerMount(mode, blupi_.IsNage(), blupi_.IsSurf()))
+                        {
+                            obj.active = false;
+                            break;
+                        }
+                    }
+                }
             }
             actionKeyWasDown_ = actionPressed;
 

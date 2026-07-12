@@ -250,6 +250,33 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerMount(VehicleMode mode, bool inNage, bool inSurf) noexcept
+    {
+        if (IsInVehicle() || inNage || inSurf)
+        {
+            return false;
+        }
+        m_vehicleMode = mode;
+        m_vehicleSpeed = 0.0f;
+        if (m_secretPower == SecretPower::Cloud || m_secretPower == SecretPower::Hide)
+        {
+            m_secretPower = SecretPower::None;
+            m_secretPowerLevel = 0;
+            m_secretPowerTimer = 0.0f;
+        }
+        return true;
+    }
+
+    void GEBlupiController::TriggerDismount() noexcept
+    {
+        if (!IsInVehicle())
+        {
+            return;
+        }
+        m_vehicleMode = VehicleMode::None;
+        m_vehicleSpeed = 0.0f;
+    }
+
     bool GEBlupiController::TriggerSpringBounce(bool jumpHeld) noexcept
     {
         if (!m_onGround)
@@ -376,8 +403,24 @@ namespace GalaxyEggbert::CNA
 
         // Allow the move if the destination column's ground is at most
         // kStepLimit above the current feet Y (step-up); any amount lower
-        // is always fine (falling is handled by the vertical pass in Step()).
-        if (static_cast<float>(targetGroundY) <= m_y + kStepLimit)
+        // is always fine (falling is handled by the vertical pass in
+        // Step()). This step-up restriction only makes sense while
+        // GROUNDED (climbing a curb while walking) -- while airborne
+        // (`!m_onGround`, mid-jump or mid-fall), it's skipped entirely.
+        // Real bug found 2026-07-12 while live-testing vehicles
+        // (E3D-MIG-171): while falling through a floorless column, m_y
+        // keeps dropping below any OTHER nearby column's real ground
+        // height (or the kNoGround sentinel itself, once m_y drops below
+        // about -2) -- the plain `targetGroundY <= m_y + kStepLimit`
+        // comparison then flips false and silently blocks ALL further
+        // horizontal movement for the rest of the fall, misreading "I'm
+        // currently far below that column's ground because I'm falling"
+        // as "that's an unclimbable wall". Not a vehicle-specific bug --
+        // any sustained directional input held while falling off the
+        // world edge hits this; previous fall-death tests only ever
+        // dropped straight down with no horizontal input during the fall,
+        // so it went uncaught until now.
+        if (!m_onGround || static_cast<float>(targetGroundY) <= m_y + kStepLimit)
         {
             m_x = candidateX;
             m_z = candidateZ;
@@ -455,11 +498,51 @@ namespace GalaxyEggbert::CNA
         // speed but blocks jump entirely while squashed.
         const float effectiveMoveSpeed = m_ecrase ? kMoveSpeed * kEcraseSpeedMultiplier : kMoveSpeed;
 
-        const bool moving = (moveInput != 0.0f);
+        // Vehicle horizontal speed (plan.md E3D-MIG-171): unlike normal
+        // walking (instant target speed, no ramp -- this engine's own
+        // existing simplification, not a real transcription), vehicles
+        // ramp `m_vehicleSpeed` toward the target at their own real
+        // accel/decel rate, matching "a neutral input always decelerates
+        // back toward zero, never instantly" -- so a vehicle keeps
+        // coasting after input stops, unlike Blupi's own instant-stop walk.
+        // Already signed (carries moveInput's own sign), so it's used
+        // directly below instead of being multiplied by moveInput again.
+        float horizontalSpeed;
+        if (IsInVehicle())
+        {
+            float maxSpeed = 0.0f;
+            float decel = kVehicleAccel;
+            switch (m_vehicleMode)
+            {
+                case VehicleMode::Jeep:        maxSpeed = kJeepMaxSpeed;       decel = kJeepDecel;       break;
+                case VehicleMode::Tank:        maxSpeed = kTankMaxSpeed;       decel = kTankDecel;       break;
+                case VehicleMode::Overcraft:   maxSpeed = kOvercraftMaxSpeed;  decel = kOvercraftDecel;  break;
+                case VehicleMode::Skateboard:  maxSpeed = kSkateboardMaxSpeed; decel = kSkateboardDecel; break;
+                case VehicleMode::Helicopter:  maxSpeed = kHelicopterMaxSpeed; decel = kHelicopterDecel; break;
+                default: break;
+            }
+            const float target = moveInput * maxSpeed;
+            const float rate = (std::fabs(target) > std::fabs(m_vehicleSpeed)) ? kVehicleAccel : decel;
+            if (m_vehicleSpeed < target)
+            {
+                m_vehicleSpeed = std::min(m_vehicleSpeed + rate * dt, target);
+            }
+            else if (m_vehicleSpeed > target)
+            {
+                m_vehicleSpeed = std::max(m_vehicleSpeed - rate * dt, target);
+            }
+            horizontalSpeed = m_vehicleSpeed;
+        }
+        else
+        {
+            horizontalSpeed = moveInput * effectiveMoveSpeed;
+        }
+
+        const bool moving = std::fabs(horizontalSpeed) > 0.001f;
         if (moving)
         {
-            const float dx = std::sin(m_yaw) * moveInput * effectiveMoveSpeed * dt;
-            const float dz = -std::cos(m_yaw) * moveInput * effectiveMoveSpeed * dt;
+            const float dx = std::sin(m_yaw) * horizontalSpeed * dt;
+            const float dz = -std::cos(m_yaw) * horizontalSpeed * dt;
             if (dx != 0.0f)
             {
                 TryMoveAxis(world, dx, 0.0f, tempPassable);
@@ -542,14 +625,52 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Wasp "balloon" status: reduced gravity while active (kBalloonGravityMultiplier's own
-        // comment explains this is an approximation of "floats rather than dying"). Nage
-        // (plan.md E3D-MIG-148): same shape, a slow floaty sink instead of a free-fall drop
-        // while genuinely submerged (kNageGravityMultiplier's own comment).
-        const float effectiveGravity = m_balloon ? kGravity * kBalloonGravityMultiplier
-                                      : m_nage    ? kGravity * kNageGravityMultiplier
-                                                  : kGravity;
-        m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
+        // Helicopter/Overcraft (plan.md E3D-MIG-171): free vertical flight
+        // instead of constant gravity -- lookUpHeld (real "Up" input)
+        // ascends, crouchHeld (real "Down") descends, ramped via
+        // kVehicleVerticalAccel rather than snapping instantly, matching
+        // the real "accel 0.5" for both flying modes. Repurposes the same
+        // two inputs that mean camera pitch on foot, the same "same input,
+        // different meaning per mode" pattern already used for tempPassable
+        // and Nage's own swim-up jump. Jeep/Tank/Skateboard are NOT flight
+        // modes -- they fall through to the normal gravity path below,
+        // matching the real source's own "uses the shared ground gravity/
+        // Air path" note for Skateboard (and this session's decision not
+        // to model Jeep/Tank's own real airborne-heavy-fall nuance).
+        if (m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft)
+        {
+            const bool isHelicopter = (m_vehicleMode == VehicleMode::Helicopter);
+            const float ascendSpeed = isHelicopter ? kHelicopterAscendSpeed : kOvercraftAscendSpeed;
+            const float descendSpeed = isHelicopter ? kHelicopterDescendSpeed : kOvercraftDescendSpeed;
+            float targetVelocityY = 0.0f;
+            if (lookUpHeld)
+            {
+                targetVelocityY = ascendSpeed;
+            }
+            else if (crouchHeld)
+            {
+                targetVelocityY = -descendSpeed;
+            }
+            if (m_velocityY < targetVelocityY)
+            {
+                m_velocityY = std::min(m_velocityY + kVehicleVerticalAccel * dt, targetVelocityY);
+            }
+            else if (m_velocityY > targetVelocityY)
+            {
+                m_velocityY = std::max(m_velocityY - kVehicleVerticalAccel * dt, targetVelocityY);
+            }
+        }
+        else
+        {
+            // Wasp "balloon" status: reduced gravity while active (kBalloonGravityMultiplier's own
+            // comment explains this is an approximation of "floats rather than dying"). Nage
+            // (plan.md E3D-MIG-148): same shape, a slow floaty sink instead of a free-fall drop
+            // while genuinely submerged (kNageGravityMultiplier's own comment).
+            const float effectiveGravity = m_balloon ? kGravity * kBalloonGravityMultiplier
+                                          : m_nage    ? kGravity * kNageGravityMultiplier
+                                                      : kGravity;
+            m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
+        }
         float newY = m_y + m_velocityY * dt;
 
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
