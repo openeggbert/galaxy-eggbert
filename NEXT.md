@@ -260,6 +260,30 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Platform lift clipping fixed + 2 more lifts added (2026-07-12, NEXT.md §8 old task 3, user
+  request 2026-07-11: "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
+  soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu").**
+  Root-caused via a temporary debug camera override (reverted, not part of the diff) plus a
+  temporary "parked at posEndY" world regeneration (also reverted): the north-hill lift's
+  destination (the crow's-nest floor, `fill(49,51,8,8,27,29)`) was a FULLY SOLID slab with no shaft
+  opening at the lift's own column (x=50,z=28) — confirmed live, the lift could only ever rise to
+  touch the slab's solid underside, with no visible passage, matching the literal complaint. Fixed
+  by (1) carving a 1-cell shaft opening (`Air`) at the lift's exact column, and (2) lowering
+  `posEndY` from `8.0f` to `7.0f` so the lift's own rendered top face
+  (`GalaxyEggbertCnaGame.cpp`'s `kObjectCubeGroundOffset=+1.0` plus the cube's own 0.5 half-height)
+  lands exactly flush with the surrounding floor's top face instead of sitting proud on solid rock
+  by a full unit. Verified live via headless EasyGL screenshots at 3 vantage points (default state,
+  temporarily forced "at rest in the hole", from multiple angles) — the platform now plugs the
+  shaft flush, no floating box, no visible clip into solid terrain. **2 new lift rooms added** south
+  of the existing fan rooms (x=45-51 and x=53-59, z=71-77, same "open sky, no walls/ceiling"
+  pattern as the teleporter/fan rooms — deliberately avoids the known `GroundHeightAt()`
+  roofed-interior limitation, §5), each with its own carved shaft + flush-tuned `posEndY`, bringing
+  the world to 3 total platform lifts (was 1). Verified: 63/63 `GalaxyEggbertWorldsTests`, all 5
+  verify tools (`VerifyBlupiMovement`, `VerifyInteractionSystem`, `VerifyMoveObjectTypesCna`,
+  `VerifyBigDecorParsingCna` — run from repo root, not `build-cna`, per §7's own note — plus
+  `easy-3d`'s own suite untouched by this change), both EasyGL and Vulkan backends live (headless,
+  `11 platform-lift/crate cube object(s) found`, up from 9, matching the 2 new lifts).
+
 - **Fourth round of live feedback (2026-07-11, plan.md `E3D-MIG-142`): the Saw blade is STILL
   wrong, teleporter tip confirmed correct/settled.** User (Czech, verbatim, with
   `Screenshot From 2026-07-11 17-56-53.png`): "synu zase jsi to zkurvil pila je spatne ... rovna
@@ -2762,9 +2786,36 @@ complete.
 **2 open items, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
    a quick fix, see §3/§8's detailed writeup — don't guess again live without reading it first).
-2. **Add more platform lifts to the demo world**, and fix the existing one, which is positioned
-   under a plate/board such that it moves THROUGH solid geometry (clips, not usable/visible as
-   intended). Not yet started.
+   Per explicit user direction (2026-07-12): do NOT guess a fix autonomously — this needs direct
+   user visual judgment (reading the crop / a screenshot), same category as the other "new visual
+   design decision" items below. Left paused, not attempted this session.
+2. **Teleporter tip renders TWICE per pillar, one copy floating too far below the cube** — reported
+   2026-07-12 (user, Czech, verbatim): "tvar hrotu je, zda se spravne, problem je ze ten hrot se
+   renderuje az pod tu krychly a ty hroty tam jsou dvakrat ty hroty pod tou deskou zrus a nech
+   jenom ty hroty pod tim, hroty podtim posun nahorou aby byly rovnou pod deskou" — the tip's SHAPE
+   is fine now, but it's emitted twice per pillar (a real double-append bug, not a design question):
+   remove the duplicate, keep only one tip, and move it up so it sits immediately/flush below the
+   cube (no gap). This likely explains the previously-unreproduced 2026-07-11 report "zadní
+   teleportér renderuje dopředu, je to rozbité" (§3) — probably the same bug. Not yet investigated
+   this session (queued behind the Phase-ordered gameplay work the user prioritized 2026-07-12; see
+   §8's task list order). Read `GETerrainRenderer.cpp`'s `AppendSpecialGeometry()` teleporter-tip
+   code in full before touching it — likely emitted from two different loop passes over the same
+   pillar, or the rotated/packed-key hash-set logic (added for the Saw plate rotation) reused
+   incorrectly here.
+
+(The platform lift clipping item that used to be listed here is DONE — see §3's newest entry,
+2026-07-12.)
+
+**New visual/artistic render-geometry decisions are deliberately SKIPPED this session, per explicit
+user direction (2026-07-12)**, given the Saw's own history of repeated wrong live guesses:
+`ThinMechanical` geometry for ~25 icons (`E3D-MIG-510`), water/liquid surface treatment
+(`E3D-MIG-512`), architectural-kit assembly (`E3D-MIG-514`), secret-power render
+(`E3D-MIG-515`, also blocked on the separate `170` behavior-research question), and the enemy
+billboard walk-cycle direction mismatch (`E3D-MIG-179`, no resolution proposed anywhere — do not
+attempt one without the user). These are `needs_human` — left exactly as `plan.md` already marks
+them (`[?]`), not attempted, not guessed. Non-visual gameplay-logic tasks (Phase 14 water gauge,
+Phase 15/16/17 mechanics) are being worked instead, per the user's explicit priority order
+(2026-07-12): continue gameplay mechanics in phase order before any Menu/HUD/Save/Score UI work.
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
@@ -3038,6 +3089,22 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 
 ## 8. Next smallest tasks
 
+**Autonomous session priority order, set explicitly by the user (2026-07-12) — supersedes older
+priority notes below until this list is exhausted:**
+
+1. Platform lift clipping + more lifts — **DONE**, see §3's newest entry / old task 3 below.
+2. Water breath gauge (`E3D-MIG-148`) — Phase 14's last item. Next up.
+3. Phase 15 (`E3D-MIG-150`-`158`) — crates/lifts/bridges full fidelity.
+4. Phase 16 (`E3D-MIG-160`-`165`) — doors & keys.
+5. Phase 17 (`E3D-MIG-170`-`179`) — secret powers/vehicles/buffs.
+6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
+   their 2026-07-12 direction, not attempted) and the teleporter double-tip bug (§4 item 2, not yet
+   investigated).
+7. Explicitly SKIPPED per the user (2026-07-12): any new visual/artistic render-geometry decision
+   (`E3D-MIG-510`/`512`/`514`/`515`, `179`) — mark `needs_human`, do not guess. Menu/HUD/Save/Score
+   UI work (plan.md §2.2 "PRIORITY" label) is explicitly LOWER priority than the phases above this
+   session — the label predates the 2026-07-10 CNA rewrite reset and wasn't re-affirmed.
+
 **User-reported live-playtest feedback (2026-07-11) — these supersede the Phase 14 water-gauge/
 fans pick as the current priority; work through them in this order (P1 items are real bugs, not
 polish):**
@@ -3186,17 +3253,9 @@ polish):**
      this same path — Saw is the first with a strongly asymmetric, orientation-sensitive graphic);
      (4) get a live screenshot BEFORE claiming done this time, and compare the visible teeth
      direction against the user's literal description before considering this resolved.
-3. **Add more platform lifts to the demo world; fix one clipping through a plate.** User (Czech,
-   verbatim): "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
-   soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu" — the
-   sample world's existing platform lift (`ObjectType1`, the "crow's-nest" lift mentioned in §3's
-   2026-07-09 history, `tools/GenerateSampleWorld3D.cpp`) is positioned such that its patrol path
-   moves it through solid geometry (a plate/board it clips through), making it useless/not visibly
-   working as intended. Find its exact placement in `GenerateSampleWorld3D.cpp`, fix the patrol
-   path so it doesn't clip anything solid, then add more `ObjectType1` instances elsewhere in the
-   sample world for a richer demo (real mobile-eggbert levels place these reasonably often per the
-   density notes already in `GenerateSampleWorld3D.cpp`'s own comments). Verify live that lifts
-   patrol visibly without clipping, rebuild+test both backends, commit+push.
+3. **DONE (2026-07-12): platform lift clipping fixed + 2 more lifts added.** See §3's newest entry
+   for the full root-cause/fix writeup (carved shaft opening + flush-tuned `posEndY`, 2 new lift
+   rooms). All 63/63 unit tests + all 5 verify tools + both backends re-verified live.
 
 Older, lower-priority polish tasks (unaffected by the above, still valid, just less urgent now):
 

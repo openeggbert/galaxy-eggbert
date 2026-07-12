@@ -137,7 +137,20 @@ int main(int argc, char** argv)
     // Second platform lift, from the plateau (y=4) up to a small crow's-nest
     // (y=8) -- a real, gameplay-motivated use of ObjectType1, not a
     // stationary demo placement.
+    //
+    // Fixed 2026-07-12 (NEXT.md 8 task 3, user-reported): the lift's own
+    // shaft column (x=50, z=28) sat directly under this floor's solid
+    // footprint with no opening, so the lift could only ever rise to touch
+    // the floor's own underside from below -- a fully solid "board" with no
+    // passage, exactly the "presouva se skrze desku" (moves through the
+    // board) complaint, and useless for ever actually reaching the top even
+    // once platform-riding exists (plan.md E3D-MIG-152). Carved a 1-cell
+    // shaft opening at the lift's own column so the platform has a real hole
+    // to rise through and can park flush in it (see the matching posEndY
+    // change below -- the cube's own top face is tuned to land exactly at
+    // this floor's top face once the center cell is Air).
     fill(49, 51, 8, 8, 27, 29, BlockTypes::RockPile);
+    world.setBlock(50, 8, 28, Block::make(BlockTypes::Air)); // lift shaft opening
 
     // ------------------------------------------------------------------
     // South tunnel: a real underground/enclosed corridor -- floor, side
@@ -218,11 +231,25 @@ int main(int argc, char** argv)
     // originally placed via place(), giving it zero patrol range and
     // making it sit permanently stationary despite GEInteractionSystem's
     // real patrol movement, caught by tools/VerifyInteractionSystem.cpp).
+    //
+    // posEndY fixed 2026-07-12 (NEXT.md 8 task 3): rendered UniformCube
+    // objects sit with their OWN top face at (currentY + 1.5) -- see
+    // GalaxyEggbertCnaGame.cpp's kObjectCubeGroundOffset (+1.0) plus the
+    // cube's own half-height (0.5). The old posEndY=8.0f (matching the
+    // crow's-nest floor's own grid Y exactly) put the lift's top face a full
+    // unit ABOVE the surrounding floor's own top face (9.5 vs 8.5) instead
+    // of flush with it, and left the floor solid at that column (see the
+    // shaft-opening comment above) -- confirmed live via a temporary debug
+    // screenshot (camera override, reverted, not part of this diff) showing
+    // the lift parked on top of a fully solid slab with no passage. Lowered
+    // by 1 to 7.0f so the lift's top face (7.0+1.0+0.5=8.5) lands exactly
+    // flush with the floor's own top face (8.5), plugging the new shaft
+    // opening above instead of sitting proud on solid rock.
     {
         MoveObjectRecord lift;
         lift.type = ObjectType::ObjectType1;
         lift.posStartX = 50.0f; lift.posStartY = 4.0f; lift.posStartZ = 28.0f;
-        lift.posEndX = 50.0f;   lift.posEndY = 8.0f;   lift.posEndZ = 28.0f;
+        lift.posEndX = 50.0f;   lift.posEndY = 7.0f;   lift.posEndZ = 28.0f;
         PlaceMoveObject(world, lift);
     }
 
@@ -372,6 +399,41 @@ int main(int argc, char** argv)
 
     fill(30, 36, 0, 0, 79, 85, BlockTypes::RockPile); // fan room B floor
     world.setBlock(33, 2, 82, Block::make(BlockTypes::FanRight)); // floating fan, walk beneath it
+
+    // ------------------------------------------------------------------
+    // Two more platform lifts (NEXT.md 8 task 3, 2026-07-12, user request:
+    // "vice presouvacich bloku" -- more moving/lift blocks), bringing the
+    // total to 3. Same open-sky room pattern as the teleporter/fan rooms
+    // directly above (a flat floor, no walls or ceiling at all) so neither
+    // lift's own shaft risks the GroundHeightAt() roofed-interior limitation
+    // (NEXT.md 5) the tunnel's fixtures already hit twice. Each destination
+    // platform has its own carved shaft opening at the lift's exact column,
+    // same fix as the north-hill lift above -- posEndY = platformGridY - 1
+    // so the lift's own top face (posEndY + 1.5) lands flush with the
+    // platform's top face (platformGridY + 0.5), plugging the hole instead
+    // of sitting proud on solid rock.
+    // ------------------------------------------------------------------
+    fill(45, 51, 0, 0, 71, 77, BlockTypes::RockPile); // lift room A floor
+    fill(48, 50, 5, 5, 73, 75, BlockTypes::RockPile); // destination platform, y=5
+    world.setBlock(49, 5, 74, Block::make(BlockTypes::Air)); // lift shaft opening
+    {
+        MoveObjectRecord liftA;
+        liftA.type = ObjectType::ObjectType1;
+        liftA.posStartX = 49.0f; liftA.posStartY = 0.0f; liftA.posStartZ = 74.0f;
+        liftA.posEndX = 49.0f;   liftA.posEndY = 4.0f;   liftA.posEndZ = 74.0f;
+        PlaceMoveObject(world, liftA);
+    }
+
+    fill(53, 59, 0, 0, 71, 77, BlockTypes::RockPile); // lift room B floor
+    fill(55, 57, 3, 3, 73, 75, BlockTypes::RockPile); // destination platform, y=3 (shorter rise)
+    world.setBlock(56, 3, 74, Block::make(BlockTypes::Air)); // lift shaft opening
+    {
+        MoveObjectRecord liftB;
+        liftB.type = ObjectType::ObjectType1;
+        liftB.posStartX = 56.0f; liftB.posStartY = 0.0f; liftB.posStartZ = 74.0f;
+        liftB.posEndX = 56.0f;   liftB.posEndY = 2.0f;   liftB.posEndZ = 74.0f;
+        PlaceMoveObject(world, liftB);
+    }
 
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
