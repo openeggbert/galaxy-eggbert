@@ -90,6 +90,39 @@ namespace GalaxyEggbert::CNA
         // direct transcription, not an approximation).
         static constexpr float kTeleportDuration = 6.4f;
 
+        // Water breath gauge (plan.md E3D-MIG-148, `m_blupiLevel`, verified
+        // against mobile-eggbert-reference/12-hazards-and-interactables.md's
+        // "Water depth state machine" section): starts at 100, ticks down by
+        // 1 every `Config::ScaleTime(5)` ticks -- 5 ticks at the real 20Hz
+        // reference rate = 0.25s/level, a direct transcription (same
+        // ScaleTime-at-20Hz-baseline technique already used for
+        // kTeleportDuration above), giving the real ~25s (100 x 0.25s)
+        // maximum submersion time. Only ticks while genuinely submerged
+        // (Nage) -- standing at the surface (Surf) does not consume it, and
+        // it resets to full whenever Nage ends (matches the real "gauge
+        // hidden" behavior on resurfacing, not a persisted shared resource
+        // across dives).
+        static constexpr int kWaterGaugeMax = 100;
+        static constexpr int kWaterGaugeRedThreshold = 25;
+        static constexpr float kWaterGaugeTickSeconds = 5.0f / 20.0f;
+
+        // Nage (fully submerged) gravity -- an approximation (unlike
+        // kWaterGaugeTickSeconds above, no exact "buoyancy" constant is
+        // documented in the reference), giving a slow, floaty sink instead
+        // of a normal free-fall drop, the same approximation shape already
+        // used for kBalloonGravityMultiplier. jumpPressed while Nage applies
+        // a modest constant upward kick (kSwimUpSpeed, also not a
+        // transcribed value -- real mobile-eggbert's continuous 2D swim
+        // input has no direct equivalent to derive an exact constant from)
+        // instead of a normal ground jump, a natural adaptation for
+        // "swimming up" rather than "jumping off solid ground". The real
+        // "Jump near the surface launches you clear of the water" nuance
+        // (-16/-12, gated on a specific sub-tile depth band) is NOT modeled
+        // -- no sub-tile position exists in this engine's single-point
+        // collision, same simplification already applied to spikes/fans.
+        static constexpr float kNageGravityMultiplier = 0.3f;
+        static constexpr float kSwimUpSpeed = kJumpSpeed * 0.4f;
+
         // Jump vs Air mirrors GalaxyEggbertSimple3D::GEBlupiController's own
         // already-shipped split (real BlupiAction IDs 4/5) -- Simple3D
         // distinguishes them by a fixed 3-frame post-trigger window (its
@@ -171,6 +204,16 @@ namespace GalaxyEggbert::CNA
         // this query itself.
         [[nodiscard]] std::uint16_t GetBlockTypeAbove(const Worlds::World& world) const noexcept;
 
+        // Block type AT Blupi's own standing cell (mirrors
+        // GetGroundBlockType()'s exact shape, but queries `round(m_y)`
+        // rather than `round(m_y) - 1`) -- used for the real Water Surf/Nage
+        // detection (plan.md E3D-MIG-148, Decor.cpp `IsSurfWater`/
+        // `IsDeepWater`/`IsOutWater` ~7462-7493): whether the tile he
+        // currently occupies is water at all. Unlike GetGroundBlockType(),
+        // NOT gated on IsOnGround() -- water detection must work while
+        // sinking through a deep pool (mid-water, not resting on anything).
+        [[nodiscard]] std::uint16_t GetBlockTypeAt(const Worlds::World& world) const noexcept;
+
         // Enters the crusher-squash state (real m_blupiEcrase=true): zeroes
         // velocity, starts the kEcraseDuration recovery countdown. A no-op
         // (returns false) if already squashed, matching the real
@@ -232,6 +275,36 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool IsTeleporting() const noexcept { return m_teleporting; }
         [[nodiscard]] std::uint16_t GetTeleportIcon() const noexcept { return m_teleportIcon; }
 
+        // Water Surf (standing/floating at the surface, dry above) / Nage
+        // (fully submerged) status (plan.md E3D-MIG-148) -- unlike every
+        // other status above, these are NOT set via a Trigger*() call:
+        // Step()'s own `inSurfWater`/`inDeepWater` parameters set them
+        // directly every frame (the caller recomputes both from
+        // GetBlockTypeAt()/GetBlockTypeAbove() + BlockTypes::isWater() each
+        // frame, the same "caller determines the terrain fact, this class
+        // just tracks status" split already used for tempPassable). The
+        // caller detects Surf/Nage/dry TRANSITIONS (for the real splash/
+        // resurface sounds -- channels 22/25) via a before/after comparison
+        // of these getters around the Step() call, the same idiom already
+        // used for the balloon/crusher/teleport recovery sounds.
+        [[nodiscard]] bool IsSurf() const noexcept { return m_surf; }
+        [[nodiscard]] bool IsNage() const noexcept { return m_nage; }
+
+        // Real submersion breath gauge, 0-100 (plan.md E3D-MIG-148,
+        // `m_blupiLevel`) -- only ticks down while Nage, resets to full
+        // whenever Nage ends. See JustDrowned() for the death signal.
+        [[nodiscard]] int GetWaterGaugeLevel() const noexcept { return m_waterGaugeLevel; }
+
+        // True for exactly the one Step() call where the gauge crosses from
+        // above zero to zero while still Nage -- the caller checks this
+        // once per frame (same shape as every terrain-hazard death check
+        // already in GalaxyEggbertCnaGame::Update()) and applies the real
+        // drowning death consequence (channel 26, distinct from every other
+        // death cause's sound) via the shared triggerDeath() lambda, which
+        // respawns Blupi (moving him out of the water) before the next
+        // Step() call recomputes Nage.
+        [[nodiscard]] bool JustDrowned() const noexcept { return m_justDrowned; }
+
         // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
         // `Decor::BlupiAddFifo`/`m_blupiValidPos`, verified directly
         // against Decor.cpp:6467-6478/6654-6673). Call once per frame
@@ -285,10 +358,14 @@ namespace GalaxyEggbert::CNA
         // treated as non-solid for ground-height purposes (both the main
         // landing check and TryMoveAxis's step-up gate), so Blupi
         // genuinely falls through a vanished Temp tile instead of standing
-        // on it.
+        // on it. inSurfWater/inDeepWater (plan.md E3D-MIG-148, both default
+        // false so existing callers/tests are unaffected) are the caller's
+        // own per-frame Surf/Nage determination (see IsSurf()/IsNage()'s own
+        // comment) -- inDeepWater additionally drives reduced (floaty)
+        // gravity and a swim-up jump instead of the normal ground jump.
         void Step(const Worlds::World& world, float turnInput, float moveInput,
                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
-                  bool tempPassable = false);
+                  bool tempPassable = false, bool inSurfWater = false, bool inDeepWater = false);
 
     private:
         // Sentinel GroundHeightAt() returns when a column has no solid
@@ -325,6 +402,12 @@ namespace GalaxyEggbert::CNA
         bool m_teleporting = false;
         float m_teleportTimer = 0.0f;
         std::uint16_t m_teleportIcon = 0;
+
+        bool m_surf = false;
+        bool m_nage = false;
+        int m_waterGaugeLevel = kWaterGaugeMax;
+        float m_waterGaugeTimer = 0.0f;
+        bool m_justDrowned = false;
 
         static constexpr int kSafeFifoCapacity = 10;
         std::array<std::array<float, 3>, kSafeFifoCapacity> m_safeFifo{};

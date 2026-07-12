@@ -181,10 +181,19 @@ int main(int argc, char** argv)
     // floating in isolation on the old demo row.
     fill(24, 26, 0, 0, 66, 68, static_cast<std::uint16_t>(200));
 
-    // A short water hazard on the tunnel floor (BlockTypes::Water1 --
-    // semi-transparent alpha-blended cube, GETerrainRenderer's dedicated
+    // A short, shallow water crossing on the tunnel floor (BlockTypes::Water1
+    // -- semi-transparent alpha-blended cube, GETerrainRenderer's dedicated
     // water pass, 2026-07-08 design decision) partway along the tunnel.
-    fill(45, 46, 0, 0, 66, 68, BlockTypes::Water1);
+    // Fixed 2026-07-12 (plan.md E3D-MIG-148): water is now non-solid for
+    // collision (real swimming needs Blupi to sink into/through it, see
+    // GEBlupiController::GroundHeightAt()'s own comment) -- placing the
+    // water AT the same layer as the surrounding floor (y=0) would have
+    // left NOTHING solid beneath it (world Y can't go negative), turning a
+    // shallow wade into a bottomless-pit death trap. The real tunnel floor
+    // (y=0) stays intact here; the water sits ONE layer above it (y=1),
+    // matching a real shallow crossing -- Blupi sinks through it and rests
+    // on the real floor at y=1 (Surf: water at his position, dry above).
+    fill(45, 46, 1, 1, 66, 68, BlockTypes::Water1);
 
     // A switch/saw pair (plan.md E3D-MIG-142, 2026-07-11) -- real linking is
     // "same Y and Z, X within +-20" (Decor.cpp:7131-7148), both satisfied
@@ -434,6 +443,18 @@ int main(int argc, char** argv)
         liftB.posEndX = 56.0f;   liftB.posEndY = 2.0f;   liftB.posEndZ = 74.0f;
         PlaceMoveObject(world, liftB);
     }
+
+    // ------------------------------------------------------------------
+    // Deep water pool (plan.md E3D-MIG-148, 2026-07-12) -- real Nage
+    // (fully submerged swimming) / breath-gauge / drowning mechanic, same
+    // open-sky room pattern as the teleporter/fan/lift rooms above. A 2-cell
+    // -deep pool (Water1 at y=1 AND y=2, resting on a real solid floor at
+    // y=0) so Blupi genuinely sinks in and finds water both at his own
+    // position and directly above it (Nage), not just a 1-layer wade
+    // (Surf) like the tunnel's own shallow crossing.
+    // ------------------------------------------------------------------
+    fill(61, 67, 0, 0, 71, 77, BlockTypes::RockPile); // pool room floor
+    fill(63, 65, 1, 2, 73, 75, BlockTypes::Water1);   // 3x3 pool, 2 layers deep
 
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything

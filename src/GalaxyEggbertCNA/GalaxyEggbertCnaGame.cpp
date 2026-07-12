@@ -421,8 +421,25 @@ namespace GalaxyEggbert::CNA
             // check like every other hazard) since this changes whether the
             // tile IS the ground at all, not just what Blupi is standing on.
             const bool tempPassable = GEWorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase());
+            // Water Surf/Nage detection (plan.md E3D-MIG-148) -- computed
+            // from Blupi's PRE-step position (matching tempPassable's own
+            // timing above), fed into Step() itself since Nage changes
+            // gravity/jump behavior, not just a post-hoc hazard check.
+            // GetBlockTypeAt() (the tile he currently occupies) and
+            // GetBlockTypeAbove() (one cell above that) together reproduce
+            // the real IsSurfWater ("water here, dry above") / IsDeepWater
+            // ("water here AND above") distinction -- see
+            // GEBlupiController::IsSurf()/IsNage()'s own comment.
+            const auto waterBlockAt = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
+            const auto waterBlockAbove = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
+            const bool atWaterTile = GalaxyEggbert::BlockTypes::isWater(waterBlockAt);
+            const bool aboveIsWaterTile = GalaxyEggbert::BlockTypes::isWater(waterBlockAbove);
+            const bool inSurfWater = atWaterTile && !aboveIsWaterTile;
+            const bool inDeepWater = atWaterTile && aboveIsWaterTile;
+            const bool wasSurf = blupi_.IsSurf();
+            const bool wasNage = blupi_.IsNage();
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
-                        crouchHeld, lookUpHeld, dt, tempPassable);
+                        crouchHeld, lookUpHeld, dt, tempPassable, inSurfWater, inDeepWater);
 
             // Real mobile-eggbert jump/land/footstep sounds (2026-07-10).
             // jumpPressed is edge-detected the same way "C" is below, gated
@@ -715,15 +732,47 @@ namespace GalaxyEggbert::CNA
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
             }
 
+            // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via
+            // before/after comparison (wasSurf/wasNage captured before
+            // Step() above), same idiom as every other status this session.
+            // Real channel 22 (water entry/exit splash) plays entering
+            // EITHER Surf or Nage from fully dry; real channel 25 (start-
+            // surfing) plays specifically on Nage->Surf (resurfacing).
+            // Real vehicle-forced-dismount-on-entry is NOT modeled (no
+            // vehicle concept exists yet, same simplification as every
+            // hazard this session).
+            const bool wasDry = !wasSurf && !wasNage;
+            const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
+            if (wasDry && !nowDry)
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel22);
+            }
+            if (wasNage && blupi_.IsSurf())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel25);
+            }
+            // Drowning (real BlupiAction::Drown, channel 26 -- a dedicated
+            // death sound distinct from every other cause's channel 8/51/75,
+            // per 07-sounds.md's own note). Real Shield/Hide/SuperBlupi
+            // immunity is NOT modeled (Phase 17), same simplification as
+            // every other hazard this session.
+            if (blupi_.JustDrowned())
+            {
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel26);
+            }
+
             // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
             // see GEBlupiController::UpdateSafePosition()'s own comment) --
             // "safe" here additionally means not standing on any of the 5
-            // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp)
-            // and not currently under a teleporter trigger (`aboveIcon`,
-            // already computed above) -- the two categories of "unsafe
-            // tile" this engine can actually check for; real vehicle/
-            // shield/ledge-teeter/transport-riding/projectile-path checks
-            // aren't modeled (see UpdateSafePosition's own comment).
+            // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp),
+            // not currently under a teleporter trigger (`aboveIcon`, already
+            // computed above), and not currently Nage (plan.md E3D-MIG-148 --
+            // respawning mid-drown with an already-depleted gauge would be a
+            // bad experience, same reasoning as excluding active hazards) --
+            // the categories of "unsafe tile/status" this engine can
+            // actually check for; real vehicle/shield/ledge-teeter/
+            // transport-riding/projectile-path checks aren't modeled (see
+            // UpdateSafePosition's own comment).
             {
                 const auto safetyGroundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
                 const bool onHazardTile =
@@ -736,7 +785,7 @@ namespace GalaxyEggbert::CNA
                 const bool underTeleporter =
                     aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
                     aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4;
-                blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter);
+                blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter && !blupi_.IsNage());
             }
 
             // Switches (plan.md E3D-MIG-142, see GEWorldRuntime::

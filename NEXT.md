@@ -260,6 +260,40 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Water breath gauge implemented, Phase 14 now 10/10 complete (2026-07-12, plan.md
+  `E3D-MIG-148`).** Real 3-state Surf(surface)/Nage(submerged)/dry machine + ~25s breath gauge +
+  drowning, verified directly against `Decor.cpp` via `mobile-eggbert-reference/
+  12-hazards-and-interactables.md`'s "Water depth state machine" section. Required a real
+  architectural fix first: water blocks were solid-for-collision (Blupi always rested ON TOP of
+  the topmost water layer, like land), making genuine submersion structurally unreachable — fixed
+  by making water ALWAYS non-solid in `GEBlupiController::GroundHeightAt()` (same precedent as the
+  teleporter pillar/fan head), so Blupi now genuinely sinks through any depth of water to the real
+  floor beneath it. New `GEBlupiController::GetBlockTypeAt()` (the tile at his own resting cell,
+  mirroring `GetGroundBlockType()`/`GetBlockTypeAbove()`) plus the existing `GetBlockTypeAbove()`
+  reproduce the real `IsSurfWater`/`IsDeepWater` distinction (water-with-dry-above = Surf, water-
+  with-water-above = Nage). New `IsSurf()`/`IsNage()`/`GetWaterGaugeLevel()`/`JustDrowned()`, fed
+  by two new `Step()` parameters (`inSurfWater`/`inDeepWater`, caller-computed each frame exactly
+  like `tempPassable`). Gauge ticks 100→0 over the real ~25s (`kWaterGaugeTickSeconds=0.25s/level`,
+  a direct `Config::ScaleTime(5)`-at-20Hz transcription, same technique as `kTeleportDuration`),
+  resets to full the instant Nage ends. Drowning plays the real dedicated channel 26 (distinct from
+  every other death cause, per `07-sounds.md`) via the existing shared `triggerDeath()` lambda;
+  channel 22 (splash) plays entering Surf/Nage from dry, channel 25 on Nage→Surf (resurfacing).
+  Nage also gets reduced "floaty" gravity and a swim-up jump (both documented approximations, same
+  shape as the wasp balloon's own gravity multiplier) instead of normal ground-jump physics. Real
+  jump-launches-you-out-of-the-water sub-tile nuance, vehicle dismount, and Shield/Hide/SuperBlupi
+  immunity are NOT modeled (Phase 17 dependencies, same simplification pattern as every other Phase
+  14 mechanic). **Found and fixed a real content bug while implementing this**: the sample world's
+  existing tunnel water crossing sat directly on the world floor (y=0) with nothing beneath it —
+  once water became non-solid this would have turned a shallow wade into a bottomless-pit death
+  trap; moved the water to y=1 with the floor intact at y=0. Added a new genuinely 2-layer-deep
+  pool (open-sky room, grid x=61-67/z=71-77, same "no walls/ceiling" pattern as the teleporter/fan/
+  lift rooms) so Nage/drowning is live-playable, not just unit-tested. Verified: 6 new
+  `VerifyBlupiMovement` assertions (shallow pool = Surf, deep pool = Nage, full gauge-to-drowning
+  cycle at the correct ~25s+fall-time mark, gauge-reset-on-resurface) + full suite (63/63 unit
+  tests, all 5 verify tools) + a live headless run with temporary debug instrumentation (spawn
+  override + periodic position/state log, reverted before committing) confirming the exact real-
+  time sequence end to end — both EasyGL and Vulkan backends re-verified.
+
 - **Platform lift clipping fixed + 2 more lifts added (2026-07-12, NEXT.md §8 old task 3, user
   request 2026-07-11: "jako dalsi ukol si uloz aby ten demo svet mel vice presouvacich bloku a ten
   soucasny presouvaci blok je pod deskou tak ze se to presouva skrze desku, je to k nicemu").**
@@ -2778,10 +2812,8 @@ settled by the user) and Saw/SawStopped wired into the `InnerFlatPlate` table wi
 ORIENTATION is still wrong (see above) — no OTHER render-mechanism work remains outstanding on the
 confirmed-icon front. **All 5 items from the 2026-07-11 live-playtest user feedback batch are
 substantially addressed, except this one open Saw-orientation detail**, and **Phase 14 (Hazards)
-is now 9/10 done** — only the water breath gauge (`148`) remains, a genuinely new movement mode
-(Surf/Nage swimming) rather than a hazard-timer variant like every other Phase 14 item so far,
-deliberately not started yet given that larger scope. Phase 13 (Enemy AI & combat) is fully
-complete.
+is now 10/10 COMPLETE** (2026-07-12: the water breath gauge, `148`, the last remaining mechanic,
+is done — see §3's newest entry). Phase 13 (Enemy AI & combat) is fully complete too.
 
 **2 open items, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
@@ -2832,14 +2864,13 @@ Phase 15/16/17 mechanics) are being worked instead, per the user's explicit prio
   exclusion in `GroundHeightAt()` rather than the original solid-pillar/facing-based workaround,
   which shipped a real live bug before being fixed), and fans (`149`, see §3's newest entry —
   found and worked around a related, deeper `GroundHeightAt()` limitation with roofed interiors,
-  tracked in §5, not fixed).
-- **Next up: Phase 14's last remaining mechanic, the water breath gauge (`148`)** — a genuinely new
-  movement mode (Surf/Nage swimming state machine), not a hazard-timer variant like every other
-  Phase 14 item, so likely needs more scoping/design work than this session's other single-task
-  cycles. See `mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Water depth state
-  machine" section for the real behavior spec.
-- Phases 15 (crates/lifts/bridges full fidelity), 16 (doors/keys), and 17 (secret powers/vehicles)
-  are not started at all — see `plan.md` for the itemized task lists.
+  tracked in §5, not fixed), and the water breath gauge (`148`, 2026-07-12, see §3's newest entry
+  — required making water non-solid for collision, a real architectural fix in the same family as
+  the teleporter/fan exclusions, plus a content-bug fix to the tunnel's own pre-existing water
+  crossing). **Phase 14 (Hazards) is now fully complete, 10/10.**
+- **Next up: Phase 15** (crates/lifts/bridges full fidelity, `E3D-MIG-150`-`158`). Phases 16
+  (doors/keys) and 17 (secret powers/vehicles) are not started at all — see `plan.md` for the
+  itemized task lists.
 
 ## 5. Known bugs and limitations
 
@@ -3093,8 +3124,8 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
 priority notes below until this list is exhausted:**
 
 1. Platform lift clipping + more lifts — **DONE**, see §3's newest entry / old task 3 below.
-2. Water breath gauge (`E3D-MIG-148`) — Phase 14's last item. Next up.
-3. Phase 15 (`E3D-MIG-150`-`158`) — crates/lifts/bridges full fidelity.
+2. Water breath gauge (`E3D-MIG-148`) — **DONE**, see §3's newest entry. Phase 14 now 10/10 complete.
+3. Phase 15 (`E3D-MIG-150`-`158`) — crates/lifts/bridges full fidelity. Next up.
 4. Phase 16 (`E3D-MIG-160`-`165`) — doors & keys.
 5. Phase 17 (`E3D-MIG-170`-`179`) — secret powers/vehicles/buffs.
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per

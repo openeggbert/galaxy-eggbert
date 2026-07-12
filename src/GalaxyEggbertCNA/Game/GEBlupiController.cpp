@@ -133,6 +133,21 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
+                // Water (plan.md E3D-MIG-148): ALWAYS non-solid, same
+                // reasoning/precedent as teleporter pillars and fan heads
+                // above -- real mobile-eggbert's water is genuinely
+                // passable (Blupi swims/sinks through it, resting on
+                // whatever solid floor is beneath), unlike this engine's
+                // default "any non-air block is solid ground" rule. Without
+                // this, Blupi would always rest ON TOP of the topmost water
+                // layer (same as standing on land), making a multi-layer
+                // deep pool -- and therefore Nage/drowning -- structurally
+                // unreachable, the same category of bug already fixed for
+                // the teleporter/fan.
+                if (GalaxyEggbert::BlockTypes::isWater(blockType))
+                {
+                    continue;
+                }
                 return y + 1;
             }
         }
@@ -275,6 +290,21 @@ namespace GalaxyEggbert::CNA
             .type();
     }
 
+    std::uint16_t GEBlupiController::GetBlockTypeAt(const Worlds::World& world) const noexcept
+    {
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+        const int gy = static_cast<int>(std::lround(m_y));
+        if (gy < 0 || gy >= blocksPerAxis)
+        {
+            return GalaxyEggbert::BlockTypes::Air;
+        }
+        return world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                               static_cast<std::uint16_t>(gz))
+            .type();
+    }
+
     void GEBlupiController::TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable)
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
@@ -302,8 +332,33 @@ namespace GalaxyEggbert::CNA
 
     void GEBlupiController::Step(const Worlds::World& world, float turnInput, float moveInput,
                                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
-                                  bool tempPassable)
+                                  bool tempPassable, bool inSurfWater, bool inDeepWater)
     {
+        // Water Surf/Nage status (plan.md E3D-MIG-148) -- set directly from
+        // the caller's own per-frame terrain determination, same split as
+        // tempPassable. The gauge only ticks while genuinely Nage, and
+        // resets to full the instant Nage ends (matches the real "gauge
+        // hidden" behavior on resurfacing/leaving the water).
+        m_surf = inSurfWater;
+        m_nage = inDeepWater;
+        m_justDrowned = false;
+        if (!m_nage)
+        {
+            m_waterGaugeLevel = kWaterGaugeMax;
+            m_waterGaugeTimer = 0.0f;
+        }
+        else
+        {
+            const bool wasAboveZero = m_waterGaugeLevel > 0;
+            m_waterGaugeTimer += dt;
+            while (m_waterGaugeTimer >= kWaterGaugeTickSeconds && m_waterGaugeLevel > 0)
+            {
+                m_waterGaugeTimer -= kWaterGaugeTickSeconds;
+                --m_waterGaugeLevel;
+            }
+            m_justDrowned = wasAboveZero && m_waterGaugeLevel <= 0;
+        }
+
         // Teleport transit (plan.md E3D-MIG-147): real BlupiAction::
         // Teleporte zeroes velocity once at trigger and drops m_blupiFocus,
         // which gates essentially every other per-frame input/gravity
@@ -357,7 +412,18 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        if (m_onGround && jumpPressed && !m_ecrase)
+        // Nage (fully submerged, plan.md E3D-MIG-148): Jump swims upward
+        // instead of the normal ground jump, and works regardless of
+        // m_onGround (mid-water, not resting on anything) -- a natural
+        // adaptation for "swimming up", see kSwimUpSpeed's own comment.
+        // Takes precedence over the normal ground jump below since a
+        // ground-jump impulse doesn't make sense while submerged.
+        if (m_nage && jumpPressed)
+        {
+            m_velocityY = kSwimUpSpeed;
+            m_onGround = false;
+        }
+        else if (m_onGround && jumpPressed && !m_ecrase)
         {
             m_velocityY = kJumpSpeed;
             m_onGround = false;
@@ -384,8 +450,12 @@ namespace GalaxyEggbert::CNA
         }
 
         // Wasp "balloon" status: reduced gravity while active (kBalloonGravityMultiplier's own
-        // comment explains this is an approximation of "floats rather than dying").
-        const float effectiveGravity = m_balloon ? kGravity * kBalloonGravityMultiplier : kGravity;
+        // comment explains this is an approximation of "floats rather than dying"). Nage
+        // (plan.md E3D-MIG-148): same shape, a slow floaty sink instead of a free-fall drop
+        // while genuinely submerged (kNageGravityMultiplier's own comment).
+        const float effectiveGravity = m_balloon ? kGravity * kBalloonGravityMultiplier
+                                      : m_nage    ? kGravity * kNageGravityMultiplier
+                                                  : kGravity;
         m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
         float newY = m_y + m_velocityY * dt;
 

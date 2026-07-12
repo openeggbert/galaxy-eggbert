@@ -807,8 +807,45 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         sample world's own real pair, and the no-partner-found path) + full suite (63/63 unit
         tests, all verify tools) + live headless runs on both EasyGL and Vulkan backends
         (6245-block/84-MoveObject world load).
-- [ ] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge, vehicles
-      forcibly dismounted on entry.
+- [x] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge. Done
+      2026-07-12, verified directly against `Decor.cpp` via
+      `mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Water depth state machine"
+      section. **Real architectural fix required first**: water blocks were solid-for-collision
+      (any non-air block counted as solid ground, so Blupi always rested ON TOP of the topmost
+      water layer, exactly like land) — made water ALWAYS non-solid in
+      `GEBlupiController::GroundHeightAt()` (same precedent as the teleporter pillar/fan head),
+      so Blupi genuinely sinks through any depth of water to the real floor beneath it. The
+      tile at his own resting cell vs. the tile one above it (new `GetBlockTypeAt()`, mirroring
+      `GetGroundBlockType()`/`GetBlockTypeAbove()`) then reproduces the real `IsSurfWater`/
+      `IsDeepWater` distinction: water-with-dry-above = Surf, water-with-water-above = Nage. New
+      `GEBlupiController::IsSurf()`/`IsNage()`/`GetWaterGaugeLevel()`/`JustDrowned()`, set via two
+      new `Step()` parameters (`inSurfWater`/`inDeepWater`, both default false, caller-computed
+      exactly like `tempPassable`). Gauge: 100→0 over the real ~25s (`kWaterGaugeTickSeconds =
+      5/20 = 0.25s/level`, a direct `Config::ScaleTime(5)`-at-20Hz transcription, same technique
+      already used for `kTeleportDuration`), resets to full the instant Nage ends. Drowning plays
+      the real dedicated channel 26 (distinct from every other death cause, confirmed via
+      `07-sounds.md`) via the existing shared `triggerDeath()` lambda. Real channel 22 (water
+      entry/exit splash) plays entering Surf/Nage from dry; channel 25 (start-surfing) plays on
+      Nage→Surf. Nage also gets reduced ("floaty") gravity (`kNageGravityMultiplier`, an
+      approximation, same shape as the wasp balloon's own gravity multiplier) and a swim-up jump
+      (`kSwimUpSpeed`, also an approximation) instead of the normal ground jump. **Not modeled**
+      (documented simplifications, same pattern as every other Phase 14 mechanic): the real
+      "Jump near the surface launches you clear of the water" fine-grained sub-tile-depth nuance
+      (-16/-12, Power-gated); vehicle forced-dismount-on-entry (no vehicle concept exists yet,
+      Phase 17); Shield/Hide/SuperBlupi drowning immunity (same phase dependency). A pre-existing
+      content bug was found and fixed while implementing this: the sample world's tunnel water
+      crossing sat directly on the world floor (y=0) with nothing beneath it (world Y can't go
+      negative) — once water became non-solid this would have turned a shallow wade into a
+      bottomless-pit death trap; moved the water to y=1, floor intact at y=0. A new genuinely
+      2-layer-deep pool (open-sky room, x=61-67/z=71-77) was added so Nage/drowning is live-
+      playable, not just unit-tested. Verified: 6 new `VerifyBlupiMovement` assertions (shallow
+      pool = Surf, deep pool = Nage, full gauge-to-drowning cycle at the correct ~25s+fall-time
+      mark, gauge-reset-on-resurface) + full suite (63/63 unit tests, all 5 verify tools) + a
+      live headless run with temporary debug instrumentation (spawn override + periodic
+      position/state log, reverted before committing) confirming the exact real-time sequence:
+      falls in, Nage detected, gauge ticks down steadily, drowns and respawns via the existing
+      FIFO safe-position system, gauge resets — both EasyGL and Vulkan backends. **Phase 14 is
+      now 10/10 complete.**
 - [x] `149` Fans (126-137, only the 4 head icons already rendered are lethal) — consumes itself
       (permanently clears the air column it blows through), kills only if unshielded+focused. Done
       2026-07-11, verified directly against `Decor::IsVentillo` (`Decor.cpp:7667-7752`, not just

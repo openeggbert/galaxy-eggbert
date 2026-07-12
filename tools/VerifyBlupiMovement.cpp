@@ -522,6 +522,90 @@ int main(int argc, char** argv)
         check(safeWalker.GetX() - safeWalker.GetValidX() >= 9.0f,
               "the lag is roughly the FIFO's 10-slot capacity, proving the oldest entry is what's used, "
               "not just the immediately-prior one");
+
+        // Water Surf/Nage/drowning (plan.md E3D-MIG-148) -- a shallow
+        // 1-layer pool (Ground at y=0, Water1 at y=1) and a deep 2-layer
+        // pool (Ground at y=0, Water1 at y=1 AND y=2) elsewhere in the same
+        // synthetic world. Water is now non-solid for collision (see
+        // GroundHeightAt's own comment), so Blupi sinks through any depth
+        // of water to the real floor beneath it -- the tile(s) at/above his
+        // resting position then determine Surf vs Nage, matching real
+        // mobile-eggbert's per-tile-independent collision well enough for
+        // this purpose, the same technique already used for the teleporter
+        // pillar and fan head.
+        constexpr std::uint16_t kShallowX = 80, kShallowZ = 80;
+        synthetic.setBlock(kShallowX, 0, kShallowZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kShallowX, 1, kShallowZ, Worlds::Block::make(BlockTypes::Water1));
+
+        constexpr std::uint16_t kDeepX = 85, kDeepZ = 80;
+        synthetic.setBlock(kDeepX, 0, kDeepZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kDeepX, 1, kDeepZ, Worlds::Block::make(BlockTypes::Water1));
+        synthetic.setBlock(kDeepX, 2, kDeepZ, Worlds::Block::make(BlockTypes::Water1));
+
+        const auto stepWithWaterDetection = [](GEBlupiController& c, const Worlds::World& w, float stepDt)
+        {
+            const auto blockAt = c.GetBlockTypeAt(w);
+            const auto blockAbove = c.GetBlockTypeAbove(w);
+            const bool surf = BlockTypes::isWater(blockAt) && !BlockTypes::isWater(blockAbove);
+            const bool nage = BlockTypes::isWater(blockAt) && BlockTypes::isWater(blockAbove);
+            c.Step(w, 0.0f, 0.0f, false, false, false, stepDt, false, surf, nage);
+        };
+
+        GEBlupiController inShallow;
+        inShallow.SetPosition(static_cast<float>(kShallowX) - 50.0f, 20.0f, static_cast<float>(kShallowZ) - 50.0f);
+        for (int i = 0; i < 200; ++i) stepWithWaterDetection(inShallow, synthetic, dt);
+        check(inShallow.IsOnGround() && std::fabs(inShallow.GetY() - 1.0f) < 0.01f,
+              "Blupi sinks through a shallow 1-layer water pool and rests on the real floor beneath it");
+        check(inShallow.IsSurf() && !inShallow.IsNage(),
+              "standing in a shallow 1-layer pool is Surf (dry above), not Nage");
+        check(inShallow.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
+              "the breath gauge stays full while merely Surf, not Nage");
+
+        GEBlupiController inDeep;
+        inDeep.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
+        for (int i = 0; i < 200; ++i) stepWithWaterDetection(inDeep, synthetic, dt);
+        check(inDeep.IsOnGround() && std::fabs(inDeep.GetY() - 1.0f) < 0.01f,
+              "Blupi sinks through a deep 2-layer water pool and rests on the real floor beneath it");
+        check(inDeep.IsNage() && !inDeep.IsSurf(),
+              "standing beneath 2 layers of water is Nage (water above too), not merely Surf");
+
+        // Gauge countdown + drowning -- run enough simulated time to
+        // exhaust the full 100-level gauge (the real ~25s), confirming
+        // JustDrowned() fires exactly at the moment it reaches 0.
+        GEBlupiController drowning;
+        drowning.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
+        constexpr float kDrownDt = 0.05f;
+        bool drownedOnce = false;
+        int drownedFrame = -1;
+        for (int i = 0; i < 700 && !drownedOnce; ++i) // 700 * 0.05s = 35s, comfortably past ~25s + fall time
+        {
+            stepWithWaterDetection(drowning, synthetic, kDrownDt);
+            if (drowning.JustDrowned())
+            {
+                drownedOnce = true;
+                drownedFrame = i;
+            }
+        }
+        std::cout << "Drowned at simulated t=" << (drownedFrame * kDrownDt) << "s" << std::endl;
+        check(drownedOnce, "JustDrowned() fires after prolonged Nage submersion (the real ~25s breath gauge)");
+        check(drowning.GetWaterGaugeLevel() == 0, "the gauge is exactly 0 at the moment JustDrowned() fires");
+
+        // Resurfacing resets the gauge -- a few seconds of genuine Nage
+        // (not to exhaustion), then Surf, confirms the gauge snaps back to
+        // full instead of resuming from where it left off (matches the
+        // real "gauge hidden on resurfacing" behavior, not a persisted
+        // shared resource across dives).
+        GEBlupiController resurfacer;
+        resurfacer.SetPosition(static_cast<float>(kDeepX) - 50.0f, 1.0f, static_cast<float>(kDeepZ) - 50.0f);
+        for (int i = 0; i < 60; ++i)
+        {
+            resurfacer.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, false, true);
+        }
+        check(resurfacer.GetWaterGaugeLevel() < GEBlupiController::kWaterGaugeMax,
+              "the gauge has ticked down after a few seconds of genuine Nage");
+        resurfacer.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, true, false);
+        check(resurfacer.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
+              "the gauge resets to full the instant Nage ends (Surf), matching the real 'gauge hidden' behavior");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
