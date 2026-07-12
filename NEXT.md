@@ -2959,8 +2959,11 @@ flat/straight side of the saw must be at ground level, the wheel-with-teeth must
 finding not yet acted on: the real icon 378 texture's actual content occupies only the bottom half
 of its 64×64 tile, and there's an unverified theory that `Easy3D::AppendPlateMesh` vertically
 flips whatever texture it's given — see §3's newest entry and §8's newest task for the full
-writeup. **The teleporter tip is confirmed correct/settled** — same round of feedback said "beze
-změny" (no change) for it.
+writeup. **The teleporter tip's SHAPE was confirmed correct/settled** in that same round of
+feedback ("beze změny", no change) — but a SEPARATE duplicate-render bug (the cube's own side
+faces baking in a second, fake, flattened copy of the tip's spike graphic) was reported and fixed
+2026-07-12; see §3's relevant entry and plan.md's `E3D-MIG-147` follow-up. The shape itself was
+never wrong, so this doesn't contradict the "beze změny" feedback above.
 
 Separately, a real, deeper architectural collision limitation was found and tracked, not fixed —
 see §5's relevant row (`GroundHeightAt()` treats a column's topmost solid block as the floor no
@@ -2993,18 +2996,42 @@ substantially done: linked-crate flood-fill (`150`), platform-lift riding (`152`
 long-standing "no riding a moving platform" gap), and dynamite (`155`, the real 9-blast sequence)
 are all done; `151`/`153`/`156`/`157`/`158` are deferred with documented reasons (see plan.md).
 **Phase 16 (doors & keys)** is substantially done: key-gated (`160`/`161`) and treasure-gated
-(`162`) doors both work; `163`-`165` deferred (render decision / hub-menu dependency). **Phase 17
-(secret powers/vehicles/buffs)** now has 4 items done (`170`/`171`/`172`/`174`) — see §3's two
-newest entries for a real documentation-error correction found along the way (the "Sp0-Sp7"
-tile-icon research was wrong; secret powers come from 4 separate pickups instead, now
-implemented, including real Shield/Hide hazard immunity retrofitted onto essentially every hazard
-from earlier this session) and for vehicle mounts (`171`, all 5 confirmed non-Balloon vehicle
-types), which also surfaced and fixed a real general `TryMoveAxis()` falling-movement collision
-bug (unrelated to vehicles specifically, but only exposed by them). **Recommended next step:** continue with the remaining, under-researched Phase 17 items (`173`
-2-stage pickup delay, `177` Suspended movement mode, `178` vehicle movement table) or other
-independent high-value work — the teleporter double-tip bug (below) is now fixed, and Phase 17's
-other remaining items are either low-value (`175` bullet pack), blocked on infrastructure that
-doesn't exist (`176` particle system), or a `needs_human` visual decision (`179`).
+(`162`) doors both work; `163`-`165` deferred (render decision / hub-menu dependency). **Phase 17 (secret powers/vehicles/buffs) is now substantially complete** — `170`/`171`/`172`/
+`174`/`175`/`178` all done. See §3's entries for: the "Sp0-Sp7" tile-icon documentation-error
+correction (secret powers actually come from 4 separate pickups, now implemented, including real
+Shield/Hide hazard immunity retrofitted onto essentially every hazard from earlier this session);
+vehicle mounts (`171`, all 5 confirmed non-Balloon vehicle types), which also surfaced and fixed a
+real general `TryMoveAxis()` falling-movement collision bug (unrelated to vehicles specifically,
+but only exposed by them); the bullet pack pickup (`175`); and the teleporter double-tip render
+fix (`E3D-MIG-147` follow-up). Every remaining Phase 17 item (`173`/`176`/`177`/`179`) is
+deferred-by-design or genuinely blocked, not simply unstarted — see that phase's plan.md entries.
+
+**Beyond Phase 17, a broad plan.md consistency sweep (2026-07-12/13) found and fixed several more
+real, safe wins**: Phase 13's stale "nothing here is started" intro (contradicted by its own
+already-complete task list) and Phase 10's `101`/`102`/`105` bullets (still pointing at "not
+started" for phases that are now done) were corrected; `E3D-MIG-086` (buff activate/warning sound
+pairs) turned out to already be fully implemented under `170`/`172`/`174`, just tracked under a
+stale, never-existed `E3D-MIG-190` reference — fixed. **`E3D-MIG-084` (terrain-specific footstep
+sound remap) was implemented**, and researching it surfaced a real, separate, pre-existing bug:
+`GESound::PlayLand()` played channel 4 (real head-bump/ceiling-hit) instead of channel 3 (real
+footstep-AND-landing), a mistake ported verbatim from `GalaxyEggbertSimple3D`'s own `GESound`
+before the later, independently-verified channel research existed — fixed. `E3D-MIG-177`
+(Ecrase collision-box mode + Suspended movement mode) and `E3D-MIG-085` (idle fidget sounds) were
+researched and found genuinely blocked (documented non-goal for Ecrase's hitbox concept this
+engine's single-point collision doesn't have; `needs_human` for Suspended/fidget, both blocked on
+icon 202's pending "thin-bar" render-geometry decision, `E3D-MIG-513`).
+
+**Recommended next step**: with Phases 10/13-17 all done/substantially done and every other
+plan.md phase either a standing rule, optional/later, or blocked on a `needs_human` render-
+geometry decision (Phase 5C, Phase 6's 3D Blupi model) or a not-yet-built subsystem (particle
+effects for `176`, a player-fired projectile system for bullet firing, save/load scope for `106`),
+**no further gameplay-mechanics work is safely actionable without either human input on a pending
+visual/render decision, or a new, separately-scoped subsystem.** The two live options left: (1)
+the Saw blade orientation (needs the user's own visual judgment, see below — do not guess again),
+or (2) HUD/Menu work (`Phase 9`, `E3D-MIG-090`-`093`; explicitly LOWER priority than the
+gameplay-mechanics phases this session, per the user's own 2026-07-12 priority choice, but with
+those now done, this becomes the natural next phase if the user wants to keep going in a
+"features, not bugs" direction) — both need explicit user direction on which to pick up next.
 
 **1 open item, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
