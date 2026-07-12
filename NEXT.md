@@ -262,6 +262,20 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **`E3D-MIG-177` researched, not implemented (2026-07-12) — split into a documented non-goal and
+  a `needs_human` blocker.** Ecrase/pancake collision-box mode: the real source uses a genuine
+  AABB collision system (squashing shrinks Blupi's hitbox to a distinct 50×19 pancake, letting him
+  fit under low gaps); `GalaxyEggbertCNA`'s single-point collision model has no hitbox to shrink,
+  so this is now a documented non-goal, not a fidelity gap. Suspended (hanging-on-a-bar) mode: a
+  real, fully-speced, cheap mechanic (verified against `Decor.cpp:4732-4790`/`GetTypeBarre`, every
+  constant known — direct `speedX*5` move with no accel ramp, 10-tick jump wind-up then fixed
+  `vitesseY=-11` launch, 5-tick no-regrab grace) but blocked on a pending render-geometry decision
+  for icon 202 ("thin-bar" — flagged in `02-tiles.md` as new, not-yet-implemented geometry) that
+  the user explicitly asked to skip guessing at this session (same `needs_human` category as the
+  Saw blade). See plan.md's `E3D-MIG-177` entry for full detail. **Recommended next step once a
+  human makes that render-geometry call: implement Suspended mode using the already-known
+  constants above.**
+
 - **Bullet pack pickup implemented (2026-07-12, plan.md `E3D-MIG-175`).** New
   `GEInteractionSystem::BulletCount()`, same shape as `dynamiteCount_`: automatic on contact (no
   button), caps at 10, gated exactly like the real source (`m_blupiBullet < 10` — touching a pack
@@ -3290,10 +3304,12 @@ priority notes below until this list is exhausted:**
    powers + real hazard immunity + vehicle mounts + bullet pack pickup; vehicles also yielded a
    real, general `TryMoveAxis()` falling-movement collision-bug fix — see §3's newest entries).
    Remaining: `173` (2-stage pickup delay, deferred simplification), `176` (sparkle-fx, needs a
-   particle system that doesn't exist), `177` (Suspended movement mode, not yet researched), `178`
-   (vehicle movement table, partly covered by `171`'s own speed/accel constants), `179`
-   (needs_human, skip). Bullet FIRING itself (vs. the ammo-count pickup done in `175`) needs a new
-   player-fired projectile system and is tracked as its own not-yet-scoped follow-up.
+   particle system that doesn't exist), `177` (Ecrase collision-box mode is now a documented
+   non-goal; Suspended movement mode is fully researched/speced but `needs_human` — blocked on
+   icon 202's pending render-geometry decision, see §3's newest entry), `178` (vehicle movement
+   table, partly covered by `171`'s own speed/accel constants), `179` (needs_human, skip). Bullet
+   FIRING itself (vs. the ammo-count pickup done in `175`) needs a new player-fired projectile
+   system and is tracked as its own not-yet-scoped follow-up.
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
    their 2026-07-12 direction, not attempted). The teleporter double-tip bug is **DONE** — see
    §3's newest entry and plan.md's `E3D-MIG-147` follow-up.

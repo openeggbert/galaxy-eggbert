@@ -1173,6 +1173,33 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
 - [ ] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups.
 - [ ] `177` Ecrase/pancake collision-box mode and Suspended (hanging, no accel ramp) movement
       mode — the two collision/movement modes not covered by `E3D-MIG-171`'s vehicle list.
+      **Researched 2026-07-12, split into two distinct outcomes, neither implemented this
+      session:**
+      - **Ecrase collision-box mode: documented non-goal, not a gap to close.** The real source
+        uses a genuine AABB collision system where squashing shrinks Blupi's hitbox to a distinct
+        50×19 pancake (vs. normal 36×47), letting him fit under low gaps. `GalaxyEggbertCNA`'s
+        collision model is single-point (`GroundHeightAt`'s column scan) — there is no hitbox to
+        shrink, so this isn't a partial-fidelity gap to close incrementally; it's architecturally
+        non-portable without a full AABB collision rewrite, a large, unrelated undertaking well
+        outside this task's scope (same category of change already declined for the teleporter
+        collision mismatch, `E3D-MIG-147`).
+      - **Suspended (hanging on a bar) mode: real, fully-speced, cheap mechanic — but blocked on a
+        pending render-geometry decision, not further gameplay research.** Verified directly
+        against `Decor.cpp:4732-4790`/`GetTypeBarre` (~7158): grabbing triggers by standing under
+        tile icon 138 or 202 (probe point `pos+(30,22)`), horizontal move is direct `speedX*5` (no
+        accel ramp, matching this task's own name), jump is a 10-tick wind-up then a fixed
+        `vitesseY=-11` launch + 5-tick no-regrab grace timer, turn takes 10 ticks — every constant
+        is known and portable. `GEBlupiController.hpp` already carries the `BlupiAction` enum
+        values (`StopSuspend`/`MarchSuspend`/`TurnSuspend`/`JumpSuspend`, from an earlier blanket
+        transcription) but zero gameplay logic — genuinely unstarted. The blocker: icon 202
+        ("thin-bar") is currently flagged in `mobile-eggbert-reference/02-tiles.md` as a NEW,
+        not-yet-implemented render geometry ("thin rectangular-prism bar," not billboard/
+        DirectionalCube/ThinMechanical), and in the real source the SAME tile icon serves as both
+        decor AND the grab trigger — there's no separate interactable tile to key off instead.
+        Implementing the mechanic now would force exactly the kind of new visual/render-geometry
+        call the user explicitly asked to skip this session (`needs_human`, same category as the
+        Saw blade). **Recommended next step once a human makes that render-geometry call**:
+        implement Suspended mode using the constants above — it's cheap once unblocked.
 - [ ] `178` Vehicle/mode-specific movement table (max speed/accel/vertical behavior per mode) —
       needed once any vehicle from `171` is implemented.
 - [ ] `179` `[?]` Enemy billboard walk-cycle direction mismatch — enemy sprites only have
