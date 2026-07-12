@@ -399,9 +399,16 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       channels.
 - [ ] `085` Idle "fidget" periodic sounds — channels 36/37/46-49/65 trigger on
       `m_blupiPhase % N`, not simple one-shot events; easy to miss in a naive port.
-- [ ] `086` Buff activate/expire-warning channel pairs: Shield 42/43(warn@10), Power 44/45(w@20),
-      Cloud 55/56(w@25)+58(pickup-start), Hide 57/62/63(w@20), Mirror 66/67(none). Depends on
-      the buffs themselves (`E3D-MIG-190`).
+- [~] `086` Buff activate/expire-warning channel pairs — **done 2026-07-12** as part of
+      `E3D-MIG-170`/`172`/`174` (the actual secret-power buffs, implemented under those task IDs,
+      not the stale `E3D-MIG-190` this entry used to point at): Shield 42/43(warn@10), Power
+      44/45(w@20), Cloud 55/56(w@25), Hide 62/63(w@20) all confirmed wired in
+      `GalaxyEggbertCnaGame.cpp` with the exact real channel numbers. Channel 58 (Cloud
+      pickup-start) is part of the real 2-stage pickup delay/animation-lock, which `E3D-MIG-173`
+      already documents as NOT modeled (buffs grant instantly instead) — not a gap in this task.
+      Mirror/Invert(40)'s 66/67 pair remains unimplemented since Mirror/Invert itself isn't a
+      modeled `SecretPower` value (see `174`'s own note) — the only real remaining piece of this
+      task, blocked on that separate mechanic ever being scoped.
 - [ ] `087` Corrected pickup sound channels are already applied in `GEInteractionSystem`
       (treasure/key 11 or 19, egg 3) — extend the same rigor to every future pickup/enemy/hazard
       sound trigger rather than reusing `GESound`'s convenience shortcuts (`PlayCollect`/
