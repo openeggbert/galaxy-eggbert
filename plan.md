@@ -901,10 +901,25 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
 Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spec:
 `mobile-eggbert-reference/14-crates-lifts-bridges-effects.md`.
 
-- [ ] `150` Linked-crate flood-fill (`SearchLinkCaisse` equivalent) — stacks push atomically as
-      a group, not single-crate; reduced push speed scales with stack size.
+- [x] `150` Linked-crate flood-fill (`SearchLinkCaisse` equivalent) — done 2026-07-12. Pushing a
+      crate now flood-fills every other crate whose box touches an already-linked one (1 grid
+      unit in X or Y, same Z), restricted to crates AT OR ABOVE the seed's own row (real
+      "push the stack, not the floor it rests on" restriction) — all linked members are tested
+      (floor support only for members at the seed's own row, matching the real source exactly)
+      and moved atomically; any one member blocked cancels the whole push. Reduced-push-speed-
+      scales-with-stack-size is NOT modeled — this engine's crate push is a discrete per-frame
+      grid-cell snap (not the real continuous px/tick system), so there's no existing "speed" to
+      scale; see `151`. New linked-crate demo (2 side-by-side + 1 stacked) added to the sample
+      world for live verification, plus 3 new `VerifyInteractionSystem` assertions (seed pushed,
+      neighbor moves the same net distance, stacked crate moves too). Full suite (63/63 unit
+      tests, all verify tools) re-verified.
 - [ ] `151` Crate "pop" push variant (landing-into-crate, different base speed) and the real
-      20-tick speed ramp-up (vs. today's simplified constant-speed push).
+      20-tick speed ramp-up (vs. today's simplified constant-speed push) — NOT started. The pop
+      trigger (landing from a fall while moving horizontally into a crate) needs coordination
+      with `GEBlupiController`'s air/fall state that doesn't exist yet; the speed ramp doesn't map
+      cleanly onto this engine's discrete "snap by 1 grid cell per satisfied frame" push model
+      (see `150`'s own note) without a deeper rework of crate movement to be continuous/timed
+      rather than instant. Deferred, not attempted this session.
 - [ ] `152` Platform boarding via swept-probe detection (avoid tunneling on fast falls) and
       continuous per-tick foot-strip re-test while riding (not just an initial catch) — this is
       the prerequisite for "riding a moving platform" at all, since `GEBlupiController`

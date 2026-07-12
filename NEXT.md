@@ -260,6 +260,18 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Linked-crate flood-fill implemented (2026-07-12, plan.md `E3D-MIG-150`, Phase 15 start).**
+  Pushing a crate now flood-fills every touching crate (real `SearchLinkCaisse`: 1 grid unit in X
+  or Y, same Z, restricted to crates at or above the seed's own row) and moves the whole linked
+  group atomically — floor-support is only re-checked for members at the seed's own row, matching
+  the real source exactly; any one member blocked cancels the whole push. New linked-crate demo
+  (2 side-by-side + 1 stacked, in the water-pool room) added to the sample world for live
+  verification. Reduced-push-speed-scales-with-stack-size (`151`) is NOT modeled — this engine's
+  crate push is a discrete per-frame grid-cell snap, not the real continuous px/tick system, so
+  there's no existing "speed" dial to scale down; deferred along with the "pop" push variant
+  (needs `GEBlupiController` fall-state coordination that doesn't exist yet). Verified: 3 new
+  `VerifyInteractionSystem` assertions + full suite (63/63 unit tests, all verify tools).
+
 - **Water breath gauge implemented, Phase 14 now 10/10 complete (2026-07-12, plan.md
   `E3D-MIG-148`).** Real 3-state Surf(surface)/Nage(submerged)/dry machine + ~25s breath gauge +
   drowning, verified directly against `Decor.cpp` via `mobile-eggbert-reference/

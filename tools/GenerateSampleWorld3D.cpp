@@ -456,6 +456,15 @@ int main(int argc, char** argv)
     fill(61, 67, 0, 0, 71, 77, BlockTypes::RockPile); // pool room floor
     fill(63, 65, 1, 2, 73, 75, BlockTypes::Water1);   // 3x3 pool, 2 layers deep
 
+    // Linked-crate demo (plan.md E3D-MIG-150, 2026-07-12) -- 2 crates
+    // side-by-side (real SearchLinkCaisse horizontal linking) plus a third
+    // stacked on top of one of them (real vertical linking), on the same
+    // room's floor away from the pool, so pushing the pair genuinely moves
+    // all 3 atomically -- not just unit-tested.
+    place(ObjectType::ObjectType12, 61.0f, 1.0f, 73.0f);
+    place(ObjectType::ObjectType12, 62.0f, 1.0f, 73.0f);
+    place(ObjectType::ObjectType12, 61.0f, 2.0f, 73.0f);
+
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.

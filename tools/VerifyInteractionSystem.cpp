@@ -198,6 +198,64 @@ int main(int argc, char** argv)
         check(false, "found a crate (ObjectType12) in the sample world");
     }
 
+    // 3.5. Linked crates (plan.md E3D-MIG-150) -- the sample world's own
+    // linked-crate demo (tools/GenerateSampleWorld3D.cpp): 2 crates side by
+    // side at grid (61,1,73)/(62,1,73) plus a 3rd stacked on top of the
+    // first at (61,2,73) -- render space (grid - 50): (11,1,23)/(12,1,23)/
+    // (11,2,23). Pushing the seed (the one at (11,1,23), closest to a Blupi
+    // approaching from the west) should move all 3 atomically.
+    const auto findByPos = [&world](float px, float py, float pz) -> const MobileObjSpec*
+    {
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType12 && std::fabs(obj.posStartX - px) < 0.1f &&
+                std::fabs(obj.posStartY - py) < 0.1f && std::fabs(obj.posStartZ - pz) < 0.1f)
+            {
+                return &obj;
+            }
+        }
+        return nullptr;
+    };
+    const auto* seed = findByPos(11.0f, 1.0f, 23.0f);
+    const auto* neighbor = findByPos(12.0f, 1.0f, 23.0f);
+    const auto* stacked = findByPos(11.0f, 2.0f, 23.0f);
+    check(seed != nullptr && neighbor != nullptr && stacked != nullptr,
+          "found the linked-crate demo trio (side-by-side pair + stacked) in the sample world");
+    if (seed != nullptr && neighbor != nullptr && stacked != nullptr)
+    {
+        const float seedStartX = seed->currentX;
+        const float neighborStartX = neighbor->currentX;
+        const float stackedStartX = stacked->currentX;
+        const float pushZ = seed->currentZ;
+        float blupiX = seedStartX - 0.8f;
+        for (int i = 0; i < 30; ++i)
+        {
+            interaction.Update(dt, world, blupiX, seed->currentY, pushZ, 0.05f, sound);
+            blupiX += 0.05f;
+        }
+        const auto* seedAfter = findByPos(11.0f, 1.0f, 23.0f);
+        const auto* neighborAfter = findByPos(12.0f, 1.0f, 23.0f);
+        const auto* stackedAfter = findByPos(11.0f, 2.0f, 23.0f);
+        std::cout << "Linked crates after push -- seed X: " << (seedAfter ? seedAfter->currentX : -999.0f)
+                  << " (started " << seedStartX << "), neighbor X: "
+                  << (neighborAfter ? neighborAfter->currentX : -999.0f) << " (started " << neighborStartX
+                  << "), stacked X: " << (stackedAfter ? stackedAfter->currentX : -999.0f) << " (started "
+                  << stackedStartX << ")" << std::endl;
+        check(seedAfter != nullptr && seedAfter->currentX > seedStartX,
+              "the pushed (seed) crate moved east");
+        // The neighbor keeps its original 1-unit offset from the seed (it
+        // doesn't snap to the same X) -- what matters is that it moved the
+        // SAME net distance as the seed, not left behind at its start
+        // position.
+        check(neighborAfter != nullptr &&
+                  std::fabs((neighborAfter->currentX - neighborStartX) - (seedAfter->currentX - seedStartX)) < 0.1f,
+              "the horizontally-linked neighbor crate moved the same distance as the seed, not left behind");
+        check(stackedAfter != nullptr &&
+                  std::fabs((stackedAfter->currentX - stackedStartX) - (seedAfter->currentX - seedStartX)) < 0.1f,
+              "the vertically-stacked crate moved together with the seed too (real SearchLinkCaisse "
+              "links vertically as well as horizontally)");
+    }
+
     // 4. GEWorldRuntime::IsBlitzActiveAtPhase() (plan.md E3D-MIG-144) -- real
     // BlitzActif() cycle: lethal only on even ticks within the first half of
     // a 100-tick cycle (num%2==0 && num<50).

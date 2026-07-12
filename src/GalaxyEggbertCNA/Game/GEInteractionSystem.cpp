@@ -423,35 +423,106 @@ namespace GalaxyEggbert::CNA
                     const float pushDir = (relX > 0.0f) ? 1.0f : -1.0f;
                     if (blupiMoveDX * pushDir > 0.01f)
                     {
-                        const float destX = obj.currentX + pushDir;
-                        const int wx = static_cast<int>(std::round(destX)) + GEWorldRuntime::kWorldCenterX;
-                        const int wz = static_cast<int>(std::round(obj.currentZ)) + GEWorldRuntime::kWorldCenterZ;
-                        const int axis = static_cast<int>(world.blocksPerAxis());
-                        if (wx >= 0 && wx < axis && wz >= 0 && wz < axis)
+                        // Linked crates (plan.md E3D-MIG-150, real
+                        // Decor::SearchLinkCaisse ~9397): flood-fill outward
+                        // from the seed (pushed) crate, adding any other
+                        // crate whose box touches an already-linked one (1
+                        // grid unit in X or Y, same Z column -- this
+                        // engine's crates only ever occupy a single Z per
+                        // real mobile-eggbert's own X/Y-only geometry),
+                        // restricted to crates AT OR ABOVE the seed's own
+                        // row (Y) -- "you push the stack, not the floor it
+                        // rests on", matching the real restriction exactly.
+                        std::vector<MobileObjSpec*> linked;
+                        linked.push_back(&obj);
+                        bool addedAny = true;
+                        while (addedAny)
                         {
-                            const bool hasFloor = !world.getBlock(static_cast<std::uint16_t>(wx), 0,
-                                                                   static_cast<std::uint16_t>(wz))
-                                                        .isAir();
-                            if (hasFloor)
+                            addedAny = false;
+                            for (auto& other : objects)
                             {
-                                bool occupied = false;
-                                for (const auto& other : objects)
+                                if (!other.active || !IsCrate(other.type)) continue;
+                                if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
+                                if (other.currentY < obj.currentY - 0.5f) continue;
+                                if (std::fabs(other.currentZ - obj.currentZ) > 0.5f) continue;
+                                bool touches = false;
+                                for (auto* member : linked)
                                 {
-                                    if (&other == &obj || !IsCrate(other.type))
+                                    if (std::fabs(other.currentX - member->currentX) < 1.5f &&
+                                        std::fabs(other.currentY - member->currentY) < 1.5f)
                                     {
-                                        continue;
-                                    }
-                                    if (std::fabs(other.currentX - destX) < 0.5f &&
-                                        std::fabs(other.currentZ - obj.currentZ) < 0.5f)
-                                    {
-                                        occupied = true;
+                                        touches = true;
                                         break;
                                     }
                                 }
-                                if (!occupied)
+                                if (touches)
                                 {
-                                    obj.currentX = destX;
+                                    linked.push_back(&other);
+                                    addedAny = true;
                                 }
+                            }
+                        }
+
+                        // TestPushCaisse (~9321): every linked member must
+                        // clear at its own proposed destination -- floor
+                        // support (real: two lower-corner edge strips) is
+                        // only re-checked for members at the seed's own row
+                        // (the row being actively pushed); members stacked
+                        // ABOVE that row skip the floor test entirely and
+                        // only need the general non-collision check, same
+                        // as the real source. A stack moves atomically:
+                        // any one member blocked cancels the whole push.
+                        bool allClear = true;
+                        for (auto* member : linked)
+                        {
+                            const float destX = member->currentX + pushDir;
+                            const int wx = static_cast<int>(std::round(destX)) + GEWorldRuntime::kWorldCenterX;
+                            const int wz = static_cast<int>(std::round(member->currentZ)) + GEWorldRuntime::kWorldCenterZ;
+                            const int axis = static_cast<int>(world.blocksPerAxis());
+                            if (wx < 0 || wx >= axis || wz < 0 || wz >= axis)
+                            {
+                                allClear = false;
+                                break;
+                            }
+
+                            const bool isSeedRow = std::fabs(member->currentY - obj.currentY) < 0.5f;
+                            if (isSeedRow)
+                            {
+                                const bool hasFloor = !world.getBlock(static_cast<std::uint16_t>(wx), 0,
+                                                                       static_cast<std::uint16_t>(wz))
+                                                            .isAir();
+                                if (!hasFloor)
+                                {
+                                    allClear = false;
+                                    break;
+                                }
+                            }
+
+                            bool occupied = false;
+                            for (const auto& other : objects)
+                            {
+                                if (!other.active || !IsCrate(other.type)) continue;
+                                if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
+                                if (std::fabs(other.currentX - destX) < 0.5f &&
+                                    std::fabs(other.currentY - member->currentY) < 0.5f &&
+                                    std::fabs(other.currentZ - member->currentZ) < 0.5f)
+                                {
+                                    occupied = true;
+                                    break;
+                                }
+                            }
+                            if (occupied)
+                            {
+                                allClear = false;
+                                break;
+                            }
+                        }
+
+                        if (allClear)
+                        {
+                            for (auto* member : linked)
+                            {
+                                member->currentX += pushDir;
                             }
                         }
                     }
