@@ -2890,9 +2890,27 @@ settled by the user) and Saw/SawStopped wired into the `InnerFlatPlate` table wi
 (floor-level) positioning and per-placement rotation metadata, but its internal texture
 ORIENTATION is still wrong (see above) — no OTHER render-mechanism work remains outstanding on the
 confirmed-icon front. **All 5 items from the 2026-07-11 live-playtest user feedback batch are
-substantially addressed, except this one open Saw-orientation detail**, and **Phase 14 (Hazards)
-is now 10/10 COMPLETE** (2026-07-12: the water breath gauge, `148`, the last remaining mechanic,
-is done — see §3's newest entry). Phase 13 (Enemy AI & combat) is fully complete too.
+substantially addressed, except this one open Saw-orientation detail.**
+
+**2026-07-12 autonomous session: Phases 13-16 are now fully/substantially complete, and Phase 17
+is well underway** — a large single-session push through the whole gameplay-mechanics backlog, per
+the user's own explicit priority order that day. **Phase 13 (Enemy AI) and Phase 14 (Hazards,
+10/10, water breath gauge `148` done) are fully complete.** **Phase 15 (crates/lifts/bridges)** is
+substantially done: linked-crate flood-fill (`150`), platform-lift riding (`152`/`154`, closing the
+long-standing "no riding a moving platform" gap), and dynamite (`155`, the real 9-blast sequence)
+are all done; `151`/`153`/`156`/`157`/`158` are deferred with documented reasons (see plan.md).
+**Phase 16 (doors & keys)** is substantially done: key-gated (`160`/`161`) and treasure-gated
+(`162`) doors both work; `163`-`165` deferred (render decision / hub-menu dependency). **Phase 17
+(secret powers/vehicles/buffs)** has its first 3 items done (`170`/`172`/`174`) — see §3's newest
+entry for a real documentation-error correction found along the way (the "Sp0-Sp7" tile-icon
+research was wrong; secret powers come from 4 separate pickups instead, now implemented, including
+real Shield/Hide hazard immunity retrofitted onto essentially every hazard from earlier this
+session). **Recommended next step: `E3D-MIG-171` (vehicle mounts)** — the clear next big Phase 17
+feature, a substantial standalone undertaking (6 vehicle types, each with its own movement model),
+better suited to a fresh, focused session than being squeezed into the tail of this one. Every
+remaining Phase 17 item after that is either blocked on vehicles (`173`'s full fidelity, `178`),
+needs a particle system that doesn't exist (`176`), is a `needs_human` visual decision (`179`), or
+is low-value without vehicles to consume it (`175`, bullet pack).
 
 **2 open items, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
@@ -2920,13 +2938,15 @@ is done — see §3's newest entry). Phase 13 (Enemy AI & combat) is fully compl
 **New visual/artistic render-geometry decisions are deliberately SKIPPED this session, per explicit
 user direction (2026-07-12)**, given the Saw's own history of repeated wrong live guesses:
 `ThinMechanical` geometry for ~25 icons (`E3D-MIG-510`), water/liquid surface treatment
-(`E3D-MIG-512`), architectural-kit assembly (`E3D-MIG-514`), secret-power render
-(`E3D-MIG-515`, also blocked on the separate `170` behavior-research question), and the enemy
-billboard walk-cycle direction mismatch (`E3D-MIG-179`, no resolution proposed anywhere — do not
-attempt one without the user). These are `needs_human` — left exactly as `plan.md` already marks
-them (`[?]`), not attempted, not guessed. Non-visual gameplay-logic tasks (Phase 14 water gauge,
-Phase 15/16/17 mechanics) are being worked instead, per the user's explicit priority order
-(2026-07-12): continue gameplay mechanics in phase order before any Menu/HUD/Save/Score UI work.
+(`E3D-MIG-512`), architectural-kit assembly (`E3D-MIG-514`), the hub-screen world-select icon
+render (`E3D-MIG-515`, re-scoped 2026-07-12 — its old "secret-power render" premise was wrong,
+see §3's newest entry; it's hub/menu-screen territory now, not blocked on `170` anymore since
+`170` itself is resolved), and the enemy billboard walk-cycle direction mismatch
+(`E3D-MIG-179`, no resolution proposed anywhere — do not attempt one without the user). These are
+`needs_human` — left exactly as `plan.md` already marks them (`[?]`), not attempted, not guessed.
+Non-visual gameplay-logic tasks (Phases 14-17) are being worked instead, per the user's explicit
+priority order (2026-07-12): continue gameplay mechanics in phase order before any Menu/HUD/Save/
+Score UI work.
 
 - **Done (Phase 13, complete)**: lives/respawn foundation (`130`), the real shared patrol-turn
   state machine (`131`, unblocked `134`/`136`), the widened shared enemy kill-list covering 8
