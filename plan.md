@@ -417,27 +417,31 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 
 ### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
 
-- [~] `100` Pickups: treasure/egg/exit/keys done (`GEInteractionSystem`, 2026-07-10); every
-      other pickup type not started (see `E3D-MIG-170`s).
-- [ ] `101` Hazard/kill detection — not started, see `E3D-MIG-140`s.
-- [ ] `102` Enemy stomp + any associated score/counter — not started, see `E3D-MIG-130`s.
+- [~] `100` Pickups: treasure/egg/exit/keys done (`GEInteractionSystem`, 2026-07-10); dynamite,
+      doors/keys, secret powers, bullet pack also done since (`E3D-MIG-155`/`160`-`162`/`170`-
+      `172`/`174`/`175`, all 2026-07-12) — remaining pickup types are the deliberately-deferred
+      ones documented under those same task IDs (2-stage delay, sparkle-fx), not unstarted work.
+- [x] `101` Hazard/kill detection — **done**, see `E3D-MIG-140`s (Phase 14, 10/10 complete).
+- [x] `102` Enemy stomp + contact-kill — **done**, see `E3D-MIG-130`s (Phase 13, fully complete
+      2026-07-11/12). No separate "score/counter" exists in real mobile-eggbert to port (see
+      `107` below) — lives/egg-gauge is the only real counter, already covered by `130`.
 - [ ] `103` Respawn invincibility window after death — not started, depends on `E3D-MIG-067`.
 - [x] `104` Exit-gate logic: gated on `treasuresCollected_ >= totalTreasures_`, win/reject sound
       channels, debounced to fire once per contact.
-- [~] `105` Crate-push + platform-patrol: basic single-crate push and lift ping-pong patrol done;
-      linked-crate stacks, boarding/riding, vertigo/shift-off, conveyor nudge not started — see
-      `E3D-MIG-150`s.
+- [x] `105` Crate-push + platform-patrol — **done**: linked-crate stacks (`E3D-MIG-150`), lift
+      riding/boarding (`152`/`154`), dynamite (`155`) all complete 2026-07-12 (Phase 15
+      substantially done; see that phase's own entries for exactly what's deferred and why —
+      `151`/`153`/`156`-`158`).
 - [ ] `106` `[?]` Save/load — scope still TBD (`easy3d.md` §12 Q7: byte-level format
       compatibility with mobile-eggbert saves is an open question, not a default). See
       `## 2 §11 SAVE-*` for the full conceptual checklist.
 - [ ] `107` Standing rule: no new mechanics — every gameplay task in this plan must trace to a
       documented mobile-eggbert behavior.
 
-### Phase 13 — Enemy AI & combat (`E3D-MIG-130`-`137`)
+### Phase 13 — Enemy AI & combat (`E3D-MIG-130`-`137`) — fully complete (2026-07-11/12)
 
-Nothing here is started. mobile-eggbert-reference/04-enemy-behavior.md and
-/12-hazards-and-interactables.md are the source of truth; do not invent stomp/hit feel not
-documented there.
+mobile-eggbert-reference/04-enemy-behavior.md and /12-hazards-and-interactables.md are the source
+of truth; do not invent stomp/hit feel not documented there.
 
 - [x] `130` Lives/gauge/respawn **foundation** done (2026-07-11): `GEInteractionSystem::Lives()`/
       `LoseLife()`, default 3, +1 per egg up to `MAX_EGG_COUNT=10`, real reset-to-3-on-zero
