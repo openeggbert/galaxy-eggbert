@@ -828,10 +828,16 @@ namespace GalaxyEggbert::CNA
             // without GEBlupiController needing a velocity accessor.
             // crouchHeld gates ObjectType3's real duck-immunity;
             // blupi_.IsBallooned() gates whether a 3/16/96/97 hazard pops
-            // the balloon instead of killing.
+            // the balloon instead of killing. blupiFacingDX/DZ (plan.md
+            // E3D-MIG-160) is Blupi's facing rounded to the nearest
+            // cardinal grid direction (GetYaw()'s own 0=-Z/forward=
+            // (sin,0,-cos) convention), used for the door-detection probe
+            // one cell ahead of him.
+            const int blupiFacingDX = static_cast<int>(std::lround(std::sin(blupi_.GetYaw())));
+            const int blupiFacingDZ = static_cast<int>(std::lround(-std::cos(blupi_.GetYaw())));
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
-                                 blupi_.IsBallooned());
+                                 blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ);
 
             // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()
             // reflects whether Blupi was standing on an active lift BEFORE

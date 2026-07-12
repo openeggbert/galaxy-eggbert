@@ -472,6 +472,24 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType55, 58.0f, 1.0f, 73.0f);
 
     // ------------------------------------------------------------------
+    // Doors demo (plan.md E3D-MIG-160/161/162, 2026-07-12) -- a small room
+    // south of the lift/pool rooms, two short corridors each blocked by a
+    // real wall with exactly one door-tile gap: a key-gated Door1 (needs
+    // Key1/ObjectType49, picked up just before it) and, further along, a
+    // treasure-gated door (icon 422, needs 2 treasures -- deliberately more
+    // than the single chest a normal playthrough would have collected by
+    // here, so this one stays genuinely closed until a second treasure is
+    // found elsewhere in the level, demonstrating the gate rather than
+    // starting pre-opened).
+    // ------------------------------------------------------------------
+    fill(45, 51, 0, 0, 87, 95, BlockTypes::RockPile);           // doors room floor
+    fill(45, 51, 1, 2, 90, 90, BlockTypes::BrickWall);          // wall 1 (key-gated door)
+    world.setBlock(48, 1, 90, Block::make(BlockTypes::Door1));  // key-gated door gap
+    fill(45, 51, 1, 2, 93, 93, BlockTypes::BrickWall);          // wall 2 (treasure-gated door)
+    world.setBlock(48, 1, 93, Block::make(static_cast<std::uint16_t>(422))); // treasure-gated door gap (needs 2)
+    place(ObjectType::ObjectType49, 46.0f, 1.0f, 88.0f);        // key 1, before wall 1
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //

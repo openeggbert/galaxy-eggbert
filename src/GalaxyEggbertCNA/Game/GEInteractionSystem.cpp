@@ -21,6 +21,53 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
+        // Opens a door tile (plan.md E3D-MIG-160/162, real `Decor::OpenDoor`,
+        // ~11667): removes the tile from the terrain grid (becomes passable)
+        // and spawns a transient ObjectType22 at that cell (real
+        // `table_bridge`-style slide, handled by this file's own
+        // ObjectType22 branch in the main Update() loop, not the generic
+        // patrol system) so it visually slides up and out of the way
+        // instead of just vanishing. Real channel 33. Shared by both the
+        // key-gated (160) and treasure-gated (162) door families --
+        // opening itself is identical, only the trigger condition differs.
+        // The door's own icon is NOT carried onto the slide object --
+        // `GEObjectIcons::GetObjIcon()` already has no confirmed icon data
+        // for type 22 (returns 0 regardless), a pre-existing gap unrelated
+        // to this task.
+        void OpenDoorAt(GEWorldRuntime& worldRuntime, int gx, int gy, int gz, GESound& sound)
+        {
+            worldRuntime.GetWorldMutable().setBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                      static_cast<std::uint16_t>(gz),
+                                                      Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+
+            MobileObjSpec slide;
+            slide.type = ObjectType::ObjectType22;
+            slide.posStartX = slide.posEndX = slide.currentX =
+                static_cast<float>(gx) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+            slide.posStartY = slide.posEndY = slide.currentY = static_cast<float>(gy);
+            slide.posStartZ = slide.posEndZ = slide.currentZ =
+                static_cast<float>(gz) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+            slide.phase = 0.0f;
+            slide.active = true;
+
+            auto& objects = worldRuntime.GetMobileObjectsMutable();
+            bool placed = false;
+            for (auto& slot : objects)
+            {
+                if (!slot.active)
+                {
+                    slot = slide;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed)
+            {
+                objects.push_back(slide);
+            }
+            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel33);
+        }
+
         // Real shared patrol-turn mechanic (plan.md E3D-MIG-131,
         // `Decor::MoveObjectStepLine`, verified directly against
         // Decor.cpp:8005-8141): a 4-phase cycle -- 1=dwell at posStart for
@@ -343,12 +390,14 @@ namespace GalaxyEggbert::CNA
 
     void GEInteractionSystem::Update(float dt, GEWorldRuntime& worldRuntime,
                                       float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
-                                      GESound& sound, bool blupiCrouching, bool blupiBallooned)
+                                      GESound& sound, bool blupiCrouching, bool blupiBallooned,
+                                      int blupiFacingDX, int blupiFacingDZ)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
         balloonPoppedThisFrame_ = false;
         ridingLift_ = false;
+        bool treasureDoorScanNeeded = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -577,6 +626,26 @@ namespace GalaxyEggbert::CNA
                             }
                         }
                     }
+                }
+                continue;
+            }
+
+            // Door-opening slide effect (ObjectType22, plan.md E3D-MIG-160,
+            // real `Decor::OpenDoor` ~11667): slides up by exactly one grid
+            // unit over the real `Config::ScaleTime(50)` = 50 ticks (2.5s
+            // at the 20Hz reference rate obj.phase already advances at),
+            // then self-destructs -- a one-shot animation, not the generic
+            // dwell/advance/dwell/recede patrol (which loops and doesn't
+            // fit a "play once and vanish" effect), so it's handled
+            // directly here instead.
+            if (obj.type == ObjectType::ObjectType22)
+            {
+                constexpr float kSlideTicks = 50.0f;
+                const float t = std::min(obj.phase / kSlideTicks, 1.0f);
+                obj.currentY = obj.posStartY + t;
+                if (obj.phase >= kSlideTicks)
+                {
+                    obj.active = false;
                 }
                 continue;
             }
@@ -1086,6 +1155,11 @@ namespace GalaxyEggbert::CNA
                     sound.Play(completesSet ? GalaxyEggbert::SoundChannel::SoundChannel19
                                              : GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    // Treasure-gated doors (plan.md E3D-MIG-162, real
+                    // Decor::OpenDoorsTresor ~11642) -- deferred to a single
+                    // whole-grid scan after this loop, in case more than one
+                    // treasure is somehow collected in the same frame.
+                    treasureDoorScanNeeded = true;
                     break;
                 }
                 case ObjectType::ObjectType6: // extra-life egg
@@ -1135,6 +1209,93 @@ namespace GalaxyEggbert::CNA
         if (!touchingExitThisFrame)
         {
             exitContactActive_ = false;
+        }
+
+        // Key-gated doors (plan.md E3D-MIG-160/161, real `Decor::IsDoor`
+        // ~7360): probes Blupi's own cell AND one cell further in his
+        // facing direction (blupiFacingDX/DZ) for a door icon (334-336),
+        // matching the real "trigger a step before actually reaching it"
+        // detection exactly. Opens automatically if the matching key is
+        // currently held -- no action-button gate in the real source,
+        // unlike switches/dynamite. Real key flags are NOT consumed on
+        // pickup, only on use (`Decor.cpp` ~5619) -- modeled here as
+        // clearing the whole count to 0 (this engine's keys1_/keys2_/
+        // keys3_ are plain pickup counters, not a persisted bitmask, but
+        // real levels only ever grant one of each key before it must be
+        // re-collected, so "count > 0" / "clear to 0" behaves identically
+        // to the real boolean flag for the realistic case). Real voyage-
+        // deferred key-flag-setting (pickup consumed from the world
+        // immediately, but not "held" until a HUD-fly animation completes)
+        // is NOT modeled -- same simplification as every other pickup this
+        // session, applied immediately instead.
+        {
+            auto& terrain = worldRuntime.GetWorldMutable();
+            const int axis = static_cast<int>(terrain.blocksPerAxis());
+            const int probeGX[2] = {
+                static_cast<int>(std::lround(blupiX)) + GEWorldRuntime::kWorldCenterX,
+                static_cast<int>(std::lround(blupiX + static_cast<float>(blupiFacingDX))) +
+                    GEWorldRuntime::kWorldCenterX,
+            };
+            const int probeGZ[2] = {
+                static_cast<int>(std::lround(blupiZ)) + GEWorldRuntime::kWorldCenterZ,
+                static_cast<int>(std::lround(blupiZ + static_cast<float>(blupiFacingDZ))) +
+                    GEWorldRuntime::kWorldCenterZ,
+            };
+            const int probeGY = static_cast<int>(std::lround(blupiY));
+            for (int p = 0; p < 2; ++p)
+            {
+                const int gx = probeGX[p];
+                const int gz = probeGZ[p];
+                if (gx < 0 || gx >= axis || gz < 0 || gz >= axis || probeGY < 0 || probeGY >= axis)
+                {
+                    continue;
+                }
+                const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(probeGY),
+                                                    static_cast<std::uint16_t>(gz))
+                                       .type();
+                if (!GalaxyEggbert::BlockTypes::isDoor(icon))
+                {
+                    continue;
+                }
+                const int keyType = GalaxyEggbert::BlockTypes::doorKeyType(icon);
+                const bool hasKey = (keyType == 49 && keys1_ > 0) || (keyType == 50 && keys2_ > 0) ||
+                                     (keyType == 51 && keys3_ > 0);
+                if (hasKey)
+                {
+                    OpenDoorAt(worldRuntime, gx, probeGY, gz, sound);
+                    if (keyType == 49) keys1_ = 0;
+                    else if (keyType == 50) keys2_ = 0;
+                    else if (keyType == 51) keys3_ = 0;
+                }
+            }
+        }
+
+        // Treasure-gated doors (plan.md E3D-MIG-162, real
+        // Decor::OpenDoorsTresor ~11642): a door needing N treasures uses
+        // icon 420+N -- scans the whole grid and opens every one whose
+        // requirement is now met, all at once, the same moment a
+        // qualifying treasure pickup completed above (not just the
+        // nearest door).
+        if (treasureDoorScanNeeded)
+        {
+            auto& terrain = worldRuntime.GetWorldMutable();
+            const int axis = static_cast<int>(terrain.blocksPerAxis());
+            for (int gx = 0; gx < axis; ++gx)
+            {
+                for (int gy = 0; gy < axis; ++gy)
+                {
+                    for (int gz = 0; gz < axis; ++gz)
+                    {
+                        const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                            static_cast<std::uint16_t>(gz))
+                                               .type();
+                        if (icon >= 421 && icon <= 420 + treasuresCollected_)
+                        {
+                            OpenDoorAt(worldRuntime, gx, gy, gz, sound);
+                        }
+                    }
+                }
+            }
         }
 
         // Flush this frame's blupih/blupit shots into the live object list

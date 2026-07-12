@@ -161,9 +161,17 @@ namespace GalaxyEggbert::CNA
         // for the rest of this frame only -- GEInteractionSystem has no
         // access to GEBlupiController, so the caller is the one that must
         // actually respawn Blupi (see GalaxyEggbertCnaGame::Update()).
+        // blupiFacingDX/DZ (plan.md E3D-MIG-160, both default 0 so existing
+        // callers/tests are unaffected) are the rounded cardinal-direction
+        // grid offset one cell in front of Blupi's current facing (the
+        // caller derives this from GEBlupiController::GetYaw()) -- doors
+        // (real `Decor::IsDoor`) probe BOTH Blupi's own cell and this one,
+        // so he can trigger a door a step before actually reaching it,
+        // matching the real source exactly.
         void Update(float dt, GEWorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
-                    GESound& sound, bool blupiCrouching = false, bool blupiBallooned = false);
+                    GESound& sound, bool blupiCrouching = false, bool blupiBallooned = false,
+                    int blupiFacingDX = 0, int blupiFacingDZ = 0);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame

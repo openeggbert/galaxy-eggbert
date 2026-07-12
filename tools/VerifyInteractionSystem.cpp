@@ -352,6 +352,68 @@ int main(int argc, char** argv)
         check(false, "found a dynamite stick (ObjectType55) in the sample world");
     }
 
+    // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own
+    // doors demo (tools/GenerateSampleWorld3D.cpp): a key-gated Door1 at
+    // grid (48,1,90) with its Key1 at (46,1,88), and a treasure-gated
+    // door (icon 421, needs 1) at (48,1,93). Fresh GEInteractionSystem
+    // instances so their own key/treasure counters start at 0,
+    // independent of the shared `interaction` used by every test above.
+    {
+        const auto doorTileType = [&]()
+        { return world.GetWorld().getBlock(48, 1, 90).type(); };
+        check(doorTileType() == BlockTypes::Door1, "the key-gated door demo tile starts as Door1 (closed)");
+
+        GEInteractionSystem doorInteraction;
+        // Approach without holding the key -- facing +Z (toward the door
+        // at z=90 from z=89), render space (grid - 50).
+        doorInteraction.Update(dt, world, 48.0f - 50.0f, 1.0f, 89.0f - 50.0f, 0.0f, sound, false, false, 0, 1);
+        check(doorTileType() == BlockTypes::Door1, "the door stays closed while Blupi doesn't hold the matching key");
+
+        doorInteraction.Update(dt, world, 46.0f - 50.0f, 1.0f, 88.0f - 50.0f, 0.0f, sound);
+        check(doorInteraction.Key1Count() == 1, "picking up the key increments Key1Count() to 1");
+
+        doorInteraction.Update(dt, world, 48.0f - 50.0f, 1.0f, 89.0f - 50.0f, 0.0f, sound, false, false, 0, 1);
+        check(doorTileType() != BlockTypes::Door1,
+              "the door opens (tile no longer Door1) once Blupi approaches while holding the key");
+        check(doorInteraction.Key1Count() == 0, "the key is consumed on use (real behavior), not just on pickup");
+    }
+
+    {
+        // Icon 422 needs 2 treasures -- deliberately more than the single
+        // chest any earlier test in this file collects via the shared
+        // `interaction`, so this tile is still genuinely closed here (not
+        // already opened as a side effect of an earlier section).
+        const auto treasureDoorTileType = [&]()
+        { return world.GetWorld().getBlock(48, 1, 93).type(); };
+        check(treasureDoorTileType() == 422,
+              "the treasure-gated door demo tile starts as icon 422 (needs 2 treasures)");
+
+        std::vector<const MobileObjSpec*> freshChests;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType5 && obj.active)
+            {
+                freshChests.push_back(&obj);
+                if (freshChests.size() == 2) break;
+            }
+        }
+        check(freshChests.size() == 2, "found 2 still-active chests for the treasure-gated door test");
+        if (freshChests.size() == 2)
+        {
+            GEInteractionSystem treasureDoorInteraction;
+            treasureDoorInteraction.Update(dt, world, freshChests[0]->currentX, freshChests[0]->currentY,
+                                            freshChests[0]->currentZ, 0.0f, sound);
+            check(treasureDoorTileType() == 422,
+                  "the door stays closed after only 1 of the 2 required treasures is collected");
+            treasureDoorInteraction.Update(dt, world, freshChests[1]->currentX, freshChests[1]->currentY,
+                                            freshChests[1]->currentZ, 0.0f, sound);
+            check(treasureDoorInteraction.TreasuresCollected() == 2,
+                  "the fresh interaction system's own treasure count reaches 2");
+            check(treasureDoorTileType() != 422,
+                  "the treasure-gated door opens the instant the 2nd qualifying treasure pickup completes");
+        }
+    }
+
     // 4. GEWorldRuntime::IsBlitzActiveAtPhase() (plan.md E3D-MIG-144) -- real
     // BlitzActif() cycle: lethal only on even ticks within the first half of
     // a 100-tick cycle (num%2==0 && num<50).

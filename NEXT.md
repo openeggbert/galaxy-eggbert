@@ -262,6 +262,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Doors & keys implemented, Phase 16 substantially done (2026-07-12, plan.md `E3D-MIG-160`/
+  `161`/`162`).** Doors (icons 334-336) now open automatically when Blupi approaches holding the
+  matching key (probing his own cell AND one cell ahead in his facing direction, matching real
+  `Decor::IsDoor` exactly) — tile removed, a transient sliding-up `ObjectType22` plays over the
+  real 2.5s, key consumed on use (not on pickup). Treasure-gated doors (icon `420+N`) open ALL
+  qualifying doors level-wide the instant a treasure pickup completes, matching
+  `Decor::OpenDoorsTresor` exactly. New key-gated + treasure-gated door demo added to the sample
+  world (2 short corridors, each with one real wall + door gap). Rendering doors as a
+  transparent billboard (`163`) and the hub/menu-screen door logic (`164`/`165`) are explicitly
+  deferred — the former is a new visual-design decision the user asked to skip this session, the
+  latter needs menu/hub screens that don't exist yet. Verified: 11 new `VerifyInteractionSystem`
+  assertions + full suite (63/63 unit tests, all verify tools) + both backends.
+
 - **Dynamite implemented (2026-07-12, plan.md `E3D-MIG-155`).** Real pickup (caps at 1 carried)
   + action-button placement (gated on carrying one + grounded) + the exact real 9-blast fuse
   sequence, verified directly against `Decor.cpp` (not just the reference doc's rounded

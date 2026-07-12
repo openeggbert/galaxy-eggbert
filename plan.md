@@ -986,19 +986,50 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
 
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 
-Not started. Full spec: `mobile-eggbert-reference/06-doors.md`.
+Full spec: `mobile-eggbert-reference/06-doors.md`. `160`/`161`/`162` done 2026-07-12; `163`/`164`/
+`165` deferred (see each entry).
 
-- [ ] `160` Door open sequence: icon removed, transient sliding-up ObjectType22 over 50 ticks,
-      real sound channel — a pure slide, not a fade/shatter/swing.
-- [ ] `161` Key pickup deferred to voyage-completion (shares `E3D-MIG-158`'s pattern); keys are
-      persistent (not consumed on pickup) but consumed one-per-door on use.
-- [ ] `162` Treasure-gated doors (icon family 421+N = needs N treasures) — opens ALL qualifying
-      doors level-wide simultaneously on any treasure pickup, not just the nearest.
+- [x] `160` Door open sequence — done 2026-07-12, verified directly against `Decor::OpenDoor`
+      (~11667). Opening a door (`GEInteractionSystem::OpenDoorAt()`, shared by the key-gated and
+      treasure-gated families below) sets the tile to `Air` and spawns a transient `ObjectType22`
+      that slides up by exactly 1 grid unit over the real `Config::ScaleTime(50)` = 50 ticks
+      (2.5s at the 20Hz reference rate), then self-destructs — handled directly by its own branch
+      in `GEInteractionSystem::Update()`'s main loop (a one-shot animation, not the generic
+      dwell/advance/dwell/recede patrol, which loops and doesn't fit). Real channel 33. The
+      slide object's own icon is NOT rendered accurately — `GEObjectIcons::GetObjIcon()` already
+      has no confirmed icon data for type 22 regardless (returns 0), a pre-existing gap unrelated
+      to this task.
+- [x] `161` Key pickup/consumption — done 2026-07-12, verified directly against `Decor.cpp`
+      ~7360-7394 (`IsDoor`, probes Blupi's own cell AND one cell further in his facing direction)
+      and ~5619 (key cleared on use). Doors open AUTOMATICALLY on approach while holding the
+      matching key (no action-button gate, unlike switches/dynamite) — new `blupiFacingDX`/`DZ`
+      `Update()` parameters (caller derives them from `GEBlupiController::GetYaw()`) drive the
+      2-cell probe. This engine's `keys1_`/`keys2_`/`keys3_` are plain pickup counters (not a
+      persisted bitmask) — modeled as "count > 0 opens, cleared to 0 on use", behaviorally
+      identical to the real boolean flag for the realistic case (real levels only ever grant one
+      of each key before requiring a re-pickup). Real voyage-deferred key-flag-setting (the pickup
+      is consumed from the world immediately, but the key isn't "held" until a HUD-fly animation
+      completes) is NOT modeled — same simplification as every other pickup this session, applied
+      immediately instead.
+- [x] `162` Treasure-gated doors — done 2026-07-12, verified directly against
+      `Decor::OpenDoorsTresor` (~11642). A door needing N treasures uses icon `420+N`; the instant
+      a treasure pickup completes, the WHOLE terrain grid is scanned and every door in
+      `[421, 420+treasuresCollected_]` opens at once (not just the nearest), matching the real
+      "newly-qualifying treasure doors across the whole level open together" behavior exactly.
+      New key-gated + treasure-gated door demo (2 short corridors, each with exactly one door-tile
+      gap in a real wall) added to the sample world for a genuinely playable scenario. Verified:
+      11 new `VerifyInteractionSystem` assertions (closed-without-key, opens-with-key,
+      key-consumed-on-use, treasure-gate-stays-closed-until-met, opens-on-2nd-qualifying-pickup)
+      + full suite (63/63 unit tests, all verify tools) + both backends.
 - [ ] `163` Render closed doors as `Billboard` — tracked in `E3D-MIG-516`, cross-referenced here.
+      Explicitly SKIPPED this session per the user's 2026-07-12 direction (no new visual/render-
+      geometry decisions) — door tiles currently fall through to the terrain renderer's plain
+      `UniformCube` default (same as any other unclassified icon) until opened, a pre-existing,
+      not-newly-introduced gap.
 - [ ] `164` `AdaptDoors` hub-screen logic (gold-flag reveals, icon swaps) — depends on hub/menu
-      screens existing (`## 2 §2 MENU-*`), lower priority.
+      screens existing (`## 2 §2 MENU-*`), not started, lower priority.
 - [ ] `165` World-entry-screen door logic (opens matching sublevel doors, snaps Blupi facing) —
-      same menu dependency as `164`.
+      same menu dependency as `164`, not started.
 
 ### Phase 17 — Secret powers, vehicles, buffs, remaining pickups (`E3D-MIG-170`-`179`)
 
