@@ -3300,16 +3300,20 @@ priority notes below until this list is exhausted:**
 3. Phase 15 (`E3D-MIG-150`-`158`) — **substantially done** (150/152/154/155 done; 151/153/156/157/
    158 deferred with documented reasons, see plan.md).
 4. Phase 16 (`E3D-MIG-160`-`165`) — **substantially done** (160/161/162 done; 163/164/165 deferred).
-5. Phase 17 (`E3D-MIG-170`-`179`) — **in progress**: `170`/`171`/`172`/`174`/`175` done (secret
-   powers + real hazard immunity + vehicle mounts + bullet pack pickup; vehicles also yielded a
-   real, general `TryMoveAxis()` falling-movement collision-bug fix — see §3's newest entries).
-   Remaining: `173` (2-stage pickup delay, deferred simplification), `176` (sparkle-fx, needs a
+5. Phase 17 (`E3D-MIG-170`-`179`) — **substantially complete**: `170`/`171`/`172`/`174`/`175`/`178`
+   done (secret powers + real hazard immunity + vehicle mounts + bullet pack pickup; vehicles also
+   yielded a real, general `TryMoveAxis()` falling-movement collision-bug fix; `178`'s "movement
+   table" was the same deliverable as `171`'s own speed/accel constants, not separate work — see
+   §3's newest entries). Every remaining item is deferred/blocked, not just unstarted: `173`
+   (2-stage pickup delay, a deliberate documented simplification), `176` (sparkle-fx, needs a
    particle system that doesn't exist), `177` (Ecrase collision-box mode is now a documented
-   non-goal; Suspended movement mode is fully researched/speced but `needs_human` — blocked on
-   icon 202's pending render-geometry decision, see §3's newest entry), `178` (vehicle movement
-   table, partly covered by `171`'s own speed/accel constants), `179` (needs_human, skip). Bullet
-   FIRING itself (vs. the ammo-count pickup done in `175`) needs a new player-fired projectile
-   system and is tracked as its own not-yet-scoped follow-up.
+   non-goal — this engine's single-point collision has no hitbox to shrink; Suspended movement
+   mode is fully researched/speced but `needs_human` — blocked on icon 202's pending
+   render-geometry decision, see §3's newest entry), `179` (needs_human, enemy billboard mismatch).
+   Bullet FIRING itself (vs. the ammo-count pickup done in `175`) needs a new player-fired
+   projectile system and is tracked as its own not-yet-scoped follow-up. **No further Phase 17
+   work is safely actionable without either human input (render-geometry calls) or a new,
+   separately-scoped subsystem (particle effects, player-fired projectiles).**
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
    their 2026-07-12 direction, not attempted). The teleporter double-tip bug is **DONE** — see
    §3's newest entry and plan.md's `E3D-MIG-147` follow-up.

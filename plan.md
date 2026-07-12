@@ -1200,8 +1200,14 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
         call the user explicitly asked to skip this session (`needs_human`, same category as the
         Saw blade). **Recommended next step once a human makes that render-geometry call**:
         implement Suspended mode using the constants above — it's cheap once unblocked.
-- [ ] `178` Vehicle/mode-specific movement table (max speed/accel/vertical behavior per mode) —
-      needed once any vehicle from `171` is implemented.
+- [x] `178` Vehicle/mode-specific movement table (max speed/accel/vertical behavior per mode) —
+      done 2026-07-12 as part of `171` itself (`kJeepMaxSpeed`/`kJeepDecel`, `kTankMaxSpeed`/
+      `kTankDecel`, `kOvercraftMaxSpeed`/`kOvercraftDecel`, `kSkateboardMaxSpeed`/
+      `kSkateboardDecel`, `kHelicopterMaxSpeed`/`kHelicopterDecel` + its own
+      `kHelicopterAscendSpeed`/`kHelicopterDescendSpeed`, `kOvercraftAscendSpeed`/
+      `kOvercraftDescendSpeed`, shared `kVehicleAccel`/`kVehicleVerticalAccel` — see `171`'s own
+      entry for the full proportional-scaling rationale). No separate work needed; this task's
+      scope and `171`'s implementation were the same table, not two deliverables.
 - [ ] `179` `[?]` Enemy billboard walk-cycle direction mismatch — enemy sprites only have
       left/right side-view frames; viewed at an oblique 3D angle this will look visibly wrong
       (already observed for Blupi, mooted there by the first-person camera, but NOT mooted for
