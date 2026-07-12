@@ -204,6 +204,27 @@ namespace GalaxyEggbert::CNA
         // is how a caller/verification tool can observe it happened.
         [[nodiscard]] int GameOverCount() const noexcept { return gameOverCount_; }
 
+        // Dynamite (plan.md E3D-MIG-155, ObjectType55 pickup / ObjectType56
+        // fuse, verified directly against Decor.cpp ~6116-6129 (pickup),
+        // ~4792-4812 (placement gate), ~8252-8296 (fuse timing), ~9058
+        // (per-blast effect)). Real `m_blupiDynamite` caps at exactly 1 --
+        // picking up a second does nothing until the first is placed (see
+        // the ObjectType55 case in Update()). PlaceDynamite() is the action-
+        // button placement: a no-op (returns false) unless carrying one and
+        // `grounded` (this engine's stand-in for the real "solid ground
+        // under both feet" check) -- spawns a real ObjectType56 fuse object
+        // at the given position and decrements the count. The fuse's own
+        // 100-tick animation (`table_dynamitef`) is NOT ported (needs a
+        // fresh data transcription this session didn't get explicit
+        // approval for) -- it renders via whatever GEObjectIcons::GetObjIcon()
+        // already returns for type 56, a documented simplification. The 9
+        // real blast ticks/offsets (Decor.cpp ~8258-8290, NOT just the
+        // reference doc's rounded summary) and the real destructible-type
+        // list (~9102-9132) are handled inside Update() itself, not exposed
+        // here.
+        [[nodiscard]] int DynamiteCount() const noexcept { return dynamiteCount_; }
+        bool PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
+
         // Platform lift riding (plan.md E3D-MIG-152, real `Decor::
         // MoveObjectStepLine`'s per-tick overlap re-test, unified with the
         // real separate `AscenseurDetect` initial-catch check into one
@@ -243,6 +264,7 @@ namespace GalaxyEggbert::CNA
         int lifeEggCount_ = 0;
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int gameOverCount_ = 0;
+        int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
         bool diedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call

@@ -281,6 +281,77 @@ int main(int argc, char** argv)
               "links vertically as well as horizontally)");
     }
 
+    // 3.6. Dynamite (plan.md E3D-MIG-155) -- pickup, the placement gate,
+    // and the full 9-blast sequence against a synthetic target crate
+    // pushed directly into the loaded world's mobile-object list (kept
+    // isolated from the real sample world's own crates/position).
+    if (const auto* dynamite = findFirst(ObjectType::ObjectType55))
+    {
+        const float ddx = dynamite->currentX, ddy = dynamite->currentY, ddz = dynamite->currentZ;
+        interaction.Update(dt, world, ddx, ddy, ddz, 0.0f, sound);
+        check(interaction.DynamiteCount() == 1, "dynamite pickup increments DynamiteCount() to 1");
+
+        check(!interaction.PlaceDynamite(world, 0.0f, 1.0f, 0.0f, /*grounded=*/false),
+              "PlaceDynamite() is a no-op while not grounded");
+        check(interaction.DynamiteCount() == 1, "DynamiteCount() unchanged after the failed placement");
+
+        // A fresh, isolated spot -- the real center blast (tick 50) has a
+        // (0,0) offset, so a target placed exactly here and Blupi standing
+        // exactly here are both within its 2x2-tile radius.
+        constexpr float placeX = 200.0f, placeY = 1.0f, placeZ = 200.0f;
+        check(interaction.PlaceDynamite(world, placeX, placeY, placeZ, /*grounded=*/true),
+              "PlaceDynamite() succeeds while carrying one and grounded");
+        check(interaction.DynamiteCount() == 0, "DynamiteCount() drops to 0 after placing");
+
+        auto& mutableObjects = world.GetMobileObjectsMutable();
+        MobileObjSpec targetCrate;
+        targetCrate.type = ObjectType::ObjectType12;
+        targetCrate.active = true;
+        targetCrate.currentX = targetCrate.posStartX = targetCrate.posEndX = placeX + 0.3f;
+        targetCrate.currentY = targetCrate.posStartY = targetCrate.posEndY = placeY;
+        targetCrate.currentZ = targetCrate.posStartZ = targetCrate.posEndZ = placeZ;
+        mutableObjects.push_back(targetCrate);
+
+        const int livesBeforeBlast = interaction.Lives();
+        const int gameOversBeforeBlast = interaction.GameOverCount();
+        // Advance the fuse through its full ~70-tick active timeline (well
+        // under 4s at the real 20Hz reference rate) in small steps so each
+        // blast tick is individually crossed, not skipped over. world.phase
+        // only advances via GEWorldRuntime::Update() itself (the real game
+        // loop calls this every frame before GEInteractionSystem::Update();
+        // this test must too, or obj.phase never moves).
+        for (int i = 0; i < 300; ++i) // 300 * (1/60)s = 5s of simulated time
+        {
+            world.Update(dt);
+            interaction.Update(dt, world, placeX, placeY, placeZ, 0.0f, sound);
+        }
+
+        bool crateStillActive = false;
+        bool fuseStillActive = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType12 && obj.active &&
+                std::fabs(obj.currentX - targetCrate.currentX) < 0.01f &&
+                std::fabs(obj.currentZ - targetCrate.currentZ) < 0.01f)
+            {
+                crateStillActive = true;
+            }
+            if (obj.type == ObjectType::ObjectType56 && obj.active &&
+                std::fabs(obj.currentX - placeX) < 0.01f && std::fabs(obj.currentZ - placeZ) < 0.01f)
+            {
+                fuseStillActive = true;
+            }
+        }
+        check(!crateStillActive, "the dynamite blast destroyed the crate within its blast radius");
+        check(interaction.Lives() < livesBeforeBlast || interaction.GameOverCount() > gameOversBeforeBlast,
+              "standing in the blast radius cost Blupi a life (or triggered game-over)");
+        check(!fuseStillActive, "the fuse object self-destructs once its sequence completes");
+    }
+    else
+    {
+        check(false, "found a dynamite stick (ObjectType55) in the sample world");
+    }
+
     // 4. GEWorldRuntime::IsBlitzActiveAtPhase() (plan.md E3D-MIG-144) -- real
     // BlitzActif() cycle: lethal only on even ticks within the first half of
     // a 100-tick cycle (num%2==0 && num<50).

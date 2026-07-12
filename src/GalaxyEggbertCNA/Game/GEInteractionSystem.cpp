@@ -1,5 +1,6 @@
 #include "GEInteractionSystem.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <algorithm>
@@ -580,6 +581,183 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Dynamite fuse (ObjectType56, plan.md E3D-MIG-155) -- real
+            // 9-blast sequence at fixed ticks (Decor.cpp ~8252-8296),
+            // verified directly against the source, not just the reference
+            // doc's rounded "~200px/~100px" summary: tick 50 is the center
+            // blast (dx,dy)=(0,0); 53=(-100,8); 55=(80,10); 56=(-15,-100);
+            // 59=(20,70); 62=(30,-50); 64=(-40,30); 67=(-180,10); 69=
+            // (200,-10) -- real pixel offsets, /64 to this engine's grid
+            // units (real dx -> this engine's X, real dy -> this engine's Y,
+            // same X/Y-only 2D-source convention already used for blupih/
+            // blupit/follower; Z is always 0, no real source axis maps to
+            // it). obj.phase already advances at the real 20Hz reference
+            // rate (GEWorldRuntime::Update()); reconstructing the phase as
+            // of the START of this frame (`prevPhase`) lets each blast fire
+            // on the exact frame its tick is crossed, not every frame after.
+            if (obj.type == ObjectType::ObjectType56)
+            {
+                struct Blast { float tick, dx, dy; };
+                static constexpr Blast kBlasts[] = {
+                    {50.0f, 0.0f / 64.0f, 0.0f / 64.0f},
+                    {53.0f, -100.0f / 64.0f, 8.0f / 64.0f},
+                    {55.0f, 80.0f / 64.0f, 10.0f / 64.0f},
+                    {56.0f, -15.0f / 64.0f, -100.0f / 64.0f},
+                    {59.0f, 20.0f / 64.0f, 70.0f / 64.0f},
+                    {62.0f, 30.0f / 64.0f, -50.0f / 64.0f},
+                    {64.0f, -40.0f / 64.0f, 30.0f / 64.0f},
+                    {67.0f, -180.0f / 64.0f, 10.0f / 64.0f},
+                    {69.0f, 200.0f / 64.0f, -10.0f / 64.0f},
+                };
+                const float prevPhase = obj.phase - dt * 20.0f;
+                for (const auto& blast : kBlasts)
+                {
+                    if (prevPhase < blast.tick && obj.phase >= blast.tick)
+                    {
+                        const float centerX = obj.currentX + blast.dx;
+                        const float centerY = obj.currentY + blast.dy;
+                        const float centerZ = obj.currentZ;
+                        if (blast.dx == 0.0f && blast.dy == 0.0f)
+                        {
+                            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                        }
+
+                        // Real 128x128px (2x2 tile) area -- +-1 grid unit
+                        // in X/Y around the blast center, same Z.
+                        constexpr float kBlastHalfExtent = 1.0f;
+
+                        // Clear destructible hazard tiles by icon (real:
+                        // saws 378/379, drip hazards 404/410 -- the latter
+                        // has no placeable BlockTypes constant in this
+                        // engine yet, so only Saw/SawStopped are handled).
+                        const int wx0 = static_cast<int>(std::round(centerX - kBlastHalfExtent)) +
+                                        GEWorldRuntime::kWorldCenterX;
+                        const int wx1 = static_cast<int>(std::round(centerX + kBlastHalfExtent)) +
+                                        GEWorldRuntime::kWorldCenterX;
+                        const int wz = static_cast<int>(std::round(centerZ)) + GEWorldRuntime::kWorldCenterZ;
+                        const int wy = static_cast<int>(std::round(centerY)) < 0
+                                           ? 0
+                                           : static_cast<int>(std::round(centerY));
+                        const int axis = static_cast<int>(world.blocksPerAxis());
+                        if (wy >= 0 && wy < axis && wz >= 0 && wz < axis)
+                        {
+                            for (int wx = std::max(0, wx0); wx <= std::min(axis - 1, wx1); ++wx)
+                            {
+                                const auto blockType = world.getBlock(static_cast<std::uint16_t>(wx),
+                                                                       static_cast<std::uint16_t>(wy),
+                                                                       static_cast<std::uint16_t>(wz))
+                                                            .type();
+                                if (blockType == GalaxyEggbert::BlockTypes::Saw ||
+                                    blockType == GalaxyEggbert::BlockTypes::SawStopped)
+                                {
+                                    worldRuntime.GetWorldMutable().setBlock(
+                                        static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(wy),
+                                        static_cast<std::uint16_t>(wz),
+                                        Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                                }
+                            }
+                        }
+
+                        // Destroy every enemy/crate/object overlapping the
+                        // blast rect, from the real explicit type list
+                        // (Decor.cpp ~9102-9132, ported exactly, not
+                        // approximated) -- crates are destroyed as a full
+                        // linked group (real SearchLinkCaisse), everything
+                        // else is a plain deactivate. No debris/particle
+                        // visuals (no such system exists yet).
+                        for (auto& victim : objects)
+                        {
+                            if (!victim.active || &victim == &obj)
+                            {
+                                continue;
+                            }
+                            const bool isDestructibleType =
+                                victim.type == ObjectType::ObjectType2 || victim.type == ObjectType::ObjectType3 ||
+                                victim.type == ObjectType::ObjectType4 || victim.type == ObjectType::ObjectType6 ||
+                                victim.type == ObjectType::ObjectType12 || victim.type == ObjectType::ObjectType13 ||
+                                victim.type == ObjectType::ObjectType16 || victim.type == ObjectType::ObjectType17 ||
+                                victim.type == ObjectType::ObjectType18 || victim.type == ObjectType::ObjectType19 ||
+                                victim.type == ObjectType::ObjectType20 || victim.type == ObjectType::ObjectType24 ||
+                                victim.type == ObjectType::ObjectType25 || victim.type == ObjectType::ObjectType26 ||
+                                victim.type == ObjectType::ObjectType28 || victim.type == ObjectType::ObjectType30 ||
+                                victim.type == ObjectType::ObjectType32 || victim.type == ObjectType::ObjectType33 ||
+                                victim.type == ObjectType::ObjectType34 || victim.type == ObjectType::ObjectType40 ||
+                                victim.type == ObjectType::ObjectType44 || victim.type == ObjectType::ObjectType46 ||
+                                victim.type == ObjectType::ObjectType52 || victim.type == ObjectType::ObjectType54 ||
+                                victim.type == ObjectType::ObjectType96 || victim.type == ObjectType::ObjectType97 ||
+                                victim.type == ObjectType::ObjectType200 || victim.type == ObjectType::ObjectType201 ||
+                                victim.type == ObjectType::ObjectType202 || victim.type == ObjectType::ObjectType203;
+                            if (!isDestructibleType)
+                            {
+                                continue;
+                            }
+                            if (std::fabs(victim.currentX - centerX) > kBlastHalfExtent + 0.5f ||
+                                std::fabs(victim.currentY - centerY) > kBlastHalfExtent + 0.5f ||
+                                std::fabs(victim.currentZ - centerZ) > 0.5f)
+                            {
+                                continue;
+                            }
+                            if (IsCrate(victim.type))
+                            {
+                                std::vector<MobileObjSpec*> linked;
+                                linked.push_back(&victim);
+                                bool addedAny = true;
+                                while (addedAny)
+                                {
+                                    addedAny = false;
+                                    for (auto& other : objects)
+                                    {
+                                        if (!other.active || !IsCrate(other.type)) continue;
+                                        if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
+                                        bool touches = false;
+                                        for (auto* member : linked)
+                                        {
+                                            if (std::fabs(other.currentX - member->currentX) < 1.5f &&
+                                                std::fabs(other.currentY - member->currentY) < 1.5f &&
+                                                std::fabs(other.currentZ - member->currentZ) < 0.5f)
+                                            {
+                                                touches = true;
+                                                break;
+                                            }
+                                        }
+                                        if (touches)
+                                        {
+                                            linked.push_back(&other);
+                                            addedAny = true;
+                                        }
+                                    }
+                                }
+                                for (auto* member : linked)
+                                {
+                                    member->active = false;
+                                }
+                            }
+                            else
+                            {
+                                victim.active = false;
+                            }
+                        }
+
+                        // Blupi death check (real: `m_blupiFocus &&
+                        // !shield && !hide && !superblupi`, all unconditional
+                        // simplifications here -- none of those concepts
+                        // exist in this engine yet).
+                        if (std::fabs(blupiX - centerX) <= kBlastHalfExtent + 0.5f &&
+                            std::fabs(blupiY - centerY) <= kBlastHalfExtent + 0.5f &&
+                            std::fabs(blupiZ - centerZ) <= 0.5f)
+                        {
+                            LoseLife();
+                            diedThisFrame_ = true;
+                        }
+                    }
+                }
+                if (obj.phase >= 70.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
             // Follower wake-up (ObjectType96 -> 97, plan.md E3D-MIG-137,
             // real Decor.cpp:9646-9678 `MoveObjectFollow`) -- a dormant
             // follower promotes to the homing type the instant Blupi comes
@@ -845,7 +1023,8 @@ namespace GalaxyEggbert::CNA
             // channel 3, not channel 42 (42 is Shield activation, unrelated).
             if (obj.type != ObjectType::ObjectType5 && obj.type != ObjectType::ObjectType6 &&
                 obj.type != ObjectType::ObjectType7 && obj.type != ObjectType::ObjectType49 &&
-                obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51)
+                obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51 &&
+                obj.type != ObjectType::ObjectType55)
             {
                 continue;
             }
@@ -935,6 +1114,19 @@ namespace GalaxyEggbert::CNA
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
                     break;
+                case ObjectType::ObjectType55: // dynamite stick
+                    // Real gate: only picked up while carrying none (real
+                    // m_blupiDynamite caps at 1) -- touching a second stick
+                    // while already carrying one does nothing at all, not
+                    // even removed (mobile-eggbert-reference/
+                    // 13-object-pickups.md).
+                    if (dynamiteCount_ == 0)
+                    {
+                        ++dynamiteCount_;
+                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
+                        obj.active = false;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -979,5 +1171,39 @@ namespace GalaxyEggbert::CNA
             lives_ = 3;
             ++gameOverCount_;
         }
+    }
+
+    bool GEInteractionSystem::PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded)
+    {
+        // Real gate (Decor.cpp ~4792-4812): carrying at least one, and
+        // solid ground under both feet -- approximated here as `grounded`
+        // (this engine's single-point collision has no separate left/right
+        // foot check). Real "not in any vehicle mode, not lift-transported"
+        // clauses aren't modeled -- neither concept exists yet.
+        if (dynamiteCount_ <= 0 || !grounded)
+        {
+            return false;
+        }
+        --dynamiteCount_;
+
+        MobileObjSpec fuse;
+        fuse.type = ObjectType::ObjectType56;
+        fuse.posStartX = fuse.posEndX = fuse.currentX = x;
+        fuse.posStartY = fuse.posEndY = fuse.currentY = y;
+        fuse.posStartZ = fuse.posEndZ = fuse.currentZ = z;
+        fuse.phase = 0.0f;
+        fuse.active = true;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = fuse;
+                return true;
+            }
+        }
+        objects.push_back(fuse);
+        return true;
     }
 }

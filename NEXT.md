@@ -262,6 +262,18 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Dynamite implemented (2026-07-12, plan.md `E3D-MIG-155`).** Real pickup (caps at 1 carried)
+  + action-button placement (gated on carrying one + grounded) + the exact real 9-blast fuse
+  sequence, verified directly against `Decor.cpp` (not just the reference doc's rounded
+  summary) — exact real blast ticks/pixel-offsets and the exact real 28-type destructible-object
+  list were read straight from the source. Each blast clears Saw hazard tiles and destroys
+  overlapping objects (crates via the same linked-group logic as `150`) in its 2x2-tile area, and
+  kills Blupi if caught. No debris/particle visuals (no such system exists — a documented
+  simplification, same as every other missing-particle-effect gap this session). New dynamite
+  pickup + target added to the sample world (lift room B, next to the linked-crate demo) for a
+  genuinely playable scenario. Verified: 10 new `VerifyInteractionSystem` assertions + full suite
+  (63/63 unit tests, all verify tools) + both backends.
+
 - **Riding a moving platform lift now works (2026-07-12, plan.md `E3D-MIG-152`/`154`) — a
   long-standing "not yet working" limitation is closed.** `GEInteractionSystem` detects (before
   its own per-frame lift patrol step) whether Blupi is standing on an active lift's surface,

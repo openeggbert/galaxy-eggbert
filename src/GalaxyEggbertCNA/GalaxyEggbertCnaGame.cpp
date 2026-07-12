@@ -804,6 +804,17 @@ namespace GalaxyEggbert::CNA
                     sound_.Play(*turnedOn ? GalaxyEggbert::SoundChannel::SoundChannel77
                                           : GalaxyEggbert::SoundChannel::SoundChannel76);
                 }
+
+                // Dynamite placement (plan.md E3D-MIG-155) -- same action
+                // button, independent gate (carrying one + grounded) from
+                // the switch check above, so both can coexist on one press
+                // without stepping on each other (real channel 61, shared
+                // with skin-swap per 07-sounds.md, unrelated here).
+                if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                                blupi_.IsOnGround()))
+                {
+                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
+                }
             }
             actionKeyWasDown_ = actionPressed;
 

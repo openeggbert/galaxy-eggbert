@@ -465,6 +465,12 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType12, 62.0f, 1.0f, 73.0f);
     place(ObjectType::ObjectType12, 61.0f, 2.0f, 73.0f);
 
+    // Dynamite demo (plan.md E3D-MIG-155, 2026-07-12) -- one stick in lift
+    // room B, a short walk from the linked-crate demo above, so picking it
+    // up and placing it near the crates is a genuinely playable scenario,
+    // not just a unit test.
+    place(ObjectType::ObjectType55, 58.0f, 1.0f, 73.0f);
+
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.

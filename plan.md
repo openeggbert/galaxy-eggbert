@@ -949,10 +949,33 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       types 47/48 respectively). The exact real 2px/tick has no established unit-conversion for
       this engine's grid scale, so the magnitude is a documented approximation, not a
       transcription.
-- [ ] `155` Dynamite — 9 separate blast calls at fixed ticks with asymmetric per-blast
-      (dx,dy) scatter, each destroying enemies/crates/objects in a 128×128px area.
+- [x] `155` Dynamite — done 2026-07-12, verified directly against `Decor.cpp` (~4792-4812 pickup/
+      placement gate, ~8252-8296 fuse timing, ~9058-9175 per-blast effect — not just the
+      reference doc's rounded summary). Pickup (`ObjectType55`) caps at exactly 1 carried (real
+      `m_blupiDynamite`, a second does nothing until the first is placed). `GEInteractionSystem::
+      PlaceDynamite()` (action-button, gated on carrying one + grounded) spawns a real
+      `ObjectType56` fuse object. The fuse's `phase` (already advanced generically by
+      `GEWorldRuntime::Update()`) drives the exact real 9-blast sequence — ticks 50/53/55/56/59/
+      62/64/67/69 with their exact real per-blast `(dx,dy)` pixel offsets (read directly from
+      `Decor.cpp`, not approximated), /64 to this engine's grid units, real X/Y-only 2D-source
+      convention (Z always 0). Each blast: clears Saw/SawStopped hazard tiles in its 2×2-tile
+      area (drip hazards 404/410 skipped — no placeable `BlockTypes` constant for them yet),
+      destroys every active object of the real exact 28-type list (ported directly from
+      `Decor.cpp` ~9102-9132, not approximated) overlapping that area — crates via the same
+      linked-group flood-fill as `150` — and kills Blupi if caught (real Shield/Hide/SuperBlupi
+      gating unconditional, Phase 17 dependency). Only the center blast plays the boom (channel
+      10); no debris/particle visuals (no such system exists). Fuse self-destructs once its
+      sequence completes. New dynamite pickup + linked-crate target added to the sample world
+      (lift room B) for a genuinely playable pickup-then-blast scenario. Verified: 10 new
+      `VerifyInteractionSystem` assertions (pickup cap, placement gate, full blast sequence
+      destroying a synthetic target crate + costing Blupi a life + fuse self-destruct) + full
+      suite (63/63 unit tests, all verify tools) + both backends.
 - [ ] `156` Helicopter-destruction / debris pool (ballistic pop-then-drop physics), shared by
-      crate destruction too.
+      crate destruction too — NOT started. The helicopter trigger itself needs vehicles (Phase
+      17, not implemented); the debris-pool VISUAL effect (also used for destroyed crates in a
+      dynamite blast) needs a particle/fragment rendering system that doesn't exist yet. `155`'s
+      own crate destruction works correctly without it (no debris visual, a documented
+      simplification matching every other missing-particle-system gap this session).
 - [ ] `157` Bridge live collision toggle — `table_bridge` overwrites the actual terrain grid
       cell every tick across a 157-tick build sequence (solid only ticks 0-15/152-156); the
       earlier "purely cosmetic" assumption was wrong.
