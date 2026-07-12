@@ -124,6 +124,27 @@ namespace GalaxyEggbert::CNA
             return Easy3D::UvRect{tileUv.U0, v0, tileUv.U1, tileUv.V1};
         }
 
+        // The cube's own 4 side faces used to reuse the WHOLE tile texture
+        // (the shared kSymmetricEntries convention every other icon in that
+        // table uses) -- which meant the post/spike graphic (the same lower
+        // two-thirds TeleporterTipUv() crops out for the real 3D tip below)
+        // ALSO appeared flattened onto the cube's own side faces, right
+        // where the real 3D tip already hangs. Reported live 2026-07-12
+        // (user, Czech): "ty hroty tam jsou dvakrat" (the tips are there
+        // twice) -- confirmed by a live headless screenshot (with the whole
+        // world isolated down to just this one pillar) showing two distinct
+        // cone shapes stacked with a gap: the top one was this flat, fake
+        // cutout on the cube's own face, the bottom one the genuine 3D
+        // pyramid. Cropping the side faces to just the top third (the real
+        // panel graphic) removes the fake/duplicate one, leaving only the
+        // real pyramid tip hanging below (already flush with the cube's
+        // bottom face, no reposition needed).
+        Easy3D::UvRect TeleporterPanelUv(const Easy3D::UvRect& tileUv)
+        {
+            const float v1 = tileUv.V0 + (tileUv.V1 - tileUv.V0) / 3.0f;
+            return Easy3D::UvRect{tileUv.U0, tileUv.V0, tileUv.U1, v1};
+        }
+
         // Appends whichever "new geometry" render mode (if any) @p lookupIcon
         // uses, into @p vertices/@p indices, textured with @p tileUv.
         // Returns true if it handled the icon (caller should skip its normal
@@ -155,6 +176,19 @@ namespace GalaxyEggbert::CNA
                 {
                     item.Faces[face] = directionalFaces[face];
                 }
+
+                if (IsTeleporterTipIcon(lookupIcon))
+                {
+                    // Crop the 4 side faces to the panel (top third) only --
+                    // see TeleporterPanelUv's own comment for why (removes
+                    // the fake, flattened "second tip" duplicate).
+                    const auto panelUv = TeleporterPanelUv(tileUv);
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosZ)].Uv = panelUv;
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegZ)].Uv = panelUv;
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosX)].Uv = panelUv;
+                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegX)].Uv = panelUv;
+                }
+
                 Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
 
                 if (IsTeleporterTipIcon(lookupIcon))

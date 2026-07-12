@@ -262,6 +262,23 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Teleporter double-tip render bug fixed (2026-07-12, plan.md `E3D-MIG-147` follow-up).** User
+  report (§4's former open item 2): the pyramid tip appeared to render TWICE per pillar, one copy
+  too far below the cube. Root-caused via a live headless screenshot with the world isolated down
+  to just one pillar (background disabled too, to rule out every other on-screen object first):
+  the cube's own 4 side faces were reusing the WHOLE tile texture (shared `kSymmetricEntries`
+  convention), which includes the same lower-two-thirds "post/spike" graphic the real 3D tip mesh
+  already crops out separately — its alpha-cutout silhouette made the cube's own flat face look
+  like a second, fake, flattened spike sitting immediately below the panel, right next to the
+  real 3D tip. Fixed with a teleporter-specific UV override (new `TeleporterPanelUv()`, crops the
+  side faces to just the top-third panel graphic) in `GETerrainRenderer.cpp`'s
+  `AppendSpecialGeometry()`. The real 3D tip itself needed no repositioning — a vertex-level dump
+  confirmed it was already a single, correctly-flush instance (cube Y=[1.5,2.5], tip Y=[0.9,1.5]).
+  Verified live from 3 angles/distances before and after (temporary debug: world-isolation filter
+  + background disabled, reverted before committing) — confirmed the duplicate is gone and the
+  remaining tip renders cleanly flush under the cube from both a straight-on and 3/4 view. Full
+  suite re-run (63/63 unit tests, all 4 verify tools) + both backends.
+
 - **Vehicle mounts implemented + a real, general falling-movement collision bug found and fixed
   (2026-07-12, plan.md `E3D-MIG-171`, Phase 17 continued).** New `GEBlupiController::VehicleMode`
   (Helicopter/Jeep/Tank/Skateboard/Overcraft) + `TriggerMount()`/`TriggerDismount()`, confirmed
@@ -2945,36 +2962,26 @@ tile-icon research was wrong; secret powers come from 4 separate pickups instead
 implemented, including real Shield/Hide hazard immunity retrofitted onto essentially every hazard
 from earlier this session) and for vehicle mounts (`171`, all 5 confirmed non-Balloon vehicle
 types), which also surfaced and fixed a real general `TryMoveAxis()` falling-movement collision
-bug (unrelated to vehicles specifically, but only exposed by them). **Recommended next step:**
-investigate task #2, the teleporter duplicate-tip render bug (full user-reported detail already
-in §4 item 2 below and §8's task list — not yet investigated this session), since it's a
-fully-specified, already-reported real bug and Phase 17's remaining items are either low-value
-(`175` bullet pack), blocked on infrastructure that doesn't exist (`176` particle system), a
-`needs_human` visual decision (`179`), or under-researched enough to warrant their own scoping
-pass (`173`, `177`, `178`).
+bug (unrelated to vehicles specifically, but only exposed by them). **Recommended next step:** continue with the remaining, under-researched Phase 17 items (`173`
+2-stage pickup delay, `177` Suspended movement mode, `178` vehicle movement table) or other
+independent high-value work — the teleporter double-tip bug (below) is now fixed, and Phase 17's
+other remaining items are either low-value (`175` bullet pack), blocked on infrastructure that
+doesn't exist (`176` particle system), or a `needs_human` visual decision (`179`).
 
-**2 open items, see §8's newest task entries for full detail**:
+**1 open item, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
    a quick fix, see §3/§8's detailed writeup — don't guess again live without reading it first).
    Per explicit user direction (2026-07-12): do NOT guess a fix autonomously — this needs direct
    user visual judgment (reading the crop / a screenshot), same category as the other "new visual
    design decision" items below. Left paused, not attempted this session.
-2. **Teleporter tip renders TWICE per pillar, one copy floating too far below the cube** — reported
-   2026-07-12 (user, Czech, verbatim): "tvar hrotu je, zda se spravne, problem je ze ten hrot se
-   renderuje az pod tu krychly a ty hroty tam jsou dvakrat ty hroty pod tou deskou zrus a nech
-   jenom ty hroty pod tim, hroty podtim posun nahorou aby byly rovnou pod deskou" — the tip's SHAPE
-   is fine now, but it's emitted twice per pillar (a real double-append bug, not a design question):
-   remove the duplicate, keep only one tip, and move it up so it sits immediately/flush below the
-   cube (no gap). This likely explains the previously-unreproduced 2026-07-11 report "zadní
-   teleportér renderuje dopředu, je to rozbité" (§3) — probably the same bug. Not yet investigated
-   this session (queued behind the Phase-ordered gameplay work the user prioritized 2026-07-12; see
-   §8's task list order). Read `GETerrainRenderer.cpp`'s `AppendSpecialGeometry()` teleporter-tip
-   code in full before touching it — likely emitted from two different loop passes over the same
-   pillar, or the rotated/packed-key hash-set logic (added for the Saw plate rotation) reused
-   incorrectly here.
 
-(The platform lift clipping item that used to be listed here is DONE — see §3's newest entry,
-2026-07-12.)
+(The platform lift clipping item and the teleporter double-tip render bug that used to be listed
+here are both DONE — see §3's two newest entries, 2026-07-12. The double-tip bug was the cube's
+own side faces baking in a duplicate, flattened copy of the same spike graphic the real 3D tip
+mesh already used — not a duplicate-append/loop bug as originally suspected; see plan.md's
+`E3D-MIG-147` follow-up entry for the full root cause. This likely also explains the previously-
+unreproduced 2026-07-11 report "zadní teleportér renderuje dopředu, je to rozbité" — same
+underlying visual artifact.)
 
 **New visual/artistic render-geometry decisions are deliberately SKIPPED this session, per explicit
 user direction (2026-07-12)**, given the Saw's own history of repeated wrong live guesses:
@@ -3276,8 +3283,8 @@ priority notes below until this list is exhausted:**
    `177` (Suspended movement mode, not yet researched), `178` (vehicle movement table, partly
    covered by `171`'s own speed/accel constants), `179` (needs_human, skip).
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
-   their 2026-07-12 direction, not attempted) and the teleporter double-tip bug (§4 item 2, not yet
-   investigated).
+   their 2026-07-12 direction, not attempted). The teleporter double-tip bug is **DONE** — see
+   §3's newest entry and plan.md's `E3D-MIG-147` follow-up.
 7. Explicitly SKIPPED per the user (2026-07-12): any new visual/artistic render-geometry decision
    (`E3D-MIG-510`/`512`/`514`/`515`, `179`) — mark `needs_human`, do not guess. Menu/HUD/Save/Score
    UI work (plan.md §2.2 "PRIORITY" label) is explicitly LOWER priority than the phases above this

@@ -812,6 +812,32 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         sample world's own real pair, and the no-partner-found path) + full suite (63/63 unit
         tests, all verify tools) + live headless runs on both EasyGL and Vulkan backends
         (6245-block/84-MoveObject world load).
+      - **Follow-up render fix, 2026-07-12** (user report, Czech, verbatim): "tvar hrotu je, zda se
+        spravne, problem je ze ten hrot se renderuje az pod tu krychly a ty hroty tam jsou dvakrat
+        ty hroty pod tou deskou zrus a nech jenom ty hroty pod tim, hroty podtim posun nahorou aby
+        byly rovnou pod deskou" (the tip's shape is fine, but the tips render twice; remove the
+        one under the panel, keep only the one below it, and move it up flush under the panel).
+        Root-caused via a live headless screenshot (world isolated down to just this one pillar,
+        background disabled, to rule out every other on-screen object first): the cube's own 4
+        side faces reuse the WHOLE tile texture (the shared `kSymmetricEntries` convention every
+        other icon in `GEDirectionalCubeTiles.cpp` uses) — which includes the SAME lower-two-
+        thirds "post/spike" graphic `TeleporterTipUv()` already crops out for the real 3D
+        `PyramidTipItem` hanging below. Alpha-cutout on that graphic made the cube's own flat side
+        face look like a second, fake, flattened spike sitting immediately below the panel — right
+        where the real 3D tip already hangs — reading as "the tip renders twice" exactly as
+        reported. Fixed by adding a teleporter-specific override in
+        `GETerrainRenderer.cpp::AppendSpecialGeometry()`: the 4 side faces now sample only the top
+        third of the tile (new `TeleporterPanelUv()`, the mirror crop of `TeleporterTipUv()`) —
+        the panel graphic stretched across the full face, no more baked-in spike shape. The real
+        3D tip itself needed no repositioning (already flush with the cube's bottom face,
+        confirmed via a vertex-level dump: cube Y range exactly [1.5,2.5], tip exactly [0.9,1.5],
+        a single instance, matching the design). Verified live: isolated the world down to just
+        this one pillar (temporary debug filter, reverted before committing) and screenshotted
+        from 3 different angles/distances before and after — before showed 2 distinct stacked
+        cone shapes with a visible gap; after shows one clean panel + one correctly-flush tip, no
+        duplication, confirmed from a straight-on view and a 3/4 angle showing both textured side
+        faces. Full suite re-run after the fix (63/63 unit tests, all 4 verify tools) + both
+        backends.
 - [x] `148` Water breath gauge (91/92) — 3-state machine (Surf/Nage/dry), ~25s gauge. Done
       2026-07-12, verified directly against `Decor.cpp` via
       `mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Water depth state machine"
