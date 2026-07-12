@@ -1235,6 +1235,34 @@ int main(int argc, char** argv)
               "TryConsumeFan() is a no-op the second time -- the fan is already consumed");
     }
 
+    // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
+    // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
+    // representative icon per range plus a generic fallback. A pure
+    // function, no LoadContent()/audio device needed.
+    {
+        using GalaxyEggbert::SoundChannel;
+        check(GESound::FootstepChannelFor(41) == SoundChannel::SoundChannel78,
+              "icon 41 (obstacle range 41-47) remaps to channel 78");
+        check(GESound::FootstepChannelFor(139) == SoundChannel::SoundChannel78,
+              "icon 139 (obstacle range 139-143) remaps to channel 78 too");
+        check(GESound::FootstepChannelFor(15) == SoundChannel::SoundChannel80,
+              "icon 15 (obstacle range 1-28) remaps to channel 80");
+        check(GESound::FootstepChannelFor(325) == SoundChannel::SoundChannel80,
+              "icon 325 (obstacle range 324-329) remaps to channel 80 too");
+        check(GESound::FootstepChannelFor(338) == SoundChannel::SoundChannel82,
+              "icon 338 remaps to channel 82");
+        check(GESound::FootstepChannelFor(350) == SoundChannel::SoundChannel84,
+              "icon 350 (obstacle range 341-363) remaps to channel 84");
+        check(GESound::FootstepChannelFor(220) == SoundChannel::SoundChannel86,
+              "icon 220 (obstacle range 215-234) remaps to channel 86");
+        check(GESound::FootstepChannelFor(247) == SoundChannel::SoundChannel88,
+              "icon 247 (obstacle range 246-249) remaps to channel 88");
+        check(GESound::FootstepChannelFor(108) == SoundChannel::SoundChannel90,
+              "icon 108 (obstacle range 107-109) remaps to channel 90");
+        check(GESound::FootstepChannelFor(BlockTypes::RockPile) == SoundChannel::SoundChannel3,
+              "an icon outside all 7 remap ranges falls back to the generic channel 3");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

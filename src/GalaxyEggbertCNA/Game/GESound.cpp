@@ -133,4 +133,41 @@ namespace GalaxyEggbert::CNA
             }
         }
     }
+
+    GalaxyEggbert::SoundChannel GESound::FootstepChannelFor(std::uint16_t icon) noexcept
+    {
+        using GalaxyEggbert::SoundChannel;
+        if (icon == 32 || icon == 33 || icon == 34 ||
+            (icon >= 41 && icon <= 47) || (icon >= 139 && icon <= 143))
+        {
+            return SoundChannel::SoundChannel78;
+        }
+        if ((icon >= 1 && icon <= 28) || (icon >= 78 && icon <= 90) ||
+            (icon >= 250 && icon <= 260) || (icon >= 311 && icon <= 316) ||
+            (icon >= 324 && icon <= 329))
+        {
+            return SoundChannel::SoundChannel80;
+        }
+        if ((icon >= 284 && icon <= 303) || icon == 338)
+        {
+            return SoundChannel::SoundChannel82;
+        }
+        if (icon >= 341 && icon <= 363)
+        {
+            return SoundChannel::SoundChannel84;
+        }
+        if (icon >= 215 && icon <= 234)
+        {
+            return SoundChannel::SoundChannel86;
+        }
+        if (icon >= 246 && icon <= 249)
+        {
+            return SoundChannel::SoundChannel88;
+        }
+        if (icon >= 107 && icon <= 109)
+        {
+            return SoundChannel::SoundChannel90;
+        }
+        return SoundChannel::SoundChannel3;
+    }
 }

@@ -449,15 +449,15 @@ namespace GalaxyEggbert::CNA
             {
                 sound_.PlayJump();
             }
+            const auto groundIcon = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
             // Real mobile-eggbert also suppresses this generic landing-thud
             // sound specifically when the landing spot is a spring
             // (Decor.cpp ~2984, `if (!IsRessort(end))`) -- the bounce sound
             // below covers it instead, since Blupi is about to launch back
             // upward immediately rather than coming to rest.
-            if (!wasOnGround && blupi_.IsOnGround() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) != GalaxyEggbert::BlockTypes::Spring)
+            if (!wasOnGround && blupi_.IsOnGround() && groundIcon != GalaxyEggbert::BlockTypes::Spring)
             {
-                sound_.PlayLand();
+                sound_.PlayLand(groundIcon);
             }
             if (blupi_.GetAnimState() == GEBlupiController::AnimState::March)
             {
@@ -470,7 +470,7 @@ namespace GalaxyEggbert::CNA
                 if (stepSoundTimer_ >= kStepSoundInterval)
                 {
                     stepSoundTimer_ -= kStepSoundInterval;
-                    sound_.PlayStep();
+                    sound_.PlayStep(groundIcon);
                 }
             }
             else

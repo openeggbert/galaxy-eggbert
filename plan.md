@@ -394,9 +394,26 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 - [ ] `083` `[?]` `Config::ScaleTime()`'s real scale factor is unresolved anywhere in the
       research — needed to correctly pace any tick-domain timing (this blocks precise footstep
       interval, buff-warning timing, etc. beyond current approximations).
-- [ ] `084` `SoundEnviron()` terrain-specific footstep/head-bump remapping — 7 terrain-specific
-      channel pairs (78-91) keyed by tile-icon range underfoot, replacing today's generic
-      channels.
+- [~] `084` `SoundEnviron()` terrain-specific footstep remapping — **footstep half done
+      2026-07-12**, head-bump half not applicable yet. New
+      `GESound::FootstepChannelFor(icon)`, a pure icon->channel lookup covering all 7 real ranges
+      from `mobile-eggbert-reference/07-sounds.md` (78: 32-34/41-47/139-143, 80: 1-28/78-90/
+      250-260/311-316/324-329, 82: 284-303/338, 84: 341-363, 86: 215-234, 88: 246-249, 90:
+      107-109), falling back to the generic channel 3 outside all of them. Wired into both
+      `PlayStep()`/`PlayLand()`, keyed off `GEBlupiController::GetGroundBlockType()`. **Found and
+      fixed a real, pre-existing bug while researching this**: `PlayLand()` played channel 4, but
+      the real source's channel 4 is head-bump/ceiling-hit — an entirely different event (hitting
+      an obstacle above during a jump) — not landing at all; channel 3 covers BOTH footstep and
+      landing in the real game. This wrong mapping was ported verbatim from
+      `GalaxyEggbertSimple3D`'s own `GESound` (predating the later, independently-verified
+      channel research in `07-sounds.md`) and silently carried into `GalaxyEggbertCNA`. Fixed
+      `PlayLand()` to channel 3, matching `PlayStep()`. Head-bump itself (channel 4 and its own
+      79/81/83/85/87/89/91 terrain remaps) is NOT wired — there is no ceiling-hit detection in
+      `GEBlupiController` at all (Blupi's upward jump arc has no "hit an obstacle above" event to
+      remap), a separate, not-yet-implemented mechanic; out of this task's scope. Verified: 10 new
+      `VerifyInteractionSystem` assertions (one representative icon per range + the generic
+      fallback) + full suite (63/63 unit tests, all verify tools) + both backends (live headless
+      run confirms no crash/regression).
 - [ ] `085` Idle "fidget" periodic sounds — channels 36/37/46-49/65 trigger on
       `m_blupiPhase % N`, not simple one-shot events; easy to miss in a naive port.
 - [~] `086` Buff activate/expire-warning channel pairs — **done 2026-07-12** as part of

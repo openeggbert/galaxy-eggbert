@@ -6,6 +6,7 @@
 #include <Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp>
 
 #include <array>
+#include <cstdint>
 #include <memory>
 
 namespace GalaxyEggbert::CNA
@@ -56,10 +57,41 @@ namespace GalaxyEggbert::CNA
         // object system yet, so pickup/key/hazard sounds aren't wired up
         // here; see Simple3D's GESound for the full real channel list once
         // that system exists). Same real channel assignments as Simple3D's
-        // GESound.
+        // GESound, EXCEPT PlayLand() -- see its own comment below for the
+        // real bug found and fixed here (2026-07-12).
         void PlayJump() { Play(GalaxyEggbert::SoundChannel::SoundChannel1); }
-        void PlayStep() { Play(GalaxyEggbert::SoundChannel::SoundChannel3); }
-        void PlayLand() { Play(GalaxyEggbert::SoundChannel::SoundChannel4); }
+
+        // Real mobile-eggbert (mobile-eggbert-reference/07-sounds.md,
+        // channels 0-9): channel 3 covers BOTH footstep AND landing -- one
+        // shared sound, not two separate events. Channel 4 is a distinct
+        // real event (head-bump/ceiling-hit, triggered when Blupi's upward
+        // jump arc hits an obstacle above) that has nothing to do with
+        // landing. Both Simple3D's and this class's own `PlayLand()`
+        // originally played channel 4 -- a real, confirmed bug (ported
+        // verbatim from Simple3D before the later, independently-verified
+        // channel research in 07-sounds.md), not a deliberate choice.
+        // Fixed here to channel 3, matching PlayStep() (plan.md
+        // E3D-MIG-084's terrain-remap task surfaced this while researching
+        // the real channels 78-91 the same shared sound remaps to).
+        // Head-bump (channel 4 and its own 79/81/83/85/87/89/91 terrain
+        // remaps) stays unwired -- there is no ceiling-hit detection in
+        // GEBlupiController yet, a separate not-yet-implemented mechanic.
+        //
+        // groundIcon is the tile icon underfoot (GEBlupiController::
+        // GetGroundBlockType()) -- remapped via FootstepChannelFor() to one
+        // of the 7 real terrain-specific variants when it falls in one of
+        // Decor::SoundEnviron()'s real icon ranges, channel 3 (this same
+        // generic sound) otherwise.
+        void PlayStep(std::uint16_t groundIcon) { Play(FootstepChannelFor(groundIcon)); }
+        void PlayLand(std::uint16_t groundIcon) { Play(FootstepChannelFor(groundIcon)); }
+
+        // Decor::SoundEnviron()'s real landing/footstep terrain remap
+        // (mobile-eggbert-reference/07-sounds.md channels 78-91): 7 tile-
+        // icon ranges, each with its own .wav: 78 (32-34,41-47,139-143), 80
+        // (1-28,78-90,250-260,311-316,324-329), 82 (284-303,338), 84
+        // (341-363), 86 (215-234), 88 (246-249), 90 (107-109). Falls back
+        // to the generic channel 3 for every icon outside all 7 ranges.
+        [[nodiscard]] static GalaxyEggbert::SoundChannel FootstepChannelFor(std::uint16_t icon) noexcept;
 
     private:
         struct Channel

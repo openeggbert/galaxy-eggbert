@@ -262,6 +262,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Footstep terrain-remap implemented + a real pre-existing landing-sound bug fixed
+  (2026-07-12, plan.md `E3D-MIG-084`).** New `GESound::FootstepChannelFor(icon)` covers all 7 real
+  `Decor::SoundEnviron()` terrain-specific footstep ranges (channels 78/80/82/84/86/88/90),
+  falling back to the generic channel 3 outside them; wired into `PlayStep()`/`PlayLand()` keyed
+  off `GEBlupiController::GetGroundBlockType()`. **Found and fixed a real bug while researching
+  this**: `PlayLand()` played channel 4, but channel 4 is real head-bump/ceiling-hit — a distinct
+  event, not landing (channel 3 covers both footstep AND landing in the real game) — a mistake
+  ported verbatim from `GalaxyEggbertSimple3D`'s own `GESound` before the later, independently-
+  verified channel research existed. Head-bump itself stays unwired (no ceiling-hit detection
+  exists in `GEBlupiController`), a separate, not-yet-implemented mechanic, out of scope here.
+  Verified: 10 new `VerifyInteractionSystem` assertions + full suite (63/63 unit tests, all verify
+  tools) + both backends (live headless run, no crash/regression).
+
 - **`E3D-MIG-177` researched, not implemented (2026-07-12) — split into a documented non-goal and
   a `needs_human` blocker.** Ecrase/pancake collision-box mode: the real source uses a genuine
   AABB collision system (squashing shrinks Blupi's hitbox to a distinct 50×19 pancake, letting him
