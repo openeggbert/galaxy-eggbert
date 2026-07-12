@@ -352,6 +352,41 @@ int main(int argc, char** argv)
         check(false, "found a dynamite stick (ObjectType55) in the sample world");
     }
 
+    // 3.7. Bullet pack (plan.md E3D-MIG-175) -- the sample world's own
+    // bullet-pack demo (tools/GenerateSampleWorld3D.cpp): automatic pickup
+    // (no button), caps at 10, a second contact once already at the cap is
+    // a genuine no-op (object stays active, count unchanged) per
+    // mobile-eggbert-reference/13-object-pickups.md.
+    if (const auto* bullets = findFirst(ObjectType::ObjectType29))
+    {
+        const float bx = bullets->currentX, by = bullets->currentY, bz = bullets->currentZ;
+        check(interaction.BulletCount() == 0, "BulletCount() starts at 0");
+        interaction.Update(dt, world, bx, by, bz, 0.0f, sound);
+        check(interaction.BulletCount() == 10, "bullet pack pickup tops BulletCount() up to 10");
+        const auto* after = findFirst(ObjectType::ObjectType29);
+        check(after == nullptr || !after->active, "collected bullet pack is no longer active");
+
+        // Already at the cap: a second synthetic pack at the cap should be
+        // a total no-op (stays active, count unchanged) -- exercised via a
+        // fresh pack pushed directly into the mobile-object list so this
+        // doesn't depend on the (now-collected) real one.
+        auto& mutableObjects = world.GetMobileObjectsMutable();
+        MobileObjSpec secondPack;
+        secondPack.type = ObjectType::ObjectType29;
+        secondPack.active = true;
+        secondPack.currentX = secondPack.posStartX = secondPack.posEndX = bx;
+        secondPack.currentY = secondPack.posStartY = secondPack.posEndY = by;
+        secondPack.currentZ = secondPack.posStartZ = secondPack.posEndZ = bz;
+        mutableObjects.push_back(secondPack);
+        interaction.Update(dt, world, bx, by, bz, 0.0f, sound);
+        check(interaction.BulletCount() == 10, "BulletCount() stays at the cap after touching a pack while full");
+        check(mutableObjects.back().active, "a bullet pack touched while already at the cap is NOT removed");
+    }
+    else
+    {
+        check(false, "found a bullet pack (ObjectType29) in the sample world");
+    }
+
     // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own
     // doors demo (tools/GenerateSampleWorld3D.cpp): a key-gated Door1 at
     // grid (48,1,90) with its Key1 at (46,1,88), and a treasure-gated

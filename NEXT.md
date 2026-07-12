@@ -262,6 +262,17 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Bullet pack pickup implemented (2026-07-12, plan.md `E3D-MIG-175`).** New
+  `GEInteractionSystem::BulletCount()`, same shape as `dynamiteCount_`: automatic on contact (no
+  button), caps at 10, gated exactly like the real source (`m_blupiBullet < 10` — touching a pack
+  already at the cap is a genuine no-op, object stays in the world). One demo pack added to the
+  sample world, right next to the Jeep demo room. The actual firing mechanic (`ObjectType23`
+  projectile spawn from Helicopter/Tank's fire button) is explicitly NOT modeled yet — this only
+  tracks the ammo count; firing needs a live player-fired projectile system that doesn't exist
+  yet (the existing blupih/blupit projectiles are enemy-fired via the existing patrol/dwell
+  mechanism, not general-purpose). Verified: 6 new `VerifyInteractionSystem` assertions + full
+  suite (63/63 unit tests, all verify tools) + both backends.
+
 - **Teleporter double-tip render bug fixed (2026-07-12, plan.md `E3D-MIG-147` follow-up).** User
   report (§4's former open item 2): the pyramid tip appeared to render TWICE per pillar, one copy
   too far below the cube. Root-caused via a live headless screenshot with the world isolated down
@@ -3275,13 +3286,14 @@ priority notes below until this list is exhausted:**
 3. Phase 15 (`E3D-MIG-150`-`158`) — **substantially done** (150/152/154/155 done; 151/153/156/157/
    158 deferred with documented reasons, see plan.md).
 4. Phase 16 (`E3D-MIG-160`-`165`) — **substantially done** (160/161/162 done; 163/164/165 deferred).
-5. Phase 17 (`E3D-MIG-170`-`179`) — **in progress**: `170`/`171`/`172`/`174` done (secret powers +
-   real hazard immunity + vehicle mounts, the latter also yielding a real, general
-   `TryMoveAxis()` falling-movement collision-bug fix — see §3's newest entry). Remaining: `173`
-   (2-stage pickup delay, deferred simplification), `175` (bullet pack, low value without more
-   vehicle/ammo integration), `176` (sparkle-fx, needs a particle system that doesn't exist),
-   `177` (Suspended movement mode, not yet researched), `178` (vehicle movement table, partly
-   covered by `171`'s own speed/accel constants), `179` (needs_human, skip).
+5. Phase 17 (`E3D-MIG-170`-`179`) — **in progress**: `170`/`171`/`172`/`174`/`175` done (secret
+   powers + real hazard immunity + vehicle mounts + bullet pack pickup; vehicles also yielded a
+   real, general `TryMoveAxis()` falling-movement collision-bug fix — see §3's newest entries).
+   Remaining: `173` (2-stage pickup delay, deferred simplification), `176` (sparkle-fx, needs a
+   particle system that doesn't exist), `177` (Suspended movement mode, not yet researched), `178`
+   (vehicle movement table, partly covered by `171`'s own speed/accel constants), `179`
+   (needs_human, skip). Bullet FIRING itself (vs. the ammo-count pickup done in `175`) needs a new
+   player-fired projectile system and is tracked as its own not-yet-scoped follow-up.
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
    their 2026-07-12 direction, not attempted). The teleporter double-tip bug is **DONE** — see
    §3's newest entry and plan.md's `E3D-MIG-147` follow-up.

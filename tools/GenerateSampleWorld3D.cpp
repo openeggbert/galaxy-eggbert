@@ -514,6 +514,17 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType19, 64.0f, 1.0f, 90.0f); // jeep
 
     // ------------------------------------------------------------------
+    // Bullet pack demo (plan.md E3D-MIG-175, 2026-07-12) -- one ammo pack,
+    // automatic pickup (no button, unlike the jeep next door), so the real
+    // "caps at 10, no-op once full" gate is genuinely playable, not just
+    // unit-tested. The actual firing mechanic (Helicopter/Tank vehicle fire
+    // button) is a separate, not-yet-implemented follow-up -- this only
+    // exercises the pickup/cap logic.
+    // ------------------------------------------------------------------
+    fill(69, 75, 0, 0, 87, 93, BlockTypes::RockPile); // bullet-pack-demo room floor
+    place(ObjectType::ObjectType29, 72.0f, 1.0f, 90.0f); // bullet pack
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //

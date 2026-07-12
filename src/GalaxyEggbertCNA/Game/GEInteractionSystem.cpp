@@ -1108,7 +1108,7 @@ namespace GalaxyEggbert::CNA
                 obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51 &&
                 obj.type != ObjectType::ObjectType55 && obj.type != ObjectType::ObjectType25 &&
                 obj.type != ObjectType::ObjectType26 && obj.type != ObjectType::ObjectType30 &&
-                obj.type != ObjectType::ObjectType31)
+                obj.type != ObjectType::ObjectType31 && obj.type != ObjectType::ObjectType29)
             {
                 continue;
             }
@@ -1213,6 +1213,17 @@ namespace GalaxyEggbert::CNA
                     {
                         ++dynamiteCount_;
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
+                        obj.active = false;
+                    }
+                    break;
+                case ObjectType::ObjectType29: // bullet pack
+                    // Real gate: only picked up below the cap (real
+                    // m_blupiBullet < 10) -- touching a pack while already
+                    // at max ammo does nothing at all, not even removed.
+                    if (bulletCount_ < kBulletCap)
+                    {
+                        bulletCount_ = kBulletCap;
+                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel54);
                         obj.active = false;
                     }
                     break;

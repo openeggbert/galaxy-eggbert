@@ -1152,8 +1152,24 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       (`GEBlupiController::TriggerCloud()`'s gate: `== None`, the strictest of the 4, matching the
       real `Decor.cpp` condition exactly). Mirror/Invert(40) itself is a separate, NOT-modeled
       effect (`m_blupiInvert`, not one of the 4 `SecretPower` values) — out of scope for `170`.
-- [ ] `175` Bullet pack(29) — auto-pickup, cap 10, immediate (not voyage-deferred) unlike most
-      other pickups.
+- [x] `175` Bullet pack(29) — done 2026-07-12, verified against
+      `mobile-eggbert-reference/13-object-pickups.md`'s "Bullet pack" section (`Decor.cpp`
+      ~5731-5744). New `GEInteractionSystem::BulletCount()` + `kBulletCap=10`, same shape as
+      `dynamiteCount_`: automatic on contact (no button), gated on `bulletCount_ < kBulletCap` —
+      touching a pack already at the cap is a genuine no-op (object stays active, count
+      unchanged), matching the real source exactly rather than a running `+=10` total (the real
+      `+= 10` then clamp has the same net effect here since the gate already guarantees the prior
+      count was below the cap, so a plain `= kBulletCap` assignment is equivalent and simpler).
+      Channel 54 fanfare on pickup. One demo pack added to the sample world (auto-pickup, unlike
+      the Jeep demo next door which needs the action button). **NOT modeled**: the actual firing
+      mechanic (`ObjectType23` projectile spawn from Helicopter's `HelicoGlu`/Tank's `FireTank`,
+      channel 52 fire sound, channel 53 out-of-ammo click) — this pickup only tracks the ammo
+      count itself; firing is a separate, not-yet-implemented follow-up (needs a live player-fired
+      projectile system, which doesn't exist yet — the existing blupih/blupit projectiles are
+      enemy-fired via the existing patrol/dwell mechanism, not a general-purpose spawn-on-demand
+      system). Verified: 6 new `VerifyInteractionSystem` assertions (starts at 0, tops up to 10,
+      pickup deactivates, cap-gated no-op via a synthetic second pack) + full suite (63/63 unit
+      tests, all verify tools) + both backends.
 - [ ] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups.
 - [ ] `177` Ecrase/pancake collision-box mode and Suspended (hanging, no accel ramp) movement
       mode — the two collision/movement modes not covered by `E3D-MIG-171`'s vehicle list.

@@ -261,6 +261,19 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int DynamiteCount() const noexcept { return dynamiteCount_; }
         bool PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
 
+        // Bullet pack (ObjectType29, plan.md E3D-MIG-175, real Decor.cpp
+        // ~5731-5744). Automatic on contact, no button, gated on
+        // `bulletCount_ < kBulletCap` (real m_blupiBullet < 10) -- picking
+        // one up at the cap does nothing (object stays in the world,
+        // matching the real source exactly). Tops up to exactly
+        // kBulletCap, not a running total (`+= 10` then clamped in the real
+        // source has the same net effect here since the gate already
+        // guarantees the prior count was below the cap). The actual
+        // firing/ammo-consumption mechanic (Helicopter/Tank vehicle fire
+        // button, real ObjectType23 projectile spawn) is NOT modeled --
+        // deferred as its own follow-up, out of this pickup's scope.
+        [[nodiscard]] int BulletCount() const noexcept { return bulletCount_; }
+
         // Platform lift riding (plan.md E3D-MIG-152, real `Decor::
         // MoveObjectStepLine`'s per-tick overlap re-test, unified with the
         // real separate `AscenseurDetect` initial-catch check into one
@@ -301,6 +314,8 @@ namespace GalaxyEggbert::CNA
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int gameOverCount_ = 0;
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
+        static constexpr int kBulletCap = 10; // real m_blupiBullet cap
+        int bulletCount_ = 0;
         bool diedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
