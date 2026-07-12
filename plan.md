@@ -231,9 +231,14 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 - [ ] `514` `[?]` Decide architectural-kit assembly approach for icons 391-395/397/400
       (arch/window/door-jamb fragments) — likely needs coordinated multi-block placement logic,
       not a single per-icon render mode.
-- [ ] `515` Render secret powers (`Sp0`-`Sp7`, icons 158-165) — gold-pedestal `Billboard`, per
-      the existing render-mode default. Blocked on `E3D-MIG-190` (behavior research) for
-      anything beyond static rendering.
+- [ ] `515` **Re-scoped 2026-07-12 (`E3D-MIG-170`'s research)**: icons 158-165 are hub-screen
+      world-select markers (`Decor::IsWorld()`), NOT secret-power pickups — the real 4
+      `SecretPower` buffs are granted by separate `MoveObject` pickups (25/26/30/31, already
+      rendered via the existing generic billboard/object-icon system, no new render decision
+      needed, and now gameplay-complete). This task should become "render hub-screen world-select
+      icons 158-165/166-173 as gold-pedestal `Billboard`" instead, which only matters once hub/
+      menu screens exist (`## 2 §2 MENU-*` territory) — not touched this session, low priority
+      until then.
 - [ ] `516` Render closed doors (icons 334-336) as `Billboard` (red pillar/bollard shape) — NOT
       `UniformCube`, corrects an earlier wrong assumption in `15-3d-render-mapping-design.md`
       §9.1. Full door behavior is `E3D-MIG-160`.
@@ -1036,19 +1041,55 @@ Full spec: `mobile-eggbert-reference/06-doors.md`. `160`/`161`/`162` done 2026-0
 Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
 `10-blupi-mechanics.md`.
 
-- [ ] `170` `[?]` Research secret-power (`Sp0`-`Sp7`) behavior — currently unclassified in every
-      reference doc; must be resolved before implementing (only the icon/render side,
-      `E3D-MIG-515`, is currently plannable).
+- [x] `170` `[?]` Research secret-power (`Sp0`-`Sp7`) behavior — **RESOLVED 2026-07-12, and the
+      "Sp0-Sp7" premise itself was WRONG.** Direct `Decor.cpp` research (not just the reference
+      doc) found: (1) the real `SecretPower` enum (`def/SecretPower.hpp`) only has 5 values —
+      None/Shield/Power/Cloud/Hide — NOT 8; (2) `Decor::IsWorld()` (~7079-7095) proves tile icons
+      158-165/166-173 are hub-screen WORLD-SELECT markers (locked/unlocked pairs, per
+      `06-doors.md`'s own `AdaptDoors` section), wholly unrelated to Blupi's secret-power buffs —
+      the reference doc's own "Sp0-Sp7... likely SecretPower value 0-7" label was a speculative,
+      never-confirmed guess based on the decompiled name alone (explicitly marked "likely" in
+      `02-tiles.md`, now corrected there); (3) the 4 REAL buffs are granted by `MoveObject`
+      pickups instead, confirmed directly: `ObjectType25` (Shield, instant), `26` (Sucette->
+      Power), `30` (Drink->Hide), `31` (Charge->Cloud) — `Decor.cpp` ~6014-6087 (pickup gates)
+      and ~3048-3235 (the real 2-stage delay before Power/Hide/Cloud activate, NOT modeled here,
+      see `172`'s own note). `E3D-MIG-515`'s "render Sp0-Sp7 as gold-pedestal Billboard" task is
+      based on the same wrong premise and should be re-scoped as a HUB-SCREEN world-select icon
+      (Phase `## 2 §2 MENU-*` territory), not a secret-power pickup — not touched this session.
+      Implemented alongside this research (`GEBlupiController`'s new `SecretPower` enum/
+      `TriggerShield/Power/Cloud/Hide()`/`IsInvincible()`): the real hazard-immunity gate
+      (`!m_blupiShield && !m_blupiHide`, confirmed identical across ~15 separate `Decor.cpp` call
+      sites — lava/spikes/saw/blitz/crusher/dynamite/fan/the shared kill-list/wasp/large-
+      creature/projectiles) now genuinely protects Blupi, resolving the "Shield/Hide/SuperBlupi
+      immunity NOT modeled" caveat left on essentially every hazard implemented earlier this
+      session (superBlupi itself still isn't modeled, no such concept exists). New secret-powers
+      demo (one of each of the 4 pickups) added to the sample world. Verified: 19 new
+      `VerifyBlupiMovement` assertions (trigger gates, exact real per-power decrement rates,
+      expiry, warning threshold) + 5 new `VerifyInteractionSystem` assertions (pickup grant
+      gating, hazard-immunity integration) + full suite (63/63 unit tests, all verify tools) +
+      live headless verification (temporary debug instrumentation, reverted before committing) +
+      both backends.
 - [ ] `171` Vehicle mounts: Helicopter(13), Jeep(19), Skateboard(24), Tank(28), Overcraft(46,
       inverted accel — only accelerates over gaps), Balloon(buoyancy drift) — shared guard:
-      blocked only while riding another vehicle or swim/surf/suspend.
-- [ ] `172` Shared power-up timer (Shield/Power/Cloud/Hide all use `m_blupiTimeShield`, differing
-      decrement rates and thus differing real durations despite the same start value) and their
-      warning-sound thresholds.
+      blocked only while riding another vehicle or swim/surf/suspend. NOT started — substantial
+      standalone feature (each vehicle needs its own movement/physics model), deferred to its own
+      task.
+- [x] `172` Shared power-up timer — done 2026-07-12 alongside `170` above (single `SecretPower`
+      state + shared gauge, decrementing at each power's own real rate: Shield 0.25s/level (25s
+      total), Power 0.15s/level (15s), Cloud/Hide 0.2s/level (20s each) — all 4 direct
+      transcriptions from `Decor.cpp` ~5071-5137, not approximations) and their real warning-sound
+      thresholds (Shield@10/Power@20/Cloud@25/Hide@20, channels 43/45/56/63).
 - [ ] `173` Suction-cup(26) and Drink(30) — both two-stage pickups (grab sound, then a delayed
-      buff-activate sound ~32 ticks later).
-- [ ] `174` Charge/Cloud(31) — gated against ALL other buffs including itself (loosest-guard
-      opposite is Mirror/Invert(40), gated only against Hide).
+      buff-activate sound ~32/36 ticks later) — the REAL 2-stage delay/animation-lock is NOT
+      modeled (2026-07-12): both grant their buff (Power/Hide respectively) INSTANTLY on contact
+      instead, a documented simplification (`GEBlupiController::TriggerPower()`/`TriggerHide()`'s
+      own comment) — implementing the real busy-animation delay is deferred as its own follow-up
+      if full fidelity is ever prioritized.
+- [x] `174` Charge/Cloud(31) — gated against ALL other buffs including itself (loosest-guard
+      opposite is Mirror/Invert(40), gated only against Hide) — done 2026-07-12 alongside `170`
+      (`GEBlupiController::TriggerCloud()`'s gate: `== None`, the strictest of the 4, matching the
+      real `Decor.cpp` condition exactly). Mirror/Invert(40) itself is a separate, NOT-modeled
+      effect (`m_blupiInvert`, not one of the 4 `SecretPower` values) — out of scope for `170`.
 - [ ] `175` Bullet pack(29) — auto-pickup, cap 10, immediate (not voyage-deferred) unlike most
       other pickups.
 - [ ] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups.
@@ -2030,9 +2071,11 @@ doesn't silently re-open them or silently guess an answer:
 - `[?]` **Save-format byte compatibility** (`easy3d.md` §12 Q7) — whether galaxy-eggbert should
   ever read/write mobile-eggbert's real save byte layout, vs. a fresh format. Not a default
   either way; decide when `E3D-MIG-106` is actually scoped.
-- `[?]` **Secret power (`Sp0`-`Sp7`) behavior** — unclassified in every reference document so
-  far; needs dedicated research before `E3D-MIG-170` can be implemented (only the static
-  render, `E3D-MIG-515`, is currently plannable without it).
+- ~~`[?]` **Secret power (`Sp0`-`Sp7`) behavior**~~ — **RESOLVED 2026-07-12** (`E3D-MIG-170`):
+  the "Sp0-Sp7" premise itself was wrong (those are hub-screen world-select icons, per
+  `Decor::IsWorld()`, not secret-power pickups); the real 4 `SecretPower` buffs come from
+  `MoveObject` pickups 25/26/30/31 instead, now implemented. See `170`'s own entry for the full
+  writeup.
 - `[?]` **Enemy billboard walk-cycle direction mismatch** — enemy sprites only have left/right
   side-view frames; no resolution proposed for how they should look when viewed at an oblique
   angle in true 3D (`E3D-MIG-179`). The equivalent question for Blupi himself is **resolved**

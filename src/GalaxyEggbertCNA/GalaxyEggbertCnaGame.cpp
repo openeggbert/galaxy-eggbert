@@ -578,9 +578,11 @@ namespace GalaxyEggbert::CNA
             }
 
             // Lava hazard (plan.md E3D-MIG-140) -- deterministic death, no
-            // immunity of any kind (mobile-eggbert-reference/
+            // vehicle immunity (mobile-eggbert-reference/
             // 12-hazards-and-interactables.md: "Lava(icon 68): deterministic
-            // Clear3, no vehicle immunity, no focus requirement" -- the
+            // Clear3, no vehicle immunity, no focus requirement" -- Shield/
+            // Hide immunity IS modeled now, plan.md E3D-MIG-170, confirmed
+            // directly against Decor.cpp:5497) -- the
             // simplest of the 5 real isHazard() tile types to implement
             // faithfully for exactly that reason; Crusher/Saw/Blitz each
             // have real gating/timing conditions BlockTypes::isHazard() does
@@ -594,7 +596,8 @@ namespace GalaxyEggbert::CNA
             // game -- see BlockTypes.hpp's isMobileTransparent() comment on
             // why Lava is deliberately kept solid despite being
             // quart-passable in the real source).
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
+            if (!blupi_.IsInvincible() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
             }
@@ -612,7 +615,8 @@ namespace GalaxyEggbert::CNA
             // count) -- not modeled, since GEBlupiController's single-point
             // 3D collision has no sub-tile position within a cell to test
             // against; the whole tile is lethal here.
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
+            if (!blupi_.IsInvincible() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
             }
@@ -633,7 +637,8 @@ namespace GalaxyEggbert::CNA
             // The real cosmetic emitter tile (icon 304, sits one cell
             // above 305, times a zap sound cue only) is NOT implemented --
             // audio-only polish, not the hazard itself.
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
+            if (!blupi_.IsInvincible() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
                 GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
@@ -649,7 +654,8 @@ namespace GalaxyEggbert::CNA
             // no-op while already squashed, matching the real
             // `!m_blupiEcrase` re-trigger guard) -- only play the real
             // entry sound (channel 70) when it actually starts a NEW squash.
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
+            if (!blupi_.IsInvincible() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
                 GEWorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
                 blupi_.TriggerCrush())
             {
@@ -666,7 +672,8 @@ namespace GalaxyEggbert::CNA
             // match already excludes it with no extra check needed. A saw
             // starts active or stopped per however the world was authored;
             // TryActivateSwitch() below is what flips it between the two.
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
+            if (!blupi_.IsInvincible() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75);
             }
@@ -718,16 +725,18 @@ namespace GalaxyEggbert::CNA
             // TryConsumeFan()'s own comment for the real IsVentillo() source
             // this ports, and for why only the head-tile consumption is
             // implemented, not the real trail-walk). Real "kills only if
-            // m_blupiFocus && unshielded/unhidden/not-SuperBlupi" is
-            // currently unconditional -- none of those buff/focus concepts
-            // exist in this engine yet, same simplification as every other
-            // hazard's immunity gating this session. Real channel 10 (the
-            // fan's own contact sound, distinct from lava/spike/blitz's
-            // channel 8/51) plays via triggerDeath() itself, same pattern
-            // as every hazard above. Real cosmetic ObjectType11 particle
-            // burst + BigShake screen effect are NOT modeled -- no particle
-            // system exists.
-            if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
+            // m_blupiFocus && unshielded/unhidden/not-SuperBlupi" -- Shield/
+            // Hide immunity IS modeled now (plan.md E3D-MIG-170); focus/
+            // superBlupi don't exist in this engine yet. The fan is still
+            // consumed (cleared) regardless of immunity, matching the real
+            // "a shielded Blupi walking through a fan still pops it but
+            // survives" behavior -- only the death itself is gated. Real
+            // channel 10 (the fan's own contact sound, distinct from lava/
+            // spike/blitz's channel 8/51) plays via triggerDeath() itself,
+            // same pattern as every hazard above. Real cosmetic
+            // ObjectType11 particle burst + BigShake screen effect are NOT
+            // modeled -- no particle system exists.
+            if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) && !blupi_.IsInvincible())
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
             }
@@ -754,9 +763,11 @@ namespace GalaxyEggbert::CNA
             // Drowning (real BlupiAction::Drown, channel 26 -- a dedicated
             // death sound distinct from every other cause's channel 8/51/75,
             // per 07-sounds.md's own note). Real Shield/Hide/SuperBlupi
-            // immunity is NOT modeled (Phase 17), same simplification as
-            // every other hazard this session.
-            if (blupi_.JustDrowned())
+            // immunity gates the death itself (plan.md E3D-MIG-170); the
+            // gauge still depletes regardless (matches every other hazard's
+            // "still triggers, only the death is gated" pattern) -- only
+            // superBlupi isn't modeled.
+            if (blupi_.JustDrowned() && !blupi_.IsInvincible())
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel26);
             }
@@ -835,9 +846,23 @@ namespace GalaxyEggbert::CNA
             // one cell ahead of him.
             const int blupiFacingDX = static_cast<int>(std::lround(std::sin(blupi_.GetYaw())));
             const int blupiFacingDZ = static_cast<int>(std::lround(-std::cos(blupi_.GetYaw())));
+            // Secret powers (plan.md E3D-MIG-170) -- blupiCanGrantX mirrors
+            // each TriggerX()'s own internal gate exactly (see
+            // GEBlupiController::TriggerShield()/Power()/Cloud()/Hide()'s
+            // own comments), computed here from GetSecretPower() since
+            // GEInteractionSystem has no access to GEBlupiController.
+            const auto secretPower = blupi_.GetSecretPower();
+            const bool canGrantShield = secretPower != GEBlupiController::SecretPower::Shield &&
+                                        secretPower != GEBlupiController::SecretPower::Hide &&
+                                        secretPower != GEBlupiController::SecretPower::Power;
+            const bool canGrantPower = secretPower != GEBlupiController::SecretPower::Shield;
+            const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None;
+            const bool canGrantHide = secretPower != GEBlupiController::SecretPower::Shield &&
+                                       secretPower != GEBlupiController::SecretPower::Cloud;
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
-                                 blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ);
+                                 blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
+                                 canGrantShield, canGrantPower, canGrantCloud, canGrantHide);
 
             // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()
             // reflects whether Blupi was standing on an active lift BEFORE
@@ -848,6 +873,57 @@ namespace GalaxyEggbert::CNA
             {
                 blupi_.RideLift(blupi_.GetX() + interaction_.RideDeltaX(), interaction_.RideStandY(),
                                  blupi_.GetZ() + interaction_.RideDeltaZ());
+            }
+
+            // Secret power grants (plan.md E3D-MIG-170) -- TriggerX()'s own
+            // internal gate should agree with what GEInteractionSystem just
+            // checked (both read the same GetSecretPower() state), so this
+            // should always succeed when *GrantedThisFrame() is true; still
+            // gated on the return value, same idiom as every other
+            // Trigger*() call in this file, in case a future edit makes the
+            // two checks diverge. Real grant sounds: Shield=42, Power=44
+            // (real Sucette-complete sound, reused here since the real
+            // 2-stage delay isn't modeled), Cloud=55, Hide=62.
+            if (interaction_.ShieldGrantedThisFrame() && blupi_.TriggerShield())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel42);
+            }
+            if (interaction_.PowerGrantedThisFrame() && blupi_.TriggerPower())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel44);
+            }
+            if (interaction_.CloudGrantedThisFrame() && blupi_.TriggerCloud())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel55);
+            }
+            if (interaction_.HideGrantedThisFrame() && blupi_.TriggerHide())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel62);
+            }
+
+            // Secret power warning sound (plan.md E3D-MIG-170) -- fires
+            // once at the real per-power remaining-level threshold
+            // (Shield@10=channel43, Power@20=channel45, Cloud@25=channel56,
+            // Hide@20=channel63).
+            if (blupi_.JustCrossedSecretPowerWarning())
+            {
+                switch (blupi_.GetSecretPower())
+                {
+                    case GEBlupiController::SecretPower::Shield:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel43);
+                        break;
+                    case GEBlupiController::SecretPower::Power:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel45);
+                        break;
+                    case GEBlupiController::SecretPower::Cloud:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel56);
+                        break;
+                    case GEBlupiController::SecretPower::Hide:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel63);
+                        break;
+                    default:
+                        break;
+                }
             }
 
             // GEInteractionSystem has no access to GEBlupiController, so it

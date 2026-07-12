@@ -201,6 +201,55 @@ namespace GalaxyEggbert::CNA
         m_onGround = false; // real m_blupiAir = true
     }
 
+    bool GEBlupiController::TriggerShield() noexcept
+    {
+        if (m_secretPower == SecretPower::Shield || m_secretPower == SecretPower::Hide ||
+            m_secretPower == SecretPower::Power)
+        {
+            return false;
+        }
+        m_secretPower = SecretPower::Shield;
+        m_secretPowerLevel = kSecretPowerMax;
+        m_secretPowerTimer = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::TriggerPower() noexcept
+    {
+        if (m_secretPower == SecretPower::Shield)
+        {
+            return false;
+        }
+        m_secretPower = SecretPower::Power;
+        m_secretPowerLevel = kSecretPowerMax;
+        m_secretPowerTimer = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::TriggerCloud() noexcept
+    {
+        if (m_secretPower != SecretPower::None)
+        {
+            return false;
+        }
+        m_secretPower = SecretPower::Cloud;
+        m_secretPowerLevel = kSecretPowerMax;
+        m_secretPowerTimer = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::TriggerHide() noexcept
+    {
+        if (m_secretPower == SecretPower::Shield || m_secretPower == SecretPower::Cloud)
+        {
+            return false;
+        }
+        m_secretPower = SecretPower::Hide;
+        m_secretPowerLevel = kSecretPowerMax;
+        m_secretPowerTimer = 0.0f;
+        return true;
+    }
+
     bool GEBlupiController::TriggerSpringBounce(bool jumpHeld) noexcept
     {
         if (!m_onGround)
@@ -455,6 +504,41 @@ namespace GalaxyEggbert::CNA
             {
                 m_balloon = false;
                 m_balloonTimer = 0.0f;
+            }
+        }
+
+        // Secret powers (plan.md E3D-MIG-170/172): the shared gauge ticks
+        // down at whichever real rate matches the currently-active power
+        // (see kShieldTickSeconds/kPowerTickSeconds/kCloudTickSeconds/
+        // kHideTickSeconds's own comment) until it reaches 0, then clears
+        // to None -- real warning-sound thresholds are exposed via
+        // JustCrossedSecretPowerWarning() below for the caller to play the
+        // real per-power channel.
+        m_secretPowerJustWarned = false;
+        if (m_secretPower != SecretPower::None)
+        {
+            const float tickSeconds = m_secretPower == SecretPower::Shield ? kShieldTickSeconds
+                                     : m_secretPower == SecretPower::Power  ? kPowerTickSeconds
+                                     : m_secretPower == SecretPower::Hide   ? kHideTickSeconds
+                                                                            : kCloudTickSeconds;
+            const int warnLevel = m_secretPower == SecretPower::Shield ? kShieldWarnLevel
+                                 : m_secretPower == SecretPower::Power  ? kPowerWarnLevel
+                                 : m_secretPower == SecretPower::Hide   ? kHideWarnLevel
+                                                                        : kCloudWarnLevel;
+            m_secretPowerTimer += dt;
+            while (m_secretPowerTimer >= tickSeconds && m_secretPowerLevel > 0)
+            {
+                m_secretPowerTimer -= tickSeconds;
+                --m_secretPowerLevel;
+                if (m_secretPowerLevel == warnLevel)
+                {
+                    m_secretPowerJustWarned = true;
+                }
+            }
+            if (m_secretPowerLevel <= 0)
+            {
+                m_secretPower = SecretPower::None;
+                m_secretPowerTimer = 0.0f;
             }
         }
 

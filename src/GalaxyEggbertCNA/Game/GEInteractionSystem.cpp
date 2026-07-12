@@ -391,11 +391,17 @@ namespace GalaxyEggbert::CNA
     void GEInteractionSystem::Update(float dt, GEWorldRuntime& worldRuntime,
                                       float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
                                       GESound& sound, bool blupiCrouching, bool blupiBallooned,
-                                      int blupiFacingDX, int blupiFacingDZ)
+                                      int blupiFacingDX, int blupiFacingDZ, bool blupiInvincible,
+                                      bool blupiCanGrantShield, bool blupiCanGrantPower,
+                                      bool blupiCanGrantCloud, bool blupiCanGrantHide)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
         balloonPoppedThisFrame_ = false;
+        shieldGrantedThisFrame_ = false;
+        powerGrantedThisFrame_ = false;
+        cloudGrantedThisFrame_ = false;
+        hideGrantedThisFrame_ = false;
         ridingLift_ = false;
         bool treasureDoorScanNeeded = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
@@ -807,11 +813,11 @@ namespace GalaxyEggbert::CNA
                             }
                         }
 
-                        // Blupi death check (real: `m_blupiFocus &&
-                        // !shield && !hide && !superblupi`, all unconditional
-                        // simplifications here -- none of those concepts
-                        // exist in this engine yet).
-                        if (std::fabs(blupiX - centerX) <= kBlastHalfExtent + 0.5f &&
+                        // Blupi death check (real: `m_blupiFocus && !shield
+                        // && !hide && !superblupi`) -- Shield/Hide (plan.md
+                        // E3D-MIG-170, blupiInvincible) modeled now; focus/
+                        // superBlupi don't exist in this engine yet.
+                        if (!blupiInvincible && std::fabs(blupiX - centerX) <= kBlastHalfExtent + 0.5f &&
                             std::fabs(blupiY - centerY) <= kBlastHalfExtent + 0.5f &&
                             std::fabs(blupiZ - centerZ) <= 0.5f)
                         {
@@ -958,10 +964,10 @@ namespace GalaxyEggbert::CNA
             // Fired projectile contact (ObjectType23, plan.md E3D-MIG-134):
             // verified directly against Decor.cpp:5914-5947 -- always fatal
             // (real Glu/glue-style death) and destroys the bullet itself.
-            // Real shield/hide/superblupi/win-and-death-action immunity
-            // gates are NOT modeled -- none of those concepts exist in this
-            // engine yet (same simplification already applied to every
-            // other hazard above). Real death has no distinct sound call of
+            // Real Shield/Hide immunity IS modeled now (plan.md E3D-MIG-170,
+            // blupiInvincible); win-and-death-action/superBlupi gates are
+            // NOT modeled -- neither concept exists in this engine yet.
+            // Real death has no distinct sound call of
             // its own (StartSploutchGlu only spawns silent splash-effect
             // debris) -- channel 74 reused here for consistency with this
             // class's existing hazard-death sound approximation.
@@ -970,7 +976,7 @@ namespace GalaxyEggbert::CNA
                 const float bdx = obj.currentX - blupiX;
                 const float bdy = obj.currentY - blupiY;
                 const float bdz = obj.currentZ - blupiZ;
-                if (bdx * bdx + bdy * bdy + bdz * bdz < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && bdx * bdx + bdy * bdy + bdz * bdz < kHazardContactRadius * kHazardContactRadius)
                 {
                     obj.active = false;
                     LoseLife();
@@ -983,13 +989,16 @@ namespace GalaxyEggbert::CNA
             // Wasp (ObjectType44, plan.md E3D-MIG-135) -- does NOT kill or
             // destroy itself; contact signals BalloonTouchedThisFrame() so
             // the caller can attempt GEBlupiController::TriggerBalloon()
-            // (idempotent there, not here -- see the class comment).
+            // (idempotent there, not here -- see the class comment). Real
+            // gate also includes `!m_blupiShield && !m_blupiHide`
+            // (Decor.cpp:5826, plan.md E3D-MIG-170) -- a shielded/hidden
+            // Blupi doesn't get ballooned at all.
             if (obj.type == ObjectType::ObjectType44)
             {
                 const float wdx = obj.currentX - blupiX;
                 const float wdy = obj.currentY - blupiY;
                 const float wdz = obj.currentZ - blupiZ;
-                if (wdx * wdx + wdy * wdy + wdz * wdz < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && wdx * wdx + wdy * wdy + wdz * wdz < kHazardContactRadius * kHazardContactRadius)
                 {
                     balloonTouchedThisFrame_ = true;
                 }
@@ -1003,10 +1012,10 @@ namespace GalaxyEggbert::CNA
             // above, walking into it while it is actually mid-walk is
             // completely safe. Real immunity is
             // `!m_blupiBalloon && !m_blupiShield && !m_blupiHide &&
-            // !m_bSuperBlupi` (plus a `m_blupiFocus` gate); only the balloon
-            // half is modeled here (blupiBallooned), since shield/hide/
-            // superBlupi/focus don't exist in this engine yet, same
-            // simplification as every hazard above -- unlike the 4 balloon-
+            // !m_bSuperBlupi` (plus a `m_blupiFocus` gate); balloon AND
+            // Shield/Hide (plan.md E3D-MIG-170, blupiInvincible) are both
+            // modeled now -- only superBlupi/focus don't exist in this
+            // engine yet -- unlike the 4 balloon-
             // POPPABLE types, contact while ballooned does nothing at all
             // here (matches the real source: `!m_blupiBalloon` gates the
             // whole branch, there's no separate pop path for type 54). The
@@ -1024,7 +1033,7 @@ namespace GalaxyEggbert::CNA
             // (cosmetic, same as type2's taunt-suppression above).
             if (obj.type == ObjectType::ObjectType54)
             {
-                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned)
+                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned && !blupiInvincible)
                 {
                     const float gdx = obj.currentX - blupiX;
                     const float gdy = obj.currentY - blupiY;
@@ -1053,7 +1062,11 @@ namespace GalaxyEggbert::CNA
             // pop the balloon instead of killing (real channel 41 is
             // played by GEBlupiController's own IsBallooned() before/after
             // comparison in the caller, not here -- see PopBalloon()'s
-            // comment) -- 2/4/17/20 still kill even while ballooned.
+            // comment) -- 2/4/17/20 still kill even while ballooned. Real
+            // gate also includes `!m_blupiShield && !m_blupiHide`
+            // (Decor.cpp:5784, plan.md E3D-MIG-170) -- modeled via
+            // blupiInvincible, skipping the whole contact (no kill, no
+            // balloon-pop either).
             if (IsGenericHazard(obj.type))
             {
                 if (obj.type == ObjectType::ObjectType3 && blupiCrouching)
@@ -1063,7 +1076,7 @@ namespace GalaxyEggbert::CNA
                 const float hdx = obj.currentX - blupiX;
                 const float hdy = obj.currentY - blupiY;
                 const float hdz = obj.currentZ - blupiZ;
-                if (hdx * hdx + hdy * hdy + hdz * hdz < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && hdx * hdx + hdy * hdy + hdz * hdz < kHazardContactRadius * kHazardContactRadius)
                 {
                     if (blupiBallooned && IsBalloonPoppableHazard(obj.type))
                     {
@@ -1093,7 +1106,9 @@ namespace GalaxyEggbert::CNA
             if (obj.type != ObjectType::ObjectType5 && obj.type != ObjectType::ObjectType6 &&
                 obj.type != ObjectType::ObjectType7 && obj.type != ObjectType::ObjectType49 &&
                 obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51 &&
-                obj.type != ObjectType::ObjectType55)
+                obj.type != ObjectType::ObjectType55 && obj.type != ObjectType::ObjectType25 &&
+                obj.type != ObjectType::ObjectType26 && obj.type != ObjectType::ObjectType30 &&
+                obj.type != ObjectType::ObjectType31)
             {
                 continue;
             }
@@ -1199,6 +1214,44 @@ namespace GalaxyEggbert::CNA
                         ++dynamiteCount_;
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
                         obj.active = false;
+                    }
+                    break;
+                // Secret powers (plan.md E3D-MIG-170, real Decor.cpp
+                // ~6014-6087) -- all 4 grant on contact here (the real
+                // 2-stage delay/animation before Power/Cloud/Hide actually
+                // activate is NOT modeled, see GEBlupiController::
+                // TriggerPower()'s own comment). Real per-pickup gates
+                // (minus vehicle-mode clauses that don't exist here) are
+                // passed in from the caller's own GEBlupiController state
+                // (blupiCanGrantShield/Power/Cloud/Hide) since this class
+                // has no access to GEBlupiController itself -- consistent
+                // with the blupiBallooned/blupiCrouching precedent.
+                case ObjectType::ObjectType25: // shield stick
+                    if (blupiCanGrantShield)
+                    {
+                        obj.active = false;
+                        shieldGrantedThisFrame_ = true;
+                    }
+                    break;
+                case ObjectType::ObjectType26: // suction-cup ("Sucette" -> Power)
+                    if (blupiCanGrantPower)
+                    {
+                        obj.active = false;
+                        powerGrantedThisFrame_ = true;
+                    }
+                    break;
+                case ObjectType::ObjectType30: // drink ("Drink" -> Hide)
+                    if (blupiCanGrantHide)
+                    {
+                        obj.active = false;
+                        hideGrantedThisFrame_ = true;
+                    }
+                    break;
+                case ObjectType::ObjectType31: // charge ("Charge" -> Cloud)
+                    if (blupiCanGrantCloud)
+                    {
+                        obj.active = false;
+                        cloudGrantedThisFrame_ = true;
                     }
                     break;
                 default:

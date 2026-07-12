@@ -123,6 +123,31 @@ namespace GalaxyEggbert::CNA
         static constexpr float kNageGravityMultiplier = 0.3f;
         static constexpr float kSwimUpSpeed = kJumpSpeed * 0.4f;
 
+        // Secret powers (plan.md E3D-MIG-170/172, real m_blupiShield/Power/
+        // Cloud/Hide + shared m_blupiTimeShield, verified directly against
+        // Decor.cpp ~5071-5137/~6014-6087, NOT the reference doc's own
+        // speculative "Sp0-Sp7 tile icons" guess -- that guess is WRONG,
+        // see GetSecretPower()'s own comment for the correction. Only one
+        // is ever active at a time (matches def/SecretPower.hpp's own
+        // documented invariant); all 4 start their shared 100-level gauge
+        // at the same value but tick down at their OWN real rate, giving
+        // 4 different real durations despite the same start value:
+        // Shield every ScaleTime(5)=0.25s/level (25s total), Power every
+        // ScaleTime(3)=0.15s/level (15s), Cloud/Hide every ScaleTime(4)=
+        // 0.2s/level (20s each) -- all 4 are direct transcriptions, not
+        // approximations. Real per-power warning sounds fire at the exact
+        // real remaining-level thresholds (Shield@10, Power@20, Cloud@25,
+        // Hide@20).
+        static constexpr int kSecretPowerMax = 100;
+        static constexpr float kShieldTickSeconds = 5.0f / 20.0f;
+        static constexpr float kPowerTickSeconds = 3.0f / 20.0f;
+        static constexpr float kCloudTickSeconds = 4.0f / 20.0f;
+        static constexpr float kHideTickSeconds = 4.0f / 20.0f;
+        static constexpr int kShieldWarnLevel = 10;
+        static constexpr int kPowerWarnLevel = 20;
+        static constexpr int kCloudWarnLevel = 25;
+        static constexpr int kHideWarnLevel = 20;
+
         // Jump vs Air mirrors GalaxyEggbertSimple3D::GEBlupiController's own
         // already-shipped split (real BlupiAction IDs 4/5) -- Simple3D
         // distinguishes them by a fixed 3-frame post-trigger window (its
@@ -159,6 +184,20 @@ namespace GalaxyEggbert::CNA
             Stop, March, Jump, Air, Down, Up,
             StopEcrase, MarchEcrase, Balloon, Teleporting
         };
+
+        // Real `SecretPower` (plan.md E3D-MIG-170): the underlying game enum
+        // itself only has 5 values (None/Shield/Power/Cloud/Hide,
+        // `def/SecretPower.hpp`) -- NOT 8. The reference doc's own "Sp0-Sp7"
+        // label for tile icons 158-165 is a speculative name-based guess
+        // ("likely SecretPower value 0-7") that this session's direct
+        // `Decor.cpp` research disproves: `Decor::IsWorld()` (~7079-7095)
+        // shows icons 158-165/166-173 are hub-screen world-select markers
+        // (locked/unlocked pairs, `06-doors.md`'s own `AdaptDoors` section),
+        // wholly unrelated to Blupi's own secret-power buffs. The real
+        // buffs are granted by 4 `MoveObject` pickups instead (ObjectType25
+        // Shield, 26 Sucette->Power, 30 Drink->Hide, 31 Charge->Cloud),
+        // confirmed directly in `Decor.cpp` ~6014-6087/~3048-3235.
+        enum class SecretPower : std::uint8_t { None, Shield, Power, Cloud, Hide };
 
         void SetPosition(float x, float y, float z) noexcept;
 
@@ -260,6 +299,43 @@ namespace GalaxyEggbert::CNA
         // instead of the hazard killing him. A no-op if not currently
         // ballooned.
         void PopBalloon() noexcept;
+
+        // Secret powers (plan.md E3D-MIG-170/172/173/174, see the
+        // SecretPower enum's own comment). Each Trigger*() applies the real
+        // exact gate for that pickup (checked directly against Decor.cpp,
+        // real vehicle-mode clauses dropped since no vehicle concept exists
+        // yet) and, if it passes, grants that power (resetting the shared
+        // gauge to kSecretPowerMax, overwriting whatever was active before
+        // -- matches the real source's own asymmetric gates, which don't
+        // uniformly check every other buff). Returns false (no-op) if the
+        // gate fails, so the caller only plays the real grant sound on an
+        // actual new trigger, same idiom as every other Trigger*() here.
+        // The real 2-stage "busy" animation + delay before Power(Sucette)/
+        // Hide(Drink)/Cloud(Charge) actually activate (32/36/64 ticks) is
+        // NOT modeled -- these grant instantly on contact instead, a
+        // documented simplification (same category as skipping vehicle
+        // dismount elsewhere).
+        bool TriggerShield() noexcept; // real gate: not already Shield/Hide/Power
+        bool TriggerPower() noexcept;  // real gate: not already Shield
+        bool TriggerCloud() noexcept;  // real gate: not already ANY power (loosest/most defensive)
+        bool TriggerHide() noexcept;   // real gate: not already Shield/Cloud
+
+        [[nodiscard]] SecretPower GetSecretPower() const noexcept { return m_secretPower; }
+        [[nodiscard]] bool IsShielded() const noexcept { return m_secretPower == SecretPower::Shield; }
+        [[nodiscard]] bool IsHidden() const noexcept { return m_secretPower == SecretPower::Hide; }
+        // Real hazard-immunity gate (`!m_blupiShield && !m_blupiHide`,
+        // confirmed identical across essentially every hazard/enemy death
+        // check in Decor.cpp -- lava/spikes/saw/blitz/crusher/dynamite/fan/
+        // the shared kill-list/wasp/large-creature/projectiles all use
+        // this exact same two-flag gate, not just Shield alone). Callers
+        // should gate every hazard/enemy death check on `!IsInvincible()`.
+        [[nodiscard]] bool IsInvincible() const noexcept { return IsShielded() || IsHidden(); }
+        [[nodiscard]] int GetSecretPowerLevel() const noexcept { return m_secretPowerLevel; }
+        // True for exactly the one Step() call where the active power's
+        // gauge crosses its own real warning threshold (Shield@10/Power@20/
+        // Cloud@25/Hide@20) -- the caller plays the real per-power warning
+        // channel (43/45/56/63) once, same one-shot shape as JustDrowned().
+        [[nodiscard]] bool JustCrossedSecretPowerWarning() const noexcept { return m_secretPowerJustWarned; }
 
         // Launches Blupi upward off a spring tile (real gate: grounded and
         // not already airborne -- swimming/surfing/suspended don't exist in
@@ -414,6 +490,11 @@ namespace GalaxyEggbert::CNA
 
         bool m_balloon = false;
         float m_balloonTimer = 0.0f;
+
+        SecretPower m_secretPower = SecretPower::None;
+        int m_secretPowerLevel = 0;
+        float m_secretPowerTimer = 0.0f;
+        bool m_secretPowerJustWarned = false;
 
         bool m_teleporting = false;
         float m_teleportTimer = 0.0f;

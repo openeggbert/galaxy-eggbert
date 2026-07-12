@@ -262,6 +262,33 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Secret powers implemented + a real documentation error corrected (2026-07-12, plan.md
+  `E3D-MIG-170`/`172`/`174`, Phase 17 start).** Direct `Decor.cpp` research (not just the
+  reference doc) found the project's own earlier "Sp0-Sp7" icon research was WRONG: tile icons
+  158-165 are hub-screen world-select markers (`Decor::IsWorld()`), unrelated to Blupi's own
+  secret-power buffs — the real `SecretPower` enum only has 5 values (None/Shield/Power/Cloud/
+  Hide, confirmed in `def/SecretPower.hpp`), granted instead by 4 `MoveObject` pickups
+  (ObjectType25 Shield, 26 Sucette->Power, 30 Drink->Hide, 31 Charge->Cloud). Corrected
+  `mobile-eggbert-reference/02-tiles.md`'s icon 158-165 rows and re-scoped `E3D-MIG-515`
+  accordingly (now a hub-screen task, not a secret-power one). Implemented the real mechanic:
+  new `GEBlupiController::SecretPower` state (mutually exclusive, matching the documented
+  invariant) with each power's own exact real gauge decrement rate and warning threshold
+  (Shield 0.25s/level+warn@10, Power 0.15s/level+warn@20, Cloud/Hide 0.2s/level+warn@25/20 —
+  all direct transcriptions). **Most valuable part**: `IsInvincible()` (Shield or Hide) now
+  genuinely protects Blupi, confirmed identical across ~15 separate real hazard/enemy call sites
+  in `Decor.cpp` (lava, spikes, saw, blitz, crusher, dynamite, fan, the shared 8-type kill list,
+  wasp, large creature, blupih/blupit projectiles) — this resolves the "Shield/Hide/SuperBlupi
+  immunity NOT modeled" caveat left on essentially every hazard implemented earlier this session
+  (superBlupi itself remains unmodeled, no such concept exists). The real 2-stage delay/
+  animation-lock before Power/Hide/Cloud actually activate (Sucette/Drink/Charge) is NOT modeled
+  — all 4 grant instantly on contact instead, a documented simplification. New secret-powers demo
+  (one of each pickup) added to the sample world. Verified: 19 new `VerifyBlupiMovement`
+  assertions (trigger gates, exact real decrement rates, expiry, warning threshold) + 5 new
+  `VerifyInteractionSystem` assertions (pickup grant gating, hazard-immunity integration) + full
+  suite (63/63 unit tests, all verify tools) + live headless verification (temporary debug
+  instrumentation, reverted before committing, confirmed the exact real 0.25s/level Shield rate
+  live in the actual game loop) + both backends.
+
 - **Doors & keys implemented, Phase 16 substantially done (2026-07-12, plan.md `E3D-MIG-160`/
   `161`/`162`).** Doors (icons 334-336) now open automatically when Blupi approaches holding the
   matching key (probing his own cell AND one cell ahead in his facing direction, matching real
@@ -3177,9 +3204,12 @@ priority notes below until this list is exhausted:**
 
 1. Platform lift clipping + more lifts — **DONE**, see §3's newest entry / old task 3 below.
 2. Water breath gauge (`E3D-MIG-148`) — **DONE**, see §3's newest entry. Phase 14 now 10/10 complete.
-3. Phase 15 (`E3D-MIG-150`-`158`) — crates/lifts/bridges full fidelity. Next up.
-4. Phase 16 (`E3D-MIG-160`-`165`) — doors & keys.
-5. Phase 17 (`E3D-MIG-170`-`179`) — secret powers/vehicles/buffs.
+3. Phase 15 (`E3D-MIG-150`-`158`) — **substantially done** (150/152/154/155 done; 151/153/156/157/
+   158 deferred with documented reasons, see plan.md).
+4. Phase 16 (`E3D-MIG-160`-`165`) — **substantially done** (160/161/162 done; 163/164/165 deferred).
+5. Phase 17 (`E3D-MIG-170`-`179`) — **in progress**: `170`/`172`/`174` done (secret powers + real
+   hazard immunity). Remaining: `171` (vehicles, substantial standalone feature), `173` (2-stage
+   pickup delay, deferred simplification), `175`-`178` (not started), `179` (needs_human, skip).
 6. Interleaved as time allows: Saw investigation (paused, needs the user's own visual judgment per
    their 2026-07-12 direction, not attempted) and the teleporter double-tip bug (§4 item 2, not yet
    investigated).

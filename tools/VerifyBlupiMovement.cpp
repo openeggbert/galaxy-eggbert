@@ -606,6 +606,76 @@ int main(int argc, char** argv)
         resurfacer.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, true, false);
         check(resurfacer.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
               "the gauge resets to full the instant Nage ends (Surf), matching the real 'gauge hidden' behavior");
+
+        // Secret powers (plan.md E3D-MIG-170) -- trigger gates, the shared
+        // gauge's real per-power decrement rate, expiry, and the real
+        // hazard-immunity gate (IsInvincible() == Shield || Hide).
+        {
+            GEBlupiController shielded;
+            check(shielded.TriggerShield(), "TriggerShield() succeeds from None");
+            check(shielded.IsShielded() && shielded.IsInvincible(),
+                  "Shield grants IsShielded()/IsInvincible()");
+            check(!shielded.TriggerPower(), "TriggerPower() fails while Shielded (real gate: != Shield)");
+            check(!shielded.TriggerCloud(), "TriggerCloud() fails while Shielded (real gate: == None)");
+            check(!shielded.TriggerHide(), "TriggerHide() fails while Shielded (real gate: != Shield/Cloud)");
+
+            GEBlupiController hidden;
+            check(hidden.TriggerHide(), "TriggerHide() succeeds from None");
+            check(hidden.IsHidden() && hidden.IsInvincible(), "Hide grants IsHidden()/IsInvincible() too");
+
+            GEBlupiController powered;
+            check(powered.TriggerPower(), "TriggerPower() succeeds from None");
+            check(!powered.IsInvincible(), "Power alone does NOT grant IsInvincible() (only Shield/Hide do)");
+            check(powered.TriggerHide(), "TriggerHide() succeeds even while Power is active (real gate ignores Power)");
+
+            // Real per-power decrement rates (Decor.cpp ~5071-5137): Shield
+            // every ScaleTime(5)=0.25s/level, Power every ScaleTime(3)=
+            // 0.15s/level, Cloud/Hide every ScaleTime(4)=0.2s/level.
+            GEBlupiController shieldTiming;
+            shieldTiming.TriggerShield();
+            for (int i = 0; i < 30; ++i) // 30 * 0.25s = 7.5s = 30 levels
+            {
+                shieldTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kShieldTickSeconds);
+            }
+            check(shieldTiming.GetSecretPowerLevel() == GEBlupiController::kSecretPowerMax - 30,
+                  "Shield's gauge ticks down at exactly the real 0.25s/level rate");
+
+            GEBlupiController powerTiming;
+            powerTiming.TriggerPower();
+            for (int i = 0; i < 30; ++i)
+            {
+                powerTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kPowerTickSeconds);
+            }
+            check(powerTiming.GetSecretPowerLevel() == GEBlupiController::kSecretPowerMax - 30,
+                  "Power's gauge ticks down at exactly the real 0.15s/level rate");
+
+            // Expiry: the real ~25s Shield duration (100 levels * 0.25s).
+            GEBlupiController expiring;
+            expiring.TriggerShield();
+            for (int i = 0; i < 500 && expiring.IsShielded(); ++i) // 500 * 0.05 = 25s
+            {
+                expiring.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            }
+            check(expiring.GetSecretPower() == GEBlupiController::SecretPower::None,
+                  "Shield expires back to None after its real ~25s duration");
+            check(!expiring.IsInvincible(), "IsInvincible() is false again once Shield expires");
+
+            // Real warning threshold: Shield warns at exactly level 10.
+            GEBlupiController warning;
+            warning.TriggerShield();
+            bool sawWarning = false;
+            for (int i = 0; i < 100 && !sawWarning; ++i)
+            {
+                warning.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kShieldTickSeconds);
+                if (warning.JustCrossedSecretPowerWarning())
+                {
+                    sawWarning = true;
+                }
+            }
+            check(sawWarning, "JustCrossedSecretPowerWarning() fires once during Shield's real countdown");
+            check(warning.GetSecretPowerLevel() == GEBlupiController::kShieldWarnLevel,
+                  "the warning fires at exactly the real level-10 threshold, not some other level");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

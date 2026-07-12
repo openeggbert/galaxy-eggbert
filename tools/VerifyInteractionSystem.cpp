@@ -414,6 +414,64 @@ int main(int argc, char** argv)
         }
     }
 
+    // 3.9. Secret powers (plan.md E3D-MIG-170) -- the sample world's own
+    // demo (tools/GenerateSampleWorld3D.cpp): Shield stick at (54,1,88).
+    // Fresh GEInteractionSystem so its own signals aren't polluted by
+    // earlier sections.
+    if (const auto* shieldStick = findFirst(ObjectType::ObjectType25))
+    {
+        GEInteractionSystem shieldInteraction;
+        shieldInteraction.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
+                                  shieldStick->currentZ, 0.0f, sound, false, false, 0, 0,
+                                  /*blupiInvincible=*/false, /*canGrantShield=*/false);
+        check(!shieldInteraction.ShieldGrantedThisFrame(),
+              "ShieldGrantedThisFrame() is false when the caller reports canGrantShield=false");
+
+        GEInteractionSystem shieldInteraction2;
+        shieldInteraction2.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
+                                   shieldStick->currentZ, 0.0f, sound, false, false, 0, 0,
+                                   /*blupiInvincible=*/false, /*canGrantShield=*/true);
+        check(shieldInteraction2.ShieldGrantedThisFrame(),
+              "ShieldGrantedThisFrame() is true on contact when canGrantShield=true");
+    }
+    else
+    {
+        check(false, "found the shield stick (ObjectType25) in the sample world");
+    }
+
+    // Hazard immunity: a fresh interaction system touching a STILL-ACTIVE
+    // generic hazard (test 2.5 above already deactivated the first
+    // ObjectType2 findFirst() would return, via the shared `interaction`
+    // instance -- this looks past that one), with blupiInvincible=true,
+    // should take no damage at all (real `!m_blupiShield && !m_blupiHide`
+    // gate confirmed directly against Decor.cpp:5784).
+    const MobileObjSpec* hazard2 = nullptr;
+    for (const auto& obj : world.GetMobileObjects())
+    {
+        if (obj.type == ObjectType::ObjectType2 && obj.active)
+        {
+            hazard2 = &obj;
+            break;
+        }
+    }
+    if (hazard2 != nullptr)
+    {
+        GEInteractionSystem invincibleInteraction;
+        const int livesBefore = invincibleInteraction.Lives();
+        invincibleInteraction.Update(dt, world, hazard2->currentX, hazard2->currentY, hazard2->currentZ, 0.0f,
+                                      sound, false, false, 0, 0, /*blupiInvincible=*/true);
+        check(!invincibleInteraction.DiedThisFrame(),
+              "DiedThisFrame() stays false touching a generic hazard while blupiInvincible=true");
+        check(invincibleInteraction.Lives() == livesBefore,
+              "no life is lost touching a generic hazard while invincible (real Shield/Hide immunity)");
+        check(hazard2->active,
+              "the hazard itself is untouched (not destroyed) by a contact that immunity blocked");
+    }
+    else
+    {
+        check(false, "found a generic hazard (ObjectType2) for the invincibility test");
+    }
+
     // 4. GEWorldRuntime::IsBlitzActiveAtPhase() (plan.md E3D-MIG-144) -- real
     // BlitzActif() cycle: lethal only on even ticks within the first half of
     // a 100-tick cycle (num%2==0 && num<50).

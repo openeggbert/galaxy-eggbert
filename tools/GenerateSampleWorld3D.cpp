@@ -490,6 +490,19 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType49, 46.0f, 1.0f, 88.0f);        // key 1, before wall 1
 
     // ------------------------------------------------------------------
+    // Secret powers demo (plan.md E3D-MIG-170, 2026-07-12) -- one of each
+    // real pickup (Shield/Sucette-Power/Drink-Hide/Charge-Cloud) in a small
+    // open room, so all 4 real buffs (and the Shield/Hide hazard-immunity
+    // they grant, verified this session against dozens of Decor.cpp call
+    // sites) are genuinely playable, not just unit-tested.
+    // ------------------------------------------------------------------
+    fill(53, 59, 0, 0, 87, 93, BlockTypes::RockPile); // secret-powers room floor
+    place(ObjectType::ObjectType25, 54.0f, 1.0f, 88.0f); // shield stick
+    place(ObjectType::ObjectType26, 56.0f, 1.0f, 88.0f); // suction-cup (-> Power)
+    place(ObjectType::ObjectType30, 54.0f, 1.0f, 92.0f); // drink (-> Hide)
+    place(ObjectType::ObjectType31, 56.0f, 1.0f, 92.0f); // charge (-> Cloud)
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //

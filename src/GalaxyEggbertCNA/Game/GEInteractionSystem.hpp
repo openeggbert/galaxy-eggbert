@@ -168,10 +168,24 @@ namespace GalaxyEggbert::CNA
         // (real `Decor::IsDoor`) probe BOTH Blupi's own cell and this one,
         // so he can trigger a door a step before actually reaching it,
         // matching the real source exactly.
+        // blupiInvincible (plan.md E3D-MIG-170, both default false so
+        // existing callers/tests are unaffected) is the caller's own
+        // `GEBlupiController::IsInvincible()` (Shield or Hide active) --
+        // gates every hazard/enemy death check inside this class (real
+        // `!m_blupiShield && !m_blupiHide`, confirmed identical across
+        // essentially every hazard in Decor.cpp). blupiCanGrantShield/
+        // Power/Cloud/Hide are the caller's own per-power gate state
+        // (`GEBlupiController::GetSecretPower()`, translated to 4 bools
+        // here rather than exposing the enum, since this class doesn't
+        // otherwise depend on GEBlupiController's types) used to decide
+        // whether touching a secret-power pickup (ObjectType25/26/30/31)
+        // actually grants it -- see the *GrantedThisFrame() signals below.
         void Update(float dt, GEWorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
                     GESound& sound, bool blupiCrouching = false, bool blupiBallooned = false,
-                    int blupiFacingDX = 0, int blupiFacingDZ = 0);
+                    int blupiFacingDX = 0, int blupiFacingDZ = 0, bool blupiInvincible = false,
+                    bool blupiCanGrantShield = true, bool blupiCanGrantPower = true,
+                    bool blupiCanGrantCloud = true, bool blupiCanGrantHide = true);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame
@@ -183,6 +197,20 @@ namespace GalaxyEggbert::CNA
         // killing (see the class comment above) -- the caller must call
         // GEBlupiController::PopBalloon() itself.
         [[nodiscard]] bool BalloonPoppedThisFrame() const noexcept { return balloonPoppedThisFrame_; }
+
+        // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31)
+        // -- true the one frame that pickup's real gate passed and the
+        // world object was actually removed; the caller then calls the
+        // matching `GEBlupiController::TriggerX()` (its own internal gate
+        // should agree, since both check the same state) and plays the
+        // real grant sound (channels 42/44/55/62) only if that returns
+        // true. Real 2-stage delay/animation before Power/Cloud/Hide
+        // actually activate is NOT modeled (see GEBlupiController::
+        // TriggerPower()'s own comment) -- all 4 grant on contact here.
+        [[nodiscard]] bool ShieldGrantedThisFrame() const noexcept { return shieldGrantedThisFrame_; }
+        [[nodiscard]] bool PowerGrantedThisFrame() const noexcept { return powerGrantedThisFrame_; }
+        [[nodiscard]] bool CloudGrantedThisFrame() const noexcept { return cloudGrantedThisFrame_; }
+        [[nodiscard]] bool HideGrantedThisFrame() const noexcept { return hideGrantedThisFrame_; }
 
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
@@ -276,5 +304,9 @@ namespace GalaxyEggbert::CNA
         bool diedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
+        bool shieldGrantedThisFrame_ = false; // reset at the top of every Update() call
+        bool powerGrantedThisFrame_ = false;  // reset at the top of every Update() call
+        bool cloudGrantedThisFrame_ = false;  // reset at the top of every Update() call
+        bool hideGrantedThisFrame_ = false;   // reset at the top of every Update() call
     };
 }
