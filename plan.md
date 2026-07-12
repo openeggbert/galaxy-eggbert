@@ -416,6 +416,18 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       run confirms no crash/regression).
 - [ ] `085` Idle "fidget" periodic sounds — channels 36/37/46-49/65 trigger on
       `m_blupiPhase % N`, not simple one-shot events; easy to miss in a naive port.
+      **Checked 2026-07-12, genuinely blocked, not attempted**: per
+      `mobile-eggbert-reference/07-sounds.md`, channels 46-49/65 each pair to a distinct idle-
+      boredom animation VARIANT (`Ouf1a`/`Ouf1b`/`Ouf5`/`Mockeryp`/`Ouf3`/`Ouf4`/`Mockery`/
+      `Mockeryi`) that doesn't exist as an `AnimState` in `GEBlupiController` at all yet — these
+      are new animation states, not sound-only additions, and implementing them meaningfully
+      needs the same real `table_blupi` timing/state transcription `E3D-MIG-064` already flags as
+      blocked on `069` (the real 3D Blupi model) and requiring explicit user approval. Channel 37
+      (idle tick while `Stop`) could theoretically be cherry-picked since `AnimState::Stop`
+      already exists, but channel 36 (its `Suspend`-mode counterpart) is blocked the same way
+      `E3D-MIG-177`'s Suspended mode is (needs icon 202's pending render-geometry call) — picking
+      off only channel 37 alone would be an oddly partial slice of one task, not implemented here.
+      Revisit this whole task together once `064`/`069`/`177` unblock.
 - [~] `086` Buff activate/expire-warning channel pairs — **done 2026-07-12** as part of
       `E3D-MIG-170`/`172`/`174` (the actual secret-power buffs, implemented under those task IDs,
       not the stale `E3D-MIG-190` this entry used to point at): Shield 42/43(warn@10), Power
