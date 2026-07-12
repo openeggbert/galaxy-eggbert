@@ -347,8 +347,34 @@ namespace GalaxyEggbert::CNA
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
         balloonPoppedThisFrame_ = false;
+        ridingLift_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
+
+        // Platform lift riding (plan.md E3D-MIG-152) -- detect which lift
+        // (if any) Blupi is standing on BEFORE it takes this frame's patrol
+        // step below, using its position as of the end of last frame.
+        // Remembered by pointer (this loop never resizes `objects`, only
+        // mutates elements in place, so the pointer stays valid for the
+        // rest of this call) so the platform-lift branch below can compute
+        // the exact same lift's own displacement once it moves.
+        MobileObjSpec* riddenLift = nullptr;
+        for (auto& candidate : objects)
+        {
+            if (!candidate.active || !IsPlatformLift(candidate.type))
+            {
+                continue;
+            }
+            const float liftStandY = candidate.currentY + 2.0f;
+            if (std::fabs(blupiX - candidate.currentX) < 0.5f && std::fabs(blupiZ - candidate.currentZ) < 0.5f &&
+                std::fabs(blupiY - liftStandY) < 0.2f)
+            {
+                riddenLift = &candidate;
+                break;
+            }
+        }
+        const float riddenLiftOldX = riddenLift ? riddenLift->currentX : 0.0f;
+        const float riddenLiftOldZ = riddenLift ? riddenLift->currentZ : 0.0f;
 
         if (totalTreasures_ < 0)
         {
@@ -402,6 +428,30 @@ namespace GalaxyEggbert::CNA
                     obj.currentX += dx * step;
                     obj.currentY += dy * step;
                     obj.currentZ += dz * step;
+                }
+
+                // Platform lift riding (plan.md E3D-MIG-152): this is the
+                // exact lift Blupi was standing on before the patrol step
+                // just above -- report its own displacement this tick (a
+                // delta, not an absolute position) plus the real constant
+                // conveyor nudge for types 47/48 (kConveyorNudgeSpeed is an
+                // approximation, plan.md E3D-MIG-154: the real 2px/tick has
+                // no exact unit-conversion established for this engine's
+                // grid scale), and the new absolute stand height (a snap,
+                // matching the real source's own "correct Y drift every
+                // frame" approach). The caller applies these via
+                // GEBlupiController::RideLift().
+                if (&obj == riddenLift)
+                {
+                    constexpr float kConveyorNudgeSpeed = 0.3f;
+                    float nudgeX = 0.0f;
+                    if (obj.type == ObjectType::ObjectType47) nudgeX = kConveyorNudgeSpeed * dt;
+                    else if (obj.type == ObjectType::ObjectType48) nudgeX = -kConveyorNudgeSpeed * dt;
+
+                    ridingLift_ = true;
+                    rideDeltaX_ = (obj.currentX - riddenLiftOldX) + nudgeX;
+                    rideDeltaZ_ = obj.currentZ - riddenLiftOldZ;
+                    rideStandY_ = obj.currentY + 2.0f;
                 }
                 continue;
             }

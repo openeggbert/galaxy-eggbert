@@ -920,14 +920,35 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       cleanly onto this engine's discrete "snap by 1 grid cell per satisfied frame" push model
       (see `150`'s own note) without a deeper rework of crate movement to be continuous/timed
       rather than instant. Deferred, not attempted this session.
-- [ ] `152` Platform boarding via swept-probe detection (avoid tunneling on fast falls) and
-      continuous per-tick foot-strip re-test while riding (not just an initial catch) — this is
-      the prerequisite for "riding a moving platform" at all, since `GEBlupiController`
-      currently only tests the static terrain grid.
+- [x] `152` Platform boarding — done 2026-07-12, verified against `Decor::AscenseurDetect`/
+      `MoveObjectStepLine` (~9184/~8005-8174). `GEInteractionSystem` now detects (before its own
+      per-frame lift-patrol step) whether Blupi's position matches an active lift's current
+      surface (X/Z within its footprint, Y at its stand height), remembers the lift, then after
+      the patrol step reports the lift's own displacement this tick (`IsRidingLift()`/
+      `RideDeltaX()`/`RideDeltaZ()`/`RideStandY()`) for the caller to apply via a new
+      `GEBlupiController::RideLift(x,y,z)` (snaps position, marks grounded, zeroes vertical
+      velocity — NOT a full `SetPosition()` teleport, since this runs every single frame while
+      riding). Unifies the real source's two separate functions (initial-catch-while-falling vs.
+      continuous glue) into one per-frame check, since this engine's discrete position doesn't
+      need that real pixel-level distinction. X/Z apply as a DELTA (preserving Blupi's own
+      walking input that frame), Y snaps absolutely (matching the real source's own "correct
+      drift every frame" approach). Real 30px swept multi-step tunnelling prevention is NOT
+      modeled — this engine's gravity/dt doesn't cross a lift's height in one frame under normal
+      conditions. Verified live (temporary debug instrumentation, reverted before committing):
+      Blupi's Y tracked the north-hill lift's ping-pong patrol exactly, staying grounded the
+      whole ride, both before and after refactoring the logic from the game loop into
+      `GEInteractionSystem` for testability. New `VerifyInteractionSystem` assertions (riding
+      true while positioned on the lift, false when far away, `RideStandY()` matches the lift's
+      post-patrol-step height) + full suite (63/63 unit tests, all verify tools) + both backends.
 - [ ] `153` Vertigo edge-detection with auto-slide-off for wide/shiftable lift platforms
-      (icons 311-316).
-- [ ] `154` Conveyor nudge (±2px/tick) for caterpillar-track types 47/48, on top of their
-      existing patrol.
+      (icons 311-316) — NOT started. Needs a new render/icon-selection decision (which of
+      types 1/47/48 render as the "wide" 311-316 frames) that the user asked to defer
+      (2026-07-12, new visual-design decisions explicitly skipped this session).
+- [x] `154` Conveyor nudge (±2px/tick) for caterpillar-track types 47/48 — done 2026-07-12,
+      folded into `152`'s `RideDeltaX()` (a constant `kConveyorNudgeSpeed` added/subtracted for
+      types 47/48 respectively). The exact real 2px/tick has no established unit-conversion for
+      this engine's grid scale, so the magnitude is a documented approximation, not a
+      transcription.
 - [ ] `155` Dynamite — 9 separate blast calls at fixed ticks with asymmetric per-blast
       (dx,dy) scatter, each destroying enemies/crates/objects in a 128×128px area.
 - [ ] `156` Helicopter-destruction / debris pool (ballistic pop-then-drop physics), shared by

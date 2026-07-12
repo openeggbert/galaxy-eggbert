@@ -162,6 +162,22 @@ namespace GalaxyEggbert::CNA
 
         void SetPosition(float x, float y, float z) noexcept;
 
+        // Real "continuous ride" (plan.md E3D-MIG-152, `Decor::
+        // MoveObjectStepLine`'s per-tick overlap re-test): called by the
+        // caller once per frame when it determines Blupi is standing on an
+        // active platform lift (this class has no knowledge of
+        // `MobileObjSpec`/lifts itself, same "caller determines the
+        // terrain/object fact" split as tempPassable/inSurfWater). Snaps
+        // his position directly onto the lift's current surface -- Y is
+        // corrected every frame rather than accumulated as a delta,
+        // matching the real source's own drift-correction approach -- and
+        // marks him grounded with zero vertical velocity, the same state a
+        // normal landing leaves him in, so Step()'s own gravity doesn't
+        // immediately re-trigger a fall next frame. Unlike SetPosition(),
+        // this is NOT a teleport (no animation/state reset beyond velocity)
+        // since it's called every single frame while riding, not once.
+        void RideLift(float x, float y, float z) noexcept;
+
         // Sets facing directly — useful for tests/tools that need to face a
         // specific direction without stepping turnInput to get there (see
         // tools/VerifyBlupiMovement.cpp). Not used by normal gameplay input.

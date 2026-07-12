@@ -76,6 +76,31 @@ int main(int argc, char** argv)
     std::cout << "Lift Y after 0.5s: " << liftYAfter << " (started at " << liftStartY << ")" << std::endl;
     check(std::fabs(liftYAfter - liftStartY) > 0.05f, "platform lift patrols (currentY changed)");
 
+    // 1.5. Platform lift riding (plan.md E3D-MIG-152) -- position Blupi
+    // exactly at the lift's current stand height (currentY + 2, see
+    // GEInteractionSystem::IsRidingLift()'s own comment) and directly
+    // above it in X/Z, then confirm one Update() call reports riding with
+    // a RideStandY() matching the lift's (now patrolled) new position.
+    if (liftAfter != nullptr)
+    {
+        const float rideBlupiX = liftAfter->currentX;
+        const float rideBlupiZ = liftAfter->currentZ;
+        const float rideBlupiY = liftAfter->currentY + 2.0f;
+        interaction.Update(dt, world, rideBlupiX, rideBlupiY, rideBlupiZ, 0.0f, sound);
+        check(interaction.IsRidingLift(), "IsRidingLift() is true while positioned on the lift's surface");
+        const auto* liftNow = findPatrollingLift();
+        check(liftNow != nullptr && std::fabs(interaction.RideStandY() - (liftNow->currentY + 2.0f)) < 0.01f,
+              "RideStandY() matches the lift's own new stand height after its patrol step this frame");
+
+        // Positioned far from the lift -- riding should not be reported.
+        interaction.Update(dt, world, rideBlupiX + 20.0f, rideBlupiY, rideBlupiZ, 0.0f, sound);
+        check(!interaction.IsRidingLift(), "IsRidingLift() is false when Blupi is nowhere near the lift");
+    }
+    else
+    {
+        check(false, "found the patrolling lift for the riding test");
+    }
+
     // 2. Pickup collection -- walk Blupi's simulated position onto each of
     // the treasure/egg/key placed in the sample world and confirm the
     // interaction system collects it (counter increments, object goes

@@ -214,10 +214,12 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 ### What does not work yet
 - `GalaxyEggbertCNA`: no real Blupi model yet (a temporary placeholder exists in third-person mode
-  only, §3; billboard rendering explicitly rejected 2026-07-10, see §3/plan.md `E3D-MIG-063`), no
-  riding a moving platform lift (collision only tests the static terrain grid, not `MobileObjSpec`
-  objects). A first interactive-object system now exists (2026-07-10, §3, `GEInteractionSystem`):
-  platform lift patrol movement, crate push, and treasure/egg/key/level-exit pickup collection
+  only, §3; billboard rendering explicitly rejected 2026-07-10, see §3/plan.md `E3D-MIG-063`).
+  **Riding a moving platform lift now works (2026-07-12, §3, plan.md `E3D-MIG-152`/`154`)** —
+  `GEInteractionSystem::IsRidingLift()`/`RideDeltaX/Z()`/`RideStandY()` + `GEBlupiController::
+  RideLift()`. A first interactive-object system now exists (2026-07-10, §3, `GEInteractionSystem`):
+  platform lift patrol movement + riding, crate push (now linked-stack aware, `150`), and
+  treasure/egg/key/level-exit pickup collection
   (with the real mobile-eggbert sound + removal behavior) all genuinely work — see §3 for exactly
   what is/isn't covered. `BigDecor:` rendering and the platform-lift/crate `UniformCube` object
   path are implemented (2026-07-09, §3). Real sound playback exists (2026-07-10, §3, `GESound`) —
@@ -259,6 +261,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Riding a moving platform lift now works (2026-07-12, plan.md `E3D-MIG-152`/`154`) — a
+  long-standing "not yet working" limitation is closed.** `GEInteractionSystem` detects (before
+  its own per-frame lift patrol step) whether Blupi is standing on an active lift's surface,
+  then reports the lift's own displacement that tick (`IsRidingLift()`/`RideDeltaX/Z()`/
+  `RideStandY()`) for the caller to apply via new `GEBlupiController::RideLift()` — X/Z apply as
+  a delta (so his own walking input isn't overridden), Y snaps absolutely each frame (matching
+  the real source's own drift-correction approach), and he's marked grounded so gravity doesn't
+  immediately re-trigger a fall. Types 47/48's real conveyor nudge (`154`) is folded in as a
+  constant offset. Verified live (temporary debug instrumentation, reverted before committing):
+  Blupi's Y tracked the north-hill lift's full ping-pong patrol, staying grounded throughout.
+  New `VerifyInteractionSystem` assertions + full suite (63/63 unit tests, all verify tools) +
+  both backends re-verified.
 
 - **Linked-crate flood-fill implemented (2026-07-12, plan.md `E3D-MIG-150`, Phase 15 start).**
   Pushing a crate now flood-fills every touching crate (real `SearchLinkCaisse`: 1 grid unit in X

@@ -120,12 +120,20 @@ namespace GalaxyEggbert::CNA
     // a solid cell, rather than continuing to home. Contact-kill/pop was
     // already covered by the shared kill list before this.
     //
+    // Riding a moving platform lift (ObjectType1/47/48) now works too
+    // (2026-07-12, plan.md E3D-MIG-152) -- see IsRidingLift()/RideDeltaX/Z()/
+    // RideStandY()'s own comment. GEBlupiController itself still has no
+    // knowledge of MobileObjSpec objects (same engine-agnostic split as
+    // every other terrain/object fact it doesn't compute itself) -- the
+    // caller (GalaxyEggbertCnaGame::Update()) reads these back and calls
+    // GEBlupiController::RideLift() with them. Real fast-fall tunnelling
+    // prevention (the 30px swept multi-step probe) is NOT modeled -- this
+    // engine's own gravity/dt doesn't cross a lift's height in one frame
+    // under normal conditions. Types 47/48's real conveyor nudge is folded
+    // into RideDeltaX() directly (kConveyorNudgeSpeed is an approximation,
+    // the real 2px/tick has no exact unit-conversion established here).
+    //
     // NOT yet implemented (deliberately, not an oversight):
-    //  - Riding a moving platform lift (ObjectType1/47/48) -- platforms now
-    //    genuinely patrol (see Update()), but GEBlupiController's collision
-    //    only tests the static terrain grid, not MobileObjSpec objects, so
-    //    Blupi cannot yet stand on one. Needs its own dedicated collision-
-    //    system work, not attempted here.
     //  - Every other pickup type in IsPickup() (helicopter, shield, drink,
     //    mirror/invert, vehicles, dynamite, etc.) -- deferred to a follow-up;
     //    only the types placed in today's sample world (treasure/egg/keys/
@@ -196,7 +204,31 @@ namespace GalaxyEggbert::CNA
         // is how a caller/verification tool can observe it happened.
         [[nodiscard]] int GameOverCount() const noexcept { return gameOverCount_; }
 
+        // Platform lift riding (plan.md E3D-MIG-152, real `Decor::
+        // MoveObjectStepLine`'s per-tick overlap re-test, unified with the
+        // real separate `AscenseurDetect` initial-catch check into one
+        // per-frame test -- see GEInteractionSystem.cpp's own comment).
+        // True this frame if Blupi (at the blupiX/Y/Z passed into Update())
+        // was standing on an active platform lift BEFORE it took this
+        // frame's patrol step. RideDeltaX/Z is the lift's own horizontal
+        // displacement this tick (+ the real constant conveyor nudge for
+        // types 47/48, plan.md E3D-MIG-154) -- a delta, not an absolute
+        // position, so the caller applies it on top of Blupi's own
+        // already-Step()'d position rather than overriding his own
+        // movement input. RideStandY is an absolute snap (matching the
+        // real source's own "correct Y drift every frame" approach): the
+        // caller should pass both into GEBlupiController::RideLift().
+        [[nodiscard]] bool IsRidingLift() const noexcept { return ridingLift_; }
+        [[nodiscard]] float RideDeltaX() const noexcept { return rideDeltaX_; }
+        [[nodiscard]] float RideDeltaZ() const noexcept { return rideDeltaZ_; }
+        [[nodiscard]] float RideStandY() const noexcept { return rideStandY_; }
+
     private:
+        bool ridingLift_ = false;
+        float rideDeltaX_ = 0.0f;
+        float rideDeltaZ_ = 0.0f;
+        float rideStandY_ = 0.0f;
+
         int treasuresCollected_ = 0;
         int totalTreasures_ = -1; // computed lazily on first Update() call
         bool exitReached_ = false;

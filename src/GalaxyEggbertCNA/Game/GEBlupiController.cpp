@@ -77,6 +77,15 @@ namespace GalaxyEggbert::CNA
         m_onGround = false;
     }
 
+    void GEBlupiController::RideLift(float x, float y, float z) noexcept
+    {
+        m_x = x;
+        m_y = y;
+        m_z = z;
+        m_velocityY = 0.0f;
+        m_onGround = true;
+    }
+
     bool GEBlupiController::IsSolidAt(const Worlds::World& world, int gx, int gy, int gz)
     {
         return !world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),

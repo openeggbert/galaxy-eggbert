@@ -808,18 +808,30 @@ namespace GalaxyEggbert::CNA
             actionKeyWasDown_ = actionPressed;
 
             // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
-            // -- platform lift patrol, crate push, pickup collection,
-            // generic hazard contact (ObjectType2/3/4/16/17/20/96/97), and
-            // (2026-07-11) the wasp's balloon status. Runs after
-            // blupi_.Step() so blupi_'s position is this frame's final
-            // value; blupiXBeforeStep lets the interaction system infer
-            // movement direction for crate push without GEBlupiController
-            // needing a velocity accessor. crouchHeld gates ObjectType3's
-            // real duck-immunity; blupi_.IsBallooned() gates whether a
-            // 3/16/96/97 hazard pops the balloon instead of killing.
+            // -- platform lift patrol + riding (plan.md E3D-MIG-152, 2026-
+            // 07-12), crate push, pickup collection, generic hazard contact
+            // (ObjectType2/3/4/16/17/20/96/97), and (2026-07-11) the wasp's
+            // balloon status. Runs after blupi_.Step() so blupi_'s position
+            // is this frame's final value; blupiXBeforeStep lets the
+            // interaction system infer movement direction for crate push
+            // without GEBlupiController needing a velocity accessor.
+            // crouchHeld gates ObjectType3's real duck-immunity;
+            // blupi_.IsBallooned() gates whether a 3/16/96/97 hazard pops
+            // the balloon instead of killing.
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned());
+
+            // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()
+            // reflects whether Blupi was standing on an active lift BEFORE
+            // interaction_.Update() just advanced its patrol step -- see
+            // GEInteractionSystem::IsRidingLift()'s own comment for the
+            // delta-vs-snap rationale.
+            if (interaction_.IsRidingLift())
+            {
+                blupi_.RideLift(blupi_.GetX() + interaction_.RideDeltaX(), interaction_.RideStandY(),
+                                 blupi_.GetZ() + interaction_.RideDeltaZ());
+            }
 
             // GEInteractionSystem has no access to GEBlupiController, so it
             // can only report that a hazard-contact death happened this
