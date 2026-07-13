@@ -1501,7 +1501,11 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
       (`Def.hpp`'s `GameState::Ranking`, `Game1.hpp`) -- ## 2 §2 MENU-* territory, not part of the
       in-game HUD at all. Do not implement an in-game score display without first finding the
       real source of this claim; it may be a stale/mistaken entry from before `DrawInfo` was
-      fully read.
+      fully read. **Re-checked 2026-07-13 (follow-up research)**: a broad grep for `score`/`Score`
+      across the ENTIRE mobile-eggbert `src/`+`include/` tree (not just `Decor.cpp`) still finds
+      nothing but the `Ranking` menu screen and doc-comment prose — no numeric score field exists
+      anywhere in the codebase. This is very likely simply a mistaken/invented entry, not an
+      under-researched one; do not implement.
 - [ ] HUD-010 — `[?]` World name + elapsed level timer. **Flagged 2026-07-13**: same as `HUD-009`
       -- not present anywhere in the real `DrawInfo`. Needs its own verification against whichever
       other real function (if any) actually draws this before implementing.
@@ -1564,16 +1568,32 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
       collected. **Not found in `DrawInfo`** (2026-07-13 sweep) -- a grep for "EXIT"/"OPEN"/
       "SORTIE" across `Decor.cpp`/`Game1`-layer headers found nothing; may be a localized string
       resource triggered from a different, not-yet-read code path, or may be a stale entry. Needs
-      its own verification before implementing.
+      its own verification before implementing. **Re-checked 2026-07-13 (follow-up)**: also grepped
+      for `EXIT`/`ExitOpen`/`OpenExit` across the ENTIRE `src/`+`include/` tree — zero hits. Same
+      likely-mistaken status as `HUD-009`/`025`, though not as conclusively ruled out (a
+      localized-string-only trigger could still exist unread).
 - [ ] HUD-021 — `[?]` Controls hint bar fades after 8 s (re-show on new level). Not in `DrawInfo`
       (real training-hint overlay there is `HUD-024`, mission-gated, a different thing) — needs
-      its own verification.
+      its own verification. **Re-checked 2026-07-13 (follow-up)**: grepped for hint-bar/8-second-
+      timer patterns across the whole tree, zero hits. Likely mistaken/invented, not merely
+      under-researched.
 - [ ] HUD-022 — `[?]` Pause button icon visible during Play phase (top area). Not in `DrawInfo` —
       likely a `Game1`/menu-layer button, not a `Decor` HUD element; needs its own verification.
+      **Confirmed real 2026-07-13 (follow-up research)**: lives in `InputPad.cpp`
+      (`Def::ButtonGlyph::PlayPause`/`PauseMenu`/`PauseBack`/`PauseSetup`/`PauseRestart`/
+      `PauseContinue`, ~lines 160-968) — the touch/button-overlay control system, a completely
+      separate class from `GEHud`'s own `Decor::DrawInfo` port. Genuinely real and unimplemented,
+      but belongs with a future touch/button-overlay task, not folded into `GEHud` as-is.
 - [ ] HUD-023 — `[?]` HUD hidden during non-Play phases (Init, Pause, Win, Lost, Setup). Plausible
       (a real `GameState`-like concept exists per `Def.hpp`), but no such phase/state machine
       exists in `GalaxyEggbertCNA` at all yet — not implementable until one does, not merely
-      unimplemented.
+      unimplemented. **Confirmed real 2026-07-13 (follow-up research)**: `Def::Phase` enum
+      (`Def.hpp:51-66`) has exactly `Init`/`Play`/`Pause`/`Lost`/`Win` plus `First`/`Wait`/`Trial`/
+      `MainSetup`/`PlaySetup`/`Resume`/`Ranking` — a real, fully-defined state machine at the
+      `Game1` application layer. Implementing even a minimal version of this phase machine would
+      be a genuinely valuable, foundational addition (unlocks HUD-023 itself, real pause
+      behavior, and eventually win/lose screens) — a good candidate for a dedicated future task,
+      not a quick HUD-only fix.
 - [x] HUD-024 — Training hint overlay at screen top (missions 11-14 only) — **done 2026-07-13**,
       per explicit user approval to (1) implement a real mission-number concept, (2) transcribe
       all 4 `Tables::table_training1`-`4` arrays, and (3) find and transcribe their real English
