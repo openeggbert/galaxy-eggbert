@@ -280,6 +280,12 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
+        // Draw()'s own frame counter (NEXT.md §5, 2026-07-13) -- lets the
+        // one-shot HUD screenshot diagnostic wait for a frame strictly
+        // after the terrain diagnostic's mid-frame GetBackBufferData call,
+        // avoiding the Vulkan-only same-frame corruption that call causes.
+        int drawFrameIndex_ = 0;
+        int terrainPixelPrintedFrame_ = -1;
 
         // Real `fadeOutPhase` (plan.md MENU-088/089) -- see SetPhase()'s
         // own comment above for the full real deferred-transition

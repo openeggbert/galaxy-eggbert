@@ -1757,6 +1757,26 @@ namespace GalaxyEggbert::CNA
     {
         (void)gameTime;
         auto& device = getGraphicsDeviceProperty();
+
+        // Root-caused 2026-07-13 (NEXT.md §5's "screenshot_hud.png blue-
+        // background anomaly", Vulkan-only): calling GetBackBufferData()
+        // mid-frame -- as the terrain-visibility diagnostic below does --
+        // corrupts the REST of that same frame's rendering on CNA's Vulkan
+        // backend specifically (subsequent billboards lose alpha blending
+        // and render as opaque white boxes, and the terrain itself reads
+        // back as flat blue by the time the end-of-frame HUD screenshot
+        // below captures it). Confirmed by temporarily disabling the
+        // mid-frame readback: the HUD screenshot rendered perfectly on
+        // Vulkan once that mid-frame GetBackBufferData call was removed.
+        // Not fixable here (the bug is inside ../cna's Vulkan backend,
+        // which needs separate approval to modify) -- worked around by
+        // simply never letting both one-shot diagnostics fire within the
+        // same frame: drawFrameIndex_ lets the HUD screenshot wait for a
+        // frame strictly after whichever frame the terrain diagnostic
+        // fired on (a fresh frame that never called GetBackBufferData
+        // mid-draw), so it always captures an uncorrupted frame.
+        ++drawFrameIndex_;
+
         device.Clear(0.392f, 0.584f, 0.929f, 1.0f);
         device.SetDepthTestEnabled(true);
 
@@ -1930,6 +1950,7 @@ namespace GalaxyEggbert::CNA
             if (!terrainPixelPrinted)
             {
                 terrainPixelPrinted = true;
+                terrainPixelPrintedFrame_ = drawFrameIndex_;
                 const auto& viewport = device.getViewportProperty();
                 const int w = viewport.getWidthProperty();
                 const int h = viewport.getHeightProperty();
@@ -2387,8 +2408,15 @@ namespace GalaxyEggbert::CNA
         // after every draw call in the frame, including the new HUD, so it
         // can be inspected for visual HUD verification the same way
         // screenshot.png already is for terrain.
+        //
+        // Gated on drawFrameIndex_ > terrainPixelPrintedFrame_ (NEXT.md §5,
+        // 2026-07-13): the terrain diagnostic's own mid-frame
+        // GetBackBufferData call corrupts the rest of THAT frame's
+        // rendering on Vulkan (see Draw()'s own opening comment) -- waiting
+        // for a later frame guarantees this screenshot captures a frame
+        // that never had a mid-draw readback.
         static bool hudScreenshotWritten = false;
-        if (!hudScreenshotWritten)
+        if (!hudScreenshotWritten && drawFrameIndex_ > terrainPixelPrintedFrame_)
         {
             hudScreenshotWritten = true;
             const auto& viewport = device.getViewportProperty();
