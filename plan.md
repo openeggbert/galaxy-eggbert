@@ -2263,11 +2263,37 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 - [x] TILE-038 — Switch tile: toggles linked door/bridge/saw state — done (`plan.md E3D-MIG-142`, `GEWorldRuntime::TryActivateSwitch()`, real 41-cell X±20 saw-linking window).
 - [x] TILE-039 — Bridge tile: builds a bridge (`ObjectType52` animation) — **done 2026-07-13** (`plan.md PICKUP-064`, see §2.7's own entry for the full writeup — a real live terrain-collision toggle, not cosmetic).
 - [x] TILE-040 — Ventilator tile: blows Blupi when in the fan stream — done (`plan.md E3D-MIG-149`, `GEWorldRuntime::TryConsumeFan()`).
-- [ ] TILE-041 — Normal jump tile: forces a jump when stepped on — confirmed still NOT implemented, no matching code found anywhere in `src/GalaxyEggbertCNA/`.
+- [ ] TILE-041 — ~~Normal jump tile: forces a jump when stepped on~~ **description was wrong,
+      corrected 2026-07-14**: `Decor::IsNormalJump()` is NOT a special tile that forces a jump on
+      contact — it's a ceiling-clearance headroom check (probes 2 stacked tiles above Blupi, offset
+      15px toward his facing direction) that modulates the STRENGTH of his own regular jump input:
+      full height (-16, or -26 with Power) if both probes are clear, a reduced "bumped head" height
+      (-12, or -16 with Power) if either is blocked — preventing a full jump from clipping a nearby
+      ceiling (`mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Jump physics" section).
+      Confirmed still NOT implemented (this engine's jump always uses the single fixed
+      `kJumpSpeed`, no headroom check) — but this needs a NEW general "probe N tiles above,
+      direction-offset" capability, not a simple tile-trigger; real implementation would also need
+      to interact carefully with `GroundHeightAt()`'s already-fixed roofed-interior collision
+      (2026-07-13) to avoid regressing it. A real gap, but bigger/subtler than its old description
+      suggested — scope carefully before attempting.
 - [x] TILE-042 — Water surface: enter surf mode — done (`plan.md E3D-MIG-148`), real Surf/Nage state split.
 - [x] TILE-043 — Deep water: enter swim/drown mode — done (`plan.md E3D-MIG-148`), real ~25s breath gauge (`kWaterGaugeMax`/`kWaterGaugeTickSeconds`).
 - [x] TILE-044 — Out-of-water exit: exit swim mode on a dry tile — done, same Surf/Nage state machine as TILE-042/043.
-- [ ] TILE-045 — Barre / barrier tile: blocks certain vehicle types — confirmed still NOT implemented, no matching code found.
+- [ ] TILE-045 — ~~Barre / barrier tile: blocks certain vehicle types~~ **description was wrong,
+      corrected 2026-07-14**: `Decor::GetTypeBarre()` has nothing to do with blocking vehicles —
+      it's the trigger/classifier for an entire real hanging/suspended-on-a-bar-or-rope movement
+      mode (`mobile-eggbert-reference/10-blupi-mechanics.md`'s "Suspended/hanging mode" section):
+      horizontal movement applied directly with no accel ramp while hanging, a 3-way tile
+      classification (type 2 = end of bar, ends the hang if the landing below is clear; type 0 =
+      nothing, or holding Down >5 ticks, drops Blupi into free-fall with a 5-tick re-grab grace
+      timer; otherwise stays gripped), and a Jump-to-release mechanic (10-tick wind-up, then a
+      fixed `-11.0` upward launch, same grace timer). This is a genuinely new movement mode
+      comparable in scope to the 5 already-implemented vehicles, NOT a simple blocking check.
+      Confirmed still NOT implemented, and blocked on further research beyond what
+      `mobile-eggbert-reference/` currently documents — the specific real tile icon ID(s) that
+      classify as a grabbable bar/rope are not given anywhere in the existing reference docs (a
+      real gap in the documentation itself, not just the implementation) — do not guess an icon ID
+      for this; research `Decor.cpp`'s own `GetTypeBarre()` call sites first if this is picked up.
 
 #### 5.4 Tile Adaptation (visual smoothing)
 
