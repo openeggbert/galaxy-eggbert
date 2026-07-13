@@ -457,13 +457,48 @@ judgment (§9).
    311-316); deliberately deferred pending a render/icon-selection decision, not a gameplay-logic
    gap. Needs that decision made first (see plan.md `153`), not a blind implementation attempt.
 
-10. **Re-audit sections 2.1-2.5/2.8/2.10-2.13 of `plan.md`** the same way 2.6/2.7 were reconciled
-    this session — they weren't touched by that pass and may have similar staleness (2.6/2.7 had 55
-    combined false-negative items before reconciliation). Lower urgency than 7/8 above since it's
-    pure documentation, not a functional gap, but worth doing before it compounds further.
+10. ~~Re-audit sections 2.1-2.5/2.8/2.10-2.13 of `plan.md`~~ **DONE 2026-07-14** — 2.4/2.8/2.10/2.12
+    confirmed NOT stale (correctly all `[ ]`, matching reality); 2.1/2.5/2.11/2.13 WERE badly stale
+    (24 items flipped `[ ]`→`[x]`, most notably §5.3's hazard-tile subsection, whose own intro
+    claimed "none of these have hazard logic wired" when Phase 14 had implemented almost all of it,
+    and §11 Save Data, which claimed "not started at all" when `GESaveData` is real and working).
 
-Each item is independently small (except #7, which is a real feature and should get its own
-regression pass) and safe to pick up in any order.
+### Genuinely open gaps (confirmed via direct source grep, not stale-doc negatives — from the
+### 2026-07-14 audit above; ordered roughly by value/effort)
+
+11. **`ctest`/CI integration** (`plan.md TEST-002`) — zero `enable_testing()`/`add_test()` calls
+    exist anywhere in `CMakeLists.txt`. The 7 real test/verify tools (`GalaxyEggbertWorldsTests` +
+    6 `VerifyXxx` binaries) all exist and pass but must be run manually one at a time (§7's own
+    command list) — wiring `gtest_discover_tests()` for the gtest-based suite and `add_test()` for
+    each `VerifyXxx` binary would make `ctest --test-dir build-cna` alone a complete regression
+    check. Concrete, well-scoped, no research needed (unlike most other open items below). Files:
+    `CMakeLists.txt`. Verify: `ctest --test-dir build-cna --output-on-failure` reports all 7 green.
+
+12. **Normal-jump tile** (`plan.md TILE-041`) — forces a jump when stepped on; no matching code
+    exists anywhere. Needs the real trigger condition/jump magnitude confirmed against
+    `mobile-eggbert-reference/` or `Decor.cpp` first (not in the existing reference docs as of this
+    audit) — a small research task before implementation, same shape as prior hazard tiles this
+    session.
+
+13. **Barre/barrier tile** (`plan.md TILE-045`) — blocks certain vehicle types; no matching code
+    exists. Same research-first shape as #12.
+
+14. **Water-drip tile** (`plan.md TILE-032`, `IsGoutte`) — triggers a glu/slow effect; confirmed not
+    among the 5 real hazards this engine already models. Needs the exact real trigger/effect
+    researched first.
+
+15. **Camera shake system** (`plan.md` §2.10/§2.12) — the whole system is genuinely unbuilt (zero
+    grep matches). Several already-implemented mechanics reference real shake events that
+    currently no-op (crate impact, explosions, fan shockwave, electric spark) — would need its own
+    scoping pass to decide magnitude/duration per trigger before implementing.
+
+16. **Particle/transient-visual-effects system** (`plan.md` §2.7 §7.5 / §2.12, ~22 items) — the
+    entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
+    single largest remaining checklist section by item count. A real feature, not a quick fix —
+    scope as its own multi-task effort if picked up, not a "next smallest task."
+
+Each item above is independently small and safe to pick up in any order, except #16 (its own
+multi-task effort) and #9 (blocked on a render decision) and #8 (blocked on door persistence).
 
 ## 9. Do not do yet
 
