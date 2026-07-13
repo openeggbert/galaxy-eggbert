@@ -568,7 +568,22 @@ namespace GalaxyEggbert::CNA
         static constexpr int kNoGround = -1;
 
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
-        [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable);
+        // @p referenceY bounds the scan to grid Y <= floor(referenceY) + 1
+        // (fixed 2026-07-13, NEXT.md §4/§5's "roofed-interior" limitation):
+        // previously this always scanned from the TOP of the entire world
+        // down, so a solid ceiling anywhere above an open interior (e.g. a
+        // roofed tunnel) registered as that column's "floor", making the
+        // real floor beneath it unreachable -- Blupi got resolved onto TOP
+        // of the ceiling instead of standing on the real ground below it.
+        // Bounding the scan by the caller's own current height (or current
+        // height + a reachable step-up allowance, for TryMoveAxis) means
+        // only solid blocks AT OR BELOW roughly where the caller already
+        // is can ever be treated as ground -- a real ceiling above stays
+        // irrelevant once the caller is already beneath it, matching real
+        // mobile-eggbert's per-tile-independent 2D collision well enough
+        // for this purpose without a general per-cell-occupancy rewrite.
+        [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable,
+                                                 float referenceY);
         void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
         void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt);
 

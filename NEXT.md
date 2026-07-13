@@ -135,6 +135,20 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13** (one very
 long session); each item is its own commit.
 
+- **Fixed `GEBlupiController::GroundHeightAt()`'s roofed-interior limitation** — previously always
+  scanned from the world's topmost Y down for a column's "floor", so a real ceiling anywhere above
+  an open interior (e.g. a roofed tunnel) registered as that column's ground, misresolving Blupi
+  onto TOP of the ceiling instead of the real floor beneath it (`SetPosition()`/walking into any
+  enclosed/roofed space was broken). Fixed by bounding the scan with a `referenceY` parameter:
+  `TryMoveAxis` passes `m_y + kStepLimit` (still detects legitimate step-up ground within reach),
+  the vertical/gravity pass passes plain `m_y` (a ceiling above where Blupi already is is now
+  irrelevant to where he lands). Verified two ways: (1) a new `VerifyBlupiMovement` check against
+  the real south tunnel (floor at grid y=0, BrickWall ceiling at grid y=3, `tools/
+  GenerateSampleWorld3D.cpp`) — confirmed via `git stash` that this check FAILS on the pre-fix code
+  (lands at y=4, the ceiling) and PASSES after the fix (lands at y=1, the real floor); (2) full
+  regression: `GalaxyEggbertWorldsTests` (64/64), all 6 `VerifyXxx` tools, both EasyGL and Vulkan
+  builds. Files: `src/GalaxyEggbertCNA/Game/GEBlupiController.cpp`/`.hpp`,
+  `tools/VerifyBlupiMovement.cpp`.
 - **Fixed 3D-world render bleed-through during Wait/Init** — reported live by the user: at game
   start, the 3D terrain/background was visible in the pillarbox margins around (and, on
   non-4:3-aspect windows, alongside) the Wait loading-gauge screen and Init's gamer-select menu.
@@ -203,21 +217,19 @@ finding exists: the real icon 378 texture's actual content occupies only the bot
 whatever texture it's given. This is purely a visual/UV-mapping issue — it does not affect any
 test or the build.
 
-A separate, deeper architectural limitation was found (not fixed, not currently blocking anything):
-`GEBlupiController::GroundHeightAt()` resolves a column's floor as the single topmost solid block
-in that column, with no concept of "nearest solid surface at or below Blupi's own height." Any
-roofed/enclosed interior with a ceiling above an open floor is unreachable via normal walking or a
-raw `SetPosition()` into it (the ceiling gets misread as the floor). Hit twice this project so far
-(the fan-hazard task, then Saw verification), both times worked around by placing the affected
-demo geometry in open-sky rooms instead of fixing the root cause. Worth fixing properly before a
-third feature needs to walk-test something inside an enclosed space — see §5.
+The previously-open `GEBlupiController::GroundHeightAt()` roofed-interior limitation (resolved a
+column's floor as the single topmost solid block with no concept of "nearest solid surface at or
+below Blupi's own height", making any roofed/enclosed interior unreachable) **is now fixed
+(2026-07-13)** — see §3 and §5 for the full writeup. The fan-hazard/Saw-verification demo rooms
+that previously worked around it by using open-sky placements were left as-is (no need to
+retrofit), but new enclosed-space content no longer needs that workaround.
 
 ## 5. Known bugs and limitations
 
 | Status | Issue |
 |---|---|
 | **open, needs_human — do not guess again** | Saw blade (icon 378) render orientation still wrong; see §4. |
-| **real architectural limitation, not fixed** | `GEBlupiController::GroundHeightAt()` misreads a ceiling as the floor for any roofed/enclosed interior — see §4. Workaround so far: avoid placing new hazards/features inside enclosed spaces. |
+| **fixed 2026-07-13** | `GEBlupiController::GroundHeightAt()` used to misread a ceiling as the floor for any roofed/enclosed interior. Fixed by bounding the scan with a `referenceY` parameter (current Y, or current Y + step-up allowance) instead of always scanning from the world's topmost Y; verified against the real south tunnel (a `git stash`-confirmed before/after test) + full regression on both backends. See §3. |
 | **CNA upstream bug, worked around — needs approval to fix upstream** | CNA's Vulkan backend records all `SpriteBatch` draws before all 3D draws each frame, so a sprite HUD drawn after the 3D scene gets painted over. `galaxy-eggbert` no longer uses `SpriteBatch` (`GEHud` draws real 3D quads instead), so it's unaffected — but any future `SpriteBatch` use would be. |
 | **CNA quirk, worked around** | A `BasicEffect` draw with `Alpha < 1` renders on EasyGL but not at all on CNA's Vulkan backend. `GEHud`'s treasure panel uses opacity 1.0 instead of the real mobile-eggbert 0.6 until this is fixed upstream (`kPanelOpacity`). |
 | **accepted limitation, user declined a fix (2026-07-09)** | `GalaxyEggbertCNA` exits with code 1 (not 0) when closed via a real window-manager close request — root cause is inside SDL's own X11 teardown (`../cna`/SDL), needs explicit approval to fix. Do not attempt without new approval. |
@@ -384,12 +396,9 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    blocks in `worlds3d/world001.vwr`; all 9 land correctly, not reproduced via scripted collision.
    See §5 for the updated conclusion; still open if a live repro with coordinates ever recurs.
 
-5. **Fix `GEBlupiController::GroundHeightAt()`'s roofed-interior limitation** (§4/§5) — make it
-   consider Blupi's own current Y instead of always using the column's topmost solid block. Scope
-   carefully: this could subtly affect every other already-shipped hazard/mechanic's collision, so
-   needs a full regression pass (`VerifyBlupiMovement`, `VerifyInteractionSystem`) after the change,
-   not just a walk-test of the specific tunnel that surfaced it. Files:
-   `src/GalaxyEggbertCNA/Game/GEBlupiController.cpp`/`.hpp`.
+5. ~~Fix `GEBlupiController::GroundHeightAt()`'s roofed-interior limitation~~ **DONE 2026-07-13** —
+   see §3/§5 for the full writeup and verification (before/after `git stash` test against the real
+   south tunnel + full regression on both backends).
 
 6. ~~Add Init's semi-transparent gamer-slot background panels~~ **DONE 2026-07-13**
    (`plan.md MENU-014/015`) — `GEInputPad::DrawInit()` now draws a `pad.png` icon-15 panel (same
@@ -399,9 +408,9 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    EasyGL screenshot (temporary `kWaitDurationSeconds` debug override to reach Init immediately,
    reverted before commit) + full 7-tool suite.
 
-Each remaining task above is independently small and verifiable; do them in any order except #5,
-which should wait until nothing more urgent depends on the current (wrong-but-stable) collision
-behavior.
+All of the above are now done except #1 (Saw blade), which is blocked on the user's own visual
+judgment (§9). See the end of this section for the next round of tasks, identified 2026-07-13 once
+this list emptied out.
 
 ## 9. Do not do yet
 

@@ -92,10 +92,15 @@ namespace GalaxyEggbert::CNA
                                static_cast<std::uint16_t>(gz)).isAir();
     }
 
-    int GEBlupiController::GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable)
+    int GEBlupiController::GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable,
+                                           float referenceY)
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        for (int y = blocksPerAxis - 1; y >= 0; --y)
+        // See this method's own header comment (GEBlupiController.hpp) for
+        // why the scan no longer unconditionally starts at the world's
+        // topmost Y.
+        const int startY = std::min(blocksPerAxis - 1, static_cast<int>(std::floor(referenceY)) + 1);
+        for (int y = startY; y >= 0; --y)
         {
             if (IsSolidAt(world, gx, y, gz))
             {
@@ -399,7 +404,10 @@ namespace GalaxyEggbert::CNA
         const int gx = ClampGrid(static_cast<int>(std::lround(candidateX + kWorldCenterX)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::lround(candidateZ + kWorldCenterZ)), blocksPerAxis);
 
-        const int targetGroundY = GroundHeightAt(world, gx, gz, tempPassable);
+        // referenceY = m_y + kStepLimit: allows detecting legitimate
+        // step-up ground within reach, while a real ceiling higher than
+        // that stays irrelevant (see GroundHeightAt's own comment).
+        const int targetGroundY = GroundHeightAt(world, gx, gz, tempPassable, m_y + kStepLimit);
 
         // Allow the move if the destination column's ground is at most
         // kStepLimit above the current feet Y (step-up); any amount lower
@@ -676,7 +684,10 @@ namespace GalaxyEggbert::CNA
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
-        const int groundY = GroundHeightAt(world, gx, gz, tempPassable);
+        // referenceY = m_y (pre-fall position): a real ceiling above where
+        // Blupi already is stays irrelevant to "what does he land on while
+        // falling" (see GroundHeightAt's own comment).
+        const int groundY = GroundHeightAt(world, gx, gz, tempPassable, m_y);
 
         // kNoGround (no solid block anywhere in this column) must never
         // clamp Blupi to a fake floor -- he keeps falling under gravity

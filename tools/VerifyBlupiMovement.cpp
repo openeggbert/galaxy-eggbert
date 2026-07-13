@@ -869,6 +869,32 @@ int main(int argc, char** argv)
               "(otherwise this repro attempt tested nothing)");
     }
 
+    // GroundHeightAt()'s roofed-interior fix (plan.md/NEXT.md §4/§5,
+    // 2026-07-13): the south tunnel (tools/GenerateSampleWorld3D.cpp) is a
+    // REAL enclosed interior already in this world -- floor at grid y=0,
+    // BrickWall ceiling at grid y=3, open walkable interior at grid z 66-68
+    // (world z 16-18) between BrickWall side walls at z=65/69. Before the
+    // fix, GroundHeightAt() always scanned from the world's topmost Y down,
+    // so the ceiling registered as this column's "floor" -- SetPosition()
+    // into the tunnel's real floor got immediately overridden to the
+    // ceiling's own top surface on the very next Step(). World x=-10 (grid
+    // 40) is well inside the tunnel's x=20-75 footprint, away from any
+    // other placed structure.
+    {
+        GEBlupiController tunnelWalker;
+        tunnelWalker.SetPosition(-10.0f, 1.0f, 17.0f); // real tunnel floor height
+        for (int i = 0; i < 30; ++i)
+        {
+            tunnelWalker.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        }
+        std::cout << "South tunnel interior: y=" << tunnelWalker.GetY()
+                   << " onGround=" << tunnelWalker.IsOnGround() << std::endl;
+        check(tunnelWalker.IsOnGround(), "Blupi stays grounded on the tunnel's real floor");
+        check(tunnelWalker.GetY() < 2.0f,
+              "Blupi rests on the tunnel's real floor (y~1), not misresolved onto the "
+              "BrickWall ceiling above it (y~4)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }
