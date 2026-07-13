@@ -268,6 +268,28 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Minimal settings persistence implemented (2026-07-13, plan.md `MENU-067`), per explicit user
+  request to propose a save-system design before implementing it.** A dedicated research pass into
+  the real mobile-eggbert `GameData.hpp`/`.cpp` confirmed: (1) it's a fixed 640-byte binary blob (3
+  gamer slots × lives/last-world/200 door flags + global sound/jump/zoom/accel settings), read/
+  written via WP7's `IsolatedStorageFile` (no desktop equivalent at all); (2) `Write()` fires two
+  ways in the real source — automatically at Win/Lost (lives/doors) and manually right after every
+  Setup-screen toggle press; (3) byte-compatibility with this format has zero payoff for
+  GalaxyEggbertCNA, since its own `GEInteractionSystem`/`GEWorldRuntime` already model lives/
+  treasure/doors completely differently (one hand-authored `.vwr` world, not 100+ levels/200 door
+  flags) — no real save file could ever cross between the two engines. Proposed and (after user
+  confirmation) implemented a deliberately minimal, NOT-byte-compatible alternative: new
+  `GESaveData` (`src/GalaxyEggbertCNA/Game/GESaveData.hpp`/`.cpp`), a plain `key=value` text file
+  (no new dependency — no JSON library exists in this project) persisting just `soundEnabled` (the
+  one setting already wired to real behavior via `GESound::SetEnabled()`/`IsEnabled()`). Loaded
+  once in `LoadContent()`; `Save()` called immediately after the SetupSounds toggle, matching the
+  real source's own write-on-toggle-press behavior exactly (not a timer or continuous autosave).
+  Verified via a new `VerifyGESaveData` tool (3 checks: default-true-when-missing, round-trip for
+  both bool states) plus a live two-process test (toggle off + save in one run, confirmed loaded
+  back correctly at the start of a second, separate run) — full regression suite green on both
+  backends. Lives/mission fields, if ever added, would follow the same automatic-Win/Lost-
+  checkpoint pattern confirmed in the real source, not continuous autosave.
+
 - **PlaySetup (settings) screen implemented (2026-07-13, plan.md `MENU-058..069`), continuing
   autonomously right after the Win/Lost task below.** Wired Pause's real Setup button
   (previously inert) to `SetPhase(PlaySetup)` (confirmed via `Game1.cpp`'s real

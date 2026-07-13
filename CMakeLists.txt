@@ -291,6 +291,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEHud.cpp
         src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
         src/GalaxyEggbertCNA/Game/GEInputPad.cpp
+        src/GalaxyEggbertCNA/Game/GESaveData.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -521,6 +522,20 @@ add_executable(VerifyBlupiMovement
 )
 
 target_include_directories(VerifyBlupiMovement PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
+# GESaveData.hpp/.cpp are deliberately engine-agnostic (only <string>/
+# <fstream>) despite living under src/GalaxyEggbertCNA/ -- this tool links
+# it without needing CNA at all, same precedent as VerifyBlupiMovement
+# above.
+add_executable(VerifyGESaveData
+        tools/VerifyGESaveData.cpp
+        src/GalaxyEggbertCNA/Game/GESaveData.cpp
+)
+
+target_include_directories(VerifyGESaveData PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )

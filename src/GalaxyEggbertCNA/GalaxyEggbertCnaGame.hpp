@@ -10,6 +10,7 @@
 #include "Game/GEHud.hpp"
 #include "Game/GETrainingHints.hpp"
 #include "Game/GEInputPad.hpp"
+#include "Game/GESaveData.hpp"
 
 #include <GalaxyEggbert/def/GamePhase.hpp>
 
@@ -247,6 +248,14 @@ namespace GalaxyEggbert::CNA
         // camera code (below) can skip its own handling and avoid the two
         // features fighting over the same left-mouse-button input.
         GEInputPad inputPad_;
+
+        // Minimal settings persistence (2026-07-13, plan.md MENU-067, see
+        // GESaveData.hpp for why this is NOT byte-compatible with the
+        // real mobile-eggbert GameData). Loaded once in LoadContent();
+        // Save() is called right after the SetupSounds toggle, matching
+        // the real source's own "write immediately on toggle press"
+        // behavior.
+        GESaveData saveData_;
 
         // Mouse drag-look (2026-07-10, user request): while the left
         // button is held, mouse deltas rotate the camera around Blupi

@@ -369,6 +369,12 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: sound loaded — " << sound_.LoadedCount() << "/"
                   << GESound::kNumChannels << " channel(s)." << std::endl;
 
+        // Minimal settings persistence (2026-07-13, plan.md MENU-067, see
+        // GESaveData.hpp) -- restores the one real, already-wired setting
+        // (sound on/off) from the previous run, if any.
+        saveData_.Load();
+        sound_.SetEnabled(saveData_.GetSoundEnabled());
+
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
                   << terrainRenderer_->BlockCount() << " blocks ("
                   << terrainRenderer_->AnimatedBlockCount() << " animated, "
@@ -486,9 +492,15 @@ namespace GalaxyEggbert::CNA
                 {
                     // Real SetupSounds toggle -- a genuinely meaningful
                     // desktop equivalent, wired to the pre-existing
-                    // GESound::SetEnabled()/IsEnabled() (not persisted
-                    // across restarts -- no GameData exists yet).
+                    // GESound::SetEnabled()/IsEnabled(). Persisted
+                    // immediately (2026-07-13, plan.md MENU-067, see
+                    // GESaveData.hpp), matching the real source's own
+                    // `gameData.setSoundActiveProperty(...);
+                    // gameData.Write();` -- write-on-toggle, not a timer
+                    // or continuous autosave.
                     sound_.SetEnabled(!sound_.IsEnabled());
+                    saveData_.SetSoundEnabled(sound_.IsEnabled());
+                    saveData_.Save();
                 }
                 if (setupInput.returnPressed ||
                     (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
