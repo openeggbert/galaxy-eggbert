@@ -454,10 +454,19 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       counters (`HUD-015`/`016`), and (2026-07-13) both real `jauge.png` gauges — water/Nage
       breath (`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`).
       Avoid building a UI framework — a HUD is a handful of sprite draws keyed to game state, not
-      a system. Remaining real HUD elements (perso counter, score/world-name/timer text,
-      hit-flash/camera-shake, exit-open popup, controls hint, etc.) are tracked individually in
-      `## 2.3`'s `HUD-009`-`HUD-011`/`HUD-013`/`HUD-014`/`HUD-017`/`HUD-020`-`HUD-026` list, not
-      part of this summary bullet.
+      a system. **The real `Decor::DrawInfo` function (`Decor.cpp:1185-1311` — the actual in-game
+      HUD draw call, the authoritative source for what this phase should port) has now been read
+      in full, end to end (2026-07-13): every element it draws is either implemented above, or
+      identified as a genuine remaining gap (`HUD-017` perso counter, blocked on a separate
+      not-yet-ported "Perso" mechanic; `HUD-024` training hints, blocked on a "mission" concept
+      plus table-transcription approval).** Every OTHER `HUD-0NN` item (`002`/`009`-`011`/`013`/
+      `020`-`023`/`025`-`026`) is NOT present in the real `DrawInfo` at all — several turned out to
+      be based on wrong premises entirely (`HUD-002`'s claimed life-icon cap doesn't exist;
+      `HUD-009`/`025`'s "score" has no real backing anywhere found) and are now flagged `[?]` in
+      `## 2.3` for independent re-verification against whichever other real function (if any)
+      actually implements them, rather than assumed real. `HUD-014` (camera shake) IS confirmed
+      real (`m_decorAction`/`DecorAction::SmallShake`/`BigShake`) but belongs with camera work, not
+      `GEHud`.
 
 ### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
 
@@ -1466,7 +1475,11 @@ CNA has no real HUD yet — only a temporary 2D debug anim-state indicator. Ever
 reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 
 - [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11; since 2026-07-10 at the REAL `DrawInfo` position (210,417), X+=16, via `GEHud`)
-- [ ] HUD-002 — Life icons cap at 5 visible; overflow shown as "+N" text — revision: verify exact mobile-eggbert layout; current CNA impl draws one icon per life uncapped (real `DrawInfo` is also uncapped — re-verify whether any cap exists at all before implementing one)
+- [x] HUD-002 — **Resolved 2026-07-13, this entry's own premise was wrong**: the real
+      `DrawInfo` (`Decor.cpp:1190-1194`) draws exactly `m_nbVies` icons in a plain, uncapped loop
+      (`for (i=0; i<m_nbVies; i++) { HudIcon(...); pos.X += 16; }`) — there is NO 5-icon cap and
+      NO "+N" overflow text anywhere in the real source. `GalaxyEggbertCNA`'s existing uncapped
+      `GEHud` implementation (`HUD-001`) was already correct; no change needed.
 - [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel (CNA, 2026-07-10, `GEHud`): real position (460,450), glyphs from `text.png` whose sheet index IS the ASCII code (read off the asset, not `table_char`); fixed 17px advance approximates the real proportional widths
 - [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15) (CNA, 2026-07-10, `GEHud`) — at opacity 1.0 instead of the real 0.6 for now (CNA Vulkan drops `BasicEffect` draws with Alpha<1, see NEXT.md §5)
 - [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11; since 2026-07-10 at the REAL position (520,418) via `GEHud`)
@@ -1477,14 +1490,37 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
       directly against `Jauge.hpp` + `Decor.cpp:5071-5137`: all 4 real states reuse the SAME
       `m_blupiTimeShield` variable and `m_jauges[1]` widget, not 4 separate gauges — corrects
       this entry's own "Shield timer" framing, which undersold the real scope)
-- [ ] HUD-009 — Score display (text label, top-right area)
-- [ ] HUD-010 — World name + elapsed level timer
-- [ ] HUD-011 — Game speed indicator label (SLOW / NORMAL / FAST)
+- [ ] HUD-009 — `[?]` Score display (text label, top-right area). **Flagged 2026-07-13**: after
+      fully reading the real `Decor::DrawInfo` (`Decor.cpp:1185-1311`, the actual in-game HUD
+      draw function -- every other `HUD-0NN`/`HUD-1NN` item cross-checked against it this
+      session came from this exact function) end to end, there is NO score display or numeric
+      score variable drawn anywhere in it, and no `m_score`-style field exists in `GameData.hpp`
+      either. The only real "score" concept found is a separate high-score/`Ranking` MENU screen
+      (`Def.hpp`'s `GameState::Ranking`, `Game1.hpp`) -- ## 2 §2 MENU-* territory, not part of the
+      in-game HUD at all. Do not implement an in-game score display without first finding the
+      real source of this claim; it may be a stale/mistaken entry from before `DrawInfo` was
+      fully read.
+- [ ] HUD-010 — `[?]` World name + elapsed level timer. **Flagged 2026-07-13**: same as `HUD-009`
+      -- not present anywhere in the real `DrawInfo`. Needs its own verification against whichever
+      other real function (if any) actually draws this before implementing.
+- [ ] HUD-011 — `[?]` Game speed indicator label (SLOW / NORMAL / FAST). **Flagged 2026-07-13**:
+      `GameSpeed` itself IS real (`Game1.hpp`'s `gameSpeed`/`SetGameSpeed()`/`getGameSpeed()`), but
+      it lives in the `Game1` application/settings layer, not `Decor`, and is NOT drawn anywhere in
+      the real `DrawInfo` -- likely a settings-menu display, not an in-game HUD element as this
+      entry assumes. Needs its own verification before implementing here.
 - [x] HUD-012 — Water/Nage breath gauge (jauge.png, real `m_jauges[0]`) at (90,450), Blue normally
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:5310-5326`, wired to the
       already-implemented `GEBlupiController::IsNage()`/`GetWaterGaugeLevel()`, `E3D-MIG-148`)
-- [ ] HUD-013 — Hit flash: red full-screen overlay panel, 0.4 s fade on damage
-- [ ] HUD-014 — Camera shake on hit
+- [ ] HUD-013 — `[?]` Hit flash: red full-screen overlay panel, 0.4 s fade on damage. **Flagged
+      2026-07-13**: not found in `DrawInfo`; needs its own verification (a full-screen flash isn't
+      obviously a `Decor` responsibility at all -- may live in a different real class/layer, or may
+      not exist as described).
+- [ ] HUD-014 — Camera shake on hit. **Confirmed real 2026-07-13, but NOT a HUD/sprite item** --
+      `Decor.cpp`'s `m_decorAction` (`DecorAction::SmallShake`/`BigShake`, driven by
+      `DecorNextAction()`/`Tables::table_decor_action`, already documented in `NEXT.md`'s
+      architecture notes) is a genuine screen-shake/forced-pan CAMERA OFFSET effect, triggered by
+      several real hazards/hits. Belongs with camera work (`GECameraRig`-equivalent), not `GEHud`
+      -- re-file under Phase 6/camera if picked up, not implemented here.
 - [x] HUD-015 — Bullet counter: element.png icon 176 × bullets held, X+=4 fanned row at (570,442)
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1197-1201`)
 - [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
@@ -1498,13 +1534,30 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 - [x] HUD-019 — **Corrected 2026-07-13**: same widget as `HUD-008` (`m_jauges[1]`, shared
       Shield/Power/Cloud/Hide countdown, not shield-specific) — done together with `HUD-008`
       (CNA, 2026-07-13, `GEHud`).
-- [ ] HUD-020 — "EXIT OPEN!" popup text (3 s timed, big centred text) when all treasures collected
-- [ ] HUD-021 — Controls hint bar fades after 8 s (re-show on new level)
-- [ ] HUD-022 — Pause button icon visible during Play phase (top area)
-- [ ] HUD-023 — HUD hidden during non-Play phases (Init, Pause, Win, Lost, Setup)
-- [ ] HUD-024 — Training hint overlay at screen top (missions 11-14 only)
-- [ ] HUD-025 — Score popup: "+N" floating text rises and fades over 1 s at collection position *(3D visual)*
-- [ ] HUD-026 — "EXIT OPEN!" text: centre screen, large font, 3 s duration
+- [ ] HUD-020 — `[?]` "EXIT OPEN!" popup text (3 s timed, big centred text) when all treasures
+      collected. **Not found in `DrawInfo`** (2026-07-13 sweep) -- a grep for "EXIT"/"OPEN"/
+      "SORTIE" across `Decor.cpp`/`Game1`-layer headers found nothing; may be a localized string
+      resource triggered from a different, not-yet-read code path, or may be a stale entry. Needs
+      its own verification before implementing.
+- [ ] HUD-021 — `[?]` Controls hint bar fades after 8 s (re-show on new level). Not in `DrawInfo`
+      (real training-hint overlay there is `HUD-024`, mission-gated, a different thing) — needs
+      its own verification.
+- [ ] HUD-022 — `[?]` Pause button icon visible during Play phase (top area). Not in `DrawInfo` —
+      likely a `Game1`/menu-layer button, not a `Decor` HUD element; needs its own verification.
+- [ ] HUD-023 — `[?]` HUD hidden during non-Play phases (Init, Pause, Win, Lost, Setup). Plausible
+      (a real `GameState`-like concept exists per `Def.hpp`), but no such phase/state machine
+      exists in `GalaxyEggbertCNA` at all yet — not implementable until one does, not merely
+      unimplemented.
+- [ ] HUD-024 — Training hint overlay at screen top (missions 11-14 only). **Confirmed real** —
+      IS in the real `DrawInfo` (`Decor.cpp:1258-1310`, `Tables::table_training1`-`4`, gated on
+      `m_mission`). Genuinely not started: needs a "mission" concept (doesn't exist in
+      `GalaxyEggbertCNA`) and explicit approval to transcribe the 4 `table_trainingN` arrays
+      (`CLAUDE.md`'s no-casual-table-copying rule) before implementing.
+- [ ] HUD-025 — `[?]` Score popup: "+N" floating text. Same as `HUD-009` — no real score variable
+      found anywhere; do not implement without first finding its actual real source.
+- [ ] HUD-026 — `[?]` "EXIT OPEN!" text: centre screen, large font, 3 s duration. Same flag as
+      `HUD-020` (likely the same real event, described twice under 2 numbers) — needs its own
+      verification, not found in `DrawInfo`.
 
 ---
 
