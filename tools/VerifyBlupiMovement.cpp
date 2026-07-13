@@ -709,6 +709,73 @@ int main(int argc, char** argv)
                   "the warning fires at exactly the real level-10 threshold, not some other level");
         }
 
+        // Invert/Mirror (plan.md PICKUP-011) -- independent of the 4 powers
+        // above (its own gauge, real gate is only !Hide), the real
+        // ScaleTime(3)=0.15s/level tick rate (same as Power), no warning
+        // stage, and the actual real "negate horizontal input speed" effect.
+        {
+            GEBlupiController inverted;
+            check(inverted.TriggerInvert(), "TriggerInvert() succeeds from no state at all");
+            check(inverted.IsInverted(), "IsInverted() reflects the new state");
+            check(!inverted.TriggerInvert(),
+                  "TriggerInvert() fails while already Invert (real: blocked while already active)");
+
+            GEBlupiController shieldedThenInvert;
+            shieldedThenInvert.TriggerShield();
+            check(shieldedThenInvert.TriggerInvert(),
+                  "TriggerInvert() succeeds while Shield is active (real gate ignores Shield/Power/Cloud)");
+
+            GEBlupiController hiddenThenInvert;
+            hiddenThenInvert.TriggerHide();
+            check(!hiddenThenInvert.TriggerInvert(),
+                  "TriggerInvert() fails while Hide is active (real gate: != Hide)");
+
+            // Real tick rate: ScaleTime(3)=0.15s/level, same as Power.
+            GEBlupiController invertTiming;
+            invertTiming.TriggerInvert();
+            for (int i = 0; i < 30; ++i)
+            {
+                invertTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kInvertTickSeconds);
+            }
+            check(invertTiming.GetInvertLevel() == GEBlupiController::kInvertMax - 30,
+                  "Invert's gauge ticks down at exactly the real 0.15s/level rate");
+
+            // Expiry: real ~15s duration (100 levels * 0.15s), no warning stage.
+            GEBlupiController invertExpiring;
+            invertExpiring.TriggerInvert();
+            bool sawInvertExpiry = false;
+            for (int i = 0; i < 400 && invertExpiring.IsInverted(); ++i) // 400 * 0.05 = 20s > 15s real duration
+            {
+                invertExpiring.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+                if (invertExpiring.JustExpiredInvert())
+                {
+                    sawInvertExpiry = true;
+                }
+            }
+            check(!invertExpiring.IsInverted(), "Invert expires back to false after its real ~15s duration");
+            check(sawInvertExpiry, "JustExpiredInvert() fires exactly once when the gauge naturally reaches 0");
+
+            // Real effect: negates horizontal movement input (Decor::
+            // SetSpeedX: "if (m_blupiInvert) speed = -speed") -- walking
+            // "forward" while Inverted should move Blupi BACKWARD relative
+            // to a non-inverted control at the same facing/input.
+            GEBlupiController normalWalker;
+            normalWalker.SetYaw(0.0f); // facing -Z
+            for (int i = 0; i < 60; ++i)
+            {
+                normalWalker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            }
+            GEBlupiController invertedWalker;
+            invertedWalker.TriggerInvert();
+            invertedWalker.SetYaw(0.0f);
+            for (int i = 0; i < 60; ++i)
+            {
+                invertedWalker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            }
+            check(invertedWalker.GetZ() > 0.0f && normalWalker.GetZ() < 0.0f,
+                  "the same forward input moves Blupi in opposite Z directions with/without Invert active");
+        }
+
         // Vehicle mounts (plan.md E3D-MIG-171) -- trigger gates, Cloud/Hide
         // cancellation on mount (real: "if Cloud or Hide was active it is
         // silently cancelled... Shield/Power are left untouched"), and the

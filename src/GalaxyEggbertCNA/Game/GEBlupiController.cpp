@@ -255,6 +255,18 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerInvert() noexcept
+    {
+        if (m_invert || m_secretPower == SecretPower::Hide)
+        {
+            return false;
+        }
+        m_invert = true;
+        m_invertLevel = kInvertMax;
+        m_invertTimer = 0.0f;
+        return true;
+    }
+
     bool GEBlupiController::TriggerMount(VehicleMode mode, bool inNage, bool inSurf) noexcept
     {
         if (IsInVehicle() || inNage || inSurf)
@@ -544,6 +556,15 @@ namespace GalaxyEggbert::CNA
         else
         {
             horizontalSpeed = moveInput * effectiveMoveSpeed;
+            // Invert/Mirror (plan.md PICKUP-011, real `Decor::SetSpeedX`:
+            // "if (m_blupiInvert) speed = -speed") -- negates normal ground
+            // movement only; vehicles use their own separate real speed
+            // system (m_vehicleSpeed above), not SetSpeedX, so this
+            // deliberately does not apply to the IsInVehicle() branch.
+            if (m_invert)
+            {
+                horizontalSpeed = -horizontalSpeed;
+            }
         }
 
         const bool moving = std::fabs(horizontalSpeed) > 0.001f;
@@ -630,6 +651,26 @@ namespace GalaxyEggbert::CNA
             {
                 m_secretPower = SecretPower::None;
                 m_secretPowerTimer = 0.0f;
+            }
+        }
+
+        // Invert/Mirror (plan.md PICKUP-011): independent gauge, same shape
+        // as the secret-power tick above but no warning stage (see
+        // kInvertMax's own comment) -- just a one-shot expiry flag.
+        m_invertJustExpired = false;
+        if (m_invert)
+        {
+            m_invertTimer += dt;
+            while (m_invertTimer >= kInvertTickSeconds && m_invertLevel > 0)
+            {
+                m_invertTimer -= kInvertTickSeconds;
+                --m_invertLevel;
+            }
+            if (m_invertLevel <= 0)
+            {
+                m_invert = false;
+                m_invertTimer = 0.0f;
+                m_invertJustExpired = true;
             }
         }
 

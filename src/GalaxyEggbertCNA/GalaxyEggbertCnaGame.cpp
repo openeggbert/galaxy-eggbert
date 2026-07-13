@@ -1437,6 +1437,10 @@ namespace GalaxyEggbert::CNA
             const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None;
             const bool canGrantHide = secretPower != GEBlupiController::SecretPower::Shield &&
                                        secretPower != GEBlupiController::SecretPower::Cloud;
+            // Invert/Mirror (plan.md PICKUP-011) -- mirrors
+            // GEBlupiController::TriggerInvert()'s own gate exactly (not
+            // already Invert, not Hide); independent of the 4 powers above.
+            const bool canGrantInvert = !blupi_.IsInverted() && secretPower != GEBlupiController::SecretPower::Hide;
             // Real Tank "Fire" (2026-07-13, plan.md BULLET-001) -- a
             // dedicated key (real `KeyPressFlags::Fire`), NOT the Action
             // button used for dynamite/Perso/switches/vehicle mount above.
@@ -1460,7 +1464,7 @@ namespace GalaxyEggbert::CNA
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
-                                 firePressed, canFire, cloudActive);
+                                 firePressed, canFire, cloudActive, canGrantInvert);
 
             // Real Win/Lost phase transitions (plan.md HUD-023): Lost
             // fires the instant GameOverCount() increments (real
@@ -1523,6 +1527,21 @@ namespace GalaxyEggbert::CNA
             if (interaction_.HideGrantedThisFrame() && blupi_.TriggerHide())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel62);
+            }
+
+            // Invert/Mirror grant + expiry (plan.md PICKUP-011) -- real
+            // channels 66 (activate) / 67 (expire), confirmed against
+            // mobile-eggbert-reference/13-object-pickups.md's "Mirror/
+            // Invert" section. No warning-threshold sound (unlike the 4
+            // powers above) -- real source has no warning stage for this
+            // buff either.
+            if (interaction_.InvertGrantedThisFrame() && blupi_.TriggerInvert())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel66);
+            }
+            if (blupi_.JustExpiredInvert())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel67);
             }
 
             // Secret power warning sound (plan.md E3D-MIG-170) -- fires

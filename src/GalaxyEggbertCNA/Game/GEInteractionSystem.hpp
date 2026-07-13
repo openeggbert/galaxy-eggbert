@@ -228,7 +228,7 @@ namespace GalaxyEggbert::CNA
                     bool blupiCanGrantShield = true, bool blupiCanGrantPower = true,
                     bool blupiCanGrantCloud = true, bool blupiCanGrantHide = true,
                     bool blupiFirePressed = false, bool blupiCanFire = false,
-                    bool blupiCloudActive = false);
+                    bool blupiCloudActive = false, bool blupiCanGrantInvert = true);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame
@@ -254,6 +254,11 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool PowerGrantedThisFrame() const noexcept { return powerGrantedThisFrame_; }
         [[nodiscard]] bool CloudGrantedThisFrame() const noexcept { return cloudGrantedThisFrame_; }
         [[nodiscard]] bool HideGrantedThisFrame() const noexcept { return hideGrantedThisFrame_; }
+        // Invert/Mirror pickup (plan.md PICKUP-011, ObjectType40) -- same
+        // one-shot shape as the 4 signals above; the caller calls
+        // GEBlupiController::TriggerInvert() and plays channel 66 only if
+        // that returns true.
+        [[nodiscard]] bool InvertGrantedThisFrame() const noexcept { return invertGrantedThisFrame_; }
 
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
@@ -458,5 +463,6 @@ namespace GalaxyEggbert::CNA
         bool powerGrantedThisFrame_ = false;  // reset at the top of every Update() call
         bool cloudGrantedThisFrame_ = false;  // reset at the top of every Update() call
         bool hideGrantedThisFrame_ = false;   // reset at the top of every Update() call
+        bool invertGrantedThisFrame_ = false; // reset at the top of every Update() call
     };
 }

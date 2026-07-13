@@ -148,6 +148,20 @@ namespace GalaxyEggbert::CNA
         static constexpr int kCloudWarnLevel = 25;
         static constexpr int kHideWarnLevel = 20;
 
+        // Invert/Mirror (plan.md PICKUP-011, real m_blupiInvert, ObjectType40,
+        // verified against mobile-eggbert-reference/13-object-pickups.md's
+        // "Mirror/Invert" section, Decor.cpp ~6040-6052). Independent of the
+        // 4 powers above (its own separate flag/gauge, not part of the
+        // mutually-exclusive SecretPower slot) -- real gate is only
+        // `!m_blupiHide`, so it coexists with Shield/Power/Cloud and even
+        // active vehicle rides. Shares the same 100-level gauge shape and
+        // Power's own real ScaleTime(3)=0.15s/level tick rate (a direct
+        // transcription, "tying with Power for the shared-timer buffs'
+        // fastest decrement" per the reference doc), but has NO warning
+        // stage (unlike the 4 powers above) -- confirmed in the same doc.
+        static constexpr int kInvertMax = 100;
+        static constexpr float kInvertTickSeconds = 3.0f / 20.0f;
+
         // Vehicle mounts (plan.md E3D-MIG-171, real m_blupiHelico/Jeep/Tank/
         // Skate/Over, verified against mobile-eggbert-reference/
         // 10-blupi-mechanics.md §6/13-object-pickups.md's own "Vehicle
@@ -409,6 +423,17 @@ namespace GalaxyEggbert::CNA
         // channel (43/45/56/63) once, same one-shot shape as JustDrowned().
         [[nodiscard]] bool JustCrossedSecretPowerWarning() const noexcept { return m_secretPowerJustWarned; }
 
+        // Invert/Mirror (plan.md PICKUP-011, see kInvertMax's own comment).
+        // Real gate: blocked only while already Invert itself, or while
+        // Hide is active -- independent of Shield/Power/Cloud/vehicles.
+        bool TriggerInvert() noexcept; // real gate: not already Invert, not Hide
+        [[nodiscard]] bool IsInverted() const noexcept { return m_invert; }
+        [[nodiscard]] int GetInvertLevel() const noexcept { return m_invertLevel; }
+        // True for exactly the one Step() call where Invert's gauge reaches
+        // 0 naturally (no warning stage, unlike the 4 powers above) -- the
+        // caller plays the real expiry channel (67) once.
+        [[nodiscard]] bool JustExpiredInvert() const noexcept { return m_invertJustExpired; }
+
         // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
         // comment). Real gate: blocked only while already riding ANY other
         // vehicle, or while Nage/Surf (real also excludes Suspended/Ecrase,
@@ -608,6 +633,11 @@ namespace GalaxyEggbert::CNA
         int m_secretPowerLevel = 0;
         float m_secretPowerTimer = 0.0f;
         bool m_secretPowerJustWarned = false;
+
+        bool m_invert = false;
+        int m_invertLevel = 0;
+        float m_invertTimer = 0.0f;
+        bool m_invertJustExpired = false;
 
         bool m_cheatSuperBlupi = false;
 

@@ -2427,7 +2427,14 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 - [x] PICKUP-008 — ObjectType30: drink — done (`170`/`173`), grants `SecretPower::Hide` instantly (real name is "Drink→Hide", not "+1 life"; the two-stage grab/delayed-activate animation is NOT modeled, see `173`); pickup sound wired (ch62, see PICKUP-073).
 - [ ] PICKUP-009 — ObjectType21: secret exit — NOT modeled as a pickup; only a render icon lookup exists (`GEObjectIcons.cpp`), no `GEInteractionSystem` contact/trigger logic.
 - [x] PICKUP-010 — ObjectType31: cloud power-up — done (`170`/`172`/`174`), grants `SecretPower::Cloud` (strictest gate of the 4, matching real source) + real Cloud offensive `BlupiElectro` aura (2026-07-13, ch59); pickup sound wired (ch55, see PICKUP-073).
-- [ ] PICKUP-011 — ObjectType40: invert/mirror power-up — confirmed NOT modeled (Phase 17 `174`'s own note: "a separate, NOT-modeled effect"); only appears in the dynamite-blast destructible-object list, no pickup/buff logic.
+- [x] PICKUP-011 — ObjectType40: invert/mirror power-up — **implemented 2026-07-13**: independent
+      of the 4 SecretPower buffs (own gauge, real gate only `!Hide`), grants instant on contact,
+      negates normal ground movement (`GEBlupiController::TriggerInvert()`/`IsInverted()`, real
+      `Decor::SetSpeedX` "speed = -speed" behavior — vehicles deliberately unaffected, they use a
+      separate real speed system), real ~15s duration (`ScaleTime(3)`, same rate as Power, no
+      warning stage), pickup/expiry sounds ch66/67. Demo placement added to the secret-powers room
+      in `tools/GenerateSampleWorld3D.cpp`. Not modeled: the 4-direction `ObjectType41`/`42`
+      particle bursts (no particle system exists) and sprite-mirroring (no visible Blupi model).
 - [x] PICKUP-012 — ObjectType26: suction-cup ("Sucette") — done (`170`/`173`), grants `SecretPower::Power` instantly; real 2-stage delay + wall-climbing behavior NOT modeled; pickup sound wired (ch44, see PICKUP-073).
 - [x] PICKUP-013 — ObjectType29: bullet ammo — done (Phase 17 `175`), tops up to `kBulletCap=10`, real no-op-at-cap behavior, ch54 fanfare.
 - [x] PICKUP-014 — ObjectType55: dynamite — done (Phase 15 `155`), caps at 1 carried, action-button placement, real 9-blast fuse sequence.
@@ -2787,10 +2794,15 @@ doesn't silently re-open them or silently guess an answer:
   (2026-07-10): billboard rejected outright, real 3D model required instead (`E3D-MIG-069`) —
   but enemies don't have that option yet (no enemy 3D models exist or are planned), so this
   remains genuinely open for them.
-- The **7 partial-support `ObjectType`s** (jeep/secret-exit/skateboard/suction-cup/mirror/
-  balloon/dynamite) already have fully-documented behavior (see `13-object-pickups.md`) and are
-  simply not yet prioritized — folded into `E3D-MIG-171`-`176`, not a research gap, just an
-  ordering decision.
+- ~~The 7 partial-support `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/
+  dynamite)~~ **STALE, updated 2026-07-13**: 6 of the 7 are now fully implemented (jeep `171`,
+  skateboard `171`, suction-cup `170`/`173`, mirror/invert PICKUP-011, balloon/Overcraft `171`,
+  dynamite `155`) — see §2.7 for each. Only `ObjectType21` (secret-level exit) remains genuinely
+  unimplemented: only a render-icon lookup exists, no `GEInteractionSystem` contact/trigger logic
+  (PICKUP-009). Its real behavior is simple (identical to the existing `ObjectType7` exit-goal
+  contact logic, plus setting a `m_bFoundCle`-equivalent flag) but that flag currently has no
+  consumer in this engine (door-open-on-win isn't modeled, see PICKUP-038/039), so implementing it
+  now would have no observable gameplay effect — low priority until door persistence exists.
 
 ## 4. Documentation Status
 

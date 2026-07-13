@@ -437,7 +437,8 @@ namespace GalaxyEggbert::CNA
                                       int blupiFacingDX, int blupiFacingDZ, bool blupiInvincible,
                                       bool blupiCanGrantShield, bool blupiCanGrantPower,
                                       bool blupiCanGrantCloud, bool blupiCanGrantHide,
-                                      bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive)
+                                      bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
+                                      bool blupiCanGrantInvert)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
@@ -446,6 +447,7 @@ namespace GalaxyEggbert::CNA
         powerGrantedThisFrame_ = false;
         cloudGrantedThisFrame_ = false;
         hideGrantedThisFrame_ = false;
+        invertGrantedThisFrame_ = false;
         ridingLift_ = false;
         bool treasureDoorScanNeeded = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
@@ -1171,7 +1173,8 @@ namespace GalaxyEggbert::CNA
                 obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51 &&
                 obj.type != ObjectType::ObjectType55 && obj.type != ObjectType::ObjectType25 &&
                 obj.type != ObjectType::ObjectType26 && obj.type != ObjectType::ObjectType30 &&
-                obj.type != ObjectType::ObjectType31 && obj.type != ObjectType::ObjectType29)
+                obj.type != ObjectType::ObjectType31 && obj.type != ObjectType::ObjectType29 &&
+                obj.type != ObjectType::ObjectType40)
             {
                 continue;
             }
@@ -1294,11 +1297,14 @@ namespace GalaxyEggbert::CNA
                 // ~6014-6087) -- all 4 grant on contact here (the real
                 // 2-stage delay/animation before Power/Cloud/Hide actually
                 // activate is NOT modeled, see GEBlupiController::
-                // TriggerPower()'s own comment). Real per-pickup gates
-                // (minus vehicle-mode clauses that don't exist here) are
-                // passed in from the caller's own GEBlupiController state
-                // (blupiCanGrantShield/Power/Cloud/Hide) since this class
-                // has no access to GEBlupiController itself -- consistent
+                // TriggerPower()'s own comment). Invert/Mirror (ObjectType40,
+                // plan.md PICKUP-011) is a separate real pickup family but
+                // shares the same instant-grant-on-contact shape, handled
+                // right below the 4 powers. Real per-pickup gates (minus
+                // vehicle-mode clauses that don't exist here) are passed in
+                // from the caller's own GEBlupiController state
+                // (blupiCanGrantShield/Power/Cloud/Hide/Invert) since this
+                // class has no access to GEBlupiController itself -- consistent
                 // with the blupiBallooned/blupiCrouching precedent.
                 case ObjectType::ObjectType25: // shield stick
                     if (blupiCanGrantShield)
@@ -1326,6 +1332,13 @@ namespace GalaxyEggbert::CNA
                     {
                         obj.active = false;
                         cloudGrantedThisFrame_ = true;
+                    }
+                    break;
+                case ObjectType::ObjectType40: // mirror/invert
+                    if (blupiCanGrantInvert)
+                    {
+                        obj.active = false;
+                        invertGrantedThisFrame_ = true;
                     }
                     break;
                 default:

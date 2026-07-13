@@ -95,7 +95,8 @@ menus, though still missing a visible 3D Blupi model.
 - All 5 real terrain hazards (lava/spikes/Blitz/saw+switches/crusher) + spring, Temp/vanishing
   tile, teleporter, water breath gauge.
 - Secret powers (Shield/Power/Cloud/Hide) fully modeled including Cloud's offensive
-  `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts.
+  `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts. Invert/Mirror
+  (independent movement-reversal debuff/buff) also implemented (2026-07-13).
 - Player-fired bullets while riding Tank (real cooldown/ammo gates).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
@@ -135,6 +136,22 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13** (one very
 long session); each item is its own commit.
 
+- **Implemented Invert/Mirror secret power** (`ObjectType40`, plan.md PICKUP-011) — a real
+  gameplay gap found while reconciling `plan.md` against source (see below). Independent of the 4
+  existing SecretPower buffs (own gauge, real gate only `!Hide`), negates normal ground movement
+  while active (`GEBlupiController::TriggerInvert()`/`IsInverted()`), real ~15s duration (no
+  warning stage), ch66/67 pickup/expiry sounds. Demo pickup added to the secret-powers room in
+  `worlds3d/world001.vwr`. New tests in both `VerifyBlupiMovement` (11 checks: gating, timing,
+  expiry, the actual movement-reversal effect) and `VerifyInteractionSystem` (world-pickup contact
+  wiring); full 7-tool suite + both backends pass.
+- **Reconciled `plan.md`'s Feature Parity Checklist with actual source** — sections 2.6 (Enemy AI)
+  and 2.7 (Pickups & Objects) had gone badly stale after the 2026-07-11/12/13 implementation push
+  (2.6 still said "not started at all"); 55 items flipped `[ ]`→`[x]`, ~26 description/sound-channel
+  corrections, after direct verification against `GEInteractionSystem.cpp`/`GEBlupiController`/
+  `GEHud`/`GESound`. A follow-up pass caught and fixed 2 false negatives in the first audit itself
+  (secret-power and switch pickup sounds were actually already wired, just in a different file than
+  the audit checked) — a live example of why "trust but verify" matters even for careful audits.
+  5 genuinely-open gaps remained after all corrections; Invert (above) closed one of them.
 - **Fixed `GEBlupiController::GroundHeightAt()`'s roofed-interior limitation** — previously always
   scanned from the world's topmost Y down for a column's "floor", so a real ceiling anywhere above
   an open interior (e.g. a roofed tunnel) registered as that column's ground, misresolving Blupi
@@ -409,8 +426,35 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    reverted before commit) + full 7-tool suite.
 
 All of the above are now done except #1 (Saw blade), which is blocked on the user's own visual
-judgment (§9). See the end of this section for the next round of tasks, identified 2026-07-13 once
-this list emptied out.
+judgment (§9).
+
+### Next round (identified 2026-07-13, after reconciling `plan.md` against source)
+
+7. **`ObjectType52` bridge construction** (`plan.md PICKUP-064`) — genuinely unbuilt: a real
+   live terrain-collision-toggle mechanic (the object overwrites the terrain grid every tick across
+   a 157-tick sequence, real `table_bridge`), not just another patrol/pickup. Bigger scope than the
+   other items here — read `mobile-eggbert-reference/13-object-pickups.md`'s bridge section first.
+   Files: `src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp`, `GEWorldRuntime.cpp` (terrain-grid
+   mutation). Verify: a new `VerifyInteractionSystem`/`VerifyBlupiMovement` check + full suite.
+
+8. **`ObjectType21` secret-level exit** (`plan.md PICKUP-009`) — only a render-icon lookup exists,
+   no contact/trigger logic. Real behavior is simple (identical to the existing `ObjectType7`
+   exit-goal contact logic, plus setting a `m_bFoundCle`-equivalent flag), but that flag currently
+   has no consumer (door-open-on-win isn't modeled, `PICKUP-038`/`039`) — low priority until door
+   persistence exists; implementing it now would add code with no observable effect. Files:
+   `src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp` (mirror the existing `ObjectType7` case).
+
+9. **`AscenseurVertigo`** (`plan.md PICKUP-024`) — edge-hang on wide/shiftable platforms (icons
+   311-316); deliberately deferred pending a render/icon-selection decision, not a gameplay-logic
+   gap. Needs that decision made first (see plan.md `153`), not a blind implementation attempt.
+
+10. **Re-audit sections 2.1-2.5/2.8/2.10-2.13 of `plan.md`** the same way 2.6/2.7 were reconciled
+    this session — they weren't touched by that pass and may have similar staleness (2.6/2.7 had 55
+    combined false-negative items before reconciliation). Lower urgency than 7/8 above since it's
+    pure documentation, not a functional gap, but worth doing before it compounds further.
+
+Each item is independently small (except #7, which is a real feature and should get its own
+regression pass) and safe to pick up in any order.
 
 ## 9. Do not do yet
 

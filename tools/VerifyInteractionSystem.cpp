@@ -595,6 +595,33 @@ int main(int argc, char** argv)
         check(false, "found the shield stick (ObjectType25) in the sample world");
     }
 
+    // 3.9b. Invert/Mirror (plan.md PICKUP-011) -- the sample world's own
+    // demo (tools/GenerateSampleWorld3D.cpp): mirror/invert at (58,1,90).
+    if (const auto* invertPickup = findFirst(ObjectType::ObjectType40))
+    {
+        GEInteractionSystem invertInteraction;
+        invertInteraction.Update(dt, world, invertPickup->currentX, invertPickup->currentY,
+                                  invertPickup->currentZ, 0.0f, sound, false, false, 0, 0,
+                                  /*blupiInvincible=*/false, /*canGrantShield=*/true, /*canGrantPower=*/true,
+                                  /*canGrantCloud=*/true, /*canGrantHide=*/true, /*blupiFirePressed=*/false,
+                                  /*blupiCanFire=*/false, /*blupiCloudActive=*/false, /*canGrantInvert=*/false);
+        check(!invertInteraction.InvertGrantedThisFrame(),
+              "InvertGrantedThisFrame() is false when the caller reports canGrantInvert=false");
+
+        GEInteractionSystem invertInteraction2;
+        invertInteraction2.Update(dt, world, invertPickup->currentX, invertPickup->currentY,
+                                   invertPickup->currentZ, 0.0f, sound, false, false, 0, 0,
+                                   /*blupiInvincible=*/false, /*canGrantShield=*/true, /*canGrantPower=*/true,
+                                   /*canGrantCloud=*/true, /*canGrantHide=*/true, /*blupiFirePressed=*/false,
+                                   /*blupiCanFire=*/false, /*blupiCloudActive=*/false, /*canGrantInvert=*/true);
+        check(invertInteraction2.InvertGrantedThisFrame(),
+              "InvertGrantedThisFrame() is true on contact when canGrantInvert=true");
+    }
+    else
+    {
+        check(false, "found the mirror/invert pickup (ObjectType40) in the sample world");
+    }
+
     // Hazard immunity: a fresh interaction system touching a STILL-ACTIVE
     // generic hazard (test 2.5 above already deactivated the first
     // ObjectType2 findFirst() would return, via the shared `interaction`

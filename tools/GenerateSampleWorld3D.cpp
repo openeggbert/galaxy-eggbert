@@ -501,6 +501,10 @@ int main(int argc, char** argv)
     place(ObjectType::ObjectType26, 56.0f, 1.0f, 88.0f); // suction-cup (-> Power)
     place(ObjectType::ObjectType30, 54.0f, 1.0f, 92.0f); // drink (-> Hide)
     place(ObjectType::ObjectType31, 56.0f, 1.0f, 92.0f); // charge (-> Cloud)
+    // Invert/Mirror (plan.md PICKUP-011, 2026-07-13) -- independent of the
+    // 4 powers above (its own separate gauge, not part of the mutually-
+    // exclusive SecretPower slot), placed in the same demo room.
+    place(ObjectType::ObjectType40, 58.0f, 1.0f, 90.0f); // mirror/invert
 
     // ------------------------------------------------------------------
     // Vehicle demo (plan.md E3D-MIG-171, 2026-07-12) -- one Jeep pickup
