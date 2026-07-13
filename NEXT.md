@@ -203,13 +203,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   real background file. Also now has a second, third-person camera mode ("C" to toggle,
   2026-07-09, §3) showing a real GPU-skinned 3D model via CNA's `AvatarRenderer` extension —
   currently a temporary CC0/CC-BY placeholder (`avatars3d/blupi_placeholder/`), not a real Blupi
-  model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost/PlaySetup/Resume,
-  2026-07-13, §3) with a real Pause screen (background/character/5 labeled buttons, Continue/
-  Restart/Setup all functional), real Win/Lost screens (background + real pulsing/spin-in
-  `blupiyoupie.png` animation + functional Return button), a real PlaySetup settings screen
-  (background + 6 real buttons, Sounds mute toggle + Return functional), a real Resume screen
-  (offered at startup after a checkpointed Win/Lost, restores saved lives on Continue), minimal
-  cross-restart settings/progress persistence (`GESaveData` — sound on/off, lives, mission,
+  model yet. Now also has a real `Def::Phase` state machine (Wait/Init/Play/Pause/Win/Lost/
+  PlaySetup/MainSetup/Resume, 2026-07-13, §3) — the engine now starts in `Wait` and reaches `Play`
+  via a real `Wait`→`Init`→`Play` (or `Wait`→`Resume`→`Play`) flow, not directly in `Play` as
+  before. `Wait` shows the real `wait.png`/`jauge.png` progress gauge (real non-linear fill curve,
+  fixed 5.0s cosmetic timer). `Init` shows the real gamer-select menu (`init.png` background,
+  animated `speedyblupi.png`/`blupiyoupie.png` entry, 3 independent gamer slots A/B/C with
+  real per-slot lives, PLAY/SETUP buttons). A real Pause screen (background/character/5 labeled
+  buttons, Continue/Restart/Setup all functional), real Win/Lost screens (background + real
+  pulsing/spin-in `blupiyoupie.png` animation + functional Return button), real PlaySetup/MainSetup
+  settings screens (shared, background + 6-7 real buttons, Sounds mute + Reset-progress + Return all
+  functional), a real Resume screen (offered after a checkpointed Win/Lost, restores saved lives on
+  Continue), cross-restart settings/progress persistence (`GESaveData` — sound on/off + 3
+  independent gamer slots each with their own lives/mission/hasProgress + selected-gamer index,
   checkpointed the same way the real `GameData` is, NOT byte-compatible with it), and functional
   on-screen D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable
   alongside keyboard input. Riding a Tank can now also fire a real bullet (`ObjectType23`, a
@@ -276,6 +282,48 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Wait/Init boot flow + gamer-select menu implemented (2026-07-13, plan.md `MENU-001..020`), per
+  explicit user request ("Init/výběr hráče menu").** The engine previously started directly in
+  `Play`; a dedicated research pass into `Game1.cpp`'s real `First`→`Wait`→`Init` transition found
+  and corrected several inaccuracies: the real `waitProgress` gauge-fill timer is a **fixed 5.0s
+  wall-clock cosmetic timer** completely decoupled from actual asset loading (this engine already
+  loads everything synchronously in `LoadContent()`), not "≥1s" as an earlier plan.md draft said;
+  the real `speedyblupi.png` title-logo entry is a **vertical slide DOWN** from above the screen
+  (`num=1-(1-t)^2` over 1.0s, Left/Right FIXED), not "sliding in from the right" as the real
+  source's OWN doc-comment incorrectly claims (the literal animation formula, not the doc-comment,
+  was treated as ground truth); `blupiyoupie.png`'s entry is a plain scale-in (50%→100%) + fade-in
+  (0.25→1.0), confirmed via the real formula to have NO rotation despite another doc-comment
+  claiming a spin. `GESaveData` was extended from a single implicit save slot to the real **3
+  independent gamer slots** (`GamerSlot{lives, missionNumber, hasProgress}` × 3 + a `selectedGamer`
+  index, matching real `GameData`'s own `data[2]` byte) — the existing single-slot accessors
+  (`GetLives()`/`SetLives()`/etc.) now implicitly operate on whichever slot is selected, so every
+  pre-existing call site (Win/Lost checkpoint, Resume restore, Cheat4/5) kept working unmodified.
+  Per explicit user decision, the real "Main gates : {n}/12"/"Secondary gates : {n}/52" per-slot
+  text lines are rendered with the real string verbatim but a static "0" (this engine has no
+  per-gamer 200-door-flags array — a single hand-authored `.vwr` world, not the real 100+-level
+  structure) rather than omitted, since a real door count would need real tracked data this engine
+  doesn't have. `MainSetup` (previously real-but-unreachable, since it needed a real Init screen)
+  is now reachable via Init's own `InitSetup` button, sharing `GEInputPad::UpdateSetup()`/
+  `DrawSetup()` with the pre-existing `PlaySetup` — the one real difference (`SetupReset`,
+  MainSetup-only) is now also fully wired (confirmed via research: real `SetupReset` is the SAME
+  full `gameData.Reset()` as Cheat5, not a per-gamer-only reset despite its own real label implying
+  otherwise) now that `GESaveData` actually exists. `InitRanking`/`InitBuy` are NOT ported: research
+  found their real visibility gate resolves to "never shown by default" in this port (hardcoded
+  false / QA-cheat-only) — same "unreachable in this port" precedent already established for the
+  Trial phase. Real exit-fade animations (Init→Play/MainSetup) are NOT ported, consistent with
+  every other phase transition in this engine being instant. Escape from Init exits the app (this
+  engine's own choice) rather than replicating a quirk the research flagged in the real source
+  itself (Escape there unconditionally maps to Pause regardless of phase, including from Init —
+  flagged as likely-unintended rather than deliberate menu-screen design). Verified: 6 new
+  `VerifyGEInputPad` checks for Init's gamer/setup/play button dispatch + 2 new checks for
+  `SetupReset`'s `showReset` gating, 7 new `VerifyGESaveData` checks for the 3-gamer-slot
+  extension, plus a live headless run confirming the real fixed-5.0s `Wait`→`Init` timer transition
+  fires at exactly `phaseTimeSeconds_=5.00` in the live game loop, screenshots confirming both the
+  Wait gauge (partial fill matching the real non-linear curve) and the fully-rendered Init menu
+  (title/character/3 gamer rows/Setup/Play all correctly laid out), and a simulated gamer-select +
+  Play transition confirming the save-slot selection and lives-restore-only-if-hasProgress logic
+  both fire correctly — full regression suite green on both backends.
 
 - **Hidden cheat menu implemented (2026-07-13, plan.md `CHEAT-001..009`/`MENU-092..102`), per
   explicit user request ("Cheat menu").** A dedicated research pass into `Game1::CheatAction()` →

@@ -1363,33 +1363,103 @@ otherwise noted.
 
 #### 2.1 Phase: First / Wait (loading screen)
 
-- [ ] MENU-001 — Render `wait.png` as full-screen image during boot loading phase
-- [ ] MENU-002 — Display animated loading gauge (`jauge.png`, yellow fill) at bottom-centre, same position as mobile-eggbert (196, 426 in 640×480 space)
-- [ ] MENU-003 — Gauge fills from 0→100% as resources load (replicate `DrawWaitProgress` logic)
-- [ ] MENU-004 — Transition from Wait → Init after loading completes (≥1 s minimum)
-- [ ] MENU-005 — Hide wait gauge if resuming a saved game (ContinueMission path)
+Corrected 2026-07-13 against real source (a dedicated research pass into `Game1.cpp`'s real
+`Phase::First -> Wait` transition) — several of the descriptions below were imprecise in the
+original draft; see each item for what the research confirmed.
+
+- [x] MENU-001 — Render `wait.png` as full-screen image during boot loading phase — **done**,
+      `GEInputPad::DrawWait()`. Confirmed exact 640×480, direct pixel match.
+- [x] MENU-002 — Display animated loading gauge (`jauge.png`, yellow fill) at bottom-centre, same
+      position as mobile-eggbert (196, 426 in 640×480 space) — **done**, real position/zoom (2.0)
+      confirmed via research and ported exactly; real sprite sheet is 124×88 (4 rows of 22px: row 0
+      = empty-gauge background, rows 1-3 = Red/Blue/Yellow fill).
+- [x] MENU-003 — Gauge fills from 0→100% as resources load (replicate `DrawWaitProgress` logic) —
+      **done, but ADAPTED**: research found the real `waitProgress` is a **fixed 5.0s wall-clock
+      cosmetic timer** (`ticks/50,000,000`), completely decoupled from actual asset loading — this
+      engine already loads everything synchronously in `LoadContent()` (matching the real source's
+      own synchronous `First` step), so the gauge fill here is real-formula-faithful (the exact
+      non-linear `waitTable` lookup curve, 12 threshold/level pairs, ported verbatim) but purely
+      cosmetic, same as the real one.
+- [x] MENU-004 — Transition from Wait → Init after loading completes (≥1 s minimum) — **done, but
+      CORRECTED**: real minimum is not "≥1s" as the draft said, it's the fixed 5.0s timer above
+      (confirmed via research: `if (waitProgress > 1.0) SetPhase(Init)`).
+- [x] MENU-005 — Hide wait gauge if resuming a saved game (ContinueMission path) — **done via
+      ADAPTED trigger**: real `ContinueMission`/`Decor::CurrentRead()` is a WP7-only OS-reactivation
+      snapshot mechanism with no desktop equivalent (confirmed via research); this engine instead
+      checks `GESaveData::GetHasProgress()` at the end of the same 5.0s timer and goes straight to
+      `Resume` instead of `Init` when true — same adapted trigger already established for Resume
+      itself (plan.md MENU-040..045), not a separate new mechanism.
 
 #### 2.2 Phase: Init (main menu / gamer select)
 
-- [ ] MENU-006 — Render `init.png` as full-screen background
-- [ ] MENU-007 — Render `speedyblupi.png` (title logo) sliding in from top on enter, ease-out quadratic over 1 s
-- [ ] MENU-008 — Render `blupiyoupie.png` (Blupi character art) scaling in from centre (0.5→1.0 with fade-in) over 1 s
-- [ ] MENU-009 — Three gamer-slot buttons (A / B / C): render from `pad.png` (cell 140×140), correct screen positions, selected slot highlighted with alternate icon
-- [ ] MENU-010 — Each gamer slot shows: name ("Gamer A/B/C"), lives count, main doors opened, secondary doors opened (text next to button, 0.7 scale)
-- [ ] MENU-011 — "PLAY" button (`InitPlay` glyph) with label below
-- [ ] MENU-012 — "SETUP" button (`InitSetup` glyph) with label to the right
-- [ ] MENU-013 — "RANKING" button (`InitRanking` glyph) — shown only when ranking mode active
-- [ ] MENU-014 — Semi-transparent panel behind left gamer slots (pad.png icon 15, opacity 0.3)
-- [ ] MENU-015 — Semi-transparent panel behind right action buttons (pad.png icon 15, opacity 0.3)
-- [ ] MENU-016 — Keyboard Back / Escape → exit game (from Init phase)
-- [ ] MENU-017 — Animated fade-out when transitioning from Init → Play (speedyblupi.png slides out, blupiyoupie.png zooms out)
-- [ ] MENU-018 — Animated fade-out when transitioning from Init → MainSetup (speedyblupi.png slides right, gear appears)
-- [ ] MENU-019 — Gamer selection persisted (GameData byte 2) — SAVE system not started on CNA, see §11
-- [ ] MENU-020 — Gamer slot info (lives, lastWorld, doors) read from GameData
+Corrected 2026-07-13 against real source (same research pass) — the draft's MENU-007/017/018
+animation descriptions were WRONG on direction/effect; see each item below.
+
+- [x] MENU-006 — Render `init.png` as full-screen background — **done**, `GEInputPad::DrawInit()`.
+      Confirmed exact 640×480.
+- [x] MENU-007 — Render `speedyblupi.png` (title logo) — **done, but draft was WRONG on
+      direction**: real entry is a **vertical slide DOWN from above the screen** (`num=1-(1-t)^2`
+      ease-out over 1.0s, Left/Right FIXED at 80/720 the whole time), not "sliding in from top" in
+      the sense of a horizontal motion — confirmed directly against the real formula, which also
+      contradicts the real source's OWN doc-comment (`Game1.hpp`) claiming a rightward slide; the
+      literal code, not the doc-comment, was treated as ground truth.
+- [x] MENU-008 — Render `blupiyoupie.png` — **done**: real scale-in 50%→100% + fade-in 0.25→1.0
+      opacity over the same 1.0s, centered at real (468,280) — confirmed NO rotation/spin despite an
+      earlier doc-comment claiming one.
+- [x] MENU-009 — Three gamer-slot buttons (A/B/C) — **done**: real `pad.png` icons 4/16 (A),
+      5/17 (B), 6/18 (C) unselected/selected, real positions confirmed to need NO proportional
+      adaptation at this engine's own 480 reference height (same rare "literal port" situation as
+      PlaySetup's own row).
+- [x] MENU-010 — Each gamer slot shows real per-slot text — **done, but CORRECTED**: real label is
+      "Player {0}" (confirmed via `MyResource`'s real EN string table), NOT "Gamer {0}" as the draft
+      said. Door-count lines ("Main gates : {n}/12" / "Secondary gates : {n}/52") are rendered with
+      the real STRING verbatim but a STATIC "0" — per explicit user decision, since this engine has
+      no per-gamer 200-door-flags array (a single hand-authored .vwr world, not the real
+      100+-level/3-gamer-slot structure) — only the title/lives lines reflect real per-slot state
+      (`GESaveData`'s own 3-independent-gamer-slot extension, plan.md MENU-019/020 below).
+- [x] MENU-011 — "PLAY" button (`InitPlay` glyph) — **done**: real position needs no adaptation
+      either. Label rendering deferred (see this section's own closing note).
+- [x] MENU-012 — "SETUP" button (`InitSetup` glyph) — **done**, same icon as `PauseSetup` (19).
+- [ ] MENU-013 — "RANKING" button (`InitRanking` glyph) — **NOT ported**: research found the real
+      visibility gate (`getIsTrialModeProperty()`/`getIsRankingModeProperty()`) resolves to "never
+      shown by default" in this port (both hardcoded false / QA-cheat-only) — same "unreachable in
+      this port" precedent already established for the Trial phase itself, not a missing feature.
+- [ ] MENU-014 / MENU-015 — Semi-transparent panels behind gamer slots / action buttons — **NOT
+      ported**: pure cosmetic background decoration, no functional value, deferred same as other
+      purely-cosmetic real details this session (e.g. PlaySetup's rotating gear.png decorations).
+- [x] MENU-016 — Keyboard Back/Escape → exit game (from Init phase) — **done, but ADAPTED**:
+      research found the real source's OWN Escape key unconditionally maps to `Pause` regardless of
+      phase (including from Init) — flagged by that research as a likely-UNINTENDED quirk of the
+      real source rather than deliberate design. NOT replicated: this engine's Escape from Init
+      instead reuses the real hardware-Back-button behavior (`Exit()`), which reads as the clearly
+      intentional one.
+- [ ] MENU-017 / MENU-018 — Animated fade-out transitions (Init→Play, Init→MainSetup) — **NOT
+      ported, and draft was WRONG on both effects anyway**: research confirmed Init→Play is
+      speedyblupi sliding back UP off-screen (not "out") while blupiyoupie scales UP to 11× native
+      size while fading (not "zooms out"); Init→MainSetup is speedyblupi sliding RIGHT off-screen
+      (draft was directionally correct there) while blupiyoupie stays FIXED size and just fades
+      (not "zooms out" either, no gear.png appears). Deferred same as every other phase transition
+      in this engine (every transition is instant, plan.md MENU-088/089) — not a gap specific to
+      Init.
+- [x] MENU-019 — Gamer selection persisted — **done**: `GESaveData` extended (2026-07-13) with a
+      real `selectedGamer` field (matches real `data[2]`) + 3 independent `GamerSlot`s
+      (lives/missionNumber/hasProgress each) — see `GESaveData.hpp`'s own Phase-3 comment. A single
+      tap on a gamer slot immediately selects AND persists it, matching real `Game1::SetGamer()`
+      (confirmed via research this does NOT also enter Play — a separate InitPlay tap is required).
+- [x] MENU-020 — Gamer slot info read from save data — **done** for lives (real per-slot data);
+      `lastWorld`/doors are NOT read (no equivalent exists here, see MENU-010's own note above).
+
+Real `SetupReset` ("Erase progress", MainSetup-only) is now also wired for real (2026-07-13): confirmed
+via research this is the SAME full `gameData.Reset()` as Cheat5, not a per-gamer-only reset, despite
+its own real label implying otherwise — maps directly onto `GESaveData::Reset()`. InitPlay/InitSetup
+button TEXT labels ("Play"/"Setup") are not yet rendered (deferred, same low-priority-polish status as
+a few other unlabeled buttons already noted elsewhere in this document, e.g. WinLostReturn/SetupReturn).
 
 #### 2.3 Phase: Play (active gameplay)
 
-- [ ] MENU-021 — Hide all menu UI elements during Play phase (no Init/menu-phase UI exists yet — N/A until MENU-006..020 land)
+- [x] MENU-021 — Hide all menu UI elements during Play phase — **done 2026-07-13** now that
+      Init/Wait actually exist (`phaseHasRealScreen` gate in `GalaxyEggbertCnaGame::Draw()` already
+      covers Wait/Init/MainSetup alongside Pause/Win/Lost/PlaySetup/Resume).
 - [x] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — **done 2026-07-13** (`GEInputPad::DrawPlay`/`UpdatePlay`) — real icon 3, top-right, real edge/release-triggered press semantics; toggles Play→Pause exactly like the pre-existing Escape key (OR'd, see MENU-027)
 - [x] MENU-023 — On-screen directional pad (`pad.png` icons 0, 1) for touch/gamepad emulation — **done 2026-07-13** — real discrete {-1,0,+1}-per-axis drag (20px reference-space threshold), current-drag-point tracking (not a fixed grab offset), proportionally-adapted position/size (real drawBounds-relative coordinates don't fit this engine's fixed 640×480 reference space at all — see `GEInputPad.hpp`'s class comment)
 - [x] MENU-024 — On-screen "JUMP" button (`PlayJump`) visible during Play — **done 2026-07-13** — real LEVEL-triggered semantics (fires every frame the pointer is inside the rect while held, no release needed), OR'd with the existing keyboard jump (LCtrl)
@@ -1454,13 +1524,55 @@ otherwise noted.
 - [~] MENU-062 — "JUMP" mode toggle (`SetupJump`) — left/right jump direction — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (this is about touch-button screen-side preference)
 - [~] MENU-063 — "ZOOM" toggle (`SetupZoom`) — auto-zoom on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no auto-zoom camera concept exists in this engine yet
 - [~] MENU-064 — "ACCEL" toggle (`SetupAccel`) — accelerometer on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (accelerometer-tilt controls)
-- [~] MENU-065 — "RESET Gamer X" button (`SetupReset`) — with gamer letter in text — **real position/icon done 2026-07-13**; **intentionally inert AND its real label deliberately not rendered** — needs GameData (doesn't exist) and a real gamer letter/number this engine has no concept of; rather than invent one, the label is simply omitted (a documented gap, not fabricated data)
-- [x] MENU-066 — "RETURN" button (`SetupReturn`) → Init (from MainSetup) or Play (from PlaySetup) — **done 2026-07-13**, fully functional: MainSetup's Init branch is unreachable (no Init screen), so this always resumes Play in place, confirmed via `Game1.cpp`'s real handler (`if (playSetup) SetPhase(Play,-1); else SetPhase(Init);`) — NOT a level-reload simplification like Win/Lost/PauseRestart, since PlaySetup never actually stops gameplay progress
-- [~] MENU-067 — All toggles persist to GameData immediately on press — **Sounds done 2026-07-13** via new `GESaveData` (`src/GalaxyEggbertCNA/Game/GESaveData.hpp`/`.cpp`), a deliberately minimal, NOT-byte-compatible substitute for the real `GameData` (see its own class comment for the full research/reasoning — the real format is a fixed 640-byte blob shaped around a 3-gamer-slot/100+-level/200-door structure this engine doesn't have, written via a WP7-only `IsolatedStorageFile` API with no desktop equivalent; porting that layout would buy nothing since no real save file could ever cross between the two engines). Real write-on-toggle-press behavior matched exactly (`Save()` called immediately after the Sounds toggle, same as the real `gameData.setSoundActiveProperty(...); gameData.Write();`) — plain `key=value` text, no new dependency (no JSON library exists in this project). Jump/Zoom/Accel/Reset have nothing to persist (they're inert, MENU-062..065) — not a gap, since they have no real state to save
+- [x] MENU-065 — "RESET Gamer X" button (`SetupReset`) — with gamer letter in text — **done
+      2026-07-13, now fully wired** (was inert before Init/`GESaveData`'s 3-gamer-slot extension
+      existed): real position/icon, shown ONLY on `MainSetup` (confirmed via `Game1::
+      DrawButtonsText()`'s own `if (phase==MainSetup)` label gate — `showReset` is the caller's
+      job, same pattern as Pause's showBack/showRestart). Real handler is `gameData.Reset();
+      gameData.Write();` — the SAME full reset as Cheat5, not a per-gamer-only reset despite the
+      label — maps directly to `GESaveData::Reset()`/`Save()`. Real 2-line label ("Player {0}
+      :\nErase progress") collapsed to one line — no multi-line text renderer exists in this class,
+      a formatting-only simplification (the gamer-letter content itself is now real, via
+      `GESaveData::GetSelectedGamer()`).
+- [x] MENU-066 — "RETURN" button (`SetupReturn`) → Init (from MainSetup) or Play (from PlaySetup)
+      — **done 2026-07-13, BOTH branches now reachable** (MainSetup used to be unreachable — this
+      changed once Init landed later the same session): confirmed via `Game1.cpp`'s real handler
+      (`if (playSetup) SetPhase(Play,-1); else SetPhase(Init);`) — NOT a level-reload simplification
+      like Win/Lost/PauseRestart, since PlaySetup never actually stops gameplay progress
+- [x] MENU-067 — All toggles persist to GameData immediately on press — **Sounds+Reset done
+      2026-07-13** via `GESaveData` (`src/GalaxyEggbertCNA/Game/GESaveData.hpp`/`.cpp`), a
+      deliberately minimal, NOT-byte-compatible substitute for the real `GameData` (see its own
+      class comment for the full research/reasoning — the real format is a fixed 640-byte blob
+      shaped around a 3-gamer-slot/100+-level/200-door structure, written via a WP7-only
+      `IsolatedStorageFile` API with no desktop equivalent; porting that BYTE LAYOUT would buy
+      nothing since no real save file could ever cross between the two engines — though the real
+      3-gamer-slot SHAPE itself was later ported faithfully via `GESaveData`'s own Phase-3
+      extension, MENU-019/020). Real write-on-toggle-press behavior matched exactly. Jump/Zoom/Accel
+      have nothing to persist (they're inert, MENU-062..064) — not a gap, since they have no real
+      state to save
 - [ ] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing) — **not implemented**, same reasoning as MENU-059/060
-- [x] MENU-069 — Keyboard Back during Setup → Init — **done 2026-07-13**, adapted: Escape returns to Play (matching SetupReturn's own real destination in this engine, not Init, which doesn't exist) — this engine's own keyboard binding choice, the real source's own doc comment doesn't list a separate Setup-phase Back-hardware mapping distinct from the SetupReturn button anyway
+- [x] MENU-069 — Keyboard Back during Setup → Init/Play — **done 2026-07-13, CORRECTED**: Escape
+      now goes to Init from MainSetup (real destination, now that Init exists) or Play from
+      PlaySetup (matching `SetupReturn`'s own real per-screen destination, MENU-066) — an earlier
+      pass of this entry said Escape always returns to Play, which was only true before MainSetup
+      was reachable.
 
-**MENU-058..069 summary (2026-07-13):** extended `GEInputPad` with `UpdateSetup()`/`DrawSetup()`, reachable only via Pause's real Setup button (`PauseSetup -> SetPhase(PlaySetup)`, now wired — confirmed via `Game1.cpp`'s real button-press dispatch). A rare case where the real `InputPad.cpp` button rects (`bsf2=drawBoundsHeight*140/480`) need ZERO proportional adaptation: at this engine's own 480 reference height, bsf2 is EXACTLY 140, so every rect is used unadapted, unlike the Pause row's bsf1-based layout. Added a new `AppendLeftAlignedLabel()` helper (real `Text::DrawTextRightButton()` semantics — left-aligned, vertically centered — a different alignment from the Pause row's centered labels). Added `GESaveData` (see MENU-067) after a dedicated research pass into the real `GameData.hpp`/`.cpp` format, confirming byte-compatibility is a non-goal — a small, new, engine-appropriate persisted set instead, starting with just `soundEnabled`. Verified via 3 new `VerifyGEInputPad` checks (30 total), a new `VerifyGESaveData` tool (3 checks, Load()-defaults/Save()-Load()-round-trip for both bool states), a live headless screenshot confirming exact layout/labels/icon state, and a live two-run save/load round-trip test (toggle off+save in run 1, confirmed loaded back correctly at the start of run 2). Cosmetic-only real animations (speedyblupi.png slide, 2 rotating gear.png decorations, MENU-059/060/068) and Reset's own real label (MENU-065, needs a gamer letter this engine has no concept of) are explicitly out of scope, documented above rather than invented.
+**MENU-058..069 summary (2026-07-13, updated same day once Init/MENU-006..020 landed):** extended
+`GEInputPad` with `UpdateSetup()`/`DrawSetup()`, reachable via Pause's real Setup button
+(`PlaySetup`) AND, once Init existed later the same session, via Init's own `InitSetup` button
+(`MainSetup`) — both share this same pair of methods, gated by a `showReset`/`isMainSetup` bool the
+caller passes (the one real difference between the two screens, `SetupReset`). A rare case where
+the real `InputPad.cpp` button rects (`bsf2=drawBoundsHeight*140/480`) need ZERO proportional
+adaptation: at this engine's own 480 reference height, bsf2 is EXACTLY 140, so every rect is used
+unadapted, unlike the Pause row's bsf1-based layout. Added `GESaveData` (see MENU-067) after a
+dedicated research pass into the real `GameData.hpp`/`.cpp` format, confirming byte-COMPATIBILITY
+is a non-goal — a small, new, engine-appropriate persisted set instead, later extended (same
+session) to the real 3-independent-gamer-slot SHAPE once Init needed it. Verified via
+`VerifyGEInputPad` (including 2 new `SetupReset` checks: fires when `showReset=true`, never fires
+when `showReset=false`), `VerifyGESaveData`, a live headless screenshot confirming exact
+layout/labels/icon state, and a live two-run save/load round-trip test. Cosmetic-only real
+animations (speedyblupi.png slide, 2 rotating gear.png decorations, MENU-059/060/068) are explicitly
+out of scope, documented above rather than invented.
 
 #### 2.9 Phase: Ranking
 
@@ -1730,14 +1842,13 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
         the very last mission shows a real Win screen and every other "win" silently advances to
         the next sub-level while staying in `Play`, doesn't map cleanly onto this engine's
         single-world setup and wasn't attempted).
-      - **`First`/`Wait`/`Init` are real but not part of this engine's own startup flow**: no
-        async content-loading step or main menu exists yet to show during them — `GalaxyEggbertCNA`
-        starts directly in `Play`, a documented, engine-appropriate adaptation (matching the same
-        "collision-only, not a 2D-system transcription" precedent `E3D-MIG-060` already set for
-        `GEBlupiController`), not a missing feature. `Trial`/`MainSetup`/`PlaySetup`/`Resume`/
-        `Ranking` are real enum values with NO trigger wired to them at all — reachable in
-        principle (the type exists), unreachable in practice until settings/upsell/ranking
-        screens exist.
+      - **Superseded note (originally written before `Wait`/`Init`/`MainSetup` existed):** this
+        entry originally said `GalaxyEggbertCNA` starts directly in `Play` since no async
+        content-loading step or main menu existed. That changed later the same session
+        (MENU-001..020): the engine now starts in `Wait` and reaches `Play` via a real
+        `Wait`→`Init`→`Play` (or `Wait`→`Resume`→`Play`) flow — see §2.1/§2.2 above for full
+        detail. `Trial`/`Ranking` remain real enum values with NO trigger wired to them at all
+        (no upsell/ranking screens exist).
       - **New `GEHud::Draw()` `overlayMessage` parameter**: when non-null, the real `DrawInfo` HUD
         this class ports is skipped ENTIRELY (matching the real "HUD hidden outside Play"
         behavior exactly) and replaced with just one big centered message ("PAUSED"/"YOU WIN!"/

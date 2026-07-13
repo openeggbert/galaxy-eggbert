@@ -164,54 +164,68 @@ namespace GalaxyEggbert::CNA
         void DrawWinLost(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                          int viewportW, int viewportH, bool won, float phaseTimeSeconds);
 
-        // PlaySetup screen (plan.md MENU-058..069), reachable only via
-        // Pause's real Setup button (see UpdatePause()'s own comment) --
-        // MainSetup (reachable from a real Init/main-menu screen this
-        // engine doesn't have) is real-but-unreachable here, same pattern
-        // as Trial/MainSetup/Resume/Ranking in GamePhase's own comment.
-        // Real setup.png background (confirmed exact 640x480). Real button
-        // rects verified directly against `InputPad.cpp`'s own
-        // bsf2=drawBoundsHeight*140/480 formula -- AT drawBoundsHeight=480
-        // (this engine's own reference height) bsf2 is EXACTLY 140,
-        // meaning these rects need no proportional adaptation at all
-        // (unlike the Pause row's bsf1-based layout) -- a rare literal
-        // 1:1 port. SetupSounds is functionally wired to the pre-existing
-        // GESound::SetEnabled()/IsEnabled() (a real, meaningful desktop
-        // equivalent of the real sound on/off toggle); its icon really
-        // swaps between 13 (on) and 21 (off), not just an opacity change
-        // (confirmed via `Pixmap.cpp`'s own `selected ? 13 : 21` -- a
-        // DIFFERENT real "pressed" convention from every other button in
-        // this class). SetupJump/SetupZoom/SetupAccel/SetupReset render at
-        // their real positions/icons/labels but are intentionally inert:
-        // Jump-button-side and accelerometer-tilt controls have no
-        // meaningful desktop equivalent, auto-zoom has no camera-zoom
-        // concept in this engine yet, and Reset needs GameData (doesn't
-        // exist) -- documented gaps, not silent omissions (SetupReset's
-        // own real label additionally needs a real gamer letter/number
-        // this engine has no concept of, so its label is deliberately not
-        // rendered at all rather than inventing one). SetupReturn is
-        // real-position/icon/label AND fully functional (confirmed via
-        // `Game1.cpp`'s real `SetupReturn` handler: `if (playSetup)
-        // SetPhase(Play,-1); else SetPhase(Init);` -- MainSetup's Init
-        // branch is unreachable here, so this always resumes Play in
-        // place, no origin-respawn simplification needed since PlaySetup
-        // never actually stops gameplay progress).
+        // PlaySetup/MainSetup screen (plan.md MENU-058..069). PlaySetup is
+        // reachable via Pause's real Setup button (see UpdatePause()'s own
+        // comment); MainSetup is reachable via the real Init menu's own
+        // InitSetup button (plan.md MENU-006..020, added 2026-07-13 once
+        // Init actually existed here). Real setup.png background
+        // (confirmed exact 640x480). Real button rects verified directly
+        // against `InputPad.cpp`'s own bsf2=drawBoundsHeight*140/480
+        // formula -- AT drawBoundsHeight=480 (this engine's own reference
+        // height) bsf2 is EXACTLY 140, meaning these rects need no
+        // proportional adaptation at all (unlike the Pause row's
+        // bsf1-based layout) -- a rare literal 1:1 port. SetupSounds is
+        // functionally wired to the pre-existing GESound::SetEnabled()/
+        // IsEnabled() (a real, meaningful desktop equivalent of the real
+        // sound on/off toggle); its icon really swaps between 13 (on) and
+        // 21 (off), not just an opacity change (confirmed via
+        // `Pixmap.cpp`'s own `selected ? 13 : 21` -- a DIFFERENT real
+        // "pressed" convention from every other button in this class).
+        // SetupJump/SetupZoom/SetupAccel render at their real positions/
+        // icons/labels but stay intentionally inert: Jump-button-side and
+        // accelerometer-tilt controls have no meaningful desktop
+        // equivalent, auto-zoom has no camera-zoom concept in this engine
+        // yet -- documented gaps, not silent omissions.
+        //
+        // SetupReset (`showReset` -- real: shown ONLY on `MainSetup`,
+        // confirmed via `Game1::DrawButtonsText()`'s own `if (phase ==
+        // MainSetup)` gate around its label draw, hence `showReset` being
+        // the CALLER's job, mirroring the pattern already used for
+        // Pause's showBack/showRestart) is now fully wired: real
+        // `SetupReset -> gameData.Reset(); gameData.Write();` (confirmed
+        // 2026-07-13 via `Game1.cpp` -- the SAME full reset as Cheat5, not
+        // a per-gamer-only reset, despite the button's own real label
+        // implying otherwise) maps directly onto `GESaveData::Reset()`/
+        // `Save()`, now that `GESaveData` actually exists. Real label
+        // ("Player {0} :\nErase progress", 2 lines) is collapsed to one
+        // line here ("Player {0}: Erase progress") -- no multi-line text
+        // renderer exists in this class, a documented simplification of
+        // the label's formatting only, not its real gamer-letter content
+        // (now meaningful via `GESaveData::GetSelectedGamer()`).
+        //
+        // SetupReturn is real-position/icon/label AND fully functional
+        // (confirmed via `Game1.cpp`'s real `SetupReturn` handler: `if
+        // (playSetup) SetPhase(Play,-1); else SetPhase(Init);` -- now
+        // BOTH branches are reachable here, so the caller picks Play vs.
+        // Init based on which of PlaySetup/MainSetup is current).
         //
         // Explicitly NOT ported (documented simplifications, same
         // precedent as Pause/Win/Lost skipping some real animations): the
         // 2 rotating gear.png background decorations and the
         // speedyblupi.png slide-in -- both pure cosmetic flourish with no
         // functional value, requiring an indefinitely-continuing rotation
-        // formula and a second texture used nowhere else in this class.
+        // formula (Init's own speedyblupi.png use is a plain entry slide,
+        // not this rotating decoration).
         struct SetupInput
         {
             bool soundsToggled = false;
+            bool resetPressed = false;
             bool returnPressed = false;
         };
         [[nodiscard]] SetupInput UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                                             int viewportW, int viewportH) noexcept;
+                                             int viewportW, int viewportH, bool showReset) noexcept;
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                       int viewportW, int viewportH, bool soundsOn);
+                       int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer);
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
@@ -310,6 +324,80 @@ namespace GalaxyEggbert::CNA
         void DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                            int viewportW, int viewportH);
 
+        // Wait phase (plan.md MENU-001..005), verified directly against
+        // `Game1.cpp`'s real `Phase::First -> Wait` transition (a
+        // dedicated research pass): real wait.png background (confirmed
+        // 640x480) + a real jauge.png progress gauge at real position
+        // (196,426), zoom 2.0, mode Yellow -- the fill level (0-100) comes
+        // from the real NON-LINEAR `waitTable` lookup curve (`Game1.hpp`),
+        // not a linear ramp, ported verbatim (see this class's .cpp
+        // constants). Real minimum duration is a FIXED 5.0s wall-clock
+        // cosmetic timer, completely decoupled from actual asset loading
+        // (confirmed via research) -- this engine already loads
+        // everything synchronously in `LoadContent()`, matching the real
+        // source's own synchronous `First`->`Wait` transition, so the
+        // gauge fill here is purely cosmetic too. The caller owns the
+        // actual phase-transition timing (checking phaseTimeSeconds >=
+        // 5.0f and moving to Init/Resume) -- this just draws.
+        void DrawWait(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                     int viewportW, int viewportH, float phaseTimeSeconds);
+
+        // Init phase / gamer-select menu (plan.md MENU-006..020),
+        // verified directly against `Game1.cpp`'s real Init rendering/
+        // input dispatch (a dedicated research pass). Real init.png
+        // background (confirmed 640x480); real speedyblupi.png title logo
+        // (640x160) sliding DOWN from above the screen over a real 1.0s
+        // entry (`num=1-(1-t)^2`, Left/Right FIXED at 80/720 -- confirmed
+        // via research this is a VERTICAL slide, not the horizontal
+        // "slides in from the right" an earlier doc-comment in the real
+        // source itself incorrectly claims); real blupiyoupie.png
+        // (shared texture with Pause/Win/Lost) scaling in 50%->100% while
+        // fading in 0.25->1.0 opacity over the same 1.0s, centered at
+        // real (468,280) -- a DIFFERENT position from Pause's (418,190)/
+        // WinLost's (418,238). Real exit-fade animations (Init->Play/
+        // MainSetup, ~1s slide/scale/fade-out) are NOT ported -- same
+        // documented simplification already established for every other
+        // phase transition in this engine (every transition is instant,
+        // plan.md MENU-088/089).
+        //
+        // Real 3 independent gamer slots (A/B/C), stacked in a column,
+        // plus InitSetup/InitPlay -- all 5 rects need NO proportional
+        // adaptation (verified: real `buttonSizeFactor2`/InitPlay formula
+        // evaluate to the exact same values at this engine's own 480
+        // reference height, same "rare literal port" situation as
+        // PlaySetup's own row). A single tap on a gamer slot SELECTS it
+        // (returned as gamerSelected, 0-2) but does NOT enter Play by
+        // itself -- confirmed via research this matches the real source's
+        // own select-then-separate-confirm behavior (`Game1::SetGamer()`
+        // vs. the separate real InitPlay button). InitRanking/InitBuy are
+        // NOT modeled: their real visibility gate
+        // (`getIsTrialModeProperty()`/`getIsRankingModeProperty()`)
+        // resolves to "never shown by default" in this port (hardcoded
+        // false / QA-cheat-only, confirmed via research) -- same
+        // "unreachable in this port" precedent already established for
+        // the Trial phase itself.
+        //
+        // Real per-slot text (`Game1::DrawButtonGamerText()`/
+        // `MyResource`): "Player {letter}" + "Main gates : {n}/12" +
+        // "Secondary gates : {n}/52" + "Blupi : {lives}". This engine has
+        // no per-gamer door-flags array (a single hand-authored .vwr
+        // world, not the real 100+-level/200-door-flag structure) -- per
+        // explicit user direction, the door-count lines are rendered with
+        // the real STRING verbatim (static "0/12"/"0/52") rather than
+        // omitted, even though those two numbers are not real tracked
+        // data (only the title/lives lines reflect real per-slot state).
+        struct InitInput
+        {
+            int gamerSelected = -1; // 0/1/2 if a gamer slot was just tapped (released) this frame, else -1
+            bool playPressed = false;
+            bool setupPressed = false;
+        };
+        [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                           int viewportW, int viewportH) noexcept;
+        void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                     int viewportW, int viewportH, float phaseTimeSeconds,
+                     int selectedGamer, int livesA, int livesB, int livesC);
+
     private:
         struct Quad
         {
@@ -338,6 +426,16 @@ namespace GalaxyEggbert::CNA
         void AppendLeftAlignedLabel(std::vector<Quad>& quads, const std::string& text,
                                     float leftX, float centerY, float scale) const;
 
+        // Real `Game1::DrawButtonGamerText()` semantics (Init's per-slot
+        // 4-line text block): LEFT-aligned starting at leftX, EXPLICIT
+        // topY (not vertically centered/nudged like AppendLeftAlignedLabel
+        // above, since each line has its own real fixed Top+N offset) and
+        // an explicit label scale (0.7 title / 0.45 body -- this is the
+        // first real use of the 0.45x scale in this engine, plan.md
+        // MENU-086).
+        void AppendGamerLabel(std::vector<Quad>& quads, const std::string& text,
+                              float leftX, float topY, float labelScale, float viewportScale) const;
+
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D pauseBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupiyoupieTexture_;
@@ -345,6 +443,10 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D lostBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D setupBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D waitBgTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D jaugeTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D initBgTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D speedyblupiTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> pauseBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiyoupieEffect_;
@@ -352,6 +454,10 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> lostBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> setupBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> waitBgEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> initBgEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> speedyblupiEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padPressedRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> pauseBgRenderer_;
@@ -360,6 +466,10 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> lostBgRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> setupBgRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> waitBgRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> initBgRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> speedyblupiRenderer_;
         bool loaded_ = false;
 
         // Edge-trigger press tracking: which logical button (if any) the

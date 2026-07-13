@@ -53,6 +53,14 @@ namespace GalaxyEggbert::CNA
                     return kSurvey;
             }
         }
+
+        // Real fixed 5.0s Wait-phase cosmetic timer (plan.md
+        // MENU-001..005, confirmed via research: `Game1.cpp`'s real
+        // `waitProgress = ticks/50,000,000`) -- must match
+        // GEInputPad::DrawWait()'s own gauge-fill duration (kept as a
+        // separately-owned constant there since that class doesn't
+        // depend on this one).
+        constexpr float kWaitDurationSeconds = 5.0f;
     }
 
     GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
@@ -375,19 +383,11 @@ namespace GalaxyEggbert::CNA
         saveData_.Load();
         sound_.SetEnabled(saveData_.GetSoundEnabled());
 
-        // Real Resume phase (2026-07-13, plan.md MENU-040..045) -- ADAPTED
-        // trigger (see GamePhase's own comment / GEInputPad::
-        // UpdateResume()'s class comment for the full real-vs-adapted
-        // reasoning): offered here at startup, in place of the real
-        // OS-reactivation event this engine has no equivalent for,
-        // whenever a previous run reached Win/Lost at least once. Direct
-        // assignment (not SetPhase()) since this runs before the game
-        // loop starts -- same convention phase_'s own default member
-        // initializer already uses for Play.
-        if (saveData_.GetHasProgress())
-        {
-            phase_ = GalaxyEggbert::GamePhase::Resume;
-        }
+        // Real Wait->Resume-or-Init branch (plan.md MENU-001..020) now
+        // decides this at the END of the real 5.0s Wait timer, in
+        // Update(), not here at load time -- see phase_'s own default
+        // member initializer (now Wait, not Play) and GamePhase's own
+        // class comment for the full reasoning.
 
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
                   << terrainRenderer_->BlockCount() << " blocks ("
@@ -560,15 +560,20 @@ namespace GalaxyEggbert::CNA
                 mouseRestartPressed = pauseInput.restartPressed;
                 mouseSetupPressed = pauseInput.setupPressed;
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup)
+            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
+                     phase_ == GalaxyEggbert::GamePhase::MainSetup)
             {
                 // Real PlaySetup (2026-07-13, plan.md MENU-058..069),
-                // reachable only via Pause's real Setup button (MainSetup,
-                // reachable from a real Init/main-menu screen this engine
-                // doesn't have, is real-but-unreachable here).
+                // reachable via Pause's real Setup button, and MainSetup
+                // (2026-07-13, plan.md MENU-006..020), reachable via
+                // Init's own InitSetup button -- sharing UpdateSetup()/
+                // DrawSetup(), the real "MainSetup additionally shows
+                // SetupReset" difference (see GEInputPad::UpdateSetup()'s
+                // own class comment) is the only distinction made here.
+                const bool isMainSetup = phase_ == GalaxyEggbert::GamePhase::MainSetup;
                 const auto mouse = Mouse::GetState();
                 const auto setupInput = inputPad_.UpdateSetup(
-                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup);
                 if (setupInput.soundsToggled)
                 {
                     // Real SetupSounds toggle -- a genuinely meaningful
@@ -583,16 +588,95 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetSoundEnabled(sound_.IsEnabled());
                     saveData_.Save();
                 }
+                if (setupInput.resetPressed)
+                {
+                    // Real SetupReset: `gameData.Reset(); gameData.Write();`
+                    // -- the SAME full reset as Cheat5 (confirmed
+                    // 2026-07-13 via Game1.cpp), only reachable from
+                    // MainSetup (isMainSetup gates its rect/visibility).
+                    saveData_.Reset();
+                    saveData_.Save();
+                }
                 if (setupInput.returnPressed ||
                     (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
                 {
                     // Real SetupReturn: `if (playSetup) SetPhase(Play,-1);
-                    // else SetPhase(Init);` -- MainSetup's Init branch is
-                    // unreachable here, so this always resumes Play in
-                    // place. Escape is this engine's own keyboard pick
-                    // for the same action (real source has no separate
-                    // Setup-phase keyboard binding confirmed).
+                    // else SetPhase(Init);` -- both branches are now
+                    // reachable here. Escape is this engine's own
+                    // keyboard pick for the same action (real source has
+                    // no separate Setup-phase keyboard binding confirmed).
+                    SetPhase(isMainSetup ? GalaxyEggbert::GamePhase::Init : GalaxyEggbert::GamePhase::Play);
+                }
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Wait)
+            {
+                // Real Wait (plan.md MENU-001..005): a fixed 5.0s
+                // wall-clock cosmetic timer (confirmed via research,
+                // decoupled from actual asset loading, which already
+                // finished synchronously in LoadContent()). See
+                // GEInputPad::DrawWait()'s own class comment for the real
+                // non-linear waitTable gauge-fill curve this timer drives.
+                if (phaseTimeSeconds_ >= kWaitDurationSeconds)
+                {
+                    // Real Wait->Resume-or-Init branch -- ADAPTED trigger
+                    // (see GamePhase's own comment for the full
+                    // real-vs-adapted reasoning, same one already
+                    // established for Resume itself).
+                    SetPhase(saveData_.GetHasProgress() ? GalaxyEggbert::GamePhase::Resume
+                                                         : GalaxyEggbert::GamePhase::Init);
+                }
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Init)
+            {
+                // Real Init / gamer-select menu (2026-07-13, plan.md
+                // MENU-006..020) -- see GEInputPad::UpdateInit()/
+                // DrawInit()'s own class comment for full detail.
+                const auto mouse = Mouse::GetState();
+                const auto initInput = inputPad_.UpdateInit(
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (initInput.gamerSelected >= 0)
+                {
+                    // Real Game1::SetGamer(): a single tap immediately
+                    // selects AND persists that slot, independent of
+                    // entering Play (confirmed via research).
+                    saveData_.SetSelectedGamer(initInput.gamerSelected);
+                    saveData_.Save();
+                }
+                if (initInput.playPressed)
+                {
+                    // Real InitPlay: `SetPhase(Play, 1)` -- always
+                    // (re-)enters mission 1 (this engine's one world), no
+                    // real level-select step exists. Restores the
+                    // selected gamer's own checkpointed lives if that slot
+                    // has previous progress (this engine's own
+                    // adaptation, since the real per-gamer lastWorld/door
+                    // state has no equivalent here beyond lives).
+                    if (saveData_.GetHasProgress())
+                    {
+                        interaction_.SetLives(saveData_.GetLives());
+                    }
+                    blupi_.SetPosition(0.0f, 1.0f, 0.0f);
                     SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
+                else if (initInput.setupPressed)
+                {
+                    SetPhase(GalaxyEggbert::GamePhase::MainSetup);
+                }
+                else if (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_)
+                {
+                    // Real hardware Back-button behavior from Init is
+                    // Exit() (`Game1.cpp`'s real gamepad-Back handler).
+                    // Research separately found that the real source's
+                    // OWN Escape key unconditionally maps to Pause
+                    // regardless of phase, including from Init -- flagged
+                    // by that research as a likely-UNINTENDED quirk of the
+                    // real source (Escape apparently meant only for
+                    // in-Play pause) rather than deliberate menu-screen
+                    // design. NOT replicated here: this engine's own
+                    // Escape binding reuses the real hardware-Back->Exit()
+                    // behavior instead, which reads as the clearly
+                    // intentional one.
+                    Exit();
                 }
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Resume)
@@ -2107,7 +2191,10 @@ namespace GalaxyEggbert::CNA
                                              phase_ == GalaxyEggbert::GamePhase::Win ||
                                              phase_ == GalaxyEggbert::GamePhase::Lost ||
                                              phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
-                                             phase_ == GalaxyEggbert::GamePhase::Resume;
+                                             phase_ == GalaxyEggbert::GamePhase::MainSetup ||
+                                             phase_ == GalaxyEggbert::GamePhase::Resume ||
+                                             phase_ == GalaxyEggbert::GamePhase::Wait ||
+                                             phase_ == GalaxyEggbert::GamePhase::Init;
             if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
@@ -2153,14 +2240,28 @@ namespace GalaxyEggbert::CNA
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phase_ == GalaxyEggbert::GamePhase::Win, phaseTimeSeconds_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup)
+            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
+                     phase_ == GalaxyEggbert::GamePhase::MainSetup)
             {
                 inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                    sound_.IsEnabled());
+                                    sound_.IsEnabled(), phase_ == GalaxyEggbert::GamePhase::MainSetup,
+                                    saveData_.GetSelectedGamer());
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Resume)
             {
                 inputPad_.DrawResume(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Wait)
+            {
+                inputPad_.DrawWait(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                   phaseTimeSeconds_);
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Init)
+            {
+                inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                   phaseTimeSeconds_, saveData_.GetSelectedGamer(),
+                                   saveData_.GetLivesForGamer(0), saveData_.GetLivesForGamer(1),
+                                   saveData_.GetLivesForGamer(2));
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {

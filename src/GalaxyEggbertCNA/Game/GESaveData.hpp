@@ -53,13 +53,40 @@ namespace GalaxyEggbert::CNA
     // Plain `key=value` text, not JSON/binary: no JSON library is linked
     // in this project, and for a handful of scalars a hand-rolled parser
     // is simpler than adding a new dependency for it.
+    //
+    // Phase 3 (2026-07-13, plan.md MENU-006..020, real Init/gamer-select
+    // menu): extended to real `GameData`'s own 3-independent-gamer-slot
+    // shape (confirmed via research: `data[2]` selectedGamer byte + 3x
+    // per-gamer lives/lastWorld) -- `lives_`/`missionNumber_`/
+    // `hasProgress_` above are now per-slot (`GamerSlot`), `soundEnabled_`
+    // stays a single global field (matches the real header's global
+    // sound/jump/zoom/accel bytes, which are NOT per-gamer). The
+    // pre-existing single-slot accessors (`GetLives()`/`SetLives()`/etc.)
+    // are UNCHANGED in signature -- they now implicitly operate on
+    // `gamers_[selectedGamer_]`, so every existing call site (Win/Lost
+    // checkpoint, Resume restore, Cheat4/5) keeps working unmodified.
+    // Real per-gamer 200 door-flags are still NOT ported (documented gap,
+    // unchanged from Phase 2) -- the Init menu's "Main gates"/"Secondary
+    // gates" text lines are rendered with a static "0/12"/"0/52" (matches
+    // the real STRING exactly, since the real label denominators are
+    // themselves hardcoded/cosmetic and don't match the real door-array
+    // capacity either -- confirmed via research), not real tracked data.
+    struct GamerSlot
+    {
+        int lives = 3; // matches GEInteractionSystem's own real GameData-derived default
+        int missionNumber = 0;
+        bool hasProgress = false;
+    };
+
     class GESaveData
     {
     public:
+        static constexpr int kGamerCount = 3; // real GameData::TotalLength = 10 + 3*210
+
         // Reads Content-relative kSavePath if it exists; leaves every
-        // field at its default (soundEnabled=true, lives=3,
-        // missionNumber=0, hasProgress=false) if the file is missing or
-        // unparsable.
+        // field at its default (soundEnabled=true, selectedGamer=0, every
+        // gamer slot lives=3/missionNumber=0/hasProgress=false) if the
+        // file is missing or unparsable.
         void Load();
 
         // Writes the current state to kSavePath, overwriting it.
@@ -68,26 +95,39 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool GetSoundEnabled() const noexcept { return soundEnabled_; }
         void SetSoundEnabled(bool enabled) noexcept { soundEnabled_ = enabled; }
 
-        [[nodiscard]] int GetLives() const noexcept { return lives_; }
-        void SetLives(int lives) noexcept { lives_ = lives; }
+        // Real `data[2]`/`SetGamer()` (`Game1.cpp`): a single tap on an
+        // Init gamer-slot button immediately selects AND persists that
+        // slot, independent of entering Play.
+        [[nodiscard]] int GetSelectedGamer() const noexcept { return selectedGamer_; }
+        void SetSelectedGamer(int gamer) noexcept { selectedGamer_ = gamer; }
 
-        [[nodiscard]] int GetMissionNumber() const noexcept { return missionNumber_; }
-        void SetMissionNumber(int missionNumber) noexcept { missionNumber_ = missionNumber; }
+        // Read-only per-slot accessors for the Init menu's 3-button
+        // display (does NOT change which slot GetLives()/SetLives()/etc.
+        // below operate on).
+        [[nodiscard]] int GetLivesForGamer(int gamer) const noexcept { return gamers_[gamer].lives; }
+        [[nodiscard]] bool GetHasProgressForGamer(int gamer) const noexcept { return gamers_[gamer].hasProgress; }
 
-        [[nodiscard]] bool GetHasProgress() const noexcept { return hasProgress_; }
-        void SetHasProgress(bool hasProgress) noexcept { hasProgress_ = hasProgress; }
+        [[nodiscard]] int GetLives() const noexcept { return gamers_[selectedGamer_].lives; }
+        void SetLives(int lives) noexcept { gamers_[selectedGamer_].lives = lives; }
+
+        [[nodiscard]] int GetMissionNumber() const noexcept { return gamers_[selectedGamer_].missionNumber; }
+        void SetMissionNumber(int missionNumber) noexcept { gamers_[selectedGamer_].missionNumber = missionNumber; }
+
+        [[nodiscard]] bool GetHasProgress() const noexcept { return gamers_[selectedGamer_].hasProgress; }
+        void SetHasProgress(bool hasProgress) noexcept { gamers_[selectedGamer_].hasProgress = hasProgress; }
 
         // Real Cheat5 ("R"): `gameData.Reset()` (2026-07-13, plan.md
-        // `CHEAT-005`) -- restores every field to its default and writes
-        // immediately, matching the real source's own `Reset(); Write();`
-        // pair (`Game1.cpp`'s real `SetupReset`/cheat handler).
+        // `CHEAT-005`) -- restores every field (all 3 gamer slots
+        // included, matching the real `Reset()`) to its default and
+        // writes immediately, matching the real source's own
+        // `Reset(); Write();` pair (`Game1.cpp`'s real `SetupReset`/cheat
+        // handler).
         void Reset() noexcept { *this = GESaveData(); }
 
     private:
         static constexpr const char* kSavePath = "savedata.txt";
         bool soundEnabled_ = true;
-        int lives_ = 3; // matches GEInteractionSystem's own real GameData-derived default
-        int missionNumber_ = 0;
-        bool hasProgress_ = false;
+        int selectedGamer_ = 0;
+        GamerSlot gamers_[kGamerCount];
     };
 }

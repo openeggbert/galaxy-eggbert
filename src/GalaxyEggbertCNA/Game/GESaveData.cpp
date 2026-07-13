@@ -28,17 +28,27 @@ namespace GalaxyEggbert::CNA
             {
                 soundEnabled_ = (value == "1");
             }
-            else if (key == "lives")
+            else if (key == "selectedGamer")
             {
-                lives_ = std::atoi(value.c_str());
+                selectedGamer_ = std::atoi(value.c_str());
             }
-            else if (key == "missionNumber")
+            else if (key.rfind("gamer", 0) == 0 && key.size() > 6 && key[6] == '.')
             {
-                missionNumber_ = std::atoi(value.c_str());
-            }
-            else if (key == "hasProgress")
-            {
-                hasProgress_ = (value == "1");
+                const int gamer = key[5] - '0';
+                if (gamer < 0 || gamer >= kGamerCount) continue;
+                const std::string field = key.substr(7);
+                if (field == "lives")
+                {
+                    gamers_[gamer].lives = std::atoi(value.c_str());
+                }
+                else if (field == "missionNumber")
+                {
+                    gamers_[gamer].missionNumber = std::atoi(value.c_str());
+                }
+                else if (field == "hasProgress")
+                {
+                    gamers_[gamer].hasProgress = (value == "1");
+                }
             }
         }
     }
@@ -52,8 +62,12 @@ namespace GalaxyEggbert::CNA
             return;
         }
         out << "soundEnabled=" << (soundEnabled_ ? "1" : "0") << "\n";
-        out << "lives=" << lives_ << "\n";
-        out << "missionNumber=" << missionNumber_ << "\n";
-        out << "hasProgress=" << (hasProgress_ ? "1" : "0") << "\n";
+        out << "selectedGamer=" << selectedGamer_ << "\n";
+        for (int gamer = 0; gamer < kGamerCount; ++gamer)
+        {
+            out << "gamer" << gamer << ".lives=" << gamers_[gamer].lives << "\n";
+            out << "gamer" << gamer << ".missionNumber=" << gamers_[gamer].missionNumber << "\n";
+            out << "gamer" << gamer << ".hasProgress=" << (gamers_[gamer].hasProgress ? "1" : "0") << "\n";
+        }
     }
 }

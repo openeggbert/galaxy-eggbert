@@ -218,25 +218,42 @@ int main()
     // functional; SetupJump/Zoom/Accel/Reset are real-position but inert.
     {
         GEInputPad pad;
-        (void)pad.UpdateSetup(mouse(55, 215, true), kViewportW, kViewportH);
-        const auto release = pad.UpdateSetup(mouse(55, 215, false), kViewportW, kViewportH);
+        (void)pad.UpdateSetup(mouse(55, 215, true), kViewportW, kViewportH, false);
+        const auto release = pad.UpdateSetup(mouse(55, 215, false), kViewportW, kViewportH, false);
         check(release.soundsToggled && !release.returnPressed,
               "Setup: Sounds toggle fires on release, distinct from Return");
     }
     {
         GEInputPad pad;
-        (void)pad.UpdateSetup(mouse(564, 404, true), kViewportW, kViewportH);
-        const auto release = pad.UpdateSetup(mouse(564, 404, false), kViewportW, kViewportH);
+        (void)pad.UpdateSetup(mouse(564, 404, true), kViewportW, kViewportH, false);
+        const auto release = pad.UpdateSetup(mouse(564, 404, false), kViewportW, kViewportH, false);
         check(release.returnPressed && !release.soundsToggled,
               "Setup: Return fires on release, distinct from Sounds");
     }
     {
         GEInputPad pad;
         // SetupJump rect: X 20-90, Y 250-320 -> center (55,285).
-        (void)pad.UpdateSetup(mouse(55, 285, true), kViewportW, kViewportH);
-        const auto release = pad.UpdateSetup(mouse(55, 285, false), kViewportW, kViewportH);
+        (void)pad.UpdateSetup(mouse(55, 285, true), kViewportW, kViewportH, false);
+        const auto release = pad.UpdateSetup(mouse(55, 285, false), kViewportW, kViewportH, false);
         check(!release.soundsToggled && !release.returnPressed,
               "Setup: Jump button press/release fires neither Sounds nor Return (documented inert placeholder)");
+    }
+
+    // --- SetupReset (real: MainSetup-only, plan.md MENU-006..020): rect
+    // X 450-520, Y 180-250 -> center (485,215). showReset gates both hit-
+    // testing and firing -- confirms PlaySetup's own call (showReset=
+    // false) can't ever trigger it even if a press lands in that rect.
+    {
+        GEInputPad pad;
+        (void)pad.UpdateSetup(mouse(485, 215, true), kViewportW, kViewportH, true);
+        const auto release = pad.UpdateSetup(mouse(485, 215, false), kViewportW, kViewportH, true);
+        check(release.resetPressed, "Setup: Reset fires on release when showReset=true (MainSetup)");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateSetup(mouse(485, 215, true), kViewportW, kViewportH, false);
+        const auto release = pad.UpdateSetup(mouse(485, 215, false), kViewportW, kViewportH, false);
+        check(!release.resetPressed, "Setup: Reset never fires when showReset=false (PlaySetup)");
     }
 
     // --- Resume: real rects (X 180.6-320.6 Menu / 320.6-460.6 Continue,
@@ -254,6 +271,53 @@ int main()
         (void)pad.UpdateResume(mouse(250, 378, true), kViewportW, kViewportH);
         const bool continuePressed = pad.UpdateResume(mouse(250, 378, false), kViewportW, kViewportH);
         check(!continuePressed, "Resume: Menu button press/release does not fire Continue (documented inert placeholder)");
+    }
+
+    // --- Init / gamer-select menu (plan.md MENU-006..020): real rects,
+    // verified against InputPad.cpp's own bsf2=140-at-this-reference-
+    // height formula (same "no adaptation needed" situation as Setup/
+    // Resume). GamerA X20-90/Y166-236 -> center (55,201); GamerB
+    // Y236-306 -> center (55,271); GamerC Y306-376 -> center (55,341);
+    // InitSetup Y390-460 -> center (55,425); InitPlay X480-620/Y300-440
+    // -> center (550,370).
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(55, 201, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(55, 201, false), kViewportW, kViewportH);
+        check(release.gamerSelected == 0 && !release.playPressed && !release.setupPressed,
+              "Init: GamerA fires gamerSelected=0 on release");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(55, 271, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(55, 271, false), kViewportW, kViewportH);
+        check(release.gamerSelected == 1, "Init: GamerB fires gamerSelected=1 on release");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(55, 341, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(55, 341, false), kViewportW, kViewportH);
+        check(release.gamerSelected == 2, "Init: GamerC fires gamerSelected=2 on release");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(55, 425, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(55, 425, false), kViewportW, kViewportH);
+        check(release.setupPressed && release.gamerSelected == -1,
+              "Init: InitSetup fires setupPressed on release, not a gamer selection");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(550, 370, false), kViewportW, kViewportH);
+        check(release.playPressed && release.gamerSelected == -1,
+              "Init: InitPlay fires playPressed on release, not a gamer selection");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
+        const auto stillHeld = pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
+        check(!stillHeld.playPressed, "Init: InitPlay does not fire while still held (only on release)");
     }
 
     // --- Cheat gesture: real 10-tap sequence (12,22,32,12,11,21,22,21,

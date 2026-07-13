@@ -257,6 +257,107 @@ namespace GalaxyEggbert::CNA
         // source, not a transcription mistake here.
         constexpr const char* kCheatLetters[kCheatButtonCount] = {"D", "B", "S", "E", "R", "T", "C", "T", "G"};
 
+        // Wait phase (plan.md MENU-001..005): real jauge.png progress
+        // gauge, position (196,426), zoom 2.0, mode Yellow. Sheet is
+        // 124x88 (4 rows of 22px: row 0 = empty-gauge background, rows
+        // 1-3 = Red/Blue/Yellow fill -- confirmed directly against real
+        // `Jauge::Draw()`). Real fill formula: `filledWidth =
+        // level*114/100`, fill rect X spans [0, 6+filledWidth]. `level`
+        // (0-100) comes from the real NON-LINEAR `waitTable` lookup curve
+        // (`Game1.hpp`), picking the first entry whose threshold >= the
+        // elapsed-time fraction -- NOT a linear ramp. Real minimum
+        // duration is a fixed 5.0s wall-clock timer (`Game1.cpp`'s real
+        // `waitProgress = ticks/50,000,000`, decoupled from actual asset
+        // loading, which already finished synchronously one frame
+        // earlier in this engine's own `LoadContent()`).
+        constexpr float kJaugePosX = 196.0f, kJaugePosY = 426.0f;
+        constexpr float kJaugeZoom = 2.0f;
+        constexpr float kJaugeCellW = 124.0f, kJaugeCellH = 22.0f;
+        constexpr int kJaugeModeYellow = 3;
+        constexpr float kWaitDurationSeconds = 5.0f;
+        struct WaitTableEntry
+        {
+            float threshold;
+            int level;
+        };
+        constexpr WaitTableEntry kWaitTable[12] = {
+            {0.10f, 7}, {0.20f, 20}, {0.25f, 22}, {0.45f, 50}, {0.60f, 53}, {0.65f, 58},
+            {0.68f, 60}, {0.80f, 70}, {0.84f, 75}, {0.90f, 84}, {0.94f, 91}, {1.00f, 100},
+        };
+
+        // Init phase / gamer-select menu (plan.md MENU-006..020): real
+        // speedyblupi.png title logo (640x160) -- Left/Right FIXED at
+        // 80/720, only Top/Bottom animate during the real 1.0s entry
+        // slide (`num=1-(1-t)^2`, confirmed via research this is
+        // VERTICAL, not the horizontal "slides in from the right" an
+        // earlier doc-comment in the real source itself incorrectly
+        // claims). Real blupiyoupie.png entry: centered at real (468,280)
+        // -- different from Pause's (418,190)/WinLost's (418,238) --
+        // scaling 50%->100% (`num=0.5+t/2`) while fading in 0.25->1.0
+        // opacity (`min(num^2,1)`), no rotation. Real exit-fade
+        // animations are NOT ported (every phase transition in this
+        // engine is instant, plan.md MENU-088/089).
+        constexpr float kInitTitleLeft = 80.0f, kInitTitleRight = 720.0f;
+        constexpr float kInitEntryDurationSeconds = 1.0f;
+        constexpr float kInitCharacterCenterX = 468.0f, kInitCharacterCenterY = 280.0f;
+
+        // Real 3 gamer-slot buttons (A/B/C) + InitSetup, stacked in a
+        // column at X=[20,90], plus InitPlay -- verified against
+        // `InputPad.cpp`'s own real `buttonSizeFactor2=
+        // drawBoundsHeight*140/480` formula, EXACTLY 140 at this engine's
+        // own 480 reference height (same "no adaptation needed"
+        // situation as PlaySetup's own row, confirmed via research);
+        // InitPlay's own real Left/Right/Top/Bottom (480/620/300/440)
+        // likewise need no adaptation at this reference size.
+        constexpr float kInitGamerColX0 = 20.0f, kInitGamerColX1 = 90.0f;
+        constexpr float kInitGamerAY0 = 166.0f, kInitGamerAY1 = 236.0f;
+        constexpr float kInitGamerBY0 = 236.0f, kInitGamerBY1 = 306.0f;
+        constexpr float kInitGamerCY0 = 306.0f, kInitGamerCY1 = 376.0f;
+        constexpr float kInitSetupY0 = 390.0f, kInitSetupY1 = 460.0f;
+        constexpr float kInitPlayX0 = 480.0f, kInitPlayY0 = 300.0f;
+        constexpr float kInitPlayX1 = 620.0f, kInitPlayY1 = 440.0f;
+
+        // Real icon indices (`Pixmap.cpp`'s pad.png dispatch): GamerA=4/16
+        // (unselected/selected), GamerB=5/17, GamerC=6/18, InitSetup=19
+        // (same icon as PauseSetup), InitPlay=7. InitRanking/InitBuy are
+        // NOT ported: real visibility gate (`getIsTrialModeProperty()`/
+        // `getIsRankingModeProperty()`) resolves to "never shown by
+        // default" in this port (hardcoded false / QA-cheat-only,
+        // confirmed via research) -- same "unreachable in this port"
+        // precedent already established for the Trial phase itself.
+        constexpr int kIconInitGamerAOff = 4, kIconInitGamerASel = 16;
+        constexpr int kIconInitGamerBOff = 5, kIconInitGamerBSel = 17;
+        constexpr int kIconInitGamerCOff = 6, kIconInitGamerCSel = 18;
+        constexpr int kIconInitSetup = 19;
+        constexpr int kIconInitPlay = 7;
+
+        // Real per-slot text (`Game1::DrawButtonGamerText()`/
+        // `MyResource`): "Player {letter}" (scale 0.7) + "Main gates :
+        // {n}/12" + "Secondary gates : {n}/52" + "Blupi : {lives}" (scale
+        // 0.45), offset from the button's own top-right corner. Door
+        // counts are static "0/12"/"0/52" text (see DrawInit()'s own
+        // header comment for why -- this engine has no per-gamer
+        // door-flags array).
+        constexpr float kGamerTitleScale = 0.7f;
+        constexpr float kGamerBodyScale = 0.45f;
+        constexpr float kGamerTextXOffset = 5.0f;
+        constexpr float kGamerTitleYOffset = 3.0f;
+        constexpr float kGamerMDoorsYOffset = 25.0f;
+        constexpr float kGamerSDoorsYOffset = 39.0f;
+        constexpr float kGamerLivesYOffset = 53.0f;
+
+        constexpr Rect kInitGamerARect{kInitGamerColX0, kInitGamerAY0, kInitGamerColX1, kInitGamerAY1};
+        constexpr Rect kInitGamerBRect{kInitGamerColX0, kInitGamerBY0, kInitGamerColX1, kInitGamerBY1};
+        constexpr Rect kInitGamerCRect{kInitGamerColX0, kInitGamerCY0, kInitGamerColX1, kInitGamerCY1};
+        constexpr Rect kInitSetupRect{kInitGamerColX0, kInitSetupY0, kInitGamerColX1, kInitSetupY1};
+        constexpr Rect kInitPlayRect{kInitPlayX0, kInitPlayY0, kInitPlayX1, kInitPlayY1};
+
+        constexpr int kInitControlGamerA = 0;
+        constexpr int kInitControlGamerB = 1;
+        constexpr int kInitControlGamerC = 2;
+        constexpr int kInitControlSetup = 3;
+        constexpr int kInitControlPlay = 4;
+
         void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
                           std::vector<std::uint32_t>& indices,
                           float x0, float y0, float x1, float y1,
@@ -333,7 +434,7 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[7] = {
+        const char* kPaths[11] = {
             "Content/icons/pad.png",
             "Content/backgrounds/pause.png",
             "Content/backgrounds/blupiyoupie.png",
@@ -341,6 +442,10 @@ namespace GalaxyEggbert::CNA
             "Content/backgrounds/lost.png",
             "Content/backgrounds/setup.png",
             "Content/icons/text.png",
+            "Content/backgrounds/wait.png",
+            "Content/icons/jauge.png",
+            "Content/backgrounds/init.png",
+            "Content/backgrounds/speedyblupi.png",
         };
         for (const char* path : kPaths)
         {
@@ -358,6 +463,10 @@ namespace GalaxyEggbert::CNA
         lostBgTexture_ = Texture2D(kPaths[4], device);
         setupBgTexture_ = Texture2D(kPaths[5], device);
         textTexture_ = Texture2D(kPaths[6], device);
+        waitBgTexture_ = Texture2D(kPaths[7], device);
+        jaugeTexture_ = Texture2D(kPaths[8], device);
+        initBgTexture_ = Texture2D(kPaths[9], device);
+        speedyblupiTexture_ = Texture2D(kPaths[10], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -374,6 +483,10 @@ namespace GalaxyEggbert::CNA
         lostBgEffect_ = makeEffect(lostBgTexture_);
         setupBgEffect_ = makeEffect(setupBgTexture_);
         textEffect_ = makeEffect(textTexture_);
+        waitBgEffect_ = makeEffect(waitBgTexture_);
+        jaugeEffect_ = makeEffect(jaugeTexture_);
+        initBgEffect_ = makeEffect(initBgTexture_);
+        speedyblupiEffect_ = makeEffect(speedyblupiTexture_);
         loaded_ = true;
     }
 
@@ -459,6 +572,37 @@ namespace GalaxyEggbert::CNA
         const float cellPx = kGlyphCellPx * kSetupLabelScale * viewportScale;
         const float advance = kGlyphAdvance * kSetupLabelScale * viewportScale;
         const float topY = centerY - kSetupLabelYNudge * viewportScale;
+        float penX = leftX;
+        for (const char c : text)
+        {
+            const int rank = static_cast<int>(static_cast<unsigned char>(c));
+            const int gcol = rank % kGlyphCols;
+            const int grow = rank / kGlyphCols;
+            Quad q;
+            q.x0 = penX;
+            q.y0 = topY;
+            q.x1 = penX + cellPx;
+            q.y1 = topY + cellPx;
+            q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+            q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+            q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+            q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+            quads.push_back(q);
+            penX += advance;
+        }
+    }
+
+    void GEInputPad::AppendGamerLabel(std::vector<Quad>& quads, const std::string& text, float leftX, float topY,
+                                      float labelScale, float viewportScale) const
+    {
+        if (text.empty())
+        {
+            return;
+        }
+        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
+        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float cellPx = kGlyphCellPx * labelScale * viewportScale;
+        const float advance = kGlyphAdvance * labelScale * viewportScale;
         float penX = leftX;
         for (const char c : text)
         {
@@ -877,7 +1021,7 @@ namespace GalaxyEggbert::CNA
     }
 
     GEInputPad::SetupInput GEInputPad::UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                                                    int viewportW, int viewportH) noexcept
+                                                    int viewportW, int viewportH, bool showReset) noexcept
     {
         SetupInput result;
 
@@ -893,7 +1037,7 @@ namespace GalaxyEggbert::CNA
         const bool overJump = InRect(mouseRefX, mouseRefY, kSetupJumpRect);
         const bool overZoom = InRect(mouseRefX, mouseRefY, kSetupZoomRect);
         const bool overAccel = InRect(mouseRefX, mouseRefY, kSetupAccelRect);
-        const bool overReset = InRect(mouseRefX, mouseRefY, kSetupResetRect);
+        const bool overReset = showReset && InRect(mouseRefX, mouseRefY, kSetupResetRect);
         const bool overReturn = InRect(mouseRefX, mouseRefY, kSetupReturnRect);
 
         if (mouseDown && !mouseWasDown_)
@@ -909,11 +1053,12 @@ namespace GalaxyEggbert::CNA
 
         if (!mouseDown && mouseWasDown_)
         {
-            // Only Sounds (a real, meaningful desktop toggle) and Return
-            // are wired to real behavior -- Jump/Zoom/Accel/Reset render
-            // at their real position/icon/label but are intentionally
-            // inert (see GEInputPad.hpp's UpdateSetup() class comment).
+            // Sounds/Reset (both real, meaningful desktop behavior now)
+            // and Return are wired -- Jump/Zoom/Accel render at their
+            // real position/icon/label but stay intentionally inert (see
+            // GEInputPad.hpp's UpdateSetup() class comment).
             if (activeControl_ == kSetupControlSounds) result.soundsToggled = true;
+            else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
         }
@@ -923,7 +1068,7 @@ namespace GalaxyEggbert::CNA
     }
 
     void GEInputPad::DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                              int viewportW, int viewportH, bool soundsOn)
+                              int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer)
     {
         if (!loaded_)
         {
@@ -979,17 +1124,25 @@ namespace GalaxyEggbert::CNA
         appendButton(kSetupJumpRect, kIconSetupToggleOff, kSetupControlJump);
         appendButton(kSetupZoomRect, kIconSetupToggleOff, kSetupControlZoom);
         appendButton(kSetupAccelRect, kIconSetupToggleOff, kSetupControlAccel);
-        appendButton(kSetupResetRect, kIconSetupReset, kSetupControlReset);
+        if (showReset)
+        {
+            appendButton(kSetupResetRect, kIconSetupReset, kSetupControlReset);
+        }
         appendButton(kSetupReturnRect, kIconSetupReturn, kSetupControlReturn);
 
         appendLabel(kSetupSoundsRect, "Sound effects");
         appendLabel(kSetupJumpRect, "Jump button on the right");
         appendLabel(kSetupZoomRect, "Automatic zoom on action");
         appendLabel(kSetupAccelRect, "Accelerometer");
-        // SetupReset's real label needs a real gamer letter/number this
-        // engine has no concept of -- deliberately not rendered rather
-        // than inventing one (see class comment). SetupReturn has no
-        // real label at all in the source (same as WinLostReturn).
+        if (showReset)
+        {
+            // Real 2-line label ("Player {0} :\nErase progress") collapsed
+            // to one line -- see class comment.
+            const std::string resetLabel = "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) +
+                                           ": Erase progress";
+            appendLabel(kSetupResetRect, resetLabel.c_str());
+        }
+        // SetupReturn has no real label at all in the source (same as WinLostReturn).
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *setupBgEffect_, setupBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
@@ -1226,6 +1379,256 @@ namespace GalaxyEggbert::CNA
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    void GEInputPad::DrawWait(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                              int viewportH, float phaseTimeSeconds)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
+        const auto refToScreenY = [&](float y) { return y * scale; };
+
+        Quad background;
+        background.x0 = refToScreenX(0.0f);
+        background.y0 = refToScreenY(0.0f);
+        background.x1 = refToScreenX(kRefW);
+        background.y1 = refToScreenY(kRefH);
+        background.u0 = 0.0f;
+        background.v0 = 0.0f;
+        background.u1 = 1.0f;
+        background.v1 = 1.0f;
+        std::vector<Quad> backgroundQuads{background};
+
+        // Real non-linear waitTable lookup, not a linear ramp -- see this
+        // file's own kWaitTable comment.
+        const float progress = std::clamp(phaseTimeSeconds / kWaitDurationSeconds, 0.0f, 1.0f);
+        int level = 100;
+        for (const auto& entry : kWaitTable)
+        {
+            if (progress <= entry.threshold)
+            {
+                level = entry.level;
+                break;
+            }
+        }
+        const int filledWidth = level * 114 / 100;
+
+        const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
+        const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+        std::vector<Quad> jaugeQuads;
+        {
+            // Row 0: always-visible empty-gauge background.
+            Quad q;
+            q.x0 = refToScreenX(kJaugePosX);
+            q.y0 = refToScreenY(kJaugePosY);
+            q.x1 = refToScreenX(kJaugePosX + kJaugeCellW * kJaugeZoom);
+            q.y1 = refToScreenY(kJaugePosY + kJaugeCellH * kJaugeZoom);
+            q.u0 = 0.0f;
+            q.v0 = 0.0f;
+            q.u1 = kJaugeCellW / jaugeSheetW;
+            q.v1 = kJaugeCellH / jaugeSheetH;
+            jaugeQuads.push_back(q);
+        }
+        if (filledWidth > 0)
+        {
+            const float fillW = 6.0f + static_cast<float>(filledWidth);
+            Quad q;
+            q.x0 = refToScreenX(kJaugePosX);
+            q.y0 = refToScreenY(kJaugePosY);
+            q.x1 = refToScreenX(kJaugePosX + fillW * kJaugeZoom);
+            q.y1 = refToScreenY(kJaugePosY + kJaugeCellH * kJaugeZoom);
+            q.u0 = 0.0f;
+            q.v0 = (kJaugeCellH * static_cast<float>(kJaugeModeYellow)) / jaugeSheetH;
+            q.u1 = fillW / jaugeSheetW;
+            q.v1 = (kJaugeCellH * static_cast<float>(kJaugeModeYellow + 1)) / jaugeSheetH;
+            jaugeQuads.push_back(q);
+        }
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        FlushQuads(device, *waitBgEffect_, waitBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    GEInputPad::InitInput GEInputPad::UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                  int viewportW, int viewportH) noexcept
+    {
+        InitInput result;
+
+        using Microsoft::Xna::Framework::Input::ButtonState;
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
+        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+
+        const bool overGamerA = InRect(mouseRefX, mouseRefY, kInitGamerARect);
+        const bool overGamerB = InRect(mouseRefX, mouseRefY, kInitGamerBRect);
+        const bool overGamerC = InRect(mouseRefX, mouseRefY, kInitGamerCRect);
+        const bool overSetup = InRect(mouseRefX, mouseRefY, kInitSetupRect);
+        const bool overPlay = InRect(mouseRefX, mouseRefY, kInitPlayRect);
+
+        if (mouseDown && !mouseWasDown_)
+        {
+            if (overGamerA) activeControl_ = kInitControlGamerA;
+            else if (overGamerB) activeControl_ = kInitControlGamerB;
+            else if (overGamerC) activeControl_ = kInitControlGamerC;
+            else if (overSetup) activeControl_ = kInitControlSetup;
+            else if (overPlay) activeControl_ = kInitControlPlay;
+            else activeControl_ = -1;
+        }
+
+        if (!mouseDown && mouseWasDown_)
+        {
+            // Real edge/release-triggered semantics, same as every other
+            // non-Jump button in this class.
+            switch (activeControl_)
+            {
+                case kInitControlGamerA: result.gamerSelected = 0; break;
+                case kInitControlGamerB: result.gamerSelected = 1; break;
+                case kInitControlGamerC: result.gamerSelected = 2; break;
+                case kInitControlSetup: result.setupPressed = true; break;
+                case kInitControlPlay: result.playPressed = true; break;
+                default: break;
+            }
+            activeControl_ = -1;
+        }
+
+        mouseWasDown_ = mouseDown;
+        return result;
+    }
+
+    void GEInputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                             int viewportH, float phaseTimeSeconds, int selectedGamer, int livesA, int livesB,
+                             int livesC)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
+        const auto refToScreenY = [&](float y) { return y * scale; };
+
+        Quad background;
+        background.x0 = refToScreenX(0.0f);
+        background.y0 = refToScreenY(0.0f);
+        background.x1 = refToScreenX(kRefW);
+        background.y1 = refToScreenY(kRefH);
+        background.u0 = 0.0f;
+        background.v0 = 0.0f;
+        background.u1 = 1.0f;
+        background.v1 = 1.0f;
+        std::vector<Quad> backgroundQuads{background};
+
+        const float t = std::min(phaseTimeSeconds / kInitEntryDurationSeconds, 1.0f);
+
+        // Real title-logo entry: vertical ease-out slide-down from above
+        // the screen, Left/Right fixed (see this file's own kInitTitleLeft
+        // comment).
+        const float titleNum = 1.0f - (1.0f - t) * (1.0f - t);
+        const float titleTop = -160.0f + 160.0f * titleNum;
+        const float titleBottom = 160.0f * titleNum;
+        Quad titleQuad;
+        titleQuad.x0 = refToScreenX(kInitTitleLeft);
+        titleQuad.y0 = refToScreenY(titleTop);
+        titleQuad.x1 = refToScreenX(kInitTitleRight);
+        titleQuad.y1 = refToScreenY(titleBottom);
+        titleQuad.u0 = 0.0f;
+        titleQuad.v0 = 0.0f;
+        titleQuad.u1 = 1.0f;
+        titleQuad.v1 = 1.0f;
+        std::vector<Quad> titleQuads{titleQuad};
+
+        // Real blupiyoupie entry: scale 50%->100%, fade 0.25->1.0, no
+        // rotation.
+        const float charNum = 0.5f + t * 0.5f;
+        const float charOpacity = std::min(charNum * charNum, 1.0f);
+        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
+        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+        const float halfWRef = (charW * 0.5f) * charNum;
+        const float halfHRef = (charH * 0.5f) * charNum;
+        std::vector<Easy3D::BillboardVertex> charVertices;
+        std::vector<std::uint32_t> charIndices;
+        AppendRotatedQuadUv(charVertices, charIndices,
+                            refToScreenX(kInitCharacterCenterX), refToScreenY(kInitCharacterCenterY),
+                            halfWRef * scale, halfHRef * scale, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        std::vector<Quad> normalQuads;
+        std::vector<Quad> pressedQuads;
+        std::vector<Quad> labelQuads;
+
+        const auto appendIconQuad = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
+        {
+            Quad q;
+            q.x0 = refToScreenX(r.x0);
+            q.y0 = refToScreenY(r.y0);
+            q.x1 = refToScreenX(r.x1);
+            q.y1 = refToScreenY(r.y1);
+            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            bucket.push_back(q);
+        };
+
+        const auto appendGamerRow = [&](const Rect& r, int control, int iconOff, int iconSel, bool selected,
+                                        char letter, int lives)
+        {
+            appendIconQuad(activeControl_ == control ? pressedQuads : normalQuads, r,
+                          selected ? iconSel : iconOff);
+
+            const float textLeft = refToScreenX(r.x1 + kGamerTextXOffset);
+            std::string title = "Player ";
+            title += letter;
+            AppendGamerLabel(labelQuads, title, textLeft, refToScreenY(r.y0 + kGamerTitleYOffset),
+                            kGamerTitleScale, scale);
+            AppendGamerLabel(labelQuads, "Main gates : 0/12", textLeft, refToScreenY(r.y0 + kGamerMDoorsYOffset),
+                            kGamerBodyScale, scale);
+            AppendGamerLabel(labelQuads, "Secondary gates : 0/52", textLeft,
+                            refToScreenY(r.y0 + kGamerSDoorsYOffset), kGamerBodyScale, scale);
+            AppendGamerLabel(labelQuads, "Blupi : " + std::to_string(lives), textLeft,
+                            refToScreenY(r.y0 + kGamerLivesYOffset), kGamerBodyScale, scale);
+        };
+
+        appendGamerRow(kInitGamerARect, kInitControlGamerA, kIconInitGamerAOff, kIconInitGamerASel,
+                      selectedGamer == 0, 'A', livesA);
+        appendGamerRow(kInitGamerBRect, kInitControlGamerB, kIconInitGamerBOff, kIconInitGamerBSel,
+                      selectedGamer == 1, 'B', livesB);
+        appendGamerRow(kInitGamerCRect, kInitControlGamerC, kIconInitGamerCOff, kIconInitGamerCSel,
+                      selectedGamer == 2, 'C', livesC);
+
+        appendIconQuad(activeControl_ == kInitControlSetup ? pressedQuads : normalQuads, kInitSetupRect,
+                      kIconInitSetup);
+        appendIconQuad(activeControl_ == kInitControlPlay ? pressedQuads : normalQuads, kInitPlayRect,
+                      kIconInitPlay);
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        FlushQuads(device, *initBgEffect_, initBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH, 1.0f);
+        if (!charIndices.empty())
+        {
+            blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
+                0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
+            blupiyoupieEffect_->setAlphaProperty(charOpacity);
+            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
+            blupiyoupieEffect_->setAlphaProperty(1.0f);
+        }
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);

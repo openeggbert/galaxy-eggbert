@@ -173,24 +173,44 @@ namespace GalaxyEggbert::CNA
         // simulation (Decor::MoveStep(), i.e. this class's own worldRuntime_/
         // blupi_/interaction_ Update() calls) is Play -- every other phase
         // freezes it, confirmed by Game1.cpp:394-438's own `if (phase==Play)`
-        // gate. `First`/`Wait`/`Init` are real but not part of this engine's
-        // own startup flow (no async content-loading step or main menu
-        // exists yet to show during them) -- CNA starts directly in Play, a
-        // documented, engine-appropriate adaptation, not a missing feature.
-        // `Trial`/`MainSetup`/`Ranking` are real enum values with NO
-        // trigger wired to them yet (no upsell/ranking screens exist) --
-        // reachable in principle, unreachable in practice until those
-        // screens exist. `MainSetup` is real-but-unreachable (its own
-        // Init entry point doesn't exist), while `PlaySetup` IS reachable
-        // (2026-07-13, plan.md MENU-058..069) via Pause's real Setup
-        // button -- see `GEInputPad::UpdateSetup()`'s own class comment
-        // for what is/isn't modeled on that screen. `Resume` is ALSO now
-        // reachable (2026-07-13, plan.md MENU-040..045) -- but via an
-        // ADAPTED trigger (offered at startup when `GESaveData::
-        // GetHasProgress()` is true), not the real `Game1::OnActivated()`
-        // OS-reactivation event, which has no desktop equivalent -- see
-        // `GEInputPad::UpdateResume()`'s own class comment for full
-        // reasoning.
+        // gate.
+        //
+        // `Wait`/`Init` are now real AND reachable (2026-07-13, plan.md
+        // MENU-001..020, a dedicated research pass) -- this engine starts
+        // in `Wait` (see phase_'s own default member initializer below),
+        // matching the real source's own `First`->`Wait` transition
+        // (`First`'s synchronous asset-loading step already happens
+        // unconditionally in this class's own `LoadContent()`, so `First`
+        // itself is skipped as redundant, not a missing feature). `Wait`
+        // shows the real wait.png/jauge.png progress gauge for a FIXED
+        // 5.0s cosmetic timer (confirmed via research: real `waitProgress`
+        // is wall-clock-based, decoupled from actual loading), then
+        // transitions to `Resume` if `GESaveData::GetHasProgress()` is
+        // true, else `Init` (an adaptation of the real `Wait`->`Resume`
+        // branch, which for real is gated on a WP7-only OS-reactivation
+        // snapshot this engine has no equivalent for -- same adapted
+        // trigger already established for Resume itself). `Init` renders
+        // the real init.png/speedyblupi.png/blupiyoupie.png gamer-select
+        // menu (3 independent slots via `GESaveData`'s own 3-gamer-slot
+        // extension) -- see `GEInputPad::UpdateInit()`/`DrawInit()`'s own
+        // class comment for full detail, including what's deliberately
+        // NOT ported (InitRanking/InitBuy, real exit-fade animations).
+        //
+        // `Trial`/`Ranking` are real enum values with NO trigger wired to
+        // them yet (no upsell/ranking screens exist) -- reachable in
+        // principle, unreachable in practice until those screens exist.
+        // `MainSetup` is now ALSO reachable (2026-07-13, via Init's own
+        // InitSetup button), sharing `GEInputPad::UpdateSetup()`/
+        // `DrawSetup()` with `PlaySetup` (2026-07-13, plan.md
+        // MENU-058..069, reachable via Pause's real Setup button) -- see
+        // that method's own class comment for what is/isn't modeled on
+        // that screen, including the one real difference between the two
+        // (`SetupReset`, MainSetup-only). `Resume` is reachable (2026-07-13,
+        // plan.md MENU-040..045) via an ADAPTED trigger (the `Wait`->
+        // `Resume`-or-`Init` branch above), not the real `Game1::
+        // OnActivated()` OS-reactivation event, which has no desktop
+        // equivalent -- see `GEInputPad::UpdateResume()`'s own class
+        // comment for full reasoning.
         //
         // Real Pause trigger is gamepad-Back / a touch PlayPause button --
         // the real source has NO keyboard binding at all (an XNA/WP7 port);
@@ -233,7 +253,7 @@ namespace GalaxyEggbert::CNA
         // guessing risks silently reusing the crate machinery for the
         // wrong feature. A documented gap, not a silent omission.
         void ApplyCheat(int cheatNumber);
-        GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Play;
+        GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
 

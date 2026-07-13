@@ -58,6 +58,43 @@ int main()
               "Save()/Load(): round-trips lives/missionNumber/hasProgress correctly (Win/Lost checkpoint fields)");
     }
 
+    // Phase 3 (2026-07-13, plan.md MENU-006..020): 3 independent gamer
+    // slots, selected via GetSelectedGamer()/SetSelectedGamer(), each
+    // with its own lives/missionNumber/hasProgress -- GetLives()/
+    // SetLives()/etc. above operate on whichever slot is selected.
+    {
+        GESaveData data;
+        check(data.GetSelectedGamer() == 0, "Load(): defaults selectedGamer to 0 when no save file exists");
+        check(data.GetLivesForGamer(1) == 3 && data.GetLivesForGamer(2) == 3,
+              "Load(): every gamer slot defaults lives to 3 when no save file exists");
+    }
+    {
+        GESaveData data;
+        data.SetSelectedGamer(1);
+        data.SetLives(7);
+        data.SetMissionNumber(4);
+        data.SetHasProgress(true);
+        check(data.GetLivesForGamer(0) == 3, "SetLives() on gamer 1 does not affect gamer 0's slot");
+        data.Save();
+        GESaveData reloaded;
+        reloaded.Load();
+        check(reloaded.GetSelectedGamer() == 1, "Save()/Load(): round-trips selectedGamer correctly");
+        reloaded.SetSelectedGamer(1);
+        check(reloaded.GetLives() == 7 && reloaded.GetMissionNumber() == 4 && reloaded.GetHasProgress(),
+              "Save()/Load(): round-trips gamer-1's own lives/missionNumber/hasProgress correctly");
+        check(reloaded.GetLivesForGamer(0) == 3 && !reloaded.GetHasProgressForGamer(0),
+              "Save()/Load(): gamer 0's slot is untouched by gamer 1's own data");
+    }
+    {
+        GESaveData data;
+        data.SetSelectedGamer(2);
+        data.SetLives(1);
+        data.SetHasProgress(true);
+        data.Reset();
+        check(data.GetSelectedGamer() == 0 && data.GetLivesForGamer(2) == 3 && !data.GetHasProgressForGamer(2),
+              "Reset(): restores selectedGamer and every gamer slot to its default (real gameData.Reset())");
+    }
+
     std::remove("savedata.txt");
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
