@@ -1716,6 +1716,9 @@ namespace GalaxyEggbert::CNA
                       interaction_.Key3Count() > 0,
                       interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
                       interaction_.BulletCount(), interaction_.DynamiteCount(),
+                      blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
+                      blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
+                      blupi_.GetSecretPowerLevel(),
                       blupi_.GetAnimIcon());
         }
 

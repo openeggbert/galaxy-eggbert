@@ -79,11 +79,29 @@ namespace GalaxyEggbert::CNA
         // a single icon shown only while `dynamite > 0` (matches this
         // engine's own dynamite cap of 1, but checked as `> 0` to mirror
         // the real source's own gate exactly rather than assume the cap).
+        //
+        // waterGauge*/powerGauge* added 2026-07-13 (plan.md HUD-008/019):
+        // the real `Jauge` HUD widget (`Decor.cpp`'s `m_jauges[0]`/`[1]`),
+        // verified directly against `Jauge.hpp`'s own fully-documented
+        // class comment plus every real `Decor.cpp` call site. `m_jauges[0]`
+        // (position (90,450)) is the water/Nage breath gauge -- Blue while
+        // `level > 25`, switching to Red at `<= 25` (a real low-air warning
+        // color change, `Decor.cpp:4621-4623`); `m_jauges[1]` (position
+        // (90,428), always Yellow) is shared by Shield/Power/Cloud/Hide's
+        // real countdown timer (all 4 reuse the SAME `m_blupiTimeShield`
+        // variable and gauge widget in the real source, confirmed via
+        // `Decor.cpp:5071-5137` -- not 4 separate gauges). Real Mirror/
+        // Invert, Balloon, and Ecrase also reuse this same gauge -- NOT
+        // wired in here since those aren't modeled by this engine's
+        // `SecretPower` enum (Balloon/Ecrase have their own separate,
+        // un-gauged timers already; Mirror/Invert isn't modeled at all).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
                   int treasures, int totalTreasures,
                   int bullets, int dynamite,
+                  bool waterGaugeVisible, int waterGaugeLevel,
+                  bool powerGaugeVisible, int powerGaugeLevel,
                   int animIcon);
 
     private:
@@ -106,14 +124,17 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D elementTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D jaugeTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> elementEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> elementRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
         bool loaded_ = false;
     };
 }

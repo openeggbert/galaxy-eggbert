@@ -450,11 +450,14 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       backend records every `SpriteBatch` batch before every 3D draw each frame, so a sprite HUD
       is always painted over by the 3D scene). Done: life icons (`blupi.png`), key icons
       (`element.png`), treasure counter text + `pad.png` panel (`text.png`, glyph-index-is-ASCII,
-      fixed advance — see `## 2.3 HUD-001/003/004/005/006/007`), and (2026-07-13) bullet/dynamite
-      counters (`HUD-015`/`016`). Avoid building a UI framework — a HUD is a handful of sprite
-      draws keyed to game state, not a system. Remaining real HUD elements (`jauge.png` gauges for
-      shield/charge, score/world-name/timer text, hit-flash, etc.) are tracked individually in
-      `## 2.3`'s `HUD-008`-`HUD-026` list, not part of this summary bullet.
+      fixed advance — see `## 2.3 HUD-001/003/004/005/006/007`), (2026-07-13) bullet/dynamite
+      counters (`HUD-015`/`016`), and (2026-07-13) both real `jauge.png` gauges — water/Nage
+      breath (`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`).
+      Avoid building a UI framework — a HUD is a handful of sprite draws keyed to game state, not
+      a system. Remaining real HUD elements (perso counter, score/world-name/timer text,
+      hit-flash/camera-shake, exit-open popup, controls hint, etc.) are tracked individually in
+      `## 2.3`'s `HUD-009`-`HUD-011`/`HUD-013`/`HUD-014`/`HUD-017`/`HUD-020`-`HUD-026` list, not
+      part of this summary bullet.
 
 ### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
 
@@ -1469,11 +1472,17 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 - [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11; since 2026-07-10 at the REAL position (520,418) via `GEHud`)
 - [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held (CNA, 2026-07-11; real position (530,418))
 - [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held (CNA, 2026-07-11; real position (540,418))
-- [ ] HUD-008 — Shield timer gauge (jauge.png yellow fill) — visible when shield active
+- [x] HUD-008 — Shared Shield/Power/Cloud/Hide countdown gauge (jauge.png yellow fill) at
+      (90,428) — visible while any of the 4 is active (CNA, 2026-07-13, `GEHud`, verified
+      directly against `Jauge.hpp` + `Decor.cpp:5071-5137`: all 4 real states reuse the SAME
+      `m_blupiTimeShield` variable and `m_jauges[1]` widget, not 4 separate gauges — corrects
+      this entry's own "Shield timer" framing, which undersold the real scope)
 - [ ] HUD-009 — Score display (text label, top-right area)
 - [ ] HUD-010 — World name + elapsed level timer
 - [ ] HUD-011 — Game speed indicator label (SLOW / NORMAL / FAST)
-- [ ] HUD-012 — Gauge sprite (jauge.png) bottom-left area
+- [x] HUD-012 — Water/Nage breath gauge (jauge.png, real `m_jauges[0]`) at (90,450), Blue normally
+      (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:5310-5326`, wired to the
+      already-implemented `GEBlupiController::IsNage()`/`GetWaterGaugeLevel()`, `E3D-MIG-148`)
 - [ ] HUD-013 — Hit flash: red full-screen overlay panel, 0.4 s fade on damage
 - [ ] HUD-014 — Camera shake on hit
 - [x] HUD-015 — Bullet counter: element.png icon 176 × bullets held, X+=4 fanned row at (570,442)
@@ -1481,8 +1490,14 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 - [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1212-1217`)
 - [ ] HUD-017 — Perso (persona) counter: button.png icon 108 + "= N" text when m_blupiPerso > 0
-- [ ] HUD-018 — Second gauge (jauge.png red fill): used for charge level (m_blupiLevel in charge mode)
-- [ ] HUD-019 — Yellow gauge: shield timer ticks down from 100 (shown while shield active, hidden when expired)
+- [x] HUD-018 — **Corrected 2026-07-13**: this is NOT a separate "charge mode" gauge — it's
+      `HUD-012`'s SAME water/Nage gauge (`m_jauges[0]`) switching from Blue to Red at the real
+      low-air warning threshold (level <= 25, `Decor.cpp:4621-4623`), still driven by the same
+      `m_blupiLevel`/breath variable, not a distinct charge-level mechanic. Done as part of
+      `HUD-012` (CNA, 2026-07-13, `GEHud`).
+- [x] HUD-019 — **Corrected 2026-07-13**: same widget as `HUD-008` (`m_jauges[1]`, shared
+      Shield/Power/Cloud/Hide countdown, not shield-specific) — done together with `HUD-008`
+      (CNA, 2026-07-13, `GEHud`).
 - [ ] HUD-020 — "EXIT OPEN!" popup text (3 s timed, big centred text) when all treasures collected
 - [ ] HUD-021 — Controls hint bar fades after 8 s (re-show on new level)
 - [ ] HUD-022 — Pause button icon visible during Play phase (top area)

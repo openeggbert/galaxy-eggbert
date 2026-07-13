@@ -25,6 +25,24 @@ namespace GalaxyEggbert::CNA
         constexpr int kPanelIcon = 15; // pad.png, same as DrawInfo
         constexpr int kBulletIcon = 176;   // element.png, same as DrawInfo
         constexpr int kDynamiteIcon = 252; // element.png, same as DrawInfo
+
+        // jauge.png: 124x88px, 4 stacked 22px-tall rows (JaugeMode Empty=0/
+        // Red=1/Blue=2/Yellow=3 -- Jauge.hpp). Real Jauge::Draw() is a
+        // two-layer sprite: the full 124x22 Empty row always drawn as a
+        // background, then (if level>0) a colored strip from the mode's
+        // row, cropped to [6, 6+level*114/100] pixels -- fill starts after
+        // a fixed 6px left border, matching real Jauge.hpp exactly.
+        constexpr float kJaugeW = 124.0f, kJaugeH = 22.0f;
+        constexpr float kJaugeFillX0 = 6.0f, kJaugeFillMaxW = 114.0f;
+        constexpr int kJaugeRowEmpty = 0, kJaugeRowRed = 1, kJaugeRowBlue = 2, kJaugeRowYellow = 3;
+        // Real Decor.cpp positions: m_jauges[0] (water/Nage breath, Blue/Red)
+        // at (90,450); m_jauges[1] (Shield/Power/Cloud/Hide shared timer,
+        // always Yellow) at (90,428).
+        constexpr float kWaterGaugeX = 90.0f, kWaterGaugeY = 450.0f;
+        constexpr float kPowerGaugeX = 90.0f, kPowerGaugeY = 428.0f;
+        // Real low-air warning: Decor.cpp:4621-4623 switches m_jauges[0]
+        // from Blue to Red exactly when the water level drops to 25.
+        constexpr int kWaterGaugeWarnLevel = 25;
         // The real DrawInfo panel opacity is 0.6 -- deliberately 1.0 here
         // for now: on CNA's Vulkan backend a BasicEffect draw with
         // Alpha < 1 doesn't render at all (verified empirically 2026-07-10:
@@ -102,11 +120,12 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[4] = {
+        const char* kPaths[5] = {
             "Content/icons/blupi.png",
             "Content/icons/element.png",
             "Content/icons/text.png",
             "Content/icons/pad.png",
+            "Content/icons/jauge.png",
         };
         for (const char* path : kPaths)
         {
@@ -121,6 +140,7 @@ namespace GalaxyEggbert::CNA
         elementTexture_ = Texture2D(kPaths[1], device);
         textTexture_ = Texture2D(kPaths[2], device);
         padTexture_ = Texture2D(kPaths[3], device);
+        jaugeTexture_ = Texture2D(kPaths[4], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -134,6 +154,7 @@ namespace GalaxyEggbert::CNA
         elementEffect_ = makeEffect(elementTexture_);
         textEffect_ = makeEffect(textTexture_);
         padEffect_ = makeEffect(padTexture_);
+        jaugeEffect_ = makeEffect(jaugeTexture_);
         loaded_ = true;
     }
 
@@ -175,6 +196,8 @@ namespace GalaxyEggbert::CNA
                      int lives, bool key1, bool key2, bool key3,
                      int treasures, int totalTreasures,
                      int bullets, int dynamite,
+                     bool waterGaugeVisible, int waterGaugeLevel,
+                     bool powerGaugeVisible, int powerGaugeLevel,
                      int animIcon)
     {
         if (!loaded_)
@@ -194,11 +217,46 @@ namespace GalaxyEggbert::CNA
         const float blupiSheetH = static_cast<float>(blupiTexture_.getHeightProperty());
         const float elementSheetW = static_cast<float>(elementTexture_.getWidthProperty());
         const float elementSheetH = static_cast<float>(elementTexture_.getHeightProperty());
+        const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
+        const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
 
         std::vector<Quad> blupiQuads;
         std::vector<Quad> elementQuads;
         std::vector<Quad> textQuads;
         std::vector<Quad> padQuads;
+        std::vector<Quad> jaugeQuads;
+
+        // Real Jauge::Draw(): the full Empty-row background always drawn
+        // first, then (if level > 0) a colored strip from the mode's row,
+        // cropped to [6, 6+level*114/100] pixels (Jauge.hpp).
+        const auto appendJauge = [&](float refX, float refY, int level, int modeRow)
+        {
+            Quad bg;
+            bg.x0 = refToScreenX(refX);
+            bg.y0 = refToScreenY(refY);
+            bg.x1 = bg.x0 + kJaugeW * scale;
+            bg.y1 = bg.y0 + kJaugeH * scale;
+            bg.u0 = 0.0f;
+            bg.v0 = (static_cast<float>(kJaugeRowEmpty) * kJaugeH) / jaugeSheetH;
+            bg.u1 = kJaugeW / jaugeSheetW;
+            bg.v1 = (static_cast<float>(kJaugeRowEmpty + 1) * kJaugeH) / jaugeSheetH;
+            jaugeQuads.push_back(bg);
+
+            if (level > 0)
+            {
+                const float fillW = kJaugeFillMaxW * static_cast<float>(level) / 100.0f;
+                Quad fill;
+                fill.x0 = refToScreenX(refX + kJaugeFillX0);
+                fill.y0 = refToScreenY(refY);
+                fill.x1 = fill.x0 + fillW * scale;
+                fill.y1 = fill.y0 + kJaugeH * scale;
+                fill.u0 = kJaugeFillX0 / jaugeSheetW;
+                fill.v0 = (static_cast<float>(modeRow) * kJaugeH) / jaugeSheetH;
+                fill.u1 = (kJaugeFillX0 + fillW) / jaugeSheetW;
+                fill.v1 = (static_cast<float>(modeRow + 1) * kJaugeH) / jaugeSheetH;
+                jaugeQuads.push_back(fill);
+            }
+        };
 
         // Lives: one blupi.png icon 48 per life, X += 16 (a fanned,
         // overlapping row -- the real DrawInfo look).
@@ -319,6 +377,21 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Water/Nage breath gauge (real m_jauges[0]): Blue normally, Red
+        // once the level drops to the real low-air warning threshold.
+        if (waterGaugeVisible)
+        {
+            appendJauge(kWaterGaugeX, kWaterGaugeY, waterGaugeLevel,
+                        waterGaugeLevel <= kWaterGaugeWarnLevel ? kJaugeRowRed : kJaugeRowBlue);
+        }
+
+        // Shield/Power/Cloud/Hide shared countdown gauge (real
+        // m_jauges[1]), always Yellow.
+        if (powerGaugeVisible)
+        {
+            appendJauge(kPowerGaugeX, kPowerGaugeY, powerGaugeLevel, kJaugeRowYellow);
+        }
+
         // Alpha blending for the icon sheets' real alpha channels; the
         // panel additionally gets the real 0.6 opacity via BasicEffect's
         // Alpha. Panel first so the text draws on top of it.
@@ -327,6 +400,7 @@ namespace GalaxyEggbert::CNA
         FlushQuads(device, *textEffect_, textRenderer_, textQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *blupiEffect_, blupiRenderer_, blupiQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *elementEffect_, elementRenderer_, elementQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 }

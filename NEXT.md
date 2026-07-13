@@ -262,6 +262,24 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Both real `jauge.png` HUD gauges implemented (2026-07-13, plan.md `HUD-008`/`012`/`018`/`019`).**
+  Researched the real `Jauge` widget (`Jauge.hpp`'s own fully-documented class comment: a
+  124×22px two-layer sprite, empty background always drawn, colored fill cropped to
+  `[6, 6+level*114/100]` pixels) and every real `Decor.cpp` call site, which corrected 2 stale
+  plan.md entries: `HUD-018` ("second gauge... charge level") isn't a separate mechanic at all —
+  it's `HUD-012`'s own water/Nage gauge switching from Blue to Red at the real low-air warning
+  threshold (level<=25); and `HUD-008`/`019` (both describing "shield timer gauge") are the SAME
+  single widget, shared by Shield/Power/Cloud/Hide alike (`Decor.cpp:5071-5137` — all 4 reuse one
+  `m_blupiTimeShield` variable and gauge, not 4 separate ones). Implemented both real gauges in
+  `GEHud`: the water/Nage breath gauge (position (90,450)) wired to the already-implemented
+  `GEBlupiController::IsNage()`/`GetWaterGaugeLevel()`, and the Shield/Power/Cloud/Hide countdown
+  gauge (position (90,428), always Yellow) wired to `GetSecretPower()`/`GetSecretPowerLevel()` —
+  no new gameplay logic needed, both pieces of state already existed from earlier this session.
+  Verified live via a headless HUD screenshot (temporary hardcoded gauge levels for the shot,
+  reverted before committing) — both gauges render at the correct position with correct
+  proportional fill widths and the right color (confirmed the water gauge switches to red below
+  the warning threshold). Full suite re-run (63/63 unit tests, all verify tools) + both backends.
+
 - **Phase 9 (HUD) started per explicit user direction (2026-07-13): bullet/dynamite HUD counters
   added (plan.md `HUD-015`/`016`), and a stale Phase 9/§2.3 documentation gap closed.** While
   scoping this, found that `GEHud`'s treasure-counter text rendering (`HUD-003`/`004`, real
