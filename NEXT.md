@@ -203,11 +203,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   real background file. Also now has a second, third-person camera mode ("C" to toggle,
   2026-07-09, §3) showing a real GPU-skinned 3D model via CNA's `AvatarRenderer` extension —
   currently a temporary CC0/CC-BY placeholder (`avatars3d/blupi_placeholder/`), not a real Blupi
-  model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost, 2026-07-13, §3)
-  with a real Pause screen (background/character/5 labeled buttons, Continue/Restart functional),
-  real Win/Lost screens (background + real pulsing/spin-in `blupiyoupie.png` animation +
-  functional Return button), and functional on-screen D-pad/Jump/Action/Pause controls
-  (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable alongside keyboard input.
+  model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost/PlaySetup,
+  2026-07-13, §3) with a real Pause screen (background/character/5 labeled buttons, Continue/
+  Restart/Setup all functional), real Win/Lost screens (background + real pulsing/spin-in
+  `blupiyoupie.png` animation + functional Return button), a real PlaySetup settings screen
+  (background + 6 real buttons, Sounds mute toggle + Return functional), and functional on-screen
+  D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable alongside
+  keyboard input.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -265,6 +267,32 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **PlaySetup (settings) screen implemented (2026-07-13, plan.md `MENU-058..069`), continuing
+  autonomously right after the Win/Lost task below.** Wired Pause's real Setup button
+  (previously inert) to `SetPhase(PlaySetup)` (confirmed via `Game1.cpp`'s real
+  `PauseSetup -> SetPhase(PlaySetup)` dispatch), and extended `GEInputPad` with
+  `UpdateSetup()`/`DrawSetup()`: real `setup.png` full-screen background + 6 real buttons.
+  Discovered a rare case where the real `InputPad.cpp` rects need ZERO proportional adaptation:
+  `bsf2 = drawBoundsHeight*140/480` is EXACTLY 140 at this engine's own 480 reference height, so
+  every Setup button rect is used completely unadapted (unlike the Pause row's `bsf1`-based
+  layout, which needed real proportional shrinking). SetupSounds is fully functional — its icon
+  really SWAPS (13 on / 21 off, a different real "pressed" convention from every other button in
+  this class) and it's wired to the pre-existing `GESound::SetEnabled()`/`IsEnabled()`, a
+  genuinely meaningful desktop equivalent of the real sound mute toggle. SetupReturn is fully
+  functional (real destination confirmed via `Game1.cpp`: always resumes Play in place here, since
+  PlaySetup's own MainSetup/Init branch is unreachable). SetupJump/SetupZoom/SetupAccel/SetupReset
+  render at their real positions/icons/real English labels but are intentionally inert — no
+  meaningful desktop equivalent for jump-button-side/auto-zoom/accelerometer, and Reset needs
+  GameData (doesn't exist) plus a real gamer letter/number this engine has no concept of, so its
+  own label is deliberately omitted rather than invented. Added a new
+  `GEInputPad::AppendLeftAlignedLabel()` (real `Text::DrawTextRightButton()` semantics, distinct
+  from the Pause row's centered labels). Explicitly out of scope, documented rather than invented:
+  the speedyblupi.png slide-in and 2 rotating gear.png decorations (pure cosmetic, real formulas
+  fully researched and written down for a future pass if ever wanted) and GameData-backed settings
+  persistence. Verified via 3 new `VerifyGEInputPad` checks (30 total) plus a live headless
+  screenshot confirming the exact real layout/labels/toggle-icon state — full regression suite
+  green on both backends.
 
 - **Win/Lost screens implemented, real Pause button text labels added (2026-07-13, plan.md
   `MENU-046..057`), continuing autonomously right after the Pause/on-screen-controls task below.**

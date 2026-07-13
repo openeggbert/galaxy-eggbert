@@ -103,23 +103,25 @@ namespace GalaxyEggbert::CNA
         // Pause-row buttons. showBack/showRestart mirror the real
         // conditional visibility (`mission!=1`, `mission!=1 &&
         // mission%10!=0`) -- Menu/Setup/Continue are always shown, matching
-        // the real source exactly. Only Continue/Restart are wired to
-        // real, distinct behavior here (return to Play, and return to Play
-        // + reset to spawn); Menu/Back/Setup are rendered at their real
-        // positions/icons but are NOT wired to any action yet, since the
-        // real destinations they'd lead to (main menu, hub-world
-        // navigation, settings screen) don't exist in this engine yet --
-        // a documented gap, not a silent omission. DrawPause() also draws
-        // each visible button's real text label underneath it (confirmed
-        // 2026-07-13 against `Game1::DrawButtonsText()`'s real
-        // `DrawTextUnderButton()` calls for `Phase::Pause` -- "Home"/
-        // "Back"/"Setup"/"Restart"/"Continue", the real English strings;
-        // note the real `Menu`/`PauseMenu` button's real EN text is "Home",
-        // not "Menu").
+        // the real source exactly. Continue/Restart/Setup are wired to
+        // real, distinct behavior here (return to Play; return to Play +
+        // reset to spawn; and enter PlaySetup, confirmed 2026-07-13 via
+        // `Game1.cpp`'s real `PauseSetup -> SetPhase(PlaySetup)`); Menu/
+        // Back are rendered at their real positions/icons but are NOT
+        // wired to any action yet, since the real destinations they'd
+        // lead to (main menu, hub-world navigation) don't exist in this
+        // engine yet -- a documented gap, not a silent omission.
+        // DrawPause() also draws each visible button's real text label
+        // underneath it (confirmed 2026-07-13 against `Game1::
+        // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
+        // `Phase::Pause` -- "Home"/"Back"/"Setup"/"Restart"/"Continue",
+        // the real English strings; note the real `Menu`/`PauseMenu`
+        // button's real EN text is "Home", not "Menu").
         struct PauseInput
         {
             bool continuePressed = false;
             bool restartPressed = false;
+            bool setupPressed = false;
         };
         [[nodiscard]] PauseInput UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH,
@@ -162,6 +164,55 @@ namespace GalaxyEggbert::CNA
         void DrawWinLost(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                          int viewportW, int viewportH, bool won, float phaseTimeSeconds);
 
+        // PlaySetup screen (plan.md MENU-058..069), reachable only via
+        // Pause's real Setup button (see UpdatePause()'s own comment) --
+        // MainSetup (reachable from a real Init/main-menu screen this
+        // engine doesn't have) is real-but-unreachable here, same pattern
+        // as Trial/MainSetup/Resume/Ranking in GamePhase's own comment.
+        // Real setup.png background (confirmed exact 640x480). Real button
+        // rects verified directly against `InputPad.cpp`'s own
+        // bsf2=drawBoundsHeight*140/480 formula -- AT drawBoundsHeight=480
+        // (this engine's own reference height) bsf2 is EXACTLY 140,
+        // meaning these rects need no proportional adaptation at all
+        // (unlike the Pause row's bsf1-based layout) -- a rare literal
+        // 1:1 port. SetupSounds is functionally wired to the pre-existing
+        // GESound::SetEnabled()/IsEnabled() (a real, meaningful desktop
+        // equivalent of the real sound on/off toggle); its icon really
+        // swaps between 13 (on) and 21 (off), not just an opacity change
+        // (confirmed via `Pixmap.cpp`'s own `selected ? 13 : 21` -- a
+        // DIFFERENT real "pressed" convention from every other button in
+        // this class). SetupJump/SetupZoom/SetupAccel/SetupReset render at
+        // their real positions/icons/labels but are intentionally inert:
+        // Jump-button-side and accelerometer-tilt controls have no
+        // meaningful desktop equivalent, auto-zoom has no camera-zoom
+        // concept in this engine yet, and Reset needs GameData (doesn't
+        // exist) -- documented gaps, not silent omissions (SetupReset's
+        // own real label additionally needs a real gamer letter/number
+        // this engine has no concept of, so its label is deliberately not
+        // rendered at all rather than inventing one). SetupReturn is
+        // real-position/icon/label AND fully functional (confirmed via
+        // `Game1.cpp`'s real `SetupReturn` handler: `if (playSetup)
+        // SetPhase(Play,-1); else SetPhase(Init);` -- MainSetup's Init
+        // branch is unreachable here, so this always resumes Play in
+        // place, no origin-respawn simplification needed since PlaySetup
+        // never actually stops gameplay progress).
+        //
+        // Explicitly NOT ported (documented simplifications, same
+        // precedent as Pause/Win/Lost skipping some real animations): the
+        // 2 rotating gear.png background decorations and the
+        // speedyblupi.png slide-in -- both pure cosmetic flourish with no
+        // functional value, requiring an indefinitely-continuing rotation
+        // formula and a second texture used nowhere else in this class.
+        struct SetupInput
+        {
+            bool soundsToggled = false;
+            bool returnPressed = false;
+        };
+        [[nodiscard]] SetupInput UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                             int viewportW, int viewportH) noexcept;
+        void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                       int viewportW, int viewportH, bool soundsOn);
+
     private:
         struct Quad
         {
@@ -183,17 +234,26 @@ namespace GalaxyEggbert::CNA
         void AppendCenteredLabel(std::vector<Quad>& quads, const std::string& text,
                                  float centerX, float topY, float scale) const;
 
+        // Real `Text::DrawTextRightButton()` semantics: LEFT-aligned
+        // starting at leftX, vertically centered around centerY (see
+        // DrawSetup()'s real button-label use -- a different alignment
+        // from AppendCenteredLabel()'s Pause-row use above).
+        void AppendLeftAlignedLabel(std::vector<Quad>& quads, const std::string& text,
+                                    float leftX, float centerY, float scale) const;
+
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D pauseBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupiyoupieTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D winBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D lostBgTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D setupBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> pauseBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiyoupieEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> winBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> lostBgEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> setupBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padPressedRenderer_;
@@ -201,6 +261,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiyoupieRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> winBgRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> lostBgRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> setupBgRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
         bool loaded_ = false;
 
@@ -208,12 +269,15 @@ namespace GalaxyEggbert::CNA
         // current mouse-down started inside, per the real "must have
         // pressed down inside, fires on release" model. Encoded as a
         // small int rather than a real ButtonGlyph-style enum since only
-        // one of UpdatePlay/UpdatePause ever runs in a given frame (Play
-        // and Pause are mutually exclusive phases) -- see
-        // ResetTouchState()'s comment for why it still needs clearing on
-        // a keyboard-driven phase change. Values defined locally in the
-        // .cpp (kPlayControlDPad/Jump/Action/Pause, kPauseControlMenu/
-        // Back/Setup/Restart/Continue) since only this class needs them.
+        // one of UpdatePlay/UpdatePause/UpdateSetup/UpdateWinLost ever
+        // runs in a given frame (Play/Pause/PlaySetup/Win/Lost are
+        // mutually exclusive phases) -- see ResetTouchState()'s comment
+        // for why it still needs clearing on a keyboard-driven phase
+        // change. Values defined locally in the .cpp
+        // (kPlayControlDPad/Jump/Action/Pause, kPauseControlMenu/Back/
+        // Setup/Restart/Continue, kSetupControlSounds/Jump/Zoom/Accel/
+        // Reset/Return, kWinLostControlReturn) since only this class
+        // needs them.
         int activeControl_ = -1;
         bool mouseWasDown_ = false;
 

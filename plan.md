@@ -1410,18 +1410,20 @@ otherwise noted.
 
 #### 2.8 Phase: MainSetup / PlaySetup (settings)
 
-- [ ] MENU-058 — Render `setup.png` as full-screen background
-- [ ] MENU-059 — Render `speedyblupi.png` sliding in from left (ease-out quadratic)
-- [ ] MENU-060 — Render two rotating `gear.png` icons (one CW, one CCW, varying speeds)
-- [ ] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state
-- [ ] MENU-062 — "JUMP" mode toggle (`SetupJump`) — left/right jump direction
-- [ ] MENU-063 — "ZOOM" toggle (`SetupZoom`) — auto-zoom on/off
-- [ ] MENU-064 — "ACCEL" toggle (`SetupAccel`) — accelerometer on/off
-- [ ] MENU-065 — "RESET Gamer X" button (`SetupReset`) — with gamer letter in text
-- [ ] MENU-066 — "RETURN" button (`SetupReturn`) → Init (from MainSetup) or Play (from PlaySetup)
-- [ ] MENU-067 — All toggles persist to GameData immediately on press
-- [ ] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing)
-- [ ] MENU-069 — Keyboard Back during Setup → Init
+- [x] MENU-058 — Render `setup.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawSetup`) — confirmed exact 640×480, direct pixel match; confirmed via `Pixmap::BackgroundCache("setup")` + `DrawBackground()` (a genuine per-phase full-screen backdrop selection, distinct from the animated foreground decoration researched for MENU-059/060 below)
+- [ ] MENU-059 — Render `speedyblupi.png` sliding in from left (ease-out quadratic) — **not implemented**, pure cosmetic flourish, documented simplification (same precedent as Pause/Win/Lost skipping some real animations)
+- [ ] MENU-060 — Render two rotating `gear.png` icons (one CW, one CCW, varying speeds) — **not implemented**, same reasoning as MENU-059 (real formula fully confirmed via `Game1.cpp:682-724` if ever revisited: `rotation = -num2*250°` / `+num2*125°`, `num2` an indefinitely-continuing rotation progress value, opacity `0.5-num*0.4`)
+- [x] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state — **done 2026-07-13**, fully functional: real icon SWAP (13 on/21 off, confirmed via `Pixmap.cpp`'s `selected ? 13 : 21` — a DIFFERENT "pressed" convention from every other button in this class, which only ever change opacity), wired to the pre-existing `GESound::SetEnabled()`/`IsEnabled()` — a genuinely meaningful desktop equivalent of the real mute toggle (not persisted across restarts, see MENU-067)
+- [~] MENU-062 — "JUMP" mode toggle (`SetupJump`) — left/right jump direction — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (this is about touch-button screen-side preference)
+- [~] MENU-063 — "ZOOM" toggle (`SetupZoom`) — auto-zoom on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no auto-zoom camera concept exists in this engine yet
+- [~] MENU-064 — "ACCEL" toggle (`SetupAccel`) — accelerometer on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (accelerometer-tilt controls)
+- [~] MENU-065 — "RESET Gamer X" button (`SetupReset`) — with gamer letter in text — **real position/icon done 2026-07-13**; **intentionally inert AND its real label deliberately not rendered** — needs GameData (doesn't exist) and a real gamer letter/number this engine has no concept of; rather than invent one, the label is simply omitted (a documented gap, not fabricated data)
+- [x] MENU-066 — "RETURN" button (`SetupReturn`) → Init (from MainSetup) or Play (from PlaySetup) — **done 2026-07-13**, fully functional: MainSetup's Init branch is unreachable (no Init screen), so this always resumes Play in place, confirmed via `Game1.cpp`'s real handler (`if (playSetup) SetPhase(Play,-1); else SetPhase(Init);`) — NOT a level-reload simplification like Win/Lost/PauseRestart, since PlaySetup never actually stops gameplay progress
+- [ ] MENU-067 — All toggles persist to GameData immediately on press — **not implemented**, no GameData/save system exists yet (Sounds' toggle works in-memory only, resets on restart — a documented gap)
+- [ ] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing) — **not implemented**, same reasoning as MENU-059/060
+- [x] MENU-069 — Keyboard Back during Setup → Init — **done 2026-07-13**, adapted: Escape returns to Play (matching SetupReturn's own real destination in this engine, not Init, which doesn't exist) — this engine's own keyboard binding choice, the real source's own doc comment doesn't list a separate Setup-phase Back-hardware mapping distinct from the SetupReturn button anyway
+
+**MENU-058..069 summary (2026-07-13):** extended `GEInputPad` with `UpdateSetup()`/`DrawSetup()`, reachable only via Pause's real Setup button (`PauseSetup -> SetPhase(PlaySetup)`, now wired — confirmed via `Game1.cpp`'s real button-press dispatch). A rare case where the real `InputPad.cpp` button rects (`bsf2=drawBoundsHeight*140/480`) need ZERO proportional adaptation: at this engine's own 480 reference height, bsf2 is EXACTLY 140, so every rect is used unadapted, unlike the Pause row's bsf1-based layout. Added a new `AppendLeftAlignedLabel()` helper (real `Text::DrawTextRightButton()` semantics — left-aligned, vertically centered — a different alignment from the Pause row's centered labels). Verified via 3 new `VerifyGEInputPad` checks (30 total) plus a live headless screenshot confirming exact layout/labels/icon state. Cosmetic-only real animations (speedyblupi.png slide, 2 rotating gear.png decorations, MENU-059/060/068) and GameData-dependent items (persistence MENU-067, Reset's own real label MENU-065) are explicitly out of scope, documented above rather than invented.
 
 #### 2.9 Phase: Ranking
 

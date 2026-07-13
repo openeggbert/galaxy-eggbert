@@ -115,6 +115,41 @@ namespace GalaxyEggbert::CNA
         constexpr float kGlyphAdvance = 17.0f;
         constexpr float kPauseLabelScale = 0.7f; // real DrawTextUnderButton() scale
         constexpr float kPauseLabelYOffset = 2.0f; // real "buttonRect.Bottom + 2"
+        constexpr float kSetupLabelScale = 0.7f; // real DrawTextRightButton() scale
+        constexpr float kSetupLabelXOffset = 10.0f; // real "buttonRect.Right + 10"
+        constexpr float kSetupLabelYNudge = 8.0f; // real "(Top+Bottom)/2 - 8" single-line case
+
+        // PlaySetup screen (plan.md MENU-058..069), verified directly
+        // against `InputPad.cpp`'s own real formula: bsf2 =
+        // drawBoundsHeight*140/480, which is EXACTLY 140 at
+        // drawBoundsHeight=480 (this engine's own reference height) --
+        // these rects are used here completely unadapted (see
+        // GEInputPad.hpp's UpdateSetup()/DrawSetup() class comment).
+        // Left column (leftXForButtonsInLeftColumn=20,
+        // rightXForButtonsInLeftColumn=20+70=90): Sounds/Jump/Zoom/Accel
+        // stacked bottom-up. Reset sits at the same row as Sounds, further
+        // right. Return is a big bottom-right corner button.
+        constexpr float kSetupLeftColX0 = 20.0f, kSetupLeftColX1 = 90.0f;
+        constexpr float kSetupSoundsY0 = 180.0f, kSetupSoundsY1 = 250.0f;
+        constexpr float kSetupJumpY0 = 250.0f, kSetupJumpY1 = 320.0f;
+        constexpr float kSetupZoomY0 = 320.0f, kSetupZoomY1 = 390.0f;
+        constexpr float kSetupAccelY0 = 390.0f, kSetupAccelY1 = 460.0f;
+        constexpr float kSetupResetX0 = 450.0f, kSetupResetX1 = 520.0f;
+        constexpr float kSetupResetY0 = 180.0f, kSetupResetY1 = 250.0f;
+        constexpr float kSetupReturnX0 = 508.0f, kSetupReturnX1 = 620.0f;
+        constexpr float kSetupReturnY0 = 348.0f, kSetupReturnY1 = 460.0f;
+
+        // Real icon indices (Pixmap.cpp): Sounds/Jump/Zoom/Accel really
+        // SWAP icon 13 (selected/on) vs 21 (not selected/off) -- a
+        // DIFFERENT "state" convention from every other button in this
+        // class (which only ever change opacity, never icon, when
+        // pressed). Reset=20, Return=8 (same value as PauseBack's icon,
+        // but a distinct named constant since it's a different real
+        // button that happens to share an icon).
+        constexpr int kIconSetupToggleOn = 13;
+        constexpr int kIconSetupToggleOff = 21;
+        constexpr int kIconSetupReset = 20;
+        constexpr int kIconSetupReturn = 8;
 
         struct Rect { float x0, y0, x1, y1; };
 
@@ -124,6 +159,12 @@ namespace GalaxyEggbert::CNA
         constexpr Rect kDPadHitRect{kDPadCenterX - kDPadHitHalf, kDPadCenterY - kDPadHitHalf,
                                      kDPadCenterX + kDPadHitHalf, kDPadCenterY + kDPadHitHalf};
         constexpr Rect kWinLostReturnRect{kWinLostReturnX0, kWinLostReturnY0, kWinLostReturnX1, kWinLostReturnY1};
+        constexpr Rect kSetupSoundsRect{kSetupLeftColX0, kSetupSoundsY0, kSetupLeftColX1, kSetupSoundsY1};
+        constexpr Rect kSetupJumpRect{kSetupLeftColX0, kSetupJumpY0, kSetupLeftColX1, kSetupJumpY1};
+        constexpr Rect kSetupZoomRect{kSetupLeftColX0, kSetupZoomY0, kSetupLeftColX1, kSetupZoomY1};
+        constexpr Rect kSetupAccelRect{kSetupLeftColX0, kSetupAccelY0, kSetupLeftColX1, kSetupAccelY1};
+        constexpr Rect kSetupResetRect{kSetupResetX0, kSetupResetY0, kSetupResetX1, kSetupResetY1};
+        constexpr Rect kSetupReturnRect{kSetupReturnX0, kSetupReturnY0, kSetupReturnX1, kSetupReturnY1};
 
         Rect PauseButtonRect(int index)
         {
@@ -151,6 +192,13 @@ namespace GalaxyEggbert::CNA
         constexpr int kPauseControlContinue = 4;
 
         constexpr int kWinLostControlReturn = 0;
+
+        constexpr int kSetupControlSounds = 0;
+        constexpr int kSetupControlJump = 1;
+        constexpr int kSetupControlZoom = 2;
+        constexpr int kSetupControlAccel = 3;
+        constexpr int kSetupControlReset = 4;
+        constexpr int kSetupControlReturn = 5;
 
         void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
                           std::vector<std::uint32_t>& indices,
@@ -228,12 +276,13 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[6] = {
+        const char* kPaths[7] = {
             "Content/icons/pad.png",
             "Content/backgrounds/pause.png",
             "Content/backgrounds/blupiyoupie.png",
             "Content/backgrounds/win.png",
             "Content/backgrounds/lost.png",
+            "Content/backgrounds/setup.png",
             "Content/icons/text.png",
         };
         for (const char* path : kPaths)
@@ -250,7 +299,8 @@ namespace GalaxyEggbert::CNA
         blupiyoupieTexture_ = Texture2D(kPaths[2], device);
         winBgTexture_ = Texture2D(kPaths[3], device);
         lostBgTexture_ = Texture2D(kPaths[4], device);
-        textTexture_ = Texture2D(kPaths[5], device);
+        setupBgTexture_ = Texture2D(kPaths[5], device);
+        textTexture_ = Texture2D(kPaths[6], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -265,6 +315,7 @@ namespace GalaxyEggbert::CNA
         blupiyoupieEffect_ = makeEffect(blupiyoupieTexture_);
         winBgEffect_ = makeEffect(winBgTexture_);
         lostBgEffect_ = makeEffect(lostBgTexture_);
+        setupBgEffect_ = makeEffect(setupBgTexture_);
         textEffect_ = makeEffect(textTexture_);
         loaded_ = true;
     }
@@ -320,6 +371,38 @@ namespace GalaxyEggbert::CNA
         const float advance = kGlyphAdvance * kPauseLabelScale * viewportScale;
         const float totalAdvance = static_cast<float>(text.size()) * advance;
         float penX = centerX - totalAdvance * 0.5f;
+        for (const char c : text)
+        {
+            const int rank = static_cast<int>(static_cast<unsigned char>(c));
+            const int gcol = rank % kGlyphCols;
+            const int grow = rank / kGlyphCols;
+            Quad q;
+            q.x0 = penX;
+            q.y0 = topY;
+            q.x1 = penX + cellPx;
+            q.y1 = topY + cellPx;
+            q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+            q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+            q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+            q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+            quads.push_back(q);
+            penX += advance;
+        }
+    }
+
+    void GEInputPad::AppendLeftAlignedLabel(std::vector<Quad>& quads, const std::string& text,
+                                            float leftX, float centerY, float viewportScale) const
+    {
+        if (text.empty())
+        {
+            return;
+        }
+        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
+        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float cellPx = kGlyphCellPx * kSetupLabelScale * viewportScale;
+        const float advance = kGlyphAdvance * kSetupLabelScale * viewportScale;
+        const float topY = centerY - kSetupLabelYNudge * viewportScale;
+        float penX = leftX;
         for (const char c : text)
         {
             const int rank = static_cast<int>(static_cast<unsigned char>(c));
@@ -501,12 +584,13 @@ namespace GalaxyEggbert::CNA
 
         if (!mouseDown && mouseWasDown_)
         {
-            // Only Continue/Restart are wired to real behavior (see
-            // GEInputPad.hpp's UpdatePause() comment) -- Menu/Back/Setup
-            // render at their real position/icon but are intentionally
-            // inert, no destination screen exists yet.
+            // Continue/Restart/Setup are wired to real behavior (see
+            // GEInputPad.hpp's UpdatePause() comment) -- Menu/Back render
+            // at their real position/icon but are intentionally inert, no
+            // destination screen exists yet.
             if (activeControl_ == kPauseControlContinue) result.continuePressed = true;
             else if (activeControl_ == kPauseControlRestart) result.restartPressed = true;
+            else if (activeControl_ == kPauseControlSetup) result.setupPressed = true;
             activeControl_ = -1;
         }
 
@@ -732,6 +816,129 @@ namespace GalaxyEggbert::CNA
         }
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPlayPressedAlpha);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    GEInputPad::SetupInput GEInputPad::UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                    int viewportW, int viewportH) noexcept
+    {
+        SetupInput result;
+
+        using Microsoft::Xna::Framework::Input::ButtonState;
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
+        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+
+        const bool overSounds = InRect(mouseRefX, mouseRefY, kSetupSoundsRect);
+        const bool overJump = InRect(mouseRefX, mouseRefY, kSetupJumpRect);
+        const bool overZoom = InRect(mouseRefX, mouseRefY, kSetupZoomRect);
+        const bool overAccel = InRect(mouseRefX, mouseRefY, kSetupAccelRect);
+        const bool overReset = InRect(mouseRefX, mouseRefY, kSetupResetRect);
+        const bool overReturn = InRect(mouseRefX, mouseRefY, kSetupReturnRect);
+
+        if (mouseDown && !mouseWasDown_)
+        {
+            if (overSounds) activeControl_ = kSetupControlSounds;
+            else if (overJump) activeControl_ = kSetupControlJump;
+            else if (overZoom) activeControl_ = kSetupControlZoom;
+            else if (overAccel) activeControl_ = kSetupControlAccel;
+            else if (overReset) activeControl_ = kSetupControlReset;
+            else if (overReturn) activeControl_ = kSetupControlReturn;
+            else activeControl_ = -1;
+        }
+
+        if (!mouseDown && mouseWasDown_)
+        {
+            // Only Sounds (a real, meaningful desktop toggle) and Return
+            // are wired to real behavior -- Jump/Zoom/Accel/Reset render
+            // at their real position/icon/label but are intentionally
+            // inert (see GEInputPad.hpp's UpdateSetup() class comment).
+            if (activeControl_ == kSetupControlSounds) result.soundsToggled = true;
+            else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
+            activeControl_ = -1;
+        }
+
+        mouseWasDown_ = mouseDown;
+        return result;
+    }
+
+    void GEInputPad::DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                              int viewportW, int viewportH, bool soundsOn)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
+        const auto refToScreenY = [&](float y) { return y * scale; };
+
+        // Real setup.png is an exact 640x480 match for the reference
+        // space, same as pause.png/win.png/lost.png.
+        Quad background;
+        background.x0 = refToScreenX(0.0f);
+        background.y0 = refToScreenY(0.0f);
+        background.x1 = refToScreenX(kRefW);
+        background.y1 = refToScreenY(kRefH);
+        background.u0 = 0.0f;
+        background.v0 = 0.0f;
+        background.u1 = 1.0f;
+        background.v1 = 1.0f;
+        std::vector<Quad> backgroundQuads{background};
+
+        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        std::vector<Quad> normalQuads;
+        std::vector<Quad> pressedQuads;
+        std::vector<Quad> labelQuads;
+
+        const auto appendButton = [&](const Rect& r, int icon, int controlId)
+        {
+            Quad q;
+            q.x0 = refToScreenX(r.x0);
+            q.y0 = refToScreenY(r.y0);
+            q.x1 = refToScreenX(r.x1);
+            q.y1 = refToScreenY(r.y1);
+            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
+        };
+        const auto appendLabel = [&](const Rect& r, const char* text)
+        {
+            const float rightX = refToScreenX(r.x1);
+            const float centerY = refToScreenY((r.y0 + r.y1) * 0.5f);
+            AppendLeftAlignedLabel(labelQuads, text, rightX + kSetupLabelXOffset, centerY, scale);
+        };
+
+        // Real icon SWAP (not just opacity) for the 3 toggle-style
+        // buttons -- Jump/Zoom/Accel have no real state tracked in this
+        // engine (no meaningful desktop equivalent, see class comment), so
+        // they always render the "off" icon.
+        appendButton(kSetupSoundsRect, soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
+        appendButton(kSetupJumpRect, kIconSetupToggleOff, kSetupControlJump);
+        appendButton(kSetupZoomRect, kIconSetupToggleOff, kSetupControlZoom);
+        appendButton(kSetupAccelRect, kIconSetupToggleOff, kSetupControlAccel);
+        appendButton(kSetupResetRect, kIconSetupReset, kSetupControlReset);
+        appendButton(kSetupReturnRect, kIconSetupReturn, kSetupControlReturn);
+
+        appendLabel(kSetupSoundsRect, "Sound effects");
+        appendLabel(kSetupJumpRect, "Jump button on the right");
+        appendLabel(kSetupZoomRect, "Automatic zoom on action");
+        appendLabel(kSetupAccelRect, "Accelerometer");
+        // SetupReset's real label needs a real gamer letter/number this
+        // engine has no concept of -- deliberately not rendered rather
+        // than inventing one (see class comment). SetupReturn has no
+        // real label at all in the source (same as WinLostReturn).
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        FlushQuads(device, *setupBgEffect_, setupBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 }

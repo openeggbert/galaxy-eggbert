@@ -210,6 +210,35 @@ int main()
         check(!releaseOutside, "WinLostReturn: does not fire when the press landed outside its rect");
     }
 
+    // --- PlaySetup: real rects, verified against InputPad.cpp's own
+    // bsf2=drawBoundsHeight*140/480 formula, which is EXACTLY 140 at this
+    // engine's 480 reference height -- used unadapted (see
+    // GEInputPad.hpp's UpdateSetup() class comment). SetupSounds
+    // (X 20-90, Y 180-250) and SetupReturn (X 508-620, Y 348-460) are
+    // functional; SetupJump/Zoom/Accel/Reset are real-position but inert.
+    {
+        GEInputPad pad;
+        (void)pad.UpdateSetup(mouse(55, 215, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateSetup(mouse(55, 215, false), kViewportW, kViewportH);
+        check(release.soundsToggled && !release.returnPressed,
+              "Setup: Sounds toggle fires on release, distinct from Return");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateSetup(mouse(564, 404, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateSetup(mouse(564, 404, false), kViewportW, kViewportH);
+        check(release.returnPressed && !release.soundsToggled,
+              "Setup: Return fires on release, distinct from Sounds");
+    }
+    {
+        GEInputPad pad;
+        // SetupJump rect: X 20-90, Y 250-320 -> center (55,285).
+        (void)pad.UpdateSetup(mouse(55, 285, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateSetup(mouse(55, 285, false), kViewportW, kViewportH);
+        check(!release.soundsToggled && !release.returnPressed,
+              "Setup: Jump button press/release fires neither Sounds nor Return (documented inert placeholder)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

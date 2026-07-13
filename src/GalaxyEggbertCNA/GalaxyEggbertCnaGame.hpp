@@ -179,14 +179,20 @@ namespace GalaxyEggbert::CNA
         // `Trial`/`MainSetup`/`PlaySetup`/`Resume`/`Ranking` are real enum
         // values with NO trigger wired to them yet (no settings/upsell/
         // ranking screens exist) -- reachable in principle, unreachable in
-        // practice until those screens exist.
+        // practice until those screens exist. `MainSetup` is the same:
+        // real-but-unreachable (its own Init entry point doesn't exist),
+        // while `PlaySetup` IS reachable (2026-07-13, plan.md
+        // MENU-058..069) via Pause's real Setup button -- see
+        // `GEInputPad::UpdateSetup()`'s own class comment for what is/
+        // isn't modeled on that screen.
         //
         // Real Pause trigger is gamepad-Back / a touch PlayPause button --
         // the real source has NO keyboard binding at all (an XNA/WP7 port);
         // Escape is this engine's own pick. Real PauseContinue resumes in
-        // place (implemented); real PauseRestart/PauseMenu/PauseSetup
-        // (reload level / return to main menu / open settings) are NOT
-        // modeled -- no level-reload or menu system exists yet.
+        // place (implemented); real PauseSetup opens PlaySetup
+        // (implemented, 2026-07-13); real PauseRestart reloads the level
+        // (simplified to an origin-respawn, see below); real PauseMenu
+        // (return to main menu) is NOT modeled -- no menu system exists.
         //
         // Real Lost trigger: a death animation completing while lives are
         // exhausted (`Decor.cpp:6374-6435`) -- this engine's own

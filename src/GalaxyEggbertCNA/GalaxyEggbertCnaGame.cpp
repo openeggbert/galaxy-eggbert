@@ -449,6 +449,7 @@ namespace GalaxyEggbert::CNA
             bool mousePausePressed = false;
             bool mouseContinuePressed = false;
             bool mouseRestartPressed = false;
+            bool mouseSetupPressed = false;
             if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
                 const auto mouse = Mouse::GetState();
@@ -470,6 +471,36 @@ namespace GalaxyEggbert::CNA
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart);
                 mouseContinuePressed = pauseInput.continuePressed;
                 mouseRestartPressed = pauseInput.restartPressed;
+                mouseSetupPressed = pauseInput.setupPressed;
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup)
+            {
+                // Real PlaySetup (2026-07-13, plan.md MENU-058..069),
+                // reachable only via Pause's real Setup button (MainSetup,
+                // reachable from a real Init/main-menu screen this engine
+                // doesn't have, is real-but-unreachable here).
+                const auto mouse = Mouse::GetState();
+                const auto setupInput = inputPad_.UpdateSetup(
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (setupInput.soundsToggled)
+                {
+                    // Real SetupSounds toggle -- a genuinely meaningful
+                    // desktop equivalent, wired to the pre-existing
+                    // GESound::SetEnabled()/IsEnabled() (not persisted
+                    // across restarts -- no GameData exists yet).
+                    sound_.SetEnabled(!sound_.IsEnabled());
+                }
+                if (setupInput.returnPressed ||
+                    (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
+                {
+                    // Real SetupReturn: `if (playSetup) SetPhase(Play,-1);
+                    // else SetPhase(Init);` -- MainSetup's Init branch is
+                    // unreachable here, so this always resumes Play in
+                    // place. Escape is this engine's own keyboard pick
+                    // for the same action (real source has no separate
+                    // Setup-phase keyboard binding confirmed).
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
             }
 
             // Real Pause trigger is gamepad-Back/a touch PlayPause button
@@ -503,6 +534,11 @@ namespace GalaxyEggbert::CNA
                 // below.
                 blupi_.SetPosition(0.0f, 1.0f, 0.0f);
                 SetPhase(GalaxyEggbert::GamePhase::Play);
+            }
+            else if (mouseSetupPressed)
+            {
+                // Real PauseSetup: SetPhase(PlaySetup).
+                SetPhase(GalaxyEggbert::GamePhase::PlaySetup);
             }
 
             if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
@@ -1924,7 +1960,8 @@ namespace GalaxyEggbert::CNA
             // text message.
             const bool phaseHasRealScreen = phase_ == GalaxyEggbert::GamePhase::Pause ||
                                              phase_ == GalaxyEggbert::GamePhase::Win ||
-                                             phase_ == GalaxyEggbert::GamePhase::Lost;
+                                             phase_ == GalaxyEggbert::GamePhase::Lost ||
+                                             phase_ == GalaxyEggbert::GamePhase::PlaySetup;
             if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
@@ -1969,6 +2006,11 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phase_ == GalaxyEggbert::GamePhase::Win, phaseTimeSeconds_);
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup)
+            {
+                inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                    sound_.IsEnabled());
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
