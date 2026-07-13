@@ -2486,7 +2486,22 @@ originally listed — no changes.
 
 #### 7.6 Special Level Objects
 
-- [ ] PICKUP-064 — ObjectType52: bridge construction (live terrain-collision toggle) — confirmed still NOT started (Phase 15 `157`); `ObjectType52` appears only in the dynamite-blast destructible-object list. Note: NEXT.md's own prose loosely describes `GEInteractionSystem` as handling "platform lift/crate/bridge patrol+push" — that's describing the shared generic patrol code applying to any `MoveObject` type in principle, not a real dedicated bridge feature; this line item's real "overwrites the terrain grid every tick across a 157-tick sequence" mechanic is genuinely unbuilt.
+- [x] PICKUP-064 — ObjectType52: bridge construction (live terrain-collision toggle) — **implemented
+      2026-07-13**: while grounded on a Bridge (icon 364) tile, spawns an `ObjectType52` object that
+      writes the construction sequence's icon directly into the terrain grid cell every tick, real
+      "genuinely removes ground collision for most of the sequence" behavior — 28 ticks ascending
+      through icons 365-372, 112 ticks holding the real `-1` "no tile" sentinel (mapped to `Air` via
+      `BlockTypes::fromMobileIconId()`, which already correctly treats 367-372/-1 as non-solid, so
+      no `GroundHeightAt()` changes were needed), 17 ticks descending back to the original 364. Real
+      mobile-eggbert's own exact per-tick `table_bridge` array is NOT transcribed (no pre-approved
+      in-repo source for it) — this reproduces the documented 28/112/17-tick aggregate shape with
+      this engine's own uniform pacing within each window. Demo gap+bridge added to
+      `tools/GenerateSampleWorld3D.cpp`. 5 new `VerifyInteractionSystem` checks (spawn, mid-sequence
+      hollow, an independent `GEBlupiController` actually falling through, restoration, self-delete)
+      + full 7-tool suite + both backends pass. Not modeled: sprite mirroring (no visible Blupi
+      model) and the mid-sequence sound (ch73) firing purely as its own scripted cue is modeled, but
+      the construction-start sound was assigned ch72 (matching `07-sounds.md`) rather than the
+      stale ch20 guess this checklist's own PICKUP-084 line still has (see that item's own note).
 - [x] PICKUP-065 — ObjectType56: dynamite fuse — done (Phase 15 `155`), real per-blast phase-driven timing (ticks 50/53/55/56/59/62/64/67/69), not the rounded "phases 50-69" this line originally guessed.
 - [x] PICKUP-066 — DynamiteStart: blast clears tiles — done (`155`), 2×2-tile area per blast (not a general "radius"), real exact 28-type destructible-object list.
 - [ ] PICKUP-067 — ObjectType200-203: Blupi avatar skins — render icons (257-262) exist in `GEObjectIcons.cpp`, but no world currently places any and no costume-select gameplay hook exists — see PICKUP-068's correction below for what `ObjectType200` actually does instead.
@@ -2513,7 +2528,10 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 - [ ] PICKUP-081 — Glu/glue sound: ch51 — NOT modeled (ObjectType34 has no dedicated implementation); real ch51 is actually the generic hazard-contact death sound used elsewhere (crusher/spike/etc. contexts), an unrelated reuse — the "glue" association in this line item appears to be a guess, not confirmed against source.
 - [x] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions) — confirmed correct, matches Phase 15 `155`; also shared by blupih/blupit's projectile-fire sound (`FireBlupihShot()`), a real reused channel not specific to dynamite alone.
 - [ ] PICKUP-083 — Secret exit pickup: ch21 — NOT modeled, `ObjectType21` has no pickup logic at all (see PICKUP-009).
-- [ ] PICKUP-084 — Bridge construction sound: ch20 — NOT modeled, bridge construction itself isn't implemented (PICKUP-064).
+- [x] PICKUP-084 — Bridge construction sound — **implemented 2026-07-13** alongside PICKUP-064:
+      real channels are **72** (construction start) and **73** (mid-sequence progress cue at tick
+      137), confirmed against `mobile-eggbert-reference/07-sounds.md` — not the originally-guessed
+      ch20.
 - [x] PICKUP-085 — "Balloon" pickup sound — **description was based on the wrong premise** (see PICKUP-019's correction: `ObjectType46` grants Overcraft, not a Balloon ride) — the real wasp-sting balloon-status sounds are channels **40/41** (entry/recovery), confirmed wired in `GalaxyEggbertCnaGame.cpp`, not ch46. No vehicle-mount-specific pickup sound was found for any of the 5 vehicles.
 - [ ] PICKUP-086 — Shield trail sound: ch48 — NOT modeled, no shield-trail visual/sound system exists.
 - [ ] PICKUP-087 — Shield loop sound: ch49 (looped while shield active) — NOT modeled, no looped-while-active sound system exists for any secret power.

@@ -1,3 +1,4 @@
+#include "Game/GEBlupiController.hpp"
 #include "Game/GEInteractionSystem.hpp"
 #include "Game/GESound.hpp"
 #include "Game/GETrainingHints.hpp"
@@ -1713,6 +1714,81 @@ int main(int argc, char** argv)
                 check(stillActive, "Cloud aura ON but far away: a blupit 50 units away is untouched");
             }
         }
+    }
+
+    // Bridge construction (ObjectType52, plan.md PICKUP-064) -- the sample
+    // world's own demo (tools/GenerateSampleWorld3D.cpp): a single Bridge
+    // (icon 364) tile at grid (88,0,97), world (38,1,47), spanning a real
+    // gap with nothing beneath it. Fresh GEWorldRuntime so this test's own
+    // many Update() calls don't affect earlier sections' object state.
+    {
+        GEWorldRuntime bridgeWorld;
+        check(bridgeWorld.LoadFromVwrFile(worldPath), "loaded the world for the bridge test");
+        GEInteractionSystem bridgeInteraction;
+        constexpr float bridgeX = 38.0f, bridgeY = 1.0f, bridgeZ = 47.0f;
+        constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
+
+        check(bridgeWorld.GetWorld().getBlock(88, 0, 97).type() == GalaxyEggbert::BlockTypes::Bridge,
+              "the sample world's Bridge demo tile is at the expected grid cell");
+
+        // Counts only ObjectType52 near the bridge cell itself -- the
+        // sample world's own object-type exhibition (tools/
+        // GenerateSampleWorld3D.cpp) already places one static specimen of
+        // every ObjectType (including 52) far away, so a blind global type
+        // count would always be off by that one pre-existing exhibit.
+        const auto countBridgeObjsHere = [&bridgeWorld, bridgeX, bridgeZ]()
+        {
+            int count = 0;
+            for (const auto& obj : bridgeWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType52 &&
+                    std::fabs(obj.currentX - bridgeX) < 0.5f && std::fabs(obj.currentZ - bridgeZ) < 0.5f)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+
+        bridgeWorld.Update(dt); // advances obj.phase for the object spawned by the call just below
+        bridgeInteraction.Update(dt, bridgeWorld, bridgeX, bridgeY, bridgeZ, 0.0f, sound);
+        check(countBridgeObjsHere() == 1, "standing on the Bridge tile spawns exactly one ObjectType52");
+
+        // Advance to well within the documented 112-tick hollow window
+        // (ticks 28-139) -- the cell must have genuinely lost its ground
+        // collision (Air), not just changed its render icon. obj.phase only
+        // advances via GEWorldRuntime::Update() itself (the real game loop
+        // calls this every frame before GEInteractionSystem::Update(), same
+        // convention as the dynamite-fuse test above), not a no-op skip.
+        for (int i = 0; i < 80; ++i)
+        {
+            bridgeWorld.Update(dt);
+            bridgeInteraction.Update(dt, bridgeWorld, bridgeX, bridgeY, bridgeZ, 0.0f, sound);
+        }
+        check(bridgeWorld.GetWorld().getBlock(88, 0, 97).isAir(),
+              "mid-construction (tick ~80), the bridge cell is genuinely non-solid (real ground-collision "
+              "toggle, not a purely cosmetic overlay)");
+
+        // A second, independent GEBlupiController standing on that same
+        // now-hollow cell must fall (nothing exists beneath this demo's
+        // real chasm) -- proves the collision change is actually consumed
+        // by movement, not just visible in the raw block data.
+        GEBlupiController fallingBlupi;
+        fallingBlupi.SetPosition(bridgeX, bridgeY, bridgeZ);
+        fallingBlupi.Step(bridgeWorld.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
+        check(!fallingBlupi.IsOnGround(),
+              "Blupi is no longer grounded standing on the hollowed-out bridge cell (real fall-through)");
+
+        // Advance to completion (self-deletes at phase 157) -- the cell
+        // must be restored to the original Bridge icon, not left hollow.
+        for (int i = 0; i < 80; ++i)
+        {
+            bridgeWorld.Update(dt);
+            bridgeInteraction.Update(dt, bridgeWorld, bridgeX + 20.0f, bridgeY, bridgeZ, 0.0f, sound);
+        }
+        check(bridgeWorld.GetWorld().getBlock(88, 0, 97).type() == GalaxyEggbert::BlockTypes::Bridge,
+              "after the full 157-tick sequence, the bridge cell is restored to the original Bridge icon");
+        check(countBridgeObjsHere() == 0, "the construction object self-deletes once its phase reaches 157");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

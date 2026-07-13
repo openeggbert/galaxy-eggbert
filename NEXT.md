@@ -136,6 +136,20 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13** (one very
 long session); each item is its own commit.
 
+- **Implemented bridge construction** (`ObjectType52`, plan.md PICKUP-064) — the last of the
+  genuinely-open gaps found by the `plan.md` reconciliation. While grounded on a Bridge (icon 364)
+  tile, spawns an object that writes the construction sequence directly into the terrain grid every
+  tick — a real, live ground-collision toggle (28 ticks ascending 365-372, 112 ticks holding the
+  real `-1`/no-tile sentinel as `Air`, 17 ticks descending back to 364), not just a cosmetic
+  overlay. Reuses the existing `BlockTypes::fromMobileIconId()` passable-icon conversion, so no
+  `GroundHeightAt()` changes were needed. Real per-tick `table_bridge` array not transcribed (no
+  pre-approved source) — reproduces the documented 28/112/17-tick shape with this engine's own
+  uniform pacing. Demo gap+bridge added to `tools/GenerateSampleWorld3D.cpp` (careful to avoid
+  grid (90,*,90), which `VerifyBlupiMovement`'s own fall-off-world test relies on staying empty —
+  caught this collision via a real regression run and relocated the demo). 5 new
+  `VerifyInteractionSystem` checks (spawn, mid-sequence hollow, an independent `GEBlupiController`
+  actually falling through, restoration, self-delete) + full 7-tool suite + both backends pass.
+
 - **Implemented Invert/Mirror secret power** (`ObjectType40`, plan.md PICKUP-011) — a real
   gameplay gap found while reconciling `plan.md` against source (see below). Independent of the 4
   existing SecretPower buffs (own gauge, real gate only `!Hide`), negates normal ground movement
@@ -430,12 +444,7 @@ judgment (§9).
 
 ### Next round (identified 2026-07-13, after reconciling `plan.md` against source)
 
-7. **`ObjectType52` bridge construction** (`plan.md PICKUP-064`) — genuinely unbuilt: a real
-   live terrain-collision-toggle mechanic (the object overwrites the terrain grid every tick across
-   a 157-tick sequence, real `table_bridge`), not just another patrol/pickup. Bigger scope than the
-   other items here — read `mobile-eggbert-reference/13-object-pickups.md`'s bridge section first.
-   Files: `src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp`, `GEWorldRuntime.cpp` (terrain-grid
-   mutation). Verify: a new `VerifyInteractionSystem`/`VerifyBlupiMovement` check + full suite.
+7. ~~`ObjectType52` bridge construction~~ **DONE 2026-07-13** — see §3 for the full writeup.
 
 8. **`ObjectType21` secret-level exit** (`plan.md PICKUP-009`) — only a render-icon lookup exists,
    no contact/trigger logic. Real behavior is simple (identical to the existing `ObjectType7`

@@ -540,6 +540,22 @@ int main(int argc, char** argv)
     world.setBlock(80, 1, 87, Block::make(BlockTypes::BrickWall)); // wall to shoot at
 
     // ------------------------------------------------------------------
+    // Bridge construction demo (plan.md PICKUP-064, 2026-07-13) -- a real
+    // single-cell gap over open air, spanned by exactly one Bridge (icon
+    // 364) tile, so the real "walking onto it spawns ObjectType52, which
+    // genuinely removes ground support for most of its 157-tick build
+    // sequence" behavior (GEInteractionSystem::Update()'s own comment) is
+    // actually playable, not just unit-tested. Nothing placed beneath the
+    // gap cell -- a real chasm, matching the tile's own name. Deliberately
+    // NOT at grid (90,*,90) -- tools/VerifyBlupiMovement.cpp's own
+    // fall-off-world test (plan.md E3D-MIG-067) relies on that exact
+    // column staying genuinely empty; z=95-99 avoids it entirely.
+    // ------------------------------------------------------------------
+    fill(85, 87, 0, 0, 95, 99, BlockTypes::RockPile); // west floor
+    fill(89, 91, 0, 0, 95, 99, BlockTypes::RockPile); // east floor
+    world.setBlock(88, 0, 97, Block::make(BlockTypes::Bridge)); // the bridge itself, over the gap
+
+    // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //

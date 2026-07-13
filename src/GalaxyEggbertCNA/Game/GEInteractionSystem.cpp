@@ -898,6 +898,74 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Bridge construction (ObjectType52, plan.md PICKUP-064, real
+            // Decor.cpp ~8540-8562): each tick writes the real
+            // `table_bridge` icon at that phase BOTH to this object's own
+            // sprite AND directly into the live terrain grid cell at its
+            // spawn position -- ground collision genuinely toggles across
+            // the sequence (icons 367-372 and the -1 "no tile" sentinel are
+            // non-solid per real `table_decor_quart`/this engine's own
+            // `BlockTypes::isMobileTransparent()`, already confirmed to
+            // agree). Real per-mobile-eggbert's exact frame-by-frame
+            // `table_bridge` array is not transcribed here (no pre-approved
+            // in-repo source for it, unlike blupi's own tables) -- this
+            // instead reproduces the DOCUMENTED aggregate shape from
+            // mobile-eggbert-reference/14-crates-lifts-bridges-effects.md:
+            // 28 ticks ascending through icons 365-372, 112 ticks holding
+            // the -1 sentinel, 17 ticks descending back through 372..365
+            // ending at the original 364 -- with this engine's own
+            // reasonable uniform pacing within each of those 3 documented
+            // windows, not a copied per-tick table.
+            if (obj.type == ObjectType::ObjectType52)
+            {
+                constexpr float kAscendTicks = 28.0f;
+                constexpr float kHoldTicks = 112.0f;
+                constexpr float kDescendTicks = 17.0f;
+                constexpr float kTotalTicks = kAscendTicks + kHoldTicks + kDescendTicks; // 157
+                constexpr float kProgressSoundTick = 137.0f;
+
+                const float prevPhase = obj.phase - dt * 20.0f;
+                if (prevPhase < kProgressSoundTick && obj.phase >= kProgressSoundTick)
+                {
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel73);
+                }
+
+                int icon;
+                if (obj.phase < kAscendTicks)
+                {
+                    const int step = static_cast<int>(obj.phase * 8.0f / kAscendTicks);
+                    icon = 365 + std::clamp(step, 0, 7);
+                }
+                else if (obj.phase < kAscendTicks + kHoldTicks)
+                {
+                    icon = -1; // real "no tile" sentinel -- fromMobileIconId() maps this to Air
+                }
+                else
+                {
+                    const float descendPhase = obj.phase - (kAscendTicks + kHoldTicks);
+                    const int step = static_cast<int>(descendPhase * 9.0f / kDescendTicks);
+                    icon = 372 - std::clamp(step, 0, 8); // 372 down to 364
+                }
+
+                const int gx = static_cast<int>(std::lround(obj.currentX)) + GEWorldRuntime::kWorldCenterX;
+                const int gz = static_cast<int>(std::lround(obj.currentZ)) + GEWorldRuntime::kWorldCenterZ;
+                const int gy = static_cast<int>(std::lround(obj.currentY)) - 1;
+                const int axis = static_cast<int>(world.blocksPerAxis());
+                if (gx >= 0 && gx < axis && gy >= 0 && gy < axis && gz >= 0 && gz < axis)
+                {
+                    worldRuntime.GetWorldMutable().setBlock(
+                        static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                        static_cast<std::uint16_t>(gz),
+                        Worlds::Block::make(GalaxyEggbert::BlockTypes::fromMobileIconId(icon)));
+                }
+
+                if (obj.phase >= kTotalTicks)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
             // Follower wake-up (ObjectType96 -> 97, plan.md E3D-MIG-137,
             // real Decor.cpp:9646-9678 `MoveObjectFollow`) -- a dormant
             // follower promotes to the homing type the instant Blupi comes
@@ -1419,6 +1487,53 @@ namespace GalaxyEggbert::CNA
         if (treasureDoorScanNeeded)
         {
             ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
+        }
+
+        // Bridge construction trigger (ObjectType52, plan.md PICKUP-064, real
+        // Decor::IsBridge ~7334, called every tick from Decor.cpp ~5608-5612
+        // while Blupi has focus -- not action-button gated, unlike switches/
+        // dynamite). Real source probes 2 candidate foot-height offsets;
+        // this engine uses a single stance height (round(blupiY)-1, same
+        // convention as TryActivateSwitch's own standing-cell check) --
+        // a documented simplification, not a transcribed real detail.
+        // Spawns exactly one ObjectType52 at the Bridge cell, guarded so a
+        // second never stacks on top of an already-in-progress one.
+        {
+            int bridgeGX, bridgeGY, bridgeGZ;
+            ToGridCell(world, blupiX, blupiY - 1.0f, blupiZ, bridgeGX, bridgeGY, bridgeGZ);
+            if (world.getBlock(static_cast<std::uint16_t>(bridgeGX), static_cast<std::uint16_t>(bridgeGY),
+                                static_cast<std::uint16_t>(bridgeGZ))
+                    .type() == GalaxyEggbert::BlockTypes::Bridge)
+            {
+                bool alreadyBuilding = false;
+                for (const auto& obj : objects)
+                {
+                    if (obj.active && obj.type == ObjectType::ObjectType52 &&
+                        std::lround(obj.currentX) == std::lround(blupiX) &&
+                        std::lround(obj.currentZ) == std::lround(blupiZ))
+                    {
+                        alreadyBuilding = true;
+                        break;
+                    }
+                }
+                if (!alreadyBuilding)
+                {
+                    // currentY stays in world-space "standing height" (grid
+                    // Y + 1), the same convention every other MobileObjSpec
+                    // uses -- the per-tick terrain write below converts back
+                    // to a grid index the same way TryActivateSwitch's own
+                    // standing-cell check does.
+                    MobileObjSpec bridge{};
+                    bridge.type = ObjectType::ObjectType52;
+                    bridge.posStartX = bridge.posEndX = bridge.currentX = static_cast<float>(std::lround(blupiX));
+                    bridge.posStartY = bridge.posEndY = bridge.currentY = static_cast<float>(bridgeGY) + 1.0f;
+                    bridge.posStartZ = bridge.posEndZ = bridge.currentZ = static_cast<float>(std::lround(blupiZ));
+                    bridge.phase = 0.0f;
+                    bridge.active = true;
+                    pendingSpawns.push_back(bridge);
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel72);
+                }
+            }
         }
 
         // Player-fired Tank bullet (2026-07-13, plan.md BULLET-001, real
