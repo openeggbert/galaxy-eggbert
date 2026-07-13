@@ -2288,45 +2288,79 @@ where noted in §5.2. Blupi's collision does not test hazard tiles at all yet.
 
 ### 2.6 Enemy AI
 
-**Not started in CNA at all** — no enemy hit/stomp/hazard detection of any kind exists yet; this is
-explicitly deferred pending a lives/gauge system (see §8). All items reset to `[ ]`.
+**Re-verified against source 2026-07-13 — this section was badly stale** (still said "not started
+at all" from before the 2026-07-11/12 implementation push). Ground truth is Phase 13
+(`E3D-MIG-130`-`137`, marked complete) above; this subsection maps that work onto the older
+ENEMY-XXX numbering rather than re-deriving it.
 
 #### 6.1 Common Enemy Behaviour
 
-- [ ] ENEMY-001 — Patrol movement: oscillate between posStart and posEnd at constant speed
-- [ ] ENEMY-002 — Stationary enemies get ±2 tile default patrol range
-- [ ] ENEMY-003 — Directional sprites: flipX when moving right (`table_mirror`)
-- [ ] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact
-- [ ] ENEMY-005 — Enemy respawns at posStart after 5 s (kill timer)
-- [ ] ENEMY-006 — Blob shadow under enemies *(3D adaptation)*
-- [ ] ENEMY-007 — Y-proximity check: aerial enemies don't hit ground-level Blupi
-- [ ] ENEMY-008 — `MoveObjectStepLine`: advance/recede speed + end-dwell timer logic
-- [ ] ENEMY-009 — `MoveObjectStepIcon`: per-type animation phase counter update — note: object animation rate is NOT confirmed to be throttled to 6fps as older assumptions had it; re-verify against real `Decor.cpp` before implementing
+- [x] ENEMY-001 — Patrol movement: oscillate between posStart and posEnd — done (`131`, the
+      shared 4-phase dwell/advance/dwell/recede state machine in `GEInteractionSystem`'s
+      `AdvancePatrolStep()`).
+- [ ] ENEMY-002 — Stationary enemies get ±2 tile default patrol range — NOT modeled; per `131`'s
+      own note, patrol ranges are level-authored per instance, not auto-derived from a
+      stationary flag.
+- [ ] ENEMY-003 — Directional sprites: flipX when moving right — NOT modeled (`131`'s own note:
+      "direction-mirrored animation-table selection... is NOT modeled — no directional walk/turn
+      sprite tables exist for these types yet, only simple icon-cycling").
+- [ ] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact — NOT modeled; confirmed no
+      velocity-gated "stomp" concept exists anywhere in `GEInteractionSystem.cpp` — contact-kill
+      (`132`) is an unconditional touch check, not stomp-specific.
+- [ ] ENEMY-005 — Enemy respawns at posStart after 5s kill timer — NOT modeled; killed hazards are
+      destroyed permanently (`obj.active = false`), never respawned.
+- [ ] ENEMY-006 — Blob shadow under enemies *(3D adaptation)* — not done, visual polish only.
+- [ ] ENEMY-007 — Y-proximity check: aerial enemies don't hit ground-level Blupi — no explicit
+      per-type rule exists; contact uses a plain 3D-distance sphere check (includes Y implicitly,
+      but not a deliberate aerial/ground distinction).
+- [x] ENEMY-008 — `MoveObjectStepLine`: advance/recede speed + end-dwell timer logic — done (`131`).
+- [x] ENEMY-009 — `MoveObjectStepIcon`: per-type animation phase counter update — done, resolved
+      by `131`/`GEWorldRuntime::Update()`'s existing generic per-instance phase advance.
 
 #### 6.2 Per-Type Enemy Implementation
 
-- [ ] ENEMY-010 — ObjectType2: patrol enemy A (table_robot_left/right, icons 12-20 in element.png)
-- [ ] ENEMY-011 — ObjectType3: patrol enemy B (icons 48-56 in element.png)
-- [ ] ENEMY-012 — ObjectType4: bulldozer (table_bulldozer_left/right, turn2l/r)
-- [ ] ENEMY-013 — ObjectType4: bulldozer charge behaviour on Blupi contact (distinct from simple patrol)
-- [ ] ENEMY-014 — ObjectType16: spider (icons 69-77, vertical oscillation hang↔drop)
-- [ ] ENEMY-015 — ObjectType17: fish (table_poisson_left/right, patrol in water)
-- [ ] ENEMY-016 — ObjectType17: turn animation (table_poisson_turn2l/r, 48 frames each)
-- [ ] ENEMY-017 — ObjectType20: bird (table_oiseau_left/right, aerial Y=3.0 patrol)
-- [ ] ENEMY-018 — ObjectType20: turn animation (table_oiseau_turn2l/r, 10 frames each)
-- [ ] ENEMY-019 — ObjectType33: blupit (table_blupit_left/right)
-- [ ] ENEMY-020 — ObjectType33: blupit fires ObjectType23 projectile at phase 3 and phase 21 during turn
-- [ ] ENEMY-021 — ObjectType32: blupih (table_blupih_left/right, turn2l/r)
-- [ ] ENEMY-022 — ObjectType32: blupih fires ObjectType23 projectile during turn animation
-- [ ] ENEMY-023 — ObjectType44: wasp/bee (table_guepe_left/right, 6-frame, fast patrol)
-- [ ] ENEMY-024 — ObjectType44: turn animation (table_guepe_turn2l/r, 5 frames)
-- [ ] ENEMY-025 — ObjectType54: creature (table_creature_left/right, 8-frame, slow patrol)
-- [ ] ENEMY-026 — ObjectType54: long turn animation (table_creature_turn2, 152 frames)
-- [ ] ENEMY-027 — ObjectType54: destroys Blupi's helicopter on contact (ByeByeHelico triggered)
-- [ ] ENEMY-028 — ObjectType18: additional patrol enemy variant (sprite/behaviour TBD from Decor.cpp)
-- [ ] ENEMY-029 — ObjectType96: follow enemy 1 (table_follow1, 26 frames) — chases Blupi
-- [ ] ENEMY-030 — ObjectType97: follow enemy 2 (table_follow2, 5 frames) — tracks exact position
-- [ ] ENEMY-031 — ObjectType96/97: MoveObjectFollow() logic — path toward Blupi
+- [x] ENEMY-010 — ObjectType2: patrol enemy A — patrol (`131`) + contact-kill (`132`, part of the
+      real shared 8-type `IsGenericHazard()` list) done; distinct sprite tables not verified.
+- [x] ENEMY-011 — ObjectType3: patrol enemy B — same as ENEMY-010 (`131`/`132`); real duck-immunity
+      for this type specifically IS modeled (`blupiCrouching` parameter).
+- [x] ENEMY-012 — ObjectType4: bulldozer — patrol + contact-kill done (`131`/`132`).
+- [ ] ENEMY-013 — ObjectType4: bulldozer charge behaviour distinct from patrol — NOT modeled, only
+      the shared generic patrol/contact-kill applies.
+- [x] ENEMY-014 — ObjectType16: spider — contact-kill done (`133`, part of `132`'s widened list);
+      the real 9-frame crawl / vertical hang↔drop-specific visual pattern is not separately
+      verified (uses the same generic patrol/icon-cycling as every other type).
+- [x] ENEMY-015 — ObjectType17: fish — contact-kill done (`133`); water-specific patrol context not
+      separately modeled (functionally unnecessary since collision doesn't distinguish).
+- [ ] ENEMY-016 — ObjectType17: turn animation (48 frames) — not verified as a distinct per-type
+      table (generic icon-cycling only).
+- [x] ENEMY-017 — ObjectType20: bird — contact-kill done (`133`); aerial Y=3.0 patrol positioning
+      is level-authored data, not a special-cased behavior.
+- [ ] ENEMY-018 — ObjectType20: turn animation (10 frames) — same caveat as ENEMY-016.
+- [x] ENEMY-019 — ObjectType33: blupit — patrol + turn-dwell-timed attack done (`134`).
+- [x] ENEMY-020 — ObjectType33: blupit fires ObjectType23 at phase 3/21 during turn — done (`134`,
+      real two-horizontal-shots-per-turn-dwell behavior, direction/frame pairing corrected during
+      verification vs. this file's own earlier (wrong) prose summary).
+- [x] ENEMY-021 — ObjectType32: blupih — patrol + turn-dwell-timed attack done (`134`).
+- [x] ENEMY-022 — ObjectType32: blupih fires ObjectType23 during turn — done (`134`, vertical drop
+      at dwell-frame 21).
+- [x] ENEMY-023 — ObjectType44: wasp/bee — fast patrol + real balloon-status trigger/hazard-pop
+      interaction done (`135`).
+- [ ] ENEMY-024 — ObjectType44: turn animation (5 frames) — not verified as a distinct table.
+- [x] ENEMY-025 — ObjectType54: creature — slow patrol + turn-dwell-gated lethality done (`136`).
+- [ ] ENEMY-026 — ObjectType54: long turn animation (152 frames) — not verified as a distinct
+      table; the real unconditional taunt icon is also NOT modeled (`136`'s own note — no
+      idle-taunt animation system exists).
+- [ ] ENEMY-027 — ObjectType54: destroys Blupi's helicopter on contact (ByeByeHelico) — NOT
+      modeled (`136`'s own note: "the real 'destroys Blupi's vehicle instead of killing him'
+      branch [is] NOT modeled"); contact always takes the real no-vehicle death branch instead.
+- [ ] ENEMY-028 — ObjectType18: additional patrol enemy variant — NOT modeled as its own enemy;
+      `ObjectType18` appears only in the dynamite-blast destructible-object list, not in
+      `IsGenericHazard()`'s real 8-type kill-list.
+- [x] ENEMY-029 — ObjectType96: follow enemy 1 (dormant) — done (`137`).
+- [x] ENEMY-030 — ObjectType97: follow enemy 2 (awake) — done (`137`).
+- [x] ENEMY-031 — ObjectType96/97: wake + homing toward Blupi — done (`137`, Chebyshev-style X/Y
+      step toward Blupi's live position at the real 1px/tick speed, self-destructs into a solid
+      cell rather than continuing).
 
 Note: `ObjectType32`/`33` (blupih/blupit) need `blupi1.png`, not `element.png` — if any prior
 assumption used a single shared sprite sheet for all enemies, that assumption is wrong; see
@@ -2334,37 +2368,52 @@ ObjectType-to-sheet corrections repeated in §7.
 
 #### 6.3 Projectiles
 
-- [ ] ENEMY-032 — ObjectType23: fired projectile (icon 176 from element.png) — spawned by blupih/blupit
-- [ ] ENEMY-033 — Projectile travels toward Blupi position, expires after 55 frames
-- [ ] ENEMY-034 — Projectile hit detection: damage Blupi if shield inactive
-- [ ] ENEMY-035 — Projectile sound (ch27 on fire?)
+- [x] ENEMY-032 — ObjectType23: fired projectile — done (`134`, spawned by blupih/blupit via
+      `SearchAirDistance()`'s real grid-cell raycast).
+- [x] ENEMY-033 — Projectile travels toward Blupi position — done (`134`); the specific "expires
+      after 55 frames" figure isn't independently re-verified, but travel + arrival/expiry is real
+      and working.
+- [x] ENEMY-034 — Projectile hit detection: damage Blupi if shield inactive — done; the real
+      `!m_blupiShield && !m_blupiHide` hazard-immunity gate (Phase 17 `170`) applies across all
+      ~15 real call sites including projectiles.
+- [x] ENEMY-035 — Projectile fire sound — done, but the real channel is **52**, not the guessed
+      ch27 (`FireBlupihShot()`/the blupit-shot branch in `GEInteractionSystem.cpp` both play
+      `SoundChannel52`).
 
 #### 6.4 Enemy Sounds
 
-- [ ] ENEMY-036 — Stomp kill sound: ch5
-- [ ] ENEMY-037 — Bulldozer turn sound (ch33)
-- [ ] ENEMY-038 — Enemy destruction sound varies by type
-- [ ] ENEMY-039 — Wasp/bee movement sound (ch72/ch73)
-- [ ] ENEMY-040 — Creature movement sound
+- [ ] ENEMY-036 — Stomp kill sound: ch5 — no stomp concept exists; the real generic contact-kill
+      death sound is channel **74**, always (real source is a 50/50 coinflip between ch74 and
+      silence, per `132`'s own note — simplified here to always ch74, not modeled as a coinflip).
+- [ ] ENEMY-037 — Bulldozer turn sound (ch33) — NOT modeled; no per-type turn sound exists (ch33
+      is actually the real door-open channel, unrelated — see §2.7's PICKUP-041/075 correction).
+- [ ] ENEMY-038 — Enemy destruction sound varies by type — NOT modeled; corrected description:
+      the real source's per-type variation is simplified here to a single uniform channel 74 for
+      every `IsGenericHazard()` kill (see ENEMY-036).
+- [x] ENEMY-039 — Wasp/bee balloon-status sound — done, but the real channels are **40** (balloon
+      entry) and **41** (recovery/expiry, shared with Crusher's own recovery cue) — not ch72/73 as
+      guessed; both wired in `GalaxyEggbertCnaGame.cpp`. No separate continuous "movement" sound
+      was found.
+- [ ] ENEMY-040 — Creature movement sound — not found/verified.
 
 ---
 
 ### 2.7 Pickups & Objects
 
-CNA has a working first interactive-object system (`GEInteractionSystem`): treasure(5)/egg(6)/
-exit(7)/keys(49-51) pickup collection works with real removal-on-contact semantics, real sound
-channels (11/19 for treasure/key, 3 for egg — corrected below), `MAX_EGG_COUNT=10` cap, and exit
-gated on treasures-collected. Crates/lifts also have real substance: `ObjectType1/12/47/48` render
-as real cubes; platform lifts patrol (ping-pong between posStart/posEnd); crates can be pushed
-(X-axis only, single-crate, with adjacency/floor-support/occupancy checks). Everything else in this
-section is not yet done.
+**Re-verified against source 2026-07-13 — badly stale.** This section predates the 2026-07-11/12/13
+implementation push (Phases 15-17 above, which are current) and still marked most of that work
+`[ ]`. Corrected in place below; ground truth is Phases 15/16/17 and a direct source check of
+`GEInteractionSystem.cpp`/`GEBlupiController`, not a re-derivation.
 
 **Sound-channel correction, applies throughout this section:** treasure/key pickup = Channel 11 (or
-19 if the pickup completes a set), egg = Channel 3 — not the older generic "ch42 collect" /
-"ch10 always-restarts" assumptions used below in some line items; where a line item's channel
-number below conflicts with this, the corrected value governs. **Sprite-sheet correction:**
-`ObjectType1`/`12` need `object-m.png`, not `element.png`; `ObjectType32`/`33` need `blupi1.png`,
-not `element.png` — any task assuming one shared sheet for all pickups/objects is wrong.
+19 if the pickup completes a set), egg = Channel 3, door open = Channel **33** (not ch7, corrected
+2026-07-13 — see PICKUP-041/075), exit-reached = Channel **14** (not ch57, PICKUP-074), generic
+hazard/enemy contact-kill death = Channel **74** (not ch5/varies-by-type, see §2.6 ENEMY-036/038),
+dynamite/blupih/blupit-fire = Channel **52** (shared by both real actions), wasp balloon
+entry/recovery = Channels **40/41** (not ch72/73/46) — where a line item's channel number below
+conflicts with these, the corrected value governs. **Sprite-sheet correction:** `ObjectType1`/`12`
+need `object-m.png`, not `element.png`; `ObjectType32`/`33` need `blupi1.png`, not `element.png` —
+any task assuming one shared sheet for all pickups/objects is wrong.
 
 #### 7.1 Static Collectibles
 
@@ -2374,110 +2423,93 @@ not `element.png` — any task assuming one shared sheet for all pickups/objects
 - [x] PICKUP-004 — ObjectType49: red key — sets Key1 flag, real sound channel (11, or 19 if set-completing) (CNA, 2026-07-10)
 - [x] PICKUP-005 — ObjectType50: green key — sets Key2 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
 - [x] PICKUP-006 — ObjectType51: blue key — sets Key3 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
-- [ ] PICKUP-007 — ObjectType25: shield orb (table_shield, 16 frames) — 5 s invincibility, ch50
-- [ ] PICKUP-008 — ObjectType30: drink (icon 178) — +1 life (cap 9), ch42 sound (re-verify channel against real Decor.cpp, per correction note above)
-- [ ] PICKUP-009 — ObjectType21: secret exit (table_cle, 12 frames) — sets m_bFoundCle, triggers Win
-- [ ] PICKUP-010 — ObjectType31: cloud power-up (table_charge, 6 frames, Object channel) — m_blupiCloud 100 ticks
-- [ ] PICKUP-011 — ObjectType40: invert power-up (table_invert, 20 frames) — m_blupiInvert 100 ticks + particle burst
-- [ ] PICKUP-012 — ObjectType26: suction-cup (table_power, 8 frames) — ACTION_Sucette, wall climbing
-- [ ] PICKUP-013 — ObjectType29: bullet ammo (icon 177) — +10 bullets to m_blupiBullet
-- [ ] PICKUP-014 — ObjectType55: dynamite (icon 252) — ACTION_TakeDynamite
-- [ ] PICKUP-015 — ObjectType13: helicopter (icon 68 in element.png) — sets m_blupiHelico
-- [ ] PICKUP-016 — ObjectType19: jeep (icon 89) — sets m_blupiJeep
-- [ ] PICKUP-017 — ObjectType28: tank (icon 167) — sets m_blupiTank
-- [ ] PICKUP-018 — ObjectType24: skateboard (table_skate, 34 frames) — ACTION_TakeSkate
-- [ ] PICKUP-019 — ObjectType46: balloon (icon 208) — sets m_blupiOver / m_blupiBalloon
+- [x] PICKUP-007 — ObjectType25: shield orb — done (Phase 17 `170`/`172`), grants `SecretPower::Shield` instantly on contact (real 2-stage delay not modeled); no dedicated pickup sound wired yet, see PICKUP-073.
+- [x] PICKUP-008 — ObjectType30: drink — done (`170`/`173`), grants `SecretPower::Hide` instantly (real name is "Drink→Hide", not "+1 life"; the two-stage grab/delayed-activate animation is NOT modeled, see `173`); no dedicated pickup sound wired.
+- [ ] PICKUP-009 — ObjectType21: secret exit — NOT modeled as a pickup; only a render icon lookup exists (`GEObjectIcons.cpp`), no `GEInteractionSystem` contact/trigger logic.
+- [x] PICKUP-010 — ObjectType31: cloud power-up — done (`170`/`172`/`174`), grants `SecretPower::Cloud` (strictest gate of the 4, matching real source) + real Cloud offensive `BlupiElectro` aura (2026-07-13, ch59).
+- [ ] PICKUP-011 — ObjectType40: invert/mirror power-up — confirmed NOT modeled (Phase 17 `174`'s own note: "a separate, NOT-modeled effect"); only appears in the dynamite-blast destructible-object list, no pickup/buff logic.
+- [x] PICKUP-012 — ObjectType26: suction-cup ("Sucette") — done (`170`/`173`), grants `SecretPower::Power` instantly; real 2-stage delay + wall-climbing behavior NOT modeled.
+- [x] PICKUP-013 — ObjectType29: bullet ammo — done (Phase 17 `175`), tops up to `kBulletCap=10`, real no-op-at-cap behavior, ch54 fanfare.
+- [x] PICKUP-014 — ObjectType55: dynamite — done (Phase 15 `155`), caps at 1 carried, action-button placement, real 9-blast fuse sequence.
+- [x] PICKUP-015 — ObjectType13: helicopter — done (Phase 17 `171`), `VehicleMode::Helicopter`, real free vertical flight.
+- [x] PICKUP-016 — ObjectType19: jeep — done (`171`), `VehicleMode::Jeep`, real accel ramp.
+- [x] PICKUP-017 — ObjectType28: tank — done (`171`), `VehicleMode::Tank`; also the only vehicle that can fire (`BULLET-001`).
+- [x] PICKUP-018 — ObjectType24: skateboard — done (`171`), `VehicleMode::Skateboard`, reuses ground gravity/jump path.
+- [x] PICKUP-019 — ObjectType46: — done (`171`), but corrected name/effect: real touch sets `m_blupiOver` (**Overcraft**, free vertical flight like Helicopter), **not** a separate "Balloon" vehicle or `m_blupiBalloon` (that flag is the unrelated wasp-sting status, Phase 13 `135`) — `ObjectType.hpp`'s own doc comment is confirmed misleading here.
 
 #### 7.2 Platform Lifts
 
-- [x] PICKUP-020 — ObjectType1: platform lift patrols posStart↔posEnd (CNA, 2026-07-10) — note: does NOT yet carry Blupi; Blupi's collision doesn't test moving objects at all, see PICKUP-023
-- [ ] PICKUP-021 — ObjectType47: platform lift rightward carry (+2 px/frame horizontal to Blupi when riding) — blocked on PICKUP-023 (platform boarding/riding)
-- [ ] PICKUP-022 — ObjectType48: platform lift leftward carry (-2 px/frame horizontal) — same blocker
-- [ ] PICKUP-023 — Platform boarding/riding: Blupi's collision must test moving objects, not just static terrain — NOT done, root blocker for this whole subsection
-- [ ] PICKUP-024 — AscenseurVertigo: Blupi hangs on edge of platform (Vertigo state)
-- [ ] PICKUP-025 — AscenseurShift: shift Blupi with moving platform
-- [ ] PICKUP-026 — AscenseurSynchro: synchronise multiple lifts
-- [ ] PICKUP-027 — m_blupiTimeNoAsc: cooldown preventing immediate re-entry
+- [x] PICKUP-020 — ObjectType1: platform lift patrols posStart↔posEnd (CNA, 2026-07-10) — now also carries Blupi, see PICKUP-023.
+- [x] PICKUP-021 — ObjectType47: platform lift rightward conveyor nudge — done (Phase 15 `154`), folded into `RideDeltaX()`'s `kConveyorNudgeSpeed`; exact real px/tick magnitude is an approximation (no established unit conversion), not a transcription.
+- [x] PICKUP-022 — ObjectType48: platform lift leftward conveyor nudge — done (`154`), same note as PICKUP-021.
+- [x] PICKUP-023 — Platform boarding/riding — done (Phase 15 `152`), was the root blocker for this whole subsection, now resolved: `GEInteractionSystem` detects standing on an active lift's footprint/height, reports its per-tick displacement, `GEBlupiController::RideLift()` applies it (X/Z as a delta preserving walking input, Y snapped absolutely).
+- [ ] PICKUP-024 — AscenseurVertigo (edge-hang on wide/shiftable platforms, icons 311-316) — NOT started (`153`); blocked on a deferred render/icon-selection decision, not a gameplay-logic gap.
+- [x] PICKUP-025 — AscenseurShift: shift Blupi with moving platform — done, this IS `152`'s `RideLift()` delta-shift mechanism (same feature, different name in this older checklist).
+- [ ] PICKUP-026 — AscenseurSynchro: synchronise multiple lifts — NOT modeled; no evidence of any special multi-lift linking (each lift patrols independently on its own clock, which may already be sufficient for this world's needs).
+- [ ] PICKUP-027 — m_blupiTimeNoAsc: cooldown preventing immediate re-entry — NOT modeled; no such cooldown found in `GEInteractionSystem`/`GEBlupiController`.
 
 #### 7.3 Crates (ObjectType12)
 
 - [x] PICKUP-028 — ObjectType12: crate renders as a real cube (CNA, 2026-07-10) — was previously a static billboard placeholder in Simple3D; CNA's is a real `UniformCube`
-- [x] PICKUP-029 — Crate push: walking into a crate pushes it 1 tile, X-axis only, single-crate (CNA, 2026-07-10) — Y-axis / non-X pushing NOT done
+- [x] PICKUP-029 — Crate push: walking into a crate pushes it 1 tile, X-axis only (CNA, 2026-07-10) — non-X pushing still not done, but crates now stack/link, see PICKUP-031.
 - [x] PICKUP-030 — Crate stops when hitting a wall or another crate (adjacency/floor-support/occupancy checks) (CNA, 2026-07-10)
-- [ ] PICKUP-031 — Crates can be stacked and linked crates push as a group (flood-fill; UpdateCaisse / SearchLinkCaisse) — NOT done, current push is single-crate only
-- [ ] PICKUP-032 — m_rankCaisse / m_nbRankCaisse: array of crate object indices
-- [ ] PICKUP-033 — TestPushCaisse: check if push is valid (clear path)
-- [ ] PICKUP-034 — CaisseInFront: detect crate directly in front of Blupi
-- [ ] PICKUP-035 — SmallShake on crate land / impact
-- [ ] PICKUP-035b — Conveyor nudge for ObjectType47/48 (new item, CNA-specific gap noted in project status: crates on conveyor-lift tiles should be nudged, not yet implemented)
+- [x] PICKUP-031 — Crates can be stacked and linked crates push as a group — done (Phase 15 `150`), a real flood-fill (not the real `SearchLinkCaisse` array structure itself, but behaviorally equivalent) restricted to crates at/above the seed's row, matching the real "push the stack, not the floor it rests on" rule; all linked members move atomically, any one blocked cancels the whole push.
+- [x] PICKUP-032 — m_rankCaisse / m_nbRankCaisse: array of crate object indices — achieved differently: `150`'s flood-fill walks `worldRuntime`'s live object list directly rather than maintaining a separate rank array, same net effect.
+- [x] PICKUP-033 — TestPushCaisse: check if push is valid (clear path) — folded into `150`'s flood-fill validity check (every linked member must have a clear destination).
+- [x] PICKUP-034 — CaisseInFront: detect crate directly in front of Blupi — folded into the existing single-crate push detection this subsection already had `[x]` (PICKUP-029).
+- [ ] PICKUP-035 — SmallShake on crate land / impact — NOT modeled, no screen-shake system exists for this.
+- [x] PICKUP-035b — Conveyor nudge for ObjectType47/48 — done, same as PICKUP-021/022 (Phase 15 `154`).
 
 #### 7.4 Doors & Keys
 
-- [ ] PICKUP-036 — DoorKeyFlags: 3-bit flag (Key1 / Key2 / Key3)
-- [ ] PICKUP-037 — Door tile (IsDoor): opens when Blupi touches and holds matching key — render mode correction: closed doors are `Billboard` (red pillar/bollard), NOT `UniformCube`
-- [ ] PICKUP-038 — InitializeDoors: restore door states from GameData on level load
-- [ ] PICKUP-039 — MemorizeDoors: save door states to GameData on level exit
-- [ ] PICKUP-040 — Door open animation: ObjectType22 (3-phase animation, self-removes)
-- [ ] PICKUP-041 — Door open sound: ch7
+- [x] PICKUP-036 — DoorKeyFlags — done differently (Phase 16 `161`): `keys1_`/`keys2_`/`keys3_` are plain pickup counters, not a persisted 3-bit flag, but behaviorally identical for the realistic case (one key granted before a door needs it).
+- [x] PICKUP-037 — Door tile (IsDoor): opens when Blupi touches and holds matching key — done (`161`), automatic on approach (2-cell probe in Blupi's facing direction), no action-button gate. Render-mode correction (closed doors should be `Billboard`, not `UniformCube`) is confirmed still NOT done — explicitly skipped 2026-07-12 per user direction (no new render-geometry decisions that session), tracked as `E3D-MIG-516`/`163`.
+- [ ] PICKUP-038 — InitializeDoors: restore door states from GameData on level load — NOT modeled; no door-state persistence exists in `GESaveData` (which isn't byte-compatible with real `GameData` by design).
+- [ ] PICKUP-039 — MemorizeDoors: save door states to GameData on level exit — NOT modeled, same reason as PICKUP-038.
+- [x] PICKUP-040 — Door open animation: ObjectType22 (self-removing slide) — done (`160`), real `Config::ScaleTime(50)`=2.5s slide-up-by-1-grid-unit, then self-destructs; the slide object's own icon is not rendered accurately (no confirmed icon data for type 22 regardless, a pre-existing unrelated gap).
+- [x] PICKUP-041 — Door open sound — done, but real channel is **33**, not ch7 (verified directly in `GEInteractionSystem.cpp`'s `OpenDoorAt()`).
 
 #### 7.5 Visual Effects (transient objects)
 
-- [ ] PICKUP-042 — ObjectType8: primary explosion (table_explo1, explo.png Explosion channel)
-- [ ] PICKUP-043 — ObjectType9: small explosion (table_explo2, 20 frames)
-- [ ] PICKUP-044 — ObjectType10: tertiary explosion (table_explo3, 20 frames)
-- [ ] PICKUP-045 — ObjectType11: fan shockwave (table_explo4, 9 frames) — triggers BigShake
-- [ ] PICKUP-046 — ObjectType36: pollution puff (table_pollution, 8 frames, 16-tick lifetime)
-- [ ] PICKUP-047 — ObjectType37: clear effect (table_clear, 70 frames)
-- [ ] PICKUP-048 — ObjectType38: electric arc (table_electro, 90 frames, starts Blupi1_12 channel)
-- [ ] PICKUP-049 — ObjectType39: treasure sparkle (table_tresortrack, 11 frames) — spawned on pickup; part of the not-yet-done voyage-deferred HUD-fly animation (current impl deletes/counts pickups immediately instead of deferring to a flight animation)
-- [ ] PICKUP-050 — ObjectType41/42: invert start/stop particles (table_invertstart/stop, 8 frames × 4 dirs)
-- [ ] PICKUP-051 — ObjectType53: tentacle hazard (table_tentacule, 45 frames, 90-tick lifetime)
-- [ ] PICKUP-052 — ObjectType57: shield trail (table_shieldtrack, 20 frames)
-- [ ] PICKUP-053 — ObjectType58: shield disappear (20 frames)
-- [ ] PICKUP-054 — ObjectType27: magic track sparkle (table_magictrack, 24 frames)
-- [ ] PICKUP-055 — ObjectType90: electric spark (table_explo5, 12 frames) — triggers ElectricShake
-- [ ] PICKUP-056 — ObjectType91: small flash (table_explo6, 6 frames)
-- [ ] PICKUP-057 — ObjectType92: long energy arc (table_explo7, 128 frames)
-- [ ] PICKUP-058 — ObjectType93: tiny flash (table_explo8, 5 frames)
-- [ ] PICKUP-059 — ObjectType98/99/100: water splashes (table_sploutch1/2/3, 10/13/18 frames)
-- [ ] PICKUP-060 — ObjectType14: water plouf (table_plouf, 7 frames, Object channel)
-- [ ] PICKUP-061 — ObjectType15: water bubble (table_blup, 20 frames) — rises to waypoint
-- [ ] PICKUP-062 — ObjectType34: goo particle (table_glu, 25-frame looping element) — sticks to geometry
-- [ ] PICKUP-063 — ObjectType35: small plouf (table_tiplouf, 3 frames)
+Re-verified 2026-07-13: confirmed **still entirely NOT implemented**, this subsection was NOT
+stale (unlike 7.1-7.4 above) — no particle/transient-visual-effect/debris system exists anywhere in
+`GEInteractionSystem`/`GEHud` beyond what's already noted elsewhere (e.g. dynamite's blast has "no
+debris/particle visuals", Phase 15 `155`/`156`). PICKUP-042 through PICKUP-063 all remain `[ ]` as
+originally listed — no changes.
 
 #### 7.6 Special Level Objects
 
-- [ ] PICKUP-064 — ObjectType52: bridge construction (table_bridge, 157 frames) — also updates static decor
-- [ ] PICKUP-065 — ObjectType56: dynamite fuse (table_dynamitef, 100 frames) — triggers DynamiteStart() at phases 50-69
-- [ ] PICKUP-066 — DynamiteStart: blast clears tiles in all 4 directions (radius-based)
-- [ ] PICKUP-067 — ObjectType200-203: Blupi avatar skins (icons 257-262 on respective channels)
-- [ ] PICKUP-068 — ObjectType200: costume select pickup → triggers player-select voyage when touched
-- [ ] PICKUP-069 — ObjectType201-203: damage Blupi on contact if shield/hide/SuperBlupi inactive
+- [ ] PICKUP-064 — ObjectType52: bridge construction (live terrain-collision toggle) — confirmed still NOT started (Phase 15 `157`); `ObjectType52` appears only in the dynamite-blast destructible-object list. Note: NEXT.md's own prose loosely describes `GEInteractionSystem` as handling "platform lift/crate/bridge patrol+push" — that's describing the shared generic patrol code applying to any `MoveObject` type in principle, not a real dedicated bridge feature; this line item's real "overwrites the terrain grid every tick across a 157-tick sequence" mechanic is genuinely unbuilt.
+- [x] PICKUP-065 — ObjectType56: dynamite fuse — done (Phase 15 `155`), real per-blast phase-driven timing (ticks 50/53/55/56/59/62/64/67/69), not the rounded "phases 50-69" this line originally guessed.
+- [x] PICKUP-066 — DynamiteStart: blast clears tiles — done (`155`), 2×2-tile area per blast (not a general "radius"), real exact 28-type destructible-object list.
+- [ ] PICKUP-067 — ObjectType200-203: Blupi avatar skins — render icons (257-262) exist in `GEObjectIcons.cpp`, but no world currently places any and no costume-select gameplay hook exists — see PICKUP-068's correction below for what `ObjectType200` actually does instead.
+- [x] PICKUP-068 — ObjectType200 — **description was wrong**: real implemented behavior (`GEInteractionSystem::TryPerso()`, "Perso" mechanic, NEXT.md's HUD-017) is a decoy placement/retrieval pickup (carry a decoy, place it on the ground, or pick an already-placed one back up), **not** a "costume select pickup → player-select voyage" trigger — no such voyage/costume-select system exists.
+- [ ] PICKUP-069 — ObjectType201-203: damage Blupi on contact if shield/hide/SuperBlupi inactive — NOT modeled; these types only appear in the dynamite-blast destructible list, no contact-damage logic found.
 
 #### 7.7 Pickup Sounds
 
-Per the channel correction above (treasure/key = ch11 or ch19 if set-completing; egg = ch3), the
-line items below are corrected in place rather than reset blindly to old (possibly wrong) channel
-numbers.
+Per the channel corrections at the top of this section (treasure/key = ch11/19, egg = ch3, door
+open = ch33, exit = ch14, generic hazard death = ch74, dynamite/projectile-fire = ch52, wasp
+balloon = ch40/41), the line items below are corrected in place rather than reset blindly.
 
 - [x] PICKUP-070 — Treasure collect sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — corrected from the old "ch10 always restarts" assumption
 - [x] PICKUP-071 — Key pickup sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — same channel as treasure, corrected from old ch11-only assumption (still ch11, but conflict/set-completing behavior added)
-- [x] PICKUP-072 — Egg pickup sound wired: ch3 (CNA, 2026-07-10) — corrected from the old "ch42" assumption; drink pickup (PICKUP-008) channel still needs separate verification
-- [ ] PICKUP-073 — Shield pickup: ch50
-- [ ] PICKUP-074 — Win/exit sound: ch57
-- [ ] PICKUP-075 — Door open: ch7
-- [ ] PICKUP-076 — Switch activate (on): ch77; switch deactivate: ch76
-- [ ] PICKUP-077 — Explosion sounds: ch40 (explosion); re-verify ch10/ch39 assignments against real Decor.cpp given the treasure/key channel correction above
-- [ ] PICKUP-078 — Water plouf: ch23
-- [ ] PICKUP-079 — Water bubble: ch24
-- [ ] PICKUP-080 — Water small plouf: ch64
-- [ ] PICKUP-081 — Glu/glue sound: ch51
-- [ ] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions)
-- [ ] PICKUP-083 — Secret exit pickup: ch21
-- [ ] PICKUP-084 — Bridge construction sound: ch20
-- [ ] PICKUP-085 — Balloon pickup sound: ch46
-- [ ] PICKUP-086 — Shield trail sound: ch48
-- [ ] PICKUP-087 — Shield loop sound: ch49 (looped while shield active)
+- [x] PICKUP-072 — Egg pickup sound wired: ch3 (CNA, 2026-07-10) — corrected from the old "ch42" assumption
+- [ ] PICKUP-073 — Shield/Power/Hide/Cloud pickup sound — confirmed NOT wired: `GEInteractionSystem`'s ObjectType25/26/30/31 pickup branches (Phase 17 `170`) grant their buff but call no `sound.Play()` at all. Genuinely open, small, easy follow-up (channels not independently re-verified here, ch50 unconfirmed).
+- [x] PICKUP-074 — Win/exit sound — done, but real channel is **14** (not ch57) — `GEInteractionSystem.cpp`'s exit-reached branch; a separate ch13 plays when reaching the exit tile without enough treasures yet.
+- [x] PICKUP-075 — Door open — done, real channel **33** (not ch7), duplicate of PICKUP-041 above.
+- [ ] PICKUP-076 — Switch activate/deactivate sound (ch77/ch76) — confirmed NOT wired: no sound.Play() call found anywhere near the switch-toggle logic despite switches/saws being a real, working hazard (Phase 14).
+- [x] PICKUP-077 — dynamite-blast/bullet-wall-impact sound — done, but real channel is **10** (not ch40) for both the dynamite center-blast boom and a fired bullet hitting a solid wall; the originally-guessed "ch40 explosion" is actually the real wasp-balloon-entry channel (see ENEMY-039/PICKUP note), unrelated.
+- [ ] PICKUP-078 — Water plouf: ch23 — NOT modeled, no ObjectType14 implementation exists.
+- [ ] PICKUP-079 — Water bubble: ch24 — NOT modeled, no ObjectType15 implementation exists.
+- [ ] PICKUP-080 — Water small plouf: ch64 — NOT modeled, no ObjectType35 implementation exists.
+- [ ] PICKUP-081 — Glu/glue sound: ch51 — NOT modeled (ObjectType34 has no dedicated implementation); real ch51 is actually the generic hazard-contact death sound used elsewhere (crusher/spike/etc. contexts), an unrelated reuse — the "glue" association in this line item appears to be a guess, not confirmed against source.
+- [x] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions) — confirmed correct, matches Phase 15 `155`; also shared by blupih/blupit's projectile-fire sound (`FireBlupihShot()`), a real reused channel not specific to dynamite alone.
+- [ ] PICKUP-083 — Secret exit pickup: ch21 — NOT modeled, `ObjectType21` has no pickup logic at all (see PICKUP-009).
+- [ ] PICKUP-084 — Bridge construction sound: ch20 — NOT modeled, bridge construction itself isn't implemented (PICKUP-064).
+- [x] PICKUP-085 — "Balloon" pickup sound — **description was based on the wrong premise** (see PICKUP-019's correction: `ObjectType46` grants Overcraft, not a Balloon ride) — the real wasp-sting balloon-status sounds are channels **40/41** (entry/recovery), confirmed wired in `GalaxyEggbertCnaGame.cpp`, not ch46. No vehicle-mount-specific pickup sound was found for any of the 5 vehicles.
+- [ ] PICKUP-086 — Shield trail sound: ch48 — NOT modeled, no shield-trail visual/sound system exists.
+- [ ] PICKUP-087 — Shield loop sound: ch49 (looped while shield active) — NOT modeled, no looped-while-active sound system exists for any secret power.
 
 ---
 
@@ -2518,6 +2550,11 @@ wired to jump/land/footstep events. Not done: pitch application, `SoundEnviron()
 footstep/bump remapping (7 terrain pairs, channels 78-91), idle "fidget" periodic sounds (channels
 36/37/46-49/65), buff activate/expire-warning channel pairs.
 
+**Spot-checked against source 2026-07-13** (lighter pass than §2.6/§2.7 above — many of this
+section's original per-channel guesses were unconfirmed speculation to begin with, not stale
+completed-work; only channels directly cross-verified while auditing §2.6/§2.7 were corrected
+below, the rest are unchanged/still genuinely unconfirmed).
+
 - [x] SOUND-001 — 93 WAV files (`sounds/sound000.wav`..`sound092.wav`) loaded (CNA, 2026-07-10)
 - [x] SOUND-002 — Per-channel volume/conflict table reused from the real data (CNA, 2026-07-10)
 - [ ] SOUND-003 — Sound on/off toggle (persisted in GameData byte 3) — blocked on §11 Save Data, not started
@@ -2548,11 +2585,11 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-017 — ch7: door open
 - [ ] SOUND-018 — ch8: death / hit
 - [ ] SOUND-019 — ch9: teleport in
-- [ ] SOUND-020 — ch10: collect (re-verify against corrected ch11/ch3 treasure/egg channels — may be unused/different purpose)
+- [x] SOUND-020 — ch10: **corrected 2026-07-13** — real use is dynamite-blast center boom AND a fired bullet hitting a solid wall, not "collect" (confirmed in `GEInteractionSystem.cpp`).
 - [x] SOUND-021 — ch11: key pickup AND treasure pickup (CNA, 2026-07-10 — corrected: shared by both per real data)
 - [ ] SOUND-022 — ch12: teleport out
-- [ ] SOUND-023 — ch13: bridge build phase 1
-- [ ] SOUND-024 — ch14: bridge build phase 2
+- [x] SOUND-023 — ch13: **corrected 2026-07-13** — real use is reaching the level exit tile without enough treasures collected yet, not "bridge build phase 1" (confirmed in `GEInteractionSystem.cpp`).
+- [x] SOUND-024 — ch14: **corrected 2026-07-13** — real use is exit-reached/win (`exitReached_`), not "bridge build phase 2" (see PICKUP-074).
 - [ ] SOUND-025 — ch15: helicopter motor start
 - [ ] SOUND-026 — ch16: helicopter motor high (loop)
 - [ ] SOUND-027 — ch17: helicopter motor stop
@@ -2565,21 +2602,21 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-034 — ch24: water bubble rise
 - [ ] SOUND-035 — ch25: unknown
 - [ ] SOUND-036 — ch26: unknown
-- [ ] SOUND-037 — ch27: projectile fired
+- [ ] SOUND-037 — ch27: unknown — **corrected 2026-07-13**: the real projectile-fire channel is ch52, not ch27 (see SOUND-062); this line item's original guess is unconfirmed against source.
 - [ ] SOUND-038 — ch28: jeep/tank start
 - [ ] SOUND-039 — ch29: jeep/tank motor high (loop)
 - [ ] SOUND-040 — ch30: jeep/tank stop
 - [ ] SOUND-041 — ch31: jeep/tank motor low (loop)
 - [ ] SOUND-042 — ch32: unknown
-- [ ] SOUND-043 — ch33: bulldozer turn
+- [x] SOUND-043 — ch33: **corrected 2026-07-13** — real use is door open (confirmed in `GEInteractionSystem.cpp`'s `OpenDoorAt()`), not "bulldozer turn" — no bulldozer-turn sound exists.
 - [ ] SOUND-044 — ch34: unknown
 - [ ] SOUND-045 — ch35: unknown
 - [ ] SOUND-046 — ch36: water walk ambient (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-047 — ch37: swim bubble (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-048 — ch38: electric arc (long)
 - [ ] SOUND-049 — ch39: key sparkle effect
-- [ ] SOUND-050 — ch40: explosion
-- [ ] SOUND-051 — ch41: glide
+- [x] SOUND-050 — ch40: **corrected 2026-07-13** — real use is wasp balloon-status entry (Phase 13 `135`), not "explosion".
+- [x] SOUND-051 — ch41: **corrected 2026-07-13** — real use is wasp balloon-status recovery/expiry (shared with Crusher's own recovery cue), not "glide".
 - [ ] SOUND-052 — ch42: life/drink pickup (egg corrected to ch3, see PICKUP-072 — ch42 role needs re-verification, may be drink-only)
 - [ ] SOUND-053 — ch43: unknown
 - [ ] SOUND-054 — ch44: shield off
@@ -2589,15 +2626,15 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-058 — ch48: shield sparkle (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-059 — ch49: shield loop (looped while active) (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-060 — ch50: shield pickup
-- [ ] SOUND-061 — ch51: glu/glue splash
-- [ ] SOUND-062 — ch52: dynamite / impact
+- [x] SOUND-061 — ch51: **corrected 2026-07-13** — real use is the generic hazard-contact death sound (confirmed in `GEInteractionSystem.cpp`), not "glu/glue splash" — no glue-specific sound found.
+- [x] SOUND-062 — ch52: confirmed correct — dynamite placement/explosion; also reused for blupih/blupit's real projectile-fire sound (see SOUND-037's correction).
 - [ ] SOUND-063 — ch53: tank fire
 - [ ] SOUND-064 — ch54: long explosion (creature death?)
 - [ ] SOUND-065 — ch55: unknown
 - [ ] SOUND-066 — ch56: unknown
 - [ ] SOUND-067 — ch57: exit open / win
 - [ ] SOUND-068 — ch58: drink pickup
-- [ ] SOUND-069 — ch59: unknown
+- [x] SOUND-069 — ch59: **corrected 2026-07-13** — Cloud secret-power `BlupiElectro` electric-aura kill sound (added 2026-07-13, `GEInteractionSystem.cpp`).
 - [ ] SOUND-070 — ch60: pickup/collect (variant)
 - [ ] SOUND-071 — ch61: unknown
 - [ ] SOUND-072 — ch62: sucette / suction-cup
@@ -2612,12 +2649,12 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-081 — ch71: unknown
 - [ ] SOUND-082 — ch72: wasp approach
 - [ ] SOUND-083 — ch73: wasp attack
-- [ ] SOUND-084 — ch74: teleport in (Blupi arrival)
+- [x] SOUND-084 — ch74: **corrected 2026-07-13** — real use is the generic hazard/enemy contact-kill death sound (confirmed repeatedly in `GEInteractionSystem.cpp`), not "teleport in".
 - [ ] SOUND-085 — ch75: teleport out (Blupi exit)
 - [ ] SOUND-086 — ch76: switch deactivate
 - [ ] SOUND-087 — ch77: switch activate
 - [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (7 terrain pairs, mapped by SoundEnviron) — see SOUND-006
-- [ ] SOUND-089 — ch92: follow-enemy sound
+- [x] SOUND-089 — ch92: confirmed correct — follower (ObjectType96→97) wake sound.
 - [ ] SOUND-090 — Sound enable/disable respects enabled_ flag (all channels silenced when off)
 
 ---
