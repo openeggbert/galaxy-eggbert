@@ -109,6 +109,37 @@ redone from scratch later.
   case, to determine whether this is icon-specific or affects every DirectionalCube-rendered tile
   once far enough away.
 
+## Re-test conclusion (2026-07-13)
+
+**Not reproducible on current code.** Re-ran the same close/far comparison this document's own
+addendum called for, on current `develop` (well after the `+Y`/`-Y` cube-winding fix referenced
+below). Used a temporary debug camera override (`phase_`/`camera_.SetPosition`/`SetTarget` forced
+in `Draw()`, reverted immediately after) pointed at the BrickWall south wall
+(`tools/GenerateSampleWorld3D.cpp`'s `fill(6,19,11,13,59,59,BrickWall)`, world ≈(-37,12,9)) at
+three distances instead of the original two:
+
+- **5 units**: sharp, fully detailed brick texture (as expected, matches the original report).
+- **12 units** (the original failing distance): sharp, fully detailed brick texture — no washout,
+  no flat gray fill of any kind.
+- **25 units** (more than double the original failing distance, added for extra confidence): still
+  sharp and fully detailed, no washout.
+
+A pixel-level scan of the 12-unit screenshot (84 sample points across the wall face) found zero
+pixels matching the original report's flat `(211,211,211)` gray, and 84 distinct real texture
+colors. The symptom described in this document's own body simply does not occur anymore.
+
+This confirms the addendum's suspicion at the top of this file: the `+Y`/`-Y` `Easy3D::CubeMesh`
+winding bug (`../easy-3d` commit `8ab3854`) was very likely the actual cause of what this
+investigation observed, not a separate, still-open texture-sampling bug. Everything this document's
+"What was ruled out" section checked (mip-level bleeding, `SamplerState` overrides, fog) was
+correctly ruled out — those really weren't the cause — but the underlying symptom itself is now
+gone, most likely because it was always the winding bug manifesting as "wrong face/wrong color at
+a distance" and got fixed as a side effect of that unrelated fix, not because of anything found in
+this document's own trail through `../cna`'s EasyGL backend.
+
+No further action needed unless this symptom is reported again live, in which case start fresh
+rather than resuming this document's old, now-obsolete trail into `../cna`.
+
 ## Related, session context
 
 - The `+Y`/`-Y` `Easy3D::CubeMesh` winding bug (fixed, unrelated to this report):
