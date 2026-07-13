@@ -135,6 +135,21 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13** (one very
 long session); each item is its own commit.
 
+- **Fixed 3D-world render bleed-through during Wait/Init** — reported live by the user: at game
+  start, the 3D terrain/background was visible in the pillarbox margins around (and, on
+  non-4:3-aspect windows, alongside) the Wait loading-gauge screen and Init's gamer-select menu.
+  Root cause: `GalaxyEggbertCnaGame::Draw()` always rendered the full 3D world (background/
+  terrain/billboards) every frame regardless of phase; Wait/Init's own 2D UI only covers the
+  centered 640×480 reference area, leaving the wider-aspect pillarbox bars showing whatever 3D
+  content was drawn underneath. Fixed by skipping the entire 3D-world render block for exactly
+  `Wait`/`Init` (the only two phases with no real game world to show — Wait is a fake progress
+  screen since `LoadContent()` already loaded everything up front, and Init is the gamer-select
+  menu entered before any level is being played); `Pause`/`Win`/`Lost`/`PlaySetup`/`MainSetup`/
+  `Resume` are deliberately untouched since real mobile-eggbert legitimately freezes and shows the
+  in-progress game world behind those overlays. Verified via live headless screenshots of both
+  phases (temporary `kWaitDurationSeconds` debug override to reach Init immediately, reverted
+  before commit) + full 7-tool regression suite. File:
+  `src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp` (`Draw()`).
 - **Cloud secret-power electric aura** (`plan.md #068`) — while `SecretPower::Cloud` is active,
   destroys small enemies (Bulldozer/blupih/blupit) within a real 40px aura, real sound channel 59.
 - **Fall-death timing halved** — `kFallDeathY` -60.0f→-27.0f per user feedback (was ~6.7s, now
@@ -206,6 +221,7 @@ third feature needs to walk-test something inside an enclosed space — see §5.
 | **CNA upstream bug, worked around — needs approval to fix upstream** | CNA's Vulkan backend records all `SpriteBatch` draws before all 3D draws each frame, so a sprite HUD drawn after the 3D scene gets painted over. `galaxy-eggbert` no longer uses `SpriteBatch` (`GEHud` draws real 3D quads instead), so it's unaffected — but any future `SpriteBatch` use would be. |
 | **CNA quirk, worked around** | A `BasicEffect` draw with `Alpha < 1` renders on EasyGL but not at all on CNA's Vulkan backend. `GEHud`'s treasure panel uses opacity 1.0 instead of the real mobile-eggbert 0.6 until this is fixed upstream (`kPanelOpacity`). |
 | **accepted limitation, user declined a fix (2026-07-09)** | `GalaxyEggbertCNA` exits with code 1 (not 0) when closed via a real window-manager close request — root cause is inside SDL's own X11 teardown (`../cna`/SDL), needs explicit approval to fix. Do not attempt without new approval. |
+| **known, deliberately out of scope for now** | The pillarbox-margin 3D-world bleed-through fixed for Wait/Init (§3, 2026-07-13) still exists for `Pause`/`Win`/`Lost`/`PlaySetup`/`MainSetup`/`Resume` on non-4:3-aspect windows — NOT a bug for those phases (real mobile-eggbert legitimately shows the frozen game world behind them), but the pillarbox bars themselves (outside the centered 640×480 reference area) are unfilled letterboxing, a separate minor cosmetic gap from the one just fixed. Not reported by the user; only fix if asked. |
 | **needs re-test** | The "texture distance washout" investigation (`texture-distance-washout-bug.md`) was conducted while an unrelated cube-winding bug was active; its "geometry proven correct" conclusion is void and the repro should be re-run on the current code before resuming. |
 | **needs investigation** | Under Vulkan specifically, `screenshot_hud.png` (an end-of-frame diagnostic) has shown a plain blue background with un-blended white boxes around billboards, even though the same frame's terrain-visibility check reports real terrain color. Found 2026-07-11, not investigated — may be a `GetBackBufferData`/swapchain timing quirk. EasyGL's equivalent screenshot is unaffected. |
 | **not reproduced via scripted collision test** | "Grass-topped cubes reported walkable-through" — a new `VerifyBlupiMovement` check (2026-07-13) drops Blupi onto all 9 icon-107/108/109 blocks in `worlds3d/world001.vwr`; all land correctly (`IsSolidAt()` is independent of which faces a render mode draws). Collision logic itself is not at fault for this world's blocks. Possible explanation: icon 107/108/109 intentionally leave their `PosY` face un-rendered (drawn instead by the separate `grass_top.png` overlay plate), which may visually read as an open hole from some camera angles even though the block is solid — an optical-illusion theory, not confirmed. Still needs a live repro with specific coordinates if the report recurs. |

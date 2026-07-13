@@ -1760,6 +1760,20 @@ namespace GalaxyEggbert::CNA
         device.Clear(0.392f, 0.584f, 0.929f, 1.0f);
         device.SetDepthTestEnabled(true);
 
+        // Reported live (2026-07-13): the 3D world was visible bleeding
+        // through the pillarbox margins around Wait's loading-gauge screen
+        // and Init's gamer-select menu -- both occur before any Play
+        // session exists (Wait is a fake progress screen since
+        // LoadContent() already loaded everything up front; Init is the
+        // gamer-select menu, entered before any level/world is actually
+        // being played), so unlike Pause/Win/Lost/Setup/Resume (which
+        // legitimately freeze and show the in-progress game world behind
+        // their overlay), there is no real game world to show here at all.
+        // Skipping this whole block for those two phases removes the
+        // bleed-through entirely instead of just papering over it with an
+        // opaque quad.
+        if (phase_ != GalaxyEggbert::GamePhase::Wait && phase_ != GalaxyEggbert::GamePhase::Init)
+        {
         // Real background image backdrop (NEXT.md §3, 2026-07-09) -- one
         // huge camera-facing billboard quad placed far behind the scene
         // (see backgroundMeshRenderer_'s header comment for why this
@@ -2242,6 +2256,7 @@ namespace GalaxyEggbert::CNA
                 bigDecorMeshRenderer_->Draw(device, *bigDecorEffect_);
             }
         }
+        } // phase_ != Wait && phase_ != Init (3D world render guard above)
 
         // Restore opaque state after the AlphaBlend block above (billboards
         // only) -- GEHud manages its own blend state, but this keeps device
