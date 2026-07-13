@@ -2423,12 +2423,12 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 - [x] PICKUP-004 — ObjectType49: red key — sets Key1 flag, real sound channel (11, or 19 if set-completing) (CNA, 2026-07-10)
 - [x] PICKUP-005 — ObjectType50: green key — sets Key2 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
 - [x] PICKUP-006 — ObjectType51: blue key — sets Key3 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
-- [x] PICKUP-007 — ObjectType25: shield orb — done (Phase 17 `170`/`172`), grants `SecretPower::Shield` instantly on contact (real 2-stage delay not modeled); no dedicated pickup sound wired yet, see PICKUP-073.
-- [x] PICKUP-008 — ObjectType30: drink — done (`170`/`173`), grants `SecretPower::Hide` instantly (real name is "Drink→Hide", not "+1 life"; the two-stage grab/delayed-activate animation is NOT modeled, see `173`); no dedicated pickup sound wired.
+- [x] PICKUP-007 — ObjectType25: shield orb — done (Phase 17 `170`/`172`), grants `SecretPower::Shield` instantly on contact (real 2-stage delay not modeled); pickup sound wired (ch42, see PICKUP-073 — corrected 2026-07-13, an earlier audit pass this same session wrongly flagged this as unwired since the `sound.Play()` call lives in `GalaxyEggbertCnaGame.cpp`, not `GEInteractionSystem.cpp`).
+- [x] PICKUP-008 — ObjectType30: drink — done (`170`/`173`), grants `SecretPower::Hide` instantly (real name is "Drink→Hide", not "+1 life"; the two-stage grab/delayed-activate animation is NOT modeled, see `173`); pickup sound wired (ch62, see PICKUP-073).
 - [ ] PICKUP-009 — ObjectType21: secret exit — NOT modeled as a pickup; only a render icon lookup exists (`GEObjectIcons.cpp`), no `GEInteractionSystem` contact/trigger logic.
-- [x] PICKUP-010 — ObjectType31: cloud power-up — done (`170`/`172`/`174`), grants `SecretPower::Cloud` (strictest gate of the 4, matching real source) + real Cloud offensive `BlupiElectro` aura (2026-07-13, ch59).
+- [x] PICKUP-010 — ObjectType31: cloud power-up — done (`170`/`172`/`174`), grants `SecretPower::Cloud` (strictest gate of the 4, matching real source) + real Cloud offensive `BlupiElectro` aura (2026-07-13, ch59); pickup sound wired (ch55, see PICKUP-073).
 - [ ] PICKUP-011 — ObjectType40: invert/mirror power-up — confirmed NOT modeled (Phase 17 `174`'s own note: "a separate, NOT-modeled effect"); only appears in the dynamite-blast destructible-object list, no pickup/buff logic.
-- [x] PICKUP-012 — ObjectType26: suction-cup ("Sucette") — done (`170`/`173`), grants `SecretPower::Power` instantly; real 2-stage delay + wall-climbing behavior NOT modeled.
+- [x] PICKUP-012 — ObjectType26: suction-cup ("Sucette") — done (`170`/`173`), grants `SecretPower::Power` instantly; real 2-stage delay + wall-climbing behavior NOT modeled; pickup sound wired (ch44, see PICKUP-073).
 - [x] PICKUP-013 — ObjectType29: bullet ammo — done (Phase 17 `175`), tops up to `kBulletCap=10`, real no-op-at-cap behavior, ch54 fanfare.
 - [x] PICKUP-014 — ObjectType55: dynamite — done (Phase 15 `155`), caps at 1 carried, action-button placement, real 9-blast fuse sequence.
 - [x] PICKUP-015 — ObjectType13: helicopter — done (Phase 17 `171`), `VehicleMode::Helicopter`, real free vertical flight.
@@ -2495,10 +2495,10 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 - [x] PICKUP-070 — Treasure collect sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — corrected from the old "ch10 always restarts" assumption
 - [x] PICKUP-071 — Key pickup sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — same channel as treasure, corrected from old ch11-only assumption (still ch11, but conflict/set-completing behavior added)
 - [x] PICKUP-072 — Egg pickup sound wired: ch3 (CNA, 2026-07-10) — corrected from the old "ch42" assumption
-- [ ] PICKUP-073 — Shield/Power/Hide/Cloud pickup sound — confirmed NOT wired: `GEInteractionSystem`'s ObjectType25/26/30/31 pickup branches (Phase 17 `170`) grant their buff but call no `sound.Play()` at all. Genuinely open, small, easy follow-up (channels not independently re-verified here, ch50 unconfirmed).
+- [x] PICKUP-073 — Shield/Power/Hide/Cloud pickup sound — **correction 2026-07-13**: an earlier audit pass this same session wrongly marked this as NOT wired (it only checked `GEInteractionSystem.cpp`, where the ObjectType25/26/30/31 branches indeed call no `sound.Play()` — but the actual wiring lives one layer up, in `GalaxyEggbertCnaGame.cpp`'s `*GrantedThisFrame()` consumption, added in an earlier commit this session, `426ae1c`). Real channels, confirmed against `mobile-eggbert-reference/07-sounds.md`: Shield=**42**, Power=**44** (real Sucette-complete sound, reused since the 2-stage delay isn't modeled), Cloud=**55**, Hide=**62** — not the originally-guessed ch50.
 - [x] PICKUP-074 — Win/exit sound — done, but real channel is **14** (not ch57) — `GEInteractionSystem.cpp`'s exit-reached branch; a separate ch13 plays when reaching the exit tile without enough treasures yet.
 - [x] PICKUP-075 — Door open — done, real channel **33** (not ch7), duplicate of PICKUP-041 above.
-- [ ] PICKUP-076 — Switch activate/deactivate sound (ch77/ch76) — confirmed NOT wired: no sound.Play() call found anywhere near the switch-toggle logic despite switches/saws being a real, working hazard (Phase 14).
+- [x] PICKUP-076 — Switch activate/deactivate sound — **correction 2026-07-13**: same false-negative as PICKUP-073 (the earlier audit pass only checked `GEInteractionSystem.cpp`) — actually wired correctly in `GalaxyEggbertCnaGame.cpp`'s `TryActivateSwitch()` call site: ch77 on activate, ch76 on deactivate, exactly matching the original guess.
 - [x] PICKUP-077 — dynamite-blast/bullet-wall-impact sound — done, but real channel is **10** (not ch40) for both the dynamite center-blast boom and a fired bullet hitting a solid wall; the originally-guessed "ch40 explosion" is actually the real wasp-balloon-entry channel (see ENEMY-039/PICKUP note), unrelated.
 - [ ] PICKUP-078 — Water plouf: ch23 — NOT modeled, no ObjectType14 implementation exists.
 - [ ] PICKUP-079 — Water bubble: ch24 — NOT modeled, no ObjectType15 implementation exists.
@@ -2617,7 +2617,7 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-049 — ch39: key sparkle effect
 - [x] SOUND-050 — ch40: **corrected 2026-07-13** — real use is wasp balloon-status entry (Phase 13 `135`), not "explosion".
 - [x] SOUND-051 — ch41: **corrected 2026-07-13** — real use is wasp balloon-status recovery/expiry (shared with Crusher's own recovery cue), not "glide".
-- [ ] SOUND-052 — ch42: life/drink pickup (egg corrected to ch3, see PICKUP-072 — ch42 role needs re-verification, may be drink-only)
+- [x] SOUND-052 — ch42: **corrected 2026-07-13** — real use is Shield power-up activation (`ObjectType25`, confirmed against `mobile-eggbert-reference/07-sounds.md` + wired in `GalaxyEggbertCnaGame.cpp`), not "life/drink pickup" — see PICKUP-073.
 - [ ] SOUND-053 — ch43: unknown
 - [ ] SOUND-054 — ch44: shield off
 - [ ] SOUND-055 — ch45: unknown
@@ -2625,7 +2625,7 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-057 — ch47: suspend attach (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-058 — ch48: shield sparkle (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-059 — ch49: shield loop (looped while active) (idle fidget channel, see SOUND-010c)
-- [ ] SOUND-060 — ch50: shield pickup
+- [ ] SOUND-060 — ch50: **corrected 2026-07-13** — real use is the Suction-cup ("Sucette") power-up's real 2-stage pickup-*start* sound, not "shield pickup" (per `mobile-eggbert-reference/07-sounds.md`); this engine plays ch44 instead at grant time since the 2-stage delay isn't modeled (see PICKUP-073) — ch50 itself is unused here.
 - [x] SOUND-061 — ch51: **corrected 2026-07-13** — real use is the generic hazard-contact death sound (confirmed in `GEInteractionSystem.cpp`), not "glu/glue splash" — no glue-specific sound found.
 - [x] SOUND-062 — ch52: confirmed correct — dynamite placement/explosion; also reused for blupih/blupit's real projectile-fire sound (see SOUND-037's correction).
 - [ ] SOUND-063 — ch53: tank fire
@@ -2633,7 +2633,7 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-065 — ch55: unknown
 - [ ] SOUND-066 — ch56: unknown
 - [ ] SOUND-067 — ch57: exit open / win
-- [ ] SOUND-068 — ch58: drink pickup
+- [ ] SOUND-068 — ch58: **corrected 2026-07-13** — real use is the Charge/Cloud (`ObjectType31`) power-up's real pickup-*start* sound, not "drink pickup" (per `mobile-eggbert-reference/07-sounds.md`); this engine plays ch55 instead at grant time (see PICKUP-073) — ch58 itself is unused here.
 - [x] SOUND-069 — ch59: **corrected 2026-07-13** — Cloud secret-power `BlupiElectro` electric-aura kill sound (added 2026-07-13, `GEInteractionSystem.cpp`).
 - [ ] SOUND-070 — ch60: pickup/collect (variant)
 - [ ] SOUND-071 — ch61: unknown
@@ -2651,8 +2651,8 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-083 — ch73: wasp attack
 - [x] SOUND-084 — ch74: **corrected 2026-07-13** — real use is the generic hazard/enemy contact-kill death sound (confirmed repeatedly in `GEInteractionSystem.cpp`), not "teleport in".
 - [ ] SOUND-085 — ch75: teleport out (Blupi exit)
-- [ ] SOUND-086 — ch76: switch deactivate
-- [ ] SOUND-087 — ch77: switch activate
+- [x] SOUND-086 — ch76: switch deactivate — confirmed correct, see PICKUP-076.
+- [x] SOUND-087 — ch77: switch activate — confirmed correct, see PICKUP-076.
 - [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (7 terrain pairs, mapped by SoundEnviron) — see SOUND-006
 - [x] SOUND-089 — ch92: confirmed correct — follower (ObjectType96→97) wake sound.
 - [ ] SOUND-090 — Sound enable/disable respects enabled_ flag (all channels silenced when off)
