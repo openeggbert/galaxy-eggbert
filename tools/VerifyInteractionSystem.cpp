@@ -1605,6 +1605,89 @@ int main(int argc, char** argv)
         }
     }
 
+    // 6. Cloud secret-power electric aura (plan.md `068`, `Decor::
+    // BlupiElectro`) -- while active, instantly destroys small enemies
+    // (ObjectType4/32/33) within a real 40px aura around Blupi. Own
+    // fresh, isolated world/interaction pair (matches the cheat tests'
+    // own reasoning above).
+    {
+        GEWorldRuntime auraWorld;
+        if (!auraWorld.LoadFromVwrFile(worldPath))
+        {
+            check(false, "aura test: could not load sample world");
+        }
+        else
+        {
+            GEInteractionSystem auraInteraction;
+            // Real blupih (ObjectType32) sample-world instance sits at
+            // its posStart, (85,4,80) -- see GenerateSampleWorld3D.cpp.
+            const MobileObjSpec* blupih = nullptr;
+            for (const auto& obj : auraWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType32)
+                {
+                    blupih = &obj;
+                    break;
+                }
+            }
+            check(blupih != nullptr, "aura test: sample world has an active blupih (ObjectType32)");
+            if (blupih != nullptr)
+            {
+                const float bx = blupih->currentX, by = blupih->currentY, bz = blupih->currentZ;
+
+                // Standing right on top of it with the aura OFF must not
+                // destroy it.
+                auraInteraction.Update(1.0f / 60.0f, auraWorld, bx, by, bz, 0.0f, sound, false, false, 0, 0, false,
+                                       true, true, true, true, false, false, /*blupiCloudActive=*/false);
+                bool stillActive = false;
+                for (const auto& obj : auraWorld.GetMobileObjects())
+                {
+                    if (&obj == blupih) { stillActive = obj.active; break; }
+                }
+                check(stillActive, "Cloud aura OFF: standing on a blupih does not destroy it");
+
+                // Same position, aura ON: destroys it.
+                auraInteraction.Update(1.0f / 60.0f, auraWorld, bx, by, bz, 0.0f, sound, false, false, 0, 0, false,
+                                       true, true, true, true, false, false, /*blupiCloudActive=*/true);
+                bool destroyed = true;
+                for (const auto& obj : auraWorld.GetMobileObjects())
+                {
+                    if (&obj == blupih) { destroyed = !obj.active; break; }
+                }
+                check(destroyed, "Cloud aura ON: standing on a blupih destroys it (BlupiElectro)");
+            }
+        }
+        {
+            // Far away (well beyond the aura radius), the aura must not
+            // reach even with Cloud active.
+            GEWorldRuntime farWorld;
+            farWorld.LoadFromVwrFile(worldPath);
+            GEInteractionSystem farInteraction;
+            const MobileObjSpec* blupit = nullptr;
+            for (const auto& obj : farWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType33)
+                {
+                    blupit = &obj;
+                    break;
+                }
+            }
+            check(blupit != nullptr, "aura test: sample world has an active blupit (ObjectType33)");
+            if (blupit != nullptr)
+            {
+                farInteraction.Update(1.0f / 60.0f, farWorld, blupit->currentX + 50.0f, blupit->currentY,
+                                      blupit->currentZ, 0.0f, sound, false, false, 0, 0, false, true, true, true,
+                                      true, false, false, /*blupiCloudActive=*/true);
+                bool stillActive = false;
+                for (const auto& obj : farWorld.GetMobileObjects())
+                {
+                    if (&obj == blupit) { stillActive = obj.active; break; }
+                }
+                check(stillActive, "Cloud aura ON but far away: a blupit 50 units away is untouched");
+            }
+        }
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

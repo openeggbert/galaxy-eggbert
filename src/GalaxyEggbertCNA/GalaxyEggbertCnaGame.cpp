@@ -1452,11 +1452,15 @@ namespace GalaxyEggbert::CNA
             // detect the exact frame GameOverCount() increments (plan.md
             // HUD-023's own real trigger, Decor.cpp:6374-6435).
             const int gameOverCountBeforeUpdate = interaction_.GameOverCount();
+            // Real BlupiElectro aura (plan.md `068`) -- active whenever
+            // Cloud is the current secret power (this engine's own
+            // SecretPower::Cloud, matching the real Power-Charge pickup).
+            const bool cloudActive = secretPower == GEBlupiController::SecretPower::Cloud;
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
-                                 firePressed, canFire);
+                                 firePressed, canFire, cloudActive);
 
             // Real Win/Lost phase transitions (plan.md HUD-023): Lost
             // fires the instant GameOverCount() increments (real

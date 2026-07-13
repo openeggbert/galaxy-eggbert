@@ -394,6 +394,21 @@ namespace GalaxyEggbert::CNA
         // simplification already applied to every pickup type above.
         constexpr float kHazardContactRadius = kPickupRadius;
 
+        // Real `BlupiElectro` aura (plan.md `068`, Decor.cpp:9610-9638,
+        // mobile-eggbert-reference/10-blupi-mechanics.md §9): while
+        // `m_blupiCloud` (this engine's SecretPower::Cloud) is active,
+        // instantly destroys small enemies within 40px of Blupi's own
+        // box -- an offensive aura Blupi carries, unrelated to the
+        // `Blitz` lightning HAZARD despite the similarly-named real
+        // function. Real check expands Blupi's own box by 40px; modeled
+        // as a circular radius (same simplification as every other
+        // proximity test in this file) combining that 40px real
+        // expansion with a 32px half-tile (Blupi's own box is measured
+        // from its center here, not its edge) -- same "half-tile + real
+        // px offset, /64" combination already used for
+        // kFollowerWakeRadius below.
+        constexpr float kCloudAuraRadius = (40.0f + 32.0f) / 64.0f;
+
         // Follower wake box (ObjectType96, plan.md E3D-MIG-137, real
         // Decor.cpp:9646-9678 MoveObjectFollow): the real check is an
         // axis-aligned rect test (the follower's own tile padded +-100px
@@ -422,7 +437,7 @@ namespace GalaxyEggbert::CNA
                                       int blupiFacingDX, int blupiFacingDZ, bool blupiInvincible,
                                       bool blupiCanGrantShield, bool blupiCanGrantPower,
                                       bool blupiCanGrantCloud, bool blupiCanGrantHide,
-                                      bool blupiFirePressed, bool blupiCanFire)
+                                      bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
@@ -488,6 +503,25 @@ namespace GalaxyEggbert::CNA
             if (!obj.active)
             {
                 continue;
+            }
+
+            // Real `BlupiElectro` aura (plan.md `068`) -- checked before
+            // every other per-object branch so a Type4 enemy (also in
+            // IsGenericHazard's own list) is destroyed by the aura rather
+            // than also killing Blupi via hazard contact the same frame.
+            if (blupiCloudActive &&
+                (obj.type == ObjectType::ObjectType4 || obj.type == ObjectType::ObjectType32 ||
+                 obj.type == ObjectType::ObjectType33))
+            {
+                const float adx = obj.currentX - blupiX;
+                const float ady = obj.currentY - blupiY;
+                const float adz = obj.currentZ - blupiZ;
+                if (adx * adx + ady * ady + adz * adz < kCloudAuraRadius * kCloudAuraRadius)
+                {
+                    obj.active = false;
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel59);
+                    continue;
+                }
             }
 
             // Platform lift patrol (ObjectType1/47/48): ping-pong between

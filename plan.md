@@ -370,8 +370,26 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       a pure game-feel tweak this time, not a further faithfulness correction (the real absolute
       margin was never being matched here anyway). Verified live: death now fires at 3.417s, almost
       exactly half of the previous 6.72s.
-- [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
-      small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
+- [x] `068` Electric aura (`BlupiElectro`) — **done 2026-07-13**, per explicit user request. The
+      stale `E3D-MIG-190` dependency this entry pointed at was already superseded by `170`/`172`/
+      `174` (the actual secret-power buffs, confirmed already implemented — see `086`'s own note).
+      Confirmed via `mobile-eggbert-reference/10-blupi-mechanics.md` §9 (`Decor::BlupiElectro`,
+      `Decor.cpp:9610-9638`/`7976-7987`): while `m_blupiCloud` (this engine's `SecretPower::Cloud`,
+      the real "Power-Charge" pickup) is active, instantly destroys small enemies
+      (`ObjectType4`/`32`/`33`) within 40px of Blupi's own box — an offensive aura Blupi carries,
+      unrelated to the `Blitz` lightning HAZARD despite the similarly-named real function. Ported
+      as a new `GEInteractionSystem::Update()` parameter (`blupiCloudActive`, wired from the
+      caller's existing `GetSecretPower()==Cloud` check) checked first in the per-object loop, so a
+      `Type4` enemy (also in `IsGenericHazard()`'s own list) is destroyed by the aura rather than
+      also killing Blupi via hazard contact the same frame. Real sound channel 59 on each kill.
+      Real 40px expansion modeled as a circular radius combining that with a 32px half-tile
+      (`(40+32)/64` grid units — same "half-tile + real px offset, /64" pattern already used for
+      `kFollowerWakeRadius`), consistent with every other proximity test in this file being
+      circular rather than the real AABB rect test. Verified via 4 new `VerifyInteractionSystem`
+      checks (aura off leaves a blupih untouched, aura on destroys it, a distant blupit 50 units
+      away is untouched even with the aura on) plus a live headless run confirming a real blupih
+      is destroyed within one frame of standing on it with Cloud active. Full regression suite
+      green on both backends.
 - [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful
       Blupi per the `063` decision, not merely optional polish. First-person intentionally stays
       without a visible model (matches the existing default camera; the player never sees it).

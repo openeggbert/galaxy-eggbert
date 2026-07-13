@@ -290,6 +290,19 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Cloud secret-power electric aura implemented (2026-07-13, plan.md `068`), per explicit user
+  request.** Confirmed via `mobile-eggbert-reference/10-blupi-mechanics.md` §9
+  (`Decor::BlupiElectro`): while `SecretPower::Cloud` (the real "Power-Charge" pickup) is active,
+  Blupi now instantly destroys small enemies (`ObjectType4`/`32`/`33` — Bulldozer/blupih/blupit)
+  within a real 40px aura, playing real sound channel 59 per kill — an offensive aura Blupi
+  carries, unrelated to the `Blitz` lightning hazard despite the similar name. The task's own
+  draft dependency (`E3D-MIG-190`) was stale, already superseded by the secret-power work done
+  under `170`/`172`/`174`. New `GEInteractionSystem::Update(..., blupiCloudActive)` parameter,
+  checked first in the per-object loop so a `Type4` enemy (also a generic hazard) is destroyed by
+  the aura rather than also killing Blupi the same frame. Verified via 4 new
+  `VerifyInteractionSystem` checks plus a live headless run (a real blupih destroyed within one
+  frame of standing on it with Cloud active). Full regression suite green on both backends.
+
 - **Fall-death timing shortened to roughly half (2026-07-13), per explicit user feedback.** The
   2026-07-11 fix had already made the fall real/noticeable (`kFallDeathY` -5.0f→-60.0f, ~6.2-6.7s),
   but the user reported this now read as too long in practice and asked for roughly half.

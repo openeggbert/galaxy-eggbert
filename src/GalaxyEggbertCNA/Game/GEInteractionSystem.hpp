@@ -213,13 +213,22 @@ namespace GalaxyEggbert::CNA
         // fired shots already use (ObjectType23, contact with Blupi
         // already fatal -- see this class's own existing kill-list
         // handling, unchanged by this feature).
+        //
+        // blupiCloudActive (plan.md `068`, `Decor::BlupiElectro`,
+        // mobile-eggbert-reference/10-blupi-mechanics.md §9): while true
+        // (caller's own `GetSecretPower()==Cloud` check), instantly
+        // destroys small enemies (ObjectType4/32/33) within a real 40px
+        // aura around Blupi -- an offensive aura Blupi carries, unrelated
+        // to the `Blitz` lightning HAZARD despite the similarly-named
+        // real function. Real sound channel 59 on each kill.
         void Update(float dt, GEWorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
                     GESound& sound, bool blupiCrouching = false, bool blupiBallooned = false,
                     int blupiFacingDX = 0, int blupiFacingDZ = 0, bool blupiInvincible = false,
                     bool blupiCanGrantShield = true, bool blupiCanGrantPower = true,
                     bool blupiCanGrantCloud = true, bool blupiCanGrantHide = true,
-                    bool blupiFirePressed = false, bool blupiCanFire = false);
+                    bool blupiFirePressed = false, bool blupiCanFire = false,
+                    bool blupiCloudActive = false);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame
