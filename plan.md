@@ -1442,25 +1442,25 @@ otherwise noted.
 
 #### 2.11 Level Intro / Mission Title
 
-- [ ] MENU-079 — Level intro title card: world name text, 3 s duration (fade-in 0.5s, hold 2s, fade-out 0.5s)
-- [ ] MENU-080 — Training level hint bar: show tutorial text from `table_training1..4` based on Blupi position
-- [ ] MENU-081 — Training hint rendered as overlay bar (pad.png icon 15 background, text centred)
-- [ ] MENU-082 — Training hint auto-scales down if text is too wide (min 0.5×)
+- [ ] MENU-079 — Level intro title card: world name text, 3 s duration (fade-in 0.5s, hold 2s, fade-out 0.5s) — not implemented; this engine tracks only a mission NUMBER (`Worlds::World::missionNumber()`), not a real world name string, so this would need new data this engine doesn't parse yet
+- [x] MENU-080 — Training level hint bar: show tutorial text from `table_training1..4` based on Blupi position — **done 2026-07-13, plan.md `HUD-024`** (`GETrainingHints.hpp`/`.cpp`, all 43 real hint records + real gate semantics transcribed)
+- [x] MENU-081 — Training hint rendered as overlay bar (pad.png icon 15 background, text centred) — **done, `HUD-024`** (`GEHud::Draw()`'s `trainingHint` parameter, full-width top-of-screen panel)
+- [x] MENU-082 — Training hint auto-scales down if text is too wide (min 0.5×) — **done, `HUD-024`** (real `min(640/textWidth, 1.0)` shrink-to-fit, approximated via this engine's own fixed-glyph-advance model)
 
 #### 2.12 Button Font & Text Rendering
 
-- [ ] MENU-083 — Render button labels using `text.png` font sheet (32×32 per glyph)
-- [ ] MENU-084 — `Text::DrawText` equivalent: render text string using glyph atlas
-- [ ] MENU-085 — `Text::DrawTextCenter` equivalent: centre-aligned text rendering
-- [ ] MENU-086 — Text scaling (0.45×, 0.7×, 1.0×) used for different label sizes
-- [ ] MENU-087 — Localised strings (MyResource strings): port key TX_ constants for button labels
+- [x] MENU-083 — Render button labels using `text.png` font sheet (32×32 per glyph) — **done**, shared by `GEHud` (HUD-023/024) and `GEInputPad` (Pause/Setup labels, 2026-07-13) — each with its own `text.png` instance per the established one-instance-per-draw-path convention
+- [x] MENU-084 — `Text::DrawText` equivalent: render text string using glyph atlas — **done** (glyph index == ASCII code, read directly off the asset per `GEHud.hpp`'s own class comment, not transcribed from `table_char`)
+- [x] MENU-085 — `Text::DrawTextCenter` equivalent: centre-aligned text rendering — **done** (`GEHud`'s treasure-counter/overlay-message text, `GEInputPad::AppendCenteredLabel()` for the Pause row); a LEFT-aligned variant (`Text::DrawTextRightButton()`) was also added 2026-07-13 (`AppendLeftAlignedLabel()`) for the Setup screen's real label alignment
+- [x] MENU-086 — Text scaling (0.45×, 0.7×, 1.0×) used for different label sizes — **done** at the specific real scales actually confirmed in use so far: 0.7 (Pause/Setup button labels, Perso HUD counter), 1.0 (treasure counter), 1.5 (Win/Lost/overlay message, this engine's own choice for a big centered message) — 0.45× not yet needed (no ported screen uses it yet)
+- [x] MENU-087 — Localised strings (MyResource strings): port key TX_ constants for button labels — **done for every button label ported so far** (real English strings only, from `MyResource::InitializeEN()` — "Home"/"Back"/"Setup"/"Restart"/"Continue" for Pause, "Sound effects"/"Jump button on the right"/"Automatic zoom on action"/"Accelerometer" for Setup); FR/DE localization is out of scope (this is a single-locale EN port, matching every other text this session)
 
 #### 2.13 Phase Transitions & Animations
 
-- [ ] MENU-088 — Fade-out animation between animated phases (20-frame linear fade, Config::ScaleTime(20))
-- [ ] MENU-089 — `fadeOutPhase` deferred transition: start animation, complete transition after 20 frames
-- [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start)
-- [ ] MENU-091 — Phase time counter reset on each phase entry
+- [ ] MENU-088 — Fade-out animation between animated phases (20-frame linear fade, Config::ScaleTime(20)) — not implemented; every phase transition in this engine is instant, a documented simplification (no `fadeOutPhase`-style deferred-transition mechanic exists)
+- [ ] MENU-089 — `fadeOutPhase` deferred transition: start animation, complete transition after 20 frames — not implemented, same reasoning as MENU-088 (this engine's `SetPhase()` always transitions immediately)
+- [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start) — not implemented/not applicable; this engine has no mission-loading pipeline at all (a single hand-authored `.vwr` world loads once at startup)
+- [x] MENU-091 — Phase time counter reset on each phase entry — **done 2026-07-13** (`GalaxyEggbertCnaGame::phaseTimeSeconds_`, reset to 0 inside `SetPhase()` — the real `phaseTime` port that drives the Win/Lost `blupiyoupie.png` animations, `MENU-046..057`)
 
 #### 2.14 Cheat Menu (hidden)
 
