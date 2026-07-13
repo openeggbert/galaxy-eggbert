@@ -177,15 +177,20 @@ namespace GalaxyEggbert::CNA
         // own startup flow (no async content-loading step or main menu
         // exists yet to show during them) -- CNA starts directly in Play, a
         // documented, engine-appropriate adaptation, not a missing feature.
-        // `Trial`/`MainSetup`/`PlaySetup`/`Resume`/`Ranking` are real enum
-        // values with NO trigger wired to them yet (no settings/upsell/
-        // ranking screens exist) -- reachable in principle, unreachable in
-        // practice until those screens exist. `MainSetup` is the same:
-        // real-but-unreachable (its own Init entry point doesn't exist),
-        // while `PlaySetup` IS reachable (2026-07-13, plan.md
-        // MENU-058..069) via Pause's real Setup button -- see
-        // `GEInputPad::UpdateSetup()`'s own class comment for what is/
-        // isn't modeled on that screen.
+        // `Trial`/`MainSetup`/`Ranking` are real enum values with NO
+        // trigger wired to them yet (no upsell/ranking screens exist) --
+        // reachable in principle, unreachable in practice until those
+        // screens exist. `MainSetup` is real-but-unreachable (its own
+        // Init entry point doesn't exist), while `PlaySetup` IS reachable
+        // (2026-07-13, plan.md MENU-058..069) via Pause's real Setup
+        // button -- see `GEInputPad::UpdateSetup()`'s own class comment
+        // for what is/isn't modeled on that screen. `Resume` is ALSO now
+        // reachable (2026-07-13, plan.md MENU-040..045) -- but via an
+        // ADAPTED trigger (offered at startup when `GESaveData::
+        // GetHasProgress()` is true), not the real `Game1::OnActivated()`
+        // OS-reactivation event, which has no desktop equivalent -- see
+        // `GEInputPad::UpdateResume()`'s own class comment for full
+        // reasoning.
         //
         // Real Pause trigger is gamepad-Back / a touch PlayPause button --
         // the real source has NO keyboard binding at all (an XNA/WP7 port);
@@ -206,7 +211,10 @@ namespace GalaxyEggbert::CNA
         // reuses the Action key and resets Blupi to the origin spawn point
         // (not a full real level-reload, which needs infrastructure this
         // engine doesn't have -- lives/treasure/keys/etc. are NOT reset by
-        // this, a documented simplification).
+        // this, a documented simplification). Both Win and Lost also now
+        // checkpoint `saveData_` (2026-07-13, plan.md MENU-040..045),
+        // matching the real `MemorizeGamerProgress()` call sites
+        // confirmed at exactly these same 2 real transition points.
         void SetPhase(GalaxyEggbert::GamePhase next) noexcept;
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
         GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Play;

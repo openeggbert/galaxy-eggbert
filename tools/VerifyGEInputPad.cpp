@@ -239,6 +239,23 @@ int main()
               "Setup: Jump button press/release fires neither Sounds nor Return (documented inert placeholder)");
     }
 
+    // --- Resume: real rects (X 180.6-320.6 Menu / 320.6-460.6 Continue,
+    // Y 308-448, same bsf2=140-at-this-reference-height "no adaptation
+    // needed" situation as Setup). Only Continue is functional; Menu is
+    // real-position/icon/label but inert (same as Pause's own Menu).
+    {
+        GEInputPad pad;
+        (void)pad.UpdateResume(mouse(390, 378, true), kViewportW, kViewportH);
+        const bool continuePressed = pad.UpdateResume(mouse(390, 378, false), kViewportW, kViewportH);
+        check(continuePressed, "Resume: Continue fires on release");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateResume(mouse(250, 378, true), kViewportW, kViewportH);
+        const bool continuePressed = pad.UpdateResume(mouse(250, 378, false), kViewportW, kViewportH);
+        check(!continuePressed, "Resume: Menu button press/release does not fire Continue (documented inert placeholder)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

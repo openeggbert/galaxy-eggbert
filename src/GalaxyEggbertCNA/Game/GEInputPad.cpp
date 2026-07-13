@@ -139,6 +139,16 @@ namespace GalaxyEggbert::CNA
         constexpr float kSetupReturnX0 = 508.0f, kSetupReturnX1 = 620.0f;
         constexpr float kSetupReturnY0 = 348.0f, kSetupReturnY1 = 460.0f;
 
+        // Resume screen (plan.md MENU-040..045): 2 real buttons, verified
+        // against `InputPad.cpp`'s own bsf2=140-at-this-reference-height
+        // formula (same "no adaptation needed" situation as Setup above),
+        // NOT reused from Pause's own Menu/Continue rects (a different
+        // real position, since Resume's row sits lower-center rather than
+        // Pause's own bottom row).
+        constexpr float kResumeMenuX0 = 180.6f, kResumeMenuX1 = 320.6f;
+        constexpr float kResumeContinueX0 = 320.6f, kResumeContinueX1 = 460.6f;
+        constexpr float kResumeRowY0 = 308.0f, kResumeRowY1 = 448.0f;
+
         // Real icon indices (Pixmap.cpp): Sounds/Jump/Zoom/Accel really
         // SWAP icon 13 (selected/on) vs 21 (not selected/off) -- a
         // DIFFERENT "state" convention from every other button in this
@@ -165,6 +175,8 @@ namespace GalaxyEggbert::CNA
         constexpr Rect kSetupAccelRect{kSetupLeftColX0, kSetupAccelY0, kSetupLeftColX1, kSetupAccelY1};
         constexpr Rect kSetupResetRect{kSetupResetX0, kSetupResetY0, kSetupResetX1, kSetupResetY1};
         constexpr Rect kSetupReturnRect{kSetupReturnX0, kSetupReturnY0, kSetupReturnX1, kSetupReturnY1};
+        constexpr Rect kResumeMenuRect{kResumeMenuX0, kResumeRowY0, kResumeMenuX1, kResumeRowY1};
+        constexpr Rect kResumeContinueRect{kResumeContinueX0, kResumeRowY0, kResumeContinueX1, kResumeRowY1};
 
         Rect PauseButtonRect(int index)
         {
@@ -199,6 +211,9 @@ namespace GalaxyEggbert::CNA
         constexpr int kSetupControlAccel = 3;
         constexpr int kSetupControlReset = 4;
         constexpr int kSetupControlReturn = 5;
+
+        constexpr int kResumeControlMenu = 0;
+        constexpr int kResumeControlContinue = 1;
 
         void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
                           std::vector<std::uint32_t>& indices,
@@ -936,6 +951,119 @@ namespace GalaxyEggbert::CNA
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *setupBgEffect_, setupBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    bool GEInputPad::UpdateResume(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                  int viewportW, int viewportH) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
+        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+
+        const bool overMenu = InRect(mouseRefX, mouseRefY, kResumeMenuRect);
+        const bool overContinue = InRect(mouseRefX, mouseRefY, kResumeContinueRect);
+
+        if (mouseDown && !mouseWasDown_)
+        {
+            if (overMenu) activeControl_ = kResumeControlMenu;
+            else if (overContinue) activeControl_ = kResumeControlContinue;
+            else activeControl_ = -1;
+        }
+
+        bool continuePressed = false;
+        if (!mouseDown && mouseWasDown_)
+        {
+            // Only Continue is wired to real behavior (see
+            // GEInputPad.hpp's UpdateResume() class comment) -- Menu
+            // renders at its real position/icon/label but is
+            // intentionally inert, same reasoning as Pause's own Menu.
+            continuePressed = (activeControl_ == kResumeControlContinue);
+            activeControl_ = -1;
+        }
+
+        mouseWasDown_ = mouseDown;
+        return continuePressed;
+    }
+
+    void GEInputPad::DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                               int viewportW, int viewportH)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
+        const auto refToScreenY = [&](float y) { return y * scale; };
+
+        // Real background is pause.png -- the SAME image as Pause
+        // (confirmed via `Game1.cpp`'s shared `case Phase::Pause: case
+        // Phase::Resume:` background dispatch).
+        Quad background;
+        background.x0 = refToScreenX(0.0f);
+        background.y0 = refToScreenY(0.0f);
+        background.x1 = refToScreenX(kRefW);
+        background.y1 = refToScreenY(kRefH);
+        background.u0 = 0.0f;
+        background.v0 = 0.0f;
+        background.u1 = 1.0f;
+        background.v1 = 1.0f;
+        std::vector<Quad> backgroundQuads{background};
+
+        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
+        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+        Quad character;
+        character.x0 = refToScreenX(kCharacterCenterX - charW * 0.5f);
+        character.y0 = refToScreenY(kCharacterCenterY - charH * 0.5f);
+        character.x1 = refToScreenX(kCharacterCenterX + charW * 0.5f);
+        character.y1 = refToScreenY(kCharacterCenterY + charH * 0.5f);
+        character.u0 = 0.0f;
+        character.v0 = 0.0f;
+        character.u1 = 1.0f;
+        character.v1 = 1.0f;
+        std::vector<Quad> characterQuads{character};
+
+        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        std::vector<Quad> normalQuads;
+        std::vector<Quad> pressedQuads;
+        std::vector<Quad> labelQuads;
+
+        const auto appendButton = [&](const Rect& r, int icon, int controlId)
+        {
+            Quad q;
+            q.x0 = refToScreenX(r.x0);
+            q.y0 = refToScreenY(r.y0);
+            q.x1 = refToScreenX(r.x1);
+            q.y1 = refToScreenY(r.y1);
+            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
+        };
+        const auto appendLabel = [&](const Rect& r, const char* text)
+        {
+            const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
+            const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
+            AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
+        };
+
+        appendButton(kResumeMenuRect, kIconPauseMenu, kResumeControlMenu);
+        appendButton(kResumeContinueRect, kIconPauseContinue, kResumeControlContinue);
+        appendLabel(kResumeMenuRect, "Home");
+        appendLabel(kResumeContinueRect, "Continue");
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *blupiyoupieEffect_, blupiyoupieRenderer_, characterQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);

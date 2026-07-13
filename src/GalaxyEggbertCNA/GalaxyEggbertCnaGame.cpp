@@ -375,6 +375,20 @@ namespace GalaxyEggbert::CNA
         saveData_.Load();
         sound_.SetEnabled(saveData_.GetSoundEnabled());
 
+        // Real Resume phase (2026-07-13, plan.md MENU-040..045) -- ADAPTED
+        // trigger (see GamePhase's own comment / GEInputPad::
+        // UpdateResume()'s class comment for the full real-vs-adapted
+        // reasoning): offered here at startup, in place of the real
+        // OS-reactivation event this engine has no equivalent for,
+        // whenever a previous run reached Win/Lost at least once. Direct
+        // assignment (not SetPhase()) since this runs before the game
+        // loop starts -- same convention phase_'s own default member
+        // initializer already uses for Play.
+        if (saveData_.GetHasProgress())
+        {
+            phase_ = GalaxyEggbert::GamePhase::Resume;
+        }
+
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
                   << terrainRenderer_->BlockCount() << " blocks ("
                   << terrainRenderer_->AnimatedBlockCount() << " animated, "
@@ -511,6 +525,35 @@ namespace GalaxyEggbert::CNA
                     // place. Escape is this engine's own keyboard pick
                     // for the same action (real source has no separate
                     // Setup-phase keyboard binding confirmed).
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Resume)
+            {
+                // Real Resume (2026-07-13, plan.md MENU-040..045) -- see
+                // GEInputPad::UpdateResume()'s class comment for the
+                // adapted-trigger reasoning; this is just the two real
+                // buttons' behavior once already in the phase.
+                const auto mouse = Mouse::GetState();
+                const bool mouseContinuePressedResume = inputPad_.UpdateResume(
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (mouseContinuePressedResume)
+                {
+                    // Real ResumeContinue -> ContinueMission(): restores
+                    // the checkpointed lives (no real mid-level position/
+                    // treasure/key state exists to restore, same
+                    // simplification as PauseRestart/WinLostReturn).
+                    interaction_.SetLives(saveData_.GetLives());
+                    blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
+                else if (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_)
+                {
+                    // Real ResumeMenu/Back -> Init (doesn't exist here).
+                    // Adapted: starts a fresh game WITHOUT restoring saved
+                    // lives (distinguishing "new game" from "continue",
+                    // matching the two real buttons' own distinct intent)
+                    // -- this engine's own keyboard binding choice.
                     SetPhase(GalaxyEggbert::GamePhase::Play);
                 }
             }
@@ -1182,10 +1225,21 @@ namespace GalaxyEggbert::CNA
             // handling).
             if (interaction_.GameOverCount() > gameOverCountBeforeUpdate)
             {
+                // Real MemorizeGamerProgress() checkpoint (2026-07-13,
+                // plan.md MENU-040..045) -- confirmed via research to
+                // fire automatically at exactly this real transition.
+                saveData_.SetLives(interaction_.Lives());
+                saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
+                saveData_.SetHasProgress(true);
+                saveData_.Save();
                 SetPhase(GalaxyEggbert::GamePhase::Lost);
             }
             else if (interaction_.ExitReached())
             {
+                saveData_.SetLives(interaction_.Lives());
+                saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
+                saveData_.SetHasProgress(true);
+                saveData_.Save();
                 SetPhase(GalaxyEggbert::GamePhase::Win);
             }
 
@@ -1973,7 +2027,8 @@ namespace GalaxyEggbert::CNA
             const bool phaseHasRealScreen = phase_ == GalaxyEggbert::GamePhase::Pause ||
                                              phase_ == GalaxyEggbert::GamePhase::Win ||
                                              phase_ == GalaxyEggbert::GamePhase::Lost ||
-                                             phase_ == GalaxyEggbert::GamePhase::PlaySetup;
+                                             phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
+                                             phase_ == GalaxyEggbert::GamePhase::Resume;
             if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
@@ -2023,6 +2078,10 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                     sound_.IsEnabled());
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Resume)
+            {
+                inputPad_.DrawResume(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {

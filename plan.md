@@ -1381,12 +1381,14 @@ otherwise noted.
 
 #### 2.5 Phase: Resume (saved game continue prompt)
 
-- [ ] MENU-040 — Render `pause.png` background (same as Pause)
-- [ ] MENU-041 — Render `blupiyoupie.png` with rotation spring animation
-- [ ] MENU-042 — "MENU" button (`ResumeMenu`) → Init
-- [ ] MENU-043 — "CONTINUE" button (`ResumeContinue`) → ContinueMission()
-- [ ] MENU-044 — Resume phase triggers when app reactivates with a saved mid-game state
-- [ ] MENU-045 — Keyboard Back during Resume → Init
+- [x] MENU-040 — Render `pause.png` background (same as Pause) — **done 2026-07-13** (`GEInputPad::DrawResume`), confirmed via `Game1.cpp`'s real `SetPhase()` background dispatch sharing the exact same `case Phase::Pause: case Phase::Resume: BackgroundCache("pause");`
+- [~] MENU-041 — Render `blupiyoupie.png` with rotation spring animation — **art+position done 2026-07-13** (reuses Pause's own static character draw, same documented non-animation simplification already established for Pause)
+- [~] MENU-042 — "MENU" button (`ResumeMenu`) → Init — **real position/icon/label done 2026-07-13** (icon 11, own distinct rect independently re-derived from `InputPad.cpp`'s bsf2=140 formula, NOT reused from PauseMenu's rect); **intentionally inert** — no Init/main-menu screen exists yet, same reasoning as Pause's own Menu button
+- [x] MENU-043 — "CONTINUE" button (`ResumeContinue`) → ContinueMission() — **done 2026-07-13**, functional: restores the checkpointed lives count (`GEInteractionSystem::SetLives()`, new) and resets Blupi to spawn (no real mid-level position/treasure/key state exists to restore — a documented simplification matching PauseRestart/WinLostReturn's own precedent)
+- [~] MENU-044 — Resume phase triggers when app reactivates with a saved mid-game state — **ADAPTED trigger implemented 2026-07-13**: the real trigger (`Game1::OnActivated()`, a WP7 app-reactivation OS lifecycle event gated on a real serialized mid-level `Decor::Current*()` snapshot — a separate, heavier mechanism than `GameData`/`GESaveData`) has no desktop equivalent and is far beyond this engine's single-`.vwr`-world scope; adapted to: offered at startup whenever `GESaveData::GetHasProgress()` is true (set at the real Win/Lost checkpoint, see MENU-046..057's own summary) — verified via a live two-process test (forced a Win checkpoint in run 1, confirmed `phase_` started as `Resume` with the correct saved lives at the start of a separate run 2)
+- [x] MENU-045 — Keyboard Back during Resume → Init — **done 2026-07-13**, adapted: Escape starts a fresh Play WITHOUT restoring saved lives (distinguishing "new game" from "continue", matching the two real buttons' own distinct intent) — Init doesn't exist, this engine's own keyboard binding choice
+
+**MENU-040..045 summary (2026-07-13):** extended `GEInputPad` with `UpdateResume()`/`DrawResume()`, reusing Pause's own background+character draw (same `pause.png`/`blupiyoupie.png`, confirmed shared in the real source) with its own distinct 2-button set (ResumeMenu icon 11 / ResumeContinue icon 10, real rects independently re-derived, NOT reused from Pause's row). Extended `GESaveData` with `lives`/`missionNumber`/`hasProgress` fields, checkpointed at the exact real Win/Lost transition points (confirmed via the same `GameData` research this session already did for MENU-067) — NOT continuous autosave. Added `GEInteractionSystem::SetLives()` to restore the checkpointed count on Continue. Verified via 2 new `VerifyGEInputPad` checks (32 total), 1 new `VerifyGESaveData` check (7 total, round-tripping all 3 new fields), a live headless screenshot of the real Resume screen, and a live two-process integration test proving the full checkpoint → restart → Resume-with-restored-lives cycle actually works end to end, not just each piece in isolation.
 
 #### 2.6 Phase: Win
 

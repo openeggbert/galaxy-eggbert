@@ -203,13 +203,16 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   real background file. Also now has a second, third-person camera mode ("C" to toggle,
   2026-07-09, §3) showing a real GPU-skinned 3D model via CNA's `AvatarRenderer` extension —
   currently a temporary CC0/CC-BY placeholder (`avatars3d/blupi_placeholder/`), not a real Blupi
-  model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost/PlaySetup,
+  model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost/PlaySetup/Resume,
   2026-07-13, §3) with a real Pause screen (background/character/5 labeled buttons, Continue/
   Restart/Setup all functional), real Win/Lost screens (background + real pulsing/spin-in
   `blupiyoupie.png` animation + functional Return button), a real PlaySetup settings screen
-  (background + 6 real buttons, Sounds mute toggle + Return functional), and functional on-screen
-  D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable alongside
-  keyboard input.
+  (background + 6 real buttons, Sounds mute toggle + Return functional), a real Resume screen
+  (offered at startup after a checkpointed Win/Lost, restores saved lives on Continue), minimal
+  cross-restart settings/progress persistence (`GESaveData` — sound on/off, lives, mission,
+  checkpointed the same way the real `GameData` is, NOT byte-compatible with it), and functional
+  on-screen D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable
+  alongside keyboard input.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -267,6 +270,31 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Resume phase implemented, save data extended to lives/mission (2026-07-13, plan.md
+  `MENU-040..045`), per explicit user request to extend the just-approved minimal save system.**
+  `GESaveData` gained `lives`/`missionNumber`/`hasProgress`, checkpointed at the exact real
+  Win/Lost transition points (matching the real `MemorizeGamerProgress()` call sites already
+  confirmed during the earlier save-system research). `GEInteractionSystem` gained `SetLives()` to
+  restore a checkpointed count. `GEInputPad` gained `UpdateResume()`/`DrawResume()`, reusing
+  Pause's own `pause.png`/`blupiyoupie.png` background+character draw (confirmed shared in the
+  real source: `Game1.cpp`'s `case Phase::Pause: case Phase::Resume: BackgroundCache("pause");`)
+  with its own distinct 2-button row (ResumeMenu icon 11 / ResumeContinue icon 10, independently
+  re-derived real rects, not reused from Pause's own row). ResumeContinue is fully functional
+  (restores checkpointed lives + respawns at origin, same simplification already established for
+  PauseRestart/WinLostReturn — no real mid-level position/treasure/key state exists to restore).
+  The real trigger for entering Resume (`Game1::OnActivated()`, a WP7 app-reactivation OS
+  lifecycle event gated on a real serialized mid-level snapshot, `Decor::Current*()` — a separate,
+  heavier mechanism than `GameData` itself) has no desktop equivalent at all and is far beyond this
+  engine's single-`.vwr`-world scope to replicate faithfully; adapted to trigger at startup
+  whenever a previous run's save shows `hasProgress==true` — a documented simplification of WHEN
+  Resume appears, not of the screen/buttons themselves. Verified via 2 new `VerifyGEInputPad`
+  checks (32 total), 1 new `VerifyGESaveData` check (7 total), a live headless screenshot of the
+  real Resume screen, and — critically — a live TWO-PROCESS integration test: forced a Win
+  checkpoint in one run (confirmed `savedata.txt` written with `hasProgress=1`), then confirmed a
+  completely separate second run correctly started in `Phase::Resume` with the exact saved lives
+  count restored, proving the full save → restart → resume cycle actually works end to end, not
+  just each piece in isolation — full regression suite green on both backends.
 
 - **Minimal settings persistence implemented (2026-07-13, plan.md `MENU-067`), per explicit user
   request to propose a save-system design before implementing it.** A dedicated research pass into

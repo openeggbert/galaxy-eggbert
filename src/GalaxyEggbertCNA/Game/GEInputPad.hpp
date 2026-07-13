@@ -213,6 +213,46 @@ namespace GalaxyEggbert::CNA
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool soundsOn);
 
+        // Resume screen (plan.md MENU-040..045). Real background is
+        // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
+        // real `SetPhase()` background dispatch: `case Phase::Pause: case
+        // Phase::Resume: BackgroundCache("pause");` -- one shared case),
+        // reusing `DrawPause()`'s own background+character draw (static,
+        // same documented non-animation simplification already
+        // established for Pause). Only 2 real buttons, a DIFFERENT set
+        // from Pause's 5: ResumeMenu (icon 11, same as PauseMenu -- real
+        // rect independently re-derived from `InputPad.cpp`'s own
+        // bsf2=140 formula, NOT reused from PauseMenu's rect, which is a
+        // different position) and ResumeContinue (icon 10, same as
+        // PauseContinue, its own distinct rect). Both get real text
+        // labels ("Home"/"Continue", confirmed via `Game1::
+        // DrawButtonsText()`'s real `Phase::Resume` branch -- same real
+        // strings as Pause's own Menu/Continue labels).
+        //
+        // Real trigger for entering this phase (`Game1::OnActivated()`, a
+        // WP7 app-reactivation OS lifecycle event gated on a real
+        // serialized mid-level `Decor::Current*()` snapshot -- a
+        // SEPARATE, heavier save mechanism than `GameData`/`GESaveData`)
+        // has no desktop equivalent and is far beyond this engine's
+        // single-`.vwr`-world scope to replicate faithfully. Adapted
+        // trigger (the caller's responsibility, not this method's):
+        // offered at startup whenever `GESaveData::GetHasProgress()` is
+        // true -- a documented simplification of WHEN Resume appears, not
+        // of the screen/buttons themselves.
+        //
+        // ResumeMenu is real-position/icon/label but intentionally inert
+        // (same reasoning as Pause's own Menu button -- no Init/main-menu
+        // screen exists). ResumeContinue is the caller's responsibility
+        // to wire (restore saved lives, reset Blupi to spawn, return to
+        // Play) -- NOT a true real mid-level resume (no serialized
+        // position/treasure/key state exists to restore), a documented
+        // simplification matching the one already established for
+        // PauseRestart/WinLostReturn.
+        [[nodiscard]] bool UpdateResume(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                        int viewportW, int viewportH) noexcept;
+        void DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                        int viewportW, int viewportH);
+
     private:
         struct Quad
         {

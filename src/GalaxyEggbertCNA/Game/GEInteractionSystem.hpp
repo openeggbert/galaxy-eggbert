@@ -233,11 +233,17 @@ namespace GalaxyEggbert::CNA
         // LoseLife() only manages the counter.
         void LoseLife();
         [[nodiscard]] int Lives() const noexcept { return lives_; }
+        // Restores a saved lives count (2026-07-13, plan.md MENU-040..045,
+        // real Resume phase) -- ResumeContinue's own real equivalent, via
+        // GESaveData, since this engine has no `GameData`-style per-gamer
+        // slot to read lives from directly.
+        void SetLives(int lives) noexcept { lives_ = lives; }
         // Diagnostic only: real DoorsLost() (Decor.cpp:11716) resets
         // m_nbVies back to 3 on game-over rather than a permanent
-        // depletion -- no real Lost-screen UI exists yet (plan.md
-        // MENU-053..057) to make a game-over user-visible, so this counter
-        // is how a caller/verification tool can observe it happened.
+        // depletion -- this counter is how a caller/verification tool can
+        // observe it happened (also now drives the real Lost screen,
+        // plan.md MENU-053..057, and the Win/Lost save checkpoint,
+        // MENU-040..045).
         [[nodiscard]] int GameOverCount() const noexcept { return gameOverCount_; }
 
         // Dynamite (plan.md E3D-MIG-155, ObjectType55 pickup / ObjectType56

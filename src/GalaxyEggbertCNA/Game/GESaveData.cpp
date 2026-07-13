@@ -1,6 +1,7 @@
 #include "GESaveData.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 
@@ -27,6 +28,18 @@ namespace GalaxyEggbert::CNA
             {
                 soundEnabled_ = (value == "1");
             }
+            else if (key == "lives")
+            {
+                lives_ = std::atoi(value.c_str());
+            }
+            else if (key == "missionNumber")
+            {
+                missionNumber_ = std::atoi(value.c_str());
+            }
+            else if (key == "hasProgress")
+            {
+                hasProgress_ = (value == "1");
+            }
         }
     }
 
@@ -39,5 +52,8 @@ namespace GalaxyEggbert::CNA
             return;
         }
         out << "soundEnabled=" << (soundEnabled_ ? "1" : "0") << "\n";
+        out << "lives=" << lives_ << "\n";
+        out << "missionNumber=" << missionNumber_ << "\n";
+        out << "hasProgress=" << (hasProgress_ ? "1" : "0") << "\n";
     }
 }
