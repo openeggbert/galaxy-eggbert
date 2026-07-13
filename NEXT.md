@@ -492,14 +492,25 @@ judgment (§9).
     (75 tests total including third-party deps; 1 pre-existing, unrelated `../easy-gl` smoke-test
     failure noted below, not a regression from this change).
 
-12. **Normal-jump tile** (`plan.md TILE-041`) — forces a jump when stepped on; no matching code
-    exists anywhere. Needs the real trigger condition/jump magnitude confirmed against
-    `mobile-eggbert-reference/` or `Decor.cpp` first (not in the existing reference docs as of this
-    audit) — a small research task before implementation, same shape as prior hazard tiles this
-    session.
+12. **Jump-height headroom modulation** (`plan.md TILE-041`, real `Decor::IsNormalJump()` —
+    **not** a special tile, its old description was wrong, corrected 2026-07-14; see plan.md's own
+    entry). Real behavior IS documented (`mobile-eggbert-reference/12-hazards-and-interactables.md`
+    "Jump physics" section): probes 2 stacked tiles above Blupi (offset 15px toward his facing
+    direction) and reduces jump strength (-12/-16 vs -16/-26 with Power) if either is blocked —
+    prevents a full jump from clipping a nearby ceiling. Bigger than a typical "next smallest task"
+    — needs a new general "probe N tiles above, direction-offset" capability, and must interact
+    carefully with `GEBlupiController::GroundHeightAt()`'s already-fixed roofed-interior collision
+    (2026-07-13) to avoid regressing it. Files: `GEBlupiController.cpp`/`.hpp`. Verify: a new
+    `VerifyBlupiMovement` check (jump near vs. away from a low ceiling) + full regression pass.
 
-13. **Barre/barrier tile** (`plan.md TILE-045`) — blocks certain vehicle types; no matching code
-    exists. Same research-first shape as #12.
+13. **Suspended/hanging bar-and-rope movement mode** (`plan.md TILE-045`, real
+    `Decor::GetTypeBarre()` — **not** a vehicle-blocking check, corrected 2026-07-14; see plan.md's
+    own entry). A genuinely new movement mode comparable in scope to the 5 already-implemented
+    vehicles (direct no-ramp horizontal input while hanging, a 3-way tile classification, a
+    fixed-velocity jump-to-release). **Blocked on further research**: the real tile icon ID(s) that
+    classify as a grabbable bar/rope aren't documented anywhere in `mobile-eggbert-reference/` —
+    read `Decor.cpp`'s own `GetTypeBarre()` call sites first (read-only reference, as always) before
+    attempting; do not guess an icon ID. Larger scope than most other items here if picked up.
 
 14. **Water-drip tile** (`plan.md TILE-032`, `IsGoutte`) — triggers a glu/slow effect; confirmed not
     among the 5 real hazards this engine already models. Needs the exact real trigger/effect
