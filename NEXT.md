@@ -224,6 +224,13 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   an oversight). Also now has the real hidden cheat menu (2026-07-13, §3, plan.md
   `CHEAT-001..009`): a 10-tap gesture on 6 invisible zones unlocks a 9-button overlay
   (OpenDoors/SuperBlupi/LayEgg/Reset/CleanAll/AllTreasure/EndGoal implemented; ShowSecret and the
+  Trial toggle are documented gaps/no-ops, see §3). Phase transitions now also fade for real
+  (2026-07-13, §3, plan.md `MENU-088/089`): only 5 real phases (`Init`/`MainSetup`/`PlaySetup`/
+  `Pause`/`Resume`) ever defer a transition through a ~1.0s exit animation before actually
+  committing — Play↔Pause and Win/Lost entry/exit are genuine real hard cuts, not merely fast, and
+  Resume→Play (Continue) is also always instant (the real `mission==-2` bypass). Pause/Resume also
+  gained their own real 0.75s entrance grow+spin flourish, and MainSetup/PlaySetup gained their real
+  speedyblupi.png slide-in + 2 rotating gear.png decorations (previously deferred, `MENU-059/060`).
   Trial toggle are documented gaps/no-ops, see §3).
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
@@ -282,6 +289,43 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Fade-out phase transitions implemented (2026-07-13, plan.md `MENU-088/089`), per explicit user
+  request ("Fade-out přechody mezi fázemi").** A dedicated research pass into the real `fadeOutPhase`
+  deferred-transition mechanic (`Game1.cpp`'s `SetPhase()`/`Update()`/`DrawBackgroundFade()`) found
+  it's considerably more precise than a generic "every transition fades" assumption would suggest:
+  **only 5 real phases ever defer** a transition through a ~1.0s (`Config::ScaleTime(20)`) exit
+  animation before actually committing — `Init`, `MainSetup`, `PlaySetup`, `Pause`, `Resume`. Every
+  other phase (`Play`, `Win`, `Lost`, `Wait`) commits **instantly** regardless of destination —
+  confirmed Play↔Pause is a real hard cut (not merely fast), and entering/leaving Win/Lost has no
+  transition fade at all (only the already-ported continuous idle pulse/grow-in). A further real
+  exception: `Resume`→`Play` via the Continue button is **always instant** even though `Resume` is
+  a deferring phase (the real `mission==-2` sentinel bypasses the defer mechanism entirely) —
+  ported as `SetPhase()`'s new `bypassFade` parameter. Implemented the exact real per-destination
+  fade formulas (all distinct, verified via 7 live headless screenshots mid-fade): Pause/Resume→Play
+  and Init→Play both "blow up to 11x native size while linearly fading out" (same idiom, different
+  real center coordinates); Pause/Resume→Init is the entrance grow+spin formula run in reverse
+  (shrinks while spinning UP into a full 360°, leaving a real ~0.25s dead/invisible window before
+  the actual commit — reproduced faithfully, not "fixed"); Pause→PlaySetup is a fixed-size/opacity
+  horizontal slide-right; Init→MainSetup slides the title right while fading, leaving blupiyoupie
+  fixed-size and just fading (confirmed NO zoom, despite an earlier doc-comment in the real source
+  itself claiming one). Also ported: Pause/Resume's own real 0.75s entrance grow+spin flourish
+  (previously static/instant, a separate mechanic from the deferred-transition fade itself, same
+  category as Win's pulse/Lost's grow-in this engine already had); MainSetup/PlaySetup's real
+  speedyblupi.png slide-in + 2 rotating gear.png decorations (`MENU-059/060/068`, previously
+  deferred as pure cosmetic flourish, implemented now since the fade-transitions work needed exit
+  timing for them anyway) — including the real perpetual slow gear rotation once settled and the
+  real (visually odd but confirmed genuine) asymmetric opacity ramp between entry and exit. Also
+  wired the previously-dormant `PauseMenu`/`ResumeMenu` buttons to real `SetPhase(Init)` (both were
+  documented inert since "no Init/main-menu screen exists" — no longer true once Init landed in the
+  immediately preceding task). A genuine bug was caught and fixed during live verification: the
+  initial commit logic pre-cleared `fadeOutPhase_` before calling `SetPhase()` again, which
+  defeated `SetPhase()`'s own real "already deferring → commit, don't re-defer" guard, causing an
+  infinite re-defer loop that silently froze the phase timer forever (looked like a hang, confirmed
+  via a temporary real-time-vs-simulated-time diagnostic print that it was actually oscillating
+  between 0 and 1.0s every second, not stuck) — fixed by calling `SetPhase()` while `fadeOutPhase_`
+  is still set to the pending target, letting its own guard correctly commit instead. Full
+  regression suite green on both backends.
 
 - **Wait/Init boot flow + gamer-select menu implemented (2026-07-13, plan.md `MENU-001..020`), per
   explicit user request ("Init/výběr hráče menu").** The engine previously started directly in

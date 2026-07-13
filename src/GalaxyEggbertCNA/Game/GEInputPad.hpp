@@ -2,6 +2,7 @@
 
 #include <Easy3D/BillboardMesh.hpp>
 #include <Easy3D/BillboardMeshRenderer.hpp>
+#include <GalaxyEggbert/def/GamePhase.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
@@ -103,31 +104,69 @@ namespace GalaxyEggbert::CNA
         // Pause-row buttons. showBack/showRestart mirror the real
         // conditional visibility (`mission!=1`, `mission!=1 &&
         // mission%10!=0`) -- Menu/Setup/Continue are always shown, matching
-        // the real source exactly. Continue/Restart/Setup are wired to
-        // real, distinct behavior here (return to Play; return to Play +
-        // reset to spawn; and enter PlaySetup, confirmed 2026-07-13 via
-        // `Game1.cpp`'s real `PauseSetup -> SetPhase(PlaySetup)`); Menu/
-        // Back are rendered at their real positions/icons but are NOT
-        // wired to any action yet, since the real destinations they'd
-        // lead to (main menu, hub-world navigation) don't exist in this
-        // engine yet -- a documented gap, not a silent omission.
+        // the real source exactly. Continue/Restart/Setup/Menu are all now
+        // wired to real, distinct destinations (Menu -> Init, 2026-07-13,
+        // now that Init actually exists -- the earlier "no destination
+        // screen exists yet" blocker no longer applies); Back's real
+        // destination (hub-world navigation) still doesn't exist here, a
+        // documented gap, not a silent omission.
         // DrawPause() also draws each visible button's real text label
         // underneath it (confirmed 2026-07-13 against `Game1::
         // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
         // `Phase::Pause` -- "Home"/"Back"/"Setup"/"Restart"/"Continue",
         // the real English strings; note the real `Menu`/`PauseMenu`
         // button's real EN text is "Home", not "Menu").
+        //
+        // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13, a
+        // dedicated research pass into the real `fadeOutPhase` deferred-
+        // transition mechanic): `phaseTimeSeconds`/`fadeOutPhase` together
+        // drive TWO distinct real animations sharing this same
+        // blupiyoupie.png character at (418,190):
+        // - `fadeOutPhase==None` (i.e. NOT currently exiting -- covers
+        //   both a fresh entry into Pause/Resume and the settled idle
+        //   state once it's finished): a real 0.75s grow-from-a-point +
+        //   decelerating 360° spin (`num=min(phaseTimeSeconds/0.75,1)`,
+        //   `rotation=(1-num)²*360`) -- confirmed via research this is
+        //   NOT part of the generic phase-commit fade at all, it is
+        //   Pause/Resume's OWN entrance flourish (same category as Win's
+        //   pulse / Lost's grow-in, which this engine already ports).
+        // - `fadeOutPhase==Play`: the real exit-to-Play fade -- blupiyoupie
+        //   grows from 1x to 11x native size while linearly fading from
+        //   opaque to transparent over the real 1.0s commit window (same
+        //   "blow up and vanish" idiom already confirmed for Init->Play,
+        //   just centered at Pause's own (418,190)).
+        // - `fadeOutPhase==PlaySetup` (Pause only -- Resume never reaches
+        //   PlaySetup): the real exit-to-PlaySetup fade -- blupiyoupie
+        //   slides horizontally off to the right at FIXED native size/
+        //   opacity, quadratic ease-in, over 1.0s (no scale/fade/rotation
+        //   change at all).
+        // - `fadeOutPhase==Init` (or anything else): the real exit-to-Init
+        //   fade -- the SAME grow+spin formula as the entry flourish
+        //   above, but run in reverse (shrinks to nothing while spinning
+        //   UP from 0° to 360°) over the first 0.75s of the 1.0s commit
+        //   window -- confirmed via research this leaves a real ~0.25s
+        //   "dead" window where the icon has already vanished but the
+        //   phase hasn't committed yet; reproduced faithfully, not
+        //   "fixed," since it's confirmed real behavior.
+        // Real buttons/labels are hidden entirely while `fadeOutPhase !=
+        // None` (confirmed: `DrawButtonsBackground()`/`inputPad.Draw()`/
+        // `DrawButtonsText()` are all gated on `fadeOutPhase==None` in the
+        // real source) -- NOT hidden during the entry flourish itself,
+        // only during an active exit.
         struct PauseInput
         {
             bool continuePressed = false;
             bool restartPressed = false;
             bool setupPressed = false;
+            bool menuPressed = false;
         };
         [[nodiscard]] PauseInput UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH,
                                              bool showBack, bool showRestart) noexcept;
         void DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                       int viewportW, int viewportH, bool showBack, bool showRestart);
+                       int viewportW, int viewportH, bool showBack, bool showRestart,
+                       float phaseTimeSeconds,
+                       GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
 
         // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
         // (win.png/lost.png, confirmed 640x480) plus the real
@@ -143,9 +182,14 @@ namespace GalaxyEggbert::CNA
         // formula, NOT reused verbatim from PlayPause's rect, which is a
         // different, smaller/more corner-flush box). The real destination
         // (`Init`, confirmed via `Game1.cpp`'s `WinLostReturn -> SetPhase
-        // (Init)`) doesn't exist in this engine -- the caller's own
-        // return-to-Play-at-spawn simplification (already established for
-        // the keyboard path, HUD-023) is reused here, not a new one.
+        // (Init)`) -- Init now EXISTS
+        // (2026-07-13) but this is left as the established return-to-
+        // Play-at-spawn simplification (already established for the
+        // keyboard path, HUD-023) rather than changed to Init, a
+        // deliberate gameplay-flow choice kept separate from the
+        // fade-transitions work (plan.md MENU-088/089) -- Win/Lost are not
+        // among the 5 real deferring source phases anyway (`Play`/`Lost`/
+        // `Win` never defer), so this transition stays instant either way.
         // Real score/mission-time/lives-remaining text overlays described
         // in plan.md MENU-049/050/051/056/057 were searched for directly
         // in `Game1.cpp`'s `Draw()`/`DrawButtonsText()`/
@@ -209,13 +253,27 @@ namespace GalaxyEggbert::CNA
         // BOTH branches are reachable here, so the caller picks Play vs.
         // Init based on which of PlaySetup/MainSetup is current).
         //
-        // Explicitly NOT ported (documented simplifications, same
-        // precedent as Pause/Win/Lost skipping some real animations): the
-        // 2 rotating gear.png background decorations and the
-        // speedyblupi.png slide-in -- both pure cosmetic flourish with no
-        // functional value, requiring an indefinitely-continuing rotation
-        // formula (Init's own speedyblupi.png use is a plain entry slide,
-        // not this rotating decoration).
+        // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13):
+        // speedyblupi.png slides in from off-screen-right while fading in
+        // (`num=1-(1-t)²` eased over 1.0s, `opacity=num²`, `Left=720-640*
+        // num, Right=1360-640*num`) whenever entering (`fadeOutPhase==
+        // None`); the SAME formula with `num`/`num2` both inverted plays
+        // during an active exit (`fadeOutPhase!=None`) -- confirmed via
+        // research this is shared verbatim by MainSetup and PlaySetup, NOT
+        // gated by which one it is. Two `gear.png` decorations (native
+        // 226x226) at real FIXED rects -- (487,148)-(713,374) at native
+        // size, and (118,268)-(570,720) at literally 2x native size, a
+        // real intentional asymmetry, not a mistake -- perpetually rotate
+        // (`num2` keeps growing slowly even once idle/settled,
+        // `rotation1=-num2*250°`, `rotation2=+num2*125°` counter-rotating
+        // at half rate) with opacity ramping `0.5→0.1` while entering
+        // (real: the exit side's opacity ramp is the mirror, `0.1→0.5`,
+        // confirmed as genuinely real even though it reads as visually odd
+        // -- see this class's own `.cpp` comment). None of this pauses
+        // interactivity: real buttons are hidden ONLY during an active
+        // EXIT fade (`fadeOutPhase!=None`), not during the entry
+        // animation, which plays purely as a decorative overlay on top of
+        // an already-interactive screen.
         struct SetupInput
         {
             bool soundsToggled = false;
@@ -225,23 +283,40 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] SetupInput UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH, bool showReset) noexcept;
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                       int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer);
+                       int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer,
+                       float phaseTimeSeconds,
+                       GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
         // real `SetPhase()` background dispatch: `case Phase::Pause: case
         // Phase::Resume: BackgroundCache("pause");` -- one shared case),
-        // reusing `DrawPause()`'s own background+character draw (static,
-        // same documented non-animation simplification already
-        // established for Pause). Only 2 real buttons, a DIFFERENT set
-        // from Pause's 5: ResumeMenu (icon 11, same as PauseMenu -- real
-        // rect independently re-derived from `InputPad.cpp`'s own
-        // bsf2=140 formula, NOT reused from PauseMenu's rect, which is a
-        // different position) and ResumeContinue (icon 10, same as
-        // PauseContinue, its own distinct rect). Both get real text
-        // labels ("Home"/"Continue", confirmed via `Game1::
-        // DrawButtonsText()`'s real `Phase::Resume` branch -- same real
-        // strings as Pause's own Menu/Continue labels).
+        // reusing `DrawPause()`'s own background+character draw, INCLUDING
+        // its real 0.75s entry grow+spin flourish and exit-to-Init
+        // shrink+reverse-spin fade (2026-07-13, plan.md MENU-088/089,
+        // confirmed via research: "Resume's entry animation is not
+        // separately coded; it is bit-for-bit Pause's"). Only 2 real
+        // buttons, a DIFFERENT set from Pause's 5: ResumeMenu (icon 11,
+        // same as PauseMenu -- real rect independently re-derived from
+        // `InputPad.cpp`'s own bsf2=140 formula, NOT reused from
+        // PauseMenu's rect, which is a different position) and
+        // ResumeContinue (icon 10, same as PauseContinue, its own distinct
+        // rect). Both get real text labels ("Home"/"Continue", confirmed
+        // via `Game1::DrawButtonsText()`'s real `Phase::Resume` branch --
+        // same real strings as Pause's own Menu/Continue labels).
+        // ResumeMenu is now wired to real `SetPhase(Init)` (2026-07-13,
+        // now that Init exists -- was previously inert for the same
+        // reason PauseMenu was).
+        //
+        // Real ResumeContinue -> `ContinueMission()` -> `SetPhase(Play,
+        // -2)` (confirmed via research): the `-2` mission sentinel
+        // BYPASSES the generic fade-defer mechanism entirely -- Resume->
+        // Play is the ONE transition among this engine's 5 deferring
+        // source phases that is genuinely, always instant in the real
+        // game, not merely fast. The caller must pass `bypassFade=true`
+        // to `GalaxyEggbertCnaGame::SetPhase()` for this specific call
+        // site (not this class's concern -- `UpdateResume()` only reports
+        // which button fired).
         //
         // Real trigger for entering this phase (`Game1::OnActivated()`, a
         // WP7 app-reactivation OS lifecycle event gated on a real
@@ -254,18 +329,21 @@ namespace GalaxyEggbert::CNA
         // true -- a documented simplification of WHEN Resume appears, not
         // of the screen/buttons themselves.
         //
-        // ResumeMenu is real-position/icon/label but intentionally inert
-        // (same reasoning as Pause's own Menu button -- no Init/main-menu
-        // screen exists). ResumeContinue is the caller's responsibility
-        // to wire (restore saved lives, reset Blupi to spawn, return to
-        // Play) -- NOT a true real mid-level resume (no serialized
-        // position/treasure/key state exists to restore), a documented
-        // simplification matching the one already established for
-        // PauseRestart/WinLostReturn.
-        [[nodiscard]] bool UpdateResume(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                                        int viewportW, int viewportH) noexcept;
+        // ResumeContinue is the caller's responsibility to wire (restore
+        // saved lives, reset Blupi to spawn, return to Play) -- NOT a true
+        // real mid-level resume (no serialized position/treasure/key
+        // state exists to restore), a documented simplification matching
+        // the one already established for PauseRestart/WinLostReturn.
+        struct ResumeInput
+        {
+            bool menuPressed = false;
+            bool continuePressed = false;
+        };
+        [[nodiscard]] ResumeInput UpdateResume(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                               int viewportW, int viewportH) noexcept;
         void DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                        int viewportW, int viewportH);
+                        int viewportW, int viewportH, float phaseTimeSeconds,
+                        GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13), verified
         // directly against the real gesture-recognition/cheat-overlay code
@@ -354,11 +432,21 @@ namespace GalaxyEggbert::CNA
         // (shared texture with Pause/Win/Lost) scaling in 50%->100% while
         // fading in 0.25->1.0 opacity over the same 1.0s, centered at
         // real (468,280) -- a DIFFERENT position from Pause's (418,190)/
-        // WinLost's (418,238). Real exit-fade animations (Init->Play/
-        // MainSetup, ~1s slide/scale/fade-out) are NOT ported -- same
-        // documented simplification already established for every other
-        // phase transition in this engine (every transition is instant,
-        // plan.md MENU-088/089).
+        // WinLost's (418,238). Real exit-fade animations are now ALSO
+        // ported (2026-07-13, plan.md MENU-088/089, a dedicated research
+        // pass into the real `fadeOutPhase` mechanic): `fadeOutPhase==
+        // Play` reverses the title slide at 2x speed (`num=1-2t`, so it's
+        // already off-screen again by 0.5s and keeps going negative) while
+        // blupiyoupie grows from 1x to 11x native size while linearly
+        // fading out (same "blow up and vanish" idiom as Pause->Play,
+        // just at Init's own (468,280)); `fadeOutPhase==MainSetup` slides
+        // the title back off to the right while fading (`num=(1-t)²`,
+        // `opacity=num²`) while blupiyoupie stays FIXED size/position and
+        // just fades out (`opacity=(1-t)²`, confirmed via research NO
+        // zoom happens here despite an earlier doc-comment in the real
+        // source itself claiming one). Real buttons are hidden entirely
+        // while an exit fade is active (`fadeOutPhase!=None`), same rule
+        // as every other screen in this class.
         //
         // Real 3 independent gamer slots (A/B/C), stacked in a column,
         // plus InitSetup/InitPlay -- all 5 rects need NO proportional
@@ -396,7 +484,8 @@ namespace GalaxyEggbert::CNA
                                            int viewportW, int viewportH) noexcept;
         void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds,
-                     int selectedGamer, int livesA, int livesB, int livesC);
+                     int selectedGamer, int livesA, int livesB, int livesC,
+                     GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
 
     private:
         struct Quad
@@ -436,6 +525,31 @@ namespace GalaxyEggbert::CNA
         void AppendGamerLabel(std::vector<Quad>& quads, const std::string& text,
                               float leftX, float topY, float labelScale, float viewportScale) const;
 
+        // Real Pause/Resume character animation (plan.md MENU-088/089):
+        // shared by DrawPause()/DrawResume() since both use the identical
+        // formula (confirmed via research). Returned rect/rotation/opacity
+        // are in REFERENCE space (caller applies refToScreenX/Y + scale),
+        // matching the convention DrawWinLost() already uses.
+        struct CharacterAnim
+        {
+            float centerX, centerY, halfW, halfH, rotationDegrees, opacity;
+            bool visible;
+        };
+        [[nodiscard]] CharacterAnim ComputePauseResumeCharacterAnim(
+            float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase) const;
+
+        // Real MainSetup/PlaySetup speedyblupi+gear decoration (plan.md
+        // MENU-088/089): shared by entry (fadeOutPhase==None) and exit
+        // (fadeOutPhase!=None, formula run with num/num2 both inverted)
+        // per the real source (confirmed identical for both PlaySetup and
+        // MainSetup, and for either real exit destination).
+        struct SetupFadeAnim
+        {
+            float speedyLeft, speedyRight, speedyOpacity;
+            float gearOpacity, gearRotation1, gearRotation2;
+        };
+        [[nodiscard]] SetupFadeAnim ComputeSetupFadeAnim(float phaseTimeSeconds, bool exiting) const;
+
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D pauseBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupiyoupieTexture_;
@@ -447,6 +561,7 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D jaugeTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D initBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D speedyblupiTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D gearTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> pauseBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiyoupieEffect_;
@@ -458,6 +573,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> initBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> speedyblupiEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> gearEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padPressedRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> pauseBgRenderer_;
@@ -470,6 +586,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> initBgRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> speedyblupiRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> gearRenderer_;
         bool loaded_ = false;
 
         // Edge-trigger press tracking: which logical button (if any) the

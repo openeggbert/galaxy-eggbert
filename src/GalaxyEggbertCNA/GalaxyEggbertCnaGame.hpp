@@ -218,7 +218,31 @@ namespace GalaxyEggbert::CNA
         // place (implemented); real PauseSetup opens PlaySetup
         // (implemented, 2026-07-13); real PauseRestart reloads the level
         // (simplified to an origin-respawn, see below); real PauseMenu
-        // (return to main menu) is NOT modeled -- no menu system exists.
+        // (return to main menu) now goes to `Init` (2026-07-13, now that
+        // Init exists -- was previously unmodeled).
+        //
+        // Real fade-out phase transitions (plan.md MENU-088/089,
+        // 2026-07-13, a dedicated research pass into the real
+        // `fadeOutPhase` deferred-transition mechanic): `SetPhase()` now
+        // takes an optional `bypassFade` param. Real source only defers
+        // (plays a ~1.0s exit fade before actually committing) when the
+        // CURRENT phase is one of exactly 5 real phases -- `Init`,
+        // `MainSetup`, `PlaySetup`, `Pause`, `Resume` -- confirmed via
+        // research; every other current phase (`Play`, `Win`, `Lost`,
+        // `Wait`) commits INSTANTLY regardless of destination (Play<->Pause
+        // is a real hard cut, not merely fast -- a documented correction,
+        // not a simplification, since the real source genuinely has no
+        // fade there). `fadeOutPhase_` tracks the pending destination
+        // during that window; `Update()` freezes ALL input/simulation
+        // while it's set (matching the real source's own early-return
+        // before `inputPad.Update()`/`decor.MoveStep()`) and commits via
+        // `SetPhase()` again once 1.0s elapses. `bypassFade=true` is the
+        // real `mission==-2` sentinel (`ContinueMission()`) -- the ONE
+        // real exception: Resume->Play (via ResumeContinue) is ALWAYS
+        // instant even though Resume is one of the 5 deferring phases,
+        // confirmed via research. See `GEInputPad::DrawPause()`/
+        // `DrawResume()`/`DrawSetup()`/`DrawInit()`'s own class comments
+        // for the exact real per-destination fade formulas.
         //
         // Real Lost trigger: a death animation completing while lives are
         // exhausted (`Decor.cpp:6374-6435`) -- this engine's own
@@ -235,7 +259,7 @@ namespace GalaxyEggbert::CNA
         // checkpoint `saveData_` (2026-07-13, plan.md MENU-040..045),
         // matching the real `MemorizeGamerProgress()` call sites
         // confirmed at exactly these same 2 real transition points.
-        void SetPhase(GalaxyEggbert::GamePhase next) noexcept;
+        void SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade = false) noexcept;
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
 
         // Dispatches cheat 1-9 (plan.md CHEAT-001..009) -- verified
@@ -256,6 +280,14 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
+
+        // Real `fadeOutPhase` (plan.md MENU-088/089) -- see SetPhase()'s
+        // own comment above for the full real deferred-transition
+        // mechanic this drives. `None` means "not currently exiting"
+        // (covers both Play and every other phase's own settled/idle
+        // state); any other value is the real pending destination during
+        // an active ~1.0s exit fade.
+        GalaxyEggbert::GamePhase fadeOutPhase_ = GalaxyEggbert::GamePhase::None;
 
         // Real `phaseTime` (2026-07-13, plan.md MENU-046..057), verified
         // directly against `Game1.hpp`'s own doc comment ("phaseTime==0"

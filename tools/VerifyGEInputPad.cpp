@@ -174,11 +174,12 @@ int main()
         check(release2.restartPressed && !release2.continuePressed,
               "Pause: Restart fires on release, distinct from Continue");
 
-        // Menu/Setup are real positions/icons but intentionally inert.
+        // Menu now goes to Init (2026-07-13, now that Init exists) --
+        // distinct from Continue/Restart.
         auto pressMenu = pad.UpdatePause(mouse(100, 350, true), kViewportW, kViewportH, true, true);
         auto releaseMenu = pad.UpdatePause(mouse(100, 350, false), kViewportW, kViewportH, true, true);
-        check(!releaseMenu.continuePressed && !releaseMenu.restartPressed,
-              "Pause: Menu button press/release fires neither Continue nor Restart (documented inert placeholder)");
+        check(releaseMenu.menuPressed && !releaseMenu.continuePressed && !releaseMenu.restartPressed,
+              "Pause: Menu fires on release, distinct from Continue/Restart");
     }
 
     // --- ResetTouchState() clears an in-flight press so a keyboard-driven
@@ -258,19 +259,19 @@ int main()
 
     // --- Resume: real rects (X 180.6-320.6 Menu / 320.6-460.6 Continue,
     // Y 308-448, same bsf2=140-at-this-reference-height "no adaptation
-    // needed" situation as Setup). Only Continue is functional; Menu is
-    // real-position/icon/label but inert (same as Pause's own Menu).
+    // needed" situation as Setup). Both buttons are now functional (Menu
+    // -> Init, 2026-07-13, now that Init exists).
     {
         GEInputPad pad;
         (void)pad.UpdateResume(mouse(390, 378, true), kViewportW, kViewportH);
-        const bool continuePressed = pad.UpdateResume(mouse(390, 378, false), kViewportW, kViewportH);
-        check(continuePressed, "Resume: Continue fires on release");
+        const auto release = pad.UpdateResume(mouse(390, 378, false), kViewportW, kViewportH);
+        check(release.continuePressed && !release.menuPressed, "Resume: Continue fires on release");
     }
     {
         GEInputPad pad;
         (void)pad.UpdateResume(mouse(250, 378, true), kViewportW, kViewportH);
-        const bool continuePressed = pad.UpdateResume(mouse(250, 378, false), kViewportW, kViewportH);
-        check(!continuePressed, "Resume: Menu button press/release does not fire Continue (documented inert placeholder)");
+        const auto release = pad.UpdateResume(mouse(250, 378, false), kViewportW, kViewportH);
+        check(release.menuPressed && !release.continuePressed, "Resume: Menu fires on release, distinct from Continue");
     }
 
     // --- Init / gamer-select menu (plan.md MENU-006..020): real rects,

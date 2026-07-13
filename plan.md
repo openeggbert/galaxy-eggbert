@@ -1425,22 +1425,23 @@ animation descriptions were WRONG on direction/effect; see each item below.
       shown by default" in this port (both hardcoded false / QA-cheat-only) — same "unreachable in
       this port" precedent already established for the Trial phase itself, not a missing feature.
 - [ ] MENU-014 / MENU-015 — Semi-transparent panels behind gamer slots / action buttons — **NOT
-      ported**: pure cosmetic background decoration, no functional value, deferred same as other
-      purely-cosmetic real details this session (e.g. PlaySetup's rotating gear.png decorations).
+      ported**: pure cosmetic background decoration, no functional value, a documented gap (Init's
+      own panels are distinct from MainSetup/PlaySetup's rotating gear.png decorations, MENU-059/060,
+      which ARE now ported).
 - [x] MENU-016 — Keyboard Back/Escape → exit game (from Init phase) — **done, but ADAPTED**:
       research found the real source's OWN Escape key unconditionally maps to `Pause` regardless of
       phase (including from Init) — flagged by that research as a likely-UNINTENDED quirk of the
       real source rather than deliberate design. NOT replicated: this engine's Escape from Init
       instead reuses the real hardware-Back-button behavior (`Exit()`), which reads as the clearly
       intentional one.
-- [ ] MENU-017 / MENU-018 — Animated fade-out transitions (Init→Play, Init→MainSetup) — **NOT
-      ported, and draft was WRONG on both effects anyway**: research confirmed Init→Play is
-      speedyblupi sliding back UP off-screen (not "out") while blupiyoupie scales UP to 11× native
-      size while fading (not "zooms out"); Init→MainSetup is speedyblupi sliding RIGHT off-screen
-      (draft was directionally correct there) while blupiyoupie stays FIXED size and just fades
-      (not "zooms out" either, no gear.png appears). Deferred same as every other phase transition
-      in this engine (every transition is instant, plan.md MENU-088/089) — not a gap specific to
-      Init.
+- [x] MENU-017 / MENU-018 — Animated fade-out transitions (Init→Play, Init→MainSetup) —
+      **done 2026-07-13 (plan.md MENU-088/089 pass), and draft was WRONG on both effects**: real
+      Init→Play is speedyblupi sliding back UP off-screen at 2x speed (not "out") while blupiyoupie
+      scales UP to 11× native size while linearly fading (not "zooms out"); Init→MainSetup is
+      speedyblupi sliding RIGHT off-screen while fading (draft was directionally correct there)
+      while blupiyoupie stays FIXED size and just fades (not "zooms out" either, no gear.png
+      appears — gear.png is MainSetup/PlaySetup's OWN decoration, not Init's). Both verified live via
+      headless screenshots mid-fade.
 - [x] MENU-019 — Gamer selection persisted — **done**: `GESaveData` extended (2026-07-13) with a
       real `selectedGamer` field (matches real `data[2]`) + 3 independent `GamerSlot`s
       (lives/missionNumber/hasProgress each) — see `GESaveData.hpp`'s own Phase-3 comment. A single
@@ -1518,8 +1519,19 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 #### 2.8 Phase: MainSetup / PlaySetup (settings)
 
 - [x] MENU-058 — Render `setup.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawSetup`) — confirmed exact 640×480, direct pixel match; confirmed via `Pixmap::BackgroundCache("setup")` + `DrawBackground()` (a genuine per-phase full-screen backdrop selection, distinct from the animated foreground decoration researched for MENU-059/060 below)
-- [ ] MENU-059 — Render `speedyblupi.png` sliding in from left (ease-out quadratic) — **not implemented**, pure cosmetic flourish, documented simplification (same precedent as Pause/Win/Lost skipping some real animations)
-- [ ] MENU-060 — Render two rotating `gear.png` icons (one CW, one CCW, varying speeds) — **not implemented**, same reasoning as MENU-059 (real formula fully confirmed via `Game1.cpp:682-724` if ever revisited: `rotation = -num2*250°` / `+num2*125°`, `num2` an indefinitely-continuing rotation progress value, opacity `0.5-num*0.4`)
+- [x] MENU-059 — Render `speedyblupi.png` sliding in (ease-out quadratic) — **done 2026-07-13**
+      (plan.md MENU-088/089 pass), `GEInputPad::ComputeSetupFadeAnim()`/`DrawSetup()`. **Draft was
+      WRONG on direction**: real is a slide in from the RIGHT (`Left=720-640*num, Right=1360-640*num`),
+      not "from left" — Top/Bottom fixed at native 0/160, no vertical component.
+- [x] MENU-060 — Render two rotating `gear.png` icons — **done 2026-07-13**, same pass. Draft's own
+      formula citation was already correct (`rotation1=-num2*250°`, `rotation2=+num2*125°`
+      counter-rotating at half rate, opacity `0.5-num*0.4` entering) and is ported verbatim,
+      including the real perpetual slow rotation once settled/idle (`num2` keeps growing past the
+      first 1.0s, 400 frames = 20s per unit) and the two real FIXED rects — confirmed via research
+      to be a genuine intentional size asymmetry (gear2 is literally 2x native 226×226 size, not a
+      mistake). Real exit reuses the identical formula with `num`/`num2` both inverted (confirmed
+      via research), including gear opacity ramping the OPPOSITE direction on exit (`0.1→0.5`) —
+      flagged by research as visually odd but genuinely real, not a bug, so reproduced faithfully.
 - [x] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state — **done 2026-07-13**, fully functional: real icon SWAP (13 on/21 off, confirmed via `Pixmap.cpp`'s `selected ? 13 : 21` — a DIFFERENT "pressed" convention from every other button in this class, which only ever change opacity), wired to the pre-existing `GESound::SetEnabled()`/`IsEnabled()` — a genuinely meaningful desktop equivalent of the real mute toggle, now persisted across restarts too (see MENU-067)
 - [~] MENU-062 — "JUMP" mode toggle (`SetupJump`) — left/right jump direction — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (this is about touch-button screen-side preference)
 - [~] MENU-063 — "ZOOM" toggle (`SetupZoom`) — auto-zoom on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no auto-zoom camera concept exists in this engine yet
@@ -1550,7 +1562,10 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
       extension, MENU-019/020). Real write-on-toggle-press behavior matched exactly. Jump/Zoom/Accel
       have nothing to persist (they're inert, MENU-062..064) — not a gap, since they have no real
       state to save
-- [ ] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing) — **not implemented**, same reasoning as MENU-059/060
+- [x] MENU-068 — Animated slide-in/out of settings panel (matching mobile-eggbert timing) — **done
+      2026-07-13**: no separate "panel" element was found beyond the speedyblupi/gear decoration
+      already covered by MENU-059/060 (the real `setup.png` background itself never animates,
+      confirmed) — this entry describes the same mechanic, not a distinct one.
 - [x] MENU-069 — Keyboard Back during Setup → Init/Play — **done 2026-07-13, CORRECTED**: Escape
       now goes to Init from MainSetup (real destination, now that Init exists) or Play from
       PlaySetup (matching `SetupReturn`'s own real per-screen destination, MENU-066) — an earlier
@@ -1570,9 +1585,10 @@ is a non-goal — a small, new, engine-appropriate persisted set instead, later 
 session) to the real 3-independent-gamer-slot SHAPE once Init needed it. Verified via
 `VerifyGEInputPad` (including 2 new `SetupReset` checks: fires when `showReset=true`, never fires
 when `showReset=false`), `VerifyGESaveData`, a live headless screenshot confirming exact
-layout/labels/icon state, and a live two-run save/load round-trip test. Cosmetic-only real
-animations (speedyblupi.png slide, 2 rotating gear.png decorations, MENU-059/060/068) are explicitly
-out of scope, documented above rather than invented.
+layout/labels/icon state, and a live two-run save/load round-trip test. The speedyblupi.png slide +
+2 rotating gear.png decorations (MENU-059/060/068) were initially out of scope here and implemented
+later the same session as part of the MENU-088/089 fade-transitions pass, once real entry/exit
+timing needed them anyway.
 
 #### 2.9 Phase: Ranking
 
@@ -1606,8 +1622,52 @@ out of scope, documented above rather than invented.
 
 #### 2.13 Phase Transitions & Animations
 
-- [ ] MENU-088 — Fade-out animation between animated phases (20-frame linear fade, Config::ScaleTime(20)) — not implemented; every phase transition in this engine is instant, a documented simplification (no `fadeOutPhase`-style deferred-transition mechanic exists)
-- [ ] MENU-089 — `fadeOutPhase` deferred transition: start animation, complete transition after 20 frames — not implemented, same reasoning as MENU-088 (this engine's `SetPhase()` always transitions immediately)
+- [x] MENU-088 / MENU-089 — Fade-out animation + `fadeOutPhase` deferred transition — **done 2026-07-13**,
+      `GalaxyEggbertCnaGame::SetPhase()`/`Update()` (`fadeOutPhase_` member). A dedicated research
+      pass into the real mechanism found it's more precise than the draft assumed:
+      - **Only 5 real phases ever defer**: `Init`, `MainSetup`, `PlaySetup`, `Pause`, `Resume`
+        (confirmed via `Game1.cpp`'s own `if (this->phase == Init || MainSetup || PlaySetup ||
+        Pause || Resume) && fadeOutPhase==None`). Every other phase (`Play`, `Win`, `Lost`,
+        `Wait`/`First`) commits INSTANTLY regardless of destination — **Play↔Pause is a real hard
+        cut, not merely fast**, and entering/leaving Win/Lost is likewise always instant (no
+        separate transition fade exists for either, only the already-ported continuous idle
+        pulse/grow-in). This corrects an implicit assumption in the original MENU-088 draft that
+        ALL transitions might eventually fade.
+      - **Real commit timer confirmed as exactly `Config::ScaleTime(20)` = 1.0s** at this build's
+        pinned 20fps (matches the already-known Init-specific fades from an earlier research pass).
+      - **Real exception**: `Resume`→`Play` via `ResumeContinue` (`ContinueMission()` → `SetPhase
+        (Play, -2)`) is ALWAYS instant even though `Resume` is a deferring phase — the real
+        `mission==-2` sentinel bypasses the defer mechanism entirely. Ported as `SetPhase()`'s new
+        `bypassFade` parameter, wired only at that one real call site.
+      - **Real per-destination exit-fade formulas** (all confirmed via research, verified live via
+        7 headless screenshots): Pause/Resume→Play and Init→Play both reuse the "blow up to 11x
+        native size while linearly fading out" idiom (same formula, different real center
+        coordinates); Pause/Resume→Init is the entrance grow+spin formula run in reverse (shrinks
+        while spinning UP into a full 360°, leaving a real ~0.25s "dead"/invisible window before
+        the actual 1.0s commit — reproduced faithfully, not "fixed"); Pause→PlaySetup is a fixed-
+        size/opacity horizontal slide-right, quadratic ease; Init→MainSetup slides the title right
+        while fading and leaves blupiyoupie fixed-size, fading only (confirmed NO zoom, despite an
+        earlier doc-comment in the real source itself claiming one).
+      - **Real input/simulation freeze during the fade window**: `GalaxyEggbertCnaGame::Update()`
+        now returns immediately (skipping all per-phase input handling) whenever `fadeOutPhase_ !=
+        None`, matching the real source's own early-return before `inputPad.Update()`/
+        `decor.MoveStep()`. Real buttons are ALSO hidden entirely during an active exit fade
+        (confirmed: `DrawButtonsBackground()`/`inputPad.Draw()`/`DrawButtonsText()` all gated on
+        `fadeOutPhase==None`) — NOT during the entry side, which renders as a decorative overlay on
+        an already-interactive screen.
+      - **Real Pause/Resume entrance flourish now ALSO ported** (was previously static/instant, a
+        SEPARATE mechanic from the deferred-transition fade itself, confirmed bit-for-bit shared by
+        both phases): a real 0.75s grow-from-a-point + decelerating 360° spin, same category as
+        Win's pulse/Lost's grow-in which this engine already had.
+      - **Real `PauseMenu`/`ResumeMenu` buttons are now ALSO wired** (previously documented as
+        inert since "no Init/main-menu screen exists" — no longer true once Init landed): both now
+        go to `Init`, exercising the new Pause/Resume→Init shrink+reverse-spin fade for real.
+      - A genuine bug was caught and fixed during live verification: the initial commit logic
+        pre-cleared `fadeOutPhase_` before calling `SetPhase()` again, which defeated `SetPhase()`'s
+        own "already deferring → commit, don't re-defer" guard (itself a real, confirmed mechanism)
+        — causing an infinite re-defer loop that silently froze `phaseTimeSeconds_` at exactly 1.0
+        forever. Fixed by calling `SetPhase(fadeOutPhase_)` while it's STILL set to the pending
+        target, letting `SetPhase()`'s own guard correctly commit.
 - [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start) — not implemented/not applicable; this engine has no mission-loading pipeline at all (a single hand-authored `.vwr` world loads once at startup)
 - [x] MENU-091 — Phase time counter reset on each phase entry — **done 2026-07-13** (`GalaxyEggbertCnaGame::phaseTimeSeconds_`, reset to 0 inside `SetPhase()` — the real `phaseTime` port that drives the Win/Lost `blupiyoupie.png` animations, `MENU-046..057`)
 

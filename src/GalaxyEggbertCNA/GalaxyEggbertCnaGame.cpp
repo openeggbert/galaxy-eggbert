@@ -61,6 +61,14 @@ namespace GalaxyEggbert::CNA
         // separately-owned constant there since that class doesn't
         // depend on this one).
         constexpr float kWaitDurationSeconds = 5.0f;
+
+        // Real fade-out phase-transition commit timer (plan.md
+        // MENU-088/089, confirmed via research: `Config::ScaleTime(20)` =
+        // 1.0s at this build's pinned 20fps) -- must match
+        // GEInputPad.cpp's own kFadeDurationSeconds (kept as a
+        // separately-owned constant there, same cross-file convention as
+        // kWaitDurationSeconds above).
+        constexpr float kFadeCommitDurationSeconds = 1.0f;
     }
 
     GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
@@ -397,15 +405,36 @@ namespace GalaxyEggbert::CNA
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
     }
 
-    void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next) noexcept
+    void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade) noexcept
     {
+        // Real Game1::SetPhase() (2026-07-13, plan.md MENU-088/089, see
+        // this method's own declaration comment for the full real
+        // deferred-transition mechanic): only defers when the CURRENT
+        // phase is one of the 5 real deferring phases, no fade is already
+        // pending, and bypassFade wasn't requested (the real `mission==
+        // -2` sentinel). Every other phase commits instantly, matching
+        // the real source exactly (confirmed via research: Play->Pause,
+        // Play->Win/Lost, and Resume->Play-via-Continue are ALL genuinely
+        // instant in the real game, not merely fast).
+        const bool sourceDefers = phase_ == GalaxyEggbert::GamePhase::Init ||
+                                   phase_ == GalaxyEggbert::GamePhase::MainSetup ||
+                                   phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
+                                   phase_ == GalaxyEggbert::GamePhase::Pause ||
+                                   phase_ == GalaxyEggbert::GamePhase::Resume;
+        if (sourceDefers && fadeOutPhase_ == GalaxyEggbert::GamePhase::None && !bypassFade)
+        {
+            fadeOutPhase_ = next;
+            phaseTimeSeconds_ = 0.0f;
+            return;
+        }
+
         // Real Game1::SetPhase() resets a per-phase timer (real `phaseTime`,
         // now ported as phaseTimeSeconds_ -- see its own member comment,
         // 2026-07-13) and clears input debounce state on every transition
         // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
-        // 2 key-debounce trackers below, since no settings-return-phase or
-        // fade-out delay is modeled.
+        // 2 key-debounce trackers below.
         phase_ = next;
+        fadeOutPhase_ = GalaxyEggbert::GamePhase::None;
         pauseKeyWasDown_ = false;
         phaseReturnKeyWasDown_ = false;
         phaseTimeSeconds_ = 0.0f;
@@ -485,6 +514,28 @@ namespace GalaxyEggbert::CNA
         const float dt = static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
         phaseTimeSeconds_ += dt;
 
+        // Real fade-out phase-transition commit (plan.md MENU-088/089) --
+        // freezes ALL input/simulation while a fade is pending (matching
+        // the real source's own early-return before `inputPad.Update()`/
+        // `decor.MoveStep()`), committing the deferred phase once the
+        // real 1.0s window elapses. See SetPhase()'s own comment for the
+        // full real deferred-transition mechanic this drives.
+        if (fadeOutPhase_ != GalaxyEggbert::GamePhase::None)
+        {
+            if (phaseTimeSeconds_ >= kFadeCommitDurationSeconds)
+            {
+                // Real "fadeOutPhase != None is REQUIRED to defer" guard
+                // (see SetPhase()'s own comment) -- calling SetPhase()
+                // with fadeOutPhase_ STILL set to the pending target
+                // (not pre-cleared) makes its own `sourceDefers &&
+                // fadeOutPhase_==None` condition false, so it correctly
+                // falls through to the commit branch instead of
+                // re-deferring to the same target forever.
+                SetPhase(fadeOutPhase_);
+            }
+            return;
+        }
+
         // Play on-screen control input (2026-07-13, plan.md MENU-021..027)
         // -- computed here, in Update()'s own top-level scope, so the
         // movement block further below (still inside the Play-gated
@@ -512,6 +563,7 @@ namespace GalaxyEggbert::CNA
             bool mouseContinuePressed = false;
             bool mouseRestartPressed = false;
             bool mouseSetupPressed = false;
+            bool mouseMenuPressed = false;
             if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
                 const auto mouse = Mouse::GetState();
@@ -559,6 +611,7 @@ namespace GalaxyEggbert::CNA
                 mouseContinuePressed = pauseInput.continuePressed;
                 mouseRestartPressed = pauseInput.restartPressed;
                 mouseSetupPressed = pauseInput.setupPressed;
+                mouseMenuPressed = pauseInput.menuPressed;
             }
             else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
                      phase_ == GalaxyEggbert::GamePhase::MainSetup)
@@ -686,26 +739,33 @@ namespace GalaxyEggbert::CNA
                 // adapted-trigger reasoning; this is just the two real
                 // buttons' behavior once already in the phase.
                 const auto mouse = Mouse::GetState();
-                const bool mouseContinuePressedResume = inputPad_.UpdateResume(
+                const auto resumeInput = inputPad_.UpdateResume(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
-                if (mouseContinuePressedResume)
+                if (resumeInput.continuePressed)
                 {
-                    // Real ResumeContinue -> ContinueMission(): restores
-                    // the checkpointed lives (no real mid-level position/
-                    // treasure/key state exists to restore, same
-                    // simplification as PauseRestart/WinLostReturn).
+                    // Real ResumeContinue -> ContinueMission() ->
+                    // SetPhase(Play,-2): restores the checkpointed lives
+                    // (no real mid-level position/treasure/key state
+                    // exists to restore, same simplification as
+                    // PauseRestart/WinLostReturn). The real `-2` mission
+                    // sentinel BYPASSES the fade-defer mechanism entirely
+                    // (plan.md MENU-088/089, confirmed via research) --
+                    // Resume->Play is genuinely instant in the real game.
                     interaction_.SetLives(saveData_.GetLives());
                     blupi_.SetPosition(0.0f, 1.0f, 0.0f);
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                    SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
                 }
-                else if (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_)
+                else if (resumeInput.menuPressed ||
+                         (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
                 {
-                    // Real ResumeMenu/Back -> Init (doesn't exist here).
-                    // Adapted: starts a fresh game WITHOUT restoring saved
-                    // lives (distinguishing "new game" from "continue",
-                    // matching the two real buttons' own distinct intent)
-                    // -- this engine's own keyboard binding choice.
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                    // Real ResumeMenu/Back -> Init -- now wired
+                    // (2026-07-13, now that Init exists; was previously
+                    // adapted to an instant restart-without-lives-restore
+                    // workaround). This DOES defer/animate (the real
+                    // shrink+reverse-spin fade, plan.md MENU-088/089),
+                    // since Resume IS one of the 5 real deferring phases
+                    // and this path doesn't pass bypassFade.
+                    SetPhase(GalaxyEggbert::GamePhase::Init);
                 }
             }
 
@@ -745,6 +805,12 @@ namespace GalaxyEggbert::CNA
             {
                 // Real PauseSetup: SetPhase(PlaySetup).
                 SetPhase(GalaxyEggbert::GamePhase::PlaySetup);
+            }
+            else if (mouseMenuPressed)
+            {
+                // Real PauseMenu: SetPhase(Init) -- now wired (2026-07-13,
+                // now that Init exists).
+                SetPhase(GalaxyEggbert::GamePhase::Init);
             }
 
             if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
@@ -2233,7 +2299,8 @@ namespace GalaxyEggbert::CNA
                 const bool showBack = mission != 1;
                 const bool showRestart = mission != 1 && mission % 10 != 0;
                 inputPad_.DrawPause(
-                    device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart);
+                    device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
+                    phaseTimeSeconds_, fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
             {
@@ -2245,11 +2312,12 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                     sound_.IsEnabled(), phase_ == GalaxyEggbert::GamePhase::MainSetup,
-                                    saveData_.GetSelectedGamer());
+                                    saveData_.GetSelectedGamer(), phaseTimeSeconds_, fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Resume)
             {
-                inputPad_.DrawResume(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                inputPad_.DrawResume(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                     phaseTimeSeconds_, fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Wait)
             {
@@ -2261,7 +2329,7 @@ namespace GalaxyEggbert::CNA
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                    phaseTimeSeconds_, saveData_.GetSelectedGamer(),
                                    saveData_.GetLivesForGamer(0), saveData_.GetLivesForGamer(1),
-                                   saveData_.GetLivesForGamer(2));
+                                   saveData_.GetLivesForGamer(2), fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {

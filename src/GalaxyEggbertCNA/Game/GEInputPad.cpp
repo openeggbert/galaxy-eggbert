@@ -358,6 +358,24 @@ namespace GalaxyEggbert::CNA
         constexpr int kInitControlSetup = 3;
         constexpr int kInitControlPlay = 4;
 
+        // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
+        // dedicated research pass into the real `fadeOutPhase` mechanic):
+        // the generic real commit timer is `Config::ScaleTime(20)` = 1.0s
+        // at this build's pinned 20fps -- matches this engine's own
+        // kWaitDurationSeconds-style cross-file convention (owned here,
+        // GalaxyEggbertCnaGame.cpp's own copy drives the actual phase
+        // commit). Pause/Resume's own entrance flourish is a SEPARATE,
+        // shorter real 0.75s (`ScaleTime(15)`).
+        constexpr float kFadeDurationSeconds = 1.0f;
+        constexpr float kPauseEntryDurationSeconds = 0.75f;
+
+        // Real MainSetup/PlaySetup gear.png decorations (native 226x226,
+        // confirmed via research): two FIXED real rects, a genuine
+        // intentional size asymmetry (gear2 is literally 2x native size),
+        // not a mistake.
+        constexpr float kGear1CenterX = 600.0f, kGear1CenterY = 261.0f, kGear1Half = 113.0f; // (487,148)-(713,374)
+        constexpr float kGear2CenterX = 344.0f, kGear2CenterY = 494.0f, kGear2Half = 226.0f; // (118,268)-(570,720)
+
         void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
                           std::vector<std::uint32_t>& indices,
                           float x0, float y0, float x1, float y1,
@@ -434,7 +452,7 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[11] = {
+        const char* kPaths[12] = {
             "Content/icons/pad.png",
             "Content/backgrounds/pause.png",
             "Content/backgrounds/blupiyoupie.png",
@@ -446,6 +464,7 @@ namespace GalaxyEggbert::CNA
             "Content/icons/jauge.png",
             "Content/backgrounds/init.png",
             "Content/backgrounds/speedyblupi.png",
+            "Content/backgrounds/gear.png",
         };
         for (const char* path : kPaths)
         {
@@ -467,6 +486,7 @@ namespace GalaxyEggbert::CNA
         jaugeTexture_ = Texture2D(kPaths[8], device);
         initBgTexture_ = Texture2D(kPaths[9], device);
         speedyblupiTexture_ = Texture2D(kPaths[10], device);
+        gearTexture_ = Texture2D(kPaths[11], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -487,6 +507,7 @@ namespace GalaxyEggbert::CNA
         jaugeEffect_ = makeEffect(jaugeTexture_);
         initBgEffect_ = makeEffect(initBgTexture_);
         speedyblupiEffect_ = makeEffect(speedyblupiTexture_);
+        gearEffect_ = makeEffect(gearTexture_);
         loaded_ = true;
     }
 
@@ -621,6 +642,108 @@ namespace GalaxyEggbert::CNA
             quads.push_back(q);
             penX += advance;
         }
+    }
+
+    GEInputPad::CharacterAnim GEInputPad::ComputePauseResumeCharacterAnim(
+        float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase) const
+    {
+        using GalaxyEggbert::GamePhase;
+
+        CharacterAnim anim{};
+        anim.centerX = kCharacterCenterX;
+        anim.centerY = kCharacterCenterY;
+        anim.opacity = 1.0f;
+
+        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
+        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+
+        if (fadeOutPhase == GamePhase::None)
+        {
+            // Real entrance flourish (NOT part of the generic commit
+            // fade): grow from a point + decelerating 360 degree spin
+            // over a real 0.75s.
+            const float t = std::min(phaseTimeSeconds / kPauseEntryDurationSeconds, 1.0f);
+            anim.halfW = (charW * 0.5f) * t;
+            anim.halfH = (charH * 0.5f) * t;
+            anim.rotationDegrees = (1.0f - t) * (1.0f - t) * 360.0f;
+        }
+        else if (fadeOutPhase == GamePhase::Play)
+        {
+            // Real exit-to-Play: blow up to 11x native size while
+            // linearly fading out, no rotation (same idiom as Init->Play).
+            const float t = std::min(phaseTimeSeconds / kFadeDurationSeconds, 1.0f);
+            const float num = 1.0f + t * 10.0f;
+            anim.halfW = (charW * 0.5f) * num;
+            anim.halfH = (charH * 0.5f) * num;
+            anim.rotationDegrees = 0.0f;
+            anim.opacity = 1.0f - t;
+        }
+        else if (fadeOutPhase == GamePhase::PlaySetup)
+        {
+            // Real exit-to-PlaySetup (Pause only): fixed native size/
+            // opacity, slides horizontally off to the right, quadratic
+            // ease-in, no rotation.
+            const float t = std::min(phaseTimeSeconds / kFadeDurationSeconds, 1.0f);
+            const float num = t * t;
+            anim.centerX = kCharacterCenterX + 800.0f * num;
+            anim.halfW = charW * 0.5f;
+            anim.halfH = charH * 0.5f;
+            anim.rotationDegrees = 0.0f;
+        }
+        else
+        {
+            // Real exit-to-Init (or any other destination): the entrance
+            // formula run in reverse -- shrinks to nothing while spinning
+            // UP into a full 360, over the first 0.75s of the real 1.0s
+            // commit window (leaving a real ~0.25s "dead"/invisible
+            // window before the phase actually commits -- reproduced
+            // faithfully, not "fixed").
+            const float shrinkT = std::min(phaseTimeSeconds / kPauseEntryDurationSeconds, 1.0f);
+            const float numShrink = 1.0f - shrinkT;
+            anim.halfW = (charW * 0.5f) * numShrink;
+            anim.halfH = (charH * 0.5f) * numShrink;
+            anim.rotationDegrees = shrinkT * shrinkT * 360.0f;
+        }
+
+        anim.visible = anim.halfW > 0.0f && anim.halfH > 0.0f;
+        return anim;
+    }
+
+    GEInputPad::SetupFadeAnim GEInputPad::ComputeSetupFadeAnim(float phaseTimeSeconds, bool exiting) const
+    {
+        const float t = std::min(phaseTimeSeconds / kFadeDurationSeconds, 1.0f);
+        const float enteringNum = 1.0f - (1.0f - t) * (1.0f - t);
+
+        float num;
+        float num2;
+        if (!exiting)
+        {
+            num = enteringNum;
+            // Real: once past the first 1.0s (i.e. genuinely idle/
+            // settled, not merely mid-entry), the gears keep slowly
+            // rotating forever (400 frames = 20s per unit) rather than
+            // freezing -- confirmed via research.
+            num2 = phaseTimeSeconds < kFadeDurationSeconds
+                       ? enteringNum
+                       : 1.0f + (phaseTimeSeconds - kFadeDurationSeconds) / 20.0f;
+        }
+        else
+        {
+            // Real exit: both num and num2 inverted -- an exit fade never
+            // outlasts the bounded 1.0s commit window, so num2's own
+            // "settled" branch above never applies here.
+            num = 1.0f - enteringNum;
+            num2 = 1.0f - enteringNum;
+        }
+
+        SetupFadeAnim anim{};
+        anim.speedyLeft = 720.0f - 640.0f * num;
+        anim.speedyRight = 1360.0f - 640.0f * num;
+        anim.speedyOpacity = num * num;
+        anim.gearOpacity = 0.5f - num * 0.4f;
+        anim.gearRotation1 = -num2 * 250.0f;
+        anim.gearRotation2 = num2 * 125.0f;
+        return anim;
     }
 
     bool GEInputPad::UpdatePlay(const Microsoft::Xna::Framework::Input::MouseState& mouse,
@@ -785,13 +908,14 @@ namespace GalaxyEggbert::CNA
 
         if (!mouseDown && mouseWasDown_)
         {
-            // Continue/Restart/Setup are wired to real behavior (see
-            // GEInputPad.hpp's UpdatePause() comment) -- Menu/Back render
-            // at their real position/icon but are intentionally inert, no
-            // destination screen exists yet.
+            // Continue/Restart/Setup/Menu are all wired to real behavior
+            // (see GEInputPad.hpp's UpdatePause() comment -- Menu now
+            // goes to Init, 2026-07-13) -- Back's real destination
+            // (hub-world navigation) still doesn't exist here.
             if (activeControl_ == kPauseControlContinue) result.continuePressed = true;
             else if (activeControl_ == kPauseControlRestart) result.restartPressed = true;
             else if (activeControl_ == kPauseControlSetup) result.setupPressed = true;
+            else if (activeControl_ == kPauseControlMenu) result.menuPressed = true;
             activeControl_ = -1;
         }
 
@@ -800,7 +924,8 @@ namespace GalaxyEggbert::CNA
     }
 
     void GEInputPad::DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                              int viewportW, int viewportH, bool showBack, bool showRestart)
+                              int viewportW, int viewportH, bool showBack, bool showRestart,
+                              float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -814,6 +939,7 @@ namespace GalaxyEggbert::CNA
 
         // Real pause.png is an exact 640x480 match for the reference
         // space -- a direct full-screen quad, no cropping/UV math needed.
+        // The background never fades -- only the character does.
         Quad background;
         background.x0 = refToScreenX(0.0f);
         background.y0 = refToScreenY(0.0f);
@@ -825,71 +951,87 @@ namespace GalaxyEggbert::CNA
         background.v1 = 1.0f;
         std::vector<Quad> backgroundQuads{background};
 
-        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
-        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
-        Quad character;
-        character.x0 = refToScreenX(kCharacterCenterX - charW * 0.5f);
-        character.y0 = refToScreenY(kCharacterCenterY - charH * 0.5f);
-        character.x1 = refToScreenX(kCharacterCenterX + charW * 0.5f);
-        character.y1 = refToScreenY(kCharacterCenterY + charH * 0.5f);
-        character.u0 = 0.0f;
-        character.v0 = 0.0f;
-        character.u1 = 1.0f;
-        character.v1 = 1.0f;
-        std::vector<Quad> characterQuads{character};
+        // Real entrance flourish / exit fades (plan.md MENU-088/089) --
+        // see ComputePauseResumeCharacterAnim()'s own comment for the
+        // per-`fadeOutPhase` formulas.
+        const auto anim = ComputePauseResumeCharacterAnim(phaseTimeSeconds, fadeOutPhase);
+        std::vector<Easy3D::BillboardVertex> charVertices;
+        std::vector<std::uint32_t> charIndices;
+        if (anim.visible)
+        {
+            AppendRotatedQuadUv(charVertices, charIndices, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
+                                anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
+        }
 
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
         const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
-
-        // Real button labels (confirmed 2026-07-13 against `Game1::
-        // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
-        // `Phase::Pause`): centered under each VISIBLE button, at real
-        // scale 0.7, Y = button's real bottom edge + 2. Real EN strings --
-        // note PauseMenu's real text is "Home", not "Menu".
         std::vector<Quad> labelQuads;
-        const auto appendLabel = [&](int index, bool visible, const char* text)
-        {
-            if (!visible)
-            {
-                return;
-            }
-            const Rect r = PauseButtonRect(index);
-            const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
-            const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
-            AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
-        };
 
-        const auto appendButton = [&](int index, bool visible, int icon, int controlId)
+        // Real: buttons/labels are hidden entirely while an exit fade is
+        // active (`fadeOutPhase != None`), confirmed via research -- NOT
+        // during the entrance flourish (`fadeOutPhase == None` covers
+        // both a fresh entry and the settled idle state).
+        if (fadeOutPhase == GalaxyEggbert::GamePhase::None)
         {
-            if (!visible)
+            // Real button labels (confirmed 2026-07-13 against `Game1::
+            // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
+            // `Phase::Pause`): centered under each VISIBLE button, at real
+            // scale 0.7, Y = button's real bottom edge + 2. Real EN
+            // strings -- note PauseMenu's real text is "Home", not "Menu".
+            const auto appendLabel = [&](int index, bool visible, const char* text)
             {
-                return;
-            }
-            const Rect r = PauseButtonRect(index);
-            Quad q;
-            q.x0 = refToScreenX(r.x0);
-            q.y0 = refToScreenY(r.y0);
-            q.x1 = refToScreenX(r.x1);
-            q.y1 = refToScreenY(r.y1);
-            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
-            (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
-        };
-        appendButton(0, true, kIconPauseMenu, kPauseControlMenu);
-        appendButton(1, showBack, kIconPauseBack, kPauseControlBack);
-        appendButton(2, true, kIconPauseSetup, kPauseControlSetup);
-        appendButton(3, showRestart, kIconPauseRestart, kPauseControlRestart);
-        appendButton(4, true, kIconPauseContinue, kPauseControlContinue);
-        appendLabel(0, true, "Home");
-        appendLabel(1, showBack, "Back");
-        appendLabel(2, true, "Setup");
-        appendLabel(3, showRestart, "Restart");
-        appendLabel(4, true, "Continue");
+                if (!visible)
+                {
+                    return;
+                }
+                const Rect r = PauseButtonRect(index);
+                const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
+                const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
+                AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
+            };
+
+            const auto appendButton = [&](int index, bool visible, int icon, int controlId)
+            {
+                if (!visible)
+                {
+                    return;
+                }
+                const Rect r = PauseButtonRect(index);
+                Quad q;
+                q.x0 = refToScreenX(r.x0);
+                q.y0 = refToScreenY(r.y0);
+                q.x1 = refToScreenX(r.x1);
+                q.y1 = refToScreenY(r.y1);
+                PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
+            };
+            appendButton(0, true, kIconPauseMenu, kPauseControlMenu);
+            appendButton(1, showBack, kIconPauseBack, kPauseControlBack);
+            appendButton(2, true, kIconPauseSetup, kPauseControlSetup);
+            appendButton(3, showRestart, kIconPauseRestart, kPauseControlRestart);
+            appendButton(4, true, kIconPauseContinue, kPauseControlContinue);
+            appendLabel(0, true, "Home");
+            appendLabel(1, showBack, "Back");
+            appendLabel(2, true, "Setup");
+            appendLabel(3, showRestart, "Restart");
+            appendLabel(4, true, "Continue");
+        }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
-        FlushQuads(device, *blupiyoupieEffect_, blupiyoupieRenderer_, characterQuads, viewportW, viewportH, 1.0f);
+        if (!charIndices.empty())
+        {
+            blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
+                0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
+            blupiyoupieEffect_->setAlphaProperty(anim.opacity);
+            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
+            blupiyoupieEffect_->setAlphaProperty(1.0f);
+        }
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
@@ -1068,7 +1210,8 @@ namespace GalaxyEggbert::CNA
     }
 
     void GEInputPad::DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                              int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer)
+                              int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer,
+                              float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1081,7 +1224,7 @@ namespace GalaxyEggbert::CNA
         const auto refToScreenY = [&](float y) { return y * scale; };
 
         // Real setup.png is an exact 640x480 match for the reference
-        // space, same as pause.png/win.png/lost.png.
+        // space, same as pause.png/win.png/lost.png. Never fades.
         Quad background;
         background.x0 = refToScreenX(0.0f);
         background.y0 = refToScreenY(0.0f);
@@ -1093,68 +1236,112 @@ namespace GalaxyEggbert::CNA
         background.v1 = 1.0f;
         std::vector<Quad> backgroundQuads{background};
 
+        // Real speedyblupi.png slide-in + 2 rotating gear.png decorations
+        // (plan.md MENU-088/089, MENU-059/060) -- see
+        // ComputeSetupFadeAnim()'s own comment for the exact real formula,
+        // shared verbatim by entry and exit (num/num2 inverted on exit).
+        const bool exiting = fadeOutPhase != GalaxyEggbert::GamePhase::None;
+        const auto anim = ComputeSetupFadeAnim(phaseTimeSeconds, exiting);
+
+        Quad speedyQuad;
+        speedyQuad.x0 = refToScreenX(anim.speedyLeft);
+        speedyQuad.y0 = refToScreenY(0.0f);
+        speedyQuad.x1 = refToScreenX(anim.speedyRight);
+        speedyQuad.y1 = refToScreenY(160.0f);
+        speedyQuad.u0 = 0.0f;
+        speedyQuad.v0 = 0.0f;
+        speedyQuad.u1 = 1.0f;
+        speedyQuad.v1 = 1.0f;
+        std::vector<Quad> speedyQuads{speedyQuad};
+
+        std::vector<Easy3D::BillboardVertex> gearVertices;
+        std::vector<std::uint32_t> gearIndices;
+        AppendRotatedQuadUv(gearVertices, gearIndices, refToScreenX(kGear1CenterX), refToScreenY(kGear1CenterY),
+                            kGear1Half * scale, kGear1Half * scale, anim.gearRotation1, 0.0f, 0.0f, 1.0f, 1.0f);
+        AppendRotatedQuadUv(gearVertices, gearIndices, refToScreenX(kGear2CenterX), refToScreenY(kGear2CenterY),
+                            kGear2Half * scale, kGear2Half * scale, anim.gearRotation2, 0.0f, 0.0f, 1.0f, 1.0f);
+
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
         const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
 
-        const auto appendButton = [&](const Rect& r, int icon, int controlId)
+        // Real: buttons/labels are hidden entirely while an exit fade is
+        // active, not during the entry decoration (which plays as a
+        // purely decorative overlay atop an already-interactive screen,
+        // confirmed via research).
+        if (!exiting)
         {
-            Quad q;
-            q.x0 = refToScreenX(r.x0);
-            q.y0 = refToScreenY(r.y0);
-            q.x1 = refToScreenX(r.x1);
-            q.y1 = refToScreenY(r.y1);
-            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
-            (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
-        };
-        const auto appendLabel = [&](const Rect& r, const char* text)
-        {
-            const float rightX = refToScreenX(r.x1);
-            const float centerY = refToScreenY((r.y0 + r.y1) * 0.5f);
-            AppendLeftAlignedLabel(labelQuads, text, rightX + kSetupLabelXOffset, centerY, scale);
-        };
+            const auto appendButton = [&](const Rect& r, int icon, int controlId)
+            {
+                Quad q;
+                q.x0 = refToScreenX(r.x0);
+                q.y0 = refToScreenY(r.y0);
+                q.x1 = refToScreenX(r.x1);
+                q.y1 = refToScreenY(r.y1);
+                PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
+            };
+            const auto appendLabel = [&](const Rect& r, const char* text)
+            {
+                const float rightX = refToScreenX(r.x1);
+                const float centerY = refToScreenY((r.y0 + r.y1) * 0.5f);
+                AppendLeftAlignedLabel(labelQuads, text, rightX + kSetupLabelXOffset, centerY, scale);
+            };
 
-        // Real icon SWAP (not just opacity) for the 3 toggle-style
-        // buttons -- Jump/Zoom/Accel have no real state tracked in this
-        // engine (no meaningful desktop equivalent, see class comment), so
-        // they always render the "off" icon.
-        appendButton(kSetupSoundsRect, soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
-        appendButton(kSetupJumpRect, kIconSetupToggleOff, kSetupControlJump);
-        appendButton(kSetupZoomRect, kIconSetupToggleOff, kSetupControlZoom);
-        appendButton(kSetupAccelRect, kIconSetupToggleOff, kSetupControlAccel);
-        if (showReset)
-        {
-            appendButton(kSetupResetRect, kIconSetupReset, kSetupControlReset);
-        }
-        appendButton(kSetupReturnRect, kIconSetupReturn, kSetupControlReturn);
+            // Real icon SWAP (not just opacity) for the 3 toggle-style
+            // buttons -- Jump/Zoom/Accel have no real state tracked in
+            // this engine (no meaningful desktop equivalent, see class
+            // comment), so they always render the "off" icon.
+            appendButton(kSetupSoundsRect, soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
+            appendButton(kSetupJumpRect, kIconSetupToggleOff, kSetupControlJump);
+            appendButton(kSetupZoomRect, kIconSetupToggleOff, kSetupControlZoom);
+            appendButton(kSetupAccelRect, kIconSetupToggleOff, kSetupControlAccel);
+            if (showReset)
+            {
+                appendButton(kSetupResetRect, kIconSetupReset, kSetupControlReset);
+            }
+            appendButton(kSetupReturnRect, kIconSetupReturn, kSetupControlReturn);
 
-        appendLabel(kSetupSoundsRect, "Sound effects");
-        appendLabel(kSetupJumpRect, "Jump button on the right");
-        appendLabel(kSetupZoomRect, "Automatic zoom on action");
-        appendLabel(kSetupAccelRect, "Accelerometer");
-        if (showReset)
-        {
-            // Real 2-line label ("Player {0} :\nErase progress") collapsed
-            // to one line -- see class comment.
-            const std::string resetLabel = "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) +
-                                           ": Erase progress";
-            appendLabel(kSetupResetRect, resetLabel.c_str());
+            appendLabel(kSetupSoundsRect, "Sound effects");
+            appendLabel(kSetupJumpRect, "Jump button on the right");
+            appendLabel(kSetupZoomRect, "Automatic zoom on action");
+            appendLabel(kSetupAccelRect, "Accelerometer");
+            if (showReset)
+            {
+                // Real 2-line label ("Player {0} :\nErase progress")
+                // collapsed to one line -- see class comment.
+                const std::string resetLabel = "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) +
+                                               ": Erase progress";
+                appendLabel(kSetupResetRect, resetLabel.c_str());
+            }
+            // SetupReturn has no real label at all in the source (same as WinLostReturn).
         }
-        // SetupReturn has no real label at all in the source (same as WinLostReturn).
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *setupBgEffect_, setupBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, speedyQuads, viewportW, viewportH,
+                   anim.speedyOpacity);
+        gearEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+        gearEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+        gearEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
+            0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
+        gearEffect_->setAlphaProperty(anim.gearOpacity);
+        gearRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, gearVertices, gearIndices);
+        gearRenderer_->Draw(device, *gearEffect_);
+        gearEffect_->setAlphaProperty(1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
-    bool GEInputPad::UpdateResume(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                                  int viewportW, int viewportH) noexcept
+    GEInputPad::ResumeInput GEInputPad::UpdateResume(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                      int viewportW, int viewportH) noexcept
     {
+        ResumeInput result;
+
         using Microsoft::Xna::Framework::Input::ButtonState;
 
         const float scale = static_cast<float>(viewportH) / kRefH;
@@ -1173,23 +1360,23 @@ namespace GalaxyEggbert::CNA
             else activeControl_ = -1;
         }
 
-        bool continuePressed = false;
         if (!mouseDown && mouseWasDown_)
         {
-            // Only Continue is wired to real behavior (see
-            // GEInputPad.hpp's UpdateResume() class comment) -- Menu
-            // renders at its real position/icon/label but is
-            // intentionally inert, same reasoning as Pause's own Menu.
-            continuePressed = (activeControl_ == kResumeControlContinue);
+            // Both buttons are now wired to real behavior (see
+            // GEInputPad.hpp's UpdateResume() class comment -- Menu now
+            // goes to Init, 2026-07-13, now that Init exists).
+            if (activeControl_ == kResumeControlContinue) result.continuePressed = true;
+            else if (activeControl_ == kResumeControlMenu) result.menuPressed = true;
             activeControl_ = -1;
         }
 
         mouseWasDown_ = mouseDown;
-        return continuePressed;
+        return result;
     }
 
     void GEInputPad::DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                               int viewportW, int viewportH)
+                               int viewportW, int viewportH, float phaseTimeSeconds,
+                               GalaxyEggbert::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1203,7 +1390,7 @@ namespace GalaxyEggbert::CNA
 
         // Real background is pause.png -- the SAME image as Pause
         // (confirmed via `Game1.cpp`'s shared `case Phase::Pause: case
-        // Phase::Resume:` background dispatch).
+        // Phase::Resume:` background dispatch). Never fades.
         Quad background;
         background.x0 = refToScreenX(0.0f);
         background.y0 = refToScreenY(0.0f);
@@ -1215,18 +1402,20 @@ namespace GalaxyEggbert::CNA
         background.v1 = 1.0f;
         std::vector<Quad> backgroundQuads{background};
 
-        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
-        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
-        Quad character;
-        character.x0 = refToScreenX(kCharacterCenterX - charW * 0.5f);
-        character.y0 = refToScreenY(kCharacterCenterY - charH * 0.5f);
-        character.x1 = refToScreenX(kCharacterCenterX + charW * 0.5f);
-        character.y1 = refToScreenY(kCharacterCenterY + charH * 0.5f);
-        character.u0 = 0.0f;
-        character.v0 = 0.0f;
-        character.u1 = 1.0f;
-        character.v1 = 1.0f;
-        std::vector<Quad> characterQuads{character};
+        // Real: Resume's entry flourish/exit fade is bit-for-bit Pause's
+        // own (confirmed via research) -- Resume->Play (Continue) never
+        // actually reaches this as an exit fade at all (the real `-2`
+        // mission sentinel bypasses the defer mechanism entirely, see
+        // this method's own class comment), so in practice fadeOutPhase
+        // here is only ever None or Init.
+        const auto anim = ComputePauseResumeCharacterAnim(phaseTimeSeconds, fadeOutPhase);
+        std::vector<Easy3D::BillboardVertex> charVertices;
+        std::vector<std::uint32_t> charIndices;
+        if (anim.visible)
+        {
+            AppendRotatedQuadUv(charVertices, charIndices, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
+                                anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
+        }
 
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
         const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
@@ -1234,31 +1423,44 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
 
-        const auto appendButton = [&](const Rect& r, int icon, int controlId)
+        if (fadeOutPhase == GalaxyEggbert::GamePhase::None)
         {
-            Quad q;
-            q.x0 = refToScreenX(r.x0);
-            q.y0 = refToScreenY(r.y0);
-            q.x1 = refToScreenX(r.x1);
-            q.y1 = refToScreenY(r.y1);
-            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
-            (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
-        };
-        const auto appendLabel = [&](const Rect& r, const char* text)
-        {
-            const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
-            const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
-            AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
-        };
+            const auto appendButton = [&](const Rect& r, int icon, int controlId)
+            {
+                Quad q;
+                q.x0 = refToScreenX(r.x0);
+                q.y0 = refToScreenY(r.y0);
+                q.x1 = refToScreenX(r.x1);
+                q.y1 = refToScreenY(r.y1);
+                PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
+            };
+            const auto appendLabel = [&](const Rect& r, const char* text)
+            {
+                const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
+                const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
+                AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
+            };
 
-        appendButton(kResumeMenuRect, kIconPauseMenu, kResumeControlMenu);
-        appendButton(kResumeContinueRect, kIconPauseContinue, kResumeControlContinue);
-        appendLabel(kResumeMenuRect, "Home");
-        appendLabel(kResumeContinueRect, "Continue");
+            appendButton(kResumeMenuRect, kIconPauseMenu, kResumeControlMenu);
+            appendButton(kResumeContinueRect, kIconPauseContinue, kResumeControlContinue);
+            appendLabel(kResumeMenuRect, "Home");
+            appendLabel(kResumeContinueRect, "Continue");
+        }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
-        FlushQuads(device, *blupiyoupieEffect_, blupiyoupieRenderer_, characterQuads, viewportW, viewportH, 1.0f);
+        if (!charIndices.empty())
+        {
+            blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
+                0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
+            blupiyoupieEffect_->setAlphaProperty(anim.opacity);
+            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
+            blupiyoupieEffect_->setAlphaProperty(1.0f);
+        }
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
@@ -1511,7 +1713,7 @@ namespace GalaxyEggbert::CNA
 
     void GEInputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, float phaseTimeSeconds, int selectedGamer, int livesA, int livesB,
-                             int livesC)
+                             int livesC, GalaxyEggbert::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1535,17 +1737,67 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> backgroundQuads{background};
 
         const float t = std::min(phaseTimeSeconds / kInitEntryDurationSeconds, 1.0f);
+        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
+        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
 
-        // Real title-logo entry: vertical ease-out slide-down from above
-        // the screen, Left/Right fixed (see this file's own kInitTitleLeft
-        // comment).
-        const float titleNum = 1.0f - (1.0f - t) * (1.0f - t);
-        const float titleTop = -160.0f + 160.0f * titleNum;
-        const float titleBottom = 160.0f * titleNum;
+        float titleLeft = kInitTitleLeft, titleRight = kInitTitleRight, titleTop, titleBottom;
+        float titleOpacity = 1.0f;
+        float charHalfW, charHalfH, charOpacity, charRotation = 0.0f;
+
+        using GalaxyEggbert::GamePhase;
+        if (fadeOutPhase == GamePhase::None)
+        {
+            // Real title-logo entry: vertical ease-out slide-down from
+            // above the screen, Left/Right fixed.
+            const float titleNum = 1.0f - (1.0f - t) * (1.0f - t);
+            titleTop = -160.0f + 160.0f * titleNum;
+            titleBottom = 160.0f * titleNum;
+
+            // Real blupiyoupie entry: scale 50%->100%, fade 0.25->1.0, no
+            // rotation.
+            const float charNum = 0.5f + t * 0.5f;
+            charOpacity = std::min(charNum * charNum, 1.0f);
+            charHalfW = (charW * 0.5f) * charNum;
+            charHalfH = (charH * 0.5f) * charNum;
+        }
+        else if (fadeOutPhase == GamePhase::Play)
+        {
+            // Real exit-to-Play: title reverses at 2x speed (already
+            // off-screen again by 0.5s, keeps going); blupiyoupie blows up
+            // to 11x while linearly fading out, no rotation -- same idiom
+            // as Pause->Play, just at Init's own (468,280).
+            const float num = 1.0f - 2.0f * t;
+            titleTop = -160.0f + 160.0f * num;
+            titleBottom = 160.0f * num;
+
+            const float charNum = 1.0f + t * 10.0f;
+            charHalfW = (charW * 0.5f) * charNum;
+            charHalfH = (charH * 0.5f) * charNum;
+            charOpacity = 1.0f - t;
+        }
+        else
+        {
+            // Real exit-to-MainSetup: title slides back off to the right
+            // while fading (`num=(1-t)^2`); blupiyoupie stays FIXED size/
+            // position and just fades out -- confirmed via research NO
+            // zoom happens here despite an earlier doc-comment claiming
+            // one.
+            const float num = (1.0f - t) * (1.0f - t);
+            titleLeft = 720.0f - 640.0f * num;
+            titleRight = 1360.0f - 640.0f * num;
+            titleTop = 0.0f;
+            titleBottom = 160.0f;
+            titleOpacity = num * num;
+
+            charHalfW = charW * 0.5f;
+            charHalfH = charH * 0.5f;
+            charOpacity = (1.0f - t) * (1.0f - t);
+        }
+
         Quad titleQuad;
-        titleQuad.x0 = refToScreenX(kInitTitleLeft);
+        titleQuad.x0 = refToScreenX(titleLeft);
         titleQuad.y0 = refToScreenY(titleTop);
-        titleQuad.x1 = refToScreenX(kInitTitleRight);
+        titleQuad.x1 = refToScreenX(titleRight);
         titleQuad.y1 = refToScreenY(titleBottom);
         titleQuad.u0 = 0.0f;
         titleQuad.v0 = 0.0f;
@@ -1553,19 +1805,14 @@ namespace GalaxyEggbert::CNA
         titleQuad.v1 = 1.0f;
         std::vector<Quad> titleQuads{titleQuad};
 
-        // Real blupiyoupie entry: scale 50%->100%, fade 0.25->1.0, no
-        // rotation.
-        const float charNum = 0.5f + t * 0.5f;
-        const float charOpacity = std::min(charNum * charNum, 1.0f);
-        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
-        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
-        const float halfWRef = (charW * 0.5f) * charNum;
-        const float halfHRef = (charH * 0.5f) * charNum;
         std::vector<Easy3D::BillboardVertex> charVertices;
         std::vector<std::uint32_t> charIndices;
-        AppendRotatedQuadUv(charVertices, charIndices,
-                            refToScreenX(kInitCharacterCenterX), refToScreenY(kInitCharacterCenterY),
-                            halfWRef * scale, halfHRef * scale, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+        if (charHalfW > 0.0f && charHalfH > 0.0f)
+        {
+            AppendRotatedQuadUv(charVertices, charIndices,
+                                refToScreenX(kInitCharacterCenterX), refToScreenY(kInitCharacterCenterY),
+                                charHalfW * scale, charHalfH * scale, charRotation, 0.0f, 0.0f, 1.0f, 1.0f);
+        }
 
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
         const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
@@ -1573,51 +1820,56 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
 
-        const auto appendIconQuad = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
+        // Real: buttons are hidden entirely while an exit fade is active.
+        if (fadeOutPhase == GamePhase::None)
         {
-            Quad q;
-            q.x0 = refToScreenX(r.x0);
-            q.y0 = refToScreenY(r.y0);
-            q.x1 = refToScreenX(r.x1);
-            q.y1 = refToScreenY(r.y1);
-            PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
-            bucket.push_back(q);
-        };
+            const auto appendIconQuad = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
+            {
+                Quad q;
+                q.x0 = refToScreenX(r.x0);
+                q.y0 = refToScreenY(r.y0);
+                q.x1 = refToScreenX(r.x1);
+                q.y1 = refToScreenY(r.y1);
+                PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                bucket.push_back(q);
+            };
 
-        const auto appendGamerRow = [&](const Rect& r, int control, int iconOff, int iconSel, bool selected,
-                                        char letter, int lives)
-        {
-            appendIconQuad(activeControl_ == control ? pressedQuads : normalQuads, r,
-                          selected ? iconSel : iconOff);
+            const auto appendGamerRow = [&](const Rect& r, int control, int iconOff, int iconSel, bool selected,
+                                            char letter, int lives)
+            {
+                appendIconQuad(activeControl_ == control ? pressedQuads : normalQuads, r,
+                              selected ? iconSel : iconOff);
 
-            const float textLeft = refToScreenX(r.x1 + kGamerTextXOffset);
-            std::string title = "Player ";
-            title += letter;
-            AppendGamerLabel(labelQuads, title, textLeft, refToScreenY(r.y0 + kGamerTitleYOffset),
-                            kGamerTitleScale, scale);
-            AppendGamerLabel(labelQuads, "Main gates : 0/12", textLeft, refToScreenY(r.y0 + kGamerMDoorsYOffset),
-                            kGamerBodyScale, scale);
-            AppendGamerLabel(labelQuads, "Secondary gates : 0/52", textLeft,
-                            refToScreenY(r.y0 + kGamerSDoorsYOffset), kGamerBodyScale, scale);
-            AppendGamerLabel(labelQuads, "Blupi : " + std::to_string(lives), textLeft,
-                            refToScreenY(r.y0 + kGamerLivesYOffset), kGamerBodyScale, scale);
-        };
+                const float textLeft = refToScreenX(r.x1 + kGamerTextXOffset);
+                std::string title = "Player ";
+                title += letter;
+                AppendGamerLabel(labelQuads, title, textLeft, refToScreenY(r.y0 + kGamerTitleYOffset),
+                                kGamerTitleScale, scale);
+                AppendGamerLabel(labelQuads, "Main gates : 0/12", textLeft, refToScreenY(r.y0 + kGamerMDoorsYOffset),
+                                kGamerBodyScale, scale);
+                AppendGamerLabel(labelQuads, "Secondary gates : 0/52", textLeft,
+                                refToScreenY(r.y0 + kGamerSDoorsYOffset), kGamerBodyScale, scale);
+                AppendGamerLabel(labelQuads, "Blupi : " + std::to_string(lives), textLeft,
+                                refToScreenY(r.y0 + kGamerLivesYOffset), kGamerBodyScale, scale);
+            };
 
-        appendGamerRow(kInitGamerARect, kInitControlGamerA, kIconInitGamerAOff, kIconInitGamerASel,
-                      selectedGamer == 0, 'A', livesA);
-        appendGamerRow(kInitGamerBRect, kInitControlGamerB, kIconInitGamerBOff, kIconInitGamerBSel,
-                      selectedGamer == 1, 'B', livesB);
-        appendGamerRow(kInitGamerCRect, kInitControlGamerC, kIconInitGamerCOff, kIconInitGamerCSel,
-                      selectedGamer == 2, 'C', livesC);
+            appendGamerRow(kInitGamerARect, kInitControlGamerA, kIconInitGamerAOff, kIconInitGamerASel,
+                          selectedGamer == 0, 'A', livesA);
+            appendGamerRow(kInitGamerBRect, kInitControlGamerB, kIconInitGamerBOff, kIconInitGamerBSel,
+                          selectedGamer == 1, 'B', livesB);
+            appendGamerRow(kInitGamerCRect, kInitControlGamerC, kIconInitGamerCOff, kIconInitGamerCSel,
+                          selectedGamer == 2, 'C', livesC);
 
-        appendIconQuad(activeControl_ == kInitControlSetup ? pressedQuads : normalQuads, kInitSetupRect,
-                      kIconInitSetup);
-        appendIconQuad(activeControl_ == kInitControlPlay ? pressedQuads : normalQuads, kInitPlayRect,
-                      kIconInitPlay);
+            appendIconQuad(activeControl_ == kInitControlSetup ? pressedQuads : normalQuads, kInitSetupRect,
+                          kIconInitSetup);
+            appendIconQuad(activeControl_ == kInitControlPlay ? pressedQuads : normalQuads, kInitPlayRect,
+                          kIconInitPlay);
+        }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *initBgEffect_, initBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
-        FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH,
+                   titleOpacity);
         if (!charIndices.empty())
         {
             blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
