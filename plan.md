@@ -455,8 +455,9 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       counters (`HUD-015`/`016`), (2026-07-13) both real `jauge.png` gauges — water/Nage
       breath (`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`)
       — and (2026-07-13) the perso decoy counter + its underlying place/retrieve mechanic
-      (`HUD-017`), and (2026-07-13) the training-hint overlay + its real mission-number
-      infrastructure (`HUD-024`). Avoid building a UI framework — a HUD is a handful of sprite
+      (`HUD-017`), (2026-07-13) the training-hint overlay + its real mission-number
+      infrastructure (`HUD-024`), and (2026-07-13) the real `Def::Phase` state machine gating
+      when the HUD is even shown at all (`HUD-023`). Avoid building a UI framework — a HUD is a handful of sprite
       draws keyed to game state, not a system. **The real `Decor::DrawInfo` function
       (`Decor.cpp:1185-1311` — the actual in-game HUD draw call, the authoritative source for what
       this phase should port) has now been read in full, end to end (2026-07-13), and every single
@@ -1584,16 +1585,64 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
       `PauseContinue`, ~lines 160-968) — the touch/button-overlay control system, a completely
       separate class from `GEHud`'s own `Decor::DrawInfo` port. Genuinely real and unimplemented,
       but belongs with a future touch/button-overlay task, not folded into `GEHud` as-is.
-- [ ] HUD-023 — `[?]` HUD hidden during non-Play phases (Init, Pause, Win, Lost, Setup). Plausible
-      (a real `GameState`-like concept exists per `Def.hpp`), but no such phase/state machine
-      exists in `GalaxyEggbertCNA` at all yet — not implementable until one does, not merely
-      unimplemented. **Confirmed real 2026-07-13 (follow-up research)**: `Def::Phase` enum
-      (`Def.hpp:51-66`) has exactly `Init`/`Play`/`Pause`/`Lost`/`Win` plus `First`/`Wait`/`Trial`/
-      `MainSetup`/`PlaySetup`/`Resume`/`Ranking` — a real, fully-defined state machine at the
-      `Game1` application layer. Implementing even a minimal version of this phase machine would
-      be a genuinely valuable, foundational addition (unlocks HUD-023 itself, real pause
-      behavior, and eventually win/lose screens) — a good candidate for a dedicated future task,
-      not a quick HUD-only fix.
+- [x] HUD-023 — HUD hidden during non-Play phases — **done 2026-07-13**, per explicit user
+      request to implement the full real `Def::Phase` state machine (not a trimmed-down subset).
+      Verified directly against `Def.hpp:51-66` (the enum itself) and `Game1.cpp:394-438`/
+      `979-1058` (`Update()`'s `if (phase==Play)` simulation gate, `SetPhase()`'s own transition
+      funnel).
+      - The real 13-value enum was already ported verbatim as `GalaxyEggbert::GamePhase`
+        (`include/GalaxyEggbert/def/GamePhase.hpp`, from an earlier session's blanket
+        transcription pass, previously unused anywhere). `GalaxyEggbertCnaGame` gained a real
+        `phase_` field + `SetPhase()`, matching the real source's own "never assign `phase_`
+        directly, always through `SetPhase()`" discipline.
+      - **Real simulation gate**: confirmed `Decor::MoveStep()` (this engine's own
+        `worldRuntime_`/`blupi_`/`interaction_` per-frame Update() calls) is the ONLY thing gated
+        behind `Phase::Play` in the real source — ported as a single early-return
+        (`if (phase_ != Play) return;`) wrapping this engine's entire existing gameplay-update
+        block, verified live (a forced Escape-press/release at two different frames showed
+        `phase_` toggling Play<->Pause exactly on cue, temporary debug instrumentation, reverted
+        before committing).
+      - **Real Pause**: the real source's own trigger is gamepad-Back/a touch button — genuinely
+        no keyboard binding exists in mobile-eggbert at all (an XNA/WP7 port) — Escape is this
+        engine's own pick. Real `PauseContinue` (resume in place) is implemented; real
+        `PauseRestart`/`PauseMenu`/`PauseSetup` (reload level / return to main menu / open
+        settings) are NOT modeled, since no level-reload or menu system exists yet.
+      - **Real Win/Lost triggers**: verified they map exactly onto state this engine already
+        tracks — real Lost (`Decor.cpp:6374-6435`, a death animation completing while lives are
+        exhausted, `DoorsLost()`'s reset-to-3) is precisely what
+        `GEInteractionSystem::GameOverCount()` already increments at; real Win
+        (`Decor::IsTerminated()`, reaching the exit with all treasure) is precisely what
+        `GEInteractionSystem::ExitReached()` already gates on. No new gameplay logic needed for
+        either trigger. Real `WinLostReturn` has no fixed auto-timer (explicit input only) — the
+        Action key returns to Play here, resetting Blupi to the origin spawn point (NOT a full
+        real level-reload — lives/treasure/keys/etc. are deliberately left as-is, a documented
+        simplification; the real per-mission win-screen nuance found during research, where only
+        the very last mission shows a real Win screen and every other "win" silently advances to
+        the next sub-level while staying in `Play`, doesn't map cleanly onto this engine's
+        single-world setup and wasn't attempted).
+      - **`First`/`Wait`/`Init` are real but not part of this engine's own startup flow**: no
+        async content-loading step or main menu exists yet to show during them — `GalaxyEggbertCNA`
+        starts directly in `Play`, a documented, engine-appropriate adaptation (matching the same
+        "collision-only, not a 2D-system transcription" precedent `E3D-MIG-060` already set for
+        `GEBlupiController`), not a missing feature. `Trial`/`MainSetup`/`PlaySetup`/`Resume`/
+        `Ranking` are real enum values with NO trigger wired to them at all — reachable in
+        principle (the type exists), unreachable in practice until settings/upsell/ranking
+        screens exist.
+      - **New `GEHud::Draw()` `overlayMessage` parameter**: when non-null, the real `DrawInfo` HUD
+        this class ports is skipped ENTIRELY (matching the real "HUD hidden outside Play"
+        behavior exactly) and replaced with just one big centered message ("PAUSED"/"YOU WIN!"/
+        "GAME OVER") — not a claim of real Pause/Win/Lost SCREEN parity (those are full menu
+        screens needing score/level-slot/level-time infrastructure this engine doesn't have,
+        `GalaxyEggbertSimple3D`'s own already-shipped phase machine has some of this — read for
+        design reference only, not copied/linked, per `CLAUDE.md`), just an honest, minimal
+        placeholder so a non-Play phase isn't a silent, feedback-free freeze.
+      - Verified live: default Play behavior unchanged (screenshot comparison), all 3 overlay
+        messages render correctly centered with the normal HUD fully hidden, and the Play<->Pause
+        toggle responds correctly to simulated input across multiple frames (temporary debug
+        instrumentation, reverted before committing) + full suite (64/64 unit tests, all verify
+        tools — this file's own state-machine logic isn't independently unit-testable, tied to
+        the full CNA `Game`/window lifecycle like the rest of `GalaxyEggbertCnaGame.cpp`, same as
+        every other change to this specific file this session) + both backends.
 - [x] HUD-024 — Training hint overlay at screen top (missions 11-14 only) — **done 2026-07-13**,
       per explicit user approval to (1) implement a real mission-number concept, (2) transcribe
       all 4 `Tables::table_training1`-`4` arrays, and (3) find and transcribe their real English

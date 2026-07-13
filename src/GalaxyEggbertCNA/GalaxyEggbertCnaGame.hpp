@@ -10,6 +10,8 @@
 #include "Game/GEHud.hpp"
 #include "Game/GETrainingHints.hpp"
 
+#include <GalaxyEggbert/def/GamePhase.hpp>
+
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
 #include <Easy3D/CubeMeshRenderer.hpp>
@@ -161,6 +163,47 @@ namespace GalaxyEggbert::CNA
         // Platform lift patrol, crate push, and pickup collection
         // (2026-07-10, see GEInteractionSystem.hpp).
         GEInteractionSystem interaction_;
+
+        // Real Def::Phase state machine (2026-07-13, plan.md HUD-023),
+        // verified directly against Def.hpp's own enum (already ported
+        // verbatim as GalaxyEggbert::GamePhase) and Game1.cpp's real
+        // SetPhase()/Update() dispatch. Real source's ONLY phase that runs
+        // simulation (Decor::MoveStep(), i.e. this class's own worldRuntime_/
+        // blupi_/interaction_ Update() calls) is Play -- every other phase
+        // freezes it, confirmed by Game1.cpp:394-438's own `if (phase==Play)`
+        // gate. `First`/`Wait`/`Init` are real but not part of this engine's
+        // own startup flow (no async content-loading step or main menu
+        // exists yet to show during them) -- CNA starts directly in Play, a
+        // documented, engine-appropriate adaptation, not a missing feature.
+        // `Trial`/`MainSetup`/`PlaySetup`/`Resume`/`Ranking` are real enum
+        // values with NO trigger wired to them yet (no settings/upsell/
+        // ranking screens exist) -- reachable in principle, unreachable in
+        // practice until those screens exist.
+        //
+        // Real Pause trigger is gamepad-Back / a touch PlayPause button --
+        // the real source has NO keyboard binding at all (an XNA/WP7 port);
+        // Escape is this engine's own pick. Real PauseContinue resumes in
+        // place (implemented); real PauseRestart/PauseMenu/PauseSetup
+        // (reload level / return to main menu / open settings) are NOT
+        // modeled -- no level-reload or menu system exists yet.
+        //
+        // Real Lost trigger: a death animation completing while lives are
+        // exhausted (`Decor.cpp:6374-6435`) -- this engine's own
+        // `GEInteractionSystem::GameOverCount()` already increments at
+        // exactly that real moment (`DoorsLost()`'s reset-to-3 behavior).
+        // Real Win trigger: reaching the exit with all treasure
+        // (`Decor::IsTerminated()`) -- already exactly what
+        // `GEInteractionSystem::ExitReached()` gates on. Real WinLostReturn
+        // input has no fixed auto-timer (explicit input only); this engine
+        // reuses the Action key and resets Blupi to the origin spawn point
+        // (not a full real level-reload, which needs infrastructure this
+        // engine doesn't have -- lives/treasure/keys/etc. are NOT reset by
+        // this, a documented simplification).
+        void SetPhase(GalaxyEggbert::GamePhase next) noexcept;
+        [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
+        GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Play;
+        bool pauseKeyWasDown_ = false;
+        bool phaseReturnKeyWasDown_ = false;
 
         // Real mobile-eggbert bottom HUD + the interim animation-state
         // indicator (2026-07-10, see GEHud.hpp) -- replaces the earlier

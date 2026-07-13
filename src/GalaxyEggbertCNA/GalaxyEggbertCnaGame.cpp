@@ -371,9 +371,77 @@ namespace GalaxyEggbert::CNA
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
     }
 
+    void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next) noexcept
+    {
+        // Real Game1::SetPhase() resets a per-phase timer and clears input
+        // debounce state on every transition (Game1.cpp:979-1058) -- this
+        // engine's own equivalent is just the 2 key-debounce trackers below,
+        // since neither a settings-return-phase nor a fade-out delay is
+        // modeled.
+        phase_ = next;
+        pauseKeyWasDown_ = false;
+        phaseReturnKeyWasDown_ = false;
+    }
+
+    const char* GalaxyEggbertCnaGame::PhaseOverlayMessage() const noexcept
+    {
+        switch (phase_)
+        {
+            case GalaxyEggbert::GamePhase::Pause:
+                return "PAUSED";
+            case GalaxyEggbert::GamePhase::Win:
+                return "YOU WIN!";
+            case GalaxyEggbert::GamePhase::Lost:
+                return "GAME OVER";
+            default:
+                return nullptr;
+        }
+    }
+
     void GalaxyEggbertCnaGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
+
+        // Phase transitions (plan.md HUD-023) -- read regardless of the
+        // current phase, since the big Play-gated simulation block below
+        // (and its own input reading) doesn't run at all outside Play.
+        {
+            using Microsoft::Xna::Framework::Input::Keyboard;
+            using Microsoft::Xna::Framework::Input::Keys;
+            const auto phaseKeys = Keyboard::GetState();
+            const bool pausePressed = phaseKeys.IsKeyDown(Keys::Escape);
+            if (pausePressed && !pauseKeyWasDown_)
+            {
+                if (phase_ == GalaxyEggbert::GamePhase::Play)
+                {
+                    SetPhase(GalaxyEggbert::GamePhase::Pause);
+                }
+                else if (phase_ == GalaxyEggbert::GamePhase::Pause)
+                {
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
+            }
+            pauseKeyWasDown_ = pausePressed;
+
+            if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
+            {
+                const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space);
+                if (returnPressed && !phaseReturnKeyWasDown_)
+                {
+                    // Not a real level reload (needs infrastructure this
+                    // engine doesn't have) -- just back to the origin spawn,
+                    // see this class's own SetPhase()/phase_ comment.
+                    blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
+                phaseReturnKeyWasDown_ = returnPressed;
+            }
+        }
+
+        if (phase_ != GalaxyEggbert::GamePhase::Play)
+        {
+            return;
+        }
 
         const float dt = static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
         worldRuntime_.Update(dt);
@@ -955,10 +1023,29 @@ namespace GalaxyEggbert::CNA
             const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None;
             const bool canGrantHide = secretPower != GEBlupiController::SecretPower::Shield &&
                                        secretPower != GEBlupiController::SecretPower::Cloud;
+            // Captured before Update() so the Lost transition below can
+            // detect the exact frame GameOverCount() increments (plan.md
+            // HUD-023's own real trigger, Decor.cpp:6374-6435).
+            const int gameOverCountBeforeUpdate = interaction_.GameOverCount();
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide);
+
+            // Real Win/Lost phase transitions (plan.md HUD-023): Lost
+            // fires the instant GameOverCount() increments (real
+            // DoorsLost()); Win fires the instant ExitReached() becomes
+            // true (real IsTerminated(), already gated on holding every
+            // treasure -- see GEInteractionSystem::Update()'s own exit
+            // handling).
+            if (interaction_.GameOverCount() > gameOverCountBeforeUpdate)
+            {
+                SetPhase(GalaxyEggbert::GamePhase::Lost);
+            }
+            else if (interaction_.ExitReached())
+            {
+                SetPhase(GalaxyEggbert::GamePhase::Win);
+            }
 
             // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()
             // reflects whether Blupi was standing on an active lift BEFORE
@@ -1746,6 +1833,7 @@ namespace GalaxyEggbert::CNA
                       blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
                       blupi_.GetSecretPowerLevel(),
                       trainingHint,
+                      PhaseOverlayMessage(),
                       blupi_.GetAnimIcon());
         }
 

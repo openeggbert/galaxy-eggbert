@@ -225,6 +225,7 @@ namespace GalaxyEggbert::CNA
                      bool waterGaugeVisible, int waterGaugeLevel,
                      bool powerGaugeVisible, int powerGaugeLevel,
                      const char* trainingHint,
+                     const char* overlayMessage,
                      int animIcon)
     {
         if (!loaded_)
@@ -240,6 +241,44 @@ namespace GalaxyEggbert::CNA
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
 
+        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
+        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+
+        // Non-Play phase overlay (plan.md HUD-023): the real HUD is fully
+        // hidden, replaced by just this one big centered message.
+        if (overlayMessage != nullptr && overlayMessage[0] != '\0')
+        {
+            std::vector<Quad> messageQuads;
+            const std::string str(overlayMessage);
+            constexpr float kMessageScale = 1.5f;
+            const float cellPx = kGlyphCellPx * kMessageScale;
+            const float advance = kGlyphAdvance * kMessageScale;
+            const float totalAdvance = static_cast<float>(str.size()) * advance;
+            float penX = kRefW * 0.5f - totalAdvance * 0.5f;
+            const float textY = kRefH * 0.5f - cellPx * 0.5f;
+            for (const char c : str)
+            {
+                const int rank = static_cast<int>(static_cast<unsigned char>(c));
+                const int gcol = rank % kGlyphCols;
+                const int grow = rank / kGlyphCols;
+                Quad q;
+                q.x0 = refToScreenX(penX - (cellPx - advance) * 0.5f);
+                q.y0 = refToScreenY(textY);
+                q.x1 = q.x0 + cellPx * scale;
+                q.y1 = q.y0 + cellPx * scale;
+                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                messageQuads.push_back(q);
+                penX += advance;
+            }
+            device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+            FlushQuads(device, *textEffect_, textRenderer_, messageQuads, viewportW, viewportH, 1.0f);
+            device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+            return;
+        }
+
         const float blupiSheetW = static_cast<float>(blupiTexture_.getWidthProperty());
         const float blupiSheetH = static_cast<float>(blupiTexture_.getHeightProperty());
         const float elementSheetW = static_cast<float>(elementTexture_.getWidthProperty());
@@ -248,8 +287,6 @@ namespace GalaxyEggbert::CNA
         const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
         const float buttonSheetW = static_cast<float>(buttonTexture_.getWidthProperty());
         const float buttonSheetH = static_cast<float>(buttonTexture_.getHeightProperty());
-        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
 
         std::vector<Quad> blupiQuads;
         std::vector<Quad> elementQuads;

@@ -113,6 +113,16 @@ namespace GalaxyEggbert::CNA
         // panel width. Pass nullptr for no hint this frame (GETrainingHints
         // handles the real mission/position/state gating -- this parameter
         // is just "what to show, if anything").
+        // overlayMessage added 2026-07-13 (plan.md HUD-023, real
+        // `Def::Phase`): when non-null, the REAL `Decor::DrawInfo` HUD this
+        // class otherwise ports is skipped entirely -- matching the real
+        // "HUD hidden outside Play" behavior exactly -- and instead just
+        // this one message is drawn, big and centered mid-screen. Not part
+        // of the real `DrawInfo` port itself (mobile-eggbert's own Pause/
+        // Win/Lost screens are full menu screens this engine has no
+        // equivalent infrastructure for yet -- score, level slots, etc.);
+        // a minimal, honest placeholder so a non-Play phase isn't a
+        // silent, feedback-free freeze, not a claim of real screen parity.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
@@ -121,6 +131,7 @@ namespace GalaxyEggbert::CNA
                   bool waterGaugeVisible, int waterGaugeLevel,
                   bool powerGaugeVisible, int powerGaugeLevel,
                   const char* trainingHint,
+                  const char* overlayMessage,
                   int animIcon);
 
     private:

@@ -262,6 +262,28 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Real `Def::Phase` state machine implemented (2026-07-13, plan.md `HUD-023`), per explicit
+  user request for the FULL real enum, not a trimmed subset.** `GalaxyEggbert::GamePhase`
+  (already ported verbatim in an earlier session, previously unused anywhere) is now wired up:
+  `GalaxyEggbertCnaGame` gained a real `phase_`/`SetPhase()`. The real simulation gate (confirmed
+  via research: `Decor::MoveStep()` is the ONLY thing gated behind `Phase::Play` in the real
+  source) is ported as a single early-return wrapping this engine's entire existing gameplay-
+  update block. Escape toggles Play<->Pause (the real source has no keyboard binding at all — an
+  XNA/WP7 port — this is this engine's own pick). Win/Lost triggers map exactly onto state
+  already tracked: real Lost is precisely `GEInteractionSystem::GameOverCount()` incrementing,
+  real Win is precisely `ExitReached()` becoming true — no new gameplay logic needed for either.
+  `GEHud::Draw()` gained an `overlayMessage` parameter: non-null skips the real HUD entirely
+  (matching "HUD hidden outside Play" exactly) and shows one big centered message instead
+  ("PAUSED"/"YOU WIN!"/"GAME OVER") — an honest minimal placeholder, not a claim of real menu-
+  screen parity (those need score/level-slot/level-time infrastructure this engine doesn't have).
+  `First`/`Wait`/`Init` are real but not part of this engine's own startup flow (no async
+  loading step or main menu exists) — starts directly in `Play`. `Trial`/`MainSetup`/
+  `PlaySetup`/`Resume`/`Ranking` are real enum values with no trigger wired to them yet.
+  Verified live: default Play behavior unchanged, all 3 overlay messages render correctly, and
+  the Play<->Pause toggle responds correctly to simulated input across multiple frames
+  (temporary debug instrumentation, reverted before committing) + full suite (64/64 unit tests,
+  all verify tools) + both backends.
+
 - **Training-hint overlay implemented, Phase 9's real `DrawInfo` scope now 100% complete
   (2026-07-13, plan.md `HUD-024`).** Per explicit user approval: (1) implemented a real
   mission-number concept (`Worlds::World::missionNumber()`, using format v2's first
