@@ -331,9 +331,9 @@ namespace GalaxyEggbert::CNA
         // kBulletCap, not a running total (`+= 10` then clamped in the real
         // source has the same net effect here since the gate already
         // guarantees the prior count was below the cap). The actual
-        // firing/ammo-consumption mechanic (Helicopter/Tank vehicle fire
-        // button, real ObjectType23 projectile spawn) is NOT modeled --
-        // deferred as its own follow-up, out of this pickup's scope.
+        // firing/ammo-consumption mechanic (Tank fire button, real
+        // ObjectType23 projectile spawn) is done -- see Update()'s own
+        // blupiFirePressed/blupiCanFire parameters (plan.md BULLET-001).
         [[nodiscard]] int BulletCount() const noexcept { return bulletCount_; }
 
         // Platform lift riding (plan.md E3D-MIG-152, real `Decor::
@@ -354,6 +354,62 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] float RideDeltaX() const noexcept { return rideDeltaX_; }
         [[nodiscard]] float RideDeltaZ() const noexcept { return rideDeltaZ_; }
         [[nodiscard]] float RideStandY() const noexcept { return rideStandY_; }
+
+        // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13), verified
+        // directly against `Decor::CheatAction(Tables::CheatCodes)` --
+        // overturned several draft assumptions in this repo's own earlier
+        // (unverified) plan.md checklist, see each method's own comment
+        // for the correction. Real dispatch is one-shot (pressing a cheat
+        // button immediately closes the overlay and applies the effect,
+        // no confirmation) -- these methods mirror that: called once, not
+        // every frame, from the caller's own button-press handler.
+        //
+        // Cheat1 "OpenDoors": real `m_bCheatDoors` is a persistent toggle
+        // re-applied via `AdaptDoors()`; ported here as a one-shot "open
+        // every door in the world right now" instead (this engine has no
+        // reversible "close it back up" bookkeeping, and the toggle's
+        // OBSERVABLE effect -- every door open -- is what matters).
+        // Scans the whole grid for both real door families: key-gated
+        // (`BlockTypes::isDoor()`, icons 334-336) and treasure-gated
+        // (icon 421+N, scanned up to this session's own confirmed real
+        // total icon ceiling of 440) -- opens both regardless of whether
+        // Blupi actually holds the matching key/treasure count.
+        void CheatOpenDoors(GEWorldRuntime& worldRuntime, GESound& sound);
+
+        // Cheat7 "CleanAll": real effect converts a SPECIFIC hazard/enemy
+        // type list (`2,3,4,16,17,20,32,33,44,54,96,97` -- exactly this
+        // class's own existing shared-kill-list set plus wasp/large-
+        // creature/blupih/blupit) into an explosion decoration with a
+        // screen-shake, NOT "remove all mobile objects" (an earlier draft
+        // description of this cheat was wrong -- treasures/pickups/
+        // vehicles are untouched). Ported here as deactivating every
+        // active instance of those 12 types; the explosion-decoration
+        // visual + screen-shake is a documented simplification (no
+        // screen-shake concept exists in this engine's camera yet).
+        void CheatCleanAll(GEWorldRuntime& worldRuntime);
+
+        // Cheat8 "AllTreasure": every active ObjectType5 is collected at
+        // once (deactivated, `treasuresCollected_` incremented per
+        // treasure found), then the existing treasure-gated door scan
+        // (the same one a real pickup already triggers) opens every door
+        // now satisfied -- reuses `OpenDoorAt()`/the real Channel11
+        // fanfare, not a separate mechanism.
+        void CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound);
+
+        // Cheat9 "EndGoal": real effect ALWAYS teleports Blupi to the
+        // exit (`ObjectType7`), but only actually triggers a real win if
+        // `treasuresCollected_ >= totalTreasures_` at that moment --
+        // otherwise Blupi just arrives at the exit without winning (an
+        // earlier draft description of this cheat as an unconditional
+        // "win immediately" was wrong). Returns the exit's real position
+        // via out-params (false if no active exit exists in the world);
+        // the caller teleports Blupi there itself (this class has no
+        // access to GEBlupiController) -- the EXISTING exit-contact
+        // detection in Update() then naturally re-evaluates the real
+        // win/no-win gate on the very next frame, so no separate
+        // win-forcing logic is needed here at all.
+        [[nodiscard]] bool CheatFindExit(const GEWorldRuntime& worldRuntime,
+                                         float& outX, float& outY, float& outZ) const;
 
     private:
         bool ridingLift_ = false;

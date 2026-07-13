@@ -388,7 +388,20 @@ namespace GalaxyEggbert::CNA
         // the shared kill-list/wasp/large-creature/projectiles all use
         // this exact same two-flag gate, not just Shield alone). Callers
         // should gate every hazard/enemy death check on `!IsInvincible()`.
-        [[nodiscard]] bool IsInvincible() const noexcept { return IsShielded() || IsHidden(); }
+        // Real Cheat2 "SuperBlupi" (2026-07-13, plan.md `CHEAT-002`) is a
+        // SEPARATE persistent invincibility flag (`m_bSuperBlupi`, toggled
+        // by the cheat, independent of and stacking with Shield/Hide) --
+        // confirmed via research to be checked alongside
+        // `!m_blupiShield && !m_blupiHide` at every one of ~30 real hazard-
+        // death call sites, i.e. a third OR'd condition, not a separate
+        // gate. Does NOT grant "all abilities" (an earlier draft
+        // description of this cheat was wrong) -- pure invincibility only.
+        [[nodiscard]] bool IsInvincible() const noexcept
+        {
+            return IsShielded() || IsHidden() || m_cheatSuperBlupi;
+        }
+        void SetCheatSuperBlupi(bool enabled) noexcept { m_cheatSuperBlupi = enabled; }
+        [[nodiscard]] bool GetCheatSuperBlupi() const noexcept { return m_cheatSuperBlupi; }
         [[nodiscard]] int GetSecretPowerLevel() const noexcept { return m_secretPowerLevel; }
         // True for exactly the one Step() call where the active power's
         // gauge crosses its own real warning threshold (Shield@10/Power@20/
@@ -580,6 +593,8 @@ namespace GalaxyEggbert::CNA
         int m_secretPowerLevel = 0;
         float m_secretPowerTimer = 0.0f;
         bool m_secretPowerJustWarned = false;
+
+        bool m_cheatSuperBlupi = false;
 
         VehicleMode m_vehicleMode = VehicleMode::None;
         float m_vehicleSpeed = 0.0f; // current ramped horizontal speed (real "vitesse"), signed by moveInput's own sign

@@ -215,6 +215,48 @@ namespace GalaxyEggbert::CNA
         constexpr int kResumeControlMenu = 0;
         constexpr int kResumeControlContinue = 1;
 
+        // Cheat gesture zones (plan.md CHEAT-001..009): real is a 3-col x
+        // 2-row grid of 6 INVISIBLE zones spanning the top-left ~2/3
+        // width x ~57% height of the screen (`InputPad.cpp`'s own real
+        // `GetButtonRect()` cases for `Cheat11..Cheat32`, real
+        // `cheatButtonSizeFactor = drawBoundsHeight/3.5`). Zone naming:
+        // first digit = column (1-3), second digit = row (1-2) --
+        // matches the real `Cheat11/12/21/22/31/32` glyph names read as
+        // (col,row). Ported here directly in reference-space fractions of
+        // 640x480 (no drawBounds-relative formula needed, unlike every
+        // other screen this session -- these zones are invisible, so
+        // there's no real pixel size to match visually, only real
+        // relative coverage).
+        constexpr float kGestureAreaW = kRefW * 2.0f / 3.0f;
+        constexpr float kGestureAreaH = kRefH * 0.57f;
+        constexpr float kGestureCellW = kGestureAreaW / 3.0f;
+        constexpr float kGestureCellH = kGestureAreaH / 2.0f;
+
+        // Real 10-tap sequence (`Game1.hpp`'s own `cheatGesteLength=10`
+        // constant and its real tap-order array -- an earlier plan.md
+        // draft said 6 taps, which was wrong, confusing the tap-COUNT
+        // with the 6 distinct ZONE names).
+        constexpr int kCheatGestureLength = 10;
+        constexpr int kCheatGestureSequence[kCheatGestureLength] = {12, 22, 32, 12, 11, 21, 22, 21, 31, 32};
+
+        // Cheat menu overlay: real is a row of nine 80x80 ABSOLUTE-pixel
+        // boxes at the literal top-left (`InputPad.cpp` special-cases
+        // this range before its normal per-button switch -- a genuine
+        // real inconsistency vs. every other button in the game, which
+        // all use a drawBounds-relative formula). 9*80=720 exceeds even
+        // this engine's 640-wide reference space, so (same situation as
+        // the Pause row) this spans the full reference width in 9 equal
+        // columns instead.
+        constexpr int kCheatButtonCount = 9;
+        constexpr float kCheatButtonW = kRefW / static_cast<float>(kCheatButtonCount);
+        constexpr float kCheatButtonH = kCheatButtonW; // real boxes are square
+        constexpr float kCheatLabelYOffset = 2.0f; // same real "Bottom + 2" convention as the Pause row
+
+        // Real single-letter labels (`Decor::GetCheatTinyText()`) --
+        // cheats 6/8 really do share "T" (Trial/Treasure) in the real
+        // source, not a transcription mistake here.
+        constexpr const char* kCheatLetters[kCheatButtonCount] = {"D", "B", "S", "E", "R", "T", "C", "T", "G"};
+
         void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
                           std::vector<std::uint32_t>& indices,
                           float x0, float y0, float x1, float y1,
@@ -1064,6 +1106,126 @@ namespace GalaxyEggbert::CNA
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *blupiyoupieEffect_, blupiyoupieRenderer_, characterQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    bool GEInputPad::UpdateCheatGesture(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                        int viewportW, int viewportH) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
+        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+
+        bool unlocked = false;
+        if (mouseDown && !cheatMouseWasDown_)
+        {
+            int tappedZone = -1;
+            if (mouseRefX >= 0.0f && mouseRefX < kGestureAreaW && mouseRefY >= 0.0f && mouseRefY < kGestureAreaH)
+            {
+                const int col = static_cast<int>(mouseRefX / kGestureCellW) + 1;
+                const int row = static_cast<int>(mouseRefY / kGestureCellH) + 1;
+                tappedZone = col * 10 + row;
+            }
+            if (tappedZone == kCheatGestureSequence[cheatGestureIndex_])
+            {
+                ++cheatGestureIndex_;
+                if (cheatGestureIndex_ >= kCheatGestureLength)
+                {
+                    cheatGestureIndex_ = 0;
+                    unlocked = true;
+                }
+            }
+            else if (tappedZone != -1)
+            {
+                // Real behavior: any wrong tap resets progress to 0. A
+                // press outside all 6 zones is simply ignored (see this
+                // method's own class-comment for why) -- so this only
+                // fires when a DIFFERENT one of the 6 zones was tapped.
+                cheatGestureIndex_ = 0;
+            }
+        }
+
+        cheatMouseWasDown_ = mouseDown;
+        return unlocked;
+    }
+
+    int GEInputPad::UpdateCheatMenu(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                    int viewportW, int viewportH) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
+        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+
+        const bool overRow = mouseRefY >= 0.0f && mouseRefY < kCheatButtonH;
+        const int hoveredIndex = overRow ? static_cast<int>(mouseRefX / kCheatButtonW) : -1;
+        const bool overButton = overRow && hoveredIndex >= 0 && hoveredIndex < kCheatButtonCount;
+
+        if (mouseDown && !cheatMouseWasDown_)
+        {
+            cheatActiveControl_ = overButton ? hoveredIndex : -1;
+        }
+
+        int pressedCheat = 0;
+        if (!mouseDown && cheatMouseWasDown_)
+        {
+            if (cheatActiveControl_ >= 0)
+            {
+                pressedCheat = cheatActiveControl_ + 1;
+            }
+            cheatActiveControl_ = -1;
+        }
+
+        cheatMouseWasDown_ = mouseDown;
+        return pressedCheat;
+    }
+
+    void GEInputPad::DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                  int viewportW, int viewportH)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
+        const auto refToScreenY = [&](float y) { return y * scale; };
+
+        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        std::vector<Quad> normalQuads;
+        std::vector<Quad> pressedQuads;
+        std::vector<Quad> labelQuads;
+
+        for (int i = 0; i < kCheatButtonCount; ++i)
+        {
+            const float x0 = static_cast<float>(i) * kCheatButtonW;
+            const float x1 = x0 + kCheatButtonW;
+            Quad q;
+            q.x0 = refToScreenX(x0);
+            q.y0 = refToScreenY(0.0f);
+            q.x1 = refToScreenX(x1);
+            q.y1 = refToScreenY(kCheatButtonH);
+            PadIconUv(kIconDPadRing, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            (cheatActiveControl_ == i ? pressedQuads : normalQuads).push_back(q);
+
+            AppendCenteredLabel(labelQuads, kCheatLetters[i], refToScreenX((x0 + x1) * 0.5f),
+                                refToScreenY(kCheatButtonH + kCheatLabelYOffset), scale);
+        }
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);

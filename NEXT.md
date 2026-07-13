@@ -215,7 +215,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   alongside keyboard input. Riding a Tank can now also fire a real bullet (`ObjectType23`, a
   dedicated "F" key, 2026-07-13, §3, plan.md `BULLET-001`) — a hazard identical to the
   already-modeled enemy-fired kind, never a weapon against enemies (confirmed real behavior, not
-  an oversight).
+  an oversight). Also now has the real hidden cheat menu (2026-07-13, §3, plan.md
+  `CHEAT-001..009`): a 10-tap gesture on 6 invisible zones unlocks a 9-button overlay
+  (OpenDoors/SuperBlupi/LayEgg/Reset/CleanAll/AllTreasure/EndGoal implemented; ShowSecret and the
+  Trial toggle are documented gaps/no-ops, see §3).
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -273,6 +276,37 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Hidden cheat menu implemented (2026-07-13, plan.md `CHEAT-001..009`/`MENU-092..102`), per
+  explicit user request ("Cheat menu").** A dedicated research pass into `Game1::CheatAction()` →
+  `Decor::CheatAction()` **corrected several wrong/imprecise descriptions in the plan.md draft
+  checklist**, which had been written without consulting real source: Cheat4 "LayEgg" doesn't spawn
+  an egg, it sets `m_nbVies = 9` (lives to 9); Cheat7 "CleanAll" doesn't remove all mobile objects,
+  it only converts a specific 12-type hazard list into an explosion decoration; Cheat9 "EndGoal"
+  doesn't unconditionally win, it always teleports Blupi to the exit and only wins if treasure
+  requirements are already met; Cheat2 "SuperBlupi" is pure invincibility, not "+ all abilities";
+  and the gesture unlock is a **10-tap** sequence (`cheatGesteLength=10`), not 6. Cheat3 "ShowSecret"
+  was left a documented gap — its real citation ("ObjectType12 secret-decor icons") conflicts with
+  this engine's own already-confirmed `ObjectType12` (pushable crate), and the ambiguity wasn't
+  safe to guess through. Implemented: `GEInteractionSystem` gained `CheatOpenDoors()`/
+  `CheatCleanAll()`/`CheatAllTreasure()`/`CheatFindExit()` (the last three's shared find-exit/
+  treasure-door logic extracted into free functions, reused by both the real per-pickup trigger and
+  the new cheat); `GEBlupiController` gained a `m_cheatSuperBlupi` flag OR'd into `IsInvincible()`;
+  `GESaveData` gained `Reset()`. UI: `GEInputPad` gained `UpdateCheatGesture()`/`UpdateCheatMenu()`/
+  `DrawCheatMenu()` with their own SEPARATE press-tracking state from the normal Play D-pad/Jump/
+  Action controls — required because the cheat gesture/menu is checked simultaneously with, not
+  instead of, normal Play input in the same frame, unlike every other phase-gated screen this
+  session (Pause/Setup/Resume/Win/Lost), which are mutually exclusive in time and could safely
+  share one tracker. `GalaxyEggbertCnaGame::ApplyCheat()` dispatches all 9. Verified: 19 new
+  `VerifyInteractionSystem` assertions (each using a fresh, isolated `GEWorldRuntime`/
+  `GEInteractionSystem` pair rather than the file's large shared/mutated fixture, avoiding the kind
+  of state-leakage bug caught during the bullet-firing task) + 6 new `VerifyGEInputPad` assertions
+  (full 10-tap unlock, wrong-tap reset, out-of-zone tap ignored, first/last button dispatch,
+  press-vs-release gating) + a live headless screenshot confirming the 9-button overlay renders
+  correctly (icon 0 + D/B/S/E/R/T/C/T/G labels, transparent overlay with the 3D scene and Play
+  HUD/D-pad visible behind it, no background swap — matching real behavior) + live functional
+  verification of Cheat4 (lives 3→9) and Cheat9 (Blupi teleported to the exit marker's exact
+  position) — full regression suite green on both backends.
 
 - **Tank bullet firing implemented, closing the `E3D-MIG-175` bullet-pack follow-up (2026-07-13,
   plan.md `BULLET-001`), per explicit user request ("implementovat střelbu").** A dedicated research

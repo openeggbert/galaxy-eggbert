@@ -1501,17 +1501,84 @@ otherwise noted.
 
 #### 2.14 Cheat Menu (hidden)
 
-- [ ] MENU-092 — Cheat gesture recognition: sequence of 6 button glyphs (Cheat11..Cheat32) unlocks cheat menu
-- [ ] MENU-093 — Cheat menu overlay: 9 cheat action buttons (Cheat1..Cheat9)
-- [ ] MENU-094 — Cheat 1: OpenDoors (open all doors in current level)
-- [ ] MENU-095 — Cheat 2: SuperBlupi (invincibility + all abilities)
-- [ ] MENU-096 — Cheat 3: ShowSecret (reveal secret exits)
-- [ ] MENU-097 — Cheat 4: LayEgg (spawn eggs)
-- [ ] MENU-098 — Cheat 5: Reset gamer progress
-- [ ] MENU-099 — Cheat 6: Simulate trial mode toggle
-- [ ] MENU-100 — Cheat 7: CleanAll (remove all mobile objects)
-- [ ] MENU-101 — Cheat 8: AllTreasure (collect all treasures)
-- [ ] MENU-102 — Cheat 9: EndGoal (win current level immediately)
+Corrected 2026-07-13 against real source (`Game1::CheatAction(ButtonGlyph)` →
+`Decor::CheatAction(Tables::CheatCodes)`) — several of the descriptions below were wrong/imprecise
+in the original draft; the real behavior is documented here, and the `CHEAT-001..009` IDs (cited
+directly in code comments) are the canonical per-cheat task IDs going forward, kept alongside the
+pre-existing `MENU-092..102` numbering.
+
+- [x] MENU-092 — Cheat gesture recognition — **done 2026-07-13**, `GEInputPad::UpdateCheatGesture()`.
+      **Draft was wrong on tap count**: real is a **10-tap sequence** (`cheatGesteLength=10`), not
+      6. The 6 distinct glyphs (`Cheat11/12/21/22/31/32`) are tapped in exact order
+      `12,22,32,12,11,21,22,21,31,32`, tracked by `cheatGesteIndex`, reset to 0 on any wrong glyph,
+      active only during real `Phase::Play`, no timeout. Real zones are invisible (no icon/text);
+      this engine's zones are likewise fully invisible, laid out as a 3-col×2-row grid spanning the
+      top-left ~⅔ width × ~57% height of the reference space (`cheatButtonSizeFactor =
+      drawBoundsHeight/3.5`). Simplification: real source additionally resets progress on ANY other
+      button press, not just a wrong gesture-zone tap — not modeled (a minor forgiving deviation,
+      not a functional loss).
+- [x] MENU-093 — Cheat menu overlay: 9 cheat action buttons (Cheat1..Cheat9) — **done 2026-07-13**,
+      `GEInputPad::UpdateCheatMenu()`/`DrawCheatMenu()`. Real buttons are a row of nine 80×80
+      ABSOLUTE-pixel boxes at the literal top-left (not scaled by `drawBoundsHeight` — a genuine
+      real inconsistency vs. every other button in the game); adapted here as 9 equal columns
+      proportionally spanning the full reference width, since the real fixed-pixel row doesn't fit
+      this engine's own reference space. Icon: pad.png icon 0 (D-pad ring, reused generically) + a
+      single-letter text label per cheat (D/B/S/E/R/T/C/T/G for cheats 1-9 — cheats 6 and 8 both
+      really show "T", a confirmed real ambiguity in the original game, not a transcription error).
+      No background swap (real source renders this as a transparent overlay atop whatever's already
+      on screen, confirmed via live headless screenshot — the 3D scene and normal Play HUD/D-pad
+      remain visible behind/through it) and no confirmation step (pressing any Cheat1-9 immediately
+      closes the overlay and applies the effect instantly, matching real `showCheatMenu = false`).
+- [x] MENU-094 / CHEAT-001 — Cheat 1: OpenDoors — **done**, `GEInteractionSystem::CheatOpenDoors()`.
+      Draft was correct: toggles the real `m_bCheatDoors` flag and calls `AdaptDoors()`; ported here
+      as opening every key-gated (`BlockTypes::isDoor()`) and treasure-gated (icon 421-440) door
+      tile in the level via the existing `OpenDoorAt()` helper.
+- [x] MENU-095 / CHEAT-002 — Cheat 2: SuperBlupi — **done**, `GEBlupiController::m_cheatSuperBlupi`
+      + `IsInvincible()`. **Draft overstated the effect**: real `m_bSuperBlupi` is a PURE
+      invincibility flag, OR'd with `!m_blupiShield && !m_blupiHide` at ~30 real hazard-death call
+      sites — it does **not** grant "all abilities" as the original draft claimed.
+- [ ] MENU-096 / CHEAT-003 — Cheat 3: ShowSecret — **not implemented, documented gap**. Real
+      `m_bDrawSecret` gates rendering of "hidden ObjectType12 secret-decor icons," but this engine's
+      own `ObjectType12` is already a confirmed, unrelated real type (pushable crate). Not resolved
+      whether the real citation means the `MoveObject` enum or an unrelated static tile icon —
+      deliberately left unimplemented rather than guessed and risk conflating two different real
+      concepts.
+- [x] MENU-097 / CHEAT-004 — Cheat 4: LayEgg — **done**, `GalaxyEggbertCnaGame::ApplyCheat()` case 4.
+      **Draft was wrong**: despite the name, the real effect is `m_nbVies = 9` (sets lives to 9) —
+      it does NOT spawn any egg. Confirmed live (headless run): lives 3 → 9 on trigger.
+- [x] MENU-098 / CHEAT-005 — Cheat 5: Reset gamer progress — **done**, `GESaveData::Reset()`. Draft
+      correct: real `gameData.Reset()`; ported as resetting every `GESaveData` field to its default
+      and writing immediately.
+- [x] MENU-099 / CHEAT-006 — Cheat 6: Simulate trial mode toggle — **done** (no-op by design). Draft
+      correct on the real effect (`simulateTrialMode = !simulateTrialMode`), but it has no
+      observable effect in this engine since the Trial phase is unreachable here; wired as a
+      documented no-op case in `ApplyCheat()` rather than left out, to keep the button's real
+      dispatch order intact.
+- [x] MENU-100 / CHEAT-007 — Cheat 7: CleanAll — **done**, `GEInteractionSystem::CheatCleanAll()`.
+      **Draft was imprecise**: NOT "remove all mobile objects" — real effect only converts a
+      specific type list (ObjectType 2/3/4/16/17/20/32/33/44/54/96/97 — the existing shared
+      hazard-kill-list set plus wasp/large-creature/blupih/blupit) into an explosion decoration +
+      screen-shake; treasures/pickups/vehicles are untouched. Ported as deactivating exactly that
+      type list.
+- [x] MENU-101 / CHEAT-008 — Cheat 8: AllTreasure — **done**, `GEInteractionSystem::CheatAllTreasure()`.
+      Draft correct: every `ObjectType5` is collected, `m_nbTresor++`, `OpenDoorsTresor()` (this
+      engine's `ScanAndOpenTreasureDoors()`), channel-11 sound.
+- [x] MENU-102 / CHEAT-009 — Cheat 9: EndGoal — **done**, `GEInteractionSystem::CheatFindExit()` +
+      `ApplyCheat()` case 9. **Draft was imprecise**: NOT unconditional "win immediately" — real
+      effect always teleports Blupi to the exit (`ObjectType7`); it only actually wins if
+      `m_nbTresor >= m_totalTresor` already, otherwise Blupi is just moved there (real source also
+      plays a "not enough" sound in that case, not modeled — ported as the teleport only). Confirmed
+      live (headless run): Blupi position moved from spawn to the level's real exit marker.
+
+Live headless verification (2026-07-13): forced the overlay open and captured a screenshot
+confirming the 9-button row renders correctly (icons, letters, transparent overlay with the 3D
+scene and Play HUD/D-pad visible behind it), then triggered Cheat 4 and Cheat 9 directly and
+confirmed their real effects (lives 3→9; Blupi teleported to the exit marker's exact position) via
+stderr diagnostics. All temporary debug code was reverted before commit. Unit coverage: 19 new
+assertions in `VerifyInteractionSystem` (fresh, isolated `GEWorldRuntime`/`GEInteractionSystem` per
+test, to avoid state leakage from the large shared fixture) + 6 new assertions in
+`VerifyGEInputPad` (full 10-tap gesture unlock, wrong-tap reset, out-of-zone tap ignored, first/last
+menu button dispatch, press-vs-release gating).
 
 ---
 

@@ -256,6 +256,99 @@ int main()
         check(!continuePressed, "Resume: Menu button press/release does not fire Continue (documented inert placeholder)");
     }
 
+    // --- Cheat gesture: real 10-tap sequence (12,22,32,12,11,21,22,21,
+    // 31,32) over 6 invisible zones in a 3-col x 2-row grid spanning the
+    // top-left 2/3 width x 57% height of the 640x480 reference space.
+    // Zone center points (col,row): 11=(71.11,68.4), 12=(71.11,205.2),
+    // 21=(213.33,68.4), 22=(213.33,205.2), 31=(355.56,68.4),
+    // 32=(355.56,205.2).
+    {
+        const float seq[10][2] = {
+            {71.11f, 205.2f}, {213.33f, 205.2f}, {355.56f, 205.2f}, {71.11f, 205.2f}, {71.11f, 68.4f},
+            {213.33f, 68.4f}, {213.33f, 205.2f}, {213.33f, 68.4f}, {355.56f, 68.4f}, {355.56f, 205.2f},
+        };
+        GEInputPad pad;
+        bool unlocked = false;
+        for (const auto& p : seq)
+        {
+            unlocked = pad.UpdateCheatGesture(mouse(static_cast<int>(p[0]), static_cast<int>(p[1]), true),
+                                              kViewportW, kViewportH);
+            (void)pad.UpdateCheatGesture(mouse(static_cast<int>(p[0]), static_cast<int>(p[1]), false), kViewportW,
+                                         kViewportH);
+        }
+        check(unlocked, "Cheat gesture: the full real 10-tap sequence unlocks on the 10th correct tap");
+    }
+    {
+        const float seq[10][2] = {
+            {71.11f, 205.2f}, {213.33f, 205.2f}, {355.56f, 205.2f}, {71.11f, 205.2f}, {71.11f, 68.4f},
+            {213.33f, 68.4f}, {213.33f, 205.2f}, {213.33f, 68.4f}, {355.56f, 68.4f}, {355.56f, 205.2f},
+        };
+        GEInputPad pad;
+        // Two correct taps, then a WRONG tap (zone 11 instead of the
+        // expected 3rd tap, 32).
+        (void)pad.UpdateCheatGesture(mouse(71, 205, true), kViewportW, kViewportH);
+        (void)pad.UpdateCheatGesture(mouse(71, 205, false), kViewportW, kViewportH);
+        (void)pad.UpdateCheatGesture(mouse(213, 205, true), kViewportW, kViewportH);
+        (void)pad.UpdateCheatGesture(mouse(213, 205, false), kViewportW, kViewportH);
+        (void)pad.UpdateCheatGesture(mouse(71, 68, true), kViewportW, kViewportH);
+        (void)pad.UpdateCheatGesture(mouse(71, 68, false), kViewportW, kViewportH);
+        // Replaying the FULL correct sequence from scratch should still
+        // take exactly 10 taps to unlock (not just the remaining 7) --
+        // proving the wrong tap above reset progress to 0.
+        bool unlocked = false;
+        for (const auto& p : seq)
+        {
+            unlocked = pad.UpdateCheatGesture(mouse(static_cast<int>(p[0]), static_cast<int>(p[1]), true),
+                                              kViewportW, kViewportH);
+            (void)pad.UpdateCheatGesture(mouse(static_cast<int>(p[0]), static_cast<int>(p[1]), false), kViewportW,
+                                         kViewportH);
+        }
+        check(unlocked, "Cheat gesture: a wrong tap resets progress to 0 (the full 10-tap sequence still unlocks afterward)");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateCheatGesture(mouse(71, 205, true), kViewportW, kViewportH); // correct 1st tap
+        (void)pad.UpdateCheatGesture(mouse(71, 205, false), kViewportW, kViewportH);
+        (void)pad.UpdateCheatGesture(mouse(500, 400, true), kViewportW, kViewportH); // outside all 6 zones
+        (void)pad.UpdateCheatGesture(mouse(500, 400, false), kViewportW, kViewportH);
+        const float rest[9][2] = {
+            {213.33f, 205.2f}, {355.56f, 205.2f}, {71.11f, 205.2f}, {71.11f, 68.4f},
+            {213.33f, 68.4f}, {213.33f, 205.2f}, {213.33f, 68.4f}, {355.56f, 68.4f}, {355.56f, 205.2f},
+        };
+        bool unlocked = false;
+        for (const auto& p : rest)
+        {
+            unlocked = pad.UpdateCheatGesture(mouse(static_cast<int>(p[0]), static_cast<int>(p[1]), true),
+                                              kViewportW, kViewportH);
+            (void)pad.UpdateCheatGesture(mouse(static_cast<int>(p[0]), static_cast<int>(p[1]), false), kViewportW,
+                                         kViewportH);
+        }
+        check(unlocked, "Cheat gesture: a press outside all 6 zones is ignored, not treated as a wrong tap");
+    }
+
+    // --- Cheat menu: real row of 9 buttons, proportionally spanning the
+    // full 640-wide reference space (real is 9x80 absolute pixels, which
+    // doesn't fit at all -- see UpdateCheatMenu()'s own class comment).
+    // Button 0 = cheat 1 (OpenDoors); button 8 = cheat 9 (EndGoal).
+    {
+        GEInputPad pad;
+        (void)pad.UpdateCheatMenu(mouse(30, 30, true), kViewportW, kViewportH);
+        const int pressed = pad.UpdateCheatMenu(mouse(30, 30, false), kViewportW, kViewportH);
+        check(pressed == 1, "Cheat menu: pressing the first button fires cheat 1 (OpenDoors) on release");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateCheatMenu(mouse(600, 30, true), kViewportW, kViewportH);
+        const int pressed = pad.UpdateCheatMenu(mouse(600, 30, false), kViewportW, kViewportH);
+        check(pressed == 9, "Cheat menu: pressing the last button fires cheat 9 (EndGoal) on release");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateCheatMenu(mouse(30, 30, true), kViewportW, kViewportH);
+        const int pressed = pad.UpdateCheatMenu(mouse(30, 30, true), kViewportW, kViewportH);
+        check(pressed == 0, "Cheat menu: not fired while still held (only fires on release)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

@@ -253,6 +253,63 @@ namespace GalaxyEggbert::CNA
         void DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         int viewportW, int viewportH);
 
+        // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13), verified
+        // directly against the real gesture-recognition/cheat-overlay code
+        // (a dedicated research pass; several draft plan.md descriptions
+        // this pass corrected, see GEInteractionSystem.hpp's own cheat
+        // method comments for the per-cheat corrections). Two independent
+        // pieces:
+        //
+        // (1) Gesture unlock: real is a 10-tap sequence
+        // (`12,22,32,12,11,21,22,21,31,32`, `Game1.hpp`'s own
+        // `cheatGesteLength=10` -- an earlier plan.md draft said 6, which
+        // was wrong) over 6 real INVISIBLE zones in a 3-column x 2-row
+        // grid spanning the top-left ~2/3 width x ~57% height of the
+        // screen, active only during real `Phase::Play` (confirmed via
+        // `InputPad.cpp`, pushed alongside PlayPause/Action/Jump). Any
+        // wrong tap resets progress to 0; no timeout. UpdateCheatGesture()
+        // should only be called while phase_==Play (the caller's
+        // responsibility, matching the real gate) and returns true the
+        // one frame the full sequence completes. Simplification: only
+        // presses landing INSIDE one of the 6 zones are tracked at all
+        // (advance or reset) -- the real source additionally resets
+        // progress on ANY other button press too (D-pad/Jump/etc.); not
+        // modeled, a minor forgiving deviation for this genuinely obscure
+        // Easter-egg feature, not a functional loss (the exact real
+        // sequence still unlocks it either way).
+        //
+        // (2) The cheat overlay itself: 9 real buttons (icon 0 -- the
+        // D-pad ring icon, reused generically -- + a single-letter real
+        // text label per button: D/B/S/E/R/T/C/T/G for cheats 1-9,
+        // `Decor::GetCheatTinyText()` -- note cheats 6 and 8 share the
+        // same real "T" label, Trial vs Treasure, a real ambiguity in the
+        // original game, not a transcription error here). Real rects are
+        // a row of nine 80x80 boxes in ABSOLUTE pixels at the literal
+        // top-left, NOT scaled by drawBoundsHeight at all (`InputPad.cpp`
+        // special-cases this range before the normal per-button switch --
+        // a genuine real inconsistency vs. every other button in the
+        // game) -- 9*80=720 exceeds even this engine's 640-wide
+        // reference space, so (same "literal port doesn't fit" situation
+        // as the Pause row) this class instead spans the full reference
+        // width in 9 equal columns. No background swap in the real
+        // source (renders as a transparent overlay atop whatever's
+        // already on screen) and no confirmation -- pressing any of the 9
+        // immediately closes the overlay and applies the effect (edge/
+        // release-triggered here, matching every other non-Jump button in
+        // this class, though that specific real detail -- press vs.
+        // release -- was not independently re-confirmed for these 9).
+        // Returns 1-9 for the cheat just released, 0 for none; the caller
+        // owns the actual cheat effects (this class has no access to
+        // GEInteractionSystem/GEBlupiController) and the "is the overlay
+        // currently shown" bool (set true when UpdateCheatGesture()
+        // returns true, false after DrawCheatMenu() stops being called).
+        [[nodiscard]] bool UpdateCheatGesture(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                              int viewportW, int viewportH) noexcept;
+        [[nodiscard]] int UpdateCheatMenu(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                          int viewportW, int viewportH) noexcept;
+        void DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                           int viewportW, int viewportH);
+
     private:
         struct Quad
         {
@@ -327,5 +384,18 @@ namespace GalaxyEggbert::CNA
         // thresholded read of the same drag.
         float dpadDragOffsetX_ = 0.0f;
         float dpadDragOffsetY_ = 0.0f;
+
+        // Cheat gesture/menu press tracking -- deliberately SEPARATE from
+        // activeControl_/mouseWasDown_ above: those are safely shared
+        // across Play/Pause/Setup/Resume/WinLost because exactly one of
+        // those phases is ever active at a time, but the cheat gesture
+        // zones (and, once unlocked, the cheat menu overlay) are checked
+        // DURING Play, simultaneously with the normal D-pad/Jump/Action/
+        // Pause controls -- reusing the same tracker would corrupt
+        // whichever one runs second in a given frame. cheatGestureIndex_
+        // is how far through the real 10-tap sequence progress is so far.
+        int cheatActiveControl_ = -1;
+        bool cheatMouseWasDown_ = false;
+        int cheatGestureIndex_ = 0;
     };
 }

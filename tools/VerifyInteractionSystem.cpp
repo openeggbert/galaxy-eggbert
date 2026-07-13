@@ -1442,6 +1442,169 @@ int main(int argc, char** argv)
               "mission 0 (no mission): no hint anywhere, matching the real array==nullptr early-out");
     }
 
+    // 5. Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- each
+    // test below uses its OWN fresh GEWorldRuntime/GEInteractionSystem
+    // pair (not the heavily-mutated shared `world`/`interaction` above)
+    // so the exact before/after deltas are unambiguous.
+    {
+        GEWorldRuntime cheatWorld;
+        if (!cheatWorld.LoadFromVwrFile(worldPath))
+        {
+            check(false, "cheat tests: could not load a fresh copy of the sample world");
+        }
+        else
+        {
+            GEInteractionSystem cheatInteraction;
+
+            // 5.1 CheatOpenDoors: opens both real door families (key-gated
+            // Door1/2/3 AND treasure-gated icon>=421) regardless of
+            // whether Blupi actually holds the matching key/treasure.
+            {
+                auto& terrain = cheatWorld.GetWorldMutable();
+                const int axis = static_cast<int>(terrain.blocksPerAxis());
+                bool foundKeyDoor = false, foundTreasureDoor = false;
+                for (int gx = 0; gx < axis && !(foundKeyDoor && foundTreasureDoor); ++gx)
+                {
+                    for (int gy = 0; gy < axis && !(foundKeyDoor && foundTreasureDoor); ++gy)
+                    {
+                        for (int gz = 0; gz < axis && !(foundKeyDoor && foundTreasureDoor); ++gz)
+                        {
+                            const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                                static_cast<std::uint16_t>(gz))
+                                                   .type();
+                            if (BlockTypes::isDoor(icon)) foundKeyDoor = true;
+                            if (icon >= 421 && icon <= 440) foundTreasureDoor = true;
+                        }
+                    }
+                }
+                check(foundKeyDoor, "cheat tests: sample world has at least one key-gated door before CheatOpenDoors()");
+                check(foundTreasureDoor,
+                      "cheat tests: sample world has at least one treasure-gated door before CheatOpenDoors()");
+
+                cheatInteraction.CheatOpenDoors(cheatWorld, sound);
+
+                bool stillHasKeyDoor = false, stillHasTreasureDoor = false;
+                for (int gx = 0; gx < axis; ++gx)
+                {
+                    for (int gy = 0; gy < axis; ++gy)
+                    {
+                        for (int gz = 0; gz < axis; ++gz)
+                        {
+                            const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                                static_cast<std::uint16_t>(gz))
+                                                   .type();
+                            if (BlockTypes::isDoor(icon)) stillHasKeyDoor = true;
+                            if (icon >= 421 && icon <= 440) stillHasTreasureDoor = true;
+                        }
+                    }
+                }
+                check(!stillHasKeyDoor, "CheatOpenDoors(): opens every key-gated door, even without holding the key");
+                check(!stillHasTreasureDoor,
+                      "CheatOpenDoors(): opens every treasure-gated door, even without enough treasures");
+            }
+
+            // 5.2 CheatCleanAll: deactivates every active instance of the
+            // 12-type hazard/enemy list, leaves everything else (e.g. the
+            // exit marker) untouched.
+            {
+                int hazardsBefore = 0;
+                bool exitActiveBefore = false;
+                for (const auto& obj : cheatWorld.GetMobileObjects())
+                {
+                    if (!obj.active) continue;
+                    switch (obj.type)
+                    {
+                        case ObjectType::ObjectType2: case ObjectType::ObjectType3: case ObjectType::ObjectType4:
+                        case ObjectType::ObjectType16: case ObjectType::ObjectType17: case ObjectType::ObjectType20:
+                        case ObjectType::ObjectType32: case ObjectType::ObjectType33: case ObjectType::ObjectType44:
+                        case ObjectType::ObjectType54: case ObjectType::ObjectType96: case ObjectType::ObjectType97:
+                            ++hazardsBefore;
+                            break;
+                        case ObjectType::ObjectType7:
+                            exitActiveBefore = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                check(hazardsBefore > 0, "cheat tests: sample world has at least one CleanAll-eligible hazard/enemy");
+                check(exitActiveBefore, "cheat tests: sample world has an active exit marker (ObjectType7) before CheatCleanAll()");
+
+                cheatInteraction.CheatCleanAll(cheatWorld);
+
+                int hazardsAfter = 0;
+                bool exitActiveAfter = false;
+                for (const auto& obj : cheatWorld.GetMobileObjects())
+                {
+                    if (!obj.active) continue;
+                    switch (obj.type)
+                    {
+                        case ObjectType::ObjectType2: case ObjectType::ObjectType3: case ObjectType::ObjectType4:
+                        case ObjectType::ObjectType16: case ObjectType::ObjectType17: case ObjectType::ObjectType20:
+                        case ObjectType::ObjectType32: case ObjectType::ObjectType33: case ObjectType::ObjectType44:
+                        case ObjectType::ObjectType54: case ObjectType::ObjectType96: case ObjectType::ObjectType97:
+                            ++hazardsAfter;
+                            break;
+                        case ObjectType::ObjectType7:
+                            exitActiveAfter = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                check(hazardsAfter == 0, "CheatCleanAll(): deactivates every hazard/enemy of the real 12-type list");
+                check(exitActiveAfter, "CheatCleanAll(): leaves unrelated objects (the exit marker) untouched");
+            }
+
+            // 5.3 CheatAllTreasure: collects every active treasure at
+            // once, incrementing TreasuresCollected() by exactly that
+            // many.
+            {
+                int treasuresInWorld = 0;
+                for (const auto& obj : cheatWorld.GetMobileObjects())
+                {
+                    if (obj.active && obj.type == ObjectType::ObjectType5) ++treasuresInWorld;
+                }
+                check(treasuresInWorld > 0, "cheat tests: sample world has at least one uncollected treasure");
+                const int before = cheatInteraction.TreasuresCollected();
+
+                cheatInteraction.CheatAllTreasure(cheatWorld, sound);
+
+                check(cheatInteraction.TreasuresCollected() == before + treasuresInWorld,
+                      "CheatAllTreasure(): TreasuresCollected() increases by exactly the number of treasures in the world");
+                int treasuresRemaining = 0;
+                for (const auto& obj : cheatWorld.GetMobileObjects())
+                {
+                    if (obj.active && obj.type == ObjectType::ObjectType5) ++treasuresRemaining;
+                }
+                check(treasuresRemaining == 0, "CheatAllTreasure(): every treasure is deactivated");
+            }
+
+            // 5.4 CheatFindExit: returns the real exit marker's position.
+            {
+                const MobileObjSpec* realExit = nullptr;
+                for (const auto& obj : cheatWorld.GetMobileObjects())
+                {
+                    if (obj.active && obj.type == ObjectType::ObjectType7)
+                    {
+                        realExit = &obj;
+                        break;
+                    }
+                }
+                check(realExit != nullptr, "cheat tests: sample world has an active exit marker");
+                if (realExit != nullptr)
+                {
+                    float ex = 0.0f, ey = 0.0f, ez = 0.0f;
+                    const bool found = cheatInteraction.CheatFindExit(cheatWorld, ex, ey, ez);
+                    check(found, "CheatFindExit(): finds the exit marker");
+                    check(std::fabs(ex - realExit->currentX) < 0.01f && std::fabs(ey - realExit->currentY) < 0.01f &&
+                              std::fabs(ez - realExit->currentZ) < 0.01f,
+                          "CheatFindExit(): returned position matches the real exit marker's position exactly");
+                }
+            }
+        }
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

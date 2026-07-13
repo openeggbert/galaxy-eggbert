@@ -217,6 +217,22 @@ namespace GalaxyEggbert::CNA
         // confirmed at exactly these same 2 real transition points.
         void SetPhase(GalaxyEggbert::GamePhase next) noexcept;
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
+
+        // Dispatches cheat 1-9 (plan.md CHEAT-001..009) -- verified
+        // directly against the real `Decor::CheatAction(Tables::
+        // CheatCodes)`, correcting several wrong/imprecise draft
+        // descriptions from an earlier, unverified plan.md pass (see
+        // GEInteractionSystem.hpp's own per-cheat comments for exactly
+        // what each one corrects). Cheat3 "ShowSecret" is NOT implemented
+        // -- the real effect gates rendering of "hidden ObjectType12
+        // secret-decor icons", but this engine's own ObjectType12 is
+        // already a confirmed, unrelated real type (a pushable crate,
+        // plan.md E3D-MIG-15x) -- whether the real citation means the
+        // MoveObject enum value or an unrelated STATIC TILE icon that
+        // happens to also be "12" was not resolved this session, and
+        // guessing risks silently reusing the crate machinery for the
+        // wrong feature. A documented gap, not a silent omission.
+        void ApplyCheat(int cheatNumber);
         GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Play;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
@@ -264,6 +280,15 @@ namespace GalaxyEggbert::CNA
         // the real source's own "write immediately on toggle press"
         // behavior.
         GESaveData saveData_;
+
+        // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- real
+        // gesture zones are checked only during real Phase::Play
+        // (confirmed via research); once the real 10-tap sequence
+        // completes, the overlay renders layered on top of the normal
+        // Play view (no phase change, no background swap) until a cheat
+        // button is pressed. See `GEInputPad::UpdateCheatGesture()`'s own
+        // class comment for the full real-behavior citation.
+        bool cheatMenuShown_ = false;
 
         // Mouse drag-look (2026-07-10, user request): while the left
         // button is held, mouse deltas rotate the camera around Blupi

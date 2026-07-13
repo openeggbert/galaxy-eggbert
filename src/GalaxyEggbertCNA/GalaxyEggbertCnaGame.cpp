@@ -433,6 +433,48 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GalaxyEggbertCnaGame::ApplyCheat(int cheatNumber)
+    {
+        switch (cheatNumber)
+        {
+            case 1: // OpenDoors
+                interaction_.CheatOpenDoors(worldRuntime_, sound_);
+                break;
+            case 2: // SuperBlupi -- pure invincibility toggle, NOT "all abilities" (an earlier draft was wrong)
+                blupi_.SetCheatSuperBlupi(!blupi_.GetCheatSuperBlupi());
+                break;
+            case 3: // ShowSecret -- NOT implemented, see this method's own header comment
+                break;
+            case 4: // "LayEgg" -- real effect sets lives to 9 (the enum name is misleading, no egg is spawned)
+                interaction_.SetLives(9);
+                break;
+            case 5: // Reset gamer progress
+                saveData_.Reset();
+                saveData_.Save();
+                break;
+            case 6: // Trial mode simulate-toggle -- no observable effect here, Trial phase is unreachable
+                break;
+            case 7: // CleanAll
+                interaction_.CheatCleanAll(worldRuntime_);
+                break;
+            case 8: // AllTreasure
+                interaction_.CheatAllTreasure(worldRuntime_, sound_);
+                break;
+            case 9: // EndGoal -- teleports to the exit; the EXISTING exit-contact check
+                    // re-evaluates the real win/no-win gate next frame, no forcing needed
+            {
+                float exitX = 0.0f, exitY = 0.0f, exitZ = 0.0f;
+                if (interaction_.CheatFindExit(worldRuntime_, exitX, exitY, exitZ))
+                {
+                    blupi_.SetPosition(exitX, exitY, exitZ);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
     void GalaxyEggbertCnaGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
@@ -476,6 +518,31 @@ namespace GalaxyEggbert::CNA
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
                 mousePausePressed = padPlayInput.pausePressed;
+
+                // Hidden cheat menu (2026-07-13, plan.md CHEAT-001..009):
+                // real gesture zones are checked only during real
+                // Phase::Play, layered on top of (not instead of) the
+                // normal Play controls above -- see GEInputPad::
+                // UpdateCheatGesture()'s own class comment for the real-
+                // behavior citation and the "layered, not exclusive"
+                // input-sharing caveat.
+                if (!cheatMenuShown_)
+                {
+                    if (inputPad_.UpdateCheatGesture(mouse, viewport.getWidthProperty(), viewport.getHeightProperty()))
+                    {
+                        cheatMenuShown_ = true;
+                    }
+                }
+                else
+                {
+                    const int cheatPressed = inputPad_.UpdateCheatMenu(
+                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                    if (cheatPressed != 0)
+                    {
+                        cheatMenuShown_ = false;
+                        ApplyCheat(cheatPressed);
+                    }
+                }
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Pause)
             {
@@ -2098,6 +2165,17 @@ namespace GalaxyEggbert::CNA
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
                 inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
+
+            // Hidden cheat menu overlay (2026-07-13, plan.md
+            // CHEAT-001..009) -- real source renders it as a transparent
+            // overlay layered on top of whatever's already on screen, no
+            // background swap and no phase change, so this draws LAST,
+            // on top of the just-drawn Play controls above (only ever
+            // shown during Play, see Update()'s own gating).
+            if (cheatMenuShown_ && phase_ == GalaxyEggbert::GamePhase::Play)
+            {
+                inputPad_.DrawCheatMenu(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
         }
 

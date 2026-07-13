@@ -77,6 +77,12 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool GetHasProgress() const noexcept { return hasProgress_; }
         void SetHasProgress(bool hasProgress) noexcept { hasProgress_ = hasProgress; }
 
+        // Real Cheat5 ("R"): `gameData.Reset()` (2026-07-13, plan.md
+        // `CHEAT-005`) -- restores every field to its default and writes
+        // immediately, matching the real source's own `Reset(); Write();`
+        // pair (`Game1.cpp`'s real `SetupReset`/cheat handler).
+        void Reset() noexcept { *this = GESaveData(); }
+
     private:
         static constexpr const char* kSavePath = "savedata.txt";
         bool soundEnabled_ = true;

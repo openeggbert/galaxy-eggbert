@@ -68,6 +68,34 @@ namespace GalaxyEggbert::CNA
             sound.Play(GalaxyEggbert::SoundChannel::SoundChannel33);
         }
 
+        // Real Decor::OpenDoorsTresor (~11642): scans the whole grid,
+        // opening every treasure-gated door (icon 421+N) whose
+        // requirement N is now met. Shared by the real per-pickup
+        // trigger (Update()'s own treasureDoorScanNeeded) and
+        // GEInteractionSystem::CheatAllTreasure() below, which needs the
+        // exact same scan after crediting every treasure at once.
+        void ScanAndOpenTreasureDoors(GEWorldRuntime& worldRuntime, int treasuresCollected, GESound& sound)
+        {
+            auto& terrain = worldRuntime.GetWorldMutable();
+            const int axis = static_cast<int>(terrain.blocksPerAxis());
+            for (int gx = 0; gx < axis; ++gx)
+            {
+                for (int gy = 0; gy < axis; ++gy)
+                {
+                    for (int gz = 0; gz < axis; ++gz)
+                    {
+                        const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                            static_cast<std::uint16_t>(gz))
+                                               .type();
+                        if (icon >= 421 && icon <= 420 + treasuresCollected)
+                        {
+                            OpenDoorAt(worldRuntime, gx, gy, gz, sound);
+                        }
+                    }
+                }
+            }
+        }
+
         // Real shared patrol-turn mechanic (plan.md E3D-MIG-131,
         // `Decor::MoveObjectStepLine`, verified directly against
         // Decor.cpp:8005-8141): a 4-phase cycle -- 1=dwell at posStart for
@@ -1340,27 +1368,10 @@ namespace GalaxyEggbert::CNA
         // icon 420+N -- scans the whole grid and opens every one whose
         // requirement is now met, all at once, the same moment a
         // qualifying treasure pickup completed above (not just the
-        // nearest door).
+        // nearest door). Shared with CheatAllTreasure() below.
         if (treasureDoorScanNeeded)
         {
-            auto& terrain = worldRuntime.GetWorldMutable();
-            const int axis = static_cast<int>(terrain.blocksPerAxis());
-            for (int gx = 0; gx < axis; ++gx)
-            {
-                for (int gy = 0; gy < axis; ++gy)
-                {
-                    for (int gz = 0; gz < axis; ++gz)
-                    {
-                        const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                                            static_cast<std::uint16_t>(gz))
-                                               .type();
-                        if (icon >= 421 && icon <= 420 + treasuresCollected_)
-                        {
-                            OpenDoorAt(worldRuntime, gx, gy, gz, sound);
-                        }
-                    }
-                }
-            }
+            ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
         }
 
         // Player-fired Tank bullet (2026-07-13, plan.md BULLET-001, real
@@ -1522,5 +1533,86 @@ namespace GalaxyEggbert::CNA
         }
         objects.push_back(decoy);
         return true;
+    }
+
+    void GEInteractionSystem::CheatOpenDoors(GEWorldRuntime& worldRuntime, GESound& sound)
+    {
+        auto& terrain = worldRuntime.GetWorldMutable();
+        const int axis = static_cast<int>(terrain.blocksPerAxis());
+        for (int gx = 0; gx < axis; ++gx)
+        {
+            for (int gy = 0; gy < axis; ++gy)
+            {
+                for (int gz = 0; gz < axis; ++gz)
+                {
+                    const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                        static_cast<std::uint16_t>(gz))
+                                           .type();
+                    // Both real door families, opened regardless of
+                    // whether Blupi actually holds the matching key/
+                    // treasure count -- see this method's own header
+                    // comment for the real-vs-adapted reasoning (440 is
+                    // this session's own confirmed real total icon
+                    // ceiling, a safe upper bound for the treasure-door
+                    // family's icon range).
+                    if (GalaxyEggbert::BlockTypes::isDoor(icon) || (icon >= 421 && icon <= 440))
+                    {
+                        OpenDoorAt(worldRuntime, gx, gy, gz, sound);
+                    }
+                }
+            }
+        }
+    }
+
+    void GEInteractionSystem::CheatCleanAll(GEWorldRuntime& worldRuntime)
+    {
+        for (auto& obj : worldRuntime.GetMobileObjectsMutable())
+        {
+            if (!obj.active)
+            {
+                continue;
+            }
+            if (IsGenericHazard(obj.type) || obj.type == ObjectType::ObjectType32 ||
+                obj.type == ObjectType::ObjectType33 || obj.type == ObjectType::ObjectType44 ||
+                obj.type == ObjectType::ObjectType54)
+            {
+                obj.active = false;
+            }
+        }
+    }
+
+    void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)
+    {
+        bool anyCollected = false;
+        for (auto& obj : worldRuntime.GetMobileObjectsMutable())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType5)
+            {
+                obj.active = false;
+                ++treasuresCollected_;
+                anyCollected = true;
+            }
+        }
+        if (anyCollected)
+        {
+            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
+            ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
+        }
+    }
+
+    bool GEInteractionSystem::CheatFindExit(const GEWorldRuntime& worldRuntime, float& outX, float& outY,
+                                             float& outZ) const
+    {
+        for (const auto& obj : worldRuntime.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType7)
+            {
+                outX = obj.currentX;
+                outY = obj.currentY;
+                outZ = obj.currentZ;
+                return true;
+            }
+        }
+        return false;
     }
 }
