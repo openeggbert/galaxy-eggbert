@@ -1033,15 +1033,27 @@ namespace GalaxyEggbert::CNA
             // several seconds, matching the user's recollection of a real,
             // noticeable fall, not the sub-1-second death the old -5.0f
             // threshold gave with this engine's own gravity. -60.0f
-            // reproduces a comparable ~6.2s fall using this engine's own
-            // already-tuned kGravity=25/kFallLimit=-10 (not the real
-            // tick-domain values, which aren't cross-checked against this
-            // engine's own constants per plan.md `065`) -- an equivalent
-            // NUMBER OF SECONDS, not the same literal unit distance, since
-            // this world's own terrain (Y 0-13) is far shorter than a real
-            // level's, so matching real "feel" (a real fall you notice)
-            // makes more sense here than matching the real absolute margin.
-            constexpr float kFallDeathY = -60.0f;
+            // reproduced a comparable ~6.2s fall (verified live at 6.72s)
+            // using this engine's own already-tuned kGravity=25/
+            // kFallLimit=-10 (not the real tick-domain values, which
+            // aren't cross-checked against this engine's own constants
+            // per plan.md `065`) -- an equivalent NUMBER OF SECONDS, not
+            // the same literal unit distance, since this world's own
+            // terrain (Y 0-13) is far shorter than a real level's, so
+            // matching real "feel" (a real fall you notice) makes more
+            // sense here than matching the real absolute margin.
+            //
+            // **-27.0f, not -60.0f (user feedback, 2026-07-13): even the
+            // "feel"-matched ~6.2-6.7s read as too long in practice.** User
+            // asked for roughly half. Using this engine's own kGravity=25/
+            // kFallLimit=-10: reaching terminal velocity takes a fixed
+            // 0.4s (10/25) covering 2.0 units regardless of the threshold;
+            // the rest is covered at the 10 units/s terminal rate. This is
+            // a game-feel adjustment, not a faithfulness correction (the
+            // real absolute margin was never matched here anyway, see
+            // above) -- verified live at 3.417s (down from the previously
+            // live-verified 6.72s), i.e. almost exactly half.
+            constexpr float kFallDeathY = -27.0f;
             if (blupi_.GetY() < kFallDeathY)
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);

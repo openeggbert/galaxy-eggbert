@@ -365,6 +365,11 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       (Y 0-13) is far shorter than a real level's. Verified live (temporary debug instrumentation,
       reverted before committing): death fired at 6.72s over a genuinely floorless column,
       matching the researched estimate closely.
+      **Follow-up (2026-07-13, user feedback): even this "feel"-matched ~6.2-6.7s read as too long
+      in practice.** User asked for roughly half. `kFallDeathY` moved again, `-60.0f` → `-27.0f` —
+      a pure game-feel tweak this time, not a further faithfulness correction (the real absolute
+      margin was never being matched here anyway). Verified live: death now fires at 3.417s, almost
+      exactly half of the previous 6.72s.
 - [ ] `068` Electric aura (`BlupiElectro`, Blupi's own offensive Power-Charge buff, destroys
       small enemies within 40px) — depends on secret-power research (`E3D-MIG-190`).
 - [ ] `069` Real 3D Blupi model (third-person only) — now the sole path to a visible, faithful

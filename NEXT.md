@@ -290,6 +290,18 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Fall-death timing shortened to roughly half (2026-07-13), per explicit user feedback.** The
+  2026-07-11 fix had already made the fall real/noticeable (`kFallDeathY` -5.0f→-60.0f, ~6.2-6.7s),
+  but the user reported this now read as too long in practice and asked for roughly half.
+  `kFallDeathY` moved to -27.0f (`GalaxyEggbertCnaGame.cpp`) — using this engine's own
+  kGravity=25/kFallLimit=-10, the ramp to terminal velocity is a fixed 0.4s regardless of the
+  threshold, so only the remaining distance-at-terminal-velocity term needed adjusting. A pure
+  game-feel tweak, not a faithfulness correction (the real absolute fall margin was never matched
+  here anyway, this world's terrain being far shorter than a real level's). Verified live (forced
+  fall from an out-of-bounds column with no ground anywhere below): death now fires at 3.417s, down
+  from the previously live-verified 6.72s — almost exactly half. Full regression suite green on
+  both backends.
+
 - **Fade-out phase transitions implemented (2026-07-13, plan.md `MENU-088/089`), per explicit user
   request ("Fade-out přechody mezi fázemi").** A dedicated research pass into the real `fadeOutPhase`
   deferred-transition mechanic (`Game1.cpp`'s `SetPhase()`/`Update()`/`DrawBackgroundFade()`) found
