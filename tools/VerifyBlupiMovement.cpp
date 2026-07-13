@@ -1,4 +1,5 @@
 #include "Game/GEBlupiController.hpp"
+#include "Game/GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -810,6 +811,62 @@ int main(int argc, char** argv)
             check(helicopterDescend.GetY() < yStartDescend,
                   "holding crouch (real 'Down') while flying a Helicopter descends Y over time");
         }
+    }
+
+    // Repro attempt for "grass-topped cubes reported walkable-through"
+    // (NEXT.md §5/§8 task 4, reported live with no specific coordinates).
+    // Icons 107/108/109 intentionally leave their PosY face un-rendered
+    // (GETerrainRenderer's grass-top overlay draws a separate plate
+    // instead -- see GEDirectionalCubeTiles.cpp) but must still be solid
+    // for collision (IsSolidAt() only checks Block::isAir(), independent
+    // of which faces a render mode chooses to draw). This walks Blupi
+    // onto every icon-107/108/109 block actually present in the loaded
+    // world and asserts he lands on top of it instead of falling through.
+    {
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        int grassTopBlocksTested = 0;
+        for (int gx = 0; gx < blocksPerAxis; ++gx)
+        {
+            for (int gz = 0; gz < blocksPerAxis; ++gz)
+            {
+                for (int gy = blocksPerAxis - 1; gy >= 0; --gy)
+                {
+                    const auto block = world.getBlock(static_cast<std::uint16_t>(gx),
+                                                        static_cast<std::uint16_t>(gy),
+                                                        static_cast<std::uint16_t>(gz));
+                    if (block.isAir()) continue;
+                    const auto type = block.type();
+                    if (type == 107 || type == 108 || type == 109)
+                    {
+                        const float worldX =
+                            static_cast<float>(gx) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+                        const float worldZ =
+                            static_cast<float>(gz) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+                        const float dropFromY = static_cast<float>(gy) + 3.0f;
+
+                        GEBlupiController dropTest;
+                        dropTest.SetPosition(worldX, dropFromY, worldZ);
+                        for (int i = 0; i < 120; ++i) // ~2s, plenty to land and settle
+                        {
+                            dropTest.Step(world, 0.0f, 0.0f, false, false, false, dt);
+                        }
+                        std::cout << "Grass-top icon " << type << " at grid (" << gx << "," << gy
+                                   << "," << gz << "): landed Y=" << dropTest.GetY()
+                                   << " onGround=" << dropTest.IsOnGround() << std::endl;
+                        check(dropTest.IsOnGround() &&
+                                  dropTest.GetY() >= static_cast<float>(gy) + 1.0f - 0.01f,
+                              "Blupi lands on top of a grass-topped block (icon 107/108/109), "
+                              "not falling through it");
+                        ++grassTopBlocksTested;
+                    }
+                }
+            }
+        }
+        std::cout << grassTopBlocksTested
+                   << " grass-topped (icon 107/108/109) block(s) tested for collision." << std::endl;
+        check(grassTopBlocksTested > 0,
+              "at least one grass-topped block exists in the world to test "
+              "(otherwise this repro attempt tested nothing)");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

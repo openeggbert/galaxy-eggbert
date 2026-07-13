@@ -208,7 +208,7 @@ third feature needs to walk-test something inside an enclosed space — see §5.
 | **accepted limitation, user declined a fix (2026-07-09)** | `GalaxyEggbertCNA` exits with code 1 (not 0) when closed via a real window-manager close request — root cause is inside SDL's own X11 teardown (`../cna`/SDL), needs explicit approval to fix. Do not attempt without new approval. |
 | **needs re-test** | The "texture distance washout" investigation (`texture-distance-washout-bug.md`) was conducted while an unrelated cube-winding bug was active; its "geometry proven correct" conclusion is void and the repro should be re-run on the current code before resuming. |
 | **needs investigation** | Under Vulkan specifically, `screenshot_hud.png` (an end-of-frame diagnostic) has shown a plain blue background with un-blended white boxes around billboards, even though the same frame's terrain-visibility check reports real terrain color. Found 2026-07-11, not investigated — may be a `GetBackBufferData`/swapchain timing quirk. EasyGL's equivalent screenshot is unaffected. |
-| **needs reproduction** | "Grass-topped cubes reported walkable-through" (no collision) — reported live, no specific coordinates given, not reproduced. |
+| **not reproduced via scripted collision test** | "Grass-topped cubes reported walkable-through" — a new `VerifyBlupiMovement` check (2026-07-13) drops Blupi onto all 9 icon-107/108/109 blocks in `worlds3d/world001.vwr`; all land correctly (`IsSolidAt()` is independent of which faces a render mode draws). Collision logic itself is not at fault for this world's blocks. Possible explanation: icon 107/108/109 intentionally leave their `PosY` face un-rendered (drawn instead by the separate `grass_top.png` overlay plate), which may visually read as an open hole from some camera angles even though the block is solid — an optical-illusion theory, not confirmed. Still needs a live repro with specific coordinates if the report recurs. |
 | **risky assumption** | World/texture loading uses relative paths — `GalaxyEggbertCNA` only works when run from its own build directory. |
 | **incomplete** | `GETerrainRenderer`'s face culling only covers the plain static `UniformCube` path — animated/water paths render every face unconditionally (fine while those are sparse decorative elements, not bulk fills). |
 | **incomplete** | No per-zone fog (Simple3D only had `SetClearColor` per sky region; not evaluated for CNA). |
@@ -367,11 +367,10 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    `cna_backend_graphics_vulkan`. Verify: compare `GetBackBufferData` output between EasyGL and
    Vulkan builds at the same frame.
 
-4. **Try to reproduce "grass-topped cubes walkable through" with a scripted test.** Since no
-   coordinates were given, write a `VerifyBlupiMovement`-style check that walks Blupi onto every
-   grass-topped block in `worlds3d/world001.vwr` and asserts he doesn't fall through. Files:
-   `tools/VerifyBlupiMovement.cpp`, `src/GalaxyEggbertCNA/Game/GEBlupiController.cpp`
-   (`GroundHeightAt`/`IsGrassTopIcon`). Verify: the new test itself, run against the current world.
+4. ~~Try to reproduce "grass-topped cubes walkable through" with a scripted test.~~ **DONE
+   2026-07-13** — added a `VerifyBlupiMovement` check that drops Blupi onto all 9 icon-107/108/109
+   blocks in `worlds3d/world001.vwr`; all 9 land correctly, not reproduced via scripted collision.
+   See §5 for the updated conclusion; still open if a live repro with coordinates ever recurs.
 
 5. **Fix `GEBlupiController::GroundHeightAt()`'s roofed-interior limitation** (§4/§5) — make it
    consider Blupi's own current Y instead of always using the column's topmost solid block. Scope
