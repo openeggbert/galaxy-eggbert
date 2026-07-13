@@ -262,6 +262,20 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Full plan.md HUD-0NN audit against the real `Decor::DrawInfo` (2026-07-13).** Read the entire
+  real in-game HUD draw function (`Decor.cpp:1185-1311`) end to end and cross-checked every
+  `HUD-0NN` plan.md entry against it — the first time this was done exhaustively rather than
+  piecemeal. Result: every element `DrawInfo` actually draws is now either implemented (this
+  session's life/key/treasure/bullet/dynamite/gauge work) or a correctly-identified real gap
+  (`HUD-017` perso counter, `HUD-024` training hints — both blocked on separate not-yet-built
+  mechanics). Every OTHER `HUD-0NN` entry not found in `DrawInfo` is now flagged `[?]` for
+  independent re-verification rather than left looking like confirmed, simply-unstarted work —
+  two turned out to rest on wrong premises entirely: `HUD-002`'s claimed 5-icon life cap doesn't
+  exist (the real source is uncapped, matching what `GalaxyEggbertCNA` already does), and
+  `HUD-009`/`025`'s "score display" has no real backing anywhere found (only a separate,
+  unrelated high-score ranking MENU screen exists). See plan.md's Phase 9/§2.3 for the full
+  per-item breakdown.
+
 - **Both real `jauge.png` HUD gauges implemented (2026-07-13, plan.md `HUD-008`/`012`/`018`/`019`).**
   Researched the real `Jauge` widget (`Jauge.hpp`'s own fully-documented class comment: a
   124×22px two-layer sprite, empty background always drawn, colored fill cropped to
@@ -3058,17 +3072,22 @@ researched and found genuinely blocked (documented non-goal for Ecrase's hitbox 
 engine's single-point collision doesn't have; `needs_human` for Suspended/fidget, both blocked on
 icon 202's pending "thin-bar" render-geometry decision, `E3D-MIG-513`).
 
-**Recommended next step**: with Phases 10/13-17 all done/substantially done and every other
-plan.md phase either a standing rule, optional/later, or blocked on a `needs_human` render-
-geometry decision (Phase 5C, Phase 6's 3D Blupi model) or a not-yet-built subsystem (particle
-effects for `176`, a player-fired projectile system for bullet firing, save/load scope for `106`),
-**no further gameplay-mechanics work is safely actionable without either human input on a pending
-visual/render decision, or a new, separately-scoped subsystem.** The two live options left: (1)
-the Saw blade orientation (needs the user's own visual judgment, see below — do not guess again),
-or (2) HUD/Menu work (`Phase 9`, `E3D-MIG-090`-`093`; explicitly LOWER priority than the
-gameplay-mechanics phases this session, per the user's own 2026-07-12 priority choice, but with
-those now done, this becomes the natural next phase if the user wants to keep going in a
-"features, not bugs" direction) — both need explicit user direction on which to pick up next.
+**Phase 9 (HUD) started 2026-07-13 per explicit user direction ("začni fázi 9")** — see §3's
+newest entries. Life/key/treasure text (already done 2026-07-10) plus new work this pass: bullet/
+dynamite counters (`HUD-015`/`016`) and both real `jauge.png` gauges — water/Nage breath
+(`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`). A full
+read-through of the real `Decor::DrawInfo` end to end confirmed every element it draws is now
+either implemented or a correctly-identified real gap (`HUD-017` perso counter, blocked on an
+unported "Perso" mechanic; `HUD-024` training hints, blocked on a "mission" concept + table
+transcription approval) — **Phase 9's real, `DrawInfo`-backed scope is now essentially exhausted**
+short of those 2 blocked items. Every other `HUD-0NN` entry (score, world/timer, hit-flash,
+exit-open popup, etc.) was NOT found in `DrawInfo` and is flagged `[?]` for independent
+verification, not assumed real — see plan.md's Phase 9/§2.3 for the full breakdown.
+**Recommended next step**: the Saw blade orientation is still the one item needing the user's own
+visual judgment (see below — do not guess again); beyond that, further Phase 9 work needs either
+resolving the `[?]`-flagged items' real source first, or picking up `HUD-017`/`024`'s own
+blockers (a "Perso" mechanic, a "mission" concept + transcription approval) — both are
+independent research/scoping tasks, not quick continuations of what's already done.
 
 **1 open item, see §8's newest task entries for full detail**:
 1. **Saw blade orientation — paused, needs careful re-investigation before the next attempt** (not
