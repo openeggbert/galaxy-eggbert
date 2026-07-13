@@ -133,8 +133,14 @@ menus, though still missing a visible 3D Blupi model.
 
 ## 3. Recent changes
 
-Most recent first. Full history: `git log`. Everything below is from **2026-07-13** (one very
-long session); each item is its own commit.
+Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
+long continuous autonomous session); each item is its own commit.
+
+- **Wired all 7 test/verify tools into `ctest`** (plan.md TEST-002) — `GalaxyEggbertWorldsTests`
+  turned out to already be ctest-discoverable; added `add_test()` for the 6 `VerifyXxx` binaries
+  (with an explicit repo-root `WORKING_DIRECTORY` for the 3 that need it). `ctest --test-dir
+  build-cna --output-on-failure` now runs everything in one command on both backends — see §5 for
+  the one pre-existing, unrelated third-party test failure this surfaced (not a regression).
 
 - **Implemented bridge construction** (`ObjectType52`, plan.md PICKUP-064) — the last of the
   genuinely-open gaps found by the `plan.md` reconciliation. While grounded on a Bridge (icon 364)
@@ -260,6 +266,7 @@ retrofit), but new enclosed-space content no longer needs that workaround.
 | Status | Issue |
 |---|---|
 | **open, needs_human — do not guess again** | Saw blade (icon 378) render orientation still wrong; see §4. |
+| **pre-existing, third-party, unrelated to galaxy-eggbert** | `ctest --test-dir build-cna` (since the 2026-07-14 TEST-002 fix) bundles in a couple of `../easy-gl`/`../meta-gl` smoke tests alongside galaxy-eggbert's own 7 tools. `easy-gl-resource-smoke-tests` fails an assertion about GL texture-unit binding state (`SmokeResourceTests.cpp`, `g_state.last_active_texture`) — confirmed unrelated to any galaxy-eggbert change (a sibling dependency's own test, out of scope to fix per CLAUDE.md's `../easy-3d`/`../cna`-adjacent sibling-repo rules; `../easy-gl` isn't even in that explicit list, treat with the same caution). Not a regression; galaxy-eggbert's own 7 tools are unaffected and all pass. |
 | **fixed 2026-07-13** | `GEBlupiController::GroundHeightAt()` used to misread a ceiling as the floor for any roofed/enclosed interior. Fixed by bounding the scan with a `referenceY` parameter (current Y, or current Y + step-up allowance) instead of always scanning from the world's topmost Y; verified against the real south tunnel (a `git stash`-confirmed before/after test) + full regression on both backends. See §3. |
 | **CNA upstream bug, worked around — needs approval to fix upstream** | CNA's Vulkan backend records all `SpriteBatch` draws before all 3D draws each frame, so a sprite HUD drawn after the 3D scene gets painted over. `galaxy-eggbert` no longer uses `SpriteBatch` (`GEHud` draws real 3D quads instead), so it's unaffected — but any future `SpriteBatch` use would be. |
 | **CNA quirk, worked around** | A `BasicEffect` draw with `Alpha < 1` renders on EasyGL but not at all on CNA's Vulkan backend. `GEHud`'s treasure panel uses opacity 1.0 instead of the real mobile-eggbert 0.6 until this is fixed upstream (`kPanelOpacity`). |
@@ -379,10 +386,20 @@ cmake --build build-cna-vulkan --target GalaxyEggbertCNA -j2
 cmake --build build-cna --target GenerateSampleWorld3D -j2
 ./build-cna/GenerateSampleWorld3D worlds3d/world001.vwr
 
-# Build + run all tests/verify tools (run from repo ROOT, not build-cna — several tools use
-# ../mobile-eggbert-relative paths that only resolve correctly from the root):
+# Build + run all tests/verify tools. Since 2026-07-14 (plan.md TEST-002) all 7 are ctest-
+# registered with the correct working directory baked in, so a single ctest invocation from
+# ANYWHERE covers everything (no more need to cd to repo root or invoke each binary by hand):
 cmake --build build-cna --target GalaxyEggbertWorldsTests VerifyBlupiMovement VerifyInteractionSystem \
     VerifyGEInputPad VerifyGESaveData VerifyMoveObjectTypesCna VerifyBigDecorParsingCna -j2
+ctest --test-dir build-cna --output-on-failure
+# Note: this also runs a handful of third-party (../easy-gl, ../meta-gl) smoke tests bundled into
+# the same ctest run -- 1 of those (easy-gl-resource-smoke-tests) has a known pre-existing,
+# unrelated failure (see NEXT.md §5); it is not one of galaxy-eggbert's own 7 tools/suites and is
+# not a regression if you see it fail.
+
+# Equivalent manual invocation of just galaxy-eggbert's own 7 tools, if isolating from the
+# third-party smoke tests above (must run from repo ROOT — several tools use
+# ../mobile-eggbert-relative paths that only resolve correctly from there):
 ./build-cna/GalaxyEggbertWorldsTests
 ./build-cna/VerifyBlupiMovement
 ./build-cna/VerifyInteractionSystem
@@ -466,13 +483,14 @@ judgment (§9).
 ### Genuinely open gaps (confirmed via direct source grep, not stale-doc negatives — from the
 ### 2026-07-14 audit above; ordered roughly by value/effort)
 
-11. **`ctest`/CI integration** (`plan.md TEST-002`) — zero `enable_testing()`/`add_test()` calls
-    exist anywhere in `CMakeLists.txt`. The 7 real test/verify tools (`GalaxyEggbertWorldsTests` +
-    6 `VerifyXxx` binaries) all exist and pass but must be run manually one at a time (§7's own
-    command list) — wiring `gtest_discover_tests()` for the gtest-based suite and `add_test()` for
-    each `VerifyXxx` binary would make `ctest --test-dir build-cna` alone a complete regression
-    check. Concrete, well-scoped, no research needed (unlike most other open items below). Files:
-    `CMakeLists.txt`. Verify: `ctest --test-dir build-cna --output-on-failure` reports all 7 green.
+11. ~~`ctest`/CI integration~~ **DONE 2026-07-14** (`plan.md TEST-002`) — `GalaxyEggbertWorldsTests`
+    turned out to already be `gtest_discover_tests()`-registered and ctest-runnable (a sibling
+    dependency's own CMakeLists.txt already calls `enable_testing()` transitively); the real gap was
+    the 6 `VerifyXxx` binaries having no `add_test()` at all. Added one for each in `CMakeLists.txt`
+    (`WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` for the 3 that default to repo-root-relative paths).
+    `ctest --test-dir build-cna` now runs all 7 tools in one command — confirmed on both backends
+    (75 tests total including third-party deps; 1 pre-existing, unrelated `../easy-gl` smoke-test
+    failure noted below, not a regression from this change).
 
 12. **Normal-jump tile** (`plan.md TILE-041`) — forces a jump when stepped on; no matching code
     exists anywhere. Needs the real trigger condition/jump magnitude confirmed against

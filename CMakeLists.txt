@@ -461,6 +461,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     else()
         target_link_libraries(VerifyInteractionSystem PRIVATE CNA SHARP_RUNTIME)
     endif()
+    if(BUILD_TESTING)
+        # WORKING_DIRECTORY = repo root: this tool's default world path
+        # ("worlds3d/world001.vwr") is relative, same quirk noted above.
+        add_test(NAME VerifyInteractionSystem COMMAND VerifyInteractionSystem
+                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    endif()
 
     # Scripted verification for GEInputPad (2026-07-13, on-screen D-pad/
     # Jump/Action/Pause + Pause-row hit-testing) -- pure layout/press-state
@@ -488,6 +494,11 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         target_link_libraries(VerifyGEInputPad PRIVATE easy3d::easy3d)
     else()
         target_link_libraries(VerifyGEInputPad PRIVATE easy3d)
+    endif()
+    if(BUILD_TESTING)
+        # No file/working-directory dependency -- LoadContent() is
+        # deliberately never called (see this tool's own top comment).
+        add_test(NAME VerifyGEInputPad COMMAND VerifyGEInputPad)
     endif()
 
 endif() # GALAXY_EGGBERT_BUILD_CNA
@@ -569,6 +580,27 @@ target_include_directories(VerifyBigDecorParsingCna PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
+
+# plan.md TEST-002/008/009/010: registers these 4 engine-agnostic tools with
+# ctest (VerifyInteractionSystem/VerifyGEInputPad are registered next to
+# their own add_executable() above, inside the GALAXY_EGGBERT_BUILD_CNA
+# block). VerifyBlupiMovement/VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna
+# all default to relative paths ("worlds3d/world001.vwr", "../mobile-eggbert/
+# worlds/*.txt") that only resolve from the repo root (NEXT.md §7's own
+# note) -- WORKING_DIRECTORY makes that explicit instead of relying on
+# whatever directory ctest happens to be invoked from. VerifyGESaveData
+# needs no such override: it only touches a scratch "savedata.txt" in
+# its own cwd and cleans it up itself, so the default build-dir cwd
+# keeps the repo root clean.
+if(BUILD_TESTING)
+    add_test(NAME VerifyBlupiMovement COMMAND VerifyBlupiMovement
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_test(NAME VerifyGESaveData COMMAND VerifyGESaveData)
+    add_test(NAME VerifyMoveObjectTypesCna COMMAND VerifyMoveObjectTypesCna
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_test(NAME VerifyBigDecorParsingCna COMMAND VerifyBigDecorParsingCna
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
 
 # =============================================================================
 # Doxygen

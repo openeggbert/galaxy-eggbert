@@ -2782,27 +2782,28 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 
 ### 2.13 Tests & Quality
 
-**Re-verified against source 2026-07-14** (this section had not been touched by the 2026-07-13
-`plan.md` reconciliation pass covering §2.6/2.7). One real category this section never accounted
-for at all: **6 scripted `VerifyXxx` tools** now exist (`VerifyBlupiMovement`,
-`VerifyInteractionSystem`, `VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`,
-`VerifyBigDecorParsingCna`) — real, working, run every session (NEXT.md §2/§7), covering most of
-what TEST-008/009/010 below ask for. They are NOT ctest-discovered/CI-automated (TEST-002 is
-still genuinely undone, and no `enable_testing()`/`add_test()` exists anywhere in
-`CMakeLists.txt`) — they're manually-invoked binaries, so TEST-008/009/010 stay `[ ]` for the
-literal "automated/CI-checked" ask, but the underlying *behavior* they'd test is not an
-unverified gap; corrected in place below rather than left silently misleading.
+**Re-verified against source 2026-07-14**, and **TEST-002 fixed the same day**. There are **7 real
+test/verify binaries**: the gtest-based `GalaxyEggbertWorldsTests` (already `gtest_discover_tests()`-
+registered) plus 6 scripted `VerifyXxx` tools (`VerifyBlupiMovement`, `VerifyInteractionSystem`,
+`VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`, `VerifyBigDecorParsingCna`) that
+were real and working but NOT ctest-registered — `add_test()` now exists for all 6 in
+`CMakeLists.txt` (with an explicit repo-root `WORKING_DIRECTORY` for the 3 that default to
+relative asset/world paths), so `ctest --test-dir build-cna` alone now runs and reports all 7
+tools' full results (75 tests total including third-party dependency suites; confirmed passing on
+both EasyGL and Vulkan build trees). TEST-008/009/010's underlying *behavior* was never an
+unverified gap (the manual tools already covered it) — only the "automated/CI-checked" framing was
+missing, and that's now closed too.
 
 - [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest, MoveObjectRecordTests) — **count reconciled 2026-07-14**: 64/64 (confirmed via a fresh `TEST(...)`/`TEST_F(...)` grep across `tests/GalaxyEggbert/`), not the previously-quoted 63.
-- [ ] TEST-002 — ctest discovery in the CNA build dir (gtest_discover_tests fix) — confirmed still NOT done: no `enable_testing()`/`add_test()` call exists anywhere in `CMakeLists.txt`.
+- [x] TEST-002 — ctest discovery in the CNA build dir — **fixed 2026-07-14**: `GalaxyEggbertWorldsTests` was already `gtest_discover_tests()`-registered (confirmed live: `ctest -N` found all 64 cases even before this fix, since a sibling dependency's own CMakeLists.txt already calls `enable_testing()` transitively) — the real gap was the 6 `VerifyXxx` binaries having no `add_test()` at all. Added one for each (`CMakeLists.txt`), with `WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` for the 3 that default to repo-root-relative paths. `ctest --test-dir build-cna` now runs all 7 tools' full suites in one command.
 - [ ] TEST-003 — Test: all mobile-eggbert world files parse without error — **partially covered, not exhaustive**: `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` each parse a curated subset of real `../mobile-eggbert/worlds/world0XX.txt` files (chosen per `ObjectType` example), not every world file in the directory — the literal "all" ask is still open.
 - [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — confirmed NOT a dedicated automated test; informally exercised by the tile-exhibition demo room (`tools/GenerateSampleWorld3D.cpp`, all 441 icons on a slab, visually confirmed via live screenshots this session) but that's manual/visual, not a scripted assertion over the full icon range.
-- [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files (manual tool, not ctest-integrated — see this section's own intro note).
+- [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files, now ctest-integrated (TEST-002).
 - [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `GESaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
 - [ ] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw/Fan div 1, Lava div 2, Water1/Crusher/Water2/Marine div 3, Spike/Temp div 4) — the real behavior IS implemented (`GETerrainRenderer.cpp`'s `AnimDivisor()`, confirmed matches this exact mapping), but no automated test asserts it — `VerifyBlupiMovement`'s own `GetAnimIcon()` checks are a different, unrelated function (Blupi's own animation state, not terrain-tile hazard animation). Genuinely still open.
-- [ ] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected — the behavior itself is real and covered by the manual `VerifyInteractionSystem` tool (190+ checks as of 2026-07-13); only the "automated/CI-checked" framing this item specifically asks for is undone (see this section's own intro note).
-- [ ] TEST-009 — Test (new): crate push validity (adjacency/floor-support/occupancy checks) and platform-lift ping-pong patrol motion — same as TEST-008: real behavior covered by the manual `VerifyMoveObjectTypesCna`/`VerifyBlupiMovement`/`VerifyInteractionSystem` tools (crate stacking/linking and lift riding are both real, see §2.7 PICKUP-023/031), only ctest automation is missing.
-- [ ] TEST-010 — Test (new): `BigDecor` billboard parsing round-trip — same as TEST-008/009: real behavior covered by the manual `VerifyBigDecorParsingCna` tool, only ctest automation is missing.
+- [x] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected — done and now ctest-integrated (`VerifyInteractionSystem`, 190+ checks as of 2026-07-13, TEST-002).
+- [x] TEST-009 — Test (new): crate push validity (adjacency/floor-support/occupancy checks) and platform-lift ping-pong patrol motion — done and now ctest-integrated (`VerifyMoveObjectTypesCna`/`VerifyBlupiMovement`/`VerifyInteractionSystem`, TEST-002).
+- [x] TEST-010 — Test (new): `BigDecor` billboard parsing round-trip — done and now ctest-integrated (`VerifyBigDecorParsingCna`, TEST-002).
 
 ## 3. Open Questions
 
