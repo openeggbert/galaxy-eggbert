@@ -1354,28 +1354,30 @@ otherwise noted.
 
 #### 2.3 Phase: Play (active gameplay)
 
-- [ ] MENU-021 — Hide all menu UI elements during Play phase
-- [ ] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — top-right corner icon from `button.png`
-- [ ] MENU-023 — On-screen directional pad (`pad.png` icons 0, 1) for touch/gamepad emulation
-- [ ] MENU-024 — On-screen "JUMP" button (`PlayJump`) visible during Play
-- [ ] MENU-025 — On-screen "ACTION" button (`PlayAction`) visible during Play
-- [ ] MENU-026 — On-screen "DOWN" button (`PlayDown`) visible during Play (when applicable)
-- [ ] MENU-027 — Keyboard: Back/Escape during Play → Pause phase
+- [ ] MENU-021 — Hide all menu UI elements during Play phase (no Init/menu-phase UI exists yet — N/A until MENU-006..020 land)
+- [x] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — **done 2026-07-13** (`GEInputPad::DrawPlay`/`UpdatePlay`) — real icon 3, top-right, real edge/release-triggered press semantics; toggles Play→Pause exactly like the pre-existing Escape key (OR'd, see MENU-027)
+- [x] MENU-023 — On-screen directional pad (`pad.png` icons 0, 1) for touch/gamepad emulation — **done 2026-07-13** — real discrete {-1,0,+1}-per-axis drag (20px reference-space threshold), current-drag-point tracking (not a fixed grab offset), proportionally-adapted position/size (real drawBounds-relative coordinates don't fit this engine's fixed 640×480 reference space at all — see `GEInputPad.hpp`'s class comment)
+- [x] MENU-024 — On-screen "JUMP" button (`PlayJump`) visible during Play — **done 2026-07-13** — real LEVEL-triggered semantics (fires every frame the pointer is inside the rect while held, no release needed), OR'd with the existing keyboard jump (LCtrl)
+- [x] MENU-025 — On-screen "ACTION" button (`PlayAction`) visible during Play — **done 2026-07-13** — real EDGE/release-triggered semantics (single-fire on release, regardless of release position, as long as the press started on the button), OR'd with the existing keyboard action (Space)
+- [ ] MENU-026 — On-screen "DOWN" button (`PlayDown`) visible during Play (when applicable) — **not implemented** (2026-07-13 session scoped to D-pad/Jump/Action/Pause only, per explicit user request — `PlayDown` is real, icon 23, same level-triggered semantics as `PlayJump`, but has no engine-side crouch-toggle use case identified yet; a real, deliberately-deferred gap, not an oversight)
+- [x] MENU-027 — Keyboard: Back/Escape during Play → Pause phase — **done** (this engine's own keyboard binding — the real source has no keyboard binding at all here, gamepad-Back/touch-only, an XNA/WP7 port; added alongside the `Def::Phase` state machine, HUD-023 2026-07-13, now also OR'd with the on-screen `PlayPause` button, MENU-022 above)
 
 #### 2.4 Phase: Pause
 
-- [ ] MENU-028 — Render `pause.png` as full-screen background
-- [ ] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190)
-- [ ] MENU-030 — "MENU" button (`PauseMenu`) with label below
-- [ ] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1
-- [ ] MENU-032 — "SETUP" button (`PauseSetup`) with label below
-- [ ] MENU-033 — "RESTART" button (`PauseRestart`) — shown only when mission ≠ 1 AND mission % 10 ≠ 0
-- [ ] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below
-- [ ] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if mission%10==0 → Init, else mission/10*10)
-- [ ] MENU-036 — PauseRestart restarts current mission
-- [ ] MENU-037 — PauseContinue resumes play without reloading
-- [ ] MENU-038 — Animated fade-out from Pause → Play (blupiyoupie.png zooms out)
-- [ ] MENU-039 — Animated slide-out when Pause → PlaySetup (blupiyoupie.png slides right)
+- [x] MENU-028 — Render `pause.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawPause`) — confirmed exact 640×480, a direct pixel match for the existing reference space, no cropping/UV math needed
+- [~] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190) — **art+position done 2026-07-13** (confirmed 410×380, centered at real position (418,190)); **static/un-animated** — the real scale/rotate-in intro animation is a documented simplification, not implemented
+- [~] MENU-030 — "MENU" button (`PauseMenu`) with label below — **real position/icon done 2026-07-13** (icon 11, unconditional); **intentionally inert** — no destination screen (main menu) exists yet, a documented gap not a silent omission
+- [x] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1 — **real position/icon + real conditional visibility done 2026-07-13** (icon 8); functionally inert like MENU-030 (no hub-navigation screen exists yet, see MENU-035)
+- [~] MENU-032 — "SETUP" button (`PauseSetup`) with label below — **real position/icon done 2026-07-13** (icon 19, unconditional); **intentionally inert** — no settings screen exists yet
+- [x] MENU-033 — "RESTART" button (`PauseRestart`) — shown only when mission ≠ 1 AND mission % 10 ≠ 0 — **done 2026-07-13**, both the real conditional visibility AND a functional (simplified) restart: resets Blupi to the origin spawn + resumes Play (see MENU-036 — not a real level reload)
+- [x] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below — **done 2026-07-13**, fully functional (resumes Play in place, real edge/release-triggered press)
+- [ ] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if mission%10==0 → Init, else mission/10*10) — not modeled, no hub-world/Init navigation exists yet (see MENU-030's note)
+- [~] MENU-036 — PauseRestart restarts current mission — **simplified 2026-07-13**: resets Blupi to the origin spawn point and resumes Play; does NOT reload the level or reset lives/treasure/keys/etc. (no level-reload infrastructure exists yet) — same simplification already established for `WinLostReturn` (HUD-023)
+- [x] MENU-037 — PauseContinue resumes play without reloading — **done 2026-07-13**
+- [ ] MENU-038 — Animated fade-out from Pause → Play (blupiyoupie.png zooms out) — not implemented, transitions are instant (same simplification as MENU-029's static art)
+- [ ] MENU-039 — Animated slide-out when Pause → PlaySetup (blupiyoupie.png slides right) — N/A, PlaySetup phase doesn't exist yet
+
+**MENU-021..027/028..039 summary (2026-07-13):** implemented `GEInputPad` (`src/GalaxyEggbertCNA/Game/GEInputPad.hpp`/`.cpp`), a mouse-driven port of the real `InputPad` class covering the Play on-screen D-pad/Jump/Action/Pause controls and the full Pause screen (real `pause.png` + `blupiyoupie.png` art, 5 real `pad.png` buttons with real conditional visibility, Continue/Restart functionally wired). Verified via a dedicated scripted tool (`tools/VerifyGEInputPad.cpp`, 24 checks, synthetic `MouseState` values, no `GraphicsDevice` needed) covering D-pad discrete-drag thresholding, Jump's level-trigger vs Action/Pause's edge-trigger semantics, Pause-row conditional visibility, and `ResetTouchState()`'s phase-transition safety — plus live headless screenshots on both backends (EasyGL/Vulkan) confirming on-screen Play control placement and the real Pause screen layout (mission 0 correctly hides `Restart` via the real `mission%10!=0` gate). Real `drawBounds`-relative button coordinates from `InputPad.cpp` do not fit this engine's fixed 640×480 reference space at all (confirmed by computing them directly — the real Pause row alone would span off both edges) — every rect here is a proportionally-adapted layout preserving real order/relative placement/icon choices, not a literal pixel port. `PlayDown` (MENU-026) and every animated transition (MENU-029/038/039) are explicitly out of scope for this pass — see their own entries above.
 
 #### 2.5 Phase: Resume (saved game continue prompt)
 

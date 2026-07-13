@@ -9,6 +9,7 @@
 #include "Game/GEInteractionSystem.hpp"
 #include "Game/GEHud.hpp"
 #include "Game/GETrainingHints.hpp"
+#include "Game/GEInputPad.hpp"
 
 #include <GalaxyEggbert/def/GamePhase.hpp>
 
@@ -214,6 +215,18 @@ namespace GalaxyEggbert::CNA
         // real 3D quads instead, recorded in genuine submission order on
         // both backends.
         GEHud hud_;
+
+        // Real mobile-eggbert on-screen touch controls (2026-07-13,
+        // plan.md MENU-021..027/028..039, see GEInputPad.hpp) -- mouse-
+        // driven Pause row (real background/character art + 5 real
+        // pad.png buttons, Continue/Restart functionally wired) and Play
+        // on-screen D-pad/Jump/Action/Pause controls, OR'd with keyboard
+        // input in the movement block below. UpdatePlay()'s/UpdatePause()'s
+        // own return value tells this class whether the current mouse
+        // press landed on a control, so the pre-existing mouse drag-look
+        // camera code (below) can skip its own handling and avoid the two
+        // features fighting over the same left-mouse-button input.
+        GEInputPad inputPad_;
 
         // Mouse drag-look (2026-07-10, user request): while the left
         // button is held, mouse deltas rotate the camera around Blupi

@@ -290,6 +290,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
         src/GalaxyEggbertCNA/Game/GEHud.cpp
         src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
+        src/GalaxyEggbertCNA/Game/GEInputPad.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -457,6 +458,34 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             SHARP_RUNTIME)
     else()
         target_link_libraries(VerifyInteractionSystem PRIVATE CNA SHARP_RUNTIME)
+    endif()
+
+    # Scripted verification for GEInputPad (2026-07-13, on-screen D-pad/
+    # Jump/Action/Pause + Pause-row hit-testing) -- pure layout/press-state
+    # math driven by synthetic MouseState values, no GraphicsDevice/window
+    # needed at runtime, but GEInputPad.cpp's LoadContent()/DrawPlay()/
+    # DrawPause() still reference CNA Texture2D/BasicEffect and
+    # Easy3D::BillboardMeshRenderer symbols, so this links the same way
+    # GalaxyEggbertCNA itself does (CNA + backend + SHARP_RUNTIME + easy3d).
+    add_executable(VerifyGEInputPad
+        tools/VerifyGEInputPad.cpp
+        src/GalaxyEggbertCNA/Game/GEInputPad.cpp
+    )
+    target_include_directories(VerifyGEInputPad PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+    )
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
+        target_link_libraries(VerifyGEInputPad PRIVATE
+            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
+            SHARP_RUNTIME)
+    else()
+        target_link_libraries(VerifyGEInputPad PRIVATE CNA SHARP_RUNTIME)
+    endif()
+    if(TARGET easy3d::easy3d)
+        target_link_libraries(VerifyGEInputPad PRIVATE easy3d::easy3d)
+    else()
+        target_link_libraries(VerifyGEInputPad PRIVATE easy3d)
     endif()
 
 endif() # GALAXY_EGGBERT_BUILD_CNA

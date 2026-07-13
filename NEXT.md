@@ -203,7 +203,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   real background file. Also now has a second, third-person camera mode ("C" to toggle,
   2026-07-09, §3) showing a real GPU-skinned 3D model via CNA's `AvatarRenderer` extension —
   currently a temporary CC0/CC-BY placeholder (`avatars3d/blupi_placeholder/`), not a real Blupi
-  model yet.
+  model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost, 2026-07-13, §3)
+  with a real Pause screen (background/character/5 buttons, Continue/Restart functional) and
+  functional on-screen D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3,
+  `GEInputPad`) usable alongside keyboard input.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -261,6 +264,42 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Pause screen + functional on-screen Play controls implemented (2026-07-13, plan.md
+  `MENU-021..027`/`028..039`), per explicit user request to build them "vizuálně i s funkcemi"
+  (visually AND functionally).** New `GEInputPad` (`src/GalaxyEggbertCNA/Game/GEInputPad.hpp`/
+  `.cpp`), a mouse-driven port of the real `InputPad` class:
+  - **Play**: on-screen D-pad (real discrete {-1,0,+1}-per-axis drag, 20px threshold, current-
+    drag-point tracking), Jump (real LEVEL-triggered — fires every frame the pointer is inside its
+    rect while held, no release needed), Action and Pause (real EDGE/release-triggered —
+    single-fire on release regardless of release position, as long as the press started on the
+    button). All OR'd with existing keyboard input (LCtrl/Space/Escape) — both work
+    simultaneously.
+  - **Pause**: real `pause.png` full-screen background (confirmed exact 640×480 match for the
+    reference space) + real `blupiyoupie.png` character art (410×380, centered at real position
+    (418,190), static — the real scale/rotate-in animation is a documented simplification) + 5
+    real `pad.png` buttons (Menu/Back/Setup/Restart/Continue) with real conditional visibility
+    (`Back`: mission≠1; `Restart`: mission≠1 AND mission%10≠0). Continue/Restart are functionally
+    wired (resume in place / reset-to-spawn-and-resume); Menu/Back/Setup render at their real
+    position/icon but are intentionally inert (no menu/hub/settings screens exist yet).
+  - Real `InputPad.cpp` button rects are expressed in actual `drawBounds` pixel space, a
+    genuinely different convention from this engine's fixed 640×480 reference space — confirmed
+    a literal port is geometrically impossible (the real Pause row alone would span off both
+    edges of a 640-wide space). Every rect here is a proportionally-adapted layout preserving
+    real order/relative placement/icon choices instead.
+  - Resolved the input conflict with the pre-existing mouse drag-look camera: `UpdatePlay()`
+    returns whether the press landed on a control, which now suppresses drag-look for that press.
+  - `PhaseOverlayMessage()`'s "PAUSED" text and `GEHud::Draw()`'s normal HUD are now both skipped
+    during Pause (superseded by the real screen above) — Win/Lost still use the generic overlay.
+  - Verified via a new scripted tool (`tools/VerifyGEInputPad.cpp`, 24 checks, synthetic
+    `MouseState` values, no `GraphicsDevice` needed) plus live headless screenshots on both
+    backends (D-pad/Jump/Action/Pause render at expected screen positions in Play; the Pause
+    screen's background/character/buttons render correctly, with `Restart` correctly hidden for
+    mission 0 via the real `mission%10!=0` gate) — full regression suite green (64/64 unit tests,
+    all verify tools, both backends).
+  - Out of scope this pass (documented gaps, not oversights): `PlayDown` (`MENU-026`, no crouch
+    use case identified yet), every animated transition (`MENU-029`/`038`/`039`), real level-reload
+    for `PauseRestart`/hub-navigation for `PauseBack` (`MENU-035`/`036`, no infrastructure yet).
 
 - **Real `Def::Phase` state machine implemented (2026-07-13, plan.md `HUD-023`), per explicit
   user request for the FULL real enum, not a trimmed subset.** `GalaxyEggbert::GamePhase`
@@ -3421,6 +3460,13 @@ cmake --build build-cna --target VerifyBlupiMovement VerifyMoveObjectTypesCna Ve
 ./build-cna/VerifyBlupiMovement          # Blupi collision/step-up/gravity vs. worlds3d/world001.vwr
 ./build-cna/VerifyMoveObjectTypesCna     # MoveObject parsing vs. 12 real mobile-eggbert level files
 ./build-cna/VerifyBigDecorParsingCna     # BigDecor: parsing vs. real mobile-eggbert level files (run from repo root, not build-cna — uses ../mobile-eggbert relative paths)
+
+# Scripted verification tools that link CNA (platform lifts/crates/pickups, training hints,
+# on-screen controls) -- run from repo root too, same ../mobile-eggbert-relative-path quirk as
+# VerifyBigDecorParsingCna above:
+cmake --build build-cna --target VerifyInteractionSystem VerifyGEInputPad -j2
+./build-cna/VerifyInteractionSystem      # platform lift/crate/pickup/training-hint behavior vs. worlds3d/world001.vwr
+./build-cna/VerifyGEInputPad             # on-screen D-pad/Jump/Action/Pause + Pause-row hit-testing (synthetic MouseState, no GraphicsDevice needed)
 
 # easy-3d: default (headers-only) build + tests
 cmake -S ../easy-3d -B /tmp/e3d-build -DEASY3D_CNA_DIR=../cna

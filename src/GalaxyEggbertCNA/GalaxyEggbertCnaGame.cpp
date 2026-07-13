@@ -192,6 +192,12 @@ namespace GalaxyEggbert::CNA
         // instances, including text.png/pad.png which nothing else loads).
         hud_.LoadContent(device);
 
+        // Real mobile-eggbert on-screen touch controls (2026-07-13, see
+        // GEInputPad.hpp -- loads its own pad.png instance plus
+        // Content/backgrounds/pause.png and blupiyoupie.png, which
+        // nothing else loads).
+        inputPad_.LoadContent(device);
+
         // Billboard rendering for MoveObjects (15-3d-render-mapping-design.md
         // §5/§7) — element.png, same asset already used by GalaxyEggbertSimple3D.
         objectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/element.png", device);
@@ -381,6 +387,7 @@ namespace GalaxyEggbert::CNA
         phase_ = next;
         pauseKeyWasDown_ = false;
         phaseReturnKeyWasDown_ = false;
+        inputPad_.ResetTouchState();
     }
 
     const char* GalaxyEggbertCnaGame::PhaseOverlayMessage() const noexcept
@@ -388,7 +395,10 @@ namespace GalaxyEggbert::CNA
         switch (phase_)
         {
             case GalaxyEggbert::GamePhase::Pause:
-                return "PAUSED";
+                // Handled by inputPad_.DrawPause() instead (2026-07-13,
+                // plan.md MENU-028..039) -- the real background/character/
+                // buttons, not a generic text overlay.
+                return nullptr;
             case GalaxyEggbert::GamePhase::Win:
                 return "YOU WIN!";
             case GalaxyEggbert::GamePhase::Lost:
@@ -402,14 +412,60 @@ namespace GalaxyEggbert::CNA
     {
         Game::Update(gameTime);
 
+        // Play on-screen control input (2026-07-13, plan.md MENU-021..027)
+        // -- computed here, in Update()'s own top-level scope, so the
+        // movement block further below (still inside the Play-gated
+        // section) can read it after the early return this block itself
+        // may trigger. Left default-zero when phase_ isn't Play (that
+        // branch below never runs inputPad_.UpdatePlay()). inputPadClaimedMouse
+        // tells the pre-existing mouse drag-look code (further below) that
+        // this frame's press landed on an on-screen control, so the two
+        // features don't fight over the same left-mouse-button input.
+        GEInputPad::PlayInput padPlayInput;
+        bool inputPadClaimedMouse = false;
+
         // Phase transitions (plan.md HUD-023) -- read regardless of the
         // current phase, since the big Play-gated simulation block below
         // (and its own input reading) doesn't run at all outside Play.
         {
+            using Microsoft::Xna::Framework::Input::ButtonState;
             using Microsoft::Xna::Framework::Input::Keyboard;
             using Microsoft::Xna::Framework::Input::Keys;
+            using Microsoft::Xna::Framework::Input::Mouse;
             const auto phaseKeys = Keyboard::GetState();
-            const bool pausePressed = phaseKeys.IsKeyDown(Keys::Escape);
+            const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+
+            bool mousePausePressed = false;
+            bool mouseContinuePressed = false;
+            bool mouseRestartPressed = false;
+            if (phase_ == GalaxyEggbert::GamePhase::Play)
+            {
+                const auto mouse = Mouse::GetState();
+                inputPadClaimedMouse = inputPad_.UpdatePlay(
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
+                mousePausePressed = padPlayInput.pausePressed;
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Pause)
+            {
+                const auto mouse = Mouse::GetState();
+                // Real conditional visibility: Back/Restart hidden on
+                // mission 1 (can't go "back" from/replay the very first
+                // level); Restart additionally hidden on decade-boundary
+                // missions (real `mission % 10 != 0` gate).
+                const int mission = worldRuntime_.GetMissionNumber();
+                const bool showBack = mission != 1;
+                const bool showRestart = mission != 1 && mission % 10 != 0;
+                const auto pauseInput = inputPad_.UpdatePause(
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart);
+                mouseContinuePressed = pauseInput.continuePressed;
+                mouseRestartPressed = pauseInput.restartPressed;
+            }
+
+            // Real Pause trigger is gamepad-Back/a touch PlayPause button
+            // (see phase_'s own class-comment) -- Escape is this engine's
+            // own keyboard binding, OR'd with the on-screen PlayPause
+            // button click (edge-triggered already, see UpdatePlay()).
+            const bool pausePressed = phaseKeys.IsKeyDown(Keys::Escape) || mousePausePressed;
             if (pausePressed && !pauseKeyWasDown_)
             {
                 if (phase_ == GalaxyEggbert::GamePhase::Play)
@@ -422,6 +478,21 @@ namespace GalaxyEggbert::CNA
                 }
             }
             pauseKeyWasDown_ = pausePressed;
+
+            if (mouseContinuePressed)
+            {
+                // Real PauseContinue: resume in place.
+                SetPhase(GalaxyEggbert::GamePhase::Play);
+            }
+            else if (mouseRestartPressed)
+            {
+                // Real PauseRestart: reload the level -- not modeled (no
+                // level-reload infrastructure exists yet), so this reuses
+                // the same origin-respawn simplification as WinLostReturn
+                // below.
+                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                SetPhase(GalaxyEggbert::GamePhase::Play);
+            }
 
             if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
             {
@@ -469,8 +540,14 @@ namespace GalaxyEggbert::CNA
             if (keys.IsKeyDown(Keys::Right)) turnInput += 1.0f;
             if (keys.IsKeyDown(Keys::Up))    moveInput += 1.0f;
             if (keys.IsKeyDown(Keys::Down))  moveInput -= 1.0f;
-            const bool jumpPressed = keys.IsKeyDown(Keys::LeftControl);
-            const bool actionPressed = keys.IsKeyDown(Keys::Space);
+            // On-screen D-pad OR'd in (2026-07-13, plan.md MENU-021..024):
+            // both axes are already the same discrete {-1,0,+1} shape as
+            // the keyboard reads above, so a plain add+clamp combines them
+            // without needing a separate "which source wins" rule.
+            turnInput = std::clamp(turnInput + padPlayInput.turnInput, -1.0f, 1.0f);
+            moveInput = std::clamp(moveInput + padPlayInput.moveInput, -1.0f, 1.0f);
+            const bool jumpPressed = keys.IsKeyDown(Keys::LeftControl) || padPlayInput.jumpHeld;
+            const bool actionPressed = keys.IsKeyDown(Keys::Space) || padPlayInput.actionPressed;
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
@@ -1173,13 +1250,21 @@ namespace GalaxyEggbert::CNA
             // then it snaps back when you walk". Drag (not free mouselook)
             // so it maps 1:1 onto touch input too (SDL reports touch drags
             // as mouse drags).
+            //
+            // inputPadClaimedMouse (2026-07-13, plan.md MENU-021..027)
+            // forces lookHeld false whenever this frame's press landed on
+            // an on-screen D-pad/Jump/Action/Pause control (computed
+            // earlier this same Update(), before the Play-gate) -- without
+            // it, dragging the on-screen D-pad would also spin the camera,
+            // since both features read the same left-mouse-button state.
             {
                 using Microsoft::Xna::Framework::Input::ButtonState;
                 using Microsoft::Xna::Framework::Input::Mouse;
                 const auto mouse = Mouse::GetState();
                 const int mouseX = mouse.getXProperty();
                 const int mouseY = mouse.getYProperty();
-                const bool lookHeld = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+                const bool lookHeld =
+                    mouse.getLeftButtonProperty() == ButtonState::Pressed && !inputPadClaimedMouse;
                 if (lookHeld && mouseLookActive_)
                 {
                     constexpr float kLookRadiansPerPixel = 0.008f;
@@ -1814,27 +1899,54 @@ namespace GalaxyEggbert::CNA
         // backends.
         {
             const auto& viewport = device.getViewportProperty();
-            // Training-hint lookup (plan.md HUD-024): real grid position
-            // (not render-centered, GEWorldRuntime::kWorldCenterX/Z offset
-            // reversed, matching every other grid<->render conversion this
-            // session).
-            const int hintGridX = static_cast<int>(std::lround(blupi_.GetX())) + GEWorldRuntime::kWorldCenterX;
-            const int hintGridZ = static_cast<int>(std::lround(blupi_.GetZ())) + GEWorldRuntime::kWorldCenterZ;
-            const char* trainingHint = FindTrainingHint(
-                worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
-                interaction_.TreasuresCollected(), blupi_.IsInVehicle(), interaction_.DynamiteCount() > 0);
-            hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                      interaction_.Lives(),
-                      interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
-                      interaction_.Key3Count() > 0,
-                      interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
-                      interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
-                      blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
-                      blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
-                      blupi_.GetSecretPowerLevel(),
-                      trainingHint,
-                      PhaseOverlayMessage(),
-                      blupi_.GetAnimIcon());
+            // Pause (2026-07-13, plan.md MENU-028..039): the real HUD is
+            // skipped entirely, replaced by inputPad_.DrawPause()'s real
+            // background/character/buttons below -- matches the existing
+            // overlayMessage precedent (Win/Lost) of fully hiding the
+            // normal HUD outside Play, just via a dedicated draw call
+            // instead of a generic text message.
+            if (phase_ != GalaxyEggbert::GamePhase::Pause)
+            {
+                // Training-hint lookup (plan.md HUD-024): real grid position
+                // (not render-centered, GEWorldRuntime::kWorldCenterX/Z offset
+                // reversed, matching every other grid<->render conversion this
+                // session).
+                const int hintGridX = static_cast<int>(std::lround(blupi_.GetX())) + GEWorldRuntime::kWorldCenterX;
+                const int hintGridZ = static_cast<int>(std::lround(blupi_.GetZ())) + GEWorldRuntime::kWorldCenterZ;
+                const char* trainingHint = FindTrainingHint(
+                    worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
+                    interaction_.TreasuresCollected(), blupi_.IsInVehicle(), interaction_.DynamiteCount() > 0);
+                hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                          interaction_.Lives(),
+                          interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
+                          interaction_.Key3Count() > 0,
+                          interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
+                          interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
+                          blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
+                          blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
+                          blupi_.GetSecretPowerLevel(),
+                          trainingHint,
+                          PhaseOverlayMessage(),
+                          blupi_.GetAnimIcon());
+            }
+
+            // On-screen touch controls (2026-07-13, plan.md
+            // MENU-021..027/028..039, see GEInputPad.hpp): the real Pause
+            // screen (background/character/5 real buttons) while paused,
+            // or the real D-pad/Jump/Action/Pause overlay on top of the
+            // live 3D scene + HUD while playing.
+            if (phase_ == GalaxyEggbert::GamePhase::Pause)
+            {
+                const int mission = worldRuntime_.GetMissionNumber();
+                const bool showBack = mission != 1;
+                const bool showRestart = mission != 1 && mission % 10 != 0;
+                inputPad_.DrawPause(
+                    device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart);
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Play)
+            {
+                inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
         }
 
         // One-shot full-frame screenshot, taken here (2026-07-11) rather
