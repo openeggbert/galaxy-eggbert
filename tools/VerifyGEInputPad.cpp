@@ -191,6 +191,25 @@ int main()
         check(!release.continuePressed, "ResetTouchState: clears a latched press before its release fires");
     }
 
+    // --- Win/Lost: the shared WinLostReturn button (real rect, confirmed
+    // via InputPad.cpp's own bsf1=drawBoundsHeight/5 formula:
+    // (428.8,19.2)-(524.8,115.2) in this 640x480 reference space) --
+    // edge/release-triggered, same semantics as every other non-Jump
+    // button in this class.
+    {
+        GEInputPad pad;
+        const bool pressReturn = pad.UpdateWinLost(mouse(470, 60, true), kViewportW, kViewportH);
+        check(!pressReturn, "WinLostReturn: not yet fired on the press frame itself");
+        const bool releaseReturn = pad.UpdateWinLost(mouse(470, 60, false), kViewportW, kViewportH);
+        check(releaseReturn, "WinLostReturn: fires on release when the press landed inside its rect");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateWinLost(mouse(10, 10, true), kViewportW, kViewportH);
+        const bool releaseOutside = pad.UpdateWinLost(mouse(10, 10, false), kViewportW, kViewportH);
+        check(!releaseOutside, "WinLostReturn: does not fire when the press landed outside its rect");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

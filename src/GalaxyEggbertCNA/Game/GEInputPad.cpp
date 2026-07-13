@@ -5,8 +5,10 @@
 #include <Microsoft/Xna/Framework/Matrix.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <string>
 
 namespace GalaxyEggbert::CNA
 {
@@ -74,6 +76,46 @@ namespace GalaxyEggbert::CNA
         // blupiyoupie.png (410x380) is centered at real position (418,190).
         constexpr float kCharacterCenterX = 418.0f, kCharacterCenterY = 190.0f;
 
+        // Win/Lost screens (plan.md MENU-046..057), verified directly
+        // against `Game1.cpp`'s real `Draw()` phase branches: both center
+        // blupiyoupie.png at real (418,238) -- a DIFFERENT Y than Pause's
+        // 190 above -- scaling its native 410x380 half-size (205,190) by
+        // `num`. Win: `num = sin(phaseTime/ScaleTime(3))/2+1`, i.e.
+        // `sin(t/0.15s)/2+1` at the real 20fps base rate this class's
+        // phaseTimeSeconds parameter is expressed in -- a perpetual pulse
+        // between 0.5x/1.5x native size, no rotation. Lost: `num =
+        // min(phaseTime/ScaleTime(100),1)` = `min(t/5s,1)` -- grows from
+        // nothing to native size once over 5s, with a decaying spin
+        // (`rotation = (1-num)^2 * 360*6` degrees while num<1, converging
+        // to 0 rotation exactly as it reaches full size).
+        constexpr float kWinLostCharacterCenterY = 238.0f;
+        constexpr float kWinPulsePeriodSeconds = 0.15f;
+        constexpr float kLostGrowDurationSeconds = 5.0f;
+        constexpr float kLostSpinMaxDegrees = 360.0f * 6.0f;
+
+        // Real WinLostReturn button (icon 3, shared with PlayPause but a
+        // DIFFERENT, bigger, less corner-flush rect -- confirmed via
+        // `InputPad.cpp`'s own real formula: Left/Right = drawBoundsWidth
+        // - bsf1*2.2/1.2, Top/Bottom = bsf1*0.2/1.2, where
+        // bsf1=drawBoundsHeight/5. In this engine's 640x480 reference
+        // space, bsf1=96, giving (428.8,19.2)-(524.8,115.2).
+        constexpr float kWinLostReturnX0 = 640.0f - 96.0f * 2.2f;
+        constexpr float kWinLostReturnY0 = 96.0f * 0.2f;
+        constexpr float kWinLostReturnX1 = 640.0f - 96.0f * 1.2f;
+        constexpr float kWinLostReturnY1 = 96.0f * 1.2f;
+
+        // text.png: 32px glyph cells, 16 columns, glyph index == ASCII
+        // code for the printable range (same convention GEHud.cpp already
+        // documents -- read off the asset, not mobile-eggbert's own
+        // table_char). Fixed advance approximation (the real font is
+        // proportional via table_char_width, deliberately not
+        // transcribed).
+        constexpr float kGlyphCellPx = 32.0f;
+        constexpr int kGlyphCols = 16;
+        constexpr float kGlyphAdvance = 17.0f;
+        constexpr float kPauseLabelScale = 0.7f; // real DrawTextUnderButton() scale
+        constexpr float kPauseLabelYOffset = 2.0f; // real "buttonRect.Bottom + 2"
+
         struct Rect { float x0, y0, x1, y1; };
 
         constexpr Rect kJumpRect{kJumpX0, kJumpY0, kJumpX1, kJumpY1};
@@ -81,6 +123,7 @@ namespace GalaxyEggbert::CNA
         constexpr Rect kPlayPauseRect{kPlayPauseX0, kPlayPauseY0, kPlayPauseX1, kPlayPauseY1};
         constexpr Rect kDPadHitRect{kDPadCenterX - kDPadHitHalf, kDPadCenterY - kDPadHitHalf,
                                      kDPadCenterX + kDPadHitHalf, kDPadCenterY + kDPadHitHalf};
+        constexpr Rect kWinLostReturnRect{kWinLostReturnX0, kWinLostReturnY0, kWinLostReturnX1, kWinLostReturnY1};
 
         Rect PauseButtonRect(int index)
         {
@@ -106,6 +149,8 @@ namespace GalaxyEggbert::CNA
         constexpr int kPauseControlSetup = 2;
         constexpr int kPauseControlRestart = 3;
         constexpr int kPauseControlContinue = 4;
+
+        constexpr int kWinLostControlReturn = 0;
 
         void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
                           std::vector<std::uint32_t>& indices,
@@ -134,6 +179,48 @@ namespace GalaxyEggbert::CNA
             u1 = (static_cast<float>(col + 1) * kPadCellPx) / sheetW;
             v1 = (static_cast<float>(row + 1) * kPadCellPx) / sheetH;
         }
+
+        // Real Lost-screen spin: the sprite rotates about its own rect
+        // CENTER (confirmed via mobile-eggbert's `Misc::RotateAdjust` --
+        // it compensates SpriteBatch's real top-left rotation origin by
+        // shifting the rect so the visual pivot lands on the center
+        // instead). Builds one standalone quad directly rather than going
+        // through the axis-aligned Quad/FlushQuads path above, since a
+        // rotated quad's 4 corners aren't expressible as a single (x0,y0)-
+        // (x1,y1) rect. Positive rotationDegrees is clockwise on screen
+        // (standard XNA SpriteBatch convention in this Y-down space).
+        void AppendRotatedQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
+                                 std::vector<std::uint32_t>& indices,
+                                 float centerX, float centerY, float halfW, float halfH,
+                                 float rotationDegrees,
+                                 float u0, float v0, float u1, float v1)
+        {
+            const float rad = rotationDegrees * (3.14159265f / 180.0f);
+            const float c = std::cos(rad);
+            const float s = std::sin(rad);
+            const auto rotate = [&](float dx, float dy, float& outX, float& outY)
+            {
+                outX = centerX + dx * c - dy * s;
+                outY = centerY + dx * s + dy * c;
+            };
+            float x0, y0, x1, y1, x2, y2, x3, y3;
+            rotate(-halfW, -halfH, x0, y0);
+            rotate(halfW, -halfH, x1, y1);
+            rotate(halfW, halfH, x2, y2);
+            rotate(-halfW, halfH, x3, y3);
+
+            const auto base = static_cast<std::uint32_t>(vertices.size());
+            vertices.push_back({{x0, y0, 0.0f}, {u0, v0}});
+            vertices.push_back({{x1, y1, 0.0f}, {u1, v0}});
+            vertices.push_back({{x2, y2, 0.0f}, {u1, v1}});
+            vertices.push_back({{x3, y3, 0.0f}, {u0, v1}});
+            indices.push_back(base + 0);
+            indices.push_back(base + 1);
+            indices.push_back(base + 2);
+            indices.push_back(base + 0);
+            indices.push_back(base + 2);
+            indices.push_back(base + 3);
+        }
     }
 
     void GEInputPad::LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
@@ -141,10 +228,13 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[3] = {
+        const char* kPaths[6] = {
             "Content/icons/pad.png",
             "Content/backgrounds/pause.png",
             "Content/backgrounds/blupiyoupie.png",
+            "Content/backgrounds/win.png",
+            "Content/backgrounds/lost.png",
+            "Content/icons/text.png",
         };
         for (const char* path : kPaths)
         {
@@ -158,6 +248,9 @@ namespace GalaxyEggbert::CNA
         padTexture_ = Texture2D(kPaths[0], device);
         pauseBgTexture_ = Texture2D(kPaths[1], device);
         blupiyoupieTexture_ = Texture2D(kPaths[2], device);
+        winBgTexture_ = Texture2D(kPaths[3], device);
+        lostBgTexture_ = Texture2D(kPaths[4], device);
+        textTexture_ = Texture2D(kPaths[5], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -170,6 +263,9 @@ namespace GalaxyEggbert::CNA
         padEffect_ = makeEffect(padTexture_);
         pauseBgEffect_ = makeEffect(pauseBgTexture_);
         blupiyoupieEffect_ = makeEffect(blupiyoupieTexture_);
+        winBgEffect_ = makeEffect(winBgTexture_);
+        lostBgEffect_ = makeEffect(lostBgTexture_);
+        textEffect_ = makeEffect(textTexture_);
         loaded_ = true;
     }
 
@@ -209,6 +305,38 @@ namespace GalaxyEggbert::CNA
         renderer = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
         renderer->Draw(device, effect);
         effect.setAlphaProperty(1.0f);
+    }
+
+    void GEInputPad::AppendCenteredLabel(std::vector<Quad>& quads, const std::string& text,
+                                        float centerX, float topY, float viewportScale) const
+    {
+        if (text.empty())
+        {
+            return;
+        }
+        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
+        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float cellPx = kGlyphCellPx * kPauseLabelScale * viewportScale;
+        const float advance = kGlyphAdvance * kPauseLabelScale * viewportScale;
+        const float totalAdvance = static_cast<float>(text.size()) * advance;
+        float penX = centerX - totalAdvance * 0.5f;
+        for (const char c : text)
+        {
+            const int rank = static_cast<int>(static_cast<unsigned char>(c));
+            const int gcol = rank % kGlyphCols;
+            const int grow = rank / kGlyphCols;
+            Quad q;
+            q.x0 = penX;
+            q.y0 = topY;
+            q.x1 = penX + cellPx;
+            q.y1 = topY + cellPx;
+            q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+            q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+            q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+            q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+            quads.push_back(q);
+            penX += advance;
+        }
     }
 
     bool GEInputPad::UpdatePlay(const Microsoft::Xna::Framework::Input::MouseState& mouse,
@@ -430,6 +558,24 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
 
+        // Real button labels (confirmed 2026-07-13 against `Game1::
+        // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
+        // `Phase::Pause`): centered under each VISIBLE button, at real
+        // scale 0.7, Y = button's real bottom edge + 2. Real EN strings --
+        // note PauseMenu's real text is "Home", not "Menu".
+        std::vector<Quad> labelQuads;
+        const auto appendLabel = [&](int index, bool visible, const char* text)
+        {
+            if (!visible)
+            {
+                return;
+            }
+            const Rect r = PauseButtonRect(index);
+            const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
+            const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
+            AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
+        };
+
         const auto appendButton = [&](int index, bool visible, int icon, int controlId)
         {
             if (!visible)
@@ -450,12 +596,142 @@ namespace GalaxyEggbert::CNA
         appendButton(2, true, kIconPauseSetup, kPauseControlSetup);
         appendButton(3, showRestart, kIconPauseRestart, kPauseControlRestart);
         appendButton(4, true, kIconPauseContinue, kPauseControlContinue);
+        appendLabel(0, true, "Home");
+        appendLabel(1, showBack, "Back");
+        appendLabel(2, true, "Setup");
+        appendLabel(3, showRestart, "Restart");
+        appendLabel(4, true, "Continue");
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *blupiyoupieEffect_, blupiyoupieRenderer_, characterQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    bool GEInputPad::UpdateWinLost(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                   int viewportW, int viewportH) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
+        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+
+        const bool overReturn = InRect(mouseRefX, mouseRefY, kWinLostReturnRect);
+
+        if (mouseDown && !mouseWasDown_)
+        {
+            activeControl_ = overReturn ? kWinLostControlReturn : -1;
+        }
+
+        bool returnPressed = false;
+        if (!mouseDown && mouseWasDown_)
+        {
+            // Real edge/release-triggered semantics, same as every other
+            // non-Jump button in this class.
+            returnPressed = (activeControl_ == kWinLostControlReturn);
+            activeControl_ = -1;
+        }
+
+        mouseWasDown_ = mouseDown;
+        return returnPressed;
+    }
+
+    void GEInputPad::DrawWinLost(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                int viewportW, int viewportH, bool won, float phaseTimeSeconds)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
+        const auto refToScreenY = [&](float y) { return y * scale; };
+
+        // Real win.png/lost.png are exact 640x480 matches for the
+        // reference space, same as pause.png.
+        Quad background;
+        background.x0 = refToScreenX(0.0f);
+        background.y0 = refToScreenY(0.0f);
+        background.x1 = refToScreenX(kRefW);
+        background.y1 = refToScreenY(kRefH);
+        background.u0 = 0.0f;
+        background.v0 = 0.0f;
+        background.u1 = 1.0f;
+        background.v1 = 1.0f;
+        std::vector<Quad> backgroundQuads{background};
+
+        // Real per-phase animation (see GEInputPad.hpp's class comment for
+        // the exact real formulas this ports): Win pulses forever between
+        // 0.5x/1.5x native size, no rotation; Lost grows from nothing to
+        // native size once over 5s with a decaying 6-turn spin.
+        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
+        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+        float num;
+        float rotationDegrees = 0.0f;
+        if (won)
+        {
+            num = std::sin(phaseTimeSeconds / kWinPulsePeriodSeconds) * 0.5f + 1.0f;
+        }
+        else
+        {
+            num = std::min(phaseTimeSeconds / kLostGrowDurationSeconds, 1.0f);
+            if (num < 1.0f)
+            {
+                const float settle = 1.0f - num;
+                rotationDegrees = settle * settle * kLostSpinMaxDegrees;
+            }
+        }
+        const float halfWRef = (charW * 0.5f) * num;
+        const float halfHRef = (charH * 0.5f) * num;
+
+        std::vector<Easy3D::BillboardVertex> charVertices;
+        std::vector<std::uint32_t> charIndices;
+        if (halfWRef > 0.0f && halfHRef > 0.0f)
+        {
+            AppendRotatedQuadUv(charVertices, charIndices,
+                                refToScreenX(kCharacterCenterX), refToScreenY(kWinLostCharacterCenterY),
+                                halfWRef * scale, halfHRef * scale, rotationDegrees,
+                                0.0f, 0.0f, 1.0f, 1.0f);
+        }
+
+        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        std::vector<Quad> normalQuads;
+        std::vector<Quad> pressedQuads;
+        {
+            Quad q;
+            q.x0 = refToScreenX(kWinLostReturnRect.x0);
+            q.y0 = refToScreenY(kWinLostReturnRect.y0);
+            q.x1 = refToScreenX(kWinLostReturnRect.x1);
+            q.y1 = refToScreenY(kWinLostReturnRect.y1);
+            PadIconUv(kIconPlayPause, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            (activeControl_ == kWinLostControlReturn ? pressedQuads : normalQuads).push_back(q);
+        }
+
+        auto& bgEffect = won ? *winBgEffect_ : *lostBgEffect_;
+        auto& bgRenderer = won ? winBgRenderer_ : lostBgRenderer_;
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        FlushQuads(device, bgEffect, bgRenderer, backgroundQuads, viewportW, viewportH, 1.0f);
+        if (!charIndices.empty())
+        {
+            blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+            blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
+                0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
+            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
+        }
+        FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPlayPressedAlpha);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 }

@@ -1366,11 +1366,11 @@ otherwise noted.
 
 - [x] MENU-028 — Render `pause.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawPause`) — confirmed exact 640×480, a direct pixel match for the existing reference space, no cropping/UV math needed
 - [~] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190) — **art+position done 2026-07-13** (confirmed 410×380, centered at real position (418,190)); **static/un-animated** — the real scale/rotate-in intro animation is a documented simplification, not implemented
-- [~] MENU-030 — "MENU" button (`PauseMenu`) with label below — **real position/icon done 2026-07-13** (icon 11, unconditional); **intentionally inert** — no destination screen (main menu) exists yet, a documented gap not a silent omission
-- [x] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1 — **real position/icon + real conditional visibility done 2026-07-13** (icon 8); functionally inert like MENU-030 (no hub-navigation screen exists yet, see MENU-035)
-- [~] MENU-032 — "SETUP" button (`PauseSetup`) with label below — **real position/icon done 2026-07-13** (icon 19, unconditional); **intentionally inert** — no settings screen exists yet
-- [x] MENU-033 — "RESTART" button (`PauseRestart`) — shown only when mission ≠ 1 AND mission % 10 ≠ 0 — **done 2026-07-13**, both the real conditional visibility AND a functional (simplified) restart: resets Blupi to the origin spawn + resumes Play (see MENU-036 — not a real level reload)
-- [x] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below — **done 2026-07-13**, fully functional (resumes Play in place, real edge/release-triggered press)
+- [~] MENU-030 — "MENU" button (`PauseMenu`) with label below — **real position/icon + real "Home" text label done 2026-07-13** (icon 11, unconditional; label added in the same pass as MENU-046..057, verified against `Game1::DrawButtonsText()`'s real `DrawTextUnderButton(PauseMenu, TX_BUTTON_MENU)` call — note the real EN string is "Home", not "Menu"); **intentionally inert** — no destination screen (main menu) exists yet, a documented gap not a silent omission
+- [x] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1 — **real position/icon + real conditional visibility + real "Back" text label done 2026-07-13**; functionally inert like MENU-030 (no hub-navigation screen exists yet, see MENU-035)
+- [~] MENU-032 — "SETUP" button (`PauseSetup`) with label below — **real position/icon + real "Setup" text label done 2026-07-13** (icon 19, unconditional); **intentionally inert** — no settings screen exists yet
+- [x] MENU-033 — "RESTART" button (`PauseRestart`) — shown only when mission ≠ 1 AND mission % 10 ≠ 0 — **done 2026-07-13**, the real conditional visibility, real "Restart" text label, AND a functional (simplified) restart: resets Blupi to the origin spawn + resumes Play (see MENU-036 — not a real level reload)
+- [x] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below — **done 2026-07-13**, real "Continue" text label, fully functional (resumes Play in place, real edge/release-triggered press)
 - [ ] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if mission%10==0 → Init, else mission/10*10) — not modeled, no hub-world/Init navigation exists yet (see MENU-030's note)
 - [~] MENU-036 — PauseRestart restarts current mission — **simplified 2026-07-13**: resets Blupi to the origin spawn point and resumes Play; does NOT reload the level or reset lives/treasure/keys/etc. (no level-reload infrastructure exists yet) — same simplification already established for `WinLostReturn` (HUD-023)
 - [x] MENU-037 — PauseContinue resumes play without reloading — **done 2026-07-13**
@@ -1390,21 +1390,23 @@ otherwise noted.
 
 #### 2.6 Phase: Win
 
-- [ ] MENU-046 — Render `win.png` as full-screen background
-- [ ] MENU-047 — Render `blupiyoupie.png` with pulsating scale (sin wave animation, amplitude 1.0±0.5)
-- [ ] MENU-048 — "RETURN" button (`WinLostReturn`) → Init
-- [ ] MENU-049 — Display mission elapsed time in text overlay
-- [ ] MENU-050 — Display score in text overlay
-- [ ] MENU-051 — Display "NEW RECORD!" text if score exceeds saved high score
-- [ ] MENU-052 — Auto-advance to next level after N seconds (optional: like mobile-eggbert)
+- [x] MENU-046 — Render `win.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawWinLost`) — confirmed exact 640×480, direct pixel match, no cropping/UV math needed
+- [x] MENU-047 — Render `blupiyoupie.png` with pulsating scale (sin wave animation, amplitude 1.0±0.5) — **done 2026-07-13**, verified directly against `Game1.cpp:744-754`'s real formula (`num = sin(phaseTime/ScaleTime(3))/2+1`, i.e. `sin(t/0.15s)/2+1` at the real 20fps base rate — a perpetual pulse between 0.5x/1.5x native size, no rotation), centered at real position (418,238) — a DIFFERENT Y than Pause's 190 (confirmed, not assumed)
+- [x] MENU-048 — "RETURN" button (`WinLostReturn`) → Init — **done 2026-07-13** with the same real icon (3, shared with `PlayPause`) and a REAL, independently-derived rect (confirmed via `InputPad.cpp`'s own `bsf1=drawBoundsHeight/5` formula: (428.8,19.2)-(524.8,115.2) in this engine's 640×480 reference space — NOT PlayPause's smaller/more corner-flush rect, a distinct real button); real destination is `Init` (confirmed via `Game1.cpp`'s `WinLostReturn -> SetPhase(Init)`), which doesn't exist here — reuses the same return-to-Play-at-spawn simplification already established for the keyboard path (HUD-023), not a new one
+- [ ] MENU-049 — Display mission elapsed time in text overlay — **searched for directly in `Game1.cpp`'s `Draw()`/`DrawButtonsText()`/`DrawButtonsBackground()` (2026-07-13) and NOT found anywhere** — treated as unconfirmed/likely-not-backed-by-found-source, not implemented (same rigor as MENU-050/051 below, extended here)
+- [ ] MENU-050 — Display score in text overlay — confirmed unconfirmed/likely-fictional (see HUD-009's original finding — no real score variable found anywhere in mobile-eggbert)
+- [ ] MENU-051 — Display "NEW RECORD!" text if score exceeds saved high score — same as MENU-050, depends on a score concept not confirmed to exist
+- [ ] MENU-052 — Auto-advance to next level after N seconds (optional: like mobile-eggbert) — not implemented; real source has no fixed auto-timer either (explicit `WinLostReturn` input only, confirmed HUD-023)
 
 #### 2.7 Phase: Lost (game over)
 
-- [ ] MENU-053 — Render `lost.png` as full-screen background
-- [ ] MENU-054 — Render `blupiyoupie.png` with spin animation (6× rotation, quadratic ease-in, same as mobile-eggbert)
-- [ ] MENU-055 — "RETURN" button (`WinLostReturn`) → Init
-- [ ] MENU-056 — Display lives remaining and score
-- [ ] MENU-057 — If 0 lives: "GAME OVER" text; if lives remain: "TRY AGAIN" hint
+- [x] MENU-053 — Render `lost.png` as full-screen background — **done 2026-07-13**, same exact-640×480 confirmation as MENU-046
+- [x] MENU-054 — Render `blupiyoupie.png` with spin animation (6× rotation, quadratic ease-in, same as mobile-eggbert) — **done 2026-07-13**, verified directly against `Game1.cpp:725-743`'s real formula: grows from nothing to native size once over a real 5s (`num = min(phaseTime/ScaleTime(100),1)` = `min(t/5s,1)`), with a decaying spin (`rotation = (1-num)^2 * 360*6` degrees while num<1, converging to exactly 0° as it reaches full size) — centered at the same real (418,238) as Win. Verified live via headless screenshots at phaseTime=1.0s (small + visibly rotated, matching the formula's predicted ~302° at that instant) and phaseTime=5.5s (full native size, upright, no rotation)
+- [x] MENU-055 — "RETURN" button (`WinLostReturn`) → Init — **done 2026-07-13**, shares the exact same button/rect/simplification as MENU-048
+- [ ] MENU-056 — Display lives remaining and score — **searched for directly in `Game1.cpp` (2026-07-13) and NOT found** — no lives/score text draw call exists for `Phase::Lost` in the real source; not implemented (see MENU-049's note)
+- [ ] MENU-057 — If 0 lives: "GAME OVER" text; if lives remain: "TRY AGAIN" hint — **not implemented, and the "TRY AGAIN" branch is likely inapplicable to this engine's own Lost trigger**: this engine's real Lost gate (`GEInteractionSystem::GameOverCount()` incrementing) fires ONLY when lives are exhausted (already confirmed real behavior, HUD-023) and immediately resets lives to 3 in the same event (real `DoorsLost()` behavior) — so by the time Lost is ever reached here, "lives remain" is always true in the post-reset sense, but the phase itself only ever represents the true-game-over case. No text draw call for either branch was found in `Game1.cpp` regardless (see MENU-049's note)
+
+**MENU-046..057 summary (2026-07-13):** extended `GEInputPad` with `UpdateWinLost()`/`DrawWinLost()` (real win.png/lost.png backgrounds + blupiyoupie.png animations + the shared `WinLostReturn` button), and — while researching the real Win/Lost draw code in `Game1.cpp` — also found and fixed a real gap in the already-shipped Pause screen: `Game1::DrawButtonsText()`'s real `DrawTextUnderButton()` calls for `Phase::Pause` (real EN strings "Home"/"Back"/"Setup"/"Restart"/"Continue" — note `PauseMenu`'s real text is "Home", not "Menu") were not yet ported; added via a new `GEInputPad::AppendCenteredLabel()` helper (own `text.png` instance, same glyph-is-ASCII-code convention as `GEHud`). Also added `GalaxyEggbertCnaGame::phaseTimeSeconds_`, a real `phaseTime` port (verified against `Game1.hpp`'s own "phaseTime==0 is a SetPhase() postcondition" doc comment and `Game1.cpp:237`'s unconditional per-tick increment) — expressed as elapsed seconds rather than a raw frame counter since the real formulas are all `phaseTime/Config::ScaleTime(N)` at a real 20fps base rate, making a seconds-based port exactly equivalent and framerate-independent. Verified via 3 new `VerifyGEInputPad` checks (27 total) plus live headless screenshots at 3 distinct animation timepoints (Pause labels, Win mid-pulse, Lost at phaseTime 1.0s and 5.5s) confirming the exact real formulas. MENU-049/050/051/056/057 (mission time/score/lives-remaining text) were searched for directly in `Game1.cpp` and found to not exist anywhere in the real Win/Lost draw code — treated as unconfirmed rather than invented, matching the established MENU-050/051 precedent.
 
 #### 2.8 Phase: MainSetup / PlaySetup (settings)
 

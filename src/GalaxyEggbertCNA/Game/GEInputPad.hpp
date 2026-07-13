@@ -8,6 +8,7 @@
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace GalaxyEggbert::CNA
@@ -56,11 +57,11 @@ namespace GalaxyEggbert::CNA
         // per-draw-path convention GEHud's own pad.png load follows) plus
         // Content/backgrounds/pause.png (real full-screen Pause
         // background, confirmed exactly 640x480 -- a direct pixel match
-        // for the existing reference space) and Content/backgrounds/
-        // blupiyoupie.png (real Pause character art, confirmed 410x380,
-        // drawn centered at real position (418,190), static/un-animated --
-        // the real scale/rotate-in intro animation is a documented
-        // simplification).
+        // for the existing reference space), Content/backgrounds/
+        // blupiyoupie.png (real Pause/Win/Lost character art, confirmed
+        // 410x380), win.png/lost.png (real full-screen Win/Lost
+        // backgrounds, confirmed exactly 640x480 too), and text.png (own
+        // instance, for the real Pause button labels -- see DrawPause()).
         void LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
         // Clears in-flight touch/click tracking. Called from
@@ -108,7 +109,13 @@ namespace GalaxyEggbert::CNA
         // positions/icons but are NOT wired to any action yet, since the
         // real destinations they'd lead to (main menu, hub-world
         // navigation, settings screen) don't exist in this engine yet --
-        // a documented gap, not a silent omission.
+        // a documented gap, not a silent omission. DrawPause() also draws
+        // each visible button's real text label underneath it (confirmed
+        // 2026-07-13 against `Game1::DrawButtonsText()`'s real
+        // `DrawTextUnderButton()` calls for `Phase::Pause` -- "Home"/
+        // "Back"/"Setup"/"Restart"/"Continue", the real English strings;
+        // note the real `Menu`/`PauseMenu` button's real EN text is "Home",
+        // not "Menu").
         struct PauseInput
         {
             bool continuePressed = false;
@@ -119,6 +126,41 @@ namespace GalaxyEggbert::CNA
                                              bool showBack, bool showRestart) noexcept;
         void DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool showBack, bool showRestart);
+
+        // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
+        // (win.png/lost.png, confirmed 640x480) plus the real
+        // blupiyoupie.png animation -- verified directly against
+        // `Game1.cpp`'s real `Draw()` phase branches (2026-07-13):
+        // Win pulses forever (`num = sin(phaseTime/0.15s)/2+1`, centered at
+        // real position (418,238), no rotation); Lost grows in once from
+        // nothing over a real 5s (`num = min(phaseTime/5s, 1)`) with a
+        // decaying spin (`rotation = (1-num)^2 * 2160 degrees`, 6 full
+        // turns unwinding to 0 as it settles). Both share the real
+        // WinLostReturn button (icon 3, same as PlayPause -- real rect
+        // confirmed via `InputPad.cpp`'s own `bsf1=drawBoundsHeight/5`
+        // formula, NOT reused verbatim from PlayPause's rect, which is a
+        // different, smaller/more corner-flush box). The real destination
+        // (`Init`, confirmed via `Game1.cpp`'s `WinLostReturn -> SetPhase
+        // (Init)`) doesn't exist in this engine -- the caller's own
+        // return-to-Play-at-spawn simplification (already established for
+        // the keyboard path, HUD-023) is reused here, not a new one.
+        // Real score/mission-time/lives-remaining text overlays described
+        // in plan.md MENU-049/050/051/056/057 were searched for directly
+        // in `Game1.cpp`'s `Draw()`/`DrawButtonsText()`/
+        // `DrawButtonsBackground()` and NOT found anywhere -- like the
+        // already-flagged MENU-050/051 "score", these are treated as
+        // unconfirmed/likely-not-backed-by-found-source rather than
+        // invented, and are deliberately NOT drawn here.
+        //
+        // Returns true exactly on the frame the WinLostReturn button is
+        // released (edge-triggered, same semantics as every other
+        // non-Jump button in this class) -- the caller should reset Blupi
+        // to spawn and return to Play (see this method's own class-comment
+        // paragraph above for why that, not a real Init transition).
+        [[nodiscard]] bool UpdateWinLost(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                         int viewportW, int viewportH) noexcept;
+        void DrawWinLost(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                         int viewportW, int viewportH, bool won, float phaseTimeSeconds);
 
     private:
         struct Quad
@@ -133,16 +175,33 @@ namespace GalaxyEggbert::CNA
                         const std::vector<Quad>& quads, int viewportW, int viewportH,
                         float alpha);
 
+        // Appends one horizontally-centered line of text.png glyph quads
+        // (real `Text::DrawTextCenter` semantics: centered at centerX,
+        // top edge at topY, unscaled Y -- see DrawPause()'s real button-
+        // label use). A member (not a free function) since text.png's
+        // real pixel dimensions are only known once loaded.
+        void AppendCenteredLabel(std::vector<Quad>& quads, const std::string& text,
+                                 float centerX, float topY, float scale) const;
+
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D pauseBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupiyoupieTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D winBgTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D lostBgTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> pauseBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiyoupieEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> winBgEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> lostBgEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padPressedRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> pauseBgRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiyoupieRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> winBgRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> lostBgRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
         bool loaded_ = false;
 
         // Edge-trigger press tracking: which logical button (if any) the

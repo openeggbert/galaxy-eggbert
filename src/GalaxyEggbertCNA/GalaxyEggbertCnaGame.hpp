@@ -206,6 +206,20 @@ namespace GalaxyEggbert::CNA
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
 
+        // Real `phaseTime` (2026-07-13, plan.md MENU-046..057), verified
+        // directly against `Game1.hpp`'s own doc comment ("phaseTime==0"
+        // is a `SetPhase()` postcondition) and `Game1.cpp:237`'s
+        // unconditional `phaseTime++` every Update() tick regardless of
+        // phase. Ported as elapsed SECONDS since the last `SetPhase()`
+        // call (not a raw frame counter) since the real formulas this
+        // drives are all expressed as `phaseTime / Config::ScaleTime(N)`
+        // at a real 20fps base rate -- dividing by N/20 seconds is exactly
+        // equivalent and framerate-independent, unlike counting ticks.
+        // Currently drives only the Win/Lost `blupiyoupie.png` animation
+        // (`GEInputPad::DrawWinLost`); not used for the Play-phase
+        // gameplay simulation, which has no timer concept of its own.
+        float phaseTimeSeconds_ = 0.0f;
+
         // Real mobile-eggbert bottom HUD + the interim animation-state
         // indicator (2026-07-10, see GEHud.hpp) -- replaces the earlier
         // SpriteBatch-based HUD entirely: on CNA's Vulkan backend every

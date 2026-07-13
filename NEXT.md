@@ -204,9 +204,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   2026-07-09, §3) showing a real GPU-skinned 3D model via CNA's `AvatarRenderer` extension —
   currently a temporary CC0/CC-BY placeholder (`avatars3d/blupi_placeholder/`), not a real Blupi
   model yet. Now also has a real `Def::Phase` state machine (Play/Pause/Win/Lost, 2026-07-13, §3)
-  with a real Pause screen (background/character/5 buttons, Continue/Restart functional) and
-  functional on-screen D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3,
-  `GEInputPad`) usable alongside keyboard input.
+  with a real Pause screen (background/character/5 labeled buttons, Continue/Restart functional),
+  real Win/Lost screens (background + real pulsing/spin-in `blupiyoupie.png` animation +
+  functional Return button), and functional on-screen D-pad/Jump/Action/Pause controls
+  (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable alongside keyboard input.
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -264,6 +265,35 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Win/Lost screens implemented, real Pause button text labels added (2026-07-13, plan.md
+  `MENU-046..057`), continuing autonomously right after the Pause/on-screen-controls task below.**
+  Extended `GEInputPad` with `UpdateWinLost()`/`DrawWinLost()`: real `win.png`/`lost.png`
+  full-screen backgrounds (confirmed exact 640×480) plus the real `blupiyoupie.png` animations,
+  verified directly against `Game1.cpp`'s actual `Draw()` phase branches (not guessed) — Win
+  pulses forever between 0.5x/1.5x native size (`sin(phaseTime/0.15s)/2+1`, real position
+  (418,238), no rotation); Lost grows from nothing to native size once over a real 5s with a
+  decaying 6-turn spin that converges to exactly 0° as it reaches full size — both share the real
+  `WinLostReturn` button (icon 3, a distinct/bigger rect from `PlayPause`'s despite sharing the
+  icon, independently re-derived from `InputPad.cpp`'s own `bsf1=drawBoundsHeight/5` formula).
+  Real destination is `Init` (confirmed via `Game1.cpp`'s `WinLostReturn -> SetPhase(Init)`, which
+  doesn't exist here) — reuses the same return-to-Play-at-spawn simplification already
+  established for the keyboard path (HUD-023), not a new one. Added
+  `GalaxyEggbertCnaGame::phaseTimeSeconds_`, a real `phaseTime` port (`Game1.hpp`'s own
+  "phaseTime==0 is a SetPhase() postcondition" doc comment, `Game1.cpp:237`'s unconditional
+  per-tick increment) expressed as elapsed seconds rather than a frame counter. While researching
+  the real Win/Lost draw code, also found and fixed a real gap in the already-shipped Pause
+  screen: real per-button text labels ("Home"/"Back"/"Setup"/"Restart"/"Continue" — the real
+  `PauseMenu` button's EN text is "Home", not "Menu") were missing; added via a new
+  `GEInputPad::AppendCenteredLabel()` (own `text.png` instance, same glyph-is-ASCII-code
+  convention `GEHud` already uses). Searched `Game1.cpp` directly for any mission-time/score/
+  lives-remaining text on the Win/Lost screens (`MENU-049`/`050`/`051`/`056`/`057`) and found
+  none anywhere in the real source — treated as unconfirmed rather than invented, extending the
+  same rigor already applied to the earlier "score" finding (HUD-009). Verified via 3 new
+  `VerifyGEInputPad` checks (27 total) plus live headless screenshots at 3 animation timepoints
+  (Pause labels; Win mid-pulse; Lost at phaseTime 1.0s showing partial size + ~302° rotation
+  exactly matching the formula's prediction, and 5.5s showing full size + 0° rotation) — full
+  regression suite green (64/64 unit tests, all verify tools, both backends).
 
 - **Pause screen + functional on-screen Play controls implemented (2026-07-13, plan.md
   `MENU-021..027`/`028..039`), per explicit user request to build them "vizuálně i s funkcemi"

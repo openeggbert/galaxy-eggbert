@@ -379,14 +379,16 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next) noexcept
     {
-        // Real Game1::SetPhase() resets a per-phase timer and clears input
-        // debounce state on every transition (Game1.cpp:979-1058) -- this
-        // engine's own equivalent is just the 2 key-debounce trackers below,
-        // since neither a settings-return-phase nor a fade-out delay is
-        // modeled.
+        // Real Game1::SetPhase() resets a per-phase timer (real `phaseTime`,
+        // now ported as phaseTimeSeconds_ -- see its own member comment,
+        // 2026-07-13) and clears input debounce state on every transition
+        // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
+        // 2 key-debounce trackers below, since no settings-return-phase or
+        // fade-out delay is modeled.
         phase_ = next;
         pauseKeyWasDown_ = false;
         phaseReturnKeyWasDown_ = false;
+        phaseTimeSeconds_ = 0.0f;
         inputPad_.ResetTouchState();
     }
 
@@ -400,9 +402,12 @@ namespace GalaxyEggbert::CNA
                 // buttons, not a generic text overlay.
                 return nullptr;
             case GalaxyEggbert::GamePhase::Win:
-                return "YOU WIN!";
             case GalaxyEggbert::GamePhase::Lost:
-                return "GAME OVER";
+                // Handled by inputPad_.DrawWinLost() instead (2026-07-13,
+                // plan.md MENU-046..057) -- the real win.png/lost.png
+                // background + blupiyoupie.png animation, not a generic
+                // text overlay.
+                return nullptr;
             default:
                 return nullptr;
         }
@@ -411,6 +416,12 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertCnaGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
+
+        // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --
+        // incremented unconditionally every Update() tick, regardless of
+        // phase, matching the real source's own `phaseTime++` placement.
+        const float dt = static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
+        phaseTimeSeconds_ += dt;
 
         // Play on-screen control input (2026-07-13, plan.md MENU-021..027)
         // -- computed here, in Update()'s own top-level scope, so the
@@ -496,7 +507,14 @@ namespace GalaxyEggbert::CNA
 
             if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
             {
-                const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space);
+                // Real WinLostReturn button (icon 3), OR'd with this
+                // engine's own Space-key pick -- edge-triggered already
+                // (see UpdateWinLost()), so no separate debounce needed
+                // for the mouse path.
+                const auto mouse = Mouse::GetState();
+                const bool mouseReturnPressed = inputPad_.UpdateWinLost(
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
                 if (returnPressed && !phaseReturnKeyWasDown_)
                 {
                     // Not a real level reload (needs infrastructure this
@@ -514,7 +532,6 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
-        const float dt = static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
         worldRuntime_.Update(dt);
 
         if (terrainRenderer_)
@@ -1899,13 +1916,16 @@ namespace GalaxyEggbert::CNA
         // backends.
         {
             const auto& viewport = device.getViewportProperty();
-            // Pause (2026-07-13, plan.md MENU-028..039): the real HUD is
-            // skipped entirely, replaced by inputPad_.DrawPause()'s real
-            // background/character/buttons below -- matches the existing
-            // overlayMessage precedent (Win/Lost) of fully hiding the
-            // normal HUD outside Play, just via a dedicated draw call
-            // instead of a generic text message.
-            if (phase_ != GalaxyEggbert::GamePhase::Pause)
+            // Pause/Win/Lost (2026-07-13, plan.md MENU-028..039/046..057):
+            // the real HUD is skipped entirely, replaced by
+            // inputPad_.DrawPause()/DrawWinLost()'s real background/
+            // character/buttons below -- fully hiding the normal HUD
+            // outside Play via a dedicated draw call instead of a generic
+            // text message.
+            const bool phaseHasRealScreen = phase_ == GalaxyEggbert::GamePhase::Pause ||
+                                             phase_ == GalaxyEggbert::GamePhase::Win ||
+                                             phase_ == GalaxyEggbert::GamePhase::Lost;
+            if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
                 // (not render-centered, GEWorldRuntime::kWorldCenterX/Z offset
@@ -1931,10 +1951,12 @@ namespace GalaxyEggbert::CNA
             }
 
             // On-screen touch controls (2026-07-13, plan.md
-            // MENU-021..027/028..039, see GEInputPad.hpp): the real Pause
-            // screen (background/character/5 real buttons) while paused,
-            // or the real D-pad/Jump/Action/Pause overlay on top of the
-            // live 3D scene + HUD while playing.
+            // MENU-021..027/028..039/046..057, see GEInputPad.hpp): the
+            // real Pause screen (background/character/5 real buttons)
+            // while paused, the real Win/Lost screen (background/
+            // character animation/Return button) while won/lost, or the
+            // real D-pad/Jump/Action/Pause overlay on top of the live 3D
+            // scene + HUD while playing.
             if (phase_ == GalaxyEggbert::GamePhase::Pause)
             {
                 const int mission = worldRuntime_.GetMissionNumber();
@@ -1942,6 +1964,11 @@ namespace GalaxyEggbert::CNA
                 const bool showRestart = mission != 1 && mission % 10 != 0;
                 inputPad_.DrawPause(
                     device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart);
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
+            {
+                inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                     phase_ == GalaxyEggbert::GamePhase::Win, phaseTimeSeconds_);
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
