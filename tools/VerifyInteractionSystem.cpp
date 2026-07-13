@@ -387,6 +387,46 @@ int main(int argc, char** argv)
         check(false, "found a bullet pack (ObjectType29) in the sample world");
     }
 
+    // 3.75. Perso decoy (plan.md HUD-017) -- real m_blupiPerso starts at 0
+    // (Decor.cpp:163/360/426) with no world pickup that grants it (only a
+    // level-authored save-data field this engine doesn't model yet, and
+    // retrieving an already-placed decoy) -- so this exercises the full
+    // round trip entirely via synthetic objects, not the sample world's own
+    // (nonexistent) demo placement.
+    {
+        constexpr float px = 300.0f, py = 1.0f, pz = 300.0f;
+        check(interaction.PersoCount() == 0, "PersoCount() starts at 0, matching the real default");
+        check(!interaction.TryPerso(world, px, py, pz, /*grounded=*/true),
+              "TryPerso() placement is a no-op while PersoCount() == 0");
+
+        auto& mutableObjects = world.GetMobileObjectsMutable();
+        MobileObjSpec decoy;
+        decoy.type = ObjectType::ObjectType200;
+        decoy.active = true;
+        decoy.currentX = decoy.posStartX = decoy.posEndX = px;
+        decoy.currentY = decoy.posStartY = decoy.posEndY = py;
+        decoy.currentZ = decoy.posStartZ = decoy.posEndZ = pz;
+        mutableObjects.push_back(decoy);
+
+        check(interaction.TryPerso(world, px, py, pz, /*grounded=*/true),
+              "TryPerso() picks up a nearby placed decoy");
+        check(interaction.PersoCount() == 1, "picking up the decoy increments PersoCount() to 1");
+        check(!mutableObjects.back().active, "the picked-up decoy is no longer active");
+
+        check(interaction.TryPerso(world, px, py, pz, /*grounded=*/true),
+              "TryPerso() places a new decoy now that PersoCount() > 0");
+        check(interaction.PersoCount() == 0, "placing the decoy decrements PersoCount() back to 0");
+        bool foundNewDecoy = false;
+        for (const auto& obj : mutableObjects)
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType200 && std::fabs(obj.currentX - px) < 0.01f)
+            {
+                foundNewDecoy = true;
+            }
+        }
+        check(foundNewDecoy, "TryPerso() actually spawned a new active decoy in the world");
+    }
+
     // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own
     // doors demo (tools/GenerateSampleWorld3D.cpp): a key-gated Door1 at
     // grid (48,1,90) with its Key1 at (46,1,88), and a treasure-gated

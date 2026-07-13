@@ -826,6 +826,23 @@ namespace GalaxyEggbert::CNA
                 {
                     sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
                 }
+                else
+                {
+                    // Perso decoy placement/pickup (plan.md HUD-017) --
+                    // real `else if (m_blupiPerso > 0)`, mutually exclusive
+                    // with dynamite above. Channel 61 shared with dynamite
+                    // placement (real, per 07-sounds.md); channel 3 is the
+                    // real generic pickup-completion chime, reused here for
+                    // the (simplified, non-voyage) pickup case.
+                    const int persoBefore = interaction_.PersoCount();
+                    if (interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                               blupi_.IsOnGround()))
+                    {
+                        sound_.Play(interaction_.PersoCount() > persoBefore
+                                        ? GalaxyEggbert::SoundChannel::SoundChannel3
+                                        : GalaxyEggbert::SoundChannel::SoundChannel61);
+                    }
+                }
 
                 // Vehicle mount/dismount (plan.md E3D-MIG-171) -- same
                 // action button. While already riding, dismounts (real:
@@ -1715,7 +1732,7 @@ namespace GalaxyEggbert::CNA
                       interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
                       interaction_.Key3Count() > 0,
                       interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
-                      interaction_.BulletCount(), interaction_.DynamiteCount(),
+                      interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
                       blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
                       blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
                       blupi_.GetSecretPowerLevel(),

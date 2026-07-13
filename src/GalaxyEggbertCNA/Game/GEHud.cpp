@@ -26,6 +26,17 @@ namespace GalaxyEggbert::CNA
         constexpr int kBulletIcon = 176;   // element.png, same as DrawInfo
         constexpr int kDynamiteIcon = 252; // element.png, same as DrawInfo
 
+        // button.png: 40px cells, 6 columns (sheet 240x1040, Pixmap.cpp:
+        // 592-600). Perso icon 108 at (0,438); its "= N" text at (32,452)
+        // renders at real scale 0.7 (smaller than the treasure counter's
+        // scale-1.0 text).
+        constexpr float kButtonTilePx = 40.0f;
+        constexpr int kButtonCols = 6;
+        constexpr float kPersoX = 0.0f, kPersoY = 438.0f;
+        constexpr float kPersoTextX = 32.0f, kPersoTextY = 452.0f;
+        constexpr float kPersoTextScale = 0.7f;
+        constexpr int kPersoIcon = 108; // button.png, same as DrawInfo
+
         // jauge.png: 124x88px, 4 stacked 22px-tall rows (JaugeMode Empty=0/
         // Red=1/Blue=2/Yellow=3 -- Jauge.hpp). Real Jauge::Draw() is a
         // two-layer sprite: the full 124x22 Empty row always drawn as a
@@ -101,17 +112,20 @@ namespace GalaxyEggbert::CNA
             indices.push_back(base + 3);
         }
 
-        // UVs for a 60px/10-col icon sheet whose real pixel size is known
+        // UVs for a fixed-cell icon sheet whose real pixel size is known
         // only at runtime (blupi.png's height differs from element.png's).
+        // Defaults match the 60px/10-col blupi.png/element.png convention;
+        // button.png (40px/6-col) passes its own tileSize/cols explicitly.
         void IconUv(int icon, float sheetW, float sheetH,
-                    float& u0, float& v0, float& u1, float& v1)
+                    float& u0, float& v0, float& u1, float& v1,
+                    float tileSize = kIconTilePx, int cols = kIconCols)
         {
-            const int col = icon % kIconCols;
-            const int row = icon / kIconCols;
-            u0 = (static_cast<float>(col) * kIconTilePx) / sheetW;
-            v0 = (static_cast<float>(row) * kIconTilePx) / sheetH;
-            u1 = (static_cast<float>(col + 1) * kIconTilePx) / sheetW;
-            v1 = (static_cast<float>(row + 1) * kIconTilePx) / sheetH;
+            const int col = icon % cols;
+            const int row = icon / cols;
+            u0 = (static_cast<float>(col) * tileSize) / sheetW;
+            v0 = (static_cast<float>(row) * tileSize) / sheetH;
+            u1 = (static_cast<float>(col + 1) * tileSize) / sheetW;
+            v1 = (static_cast<float>(row + 1) * tileSize) / sheetH;
         }
     }
 
@@ -120,12 +134,13 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[5] = {
+        const char* kPaths[6] = {
             "Content/icons/blupi.png",
             "Content/icons/element.png",
             "Content/icons/text.png",
             "Content/icons/pad.png",
             "Content/icons/jauge.png",
+            "Content/icons/button.png",
         };
         for (const char* path : kPaths)
         {
@@ -141,6 +156,7 @@ namespace GalaxyEggbert::CNA
         textTexture_ = Texture2D(kPaths[2], device);
         padTexture_ = Texture2D(kPaths[3], device);
         jaugeTexture_ = Texture2D(kPaths[4], device);
+        buttonTexture_ = Texture2D(kPaths[5], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -155,6 +171,7 @@ namespace GalaxyEggbert::CNA
         textEffect_ = makeEffect(textTexture_);
         padEffect_ = makeEffect(padTexture_);
         jaugeEffect_ = makeEffect(jaugeTexture_);
+        buttonEffect_ = makeEffect(buttonTexture_);
         loaded_ = true;
     }
 
@@ -195,7 +212,7 @@ namespace GalaxyEggbert::CNA
                      int viewportW, int viewportH,
                      int lives, bool key1, bool key2, bool key3,
                      int treasures, int totalTreasures,
-                     int bullets, int dynamite,
+                     int bullets, int dynamite, int perso,
                      bool waterGaugeVisible, int waterGaugeLevel,
                      bool powerGaugeVisible, int powerGaugeLevel,
                      int animIcon)
@@ -219,12 +236,17 @@ namespace GalaxyEggbert::CNA
         const float elementSheetH = static_cast<float>(elementTexture_.getHeightProperty());
         const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
         const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+        const float buttonSheetW = static_cast<float>(buttonTexture_.getWidthProperty());
+        const float buttonSheetH = static_cast<float>(buttonTexture_.getHeightProperty());
+        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
+        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
 
         std::vector<Quad> blupiQuads;
         std::vector<Quad> elementQuads;
         std::vector<Quad> textQuads;
         std::vector<Quad> padQuads;
         std::vector<Quad> jaugeQuads;
+        std::vector<Quad> buttonQuads;
 
         // Real Jauge::Draw(): the full Empty-row background always drawn
         // first, then (if level > 0) a colored strip from the mode's row,
@@ -331,6 +353,45 @@ namespace GalaxyEggbert::CNA
             elementQuads.push_back(q);
         }
 
+        // Perso: button.png icon 108 + "= N" text at real scale 0.7, shown
+        // only while carrying at least one decoy (real `if (m_blupiPerso >
+        // 0)`).
+        if (perso > 0)
+        {
+            Quad icon;
+            icon.x0 = refToScreenX(kPersoX);
+            icon.y0 = refToScreenY(kPersoY);
+            icon.x1 = icon.x0 + kButtonTilePx * scale;
+            icon.y1 = icon.y0 + kButtonTilePx * scale;
+            IconUv(kPersoIcon, buttonSheetW, buttonSheetH, icon.u0, icon.v0, icon.u1, icon.v1,
+                   kButtonTilePx, kButtonCols);
+            buttonQuads.push_back(icon);
+
+            char text[16];
+            std::snprintf(text, sizeof(text), "= %d", perso);
+            const std::string str(text);
+            const float cellPx = kGlyphCellPx * kPersoTextScale;
+            const float advance = kGlyphAdvance * kPersoTextScale;
+            float penX = kPersoTextX;
+            for (const char c : str)
+            {
+                const int rank = static_cast<int>(static_cast<unsigned char>(c));
+                const int gcol = rank % kGlyphCols;
+                const int grow = rank / kGlyphCols;
+                Quad q;
+                q.x0 = refToScreenX(penX - (cellPx - advance) * 0.5f);
+                q.y0 = refToScreenY(kPersoTextY);
+                q.x1 = q.x0 + cellPx * scale;
+                q.y1 = q.y0 + cellPx * scale;
+                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                textQuads.push_back(q);
+                penX += advance;
+            }
+        }
+
         // Treasure counter: pad.png icon-15 panel + centered "N/M" text.
         // Real DrawInfo gates this on being in a real level (mission
         // checks); the CNA equivalent is simply "the world has treasures".
@@ -354,8 +415,6 @@ namespace GalaxyEggbert::CNA
             char text[16];
             std::snprintf(text, sizeof(text), "%d/%d", treasures, totalTreasures);
             const std::string str(text);
-            const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-            const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
             const float totalAdvance = static_cast<float>(str.size()) * kGlyphAdvance;
             float penX = kTreasureTextCenterX - totalAdvance * 0.5f;
             for (const char c : str)
@@ -401,6 +460,7 @@ namespace GalaxyEggbert::CNA
         FlushQuads(device, *blupiEffect_, blupiRenderer_, blupiQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *elementEffect_, elementRenderer_, elementQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *buttonEffect_, buttonRenderer_, buttonQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 }

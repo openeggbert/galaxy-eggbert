@@ -95,11 +95,16 @@ namespace GalaxyEggbert::CNA
         // wired in here since those aren't modeled by this engine's
         // `SecretPower` enum (Balloon/Ecrase have their own separate,
         // un-gauged timers already; Mirror/Invert isn't modeled at all).
+        // perso added 2026-07-13 (plan.md HUD-017), verified directly
+        // against `Decor.cpp:1202-1211`: button.png icon 108 (40px tiles,
+        // `Pixmap.cpp:592-600`) at (0,438), plus "= N" text at (32,452) at
+        // real scale 0.7 (smaller than the treasure counter's scale-1.0
+        // text), shown only while `perso > 0`.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
                   int treasures, int totalTreasures,
-                  int bullets, int dynamite,
+                  int bullets, int dynamite, int perso,
                   bool waterGaugeVisible, int waterGaugeLevel,
                   bool powerGaugeVisible, int powerGaugeLevel,
                   int animIcon);
@@ -125,16 +130,19 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D jaugeTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D buttonTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> elementEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> buttonEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> elementRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> buttonRenderer_;
         bool loaded_ = false;
     };
 }

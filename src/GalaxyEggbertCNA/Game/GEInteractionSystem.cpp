@@ -1431,4 +1431,64 @@ namespace GalaxyEggbert::CNA
         objects.push_back(fuse);
         return true;
     }
+
+    bool GEInteractionSystem::TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded)
+    {
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+
+        // Real pickup (Decor.cpp ~6088-6101): standing near an already-
+        // placed decoy takes priority over placing a new one (matching the
+        // real source's own MoveObjectDetect check before the placement
+        // branch). Proximity radius matches every other pickup/interaction
+        // check in this file.
+        constexpr float kPersoRadius = 1.1f;
+        for (auto& obj : objects)
+        {
+            if (!obj.active || obj.type != ObjectType::ObjectType200)
+            {
+                continue;
+            }
+            const float dx = obj.currentX - x;
+            const float dy = obj.currentY - y;
+            const float dz = obj.currentZ - z;
+            if (dx * dx + dy * dy + dz * dz < kPersoRadius * kPersoRadius)
+            {
+                if (persoCount_ >= kPersoCap)
+                {
+                    return false;
+                }
+                obj.active = false;
+                ++persoCount_;
+                return true;
+            }
+        }
+
+        // Real placement (Decor.cpp ~4818-4841): carrying at least one,
+        // and solid ground under both feet -- approximated as `grounded`,
+        // same simplification as PlaceDynamite() above.
+        if (persoCount_ <= 0 || !grounded)
+        {
+            return false;
+        }
+        --persoCount_;
+
+        MobileObjSpec decoy;
+        decoy.type = ObjectType::ObjectType200;
+        decoy.posStartX = decoy.posEndX = decoy.currentX = x;
+        decoy.posStartY = decoy.posEndY = decoy.currentY = y;
+        decoy.posStartZ = decoy.posEndZ = decoy.currentZ = z;
+        decoy.phase = 0.0f;
+        decoy.active = true;
+
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = decoy;
+                return true;
+            }
+        }
+        objects.push_back(decoy);
+        return true;
+    }
 }

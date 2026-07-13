@@ -261,6 +261,28 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int DynamiteCount() const noexcept { return dynamiteCount_; }
         bool PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
 
+        // Perso (decoy statue) placement/pickup (plan.md HUD-017, real
+        // Decor.cpp ~4818-4841 place, ~6088-6101 pickup start, ~10291-10294
+        // pickup completion). A placeable `ObjectType200` decoy (same
+        // `blupi.png` look as Blupi himself) -- what it actually DOES once
+        // placed (if anything beyond existing as a marker) wasn't found in
+        // the real source by this port's own research; not modeled as a
+        // gameplay effect, just the place/retrieve/count loop itself. Real
+        // cap 5 (`m_blupiPerso < 5` gates pickup), starts at 0. Real gate:
+        // mutually exclusive with dynamite (an `else if` in the real
+        // source -- the caller is expected to only call this when
+        // `PlaceDynamite()` above didn't act, matching that precedence).
+        // A single call handles BOTH real branches (pickup takes priority
+        // when already standing near a placed decoy, matching the real
+        // source's own `MoveObjectDetect` check before attempting a new
+        // placement): returns true if either a pickup or a placement
+        // happened. The real voyage-flight-animation before the pickup
+        // counter actually increments is NOT modeled -- increments
+        // immediately, same simplification as every other pickup this
+        // session.
+        [[nodiscard]] int PersoCount() const noexcept { return persoCount_; }
+        bool TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
+
         // Bullet pack (ObjectType29, plan.md E3D-MIG-175, real Decor.cpp
         // ~5731-5744). Automatic on contact, no button, gated on
         // `bulletCount_ < kBulletCap` (real m_blupiBullet < 10) -- picking
@@ -316,6 +338,8 @@ namespace GalaxyEggbert::CNA
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
         static constexpr int kBulletCap = 10; // real m_blupiBullet cap
         int bulletCount_ = 0;
+        static constexpr int kPersoCap = 5; // real m_blupiPerso cap
+        int persoCount_ = 0;
         bool diedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call

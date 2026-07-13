@@ -262,6 +262,23 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Perso decoy mechanic + HUD counter implemented (2026-07-13, plan.md `HUD-017`).** Researched
+  what "Perso" actually is (previously unknown): a deployable `ObjectType200` decoy statue (same
+  `blupi.png` look as Blupi), verified directly against `Decor.cpp:4818-4841`/`6088-6101`/
+  `10291-10294`. New `GEInteractionSystem::TryPerso()` — a single call handles both real branches
+  (picks up an already-placed decoy within range if one exists, matching the real source's own
+  priority; otherwise places a new one if carrying at least one and grounded), mutually exclusive
+  with dynamite on the same action-button press (real `else if`). Real cap 5. HUD: button.png
+  icon 108 + "= N" text at real scale 0.7. **Real starting count is level-authored save data
+  (`_blupiPerso_`, default 0) with no world-pickup that grants it at all** — this engine has no
+  level-authored-starting-inventory concept yet, so the mechanic starts at 0 (matching the real
+  default) and isn't reachable via a sample-world demo placement; verified entirely via 8 new
+  `VerifyInteractionSystem` assertions using a synthetic decoy (full pickup->place round trip) +
+  a live headless HUD screenshot (temporary forced count, reverted before committing). What
+  placing a decoy actually DOES gameplay-wise (if anything beyond existing as a marker) wasn't
+  found by a targeted search of enemy-AI code — not modeled as a gameplay effect. Full suite
+  re-run (63/63 unit tests, all verify tools) + both backends.
+
 - **Full plan.md HUD-0NN audit against the real `Decor::DrawInfo` (2026-07-13).** Read the entire
   real in-game HUD draw function (`Decor.cpp:1185-1311`) end to end and cross-checked every
   `HUD-0NN` plan.md entry against it — the first time this was done exhaustively rather than

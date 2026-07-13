@@ -451,14 +451,14 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       is always painted over by the 3D scene). Done: life icons (`blupi.png`), key icons
       (`element.png`), treasure counter text + `pad.png` panel (`text.png`, glyph-index-is-ASCII,
       fixed advance — see `## 2.3 HUD-001/003/004/005/006/007`), (2026-07-13) bullet/dynamite
-      counters (`HUD-015`/`016`), and (2026-07-13) both real `jauge.png` gauges — water/Nage
-      breath (`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`).
-      Avoid building a UI framework — a HUD is a handful of sprite draws keyed to game state, not
-      a system. **The real `Decor::DrawInfo` function (`Decor.cpp:1185-1311` — the actual in-game
-      HUD draw call, the authoritative source for what this phase should port) has now been read
-      in full, end to end (2026-07-13): every element it draws is either implemented above, or
-      identified as a genuine remaining gap (`HUD-017` perso counter, blocked on a separate
-      not-yet-ported "Perso" mechanic; `HUD-024` training hints, blocked on a "mission" concept
+      counters (`HUD-015`/`016`), (2026-07-13) both real `jauge.png` gauges — water/Nage
+      breath (`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`)
+      — and (2026-07-13) the perso decoy counter + its underlying place/retrieve mechanic
+      (`HUD-017`). Avoid building a UI framework — a HUD is a handful of sprite draws keyed to
+      game state, not a system. **The real `Decor::DrawInfo` function (`Decor.cpp:1185-1311` —
+      the actual in-game HUD draw call, the authoritative source for what this phase should port)
+      has now been read in full, end to end (2026-07-13): every element it draws is now
+      implemented, except `HUD-024` training hints, blocked on a "mission" concept
       plus table-transcription approval).** Every OTHER `HUD-0NN` item (`002`/`009`-`011`/`013`/
       `020`-`023`/`025`-`026`) is NOT present in the real `DrawInfo` at all — several turned out to
       be based on wrong premises entirely (`HUD-002`'s claimed life-icon cap doesn't exist;
@@ -1525,7 +1525,31 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1197-1201`)
 - [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1212-1217`)
-- [ ] HUD-017 — Perso (persona) counter: button.png icon 108 + "= N" text when m_blupiPerso > 0
+- [x] HUD-017 — Perso decoy counter — **done 2026-07-13**, both the HUD element AND the
+      underlying place/retrieve mechanic. Researched what "Perso" actually is (not previously
+      known): a deployable `ObjectType200` decoy statue (same `blupi.png` look as Blupi himself)
+      — verified directly against `Decor.cpp:4818-4841` (placement), `6088-6101` (pickup start),
+      `10291-10294` (pickup completion). Real gate: mutually exclusive with dynamite (an
+      `else if` in the real source — modeled the same way here, dynamite placement takes
+      priority on the same action-button press). New `GEInteractionSystem::TryPerso()`: a single
+      call handles BOTH real branches — picks up an already-placed decoy within range if one
+      exists (real: takes priority over placing a new one), otherwise places a new one if
+      `persoCount_ > 0` and grounded. Real cap 5 (gates pickup, not placement). HUD: button.png
+      icon 108 (40px/6-col tiles, `Pixmap.cpp:592-600`) at (0,438) + "= N" text at (32,452) at
+      real scale 0.7 (smaller than the treasure counter's scale-1.0 text). **NOT modeled**: what
+      placing a decoy actually DOES gameplay-wise (a targeted search of enemy-AI code found no
+      distraction/interaction effect from `ObjectType200`'s mere presence — it may genuinely just
+      be a placeable marker/checkpoint with no further effect, or the effect lives somewhere not
+      yet found); the real voyage-flight-animation before the pickup counter increments (skipped,
+      same simplification as every other pickup this session); and the real starting count, which
+      is level-authored save data (`_blupiPerso_`, default 0, no world-pickup grants it at all) —
+      this engine has no level-authored-starting-inventory concept yet, so `persoCount_` always
+      starts at 0 (matching the real common-case default) and the mechanic is exercised only via
+      synthetic test objects, not a sample-world demo placement (there is no real pickup object
+      to place one). Verified: 8 new `VerifyInteractionSystem` assertions (starts at 0, placement
+      no-ops at 0, full pickup->place round trip via a synthetic decoy) + full suite (63/63 unit
+      tests, all verify tools) + live headless HUD screenshot (temporary forced count, reverted
+      before committing) + both backends.
 - [x] HUD-018 — **Corrected 2026-07-13**: this is NOT a separate "charge mode" gauge — it's
       `HUD-012`'s SAME water/Nage gauge (`m_jauges[0]`) switching from Blue to Red at the real
       low-air warning threshold (level <= 25, `Decor.cpp:4621-4623`), still driven by the same
