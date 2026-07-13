@@ -1208,6 +1208,17 @@ namespace GalaxyEggbert::CNA
             const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None;
             const bool canGrantHide = secretPower != GEBlupiController::SecretPower::Shield &&
                                        secretPower != GEBlupiController::SecretPower::Cloud;
+            // Real Tank "Fire" (2026-07-13, plan.md BULLET-001) -- a
+            // dedicated key (real `KeyPressFlags::Fire`), NOT the Action
+            // button used for dynamite/Perso/switches/vehicle mount above.
+            // "F" is this engine's own keyboard pick (no real keyboard
+            // binding exists to match -- WP7 touch-only). Level state, not
+            // edge-triggered (see GEInteractionSystem::Update()'s own
+            // comment for why). Gated to Tank only -- Helicopter's own
+            // real firing branch was not independently confirmed this
+            // session, a documented gap, not modeled here.
+            const bool firePressed = keys.IsKeyDown(Keys::F);
+            const bool canFire = blupi_.GetVehicleMode() == GEBlupiController::VehicleMode::Tank;
             // Captured before Update() so the Lost transition below can
             // detect the exact frame GameOverCount() increments (plan.md
             // HUD-023's own real trigger, Decor.cpp:6374-6435).
@@ -1215,7 +1226,8 @@ namespace GalaxyEggbert::CNA
             interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
-                                 canGrantShield, canGrantPower, canGrantCloud, canGrantHide);
+                                 canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
+                                 firePressed, canFire);
 
             // Real Win/Lost phase transitions (plan.md HUD-023): Lost
             // fires the instant GameOverCount() increments (real

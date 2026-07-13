@@ -393,7 +393,8 @@ namespace GalaxyEggbert::CNA
                                       GESound& sound, bool blupiCrouching, bool blupiBallooned,
                                       int blupiFacingDX, int blupiFacingDZ, bool blupiInvincible,
                                       bool blupiCanGrantShield, bool blupiCanGrantPower,
-                                      bool blupiCanGrantCloud, bool blupiCanGrantHide)
+                                      bool blupiCanGrantCloud, bool blupiCanGrantHide,
+                                      bool blupiFirePressed, bool blupiCanFire)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
@@ -1359,6 +1360,37 @@ namespace GalaxyEggbert::CNA
                         }
                     }
                 }
+            }
+        }
+
+        // Player-fired Tank bullet (2026-07-13, plan.md BULLET-001, real
+        // Decor.cpp:4308-4344) -- see Update()'s own class comment for the
+        // full real-behavior citation. Cooldown ticks down every frame
+        // regardless of input; only reset on an actual shot.
+        fireCooldownTimer_ = std::max(0.0f, fireCooldownTimer_ - dt);
+        if (blupiFirePressed && blupiCanFire && fireCooldownTimer_ <= 0.0f)
+        {
+            if (bulletCount_ > 0)
+            {
+                int gx, gy, gz;
+                ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
+                const int dist = SearchAirDistance(world, gx, gy, gz, blupiFacingDX, 0, blupiFacingDZ);
+                --bulletCount_;
+                fireCooldownTimer_ = kFireCooldownSeconds;
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
+                if (dist > 0)
+                {
+                    MobileObjSpec blupiPos{};
+                    blupiPos.currentX = blupiX;
+                    blupiPos.currentY = blupiY;
+                    blupiPos.currentZ = blupiZ;
+                    pendingSpawns.push_back(MakeBullet(blupiPos, static_cast<float>(blupiFacingDX), 0.0f,
+                                                        static_cast<float>(blupiFacingDZ), dist));
+                }
+            }
+            else
+            {
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel53);
             }
         }
 

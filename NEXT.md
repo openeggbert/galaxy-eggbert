@@ -212,7 +212,10 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
   cross-restart settings/progress persistence (`GESaveData` — sound on/off, lives, mission,
   checkpointed the same way the real `GameData` is, NOT byte-compatible with it), and functional
   on-screen D-pad/Jump/Action/Pause controls (mouse-driven, 2026-07-13, §3, `GEInputPad`) usable
-  alongside keyboard input.
+  alongside keyboard input. Riding a Tank can now also fire a real bullet (`ObjectType23`, a
+  dedicated "F" key, 2026-07-13, §3, plan.md `BULLET-001`) — a hazard identical to the
+  already-modeled enemy-fired kind, never a weapon against enemies (confirmed real behavior, not
+  an oversight).
 - **Tile/object documentation**: `mobile-eggbert-reference/` — complete catalogs of all 441 tile
   icons (see §1), 204 `ObjectType`s, 93 sounds, 131 animation sequences, all backgrounds, plus a
   prose gameplay-behavior spec.
@@ -270,6 +273,29 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+- **Tank bullet firing implemented, closing the `E3D-MIG-175` bullet-pack follow-up (2026-07-13,
+  plan.md `BULLET-001`), per explicit user request ("implementovat střelbu").** A dedicated research
+  pass into `Decor.cpp` overturned an initial assumption: real bullets are **never a weapon against
+  enemies** — an exhaustive search of all ~25 real `ObjectType23` references found no code where a
+  bullet damages an enemy `MoveObject`. The only real collision consequence is bullet-vs-Blupi
+  (already implemented from an earlier session's blupih/blupit work, `E3D-MIG-134`) — real bullets
+  are a hazard, identical whether enemy- or player-fired. Real trigger: a dedicated `Fire` key
+  (`KeyPressFlags::Fire`, NOT the Action button), this engine's own "F" keyboard pick, usable only
+  while riding **Tank** (Helicopter's own firing branch wasn't independently confirmed to spawn a
+  projectile, so it's deliberately NOT modeled — a documented gap). Real gates: a 0.5s cooldown
+  (ticked every frame, reset only on an actual shot) and an ammo check that plays a real
+  out-of-ammo click (no cooldown reset) instead of firing when empty. Reuses the SAME
+  `MakeBullet()`/`SearchAirDistance()` helpers blupih/blupit's own fired shots already use — no new
+  projectile-physics code, just a new spawn trigger. Added a Tank pickup + a nearby wall to the
+  sample world (right next to the existing bullet-pack demo) so the full pickup → mount → fire →
+  hit-wall loop is genuinely playable. Verified: 6 new `VerifyInteractionSystem` assertions
+  (caught and fixed a real test-design bug along the way — a leftover synthetic bullet pack from an
+  earlier test silently re-topped ammo every frame, initially producing 2 unrelated-looking
+  failures plus a cascaded failure in a much later test) and a live two-stage headless check
+  confirming a real in-flight projectile spawns at Blupi's fire position and travels toward a
+  placed wall, with the cooldown correctly gating repeat-fire in the live game loop (not just the
+  isolated test) — full regression suite green on both backends.
 
 - **Resume phase implemented, save data extended to lives/mission (2026-07-13, plan.md
   `MENU-040..045`), per explicit user request to extend the just-approved minimal save system.**

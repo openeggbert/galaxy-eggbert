@@ -359,9 +359,13 @@ int main(int argc, char** argv)
     // (no button), caps at 10, a second contact once already at the cap is
     // a genuine no-op (object stays active, count unchanged) per
     // mobile-eggbert-reference/13-object-pickups.md.
+    float fireTestX = 0.0f, fireTestY = 0.0f, fireTestZ = 0.0f;
     if (const auto* bullets = findFirst(ObjectType::ObjectType29))
     {
         const float bx = bullets->currentX, by = bullets->currentY, bz = bullets->currentZ;
+        fireTestX = bx;
+        fireTestY = by;
+        fireTestZ = bz;
         check(interaction.BulletCount() == 0, "BulletCount() starts at 0");
         interaction.Update(dt, world, bx, by, bz, 0.0f, sound);
         check(interaction.BulletCount() == 10, "bullet pack pickup tops BulletCount() up to 10");
@@ -387,6 +391,81 @@ int main(int argc, char** argv)
     else
     {
         check(false, "found a bullet pack (ObjectType29) in the sample world");
+    }
+
+    // 3.71. Player-fired Tank bullet (plan.md BULLET-001, real
+    // Decor.cpp:4308-4344) -- BulletCount() is already 10 from 3.7 above.
+    // Reuses the bullet pack's own real in-world position (fireTestX/Y/Z)
+    // -- these tests only check ammo/cooldown bookkeeping, not the
+    // raycast distance, so whatever terrain happens to be there doesn't
+    // matter (a real shot fired straight into a wall still consumes ammo
+    // and starts the cooldown, exactly like the real gate order: ammo
+    // check happens before the raycast). 3.7 above left a still-ACTIVE
+    // synthetic second bullet pack sitting at this exact position (its
+    // own "no-op while at the cap" test) -- deactivated here first, or it
+    // would silently re-top BulletCount() back to the cap every one of
+    // these Update() calls and mask every assertion below.
+    {
+        for (auto& obj : world.GetMobileObjectsMutable())
+        {
+            if (obj.type == ObjectType::ObjectType29 && std::fabs(obj.currentX - fireTestX) < 0.01f &&
+                std::fabs(obj.currentZ - fireTestZ) < 0.01f)
+            {
+                obj.active = false;
+            }
+        }
+
+        const int bulletsBeforeFiring = interaction.BulletCount();
+
+        interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                            false, false, 1, 0, false, true, true, true, true,
+                            /*blupiFirePressed=*/true, /*blupiCanFire=*/false);
+        check(interaction.BulletCount() == bulletsBeforeFiring,
+              "firing while not in a Tank (canFire=false) does not consume ammo");
+
+        interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                            false, false, 1, 0, false, true, true, true, true,
+                            true, true);
+        check(interaction.BulletCount() == bulletsBeforeFiring - 1,
+              "firing while in a Tank consumes exactly 1 bullet");
+
+        interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                            false, false, 1, 0, false, true, true, true, true,
+                            true, true);
+        check(interaction.BulletCount() == bulletsBeforeFiring - 1,
+              "holding Fire within the real 0.5s cooldown does not fire again");
+
+        // Advance past the real 0.5s cooldown (Fire not held during the
+        // wait, matching a real "tap" cadence) then fire again.
+        for (int i = 0; i < 40; ++i)
+        {
+            interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                                false, false, 1, 0, false, true, true, true, true,
+                                false, true);
+        }
+        interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                            false, false, 1, 0, false, true, true, true, true,
+                            true, true);
+        check(interaction.BulletCount() == bulletsBeforeFiring - 2,
+              "firing again after the cooldown elapses consumes a second bullet");
+
+        // Drain to 0, then confirm firing with no ammo does not underflow.
+        while (interaction.BulletCount() > 0)
+        {
+            for (int i = 0; i < 40; ++i)
+            {
+                interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                                    false, false, 1, 0, false, true, true, true, true,
+                                    false, true);
+            }
+            interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                                false, false, 1, 0, false, true, true, true, true,
+                                true, true);
+        }
+        interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                            false, false, 1, 0, false, true, true, true, true,
+                            true, true);
+        check(interaction.BulletCount() == 0, "firing with no ammo left does not underflow BulletCount()");
     }
 
     // 3.75. Perso decoy (plan.md HUD-017) -- real m_blupiPerso starts at 0

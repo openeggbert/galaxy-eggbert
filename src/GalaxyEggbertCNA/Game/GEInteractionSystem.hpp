@@ -180,12 +180,46 @@ namespace GalaxyEggbert::CNA
         // otherwise depend on GEBlupiController's types) used to decide
         // whether touching a secret-power pickup (ObjectType25/26/30/31)
         // actually grants it -- see the *GrantedThisFrame() signals below.
+        // blupiFirePressed/blupiCanFire (2026-07-13, plan.md BULLET-001,
+        // both default false so existing callers/tests are unaffected):
+        // real Tank-mounted "Fire" (`KeyPressFlags::Fire`, a dedicated key
+        // -- NOT the Action button used for dynamite/Perso/switches/
+        // vehicle mount above) verified directly against Decor.cpp:
+        // 4308-4344. blupiCanFire is the caller's own `GetVehicleMode()==
+        // Tank` check (translated to a bool here, same
+        // don't-expose-GEBlupiController's-enum pattern as
+        // blupiCanGrantX above) -- Helicopter's own real firing branch
+        // (`HelicoGlu`, Decor.cpp:3691-3706) was NOT independently
+        // confirmed to actually spawn a projectile during this session's
+        // research (only that channel 52 covers both vehicle paths) --
+        // deliberately NOT modeled here until that's verified, rather
+        // than guessed. blupiFirePressed is a LEVEL state (held-down),
+        // not edge-triggered -- the real source has no separate "must
+        // release between shots" debounce, just the cooldown gate below.
+        // Real gate: `m_blupiTimeFire==0` (a 0.5s/Config::ScaleTime(10)
+        // cooldown at the real 20fps base rate, ticked down every frame
+        // regardless of input) -- ammo is checked only once the cooldown
+        // has elapsed; `m_blupiBullet==0` plays the real out-of-ammo click
+        // (channel 53) WITHOUT starting the cooldown (the real
+        // `m_blupiTimeFire=ScaleTime(10)` assignment only happens on an
+        // actual shot, Decor.cpp:4343) -- so holding Fire with no ammo
+        // replays the click every frame (GESound's own "don't restart an
+        // already-playing channel" policy naturally throttles this, see
+        // GESound.hpp). A real shot consumes exactly 1 bullet
+        // (`m_blupiBullet--`) and raycasts along Blupi's own facing
+        // (blupiFacingDX/DZ above -- horizontal only, matching the real
+        // Tank's own speed=+-5 encoding) to the next solid cell via the
+        // same SearchAirDistance/MakeBullet helpers blupih/blupit's own
+        // fired shots already use (ObjectType23, contact with Blupi
+        // already fatal -- see this class's own existing kill-list
+        // handling, unchanged by this feature).
         void Update(float dt, GEWorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
                     GESound& sound, bool blupiCrouching = false, bool blupiBallooned = false,
                     int blupiFacingDX = 0, int blupiFacingDZ = 0, bool blupiInvincible = false,
                     bool blupiCanGrantShield = true, bool blupiCanGrantPower = true,
-                    bool blupiCanGrantCloud = true, bool blupiCanGrantHide = true);
+                    bool blupiCanGrantCloud = true, bool blupiCanGrantHide = true,
+                    bool blupiFirePressed = false, bool blupiCanFire = false);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame
@@ -344,6 +378,12 @@ namespace GalaxyEggbert::CNA
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
         static constexpr int kBulletCap = 10; // real m_blupiBullet cap
         int bulletCount_ = 0;
+        // Real Tank "Fire" cooldown (2026-07-13, plan.md BULLET-001):
+        // Config::ScaleTime(10) at the real 20fps base rate = 0.5s,
+        // ticked down every Update() regardless of input; only reset on
+        // an actual shot (see Update()'s own class comment).
+        static constexpr float kFireCooldownSeconds = 0.5f;
+        float fireCooldownTimer_ = 0.0f;
         static constexpr int kPersoCap = 5; // real m_blupiPerso cap
         int persoCount_ = 0;
         bool diedThisFrame_ = false; // reset at the top of every Update() call

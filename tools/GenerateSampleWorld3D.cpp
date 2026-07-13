@@ -517,12 +517,23 @@ int main(int argc, char** argv)
     // Bullet pack demo (plan.md E3D-MIG-175, 2026-07-12) -- one ammo pack,
     // automatic pickup (no button, unlike the jeep next door), so the real
     // "caps at 10, no-op once full" gate is genuinely playable, not just
-    // unit-tested. The actual firing mechanic (Helicopter/Tank vehicle fire
-    // button) is a separate, not-yet-implemented follow-up -- this only
-    // exercises the pickup/cap logic.
+    // unit-tested.
     // ------------------------------------------------------------------
     fill(69, 75, 0, 0, 87, 93, BlockTypes::RockPile); // bullet-pack-demo room floor
     place(ObjectType::ObjectType29, 72.0f, 1.0f, 90.0f); // bullet pack
+
+    // ------------------------------------------------------------------
+    // Tank + firing demo (plan.md BULLET-001, 2026-07-13) -- one Tank
+    // pickup right next to the bullet pack above, so mounting it and
+    // firing (real dedicated "Fire" key -- this engine's own "F" pick,
+    // see GalaxyEggbertCnaGame::Update()'s own comment) is genuinely
+    // playable end to end, not just unit-tested. A single free-standing
+    // wall a few cells ahead gives the shot real, finite travel distance
+    // to actually hit instead of flying off into open air.
+    // ------------------------------------------------------------------
+    fill(77, 83, 0, 0, 87, 93, BlockTypes::RockPile); // tank-demo room floor
+    place(ObjectType::ObjectType28, 80.0f, 1.0f, 90.0f); // tank
+    world.setBlock(80, 1, 87, Block::make(BlockTypes::BrickWall)); // wall to shoot at
 
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything

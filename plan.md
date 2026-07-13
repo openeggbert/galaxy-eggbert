@@ -1221,15 +1221,50 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       `+= 10` then clamp has the same net effect here since the gate already guarantees the prior
       count was below the cap, so a plain `= kBulletCap` assignment is equivalent and simpler).
       Channel 54 fanfare on pickup. One demo pack added to the sample world (auto-pickup, unlike
-      the Jeep demo next door which needs the action button). **NOT modeled**: the actual firing
-      mechanic (`ObjectType23` projectile spawn from Helicopter's `HelicoGlu`/Tank's `FireTank`,
-      channel 52 fire sound, channel 53 out-of-ammo click) — this pickup only tracks the ammo
-      count itself; firing is a separate, not-yet-implemented follow-up (needs a live player-fired
-      projectile system, which doesn't exist yet — the existing blupih/blupit projectiles are
-      enemy-fired via the existing patrol/dwell mechanism, not a general-purpose spawn-on-demand
-      system). Verified: 6 new `VerifyInteractionSystem` assertions (starts at 0, tops up to 10,
-      pickup deactivates, cap-gated no-op via a synthetic second pack) + full suite (63/63 unit
-      tests, all verify tools) + both backends.
+      the Jeep demo next door which needs the action button). Verified: 6 new
+      `VerifyInteractionSystem` assertions (starts at 0, tops up to 10, pickup deactivates,
+      cap-gated no-op via a synthetic second pack) + full suite (63/63 unit tests, all verify
+      tools) + both backends. The actual firing mechanic itself is `BULLET-001` below (done
+      2026-07-13).
+
+- [x] `BULLET-001` Tank firing (`ObjectType23` projectile) — **done 2026-07-13**, closing `175`'s
+      own deferred gap, per explicit user request ("implementovat střelbu"). Preceded by a
+      dedicated research pass into `Decor.cpp` (real firing code, not guessed) that overturned an
+      initial assumption: real bullets are **NEVER a weapon against enemies** — an exhaustive
+      search of all ~25 real `ObjectType23` references found no code anywhere where a bullet
+      damages or destroys an enemy `MoveObject`. The ONLY real collision consequence is
+      bullet-vs-Blupi (already implemented in this engine from an earlier session,
+      `GEInteractionSystem.cpp`'s existing `ObjectType23` contact-kill block, `E3D-MIG-134`) — real
+      bullets are a hazard, identical whether enemy-fired (blupih/blupit, already modeled) or
+      player-fired (this task). Real trigger: a **dedicated `Fire` key** (`KeyPressFlags::Fire`),
+      NOT the Action button used for dynamite/Perso/switches/vehicle mount — this engine's own "F"
+      keyboard pick (real source is touch/gamepad-only, no keyboard binding to match). Only usable
+      while riding **Tank** (`Decor.cpp:4308-4344`) — Helicopter's own real firing branch
+      (`HelicoGlu`) was NOT independently confirmed to actually spawn a projectile during research
+      (only that channel 52 covers both vehicle paths), so it is deliberately NOT modeled, a
+      documented gap rather than a guess. Real gates: a 0.5s cooldown
+      (`Config::ScaleTime(10)`@20fps, ticked down every frame regardless of input, reset only on an
+      actual shot) and `bulletCount_ > 0` (checked AFTER the cooldown, BEFORE the raycast — an
+      empty-cooldown Fire press with 0 ammo plays the real out-of-ammo click, channel 53, without
+      starting the cooldown, matching the real gate order exactly). A real shot consumes exactly 1
+      bullet and reuses the SAME `MakeBullet()`/`SearchAirDistance()` helpers blupih/blupit's own
+      fired shots already used (horizontal raycast to the next solid cell along Blupi's own
+      facing) — no new projectile-physics code needed, just a new spawn trigger wired into the
+      existing mechanism. One Tank pickup + a wall a few cells away added to the sample world
+      (`tools/GenerateSampleWorld3D.cpp`) right next to the existing bullet-pack demo, so the full
+      pickup → mount → fire → hit-wall loop is genuinely playable, not just unit-tested. Verified:
+      6 new `VerifyInteractionSystem` assertions (canFire=false gate, ammo consumption, cooldown
+      gating both directions, no-underflow-at-0-ammo) — caught and fixed a real test-design bug
+      while writing them (a leftover synthetic bullet pack from an earlier `175` test sat at the
+      exact same position and silently re-topped ammo every frame, initially producing 2
+      unrelated-looking test failures including a cascaded failure in a much later, otherwise
+      untouched test) — plus a live two-stage headless verification: forced Tank-mount + fire in
+      the running game (not just the isolated test), confirming via direct object-list inspection
+      that a real in-flight `ObjectType23` spawned exactly at Blupi's fire position and traveled
+      toward the placed wall, AND that `BulletCount()` dropped by exactly 1 despite holding Fire
+      held for 6 consecutive frames (proving the cooldown gates correctly in the live game loop,
+      not just the isolated test). Full regression suite green (64/64 unit tests, all verify
+      tools, both backends).
 - [ ] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups.
 - [ ] `177` Ecrase/pancake collision-box mode and Suspended (hanging, no accel ramp) movement
       mode — the two collision/movement modes not covered by `E3D-MIG-171`'s vehicle list.
@@ -1844,7 +1879,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-112 — Hide mode (m_blupiHide): concealed in object
 - [ ] BLUPI-113 — Sucette/suction-cup (m_blupiPower): from ObjectType26, walk up walls
 - [ ] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions
-- [ ] BLUPI-115 — Bullet count (m_blupiBullet): from ObjectType29; FireTank expends bullets
+- [x] BLUPI-115 — Bullet count (m_blupiBullet): from ObjectType29; FireTank expends bullets — **firing done 2026-07-13, plan.md `BULLET-001`** (ammo pickup itself already done 2026-07-12, E3D-MIG-175); see `BULLET-001`'s own entry (§ Bullets) for the full real-behavior citation and what's NOT modeled (Helicopter firing, enemy damage -- there is none, real bullets are a hazard not a weapon)
 - [ ] BLUPI-116 — Ecrase mode (m_blupiEcrase): crushed flat under object (StopEcrase/MarchEcrase)
 - [ ] BLUPI-117 — m_blupiPerso: persona counter (shown in HUD as button icon 108 + count)
 
