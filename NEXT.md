@@ -379,13 +379,17 @@ No `.clang-format`/`.clang-tidy` config exists in this repo — no lint/format t
    not just a walk-test of the specific tunnel that surfaced it. Files:
    `src/GalaxyEggbertCNA/Game/GEBlupiController.cpp`/`.hpp`.
 
-6. **Add Init's semi-transparent gamer-slot background panels** (`plan.md MENU-014/015`, small,
-   purely cosmetic, no gameplay effect). Files: `src/GalaxyEggbertCNA/Game/GEInputPad.cpp`
-   (`DrawInit()`), reuse the existing `pad.png` icon-15 translucent-panel convention already used
-   elsewhere in this class. Verify: live headless screenshot of the Init screen.
+6. ~~Add Init's semi-transparent gamer-slot background panels~~ **DONE 2026-07-13**
+   (`plan.md MENU-014/015`) — `GEInputPad::DrawInit()` now draws a `pad.png` icon-15 panel (same
+   convention as `GEHud`'s `DrawInfo` panel) behind each gamer row and behind the Setup/Play
+   buttons. Drawn at opacity 1.0, not true transparency, per the same CNA/Vulkan `BasicEffect`
+   Alpha<1 workaround already used by `GEHud::kPanelOpacity` (§5). Verified via a live headless
+   EasyGL screenshot (temporary `kWaitDurationSeconds` debug override to reach Init immediately,
+   reverted before commit) + full 7-tool suite.
 
-Each task above is independently small and verifiable; do them in any order except #5, which
-should wait until nothing more urgent depends on the current (wrong-but-stable) collision behavior.
+Each remaining task above is independently small and verifiable; do them in any order except #5,
+which should wait until nothing more urgent depends on the current (wrong-but-stable) collision
+behavior.
 
 ## 9. Do not do yet
 

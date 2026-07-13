@@ -317,6 +317,18 @@ namespace GalaxyEggbert::CNA
         constexpr float kInitPlayX0 = 480.0f, kInitPlayY0 = 300.0f;
         constexpr float kInitPlayX1 = 620.0f, kInitPlayY1 = 440.0f;
 
+        // Semi-transparent background panels behind the gamer-slot rows /
+        // action buttons (plan.md MENU-014/015) -- pure cosmetic decoration,
+        // no functional value (real source has these purely for visual
+        // legibility of the text/icons drawn on top). Reuses the same
+        // pad.png icon-15 panel convention already established by
+        // GEHud.cpp's DrawInfo panels (kPanelIcon there). Panel width
+        // extends to cover the gamer row's own text labels (title/gates/
+        // lives), not just the icon.
+        constexpr int kInitPanelIcon = 15; // pad.png, same convention as GEHud's DrawInfo panel
+        constexpr float kInitGamerPanelX0 = 12.0f, kInitGamerPanelX1 = 400.0f;
+        constexpr float kInitButtonPanelMargin = 8.0f;
+
         // Real icon indices (`Pixmap.cpp`'s pad.png dispatch): GamerA=4/16
         // (unselected/selected), GamerB=5/17, GamerC=6/18, InitSetup=19
         // (same icon as PauseSetup), InitPlay=7. InitRanking/InitBuy are
@@ -1819,6 +1831,7 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
+        std::vector<Quad> panelQuads;
 
         // Real: buttons are hidden entirely while an exit fade is active.
         if (fadeOutPhase == GamePhase::None)
@@ -1833,6 +1846,24 @@ namespace GalaxyEggbert::CNA
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 bucket.push_back(q);
             };
+
+            const auto appendPanel = [&](float x0, float y0, float x1, float y1)
+            {
+                Quad q;
+                q.x0 = refToScreenX(x0);
+                q.y0 = refToScreenY(y0);
+                q.x1 = refToScreenX(x1);
+                q.y1 = refToScreenY(y1);
+                PadIconUv(kInitPanelIcon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                panelQuads.push_back(q);
+            };
+            appendPanel(kInitGamerPanelX0, kInitGamerAY0, kInitGamerPanelX1, kInitGamerAY1);
+            appendPanel(kInitGamerPanelX0, kInitGamerBY0, kInitGamerPanelX1, kInitGamerBY1);
+            appendPanel(kInitGamerPanelX0, kInitGamerCY0, kInitGamerPanelX1, kInitGamerCY1);
+            appendPanel(kInitGamerColX0 - kInitButtonPanelMargin, kInitSetupY0 - kInitButtonPanelMargin,
+                        kInitGamerColX1 + kInitButtonPanelMargin, kInitSetupY1 + kInitButtonPanelMargin);
+            appendPanel(kInitPlayX0 - kInitButtonPanelMargin, kInitPlayY0 - kInitButtonPanelMargin,
+                        kInitPlayX1 + kInitButtonPanelMargin, kInitPlayY1 + kInitButtonPanelMargin);
 
             const auto appendGamerRow = [&](const Rect& r, int control, int iconOff, int iconSel, bool selected,
                                             char letter, int lives)
@@ -1881,6 +1912,11 @@ namespace GalaxyEggbert::CNA
             blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
             blupiyoupieEffect_->setAlphaProperty(1.0f);
         }
+        // Panels drawn opaque (1.0), not truly semi-transparent -- same
+        // CNA/Vulkan `BasicEffect` Alpha<1 workaround already documented by
+        // GEHud.cpp's own kPanelOpacity (a BasicEffect draw with Alpha<1
+        // renders on EasyGL but not at all on CNA's Vulkan backend).
+        FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
