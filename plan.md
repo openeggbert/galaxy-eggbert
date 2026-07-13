@@ -1365,7 +1365,7 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
 - [x] BUILD-002 — `GALAXY_EGGBERT_BUILD_CNA` option wired and defaults to `ON` (CNA, 2026-07-10)
 - [ ] BUILD-003 — Web build (Emscripten / WebAssembly) for `GalaxyEggbertCNA` — not attempted yet
 - [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
-- [ ] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — re-verify current count under CNA-only build (was 54, see TEST-001 note in §13)
+- [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
 - [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests
 - [ ] BUILD-009 — CI: automated build on push (GitHub Actions), CNA target only (Linux; Web once BUILD-003 exists)
 - [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets) for `GalaxyEggbertCNA`
@@ -1379,10 +1379,10 @@ BUILD-006 (Nova3D backend switch).
 ### 2.2 Menu & Screens (PRIORITY)
 
 Menu screens use the same PNG backgrounds as mobile-eggbert (`Content/backgrounds/*.png`,
-`Content/icons/*.png`). All statuses below reset to reflect `GalaxyEggbertCNA`, which has not
-started on HUD/menu work — see CLAUDE.md and NEXT.md. Every item that was previously `[x]`
-reflected `GalaxyEggbertSimple3D` only (historical reference now) and is reset to `[ ]` unless
-otherwise noted.
+`Content/icons/*.png`). **Stale intro note removed 2026-07-14**: this paragraph used to say CNA
+"has not started on HUD/menu work" — no longer true as of the extensive 2026-07-13 menu/HUD
+session below (each subsection already carries its own accurate, per-item correction dates; this
+was just a leftover boilerplate reset note above them, not a sign the items themselves are wrong).
 
 #### 2.1 Phase: First / Wait (loading screen)
 
@@ -1779,8 +1779,9 @@ menu button dispatch, press-vs-release gating).
 
 ### 2.3 HUD (Heads-Up Display)
 
-CNA has no real HUD yet — only a temporary 2D debug anim-state indicator. Every item below is
-reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
+**Stale intro note removed 2026-07-14**: this paragraph used to say CNA "has no real HUD yet" —
+no longer true (real `GEHud`, 2026-07-10/11/13 across multiple sessions; each item below already
+carries its own accurate per-item date/citation, this was just a leftover boilerplate reset note).
 
 - [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11; since 2026-07-10 at the REAL `DrawInfo` position (210,417), X+=16, via `GEHud`)
 - [x] HUD-002 — **Resolved 2026-07-13, this entry's own premise was wrong**: the real
@@ -2213,7 +2214,7 @@ in-progress item.
 - [ ] TILE-008 — Sky dome per world (`backgrounds/decorNNN.png`)
 - [ ] TILE-009 — Per-world sky colour (ambient + fog)
 - [x] TILE-010 — Blupi spawn position parsed from world data (CNA, 2026-07-10 — collision point spawn only, no visible Blupi, see BLUPI-078)
-- [ ] TILE-011 — `region=` header parsed → background texture selection
+- [x] TILE-011 — Background texture selection by region — **done differently** (**corrected 2026-07-14**): not a mobile-eggbert-style text `region=` header line (this engine's `.vwr` format is different), but the `.vwr` v2 format's own `skyRegion` binary header field, read via `GEWorldRuntime::GetSkyRegion()` and used to pick `Content/backgrounds/decorNNN.png` directly (`GalaxyEggbertCnaGame::LoadContent()`) — same real end result (per-world background selection), different real source field.
 - [ ] TILE-012 — `music=` header parsed → ambient music track
 
 #### 5.2 Animated Tiles
@@ -2224,10 +2225,10 @@ div 4 (200ms). Any task below that previously assumed a uniform "6 fps" animatio
 accordingly.
 
 - [x] TILE-013 — Per-type animation phase timing using real `ScaleDiv()` divisors, not a uniform tick counter (CNA, 2026-07-10 — corrected from the old uniform-6fps assumption)
-- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}), div 2 / 100ms (CNA, 2026-07-10) — kill-on-contact behavior itself blocked on hazard/lives system, see §6/§8
-- [x] TILE-015 — Crusher tiles (10-frame: {317..323...}), div 3 / 150ms (CNA, 2026-07-10 — animation only; kill-in-frames-5-9 hazard logic NOT done)
-- [x] TILE-016 — Saw tiles (6-frame: {378..383}), div 1 / 50ms (CNA, 2026-07-10 — animation only; kill-on-contact NOT done)
-- [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1), div 4 / 200ms (CNA, 2026-07-10 — animation only; kill-on-contact NOT done)
+- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}), div 2 / 100ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, stale note said "blocked on hazard/lives system": real hazard-contact check is in `GalaxyEggbertCnaGame.cpp`, not `GEInteractionSystem.cpp` — `GetGroundBlockType()==Lava` gate, confirmed live, all 5 real terrain hazards are working as of 2026-07-11/12).
+- [x] TILE-015 — Crusher tiles (10-frame: {317..323...}), div 3 / 150ms (CNA, 2026-07-10) — kill-in-frames hazard logic **also done** (**corrected 2026-07-14**, same false-negative as TILE-014 — `GalaxyEggbertCnaGame.cpp`'s `GetGroundBlockType()==Crusher` gate).
+- [x] TILE-016 — Saw tiles (6-frame: {378..383}), div 1 / 50ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, same false-negative — `GetGroundBlockType()==Saw` gate, plus the real switch/saw 41-cell linking, `GEWorldRuntime::TryActivateSwitch()`).
+- [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1), div 4 / 200ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, same false-negative — `GetGroundBlockType()==Spike` gate).
 - [x] TILE-018 — Water1 tiles (6-frame: {92..95,94,93}), div 3 / 150ms (CNA, 2026-07-10 — animated decoration, alpha-blended cube, not wavy-edge surface)
 - [x] TILE-019 — Water2 tiles (6-frame: {91,96..98,97,96}), div 3 / 150ms (CNA, 2026-07-10 — same caveat as TILE-018)
 - [ ] TILE-020 — Ventilator/fan Up tiles (icons 126-128, 3-frame: table_decor_ventillog)
@@ -2241,27 +2242,32 @@ accordingly.
 
 #### 5.3 Interactive / Hazard Tiles
 
-None of these have hazard/gameplay logic wired in CNA yet — only static/animated rendering exists
-where noted in §5.2. Blupi's collision does not test hazard tiles at all yet.
+**Badly stale, corrected 2026-07-14** — this subsection's own intro claimed "none of these have
+hazard/gameplay logic wired... Blupi's collision does not test hazard tiles at all", but Phase 14
+(`E3D-MIG-140`-`149`) implemented almost all of it across 2026-07-11/12; that phase's own
+completion was never back-propagated to this checklist. Verified directly in
+`GalaxyEggbertCnaGame.cpp` (most of this logic lives there, NOT `GEInteractionSystem.cpp` — same
+false-negative risk flagged earlier in this file's own 2026-07-13 correction notes) and
+`GEWorldRuntime.cpp`/`GEBlupiController.cpp`.
 
-- [ ] TILE-028 — Lava (icon 68-72): kill Blupi on contact (IsLave)
-- [ ] TILE-029 — Spike (icon 373/347): kill Blupi on contact (IsPiege)
-- [ ] TILE-030 — Crusher (icon 317-323): kill only when fully extended (IsEcraseur, phase 5-9)
-- [ ] TILE-031 — Saw (icon 378-383): kill Blupi on contact (IsScie)
-- [ ] TILE-032 — Water drip (IsGoutte): triggers glu/slow effect when hit
-- [ ] TILE-033 — Blitz/lightning tile (IsBlitz): electric instant death
-- [ ] TILE-034 — Spring/ressort tile (IsRessort): launch Blupi upward
-- [ ] TILE-035 — Temp tile (IsTemp): brief passability change (bridge-like)
-- [ ] TILE-036 — Door tile (IsDoor): locked door, opened by matching key (DoorKeyFlags) — note: closed doors should render as `Billboard` (red pillar/bollard shape), NOT `UniformCube`
-- [ ] TILE-037 — Teleporter tile (IsTeleporte / SearchTeleporte): pair of tiles, teleport Blupi
-- [ ] TILE-038 — Switch tile (IsSwitch / ActiveSwitch): toggles state of linked door/bridge
-- [ ] TILE-039 — Bridge tile (IsBridge): builds a bridge (ObjectType52 animation)
-- [ ] TILE-040 — Ventilator tile (IsVentillo): blows Blupi in direction when standing in fan stream
-- [ ] TILE-041 — Normal jump tile (IsNormalJump): forces a jump when stepped on
-- [ ] TILE-042 — Water surface (IsSurfWater): enter surf mode
-- [ ] TILE-043 — Deep water (IsDeepWater): enter swim/drown mode
-- [ ] TILE-044 — Out-of-water exit (IsOutWater): exit swim mode when reaching dry tile
-- [ ] TILE-045 — Barre / barrier tile (GetTypeBarre): blocks certain vehicle types
+- [x] TILE-028 — Lava (icon 68): kill Blupi on contact — done (`GetGroundBlockType()==Lava` gate, `GalaxyEggbertCnaGame.cpp`).
+- [x] TILE-029 — Spike (icon 373): kill Blupi on contact — done (`GetGroundBlockType()==Spike` gate).
+- [x] TILE-030 — Crusher (icon 317-323): phase-gated (`IsCrusherActiveAtPhase()`, an approximation of the real 3-of-10-frame danger window, see that function's own comment) — **description corrected**: real effect is NOT a kill, it's a temporary squash/debuff (`TriggerCrush()`: reduced move speed, no jump, ~10s auto-recovery), confirmed directly against source.
+- [x] TILE-031 — Saw (icon 378, active variant only — `SawStopped`/379 is a separate, safe value): kill Blupi on contact — done, real channel 75.
+- [ ] TILE-032 — Water drip (IsGoutte): triggers glu/slow effect — confirmed still NOT implemented; not among the real 5 confirmed terrain hazards this engine models (lava/spike/saw/crusher/Blitz).
+- [x] TILE-033 — Blitz/lightning tile: electric instant death — done, one of the real 5 confirmed hazards (see NEXT.md §2).
+- [x] TILE-034 — Spring/ressort tile (icon 211): launches Blupi upward — done (`plan.md E3D-MIG-145`), correctly NOT a hazard (real behavior: bounce, not damage).
+- [x] TILE-035 — Temp tile: brief passability change — done (`plan.md E3D-MIG-146`), `GEBlupiController::GroundHeightAt()`'s own `tempPassable` phase-gated skip.
+- [x] TILE-036 — Door tile: locked door, opened by matching key — done (`plan.md E3D-MIG-160`/`161`, key- and treasure-gated families both real and working). The render-mode note (closed doors should be `Billboard`, not `UniformCube`) is confirmed STILL not done — explicitly deferred 2026-07-12 per user direction (no new render-geometry decisions that session), tracked separately (`E3D-MIG-516`/`163`, see §2.7 PICKUP-037's own note).
+- [x] TILE-037 — Teleporter tile: pair of tiles, teleport Blupi — done (`plan.md E3D-MIG-147`), real ~6.4s transit duration.
+- [x] TILE-038 — Switch tile: toggles linked door/bridge/saw state — done (`plan.md E3D-MIG-142`, `GEWorldRuntime::TryActivateSwitch()`, real 41-cell X±20 saw-linking window).
+- [x] TILE-039 — Bridge tile: builds a bridge (`ObjectType52` animation) — **done 2026-07-13** (`plan.md PICKUP-064`, see §2.7's own entry for the full writeup — a real live terrain-collision toggle, not cosmetic).
+- [x] TILE-040 — Ventilator tile: blows Blupi when in the fan stream — done (`plan.md E3D-MIG-149`, `GEWorldRuntime::TryConsumeFan()`).
+- [ ] TILE-041 — Normal jump tile: forces a jump when stepped on — confirmed still NOT implemented, no matching code found anywhere in `src/GalaxyEggbertCNA/`.
+- [x] TILE-042 — Water surface: enter surf mode — done (`plan.md E3D-MIG-148`), real Surf/Nage state split.
+- [x] TILE-043 — Deep water: enter swim/drown mode — done (`plan.md E3D-MIG-148`), real ~25s breath gauge (`kWaterGaugeMax`/`kWaterGaugeTickSeconds`).
+- [x] TILE-044 — Out-of-water exit: exit swim mode on a dry tile — done, same Surf/Nage state machine as TILE-042/043.
+- [ ] TILE-045 — Barre / barrier tile: blocks certain vehicle types — confirmed still NOT implemented, no matching code found.
 
 #### 5.4 Tile Adaptation (visual smoothing)
 
@@ -2271,7 +2277,7 @@ where noted in §5.2. Blupi's collision does not test hazard tiles at all yet.
 
 #### 5.5 Background & Sky
 
-- [ ] TILE-049 — Background sky PNG per region (`decor000.png`..`decor031.png`, not all consecutive)
+- [x] TILE-049 — Background sky PNG per region (`decor000.png`..`decor031.png`, not all consecutive) — **done** (see TILE-011): loads the exact real file matching the world's `skyRegion`, degrades gracefully (no crash) for the 4 real region ids confirmed never used by any real level.
 - [ ] TILE-050 — 5 sky colour palettes (ambient + fog per world region)
 - [ ] TILE-051 — Per-zone fog colour changes mid-level (region changes between areas)
 - [ ] TILE-052 — Lightning tile visual effect (icon 66-68 drawn 13 px higher, ch69 sound)
@@ -2282,7 +2288,7 @@ where noted in §5.2. Blupi's collision does not test hazard tiles at all yet.
 - [ ] TILE-054 — Distinct water/liquid surface treatment (wavy-edge surface) to replace the current alpha-blended-cube placeholder
 - [ ] TILE-055 — "Thin-bar" new geometry for icon 202
 - [ ] TILE-056 — Architectural kit modular assembly
-- [ ] TILE-057 — Secret-power (Sp0-7) billboard rendering and behavior — behavior itself is undocumented anywhere, research needed first
+- [ ] TILE-057 — ~~Secret-power (Sp0-7) billboard rendering and behavior~~ **obsolete premise, corrected 2026-07-14**: resolved 2026-07-12 (see `## 3 Open Questions`) — "Sp0-Sp7" are real hub-screen world-select icons (`Decor::IsWorld()`), not secret-power tiles at all. The real 4 `SecretPower` buffs come from `MoveObject` pickups 25/26/30/31 instead, already fully implemented (§2.7 PICKUP-007/008/010/012). This item itself has nothing left to do.
 
 ---
 
@@ -2680,7 +2686,7 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-087 — ch77: switch activate — confirmed correct, see PICKUP-076.
 - [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (7 terrain pairs, mapped by SoundEnviron) — see SOUND-006
 - [x] SOUND-089 — ch92: confirmed correct — follower (ObjectType96→97) wake sound.
-- [ ] SOUND-090 — Sound enable/disable respects enabled_ flag (all channels silenced when off)
+- [x] SOUND-090 — Sound enable/disable respects `enabled_` flag — **done** (**corrected 2026-07-14**): `GESound::Play()` gates on `enabled_` and `SetEnabled(false)` calls `StopAll()`, wired to the real Setup sound toggle + persisted via `GESaveData`.
 
 ---
 
@@ -2713,26 +2719,31 @@ damping already work.
 
 ### 2.11 Save Data
 
-**Not started at all in CNA.** Every item resets to `[ ]`; the old Simple3D save-format work does
-not carry over as evidence of anything CNA does today.
+**Badly stale, corrected 2026-07-14** — this section's own header claimed "not started at all",
+but `GESaveData` (`src/GalaxyEggbertCNA/Game/GESaveData.hpp`/`.cpp`) is a real, working, tested
+(`tools/VerifyGESaveData`) save system: 3 independent gamer slots (lives/missionNumber/
+hasProgress), a global `soundEnabled` flag, a persisted `selectedGamer` index, auto-save wired to
+the real Win/Lost/reset/gamer-select trigger points. It is a plain `key=value` text file, NOT
+byte-compatible with real `GameData`'s 640-byte binary layout — a deliberate, confirmed decision
+(`GESaveData.hpp`'s own header comment): the real format is shaped around a 100+-level/3-gamer-
+slot/`IsolatedStorageFile` structure this engine's single hand-authored `.vwr` world doesn't have,
+so byte compatibility would buy nothing. Do NOT flip SAVE-001/003/006/007 to `[x]` on that basis —
+those are specifically about the real byte layout, which stays undone by design.
 
-- [ ] SAVE-001 — GameData: 640-byte flat binary format, binary-compatible with mobile-eggbert
-- [ ] SAVE-002 — Global header (10 bytes): version, selectedGamer, sounds, jumpRight, autoZoom, accelActive
-- [ ] SAVE-003 — 3 gamer slots × 210 bytes: lives (byte 0), lastWorld (byte 1), doors[200] (bytes 10-209)
-- [ ] SAVE-004 — Auto-save on win / lost / quit / reset / gamer-select
-- [ ] SAVE-005 — Persistence mechanism chosen and wired for CNA (CNA has no equivalent of Simple3D's `Simple3D::SaveData` yet — this needs its own CNA-appropriate API, not a straight port)
-- [ ] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors)
-- [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub worlds)
-- [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per gamer slot
-- [ ] SAVE-009 — CurrentWrite / CurrentRead: mid-game save/load (on app deactivate/activate)
-- [ ] SAVE-010 — CurrentDelete: remove mid-game save (on OnExiting or normal level exit)
-- [ ] SAVE-011 — Accelerometer sensitivity setting (byte 7, 0-100 → 0.0-1.0)
-- [ ] SAVE-012 — JumpRight setting (byte 4) — jump direction preference
-- [ ] SAVE-013 — AutoZoom setting (byte 5)
-- [ ] SAVE-014 — Ranking mode persisted when isRankingMode is active
-
-Reuse of the byte-level layout for save compatibility with mobile-eggbert is still an open question
-(see `easy3d.md` §12 Q7) — do not assume SAVE-001's binary-compatible framing until that's decided.
+- [ ] SAVE-001 — GameData: 640-byte flat binary format, binary-compatible with mobile-eggbert — still correctly undone (deliberate, see this section's own intro).
+- [x] SAVE-002 — Global header — **partially real, done differently**: `selectedGamer` and `soundEnabled` ARE persisted (the two settings with real desktop behavior behind them); `jumpRight`/`autoZoom`/`accelActive` are NOT (their own UI toggles — `SetupJump`/`SetupZoom`/`SetupAccel` — are themselves intentionally inert in this engine, no touch/accelerometer hardware to back them, see §2.2's own notes).
+- [x] SAVE-003 — 3 gamer slots — **done differently**: `GamerSlot{lives, missionNumber, hasProgress}` × 3 (`kGamerCount`), matching the real slot COUNT and the lives/lastWorld-equivalent fields; the `doors[200]` byte range is NOT ported (see SAVE-006/007).
+- [x] SAVE-004 — Auto-save — **done for win/lost/reset/gamer-select** (confirmed via 5 real `saveData_.Save()` call sites in `GalaxyEggbertCnaGame.cpp`: Win transition, Lost transition, Cheat5/SetupReset full reset, sound toggle, Init gamer-slot tap); NOT done for quit/window-close (no such hook exists) — a real, if minor, gap.
+- [x] SAVE-005 — Persistence mechanism chosen and wired for CNA — **done**: plain `key=value` text file (no JSON library is linked in this project; a hand-rolled parser was simpler than adding one for a handful of scalars), a real, working, CNA-appropriate answer to this question.
+- [ ] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors) — confirmed NOT ported, a documented gap (`GEInteractionSystem` reacts to door BLOCKS directly in the world, not a bespoke persisted array); Init's "Secondary gates" HUD line is a static "0/52" text match, not real tracked data.
+- [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub worlds) — same gap as SAVE-006.
+- [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per gamer slot — partially real (`GetLives()`-equivalent per-slot accessors exist and work), but the doors portion of this ask is fake/static per SAVE-006/007 — stays `[ ]` for the full ask.
+- [ ] SAVE-009 — CurrentWrite / CurrentRead: mid-game save/load (on app deactivate/activate) — confirmed NOT modeled; real trigger is a WP7 OS lifecycle event (`Game1::OnActivated()`) with no desktop equivalent, and the real mechanism itself is a separate, heavier serialized-`Decor`-state snapshot than `GameData`, explicitly out of this engine's single-world scope (`GESaveData.hpp`'s own comment). Resume is offered instead whenever `hasProgress==true` from a prior Win/Lost — a documented simplification of the trigger, not a port of this item.
+- [ ] SAVE-010 — CurrentDelete: remove mid-game save (on OnExiting or normal level exit) — same reasoning as SAVE-009, not modeled.
+- [ ] SAVE-011 — Accelerometer sensitivity setting — NOT modeled, no accelerometer hardware exists on desktop.
+- [ ] SAVE-012 — JumpRight setting — NOT modeled; `SetupJump` toggle is real UI (renders/responds) but intentionally has no behavioral effect (documented gap, §2.2).
+- [ ] SAVE-013 — AutoZoom setting — same as SAVE-012 (`SetupZoom`).
+- [ ] SAVE-014 — Ranking mode persisted when isRankingMode is active — NOT modeled; Ranking mode itself is confirmed unreachable in this port (hardcoded-false gate, same "never shown by default" precedent as the Trial phase and `InitRanking` button).
 
 ---
 
@@ -2771,16 +2782,27 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 
 ### 2.13 Tests & Quality
 
-- [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest) — re-verify current pass count in this build (documented elsewhere as 63/63; a raw `TEST(...)` grep in this pass counted 60 macros, likely a counting-method difference, not a regression — reconcile before quoting a number in docs)
-- [ ] TEST-002 — ctest discovery in the CNA build dir (gtest_discover_tests fix)
-- [ ] TEST-003 — Test: all mobile-eggbert world files parse without error
-- [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs, including the corrected 65px-pitch/1px-gap math (see plan §1 history / NEXT.md for the tileUV pitch bug)
-- [ ] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip
-- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — blocked on §11 Save Data being started at all
-- [ ] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw/Fan div 1, Lava div 2, Water1/Crusher/Water2/Marine div 3, Spike/Temp div 4) — supersedes the old "matches mobile-eggbert table indices at known times" framing, which assumed a uniform rate
-- [ ] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected (covers the same ground as the existing `VerifyInteractionSystem` tool, but as an automated/CI-checked test rather than a manual verification binary)
-- [ ] TEST-009 — Test (new): crate push validity (adjacency/floor-support/occupancy checks) and platform-lift ping-pong patrol motion, independent of the manual `VerifyMoveObjectTypesCna`/`VerifyBlupiMovement` tools
-- [ ] TEST-010 — Test (new): `BigDecor` billboard parsing round-trip, independent of the manual `VerifyBigDecorParsingCna` tool
+**Re-verified against source 2026-07-14** (this section had not been touched by the 2026-07-13
+`plan.md` reconciliation pass covering §2.6/2.7). One real category this section never accounted
+for at all: **6 scripted `VerifyXxx` tools** now exist (`VerifyBlupiMovement`,
+`VerifyInteractionSystem`, `VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`,
+`VerifyBigDecorParsingCna`) — real, working, run every session (NEXT.md §2/§7), covering most of
+what TEST-008/009/010 below ask for. They are NOT ctest-discovered/CI-automated (TEST-002 is
+still genuinely undone, and no `enable_testing()`/`add_test()` exists anywhere in
+`CMakeLists.txt`) — they're manually-invoked binaries, so TEST-008/009/010 stay `[ ]` for the
+literal "automated/CI-checked" ask, but the underlying *behavior* they'd test is not an
+unverified gap; corrected in place below rather than left silently misleading.
+
+- [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest, MoveObjectRecordTests) — **count reconciled 2026-07-14**: 64/64 (confirmed via a fresh `TEST(...)`/`TEST_F(...)` grep across `tests/GalaxyEggbert/`), not the previously-quoted 63.
+- [ ] TEST-002 — ctest discovery in the CNA build dir (gtest_discover_tests fix) — confirmed still NOT done: no `enable_testing()`/`add_test()` call exists anywhere in `CMakeLists.txt`.
+- [ ] TEST-003 — Test: all mobile-eggbert world files parse without error — **partially covered, not exhaustive**: `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` each parse a curated subset of real `../mobile-eggbert/worlds/world0XX.txt` files (chosen per `ObjectType` example), not every world file in the directory — the literal "all" ask is still open.
+- [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — confirmed NOT a dedicated automated test; informally exercised by the tile-exhibition demo room (`tools/GenerateSampleWorld3D.cpp`, all 441 icons on a slab, visually confirmed via live screenshots this session) but that's manual/visual, not a scripted assertion over the full icon range.
+- [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files (manual tool, not ctest-integrated — see this section's own intro note).
+- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `GESaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
+- [ ] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw/Fan div 1, Lava div 2, Water1/Crusher/Water2/Marine div 3, Spike/Temp div 4) — the real behavior IS implemented (`GETerrainRenderer.cpp`'s `AnimDivisor()`, confirmed matches this exact mapping), but no automated test asserts it — `VerifyBlupiMovement`'s own `GetAnimIcon()` checks are a different, unrelated function (Blupi's own animation state, not terrain-tile hazard animation). Genuinely still open.
+- [ ] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected — the behavior itself is real and covered by the manual `VerifyInteractionSystem` tool (190+ checks as of 2026-07-13); only the "automated/CI-checked" framing this item specifically asks for is undone (see this section's own intro note).
+- [ ] TEST-009 — Test (new): crate push validity (adjacency/floor-support/occupancy checks) and platform-lift ping-pong patrol motion — same as TEST-008: real behavior covered by the manual `VerifyMoveObjectTypesCna`/`VerifyBlupiMovement`/`VerifyInteractionSystem` tools (crate stacking/linking and lift riding are both real, see §2.7 PICKUP-023/031), only ctest automation is missing.
+- [ ] TEST-010 — Test (new): `BigDecor` billboard parsing round-trip — same as TEST-008/009: real behavior covered by the manual `VerifyBigDecorParsingCna` tool, only ctest automation is missing.
 
 ## 3. Open Questions
 
