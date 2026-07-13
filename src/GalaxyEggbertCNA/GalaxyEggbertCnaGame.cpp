@@ -1715,6 +1715,7 @@ namespace GalaxyEggbert::CNA
                       interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
                       interaction_.Key3Count() > 0,
                       interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
+                      interaction_.BulletCount(), interaction_.DynamiteCount(),
                       blupi_.GetAnimIcon());
         }
 

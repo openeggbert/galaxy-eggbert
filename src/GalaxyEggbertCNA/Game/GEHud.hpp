@@ -17,9 +17,12 @@ namespace GalaxyEggbert::CNA
     // same 640x480 reference space (verified directly against
     // mobile-eggbert Decor.cpp:1185-1249): one blupi.png icon 48 per life
     // at (210,417) advancing X+=16, held keys as element.png icons
-    // 215/222/229 at (520/530/540, 418), and the treasure counter -- a
+    // 215/222/229 at (520/530/540, 418), the treasure counter -- a
     // pad.png icon-15 panel stretched over (410,445)-(510,480) at 0.6
-    // opacity with centered "N/M" text at (460,450). Text glyphs come from
+    // opacity with centered "N/M" text at (460,450) -- and (2026-07-13,
+    // plan.md HUD-015/016) element.png icon 176 x bullet count at (570,442)
+    // advancing X+=4, and element.png icon 252 at (505,414) shown only
+    // while carrying dynamite. Text glyphs come from
     // Content/icons/text.png, where the glyph's sheet index IS the
     // character's ASCII code for the printable range -- read directly off
     // the asset's own layout (row 2 of the 16-column/32px grid starts with
@@ -67,10 +70,20 @@ namespace GalaxyEggbert::CNA
         // class comment for why order matters), with depth testing already
         // disabled by the caller. Sets AlphaBlend for its own draws and
         // restores Opaque before returning.
+        //
+        // bullets/dynamite added 2026-07-13 (plan.md HUD-015/016), verified
+        // directly against the same real `Decor::DrawInfo` (Decor.cpp
+        // 1197-1201, 1212-1217): element.png icon 176 at (570,442),
+        // X+=4 per bullet held (a heavily-overlapping "fanned" row, same
+        // real look as the life icons); element.png icon 252 at (505,414),
+        // a single icon shown only while `dynamite > 0` (matches this
+        // engine's own dynamite cap of 1, but checked as `> 0` to mirror
+        // the real source's own gate exactly rather than assume the cap).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
                   int treasures, int totalTreasures,
+                  int bullets, int dynamite,
                   int animIcon);
 
     private:

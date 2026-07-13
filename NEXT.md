@@ -262,6 +262,25 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Phase 9 (HUD) started per explicit user direction (2026-07-13): bullet/dynamite HUD counters
+  added (plan.md `HUD-015`/`016`), and a stale Phase 9/§2.3 documentation gap closed.** While
+  scoping this, found that `GEHud`'s treasure-counter text rendering (`HUD-003`/`004`, real
+  `text.png` glyph-sheet + `pad.png` panel) was ALREADY implemented (2026-07-10) — plan.md's own
+  Phase 9 top-level bullet had gone stale, still claiming "treasure/score text needs text
+  rendering, not started" and "using CNA `SpriteBatch`" (it's real 3D quads, for the same Vulkan
+  submission-order reason documented in `GEHud.hpp`'s own class comment) well after that work
+  shipped; corrected. New work: `GEHud::Draw()` gained `bullets`/`dynamite` parameters, verified
+  directly against the real `Decor::DrawInfo` (`Decor.cpp:1197-1201`/`1212-1217`): element.png
+  icon 176 × bullets held at (570,442) advancing X+=4 (the same heavily-overlapping "fanned" row
+  look as the life icons), and element.png icon 252 at (505,414) shown only while carrying
+  dynamite (no counter loop — the real game only ever holds at most 1, matching this engine's own
+  cap). Both wired directly to `GEInteractionSystem::BulletCount()`/`DynamiteCount()`, already
+  implemented earlier this session — no new gameplay logic needed. Verified live via a headless
+  HUD screenshot (temporary hardcoded bullet=5/dynamite=1 values for the shot, reverted before
+  committing) — both new icons render at the correct position/texture, bullets forming the
+  expected overlapping row. Full suite re-run (63/63 unit tests, all verify tools) + both
+  backends.
+
 - **Footstep terrain-remap implemented + a real pre-existing landing-sound bug fixed
   (2026-07-12, plan.md `E3D-MIG-084`).** New `GESound::FootstepChannelFor(icon)` covers all 7 real
   `Decor::SoundEnviron()` terrain-specific footstep ranges (channels 78/80/82/84/86/88/90),

@@ -18,9 +18,13 @@ namespace GalaxyEggbert::CNA
         constexpr float kKey1X = 520.0f, kKey2X = 530.0f, kKey3X = 540.0f, kKeyY = 418.0f;
         constexpr float kPanelX0 = 410.0f, kPanelY0 = 445.0f, kPanelX1 = 510.0f, kPanelY1 = 480.0f;
         constexpr float kTreasureTextCenterX = 460.0f, kTreasureTextY = 450.0f;
+        constexpr float kBulletX = 570.0f, kBulletY = 442.0f, kBulletStep = 4.0f;
+        constexpr float kDynamiteX = 505.0f, kDynamiteY = 414.0f;
         constexpr int kKeyIcon1 = 215, kKeyIcon2 = 222, kKeyIcon3 = 229; // element.png, same as DrawInfo
         constexpr int kLifeIcon = 48;  // blupi.png, same as DrawInfo
         constexpr int kPanelIcon = 15; // pad.png, same as DrawInfo
+        constexpr int kBulletIcon = 176;   // element.png, same as DrawInfo
+        constexpr int kDynamiteIcon = 252; // element.png, same as DrawInfo
         // The real DrawInfo panel opacity is 0.6 -- deliberately 1.0 here
         // for now: on CNA's Vulkan backend a BasicEffect draw with
         // Alpha < 1 doesn't render at all (verified empirically 2026-07-10:
@@ -170,6 +174,7 @@ namespace GalaxyEggbert::CNA
                      int viewportW, int viewportH,
                      int lives, bool key1, bool key2, bool key3,
                      int treasures, int totalTreasures,
+                     int bullets, int dynamite,
                      int animIcon)
     {
         if (!loaded_)
@@ -237,6 +242,34 @@ namespace GalaxyEggbert::CNA
             q.x1 = q.x0 + kIconTilePx * scale;
             q.y1 = q.y0 + kIconTilePx * scale;
             IconUv(key.icon, elementSheetW, elementSheetH, q.u0, q.v0, q.u1, q.v1);
+            elementQuads.push_back(q);
+        }
+
+        // Bullets: element.png icon 176 x bullets held, X += 4 (real
+        // DrawInfo) -- a heavily-overlapping "fanned" row, same real look
+        // as the life icons above.
+        for (int i = 0; i < bullets; ++i)
+        {
+            Quad q;
+            q.x0 = refToScreenX(kBulletX + static_cast<float>(i) * kBulletStep);
+            q.y0 = refToScreenY(kBulletY);
+            q.x1 = q.x0 + kIconTilePx * scale;
+            q.y1 = q.y0 + kIconTilePx * scale;
+            IconUv(kBulletIcon, elementSheetW, elementSheetH, q.u0, q.v0, q.u1, q.v1);
+            elementQuads.push_back(q);
+        }
+
+        // Dynamite: element.png icon 252, single icon while carrying one
+        // (real `if (m_blupiDynamite > 0)`, no counter loop -- there's only
+        // ever at most 1 in the real game too).
+        if (dynamite > 0)
+        {
+            Quad q;
+            q.x0 = refToScreenX(kDynamiteX);
+            q.y0 = refToScreenY(kDynamiteY);
+            q.x1 = q.x0 + kIconTilePx * scale;
+            q.y1 = q.y0 + kIconTilePx * scale;
+            IconUv(kDynamiteIcon, elementSheetW, elementSheetH, q.u0, q.v0, q.u1, q.v1);
             elementQuads.push_back(q);
         }
 

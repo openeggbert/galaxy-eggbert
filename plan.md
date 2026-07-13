@@ -445,11 +445,16 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 
 ### Phase 9 — HUD (`E3D-MIG-090`-`093`)
 
-- [~] `090`-`093` Minimal lives/world/treasure HUD using CNA `SpriteBatch`. **Started 2026-07-11**:
-      life icons + key icons (see `## 2.3 HUD-001/005/006/007`), reusing existing textures already
-      loaded elsewhere (`blupi.png`, `element.png`), not `pad.png`/`jauge.png` yet. Avoid building
-      a UI framework — a HUD is a handful of sprite draws keyed to game state, not a system.
-      Treasure/world/score text still needs `pad.png`/`jauge.png` plus text rendering, not started.
+- [~] `090`-`093` Minimal lives/world/treasure HUD — **substantially done**, drawn via real 3D
+      quads (`GEHud`, NOT `SpriteBatch` — see that class's own comment for why: CNA's Vulkan
+      backend records every `SpriteBatch` batch before every 3D draw each frame, so a sprite HUD
+      is always painted over by the 3D scene). Done: life icons (`blupi.png`), key icons
+      (`element.png`), treasure counter text + `pad.png` panel (`text.png`, glyph-index-is-ASCII,
+      fixed advance — see `## 2.3 HUD-001/003/004/005/006/007`), and (2026-07-13) bullet/dynamite
+      counters (`HUD-015`/`016`). Avoid building a UI framework — a HUD is a handful of sprite
+      draws keyed to game state, not a system. Remaining real HUD elements (`jauge.png` gauges for
+      shield/charge, score/world-name/timer text, hit-flash, etc.) are tracked individually in
+      `## 2.3`'s `HUD-008`-`HUD-026` list, not part of this summary bullet.
 
 ### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
 
@@ -1471,8 +1476,10 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
 - [ ] HUD-012 — Gauge sprite (jauge.png) bottom-left area
 - [ ] HUD-013 — Hit flash: red full-screen overlay panel, 0.4 s fade on damage
 - [ ] HUD-014 — Camera shake on hit
-- [ ] HUD-015 — Bullet counter: element.png icon 176 × m_blupiBullet, small row near bottom-right
-- [ ] HUD-016 — Dynamite count: element.png icon 252 shown when m_blupiDynamite > 0
+- [x] HUD-015 — Bullet counter: element.png icon 176 × bullets held, X+=4 fanned row at (570,442)
+      (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1197-1201`)
+- [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
+      (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1212-1217`)
 - [ ] HUD-017 — Perso (persona) counter: button.png icon 108 + "= N" text when m_blupiPerso > 0
 - [ ] HUD-018 — Second gauge (jauge.png red fill): used for charge level (m_blupiLevel in charge mode)
 - [ ] HUD-019 — Yellow gauge: shield timer ticks down from 100 (shown while shield active, hidden when expired)
