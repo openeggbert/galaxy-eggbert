@@ -32,7 +32,24 @@ namespace GalaxyEggbert::CNA
     public:
         static constexpr float kMoveSpeed = 5.5f; // matches Simple3D::GEBlupiController
         static constexpr float kTurnSpeed = 3.14159265f; // rad/s (180 deg/s, matches Simple3D)
-        static constexpr float kJumpSpeed = 12.0f;
+        static constexpr float kJumpSpeed = 12.0f; // real "-16, no Power, clear headroom" baseline -- see kJumpSpeedPowered's own comment
+
+        // Jump-height headroom modulation (plan.md TILE-041, real
+        // Decor::IsNormalJump(), verified against mobile-eggbert-reference/
+        // 12-hazards-and-interactables.md's "Jump physics" section --
+        // corrected 2026-07-14, the old checklist description of this as a
+        // special "tile that forces a jump" was wrong). Real 4 magnitudes:
+        // clear-headroom+noPower=-16 (kJumpSpeed itself, the existing
+        // baseline/anchor per kSpringBounceHeld/NotHeld's own comment),
+        // clear-headroom+Power=-26, blocked-headroom+noPower=-12,
+        // blocked-headroom+Power=-16 (coincidentally the same magnitude as
+        // clear-headroom+noPower -- a real coincidence in mobile-eggbert's
+        // own numbers, not a bug here). Same proportional-anchoring
+        // technique as kSpringBounceHeld/NotHeld above.
+        static constexpr float kJumpSpeedPowered = kJumpSpeed * (26.0f / 16.0f);
+        static constexpr float kJumpSpeedReduced = kJumpSpeed * (12.0f / 16.0f);
+        static constexpr float kJumpSpeedReducedPowered = kJumpSpeed * (16.0f / 16.0f);
+
         static constexpr float kGravity   = 25.0f;
         static constexpr float kFallLimit = -10.0f;
         static constexpr float kStepLimit = 1.0f;
@@ -298,6 +315,7 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] float GetX() const noexcept { return m_x; }
         [[nodiscard]] float GetY() const noexcept { return m_y; }
         [[nodiscard]] float GetZ() const noexcept { return m_z; }
+        [[nodiscard]] float GetVelocityY() const noexcept { return m_velocityY; }
         [[nodiscard]] bool IsOnGround() const noexcept { return m_onGround; }
 
         // Block type directly beneath Blupi's feet, or Air (0) if not
@@ -609,6 +627,16 @@ namespace GalaxyEggbert::CNA
         // for this purpose without a general per-cell-occupancy rewrite.
         [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable,
                                                  float referenceY);
+        // Real Decor::IsNormalJump() headroom probe (see kJumpSpeedPowered's
+        // own comment): checks the 2 grid cells directly above Blupi's
+        // current standing height for solid blocks. Real source offsets the
+        // probe 15px toward Blupi's current facing direction to pick
+        // between 2 adjacent columns near a tile boundary -- simplified
+        // here to a single column (this engine's own current position,
+        // already grid-snapped), same "single stance, not multi-candidate"
+        // simplification already used for TryActivateSwitch/the bridge
+        // trigger scan, not a transcription gap.
+        [[nodiscard]] bool HasJumpHeadroom(const Worlds::World& world) const;
         void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
         void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt);
 

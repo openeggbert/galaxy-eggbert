@@ -136,6 +136,15 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented jump-height headroom modulation** (`ObjectType`-agnostic Blupi physics, plan.md
+  TILE-041) — real `Decor::IsNormalJump()`, corrected from a wrong "forces a jump when stepped on"
+  premise to its real behavior: a ceiling-clearance headroom check that reduces jump strength when
+  Blupi's head would clip a nearby ceiling. `GEBlupiController::HasJumpHeadroom()` probes the 2 grid
+  cells above his current standing height; 3 new proportionally-anchored speed constants
+  (`kJumpSpeedPowered`/`kJumpSpeedReduced`/`kJumpSpeedReducedPowered`) give the real 4 magnitudes
+  (clear/blocked × Power/no-Power). Verified against the real south tunnel's low BrickWall ceiling
+  with an exact expected-velocity match (accounting for the same frame's own gravity subtraction),
+  not just a pass/fail — full regression on both backends.
 - **Wired all 7 test/verify tools into `ctest`** (plan.md TEST-002) — `GalaxyEggbertWorldsTests`
   turned out to already be ctest-discoverable; added `add_test()` for the 6 `VerifyXxx` binaries
   (with an explicit repo-root `WORKING_DIRECTORY` for the 3 that need it). `ctest --test-dir
@@ -492,16 +501,10 @@ judgment (§9).
     (75 tests total including third-party deps; 1 pre-existing, unrelated `../easy-gl` smoke-test
     failure noted below, not a regression from this change).
 
-12. **Jump-height headroom modulation** (`plan.md TILE-041`, real `Decor::IsNormalJump()` —
-    **not** a special tile, its old description was wrong, corrected 2026-07-14; see plan.md's own
-    entry). Real behavior IS documented (`mobile-eggbert-reference/12-hazards-and-interactables.md`
-    "Jump physics" section): probes 2 stacked tiles above Blupi (offset 15px toward his facing
-    direction) and reduces jump strength (-12/-16 vs -16/-26 with Power) if either is blocked —
-    prevents a full jump from clipping a nearby ceiling. Bigger than a typical "next smallest task"
-    — needs a new general "probe N tiles above, direction-offset" capability, and must interact
-    carefully with `GEBlupiController::GroundHeightAt()`'s already-fixed roofed-interior collision
-    (2026-07-13) to avoid regressing it. Files: `GEBlupiController.cpp`/`.hpp`. Verify: a new
-    `VerifyBlupiMovement` check (jump near vs. away from a low ceiling) + full regression pass.
+12. ~~Jump-height headroom modulation~~ **DONE 2026-07-14** (`plan.md TILE-041`) — see §3 for the
+    full writeup. `GEBlupiController::HasJumpHeadroom()` + 3 new proportionally-anchored jump-speed
+    constants; verified with an exact expected-velocity match (not just pass/fail) against the real
+    south tunnel's low ceiling, full regression on both backends.
 
 13. **Suspended/hanging bar-and-rope movement mode** (`plan.md TILE-045`, real
     `Decor::GetTypeBarre()` — **not** a vehicle-blocking check, corrected 2026-07-14; see plan.md's

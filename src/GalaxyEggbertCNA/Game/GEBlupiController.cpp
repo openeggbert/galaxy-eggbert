@@ -171,6 +171,28 @@ namespace GalaxyEggbert::CNA
         return kNoGround;
     }
 
+    bool GEBlupiController::HasJumpHeadroom(const Worlds::World& world) const
+    {
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+        // "One tile above Blupi's center, probes two stacked tiles overhead"
+        // -- the 2 grid cells directly above his current standing height.
+        const int gy0 = static_cast<int>(std::lround(m_y)) + 1;
+        for (int gy = gy0; gy < gy0 + 2; ++gy)
+        {
+            if (gy < 0 || gy >= blocksPerAxis)
+            {
+                continue; // off the top of the world -- open sky, not blocked
+            }
+            if (IsSolidAt(world, gx, gy, gz))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     bool GEBlupiController::TriggerCrush() noexcept
     {
         if (m_ecrase)
@@ -595,7 +617,19 @@ namespace GalaxyEggbert::CNA
         }
         else if (m_onGround && jumpPressed && !m_ecrase)
         {
-            m_velocityY = kJumpSpeed;
+            // Real Decor::IsNormalJump() headroom modulation (plan.md
+            // TILE-041, see kJumpSpeedPowered's own comment) -- a clipped
+            // ceiling within 2 tiles overhead reduces jump strength instead
+            // of letting Blupi clip through it.
+            const bool powered = m_secretPower == SecretPower::Power;
+            if (HasJumpHeadroom(world))
+            {
+                m_velocityY = powered ? kJumpSpeedPowered : kJumpSpeed;
+            }
+            else
+            {
+                m_velocityY = powered ? kJumpSpeedReducedPowered : kJumpSpeedReduced;
+            }
             m_onGround = false;
         }
 

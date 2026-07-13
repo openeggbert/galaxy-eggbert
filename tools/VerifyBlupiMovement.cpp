@@ -962,6 +962,41 @@ int main(int argc, char** argv)
               "BrickWall ceiling above it (y~4)");
     }
 
+    // Jump-height headroom modulation (plan.md TILE-041, real
+    // Decor::IsNormalJump()): a clipped ceiling within 2 tiles overhead
+    // should reduce jump strength. Open sky (spawn (0,1,0)) vs. the same
+    // south tunnel interior above (floor at grid y=0, BrickWall ceiling at
+    // grid y=3 -- exactly 2 cells above Blupi's own standing height of 1,
+    // triggering the "blocked" case).
+    {
+        // The jump-trigger assignment and gravity subtraction both happen
+        // within the same Step() call (gravity runs later in that same
+        // function body), so one call after the jump already reflects
+        // exactly one frame of gravity -- subtract it here for an exact
+        // comparison instead of a loose tolerance.
+        const float kOneFrameGravity = GEBlupiController::kGravity * dt;
+
+        GEBlupiController openJumper;
+        openJumper.SetPosition(0.0f, 1.0f, 0.0f);
+        for (int i = 0; i < 5; ++i) openJumper.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle grounded
+        openJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        std::cout << "Open-sky jump velocityY=" << openJumper.GetVelocityY() << std::endl;
+        check(std::fabs(openJumper.GetVelocityY() - (GEBlupiController::kJumpSpeed - kOneFrameGravity)) < 0.01f,
+              "jumping with clear headroom uses the real full-height baseline (-16 equivalent)");
+
+        GEBlupiController tunnelJumper;
+        tunnelJumper.SetPosition(-10.0f, 1.0f, 17.0f);
+        for (int i = 0; i < 5; ++i) tunnelJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        tunnelJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        std::cout << "Low-ceiling jump velocityY=" << tunnelJumper.GetVelocityY() << std::endl;
+        check(std::fabs(tunnelJumper.GetVelocityY() -
+                         (GEBlupiController::kJumpSpeedReduced - kOneFrameGravity)) < 0.01f,
+              "jumping under the tunnel's low BrickWall ceiling uses the real reduced 'bumped head' "
+              "height (-12 equivalent), not the full baseline");
+        check(tunnelJumper.GetVelocityY() < openJumper.GetVelocityY(),
+              "the low-ceiling jump is measurably weaker than the open-sky jump");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

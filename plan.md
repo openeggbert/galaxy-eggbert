@@ -2263,19 +2263,22 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 - [x] TILE-038 — Switch tile: toggles linked door/bridge/saw state — done (`plan.md E3D-MIG-142`, `GEWorldRuntime::TryActivateSwitch()`, real 41-cell X±20 saw-linking window).
 - [x] TILE-039 — Bridge tile: builds a bridge (`ObjectType52` animation) — **done 2026-07-13** (`plan.md PICKUP-064`, see §2.7's own entry for the full writeup — a real live terrain-collision toggle, not cosmetic).
 - [x] TILE-040 — Ventilator tile: blows Blupi when in the fan stream — done (`plan.md E3D-MIG-149`, `GEWorldRuntime::TryConsumeFan()`).
-- [ ] TILE-041 — ~~Normal jump tile: forces a jump when stepped on~~ **description was wrong,
-      corrected 2026-07-14**: `Decor::IsNormalJump()` is NOT a special tile that forces a jump on
-      contact — it's a ceiling-clearance headroom check (probes 2 stacked tiles above Blupi, offset
-      15px toward his facing direction) that modulates the STRENGTH of his own regular jump input:
-      full height (-16, or -26 with Power) if both probes are clear, a reduced "bumped head" height
-      (-12, or -16 with Power) if either is blocked — preventing a full jump from clipping a nearby
-      ceiling (`mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Jump physics" section).
-      Confirmed still NOT implemented (this engine's jump always uses the single fixed
-      `kJumpSpeed`, no headroom check) — but this needs a NEW general "probe N tiles above,
-      direction-offset" capability, not a simple tile-trigger; real implementation would also need
-      to interact carefully with `GroundHeightAt()`'s already-fixed roofed-interior collision
-      (2026-07-13) to avoid regressing it. A real gap, but bigger/subtler than its old description
-      suggested — scope carefully before attempting.
+- [x] TILE-041 — ~~Normal jump tile: forces a jump when stepped on~~ **description was wrong,
+      corrected 2026-07-14; implemented same day**: `Decor::IsNormalJump()` is NOT a special tile
+      that forces a jump on contact — it's a ceiling-clearance headroom check that modulates the
+      STRENGTH of Blupi's own regular jump input: full height (-16, or -26 with Power) if 2 stacked
+      cells above him are clear, a reduced "bumped head" height (-12, or -16 with Power) if either
+      is blocked — preventing a full jump from clipping a nearby ceiling
+      (`mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Jump physics" section). Done via
+      `GEBlupiController::HasJumpHeadroom()` + 3 new proportionally-anchored speed constants
+      (`kJumpSpeedPowered`/`kJumpSpeedReduced`/`kJumpSpeedReducedPowered`, same technique as
+      `kSpringBounceHeld`/`NotHeld`). Real source offsets the probe 15px toward Blupi's facing
+      direction to disambiguate near a tile boundary — simplified to a single column (this engine's
+      own current grid-snapped position), same "single stance, not multi-candidate" simplification
+      already used for `TryActivateSwitch`/the bridge trigger scan. Verified against the real south
+      tunnel's low BrickWall ceiling (exact expected velocity match, not just a pass/fail) + full
+      regression on both backends — no interaction issues found with `GroundHeightAt()`'s own
+      roofed-interior fix (headroom probe only reads terrain, doesn't touch ground resolution).
 - [x] TILE-042 — Water surface: enter surf mode — done (`plan.md E3D-MIG-148`), real Surf/Nage state split.
 - [x] TILE-043 — Deep water: enter swim/drown mode — done (`plan.md E3D-MIG-148`), real ~25s breath gauge (`kWaterGaugeMax`/`kWaterGaugeTickSeconds`).
 - [x] TILE-044 — Out-of-water exit: exit swim mode on a dry tile — done, same Surf/Nage state machine as TILE-042/043.
