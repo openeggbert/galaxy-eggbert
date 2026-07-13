@@ -262,6 +262,29 @@ in 3D — perspective camera, billboard sprites, 3D-rendered tiles — without i
 
 Most recent first. Full history: `git log`.
 
+- **Training-hint overlay implemented, Phase 9's real `DrawInfo` scope now 100% complete
+  (2026-07-13, plan.md `HUD-024`).** Per explicit user approval: (1) implemented a real
+  mission-number concept (`Worlds::World::missionNumber()`, using format v2's first
+  already-reserved header field — no format/size change, existing `.vwr` files unaffected), (2)
+  transcribed all 4 real `Tables::table_training1`-`4` arrays (43 hint records total) into new
+  `GETrainingHints.hpp`/`.cpp`, verified against `Decor.cpp:1258-1310`/`1313-1340`, and (3) found
+  and transcribed their real English hint text from `MyResource.cpp`'s `InitializeEN()`. Real
+  gate semantics fully modeled: exact-treasure-count match, in/not-in-any-vehicle, carrying/not-
+  carrying-dynamite — all driven by state this session already tracks. Inline real button-icon
+  glyphs (the original text embeds control bytes `Text::DrawChar` renders as pictograms) aren't
+  supported by this engine's text renderer; replaced with bracketed labels (`[Move]`/`[Jump]`/
+  `[Action]`) instead of silently dropped. HUD: full-width top-of-screen panel, text centered and
+  auto-shrunk to fit, matching the real layout exactly. The shared sample world is deliberately
+  left at mission 0 (its layout is unrelated to the real tutorial world, so forcing mission 11
+  would fire hints in nonsensical places) — verified instead via `VerifyInteractionSystem` +
+  live headless screenshots with a temporary mission/position override (reverted before
+  committing). **With this done, every element the real `Decor::DrawInfo` function draws is now
+  implemented in `GalaxyEggbertCNA`** — Phase 9's `090`-`093` scope is complete; only the
+  separately-flagged, not-found-in-`DrawInfo` `HUD-0NN` items remain, each needing its own
+  verification before being treated as real work. Verified: 1 new `WorldSerializationTests` +
+  12 new `VerifyInteractionSystem` assertions + full suite (64/64 unit tests, all verify tools)
+  + both backends.
+
 - **Perso decoy mechanic + HUD counter implemented (2026-07-13, plan.md `HUD-017`).** Researched
   what "Perso" actually is (previously unknown): a deployable `ObjectType200` decoy statue (same
   `blupi.png` look as Blupi), verified directly against `Decor.cpp:4818-4841`/`6088-6101`/

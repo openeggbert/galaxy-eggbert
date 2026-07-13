@@ -289,6 +289,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GESound.cpp
         src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
         src/GalaxyEggbertCNA/Game/GEHud.cpp
+        src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -443,6 +444,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
         src/GalaxyEggbertCNA/Game/GESound.cpp
         src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
+        src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyInteractionSystem PRIVATE

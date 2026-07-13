@@ -190,6 +190,20 @@ TEST(WorldSerializationTests, SaveAndLoadPreservesSkyRegion) {
     removeFileNoThrow(filePath);
 }
 
+TEST(WorldSerializationTests, SaveAndLoadPreservesMissionNumber) {
+    const auto filePath = makeTempPath(".vwr");
+
+    World world;
+    EXPECT_EQ(world.missionNumber(), 0u);
+    world.setMissionNumber(11);
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_EQ(loaded.missionNumber(), 11u);
+
+    removeFileNoThrow(filePath);
+}
+
 TEST(WorldSerializationTests, LoadRejectsV1FormatVersion) {
     const auto filePath = makeTempPath(".vwr");
     {

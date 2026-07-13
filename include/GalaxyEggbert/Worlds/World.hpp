@@ -63,6 +63,22 @@ public:
     void setSkyRegion(std::uint32_t skyRegion) noexcept { skyRegion_ = skyRegion; }
 
     /**
+     * @brief Returns the world-level mission/level number (2026-07-13,
+     * format v2's first reserved field put to use), a direct pass-through
+     * of mobile-eggbert's real `m_mission` -- gates level-specific logic
+     * such as the real training-hint overlay (missions 11-14 only, see
+     * `GEHud`/`GETrainingHints`). Defaults to 0 (no mission) for worlds
+     * that never call @ref setMissionNumber, matching real mobile-eggbert
+     * levels outside the tutorial world range.
+     */
+    [[nodiscard]] std::uint32_t missionNumber() const noexcept { return missionNumber_; }
+
+    /**
+     * @brief Sets the world-level mission/level number (see @ref missionNumber).
+     */
+    void setMissionNumber(std::uint32_t missionNumber) noexcept { missionNumber_ = missionNumber; }
+
+    /**
      * @brief Reads a block at world-space coordinates.
      *
      * @param x World X coordinate in range <tt>[0, blocksPerAxis())</tt>.
@@ -160,9 +176,10 @@ public:
      * 2026-07-09).
      *
      * The file stores a world header (`VWR1` magic, format settings, chunk
-     * count, table offsets, @ref skyRegion, and 4 reserved fields for future
-     * world-level metadata), a chunk table, and serialized non-empty chunk
-     * payloads.
+     * count, table offsets, @ref skyRegion, @ref missionNumber (2026-07-13,
+     * the first of the format's 4 reserved fields put to use), and 3
+     * remaining reserved fields for future world-level metadata), a chunk
+     * table, and serialized non-empty chunk payloads.
      *
      * @param path Destination file path.
      * @throws std::runtime_error If file creation or serialization fails.
@@ -187,6 +204,7 @@ private:
     std::uint8_t chunksPerAxis_;
     std::vector<Chunk> chunks_;
     std::uint32_t skyRegion_ = 0;
+    std::uint32_t missionNumber_ = 0;
 
     /**
      * @brief Converts chunk-grid coordinates to a linear vector index.

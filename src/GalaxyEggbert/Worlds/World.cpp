@@ -21,9 +21,13 @@ constexpr std::uint16_t ChunkTableFlagEmpty = 0x0001;
 // v2 (2026-07-09, breaking change): 20-byte v1 core (magic/version/
 // chunkSize/chunksPerAxis/flags/chunkCount/tableOffset/dataOffset) + 4-byte
 // skyRegion + 4 reserved uint32 fields (16 bytes) for future world-level
-// metadata (e.g. spawn point) -- see World Format.md.
+// metadata (e.g. spawn point) -- see World Format.md. 2026-07-13: the first
+// reserved field is now missionNumber (still 4 total header uint32 fields
+// after skyRegion, WorldHeaderSize unchanged -- just repurposing one
+// already-reserved slot, not a format/size change), leaving 3 truly
+// reserved.
 constexpr std::uint32_t WorldHeaderSize = 40;
-constexpr std::uint32_t WorldHeaderReservedFieldCount = 4;
+constexpr std::uint32_t WorldHeaderReservedFieldCount = 3;
 constexpr std::uint32_t ChunkTableEntrySize = 20;
 
 struct SerializedChunkEntry final {
@@ -246,6 +250,7 @@ void World::saveToFile(const std::filesystem::path& path) const {
     Binary::writeU32LE(out, static_cast<std::uint32_t>(tableOffset));
     Binary::writeU32LE(out, static_cast<std::uint32_t>(dataOffset));
     Binary::writeU32LE(out, skyRegion_);
+    Binary::writeU32LE(out, missionNumber_);
     for (std::uint32_t i = 0; i < WorldHeaderReservedFieldCount; ++i) {
         Binary::writeU32LE(out, 0); // reserved
     }
@@ -284,6 +289,7 @@ World World::loadFromFile(const std::filesystem::path& path) {
     const std::uint32_t tableOffset = Binary::readU32LE(in);
     static_cast<void>(Binary::readU32LE(in)); // dataOffset, informational
     const std::uint32_t skyRegion = Binary::readU32LE(in);
+    const std::uint32_t missionNumber = Binary::readU32LE(in);
     for (std::uint32_t i = 0; i < WorldHeaderReservedFieldCount; ++i) {
         static_cast<void>(Binary::readU32LE(in)); // reserved
     }
@@ -308,6 +314,7 @@ World World::loadFromFile(const std::filesystem::path& path) {
 
     World world(chunksPerAxis);
     world.skyRegion_ = skyRegion;
+    world.missionNumber_ = missionNumber;
 
     in.seekg(tableOffset, std::ios::beg);
     if (!in) {

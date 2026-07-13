@@ -443,9 +443,10 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       sound trigger rather than reusing `GESound`'s convenience shortcuts (`PlayCollect`/
       `PlayLife`) which were found to be imprecise.
 
-### Phase 9 — HUD (`E3D-MIG-090`-`093`)
+### Phase 9 — HUD (`E3D-MIG-090`-`093`) — `Decor::DrawInfo`'s real scope complete (2026-07-13)
 
-- [~] `090`-`093` Minimal lives/world/treasure HUD — **substantially done**, drawn via real 3D
+- [x] `090`-`093` Minimal lives/world/treasure HUD — **the real `Decor::DrawInfo` scope is now
+      complete** (2026-07-13), drawn via real 3D
       quads (`GEHud`, NOT `SpriteBatch` — see that class's own comment for why: CNA's Vulkan
       backend records every `SpriteBatch` batch before every 3D draw each frame, so a sprite HUD
       is always painted over by the 3D scene). Done: life icons (`blupi.png`), key icons
@@ -454,12 +455,13 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       counters (`HUD-015`/`016`), (2026-07-13) both real `jauge.png` gauges — water/Nage
       breath (`HUD-012`/`018`) and the shared Shield/Power/Cloud/Hide countdown (`HUD-008`/`019`)
       — and (2026-07-13) the perso decoy counter + its underlying place/retrieve mechanic
-      (`HUD-017`). Avoid building a UI framework — a HUD is a handful of sprite draws keyed to
-      game state, not a system. **The real `Decor::DrawInfo` function (`Decor.cpp:1185-1311` —
-      the actual in-game HUD draw call, the authoritative source for what this phase should port)
-      has now been read in full, end to end (2026-07-13): every element it draws is now
-      implemented, except `HUD-024` training hints, blocked on a "mission" concept
-      plus table-transcription approval).** Every OTHER `HUD-0NN` item (`002`/`009`-`011`/`013`/
+      (`HUD-017`), and (2026-07-13) the training-hint overlay + its real mission-number
+      infrastructure (`HUD-024`). Avoid building a UI framework — a HUD is a handful of sprite
+      draws keyed to game state, not a system. **The real `Decor::DrawInfo` function
+      (`Decor.cpp:1185-1311` — the actual in-game HUD draw call, the authoritative source for what
+      this phase should port) has now been read in full, end to end (2026-07-13), and every single
+      element it draws is now implemented — `090`-`093`'s real scope is complete.** Every OTHER
+      `HUD-0NN` item (`002`/`009`-`011`/`013`/
       `020`-`023`/`025`-`026`) is NOT present in the real `DrawInfo` at all — several turned out to
       be based on wrong premises entirely (`HUD-002`'s claimed life-icon cap doesn't exist;
       `HUD-009`/`025`'s "score" has no real backing anywhere found) and are now flagged `[?]` in
@@ -1572,11 +1574,54 @@ reset to `[ ]`; none of the old Simple3D `[x]` marks carry over.
       (a real `GameState`-like concept exists per `Def.hpp`), but no such phase/state machine
       exists in `GalaxyEggbertCNA` at all yet — not implementable until one does, not merely
       unimplemented.
-- [ ] HUD-024 — Training hint overlay at screen top (missions 11-14 only). **Confirmed real** —
-      IS in the real `DrawInfo` (`Decor.cpp:1258-1310`, `Tables::table_training1`-`4`, gated on
-      `m_mission`). Genuinely not started: needs a "mission" concept (doesn't exist in
-      `GalaxyEggbertCNA`) and explicit approval to transcribe the 4 `table_trainingN` arrays
-      (`CLAUDE.md`'s no-casual-table-copying rule) before implementing.
+- [x] HUD-024 — Training hint overlay at screen top (missions 11-14 only) — **done 2026-07-13**,
+      per explicit user approval to (1) implement a real mission-number concept, (2) transcribe
+      all 4 `Tables::table_training1`-`4` arrays, and (3) find and transcribe their real English
+      hint text. Verified directly against `Decor.cpp:1258-1310`/`1313-1340` (`IsDisplayInfo`) and
+      `Tables.cpp:1945-2004`.
+      - **Mission concept**: `Worlds::World` gained a real `missionNumber()`/`setMissionNumber()`
+        (format v2's first already-reserved header field put to use — see that class's own
+        `saveToFile()`/`loadFromFile()` doc comments — no format/size change, still v2, existing
+        `.vwr` files load unaffected with `missionNumber()==0`). `GEWorldRuntime::
+        GetMissionNumber()` passes it through. `LoadFromMobileEggbertFile()` (the `.txt` loader)
+        always resets it to 0 — the real `m_mission` is derived from which level FILE is loaded
+        (`world011.txt` -> mission 11), not a header field within the file, unlike `region=`; not
+        modeled, a documented gap matching `skyRegion_`'s own existing precedent there. The shared
+        sample world (`worlds3d/world001.vwr`) is deliberately left at mission 0 (no training
+        hints) rather than forced to 11 — its own layout is unrelated to the real tutorial
+        world's, so training hints would fire in nonsensical places overlaid on unrelated demo
+        content; verified instead via `VerifyInteractionSystem` + a live headless screenshot with
+        a temporary hardcoded mission override (reverted before committing).
+      - **New `GETrainingHints.hpp`/`.cpp`**: all 43 real hint records across the 4 missions
+        (transcribed and cross-checked against `Tables.cpp`'s own doc comments identifying each
+        record's text-resource-ID slot position, confirming the record grouping is right), plus
+        the real `IsDisplayInfo` gate semantics (`>=0` = exact treasure-count match, `-1` =
+        always, `-2`/`-3` = not-in-any-vehicle / in-any-vehicle, `-4`/`-5` = not-carrying-dynamite
+        / carrying-dynamite — the real source's own `-2`/`-3` only ever distinguish Jeep from
+        Helicopter/Skateboard/Tank to resolve to the same "in ANY vehicle" result either way,
+        collapsed to one bool here). First rect+gate match wins, matching the real source's own
+        `break` — including the handful of real slots whose text is genuinely empty (matches but
+        shows nothing, doesn't fall through to a later record).
+      - **Real English text found and transcribed** from `MyResource.cpp`'s own `InitializeEN()`
+        (the D-pad/button control variant, not the accelerometer `...a` variant — this engine has
+        no tilt input). Inline control-glyph placeholders (nul, and other low control bytes in the 0x02-0x09 range) that
+        the real `Text::DrawChar` renders as button-icon pictograms are NOT modeled (this engine's
+        text renderer only supports the printable ASCII glyph range) — replaced with short
+        bracketed labels (`[Move]`/`[Jump]`/`[Action]`) instead of being silently dropped, a
+        documented simplification, not a claim about the exact original icons.
+      - **HUD rendering**: full-width `pad.png` icon-15 panel at the very top of screen
+        ((0,0)-(640,40), real opacity 1.0 — a distinct draw call from the treasure counter's own
+        0.6-opacity panel, its own dedicated quad batch/renderer, not sharing `kPanelOpacity`),
+        text centered and shrunk to fit (real `min(640/textWidth, 1.0)`, approximated via this
+        class's existing fixed-glyph-advance model rather than the real proportional font width).
+      - Verified: 1 new `WorldSerializationTests` (mission-number save/load round trip) + 12 new
+        `VerifyInteractionSystem` assertions (one representative case per mission, the
+        exact-treasure-count gate, the vehicle/dynamite gates producing different text at the same
+        rect, the empty-slot case, out-of-rect and out-of-mission no-hint cases) + full suite
+        (64/64 unit tests, all verify tools) + 2 live headless HUD screenshots (a short and a long
+        hint, confirming panel position, text centering, and the shrink-to-fit scaling all work;
+        temporary hardcoded mission/position overrides, reverted before committing) + both
+        backends.
 - [ ] HUD-025 — `[?]` Score popup: "+N" floating text. Same as `HUD-009` — no real score variable
       found anywhere; do not implement without first finding its actual real source.
 - [ ] HUD-026 — `[?]` "EXIT OPEN!" text: centre screen, large font, 3 s duration. Same flag as

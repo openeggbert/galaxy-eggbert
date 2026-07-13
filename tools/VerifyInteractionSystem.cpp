@@ -1,5 +1,6 @@
 #include "Game/GEInteractionSystem.hpp"
 #include "Game/GESound.hpp"
+#include "Game/GETrainingHints.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -7,6 +8,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <string>
 
 // Scripted, non-interactive verification of GEInteractionSystem (2026-07-10)
 // against the real worlds3d/world001.vwr sample world -- proves platform
@@ -1301,6 +1303,64 @@ int main(int argc, char** argv)
               "icon 108 (obstacle range 107-109) remaps to channel 90");
         check(GESound::FootstepChannelFor(BlockTypes::RockPile) == SoundChannel::SoundChannel3,
               "an icon outside all 7 remap ranges falls back to the generic channel 3");
+    }
+
+    // 19. FindTrainingHint() (plan.md HUD-024) -- the real
+    // Decor::DrawInfo/Tables::table_training1..4 lookup, one representative
+    // check per mission plus the real gate semantics (exact-treasure-count,
+    // vehicle, dynamite) and the "matched but empty text" case.
+    {
+        using std::string;
+        // Mission 11: unconditional hint in range [1,3].
+        {
+            const char* hint = FindTrainingHint(11, 2, 10, 0, false, false);
+            check(hint != nullptr && string(hint) == "Use the directional wheel [Move].",
+                  "mission 11, grid (2,10): unconditional hint matches");
+        }
+        // Mission 11: exact-treasure-count gate (record at col 4 needs
+        // treasuresCollected == 0).
+        {
+            check(FindTrainingHint(11, 4, 10, 0, false, false) != nullptr,
+                  "mission 11, grid (4,10), 0 treasures: gate (==0) passes");
+            check(FindTrainingHint(11, 4, 10, 1, false, false) == nullptr,
+                  "mission 11, grid (4,10), 1 treasure: gate (==0) now fails, no hint");
+        }
+        // Mission 11: a real record whose text is genuinely empty (col 16)
+        // -- matches but shows nothing, same as the real source.
+        {
+            check(FindTrainingHint(11, 16, 10, 0, false, false) == nullptr,
+                  "mission 11, grid (16,10): matches a real but intentionally-empty hint slot");
+        }
+        // Mission 12: unconditional.
+        {
+            const char* hint = FindTrainingHint(12, 10, 50, 0, false, false);
+            check(hint != nullptr && string(hint) == "Push the box forward until the red dot with [Action].",
+                  "mission 12, grid (10,50): unconditional hint matches");
+        }
+        // Mission 13: same rect, opposite vehicle gate -> different text.
+        {
+            const char* noVehicleHint = FindTrainingHint(13, 20, 38, 0, false, false);
+            const char* vehicleHint = FindTrainingHint(13, 20, 38, 0, true, false);
+            check(noVehicleHint != nullptr && string(noVehicleHint) == "Take a helicopter with [Action].",
+                  "mission 13, grid (20,38), no vehicle: the -2 (noVehicle) record");
+            check(vehicleHint != nullptr &&
+                      string(vehicleHint) == "Use [Move] or [Jump] to take off. Direct with [Move] and [Move].",
+                  "mission 13, grid (20,38), in a vehicle: the -3 (anyVehicle) record, different text");
+        }
+        // Mission 14: dynamite gate.
+        {
+            const char* noDynamite = FindTrainingHint(14, 10, 50, 0, false, false);
+            const char* hasDynamite = FindTrainingHint(14, 10, 50, 0, false, true);
+            check(noDynamite != nullptr && string(noDynamite) == "Take the dynamite sticks with [Action].",
+                  "mission 14, grid (10,50), no dynamite: the -4 (noDynamite) record");
+            check(hasDynamite != nullptr && string(hasDynamite) == "Do not put down the dynamite here!",
+                  "mission 14, grid (10,50), carrying dynamite: the -5 (hasDynamite) record, different text");
+        }
+        // Outside every real rect, and outside missions 11-14 entirely.
+        check(FindTrainingHint(11, 99, 99, 0, false, false) == nullptr,
+              "mission 11, a grid position outside every real rect: no hint");
+        check(FindTrainingHint(0, 2, 10, 0, false, false) == nullptr,
+              "mission 0 (no mission): no hint anywhere, matching the real array==nullptr early-out");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

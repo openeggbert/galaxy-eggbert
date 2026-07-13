@@ -8,6 +8,7 @@
 #include "Game/GESound.hpp"
 #include "Game/GEInteractionSystem.hpp"
 #include "Game/GEHud.hpp"
+#include "Game/GETrainingHints.hpp"
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>

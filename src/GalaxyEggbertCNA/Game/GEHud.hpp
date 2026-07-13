@@ -100,6 +100,19 @@ namespace GalaxyEggbert::CNA
         // `Pixmap.cpp:592-600`) at (0,438), plus "= N" text at (32,452) at
         // real scale 0.7 (smaller than the treasure counter's scale-1.0
         // text), shown only while `perso > 0`.
+        //
+        // trainingHint added 2026-07-13 (plan.md HUD-024), verified
+        // directly against `Decor.cpp:1294-1306`: a full-width pad.png
+        // icon-15 panel at the very top of screen ((0,0)-(640,40), real
+        // opacity 1.0 -- a DIFFERENT draw call from the treasure counter's
+        // own 0.6-opacity panel, not the same CNA-Vulkan-Alpha-under-1
+        // workaround needed here), with the hint text centered at (320,5),
+        // shrunk down (real `min(640/textWidth, 1.0)`, approximated here
+        // via this class's own fixed glyph-advance model rather than the
+        // real proportional font width) if it would otherwise overflow the
+        // panel width. Pass nullptr for no hint this frame (GETrainingHints
+        // handles the real mission/position/state gating -- this parameter
+        // is just "what to show, if anything").
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
@@ -107,6 +120,7 @@ namespace GalaxyEggbert::CNA
                   int bullets, int dynamite, int perso,
                   bool waterGaugeVisible, int waterGaugeLevel,
                   bool powerGaugeVisible, int powerGaugeLevel,
+                  const char* trainingHint,
                   int animIcon);
 
     private:
@@ -143,6 +157,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> buttonRenderer_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> hintPanelRenderer_;
         bool loaded_ = false;
     };
 }

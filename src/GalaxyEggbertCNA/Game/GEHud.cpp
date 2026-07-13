@@ -3,6 +3,7 @@
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Matrix.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 
@@ -18,6 +19,14 @@ namespace GalaxyEggbert::CNA
         constexpr float kKey1X = 520.0f, kKey2X = 530.0f, kKey3X = 540.0f, kKeyY = 418.0f;
         constexpr float kPanelX0 = 410.0f, kPanelY0 = 445.0f, kPanelX1 = 510.0f, kPanelY1 = 480.0f;
         constexpr float kTreasureTextCenterX = 460.0f, kTreasureTextY = 450.0f;
+        // Training-hint banner (plan.md HUD-024, Decor.cpp:1294-1306):
+        // full-width panel at the very top of screen, real opacity 1.0
+        // (unlike the treasure panel's 0.6).
+        constexpr float kHintPanelX0 = 0.0f, kHintPanelY0 = 0.0f, kHintPanelX1 = 640.0f, kHintPanelY1 = 40.0f;
+        constexpr float kHintTextCenterX = 320.0f, kHintTextBaseY = 5.0f;
+        // Real `(1.0 - scale) * 35.0 * 0.6` vertical nudge as text shrinks
+        // to fit the panel width.
+        constexpr float kHintTextYNudge = 35.0f * 0.6f;
         constexpr float kBulletX = 570.0f, kBulletY = 442.0f, kBulletStep = 4.0f;
         constexpr float kDynamiteX = 505.0f, kDynamiteY = 414.0f;
         constexpr int kKeyIcon1 = 215, kKeyIcon2 = 222, kKeyIcon3 = 229; // element.png, same as DrawInfo
@@ -215,6 +224,7 @@ namespace GalaxyEggbert::CNA
                      int bullets, int dynamite, int perso,
                      bool waterGaugeVisible, int waterGaugeLevel,
                      bool powerGaugeVisible, int powerGaugeLevel,
+                     const char* trainingHint,
                      int animIcon)
     {
         if (!loaded_)
@@ -247,6 +257,7 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> padQuads;
         std::vector<Quad> jaugeQuads;
         std::vector<Quad> buttonQuads;
+        std::vector<Quad> hintPanelQuads;
 
         // Real Jauge::Draw(): the full Empty-row background always drawn
         // first, then (if level > 0) a colored strip from the mode's row,
@@ -451,11 +462,65 @@ namespace GalaxyEggbert::CNA
             appendJauge(kPowerGaugeX, kPowerGaugeY, powerGaugeLevel, kJaugeRowYellow);
         }
 
+        // Training-hint banner (plan.md HUD-024): full-width panel at real
+        // opacity 1.0 (own quad batch, NOT sharing padQuads/kPanelOpacity --
+        // that panel is 0.6 in the real source, even though both currently
+        // render at 1.0 here for the same CNA-Vulkan reason, see
+        // kPanelOpacity's own comment), with the hint text centered and
+        // shrunk to fit if needed.
+        if (trainingHint != nullptr && trainingHint[0] != '\0')
+        {
+            Quad panel;
+            panel.x0 = refToScreenX(kHintPanelX0);
+            panel.y0 = refToScreenY(kHintPanelY0);
+            panel.x1 = refToScreenX(kHintPanelX1);
+            panel.y1 = refToScreenY(kHintPanelY1);
+            const int col = kPanelIcon % kPadCols;
+            const int row = kPanelIcon / kPadCols;
+            const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+            const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+            panel.u0 = (static_cast<float>(col) * kPadCellPx) / padSheetW;
+            panel.v0 = (static_cast<float>(row) * kPadCellPx) / padSheetH;
+            panel.u1 = (static_cast<float>(col + 1) * kPadCellPx) / padSheetW;
+            panel.v1 = (static_cast<float>(row + 1) * kPadCellPx) / padSheetH;
+            hintPanelQuads.push_back(panel);
+
+            const std::string str(trainingHint);
+            const float rawWidth = static_cast<float>(str.size()) * kGlyphAdvance;
+            const float textScale = rawWidth > 0.0f ? std::min(kHintPanelX1 / rawWidth, 1.0f) : 1.0f;
+            const float cellPx = kGlyphCellPx * textScale;
+            const float advance = kGlyphAdvance * textScale;
+            const float totalAdvance = static_cast<float>(str.size()) * advance;
+            const float textY = kHintTextBaseY + (1.0f - textScale) * kHintTextYNudge;
+            float penX = kHintTextCenterX - totalAdvance * 0.5f;
+            for (const char c : str)
+            {
+                const int rank = static_cast<int>(static_cast<unsigned char>(c));
+                const int gcol = rank % kGlyphCols;
+                const int grow = rank / kGlyphCols;
+                Quad q;
+                q.x0 = refToScreenX(penX - (cellPx - advance) * 0.5f);
+                q.y0 = refToScreenY(textY);
+                q.x1 = q.x0 + cellPx * scale;
+                q.y1 = q.y0 + cellPx * scale;
+                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                textQuads.push_back(q);
+                penX += advance;
+            }
+        }
+
         // Alpha blending for the icon sheets' real alpha channels; the
         // panel additionally gets the real 0.6 opacity via BasicEffect's
         // Alpha. Panel first so the text draws on top of it.
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *padEffect_, padRenderer_, padQuads, viewportW, viewportH, kPanelOpacity);
+        // Reuses padEffect_ (same pad.png texture/shader) but its own
+        // dedicated renderer/mesh buffer, at the real, distinct 1.0 opacity
+        // for the training-hint banner.
+        FlushQuads(device, *padEffect_, hintPanelRenderer_, hintPanelQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, textQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *blupiEffect_, blupiRenderer_, blupiQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *elementEffect_, elementRenderer_, elementQuads, viewportW, viewportH, 1.0f);

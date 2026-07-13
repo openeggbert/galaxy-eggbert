@@ -206,6 +206,11 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int GetSpawnTileX() const { return spawnTileX_; }
         [[nodiscard]] int GetSpawnTileZ() const { return spawnTileZ_; }
         [[nodiscard]] int GetSkyRegion() const { return skyRegion_; }
+        // Real m_mission (2026-07-13, plan.md HUD-024), a direct pass-
+        // through of Worlds::World::missionNumber() -- gates level-specific
+        // logic such as the real training-hint overlay. 0 for worlds that
+        // never set it (matches the real default for non-tutorial levels).
+        [[nodiscard]] int GetMissionNumber() const { return missionNumber_; }
         // Raw 20fps animation tick (2026-07-09) -- NOT a ready-to-index
         // frame number; GETerrainRenderer::AnimIcon() divides it by each
         // tile type's own real tick divisor before indexing that type's
@@ -290,6 +295,7 @@ namespace GalaxyEggbert::CNA
         int spawnTileX_ = 0;
         int spawnTileZ_ = 0;
         int skyRegion_ = 0;
+        int missionNumber_ = 0;
         float animTimer_ = 0.0f;
         int animPhase_ = 0;
     };

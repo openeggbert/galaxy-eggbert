@@ -1727,6 +1727,15 @@ namespace GalaxyEggbert::CNA
         // backends.
         {
             const auto& viewport = device.getViewportProperty();
+            // Training-hint lookup (plan.md HUD-024): real grid position
+            // (not render-centered, GEWorldRuntime::kWorldCenterX/Z offset
+            // reversed, matching every other grid<->render conversion this
+            // session).
+            const int hintGridX = static_cast<int>(std::lround(blupi_.GetX())) + GEWorldRuntime::kWorldCenterX;
+            const int hintGridZ = static_cast<int>(std::lround(blupi_.GetZ())) + GEWorldRuntime::kWorldCenterZ;
+            const char* trainingHint = FindTrainingHint(
+                worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
+                interaction_.TreasuresCollected(), blupi_.IsInVehicle(), interaction_.DynamiteCount() > 0);
             hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                       interaction_.Lives(),
                       interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
@@ -1736,6 +1745,7 @@ namespace GalaxyEggbert::CNA
                       blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
                       blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
                       blupi_.GetSecretPowerLevel(),
+                      trainingHint,
                       blupi_.GetAnimIcon());
         }
 

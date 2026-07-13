@@ -60,6 +60,12 @@ namespace GalaxyEggbert::CNA
 
         world_ = std::make_unique<Worlds::World>();
         skyRegion_ = 0;
+        // Real m_mission is derived from which level FILE is loaded (e.g.
+        // world011.txt -> mission 11), not a header field within the file
+        // itself (unlike region=) -- not modeled here, defaults to 0 (no
+        // mission) same as skyRegion_ above. The .vwr loader below carries
+        // a real, explicit missionNumber field instead.
+        missionNumber_ = 0;
 
         std::string header;
         if (!std::getline(file, header))
@@ -227,6 +233,7 @@ namespace GalaxyEggbert::CNA
         // unlike spawn point (still no .vwr equivalent), this one no longer
         // needs to reset to 0.
         skyRegion_ = static_cast<int>(world_->skyRegion());
+        missionNumber_ = static_cast<int>(world_->missionNumber());
         bigDecor_.clear();
 
         // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects
