@@ -1223,6 +1223,17 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         Voyage (which ties into respawn/death-lock control flow — a separate behavior change, not
         touched here).
 
+**Unnumbered follow-up, researched 2026-07-14 (no `E3D-MIG` ID assigned yet — would collide with
+Phase 16's own `160`-`165` range):** implementing `Glu` faithfully turns out to require a shared
+death-lock + life-loss-Voyage system (every real death type, not just Glu, locks Blupi for a fixed
+70-110-tick duration then plays a life-loss Voyage — icon 48/Blupi channel, decrements lives at
+Voyage START not completion, the opposite timing direction from every Voyage `158`/`159` built) —
+this is a genuinely large architecture change touching every one of this engine's ~10 existing
+(already-shipped, already-tested) instant-death call sites, not a small addition. See `NEXT.md`
+§8 item 17 for the full research writeup (trigger sites, exact duration table, real source
+citations) — deliberately NOT started without the user's own go-ahead, matching how the life-loss
+animation was already flagged as "a materially different, separate behavior change" during `158`.
+
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 
 Full spec: `mobile-eggbert-reference/06-doors.md`. `160`/`161`/`162` done 2026-07-12; `163`/`164`/

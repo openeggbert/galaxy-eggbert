@@ -1017,6 +1017,39 @@ own dedicated effort, same conclusion as before).
 too** (see §3's own writeup) — camera shake (#15) is now fully done, all 3 shake types. Remaining
 genuinely open is unchanged from the note just above: #8, #9, Saw blade orientation, #16.
 
+**Further update, 2026-07-14 (same day, still later): #16's Voyage/death-VFX slices (Clear2/
+Clear3/Clear4) are now done too** (`plan.md 158`/`159`) — see §3 for both writeups.
+
+17. **Death-lock + life-loss Voyage system** — researched 2026-07-14 while scoping the real
+    `BlupiAction::Glu` "stuck" mechanic (spikes/drip/fired-projectile-contact/large-creature-grab
+    deaths); this is the reason Glu was never implemented alongside `159`. Confirmed via direct
+    `Decor.cpp` reads: EVERY real death type (Clear1-8, Glu, Drown, Electro) shares one dispatch
+    (`Decor.cpp:6374-6392`) — contact locks Blupi for a real fixed duration (70/100/70/110/90×4/
+    **Glu=100**/90/90 ticks depending on cause, frozen with a hurt-sprite animation, NOT instant
+    like this engine's current death handling), THEN Blupi goes `Hide` (invisible) and a real
+    "life-loss Voyage" begins (icon 48/Blupi channel, `VoyageGetPosVie(m_nbVies)` -> Blupi's own
+    position, `ScaleTime(40)` ticks, channel 9) — **`m_nbVies--` fires at Voyage START, not
+    completion**, the only Voyage kind that applies its effect at the start rather than the end
+    (the OPPOSITE timing direction from every pickup/Clear2/Clear3 Voyage `158`/`159` already
+    built). Respawn positioning also happens at the LOCK's end, not at contact. On completion,
+    control returns to Blupi (`Stop`, focus restored) at the respawn position. If no lives remain,
+    `DoorsLost()` (game over) fires instead with no Voyage at all.
+    This means implementing Glu faithfully (or fixing the Clear1-8/Drown/Electro death types this
+    engine already ships as INSTANT deaths, which is itself a documented simplification, not
+    "done") requires a real architecture change, not a small addition: a new death-locked state
+    (freezing input/movement per-type for 70-110 ticks), moving `LoseLife()`'s decrement from
+    contact-time to life-loss-Voyage-start-time (a genuinely new Voyage direction), moving respawn
+    positioning from contact-time to lock-elapsed-time, and a `Hide`/invisible render state during
+    the lock+Voyage window — touching every one of this engine's ~10 existing death call sites at
+    once. This is exactly the "life-loss animation... ties into respawn/death-lock control flow, a
+    materially different, separate behavior change" already flagged and deliberately excluded from
+    both `158` and `159` — confirmed real, valuable, and well-understood now, but genuinely its own
+    multi-task effort (changes ALREADY-SHIPPED, tested death/respawn behavior across the whole
+    game, not purely additive like `159` was) that needs the user's own go-ahead before starting,
+    not a default "next smallest task." Full research citations (trigger sites, exact duration
+    table, `VoyageInit`/`VoyageStep`'s own icon==48 branches) are preserved in this session's own
+    transcript/plan.md `159`'s writeup for whoever picks this up.
+
 ## 9. Do not do yet
 
 - **Do not guess at the Saw blade orientation a 4th time without the user's own visual input** —
