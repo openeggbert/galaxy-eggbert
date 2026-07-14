@@ -455,6 +455,74 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int PersoCount() const noexcept { return persoCount_; }
         bool TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
 
+        // Voyage (plan.md `158`, real `Decor::VoyageInit`/`VoyageStep`/
+        // `VoyageDraw`, `Decor.cpp:10141-10348`) -- real pickups do NOT
+        // apply their reward immediately: the world object is deleted on
+        // contact, but the actual counter increment (plus e.g. re-scanning
+        // treasure-gated doors) only happens once a short 2D "fly to HUD
+        // icon" animation completes. Previously modeled as immediate
+        // application (a documented simplification); this class now
+        // matches the real deferred timing. Real state: which reward, a
+        // start/end point in mobile-eggbert's 640x480 reference screen
+        // space (the same space `GEHud` already uses), a phase counter,
+        // and `total = (|dx|+|dy|)/10` ticks (real integer-truncated
+        // Manhattan screen distance). Only one voyage is active at a time;
+        // starting a new one force-completes the previous one's reward
+        // immediately (real `VoyageInit`'s own
+        // `if (m_voyageIcon != -1) { phase = total; Step(); }`).
+        //
+        // This class has no camera access, so it can't project a pickup's
+        // 3D world position into 2D screen space itself. Instead, pickup
+        // sites record a "pending" voyage request (this-frame flag +
+        // whichever ONE endpoint still needs projecting, plus the other,
+        // already-resolved endpoint) via `RequestVoyage()`; the caller
+        // (`GalaxyEggbertCnaGame.cpp`, which has `camera_`) checks
+        // `VoyagePendingThisFrame()` right after `Update()` returns,
+        // projects the world point via `GEHud::ProjectWorldToHudSpace()`,
+        // and calls `BeginVoyage()` with both fully-resolved endpoints --
+        // the same "called by the game class right after Update()
+        // returns" shape already used for `SpawnInvertBurst()`/
+        // `SpawnTeleportArc()` above. A pickup touched while ANOTHER
+        // pickup's request from the SAME frame is still pending
+        // (un-consumed) overwrites it, silently dropping the first one's
+        // reward -- an accepted, documented simplification for a
+        // vanishingly rare edge case (two different pickups touched in
+        // the exact same tick), not worth the extra bookkeeping.
+        enum class VoyageKind : std::uint8_t
+        {
+            None, Treasure, Key1, Key2, Key3, Egg, Dynamite, Perso, BulletPack, DoorUnlock
+        };
+
+        [[nodiscard]] bool VoyagePendingThisFrame() const noexcept { return voyagePendingThisFrame_; }
+        [[nodiscard]] VoyageKind VoyagePendingKind() const noexcept { return pendingKind_; }
+        [[nodiscard]] int VoyagePendingIconId() const noexcept { return pendingIconId_; }
+        [[nodiscard]] bool VoyagePendingIsButtonChannel() const noexcept { return pendingIsButton_; }
+        [[nodiscard]] float VoyagePendingWorldX() const noexcept { return pendingWorldX_; }
+        [[nodiscard]] float VoyagePendingWorldY() const noexcept { return pendingWorldY_; }
+        [[nodiscard]] float VoyagePendingWorldZ() const noexcept { return pendingWorldZ_; }
+        [[nodiscard]] float VoyagePendingFixedX() const noexcept { return pendingFixedX_; }
+        [[nodiscard]] float VoyagePendingFixedY() const noexcept { return pendingFixedY_; }
+        // True: the projected world point is the voyage's START (every
+        // pickup -- flies FROM the pickup's own position TO a fixed HUD
+        // point). False: the world point is the voyage's END (real
+        // door-unlock key-consumption flourish only -- flies FROM the
+        // fixed HUD key position TO the door's own world position).
+        [[nodiscard]] bool VoyagePendingWorldIsStart() const noexcept { return pendingWorldIsStart_; }
+
+        // Called by the game class once it has resolved both endpoints
+        // (projecting whichever one was still a world position). Force-
+        // completes any voyage already in flight first (see class comment).
+        void BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId, bool isButtonChannel,
+                          float startX, float startY, float endX, float endY, GESound& sound);
+
+        // Draw-side state for `GEHud::Draw()` -- current interpolated
+        // position in the same 640x480 reference space.
+        [[nodiscard]] bool VoyageActive() const noexcept { return voyageKind_ != VoyageKind::None; }
+        [[nodiscard]] int VoyageIconId() const noexcept { return voyageIconId_; }
+        [[nodiscard]] bool VoyageIsButtonChannel() const noexcept { return voyageIsButton_; }
+        [[nodiscard]] float VoyageDrawX() const noexcept;
+        [[nodiscard]] float VoyageDrawY() const noexcept;
+
         // Bullet pack (ObjectType29, plan.md E3D-MIG-175, real Decor.cpp
         // ~5731-5744). Automatic on contact, no button, gated on
         // `bulletCount_ < kBulletCap` (real m_blupiBullet < 10) -- picking
@@ -569,6 +637,30 @@ namespace GalaxyEggbert::CNA
         int gameOverCount_ = 0;
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
         int pollutionTick_ = 0; // stands in for real m_time/m_blupiPhase, see TickPollutionPuff()'s own comment
+
+        // Voyage (plan.md `158`), see its own public-API comment above.
+        // Active/in-flight state:
+        VoyageKind voyageKind_ = VoyageKind::None;
+        int voyageIconId_ = 0;
+        bool voyageIsButton_ = false;
+        float voyageStartX_ = 0.0f, voyageStartY_ = 0.0f, voyageEndX_ = 0.0f, voyageEndY_ = 0.0f;
+        float voyagePhase_ = 0.0f, voyageTotal_ = 0.0f;
+        // This-frame pending request (consumed by the game class):
+        bool voyagePendingThisFrame_ = false;
+        VoyageKind pendingKind_ = VoyageKind::None;
+        int pendingIconId_ = 0;
+        bool pendingIsButton_ = false;
+        float pendingWorldX_ = 0.0f, pendingWorldY_ = 0.0f, pendingWorldZ_ = 0.0f;
+        float pendingFixedX_ = 0.0f, pendingFixedY_ = 0.0f;
+        bool pendingWorldIsStart_ = true;
+
+        void TickVoyage(float dt, GEWorldRuntime& worldRuntime, GESound& sound);
+        void ApplyVoyageReward(GEWorldRuntime& worldRuntime, GESound& sound);
+        // Records a this-frame voyage request (see the public API comment
+        // above for the world/fixed-point split). Called from the pickup
+        // switch, TryPerso(), and the key-gated-door block.
+        void RequestVoyage(VoyageKind kind, int iconId, bool isButtonChannel, float worldX, float worldY,
+                            float worldZ, float fixedX, float fixedY, bool worldIsStart);
         // Real m_blupiPosMagic, see TickMagicTrail()'s own comment. Only
         // consulted once Shield/Power has actually granted (which always
         // calls ResetMagicTrail() first), so this default is never read

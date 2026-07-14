@@ -70,8 +70,9 @@ namespace GalaxyEggbert::CNA
 
         // Real Decor::OpenDoorsTresor (~11642): scans the whole grid,
         // opening every treasure-gated door (icon 421+N) whose
-        // requirement N is now met. Shared by the real per-pickup
-        // trigger (Update()'s own treasureDoorScanNeeded) and
+        // requirement N is now met. Shared by the real per-pickup trigger
+        // (called from ApplyVoyageReward() the instant a treasure voyage
+        // completes, plan.md `158`) and
         // GEInteractionSystem::CheatAllTreasure() below, which needs the
         // exact same scan after crediting every treasure at once.
         void ScanAndOpenTreasureDoors(GEWorldRuntime& worldRuntime, int treasuresCollected, GESound& sound)
@@ -566,9 +567,17 @@ namespace GalaxyEggbert::CNA
         smallShakeTriggeredThisFrame_ = false;
         bigShakeTriggeredThisFrame_ = false;
         ridingLift_ = false;
-        bool treasureDoorScanNeeded = false;
+        voyagePendingThisFrame_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
+
+        // Real Voyage (plan.md `158`) -- ticks any in-flight "fly to HUD
+        // icon" animation forward, applying its real reward (see
+        // ApplyVoyageReward()) the instant it completes. Runs before the
+        // per-object pickup loop below so a treasure voyage completing
+        // THIS frame is scanned for newly-satisfied doors THIS frame too
+        // (ApplyVoyageReward() calls ScanAndOpenTreasureDoors() directly).
+        TickVoyage(dt, worldRuntime, sound);
 
         // Platform lift riding (plan.md E3D-MIG-152) -- detect which lift
         // (if any) Blupi is standing on BEFORE it takes this frame's patrol
@@ -1618,24 +1627,24 @@ namespace GalaxyEggbert::CNA
             }
 
             // Every other pickup type here is deleted immediately on
-            // contact per `13-object-pickups.md`'s "Voyage" section ("the
-            // world object is deleted immediately, and a voyage animation
-            // is [flown to the HUD]") -- no HUD-fly animation exists here,
-            // just the immediate removal + reward + sound.
+            // contact, matching real source exactly -- but the REWARD
+            // (counter increment) is now deferred to voyage completion
+            // (plan.md `158`, fixed 2026-07-14; previously applied
+            // immediately as a documented simplification). Each case
+            // records a this-frame voyage request (`RequestVoyage()`) with
+            // the pickup's own world position as the voyage's START and a
+            // fixed HUD-space point (matching `GEHud.cpp`'s own real
+            // constants exactly) as its END -- the caller
+            // (`GalaxyEggbertCnaGame.cpp`) projects the world position and
+            // calls `BeginVoyage()` right after this `Update()` call
+            // returns.
             switch (obj.type)
             {
                 case ObjectType::ObjectType5: // treasure
-                {
-                    const bool completesSet = (treasuresCollected_ + 1 >= totalTreasures_);
-                    ++treasuresCollected_;
-                    sound.Play(completesSet ? GalaxyEggbert::SoundChannel::SoundChannel19
-                                             : GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
-                    // Treasure-gated doors (plan.md E3D-MIG-162, real
-                    // Decor::OpenDoorsTresor ~11642) -- deferred to a single
-                    // whole-grid scan after this loop, in case more than one
-                    // treasure is somehow collected in the same frame.
-                    treasureDoorScanNeeded = true;
+                    // Real end point (430,430), Decor.cpp:5956.
+                    RequestVoyage(VoyageKind::Treasure, 6, false, obj.currentX, obj.currentY, obj.currentZ, 430.0f,
+                                  430.0f, true);
                     // Real sparkle burst (plan.md VISUAL-012) -- see
                     // AppendSparkleBurst()'s own comment for the full real
                     // citation. Real source also fires this same burst for
@@ -1645,36 +1654,44 @@ namespace GalaxyEggbert::CNA
                     // collectible" doc comments), not door tiles as
                     // previously assumed here; now wired below alongside
                     // this engine's own existing key-pickup collection.
+                    // Real source spawns this immediately at touch time,
+                    // NOT deferred to voyage completion -- unchanged here.
                     AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
-                }
                 case ObjectType::ObjectType6: // extra-life egg
                     // Real MAX_EGG_COUNT=10 gate: at the cap, touching an
-                    // egg does nothing at all -- not even removed.
+                    // egg does nothing at all -- not even removed (real
+                    // gate is on the WHOLE touch-time block, Decor.cpp:6007,
+                    // not just the reward).
                     if (lifeEggCount_ < kMaxEggCount)
                     {
-                        ++lifeEggCount_;
-                        ++lives_;
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                         obj.active = false;
+                        // Real end point VoyageGetPosVie(m_nbVies+1) =
+                        // (210+16*(lifeEggCount_+1), 417), Decor.cpp:10141-
+                        // 10147/6012.
+                        RequestVoyage(VoyageKind::Egg, 21, false, obj.currentX, obj.currentY, obj.currentZ,
+                                      210.0f + 16.0f * static_cast<float>(lifeEggCount_ + 1), 417.0f, true);
                     }
                     break;
                 case ObjectType::ObjectType49: // key 1
-                    ++keys1_;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    // Real end point (520,418), Decor.cpp:5971.
+                    RequestVoyage(VoyageKind::Key1, 215, false, obj.currentX, obj.currentY, obj.currentZ, 520.0f,
+                                  418.0f, true);
                     AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 case ObjectType::ObjectType50: // key 2
-                    ++keys2_;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    // Real end point (530,418), Decor.cpp:5986.
+                    RequestVoyage(VoyageKind::Key2, 222, false, obj.currentX, obj.currentY, obj.currentZ, 530.0f,
+                                  418.0f, true);
                     AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 case ObjectType::ObjectType51: // key 3
-                    ++keys3_;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    // Real end point (540,418), Decor.cpp:6001.
+                    RequestVoyage(VoyageKind::Key3, 229, false, obj.currentX, obj.currentY, obj.currentZ, 540.0f,
+                                  418.0f, true);
                     AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 case ObjectType::ObjectType55: // dynamite stick
@@ -1682,23 +1699,41 @@ namespace GalaxyEggbert::CNA
                     // m_blupiDynamite caps at 1) -- touching a second stick
                     // while already carrying one does nothing at all, not
                     // even removed (mobile-eggbert-reference/
-                    // 13-object-pickups.md).
+                    // 13-object-pickups.md). Real source plays NO immediate
+                    // sound at all here (confirmed via direct source read,
+                    // Decor.cpp:6116-6129 -- no PlaySound call, and
+                    // VoyageInit has no icon==252 case) -- the previous
+                    // immediate `SoundChannel60` was a mismatch, removed
+                    // 2026-07-14 (only the deferred completion sound
+                    // remains, in ApplyVoyageReward()).
                     if (dynamiteCount_ == 0)
                     {
-                        ++dynamiteCount_;
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
                         obj.active = false;
+                        // Real end point (505,414), Decor.cpp:6123-6125.
+                        RequestVoyage(VoyageKind::Dynamite, 252, false, obj.currentX, obj.currentY, obj.currentZ,
+                                      505.0f, 414.0f, true);
                     }
                     break;
                 case ObjectType::ObjectType29: // bullet pack
                     // Real gate: only picked up below the cap (real
                     // m_blupiBullet < 10) -- touching a pack while already
                     // at max ammo does nothing at all, not even removed.
+                    // Real reward is granted immediately (NOT deferred --
+                    // Decor.cpp:5739, unlike every other reward-bearing
+                    // pickup above), but it still triggers the SAME single
+                    // voyage slot (force-completing whatever else is in
+                    // flight) and the deferred completion sound -- real
+                    // source plays no immediate sound here either
+                    // (Decor.cpp:5731-5744, no PlaySound call, no
+                    // VoyageInit icon==177 case) -- the previous immediate
+                    // `SoundChannel54` was a mismatch, removed 2026-07-14.
                     if (bulletCount_ < kBulletCap)
                     {
                         bulletCount_ = kBulletCap;
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel54);
                         obj.active = false;
+                        // Real end point (570,430), Decor.cpp:5736-5738.
+                        RequestVoyage(VoyageKind::BulletPack, 177, false, obj.currentX, obj.currentY, obj.currentZ,
+                                      570.0f, 430.0f, true);
                     }
                     break;
                 // Secret powers (plan.md E3D-MIG-170, real Decor.cpp
@@ -1814,6 +1849,24 @@ namespace GalaxyEggbert::CNA
                     if (keyType == 49) keys1_ = 0;
                     else if (keyType == 50) keys2_ = 0;
                     else if (keyType == 51) keys3_ = 0;
+                    // Real door-unlock key-consumption flourish (plan.md
+                    // `158`, Decor.cpp:5620-5624) -- purely cosmetic, the
+                    // key bit is already cleared above, before the voyage
+                    // even starts (no reward at completion). Reversed
+                    // direction from every pickup above: start = the
+                    // fixed HUD position of whichever key was consumed
+                    // (matching Key1/2/3's own real end points), end = the
+                    // door's own world position (needs projecting, unlike
+                    // every pickup's fixed end). Real icon is dynamic per
+                    // door: `214 + (doorIcon-334)*7` = 214/221/228 for
+                    // door1/2/3.
+                    const float startX = (keyType == 49) ? 520.0f : (keyType == 50) ? 530.0f : 540.0f;
+                    const int doorIconId = 214 + (static_cast<int>(icon) - 334) * 7;
+                    const float doorWorldX = static_cast<float>(gx) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+                    const float doorWorldY = static_cast<float>(probeGY);
+                    const float doorWorldZ = static_cast<float>(gz) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+                    RequestVoyage(VoyageKind::DoorUnlock, doorIconId, false, doorWorldX, doorWorldY, doorWorldZ,
+                                  startX, 418.0f, false);
                 }
             }
         }
@@ -1821,13 +1874,13 @@ namespace GalaxyEggbert::CNA
         // Treasure-gated doors (plan.md E3D-MIG-162, real
         // Decor::OpenDoorsTresor ~11642): a door needing N treasures uses
         // icon 420+N -- scans the whole grid and opens every one whose
-        // requirement is now met, all at once, the same moment a
-        // qualifying treasure pickup completed above (not just the
-        // nearest door). Shared with CheatAllTreasure() below.
-        if (treasureDoorScanNeeded)
-        {
-            ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
-        }
+        // requirement is now met, all at once. Real reward timing (plan.md
+        // `158`) means this now happens inside ApplyVoyageReward() itself
+        // (called from TickVoyage() above, or from BeginVoyage()'s own
+        // force-complete path), the instant a treasure voyage completes --
+        // not unconditionally here every frame. Shared with
+        // CheatAllTreasure() below, which still scans immediately (the
+        // cheat is a separate, real immediate-credit mechanic).
 
         // Bridge construction trigger (ObjectType52, plan.md PICKUP-064, real
         // Decor::IsBridge ~7334, called every tick from Decor.cpp ~5608-5612
@@ -1985,7 +2038,9 @@ namespace GalaxyEggbert::CNA
         // placed decoy takes priority over placing a new one (matching the
         // real source's own MoveObjectDetect check before the placement
         // branch). Proximity radius matches every other pickup/interaction
-        // check in this file.
+        // check in this file. Real reward is deferred to voyage completion
+        // (plan.md `158`, fixed 2026-07-14) -- see RequestVoyage()'s own
+        // callers for the full citation.
         constexpr float kPersoRadius = 1.1f;
         for (auto& obj : objects)
         {
@@ -2003,7 +2058,9 @@ namespace GalaxyEggbert::CNA
                     return false;
                 }
                 obj.active = false;
-                ++persoCount_;
+                // Real end point (0,438), Decor.cpp:6098-6100.
+                RequestVoyage(VoyageKind::Perso, 108, true, obj.currentX, obj.currentY, obj.currentZ, 0.0f, 438.0f,
+                              true);
                 return true;
             }
         }
@@ -2423,6 +2480,174 @@ namespace GalaxyEggbert::CNA
         }
 
         ResetMagicTrail(blupiX, blupiY, blupiZ);
+    }
+
+    void GEInteractionSystem::RequestVoyage(VoyageKind kind, int iconId, bool isButtonChannel, float worldX,
+                                             float worldY, float worldZ, float fixedX, float fixedY,
+                                             bool worldIsStart)
+    {
+        // Overwrites any UN-CONSUMED same-frame request (see the public
+        // API comment's documented rare-edge-case simplification).
+        voyagePendingThisFrame_ = true;
+        pendingKind_ = kind;
+        pendingIconId_ = iconId;
+        pendingIsButton_ = isButtonChannel;
+        pendingWorldX_ = worldX;
+        pendingWorldY_ = worldY;
+        pendingWorldZ_ = worldZ;
+        pendingFixedX_ = fixedX;
+        pendingFixedY_ = fixedY;
+        pendingWorldIsStart_ = worldIsStart;
+    }
+
+    void GEInteractionSystem::BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId,
+                                           bool isButtonChannel, float startX, float startY, float endX, float endY,
+                                           GESound& sound)
+    {
+        // Real `VoyageInit()`'s own force-complete-the-previous-one
+        // behavior (`Decor.cpp:10160-10164`).
+        if (voyageKind_ != VoyageKind::None)
+        {
+            ApplyVoyageReward(worldRuntime, sound);
+        }
+
+        voyageKind_ = kind;
+        voyageIconId_ = iconId;
+        voyageIsButton_ = isButtonChannel;
+        voyageStartX_ = startX;
+        voyageStartY_ = startY;
+        voyageEndX_ = endX;
+        voyageEndY_ = endY;
+        voyagePhase_ = 0.0f;
+        // Real `(|dx|+|dy|)/10`, integer-truncated (`Decor.cpp:10169-10172`).
+        const int dx = static_cast<int>(std::fabs(endX - startX));
+        const int dy = static_cast<int>(std::fabs(endY - startY));
+        voyageTotal_ = static_cast<float>((dx + dy) / 10);
+
+        // Real touch-time sounds (`Decor::VoyageInit`'s own per-icon
+        // cases) -- independent of the deferred reward-applied sound
+        // played later in ApplyVoyageReward(). Treasure's completes-the-
+        // set distinction is decided by the caller (RequestVoyage()'s own
+        // iconId/kind are fixed per pickup, but the SOUND choice for
+        // Treasure needs treasuresCollected_/totalTreasures_ read here
+        // since Treasure hasn't incremented yet at this point).
+        switch (kind)
+        {
+            case VoyageKind::Treasure:
+            {
+                const bool completesSet = (treasuresCollected_ + 1 >= totalTreasures_);
+                sound.Play(completesSet ? GalaxyEggbert::SoundChannel::SoundChannel19
+                                        : GalaxyEggbert::SoundChannel::SoundChannel11);
+                break;
+            }
+            case VoyageKind::Key1:
+            case VoyageKind::Key2:
+            case VoyageKind::Key3:
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
+                break;
+            case VoyageKind::Egg:
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel12);
+                break;
+            case VoyageKind::Perso:
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
+                break;
+            // Dynamite/BulletPack/DoorUnlock: real source plays no
+            // immediate sound at all (confirmed via direct source read --
+            // dynamite has no VoyageInit case; DoorUnlock's dynamic icon
+            // never matches any of VoyageInit's fixed-icon checks).
+            default:
+                break;
+        }
+    }
+
+    void GEInteractionSystem::TickVoyage(float dt, GEWorldRuntime& worldRuntime, GESound& sound)
+    {
+        if (voyageKind_ == VoyageKind::None)
+        {
+            return;
+        }
+        voyagePhase_ += dt * 20.0f; // same dt*20 real-20Hz-tick convention as AdvancePatrolStep
+        if (voyagePhase_ >= voyageTotal_)
+        {
+            ApplyVoyageReward(worldRuntime, sound);
+        }
+    }
+
+    void GEInteractionSystem::ApplyVoyageReward(GEWorldRuntime& worldRuntime, GESound& sound)
+    {
+        // Real `VoyageStep()`'s completion branch (`Decor.cpp:10254-10306`)
+        // -- applies the real reward, then plays the shared "reward
+        // applied" sound (channel 3) for every kind EXCEPT DoorUnlock
+        // (whose dynamic icon never matches any of VoyageStep's own
+        // fixed-icon checks, so real completion is silent for it).
+        constexpr int kMaxEggCount = 10; // real MAX_EGG_COUNT, same value as Update()'s own local constant
+        switch (voyageKind_)
+        {
+            case VoyageKind::Treasure:
+                ++treasuresCollected_;
+                ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::Key1:
+                ++keys1_;
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::Key2:
+                ++keys2_;
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::Key3:
+                ++keys3_;
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::Egg:
+                if (lifeEggCount_ < kMaxEggCount)
+                {
+                    ++lifeEggCount_;
+                    ++lives_;
+                }
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::Dynamite:
+                ++dynamiteCount_;
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::Perso:
+                ++persoCount_;
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::BulletPack:
+                // Real reward already applied immediately at touch time
+                // (matches this engine's own bulletCount_ handling) --
+                // only the deferred completion sound fires here.
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                break;
+            case VoyageKind::DoorUnlock:
+            case VoyageKind::None:
+            default:
+                break;
+        }
+        voyageKind_ = VoyageKind::None;
+    }
+
+    float GEInteractionSystem::VoyageDrawX() const noexcept
+    {
+        if (voyageKind_ == VoyageKind::None || voyageTotal_ <= 0.0f)
+        {
+            return voyageStartX_;
+        }
+        const float t = std::min(voyagePhase_ / voyageTotal_, 1.0f);
+        return voyageStartX_ + (voyageEndX_ - voyageStartX_) * t;
+    }
+
+    float GEInteractionSystem::VoyageDrawY() const noexcept
+    {
+        if (voyageKind_ == VoyageKind::None || voyageTotal_ <= 0.0f)
+        {
+            return voyageStartY_;
+        }
+        const float t = std::min(voyagePhase_ / voyageTotal_, 1.0f);
+        return voyageStartY_ + (voyageEndY_ - voyageStartY_) * t;
     }
 
     void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)

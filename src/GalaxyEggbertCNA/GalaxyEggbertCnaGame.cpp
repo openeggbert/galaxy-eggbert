@@ -462,6 +462,40 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GalaxyEggbertCnaGame::ResolvePendingVoyage()
+    {
+        if (!interaction_.VoyagePendingThisFrame())
+        {
+            return;
+        }
+        const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+        const int viewportW = viewport.getWidthProperty();
+        const int viewportH = viewport.getHeightProperty();
+
+        float projectedX = 0.0f, projectedY = 0.0f;
+        const bool worldIsStart = interaction_.VoyagePendingWorldIsStart();
+        const bool projected = GEHud::ProjectWorldToHudSpace(
+            Microsoft::Xna::Framework::Vector3(interaction_.VoyagePendingWorldX(), interaction_.VoyagePendingWorldY(),
+                                                interaction_.VoyagePendingWorldZ()),
+            camera_.GetViewMatrix(), camera_.GetProjectionMatrix(), viewportW, viewportH, projectedX, projectedY);
+        if (!projected)
+        {
+            // Behind the camera (shouldn't happen for a just-touched
+            // pickup) -- fall back to collapsing this endpoint onto the
+            // OTHER (fixed) one, giving a real total=0 (the reward applies
+            // on the very next tick) rather than leaving the voyage stuck.
+            projectedX = interaction_.VoyagePendingFixedX();
+            projectedY = interaction_.VoyagePendingFixedY();
+        }
+
+        const float startX = worldIsStart ? projectedX : interaction_.VoyagePendingFixedX();
+        const float startY = worldIsStart ? projectedY : interaction_.VoyagePendingFixedY();
+        const float endX = worldIsStart ? interaction_.VoyagePendingFixedX() : projectedX;
+        const float endY = worldIsStart ? interaction_.VoyagePendingFixedY() : projectedY;
+        interaction_.BeginVoyage(worldRuntime_, interaction_.VoyagePendingKind(), interaction_.VoyagePendingIconId(),
+                                 interaction_.VoyagePendingIsButtonChannel(), startX, startY, endX, endY, sound_);
+    }
+
     void GalaxyEggbertCnaGame::ApplyCheat(int cheatNumber)
     {
         switch (cheatNumber)
@@ -1353,18 +1387,24 @@ namespace GalaxyEggbert::CNA
                 {
                     // Perso decoy placement/pickup (plan.md HUD-017) --
                     // real `else if (m_blupiPerso > 0)`, mutually exclusive
-                    // with dynamite above. Channel 61 shared with dynamite
-                    // placement (real, per 07-sounds.md); channel 3 is the
-                    // real generic pickup-completion chime, reused here for
-                    // the (simplified, non-voyage) pickup case.
+                    // with dynamite above. Channel 61 is the real placement
+                    // sound (per 07-sounds.md), unaffected by Voyage timing.
+                    // The pickup case's own real touch-time sound (ch60)
+                    // and deferred completion sound (ch3, plan.md `158`)
+                    // are handled by ResolvePendingVoyage() below instead
+                    // -- PersoCount() no longer increments immediately, so
+                    // it can't be used to distinguish pickup from placement
+                    // anymore; a placement always DECREASES the count
+                    // immediately (unaffected by Voyage), so that's the
+                    // real distinguishing signal now.
                     const int persoBefore = interaction_.PersoCount();
                     if (interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                               blupi_.IsOnGround()))
+                                               blupi_.IsOnGround()) &&
+                        interaction_.PersoCount() < persoBefore)
                     {
-                        sound_.Play(interaction_.PersoCount() > persoBefore
-                                        ? GalaxyEggbert::SoundChannel::SoundChannel3
-                                        : GalaxyEggbert::SoundChannel::SoundChannel61);
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
                     }
+                    ResolvePendingVoyage();
                 }
 
                 // Vehicle mount/dismount (plan.md E3D-MIG-171) -- same
@@ -1524,6 +1564,12 @@ namespace GalaxyEggbert::CNA
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert);
+
+            // Voyage (plan.md `158`) -- a pickup touched above may have
+            // recorded a this-frame voyage request (GEInteractionSystem has
+            // no camera access, so it can't project the world<->HUD-space
+            // endpoint itself). Resolve it here and start the real voyage.
+            ResolvePendingVoyage();
 
             // Pollution puff (plan.md VISUAL-013) -- called unconditionally
             // every frame, matching the real function's own internal gate
@@ -2493,7 +2539,10 @@ namespace GalaxyEggbert::CNA
                           blupi_.GetSecretPowerLevel(),
                           trainingHint,
                           PhaseOverlayMessage(),
-                          blupi_.GetAnimIcon());
+                          blupi_.GetAnimIcon(),
+                          interaction_.VoyageActive(), interaction_.VoyageIconId(),
+                          interaction_.VoyageIsButtonChannel(),
+                          interaction_.VoyageDrawX(), interaction_.VoyageDrawY());
             }
 
             // On-screen touch controls (2026-07-13, plan.md

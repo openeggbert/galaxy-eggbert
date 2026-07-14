@@ -2,6 +2,7 @@
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Matrix.hpp>
+#include <Microsoft/Xna/Framework/Vector4.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -217,6 +218,37 @@ namespace GalaxyEggbert::CNA
         effect.setAlphaProperty(1.0f);
     }
 
+    bool GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3 worldPos,
+                                       const Microsoft::Xna::Framework::Matrix& view,
+                                       const Microsoft::Xna::Framework::Matrix& projection,
+                                       int viewportW, int viewportH, float& outX, float& outY)
+    {
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Vector4;
+
+        const Matrix viewProj = Matrix::Multiply(view, projection);
+        // Vector4::Transform (NOT Vector3::Transform, which silently drops
+        // W) computes the real clip-space W needed for the perspective
+        // divide below.
+        const Vector4 clip = Vector4::Transform(worldPos, viewProj);
+        if (clip.W <= 0.0001f)
+        {
+            return false; // behind the camera
+        }
+        const float ndcX = clip.X / clip.W;
+        const float ndcY = clip.Y / clip.W;
+        const float viewportX = (ndcX * 0.5f + 0.5f) * static_cast<float>(viewportW);
+        const float viewportY = (1.0f - (ndcY * 0.5f + 0.5f)) * static_cast<float>(viewportH);
+
+        // Invert this class's own 640x480 <-> viewport mapping (kRefW/
+        // kRefH, the refToScreenX/Y lambdas in Draw() below).
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
+        outX = (viewportX - offsetX) / scale;
+        outY = viewportY / scale;
+        return true;
+    }
+
     void GEHud::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH,
                      int lives, bool key1, bool key2, bool key3,
@@ -226,7 +258,9 @@ namespace GalaxyEggbert::CNA
                      bool powerGaugeVisible, int powerGaugeLevel,
                      const char* trainingHint,
                      const char* overlayMessage,
-                     int animIcon)
+                     int animIcon,
+                     bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
+                     float voyageX, float voyageY)
     {
         if (!loaded_)
         {
@@ -437,6 +471,31 @@ namespace GalaxyEggbert::CNA
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
                 penX += advance;
+            }
+        }
+
+        // Voyage (plan.md `158`, real `Decor::VoyageDraw`) -- the flying
+        // pickup-reward icon, drawn at its current interpolated position
+        // (already in this class's own 640x480 reference space). Same
+        // quad-building pattern as every fixed-position icon above, just
+        // with a dynamic position instead of a fixed constant.
+        if (voyageActive)
+        {
+            Quad q;
+            const float tileSize = voyageIsButtonChannel ? kButtonTilePx : kIconTilePx;
+            q.x0 = refToScreenX(voyageX);
+            q.y0 = refToScreenY(voyageY);
+            q.x1 = q.x0 + tileSize * scale;
+            q.y1 = q.y0 + tileSize * scale;
+            if (voyageIsButtonChannel)
+            {
+                IconUv(voyageIconId, buttonSheetW, buttonSheetH, q.u0, q.v0, q.u1, q.v1, kButtonTilePx, kButtonCols);
+                buttonQuads.push_back(q);
+            }
+            else
+            {
+                IconUv(voyageIconId, elementSheetW, elementSheetH, q.u0, q.v0, q.u1, q.v1);
+                elementQuads.push_back(q);
             }
         }
 

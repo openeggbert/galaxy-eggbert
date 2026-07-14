@@ -1,6 +1,6 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-13. Concise handoff document — full history lives in `git log` (502+
+_Last updated: 2026-07-14. Concise handoff document — full history lives in `git log` (502+
 commits) and `plan.md`'s per-phase task lists. This file summarizes current state; it does not
 replace either of those._
 
@@ -61,8 +61,8 @@ menus, though still missing a visible 3D Blupi model.
 ## 2. Current status
 
 ### Build status
-- **`GalaxyEggbertCNA` — last confirmed clean build on both graphics backends: 2026-07-13**
-  (commit `63e020d`). Two build trees exist in this repo, both currently configured and buildable:
+- **`GalaxyEggbertCNA` — last confirmed clean build on both graphics backends: 2026-07-14.**
+  Two build trees exist in this repo, both currently configured and buildable:
   - `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default).
   - `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`).
   - Current CMakeLists.txt defaults: `GALAXY_EGGBERT_BUILD_CNA=ON`, `GALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`
@@ -95,7 +95,9 @@ menus, though still missing a visible 3D Blupi model.
 - Tank-control Blupi (invisible collision point) + first-/third-person camera toggle.
 - Full interactive-object system: platform lifts (patrol + riding), crates (linked-stack push),
   bridges, doors (key- and treasure-gated), all pickups (treasure/egg/keys/dynamite/bullets/Perso/
-  secret-power pickups), level exit.
+  secret-power pickups), level exit. Pickup rewards use the real deferred "Voyage" HUD-icon-flight
+  timing (added 2026-07-14) — the world object deletes on contact, but the reward only applies
+  once the flight animation completes, matching real mobile-eggbert exactly.
 - Full enemy AI/combat: shared 8-type hazard kill-list, wasp balloon status, blupih/blupit
   projectile attacks, large-creature turn-dwell grab, follower wake+homing, all real patrol timing.
 - All 6 real terrain hazards (lava/spikes/Blitz/saw+switches/crusher/water-drip, the last added
@@ -154,6 +156,42 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the "Voyage" pickup-reward system (`plan.md 158`) — the fully faithful port, not
+  a cosmetic-only approximation.** Real mobile-eggbert defers a pickup's actual reward (counter
+  increment, key-bit set) behind a 2D "fly to HUD icon" animation (`Decor::VoyageInit`/
+  `VoyageStep`/`VoyageDraw`, `Decor.cpp:10141-10348`) — the world object deletes on contact
+  immediately, but the reward only applies once the flight completes
+  (`total = (|dx|+|dy|)/10` real integer-truncated-Manhattan-distance ticks in mobile-eggbert's
+  640x480 reference screen space, `phase += dt*20`). Only one voyage runs at a time; starting a
+  new one force-completes the previous one's reward immediately, matching real source exactly.
+  Covers all 6 real reward-bearing kinds (Treasure/Key1/2/3/Egg/Dynamite/Perso) plus BulletPack
+  (reward already immediate, only the sound is deferred) and the door-unlock key-consumption
+  flourish (reversed direction: HUD position → door's own world position, no reward — purely
+  cosmetic, the key bit clears before the voyage starts). Found and fixed 4 real touch-time-sound
+  mismatches while porting this: Egg now plays ch12 immediately (was incorrectly playing the
+  deferred ch3 early); Perso now plays ch60 immediately (was previously completely silent);
+  Dynamite/BulletPack/DoorUnlock now correctly play no immediate sound at all (Dynamite was
+  incorrectly playing ch60, apparently copy-pasted from Perso's own channel). New architecture:
+  `GEInteractionSystem` stays free of any camera/graphics dependency — pickup sites record a
+  same-frame pending request, and `GalaxyEggbertCnaGame::ResolvePendingVoyage()` (which owns
+  `camera_`) projects the pickup's world position into 640x480 reference space via a new
+  `GEHud::ProjectWorldToHudSpace()` utility (real clip-space W via `Vector4::Transform`, then
+  inverts `GEHud`'s own existing ref-space<->viewport mapping) before calling the public
+  `BeginVoyage()` — mirroring the already-established `SpawnInvertBurst()`/`SpawnTeleportArc()`
+  pattern, and avoiding camera parameters on `Update()`'s already ~20-parameter signature. Also
+  corrected a wrong premise from an earlier session note: `BlupiAction::Clear1`-`Clear8` are 8
+  distinct real Blupi DEATH-animation types (Clear3/Lava and Clear2 fire their own "soul ascends"
+  Voyage via icon 40/230; Clear4/Saw fires an unrelated `ObjectType41`-reusing particle burst
+  instead) — NOT a 3rd Invert-grant site as previously assumed. This means no death in this engine
+  currently has any of these real VFX — a genuinely separate **"death VFX" system**, confirmed
+  real and valuable but explicitly deferred as its own future task (along with the life-loss
+  icon-48/Blupi-channel animation, which ties into respawn/death-lock control flow — a separate
+  behavior change, not touched). Verified: 18 existing `VerifyInteractionSystem` assertions
+  updated for the new deferred timing, plus new dedicated tests for the interpolation/reward-
+  timing math, the force-complete-on-new-voyage interaction, and `ProjectWorldToHudSpace()`'s
+  math against a controlled `Easy3D::Camera3D`. Full suite: 78 tests on `build-cna` (99%, only the
+  pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on
+  `build-cna-vulkan`.
 - **Implemented ObjectType9 (follower-blocked-path debris flash) — the ELEVENTH and final real
   particle effect, completing VISUAL-008 at 4-of-4 real types.** The real spawn site (the
   follower-blocked-path self-destruct, already this engine's own existing homing-follower logic)
@@ -889,7 +927,10 @@ judgment (§9).
     effect this session set out to build is now done — remaining items are either genuinely harder
     (the Voyage system, a full 2D-screen-space HUD-icon-flight animation distinct from this
     engine's 3D `MobileObjSpec` system entirely) or blocked on a visible Blupi model this engine
-    doesn't have yet (Hide's own afterimage trail).
+    doesn't have yet (Hide's own afterimage trail). **Update 2026-07-14 (later same day): the
+    Voyage system is now done too** (`plan.md 158`) — see §3 for the full writeup. The only
+    remaining item in this whole particle/transient-visual-effects umbrella is Hide's afterimage
+    trail, still blocked on a visible Blupi model.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

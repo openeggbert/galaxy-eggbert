@@ -452,6 +452,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
         src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+        src/GalaxyEggbertCNA/Game/GEHud.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyInteractionSystem PRIVATE
@@ -464,6 +465,11 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             SHARP_RUNTIME)
     else()
         target_link_libraries(VerifyInteractionSystem PRIVATE CNA SHARP_RUNTIME)
+    endif()
+    if(TARGET easy3d::easy3d)
+        target_link_libraries(VerifyInteractionSystem PRIVATE easy3d::easy3d)
+    else()
+        target_link_libraries(VerifyInteractionSystem PRIVATE easy3d)
     endif()
     if(BUILD_TESTING)
         # WORKING_DIRECTORY = repo root: this tool's default world path

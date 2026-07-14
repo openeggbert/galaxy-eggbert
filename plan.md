@@ -1090,13 +1090,63 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       dynamite blast) needs a particle/fragment rendering system that doesn't exist yet. `155`'s
       own crate destruction works correctly without it (no debris visual, a documented
       simplification matching every other missing-particle-system gap this session).
-- [ ] `157` Bridge live collision toggle — `table_bridge` overwrites the actual terrain grid
-      cell every tick across a 157-tick build sequence (solid only ticks 0-15/152-156); the
-      earlier "purely cosmetic" assumption was wrong.
-- [ ] `158` "Voyage" pickup-reward pattern: several pickups (treasure/egg/3 keys/dynamite)
-      already delete-on-contact (done, `E3D-MIG-100`/`158` supersedes the old assumption) but
-      should defer the actual reward (count++, flag) until a HUD-fly animation completes — not
-      yet implemented, current impl applies the reward immediately.
+- [x] `157` Bridge live collision toggle — done (`ed60898`, PICKUP-064; this checkbox was stale).
+      `table_bridge` overwrites the actual terrain grid cell every tick across a 157-tick build
+      sequence (solid only ticks 0-15/152-156) — real, not purely cosmetic. Verified by 7
+      `VerifyInteractionSystem` assertions (bridge tile found, mid-construction cell genuinely
+      non-solid, Blupi falls through, cell restored + construction object self-deletes at tick
+      157).
+- [x] `158` "Voyage" pickup-reward pattern — done 2026-07-14, verified directly against
+      `Decor::VoyageInit`/`VoyageStep`/`VoyageDraw` (`Decor.cpp:10141-10348`). Real mechanic: a
+      pickup deletes its world object on contact but does NOT apply the reward immediately — a
+      2D "fly to HUD icon" animation runs first (start/end point in mobile-eggbert's 640x480
+      reference screen space, `total = (|dx|+|dy|)/10` real integer-truncated-Manhattan ticks,
+      `phase += dt*20` — the established `AdvancePatrolStep` tick convention); the reward applies
+      exactly when `phase >= total`. Only one voyage runs at a time — starting a new one
+      force-completes the previous one's reward immediately (real `if (m_voyageIcon != -1) {
+      phase = total; Step(); }`).
+      - In scope, all confirmed via direct `Decor.cpp` reads: Treasure (icon 6/Element, end
+        (430,430), reward `treasuresCollected_++` + treasure-door rescan), Key1/2/3 (icons
+        215/222/229/Element, ends (520,418)/(530,418)/(540,418), reward = set key bit), Egg
+        (icon 21/Element, dynamic end `(210+16*(lifeEggCount_+1), 417)`, reward
+        `lifeEggCount_++`/`lives_++` capped), Dynamite (icon 252/Element, end (505,414), reward
+        `dynamiteCount_++`), Perso (icon 108/Button, end (0,438), reward `persoCount_++`),
+        BulletPack (icon 177/Element, end (570,430) — real reward is NOT deferred, granted
+        immediately at touch; only the completion sound is deferred), DoorUnlock (icon
+        `214+(doorIcon-334)*7`, REVERSED direction — start = the fixed HUD position of whichever
+        key was consumed, end = the door's own world position; no reward at completion since the
+        key bit is cleared before the voyage starts, purely a visual flourish).
+      - Found and fixed 4 real touch-time-sound mismatches while porting this (previously this
+        engine either played the wrong channel, played it at the wrong time, or played nothing):
+        Egg now plays `ch12` immediately (was incorrectly playing the deferred `ch3` early); Perso
+        now plays `ch60` immediately (was previously silent — `TryPerso()` had zero `sound.Play`
+        calls); Dynamite/BulletPack/DoorUnlock now correctly play NO immediate sound (Dynamite was
+        incorrectly playing `ch60`, apparently copy-pasted from Perso). Treasure/Key1/2/3's
+        existing immediate sounds were already correct. All 6 reward-bearing kinds now also play
+        the real deferred completion sound (`ch3`) exactly when `ApplyVoyageReward()` fires.
+      - Architecture: `GEInteractionSystem` has zero camera/graphics dependency — pickup sites
+        record a same-frame pending request (`RequestVoyage()`); after `Update()`/`TryPerso()`
+        return, `GalaxyEggbertCnaGame::ResolvePendingVoyage()` (which owns `camera_`) projects the
+        pickup's world position into 640x480 reference space via the new
+        `GEHud::ProjectWorldToHudSpace()` (uses `Vector4::Transform` for the real clip-space W,
+        then inverts `GEHud`'s own existing ref-space<->viewport mapping) and calls the public
+        `BeginVoyage()`. This mirrors the already-established pattern used by
+        `SpawnInvertBurst()`/`SpawnTeleportArc()`/`ResetMagicTrail()`, and avoided adding camera
+        parameters to `Update()`'s already-large (~20-parameter) signature.
+      - Corrected a wrong premise from an earlier session note: `BlupiAction::Clear1`-`Clear8` are
+        8 distinct real Blupi DEATH-animation types (not related to a 3rd Invert-grant site as
+        previously assumed) — Clear3/Lava and Clear2 fire their own "soul ascends" Voyage
+        (icon 40/230), Clear4/Saw fires an unrelated `ObjectType41`-reusing particle burst. This
+        means no death in this engine currently has ANY of these real VFX — a genuinely separate
+        **"death VFX" system**, explicitly deferred as a future task, not part of this pass (along
+        with the life-loss icon-48/Blupi-channel animation, which ties into respawn/death-lock
+        control flow).
+      - Verified: 18 existing `VerifyInteractionSystem` assertions updated for the new deferred
+        timing (treasure/keys/egg/dynamite/Perso/both door-unlock kinds), plus new dedicated tests
+        for the interpolation/reward-timing math, the force-complete-on-new-voyage interaction,
+        and `GEHud::ProjectWorldToHudSpace()`'s math against a controlled `Easy3D::Camera3D`.
+        Full suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
+        `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`.
 
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 

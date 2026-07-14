@@ -5,6 +5,8 @@
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
+#include <Microsoft/Xna/Framework/Matrix.hpp>
+#include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <memory>
 #include <string>
@@ -123,6 +125,12 @@ namespace GalaxyEggbert::CNA
         // equivalent infrastructure for yet -- score, level slots, etc.);
         // a minimal, honest placeholder so a non-Play phase isn't a
         // silent, feedback-free freeze, not a claim of real screen parity.
+        // voyage* (plan.md `158`, 2026-07-14): the real "fly to HUD icon"
+        // pickup-reward animation (`Decor::VoyageDraw`). voyageX/Y are
+        // already in this class's own 640x480 reference space (the
+        // caller interpolates via GEInteractionSystem::VoyageDrawX/Y()).
+        // voyageIsButtonChannel selects button.png (Perso) vs element.png
+        // (every other kind in scope).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
@@ -132,7 +140,26 @@ namespace GalaxyEggbert::CNA
                   bool powerGaugeVisible, int powerGaugeLevel,
                   const char* trainingHint,
                   const char* overlayMessage,
-                  int animIcon);
+                  int animIcon,
+                  bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
+                  float voyageX, float voyageY);
+
+        // Projects a 3D world position into this class's own 640x480
+        // reference screen space (plan.md `158`) -- the real Voyage
+        // animation's start/end points are 2D screen positions, but a
+        // pickup's position is 3D world-space. No world->screen projection
+        // utility existed anywhere in this codebase before this (confirmed
+        // via search) -- written from scratch here, colocated with the
+        // ONLY other code that knows this class's own 640x480<->viewport
+        // mapping (`kRefW`/`kRefH`, the `refToScreenX/Y` lambdas in
+        // `Draw()`). Returns false if the position is behind the camera
+        // (`clip.W<=0`) -- callers should fall back to a sensible fixed
+        // point in that case rather than use garbage output.
+        [[nodiscard]] static bool ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3 worldPos,
+                                                          const Microsoft::Xna::Framework::Matrix& view,
+                                                          const Microsoft::Xna::Framework::Matrix& projection,
+                                                          int viewportW, int viewportH,
+                                                          float& outX, float& outY);
 
     private:
         struct Quad

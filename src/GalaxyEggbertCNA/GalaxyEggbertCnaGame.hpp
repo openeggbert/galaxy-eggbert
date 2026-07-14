@@ -270,6 +270,20 @@ namespace GalaxyEggbert::CNA
         void SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade = false) noexcept;
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
 
+        // Voyage (plan.md `158`) -- a no-op unless
+        // `interaction_.VoyagePendingThisFrame()` is true. Projects
+        // whichever endpoint is still a 3D world position (via
+        // `GEHud::ProjectWorldToHudSpace()`, using `camera_` and the real
+        // GraphicsDevice's current viewport -- accessible here via
+        // `getGraphicsDeviceProperty()`, the same base-Game accessor
+        // already used elsewhere in this file for on-screen touch-control
+        // hit-testing) and calls `interaction_.BeginVoyage()` with both
+        // fully-resolved endpoints. Called right after BOTH
+        // `interaction_.Update()` and `interaction_.TryPerso()` (idempotent
+        // if neither set a pending request) since `TryPerso()`'s own call
+        // site runs BEFORE `Update()`'s own per-frame flag reset.
+        void ResolvePendingVoyage();
+
         // Dispatches cheat 1-9 (plan.md CHEAT-001..009) -- verified
         // directly against the real `Decor::CheatAction(Tables::
         // CheatCodes)`, correcting several wrong/imprecise draft

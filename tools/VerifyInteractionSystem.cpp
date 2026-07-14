@@ -1,9 +1,12 @@
 #include "Game/GEBlupiController.hpp"
+#include "Game/GEHud.hpp"
 #include "Game/GEInteractionSystem.hpp"
 #include "Game/GEObjectIcons.hpp"
 #include "Game/GESound.hpp"
 #include "Game/GETrainingHints.hpp"
 #include "Game/GEWorldRuntime.hpp"
+
+#include <Easy3D/Camera3D.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -118,10 +121,53 @@ int main(int argc, char** argv)
         return nullptr;
     };
 
+    // Voyage (plan.md `158`) test helper: GEInteractionSystem has no
+    // camera access, so a real pickup only records a THIS-FRAME pending
+    // request (GEInteractionSystem::Update() itself never starts the
+    // actual voyage) -- real projection is GalaxyEggbertCnaGame's own
+    // ResolvePendingVoyage() job. This helper stands in for that (no real
+    // projection needed in a unit test -- just reuses the pending world
+    // position directly as one endpoint, matching real behavior closely
+    // enough for these tests, which only check the eventual REWARD, not
+    // exact on-screen pixels), then fast-forwards world/interaction
+    // updates (using the sentinel-position idiom already established
+    // elsewhere in this file, so nothing else triggers meanwhile) until
+    // the voyage completes. Returns false if no voyage was pending.
+    const auto completePendingVoyage = [&sound](GEWorldRuntime& w, GEInteractionSystem& ir)
+    {
+        if (!ir.VoyagePendingThisFrame())
+        {
+            return false;
+        }
+        // Collapses start==end (ignoring the real pending positions --
+        // unit tests only care that the reward eventually applies, not
+        // exact on-screen distance/timing), so the voyage's real
+        // `total=(|dx|+|dy|)/10` computes to 0 and the reward applies on
+        // the very next tick. Deliberately avoids a long fast-forward:
+        // advancing world time far enough for a REALISTIC screen distance
+        // to complete would let other real periodic behavior (e.g.
+        // blupih/blupit's own firing cooldown) fire too, an unwanted side
+        // effect this helper's callers don't want.
+        constexpr float kCollapsed = 0.0f;
+        ir.BeginVoyage(w, ir.VoyagePendingKind(), ir.VoyagePendingIconId(), ir.VoyagePendingIsButtonChannel(),
+                       kCollapsed, kCollapsed, kCollapsed, kCollapsed, sound);
+        constexpr float voyageDt = 1.0f / 20.0f;
+        w.Update(voyageDt);
+        ir.Update(voyageDt, w, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        return true;
+    };
+
     if (const auto* egg = findFirst(ObjectType::ObjectType6))
     {
         const float ex = egg->currentX, ey = egg->currentY, ez = egg->currentZ;
-        for (int i = 0; i < 5; ++i)
+        // Real reward is deferred to voyage completion (plan.md `158`) --
+        // the first contact requests it; completePendingVoyage() stands in
+        // for GalaxyEggbertCnaGame::ResolvePendingVoyage() + the flight
+        // itself. The remaining frames of continued contact (the egg is
+        // now inactive) must NOT request/grant a second reward.
+        interaction.Update(dt, world, ex, ey, ez, 0.0f, sound);
+        completePendingVoyage(world, interaction);
+        for (int i = 0; i < 4; ++i)
         {
             interaction.Update(dt, world, ex, ey, ez, 0.0f, sound);
         }
@@ -156,7 +202,11 @@ int main(int argc, char** argv)
     if (const auto* chest = findFirst(ObjectType::ObjectType5))
     {
         const float cx = chest->currentX, cy = chest->currentY, cz = chest->currentZ;
-        for (int i = 0; i < 5; ++i)
+        // Real reward deferred to voyage completion (plan.md `158`) -- see
+        // the egg test's own comment above.
+        interaction.Update(dt, world, cx, cy, cz, 0.0f, sound);
+        completePendingVoyage(world, interaction);
+        for (int i = 0; i < 4; ++i)
         {
             interaction.Update(dt, world, cx, cy, cz, 0.0f, sound);
         }
@@ -249,7 +299,11 @@ int main(int argc, char** argv)
     if (const auto* key = findFirst(ObjectType::ObjectType49))
     {
         const float kx = key->currentX, ky = key->currentY, kz = key->currentZ;
-        for (int i = 0; i < 5; ++i)
+        // Real reward deferred to voyage completion (plan.md `158`) -- see
+        // the egg test's own comment above.
+        interaction.Update(dt, world, kx, ky, kz, 0.0f, sound);
+        completePendingVoyage(world, interaction);
+        for (int i = 0; i < 4; ++i)
         {
             interaction.Update(dt, world, kx, ky, kz, 0.0f, sound);
         }
@@ -426,7 +480,10 @@ int main(int argc, char** argv)
     if (const auto* dynamite = findFirst(ObjectType::ObjectType55))
     {
         const float ddx = dynamite->currentX, ddy = dynamite->currentY, ddz = dynamite->currentZ;
+        // Real reward deferred to voyage completion (plan.md `158`) -- see
+        // the egg test's own comment above.
         interaction.Update(dt, world, ddx, ddy, ddz, 0.0f, sound);
+        completePendingVoyage(world, interaction);
         check(interaction.DynamiteCount() == 1, "dynamite pickup increments DynamiteCount() to 1");
 
         check(!interaction.PlaceDynamite(world, 0.0f, 1.0f, 0.0f, /*grounded=*/false),
@@ -645,6 +702,9 @@ int main(int argc, char** argv)
 
         check(interaction.TryPerso(world, px, py, pz, /*grounded=*/true),
               "TryPerso() picks up a nearby placed decoy");
+        // Real reward deferred to voyage completion (plan.md `158`) -- see
+        // the egg test's own comment above.
+        completePendingVoyage(world, interaction);
         check(interaction.PersoCount() == 1, "picking up the decoy increments PersoCount() to 1");
         check(!mutableObjects.back().active, "the picked-up decoy is no longer active");
 
@@ -680,6 +740,12 @@ int main(int argc, char** argv)
         check(doorTileType() == BlockTypes::Door1, "the door stays closed while Blupi doesn't hold the matching key");
 
         doorInteraction.Update(dt, world, 46.0f - 50.0f, 1.0f, 88.0f - 50.0f, 0.0f, sound);
+        // Real reward deferred to voyage completion (plan.md `158`) -- see
+        // the egg test's own comment above. The door-OPENING itself is
+        // NOT deferred (real key-flag clearing happens immediately, before
+        // the door-unlock flourish's own voyage even starts -- see
+        // RequestVoyage(VoyageKind::DoorUnlock, ...)'s own call site).
+        completePendingVoyage(world, doorInteraction);
         check(doorInteraction.Key1Count() == 1, "picking up the key increments Key1Count() to 1");
 
         doorInteraction.Update(dt, world, 48.0f - 50.0f, 1.0f, 89.0f - 50.0f, 0.0f, sound, false, false, 0, 1);
@@ -711,12 +777,17 @@ int main(int argc, char** argv)
         if (freshChests.size() == 2)
         {
             GEInteractionSystem treasureDoorInteraction;
+            // Real reward (and the treasure-door rescan it triggers)
+            // deferred to voyage completion (plan.md `158`) -- see the
+            // egg test's own comment above.
             treasureDoorInteraction.Update(dt, world, freshChests[0]->currentX, freshChests[0]->currentY,
                                             freshChests[0]->currentZ, 0.0f, sound);
+            completePendingVoyage(world, treasureDoorInteraction);
             check(treasureDoorTileType() == 422,
                   "the door stays closed after only 1 of the 2 required treasures is collected");
             treasureDoorInteraction.Update(dt, world, freshChests[1]->currentX, freshChests[1]->currentY,
                                             freshChests[1]->currentZ, 0.0f, sound);
+            completePendingVoyage(world, treasureDoorInteraction);
             check(treasureDoorInteraction.TreasuresCollected() == 2,
                   "the fresh interaction system's own treasure count reaches 2");
             check(treasureDoorTileType() != 422,
@@ -2390,6 +2461,109 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType92, 1) == 61, "ObjectType92 icon at phase=1 is the real table_explo7[1]=61");
         check(GetObjIcon(ObjectType::ObjectType92, 2) == -1, "ObjectType92 icon at phase=2 is the real table_explo7[2]=-1 (a mid-sequence blank)");
         check(GetObjIcon(ObjectType::ObjectType92, 127) == -1, "ObjectType92 icon at phase=127 is the real table_explo7[127]=-1 (last frame before self-delete)");
+    }
+
+    // 17.11. Voyage (plan.md `158`) mechanics in isolation -- the real
+    // spawn sites are already exercised throughout this file above (each
+    // pickup's own test, via completePendingVoyage()); this verifies the
+    // state machine itself directly: linear interpolation, reward-at-
+    // completion timing, and the real force-complete-on-new-voyage
+    // interaction.
+    {
+        GEWorldRuntime voyageWorld;
+        GEInteractionSystem voyageInteraction;
+        constexpr float dt = 1.0f / 20.0f;
+
+        voyageInteraction.BeginVoyage(voyageWorld, GEInteractionSystem::VoyageKind::Treasure, 6, false, 0.0f, 0.0f,
+                                       100.0f, 0.0f, sound);
+        check(voyageInteraction.VoyageActive(), "BeginVoyage() starts an active voyage");
+        check(voyageInteraction.VoyageIconId() == 6 && !voyageInteraction.VoyageIsButtonChannel(),
+              "the active voyage's icon/channel match what was passed in");
+        check(std::fabs(voyageInteraction.VoyageDrawX() - 0.0f) < 0.01f,
+              "VoyageDrawX() starts at the real start point (phase=0)");
+
+        // Real total = (|100-0|+|0-0|)/10 = 10 ticks.
+        for (int i = 0; i < 5; ++i)
+        {
+            voyageWorld.Update(dt);
+            voyageInteraction.Update(dt, voyageWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(voyageInteraction.VoyageActive(), "the voyage is still active partway through (5 of 10 real ticks)");
+        check(std::fabs(voyageInteraction.VoyageDrawX() - 50.0f) < 1.0f,
+              "VoyageDrawX() linearly interpolates to the midpoint at phase=5/total=10");
+
+        const int treasuresBefore = voyageInteraction.TreasuresCollected();
+        for (int i = 0; i < 5; ++i) // the remaining 5 ticks to reach the real total=10
+        {
+            voyageWorld.Update(dt);
+            voyageInteraction.Update(dt, voyageWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(!voyageInteraction.VoyageActive(), "the voyage completes once phase reaches the real total");
+        check(voyageInteraction.TreasuresCollected() == treasuresBefore + 1,
+              "the real reward applies exactly at completion (phase>=total), not before");
+
+        // Force-complete-on-new-voyage (real `VoyageInit`'s own
+        // `if (m_voyageIcon != -1) { phase=total; Step(); }`, Decor.cpp:
+        // 10160-10164): starting a NEW voyage while another is still
+        // mid-flight applies the OLD one's reward immediately.
+        GEWorldRuntime forceWorld;
+        GEInteractionSystem forceInteraction;
+        forceInteraction.BeginVoyage(forceWorld, GEInteractionSystem::VoyageKind::Key1, 215, false, 0.0f, 0.0f,
+                                      1000.0f, 0.0f, sound); // real total=100, won't complete on its own here
+        check(forceInteraction.VoyageActive(), "voyage A (Key1) is active");
+        const int key1Before = forceInteraction.Key1Count();
+        forceInteraction.BeginVoyage(forceWorld, GEInteractionSystem::VoyageKind::Key2, 222, false, 0.0f, 0.0f, 10.0f,
+                                      0.0f, sound);
+        check(forceInteraction.Key1Count() == key1Before + 1,
+              "starting voyage B (Key2) force-completes voyage A (Key1)'s real reward immediately");
+        check(forceInteraction.VoyageActive() && forceInteraction.VoyageIconId() == 222,
+              "voyage B (Key2) is now the active voyage");
+    }
+
+    // 17.12. GEHud::ProjectWorldToHudSpace() -- the new world->screen
+    // projection utility (plan.md `158`), verified against a controlled
+    // camera/viewport setup with hand-computed expected results (no such
+    // projection utility existed anywhere in this codebase before this).
+    {
+        Easy3D::Camera3D camera;
+        camera.SetPosition(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 5.0f));
+        camera.SetTarget(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f));
+        camera.SetUp(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f));
+        camera.SetFieldOfView(1.57079633f); // 90 degrees
+        camera.SetAspectRatio(640.0f / 480.0f);
+        camera.SetNearPlane(0.1f);
+        camera.SetFarPlane(100.0f);
+
+        // Viewport matches the 640x480 reference space exactly (scale=1,
+        // no horizontal centering offset), so this isolates the
+        // projection math itself from GEHud's own separate ref<->viewport
+        // scale/offset conversion (already covered by GEHud.cpp's own
+        // existing logic, reused verbatim here).
+        float px = 0.0f, py = 0.0f;
+        bool ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f),
+                                                 camera.GetViewMatrix(), camera.GetProjectionMatrix(), 640, 480, px,
+                                                 py);
+        check(ok, "ProjectWorldToHudSpace() succeeds for a point in front of the camera");
+        check(std::fabs(px - 320.0f) < 0.5f && std::fabs(py - 240.0f) < 0.5f,
+              "a world point exactly on the camera's forward axis projects to the viewport center (320,240)");
+
+        // A point to the world's +X (camera's own right, since the camera
+        // looks down -Z with +Y up) must project to the RIGHT half of the
+        // screen (px > 320); a point above center must project to the
+        // TOP half (screen-space Y is down, so py < 240).
+        ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(1.0f, 0.0f, 0.0f), camera.GetViewMatrix(),
+                                            camera.GetProjectionMatrix(), 640, 480, px, py);
+        check(ok && px > 320.0f, "a world point to the camera's right projects to the right half of the screen");
+
+        ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f), camera.GetViewMatrix(),
+                                            camera.GetProjectionMatrix(), 640, 480, px, py);
+        check(ok && py < 240.0f, "a world point above center projects to the top half of the screen (screen-Y-down)");
+
+        // Behind the camera (camera looks toward -Z from Z=5, so a point
+        // further along +Z than the camera itself is behind it).
+        ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 10.0f), camera.GetViewMatrix(),
+                                            camera.GetProjectionMatrix(), 640, 480, px, py);
+        check(!ok, "ProjectWorldToHudSpace() returns false for a point behind the camera");
     }
 
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
