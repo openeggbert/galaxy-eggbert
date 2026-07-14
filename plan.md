@@ -2716,9 +2716,25 @@ reset to `[ ]`.
 - [ ] SCORE-006 — ~~+100 bonus when all treasures collected~~ **HALLUCINATED — CANCELLED, see note above.**
 - [ ] SCORE-007 — ~~High score per gamer slot persisted~~ **HALLUCINATED — CANCELLED, see note above (depends entirely on the non-existent score value).**
 - [ ] SCORE-008 — Level elapsed timer displayed in HUD
-- [ ] SCORE-009 — Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)
-- [ ] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes (from mobile-eggbert enum)
-- [ ] SCORE-011 — Slow game speed: alternate-frame skip (`slow_frame` toggle in game loop)
+- [ ] SCORE-009 — ~~Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)~~
+      **description was wrong, researched 2026-07-14**: direct read of real
+      `include/WindowsPhoneSpeedyBlupi/def/GameSpeed.hpp` — `GameSpeed` is NOT a continuous dt
+      multiplier at all. It's a "how many simulation ticks run per rendered frame" enum with 5
+      levels (`Slow=0, Normal=1, Fast=2, Faster=4, Fastest=8`), set via real keys **F5-F8** (F5=
+      Normal, F6=Fast, F7=Faster, F8=Fastest — no key is documented for Slow=0 in this mapping
+      function; a separate real site presumably sets it, not yet found). Not "G key", not
+      "0.6×/1.0×/1.5×", not 3 levels — 5 real levels, integer tick-multiplier semantics. Needs a
+      proper research pass into how "N ticks per frame" is actually driven in the real game loop
+      before implementing — this engine's own fixed-timestep `Update()`/`Draw()` split isn't
+      obviously the same shape, and guessing an adaptation here risks the same "wrong premise"
+      category as several other already-corrected items this session.
+- [ ] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes (from mobile-eggbert enum) — real
+      enum values confirmed (`Faster=4, Fastest=8` ticks/frame, see SCORE-009's correction) — not
+      yet implemented.
+- [ ] SCORE-011 — ~~Slow game speed: alternate-frame skip (`slow_frame` toggle in game loop)~~ —
+      **plausible given `Slow=0` (see SCORE-009), but the exact real frame-skip mechanism (which
+      variable, which function) was NOT found in this pass** — needs its own confirmation before
+      implementing, not assumed from the enum doc comment alone.
 - [ ] SCORE-012 — ~~Win screen: display total score~~, elapsed time, new-record indicator —
       **the "total score"/"new-record" parts are HALLUCINATED — CANCELLED** (see note above);
       "elapsed time" display itself is unrelated to the score hallucination and stays open pending
