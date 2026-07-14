@@ -674,6 +674,21 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Pollution puff (plan.md VISUAL-013, ObjectType36) -- purely
+            // cosmetic. Real self-delete at phase>=16 (`Decor.cpp:8563-
+            // 8567`). Unlike the self-contained blocks above, this does NOT
+            // `continue` on the "still alive" path -- `TickPollutionPuff()`
+            // sets up `posStart`/`posEnd`/`stepAdvanceTicks`/`patrolStep=2`
+            // directly, so this object falls through to the existing
+            // generic `AdvancePatrolStep()` call below for its real
+            // posStart->posEnd slide, rather than a fourth duplicate
+            // hand-rolled interpolation block.
+            if (obj.type == ObjectType::ObjectType36 && obj.phase >= 16.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
             // posStart and posEnd at `speed` units/sec -- matches
             // GalaxyEggbertSimple3D's GEDecorSystem::Update() exactly
@@ -2015,6 +2030,175 @@ namespace GalaxyEggbert::CNA
         spec.currentX = spec.posStartX = spec.posEndX = x;
         spec.currentY = spec.posStartY = spec.posEndY = y;
         spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
+    void GEInteractionSystem::TickPollutionPuff(GEWorldRuntime& worldRuntime, float blupiX, float blupiY,
+                                                 float blupiZ, bool isHelicopter, bool isOvercraft, bool isJeep,
+                                                 bool isTank, bool isMoving, bool ascending, int facingDX)
+    {
+        ++pollutionTick_;
+        const int realTime = pollutionTick_;       // real m_time -- exact for Helicopter/Overcraft below
+        const int blupiPhase = pollutionTick_;     // stands in for real m_blupiPhase -- see this method's own header comment
+
+        bool flag = false;
+        float pointX = 0.0f, pointY = 0.0f;
+        int num = 20;
+
+        if (isHelicopter)
+        {
+            if (ascending)
+            {
+                if (realTime % 20 != 0 && realTime % 20 != 2 && realTime % 20 != 5 && realTime % 20 != 8 &&
+                    realTime % 20 != 10 && realTime % 20 != 11 && realTime % 20 != 16 && realTime % 20 != 18)
+                {
+                    return;
+                }
+            }
+            else if (!isMoving)
+            {
+                if (realTime % 50 != 0 && realTime % 50 != 12 && realTime % 50 != 30)
+                {
+                    return;
+                }
+            }
+            else if (realTime % 20 != 0 && realTime % 20 != 3 && realTime % 20 != 5 && realTime % 20 != 11 &&
+                     realTime % 20 != 15)
+            {
+                return;
+            }
+            pointX = 22.0f;
+            flag = true;
+        }
+        if (isOvercraft)
+        {
+            if (ascending)
+            {
+                if (realTime % 20 != 0 && realTime % 20 != 2 && realTime % 20 != 5 && realTime % 20 != 8 &&
+                    realTime % 20 != 11 && realTime % 20 != 13 && realTime % 20 != 14 && realTime % 20 != 18)
+                {
+                    return;
+                }
+                num = 58;
+                // Real `m_random.get()->Next(-10, 10)` -- no RNG exists
+                // anywhere else in this engine; a small deterministic
+                // stand-in seeded by the tick counter is used instead,
+                // since only cosmetic jitter (not gameplay) depends on it.
+                pointX = static_cast<float>(((pollutionTick_ * 1103515245 + 12345) / 65536) % 21 - 10);
+                pointY = 22.0f;
+            }
+            else
+            {
+                if (realTime % 50 != 0 && realTime % 50 != 12 && realTime % 50 != 30)
+                {
+                    return;
+                }
+                num = 20;
+                pointX = 30.0f;
+            }
+            flag = true;
+        }
+        if (isJeep)
+        {
+            if (!isMoving)
+            {
+                if (blupiPhase % 50 != 0 && blupiPhase % 50 != 12 && blupiPhase % 50 != 20 && blupiPhase % 50 != 35)
+                {
+                    return;
+                }
+            }
+            else if (blupiPhase % 20 != 0 && blupiPhase % 20 != 3 && blupiPhase % 20 != 5 && blupiPhase % 20 != 11 &&
+                     blupiPhase % 20 != 15)
+            {
+                return;
+            }
+            pointX = 32.0f;
+            flag = true;
+        }
+        if (isTank)
+        {
+            if (!isMoving)
+            {
+                if (blupiPhase % 50 != 0 && blupiPhase % 50 != 15 && blupiPhase % 50 != 28)
+                {
+                    return;
+                }
+            }
+            else if (blupiPhase % 20 != 0 && blupiPhase % 20 != 4 && blupiPhase % 20 != 12)
+            {
+                return;
+            }
+            pointX = 35.0f;
+            flag = true;
+        }
+        if (!flag)
+        {
+            return;
+        }
+
+        float spawnX = blupiX;
+        if (facingDX >= 0) // real Direction::Right
+        {
+            spawnX -= (pointX - 5.0f) / 64.0f;
+            if (num < 50)
+            {
+                num = -num;
+            }
+        }
+        else
+        {
+            spawnX += pointX / 64.0f;
+        }
+        const float spawnY = blupiY - pointY / 64.0f; // real screen-Y+ -> this engine's world Y- (established sign flip)
+        const float spawnZ = blupiZ;
+
+        // Real `ObjectStart()`'s speed-bucket encoding (same as
+        // SpawnInvertBurst()/AppendSparkleBurst() -- >50 down, <-50 up
+        // [never reached here, |num|<=58], >0 right, <0 left) and its real
+        // flat 500px reach for this ObjectType (`Decor::SearchDistRight()`,
+        // `Decor.cpp:7628-7653`).
+        constexpr float kReach = 500.0f / 64.0f;
+        float endX = spawnX, endY = spawnY;
+        int magnitude;
+        if (num > 50)
+        {
+            endY -= kReach;
+            magnitude = num - 50;
+        }
+        else if (num > 0)
+        {
+            endX += kReach;
+            magnitude = num;
+        }
+        else
+        {
+            endX -= kReach;
+            magnitude = -num;
+        }
+
+        MobileObjSpec spec;
+        spec.type = ObjectType::ObjectType36;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spawnX;
+        spec.currentY = spec.posStartY = spawnY;
+        spec.currentZ = spec.posStartZ = spawnZ;
+        spec.posEndX = endX;
+        spec.posEndY = endY;
+        spec.posEndZ = spawnZ;
+        spec.patrolStep = 2; // real step=2 -- skips the dwell-at-start phase entirely
+        spec.patrolTime = 0.0f;
+        spec.stepAdvanceTicks = static_cast<float>(std::abs(magnitude * 500 / 64));
 
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         for (auto& slot : objects)

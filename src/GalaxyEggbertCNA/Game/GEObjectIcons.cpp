@@ -93,7 +93,12 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType28: return 167;
             case ObjectType::ObjectType29: return 177;
             case ObjectType::ObjectType34: return 168 + (p / 6) % 25;
-            case ObjectType::ObjectType36: return 179 + (p / 6) % 8;
+            // Fixed 2026-07-14 (plan.md VISUAL-013, Pollution puff): wrong
+            // divisor (6 instead of the real `Config::ScaleDiv(2)==2`) --
+            // real `table_pollution` (`Tables.cpp:1494`) is a plain
+            // ascending range (179..186), so only the divisor needed
+            // fixing, unlike the non-monotonic tables fixed elsewhere.
+            case ObjectType::ObjectType36: return 179 + (p / 2) % 8;
             case ObjectType::ObjectType37: return 40 + (p / 6) % 70;
             // Fixed 2026-07-14 (plan.md VISUAL-012): was a wrong "166 +
             // ascending" arithmetic formula; the real table_tresortrack is

@@ -3098,23 +3098,52 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       identically (posStart=origin, posEnd=target, linear interpolation via `phase/78`). Existing
       tests updated to check `posEnd` (the fixed real target) and the real starting-at-origin
       position. Full regression re-run on both backends after the fix, all pass.
-- [ ] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers — **researched, not
-      implemented, 2026-07-14**: real trigger is `Decor::MoveObjectPollution()` (`Decor.cpp:
-      6877-6989`, confirmed function name/range via direct read), called once per tick regardless
-      of vehicle state and gated by 4 separate `if (m_blupiXxx)` blocks (Helico/Overcraft/Jeep/Tank
-      — NOT mutually-exclusive `else if`s in the decompiled source, but only one vehicle can
-      realistically be active at a time), each with its OWN hand-tuned `m_time`/`m_blupiPhase`
-      modulo-based emission schedule (e.g. Jeep: every `m_blupiPhase%50` hits 0/12/20/35 while
-      stationary, or `%20` hits 0/3/5/11/15 while moving) and its OWN per-vehicle nozzle offset
-      (`tinyPoint.X/Y`) and puff lifetime/speed (`num`, mostly 20, Overcraft's airborne case uses
-      58). After the per-vehicle gate, a universal facing-direction step negates/keeps `num`'s
-      sign so the puff always drifts backward relative to Blupi's own facing, then
-      `ObjectStart(blupiPos, ObjectType36, num)` spawns ONE puff (not a 4-direction burst like
-      Invert/treasure) — genuinely more complex than every particle effect shipped so far, real
-      effort, not a "next smallest task." Confirmed this engine already tracks the needed vehicle
-      state (Jeep/Tank/Overcraft/Helicopter mounts, all 5 vehicles per NEXT.md) so the gating
-      conditions are at least expressible; the per-vehicle modulo schedules and nozzle offsets
-      still need careful 1:1 transcription and their own test coverage.
+- [x] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers — **done 2026-07-14**,
+      the FIFTH real particle effect built, and the most complex one so far. Real trigger is
+      `Decor::MoveObjectPollution()` (`Decor.cpp:6877-6989`, confirmed function name/range via
+      direct read), called once per tick regardless of vehicle state and gated by 4 separate
+      `if (m_blupiXxx)` blocks (Helicopter/Overcraft/Jeep/Tank — NOT mutually-exclusive `else if`s
+      in the decompiled source, but only one vehicle can realistically be active at a time), each
+      with its OWN hand-tuned `m_time`/`m_blupiPhase` modulo-based emission schedule (e.g. Jeep:
+      every `m_blupiPhase%50` hits 0/12/20/35 while stationary, or `%20` hits 0/3/5/11/15 while
+      moving) and its OWN per-vehicle nozzle offset (`tinyPoint.X/Y`) and puff lifetime/speed
+      (`num`, mostly 20, Overcraft's ascending case uses 58 with a small real random X jitter).
+      Since `MoveObjectPollution()` is itself the gate (`if (!flag) return;`), a single
+      unconditional per-frame call (`GEInteractionSystem::TickPollutionPuff()`, called from
+      `GalaxyEggbertCnaGame.cpp` right after `interaction_.Update()`) is behaviorally equivalent
+      to the real 4 separate call sites. Real self-delete at `phase>=16` (`Decor.cpp:8563-8567`).
+      Found and fixed a bug in the existing `GEObjectIcons.cpp` formula for this type (wrong
+      divisor 6 instead of the real `Config::ScaleDiv(2)==2`) — real `table_pollution` is a plain
+      ascending range (`Tables.cpp:1494`, 179..186), so only the divisor needed fixing, unlike the
+      non-monotonic tables fixed elsewhere.
+
+      Two real simplifications, both documented in `TickPollutionPuff()`'s own comment: (1) real
+      `m_blupiPhase` (Jeep/Tank's schedule) is Blupi's own animation-state-phase counter, reset on
+      every real action-state change — this engine has no equivalent action-state machine yet (no
+      visible Blupi model/animation exists at all, still the single largest remaining gap), so a
+      monotonic never-resetting tick counter stands in for it (shared with Helicopter/Overcraft's
+      real `m_time`, which IS an exact match since that one really is a monotonic global counter).
+      (2) the real `m_random.get()->Next(-10,10)` (Overcraft's ascending-case X jitter) has no
+      real analogue since no RNG exists anywhere else in this engine; a small deterministic LCG
+      seeded by the tick counter stands in, since only cosmetic jitter (not gameplay) depends on it.
+
+      Architecturally different from Invert/treasure/Fan-hit/dynamite-blast: this is the FIRST
+      particle effect to use the engine's own EXISTING generic `AdvancePatrolStep()` machinery
+      (`stepAdvanceTicks`/`patrolStep`/`posStart`/`posEnd`, already used by every other
+      non-lift/crate `MobileObject`, plan.md E3D-MIG-131) directly, by setting `patrolStep=2` at
+      spawn (matching real `ObjectStart()`'s own `step=2`, skipping the dwell-at-start phase) —
+      rather than a bespoke hand-rolled interpolation block. **Found while building this: Invert
+      burst/treasure sparkle's own posStart->posEnd slide (VISUAL-014/015/012's own corrections,
+      above) duplicate this same already-existing mechanism instead of reusing it — a real, valid,
+      NOT-yet-done cleanup opportunity, flagged but not undertaken here** (their current behavior
+      is already correct, just implemented redundantly).
+
+      16 new `VerifyInteractionSystem` checks (no-vehicle no-op, Jeep stationary schedule count/
+      exact spawn position/posEnd/stepAdvance/patrolStep, facing-direction sign flip, Overcraft
+      ascending Y-offset/stepAdvance/nozzle-offset, self-delete timing, confirmed real movement via
+      the shared `AdvancePatrolStep()` slide, corrected icon values) + full regression on both
+      backends, all pass. Not live-visually verified (same already-proven element.png billboard
+      rendering path as every other particle effect this session).
 - [x] VISUAL-014 — Invert power-up particles: ObjectType41 (4-direction burst on pickup) — **done
       2026-07-14, the FIRST real particle effect built in this engine** (data-table transcription
       approved by the user the same day). Real spawn site confirmed via direct source read

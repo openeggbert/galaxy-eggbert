@@ -1521,6 +1521,23 @@ namespace GalaxyEggbert::CNA
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert);
 
+            // Pollution puff (plan.md VISUAL-013) -- called unconditionally
+            // every frame, matching the real function's own internal gate
+            // (see TickPollutionPuff()'s own comment). isMoving reuses the
+            // same blupiXBeforeStep delta already computed above for the
+            // interaction system's crate-push direction inference, instead
+            // of adding a new horizontal-speed accessor to GEBlupiController.
+            {
+                const auto vehicleMode = blupi_.GetVehicleMode();
+                interaction_.TickPollutionPuff(
+                    worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                    vehicleMode == GEBlupiController::VehicleMode::Helicopter,
+                    vehicleMode == GEBlupiController::VehicleMode::Overcraft,
+                    vehicleMode == GEBlupiController::VehicleMode::Jeep,
+                    vehicleMode == GEBlupiController::VehicleMode::Tank,
+                    blupi_.GetX() != blupiXBeforeStep, blupi_.GetVelocityY() > 0.0f, blupiFacingDX);
+            }
+
             // Real camera shake (plan.md CAM-008/009) -- generic-hazard
             // contact-kill (most types SmallShake, fish/bird BigShake) and
             // the dynamite blast's own center-tile SmallShake, both

@@ -107,11 +107,11 @@ menus, though still missing a visible 3D Blupi model.
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
   cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
-- The first 4 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
-  Fan-hit shockwave flash, dynamite-blast explosion flash, all added 2026-07-14) — logic and
-  positions independently confirmed correct via unit tests; live visual confirmation was attempted
-  for the first two but inconclusive (see §3's own note); the latter two were not re-attempted
-  (same rendering path).
+- The first 5 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
+  Fan-hit shockwave flash, dynamite-blast explosion flash, Pollution puff (4 vehicle types),
+  all added 2026-07-14) — logic and positions independently confirmed correct via unit tests; live
+  visual confirmation was attempted for the first two but inconclusive (see §3's own note); the
+  latter three were not re-attempted (same rendering path).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -151,6 +151,24 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented Pollution puff — the FIFTH real particle effect, and the most complex one so far**
+  (plan.md VISUAL-013, ObjectType36) — real vehicle-exhaust smoke from
+  `Decor::MoveObjectPollution()`, gated by 4 separate vehicle checks (Helicopter/Overcraft/Jeep/
+  Tank), each with its own hand-tuned modulo-based emission schedule, nozzle offset, and puff
+  speed. A single unconditional per-frame call (`GEInteractionSystem::TickPollutionPuff()`) is
+  behaviorally equivalent to the real 4 call sites, since the real function is itself the gate.
+  Fixed an existing icon-formula divisor bug (6 instead of the real 2). Two documented real
+  simplifications: Jeep/Tank's schedule reuses the same monotonic tick counter as Helicopter/
+  Overcraft's real exact global-time counter (standing in for real per-Blupi-action-state-reset
+  timing this engine has no infrastructure for yet, since Blupi has no visible model/animation at
+  all); Overcraft's small real random X jitter uses a deterministic LCG (no RNG exists anywhere
+  else in this engine). Architecturally different from every earlier particle effect: this is the
+  FIRST to use the engine's own existing generic `AdvancePatrolStep()` machinery directly
+  (`patrolStep=2` at spawn) instead of a hand-rolled interpolation block — and in doing so, found
+  that Invert burst/treasure sparkle's own posStart->posEnd slide (just fixed below) duplicates
+  this same already-existing mechanism instead of reusing it, a real but not-yet-done cleanup
+  opportunity (their current behavior is already correct, just implemented redundantly). 16 new
+  `VerifyInteractionSystem` checks + full regression on both backends, all pass.
 - **Fixed a real animation bug in the Invert burst and treasure sparkle particle effects** (plan.md
   VISUAL-012/014/015), found while researching Pollution puff (below) and re-reading
   `Decor::ObjectStart()`'s full body for the first time. The real function does NOT place these
@@ -747,20 +765,26 @@ judgment (§9).
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
-    2026-07-14: the user directed a start on this system; 4 slices are now done** — Invert
+    2026-07-14: the user directed a start on this system; 5 slices are now done** — Invert
     start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`), Fan-hit
-    shockwave flash, and dynamite-blast explosion flash (`VISUAL-008`, partial — only
-    `ObjectType8`/`11` of the 4 types in that item), see §3's own writeups. Real
-    `SearchDistRight()` short-circuits to a flat 500px for types 36/39/41/42/93 (no raycast
-    needed) — investigated type 93 directly (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and
-    found it's actually gated behind the whole not-yet-built "Voyage" pickup-flight-animation
-    system (plan.md `158`), NOT a simple standalone spawn like the others — plan.md's earlier note
-    calling it "simple" was wrong, corrected. Type 36 (pollution puff, vehicle exhaust — real
-    trigger is more complex, 4 different vehicle-specific timing patterns) is the only one left in
-    the genuinely "simple" family. `ObjectType9/10`'s `GetObjIcon()` formulas are still flagged
-    (not fixed) — same category of bug as the fixed ones, but both types remain entirely unspawned
-    in this engine, so fixing their formulas now would be speculative work on unreachable code; a
-    real follow-up once/if they're ever wired. ~16 items remain overall.
+    shockwave flash and dynamite-blast explosion flash (`VISUAL-008`, partial — only
+    `ObjectType8`/`11` of the 4 types in that item), and Pollution puff (`VISUAL-013`, all 4
+    vehicle types), see §3's own writeups. Real `SearchDistRight()` short-circuits to a flat 500px
+    for types 36/39/41/42/93 (no raycast needed) — investigated type 93 directly
+    (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and found it's actually gated behind the whole
+    not-yet-built "Voyage" pickup-flight-animation system (plan.md `158`), NOT a simple standalone
+    spawn like the others — plan.md's earlier note calling it "simple" was wrong, corrected.
+    `ObjectType9/10`'s `GetObjIcon()` formulas are still flagged (not fixed) — same category of bug
+    as the fixed ones, but both types remain entirely unspawned in this engine, so fixing their
+    formulas now would be speculative work on unreachable code; a real follow-up once/if they're
+    ever wired. Also flagged (not done): Invert/treasure's own posStart->posEnd slide duplicates
+    the engine's existing generic `AdvancePatrolStep()` machinery instead of reusing it (found
+    while building Pollution puff, the first effect to use that machinery directly) — a real
+    cleanup opportunity, not urgent since current behavior is already correct. ~15 items remain
+    overall, and every real "simple" (flat-500px, single-instance-or-4-burst) particle effect is
+    now done — remaining items are either genuinely harder (door-linked bursts needing a
+    non-`MobileObjSpec` door model, the Voyage system, Shield's sparkle loop, water splashes, the
+    electric arc) or blocked on the still-unaudited `ObjectType9/10` formulas.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

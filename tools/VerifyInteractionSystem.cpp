@@ -1708,6 +1708,185 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType8, 38) == 11, "ObjectType8 icon at phase=38 is the real table_explo1[38]=11 (last frame before self-delete)");
     }
 
+    // 17.7. Pollution puff (plan.md VISUAL-013, ObjectType36) -- vehicle
+    // exhaust smoke, 4 vehicle-gated emission schedules, real posStart->
+    // posEnd slide via the existing generic AdvancePatrolStep() machinery
+    // (not a hand-rolled interpolation block, unlike Invert/treasure's
+    // earlier fix), real phase>=16 self-delete.
+    {
+        constexpr float px = 20.0f, py = 1.0f, pz = 20.0f;
+        constexpr float dt = 1.0f / 20.0f;
+        constexpr float kReach = 500.0f / 64.0f;
+
+        GEWorldRuntime noneWorld;
+        GEInteractionSystem noneInteraction;
+        for (int i = 0; i < 60; ++i)
+        {
+            noneInteraction.TickPollutionPuff(noneWorld, px, py, pz, false, false, false, false,
+                                               /*isMoving=*/false, /*ascending=*/false, /*facingDX=*/1);
+        }
+        int noneCount = 0;
+        for (const auto& obj : noneWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType36)
+            {
+                ++noneCount;
+            }
+        }
+        check(noneCount == 0, "TickPollutionPuff() never spawns while not in any of the 4 vehicles");
+
+        // Jeep, stationary, facing right -- real schedule hits at
+        // blupiPhase%50 in {0,12,20,35}; the tick counter used as the real
+        // m_blupiPhase stand-in starts at 1 on the first call (see
+        // TickPollutionPuff()'s own header comment), so ticks 12/20/35/50
+        // of a fresh 50-call run each hit exactly once.
+        GEWorldRuntime jeepWorld;
+        GEInteractionSystem jeepInteraction;
+        for (int i = 0; i < 50; ++i)
+        {
+            jeepInteraction.TickPollutionPuff(jeepWorld, px, py, pz, false, false, /*isJeep=*/true, false,
+                                               /*isMoving=*/false, /*ascending=*/false, /*facingDX=*/1);
+        }
+        int jeepCount = 0;
+        const MobileObjSpec* jeepPuff = nullptr;
+        for (const auto& obj : jeepWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType36)
+            {
+                ++jeepCount;
+                jeepPuff = &obj;
+            }
+        }
+        check(jeepCount == 4,
+              "Jeep (stationary) spawns exactly 4 puffs across one real 50-tick schedule cycle "
+              "(blupiPhase%50 in {0,12,20,35})");
+        if (jeepPuff != nullptr)
+        {
+            constexpr float kJeepOffsetX = (32.0f - 5.0f) / 64.0f;
+            check(std::fabs(jeepPuff->posStartX - (px - kJeepOffsetX)) < 0.01f && jeepPuff->posStartY == py,
+                  "Jeep puff spawns at the real facing-right offset from Blupi (32px nozzle, -5px trailing "
+                  "adjustment)");
+            check(std::fabs(jeepPuff->posEndX - (jeepPuff->posStartX - kReach)) < 0.01f,
+                  "Jeep puff's real posEnd is 500px/64 further LEFT (facing right negates num, drifting "
+                  "backward)");
+            check(std::fabs(jeepPuff->stepAdvanceTicks - 156.0f) < 0.5f,
+                  "Jeep puff's real stepAdvance is |20*500/64|=156 ticks (magnitude-20 bucket)");
+            check(jeepPuff->patrolStep == 2,
+                  "Jeep puff starts directly in patrolStep=2 (real step=2, skips the dwell phase)");
+        }
+        else
+        {
+            check(false, "found at least one spawned Jeep puff to inspect");
+        }
+
+        // Facing LEFT flips the drift direction (real: no negation, `num`
+        // stays positive -> right bucket).
+        GEWorldRuntime jeepLeftWorld;
+        GEInteractionSystem jeepLeftInteraction;
+        for (int i = 0; i < 12; ++i)
+        {
+            jeepLeftInteraction.TickPollutionPuff(jeepLeftWorld, px, py, pz, false, false, true, false, false, false,
+                                                   /*facingDX=*/-1);
+        }
+        const MobileObjSpec* jeepLeftPuff = nullptr;
+        for (const auto& obj : jeepLeftWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType36)
+            {
+                jeepLeftPuff = &obj;
+            }
+        }
+        if (jeepLeftPuff != nullptr)
+        {
+            check(jeepLeftPuff->posEndX > jeepLeftPuff->posStartX + kReach - 0.01f,
+                  "facing LEFT drifts the puff to the real RIGHT bucket instead (no negation)");
+        }
+        else
+        {
+            check(false, "found a spawned Jeep puff (facing left) to inspect");
+        }
+
+        // Overcraft, ascending -- real num=58 (>50 bucket, always downward
+        // regardless of facing), Y offset always applied, X has a small
+        // real random jitter (no RNG exists elsewhere in this engine, so a
+        // deterministic stand-in is used -- see TickPollutionPuff()'s
+        // comment).
+        GEWorldRuntime overWorld;
+        GEInteractionSystem overInteraction;
+        for (int i = 0; i < 20; ++i)
+        {
+            overInteraction.TickPollutionPuff(overWorld, px, py, pz, false, /*isOvercraft=*/true, false, false,
+                                               /*isMoving=*/false, /*ascending=*/true, /*facingDX=*/1);
+        }
+        const MobileObjSpec* overPuff = nullptr;
+        for (const auto& obj : overWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType36)
+            {
+                overPuff = &obj;
+            }
+        }
+        if (overPuff != nullptr)
+        {
+            check(std::fabs(overPuff->posEndY - (overPuff->posStartY - kReach)) < 0.01f,
+                  "Overcraft (ascending) puff's real posEnd is 500px/64 further DOWN, regardless of facing");
+            check(std::fabs(overPuff->stepAdvanceTicks - 62.0f) < 0.5f,
+                  "Overcraft (ascending) puff's real stepAdvance is |8*500/64|=62 ticks (magnitude-8 bucket, "
+                  "num=58)");
+            check(std::fabs(overPuff->posStartY - (py - 22.0f / 64.0f)) < 0.01f,
+                  "Overcraft (ascending) puff spawns at the real 22px/64 downward nozzle offset");
+        }
+        else
+        {
+            check(false, "found a spawned Overcraft (ascending) puff to inspect");
+        }
+
+        // Self-delete + real posStart->posEnd slide via the shared
+        // AdvancePatrolStep() machinery (plan.md E3D-MIG-131), reused
+        // rather than a fifth hand-rolled interpolation block.
+        for (int i = 0; i < 15; ++i)
+        {
+            jeepWorld.Update(dt);
+            jeepInteraction.Update(dt, jeepWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        int jeepStillActiveAt15 = 0;
+        const MobileObjSpec* movedPuff = nullptr;
+        for (const auto& obj : jeepWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType36)
+            {
+                ++jeepStillActiveAt15;
+                movedPuff = &obj;
+            }
+        }
+        check(jeepStillActiveAt15 == 4, "all 4 Jeep puffs are still active just before their real phase-16 self-delete");
+        if (movedPuff != nullptr)
+        {
+            check(movedPuff->currentX != movedPuff->posStartX,
+                  "a Jeep puff has visibly moved from posStart via the shared AdvancePatrolStep() slide "
+                  "after 15 ticks");
+        }
+
+        jeepWorld.Update(dt);
+        jeepInteraction.Update(dt, jeepWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        int jeepStillActiveAt16 = 0;
+        for (const auto& obj : jeepWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType36)
+            {
+                ++jeepStillActiveAt16;
+            }
+        }
+        check(jeepStillActiveAt16 == 0, "all 4 Jeep puffs self-delete once phase reaches the real 16-tick lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-013, fixed
+        // 2026-07-14 -- divisor was 6, real is 2; table_pollution is a
+        // plain ascending range so only the divisor needed fixing).
+        check(GetObjIcon(ObjectType::ObjectType36, 0) == 179, "ObjectType36 icon at phase=0 is the real table_pollution[0]=179");
+        check(GetObjIcon(ObjectType::ObjectType36, 2) == 180, "ObjectType36 icon at phase=2 is the real table_pollution[1]=180");
+        check(GetObjIcon(ObjectType::ObjectType36, 14) == 186, "ObjectType36 icon at phase=14 is the real table_pollution[7]=186 (last frame before self-delete)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

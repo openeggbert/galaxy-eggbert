@@ -298,6 +298,40 @@ namespace GalaxyEggbert::CNA
         // in that check), same reasoning as `SpawnInvertBurst()` above.
         void SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z);
 
+        // Pollution puff (plan.md VISUAL-013, ObjectType36) -- real
+        // vehicle-exhaust smoke, confirmed via direct source read
+        // (`Decor::MoveObjectPollution()`, `Decor.cpp:6877-6989`). Called
+        // once per frame unconditionally (the real function is called from
+        // 4 different movement-mode branches, but is itself the gate --
+        // `if (!flag) return;` -- so a single unconditional call is
+        // behaviorally equivalent). isHelicopter/isOvercraft/isJeep/isTank
+        // are NOT mutually exclusive in the real source's own if-chain, but
+        // only one can realistically be true at a time (Blupi drives one
+        // vehicle at a time). isMoving is the real `m_blupiVitesseX==0.0`
+        // check (false = stationary); ascending is real `m_blupiSpeedY<0.0`
+        // (Overcraft) / `m_blupiVitesseY<-5.0` (Helicopter, threshold
+        // dropped as a simplification -- just "moving up"); facingDX>=0 is
+        // real `Direction::Right`. Real `m_blupiPhase` (Jeep/Tank's own
+        // emission schedule) is Blupi's own animation-state-phase counter,
+        // reset on every real action-state change -- this engine has no
+        // equivalent action-state machine yet (no visible Blupi model/
+        // animation exists at all, NEXT.md's single largest gap), so this
+        // reuses the same monotonic, never-resetting tick counter as
+        // Helicopter/Overcraft's real `m_time` -- a deliberate, documented
+        // simplification for this purely-cosmetic effect (the puff cadence
+        // drifts out of exact sync with real per-action resets, but still
+        // produces the same irregular-feeling emission pattern). Spawns via
+        // the existing generic `AdvancePatrolStep()` machinery (sets
+        // `posStart`/`posEnd`/`stepAdvanceTicks`/`patrolStep=2` directly,
+        // matching real `ObjectStart()`'s own `step=2` skip-the-dwell-phase
+        // behavior) rather than a bespoke interpolation block, unlike
+        // `SpawnInvertBurst()`/treasure sparkle's own (earlier, still
+        // correct but duplicative) hand-rolled version -- a real cleanup
+        // opportunity for those two, not done here.
+        void TickPollutionPuff(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ,
+                               bool isHelicopter, bool isOvercraft, bool isJeep, bool isTank, bool isMoving,
+                               bool ascending, int facingDX);
+
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
         [[nodiscard]] bool ExitReached() const noexcept { return exitReached_; }
@@ -488,6 +522,7 @@ namespace GalaxyEggbert::CNA
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int gameOverCount_ = 0;
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
+        int pollutionTick_ = 0; // stands in for real m_time/m_blupiPhase, see TickPollutionPuff()'s own comment
         static constexpr int kBulletCap = 10; // real m_blupiBullet cap
         int bulletCount_ = 0;
         // Real Tank "Fire" cooldown (2026-07-13, plan.md BULLET-001):
