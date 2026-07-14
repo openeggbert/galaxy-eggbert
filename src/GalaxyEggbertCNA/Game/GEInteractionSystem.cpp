@@ -343,6 +343,43 @@ namespace GalaxyEggbert::CNA
             return bullet;
         }
 
+        // Treasure/collectible sparkle burst (plan.md VISUAL-012,
+        // ObjectType39) -- confirmed via a direct source read
+        // (`Decor.cpp:5948-5960`, the real ObjectType5/treasure-collect
+        // site): 4 `ObjectStart(pos, ObjectType39, speed)` calls
+        // (`speed ∈ {-60,60,10,-10}`, encoding up/down/+X/-X) at the
+        // collected object's own position, no pre-offset -- same real
+        // `SearchDistRight()` short-circuit as Invert's burst
+        // (`Decor.cpp:7628-7653`, flat 500 real-px for this ObjectType
+        // too), same 64px-per-tile conversion, same real screen-Y-to-
+        // world-Y sign flip. Appends directly to pendingSpawns since,
+        // unlike Invert's grant/expiry (fired from the game class after
+        // this class's own Update() has already returned), the real
+        // treasure-collect site is INSIDE this class's own per-object
+        // loop, so the existing deferred-spawn flush at the end of
+        // Update() already covers it.
+        void AppendSparkleBurst(float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
+        {
+            constexpr float kDistance = 500.0f / 64.0f;
+            const float offsets[4][3] = {
+                {0.0f, kDistance, 0.0f},  // up
+                {0.0f, -kDistance, 0.0f}, // down
+                {kDistance, 0.0f, 0.0f},  // +X (real "right")
+                {-kDistance, 0.0f, 0.0f}, // -X (real "left")
+            };
+            for (const auto& offset : offsets)
+            {
+                MobileObjSpec spec;
+                spec.type = ObjectType::ObjectType39;
+                spec.active = true;
+                spec.phase = 0.0f;
+                spec.currentX = spec.posStartX = spec.posEndX = x + offset[0];
+                spec.currentY = spec.posStartY = spec.posEndY = y + offset[1];
+                spec.currentZ = spec.posStartZ = spec.posEndZ = z + offset[2];
+                pendingSpawns.push_back(spec);
+            }
+        }
+
         // Blupih (ObjectType32, plan.md E3D-MIG-134) attack: verified
         // directly against Decor.cpp:8878-8886 -- during a turn-dwell
         // (step 1 or 3), at dwell-frame 21 exactly, drops one ObjectType23
@@ -538,6 +575,20 @@ namespace GalaxyEggbert::CNA
             if (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42)
             {
                 if (obj.phase >= 16.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
+            // Treasure/collectible sparkle burst (plan.md VISUAL-012,
+            // ObjectType39) -- purely cosmetic. Real self-delete at
+            // phase>=11 (`Decor.cpp:8382-8389`, `Config::ScaleTime(11)==11`
+            // at this build's 20Hz reference rate) -- an 11-frame lifetime,
+            // shorter than Invert's 16.
+            if (obj.type == ObjectType::ObjectType39)
+            {
+                if (obj.phase >= 11.0f)
                 {
                     obj.active = false;
                 }
@@ -1348,6 +1399,14 @@ namespace GalaxyEggbert::CNA
                     // whole-grid scan after this loop, in case more than one
                     // treasure is somehow collected in the same frame.
                     treasureDoorScanNeeded = true;
+                    // Real sparkle burst (plan.md VISUAL-012) -- see
+                    // AppendSparkleBurst()'s own comment for the full real
+                    // citation. Real source also fires this same burst for
+                    // ObjectType49/50/51 (key-gated doors, not key pickups
+                    // themselves) -- NOT wired here, since this engine's own
+                    // door model uses static terrain tiles, not MobileObjSpec
+                    // instances, for those; a separate follow-up if picked up.
+                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 }
                 case ObjectType::ObjectType6: // extra-life egg

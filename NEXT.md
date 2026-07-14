@@ -107,9 +107,9 @@ menus, though still missing a visible 3D Blupi model.
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
   cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
-- The first real particle effect (Invert start/stop 4-direction burst, added 2026-07-14) — logic
-  and positions independently confirmed correct via unit tests; live visual confirmation was
-  attempted but inconclusive (see §3's own note).
+- The first 2 real particle effects (Invert start/stop 4-direction burst, treasure sparkle, both
+  added 2026-07-14) — logic and positions independently confirmed correct via unit tests; live
+  visual confirmation was attempted but inconclusive (see §3's own note).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -149,6 +149,18 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the treasure sparkle burst — the SECOND real particle effect** (plan.md
+  VISUAL-012), reusing the same technique as the Invert burst below (real `SearchDistRight()`
+  short-circuit, 64px-per-tile conversion). Real spawn site: the treasure-collect branch already
+  inside `GEInteractionSystem::Update()`'s own per-object loop, so this one uses the existing
+  `pendingSpawns` pattern directly (simpler than Invert's grant/expiry, which fire from the game
+  class after `Update()` has already returned). Found a THIRD icon-formula bug along the way: real
+  `table_tresortrack` is a genuinely oscillating table (166 down to 161 and back), not a simple
+  ascending range like the other two — transcribed verbatim as a lookup table. 7 new
+  `VerifyInteractionSystem` checks + full regression on both backends, all pass. Also found (but
+  correctly left unwired) that the same real burst fires for key-gated doors (ObjectType49/50/51)
+  too — this engine's own door model uses static terrain tiles, not `MobileObjSpec`, for those, so
+  wiring it needs its own separate design, not a quick add.
 - **Implemented the Invert start/stop particle burst — the FIRST real particle effect in this
   engine** (plan.md BLUPI-110/VISUAL-014/015), per the user's explicit direction to start on the
   particle-effects system now that data-table transcription is approved. Real spawn sites
@@ -684,11 +696,12 @@ judgment (§9).
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
-    2026-07-14: the user directed a start on this system and the first slice (Invert start/stop
-    burst, `BLUPI-110`/`VISUAL-014/015`) is now done** — see §3's own writeup, including the
-    real `SearchDistRight()` short-circuit finding that makes several OTHER effects in this family
-    (types 36/39/93) similarly simple (no raycast needed), a reusable discovery for whichever
-    effect is picked up next. ~20 items remain.
+    2026-07-14: the user directed a start on this system; 2 slices are now done** — Invert
+    start/stop burst (`BLUPI-110`/`VISUAL-014/015`) and treasure sparkle (`VISUAL-012`), see §3's
+    own writeups. Real `SearchDistRight()` short-circuits to a flat 500px for types 36/39/41/42/93
+    (no raycast needed) — types 36 (pollution puff, vehicle exhaust — real trigger is more complex,
+    4 different vehicle-specific timing patterns) and 93 remain in this "simple" family if picked
+    up next. ~18 items remain overall.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

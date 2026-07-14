@@ -167,6 +167,70 @@ int main(int argc, char** argv)
         check(false, "found a chest (ObjectType5) in the sample world");
     }
 
+    // 2.1b. Treasure sparkle burst (plan.md VISUAL-012, ObjectType39) --
+    // real 4-instance burst at the collected chest's own position, same
+    // 500px/64 real distance and phase>=11 self-delete as confirmed via
+    // direct Decor.cpp source read.
+    if (const auto* sparkleChest = findFirst(ObjectType::ObjectType5))
+    {
+        GEWorldRuntime sparkleWorld;
+        check(sparkleWorld.LoadFromVwrFile(worldPath), "loaded a fresh world for the sparkle-burst test");
+        GEInteractionSystem sparkleInteraction;
+        constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
+        constexpr float kDist = 500.0f / 64.0f;
+        const float cx = sparkleChest->currentX, cy = sparkleChest->currentY, cz = sparkleChest->currentZ;
+
+        // Filtered by proximity to the chest, not a global ObjectType39
+        // count -- the sample world's own object-type exhibition already
+        // places one static specimen of every ObjectType (including 39)
+        // elsewhere in the map, so a blind global count is always off by
+        // one (same false-positive shape as the bridge-construction test
+        // above).
+        const auto countNearbySparkles = [&sparkleWorld, cx, cy, cz, kDist]()
+        {
+            int count = 0;
+            for (const auto& obj : sparkleWorld.GetMobileObjects())
+            {
+                if (!obj.active || obj.type != ObjectType::ObjectType39)
+                {
+                    continue;
+                }
+                const float ddx = obj.currentX - cx, ddy = obj.currentY - cy, ddz = obj.currentZ - cz;
+                const float dist = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
+                if (std::fabs(dist - kDist) < 0.01f)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+
+        sparkleInteraction.Update(dt, sparkleWorld, cx, cy, cz, 0.0f, sound);
+        check(countNearbySparkles() == 4, "collecting a treasure spawns exactly 4 ObjectType39 sparkle instances at the real 500px/64 distance");
+
+        for (int i = 0; i < 10; ++i)
+        {
+            sparkleWorld.Update(dt);
+        }
+        sparkleInteraction.Update(dt, sparkleWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countNearbySparkles() == 4, "sparkle instances are still active just before their real phase-11 self-delete");
+
+        sparkleWorld.Update(dt);
+        sparkleInteraction.Update(dt, sparkleWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countNearbySparkles() == 0, "sparkle instances self-delete once phase reaches the real 11-tick lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-012, fixed
+        // 2026-07-14 -- real table_tresortrack oscillates, was wrongly
+        // ascending arithmetic before).
+        check(GetObjIcon(ObjectType::ObjectType39, 0) == 166, "ObjectType39 icon at phase=0 is the real table_tresortrack[0]=166");
+        check(GetObjIcon(ObjectType::ObjectType39, 5) == 161, "ObjectType39 icon at phase=5 is the real table_tresortrack[5]=161 (the shimmer's low point)");
+        check(GetObjIcon(ObjectType::ObjectType39, 10) == 166, "ObjectType39 icon at phase=10 is the real table_tresortrack[10]=166 (back to the start)");
+    }
+    else
+    {
+        check(false, "found a chest (ObjectType5) in the sample world for the sparkle-burst test");
+    }
+
     if (const auto* key = findFirst(ObjectType::ObjectType49))
     {
         const float kx = key->currentX, ky = key->currentY, kz = key->currentZ;

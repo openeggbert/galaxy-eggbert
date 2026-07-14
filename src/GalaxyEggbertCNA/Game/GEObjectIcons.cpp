@@ -12,6 +12,11 @@ namespace GalaxyEggbert::CNA
         static const int kBird[8]     = {98,99,100,101,102,103,104,105};
         static const int kFish[8]     = {82,82,81,81,82,82,83,83};
         static const int kBlupit[8]   = {249,249,250,250,249,249,248,248};
+        // Real table_tresortrack (Tables.cpp:1792-1795, Invert-burst-adjacent
+        // fix, 2026-07-14) -- an 11-frame oscillating shimmer (166 down to
+        // 161 and back), NOT a simple ascending range like the old wrong
+        // formula here assumed.
+        static const int kTresorTrack[11] = {166,165,164,163,162,161,162,163,164,165,166};
         static const int kGuepeLeft[6]    = {195,196,197,198,197,196};
         static const int kCreature[8]     = {247,248,249,250,251,250,249,248};
         static const int kBlupihLeft[8]   = {66,67,68,67,66,69,70,69};
@@ -74,7 +79,11 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType34: return 168 + (p / 6) % 25;
             case ObjectType::ObjectType36: return 179 + (p / 6) % 8;
             case ObjectType::ObjectType37: return 40 + (p / 6) % 70;
-            case ObjectType::ObjectType39: return 166 + (p / 6) % 11;
+            // Fixed 2026-07-14 (plan.md VISUAL-012): was a wrong "166 +
+            // ascending" arithmetic formula; the real table_tresortrack is
+            // an oscillating shimmer (see kTresorTrack above), and the real
+            // divisor is Config::ScaleDiv(1)==1, not 6.
+            case ObjectType::ObjectType39: return kTresorTrack[p % 11];
             // Fixed 2026-07-14 (plan.md VISUAL-014/015): divisor was 6, real
             // is Config::ScaleDiv(2)==2 at this build's 20Hz reference rate
             // (Tables.cpp:table_invertstart/table_invertstop, confirmed via

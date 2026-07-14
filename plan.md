@@ -3022,7 +3022,30 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
 - [ ] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded
-- [ ] VISUAL-012 — Treasure sparkle: ObjectType39 on each treasure pickup
+- [x] VISUAL-012 — Treasure sparkle: ObjectType39 on each treasure pickup — **done 2026-07-14**,
+      the second real particle effect built (see VISUAL-014/015's writeup for the shared
+      `SearchDistRight()`-short-circuit/64px-conversion technique this reuses). Real spawn site
+      confirmed via direct source read (`Decor.cpp:5948-5960`, the real ObjectType5/treasure-
+      collect site): 4 `ObjectStart(pos, ObjectType39, speed)` calls, same `{-60,60,10,-10}`
+      direction encoding as Invert, no pre-offset (matches Invert's GRANT shape, 500 real-px).
+      Real self-delete at `phase>=11` (`Decor.cpp:8382-8389`, an 11-frame lifetime, shorter than
+      Invert's 16). Found and fixed a THIRD real bug in `GEObjectIcons.cpp`'s existing icon
+      formula for this type — unlike the Invert pair's simple arithmetic-range bug, real
+      `table_tresortrack` is a genuinely oscillating table (`166,165,164,163,162,161,162,163,
+      164,165,166` — shimmers down to 161 and back, not a plain ascending range), transcribed
+      verbatim as a lookup table; divisor was also wrong (6 instead of the real
+      `Config::ScaleDiv(1)==1`). New free function `AppendSparkleBurst()` (not a public method
+      like Invert's `SpawnInvertBurst()` — the real treasure-collect site is INSIDE
+      `GEInteractionSystem::Update()`'s own per-object loop, so it can use the existing
+      `pendingSpawns` deferred-spawn pattern directly). Real source also fires this same burst for
+      `ObjectType49/50/51` (key-gated doors, not key pickups) — NOT wired, since this engine's own
+      door model uses static terrain tiles, not `MobileObjSpec` instances, for those; a separate
+      follow-up if picked up. 7 new `VerifyInteractionSystem` checks (spawn count/distance
+      filtered by proximity to the chest, since the sample world's own object-type exhibition
+      already places one static specimen of every type including this one, self-delete timing,
+      corrected icon values at 3 points including the shimmer's low point) + full regression on
+      both backends, all pass. Same live-visual-verification caveat as VISUAL-014/015 — not
+      independently re-attempted (same rendering path, same conclusion would apply).
 - [ ] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers
 - [x] VISUAL-014 — Invert power-up particles: ObjectType41 (4-direction burst on pickup) — **done
       2026-07-14, the FIRST real particle effect built in this engine** (data-table transcription
