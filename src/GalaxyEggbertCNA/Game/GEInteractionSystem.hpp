@@ -324,13 +324,44 @@ namespace GalaxyEggbert::CNA
         // the existing generic `AdvancePatrolStep()` machinery (sets
         // `posStart`/`posEnd`/`stepAdvanceTicks`/`patrolStep=2` directly,
         // matching real `ObjectStart()`'s own `step=2` skip-the-dwell-phase
-        // behavior) rather than a bespoke interpolation block, unlike
-        // `SpawnInvertBurst()`/treasure sparkle's own (earlier, still
-        // correct but duplicative) hand-rolled version -- a real cleanup
-        // opportunity for those two, not done here.
+        // behavior) rather than a bespoke interpolation block --
+        // `SpawnInvertBurst()`/treasure sparkle were refactored the same
+        // day (2026-07-14) to also use this shared machinery.
         void TickPollutionPuff(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ,
                                bool isHelicopter, bool isOvercraft, bool isJeep, bool isTank, bool isMoving,
                                bool ascending, int facingDX);
+
+        // Shield/Power magic trail (plan.md VISUAL-011/E3D-MIG-??,
+        // ObjectType57/27) -- real `Decor.cpp:5204-5237`: while Shield or
+        // Power is active, drops a single static sparkle marker exactly at
+        // Blupi's current position every time he has moved a real
+        // Manhattan (X+Y, screen-space) distance of >=40px since the last
+        // drop (`m_blupiPosMagic`), then resets the tracker to the new
+        // drop point -- a breadcrumb trail, not a burst (posStart=posEnd=
+        // spawn point, no offset/interpolation, same `speed=0` shape as
+        // `SpawnFanHitFlash()`). Real `m_blupiPosMagic` is a SINGLE shared
+        // tracker (Shield/Power/Hide can never be active simultaneously,
+        // per this engine's own mutually-exclusive `SecretPower` enum), so
+        // one tracker suffices here too. `ResetMagicTrail()` mirrors every
+        // real grant site's own `m_blupiPosMagic = m_blupiPos` (confirmed
+        // at multiple real grant sites, e.g. `Decor.cpp:6022`) -- call it
+        // at Shield/Power's own grant sites, same idiom as
+        // `SpawnInvertBurst()`'s grant-site call. Real distance check
+        // ignores Z (matching every other 2D-source-derived check this
+        // session, e.g. follower homing) -- only X/Y accumulate toward the
+        // 40px threshold, though the spawned marker still uses Blupi's
+        // full 3D position. Hide's own real afterimage trail
+        // (`ObjectType58`, a snapshot of Blupi's OWN current sprite, not a
+        // fixed icon) is NOT modeled here -- blocked on the same "no
+        // visible Blupi model/animation" gap as Pollution puff's
+        // Jeep/Tank `m_blupiPhase` simplification, not a quick add. Real
+        // level-load/respawn resets of `m_blupiPosMagic` (several
+        // additional real call sites) are also NOT modeled -- a minor,
+        // accepted simplification (a stale tracker only shifts the first
+        // post-respawn marker's exact trigger point, cosmetic only).
+        void ResetMagicTrail(float x, float y, float z);
+        void TickMagicTrail(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ, bool isShielded,
+                             bool isPowered);
 
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
@@ -523,6 +554,11 @@ namespace GalaxyEggbert::CNA
         int gameOverCount_ = 0;
         int dynamiteCount_ = 0; // real m_blupiDynamite, caps at 1
         int pollutionTick_ = 0; // stands in for real m_time/m_blupiPhase, see TickPollutionPuff()'s own comment
+        // Real m_blupiPosMagic, see TickMagicTrail()'s own comment. Only
+        // consulted once Shield/Power has actually granted (which always
+        // calls ResetMagicTrail() first), so this default is never read
+        // uninitialized.
+        float magicTrailLastX_ = 0.0f, magicTrailLastY_ = 0.0f, magicTrailLastZ_ = 0.0f;
         static constexpr int kBulletCap = 10; // real m_blupiBullet cap
         int bulletCount_ = 0;
         // Real Tank "Fire" cooldown (2026-07-13, plan.md BULLET-001):

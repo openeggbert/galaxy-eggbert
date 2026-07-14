@@ -678,6 +678,26 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Shield/Power magic trail (plan.md VISUAL-011-adjacent,
+            // ObjectType57/27) -- purely cosmetic, static markers (real
+            // `speed=0`-equivalent, no offset -- see `TickMagicTrail()`'s
+            // own comment), so unlike Pollution puff above there's nothing
+            // for the shared `AdvancePatrolStep()` call to do (posStart==
+            // posEnd is already its own no-op guard); self-contained here,
+            // same shape as Fan-hit/dynamite-blast flash. Real self-delete
+            // at phase>=20 (Shield, `Decor.cpp:8373-8380`) / phase>=24
+            // (Power, `Decor.cpp:8365-8372`).
+            if (obj.type == ObjectType::ObjectType57 && obj.phase >= 20.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+            if (obj.type == ObjectType::ObjectType27 && obj.phase >= 24.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
             // posStart and posEnd at `speed` units/sec -- matches
             // GalaxyEggbertSimple3D's GEDecorSystem::Update() exactly
@@ -2202,6 +2222,58 @@ namespace GalaxyEggbert::CNA
             }
         }
         objects.push_back(spec);
+    }
+
+    void GEInteractionSystem::ResetMagicTrail(float x, float y, float z)
+    {
+        magicTrailLastX_ = x;
+        magicTrailLastY_ = y;
+        magicTrailLastZ_ = z;
+    }
+
+    void GEInteractionSystem::TickMagicTrail(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ,
+                                              bool isShielded, bool isPowered)
+    {
+        if (!isShielded && !isPowered)
+        {
+            return;
+        }
+
+        // Real Manhattan distance check ignores Z (Decor.cpp:5204-5237,
+        // same 2D-source-only convention as every other real X/Y-only
+        // check this session).
+        constexpr float kThreshold = 40.0f / 64.0f;
+        const float dist = std::fabs(blupiX - magicTrailLastX_) + std::fabs(blupiY - magicTrailLastY_);
+        if (dist < kThreshold)
+        {
+            return;
+        }
+
+        MobileObjSpec spec;
+        spec.type = isShielded ? ObjectType::ObjectType57 : ObjectType::ObjectType27;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = blupiX;
+        spec.currentY = spec.posStartY = spec.posEndY = blupiY;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = blupiZ;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        bool placed = false;
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                placed = true;
+                break;
+            }
+        }
+        if (!placed)
+        {
+            objects.push_back(spec);
+        }
+
+        ResetMagicTrail(blupiX, blupiY, blupiZ);
     }
 
     void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)

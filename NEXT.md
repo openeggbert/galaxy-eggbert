@@ -107,11 +107,11 @@ menus, though still missing a visible 3D Blupi model.
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
   cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
-- The first 5 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
+- The first 7 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
   Fan-hit shockwave flash, dynamite-blast explosion flash, Pollution puff (4 vehicle types),
-  all added 2026-07-14) — logic and positions independently confirmed correct via unit tests; live
-  visual confirmation was attempted for the first two but inconclusive (see §3's own note); the
-  latter three were not re-attempted (same rendering path).
+  Shield trail, Power/Magic trail, all added 2026-07-14) — logic and positions independently
+  confirmed correct via unit tests; live visual confirmation was attempted for the first two but
+  inconclusive (see §3's own note); the rest were not re-attempted (same rendering path).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -151,6 +151,22 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the Shield and Power/Magic trails — the SIXTH and SEVENTH real particle effects**
+  (plan.md VISUAL-011/017, ObjectType57/27) — a breadcrumb trail, not a burst: real
+  `Decor.cpp:5204-5237` drops a single STATIC marker exactly at Blupi's position every time he has
+  moved a real 40px/64 Manhattan (X/Y-only, Z ignored) distance since the last drop, tracked via
+  one shared `m_blupiPosMagic`-equivalent (safe since Shield/Power/Cloud/Hide can never be active
+  simultaneously). New `GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, the latter
+  wired at this engine's existing Shield/Power grant sites (mirroring every real grant site's own
+  tracker reset). Real self-delete at phase>=20 (Shield)/24 (Power). Found and fixed 2 more
+  `GEObjectIcons.cpp` bugs: Power's `table_magictrack` repeats its first 5 icons twice before
+  continuing (the usual wrong-divisor-and-ascending-arithmetic shape); Shield's `table_shieldtrack`
+  was previously a static "first-frame only" return under a wrong "would overflow the sheet"
+  assumption -- the real table only reaches icon 288, well within bounds, so it's now fully
+  animated. Hide's own real afterimage trail (ObjectType58, a snapshot of Blupi's own sprite) is
+  NOT modeled -- blocked on the same "no visible Blupi model" gap as Pollution puff's Jeep/Tank
+  simplification. 15 new `VerifyInteractionSystem` checks + full regression on both backends, all
+  pass.
 - **Refactored the Invert burst and treasure sparkle particle effects to reuse the engine's
   existing generic `AdvancePatrolStep()` machinery** instead of their own hand-rolled `phase`-based
   interpolation, matching the pattern Pollution puff (below) established. `SpawnInvertBurst()`/
@@ -775,11 +791,12 @@ judgment (§9).
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
-    2026-07-14: the user directed a start on this system; 5 slices are now done** — Invert
+    2026-07-14: the user directed a start on this system; 7 slices are now done** — Invert
     start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`), Fan-hit
     shockwave flash and dynamite-blast explosion flash (`VISUAL-008`, partial — only
-    `ObjectType8`/`11` of the 4 types in that item), and Pollution puff (`VISUAL-013`, all 4
-    vehicle types), see §3's own writeups. Real `SearchDistRight()` short-circuits to a flat 500px
+    `ObjectType8`/`11` of the 4 types in that item), Pollution puff (`VISUAL-013`, all 4
+    vehicle types), and the Shield/Power magic trails (`VISUAL-011`/`017`), see §3's own writeups.
+    Real `SearchDistRight()` short-circuits to a flat 500px
     for types 36/39/41/42/93 (no raycast needed) — investigated type 93 directly
     (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and found it's actually gated behind the whole
     not-yet-built "Voyage" pickup-flight-animation system (plan.md `158`), NOT a simple standalone
@@ -792,11 +809,12 @@ judgment (§9).
     Pollution puff, the first effect to use that machinery directly) — cleaned up the same day
     (both now set `patrolStep=2`/`stepAdvanceTicks` at spawn like Pollution puff; confirmed
     mathematically identical to the old hand-rolled version first, a pure refactor with zero
-    behavior change). ~15 items remain
-    overall, and every real "simple" (flat-500px, single-instance-or-4-burst) particle effect is
-    now done — remaining items are either genuinely harder (door-linked bursts needing a
-    non-`MobileObjSpec` door model, the Voyage system, Shield's sparkle loop, water splashes, the
-    electric arc) or blocked on the still-unaudited `ObjectType9/10` formulas.
+    behavior change). ~13 items remain overall, and every real "simple" (flat-500px,
+    single-instance-or-4-burst, or distance-triggered breadcrumb) particle effect is now done —
+    remaining items are either genuinely harder (door-linked bursts needing a non-`MobileObjSpec`
+    door model, the Voyage system, water splashes, the electric arc, Hide's own afterimage trail
+    which needs a visible Blupi model this engine doesn't have) or blocked on the still-unaudited
+    `ObjectType9/10` formulas.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

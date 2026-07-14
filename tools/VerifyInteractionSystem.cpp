@@ -1887,6 +1887,175 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType36, 14) == 186, "ObjectType36 icon at phase=14 is the real table_pollution[7]=186 (last frame before self-delete)");
     }
 
+    // 17.8. Shield/Power magic trail (plan.md VISUAL-011-adjacent,
+    // ObjectType57/27) -- a breadcrumb trail dropped every real 40px/64 of
+    // Manhattan (X/Y-only) movement while Shield or Power is active, real
+    // phase>=20/24 self-delete.
+    {
+        constexpr float dt = 1.0f / 20.0f;
+        constexpr float kThreshold = 40.0f / 64.0f;
+
+        GEWorldRuntime noneWorld;
+        GEInteractionSystem noneInteraction;
+        noneInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
+        noneInteraction.TickMagicTrail(noneWorld, 5.0f, 1.0f, 0.0f, /*isShielded=*/false, /*isPowered=*/false);
+        int noneCount = 0;
+        for (const auto& obj : noneWorld.GetMobileObjects())
+        {
+            if (obj.active && (obj.type == ObjectType::ObjectType57 || obj.type == ObjectType::ObjectType27))
+            {
+                ++noneCount;
+            }
+        }
+        check(noneCount == 0, "TickMagicTrail() never spawns while neither Shield nor Power is active, even after a large move");
+
+        // Shield: below-threshold movement is a no-op; crossing it spawns
+        // exactly at the current position and resets the tracker.
+        GEWorldRuntime shieldWorld;
+        GEInteractionSystem shieldInteraction;
+        shieldInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
+        shieldInteraction.TickMagicTrail(shieldWorld, kThreshold * 0.5f, 1.0f, 0.0f, /*isShielded=*/true, false);
+        int shieldCountBelowThreshold = 0;
+        for (const auto& obj : shieldWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType57)
+            {
+                ++shieldCountBelowThreshold;
+            }
+        }
+        check(shieldCountBelowThreshold == 0, "moving less than the real 40px/64 threshold does not drop a Shield trail marker");
+
+        shieldInteraction.TickMagicTrail(shieldWorld, kThreshold + 0.1f, 1.0f, 0.0f, true, false);
+        const MobileObjSpec* shieldMarker = nullptr;
+        int shieldCount = 0;
+        for (const auto& obj : shieldWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType57)
+            {
+                ++shieldCount;
+                shieldMarker = &obj;
+            }
+        }
+        check(shieldCount == 1, "crossing the real 40px/64 threshold drops exactly 1 Shield trail marker (ObjectType57)");
+        if (shieldMarker != nullptr)
+        {
+            constexpr float kSpawnX = kThreshold + 0.1f;
+            check(shieldMarker->currentX == kSpawnX && shieldMarker->currentY == 1.0f && shieldMarker->currentZ == 0.0f,
+                  "the Shield trail marker spawns exactly at Blupi's current position (static, no offset)");
+            check(shieldMarker->posStartX == shieldMarker->posEndX && shieldMarker->posStartY == shieldMarker->posEndY,
+                  "the Shield trail marker is static (real speed=0 -- posStart==posEnd, no slide)");
+        }
+
+        // The tracker is reset on spawn -- another below-threshold move
+        // from the NEW marker position doesn't drop a second one.
+        shieldInteraction.TickMagicTrail(shieldWorld, kThreshold + 0.1f + kThreshold * 0.5f, 1.0f, 0.0f, true, false);
+        int shieldCountAfterSmallMove = 0;
+        for (const auto& obj : shieldWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType57)
+            {
+                ++shieldCountAfterSmallMove;
+            }
+        }
+        check(shieldCountAfterSmallMove == 1,
+              "the tracker resets on spawn -- a second below-threshold move doesn't drop another marker yet");
+
+        // Z is ignored by the real distance check -- moving only in Z
+        // never drops a marker.
+        GEWorldRuntime zOnlyWorld;
+        GEInteractionSystem zOnlyInteraction;
+        zOnlyInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
+        zOnlyInteraction.TickMagicTrail(zOnlyWorld, 0.0f, 1.0f, 50.0f, true, false);
+        int zOnlyCount = 0;
+        for (const auto& obj : zOnlyWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType57)
+            {
+                ++zOnlyCount;
+            }
+        }
+        check(zOnlyCount == 0, "the real distance check ignores world Z -- moving only in Z never drops a marker");
+
+        // Power: same mechanic, different type/table.
+        GEWorldRuntime powerWorld;
+        GEInteractionSystem powerInteraction;
+        powerInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
+        powerInteraction.TickMagicTrail(powerWorld, kThreshold + 0.1f, 1.0f, 0.0f, /*isShielded=*/false,
+                                        /*isPowered=*/true);
+        int powerCount = 0;
+        for (const auto& obj : powerWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType27)
+            {
+                ++powerCount;
+            }
+        }
+        check(powerCount == 1, "crossing the real 40px/64 threshold drops exactly 1 Power trail marker (ObjectType27)");
+
+        // Self-delete timing (phase>=20 Shield / phase>=24 Power).
+        for (int i = 0; i < 19; ++i)
+        {
+            shieldWorld.Update(dt);
+            shieldInteraction.Update(dt, shieldWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        int shieldActiveAt19 = 0;
+        for (const auto& obj : shieldWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType57)
+            {
+                ++shieldActiveAt19;
+            }
+        }
+        check(shieldActiveAt19 == 1, "the Shield trail marker is still active just before its real phase-20 self-delete");
+        shieldWorld.Update(dt);
+        shieldInteraction.Update(dt, shieldWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        int shieldActiveAt20 = 0;
+        for (const auto& obj : shieldWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType57)
+            {
+                ++shieldActiveAt20;
+            }
+        }
+        check(shieldActiveAt20 == 0, "Shield trail markers self-delete once phase reaches the real 20-tick lifetime");
+
+        for (int i = 0; i < 23; ++i)
+        {
+            powerWorld.Update(dt);
+            powerInteraction.Update(dt, powerWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        int powerActiveAt23 = 0;
+        for (const auto& obj : powerWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType27)
+            {
+                ++powerActiveAt23;
+            }
+        }
+        check(powerActiveAt23 == 1, "the Power trail marker is still active just before its real phase-24 self-delete");
+        powerWorld.Update(dt);
+        powerInteraction.Update(dt, powerWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        int powerActiveAt24 = 0;
+        for (const auto& obj : powerWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType27)
+            {
+                ++powerActiveAt24;
+            }
+        }
+        check(powerActiveAt24 == 0, "the Power trail marker self-deletes once phase reaches the real 24-tick lifetime");
+
+        // GetObjIcon()'s corrected formulas (plan.md VISUAL-011-adjacent,
+        // fixed 2026-07-14 -- both tables repeat their first 5 icons twice
+        // before continuing, not a simple ascending range).
+        check(GetObjIcon(ObjectType::ObjectType57, 0) == 274, "ObjectType57 icon at phase=0 is the real table_shieldtrack[0]=274");
+        check(GetObjIcon(ObjectType::ObjectType57, 5) == 274, "ObjectType57 icon at phase=5 is the real table_shieldtrack[5]=274 (the repeat)");
+        check(GetObjIcon(ObjectType::ObjectType57, 10) == 279, "ObjectType57 icon at phase=10 is the real table_shieldtrack[10]=279 (continues past the repeat)");
+        check(GetObjIcon(ObjectType::ObjectType27, 0) == 152, "ObjectType27 icon at phase=0 is the real table_magictrack[0]=152");
+        check(GetObjIcon(ObjectType::ObjectType27, 5) == 152, "ObjectType27 icon at phase=5 is the real table_magictrack[5]=152 (the repeat)");
+        check(GetObjIcon(ObjectType::ObjectType27, 10) == 157, "ObjectType27 icon at phase=10 is the real table_magictrack[10]=157 (continues past the repeat)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

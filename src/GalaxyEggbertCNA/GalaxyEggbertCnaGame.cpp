@@ -1538,6 +1538,13 @@ namespace GalaxyEggbert::CNA
                     blupi_.GetX() != blupiXBeforeStep, blupi_.GetVelocityY() > 0.0f, blupiFacingDX);
             }
 
+            // Shield/Power magic trail (plan.md VISUAL-011-adjacent) --
+            // called unconditionally every frame; TickMagicTrail() itself
+            // is the gate (a no-op unless Shield or Power is active).
+            interaction_.TickMagicTrail(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                        secretPower == GEBlupiController::SecretPower::Shield,
+                                        secretPower == GEBlupiController::SecretPower::Power);
+
             // Real camera shake (plan.md CAM-008/009) -- generic-hazard
             // contact-kill (most types SmallShake, fish/bird BigShake) and
             // the dynamite blast's own center-tile SmallShake, both
@@ -1600,10 +1607,15 @@ namespace GalaxyEggbert::CNA
             if (interaction_.ShieldGrantedThisFrame() && blupi_.TriggerShield())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel42);
+                // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent,
+                // Decor.cpp:6022) -- the magic trail's first marker only
+                // appears after a further real 40px of movement from here.
+                interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
             if (interaction_.PowerGrantedThisFrame() && blupi_.TriggerPower())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel44);
+                interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
             if (interaction_.CloudGrantedThisFrame() && blupi_.TriggerCloud())
             {

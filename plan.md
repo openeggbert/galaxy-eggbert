@@ -3066,7 +3066,38 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       this session).
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
-- [ ] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded
+- [x] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded —
+      **done 2026-07-14**, the SIXTH real particle effect, built alongside its sibling Power/Magic
+      trail (ObjectType27, same mechanic, see VISUAL-017). Description corrected: not a continuous
+      "loop" — real `Decor.cpp:5204-5237` drops a
+      single STATIC breadcrumb marker exactly at Blupi's current position every time he has moved
+      a real Manhattan (X+Y, screen-space, Z ignored) distance of >=40px since the last drop
+      (`m_blupiPosMagic`, a SINGLE tracker shared with the Power trail below, safe since Shield/
+      Power/Cloud/Hide can never be simultaneously active), confirmed via direct source read. Real
+      self-delete at `phase>=20` (Shield, `table_shieldtrack`, `Decor.cpp:8373-8380`) /
+      `phase>=24` (Power, `table_magictrack`, `Decor.cpp:8365-8372`). No offset/interpolation
+      needed (`speed=0`-equivalent, same static shape as `SpawnFanHitFlash()`). `ResetMagicTrail()`
+      mirrors every real grant site's own `m_blupiPosMagic = m_blupiPos` reset (confirmed at
+      multiple sites, e.g. `Decor.cpp:6022`) — wired at this engine's own existing Shield/Power
+      grant sites (`GalaxyEggbertCnaGame.cpp`, right next to their existing grant-sound calls).
+      Found and fixed TWO more `GEObjectIcons.cpp` bugs: `ObjectType27`'s existing formula had the
+      usual wrong-divisor-and-ascending-arithmetic bug (real `table_magictrack` repeats icons
+      152-156 TWICE before continuing, `Tables.cpp:1754-1759`); `ObjectType57` was previously a
+      static "first-frame only" return under the WRONG assumption that a naive ascending 20-frame
+      range would overflow this engine's element.png sheet (274+19=293 > 289) — the REAL table
+      (`table_shieldtrack`, `Tables.cpp:1769-1773`) only reaches 288, comfortably within bounds, so
+      the full animation is now modeled instead. Real Hide's own afterimage trail (`ObjectType58`,
+      a snapshot of Blupi's OWN current sprite, not a fixed icon) is NOT modeled — blocked on the
+      same "no visible Blupi model/animation" gap as Pollution puff's Jeep/Tank simplification, not
+      a quick add. Real level-load/respawn resets of `m_blupiPosMagic` (several additional real
+      call sites beyond the 4 power-grant ones) are also NOT modeled — a minor, accepted
+      simplification (cosmetic only: a stale tracker just shifts the first post-respawn marker's
+      exact trigger point). 15 new `VerifyInteractionSystem` checks (no-op without Shield/Power,
+      threshold-crossing spawn/no-spawn, static position, tracker reset on spawn, Z-axis ignored,
+      self-delete timing for both types, corrected icon values including the repeat-then-continue
+      point) + full regression on both backends, all pass. Not live-visually verified (same
+      already-proven element.png billboard rendering path as every other particle effect this
+      session).
 - [x] VISUAL-012 — Treasure sparkle: ObjectType39 on each treasure pickup — **done 2026-07-14**,
       the second real particle effect built (see VISUAL-014/015's writeup for the shared
       `SearchDistRight()`-short-circuit/64px-conversion technique this reuses). Real spawn site
@@ -3218,7 +3249,11 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       instead of matching the real `table_invertstop` array's exact reverse order (186 down to
       179) — corrected to `186 - (p/2)%8`.
 - [ ] VISUAL-016 — Goo particle: ObjectType34 sticks to geometry (element.png, 25 frames)
-- [ ] VISUAL-017 — Magic track sparkle: ObjectType27 trail effect
+- [x] VISUAL-017 — Magic track sparkle: ObjectType27 trail effect — **done 2026-07-14**, built
+      together with VISUAL-011 (Shield trail, ObjectType57) — same mechanic, same
+      `GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, see VISUAL-011's full writeup
+      for the real trigger/self-delete/icon-formula-fix details specific to this type
+      (`table_magictrack`, phase>=24 self-delete, Power's own grant site).
 - [ ] VISUAL-018 — Helicopter debris: ByeByeHelico float-based debris pool when helico destroyed
 - [ ] VISUAL-019 — Bridge construction animation: ObjectType52 (157 frames) modifies static decor
 - [ ] VISUAL-020 — Dynamite fuse animation: ObjectType56 (100 frames) with blast events at phases 50-69

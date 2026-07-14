@@ -33,6 +33,26 @@ namespace GalaxyEggbert::CNA
             4,5,6,5,6,6,5,5,6,7,
             7,8,8,9,9,10,10,11,11
         };
+        // Real table_magictrack (Tables.cpp:1754-1759, Shield/Power magic
+        // trail fix, 2026-07-14) -- NOT a simple ascending range: the real
+        // 24-frame "loop departs Blupi" animation repeats icons 152-156
+        // TWICE (frames 0-9) before continuing upward, same category of
+        // bug as kExplo1/kExplo4/kTresorTrack above.
+        static const int kMagicTrack[24] = {
+            152,153,154,155,156,152,153,154,155,156,
+            157,158,159,160,157,158,159,160,161,162,
+            163,164,165,166
+        };
+        // Real table_shieldtrack (Tables.cpp:1769-1773) -- same
+        // repeats-twice-then-continues shape as kMagicTrack above. Also
+        // fixes a second bug: the previous static "274 (first-frame only)"
+        // return assumed a naive ascending 274..293 range would overflow
+        // this engine's element.png sheet, but the REAL table only reaches
+        // 288 -- comfortably within bounds, so the full animation fits.
+        static const int kShieldTrack[20] = {
+            274,275,276,277,278,274,275,276,277,278,
+            279,280,281,282,283,284,285,286,287,288
+        };
         static const int kGuepeLeft[6]    = {195,196,197,198,197,196};
         static const int kCreature[8]     = {247,248,249,250,251,250,249,248};
         static const int kBlupihLeft[8]   = {66,67,68,67,66,69,70,69};
@@ -84,12 +104,19 @@ namespace GalaxyEggbert::CNA
             // grid (29 rows x 10 cols), a consecutive-icon cycle is used,
             // matching this function's existing convention for simple
             // animations (e.g. ObjectType2/6/7 above). Where it doesn't
-            // (56/57), the real per-frame layout isn't known without reading
+            // (56), the real per-frame layout isn't known without reading
             // Tables.cpp, so only the documented first-frame icon is
             // returned (no animation) rather than guessing a cycle that
-            // would run off the sheet.
+            // would run off the sheet. (57 was in this category too until
+            // 2026-07-14, when Tables.cpp confirmed its real table fits
+            // the sheet after all -- see its own case below.)
             case ObjectType::ObjectType23: return 176;
-            case ObjectType::ObjectType27: return 152 + (p / 6) % 24;
+            // Fixed 2026-07-14 (plan.md VISUAL-011-adjacent, Shield/Power
+            // magic trail): wrong divisor (6 instead of the real
+            // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
+            // assumption -- real table_magictrack repeats icons 152-156
+            // twice before continuing (see kMagicTrack above).
+            case ObjectType::ObjectType27: return kMagicTrack[p % 24];
             case ObjectType::ObjectType28: return 167;
             case ObjectType::ObjectType29: return 177;
             case ObjectType::ObjectType34: return 168 + (p / 6) % 25;
@@ -114,7 +141,12 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType41: return 179 + (p / 2) % 8;
             case ObjectType::ObjectType42: return 186 - (p / 2) % 8;
             case ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
-            case ObjectType::ObjectType57: return 274; // 20 frames would exceed the sheet (274+19=293 > 289) -- first-frame only
+            // Fixed 2026-07-14 (plan.md VISUAL-011-adjacent, Shield/Power
+            // magic trail): the real table only reaches 288 (see
+            // kShieldTrack above), not the previously-assumed 293 -- it
+            // fits the sheet fine, so the full 20-frame animation is now
+            // modeled instead of a static first-frame return.
+            case ObjectType::ObjectType57: return kShieldTrack[p % 20];
             case ObjectType::ObjectType97: return 256 + (p / 6) % 5;
             // object-m.png-sourced Category B types (2026-07-09) -- these
             // are NOT element.png icons; GetElementIconUv() would compute
