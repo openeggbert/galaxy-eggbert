@@ -380,6 +380,28 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Dynamite-blast explosion flash (plan.md VISUAL-008,
+        // ObjectType8) -- a single instance spawned exactly at the given
+        // blast-center position, no offset (real `ObjectStart(posStart,
+        // ObjectType8, 0)`, `Decor.cpp:9065`, the real
+        // `Decor::DynamiteStart()` called once per blast in the 9-blast
+        // sequence -- speed=0 means no direction/offset encoding, same
+        // reasoning as `SpawnFanHitFlash()`). Appends directly to
+        // pendingSpawns since, like the treasure sparkle above, the real
+        // spawn site is INSIDE this class's own per-object loop (the
+        // dynamite-fuse ObjectType56 block).
+        void AppendDynamiteBlastFlash(float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
+        {
+            MobileObjSpec spec;
+            spec.type = ObjectType::ObjectType8;
+            spec.active = true;
+            spec.phase = 0.0f;
+            spec.currentX = spec.posStartX = spec.posEndX = x;
+            spec.currentY = spec.posStartY = spec.posEndY = y;
+            spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+            pendingSpawns.push_back(spec);
+        }
+
         // Blupih (ObjectType32, plan.md E3D-MIG-134) attack: verified
         // directly against Decor.cpp:8878-8886 -- during a turn-dwell
         // (step 1 or 3), at dwell-frame 21 exactly, drops one ObjectType23
@@ -604,6 +626,21 @@ namespace GalaxyEggbert::CNA
             if (obj.type == ObjectType::ObjectType11)
             {
                 if (obj.phase >= 9.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
+            // Dynamite-blast explosion flash (plan.md VISUAL-008,
+            // ObjectType8) -- purely cosmetic. Real self-delete at
+            // phase>=39 (`Decor.cpp:8397-8399`,
+            // `Tables::table_explo1Length==39`, `Config::ScaleDiv(1)==1`
+            // at this build's 20Hz reference rate) -- the longest of the 4
+            // particle-effect lifetimes modeled so far.
+            if (obj.type == ObjectType::ObjectType8)
+            {
+                if (obj.phase >= 39.0f)
                 {
                     obj.active = false;
                 }
@@ -841,6 +878,13 @@ namespace GalaxyEggbert::CNA
                         const float centerX = obj.currentX + blast.dx;
                         const float centerY = obj.currentY + blast.dy;
                         const float centerZ = obj.currentZ;
+
+                        // Real dynamite-blast explosion flash (plan.md
+                        // VISUAL-008, ObjectType8, Decor.cpp:9065) -- one
+                        // instance per blast, at its own center, not just
+                        // the central (dx=0,dy=0) one.
+                        AppendDynamiteBlastFlash(centerX, centerY, centerZ, pendingSpawns);
+
                         if (blast.dx == 0.0f && blast.dy == 0.0f)
                         {
                             sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
@@ -894,8 +938,11 @@ namespace GalaxyEggbert::CNA
                         // (Decor.cpp ~9102-9132, ported exactly, not
                         // approximated) -- crates are destroyed as a full
                         // linked group (real SearchLinkCaisse), everything
-                        // else is a plain deactivate. No debris/particle
-                        // visuals (no such system exists yet).
+                        // else is a plain deactivate. The blast flash itself
+                        // is spawned above; no further per-victim debris
+                        // visual is modeled (real source has none either --
+                        // ObjectType8 above is the only cosmetic effect at
+                        // this site).
                         for (auto& victim : objects)
                         {
                             if (!victim.active || &victim == &obj)
@@ -1101,11 +1148,14 @@ namespace GalaxyEggbert::CNA
             // real `TestPath` sweeps a rectangle, not a point, same
             // simplification as every other collision check in this file.
             // The cosmetic `ObjectType9` debris object is deliberately NOT
-            // spawned -- no one-shot/auto-expiring decorative-effect
-            // system exists in this engine at all yet (every hazard death
-            // above already omits its own real debris/shake effects for
-            // the same reason); only the death itself and its sound are
-            // ported. `continue`s on self-destruct so an already-destroyed
+            // spawned here -- a particle-effects system now exists (Invert
+            // burst, treasure sparkle, Fan-hit/dynamite-blast flash, all
+            // 2026-07-14), but `ObjectType9`'s own `GetObjIcon()` formula
+            // is still unaudited/unfixed (real `table_explo2` has `-1`
+            // blank-frame sentinels the renderer doesn't handle yet, see
+            // `GEObjectIcons.cpp`) -- a real, scoped follow-up, not done
+            // here; only the death itself and its sound are ported.
+            // `continue`s on self-destruct so an already-destroyed
             // follower can't also register a contact-kill against Blupi
             // this same frame via the generic hazard check below; falls
             // through (no `continue`) on a successful step, since that

@@ -393,15 +393,28 @@ int main(int argc, char** argv)
         // loop calls this every frame before GEInteractionSystem::Update();
         // this test must too, or obj.phase never moves).
         bool smallShakeSeenDuringBlast = false;
+        bool explosionFlashSeenAtCenter = false;
         for (int i = 0; i < 300; ++i) // 300 * (1/60)s = 5s of simulated time
         {
             world.Update(dt);
             interaction.Update(dt, world, placeX, placeY, placeZ, 0.0f, sound);
             smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || interaction.SmallShakeTriggeredThisFrame();
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType8 &&
+                    std::fabs(obj.currentX - placeX) < 0.01f && std::fabs(obj.currentY - placeY) < 0.01f &&
+                    std::fabs(obj.currentZ - placeZ) < 0.01f)
+                {
+                    explosionFlashSeenAtCenter = true;
+                }
+            }
         }
         check(smallShakeSeenDuringBlast,
               "the dynamite blast's own center-tile tick triggers SmallShake (plan.md CAM-008, real "
               "Decor::DynamiteStart() behavior)");
+        check(explosionFlashSeenAtCenter,
+              "the dynamite blast's own center-tile tick also spawns an ObjectType8 explosion flash "
+              "(plan.md VISUAL-008), at the exact blast-center position");
 
         bool crateStillActive = false;
         bool fuseStillActive = false;
@@ -1610,6 +1623,61 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType11, 3) == 15, "ObjectType11 icon at phase=3 is the real table_explo4[3]=15");
         check(GetObjIcon(ObjectType::ObjectType11, 4) == 7, "ObjectType11 icon at phase=4 is the real table_explo4[4]=7 (the non-monotonic jump)");
         check(GetObjIcon(ObjectType::ObjectType11, 8) == 11, "ObjectType11 icon at phase=8 is the real table_explo4[8]=11 (last frame before self-delete)");
+    }
+
+    // 17.6. Dynamite-blast explosion flash self-delete timing (plan.md
+    // VISUAL-008, ObjectType8) -- the actual spawn (via the real
+    // 9-blast dynamite-fuse sequence) is already exercised in 3.6 above;
+    // this isolates the self-delete-at-phase-39 logic on its own with a
+    // directly-constructed instance, since there is no public single-shot
+    // spawn method for this type (unlike SpawnFanHitFlash()).
+    {
+        GEWorldRuntime explo1World;
+        GEInteractionSystem explo1Interaction;
+        constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
+        constexpr float ex = 30.0f, ey = 1.0f, ez = 30.0f;
+
+        MobileObjSpec flash;
+        flash.type = ObjectType::ObjectType8;
+        flash.active = true;
+        flash.phase = 0.0f;
+        flash.currentX = flash.posStartX = flash.posEndX = ex;
+        flash.currentY = flash.posStartY = flash.posEndY = ey;
+        flash.currentZ = flash.posStartZ = flash.posEndZ = ez;
+        explo1World.GetMobileObjectsMutable().push_back(flash);
+
+        const auto countFlashesAt = [&explo1World, ex, ey, ez]()
+        {
+            int count = 0;
+            for (const auto& obj : explo1World.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType8 && obj.currentX == ex &&
+                    obj.currentY == ey && obj.currentZ == ez)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+
+        for (int i = 0; i < 38; ++i)
+        {
+            explo1World.Update(dt);
+        }
+        explo1Interaction.Update(dt, explo1World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 1, "the dynamite-blast flash is still active just before its real phase-39 self-delete");
+
+        explo1World.Update(dt);
+        explo1Interaction.Update(dt, explo1World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 0, "the dynamite-blast flash self-deletes once phase reaches the real 39-tick lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-008, fixed
+        // 2026-07-14 -- real table_explo1 bounces back and forth between
+        // adjacent values, was wrongly ascending arithmetic before).
+        check(GetObjIcon(ObjectType::ObjectType8, 0) == 0, "ObjectType8 icon at phase=0 is the real table_explo1[0]=0");
+        check(GetObjIcon(ObjectType::ObjectType8, 8) == 4, "ObjectType8 icon at phase=8 is the real table_explo1[8]=4");
+        check(GetObjIcon(ObjectType::ObjectType8, 9) == 3, "ObjectType8 icon at phase=9 is the real table_explo1[9]=3 (bounces back down from 4)");
+        check(GetObjIcon(ObjectType::ObjectType8, 38) == 11, "ObjectType8 icon at phase=38 is the real table_explo1[38]=11 (last frame before self-delete)");
     }
 
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real

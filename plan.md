@@ -3021,26 +3021,49 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       as VISUAL-006 — no real blink-at-low-time effect found, only the sparkle-overlay behavior
       already noted.**
 - [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px,
-      Explosion channel) — **partially done 2026-07-14**: ObjectType11 (Fan-hit shockwave, the
-      cosmetic particle spawned alongside CAM-009's BigShake — see CAM-009's writeup, now updated)
-      is implemented; ObjectType8/9/10 are NOT. Real spawn site confirmed via direct source read
-      (`Decor.cpp:5467`, the same real Fan/Ventillo-kill block CAM-009 already cites):
-      `ObjectStart(celSwitch, ObjectType11, 0)` — `speed=0` means no direction/offset encoding at
-      all (unlike every other particle effect shipped so far), so `GEInteractionSystem::
-      SpawnFanHitFlash()` is a single-instance spawn exactly at the given position, no burst. Real
-      self-delete at `phase>=9` (`Decor.cpp:8431-8440`, a 9-frame lifetime). Found and fixed a
-      FOURTH real bug in `GEObjectIcons.cpp`'s icon formula for this type: wrong divisor (6 instead
-      of the real `Config::ScaleDiv(1)==1`) AND wrong ascending-arithmetic assumption — real
-      `table_explo4` (`Tables.cpp:1391`) is non-monotonic (`12,13,14,15,7,8,9,10,11` — jumps back
-      from 15 to 7 partway through), transcribed verbatim as a lookup table, same category of bug
-      as VISUAL-012's `table_tresortrack`. ObjectType8/9/10 are flagged as a likely-similar,
-      NOT-yet-attempted follow-up: their real tables (`table_explo1/2/3`) are also non-trivial,
-      and `table_explo2` even has `-1` "invisible frame" sentinel values, so their existing
-      `GetObjIcon()` formulas should be assumed wrong until individually re-derived from source,
-      same as this one was. 7 new `VerifyInteractionSystem` checks (spawn position/no-offset,
-      self-delete timing, corrected icon values including the phase=4 non-monotonic jump point) +
-      full regression on both backends, all pass. Not live-visually re-verified (same already-
-      proven element.png billboard rendering path as every other particle effect this session).
+      Explosion channel) — **partially done 2026-07-14**: ObjectType11 (Fan-hit shockwave) and
+      ObjectType8 (dynamite-blast flash) are implemented; ObjectType9/10 are NOT.
+      **ObjectType11** — the cosmetic particle spawned alongside CAM-009's BigShake (see CAM-009's
+      writeup, now updated). Real spawn site confirmed via direct source read (`Decor.cpp:5467`,
+      the same real Fan/Ventillo-kill block CAM-009 already cites): `ObjectStart(celSwitch,
+      ObjectType11, 0)` — `speed=0` means no direction/offset encoding at all (unlike every other
+      particle effect shipped so far), so `GEInteractionSystem::SpawnFanHitFlash()` is a
+      single-instance spawn exactly at the given position, no burst. Real self-delete at
+      `phase>=9` (`Decor.cpp:8431-8440`, a 9-frame lifetime). Found and fixed a FOURTH real bug in
+      `GEObjectIcons.cpp`'s icon formula for this type: wrong divisor (6 instead of the real
+      `Config::ScaleDiv(1)==1`) AND wrong ascending-arithmetic assumption — real `table_explo4`
+      (`Tables.cpp:1391`) is non-monotonic (`12,13,14,15,7,8,9,10,11` — jumps back from 15 to 7
+      partway through), transcribed verbatim as a lookup table, same category of bug as
+      VISUAL-012's `table_tresortrack`. 7 new `VerifyInteractionSystem` checks (spawn
+      position/no-offset, self-delete timing, corrected icon values including the phase=4
+      non-monotonic jump point) + full regression on both backends, all pass.
+      **ObjectType8** — the cosmetic flash spawned once per blast in the real 9-blast dynamite-chain
+      sequence (`Decor::DynamiteStart()`, `Decor.cpp:9058-9065`: `ObjectStart(posStart,
+      ObjectType8, 0)`, again `speed=0`/no offset), at each blast's own already-computed
+      `(centerX,centerY,centerZ)` — this engine's dynamite-blast logic (`GEInteractionSystem.cpp`'s
+      `ObjectType56` fuse block, plan.md E3D-MIG-155/CAM-008) already computed these 9 real
+      per-blast centers for its destruction/SmallShake logic, so the flash only needed a new
+      `AppendDynamiteBlastFlash()` free function (pendingSpawns idiom, same reasoning as
+      VISUAL-012's `AppendSparkleBurst()` — the real spawn site is inside this class's own
+      per-object loop) called once per blast, not just the center one. Real self-delete at
+      `phase>=39` (`Decor.cpp:8397-8399`, `Tables::table_explo1Length==39`, the longest of the 4
+      particle lifetimes modeled so far). Found and fixed a FIFTH real bug in `GEObjectIcons.cpp`:
+      same wrong-divisor bug, plus real `table_explo1` (`Tables.cpp:1368-1374`, 39 frames)
+      repeatedly bounces back and forth between adjacent values rather than advancing
+      monotonically (e.g. `...,4,3,4,4,3,4,3,3,4,4,...`), transcribed verbatim as `kExplo1[39]`.
+      7 new `VerifyInteractionSystem` checks (real spawn exercised via the existing dynamite-blast
+      test, isolated self-delete timing, corrected icon values including a bounce-back point) +
+      full regression on both backends, all pass.
+      **ObjectType9/10 remain NOT done** — flagged as a likely-similar follow-up: their real tables
+      (`table_explo2/3`) are also non-trivial, and `table_explo2` even has `-1` "invisible frame"
+      sentinel values (meaning the renderer would ALSO need a "skip this frame" check added to the
+      explo.png billboard loop in `GalaxyEggbertCnaGame.cpp`, not just a table fix) — deliberately
+      left alone since, unlike 8/11, no real spawn site for 9/10 is wired in this engine yet (only
+      an already-flagged comment in `GEInteractionSystem.cpp`'s follower-blocked-path-self-destruct
+      block references `ObjectType9` as unspawned), so fixing their formulas now would be
+      speculative work on unreachable code. Not live-visually re-verified for either 8 or 11 (same
+      already-proven element.png/explo.png billboard rendering path as every other particle effect
+      this session).
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
 - [ ] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded

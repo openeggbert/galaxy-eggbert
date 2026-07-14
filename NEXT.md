@@ -107,10 +107,11 @@ menus, though still missing a visible 3D Blupi model.
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
   cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
-- The first 3 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
-  Fan-hit shockwave flash, all added 2026-07-14) — logic and positions independently confirmed
-  correct via unit tests; live visual confirmation was attempted for the first two but
-  inconclusive (see §3's own note); the Fan-hit flash was not re-attempted (same rendering path).
+- The first 4 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
+  Fan-hit shockwave flash, dynamite-blast explosion flash, all added 2026-07-14) — logic and
+  positions independently confirmed correct via unit tests; live visual confirmation was attempted
+  for the first two but inconclusive (see §3's own note); the latter two were not re-attempted
+  (same rendering path).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -150,6 +151,21 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the dynamite-blast explosion flash — the FOURTH real particle effect** (plan.md
+  VISUAL-008, ObjectType8), spawned once per blast in the real 9-blast dynamite-chain sequence
+  (`Decor::DynamiteStart()`, `speed=0`, no offset, same as the Fan-hit flash below) at each blast's
+  own already-computed center position — this engine's existing dynamite-blast logic
+  (`GEInteractionSystem.cpp`'s ObjectType56 fuse block) already computes all 9 real per-blast
+  centers for its destruction/SmallShake logic, so this only needed a new
+  `AppendDynamiteBlastFlash()` free function called once per blast, not just the center one. Real
+  self-delete at `phase>=39` (`table_explo1Length`, the longest of the 4 particle lifetimes so
+  far). Found and fixed a FIFTH icon-formula bug: real `table_explo1` (39 frames) repeatedly
+  bounces back and forth between adjacent values rather than advancing monotonically. 7 new
+  `VerifyInteractionSystem` checks (real spawn exercised via the existing dynamite-blast test,
+  isolated self-delete timing, corrected icon values including a bounce-back point) + full
+  regression on both backends, all pass. Also flagged (not fixed): ObjectType9/10 remain unspawned
+  in this engine, so their own similarly-wrong `GetObjIcon()` formulas were deliberately left
+  alone — fixing unreachable code would be speculative.
 - **Implemented the Fan-hit shockwave flash — the THIRD real particle effect** (plan.md
   VISUAL-008, partial), the cosmetic `ObjectType11` particle spawned alongside CAM-009's BigShake
   (which was already wired) at the Fan/Ventillo-kill site. Unlike the other 2 particle effects,
@@ -710,16 +726,20 @@ judgment (§9).
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
-    2026-07-14: the user directed a start on this system; 3 slices are now done** — Invert
-    start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`), and Fan-hit
-    shockwave flash (`VISUAL-008`, partial — only `ObjectType11` of the 4 types in that item), see
-    §3's own writeups. Real `SearchDistRight()` short-circuits to a flat 500px for types
-    36/39/41/42/93 (no raycast needed) — types 36 (pollution puff, vehicle exhaust — real trigger
-    is more complex, 4 different vehicle-specific timing patterns) and 93 remain in this "simple"
-    family if picked up next. Also flagged (not fixed): `ObjectType8/9/10`'s existing `GetObjIcon()`
-    formulas are likely wrong the same way 41/42/39/11's were, since their real tables
-    (`table_explo1/2/3`) are non-trivial too — a real audit follow-up, separate from new spawn
-    logic. ~17 items remain overall.
+    2026-07-14: the user directed a start on this system; 4 slices are now done** — Invert
+    start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`), Fan-hit
+    shockwave flash, and dynamite-blast explosion flash (`VISUAL-008`, partial — only
+    `ObjectType8`/`11` of the 4 types in that item), see §3's own writeups. Real
+    `SearchDistRight()` short-circuits to a flat 500px for types 36/39/41/42/93 (no raycast
+    needed) — investigated type 93 directly (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and
+    found it's actually gated behind the whole not-yet-built "Voyage" pickup-flight-animation
+    system (plan.md `158`), NOT a simple standalone spawn like the others — plan.md's earlier note
+    calling it "simple" was wrong, corrected. Type 36 (pollution puff, vehicle exhaust — real
+    trigger is more complex, 4 different vehicle-specific timing patterns) is the only one left in
+    the genuinely "simple" family. `ObjectType9/10`'s `GetObjIcon()` formulas are still flagged
+    (not fixed) — same category of bug as the fixed ones, but both types remain entirely unspawned
+    in this engine, so fixing their formulas now would be speculative work on unreachable code; a
+    real follow-up once/if they're ever wired. ~16 items remain overall.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

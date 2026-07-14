@@ -22,6 +22,17 @@ namespace GalaxyEggbert::CNA
         // to 7 partway through), same category of bug as kTresorTrack
         // above.
         static const int kExplo4[9] = {12,13,14,15,7,8,9,10,11};
+        // Real table_explo1 (Tables.cpp:1368-1374, dynamite-blast flash
+        // fix, 2026-07-14) -- the real 39-frame primary blast sequence
+        // repeatedly bounces back and forth between adjacent values
+        // (e.g. ...,4,3,4,3,3,4,4,...) rather than advancing monotonically,
+        // same category of bug as kExplo4/kTresorTrack above.
+        static const int kExplo1[39] = {
+            0,0,1,1,2,2,3,3,4,3,
+            4,4,3,4,3,3,4,4,5,5,
+            4,5,6,5,6,6,5,5,6,7,
+            7,8,8,9,9,10,10,11,11
+        };
         static const int kGuepeLeft[6]    = {195,196,197,198,197,196};
         static const int kCreature[8]     = {247,248,249,250,251,250,249,248};
         static const int kBlupihLeft[8]   = {66,67,68,67,66,69,70,69};
@@ -158,7 +169,11 @@ namespace GalaxyEggbert::CNA
             // also return their first REAL-frame icon only (both have real
             // leading invisible ticks in mobile-eggbert that a static
             // return can't represent -- see GetObjIcon's header comment).
-            case ObjectType::ObjectType8:   return 0 + (p / 6) % 39;
+            // Fixed 2026-07-14 (plan.md VISUAL-008, dynamite-blast flash):
+            // wrong divisor (6 instead of the real Config::ScaleDiv(1)==1)
+            // and wrong ascending-arithmetic assumption -- real
+            // table_explo1 bounces back and forth (see kExplo1 above).
+            case ObjectType::ObjectType8:   return kExplo1[p % 39];
             case ObjectType::ObjectType9:   return 12 + (p / 6) % 20;
             case ObjectType::ObjectType10:  return 32 + (p / 6) % 20;
             // Fixed 2026-07-14 (plan.md VISUAL-008-adjacent, the Fan-hit
