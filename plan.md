@@ -2254,8 +2254,21 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 - [x] TILE-029 — Spike (icon 373): kill Blupi on contact — done (`GetGroundBlockType()==Spike` gate).
 - [x] TILE-030 — Crusher (icon 317-323): phase-gated (`IsCrusherActiveAtPhase()`, an approximation of the real 3-of-10-frame danger window, see that function's own comment) — **description corrected**: real effect is NOT a kill, it's a temporary squash/debuff (`TriggerCrush()`: reduced move speed, no jump, ~10s auto-recovery), confirmed directly against source.
 - [x] TILE-031 — Saw (icon 378, active variant only — `SawStopped`/379 is a separate, safe value): kill Blupi on contact — done, real channel 75.
-- [ ] TILE-032 — Water drip (IsGoutte): triggers glu/slow effect — confirmed still NOT implemented; not among the real 5 confirmed terrain hazards this engine models (lava/spike/saw/crusher/Blitz).
-- [x] TILE-033 — Blitz/lightning tile: electric instant death — done, one of the real 5 confirmed hazards (see NEXT.md §2).
+- [x] TILE-032 — Water drip (`IsGoutte`) — **description was wrong, corrected and implemented
+      2026-07-14**: despite the "drip"/glue-sounding name, real behavior (confirmed via a direct
+      `Decor.cpp` read, `IsGoutte`/`Decor.cpp:7220-7241`, call site `Decor.cpp:5513-5519`) is a
+      deterministic KILL on contact (`BlupiAction::Glu`), mechanically identical to Spike — same
+      gate shape, same real channel 51 sound — not a slow/glue debuff. Real trigger icon is 404
+      (a second icon, 410, is excluded from the real safe-respawn-position FIFO but isn't itself a
+      kill trigger — not modeled, a minor accepted simplification). `BlockTypes::Drip` added; real
+      visual appearance is a green vase/bulb-on-a-neck (`Billboard` render mode per
+      `mobile-eggbert-reference/02-tiles.md`), not a liquid graphic despite the name — falls back to
+      the default `UniformCube`, an already-correct resolution (no dedicated visual identified as
+      more faithful). Now a real 6th confirmed instant-kill terrain hazard alongside lava/spike/saw/
+      crusher/Blitz. `GetGroundBlockType()` recognition test added (same shape as every other
+      hazard's own test — the kill trigger itself lives in `GalaxyEggbertCnaGame::Update()`, not yet
+      separately unit-testable for any of the 6 hazards). Full regression + both backends pass.
+- [x] TILE-033 — Blitz/lightning tile: electric instant death — done, one of the real 6 confirmed hazards (see NEXT.md §2).
 - [x] TILE-034 — Spring/ressort tile (icon 211): launches Blupi upward — done (`plan.md E3D-MIG-145`), correctly NOT a hazard (real behavior: bounce, not damage).
 - [x] TILE-035 — Temp tile: brief passability change — done (`plan.md E3D-MIG-146`), `GEBlupiController::GroundHeightAt()`'s own `tempPassable` phase-gated skip.
 - [x] TILE-036 — Door tile: locked door, opened by matching key — done (`plan.md E3D-MIG-160`/`161`, key- and treasure-gated families both real and working). The render-mode note (closed doors should be `Billboard`, not `UniformCube`) is confirmed STILL not done — explicitly deferred 2026-07-12 per user direction (no new render-geometry decisions that session), tracked separately (`E3D-MIG-516`/`163`, see §2.7 PICKUP-037's own note).

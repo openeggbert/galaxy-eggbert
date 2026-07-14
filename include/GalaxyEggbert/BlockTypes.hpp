@@ -80,6 +80,16 @@ constexpr uint16_t Lava     =  68;   // kills Blupi on contact (anim group 68–
 constexpr uint16_t Spike    = 373;   // kills Blupi on contact (anim group 347,373,374)
 constexpr uint16_t Crusher  = 317;   // kills Blupi on contact (anim group 317–323)
 constexpr uint16_t Saw      = 378;   // kills Blupi on contact (anim group 378–383)
+// "Water drip" (real Decor::IsGoutte, confirmed 2026-07-14 via direct
+// Decor.cpp read: icon 404 kills on contact, real BlupiAction::Glu, same
+// gate/sound/behavior shape as Spike -- NOT a slow/glue debuff despite the
+// name, a real 6th confirmed instant-kill hazard). Real visual appearance is
+// a green vase/bulb-on-a-neck (Billboard render mode per
+// mobile-eggbert-reference/02-tiles.md), not a drip/liquid graphic despite
+// the functional name -- render falls back to the default UniformCube here,
+// which is a correct, already-accounted-for resolution (no dedicated visual
+// identified as more faithful).
+constexpr uint16_t Drip     = 404;   // kills Blupi on contact (real IsGoutte)
 
 // Water tiles — decorative (anim groups 92–95 and 96–98).
 constexpr uint16_t Water1   =  92;

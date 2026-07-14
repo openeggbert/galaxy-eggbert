@@ -19,7 +19,7 @@ menus, though still missing a visible 3D Blupi model.
   window, loads a hand-authored `.vwr` world (`worlds3d/world001.vwr`), renders real
   textured/animated terrain (4 confirmed tile render modes, all ~175 confirmed icons wired,
   face-culled), moves an invisible collision-point Blupi (tank controls + vehicles), and has a
-  complete real gameplay loop: pickups, all 5 terrain hazards, the full enemy-AI/combat set,
+  complete real gameplay loop: pickups, all 6 confirmed terrain hazards, the full enemy-AI/combat set,
   platform lifts/crates/bridges, doors & keys, secret powers/vehicles, bullet firing, a real
   `Def::Phase` state machine (Wait→Init→Play→Pause/Win/Lost/Setup/Resume, with real fade-out
   transitions between phases), a cross-restart save system (3 gamer slots), and a hidden cheat
@@ -92,8 +92,8 @@ menus, though still missing a visible 3D Blupi model.
   secret-power pickups), level exit.
 - Full enemy AI/combat: shared 8-type hazard kill-list, wasp balloon status, blupih/blupit
   projectile attacks, large-creature turn-dwell grab, follower wake+homing, all real patrol timing.
-- All 5 real terrain hazards (lava/spikes/Blitz/saw+switches/crusher) + spring, Temp/vanishing
-  tile, teleporter, water breath gauge.
+- All 6 real terrain hazards (lava/spikes/Blitz/saw+switches/crusher/water-drip, the last added
+  2026-07-14) + spring, Temp/vanishing tile, teleporter, water breath gauge.
 - Secret powers (Shield/Power/Cloud/Hide) fully modeled including Cloud's offensive
   `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts. Invert/Mirror
   (independent movement-reversal debuff/buff) also implemented (2026-07-13).
@@ -136,6 +136,16 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the water-drip terrain hazard** (icon 404, plan.md TILE-032) — real
+  `Decor::IsGoutte()`, corrected from a wrong "triggers a glu/slow effect" premise (same category
+  of error as TILE-041/045 earlier this session): confirmed via a direct `Decor.cpp` read that real
+  behavior is a deterministic kill, mechanically identical to Spike (same gate shape, same real
+  channel 51 sound). Added `BlockTypes::Drip`, wired the hazard-kill check + safe-respawn-position
+  exclusion in `GalaxyEggbertCnaGame.cpp` exactly mirroring Spike's own code. Now a real 6th
+  confirmed instant-kill terrain hazard (previously 5: lava/spike/saw/crusher/Blitz). Real visual
+  is a green vase/bulb, not a liquid graphic — falls back to the default `UniformCube` render, an
+  already-correct resolution. `GetGroundBlockType()` recognition test added; full regression +
+  both backends pass.
 - **Implemented jump-height headroom modulation** (`ObjectType`-agnostic Blupi physics, plan.md
   TILE-041) — real `Decor::IsNormalJump()`, corrected from a wrong "forces a jump when stepped on"
   premise to its real behavior: a ceiling-clearance headroom check that reduces jump strength when
@@ -515,9 +525,9 @@ judgment (§9).
     read `Decor.cpp`'s own `GetTypeBarre()` call sites first (read-only reference, as always) before
     attempting; do not guess an icon ID. Larger scope than most other items here if picked up.
 
-14. **Water-drip tile** (`plan.md TILE-032`, `IsGoutte`) — triggers a glu/slow effect; confirmed not
-    among the 5 real hazards this engine already models. Needs the exact real trigger/effect
-    researched first.
+14. ~~Water-drip tile~~ **DONE 2026-07-14** (`plan.md TILE-032`) — see §3 for the full writeup. Real
+    behavior was NOT a glu/slow effect (a wrong premise, same category as TILE-041/045) — it's a
+    deterministic kill, mechanically identical to Spike. Now a real 6th confirmed terrain hazard.
 
 15. **Camera shake system** (`plan.md` §2.10/§2.12) — the whole system is genuinely unbuilt (zero
     grep matches). Several already-implemented mechanics reference real shake events that

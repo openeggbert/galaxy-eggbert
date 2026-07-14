@@ -224,6 +224,20 @@ int main(int argc, char** argv)
         check(onSpike.GetGroundBlockType(synthetic) == BlockTypes::Spike,
               "GetGroundBlockType() identifies spikes correctly (E3D-MIG-141 hazard detection)");
 
+        // Water drip (plan.md TILE-032, real Decor::IsGoutte, icon 404,
+        // confirmed 2026-07-14 via direct Decor.cpp read) -- same
+        // recognition-only test shape as Lava/Spike above (the actual
+        // kill trigger lives in GalaxyEggbertCnaGame::Update(), same as
+        // every other hazard here, not separately unit-testable yet).
+        constexpr std::uint16_t kDripX = 31, kDripZ = 31;
+        synthetic.setBlock(kDripX, 0, kDripZ, Worlds::Block::make(BlockTypes::Drip));
+        GEBlupiController onDrip;
+        onDrip.SetPosition(static_cast<float>(kDripX) - 50.0f, 1.0f, static_cast<float>(kDripZ) - 50.0f);
+        onDrip.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(onDrip.IsOnGround(), "Blupi stands on a water-drip block rather than falling through it");
+        check(onDrip.GetGroundBlockType(synthetic) == BlockTypes::Drip,
+              "GetGroundBlockType() identifies the water-drip hazard correctly (real icon 404)");
+
         // Crusher squash state (plan.md E3D-MIG-143) -- TriggerCrush()/
         // IsEcrased()/recovery, standing on the same ordinary ground block
         // used above (the trigger *condition* -- Crusher block + active

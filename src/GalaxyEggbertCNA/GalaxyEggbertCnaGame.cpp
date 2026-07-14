@@ -1103,6 +1103,19 @@ namespace GalaxyEggbert::CNA
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
             }
 
+            // Water drip hazard (plan.md TILE-032, real Decor::IsGoutte,
+            // confirmed 2026-07-14 via direct Decor.cpp read -- despite the
+            // "drip"/glue-sounding name, real behavior is a deterministic
+            // kill, mechanically identical to Spike above: same
+            // BlupiAction::Glu death, same gate shape, same real channel 51
+            // sound (Decor.cpp:5513-5519). Same vehicle/focus simplification
+            // as every other hazard here (neither concept exists yet).
+            if (!blupi_.IsInvincible() &&
+                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
+            {
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
+            }
+
             // Blitz hazard (plan.md E3D-MIG-144) -- real channel 8, same
             // lethality profile as lava per mobile-eggbert-reference/
             // 12-hazards-and-interactables.md ("No vehicle immunity --
@@ -1256,9 +1269,9 @@ namespace GalaxyEggbert::CNA
 
             // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
             // see GEBlupiController::UpdateSafePosition()'s own comment) --
-            // "safe" here additionally means not standing on any of the 5
-            // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp),
-            // not currently under a teleporter trigger (`aboveIcon`, already
+            // "safe" here additionally means not standing on any of the 6
+            // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp/
+            // Drip), not currently under a teleporter trigger (`aboveIcon`, already
             // computed above), and not currently Nage (plan.md E3D-MIG-148 --
             // respawning mid-drown with an already-depleted gauge would be a
             // bad experience, same reasoning as excluding active hazards) --
@@ -1273,6 +1286,7 @@ namespace GalaxyEggbert::CNA
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Spike ||
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Saw ||
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Temp ||
+                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Drip ||
                     (safetyGroundBlock == GalaxyEggbert::BlockTypes::Blitz &&
                      GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
                 const bool underTeleporter =
