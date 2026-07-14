@@ -2899,13 +2899,31 @@ those are specifically about the real byte layout, which stays undone by design.
 Everything here depends on systems (Blupi visibility, enemies, pickups, camera shake) that are
 themselves mostly not started in CNA yet. All items reset to `[ ]`.
 
-- [ ] VISUAL-001 — Blob shadow under Blupi (scales with height, disabled in helicopter/balloon)
-- [ ] VISUAL-002 — Blob shadow under enemies (disabled for birds)
-- [ ] VISUAL-003 — Pickup bobbing: sine-wave Y offset on collectibles
-- [ ] VISUAL-004 — Score popups: rising "+N" text, 1 s fade at collection position
-- [ ] VISUAL-005 — Respawn flash: Blupi billboard blinks at 10 Hz for 2 s after respawn
-- [ ] VISUAL-006 — Shield tint: cyan sprite when m_blupiShield active
-- [ ] VISUAL-007 — Shield blink at < 1.5 s remaining
+- [ ] VISUAL-001 — ~~Blob shadow under Blupi (scales with height, disabled in helicopter/
+      balloon)~~ **researched 2026-07-14, premise appears INVENTED**: grepped all of
+      `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and headers (including French terms —
+      "ombre"/"shadow") — zero hits anywhere. No blob-shadow concept exists in real source. Do not
+      implement without the user's own confirmation.
+- [ ] VISUAL-002 — ~~Blob shadow under enemies (disabled for birds)~~ **same finding as VISUAL-001
+      — no real source, do not implement.**
+- [ ] VISUAL-003 — ~~Pickup bobbing: sine-wave Y offset on collectibles~~ **researched 2026-07-14,
+      premise appears INVENTED**: no `sin`/bobbing animation tied to any pickup type found anywhere
+      in `Decor.cpp`. Do not implement without confirmation.
+- [ ] VISUAL-004 — ~~Score popups: rising "+N" text, 1 s fade at collection position~~ **same
+      invented premise as the §2.8 SCORE section** (see that section's own correction above) — no
+      numeric score concept exists in mobile-eggbert at all, so a "+N" popup tied to it can't be
+      real either. Do not implement.
+- [ ] VISUAL-005 — ~~Respawn flash: Blupi billboard blinks at 10 Hz for 2 s after respawn~~
+      **researched 2026-07-14, premise appears INVENTED**: no respawn-flash/blink effect found in
+      `Decor.cpp` — the only "blink" hit anywhere is an unrelated comment about a timed platform
+      tile's solidity cycle (icon 324, line ~6693). Do not implement without confirmation.
+- [ ] VISUAL-006 — ~~Shield tint: cyan sprite when m_blupiShield active~~ **researched 2026-07-14,
+      premise appears INVENTED**: no tint/color-modulation effect for Shield found in `Decor.cpp` —
+      real Shield rendering (`Decor.cpp` ~line 780 area, already cited elsewhere this session) draws
+      a `table_shieldloop` sparkle icon overlay, not a tint. Do not implement as described.
+- [ ] VISUAL-007 — ~~Shield blink at < 1.5 s remaining~~ **same finding as VISUAL-006 — no real
+      blink-at-low-time effect found, only the sparkle-overlay behavior already noted. Do not
+      implement as described.**
 - [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px, Explosion channel)
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)

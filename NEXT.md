@@ -602,6 +602,17 @@ commit to implementing #16 as its own focused effort rather than an opportunisti
 - **Do not invent new gameplay mechanics.** Every feature must trace to something confirmed in
   mobile-eggbert — verify against real source or `mobile-eggbert-reference/` before implementing,
   not just plausibility.
+- **Do not implement any of `plan.md` §7.5's particle/visual-effects items (PICKUP-042..063,
+  VISUAL-XXX) without the user first resolving one of two blockers** — researched 2026-07-14,
+  checked every candidate: (1) the ones with a real confirmed mechanic (Invert start/stop burst,
+  Goo, water plouf/bubble/small-plouf, pollution puff, etc.) are ALL driven by real mobile-eggbert
+  icon-sequence data tables (`table_invertstart`/`table_invertstop`/`table_glu`/`table_plouf`/
+  `table_blup`/`table_tiplouf`/`table_pollution`, 8-25 entries each) needing explicit
+  transcription approval; (2) VISUAL-001/002/003/004/005/006/007 (blob shadows, pickup bobbing,
+  score popups, respawn flash, shield tint/blink) have **no confirmed real source at all** —
+  zero grep hits anywhere in `Decor.cpp` for shadow/bobbing/tint/blink/respawn-flash concepts —
+  and look like invented items, same category as the §2.8 SCORE section. See `plan.md`'s own
+  per-item corrections for citations.
 - **Do not modify `../cna` or `../simple-3d`** without explicit per-change approval (the exit-code-1
   and Vulkan SpriteBatch-ordering bugs in §5 both need this and were explicitly deferred).
 - **Do not attempt the exit-code-1-on-window-close fix** — the user already explicitly declined it.
