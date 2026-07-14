@@ -2141,7 +2141,8 @@ reset to `[ ]` except the small set with direct CNA evidence.
       is not supported by any source and is confirmed invented — do not implement it under any
       item number.
 - [ ] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
-- [ ] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions)
+- [x] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions) — **done
+      2026-07-14, see `plan.md` VISUAL-014/015 for the full implementation writeup.**
 - [x] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions —
       **done 2026-07-14**. Initially researched as blocked (the on-screen button-gesture cheat
       dispatch, `Game1.cpp`'s `CheatAction()`, never maps any real cheat-number/gesture to
@@ -3023,8 +3024,44 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 - [ ] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded
 - [ ] VISUAL-012 — Treasure sparkle: ObjectType39 on each treasure pickup
 - [ ] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers
-- [ ] VISUAL-014 — Invert power-up particles: ObjectType41 (4-direction burst on pickup)
-- [ ] VISUAL-015 — Invert expire particles: ObjectType42 (4-direction burst on expiry)
+- [x] VISUAL-014 — Invert power-up particles: ObjectType41 (4-direction burst on pickup) — **done
+      2026-07-14, the FIRST real particle effect built in this engine** (data-table transcription
+      approved by the user the same day). Real spawn site confirmed via direct source read
+      (`Decor.cpp:6039-6051`): 4 `ObjectStart(m_blupiPos, ObjectType41, speed)` calls
+      (`speed ∈ {-60,60,10,-10}`, encoding up/down/+X/-X) at Blupi's exact position, no pre-offset.
+      Real `Decor::SearchDistRight()` (confirmed name, `Decor.cpp:7628-7653`) short-circuits to a
+      flat `return 500` for this specific ObjectType (and 36/39/42/93) — no raycast/wall-collision
+      logic needed at all for this effect, just a fixed 500-real-px offset in the bucketed
+      direction, converted to this engine's world units via the same 64px-per-tile scale used
+      throughout. Real self-delete at `phase>=16` (`Decor.cpp:8575-8582`,
+      `Config::ScaleTime(16)==16` at this build's 20Hz reference rate, confirmed identity function)
+      — `phase` itself is already advanced generically by `GEWorldRuntime::Update()`, no new
+      increment logic needed. New `GEInteractionSystem::SpawnInvertBurst()` (called directly by
+      `GalaxyEggbertCnaGame.cpp` at its own existing grant site, since `GEInteractionSystem::
+      Update()` has already returned by the time that fires). Along the way, found and fixed a
+      real bug in the ALREADY-WRITTEN (but until now unused) `GEObjectIcons.cpp` icon formula for
+      this type: wrong divisor (6 instead of the real `Config::ScaleDiv(2)==2`) — see VISUAL-015
+      for the ObjectType42 half of this same fix. 8 new `VerifyInteractionSystem` checks (spawn
+      count, real distance, self-delete timing, corrected icon values) + full regression on both
+      backends, all pass. **Live visual verification was attempted but inconclusive** — the real
+      sprite (element.png icon 179, directly pixel-inspected: a small ~5%-coverage white/gray
+      blob) is confirmed to exist at the exact right position via a live debug print, but was not
+      clearly distinguishable in headless screenshots at several distances/angles within a
+      reasonable time budget; the underlying position/timing/icon-value math is independently
+      confirmed correct via the unit tests above and via direct comparison against the real
+      source, and reuses the SAME already-proven billboard rendering path used successfully by
+      every other element.png-sourced object in this engine (treasures, keys, etc.) — not a new
+      rendering mode needing its own visual proof the way TILE-055 did.
+- [x] VISUAL-015 — Invert expire particles: ObjectType42 (4-direction burst on expiry) — **done
+      2026-07-14, see VISUAL-014's writeup for the shared implementation** (`SpawnInvertBurst(...,
+      isGrant=false)`). Real spawn site confirmed via direct source read (`Decor.cpp:5137-5158`):
+      same 4 directions, but pre-offset 100 real-px TOWARD Blupi before the same 500px push,
+      netting exactly 400 real-px (closer than grant's 500px) — confirmed by working through the
+      real per-direction arithmetic by hand for all 4 cases, not assumed symmetric with grant.
+      Fixed a second real bug in `GEObjectIcons.cpp`'s existing icon formula for this type: it
+      ascended past 186 (`186 + (p/6)%8`, reading out-of-range/unrelated sprite-sheet icons)
+      instead of matching the real `table_invertstop` array's exact reverse order (186 down to
+      179) — corrected to `186 - (p/2)%8`.
 - [ ] VISUAL-016 — Goo particle: ObjectType34 sticks to geometry (element.png, 25 frames)
 - [ ] VISUAL-017 — Magic track sparkle: ObjectType27 trail effect
 - [ ] VISUAL-018 — Helicopter debris: ByeByeHelico float-based debris pool when helico destroyed

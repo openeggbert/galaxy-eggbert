@@ -1,5 +1,6 @@
 #include "Game/GEBlupiController.hpp"
 #include "Game/GEInteractionSystem.hpp"
+#include "Game/GEObjectIcons.hpp"
 #include "Game/GESound.hpp"
 #include "Game/GETrainingHints.hpp"
 #include "Game/GEWorldRuntime.hpp"
@@ -630,6 +631,93 @@ int main(int argc, char** argv)
     else
     {
         check(false, "found the mirror/invert pickup (ObjectType40) in the sample world");
+    }
+
+    // 3.9c. Invert start/stop particle burst (plan.md VISUAL-014/015,
+    // ObjectType41 on grant / ObjectType42 on expiry) -- 4 instances,
+    // real distances (500 real-px grant, 400 real-px expiry, both /64 for
+    // this engine's world units), real screen-Y-to-world-Y sign flip, and
+    // the real phase>=16 self-delete.
+    {
+        GEWorldRuntime burstWorld;
+        GEInteractionSystem burstInteraction;
+        constexpr float bx = 10.0f, by = 1.0f, bz = 10.0f;
+        constexpr float kGrantDist = 500.0f / 64.0f;
+        constexpr float kExpiryDist = 400.0f / 64.0f;
+        constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
+
+        burstInteraction.SpawnInvertBurst(burstWorld, bx, by, bz, /*isGrant=*/true);
+        int grantCount = 0;
+        for (const auto& obj : burstWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType41)
+            {
+                ++grantCount;
+                const float ddx = obj.currentX - bx, ddy = obj.currentY - by, ddz = obj.currentZ - bz;
+                const float dist = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
+                check(std::fabs(dist - kGrantDist) < 0.01f,
+                      "grant burst instance sits at the real 500px/64 distance from Blupi");
+                check(ddz == 0.0f, "grant burst never offsets along world Z (only X/Y are used)");
+            }
+        }
+        check(grantCount == 4, "SpawnInvertBurst(isGrant=true) spawns exactly 4 ObjectType41 instances");
+
+        burstInteraction.SpawnInvertBurst(burstWorld, bx, by, bz, /*isGrant=*/false);
+        int expiryCount = 0;
+        for (const auto& obj : burstWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType42)
+            {
+                ++expiryCount;
+                const float ddx = obj.currentX - bx, ddy = obj.currentY - by, ddz = obj.currentZ - bz;
+                const float dist = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
+                check(std::fabs(dist - kExpiryDist) < 0.01f,
+                      "expiry burst instance sits at the real 400px/64 distance from Blupi (closer than grant)");
+            }
+        }
+        check(expiryCount == 4, "SpawnInvertBurst(isGrant=false) spawns exactly 4 ObjectType42 instances");
+
+        // Real self-delete at phase>=16 (Decor.cpp:8575-8596) -- phase is
+        // advanced by World::Update() itself (same convention as every
+        // other phase-driven object this session), not by Update() here.
+        for (int i = 0; i < 15; ++i)
+        {
+            burstWorld.Update(dt);
+        }
+        burstInteraction.Update(dt, burstWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        int stillActiveAt15 = 0;
+        for (const auto& obj : burstWorld.GetMobileObjects())
+        {
+            if (obj.active && (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42))
+            {
+                ++stillActiveAt15;
+            }
+        }
+        check(stillActiveAt15 == 8, "all 8 burst instances are still active just before their real phase-16 self-delete");
+
+        burstWorld.Update(dt);
+        burstInteraction.Update(dt, burstWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        int stillActiveAt16 = 0;
+        for (const auto& obj : burstWorld.GetMobileObjects())
+        {
+            if (obj.active && (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42))
+            {
+                ++stillActiveAt16;
+            }
+        }
+        check(stillActiveAt16 == 0, "all 8 burst instances self-delete once phase reaches the real 16-tick lifetime");
+
+        // GetObjIcon()'s own formula (plan.md VISUAL-014/015, fixed
+        // 2026-07-14 -- divisor was 6, real is 2; ObjectType42 wrongly
+        // ascended past 186 instead of matching the real table's exact
+        // reverse). table_invertstart={179..186}, table_invertstop=
+        // {186..179} (Tables.cpp:1498/1502, confirmed via direct source
+        // read) -- checked at phase=0 (first frame) and phase=14 (last
+        // frame before the real phase-16 self-delete, (14/2)%8==7).
+        check(GetObjIcon(ObjectType::ObjectType41, 0) == 179, "ObjectType41 icon at phase=0 is the real table_invertstart[0]=179");
+        check(GetObjIcon(ObjectType::ObjectType41, 14) == 186, "ObjectType41 icon at phase=14 is the real table_invertstart[7]=186");
+        check(GetObjIcon(ObjectType::ObjectType42, 0) == 186, "ObjectType42 icon at phase=0 is the real table_invertstop[0]=186");
+        check(GetObjIcon(ObjectType::ObjectType42, 14) == 179, "ObjectType42 icon at phase=14 is the real table_invertstop[7]=179 (descending, not ascending past 186)");
     }
 
     // Hazard immunity: a fresh interaction system touching a STILL-ACTIVE

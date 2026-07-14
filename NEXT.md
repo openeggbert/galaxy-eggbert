@@ -106,8 +106,10 @@ menus, though still missing a visible 3D Blupi model.
 - Player-fired bullets while riding Tank (real cooldown/ammo gates).
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
-  cheat: free flight, no gravity/
-  collision/interactions), both added 2026-07-14.
+  cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
+- The first real particle effect (Invert start/stop 4-direction burst, added 2026-07-14) — logic
+  and positions independently confirmed correct via unit tests; live visual confirmation was
+  attempted but inconclusive (see §3's own note).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -147,6 +149,24 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the Invert start/stop particle burst — the FIRST real particle effect in this
+  engine** (plan.md BLUPI-110/VISUAL-014/015), per the user's explicit direction to start on the
+  particle-effects system now that data-table transcription is approved. Real spawn sites
+  confirmed via direct `Decor.cpp` reads: grant places 4 instances (up/down/+X/-X) at exactly 500
+  real-px from Blupi; expiry places them at 400 real-px (a real, deliberate, closer-in radius, not
+  symmetric with grant). Real `SearchDistRight()` short-circuits to a flat 500px for this specific
+  effect — no raycast/wall-collision logic needed. New `GEInteractionSystem::SpawnInvertBurst()`,
+  called directly at the game class's existing grant/expiry sites. Found and fixed 2 real bugs in
+  `GEObjectIcons.cpp`'s existing (previously unused) icon formulas along the way: wrong divisor (6
+  instead of the real 2) and ObjectType42 ascending past the valid range instead of matching the
+  real table's exact reverse order. 8 new `VerifyInteractionSystem` checks + full regression on
+  both backends, all pass. **Live visual verification was attempted but inconclusive** — confirmed
+  via a live debug print that the object spawns at the exact right position, but the real sprite
+  (a small ~5%-coverage element.png icon) wasn't clearly distinguishable in headless screenshots
+  within a reasonable time budget. Reuses the same already-proven billboard rendering path used
+  by every other element.png object in this engine, so this is a lower-risk gap than a new
+  rendering mode would be — see plan.md VISUAL-014's own note for the full reasoning. Flagging
+  this openly rather than either fabricating a "confirmed working" claim or endlessly debugging.
 - **Wired SmallShake's real trigger sites (plan.md CAM-008)** — the earlier camera-shake commit
   (below) left this unwired pending research; direct re-verification of every cited `Decor.cpp`
   site found the "7 near-identical dynamite-blast sites" description was wrong — it was actually a
@@ -663,7 +683,12 @@ judgment (§9).
 16. **Particle/transient-visual-effects system** (`plan.md` §2.7 §7.5 / §2.12, ~22 items) — the
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
-    scope as its own multi-task effort if picked up, not a "next smallest task."
+    scope as its own multi-task effort if picked up, not a "next smallest task." **Update
+    2026-07-14: the user directed a start on this system and the first slice (Invert start/stop
+    burst, `BLUPI-110`/`VISUAL-014/015`) is now done** — see §3's own writeup, including the
+    real `SearchDistRight()` short-circuit finding that makes several OTHER effects in this family
+    (types 36/39/93) similarly simple (no raycast needed), a reusable discovery for whichever
+    effect is picked up next. ~20 items remain.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

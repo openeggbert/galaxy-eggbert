@@ -266,6 +266,26 @@ namespace GalaxyEggbert::CNA
         // that returns true.
         [[nodiscard]] bool InvertGrantedThisFrame() const noexcept { return invertGrantedThisFrame_; }
 
+        // Invert start/stop particle burst (plan.md VISUAL-014/015,
+        // ObjectType41 on grant / ObjectType42 on expiry) -- spawns 4
+        // instances around (blupiX,blupiY,blupiZ), one in each of the 4
+        // real directions (up/down/+X/-X -- see .cpp for the real
+        // screen-Y-to-world-Y sign flip, same convention as this engine's
+        // camera shake). Real `Decor.cpp` confirms grant places them at an
+        // exact 500 real-px radius (`ObjectStart(m_blupiPos, ...)`, no
+        // pre-offset, `Decor.cpp:6048-6051`) while expiry places them
+        // slightly closer at 400 real-px (`Decor.cpp:5137-5158`'s own
+        // ±100px pre-offset partially cancelling the same 500px final
+        // offset) -- both converted to this engine's world units via the
+        // same 64px-per-tile scale used throughout. Called directly by the
+        // game class at its own existing Invert grant/expiry sites (this
+        // class's own Update() has already returned by the time those
+        // fire, so it can't use the pendingSpawns deferred-spawn pattern --
+        // reuses an inactive slot first, matching that same real
+        // MoveObjectFree() slot-reuse semantics via a direct push instead).
+        void SpawnInvertBurst(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ,
+                               bool isGrant);
+
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
         [[nodiscard]] bool ExitReached() const noexcept { return exitReached_; }

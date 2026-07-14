@@ -1603,10 +1603,14 @@ namespace GalaxyEggbert::CNA
             if (interaction_.InvertGrantedThisFrame() && blupi_.TriggerInvert())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel66);
+                interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                               /*isGrant=*/true);
             }
             if (blupi_.JustExpiredInvert())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel67);
+                interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                               /*isGrant=*/false);
             }
 
             // Secret power warning sound (plan.md E3D-MIG-170) -- fires

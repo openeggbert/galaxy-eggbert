@@ -75,8 +75,14 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType36: return 179 + (p / 6) % 8;
             case ObjectType::ObjectType37: return 40 + (p / 6) % 70;
             case ObjectType::ObjectType39: return 166 + (p / 6) % 11;
-            case ObjectType::ObjectType41: return 179 + (p / 6) % 8;
-            case ObjectType::ObjectType42: return 186 + (p / 6) % 8;
+            // Fixed 2026-07-14 (plan.md VISUAL-014/015): divisor was 6, real
+            // is Config::ScaleDiv(2)==2 at this build's 20Hz reference rate
+            // (Tables.cpp:table_invertstart/table_invertstop, confirmed via
+            // direct source read); ObjectType42 also wrongly ASCENDED past
+            // 186 (out of the real icon range) instead of matching the
+            // real table's exact reverse order (186 down to 179).
+            case ObjectType::ObjectType41: return 179 + (p / 2) % 8;
+            case ObjectType::ObjectType42: return 186 - (p / 2) % 8;
             case ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
             case ObjectType::ObjectType57: return 274; // 20 frames would exceed the sheet (274+19=293 > 289) -- first-frame only
             case ObjectType::ObjectType97: return 256 + (p / 6) % 5;

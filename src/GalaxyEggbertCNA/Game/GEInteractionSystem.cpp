@@ -528,6 +528,22 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
+            // Invert start/stop particle burst (plan.md VISUAL-014/015,
+            // ObjectType41/42) -- purely cosmetic, no interaction with
+            // Blupi. Real self-delete at phase>=16 (`Decor.cpp:8575-8596`,
+            // `Config::ScaleTime(16)==16` at this build's 20Hz reference
+            // rate) -- `phase` itself is already advanced generically by
+            // `GEWorldRuntime::Update()` (called every frame before this
+            // one), so this only needs to check it, not increment it.
+            if (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42)
+            {
+                if (obj.phase >= 16.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
             // posStart and posEnd at `speed` units/sec -- matches
             // GalaxyEggbertSimple3D's GEDecorSystem::Update() exactly
@@ -1767,6 +1783,61 @@ namespace GalaxyEggbert::CNA
             }
         }
         return anyDestroyed;
+    }
+
+    void GEInteractionSystem::SpawnInvertBurst(GEWorldRuntime& worldRuntime, float blupiX, float blupiY,
+                                                float blupiZ, bool isGrant)
+    {
+        // Real distances confirmed via direct Decor.cpp read: grant places
+        // each instance exactly 500 real px out (no pre-offset); expiry
+        // pre-offsets 100px toward Blupi before the same 500px push,
+        // netting exactly 400px -- both converted here via the same
+        // 64px-per-tile scale used throughout this engine's own atlas/
+        // movement math.
+        constexpr float kGrantDistance = 500.0f / 64.0f;
+        constexpr float kExpiryDistance = 400.0f / 64.0f;
+        const float distance = isGrant ? kGrantDistance : kExpiryDistance;
+        const ObjectType type = isGrant ? ObjectType::ObjectType41 : ObjectType::ObjectType42;
+
+        // Real screen-Y (up/down) maps to this engine's world-Y (height),
+        // same convention already established for camera shake and Ghost
+        // mode's vertical flight -- real screen-up (the real `speed=-60`
+        // case) is world +Y here, real screen-down (`speed=60`) is world
+        // -Y. Real screen-X (left/right) maps directly to world X with no
+        // sign flip, same convention used everywhere else this session.
+        const float offsets[4][3] = {
+            {0.0f, distance, 0.0f},  // up
+            {0.0f, -distance, 0.0f}, // down
+            {distance, 0.0f, 0.0f},  // +X (real "right")
+            {-distance, 0.0f, 0.0f}, // -X (real "left")
+        };
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (const auto& offset : offsets)
+        {
+            MobileObjSpec spec;
+            spec.type = type;
+            spec.active = true;
+            spec.phase = 0.0f;
+            spec.currentX = spec.posStartX = spec.posEndX = blupiX + offset[0];
+            spec.currentY = spec.posStartY = spec.posEndY = blupiY + offset[1];
+            spec.currentZ = spec.posStartZ = spec.posEndZ = blupiZ + offset[2];
+
+            bool placed = false;
+            for (auto& slot : objects)
+            {
+                if (!slot.active)
+                {
+                    slot = spec;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed)
+            {
+                objects.push_back(spec);
+            }
+        }
     }
 
     void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)
