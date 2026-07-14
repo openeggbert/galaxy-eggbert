@@ -385,6 +385,9 @@ namespace GalaxyEggbert::CNA
                 spec.posEndX = x + dir[0] * kReach;
                 spec.posEndY = y + dir[1] * kReach;
                 spec.posEndZ = z + dir[2] * kReach;
+                spec.patrolStep = 2; // real step=2, matches SpawnInvertBurst()'s own spawn
+                spec.patrolTime = 0.0f;
+                spec.stepAdvanceTicks = 78.0f;
                 pendingSpawns.push_back(spec);
             }
         }
@@ -602,24 +605,18 @@ namespace GalaxyEggbert::CNA
             // `Config::ScaleTime(16)==16` at this build's 20Hz reference
             // rate) -- `phase` itself is already advanced generically by
             // `GEWorldRuntime::Update()` (called every frame before this
-            // one), so this only needs to check it, not increment it.
-            // Real `stepAdvance` (`Decor::ObjectStart()`, `Decor.cpp:7866`)
-            // is 78 ticks for every direction of this burst (the same
-            // 500px-reach/magnitude-10 combination in all 4 cases,
-            // fixed 2026-07-14 -- this object always self-deletes at 16/78
-            // ticks, ~20% of the way, long before reaching posEnd, so no
-            // arrival/dwell handling is needed).
-            if (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42)
+            // one), so this only needs to check it, not increment it. Real
+            // `stepAdvance` (`Decor::ObjectStart()`, `Decor.cpp:7866`) is 78
+            // ticks for every direction of this burst; `SpawnInvertBurst()`
+            // sets `stepAdvanceTicks`/`patrolStep=2` at spawn, so (like
+            // Pollution puff, plan.md VISUAL-013) this does NOT hand-roll
+            // its own interpolation -- it falls through to the existing
+            // generic `AdvancePatrolStep()` call below for the real
+            // posStart->posEnd slide (cleanup applied 2026-07-14: this used
+            // to duplicate that same machinery here).
+            if ((obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42) && obj.phase >= 16.0f)
             {
-                constexpr float kStepAdvance = 78.0f;
-                const float t = obj.phase / kStepAdvance;
-                obj.currentX = obj.posStartX + (obj.posEndX - obj.posStartX) * t;
-                obj.currentY = obj.posStartY + (obj.posEndY - obj.posStartY) * t;
-                obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
-                if (obj.phase >= 16.0f)
-                {
-                    obj.active = false;
-                }
+                obj.active = false;
                 continue;
             }
 
@@ -627,20 +624,12 @@ namespace GalaxyEggbert::CNA
             // ObjectType39) -- purely cosmetic. Real self-delete at
             // phase>=11 (`Decor.cpp:8382-8389`, `Config::ScaleTime(11)==11`
             // at this build's 20Hz reference rate) -- an 11-frame lifetime,
-            // shorter than Invert's 16. Same real `stepAdvance`=78 slide
-            // toward posEnd as the Invert burst above (fixed 2026-07-14) --
-            // self-deletes at 11/78 ticks, ~14% of the way.
-            if (obj.type == ObjectType::ObjectType39)
+            // shorter than Invert's 16. Same real `stepAdvance`=78 slide via
+            // the shared `AdvancePatrolStep()` machinery as the Invert burst
+            // above (cleanup applied 2026-07-14, see its own comment).
+            if (obj.type == ObjectType::ObjectType39 && obj.phase >= 11.0f)
             {
-                constexpr float kStepAdvance = 78.0f;
-                const float t = obj.phase / kStepAdvance;
-                obj.currentX = obj.posStartX + (obj.posEndX - obj.posStartX) * t;
-                obj.currentY = obj.posStartY + (obj.posEndY - obj.posStartY) * t;
-                obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
-                if (obj.phase >= 11.0f)
-                {
-                    obj.active = false;
-                }
+                obj.active = false;
                 continue;
             }
 
@@ -2003,6 +1992,9 @@ namespace GalaxyEggbert::CNA
             spec.posEndX = blupiX + dir[0] * endOffset;
             spec.posEndY = blupiY + dir[1] * endOffset;
             spec.posEndZ = blupiZ + dir[2] * endOffset;
+            spec.patrolStep = 2; // real step=2 -- skips the dwell-at-start phase, matches Pollution puff's own spawn
+            spec.patrolTime = 0.0f;
+            spec.stepAdvanceTicks = 78.0f; // real |magnitude-10 * 500/64| -- same for grant and expiry, see comment above
 
             bool placed = false;
             for (auto& slot : objects)

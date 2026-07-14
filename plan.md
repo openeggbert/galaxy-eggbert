@@ -3134,9 +3134,15 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       spawn (matching real `ObjectStart()`'s own `step=2`, skipping the dwell-at-start phase) —
       rather than a bespoke hand-rolled interpolation block. **Found while building this: Invert
       burst/treasure sparkle's own posStart->posEnd slide (VISUAL-014/015/012's own corrections,
-      above) duplicate this same already-existing mechanism instead of reusing it — a real, valid,
-      NOT-yet-done cleanup opportunity, flagged but not undertaken here** (their current behavior
-      is already correct, just implemented redundantly).
+      above) duplicated this same already-existing mechanism instead of reusing it — cleaned up
+      the same day** (2026-07-14, later): `SpawnInvertBurst()`/`AppendSparkleBurst()` now also set
+      `patrolStep=2`/`stepAdvanceTicks=78` at spawn instead of hand-rolling their own
+      `phase`-driven interpolation in the per-object loop, which now only checks the real
+      self-delete condition and falls through to the shared `AdvancePatrolStep()` call, same as
+      Pollution puff. Confirmed mathematically identical (both `phase` and `patrolTime` advance by
+      the same `dt*20` per frame from a spawn-time 0, so the two formulas were always numerically
+      equal) — a pure refactor, zero behavior change, all existing tests pass unmodified. Full
+      regression re-run on both backends, all pass.
 
       16 new `VerifyInteractionSystem` checks (no-vehicle no-op, Jeep stationary schedule count/
       exact spawn position/posEnd/stepAdvance/patrolStep, facing-direction sign flip, Overcraft

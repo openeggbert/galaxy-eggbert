@@ -151,6 +151,16 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Refactored the Invert burst and treasure sparkle particle effects to reuse the engine's
+  existing generic `AdvancePatrolStep()` machinery** instead of their own hand-rolled `phase`-based
+  interpolation, matching the pattern Pollution puff (below) established. `SpawnInvertBurst()`/
+  `AppendSparkleBurst()` now set `patrolStep=2`/`stepAdvanceTicks=78` at spawn; the per-object loop
+  now only checks the real self-delete condition (`phase>=16`/`phase>=11`) and falls through to
+  the shared interpolation call, rather than duplicating it. Confirmed mathematically identical
+  first (`phase` and `patrolTime` both advance by the exact same `dt*20` per frame from a
+  spawn-time 0, so the two formulas were always numerically equal) — a pure refactor, zero
+  behavior change, every existing test passes unmodified. Full regression re-run on both
+  backends, all pass.
 - **Implemented Pollution puff — the FIFTH real particle effect, and the most complex one so far**
   (plan.md VISUAL-013, ObjectType36) — real vehicle-exhaust smoke from
   `Decor::MoveObjectPollution()`, gated by 4 separate vehicle checks (Helicopter/Overcraft/Jeep/
@@ -777,10 +787,12 @@ judgment (§9).
     `ObjectType9/10`'s `GetObjIcon()` formulas are still flagged (not fixed) — same category of bug
     as the fixed ones, but both types remain entirely unspawned in this engine, so fixing their
     formulas now would be speculative work on unreachable code; a real follow-up once/if they're
-    ever wired. Also flagged (not done): Invert/treasure's own posStart->posEnd slide duplicates
-    the engine's existing generic `AdvancePatrolStep()` machinery instead of reusing it (found
-    while building Pollution puff, the first effect to use that machinery directly) — a real
-    cleanup opportunity, not urgent since current behavior is already correct. ~15 items remain
+    ever wired. Invert/treasure's own posStart->posEnd slide used to duplicate the engine's
+    existing generic `AdvancePatrolStep()` machinery instead of reusing it (found while building
+    Pollution puff, the first effect to use that machinery directly) — cleaned up the same day
+    (both now set `patrolStep=2`/`stepAdvanceTicks` at spawn like Pollution puff; confirmed
+    mathematically identical to the old hand-rolled version first, a pure refactor with zero
+    behavior change). ~15 items remain
     overall, and every real "simple" (flat-500px, single-instance-or-4-burst) particle effect is
     now done — remaining items are either genuinely harder (door-linked bursts needing a
     non-`MobileObjSpec` door model, the Voyage system, Shield's sparkle loop, water splashes, the
