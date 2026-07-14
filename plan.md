@@ -2142,13 +2142,13 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active)
 - [ ] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers
 - [x] BLUPI-108 — ~~Cloud mode (m_blupiCloud): from ObjectType31, floats through blocks for N
-      ticks~~ **description was wrong, corrected 2026-07-14**: grepped real `Decor.cpp` for every
-      `m_blupiCloud` reference — none gate any collision/movement-bypass function; Cloud's actual
-      real gameplay effect is the `BlupiElectro` enemy-kill aura (destroys small enemies within a
-      real 40px radius while active), already implemented — see item `068` and `PICKUP-010` above
-      for the full citation. This line was simply stale (never updated when that work landed under
-      a different item number) and had an invented "floats through blocks" premise not supported by
-      source.
+      ticks~~ **HALLUCINATED — CANCELLED (confirmed by user 2026-07-14)**: grepped real
+      `Decor.cpp` for every `m_blupiCloud` reference — none gate any collision/movement-bypass
+      function; Cloud's actual real gameplay effect is the `BlupiElectro` enemy-kill aura
+      (destroys small enemies within a real 40px radius while active), already implemented — see
+      item `068` and `PICKUP-010` above for the full citation. The "floats through blocks" premise
+      is not supported by any source and is confirmed invented — do not implement it under any
+      item number.
 - [ ] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
 - [ ] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions)
 - [ ] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions —
@@ -2180,22 +2180,20 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-124 — Ouf recovery: after close call, play one of Ouf1a..Ouf5 animations
 - [ ] BLUPI-125 — Mockery: enemies mock Blupi (ACTION_MOCKERY/i/p) for m_blupiTimeMockery ticks
 - [ ] BLUPI-126 — ~~Stomp kill: velY < -1.0 on contact with enemy → BounceUp() + kill enemy~~
-      **premise appears INVENTED, researched 2026-07-14** — a Mario-style "jump on an enemy to kill
-      it" mechanic. Grepped all of `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and `include/
-      WindowsPhoneSpeedyBlupi/` for `bounce`/`Bounce`/`stomp`/`Stomp` (case-insensitive) — zero
-      matches for any such function or concept; `BounceUp()` does not exist anywhere in source.
-      Also checked `MoveObjectStep()`'s own real enemy-contact code (`Decor.cpp:7940-7965`, the
-      exact function whose own doc comment says enemy types 4/32/33 "electrocute Blupi" on contact)
-      and every other Type4/32/33 contact site — none has any velocity/vertical-speed condition
-      gating a different outcome. **Do NOT implement without the user's own confirmation that this
-      mechanic exists** — per CLAUDE.md's explicit example of invented mechanics that must not be
-      added ("any mechanic invented by Claude"), this looks like exactly that category, not a
-      verified port target. The real, confirmed side of this (enemy-contact death, no stomp
-      exception) is presumably just the shared hazard-contact kill logic already covered by
-      `IsGenericHazard()` (galaxy-eggbert's own `GEInteractionSystem.cpp`) — already implemented,
-      see the correction below (ENEMY-CONTACT-001 was a false claim, retracted).
-- [ ] BLUPI-127 — ~~BounceUp: upward impulse kJumpSpeed × 0.65~~ **same invented premise as
-      BLUPI-126 above — do not implement, no such function exists in real source.**
+      **HALLUCINATED — CANCELLED (confirmed by user 2026-07-14)** — a Mario-style "jump on an
+      enemy to kill it" mechanic. Grepped all of `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and
+      `include/WindowsPhoneSpeedyBlupi/` for `bounce`/`Bounce`/`stomp`/`Stomp` (case-insensitive) —
+      zero matches for any such function or concept; `BounceUp()` does not exist anywhere in
+      source. Also checked `MoveObjectStep()`'s own real enemy-contact code
+      (`Decor.cpp:7940-7965`, the exact function whose own doc comment says enemy types 4/32/33
+      "electrocute Blupi" on contact) and every other Type4/32/33 contact site — none has any
+      velocity/vertical-speed condition gating a different outcome. Confirmed invented — do not
+      implement. The real, confirmed side of this (enemy-contact death, no stomp exception) is
+      just the shared hazard-contact kill logic already covered by `IsGenericHazard()`
+      (galaxy-eggbert's own `GEInteractionSystem.cpp`) — already implemented, see the correction
+      below (ENEMY-CONTACT-001 was a false claim, retracted).
+- [ ] BLUPI-127 — ~~BounceUp: upward impulse kJumpSpeed × 0.65~~ **HALLUCINATED — CANCELLED, same
+      as BLUPI-126 above — no such function exists in real source.**
 - ~~ENEMY-CONTACT-001 — Blupi has NO contact-collision detection against enemy `MoveObject`s at
       all yet~~ **RETRACTED 2026-07-14, this claim was itself wrong** — direct re-verification of
       `GEInteractionSystem.cpp` found Blupi-enemy contact detection is already comprehensive and
@@ -2222,8 +2220,7 @@ re-verified individually since it is not a full port yet.
 - [x] BLUPI-128 — Jump sound: ch1 on jump (CNA, 2026-07-10)
 - [x] BLUPI-129 — Footstep sound: ch3 per march stride (CNA, 2026-07-10 — plain footstep wiring only; surface-dependent remap NOT done, see BLUPI-133)
 - [x] BLUPI-130 — Landing sound: ch4 on ground contact (CNA, 2026-07-10)
-- [ ] BLUPI-131 — ~~Stomp kill sound: ch5~~ **same invented premise as BLUPI-126 — do not
-      implement.**
+- [ ] BLUPI-131 — ~~Stomp kill sound: ch5~~ **HALLUCINATED — CANCELLED, same as BLUPI-126.**
 - [ ] BLUPI-132 — Death sound: ch8
 - [ ] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile type — NOT done in CNA (7 terrain pairs, channels 78-91)
 - [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient)
@@ -2675,40 +2672,41 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 
 ### 2.8 Score & Progression
 
-**Researched 2026-07-14 — SCORE-001 through SCORE-006's premise appears INVENTED, not real.**
-Grepped all of `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and `include/WindowsPhoneSpeedyBlupi/`
-for `score`/`Score`/`m_score`/`GetScore`/`SetScore`/`AddScore` — no actual game-state score
-variable exists anywhere. The only hits are UI label text (`TX_BUTTON_RANKING`,
+**HALLUCINATED — CANCELLED (confirmed by user 2026-07-14): SCORE-001 through SCORE-007 and the
+"total score"/"new-record" parts of SCORE-012.** Grepped all of
+`mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and `include/WindowsPhoneSpeedyBlupi/` for
+`score`/`Score`/`m_score`/`GetScore`/`SetScore`/`AddScore` — no actual game-state score variable
+exists anywhere. The only hits are UI label text (`TX_BUTTON_RANKING`,
 `MyResource.cpp:110,317,453,587`) and a `Def::Phase::Ranking` screen name (`Def.hpp:65`,
 `Game1.cpp:94,347-351`) — a gamer/profile stats screen name, not a numeric score mechanic.
 `GameData.hpp`'s save-format class documents its entire byte layout explicitly (lines 12-39:
 global header + per-gamer lives/lastWorld/200 door-state bytes) — no score field anywhere in 640
-bytes of save data. The specific point values below (10/25/50/50/50/100) are not traceable to any
-real source at all — **do NOT implement SCORE-001 through SCORE-006** without the user's own
-confirmation that a real score mechanic exists; per CLAUDE.md's "no mechanic invented by Claude"
-rule, this looks like an invented feature from early documentation, not a verified port target.
-This is a harder block than the data-table-transcription items elsewhere (camera shake, particle
-tables) — those at least have *real* values gated on copy-approval; here there is nothing real
-found to copy. The rest of this section (mission numbering/hub progression/save-linked
-progression, SCORE-013 onward) was NOT specifically re-verified this pass — treat as unconfirmed
-pending its own source check, not as confirmed real either.
+bytes of save data. The specific point values (10/25/50/50/50/100) were not traceable to any real
+source at all. Confirmed invented — do not implement any numeric score mechanic. The rest of this
+section (mission numbering/hub progression/save-linked progression/game speed, SCORE-008-011 and
+SCORE-013 onward) is a SEPARATE, real category unrelated to the score hallucination — NOT
+specifically re-verified this pass, treat as unconfirmed pending its own source check, not as
+cancelled either.
 
 Not started in CNA beyond what's implied by the interactive-object system's counting (treasures
-collected, egg cap). No score numbers, HUD display, win/lose screen, or save-linked progression
-exist yet. All items reset to `[ ]`.
+collected, egg cap). No score numbers exist yet, and per the above, never will. All other items
+reset to `[ ]`.
 
-- [ ] SCORE-001 — ~~+10 score per treasure collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
-- [ ] SCORE-002 — ~~+25 score per enemy stomped~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
-- [ ] SCORE-003 — ~~+50 score per key collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
-- [ ] SCORE-004 — ~~+50 score per egg collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation** (mobile-eggbert: ch3 + life — channel corrected, see §7 note; the "+ score" part is the unconfirmed piece)
-- [ ] SCORE-005 — ~~+50 score per drink collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
-- [ ] SCORE-006 — ~~+100 bonus when all treasures collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
-- [ ] SCORE-007 — High score per gamer slot persisted
+- [ ] SCORE-001 — ~~+10 score per treasure collected~~ **HALLUCINATED — CANCELLED, see note above.**
+- [ ] SCORE-002 — ~~+25 score per enemy stomped~~ **HALLUCINATED — CANCELLED, see note above.**
+- [ ] SCORE-003 — ~~+50 score per key collected~~ **HALLUCINATED — CANCELLED, see note above.**
+- [ ] SCORE-004 — ~~+50 score per egg collected~~ **HALLUCINATED — CANCELLED, see note above** (mobile-eggbert: ch3 + life — channel corrected, see §7 note; that part is real, only the "+ score" part was invented)
+- [ ] SCORE-005 — ~~+50 score per drink collected~~ **HALLUCINATED — CANCELLED, see note above.**
+- [ ] SCORE-006 — ~~+100 bonus when all treasures collected~~ **HALLUCINATED — CANCELLED, see note above.**
+- [ ] SCORE-007 — ~~High score per gamer slot persisted~~ **HALLUCINATED — CANCELLED, see note above (depends entirely on the non-existent score value).**
 - [ ] SCORE-008 — Level elapsed timer displayed in HUD
 - [ ] SCORE-009 — Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)
 - [ ] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes (from mobile-eggbert enum)
 - [ ] SCORE-011 — Slow game speed: alternate-frame skip (`slow_frame` toggle in game loop)
-- [ ] SCORE-012 — Win screen: display total score, elapsed time, new-record indicator
+- [ ] SCORE-012 — ~~Win screen: display total score~~, elapsed time, new-record indicator —
+      **the "total score"/"new-record" parts are HALLUCINATED — CANCELLED** (see note above);
+      "elapsed time" display itself is unrelated to the score hallucination and stays open pending
+      its own check (see SCORE-008).
 - [ ] SCORE-013 — Mission numbering: world hub (X0) → levels (X1-X5) → next hub ((X+1)0)
 - [ ] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs) supported
 - [ ] SCORE-015 — IsTerminated: -1=lost, -2=win, ≥1=advance to mission N
@@ -2900,30 +2898,29 @@ Everything here depends on systems (Blupi visibility, enemies, pickups, camera s
 themselves mostly not started in CNA yet. All items reset to `[ ]`.
 
 - [ ] VISUAL-001 — ~~Blob shadow under Blupi (scales with height, disabled in helicopter/
-      balloon)~~ **researched 2026-07-14, premise appears INVENTED**: grepped all of
+      balloon)~~ **HALLUCINATED — CANCELLED (confirmed by user 2026-07-14)**: grepped all of
       `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and headers (including French terms —
-      "ombre"/"shadow") — zero hits anywhere. No blob-shadow concept exists in real source. Do not
-      implement without the user's own confirmation.
-- [ ] VISUAL-002 — ~~Blob shadow under enemies (disabled for birds)~~ **same finding as VISUAL-001
-      — no real source, do not implement.**
-- [ ] VISUAL-003 — ~~Pickup bobbing: sine-wave Y offset on collectibles~~ **researched 2026-07-14,
-      premise appears INVENTED**: no `sin`/bobbing animation tied to any pickup type found anywhere
-      in `Decor.cpp`. Do not implement without confirmation.
-- [ ] VISUAL-004 — ~~Score popups: rising "+N" text, 1 s fade at collection position~~ **same
-      invented premise as the §2.8 SCORE section** (see that section's own correction above) — no
-      numeric score concept exists in mobile-eggbert at all, so a "+N" popup tied to it can't be
-      real either. Do not implement.
+      "ombre"/"shadow") — zero hits anywhere. No blob-shadow concept exists in real source.
+- [ ] VISUAL-002 — ~~Blob shadow under enemies (disabled for birds)~~ **HALLUCINATED — CANCELLED,
+      same finding as VISUAL-001 — no real source.**
+- [ ] VISUAL-003 — ~~Pickup bobbing: sine-wave Y offset on collectibles~~ **HALLUCINATED —
+      CANCELLED (confirmed by user 2026-07-14)**: no `sin`/bobbing animation tied to any pickup
+      type found anywhere in `Decor.cpp`.
+- [ ] VISUAL-004 — ~~Score popups: rising "+N" text, 1 s fade at collection position~~
+      **HALLUCINATED — CANCELLED, same invented premise as the §2.8 SCORE section** (see that
+      section's own correction above) — no numeric score concept exists in mobile-eggbert at all,
+      so a "+N" popup tied to it can't be real either.
 - [ ] VISUAL-005 — ~~Respawn flash: Blupi billboard blinks at 10 Hz for 2 s after respawn~~
-      **researched 2026-07-14, premise appears INVENTED**: no respawn-flash/blink effect found in
-      `Decor.cpp` — the only "blink" hit anywhere is an unrelated comment about a timed platform
-      tile's solidity cycle (icon 324, line ~6693). Do not implement without confirmation.
-- [ ] VISUAL-006 — ~~Shield tint: cyan sprite when m_blupiShield active~~ **researched 2026-07-14,
-      premise appears INVENTED**: no tint/color-modulation effect for Shield found in `Decor.cpp` —
-      real Shield rendering (`Decor.cpp` ~line 780 area, already cited elsewhere this session) draws
-      a `table_shieldloop` sparkle icon overlay, not a tint. Do not implement as described.
-- [ ] VISUAL-007 — ~~Shield blink at < 1.5 s remaining~~ **same finding as VISUAL-006 — no real
-      blink-at-low-time effect found, only the sparkle-overlay behavior already noted. Do not
-      implement as described.**
+      **HALLUCINATED — CANCELLED (confirmed by user 2026-07-14)**: no respawn-flash/blink effect
+      found in `Decor.cpp` — the only "blink" hit anywhere is an unrelated comment about a timed
+      platform tile's solidity cycle (icon 324, line ~6693).
+- [ ] VISUAL-006 — ~~Shield tint: cyan sprite when m_blupiShield active~~ **HALLUCINATED —
+      CANCELLED (confirmed by user 2026-07-14)**: no tint/color-modulation effect for Shield found
+      in `Decor.cpp` — real Shield rendering (`Decor.cpp` ~line 780 area, already cited elsewhere
+      this session) draws a `table_shieldloop` sparkle icon overlay, not a tint.
+- [ ] VISUAL-007 — ~~Shield blink at < 1.5 s remaining~~ **HALLUCINATED — CANCELLED, same finding
+      as VISUAL-006 — no real blink-at-low-time effect found, only the sparkle-overlay behavior
+      already noted.**
 - [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px, Explosion channel)
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)

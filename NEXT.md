@@ -652,6 +652,18 @@ committing to #16 as its own dedicated multi-task effort). A future session shou
 user on one of these before continuing, or re-run this same discovery process in case a fresh look
 turns up something this pass missed.
 
+**Further update, 2026-07-14 (same day, later): the user resolved most of the open blockers
+directly.** (1) Data-table transcription is now approved — camera shake (#15) and the
+data-table-backed particle-effects items in #16 are unblocked; still needs its own scoped
+implementation pass (particle effects remain a genuinely large feature, camera shake is small).
+(2) `BLUPI-108`/`BLUPI-126/127/131`/`SCORE-001..007`/`VISUAL-001..007` confirmed HALLUCINATED —
+explicitly cancelled by the user, see `plan.md`'s per-item corrections and §9's "do not do yet"
+note above. (3) Ghost-mode's real trigger was provided directly by the user: typed word "Ghost",
+via a second (word-typing) cheat-entry method distinct from the on-screen button dispatch this
+session found earlier — needs source research to find the exact mechanism before implementing,
+in progress. Remaining open: #8 (door persistence, still low value), #9 (AscenseurVertigo render
+decision), Saw blade orientation (needs visual input).
+
 ## 9. Do not do yet
 
 - **Do not guess at the Saw blade orientation a 4th time without the user's own visual input** —
@@ -665,42 +677,32 @@ turns up something this pass missed.
 - **Do not invent new gameplay mechanics.** Every feature must trace to something confirmed in
   mobile-eggbert — verify against real source or `mobile-eggbert-reference/` before implementing,
   not just plausibility.
-- **Do not implement any of `plan.md` §7.5's particle/visual-effects items (PICKUP-042..063,
-  VISUAL-XXX) without the user first resolving one of two blockers** — researched 2026-07-14,
-  checked every candidate: (1) the ones with a real confirmed mechanic (Invert start/stop burst,
-  Goo, water plouf/bubble/small-plouf, pollution puff, etc.) are ALL driven by real mobile-eggbert
-  icon-sequence data tables (`table_invertstart`/`table_invertstop`/`table_glu`/`table_plouf`/
-  `table_blup`/`table_tiplouf`/`table_pollution`, 8-25 entries each) needing explicit
-  transcription approval; (2) VISUAL-001/002/003/004/005/006/007 (blob shadows, pickup bobbing,
-  score popups, respawn flash, shield tint/blink) have **no confirmed real source at all** —
-  zero grep hits anywhere in `Decor.cpp` for shadow/bobbing/tint/blink/respawn-flash concepts —
-  and look like invented items, same category as the §2.8 SCORE section. See `plan.md`'s own
-  per-item corrections for citations.
+- **Data-table transcription is now APPROVED (user, 2026-07-14)** — the user gave explicit
+  blanket approval to copy small real mobile-eggbert data tables into galaxy-eggbert. This
+  unblocks the particle/visual-effects items in `plan.md` §7.5 that have a real confirmed
+  mechanic (Invert start/stop burst, Goo, water plouf/bubble/small-plouf, pollution puff, etc. —
+  `table_invertstart`/`table_invertstop`/`table_glu`/`table_plouf`/`table_blup`/`table_tiplouf`/
+  `table_pollution`) and camera shake (`table_decor_action`). Still verify each mechanic against
+  real source before implementing (approval covers copying real data, not inventing behavior) —
+  this does NOT retroactively make the confirmed-hallucinated items below real.
+- **`plan.md` BLUPI-108 (Cloud "floats through blocks"), BLUPI-126/127/131 ("stomp kill"),
+  SCORE-001..007/the score parts of SCORE-012, and VISUAL-001/002/003/004/005/006/007 are
+  HALLUCINATED and CANCELLED (confirmed by the user, 2026-07-14)** — none of these have any real
+  mobile-eggbert source; do not implement any of them under any item number, and do not revisit
+  unless the user explicitly asks again. See each item's own `plan.md` correction for the research
+  citations.
+- **`plan.md` BLUPI-111 (Ghost mode cheat) has a real trigger after all — the user provided it
+  2026-07-14**: activated in-game by typing the word "Ghost". Cheats can be entered via two
+  distinct methods in real mobile-eggbert; only the second method (word-typing) can reach every
+  possible cheat, including Ghost — the on-screen button-glyph dispatch this session found
+  earlier (`Game1::CheatAction(Def::ButtonGlyph)`) is the FIRST, more limited method. The exact
+  mechanism (keyboard buffer, phase gating, case sensitivity) needs source research before
+  implementing — see whichever research note/commit is most recent for the current findings.
 - **Do not modify `../cna` or `../simple-3d`** without explicit per-change approval (the exit-code-1
   and Vulkan SpriteBatch-ordering bugs in §5 both need this and were explicitly deferred).
 - **Do not attempt the exit-code-1-on-window-close fix** — the user already explicitly declined it.
 - **Do not design or build the real 3D Blupi model** — blocked on the user providing an asset;
   don't speculate about its look/rig in the meantime.
-- **Do not implement `plan.md` BLUPI-111 (Ghost mode cheat)** without the user picking a trigger —
-  researched 2026-07-14: the mechanic is real (`Tables::CheatCodes::Ghost`, live under `#ifdef
-  MODERN` which is unconditionally defined), but `Game1.cpp`'s real `CheatAction()` dispatch never
-  maps any actual cheat gesture/number to it — there is no real access path to mirror, so wiring it
-  up now would mean inventing a new keybind/cheat-slot with no precedent.
-- **Do not implement `plan.md` BLUPI-126/127/131** (Mario-style "stomp kill" on enemies,
-  `BounceUp()`, stomp sound) — researched 2026-07-14: grepped all of mobile-eggbert source for
-  `bounce`/`stomp` (case-insensitive) and found zero matches; `BounceUp()` doesn't exist anywhere,
-  and the real enemy-contact code (`Decor.cpp:7940-7965`) has no velocity-conditioned branch. This
-  looks like an invented mechanic, not a verified port target. (A follow-up research pass initially
-  claimed the real underlying contact-detection was itself a missing gap — that claim was WRONG and
-  has been retracted; re-verification found `GEInteractionSystem.cpp` already implements
-  comprehensive, source-confirmed Blupi-enemy contact handling for every real case. See `plan.md`'s
-  retracted `ENEMY-CONTACT-001` note for the full correction.)
-- **Do not implement `plan.md` SCORE-001 through SCORE-006** (numeric score-per-pickup) —
-  researched 2026-07-14: no `score`/`Score` game-state variable exists anywhere in real
-  mobile-eggbert source, and `GameData.hpp`'s entire 640-byte save layout has no score field. The
-  specific point values (+10/+25/+50/+50/+50/+100) are not traceable to any real source at all —
-  this looks like an invented mechanic from early documentation, not a verified port target. See
-  `plan.md` §2.8 for full detail. Needs the user's own confirmation before any of it is built.
 - **Do not broadly refactor `GEInputPad`/`GEInteractionSystem`/`GEBlupiController`** — they are
   large, working, and have many call sites; prefer small, targeted, well-tested additions over
   restructuring.
