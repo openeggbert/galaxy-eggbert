@@ -1593,10 +1593,12 @@ namespace GalaxyEggbert::CNA
                     // Real sparkle burst (plan.md VISUAL-012) -- see
                     // AppendSparkleBurst()'s own comment for the full real
                     // citation. Real source also fires this same burst for
-                    // ObjectType49/50/51 (key-gated doors, not key pickups
-                    // themselves) -- NOT wired here, since this engine's own
-                    // door model uses static terrain tiles, not MobileObjSpec
-                    // instances, for those; a separate follow-up if picked up.
+                    // ObjectType49/50/51 -- corrected 2026-07-14: these are
+                    // the 3 KEY PICKUPS themselves (`Decor.cpp:5962-6006`,
+                    // confirmed via ObjectType.hpp's own "Key 1/2/3
+                    // collectible" doc comments), not door tiles as
+                    // previously assumed here; now wired below alongside
+                    // this engine's own existing key-pickup collection.
                     AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 }
@@ -1615,16 +1617,19 @@ namespace GalaxyEggbert::CNA
                     ++keys1_;
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 case ObjectType::ObjectType50: // key 2
                     ++keys2_;
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 case ObjectType::ObjectType51: // key 3
                     ++keys3_;
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                     obj.active = false;
+                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     break;
                 case ObjectType::ObjectType55: // dynamite stick
                     // Real gate: only picked up while carrying none (real

@@ -3182,6 +3182,14 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       identically (posStart=origin, posEnd=target, linear interpolation via `phase/78`). Existing
       tests updated to check `posEnd` (the fixed real target) and the real starting-at-origin
       position. Full regression re-run on both backends after the fix, all pass.
+      **Correction, 2026-07-14 (later the same day):** the "ObjectType49/50/51 (key-gated doors,
+      not key pickups)" note above had it BACKWARDS — direct re-read of `ObjectType.hpp`'s own doc
+      comments confirms these ARE the 3 key pickups themselves ("Key 1/2/3 collectible"), not door
+      tiles, and this engine already collects them as such (`GEInteractionSystem.cpp`'s existing
+      `ObjectType49/50/51` cases, `keys1_/keys2_/keys3_`). No door-model blocker ever applied —
+      wired the same `AppendSparkleBurst()` call into all 3 existing key-pickup cases. 1 new
+      `VerifyInteractionSystem` check (key pickup spawns the same 4-instance burst, filtered by
+      `posEnd` proximity like the treasure test) + full regression on both backends, all pass.
 - [x] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers — **done 2026-07-14**,
       the FIFTH real particle effect built, and the most complex one so far. Real trigger is
       `Decor::MoveObjectPollution()` (`Decor.cpp:6877-6989`, confirmed function name/range via

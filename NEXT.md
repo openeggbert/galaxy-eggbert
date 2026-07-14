@@ -152,6 +152,15 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Wired the treasure sparkle burst to key pickups too (plan.md VISUAL-012)** — corrected a
+  backwards assumption from earlier the same day: `ObjectType49/50/51` were assumed to be
+  key-gated DOOR tiles needing a new non-`MobileObjSpec` door model before the burst could be
+  wired, but `ObjectType.hpp`'s own doc comments confirm they're the 3 KEY PICKUPS themselves —
+  and this engine already collects them (`GEInteractionSystem.cpp`'s existing
+  `keys1_/keys2_/keys3_` cases). No blocker ever applied; added the same `AppendSparkleBurst()`
+  call already used for treasure to all 3 key-pickup cases. 1 new `VerifyInteractionSystem` check
+  + full regression on both backends, all pass.
+
 - **Implemented the teleporter arc — the NINTH real particle effect** (plan.md VISUAL-010,
   ObjectType92) — despite `ObjectType.hpp`'s own "charged attack" doc comment, the only real spawn
   site is the teleporter trigger itself, already this engine's existing `TriggerTeleport()` call
@@ -279,7 +288,9 @@ long continuous autonomous session); each item is its own commit.
   `VerifyInteractionSystem` checks + full regression on both backends, all pass. Also found (but
   correctly left unwired) that the same real burst fires for key-gated doors (ObjectType49/50/51)
   too — this engine's own door model uses static terrain tiles, not `MobileObjSpec`, for those, so
-  wiring it needs its own separate design, not a quick add.
+  wiring it needs its own separate design, not a quick add. **Corrected 2026-07-14, later the same
+  day: this was backwards — ObjectType49/50/51 are the 3 key pickups themselves, not door tiles;
+  no door-model blocker ever applied, wired directly (see §3's own newer entry).**
 - **Implemented the Invert start/stop particle burst — the FIRST real particle effect in this
   engine** (plan.md BLUPI-110/VISUAL-014/015), per the user's explicit direction to start on the
   particle-effects system now that data-table transcription is approved. Real spawn sites
@@ -816,14 +827,15 @@ judgment (§9).
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
     2026-07-14: the user directed a start on this system; 9 slices are now done** — Invert
-    start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`), Fan-hit
-    shockwave flash and dynamite-blast explosion flash (`VISUAL-008`, partial — only
-    `ObjectType8`/`11` of the 4 types in that item), Pollution puff (`VISUAL-013`, all 4
-    vehicle types), the Shield/Power magic trails (`VISUAL-011`/`017`), the bullet-hit splat
-    effect (`VISUAL-009`, description corrected — real trigger is a bullet contact-kill, not
-    "water entry"), and the teleporter arc (`VISUAL-010`, description corrected — real trigger is
-    the teleporter, not "a charged attack"), see §3's own writeups. Real `SearchDistRight()`
-    short-circuits to a flat 500px
+    start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`, now wired to
+    key pickups too — see §3's newer entry, a backwards "door model" assumption from earlier the
+    same day is corrected), Fan-hit shockwave flash and dynamite-blast explosion flash
+    (`VISUAL-008`, partial — only `ObjectType8`/`11` of the 4 types in that item), Pollution puff
+    (`VISUAL-013`, all 4 vehicle types), the Shield/Power magic trails (`VISUAL-011`/`017`), the
+    bullet-hit splat effect (`VISUAL-009`, description corrected — real trigger is a bullet
+    contact-kill, not "water entry"), and the teleporter arc (`VISUAL-010`, description corrected
+    — real trigger is the teleporter, not "a charged attack"), see §3's own writeups. Real
+    `SearchDistRight()` short-circuits to a flat 500px
     for types 36/39/41/42/93 (no raycast needed) — investigated type 93 directly
     (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and found it's actually gated behind the whole
     not-yet-built "Voyage" pickup-flight-animation system (plan.md `158`), NOT a simple standalone
@@ -839,13 +851,13 @@ judgment (§9).
     behavior change). The bullet-splat effect also required the first render-side change any
     particle effect this session has needed: real `-1` "invisible frame" sentinel support in the
     explo.png billboard pass (skip drawing when the icon is negative), reused as-is for the
-    teleporter arc's own 128-frame scattered table with no further renderer changes needed. ~11
+    teleporter arc's own 128-frame scattered table with no further renderer changes needed. ~10
     items remain overall, and every real particle effect with a genuinely "simple" single-site
     trigger (burst, single-instance flash, distance-triggered breadcrumb, contact-triggered splat,
-    or state-triggered arc) is now done — remaining items are either genuinely harder (door-linked
-    bursts needing a non-`MobileObjSpec` door model, the Voyage system, Hide's own afterimage
-    trail which needs a visible Blupi model this engine doesn't have) or blocked on the still-
-    unaudited `ObjectType9/10` formulas.
+    or state-triggered arc) is now done — remaining items are either genuinely harder (the Voyage
+    system, a full 2D-screen-space HUD-icon-flight animation distinct from this engine's 3D
+    `MobileObjSpec` system entirely; Hide's own afterimage trail which needs a visible Blupi model
+    this engine doesn't have) or blocked on the still-unaudited `ObjectType9/10` formulas.
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

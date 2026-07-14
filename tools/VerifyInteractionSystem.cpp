@@ -254,6 +254,28 @@ int main(int argc, char** argv)
             interaction.Update(dt, world, kx, ky, kz, 0.0f, sound);
         }
         check(interaction.Key1Count() == 1, "key collected exactly once (Key1Count == 1)");
+
+        // Real sparkle burst also fires for key pickups, not just treasure
+        // (plan.md VISUAL-012, corrected 2026-07-14 -- ObjectType49/50/51
+        // are the 3 key pickups themselves, not door tiles). Filtered by
+        // posEnd proximity to the key, same false-positive-avoidance shape
+        // as the treasure sparkle test's own `countNearbySparkles()`.
+        constexpr float kKeySparkleDist = 500.0f / 64.0f;
+        int keySparkleCount = 0;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (!obj.active || obj.type != ObjectType::ObjectType39)
+            {
+                continue;
+            }
+            const float edx = obj.posEndX - kx, edy = obj.posEndY - ky, edz = obj.posEndZ - kz;
+            const float endDist = std::sqrt(edx * edx + edy * edy + edz * edz);
+            if (std::fabs(endDist - kKeySparkleDist) < 0.01f)
+            {
+                ++keySparkleCount;
+            }
+        }
+        check(keySparkleCount == 4, "collecting a key spawns the real 4-instance ObjectType39 sparkle burst too");
     }
     else
     {
