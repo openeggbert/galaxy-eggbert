@@ -2962,7 +2962,36 @@ covered it) — only the "automated/CI-checked" framing was missing, and that's 
 - [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest, MoveObjectRecordTests) — **count reconciled 2026-07-14**: 64/64 (confirmed via a fresh `TEST(...)`/`TEST_F(...)` grep across `tests/GalaxyEggbert/`), not the previously-quoted 63.
 - [x] TEST-002 — ctest discovery in the CNA build dir — **fixed 2026-07-14**: `GalaxyEggbertWorldsTests` was already `gtest_discover_tests()`-registered (confirmed live: `ctest -N` found all 64 cases even before this fix, since a sibling dependency's own CMakeLists.txt already calls `enable_testing()` transitively) — the real gap was the 6 `VerifyXxx` binaries having no `add_test()` at all. Added one for each (`CMakeLists.txt`), with `WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` for the 3 that default to repo-root-relative paths. `ctest --test-dir build-cna` now runs all 7 tools' full suites in one command.
 - [ ] TEST-003 — Test: all mobile-eggbert world files parse without error — **partially covered, not exhaustive**: `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` each parse a curated subset of real `../mobile-eggbert/worlds/world0XX.txt` files (chosen per `ObjectType` example), not every world file in the directory — the literal "all" ask is still open.
-- [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — confirmed NOT a dedicated automated test; informally exercised by the tile-exhibition demo room (`tools/GenerateSampleWorld3D.cpp`, all 441 icons on a slab, visually confirmed via live screenshots this session) but that's manual/visual, not a scripted assertion over the full icon range.
+- [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — **investigated
+      2026-07-14, found a genuine but low-impact boundary bug, no automated test written yet.**
+      Directly computed `tileUV()`'s implied atlas-pixel rect for every icon near the end of the
+      0..440 range and cross-checked against the real `object-m.png` (1301×1431, confirmed via
+      direct Python/PIL inspection): icon 440's computed rect is `(1,1431)`-`(65,1495)` —
+      **entirely outside the real image's 1431px height** (a crop attempt fails outright, would
+      read past the file). Icons 0..439 all fit correctly (20 cols × 22 rows × the real 65px
+      pitch = exactly 1431px tall, confirmed `1 + 22*65 == 1431`) — this is specifically a
+      1-icon overshoot at the very last slot, not a broader miscalibration. Corroborating evidence
+      found independently elsewhere in this same codebase: `GEObjectIcons.cpp`'s own
+      `ObjectType52` comment already reasons about sheet overflow using bound **439** ("157 frames
+      would exceed the sheet (365+156=521 > 439)"), and a nearby comment already calls this
+      "object-m.png's 440-icon grid" — i.e. this discrepancy between the real 440-icon sheet and
+      `BlockTypes.hpp`'s `kPassable[441]`/exhibition-loop's `icon<=440` assumption of 441 icons has
+      apparently been latent and unreconciled across files for a while. **Real-world impact is
+      confirmed zero**: grepped every real mobile-eggbert `worlds/*.txt` level file for icon 440 —
+      zero placements anywhere; the ONLY place in this entire repo that ever rendered it was
+      galaxy-eggbert's own synthetic exhibition demo (`tools/GenerateSampleWorld3D.cpp`), which
+      has now been fixed to exclude icon 440 (2026-07-14, see its own updated comment) — the
+      demo's own render is the sole practical fix needed today. **Deliberately NOT touched**:
+      `BlockTypes.hpp`'s `kPassable[441]` array size / `isMobileTransparent()`'s `icon < 441` bounds
+      check / `tileUV()` itself — these are foundational, heavily-relied-upon functions used by
+      effectively everything, and reconciling the real 440-vs-441 count there needs careful,
+      deliberate attention (is icon 440 a real `ObjectType`/gameplay-referenced id that simply has
+      no valid `object-m.png` backing content at all, an intentional sentinel, or something else?
+      `Decor.hpp`'s `MAXQUART=441` and `Decor.cpp`'s own `case 440:` branch confirm icon 440 IS a
+      real, meaningful id in mobile-eggbert's data model even though it has no valid image — not
+      something to guess a resolution for in a rushed pass). The scripted TEST-004 assertion itself
+      is still open — write it once the 440-vs-441 question above is resolved, so the test encodes
+      the actually-correct bound rather than baking in a guess.
 - [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files, now ctest-integrated (TEST-002).
 - [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `GESaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
 - [x] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw div 1, Lava div 2, Water1/Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) — **done 2026-07-14**. `AnimDivisor()` was a pure function trapped in `GETerrainRenderer.cpp`'s anonymous namespace with no graphics dependency of its own — extracted into `GETerrainAnimDivisor.hpp`/`.cpp` (behavior unchanged, `GETerrainRenderer.cpp` now calls the extracted version) so it could be linked into a new lightweight, engine-independent tool (`tools/VerifyTerrainAnimDivisor.cpp`, no CNA/graphics link needed, same precedent as `VerifyGESaveData`/`VerifyBlupiMovement`), now ctest-registered. 13 checks (all 8 real per-type divisor values + the non-animated-icon default fallback) confirm the exact mapping this item asked for. Full regression on both backends passes (76 tests on EasyGL, only the known pre-existing unrelated `easy-gl-resource-smoke-tests` failure; 71/71 on Vulkan).
@@ -2983,6 +3012,13 @@ doesn't silently re-open them or silently guess an answer:
   for which object/hazard is many-to-one or context-dependent; not traced anywhere yet.
 - `[?]` **Icon 95** — ambiguous, boundary-only reference in mobile-eggbert source, intentionally
   left unresolved by the reference documentation.
+- `[?]` **Icon 440's real meaning despite having no valid `object-m.png` backing content**
+  (found 2026-07-14, see `TEST-004`) — `Decor.hpp`'s `MAXQUART=441` and `Decor.cpp`'s own
+  `case 440:` branch confirm it's a real, meaningful id in mobile-eggbert's data model, yet
+  `tileUV()`'s atlas math places it entirely outside the real 1301×1431 image (confirmed, not
+  guessed). Is it an intentional sentinel, a real icon whose actual artwork lives in a different
+  file/offset than assumed, or something else? Needs source research before touching
+  `BlockTypes.hpp`'s `kPassable[441]`/`tileUV()` — not something to guess a fix for.
 - `[?]` **`E3D-MIG-015`**: whether to ask mobile-eggbert maintainers for a future
   `add_library()` target covering `Tables`/`Def`/`GameData`/`ObjectType`/`SoundChannel` — still
   open, would need explicit user approval as a separate task even if pursued.

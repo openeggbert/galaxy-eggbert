@@ -138,6 +138,18 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Found and fixed a real icon-440 atlas-bounds bug in galaxy-eggbert's own exhibition demo**
+  (plan.md TEST-004 investigation) — `BlockTypes::tileUV()`'s formula places icon 440 at atlas
+  pixel rect `(1,1431)`-`(65,1495)`, entirely outside the real `object-m.png`'s actual 1301×1431
+  bounds (confirmed via direct Python/PIL crop attempt — fails). Icons 0..439 all fit correctly;
+  this is a 1-icon overshoot at the very last slot, and `GEObjectIcons.cpp` already independently
+  uses bound 439 elsewhere with a comment calling this "object-m.png's 440-icon grid" — the
+  440-vs-441 discrepancy has apparently been latent and unreconciled across files for a while.
+  Confirmed zero real-world impact (icon 440 is never placed in any real mobile-eggbert level
+  file) — the only place in this repo that ever rendered it was galaxy-eggbert's own synthetic
+  "museum" exhibition demo, now fixed to exclude it. Deliberately did NOT touch the foundational
+  `BlockTypes.hpp` `kPassable[441]`/`tileUV()` logic itself — see plan.md TEST-004 for why that
+  needs deliberate follow-up, not a rushed fix.
 - **Added `VerifyTerrainAnimDivisor` and closed plan.md TEST-007** — the real per-type terrain
   hazard-tile animation-phase divisor mapping (`AnimDivisor()`: Saw div 1, Lava div 2, Water1/
   Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) was already correctly implemented

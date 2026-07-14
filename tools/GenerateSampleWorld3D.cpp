@@ -584,8 +584,8 @@ int main(int argc, char** argv)
     // Exhibition area (2026-07-10, user request): a museum of everything
     // the renderer supports, for visual inspection in-game.
     //
-    // Tile exhibition -- the ENTIRE icon range 1..440 on a flat slab in
-    // the previously-empty north strip (z=1..24), one block per icon at a
+    // Tile exhibition -- the icon range 1..439 on a flat slab in the
+    // previously-empty north strip (z=1..24), one block per icon at a
     // 2-cell pitch so every block stands free (all 5 visible faces
     // exposed) and each renders via whatever mode the terrain renderer
     // assigns it (DirectionalCube / InnerPillarBox / InnerFlatPlate /
@@ -594,9 +594,25 @@ int main(int argc, char** argv)
     // ON here, same as anywhere else -- walk the aisles, don't climb the
     // exhibits. Reachable by jumping down from the north hill plateau's
     // north edge (a 4-block drop, well short of the fall-death limit).
+    //
+    // Icon 440 is deliberately EXCLUDED (2026-07-14, plan.md TEST-004
+    // investigation): `BlockTypes::tileUV()`'s atlas-pitch formula places
+    // it at row 22 (pxY=1431..1495), entirely outside the real
+    // object-m.png's actual 1301x1431 bounds (confirmed by direct crop
+    // attempt -- fails, would read past the image). Real mobile-eggbert
+    // never places icon 440 in any actual level file either (confirmed
+    // via a full grep of every worlds/*.txt) -- MAXQUART=441 (Decor.hpp)
+    // and Decor.cpp's own `case 440:` branch mean it IS a real, defined
+    // ObjectType/icon id, just never one placed in practice, so this is a
+    // latent atlas-bounds gap, not something to guess a fix for here.
+    // Excluding it from this synthetic demo (the only place in this whole
+    // repo that would ever render it) avoids exercising a known-broken
+    // path without touching the shared, heavily-relied-upon `tileUV()`/
+    // `kPassable` logic itself -- see plan.md TEST-004 for the full
+    // writeup and NEXT.md for the open follow-up.
     // ------------------------------------------------------------------
     fill(1, 98, 0, 0, 1, 24, BlockTypes::RockPile); // exhibition floor
-    for (int icon = 1; icon <= 440; ++icon)
+    for (int icon = 1; icon <= 439; ++icon)
     {
         // Icon 330 (Teleport1) is deliberately skipped here -- it already
         // has a real, matched pair placed above (the teleporter rooms),
@@ -643,8 +659,9 @@ int main(int argc, char** argv)
             place(type, static_cast<float>(78 + col * 3), 1.0f, static_cast<float>(27 + row * 3));
             ++slot;
         }
-        std::cout << "GenerateSampleWorld3D: exhibition placed -- 439 tile icons in the exhibition slab "
-                     "(icon 330 excluded, see the teleporter rooms above), "
+        std::cout << "GenerateSampleWorld3D: exhibition placed -- 438 tile icons in the exhibition slab "
+                     "(icons 330 and 440 excluded, see the teleporter rooms above and the icon-440 "
+                     "atlas-bounds note above), "
                   << slot << " object types." << std::endl;
     }
 
