@@ -71,7 +71,7 @@ menus, though still missing a visible 3D Blupi model.
   environment (`find_package(Urho3D)` fails, U3D prebuilt missing/incompatible) — intentionally
   left unfixed. Do not attempt to build or fix it.
 
-### Test status (all last run and passing, 2026-07-13, commit `63e020d`)
+### Test status (all last run and passing, 2026-07-14)
 - `GalaxyEggbertWorldsTests` — 64/64 (gtest, engine-agnostic `World`/`Chunk`/`MoveObjectRecord`
   model, no CNA link needed).
 - `VerifyBlupiMovement` — collision/step-up/gravity/vehicle-movement checks against
@@ -83,6 +83,8 @@ menus, though still missing a visible 3D Blupi model.
 - `VerifyGESaveData` — `GESaveData` load/save round-trip, 3-gamer-slot isolation, `Reset()`.
 - `VerifyMoveObjectTypesCna` — `MoveObject` parsing against real mobile-eggbert `.txt` level files.
 - `VerifyBigDecorParsingCna` — `BigDecor:` parsing against real mobile-eggbert `.txt` level files.
+- `VerifyTerrainAnimDivisor` — terrain hazard-tile animation-phase divisor mapping (plan.md
+  TEST-007, added 2026-07-14), no CNA/graphics link needed.
 
 ### What works (high level — see `plan.md` for the exhaustive per-item checklist)
 - Real textured/animated 3D terrain (4 render modes, face-culled), real background image per world.
@@ -136,6 +138,23 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Added `VerifyTerrainAnimDivisor` and closed plan.md TEST-007** — the real per-type terrain
+  hazard-tile animation-phase divisor mapping (`AnimDivisor()`: Saw div 1, Lava div 2, Water1/
+  Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) was already correctly implemented
+  but untested. Extracted `AnimDivisor()` out of `GETerrainRenderer.cpp`'s anonymous namespace into
+  its own `GETerrainAnimDivisor.hpp`/`.cpp` (behavior unchanged) so a new lightweight,
+  engine-independent tool could link just that pure function with no CNA/graphics dependency, same
+  precedent as `VerifyGESaveData`/`VerifyBlupiMovement`. 13 checks, now ctest-registered. Full
+  regression on both backends passes (76 tests on EasyGL, 71/71 on Vulkan).
+- **Ruled out several opportunistic "next task" candidates via direct source verification** (no
+  code changes, documentation-only, all pushed): `BLUPI-108`'s "Cloud floats through blocks" line
+  was stale (real effect already shipped as `BlupiElectro`); `BLUPI-111` Ghost-mode cheat is real
+  but has no player-facing trigger in real source; `BLUPI-126/127/131` "stomp kill" is an invented
+  Mario-style mechanic; a follow-up research fork's own `ENEMY-CONTACT-001` claim was itself wrong
+  and retracted (contact detection is already comprehensive); the entire `SCORE-001..006` numeric
+  score system and `VISUAL-001..007` (shadows/bobbing/tint/blink/respawn-flash) all lack any real
+  source and look invented; the rest of the particle-effects backlog (§7.5) is real but blocked on
+  data-table transcription approval. See each item's own plan.md correction for citations.
 - **Implemented the Suspended/hanging bar-and-rope movement mode** (real `Decor::GetTypeBarre()`,
   plan.md TILE-045) — a genuinely new movement mode comparable in scope to the 5 already-
   implemented vehicles, following up the icon-ID research earlier this session (icons 138/202,
@@ -436,18 +455,19 @@ cmake --build build-cna-vulkan --target GalaxyEggbertCNA -j2
 cmake --build build-cna --target GenerateSampleWorld3D -j2
 ./build-cna/GenerateSampleWorld3D worlds3d/world001.vwr
 
-# Build + run all tests/verify tools. Since 2026-07-14 (plan.md TEST-002) all 7 are ctest-
-# registered with the correct working directory baked in, so a single ctest invocation from
+# Build + run all tests/verify tools. Since 2026-07-14 (plan.md TEST-002/TEST-007) all 8 are
+# ctest-registered with the correct working directory baked in, so a single ctest invocation from
 # ANYWHERE covers everything (no more need to cd to repo root or invoke each binary by hand):
 cmake --build build-cna --target GalaxyEggbertWorldsTests VerifyBlupiMovement VerifyInteractionSystem \
-    VerifyGEInputPad VerifyGESaveData VerifyMoveObjectTypesCna VerifyBigDecorParsingCna -j2
+    VerifyGEInputPad VerifyGESaveData VerifyMoveObjectTypesCna VerifyBigDecorParsingCna \
+    VerifyTerrainAnimDivisor -j2
 ctest --test-dir build-cna --output-on-failure
 # Note: this also runs a handful of third-party (../easy-gl, ../meta-gl) smoke tests bundled into
 # the same ctest run -- 1 of those (easy-gl-resource-smoke-tests) has a known pre-existing,
-# unrelated failure (see NEXT.md §5); it is not one of galaxy-eggbert's own 7 tools/suites and is
+# unrelated failure (see NEXT.md §5); it is not one of galaxy-eggbert's own 8 tools/suites and is
 # not a regression if you see it fail.
 
-# Equivalent manual invocation of just galaxy-eggbert's own 7 tools, if isolating from the
+# Equivalent manual invocation of just galaxy-eggbert's own 8 tools, if isolating from the
 # third-party smoke tests above (must run from repo ROOT — several tools use
 # ../mobile-eggbert-relative paths that only resolve correctly from there):
 ./build-cna/GalaxyEggbertWorldsTests
@@ -457,6 +477,7 @@ ctest --test-dir build-cna --output-on-failure
 ./build-cna/VerifyGESaveData
 ./build-cna/VerifyMoveObjectTypesCna
 ./build-cna/VerifyBigDecorParsingCna
+./build-cna/VerifyTerrainAnimDivisor
 
 # easy-3d: CNA-linked build + tests
 cmake -S ../easy-3d -B /tmp/e3d-build-cna -DEASY3D_LINK_CNA=ON -DEASY3D_CNA_BACKEND=EASY_GL -DEASY3D_CNA_DIR=../cna

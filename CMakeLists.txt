@@ -278,6 +278,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp
+        src/GalaxyEggbertCNA/Game/GETerrainAnimDivisor.cpp
         src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp
         src/GalaxyEggbertCNA/Game/GESwatchUv.cpp
         src/GalaxyEggbertCNA/Game/GEInnerPillarBoxTiles.cpp
@@ -553,6 +554,20 @@ target_include_directories(VerifyGESaveData PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# GETerrainAnimDivisor.hpp/.cpp (plan.md TEST-007, 2026-07-14) is a pure
+# function of a BlockTypes icon id -- no CNA/graphics dependency at all,
+# same engine-independent precedent as VerifyGESaveData/VerifyBlupiMovement
+# above.
+add_executable(VerifyTerrainAnimDivisor
+        tools/VerifyTerrainAnimDivisor.cpp
+        src/GalaxyEggbertCNA/Game/GETerrainAnimDivisor.cpp
+)
+
+target_include_directories(VerifyTerrainAnimDivisor PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
 # GEWorldRuntime.hpp/.cpp (CNA) are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
@@ -601,6 +616,9 @@ if(BUILD_TESTING)
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     add_test(NAME VerifyBigDecorParsingCna COMMAND VerifyBigDecorParsingCna
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    # No file/working-directory dependency -- AnimDivisor() is a pure
+    # function of a BlockTypes icon id (plan.md TEST-007).
+    add_test(NAME VerifyTerrainAnimDivisor COMMAND VerifyTerrainAnimDivisor)
 endif()
 
 # =============================================================================

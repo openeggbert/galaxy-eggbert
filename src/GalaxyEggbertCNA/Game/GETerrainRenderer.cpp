@@ -2,6 +2,7 @@
 #include "GEDirectionalCubeTiles.hpp"
 #include "GEInnerFlatPlateTiles.hpp"
 #include "GEInnerPillarBoxTiles.hpp"
+#include "GETerrainAnimDivisor.hpp"
 #include "GEThinBarTiles.hpp"
 #include "GETripleCrossBillboardTiles.hpp"
 #include "GEWorldRuntime.hpp"
@@ -300,42 +301,10 @@ namespace GalaxyEggbert::CNA
                                            325,325,326,326,327,329,328,328,-1,-1};
         constexpr int kAnimMarine[11]  = {203,204,205,206,207,208,207,206,205,204,203};
 
-        // Real per-type tick divisor against the 20fps raw tick
-        // (GEWorldRuntime::GetAnimPhase(), fixed 2026-07-09 -- see its own
-        // comment) -- mobile-eggbert's real Decor.cpp tile-animation logic
-        // (table_decor_scie/lave/eau1/eau2/ecraseur/piege1/piege2/temp,
-        // table_marine) divides the same 20fps base tick per type via
-        // Config::ScaleDiv(N), NOT a flat rate shared by every animated
-        // tile -- confirmed by direct source line, e.g. `table_decor_lave[
-        // ... + m_time/ScaleDiv(2)]`. Water2/Marine's real divisor also
-        // varies per-instance (3 + position%3, a visual ripple-offset
-        // detail) -- not modeled here, every instance of a given type
-        // shares one phase; only the base speed is fixed.
-        //
-        // Fan's divisor is NOT from mobile-eggbert source -- the FanLeft/
-        // Right/Up/Down BLOCK icons (126-137) have no dedicated
-        // table_decor_* animation entry in Decor.cpp at all (only a
-        // same-numbered-looking but unrelated table_decor_ventg/ventd/
-        // venth/ventb exists, animating icons 110-125, a separate wind
-        // "particle stream" decor effect, not these cube blocks -- an
-        // initial 2026-07-09 fix wrongly matched fans to that table's
-        // divisor 1/50ms and was reported live as "now too fast"; reverted
-        // to divisor 3/150ms here, the same rate as the other real
-        // mechanical/moving elements (Water1/Crusher/Marine) for lack of a
-        // real per-type source value to match.
-        int AnimDivisor(std::uint16_t base)
-        {
-            using namespace GalaxyEggbert::BlockTypes;
-            switch (base)
-            {
-                case Saw:                                              return 1; // 50ms/frame
-                case Lava:                                              return 2; // 100ms/frame
-                case FanLeft: case FanRight: case FanUp: case FanDown:
-                case Water1: case Crusher: case Water2: case Marine:    return 3; // 150ms/frame
-                case Spike: case Temp:                                  return 4; // 200ms/frame
-                default:                                                return 3;
-            }
-        }
+        // AnimDivisor() moved to GETerrainAnimDivisor.hpp/.cpp (plan.md
+        // TEST-007, 2026-07-14) so it can be exercised by a scripted test
+        // without a graphics context -- see that header for the full real-
+        // behavior citation.
 
         int AnimIcon(std::uint16_t base, int rawTick)
         {
