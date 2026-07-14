@@ -238,6 +238,100 @@ int main(int argc, char** argv)
         check(onDrip.GetGroundBlockType(synthetic) == BlockTypes::Drip,
               "GetGroundBlockType() identifies the water-drip hazard correctly (real icon 404)");
 
+        // Suspended/hanging bar-and-rope mode (plan.md TILE-045, real
+        // Decor::GetTypeBarre()/m_blupiSuspend, icons 138/202 confirmed
+        // 2026-07-14 via a direct Decor.cpp read). Own synthetic world,
+        // well away from any other test's coordinates: a floor at gz=70,
+        // a 3-cell gap (gz=71-73) spanned by a bar tile (icon 138) one row
+        // above the floor (Hanging over open air), then floor resumes at
+        // gz=74 with the SAME bar tile continuing over it (LandingAvailable,
+        // since the cell below is now solid).
+        {
+            Worlds::World barreWorld;
+            constexpr std::uint16_t kBarreX = 60;
+            barreWorld.setBlock(kBarreX, 0, 70, Worlds::Block::make(BlockTypes::Ground));
+            for (std::uint16_t z = 71; z <= 74; ++z)
+            {
+                barreWorld.setBlock(kBarreX, 1, z, Worlds::Block::make(static_cast<std::uint16_t>(138)));
+            }
+            barreWorld.setBlock(kBarreX, 0, 74, Worlds::Block::make(BlockTypes::Ground));
+            const float barreWorldX = static_cast<float>(kBarreX) - 50.0f;
+
+            // Grab: standing at a Hanging cell (gz=71, open air below).
+            GEBlupiController grabber;
+            grabber.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
+            grabber.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(grabber.IsSuspended(), "standing at a bar cell over open air grabs it automatically");
+
+            // Movement while hanging: face +Z (yaw=pi) and walk toward the
+            // landing at gz=74.
+            GEBlupiController climber;
+            climber.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
+            climber.SetYaw(3.14159265f); // facing +Z
+            climber.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(climber.IsSuspended(), "sanity: grabbed the bar before attempting to climb it");
+            for (int i = 0; i < 400 && climber.IsSuspended(); ++i) // generous bound, real move is slow/frame
+            {
+                climber.Step(barreWorld, 0.0f, 1.0f, false, false, false, dt);
+            }
+            check(!climber.IsSuspended() && climber.IsOnGround(),
+                  "climbing to the far end (landing available) releases gracefully onto solid ground, "
+                  "not a free-fall");
+            check(climber.GetZ() > 71.0f - 50.0f,
+                  "the climb actually moved Blupi forward along the bar (not stuck in place)");
+
+            // Walking the OTHER way (back toward gz=70, off the bar
+            // entirely) drops Blupi into free-fall instead.
+            GEBlupiController dropper;
+            dropper.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
+            dropper.SetYaw(0.0f); // facing -Z
+            dropper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(dropper.IsSuspended(), "sanity: grabbed the bar before walking off the near end");
+            bool sawFreefall = false;
+            for (int i = 0; i < 400; ++i)
+            {
+                dropper.Step(barreWorld, 0.0f, 1.0f, false, false, false, dt);
+                if (!dropper.IsSuspended() && !dropper.IsOnGround())
+                {
+                    sawFreefall = true;
+                    break;
+                }
+            }
+            check(sawFreefall, "walking off the bar's near end (no bar tile, gap below) drops Blupi "
+                                "into free-fall instead of releasing gracefully");
+
+            // Jump-to-release: immediate upward velocity, not a delayed
+            // wind-up (no visible model exists to show one).
+            GEBlupiController jumper;
+            jumper.SetPosition(barreWorldX, 1.0f, 72.0f - 50.0f);
+            jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(jumper.IsSuspended(), "sanity: grabbed the bar before testing jump-release");
+            jumper.Step(barreWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            check(!jumper.IsSuspended(), "pressing Jump while suspended releases the hang");
+            check(jumper.GetVelocityY() > 0.0f,
+                  "the jump-release gives Blupi a real upward launch (real fixed -11.0 equivalent)");
+
+            // Grace timer (real m_blupiNoBarre, 5 ticks @ 20Hz = 0.25s):
+            // force Blupi back to the exact bar cell right after release
+            // (SetPosition() doesn't touch the grace timer) -- the very
+            // next Step() must NOT instantly re-grab despite standing
+            // exactly on a Hanging cell again.
+            jumper.SetPosition(barreWorldX, 1.0f, 72.0f - 50.0f);
+            jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(!jumper.IsSuspended(),
+                  "the grace timer blocks an instant re-grab even when forced back onto the same bar cell");
+
+            // Past the real ~0.25s grace window, the same cell becomes
+            // grabbable again (matches the real 5-tick expiry, not a
+            // permanent lockout).
+            for (int i = 0; i < 20 && !jumper.IsSuspended(); ++i) // 20 * (1/60)s > 0.25s
+            {
+                jumper.SetPosition(barreWorldX, 1.0f, 72.0f - 50.0f);
+                jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(jumper.IsSuspended(), "the same bar cell becomes grabbable again once the grace timer expires");
+        }
+
         // Crusher squash state (plan.md E3D-MIG-143) -- TriggerCrush()/
         // IsEcrased()/recovery, standing on the same ordinary ground block
         // used above (the trigger *condition* -- Crusher block + active

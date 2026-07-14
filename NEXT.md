@@ -136,6 +136,24 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the Suspended/hanging bar-and-rope movement mode** (real `Decor::GetTypeBarre()`,
+  plan.md TILE-045) — a genuinely new movement mode comparable in scope to the 5 already-
+  implemented vehicles, following up the icon-ID research earlier this session (icons 138/202,
+  cross-confirmed against `Decor.cpp` and the user's own prior questionnaire answer).
+  `GEBlupiController::GetBarreCellType()` classifies a grid cell as `None`/`Hanging`/
+  `LandingAvailable` (bar tile absent / open air below / solid ground below); grabbing is automatic
+  on contact (no button), matching the real trigger exactly. While hanging: direct no-ramp
+  horizontal movement (reusing the same shape this engine's normal walk already has), re-classifies
+  at the new position every step (reaching a `LandingAvailable` cell releases gracefully onto solid
+  ground; reaching `None` — walking off the structure — drops Blupi into free-fall, same as holding
+  Down for the real ~0.25s threshold), and Jump immediately releases with a real proportionally-
+  anchored upward launch (the real 10-tick wind-up animation isn't modeled — no visible Blupi model
+  exists to show one). Real 5-tick no-regrab grace timer modeled as a direct transcription.
+  `TriggerMount()` now also excludes hanging (the real gate already documented this exclusion).
+  Demo bar added to `worlds3d/world001.vwr` (icon 138 only — icon 202 needs its own new render
+  geometry first, `plan.md TILE-055`, not yet built). 11 new `VerifyBlupiMovement` checks (grab,
+  climb, graceful landing, free-fall drop, jump-release, grace-timer block + expiry) + a live
+  headless screenshot sanity check + full regression on both backends, all pass.
 - **Implemented the water-drip terrain hazard** (icon 404, plan.md TILE-032) — real
   `Decor::IsGoutte()`, corrected from a wrong "triggers a glu/slow effect" premise (same category
   of error as TILE-041/045 earlier this session): confirmed via a direct `Decor.cpp` read that real
@@ -516,20 +534,10 @@ judgment (§9).
     constants; verified with an exact expected-velocity match (not just pass/fail) against the real
     south tunnel's low ceiling, full regression on both backends.
 
-13. **Suspended/hanging bar-and-rope movement mode** (`plan.md TILE-045`, real
-    `Decor::GetTypeBarre()` — **not** a vehicle-blocking check, corrected 2026-07-14). A genuinely
-    new movement mode comparable in scope to the 5 already-implemented vehicles (direct no-ramp
-    horizontal input while hanging, a 3-way tile classification, a fixed-velocity jump-to-release).
-    **Icon-ID research gap CLOSED 2026-07-14**: real trigger icons are **138 and 202** (`Decor.cpp`
-    `GetTypeBarre()`, `Decor.cpp:7158-7193`) — icon 202 independently confirmed by the user's own
-    2026-07-07 questionnaire answer as "a rod/pole Blupi walks on and climbs over a dangerous
-    obstacle beneath it," an exact match found before this mechanic was ever connected to that icon
-    (see plan.md TILE-045's own entry for the full citation). Icon 202 needs new render geometry
-    (`plan.md TILE-055`, "thin-bar", a genuinely new non-cube/non-billboard shape); icon 138 already
-    renders via the existing `InnerFlatPlate` table. The icon-ID blocker is gone, but implementing
-    the actual movement mode (state machine, direct-input movement, jump-to-release, grace timer)
-    remains a real, sizable task — its own scoping/session, not a "next smallest task" to slot in
-    opportunistically. Files if picked up: `GEBlupiController.cpp`/`.hpp` (new state), `GEInnerFlatPlateTiles.cpp`/`GETerrainRenderer.cpp` (icon 202's new geometry, TILE-055).
+13. ~~Suspended/hanging bar-and-rope movement mode~~ **DONE 2026-07-14** (`plan.md TILE-045`) — see
+    §3 for the full writeup. Icon 202 (also a real trigger icon) still needs its own new render
+    geometry (`plan.md TILE-055`, "thin-bar") before it can be used in a demo world — the shipped
+    demo only uses icon 138, which already renders correctly.
 
 14. ~~Water-drip tile~~ **DONE 2026-07-14** (`plan.md TILE-032`) — see §3 for the full writeup. Real
     behavior was NOT a glu/slow effect (a wrong premise, same category as TILE-041/045) — it's a
@@ -559,14 +567,14 @@ judgment (§9).
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task."
 
-**Status as of 2026-07-14: every remaining item above now needs either a human decision or its own
-dedicated multi-task session** — none are a safe "next smallest task" to pick up opportunistically:
-#8 (blocked on door persistence, low value even if done), #9 (blocked on a render decision), #13
-(icon IDs now known, but the movement-mode implementation itself is comparable in scope to the
-vehicle system — a real, sizable feature, not a quick addition), #15 (blocked on a data-table
-transcription approval decision), #16 (explicitly its own multi-task effort). A future session
-should either get one of these blockers resolved by the user, or deliberately scope and commit to
-implementing #13 or #16 as their own focused effort rather than an opportunistic pass.
+**Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
+note was first written, after concluding the icon-ID research had actually de-risked it enough to
+attempt directly rather than defer. **Everything else still needs either a human decision or its
+own dedicated multi-task session:** #8 (blocked on door persistence, low value even if done), #9
+(blocked on a render decision), #15 (blocked on a data-table transcription approval decision), #16
+(explicitly its own multi-task effort, the single largest remaining checklist section). A future
+session should either get one of these blockers resolved by the user, or deliberately scope and
+commit to implementing #16 as its own focused effort rather than an opportunistic pass.
 
 ## 9. Do not do yet
 

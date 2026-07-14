@@ -193,6 +193,25 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    GEBlupiController::BarreCellType GEBlupiController::GetBarreCellType(const Worlds::World& world,
+                                                                          int gx, int gy, int gz)
+    {
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        if (gx < 0 || gx >= blocksPerAxis || gy < 0 || gy >= blocksPerAxis || gz < 0 || gz >= blocksPerAxis)
+        {
+            return BarreCellType::None;
+        }
+        const auto icon = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                          static_cast<std::uint16_t>(gz))
+                               .type();
+        if (icon != 138 && icon != 202)
+        {
+            return BarreCellType::None;
+        }
+        const bool belowSolid = gy > 0 && IsSolidAt(world, gx, gy - 1, gz);
+        return belowSolid ? BarreCellType::LandingAvailable : BarreCellType::Hanging;
+    }
+
     bool GEBlupiController::TriggerCrush() noexcept
     {
         if (m_ecrase)
@@ -291,7 +310,7 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerMount(VehicleMode mode, bool inNage, bool inSurf) noexcept
     {
-        if (IsInVehicle() || inNage || inSurf)
+        if (IsInVehicle() || inNage || inSurf || m_suspended)
         {
             return false;
         }
@@ -523,6 +542,118 @@ namespace GalaxyEggbert::CNA
             // don't matter here since m_teleporting takes top precedence in
             // UpdateAnim()'s own cascade regardless of their values.
             UpdateAnim(false, false, false, dt);
+            return;
+        }
+
+        // Suspended/hanging bar-and-rope mode (plan.md TILE-045, see
+        // kSuspendMoveSpeed's own comment for the full real-behavior
+        // citation). Grace timer ticks down regardless of state (real
+        // m_blupiNoBarre decrements every tick unconditionally).
+        if (m_suspendGraceTimer > 0.0f)
+        {
+            m_suspendGraceTimer = std::max(0.0f, m_suspendGraceTimer - dt);
+        }
+
+        // Grab trigger: automatic (no button), matches the real gate
+        // exactly -- blocked while already suspended, in ANY vehicle,
+        // ballooned, crushed, or genuinely in water (Nage/Surf), and during
+        // the post-release grace window.
+        if (!m_suspended && m_suspendGraceTimer <= 0.0f && !IsInVehicle() && !m_balloon && !m_ecrase &&
+            !m_nage && !m_surf)
+        {
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+            const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+            const int gy = ClampGrid(static_cast<int>(std::lround(m_y)), blocksPerAxis);
+            if (GetBarreCellType(world, gx, gy, gz) == BarreCellType::Hanging)
+            {
+                // m_y stays exactly at the bar's own grid row while hanging
+                // (not the usual "+1 standing height" convention) -- this
+                // state bypasses normal ground physics entirely, so the
+                // only requirement is internal self-consistency with the
+                // round(m_y) reads used throughout the hang below.
+                m_suspended = true;
+                m_y = static_cast<float>(gy);
+                m_velocityY = 0.0f;
+                m_onGround = false;
+                m_suspendDropHoldTimer = 0.0f;
+            }
+        }
+
+        if (m_suspended)
+        {
+            // Real Turn animation while suspended has its own timing (this
+            // engine has no visible model to show it, so plain yaw update
+            // suffices, same simplification as everywhere else in Step()).
+            if (turnInput != 0.0f)
+            {
+                m_yaw += turnInput * kTurnSpeed * dt;
+            }
+
+            // Real "speedX*5, no ramp" -- reuses the same instant
+            // target-speed shape this engine's normal walk already uses
+            // (see kSuspendMoveSpeed's own comment).
+            const bool moving = std::fabs(moveInput) > 0.001f;
+            if (moving)
+            {
+                m_x += std::sin(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
+                m_z += -std::cos(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
+            }
+
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+            const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+            const int gy = ClampGrid(static_cast<int>(std::lround(m_y)), blocksPerAxis);
+            const BarreCellType cellHere = GetBarreCellType(world, gx, gy, gz);
+
+            // Real jump-to-release (Decor.cpp:4769-4789): instant here, not
+            // the real 10-tick wind-up (no visible model to show it, see
+            // kSuspendReleaseSpeed's own comment).
+            if (jumpPressed)
+            {
+                m_suspended = false;
+                m_onGround = false;
+                m_velocityY = kSuspendReleaseSpeed;
+                m_suspendGraceTimer = kSuspendNoRegrabSeconds;
+            }
+            // Real: holding Down for >5 ticks, or walking off the bar
+            // entirely (no bar tile at the new position), drops Blupi into
+            // free-fall.
+            else if (crouchHeld)
+            {
+                m_suspendDropHoldTimer += dt;
+                if (m_suspendDropHoldTimer > kSuspendDropHoldSeconds || cellHere == BarreCellType::None)
+                {
+                    m_suspended = false;
+                    m_onGround = false;
+                    m_velocityY = 0.0f;
+                    m_suspendGraceTimer = kSuspendNoRegrabSeconds;
+                }
+            }
+            else if (cellHere == BarreCellType::None)
+            {
+                m_suspended = false;
+                m_onGround = false;
+                m_velocityY = 0.0f;
+                m_suspendGraceTimer = kSuspendNoRegrabSeconds;
+                m_suspendDropHoldTimer = 0.0f;
+            }
+            else
+            {
+                m_suspendDropHoldTimer = 0.0f;
+                // Real: reaching a cell where the landing below is clear
+                // ends the hang gracefully, stepping down onto solid
+                // ground instead of free-falling.
+                if (cellHere == BarreCellType::LandingAvailable)
+                {
+                    m_suspended = false;
+                    m_onGround = true;
+                    m_y = static_cast<float>(gy);
+                    m_velocityY = 0.0f;
+                }
+            }
+
+            UpdateAnim(moving, false, false, dt);
             return;
         }
 

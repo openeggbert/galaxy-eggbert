@@ -2302,28 +2302,32 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 - [x] TILE-042 — Water surface: enter surf mode — done (`plan.md E3D-MIG-148`), real Surf/Nage state split.
 - [x] TILE-043 — Deep water: enter swim/drown mode — done (`plan.md E3D-MIG-148`), real ~25s breath gauge (`kWaterGaugeMax`/`kWaterGaugeTickSeconds`).
 - [x] TILE-044 — Out-of-water exit: exit swim mode on a dry tile — done, same Surf/Nage state machine as TILE-042/043.
-- [ ] TILE-045 — ~~Barre / barrier tile: blocks certain vehicle types~~ **description was wrong,
-      corrected 2026-07-14**: `Decor::GetTypeBarre()` has nothing to do with blocking vehicles —
-      it's the trigger/classifier for an entire real hanging/suspended-on-a-bar-or-rope movement
-      mode (`mobile-eggbert-reference/10-blupi-mechanics.md`'s "Suspended/hanging mode" section):
-      horizontal movement applied directly with no accel ramp while hanging, a 3-way tile
-      classification (type 2 = landing below is blocked, stay gripped/climb; type 0 = no bar tile
-      here at all; type 1 = clear landing below), and a Jump-to-release mechanic (10-tick wind-up,
-      then a fixed `-11.0` upward launch, 5-tick re-grab grace timer). This is a genuinely new
-      movement mode comparable in scope to the 5 already-implemented vehicles, NOT a simple
-      blocking check. **Icon-ID research gap CLOSED 2026-07-14** (a direct `Decor.cpp` read,
-      `GetTypeBarre()` at `Decor.cpp:7158-7193`): the real trigger icons are **138 and 202** —
-      confirmed against 2 independent sources, not guessed: (1) the real source code itself, and
-      (2) icon 202 was ALREADY separately confirmed by the user's own 2026-07-07 questionnaire
-      answer in `mobile-eggbert-reference/02-tiles.md` as "a rod/pole Blupi walks on and climbs
-      over a dangerous obstacle beneath it" — an exact match, from before this specific gameplay
-      mechanic was ever connected to that icon. Icon 202's own render geometry is a separate
-      already-tracked gap (TILE-055, "thin-bar new geometry", a genuinely new non-cube/non-billboard
-      shape per that same questionnaire answer); icon 138 already renders via the existing
-      `InnerFlatPlate` `ThinMechanical` table (`GEInnerFlatPlateTiles.cpp`). Confirmed still NOT
-      implemented (no gameplay logic exists for either icon beyond rendering) — the icon-ID
-      research blocker is gone, but the movement-mode implementation itself remains a real, sizable
-      task (its own scoping/session, not a "next smallest task").
+- [x] TILE-045 — ~~Barre / barrier tile: blocks certain vehicle types~~ **description was wrong,
+      corrected AND implemented 2026-07-14**: `Decor::GetTypeBarre()` has nothing to do with
+      blocking vehicles — it's the trigger/classifier for a real hanging/suspended-on-a-bar-or-rope
+      movement mode (`mobile-eggbert-reference/10-blupi-mechanics.md`'s "Suspended/hanging mode"
+      section + a direct `Decor.cpp` read, `Decor.cpp:4732-4790`/`7158-7193`). Real trigger icons
+      **138 and 202** — confirmed against 2 independent sources: the real source code itself, and
+      icon 202 was ALREADY separately confirmed by the user's own 2026-07-07 questionnaire answer in
+      `mobile-eggbert-reference/02-tiles.md` as "a rod/pole Blupi walks on and climbs over a
+      dangerous obstacle beneath it," an exact match found before this mechanic was ever connected
+      to that icon. Implemented via `GEBlupiController::GetBarreCellType()` (3-way: `None` = no bar
+      tile; `Hanging` = bar tile with open air below, real type 1, grabbable; `LandingAvailable` =
+      bar tile with solid ground below, real type 2, releases gracefully onto it) +
+      `m_suspended`/grace-timer/drop-hold-timer state. Grab is automatic (no button), matching the
+      real trigger exactly; horizontal movement while hanging reuses the plain no-ramp `moveInput*
+      speed` shape this engine's normal walk already has (`kSuspendMoveSpeed`, no established
+      proportional anchor so it just reuses `kMoveSpeed` directly); `kSuspendReleaseSpeed` IS
+      proportionally anchored to `kJumpSpeed` (real fixed `-11.0` vs. the real jump baseline `-16.0`
+      already anchored there). Real 10-tick jump-release wind-up animation NOT modeled (instant
+      release instead — no visible Blupi model to show a wind-up); real 5-tick no-regrab grace timer
+      IS modeled as a direct `ScaleTime(5)`-at-20Hz transcription. `TriggerMount()` now also excludes
+      `m_suspended` (the real gate already documented this exclusion, just had nothing to check
+      before this feature existed). Icon 202 still needs its own new render geometry (`TILE-055`,
+      not yet built) — the demo world only uses icon 138, which already renders correctly via the
+      existing `InnerFlatPlate` table. 11 new `VerifyBlupiMovement` checks (grab, climb, graceful
+      landing, free-fall drop off the near end, jump-release, grace-timer block + expiry) + a live
+      headless screenshot sanity check + full regression on both backends, all pass.
 
 #### 5.4 Tile Adaptation (visual smoothing)
 
@@ -2342,7 +2346,9 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 
 - [ ] TILE-053 — Decide and implement `ThinMechanical` render-mode geometry for saws/springs/switches/fans/bridge/pipes/grates (~25 icons) — decision not yet made
 - [ ] TILE-054 — Distinct water/liquid surface treatment (wavy-edge surface) to replace the current alpha-blended-cube placeholder
-- [ ] TILE-055 — "Thin-bar" new geometry for icon 202
+- [ ] TILE-055 — "Thin-bar" new geometry for icon 202 — now has a real gameplay-logic consumer
+      (`TILE-045`'s hanging/suspended mode, implemented 2026-07-14, currently using icon 138 only
+      since 202 still renders as an unrelated default cube).
 - [ ] TILE-056 — Architectural kit modular assembly
 - [ ] TILE-057 — ~~Secret-power (Sp0-7) billboard rendering and behavior~~ **obsolete premise, corrected 2026-07-14**: resolved 2026-07-12 (see `## 3 Open Questions`) — "Sp0-Sp7" are real hub-screen world-select icons (`Decor::IsWorld()`), not secret-power tiles at all. The real 4 `SecretPower` buffs come from `MoveObject` pickups 25/26/30/31 instead, already fully implemented (§2.7 PICKUP-007/008/010/012). This item itself has nothing left to do.
 

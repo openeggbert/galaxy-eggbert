@@ -179,6 +179,38 @@ namespace GalaxyEggbert::CNA
         static constexpr int kInvertMax = 100;
         static constexpr float kInvertTickSeconds = 3.0f / 20.0f;
 
+        // Suspended/hanging bar-and-rope movement mode (plan.md TILE-045,
+        // real Decor::GetTypeBarre()/m_blupiSuspend, verified against
+        // mobile-eggbert-reference/10-blupi-mechanics.md's "Suspended/
+        // hanging mode" section + a direct Decor.cpp read, 2026-07-14,
+        // Decor.cpp:4732-4790/7158-7193). Real trigger icons 138/202
+        // (BlockTypes.hpp doesn't need new named constants for these --
+        // GetBarreCellType() below checks the raw icon values directly,
+        // same convention as isMobileTransparent()'s own raw-icon table).
+        // Grab is AUTOMATIC (no button) whenever standing at a "Hanging"
+        // cell (bar tile with open space below) and not already doing
+        // something else exclusive -- matches the real trigger exactly.
+        // Horizontal movement while hanging reuses the plain moveInput*
+        // speed formula this engine's normal walk already uses (no
+        // acceleration ramp, matching the real "speedX*5, no ramp"
+        // behavior's overall shape) -- kSuspendMoveSpeed has no established
+        // proportional anchor to derive an exact ratio from (unlike
+        // kJumpSpeedPowered/etc.), so it reuses kMoveSpeed directly as a
+        // reasonable value, not a transcribed constant. kSuspendReleaseSpeed
+        // is proportionally anchored to kJumpSpeed the same way as the jump-
+        // headroom constants (real fixed -11.0 vs the real jump baseline
+        // -16.0 already anchored to kJumpSpeed). The real 10-tick
+        // jump-release wind-up animation is NOT modeled (no visible Blupi
+        // model exists to show it) -- pressing Jump releases instantly, a
+        // documented simplification, not a transcription gap. Real 5-tick
+        // no-regrab grace timer (both the free-fall-drop and jump-release
+        // paths) is a direct ScaleTime(5)-at-20Hz transcription, same
+        // technique as kWaterGaugeTickSeconds/kTeleportDuration.
+        static constexpr float kSuspendMoveSpeed = kMoveSpeed;
+        static constexpr float kSuspendReleaseSpeed = kJumpSpeed * (11.0f / 16.0f);
+        static constexpr float kSuspendNoRegrabSeconds = 5.0f / 20.0f;
+        static constexpr float kSuspendDropHoldSeconds = 5.0f / 20.0f;
+
         // Vehicle mounts (plan.md E3D-MIG-171, real m_blupiHelico/Jeep/Tank/
         // Skate/Over, verified against mobile-eggbert-reference/
         // 10-blupi-mechanics.md §6/13-object-pickups.md's own "Vehicle
@@ -452,6 +484,10 @@ namespace GalaxyEggbert::CNA
         // caller plays the real expiry channel (67) once.
         [[nodiscard]] bool JustExpiredInvert() const noexcept { return m_invertJustExpired; }
 
+        // Suspended/hanging bar-and-rope mode (plan.md TILE-045, see
+        // kSuspendMoveSpeed's own comment).
+        [[nodiscard]] bool IsSuspended() const noexcept { return m_suspended; }
+
         // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
         // comment). Real gate: blocked only while already riding ANY other
         // vehicle, or while Nage/Surf (real also excludes Suspended/Ecrase,
@@ -637,6 +673,17 @@ namespace GalaxyEggbert::CNA
         // simplification already used for TryActivateSwitch/the bridge
         // trigger scan, not a transcription gap.
         [[nodiscard]] bool HasJumpHeadroom(const Worlds::World& world) const;
+
+        // Real Decor::GetTypeBarre() classification (see kSuspendMoveSpeed's
+        // own comment) -- checks the icon at grid (gx,gy,gz) for a real bar
+        // tile (138/202); if found, None/Hanging/LandingAvailable is decided
+        // by whether the cell directly below (gy-1) is solid. Simplified to
+        // a single grid-snapped cell (this engine's own current position),
+        // same "single stance" simplification as HasJumpHeadroom/
+        // TryActivateSwitch -- the real sub-pixel bottom-of-hitbox probe and
+        // separate DecorDetect landing-rect check aren't modeled.
+        enum class BarreCellType { None, Hanging, LandingAvailable };
+        [[nodiscard]] static BarreCellType GetBarreCellType(const Worlds::World& world, int gx, int gy, int gz);
         void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
         void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt);
 
@@ -666,6 +713,10 @@ namespace GalaxyEggbert::CNA
         int m_invertLevel = 0;
         float m_invertTimer = 0.0f;
         bool m_invertJustExpired = false;
+
+        bool m_suspended = false;
+        float m_suspendGraceTimer = 0.0f; // real m_blupiNoBarre, prevents an immediate re-grab
+        float m_suspendDropHoldTimer = 0.0f; // real "holding Down >5 ticks drops him" accumulator
 
         bool m_cheatSuperBlupi = false;
 
