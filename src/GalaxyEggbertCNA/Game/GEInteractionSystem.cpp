@@ -758,6 +758,18 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Teleporter arc (plan.md VISUAL-010, ObjectType92) -- purely
+            // cosmetic, static (real `speed=0`), same self-contained shape
+            // as the splat effect above. Real self-delete at phase>=128
+            // (`Decor.cpp:8467-8477`) -- a long 128-tick (6.4s) lifetime
+            // matching this engine's own `kTeleportDuration` exactly (the
+            // arc plays for the whole real teleport transit).
+            if (obj.type == ObjectType::ObjectType92 && obj.phase >= 128.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
             // posStart and posEnd at `speed` units/sec -- matches
             // GalaxyEggbertSimple3D's GEDecorSystem::Update() exactly
@@ -2104,6 +2116,29 @@ namespace GalaxyEggbert::CNA
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spec.posEndX = x;
         spec.currentY = spec.posStartY = spec.posEndY = y;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
+    void GEInteractionSystem::SpawnTeleportArc(GEWorldRuntime& worldRuntime, float x, float y, float z)
+    {
+        MobileObjSpec spec;
+        spec.type = ObjectType::ObjectType92;
+        spec.active = true;
+        spec.phase = 0.0f;
+        constexpr float kOffsetY = 5.0f / 64.0f; // real celSwitch.Y = blupiPos.Y - 5 (screen), world Y+ (sign flip)
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = spec.posEndY = y + kOffsetY;
         spec.currentZ = spec.posStartZ = spec.posEndZ = z;
 
         auto& objects = worldRuntime.GetMobileObjectsMutable();

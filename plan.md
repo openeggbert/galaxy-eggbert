@@ -3094,7 +3094,31 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       frames) + full regression on both backends, all pass. Not live-visually verified (same
       already-proven explo.png billboard rendering path as every other Explosion-channel particle
       effect this session).
-- [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
+- [x] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames) —
+      **done 2026-07-14, description corrected**: despite `ObjectType.hpp`'s own "spawned when
+      Blupi uses a charged attack" doc comment, direct source read found the ONLY real spawn site
+      (`Decor.cpp:5593-5606`) is the TELEPORTER trigger — already this engine's own existing
+      `GEBlupiController::TriggerTeleport()` call site (`GalaxyEggbertCnaGame.cpp`,
+      plan.md E3D-MIG-147) — spawned once, static (real `speed=0`), at
+      `(blupiX, blupiY+5/64, blupiZ)` (real `celSwitch = (blupiPos.X, blupiPos.Y-5)`, the usual
+      screen-Y-to-world-Y sign flip). New `GEInteractionSystem::SpawnTeleportArc()`, called
+      directly at the existing teleporter-trigger site (same shape as `SpawnFanHitFlash()`). Real
+      self-delete at `phase>=128` — a long 6.4s lifetime that exactly matches this engine's own
+      `GEBlupiController::kTeleportDuration` (the arc plays for the whole real teleport transit,
+      a nice confirmation the two independently-ported real constants agree).
+
+      Fixed the existing `GEObjectIcons.cpp` static "first-frame only" stub: real `table_explo7`
+      (`Tables.cpp:1407-1422`) is a 128-frame "large multi-particle scatter" with `-1` blanks
+      interspersed THROUGHOUT (not just a leading/trailing delay like `table_sploutch2/3`) — only
+      6 distinct icons (60-65) ever appear, comfortably within the sheet, so the earlier "would
+      exceed the sheet" assumption was wrong the same way `ObjectType57`'s was. Transcribed
+      verbatim and INDEPENDENTLY byte-verified via a script comparing all 128 values against the
+      real source directly (exact match). Reuses the `-1`-skip render support added for the
+      bullet-splat effect (VISUAL-009) with no further renderer changes needed. 7 new
+      `VerifyInteractionSystem` checks (spawn position/offset, self-delete timing, corrected icon
+      values including a mid-sequence blank) + full regression on both backends, all pass. Not
+      live-visually verified (same already-proven explo.png billboard rendering path as every
+      other Explosion-channel particle effect this session).
 - [x] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded —
       **done 2026-07-14**, the SIXTH real particle effect, built alongside its sibling Power/Magic
       trail (ObjectType27, same mechanic, see VISUAL-017). Description corrected: not a continuous

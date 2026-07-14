@@ -298,6 +298,21 @@ namespace GalaxyEggbert::CNA
         // in that check), same reasoning as `SpawnInvertBurst()` above.
         void SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z);
 
+        // Teleporter arc (plan.md VISUAL-010, ObjectType92) -- despite
+        // ObjectType.hpp's own "spawned when Blupi uses a charged attack"
+        // doc comment, the ONLY real spawn site is the teleporter-trigger
+        // block (`Decor.cpp:5593-5606`, already this engine's own existing
+        // `TriggerTeleport()` call site) -- a single instance at
+        // (blupiX, blupiY+5/64, blupiZ) (real `celSwitch = (blupiPos.X,
+        // blupiPos.Y-5)`, screen Y- -> world Y+, the usual sign flip), no
+        // further offset (`speed=0`). Real self-delete at phase>=128, a
+        // long 6.4s lifetime matching this engine's own
+        // `GEBlupiController::kTeleportDuration` exactly -- the arc plays
+        // for the whole teleport transit. Called directly by the game
+        // class at its own existing `TriggerTeleport()` success site, same
+        // reasoning as `SpawnFanHitFlash()` above.
+        void SpawnTeleportArc(GEWorldRuntime& worldRuntime, float x, float y, float z);
+
         // Pollution puff (plan.md VISUAL-013, ObjectType36) -- real
         // vehicle-exhaust smoke, confirmed via direct source read
         // (`Decor::MoveObjectPollution()`, `Decor.cpp:6877-6989`). Called

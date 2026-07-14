@@ -33,6 +33,27 @@ namespace GalaxyEggbert::CNA
             4,5,6,5,6,6,5,5,6,7,
             7,8,8,9,9,10,10,11,11
         };
+        // Real table_explo7 (Tables.cpp:1407-1422, teleporter arc fix,
+        // 2026-07-14) -- a 128-frame "large multi-particle scatter" with
+        // `-1` blanks interspersed throughout (not just a leading/trailing
+        // delay like table_sploutch2/3) for a staggered, flickering look;
+        // the renderer's existing `-1`-skip support (added for the
+        // bullet-splat effect) already handles this.
+        static const int kExplo7[128] = {
+            60,61,-1,63,64,65,62,64,62,60,
+            62,-1,65,-1,60,65,63,61,62,-1,
+            64,65,-1,62,64,61,62,63,-1,65,
+            60,-1,65,-1,63,65,-1,61,60,65,
+            62,63,64,-1,62,63,-1,62,62,60,
+            62,-1,65,-1,60,65,64,61,62,63,
+            -1,65,60,-1,63,61,62,-1,64,65,
+            -1,62,62,60,62,-1,65,-1,60,65,
+            60,61,-1,63,64,65,62,64,63,61,
+            62,-1,64,65,-1,62,60,61,-1,63,
+            64,65,62,64,-1,60,-1,-1,65,-1,
+            60,-1,63,-1,62,-1,-1,65,-1,-1,
+            -1,61,-1,-1,-1,60,-1,-1
+        };
         // Real table_magictrack (Tables.cpp:1754-1759, Shield/Power magic
         // trail fix, 2026-07-14) -- NOT a simple ascending range: the real
         // 24-frame "loop departs Blupi" animation repeats icons 152-156
@@ -229,7 +250,12 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType53:  return 86; // 45 frames would exceed the sheet (86+44=130 > 99)
             case ObjectType::ObjectType90:  return 54 + (p / 6) % 12;
             case ObjectType::ObjectType91:  return 54 + (p / 6) % 6;
-            case ObjectType::ObjectType92:  return 60; // 128 frames would exceed the sheet (60+127=187 > 99)
+            // Fixed 2026-07-14 (plan.md VISUAL-010, teleporter arc): the
+            // real table_explo7 stays within icons 60-65 (see kExplo7
+            // above), well within the sheet -- the previous "would exceed
+            // the sheet" assumption was based on a wrong naive-ascending
+            // guess, same mistake as ObjectType57's own fix.
+            case ObjectType::ObjectType92:  return kExplo7[p % 128];
             case ObjectType::ObjectType93:  return 7 + (p / 6) % 5;
             // Fixed 2026-07-14 (plan.md VISUAL-009, bullet-splat effect):
             // wrong divisor (6 instead of the real `Config::ScaleDiv(1)==1`)

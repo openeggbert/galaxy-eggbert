@@ -1227,6 +1227,10 @@ namespace GalaxyEggbert::CNA
                 blupi_.TriggerTeleport(aboveIcon))
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
+                // Real teleporter arc (plan.md VISUAL-010, ObjectType92,
+                // Decor.cpp:5606) -- despite ObjectType.hpp's own "charged
+                // attack" doc comment, this is the real, only spawn site.
+                interaction_.SpawnTeleportArc(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
 
             // Fan hazard (plan.md E3D-MIG-149, see GEWorldRuntime::

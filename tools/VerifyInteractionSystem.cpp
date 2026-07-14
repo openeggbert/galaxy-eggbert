@@ -2152,6 +2152,54 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType100, 8) == 90, "ObjectType100 icon at phase=8 is the real table_sploutch3[8]=90 (splash begins, longest delay)");
     }
 
+    // 17.10. Teleporter arc (plan.md VISUAL-010, ObjectType92) -- despite
+    // ObjectType.hpp's own "charged attack" doc comment, the real trigger
+    // is the teleporter itself (already this engine's own TriggerTeleport()
+    // call site); a single static instance, real phase>=128 self-delete.
+    {
+        GEWorldRuntime arcWorld;
+        GEInteractionSystem arcInteraction;
+        constexpr float dt = 1.0f / 20.0f;
+        constexpr float ax = 25.0f, ay = 1.0f, az = 25.0f;
+
+        arcInteraction.SpawnTeleportArc(arcWorld, ax, ay, az);
+        const auto countArcsAt = [&arcWorld, ax, ay, az]()
+        {
+            int count = 0;
+            for (const auto& obj : arcWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType92 && obj.currentX == ax &&
+                    std::fabs(obj.currentY - (ay + 5.0f / 64.0f)) < 0.001f && obj.currentZ == az)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+        check(countArcsAt() == 1,
+              "SpawnTeleportArc() spawns exactly 1 instance, at Blupi's position with the real 5px/64 upward "
+              "offset (screen Y- -> world Y+)");
+
+        for (int i = 0; i < 127; ++i)
+        {
+            arcWorld.Update(dt);
+        }
+        arcInteraction.Update(dt, arcWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countArcsAt() == 1, "the arc is still active just before its real phase-128 self-delete");
+
+        arcWorld.Update(dt);
+        arcInteraction.Update(dt, arcWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countArcsAt() == 0, "the arc self-deletes once phase reaches the real 128-tick (6.4s) lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-010, fixed
+        // 2026-07-14 -- real table_explo7 is a 128-frame scatter with `-1`
+        // blanks interspersed throughout, not a static first-frame return).
+        check(GetObjIcon(ObjectType::ObjectType92, 0) == 60, "ObjectType92 icon at phase=0 is the real table_explo7[0]=60");
+        check(GetObjIcon(ObjectType::ObjectType92, 1) == 61, "ObjectType92 icon at phase=1 is the real table_explo7[1]=61");
+        check(GetObjIcon(ObjectType::ObjectType92, 2) == -1, "ObjectType92 icon at phase=2 is the real table_explo7[2]=-1 (a mid-sequence blank)");
+        check(GetObjIcon(ObjectType::ObjectType92, 127) == -1, "ObjectType92 icon at phase=127 is the real table_explo7[127]=-1 (last frame before self-delete)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure
