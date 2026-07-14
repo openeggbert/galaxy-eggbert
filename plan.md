@@ -2864,13 +2864,29 @@ damping already work.
 - [ ] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera position)
 - [x] CAM-006 — Exponential, framerate-independent damping on camera follow (CNA, 2026-07-10)
 - [ ] CAM-007 — FOV tuned/finalized (verify current FOV value against original 65° reference)
-- [x] CAM-008 — Camera shake: SmallShake (minor impacts: crate land, small explosions) — **core
-      mechanism done 2026-07-14** (see CAM-013's writeup), but SmallShake's own real trigger sites
-      (dynamite-blast destroyed objects — 7 near-identical `Decor.cpp` sites — and the CleanAll
-      cheat's enemy destruction) are NOT wired yet: each needs its own signal path from
-      `GEInteractionSystem` back to the camera (that class has no camera concept today), plus
-      individual verification of which of the 7 dynamite sites genuinely shake vs. incidental
-      duplication — left as a real, scoped follow-up, not guessed at in this pass.
+- [x] CAM-008 — Camera shake: SmallShake — **fully wired 2026-07-14**. The "7 near-identical
+      dynamite-blast sites" a first research pass reported turned out, on direct re-verification,
+      to be a MIX of different real mechanics, not one uniform trigger — corrected via a direct
+      `Decor.cpp` read of every cited site: (1) the generic-hazard contact-kill branch
+      (`Decor.cpp:5782-5814`) — the SAME site already implemented as galaxy-eggbert's own
+      `IsGenericHazard()` contact-kill logic (`GEInteractionSystem.cpp`) — plays SmallShake for
+      every one of its 8 types except fish/bird (see CAM-009); (2) the REAL dynamite blast
+      (`Decor::DynamiteStart()`, `Decor.cpp:9068-9070`) plays SmallShake only ONCE, at the blast's
+      own center tile (`dx==0 && dy==0`), not per-destroyed-object — matches galaxy-eggbert's
+      existing `if (blast.dx==0.0f && blast.dy==0.0f)` ch10-sound branch exactly, just needed the
+      shake signal added alongside it; (3) the CleanAll cheat's enemy-destruction loop
+      (`Decor.cpp:1811`, already `CheatCleanAll()` in this engine) plays SmallShake once per
+      destroyed enemy in the real source, modeled here as once-per-cheat-invocation (via a new
+      `bool` return value signaling "anything destroyed"), a reasonable simplification since the
+      camera can't display more than one shake at a time anyway. Three OTHER cited sites turned
+      out to be different, NOT-YET-implemented mechanics entirely (Perso-decoy-destroys-enemy via
+      `MovePersoDetect()`, `ObjectType201-203` contact damage — plan.md's own already-flagged
+      `PICKUP-069` gap — and forced-vehicle-dismount-on-large-creature-contact) — correctly left
+      unwired, since each would need its own new gameplay logic built first, not just a shake
+      signal. `GEInteractionSystem::SmallShakeTriggeredThisFrame()`/`BigShakeTriggeredThisFrame()`
+      (new, reset every `Update()` call, same idiom as `DiedThisFrame()`) signal both (1) and (2)
+      back to `GalaxyEggbertCnaGame.cpp`; `CheatCleanAll()` signals (3) via its own return value.
+      6 new `VerifyInteractionSystem` checks + full regression on both backends, all pass.
 - [x] CAM-009 — Camera shake: BigShake — **done 2026-07-14**. Description corrected: the real
       trigger (`Decor.cpp:5468`, direct source read) is Fan/Ventillo contact specifically killing
       Blupi (`IsVentillo(m_blupiPos)` inside the same real gate as `BlupiDead()`, matching this
@@ -2878,7 +2894,10 @@ damping already work.
       (unconfirmed) nor "triggered by ObjectType11" (`ObjectType11` is a cosmetic particle spawned
       *alongside* the real shake, not a separate trigger condition; the particle itself isn't
       modeled, no particle system exists). Wired into `GalaxyEggbertCnaGame.cpp`'s existing Fan
-      hazard block.
+      hazard block. A SECOND real BigShake trigger was also found and wired the same day (see
+      CAM-008's writeup): the generic-hazard contact-kill site plays BigShake instead of SmallShake
+      specifically for fish (`ObjectType17`) and bird (`ObjectType20`) — confirmed via
+      `Decor.cpp:5820-5823` and a dedicated `VerifyInteractionSystem` check.
 - [x] CAM-010 — Camera shake: ElectricShake — **done 2026-07-14**. Description corrected: the real
       trigger (`Decor.cpp:5864`, direct source read) is specifically the WASP-STING/balloon-entry
       event (the same real site that sets `m_blupiBalloon=true` and plays channel 40, both already

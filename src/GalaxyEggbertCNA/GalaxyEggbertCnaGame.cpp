@@ -484,7 +484,10 @@ namespace GalaxyEggbert::CNA
             case 6: // Trial mode simulate-toggle -- no observable effect here, Trial phase is unreachable
                 break;
             case 7: // CleanAll
-                interaction_.CheatCleanAll(worldRuntime_);
+                if (interaction_.CheatCleanAll(worldRuntime_))
+                {
+                    cameraShake_.Trigger(CameraShakeType::Small);
+                }
                 break;
             case 8: // AllTreasure
                 interaction_.CheatAllTreasure(worldRuntime_, sound_);
@@ -1514,6 +1517,19 @@ namespace GalaxyEggbert::CNA
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert);
+
+            // Real camera shake (plan.md CAM-008/009) -- generic-hazard
+            // contact-kill (most types SmallShake, fish/bird BigShake) and
+            // the dynamite blast's own center-tile SmallShake, both
+            // signaled from GEInteractionSystem::Update() above.
+            if (interaction_.SmallShakeTriggeredThisFrame())
+            {
+                cameraShake_.Trigger(CameraShakeType::Small);
+            }
+            if (interaction_.BigShakeTriggeredThisFrame())
+            {
+                cameraShake_.Trigger(CameraShakeType::Big);
+            }
 
             // Real Win/Lost phase transitions (plan.md HUD-023): Lost
             // fires the instant GameOverCount() increments (real

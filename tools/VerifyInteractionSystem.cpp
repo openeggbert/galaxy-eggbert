@@ -191,6 +191,10 @@ int main(int argc, char** argv)
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
         check(interaction.DiedThisFrame(), "DiedThisFrame() is true the frame Blupi touches a generic hazard");
         check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
+        check(interaction.SmallShakeTriggeredThisFrame(),
+              "generic hazard contact-kill triggers SmallShake (plan.md CAM-008, real Decor.cpp behavior)");
+        check(!interaction.BigShakeTriggeredThisFrame(),
+              "a non-fish/bird hazard contact-kill does NOT trigger BigShake");
         const auto* afterHazard = findFirst(ObjectType::ObjectType2);
         check(afterHazard == nullptr || !afterHazard->active,
               "the hazard that killed Blupi is destroyed (no longer active)");
@@ -323,11 +327,16 @@ int main(int argc, char** argv)
         // only advances via GEWorldRuntime::Update() itself (the real game
         // loop calls this every frame before GEInteractionSystem::Update();
         // this test must too, or obj.phase never moves).
+        bool smallShakeSeenDuringBlast = false;
         for (int i = 0; i < 300; ++i) // 300 * (1/60)s = 5s of simulated time
         {
             world.Update(dt);
             interaction.Update(dt, world, placeX, placeY, placeZ, 0.0f, sound);
+            smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || interaction.SmallShakeTriggeredThisFrame();
         }
+        check(smallShakeSeenDuringBlast,
+              "the dynamite blast's own center-tile tick triggers SmallShake (plan.md CAM-008, real "
+              "Decor::DynamiteStart() behavior)");
 
         bool crateStillActive = false;
         bool fuseStillActive = false;
@@ -737,6 +746,27 @@ int main(int argc, char** argv)
             }
         }
         check(!spiderStillActive, "the spider that killed Blupi is destroyed, same as ObjectType2/3");
+    }
+
+    // 7.5. Fish (ObjectType17) contact-kill triggers BigShake, NOT
+    // SmallShake -- the one real exception in the generic-hazard list
+    // (plan.md CAM-008/009, Decor.cpp:5820-5823, confirmed via direct
+    // source read: fish/bird specifically play BigShake, every other
+    // hazard type plays SmallShake).
+    {
+        MobileObjSpec fish;
+        fish.type = ObjectType::ObjectType17;
+        fish.posStartX = fish.posEndX = fish.currentX = 6.0f;
+        fish.posStartY = fish.posEndY = fish.currentY = 1.0f;
+        fish.posStartZ = fish.posEndZ = fish.currentZ = 6.0f;
+        world.GetMobileObjectsMutable().push_back(fish);
+
+        interaction.Update(dt, world, 6.0f, 1.0f, 6.0f, 0.0f, sound);
+        check(interaction.DiedThisFrame(), "DiedThisFrame() is true touching an injected fish (ObjectType17)");
+        check(interaction.BigShakeTriggeredThisFrame(),
+              "fish contact-kill triggers BigShake specifically, not SmallShake");
+        check(!interaction.SmallShakeTriggeredThisFrame(),
+              "fish contact-kill does NOT also trigger SmallShake the same frame");
     }
 
     // 8. Wasp (ObjectType44) balloon status and its hazard-pop interaction
@@ -1558,7 +1588,12 @@ int main(int argc, char** argv)
                 check(hazardsBefore > 0, "cheat tests: sample world has at least one CleanAll-eligible hazard/enemy");
                 check(exitActiveBefore, "cheat tests: sample world has an active exit marker (ObjectType7) before CheatCleanAll()");
 
-                cheatInteraction.CheatCleanAll(cheatWorld);
+                const bool cleanAllDestroyedAnything = cheatInteraction.CheatCleanAll(cheatWorld);
+                check(cleanAllDestroyedAnything,
+                      "CheatCleanAll() returns true when it actually destroyed something (plan.md CAM-008 "
+                      "camera-shake signal)");
+                check(!cheatInteraction.CheatCleanAll(cheatWorld),
+                      "CheatCleanAll() returns false when called again with nothing left to destroy");
 
                 int hazardsAfter = 0;
                 bool exitActiveAfter = false;

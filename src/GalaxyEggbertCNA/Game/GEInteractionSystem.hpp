@@ -240,6 +240,12 @@ namespace GalaxyEggbert::CNA
         // killing (see the class comment above) -- the caller must call
         // GEBlupiController::PopBalloon() itself.
         [[nodiscard]] bool BalloonPoppedThisFrame() const noexcept { return balloonPoppedThisFrame_; }
+        // Real camera shake (plan.md CAM-008/009) -- true the one frame a
+        // generic-hazard contact-kill fired SmallShake (most types) or
+        // BigShake (fish/bird, ObjectType17/20) instead; the caller
+        // triggers its own GECameraShake with the matching type.
+        [[nodiscard]] bool SmallShakeTriggeredThisFrame() const noexcept { return smallShakeTriggeredThisFrame_; }
+        [[nodiscard]] bool BigShakeTriggeredThisFrame() const noexcept { return bigShakeTriggeredThisFrame_; }
 
         // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31)
         // -- true the one frame that pickup's real gate passed and the
@@ -394,13 +400,17 @@ namespace GalaxyEggbert::CNA
         // type list (`2,3,4,16,17,20,32,33,44,54,96,97` -- exactly this
         // class's own existing shared-kill-list set plus wasp/large-
         // creature/blupih/blupit) into an explosion decoration with a
-        // screen-shake, NOT "remove all mobile objects" (an earlier draft
+        // screen-shake (real SmallShake, `Decor.cpp:1811`, plan.md
+        // CAM-008, confirmed and wired 2026-07-14 -- see the returned
+        // bool below), NOT "remove all mobile objects" (an earlier draft
         // description of this cheat was wrong -- treasures/pickups/
         // vehicles are untouched). Ported here as deactivating every
         // active instance of those 12 types; the explosion-decoration
-        // visual + screen-shake is a documented simplification (no
-        // screen-shake concept exists in this engine's camera yet).
-        void CheatCleanAll(GEWorldRuntime& worldRuntime);
+        // visual is a documented simplification (no particle system
+        // exists). Returns true if anything was actually destroyed, so
+        // the caller only triggers its own GECameraShake on a real
+        // effect, same idiom as every other *ThisFrame() signal here.
+        bool CheatCleanAll(GEWorldRuntime& worldRuntime);
 
         // Cheat8 "AllTreasure": every active ObjectType5 is collected at
         // once (deactivated, `treasuresCollected_` incremented per
@@ -459,6 +469,8 @@ namespace GalaxyEggbert::CNA
         bool diedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
+        bool smallShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
+        bool bigShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
         bool shieldGrantedThisFrame_ = false; // reset at the top of every Update() call
         bool powerGrantedThisFrame_ = false;  // reset at the top of every Update() call
         bool cloudGrantedThisFrame_ = false;  // reset at the top of every Update() call

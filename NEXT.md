@@ -104,8 +104,9 @@ menus, though still missing a visible 3D Blupi model.
   `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts. Invert/Mirror
   (independent movement-reversal debuff/buff) also implemented (2026-07-13).
 - Player-fired bullets while riding Tank (real cooldown/ammo gates).
-- Real camera shake (Fan-death BigShake, wasp-sting ElectricShake — SmallShake's own dynamite/
-  CleanAll triggers not wired yet) and Ghost mode (typed-word cheat: free flight, no gravity/
+- Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
+  ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
+  cheat: free flight, no gravity/
   collision/interactions), both added 2026-07-14.
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
@@ -146,6 +147,20 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Wired SmallShake's real trigger sites (plan.md CAM-008)** — the earlier camera-shake commit
+  (below) left this unwired pending research; direct re-verification of every cited `Decor.cpp`
+  site found the "7 near-identical dynamite-blast sites" description was wrong — it was actually a
+  MIX of 3 different mechanics. (1) The generic-hazard contact-kill branch (already implemented as
+  this engine's own `IsGenericHazard()` logic) plays SmallShake for 6 of its 8 types and BigShake
+  specifically for fish/bird (`ObjectType17`/`20`) — a real exception found along the way. (2) The
+  REAL dynamite blast plays SmallShake only ONCE, at the blast's own center tile, not
+  per-destroyed-object — matches this engine's existing center-tile ch10-sound branch exactly. (3)
+  The CleanAll cheat's enemy-destruction loop plays it once per real destroyed enemy, modeled here
+  as once-per-invocation via a new `bool CheatCleanAll()` return value. 3 other cited sites turned
+  out to be different, not-yet-implemented mechanics (Perso-decoy-kills-enemy, `ObjectType201-203`
+  contact damage — plan.md's own already-flagged `PICKUP-069` gap — forced-vehicle-dismount) and
+  were correctly left unwired. 6 new `VerifyInteractionSystem` checks + full regression on both
+  backends, all pass.
 - **Implemented the camera-shake system (plan.md CAM-008..013/HUD-014)** — previously blocked on
   `Tables::table_decor_action`'s data-table transcription approval, granted by the user the same
   day. Verbatim-transcribed the real 519-entry table into new `GECameraShake.hpp`/`.cpp`
@@ -698,6 +713,10 @@ the camera, which that class has no concept of today). Remaining genuinely open:
 persistence), #9 (AscenseurVertigo render decision), Saw blade orientation (needs visual input),
 and the particle-effects system (#16, real but large — a future session should scope it as its
 own dedicated effort, same conclusion as before).
+
+**Further update, 2026-07-14 (same day, even later): SmallShake's own trigger sites are now wired
+too** (see §3's own writeup) — camera shake (#15) is now fully done, all 3 shake types. Remaining
+genuinely open is unchanged from the note just above: #8, #9, Saw blade orientation, #16.
 
 ## 9. Do not do yet
 

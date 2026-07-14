@@ -448,6 +448,8 @@ namespace GalaxyEggbert::CNA
         cloudGrantedThisFrame_ = false;
         hideGrantedThisFrame_ = false;
         invertGrantedThisFrame_ = false;
+        smallShakeTriggeredThisFrame_ = false;
+        bigShakeTriggeredThisFrame_ = false;
         ridingLift_ = false;
         bool treasureDoorScanNeeded = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
@@ -760,6 +762,13 @@ namespace GalaxyEggbert::CNA
                         if (blast.dx == 0.0f && blast.dy == 0.0f)
                         {
                             sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                            // Real camera shake (plan.md CAM-008,
+                            // Decor::DynamiteStart(), Decor.cpp:9068-9070,
+                            // confirmed via direct source read): SmallShake
+                            // fires ONLY for the center blast (dx=0,dy=0),
+                            // not for every peripheral tick in the 9-blast
+                            // sequence.
+                            smallShakeTriggeredThisFrame_ = true;
                         }
 
                         // Real 128x128px (2x2 tile) area -- +-1 grid unit
@@ -1221,6 +1230,20 @@ namespace GalaxyEggbert::CNA
                         LoseLife();
                         diedThisFrame_ = true;
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                        // Real camera shake (plan.md CAM-008/009, Decor.cpp
+                        // ~5782-5814, confirmed via direct source read) --
+                        // this exact real site plays SmallShake for every
+                        // one of these 8 hazard types EXCEPT the fish (17)
+                        // and bird (20) variants, which play BigShake
+                        // instead (real behavior, not an approximation).
+                        if (obj.type == ObjectType::ObjectType17 || obj.type == ObjectType::ObjectType20)
+                        {
+                            bigShakeTriggeredThisFrame_ = true;
+                        }
+                        else
+                        {
+                            smallShakeTriggeredThisFrame_ = true;
+                        }
                     }
                 }
                 continue;
@@ -1726,8 +1749,9 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GEInteractionSystem::CheatCleanAll(GEWorldRuntime& worldRuntime)
+    bool GEInteractionSystem::CheatCleanAll(GEWorldRuntime& worldRuntime)
     {
+        bool anyDestroyed = false;
         for (auto& obj : worldRuntime.GetMobileObjectsMutable())
         {
             if (!obj.active)
@@ -1739,8 +1763,10 @@ namespace GalaxyEggbert::CNA
                 obj.type == ObjectType::ObjectType54)
             {
                 obj.active = false;
+                anyDestroyed = true;
             }
         }
+        return anyDestroyed;
     }
 
     void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)
