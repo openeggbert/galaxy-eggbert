@@ -335,6 +335,32 @@ namespace GalaxyEggbert::CNA
         m_vehicleSpeed = 0.0f;
     }
 
+    bool GEBlupiController::ToggleGhost(const Worlds::World& world) noexcept
+    {
+        if (!m_ghost)
+        {
+            m_ghost = true;
+            m_vehicleMode = VehicleMode::None;
+            m_vehicleSpeed = 0.0f;
+            m_suspended = false;
+            m_velocityY = 0.0f;
+            return m_ghost;
+        }
+
+        // Toggle-off gate: real `!DecorDetect(BlupiRect(m_blupiPos))`
+        // (Decor.cpp:2065) -- silently rejected if the current position
+        // is inside solid geometry, rather than stranding Blupi mid-wall.
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+        const int gy = ClampGrid(static_cast<int>(std::lround(m_y)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+        if (!IsSolidAt(world, gx, gy, gz))
+        {
+            m_ghost = false;
+        }
+        return m_ghost;
+    }
+
     bool GEBlupiController::TriggerSpringBounce(bool jumpHeld) noexcept
     {
         if (!m_onGround)
@@ -496,6 +522,50 @@ namespace GalaxyEggbert::CNA
                                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
                                   bool tempPassable, bool inSurfWater, bool inDeepWater)
     {
+        // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
+        // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
+        // { BlupiGhostStep(); return; }`, before even teleporting. Real
+        // `BlupiGhostStep()` (`Decor.cpp:2639-2705`) moves directly along
+        // both real screen axes at 4x the normal per-frame speed, no
+        // gravity, no collision, world-bounds clamp only -- see
+        // kGhostSpeed's own comment for how the real X/Y-axis free flight
+        // is adapted to this engine's tank-control scheme (forward/back
+        // along facing + turn for horizontal, reusing jumpPressed/
+        // crouchHeld for vertical since this engine has no other
+        // real-mapped use for them once every other Step() branch below
+        // is skipped).
+        if (m_ghost)
+        {
+            if (turnInput != 0.0f)
+            {
+                m_yaw += turnInput * kTurnSpeed * dt;
+            }
+            m_x += std::sin(m_yaw) * kGhostSpeed * moveInput * dt;
+            m_z += -std::cos(m_yaw) * kGhostSpeed * moveInput * dt;
+            if (jumpPressed)
+            {
+                m_y += kGhostSpeed * dt;
+            }
+            if (crouchHeld)
+            {
+                m_y -= kGhostSpeed * dt;
+            }
+
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            m_x = std::clamp(m_x, static_cast<float>(-kWorldCenterX),
+                              static_cast<float>(blocksPerAxis - 1 - kWorldCenterX));
+            m_z = std::clamp(m_z, static_cast<float>(-kWorldCenterZ),
+                              static_cast<float>(blocksPerAxis - 1 - kWorldCenterZ));
+            m_y = std::clamp(m_y, 0.0f, static_cast<float>(blocksPerAxis));
+
+            m_velocityY = 0.0f;
+            m_onGround = false;
+
+            const bool moving = moveInput != 0.0f;
+            UpdateAnim(moving, false, false, dt);
+            return;
+        }
+
         // Water Surf/Nage status (plan.md E3D-MIG-148) -- set directly from
         // the caller's own per-frame terrain determination, same split as
         // tempPassable. The gauge only ticks while genuinely Nage, and

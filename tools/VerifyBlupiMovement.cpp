@@ -988,6 +988,105 @@ int main(int argc, char** argv)
         }
     }
 
+    // Ghost mode (plan.md BLUPI-111) -- real absolute top-priority free
+    // flight (Decor.cpp:2639-2705, confirmed via direct source research
+    // 2026-07-14): no gravity, no collision, 4x normal speed, toggle-on
+    // clears any active vehicle, toggle-off is rejected while standing
+    // inside solid geometry.
+    {
+        Worlds::World ghostWorld;
+        constexpr std::uint16_t kGhostGroundX = 30, kGhostGroundZ = 30;
+        ghostWorld.setBlock(kGhostGroundX, 0, kGhostGroundZ, Worlds::Block::make(BlockTypes::Ground));
+
+        GEBlupiController toggler;
+        check(toggler.ToggleGhost(ghostWorld), "ToggleGhost() turns on from no state at all");
+        check(toggler.IsGhost(), "IsGhost() reflects the new state");
+
+        GEBlupiController vehicleThenGhost;
+        vehicleThenGhost.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+        vehicleThenGhost.ToggleGhost(ghostWorld);
+        check(!vehicleThenGhost.IsInVehicle(), "turning Ghost on clears any active vehicle mount (real behavior)");
+
+        // No gravity: floating in open air, still airborne after several
+        // frames of Step() with no input at all (a non-ghosted Blupi
+        // would fall).
+        GEBlupiController floater;
+        floater.SetPosition(0.0f, 20.0f, 0.0f);
+        floater.ToggleGhost(ghostWorld);
+        const float yBeforeFloat = floater.GetY();
+        for (int i = 0; i < 30; ++i)
+        {
+            floater.Step(ghostWorld, 0.0f, 0.0f, false, false, false, dt);
+        }
+        check(std::fabs(floater.GetY() - yBeforeFloat) < 0.01f,
+              "Ghost mode has no gravity -- Y stays put with no vertical input, even far above any ground");
+
+        // Free vertical flight via jumpPressed(up)/crouchHeld(down) --
+        // this engine's adaptation of the real screen-vertical axis (see
+        // kGhostSpeed's own comment).
+        GEBlupiController riser;
+        riser.SetPosition(0.0f, 20.0f, 0.0f);
+        riser.ToggleGhost(ghostWorld);
+        const float yBeforeRise = riser.GetY();
+        riser.Step(ghostWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(riser.GetY() > yBeforeRise, "holding Jump while ghosting flies upward");
+
+        GEBlupiController sinker;
+        sinker.SetPosition(0.0f, 20.0f, 0.0f);
+        sinker.ToggleGhost(ghostWorld);
+        const float yBeforeSink = sinker.GetY();
+        sinker.Step(ghostWorld, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        check(sinker.GetY() < yBeforeSink, "holding crouch while ghosting flies downward");
+
+        // Collision bypass: moving straight at/through the solid ground
+        // block's own column (approached at the SAME height as the solid
+        // block, which a normal walk would block outright). yaw=0 faces
+        // -Z (this engine's own forward convention), so starting on the
+        // +Z side of the block and walking forward crosses right through
+        // its column and out the other side.
+        const float ghostBlockWorldZ = static_cast<float>(kGhostGroundZ) - 50.0f;
+        GEBlupiController flyer;
+        flyer.SetPosition(static_cast<float>(kGhostGroundX) - 50.0f, 0.5f, ghostBlockWorldZ + 3.0f);
+        flyer.ToggleGhost(ghostWorld);
+        flyer.SetYaw(0.0f); // facing -Z, straight toward/through the solid block's own column
+        for (int i = 0; i < 10; ++i)
+        {
+            flyer.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
+        }
+        check(flyer.GetZ() < ghostBlockWorldZ,
+              "Ghost mode passes straight through solid geometry (no collision response at all)");
+
+        // Real 4x speed: covers noticeably more ground per frame than a
+        // normal (non-ghosted) walker given the identical input.
+        GEBlupiController ghostMover;
+        ghostMover.ToggleGhost(ghostWorld);
+        ghostMover.SetYaw(0.0f);
+        ghostMover.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
+        GEBlupiController normalMover;
+        normalMover.SetYaw(0.0f);
+        normalMover.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
+        check(std::fabs(ghostMover.GetZ()) > std::fabs(normalMover.GetZ()) * 3.0f,
+              "Ghost mode's per-frame horizontal movement is markedly faster than normal walking "
+              "(real exact 4x multiplier)");
+
+        // Toggle-off gate: succeeds in open air, rejected inside solid
+        // geometry (real `!DecorDetect(...)`, Decor.cpp:2065).
+        GEBlupiController offInAir;
+        offInAir.SetPosition(0.0f, 20.0f, 0.0f);
+        offInAir.ToggleGhost(ghostWorld);
+        check(!offInAir.ToggleGhost(ghostWorld), "ToggleGhost() off succeeds while standing in open air");
+        check(!offInAir.IsGhost(), "IsGhost() reflects the toggle-off");
+
+        GEBlupiController offInsideWall;
+        offInsideWall.SetPosition(static_cast<float>(kGhostGroundX) - 50.0f, 0.3f,
+                                   static_cast<float>(kGhostGroundZ) - 50.0f);
+        offInsideWall.ToggleGhost(ghostWorld);
+        check(offInsideWall.ToggleGhost(ghostWorld),
+              "ToggleGhost() off is silently REJECTED while standing inside solid geometry (real behavior, "
+              "avoids stranding Blupi mid-wall)");
+        check(offInsideWall.IsGhost(), "IsGhost() stays true after the rejected toggle-off");
+    }
+
     // Repro attempt for "grass-topped cubes reported walkable-through"
     // (NEXT.md §5/§8 task 4, reported live with no specific coordinates).
     // Icons 107/108/109 intentionally leave their PosY face un-rendered

@@ -2,6 +2,7 @@
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
+#include <Microsoft/Xna/Framework/Input/Keys.hpp>
 #include <Microsoft/Xna/Framework/Matrix.hpp>
 
 #include <algorithm>
@@ -1555,6 +1556,46 @@ namespace GalaxyEggbert::CNA
 
         cheatMouseWasDown_ = mouseDown;
         return pressedCheat;
+    }
+
+    bool GEInputPad::UpdateTypedGhostCheat(
+        const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::Keys;
+
+        if (!isPlayPhase)
+        {
+            return false;
+        }
+
+        static constexpr Keys kLetterKeys[26] = {
+            Keys::A, Keys::B, Keys::C, Keys::D, Keys::E, Keys::F, Keys::G, Keys::H,
+            Keys::I, Keys::J, Keys::K, Keys::L, Keys::M, Keys::N, Keys::O, Keys::P,
+            Keys::Q, Keys::R, Keys::S, Keys::T, Keys::U, Keys::V, Keys::W, Keys::X,
+            Keys::Y, Keys::Z};
+
+        bool ghostTyped = false;
+        for (int li = 0; li < 26; ++li)
+        {
+            const bool down = keyboard.IsKeyDown(kLetterKeys[li]);
+            if (down && !letterKeyWasDown_[li])
+            {
+                typedCheatBuffer_ += static_cast<char>('a' + li);
+                if (typedCheatBuffer_.size() > 32)
+                {
+                    typedCheatBuffer_ = typedCheatBuffer_.substr(typedCheatBuffer_.size() - 32);
+                }
+
+                static const std::string kGhostName = "ghost";
+                if (typedCheatBuffer_.size() >= kGhostName.size() &&
+                    typedCheatBuffer_.substr(typedCheatBuffer_.size() - kGhostName.size()) == kGhostName)
+                {
+                    ghostTyped = true;
+                }
+            }
+            letterKeyWasDown_[li] = down;
+        }
+        return ghostTyped;
     }
 
     void GEInputPad::DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,

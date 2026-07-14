@@ -595,6 +595,16 @@ namespace GalaxyEggbert::CNA
                         ApplyCheat(cheatPressed);
                     }
                 }
+
+                // Real SECOND, independent cheat-entry method (plan.md
+                // BLUPI-111, see GEInputPad::UpdateTypedGhostCheat()'s own
+                // comment) -- typing "ghost" toggles Ghost mode, layered
+                // on top of (not instead of) the on-screen cheat menu
+                // above, same "layered" idiom already established there.
+                if (inputPad_.UpdateTypedGhostCheat(phaseKeys, /*isPlayPhase=*/true))
+                {
+                    blupi_.ToggleGhost(worldRuntime_.GetWorld());
+                }
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Pause)
             {
@@ -1474,7 +1484,25 @@ namespace GalaxyEggbert::CNA
             // Cloud is the current secret power (this engine's own
             // SecretPower::Cloud, matching the real Power-Charge pickup).
             const bool cloudActive = secretPower == GEBlupiController::SecretPower::Cloud;
-            interaction_.Update(dt, worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+
+            // Ghost mode (plan.md BLUPI-111) real "no interactions"
+            // behavior: real `MoveObjectDetect()` (the shared query nearly
+            // every pickup/hazard/enemy-contact/lift-riding check in this
+            // function is ultimately built on) unconditionally returns "no
+            // object found" while ghosting -- every check in this
+            // function is a proximity test against Blupi's own position
+            // (see this class's own repeated "same simplification as
+            // every other proximity test in this file" comments), so
+            // substituting a position far outside the 100x100 world makes
+            // every one of them correctly fail shut, with zero changes
+            // needed inside GEInteractionSystem itself. Patrol/animation
+            // logic (which never references Blupi's position at all)
+            // continues normally, matching real behavior exactly.
+            constexpr float kGhostSentinelPos = 100000.0f;
+            const float interactionBlupiX = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetX();
+            const float interactionBlupiY = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetY();
+            const float interactionBlupiZ = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetZ();
+            interaction_.Update(dt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,

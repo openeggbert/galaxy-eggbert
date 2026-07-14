@@ -414,6 +414,73 @@ int main()
         check(pressed == 0, "Cheat menu: not fired while still held (only fires on release)");
     }
 
+    // --- Typed cheat code: "ghost" (plan.md BLUPI-111) ---
+    {
+        using Keys = Microsoft::Xna::Framework::Input::Keys;
+        using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
+
+        GEInputPad pad;
+        bool anyTrue = false;
+        // Types "ghost" one key-down-edge at a time, releasing between
+        // each letter (matching the real "down-edge appends, held doesn't
+        // repeat" semantics) -- only the final 't' completes the suffix
+        // match.
+        for (Keys k : {Keys::G, Keys::H, Keys::O, Keys::S, Keys::T})
+        {
+            const bool firedOnPress = pad.UpdateTypedGhostCheat(KeyboardState{k}, /*isPlayPhase=*/true);
+            anyTrue = anyTrue || firedOnPress;
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{}, /*isPlayPhase=*/true); // release edge
+        }
+        check(anyTrue, "Typed cheat: typing \"ghost\" letter by letter fires exactly once (on the final 't')");
+    }
+    {
+        GEInputPad pad;
+        using Keys = Microsoft::Xna::Framework::Input::Keys;
+        using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
+        bool anyTrue = false;
+        for (Keys k : {Keys::G, Keys::H, Keys::O, Keys::S, Keys::T})
+        {
+            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, /*isPlayPhase=*/false);
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{}, /*isPlayPhase=*/false);
+        }
+        check(!anyTrue, "Typed cheat: typing \"ghost\" outside Play phase never fires (real Phase::Play gate)");
+    }
+    {
+        GEInputPad pad;
+        using Keys = Microsoft::Xna::Framework::Input::Keys;
+        using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
+        // Holding G down across multiple frames (no release in between)
+        // must NOT repeat-append -- only the down-EDGE counts.
+        (void)pad.UpdateTypedGhostCheat(KeyboardState{Keys::G}, true);
+        (void)pad.UpdateTypedGhostCheat(KeyboardState{Keys::G}, true);
+        (void)pad.UpdateTypedGhostCheat(KeyboardState{Keys::G}, true);
+        (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
+        bool anyTrue = false;
+        for (Keys k : {Keys::H, Keys::O, Keys::S, Keys::T})
+        {
+            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, true);
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
+        }
+        check(anyTrue,
+              "Typed cheat: holding a key across frames only counts once (down-edge, not held-repeat), "
+              "so \"ghost\" still completes correctly afterward");
+    }
+    {
+        // Suffix match: typing an unrelated prefix before "ghost" still
+        // fires (real behavior matches the buffer's own SUFFIX, no reset
+        // needed).
+        GEInputPad pad;
+        using Keys = Microsoft::Xna::Framework::Input::Keys;
+        using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
+        bool anyTrue = false;
+        for (Keys k : {Keys::X, Keys::Y, Keys::Z, Keys::G, Keys::H, Keys::O, Keys::S, Keys::T})
+        {
+            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, true);
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
+        }
+        check(anyTrue, "Typed cheat: an unrelated prefix before \"ghost\" doesn't prevent the suffix match");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

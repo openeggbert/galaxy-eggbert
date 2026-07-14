@@ -2151,17 +2151,42 @@ reset to `[ ]` except the small set with direct CNA evidence.
       item number.
 - [ ] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
 - [ ] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions)
-- [ ] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions —
-      **researched 2026-07-14**: real and well-defined (`Tables::CheatCodes::Ghost`, doc comment
-      "semi-transparent, free flight, no interactions"; behavior confirmed in `Decor.cpp` under
-      `#ifdef MODERN`, which IS unconditionally defined in `Config.hpp` so this code path is live in
-      the real build) — but it has **no real player-facing trigger anywhere**: `Game1.cpp`'s
-      `CheatAction()` dispatch (the actual cheat-button-gesture handler backing galaxy-eggbert's own
-      `CHEAT-001..009`) never maps any real cheat-number/gesture to `CheatCodes::Ghost` — only
-      OpenDoors/SuperBlupi/ShowSecret/LayEgg/CleanAll/AllTreasure/EndGoal are reachable that way.
-      Implementing this would require inventing a new access path (keybind or cheat slot) with no
-      real precedent to mirror — blocked on the user picking/approving a trigger, not a safe
-      opportunistic task despite the underlying state/effect being real.
+- [x] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions —
+      **done 2026-07-14**. Initially researched as blocked (the on-screen button-gesture cheat
+      dispatch, `Game1.cpp`'s `CheatAction()`, never maps any real cheat-number/gesture to
+      `CheatCodes::Ghost` — only 7 of the ~26 real cheats are reachable that way). The user then
+      provided the missing piece directly: real mobile-eggbert has a SECOND, independent
+      cheat-entry method — confirmed via direct source read at `InputPad.cpp:686-753` — a rolling
+      lowercase-letter buffer (A-Z keys, capped at 32 chars, built only during real `Phase::Play`,
+      appending on each key's down-EDGE not held-repeat) whose own SUFFIX is matched against a
+      real ~26-entry cheat-name table (`"ghost"` among them, `#ifdef MODERN` which is
+      unconditionally live) to call `Decor::CheatAction()`. Ported as
+      `GEInputPad::UpdateTypedGhostCheat()` (only `"ghost"` wired for now — the other ~25 real
+      names each need their own individual verification pass before wiring, a separate future
+      task, not a blind mass-port). Movement: real `BlupiGhostStep()` (`Decor.cpp:2639-2705`) is a
+      genuinely separate top-priority early-return (checked before even teleporting) — free flight
+      at a real exact 4x normal speed, no gravity, no collision, world-bounds clamp only; ported as
+      `GEBlupiController::Step()`'s own top-priority `m_ghost` branch (`kGhostSpeed = kMoveSpeed *
+      4.0f`), adapting the real 2 independent screen axes to this engine's tank-control scheme
+      (forward/back-along-yaw + turn for horizontal, reusing jumpPressed/crouchHeld for vertical
+      flight since this engine has no other real-mapped use for them while every other Step()
+      branch is skipped). "No interactions": real `MoveObjectDetect()` unconditionally returns "no
+      object found" while ghosting, which nearly every hazard/pickup/enemy-contact/lift-riding
+      check in `GEInteractionSystem` is built on (all proximity tests against Blupi's own
+      position) — ported by substituting a sentinel far-outside-the-world position for Blupi's
+      real coordinates in the `GEInteractionSystem::Update()` call site whenever
+      `GEBlupiController::IsGhost()`, making every proximity check fail shut with zero changes
+      inside `GEInteractionSystem` itself; patrol/animation logic (which never references Blupi's
+      position) continues unaffected, matching real behavior. Toggle-on clears any active vehicle
+      mount (real behavior); toggle-off is silently rejected while standing inside solid geometry
+      (real `!DecorDetect(BlupiRect(m_blupiPos))`, `Decor.cpp:2065`) rather than stranding Blupi
+      mid-wall. NOT modeled: the real 0.75-opacity billboard tint while ghosting (no consistent
+      visible Blupi sprite exists yet to tint — same documented gap as every other Blupi-visual
+      simplification this session). 12 new `VerifyBlupiMovement` checks (toggle/state, vehicle
+      clearing, no-gravity float, vertical flight both directions, collision bypass, real 4x speed,
+      toggle-off in open air vs. rejected inside solid geometry) + 4 new `VerifyGEInputPad` checks
+      (letter-by-letter typing, Play-phase gate, held-key-doesn't-repeat, suffix-match-through-a-
+      prefix) + full regression on both backends, all pass.
 - [ ] BLUPI-112 — Hide mode (m_blupiHide): concealed in object
 - [ ] BLUPI-113 — Sucette/suction-cup (m_blupiPower): from ObjectType26, walk up walls
 - [ ] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions

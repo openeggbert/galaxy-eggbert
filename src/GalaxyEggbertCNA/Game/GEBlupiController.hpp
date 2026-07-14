@@ -211,6 +211,22 @@ namespace GalaxyEggbert::CNA
         static constexpr float kSuspendNoRegrabSeconds = 5.0f / 20.0f;
         static constexpr float kSuspendDropHoldSeconds = 5.0f / 20.0f;
 
+        // Ghost mode free-flight speed (plan.md BLUPI-111, see
+        // ToggleGhost()'s own comment). Real `BlupiGhostStep()`
+        // (`Decor.cpp:2639-2705`, `#ifdef MODERN`) moves Blupi directly
+        // along BOTH real screen axes at `m_blupiSpeedX/Y * 4.0` -- a
+        // real, exact 4x multiplier on the same per-frame speed value
+        // normal walking already uses, not an approximation. This engine
+        // has no strafe input (tank controls only: turn + forward/back),
+        // so the real X-axis free movement is adapted to the same
+        // forward/back-along-facing-yaw shape every other mode here
+        // already uses (a natural 3D adaptation, not a new mechanic);
+        // the real Y-axis (screen-vertical) maps directly to this
+        // engine's own world-Y (height) -- see the dedicated
+        // jumpPressed/crouchHeld reuse in Step()'s own ghost branch for
+        // how vertical flight is driven without inventing a new keybind.
+        static constexpr float kGhostSpeed = kMoveSpeed * 4.0f;
+
         // Vehicle mounts (plan.md E3D-MIG-171, real m_blupiHelico/Jeep/Tank/
         // Skate/Over, verified against mobile-eggbert-reference/
         // 10-blupi-mechanics.md §6/13-object-pickups.md's own "Vehicle
@@ -488,6 +504,25 @@ namespace GalaxyEggbert::CNA
         // kSuspendMoveSpeed's own comment).
         [[nodiscard]] bool IsSuspended() const noexcept { return m_suspended; }
 
+        // Ghost mode (plan.md BLUPI-111), real trigger confirmed by the
+        // user (2026-07-14): activated by typing "ghost" during Play, via
+        // a real SECOND cheat-entry method (`InputPad.cpp:686-753`)
+        // distinct from the numbered on-screen cheat menu -- see
+        // `GEInputPad::UpdateTypedGhostCheat()`'s own comment. Real
+        // `Decor::CheatAction()`'s Ghost branch is an unconditional
+        // toggle (`Decor.cpp:2046-2070`): turning ON clears every other
+        // vehicle/movement mode and zeroes vertical velocity; turning OFF
+        // only succeeds if Blupi's CURRENT position isn't inside solid
+        // geometry (`!DecorDetect(BlupiRect(m_blupiPos))`,
+        // `Decor.cpp:2065`) -- otherwise the toggle-off is silently
+        // rejected (stays ghosted) rather than stranding him inside a
+        // wall. Returns the new ghost state (so the caller can play a
+        // toggle sound only on an actual state change, same idiom as
+        // every other Trigger*() here, even though this one isn't gated
+        // on anything when turning on).
+        bool ToggleGhost(const Worlds::World& world) noexcept;
+        [[nodiscard]] bool IsGhost() const noexcept { return m_ghost; }
+
         // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
         // comment). Real gate: blocked only while already riding ANY other
         // vehicle, or while Nage/Surf (real also excludes Suspended/Ecrase,
@@ -717,6 +752,8 @@ namespace GalaxyEggbert::CNA
         bool m_suspended = false;
         float m_suspendGraceTimer = 0.0f; // real m_blupiNoBarre, prevents an immediate re-grab
         float m_suspendDropHoldTimer = 0.0f; // real "holding Down >5 ticks drops him" accumulator
+
+        bool m_ghost = false;
 
         bool m_cheatSuperBlupi = false;
 

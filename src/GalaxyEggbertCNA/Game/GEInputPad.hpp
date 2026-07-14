@@ -6,6 +6,7 @@
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
+#include <Microsoft/Xna/Framework/Input/KeyboardState.hpp>
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
 #include <memory>
@@ -402,6 +403,31 @@ namespace GalaxyEggbert::CNA
         void DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                            int viewportW, int viewportH);
 
+        // Real SECOND, independent cheat-entry method (confirmed via a
+        // direct read of `InputPad.cpp:686-753`, plan.md BLUPI-111) --
+        // distinct from the on-screen button-glyph cheat menu above
+        // (UpdateCheatGesture/UpdateCheatMenu), which only reaches a
+        // handful of cheats. Real mechanism: a rolling lowercase-letter
+        // buffer (A-Z keys, capped at 32 chars, oldest dropped), built
+        // ONLY during real `Phase::Play`, appending on each key's
+        // down-edge (not held-repeat). Each real cheat name is matched
+        // against the buffer's own SUFFIX (not a full-buffer-reset
+        // match), so typing "...ghost" anywhere fires it without needing
+        // to clear the buffer first. Only "ghost" is wired here for now
+        // (plan.md BLUPI-111) -- the real table has ~26 entries total
+        // (most of the already-implemented CHEAT-001..009 plus several
+        // requiring features this engine doesn't have yet, e.g. Debug
+        // overlay/Zoom levels/game-speed Quick toggle) -- extending this
+        // to more names is a real, faithful, but separate task each time
+        // (needs its own verification pass per name, same as every other
+        // secret power/cheat this session), not a blind mass-port.
+        // Returns true for exactly the one Update() call where "ghost"
+        // was just completed (one-shot signal, same idiom as this
+        // class's edge-triggered button presses) -- a no-op (always
+        // false) outside Play.
+        [[nodiscard]] bool UpdateTypedGhostCheat(
+            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept;
+
         // Wait phase (plan.md MENU-001..005), verified directly against
         // `Game1.cpp`'s real `Phase::First -> Wait` transition (a
         // dedicated research pass): real wait.png background (confirmed
@@ -624,5 +650,11 @@ namespace GalaxyEggbert::CNA
         int cheatActiveControl_ = -1;
         bool cheatMouseWasDown_ = false;
         int cheatGestureIndex_ = 0;
+
+        // Typed-cheat-code buffer (plan.md BLUPI-111, see
+        // UpdateTypedGhostCheat()'s own comment) -- real rolling
+        // lowercase-letter buffer plus per-key down-edge tracking.
+        std::string typedCheatBuffer_;
+        bool letterKeyWasDown_[26] = {};
     };
 }

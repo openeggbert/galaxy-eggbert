@@ -116,7 +116,8 @@ menus, though still missing a visible 3D Blupi model.
   sound on/off + 3 independent gamer slots (lives/mission/hasProgress) + selected-gamer index.
 - Hidden cheat menu: 10-tap gesture unlocks a 9-button overlay (OpenDoors/SuperBlupi/LayEgg/Reset/
   CleanAll/AllTreasure/EndGoal implemented; ShowSecret and the Trial toggle are documented
-  gaps/no-ops).
+  gaps/no-ops). Plus a real second cheat-entry method (typed word during Play) — only "ghost" is
+  wired so far (Ghost mode: free flight, no gravity/collision/interactions).
 - 93/93 real sound channels.
 
 ### What does not work / is not implemented
@@ -142,6 +143,22 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented Ghost mode (plan.md BLUPI-111)** — the user provided the missing real trigger
+  directly (typed word "ghost", a real second cheat-entry method in mobile-eggbert distinct from
+  the on-screen button dispatch), confirmed via a direct source read (`InputPad.cpp:686-753`): a
+  rolling lowercase-letter buffer, Play-phase-gated, suffix-matched against a real ~26-entry cheat
+  name table. Ported the buffer mechanism (`GEInputPad::UpdateTypedGhostCheat()`, only "ghost"
+  wired for now) and the real free-flight movement (`GEBlupiController`'s top-priority `m_ghost`
+  branch in `Step()` — real exact 4x speed, no gravity, no collision, world-bounds clamp) and "no
+  interactions" (a sentinel far-away Blupi position passed into `GEInteractionSystem::Update()`
+  while ghosting, making every existing proximity check fail shut with zero changes inside that
+  class). Toggle-on clears any vehicle mount; toggle-off is rejected while standing inside solid
+  geometry (both real behaviors). 12 new `VerifyBlupiMovement` checks + 4 new `VerifyGEInputPad`
+  checks + full regression on both backends, all pass. Also, per explicit user direction the same
+  day: data-table transcription from mobile-eggbert is now approved (unblocking camera shake and
+  several particle-effects items for a future pass), and `BLUPI-108`/`BLUPI-126/127/131`/
+  `SCORE-001..007`/`VISUAL-001..007` are confirmed HALLUCINATED and CANCELLED (no real
+  mobile-eggbert source) rather than merely "unconfirmed."
 - **Closed plan.md TEST-003** — `VerifyMoveObjectTypesCna` now also sweeps every real
   `../mobile-eggbert/worlds/*.txt` file (enumerated at runtime, not hardcoded) confirming
   `GEWorldRuntime::LoadFromMobileEggbertFile()` succeeds on all of them, closing the literal "all
@@ -691,13 +708,13 @@ decision), Saw blade orientation (needs visual input).
   mobile-eggbert source; do not implement any of them under any item number, and do not revisit
   unless the user explicitly asks again. See each item's own `plan.md` correction for the research
   citations.
-- **`plan.md` BLUPI-111 (Ghost mode cheat) has a real trigger after all — the user provided it
-  2026-07-14**: activated in-game by typing the word "Ghost". Cheats can be entered via two
-  distinct methods in real mobile-eggbert; only the second method (word-typing) can reach every
-  possible cheat, including Ghost — the on-screen button-glyph dispatch this session found
-  earlier (`Game1::CheatAction(Def::ButtonGlyph)`) is the FIRST, more limited method. The exact
-  mechanism (keyboard buffer, phase gating, case sensitivity) needs source research before
-  implementing — see whichever research note/commit is most recent for the current findings.
+- **`plan.md` BLUPI-111 (Ghost mode cheat) is DONE (2026-07-14)** — real trigger provided directly
+  by the user (typed word "ghost", the second of two real cheat-entry methods in mobile-eggbert)
+  and fully implemented: `GEInputPad::UpdateTypedGhostCheat()` + `GEBlupiController`'s
+  `ToggleGhost()`/`IsGhost()`/free-flight `Step()` branch + `GEInteractionSystem` interaction
+  suppression via a sentinel Blupi position. See §3 for the full writeup. The other ~25 real
+  typed cheat names are a real, still-open port opportunity (each needs its own verification pass
+  before wiring, same discipline as this one) — not implemented yet, not blocked either.
 - **Do not modify `../cna` or `../simple-3d`** without explicit per-change approval (the exit-code-1
   and Vulkan SpriteBatch-ordering bugs in §5 both need this and were explicitly deferred).
 - **Do not attempt the exit-code-1-on-window-close fix** — the user already explicitly declined it.
