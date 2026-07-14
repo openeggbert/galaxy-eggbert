@@ -151,6 +151,27 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Fixed a real animation bug in the Invert burst and treasure sparkle particle effects** (plan.md
+  VISUAL-012/014/015), found while researching Pollution puff (below) and re-reading
+  `Decor::ObjectStart()`'s full body for the first time. The real function does NOT place these
+  objects instantly at their final offset target — it spawns them AT the origin (Blupi/the chest)
+  and linearly slides them toward the real 500px-out target over 78 ticks (the shared
+  `MoveObjectStepLine()` state machine), but both effects always self-delete at ~15-20% of that
+  slide (phase 11/16 of 78), so the previous implementation had the right final target distance but
+  the wrong mechanism (static instead of animated-from-origin). Fixed by keeping `posStart` at the
+  origin, `posEnd` at the real target, and linearly interpolating `current` from one to the other
+  using `phase/78` each tick. Also re-derived Invert-expiry's exact per-direction pre-offset
+  arithmetic by hand (100px pre-offset in the OPPOSITE direction, netting the real 400px final
+  target) rather than the flat "sits at 400px" the previous implementation assumed. Existing tests
+  rewritten to check the real `posEnd` target and the real starting-at-origin position instead of
+  an instant final distance. Also found (not investigated) a third real `ObjectType41` trigger site
+  (`BlupiAction::Clear4`, 3-direction, no "down") distinct from the already-modeled grant/expiry
+  sites. Full regression re-run on both backends, all pass.
+- **Researched (not implemented) Pollution puff** (plan.md VISUAL-013, ObjectType36) — confirmed
+  the real trigger (`Decor::MoveObjectPollution()`) is meaningfully more complex than every
+  particle effect shipped so far: 4 separate vehicle-gated blocks (Helico/Overcraft/Jeep/Tank),
+  each with its own hand-tuned modulo-based emission schedule, nozzle offset, and puff
+  lifetime/speed, plus a universal facing-direction sign flip. A real follow-up, not a quick slice.
 - **Implemented the dynamite-blast explosion flash — the FOURTH real particle effect** (plan.md
   VISUAL-008, ObjectType8), spawned once per blast in the real 9-blast dynamite-chain sequence
   (`Decor::DynamiteStart()`, `speed=0`, no offset, same as the Fan-hit flash below) at each blast's

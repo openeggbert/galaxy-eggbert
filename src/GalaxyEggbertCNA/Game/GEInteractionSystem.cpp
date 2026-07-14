@@ -360,22 +360,31 @@ namespace GalaxyEggbert::CNA
         // Update() already covers it.
         void AppendSparkleBurst(float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
         {
-            constexpr float kDistance = 500.0f / 64.0f;
-            const float offsets[4][3] = {
-                {0.0f, kDistance, 0.0f},  // up
-                {0.0f, -kDistance, 0.0f}, // down
-                {kDistance, 0.0f, 0.0f},  // +X (real "right")
-                {-kDistance, 0.0f, 0.0f}, // -X (real "left")
+            // Real behavior (`Decor::ObjectStart()`, same as the Invert
+            // burst's own updated comment) -- spawns exactly AT the
+            // collected object's position (no pre-offset, matching
+            // Invert's GRANT shape) and slides toward a 500px-out posEnd
+            // over 78 ticks, self-deleting at phase>=11 (see below) long
+            // before actually arriving.
+            constexpr float kReach = 500.0f / 64.0f;
+            const float dirs[4][3] = {
+                {0.0f, 1.0f, 0.0f},  // up
+                {0.0f, -1.0f, 0.0f}, // down
+                {1.0f, 0.0f, 0.0f},  // +X (real "right")
+                {-1.0f, 0.0f, 0.0f}, // -X (real "left")
             };
-            for (const auto& offset : offsets)
+            for (const auto& dir : dirs)
             {
                 MobileObjSpec spec;
                 spec.type = ObjectType::ObjectType39;
                 spec.active = true;
                 spec.phase = 0.0f;
-                spec.currentX = spec.posStartX = spec.posEndX = x + offset[0];
-                spec.currentY = spec.posStartY = spec.posEndY = y + offset[1];
-                spec.currentZ = spec.posStartZ = spec.posEndZ = z + offset[2];
+                spec.currentX = spec.posStartX = x;
+                spec.currentY = spec.posStartY = y;
+                spec.currentZ = spec.posStartZ = z;
+                spec.posEndX = x + dir[0] * kReach;
+                spec.posEndY = y + dir[1] * kReach;
+                spec.posEndZ = z + dir[2] * kReach;
                 pendingSpawns.push_back(spec);
             }
         }
@@ -594,8 +603,19 @@ namespace GalaxyEggbert::CNA
             // rate) -- `phase` itself is already advanced generically by
             // `GEWorldRuntime::Update()` (called every frame before this
             // one), so this only needs to check it, not increment it.
+            // Real `stepAdvance` (`Decor::ObjectStart()`, `Decor.cpp:7866`)
+            // is 78 ticks for every direction of this burst (the same
+            // 500px-reach/magnitude-10 combination in all 4 cases,
+            // fixed 2026-07-14 -- this object always self-deletes at 16/78
+            // ticks, ~20% of the way, long before reaching posEnd, so no
+            // arrival/dwell handling is needed).
             if (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42)
             {
+                constexpr float kStepAdvance = 78.0f;
+                const float t = obj.phase / kStepAdvance;
+                obj.currentX = obj.posStartX + (obj.posEndX - obj.posStartX) * t;
+                obj.currentY = obj.posStartY + (obj.posEndY - obj.posStartY) * t;
+                obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
                 if (obj.phase >= 16.0f)
                 {
                     obj.active = false;
@@ -607,9 +627,16 @@ namespace GalaxyEggbert::CNA
             // ObjectType39) -- purely cosmetic. Real self-delete at
             // phase>=11 (`Decor.cpp:8382-8389`, `Config::ScaleTime(11)==11`
             // at this build's 20Hz reference rate) -- an 11-frame lifetime,
-            // shorter than Invert's 16.
+            // shorter than Invert's 16. Same real `stepAdvance`=78 slide
+            // toward posEnd as the Invert burst above (fixed 2026-07-14) --
+            // self-deletes at 11/78 ticks, ~14% of the way.
             if (obj.type == ObjectType::ObjectType39)
             {
+                constexpr float kStepAdvance = 78.0f;
+                const float t = obj.phase / kStepAdvance;
+                obj.currentX = obj.posStartX + (obj.posEndX - obj.posStartX) * t;
+                obj.currentY = obj.posStartY + (obj.posEndY - obj.posStartY) * t;
+                obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
                 if (obj.phase >= 11.0f)
                 {
                     obj.active = false;
@@ -1912,15 +1939,24 @@ namespace GalaxyEggbert::CNA
     void GEInteractionSystem::SpawnInvertBurst(GEWorldRuntime& worldRuntime, float blupiX, float blupiY,
                                                 float blupiZ, bool isGrant)
     {
-        // Real distances confirmed via direct Decor.cpp read: grant places
-        // each instance exactly 500 real px out (no pre-offset); expiry
-        // pre-offsets 100px toward Blupi before the same 500px push,
-        // netting exactly 400px -- both converted here via the same
+        // Real behavior confirmed via direct Decor.cpp read (the general
+        // `Decor::ObjectStart()` sets posStart=the spawn point itself,
+        // posEnd=spawn point + the bucketed direction's real 500px reach,
+        // step=2, stepAdvance=ScaleTime(|speedMagnitude*500/64|)=78 at this
+        // build's 20Hz reference rate -- NOT an instant static burst; the
+        // object is meant to visibly slide from posStart to posEnd over 78
+        // ticks, though it always self-deletes (phase>=16, see below) long
+        // before actually arriving). Grant spawns each instance exactly AT
+        // Blupi (no pre-offset), reaching a full 500px-out posEnd. Expiry
+        // additionally pre-offsets each spawn point 100px in the OPPOSITE
+        // direction before the same 500px push (`Decor.cpp:5145-5156`,
+        // e.g. the "up" instance spawns 100px below Blupi then pushes up
+        // 500px, netting a 400px-above final posEnd but sweeping back
+        // through Blupi's own position along the way) -- both use the same
         // 64px-per-tile scale used throughout this engine's own atlas/
         // movement math.
-        constexpr float kGrantDistance = 500.0f / 64.0f;
-        constexpr float kExpiryDistance = 400.0f / 64.0f;
-        const float distance = isGrant ? kGrantDistance : kExpiryDistance;
+        constexpr float kReach = 500.0f / 64.0f;
+        constexpr float kExpiryPreOffset = 100.0f / 64.0f;
         const ObjectType type = isGrant ? ObjectType::ObjectType41 : ObjectType::ObjectType42;
 
         // Real screen-Y (up/down) maps to this engine's world-Y (height),
@@ -1929,23 +1965,29 @@ namespace GalaxyEggbert::CNA
         // case) is world +Y here, real screen-down (`speed=60`) is world
         // -Y. Real screen-X (left/right) maps directly to world X with no
         // sign flip, same convention used everywhere else this session.
-        const float offsets[4][3] = {
-            {0.0f, distance, 0.0f},  // up
-            {0.0f, -distance, 0.0f}, // down
-            {distance, 0.0f, 0.0f},  // +X (real "right")
-            {-distance, 0.0f, 0.0f}, // -X (real "left")
+        const float dirs[4][3] = {
+            {0.0f, 1.0f, 0.0f},  // up
+            {0.0f, -1.0f, 0.0f}, // down
+            {1.0f, 0.0f, 0.0f},  // +X (real "right")
+            {-1.0f, 0.0f, 0.0f}, // -X (real "left")
         };
 
         auto& objects = worldRuntime.GetMobileObjectsMutable();
-        for (const auto& offset : offsets)
+        for (const auto& dir : dirs)
         {
+            const float startOffset = isGrant ? 0.0f : -kExpiryPreOffset;
+            const float endOffset = isGrant ? kReach : (kReach - kExpiryPreOffset);
+
             MobileObjSpec spec;
             spec.type = type;
             spec.active = true;
             spec.phase = 0.0f;
-            spec.currentX = spec.posStartX = spec.posEndX = blupiX + offset[0];
-            spec.currentY = spec.posStartY = spec.posEndY = blupiY + offset[1];
-            spec.currentZ = spec.posStartZ = spec.posEndZ = blupiZ + offset[2];
+            spec.currentX = spec.posStartX = blupiX + dir[0] * startOffset;
+            spec.currentY = spec.posStartY = blupiY + dir[1] * startOffset;
+            spec.currentZ = spec.posStartZ = blupiZ + dir[2] * startOffset;
+            spec.posEndX = blupiX + dir[0] * endOffset;
+            spec.posEndY = blupiY + dir[1] * endOffset;
+            spec.posEndZ = blupiZ + dir[2] * endOffset;
 
             bool placed = false;
             for (auto& slot : objects)

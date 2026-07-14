@@ -3091,7 +3091,30 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       corrected icon values at 3 points including the shimmer's low point) + full regression on
       both backends, all pass. Same live-visual-verification caveat as VISUAL-014/015 — not
       independently re-attempted (same rendering path, same conclusion would apply).
-- [ ] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers
+      **Correction, 2026-07-14 (later the same day):** same animation bug as VISUAL-014's own
+      correction (see its writeup for the full explanation) — this effect also spawns AT the
+      chest's position and slides toward the real 500px-out `posEnd` over 78 ticks, self-deleting
+      at phase>=11 (~14% of the way) rather than appearing instantly at the full distance. Fixed
+      identically (posStart=origin, posEnd=target, linear interpolation via `phase/78`). Existing
+      tests updated to check `posEnd` (the fixed real target) and the real starting-at-origin
+      position. Full regression re-run on both backends after the fix, all pass.
+- [ ] VISUAL-013 — Pollution puff: ObjectType36 on environmental triggers — **researched, not
+      implemented, 2026-07-14**: real trigger is `Decor::MoveObjectPollution()` (`Decor.cpp:
+      6877-6989`, confirmed function name/range via direct read), called once per tick regardless
+      of vehicle state and gated by 4 separate `if (m_blupiXxx)` blocks (Helico/Overcraft/Jeep/Tank
+      — NOT mutually-exclusive `else if`s in the decompiled source, but only one vehicle can
+      realistically be active at a time), each with its OWN hand-tuned `m_time`/`m_blupiPhase`
+      modulo-based emission schedule (e.g. Jeep: every `m_blupiPhase%50` hits 0/12/20/35 while
+      stationary, or `%20` hits 0/3/5/11/15 while moving) and its OWN per-vehicle nozzle offset
+      (`tinyPoint.X/Y`) and puff lifetime/speed (`num`, mostly 20, Overcraft's airborne case uses
+      58). After the per-vehicle gate, a universal facing-direction step negates/keeps `num`'s
+      sign so the puff always drifts backward relative to Blupi's own facing, then
+      `ObjectStart(blupiPos, ObjectType36, num)` spawns ONE puff (not a 4-direction burst like
+      Invert/treasure) — genuinely more complex than every particle effect shipped so far, real
+      effort, not a "next smallest task." Confirmed this engine already tracks the needed vehicle
+      state (Jeep/Tank/Overcraft/Helicopter mounts, all 5 vehicles per NEXT.md) so the gating
+      conditions are at least expressible; the per-vehicle modulo schedules and nozzle offsets
+      still need careful 1:1 transcription and their own test coverage.
 - [x] VISUAL-014 — Invert power-up particles: ObjectType41 (4-direction burst on pickup) — **done
       2026-07-14, the FIRST real particle effect built in this engine** (data-table transcription
       approved by the user the same day). Real spawn site confirmed via direct source read
@@ -3120,6 +3143,35 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       source, and reuses the SAME already-proven billboard rendering path used successfully by
       every other element.png-sourced object in this engine (treasures, keys, etc.) — not a new
       rendering mode needing its own visual proof the way TILE-055 did.
+      **Correction, 2026-07-14 (later the same day):** found and fixed a real animation bug in this
+      original implementation, discovered while investigating a DIFFERENT ObjectType (Pollution
+      puff, `ObjectType36`) that led to re-reading `Decor::ObjectStart()`'s full body directly for
+      the first time (`Decor.cpp:7805-7873`). The real function does NOT place the object
+      instantly at its final offset target as a static burst — it sets `posStart` to the ORIGINAL
+      spawn point (Blupi's own position, unchanged) and `posEnd` to the computed 500px-out target,
+      `step=2`, and `stepAdvance=Config::ScaleTime(|speedMagnitude*500/64|)` (78 ticks for this
+      effect's real ±10 magnitude at this build's 20Hz rate) — the shared `MoveObjectStepLine()`
+      state machine (`Decor.cpp:8005-8145`) then linearly interpolates `posCurrent` from `posStart`
+      toward `posEnd` over those 78 ticks. Since this object always self-deletes at `phase>=16`
+      (~20% of the way), it visibly slides a SHORT distance from Blupi's exact position rather than
+      appearing instantly ~7.8 world units away and sitting there for its whole life — the previous
+      implementation had the right final target distance but the wrong mechanism (static instead of
+      animated-from-origin). Fixed by keeping `posStart` at the origin and only setting `posEnd` to
+      the offset target, then linearly interpolating `currentX/Y/Z` from `posStart` to `posEnd`
+      using `phase/78` each tick (reusing `phase` directly as the interpolation counter, since nothing
+      else needs a separate `time` counter for these short-lived objects). Existing tests updated to
+      check the real `posEnd` target and the real starting-at-origin position instead of an
+      instant final distance. Also found, while re-deriving the exact per-direction arithmetic, that
+      the SAME real function short-circuits at `speed=0` to skip the whole offset/step-2 branch
+      entirely — already correctly modeled for `SpawnFanHitFlash()`/`AppendDynamiteBlastFlash()`
+      (both use `speed=0`), so those two are NOT affected by this bug. Full regression re-run on
+      both backends after the fix, all pass. **Also found (not yet investigated further):** a THIRD
+      real `ObjectType41` trigger site exists (`Decor.cpp:6608-6612`, gated on `BlupiAction::Clear4`)
+      that spawns only 3 directions (`-70,20,-20`, no "down") — distinct from the two already-cited
+      grant sites (`Decor.cpp:5189-5192`/`5583-5586`/`6048-6051`, which are 3 literal call sites for
+      the SAME real trigger event and don't need separate handling). What `BlupiAction::Clear4`
+      actually corresponds to (and whether this engine already models it under a different name) is
+      unresearched — flagged as an open question, not fixed here.
 - [x] VISUAL-015 — Invert expire particles: ObjectType42 (4-direction burst on expiry) — **done
       2026-07-14, see VISUAL-014's writeup for the shared implementation** (`SpawnInvertBurst(...,
       isGrant=false)`). Real spawn site confirmed via direct source read (`Decor.cpp:5137-5158`):

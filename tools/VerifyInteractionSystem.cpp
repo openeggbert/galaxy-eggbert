@@ -168,9 +168,11 @@ int main(int argc, char** argv)
     }
 
     // 2.1b. Treasure sparkle burst (plan.md VISUAL-012, ObjectType39) --
-    // real 4-instance burst at the collected chest's own position, same
-    // 500px/64 real distance and phase>=11 self-delete as confirmed via
-    // direct Decor.cpp source read.
+    // real 4-instance burst starting at the collected chest's own
+    // position, sliding toward a real 500px/64-away posEnd over 78 ticks
+    // (fixed 2026-07-14 -- was wrongly an instant static burst before) and
+    // self-deleting at phase>=11, confirmed via direct Decor.cpp source
+    // read.
     if (const auto* sparkleChest = findFirst(ObjectType::ObjectType5))
     {
         GEWorldRuntime sparkleWorld;
@@ -180,12 +182,13 @@ int main(int argc, char** argv)
         constexpr float kDist = 500.0f / 64.0f;
         const float cx = sparkleChest->currentX, cy = sparkleChest->currentY, cz = sparkleChest->currentZ;
 
-        // Filtered by proximity to the chest, not a global ObjectType39
-        // count -- the sample world's own object-type exhibition already
-        // places one static specimen of every ObjectType (including 39)
-        // elsewhere in the map, so a blind global count is always off by
-        // one (same false-positive shape as the bridge-construction test
-        // above).
+        // Filtered by proximity of posEnd (the real, fixed final target,
+        // unaffected by the in-flight slide) to the chest, not a global
+        // ObjectType39 count -- the sample world's own object-type
+        // exhibition already places one static specimen of every
+        // ObjectType (including 39) elsewhere in the map, so a blind
+        // global count is always off by one (same false-positive shape as
+        // the bridge-construction test above).
         const auto countNearbySparkles = [&sparkleWorld, cx, cy, cz, kDist]()
         {
             int count = 0;
@@ -195,9 +198,9 @@ int main(int argc, char** argv)
                 {
                     continue;
                 }
-                const float ddx = obj.currentX - cx, ddy = obj.currentY - cy, ddz = obj.currentZ - cz;
-                const float dist = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
-                if (std::fabs(dist - kDist) < 0.01f)
+                const float edx = obj.posEndX - cx, edy = obj.posEndY - cy, edz = obj.posEndZ - cz;
+                const float endDist = std::sqrt(edx * edx + edy * edy + edz * edz);
+                if (std::fabs(endDist - kDist) < 0.01f)
                 {
                     ++count;
                 }
@@ -206,7 +209,19 @@ int main(int argc, char** argv)
         };
 
         sparkleInteraction.Update(dt, sparkleWorld, cx, cy, cz, 0.0f, sound);
-        check(countNearbySparkles() == 4, "collecting a treasure spawns exactly 4 ObjectType39 sparkle instances at the real 500px/64 distance");
+        check(countNearbySparkles() == 4,
+              "collecting a treasure spawns exactly 4 ObjectType39 sparkle instances with a real 500px/64 posEnd");
+        for (const auto& obj : sparkleWorld.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType39 &&
+                std::fabs(std::sqrt((obj.posEndX - cx) * (obj.posEndX - cx) + (obj.posEndY - cy) * (obj.posEndY - cy) +
+                                     (obj.posEndZ - cz) * (obj.posEndZ - cz)) -
+                          kDist) < 0.01f)
+            {
+                check(obj.currentX == cx && obj.currentY == cy && obj.currentZ == cz,
+                      "sparkle instance starts exactly at the chest's own position (no pre-offset)");
+            }
+        }
 
         for (int i = 0; i < 10; ++i)
         {
@@ -711,16 +726,21 @@ int main(int argc, char** argv)
     }
 
     // 3.9c. Invert start/stop particle burst (plan.md VISUAL-014/015,
-    // ObjectType41 on grant / ObjectType42 on expiry) -- 4 instances,
-    // real distances (500 real-px grant, 400 real-px expiry, both /64 for
-    // this engine's world units), real screen-Y-to-world-Y sign flip, and
-    // the real phase>=16 self-delete.
+    // ObjectType41 on grant / ObjectType42 on expiry) -- 4 instances each,
+    // real 500px/64 grant posEnd reach / 400px/64 expiry posEnd reach
+    // (both computed from a real 100px/64 pre-offset for expiry, see
+    // SpawnInvertBurst()'s own comment), a real slide from posStart to
+    // posEnd over 78 ticks (fixed 2026-07-14 -- was wrongly an instant
+    // static burst before), real screen-Y-to-world-Y sign flip, and the
+    // real phase>=16 self-delete (long before the 78-tick slide actually
+    // completes).
     {
         GEWorldRuntime burstWorld;
         GEInteractionSystem burstInteraction;
         constexpr float bx = 10.0f, by = 1.0f, bz = 10.0f;
         constexpr float kGrantDist = 500.0f / 64.0f;
         constexpr float kExpiryDist = 400.0f / 64.0f;
+        constexpr float kExpiryPreOffset = 100.0f / 64.0f;
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
 
         burstInteraction.SpawnInvertBurst(burstWorld, bx, by, bz, /*isGrant=*/true);
@@ -730,11 +750,13 @@ int main(int argc, char** argv)
             if (obj.active && obj.type == ObjectType::ObjectType41)
             {
                 ++grantCount;
-                const float ddx = obj.currentX - bx, ddy = obj.currentY - by, ddz = obj.currentZ - bz;
-                const float dist = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
-                check(std::fabs(dist - kGrantDist) < 0.01f,
-                      "grant burst instance sits at the real 500px/64 distance from Blupi");
-                check(ddz == 0.0f, "grant burst never offsets along world Z (only X/Y are used)");
+                check(obj.currentX == bx && obj.currentY == by && obj.currentZ == bz,
+                      "grant burst instance starts exactly at Blupi's own position (no pre-offset)");
+                const float edx = obj.posEndX - bx, edy = obj.posEndY - by, edz = obj.posEndZ - bz;
+                const float endDist = std::sqrt(edx * edx + edy * edy + edz * edz);
+                check(std::fabs(endDist - kGrantDist) < 0.01f,
+                      "grant burst instance's real posEnd target is the real 500px/64 distance from Blupi");
+                check(edz == 0.0f, "grant burst never offsets along world Z (only X/Y are used)");
             }
         }
         check(grantCount == 4, "SpawnInvertBurst(isGrant=true) spawns exactly 4 ObjectType41 instances");
@@ -746,10 +768,16 @@ int main(int argc, char** argv)
             if (obj.active && obj.type == ObjectType::ObjectType42)
             {
                 ++expiryCount;
-                const float ddx = obj.currentX - bx, ddy = obj.currentY - by, ddz = obj.currentZ - bz;
-                const float dist = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
-                check(std::fabs(dist - kExpiryDist) < 0.01f,
-                      "expiry burst instance sits at the real 400px/64 distance from Blupi (closer than grant)");
+                const float sdx = obj.currentX - bx, sdy = obj.currentY - by, sdz = obj.currentZ - bz;
+                const float startDist = std::sqrt(sdx * sdx + sdy * sdy + sdz * sdz);
+                check(std::fabs(startDist - kExpiryPreOffset) < 0.01f,
+                      "expiry burst instance starts the real 100px/64 pre-offset away from Blupi, opposite its "
+                      "final direction");
+                const float edx = obj.posEndX - bx, edy = obj.posEndY - by, edz = obj.posEndZ - bz;
+                const float endDist = std::sqrt(edx * edx + edy * edy + edz * edz);
+                check(std::fabs(endDist - kExpiryDist) < 0.01f,
+                      "expiry burst instance's real posEnd target is the real 400px/64 distance from Blupi "
+                      "(closer than grant)");
             }
         }
         check(expiryCount == 4, "SpawnInvertBurst(isGrant=false) spawns exactly 4 ObjectType42 instances");
