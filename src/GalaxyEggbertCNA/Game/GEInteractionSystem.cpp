@@ -414,6 +414,45 @@ namespace GalaxyEggbert::CNA
             pendingSpawns.push_back(spec);
         }
 
+        // Bullet-hit splat effect (plan.md VISUAL-009, ObjectType98/99/100
+        // -- despite ObjectType.hpp's own "water splash" doc comments,
+        // the ONLY real spawn site is `Decor::StartSploutchGlu()`
+        // (`Decor.cpp:7763-7789`), called exactly once, from the
+        // ObjectType23-bullet-kills-Blupi block (`Decor.cpp:5914-5947`,
+        // already this class's own `ObjectType23` contact-death branch) --
+        // a scattered 7-instance splat (1x98, 4x99, 2x100), each at a
+        // small fixed real-pixel offset from the bullet's own position,
+        // all `speed=0` (static, no offset/interpolation, same shape as
+        // `SpawnFanHitFlash()`). Real self-delete: phase>=10 (98), >=13
+        // (99), >=18 (100). Appends directly to pendingSpawns since, like
+        // the treasure sparkle above, the real spawn site is INSIDE this
+        // class's own per-object loop.
+        void AppendSplatEffect(float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
+        {
+            struct Splat { ObjectType type; float dx, dy; };
+            static constexpr float k = 64.0f; // real px-per-tile scale
+            static const Splat splats[7] = {
+                {ObjectType::ObjectType98, 0.0f / k, 0.0f / k},
+                {ObjectType::ObjectType99, 15.0f / k, -20.0f / k},
+                {ObjectType::ObjectType99, -20.0f / k, -18.0f / k},
+                {ObjectType::ObjectType99, 23.0f / k, 18.0f / k},
+                {ObjectType::ObjectType99, -15.0f / k, 18.0f / k},
+                {ObjectType::ObjectType100, 32.0f / k, -10.0f / k},
+                {ObjectType::ObjectType100, -28.0f / k, -15.0f / k},
+            };
+            for (const auto& splat : splats)
+            {
+                MobileObjSpec spec;
+                spec.type = splat.type;
+                spec.active = true;
+                spec.phase = 0.0f;
+                spec.currentX = spec.posStartX = spec.posEndX = x + splat.dx;
+                spec.currentY = spec.posStartY = spec.posEndY = y + splat.dy;
+                spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+                pendingSpawns.push_back(spec);
+            }
+        }
+
         // Blupih (ObjectType32, plan.md E3D-MIG-134) attack: verified
         // directly against Decor.cpp:8878-8886 -- during a turn-dwell
         // (step 1 or 3), at dwell-frame 21 exactly, drops one ObjectType23
@@ -693,6 +732,27 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
             if (obj.type == ObjectType::ObjectType27 && obj.phase >= 24.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+
+            // Bullet-hit splat effect (plan.md VISUAL-009, ObjectType98/
+            // 99/100) -- purely cosmetic, static (real `speed=0`), same
+            // self-contained shape as the magic trail above. Real
+            // self-delete: phase>=10 (98), >=13 (99), >=18 (100)
+            // (`Decor.cpp:8491-8526`).
+            if (obj.type == ObjectType::ObjectType98 && obj.phase >= 10.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+            if (obj.type == ObjectType::ObjectType99 && obj.phase >= 13.0f)
+            {
+                obj.active = false;
+                continue;
+            }
+            if (obj.type == ObjectType::ObjectType100 && obj.phase >= 18.0f)
             {
                 obj.active = false;
                 continue;
@@ -1294,8 +1354,10 @@ namespace GalaxyEggbert::CNA
             // NOT modeled -- neither concept exists in this engine yet.
             // Real death has no distinct sound call of
             // its own (StartSploutchGlu only spawns silent splash-effect
-            // debris) -- channel 74 reused here for consistency with this
-            // class's existing hazard-death sound approximation.
+            // debris, now modeled -- plan.md VISUAL-009, see
+            // AppendSplatEffect()'s own comment) -- channel 74 reused here
+            // for consistency with this class's existing hazard-death
+            // sound approximation.
             if (obj.type == ObjectType::ObjectType23)
             {
                 const float bdx = obj.currentX - blupiX;
@@ -1303,6 +1365,7 @@ namespace GalaxyEggbert::CNA
                 const float bdz = obj.currentZ - blupiZ;
                 if (!blupiInvincible && bdx * bdx + bdy * bdy + bdz * bdz < kHazardContactRadius * kHazardContactRadius)
                 {
+                    AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     obj.active = false;
                     LoseLife();
                     diedThisFrame_ = true;

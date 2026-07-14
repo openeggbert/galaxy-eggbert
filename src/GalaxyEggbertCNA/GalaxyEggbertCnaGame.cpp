@@ -2307,6 +2307,14 @@ namespace GalaxyEggbert::CNA
                     continue;
                 }
                 const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
+                // Real -1 "invisible frame" sentinel (plan.md VISUAL-009,
+                // table_sploutch2/3's own leading delay ticks, fixed
+                // 2026-07-14) -- skip drawing this object entirely this
+                // tick, matching the real source's own blank-frame behavior.
+                if (icon < 0)
+                {
+                    continue;
+                }
                 const auto uv = GetExploIconUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),

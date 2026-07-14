@@ -3064,7 +3064,36 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       speculative work on unreachable code. Not live-visually re-verified for either 8 or 11 (same
       already-proven element.png/explo.png billboard rendering path as every other particle effect
       this session).
-- [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
+- [x] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png` —
+      **done 2026-07-14, description corrected**: despite the `ObjectType.hpp` enum's own "water
+      splash"/"spawned when entering water" doc comments, direct source read found the ONLY real
+      spawn site is `Decor::StartSploutchGlu()` (`Decor.cpp:7763-7789`), called exactly once, from
+      the real ObjectType23-bullet-kills-Blupi block (`Decor.cpp:5914-5947` — already this
+      engine's own existing `ObjectType23` contact-death branch, plan.md E3D-MIG-134) — a "Blupi
+      hit by a bullet, gets glued (`BlupiAction::Glu`)" splat reaction, not water entry at all; no
+      other real trigger for these 3 types exists anywhere in source. Spawns a scattered
+      7-instance splat (1x ObjectType98, 4x99, 2x100) at small fixed real-pixel offsets from the
+      bullet's own position, all `speed=0` (static, no offset/interpolation, same shape as
+      `SpawnFanHitFlash()`). New `AppendSplatEffect()` free function, wired directly into the
+      already-existing `ObjectType23` contact block. Real self-delete: `phase>=10` (98), `>=13`
+      (99), `>=18` (100).
+
+      Found and fixed 3 more `GEObjectIcons.cpp` bugs: `ObjectType98`'s wrong divisor (6 instead of
+      1, `table_sploutch1` is a plain ascending range so only the divisor needed fixing);
+      `ObjectType99`/`100` were previously static "first real frame" stubs — their real tables
+      (`table_sploutch2/3`, `Tables.cpp:1436-1448`) are now transcribed verbatim and fully
+      animated, including their real leading `-1` "invisible frame" delay (3 ticks for 99, 8 for
+      100, modeling debris fallen from progressively greater heights). This REQUIRED adding real
+      `-1`-sentinel support to the explo.png billboard render pass itself
+      (`GalaxyEggbertCnaGame.cpp`: skip drawing when the icon is negative) — the first render-side
+      change any particle effect this session has needed, and the same fix already flagged as a
+      prerequisite for `ObjectType9` (`table_explo2`) if that type is ever wired.
+
+      17 new `VerifyInteractionSystem` checks (spawn count/type-split at the real bullet-contact
+      site, self-delete timing for all 3 types, corrected icon values including the invisible-delay
+      frames) + full regression on both backends, all pass. Not live-visually verified (same
+      already-proven explo.png billboard rendering path as every other Explosion-channel particle
+      effect this session).
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
 - [x] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded —
       **done 2026-07-14**, the SIXTH real particle effect, built alongside its sibling Power/Magic

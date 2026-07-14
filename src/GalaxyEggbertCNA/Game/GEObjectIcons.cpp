@@ -53,6 +53,13 @@ namespace GalaxyEggbert::CNA
             274,275,276,277,278,274,275,276,277,278,
             279,280,281,282,283,284,285,286,287,288
         };
+        // Real table_sploutch2/3 (Tables.cpp:1436-1448, bullet-splat
+        // effect fix, 2026-07-14) -- -1 means "no sprite this tick" (a
+        // real leading delay before the splash icons begin: 3 ticks for
+        // table_sploutch2, 8 for table_sploutch3, modeling debris that
+        // fell from progressively greater heights).
+        static const int kSploutch2[13] = {-1,-1,-1,90,91,92,93,94,95,96,97,98,99};
+        static const int kSploutch3[18] = {-1,-1,-1,-1,-1,-1,-1,-1,90,91,92,93,94,95,96,97,98,99};
         static const int kGuepeLeft[6]    = {195,196,197,198,197,196};
         static const int kCreature[8]     = {247,248,249,250,251,250,249,248};
         static const int kBlupihLeft[8]   = {66,67,68,67,66,69,70,69};
@@ -224,9 +231,20 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType91:  return 54 + (p / 6) % 6;
             case ObjectType::ObjectType92:  return 60; // 128 frames would exceed the sheet (60+127=187 > 99)
             case ObjectType::ObjectType93:  return 7 + (p / 6) % 5;
-            case ObjectType::ObjectType98:  return 90 + (p / 6) % 10;
-            case ObjectType::ObjectType99:  return 90; // first real frame after 3 documented invisible ticks
-            case ObjectType::ObjectType100: return 90; // first real frame after 8 documented invisible ticks
+            // Fixed 2026-07-14 (plan.md VISUAL-009, bullet-splat effect):
+            // wrong divisor (6 instead of the real `Config::ScaleDiv(1)==1`)
+            // -- real `table_sploutch1` is a plain ascending range (90..99),
+            // so only the divisor needed fixing.
+            case ObjectType::ObjectType98:  return 90 + p % 10;
+            // Fixed 2026-07-14: previously a static "first real frame"
+            // return -- the real tables (`table_sploutch2/3`) are now
+            // transcribed verbatim (see kSploutch2/3 below) and fully
+            // animated, including their real leading `-1` "invisible frame"
+            // delay (3 ticks for 99, 8 for 100) -- the renderer skips
+            // drawing this tick when the icon is negative (see
+            // GalaxyEggbertCnaGame.cpp's explo.png billboard pass).
+            case ObjectType::ObjectType99:  return kSploutch2[p % 13];
+            case ObjectType::ObjectType100: return kSploutch3[p % 18];
 
             // blupi.png/blupi1.png-sourced Blupi-skin types (2026-07-09) --
             // 340-icon grid (0-339). Icon numbers are only meaningful via

@@ -1189,6 +1189,24 @@ int main(int argc, char** argv)
         const int bulletCountAfterContact = countBulletsAt(bhX, bhZ);
         check(bulletCountAfterContact == bulletCountBefore, "the projectile that killed Blupi is destroyed (no longer active)");
 
+        // Bullet-hit splat effect (plan.md VISUAL-009) -- real
+        // StartSploutchGlu() scatters 7 instances (1x ObjectType98, 4x99,
+        // 2x100) within a few real px of the bullet's own position at the
+        // moment of contact.
+        int splatCount98 = 0, splatCount99 = 0, splatCount100 = 0;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            const float sdx = obj.currentX - bhX, sdy = obj.currentY - 15.0f, sdz = obj.currentZ - bhZ;
+            if (obj.active && sdx * sdx + sdy * sdy + sdz * sdz < 1.0f)
+            {
+                if (obj.type == ObjectType::ObjectType98) ++splatCount98;
+                else if (obj.type == ObjectType::ObjectType99) ++splatCount99;
+                else if (obj.type == ObjectType::ObjectType100) ++splatCount100;
+            }
+        }
+        check(splatCount98 == 1 && splatCount99 == 4 && splatCount100 == 2,
+              "the bullet contact-kill spawns the real 7-instance splat effect (1x ObjectType98, 4x99, 2x100)");
+
         // "No room" cancellation: a second blupih placed directly on solid
         // ground (nothing but the floor immediately below it) should NOT
         // drop a visible projectile at all -- real ObjectStart still
@@ -2054,6 +2072,84 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType27, 0) == 152, "ObjectType27 icon at phase=0 is the real table_magictrack[0]=152");
         check(GetObjIcon(ObjectType::ObjectType27, 5) == 152, "ObjectType27 icon at phase=5 is the real table_magictrack[5]=152 (the repeat)");
         check(GetObjIcon(ObjectType::ObjectType27, 10) == 157, "ObjectType27 icon at phase=10 is the real table_magictrack[10]=157 (continues past the repeat)");
+    }
+
+    // 17.9. Bullet-hit splat effect self-delete timing + icon formulas
+    // (plan.md VISUAL-009, ObjectType98/99/100) -- the real spawn (via
+    // the bullet-contact-kill site) is already exercised in test 10 above;
+    // this isolates the 3 self-delete timings on their own with directly-
+    // constructed instances, since there is no public single-shot spawn
+    // method for these types (AppendSplatEffect() is a free function).
+    {
+        GEWorldRuntime splatWorld;
+        GEInteractionSystem splatInteraction;
+        constexpr float dt = 1.0f / 20.0f;
+        constexpr float sx = 40.0f, sy = 1.0f, sz = 40.0f;
+
+        const auto makeStatic = [](ObjectType type, float x, float y, float z)
+        {
+            MobileObjSpec spec;
+            spec.type = type;
+            spec.active = true;
+            spec.phase = 0.0f;
+            spec.currentX = spec.posStartX = spec.posEndX = x;
+            spec.currentY = spec.posStartY = spec.posEndY = y;
+            spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+            return spec;
+        };
+        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(ObjectType::ObjectType98, sx, sy, sz));
+        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(ObjectType::ObjectType99, sx, sy, sz));
+        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(ObjectType::ObjectType100, sx, sy, sz));
+
+        const auto countActiveOf = [&splatWorld](ObjectType type)
+        {
+            int n = 0;
+            for (const auto& obj : splatWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == type) ++n;
+            }
+            return n;
+        };
+
+        for (int i = 0; i < 9; ++i)
+        {
+            splatWorld.Update(dt);
+        }
+        splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOf(ObjectType::ObjectType98) == 1, "ObjectType98 is still active just before its real phase-10 self-delete");
+        check(countActiveOf(ObjectType::ObjectType99) == 1, "ObjectType99 is still active just before its real phase-13 self-delete");
+        check(countActiveOf(ObjectType::ObjectType100) == 1, "ObjectType100 is still active just before its real phase-18 self-delete");
+
+        splatWorld.Update(dt);
+        splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOf(ObjectType::ObjectType98) == 0, "ObjectType98 self-deletes once phase reaches the real 10-tick lifetime");
+
+        for (int i = 0; i < 3; ++i)
+        {
+            splatWorld.Update(dt);
+        }
+        splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOf(ObjectType::ObjectType99) == 0, "ObjectType99 self-deletes once phase reaches the real 13-tick lifetime");
+
+        for (int i = 0; i < 5; ++i)
+        {
+            splatWorld.Update(dt);
+        }
+        splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOf(ObjectType::ObjectType100) == 0, "ObjectType100 self-deletes once phase reaches the real 18-tick lifetime");
+
+        // GetObjIcon()'s corrected formulas (plan.md VISUAL-009, fixed
+        // 2026-07-14 -- table_sploutch2/3's real leading `-1` "invisible
+        // frame" delay is now modeled instead of a static first-frame
+        // return).
+        check(GetObjIcon(ObjectType::ObjectType98, 0) == 90, "ObjectType98 icon at phase=0 is the real table_sploutch1[0]=90");
+        check(GetObjIcon(ObjectType::ObjectType98, 9) == 99, "ObjectType98 icon at phase=9 is the real table_sploutch1[9]=99 (last frame)");
+        check(GetObjIcon(ObjectType::ObjectType99, 0) == -1, "ObjectType99 icon at phase=0 is the real table_sploutch2[0]=-1 (invisible delay)");
+        check(GetObjIcon(ObjectType::ObjectType99, 2) == -1, "ObjectType99 icon at phase=2 is the real table_sploutch2[2]=-1 (still invisible)");
+        check(GetObjIcon(ObjectType::ObjectType99, 3) == 90, "ObjectType99 icon at phase=3 is the real table_sploutch2[3]=90 (splash begins)");
+        check(GetObjIcon(ObjectType::ObjectType100, 0) == -1, "ObjectType100 icon at phase=0 is the real table_sploutch3[0]=-1 (invisible delay)");
+        check(GetObjIcon(ObjectType::ObjectType100, 7) == -1, "ObjectType100 icon at phase=7 is the real table_sploutch3[7]=-1 (still invisible)");
+        check(GetObjIcon(ObjectType::ObjectType100, 8) == 90, "ObjectType100 icon at phase=8 is the real table_sploutch3[8]=90 (splash begins, longest delay)");
     }
 
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
