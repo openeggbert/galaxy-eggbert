@@ -2551,10 +2551,16 @@ namespace GalaxyEggbert::CNA
             case VoyageKind::Perso:
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
                 break;
-            // Dynamite/BulletPack/DoorUnlock: real source plays no
-            // immediate sound at all (confirmed via direct source read --
-            // dynamite has no VoyageInit case; DoorUnlock's dynamic icon
-            // never matches any of VoyageInit's fixed-icon checks).
+            case VoyageKind::Dynamite:
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
+                break;
+            case VoyageKind::BulletPack:
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel54);
+                break;
+            // DoorUnlock: real source plays no immediate sound at all --
+            // its dynamic icon never matches any of VoyageInit's
+            // fixed-icon checks (confirmed via direct source read,
+            // Decor.cpp:10141-10226).
             default:
                 break;
         }

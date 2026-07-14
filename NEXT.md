@@ -167,11 +167,14 @@ long continuous autonomous session); each item is its own commit.
   Covers all 6 real reward-bearing kinds (Treasure/Key1/2/3/Egg/Dynamite/Perso) plus BulletPack
   (reward already immediate, only the sound is deferred) and the door-unlock key-consumption
   flourish (reversed direction: HUD position → door's own world position, no reward — purely
-  cosmetic, the key bit clears before the voyage starts). Found and fixed 4 real touch-time-sound
+  cosmetic, the key bit clears before the voyage starts). Found and fixed touch-time-sound
   mismatches while porting this: Egg now plays ch12 immediately (was incorrectly playing the
   deferred ch3 early); Perso now plays ch60 immediately (was previously completely silent);
-  Dynamite/BulletPack/DoorUnlock now correctly play no immediate sound at all (Dynamite was
-  incorrectly playing ch60, apparently copy-pasted from Perso's own channel). New architecture:
+  DoorUnlock correctly plays no immediate sound (its dynamic icon never matches a fixed-icon
+  check). **Correction, later the same day:** Dynamite (icon 252) and BulletPack (icon 177) were
+  wrongly ported as silent too — re-reading `Decor.cpp:10141-10226` directly (while researching
+  the death-VFX follow-up below) found they DO have real immediate sounds, ch60 and ch54
+  respectively; fixed and re-verified on both backends. New architecture:
   `GEInteractionSystem` stays free of any camera/graphics dependency — pickup sites record a
   same-frame pending request, and `GalaxyEggbertCnaGame::ResolvePendingVoyage()` (which owns
   `camera_`) projects the pickup's world position into 640x480 reference space via a new

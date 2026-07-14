@@ -1116,14 +1116,20 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         `214+(doorIcon-334)*7`, REVERSED direction — start = the fixed HUD position of whichever
         key was consumed, end = the door's own world position; no reward at completion since the
         key bit is cleared before the voyage starts, purely a visual flourish).
-      - Found and fixed 4 real touch-time-sound mismatches while porting this (previously this
-        engine either played the wrong channel, played it at the wrong time, or played nothing):
-        Egg now plays `ch12` immediately (was incorrectly playing the deferred `ch3` early); Perso
-        now plays `ch60` immediately (was previously silent — `TryPerso()` had zero `sound.Play`
-        calls); Dynamite/BulletPack/DoorUnlock now correctly play NO immediate sound (Dynamite was
-        incorrectly playing `ch60`, apparently copy-pasted from Perso). Treasure/Key1/2/3's
-        existing immediate sounds were already correct. All 6 reward-bearing kinds now also play
-        the real deferred completion sound (`ch3`) exactly when `ApplyVoyageReward()` fires.
+      - Found and fixed touch-time-sound mismatches while porting this (previously this engine
+        either played the wrong channel, played it at the wrong time, or played nothing): Egg now
+        plays `ch12` immediately (was incorrectly playing the deferred `ch3` early); Perso now
+        plays `ch60` immediately (was previously silent — `TryPerso()` had zero `sound.Play`
+        calls); DoorUnlock correctly plays no immediate sound (its dynamic icon never matches any
+        of `VoyageInit`'s fixed-icon checks). Treasure/Key1/2/3's existing immediate sounds were
+        already correct. All 6 reward-bearing kinds now also play the real deferred completion
+        sound (`ch3`) exactly when `ApplyVoyageReward()` fires. **Correction (2026-07-14, found
+        while re-reading `Decor.cpp` for the death-VFX follow-up task): Dynamite (icon 252) and
+        BulletPack (icon 177) DO have real immediate sounds after all — `ch60` and `ch54`
+        respectively (`Decor.cpp:10141-10226`, freshly re-read directly) — an earlier pass's
+        research had wrongly concluded both were silent. Both are now fixed to play their real
+        immediate sound; re-verified on both backends (78/78 minus the pre-existing unrelated
+        `easy-gl-resource-smoke-tests` failure on `build-cna`, 73/73 on `build-cna-vulkan`).**
       - Architecture: `GEInteractionSystem` has zero camera/graphics dependency — pickup sites
         record a same-frame pending request (`RequestVoyage()`); after `Update()`/`TryPerso()`
         return, `GalaxyEggbertCnaGame::ResolvePendingVoyage()` (which owns `camera_`) projects the
