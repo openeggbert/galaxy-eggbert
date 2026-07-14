@@ -157,6 +157,57 @@ int main(int argc, char** argv)
         return true;
     };
 
+    // Death-lock/life-loss-Voyage follow-up: real life loss/respawn is now
+    // deferred behind a per-cause frozen "lock" duration (70-110 real
+    // ticks) then a fixed 40-tick life-loss Voyage, mirroring
+    // GalaxyEggbertCnaGame::ResolveDeathLock()'s own orchestration (which
+    // this standalone tool has no access to, so it's replicated here).
+    // Starts the lock if `ir.DeathLockRequestedThisFrame()` is set, then
+    // fast-forwards `b`/`w`/`ir` together until it fully resolves (respawn
+    // applied, LoseLife()/life-loss Voyage started). The real longest
+    // duration is Clear4's 110-tick lock (5.5s) + the 40-tick (2.0s)
+    // life-loss Voyage = 7.5s worst case -- 200 real-time-second iterations
+    // at dt=1/20 comfortably covers every real cause with margin.
+    const auto completeDeathLock = [&sound](GEWorldRuntime& w, GEInteractionSystem& ir, GEBlupiController& b)
+    {
+        if (ir.DeathLockRequestedThisFrame())
+        {
+            const auto kind = ir.DeathLockPendingKind();
+            const auto cause = (kind == GEInteractionSystem::PendingDeathKind::Clear1) ? GEBlupiController::DeathCause::Clear1
+                              : (kind == GEInteractionSystem::PendingDeathKind::Clear2) ? GEBlupiController::DeathCause::Clear2
+                                                                                         : GEBlupiController::DeathCause::Glu;
+            b.TriggerDeathLock(cause, ir.DeathLockShouldRespawn());
+        }
+        constexpr float lockDt = 1.0f / 20.0f;
+        for (int i = 0; i < 200; ++i)
+        {
+            w.Update(lockDt);
+            b.Step(w.GetWorld(), 0.0f, 0.0f, false, false, false, lockDt);
+            bool shouldRespawn = false;
+            if (b.ConsumeDeathLockResolved(shouldRespawn))
+            {
+                if (shouldRespawn)
+                {
+                    b.SetPosition(b.GetValidX(), b.GetValidY(), b.GetValidZ());
+                }
+                if (ir.Lives() <= 1)
+                {
+                    ir.LoseLife();
+                }
+                else
+                {
+                    ir.BeginVoyage(w, GEInteractionSystem::VoyageKind::LifeLoss, 48, false, 0.0f, 0.0f, 0.0f, 0.0f,
+                                   sound);
+                }
+            }
+            ir.Update(lockDt, w, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+            if (!b.IsDeathLocked() && !b.IsDeathHidden())
+            {
+                break;
+            }
+        }
+    };
+
     if (const auto* egg = findFirst(ObjectType::ObjectType6))
     {
         const float ex = egg->currentX, ey = egg->currentY, ez = egg->currentZ;
@@ -346,7 +397,6 @@ int main(int argc, char** argv)
         const int livesBeforeHazard = interaction.Lives();
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
         check(interaction.DiedThisFrame(), "DiedThisFrame() is true the frame Blupi touches a generic hazard");
-        check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
         check(interaction.SmallShakeTriggeredThisFrame(),
               "generic hazard contact-kill triggers SmallShake (plan.md CAM-008, real Decor.cpp behavior)");
         check(!interaction.BigShakeTriggeredThisFrame(),
@@ -383,6 +433,14 @@ int main(int argc, char** argv)
             }
         }
         check(!hazardStillActiveAtSamePos, "the hazard that killed Blupi is destroyed (no longer active)");
+        // Real life loss is now deferred behind the death-lock/life-loss-
+        // Voyage (death-VFX follow-up) -- consumed BEFORE the "next frame"
+        // check below, whose own interaction.Update() call would otherwise
+        // wipe the still-pending DeathLockRequestedThisFrame() signal
+        // first (a *ThisFrame() flag, reset every Update() call).
+        GEBlupiController hazardDeathBlupi;
+        completeDeathLock(world, interaction, hazardDeathBlupi);
+        check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
         check(!interaction.DiedThisFrame(), "DiedThisFrame() is false again the very next frame");
     }
@@ -517,10 +575,48 @@ int main(int argc, char** argv)
         // this test must too, or obj.phase never moves).
         bool smallShakeSeenDuringBlast = false;
         bool explosionFlashSeenAtCenter = false;
-        for (int i = 0; i < 300; ++i) // 300 * (1/60)s = 5s of simulated time
+        // Real life loss/respawn for the blast's own death check is now
+        // deferred behind the death-lock/life-loss-Voyage (death-VFX
+        // follow-up) -- driven inline here (not completeDeathLock(), which
+        // has its own loop) alongside the existing blast-sequence
+        // fast-forward. 750 iterations (12.5s at dt=1/60) comfortably
+        // covers the real ~70-tick(3.5s) blast sequence PLUS the worst-case
+        // 110-tick lock(5.5s) + 40-tick(2.0s) life-loss Voyage that might
+        // start near the end of it.
+        GEBlupiController blastDeathBlupi;
+        for (int i = 0; i < 750; ++i)
         {
             world.Update(dt);
             interaction.Update(dt, world, placeX, placeY, placeZ, 0.0f, sound);
+            if (interaction.DeathLockRequestedThisFrame())
+            {
+                const auto kind = interaction.DeathLockPendingKind();
+                const auto cause = (kind == GEInteractionSystem::PendingDeathKind::Clear1)
+                                        ? GEBlupiController::DeathCause::Clear1
+                                    : (kind == GEInteractionSystem::PendingDeathKind::Clear2)
+                                        ? GEBlupiController::DeathCause::Clear2
+                                        : GEBlupiController::DeathCause::Glu;
+                blastDeathBlupi.TriggerDeathLock(cause, interaction.DeathLockShouldRespawn());
+            }
+            blastDeathBlupi.Step(world.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
+            bool blastShouldRespawn = false;
+            if (blastDeathBlupi.ConsumeDeathLockResolved(blastShouldRespawn))
+            {
+                if (blastShouldRespawn)
+                {
+                    blastDeathBlupi.SetPosition(blastDeathBlupi.GetValidX(), blastDeathBlupi.GetValidY(),
+                                                 blastDeathBlupi.GetValidZ());
+                }
+                if (interaction.Lives() <= 1)
+                {
+                    interaction.LoseLife();
+                }
+                else
+                {
+                    interaction.BeginVoyage(world, GEInteractionSystem::VoyageKind::LifeLoss, 48, false, 0.0f, 0.0f,
+                                            0.0f, 0.0f, sound);
+                }
+            }
             smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || interaction.SmallShakeTriggeredThisFrame();
             for (const auto& obj : world.GetMobileObjects())
             {
@@ -1048,19 +1144,36 @@ int main(int argc, char** argv)
         world.GetMobileObjectsMutable().push_back(spider);
 
         const int livesBeforeSpider = interaction.Lives();
+        const int gameOverBeforeSpider = interaction.GameOverCount();
         interaction.Update(dt, world, 5.0f, 1.0f, 5.0f, 0.0f, sound);
         check(interaction.DiedThisFrame(), "DiedThisFrame() is true touching an injected spider (ObjectType16)");
-        check(interaction.Lives() == livesBeforeSpider - 1, "spider contact costs exactly 1 life, same as ObjectType2/3");
+        GEBlupiController spiderDeathBlupi;
+        completeDeathLock(world, interaction, spiderDeathBlupi);
+        // Lives() may already be down to 1 from earlier sections in this
+        // same shared `interaction` instance -- a real life lost here can
+        // therefore legitimately wrap back to 3 via game-over, same idiom
+        // as the bulldozer/turn-dwell tests below.
+        const bool spiderCostALife = (interaction.Lives() == livesBeforeSpider - 1) ||
+                                     (interaction.GameOverCount() == gameOverBeforeSpider + 1 && interaction.Lives() == 3);
+        check(spiderCostALife, "spider contact costs exactly 1 life, same as ObjectType2/3");
 
-        bool spiderStillActive = false;
+        // Matched on position, not just type -- the sample world has its
+        // own real ObjectType16 placements elsewhere, and completeDeathLock()'s
+        // fast-forward can let some other periodic spawn reuse this
+        // injected spider's now-inactive slot, so a blind "last matching
+        // type16 wins" search could find one of those real placements
+        // instead (same false-positive shape flagged elsewhere this file).
+        bool spiderStillActiveAtSamePos = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType16)
+            if (obj.active && obj.type == ObjectType::ObjectType16 && obj.currentX == 5.0f && obj.currentY == 1.0f &&
+                obj.currentZ == 5.0f)
             {
-                spiderStillActive = obj.active;
+                spiderStillActiveAtSamePos = true;
+                break;
             }
         }
-        check(!spiderStillActive, "the spider that killed Blupi is destroyed, same as ObjectType2/3");
+        check(!spiderStillActiveAtSamePos, "the spider that killed Blupi is destroyed, same as ObjectType2/3");
     }
 
     // 7.5. Fish (ObjectType17) contact-kill triggers BigShake, NOT
@@ -1172,6 +1285,8 @@ int main(int argc, char** argv)
         const int gameOverCountBeforeBulldozer = interaction.GameOverCount();
         interaction.Update(dt, world, 20.0f, 1.0f, 20.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
         check(interaction.DiedThisFrame(), "bulldozer (type 4) still kills Blupi even while ballooned");
+        GEBlupiController bulldozerDeathBlupi;
+        completeDeathLock(world, interaction, bulldozerDeathBlupi);
         const bool bulldozerCostALife =
             (interaction.Lives() == livesBeforeBulldozer - 1) ||
             (interaction.GameOverCount() == gameOverCountBeforeBulldozer + 1 && interaction.Lives() == 3);
@@ -1316,9 +1431,6 @@ int main(int argc, char** argv)
         const int livesBeforeBullet = interaction.Lives();
         interaction.Update(dt, world, bhX, 15.0f, bhZ, 0.0f, sound);
         check(interaction.DiedThisFrame(), "blupih's projectile is fatal on contact");
-        const bool bulletCostALife =
-            (interaction.Lives() == livesBeforeBullet - 1) || (interaction.Lives() == 3 && livesBeforeBullet <= 1);
-        check(bulletCostALife, "blupih's projectile contact costs exactly 1 life");
 
         const int bulletCountAfterContact = countBulletsAt(bhX, bhZ);
         check(bulletCountAfterContact == bulletCountBefore, "the projectile that killed Blupi is destroyed (no longer active)");
@@ -1326,7 +1438,9 @@ int main(int argc, char** argv)
         // Bullet-hit splat effect (plan.md VISUAL-009) -- real
         // StartSploutchGlu() scatters 7 instances (1x ObjectType98, 4x99,
         // 2x100) within a few real px of the bullet's own position at the
-        // moment of contact.
+        // moment of contact. Checked BEFORE completeDeathLock() below --
+        // these transient splat objects self-delete well within its
+        // multi-second fast-forward.
         int splatCount98 = 0, splatCount99 = 0, splatCount100 = 0;
         for (const auto& obj : world.GetMobileObjects())
         {
@@ -1340,6 +1454,16 @@ int main(int argc, char** argv)
         }
         check(splatCount98 == 1 && splatCount99 == 4 && splatCount100 == 2,
               "the bullet contact-kill spawns the real 7-instance splat effect (1x ObjectType98, 4x99, 2x100)");
+
+        // Real life loss is now deferred behind the death-lock/life-loss-
+        // Voyage (death-VFX follow-up) -- checked last, see the generic-
+        // hazard test above for why this must come after every immediate-
+        // effect check.
+        GEBlupiController bulletDeathBlupi;
+        completeDeathLock(world, interaction, bulletDeathBlupi);
+        const bool bulletCostALife =
+            (interaction.Lives() == livesBeforeBullet - 1) || (interaction.Lives() == 3 && livesBeforeBullet <= 1);
+        check(bulletCostALife, "blupih's projectile contact costs exactly 1 life");
 
         // "No room" cancellation: a second blupih placed directly on solid
         // ground (nothing but the floor immediately below it) should NOT
@@ -1486,6 +1610,8 @@ int main(int argc, char** argv)
         const int gameOverBefore = interaction.GameOverCount();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
         check(interaction.DiedThisFrame(), "large creature contact is lethal during turn-dwell (patrolStep 1)");
+        GEBlupiController turnDwellDeathBlupi;
+        completeDeathLock(world, interaction, turnDwellDeathBlupi);
         const bool costALife =
             (interaction.Lives() == livesBefore - 1) ||
             (interaction.GameOverCount() == gameOverBefore + 1 && interaction.Lives() == 3);

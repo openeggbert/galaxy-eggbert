@@ -101,7 +101,10 @@ menus, though still missing a visible 3D Blupi model.
 - Full enemy AI/combat: shared 8-type hazard kill-list, wasp balloon status, blupih/blupit
   projectile attacks, large-creature turn-dwell grab, follower wake+homing, all real patrol timing.
 - All 6 real terrain hazards (lava/spikes/Blitz/saw+switches/crusher/water-drip, the last added
-  2026-07-14) + spring, Temp/vanishing tile, teleporter, water breath gauge.
+  2026-07-14) + spring, Temp/vanishing tile, teleporter, water breath gauge. Every real death cause
+  (Clear1-4/Glu/Drown) uses the real deferred death-lock + life-loss-Voyage timing (added
+  2026-07-14) — a fixed per-cause freeze, then the real icon-48 HUD-icon-flight animation, THEN
+  life loss/respawn, matching real mobile-eggbert exactly (not an instant death anymore).
 - Secret powers (Shield/Power/Cloud/Hide) fully modeled including Cloud's offensive
   `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts. Invert/Mirror
   (independent movement-reversal debuff/buff) also implemented (2026-07-13).
@@ -157,6 +160,37 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the death-lock + life-loss Voyage system (`plan.md`'s "death-lock" entry, Phase
+  15) — replacing every hazard death's old instant life-loss/respawn with the real deferred
+  timing.** Surfaced while researching the real `BlupiAction::Glu` "stuck" mechanic (spikes/drip/
+  fired-projectile-contact/large-creature-grab deaths), which turned out to share this exact
+  pipeline with every other death type — user chose this as the next task after seeing the
+  research. Every real death (Clear1-4/Glu/Drown; Clear5-8/Electro unreachable/unmodeled) now
+  locks Blupi for its real fixed per-cause duration (`Decor.cpp:6374-6392`: 70/100/70/110/100/90
+  ticks), THEN plays the real life-loss Voyage (icon 48/Blupi channel, fixed 40-tick total,
+  decrements lives at Voyage START not completion — the opposite timing direction from every
+  other Voyage this session built) before respawning and returning control. This also means Glu
+  itself is now fully, faithfully implemented (it has no unique cosmetic VFX beyond the shared
+  lock — confirmed via research — so the shared mechanism alone completes it). Found a real
+  nuance the initial research under-counted: 3 causes (not the initially-flagged 2) skip the
+  safe-position respawn entirely (Fan, generic-hazard-contact, AND dynamite blast — the third
+  found only while implementing, via a direct re-check of every trigger site). Architecture:
+  `GEBlupiController` reuses its own already-proven `TriggerTeleport()` freeze-timer template for
+  the two chained frozen sub-states (the lock, then the life-loss-Voyage window);
+  `GEInteractionSystem` stays fully decoupled from it (a small local enum, not a shared type,
+  matching the Voyage system's own established decoupling precedent). Verified: new
+  `GEBlupiController`-level tests (per-cause durations including Clear4's distinct 110 and
+  Drown's 90, full freeze, `IsDeathHidden()` timing, `ConsumeDeathLockResolved()`) plus every
+  existing hazard-contact test across both `VerifyBlupiMovement` and `VerifyInteractionSystem`
+  updated for the new deferred timing (2 genuine test false-positives found and fixed along the
+  way — a `*ThisFrame()`-flag/transient-particle check that must run before the fast-forward not
+  after, and a position-blind object search that broke once the fast-forward let another periodic
+  spawn reuse an already-destroyed test object's slot). Full suite: 78 tests on `build-cna` (99%,
+  only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on
+  `build-cna-vulkan`. Confirmed the game still launches/runs headless without crashing; a full
+  live multi-second visual walkthrough of an actual hazard death was not scripted this pass, given
+  the thorough unit coverage — the real per-cause hurt-sprite frame table
+  (`Tables::table_blupi`, a static Stop pose stands in) also remains untranscribed.
 - **Implemented "death VFX" (`plan.md 159`) — the Clear2/Clear3/Clear4 follow-up flagged by the
   Voyage entry below.** Of Blupi's 8 real `BlupiAction::Clear1`-`Clear8` death-animation types,
   only 3 turned out to have any real VFX at all: Clear1 has none, Clear5-8 are confirmed DEAD CODE
@@ -1020,35 +1054,23 @@ genuinely open is unchanged from the note just above: #8, #9, Saw blade orientat
 **Further update, 2026-07-14 (same day, still later): #16's Voyage/death-VFX slices (Clear2/
 Clear3/Clear4) are now done too** (`plan.md 158`/`159`) — see §3 for both writeups.
 
-17. **Death-lock + life-loss Voyage system** — researched 2026-07-14 while scoping the real
-    `BlupiAction::Glu` "stuck" mechanic (spikes/drip/fired-projectile-contact/large-creature-grab
-    deaths); this is the reason Glu was never implemented alongside `159`. Confirmed via direct
-    `Decor.cpp` reads: EVERY real death type (Clear1-8, Glu, Drown, Electro) shares one dispatch
-    (`Decor.cpp:6374-6392`) — contact locks Blupi for a real fixed duration (70/100/70/110/90×4/
-    **Glu=100**/90/90 ticks depending on cause, frozen with a hurt-sprite animation, NOT instant
-    like this engine's current death handling), THEN Blupi goes `Hide` (invisible) and a real
-    "life-loss Voyage" begins (icon 48/Blupi channel, `VoyageGetPosVie(m_nbVies)` -> Blupi's own
-    position, `ScaleTime(40)` ticks, channel 9) — **`m_nbVies--` fires at Voyage START, not
-    completion**, the only Voyage kind that applies its effect at the start rather than the end
-    (the OPPOSITE timing direction from every pickup/Clear2/Clear3 Voyage `158`/`159` already
-    built). Respawn positioning also happens at the LOCK's end, not at contact. On completion,
-    control returns to Blupi (`Stop`, focus restored) at the respawn position. If no lives remain,
-    `DoorsLost()` (game over) fires instead with no Voyage at all.
-    This means implementing Glu faithfully (or fixing the Clear1-8/Drown/Electro death types this
-    engine already ships as INSTANT deaths, which is itself a documented simplification, not
-    "done") requires a real architecture change, not a small addition: a new death-locked state
-    (freezing input/movement per-type for 70-110 ticks), moving `LoseLife()`'s decrement from
-    contact-time to life-loss-Voyage-start-time (a genuinely new Voyage direction), moving respawn
-    positioning from contact-time to lock-elapsed-time, and a `Hide`/invisible render state during
-    the lock+Voyage window — touching every one of this engine's ~10 existing death call sites at
-    once. This is exactly the "life-loss animation... ties into respawn/death-lock control flow, a
-    materially different, separate behavior change" already flagged and deliberately excluded from
-    both `158` and `159` — confirmed real, valuable, and well-understood now, but genuinely its own
-    multi-task effort (changes ALREADY-SHIPPED, tested death/respawn behavior across the whole
-    game, not purely additive like `159` was) that needs the user's own go-ahead before starting,
-    not a default "next smallest task." Full research citations (trigger sites, exact duration
-    table, `VoyageInit`/`VoyageStep`'s own icon==48 branches) are preserved in this session's own
-    transcript/plan.md `159`'s writeup for whoever picks this up.
+17. ~~Death-lock + life-loss Voyage system~~ **DONE 2026-07-14** (user-approved after the research
+    below) — see `plan.md`'s "death-lock" writeup (Phase 15) for the full details: every real
+    death type (Clear1-4/Glu/Drown; Clear5-8/Electro unreachable/unmodeled) now locks Blupi for
+    its real fixed per-cause duration (70-110 ticks), THEN plays the real life-loss Voyage (icon
+    48/Blupi channel, decrements lives at Voyage START not completion) before respawning and
+    returning control — replacing the old instant life-loss/respawn. Also fixed a real nuance the
+    initial research under-counted: 3 causes (not 2) skip the safe-position respawn (Fan,
+    generic-hazard-contact, AND dynamite blast — the last one found only while implementing).
+    `GEBlupiController` reuses its own proven `TriggerTeleport()` freeze-timer template for the two
+    chained frozen sub-states; `GEInteractionSystem` stays fully decoupled (no shared enum type).
+    Verified: new `GEBlupiController`-level tests (per-cause durations, freeze, `IsDeathHidden()`,
+    `ConsumeDeathLockResolved()`) plus every existing hazard-contact test updated for the new
+    timing. Full suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
+    `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`. **Not done this
+    pass:** the real per-cause hurt-sprite frame table (`Tables::table_blupi`, a static Stop pose
+    stands in instead) and a full live multi-second visual walkthrough of an actual hazard death
+    (relied on the thorough unit coverage instead, given the size of this change).
 
 ## 9. Do not do yet
 

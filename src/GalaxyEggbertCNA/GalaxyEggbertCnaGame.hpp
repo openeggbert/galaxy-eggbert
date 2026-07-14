@@ -284,6 +284,24 @@ namespace GalaxyEggbert::CNA
         // site runs BEFORE `Update()`'s own per-frame flag reset.
         void ResolvePendingVoyage();
 
+        // Death-lock/life-loss-Voyage follow-up -- a no-op unless
+        // `interaction_.DeathLockRequestedThisFrame()` is set (the generic-
+        // hazard-contact/dynamite/projectile/large-creature-grab pending
+        // signal from inside `interaction_.Update()`, see
+        // `GEInteractionSystem::DeathLockRequestedThisFrame()`'s own
+        // comment) OR `blupi_.ConsumeDeathLockResolved()` fires (an
+        // ALREADY-active lock, possibly started a previous frame,
+        // elapsing). Starts a new lock via `blupi_.TriggerDeathLock()` for
+        // the former; for the latter, applies the real respawn (if
+        // requested), predicts game-over via `interaction_.Lives() <= 1`
+        // (skipping the Voyage entirely, matching real `DoorsLost()`'s "no
+        // Voyage" path), and otherwise starts the real icon-48 life-loss
+        // Voyage (`VoyageKind::LifeLoss`, which itself calls
+        // `interaction_.LoseLife()` -- see `BeginVoyage()`'s own comment).
+        // Called right after `interaction_.Update()` returns, alongside
+        // `ResolvePendingVoyage()` above.
+        void ResolveDeathLock();
+
         // Dispatches cheat 1-9 (plan.md CHEAT-001..009) -- verified
         // directly against the real `Decor::CheatAction(Tables::
         // CheatCodes)`, correcting several wrong/imprecise draft

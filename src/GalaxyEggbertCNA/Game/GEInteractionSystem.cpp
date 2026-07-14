@@ -568,6 +568,7 @@ namespace GalaxyEggbert::CNA
         bigShakeTriggeredThisFrame_ = false;
         ridingLift_ = false;
         voyagePendingThisFrame_ = false;
+        deathLockRequestedThisFrame_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -1201,8 +1202,14 @@ namespace GalaxyEggbert::CNA
                             std::fabs(blupiY - centerY) <= kBlastHalfExtent + 0.5f &&
                             std::fabs(blupiZ - centerZ) <= 0.5f)
                         {
-                            LoseLife();
                             diedThisFrame_ = true;
+                            // Real LoseLife()/respawn deferred to the death-lock resolution point
+                            // (death-VFX follow-up) -- deterministic Clear1 (no VFX, matches
+                            // `159`), shouldRespawn=false, confirmed no `m_blupiRestart=true` near
+                            // this real site (Decor.cpp:9168-9173).
+                            deathLockRequestedThisFrame_ = true;
+                            deathLockPendingKind_ = PendingDeathKind::Clear1;
+                            deathLockShouldRespawn_ = false;
                         }
                     }
                 }
@@ -1439,8 +1446,14 @@ namespace GalaxyEggbert::CNA
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     obj.active = false;
-                    LoseLife();
                     diedThisFrame_ = true;
+                    // Real LoseLife()/respawn deferred to the death-lock resolution point
+                    // (death-VFX follow-up) -- this is one of the real Glu trigger sites (direct
+                    // `m_blupiAction=Glu` assignment, Decor.cpp:5914-5946, NOT via BlupiDead),
+                    // shouldRespawn=true (confirmed `m_blupiRestart=true` at Decor.cpp:5927).
+                    deathLockRequestedThisFrame_ = true;
+                    deathLockPendingKind_ = PendingDeathKind::Glu;
+                    deathLockShouldRespawn_ = true;
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
                 }
                 continue;
@@ -1500,8 +1513,15 @@ namespace GalaxyEggbert::CNA
                     const float gdz = obj.currentZ - blupiZ;
                     if (gdx * gdx + gdy * gdy + gdz * gdz < kHazardContactRadius * kHazardContactRadius)
                     {
-                        LoseLife();
                         diedThisFrame_ = true;
+                        // Real LoseLife()/respawn deferred to the death-lock resolution point
+                        // (death-VFX follow-up) -- this is one of the real Glu trigger sites
+                        // (direct `m_blupiAction=Glu` assignment, Decor.cpp:5867-5910, NOT via
+                        // BlupiDead), shouldRespawn=true (confirmed `m_blupiRestart=true` at
+                        // Decor.cpp:5879).
+                        deathLockRequestedThisFrame_ = true;
+                        deathLockPendingKind_ = PendingDeathKind::Glu;
+                        deathLockShouldRespawn_ = true;
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel51);
                     }
                 }
@@ -1546,9 +1566,15 @@ namespace GalaxyEggbert::CNA
                     else
                     {
                         obj.active = false;
-                        LoseLife();
                         diedThisFrame_ = true;
-                        if (RollClear2Coinflip())
+                        // Real LoseLife()/respawn now deferred to the death-lock/life-loss-Voyage
+                        // resolution point (death-VFX follow-up) -- shouldRespawn=false, confirmed
+                        // no `m_blupiRestart=true` near this real site (Decor.cpp:5782-5815).
+                        const bool isClear2 = RollClear2Coinflip();
+                        deathLockRequestedThisFrame_ = true;
+                        deathLockPendingKind_ = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
+                        deathLockShouldRespawn_ = false;
+                        if (isClear2)
                         {
                             sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
                             RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
@@ -2630,6 +2656,10 @@ namespace GalaxyEggbert::CNA
         {
             voyageTotal_ = 50.0f;
         }
+        else if (kind == VoyageKind::LifeLoss)
+        {
+            voyageTotal_ = 40.0f; // real ScaleTime(40), Decor.cpp:10173
+        }
 
         // Real touch-time sounds (`Decor::VoyageInit`'s own per-icon
         // cases) -- independent of the deferred reward-applied sound
@@ -2667,6 +2697,20 @@ namespace GalaxyEggbert::CNA
             case VoyageKind::Clear2Ascend:
             case VoyageKind::Clear3Ascend:
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                break;
+            // LifeLoss: the ONLY Voyage kind whose effect fires at START, not
+            // completion -- matches real VoyageInit's own inline `m_nbVies--`
+            // (Decor.cpp:10172-10176). The caller has already captured
+            // Lives() BEFORE this call for the start-position argument (real
+            // `VoyageGetPosVie(m_nbVies)` uses the PRE-decrement value, since
+            // it's evaluated as a call argument before VoyageInit's body
+            // runs) -- LoseLife() here is what actually applies the
+            // decrement (and the real reset-to-3 + game-over detection, via
+            // its own existing logic, for the case the caller predicted
+            // would NOT be game-over).
+            case VoyageKind::LifeLoss:
+                LoseLife();
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel9);
                 break;
             // DoorUnlock: real source plays no immediate sound at all --
             // its dynamic icon never matches any of VoyageInit's
@@ -2817,6 +2861,11 @@ namespace GalaxyEggbert::CNA
             // own completion if-chain (confirmed via direct source read).
             case VoyageKind::Clear2Ascend:
             case VoyageKind::Clear3Ascend:
+            // LifeLoss: real completion (`Stop`/`m_blupiFocus=true`, unfreezing Blupi) is handled
+            // by GEBlupiController's own independent life-loss-Voyage timer (see
+            // TriggerDeathLock()'s own comment) -- the effect (LoseLife()) already fired at START
+            // (BeginVoyage()'s own LifeLoss case), so completion here is a pure no-op.
+            case VoyageKind::LifeLoss:
             case VoyageKind::None:
             default:
                 break;

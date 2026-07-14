@@ -591,6 +591,118 @@ int main(int argc, char** argv)
         check(!crushed2.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while squashed (real !m_blupiEcrase gate)");
 
+        // Death-lock + life-loss Voyage (death-VFX follow-up, verified
+        // directly against Decor.cpp:6374-6392's shared per-cause duration
+        // dispatch) -- mirrors TriggerTeleport()'s own freeze-timer shape
+        // above, but chains into a SECOND fixed-duration frozen sub-state
+        // (the life-loss-Voyage window) instead of auto-resuming directly.
+        {
+            GEBlupiController deathLocked;
+            deathLocked.SetPosition(0.0f, 1.0f, 0.0f);
+            check(deathLocked.TriggerDeathLock(GEBlupiController::DeathCause::Clear2, true),
+                  "TriggerDeathLock() returns true when not already locked");
+            check(deathLocked.IsDeathLocked(), "IsDeathLocked() is true immediately after TriggerDeathLock()");
+            check(!deathLocked.IsDeathHidden(), "IsDeathHidden() is false during the lock itself (not yet Hide)");
+            check(!deathLocked.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, false),
+                  "TriggerDeathLock() is a no-op (returns false) while already locked");
+
+            // Fully frozen: same shape as the teleport freeze test above.
+            // Also the first Step() call since TriggerDeathLock(), so this
+            // is where GetAnimState() first reflects DeathLocked (set
+            // inside UpdateAnim(), only called from within Step()).
+            const float xBeforeFrozen = deathLocked.GetX();
+            const float yawBeforeFrozen = deathLocked.GetYaw();
+            deathLocked.Step(synthetic, 1.0f, 1.0f, true, false, false, dt);
+            check(deathLocked.GetX() == xBeforeFrozen && deathLocked.GetYaw() == yawBeforeFrozen,
+                  "Blupi is fully frozen (no movement or turning) while death-locked");
+            check(deathLocked.GetAnimState() == GEBlupiController::AnimState::DeathLocked,
+                  "the death lock is the DeathLocked anim state");
+
+            // Real Clear2 lock duration = 100 ticks = 5.0s (Decor.cpp:6374-6392) --
+            // advance to just under it (still locked), matching
+            // kDeathLockTicks[Clear2]/20.0f exactly.
+            constexpr float kClear2LockSeconds = 100.0f / 20.0f;
+            const int ticksJustUnder = static_cast<int>(kClear2LockSeconds / dt) - 3;
+            for (int i = 0; i < ticksJustUnder; ++i)
+            {
+                deathLocked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(deathLocked.IsDeathLocked(), "still locked just under the real Clear2 duration (100 ticks=5.0s)");
+
+            // Cross the threshold -- transitions into the life-loss-Voyage
+            // window (still frozen, now ALSO Hide/invisible), and
+            // ConsumeDeathLockResolved() fires exactly once.
+            bool resolvedShouldRespawn = false;
+            bool sawResolved = false;
+            for (int i = 0; i < 10 && !sawResolved; ++i)
+            {
+                deathLocked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                if (deathLocked.ConsumeDeathLockResolved(resolvedShouldRespawn))
+                {
+                    sawResolved = true;
+                }
+            }
+            check(sawResolved, "ConsumeDeathLockResolved() fires exactly once when the lock elapses");
+            check(resolvedShouldRespawn, "ConsumeDeathLockResolved() echoes the real shouldRespawn=true passed to TriggerDeathLock()");
+            check(!deathLocked.IsDeathLocked() && deathLocked.IsDeathHidden(),
+                  "the lock ends and the life-loss-Voyage window (Hide) begins on the same transition");
+            check(!deathLocked.ConsumeDeathLockResolved(resolvedShouldRespawn),
+                  "ConsumeDeathLockResolved() does not fire again until the NEXT lock resolves");
+            check(deathLocked.GetAnimState() == GEBlupiController::AnimState::DeathLocked,
+                  "the life-loss-Voyage window is still the DeathLocked anim state");
+
+            // Real fixed 40-tick(2.0s) life-loss Voyage auto-completes,
+            // returning full control (no longer locked or hidden).
+            constexpr float kLifeLossSeconds = 2.0f;
+            const int stepsToLifeLoss = static_cast<int>(kLifeLossSeconds / dt) + 5;
+            for (int i = 0; i < stepsToLifeLoss && deathLocked.IsDeathHidden(); ++i)
+            {
+                deathLocked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(!deathLocked.IsDeathLocked() && !deathLocked.IsDeathHidden(),
+                  "the life-loss-Voyage window auto-completes after kLifeLossVoyageDuration seconds");
+            // moveInput moves along -cos(yaw) on Z / sin(yaw) on X -- at
+            // the default yaw=0, that's pure Z movement (X stays put),
+            // same axis convention used by Ghost mode/suspended movement
+            // above.
+            const float zBeforeUnlocked = deathLocked.GetZ();
+            deathLocked.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            check(deathLocked.GetZ() != zBeforeUnlocked, "Blupi is fully controllable again once the death lock fully resolves");
+
+            // Real per-cause durations (Decor.cpp:6374-6392): Clear1=70,
+            // Clear3=70, Clear4=110, Glu=100, Drown=90 real ticks -- spot-
+            // check 2 more (Clear4's real 110, the longest; Drown's real
+            // 90) to confirm the lookup table itself, not just Clear2.
+            GEBlupiController clear4Lock;
+            clear4Lock.SetPosition(0.0f, 1.0f, 0.0f);
+            clear4Lock.TriggerDeathLock(GEBlupiController::DeathCause::Clear4, false);
+            constexpr float kClear4LockSeconds = 110.0f / 20.0f;
+            for (int i = 0; i < static_cast<int>(kClear4LockSeconds / dt) - 3; ++i)
+            {
+                clear4Lock.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(clear4Lock.IsDeathLocked(), "still locked just under the real Clear4 duration (110 ticks=5.5s)");
+            for (int i = 0; i < 10; ++i)
+            {
+                clear4Lock.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(!clear4Lock.IsDeathLocked(), "Clear4's real 110-tick duration elapses (distinct from Clear2's 100)");
+            bool clear4ShouldRespawn = true;
+            check(clear4Lock.ConsumeDeathLockResolved(clear4ShouldRespawn),
+                  "ConsumeDeathLockResolved() fires for Clear4's own lock too");
+            check(!clear4ShouldRespawn, "ConsumeDeathLockResolved() echoes the real shouldRespawn=false passed to TriggerDeathLock()");
+
+            GEBlupiController drownLock;
+            drownLock.SetPosition(0.0f, 1.0f, 0.0f);
+            drownLock.TriggerDeathLock(GEBlupiController::DeathCause::Drown, true);
+            constexpr float kDrownLockSeconds = 90.0f / 20.0f;
+            for (int i = 0; i < static_cast<int>(kDrownLockSeconds / dt) - 3; ++i)
+            {
+                drownLock.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(drownLock.IsDeathLocked(), "still locked just under the real Drown duration (90 ticks=4.5s)");
+        }
+
         // Fan hazard collision (plan.md E3D-MIG-149) -- same non-solid
         // architecture as the teleporter above: a real Ground floor (Y=0)
         // with a FanLeft head FLOATING one cell above Blupi's standing

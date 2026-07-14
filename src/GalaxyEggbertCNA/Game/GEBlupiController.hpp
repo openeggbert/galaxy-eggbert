@@ -308,7 +308,18 @@ namespace GalaxyEggbert::CNA
         enum class AnimState : std::uint8_t
         {
             Stop, March, Jump, Air, Down, Up,
-            StopEcrase, MarchEcrase, Balloon, Teleporting
+            StopEcrase, MarchEcrase, Balloon, Teleporting,
+            // Real hazard-death lock + life-loss Voyage window (see
+            // TriggerDeathLock()/IsDeathHidden() below) -- one real BlupiAction
+            // status covering both freeze sub-states (locked hurt pose,
+            // then invisible while the life-loss Voyage flies), same
+            // "single animation regardless of grounded/airborne" shape as
+            // Teleporting/Balloon/Ecrase. The real per-cause hurt-sprite
+            // frame table (`Tables::table_blupi`) has not been transcribed
+            // -- GetAnimIcon() below uses a static Stop-pose icon instead,
+            // a documented simplification (the real FREEZE/TIMING behavior
+            // is faithful; the exact hurt-face artwork is not).
+            DeathLocked
         };
 
         // Real `SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -579,6 +590,42 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool IsTeleporting() const noexcept { return m_teleporting; }
         [[nodiscard]] std::uint16_t GetTeleportIcon() const noexcept { return m_teleportIcon; }
 
+        // Real death-lock + life-loss Voyage (plan.md death-VFX follow-up, verified directly
+        // against `Decor.cpp:6374-6392`'s shared per-cause duration dispatch): every real hazard
+        // death locks Blupi in a frozen hurt state for a fixed per-cause duration, THEN goes
+        // `Hide` (invisible) and plays a life-loss Voyage (the caller starts this second part,
+        // see ConsumeDeathLockResolved() below) before control returns. Two CHAINED freeze
+        // sub-states, same "freeze everything, count a timer down, auto-resume" shape as
+        // TriggerTeleport()/m_teleporting above:
+        //   1. The lock itself (`IsDeathLocked()`), duration from `cause` (see kDeathLockTicks*
+        //      constants below -- Clear1=70/Clear2=100/Clear3=70/Clear4=110/Glu=100/Drown=90 real
+        //      ticks, `/20` to seconds, the same tick-rate conversion used throughout this
+        //      session).
+        //   2. Once (1) elapses, automatically transitions into the life-loss-Voyage window
+        //      (`IsDeathHidden()`), a fixed real `ScaleTime(40)`=40 ticks=2.0s -- Blupi stays frozen
+        //      and invisible through this too. `ConsumeDeathLockResolved()` fires exactly once,
+        //      the frame (1) elapses and (2) begins, telling the caller to apply the real
+        //      `m_blupiRestart`-gated respawn NOW, call `GEInteractionSystem::LoseLife()`, and
+        //      start the cosmetic icon-48 life-loss Voyage itself (this class has no dependency on
+        //      GEInteractionSystem/GESound, same one-way layering as the lift-riding
+        //      IsRidingLift()/RideDeltaX() pattern below).
+        // The already-shipped Clear2Ascend/Clear3Ascend cosmetic ascend-Voyage and Clear4's
+        // particle burst (both started by the caller at CONTACT time, independent of this lock)
+        // are UNCHANGED by this -- confirmed via direct source read that `m_blupiPhase` (this
+        // lock's own timer) and `m_voyagePhase` (the ascend Voyage's timer) are separate counters.
+        enum class DeathCause : std::uint8_t { Clear1, Clear2, Clear3, Clear4, Glu, Drown };
+
+        // No-op (returns false) if already locked -- matches the idempotent-re-trigger shape of
+        // every other Trigger*() here. shouldRespawn is the real `m_blupiRestart` flag for this
+        // specific cause (false only for Fan/generic-hazard-contact -- see the plan's own
+        // Decor.cpp:5458-5472/5782-5815 citation; true for every other real cause).
+        bool TriggerDeathLock(DeathCause cause, bool shouldRespawn) noexcept;
+        [[nodiscard]] bool IsDeathLocked() const noexcept { return m_deathLocked; }
+        [[nodiscard]] bool IsDeathHidden() const noexcept { return m_deathLossVoyageActive; }
+        // True exactly once, the frame the lock (part 1) elapses and the life-loss-Voyage window
+        // (part 2) begins. outShouldRespawn echoes the value passed into TriggerDeathLock().
+        [[nodiscard]] bool ConsumeDeathLockResolved(bool& outShouldRespawn) noexcept;
+
         // Water Surf (standing/floating at the surface, dry above) / Nage
         // (fully submerged) status (plan.md E3D-MIG-148) -- unlike every
         // other status above, these are NOT set via a Trigger*() call:
@@ -763,6 +810,15 @@ namespace GalaxyEggbert::CNA
         bool m_teleporting = false;
         float m_teleportTimer = 0.0f;
         std::uint16_t m_teleportIcon = 0;
+
+        // Real ScaleTime(40)=40 ticks=2.0s, same conversion as every other duration here.
+        static constexpr float kLifeLossVoyageDuration = 2.0f;
+        bool m_deathLocked = false;
+        float m_deathLockTimer = 0.0f;
+        bool m_deathLossVoyageActive = false;
+        float m_deathLossVoyageTimer = 0.0f;
+        bool m_deathLockShouldRespawn = false;
+        bool m_deathLockResolvedPending = false; // consumed once via ConsumeDeathLockResolved()
 
         bool m_surf = false;
         bool m_nage = false;

@@ -385,6 +385,41 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerDeathLock(DeathCause cause, bool shouldRespawn) noexcept
+    {
+        if (m_deathLocked || m_deathLossVoyageActive)
+        {
+            return false;
+        }
+        // Real Decor.cpp:6374-6392 duration table (Config::ScaleTime(N), N in real ticks at this
+        // build's 20Hz reference rate -- /20.0f to seconds, same conversion used throughout this
+        // session).
+        constexpr float kDeathLockTicks[] = {
+            70.0f, // Clear1
+            100.0f, // Clear2
+            70.0f, // Clear3
+            110.0f, // Clear4
+            100.0f, // Glu
+            90.0f, // Drown
+        };
+        m_deathLocked = true;
+        m_deathLockTimer = kDeathLockTicks[static_cast<std::size_t>(cause)] / 20.0f;
+        m_deathLockShouldRespawn = shouldRespawn;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::ConsumeDeathLockResolved(bool& outShouldRespawn) noexcept
+    {
+        if (!m_deathLockResolvedPending)
+        {
+            return false;
+        }
+        m_deathLockResolvedPending = false;
+        outShouldRespawn = m_deathLockShouldRespawn;
+        return true;
+    }
+
     void GEBlupiController::UpdateSafePosition(bool externallySafe) noexcept
     {
         if (!(m_onGround && !m_balloon && !m_ecrase && externallySafe))
@@ -589,6 +624,39 @@ namespace GalaxyEggbert::CNA
                 --m_waterGaugeLevel;
             }
             m_justDrowned = wasAboveZero && m_waterGaugeLevel <= 0;
+        }
+
+        // Death-lock + life-loss Voyage (see TriggerDeathLock()'s own comment) -- real
+        // `BlupiDead()` sets `m_blupiFocus=false` immediately (Decor.cpp:6547-6614), the same
+        // mechanism Teleporte uses, so this takes the same top-priority early-return shape,
+        // checked BEFORE teleporting since a death always overrides any other frozen state. Two
+        // chained timers: the lock itself, then (once it elapses) the life-loss-Voyage window --
+        // ConsumeDeathLockResolved() lets the caller know exactly once when to apply the real
+        // `m_blupiRestart`-gated respawn, call LoseLife(), and start the icon-48 Voyage.
+        if (m_deathLocked)
+        {
+            m_deathLockTimer -= dt;
+            if (m_deathLockTimer <= 0.0f)
+            {
+                m_deathLocked = false;
+                m_deathLockTimer = 0.0f;
+                m_deathLossVoyageActive = true;
+                m_deathLossVoyageTimer = kLifeLossVoyageDuration;
+                m_deathLockResolvedPending = true;
+            }
+            UpdateAnim(false, false, false, dt);
+            return;
+        }
+        if (m_deathLossVoyageActive)
+        {
+            m_deathLossVoyageTimer -= dt;
+            if (m_deathLossVoyageTimer <= 0.0f)
+            {
+                m_deathLossVoyageActive = false;
+                m_deathLossVoyageTimer = 0.0f;
+            }
+            UpdateAnim(false, false, false, dt);
+            return;
         }
 
         // Teleport transit (plan.md E3D-MIG-147): real BlupiAction::
@@ -996,7 +1064,8 @@ namespace GalaxyEggbert::CNA
         // splits Jump (ascending) vs Air (falling/apex) by velocity sign --
         // see the AnimState enum's own comment for why this differs from
         // Simple3D's frame-counted trigger window.
-        const AnimState newState = m_teleporting ? AnimState::Teleporting
+        const AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
+                                  : m_teleporting ? AnimState::Teleporting
                                   : m_balloon     ? AnimState::Balloon
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
@@ -1046,6 +1115,10 @@ namespace GalaxyEggbert::CNA
                 const int icon = kTeleportingFrames[m_animPhase % (sizeof(kTeleportingFrames) / sizeof(kTeleportingFrames[0]))];
                 return icon >= 0 ? icon : kStopFrames[0]; // -1 = real invisible frame, see kTeleportingFrames' own comment
             }
+            case AnimState::DeathLocked:
+                // Real per-cause hurt-sprite frame table (`Tables::table_blupi`) not transcribed
+                // (see the AnimState enum's own comment) -- a static Stop pose stands in.
+                return kStopFrames[0];
             case AnimState::Stop:
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];

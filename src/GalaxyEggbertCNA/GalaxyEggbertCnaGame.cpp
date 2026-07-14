@@ -516,6 +516,70 @@ namespace GalaxyEggbert::CNA
                                  interaction_.VoyagePendingIsButtonChannel(), startX, startY, endX, endY, sound_);
     }
 
+    void GalaxyEggbertCnaGame::ResolveDeathLock()
+    {
+        // Starts a NEW lock for the 4 real trigger sites living inside
+        // interaction_.Update() itself (see GEInteractionSystem::
+        // DeathLockRequestedThisFrame()'s own comment for the exact
+        // shouldRespawn/PendingDeathKind->DeathCause mapping).
+        if (interaction_.DeathLockRequestedThisFrame())
+        {
+            using GalaxyEggbert::CNA::GEBlupiController;
+            using GalaxyEggbert::CNA::GEInteractionSystem;
+            const GEInteractionSystem::PendingDeathKind pendingKind = interaction_.DeathLockPendingKind();
+            const GEBlupiController::DeathCause cause = (pendingKind == GEInteractionSystem::PendingDeathKind::Clear1)
+                                                             ? GEBlupiController::DeathCause::Clear1
+                                                         : (pendingKind == GEInteractionSystem::PendingDeathKind::Clear2)
+                                                             ? GEBlupiController::DeathCause::Clear2
+                                                             : GEBlupiController::DeathCause::Glu;
+            blupi_.TriggerDeathLock(cause, interaction_.DeathLockShouldRespawn());
+        }
+
+        // Resolves an ALREADY-active lock (possibly started a prior frame)
+        // that just elapsed -- see TriggerDeathLock()'s own comment for the
+        // real mechanic (respawn, then the life-loss Voyage; or game over
+        // with no Voyage at all if this was Blupi's last life).
+        bool shouldRespawn = false;
+        if (!blupi_.ConsumeDeathLockResolved(shouldRespawn))
+        {
+            return;
+        }
+        if (shouldRespawn)
+        {
+            blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
+        }
+        // Real `if (m_nbVies > 0) { ...Voyage... } else { ...DoorsLost(), no
+        // Voyage... }` (Decor.cpp:6382-6392) -- predict which branch BEFORE
+        // calling anything that decrements, since LoseLife() itself is what
+        // performs the decrement (inside BeginVoyage()'s own LifeLoss case
+        // below, matching real VoyageInit's inline `m_nbVies--`).
+        if (interaction_.Lives() <= 1)
+        {
+            interaction_.LoseLife();
+            return;
+        }
+
+        const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+        float endX = 0.0f, endY = 0.0f;
+        const bool projected = GEHud::ProjectWorldToHudSpace(
+            Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()), camera_.GetViewMatrix(),
+            camera_.GetProjectionMatrix(), viewport.getWidthProperty(), viewport.getHeightProperty(), endX, endY);
+        // Real `VoyageGetPosVie(m_nbVies)` uses the PRE-decrement life count (evaluated as a call
+        // argument before VoyageInit's body runs) -- kLivesX/Y/Step match GEHud.cpp's own
+        // constants exactly (already reused this way for Egg's own dynamic end point in `158`).
+        constexpr float kLivesX = 210.0f, kLivesY = 417.0f, kLivesStep = 16.0f;
+        const float startX = kLivesX + kLivesStep * static_cast<float>(interaction_.Lives());
+        if (!projected)
+        {
+            // Behind the camera -- collapse onto the start point, same
+            // fallback idiom as ResolvePendingVoyage() above.
+            endX = startX;
+            endY = kLivesY;
+        }
+        interaction_.BeginVoyage(worldRuntime_, GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::LifeLoss, 48,
+                                 false, startX, kLivesY, endX, endY, sound_);
+    }
+
     void GalaxyEggbertCnaGame::ApplyCheat(int cheatNumber)
     {
         switch (cheatNumber)
@@ -1053,25 +1117,27 @@ namespace GalaxyEggbert::CNA
             }
 
             // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
-            // subset) -- takes the real death sound channel for the
-            // specific cause (channel 8: fall-off-world/lava, the real
-            // shared "you died" sound per 07-sounds.md; channel 51: spikes/
-            // drip/saw's real Glu-death sound, distinct from channel 8's).
-            // Respawns at the real 10-slot "last safe position" FIFO
-            // (GEBlupiController::GetValidX/Y/Z(), plan.md E3D-MIG-067,
-            // done 2026-07-11) instead of the fixed spawn point. Does not
-            // yet distinguish death *animations* (Clear1-8/Glu each have
-            // their own real fixed duration and revival behavior,
-            // 10-blupi-mechanics.md §8) -- every cause here is instant, no
-            // animation state exists yet for any of them.
-            const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel, bool playChannel = true)
+            // subset; deferred-timing follow-up 2026-07-14) -- takes the
+            // real death sound channel for the specific cause (channel 8:
+            // fall-off-world/lava, the real shared "you died" sound per
+            // 07-sounds.md; channel 51: spikes/drip's real Glu-death sound,
+            // distinct from channel 8's) and starts the real death-lock
+            // (`GEBlupiController::TriggerDeathLock()`, see its own
+            // comment) instead of applying life loss/respawn instantly --
+            // both now happen once the lock elapses, via
+            // ConsumeDeathLockResolved() below. `cause` drives the real
+            // per-type lock duration; `shouldRespawn` is the real
+            // `m_blupiRestart` flag for this specific site (see each call
+            // site's own comment for its citation).
+            const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel,
+                                              GalaxyEggbert::CNA::GEBlupiController::DeathCause cause,
+                                              bool shouldRespawn, bool playChannel = true)
             {
                 if (playChannel)
                 {
                     sound_.Play(channel);
                 }
-                interaction_.LoseLife();
-                blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
+                blupi_.TriggerDeathLock(cause, shouldRespawn);
             };
 
             // Real Clear2/Clear3 "soul ascends" death VFX (plan.md `158`
@@ -1085,10 +1151,10 @@ namespace GalaxyEggbert::CNA
             // Clear2Ascend (icon 230, offsetY 300) or Clear3Ascend (icon
             // 40, offsetY 2000).
             // Takes an EXPLICIT death position (not read live from blupi_)
-            // because triggerDeath() above already respawns Blupi before
-            // this would run -- the ascend must originate from where he
-            // died, not where he respawns. Callers capture blupi_.GetX/Y/Z()
-            // BEFORE calling triggerDeath().
+            // -- harmless now that triggerDeath() no longer moves Blupi
+            // synchronously (2026-07-14, deferred-timing follow-up), but
+            // callers still capture blupi_.GetX/Y/Z() BEFORE calling
+            // triggerDeath() for clarity/consistency with every call site.
             const auto triggerDeathAscend = [this](GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind kind,
                                                     float offsetY, int icon, float deathX, float deathY, float deathZ)
             {
@@ -1159,7 +1225,9 @@ namespace GalaxyEggbert::CNA
                 const float deathX = blupi_.GetX();
                 const float deathY = blupi_.GetY();
                 const float deathZ = blupi_.GetZ();
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+                // Real m_blupiRestart=true at this site (Decor.cpp:2757).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear2, true);
                 // Real Clear2 ascend (plan.md `158` death-VFX follow-up,
                 // Decor.cpp:2754-2761) -- deterministic, no coinflip.
                 triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
@@ -1191,7 +1259,9 @@ namespace GalaxyEggbert::CNA
                 const float deathX = blupi_.GetX();
                 const float deathY = blupi_.GetY();
                 const float deathZ = blupi_.GetZ();
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+                // Real m_blupiRestart=true at this site (Decor.cpp:5500).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear3, true);
                 // Real Clear3 ascend (plan.md `158` death-VFX follow-up,
                 // Decor.cpp:5497-5499) -- deterministic, no coinflip.
                 triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear3Ascend, 2000.0f, 40,
@@ -1214,7 +1284,9 @@ namespace GalaxyEggbert::CNA
             if (!blupi_.IsInvincible() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
             {
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
+                // Real BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Glu, true);
             }
 
             // Water drip hazard (plan.md TILE-032, real Decor::IsGoutte,
@@ -1227,7 +1299,9 @@ namespace GalaxyEggbert::CNA
             if (!blupi_.IsInvincible() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
             {
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51);
+                // Real BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Glu, true);
             }
 
             // Blitz hazard (plan.md E3D-MIG-144) -- real channel 8, same
@@ -1250,7 +1324,9 @@ namespace GalaxyEggbert::CNA
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
                 GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
             {
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+                // Real BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear1, true);
             }
 
             // Crusher hazard (plan.md E3D-MIG-143) -- unlike every hazard
@@ -1292,8 +1368,10 @@ namespace GalaxyEggbert::CNA
                 // comes entirely from BlupiDead's own Clear4 branch, which
                 // SpawnSawDeathBurst() plays itself (plan.md `158`
                 // death-VFX follow-up, Decor.cpp:5521-5524/6608-6613), so
-                // triggerDeath() must NOT also play it here.
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75, false);
+                // triggerDeath() must NOT also play it here. Real
+                // m_blupiRestart=true at this site (Decor.cpp:5526).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear4, true, false);
                 interaction_.SpawnSawDeathBurst(worldRuntime_, deathX, deathY, deathZ, sound_);
             }
 
@@ -1377,14 +1455,19 @@ namespace GalaxyEggbert::CNA
                 const float deathX = blupi_.GetX();
                 const float deathY = blupi_.GetY();
                 const float deathZ = blupi_.GetZ();
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
                 cameraShake_.Trigger(CameraShakeType::Big);
                 interaction_.SpawnFanHitFlash(worldRuntime_, deathX, deathY, deathZ);
                 // Real 50/50 Clear1/Clear2 coinflip (plan.md `158`
                 // death-VFX follow-up, Decor.cpp:5458-5463) -- unlike
                 // fall-off-world/Lava, Fan's death is NOT deterministically
-                // Clear2.
-                if (interaction_.RollClear2Coinflip())
+                // Clear2. Real m_blupiRestart=false at this site (no
+                // `m_blupiRestart=true` anywhere near Decor.cpp:5458-5472).
+                const bool isClear2 = interaction_.RollClear2Coinflip();
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10,
+                             isClear2 ? GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear2
+                                      : GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear1,
+                             false);
+                if (isClear2)
                 {
                     triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
                                         deathX, deathY, deathZ);
@@ -1419,7 +1502,9 @@ namespace GalaxyEggbert::CNA
             // superBlupi isn't modeled.
             if (blupi_.JustDrowned() && !blupi_.IsInvincible())
             {
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel26);
+                // Real BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel26,
+                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Drown, true);
             }
 
             // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
@@ -1664,6 +1749,8 @@ namespace GalaxyEggbert::CNA
             // no camera access, so it can't project the world<->HUD-space
             // endpoint itself). Resolve it here and start the real voyage.
             ResolvePendingVoyage();
+            // Death-lock/life-loss Voyage follow-up -- see its own comment.
+            ResolveDeathLock();
 
             // Pollution puff (plan.md VISUAL-013) -- called unconditionally
             // every frame, matching the real function's own internal gate
@@ -1814,14 +1901,11 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
-            // GEInteractionSystem has no access to GEBlupiController, so it
-            // can only report that a hazard-contact death happened this
-            // frame (DiedThisFrame()) -- respawn is applied here, same real
-            // last-safe-position FIFO as the terrain-hazard deaths above.
-            if (interaction_.DiedThisFrame())
-            {
-                blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
-            }
+            // Real respawn/life-loss for hazard-contact deaths (DiedThisFrame()
+            // still true instantly on contact, for tests/other consumers) is
+            // now deferred to the death-lock/life-loss-Voyage system --
+            // resolved via ResolveDeathLock() above, not here (death-VFX
+            // follow-up, 2026-07-14; this used to respawn instantly).
 
             // Wasp balloon status (plan.md E3D-MIG-135) -- TriggerBalloon()
             // is idempotent (a no-op while already ballooned, matching the
@@ -2219,7 +2303,12 @@ namespace GalaxyEggbert::CNA
             // alignment for this specific placeholder asset hasn't been
             // visually verified, a real Blupi model may need a different
             // constant rotation offset here.
-            if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiAvatarRenderer_)
+            // Real `Hide` during the death-lock's own life-loss-Voyage window
+            // (death-VFX follow-up, `IsDeathHidden()`'s own comment) -- first-
+            // person mode already renders no Blupi model at all, so this is
+            // the only render-side change needed.
+            if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiAvatarRenderer_ &&
+                !blupi_.IsDeathHidden())
             {
                 constexpr float kPlaceholderModelScale = 0.02f;
                 const auto world =

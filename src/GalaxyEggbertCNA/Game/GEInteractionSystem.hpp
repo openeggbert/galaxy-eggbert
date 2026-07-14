@@ -513,7 +513,17 @@ namespace GalaxyEggbert::CNA
         enum class VoyageKind : std::uint8_t
         {
             None, Treasure, Key1, Key2, Key3, Egg, Dynamite, Perso, BulletPack, DoorUnlock,
-            Clear2Ascend, Clear3Ascend
+            Clear2Ascend, Clear3Ascend,
+            // Real life-loss Voyage (icon 48/Blupi channel, `Decor.cpp:6383-6389`/`10172-10176`,
+            // death-lock follow-up) -- the ONLY Voyage kind whose effect (LoseLife()) fires at
+            // START, not completion (`BeginVoyage()`'s own switch calls it directly, matching
+            // real `VoyageInit`'s own inline `m_nbVies--`). Fixed total=40 (real `ScaleTime(40)`),
+            // start = the lives-HUD icon position (`210+16*lives_`, using the PRE-decrement count
+            // -- real `VoyageGetPosVie(m_nbVies)` is evaluated as a call argument before
+            // `VoyageInit`'s own body runs), end = Blupi's own (possibly just-respawned) position
+            // projected to HUD space by the caller. No reward at completion (`VoyageStep`'s
+            // icon==48 branch only does `Stop`/`m_blupiFocus=true`).
+            LifeLoss
         };
 
         [[nodiscard]] bool VoyagePendingThisFrame() const noexcept { return voyagePendingThisFrame_; }
@@ -541,6 +551,28 @@ namespace GalaxyEggbert::CNA
         // VoyagePendingFixedX/Y() (which are unused/stale in this mode).
         [[nodiscard]] bool VoyagePendingIsAscend() const noexcept { return pendingIsAscend_; }
         [[nodiscard]] float VoyagePendingAscendOffsetY() const noexcept { return pendingAscendOffsetY_; }
+
+        // Death-lock request (death-lock/life-loss-Voyage follow-up) from the 4 real trigger sites
+        // living inside Update() itself, which has no `GEBlupiController&`/camera access (every
+        // OTHER real cause -- fall/Lava/Saw/Blitz/Drown/Fan -- is checked directly in
+        // `GalaxyEggbertCnaGame.cpp`, which already has `blupi_` in scope and calls
+        // `blupi_.TriggerDeathLock()` straight away): generic-hazard-contact (Clear1/Clear2 real
+        // 50/50 coinflip, `shouldRespawn=false` -- confirmed no `m_blupiRestart=true` near
+        // Decor.cpp:5782-5815), dynamite blast (deterministic Clear1, `shouldRespawn=false` --
+        // confirmed no `m_blupiRestart=true` near Decor.cpp:9168-9173 either, a correction to an
+        // earlier assumption that only Fan/generic-hazard lacked it), and fired-projectile-contact
+        // (ObjectType23)/large-creature-grab (ObjectType54), both real Glu, `shouldRespawn=true`
+        // (confirmed `m_blupiRestart=true` at Decor.cpp:5879/5927). A LOCAL enum, deliberately NOT
+        // shared with `GEBlupiController::DeathCause` (this class stays fully decoupled from it,
+        // same reasoning as every other pending signal here) -- the caller maps this to the real
+        // `DeathCause` when calling `TriggerDeathLock()`. This is a SEPARATE signal from the
+        // VoyagePending* fields above -- a Clear2 outcome sets BOTH in the same frame (the
+        // cosmetic Clear2Ascend request via RequestClear2Ascend() below, AND this one), consumed
+        // independently by the caller.
+        enum class PendingDeathKind : std::uint8_t { Clear1, Clear2, Glu };
+        [[nodiscard]] bool DeathLockRequestedThisFrame() const noexcept { return deathLockRequestedThisFrame_; }
+        [[nodiscard]] PendingDeathKind DeathLockPendingKind() const noexcept { return deathLockPendingKind_; }
+        [[nodiscard]] bool DeathLockShouldRespawn() const noexcept { return deathLockShouldRespawn_; }
 
         // Called by the game class once it has resolved both endpoints
         // (projecting whichever one was still a world position). Force-
@@ -728,6 +760,9 @@ namespace GalaxyEggbert::CNA
         bool pendingWorldIsStart_ = true;
         bool pendingIsAscend_ = false;
         float pendingAscendOffsetY_ = 0.0f;
+        bool deathLockRequestedThisFrame_ = false;
+        PendingDeathKind deathLockPendingKind_ = PendingDeathKind::Clear1;
+        bool deathLockShouldRespawn_ = false;
         // First randomness needed anywhere in this engine's gameplay code
         // (real `Decor::BlupiDead`'s own `m_random`, Decor.cpp:6551) --
         // seeded from real entropy since the real coinflip this ports is

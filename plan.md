@@ -1223,16 +1223,64 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         Voyage (which ties into respawn/death-lock control flow — a separate behavior change, not
         touched here).
 
-**Unnumbered follow-up, researched 2026-07-14 (no `E3D-MIG` ID assigned yet — would collide with
-Phase 16's own `160`-`165` range):** implementing `Glu` faithfully turns out to require a shared
-death-lock + life-loss-Voyage system (every real death type, not just Glu, locks Blupi for a fixed
-70-110-tick duration then plays a life-loss Voyage — icon 48/Blupi channel, decrements lives at
-Voyage START not completion, the opposite timing direction from every Voyage `158`/`159` built) —
-this is a genuinely large architecture change touching every one of this engine's ~10 existing
-(already-shipped, already-tested) instant-death call sites, not a small addition. See `NEXT.md`
-§8 item 17 for the full research writeup (trigger sites, exact duration table, real source
-citations) — deliberately NOT started without the user's own go-ahead, matching how the life-loss
-animation was already flagged as "a materially different, separate behavior change" during `158`.
+**Unnumbered follow-up "death-lock" (no `E3D-MIG` ID — would collide with Phase 16's own
+`160`-`165` range): done 2026-07-14, user-approved after the research below.** Implementing `Glu`
+faithfully turned out to require a shared death-lock + life-loss-Voyage system covering EVERY real
+death type (Clear1-4/Glu/Drown), not just Glu — real per-cause fixed lock duration
+(`Decor.cpp:6374-6392`, `m_blupiPhase == Config::ScaleTime(N)`: Clear1=70, Clear2=100, Clear3=70,
+Clear4=110, Glu=100, Drown=90 ticks; Clear5-8/Electro unreachable/unmodeled, skipped), THEN a real
+life-loss Voyage (icon 48/Blupi channel, fixed `ScaleTime(40)`=40 ticks, decrements `lives_`
+**at Voyage START, not completion** — the opposite timing direction from every Voyage `158`/`159`
+built — plays channel 9, start = the real lives-HUD-icon position using the PRE-decrement count,
+end = Blupi's own post-respawn position). Only THEN does control return.
+- **Real `m_blupiRestart` (respawn-at-safe-position) nuance, confirmed by directly re-reading
+  every trigger site** (a correction found while implementing, not caught by the initial
+  research): **3** of the real death causes do NOT respawn Blupi at the safe FIFO position
+  (Fan, the generic 8-type hazard-contact list, AND dynamite blast — the last one missed by the
+  initial research, which only flagged the first two) — confirmed via direct grep, none of
+  these 3 sites' real code sets `m_blupiRestart=true` anywhere nearby, unlike the other 9 real
+  sites which all do. Faithfully, dying to these 3 causes leaves Blupi exactly where he died
+  (once un-Hidden) instead of teleporting him away.
+- Architecture: `GEBlupiController` gained `TriggerDeathLock()`/`IsDeathLocked()`/
+  `IsDeathHidden()`/`ConsumeDeathLockResolved()`, reusing the EXACT proven freeze-timer template
+  already established by `TriggerTeleport()`/`m_teleporting` — two chained frozen sub-states
+  (the lock, then the life-loss-Voyage window) instead of one. `GEInteractionSystem` stays fully
+  decoupled from `GEBlupiController` (no shared type, matching `158`'s own precedent) — the one
+  real trigger site living inside `Update()` itself with no camera/controller access (the
+  generic-hazard-contact coinflip) uses a small LOCAL `PendingDeathKind{Clear1,Clear2,Glu}` enum
+  + a `*ThisFrame()` pending signal, consumed by the game class's new `ResolveDeathLock()`
+  (called alongside the existing `ResolvePendingVoyage()`). The other 8 real trigger sites
+  (fall/lava/spike/drip/blitz/saw/fan/drown) already live directly in `GalaxyEggbertCnaGame.cpp`
+  and call `TriggerDeathLock()` straight away. `VoyageKind::LifeLoss` reuses the existing Voyage
+  machinery with a fixed 40-tick total override; `LoseLife()`'s own logic is UNCHANGED, only
+  moved from every death-trigger call site to this one deferred resolution point. Game-over
+  (`lives_<=1`) is predicted BEFORE starting the Voyage (matching real `else { DoorsLost() }`,
+  no Voyage at all in that case). `GEBlupiController::AnimState::DeathLocked` covers both frozen
+  sub-states with a static Stop-pose icon (the real per-cause hurt-sprite frame table,
+  `Tables::table_blupi`, was not transcribed — a documented simplification; the FREEZE/TIMING
+  behavior is faithful, the exact hurt-face artwork is not). Render-side: third-person model
+  draw gets one added `!IsDeathHidden()` clause (first-person already renders no Blupi model).
+- Found and fixed a real pre-existing bug while wiring this: the Fan hazard's own
+  `SpawnFanHitFlash()`/ascend-Voyage call previously read Blupi's position via `blupi_.GetX/Y/Z()`
+  which, before this change, had ALREADY been moved by the old instant-respawn `triggerDeath()` —
+  fixed by capturing the death position first (now largely moot since respawn itself is deferred,
+  but the capture-first pattern was kept for clarity/consistency).
+- Verified: new `GEBlupiController`-level tests (per-cause fixed durations including a spot-check
+  of Clear4's distinct 110-tick duration and Drown's 90, full-frozen movement, `IsDeathHidden()`
+  timing, `ConsumeDeathLockResolved()` firing exactly once and echoing the real `shouldRespawn`,
+  auto-completion) in `VerifyBlupiMovement`, plus every existing `VerifyInteractionSystem` hazard-
+  contact test (fall/lava/spike/drip/blitz/saw/fan/generic-hazard ×several enemy types/dynamite/
+  drown) updated to advance through the real deferred timing before checking life/position —
+  including 2 genuine false-positive fixes found along the way (a `*ThisFrame()` flag / transient
+  particle-lifetime check that must run BEFORE the fast-forward, not after; a position-blind
+  "last matching type wins" search that broke once the fast-forward let another periodic spawn
+  reuse an already-destroyed test object's slot — both fixed by reordering/adding position filters,
+  the same defensive patterns already established elsewhere in this file). Full suite: 78 tests on
+  `build-cna` (99%, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73
+  (100%) on `build-cna-vulkan`. Verified the game still launches and runs headless without
+  crashing; a full live multi-second visual walkthrough of an actual hazard death (lock → life-loss
+  Voyage → respawn) was NOT scripted this pass, given the thorough unit coverage above — a real
+  gap if a future session wants full visual confirmation.
 
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 
