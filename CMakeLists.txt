@@ -281,6 +281,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp
         src/GalaxyEggbertCNA/Game/GESwatchUv.cpp
         src/GalaxyEggbertCNA/Game/GEInnerPillarBoxTiles.cpp
+        src/GalaxyEggbertCNA/Game/GEThinBarTiles.cpp
         src/GalaxyEggbertCNA/Game/GEInnerFlatPlateTiles.cpp
         src/GalaxyEggbertCNA/Game/GEPlateRotationMetadata.cpp
         src/GalaxyEggbertCNA/Game/GETripleCrossBillboardTiles.cpp

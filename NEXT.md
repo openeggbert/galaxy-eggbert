@@ -150,10 +150,23 @@ long continuous autonomous session); each item is its own commit.
   anchored upward launch (the real 10-tick wind-up animation isn't modeled — no visible Blupi model
   exists to show one). Real 5-tick no-regrab grace timer modeled as a direct transcription.
   `TriggerMount()` now also excludes hanging (the real gate already documented this exclusion).
-  Demo bar added to `worlds3d/world001.vwr` (icon 138 only — icon 202 needs its own new render
-  geometry first, `plan.md TILE-055`, not yet built). 11 new `VerifyBlupiMovement` checks (grab,
-  climb, graceful landing, free-fall drop, jump-release, grace-timer block + expiry) + a live
-  headless screenshot sanity check + full regression on both backends, all pass.
+  Demo bar added to `worlds3d/world001.vwr` (icon 138 and icon 202, each in its own row — icon
+  202 now has its own new render geometry, `plan.md TILE-055`, see below). 11 new
+  `VerifyBlupiMovement` checks (grab, climb, graceful landing, free-fall drop, jump-release,
+  grace-timer block + expiry) + a live headless screenshot sanity check + full regression on both
+  backends, all pass.
+- **Implemented the "thin-bar" render geometry for icon 202** (plan.md TILE-055) — new
+  `GEThinBarTiles.hpp`/`.cpp`, modeled on the existing `GEInnerPillarBoxTiles` precedent: a thin
+  `DirectionalCubeItem` (full block width along X, `kThinBarThickness=0.3` in Y/Z) with the real
+  texture on its 4 long sides and a flat blue `SwatchUv` fallback on the 2 end caps, matching the
+  user's 2026-07-07 questionnaire description of icon 202. Live screenshots initially showed a
+  solid white block instead of the intended thin rod; direct pixel inspection of `object-m.png`
+  found icon 202's real crop is a thin stripe on an otherwise fully-transparent tile, and the
+  static-mesh renderer's opaque pass doesn't respect alpha (same bug category as icons 30/31 and
+  the teleporter pillars). Fixed by adding icon 202 to `GETerrainRenderer.cpp`'s
+  `NeedsAlphaBlend()`, routing it through the existing alpha-respecting transparent pass. Confirmed
+  fixed via live headless screenshots (close range and 3/4 angle): the tile now renders as a thin,
+  mostly-transparent rod, not a solid block. Full regression on both backends passes.
 - **Implemented the water-drip terrain hazard** (icon 404, plan.md TILE-032) — real
   `Decor::IsGoutte()`, corrected from a wrong "triggers a glu/slow effect" premise (same category
   of error as TILE-041/045 earlier this session): confirmed via a direct `Decor.cpp` read that real
@@ -535,9 +548,9 @@ judgment (§9).
     south tunnel's low ceiling, full regression on both backends.
 
 13. ~~Suspended/hanging bar-and-rope movement mode~~ **DONE 2026-07-14** (`plan.md TILE-045`) — see
-    §3 for the full writeup. Icon 202 (also a real trigger icon) still needs its own new render
-    geometry (`plan.md TILE-055`, "thin-bar") before it can be used in a demo world — the shipped
-    demo only uses icon 138, which already renders correctly.
+    §3 for the full writeup. Icon 202 (also a real trigger icon) now has its own new render
+    geometry too (`plan.md TILE-055`, "thin-bar", done 2026-07-14) — the demo world now uses both
+    icon 138 and icon 202, each in its own row.
 
 14. ~~Water-drip tile~~ **DONE 2026-07-14** (`plan.md TILE-032`) — see §3 for the full writeup. Real
     behavior was NOT a glu/slow effect (a wrong premise, same category as TILE-041/045) — it's a

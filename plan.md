@@ -2323,11 +2323,12 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
       release instead — no visible Blupi model to show a wind-up); real 5-tick no-regrab grace timer
       IS modeled as a direct `ScaleTime(5)`-at-20Hz transcription. `TriggerMount()` now also excludes
       `m_suspended` (the real gate already documented this exclusion, just had nothing to check
-      before this feature existed). Icon 202 still needs its own new render geometry (`TILE-055`,
-      not yet built) — the demo world only uses icon 138, which already renders correctly via the
-      existing `InnerFlatPlate` table. 11 new `VerifyBlupiMovement` checks (grab, climb, graceful
-      landing, free-fall drop off the near end, jump-release, grace-timer block + expiry) + a live
-      headless screenshot sanity check + full regression on both backends, all pass.
+      before this feature existed). Icon 202 now has its own render geometry too (`TILE-055`,
+      done 2026-07-14) — the demo world uses both icon 138 (via the existing `InnerFlatPlate`
+      table) and icon 202 (via the new `ThinBar` geometry). 11 new `VerifyBlupiMovement` checks
+      (grab, climb, graceful landing, free-fall drop off the near end, jump-release, grace-timer
+      block + expiry) + a live headless screenshot sanity check + full regression on both
+      backends, all pass.
 
 #### 5.4 Tile Adaptation (visual smoothing)
 
@@ -2346,9 +2347,26 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 
 - [ ] TILE-053 — Decide and implement `ThinMechanical` render-mode geometry for saws/springs/switches/fans/bridge/pipes/grates (~25 icons) — decision not yet made
 - [ ] TILE-054 — Distinct water/liquid surface treatment (wavy-edge surface) to replace the current alpha-blended-cube placeholder
-- [ ] TILE-055 — "Thin-bar" new geometry for icon 202 — now has a real gameplay-logic consumer
-      (`TILE-045`'s hanging/suspended mode, implemented 2026-07-14, currently using icon 138 only
-      since 202 still renders as an unrelated default cube).
+- [x] TILE-055 — "Thin-bar" new geometry for icon 202 — **done 2026-07-14**. New
+      `GEThinBarTiles.hpp`/`.cpp` (`TryGetThinBarFaces()`), modeled directly on the existing
+      `GEInnerPillarBoxTiles` precedent: an `Easy3D::DirectionalCubeItem` sized `(1.0,
+      kThinBarThickness=0.3, kThinBarThickness=0.3)` — full block width along the bar's own X
+      axis (so adjacent bar blocks connect seamlessly), thin in Y/Z. 4 long sides use the tile's
+      real texture; the 2 end caps (PosX/NegX) use a flat `SwatchUv(tileUv, kMidSwatchV)`
+      fallback colour, matching the user's 2026-07-07 questionnaire description ("thin
+      rod/prism, not a cube; texture on the 4 long sides, 2 small square blue end faces").
+      Wired into `GETerrainRenderer::AppendSpecialGeometry()`/`IsSpecialGeometryIcon()`.
+      Direct pixel inspection of `object-m.png` found icon 202's real crop is a thin stripe on an
+      otherwise fully-transparent 64x64 tile — rendering it through the normal opaque static-mesh
+      pass showed a solid white block (the alpha=0 background pixels' own RGB) instead of the
+      thin rod. Fixed by adding icon 202 to `NeedsAlphaBlend()` in `GETerrainRenderer.cpp`,
+      routing it through the same alpha-respecting "static-but-transparent" pass already used for
+      icons 30/31 and the 4 teleporter pillars. Confirmed via live headless screenshots at close
+      range and 3/4 angle: the tile now renders as a thin, mostly-transparent rod with visible
+      colour, no solid white block. Demo world (`tools/GenerateSampleWorld3D.cpp`'s Suspended/
+      hanging bar demo, `TILE-045`) now places icon 202 in its own row alongside icon 138. Full
+      regression on both backends passes (only the known pre-existing unrelated
+      `easy-gl-resource-smoke-tests` failure).
 - [ ] TILE-056 — Architectural kit modular assembly
 - [ ] TILE-057 — ~~Secret-power (Sp0-7) billboard rendering and behavior~~ **obsolete premise, corrected 2026-07-14**: resolved 2026-07-12 (see `## 3 Open Questions`) — "Sp0-Sp7" are real hub-screen world-select icons (`Decor::IsWorld()`), not secret-power tiles at all. The real 4 `SecretPower` buffs come from `MoveObject` pickups 25/26/30/31 instead, already fully implemented (§2.7 PICKUP-007/008/010/012). This item itself has nothing left to do.
 

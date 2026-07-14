@@ -563,17 +563,22 @@ int main(int argc, char** argv)
     // release-onto-solid-ground behavior is actually playable. The far end
     // (x=99, solid floor beneath) also carries the bar tile, matching the
     // synthetic test's own "LandingAvailable" case -- walking onto it steps
-    // down gracefully instead of free-falling. Icon 202 (also a real
-    // trigger icon) is NOT used here -- it needs its own new render
-    // geometry first (plan.md TILE-055, not yet built); icon 138 already
-    // renders correctly via the existing InnerFlatPlate table.
+    // down gracefully instead of free-falling. Icon 138 renders via the
+    // existing InnerFlatPlate table.
+    //
+    // A second row (z=90) reuses the same near/far floor for icon 202 --
+    // the OTHER real grabbable-bar trigger icon -- now that its own
+    // "thin-bar" render geometry exists (plan.md TILE-055, implemented
+    // 2026-07-14, GEThinBarTiles.cpp): a real, thin, full-block-width rod
+    // with 4 textured long sides and 2 blue end caps, not a plain cube.
     // ------------------------------------------------------------------
     fill(93, 95, 0, 0, 88, 90, BlockTypes::RockPile); // near floor
     for (int x = 96; x <= 99; ++x)
     {
         world.setBlock(static_cast<std::uint16_t>(x), 1, 89, Block::make(static_cast<std::uint16_t>(138)));
+        world.setBlock(static_cast<std::uint16_t>(x), 1, 90, Block::make(static_cast<std::uint16_t>(202)));
     }
-    fill(99, 99, 0, 0, 88, 90, BlockTypes::RockPile); // far floor, beneath the bar's landing end
+    fill(99, 99, 0, 0, 88, 90, BlockTypes::RockPile); // far floor, beneath both bars' landing end
 
     // ------------------------------------------------------------------
     // Exhibition area (2026-07-10, user request): a museum of everything

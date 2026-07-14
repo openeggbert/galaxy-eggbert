@@ -2,6 +2,7 @@
 #include "GEDirectionalCubeTiles.hpp"
 #include "GEInnerFlatPlateTiles.hpp"
 #include "GEInnerPillarBoxTiles.hpp"
+#include "GEThinBarTiles.hpp"
 #include "GETripleCrossBillboardTiles.hpp"
 #include "GEWorldRuntime.hpp"
 
@@ -218,6 +219,24 @@ namespace GalaxyEggbert::CNA
                 return true;
             }
 
+            Easy3D::DirectionalCubeFace thinBarFaces[6];
+            if (TryGetThinBarFaces(lookupIcon, tileUv, thinBarFaces))
+            {
+                Easy3D::DirectionalCubeItem item;
+                item.Center = center;
+                // Full block width along X (the bar's own long axis, so
+                // adjacent bar blocks connect seamlessly), thin in Y/Z --
+                // see GEThinBarTiles.hpp's own comment for the real
+                // orientation justification.
+                item.Size = Easy3D::CubeBatch::Vector3(1.0f, kThinBarThickness, kThinBarThickness);
+                for (int face = 0; face < 6; ++face)
+                {
+                    item.Faces[face] = thinBarFaces[face];
+                }
+                Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
+                return true;
+            }
+
             if (IsInnerFlatPlateIcon(lookupIcon))
             {
                 Easy3D::PlateItem item;
@@ -377,7 +396,15 @@ namespace GalaxyEggbert::CNA
         // real issue, already fixed independently -- see AppendSpecialGeometry).
         bool NeedsAlphaBlend(int icon)
         {
-            return icon == 30 || icon == 31 ||
+            // Icon 202 (thin-bar, plan.md TILE-055, 2026-07-14): direct
+            // pixel inspection of the real crop found its actual visible
+            // content is a thin stripe near the top of an otherwise fully
+            // transparent 64x64 tile (confirmed via a small script sampling
+            // object-m.png's alpha channel) -- same category of bug as
+            // icons 30/31/the teleporter pillars above: rendering it opaque
+            // shows the surrounding alpha=0 pixels' own RGB (a solid white
+            // block) instead of the real thin-rod content.
+            return icon == 30 || icon == 31 || icon == 202 ||
                    icon == GalaxyEggbert::BlockTypes::Teleport1 || icon == GalaxyEggbert::BlockTypes::Teleport2 ||
                    icon == GalaxyEggbert::BlockTypes::Teleport3 || icon == GalaxyEggbert::BlockTypes::Teleport4;
         }
@@ -408,6 +435,7 @@ namespace GalaxyEggbert::CNA
             Easy3D::DirectionalCubeFace unusedFaces[6];
             return TryGetDirectionalCubeFaces(icon, Easy3D::UvRect{}, Easy3D::UvRect{}, unusedFaces) ||
                    TryGetInnerPillarBoxFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
+                   TryGetThinBarFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
                    IsInnerFlatPlateIcon(icon) ||
                    IsTripleCrossBillboardIcon(icon);
         }
