@@ -1447,14 +1447,23 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       - Real completion also RE-SPAWNS the same pickup at its original position (`ObjectStart`,
         speed=0, static) — a detail missing from `mobile-eggbert-reference/13-object-pickups.md`,
         now implemented (`GEInteractionSystem::RespawnPickupItem()`).
-      - **Found but explicitly out of scope this pass**: real Sucette/Drink require the action
-        button held at contact (`getButtonPressedProperty()==PlayAction`) — this engine currently
-        grants both automatically on contact alone, with no button gate (unlike Shield/Charge/
-        Invert, which really are automatic). A real, separate gap — not implemented here, flagged
-        for a future pass.
+      - **Action-button gate — done as its own follow-up, 2026-07-14 (later the same day,
+        user-requested)**: real Sucette/Drink require the action button held at contact
+        (`getButtonPressedProperty()==PlayAction && setButtonPressedProperty(None)`,
+        Decor.cpp:6025/6053) — this engine previously granted both automatically on contact alone.
+        Fixed via a new `blupiActionPressedEdge` parameter on `GEInteractionSystem::Update()`
+        (edge-detected, same idiom as this engine's own existing switch-activation check —
+        real source's own `setButtonPressedProperty(None)` "consume the press" is this engine's
+        existing per-frame edge-detect, not separately modeled since nothing else in this engine
+        currently double-consumes the same press). Charge(31) deliberately has NO button gate
+        (confirmed: `Decor.cpp:6069-6087` has no `getButtonPressedProperty()` check at all) —
+        real, genuine asymmetry, not an oversight. New tests confirm both the positive case (button
+        held → grants) and the negative case (no button → nothing happens) for Sucette/Drink, plus
+        an explicit "Charge needs no button" confirmation.
       - Verified: new `GEBlupiController`-level tests (all 3 durations including idempotent
         no-op/cancellation-by-death-lock) in `VerifyBlupiMovement`, new `GEInteractionSystem`-level
-        tests (contact position capture, `RespawnPickupItem()`) in `VerifyInteractionSystem`. Full
+        tests (contact position capture, `RespawnPickupItem()`, the action-button gate) in
+        `VerifyInteractionSystem`. Full
         suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
         `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`.
 - [x] `174` Charge/Cloud(31) — gated against ALL other buffs including itself (loosest-guard

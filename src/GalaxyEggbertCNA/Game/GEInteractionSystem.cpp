@@ -554,7 +554,7 @@ namespace GalaxyEggbert::CNA
                                       bool blupiCanGrantShield, bool blupiCanGrantPower,
                                       bool blupiCanGrantCloud, bool blupiCanGrantHide,
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
-                                      bool blupiCanGrantInvert)
+                                      bool blupiCanGrantInvert, bool blupiActionPressedEdge)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
@@ -1782,13 +1782,17 @@ namespace GalaxyEggbert::CNA
                     }
                     break;
                 // Secret powers (plan.md E3D-MIG-170, real Decor.cpp
-                // ~6014-6087) -- all 4 grant on contact here (the real
-                // 2-stage delay/animation before Power/Cloud/Hide actually
-                // activate is NOT modeled, see GEBlupiController::
-                // TriggerPower()'s own comment). Invert/Mirror (ObjectType40,
-                // plan.md PICKUP-011) is a separate real pickup family but
-                // shares the same instant-grant-on-contact shape, handled
-                // right below the 4 powers. Real per-pickup gates (minus
+                // ~6014-6087) -- Shield/Charge/Invert really are automatic
+                // on contact; Sucette/Drink additionally require the real
+                // action button held at contact (`blupiActionPressedEdge`,
+                // Decor.cpp:6025/6053, plan.md `173`, found 2026-07-14).
+                // Power/Cloud/Hide's own real 2-stage grab/freeze/complete
+                // delay is handled by the caller (GEBlupiController::
+                // TriggerPickupFreeze(), since this class has no access to
+                // it) -- see the *PickupX/Y/Z() getters below. Invert/Mirror
+                // (ObjectType40, plan.md PICKUP-011) is a separate real
+                // pickup family sharing the same instant-grant-on-contact
+                // shape as Shield/Charge. Real per-pickup gates (minus
                 // vehicle-mode clauses that don't exist here) are passed in
                 // from the caller's own GEBlupiController state
                 // (blupiCanGrantShield/Power/Cloud/Hide/Invert) since this
@@ -1802,7 +1806,7 @@ namespace GalaxyEggbert::CNA
                     }
                     break;
                 case ObjectType::ObjectType26: // suction-cup ("Sucette" -> Power)
-                    if (blupiCanGrantPower)
+                    if (blupiCanGrantPower && blupiActionPressedEdge)
                     {
                         obj.active = false;
                         powerGrantedThisFrame_ = true;
@@ -1812,7 +1816,7 @@ namespace GalaxyEggbert::CNA
                     }
                     break;
                 case ObjectType::ObjectType30: // drink ("Drink" -> Hide)
-                    if (blupiCanGrantHide)
+                    if (blupiCanGrantHide && blupiActionPressedEdge)
                     {
                         obj.active = false;
                         hideGrantedThisFrame_ = true;

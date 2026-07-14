@@ -155,9 +155,6 @@ menus, though still missing a visible 3D Blupi model.
   already-confirmed `ObjectType12` (crate); deliberately not guessed through.
 - Idle "fidget" periodic sounds (`plan.md #085`) — blocked on new `AnimState` values this engine
   doesn't have yet (same prerequisite as the 3D Blupi model work).
-- Sucette(26)/Drink(30) pickups grant automatically on contact alone — real source requires the
-  action button held at contact too (found 2026-07-14 while implementing `plan.md 173`, not
-  implemented this pass; Shield/Charge/Invert really are automatic, so this isn't a uniform gap).
 - `GalaxyEggbertSimple3D` — historical reference only, not buildable/maintained (see above).
 
 ## 3. Recent changes
@@ -165,6 +162,18 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Added the real Sucette(26)/Drink(30) action-button gate (`plan.md 173` follow-up).** Real
+  source requires the action button held at contact
+  (`getButtonPressedProperty()==PlayAction`, Decor.cpp:6025/6053) — this engine previously granted
+  both automatically on contact alone (found while implementing the 2-stage delay below, fixed as
+  a separate follow-up the same day). New `blupiActionPressedEdge` parameter on
+  `GEInteractionSystem::Update()` (edge-detected, same idiom as this engine's existing switch-
+  activation check), captured in `GalaxyEggbertCnaGame.cpp` at the same point the switch check
+  already computes it. Charge(31) deliberately keeps NO button gate — confirmed real source has no
+  `getButtonPressedProperty()` check for it at all, a genuine asymmetry. New tests confirm both the
+  positive (button held → grants) and negative (no button → nothing happens) cases. Full suite: 78
+  tests on `build-cna` (99%, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+  failure), 73/73 (100%) on `build-cna-vulkan`.
 - **Implemented the real Sucette(26)/Drink(30)/Charge(31) 2-stage pickup delay (`plan.md 173`).**
   Real exact durations (not the earlier "~32/36" approximation): Sucette=32 ticks(1.6s),
   Drink=36(1.8s), Charge=64(3.2s) — all three genuinely freeze Blupi for the real duration, a
@@ -176,9 +185,9 @@ long continuous autonomous session); each item is its own commit.
   now play at contact (Sucette ch50/Drink ch57/Charge ch58); the real completion sounds
   (ch44/ch62/ch55) moved from contact-time to the actual deferred point. Also found and
   implemented a detail missing from the reference doc: completion re-spawns the same pickup at its
-  original position (real `ObjectStart`, static). Found but explicitly deferred: real Sucette/Drink
-  require the action button held at contact — this engine still grants them automatically on
-  contact alone, a real, separate, flagged gap. Verified: new tests at both the
+  original position (real `ObjectStart`, static). Also found (and fixed the same day as a separate
+  follow-up, see the entry above): real Sucette/Drink require the action button held at contact.
+  Verified: new tests at both the
   `GEBlupiController` level (durations, freeze, cancellation-by-death-lock) and the
   `GEInteractionSystem` level (contact position capture, item respawn). Full suite: 78 tests on
   `build-cna` (99%, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73

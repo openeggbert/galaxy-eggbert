@@ -2858,7 +2858,16 @@ int main(int argc, char** argv)
         sucette.posStartY = sucette.posEndY = sucette.currentY = 1.0f;
         sucette.posStartZ = sucette.posEndZ = sucette.currentZ = 34.0f;
         pickupWorld.GetMobileObjectsMutable().push_back(sucette);
+        // Real Sucette gate requires the action button held at contact (plan.md `173`, found
+        // 2026-07-14) -- touching it WITHOUT the button (blupiActionPressedEdge=false, the
+        // default) must not grant anything.
         pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound);
+        check(!pickupInteraction.PowerGrantedThisFrame(),
+              "touching Sucette(26) WITHOUT the action button does not grant Power (real gate)");
+        // Now with the button held -- blupiActionPressedEdge=true, every other trailing param
+        // left at its real default.
+        pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound, false, false, 0, 0, false, true,
+                                  true, true, true, false, false, false, true, /*blupiActionPressedEdge=*/true);
         check(pickupInteraction.PowerGrantedThisFrame(), "touching Sucette(26) sets PowerGrantedThisFrame()");
         check(std::fabs(pickupInteraction.PowerPickupX() - 12.0f) < 0.01f &&
                   std::fabs(pickupInteraction.PowerPickupY() - 1.0f) < 0.01f &&
@@ -2871,7 +2880,12 @@ int main(int argc, char** argv)
         drink.posStartY = drink.posEndY = drink.currentY = 1.0f;
         drink.posStartZ = drink.posEndZ = drink.currentZ = 41.0f;
         pickupWorld.GetMobileObjectsMutable().push_back(drink);
+        // Same real action-button gate as Sucette above -- without it, nothing grants.
         pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound);
+        check(!pickupInteraction.HideGrantedThisFrame(),
+              "touching Drink(30) WITHOUT the action button does not grant Hide (real gate)");
+        pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound, false, false, 0, 0, false, true,
+                                  true, true, true, false, false, false, true, /*blupiActionPressedEdge=*/true);
         check(pickupInteraction.HideGrantedThisFrame(), "touching Drink(30) sets HideGrantedThisFrame()");
         check(std::fabs(pickupInteraction.HidePickupX() - 20.0f) < 0.01f &&
                   std::fabs(pickupInteraction.HidePickupY() - 1.0f) < 0.01f &&
@@ -2884,8 +2898,12 @@ int main(int argc, char** argv)
         charge.posStartY = charge.posEndY = charge.currentY = 1.0f;
         charge.posStartZ = charge.posEndZ = charge.currentZ = 9.0f;
         pickupWorld.GetMobileObjectsMutable().push_back(charge);
+        // Deliberately NO action-button param here (defaults to false) -- real Charge grants
+        // automatically on contact alone, unlike Sucette/Drink above (confirmed via direct source
+        // read, Decor.cpp:6069-6087 has no getButtonPressedProperty() check at all).
         pickupInteraction.Update(dt, pickupWorld, 7.0f, 1.0f, 9.0f, 0.0f, sound);
-        check(pickupInteraction.CloudGrantedThisFrame(), "touching Charge(31) sets CloudGrantedThisFrame()");
+        check(pickupInteraction.CloudGrantedThisFrame(),
+              "touching Charge(31) sets CloudGrantedThisFrame() with NO action button needed (real gate)");
         check(std::fabs(pickupInteraction.CloudPickupX() - 7.0f) < 0.01f &&
                   std::fabs(pickupInteraction.CloudPickupY() - 1.0f) < 0.01f &&
                   std::fabs(pickupInteraction.CloudPickupZ() - 9.0f) < 0.01f,

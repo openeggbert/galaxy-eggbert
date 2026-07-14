@@ -230,7 +230,14 @@ namespace GalaxyEggbert::CNA
                     bool blupiCanGrantShield = true, bool blupiCanGrantPower = true,
                     bool blupiCanGrantCloud = true, bool blupiCanGrantHide = true,
                     bool blupiFirePressed = false, bool blupiCanFire = false,
-                    bool blupiCloudActive = false, bool blupiCanGrantInvert = true);
+                    bool blupiCloudActive = false, bool blupiCanGrantInvert = true,
+                    // Real Sucette(26)/Drink(30) gate (plan.md `173`, found while implementing the
+                    // 2-stage pickup delay): `getButtonPressedProperty()==PlayAction`,
+                    // Decor.cpp:6025/6053 -- unlike Shield/Charge/Invert, which really are
+                    // automatic on contact. Edge-detected (true only the frame the button is FIRST
+                    // pressed, same idiom as this engine's own switch-activation check), passed in
+                    // since this class has no input-device access of its own.
+                    bool blupiActionPressedEdge = false);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame

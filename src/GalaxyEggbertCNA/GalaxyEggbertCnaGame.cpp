@@ -1614,7 +1614,14 @@ namespace GalaxyEggbert::CNA
             // needed here: TryActivateSwitch() itself is the single
             // authoritative check (grounded + standing on a switch tile),
             // no separate before/after state to compare.
-            if (actionPressed && !actionKeyWasDown_)
+            // Captured into a local (not just the `if` condition below)
+            // since Sucette/Drink's own real action-button gate (plan.md
+            // `173`) needs this SAME edge-detected value passed into
+            // interaction_.Update() further down, by which point
+            // actionKeyWasDown_ has already been overwritten with this
+            // frame's raw actionPressed (see its own assignment below).
+            const bool actionPressedEdge = actionPressed && !actionKeyWasDown_;
+            if (actionPressedEdge)
             {
                 if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
                         blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
@@ -1813,7 +1820,7 @@ namespace GalaxyEggbert::CNA
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
-                                 firePressed, canFire, cloudActive, canGrantInvert);
+                                 firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge);
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
             // recorded a this-frame voyage request (GEInteractionSystem has
