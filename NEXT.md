@@ -559,8 +559,14 @@ judgment (§9).
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task."
 
-Each item above is independently small and safe to pick up in any order, except #16 (its own
-multi-task effort) and #9 (blocked on a render decision) and #8 (blocked on door persistence).
+**Status as of 2026-07-14: every remaining item above now needs either a human decision or its own
+dedicated multi-task session** — none are a safe "next smallest task" to pick up opportunistically:
+#8 (blocked on door persistence, low value even if done), #9 (blocked on a render decision), #13
+(icon IDs now known, but the movement-mode implementation itself is comparable in scope to the
+vehicle system — a real, sizable feature, not a quick addition), #15 (blocked on a data-table
+transcription approval decision), #16 (explicitly its own multi-task effort). A future session
+should either get one of these blockers resolved by the user, or deliberately scope and commit to
+implementing #13 or #16 as their own focused effort rather than an opportunistic pass.
 
 ## 9. Do not do yet
 
