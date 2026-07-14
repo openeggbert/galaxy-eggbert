@@ -1567,6 +1567,7 @@ int main(int argc, char** argv)
 
         bool selfDestructed = false;
         int framesToDestruct = -1;
+        float destructX = 0.0f, destructY = 0.0f, destructZ = 0.0f;
         for (int i = 0; i < 250 && !selfDestructed; ++i)
         {
             interaction.Update(dt, world, beyondWallX, fY, fZ, 0.0f, sound);
@@ -1575,10 +1576,30 @@ int main(int argc, char** argv)
             {
                 selfDestructed = true;
                 framesToDestruct = i;
+                destructX = current->currentX;
+                destructY = current->currentY;
+                destructZ = current->currentZ;
             }
         }
         std::cout << "Follower self-destructed after " << framesToDestruct << " frame(s) approaching the wall" << std::endl;
         check(selfDestructed, "a homing follower self-destructs when its next step would land inside solid terrain");
+        check(interaction.SmallShakeTriggeredThisFrame(),
+              "the follower's blocked-path self-destruct triggers SmallShake (plan.md CAM-008, a site the "
+              "earlier camera-shake audit missed)");
+
+        // Real debris flash (plan.md VISUAL-008, ObjectType9) spawned at
+        // the follower's own position at the moment of self-destruct.
+        int debrisFlashCount = 0;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType9 && obj.currentX == destructX &&
+                obj.currentY == destructY && obj.currentZ == destructZ)
+            {
+                ++debrisFlashCount;
+            }
+        }
+        check(debrisFlashCount == 1,
+              "the follower's blocked-path self-destruct spawns an ObjectType9 debris flash at its position");
     }
 
     // 15. GEWorldRuntime::IsTempPassableAtPhase() (plan.md E3D-MIG-146) --
@@ -1841,6 +1862,60 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType10, 2) == 34, "ObjectType10 icon at phase=2 is the real table_explo3[2]=34");
         check(GetObjIcon(ObjectType::ObjectType10, 14) == 35, "ObjectType10 icon at phase=14 is the real table_explo3[14]=35 (the second oscillation phase)");
         check(GetObjIcon(ObjectType::ObjectType10, 19) == 35, "ObjectType10 icon at phase=19 is the real table_explo3[19]=35 (last frame before self-delete)");
+    }
+
+    // 17.6c. Follower-blocked-path debris flash self-delete timing + icon
+    // formula (plan.md VISUAL-008, ObjectType9) -- the real spawn (via
+    // the follower blocked-path self-destruct) is already exercised in
+    // test 14b above; this isolates the self-delete-at-phase-20 logic and
+    // the `-1` blank-frame icon values on their own.
+    {
+        GEWorldRuntime explo2World;
+        GEInteractionSystem explo2Interaction;
+        constexpr float dt = 1.0f / 20.0f;
+        constexpr float ex = 45.0f, ey = 1.0f, ez = 45.0f;
+
+        MobileObjSpec flash;
+        flash.type = ObjectType::ObjectType9;
+        flash.active = true;
+        flash.phase = 0.0f;
+        flash.currentX = flash.posStartX = flash.posEndX = ex;
+        flash.currentY = flash.posStartY = flash.posEndY = ey;
+        flash.currentZ = flash.posStartZ = flash.posEndZ = ez;
+        explo2World.GetMobileObjectsMutable().push_back(flash);
+
+        const auto countFlashesAt = [&explo2World, ex, ey, ez]()
+        {
+            int count = 0;
+            for (const auto& obj : explo2World.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType9 && obj.currentX == ex &&
+                    obj.currentY == ey && obj.currentZ == ez)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+
+        for (int i = 0; i < 19; ++i)
+        {
+            explo2World.Update(dt);
+        }
+        explo2Interaction.Update(dt, explo2World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 1, "the debris flash is still active just before its real phase-20 self-delete");
+
+        explo2World.Update(dt);
+        explo2Interaction.Update(dt, explo2World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 0, "the debris flash self-deletes once phase reaches the real 20-tick lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-008, fixed
+        // 2026-07-14 -- real table_explo2 has real `-1` blank-frame
+        // sentinels interspersed throughout, was wrongly ascending
+        // arithmetic before).
+        check(GetObjIcon(ObjectType::ObjectType9, 0) == 12, "ObjectType9 icon at phase=0 is the real table_explo2[0]=12");
+        check(GetObjIcon(ObjectType::ObjectType9, 1) == -1, "ObjectType9 icon at phase=1 is the real table_explo2[1]=-1 (a blank frame)");
+        check(GetObjIcon(ObjectType::ObjectType9, 19) == 13, "ObjectType9 icon at phase=19 is the real table_explo2[19]=13 (last frame before self-delete)");
     }
 
     // 17.7. Pollution puff (plan.md VISUAL-013, ObjectType36) -- vehicle

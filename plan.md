@@ -3021,9 +3021,9 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       as VISUAL-006 — no real blink-at-low-time effect found, only the sparkle-overlay behavior
       already noted.**
 - [x] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px,
-      Explosion channel) — **3 of 4 types done, `ObjectType9` remains unspawned/unfixed (see its
-      own note below)**. ObjectType11 (Fan-hit shockwave), ObjectType8 (dynamite-blast flash /
-      generic-hazard explosion flash), and ObjectType10 (fish/bird explosion flash) are
+      Explosion channel) — **all 4 types done as of 2026-07-14**. ObjectType11 (Fan-hit
+      shockwave), ObjectType8 (dynamite-blast flash / generic-hazard explosion flash), ObjectType10
+      (fish/bird explosion flash), and ObjectType9 (follower-blocked-path debris flash) are all
       implemented.
       **ObjectType11** — the cosmetic particle spawned alongside CAM-009's BigShake (see CAM-009's
       writeup, now updated). Real spawn site confirmed via direct source read (`Decor.cpp:5467`,
@@ -3081,14 +3081,28 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       for several other tests this session. 5 new `VerifyInteractionSystem` checks (both real
       spawn sites, isolated self-delete timing, corrected icon values) + the 1 existing test fixed
       + full regression on both backends, all pass.
-      **ObjectType9 remains NOT done** — its real table (`table_explo2`) has `-1` "invisible
-      frame" sentinel values (same category the bullet-splat effect's `table_sploutch2/3` already
-      needed and got real renderer support for, so that blocker no longer applies) but, unlike
-      8/10/11, no real spawn site for `ObjectType9` is wired in this engine yet (only an
-      already-flagged comment in `GEInteractionSystem.cpp`'s follower-blocked-path-self-destruct
-      block references it as unspawned) — fixing its formula now would still be speculative work
-      on unreachable code; a real follow-up once/if that follower-destruct spawn is ever wired.
-      Not live-visually re-verified for 8/10/11 (same already-proven element.png/explo.png
+      **ObjectType9 — done 2026-07-14 (found while re-reading the follower-blocked-path
+      self-destruct block, already this engine's own existing `ObjectType97` homing-follower
+      logic):** the real spawn site (`Decor.cpp:8057-8064`, `TestPath` fails ->
+      `ObjectDelete` + `ObjectStart(end, ObjectType9, 0)`) was already correctly identified in an
+      earlier session comment, which claimed it was blocked on the renderer's missing `-1`
+      blank-frame support — that blocker was quietly resolved by the bullet-splat effect
+      (VISUAL-009) earlier the same day but the follower comment was never revisited until now.
+      **Also found at this exact site while fixing it: the real self-destruct ALSO triggers
+      `SmallShake`** (`m_decorAction = DecorAction::SmallShake`, `Decor.cpp:8062-8063`) — a site
+      the earlier CAM-008 SmallShake-trigger-site audit missed entirely (it was scoped around the
+      "7 near-identical dynamite-blast sites" description and didn't crawl every
+      `DecorAction::SmallShake` assignment in the file); now wired too. Real self-delete at
+      `phase>=20` (`Decor.cpp:8407-8417`). Found and fixed a SEVENTH `GEObjectIcons.cpp` bug: wrong
+      divisor and wrong ascending-arithmetic assumption — real `table_explo2` (`Tables.cpp:
+      1377-1381`) has real `-1` blank-frame sentinels interspersed throughout, transcribed verbatim
+      as `kExplo2[20]`, reusing the already-existing renderer `-1`-skip support with no further
+      changes needed. 7 new `VerifyInteractionSystem` checks (real spawn site now also verifies
+      the newly-wired SmallShake, isolated self-delete timing, corrected icon values including a
+      blank frame) + full regression on both backends, all pass.
+
+      VISUAL-008 is now the first particle-effect checklist item completed at 4-of-4 real types.
+      Not live-visually re-verified for any of the 4 (same already-proven element.png/explo.png
       billboard rendering path as every other particle effect this session).
 - [x] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png` —
       **done 2026-07-14, description corrected**: despite the `ObjectType.hpp` enum's own "water

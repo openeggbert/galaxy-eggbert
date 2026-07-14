@@ -720,6 +720,19 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Follower-blocked-path debris flash (plan.md VISUAL-008,
+            // ObjectType9) -- purely cosmetic, same real spawn shape as
+            // ObjectType8/10 above. Real self-delete at phase>=20
+            // (`Decor.cpp:8407-8417`).
+            if (obj.type == ObjectType::ObjectType9)
+            {
+                if (obj.phase >= 20.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
             // Pollution puff (plan.md VISUAL-013, ObjectType36) -- purely
             // cosmetic. Real self-delete at phase>=16 (`Decor.cpp:8563-
             // 8567`). Unlike the self-contained blocks above, this does NOT
@@ -1282,21 +1295,24 @@ namespace GalaxyEggbert::CNA
             // branch runs -- no separate type exclusion needed.
             //
             // Blocked-path self-destruct (real: `TestPath` fails ->
-            // `ObjectDelete` + a real `ObjectType9` explosion + channel 10)
-            // is modeled as a single-point solid check at the destination
-            // cell via `GEBlupiController::IsSolidAt` (this file's own
-            // existing tile-grid convention, e.g. `SearchAirDistance`) --
-            // real `TestPath` sweeps a rectangle, not a point, same
-            // simplification as every other collision check in this file.
-            // The cosmetic `ObjectType9` debris object is deliberately NOT
-            // spawned here -- a particle-effects system now exists (Invert
-            // burst, treasure sparkle, Fan-hit/dynamite-blast flash, all
-            // 2026-07-14), but `ObjectType9`'s own `GetObjIcon()` formula
-            // is still unaudited/unfixed (real `table_explo2` has `-1`
-            // blank-frame sentinels the renderer doesn't handle yet, see
-            // `GEObjectIcons.cpp`) -- a real, scoped follow-up, not done
-            // here; only the death itself and its sound are ported.
-            // `continue`s on self-destruct so an already-destroyed
+            // `ObjectDelete` + a real `ObjectType9` explosion + channel 10,
+            // `Decor.cpp:8025-8064`) is modeled as a single-point solid
+            // check at the destination cell via `GEBlupiController::
+            // IsSolidAt` (this file's own existing tile-grid convention,
+            // e.g. `SearchAirDistance`) -- real `TestPath` sweeps a
+            // rectangle, not a point, same simplification as every other
+            // collision check in this file. The cosmetic `ObjectType9`
+            // debris flash (plan.md VISUAL-008) and real `SmallShake`
+            // camera shake (`m_decorAction = DecorAction::SmallShake`,
+            // `Decor.cpp:8062-8063`, plan.md CAM-008 -- this exact site was
+            // missed by that earlier audit) are both now modeled too,
+            // found and fixed 2026-07-14 (this class's own real `-1`
+            // blank-frame renderer support, added for the bullet-splat
+            // effect, already covers `table_explo2`'s own sentinels). Real
+            // `end.X/Y -= 34` pre-offset before the spawn is the same 2D
+            // sprite-corner-anchoring artifact already dismissed for every
+            // other real `ObjectStart(..., 0)` site this session -- spawns
+            // at the follower's own position instead. `continue`s on self-destruct so an already-destroyed
             // follower can't also register a contact-kill against Blupi
             // this same frame via the generic hazard check below; falls
             // through (no `continue`) on a successful step, since that
@@ -1318,6 +1334,9 @@ namespace GalaxyEggbert::CNA
                 {
                     obj.active = false;
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                    AppendExplosionFlash(ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
+                                          pendingSpawns);
+                    smallShakeTriggeredThisFrame_ = true;
                     continue;
                 }
                 obj.currentX = obj.posStartX = obj.posEndX = endX;

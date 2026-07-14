@@ -107,12 +107,13 @@ menus, though still missing a visible 3D Blupi model.
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
   cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
-- The first 10 real particle effects (Invert start/stop 4-direction burst, treasure sparkle (now
+- The first 11 real particle effects (Invert start/stop 4-direction burst, treasure sparkle (now
   wired to key pickups too), Fan-hit shockwave flash, dynamite-blast/generic-hazard explosion
-  flash, fish/bird explosion flash, Pollution puff (4 vehicle types), Shield trail, Power/Magic
-  trail, bullet-hit splat effect, teleporter arc, all added 2026-07-14) — logic and positions
-  independently confirmed correct via unit tests; live visual confirmation was attempted for the
-  first two but inconclusive (see §3's own note); the rest were not re-attempted (same rendering
+  flash, fish/bird explosion flash, follower-blocked-path debris flash, Pollution puff (4 vehicle
+  types), Shield trail, Power/Magic trail, bullet-hit splat effect, teleporter arc, all added
+  2026-07-14) — logic and positions independently confirmed correct via unit tests; live visual
+  confirmation was attempted for the first two but inconclusive (see §3's own note); the rest
+  were not re-attempted (same rendering
   path).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
@@ -153,6 +154,20 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented ObjectType9 (follower-blocked-path debris flash) — the ELEVENTH and final real
+  particle effect, completing VISUAL-008 at 4-of-4 real types.** The real spawn site (the
+  follower-blocked-path self-destruct, already this engine's own existing homing-follower logic)
+  had already been correctly identified in an earlier comment, which claimed it was blocked on the
+  renderer's `-1` blank-frame support — that blocker was actually resolved by the bullet-splat
+  effect earlier the same day, but the comment was never revisited. Also found, while re-reading
+  this exact site: the real self-destruct ALSO triggers `SmallShake` — a real camera-shake trigger
+  site the earlier CAM-008 audit missed entirely, now wired too. Fixed a seventh
+  `GEObjectIcons.cpp` bug (`table_explo2` has real `-1` blanks throughout). 7 new
+  `VerifyInteractionSystem` checks (spawn + newly-wired SmallShake, self-delete timing, corrected
+  icon values) + full regression on both backends, all pass. **Every particle effect this session
+  set out to build is now done** — the only remaining backlog items are the Voyage system (a
+  genuinely different 2D-screen-space HUD-icon-flight architecture) and Hide's afterimage trail
+  (blocked on a visible Blupi model this engine doesn't have).
 - **Completed VISUAL-008's explosion-flash family — found a second real ObjectType8 trigger site
   and implemented ObjectType10 (fish/bird explosion flash)**, the TENTH real particle effect.
   Direct source read found the SAME cosmetic flash spawned at the generic-hazard contact-kill
@@ -844,23 +859,21 @@ judgment (§9).
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
-    2026-07-14: the user directed a start on this system; 10 slices are now done** — Invert
+    2026-07-14: the user directed a start on this system; 11 slices are now done** — Invert
     start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`, now wired to
     key pickups too — see §3's newer entry, a backwards "door model" assumption from earlier the
     same day is corrected), Fan-hit shockwave flash, dynamite-blast/generic-hazard explosion flash,
-    and fish/bird explosion flash (`VISUAL-008`, now 3 of 4 types done — only `ObjectType9`
-    remains, see §3's own newer entry), Pollution puff (`VISUAL-013`, all 4 vehicle types), the
-    Shield/Power magic trails (`VISUAL-011`/`017`), the bullet-hit splat effect (`VISUAL-009`,
-    description corrected — real trigger is a bullet contact-kill, not "water entry"), and the
-    teleporter arc (`VISUAL-010`, description corrected — real trigger is the teleporter, not "a
-    charged attack"), see §3's own writeups. Real `SearchDistRight()` short-circuits to a flat 500px
+    fish/bird explosion flash, and follower-blocked-path debris flash (`VISUAL-008`, now all 4 of 4
+    types done, the first particle-effect item completed in full — see §3's own newer entry),
+    Pollution puff (`VISUAL-013`, all 4 vehicle types), the Shield/Power magic trails
+    (`VISUAL-011`/`017`), the bullet-hit splat effect (`VISUAL-009`, description corrected — real
+    trigger is a bullet contact-kill, not "water entry"), and the teleporter arc (`VISUAL-010`,
+    description corrected — real trigger is the teleporter, not "a charged attack"), see §3's own
+    writeups. Real `SearchDistRight()` short-circuits to a flat 500px
     for types 36/39/41/42/93 (no raycast needed) — investigated type 93 directly
     (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and found it's actually gated behind the whole
     not-yet-built "Voyage" pickup-flight-animation system (plan.md `158`), NOT a simple standalone
     spawn like the others — plan.md's earlier note calling it "simple" was wrong, corrected.
-    `ObjectType9`'s `GetObjIcon()` formula is still flagged (not fixed) — same category of bug as
-    the fixed ones, but it remains entirely unspawned in this engine, so fixing its formula now
-    would be speculative work on unreachable code; a real follow-up once/if it's ever wired.
     Invert/treasure's own posStart->posEnd slide used to duplicate the engine's
     existing generic `AdvancePatrolStep()` machinery instead of reusing it (found while building
     Pollution puff, the first effect to use that machinery directly) — cleaned up the same day
@@ -869,14 +882,14 @@ judgment (§9).
     behavior change). The bullet-splat effect also required the first render-side change any
     particle effect this session has needed: real `-1` "invisible frame" sentinel support in the
     explo.png billboard pass (skip drawing when the icon is negative), reused as-is for the
-    teleporter arc's own 128-frame scattered table with no further renderer changes needed. ~9
-    items remain overall, and every real particle effect with a genuinely "simple" single-site
-    trigger (burst, single-instance flash, distance-triggered breadcrumb, contact-triggered splat,
-    or state-triggered arc) is now done — remaining items are either genuinely harder (the Voyage
-    system, a full 2D-screen-space HUD-icon-flight animation distinct from this engine's 3D
-    `MobileObjSpec` system entirely; Hide's own afterimage trail which needs a visible Blupi model
-    this engine doesn't have) or blocked on the still-unaudited `ObjectType9` formula (no real
-    spawn site wired for it yet).
+    teleporter arc's own 128-frame scattered table and, later, `ObjectType9`'s own blanks too, with
+    no further renderer changes needed after the first time. Also found (while fixing
+    `ObjectType9`) a real SmallShake trigger site the earlier CAM-008 audit missed entirely (the
+    follower-blocked-path self-destruct), now wired. ~8 items remain overall, and EVERY particle
+    effect this session set out to build is now done — remaining items are either genuinely harder
+    (the Voyage system, a full 2D-screen-space HUD-icon-flight animation distinct from this
+    engine's 3D `MobileObjSpec` system entirely) or blocked on a visible Blupi model this engine
+    doesn't have yet (Hide's own afterimage trail).
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

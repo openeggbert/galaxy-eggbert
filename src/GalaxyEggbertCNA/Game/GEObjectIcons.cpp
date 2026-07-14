@@ -30,6 +30,15 @@ namespace GalaxyEggbert::CNA
             32,32,34,34,32,32,34,34,32,32,
             34,34,32,32,35,35,32,32,35,35
         };
+        // Real table_explo2 (Tables.cpp:1377-1381, follower-blocked-path
+        // debris flash fix, 2026-07-14) -- 20-frame scattered debris with
+        // real `-1` "no sprite this tick" entries interspersed throughout
+        // (reuses the same renderer `-1`-skip support added for the
+        // bullet-splat effect), NOT a simple ascending range.
+        static const int kExplo2[20] = {
+            12,-1,13,14,-1,15,13,-1,14,15,
+            12,-1,13,15,14,14,-1,14,15,13
+        };
         // Real table_explo1 (Tables.cpp:1368-1374, dynamite-blast flash
         // fix, 2026-07-14) -- the real 39-frame primary blast sequence
         // repeatedly bounces back and forth between adjacent values
@@ -247,7 +256,12 @@ namespace GalaxyEggbert::CNA
             // and wrong ascending-arithmetic assumption -- real
             // table_explo1 bounces back and forth (see kExplo1 above).
             case ObjectType::ObjectType8:   return kExplo1[p % 39];
-            case ObjectType::ObjectType9:   return 12 + (p / 6) % 20;
+            // Fixed 2026-07-14 (plan.md VISUAL-008, follower-blocked-path
+            // debris flash): wrong divisor (6 instead of the real
+            // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
+            // assumption -- real table_explo2 has real `-1` blank-frame
+            // sentinels interspersed throughout (see kExplo2 above).
+            case ObjectType::ObjectType9:   return kExplo2[p % 20];
             // Fixed 2026-07-14 (plan.md VISUAL-008, fish/bird explosion
             // flash): wrong divisor (6 instead of the real
             // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
