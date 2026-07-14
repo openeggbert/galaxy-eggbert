@@ -2626,16 +2626,34 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 
 ### 2.8 Score & Progression
 
+**Researched 2026-07-14 — SCORE-001 through SCORE-006's premise appears INVENTED, not real.**
+Grepped all of `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and `include/WindowsPhoneSpeedyBlupi/`
+for `score`/`Score`/`m_score`/`GetScore`/`SetScore`/`AddScore` — no actual game-state score
+variable exists anywhere. The only hits are UI label text (`TX_BUTTON_RANKING`,
+`MyResource.cpp:110,317,453,587`) and a `Def::Phase::Ranking` screen name (`Def.hpp:65`,
+`Game1.cpp:94,347-351`) — a gamer/profile stats screen name, not a numeric score mechanic.
+`GameData.hpp`'s save-format class documents its entire byte layout explicitly (lines 12-39:
+global header + per-gamer lives/lastWorld/200 door-state bytes) — no score field anywhere in 640
+bytes of save data. The specific point values below (10/25/50/50/50/100) are not traceable to any
+real source at all — **do NOT implement SCORE-001 through SCORE-006** without the user's own
+confirmation that a real score mechanic exists; per CLAUDE.md's "no mechanic invented by Claude"
+rule, this looks like an invented feature from early documentation, not a verified port target.
+This is a harder block than the data-table-transcription items elsewhere (camera shake, particle
+tables) — those at least have *real* values gated on copy-approval; here there is nothing real
+found to copy. The rest of this section (mission numbering/hub progression/save-linked
+progression, SCORE-013 onward) was NOT specifically re-verified this pass — treat as unconfirmed
+pending its own source check, not as confirmed real either.
+
 Not started in CNA beyond what's implied by the interactive-object system's counting (treasures
 collected, egg cap). No score numbers, HUD display, win/lose screen, or save-linked progression
 exist yet. All items reset to `[ ]`.
 
-- [ ] SCORE-001 — +10 score per treasure collected
-- [ ] SCORE-002 — +25 score per enemy stomped
-- [ ] SCORE-003 — +50 score per key collected
-- [ ] SCORE-004 — +50 score per egg collected (mobile-eggbert: ch3 + life + score — channel corrected, see §7 note)
-- [ ] SCORE-005 — +50 score per drink collected
-- [ ] SCORE-006 — +100 bonus when all treasures collected (all-treasures bonus)
+- [ ] SCORE-001 — ~~+10 score per treasure collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
+- [ ] SCORE-002 — ~~+25 score per enemy stomped~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
+- [ ] SCORE-003 — ~~+50 score per key collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
+- [ ] SCORE-004 — ~~+50 score per egg collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation** (mobile-eggbert: ch3 + life — channel corrected, see §7 note; the "+ score" part is the unconfirmed piece)
+- [ ] SCORE-005 — ~~+50 score per drink collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
+- [ ] SCORE-006 — ~~+100 bonus when all treasures collected~~ **premise unconfirmed/likely invented, see note above — do not implement without user confirmation**
 - [ ] SCORE-007 — High score per gamer slot persisted
 - [ ] SCORE-008 — Level elapsed timer displayed in HUD
 - [ ] SCORE-009 — Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)

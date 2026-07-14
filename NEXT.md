@@ -607,6 +607,12 @@ commit to implementing #16 as its own focused effort rather than an opportunisti
 - **Do not attempt the exit-code-1-on-window-close fix** — the user already explicitly declined it.
 - **Do not design or build the real 3D Blupi model** — blocked on the user providing an asset;
   don't speculate about its look/rig in the meantime.
+- **Do not implement `plan.md` SCORE-001 through SCORE-006** (numeric score-per-pickup) —
+  researched 2026-07-14: no `score`/`Score` game-state variable exists anywhere in real
+  mobile-eggbert source, and `GameData.hpp`'s entire 640-byte save layout has no score field. The
+  specific point values (+10/+25/+50/+50/+50/+100) are not traceable to any real source at all —
+  this looks like an invented mechanic from early documentation, not a verified port target. See
+  `plan.md` §2.8 for full detail. Needs the user's own confirmation before any of it is built.
 - **Do not broadly refactor `GEInputPad`/`GEInteractionSystem`/`GEBlupiController`** — they are
   large, working, and have many call sites; prefer small, targeted, well-tested additions over
   restructuring.
