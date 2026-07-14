@@ -589,6 +589,24 @@ own dedicated multi-task session:** #8 (blocked on door persistence, low value e
 session should either get one of these blockers resolved by the user, or deliberately scope and
 commit to implementing #16 as its own focused effort rather than an opportunistic pass.
 
+**Further update, 2026-07-14 (later the same day):** shipped `TILE-055` (icon-202 thin-bar render
+geometry, the follow-up to #13/TILE-045) — see §3. Then did a thorough round of candidate-hunting
+for the next small opportunistic task and closed out several dead ends with source-verified
+corrections (all pushed): Cloud's `BLUPI-108` line was stale (real effect already shipped as
+`BlupiElectro`); `BLUPI-111` Ghost-mode cheat is real but has no player-facing trigger anywhere in
+real source; `BLUPI-126/127/131` "stomp kill" is an invented Mario-style mechanic with zero source
+support; a follow-up research fork's own `ENEMY-CONTACT-001` claim ("no enemy contact detection
+exists") was itself checked and found WRONG — retracted, since `GEInteractionSystem.cpp` already
+implements comprehensive contact handling for every real enemy case; and the entire particle/
+visual-effects backlog (§7.5, `VISUAL-001..007`) is either data-table-blocked or has no confirmed
+real source at all (likely invented, same category as SCORE). **No further small, safe,
+unblocked, real task was found this pass.** Every remaining checklist item needs either explicit
+user approval (data-table transcription for particle effects/camera shake) or the user's own
+decision (Ghost-mode trigger, AscenseurVertigo's render choice, Saw blade orientation, or
+committing to #16 as its own dedicated multi-task effort). A future session should check with the
+user on one of these before continuing, or re-run this same discovery process in case a fresh look
+turns up something this pass missed.
+
 ## 9. Do not do yet
 
 - **Do not guess at the Saw blade orientation a 4th time without the user's own visual input** —
