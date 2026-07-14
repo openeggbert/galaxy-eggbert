@@ -1566,6 +1566,52 @@ int main(int argc, char** argv)
               "TryConsumeFan() is a no-op the second time -- the fan is already consumed");
     }
 
+    // 17.5. Fan-hit shockwave flash (plan.md VISUAL-008-adjacent,
+    // ObjectType11) -- a single instance spawned exactly at the given
+    // position (no offset), real phase>=9 self-delete, corrected
+    // table_explo4 icon values.
+    {
+        GEWorldRuntime flashWorld;
+        GEInteractionSystem flashInteraction;
+        constexpr float fx = 12.0f, fy = 1.0f, fz = 12.0f;
+        constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
+
+        flashInteraction.SpawnFanHitFlash(flashWorld, fx, fy, fz);
+        const auto countFlashesAt = [&flashWorld, fx, fy, fz]()
+        {
+            int count = 0;
+            for (const auto& obj : flashWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType11 && obj.currentX == fx &&
+                    obj.currentY == fy && obj.currentZ == fz)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+        check(countFlashesAt() == 1, "SpawnFanHitFlash() spawns exactly 1 instance, exactly at the given position");
+
+        for (int i = 0; i < 8; ++i)
+        {
+            flashWorld.Update(dt);
+        }
+        flashInteraction.Update(dt, flashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 1, "the flash is still active just before its real phase-9 self-delete");
+
+        flashWorld.Update(dt);
+        flashInteraction.Update(dt, flashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 0, "the flash self-deletes once phase reaches the real 9-tick lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-008-adjacent,
+        // fixed 2026-07-14 -- real table_explo4 is non-monotonic, was
+        // wrongly ascending arithmetic before).
+        check(GetObjIcon(ObjectType::ObjectType11, 0) == 12, "ObjectType11 icon at phase=0 is the real table_explo4[0]=12");
+        check(GetObjIcon(ObjectType::ObjectType11, 3) == 15, "ObjectType11 icon at phase=3 is the real table_explo4[3]=15");
+        check(GetObjIcon(ObjectType::ObjectType11, 4) == 7, "ObjectType11 icon at phase=4 is the real table_explo4[4]=7 (the non-monotonic jump)");
+        check(GetObjIcon(ObjectType::ObjectType11, 8) == 11, "ObjectType11 icon at phase=8 is the real table_explo4[8]=11 (last frame before self-delete)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

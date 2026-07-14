@@ -1241,19 +1241,22 @@ namespace GalaxyEggbert::CNA
             // survives" behavior -- only the death itself is gated. Real
             // channel 10 (the fan's own contact sound, distinct from lava/
             // spike/blitz's channel 8/51) plays via triggerDeath() itself,
-            // same pattern as every hazard above. Real cosmetic
-            // ObjectType11 particle burst is NOT modeled -- no particle
-            // system exists. BigShake IS now modeled (plan.md CAM-009,
-            // 2026-07-14) -- verified directly against Decor.cpp: the real
-            // trigger site is the SAME `if (m_blupiFocus && !shield &&
-            // !hide && !superBlupi)` block that calls BlupiDead(), i.e.
-            // the shake fires exactly when the fan actually kills Blupi,
-            // not on every fan contact -- matches this engine's own
-            // `!IsInvincible()` gate on triggerDeath() below exactly.
+            // same pattern as every hazard above. BigShake IS modeled
+            // (plan.md CAM-009, 2026-07-14) -- verified directly against
+            // Decor.cpp: the real trigger site is the SAME `if
+            // (m_blupiFocus && !shield && !hide && !superBlupi)` block
+            // that calls BlupiDead(), i.e. the shake fires exactly when
+            // the fan actually kills Blupi, not on every fan contact --
+            // matches this engine's own `!IsInvincible()` gate on
+            // triggerDeath() below exactly. The real cosmetic ObjectType11
+            // shockwave flash spawned at the SAME site is now also
+            // modeled (plan.md VISUAL-008-adjacent, 2026-07-14, see
+            // `GEInteractionSystem::SpawnFanHitFlash()`'s own comment).
             if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) && !blupi_.IsInvincible())
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
                 cameraShake_.Trigger(CameraShakeType::Big);
+                interaction_.SpawnFanHitFlash(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
 
             // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via

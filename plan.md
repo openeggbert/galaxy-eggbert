@@ -2909,9 +2909,11 @@ damping already work.
       Blupi (`IsVentillo(m_blupiPos)` inside the same real gate as `BlupiDead()`, matching this
       engine's own `!IsInvincible()` gate on `triggerDeath()` exactly) — NOT "large explosion"
       (unconfirmed) nor "triggered by ObjectType11" (`ObjectType11` is a cosmetic particle spawned
-      *alongside* the real shake, not a separate trigger condition; the particle itself isn't
-      modeled, no particle system exists). Wired into `GalaxyEggbertCnaGame.cpp`'s existing Fan
-      hazard block. A SECOND real BigShake trigger was also found and wired the same day (see
+      *alongside* the real shake, not a separate trigger condition; this particle IS now also
+      modeled, see VISUAL-008's writeup — `GEInteractionSystem::SpawnFanHitFlash()`, wired into the
+      same Fan-hazard block right next to the shake trigger). Wired into
+      `GalaxyEggbertCnaGame.cpp`'s existing Fan hazard block. A SECOND real BigShake trigger was
+      also found and wired the same day (see
       CAM-008's writeup): the generic-hazard contact-kill site plays BigShake instead of SmallShake
       specifically for fish (`ObjectType17`) and bird (`ObjectType20`) — confirmed via
       `Decor.cpp:5820-5823` and a dedicated `VerifyInteractionSystem` check.
@@ -3018,7 +3020,27 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 - [ ] VISUAL-007 — ~~Shield blink at < 1.5 s remaining~~ **HALLUCINATED — CANCELLED, same finding
       as VISUAL-006 — no real blink-at-low-time effect found, only the sparkle-overlay behavior
       already noted.**
-- [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px, Explosion channel)
+- [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px,
+      Explosion channel) — **partially done 2026-07-14**: ObjectType11 (Fan-hit shockwave, the
+      cosmetic particle spawned alongside CAM-009's BigShake — see CAM-009's writeup, now updated)
+      is implemented; ObjectType8/9/10 are NOT. Real spawn site confirmed via direct source read
+      (`Decor.cpp:5467`, the same real Fan/Ventillo-kill block CAM-009 already cites):
+      `ObjectStart(celSwitch, ObjectType11, 0)` — `speed=0` means no direction/offset encoding at
+      all (unlike every other particle effect shipped so far), so `GEInteractionSystem::
+      SpawnFanHitFlash()` is a single-instance spawn exactly at the given position, no burst. Real
+      self-delete at `phase>=9` (`Decor.cpp:8431-8440`, a 9-frame lifetime). Found and fixed a
+      FOURTH real bug in `GEObjectIcons.cpp`'s icon formula for this type: wrong divisor (6 instead
+      of the real `Config::ScaleDiv(1)==1`) AND wrong ascending-arithmetic assumption — real
+      `table_explo4` (`Tables.cpp:1391`) is non-monotonic (`12,13,14,15,7,8,9,10,11` — jumps back
+      from 15 to 7 partway through), transcribed verbatim as a lookup table, same category of bug
+      as VISUAL-012's `table_tresortrack`. ObjectType8/9/10 are flagged as a likely-similar,
+      NOT-yet-attempted follow-up: their real tables (`table_explo1/2/3`) are also non-trivial,
+      and `table_explo2` even has `-1` "invisible frame" sentinel values, so their existing
+      `GetObjIcon()` formulas should be assumed wrong until individually re-derived from source,
+      same as this one was. 7 new `VerifyInteractionSystem` checks (spawn position/no-offset,
+      self-delete timing, corrected icon values including the phase=4 non-monotonic jump point) +
+      full regression on both backends, all pass. Not live-visually re-verified (same already-
+      proven element.png billboard rendering path as every other particle effect this session).
 - [ ] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png`
 - [ ] VISUAL-010 — Electric arc: ObjectType92 long arc from `explo.png` (128 frames)
 - [ ] VISUAL-011 — Shield sparkle loop: ObjectType57 trail behind Blupi while shielded

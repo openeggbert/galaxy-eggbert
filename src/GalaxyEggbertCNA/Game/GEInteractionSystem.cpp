@@ -595,6 +595,21 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Fan-hit shockwave flash (plan.md CAM-009-adjacent,
+            // ObjectType11) -- purely cosmetic, completes the real Fan-hit
+            // effect alongside the already-wired BigShake camera shake.
+            // Real self-delete at phase>=9 (`Decor.cpp:8431-8440`,
+            // `Config::ScaleTime(9)==9` at this build's 20Hz reference
+            // rate) -- a 9-frame lifetime.
+            if (obj.type == ObjectType::ObjectType11)
+            {
+                if (obj.phase >= 9.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
             // posStart and posEnd at `speed` units/sec -- matches
             // GalaxyEggbertSimple3D's GEDecorSystem::Update() exactly
@@ -1897,6 +1912,28 @@ namespace GalaxyEggbert::CNA
                 objects.push_back(spec);
             }
         }
+    }
+
+    void GEInteractionSystem::SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z)
+    {
+        MobileObjSpec spec;
+        spec.type = ObjectType::ObjectType11;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = spec.posEndY = y;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
     }
 
     void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)

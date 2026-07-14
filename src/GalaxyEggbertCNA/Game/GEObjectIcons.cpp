@@ -17,6 +17,11 @@ namespace GalaxyEggbert::CNA
         // 161 and back), NOT a simple ascending range like the old wrong
         // formula here assumed.
         static const int kTresorTrack[11] = {166,165,164,163,162,161,162,163,164,165,166};
+        // Real table_explo4 (Tables.cpp:1391, fan-hit shockwave fix,
+        // 2026-07-14) -- NOT a simple ascending range (jumps from 15 back
+        // to 7 partway through), same category of bug as kTresorTrack
+        // above.
+        static const int kExplo4[9] = {12,13,14,15,7,8,9,10,11};
         static const int kGuepeLeft[6]    = {195,196,197,198,197,196};
         static const int kCreature[8]     = {247,248,249,250,251,250,249,248};
         static const int kBlupihLeft[8]   = {66,67,68,67,66,69,70,69};
@@ -156,7 +161,12 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType8:   return 0 + (p / 6) % 39;
             case ObjectType::ObjectType9:   return 12 + (p / 6) % 20;
             case ObjectType::ObjectType10:  return 32 + (p / 6) % 20;
-            case ObjectType::ObjectType11:  return 12 + (p / 6) % 9;
+            // Fixed 2026-07-14 (plan.md VISUAL-008-adjacent, the Fan-hit
+            // shockwave completing CAM-009's BigShake): wrong divisor (6
+            // instead of the real Config::ScaleDiv(1)==1) and wrong
+            // ascending-arithmetic assumption -- real table_explo4 jumps
+            // non-monotonically (see kExplo4 above).
+            case ObjectType::ObjectType11:  return kExplo4[p % 9];
             case ObjectType::ObjectType53:  return 86; // 45 frames would exceed the sheet (86+44=130 > 99)
             case ObjectType::ObjectType90:  return 54 + (p / 6) % 12;
             case ObjectType::ObjectType91:  return 54 + (p / 6) % 6;

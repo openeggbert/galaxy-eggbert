@@ -286,6 +286,18 @@ namespace GalaxyEggbert::CNA
         void SpawnInvertBurst(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ,
                                bool isGrant);
 
+        // Fan-hit shockwave flash (plan.md CAM-009-adjacent, ObjectType11)
+        // -- a single instance spawned exactly at (x,y,z), no offset (real
+        // `ObjectStart(celSwitch, ObjectType11, 0)`, `Decor.cpp:5467` --
+        // the real `celSwitch` -34/-34 pixel pre-offset is a 2D
+        // sprite-corner-anchoring artifact, not meaningful for this
+        // engine's center-anchored billboards, same reasoning already
+        // applied to every other real `ObjectStart(..., 0)` site this
+        // session). Called directly by the game class at its own existing
+        // Fan-hazard site (`GEInteractionSystem::Update()` isn't involved
+        // in that check), same reasoning as `SpawnInvertBurst()` above.
+        void SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z);
+
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
         [[nodiscard]] bool ExitReached() const noexcept { return exitReached_; }
