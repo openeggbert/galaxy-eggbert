@@ -2179,8 +2179,32 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-123 — Charge death: enemy charge-hit animation (ACTION_CHARGE)
 - [ ] BLUPI-124 — Ouf recovery: after close call, play one of Ouf1a..Ouf5 animations
 - [ ] BLUPI-125 — Mockery: enemies mock Blupi (ACTION_MOCKERY/i/p) for m_blupiTimeMockery ticks
-- [ ] BLUPI-126 — Stomp kill: velY < -1.0 on contact with enemy → BounceUp() + kill enemy — blocked on ENEMY-* work (no enemy hit detection in CNA yet)
-- [ ] BLUPI-127 — BounceUp: upward impulse kJumpSpeed × 0.65
+- [ ] BLUPI-126 — ~~Stomp kill: velY < -1.0 on contact with enemy → BounceUp() + kill enemy~~
+      **premise appears INVENTED, researched 2026-07-14** — a Mario-style "jump on an enemy to kill
+      it" mechanic. Grepped all of `mobile-eggbert/src/WindowsPhoneSpeedyBlupi/` and `include/
+      WindowsPhoneSpeedyBlupi/` for `bounce`/`Bounce`/`stomp`/`Stomp` (case-insensitive) — zero
+      matches for any such function or concept; `BounceUp()` does not exist anywhere in source.
+      Also checked `MoveObjectStep()`'s own real enemy-contact code (`Decor.cpp:7940-7965`, the
+      exact function whose own doc comment says enemy types 4/32/33 "electrocute Blupi" on contact)
+      and every other Type4/32/33 contact site — none has any velocity/vertical-speed condition
+      gating a different outcome. **Do NOT implement without the user's own confirmation that this
+      mechanic exists** — per CLAUDE.md's explicit example of invented mechanics that must not be
+      added ("any mechanic invented by Claude"), this looks like exactly that category, not a
+      verified port target. The real, confirmed side of this (enemy-contact death, no stomp
+      exception) is presumably just the shared hazard-contact kill logic already covered by
+      `IsGenericHazard()` (galaxy-eggbert's own `GEInteractionSystem.cpp`) once enemy-Blupi contact
+      detection itself is implemented (a real, separate, still-genuinely-missing gap — see
+      ENEMY-CONTACT-001 below) — not a stomp/bounce branch.
+- [ ] BLUPI-127 — ~~BounceUp: upward impulse kJumpSpeed × 0.65~~ **same invented premise as
+      BLUPI-126 above — do not implement, no such function exists in real source.**
+- [ ] ENEMY-CONTACT-001 — (new item, 2026-07-14) Real, confirmed, still-missing gap: Blupi has NO
+      contact-collision detection against enemy `MoveObject`s at all yet (confirmed via direct grep
+      of `GalaxyEggbertCnaGame.cpp` and all of `src/GalaxyEggbertCNA/Game/` — zero hits). Phase 13
+      "Enemy AI" only covers enemy movement/behavior, not Blupi-enemy collision resolution. The real
+      mechanic to port here (once picked up) is plain contact death matching `IsGenericHazard()`'s
+      existing hazard-contact pattern — NOT stomp-kill (see BLUPI-126's correction above). A real,
+      valuable, but non-trivial gap — needs its own scoped task, not a same-session opportunistic
+      add given the stomp-kill premise it was originally bundled with turned out to be wrong.
 
 #### 4.7 Blupi Sounds
 
@@ -2191,7 +2215,8 @@ re-verified individually since it is not a full port yet.
 - [x] BLUPI-128 — Jump sound: ch1 on jump (CNA, 2026-07-10)
 - [x] BLUPI-129 — Footstep sound: ch3 per march stride (CNA, 2026-07-10 — plain footstep wiring only; surface-dependent remap NOT done, see BLUPI-133)
 - [x] BLUPI-130 — Landing sound: ch4 on ground contact (CNA, 2026-07-10)
-- [ ] BLUPI-131 — Stomp kill sound: ch5 — blocked on enemy stomp detection, see BLUPI-126
+- [ ] BLUPI-131 — ~~Stomp kill sound: ch5~~ **same invented premise as BLUPI-126 — do not
+      implement.**
 - [ ] BLUPI-132 — Death sound: ch8
 - [ ] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile type — NOT done in CNA (7 terrain pairs, channels 78-91)
 - [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient)
