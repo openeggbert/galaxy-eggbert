@@ -2947,23 +2947,24 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 
 ### 2.13 Tests & Quality
 
-**Re-verified against source 2026-07-14**, and **TEST-002 fixed the same day**. There are now **8
+**Re-verified against source 2026-07-14**, and **TEST-002 fixed the same day**. There are now **9
 real test/verify binaries**: the gtest-based `GalaxyEggbertWorldsTests` (already
-`gtest_discover_tests()`-registered) plus 7 scripted `VerifyXxx` tools (`VerifyBlupiMovement`,
+`gtest_discover_tests()`-registered) plus 8 scripted `VerifyXxx` tools (`VerifyBlupiMovement`,
 `VerifyInteractionSystem`, `VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`,
-`VerifyBigDecorParsingCna`, and `VerifyTerrainAnimDivisor` added the same day for TEST-007) that
-are ctest-registered — `add_test()` exists for all 7 in `CMakeLists.txt` (with an explicit
-repo-root `WORKING_DIRECTORY` for the 3 that default to relative asset/world paths), so
-`ctest --test-dir build-cna` alone now runs and reports all 8 tools' full results (76 tests total
-including third-party dependency suites; confirmed passing on both EasyGL and Vulkan build trees).
-TEST-008/009/010's underlying *behavior* was never an unverified gap (the manual tools already
-covered it) — only the "automated/CI-checked" framing was missing, and that's now closed too.
+`VerifyBigDecorParsingCna`, `VerifyTerrainAnimDivisor` added for TEST-007, and `VerifyTileUvBounds`
+added for TEST-004, both the same day) that are ctest-registered — `add_test()` exists for all 8 in
+`CMakeLists.txt` (with an explicit repo-root `WORKING_DIRECTORY` for the 3 that default to relative
+asset/world paths), so `ctest --test-dir build-cna` alone now runs and reports all 9 tools' full
+results (77 tests total including third-party dependency suites; confirmed passing on both EasyGL
+and Vulkan build trees). TEST-008/009/010's underlying *behavior* was never an unverified gap (the
+manual tools already covered it) — only the "automated/CI-checked" framing was missing, and that's
+now closed too.
 
 - [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest, MoveObjectRecordTests) — **count reconciled 2026-07-14**: 64/64 (confirmed via a fresh `TEST(...)`/`TEST_F(...)` grep across `tests/GalaxyEggbert/`), not the previously-quoted 63.
 - [x] TEST-002 — ctest discovery in the CNA build dir — **fixed 2026-07-14**: `GalaxyEggbertWorldsTests` was already `gtest_discover_tests()`-registered (confirmed live: `ctest -N` found all 64 cases even before this fix, since a sibling dependency's own CMakeLists.txt already calls `enable_testing()` transitively) — the real gap was the 6 `VerifyXxx` binaries having no `add_test()` at all. Added one for each (`CMakeLists.txt`), with `WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` for the 3 that default to repo-root-relative paths. `ctest --test-dir build-cna` now runs all 7 tools' full suites in one command.
 - [x] TEST-003 — Test: all mobile-eggbert world files parse without error — **done 2026-07-14**: `VerifyMoveObjectTypesCna` now also sweeps every real `../mobile-eggbert/worlds/*.txt` file (enumerated at runtime via `std::filesystem::directory_iterator`, not a hardcoded list, so it stays accurate as files are added/removed) and confirms `GEWorldRuntime::LoadFromMobileEggbertFile()` returns success for each — all 78 real world files parse without error. The pre-existing curated per-`ObjectType`-example checks are unchanged and still run alongside it.
-- [ ] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — **investigated
-      2026-07-14, found a genuine but low-impact boundary bug, no automated test written yet.**
+- [x] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — **done
+      2026-07-14, and found a genuine but low-impact boundary bug along the way.**
       Directly computed `tileUV()`'s implied atlas-pixel rect for every icon near the end of the
       0..440 range and cross-checked against the real `object-m.png` (1301×1431, confirmed via
       direct Python/PIL inspection): icon 440's computed rect is `(1,1431)`-`(65,1495)` —
@@ -2989,9 +2990,13 @@ covered it) — only the "automated/CI-checked" framing was missing, and that's 
       no valid `object-m.png` backing content at all, an intentional sentinel, or something else?
       `Decor.hpp`'s `MAXQUART=441` and `Decor.cpp`'s own `case 440:` branch confirm icon 440 IS a
       real, meaningful id in mobile-eggbert's data model even though it has no valid image — not
-      something to guess a resolution for in a rushed pass). The scripted TEST-004 assertion itself
-      is still open — write it once the 440-vs-441 question above is resolved, so the test encodes
-      the actually-correct bound rather than baking in a guess.
+      something to guess a resolution for in a rushed pass). The scripted assertion itself is now
+      written (`tools/VerifyTileUvBounds.cpp`, ctest-registered): confirms every icon 0..439 maps to
+      an atlas rect that actually fits inside `object-m.png`'s real bounds, and explicitly locks in
+      icon 440 as a KNOWN, tracked exception (asserts it does NOT fit) rather than silently ignoring
+      it — if the underlying `kPassable[441]`/`tileUV()` question above is ever resolved in a way
+      that makes icon 440 valid too, this test will correctly need updating, rather than staying
+      silently green on a stale assumption forever.
 - [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files, now ctest-integrated (TEST-002).
 - [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `GESaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
 - [x] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw div 1, Lava div 2, Water1/Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) — **done 2026-07-14**. `AnimDivisor()` was a pure function trapped in `GETerrainRenderer.cpp`'s anonymous namespace with no graphics dependency of its own — extracted into `GETerrainAnimDivisor.hpp`/`.cpp` (behavior unchanged, `GETerrainRenderer.cpp` now calls the extracted version) so it could be linked into a new lightweight, engine-independent tool (`tools/VerifyTerrainAnimDivisor.cpp`, no CNA/graphics link needed, same precedent as `VerifyGESaveData`/`VerifyBlupiMovement`), now ctest-registered. 13 checks (all 8 real per-type divisor values + the non-animated-icon default fallback) confirm the exact mapping this item asked for. Full regression on both backends passes (76 tests on EasyGL, only the known pre-existing unrelated `easy-gl-resource-smoke-tests` failure; 71/71 on Vulkan).

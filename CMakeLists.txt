@@ -568,6 +568,17 @@ target_include_directories(VerifyTerrainAnimDivisor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# BlockTypes::tileUV() (plan.md TEST-004) is a pure header-only function --
+# no CNA/graphics dependency at all, same engine-independent precedent as
+# VerifyGESaveData/VerifyBlupiMovement/VerifyTerrainAnimDivisor above.
+add_executable(VerifyTileUvBounds
+        tools/VerifyTileUvBounds.cpp
+)
+
+target_include_directories(VerifyTileUvBounds PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 # GEWorldRuntime.hpp/.cpp (CNA) are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
@@ -619,6 +630,9 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- AnimDivisor() is a pure
     # function of a BlockTypes icon id (plan.md TEST-007).
     add_test(NAME VerifyTerrainAnimDivisor COMMAND VerifyTerrainAnimDivisor)
+    # No file/working-directory dependency -- tileUV() is a pure header-only
+    # function of a BlockTypes icon id (plan.md TEST-004).
+    add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)
 endif()
 
 # =============================================================================

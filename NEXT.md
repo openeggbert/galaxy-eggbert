@@ -81,10 +81,14 @@ menus, though still missing a visible 3D Blupi model.
 - `VerifyGEInputPad` — on-screen control hit-testing (D-pad/Jump/Action/Pause/Setup/Init/cheat
   gesture), synthetic `MouseState`, no `GraphicsDevice` needed.
 - `VerifyGESaveData` — `GESaveData` load/save round-trip, 3-gamer-slot isolation, `Reset()`.
-- `VerifyMoveObjectTypesCna` — `MoveObject` parsing against real mobile-eggbert `.txt` level files.
+- `VerifyMoveObjectTypesCna` — `MoveObject` parsing against real mobile-eggbert `.txt` level files
+  (curated per-`ObjectType` examples, plus an exhaustive sweep of all 78 real world files, plan.md
+  TEST-003, added 2026-07-14).
 - `VerifyBigDecorParsingCna` — `BigDecor:` parsing against real mobile-eggbert `.txt` level files.
 - `VerifyTerrainAnimDivisor` — terrain hazard-tile animation-phase divisor mapping (plan.md
   TEST-007, added 2026-07-14), no CNA/graphics link needed.
+- `VerifyTileUvBounds` — `BlockTypes::tileUV()` atlas-rect validity for every icon (plan.md
+  TEST-004, added 2026-07-14), no CNA/graphics link needed.
 
 ### What works (high level — see `plan.md` for the exhaustive per-item checklist)
 - Real textured/animated 3D terrain (4 render modes, face-culled), real background image per world.
@@ -154,7 +158,9 @@ long continuous autonomous session); each item is its own commit.
   file) — the only place in this repo that ever rendered it was galaxy-eggbert's own synthetic
   "museum" exhibition demo, now fixed to exclude it. Deliberately did NOT touch the foundational
   `BlockTypes.hpp` `kPassable[441]`/`tileUV()` logic itself — see plan.md TEST-004 for why that
-  needs deliberate follow-up, not a rushed fix.
+  needs deliberate follow-up, not a rushed fix. Also closed the underlying `TEST-004` ask itself:
+  added `VerifyTileUvBounds` (ctest-registered), confirming every icon 0..439 fits the real atlas
+  and explicitly locking in icon 440 as a known, tracked exception rather than a silent one.
 - **Added `VerifyTerrainAnimDivisor` and closed plan.md TEST-007** — the real per-type terrain
   hazard-tile animation-phase divisor mapping (`AnimDivisor()`: Saw div 1, Lava div 2, Water1/
   Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) was already correctly implemented
@@ -472,19 +478,19 @@ cmake --build build-cna-vulkan --target GalaxyEggbertCNA -j2
 cmake --build build-cna --target GenerateSampleWorld3D -j2
 ./build-cna/GenerateSampleWorld3D worlds3d/world001.vwr
 
-# Build + run all tests/verify tools. Since 2026-07-14 (plan.md TEST-002/TEST-007) all 8 are
-# ctest-registered with the correct working directory baked in, so a single ctest invocation from
-# ANYWHERE covers everything (no more need to cd to repo root or invoke each binary by hand):
+# Build + run all tests/verify tools. Since 2026-07-14 (plan.md TEST-002/TEST-007/TEST-004) all 9
+# are ctest-registered with the correct working directory baked in, so a single ctest invocation
+# from ANYWHERE covers everything (no more need to cd to repo root or invoke each binary by hand):
 cmake --build build-cna --target GalaxyEggbertWorldsTests VerifyBlupiMovement VerifyInteractionSystem \
     VerifyGEInputPad VerifyGESaveData VerifyMoveObjectTypesCna VerifyBigDecorParsingCna \
-    VerifyTerrainAnimDivisor -j2
+    VerifyTerrainAnimDivisor VerifyTileUvBounds -j2
 ctest --test-dir build-cna --output-on-failure
 # Note: this also runs a handful of third-party (../easy-gl, ../meta-gl) smoke tests bundled into
 # the same ctest run -- 1 of those (easy-gl-resource-smoke-tests) has a known pre-existing,
-# unrelated failure (see NEXT.md §5); it is not one of galaxy-eggbert's own 8 tools/suites and is
+# unrelated failure (see NEXT.md §5); it is not one of galaxy-eggbert's own 9 tools/suites and is
 # not a regression if you see it fail.
 
-# Equivalent manual invocation of just galaxy-eggbert's own 8 tools, if isolating from the
+# Equivalent manual invocation of just galaxy-eggbert's own 9 tools, if isolating from the
 # third-party smoke tests above (must run from repo ROOT — several tools use
 # ../mobile-eggbert-relative paths that only resolve correctly from there):
 ./build-cna/GalaxyEggbertWorldsTests
@@ -495,6 +501,7 @@ ctest --test-dir build-cna --output-on-failure
 ./build-cna/VerifyMoveObjectTypesCna
 ./build-cna/VerifyBigDecorParsingCna
 ./build-cna/VerifyTerrainAnimDivisor
+./build-cna/VerifyTileUvBounds
 
 # easy-3d: CNA-linked build + tests
 cmake -S ../easy-3d -B /tmp/e3d-build-cna -DEASY3D_LINK_CNA=ON -DEASY3D_CNA_BACKEND=EASY_GL -DEASY3D_CNA_DIR=../cna
