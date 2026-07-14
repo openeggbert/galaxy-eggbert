@@ -2300,16 +2300,23 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
       it's the trigger/classifier for an entire real hanging/suspended-on-a-bar-or-rope movement
       mode (`mobile-eggbert-reference/10-blupi-mechanics.md`'s "Suspended/hanging mode" section):
       horizontal movement applied directly with no accel ramp while hanging, a 3-way tile
-      classification (type 2 = end of bar, ends the hang if the landing below is clear; type 0 =
-      nothing, or holding Down >5 ticks, drops Blupi into free-fall with a 5-tick re-grab grace
-      timer; otherwise stays gripped), and a Jump-to-release mechanic (10-tick wind-up, then a
-      fixed `-11.0` upward launch, same grace timer). This is a genuinely new movement mode
-      comparable in scope to the 5 already-implemented vehicles, NOT a simple blocking check.
-      Confirmed still NOT implemented, and blocked on further research beyond what
-      `mobile-eggbert-reference/` currently documents — the specific real tile icon ID(s) that
-      classify as a grabbable bar/rope are not given anywhere in the existing reference docs (a
-      real gap in the documentation itself, not just the implementation) — do not guess an icon ID
-      for this; research `Decor.cpp`'s own `GetTypeBarre()` call sites first if this is picked up.
+      classification (type 2 = landing below is blocked, stay gripped/climb; type 0 = no bar tile
+      here at all; type 1 = clear landing below), and a Jump-to-release mechanic (10-tick wind-up,
+      then a fixed `-11.0` upward launch, 5-tick re-grab grace timer). This is a genuinely new
+      movement mode comparable in scope to the 5 already-implemented vehicles, NOT a simple
+      blocking check. **Icon-ID research gap CLOSED 2026-07-14** (a direct `Decor.cpp` read,
+      `GetTypeBarre()` at `Decor.cpp:7158-7193`): the real trigger icons are **138 and 202** —
+      confirmed against 2 independent sources, not guessed: (1) the real source code itself, and
+      (2) icon 202 was ALREADY separately confirmed by the user's own 2026-07-07 questionnaire
+      answer in `mobile-eggbert-reference/02-tiles.md` as "a rod/pole Blupi walks on and climbs
+      over a dangerous obstacle beneath it" — an exact match, from before this specific gameplay
+      mechanic was ever connected to that icon. Icon 202's own render geometry is a separate
+      already-tracked gap (TILE-055, "thin-bar new geometry", a genuinely new non-cube/non-billboard
+      shape per that same questionnaire answer); icon 138 already renders via the existing
+      `InnerFlatPlate` `ThinMechanical` table (`GEInnerFlatPlateTiles.cpp`). Confirmed still NOT
+      implemented (no gameplay logic exists for either icon beyond rendering) — the icon-ID
+      research blocker is gone, but the movement-mode implementation itself remains a real, sizable
+      task (its own scoping/session, not a "next smallest task").
 
 #### 5.4 Tile Adaptation (visual smoothing)
 

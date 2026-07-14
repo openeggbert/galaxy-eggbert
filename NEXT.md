@@ -517,13 +517,19 @@ judgment (§9).
     south tunnel's low ceiling, full regression on both backends.
 
 13. **Suspended/hanging bar-and-rope movement mode** (`plan.md TILE-045`, real
-    `Decor::GetTypeBarre()` — **not** a vehicle-blocking check, corrected 2026-07-14; see plan.md's
-    own entry). A genuinely new movement mode comparable in scope to the 5 already-implemented
-    vehicles (direct no-ramp horizontal input while hanging, a 3-way tile classification, a
-    fixed-velocity jump-to-release). **Blocked on further research**: the real tile icon ID(s) that
-    classify as a grabbable bar/rope aren't documented anywhere in `mobile-eggbert-reference/` —
-    read `Decor.cpp`'s own `GetTypeBarre()` call sites first (read-only reference, as always) before
-    attempting; do not guess an icon ID. Larger scope than most other items here if picked up.
+    `Decor::GetTypeBarre()` — **not** a vehicle-blocking check, corrected 2026-07-14). A genuinely
+    new movement mode comparable in scope to the 5 already-implemented vehicles (direct no-ramp
+    horizontal input while hanging, a 3-way tile classification, a fixed-velocity jump-to-release).
+    **Icon-ID research gap CLOSED 2026-07-14**: real trigger icons are **138 and 202** (`Decor.cpp`
+    `GetTypeBarre()`, `Decor.cpp:7158-7193`) — icon 202 independently confirmed by the user's own
+    2026-07-07 questionnaire answer as "a rod/pole Blupi walks on and climbs over a dangerous
+    obstacle beneath it," an exact match found before this mechanic was ever connected to that icon
+    (see plan.md TILE-045's own entry for the full citation). Icon 202 needs new render geometry
+    (`plan.md TILE-055`, "thin-bar", a genuinely new non-cube/non-billboard shape); icon 138 already
+    renders via the existing `InnerFlatPlate` table. The icon-ID blocker is gone, but implementing
+    the actual movement mode (state machine, direct-input movement, jump-to-release, grace timer)
+    remains a real, sizable task — its own scoping/session, not a "next smallest task" to slot in
+    opportunistically. Files if picked up: `GEBlupiController.cpp`/`.hpp` (new state), `GEInnerFlatPlateTiles.cpp`/`GETerrainRenderer.cpp` (icon 202's new geometry, TILE-055).
 
 14. ~~Water-drip tile~~ **DONE 2026-07-14** (`plan.md TILE-032`) — see §3 for the full writeup. Real
     behavior was NOT a glu/slow effect (a wrong premise, same category as TILE-041/045) — it's a
