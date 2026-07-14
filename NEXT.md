@@ -104,6 +104,9 @@ menus, though still missing a visible 3D Blupi model.
   `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts. Invert/Mirror
   (independent movement-reversal debuff/buff) also implemented (2026-07-13).
 - Player-fired bullets while riding Tank (real cooldown/ammo gates).
+- Real camera shake (Fan-death BigShake, wasp-sting ElectricShake — SmallShake's own dynamite/
+  CleanAll triggers not wired yet) and Ghost mode (typed-word cheat: free flight, no gravity/
+  collision/interactions), both added 2026-07-14.
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -143,6 +146,23 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented the camera-shake system (plan.md CAM-008..013/HUD-014)** — previously blocked on
+  `Tables::table_decor_action`'s data-table transcription approval, granted by the user the same
+  day. Verbatim-transcribed the real 519-entry table into new `GECameraShake.hpp`/`.cpp`
+  (engine-agnostic, no CNA/graphics dependency) and INDEPENDENTLY byte-verified all 519 values via
+  a script comparing against the real source directly — not just visually proofread. Ported
+  `DecorNextAction()`'s exact real per-frame logic (20Hz tick, real ×3 multiplier, self-clear on
+  table exhaustion, unconditional restart-on-retrigger with no priority gating). Corrected 2 wrong
+  trigger descriptions along the way: BigShake's real trigger is Fan/Ventillo contact killing
+  Blupi (not "large explosion"/ObjectType11 — that's a cosmetic particle spawned alongside it, not
+  the trigger condition), and ElectricShake's real trigger is specifically the wasp-sting/balloon
+  event (not a generic "electric field tile" despite the enum's own doc comment). Wired both into
+  `GalaxyEggbertCnaGame.cpp`'s existing Fan-hazard and wasp-balloon blocks; applied as a small 3D
+  camera-space translation (eye+target shifted equally, preserving look direction) converted from
+  real pixels via the same 64px-per-tile scale used throughout this engine's own atlas math.
+  SmallShake's own real triggers (dynamite-blast destroyed objects, CleanAll cheat) are NOT wired
+  yet — a real, scoped follow-up needing a new signal path from `GEInteractionSystem` to the
+  camera. 18 new `VerifyCameraShake` checks + full regression on both backends, all pass.
 - **Implemented Ghost mode (plan.md BLUPI-111)** — the user provided the missing real trigger
   directly (typed word "ghost", a real second cheat-entry method in mobile-eggbert distinct from
   the on-screen button dispatch), confirmed via a direct source read (`InputPad.cpp:686-753`): a
@@ -618,24 +638,12 @@ judgment (§9).
     behavior was NOT a glu/slow effect (a wrong premise, same category as TILE-041/045) — it's a
     deterministic kill, mechanically identical to Spike. Now a real 6th confirmed terrain hazard.
 
-15. **Camera shake system** (`plan.md` §2.10/§2.12) — the whole system is genuinely unbuilt (zero
-    grep matches). **Researched 2026-07-14, now blocked on an explicit approval decision rather
-    than just "needs scoping":** real per-frame shake magnitudes come from `Decor::DecorNextAction()`
-    reading `Tables::table_decor_action` (`Decor.cpp:1353-1374`) — an actual mobile-eggbert data
-    table (per-shake-type frame count + a `(dx,dy)` offset pair per frame, applied ×3 to the scroll
-    position each frame). This is real structured table data, the same category CLAUDE.md's reuse
-    table already restricts ("Animation/movement tables... do not transcribe array contents without
-    approval") — NOT a tunable constant with no given value (unlike e.g. `kEcraseSpeedMultiplier`),
-    so it can't be faithfully ported without the same kind of explicit approval `kStopEcraseFrames`/
-    etc. needed in an earlier phase. Nor is there a reasonable *approximation* to fall back on: with
-    no real anchor value at all for amplitude/duration (unlike every other "approximated, not
-    transcribed" constant elsewhere in this project, which at least proportionally derives from a
-    known real baseline), any chosen magnitude would be a pure guess — the same category of problem
-    this project already treats as needing the user's own judgment, not another autonomous attempt
-    (see the Saw blade orientation precedent, §9). **Do not implement an approximate/guessed shake
-    system** — either get explicit approval to read+transcribe `table_decor_action`'s real values,
-    or ask the user for a feel-based amplitude/duration if approval for the table itself is
-    declined. Do not guess in the meantime.
+15. ~~Camera shake system~~ **DONE 2026-07-14** (`plan.md CAM-008..013`) — see §3 for the full
+    writeup. Was blocked on `table_decor_action`'s data-table transcription approval; the user
+    granted blanket approval the same day. SmallShake's own real trigger sites (dynamite-blast
+    destroyed objects, CleanAll cheat) are a real, scoped follow-up, not wired yet — the core
+    mechanism (real table, real ×3 multiplier, real self-clear timing) and 2 of 3 shake types
+    (BigShake/Fan, ElectricShake/wasp) are done and camera-wired.
 
 16. **Particle/transient-visual-effects system** (`plan.md` §2.7 §7.5 / §2.12, ~22 items) — the
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
@@ -681,6 +689,16 @@ session found earlier — needs source research to find the exact mechanism befo
 in progress. Remaining open: #8 (door persistence, still low value), #9 (AscenseurVertigo render
 decision), Saw blade orientation (needs visual input).
 
+**Further update, 2026-07-14 (same day, later still): Ghost mode (#3 above) and camera shake (#15,
+`plan.md CAM-008..013`) are both now DONE** — see §3 for both writeups. Camera shake's core
+mechanism (real `table_decor_action`, verbatim-transcribed and byte-verified) and 2 of 3 shake
+types (BigShake/Fan, ElectricShake/wasp) are wired; SmallShake's own dynamite-blast/CleanAll
+trigger sites are a real, scoped follow-up (need a new signal path from `GEInteractionSystem` to
+the camera, which that class has no concept of today). Remaining genuinely open: #8 (door
+persistence), #9 (AscenseurVertigo render decision), Saw blade orientation (needs visual input),
+and the particle-effects system (#16, real but large — a future session should scope it as its
+own dedicated effort, same conclusion as before).
+
 ## 9. Do not do yet
 
 - **Do not guess at the Saw blade orientation a 4th time without the user's own visual input** —
@@ -696,12 +714,13 @@ decision), Saw blade orientation (needs visual input).
   not just plausibility.
 - **Data-table transcription is now APPROVED (user, 2026-07-14)** — the user gave explicit
   blanket approval to copy small real mobile-eggbert data tables into galaxy-eggbert. This
-  unblocks the particle/visual-effects items in `plan.md` §7.5 that have a real confirmed
-  mechanic (Invert start/stop burst, Goo, water plouf/bubble/small-plouf, pollution puff, etc. —
+  unblocked (and, for camera shake, has now shipped — see `plan.md CAM-008..013`/§3) the
+  particle/visual-effects items in `plan.md` §7.5 that have a real confirmed mechanic (Invert
+  start/stop burst, Goo, water plouf/bubble/small-plouf, pollution puff, etc. —
   `table_invertstart`/`table_invertstop`/`table_glu`/`table_plouf`/`table_blup`/`table_tiplouf`/
-  `table_pollution`) and camera shake (`table_decor_action`). Still verify each mechanic against
-  real source before implementing (approval covers copying real data, not inventing behavior) —
-  this does NOT retroactively make the confirmed-hallucinated items below real.
+  `table_pollution`) and camera shake (`table_decor_action`, done). Still verify each mechanic
+  against real source before implementing (approval covers copying real data, not inventing
+  behavior) — this does NOT retroactively make the confirmed-hallucinated items below real.
 - **`plan.md` BLUPI-108 (Cloud "floats through blocks"), BLUPI-126/127/131 ("stomp kill"),
   SCORE-001..007/the score parts of SCORE-012, and VISUAL-001/002/003/004/005/006/007 are
   HALLUCINATED and CANCELLED (confirmed by the user, 2026-07-14)** — none of these have any real

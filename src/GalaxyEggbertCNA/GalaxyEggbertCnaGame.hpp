@@ -4,6 +4,7 @@
 #include "Game/GETileAtlas.hpp"
 #include "Game/GETerrainRenderer.hpp"
 #include "Game/GEBlupiController.hpp"
+#include "Game/GECameraShake.hpp"
 #include "Game/GEObjectIcons.hpp"
 #include "Game/GESound.hpp"
 #include "Game/GEInteractionSystem.hpp"
@@ -147,6 +148,13 @@ namespace GalaxyEggbert::CNA
         // its facing. No 3D sprite yet (E3D-MIG-061..063) — see blupiIcon_
         // below for the interim 2D stand-in.
         GEBlupiController blupi_;
+
+        // Real screen-shake/forced-pan camera effect (plan.md CAM-008..013,
+        // see GECameraShake.hpp's own comment for the full real-behavior
+        // citation) -- ticked every Play-phase frame, its (dx,dy) pixel
+        // offset applied as a small camera-space perturbation after the
+        // normal eye/target damping (see Draw()'s own camera block).
+        GECameraShake cameraShake_;
 
         // Real mobile-eggbert sound playback (2026-07-10, see GESound.hpp).
         // jumpKeyWasDown_ edge-detects the jump key the same way

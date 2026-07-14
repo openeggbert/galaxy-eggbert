@@ -287,6 +287,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEPlateRotationMetadata.cpp
         src/GalaxyEggbertCNA/Game/GETripleCrossBillboardTiles.cpp
         src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
+        src/GalaxyEggbertCNA/Game/GECameraShake.cpp
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         src/GalaxyEggbertCNA/Game/GESound.cpp
         src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
@@ -579,6 +580,20 @@ target_include_directories(VerifyTileUvBounds PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+# GECameraShake.hpp/.cpp (plan.md CAM-008..013) is deliberately
+# engine-agnostic (no CNA/graphics dependency) despite living under
+# src/GalaxyEggbertCNA/ -- this tool links it without needing CNA at all,
+# same precedent as VerifyGESaveData/VerifyTerrainAnimDivisor above.
+add_executable(VerifyCameraShake
+        tools/VerifyCameraShake.cpp
+        src/GalaxyEggbertCNA/Game/GECameraShake.cpp
+)
+
+target_include_directories(VerifyCameraShake PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
 # GEWorldRuntime.hpp/.cpp (CNA) are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
@@ -633,6 +648,9 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- tileUV() is a pure header-only
     # function of a BlockTypes icon id (plan.md TEST-004).
     add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)
+    # No file/working-directory dependency -- GECameraShake is a pure
+    # tick-based state machine (plan.md CAM-008..013).
+    add_test(NAME VerifyCameraShake COMMAND VerifyCameraShake)
 endif()
 
 # =============================================================================

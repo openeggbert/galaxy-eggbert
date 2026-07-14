@@ -1239,11 +1239,18 @@ namespace GalaxyEggbert::CNA
             // channel 10 (the fan's own contact sound, distinct from lava/
             // spike/blitz's channel 8/51) plays via triggerDeath() itself,
             // same pattern as every hazard above. Real cosmetic
-            // ObjectType11 particle burst + BigShake screen effect are NOT
-            // modeled -- no particle system exists.
+            // ObjectType11 particle burst is NOT modeled -- no particle
+            // system exists. BigShake IS now modeled (plan.md CAM-009,
+            // 2026-07-14) -- verified directly against Decor.cpp: the real
+            // trigger site is the SAME `if (m_blupiFocus && !shield &&
+            // !hide && !superBlupi)` block that calls BlupiDead(), i.e.
+            // the shake fires exactly when the fan actually kills Blupi,
+            // not on every fan contact -- matches this engine's own
+            // `!IsInvincible()` gate on triggerDeath() below exactly.
             if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) && !blupi_.IsInvincible())
             {
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
+                cameraShake_.Trigger(CameraShakeType::Big);
             }
 
             // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via
@@ -1624,9 +1631,15 @@ namespace GalaxyEggbert::CNA
             // is idempotent (a no-op while already ballooned, matching the
             // real `!m_blupiBalloon` re-trigger guard), so only play the
             // real entry sound (channel 40) on an actual new trigger.
+            // ElectricShake (plan.md CAM-010) fires at this exact same
+            // real site (Decor.cpp:5864, confirmed via direct source
+            // read) -- despite the enum's own generic "electric field"
+            // doc comment, the real trigger IS specifically wasp-sting/
+            // balloon entry, not a separate electric-field-tile hazard.
             if (interaction_.BalloonTouchedThisFrame() && blupi_.TriggerBalloon())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel40);
+                cameraShake_.Trigger(CameraShakeType::Electric);
             }
             if (interaction_.BalloonPoppedThisFrame())
             {
@@ -1791,8 +1804,28 @@ namespace GalaxyEggbert::CNA
                 cameraEyeSmoothed_ = Easy3D::Camera3D::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
                 cameraTargetSmoothed_ = Easy3D::Camera3D::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
             }
-            camera_.SetPosition(cameraEyeSmoothed_);
-            camera_.SetTarget(cameraTargetSmoothed_);
+
+            // Real screen-shake/forced-pan effect (plan.md CAM-008..013,
+            // see GECameraShake.hpp's own comment) -- only ticks during
+            // real Play (matches the real `m_bPause` freeze gate; no other
+            // phase should animate it). Real (dx,dy) is a 2D screen-space
+            // scroll-offset in pixels; the closest natural 3D adaptation
+            // (CLAUDE.md's allowed "perspective camera" adaptations) is a
+            // small bodily camera TRANSLATION (added equally to eye AND
+            // target, preserving look direction) along world X/height,
+            // using the same 64px-per-world-unit conversion already used
+            // throughout this engine's own tile/atlas math.
+            if (phase_ == GalaxyEggbert::GamePhase::Play)
+            {
+                cameraShake_.Update(dt);
+            }
+            constexpr float kShakePixelsToWorldUnits = 1.0f / 64.0f;
+            const Easy3D::Camera3D::Vector3 shakeOffset(
+                cameraShake_.GetOffsetX() * kShakePixelsToWorldUnits,
+                -cameraShake_.GetOffsetY() * kShakePixelsToWorldUnits, // real +Y is screen-down; this engine's +Y is up
+                0.0f);
+            camera_.SetPosition(cameraEyeSmoothed_ + shakeOffset);
+            camera_.SetTarget(cameraTargetSmoothed_ + shakeOffset);
 
             // Third-person placeholder model animation clip (2026-07-09) --
             // advanced regardless of camera mode so switching into

@@ -1828,19 +1828,10 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       2026-07-13**: not found in `DrawInfo`; needs its own verification (a full-screen flash isn't
       obviously a `Decor` responsibility at all -- may live in a different real class/layer, or may
       not exist as described).
-- [ ] HUD-014 — Camera shake on hit. **Confirmed real 2026-07-13, but NOT a HUD/sprite item** --
-      `Decor.cpp`'s `m_decorAction` (`DecorAction::SmallShake`/`BigShake`, driven by
-      `DecorNextAction()`/`Tables::table_decor_action`, already documented in `NEXT.md`'s
-      architecture notes) is a genuine screen-shake/forced-pan CAMERA OFFSET effect, triggered by
-      several real hazards/hits. Belongs with camera work (`GECameraRig`-equivalent), not `GEHud`
-      -- re-file under Phase 6/camera if picked up, not implemented here. **Researched further
-      2026-07-14**: `table_decor_action` is real per-shake-type structured frame data (frame count +
-      a `(dx,dy)` offset pair per frame, `Decor.cpp:1353-1374`), the same category CLAUDE.md's reuse
-      table already restricts from casual transcription — not a tunable constant with a derivable
-      proportional anchor like most of this project's other "approximated" constants. Implementing
-      this needs either explicit approval to transcribe the real table, or the user's own feel-based
-      amplitude/duration if that approval is declined — do not guess a shake magnitude in the
-      meantime (see NEXT.md's own next-round task list for the full reasoning).
+- [x] HUD-014 — Camera shake on hit — **done 2026-07-14, filed under CAM-008..013 (camera work),
+      not `GEHud`** — see those entries for the full implementation writeup. Was blocked on
+      `table_decor_action`'s data-table transcription approval; the user granted blanket approval
+      2026-07-14, unblocking this along with the rest of the camera-shake system.
 - [x] HUD-015 — Bullet counter: element.png icon 176 × bullets held, X+=4 fanned row at (570,442)
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1197-1201`)
 - [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
@@ -2873,12 +2864,57 @@ damping already work.
 - [ ] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera position)
 - [x] CAM-006 — Exponential, framerate-independent damping on camera follow (CNA, 2026-07-10)
 - [ ] CAM-007 — FOV tuned/finalized (verify current FOV value against original 65° reference)
-- [ ] CAM-008 — Camera shake: SmallShake (minor impacts: crate land, small explosions)
-- [ ] CAM-009 — Camera shake: BigShake (fan-blade hit, large explosion) — triggered by ObjectType11
-- [ ] CAM-010 — Camera shake: ElectricShake (ObjectType90 electric spark contact)
-- [ ] CAM-011 — Camera shake: table_decor_action per-frame (dx, dy) offsets × 3 multiplier
-- [ ] CAM-012 — Camera shake: fixed N-frame duration, self-clears to None after last frame
-- [ ] CAM-013 — Camera shake implementation ported into CNA/Easy3D (StartShake equivalent)
+- [x] CAM-008 — Camera shake: SmallShake (minor impacts: crate land, small explosions) — **core
+      mechanism done 2026-07-14** (see CAM-013's writeup), but SmallShake's own real trigger sites
+      (dynamite-blast destroyed objects — 7 near-identical `Decor.cpp` sites — and the CleanAll
+      cheat's enemy destruction) are NOT wired yet: each needs its own signal path from
+      `GEInteractionSystem` back to the camera (that class has no camera concept today), plus
+      individual verification of which of the 7 dynamite sites genuinely shake vs. incidental
+      duplication — left as a real, scoped follow-up, not guessed at in this pass.
+- [x] CAM-009 — Camera shake: BigShake — **done 2026-07-14**. Description corrected: the real
+      trigger (`Decor.cpp:5468`, direct source read) is Fan/Ventillo contact specifically killing
+      Blupi (`IsVentillo(m_blupiPos)` inside the same real gate as `BlupiDead()`, matching this
+      engine's own `!IsInvincible()` gate on `triggerDeath()` exactly) — NOT "large explosion"
+      (unconfirmed) nor "triggered by ObjectType11" (`ObjectType11` is a cosmetic particle spawned
+      *alongside* the real shake, not a separate trigger condition; the particle itself isn't
+      modeled, no particle system exists). Wired into `GalaxyEggbertCnaGame.cpp`'s existing Fan
+      hazard block.
+- [x] CAM-010 — Camera shake: ElectricShake — **done 2026-07-14**. Description corrected: the real
+      trigger (`Decor.cpp:5864`, direct source read) is specifically the WASP-STING/balloon-entry
+      event (the same real site that sets `m_blupiBalloon=true` and plays channel 40, both already
+      implemented in this engine) — despite the `DecorAction::ElectricShake` enum's own generic
+      "contacts an electric field (ObjectType90 spark object)" doc comment, there is no separate
+      electric-field-tile hazard anywhere in source; `ObjectType90` is a cosmetic spark spawned
+      alongside this same wasp event, not modeled (no particle system). Wired into
+      `GalaxyEggbertCnaGame.cpp`'s existing wasp-balloon block.
+- [x] CAM-011 — Camera shake: table_decor_action per-frame (dx, dy) offsets × 3 multiplier —
+      **done 2026-07-14**. `Tables::table_decor_action[519]` verbatim-transcribed into
+      `GECameraShake.cpp` (data-table transcription approved by the user 2026-07-14) and
+      INDEPENDENTLY byte-verified via a script comparing every one of the 519 values against the
+      real source directly (exact match, not just visually proofread). The real ×3 multiplier
+      (`Decor.cpp:1367-1368`) is applied exactly as found, not approximated.
+- [x] CAM-012 — Camera shake: fixed N-frame duration, self-clears to None after last frame —
+      **done 2026-07-14**, ported 1:1 from `DecorNextAction()`'s own record-walk/self-clear logic
+      (`Decor.cpp:1353-1397`) — confirmed the real self-clear only becomes observable on the
+      Update() call *after* the last real frame is consumed (an off-by-one that looked like a bug
+      in an early test draft but is exactly how the real source behaves too, verified by matching
+      the real `if (m_decorPhase < frameCount) {...} else { None }` structure line-for-line).
+- [x] CAM-013 — Camera shake implementation ported into CNA/Easy3D (StartShake equivalent) —
+      **done 2026-07-14**. New `GECameraShake.hpp`/`.cpp` (engine-agnostic, no CNA/graphics
+      dependency, same precedent as `GEBlupiController`/`GETerrainAnimDivisor`): `Trigger(type)`
+      (unconditional restart from frame 0, matching the real trigger sites' own plain
+      `m_decorAction = X; m_decorPhase = 0;` — no priority gating found anywhere) + `Update(dt)`
+      (real 20Hz tick, `Config::CURRENT_FPS`, confirmed) + `GetOffsetX()/GetOffsetY()` (the real
+      per-frame offset in pixel units, already ×3'd). `GalaxyEggbertCnaGame.cpp` ticks it once per
+      Play-phase frame (matching the real `m_bPause` freeze gate) and applies the real 2D
+      screen-space `(dx,dy)` as a small 3D camera-space TRANSLATION (added equally to eye and
+      target, preserving look direction — the closest natural adaptation of a scroll-offset shake
+      to a 3D perspective camera, per CLAUDE.md's allowed "perspective camera" adaptations),
+      converted from real pixels to this engine's world units via the same 64px-per-tile
+      conversion already used throughout its own atlas math. 18 new `VerifyCameraShake` checks
+      (per-type first-frame offset values, self-clear timing for all 3 types, unconditional
+      re-trigger override, sub-tick dt accumulation, idle no-op) + full regression on both
+      backends, all pass.
 - [ ] CAM-014 — HotSpot zoom: MoveHotSpot() eases camera zoom toward target
 - [ ] CAM-015 — HotSpot target: m_hotSpotFinalZoom/X/Y interpolated over N frames
 - [ ] CAM-016 — HotSpot: triggered on special events (secret exit found, level end zoom)
