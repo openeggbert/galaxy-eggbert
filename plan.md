@@ -504,7 +504,15 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 - [x] `102` Enemy stomp + contact-kill — **done**, see `E3D-MIG-130`s (Phase 13, fully complete
       2026-07-11/12). No separate "score/counter" exists in real mobile-eggbert to port (see
       `107` below) — lives/egg-gauge is the only real counter, already covered by `130`.
-- [ ] `103` Respawn invincibility window after death — not started, depends on `E3D-MIG-067`.
+- ~~`103` Respawn invincibility window after death~~ **CONFIRMED NON-FEATURE, 2026-07-14** — direct
+      source research (grepped all of `Decor.cpp`/`Decor.hpp`, re-verified the exact life-loss
+      Voyage completion site, `Decor.cpp:10256-10260`: `m_blupiAction=Stop; m_blupiPhase=0;
+      m_blupiFocus=true;`, nothing else) found NO invincibility flag/timer/blink state tied to
+      respawn anywhere in real source. `mobile-eggbert-reference/10-blupi-mechanics.md:260-268`
+      independently confirms this — the real "safety" after respawn is purely SPATIAL (the FIFO
+      safe-position system, `E3D-MIG-067`, already implemented, never respawns onto a hazard
+      tile), not temporal immunity. Per CLAUDE.md's faithful-remake rule, not implemented — this
+      item is closed as a non-feature, not a remaining gap.
 - [x] `104` Exit-gate logic: gated on `treasuresCollected_ >= totalTreasures_`, win/reject sound
       channels, debounced to fire once per contact.
 - [x] `105` Crate-push + platform-patrol — **done**: linked-crate stacks (`E3D-MIG-150`), lift
