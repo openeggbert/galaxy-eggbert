@@ -187,10 +187,15 @@ long continuous autonomous session); each item is its own commit.
   after, and a position-blind object search that broke once the fast-forward let another periodic
   spawn reuse an already-destroyed test object's slot). Full suite: 78 tests on `build-cna` (99%,
   only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on
-  `build-cna-vulkan`. Confirmed the game still launches/runs headless without crashing; a full
-  live multi-second visual walkthrough of an actual hazard death was not scripted this pass, given
-  the thorough unit coverage — the real per-cause hurt-sprite frame table
-  (`Tables::table_blupi`, a static Stop pose stands in) also remains untranscribed.
+  `build-cna-vulkan`. **Live-visual verification done as a follow-up the same day** (user-
+  requested): a temporary, fully-reverted debug scaffold spawned Blupi directly on the sample
+  world's Lava tile and captured timed screenshots, confirming live in the actual running game
+  that lives visibly drop (3→2) and Blupi's camera/position visibly jumps to a different respawn
+  location a few seconds after contact — the real deferred lock→life-loss-Voyage→respawn
+  sequence, not an instant death. The real per-cause hurt-sprite frame table (`Tables::
+  table_blupi`, a static Stop pose stands in) remains untranscribed, and the exact icon-48
+  HUD-icon-flight frame wasn't specifically isolated in a screenshot (small/easy to miss at the
+  capture interval used, though the state transition it drives is confirmed correct).
 - **Implemented "death VFX" (`plan.md 159`) — the Clear2/Clear3/Clear4 follow-up flagged by the
   Voyage entry below.** Of Blupi's 8 real `BlupiAction::Clear1`-`Clear8` death-animation types,
   only 3 turned out to have any real VFX at all: Clear1 has none, Clear5-8 are confirmed DEAD CODE
@@ -1067,10 +1072,15 @@ Clear3/Clear4) are now done too** (`plan.md 158`/`159`) — see §3 for both wri
     Verified: new `GEBlupiController`-level tests (per-cause durations, freeze, `IsDeathHidden()`,
     `ConsumeDeathLockResolved()`) plus every existing hazard-contact test updated for the new
     timing. Full suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
-    `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`. **Not done this
-    pass:** the real per-cause hurt-sprite frame table (`Tables::table_blupi`, a static Stop pose
-    stands in instead) and a full live multi-second visual walkthrough of an actual hazard death
-    (relied on the thorough unit coverage instead, given the size of this change).
+    `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`. **Live-visual
+    verification also done** (2026-07-14, later, user-requested): a temporary, fully-reverted debug
+    scaffold spawned Blupi directly on the sample world's Lava tile and captured timed screenshots
+    — confirmed live in the actual running game that lives visibly drop (3→2) and Blupi's
+    camera/position visibly jumps to a different respawn location a few seconds after contact,
+    matching the real deferred timing. **Still not done:** the real per-cause hurt-sprite frame
+    table (`Tables::table_blupi`, a static Stop pose stands in instead) and isolating the exact
+    icon-48 HUD-icon-flight frame in a screenshot (small/easy to miss at this capture interval,
+    though the state transition it drives is confirmed correct).
 
 ## 9. Do not do yet
 

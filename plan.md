@@ -1277,10 +1277,17 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   reuse an already-destroyed test object's slot — both fixed by reordering/adding position filters,
   the same defensive patterns already established elsewhere in this file). Full suite: 78 tests on
   `build-cna` (99%, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73
-  (100%) on `build-cna-vulkan`. Verified the game still launches and runs headless without
-  crashing; a full live multi-second visual walkthrough of an actual hazard death (lock → life-loss
-  Voyage → respawn) was NOT scripted this pass, given the thorough unit coverage above — a real
-  gap if a future session wants full visual confirmation.
+  (100%) on `build-cna-vulkan`.
+  - **Live-visual verification, done 2026-07-14 (later, user-requested follow-up):** temporary
+    debug scaffold (spawn Blupi directly on the sample world's first Lava tile, skip straight to
+    the `Play` phase, capture timed screenshots — all reverted before commit, confirmed via a
+    clean `git diff`) confirmed the real sequence live in the actual running game: lives visibly
+    drop from 3 to 2 a few seconds after lava contact, and Blupi's camera/position visibly jumps to
+    a different (safe-respawn) location — matching the real deferred lock → life-loss-Voyage →
+    respawn timing, not an instant death. The exact icon-48 HUD-icon-flight animation itself is
+    small at this screenshot resolution/interval spacing and wasn't specifically isolated in a
+    frame, but the core state transition (deferred life loss + deferred respawn) is confirmed
+    working end-to-end, not just in unit tests.
 
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 
