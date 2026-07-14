@@ -22,6 +22,14 @@ namespace GalaxyEggbert::CNA
         // to 7 partway through), same category of bug as kTresorTrack
         // above.
         static const int kExplo4[9] = {12,13,14,15,7,8,9,10,11};
+        // Real table_explo3 (Tables.cpp:1384-1388, fish/bird explosion
+        // flash fix, 2026-07-14) -- a 20-frame repeating oscillation
+        // (32,32,34,34 x3, then 32,32,35,35 x2), NOT a simple ascending
+        // range, same category of bug as kExplo4/kTresorTrack above.
+        static const int kExplo3[20] = {
+            32,32,34,34,32,32,34,34,32,32,
+            34,34,32,32,35,35,32,32,35,35
+        };
         // Real table_explo1 (Tables.cpp:1368-1374, dynamite-blast flash
         // fix, 2026-07-14) -- the real 39-frame primary blast sequence
         // repeatedly bounces back and forth between adjacent values
@@ -240,7 +248,12 @@ namespace GalaxyEggbert::CNA
             // table_explo1 bounces back and forth (see kExplo1 above).
             case ObjectType::ObjectType8:   return kExplo1[p % 39];
             case ObjectType::ObjectType9:   return 12 + (p / 6) % 20;
-            case ObjectType::ObjectType10:  return 32 + (p / 6) % 20;
+            // Fixed 2026-07-14 (plan.md VISUAL-008, fish/bird explosion
+            // flash): wrong divisor (6 instead of the real
+            // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
+            // assumption -- real table_explo3 oscillates (see kExplo3
+            // above).
+            case ObjectType::ObjectType10:  return kExplo3[p % 20];
             // Fixed 2026-07-14 (plan.md VISUAL-008-adjacent, the Fan-hit
             // shockwave completing CAM-009's BigShake): wrong divisor (6
             // instead of the real Config::ScaleDiv(1)==1) and wrong

@@ -297,9 +297,38 @@ int main(int argc, char** argv)
               "generic hazard contact-kill triggers SmallShake (plan.md CAM-008, real Decor.cpp behavior)");
         check(!interaction.BigShakeTriggeredThisFrame(),
               "a non-fish/bird hazard contact-kill does NOT trigger BigShake");
-        const auto* afterHazard = findFirst(ObjectType::ObjectType2);
-        check(afterHazard == nullptr || !afterHazard->active,
-              "the hazard that killed Blupi is destroyed (no longer active)");
+        // Real explosion flash (plan.md VISUAL-008) spawned at the same
+        // site: ObjectType8 for this non-fish/bird hazard, exactly at the
+        // hazard's own position.
+        int explosionFlashCount = 0;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType8 && obj.currentX == hx && obj.currentY == hy &&
+                obj.currentZ == hz)
+            {
+                ++explosionFlashCount;
+            }
+        }
+        check(explosionFlashCount == 1,
+              "generic hazard contact-kill spawns an ObjectType8 explosion flash at the hazard's position");
+        // Matched on position, not just type -- `findFirst()` doesn't
+        // filter by active state, and the real explosion-flash spawn
+        // (plan.md VISUAL-008, added 2026-07-14) can now reuse this exact
+        // now-inactive slot for its own ObjectType8, which would otherwise
+        // make a blind type search find the sample world's OTHER real
+        // ObjectType2 placement instead (still active), a false failure
+        // (same false-positive shape flagged elsewhere this session).
+        bool hazardStillActiveAtSamePos = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType2 && obj.currentX == hx && obj.currentY == hy &&
+                obj.currentZ == hz)
+            {
+                hazardStillActiveAtSamePos = true;
+                break;
+            }
+        }
+        check(!hazardStillActiveAtSamePos, "the hazard that killed Blupi is destroyed (no longer active)");
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
         check(!interaction.DiedThisFrame(), "DiedThisFrame() is false again the very next frame");
     }
@@ -982,6 +1011,18 @@ int main(int argc, char** argv)
               "fish contact-kill triggers BigShake specifically, not SmallShake");
         check(!interaction.SmallShakeTriggeredThisFrame(),
               "fish contact-kill does NOT also trigger SmallShake the same frame");
+        // Real explosion flash (plan.md VISUAL-008): ObjectType10 for
+        // fish/bird specifically, matching the BigShake split exactly.
+        int fishFlashCount = 0;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.active && obj.type == ObjectType::ObjectType10 && obj.currentX == 6.0f && obj.currentY == 1.0f &&
+                obj.currentZ == 6.0f)
+            {
+                ++fishFlashCount;
+            }
+        }
+        check(fishFlashCount == 1, "fish contact-kill spawns an ObjectType10 explosion flash, not ObjectType8");
     }
 
     // 8. Wasp (ObjectType44) balloon status and its hazard-pop interaction
@@ -1746,6 +1787,60 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType8, 8) == 4, "ObjectType8 icon at phase=8 is the real table_explo1[8]=4");
         check(GetObjIcon(ObjectType::ObjectType8, 9) == 3, "ObjectType8 icon at phase=9 is the real table_explo1[9]=3 (bounces back down from 4)");
         check(GetObjIcon(ObjectType::ObjectType8, 38) == 11, "ObjectType8 icon at phase=38 is the real table_explo1[38]=11 (last frame before self-delete)");
+    }
+
+    // 17.6b. Fish/bird explosion flash self-delete timing + icon formula
+    // (plan.md VISUAL-008, ObjectType10) -- the real spawn (via the
+    // generic-hazard-kill/fish-BigShake sites) is already exercised in
+    // tests 2.5/7.5 above; this isolates the self-delete-at-phase-20
+    // logic on its own with a directly-constructed instance.
+    {
+        GEWorldRuntime explo3World;
+        GEInteractionSystem explo3Interaction;
+        constexpr float dt = 1.0f / 20.0f;
+        constexpr float ex = 35.0f, ey = 1.0f, ez = 35.0f;
+
+        MobileObjSpec flash;
+        flash.type = ObjectType::ObjectType10;
+        flash.active = true;
+        flash.phase = 0.0f;
+        flash.currentX = flash.posStartX = flash.posEndX = ex;
+        flash.currentY = flash.posStartY = flash.posEndY = ey;
+        flash.currentZ = flash.posStartZ = flash.posEndZ = ez;
+        explo3World.GetMobileObjectsMutable().push_back(flash);
+
+        const auto countFlashesAt = [&explo3World, ex, ey, ez]()
+        {
+            int count = 0;
+            for (const auto& obj : explo3World.GetMobileObjects())
+            {
+                if (obj.active && obj.type == ObjectType::ObjectType10 && obj.currentX == ex &&
+                    obj.currentY == ey && obj.currentZ == ez)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+
+        for (int i = 0; i < 19; ++i)
+        {
+            explo3World.Update(dt);
+        }
+        explo3Interaction.Update(dt, explo3World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 1, "the fish/bird flash is still active just before its real phase-20 self-delete");
+
+        explo3World.Update(dt);
+        explo3Interaction.Update(dt, explo3World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countFlashesAt() == 0, "the fish/bird flash self-deletes once phase reaches the real 20-tick lifetime");
+
+        // GetObjIcon()'s corrected formula (plan.md VISUAL-008, fixed
+        // 2026-07-14 -- real table_explo3 oscillates between 32/34/35, was
+        // wrongly ascending arithmetic before).
+        check(GetObjIcon(ObjectType::ObjectType10, 0) == 32, "ObjectType10 icon at phase=0 is the real table_explo3[0]=32");
+        check(GetObjIcon(ObjectType::ObjectType10, 2) == 34, "ObjectType10 icon at phase=2 is the real table_explo3[2]=34");
+        check(GetObjIcon(ObjectType::ObjectType10, 14) == 35, "ObjectType10 icon at phase=14 is the real table_explo3[14]=35 (the second oscillation phase)");
+        check(GetObjIcon(ObjectType::ObjectType10, 19) == 35, "ObjectType10 icon at phase=19 is the real table_explo3[19]=35 (last frame before self-delete)");
     }
 
     // 17.7. Pollution puff (plan.md VISUAL-013, ObjectType36) -- vehicle

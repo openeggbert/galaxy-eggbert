@@ -392,20 +392,25 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Dynamite-blast explosion flash (plan.md VISUAL-008,
-        // ObjectType8) -- a single instance spawned exactly at the given
-        // blast-center position, no offset (real `ObjectStart(posStart,
-        // ObjectType8, 0)`, `Decor.cpp:9065`, the real
-        // `Decor::DynamiteStart()` called once per blast in the 9-blast
-        // sequence -- speed=0 means no direction/offset encoding, same
-        // reasoning as `SpawnFanHitFlash()`). Appends directly to
-        // pendingSpawns since, like the treasure sparkle above, the real
-        // spawn site is INSIDE this class's own per-object loop (the
-        // dynamite-fuse ObjectType56 block).
-        void AppendDynamiteBlastFlash(float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
+        // Explosion flash (plan.md VISUAL-008, ObjectType8 SmallShake /
+        // ObjectType10 BigShake) -- a single instance spawned exactly at
+        // the given position, no offset (real `ObjectStart(pos, type, 0)`
+        // -- speed=0 means no direction/offset encoding, same reasoning
+        // as `SpawnFanHitFlash()`). Two real, independent trigger sites
+        // share this exact spawn shape: `Decor::DynamiteStart()`
+        // (`Decor.cpp:9065`, ObjectType8, once per blast in the 9-blast
+        // sequence) and the generic-hazard contact-kill site
+        // (`Decor.cpp:5797-5816`, already this engine's own existing
+        // `IsGenericHazard()` block, plan.md CAM-008/009 -- ObjectType10
+        // for fish/17 and bird/20 specifically, paired with the
+        // already-wired BigShake; ObjectType8 for every other hazard
+        // type, paired with SmallShake). Appends directly to pendingSpawns
+        // since both real spawn sites are INSIDE this class's own
+        // per-object loop.
+        void AppendExplosionFlash(ObjectType type, float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
         {
             MobileObjSpec spec;
-            spec.type = ObjectType::ObjectType8;
+            spec.type = type;
             spec.active = true;
             spec.phase = 0.0f;
             spec.currentX = spec.posStartX = spec.posEndX = x;
@@ -696,6 +701,19 @@ namespace GalaxyEggbert::CNA
             if (obj.type == ObjectType::ObjectType8)
             {
                 if (obj.phase >= 39.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
+            // Fish/bird explosion flash (plan.md VISUAL-008, ObjectType10)
+            // -- purely cosmetic, same real spawn shape as ObjectType8
+            // above (see `AppendExplosionFlash()`'s own comment). Real
+            // self-delete at phase>=20 (`Decor.cpp:8419-8430`).
+            if (obj.type == ObjectType::ObjectType10)
+            {
+                if (obj.phase >= 20.0f)
                 {
                     obj.active = false;
                 }
@@ -1006,7 +1024,7 @@ namespace GalaxyEggbert::CNA
                         // VISUAL-008, ObjectType8, Decor.cpp:9065) -- one
                         // instance per blast, at its own center, not just
                         // the central (dx=0,dy=0) one.
-                        AppendDynamiteBlastFlash(centerX, centerY, centerZ, pendingSpawns);
+                        AppendExplosionFlash(ObjectType::ObjectType8, centerX, centerY, centerZ, pendingSpawns);
 
                         if (blast.dx == 0.0f && blast.dy == 0.0f)
                         {
@@ -1494,13 +1512,22 @@ namespace GalaxyEggbert::CNA
                         // one of these 8 hazard types EXCEPT the fish (17)
                         // and bird (20) variants, which play BigShake
                         // instead (real behavior, not an approximation).
+                        // Real explosion flash (plan.md VISUAL-008, see
+                        // AppendExplosionFlash()'s own comment) is spawned
+                        // at the SAME site, same fish/bird split:
+                        // ObjectType10 for fish/bird, ObjectType8 for every
+                        // other hazard type.
                         if (obj.type == ObjectType::ObjectType17 || obj.type == ObjectType::ObjectType20)
                         {
                             bigShakeTriggeredThisFrame_ = true;
+                            AppendExplosionFlash(ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
+                                                  pendingSpawns);
                         }
                         else
                         {
                             smallShakeTriggeredThisFrame_ = true;
+                            AppendExplosionFlash(ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
+                                                  pendingSpawns);
                         }
                     }
                 }

@@ -107,12 +107,13 @@ menus, though still missing a visible 3D Blupi model.
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
   cheat: free flight, no gravity/collision/interactions), both added 2026-07-14.
-- The first 9 real particle effects (Invert start/stop 4-direction burst, treasure sparkle,
-  Fan-hit shockwave flash, dynamite-blast explosion flash, Pollution puff (4 vehicle types),
-  Shield trail, Power/Magic trail, bullet-hit splat effect, teleporter arc, all added 2026-07-14)
-  — logic and positions independently confirmed correct via unit tests; live visual confirmation
-  was attempted for the first two but inconclusive (see §3's own note); the rest were not
-  re-attempted (same rendering path).
+- The first 10 real particle effects (Invert start/stop 4-direction burst, treasure sparkle (now
+  wired to key pickups too), Fan-hit shockwave flash, dynamite-blast/generic-hazard explosion
+  flash, fish/bird explosion flash, Pollution puff (4 vehicle types), Shield trail, Power/Magic
+  trail, bullet-hit splat effect, teleporter arc, all added 2026-07-14) — logic and positions
+  independently confirmed correct via unit tests; live visual confirmation was attempted for the
+  first two but inconclusive (see §3's own note); the rest were not re-attempted (same rendering
+  path).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -152,6 +153,23 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Completed VISUAL-008's explosion-flash family — found a second real ObjectType8 trigger site
+  and implemented ObjectType10 (fish/bird explosion flash)**, the TENTH real particle effect.
+  Direct source read found the SAME cosmetic flash spawned at the generic-hazard contact-kill
+  site (already this engine's own `IsGenericHazard()`/`CAM-008` SmallShake block) — ObjectType8
+  for every hazard type except fish/bird, ObjectType10 specifically for fish/bird, matching the
+  BigShake/SmallShake split already modeled exactly. Renamed the free function from
+  `AppendDynamiteBlastFlash()` to the more general `AppendExplosionFlash(type, ...)` since it's
+  now used by 2 independent real trigger sites for 2 different types. Fixed a sixth
+  `GEObjectIcons.cpp` bug (`ObjectType10`'s real `table_explo3` oscillates between icons 32/34/35,
+  not a plain ascending range). Also found and fixed a genuine test false-positive this change
+  exposed: an existing test's `findFirst()` helper doesn't filter by active state, and the new
+  flash can legitimately reuse a just-killed hazard's own pool slot (matching real
+  `MoveObjectFree()` semantics), which made a blind type-based re-lookup find a DIFFERENT,
+  still-active real hazard placement instead — not a real regression, fixed by matching on
+  position like several other tests already do. 5 new checks + 1 existing test fixed + full
+  regression on both backends, all pass. `ObjectType9` remains unspawned/unfixed — no real spawn
+  site is wired for it yet.
 - **Wired the treasure sparkle burst to key pickups too (plan.md VISUAL-012)** — corrected a
   backwards assumption from earlier the same day: `ObjectType49/50/51` were assumed to be
   key-gated DOOR tiles needing a new non-`MobileObjSpec` door model before the burst could be
@@ -826,24 +844,24 @@ judgment (§9).
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the
     single largest remaining checklist section by item count. A real feature, not a quick fix —
     scope as its own multi-task effort if picked up, not a "next smallest task." **Update
-    2026-07-14: the user directed a start on this system; 9 slices are now done** — Invert
+    2026-07-14: the user directed a start on this system; 10 slices are now done** — Invert
     start/stop burst (`BLUPI-110`/`VISUAL-014/015`), treasure sparkle (`VISUAL-012`, now wired to
     key pickups too — see §3's newer entry, a backwards "door model" assumption from earlier the
-    same day is corrected), Fan-hit shockwave flash and dynamite-blast explosion flash
-    (`VISUAL-008`, partial — only `ObjectType8`/`11` of the 4 types in that item), Pollution puff
-    (`VISUAL-013`, all 4 vehicle types), the Shield/Power magic trails (`VISUAL-011`/`017`), the
-    bullet-hit splat effect (`VISUAL-009`, description corrected — real trigger is a bullet
-    contact-kill, not "water entry"), and the teleporter arc (`VISUAL-010`, description corrected
-    — real trigger is the teleporter, not "a charged attack"), see §3's own writeups. Real
-    `SearchDistRight()` short-circuits to a flat 500px
+    same day is corrected), Fan-hit shockwave flash, dynamite-blast/generic-hazard explosion flash,
+    and fish/bird explosion flash (`VISUAL-008`, now 3 of 4 types done — only `ObjectType9`
+    remains, see §3's own newer entry), Pollution puff (`VISUAL-013`, all 4 vehicle types), the
+    Shield/Power magic trails (`VISUAL-011`/`017`), the bullet-hit splat effect (`VISUAL-009`,
+    description corrected — real trigger is a bullet contact-kill, not "water entry"), and the
+    teleporter arc (`VISUAL-010`, description corrected — real trigger is the teleporter, not "a
+    charged attack"), see §3's own writeups. Real `SearchDistRight()` short-circuits to a flat 500px
     for types 36/39/41/42/93 (no raycast needed) — investigated type 93 directly
     (`Decor.cpp:10310-10348`, `Decor::VoyageDraw()`) and found it's actually gated behind the whole
     not-yet-built "Voyage" pickup-flight-animation system (plan.md `158`), NOT a simple standalone
     spawn like the others — plan.md's earlier note calling it "simple" was wrong, corrected.
-    `ObjectType9/10`'s `GetObjIcon()` formulas are still flagged (not fixed) — same category of bug
-    as the fixed ones, but both types remain entirely unspawned in this engine, so fixing their
-    formulas now would be speculative work on unreachable code; a real follow-up once/if they're
-    ever wired. Invert/treasure's own posStart->posEnd slide used to duplicate the engine's
+    `ObjectType9`'s `GetObjIcon()` formula is still flagged (not fixed) — same category of bug as
+    the fixed ones, but it remains entirely unspawned in this engine, so fixing its formula now
+    would be speculative work on unreachable code; a real follow-up once/if it's ever wired.
+    Invert/treasure's own posStart->posEnd slide used to duplicate the engine's
     existing generic `AdvancePatrolStep()` machinery instead of reusing it (found while building
     Pollution puff, the first effect to use that machinery directly) — cleaned up the same day
     (both now set `patrolStep=2`/`stepAdvanceTicks` at spawn like Pollution puff; confirmed
@@ -851,13 +869,14 @@ judgment (§9).
     behavior change). The bullet-splat effect also required the first render-side change any
     particle effect this session has needed: real `-1` "invisible frame" sentinel support in the
     explo.png billboard pass (skip drawing when the icon is negative), reused as-is for the
-    teleporter arc's own 128-frame scattered table with no further renderer changes needed. ~10
+    teleporter arc's own 128-frame scattered table with no further renderer changes needed. ~9
     items remain overall, and every real particle effect with a genuinely "simple" single-site
     trigger (burst, single-instance flash, distance-triggered breadcrumb, contact-triggered splat,
     or state-triggered arc) is now done — remaining items are either genuinely harder (the Voyage
     system, a full 2D-screen-space HUD-icon-flight animation distinct from this engine's 3D
     `MobileObjSpec` system entirely; Hide's own afterimage trail which needs a visible Blupi model
-    this engine doesn't have) or blocked on the still-unaudited `ObjectType9/10` formulas.
+    this engine doesn't have) or blocked on the still-unaudited `ObjectType9` formula (no real
+    spawn site wired for it yet).
 
 **Status as of 2026-07-14 (updated): #13 is now done** (see §3) — implemented the same session this
 note was first written, after concluding the icon-ID research had actually de-risked it enough to

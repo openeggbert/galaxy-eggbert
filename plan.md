@@ -3020,9 +3020,11 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 - [ ] VISUAL-007 — ~~Shield blink at < 1.5 s remaining~~ **HALLUCINATED — CANCELLED, same finding
       as VISUAL-006 — no real blink-at-low-time effect found, only the sparkle-overlay behavior
       already noted.**
-- [ ] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px,
-      Explosion channel) — **partially done 2026-07-14**: ObjectType11 (Fan-hit shockwave) and
-      ObjectType8 (dynamite-blast flash) are implemented; ObjectType9/10 are NOT.
+- [x] VISUAL-008 — Explosion billboard effects: ObjectType8-11 from `explo.png` (128×128 px,
+      Explosion channel) — **3 of 4 types done, `ObjectType9` remains unspawned/unfixed (see its
+      own note below)**. ObjectType11 (Fan-hit shockwave), ObjectType8 (dynamite-blast flash /
+      generic-hazard explosion flash), and ObjectType10 (fish/bird explosion flash) are
+      implemented.
       **ObjectType11** — the cosmetic particle spawned alongside CAM-009's BigShake (see CAM-009's
       writeup, now updated). Real spawn site confirmed via direct source read (`Decor.cpp:5467`,
       the same real Fan/Ventillo-kill block CAM-009 already cites): `ObjectStart(celSwitch,
@@ -3054,16 +3056,40 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       7 new `VerifyInteractionSystem` checks (real spawn exercised via the existing dynamite-blast
       test, isolated self-delete timing, corrected icon values including a bounce-back point) +
       full regression on both backends, all pass.
-      **ObjectType9/10 remain NOT done** — flagged as a likely-similar follow-up: their real tables
-      (`table_explo2/3`) are also non-trivial, and `table_explo2` even has `-1` "invisible frame"
-      sentinel values (meaning the renderer would ALSO need a "skip this frame" check added to the
-      explo.png billboard loop in `GalaxyEggbertCnaGame.cpp`, not just a table fix) — deliberately
-      left alone since, unlike 8/11, no real spawn site for 9/10 is wired in this engine yet (only
-      an already-flagged comment in `GEInteractionSystem.cpp`'s follower-blocked-path-self-destruct
-      block references `ObjectType9` as unspawned), so fixing their formulas now would be
-      speculative work on unreachable code. Not live-visually re-verified for either 8 or 11 (same
-      already-proven element.png/explo.png billboard rendering path as every other particle effect
-      this session).
+      **ObjectType8, second real trigger site, found 2026-07-14 (later the same day):** the SAME
+      flash is ALSO spawned at the real generic-hazard contact-kill site (`Decor.cpp:5807-5816`,
+      already this engine's own existing `IsGenericHazard()`/`CAM-008` SmallShake block) for every
+      hazard type EXCEPT fish/bird — reusing the exact same spawn (renamed the free function from
+      `AppendDynamiteBlastFlash()` to the more general `AppendExplosionFlash(type, x, y, z, ...)`,
+      now parameterized by `ObjectType` since both real sites need the identical static/no-offset
+      spawn shape, just at different positions and for different types).
+      **ObjectType10 — done 2026-07-14 (found alongside the ObjectType8 second-site discovery
+      above):** the SAME generic-hazard contact-kill site spawns ObjectType10 instead of
+      ObjectType8 specifically for fish (`ObjectType17`) and bird (`ObjectType20`) — the exact
+      same real fish/bird split already modeled for BigShake vs SmallShake (`CAM-008/009`), now
+      also driving which explosion-flash type spawns. Real self-delete at `phase>=20`
+      (`Decor.cpp:8419-8430`). Found and fixed a SIXTH `GEObjectIcons.cpp` bug: wrong divisor (6
+      instead of 1) and wrong ascending-arithmetic assumption — real `table_explo3`
+      (`Tables.cpp:1384-1388`) is a repeating oscillation (`32,32,34,34` ×3, then `32,32,35,35`
+      ×2), transcribed verbatim as `kExplo3[20]`. **Found and fixed a test false-positive along the
+      way:** adding this spawn exposed a latent bug in an EXISTING test (`2.5. Generic hazard
+      contact`) — its `findFirst()` helper doesn't filter by active state, and the new explosion
+      flash can legitimately reuse the just-killed hazard's own now-inactive pool slot (matching
+      real `MoveObjectFree()`'s own slot-reuse semantics), which made a blind type-based re-lookup
+      find the sample world's OTHER real `ObjectType2` placement instead (still active) — a false
+      failure, not a real regression. Fixed by matching on position, same established pattern used
+      for several other tests this session. 5 new `VerifyInteractionSystem` checks (both real
+      spawn sites, isolated self-delete timing, corrected icon values) + the 1 existing test fixed
+      + full regression on both backends, all pass.
+      **ObjectType9 remains NOT done** — its real table (`table_explo2`) has `-1` "invisible
+      frame" sentinel values (same category the bullet-splat effect's `table_sploutch2/3` already
+      needed and got real renderer support for, so that blocker no longer applies) but, unlike
+      8/10/11, no real spawn site for `ObjectType9` is wired in this engine yet (only an
+      already-flagged comment in `GEInteractionSystem.cpp`'s follower-blocked-path-self-destruct
+      block references it as unspawned) — fixing its formula now would still be speculative work
+      on unreachable code; a real follow-up once/if that follower-destruct spawn is ever wired.
+      Not live-visually re-verified for 8/10/11 (same already-proven element.png/explo.png
+      billboard rendering path as every other particle effect this session).
 - [x] VISUAL-009 — Water splash billboard effects: ObjectType98-100 from `explo.png` —
       **done 2026-07-14, description corrected**: despite the `ObjectType.hpp` enum's own "water
       splash"/"spawned when entering water" doc comments, direct source read found the ONLY real
