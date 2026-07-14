@@ -536,9 +536,23 @@ judgment (§9).
     deterministic kill, mechanically identical to Spike. Now a real 6th confirmed terrain hazard.
 
 15. **Camera shake system** (`plan.md` §2.10/§2.12) — the whole system is genuinely unbuilt (zero
-    grep matches). Several already-implemented mechanics reference real shake events that
-    currently no-op (crate impact, explosions, fan shockwave, electric spark) — would need its own
-    scoping pass to decide magnitude/duration per trigger before implementing.
+    grep matches). **Researched 2026-07-14, now blocked on an explicit approval decision rather
+    than just "needs scoping":** real per-frame shake magnitudes come from `Decor::DecorNextAction()`
+    reading `Tables::table_decor_action` (`Decor.cpp:1353-1374`) — an actual mobile-eggbert data
+    table (per-shake-type frame count + a `(dx,dy)` offset pair per frame, applied ×3 to the scroll
+    position each frame). This is real structured table data, the same category CLAUDE.md's reuse
+    table already restricts ("Animation/movement tables... do not transcribe array contents without
+    approval") — NOT a tunable constant with no given value (unlike e.g. `kEcraseSpeedMultiplier`),
+    so it can't be faithfully ported without the same kind of explicit approval `kStopEcraseFrames`/
+    etc. needed in an earlier phase. Nor is there a reasonable *approximation* to fall back on: with
+    no real anchor value at all for amplitude/duration (unlike every other "approximated, not
+    transcribed" constant elsewhere in this project, which at least proportionally derives from a
+    known real baseline), any chosen magnitude would be a pure guess — the same category of problem
+    this project already treats as needing the user's own judgment, not another autonomous attempt
+    (see the Saw blade orientation precedent, §9). **Do not implement an approximate/guessed shake
+    system** — either get explicit approval to read+transcribe `table_decor_action`'s real values,
+    or ask the user for a feel-based amplitude/duration if approval for the table itself is
+    declined. Do not guess in the meantime.
 
 16. **Particle/transient-visual-effects system** (`plan.md` §2.7 §7.5 / §2.12, ~22 items) — the
     entire system (explosions, sparkles, splashes, bursts) is genuinely unbuilt; explicitly the

@@ -1833,7 +1833,14 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       `DecorNextAction()`/`Tables::table_decor_action`, already documented in `NEXT.md`'s
       architecture notes) is a genuine screen-shake/forced-pan CAMERA OFFSET effect, triggered by
       several real hazards/hits. Belongs with camera work (`GECameraRig`-equivalent), not `GEHud`
-      -- re-file under Phase 6/camera if picked up, not implemented here.
+      -- re-file under Phase 6/camera if picked up, not implemented here. **Researched further
+      2026-07-14**: `table_decor_action` is real per-shake-type structured frame data (frame count +
+      a `(dx,dy)` offset pair per frame, `Decor.cpp:1353-1374`), the same category CLAUDE.md's reuse
+      table already restricts from casual transcription — not a tunable constant with a derivable
+      proportional anchor like most of this project's other "approximated" constants. Implementing
+      this needs either explicit approval to transcribe the real table, or the user's own feel-based
+      amplitude/duration if that approval is declined — do not guess a shake magnitude in the
+      meantime (see NEXT.md's own next-round task list for the full reasoning).
 - [x] HUD-015 — Bullet counter: element.png icon 176 × bullets held, X+=4 fanned row at (570,442)
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1197-1201`)
 - [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
