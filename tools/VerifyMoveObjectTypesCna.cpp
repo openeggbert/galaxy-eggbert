@@ -1,5 +1,7 @@
 #include "Game/GEWorldRuntime.hpp"
 
+#include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -55,6 +57,47 @@ int main()
         {
             allOk = false;
         }
+    }
+
+    // plan.md TEST-003 (2026-07-14): the checks above only cover a curated
+    // subset chosen per ObjectType example -- this sweeps EVERY real
+    // mobile-eggbert world file and confirms LoadFromMobileEggbertFile()
+    // doesn't fail on any of them, closing the literal "all world files
+    // parse without error" ask. Enumerated at runtime (not a hardcoded
+    // list) so it stays accurate if ../mobile-eggbert/worlds/ ever gains
+    // or loses files.
+    {
+        const std::filesystem::path worldsDir = "../mobile-eggbert/worlds";
+        std::vector<std::string> files;
+        for (const auto& entry : std::filesystem::directory_iterator(worldsDir))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == ".txt")
+            {
+                files.push_back(entry.path().string());
+            }
+        }
+        std::sort(files.begin(), files.end());
+
+        if (files.empty())
+        {
+            std::cout << "FAIL: no world files found under " << worldsDir << std::endl;
+            allOk = false;
+        }
+
+        int failCount = 0;
+        for (const auto& file : files)
+        {
+            GalaxyEggbert::CNA::GEWorldRuntime runtime;
+            if (!runtime.LoadFromMobileEggbertFile(file))
+            {
+                std::cout << "FAIL: could not parse " << file << std::endl;
+                ++failCount;
+                allOk = false;
+            }
+        }
+        std::cout << (failCount == 0 ? "PASS" : "FAIL") << ": all " << files.size()
+                  << " real mobile-eggbert world files parse without error (" << failCount
+                  << " failed)" << std::endl;
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

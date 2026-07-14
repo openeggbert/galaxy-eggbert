@@ -138,6 +138,11 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Closed plan.md TEST-003** — `VerifyMoveObjectTypesCna` now also sweeps every real
+  `../mobile-eggbert/worlds/*.txt` file (enumerated at runtime, not hardcoded) confirming
+  `GEWorldRuntime::LoadFromMobileEggbertFile()` succeeds on all of them, closing the literal "all
+  world files parse without error" ask (previously only a curated per-`ObjectType`-example subset
+  was covered). All 78 real world files parse cleanly. Full regression on both backends passes.
 - **Found and fixed a real icon-440 atlas-bounds bug in galaxy-eggbert's own exhibition demo**
   (plan.md TEST-004 investigation) — `BlockTypes::tileUV()`'s formula places icon 440 at atlas
   pixel rect `(1,1431)`-`(65,1495)`, entirely outside the real `object-m.png`'s actual 1301×1431
