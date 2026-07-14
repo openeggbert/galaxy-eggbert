@@ -116,7 +116,8 @@ menus, though still missing a visible 3D Blupi model.
   2026-07-14) — logic and positions independently confirmed correct via unit tests; live visual
   confirmation was attempted for the first two but inconclusive (see §3's own note); the rest
   were not re-attempted (same rendering
-  path).
+  path). Plus the Voyage pickup-reward-flight system and the Clear2/Clear3/Clear4 death VFX
+  (soul-ascend Voyages + a 3-direction particle burst), both added 2026-07-14 (see §3).
 - Real mobile-eggbert-faithful HUD (`GEHud`): lives/keys/treasure/bullets/dynamite/Perso icons,
   water and secret-power gauges, training-hint overlay — every element the real `Decor::DrawInfo`
   draws is implemented.
@@ -156,6 +157,33 @@ menus, though still missing a visible 3D Blupi model.
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
 
+- **Implemented "death VFX" (`plan.md 159`) — the Clear2/Clear3/Clear4 follow-up flagged by the
+  Voyage entry below.** Of Blupi's 8 real `BlupiAction::Clear1`-`Clear8` death-animation types,
+  only 3 turned out to have any real VFX at all: Clear1 has none, Clear5-8 are confirmed DEAD CODE
+  (grepped the whole real codebase — defined in the enum, excluded by every guard, never assigned
+  anywhere), and `Glu` (spikes/drip/projectile-contact/large-creature-grab deaths) is a wholly
+  separate mechanic, still out of scope. Clear2 ("soul ascends" 300px, icon 230 animated 230-241)
+  fires from fall-off-world (deterministic), Fan, and the generic 8-type hazard-contact list (the
+  latter two a real 50/50 coinflip vs. Clear1 — `Decor::BlupiDead(action1, action2)`'s own RNG
+  choice, `Decor.cpp:6551-6554`, the FIRST randomness anywhere in this engine's gameplay code).
+  Clear3 ("soul ascends" 2000px, icon 40 static, Lava, deterministic) has a real 30-tick pre-move
+  delay (position/icon frozen) before rising, plus a continuous `ObjectType93` puff-particle spawn
+  every tick while active. Both reuse the Voyage machinery `158` built, with real FIXED
+  (non-distance-proportional) durations — 100/50 ticks — overriding the generic formula entirely,
+  confirmed via a fresh direct re-read of `Decor.cpp:10141-10350` (this same re-read is also what
+  caught the Dynamite/BulletPack sound bug noted below). Clear4 (Saw, deterministic) is NOT a
+  Voyage — 3 `ObjectType41` particles (up/right/left, no "down"), same real type as the
+  already-shipped Invert burst but a larger magnitude (`stepAdvanceTicks=156` vs Invert's 78) +
+  channel 75 (had to stop the existing Saw death-site code from separately double-playing it).
+  Found and fixed a real pre-existing bug while wiring this: the Fan hazard's own
+  `SpawnFanHitFlash()` read Blupi's position AFTER the death respawn had already moved it, spawning
+  the flash at the wrong spot — fixed (and applied the same "capture death position first" pattern
+  to all 3 new call sites). New dedicated tests for all of the above (fixed-duration override,
+  icon-cycle animation, pre-move delay, puff jitter bounds, the 3-direction burst, and a
+  statistical coinflip test over 200 trials). Full suite: 78 tests on `build-cna` (99%, only the
+  pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on
+  `build-cna-vulkan`. Still out of scope: the `Glu` "stuck" mechanic and the life-loss icon-48
+  Voyage (respawn/death-lock control flow, a separate behavior change).
 - **Implemented the "Voyage" pickup-reward system (`plan.md 158`) — the fully faithful port, not
   a cosmetic-only approximation.** Real mobile-eggbert defers a pickup's actual reward (counter
   increment, key-bit set) behind a 2D "fly to HUD icon" animation (`Decor::VoyageInit`/
@@ -186,10 +214,11 @@ long continuous autonomous session); each item is its own commit.
   distinct real Blupi DEATH-animation types (Clear3/Lava and Clear2 fire their own "soul ascends"
   Voyage via icon 40/230; Clear4/Saw fires an unrelated `ObjectType41`-reusing particle burst
   instead) — NOT a 3rd Invert-grant site as previously assumed. This means no death in this engine
-  currently has any of these real VFX — a genuinely separate **"death VFX" system**, confirmed
-  real and valuable but explicitly deferred as its own future task (along with the life-loss
-  icon-48/Blupi-channel animation, which ties into respawn/death-lock control flow — a separate
-  behavior change, not touched). Verified: 18 existing `VerifyInteractionSystem` assertions
+  had any of these real VFX at the time this Voyage pass shipped — a genuinely separate **"death
+  VFX" system**, confirmed real and valuable and implemented as its own follow-up the same day
+  (see the entry above) — only the life-loss icon-48/Blupi-channel animation (respawn/death-lock
+  control flow, a separate behavior change) remains deferred. Verified: 18 existing
+  `VerifyInteractionSystem` assertions
   updated for the new deferred timing, plus new dedicated tests for the interpolation/reward-
   timing math, the force-complete-on-new-voyage interaction, and `ProjectWorldToHudSpace()`'s
   math against a controlled `Easy3D::Camera3D`. Full suite: 78 tests on `build-cna` (99%, only the

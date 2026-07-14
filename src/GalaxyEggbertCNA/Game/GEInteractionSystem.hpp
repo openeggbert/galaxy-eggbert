@@ -3,6 +3,8 @@
 #include "GESound.hpp"
 #include "GEWorldRuntime.hpp"
 
+#include <random>
+
 namespace GalaxyEggbert::CNA
 {
     // Real mobile-eggbert interactive-object behavior (2026-07-10): platform
@@ -488,9 +490,30 @@ namespace GalaxyEggbert::CNA
         // reward -- an accepted, documented simplification for a
         // vanishingly rare edge case (two different pickups touched in
         // the exact same tick), not worth the extra bookkeeping.
+        // Clear2Ascend/Clear3Ascend (plan.md `158` death-VFX follow-up,
+        // verified directly against `Decor::BlupiDead`/`VoyageInit`/
+        // `VoyageStep`/`VoyageDraw`, Decor.cpp:6547-6614/10141-10350): the
+        // real "soul ascends" Voyage fired by 2 of Blupi's 8 death-
+        // animation types (`BlupiAction::Clear2`/`Clear3` -- Clear1's own
+        // death has no VFX at all, Clear4/Saw is a particle burst not a
+        // Voyage, Clear5-8 are unreachable dead code, and Glu -- spikes/
+        // drip/projectile/large-creature-grab deaths -- is a wholly
+        // separate, un-researched "stuck in goo" mechanic, out of scope
+        // here). Unlike every pickup kind above, BOTH endpoints derive
+        // from Blupi's OWN position (start = Blupi projected to HUD
+        // space, end = straight up from there by a fixed HUD-space
+        // offset -- 300 for Clear2, 2000 for Clear3) rather than one
+        // pickup-fixed HUD point -- a natural technical adaptation of the
+        // real `pos`/`pos2` (both `m_blupiPos - m_posDecor`, differing
+        // only by a real screen-Y offset before the shared
+        // `HotSpotToHud()` transform) for an engine with no 2D scrolling
+        // "decor" pixel space. No reward at either kind's completion
+        // (confirmed: neither icon 230 nor 40 appears in `VoyageStep`'s
+        // completion if-chain, Decor.cpp:10256-10304).
         enum class VoyageKind : std::uint8_t
         {
-            None, Treasure, Key1, Key2, Key3, Egg, Dynamite, Perso, BulletPack, DoorUnlock
+            None, Treasure, Key1, Key2, Key3, Egg, Dynamite, Perso, BulletPack, DoorUnlock,
+            Clear2Ascend, Clear3Ascend
         };
 
         [[nodiscard]] bool VoyagePendingThisFrame() const noexcept { return voyagePendingThisFrame_; }
@@ -508,12 +531,52 @@ namespace GalaxyEggbert::CNA
         // door-unlock key-consumption flourish only -- flies FROM the
         // fixed HUD key position TO the door's own world position).
         [[nodiscard]] bool VoyagePendingWorldIsStart() const noexcept { return pendingWorldIsStart_; }
+        // True only for the generic-hazard-contact Clear2 coinflip site
+        // (inside Update(), no camera access -- unlike Clear2/Clear3's
+        // OTHER 2 real trigger sites, fall-off-world and Lava, which live
+        // directly in `GalaxyEggbertCnaGame.cpp` and so call `BeginVoyage()`
+        // straight away, no pending round-trip needed). When true, the
+        // caller computes end = (projectedX, projectedY -
+        // VoyagePendingAscendOffsetY()) instead of reading
+        // VoyagePendingFixedX/Y() (which are unused/stale in this mode).
+        [[nodiscard]] bool VoyagePendingIsAscend() const noexcept { return pendingIsAscend_; }
+        [[nodiscard]] float VoyagePendingAscendOffsetY() const noexcept { return pendingAscendOffsetY_; }
 
         // Called by the game class once it has resolved both endpoints
         // (projecting whichever one was still a world position). Force-
         // completes any voyage already in flight first (see class comment).
+        // worldAnchorX/Y/Z is Blupi's own 3D world position at the moment
+        // the voyage started -- unused by every pickup kind (defaulted to
+        // 0), but needed by Clear3Ascend to anchor its own real continuous
+        // world-space puff-particle spawn (see TickVoyage()'s own comment).
         void BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId, bool isButtonChannel,
-                          float startX, float startY, float endX, float endY, GESound& sound);
+                          float startX, float startY, float endX, float endY, GESound& sound,
+                          float worldAnchorX = 0.0f, float worldAnchorY = 0.0f, float worldAnchorZ = 0.0f);
+
+        // Real 50/50 Clear1(nothing)/Clear2(ascend) coinflip
+        // (`Decor::BlupiDead(action1, action2)`'s own `m_random.get()->
+        // Next() % 2 == 0` choice, Decor.cpp:6551-6554), shared by the Fan
+        // and generic-hazard-contact real trigger sites (the only 2 of
+        // Clear2's 3 real trigger sites that aren't deterministic --
+        // fall-off-world and Lava always pick Clear2/Clear3 outright).
+        // Returns true if Clear2 was picked (caller then begins/requests
+        // the ascend voyage + plays channel 74); false means Clear1 (do
+        // nothing further -- Clear1 itself has no real VFX or sound).
+        [[nodiscard]] bool RollClear2Coinflip();
+
+        // Real Clear4/Saw death VFX (`Decor::BlupiDead`'s own Clear4
+        // branch, Decor.cpp:6608-6613): 3 ObjectType41 particles (up/
+        // right/left, no "down" -- decoded directly from the real
+        // `ObjectStart(pos, ObjectType41, speed)` calls with speed
+        // -70/20/-20 via `Decor::ObjectStart`'s own direction/magnitude
+        // logic, Decor.cpp:7805-7869) + channel 75. Deterministic (Saw
+        // death is always Clear4, no coinflip) -- called directly by the
+        // game class in place of its existing `triggerDeath(ch75)` call
+        // (which must instead pass playChannel=false to avoid double-
+        // playing channel 75, since this method plays it itself, matching
+        // the real source's own single call site for that sound).
+        void SpawnSawDeathBurst(GEWorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ,
+                                 GESound& sound);
 
         // Draw-side state for `GEHud::Draw()` -- current interpolated
         // position in the same 640x480 reference space.
@@ -522,6 +585,12 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool VoyageIsButtonChannel() const noexcept { return voyageIsButton_; }
         [[nodiscard]] float VoyageDrawX() const noexcept;
         [[nodiscard]] float VoyageDrawY() const noexcept;
+        // False only for Clear3Ascend during its real 30-tick pre-move
+        // delay (`Decor::VoyageDraw`'s own `if (icon != 40 || channel !=
+        // Element || num != 0) HudIcon(...)` guard, Decor.cpp:10318) --
+        // every other kind (including Clear2Ascend, which has no delay)
+        // is always visible while active.
+        [[nodiscard]] bool VoyageIconVisible() const noexcept;
 
         // Bullet pack (ObjectType29, plan.md E3D-MIG-175, real Decor.cpp
         // ~5731-5744). Automatic on contact, no button, gated on
@@ -645,6 +714,10 @@ namespace GalaxyEggbert::CNA
         bool voyageIsButton_ = false;
         float voyageStartX_ = 0.0f, voyageStartY_ = 0.0f, voyageEndX_ = 0.0f, voyageEndY_ = 0.0f;
         float voyagePhase_ = 0.0f, voyageTotal_ = 0.0f;
+        // Blupi's own world position at the moment the active voyage
+        // started (see BeginVoyage()'s own comment) -- only meaningful for
+        // Clear3Ascend's continuous puff-particle spawn.
+        float voyageWorldAnchorX_ = 0.0f, voyageWorldAnchorY_ = 0.0f, voyageWorldAnchorZ_ = 0.0f;
         // This-frame pending request (consumed by the game class):
         bool voyagePendingThisFrame_ = false;
         VoyageKind pendingKind_ = VoyageKind::None;
@@ -653,6 +726,14 @@ namespace GalaxyEggbert::CNA
         float pendingWorldX_ = 0.0f, pendingWorldY_ = 0.0f, pendingWorldZ_ = 0.0f;
         float pendingFixedX_ = 0.0f, pendingFixedY_ = 0.0f;
         bool pendingWorldIsStart_ = true;
+        bool pendingIsAscend_ = false;
+        float pendingAscendOffsetY_ = 0.0f;
+        // First randomness needed anywhere in this engine's gameplay code
+        // (real `Decor::BlupiDead`'s own `m_random`, Decor.cpp:6551) --
+        // seeded from real entropy since the real coinflip this ports is
+        // genuinely non-deterministic (cosmetic-only: it never affects
+        // `lives_`/reward state, only whether the ascend VFX/sound plays).
+        std::mt19937 rng_{std::random_device{}()};
 
         void TickVoyage(float dt, GEWorldRuntime& worldRuntime, GESound& sound);
         void ApplyVoyageReward(GEWorldRuntime& worldRuntime, GESound& sound);
@@ -661,6 +742,15 @@ namespace GalaxyEggbert::CNA
         // switch, TryPerso(), and the key-gated-door block.
         void RequestVoyage(VoyageKind kind, int iconId, bool isButtonChannel, float worldX, float worldY,
                             float worldZ, float fixedX, float fixedY, bool worldIsStart);
+        // Records a this-frame Clear2Ascend request from the generic-
+        // hazard-contact site (the only Clear2 trigger site inside
+        // Update() itself, with no camera access -- see
+        // VoyagePendingIsAscend()'s own comment).
+        void RequestClear2Ascend(float worldX, float worldY, float worldZ);
+        // Real `Decor::VoyageDraw`'s icon==40 puff spawn (Decor.cpp:
+        // 10331-10348), called once per TickVoyage() while Clear3Ascend is
+        // active (see TickVoyage()'s own comment).
+        void SpawnLavaAscendPuff(GEWorldRuntime& worldRuntime);
         // Real m_blupiPosMagic, see TickMagicTrail()'s own comment. Only
         // consulted once Shield/Power has actually granted (which always
         // calls ResetMagicTrail() first), so this default is never read

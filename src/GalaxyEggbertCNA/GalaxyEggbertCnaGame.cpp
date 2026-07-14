@@ -478,6 +478,26 @@ namespace GalaxyEggbert::CNA
             Microsoft::Xna::Framework::Vector3(interaction_.VoyagePendingWorldX(), interaction_.VoyagePendingWorldY(),
                                                 interaction_.VoyagePendingWorldZ()),
             camera_.GetViewMatrix(), camera_.GetProjectionMatrix(), viewportW, viewportH, projectedX, projectedY);
+        // Clear2Ascend (real death-VFX coinflip, plan.md `158` follow-up):
+        // BOTH endpoints derive from the SAME projected world point (start
+        // = Blupi's projected position, end = straight up from there by a
+        // fixed HUD-space offset) -- there is no independent "fixed" point
+        // to fall back to if projection fails, so an un-projectable
+        // ascend request is simply dropped (a dying Blupi behind the
+        // camera is not a real scenario this needs to handle robustly).
+        if (interaction_.VoyagePendingIsAscend())
+        {
+            if (projected)
+            {
+                interaction_.BeginVoyage(worldRuntime_, interaction_.VoyagePendingKind(),
+                                         interaction_.VoyagePendingIconId(), false, projectedX, projectedY, projectedX,
+                                         projectedY - interaction_.VoyagePendingAscendOffsetY(), sound_,
+                                         interaction_.VoyagePendingWorldX(), interaction_.VoyagePendingWorldY(),
+                                         interaction_.VoyagePendingWorldZ());
+            }
+            return;
+        }
+
         if (!projected)
         {
             // Behind the camera (shouldn't happen for a just-touched
@@ -1044,11 +1064,44 @@ namespace GalaxyEggbert::CNA
             // their own real fixed duration and revival behavior,
             // 10-blupi-mechanics.md §8) -- every cause here is instant, no
             // animation state exists yet for any of them.
-            const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel)
+            const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel, bool playChannel = true)
             {
-                sound_.Play(channel);
+                if (playChannel)
+                {
+                    sound_.Play(channel);
+                }
                 interaction_.LoseLife();
                 blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
+            };
+
+            // Real Clear2/Clear3 "soul ascends" death VFX (plan.md `158`
+            // death-VFX follow-up, `Decor::BlupiDead`'s own Clear2/Clear3
+            // branches, Decor.cpp:6589-6606) -- called directly here (not
+            // via the pending-request round-trip pickups use) since these
+            // 2 real trigger sites (fall-off-world, Lava) already have
+            // `camera_`/viewport in scope, unlike the generic-hazard-
+            // contact coinflip site inside GEInteractionSystem::Update()
+            // (see RequestClear2Ascend()'s own comment). kind must be
+            // Clear2Ascend (icon 230, offsetY 300) or Clear3Ascend (icon
+            // 40, offsetY 2000).
+            // Takes an EXPLICIT death position (not read live from blupi_)
+            // because triggerDeath() above already respawns Blupi before
+            // this would run -- the ascend must originate from where he
+            // died, not where he respawns. Callers capture blupi_.GetX/Y/Z()
+            // BEFORE calling triggerDeath().
+            const auto triggerDeathAscend = [this](GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind kind,
+                                                    float offsetY, int icon, float deathX, float deathY, float deathZ)
+            {
+                const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+                float hudX = 0.0f, hudY = 0.0f;
+                if (GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
+                                                   camera_.GetViewMatrix(), camera_.GetProjectionMatrix(),
+                                                   viewport.getWidthProperty(), viewport.getHeightProperty(), hudX,
+                                                   hudY))
+                {
+                    interaction_.BeginVoyage(worldRuntime_, kind, icon, false, hudX, hudY, hudX, hudY - offsetY,
+                                              sound_, deathX, deathY, deathZ);
+                }
             };
 
             // Fall-off-world death -- mobile-eggbert-reference/
@@ -1103,7 +1156,14 @@ namespace GalaxyEggbert::CNA
             constexpr float kFallDeathY = -27.0f;
             if (blupi_.GetY() < kFallDeathY)
             {
+                const float deathX = blupi_.GetX();
+                const float deathY = blupi_.GetY();
+                const float deathZ = blupi_.GetZ();
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+                // Real Clear2 ascend (plan.md `158` death-VFX follow-up,
+                // Decor.cpp:2754-2761) -- deterministic, no coinflip.
+                triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
+                                    deathX, deathY, deathZ);
             }
 
             // Lava hazard (plan.md E3D-MIG-140) -- deterministic death, no
@@ -1128,7 +1188,14 @@ namespace GalaxyEggbert::CNA
             if (!blupi_.IsInvincible() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
             {
+                const float deathX = blupi_.GetX();
+                const float deathY = blupi_.GetY();
+                const float deathZ = blupi_.GetZ();
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8);
+                // Real Clear3 ascend (plan.md `158` death-VFX follow-up,
+                // Decor.cpp:5497-5499) -- deterministic, no coinflip.
+                triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear3Ascend, 2000.0f, 40,
+                                    deathX, deathY, deathZ);
             }
 
             // Spikes hazard (plan.md E3D-MIG-141) -- real channel 51 (the
@@ -1217,7 +1284,17 @@ namespace GalaxyEggbert::CNA
             if (!blupi_.IsInvincible() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
             {
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75);
+                const float deathX = blupi_.GetX();
+                const float deathY = blupi_.GetY();
+                const float deathZ = blupi_.GetZ();
+                // Real source has NO separate contact-site sound for Saw
+                // (unlike Lava/fall's own extra channel 8) -- channel 75
+                // comes entirely from BlupiDead's own Clear4 branch, which
+                // SpawnSawDeathBurst() plays itself (plan.md `158`
+                // death-VFX follow-up, Decor.cpp:5521-5524/6608-6613), so
+                // triggerDeath() must NOT also play it here.
+                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75, false);
+                interaction_.SpawnSawDeathBurst(worldRuntime_, deathX, deathY, deathZ, sound_);
             }
 
             // Spring / bounce tile (plan.md E3D-MIG-145, icon 211,
@@ -1292,9 +1369,26 @@ namespace GalaxyEggbert::CNA
             // `GEInteractionSystem::SpawnFanHitFlash()`'s own comment).
             if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) && !blupi_.IsInvincible())
             {
+                // Captured BEFORE triggerDeath() respawns Blupi -- the
+                // flash/ascend must originate from the death position, not
+                // the respawn position (fixes a pre-existing bug: this
+                // call previously read blupi_.GetX/Y/Z() AFTER triggerDeath()
+                // had already moved it).
+                const float deathX = blupi_.GetX();
+                const float deathY = blupi_.GetY();
+                const float deathZ = blupi_.GetZ();
                 triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10);
                 cameraShake_.Trigger(CameraShakeType::Big);
-                interaction_.SpawnFanHitFlash(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                interaction_.SpawnFanHitFlash(worldRuntime_, deathX, deathY, deathZ);
+                // Real 50/50 Clear1/Clear2 coinflip (plan.md `158`
+                // death-VFX follow-up, Decor.cpp:5458-5463) -- unlike
+                // fall-off-world/Lava, Fan's death is NOT deterministically
+                // Clear2.
+                if (interaction_.RollClear2Coinflip())
+                {
+                    triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
+                                        deathX, deathY, deathZ);
+                }
             }
 
             // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via

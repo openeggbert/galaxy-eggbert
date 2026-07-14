@@ -2566,6 +2566,156 @@ int main(int argc, char** argv)
         check(!ok, "ProjectWorldToHudSpace() returns false for a point behind the camera");
     }
 
+    // 17.13. Clear2Ascend/Clear3Ascend/Clear4 death VFX (plan.md `158`
+    // death-VFX follow-up, verified directly against Decor.cpp:6547-6614
+    // BlupiDead, 10141-10226 VoyageInit, 10228-10350 VoyageStep/
+    // VoyageDraw, 8479-8481 ObjectType93 self-delete) -- the real
+    // "soul ascends"/particle-burst VFX fired by 3 of Blupi's 8 death-
+    // animation types (Clear1/5-8 have no VFX at all, Glu is a wholly
+    // separate un-researched mechanic, all out of scope here).
+    {
+        GEWorldRuntime clear2World;
+        GEInteractionSystem clear2Interaction;
+        constexpr float dt = 1.0f / 20.0f;
+
+        // Clear2Ascend: fixed total=100 (NOT distance-proportional, unlike
+        // every pickup kind), even with a huge real HUD-space distance.
+        clear2Interaction.BeginVoyage(clear2World, GEInteractionSystem::VoyageKind::Clear2Ascend, 230, false, 100.0f,
+                                      500.0f, 100.0f, 200.0f, sound);
+        check(clear2Interaction.VoyageActive() && clear2Interaction.VoyageIconId() == 230,
+              "BeginVoyage(Clear2Ascend) starts an active voyage with the real icon 230");
+        check(clear2Interaction.VoyageIconVisible(), "Clear2Ascend has no pre-move delay -- always visible");
+        // Real total=(|dx|+|dy|)/10=(0+300)/10=30 WOULD be the generic
+        // formula's answer here, but Clear2Ascend's fixed override (100)
+        // must win instead -- verified by running fewer ticks than 30
+        // would need and confirming it is NOT yet complete.
+        for (int i = 0; i < 29; ++i)
+        {
+            clear2World.Update(dt);
+            clear2Interaction.Update(dt, clear2World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(clear2Interaction.VoyageActive(),
+              "Clear2Ascend is still active after 29 ticks -- the real fixed total=100 overrides the generic "
+              "distance-based total=30 the endpoints alone would imply");
+
+        // Real icon-cycle animation: 230->241 every 2 ticks while in
+        // flight (Decor.cpp:10241-10252). After 29 ticks (all even-parity
+        // boundaries crossed 14 times, `static_cast<int>(phase)%2==0`
+        // checked at phase=2,4,...,28 -- 14 increments from the initial
+        // 230), the icon should have advanced by exactly 14 (no wraparound
+        // yet, since 230+14=244 would wrap at >241 -- 230+14=244>241, so
+        // it DOES wrap: 244-12=232 after one wrap of the 12-value range
+        // [230,241]). Rather than hand-deriving the exact wrapped value
+        // (fragile to off-by-one drift), assert the real INVARIANT
+        // instead: the icon always stays within the real animated range.
+        check(clear2Interaction.VoyageIconId() >= 230 && clear2Interaction.VoyageIconId() <= 241,
+              "Clear2Ascend's icon-cycle animation stays within the real [230,241] range (wraps, never escapes)");
+        check(clear2Interaction.VoyageIconId() != 230,
+              "Clear2Ascend's icon actually advanced from its initial 230 after 29 ticks (animation is running)");
+
+        const int keys1Before = clear2Interaction.Key1Count(); // any counter neither kind touches
+        for (int i = 0; i < 71; ++i) // remaining ticks (29 already elapsed) to reach the real fixed total=100
+        {
+            clear2World.Update(dt);
+            clear2Interaction.Update(dt, clear2World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(!clear2Interaction.VoyageActive(), "Clear2Ascend completes once phase reaches its real fixed total=100");
+        check(clear2Interaction.Key1Count() == keys1Before,
+              "Clear2Ascend's real completion has no reward -- neither icon 230 nor 40 appears in VoyageStep's own "
+              "completion if-chain");
+
+        // Clear3Ascend: fixed total=50, real 30-tick pre-move delay (icon
+        // hidden, position clamped to start) -- verified against a
+        // controlled world-anchor position (BeginVoyage()'s trailing
+        // worldAnchorX/Y/Z params) used by the puff-particle spawn.
+        GEWorldRuntime clear3World;
+        GEInteractionSystem clear3Interaction;
+        clear3Interaction.BeginVoyage(clear3World, GEInteractionSystem::VoyageKind::Clear3Ascend, 40, false, 50.0f,
+                                      100.0f, 50.0f, 0.0f, sound, 5.0f, 2.0f, -3.0f);
+        check(clear3Interaction.VoyageActive() && clear3Interaction.VoyageIconId() == 40,
+              "BeginVoyage(Clear3Ascend) starts an active voyage with the real icon 40");
+        check(!clear3Interaction.VoyageIconVisible(),
+              "Clear3Ascend's icon is hidden during the real 30-tick pre-move delay (phase=0)");
+        check(std::fabs(clear3Interaction.VoyageDrawX() - 50.0f) < 0.01f,
+              "Clear3Ascend's position stays clamped to the start point during the pre-move delay");
+
+        // Real puff-particle spawn (Decor.cpp:10331-10348): a fresh
+        // ObjectType93 appears each tick, anchored near the world-anchor
+        // position (not the HUD-space start/end -- this engine has no 2D
+        // decor-pixel space, see SpawnLavaAscendPuff()'s own comment).
+        const int type93CountBefore =
+            static_cast<int>(std::count_if(clear3World.GetMobileObjects().begin(), clear3World.GetMobileObjects().end(),
+                                            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType93; }));
+        clear3World.Update(dt);
+        clear3Interaction.Update(dt, clear3World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        const int type93CountAfter =
+            static_cast<int>(std::count_if(clear3World.GetMobileObjects().begin(), clear3World.GetMobileObjects().end(),
+                                            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType93; }));
+        check(type93CountAfter == type93CountBefore + 1,
+              "Clear3Ascend's real puff spawn (ObjectType93) fires once per TickVoyage() call");
+        const auto puff = std::find_if(clear3World.GetMobileObjects().begin(), clear3World.GetMobileObjects().end(),
+                                        [](const auto& o) { return o.active && o.type == ObjectType::ObjectType93; });
+        check(puff != clear3World.GetMobileObjects().end() && std::fabs(puff->currentZ - (-3.0f)) < 0.01f,
+              "the spawned puff is anchored at the real world-anchor Z (no jitter applied to Z)");
+        // This first spawn happens at phase=1, still within the real
+        // 30-tick pre-move delay -- horizontal jitter is halved (max 4,
+        // not 8) and vertical jitter quadrupled (max 40, not 10) during
+        // that window (Decor.cpp:10339-10343).
+        check(std::fabs(puff->currentX - 5.0f) <= (4.0f / 64.0f) + 0.01f &&
+                  std::fabs(puff->currentY - 2.0f) <= (40.0f / 64.0f) + 0.01f,
+              "the spawned puff's X/Y jitter stays within the real pre-move-delay table/random-range bounds around "
+              "the anchor");
+
+        // Real 30-tick delay elapses; icon becomes visible and position
+        // starts advancing from the start point.
+        for (int i = 0; i < 30; ++i)
+        {
+            clear3World.Update(dt);
+            clear3Interaction.Update(dt, clear3World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(clear3Interaction.VoyageIconVisible(),
+              "Clear3Ascend's icon becomes visible once the real 30-tick pre-move delay elapses");
+
+        // Real Clear4/Saw death VFX: 3 ObjectType41 particles (up/right/
+        // left, no "down"), decoded from the real ObjectStart speeds
+        // -70/20/-20 (Decor.cpp:6608-6613/7805-7869).
+        GEWorldRuntime sawWorld;
+        GEInteractionSystem sawInteraction;
+        sawInteraction.SpawnSawDeathBurst(sawWorld, 10.0f, 1.0f, -5.0f, sound);
+        int burstCount = 0;
+        bool sawUp = false, sawRight = false, sawLeft = false, sawDown = false;
+        constexpr float kSawReach = 500.0f / 64.0f;
+        for (const auto& o : sawWorld.GetMobileObjects())
+        {
+            if (o.active && o.type == ObjectType::ObjectType41)
+            {
+                ++burstCount;
+                check(std::fabs(o.stepAdvanceTicks - 156.0f) < 0.01f,
+                      "each Clear4 burst particle uses the real stepAdvanceTicks=156 (magnitude 20, not Invert's 10)");
+                if (std::fabs(o.posEndY - (1.0f + kSawReach)) < 0.01f) sawUp = true;
+                if (std::fabs(o.posEndX - (10.0f + kSawReach)) < 0.01f) sawRight = true;
+                if (std::fabs(o.posEndX - (10.0f - kSawReach)) < 0.01f) sawLeft = true;
+                if (std::fabs(o.posEndY - (1.0f - kSawReach)) < 0.01f) sawDown = true;
+            }
+        }
+        check(burstCount == 3, "SpawnSawDeathBurst() spawns exactly the real 3 particles, not Invert's 4");
+        check(sawUp && sawRight && sawLeft && !sawDown,
+              "Clear4's 3 real directions are up/right/left -- there is deliberately no 'down' direction");
+
+        // Real 50/50 Clear1(nothing)/Clear2(ascend) coinflip
+        // (Decor::BlupiDead(action1, action2), Decor.cpp:6551-6554) --
+        // statistical: both outcomes must occur across enough trials
+        // (P(all-same after 200 trials) is astronomically small for a
+        // fair coin, so this is not a flaky test in practice).
+        GEInteractionSystem coinInteraction;
+        bool sawTrue = false, sawFalse = false;
+        for (int i = 0; i < 200 && !(sawTrue && sawFalse); ++i)
+        {
+            (coinInteraction.RollClear2Coinflip() ? sawTrue : sawFalse) = true;
+        }
+        check(sawTrue && sawFalse, "RollClear2Coinflip() produces both outcomes over enough trials (a real 50/50)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

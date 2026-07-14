@@ -1010,7 +1010,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         lives dropped 3→2, the fan tile became `Air`, and the FIFO respawn correctly kicked in
         afterward.
 
-### Phase 15 — Crates, lifts, bridges, effects: full fidelity (`E3D-MIG-150`-`158`)
+### Phase 15 — Crates, lifts, bridges, effects: full fidelity (`E3D-MIG-150`-`159`)
 
 Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spec:
 `mobile-eggbert-reference/14-crates-lifts-bridges-effects.md`.
@@ -1153,6 +1153,75 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         and `GEHud::ProjectWorldToHudSpace()`'s math against a controlled `Easy3D::Camera3D`.
         Full suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
         `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`.
+- [x] `159` "Death VFX" (Clear2/Clear3/Clear4 death-animation VFX) — done 2026-07-14, the
+      follow-up flagged by `158` above. Verified directly against `Decor::BlupiDead`
+      (`Decor.cpp:6547-6614`), every one of its real trigger call sites (fall-off-world
+      `Decor.cpp:2754-2761`, Ventillo/fan `5458-5471`, Lava `5497-5499`, Piege/Goutte
+      `5504-5519`, Saw `5521-5524`, Blitz `5541-5547`, the generic 8-type hazard-contact list
+      `5788-5795`/`6103-6106`, dynamite blast `9172`), and `Decor::ObjectStart`'s real direction/
+      magnitude decoding (`Decor.cpp:7805-7869`).
+      - Of Blupi's 8 real `BlupiAction::Clear1`-`Clear8` death-animation types, only 3 turned out
+        to have any actual VFX: **Clear1** has none at all (just whatever death sound the hazard's
+        own contact site plays); **Clear5**-**Clear8** are confirmed DEAD CODE (defined in the
+        enum, given a duration table entry, and excluded by every "is this a Clear-type action"
+        guard, but never assigned anywhere in real source — grepped the whole real codebase to
+        confirm). `BlupiAction::Glu` (spikes/drip/fired-projectile-contact/large-creature-grab
+        deaths) is a wholly separate, un-researched "stuck" mechanic, explicitly out of scope
+        here — this feature covers only Clear2/Clear3/Clear4.
+      - **Clear2** ("soul ascends" 300px, real trigger: fall-off-world deterministically, Fan and
+        the generic-hazard-contact list each a real 50/50 coinflip vs. Clear1) and **Clear3**
+        ("soul ascends" 2000px, Lava, deterministic) both reuse the Voyage machinery `158` built
+        (`VoyageKind::Clear2Ascend`/`Clear3Ascend`) — but unlike every pickup kind, BOTH endpoints
+        derive from Blupi's OWN position (start = Blupi projected to HUD space via
+        `GEHud::ProjectWorldToHudSpace()`, end = straight up from there by a fixed HUD-space
+        offset), a natural technical adaptation of the real `pos`/`pos2` (both computed in 2D
+        decor-pixel space before a shared `HotSpotToHud()` transform this engine has no equivalent
+        2D scrolling space for). Real fixed, NON-distance-proportional durations (`Decor.cpp:
+        10222-10226`, confirmed by direct re-read) — Clear2 total=100 ticks, Clear3 total=50 —
+        override the generic `(|dx|+|dy|)/10` formula entirely. Clear2's icon animates (230→241,
+        cycling every 2 ticks, `Decor.cpp:10241-10252`); Clear3's icon (40) is static but has a
+        real 30-tick pre-move delay (position clamped to start, icon hidden,
+        `Decor.cpp:10310-10318`) before it starts rising, plus a continuous `ObjectType93` puff-
+        particle spawn every tick while active (`Decor.cpp:10331-10348`, real 7-value horizontal
+        scatter table + wider vertical random range, both halved/quadrupled respectively during
+        the pre-move delay) — ported as a small world-space jitter around Blupi's own death
+        position (no 2D decor-pixel space to reproduce the real conversion against). Neither
+        ascend has a reward at completion (confirmed: neither icon appears in `VoyageStep`'s own
+        completion if-chain).
+      - **Clear4** (Saw, deterministic) is NOT a Voyage — it is 3 `ObjectType41` particles (up/
+        right/left, no "down") reusing the same real object type as the already-shipped Invert
+        burst, but with a LARGER real magnitude (20 vs Invert's 10, decoded via `Decor::
+        ObjectStart`'s own direction/magnitude logic from real speeds -70/20/-20) giving
+        `stepAdvanceTicks=156` instead of Invert's 78, plus channel 75 (played once, matching real
+        source's own single call site for that sound — the existing Saw death-site code already
+        played channel 75 itself and had to be changed to NOT double-play it).
+      - **First randomness anywhere in this engine's gameplay code** (`GEInteractionSystem`'s new
+        `rng_`/`RollClear2Coinflip()`, seeded from `std::random_device`) — real `Decor::BlupiDead
+        (action1, action2)`'s own `m_random.get()->Next() % 2 == 0` coinflip choice
+        (`Decor.cpp:6551-6554`), genuinely non-deterministic in real source and cosmetic-only here
+        (never affects `lives_`/reward state, only whether the ascend VFX/sound plays). New
+        `VoyagePendingIsAscend()`/`RequestClear2Ascend()` extend the existing pending-request
+        round-trip (`158`) for the ONE trigger site with no camera access (the generic-hazard-
+        contact coinflip, inside `GEInteractionSystem::Update()`) — the other 4 trigger sites
+        (fall/Lava/Saw/Fan) live directly in `GalaxyEggbertCnaGame.cpp`, which already has
+        `camera_` in scope, so they call `BeginVoyage()`/`SpawnSawDeathBurst()` directly via a new
+        `triggerDeathAscend` lambda alongside the existing `triggerDeath`.
+      - Found and fixed a real pre-existing bug while wiring this: the Fan hazard's own
+        `SpawnFanHitFlash()` call read `blupi_.GetX/Y/Z()` AFTER `triggerDeath()` had already
+        respawned Blupi, spawning the flash at the RESPAWN position instead of the death position
+        — fixed by capturing the death position before calling `triggerDeath()`, same fix applied
+        to the 3 new ascend/burst call sites for the same reason.
+      - Verified: new `VerifyInteractionSystem` tests for Clear2Ascend's fixed-duration override +
+        icon-cycle animation + no-reward completion, Clear3Ascend's fixed duration + pre-move
+        delay + puff-particle spawn (position and jitter bounds), Clear4's exact 3-direction burst
+        (up/right/left, no down) with the real `stepAdvanceTicks=156`, and a statistical test
+        confirming `RollClear2Coinflip()` produces both outcomes over 200 trials. Full suite: 78
+        tests on `build-cna` (99%, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+        failure), 73/73 (100%) on `build-cna-vulkan`.
+      - **Still explicitly out of scope**: the real `Glu` "stuck" death mechanic (spikes/drip/
+        fired-projectile-contact/large-creature-grab) and the life-loss icon-48/Blupi-channel
+        Voyage (which ties into respawn/death-lock control flow — a separate behavior change, not
+        touched here).
 
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 

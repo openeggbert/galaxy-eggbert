@@ -729,6 +729,20 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Clear3Ascend (Lava death) puff (plan.md `158` death-VFX
+            // follow-up, ObjectType93) -- purely cosmetic, spawned every
+            // tick by SpawnLavaAscendPuff() while active. Real self-delete
+            // at phase>=5 (`Decor.cpp:8479-8481`) -- the shortest-lived
+            // particle type modeled so far, a 5-frame "tiny flash".
+            if (obj.type == ObjectType::ObjectType93)
+            {
+                if (obj.phase >= 5.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
             // Follower-blocked-path debris flash (plan.md VISUAL-008,
             // ObjectType9) -- purely cosmetic, same real spawn shape as
             // ObjectType8/10 above. Real self-delete at phase>=20
@@ -1500,10 +1514,11 @@ namespace GalaxyEggbert::CNA
             // explosion). Type3's real duck-immunity (MoveObjectDetect
             // skips it entirely while Blupi's action is Down) is modeled
             // via blupiCrouching; the others have no such immunity. Real
-            // death sound is a 50/50 coinflip (BlupiDead's own Clear2
-            // branch plays channel 74, Clear1 plays nothing, per
-            // Decor.cpp:6547-6614) -- simplified to always channel 74
-            // rather than modeling the coinflip. While ballooned, exactly
+            // death is a 50/50 `BlupiDead(Clear1, Clear2)` coinflip
+            // (Decor.cpp:6547-6614, `RollClear2Coinflip()`) -- Clear2 plays
+            // channel 74 + the real ascend Voyage (icon 230, plan.md `158`
+            // death-VFX follow-up, 2026-07-14), Clear1 plays/spawns
+            // nothing further. While ballooned, exactly
             // 4 of these 8 types (3/16/96/97, IsBalloonPoppableHazard())
             // pop the balloon instead of killing (real channel 41 is
             // played by GEBlupiController's own IsBallooned() before/after
@@ -1533,7 +1548,11 @@ namespace GalaxyEggbert::CNA
                         obj.active = false;
                         LoseLife();
                         diedThisFrame_ = true;
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                        if (RollClear2Coinflip())
+                        {
+                            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                            RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
+                        }
                         // Real camera shake (plan.md CAM-008/009, Decor.cpp
                         // ~5782-5814, confirmed via direct source read) --
                         // this exact real site plays SmallShake for every
@@ -2216,6 +2235,63 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GEInteractionSystem::SpawnSawDeathBurst(GEWorldRuntime& worldRuntime, float blupiX, float blupiY,
+                                                  float blupiZ, GESound& sound)
+    {
+        // Real `Decor::BlupiDead`'s own Clear4 branch (Decor.cpp:
+        // 6608-6613): 3 `ObjectStart(pos, ObjectType41, speed)` calls with
+        // speed -70/20/-20, decoded via `Decor::ObjectStart`'s own real
+        // direction/magnitude logic (Decor.cpp:7805-7869, same function
+        // SpawnInvertBurst() above already ports): speed<-50 -> up
+        // (magnitude = |speed+50| = 20), speed>0 -> right (magnitude 20),
+        // speed<0 -> left (magnitude 20) -- no "down" direction, unlike
+        // Invert's 4-direction burst. Same real 500px short-circuit reach
+        // (`SearchDistRight()`'s own flat-500 case for ObjectType41,
+        // confirmed by SpawnInvertBurst()'s own comment) but a LARGER
+        // stepAdvance than Invert's (magnitude 20 vs Invert's 10, so real
+        // `ScaleTime(|20*500/64|)` = 156 ticks, not 78).
+        constexpr float kReach = 500.0f / 64.0f;
+        const float dirs[3][3] = {
+            {0.0f, 1.0f, 0.0f},  // up
+            {1.0f, 0.0f, 0.0f},  // +X (real "right")
+            {-1.0f, 0.0f, 0.0f}, // -X (real "left")
+        };
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (const auto& dir : dirs)
+        {
+            MobileObjSpec spec;
+            spec.type = ObjectType::ObjectType41;
+            spec.active = true;
+            spec.phase = 0.0f;
+            spec.currentX = spec.posStartX = blupiX;
+            spec.currentY = spec.posStartY = blupiY;
+            spec.currentZ = spec.posStartZ = blupiZ;
+            spec.posEndX = blupiX + dir[0] * kReach;
+            spec.posEndY = blupiY + dir[1] * kReach;
+            spec.posEndZ = blupiZ + dir[2] * kReach;
+            spec.patrolStep = 2;
+            spec.patrolTime = 0.0f;
+            spec.stepAdvanceTicks = 156.0f; // real |magnitude 20 * 500/64|
+
+            bool placed = false;
+            for (auto& slot : objects)
+            {
+                if (!slot.active)
+                {
+                    slot = spec;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed)
+            {
+                objects.push_back(spec);
+            }
+        }
+        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel75);
+    }
+
     void GEInteractionSystem::SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z)
     {
         MobileObjSpec spec;
@@ -2498,11 +2574,27 @@ namespace GalaxyEggbert::CNA
         pendingFixedX_ = fixedX;
         pendingFixedY_ = fixedY;
         pendingWorldIsStart_ = worldIsStart;
+        pendingIsAscend_ = false;
+    }
+
+    void GEInteractionSystem::RequestClear2Ascend(float worldX, float worldY, float worldZ)
+    {
+        voyagePendingThisFrame_ = true;
+        pendingKind_ = VoyageKind::Clear2Ascend;
+        pendingIconId_ = 230;
+        pendingIsButton_ = false;
+        pendingWorldX_ = worldX;
+        pendingWorldY_ = worldY;
+        pendingWorldZ_ = worldZ;
+        pendingWorldIsStart_ = true;
+        pendingIsAscend_ = true;
+        pendingAscendOffsetY_ = 300.0f; // real Decor.cpp:6595 (Clear2's own pos2.Y offset)
     }
 
     void GEInteractionSystem::BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId,
                                            bool isButtonChannel, float startX, float startY, float endX, float endY,
-                                           GESound& sound)
+                                           GESound& sound, float worldAnchorX, float worldAnchorY,
+                                           float worldAnchorZ)
     {
         // Real `VoyageInit()`'s own force-complete-the-previous-one
         // behavior (`Decor.cpp:10160-10164`).
@@ -2519,10 +2611,25 @@ namespace GalaxyEggbert::CNA
         voyageEndX_ = endX;
         voyageEndY_ = endY;
         voyagePhase_ = 0.0f;
+        voyageWorldAnchorX_ = worldAnchorX;
+        voyageWorldAnchorY_ = worldAnchorY;
+        voyageWorldAnchorZ_ = worldAnchorZ;
         // Real `(|dx|+|dy|)/10`, integer-truncated (`Decor.cpp:10169-10172`).
         const int dx = static_cast<int>(std::fabs(endX - startX));
         const int dy = static_cast<int>(std::fabs(endY - startY));
         voyageTotal_ = static_cast<float>((dx + dy) / 10);
+        // Real fixed-duration overrides (`Decor.cpp:10222-10226`) --
+        // NOT distance-proportional despite the 300px/2000px real ascend
+        // distance, matching real VoyageInit's own icon==230/40 overrides
+        // exactly.
+        if (kind == VoyageKind::Clear2Ascend)
+        {
+            voyageTotal_ = 100.0f;
+        }
+        else if (kind == VoyageKind::Clear3Ascend)
+        {
+            voyageTotal_ = 50.0f;
+        }
 
         // Real touch-time sounds (`Decor::VoyageInit`'s own per-icon
         // cases) -- independent of the deferred reward-applied sound
@@ -2557,6 +2664,10 @@ namespace GalaxyEggbert::CNA
             case VoyageKind::BulletPack:
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel54);
                 break;
+            case VoyageKind::Clear2Ascend:
+            case VoyageKind::Clear3Ascend:
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                break;
             // DoorUnlock: real source plays no immediate sound at all --
             // its dynamic icon never matches any of VoyageInit's
             // fixed-icon checks (confirmed via direct source read,
@@ -2573,10 +2684,82 @@ namespace GalaxyEggbert::CNA
             return;
         }
         voyagePhase_ += dt * 20.0f; // same dt*20 real-20Hz-tick convention as AdvancePatrolStep
+        // Real icon-cycle animation (`Decor::VoyageStep`'s own `if
+        // (m_voyagePhase < m_voyageTotal) { if (m_time % ScaleTime(2) == 0
+        // && icon in [230,241]) icon++ }`, Decor.cpp:10241-10252) -- uses
+        // this voyage's own phase as the tick source (ScaleTime(2)==2 at
+        // this build's reference rate), since this engine has no single
+        // global `m_time` frame counter to match exactly.
+        if (voyageKind_ == VoyageKind::Clear2Ascend && voyagePhase_ < voyageTotal_ &&
+            static_cast<int>(voyagePhase_) % 2 == 0)
+        {
+            ++voyageIconId_;
+            if (voyageIconId_ > 241)
+            {
+                voyageIconId_ = 230;
+            }
+        }
+        if (voyageKind_ == VoyageKind::Clear3Ascend)
+        {
+            SpawnLavaAscendPuff(worldRuntime);
+        }
         if (voyagePhase_ >= voyageTotal_)
         {
             ApplyVoyageReward(worldRuntime, sound);
         }
+    }
+
+    void GEInteractionSystem::SpawnLavaAscendPuff(GEWorldRuntime& worldRuntime)
+    {
+        // Real `Decor::VoyageDraw`'s icon==40 special case (Decor.cpp:
+        // 10331-10348): every tick while the ascend is active, spawns a
+        // tiny ObjectType93 puff scattered by a fixed 7-value horizontal
+        // table plus a wider vertical random range -- both halved/
+        // quadrupled respectively during the real 30-tick pre-move delay
+        // (`num==0`, i.e. phase<=30 here), giving a denser puff right at
+        // the death spot before the icon itself appears (VoyageIconVisible()
+        // is false for that same window). Real X/Y offsets are added in
+        // 2D screen space; ported here as a small world-space X/Y jitter
+        // around Blupi's own death position (voyageWorldAnchor{X,Y,Z}_,
+        // set by BeginVoyage()) -- this engine has no 2D decor-pixel space
+        // to reproduce the real `pos.X -= 34; pos.X/Y += m_posDecor.X/Y`
+        // conversion against.
+        static constexpr float kHorizTable[7] = {-8.0f, -6.0f, -4.0f, 0.0f, 4.0f, 6.0f, 8.0f};
+        std::uniform_int_distribution<int> horizIndexDist(0, 6);
+        std::uniform_int_distribution<int> vertNoiseDist(-10, 10);
+        float horizOffset = kHorizTable[horizIndexDist(rng_)];
+        float vertOffset = static_cast<float>(vertNoiseDist(rng_));
+        const bool preMove = (voyagePhase_ - 30.0f) <= 0.0f;
+        if (preMove)
+        {
+            horizOffset *= 0.5f;
+            vertOffset *= 4.0f;
+        }
+
+        MobileObjSpec spec;
+        spec.type = ObjectType::ObjectType93;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = voyageWorldAnchorX_ + horizOffset / 64.0f;
+        spec.currentY = spec.posStartY = spec.posEndY = voyageWorldAnchorY_ + vertOffset / 64.0f;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = voyageWorldAnchorZ_;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
+    bool GEInteractionSystem::RollClear2Coinflip()
+    {
+        std::uniform_int_distribution<int> coinDist(0, 1);
+        return coinDist(rng_) == 1;
     }
 
     void GEInteractionSystem::ApplyVoyageReward(GEWorldRuntime& worldRuntime, GESound& sound)
@@ -2629,6 +2812,11 @@ namespace GalaxyEggbert::CNA
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::DoorUnlock:
+            // Clear2Ascend/Clear3Ascend: real completion is silent with no
+            // reward -- neither icon 230 nor 40 appears in VoyageStep's
+            // own completion if-chain (confirmed via direct source read).
+            case VoyageKind::Clear2Ascend:
+            case VoyageKind::Clear3Ascend:
             case VoyageKind::None:
             default:
                 break;
@@ -2642,7 +2830,12 @@ namespace GalaxyEggbert::CNA
         {
             return voyageStartX_;
         }
-        const float t = std::min(voyagePhase_ / voyageTotal_, 1.0f);
+        // Real `Decor::VoyageDraw`'s own icon==40 delay (Decor.cpp:
+        // 10310-10316): position stays clamped to the start point for the
+        // first 30 ticks -- only Clear3Ascend has this delay.
+        const float adjustedPhase =
+            (voyageKind_ == VoyageKind::Clear3Ascend) ? std::max(voyagePhase_ - 30.0f, 0.0f) : voyagePhase_;
+        const float t = std::min(adjustedPhase / voyageTotal_, 1.0f);
         return voyageStartX_ + (voyageEndX_ - voyageStartX_) * t;
     }
 
@@ -2652,8 +2845,23 @@ namespace GalaxyEggbert::CNA
         {
             return voyageStartY_;
         }
-        const float t = std::min(voyagePhase_ / voyageTotal_, 1.0f);
+        const float adjustedPhase =
+            (voyageKind_ == VoyageKind::Clear3Ascend) ? std::max(voyagePhase_ - 30.0f, 0.0f) : voyagePhase_;
+        const float t = std::min(adjustedPhase / voyageTotal_, 1.0f);
         return voyageStartY_ + (voyageEndY_ - voyageStartY_) * t;
+    }
+
+    bool GEInteractionSystem::VoyageIconVisible() const noexcept
+    {
+        if (voyageKind_ == VoyageKind::None)
+        {
+            return false;
+        }
+        if (voyageKind_ == VoyageKind::Clear3Ascend && (voyagePhase_ - 30.0f) <= 0.0f)
+        {
+            return false;
+        }
+        return true;
     }
 
     void GEInteractionSystem::CheatAllTreasure(GEWorldRuntime& worldRuntime, GESound& sound)
