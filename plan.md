@@ -1423,12 +1423,40 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       total), Power 0.15s/level (15s), Cloud/Hide 0.2s/level (20s each) — all 4 direct
       transcriptions from `Decor.cpp` ~5071-5137, not approximations) and their real warning-sound
       thresholds (Shield@10/Power@20/Cloud@25/Hide@20, channels 43/45/56/63).
-- [ ] `173` Suction-cup(26) and Drink(30) — both two-stage pickups (grab sound, then a delayed
-      buff-activate sound ~32/36 ticks later) — the REAL 2-stage delay/animation-lock is NOT
-      modeled (2026-07-12): both grant their buff (Power/Hide respectively) INSTANTLY on contact
-      instead, a documented simplification (`GEBlupiController::TriggerPower()`/`TriggerHide()`'s
-      own comment) — implementing the real busy-animation delay is deferred as its own follow-up
-      if full fidelity is ever prioritized.
+- [x] `173` Suction-cup(26)/Drink(30)/Charge(31) real 2-stage pickup delay — done 2026-07-14,
+      verified directly against `Decor.cpp:6025-6087` (contact) and `3048-3235` (completion).
+      Real exact tick counts (not the earlier "~32/36" approximation): Sucette=32 ticks(1.6s),
+      Drink=36(1.8s), Charge=64(3.2s) — all three genuinely freeze Blupi (`m_blupiFocus=false`,
+      confirmed) for the full duration, a THIRD application of the same freeze-timer template
+      already built for `TriggerTeleport()`/the death lock (`GEBlupiController::
+      TriggerPickupFreeze()`/`IsPickupFrozen()`/`ConsumePickupFreezeResolved()`). A death lock
+      started while pickup-frozen always cancels it (real `BlupiDead()` unconditionally overwrites
+      whatever action was active).
+      - **Key asymmetry found**: Sucette/Drink are genuinely 2-stage — `m_blupiPower`/
+        `m_blupiHide` grant ONLY at completion (32/36 ticks later), not at contact. **Charge is
+        NOT actually deferred** — `m_blupiCloud` grants immediately at contact in real source too
+        (confirmed) — only the freeze + immediate "grab" sound (ch58) + completion sound (ch55)
+        were missing; this engine's existing instant `TriggerCloud()` call was already correct and
+        is unchanged. Real source also redundantly re-arms Charge's gauge a second time at
+        completion (same values) — NOT re-applied here (a documented, minor simplification: the
+        gauge decays for the ~3.2s freeze instead of being refreshed).
+      - Real immediate "grab" sounds (previously entirely skipped by this engine — only the
+        completion sound played, and only at contact instead of after the delay): Sucette ch50,
+        Drink ch57, Charge ch58. Real completion sounds (moved from contact-time to the real
+        deferred point): Sucette ch44, Drink ch62, Charge ch55.
+      - Real completion also RE-SPAWNS the same pickup at its original position (`ObjectStart`,
+        speed=0, static) — a detail missing from `mobile-eggbert-reference/13-object-pickups.md`,
+        now implemented (`GEInteractionSystem::RespawnPickupItem()`).
+      - **Found but explicitly out of scope this pass**: real Sucette/Drink require the action
+        button held at contact (`getButtonPressedProperty()==PlayAction`) — this engine currently
+        grants both automatically on contact alone, with no button gate (unlike Shield/Charge/
+        Invert, which really are automatic). A real, separate gap — not implemented here, flagged
+        for a future pass.
+      - Verified: new `GEBlupiController`-level tests (all 3 durations including idempotent
+        no-op/cancellation-by-death-lock) in `VerifyBlupiMovement`, new `GEInteractionSystem`-level
+        tests (contact position capture, `RespawnPickupItem()`) in `VerifyInteractionSystem`. Full
+        suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
+        `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`.
 - [x] `174` Charge/Cloud(31) — gated against ALL other buffs including itself (loosest-guard
       opposite is Mirror/Invert(40), gated only against Hide) — done 2026-07-12 alongside `170`
       (`GEBlupiController::TriggerCloud()`'s gate: `== None`, the strictest of the 4, matching the

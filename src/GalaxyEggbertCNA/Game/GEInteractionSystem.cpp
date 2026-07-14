@@ -1806,6 +1806,9 @@ namespace GalaxyEggbert::CNA
                     {
                         obj.active = false;
                         powerGrantedThisFrame_ = true;
+                        powerPickupX_ = obj.currentX;
+                        powerPickupY_ = obj.currentY;
+                        powerPickupZ_ = obj.currentZ;
                     }
                     break;
                 case ObjectType::ObjectType30: // drink ("Drink" -> Hide)
@@ -1813,6 +1816,9 @@ namespace GalaxyEggbert::CNA
                     {
                         obj.active = false;
                         hideGrantedThisFrame_ = true;
+                        hidePickupX_ = obj.currentX;
+                        hidePickupY_ = obj.currentY;
+                        hidePickupZ_ = obj.currentZ;
                     }
                     break;
                 case ObjectType::ObjectType31: // charge ("Charge" -> Cloud)
@@ -1820,6 +1826,9 @@ namespace GalaxyEggbert::CNA
                     {
                         obj.active = false;
                         cloudGrantedThisFrame_ = true;
+                        cloudPickupX_ = obj.currentX;
+                        cloudPickupY_ = obj.currentY;
+                        cloudPickupZ_ = obj.currentZ;
                     }
                     break;
                 case ObjectType::ObjectType40: // mirror/invert
@@ -2322,6 +2331,32 @@ namespace GalaxyEggbert::CNA
     {
         MobileObjSpec spec;
         spec.type = ObjectType::ObjectType11;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = spec.posEndY = y;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
+    void GEInteractionSystem::RespawnPickupItem(GEWorldRuntime& worldRuntime, float x, float y, float z,
+                                                 GalaxyEggbert::ObjectType type)
+    {
+        // Real `ObjectStart(pos, type, 0)` at the real 2-stage pickup's own completion
+        // (Decor.cpp:3212-3235/3048-3057, plan.md `173`) -- a static respawn (speed=0, no
+        // posEnd/patrol movement) of the SAME pickup at its original position.
+        MobileObjSpec spec;
+        spec.type = type;
         spec.active = true;
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spec.posEndX = x;

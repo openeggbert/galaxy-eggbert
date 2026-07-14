@@ -402,10 +402,47 @@ namespace GalaxyEggbert::CNA
             100.0f, // Glu
             90.0f, // Drown
         };
+        // Real BlupiDead() unconditionally overwrites whatever action was active (Decor.cpp:
+        // 6547-6614) -- a death always cancels a pending pickup freeze outright, the same
+        // "always wins" precedence Step() already gives the death lock over pickup-freeze below.
+        m_pickupFrozen = false;
+        m_pickupFreezeTimer = 0.0f;
+        m_pickupFreezeResolvedPending = false;
         m_deathLocked = true;
         m_deathLockTimer = kDeathLockTicks[static_cast<std::size_t>(cause)] / 20.0f;
         m_deathLockShouldRespawn = shouldRespawn;
         m_velocityY = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::TriggerPickupFreeze(PickupFreezeKind kind) noexcept
+    {
+        if (m_pickupFrozen || m_deathLocked || m_deathLossVoyageActive)
+        {
+            return false;
+        }
+        // Real Decor.cpp:6025-6087's own 3 independent durations (Config::ScaleTime(N)) -- /20.0f
+        // to seconds, same conversion used throughout this session.
+        constexpr float kPickupFreezeTicks[] = {
+            32.0f, // Sucette
+            36.0f, // Drink
+            64.0f, // Charge
+        };
+        m_pickupFrozen = true;
+        m_pickupFreezeTimer = kPickupFreezeTicks[static_cast<std::size_t>(kind)] / 20.0f;
+        m_pickupFreezeKind = kind;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::ConsumePickupFreezeResolved(PickupFreezeKind& outKind) noexcept
+    {
+        if (!m_pickupFreezeResolvedPending)
+        {
+            return false;
+        }
+        m_pickupFreezeResolvedPending = false;
+        outKind = m_pickupFreezeKind;
         return true;
     }
 
@@ -654,6 +691,24 @@ namespace GalaxyEggbert::CNA
             {
                 m_deathLossVoyageActive = false;
                 m_deathLossVoyageTimer = 0.0f;
+            }
+            UpdateAnim(false, false, false, dt);
+            return;
+        }
+
+        // Real Sucette/Drink/Charge 2-stage pickup delay (see TriggerPickupFreeze()'s own
+        // comment) -- same freeze shape as the death lock/Teleporte, checked after both (a death
+        // always cancels a pending pickup freeze, per TriggerDeathLock()'s own comment) but before
+        // teleporting (mutually exclusive in practice -- real BlupiFocus-gated pickups can't be
+        // touched mid-teleport anyway).
+        if (m_pickupFrozen)
+        {
+            m_pickupFreezeTimer -= dt;
+            if (m_pickupFreezeTimer <= 0.0f)
+            {
+                m_pickupFrozen = false;
+                m_pickupFreezeTimer = 0.0f;
+                m_pickupFreezeResolvedPending = true;
             }
             UpdateAnim(false, false, false, dt);
             return;
@@ -1065,6 +1120,7 @@ namespace GalaxyEggbert::CNA
         // see the AnimState enum's own comment for why this differs from
         // Simple3D's frame-counted trigger window.
         const AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
+                                  : m_pickupFrozen ? AnimState::PickupBusy
                                   : m_teleporting ? AnimState::Teleporting
                                   : m_balloon     ? AnimState::Balloon
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
@@ -1118,6 +1174,10 @@ namespace GalaxyEggbert::CNA
             case AnimState::DeathLocked:
                 // Real per-cause hurt-sprite frame table (`Tables::table_blupi`) not transcribed
                 // (see the AnimState enum's own comment) -- a static Stop pose stands in.
+                return kStopFrames[0];
+            case AnimState::PickupBusy:
+                // Real Sucette/Drink/Charge busy-animation frames not transcribed (same reason as
+                // DeathLocked above) -- a static Stop pose stands in.
                 return kStopFrames[0];
             case AnimState::Stop:
             default:

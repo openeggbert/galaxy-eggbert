@@ -580,6 +580,77 @@ namespace GalaxyEggbert::CNA
                                  false, startX, kLivesY, endX, endY, sound_);
     }
 
+    void GalaxyEggbertCnaGame::ResolvePickupFreeze()
+    {
+        using GalaxyEggbert::CNA::GEBlupiController;
+
+        // Starts a new freeze for whichever of the 3 real 2-stage pickups was touched this frame
+        // (real immediate "grab" sound: Sucette ch50, Drink ch57, Charge ch58, Decor.cpp:
+        // 6025-6087) -- the world object was already destroyed by interaction_.Update() itself.
+        if (interaction_.PowerGrantedThisFrame() && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette))
+        {
+            sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel50);
+            pendingPickupX_ = interaction_.PowerPickupX();
+            pendingPickupY_ = interaction_.PowerPickupY();
+            pendingPickupZ_ = interaction_.PowerPickupZ();
+            pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType26;
+        }
+        else if (interaction_.HideGrantedThisFrame() &&
+                 blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink))
+        {
+            sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel57);
+            pendingPickupX_ = interaction_.HidePickupX();
+            pendingPickupY_ = interaction_.HidePickupY();
+            pendingPickupZ_ = interaction_.HidePickupZ();
+            pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType30;
+        }
+        else if (interaction_.CloudGrantedThisFrame() &&
+                 blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge))
+        {
+            sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel58);
+            // Real m_blupiCloud grants at CONTACT, not completion (confirmed via direct source
+            // read, unlike Sucette/Drink) -- this engine's existing instant TriggerCloud() call
+            // below (already correct) stays; only the freeze/grab-sound/completion-sound were
+            // missing. Real source also redundantly re-arms the gauge again at the 64-tick
+            // completion (same values) -- NOT re-applied here, a documented, minor simplification
+            // (the gauge decays for those ~3.2s during the freeze instead of being refreshed).
+            blupi_.TriggerCloud();
+            pendingPickupX_ = interaction_.CloudPickupX();
+            pendingPickupY_ = interaction_.CloudPickupY();
+            pendingPickupZ_ = interaction_.CloudPickupZ();
+            pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType31;
+        }
+
+        // Resolves an ALREADY-active freeze (possibly started a prior frame) that just elapsed --
+        // grants the real deferred buff (Sucette/Drink only -- Cloud already granted above),
+        // plays the real "complete" sound (ch44/ch62/ch55), and re-spawns the item.
+        GEBlupiController::PickupFreezeKind kind{};
+        if (!blupi_.ConsumePickupFreezeResolved(kind))
+        {
+            return;
+        }
+        switch (kind)
+        {
+            case GEBlupiController::PickupFreezeKind::Sucette:
+                blupi_.TriggerPower();
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel44);
+                // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent) -- moved here from the
+                // old instant-grant site since the Power buff (and thus the magic trail) only
+                // actually starts now, at completion, not at contact.
+                interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                break;
+            case GEBlupiController::PickupFreezeKind::Drink:
+                blupi_.TriggerHide();
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel62);
+                break;
+            case GEBlupiController::PickupFreezeKind::Charge:
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel55);
+                break;
+        }
+        interaction_.RespawnPickupItem(worldRuntime_, pendingPickupX_, pendingPickupY_, pendingPickupZ_,
+                                        pendingPickupType_);
+    }
+
     void GalaxyEggbertCnaGame::ApplyCheat(int cheatNumber)
     {
         switch (cheatNumber)
@@ -1751,6 +1822,8 @@ namespace GalaxyEggbert::CNA
             ResolvePendingVoyage();
             // Death-lock/life-loss Voyage follow-up -- see its own comment.
             ResolveDeathLock();
+            // Sucette/Drink/Charge real 2-stage pickup delay -- see its own comment.
+            ResolvePickupFreeze();
 
             // Pollution puff (plan.md VISUAL-013) -- called unconditionally
             // every frame, matching the real function's own internal gate
@@ -1826,15 +1899,13 @@ namespace GalaxyEggbert::CNA
                                  blupi_.GetZ() + interaction_.RideDeltaZ());
             }
 
-            // Secret power grants (plan.md E3D-MIG-170) -- TriggerX()'s own
-            // internal gate should agree with what GEInteractionSystem just
-            // checked (both read the same GetSecretPower() state), so this
-            // should always succeed when *GrantedThisFrame() is true; still
-            // gated on the return value, same idiom as every other
-            // Trigger*() call in this file, in case a future edit makes the
-            // two checks diverge. Real grant sounds: Shield=42, Power=44
-            // (real Sucette-complete sound, reused here since the real
-            // 2-stage delay isn't modeled), Cloud=55, Hide=62.
+            // Secret power grants (plan.md E3D-MIG-170) -- Shield is real,
+            // single-stage, instant (TriggerX()'s own internal gate should
+            // agree with what GEInteractionSystem just checked, both read
+            // the same GetSecretPower() state). Power/Cloud/Hide (Sucette/
+            // Charge/Drink) are real 2-stage pickups -- see
+            // ResolvePickupFreeze() below for their own grab/freeze/
+            // complete handling (plan.md `173`, 2026-07-14).
             if (interaction_.ShieldGrantedThisFrame() && blupi_.TriggerShield())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel42);
@@ -1842,19 +1913,6 @@ namespace GalaxyEggbert::CNA
                 // Decor.cpp:6022) -- the magic trail's first marker only
                 // appears after a further real 40px of movement from here.
                 interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-            }
-            if (interaction_.PowerGrantedThisFrame() && blupi_.TriggerPower())
-            {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel44);
-                interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-            }
-            if (interaction_.CloudGrantedThisFrame() && blupi_.TriggerCloud())
-            {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel55);
-            }
-            if (interaction_.HideGrantedThisFrame() && blupi_.TriggerHide())
-            {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel62);
             }
 
             // Invert/Mirror grant + expiry (plan.md PICKUP-011) -- real

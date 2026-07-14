@@ -2842,6 +2842,74 @@ int main(int argc, char** argv)
         check(sawTrue && sawFalse, "RollClear2Coinflip() produces both outcomes over enough trials (a real 50/50)");
     }
 
+    // 17.14. Sucette(26)/Drink(30)/Charge(31) real 2-stage pickup delay (plan.md `173`, verified
+    // directly against Decor.cpp:6025-6087) -- GEInteractionSystem's OWN side of this: the
+    // contact-time position getters GalaxyEggbertCnaGame::ResolvePickupFreeze() needs, and
+    // RespawnPickupItem() itself. The deferred buff-grant/freeze timing lives entirely in
+    // GEBlupiController (already covered directly in VerifyBlupiMovement) -- this class has no
+    // access to it, matching the established decoupling.
+    {
+        GEWorldRuntime pickupWorld;
+        GEInteractionSystem pickupInteraction;
+
+        MobileObjSpec sucette;
+        sucette.type = ObjectType::ObjectType26;
+        sucette.posStartX = sucette.posEndX = sucette.currentX = 12.0f;
+        sucette.posStartY = sucette.posEndY = sucette.currentY = 1.0f;
+        sucette.posStartZ = sucette.posEndZ = sucette.currentZ = 34.0f;
+        pickupWorld.GetMobileObjectsMutable().push_back(sucette);
+        pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound);
+        check(pickupInteraction.PowerGrantedThisFrame(), "touching Sucette(26) sets PowerGrantedThisFrame()");
+        check(std::fabs(pickupInteraction.PowerPickupX() - 12.0f) < 0.01f &&
+                  std::fabs(pickupInteraction.PowerPickupY() - 1.0f) < 0.01f &&
+                  std::fabs(pickupInteraction.PowerPickupZ() - 34.0f) < 0.01f,
+              "PowerPickupX/Y/Z() capture the real pickup's own contact position");
+
+        MobileObjSpec drink;
+        drink.type = ObjectType::ObjectType30;
+        drink.posStartX = drink.posEndX = drink.currentX = 20.0f;
+        drink.posStartY = drink.posEndY = drink.currentY = 1.0f;
+        drink.posStartZ = drink.posEndZ = drink.currentZ = 41.0f;
+        pickupWorld.GetMobileObjectsMutable().push_back(drink);
+        pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound);
+        check(pickupInteraction.HideGrantedThisFrame(), "touching Drink(30) sets HideGrantedThisFrame()");
+        check(std::fabs(pickupInteraction.HidePickupX() - 20.0f) < 0.01f &&
+                  std::fabs(pickupInteraction.HidePickupY() - 1.0f) < 0.01f &&
+                  std::fabs(pickupInteraction.HidePickupZ() - 41.0f) < 0.01f,
+              "HidePickupX/Y/Z() capture the real pickup's own contact position");
+
+        MobileObjSpec charge;
+        charge.type = ObjectType::ObjectType31;
+        charge.posStartX = charge.posEndX = charge.currentX = 7.0f;
+        charge.posStartY = charge.posEndY = charge.currentY = 1.0f;
+        charge.posStartZ = charge.posEndZ = charge.currentZ = 9.0f;
+        pickupWorld.GetMobileObjectsMutable().push_back(charge);
+        pickupInteraction.Update(dt, pickupWorld, 7.0f, 1.0f, 9.0f, 0.0f, sound);
+        check(pickupInteraction.CloudGrantedThisFrame(), "touching Charge(31) sets CloudGrantedThisFrame()");
+        check(std::fabs(pickupInteraction.CloudPickupX() - 7.0f) < 0.01f &&
+                  std::fabs(pickupInteraction.CloudPickupY() - 1.0f) < 0.01f &&
+                  std::fabs(pickupInteraction.CloudPickupZ() - 9.0f) < 0.01f,
+              "CloudPickupX/Y/Z() capture the real pickup's own contact position");
+
+        // RespawnPickupItem() -- real ObjectStart(pos, type, 0) at the freeze's own completion.
+        const int type26CountBefore = static_cast<int>(std::count_if(
+            pickupWorld.GetMobileObjects().begin(), pickupWorld.GetMobileObjects().end(),
+            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType26; }));
+        pickupInteraction.RespawnPickupItem(pickupWorld, 12.0f, 1.0f, 34.0f, ObjectType::ObjectType26);
+        const int type26CountAfter = static_cast<int>(std::count_if(
+            pickupWorld.GetMobileObjects().begin(), pickupWorld.GetMobileObjects().end(),
+            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType26; }));
+        check(type26CountAfter == type26CountBefore + 1,
+              "RespawnPickupItem() spawns a new active instance of the real pickup type");
+        const auto respawned =
+            std::find_if(pickupWorld.GetMobileObjects().begin(), pickupWorld.GetMobileObjects().end(),
+                          [](const auto& o) { return o.active && o.type == ObjectType::ObjectType26; });
+        check(respawned != pickupWorld.GetMobileObjects().end() &&
+                  std::fabs(respawned->currentX - 12.0f) < 0.01f && std::fabs(respawned->posStartX - 12.0f) < 0.01f &&
+                  std::fabs(respawned->posEndX - 12.0f) < 0.01f,
+              "the respawned item is static (posStart==posEnd==current, real speed=0)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

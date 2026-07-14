@@ -254,14 +254,39 @@ namespace GalaxyEggbert::CNA
         // world object was actually removed; the caller then calls the
         // matching `GEBlupiController::TriggerX()` (its own internal gate
         // should agree, since both check the same state) and plays the
-        // real grant sound (channels 42/44/55/62) only if that returns
-        // true. Real 2-stage delay/animation before Power/Cloud/Hide
-        // actually activate is NOT modeled (see GEBlupiController::
-        // TriggerPower()'s own comment) -- all 4 grant on contact here.
+        // real grant sound only if that returns true. Shield grants
+        // instantly on contact (real, single-stage). Power/Cloud/Hide
+        // (plan.md `173`, 2026-07-14) are real 2-stage pickups -- the world
+        // object is still destroyed HERE at contact (matching real
+        // immediate `ObjectDelete`), and the caller plays the real
+        // immediate "grab" sound + starts `GEBlupiController::
+        // TriggerPickupFreeze()` here, but the actual buff grant (Power/
+        // Hide only -- Cloud's own buff already grants at contact in real
+        // source too) and the "complete" sound are deferred to
+        // `GEBlupiController::ConsumePickupFreezeResolved()`, which also
+        // needs the pickup's own original position to respawn it (real
+        // `ObjectStart(pos, type, 0)` at completion) -- the Pickup*X/Y/Z()
+        // getters below capture that position at the same moment as the
+        // *ThisFrame() flag.
         [[nodiscard]] bool ShieldGrantedThisFrame() const noexcept { return shieldGrantedThisFrame_; }
         [[nodiscard]] bool PowerGrantedThisFrame() const noexcept { return powerGrantedThisFrame_; }
         [[nodiscard]] bool CloudGrantedThisFrame() const noexcept { return cloudGrantedThisFrame_; }
         [[nodiscard]] bool HideGrantedThisFrame() const noexcept { return hideGrantedThisFrame_; }
+        [[nodiscard]] float PowerPickupX() const noexcept { return powerPickupX_; }
+        [[nodiscard]] float PowerPickupY() const noexcept { return powerPickupY_; }
+        [[nodiscard]] float PowerPickupZ() const noexcept { return powerPickupZ_; }
+        [[nodiscard]] float CloudPickupX() const noexcept { return cloudPickupX_; }
+        [[nodiscard]] float CloudPickupY() const noexcept { return cloudPickupY_; }
+        [[nodiscard]] float CloudPickupZ() const noexcept { return cloudPickupZ_; }
+        [[nodiscard]] float HidePickupX() const noexcept { return hidePickupX_; }
+        [[nodiscard]] float HidePickupY() const noexcept { return hidePickupY_; }
+        [[nodiscard]] float HidePickupZ() const noexcept { return hidePickupZ_; }
+        // Re-spawns a pickup at its original position as a static, active
+        // object (real `ObjectStart(pos, type, 0)`, speed=0) -- called by
+        // the game class once the real 2-stage freeze resolves for
+        // Sucette/Drink/Charge (plan.md `173`).
+        void RespawnPickupItem(GEWorldRuntime& worldRuntime, float x, float y, float z,
+                                GalaxyEggbert::ObjectType type);
         // Invert/Mirror pickup (plan.md PICKUP-011, ObjectType40) -- same
         // one-shot shape as the 4 signals above; the caller calls
         // GEBlupiController::TriggerInvert() and plays channel 66 only if
@@ -811,5 +836,8 @@ namespace GalaxyEggbert::CNA
         bool cloudGrantedThisFrame_ = false;  // reset at the top of every Update() call
         bool hideGrantedThisFrame_ = false;   // reset at the top of every Update() call
         bool invertGrantedThisFrame_ = false; // reset at the top of every Update() call
+        float powerPickupX_ = 0.0f, powerPickupY_ = 0.0f, powerPickupZ_ = 0.0f;
+        float cloudPickupX_ = 0.0f, cloudPickupY_ = 0.0f, cloudPickupZ_ = 0.0f;
+        float hidePickupX_ = 0.0f, hidePickupY_ = 0.0f, hidePickupZ_ = 0.0f;
     };
 }

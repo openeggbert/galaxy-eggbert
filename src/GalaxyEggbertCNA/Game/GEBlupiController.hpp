@@ -319,7 +319,12 @@ namespace GalaxyEggbert::CNA
             // -- GetAnimIcon() below uses a static Stop-pose icon instead,
             // a documented simplification (the real FREEZE/TIMING behavior
             // is faithful; the exact hurt-face artwork is not).
-            DeathLocked
+            DeathLocked,
+            // Real Sucette/Drink/Charge 2-stage pickup delay (see
+            // TriggerPickupFreeze() below) -- same static-Stop-pose
+            // simplification as DeathLocked, for the same reason (no real
+            // busy-animation frame table transcribed).
+            PickupBusy
         };
 
         // Real `SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -626,6 +631,30 @@ namespace GalaxyEggbert::CNA
         // (part 2) begins. outShouldRespawn echoes the value passed into TriggerDeathLock().
         [[nodiscard]] bool ConsumeDeathLockResolved(bool& outShouldRespawn) noexcept;
 
+        // Real 2-stage "busy" pickup delay (Sucette/Drink/Charge, plan.md `173`, verified directly
+        // against `Decor.cpp:6025-6087`/`3048-3235`): contact plays an immediate "grab" sound and
+        // freezes Blupi (`m_blupiFocus=false`, the SAME mechanism as `TriggerTeleport()`/the death
+        // lock -- a third application of that template) for a real fixed duration (Sucette=32
+        // ticks=1.6s, Drink=36=1.8s, Charge=64=3.2s), THEN plays a second "complete" sound. Sucette/
+        // Drink's real buff (Power/Hide) is granted ONLY at completion -- the ONLY reward that's
+        // actually deferred; Charge's Cloud buff grants immediately at contact in real source too
+        // (confirmed -- only its freeze/completion-sound was missing), so the caller does not call
+        // any "grant" method for Charge at resolution, only plays the sound + respawns the item.
+        // Completion also RE-SPAWNS the same pickup at its original position (real `ObjectStart`,
+        // speed=0, static) -- the caller does this via GEInteractionSystem, this class has no world
+        // access, same one-way layering as every other Trigger*() here.
+        enum class PickupFreezeKind : std::uint8_t { Sucette, Drink, Charge };
+
+        // No-op (returns false) if already frozen (pickup or death) -- matches every other
+        // Trigger*() here. A death-lock started while pickup-frozen always wins (real BlupiDead()
+        // unconditionally overwrites whatever action was active) -- TriggerDeathLock() cancels any
+        // pending pickup freeze outright, see its own .cpp implementation.
+        bool TriggerPickupFreeze(PickupFreezeKind kind) noexcept;
+        [[nodiscard]] bool IsPickupFrozen() const noexcept { return m_pickupFrozen; }
+        // True exactly once, the frame the freeze elapses. outKind echoes the value passed into
+        // TriggerPickupFreeze().
+        [[nodiscard]] bool ConsumePickupFreezeResolved(PickupFreezeKind& outKind) noexcept;
+
         // Water Surf (standing/floating at the surface, dry above) / Nage
         // (fully submerged) status (plan.md E3D-MIG-148) -- unlike every
         // other status above, these are NOT set via a Trigger*() call:
@@ -819,6 +848,11 @@ namespace GalaxyEggbert::CNA
         float m_deathLossVoyageTimer = 0.0f;
         bool m_deathLockShouldRespawn = false;
         bool m_deathLockResolvedPending = false; // consumed once via ConsumeDeathLockResolved()
+
+        bool m_pickupFrozen = false;
+        float m_pickupFreezeTimer = 0.0f;
+        PickupFreezeKind m_pickupFreezeKind = PickupFreezeKind::Sucette;
+        bool m_pickupFreezeResolvedPending = false; // consumed once via ConsumePickupFreezeResolved()
 
         bool m_surf = false;
         bool m_nage = false;

@@ -107,7 +107,9 @@ menus, though still missing a visible 3D Blupi model.
   life loss/respawn, matching real mobile-eggbert exactly (not an instant death anymore).
 - Secret powers (Shield/Power/Cloud/Hide) fully modeled including Cloud's offensive
   `BlupiElectro` aura (destroys small enemies within range) and all 5 vehicle mounts. Invert/Mirror
-  (independent movement-reversal debuff/buff) also implemented (2026-07-13).
+  (independent movement-reversal debuff/buff) also implemented (2026-07-13). Power(Sucette)/
+  Hide(Drink)/Cloud(Charge) use the real 2-stage grab→freeze→complete pickup timing (added
+  2026-07-14) — Shield stays real single-stage/instant.
 - Player-fired bullets while riding Tank (real cooldown/ammo gates).
 - Real camera shake, all 3 types wired (Fan-death/fish-bird-hazard-kill BigShake, wasp-sting
   ElectricShake, generic-hazard-kill/dynamite-blast/CleanAll SmallShake) and Ghost mode (typed-word
@@ -153,12 +155,39 @@ menus, though still missing a visible 3D Blupi model.
   already-confirmed `ObjectType12` (crate); deliberately not guessed through.
 - Idle "fidget" periodic sounds (`plan.md #085`) — blocked on new `AnimState` values this engine
   doesn't have yet (same prerequisite as the 3D Blupi model work).
+- Sucette(26)/Drink(30) pickups grant automatically on contact alone — real source requires the
+  action button held at contact too (found 2026-07-14 while implementing `plan.md 173`, not
+  implemented this pass; Shield/Charge/Invert really are automatic, so this isn't a uniform gap).
 - `GalaxyEggbertSimple3D` — historical reference only, not buildable/maintained (see above).
 
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`. Everything below is from **2026-07-13/14** (one very
 long continuous autonomous session); each item is its own commit.
+
+- **Implemented the real Sucette(26)/Drink(30)/Charge(31) 2-stage pickup delay (`plan.md 173`).**
+  Real exact durations (not the earlier "~32/36" approximation): Sucette=32 ticks(1.6s),
+  Drink=36(1.8s), Charge=64(3.2s) — all three genuinely freeze Blupi for the real duration, a
+  third application of the same freeze-timer template already built for `TriggerTeleport()`/the
+  death lock. Key asymmetry found: Sucette/Drink are genuinely 2-stage (buff grants only at
+  completion), but Charge's Cloud buff actually grants at CONTACT in real source too — this
+  engine's existing instant grant there was already correct, only the freeze/grab-sound/
+  completion-sound timing was missing. Real immediate "grab" sounds (previously skipped entirely)
+  now play at contact (Sucette ch50/Drink ch57/Charge ch58); the real completion sounds
+  (ch44/ch62/ch55) moved from contact-time to the actual deferred point. Also found and
+  implemented a detail missing from the reference doc: completion re-spawns the same pickup at its
+  original position (real `ObjectStart`, static). Found but explicitly deferred: real Sucette/Drink
+  require the action button held at contact — this engine still grants them automatically on
+  contact alone, a real, separate, flagged gap. Verified: new tests at both the
+  `GEBlupiController` level (durations, freeze, cancellation-by-death-lock) and the
+  `GEInteractionSystem` level (contact position capture, item respawn). Full suite: 78 tests on
+  `build-cna` (99%, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure), 73/73
+  (100%) on `build-cna-vulkan`.
+- **Confirmed `plan.md 103` ("respawn invincibility window") is a non-feature.** Direct source
+  research found no invincibility flag/timer/blink state tied to respawn anywhere in real
+  `Decor.cpp`/`Decor.hpp` — the real "safety" after death is purely spatial (the FIFO safe-position
+  system, already implemented), not temporal immunity. Closed as confirmed-non-existent rather than
+  left as an open gap, per the faithful-remake rule.
 
 - **Implemented the death-lock + life-loss Voyage system (`plan.md`'s "death-lock" entry, Phase
   15) — replacing every hazard death's old instant life-loss/respawn with the real deferred

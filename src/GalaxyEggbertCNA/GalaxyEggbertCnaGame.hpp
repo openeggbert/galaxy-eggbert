@@ -149,6 +149,17 @@ namespace GalaxyEggbert::CNA
         // below for the interim 2D stand-in.
         GEBlupiController blupi_;
 
+        // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
+        // stashes the pickup's own position/type from contact time until
+        // the freeze resolves (potentially several frames/seconds later,
+        // past when interaction_'s own *ThisFrame() signal has reset), so
+        // ResolvePickupFreeze() can re-spawn it at completion. Only one
+        // freeze can be active at a time (GEBlupiController::
+        // TriggerPickupFreeze() is a no-op while already frozen), so a
+        // single pending slot is sufficient.
+        float pendingPickupX_ = 0.0f, pendingPickupY_ = 0.0f, pendingPickupZ_ = 0.0f;
+        GalaxyEggbert::ObjectType pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType0;
+
         // Real screen-shake/forced-pan camera effect (plan.md CAM-008..013,
         // see GECameraShake.hpp's own comment for the full real-behavior
         // citation) -- ticked every Play-phase frame, its (dx,dy) pixel
@@ -301,6 +312,22 @@ namespace GalaxyEggbert::CNA
         // Called right after `interaction_.Update()` returns, alongside
         // `ResolvePendingVoyage()` above.
         void ResolveDeathLock();
+
+        // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
+        // a no-op unless `interaction_.PowerGrantedThisFrame()`/
+        // `CloudGrantedThisFrame()`/`HideGrantedThisFrame()` fires this
+        // frame (plays the real immediate "grab" sound, starts
+        // `blupi_.TriggerPickupFreeze()`, and stashes the pickup's own
+        // position from `interaction_.Power/Cloud/HidePickupX/Y/Z()` into
+        // `pendingPickup*_` below since the freeze outlives this frame) OR
+        // `blupi_.ConsumePickupFreezeResolved()` fires (plays the real
+        // "complete" sound, grants Power/Hide via `blupi_.TriggerPower()`/
+        // `TriggerHide()` -- Cloud's own buff already granted at contact,
+        // matching real source -- and re-spawns the item at the stashed
+        // position via `interaction_.RespawnPickupItem()`). Called right
+        // after `interaction_.Update()` returns, alongside
+        // `ResolveDeathLock()` above.
+        void ResolvePickupFreeze();
 
         // Dispatches cheat 1-9 (plan.md CHEAT-001..009) -- verified
         // directly against the real `Decor::CheatAction(Tables::

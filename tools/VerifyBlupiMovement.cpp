@@ -703,6 +703,101 @@ int main(int argc, char** argv)
             check(drownLock.IsDeathLocked(), "still locked just under the real Drown duration (90 ticks=4.5s)");
         }
 
+        // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`, verified directly
+        // against Decor.cpp:6025-6087) -- a third application of the same freeze-timer template
+        // as TriggerTeleport()/the death lock above.
+        {
+            GEBlupiController pickupFrozen;
+            pickupFrozen.SetPosition(0.0f, 1.0f, 0.0f);
+            check(pickupFrozen.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette),
+                  "TriggerPickupFreeze() returns true when not already frozen/locked");
+            check(pickupFrozen.IsPickupFrozen(), "IsPickupFrozen() is true immediately after TriggerPickupFreeze()");
+            check(!pickupFrozen.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink),
+                  "TriggerPickupFreeze() is a no-op (returns false) while already frozen");
+
+            // Fully frozen, same shape as the death lock/teleport tests above. Also the first
+            // Step() call, so this is where GetAnimState() first reflects PickupBusy.
+            const float xBeforeFrozen = pickupFrozen.GetX();
+            const float yawBeforeFrozen = pickupFrozen.GetYaw();
+            pickupFrozen.Step(synthetic, 1.0f, 1.0f, true, false, false, dt);
+            check(pickupFrozen.GetX() == xBeforeFrozen && pickupFrozen.GetYaw() == yawBeforeFrozen,
+                  "Blupi is fully frozen (no movement or turning) while pickup-busy");
+            check(pickupFrozen.GetAnimState() == GEBlupiController::AnimState::PickupBusy,
+                  "the pickup delay is the PickupBusy anim state");
+
+            // Real Sucette duration = 32 ticks = 1.6s -- advance to just under it (still frozen).
+            constexpr float kSucetteSeconds = 32.0f / 20.0f;
+            for (int i = 0; i < static_cast<int>(kSucetteSeconds / dt) - 3; ++i)
+            {
+                pickupFrozen.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(pickupFrozen.IsPickupFrozen(), "still frozen just under the real Sucette duration (32 ticks=1.6s)");
+
+            GEBlupiController::PickupFreezeKind resolvedKind{};
+            bool sawResolved = false;
+            for (int i = 0; i < 10 && !sawResolved; ++i)
+            {
+                pickupFrozen.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                if (pickupFrozen.ConsumePickupFreezeResolved(resolvedKind))
+                {
+                    sawResolved = true;
+                }
+            }
+            check(sawResolved, "ConsumePickupFreezeResolved() fires exactly once when the freeze elapses");
+            check(resolvedKind == GEBlupiController::PickupFreezeKind::Sucette,
+                  "ConsumePickupFreezeResolved() echoes the real kind passed to TriggerPickupFreeze()");
+            check(!pickupFrozen.IsPickupFrozen(), "the freeze ends on the same transition");
+            check(!pickupFrozen.ConsumePickupFreezeResolved(resolvedKind),
+                  "ConsumePickupFreezeResolved() does not fire again until the NEXT freeze resolves");
+
+            // Real controllability restored (movement along -cos(yaw)/Z at the default yaw=0,
+            // same axis convention as the death-lock test above).
+            const float zBeforeUnfrozen = pickupFrozen.GetZ();
+            pickupFrozen.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            check(pickupFrozen.GetZ() != zBeforeUnfrozen, "Blupi is fully controllable again once the pickup freeze resolves");
+
+            // Spot-check Drink's distinct 36-tick duration and Charge's 64-tick duration.
+            GEBlupiController drinkFreeze;
+            drinkFreeze.SetPosition(0.0f, 1.0f, 0.0f);
+            drinkFreeze.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink);
+            constexpr float kDrinkSeconds = 36.0f / 20.0f;
+            for (int i = 0; i < static_cast<int>(kDrinkSeconds / dt) - 3; ++i)
+            {
+                drinkFreeze.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(drinkFreeze.IsPickupFrozen(), "still frozen just under the real Drink duration (36 ticks=1.8s)");
+            for (int i = 0; i < 10; ++i)
+            {
+                drinkFreeze.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(!drinkFreeze.IsPickupFrozen(), "Drink's real 36-tick duration elapses (distinct from Sucette's 32)");
+
+            GEBlupiController chargeFreeze;
+            chargeFreeze.SetPosition(0.0f, 1.0f, 0.0f);
+            chargeFreeze.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge);
+            constexpr float kChargeSeconds = 64.0f / 20.0f;
+            for (int i = 0; i < static_cast<int>(kChargeSeconds / dt) - 3; ++i)
+            {
+                chargeFreeze.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(chargeFreeze.IsPickupFrozen(), "still frozen just under the real Charge duration (64 ticks=3.2s)");
+            for (int i = 0; i < 10; ++i)
+            {
+                chargeFreeze.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(!chargeFreeze.IsPickupFrozen(), "Charge's real 64-tick duration elapses (the longest of the 3)");
+
+            // A death lock always cancels a pending pickup freeze (real BlupiDead() unconditionally
+            // overwrites whatever action was active).
+            GEBlupiController canceledByDeath;
+            canceledByDeath.SetPosition(0.0f, 1.0f, 0.0f);
+            canceledByDeath.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge);
+            check(canceledByDeath.IsPickupFrozen(), "pickup freeze is active before a death lock interrupts it");
+            canceledByDeath.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
+            check(!canceledByDeath.IsPickupFrozen(), "TriggerDeathLock() cancels a pending pickup freeze outright");
+            check(canceledByDeath.IsDeathLocked(), "the death lock itself starts normally despite the cancellation");
+        }
+
         // Fan hazard collision (plan.md E3D-MIG-149) -- same non-solid
         // architecture as the teleporter above: a real Ground floor (Y=0)
         // with a FanLeft head FLOATING one cell above Blupi's standing
