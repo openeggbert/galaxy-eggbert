@@ -2192,19 +2192,26 @@ reset to `[ ]` except the small set with direct CNA evidence.
       added ("any mechanic invented by Claude"), this looks like exactly that category, not a
       verified port target. The real, confirmed side of this (enemy-contact death, no stomp
       exception) is presumably just the shared hazard-contact kill logic already covered by
-      `IsGenericHazard()` (galaxy-eggbert's own `GEInteractionSystem.cpp`) once enemy-Blupi contact
-      detection itself is implemented (a real, separate, still-genuinely-missing gap — see
-      ENEMY-CONTACT-001 below) — not a stomp/bounce branch.
+      `IsGenericHazard()` (galaxy-eggbert's own `GEInteractionSystem.cpp`) — already implemented,
+      see the correction below (ENEMY-CONTACT-001 was a false claim, retracted).
 - [ ] BLUPI-127 — ~~BounceUp: upward impulse kJumpSpeed × 0.65~~ **same invented premise as
       BLUPI-126 above — do not implement, no such function exists in real source.**
-- [ ] ENEMY-CONTACT-001 — (new item, 2026-07-14) Real, confirmed, still-missing gap: Blupi has NO
-      contact-collision detection against enemy `MoveObject`s at all yet (confirmed via direct grep
-      of `GalaxyEggbertCnaGame.cpp` and all of `src/GalaxyEggbertCNA/Game/` — zero hits). Phase 13
-      "Enemy AI" only covers enemy movement/behavior, not Blupi-enemy collision resolution. The real
-      mechanic to port here (once picked up) is plain contact death matching `IsGenericHazard()`'s
-      existing hazard-contact pattern — NOT stomp-kill (see BLUPI-126's correction above). A real,
-      valuable, but non-trivial gap — needs its own scoped task, not a same-session opportunistic
-      add given the stomp-kill premise it was originally bundled with turned out to be wrong.
+- ~~ENEMY-CONTACT-001 — Blupi has NO contact-collision detection against enemy `MoveObject`s at
+      all yet~~ **RETRACTED 2026-07-14, this claim was itself wrong** — direct re-verification of
+      `GEInteractionSystem.cpp` found Blupi-enemy contact detection is already comprehensive and
+      source-confirmed: the shared 8-type hazard-contact kill list (`IsGenericHazard()`, types
+      2/3/4/16/17/20/96/97, line ~1203), wasp balloon-touch (type 44, line ~1129), large-creature
+      turn-dwell lethal contact (type 54, line ~1167), fired-projectile contact (type 23, line
+      ~1107), and blupih/blupit's own body (32/33) CORRECTLY excluded from any contact-kill (real
+      `Decor.cpp` only ever harms Blupi via their fired projectile, never their body — already
+      documented in place at line ~1090). Also checked `ObjectType18` (absent from
+      `IsGenericHazard()`) against real source: it has exactly one reference in all of `Decor.cpp`
+      (the dynamite-blast destructible list, already mirrored in galaxy-eggbert) and no confirmed
+      contact-damage behavior anywhere — correctly excluded, not a gap. No remaining real
+      Blupi-enemy contact gap was found. (Meta-note: this whole ENEMY-CONTACT-001 item was added by
+      a research fork earlier the same session and not independently re-verified before being
+      committed — a "trust but verify" lesson, same category as this session's earlier false-negative
+      sound-wiring audit finding.)
 
 #### 4.7 Blupi Sounds
 

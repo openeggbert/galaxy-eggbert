@@ -616,9 +616,11 @@ commit to implementing #16 as its own focused effort rather than an opportunisti
   `BounceUp()`, stomp sound) — researched 2026-07-14: grepped all of mobile-eggbert source for
   `bounce`/`stomp` (case-insensitive) and found zero matches; `BounceUp()` doesn't exist anywhere,
   and the real enemy-contact code (`Decor.cpp:7940-7965`) has no velocity-conditioned branch. This
-  looks like an invented mechanic, not a verified port target. The real, still-missing, and
-  genuinely valuable gap underneath it is plain Blupi-enemy contact detection (no stomp exception)
-  — see `plan.md` ENEMY-CONTACT-001 for the correctly-scoped version of this gap.
+  looks like an invented mechanic, not a verified port target. (A follow-up research pass initially
+  claimed the real underlying contact-detection was itself a missing gap — that claim was WRONG and
+  has been retracted; re-verification found `GEInteractionSystem.cpp` already implements
+  comprehensive, source-confirmed Blupi-enemy contact handling for every real case. See `plan.md`'s
+  retracted `ENEMY-CONTACT-001` note for the full correction.)
 - **Do not implement `plan.md` SCORE-001 through SCORE-006** (numeric score-per-pickup) —
   researched 2026-07-14: no `score`/`Score` game-state variable exists anywhere in real
   mobile-eggbert source, and `GameData.hpp`'s entire 640-byte save layout has no score field. The
