@@ -2141,10 +2141,27 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-105 — Shield timer (m_blupiTimeShield): counts down 0→100 ticks; gauge shows progress
 - [ ] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active)
 - [ ] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers
-- [ ] BLUPI-108 — Cloud mode (m_blupiCloud): from ObjectType31, floats through blocks for N ticks
+- [x] BLUPI-108 — ~~Cloud mode (m_blupiCloud): from ObjectType31, floats through blocks for N
+      ticks~~ **description was wrong, corrected 2026-07-14**: grepped real `Decor.cpp` for every
+      `m_blupiCloud` reference — none gate any collision/movement-bypass function; Cloud's actual
+      real gameplay effect is the `BlupiElectro` enemy-kill aura (destroys small enemies within a
+      real 40px radius while active), already implemented — see item `068` and `PICKUP-010` above
+      for the full citation. This line was simply stale (never updated when that work landed under
+      a different item number) and had an invented "floats through blocks" premise not supported by
+      source.
 - [ ] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
 - [ ] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions)
-- [ ] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions
+- [ ] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions —
+      **researched 2026-07-14**: real and well-defined (`Tables::CheatCodes::Ghost`, doc comment
+      "semi-transparent, free flight, no interactions"; behavior confirmed in `Decor.cpp` under
+      `#ifdef MODERN`, which IS unconditionally defined in `Config.hpp` so this code path is live in
+      the real build) — but it has **no real player-facing trigger anywhere**: `Game1.cpp`'s
+      `CheatAction()` dispatch (the actual cheat-button-gesture handler backing galaxy-eggbert's own
+      `CHEAT-001..009`) never maps any real cheat-number/gesture to `CheatCodes::Ghost` — only
+      OpenDoors/SuperBlupi/ShowSecret/LayEgg/CleanAll/AllTreasure/EndGoal are reachable that way.
+      Implementing this would require inventing a new access path (keybind or cheat slot) with no
+      real precedent to mirror — blocked on the user picking/approving a trigger, not a safe
+      opportunistic task despite the underlying state/effect being real.
 - [ ] BLUPI-112 — Hide mode (m_blupiHide): concealed in object
 - [ ] BLUPI-113 — Sucette/suction-cup (m_blupiPower): from ObjectType26, walk up walls
 - [ ] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions

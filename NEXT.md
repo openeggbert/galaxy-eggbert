@@ -607,6 +607,11 @@ commit to implementing #16 as its own focused effort rather than an opportunisti
 - **Do not attempt the exit-code-1-on-window-close fix** — the user already explicitly declined it.
 - **Do not design or build the real 3D Blupi model** — blocked on the user providing an asset;
   don't speculate about its look/rig in the meantime.
+- **Do not implement `plan.md` BLUPI-111 (Ghost mode cheat)** without the user picking a trigger —
+  researched 2026-07-14: the mechanic is real (`Tables::CheatCodes::Ghost`, live under `#ifdef
+  MODERN` which is unconditionally defined), but `Game1.cpp`'s real `CheatAction()` dispatch never
+  maps any actual cheat gesture/number to it — there is no real access path to mirror, so wiring it
+  up now would mean inventing a new keybind/cheat-slot with no precedent.
 - **Do not implement `plan.md` SCORE-001 through SCORE-006** (numeric score-per-pickup) —
   researched 2026-07-14: no `score`/`Score` game-state variable exists anywhere in real
   mobile-eggbert source, and `GameData.hpp`'s entire 640-byte save layout has no score field. The
