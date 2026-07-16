@@ -2149,20 +2149,26 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       anywhere in the codebase. This is very likely simply a mistaken/invented entry, not an
       under-researched one; do not implement.
 - [ ] HUD-010 — `[?]` World name + elapsed level timer. **Flagged 2026-07-13**: same as `HUD-009`
-      -- not present anywhere in the real `DrawInfo`. Needs its own verification against whichever
-      other real function (if any) actually draws this before implementing.
+      -- not present anywhere in the real `DrawInfo`. **Confirmed 2026-07-16**: read the complete
+      real `Decor::DrawInfo()` function end to end (`Decor.cpp:1185-1311`, its full extent, not an
+      excerpt) -- no world name, no elapsed timer, no clock/timer variable of any kind anywhere in
+      it. Same likely-mistaken/invented status as `HUD-009`; do not implement.
 - [ ] HUD-011 — `[?]` Game speed indicator label (SLOW / NORMAL / FAST). **Flagged 2026-07-13**:
       `GameSpeed` itself IS real (`Game1.hpp`'s `gameSpeed`/`SetGameSpeed()`/`getGameSpeed()`), but
-      it lives in the `Game1` application/settings layer, not `Decor`, and is NOT drawn anywhere in
-      the real `DrawInfo` -- likely a settings-menu display, not an in-game HUD element as this
-      entry assumes. Needs its own verification before implementing here.
+      it lives in the `Game1` application/settings layer, not `Decor`. **Confirmed 2026-07-16**: the
+      complete real `DrawInfo()` (`Decor.cpp:1185-1311`) draws lives/bullets/Perso/dynamite/keys/
+      treasure-count/gauges/training-hint only -- no speed label anywhere. Likely a settings-menu
+      display (unconfirmed, not part of this task's scope), not an in-game HUD element as this
+      entry assumed; do not implement here.
 - [x] HUD-012 — Water/Nage breath gauge (jauge.png, real `m_jauges[0]`) at (90,450), Blue normally
       (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:5310-5326`, wired to the
       already-implemented `GEBlupiController::IsNage()`/`GetWaterGaugeLevel()`, `E3D-MIG-148`)
 - [ ] HUD-013 — `[?]` Hit flash: red full-screen overlay panel, 0.4 s fade on damage. **Flagged
-      2026-07-13**: not found in `DrawInfo`; needs its own verification (a full-screen flash isn't
-      obviously a `Decor` responsibility at all -- may live in a different real class/layer, or may
-      not exist as described).
+      2026-07-13**: not found in `DrawInfo`. **Confirmed 2026-07-16**: read the complete real
+      `DrawInfo()` (`Decor.cpp:1185-1311`) end to end -- no full-screen overlay/flash/fade drawing
+      of any kind. Camera shake on hit (`HUD-014`/`CAM-008..013`) is the real, confirmed hit-
+      feedback mechanic -- this entry's separate red-flash-panel premise appears to be
+      conflating/inventing on top of that already-real mechanic. Do not implement.
 - [x] HUD-014 — Camera shake on hit — **done 2026-07-14, filed under CAM-008..013 (camera work),
       not `GEHud`** — see those entries for the full implementation writeup. Was blocked on
       `table_decor_action`'s data-table transcription approval; the user granted blanket approval
@@ -2213,10 +2219,13 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       likely-mistaken status as `HUD-009`/`025`, though not as conclusively ruled out (a
       localized-string-only trigger could still exist unread).
 - [ ] HUD-021 — `[?]` Controls hint bar fades after 8 s (re-show on new level). Not in `DrawInfo`
-      (real training-hint overlay there is `HUD-024`, mission-gated, a different thing) — needs
-      its own verification. **Re-checked 2026-07-13 (follow-up)**: grepped for hint-bar/8-second-
-      timer patterns across the whole tree, zero hits. Likely mistaken/invented, not merely
-      under-researched.
+      (real training-hint overlay there is `HUD-024`, mission-gated, a different thing) --
+      **Re-checked 2026-07-13 (follow-up)**: grepped for hint-bar/8-second-timer patterns across
+      the whole tree, zero hits. **Confirmed 2026-07-16**: read the complete real `DrawInfo()`
+      (`Decor.cpp:1185-1311`) end to end -- the ONLY hint-related element is the mission-gated
+      training overlay (`HUD-024`'s own position-triggered, per-mission array lookup, not a
+      generic "controls hint bar"), with no separate 8-second fade timer anywhere. Likely
+      mistaken/invented, not merely under-researched; do not implement.
 - [ ] HUD-022 — `[?]` Pause button icon visible during Play phase (top area). Not in `DrawInfo` —
       likely a `Game1`/menu-layer button, not a `Decor` HUD element; needs its own verification.
       **Confirmed real 2026-07-13 (follow-up research)**: lives in `InputPad.cpp`
