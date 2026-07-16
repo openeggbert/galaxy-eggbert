@@ -654,6 +654,53 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
+            // Perso-decoy/lethal-decor trap (found 2026-07-16, real Decor.cpp:7957-7975 +
+            // `Decor::MovePersoDetect()` ~9835-9865) -- resolves the "what does placing a Perso
+            // decoy actually DO gameplay-wise" mystery HUD-017's own writeup left open: small
+            // enemies (4/32/33) that patrol into contact with ANY real 200-203 object -- the
+            // placed Perso decoy (200) itself, OR one of the 201-203 lethal-looking decorations
+            // (`170`) -- mutually destroy each other. Real effects: an ObjectType8 explosion +
+            // channel 10 + SmallShake at the ENEMY's position, then an ObjectType37 dissolve
+            // effect at a small real offset from it; the detected 200-203 object is also deleted.
+            // Checked before the Cloud aura above in real source's own per-object loop (this
+            // engine's own ordering here is a natural adaptation, not a faithfulness question --
+            // the two can't both apply to the same enemy the same frame regardless of order).
+            if (obj.type == ObjectType::ObjectType4 || obj.type == ObjectType::ObjectType32 ||
+                obj.type == ObjectType::ObjectType33)
+            {
+                for (auto& other : objects)
+                {
+                    if (!other.active)
+                    {
+                        continue;
+                    }
+                    if (other.type != ObjectType::ObjectType200 && other.type != ObjectType::ObjectType201 &&
+                        other.type != ObjectType::ObjectType202 && other.type != ObjectType::ObjectType203)
+                    {
+                        continue;
+                    }
+                    const float pdx = other.currentX - obj.currentX;
+                    const float pdy = other.currentY - obj.currentY;
+                    const float pdz = other.currentZ - obj.currentZ;
+                    if (pdx * pdx + pdy * pdy + pdz * pdz < kHazardContactRadius * kHazardContactRadius)
+                    {
+                        AppendExplosionFlash(ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
+                                              pendingSpawns);
+                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                        smallShakeTriggeredThisFrame_ = true;
+                        AppendExplosionFlash(ObjectType::ObjectType37, obj.currentX, obj.currentY, obj.currentZ,
+                                              pendingSpawns);
+                        other.active = false;
+                        obj.active = false;
+                        break;
+                    }
+                }
+                if (!obj.active)
+                {
+                    continue;
+                }
+            }
+
             // Invert start/stop particle burst (plan.md VISUAL-014/015,
             // ObjectType41/42) -- purely cosmetic, no interaction with
             // Blupi. Real self-delete at phase>=16 (`Decor.cpp:8575-8596`,

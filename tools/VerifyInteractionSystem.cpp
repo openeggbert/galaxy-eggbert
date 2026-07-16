@@ -841,6 +841,62 @@ int main(int argc, char** argv)
               "lethal contact always triggers SmallShake (real: no fish/bird BigShake variant here)");
     }
 
+    // 3.745. Perso-decoy/lethal-decor trap (found 2026-07-16, real Decor.cpp:7957-7975 +
+    // Decor::MovePersoDetect() ~9835-9865) -- small enemies (4/32/33) that patrol into contact
+    // with ANY real 200-203 object mutually destroy each other. Resolves the "what does placing a
+    // Perso decoy actually DO" mystery HUD-017's own writeup left open.
+    {
+        GEWorldRuntime trapWorld;
+        GEInteractionSystem trapInteraction;
+
+        MobileObjSpec decoy;
+        decoy.type = ObjectType::ObjectType200;
+        decoy.posStartX = decoy.posEndX = decoy.currentX = 500.0f;
+        decoy.posStartY = decoy.posEndY = decoy.currentY = 1.0f;
+        decoy.posStartZ = decoy.posEndZ = decoy.currentZ = 500.0f;
+        trapWorld.GetMobileObjectsMutable().push_back(decoy);
+
+        MobileObjSpec bulldozer;
+        bulldozer.type = ObjectType::ObjectType4;
+        bulldozer.posStartX = bulldozer.posEndX = bulldozer.currentX = 500.0f;
+        bulldozer.posStartY = bulldozer.posEndY = bulldozer.currentY = 1.0f;
+        bulldozer.posStartZ = bulldozer.posEndZ = bulldozer.currentZ = 500.0f;
+        trapWorld.GetMobileObjectsMutable().push_back(bulldozer);
+
+        // Blupi is far away -- this mechanic doesn't involve his position at all.
+        trapInteraction.Update(dt, trapWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
+        check(trapInteraction.SmallShakeTriggeredThisFrame(),
+              "the Perso-decoy trap triggers SmallShake when a small enemy touches a placed decoy");
+        const bool anyActiveDecoyOrEnemy =
+            std::any_of(trapWorld.GetMobileObjects().begin(), trapWorld.GetMobileObjects().end(),
+                        [](const auto& o) {
+                            return o.active && (o.type == ObjectType::ObjectType200 || o.type == ObjectType::ObjectType4);
+                        });
+        check(!anyActiveDecoyOrEnemy, "both the decoy and the enemy are destroyed by the trap (real mutual ObjectDelete)");
+
+        // A small enemy far from any decoy is entirely unaffected.
+        GEWorldRuntime noTrapWorld;
+        GEInteractionSystem noTrapInteraction;
+        MobileObjSpec farDecoy;
+        farDecoy.type = ObjectType::ObjectType200;
+        farDecoy.posStartX = farDecoy.posEndX = farDecoy.currentX = 500.0f;
+        farDecoy.posStartY = farDecoy.posEndY = farDecoy.currentY = 1.0f;
+        farDecoy.posStartZ = farDecoy.posEndZ = farDecoy.currentZ = 500.0f;
+        noTrapWorld.GetMobileObjectsMutable().push_back(farDecoy);
+        MobileObjSpec farBulldozer;
+        farBulldozer.type = ObjectType::ObjectType4;
+        farBulldozer.posStartX = farBulldozer.posEndX = farBulldozer.currentX = 700.0f;
+        farBulldozer.posStartY = farBulldozer.posEndY = farBulldozer.currentY = 1.0f;
+        farBulldozer.posStartZ = farBulldozer.posEndZ = farBulldozer.currentZ = 700.0f;
+        noTrapWorld.GetMobileObjectsMutable().push_back(farBulldozer);
+        noTrapInteraction.Update(dt, noTrapWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
+        check(!noTrapInteraction.SmallShakeTriggeredThisFrame(),
+              "no trap trigger when the enemy is far from any 200-203 object");
+        const bool bothStillActive =
+            noTrapWorld.GetMobileObjects()[0].active && noTrapWorld.GetMobileObjects()[1].active;
+        check(bothStillActive, "both the decoy and the enemy survive when far apart");
+    }
+
     // 3.75. Perso decoy (plan.md HUD-017) -- real m_blupiPerso starts at 0
     // (Decor.cpp:163/360/426) with no world pickup that grants it (only a
     // level-authored save-data field this engine doesn't model yet, and

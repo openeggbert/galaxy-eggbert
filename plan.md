@@ -2240,11 +2240,19 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       exists (real: takes priority over placing a new one), otherwise places a new one if
       `persoCount_ > 0` and grounded. Real cap 5 (gates pickup, not placement). HUD: button.png
       icon 108 (40px/6-col tiles, `Pixmap.cpp:592-600`) at (0,438) + "= N" text at (32,452) at
-      real scale 0.7 (smaller than the treasure counter's scale-1.0 text). **NOT modeled**: what
-      placing a decoy actually DOES gameplay-wise (a targeted search of enemy-AI code found no
-      distraction/interaction effect from `ObjectType200`'s mere presence — it may genuinely just
-      be a placeable marker/checkpoint with no further effect, or the effect lives somewhere not
-      yet found); the real voyage-flight-animation before the pickup counter increments (skipped,
+      real scale 0.7 (smaller than the treasure counter's scale-1.0 text).
+      **Mystery resolved 2026-07-16**: what placing a decoy actually does gameplay-wise (the
+      original search targeted enemy-AI code and missed it) — verified directly against
+      `Decor.cpp:7957-7975`/`Decor::MovePersoDetect()` (~9835-9865): small enemies (4/32/33) that
+      patrol into contact with ANY real 200-203 object (the placed decoy itself, OR one of the
+      201-203 lethal decorations, `PICKUP-069`) mutually destroy each other — an explosion +
+      channel 10 + SmallShake at the enemy's position, then an `ObjectType37` dissolve effect, the
+      decoy/decoration also deleted. Implemented as a new block in `GEInteractionSystem::Update()`
+      right before the Cloud-aura check (which targets the same 3 enemy types), reusing the
+      existing `AppendExplosionFlash()` helper for both spawned effects. 4 new
+      `VerifyInteractionSystem` assertions (trigger + mutual destruction, no-trigger when far
+      apart). Full suite green both backends + live headless launch smoke check. **Still NOT
+      modeled**: the real voyage-flight-animation before the pickup counter increments (skipped,
       same simplification as every other pickup this session); and the real starting count, which
       is level-authored save data (`_blupiPerso_`, default 0, no world-pickup grants it at all) —
       this engine has no level-authored-starting-inventory concept yet, so `persoCount_` always
