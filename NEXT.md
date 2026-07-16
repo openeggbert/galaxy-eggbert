@@ -118,6 +118,13 @@ gauge decremented unconditionally regardless of Shield/Hide, now fixed. 3 plan.m
 claimed this immunity "wasn't modeled" for fired-projectiles/Spikes/Fan — stale since `170` shipped
 2026-07-12, corrected.
 
+**Family 3 — 2 genuinely new gameplay features (not a gate retrofit)**: `ObjectType201-203`
+lethal contact (`PICKUP-069`) and the Perso-decoy/lethal-decor enemy trap mechanic — both real,
+previously-undiscovered mechanics found via direct `Decor.cpp` reads around the already-implemented
+Perso pickup code (`6088-6115`/`7957-7975`/`9835-9865`), not vehicle/immunity retrofits like
+Families 1-2. The trap mechanic resolves a "what does placing a decoy actually DO" mystery flagged
+back on 2026-07-13.
+
 (Prior session, 2026-07-13/14): real deferred "Voyage" pickup-reward timing, Clear2/3/4 death VFX,
 the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup delay.
 
@@ -142,6 +149,12 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `3f577c8` **feat: implement the Perso-decoy/lethal-decor enemy trap mechanic.** Resolves a
+  mystery left open since 2026-07-13 ("what does placing a Perso decoy actually DO gameplay-wise" —
+  the original search targeted enemy-AI code and missed the real site). Verified against
+  `Decor.cpp:7957-7975` + `Decor::MovePersoDetect()`: small enemies (4/32/33) that patrol into
+  contact with ANY real 200-203 object (the placed decoy, OR one of the 201-203 lethal decorations
+  just below) mutually destroy each other.
 - `4fecb1e` **feat: implement `ObjectType201-203` lethal contact (`PICKUP-069`).** A real,
   previously-undiscovered gameplay gap (not a vehicle/immunity retrofit like the others above) —
   found via direct `Decor.cpp:6088-6115` read: types 201-203 share `ObjectType200` Perso's real
