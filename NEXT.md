@@ -1,6 +1,6 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-14._
+_Last updated: 2026-07-16._
 
 ## 1. Project summary
 
@@ -99,6 +99,17 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- (uncommitted at time of writing) **fix: real vehicle-mode/Balloon/Ecrase pickup+teleport gates.**
+  Verified directly against `Decor.cpp:6025-6087` and `:5593-5594`: Sucette(26)/Drink(30)/
+  Charge(31) pickups and the teleporter both really exclude every vehicle mount plus Balloon/
+  Ecrase (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate`) — this engine had none of that for
+  pickups, and `TriggerTeleport()` only checked Balloon/Ecrase (its own comment wrongly claimed
+  "vehicles aren't modeled", stale since `VehicleMode` was added). Shield(25)/Invert(40) genuinely
+  have no such clause in real source — confirmed, not just assumed; this closes §8 item 1 from the
+  previous update (which had mistakenly also listed Shield). New `blupiVehicleOrSquashed` gate in
+  `GalaxyEggbertCnaGame.cpp`'s `canGrantPower/Cloud/Hide` computation; `GEBlupiController::
+  TriggerTeleport()` now also checks `m_vehicleMode`. New tests in `VerifyBlupiMovement.cpp`
+  (vehicle-mounted teleport no-op) and `VerifyInteractionSystem.cpp` (gated Sucette grant).
 - `f6753ca` **fix: require the action button for Sucette/Drink pickups.** Real mobile-eggbert
   gates Sucette(26)/Drink(30) on the action button held at contact
   (`getButtonPressedProperty()==PlayAction`); this engine previously granted both automatically.
@@ -160,14 +171,9 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   attempt.
 - **Incomplete:** No visible 3D Blupi model (blocked on the user providing one).
 - **Incomplete:** No 3D world editor.
-- **Incomplete/suspected gap — needs verification:** Real Sucette(26)/Drink(30)/Charge(31)/Shield(25)
-  pickup gates in real mobile-eggbert also exclude several vehicle modes
-  (`!m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep &&
-  !m_blupiTank && !m_blupiSkate`). This engine's `GEInteractionSystem.cpp` pickup switch does not
-  currently check vehicle mode for these 4 pickups at all — since vehicles ARE implemented in this
-  engine (5 vehicle mounts, per §2), this may be a real, live gap now, not just a historical
-  "vehicles don't exist yet" simplification. Not verified or fixed this session; verify against
-  `Decor.cpp:6014-6087` directly before assuming it's a real gap or a non-issue.
+- **Fixed 2026-07-16:** Sucette(26)/Drink(30)/Charge(31) pickups and `TriggerTeleport()` now check
+  vehicle mode + Balloon/Ecrase (`Decor.cpp:6025-6087`/`:5593-5594`). Shield(25)/Invert(40) confirmed
+  to have no such clause in real source (the previous entry here mistakenly listed Shield). See §3.
 - **Known simplification, not a bug:** The real per-cause hurt-sprite animation frame table
   (`Tables::table_blupi`) has not been transcribed for the death-lock (`AnimState::DeathLocked`) or
   pickup-freeze (`AnimState::PickupBusy`) states — both render a static "Stop" pose instead. The
@@ -275,19 +281,7 @@ No lint/format tooling is configured in this repository at present.
 
 ## 8. Next smallest tasks
 
-1. **Verify (and if needed, fix) the vehicle-mode gate gap for Sucette/Drink/Charge/Shield
-   pickups.**
-   Goal: confirm whether real vehicle-mode exclusions
-   (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate`) apply to these 4 pickups in this engine
-   today, and if not, add them.
-   Files: `src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp` (the `ObjectType25/26/30/31` switch
-   cases), `GalaxyEggbertCnaGame.cpp` (wherever `canGrantShield`/`canGrantPower`/etc. are computed
-   from `blupi_`'s vehicle state).
-   Verify: `cmake --build build-cna --target VerifyInteractionSystem -j2 && cd build-cna &&
-   ./VerifyInteractionSystem` (add a new test case mounting a vehicle then touching one of these
-   4 pickups).
-
-2. **Root-cause `easy-gl-resource-smoke-tests`'s failing assertion**, even though it's currently
+1. **Root-cause `easy-gl-resource-smoke-tests`'s failing assertion**, even though it's currently
    treated as pre-existing/unrelated (see §5). At minimum, confirm it fails identically on a fresh
    clone with no galaxy-eggbert-side changes, so the "unrelated" assumption is verified rather than
    inherited.
@@ -295,7 +289,7 @@ No lint/format tooling is configured in this repository at present.
    `g_state.last_active_texture`/`0x84C0` (`GL_TEXTURE0`) tracking it depends on.
    Verify: `cd build-cna && ctest -R easy-gl-resource-smoke-tests --output-on-failure`.
 
-3. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
+2. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
    isolate a frame showing the flying icon-48 HUD animation itself (the earlier live check
    confirmed the life-total/position state transition but didn't catch the icon mid-flight at the
    screenshot intervals used).
@@ -304,13 +298,13 @@ No lint/format tooling is configured in this repository at present.
    timed screenshots, fully revert before committing).
    Verify: visual inspection of the captured `.png`, no code changes should survive.
 
-4. **Get the user's visual judgment on the Saw blade (icon 378) orientation**, then fix it.
+3. **Get the user's visual judgment on the Saw blade (icon 378) orientation**, then fix it.
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`, `../easy-3d`'s `CubeMesh.cpp`
    (`AppendPlateMesh`).
    Verify: live headless screenshot at the Saw demo block in `worlds3d/world001.vwr` +
    `VerifyBlupiMovement`.
 
-5. **Get the user's decision on `AscenseurVertigo` render geometry** (icons 311-316, which of the
+4. **Get the user's decision on `AscenseurVertigo` render geometry** (icons 311-316, which of the
    3 existing render approaches to reuse), then implement it.
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`.
    Verify: `cmake --build build-cna --target VerifyTileUvBounds -j2` plus a live screenshot.

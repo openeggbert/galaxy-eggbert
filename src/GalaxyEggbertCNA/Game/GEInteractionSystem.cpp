@@ -1792,12 +1792,14 @@ namespace GalaxyEggbert::CNA
                 // it) -- see the *PickupX/Y/Z() getters below. Invert/Mirror
                 // (ObjectType40, plan.md PICKUP-011) is a separate real
                 // pickup family sharing the same instant-grant-on-contact
-                // shape as Shield/Charge. Real per-pickup gates (minus
-                // vehicle-mode clauses that don't exist here) are passed in
-                // from the caller's own GEBlupiController state
-                // (blupiCanGrantShield/Power/Cloud/Hide/Invert) since this
-                // class has no access to GEBlupiController itself -- consistent
-                // with the blupiBallooned/blupiCrouching precedent.
+                // shape as Shield/Charge. Real per-pickup gates, including
+                // Power/Cloud/Hide's real vehicle-mode + Balloon/Ecrase
+                // exclusions (Decor.cpp:6025-6087; Shield/Invert have none,
+                // verified 2026-07-16), are passed in from the caller's own
+                // GEBlupiController state (blupiCanGrantShield/Power/Cloud/
+                // Hide/Invert) since this class has no access to
+                // GEBlupiController itself -- consistent with the
+                // blupiBallooned/blupiCrouching precedent.
                 case ObjectType::ObjectType25: // shield stick
                     if (blupiCanGrantShield)
                     {

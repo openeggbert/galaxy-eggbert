@@ -591,6 +591,16 @@ int main(int argc, char** argv)
         check(!crushed2.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while squashed (real !m_blupiEcrase gate)");
 
+        // Real gate also excludes every vehicle mount (Decor.cpp:5593-5594:
+        // !m_blupiHelico/Over/Jeep/Tank/Skate) -- added 2026-07-16, this
+        // engine's own gate previously missed this clause entirely.
+        GEBlupiController mountedTeleport;
+        mountedTeleport.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
+        mountedTeleport.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        mountedTeleport.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+        check(!mountedTeleport.TriggerTeleport(BlockTypes::Teleport1),
+              "TriggerTeleport() is a no-op while in a vehicle (real !m_blupiJeep/Tank/etc. gate)");
+
         // Death-lock + life-loss Voyage (death-VFX follow-up, verified
         // directly against Decor.cpp:6374-6392's shared per-cause duration
         // dispatch) -- mirrors TriggerTeleport()'s own freeze-timer shape

@@ -580,10 +580,13 @@ namespace GalaxyEggbert::CNA
         // `m_blupiFocus=false`) -- freezes Blupi completely (no movement/
         // turning/jump/gravity at all, see Step()) for kTeleportDuration
         // seconds. Real gate: grounded and not already in transit
-        // (`!m_blupiAir`), and not ballooned/squashed (`!m_blupiBalloon &&
-        // !m_blupiEcrase` -- vehicles aren't modeled, so those clauses of
-        // the real gate don't apply). A no-op (returns false) if any of
-        // those aren't met, matching the same idempotent-re-trigger shape
+        // (`!m_blupiAir`), not ballooned/squashed (`!m_blupiBalloon &&
+        // !m_blupiEcrase`), and not in any vehicle mount (`!m_blupiHelico/
+        // Over/Jeep/Tank/Skate`, Decor.cpp:5593-5594 -- added 2026-07-16;
+        // this comment previously claimed vehicles weren't modeled, which
+        // stopped being true once VehicleMode was added). A no-op (returns
+        // false) if any of those aren't met, matching the same idempotent-
+        // re-trigger shape
         // as TriggerCrush()/TriggerBalloon()/TriggerSpringBounce() -- lets
         // the caller play the real entry sound (channel 71) only on an
         // actual new trigger. `icon` (330-333) is remembered so the caller

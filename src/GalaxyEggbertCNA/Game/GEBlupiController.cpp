@@ -374,7 +374,13 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerTeleport(std::uint16_t icon) noexcept
     {
-        if (m_teleporting || !m_onGround || m_balloon || m_ecrase)
+        // Real gate also excludes every vehicle mount (Decor.cpp:5593-5594:
+        // !m_blupiHelico/Over/Jeep/Tank/Skate) -- this class's own comment
+        // above once said "vehicles aren't modeled, so those clauses don't
+        // apply", which stopped being true once VehicleMode was added; fixed
+        // 2026-07-16 alongside the same gap in the Sucette/Drink/Charge
+        // pickup gates (GalaxyEggbertCnaGame.cpp).
+        if (m_teleporting || !m_onGround || m_balloon || m_ecrase || m_vehicleMode != VehicleMode::None)
         {
             return false;
         }

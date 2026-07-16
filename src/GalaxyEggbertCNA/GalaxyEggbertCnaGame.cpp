@@ -1771,10 +1771,21 @@ namespace GalaxyEggbert::CNA
             const bool canGrantShield = secretPower != GEBlupiController::SecretPower::Shield &&
                                         secretPower != GEBlupiController::SecretPower::Hide &&
                                         secretPower != GEBlupiController::SecretPower::Power;
-            const bool canGrantPower = secretPower != GEBlupiController::SecretPower::Shield;
-            const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None;
+            // Real Sucette(26)/Drink(30)/Charge(31) gates also exclude every
+            // vehicle mount plus Balloon/Ecrase (Decor.cpp:6025-6087:
+            // !m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate) -- Shield
+            // and Invert have no such clause in real source (verified
+            // directly, NEXT.md's listing of Shield here was wrong), so
+            // canGrantShield/canGrantInvert deliberately don't get this.
+            const bool blupiVehicleOrSquashed = blupi_.GetVehicleMode() != GEBlupiController::VehicleMode::None ||
+                                                 blupi_.IsBallooned() || blupi_.IsEcrased();
+            const bool canGrantPower = secretPower != GEBlupiController::SecretPower::Shield &&
+                                        !blupiVehicleOrSquashed;
+            const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None &&
+                                        !blupiVehicleOrSquashed;
             const bool canGrantHide = secretPower != GEBlupiController::SecretPower::Shield &&
-                                       secretPower != GEBlupiController::SecretPower::Cloud;
+                                       secretPower != GEBlupiController::SecretPower::Cloud &&
+                                       !blupiVehicleOrSquashed;
             // Invert/Mirror (plan.md PICKUP-011) -- mirrors
             // GEBlupiController::TriggerInvert()'s own gate exactly (not
             // already Invert, not Hide); independent of the 4 powers above.

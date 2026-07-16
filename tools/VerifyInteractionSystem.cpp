@@ -2874,6 +2874,27 @@ int main(int argc, char** argv)
                   std::fabs(pickupInteraction.PowerPickupZ() - 34.0f) < 0.01f,
               "PowerPickupX/Y/Z() capture the real pickup's own contact position");
 
+        // Vehicle-mode/Balloon/Ecrase gate (real Decor.cpp:6025-6087) -- caller
+        // (GalaxyEggbertCnaGame::canGrantPower) reports false while Blupi is mounted/ballooned/
+        // squashed, matching the real !m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate clause.
+        // This class has no vehicle-state access itself, so this only exercises that it honors
+        // blupiCanGrantPower=false even with the action button held -- the vehicle-state
+        // computation itself is covered by GEBlupiController's own IsInVehicle()/IsBallooned()/
+        // IsEcrased() (VerifyBlupiMovement). A fresh instance is used since the one above was
+        // already consumed by the successful grant just checked.
+        MobileObjSpec sucetteGated;
+        sucetteGated.type = ObjectType::ObjectType26;
+        sucetteGated.posStartX = sucetteGated.posEndX = sucetteGated.currentX = 50.0f;
+        sucetteGated.posStartY = sucetteGated.posEndY = sucetteGated.currentY = 1.0f;
+        sucetteGated.posStartZ = sucetteGated.posEndZ = sucetteGated.currentZ = 60.0f;
+        pickupWorld.GetMobileObjectsMutable().push_back(sucetteGated);
+        pickupInteraction.Update(dt, pickupWorld, 50.0f, 1.0f, 60.0f, 0.0f, sound, false, false, 0, 0, false, true,
+                                  /*blupiCanGrantPower=*/false, true, true, false, false, false, true,
+                                  /*blupiActionPressedEdge=*/true);
+        check(!pickupInteraction.PowerGrantedThisFrame(),
+              "touching Sucette(26) with the action button held but blupiCanGrantPower=false "
+              "(vehicle/balloon/squash gate) does not grant Power");
+
         MobileObjSpec drink;
         drink.type = ObjectType::ObjectType30;
         drink.posStartX = drink.posEndX = drink.currentX = 20.0f;
