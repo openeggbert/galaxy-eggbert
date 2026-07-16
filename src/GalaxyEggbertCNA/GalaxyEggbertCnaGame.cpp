@@ -1656,13 +1656,20 @@ namespace GalaxyEggbert::CNA
                     }
                 }
 
+                // Dynamite/Perso PLACEMENT vehicle gate (found 2026-07-16, Decor.cpp:4792-4794):
+                // real source excludes EVERY vehicle mode (unlike switches, Helicopter is NOT
+                // exempt here) plus Balloon/Ecrase. Deliberately does NOT gate Perso PICKUP
+                // (TryPerso()'s own internal pickup branch, real Decor.cpp:6088-6101 has no
+                // vehicle clause at all) -- see PlaceDynamite()/TryPerso()'s own header comments.
+                const bool blupiCanUseHands = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
+
                 // Dynamite placement (plan.md E3D-MIG-155) -- same action
                 // button, independent gate (carrying one + grounded) from
                 // the switch check above, so both can coexist on one press
                 // without stepping on each other (real channel 61, shared
                 // with skin-swap per 07-sounds.md, unrelated here).
                 if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                                blupi_.IsOnGround()))
+                                                blupi_.IsOnGround(), blupiCanUseHands))
                 {
                     sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
                 }
@@ -1682,7 +1689,7 @@ namespace GalaxyEggbert::CNA
                     // real distinguishing signal now.
                     const int persoBefore = interaction_.PersoCount();
                     if (interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                               blupi_.IsOnGround()) &&
+                                               blupi_.IsOnGround(), blupiCanUseHands) &&
                         interaction_.PersoCount() < persoBefore)
                     {
                         sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);

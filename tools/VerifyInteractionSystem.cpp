@@ -548,6 +548,14 @@ int main(int argc, char** argv)
               "PlaceDynamite() is a no-op while not grounded");
         check(interaction.DynamiteCount() == 1, "DynamiteCount() unchanged after the failed placement");
 
+        // Real vehicle-mode gate (Decor.cpp:4792-4794, found 2026-07-16) -- the caller (e.g. while
+        // mounted in any vehicle) reports blupiCanUseHands=false; PlaceDynamite() must stay a
+        // no-op even while grounded and carrying one.
+        check(!interaction.PlaceDynamite(world, 0.0f, 1.0f, 0.0f, /*grounded=*/true,
+                                          /*blupiCanUseHands=*/false),
+              "PlaceDynamite() is a no-op when blupiCanUseHands=false (real vehicle-mode gate)");
+        check(interaction.DynamiteCount() == 1, "DynamiteCount() unchanged after the vehicle-gated no-op");
+
         // A fresh, isolated spot -- the real center blast (tick 50) has a
         // (0,0) offset, so a target placed exactly here and Blupi standing
         // exactly here are both within its 2x2-tile radius.
@@ -816,6 +824,20 @@ int main(int argc, char** argv)
             }
         }
         check(foundNewDecoy, "TryPerso() actually spawned a new active decoy in the world");
+
+        // Real vehicle-mode gate (Decor.cpp:4792-4794/6088-6101, found 2026-07-16): placement
+        // excludes every vehicle mode, but pickup has NO such clause at all -- picking up the
+        // decoy just placed above must still succeed even with blupiCanUseHands=false.
+        check(interaction.TryPerso(world, px, py, pz, /*grounded=*/true, /*blupiCanUseHands=*/false),
+              "TryPerso() pickup still succeeds with blupiCanUseHands=false (real: no vehicle "
+              "clause on pickup)");
+        completePendingVoyage(world, interaction);
+        check(interaction.PersoCount() == 1,
+              "picking up the decoy (blupiCanUseHands=false) still increments PersoCount()");
+
+        check(!interaction.TryPerso(world, px, py, pz, /*grounded=*/true, /*blupiCanUseHands=*/false),
+              "TryPerso() placement IS blocked with blupiCanUseHands=false (real vehicle-mode gate)");
+        check(interaction.PersoCount() == 1, "PersoCount() unchanged after the vehicle-gated no-op");
     }
 
     // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own

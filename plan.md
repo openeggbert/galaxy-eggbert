@@ -1153,6 +1153,15 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       `VerifyInteractionSystem` assertions (pickup cap, placement gate, full blast sequence
       destroying a synthetic target crate + costing Blupi a life + fuse self-destruct) + full
       suite (63/63 unit tests, all verify tools) + both backends.
+      **Vehicle-mode gate fixed 2026-07-16**: verified directly against `Decor.cpp:4792-4794` —
+      real placement (both Dynamite AND Perso, the same `if`/`else if` pair) excludes EVERY vehicle
+      mode (unlike switches, Helicopter is NOT exempt here) plus Balloon/Ecrase. New
+      `blupiCanUseHands` parameter on `PlaceDynamite()`/`TryPerso()` (default `true`), computed in
+      `GalaxyEggbertCnaGame.cpp` from `!IsInVehicle() && !IsBallooned() && !IsEcrased()`.
+      Deliberately does NOT gate `TryPerso()`'s pickup branch (real `Decor.cpp:6088-6101` has no
+      vehicle clause on picking up an already-placed decoy) — verified by 2 new
+      `VerifyInteractionSystem` assertions per function (blocked placement, still-working pickup).
+      Full suite green both backends + live headless launch smoke check.
 - [ ] `156` Helicopter-destruction / debris pool (ballistic pop-then-drop physics), shared by
       crate destruction too — NOT started. The helicopter trigger itself needs vehicles (Phase
       17, not implemented); the debris-pool VISUAL effect (also used for destroyed crates in a

@@ -2056,14 +2056,16 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    bool GEInteractionSystem::PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded)
+    bool GEInteractionSystem::PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded,
+                                             bool blupiCanUseHands)
     {
         // Real gate (Decor.cpp ~4792-4812): carrying at least one, and
         // solid ground under both feet -- approximated here as `grounded`
         // (this engine's single-point collision has no separate left/right
-        // foot check). Real "not in any vehicle mode, not lift-transported"
-        // clauses aren't modeled -- neither concept exists yet.
-        if (dynamiteCount_ <= 0 || !grounded)
+        // foot check). Real "not in any vehicle mode" clause fixed
+        // 2026-07-16 -- see blupiCanUseHands's own header comment
+        // ("lift-transported" still isn't modeled, no such concept exists).
+        if (dynamiteCount_ <= 0 || !grounded || !blupiCanUseHands)
         {
             return false;
         }
@@ -2090,7 +2092,8 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
-    bool GEInteractionSystem::TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded)
+    bool GEInteractionSystem::TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded,
+                                        bool blupiCanUseHands)
     {
         auto& objects = worldRuntime.GetMobileObjectsMutable();
 
@@ -2127,8 +2130,10 @@ namespace GalaxyEggbert::CNA
 
         // Real placement (Decor.cpp ~4818-4841): carrying at least one,
         // and solid ground under both feet -- approximated as `grounded`,
-        // same simplification as PlaceDynamite() above.
-        if (persoCount_ <= 0 || !grounded)
+        // same simplification as PlaceDynamite() above. Real vehicle-mode
+        // gate fixed 2026-07-16 -- see blupiCanUseHands's own header
+        // comment; deliberately does NOT apply to the pickup branch above.
+        if (persoCount_ <= 0 || !grounded || !blupiCanUseHands)
         {
             return false;
         }

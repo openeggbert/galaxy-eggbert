@@ -465,7 +465,13 @@ namespace GalaxyEggbert::CNA
         // list (~9102-9132) are handled inside Update() itself, not exposed
         // here.
         [[nodiscard]] int DynamiteCount() const noexcept { return dynamiteCount_; }
-        bool PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
+        // blupiCanUseHands (found 2026-07-16, Decor.cpp:4792-4794): real placement gate ALSO
+        // excludes every vehicle mode (Helico/Over/Jeep/Tank/Skate) plus Balloon/Ecrase --
+        // unlike switch activation, Helicopter is NOT exempt here. This class has no
+        // GEBlupiController access, so the caller computes and passes this in, same convention as
+        // blupiCanGrantShield/Power/etc.
+        bool PlaceDynamite(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded,
+                            bool blupiCanUseHands = true);
 
         // Perso (decoy statue) placement/pickup (plan.md HUD-017, real
         // Decor.cpp ~4818-4841 place, ~6088-6101 pickup start, ~10291-10294
@@ -486,8 +492,15 @@ namespace GalaxyEggbert::CNA
         // counter actually increments is NOT modeled -- increments
         // immediately, same simplification as every other pickup this
         // session.
+        // blupiCanUseHands: same real vehicle/Balloon/Ecrase gate as PlaceDynamite() above
+        // (Decor.cpp:4792-4794 covers BOTH dynamite and Perso placement under the one condition,
+        // an `if`/`else if`) -- ONLY affects the placement branch below, NOT the pickup branch
+        // above it, which real source gates solely on `m_blupiFocus` (Decor.cpp:6088-6101, no
+        // vehicle clause at all) -- picking up an already-placed decoy must still work while
+        // riding/ballooned/squashed.
         [[nodiscard]] int PersoCount() const noexcept { return persoCount_; }
-        bool TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded);
+        bool TryPerso(GEWorldRuntime& worldRuntime, float x, float y, float z, bool grounded,
+                      bool blupiCanUseHands = true);
 
         // Voyage (plan.md `158`, real `Decor::VoyageInit`/`VoyageStep`/
         // `VoyageDraw`, `Decor.cpp:10141-10348`) -- real pickups do NOT
