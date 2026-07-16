@@ -120,7 +120,7 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
-- (pending commit) **feat: real per-cause DeathLocked/PickupBusy animation frames (Blupi-model
+- `ee91d1f` **feat: real per-cause DeathLocked/PickupBusy animation frames (Blupi-model
   prep).** Parsed `Tables::table_blupi` directly via a small script (validated by first
   reproducing the already-approved `kTeleportingFrames` byte-for-byte before trusting new output)
   to transcribe the 6 real `DeathCause` hurt-sprite frame arrays (Clear1-4/Glu/Drown) and 3 real
