@@ -1141,9 +1141,14 @@ namespace GalaxyEggbert::CNA
             // the real IsSurfWater ("water here, dry above") / IsDeepWater
             // ("water here AND above") distinction -- see
             // GEBlupiController::IsSurf()/IsNage()'s own comment.
+            // Real gate (Decor.cpp:5284-5285, found 2026-07-16) also excludes every vehicle mode +
+            // Balloon/Ecrase entirely -- while riding/ballooned/squashed, water tiles never
+            // trigger Surf/Nage at all (a vehicle drives straight over/through them instead).
+            // This engine had no such exclusion; water detection ran unconditionally.
+            const bool canEnterWater = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
             const auto waterBlockAt = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
             const auto waterBlockAbove = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
-            const bool atWaterTile = GalaxyEggbert::BlockTypes::isWater(waterBlockAt);
+            const bool atWaterTile = canEnterWater && GalaxyEggbert::BlockTypes::isWater(waterBlockAt);
             const bool aboveIsWaterTile = GalaxyEggbert::BlockTypes::isWater(waterBlockAbove);
             const bool inSurfWater = atWaterTile && !aboveIsWaterTile;
             const bool inDeepWater = atWaterTile && aboveIsWaterTile;
@@ -1610,9 +1615,13 @@ namespace GalaxyEggbert::CNA
             // Real channel 22 (water entry/exit splash) plays entering
             // EITHER Surf or Nage from fully dry; real channel 25 (start-
             // surfing) plays specifically on Nage->Surf (resurfacing).
-            // Real vehicle-forced-dismount-on-entry is NOT modeled (no
-            // vehicle concept exists yet, same simplification as every
-            // hazard this session).
+            // Real vehicle exclusion fixed 2026-07-16 -- this comment
+            // previously mis-described it as "forced dismount on water
+            // entry"; verified directly against Decor.cpp:5284-5285: it's
+            // not a dismount at all, water tiles simply never register as
+            // Surf/Nage while riding/ballooned/squashed (`canEnterWater`
+            // above, computed before Step()) -- a vehicle just drives
+            // straight over/through water instead.
             const bool wasDry = !wasSurf && !wasNage;
             const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
             if (wasDry && !nowDry)

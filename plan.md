@@ -1034,8 +1034,13 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       (`kSwimUpSpeed`, also an approximation) instead of the normal ground jump. **Not modeled**
       (documented simplifications, same pattern as every other Phase 14 mechanic): the real
       "Jump near the surface launches you clear of the water" fine-grained sub-tile-depth nuance
-      (-16/-12, Power-gated); vehicle forced-dismount-on-entry (no vehicle concept exists yet,
-      Phase 17); Shield/Hide/SuperBlupi drowning immunity (same phase dependency). A pre-existing
+      (-16/-12, Power-gated); Shield/Hide/SuperBlupi drowning immunity.
+      **Vehicle exclusion fixed 2026-07-16** (this entry previously mis-described it as "vehicle
+      forced-dismount-on-entry" — verified directly against `Decor.cpp:5284-5285`: it's not a
+      dismount at all, water simply never registers as Surf/Nage while riding ANY vehicle or
+      Balloon/Ecrase — a vehicle just drives straight over/through water instead, no special
+      handling needed beyond skipping the detection). New `canEnterWater` gate in
+      `GalaxyEggbertCnaGame.cpp`, computed before `Step()`. A pre-existing
       content bug was found and fixed while implementing this: the sample world's tunnel water
       crossing sat directly on the world floor (y=0) with nothing beneath it (world Y can't go
       negative) — once water became non-solid this would have turned a shallow wade into a
