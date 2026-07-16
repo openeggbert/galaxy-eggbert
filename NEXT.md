@@ -69,10 +69,14 @@ Last full run (2026-07-16, both backends, re-verified after this session's 5 veh
   not built per the direction lock.
 
 ### Recently implemented (this session, 2026-07-16 — see §3 for detail)
-A systemic class of bug found and fixed **11 times** this session: real vehicle-mode (Helicopter/
-Overcraft/Jeep/Tank/Skateboard) exclusion/immunity clauses that predate Phase 17's vehicle
-implementation and were never retrofitted once vehicles actually shipped. Each verified directly
-against `Decor.cpp`, not guessed. The 4 most recent, on top of the 7 below:
+**Two related bug families found and fixed 12 times total** this session, both from the same root
+cause: real per-mechanic gate clauses that were correct when first ported but never retrofitted
+once a LATER feature (vehicles, secret powers) shipped and should have applied to them too. Each
+verified directly against `Decor.cpp`, not guessed.
+
+**Family 1 — vehicle-mode gates (11 fixes)**: Helicopter/Overcraft/Jeep/Tank/Skateboard exclusion/
+immunity clauses that predate Phase 17's vehicle implementation. The 4 most recent, on top of the 7
+below:
 - Springs now forcibly dismount any vehicle first (unless Shield/Hide active) before applying the
   bounce, matching real behavior — new shared `DismountAndDepositVehicle()` helper.
 - **Most significant fix**: `TriggerDeathLock()` (every real death cause) now also unconditionally
@@ -106,6 +110,14 @@ occurrences in `Decor.cpp` (only the ones reachable from already-implemented mec
 residual few may still exist if new mechanics get implemented later — re-check any NEW
 mechanic against this same pattern before assuming it's complete.
 
+**Family 2 — Shield/Hide immunity (1 code fix + 3 doc corrections)**: `SecretPower::Shield`/`Hide`
+grant real hazard immunity (`blupi_.IsInvincible()`) — already correctly wired at all 8 real hazard
+contact sites (Lava/Spike/Drip/Blitz/Crusher/Saw/Fan/Drown) plus fired-projectiles/dynamite-blast/
+wasp/large-creature (verified directly, all consistent). The one genuine gap: the water breath
+gauge decremented unconditionally regardless of Shield/Hide, now fixed. 3 plan.md notes still
+claimed this immunity "wasn't modeled" for fired-projectiles/Spikes/Fan — stale since `170` shipped
+2026-07-12, corrected.
+
 (Prior session, 2026-07-13/14): real deferred "Voyage" pickup-reward timing, Clear2/3/4 death VFX,
 the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup delay.
 
@@ -130,6 +142,13 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `2284775` **docs only**: fixed 3 more stale Shield/Hide-immunity notes (fired projectiles,
+  Spikes, Fan) that claimed immunity "isn't modeled" — all 3 were already fixed when `170` (secret
+  powers) landed 2026-07-12, just never updated afterward. Also corrected `141`'s stale "Drip NOT
+  done" claim (Drip was implemented 2026-07-14).
+- `a7622a0` **fix: Shield/Hide now grant real immunity to the water breath gauge.** Verified
+  against `Decor.cpp:4615-4620` — the gauge only decrements at all while NOT Shield/Hide (this
+  engine decremented unconditionally). An already-documented "not modeled" gap, now closed.
 - `6341319` **docs only**: fixed 2 more stale "vehicles aren't modeled" comments found during a
   final sweep (TriggerTeleport's caller-side comment, the secret-power Trigger*() header note).
 - `9027b84` **fix: vehicles/Balloon/Ecrase now skip water Surf/Nage detection.** Verified against
