@@ -823,6 +823,38 @@ int main(int argc, char** argv)
             canceledByDeath.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
             check(!canceledByDeath.IsPickupFrozen(), "TriggerDeathLock() cancels a pending pickup freeze outright");
             check(canceledByDeath.IsDeathLocked(), "the death lock itself starts normally despite the cancellation");
+
+            // Real BlupiDead() (Decor.cpp:6547-6614) ALSO unconditionally clears vehicle mount/
+            // Balloon/Ecrase/every secret power/Invert/Nage/Surf/Suspend/Ghost -- found 2026-07-16.
+            // Death previously left every one of these completely untouched in this engine.
+            GEBlupiController fullyLoaded;
+            fullyLoaded.SetPosition(0.0f, 1.0f, 0.0f);
+            fullyLoaded.Step(synthetic, 0.0f, 0.0f, false, false, false, dt); // settle grounded
+            fullyLoaded.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            fullyLoaded.TriggerShield();
+            fullyLoaded.TriggerInvert();
+            check(fullyLoaded.IsInVehicle() && fullyLoaded.GetSecretPower() == GEBlupiController::SecretPower::Shield &&
+                      fullyLoaded.IsInverted(),
+                  "sanity: vehicle/Shield/Invert are all active before the death lock clears them");
+            fullyLoaded.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
+            check(!fullyLoaded.IsInVehicle(), "TriggerDeathLock() clears the vehicle mount (real BlupiDead())");
+            check(fullyLoaded.GetSecretPower() == GEBlupiController::SecretPower::None,
+                  "TriggerDeathLock() clears the active secret power (real BlupiDead())");
+            check(!fullyLoaded.IsInverted(), "TriggerDeathLock() clears Invert too (real BlupiDead())");
+
+            GEBlupiController ballooned3;
+            ballooned3.SetPosition(0.0f, 1.0f, 0.0f);
+            ballooned3.TriggerBalloon();
+            check(ballooned3.IsBallooned(), "sanity: ballooned before the death lock clears it");
+            ballooned3.TriggerDeathLock(GEBlupiController::DeathCause::Clear2, true);
+            check(!ballooned3.IsBallooned(), "TriggerDeathLock() clears Balloon too (real BlupiDead())");
+
+            GEBlupiController crushed3;
+            crushed3.SetPosition(0.0f, 1.0f, 0.0f);
+            crushed3.TriggerCrush();
+            check(crushed3.IsEcrased(), "sanity: squashed before the death lock clears it");
+            crushed3.TriggerDeathLock(GEBlupiController::DeathCause::Drown, true);
+            check(!crushed3.IsEcrased(), "TriggerDeathLock() clears Ecrase too (real BlupiDead())");
         }
 
         // Fan hazard collision (plan.md E3D-MIG-149) -- same non-solid

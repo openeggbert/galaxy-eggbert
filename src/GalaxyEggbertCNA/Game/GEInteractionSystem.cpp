@@ -1499,13 +1499,26 @@ namespace GalaxyEggbert::CNA
             // whole branch, there's no separate pop path for type 54). The
             // creature itself is never destroyed by this contact (no
             // `ObjectDelete` in the real branch, unlike the shared kill-list
-            // types below) -- it always survives to keep guarding. Real
-            // contact also destroys Blupi's current vehicle instead of
-            // killing him outright if he's riding one (channel 10 +
-            // SmallShake) -- NOT modeled, no vehicle concept exists yet, so
-            // contact always takes the real no-vehicle branch instead
-            // (channel 51, Decor.cpp:5905's PlaySound call for that path).
-            // The real unconditional taunt icon (mockery `83` regardless of
+            // types below) -- it always survives to keep guarding.
+            // **Corrected 2026-07-16** (this comment previously mis-stated the
+            // real behavior): contact does NOT spare Blupi if he's riding a
+            // vehicle -- real source sets `BlupiAction::Glu` unconditionally
+            // either way (still a real death via the shared per-action
+            // life-loss dispatch, `Decor.cpp:6374-6392`), it just ALSO plays a
+            // different sound/shake (channel 10 + SmallShake + a pop effect,
+            // vs. plain channel 51) and clears vehicle/Balloon/Ecrase state
+            // when contact happens while riding/ballooned/squashed
+            // (Decor.cpp:5884-5905) -- mirroring what `BlupiDead()` already
+            // does unconditionally for every other real death cause
+            // (`GEBlupiController::TriggerDeathLock()` now does this too,
+            // fixed alongside this same research). The one remaining gap is
+            // purely cosmetic: this engine always plays the plain channel-51
+            // sound here regardless of vehicle/Balloon/Ecrase state at
+            // contact, since `GEInteractionSystem` has no `GEBlupiController`
+            // access to know which applies -- not worth new plumbing for an
+            // audio-only distinction (the actual game-state outcome, death +
+            // full state clear, is now faithful either way). The real
+            // unconditional taunt icon (mockery `83` regardless of
             // facing, Decor.cpp:9575-9578) is also NOT modeled -- no idle-
             // taunt animation system exists in this engine at all yet
             // (cosmetic, same as type2's taunt-suppression above).

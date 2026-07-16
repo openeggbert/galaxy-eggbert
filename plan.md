@@ -683,11 +683,20 @@ of truth; do not invent stomp/hit feel not documented there.
       landed) — safe to touch while it's actually mid-walk. The creature is never destroyed by the
       contact (no real `ObjectDelete` in that branch). Real balloon immunity IS modeled
       (`blupiBallooned` blocks the whole branch, matching the real `!m_blupiBalloon` gate, no
-      separate pop path for this type unlike the 4 balloon-poppable hazards). Real shield/hide/
-      superBlupi/focus immunity and the real "destroys Blupi's vehicle instead of killing him"
-      branch are NOT modeled (no such concepts exist in this engine yet), so contact always takes
-      the real no-vehicle death branch (channel 51). The real unconditional taunt icon is also NOT
-      modeled — no idle-taunt animation system exists at all. The sample world's placement
+      separate pop path for this type unlike the 4 balloon-poppable hazards). Real shield/hide
+      immunity (`blupiInvincible`) IS modeled too, superBlupi/focus are not (no such concepts
+      exist). **Corrected 2026-07-16**: this entry's own title/body previously mis-stated the
+      "destroys Blupi's vehicle instead of killing him" premise — verified directly against
+      `Decor.cpp:5867-5913`: contact sets `BlupiAction::Glu` UNCONDITIONALLY either way (a real
+      death via the shared per-action life-loss dispatch), it just ALSO plays a different sound/
+      shake and clears vehicle/Balloon/Ecrase state when contact happens while riding/ballooned/
+      squashed — mirroring what `BlupiDead()` already does unconditionally for every real death
+      cause. That state-clearing is now faithful (`GEBlupiController::TriggerDeathLock()` fixed to
+      match `BlupiDead()`, see `067`'s own entry) — the one remaining gap is purely cosmetic:
+      this engine always plays the plain channel-51 sound regardless of vehicle/Balloon/Ecrase
+      state at contact (`GEInteractionSystem` has no `GEBlupiController` access to know which
+      applies), not worth new plumbing for an audio-only distinction. The real unconditional taunt
+      icon is also NOT modeled — no idle-taunt animation system exists at all. The sample world's placement
       (`tools/GenerateSampleWorld3D.cpp`'s walled-room guardian) was converted from a zero-range
       `place()` call to a real `posStart != posEnd` patrol path (same real guard the platform lift
       needed) so both the safe-mid-walk and lethal-turn-dwell windows are genuinely playable, not
@@ -1357,6 +1366,21 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   `DeathCause` values — new `kClear1/2/3/4Frames`/`kGluFrames`/`kDrownFrames`, dispatched via a new
   stored `m_deathCause` member. Render-side: third-person model
   draw gets one added `!IsDeathHidden()` clause (first-person already renders no Blupi model).
+- **Significant gap found and fixed 2026-07-16** (while researching the large-creature
+  `ObjectType54` contact, `136`): real `BlupiDead()` (`Decor.cpp:6547-6614`) unconditionally clears
+  vehicle mount/Balloon/Ecrase/every secret power (Shield/Power/Cloud/Hide)/Invert/Nage/Surf/
+  Suspend/Ghost on EVERY real death, not just a per-hazard special case. `GEBlupiController::
+  TriggerDeathLock()` previously left every one of these completely untouched across death and
+  respawn — meaning dying while riding a vehicle, ballooned, squashed, or with an active secret
+  power silently carried that state through respawn, unlike real mobile-eggbert. Fixed by adding
+  the equivalent unconditional reset directly to `TriggerDeathLock()` (matches `BlupiDead()`'s own
+  timing — immediately at the death trigger, not at the deferred respawn point). Real `BlupiDead()`
+  does NOT redeposit a mounted vehicle's pickup back into the world (no such `ObjectStart` call in
+  it, unlike voluntary/spring-forced dismount) — dying with one mounted just loses it, matching
+  this fix (no world-facing action, `GEBlupiController` has none anyway). New `VerifyBlupiMovement`
+  assertions (vehicle/Shield/Invert/Balloon/Ecrase all cleared by a death lock). This is a broader,
+  more significant fix than the narrow single-mechanic vehicle-gate fixes elsewhere this session —
+  it affects the shared death-lock path used by all 6 real death causes.
 - Found and fixed a real pre-existing bug while wiring this: the Fan hazard's own
   `SpawnFanHitFlash()`/ascend-Voyage call previously read Blupi's position via `blupi_.GetX/Y/Z()`
   which, before this change, had ALREADY been moved by the old instant-respawn `triggerDeath()` —

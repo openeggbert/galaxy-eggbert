@@ -474,6 +474,31 @@ namespace GalaxyEggbert::CNA
         m_pickupFrozen = false;
         m_pickupFreezeTimer = 0.0f;
         m_pickupFreezeResolvedPending = false;
+        // Real BlupiDead() (Decor.cpp:6547-6614) ALSO unconditionally clears vehicle mount/
+        // Balloon/Ecrase/every secret power/Invert/Nage/Surf/Suspend/Ghost (found 2026-07-16 while
+        // researching the large-creature ObjectType54 contact, which has its own manual
+        // equivalent of this same reset because it bypasses BlupiDead() -- see
+        // GEInteractionSystem.cpp's own comment). This engine's death-lock previously left every
+        // one of these completely untouched across death/respawn -- a real, significant gap, not
+        // just the narrow single-mechanic gates fixed earlier this session. Unlike voluntary/
+        // spring-forced dismount, real BlupiDead() does NOT redeposit the vehicle pickup back into
+        // the world (no such ObjectStart call in it) -- dying with one mounted just loses it, so
+        // this class does nothing world-facing here, matching that (this class has no world
+        // access regardless).
+        m_vehicleMode = VehicleMode::None;
+        m_vehicleSpeed = 0.0f;
+        m_balloon = false;
+        m_ecrase = false;
+        m_secretPower = SecretPower::None;
+        m_secretPowerLevel = 0;
+        m_secretPowerTimer = 0.0f;
+        m_invert = false;
+        m_invertLevel = 0;
+        m_invertTimer = 0.0f;
+        m_nage = false;
+        m_surf = false;
+        m_suspended = false;
+        m_ghost = false;
         m_deathLocked = true;
         m_deathLockTimer = kDeathLockTicks[static_cast<std::size_t>(cause)] / 20.0f;
         m_deathLockShouldRespawn = shouldRespawn;
