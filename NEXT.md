@@ -149,6 +149,11 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `9505fd5` **fix: exact `table_explo5/6/8` transcriptions + resolve the explo-mapping open
+  question.** Verified against `Decor.cpp:8395-8489`: the real `explo1-8`→`ObjectType` mapping is
+  a plain 1:1 correspondence, not "many-to-one or context-dependent" as the open question in
+  `plan.md` claimed. explo1/2/3/4/7 were already exact (2026-07-14); explo5/6/8 were the 3
+  remaining cases still using an approximation formula, now exact.
 - `3f577c8` **feat: implement the Perso-decoy/lethal-decor enemy trap mechanic.** Resolves a
   mystery left open since 2026-07-13 ("what does placing a Perso decoy actually DO gameplay-wise" —
   the original search targeted enemy-AI code and missed the real site). Verified against
