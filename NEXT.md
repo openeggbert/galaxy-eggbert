@@ -69,10 +69,20 @@ Last full run (2026-07-16, both backends, re-verified after this session's 5 veh
   not built per the direction lock.
 
 ### Recently implemented (this session, 2026-07-16 — see §3 for detail)
-A systemic class of bug found and fixed **7 times** this session: real vehicle-mode (Helicopter/
+A systemic class of bug found and fixed **11 times** this session: real vehicle-mode (Helicopter/
 Overcraft/Jeep/Tank/Skateboard) exclusion/immunity clauses that predate Phase 17's vehicle
 implementation and were never retrofitted once vehicles actually shipped. Each verified directly
-against `Decor.cpp`, not guessed:
+against `Decor.cpp`, not guessed. The 4 most recent, on top of the 7 below:
+- Springs now forcibly dismount any vehicle first (unless Shield/Hide active) before applying the
+  bounce, matching real behavior — new shared `DismountAndDepositVehicle()` helper.
+- **Most significant fix**: `TriggerDeathLock()` (every real death cause) now also unconditionally
+  clears vehicle mount/Balloon/Ecrase/every secret power/Invert/Nage/Surf/Suspend/Ghost, matching
+  real `BlupiDead()` exactly — previously ALL of this state silently survived death/respawn.
+- Vehicles/Balloon/Ecrase now correctly skip water Surf/Nage detection entirely (not a "forced
+  dismount" as a stale comment claimed — a vehicle just drives over/through water).
+- Corrected 2 more stale "vehicles aren't modeled" comments found during this audit.
+
+The original 7:
 - Sucette(26)/Drink(30)/Charge(31) pickups now correctly exclude every vehicle mode + Balloon/
   Ecrase (Shield/Invert confirmed to have NO such clause, unlike what an earlier note claimed).
 - `TriggerTeleport()` now also excludes vehicle mode (previously only checked Balloon/Ecrase).
@@ -120,6 +130,20 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `6341319` **docs only**: fixed 2 more stale "vehicles aren't modeled" comments found during a
+  final sweep (TriggerTeleport's caller-side comment, the secret-power Trigger*() header note).
+- `9027b84` **fix: vehicles/Balloon/Ecrase now skip water Surf/Nage detection.** Verified against
+  `Decor.cpp:5284-5285` — not a "forced dismount" as a stale comment claimed, water tiles just
+  never register as Surf/Nage while riding/ballooned/squashed at all.
+- `51e4d6f` **fix: `TriggerDeathLock()` now clears vehicle/Balloon/Ecrase/secret-power/Invert
+  state.** The most significant fix this session — found while researching the large-creature
+  contact: real `BlupiDead()` unconditionally clears ALL of this on every death, not a per-hazard
+  special case. This engine's death-lock left it completely untouched across death/respawn.
+- `8fdc23b` **fix: springs now forcibly dismount vehicles before bouncing.** Verified against
+  `Decor.cpp:2837-2893`. New shared `DismountAndDepositVehicle()` helper (factored out of the
+  existing voluntary dismount, which had the same logic inline).
+- `2783a9b` **docs only**: confirmed HUD-010/011/013/021 are non-features by reading the complete
+  real `DrawInfo()` function end to end.
 - `ee91d1f` **feat: real per-cause DeathLocked/PickupBusy animation frames (Blupi-model
   prep).** Parsed `Tables::table_blupi` directly via a small script (validated by first
   reproducing the already-approved `kTeleportingFrames` byte-for-byte before trusting new output)
