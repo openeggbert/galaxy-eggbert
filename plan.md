@@ -3838,8 +3838,16 @@ doesn't silently re-open them or silently guess an answer:
   far. Blocks precise conversion of tick-domain durations to real seconds across multiple
   systems: footstep interval (`E3D-MIG-083`), door-slide duration (`E3D-MIG-160`), teleporter
   delay (`E3D-MIG-147`), dynamite fuse (`E3D-MIG-155`).
-- `[?]` **`explo1`-`explo8` → `ObjectType` trigger mapping** — which explosion animation fires
-  for which object/hazard is many-to-one or context-dependent; not traced anywhere yet.
+- ~~`[?]` **`explo1`-`explo8` → `ObjectType` trigger mapping**~~ — **RESOLVED 2026-07-16**: the
+  "many-to-one or context-dependent" premise was wrong — verified directly against
+  `Decor.cpp:8395-8489`: it's a plain 1:1 mapping (`explo1`→`ObjectType8`, `explo2`→`9`, `explo3`→
+  `10`, `explo4`→`11`, `explo5`→`90`, `explo6`→`91`, `explo7`→`92`, `explo8`→`93`), each with its
+  own frame count/self-delete duration, no cross-cutting trigger logic to trace. Already
+  implemented in `GEObjectIcons.cpp`'s `GetObjIcon()` for explo1-4/7 (fixed 2026-07-14); explo5/6/8
+  were the 3 remaining cases still using an approximation formula (`(p/6) % N`) instead of an exact
+  transcription — fixed 2026-07-16 alongside this research (new `kExplo5`/`kExplo6`/`kExplo8`,
+  same "wrong divisor" bug class as every other explo case). 7 new `VerifyInteractionSystem`
+  assertions. This open question is now fully closed, not just partially.
 - `[?]` **Icon 95** — ambiguous, boundary-only reference in mobile-eggbert source, intentionally
   left unresolved by the reference documentation.
 - `[?]` **Icon 440's real meaning despite having no valid `object-m.png` backing content**

@@ -71,6 +71,16 @@ namespace GalaxyEggbert::CNA
             60,-1,63,-1,62,-1,-1,65,-1,-1,
             -1,61,-1,-1,-1,60,-1,-1
         };
+        // Real table_explo5/6/8 (Tables.cpp:1395-1425, found 2026-07-16 -- these 3 were the only
+        // remaining explo tables still using an approximation formula instead of an exact
+        // transcription after the 2026-07-14 pass fixed explo1/2/3/4/7). Same "wrong divisor"
+        // bug as every array above (`(p/6) % N` instead of `p % N`, `Config::ScaleDiv(1)==1`).
+        // table_explo5 has real `-1` "no sprite this tick" entries producing an alternating
+        // visible/invisible strobe (the renderer's existing `-1`-skip support already handles
+        // it); explo6/8 have no blanks, plain ascending ranges.
+        static const int kExplo5[12] = {54,-1,55,-1,56,-1,57,-1,58,-1,59,-1};
+        static const int kExplo6[6]  = {54,55,56,57,58,59};
+        static const int kExplo8[5]  = {7,8,9,10,11};
         // Real table_magictrack (Tables.cpp:1754-1759, Shield/Power magic
         // trail fix, 2026-07-14) -- NOT a simple ascending range: the real
         // 24-frame "loop departs Blupi" animation repeats icons 152-156
@@ -275,15 +285,19 @@ namespace GalaxyEggbert::CNA
             // non-monotonically (see kExplo4 above).
             case ObjectType::ObjectType11:  return kExplo4[p % 9];
             case ObjectType::ObjectType53:  return 86; // 45 frames would exceed the sheet (86+44=130 > 99)
-            case ObjectType::ObjectType90:  return 54 + (p / 6) % 12;
-            case ObjectType::ObjectType91:  return 54 + (p / 6) % 6;
+            // Fixed 2026-07-16 -- exact table_explo5 transcription (see kExplo5 above), same
+            // wrong-divisor bug as every other explo case here.
+            case ObjectType::ObjectType90:  return kExplo5[p % 12];
+            // Fixed 2026-07-16 -- exact table_explo6 transcription (see kExplo6 above).
+            case ObjectType::ObjectType91:  return kExplo6[p % 6];
             // Fixed 2026-07-14 (plan.md VISUAL-010, teleporter arc): the
             // real table_explo7 stays within icons 60-65 (see kExplo7
             // above), well within the sheet -- the previous "would exceed
             // the sheet" assumption was based on a wrong naive-ascending
             // guess, same mistake as ObjectType57's own fix.
             case ObjectType::ObjectType92:  return kExplo7[p % 128];
-            case ObjectType::ObjectType93:  return 7 + (p / 6) % 5;
+            // Fixed 2026-07-16 -- exact table_explo8 transcription (see kExplo8 above).
+            case ObjectType::ObjectType93:  return kExplo8[p % 5];
             // Fixed 2026-07-14 (plan.md VISUAL-009, bullet-splat effect):
             // wrong divisor (6 instead of the real `Config::ScaleDiv(1)==1`)
             // -- real `table_sploutch1` is a plain ascending range (90..99),

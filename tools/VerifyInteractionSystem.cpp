@@ -2723,6 +2723,17 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType92, 1) == 61, "ObjectType92 icon at phase=1 is the real table_explo7[1]=61");
         check(GetObjIcon(ObjectType::ObjectType92, 2) == -1, "ObjectType92 icon at phase=2 is the real table_explo7[2]=-1 (a mid-sequence blank)");
         check(GetObjIcon(ObjectType::ObjectType92, 127) == -1, "ObjectType92 icon at phase=127 is the real table_explo7[127]=-1 (last frame before self-delete)");
+
+        // GetObjIcon()'s corrected formula (found 2026-07-16 -- table_explo5/6/8 were the only
+        // remaining explo tables still using an approximation formula (`(p/6) % N`) instead of an
+        // exact transcription, after the 2026-07-14 pass fixed explo1/2/3/4/7).
+        check(GetObjIcon(ObjectType::ObjectType90, 0) == 54, "ObjectType90 icon at phase=0 is the real table_explo5[0]=54");
+        check(GetObjIcon(ObjectType::ObjectType90, 1) == -1, "ObjectType90 icon at phase=1 is the real table_explo5[1]=-1 (the strobe's blank tick)");
+        check(GetObjIcon(ObjectType::ObjectType90, 2) == 55, "ObjectType90 icon at phase=2 is the real table_explo5[2]=55");
+        check(GetObjIcon(ObjectType::ObjectType91, 0) == 54, "ObjectType91 icon at phase=0 is the real table_explo6[0]=54");
+        check(GetObjIcon(ObjectType::ObjectType91, 5) == 59, "ObjectType91 icon at phase=5 is the real table_explo6[5]=59 (no blanks, plain ascending)");
+        check(GetObjIcon(ObjectType::ObjectType93, 0) == 7, "ObjectType93 icon at phase=0 is the real table_explo8[0]=7");
+        check(GetObjIcon(ObjectType::ObjectType93, 4) == 11, "ObjectType93 icon at phase=4 is the real table_explo8[4]=11 (no blanks, plain ascending)");
     }
 
     // 17.11. Voyage (plan.md `158`) mechanics in isolation -- the real
