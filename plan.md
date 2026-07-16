@@ -647,8 +647,9 @@ of truth; do not invent stomp/hit feel not documented there.
       direct, non-approximated transcription of the real `ScaleTime(abs(speed*dist/64))` formula,
       not an invented pacing constant. Body contact is deliberately NOT lethal (not in
       `IsGenericHazard()`) — only the fired projectile is, always fatal on contact (real
-      shield/hide/superblupi immunity gates NOT modeled, same simplification as every other hazard
-      — none of those concepts exist in this engine yet). New `GEWorldRuntime::GetWorldMutable()`
+      shield/hide immunity gates **fixed 2026-07-12 as part of `170`** — this note was written
+      before that landed and was never updated; superBlupi immunity remains NOT modeled, no such
+      concept exists). New `GEWorldRuntime::GetWorldMutable()`
       accessor added for test tooling (hand-carving a guaranteed-shape ledge-over-a-pit/walled
       corridor rather than depending on incidental terrain shape elsewhere). A real, playable
       blupih ("turret perch", 3x3 ledge with a notch over a 3-cell drop) and blupit ("sentry
@@ -739,15 +740,18 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       `BlockTypes::isHazard()` (a Simple3D-only uniform "any hazard kills" shortcut) — Spike/
       Crusher/Saw/Blitz each have real gating/timing conditions that helper ignores, so each stays
       its own dedicated task (`141`-`144`), not folded into one generic hazard check.
-- [~] `141` **Spikes (373) done 2026-07-11**, same shape as `140` (`GetGroundBlockType() ==
-      Spike` → `triggerDeath()`, real channel 51 not channel 8 — the Glu-death sound). Real
-      vehicle+focus-gated immunity NOT modeled — neither vehicles nor a focus concept exist in
-      CNA yet (Phase 17); currently unconditional, same simplification as lava, revisit once
-      vehicles exist. Real narrow central x-band restriction within the tile also NOT modeled —
-      no sub-tile position exists in the current single-point 3D collision. Verified via a
-      synthetic-world test in `VerifyBlupiMovement`. **Drip (404/410) NOT done** — blocked on the
-      `ThinMechanical` render-geometry decision (`E3D-MIG-510`, still `[?]`), since those icons
-      aren't a placeable/renderable `BlockTypes` constant yet.
+- [x] `141` **Spikes (373) done 2026-07-11**, same shape as `140` (`GetGroundBlockType() ==
+      Spike` → `triggerDeath()`, real channel 51 not channel 8 — the Glu-death sound). Real narrow
+      central x-band restriction within the tile is NOT modeled — no sub-tile position exists in
+      the current single-point 3D collision. Verified via a synthetic-world test in
+      `VerifyBlupiMovement`.
+      **Corrected 2026-07-16**: this entry was stale on 2 counts. (1) **Vehicle immunity fixed**
+      2026-07-16 as part of that session's broader vehicle-gate audit — Overcraft/Jeep/Tank now
+      correctly grant immunity (`GEBlupiController::HasVehicleHazardImmunity()`); focus still isn't
+      modeled (no such concept exists). (2) **Drip (404) was already done 2026-07-14** (see
+      `TILE-032`) — this entry's own "Drip NOT done, blocked on ThinMechanical" claim predates that
+      and was never updated; Drip is a real, placeable `BlockTypes` constant and shares the same
+      vehicle-immunity fix as Spike.
 - [x] `142` **Saw (378/379) + switches done 2026-07-11** — verified directly against
       `Decor.cpp:7131-7148` (not just the reference doc). New `GEWorldRuntime::TryActivateSwitch()`:
       call on an edge-detected action-button press while grounded; a no-op unless standing on a
@@ -1075,9 +1079,11 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         (`BlockTypes::isFan()`); on a match, immediately clears it to `Air` (real
         `ModifDecor(pos, -1)` on the head tile) and returns the icon. Fan head icons are ALWAYS
         non-solid for collision (`GEBlupiController::GroundHeightAt`'s own new `isFan()` skip,
-        same architecture as the teleporter pillar). Real sub-tile-band gating and
-        focus/shield/hide/SuperBlupi immunity are NOT modeled (no sub-tile position or those buff
-        concepts exist yet) -- contact anywhere in the cell is unconditionally lethal, same
+        same architecture as the teleporter pillar). Real sub-tile-band gating is NOT modeled (no
+        sub-tile position exists). Shield/Hide immunity IS modeled (`!blupi_.IsInvincible()` at the
+        call site, `GalaxyEggbertCnaGame.cpp` -- this note previously claimed it wasn't, stale since
+        `170` landed); focus/SuperBlupi still aren't (no such concepts exist) -- contact anywhere in
+        the cell is unconditionally lethal otherwise, same
         simplification as every other hazard this session. Real channel 10 plays via the existing
         `triggerDeath()` lambda; the real particle/screen-shake effects are NOT modeled (no
         particle system exists).
