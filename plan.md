@@ -317,7 +317,21 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       geometry decisions, just for game feel instead of visuals. Left open, not attempted this
       session.
 - [ ] `066` Turning-duration-per-mode table (Normal/Air 6 ticks, Overcraft/Jeep 7, Helicopter/
-      Swim/Surf/Suspended 10, Tank 12, Skateboard 14).
+      Swim/Surf/Suspended 10, Tank 12, Skateboard 14). **Investigated 2026-07-16, NOT a simple
+      constant port**: directly checked `Decor.cpp` — real `BlupiAction::Turn`/`TurnHelico`/
+      `TurnJeep`/`TurnTank`/`TurnSkate`/`TurnNage`/`TurnSurf`/`TurnSuspend` is a DISCRETE 2D
+      facing-flip mechanic (Blupi only ever faces `Direction::Left`/`Right`; reversing plays a
+      fixed-duration "Turn" animation state, mode-dependent tick count, before the flip completes
+      and movement resumes) — NOT a continuous angular turn-RATE modifier. This engine's
+      `kTurnSpeed`/tank-control continuous free-yaw (`m_yaw += turnInput*kTurnSpeed*dt`) is
+      already a natural 3D adaptation of that (per `CLAUDE.md`'s allowed adaptations), fully
+      unlike the real discrete 2-state mechanic — there's no obvious 1:1 mapping from "N ticks to
+      flip facing" onto "continuous yaw degrees/sec", so this isn't a safe solo numeric rescale
+      the way `kSkateboardJumpSpeed` was (`065`'s fix above): naively multiplying `kTurnSpeed` by
+      `6/N` per vehicle mode would be inventing a mechanic-mapping, not porting real data. Left
+      open; would need either accepting an invented mapping (against the faithful-remake rule) or
+      a design discussion on whether/how to model per-mode turn delay at all in a continuous-yaw
+      engine.
 - [~] `067` Death/respawn: **fall-off-world case done** (2026-07-11, real Clear2 case — no
       per-tile-type work needed, checked before hazard tiles per the real source too) —
       `GalaxyEggbertCnaGame::Update()` triggers `LoseLife()` + channel 8 sound + fixed-point
@@ -363,10 +377,25 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       correctly stopped updating once he walked into a wall and stayed still (dedup working).
       Added 6 new `VerifyBlupiMovement` assertions (default-before-any-safe-frame, no-op while
       airborne, no-op when the caller reports unsafe, and the FIFO's lag/buffer behavior across
-      13 distinct positions exceeding the 10-slot capacity). Still missing: the full
-      hazard→action table (Lava→Clear3, Saw→Clear4, Blitz→Clear1, Fan→Clear1/Clear2 coinflip,
-      Trap/Drip→Glu, each depends on its own hazard from Phase 14), fixed per-action animation
-      durations, fall->1000px = instant fatal bypassing lives. **Fall-death TIMING is also now
+      13 distinct positions exceeding the 10-slot capacity). **Corrected 2026-07-16: the "still
+      missing" list below is stale** — the full hazard→action table (Lava→Clear3, Saw→Clear4,
+      Blitz→Clear1, Fan→Clear1/Clear2 coinflip, Spike/Drip→Glu) and fixed per-action animation
+      durations were both completed by Phase 14/the death-lock system (`GalaxyEggbertCnaGame.cpp`'s
+      per-hazard `triggerDeath()` calls + `GEBlupiController::TriggerDeathLock()`'s
+      `kDeathLockTicks[]`, confirmed directly in source) — this note just predates that work and
+      was never updated after. **Still genuinely open**: fall→1000px-past-the-death-boundary =
+      instant game over bypassing remaining lives (`Decor.cpp:6406-6410`, unconditional
+      `m_term=-1; DoorsLost()`, distinct from the normal per-life Clear2 fall-death at the row-99
+      boundary a bit above it) — investigated 2026-07-16, NOT implemented: this engine's fall
+      death (`kFallDeathY=-27`) always goes through the normal `LoseLife()`/respawn path with no
+      second, deeper "instant total game over" threshold at all. Left unimplemented rather than
+      guessed at: real `TriggerDeathLock()`-equivalent state fully freezes Blupi (no further
+      Y movement) once a fall-death fires, same as this engine already does — meaning in the REAL
+      game this deeper threshold is very likely unreachable through ordinary continued falling
+      too (a defensive catch-all, not a normally-triggerable mechanic), so confidence in exactly
+      how/whether to port it is low; needs further source research (specifically: what could
+      leave `m_blupiRestart` false or `m_blupiValidPos` itself already past this threshold) before
+      attempting, not a straightforward table-fill. **Fall-death TIMING is also now
       fixed (2026-07-11, same feedback batch)**: the old `kFallDeathY=-5.0f` gave a sub-1-second
       death, which the user correctly recalled as unfaithful (real mobile-eggbert gives a real,
       noticeable multi-second fall). Root-caused by directly inspecting a real level
