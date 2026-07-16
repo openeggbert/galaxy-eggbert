@@ -1629,11 +1629,31 @@ namespace GalaxyEggbert::CNA
             const bool actionPressedEdge = actionPressed && !actionKeyWasDown_;
             if (actionPressedEdge)
             {
-                if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
-                        blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
+                // Real switch-activation gate (found 2026-07-16, Decor.cpp:5529-5531) also
+                // excludes Overcraft/Jeep/Tank/Skateboard and Balloon -- NOT Helicopter, which
+                // real source allows (a hovering Helicopter can still reach down and press a
+                // switch, unlike the other 4 ground-committed/no-hands vehicle states). Same
+                // "predates vehicle modeling" gap already found/fixed this session elsewhere
+                // (pickups/TriggerTeleport/ground-jump/hazard immunity) -- TryActivateSwitch()
+                // itself has no GEBlupiController access, so this is gated here in the caller
+                // instead, matching that established decoupling. Scoped to JUST this call, NOT
+                // the whole actionPressedEdge block below -- Dynamite/Perso/vehicle mount-dismount
+                // share the same action-button press but have their own independent real gates
+                // (in particular, dismounting a vehicle must still work while riding one).
+                const bool canActivateSwitch =
+                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Overcraft &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Jeep &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Tank &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Skateboard &&
+                    !blupi_.IsBallooned();
+                if (canActivateSwitch)
                 {
-                    sound_.Play(*turnedOn ? GalaxyEggbert::SoundChannel::SoundChannel77
-                                          : GalaxyEggbert::SoundChannel::SoundChannel76);
+                    if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
+                            blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
+                    {
+                        sound_.Play(*turnedOn ? GalaxyEggbert::SoundChannel::SoundChannel77
+                                              : GalaxyEggbert::SoundChannel::SoundChannel76);
+                    }
                 }
 
                 // Dynamite placement (plan.md E3D-MIG-155) -- same action

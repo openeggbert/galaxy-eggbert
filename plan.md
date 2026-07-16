@@ -755,6 +755,19 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       saw starts safe (`SawStopped`) until the switch is pressed. Verified via 9 new
       `VerifyInteractionSystem` assertions against that real placement (no-op off-switch, no-op
       airborne, on-toggle, off-toggle, and the linked saw's state each time).
+      **Vehicle-immunity gate fixed 2026-07-16** (the "vehicle-immunity... not modeled" note just
+      above was correct when written but is now stale): verified directly against
+      `Decor.cpp:5529-5531` — real switch activation excludes Overcraft/Jeep/Tank/Skateboard and
+      Balloon (NOT Helicopter, which real source allows — a hovering Helicopter can still reach
+      down and press a switch, unlike the other 4). Gated in the caller
+      (`GalaxyEggbertCnaGame.cpp`, right before the `TryActivateSwitch()` call only — NOT the whole
+      shared action-button block, since Dynamite/Perso/vehicle mount-dismount share the same press
+      with their own independent real gates, and dismounting must still work while riding).
+      `TryActivateSwitch()` itself is unchanged (still has no `GEBlupiController` access, matching
+      the established decoupling). Not unit-testable at this layer (no test harness for
+      `GalaxyEggbertCnaGame` itself); verified via full regression suite (only the pre-existing
+      unrelated `easy-gl-resource-smoke-tests` failure) + a live headless launch/exit smoke check,
+      both backends.
       **Render mode fixed (2026-07-11, same day, live user re-check)**: Saw/SawStopped
       (378/379) were rendering as plain `UniformCube`s (falling through every special-geometry
       table) — user reported "nema to byt na krychly" (shouldn't be on a cube). Added both icons
