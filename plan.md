@@ -852,9 +852,20 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       `kSpringBounceNotHeld`) preserve the REAL PROPORTION between the spring's magnitudes and the
       real baseline ground-jump velocity (`IsNormalJump`'s held+noPower=-16) applied on top of
       this engine's own already-tuned `kJumpSpeed` — the same technique
-      `GalaxyEggbertSimple3D`'s own stomp bounce already used (`kJumpSpeed * 0.65f`). Real vehicle-
-      dismount-first branches (Helico/Over/Jeep/Tank/Skate) are NOT modeled (no vehicle concept
-      exists yet, same simplification as every hazard so far). Also ported: the real generic
+      `GalaxyEggbertSimple3D`'s own stomp bounce already used (`kJumpSpeed * 0.65f`).
+      **Vehicle-dismount-first branches fixed 2026-07-16** (this entry's own title already
+      described the real behavior, written 2026-07-11 before vehicles existed -- the body above
+      was accurate about the gap, just stale relative to the title): touching a spring while
+      riding ANY vehicle now forcibly ejects Blupi first (small shake + channel 10, depositing the
+      vehicle pickup back into the world), unless Shield/Hide is active (matching
+      `Decor.cpp:2837-2893`'s real per-vehicle `!m_blupiShield && !m_blupiHide` guard) -- the
+      bounce itself still applies on the same contact (real source doesn't treat these as mutually
+      exclusive). New shared `GalaxyEggbertCnaGame::DismountAndDepositVehicle()` helper (factored
+      out of the existing voluntary action-button dismount, which had the same logic inline).
+      Verified via full regression suite (both backends, only the pre-existing unrelated
+      `easy-gl-resource-smoke-tests` failure) + live headless launch smoke check -- not unit-
+      tested directly (no test harness at the `GalaxyEggbertCnaGame` layer, same as every other
+      fix at this layer this session). Also ported: the real generic
       landing-thud suppression when landing specifically on a spring (`Decor.cpp` ~2984,
       `if (!IsRessort(end))`), since the bounce sound (real channel 41) already covers it. Already
       playable — icon 211 is part of the tile exhibition's full 1..440 icon range, no dedicated

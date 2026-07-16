@@ -516,6 +516,45 @@ namespace GalaxyEggbert::CNA
                                  interaction_.VoyagePendingIsButtonChannel(), startX, startY, endX, endY, sound_);
     }
 
+    void GalaxyEggbertCnaGame::DismountAndDepositVehicle()
+    {
+        if (!blupi_.IsInVehicle())
+        {
+            return;
+        }
+        GalaxyEggbert::ObjectType depositType;
+        switch (blupi_.GetVehicleMode())
+        {
+            case GEBlupiController::VehicleMode::Helicopter: depositType = GalaxyEggbert::ObjectType::ObjectType13; break;
+            case GEBlupiController::VehicleMode::Jeep:        depositType = GalaxyEggbert::ObjectType::ObjectType19; break;
+            case GEBlupiController::VehicleMode::Tank:        depositType = GalaxyEggbert::ObjectType::ObjectType28; break;
+            case GEBlupiController::VehicleMode::Skateboard:  depositType = GalaxyEggbert::ObjectType::ObjectType24; break;
+            default:                                          depositType = GalaxyEggbert::ObjectType::ObjectType46; break;
+        }
+        blupi_.TriggerDismount();
+        auto& objects = worldRuntime_.GetMobileObjectsMutable();
+        MobileObjSpec deposited;
+        deposited.type = depositType;
+        deposited.active = true;
+        deposited.posStartX = deposited.posEndX = deposited.currentX = blupi_.GetX();
+        deposited.posStartY = deposited.posEndY = deposited.currentY = blupi_.GetY();
+        deposited.posStartZ = deposited.posEndZ = deposited.currentZ = blupi_.GetZ();
+        bool placed = false;
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = deposited;
+                placed = true;
+                break;
+            }
+        }
+        if (!placed)
+        {
+            objects.push_back(deposited);
+        }
+    }
+
     void GalaxyEggbertCnaGame::ResolveDeathLock()
     {
         // Starts a NEW lock for the 4 real trigger sites living inside
@@ -1458,10 +1497,24 @@ namespace GalaxyEggbert::CNA
             // life. TriggerSpringBounce() is idempotent (a no-op while
             // already airborne, matching the real `!m_blupiAir` guard), so
             // only play the real bounce sound (channel 41) on an actual new
-            // trigger. Real vehicle-dismount-first branches (Helico/Over/
-            // Jeep/Tank/Skate) are NOT modeled -- no vehicle concept exists
-            // in this engine yet, same simplification as every hazard
-            // above.
+            // trigger. Real vehicle-dismount-first gate fixed 2026-07-16
+            // (Decor.cpp:2837-2893): touching a spring while riding ANY
+            // vehicle (Shield/Hide protect against this, matching every
+            // other real forced-dismount-style gate) forcibly ejects
+            // Blupi first (small shake + channel 10, depositing the
+            // vehicle pickup back into the world via the same
+            // `DismountAndDepositVehicle()` helper the voluntary
+            // action-button dismount uses) -- the bounce itself still
+            // applies on the same contact, real source does not treat
+            // these as mutually exclusive.
+            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
+                blupi_.IsInVehicle() && blupi_.GetSecretPower() != GEBlupiController::SecretPower::Shield &&
+                blupi_.GetSecretPower() != GEBlupiController::SecretPower::Hide)
+            {
+                DismountAndDepositVehicle();
+                cameraShake_.Trigger(CameraShakeType::Small);
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+            }
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
                 blupi_.TriggerSpringBounce(jumpPressed))
             {
@@ -1716,37 +1769,7 @@ namespace GalaxyEggbert::CNA
                 // (`Decor::IsFloatingObject`) is NOT modeled.
                 if (blupi_.IsInVehicle())
                 {
-                    GalaxyEggbert::ObjectType depositType;
-                    switch (blupi_.GetVehicleMode())
-                    {
-                        case GEBlupiController::VehicleMode::Helicopter: depositType = GalaxyEggbert::ObjectType::ObjectType13; break;
-                        case GEBlupiController::VehicleMode::Jeep:        depositType = GalaxyEggbert::ObjectType::ObjectType19; break;
-                        case GEBlupiController::VehicleMode::Tank:        depositType = GalaxyEggbert::ObjectType::ObjectType28; break;
-                        case GEBlupiController::VehicleMode::Skateboard:  depositType = GalaxyEggbert::ObjectType::ObjectType24; break;
-                        default:                                          depositType = GalaxyEggbert::ObjectType::ObjectType46; break;
-                    }
-                    blupi_.TriggerDismount();
-                    auto& objects = worldRuntime_.GetMobileObjectsMutable();
-                    MobileObjSpec deposited;
-                    deposited.type = depositType;
-                    deposited.active = true;
-                    deposited.posStartX = deposited.posEndX = deposited.currentX = blupi_.GetX();
-                    deposited.posStartY = deposited.posEndY = deposited.currentY = blupi_.GetY();
-                    deposited.posStartZ = deposited.posEndZ = deposited.currentZ = blupi_.GetZ();
-                    bool placed = false;
-                    for (auto& slot : objects)
-                    {
-                        if (!slot.active)
-                        {
-                            slot = deposited;
-                            placed = true;
-                            break;
-                        }
-                    }
-                    if (!placed)
-                    {
-                        objects.push_back(deposited);
-                    }
+                    DismountAndDepositVehicle();
                 }
                 else
                 {

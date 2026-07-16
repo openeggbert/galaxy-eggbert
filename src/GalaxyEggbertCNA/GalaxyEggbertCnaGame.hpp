@@ -313,6 +313,14 @@ namespace GalaxyEggbert::CNA
         // `ResolvePendingVoyage()` above.
         void ResolveDeathLock();
 
+        // Forces Blupi off whatever vehicle he's currently riding and deposits the matching real
+        // pickup back into the world at his position (real "deposits vehicle pickup back into
+        // the world" behavior) -- shared by the voluntary action-button dismount and the real
+        // spring-forces-a-dismount case (`Decor.cpp:2837-2893`, found 2026-07-16). A no-op if not
+        // currently in a vehicle. Does NOT play any sound itself -- callers differ on which real
+        // sound applies (or none).
+        void DismountAndDepositVehicle();
+
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
         // a no-op unless `interaction_.PowerGrantedThisFrame()`/
         // `CloudGrantedThisFrame()`/`HideGrantedThisFrame()` fires this
