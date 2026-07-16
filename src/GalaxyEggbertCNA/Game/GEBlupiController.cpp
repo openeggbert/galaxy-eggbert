@@ -745,12 +745,21 @@ namespace GalaxyEggbert::CNA
         }
         else
         {
+            // Real gate (Decor.cpp:4615-4620, found 2026-07-16): Shield/Hide grant immunity to the
+            // gauge depleting AT ALL while submerged (`!m_blupiShield && !m_blupiHide` around the
+            // decrement itself) -- this engine previously decremented unconditionally, a
+            // previously-documented "not modeled" gap, now closed.
             const bool wasAboveZero = m_waterGaugeLevel > 0;
+            const bool shieldOrHideImmune =
+                m_secretPower == SecretPower::Shield || m_secretPower == SecretPower::Hide;
             m_waterGaugeTimer += dt;
             while (m_waterGaugeTimer >= kWaterGaugeTickSeconds && m_waterGaugeLevel > 0)
             {
                 m_waterGaugeTimer -= kWaterGaugeTickSeconds;
-                --m_waterGaugeLevel;
+                if (!shieldOrHideImmune)
+                {
+                    --m_waterGaugeLevel;
+                }
             }
             m_justDrowned = wasAboveZero && m_waterGaugeLevel <= 0;
         }

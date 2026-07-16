@@ -1034,7 +1034,13 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       (`kSwimUpSpeed`, also an approximation) instead of the normal ground jump. **Not modeled**
       (documented simplifications, same pattern as every other Phase 14 mechanic): the real
       "Jump near the surface launches you clear of the water" fine-grained sub-tile-depth nuance
-      (-16/-12, Power-gated); Shield/Hide/SuperBlupi drowning immunity.
+      (-16/-12, Power-gated); SuperBlupi drowning immunity (no such concept exists).
+      **Shield/Hide drowning immunity fixed 2026-07-16**: verified directly against
+      `Decor.cpp:4615-4620` — the water gauge only decrements at all while NOT Shield/Hide
+      (`!m_blupiShield && !m_blupiHide` wraps the decrement itself, not a separate immunity check
+      after the fact). This engine's gauge previously decremented unconditionally. New
+      `VerifyBlupiMovement` assertion (gauge stays at `kWaterGaugeMax` after 15s submerged with
+      Shield active, well past the point an unprotected Blupi would have lost over half of it).
       **Vehicle exclusion fixed 2026-07-16** (this entry previously mis-described it as "vehicle
       forced-dismount-on-entry" — verified directly against `Decor.cpp:5284-5285`: it's not a
       dismount at all, water simply never registers as Surf/Nage while riding ANY vehicle or

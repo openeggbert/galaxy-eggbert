@@ -996,6 +996,21 @@ int main(int argc, char** argv)
         check(drownedOnce, "JustDrowned() fires after prolonged Nage submersion (the real ~25s breath gauge)");
         check(drowning.GetWaterGaugeLevel() == 0, "the gauge is exactly 0 at the moment JustDrowned() fires");
 
+        // Real Shield/Hide immunity (Decor.cpp:4615-4620, found 2026-07-16): the gauge does not
+        // deplete AT ALL while either is active. 15s comfortably exceeds half the real ~25s
+        // breath gauge (so an unprotected Blupi would have lost well over half by this point) while
+        // staying safely inside Shield's own ~25s real duration (avoiding the coincidental overlap
+        // where Shield expiring mid-test would let the gauge resume depleting).
+        GEBlupiController shieldedSwimmer;
+        shieldedSwimmer.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
+        shieldedSwimmer.TriggerShield();
+        for (int i = 0; i < 300; ++i) // 300 * 0.05s = 15s
+        {
+            stepWithWaterDetection(shieldedSwimmer, synthetic, kDrownDt);
+        }
+        check(!shieldedSwimmer.JustDrowned() && shieldedSwimmer.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
+              "the water gauge never depletes while Shield is active (real !m_blupiShield gate)");
+
         // Resurfacing resets the gauge -- a few seconds of genuine Nage
         // (not to exhaustion), then Surf, confirms the gauge snaps back to
         // full instead of resuming from where it left off (matches the
