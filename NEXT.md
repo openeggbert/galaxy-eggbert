@@ -1,6 +1,6 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-16._
+_Last updated: 2026-07-16 (autonomous session, see §7.5 for standing directives)._
 
 ## 1. Project summary
 
@@ -50,7 +50,7 @@ appears to be under active, independent development and the failure was transien
 it is not caused by anything in this repository; check `../sharp-runtime`'s own git log first.
 
 ### Test status
-Last full run (2026-07-14, both backends):
+Last full run (2026-07-16, both backends, re-verified after this session's 5 vehicle-gate fixes):
 - `build-cna`: **78 tests, 99% pass** — the only failure is `easy-gl-resource-smoke-tests`, a
   **pre-existing, unrelated** failure in the `easy-gl` dependency, not caused by this repository's
   own code. It has been the same single failure across many verification passes this session.
@@ -68,15 +68,26 @@ Last full run (2026-07-14, both backends):
 - `GalaxyEggbertSimple3D`, `VerifyBigDecorParsing`, `VerifyMoveObjectTypes` — Simple3D-only targets,
   not built per the direction lock.
 
-### Recently implemented (this session, 2026-07-13/14 — see §3 for detail)
-- Real deferred "Voyage" pickup-reward timing (treasure/keys/egg/dynamite/Perso/bullet pack/door
-  unlock).
-- Clear2/Clear3/Clear4 death VFX (soul-ascend HUD animations, Saw's particle burst).
-- A full death-lock + life-loss-Voyage system: every real hazard death now locks Blupi for a real
-  fixed duration, plays the real life-loss Voyage, then respawns him — replacing the previous
-  instant death/respawn. Verified live in the running game (screenshots), not just in unit tests.
-- Sucette(26)/Drink(30)/Charge(31) real 2-stage pickup delay (grab → freeze → complete), including
-  the real action-button gate for Sucette/Drink.
+### Recently implemented (this session, 2026-07-16 — see §3 for detail)
+A systemic class of bug found and fixed 5 times this session: real vehicle-mode (Helicopter/
+Overcraft/Jeep/Tank/Skateboard) exclusion/immunity clauses that predate Phase 17's vehicle
+implementation and were never retrofitted once vehicles actually shipped. Each verified directly
+against `Decor.cpp`, not guessed:
+- Sucette(26)/Drink(30)/Charge(31) pickups now correctly exclude every vehicle mode + Balloon/
+  Ecrase (Shield/Invert confirmed to have NO such clause, unlike what an earlier note claimed).
+- `TriggerTeleport()` now also excludes vehicle mode (previously only checked Balloon/Ecrase).
+- Ground jump now excludes Jeep/Tank/Helicopter/Overcraft/Balloon entirely; Skateboard gets its
+  own real distinct jump velocity instead of the ordinary headroom-modulated one.
+- Spike/Drip/Saw hazards now grant real immunity while riding Overcraft/Jeep/Tank specifically
+  (not Helicopter/Skateboard; Lava/Blitz/Crusher deliberately have no such clause).
+- Switch activation now excludes Overcraft/Jeep/Tank/Skateboard/Balloon (Helicopter IS exempt here
+  — real source allows it, unlike every other gate above).
+- Dynamite/Perso placement now excludes every vehicle mode + Balloon/Ecrase (Perso's separate
+  pickup-an-already-placed-decoy path deliberately does NOT get this gate — real source has none
+  there either).
+
+(Prior session, 2026-07-13/14): real deferred "Voyage" pickup-reward timing, Clear2/3/4 death VFX,
+the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup delay.
 
 ### Known working demo
 `worlds3d/world001.vwr`, loaded automatically by `GalaxyEggbertCNA` on startup. Playable with
@@ -99,13 +110,32 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
-- (uncommitted at time of writing) **docs: root-cause the `easy-gl-resource-smoke-tests` failure.**
-  No galaxy-eggbert code changes — confirmed the single failing assertion is entirely a bug in
-  `../easy-gl` (a separate,
-  independently-developed sibling repo): its test asserts `glActiveTexture(GL_TEXTURE0)` was called
-  during `Texture::set_image_2d()`/`bind()`, but neither function actually calls it (only the
-  separate `active_bind()` does) — see §5 for the full writeup. Closes the previous §8 item 1;
-  fixing it is left to `../easy-gl` itself, out of this repo's scope.
+- `f575064` **fix: real vehicle-mode gate for Dynamite/Perso placement.** Verified directly
+  against `Decor.cpp:4792-4794`: placement (Dynamite AND Perso, same `if`/`else if` gate) excludes
+  EVERY vehicle mode (Helicopter NOT exempt here, unlike switches) + Balloon/Ecrase. New
+  `blupiCanUseHands` parameter on `PlaceDynamite()`/`TryPerso()` — deliberately does NOT gate
+  `TryPerso()`'s separate pickup-an-already-placed-decoy branch (real source has no vehicle clause
+  there).
+- `59db4ad` **fix: real Over/Jeep/Tank/Skateboard/Balloon gate for switch activation.** Verified
+  against `Decor.cpp:5529-5531` — Helicopter IS exempt here (unlike every other vehicle gate this
+  session), a hovering Helicopter can still reach down and press a switch. Caught and fixed a
+  drafting mistake before committing: an earlier version wrongly gated the WHOLE shared
+  action-button block, which would have broken vehicle dismounting.
+- `2247c38` **fix: real Over/Jeep/Tank hazard immunity for Spike/Drip/Saw.** Verified against
+  `Decor.cpp:5497-5528` — these 3 hazards specifically exempt Overcraft/Jeep/Tank (not Helicopter/
+  Skateboard); Lava/Blitz/Crusher deliberately have no vehicle clause at all. New
+  `GEBlupiController::HasVehicleHazardImmunity()`.
+- `5b105c0` **fix: real vehicle-mode gate + Skateboard velocity for ground jump.** Verified
+  against `Decor.cpp:2913-2947` — Jeep/Tank/Helicopter/Overcraft/Balloon can't ground-jump at all;
+  Skateboard gets its own real distinct velocity (-17 Power/-13 noPower) instead of the
+  headroom-modulated ordinary values. New `kSkateboardJumpSpeed`/`kSkateboardJumpSpeedPowered`.
+- `4c85517`/`8dcc986` **docs only**: corrected 2 stale `plan.md` notes (`066`'s turning-duration
+  table turned out to be a discrete 2D facing-flip mechanic, not a portable continuous turn-rate
+  table; `067`'s "still missing hazard table" was already done by the death-lock system), and
+  root-caused `easy-gl-resource-smoke-tests` as entirely an `../easy-gl`-side bug (its test expects
+  `glActiveTexture(GL_TEXTURE0)` from `Texture::set_image_2d()`/`bind()`, but neither calls it) —
+  confirmed pre-existing/unrelated (that repo's last commit predates this session by 11 days), not
+  fixed here since it's a separate independently-developed repo.
 - `1d99487` **fix: real vehicle-mode/Balloon/Ecrase pickup+teleport gates.**
   Verified directly against `Decor.cpp:6025-6087` and `:5593-5594`: Sucette(26)/Drink(30)/
   Charge(31) pickups and the teleporter both really exclude every vehicle mount plus Balloon/
@@ -294,6 +324,31 @@ cd build-cna && ./GenerateSampleWorld3D
 ```
 
 No lint/format tooling is configured in this repository at present.
+
+## 7.5. Standing directives for the current autonomous session (2026-07-16)
+
+The user authorized an extended unattended session and pre-answered the questions that would
+otherwise block it. These answers stand for the remainder of THIS session (re-confirm with the
+user before treating them as permanent beyond it):
+
+- **Skip every task that needs visual judgment on a render/screenshot entirely** — Saw blade
+  orientation, `ThinMechanical` geometry (`510`), water surface treatment (`512`),
+  architectural-kit assembly (`514`), enemy billboard walk-cycle angle (`179`), `AscenseurVertigo`
+  (`153`/`PICKUP-024`). Do not touch their rendering code or take "best guesses" at geometry —
+  leave them exactly as flagged until the user can look at a screenshot themselves.
+- **`GESaveData` stays an independent format, not byte-compatible with real mobile-eggbert saves**
+  (closes `E3D-MIG-106`/the open question in §3 of the main doc) — don't expand `SAVE-*` scope
+  toward byte-layout matching.
+- **No 3D world editor work this session** (`EDITOR-000..010`) — a dedicated future effort, not
+  part of this one.
+- **Blupi-model prep IS authorized, format-agnostic only**: e.g. animation-state timing/signal
+  plumbing, third-person placeholder improvements, asset-loading scaffolding that would work
+  regardless of the eventual real model's exact format/rig. Do NOT commit to a specific model
+  format or file layout without the user's input.
+- Similarly discovered *this session*: rescaling `kGravity`/`kJumpSpeed`'s own absolute magnitude
+  to real tick-domain values (part of `065`) needs the user's live-feel judgment, same as the
+  visual-judgment items above (see `065`'s own plan.md entry for why) — left open, not a green
+  light to guess.
 
 ## 8. Next smallest tasks
 
