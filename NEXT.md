@@ -69,7 +69,7 @@ Last full run (2026-07-16, both backends, re-verified after this session's 5 veh
   not built per the direction lock.
 
 ### Recently implemented (this session, 2026-07-16 — see §3 for detail)
-A systemic class of bug found and fixed 5 times this session: real vehicle-mode (Helicopter/
+A systemic class of bug found and fixed **7 times** this session: real vehicle-mode (Helicopter/
 Overcraft/Jeep/Tank/Skateboard) exclusion/immunity clauses that predate Phase 17's vehicle
 implementation and were never retrofitted once vehicles actually shipped. Each verified directly
 against `Decor.cpp`, not guessed:
@@ -85,6 +85,16 @@ against `Decor.cpp`, not guessed:
 - Dynamite/Perso placement now excludes every vehicle mode + Balloon/Ecrase (Perso's separate
   pickup-an-already-placed-decoy path deliberately does NOT get this gate — real source has none
   there either).
+- `TriggerMount()` (mounting a NEW vehicle) now also excludes Balloon/Ecrase (its own header
+  comment wrongly claimed this was already handled elsewhere).
+- Crate push now excludes every vehicle mode + Balloon/Ecrase.
+
+**Audit scope note**: also checked platform-lift boarding/riding (`Decor.cpp:3013-3018`) and egg/
+door-key pickups directly — confirmed these genuinely have NO vehicle-mode clause in real source,
+so no fix was needed there. Not exhaustively re-verified against all ~56 vehicle-exclusion-pattern
+occurrences in `Decor.cpp` (only the ones reachable from already-implemented mechanics), so a
+residual few may still exist if new mechanics get implemented later — re-check any NEW
+mechanic against this same pattern before assuming it's complete.
 
 (Prior session, 2026-07-13/14): real deferred "Voyage" pickup-reward timing, Clear2/3/4 death VFX,
 the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup delay.
@@ -110,6 +120,12 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `9ca723f` **fix: real vehicle-mode gate for crate push.** Verified against `Decor.cpp:6130-6132`
+  — excludes every vehicle mode + Balloon/Ecrase. New `blupiCanPushCrate` parameter on
+  `GEInteractionSystem::Update()`.
+- `34a1ccf` **fix: `TriggerMount()` now excludes Balloon/Ecrase.** Verified against
+  `Decor.cpp:5649/5669/5687` — these were missing from the mount gate entirely; its own header
+  comment wrongly claimed Ecrase was "already handled elsewhere."
 - `f575064` **fix: real vehicle-mode gate for Dynamite/Perso placement.** Verified directly
   against `Decor.cpp:4792-4794`: placement (Dynamite AND Perso, same `if`/`else if` gate) excludes
   EVERY vehicle mode (Helicopter NOT exempt here, unlike switches) + Balloon/Ecrase. New
