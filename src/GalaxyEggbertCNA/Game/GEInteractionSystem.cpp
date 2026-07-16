@@ -554,7 +554,8 @@ namespace GalaxyEggbert::CNA
                                       bool blupiCanGrantShield, bool blupiCanGrantPower,
                                       bool blupiCanGrantCloud, bool blupiCanGrantHide,
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
-                                      bool blupiCanGrantInvert, bool blupiActionPressedEdge)
+                                      bool blupiCanGrantInvert, bool blupiActionPressedEdge,
+                                      bool blupiCanPushCrate)
     {
         diedThisFrame_ = false;
         balloonTouchedThisFrame_ = false;
@@ -881,8 +882,12 @@ namespace GalaxyEggbert::CNA
             // whose own comment cites the real function name). X-axis only,
             // matching that reference exactly (mobile-eggbert is a 2D side-
             // scroller; X is its only horizontal movement axis, so a
-            // Z-axis push was never a real mechanic to begin with).
-            if (IsCrate(obj.type))
+            // Z-axis push was never a real mechanic to begin with). Real
+            // gate also excludes every vehicle mode + Balloon/Ecrase
+            // (Decor.cpp:6130-6132, found 2026-07-16) -- blupiCanPushCrate
+            // (vehicle+Ecrase) and blupiBallooned (already an existing
+            // parameter) together cover it.
+            if (IsCrate(obj.type) && blupiCanPushCrate && !blupiBallooned)
             {
                 const float relX = obj.currentX - blupiX;
                 const float relZ = obj.currentZ - blupiZ;

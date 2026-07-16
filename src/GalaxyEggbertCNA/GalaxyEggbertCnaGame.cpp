@@ -1860,11 +1860,16 @@ namespace GalaxyEggbert::CNA
             const float interactionBlupiX = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetX();
             const float interactionBlupiY = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetY();
             const float interactionBlupiZ = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetZ();
+            // Crate-push gate (found 2026-07-16, Decor.cpp:6130-6132): real source also excludes
+            // every vehicle mode + Ecrase (Balloon is covered separately by the existing
+            // blupi_.IsBallooned() argument just below).
+            const bool canPushCrate = !blupi_.IsInVehicle() && !blupi_.IsEcrased();
             interaction_.Update(dt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
-                                 firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge);
+                                 firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge,
+                                 canPushCrate);
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
             // recorded a this-frame voyage request (GEInteractionSystem has

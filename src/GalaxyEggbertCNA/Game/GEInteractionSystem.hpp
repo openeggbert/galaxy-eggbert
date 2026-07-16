@@ -237,7 +237,14 @@ namespace GalaxyEggbert::CNA
                     // automatic on contact. Edge-detected (true only the frame the button is FIRST
                     // pressed, same idiom as this engine's own switch-activation check), passed in
                     // since this class has no input-device access of its own.
-                    bool blupiActionPressedEdge = false);
+                    bool blupiActionPressedEdge = false,
+                    // Real crate-push gate (found 2026-07-16, Decor.cpp:6130-6132) ALSO excludes
+                    // every vehicle mode + Ecrase (blupiBallooned above already covers Balloon) --
+                    // this class has no GEBlupiController access, so the caller pre-computes
+                    // !IsInVehicle() && !IsEcrased() and passes it in, same convention as
+                    // blupiCanGrantShield/Power/etc. Default true so every existing call site
+                    // (synthetic tests included) keeps pushing crates unless it opts in.
+                    bool blupiCanPushCrate = true);
 
         [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
         // Wasp contact (see the class comment above) -- true every frame

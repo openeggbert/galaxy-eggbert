@@ -1096,6 +1096,12 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       world for live verification, plus 3 new `VerifyInteractionSystem` assertions (seed pushed,
       neighbor moves the same net distance, stacked crate moves too). Full suite (63/63 unit
       tests, all verify tools) re-verified.
+      **Vehicle-mode gate fixed 2026-07-16**: verified directly against `Decor.cpp:6130-6132` —
+      real crate push also excludes every vehicle mode + Balloon/Ecrase. New
+      `blupiCanPushCrate` parameter on `GEInteractionSystem::Update()` (vehicle+Ecrase, computed
+      in `GalaxyEggbertCnaGame.cpp`; Balloon already covered by the existing `blupiBallooned`
+      parameter). New `VerifyInteractionSystem` assertion (crate doesn't move with
+      `blupiCanPushCrate=false`). Full suite green both backends.
 - [ ] `151` Crate "pop" push variant (landing-into-crate, different base speed) and the real
       20-tick speed ramp-up (vs. today's simplified constant-speed push) — NOT started. The pop
       trigger (landing from a fall while moving horizontally into a crate) needs coordination

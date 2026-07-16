@@ -467,6 +467,23 @@ int main(int argc, char** argv)
         std::cout << "Crate X after push attempt: " << (after ? after->currentX : -999.0f)
                   << " (started at " << startX << ")" << std::endl;
         check(after != nullptr && after->currentX > startX, "crate was pushed east (currentX increased)");
+
+        // Real crate-push gate (Decor.cpp:6130-6132, found 2026-07-16) also excludes every
+        // vehicle mode + Ecrase -- blupiCanPushCrate=false (e.g. while riding a vehicle) must
+        // stop the push entirely, even while walking straight into the crate.
+        const float gatedStartX = after->currentX;
+        float gatedBlupiX = gatedStartX - 0.8f;
+        for (int i = 0; i < 30; ++i)
+        {
+            const float moveDX = 0.05f;
+            interaction.Update(dt, world, gatedBlupiX, after->currentY, blupiZ, moveDX, sound, false, false, 0, 0,
+                                false, true, true, true, true, false, false, false, true, false,
+                                /*blupiCanPushCrate=*/false);
+            gatedBlupiX += moveDX;
+        }
+        const auto* stillGated = findFirst(ObjectType::ObjectType12);
+        check(stillGated != nullptr && std::fabs(stillGated->currentX - gatedStartX) < 0.01f,
+              "crate does NOT move when blupiCanPushCrate=false (real vehicle-mode gate)");
     }
     else
     {
