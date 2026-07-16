@@ -142,6 +142,13 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `4fecb1e` **feat: implement `ObjectType201-203` lethal contact (`PICKUP-069`).** A real,
+  previously-undiscovered gameplay gap (not a vehicle/immunity retrofit like the others above) —
+  found via direct `Decor.cpp:6088-6115` read: types 201-203 share `ObjectType200` Perso's real
+  range but damage Blupi on contact (`BlupiDead(Clear1, Clear2)` coinflip, Shield/Hide immune,
+  always channel 10 + SmallShake + an `ObjectType10` pop effect). `plan.md`'s own note that "no
+  contact-damage logic found" was wrong — easy to miss reading only around the Perso branch. New
+  block in `GEInteractionSystem::Update()`, 6 new `VerifyInteractionSystem` assertions.
 - `2284775` **docs only**: fixed 3 more stale Shield/Hide-immunity notes (fired projectiles,
   Spikes, Fan) that claimed immunity "isn't modeled" — all 3 were already fixed when `170` (secret
   powers) landed 2026-07-12, just never updated afterward. Also corrected `141`'s stale "Drip NOT
