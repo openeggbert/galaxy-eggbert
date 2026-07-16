@@ -292,11 +292,30 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       documented simplification (this debug HUD slot has no "draw nothing" mechanism), not a
       fidelity claim. New `VerifyBlupiMovement.cpp` assertions cover all 3 states' exact icon
       values; full suite + both backends re-verified.
-- [ ] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
+- [~] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
       +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
       Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to
       CNA's real framerate. Current `GEBlupiController` constants are an independent
       engine-appropriate approximation, not yet cross-checked against these real values.
+      **Sub-finding fixed 2026-07-16**: while researching the real Jump-held×Power combo values
+      (`Decor.cpp:2913-2947`), found the real ground-jump trigger is ALSO gated on vehicle mode —
+      excludes Helico/Over/Balloon/Ecrase/Jeep/Tank entirely (Nage/Surf/Suspend don't exist in
+      this engine), and gives Skateboard its OWN distinct velocity (-17 Power/-13 noPower), not
+      the headroom-modulated ordinary-Blupi values. This engine's jump gate had no vehicle-mode
+      check at all (same "predates vehicle modeling" gap already found/fixed this session for
+      Sucette/Drink/Charge pickups and `TriggerTeleport()`) — Jeep/Tank could incorrectly launch a
+      normal jump; Skateboard used the wrong magnitude. Fixed via a `VehicleMode` check in the
+      jump gate + new `kSkateboardJumpSpeed`/`kSkateboardJumpSpeedPowered` constants (same
+      proportional-anchoring technique as `kJumpSpeedPowered`/`Reduced`). New
+      `VerifyBlupiMovement` assertions (Jeep/Tank jump-press no-ops, Skateboard's distinct
+      velocity). **The larger task (rescaling `kGravity`/`kJumpSpeed`'s own absolute magnitude to
+      real tick-domain values) is deliberately NOT done** — those constants have been repeatedly,
+      deliberately game-feel-tuned against live user playtesting (e.g. `kFallDeathY`'s two
+      documented feel-driven revisions above) rather than literal real-value transcriptions;
+      changing their absolute magnitude needs the user's own live-feel judgment, not a solo
+      numeric rescale — same category of "needs the user physically present" as the render-
+      geometry decisions, just for game feel instead of visuals. Left open, not attempted this
+      session.
 - [ ] `066` Turning-duration-per-mode table (Normal/Air 6 ticks, Overcraft/Jeep 7, Helicopter/
       Swim/Surf/Suspended 10, Tank 12, Skateboard 14).
 - [~] `067` Death/respawn: **fall-off-world case done** (2026-07-11, real Clear2 case — no

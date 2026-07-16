@@ -50,6 +50,20 @@ namespace GalaxyEggbert::CNA
         static constexpr float kJumpSpeedReduced = kJumpSpeed * (12.0f / 16.0f);
         static constexpr float kJumpSpeedReducedPowered = kJumpSpeed * (16.0f / 16.0f);
 
+        // Real ground-jump gate (Decor.cpp:2913-2947, found 2026-07-16 while
+        // researching E3D-MIG-065) also excludes Helico/Over/Balloon/Ecrase/
+        // Jeep/Tank/Nage/Surf/Suspend entirely -- only Skateboard is allowed
+        // through, with its OWN distinct velocity (-17 Power/-13 noPower),
+        // not the headroom-modulated values above. This engine's jump gate
+        // previously had no vehicle-mode check at all (the same "predates
+        // vehicle modeling" gap already found/fixed this session for
+        // Sucette/Drink/Charge/TriggerTeleport) -- Jeep/Tank could
+        // incorrectly launch a normal Blupi jump; Skateboard used the wrong
+        // (headroom-based) magnitude instead of its own. Same proportional-
+        // anchoring technique as kJumpSpeedPowered/Reduced above.
+        static constexpr float kSkateboardJumpSpeed = kJumpSpeed * (13.0f / 16.0f);
+        static constexpr float kSkateboardJumpSpeedPowered = kJumpSpeed * (17.0f / 16.0f);
+
         static constexpr float kGravity   = 25.0f;
         static constexpr float kFallLimit = -10.0f;
         static constexpr float kStepLimit = 1.0f;
@@ -261,10 +275,13 @@ namespace GalaxyEggbert::CNA
         static constexpr float kHelicopterDecel = kVehicleAccel * 2.0f; // real decel 2.0/tick
 
         // Vertical flight (Helicopter/Overcraft only -- Jeep/Tank/Skateboard
-        // use the existing ground gravity/jump path unchanged, matching the
-        // real source's own "uses the shared ground gravity/Air path" note
-        // for Skateboard, and this session's decision not to model Jeep/
-        // Tank's own real airborne-heavy-fall nuance). Real ascend/descend
+        // use the existing ground gravity path unchanged for FALLING,
+        // matching the real source's own "uses the shared ground gravity/Air
+        // path" note for Skateboard, and this session's decision not to
+        // model Jeep/Tank's own real airborne-heavy-fall nuance -- this is
+        // about gravity/falling only, NOT about whether Jump itself
+        // triggers; see kSkateboardJumpSpeed's own comment above for that
+        // separate, real per-mode jump-trigger gate). Real ascend/descend
         // targets (Helicopter -10/+12 px/tick, Overcraft -5/+12) are scaled
         // by the same technique as the horizontal speeds above, anchored to
         // each vehicle's own already-scaled horizontal max speed.

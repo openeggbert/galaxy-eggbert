@@ -1421,6 +1421,46 @@ int main(int argc, char** argv)
               "the low-ceiling jump is measurably weaker than the open-sky jump");
     }
 
+    // Vehicle-mode ground-jump gate (real Decor.cpp:2913-2947, found 2026-07-16 while
+    // researching E3D-MIG-065) -- Jeep/Tank must NOT respond to Jump via the normal ground-jump
+    // path at all (previously this engine had no vehicle-mode check here whatsoever), and
+    // Skateboard must use its OWN distinct real velocity (-13/-17), not the headroom-modulated
+    // ordinary-Blupi values.
+    {
+        const float kOneFrameGravity = GEBlupiController::kGravity * dt;
+
+        GEBlupiController jeepJumper;
+        jeepJumper.SetPosition(0.0f, 1.0f, 0.0f);
+        for (int i = 0; i < 5; ++i) jeepJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        jeepJumper.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+        const float velocityYBeforeJeepJump = jeepJumper.GetVelocityY();
+        jeepJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(jeepJumper.GetVelocityY() < velocityYBeforeJeepJump + 0.01f,
+              "pressing Jump while mounted in a Jeep does not launch a normal ground jump (real "
+              "!m_blupiJeep gate) -- velocityY only reflects gravity, not a jump impulse");
+
+        GEBlupiController tankJumper;
+        tankJumper.SetPosition(0.0f, 1.0f, 0.0f);
+        for (int i = 0; i < 5; ++i) tankJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        tankJumper.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+        const float velocityYBeforeTankJump = tankJumper.GetVelocityY();
+        tankJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(tankJumper.GetVelocityY() < velocityYBeforeTankJump + 0.01f,
+              "pressing Jump while mounted in a Tank does not launch a normal ground jump (real "
+              "!m_blupiTank gate)");
+
+        GEBlupiController skateJumper;
+        skateJumper.SetPosition(0.0f, 1.0f, 0.0f);
+        for (int i = 0; i < 5; ++i) skateJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        skateJumper.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+        skateJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        std::cout << "Skateboard jump velocityY=" << skateJumper.GetVelocityY() << std::endl;
+        check(std::fabs(skateJumper.GetVelocityY() -
+                         (GEBlupiController::kSkateboardJumpSpeed - kOneFrameGravity)) < 0.01f,
+              "Skateboard jump uses its own real distinct velocity (-13 equivalent), not the "
+              "headroom-modulated ordinary-Blupi values");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

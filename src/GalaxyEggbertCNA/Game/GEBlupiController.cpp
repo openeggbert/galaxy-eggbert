@@ -945,14 +945,22 @@ namespace GalaxyEggbert::CNA
             m_velocityY = kSwimUpSpeed;
             m_onGround = false;
         }
-        else if (m_onGround && jumpPressed && !m_ecrase)
+        else if (m_onGround && jumpPressed && !m_ecrase && !m_balloon &&
+                 (m_vehicleMode == VehicleMode::None || m_vehicleMode == VehicleMode::Skateboard))
         {
-            // Real Decor::IsNormalJump() headroom modulation (plan.md
-            // TILE-041, see kJumpSpeedPowered's own comment) -- a clipped
-            // ceiling within 2 tiles overhead reduces jump strength instead
-            // of letting Blupi clip through it.
+            // Real Decor.cpp:2913-2947 ground-jump gate: excludes every
+            // other vehicle mode (Helico/Over/Jeep/Tank, already excluded
+            // above by the VehicleMode check; Nage/Surf/Suspend don't exist
+            // in this engine) -- only Skateboard gets its OWN distinct
+            // velocity (kSkateboardJumpSpeed/Powered), not the headroom-
+            // modulated Decor::IsNormalJump() values below, which apply to
+            // ordinary (no-vehicle) Blupi only.
             const bool powered = m_secretPower == SecretPower::Power;
-            if (HasJumpHeadroom(world))
+            if (m_vehicleMode == VehicleMode::Skateboard)
+            {
+                m_velocityY = powered ? kSkateboardJumpSpeedPowered : kSkateboardJumpSpeed;
+            }
+            else if (HasJumpHeadroom(world))
             {
                 m_velocityY = powered ? kJumpSpeedPowered : kJumpSpeed;
             }
