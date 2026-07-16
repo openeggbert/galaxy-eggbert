@@ -1448,9 +1448,23 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       has no access to `GEBlupiController::VehicleMode`) — same action button as switches/
       dynamite. NOT modeled: Balloon vehicle (no confirmed trigger), tilt easing (Jeep/Tank, no
       visible 3D model to tilt anyway), Overcraft's real altitude-cap/inverted-accel-over-gaps
-      nuance (simplified to the same ramp as every other mode), the real Helicopter floating-
-      object auto-mount-without-a-button exception, and per-vehicle hazard immunity (e.g. real
-      Over/Jeep/Tank protect against spikes — already a documented gap from Phase 14). **Found and
+      nuance (simplified to the same ramp as every other mode), and the real Helicopter floating-
+      object auto-mount-without-a-button exception.
+      **Per-vehicle hazard immunity fixed 2026-07-16** (was the one item above still listed as a
+      documented gap): verified directly against `Decor.cpp:5497-5528` — Over/Jeep/Tank grant
+      immunity to Spike/Drip/Saw specifically (`!m_blupiOver && !m_blupiJeep && !m_blupiTank`,
+      identical clause across all 3), but NOT Helicopter or Skateboard, and NOT Lava/Blitz/Crusher
+      (those 3 check only Shield/Hide/SuperBlupi, confirmed no vehicle clause at all — a real,
+      deliberate asymmetry, not an oversight). New `GEBlupiController::HasVehicleHazardImmunity()`
+      wired into `GalaxyEggbertCnaGame.cpp`'s Spike/Drip/Saw death checks (Lava/Blitz/Crusher
+      deliberately untouched). The real safe-position-FIFO gate (`Decor.cpp:6467-6478`) does NOT
+      check vehicle state at all even for these 3 tiles (confirmed directly) — left as-is, already
+      correct. New `VerifyBlupiMovement` assertions covering all 5 vehicle modes' immunity status;
+      the `GalaxyEggbertCnaGame.cpp` wiring itself isn't unit-testable (no test harness at that
+      layer) — verified via full regression suite (only the pre-existing unrelated
+      `easy-gl-resource-smoke-tests` failure) + a live headless launch/exit smoke check on both
+      backends, not a dedicated hazard+vehicle live scenario (lower cost/value than the accessor's
+      own direct unit coverage justified for this single boolean-gate change). **Found and
       fixed a real, pre-existing collision bug while live-testing this** (not vehicle-specific):
       `GEBlupiController::TryMoveAxis()` silently froze ALL horizontal movement once `m_y` fell
       far enough negative during a sustained fall through a floorless column (below roughly -2) —

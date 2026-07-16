@@ -1115,6 +1115,31 @@ int main(int argc, char** argv)
             check(!jeep.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false),
                   "TriggerMount() fails while already riding another vehicle (real: blocked while riding ANY vehicle)");
 
+            // Real per-vehicle hazard immunity (Decor.cpp:5504-5528, found 2026-07-16): Over/Jeep/
+            // Tank protect against Spike/Drip/Saw; Helicopter/Skateboard do NOT.
+            check(jeep.HasVehicleHazardImmunity(),
+                  "HasVehicleHazardImmunity() is true while riding a Jeep");
+            GEBlupiController tankRider;
+            tankRider.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+            check(tankRider.HasVehicleHazardImmunity(),
+                  "HasVehicleHazardImmunity() is true while riding a Tank");
+            GEBlupiController overRider;
+            overRider.TriggerMount(GEBlupiController::VehicleMode::Overcraft, false, false);
+            check(overRider.HasVehicleHazardImmunity(),
+                  "HasVehicleHazardImmunity() is true while riding an Overcraft");
+            GEBlupiController heliRider;
+            heliRider.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            check(!heliRider.HasVehicleHazardImmunity(),
+                  "HasVehicleHazardImmunity() is FALSE while riding a Helicopter (real: not one of the "
+                  "3 immune modes)");
+            GEBlupiController skateRider;
+            skateRider.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            check(!skateRider.HasVehicleHazardImmunity(),
+                  "HasVehicleHazardImmunity() is FALSE while riding a Skateboard");
+            GEBlupiController noVehicle;
+            check(!noVehicle.HasVehicleHazardImmunity(),
+                  "HasVehicleHazardImmunity() is false with no vehicle mounted");
+
             GEBlupiController nageRider;
             check(!nageRider.TriggerMount(GEBlupiController::VehicleMode::Jeep, /*inNage=*/true, false),
                   "TriggerMount() fails while Nage (real: blocked while swimming/surfing)");

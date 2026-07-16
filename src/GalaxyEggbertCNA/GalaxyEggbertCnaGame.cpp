@@ -1343,16 +1343,18 @@ namespace GalaxyEggbert::CNA
             // Glu-death sound, distinct from lava/fall's channel 8, per
             // 07-sounds.md). Real behavior (12-hazards-and-interactables.md)
             // gates this on vehicle immunity (Over/Jeep/Tank protect,
-            // unlike lava) and requires m_blupiFocus -- neither vehicles
-            // nor a focus concept exist in GalaxyEggbertCNA yet (Phase 17),
-            // so this is currently unconditional, same simplification as
-            // lava; revisit once vehicles exist. The real check also
+            // unlike lava) and requires m_blupiFocus -- focus doesn't exist
+            // in GalaxyEggbertCNA yet, same simplification as every hazard
+            // here, but vehicle immunity now DOES exist (`HasVehicleHazard
+            // Immunity()`, fixed 2026-07-16 -- this comment previously said
+            // "neither vehicles nor a focus concept exist... yet", stale
+            // since vehicles were implemented `171`). The real check also
             // restricts to a narrow central x-band within the tile
             // (`pos.X%64` roughly 15-49, touching the tile's edges doesn't
             // count) -- not modeled, since GEBlupiController's single-point
             // 3D collision has no sub-tile position within a cell to test
             // against; the whole tile is lethal here.
-            if (!blupi_.IsInvincible() &&
+            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
             {
                 // Real BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510).
@@ -1365,9 +1367,9 @@ namespace GalaxyEggbert::CNA
             // "drip"/glue-sounding name, real behavior is a deterministic
             // kill, mechanically identical to Spike above: same
             // BlupiAction::Glu death, same gate shape, same real channel 51
-            // sound (Decor.cpp:5513-5519). Same vehicle/focus simplification
-            // as every other hazard here (neither concept exists yet).
-            if (!blupi_.IsInvincible() &&
+            // sound (Decor.cpp:5513-5519), same real Over/Jeep/Tank vehicle
+            // immunity (fixed 2026-07-16, same as Spike above).
+            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
             {
                 // Real BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
@@ -1420,15 +1422,19 @@ namespace GalaxyEggbert::CNA
 
             // Saw hazard (plan.md E3D-MIG-142) -- real channel 75 (the
             // "cut apart" death cue, distinct from every other hazard's
-            // sound so far), deterministic, no immunity simplification
-            // beyond what every hazard here already lacks (vehicles/focus
-            // don't exist yet). Only the active icon (`Saw`, 378) is
-            // lethal -- the stopped variant (`SawStopped`, 379) is a
-            // separate BlockTypes value, so GetGroundBlockType()'s exact
-            // match already excludes it with no extra check needed. A saw
-            // starts active or stopped per however the world was authored;
-            // TryActivateSwitch() below is what flips it between the two.
-            if (!blupi_.IsInvincible() &&
+            // sound so far), deterministic, real Over/Jeep/Tank vehicle
+            // immunity (`HasVehicleHazardImmunity()`, fixed 2026-07-16,
+            // identical to Spike/Drip above -- this comment previously said
+            // "no immunity simplification beyond what every hazard here
+            // already lacks (vehicles... don't exist yet)", stale since
+            // vehicles were implemented `171`). Only the active icon
+            // (`Saw`, 378) is lethal -- the stopped variant (`SawStopped`,
+            // 379) is a separate BlockTypes value, so GetGroundBlockType()'s
+            // exact match already excludes it with no extra check needed. A
+            // saw starts active or stopped per however the world was
+            // authored; TryActivateSwitch() below is what flips it between
+            // the two.
+            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
             {
                 const float deathX = blupi_.GetX();

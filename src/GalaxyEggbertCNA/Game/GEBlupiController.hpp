@@ -582,6 +582,18 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] VehicleMode GetVehicleMode() const noexcept { return m_vehicleMode; }
         [[nodiscard]] bool IsInVehicle() const noexcept { return m_vehicleMode != VehicleMode::None; }
 
+        // Real per-vehicle hazard immunity (found 2026-07-16, `Decor.cpp:5504-5528`): Overcraft/
+        // Jeep/Tank protect against Spike/Drip/Saw specifically (`!m_blupiOver && !m_blupiJeep &&
+        // !m_blupiTank`, identical across all 3) -- NOT Helicopter or Skateboard, which get no
+        // such immunity in real source. Lava/Blitz/Crusher deliberately do NOT check this (real
+        // source only gates those on Shield/Hide/SuperBlupi, confirmed directly, no vehicle
+        // clause at all) -- do not apply this blanket-style to every hazard.
+        [[nodiscard]] bool HasVehicleHazardImmunity() const noexcept
+        {
+            return m_vehicleMode == VehicleMode::Overcraft || m_vehicleMode == VehicleMode::Jeep ||
+                   m_vehicleMode == VehicleMode::Tank;
+        }
+
         // Launches Blupi upward off a spring tile (real gate: grounded and
         // not already airborne -- swimming/surfing/suspended don't exist in
         // this engine, so only `m_onGround` remains relevant). A no-op
