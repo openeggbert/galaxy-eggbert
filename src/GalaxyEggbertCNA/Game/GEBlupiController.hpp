@@ -882,6 +882,9 @@ namespace GalaxyEggbert::CNA
         float m_deathLossVoyageTimer = 0.0f;
         bool m_deathLockShouldRespawn = false;
         bool m_deathLockResolvedPending = false; // consumed once via ConsumeDeathLockResolved()
+        // Remembered so GetAnimIcon()'s DeathLocked case can select the real per-cause hurt-sprite
+        // frame array (added 2026-07-16, same table_blupi transcription as kClear1Frames etc.).
+        DeathCause m_deathCause = DeathCause::Clear1;
 
         bool m_pickupFrozen = false;
         float m_pickupFreezeTimer = 0.0f;

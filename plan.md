@@ -1340,9 +1340,11 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   moved from every death-trigger call site to this one deferred resolution point. Game-over
   (`lives_<=1`) is predicted BEFORE starting the Voyage (matching real `else { DoorsLost() }`,
   no Voyage at all in that case). `GEBlupiController::AnimState::DeathLocked` covers both frozen
-  sub-states with a static Stop-pose icon (the real per-cause hurt-sprite frame table,
-  `Tables::table_blupi`, was not transcribed — a documented simplification; the FREEZE/TIMING
-  behavior is faithful, the exact hurt-face artwork is not). Render-side: third-person model
+  sub-states. **Real per-cause hurt-sprite frames transcribed 2026-07-16** (Blupi-model
+  format-agnostic prep): `Tables::table_blupi` parsed directly via a small script (validated by
+  reproducing the already-approved `kTeleportingFrames` byte-for-byte first) for all 6
+  `DeathCause` values — new `kClear1/2/3/4Frames`/`kGluFrames`/`kDrownFrames`, dispatched via a new
+  stored `m_deathCause` member. Render-side: third-person model
   draw gets one added `!IsDeathHidden()` clause (first-person already renders no Blupi model).
 - Found and fixed a real pre-existing bug while wiring this: the Fan hazard's own
   `SpawnFanHitFlash()`/ascend-Voyage call previously read Blupi's position via `blupi_.GetX/Y/Z()`

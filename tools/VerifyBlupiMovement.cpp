@@ -627,6 +627,20 @@ int main(int argc, char** argv)
                   "Blupi is fully frozen (no movement or turning) while death-locked");
             check(deathLocked.GetAnimState() == GEBlupiController::AnimState::DeathLocked,
                   "the death lock is the DeathLocked anim state");
+            // Real Clear2 has only a single, real "invisible" frame (table_blupi's own -1
+            // sentinel) -- matches IsDeathHidden() never applying to Clear2 itself (no visible
+            // Blupi to animate). GetAnimIcon() substitutes icon 0, same convention as Teleporting.
+            check(deathLocked.GetAnimIcon() == 0,
+                  "Clear2's DeathLocked anim icon substitutes icon 0 for its real invisible-only frame");
+
+            // Real per-cause hurt-sprite frames (plan.md `067`, added 2026-07-16) -- Clear1 has a
+            // real distinct first frame (icon 40), unlike Clear2's invisible-only case above.
+            GEBlupiController clear1Locked;
+            clear1Locked.SetPosition(0.0f, 1.0f, 0.0f);
+            clear1Locked.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
+            clear1Locked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(clear1Locked.GetAnimIcon() == 40,
+                  "Clear1's DeathLocked anim icon starts at the real first frame (icon 40)");
 
             // Real Clear2 lock duration = 100 ticks = 5.0s (Decor.cpp:6374-6392) --
             // advance to just under it (still locked), matching
@@ -734,6 +748,9 @@ int main(int argc, char** argv)
                   "Blupi is fully frozen (no movement or turning) while pickup-busy");
             check(pickupFrozen.GetAnimState() == GEBlupiController::AnimState::PickupBusy,
                   "the pickup delay is the PickupBusy anim state");
+            // Real per-kind pickup-freeze busy-animation frames (plan.md `173`, added 2026-07-16).
+            check(pickupFrozen.GetAnimIcon() == 234,
+                  "Sucette's PickupBusy anim icon starts at the real first frame (icon 234)");
 
             // Real Sucette duration = 32 ticks = 1.6s -- advance to just under it (still frozen).
             constexpr float kSucetteSeconds = 32.0f / 20.0f;

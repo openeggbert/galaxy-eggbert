@@ -120,6 +120,16 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- (pending commit) **feat: real per-cause DeathLocked/PickupBusy animation frames (Blupi-model
+  prep).** Parsed `Tables::table_blupi` directly via a small script (validated by first
+  reproducing the already-approved `kTeleportingFrames` byte-for-byte before trusting new output)
+  to transcribe the 6 real `DeathCause` hurt-sprite frame arrays (Clear1-4/Glu/Drown) and 3 real
+  `PickupFreezeKind` busy-animation frame arrays (Sucette/Drink/Charge) — replaces the previous
+  static "Stop pose" stand-in. New `GEBlupiController::m_deathCause` (stored so `GetAnimIcon()` can
+  select the right array; `m_pickupFreezeKind` already existed). Format-agnostic icon-index data
+  only — no 3D model exists yet to actually display it, becomes visible once `069` ships. New
+  `VerifyBlupiMovement` assertions (Clear1/Clear2/Sucette exact icon values). Full suite green both
+  backends.
 - `9ca723f` **fix: real vehicle-mode gate for crate push.** Verified against `Decor.cpp:6130-6132`
   — excludes every vehicle mode + Balloon/Ecrase. New `blupiCanPushCrate` parameter on
   `GEInteractionSystem::Update()`.
@@ -227,13 +237,11 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
 - **Fixed 2026-07-16:** Sucette(26)/Drink(30)/Charge(31) pickups and `TriggerTeleport()` now check
   vehicle mode + Balloon/Ecrase (`Decor.cpp:6025-6087`/`:5593-5594`). Shield(25)/Invert(40) confirmed
   to have no such clause in real source (the previous entry here mistakenly listed Shield). See §3.
-- **Known simplification, not a bug:** The real per-cause hurt-sprite animation frame table
-  (`Tables::table_blupi`) has not been transcribed for the death-lock (`AnimState::DeathLocked`) or
-  pickup-freeze (`AnimState::PickupBusy`) states — both render a static "Stop" pose instead. The
-  freeze *timing* is faithful; the animation artwork is not.
-  (`src/GalaxyEggbertCNA/Game/GEBlupiController.cpp`/`.hpp`).
-  Only the state transition was confirmed live; a screenshot of the flying icon itself was not
-  isolated.
+- **Fixed 2026-07-16** (Blupi-model prep, format-agnostic — see §7.5): the real per-cause
+  hurt-sprite animation frame table (`Tables::table_blupi`) is now transcribed for both the
+  death-lock (`AnimState::DeathLocked`, 6 causes) and pickup-freeze (`AnimState::PickupBusy`, 3
+  kinds) states, replacing the static "Stop" pose stand-in — see §3. This is icon-index data only
+  (no 3D model exists to actually display it yet); it becomes visible once `069` ships.
 - **Needs verification:** `easy-gl-resource-smoke-tests`'s single failing assertion
   (`test_texture_upload_sets_unpack_alignment_wrap_and_unit0_binding`,
   `../easy-gl/tests/smoke/SmokeResourceTests.cpp:336`) — **root-caused 2026-07-16, confirmed

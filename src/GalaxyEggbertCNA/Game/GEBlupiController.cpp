@@ -58,6 +58,62 @@ namespace GalaxyEggbert::CNA
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
+        // blupi.png icon indices for the 6 real DeathCause hurt-sprite states
+        // (Clear1/2/3/4/Glu/Drown, plan.md `067`/`158`) and the 3 real
+        // PickupFreezeKind states (Sucette/Drink/Charge, plan.md `173`) --
+        // parsed directly out of ../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/
+        // Tables.cpp's own table_blupi (a small script mirroring
+        // Decor.cpp:2393-2400's own [actionID, frameCount, threshold,
+        // frame0..frameN-1] record layout, not by hand), added 2026-07-16
+        // under the user's standing blanket approval (2026-07-14) for small
+        // real data-table transcriptions -- validated by cross-checking the
+        // same script against BlupiAction::Teleporte(74) first, which
+        // reproduced kTeleportingFrames above byte-for-byte. -1 is the real
+        // "invisible frame" sentinel (same convention as kTeleportingFrames);
+        // GetAnimIcon() substitutes icon 0 for it, same simplification.
+        constexpr int kClear1Frames[] = {
+            40, 40, 40, 40, 41, 41, 41, 41, 40, 40, 40, 40, 40, 40, 40, 41,
+            41, 41, 40, 40, 40, 40, 40, 40, 40, 41, 41, 41, 40, 40, 42, 42,
+            42, 43, 43, 43, 44, 44, 44, 45, 45, 45, 46, 46, 47, 47, 46, 46,
+            47, 47, 46, 46, 47, 47, 46, 46, 47, 47, 46, 46, 47, 47, 46, 46,
+            47, 47, 46, 46, 47, 47};
+        constexpr int kClear2Frames[] = {-1};
+        constexpr int kClear3Frames[] = {
+            40, 40, 40, 40, 41, 41, 41, 41, 40, 40, 40, 40, 40, 40, 40, 41,
+            41, 41, 40, 40, 40, 40, 40, 40, 40, 41, 41, 41, 40, 40, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1};
+        constexpr int kClear4Frames[] = {
+            324, 325, 324, 325, 324, 325, 324, 325, 324, 325, 324, 325, 324, 325,
+            324, 325, 324, 325, 324, 325, 324, 324, 325, 325, 326, 326, 327, 327,
+            328, 328, 329, 329, 330, 330, 331, 331, 332, 332, 333, 333, 334, 334,
+            333, 333, 332, 332, 331, 331, 330, 330, 329, 329, 329, 330, 330, 330,
+            331, 331, 331, 332, 332, 332, 333, 333, 333, 334, 334, 334, 333, 333,
+            333, 332, 332, 332, 331, 331, 331, 330, 330, 330, 329, 329, 329, 329,
+            329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329,
+            329, 329, 329, 329, 329, 329, 329, 329, 329, 329};
+        constexpr int kGluFrames[] = {
+            168, 168, 169, 169, 170, 170, 171, 171, 170, 170, 169, 169, 168, 168,
+            169, 169, 169, 168, 168, 169, 169, 170, 170, 169, 168};
+        constexpr int kDrownFrames[] = {
+            93, 96, 98, 94, 95, 93, 95, 98, 93, 94, 96, 96, 94, 94, 98, 98,
+            93, 93, 97, 97, 94, 94, 94, 96, 96, 96, 93, 93, 93, 93, 94, 94,
+            94, 94, 94, 97, 97, 97, 97, 97, 76, 76, 76, 76, 76, 76, 76, 76,
+            76, 76, 79, 79, 76, 76, 76, 76, 79, 79, 76, 76, 76, 76, 76, 76,
+            76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76,
+            76, 76, 76, 76, 76, 76, 76, 76, 76, 76};
+        constexpr int kSucetteFrames[] = {
+            234, 234, 235, 235, 236, 236, 235, 235, 234, 234, 235, 235, 236, 236,
+            235, 235, 234, 234, 235, 235, 236, 236, 235, 235, 234, 234, 235, 235,
+            236, 236, 235, 235};
+        constexpr int kDrinkFrames[] = {253, 253, 254, 254};
+        constexpr int kChargeFrames[] = {
+            1, 3, 270, 268, 1, 3, 270, 268, 1, 3, 270, 268, 1, 3, 270, 268,
+            1, 3, 270, 268, 1, 3, 270, 268, 1, 3, 270, 268, 1, 3, 270, 268,
+            1, 2, 3, 4, 270, 269, 268, 0, 1, 2, 3, 4, 270, 269, 268, 0,
+            1, 1, 2, 2, 3, 3, 4, 4, 270, 270, 269, 269, 268, 268, 0, 0};
+
         // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
         // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
         // phase-gated) -- see GroundHeightAt's own comment for why.
@@ -421,6 +477,7 @@ namespace GalaxyEggbert::CNA
         m_deathLocked = true;
         m_deathLockTimer = kDeathLockTicks[static_cast<std::size_t>(cause)] / 20.0f;
         m_deathLockShouldRespawn = shouldRespawn;
+        m_deathCause = cause;
         m_velocityY = 0.0f;
         return true;
     }
@@ -1190,13 +1247,49 @@ namespace GalaxyEggbert::CNA
                 return icon >= 0 ? icon : kStopFrames[0]; // -1 = real invisible frame, see kTeleportingFrames' own comment
             }
             case AnimState::DeathLocked:
-                // Real per-cause hurt-sprite frame table (`Tables::table_blupi`) not transcribed
-                // (see the AnimState enum's own comment) -- a static Stop pose stands in.
-                return kStopFrames[0];
+            {
+                // Real per-cause hurt-sprite frame table, added 2026-07-16 (see kClear1Frames'
+                // own comment for the transcription method/approval).
+                int icon;
+                switch (m_deathCause)
+                {
+                    case DeathCause::Clear1:
+                        icon = kClear1Frames[m_animPhase % (sizeof(kClear1Frames) / sizeof(kClear1Frames[0]))];
+                        break;
+                    case DeathCause::Clear2:
+                        icon = kClear2Frames[m_animPhase % (sizeof(kClear2Frames) / sizeof(kClear2Frames[0]))];
+                        break;
+                    case DeathCause::Clear3:
+                        icon = kClear3Frames[m_animPhase % (sizeof(kClear3Frames) / sizeof(kClear3Frames[0]))];
+                        break;
+                    case DeathCause::Clear4:
+                        icon = kClear4Frames[m_animPhase % (sizeof(kClear4Frames) / sizeof(kClear4Frames[0]))];
+                        break;
+                    case DeathCause::Glu:
+                        icon = kGluFrames[m_animPhase % (sizeof(kGluFrames) / sizeof(kGluFrames[0]))];
+                        break;
+                    case DeathCause::Drown:
+                    default:
+                        icon = kDrownFrames[m_animPhase % (sizeof(kDrownFrames) / sizeof(kDrownFrames[0]))];
+                        break;
+                }
+                return icon >= 0 ? icon : kStopFrames[0]; // -1 = real invisible frame (Clear2/Clear3's tail)
+            }
             case AnimState::PickupBusy:
-                // Real Sucette/Drink/Charge busy-animation frames not transcribed (same reason as
-                // DeathLocked above) -- a static Stop pose stands in.
-                return kStopFrames[0];
+            {
+                // Real per-kind pickup-freeze busy-animation frames, added 2026-07-16 (same
+                // transcription as DeathLocked above).
+                switch (m_pickupFreezeKind)
+                {
+                    case PickupFreezeKind::Sucette:
+                        return kSucetteFrames[m_animPhase % (sizeof(kSucetteFrames) / sizeof(kSucetteFrames[0]))];
+                    case PickupFreezeKind::Drink:
+                        return kDrinkFrames[m_animPhase % (sizeof(kDrinkFrames) / sizeof(kDrinkFrames[0]))];
+                    case PickupFreezeKind::Charge:
+                    default:
+                        return kChargeFrames[m_animPhase % (sizeof(kChargeFrames) / sizeof(kChargeFrames[0]))];
+                }
+            }
             case AnimState::Stop:
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];
