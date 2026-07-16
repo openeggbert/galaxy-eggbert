@@ -99,7 +99,14 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
-- (uncommitted at time of writing) **fix: real vehicle-mode/Balloon/Ecrase pickup+teleport gates.**
+- (uncommitted at time of writing) **docs: root-cause the `easy-gl-resource-smoke-tests` failure.**
+  No galaxy-eggbert code changes — confirmed the single failing assertion is entirely a bug in
+  `../easy-gl` (a separate,
+  independently-developed sibling repo): its test asserts `glActiveTexture(GL_TEXTURE0)` was called
+  during `Texture::set_image_2d()`/`bind()`, but neither function actually calls it (only the
+  separate `active_bind()` does) — see §5 for the full writeup. Closes the previous §8 item 1;
+  fixing it is left to `../easy-gl` itself, out of this repo's scope.
+- `1d99487` **fix: real vehicle-mode/Balloon/Ecrase pickup+teleport gates.**
   Verified directly against `Decor.cpp:6025-6087` and `:5593-5594`: Sucette(26)/Drink(30)/
   Charge(31) pickups and the teleporter both really exclude every vehicle mount plus Balloon/
   Ecrase (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate`) — this engine had none of that for
@@ -183,10 +190,19 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   isolated.
 - **Needs verification:** `easy-gl-resource-smoke-tests`'s single failing assertion
   (`test_texture_upload_sets_unpack_alignment_wrap_and_unit0_binding`,
-  `../easy-gl/tests/smoke/SmokeResourceTests.cpp:336`) — treated as pre-existing/unrelated
-  throughout this session (present before and after every change made), but has not been
-  root-caused. If it ever becomes the *only* thing standing between a clean and a failing suite,
-  investigate it properly rather than continuing to assume it's benign.
+  `../easy-gl/tests/smoke/SmokeResourceTests.cpp:336`) — **root-caused 2026-07-16, confirmed
+  entirely in `../easy-gl`, not galaxy-eggbert.** The test does `texture.set_image_2d(...)` then
+  `texture.bind(Texture2D)` and asserts `g_state.last_active_texture == 0x84C0` (`GL_TEXTURE0`),
+  but neither `Texture::set_image_2d()` nor `Texture::bind()` (`../easy-gl/src/Texture.cpp:52,118`)
+  ever call `glActiveTexture` — only the separate `Texture::active_bind(unit, target)` does (line
+  57). `g_state.last_active_texture` is never written, so it stays at its `reset_state()` default
+  (0), not `0x84C0`, and the `assert()` aborts. Either the test should call `active_bind()`/not
+  assert this, or `set_image_2d()`/`bind()` should call `glActiveTexture(GL_TEXTURE0)` first (both
+  plausible fixes) — that decision belongs to `../easy-gl`'s own maintainers/plan (its last commit,
+  `5a50c69`, predates this session by 11 days, confirming it's genuinely pre-existing, not
+  introduced or affected by anything done here). Not fixed in this session — it's a different git
+  repository under its own independent development (same caveat as `../sharp-runtime`, see §1), out
+  of scope to modify without the user's direction.
 - **Risky assumption to keep in mind:** `GEInteractionSystem` is deliberately decoupled from both
   `GEBlupiController` and any camera/graphics type (see §6). Every new feature that needs either
   has had to route through a same-frame "pending signal" (`*ThisFrame()` flags) consumed by
@@ -281,15 +297,7 @@ No lint/format tooling is configured in this repository at present.
 
 ## 8. Next smallest tasks
 
-1. **Root-cause `easy-gl-resource-smoke-tests`'s failing assertion**, even though it's currently
-   treated as pre-existing/unrelated (see §5). At minimum, confirm it fails identically on a fresh
-   clone with no galaxy-eggbert-side changes, so the "unrelated" assumption is verified rather than
-   inherited.
-   Files: `../easy-gl/tests/smoke/SmokeResourceTests.cpp:336` and whatever
-   `g_state.last_active_texture`/`0x84C0` (`GL_TEXTURE0`) tracking it depends on.
-   Verify: `cd build-cna && ctest -R easy-gl-resource-smoke-tests --output-on-failure`.
-
-2. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
+1. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
    isolate a frame showing the flying icon-48 HUD animation itself (the earlier live check
    confirmed the life-total/position state transition but didn't catch the icon mid-flight at the
    screenshot intervals used).
@@ -298,13 +306,13 @@ No lint/format tooling is configured in this repository at present.
    timed screenshots, fully revert before committing).
    Verify: visual inspection of the captured `.png`, no code changes should survive.
 
-3. **Get the user's visual judgment on the Saw blade (icon 378) orientation**, then fix it.
+2. **Get the user's visual judgment on the Saw blade (icon 378) orientation**, then fix it.
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`, `../easy-3d`'s `CubeMesh.cpp`
    (`AppendPlateMesh`).
    Verify: live headless screenshot at the Saw demo block in `worlds3d/world001.vwr` +
    `VerifyBlupiMovement`.
 
-4. **Get the user's decision on `AscenseurVertigo` render geometry** (icons 311-316, which of the
+3. **Get the user's decision on `AscenseurVertigo` render geometry** (icons 311-316, which of the
    3 existing render approaches to reuse), then implement it.
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`.
    Verify: `cmake --build build-cna --target VerifyTileUvBounds -j2` plus a live screenshot.
