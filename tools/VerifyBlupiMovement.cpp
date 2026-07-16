@@ -1147,6 +1147,19 @@ int main(int argc, char** argv)
             check(!surfRider.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, /*inSurf=*/true),
                   "TriggerMount() fails while Surf too");
 
+            // Real gate also excludes Balloon/Ecrase (Decor.cpp:5649/5669/5687, found 2026-07-16)
+            // -- previously missing from this engine's TriggerMount() entirely.
+            GEBlupiController balloonedMounter;
+            balloonedMounter.TriggerBalloon();
+            check(balloonedMounter.IsBallooned(), "sanity: ballooned before attempting to mount");
+            check(!balloonedMounter.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false),
+                  "TriggerMount() fails while ballooned (real !m_blupiBalloon gate)");
+            GEBlupiController crushedMounter;
+            crushedMounter.TriggerCrush();
+            check(crushedMounter.IsEcrased(), "sanity: squashed before attempting to mount");
+            check(!crushedMounter.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false),
+                  "TriggerMount() fails while squashed (real !m_blupiEcrase gate)");
+
             GEBlupiController cloudMounter;
             cloudMounter.TriggerCloud();
             check(cloudMounter.GetSecretPower() == GEBlupiController::SecretPower::Cloud,

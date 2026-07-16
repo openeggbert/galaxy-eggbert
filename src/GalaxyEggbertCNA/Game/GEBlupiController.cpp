@@ -310,7 +310,11 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerMount(VehicleMode mode, bool inNage, bool inSurf) noexcept
     {
-        if (IsInVehicle() || inNage || inSurf || m_suspended)
+        // Real gate also excludes Balloon/Ecrase (Decor.cpp:5649/5669/5687: !m_blupiBalloon &&
+        // !m_blupiEcrase), found missing here 2026-07-16 -- this method's own header comment
+        // claimed "Ecrase already blocks separately via its own state elsewhere", which was never
+        // actually true (no other check anywhere blocks mounting while squashed/ballooned).
+        if (IsInVehicle() || inNage || inSurf || m_suspended || m_balloon || m_ecrase)
         {
             return false;
         }

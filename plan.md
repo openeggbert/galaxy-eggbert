@@ -1486,8 +1486,15 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       layer) — verified via full regression suite (only the pre-existing unrelated
       `easy-gl-resource-smoke-tests` failure) + a live headless launch/exit smoke check on both
       backends, not a dedicated hazard+vehicle live scenario (lower cost/value than the accessor's
-      own direct unit coverage justified for this single boolean-gate change). **Found and
-      fixed a real, pre-existing collision bug while live-testing this** (not vehicle-specific):
+      own direct unit coverage justified for this single boolean-gate change).
+      **`TriggerMount()`'s own gate fixed 2026-07-16**: verified directly against
+      `Decor.cpp:5649/5669/5687` — real mount gate ALSO excludes Balloon/Ecrase, which were
+      missing from `TriggerMount()` entirely (its own header comment wrongly claimed "Ecrase
+      already blocks separately via its own state elsewhere" — never actually true, no other
+      check anywhere blocked mounting while squashed/ballooned). Now
+      `if (IsInVehicle() || inNage || inSurf || m_suspended || m_balloon || m_ecrase)`. New
+      `VerifyBlupiMovement` assertions (mount fails while ballooned, mount fails while squashed).
+      **Found and fixed a real, pre-existing collision bug while live-testing this** (not vehicle-specific):
       `GEBlupiController::TryMoveAxis()` silently froze ALL horizontal movement once `m_y` fell
       far enough negative during a sustained fall through a floorless column (below roughly -2) —
       the step-up check compared the destination's ground height directly against the falling

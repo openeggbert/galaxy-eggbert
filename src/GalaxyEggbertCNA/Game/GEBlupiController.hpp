@@ -557,10 +557,12 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool IsGhost() const noexcept { return m_ghost; }
 
         // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
-        // comment). Real gate: blocked only while already riding ANY other
-        // vehicle, or while Nage/Surf (real also excludes Suspended/Ecrase,
-        // Ecrase already blocks separately via its own state elsewhere) --
-        // NOT gated on Shield/Power (real note: "none of them check Shield
+        // comment). Real gate: blocked while already riding ANY other
+        // vehicle, Nage/Surf, Suspended, or Balloon/Ecrase (fixed 2026-07-16
+        // -- Balloon/Ecrase were missing from this gate entirely; this
+        // comment previously claimed "Ecrase already blocks separately via
+        // its own state elsewhere", which was never actually true) -- NOT
+        // gated on Shield/Power (real note: "none of them check Shield
         // or Power"). Zeroes horizontal velocity and silently cancels
         // Cloud/Hide if active (matching the real "if Cloud or Hide was
         // active it is silently cancelled" -- Shield/Power are left
