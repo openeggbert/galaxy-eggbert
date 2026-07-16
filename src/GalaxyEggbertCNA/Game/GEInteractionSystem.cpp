@@ -1625,6 +1625,43 @@ namespace GalaxyEggbert::CNA
                 continue;
             }
 
+            // Types 201-203 (plan.md PICKUP-069, found 2026-07-16, real Decor.cpp:6088-6115) --
+            // lethal decorative objects sharing ObjectType200's real "MoveObject 200-203" range,
+            // but NOT Perso itself (200, the placeable decoy, already implemented separately,
+            // handled entirely by TryPerso()/GalaxyEggbertCnaGame.cpp -- not here). Real contact:
+            // same Clear1/Clear2 coinflip death as the generic-hazard list above (real
+            // BlupiDead(Clear1, Clear2)), Shield/Hide immunity (blupiInvincible), no
+            // m_blupiRestart=true anywhere in this real block (shouldRespawn=false, same as the
+            // generic-hazard list) -- but ALWAYS channel 10 + SmallShake + an ObjectType10 pop
+            // effect (no fish/bird BigShake variant here, unlike the generic-hazard list).
+            if (obj.type == ObjectType::ObjectType201 || obj.type == ObjectType::ObjectType202 ||
+                obj.type == ObjectType::ObjectType203)
+            {
+                const float sdx = obj.currentX - blupiX;
+                const float sdy = obj.currentY - blupiY;
+                const float sdz = obj.currentZ - blupiZ;
+                if (!blupiInvincible &&
+                    sdx * sdx + sdy * sdy + sdz * sdz < kHazardContactRadius * kHazardContactRadius)
+                {
+                    obj.active = false;
+                    diedThisFrame_ = true;
+                    const bool isClear2 = RollClear2Coinflip();
+                    deathLockRequestedThisFrame_ = true;
+                    deathLockPendingKind_ = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
+                    deathLockShouldRespawn_ = false;
+                    if (isClear2)
+                    {
+                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                        RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
+                    }
+                    smallShakeTriggeredThisFrame_ = true;
+                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                    AppendExplosionFlash(ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
+                                          pendingSpawns);
+                }
+                continue;
+            }
+
             // Pickup collection -- treasure/egg/level-exit/keys, the only
             // IsPickup() types placed in today's sample world. Sound
             // channels and removal behavior come from `mobile-eggbert-

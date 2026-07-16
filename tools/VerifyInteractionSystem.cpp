@@ -800,6 +800,47 @@ int main(int argc, char** argv)
         check(interaction.BulletCount() == 0, "firing with no ammo left does not underflow BulletCount()");
     }
 
+    // 3.74. Types 201-203 (plan.md PICKUP-069, found 2026-07-16, real Decor.cpp:6088-6115) --
+    // lethal decorative objects sharing ObjectType200's range but NOT Perso (200) itself. Real
+    // contact: Clear1/Clear2 coinflip death (Shield/Hide immune), always channel 10 + SmallShake +
+    // an ObjectType10 pop effect.
+    {
+        GEWorldRuntime lethalDecorWorld;
+        GEInteractionSystem lethalDecorInteraction;
+        MobileObjSpec decor201;
+        decor201.type = ObjectType::ObjectType201;
+        decor201.posStartX = decor201.posEndX = decor201.currentX = 400.0f;
+        decor201.posStartY = decor201.posEndY = decor201.currentY = 1.0f;
+        decor201.posStartZ = decor201.posEndZ = decor201.currentZ = 400.0f;
+        lethalDecorWorld.GetMobileObjectsMutable().push_back(decor201);
+
+        // Shield/Hide immunity (blupiInvincible=true) -- no death, object survives.
+        lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound, false, false, 0, 0,
+                                       /*blupiInvincible=*/true);
+        check(!lethalDecorInteraction.DiedThisFrame(),
+              "touching ObjectType201 with blupiInvincible=true does not kill Blupi (real Shield/Hide gate)");
+        check(lethalDecorWorld.GetMobileObjects().front().active,
+              "ObjectType201 survives contact while Blupi is invincible");
+
+        // Now without invincibility -- lethal, real Clear1/Clear2 coinflip + effects.
+        lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound);
+        check(lethalDecorInteraction.DiedThisFrame(), "touching ObjectType201 kills Blupi (real BlupiDead(Clear1,Clear2))");
+        const bool anyActive201 = std::any_of(lethalDecorWorld.GetMobileObjects().begin(),
+                                               lethalDecorWorld.GetMobileObjects().end(),
+                                               [](const auto& o) { return o.active && o.type == ObjectType::ObjectType201; });
+        check(!anyActive201, "ObjectType201 is destroyed on lethal contact (real ObjectDelete) -- the destroyed "
+                             "slot may be reused by the real ObjectType10 pop effect spawned the same frame");
+        check(lethalDecorInteraction.DeathLockRequestedThisFrame(),
+              "lethal contact requests a death lock");
+        check(lethalDecorInteraction.DeathLockPendingKind() == GEInteractionSystem::PendingDeathKind::Clear1 ||
+                  lethalDecorInteraction.DeathLockPendingKind() == GEInteractionSystem::PendingDeathKind::Clear2,
+              "the death lock's pending kind is the real Clear1/Clear2 coinflip, nothing else");
+        check(!lethalDecorInteraction.DeathLockShouldRespawn(),
+              "shouldRespawn is false (real: no m_blupiRestart=true anywhere in this block)");
+        check(lethalDecorInteraction.SmallShakeTriggeredThisFrame(),
+              "lethal contact always triggers SmallShake (real: no fish/bird BigShake variant here)");
+    }
+
     // 3.75. Perso decoy (plan.md HUD-017) -- real m_blupiPerso starts at 0
     // (Decor.cpp:163/360/426) with no world pickup that grants it (only a
     // level-authored save-data field this engine doesn't model yet, and
