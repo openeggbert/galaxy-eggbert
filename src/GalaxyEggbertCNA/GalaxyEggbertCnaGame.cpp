@@ -1541,8 +1541,9 @@ namespace GalaxyEggbert::CNA
             // applied to spikes' own real sub-tile band. Real gate
             // (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate &&
             // !m_blupiAir && m_blupiFocus`) is checked inside
-            // TriggerTeleport() itself (grounded, not ballooned/squashed --
-            // vehicles/focus aren't modeled). Idempotent, same shape as
+            // TriggerTeleport() itself (grounded, not ballooned/squashed,
+            // and -- fixed 2026-07-16 -- not in any vehicle mode either;
+            // focus alone still isn't modeled). Idempotent, same shape as
             // every other Trigger*() here, so channel 71 only plays on an
             // actual new trigger.
             const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());

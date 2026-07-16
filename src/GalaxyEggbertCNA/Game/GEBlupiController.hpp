@@ -474,19 +474,23 @@ namespace GalaxyEggbert::CNA
 
         // Secret powers (plan.md E3D-MIG-170/172/173/174, see the
         // SecretPower enum's own comment). Each Trigger*() applies the real
-        // exact gate for that pickup (checked directly against Decor.cpp,
-        // real vehicle-mode clauses dropped since no vehicle concept exists
-        // yet) and, if it passes, grants that power (resetting the shared
-        // gauge to kSecretPowerMax, overwriting whatever was active before
-        // -- matches the real source's own asymmetric gates, which don't
-        // uniformly check every other buff). Returns false (no-op) if the
-        // gate fails, so the caller only plays the real grant sound on an
-        // actual new trigger, same idiom as every other Trigger*() here.
-        // The real 2-stage "busy" animation + delay before Power(Sucette)/
-        // Hide(Drink)/Cloud(Charge) actually activate (32/36/64 ticks) is
-        // NOT modeled -- these grant instantly on contact instead, a
-        // documented simplification (same category as skipping vehicle
-        // dismount elsewhere).
+        // exact OTHER-BUFF gate for that pickup (checked directly against
+        // Decor.cpp) and, if it passes, grants that power (resetting the
+        // shared gauge to kSecretPowerMax, overwriting whatever was active
+        // before -- matches the real source's own asymmetric gates, which
+        // don't uniformly check every other buff). Returns false (no-op) if
+        // the gate fails, so the caller only plays the real grant sound on
+        // an actual new trigger, same idiom as every other Trigger*() here.
+        // Real vehicle-mode clauses (Power/Cloud/Hide only -- Shield has
+        // none, confirmed directly) are enforced by the CALLER instead
+        // (`GalaxyEggbertCnaGame.cpp`'s `canGrantPower/Cloud/Hide`, fixed
+        // 2026-07-16), not inside these methods, since this class has no
+        // vehicle-mode access of its own. The real 2-stage "busy" animation
+        // + delay before Power(Sucette)/Hide(Drink)/Cloud(Charge) actually
+        // activate (32/36/64 ticks) IS modeled -- see TriggerPickupFreeze()
+        // below -- these methods themselves still grant instantly, matching
+        // real source's own Charge (no deferral) and being called from the
+        // deferred completion point for Sucette/Drink.
         bool TriggerShield() noexcept; // real gate: not already Shield/Hide/Power
         bool TriggerPower() noexcept;  // real gate: not already Shield
         bool TriggerCloud() noexcept;  // real gate: not already ANY power (loosest/most defensive)
