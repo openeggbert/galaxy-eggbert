@@ -3271,39 +3271,77 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-050 — ch40: **corrected 2026-07-13** — real use is wasp balloon-status entry (Phase 13 `135`), not "explosion".
 - [x] SOUND-051 — ch41: **corrected 2026-07-13** — real use is wasp balloon-status recovery/expiry (shared with Crusher's own recovery cue), not "glide".
 - [x] SOUND-052 — ch42: **corrected 2026-07-13** — real use is Shield power-up activation (`ObjectType25`, confirmed against `mobile-eggbert-reference/07-sounds.md` + wired in `GalaxyEggbertCnaGame.cpp`), not "life/drink pickup" — see PICKUP-073.
-- [ ] SOUND-053 — ch43: unknown
-- [ ] SOUND-054 — ch44: shield off
-- [ ] SOUND-055 — ch45: unknown
+- [x] SOUND-053 — ch43: **stale, corrected 2026-07-16** — real use is the Shield secret-power
+  warning-threshold sound (@10 levels remaining, `JustCrossedSecretPowerWarning()` in
+  `GalaxyEggbertCnaGame.cpp`). Already wired.
+- [x] SOUND-054 — ch44: **label wrong, corrected 2026-07-16** — real use is the Sucette/Power
+  pickup's real 2-stage-delay COMPLETION sound (`ResolvePickupFreeze()`'s
+  `PickupFreezeKind::Sucette` case), not "shield off". Already wired.
+- [x] SOUND-055 — ch45: **stale, corrected 2026-07-16** — real use is the Power secret-power
+  warning-threshold sound (@20 levels remaining). Already wired.
 - [ ] SOUND-056 — ch46: balloon mode sound (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-057 — ch47: suspend attach (idle fidget channel, see SOUND-010c)
-- [ ] SOUND-058 — ch48: shield sparkle (idle fidget channel, see SOUND-010c)
-- [ ] SOUND-059 — ch49: shield loop (looped while active) (idle fidget channel, see SOUND-010c)
-- [ ] SOUND-060 — ch50: **corrected 2026-07-13** — real use is the Suction-cup ("Sucette") power-up's real 2-stage pickup-*start* sound, not "shield pickup" (per `mobile-eggbert-reference/07-sounds.md`); this engine plays ch44 instead at grant time since the 2-stage delay isn't modeled (see PICKUP-073) — ch50 itself is unused here.
+- [ ] SOUND-058 — ch48: shield sparkle (idle fidget channel, see SOUND-010c) — **label wrong**:
+  ch48 is actually the `Ouf3` idle-fidget sound (see the cancelled `PICKUP-086`/`087` entry), not
+  shield-specific at all; still correctly categorized as idle-fidget/not done.
+- [ ] SOUND-059 — ch49: shield loop (looped while active) (idle fidget channel, see SOUND-010c) —
+  **label wrong**: ch49 is actually the `Ouf4` idle-fidget sound, same correction as ch48 above.
+- [x] SOUND-060 — ch50: **stale, corrected 2026-07-16** — this entry's own "ch50 itself is unused
+  here" claim (written 2026-07-13) is now stale: the real Sucette pickup-*start* ("grab") sound IS
+  wired as of the `173` 2-stage-delay work (2026-07-14), exactly at the real contact-time trigger
+  point this entry originally described. Label/citation were already correct, only the "unused"
+  status needed updating.
 - [x] SOUND-061 — ch51: **corrected 2026-07-13** — real use is the generic hazard-contact death sound (confirmed in `GEInteractionSystem.cpp`), not "glu/glue splash" — no glue-specific sound found.
 - [x] SOUND-062 — ch52: confirmed correct — dynamite placement/explosion; also reused for blupih/blupit's real projectile-fire sound (see SOUND-037's correction).
-- [ ] SOUND-063 — ch53: tank fire
-- [ ] SOUND-064 — ch54: long explosion (creature death?)
-- [ ] SOUND-065 — ch55: unknown
-- [ ] SOUND-066 — ch56: unknown
-- [ ] SOUND-067 — ch57: exit open / win
-- [ ] SOUND-068 — ch58: **corrected 2026-07-13** — real use is the Charge/Cloud (`ObjectType31`) power-up's real pickup-*start* sound, not "drink pickup" (per `mobile-eggbert-reference/07-sounds.md`); this engine plays ch55 instead at grant time (see PICKUP-073) — ch58 itself is unused here.
+- [x] SOUND-063 — ch53: **label wrong, corrected 2026-07-16** — real use is the real out-of-ammo
+  click when Fire is pressed at 0 bullets (`GEInteractionSystem.cpp`'s Tank-fire block, `else`
+  branch), not "tank fire" itself (that's ch52, see `SOUND-062`). Already wired under the correct
+  meaning.
+- [x] SOUND-064 — ch54: **label wrong, corrected 2026-07-16** — real use is the BulletPack Voyage
+  completion sound (`VoyageKind::BulletPack` case), not "long explosion (creature death?)".
+  Already wired.
+- [x] SOUND-065 — ch55: **stale, corrected 2026-07-16** — real use is the Charge pickup's real
+  2-stage-delay COMPLETION sound (`PickupFreezeKind::Charge` case) — already correctly
+  cross-referenced by `SOUND-068`'s own note, just never marked done itself. Already wired.
+- [x] SOUND-066 — ch56: **stale, corrected 2026-07-16** — real use is the Cloud secret-power
+  warning-threshold sound (@25 levels remaining). Already wired.
+- [x] SOUND-067 — ch57: **label wrong, corrected 2026-07-16** — real use is the Drink pickup's
+  real pickup-*start* ("grab") sound, not "exit open / win" (that's ch14, see `SOUND-024`).
+  Already wired.
+- [x] SOUND-068 — ch58: **corrected 2026-07-13** — real use is the Charge/Cloud (`ObjectType31`) power-up's real pickup-*start* sound, not "drink pickup" (per `mobile-eggbert-reference/07-sounds.md`); this engine plays ch55 instead at grant time (see PICKUP-073) — ch58 itself is unused here.
 - [x] SOUND-069 — ch59: **corrected 2026-07-13** — Cloud secret-power `BlupiElectro` electric-aura kill sound (added 2026-07-13, `GEInteractionSystem.cpp`).
-- [ ] SOUND-070 — ch60: pickup/collect (variant)
-- [ ] SOUND-071 — ch61: unknown
-- [ ] SOUND-072 — ch62: sucette / suction-cup
-- [ ] SOUND-073 — ch63: unknown
+- [x] SOUND-070 — ch60: **confirmed 2026-07-16** — real use is the Perso/Dynamite Voyage
+  completion sound (`VoyageKind::Perso`/`Dynamite` cases). Already wired.
+- [x] SOUND-071 — ch61: **stale, corrected 2026-07-16** — real use is the Dynamite/Perso
+  placement sound (shared, per `07-sounds.md` — see the code's own citation in
+  `GalaxyEggbertCnaGame.cpp`). Already wired.
+- [x] SOUND-072 — ch62: **label imprecise, corrected 2026-07-16** — real use is specifically the
+  Drink pickup's real 2-stage-delay COMPLETION sound (`PickupFreezeKind::Drink` case), not
+  Sucette's (that's ch44, see `SOUND-054`). Already wired.
+- [x] SOUND-073 — ch63: **stale, corrected 2026-07-16** — real use is the Hide secret-power
+  warning-threshold sound (@20 levels remaining). Already wired.
 - [ ] SOUND-074 — ch64: small water plouf
 - [ ] SOUND-075 — ch65: suspend detach / rope release (idle fidget channel, see SOUND-010c)
-- [ ] SOUND-076 — ch66: unknown
-- [ ] SOUND-077 — ch67: unknown
+- [x] SOUND-076 — ch66: **stale, corrected 2026-07-16** — real use is the Mirror/Invert activate
+  sound (confirmed against `mobile-eggbert-reference/13-object-pickups.md`). Already wired.
+- [x] SOUND-077 — ch67: **stale, corrected 2026-07-16** — real use is the Mirror/Invert expire
+  sound. Already wired.
 - [ ] SOUND-078 — ch68: unknown
 - [ ] SOUND-079 — ch69: lightning strike
-- [ ] SOUND-080 — ch70: unknown
-- [ ] SOUND-081 — ch71: unknown
-- [ ] SOUND-082 — ch72: wasp approach
-- [ ] SOUND-083 — ch73: wasp attack
+- [x] SOUND-080 — ch70: **stale, corrected 2026-07-16** — real use is the Crusher squash-entry
+  sound (`TriggerCrush()` succeeding). Already wired.
+- [x] SOUND-081 — ch71: **stale, corrected 2026-07-16** — real use is the Teleporter entry sound
+  (`TriggerTeleport()` succeeding). Already wired.
+- [x] SOUND-082 — ch72: **label wrong, corrected 2026-07-16** — real use is the bridge-
+  construction START sound (a new `ObjectType52` bridge spawning), not "wasp approach". Already
+  wired.
+- [x] SOUND-083 — ch73: **label wrong, corrected 2026-07-16** — real use is a bridge-construction
+  PROGRESS sound (fires at a fixed tick partway through the build sequence), not "wasp attack".
+  Already wired.
 - [x] SOUND-084 — ch74: **corrected 2026-07-13** — real use is the generic hazard/enemy contact-kill death sound (confirmed repeatedly in `GEInteractionSystem.cpp`), not "teleport in".
-- [ ] SOUND-085 — ch75: teleport out (Blupi exit)
+- [x] SOUND-085 — ch75: **label wrong, corrected 2026-07-16** — real use is the Saw death
+  "cut apart" sound (`BlupiDead()`'s Clear4 branch, `SpawnSawDeathBurst()`), not "teleport out".
+  Already wired.
 - [x] SOUND-086 — ch76: switch deactivate — confirmed correct, see PICKUP-076.
 - [x] SOUND-087 — ch77: switch activate — confirmed correct, see PICKUP-076.
 - [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (7 terrain pairs, mapped by SoundEnviron) — see SOUND-006
