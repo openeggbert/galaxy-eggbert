@@ -3192,10 +3192,17 @@ below, the rest are unchanged/still genuinely unconfirmed).
 
 - [x] SOUND-001 — 93 WAV files (`sounds/sound000.wav`..`sound092.wav`) loaded (CNA, 2026-07-10)
 - [x] SOUND-002 — Per-channel volume/conflict table reused from the real data (CNA, 2026-07-10)
-- [ ] SOUND-003 — Sound on/off toggle (persisted in GameData byte 3) — blocked on §11 Save Data, not started
+- [x] SOUND-003 — Sound on/off toggle — **done, corrected 2026-07-16**: this entry's own premise
+  was wrong — real behavior (persisted mute toggle, `GESound::SetEnabled()`/`IsEnabled()`) doesn't
+  need GameData byte-compatibility to work, just persistence at all. Already implemented via this
+  engine's own independent `GESaveData` (plan.md MENU-067, `GESaveData::GetSoundEnabled()`/
+  `SetSoundEnabled()`, wired to `GESound::SetEnabled()` on load).
 - [x] SOUND-004 — Sound loop support via `SoundEffectInstance` (CNA, 2026-07-10)
 - [ ] SOUND-005 — Positional (panned) audio: volume/balance based on screen X position (SoundEnviron)
-- [ ] SOUND-006 — SoundEnviron: maps ch3/ch4 footstep to tile-surface variant (ch78-91) — NOT done (7 terrain pairs)
+- [x] SOUND-006 — SoundEnviron: maps ch3/ch4 footstep to tile-surface variant (ch78-91) — **stale,
+  corrected 2026-07-16**: this was already done 2026-07-12 (`GESound::FootstepChannelFor()`,
+  covers all 7 real terrain ranges: 78/80/82/84/86/88/90) — this entry was never updated
+  afterward.
 - [ ] SOUND-007 — Vehicle motor loop: ch16/ch18 (helicopter high/low), ch29/ch31 (jeep/tank/over)
 - [ ] SOUND-008 — Motor sound crossfade: start sound (ch15/ch28) + stop sound (ch17/ch30)
 - [ ] SOUND-009 — PosSound: update panned position of active motor loop each frame
@@ -3217,12 +3224,23 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-014 — ch4: landing (CNA, 2026-07-10)
 - [ ] SOUND-015 — ch5: stomp kill — blocked on enemy hit detection
 - [ ] SOUND-016 — ch6: unknown
-- [ ] SOUND-017 — ch7: door open
-- [ ] SOUND-018 — ch8: death / hit
-- [ ] SOUND-019 — ch9: teleport in
+- [ ] SOUND-017 — ch7: door open — **corrected 2026-07-16**: label is wrong. Verified directly
+  against `Decor.cpp:3283-3286` — real ch7 plays on the `Down`(crouch)-action transition (screen
+  scrolls down 150px), not door open (that's ch33, see `SOUND-043`). Genuinely NOT wired in this
+  engine (no crouch-transition sound exists), but under the correct real meaning.
+- [x] SOUND-018 — ch8: death / hit — **stale, corrected 2026-07-16**: already wired (Lava/Blitz/
+  fall-death `triggerDeath()` calls in `GalaxyEggbertCnaGame.cpp`), label is accurate.
+- [x] SOUND-019 — ch9: teleport in — **label wrong AND stale, corrected 2026-07-16**: verified
+  directly against `Decor.cpp:10173-10177` — real ch9 is the life-loss Voyage sound (icon 48/Blupi
+  channel, `m_nbVies--`), not "teleport in". Already wired
+  (`GEInteractionSystem::BeginVoyage()`'s `VoyageKind::LifeLoss` case) under the correct real
+  meaning.
 - [x] SOUND-020 — ch10: **corrected 2026-07-13** — real use is dynamite-blast center boom AND a fired bullet hitting a solid wall, not "collect" (confirmed in `GEInteractionSystem.cpp`).
 - [x] SOUND-021 — ch11: key pickup AND treasure pickup (CNA, 2026-07-10 — corrected: shared by both per real data)
-- [ ] SOUND-022 — ch12: teleport out
+- [x] SOUND-022 — ch12: teleport out — **label wrong AND stale, corrected 2026-07-16**: verified
+  directly against `Decor.cpp:10179-10182` — real ch12 plays on egg-pickup Voyage completion
+  (`m_voyageIcon==21 && Element channel`), not "teleport out". Already wired
+  (`GEInteractionSystem::BeginVoyage()`'s `VoyageKind::Egg` case) under the correct real meaning.
 - [x] SOUND-023 — ch13: **corrected 2026-07-13** — real use is reaching the level exit tile without enough treasures collected yet, not "bridge build phase 1" (confirmed in `GEInteractionSystem.cpp`).
 - [x] SOUND-024 — ch14: **corrected 2026-07-13** — real use is exit-reached/win (`exitReached_`), not "bridge build phase 2" (see PICKUP-074).
 - [ ] SOUND-025 — ch15: helicopter motor start
