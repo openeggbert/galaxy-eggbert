@@ -3365,6 +3365,27 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 #### 7.2 Platform Lifts
 
 - [x] PICKUP-020 — ObjectType1: platform lift patrols posStart↔posEnd (CNA, 2026-07-10) — now also carries Blupi, see PICKUP-023.
+      **North-hill lift re-designed 2026-07-17** (user-reported, confirmed via screenshot: the lift
+      near the wasp visibly "clips through" the crow's-nest floor near the wasp): the underlying
+      patrol math was actually correct (verified twice independently against the real cube-rendering
+      convention — object cubes span `[Y+0.5, Y+1.5)`, terrain blocks span `[gridY-0.5, gridY+0.5)`,
+      so `posStartY=4.0`/`posEndY=7.0` land exactly flush with the plateau floor and the crow's-nest
+      floor respectively, zero geometric overlap) — the REAL problem was the crow's-nest floor's own
+      single 1-cell carved shaft opening (from the 2026-07-12 fix) being surrounded on all sides by
+      solid rock, which reads as "the platform vanishes into stone" from nearly any camera angle
+      regardless of the underlying math. A first attempt widened the hole into a full 3-wide trench
+      along the lift's own X row — live-verified this STILL looked wrong: even a full-width, 1-cell-
+      deep trench gets visually "filled back in" by the solid neighbouring rows the instant the
+      camera isn't looking exactly down the trench axis. The real fix, matching the exact same
+      conclusion `liftA`/`liftB` already reached for this identical class of problem (their own
+      comment: open-sky placement to sidestep the enclosed-shaft issue entirely) — removed the
+      enclosing 3x3 floor slab entirely; the shaft column (x=50,z=28) is now open air all the way up,
+      and the chest/exit-goal that used to sit on the slab's east/west edges now perch on two small,
+      visually separate single-cell stepping-stones instead. Live-verified via a temporary debug
+      camera (reverted before commit): the platform now floats clearly in open space with visible
+      background on all sides, fully separated from both stepping-stones, at every patrol height from
+      4 to 7. Full regression clean (only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+      failure).
 - [x] PICKUP-021 — ObjectType47: platform lift rightward conveyor nudge — done (Phase 15 `154`), folded into `RideDeltaX()`'s `kConveyorNudgeSpeed`; exact real px/tick magnitude is an approximation (no established unit conversion), not a transcription.
 - [x] PICKUP-022 — ObjectType48: platform lift leftward conveyor nudge — done (`154`), same note as PICKUP-021.
 - [x] PICKUP-023 — Platform boarding/riding — done (Phase 15 `152`), was the root blocker for this whole subsection, now resolved: `GEInteractionSystem` detects standing on an active lift's footprint/height, reports its per-tick displacement, `GEBlupiController::RideLift()` applies it (X/Z as a delta preserving walking input, Y snapped absolutely).

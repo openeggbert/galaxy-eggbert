@@ -179,6 +179,17 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: north-hill platform lift visibly "clipped through" the crow's-nest floor near the wasp
+  (plan.md `PICKUP-020`).** User-reported with a screenshot. The lift's patrol math was actually
+  correct (verified twice against the real cube-rendering convention — flush at both ends, zero
+  overlap) — the real problem was the crow's-nest floor's single 1-cell carved shaft opening being
+  surrounded on all sides by solid rock, reading as "vanishes into stone" from nearly any angle.
+  Widening the hole into a full trench still looked wrong once live-tested (a 1-cell-deep gap gets
+  visually filled back in by neighbouring rows off-axis). Real fix, matching the exact conclusion
+  `liftA`/`liftB` already reached for this same problem: removed the enclosing floor slab entirely —
+  the shaft is now open air all the way up, with the chest/exit-goal perched on two small, separate
+  stepping-stones instead of one enclosing floor. Live-verified: the platform now floats clearly in
+  open space at every patrol height. Full regression clean.
 - **fix: web build showed only a black screen on the real, unpatched shell (plan.md `BUILD-003`).**
   The prior entry's headless verification had patched `Module.noInitialRun` directly in a throwaway
   test copy, bypassing `shell-cna.html`'s own "Click or tap to begin." gate — masking a real bug the

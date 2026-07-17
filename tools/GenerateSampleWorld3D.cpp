@@ -289,13 +289,33 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // the floor's own underside from below -- a fully solid "board" with no
     // passage, exactly the "presouva se skrze desku" (moves through the
     // board) complaint, and useless for ever actually reaching the top even
-    // once platform-riding exists (plan.md E3D-MIG-152). Carved a 1-cell
-    // shaft opening at the lift's own column so the platform has a real hole
-    // to rise through and can park flush in it (see the matching posEndY
+    // once platform-riding exists (plan.md E3D-MIG-152). Carved a shaft
+    // opening at the lift's own column so the platform has a real hole to
+    // rise through and can park flush in it (see the matching posEndY
     // change below -- the cube's own top face is tuned to land exactly at
-    // this floor's top face once the center cell is Air).
-    fill(49, 51, 8, 8, 27, 29, BlockTypes::RockPile);
-    world.setBlock(50, 8, 28, Block::make(BlockTypes::Air)); // lift shaft opening
+    // this floor's top face once the shaft cells are Air).
+    //
+    // Re-designed 2026-07-17 (user-reported, screenshot confirmed: the lift
+    // visibly "clips through" this floor near the wasp). First attempt
+    // widened the single carved cell into a 3-wide trench along X -- still
+    // visibly wrong: confirmed live that even a full-width, 1-cell-DEEP
+    // trench gets visually "filled back in" by the solid z=27/z=29 rows
+    // the instant the camera isn't looking exactly down the trench axis
+    // (any off-axis view shows those neighbours' faces, not the distant
+    // background, so the platform still reads as embedded in solid rock).
+    // A single thin gap in an otherwise-solid slab just doesn't read as
+    // "a real opening" from ordinary play angles, no matter how it's
+    // carved. Real fix, matching the EXACT same conclusion `liftA`/`liftB`
+    // already reached for this identical problem (see their own comment
+    // below): stop enclosing the shaft at all. The lift's own column
+    // (x=50, z=28) is now open air all the way up -- no solid neighbour
+    // anywhere near it -- and the two items that used to sit on the old
+    // slab's east/west edges (chest/exit-goal below) now perch on two
+    // small, visually separate single-cell stepping-stones instead of one
+    // enclosing floor, so there is nothing left for the rising platform to
+    // ever appear to clip through.
+    world.setBlock(49, 8, 28, Block::make(BlockTypes::RockPile)); // west stepping-stone (chest)
+    world.setBlock(51, 8, 28, Block::make(BlockTypes::RockPile)); // east stepping-stone (exit-goal)
 
     // ------------------------------------------------------------------
     // South tunnel: a real underground/enclosed corridor -- floor, side
