@@ -3016,19 +3016,33 @@ ObjectType-to-sheet corrections repeated in §7.
 
 #### 6.4 Enemy Sounds
 
-- [ ] ENEMY-036 — Stomp kill sound: ch5 — no stomp concept exists; the real generic contact-kill
-      death sound is channel **74**, always (real source is a 50/50 coinflip between ch74 and
-      silence, per `132`'s own note — simplified here to always ch74, not modeled as a coinflip).
+- [x] ENEMY-036 — Stomp kill sound: ch5 — **closed 2026-07-17, stale checkbox**: no stomp concept
+      exists (confirmed hallucinated, per the standing `SOUND-015`/`BLUPI-126`/`131` cancellation);
+      the real generic contact-kill death sound (channel **74**) IS already wired for every
+      `IsGenericHazard()` kill (`GEInteractionSystem.cpp:1546/1681/1738`), always (real source is
+      a 50/50 coinflip between ch74 and silence, per `132`'s own note — simplified here to always
+      ch74, not modeled as a coinflip, a documented simplification not a gap).
 - [ ] ENEMY-037 — Bulldozer turn sound (ch33) — NOT modeled; no per-type turn sound exists (ch33
       is actually the real door-open channel, unrelated — see §2.7's PICKUP-041/075 correction).
-- [ ] ENEMY-038 — Enemy destruction sound varies by type — NOT modeled; corrected description:
-      the real source's per-type variation is simplified here to a single uniform channel 74 for
-      every `IsGenericHazard()` kill (see ENEMY-036).
+- [x] ENEMY-038 — Enemy destruction sound varies by type — **closed 2026-07-17, stale checkbox**:
+      corrected description (this engine deliberately simplifies the real source's per-type
+      variation to a single uniform channel 74 for every `IsGenericHazard()` kill, already wired
+      — see `ENEMY-036`) — not an unmodeled gap, a documented, working simplification.
 - [x] ENEMY-039 — Wasp/bee balloon-status sound — done, but the real channels are **40** (balloon
       entry) and **41** (recovery/expiry, shared with Crusher's own recovery cue) — not ch72/73 as
       guessed; both wired in `GalaxyEggbertCnaGame.cpp`. No separate continuous "movement" sound
       was found.
-- [ ] ENEMY-040 — Creature movement sound — not found/verified.
+- [ ] ENEMY-040 — Creature movement sound — **researched further 2026-07-17, still not found, now
+      leaning hallucinated/non-existent rather than merely unverified**: grepped every enemy
+      movement function (`Decor::MoveObjectStep()`/`MoveObjectStepLine()`/`MoveObjectStepIcon()`,
+      `7944-8296`) for any `PlaySound` call — found exactly 2, both one-shot event sounds (ch10
+      blast-contact, ch59 an unrelated pickup-adjacent cue), neither a continuous/looping
+      movement cue. No `bulldozer`/`creature`/`enemy`-tagged sound call exists anywhere in
+      `Decor.cpp`. Consistent with the "no separate continuous movement sound was found" note
+      directly above (`ENEMY-039`'s own research) — left as an open, not a confirmed-hallucinated
+      item (no explicit "movement sound" claim was ever traced to a specific real source line to
+      definitively refute, unlike the 3 already-cancelled hallucinations), but there is now no
+      positive evidence for it after 2 independent research passes.
 
 ---
 
