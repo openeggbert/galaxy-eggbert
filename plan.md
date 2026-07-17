@@ -2897,8 +2897,14 @@ ENEMY-XXX numbering rather than re-deriving it.
 - [ ] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact — NOT modeled; confirmed no
       velocity-gated "stomp" concept exists anywhere in `GEInteractionSystem.cpp` — contact-kill
       (`132`) is an unconditional touch check, not stomp-specific.
-- [ ] ENEMY-005 — Enemy respawns at posStart after 5s kill timer — NOT modeled; killed hazards are
-      destroyed permanently (`obj.active = false`), never respawned.
+- [ ] ENEMY-005 — Enemy respawns at posStart after 5s kill timer — **likely hallucinated,
+  investigated 2026-07-16**: verified directly against `Decor.cpp:7881-7917` (`Decor::
+  ObjectDelete()`, the real enemy-destruction function) — it unconditionally sets the slot to
+  `ObjectType0` (freed) with no timer or respawn logic at all, just an optional cosmetic
+  "goodbye" particle for a few types. A broad grep for "respawn"/"revive" across all of
+  `Decor.cpp` found nothing enemy-related either. This looks like another invented claim, same
+  category as the already-cancelled stomp-kill entries — not confirmed against source anywhere;
+  do not implement without finding the actual citation first.
 - [ ] ENEMY-006 — Blob shadow under enemies *(3D adaptation)* — not done, visual polish only.
 - [ ] ENEMY-007 — Y-proximity check: aerial enemies don't hit ground-level Blupi — no explicit
       per-type rule exists; contact uses a plain 3D-distance sphere check (includes Y implicitly,
@@ -2940,9 +2946,13 @@ ENEMY-XXX numbering rather than re-deriving it.
 - [ ] ENEMY-026 — ObjectType54: long turn animation (152 frames) — not verified as a distinct
       table; the real unconditional taunt icon is also NOT modeled (`136`'s own note — no
       idle-taunt animation system exists).
-- [ ] ENEMY-027 — ObjectType54: destroys Blupi's helicopter on contact (ByeByeHelico) — NOT
-      modeled (`136`'s own note: "the real 'destroys Blupi's vehicle instead of killing him'
-      branch [is] NOT modeled"); contact always takes the real no-vehicle death branch instead.
+- [x] ENEMY-027 — ObjectType54: destroys Blupi's helicopter on contact (ByeByeHelico) — **stale
+  cross-reference, corrected 2026-07-16**: this entry's own premise was already corrected in
+  `136`'s own writeup — contact does NOT spare Blupi/only-destroy-the-vehicle instead of killing;
+  it's an unconditional Glu death either way, which ALSO clears vehicle/Balloon/Ecrase state when
+  applicable (via `GEBlupiController::TriggerDeathLock()`, fixed 2026-07-16, matching real
+  `BlupiDead()`). `ByeByeHelico()` itself is purely a cosmetic particle effect with no state
+  change (see `136`'s own note) — not worth new plumbing for. See `136` for the full writeup.
 - [ ] ENEMY-028 — ObjectType18: additional patrol enemy variant — NOT modeled as its own enemy;
       `ObjectType18` appears only in the dynamite-blast destructible-object list, not in
       `IsGenericHazard()`'s real 8-type kill-list.
