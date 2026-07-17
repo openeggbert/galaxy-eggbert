@@ -154,6 +154,13 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `a1c8672`/`9efe096` **docs only**: 2 passes over `plan.md`'s `SOUND-0XX` channel checklist,
+  cross-referencing which channels this engine already plays against the checklist's `[ ]` marks
+  — 23 entries corrected total (many already wired but marked "not done"/"unknown"; several with
+  outright wrong real-channel labels, e.g. ch54/57/72/73/75). No code changes. Channels 32/64/68
+  spot-checked and confirmed genuinely not wired (correctly marked already). Not exhaustively
+  audited beyond what was checked — a fuller pass may still find more.
+
 - `2bab5b4` **docs only**: clarified that PICKUP-027 (`m_blupiTimeNoAsc`) and PICKUP-035
   (crate-land shake) aren't independent gaps — the first is genuinely part of `AscenseurVertigo`
   (same render-geometry block as `PICKUP-024`), the second needs crate fall-physics that doesn't
