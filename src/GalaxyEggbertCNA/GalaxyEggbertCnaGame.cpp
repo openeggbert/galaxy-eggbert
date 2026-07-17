@@ -555,6 +555,54 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GalaxyEggbertCnaGame::UpdateVehicleMotorSound()
+    {
+        using GalaxyEggbert::SoundChannel;
+
+        SoundChannel desiredLoop = SoundChannel::SoundChannel0;
+        SoundChannel startSound = SoundChannel::SoundChannel0;
+        SoundChannel stopSound = SoundChannel::SoundChannel0;
+        switch (blupi_.GetVehicleMode())
+        {
+            case GEBlupiController::VehicleMode::Helicopter:
+                desiredLoop = blupi_.IsVehicleMotorHigh() ? SoundChannel::SoundChannel16 : SoundChannel::SoundChannel18;
+                startSound = SoundChannel::SoundChannel15;
+                stopSound = SoundChannel::SoundChannel17;
+                break;
+            case GEBlupiController::VehicleMode::Jeep:
+            case GEBlupiController::VehicleMode::Tank:
+            case GEBlupiController::VehicleMode::Overcraft:
+                desiredLoop = blupi_.IsVehicleMotorHigh() ? SoundChannel::SoundChannel29 : SoundChannel::SoundChannel31;
+                startSound = SoundChannel::SoundChannel28;
+                stopSound = SoundChannel::SoundChannel30;
+                break;
+            default:
+                break; // None/Skateboard: no motor sound in real source either
+        }
+
+        if (activeMotorLoop_ == desiredLoop)
+        {
+            return;
+        }
+        if (activeMotorLoop_ == SoundChannel::SoundChannel0 && desiredLoop != SoundChannel::SoundChannel0)
+        {
+            sound_.Play(startSound);
+        }
+        if (activeMotorLoop_ != SoundChannel::SoundChannel0 && desiredLoop == SoundChannel::SoundChannel0)
+        {
+            sound_.Play(stopSound);
+        }
+        if (activeMotorLoop_ != SoundChannel::SoundChannel0)
+        {
+            sound_.Stop(activeMotorLoop_);
+        }
+        activeMotorLoop_ = desiredLoop;
+        if (activeMotorLoop_ != SoundChannel::SoundChannel0)
+        {
+            sound_.Play(activeMotorLoop_, /*loop=*/true);
+        }
+    }
+
     void GalaxyEggbertCnaGame::ResolveDeathLock()
     {
         // Starts a NEW lock for the 4 real trigger sites living inside
@@ -2014,6 +2062,12 @@ namespace GalaxyEggbert::CNA
                 sound_.Stop(GalaxyEggbert::SoundChannel::SoundChannel38);
             }
             wasPushingCrate_ = isPushingCrate;
+
+            // Real vehicle motor sound crossfade (plan.md SOUND-007/008, found 2026-07-17) --
+            // see UpdateVehicleMotorSound()'s own comment. Runs every frame regardless of vehicle
+            // state; it's the real per-mode `if`/`else if` chain inside the method itself that
+            // decides whether a motor should be playing at all.
+            UpdateVehicleMotorSound();
 
             // Real Win/Lost phase transitions (plan.md HUD-023): Lost
             // fires the instant GameOverCount() increments (real

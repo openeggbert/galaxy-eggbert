@@ -1245,6 +1245,51 @@ int main(int argc, char** argv)
             dismounter.TriggerDismount(); // no-op when not riding -- just confirming it doesn't crash
             check(!dismounter.IsInVehicle(), "TriggerDismount() stays a no-op when called again while not riding");
 
+            // Vehicle motor sound accessors (plan.md SOUND-007/008, found 2026-07-17):
+            // HasVehicleMotor() -- real source gives Helicopter/Jeep/Tank/Overcraft their own
+            // motor sound set, but NOT Skateboard (confirmed via direct source read).
+            GEBlupiController noMotorVehicle;
+            check(!noMotorVehicle.HasVehicleMotor(), "HasVehicleMotor() is false with no vehicle mounted");
+            GEBlupiController jeepMotor;
+            jeepMotor.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            check(jeepMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding a Jeep");
+            GEBlupiController tankMotor;
+            tankMotor.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+            check(tankMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding a Tank");
+            GEBlupiController overMotor;
+            overMotor.TriggerMount(GEBlupiController::VehicleMode::Overcraft, false, false);
+            check(overMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding an Overcraft");
+            GEBlupiController heliMotor;
+            heliMotor.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            check(heliMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding a Helicopter");
+            GEBlupiController skateMotor;
+            skateMotor.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            check(!skateMotor.HasVehicleMotor(),
+                  "HasVehicleMotor() is FALSE while riding a Skateboard (real: no motor sound set for it)");
+
+            // IsVehicleMotorHigh() -- real per-mode "m_blupiMotorHigh" pitch-select flag: false
+            // at rest, true once genuinely moving (Jeep: nonzero horizontal speed after ramping
+            // up; Helicopter: nonzero vertical velocity while ascending).
+            GEBlupiController jeepIdle;
+            jeepIdle.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            check(!jeepIdle.IsVehicleMotorHigh(), "IsVehicleMotorHigh() is false for a Jeep at rest");
+            jeepIdle.SetYaw(0.0f);
+            for (int i = 0; i < 5; ++i)
+            {
+                jeepIdle.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            }
+            check(jeepIdle.IsVehicleMotorHigh(), "IsVehicleMotorHigh() is true once the Jeep has ramped up speed");
+
+            GEBlupiController heliIdle;
+            heliIdle.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            check(!heliIdle.IsVehicleMotorHigh(), "IsVehicleMotorHigh() is false for a Helicopter at rest");
+            for (int i = 0; i < 5; ++i)
+            {
+                heliIdle.Step(synthetic, 0.0f, 0.0f, false, /*crouchHeld=*/false, /*lookUpHeld=*/true, dt);
+            }
+            check(heliIdle.IsVehicleMotorHigh(),
+                  "IsVehicleMotorHigh() is true once the Helicopter is ascending (nonzero vertical velocity)");
+
             // Real per-mode accel/decel ramp: Jeep's horizontal speed
             // should climb from 0 toward its own max, not snap instantly.
             // Verified by comparing the PER-FRAME delta near the start of

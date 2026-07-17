@@ -3,6 +3,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 
 namespace GalaxyEggbert::CNA
@@ -587,6 +588,31 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] VehicleMode GetVehicleMode() const noexcept { return m_vehicleMode; }
         [[nodiscard]] bool IsInVehicle() const noexcept { return m_vehicleMode != VehicleMode::None; }
+
+        // Vehicle motor sound (plan.md SOUND-007/008, BLUPI-084/090/148, found 2026-07-17): real
+        // `Decor::AdaptMotorVehicleSound()` crossfades a start/loop/stop sound set per vehicle,
+        // selecting the "high" (moving) vs "low" (idle) loop variant via `m_blupiMotorHigh`.
+        // Real source gives Helicopter/Jeep/Tank/Overcraft their own motor sound set; Skateboard
+        // has none (confirmed: `AdaptMotorVehicleSound()`'s own `if`/`else if` chain checks only
+        // those 4 modes). `HasVehicleMotor()` is the "should a loop be playing at all" gate;
+        // `IsVehicleMotorHigh()` is the pitch-select flag, translated from the real per-mode
+        // `m_blupiMotorHigh` assignments (Jeep: `m_blupiAction != BlupiAction::Stop`, i.e.
+        // nonzero horizontal velocity including coasting after input release, translated here as
+        // nonzero `m_vehicleSpeed`; Helicopter/Overcraft: real code uses their own analogous
+        // "not idle" checks, translated here as nonzero vertical `m_velocityY`, the flight-mode
+        // equivalent of horizontal motion).
+        [[nodiscard]] bool HasVehicleMotor() const noexcept
+        {
+            return IsInVehicle() && m_vehicleMode != VehicleMode::Skateboard;
+        }
+        [[nodiscard]] bool IsVehicleMotorHigh() const noexcept
+        {
+            if (m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft)
+            {
+                return std::fabs(m_velocityY) > 0.01f;
+            }
+            return std::fabs(m_vehicleSpeed) > 0.01f;
+        }
 
         // Real per-vehicle hazard immunity (found 2026-07-16, `Decor.cpp:5504-5528`): Overcraft/
         // Jeep/Tank protect against Spike/Drip/Saw specifically (`!m_blupiOver && !m_blupiJeep &&

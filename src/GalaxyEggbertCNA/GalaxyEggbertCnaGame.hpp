@@ -186,6 +186,14 @@ namespace GalaxyEggbert::CNA
         // detected (the flag itself carries no memory across frames).
         bool wasPushingCrate_ = false;
 
+        // Real vehicle motor sound crossfade (plan.md SOUND-007/008, found 2026-07-17) -- mirrors
+        // real `m_blupiMotorSound`: the channel of the currently-playing loop, or SoundChannel0
+        // (the real sentinel) while none is playing. Needed because the desired loop channel can
+        // change directly from one loop to another (e.g. moving->idle) without ever passing
+        // through "no motor", so a plain this-frame/last-frame bool (like wasPushingCrate_ above)
+        // isn't enough -- see UpdateVehicleMotorSound()'s own comment for the full crossfade.
+        GalaxyEggbert::SoundChannel activeMotorLoop_ = GalaxyEggbert::SoundChannel::SoundChannel0;
+
         // Platform lift patrol, crate push, and pickup collection
         // (2026-07-10, see GEInteractionSystem.hpp).
         GEInteractionSystem interaction_;
@@ -325,6 +333,15 @@ namespace GalaxyEggbert::CNA
         // currently in a vehicle. Does NOT play any sound itself -- callers differ on which real
         // sound applies (or none).
         void DismountAndDepositVehicle();
+
+        // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `GEBlupiController::
+        // HasVehicleMotor()`/`IsVehicleMotorHigh()`, found 2026-07-17) -- ports
+        // `Decor::AdaptMotorVehicleSound()` exactly: computes the desired loop channel (none,
+        // or the mode's own high/low variant), and if it differs from `activeMotorLoop_`, plays
+        // the one-shot start sound (silence->motor) or stop sound (motor->silence), stops the
+        // old loop, and starts the new one. A no-op when the desired loop already matches the
+        // active one (matches the real early-out exactly). Called once per frame.
+        void UpdateVehicleMotorSound();
 
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
         // a no-op unless `interaction_.PowerGrantedThisFrame()`/

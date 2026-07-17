@@ -2591,26 +2591,76 @@ reset to `[ ]` except the small set with direct CNA evidence.
 
 #### 4.4 Vehicle Modes (each = new movement model + sprite sheet section)
 
-- [ ] BLUPI-084 — Helicopter mode (m_blupiHelico): 8-direction flight, no gravity, propeller sound loop (ch16/ch18)
-- [ ] BLUPI-085 — Helicopter boarding: touch ObjectType13 → sets m_blupiHelico, removes object
-- [ ] BLUPI-086 — Helicopter dismount: press Down → drops Blupi, reverts to normal mode
-- [ ] BLUPI-087 — Helicopter destroyed by creature (ObjectType54): ByeByeHelico debris effect
-- [ ] BLUPI-088 — Jeep mode (m_blupiJeep): horizontal drive, jump, carry Blupi
-- [ ] BLUPI-089 — Jeep boarding: touch ObjectType19 → sets m_blupiJeep
-- [ ] BLUPI-090 — Jeep motor sound loop (ch29/ch31, high/low pitch via m_blupiMotorHigh)
-- [ ] BLUPI-091 — Tank mode (m_blupiTank): drive + fire projectiles (ch FireTank)
-- [ ] BLUPI-092 — Tank boarding: touch ObjectType28 → sets m_blupiTank
-- [ ] BLUPI-093 — Tank fire sound (ch 53) on FireTank animation frames
-- [ ] BLUPI-094 — Skateboard mode (m_blupiSkate): faster horizontal, higher jump
-- [ ] BLUPI-095 — Skateboard pickup: touch ObjectType24 → TakeSkate animation → sets m_blupiSkate
-- [ ] BLUPI-096 — Balloon mode (m_blupiOver/m_blupiBalloon): float up/down, limited horizontal
-- [ ] BLUPI-097 — Balloon pickup: touch ObjectType46 → sets m_blupiOver
-- [ ] BLUPI-098 — Swimming (m_blupiNage): entered when Blupi falls into water (`table_vitesse_nage`)
-- [ ] BLUPI-099 — Surfing (m_blupiSurf): surfboard on water surface (`table_vitesse_surf`)
-- [ ] BLUPI-100 — Vent (fan) propulsion (m_blupiVent): blown by ventilator tile
-- [ ] BLUPI-101 — Suspend (rope hang): entered when Blupi grabs a rope tile
-- [ ] BLUPI-102 — Motor sound crossfade: one-shot start/stop sounds + looped motor sound
-- [ ] BLUPI-103 — m_blupiMotorHigh: pitch variant selection (fast vs slow motor)
+- [x] BLUPI-084 — Helicopter mode (m_blupiHelico): 8-direction flight, no gravity, propeller
+      sound loop (ch16/ch18) — **stale checkbox, closed 2026-07-17**: flight mechanic done via
+      Phase 17 `171` (free vertical flight, no gravity, reusing crouch/lookUp for ascend/descend
+      — this engine's tank-control scheme adapts the real 2-axis flight to forward/back+turn
+      instead of a literal 8-direction free-move, a documented adaptation not a gap); motor sound
+      now done too, see `SOUND-008`.
+- [x] BLUPI-085 — Helicopter boarding: touch ObjectType13 → sets m_blupiHelico, removes object —
+      **stale checkbox, closed 2026-07-17**: done via `171`'s real pickup->vehicle mapping.
+- [ ] BLUPI-086 — Helicopter dismount: press Down → drops Blupi, reverts to normal mode —
+      **partially researched 2026-07-17, left open**: dismounting itself IS implemented
+      (`171`'s `TriggerDismount()`), but this engine's voluntary dismount is bound to the shared
+      action button for every vehicle uniformly, not specifically "press Down" for Helicopter —
+      whether real source actually uses a different per-vehicle dismount key (Down specifically
+      for Helicopter) was not conclusively re-verified this pass; left unchecked pending that,
+      not because dismounting doesn't work.
+- [ ] BLUPI-087 — Helicopter destroyed by creature (ObjectType54): ByeByeHelico debris effect —
+      still correctly NOT modeled, see `VISUAL-018`/`156` (needs a particle/fragment rendering
+      system that doesn't exist yet).
+- [x] BLUPI-088 — Jeep mode (m_blupiJeep): horizontal drive, jump, carry Blupi — **stale
+      checkbox, closed 2026-07-17**: done via `171`/`178` (ground-gravity movement path,
+      per-mode max speed/accel table).
+- [x] BLUPI-089 — Jeep boarding: touch ObjectType19 → sets m_blupiJeep — **stale checkbox, closed
+      2026-07-17**: done via `171`'s real pickup->vehicle mapping.
+- [x] BLUPI-090 — Jeep motor sound loop (ch29/ch31, high/low pitch via m_blupiMotorHigh) —
+      **done 2026-07-17**, see `SOUND-008`.
+- [x] BLUPI-091 — Tank mode (m_blupiTank): drive + fire projectiles (ch FireTank) — **stale
+      checkbox, closed 2026-07-17**: drive done via `171`/`178`; firing done via `BULLET-001`.
+- [x] BLUPI-092 — Tank boarding: touch ObjectType28 → sets m_blupiTank — **stale checkbox, closed
+      2026-07-17**: done via `171`'s real pickup->vehicle mapping.
+- [x] BLUPI-093 — Tank fire sound (ch 53) on FireTank animation frames — **stale checkbox
+      closed, but this entry's channel claim is WRONG, corrected 2026-07-17**: per `BULLET-001`'s
+      own research, ch53 is actually the real OUT-OF-AMMO click, not the fire sound — the real
+      fire sound is ch52 (shared with dynamite placement/explosion, `SOUND-062`). Both are
+      already correctly wired in `BULLET-001`'s firing implementation; only this entry's channel
+      label was wrong.
+- [x] BLUPI-094 — Skateboard mode (m_blupiSkate): faster horizontal, higher jump — **stale
+      checkbox, closed 2026-07-17**: done via `171`/`178` (own `kSkateboardJumpSpeed`, reuses the
+      shared ground gravity/jump path per real source's own note).
+- [x] BLUPI-095 — Skateboard pickup: touch ObjectType24 → TakeSkate animation → sets m_blupiSkate
+      — **stale checkbox, closed 2026-07-17**: the MOUNT mechanic is done via `171`'s real
+      pickup->vehicle mapping — only the `TakeSkate` ANIMATION-STATE selection remains blocked on
+      the missing visible-Blupi-model work, same as `BLUPI-116`/`120` above.
+- [x] BLUPI-096 — Balloon mode (m_blupiOver/m_blupiBalloon): float up/down, limited horizontal —
+      **stale checkbox, closed 2026-07-17, and note the real "Balloon" naming trap already flagged
+      elsewhere**: `ObjectType46` actually grants Overcraft (`m_blupiOver`), not a separate
+      Balloon ride (see `171`'s own correction of `ObjectType.hpp`'s misleading doc comment) —
+      Overcraft's free vertical flight is done via `171` (shares the Helicopter flight branch).
+      The genuinely separate wasp-sting "Balloon" status effect (`m_blupiBalloon`) is a different
+      mechanic, also already implemented (`TriggerBalloon()`/`IsBallooned()`).
+- [x] BLUPI-097 — Balloon pickup: touch ObjectType46 → sets m_blupiOver — **stale checkbox,
+      closed 2026-07-17**: done via `171`'s real pickup->vehicle mapping (grants Overcraft, per
+      the naming-trap note on `BLUPI-096` above).
+- [x] BLUPI-098 — Swimming (m_blupiNage): entered when Blupi falls into water
+      (`table_vitesse_nage`) — **stale checkbox, closed 2026-07-17**: done via Phase 14 `148`
+      (`GEBlupiController::IsNage()`).
+- [x] BLUPI-099 — Surfing (m_blupiSurf): surfboard on water surface (`table_vitesse_surf`) —
+      **stale checkbox, closed 2026-07-17**: done via Phase 14 `148` (`GEBlupiController::IsSurf()`).
+- [ ] BLUPI-100 — Vent (fan) propulsion (m_blupiVent): blown by ventilator tile — **researched
+      2026-07-17, genuinely NOT modeled**: grepped both `GEBlupiController.cpp` and
+      `GalaxyEggbertCnaGame.cpp` for any Fan-tile physics interaction — none exists; Fan
+      tiles (`BlockTypes::FanLeft/Right/Up/Down`) are purely a visual terrain animation
+      (`GETerrainRenderer.cpp`), with no effect on Blupi's movement at all. A genuine, real,
+      still-open gap — correctly left unchecked, not stale.
+- [ ] BLUPI-101 — Suspend (rope hang): entered when Blupi grabs a rope tile — still correctly
+      blocked, see `177`'s own research (real, fully-speced, cheap mechanic, but blocked on the
+      pending icon-202 render-geometry decision the user asked to defer this session).
+- [x] BLUPI-102 — Motor sound crossfade: one-shot start/stop sounds + looped motor sound —
+      **done 2026-07-17**, see `SOUND-008`.
+- [x] BLUPI-103 — m_blupiMotorHigh: pitch variant selection (fast vs slow motor) — **done
+      2026-07-17**, see `SOUND-008` (`GEBlupiController::IsVehicleMotorHigh()`).
 
 #### 4.5 Blupi Special States & Power-ups
 
@@ -2783,7 +2833,10 @@ re-verified individually since it is not a full port yet.
 - [ ] BLUPI-145 — Key pickup sound: ch11 — see PICKUP-004/005/006, PICKUP-071 (CNA has this wired at the pickup level)
 - [ ] BLUPI-146 — Life / egg pickup sound: ch42 — see PICKUP-002/072, egg pickup uses ch3 per corrected channel table below, not ch42; re-verify against real `Decor.cpp`
 - [ ] BLUPI-147 — Sucette pickup sound: ch62
-- [ ] BLUPI-148 — Balloon motor sounds: ch28/ch30 (start/stop), ch29/ch31 (loop low/high)
+- [x] BLUPI-148 — Balloon motor sounds: ch28/ch30 (start/stop), ch29/ch31 (loop low/high) —
+      **done 2026-07-17, and this entry's "Balloon" label is wrong**: these are the real Jeep/
+      Tank/Overcraft motor sounds (`SOUND-008`), not Balloon-specific — see `BLUPI-096`'s note on
+      the same naming trap (`ObjectType46` grants Overcraft, not a separate Balloon ride).
 - [ ] BLUPI-149 — Electro sounds: ch38 (long arc) / ch90 (spark)
 - [ ] BLUPI-150 — Glu splash sounds: ch51
 - [x] BLUPI-151 — Water splash sounds: ch23 (small plouf), ch64 (tiplouf), ch24 (blup bubble) —
@@ -3389,9 +3442,28 @@ below, the rest are unchanged/still genuinely unconfirmed).
   corrected 2026-07-16**: this was already done 2026-07-12 (`GESound::FootstepChannelFor()`,
   covers all 7 real terrain ranges: 78/80/82/84/86/88/90) — this entry was never updated
   afterward.
-- [ ] SOUND-007 — Vehicle motor loop: ch16/ch18 (helicopter high/low), ch29/ch31 (jeep/tank/over)
-- [ ] SOUND-008 — Motor sound crossfade: start sound (ch15/ch28) + stop sound (ch17/ch30)
-- [ ] SOUND-009 — PosSound: update panned position of active motor loop each frame
+- [x] SOUND-007 — Vehicle motor loop: ch16/ch18 (helicopter high/low), ch29/ch31 (jeep/tank/over)
+      — **done 2026-07-17**, see `SOUND-008`'s writeup for the full implementation.
+- [x] SOUND-008 — Motor sound crossfade: start sound (ch15/ch28) + stop sound (ch17/ch30) —
+      **done 2026-07-17**, verified directly against `Decor::AdaptMotorVehicleSound()`
+      (`Decor.cpp:1599-1639`): a real per-vehicle-mode crossfade — Helicopter gets ch15
+      (start)/ch16-18 (loop high/low)/ch17 (stop); Jeep/Tank/Overcraft share ch28 (start)/
+      ch29-31 (loop high/low)/ch30 (stop); Skateboard has no motor sound at all (confirmed: the
+      real function's own `if`/`else if` chain checks only the other 4 modes). New
+      `GEBlupiController::HasVehicleMotor()`/`IsVehicleMotorHigh()` (the real per-mode
+      `m_blupiMotorHigh` pitch-select flag — Jeep uses `m_blupiAction != BlupiAction::Stop`,
+      i.e. nonzero horizontal velocity including coasting, translated here as nonzero
+      `m_vehicleSpeed`; Helicopter/Overcraft translated as nonzero vertical `m_velocityY`, the
+      flight-mode equivalent) + `GalaxyEggbertCnaGame::UpdateVehicleMotorSound()` (a direct port
+      of the real crossfade state machine, called once per frame, `activeMotorLoop_` mirroring
+      the real `m_blupiMotorSound` sentinel). 4 new `VerifyBlupiMovement` assertions
+      (`HasVehicleMotor()` per mode including the Skateboard exception, `IsVehicleMotorHigh()`
+      idle-vs-moving for both a ground vehicle and a flight vehicle). Full regression clean (only
+      the pre-existing unrelated `easy-gl-resource-smoke-tests` failure); live headless launch
+      smoke check clean.
+- [ ] SOUND-009 — PosSound: update panned position of active motor loop each frame — **NOT
+      modeled, deliberately**: this engine's `GESound::Play()` has no positional/panned audio at
+      all (same architectural gap as `SOUND-005`) — there is no pan state to update per frame.
 - [ ] SOUND-010 — Ambient sound: all 72 gameplay channels wired to correct game events (see full list below)
 - [ ] SOUND-010b — Pitch application per tableVolumePitch (new item — noted explicitly as NOT done in CNA despite the volume/conflict table being reused)
 - [ ] SOUND-010c — Idle "fidget" periodic sounds (channels 36/37/46-49/65) (new item — explicitly NOT done)
@@ -3439,10 +3511,10 @@ old scheme — cross-check against §7 when wiring these).
   (`GEInteractionSystem::BeginVoyage()`'s `VoyageKind::Egg` case) under the correct real meaning.
 - [x] SOUND-023 — ch13: **corrected 2026-07-13** — real use is reaching the level exit tile without enough treasures collected yet, not "bridge build phase 1" (confirmed in `GEInteractionSystem.cpp`).
 - [x] SOUND-024 — ch14: **corrected 2026-07-13** — real use is exit-reached/win (`exitReached_`), not "bridge build phase 2" (see PICKUP-074).
-- [ ] SOUND-025 — ch15: helicopter motor start
-- [ ] SOUND-026 — ch16: helicopter motor high (loop)
-- [ ] SOUND-027 — ch17: helicopter motor stop
-- [ ] SOUND-028 — ch18: helicopter motor low (loop)
+- [x] SOUND-025 — ch15: helicopter motor start — **done 2026-07-17**, see `SOUND-008`.
+- [x] SOUND-026 — ch16: helicopter motor high (loop) — **done 2026-07-17**, see `SOUND-008`.
+- [x] SOUND-027 — ch17: helicopter motor stop — **done 2026-07-17**, see `SOUND-008`.
+- [x] SOUND-028 — ch18: helicopter motor low (loop) — **done 2026-07-17**, see `SOUND-008`.
 - [x] SOUND-029 — ch19: treasure/key pickup, set-completing variant (CNA, 2026-07-10 — new correct meaning, was previously listed as generic "teleport (alternate)")
 - [ ] SOUND-030 — ch20: bridge completed — **label wrong, corrected 2026-07-16**: verified
   directly against `Decor.cpp:3628-3633` — real ch20 plays when standing back up from a crouch
@@ -3480,10 +3552,11 @@ old scheme — cross-check against §7 when wiring these).
   dedicated channel distinct from every other death cause's ch8/51/75, per `07-sounds.md`).
   Already wired.
 - [ ] SOUND-037 — ch27: unknown — **corrected 2026-07-13**: the real projectile-fire channel is ch52, not ch27 (see SOUND-062); this line item's original guess is unconfirmed against source.
-- [ ] SOUND-038 — ch28: jeep/tank start
-- [ ] SOUND-039 — ch29: jeep/tank motor high (loop)
-- [ ] SOUND-040 — ch30: jeep/tank stop
-- [ ] SOUND-041 — ch31: jeep/tank motor low (loop)
+- [x] SOUND-038 — ch28: jeep/tank start — **done 2026-07-17, and also covers Overcraft** (the real
+      function shares this channel set across all 3), see `SOUND-008`.
+- [x] SOUND-039 — ch29: jeep/tank motor high (loop) — **done 2026-07-17**, see `SOUND-008`.
+- [x] SOUND-040 — ch30: jeep/tank stop — **done 2026-07-17**, see `SOUND-008`.
+- [x] SOUND-041 — ch31: jeep/tank motor low (loop) — **done 2026-07-17**, see `SOUND-008`.
 - [ ] SOUND-042 — ch32: unknown — **identified 2026-07-16**: verified directly against
   `Decor.cpp:5476-5489` — real ch32 is the hub-screen world-select entry sound (`Decor::IsWorld()`
   match, `BlupiAction::Bye`). Out of scope — hub/menu screens (`MENU-*` territory) aren't touched

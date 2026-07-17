@@ -154,6 +154,25 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: implement the real vehicle motor sound crossfade (plan.md SOUND-007/008, ch15-18/28-31).**
+  Real `Decor::AdaptMotorVehicleSound()` gives Helicopter its own start/loop-high/loop-low/stop
+  sound set (ch15/16/18/17) and Jeep/Tank/Overcraft share a second set (ch28/29/31/30) —
+  Skateboard has no motor sound at all. New `GEBlupiController::HasVehicleMotor()`/
+  `IsVehicleMotorHigh()` (the real per-mode "moving vs idle" pitch-select flag, translated as
+  nonzero horizontal speed for ground vehicles / nonzero vertical velocity for flight modes) +
+  `GalaxyEggbertCnaGame::UpdateVehicleMotorSound()`, a direct port of the real crossfade state
+  machine (one-shot start/stop sounds bracket the looped motor sound, exactly mirroring real
+  `m_blupiMotorSound`'s sentinel-based transition logic). Closed 12 more stale/mislabeled
+  `BLUPI-0xx` checkboxes along the way (the whole "Vehicle Modes" subsection was in the same
+  not-yet-cross-referenced state as the earlier `BLUPI-104`-`117` batch) — found and corrected a
+  wrong channel claim (`BLUPI-093`'s "ch53 = Tank fire sound" is actually the real out-of-ammo
+  click; fire itself is ch52) and a repeated "Balloon" naming-trap mislabel (`BLUPI-096`/`148`:
+  `ObjectType46` grants Overcraft, not a separate Balloon vehicle). Left genuinely open/blocked
+  items alone (`BLUPI-100` Vent/fan propulsion — confirmed still entirely unmodeled; `BLUPI-101`
+  Suspend — blocked on the deferred render-geometry decision; `BLUPI-087` helicopter debris —
+  needs a particle system that doesn't exist). 4 new `VerifyBlupiMovement` assertions. Full
+  regression clean (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure); live
+  headless launch smoke check clean.
 - **docs only**: closed 14 stale `BLUPI-1xx` checkboxes (Shield/Hide/SuperBlupi/Invert/Sucette/
   Ecrase/Dynamite/Perso/death-cause/footstep) — all already implemented under Phase 14/15/17 or
   `HUD`/`CAM` items, just never cross-referenced back. Corrected `BLUPI-113`'s "walk up walls"
