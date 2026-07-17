@@ -2443,9 +2443,21 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-009 — Respawn invincibility: 2 s grace period after death
 - [ ] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide)
 - [ ] BLUPI-011 — Blob shadow (scans downward, scales with height) *(3D adaptation)*
-- [ ] BLUPI-012 — Sub-pixel accumulator (m_blupiSubPixelX/Y) — prevents drift at high FPS
-- [ ] BLUPI-013 — BlupiBloque: directional collision query (can I move here?)
-- [ ] BLUPI-014 — BlupiAdjust: push Blupi out of penetrated tiles after movement
+- [ ] BLUPI-012 — Sub-pixel accumulator (m_blupiSubPixelX/Y) — prevents drift at high FPS.
+  **Clarified 2026-07-16**: this is a real 2D-integer-position-truncation workaround (the real
+  engine stores position as integers, so sub-pixel motion needs an explicit fractional
+  accumulator). This engine stores position as native floats throughout — there is no integer
+  truncation to work around, so this isn't a gap to port, it's architecturally moot (same
+  category as the already-documented Ecrase-hitbox non-goal above).
+- [ ] BLUPI-013 — BlupiBloque: directional collision query (can I move here?) — **clarified
+  2026-07-16**: the EQUIVALENT real functionality (can Blupi move to a given position) is already
+  implemented via this engine's own 3D-native collision (`GEBlupiController::TryMoveAxis()`/
+  `GroundHeightAt()`, `BLUPI-006`/`007`, already marked done as "3D adaptation, not the 2D
+  transcription"). Not a gap — a literal `BlupiBloque` port was never the goal, just left
+  unclosed as its own checklist line.
+- [ ] BLUPI-014 — BlupiAdjust: push Blupi out of penetrated tiles after movement — same
+  clarification as `BLUPI-013`: covered by this engine's own 3D collision-resolution shape in
+  `TryMoveAxis()`, not a separate gap.
 - [ ] BLUPI-015 — SCROLL_SPEED = 8 px/tick camera scroll toward Blupi
 - [x] BLUPI-016 — m_blupiLevel: charge level gauge for vehicles/actions — **stale AND label
   imprecise, corrected 2026-07-16**: verified directly against `Decor.cpp:4619-5324` — real
