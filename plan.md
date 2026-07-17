@@ -2420,11 +2420,26 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [x] BLUPI-001 — Gravity applied every frame (CNA, 2026-07-10)
 - [x] BLUPI-002 — Jump: upward impulse on jump input; air flag set (CNA, 2026-07-10)
 - [x] BLUPI-003 — Walk left/right: input sets horizontal speed (CNA, 2026-07-10)
-- [ ] BLUPI-004 — Crouch: Left Shift sets Down state
-- [ ] BLUPI-005 — Look up / glide: Right Shift in air → reduced gravity, capped fall speed
+- [x] BLUPI-004 — Crouch: Left Shift sets Down state — **stale, corrected 2026-07-16**: already
+  implemented (`crouchHeld = keys.IsKeyDown(Keys::LeftShift)` in `GalaxyEggbertCnaGame.cpp`,
+  drives `AnimState::Down` in `GEBlupiController::UpdateAnim()`). Only the visible SPRITE for
+  this state is blocked (no 3D Blupi model, `069`) — the state-tracking itself works.
+- [ ] BLUPI-005 — Look up / glide: Right Shift in air → reduced gravity, capped fall speed —
+  **premise likely wrong, corrected 2026-07-16**: verified directly against `Decor.cpp:3236-3243`
+  — real `BlupiAction::Up` requires `!m_blupiAir` (explicitly GROUND-ONLY, a cosmetic look-up pose
+  triggered by the 2D Y-axis input while standing), not an airborne glide. A broad grep for
+  "glide"/reduced-gravity-while-holding-up across all of `Decor.cpp` found nothing. This looks
+  like another invented/hallucinated premise (same category as the already-cancelled `BLUPI-126`/
+  `131` stomp-kill) rather than a real missing mechanic — `Right Shift` (`lookUpHeld`) IS already
+  wired in this engine, correctly, for the ground look-up pose AND (separately, correctly) for
+  Helicopter/Overcraft vertical-flight ascend; there is no third "glide" case to add.
 - [x] BLUPI-006 — Auto step-up: 1-tile ledges climbed automatically (CNA, 2026-07-10) *(3D adaptation)*
 - [x] BLUPI-007 — Grid-based tile collision (CNA, 2026-07-10) — collision-only, not the 2D AABB/CharacterController transcription
-- [ ] BLUPI-008 — Respawn at blupiStart on death
+- [x] BLUPI-008 — Respawn at blupiStart on death — **stale, corrected 2026-07-16**: already
+  implemented as the real 10-slot safe-position FIFO respawn (`GEBlupiController::
+  UpdateSafePosition()`/`GetValidX/Y/Z()`, plan.md `067`), verified directly against
+  `Decor.cpp:6467-6478`/`6654-6673` back on 2026-07-11 — this specific checklist entry was just
+  never marked done at the time.
 - [ ] BLUPI-009 — Respawn invincibility: 2 s grace period after death
 - [ ] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide)
 - [ ] BLUPI-011 — Blob shadow (scans downward, scales with height) *(3D adaptation)*
@@ -2432,11 +2447,21 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-013 — BlupiBloque: directional collision query (can I move here?)
 - [ ] BLUPI-014 — BlupiAdjust: push Blupi out of penetrated tiles after movement
 - [ ] BLUPI-015 — SCROLL_SPEED = 8 px/tick camera scroll toward Blupi
-- [ ] BLUPI-016 — m_blupiLevel: charge level gauge for vehicles/actions
+- [x] BLUPI-016 — m_blupiLevel: charge level gauge for vehicles/actions — **stale AND label
+  imprecise, corrected 2026-07-16**: verified directly against `Decor.cpp:4619-5324` — real
+  `m_blupiLevel` is specifically the water/Nage breath gauge (100→0 while submerged, Shield/Hide
+  immune), not a general "vehicles/actions charge gauge". Already implemented as `148`'s water
+  breath gauge (`GEBlupiController::GetWaterGaugeLevel()`/`kWaterGaugeMax`).
 - [ ] BLUPI-017 — m_blupiTimeNoAsc: timer preventing lift re-entry after a dismount
 - [ ] BLUPI-018 — m_blupiTimeMockery: timer for enemy mockery animation
 - [ ] BLUPI-019 — m_blupiTimeOuf: relief animation timer (Ouf variants)
-- [ ] BLUPI-020 — m_blupiFifoPos[10]: history of last 10 positions (used for teleporter exit placement)
+- [x] BLUPI-020 — m_blupiFifoPos[10]: history of last 10 positions — **stale AND wrong
+  parenthetical, corrected 2026-07-16**: already implemented as part of `067`'s safe-position FIFO
+  (same as `BLUPI-008` above). The "(used for teleporter exit placement)" claim is wrong — verified
+  directly against `Decor.cpp:6475-6671` — the real FIFO is used SOLELY for `m_blupiValidPos`
+  (safe respawn), never referenced by teleporter code at all; the real teleporter-exit mechanism
+  is the separate paired-teleporter lookup (`Decor::SearchTeleporte()`, already ported as this
+  engine's own `GEWorldRuntime::FindTeleportDestination()`).
 - [ ] BLUPI-021 — Blupi "front" flag (m_blupiFront): determines draw order vs objects
 
 #### 4.2 BlupiAction State Machine (87 states)
