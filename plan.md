@@ -2945,7 +2945,14 @@ accordingly.
   implemented (`case FanUp: return 132 + (phase % 3);`). Same compass-direction-label caveat.
 - [x] TILE-023 — Ventilator/fan tiles, icons 135-137, 3-frame (`table_decor_ventillob`) — already
   implemented (`case FanDown: return 135 + (phase % 3);`). Same compass-direction-label caveat.
-- [ ] TILE-024 — Water drip tiles (icons: table_decor_goutte, 48-frame)
+- [ ] TILE-024 — Water drip tiles (icons: table_decor_goutte, 48-frame) — **researched 2026-07-17,
+      still correctly blocked, not stale**: the real 48-frame table (`Tables.cpp:1835-1842`,
+      `table_decor_goutte`, icons 404-410, includes real `-1` "no sprite this tick" gaps) is a
+      known, exact transcription target, and `BlockTypes.hpp`'s own `Drip` comment already
+      correctly identifies WHY it isn't wired: the real visual is a Billboard-rendered vase/bulb
+      sprite, not a terrain-cube atlas swap like Lava/Water/Saw — animating it faithfully needs
+      the same kind of render-mode decision as the already-deferred Saw-blade/`ThinMechanical`
+      items, not just a table transcription. Left blocked, not implemented.
 - [x] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame), div 4 / 200ms —
   **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
   `case Temp: return kAnimTemp[phase % 20];`).
