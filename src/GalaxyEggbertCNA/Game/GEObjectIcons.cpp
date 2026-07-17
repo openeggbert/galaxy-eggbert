@@ -81,6 +81,20 @@ namespace GalaxyEggbert::CNA
         static const int kExplo5[12] = {54,-1,55,-1,56,-1,57,-1,58,-1,59,-1};
         static const int kExplo6[6]  = {54,55,56,57,58,59};
         static const int kExplo8[5]  = {7,8,9,10,11};
+        // Real table_plouf/table_tiplouf/table_blup (Tables.cpp:1508-1519,
+        // found 2026-07-17 during water-splash research) -- same "wrong
+        // approximation formula" bug class as every array above. Plouf is a
+        // 7-frame ripple oscillating 99->102->99 (NOT a monotonic range up
+        // to 105); Tiplouf is only 3 frames, {244,99,244} -- icon 244 is the
+        // ambient background, 99 the visible droplet on the middle frame
+        // (NOT a monotonic range up to 246); Blup is a 20-frame shuffled
+        // reuse of just 4 icons (103-106), NOT a growing range up to 122.
+        static const int kPlouf[7]   = {99,100,101,102,101,100,99};
+        static const int kTiplouf[3] = {244,99,244};
+        static const int kBlup[20]   = {
+            103,104,105,106,104,103,106,105,103,104,
+            103,105,106,103,105,106,103,104,106,105
+        };
         // Real table_magictrack (Tables.cpp:1754-1759, Shield/Power magic
         // trail fix, 2026-07-14) -- NOT a simple ascending range: the real
         // 24-frame "loop departs Blupi" animation repeats icons 152-156
@@ -210,10 +224,10 @@ namespace GalaxyEggbert::CNA
             // (object-m.png's 440-icon grid) -- see IsObjectMPngSourced()
             // and GalaxyEggbertCnaGame.cpp's dedicated dispatch, mirroring
             // the existing IsUniformCubeObject() precedent.
-            case ObjectType::ObjectType14: return 99 + (p / 6) % 7;
-            case ObjectType::ObjectType15: return 103 + (p / 6) % 20;
+            case ObjectType::ObjectType14: return kPlouf[p % 7];
+            case ObjectType::ObjectType15: return kBlup[p % 20];
             case ObjectType::ObjectType31: return 238 + (p / 6) % 6;
-            case ObjectType::ObjectType35: return 244 + (p / 6) % 3;
+            case ObjectType::ObjectType35: return kTiplouf[p % 3];
             case ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
             case ObjectType::ObjectType1:  return 29;
             case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;

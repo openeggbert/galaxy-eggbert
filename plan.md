@@ -1035,9 +1035,12 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       5/20 = 0.25s/level`, a direct `Config::ScaleTime(5)`-at-20Hz transcription, same technique
       already used for `kTeleportDuration`), resets to full the instant Nage ends. Drowning plays
       the real dedicated channel 26 (distinct from every other death cause, confirmed via
-      `07-sounds.md`) via the existing shared `triggerDeath()` lambda. Real channel 22 (water
-      entry/exit splash) plays entering Surf/Nage from dry; channel 25 (start-surfing) plays on
-      Nage→Surf. Nage also gets reduced ("floaty") gravity (`kNageGravityMultiplier`, an
+      `07-sounds.md`) via the existing shared `triggerDeath()` lambda. Channel 25 (start-surfing)
+      plays on Nage→Surf. **Correction 2026-07-17**: channel 22 was originally wired to play
+      entering Surf/Nage from dry — backwards; real ch22 plays on water EXIT, not entry (see
+      `SOUND-032`'s full correction and `PICKUP-078`/`079`/`080` for the real entry/ambient splash
+      sounds, ch23/24/64, added the same day). Nage also gets reduced ("floaty") gravity
+      (`kNageGravityMultiplier`, an
       approximation, same shape as the wasp balloon's own gravity multiplier) and a swim-up jump
       (`kSwimUpSpeed`, also an approximation) instead of the normal ground jump. **Not modeled**
       (documented simplifications, same pattern as every other Phase 14 mechanic): the real
@@ -1454,10 +1457,12 @@ Full spec: `mobile-eggbert-reference/06-doors.md`. `160`/`161`/`162` done 2026-0
       2-cell probe. This engine's `keys1_`/`keys2_`/`keys3_` are plain pickup counters (not a
       persisted bitmask) — modeled as "count > 0 opens, cleared to 0 on use", behaviorally
       identical to the real boolean flag for the realistic case (real levels only ever grant one
-      of each key before requiring a re-pickup). Real voyage-deferred key-flag-setting (the pickup
-      is consumed from the world immediately, but the key isn't "held" until a HUD-fly animation
-      completes) is NOT modeled — same simplification as every other pickup this session, applied
-      immediately instead.
+      of each key before requiring a re-pickup). **Correction 2026-07-17**: the note below was
+      stale as of `158` (done 2026-07-14, same day as this entry but written first) — real
+      voyage-deferred key-flag-setting (pickup deleted from the world on contact, but
+      `keys1_`/`keys2_`/`keys3_` only incremented once the HUD-fly voyage completes,
+      `ApplyVoyageReward()` lines ~2990-2999) IS modeled after all, via `RequestVoyage(VoyageKind::
+      Key1/2/3, ...)` at each key's contact site. Superseded, no longer a gap.
 - [x] `162` Treasure-gated doors — done 2026-07-12, verified directly against
       `Decor::OpenDoorsTresor` (~11642). A door needing N treasures uses icon `420+N`; the instant
       a treasure pickup completes, the WHOLE terrain grid is scanned and every door in
@@ -1679,7 +1684,12 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       held for 6 consecutive frames (proving the cooldown gates correctly in the live game loop,
       not just the isolated test). Full regression suite green (64/64 unit tests, all verify
       tools, both backends).
-- [ ] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups.
+- [x] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups — **already
+      done, stale duplicate closed 2026-07-17**: this is the exact same mechanic as `VISUAL-012`
+      (done 2026-07-14). Confirmed directly in `GEInteractionSystem.cpp`: `AppendSparkleBurst()`
+      is called for `ObjectType5` (treasure, line 1824) and all 3 keys (`ObjectType49/50/51`,
+      lines 1846/1853/1860), matching real `Decor.cpp:5948-6006` exactly (treasure and all 3 keys
+      fire the same 4-direction `ObjectType39` burst). No further work needed.
 - [ ] `177` Ecrase/pancake collision-box mode and Suspended (hanging, no accel ramp) movement
       mode — the two collision/movement modes not covered by `E3D-MIG-171`'s vehicle list.
       **Researched 2026-07-12, split into two distinct outcomes, neither implemented this
@@ -2702,7 +2712,8 @@ re-verified individually since it is not a full port yet.
 - [ ] BLUPI-148 — Balloon motor sounds: ch28/ch30 (start/stop), ch29/ch31 (loop low/high)
 - [ ] BLUPI-149 — Electro sounds: ch38 (long arc) / ch90 (spark)
 - [ ] BLUPI-150 — Glu splash sounds: ch51
-- [ ] BLUPI-151 — Water splash sounds: ch23 (small plouf), ch64 (tiplouf), ch24 (blup bubble)
+- [x] BLUPI-151 — Water splash sounds: ch23 (small plouf), ch64 (tiplouf), ch24 (blup bubble) —
+      **done 2026-07-17**, see `SOUND-032/033/034/074`/`PICKUP-078/079/080` for the full writeup.
 - [ ] BLUPI-152 — Secret exit found sound: ch21
 - [ ] BLUPI-153 — Door open sound: ch7
 
@@ -3157,9 +3168,26 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 - [x] PICKUP-075 — Door open — done, real channel **33** (not ch7), duplicate of PICKUP-041 above.
 - [x] PICKUP-076 — Switch activate/deactivate sound — **correction 2026-07-13**: same false-negative as PICKUP-073 (the earlier audit pass only checked `GEInteractionSystem.cpp`) — actually wired correctly in `GalaxyEggbertCnaGame.cpp`'s `TryActivateSwitch()` call site: ch77 on activate, ch76 on deactivate, exactly matching the original guess.
 - [x] PICKUP-077 — dynamite-blast/bullet-wall-impact sound — done, but real channel is **10** (not ch40) for both the dynamite center-blast boom and a fired bullet hitting a solid wall; the originally-guessed "ch40 explosion" is actually the real wasp-balloon-entry channel (see ENEMY-039/PICKUP note), unrelated.
-- [ ] PICKUP-078 — Water plouf: ch23 — NOT modeled, no ObjectType14 implementation exists.
-- [ ] PICKUP-079 — Water bubble: ch24 — NOT modeled, no ObjectType15 implementation exists.
-- [ ] PICKUP-080 — Water small plouf: ch64 — NOT modeled, no ObjectType35 implementation exists.
+- [x] PICKUP-078 — Water plouf: ch23 — **done 2026-07-17**, verified directly against
+      `Decor::MoveObjectPlouf()` (`Decor.cpp:6991-7003`). Spawns on the real dry->Surf/dry->Nage
+      transition (`GalaxyEggbertCnaGame.cpp`'s water-status block, `wasDry && !nowDry`), gated to
+      one active instance at a time (`GEInteractionSystem::HasActiveObjectOfType()`, matching the
+      real pre-check exactly). Found and fixed alongside this: real channel 22 was actually wired
+      to the WRONG transition (entry, not exit — see `SOUND-032`'s correction) and ch23 wasn't
+      wired to anything. Also fixed `GEObjectIcons.cpp`'s `ObjectType14` icon formula (was a wrong
+      monotonic-range approximation; real `table_plouf` oscillates 99->102->99, non-monotonic).
+- [x] PICKUP-079 — Water bubble: ch24 — **done 2026-07-17**, verified directly against
+      `Decor::MoveObjectBlup()` (`Decor.cpp:7027-7070`). Real ambient bubble spawned periodically
+      while fully submerged (Nage), rising exactly as many tiles as the clear water column above
+      Blupi (`GEInteractionSystem::SpawnWaterBubble()`, scans via `BlockTypes::isWater()`),
+      self-deleting on arrival at the surface (folded into the shared `AdvancePatrolStep()`
+      ObjectType23-arrival branch — real source treats both types identically there). Also fixed
+      `GEObjectIcons.cpp`'s `ObjectType15` icon formula (was a wrong growing-range approximation;
+      real `table_blup` is a 20-frame shuffle of just 4 icons, 103-106).
+- [x] PICKUP-080 — Water small plouf: ch64 — **done 2026-07-17**, see `SOUND-074`'s writeup for
+      the jump-exit-specific trigger and its documented approximation. Also fixed
+      `GEObjectIcons.cpp`'s `ObjectType35` icon formula (was a wrong monotonic-range
+      approximation; real `table_tiplouf` is only 3 frames, `{244,99,244}`).
 - [ ] PICKUP-081 — Glu/glue sound: ch51 — NOT modeled (ObjectType34 has no dedicated implementation); real ch51 is actually the generic hazard-contact death sound used elsewhere (crusher/spike/etc. contexts), an unrelated reuse — the "glue" association in this line item appears to be a guess, not confirmed against source.
 - [x] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions) — confirmed correct, matches Phase 15 `155`; also shared by blupih/blupit's projectile-fire sound (`FireBlupihShot()`), a real reused channel not specific to dynamite alone.
 - [x] PICKUP-083 — Secret exit pickup: ch21 — **description was wrong**: there is no dedicated "ch21" secret-exit sound in real source — done as part of PICKUP-009, it reuses the SAME win (ch14)/reject (ch13) sounds as the regular exit, not a distinct channel.
@@ -3338,11 +3366,25 @@ old scheme — cross-check against §7 when wiring these).
   such distinct sound exists at all — confirmed via `PICKUP-083`'s own research, the secret exit
   reuses the regular exit's ch13/ch14). Genuinely not wired under the correct meaning (no
   look-up-transition sound exists in this engine).
-- [x] SOUND-032 — ch22: **stale, corrected 2026-07-16** — real use is the water entry/exit splash
-  (plays entering EITHER Surf or Nage from fully dry, `GalaxyEggbertCnaGame.cpp`'s water-status
-  block). Already wired.
-- [ ] SOUND-033 — ch23: water plouf
-- [ ] SOUND-034 — ch24: water bubble rise
+- [x] SOUND-032 — ch22: **corrected again 2026-07-17** (the 2026-07-16 pass had it backwards) —
+  verified directly against all 4 real `PlaySound(SoundChannel22, ...)` call sites
+  (`Decor.cpp:5356/5378/5392/5405`): every one is in a water-EXIT path (jump-out, transport-out,
+  drift-out onto shore), none in entry. `GalaxyEggbertCnaGame.cpp`'s water-status block was
+  wired backwards (played on entry, `wasDry && !nowDry`) — fixed to fire on exit
+  (`!wasDry && nowDry`) instead.
+- [x] SOUND-033 — ch23: water plouf — **done 2026-07-17**, alongside the ch22 fix above. Real
+  entry splash (`Decor::MoveObjectPlouf`, `ObjectType14`) was previously entirely unwired (this
+  was ch22's actual real meaning, confused with the exit sound above). Now spawns via
+  `GEInteractionSystem::SpawnWaterSplash()` on the real dry->Surf/dry->Nage transition
+  (`wasDry && !nowDry`), single-instance-gated (`HasActiveObjectOfType()`).
+- [x] SOUND-034 — ch24: water bubble rise — **done 2026-07-17**. Real ambient bubble
+  (`Decor::MoveObjectBlup`, `ObjectType15`) while fully submerged (Nage), triggered twice per
+  ~3.5s cycle (`m_time % ScaleTime(70) == 0 || == ScaleTime(28)`, reproduced via this engine's
+  own `GEWorldRuntime::GetAnimPhase() % 70`). New `GEInteractionSystem::SpawnWaterBubble()` scans
+  the water column above Blupi (`BlockTypes::isWater()`) and spawns a bubble that rises exactly
+  that many tiles, self-deleting on arrival (folded into the existing `AdvancePatrolStep()`
+  ObjectType23-arrival branch, matching real source's identical treatment of both types at that
+  exact junction).
 - [x] SOUND-035 — ch25: **stale, corrected 2026-07-16** — real use is the start-surfing/
   resurfacing sound (Nage→Surf transition specifically, distinct from ch22's general water-entry
   splash). Already wired.
@@ -3435,7 +3477,12 @@ old scheme — cross-check against §7 when wiring these).
   Sucette's (that's ch44, see `SOUND-054`). Already wired.
 - [x] SOUND-073 — ch63: **stale, corrected 2026-07-16** — real use is the Hide secret-power
   warning-threshold sound (@20 levels remaining). Already wired.
-- [ ] SOUND-074 — ch64: small water plouf
+- [x] SOUND-074 — ch64: small water plouf — **done 2026-07-17**, alongside `SOUND-032/033/034`
+      above. Real "Tiplouf" (`ObjectType35`), the jump-triggered exit's extra splash on top of
+      ch22 — this engine approximates "deliberate jump exit" (vs. passive drift-out, which plays
+      only ch22) as `jumpPressed` being true at the exact water-exit frame, a documented
+      simplification of this engine's single-point collision model (see `GalaxyEggbertCnaGame.cpp`'s
+      own comment for the full reasoning).
 - [ ] SOUND-075 — ch65: suspend detach / rope release (idle fidget channel, see SOUND-010c) —
   **label wrong, corrected 2026-07-16**: verified directly against `Decor.cpp:3147-3168` — real
   ch65 is the `Mockery`/`Mockeryi` idle-taunt-animation sound, not "suspend detach". Correctly

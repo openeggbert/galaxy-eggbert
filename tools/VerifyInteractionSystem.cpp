@@ -3126,6 +3126,127 @@ int main(int argc, char** argv)
               "the respawned item is static (posStart==posEnd==current, real speed=0)");
     }
 
+    // 17.15. Water splash/bubble effects (plan.md PICKUP-078/079/080, found
+    // 2026-07-17): SpawnWaterSplash() (ObjectType14 Plouf / ObjectType35
+    // Tiplouf, static, real phase>=14/6 self-delete) and SpawnWaterBubble()
+    // (ObjectType15 Blup, rises through a scanned water column, self-
+    // deletes on arrival via the shared AdvancePatrolStep() ObjectType23
+    // junction).
+    {
+        GEWorldRuntime splashWorld;
+        GEInteractionSystem splashInteraction;
+        constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
+        constexpr float sx = 5.0f, sy = 2.0f, sz = 5.0f;
+
+        const auto countActiveOfType = [&splashWorld](ObjectType type)
+        {
+            int count = 0;
+            for (const auto& obj : splashWorld.GetMobileObjects())
+            {
+                if (obj.active && obj.type == type)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        };
+
+        check(!splashInteraction.HasActiveObjectOfType(splashWorld, ObjectType::ObjectType14),
+              "HasActiveObjectOfType() is false before any Plouf is spawned");
+        splashInteraction.SpawnWaterSplash(splashWorld, ObjectType::ObjectType14, sx, sy, sz);
+        check(countActiveOfType(ObjectType::ObjectType14) == 1,
+              "SpawnWaterSplash(Plouf) spawns exactly 1 static instance");
+        check(splashInteraction.HasActiveObjectOfType(splashWorld, ObjectType::ObjectType14),
+              "HasActiveObjectOfType() is true once a Plouf is active");
+
+        for (int i = 0; i < 13; ++i)
+        {
+            splashWorld.Update(dt);
+        }
+        splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOfType(ObjectType::ObjectType14) == 1,
+              "the Plouf splash is still active just before its real phase-14 self-delete");
+        splashWorld.Update(dt);
+        splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOfType(ObjectType::ObjectType14) == 0,
+              "the Plouf splash self-deletes once phase reaches the real 14-tick lifetime");
+
+        // Tiplouf -- same shape, shorter real 6-tick lifetime.
+        splashInteraction.SpawnWaterSplash(splashWorld, ObjectType::ObjectType35, sx, sy, sz);
+        check(countActiveOfType(ObjectType::ObjectType35) == 1,
+              "SpawnWaterSplash(Tiplouf) spawns exactly 1 static instance");
+        for (int i = 0; i < 5; ++i)
+        {
+            splashWorld.Update(dt);
+        }
+        splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOfType(ObjectType::ObjectType35) == 1,
+              "the Tiplouf splash is still active just before its real phase-6 self-delete");
+        splashWorld.Update(dt);
+        splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(countActiveOfType(ObjectType::ObjectType35) == 0,
+              "the Tiplouf splash self-deletes once phase reaches the real 6-tick lifetime");
+
+        // Corrected icon tables (real table_plouf/tiplouf/blup, Tables.cpp:1508-1519, previously
+        // wrong monotonic-range approximations here).
+        check(GetObjIcon(ObjectType::ObjectType14, 0) == 99, "Plouf icon at phase=0 is the real table_plouf[0]=99");
+        check(GetObjIcon(ObjectType::ObjectType14, 3) == 102, "Plouf icon at phase=3 is the real table_plouf[3]=102 (ripple peak)");
+        check(GetObjIcon(ObjectType::ObjectType14, 6) == 99, "Plouf icon at phase=6 is the real table_plouf[6]=99 (back down)");
+        check(GetObjIcon(ObjectType::ObjectType35, 0) == 244, "Tiplouf icon at phase=0 is the real table_tiplouf[0]=244 (ambient)");
+        check(GetObjIcon(ObjectType::ObjectType35, 1) == 99, "Tiplouf icon at phase=1 is the real table_tiplouf[1]=99 (the droplet)");
+        check(GetObjIcon(ObjectType::ObjectType35, 2) == 244, "Tiplouf icon at phase=2 is the real table_tiplouf[2]=244 (back to ambient)");
+        check(GetObjIcon(ObjectType::ObjectType15, 0) == 103, "Blup icon at phase=0 is the real table_blup[0]=103");
+        check(GetObjIcon(ObjectType::ObjectType15, 6) == 106, "Blup icon at phase=6 is the real table_blup[6]=106 (shuffled, not a growing range)");
+
+        // SpawnWaterBubble() -- a 4-tile water column above the spawn point.
+        GEWorldRuntime bubbleWorld;
+        GEInteractionSystem bubbleInteraction;
+        auto& mutableBubbleWorld = bubbleWorld.GetWorldMutable();
+        constexpr int kBGX = 20, kBGZ = 20, kBGY0 = 10;
+        for (int i = 0; i < 5; ++i)
+        {
+            mutableBubbleWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0 + i), kBGZ,
+                                          Worlds::Block::make(BlockTypes::Water1));
+        }
+        mutableBubbleWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0 + 5), kBGZ,
+                                      Worlds::Block::make(BlockTypes::Air));
+        const float bx = static_cast<float>(kBGX) - GEWorldRuntime::kWorldCenterX;
+        const float bz = static_cast<float>(kBGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float by = static_cast<float>(kBGY0);
+
+        bubbleInteraction.SpawnWaterBubble(bubbleWorld, bubbleWorld.GetWorld(), bx, by, bz);
+        const auto findBubble = [&bubbleWorld]()
+        {
+            return std::find_if(bubbleWorld.GetMobileObjects().begin(), bubbleWorld.GetMobileObjects().end(),
+                                  [](const auto& o) { return o.active && o.type == ObjectType::ObjectType15; });
+        };
+        auto bubbleIt = findBubble();
+        check(bubbleIt != bubbleWorld.GetMobileObjects().end(),
+              "SpawnWaterBubble() spawns an ObjectType15 instance when there's a clear water column above");
+        check(bubbleIt->patrolStep == 2, "the bubble starts already advancing (real step=2, no dwell)");
+        check(std::fabs(bubbleIt->posEndY - bubbleIt->posStartY - 4.0f) < 0.01f,
+              "the bubble's posEnd is exactly the real water-column height (4 clear tiles) above its start");
+
+        for (int i = 0; i < 40; ++i)
+        {
+            bubbleWorld.Update(dt);
+            bubbleInteraction.Update(dt, bubbleWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(findBubble() == bubbleWorld.GetMobileObjects().end(),
+              "the bubble self-deletes on reaching posEnd (real ObjectType15/ObjectType23 shared arrival branch), not dwelling there");
+
+        // No-op guard: no water column above (dry tile immediately above the spawn point).
+        GEWorldRuntime dryWorld;
+        GEInteractionSystem dryInteraction;
+        auto& mutableDryWorld = dryWorld.GetWorldMutable();
+        mutableDryWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0), kBGZ, Worlds::Block::make(BlockTypes::Water1));
+        mutableDryWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0 + 1), kBGZ, Worlds::Block::make(BlockTypes::Air));
+        dryInteraction.SpawnWaterBubble(dryWorld, dryWorld.GetWorld(), bx, by, bz);
+        check(std::none_of(dryWorld.GetMobileObjects().begin(), dryWorld.GetMobileObjects().end(),
+                            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType15; }),
+              "SpawnWaterBubble() is a no-op with no clear water column above (real num<=0 guard)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

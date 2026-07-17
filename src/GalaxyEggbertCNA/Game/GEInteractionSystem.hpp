@@ -359,6 +359,44 @@ namespace GalaxyEggbert::CNA
         // reasoning as `SpawnFanHitFlash()` above.
         void SpawnTeleportArc(GEWorldRuntime& worldRuntime, float x, float y, float z);
 
+        // Water splash (plan.md PICKUP-078/080, ObjectType14/35) -- real
+        // `Decor::MoveObjectPlouf()`/`MoveObjectTiplouf()` (`Decor.cpp:
+        // 6991-7025`), confirmed via direct source read during 2026-07-17
+        // water-splash research. Both are static (no posEnd slide, real
+        // `ObjectStart(pos, type, 0)`), single-instance-at-a-time (a real
+        // pre-check scans for an already-active instance of the SAME type
+        // and no-ops if found -- reproduced by the caller checking
+        // `HasActiveObjectOfType()` before calling this, same idiom as
+        // every other "only one at a time" pickup gate this session).
+        // Real self-delete: Plouf phase>=14, Tiplouf phase>=6 (`Decor.cpp:
+        // 8599-8622`) -- handled generically in `Update()`'s per-object
+        // loop, same as every other cosmetic burst. Called directly by the
+        // game class at its own water Surf/Nage transition site, same
+        // reasoning as `SpawnFanHitFlash()` above.
+        void SpawnWaterSplash(GEWorldRuntime& worldRuntime, GalaxyEggbert::ObjectType type, float x, float y, float z);
+
+        // Real pre-check for SpawnWaterSplash()'s "only one Plouf/Tiplouf
+        // active at once" gate (`Decor.cpp:6993-6998`/`7007-7012`).
+        [[nodiscard]] bool HasActiveObjectOfType(const GEWorldRuntime& worldRuntime, GalaxyEggbert::ObjectType type) const;
+
+        // Ambient rising water bubble (plan.md PICKUP-079, ObjectType15) --
+        // real `Decor::MoveObjectBlup()` (`Decor.cpp:7027-7070`): scans
+        // upward from (x,y,z) counting consecutive water-tile columns
+        // (this engine's `BlockTypes::isWater()`, matching the real
+        // "icon==91 or icon==92" check's intent), spawns a bubble that
+        // rises exactly that many tiles (posEnd = start + count, real
+        // `stepAdvance = ScaleTime(count*10)`, this build's already-
+        // established 1:1 tick convention) and self-deletes on arrival
+        // (folded into the shared `AdvancePatrolStep()`'s existing
+        // ObjectType23-arrival branch, since real source treats both
+        // identically at that exact junction, `Decor.cpp:8095-8098`). A
+        // no-op if there's no clear water column above (count<=0), matching
+        // the real guard exactly. Called periodically from the game class
+        // while `GEBlupiController::IsNage()`, keyed off
+        // `GEWorldRuntime::GetAnimPhase()` the same way every other real
+        // `m_time %`-gated periodic effect in this engine already is.
+        void SpawnWaterBubble(GEWorldRuntime& worldRuntime, const Worlds::World& world, float x, float y, float z);
+
         // Pollution puff (plan.md VISUAL-013, ObjectType36) -- real
         // vehicle-exhaust smoke, confirmed via direct source read
         // (`Decor::MoveObjectPollution()`, `Decor.cpp:6877-6989`). Called

@@ -154,6 +154,29 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: implement real water splash/bubble effects (plan.md PICKUP-078/079/080, SOUND-032/033/
+  034/074, BLUPI-151).** Found while auditing the Pickups & Objects checklist: real channel 22 was
+  wired backwards (playing on water ENTRY; all 4 real `PlaySound(ch22,...)` call sites are EXIT
+  paths, `Decor.cpp:5356/5378/5392/5405`) and the real entry splash (ch23, "Plouf",
+  `ObjectType14`) wasn't wired to anything. Fixed ch22 to fire on exit only; added ch23 + a real
+  `GEInteractionSystem::SpawnWaterSplash()` spawn on the dry->Surf/dry->Nage transition
+  (single-instance-gated via new `HasActiveObjectOfType()`). Added the jump-exit-specific
+  "Tiplouf" splash (ch64, `ObjectType35`) — this engine approximates "deliberate jump exit" as
+  `jumpPressed` at the exact exit frame (documented simplification, single-point collision has no
+  equivalent to the real 3-way exit-cause distinction). Added the ambient rising bubble while
+  swimming (ch24, `ObjectType15`, new `GEInteractionSystem::SpawnWaterBubble()` — scans the real
+  water column above Blupi via `BlockTypes::isWater()`, spawns a bubble rising exactly that many
+  tiles, self-deleting on arrival via the existing `AdvancePatrolStep()` ObjectType23-arrival
+  branch, matching real source's identical treatment of both types there), triggered twice per
+  ~3.5s cycle off `GEWorldRuntime::GetAnimPhase() % 70`. Also fixed 3 more `GEObjectIcons.cpp`
+  wrong-approximation-formula bugs found along the way (same bug class as the `explo5/6/8` fixes
+  the day before): `ObjectType14`/`15`/`35` were using monotonic-range formulas instead of the
+  real non-monotonic/shuffled `table_plouf`/`table_blup`/`table_tiplouf` transcriptions. 14 new
+  `VerifyInteractionSystem` assertions (spawn/self-delete timing for both splash types, corrected
+  icon values, bubble column-scan height + self-delete-on-arrival + no-op-with-no-water-column
+  guard). Full regression: 78/78 minus the pre-existing unrelated
+  `easy-gl-resource-smoke-tests` failure on `build-cna`; live headless launch smoke check clean
+  on both backends.
 - **docs only**: resolved both remaining `plan.md` §3 Open Questions on user request ("hlubší
   research na icon 95/440"). **Icon 95**: not ambiguous — `Tables.cpp:1872`'s
   `table_decor_eau1[6] = {92,93,94,95,94,93}` (triggered only when the placed grid icon is 92,

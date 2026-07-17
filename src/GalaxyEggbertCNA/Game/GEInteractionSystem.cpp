@@ -144,8 +144,14 @@ namespace GalaxyEggbert::CNA
                         // other MoveObject -- it self-destructs the instant
                         // it reaches the end of its pre-computed clear path
                         // (real: type reset to ObjectType0; here: active=false,
-                        // this class's existing "destroyed" convention).
-                        if (obj.type == ObjectType::ObjectType23)
+                        // this class's existing "destroyed" convention). Real
+                        // source treats the rising water bubble (ObjectType15,
+                        // plan.md PICKUP-079) identically at this same exact
+                        // junction (`|| m_moveObject[i].type ==
+                        // ObjectType::ObjectType15` in the real condition) --
+                        // it self-deletes on reaching the surface rather than
+                        // dwelling there, found 2026-07-17.
+                        if (obj.type == ObjectType::ObjectType23 || obj.type == ObjectType::ObjectType15)
                         {
                             obj.active = false;
                         }
@@ -745,6 +751,27 @@ namespace GalaxyEggbert::CNA
             if (obj.type == ObjectType::ObjectType11)
             {
                 if (obj.phase >= 9.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+
+            // Water splash burst (plan.md PICKUP-078/080, ObjectType14/35)
+            // -- purely cosmetic, see SpawnWaterSplash()'s own comment.
+            // Real self-delete: Plouf (14) at phase>=14, Tiplouf (35) at
+            // phase>=6 (`Decor.cpp:8599-8622`).
+            if (obj.type == ObjectType::ObjectType14)
+            {
+                if (obj.phase >= 14.0f)
+                {
+                    obj.active = false;
+                }
+                continue;
+            }
+            if (obj.type == ObjectType::ObjectType35)
+            {
+                if (obj.phase >= 6.0f)
                 {
                     obj.active = false;
                 }
@@ -2516,6 +2543,102 @@ namespace GalaxyEggbert::CNA
         spec.currentX = spec.posStartX = spec.posEndX = x;
         spec.currentY = spec.posStartY = spec.posEndY = y + kOffsetY;
         spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
+    bool GEInteractionSystem::HasActiveObjectOfType(const GEWorldRuntime& worldRuntime, ObjectType type) const
+    {
+        for (const auto& obj : worldRuntime.GetMobileObjects())
+        {
+            if (obj.active && obj.type == type)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void GEInteractionSystem::SpawnWaterSplash(GEWorldRuntime& worldRuntime, ObjectType type, float x, float y,
+                                                float z)
+    {
+        MobileObjSpec spec;
+        spec.type = type;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = spec.posEndY = y;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
+    void GEInteractionSystem::SpawnWaterBubble(GEWorldRuntime& worldRuntime, const Worlds::World& world, float x,
+                                                float y, float z)
+    {
+        // Real `pos.Y -= 20` pre-offset (Decor.cpp:7037) before the column
+        // scan -- a small upward nudge, less than one full 64px tile.
+        constexpr float kPreOffset = 20.0f / 64.0f;
+        const float startY = y + kPreOffset;
+
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        const int gx = static_cast<int>(std::lround(x)) + GEWorldRuntime::kWorldCenterX;
+        const int gz = static_cast<int>(std::lround(z)) + GEWorldRuntime::kWorldCenterZ;
+        int count = 0;
+        if (gx >= 0 && gz >= 0 && gx < blocksPerAxis && gz < blocksPerAxis)
+        {
+            for (int gy = static_cast<int>(std::lround(startY)); gy < blocksPerAxis; ++gy)
+            {
+                if (gy < 0)
+                {
+                    continue;
+                }
+                const auto block = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                    static_cast<std::uint16_t>(gz))
+                                        .type();
+                if (!GalaxyEggbert::BlockTypes::isWater(block))
+                {
+                    break;
+                }
+                ++count;
+            }
+        }
+        --count; // real `num--` (Decor.cpp:7050) -- don't count the tile Blupi is standing in
+
+        if (count <= 0)
+        {
+            return;
+        }
+
+        MobileObjSpec spec;
+        spec.type = ObjectType::ObjectType15;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = startY;
+        spec.posEndY = startY + static_cast<float>(count);
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+        spec.patrolStep = 2; // real step=2 -- skips the dwell-at-start phase, matches SpawnInvertBurst()'s own spawn
+        spec.patrolTime = 0.0f;
+        spec.stepAdvanceTicks = static_cast<float>(count) * 10.0f; // real ScaleTime(count*10), 1:1 tick convention
 
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         for (auto& slot : objects)

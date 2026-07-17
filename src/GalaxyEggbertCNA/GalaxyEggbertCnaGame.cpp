@@ -1613,25 +1613,71 @@ namespace GalaxyEggbert::CNA
             // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via
             // before/after comparison (wasSurf/wasNage captured before
             // Step() above), same idiom as every other status this session.
-            // Real channel 22 (water entry/exit splash) plays entering
-            // EITHER Surf or Nage from fully dry; real channel 25 (start-
-            // surfing) plays specifically on Nage->Surf (resurfacing).
-            // Real vehicle exclusion fixed 2026-07-16 -- this comment
-            // previously mis-described it as "forced dismount on water
-            // entry"; verified directly against Decor.cpp:5284-5285: it's
-            // not a dismount at all, water tiles simply never register as
-            // Surf/Nage while riding/ballooned/squashed (`canEnterWater`
-            // above, computed before Step()) -- a vehicle just drives
-            // straight over/through water instead.
+            // Real channel 25 (start-surfing) plays specifically on
+            // Nage->Surf (resurfacing). Real vehicle exclusion fixed
+            // 2026-07-16 -- this comment previously mis-described it as
+            // "forced dismount on water entry"; verified directly against
+            // Decor.cpp:5284-5285: it's not a dismount at all, water tiles
+            // simply never register as Surf/Nage while riding/ballooned/
+            // squashed (`canEnterWater` above, computed before Step()) -- a
+            // vehicle just drives straight over/through water instead.
+            //
+            // **Corrected 2026-07-17** (water-splash research): channel 22
+            // was wired backwards -- verified directly against every real
+            // `PlaySound(SoundChannel22, ...)` call site (`Decor.cpp:5356/
+            // 5378/5392/5405`): ALL four are in the water-EXIT paths, none
+            // in entry. Real water ENTRY instead plays channel 23 ("Plouf",
+            // `Decor::MoveObjectPlouf`, `ObjectType14`) via the two dry->
+            // Surf/dry->Nage branches (`Decor.cpp:5298/5318`) -- previously
+            // entirely unwired (no code/sound at all on entry). Also added:
+            // the jump-triggered exit's extra "Tiplouf" splash (channel 64,
+            // `ObjectType35`, `Decor.cpp:5355-5356`) -- real source
+            // distinguishes a deliberate jump-out (Jump held near the
+            // surface, `MoveObjectTiplouf`+ch22 together) from a passive
+            // drift-out (`Decor.cpp:5359-5408`, ch22 alone, 3 sub-cases by
+            // vertical velocity sign, cosmetically identical) -- this
+            // engine's single-point collision has no equivalent drift-out
+            // distinction, so `jumpPressed` at the exact exit frame is used
+            // as a documented approximation for "this was a deliberate jump
+            // exit" (matches the common case: players hold Jump through the
+            // whole swim-up-and-surface action).
             const bool wasDry = !wasSurf && !wasNage;
             const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
-            if (wasDry && !nowDry)
+            if (wasDry && !nowDry && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType14))
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel23);
+                interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType14, blupi_.GetX(),
+                                               blupi_.GetY(), blupi_.GetZ());
+            }
+            if (!wasDry && nowDry)
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel22);
+                if (jumpPressed && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType35))
+                {
+                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel64);
+                    interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType35, blupi_.GetX(),
+                                                   blupi_.GetY(), blupi_.GetZ());
+                }
             }
             if (wasNage && blupi_.IsSurf())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel25);
+            }
+            // Ambient rising bubbles while fully submerged (plan.md
+            // PICKUP-079, ObjectType15/channel 24) -- real trigger
+            // `m_time % ScaleTime(70) == 0 || == ScaleTime(28)` (twice per
+            // ~3.5s cycle, `Decor.cpp:4611-4613`), reusing this engine's own
+            // 1:1-tick `GetAnimPhase()` the same way every other real
+            // `m_time %`-gated periodic effect already does.
+            if (blupi_.IsNage())
+            {
+                const int animTick = worldRuntime_.GetAnimPhase();
+                if (animTick % 70 == 0 || animTick % 70 == 28)
+                {
+                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel24);
+                    interaction_.SpawnWaterBubble(worldRuntime_, worldRuntime_.GetWorld(), blupi_.GetX(), blupi_.GetY(),
+                                                   blupi_.GetZ());
+                }
             }
             // Drowning (real BlupiAction::Drown, channel 26 -- a dedicated
             // death sound distinct from every other cause's channel 8/51/75,
