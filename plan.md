@@ -1901,8 +1901,27 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 - [~] MENU-032 — "SETUP" button (`PauseSetup`) with label below — **real position/icon + real "Setup" text label done 2026-07-13** (icon 19, unconditional); **intentionally inert** — no settings screen exists yet
 - [x] MENU-033 — "RESTART" button (`PauseRestart`) — shown only when mission ≠ 1 AND mission % 10 ≠ 0 — **done 2026-07-13**, the real conditional visibility, real "Restart" text label, AND a functional (simplified) restart: resets Blupi to the origin spawn + resumes Play (see MENU-036 — not a real level reload)
 - [x] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below — **done 2026-07-13**, real "Continue" text label, fully functional (resumes Play in place, real edge/release-triggered press)
-- [ ] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if mission%10==0 → Init, else mission/10*10) — not modeled, no hub-world/Init navigation exists yet (see MENU-030's note)
-- [~] MENU-036 — PauseRestart restarts current mission — **simplified 2026-07-13**: resets Blupi to the origin spawn point and resumes Play; does NOT reload the level or reset lives/treasure/keys/etc. (no level-reload infrastructure exists yet) — same simplification already established for `WinLostReturn` (HUD-023)
+- [x] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if
+      mission%10==0 → Init, else mission/10*10) — **done 2026-07-17**, real
+      formula ported exactly as `GEWorldRuntime::ComputeMissionBack()`
+      (verified directly against `Game1::MissionBack()`), wired to the
+      real `PauseBack` button (its own press-tracking already existed,
+      `kPauseControlBack`, just was never surfaced into `GEInputPad::
+      PauseInput` before — added `backPressed`). Goes to `LoadMission(...)`
+      + stays in Play (real destination for the `mission%10==0` case is
+      Init, not directly back into gameplay -- an already-established,
+      unchanged simplification, same one `WinLostReturn` below already used
+      before this session even existed).
+- [x] MENU-036 — PauseRestart restarts current mission — **upgraded to a
+      genuine reload 2026-07-17**: verified directly against
+      `Game1.cpp:357-358` (`case PauseRestart: SetPhase(Play, mission)` —
+      the SAME real mission, which DOES route through `StartMission()`'s
+      full reload, confirmed by comparing against Lost's very different
+      `DoorsLost()` path which does NOT reload). Now calls
+      `LoadMission(worldRuntime_.GetMissionNumber())` — a real fresh level
+      reload (vehicle/secret-power/key/dynamite/treasure state all reset,
+      lives preserved), replacing the previous origin-respawn-only
+      simplification.
 - [x] MENU-037 — PauseContinue resumes play without reloading — **done 2026-07-13**
 - [ ] MENU-038 — Animated fade-out from Pause → Play (blupiyoupie.png zooms out) — not implemented, transitions are instant (same simplification as MENU-029's static art)
 - [ ] MENU-039 — Animated slide-out when Pause → PlaySetup (blupiyoupie.png slides right) — N/A, PlaySetup phase doesn't exist yet
@@ -2092,7 +2111,7 @@ timing needed them anyway.
         — causing an infinite re-defer loop that silently froze `phaseTimeSeconds_` at exactly 1.0
         forever. Fixed by calling `SetPhase(fadeOutPhase_)` while it's STILL set to the pending
         target, letting `SetPhase()`'s own guard correctly commit.
-- [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start) — not implemented/not applicable; this engine has no mission-loading pipeline at all (a single hand-authored `.vwr` world loads once at startup)
+- [ ] MENU-090 — `missionToStart1/2` two-stage mission loading pipeline (background swap before Start) — **partially superseded 2026-07-17**: a real mission-loading pipeline now exists (`GalaxyEggbertCnaGame::LoadMission()`, see `SCORE-013`), but it's a single-step synchronous reload (background+terrain rebuilt together, no separate "swap background first, commit world second" staging) — the real 2-stage `missionToStart1`/`missionToStart2` distinction itself is still not modeled.
 - [x] MENU-091 — Phase time counter reset on each phase entry — **done 2026-07-13** (`GalaxyEggbertCnaGame::phaseTimeSeconds_`, reset to 0 inside `SetPhase()` — the real `phaseTime` port that drives the Win/Lost `blupiyoupie.png` animations, `MENU-046..057`)
 
 #### 2.14 Cheat Menu (hidden)
@@ -2907,7 +2926,14 @@ in-progress item.
 - [x] TILE-003 — Tile textures from `object-m.png`, correct 65px-pitch atlas (65px = 64px icon + 1px gap, 1px leading margin) (CNA, 2026-07-10)
 - [x] TILE-004 — Correct tile passability distinguishing decorative vs. solid tiles (CNA, 2026-07-10)
 - [ ] TILE-005 — 5 worlds (Grassland, Forest, Ice Caves, Lava Fields, Space Station) hand-authored as real 3D `.vwr` worlds — only a small sample world exists so far, not all 5
-- [ ] TILE-006 — Level progression: win → next world, wraps at world 5
+- [x] TILE-006 — Level progression: win → next world, wraps at world 5 —
+      **the real progression MECHANISM is now done 2026-07-17**, see the
+      hub/mission-progression system writeup at `SCORE-013`-`019`. "Wraps
+      at world 5" specifically is not modeled — this session only
+      authored world 1's own hub+2 sublevels (`worlds3d/world010/011/
+      012.vwr`) as a minimal proof of the mechanism, per explicit user
+      scope (worlds 2-5's full content is a separate, larger content-
+      authoring task, `TILE-005`, not attempted here).
 - [ ] TILE-007 — Terrain depth fill (cliff edges extrude dark fill blocks downward) *(3D)*
 - [ ] TILE-008 — Sky dome per world (`backgrounds/decorNNN.png`)
 - [ ] TILE-009 — Per-world sky colour (ambient + fog)
@@ -3457,13 +3483,80 @@ reset to `[ ]`.
       **the "total score"/"new-record" parts are HALLUCINATED — CANCELLED** (see note above);
       "elapsed time" display itself is unrelated to the score hallucination and stays open pending
       its own check (see SCORE-008).
-- [ ] SCORE-013 — Mission numbering: world hub (X0) → levels (X1-X5) → next hub ((X+1)0)
-- [ ] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs) supported
-- [ ] SCORE-015 — IsTerminated: -1=lost, -2=win, ≥1=advance to mission N
-- [ ] SCORE-016 — Mission advance: m_term = m_mission/10*10 + next_level_in_world
-- [ ] SCORE-017 — Hub mission (mission % 10 == 0): no treasure counter in HUD
-- [ ] SCORE-018 — Training missions (11-14): show tutorial hint overlay
-- [ ] SCORE-019 — MemorizeGamerProgress: save lives and doors after each win/loss
+- [x] SCORE-013 — Mission numbering: world hub (X0) → levels (X1-X5) → next
+      hub ((X+1)0) — **done 2026-07-17.** Full hub/mission-progression
+      system, verified directly against `Decor.cpp`'s real `Bye`/`Win`-
+      action mission handlers and `Game1::MissionBack()`: global hub
+      (mission 1) → world-select marker N → world hub (mission N*10) →
+      level-select marker N → sublevel (mission `X0+N`) → exit reached or
+      `PauseBack`/`PauseRestart` → back to `(mission/10)*10`, or to the
+      global hub if already at a hub. New `GEWorldRuntime::
+      ComputeWorldSelectTarget()`/`ComputeMissionBack()` (pure, unit-
+      tested), `GalaxyEggbertCnaGame::LoadMission(int)` (loads
+      `worlds3d/world{N:03d}.vwr`, rebuilds terrain/background, resets
+      `blupi_`/`interaction_` to fresh per-level defaults preserving only
+      lives — real `PlayPrepare()`'s exact reset scope), and 8 renamed
+      `BlockTypes` constants (`Sp0`-`Sp7` → `WorldSelect1`-`8`, the real
+      icons 158-165 already correctly identified at `170`/`TILE-057` but
+      never wired to anything). Minimal new world content (explicitly
+      authorized this session as an exception to the normal "no 3D world
+      editor work" rule): `worlds3d/world010.vwr` (world-1 hub, 2 portal
+      markers) + `world011`/`012.vwr` (minimal placeholder sublevels, each
+      just a small stone-cube floor + a real exit marker) —
+      `worlds3d/world001.vwr` itself is unchanged in content and now
+      doubles as the real global hub (mission 1), with one new
+      `WorldSelect1` portal marker added to its existing icon-exhibition
+      floor (at a cell past every exhibited specimen, so nothing pre-
+      existing was disturbed — confirmed via the existing test suite's own
+      hardcoded-position checks against that file, all still passing).
+      **Known, deliberate divergence**: every level's exit still shows this
+      engine's own Win screen (pulsing `blupiyoupie.png` + Return button)
+      before advancing — real source only shows a genuine Win screen for
+      the true final mission (199); every other level completion silently/
+      instantly reloads the next mission with no screen at all. Keeping
+      the Win screen for every completion is an intentional, already-
+      built-and-tested UX choice from earlier this session, not a new gap.
+      14 new `VerifyInteractionSystem` assertions (mission-math table,
+      `isWorldSelect()`/`worldSelectIndex()`, all 3 new worlds load with
+      the right `missionNumber()`) + a live headless run proving the full
+      chain (mission 1 → walk onto the portal → mission 10 → walk onto a
+      level marker → mission 11, confirmed via stdout diagnostics, temporary
+      instrumentation reverted before commit) + full regression (only the
+      pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
+- [x] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs)
+      supported — **partially addressed 2026-07-17**: the real per-mission
+      filename FORMULA (`world{N:03d}.vwr`) is now genuinely used by
+      `LoadMission()`; only 4 files exist so far (`001`/`010`/`011`/`012`),
+      not the real game's full 78/55 — see `TILE-005`'s own scope note
+      (content authoring for the other worlds is separate, larger work).
+- [x] SCORE-015 — IsTerminated: -1=lost, -2=win, ≥1=advance to mission N —
+      **the ≥1 case is done 2026-07-17** (`ComputeWorldSelectTarget()`/
+      `ComputeMissionBack()` feed `LoadMission()` directly). -1/-2
+      (Lost/true-final-Win) were already correctly handled by the existing
+      phase system (`HUD-023`) before this session; not re-touched.
+- [x] SCORE-016 — Mission advance: m_term = m_mission/10*10 + next_level_in_world
+      — **done 2026-07-17**, see `SCORE-013` (`ComputeWorldSelectTarget()`
+      is the exact real formula, contextually applied depending on whether
+      the current mission is the global hub or a world hub).
+- [ ] SCORE-017 — Hub mission (mission % 10 == 0): no treasure counter in
+      HUD — still not modeled; `GEHud` has no mission-number-gated
+      visibility logic for the treasure counter (it currently shows/hides
+      based on "does this world have any treasures", `GEHud.cpp:503`'s own
+      note) — a real, small remaining gap, not attempted this pass.
+- [x] SCORE-018 — Training missions (11-14): show tutorial hint overlay —
+      **stale checkbox, closed 2026-07-17**: already fully done, see
+      `HUD-024`/`MENU-080..082` (`GETrainingHints`, gated on exactly
+      missions 11-14) — this entry just hadn't been cross-referenced here.
+- [x] SCORE-019 — MemorizeGamerProgress: save lives and doors after each
+      win/loss — **lives half done, doors half still correctly not
+      modeled**: `saveData_.Save()` at Win/Lost checkpoints already
+      persisted lives+mission (`MENU-019`/`020`/`067`); as of 2026-07-17
+      the mission number is now also genuinely READ BACK on Resume
+      `CONTINUE` (`saveData_.GetMissionNumber()` → `LoadMission()`), closing
+      the previously write-only half of this gap. Real per-gamer door-
+      unlock state (`MemorizeDoors`/`InitializeDoors`) is still correctly
+      not modeled — see `SAVE-006`/`007`'s own note (no per-gamer 200-door-
+      flags array exists in `GESaveData` by design).
 - [ ] SCORE-020 — LastWorld: updated when completing a hub (mission divisible by 10)
 
 ---

@@ -334,6 +334,32 @@ namespace GalaxyEggbert::CNA
         // sound applies (or none).
         void DismountAndDepositVehicle();
 
+        // Hub/mission-progression system (plan.md `MENU-035`/`036`,
+        // `SCORE-013`-`019`, found/implemented 2026-07-17). Rebuilds
+        // `backgroundTexture_`/`backgroundEffect_` (skyRegion-dependent) and
+        // `terrainRenderer_` from whatever's CURRENTLY loaded in
+        // `worldRuntime_` -- shared by `LoadContent()`'s own initial load
+        // (which handles `blupi_`'s spawn/`saveData_`'s load itself, at its
+        // own point in the boot sequence) and `LoadMission()` below.
+        void RebuildWorldPresentation();
+
+        // Loads `worlds3d/world{missionNumber:03d}.vwr`, rebuilds the
+        // terrain/background presentation, resets `blupi_`/`interaction_`
+        // to fresh per-level defaults (preserving lives -- the one real
+        // state that survives a mission change, real `PlayPrepare()`
+        // resets everything else: vehicle mode, secret powers, keys,
+        // dynamite, treasure count), repositions Blupi at the spawn
+        // convention every hand-authored world in this engine shares
+        // (world (0,1,0)), and persists the new mission via `saveData_`.
+        // Used by every real mission-transition trigger: world-select
+        // portal contact, exit-reached (`WinLostReturn`), `PauseBack`,
+        // `PauseRestart` (reloads the CURRENT mission fresh), Init's
+        // `PLAY` (mission 1), and Resume's `CONTINUE` (the saved mission).
+        // A no-op (logs and returns) if the target `.vwr` file doesn't
+        // exist -- same graceful-failure shape as the initial `LoadContent()`
+        // load.
+        void LoadMission(int missionNumber);
+
         // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `GEBlupiController::
         // HasVehicleMotor()`/`IsVehicleMotorHigh()`, found 2026-07-17) -- ports
         // `Decor::AdaptMotorVehicleSound()` exactly: computes the desired loop channel (none,

@@ -62,14 +62,29 @@ constexpr uint16_t GoldPillar = 183;
 // until the DirectionalCube render mode (see NEXT.md §8 task 2) exists to
 // render it correctly as an open grate.
 constexpr uint16_t Platform = 200;   // floating platform
-constexpr uint16_t Sp0      = 158;
-constexpr uint16_t Sp1      = 159;
-constexpr uint16_t Sp2      = 160;
-constexpr uint16_t Sp3      = 161;
-constexpr uint16_t Sp4      = 162;
-constexpr uint16_t Sp5      = 163;
-constexpr uint16_t Sp6      = 164;
-constexpr uint16_t Sp7      = 165;
+
+// Real hub-screen world-select markers (`Decor::IsWorld()`, icons 158-165,
+// plan.md `170`/`TILE-057`) -- these 8 constants used to be named `Sp0`-`Sp7`
+// under an earlier, now-debunked "SecretPower 0-7" hypothesis (the real
+// SecretPower enum only has 5 values and comes from unrelated MoveObject
+// pickups instead, see `170`'s own writeup). Renamed 2026-07-17 once put to
+// actual use for the hub/mission-progression system: touching one selects
+// world/level N (1-8), the real destination computed contextually by
+// `GEWorldRuntime::ComputeWorldSelectTarget()` depending on the CURRENT
+// mission (same real marker range means "pick a world" from the global hub,
+// or "pick a level" from a world hub -- exactly mirroring real source).
+constexpr uint16_t WorldSelect1 = 158;
+constexpr uint16_t WorldSelect2 = 159;
+constexpr uint16_t WorldSelect3 = 160;
+constexpr uint16_t WorldSelect4 = 161;
+constexpr uint16_t WorldSelect5 = 162;
+constexpr uint16_t WorldSelect6 = 163;
+constexpr uint16_t WorldSelect7 = 164;
+constexpr uint16_t WorldSelect8 = 165;
+
+inline bool isWorldSelect(uint16_t bt) { return bt >= WorldSelect1 && bt <= WorldSelect8; }
+inline int worldSelectIndex(uint16_t bt) { return isWorldSelect(bt) ? static_cast<int>(bt - WorldSelect1 + 1) : -1; }
+
 constexpr uint16_t Marker   = 309;
 constexpr uint16_t Tile411  = 411;
 constexpr uint16_t Tile412  = 412;

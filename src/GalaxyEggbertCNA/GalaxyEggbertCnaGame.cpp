@@ -138,43 +138,7 @@ namespace GalaxyEggbert::CNA
         // Static terrain mesh for the loaded world (plan.md E3D-MIG-054) —
         // one CubeBatch item per non-air cell, textured via GETileAtlas.
         auto& device = getGraphicsDeviceProperty();
-
-        // Real mobile-eggbert background image for this world's skyRegion
-        // (NEXT.md §3, 2026-07-09) -- direct filename formula, same
-        // convention as mobile-eggbert's own Decor::LoadImages()
-        // (05-backgrounds.md): "decor" + 3-digit zero-padded region id.
-        // Content/backgrounds/ is already copied next to this binary (see
-        // the mobile-eggbert Content/ POST_BUILD copy, CMakeLists.txt). Only
-        // 28 of the 32 possible region ids (0-31) have a real file -- the 4
-        // missing ones are confirmed never used by any real level
-        // (05-backgrounds.md), but a hand-authored .vwr world could still
-        // reference one, so this must degrade gracefully, not throw.
-        {
-            char backgroundPath[64];
-            std::snprintf(backgroundPath, sizeof(backgroundPath),
-                          "Content/backgrounds/decor%03u.png", worldRuntime_.GetSkyRegion());
-            if (std::filesystem::exists(backgroundPath))
-            {
-                backgroundTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(backgroundPath, device);
-                backgroundEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
-                backgroundEffect_->VertexColorEnabled = false;
-                backgroundEffect_->setTextureEnabledProperty(true);
-                backgroundEffect_->setTextureProperty(&backgroundTexture_);
-                backgroundLoaded_ = true;
-                std::cout << "GalaxyEggbertCNA: background loaded — " << backgroundPath << " ("
-                          << backgroundTexture_.getWidthProperty() << "x"
-                          << backgroundTexture_.getHeightProperty() << " px, region "
-                          << worldRuntime_.GetSkyRegion() << ")." << std::endl;
-            }
-            else
-            {
-                std::cout << "GalaxyEggbertCNA: no background image for region "
-                          << worldRuntime_.GetSkyRegion() << " (" << backgroundPath
-                          << " not found) — falling back to flat clear color." << std::endl;
-            }
-        }
-
-        terrainRenderer_ = std::make_unique<GETerrainRenderer>(device, world, tileAtlas_);
+        RebuildWorldPresentation();
 
         // object-m.png was already copied next to this binary at build time
         // (plan.md E3D-MIG-030); loaded directly via CNA's own Texture2D —
@@ -403,6 +367,86 @@ namespace GalaxyEggbert::CNA
                   << terrainRenderer_->WaterBlockCount() << " water/semi-transparent), "
                   << terrainRenderer_->VertexCount() << " vertices, "
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
+    }
+
+    void GalaxyEggbertCnaGame::RebuildWorldPresentation()
+    {
+        auto& device = getGraphicsDeviceProperty();
+
+        // Real mobile-eggbert background image for this world's skyRegion
+        // (NEXT.md §3, 2026-07-09) -- direct filename formula, same
+        // convention as mobile-eggbert's own Decor::LoadImages()
+        // (05-backgrounds.md): "decor" + 3-digit zero-padded region id.
+        // Content/backgrounds/ is already copied next to this binary (see
+        // the mobile-eggbert Content/ POST_BUILD copy, CMakeLists.txt). Only
+        // 28 of the 32 possible region ids (0-31) have a real file -- the 4
+        // missing ones are confirmed never used by any real level
+        // (05-backgrounds.md), but a hand-authored .vwr world could still
+        // reference one, so this must degrade gracefully, not throw.
+        {
+            char backgroundPath[64];
+            std::snprintf(backgroundPath, sizeof(backgroundPath),
+                          "Content/backgrounds/decor%03u.png", worldRuntime_.GetSkyRegion());
+            if (std::filesystem::exists(backgroundPath))
+            {
+                backgroundTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(backgroundPath, device);
+                backgroundEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+                backgroundEffect_->VertexColorEnabled = false;
+                backgroundEffect_->setTextureEnabledProperty(true);
+                backgroundEffect_->setTextureProperty(&backgroundTexture_);
+                backgroundLoaded_ = true;
+                std::cout << "GalaxyEggbertCNA: background loaded — " << backgroundPath << " ("
+                          << backgroundTexture_.getWidthProperty() << "x"
+                          << backgroundTexture_.getHeightProperty() << " px, region "
+                          << worldRuntime_.GetSkyRegion() << ")." << std::endl;
+            }
+            else
+            {
+                backgroundLoaded_ = false;
+                std::cout << "GalaxyEggbertCNA: no background image for region "
+                          << worldRuntime_.GetSkyRegion() << " (" << backgroundPath
+                          << " not found) — falling back to flat clear color." << std::endl;
+            }
+        }
+
+        terrainRenderer_ = std::make_unique<GETerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_);
+    }
+
+    void GalaxyEggbertCnaGame::LoadMission(int missionNumber)
+    {
+        char path[64];
+        std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
+        if (!worldRuntime_.LoadFromVwrFile(path))
+        {
+            std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): " << path
+                       << " not found or failed to load — staying on the current mission." << std::endl;
+            return;
+        }
+
+        RebuildWorldPresentation();
+
+        // Real PlayPrepare() (Decor.cpp:381-429): every mission load resets
+        // vehicle mode, all 4 secret powers, Invert, Ghost, keys, dynamite
+        // count, and recounts this world's own treasures from scratch --
+        // ONLY lives (m_nbVies) survive. `interaction_`/`blupi_` are plain
+        // value members (not pointers), so reassigning fresh defaults is a
+        // real reset, not a partial one -- same idiom already used
+        // elsewhere in this class for "start over" semantics.
+        const int preservedLives = interaction_.Lives();
+        interaction_ = GEInteractionSystem();
+        interaction_.SetLives(preservedLives);
+        blupi_ = GEBlupiController();
+
+        // Same fixed spawn convention every hand-authored .vwr world in
+        // this engine shares (see LoadContent()'s own comment) -- the
+        // format itself still carries no real per-world spawn point.
+        blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+
+        saveData_.SetMissionNumber(missionNumber);
+        saveData_.Save();
+
+        std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): loaded " << path << "."
+                   << std::endl;
     }
 
     void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade) noexcept
@@ -843,6 +887,7 @@ namespace GalaxyEggbert::CNA
             bool mouseRestartPressed = false;
             bool mouseSetupPressed = false;
             bool mouseMenuPressed = false;
+            bool mouseBackPressed = false;
             if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
                 const auto mouse = Mouse::GetState();
@@ -901,6 +946,7 @@ namespace GalaxyEggbert::CNA
                 mouseRestartPressed = pauseInput.restartPressed;
                 mouseSetupPressed = pauseInput.setupPressed;
                 mouseMenuPressed = pauseInput.menuPressed;
+                mouseBackPressed = pauseInput.backPressed;
             }
             else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
                      phase_ == GalaxyEggbert::GamePhase::MainSetup)
@@ -987,17 +1033,17 @@ namespace GalaxyEggbert::CNA
                 if (initInput.playPressed)
                 {
                     // Real InitPlay: `SetPhase(Play, 1)` -- always
-                    // (re-)enters mission 1 (this engine's one world), no
-                    // real level-select step exists. Restores the
-                    // selected gamer's own checkpointed lives if that slot
-                    // has previous progress (this engine's own
-                    // adaptation, since the real per-gamer lastWorld/door
-                    // state has no equivalent here beyond lives).
-                    if (saveData_.GetHasProgress())
-                    {
-                        interaction_.SetLives(saveData_.GetLives());
-                    }
-                    blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                    // (re-)enters mission 1, the global hub (2026-07-17,
+                    // now that `LoadMission()` exists to make this a real
+                    // world load instead of just restaying on whatever was
+                    // already loaded). Restores the selected gamer's own
+                    // checkpointed lives if that slot has previous progress
+                    // (this engine's own adaptation, since the real
+                    // per-gamer lastWorld/door state has no equivalent here
+                    // beyond lives) -- read AFTER LoadMission(1), which
+                    // would otherwise reset lives to the default 3.
+                    LoadMission(1);
+                    interaction_.SetLives(saveData_.GetHasProgress() ? saveData_.GetLives() : 3);
                     SetPhase(GalaxyEggbert::GamePhase::Play);
                 }
                 else if (initInput.setupPressed)
@@ -1033,15 +1079,18 @@ namespace GalaxyEggbert::CNA
                 if (resumeInput.continuePressed)
                 {
                     // Real ResumeContinue -> ContinueMission() ->
-                    // SetPhase(Play,-2): restores the checkpointed lives
-                    // (no real mid-level position/treasure/key state
-                    // exists to restore, same simplification as
-                    // PauseRestart/WinLostReturn). The real `-2` mission
+                    // SetPhase(Play,-2): restores the checkpointed
+                    // mission (2026-07-17, now that GESaveData's own
+                    // already-persisted missionNumber -- written at every
+                    // Win/Lost checkpoint -- is finally read back) and
+                    // lives (no real mid-level position/treasure/key state
+                    // exists to restore beyond that, same simplification
+                    // as PauseRestart/WinLostReturn). The real `-2` mission
                     // sentinel BYPASSES the fade-defer mechanism entirely
                     // (plan.md MENU-088/089, confirmed via research) --
                     // Resume->Play is genuinely instant in the real game.
+                    LoadMission(saveData_.GetMissionNumber());
                     interaction_.SetLives(saveData_.GetLives());
-                    blupi_.SetPosition(0.0f, 1.0f, 0.0f);
                     SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
                 }
                 else if (resumeInput.menuPressed ||
@@ -1083,11 +1132,13 @@ namespace GalaxyEggbert::CNA
             }
             else if (mouseRestartPressed)
             {
-                // Real PauseRestart: reload the level -- not modeled (no
-                // level-reload infrastructure exists yet), so this reuses
-                // the same origin-respawn simplification as WinLostReturn
-                // below.
-                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                // Real PauseRestart (plan.md MENU-036): reload the CURRENT
+                // mission fresh -- upgraded 2026-07-17 from the previous
+                // origin-respawn-in-place simplification, now that
+                // LoadMission() exists to do a genuine level reload
+                // (fresh vehicle/secret-power/key/dynamite/treasure state,
+                // same as touching any other mission trigger).
+                LoadMission(worldRuntime_.GetMissionNumber());
                 SetPhase(GalaxyEggbert::GamePhase::Play);
             }
             else if (mouseSetupPressed)
@@ -1100,6 +1151,17 @@ namespace GalaxyEggbert::CNA
                 // Real PauseMenu: SetPhase(Init) -- now wired (2026-07-13,
                 // now that Init exists).
                 SetPhase(GalaxyEggbert::GamePhase::Init);
+            }
+            else if (mouseBackPressed)
+            {
+                // Real PauseBack/MissionBack (plan.md MENU-035): wired
+                // 2026-07-17 now that the hub/mission-progression system
+                // gives it a real destination -- the same
+                // ComputeMissionBack() formula shared by exit-reached
+                // (WinLostReturn below): a hub (mission%10==0) goes to the
+                // global hub (1), a sublevel goes to its own world's hub.
+                LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
+                SetPhase(GalaxyEggbert::GamePhase::Play);
             }
 
             if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
@@ -1114,10 +1176,35 @@ namespace GalaxyEggbert::CNA
                 const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
                 if (returnPressed && !phaseReturnKeyWasDown_)
                 {
-                    // Not a real level reload (needs infrastructure this
-                    // engine doesn't have) -- just back to the origin spawn,
-                    // see this class's own SetPhase()/phase_ comment.
-                    blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                    if (phase_ == GalaxyEggbert::GamePhase::Win)
+                    {
+                        // Real WinLostReturn from Win (plan.md TILE-006/
+                        // SCORE-013..019): upgraded 2026-07-17 from the
+                        // previous origin-respawn simplification -- reaching
+                        // the exit now actually advances to the mission's
+                        // own hub via ComputeMissionBack() (same formula as
+                        // PauseBack above), a genuine "finish a level, go
+                        // somewhere else" transition (real destination is
+                        // actually Init, not straight back into Play -- this
+                        // engine's own already-established "skip Init,
+                        // return to Play directly" simplification is kept
+                        // as-is, only WHICH mission loads is now real).
+                        LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
+                    }
+                    else
+                    {
+                        // Real WinLostReturn from Lost: verified directly
+                        // against Decor.cpp:6395-6397/11716 (DoorsLost()) --
+                        // Lost does NOT reload the level or reset treasure/
+                        // key/dynamite progress, only lives (already reset
+                        // to 3 the instant GameOverCount() incremented, see
+                        // HUD-023). Repositioning to spawn (unchanged from
+                        // before) is the correct, already-accepted behavior
+                        // here -- do NOT call LoadMission() on this path,
+                        // it would wrongly wipe the current mission's
+                        // in-progress treasure/key state.
+                        blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                    }
                     SetPhase(GalaxyEggbert::GamePhase::Play);
                 }
                 phaseReturnKeyWasDown_ = returnPressed;
@@ -1572,6 +1659,32 @@ namespace GalaxyEggbert::CNA
                 blupi_.TriggerSpringBounce(jumpPressed))
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+            }
+
+            // Hub/mission-progression: world-select portal contact (plan.md
+            // hub/mission system, found/implemented 2026-07-17, real
+            // `Decor::IsWorld()`/the `Bye`-action mission-change handler).
+            // Contact-triggered, no debounce needed -- unlike every other
+            // ground-tile check here, `LoadMission()` itself repositions
+            // Blupi to a DIFFERENT world's spawn point, so he's never still
+            // standing on the same portal tile the frame after it fires (by
+            // construction: no world in this engine places a portal marker
+            // at its own spawn point). The real ~1.5s "turn and wave" `Bye`
+            // animation delay is NOT modeled (documented simplification,
+            // same category as this session's other timing simplifications).
+            // Returns immediately after LoadMission() (same "freeze this
+            // frame" precedent already used for the fade-transition window)
+            // so nothing below operates on stale locals derived from the
+            // world that just got replaced.
+            {
+                const auto groundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
+                if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
+                {
+                    const int target = GEWorldRuntime::ComputeWorldSelectTarget(
+                        worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock));
+                    LoadMission(target);
+                    return;
+                }
             }
 
             // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified

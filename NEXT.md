@@ -154,6 +154,34 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: implement the hub/mission-progression system (plan.md SCORE-013..019, MENU-035/036,
+  TILE-006).** The single biggest new subsystem this session — real mobile-eggbert's actual
+  structure (global hub, mission 1 → world hubs, mission X0 → sublevels, mission X1-X5 → back via
+  exit/PauseBack/PauseRestart) ported faithfully via new `GEWorldRuntime::
+  ComputeWorldSelectTarget()`/`ComputeMissionBack()` (pure, verified directly against
+  `Decor.cpp`'s real mission-handler formulas and `Game1::MissionBack()`) and
+  `GalaxyEggbertCnaGame::LoadMission(int)` (loads `worlds3d/world{N:03d}.vwr`, rebuilds terrain/
+  background, resets Blupi/interaction state to fresh per-level defaults preserving only lives —
+  real `PlayPrepare()`'s exact scope). Renamed 8 long-unused `BlockTypes` constants (`Sp0`-`Sp7` →
+  `WorldSelect1`-`8`) — these were ALREADY the correctly-identified real hub-screen world-select
+  markers (icons 158-165, from `170`'s earlier research), just never wired to anything.
+  **User-authorized exception to this session's normal "no 3D world editor work" rule**: 3 new
+  minimal placeholder worlds (`worlds3d/world010/011/012.vwr` — a world-1 hub + 2 nearly-empty
+  sublevels, just a small stone-cube floor each) plus one new portal marker added to the existing
+  `world001.vwr`'s icon-exhibition floor (which now doubles as the real global hub) — its own rich
+  demo content (dynamite/crates/vehicles/water/doors/etc.) is completely unchanged, confirmed via
+  the full existing test suite still passing unmodified. Wired every real mission-transition
+  trigger: world-select portal contact, exit-reached (`WinLostReturn`), `PauseBack` (previously
+  fully inert — its own button-press tracking already existed, just was never surfaced), and
+  `PauseRestart` (upgraded from a position-only reset to a genuine level reload, matching real
+  `Game1.cpp:357-358`). Resume `CONTINUE` now actually reads back the mission number `GESaveData`
+  was already (write-only) persisting at every Win/Lost checkpoint. **Known, deliberate
+  divergence**: every level completion still shows this engine's own Win screen before advancing
+  (real source only does that for the true final mission 199, silently reloading otherwise) — kept
+  as an intentional, already-built UX choice, not a new gap. 14 new `VerifyInteractionSystem`
+  assertions + a live headless run proving the full chain end-to-end (mission 1 → portal → mission
+  10 → marker → mission 11, temporary debug instrumentation reverted before commit) + full
+  regression clean (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - **docs only**: closed/corrected 15 more `BLUPI-1xx` sound-channel duplicates (`BLUPI-132`-`153`
   range) — most were exact duplicates of already-fixed `SOUND-0xx`/`PICKUP-0xx` entries just never
   checked off; several additionally had wrong channel claims (ch41 isn't "glide", ch50 isn't

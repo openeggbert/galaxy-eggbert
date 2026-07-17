@@ -160,6 +160,11 @@ namespace GalaxyEggbert::CNA
             bool restartPressed = false;
             bool setupPressed = false;
             bool menuPressed = false;
+            // Real `PauseBack` (plan.md MENU-035, wired 2026-07-17 once the
+            // hub/mission-progression system existed to give it a real
+            // destination) -- the button rect/press-tracking already
+            // existed (`kPauseControlBack`), it just wasn't surfaced here.
+            bool backPressed = false;
         };
         [[nodiscard]] PauseInput UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH,

@@ -262,6 +262,23 @@ namespace GalaxyEggbert::CNA
         // collision-shape question, not a "what am I standing on" query).
         [[nodiscard]] static bool IsTempPassableAtPhase(int animPhase) noexcept;
 
+        // Real mission-number arithmetic (plan.md hub/mission-progression
+        // system, found 2026-07-17 via direct `Decor.cpp`/`Game1.cpp` read):
+        // ComputeWorldSelectTarget() is what touching a real hub-screen
+        // world-select marker (`BlockTypes::isWorldSelect()`, icons 158-165)
+        // computes, contextually reinterpreted by the CURRENT mission
+        // (`Decor.cpp`'s `Bye`-action handler): from the global hub
+        // (mission==1), marker N selects world N*10; from within a world hub
+        // (mission==X0), marker N selects sublevel X0+N. ComputeMissionBack()
+        // is the real "go to this mission's own hub" formula, shared by
+        // finishing a sublevel (`Win`-action handler, `mission/10*10`) and
+        // the real `MissionBack`/`PauseBack` button (`Game1.cpp`): from a
+        // hub already (mission%10==0), back goes to the global hub (1);
+        // otherwise it's the same `mission/10*10`. Static/pure so a tool can
+        // test the arithmetic directly, same reasoning as IsBlitzActiveAtPhase().
+        [[nodiscard]] static int ComputeWorldSelectTarget(int currentMission, int selectIndex) noexcept;
+        [[nodiscard]] static int ComputeMissionBack(int currentMission) noexcept;
+
         // BigDecor: is a second 100x100 background tile layer in
         // mobile-eggbert level files (see mobile-eggbert-2d-reference.md
         // §2.3) — parsed and stored here (same icon-id-to-block-type

@@ -921,14 +921,14 @@ namespace GalaxyEggbert::CNA
 
         if (!mouseDown && mouseWasDown_)
         {
-            // Continue/Restart/Setup/Menu are all wired to real behavior
-            // (see GEInputPad.hpp's UpdatePause() comment -- Menu now
-            // goes to Init, 2026-07-13) -- Back's real destination
-            // (hub-world navigation) still doesn't exist here.
+            // Continue/Restart/Setup/Menu/Back are all wired to real
+            // behavior (see GEInputPad.hpp's UpdatePause() comment -- Menu
+            // goes to Init, Back goes to the mission's own hub, 2026-07-17).
             if (activeControl_ == kPauseControlContinue) result.continuePressed = true;
             else if (activeControl_ == kPauseControlRestart) result.restartPressed = true;
             else if (activeControl_ == kPauseControlSetup) result.setupPressed = true;
             else if (activeControl_ == kPauseControlMenu) result.menuPressed = true;
+            else if (activeControl_ == kPauseControlBack) result.backPressed = true;
             activeControl_ = -1;
         }
 

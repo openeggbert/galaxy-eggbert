@@ -10,6 +10,97 @@
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <vector>
+
+namespace
+{
+    // Hub/mission-progression system (plan.md hub/mission system,
+    // 2026-07-17): minimal, hand-authored placeholder worlds for the real
+    // hub/sub-hub/sublevel structure -- explicitly authorized as an
+    // exception to this session's normal "no 3D world editor work" rule,
+    // on the condition that new worlds stay minimal ("just a floor made of
+    // cubes, like a pile of stones, and portals") until a real 3D world
+    // editor exists later to flesh them out. Every world shares the same
+    // fixed spawn convention this engine already uses everywhere (world
+    // (0,1,0) == grid (50,*,50)), so none of them need the .vwr format's
+    // still-nonexistent real per-world spawn point.
+    void GenerateWorldHub(int missionNumber, const std::vector<int>& portalTargetMissions,
+                          const std::filesystem::path& outPath)
+    {
+        using namespace GalaxyEggbert;
+        using namespace GalaxyEggbert::Worlds;
+
+        World world;
+        world.setSkyRegion(3);
+        world.setMissionNumber(missionNumber);
+
+        // 11x11 stone-cube floor platform centered on the shared spawn point.
+        for (int x = -5; x <= 5; ++x)
+        {
+            for (int z = -5; z <= 5; ++z)
+            {
+                world.setBlock(static_cast<std::uint16_t>(x + 50), 0, static_cast<std::uint16_t>(z + 50),
+                               Block::make(BlockTypes::RockPile));
+            }
+        }
+
+        // One WorldSelect marker per real destination mission, spaced 2
+        // apart along +X from spawn (clear of grid (50,*,50) itself, so
+        // arriving here via LoadMission() never immediately re-triggers
+        // one) -- real `GEWorldRuntime::ComputeWorldSelectTarget()` decides
+        // where each one actually leads, contextually, from THIS mission
+        // number; `portalTargetMissions` here is only used to log what
+        // each marker leads to, not to encode it (the index IS the
+        // encoding, same as real source).
+        for (std::size_t i = 0; i < portalTargetMissions.size(); ++i)
+        {
+            const auto markerIcon = static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + i);
+            const int x = 52 + static_cast<int>(i) * 2;
+            world.setBlock(static_cast<std::uint16_t>(x), 1, 50, Block::make(markerIcon));
+            std::cout << "GenerateSampleWorld3D: " << outPath << " marker " << (i + 1) << " (icon "
+                      << markerIcon << ") -> mission " << portalTargetMissions[i] << std::endl;
+        }
+
+        world.saveToFile(outPath);
+        std::cout << "GenerateSampleWorld3D: wrote " << outPath << " (mission " << missionNumber << ", "
+                  << portalTargetMissions.size() << " world-select portal(s))." << std::endl;
+    }
+
+    // A minimal placeholder sublevel: a small floor platform and a real
+    // exit marker (ObjectType7, the same already-implemented exit-reached
+    // mechanic every other level in this engine uses) that returns to this
+    // mission's own hub. Deliberately near-empty -- see this file's own
+    // hub/mission-progression comment above.
+    void GenerateMinimalSublevel(int missionNumber, const std::filesystem::path& outPath)
+    {
+        using namespace GalaxyEggbert;
+        using namespace GalaxyEggbert::Worlds;
+
+        World world;
+        world.setSkyRegion(3);
+        world.setMissionNumber(missionNumber);
+
+        for (int x = -5; x <= 5; ++x)
+        {
+            for (int z = -5; z <= 5; ++z)
+            {
+                world.setBlock(static_cast<std::uint16_t>(x + 50), 0, static_cast<std::uint16_t>(z + 50),
+                               Block::make(BlockTypes::RockPile));
+            }
+        }
+
+        MoveObjectRecord exit;
+        exit.type = ObjectType::ObjectType7;
+        exit.posStartX = exit.posEndX = 52.0f;
+        exit.posStartY = exit.posEndY = 1.0f;
+        exit.posStartZ = exit.posEndZ = 50.0f;
+        PlaceMoveObject(world, exit);
+
+        world.saveToFile(outPath);
+        std::cout << "GenerateSampleWorld3D: wrote " << outPath << " (mission " << missionNumber
+                  << ", minimal placeholder sublevel)." << std::endl;
+    }
+}
 
 // Generates the first genuinely 3D, hand-authored .vwr world: a ground
 // floor, an ascending solid staircase, and a walled room on a raised
@@ -53,6 +144,13 @@ int main(int argc, char** argv)
     // skyRegion header field/GalaxyEggbertCnaGame background-loading path
     // instead of silently matching the fallback.
     world.setSkyRegion(3);
+
+    // Hub/mission-progression system (plan.md hub/mission system,
+    // 2026-07-17): this world doubles as the real global hub (mission 1),
+    // per Decor.cpp's own real formula (`m_mission==1` is always the global
+    // hub) -- see the WorldSelect1 portal marker placed near the end of
+    // this file for the actual navigation trigger.
+    world.setMissionNumber(1);
 
     const auto fill = [&world](int x0, int x1, int y0, int y1, int z0, int z1, std::uint16_t type)
     {
@@ -622,7 +720,16 @@ int main(int argc, char** argv)
         // (Teleport2-4) are still exhibited normally as lone specimens,
         // faithfully demonstrating the real "no partner found -> regains
         // control in place" behavior.
-        if (icon == BlockTypes::Teleport1)
+        //
+        // Icons 158-165 (WorldSelect1-8, found 2026-07-17) are ALSO
+        // skipped here, same reasoning as Teleport1 -- they're real
+        // gameplay-triggering hub/mission-navigation markers now (not
+        // inert decoration), and this exhibition floor is meant to be a
+        // passive "look but don't interact" specimen catalog; a stray
+        // exhibited copy would silently double as a working (if
+        // undiscoverable) portal, confusingly overlapping with the
+        // deliberately-placed WorldSelect1 marker below.
+        if (icon == BlockTypes::Teleport1 || BlockTypes::isWorldSelect(static_cast<std::uint16_t>(icon)))
         {
             continue;
         }
@@ -633,6 +740,20 @@ int main(int argc, char** argv)
                        static_cast<std::uint16_t>(3 + row * 2),
                        Block::make(static_cast<std::uint16_t>(icon)));
     }
+
+    // ------------------------------------------------------------------
+    // Hub/mission-progression system (plan.md hub/mission system,
+    // 2026-07-17): the ONE real, deliberately-placed WorldSelect1 portal
+    // marker in this world (mission 1, the global hub) -- touching it
+    // (`GEWorldRuntime::ComputeWorldSelectTarget(1, 1) == 10`) loads
+    // world010.vwr, the minimal world-1 hub. Placed at the north edge of
+    // the icon-exhibition floor (z=23), past the last used specimen row
+    // (max row's z is 3+9*2=21) so it doesn't collide with any exhibited
+    // icon -- a short, deliberate walk from the exhibition, not buried in
+    // it. Not at (0,1,0) (this world's own spawn point), so re-entering
+    // this world via LoadMission() never re-triggers it on arrival.
+    // ------------------------------------------------------------------
+    world.setBlock(50, 1, 23, Block::make(BlockTypes::WorldSelect1));
 
     // Object exhibition -- every ObjectType the renderer has an icon for
     // (enumerated via GEObjectIcons::GetObjIcon, the renderer's own
@@ -659,9 +780,9 @@ int main(int argc, char** argv)
             place(type, static_cast<float>(78 + col * 3), 1.0f, static_cast<float>(27 + row * 3));
             ++slot;
         }
-        std::cout << "GenerateSampleWorld3D: exhibition placed -- 438 tile icons in the exhibition slab "
-                     "(icons 330 and 440 excluded, see the teleporter rooms above and the icon-440 "
-                     "atlas-bounds note above), "
+        std::cout << "GenerateSampleWorld3D: exhibition placed -- 430 tile icons in the exhibition slab "
+                     "(icons 330, 158-165, and 440 excluded, see the teleporter rooms/WorldSelect1 marker "
+                     "above and the icon-440 atlas-bounds note above), "
                   << slot << " object types." << std::endl;
     }
 
@@ -695,6 +816,17 @@ int main(int argc, char** argv)
               << " non-air blocks, Y range [" << minY << ", " << maxY << "], skyRegion="
               << reloaded.skyRegion()
               << " (round-trip verified via World::loadFromFile)." << std::endl;
+
+    // Hub/mission-progression system (plan.md hub/mission system,
+    // 2026-07-17) -- the 3 new minimal worlds, always (re)generated
+    // alongside world001.vwr above (this tool's own "manually run to
+    // regenerate" convention, no separate invocation needed). world010 is
+    // the world-1 hub (mission 10, reached from world001's own
+    // WorldSelect1 marker); world011/012 are its two minimal placeholder
+    // sublevels.
+    GenerateWorldHub(10, {11, 12}, "worlds3d/world010.vwr");
+    GenerateMinimalSublevel(11, "worlds3d/world011.vwr");
+    GenerateMinimalSublevel(12, "worlds3d/world012.vwr");
 
     return 0;
 }

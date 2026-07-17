@@ -3291,6 +3291,64 @@ int main(int argc, char** argv)
                     "present (real trigger ticks 0/7/18/25/33/44 all exercised)");
     }
 
+    // 17.17. Hub/mission-progression mission-math (found/implemented
+    // 2026-07-17, real `Decor.cpp`'s `Bye`/`Win`-action mission handlers
+    // and `Game1::MissionBack()`) -- pure functions, table-driven.
+    {
+        using GalaxyEggbert::BlockTypes::isWorldSelect;
+        using GalaxyEggbert::BlockTypes::worldSelectIndex;
+        using GalaxyEggbert::BlockTypes::WorldSelect1;
+        using GalaxyEggbert::BlockTypes::WorldSelect8;
+
+        // From the global hub (mission 1): marker N -> world N*10.
+        check(GEWorldRuntime::ComputeWorldSelectTarget(1, 1) == 10,
+              "global hub marker 1 -> mission 10 (world 1's hub)");
+        check(GEWorldRuntime::ComputeWorldSelectTarget(1, 5) == 50,
+              "global hub marker 5 -> mission 50 (world 5's hub)");
+
+        // From a world hub (mission X0): marker N -> sublevel X0+N.
+        check(GEWorldRuntime::ComputeWorldSelectTarget(10, 1) == 11,
+              "world-10 hub marker 1 -> mission 11 (its own first sublevel)");
+        check(GEWorldRuntime::ComputeWorldSelectTarget(10, 2) == 12,
+              "world-10 hub marker 2 -> mission 12 (its own second sublevel)");
+        check(GEWorldRuntime::ComputeWorldSelectTarget(30, 4) == 34,
+              "world-30 hub marker 4 -> mission 34");
+
+        // ComputeMissionBack(): a sublevel returns to its own world's hub;
+        // a hub already (mission%10==0) returns to the global hub (1).
+        check(GEWorldRuntime::ComputeMissionBack(11) == 10, "sublevel 11 back -> hub 10");
+        check(GEWorldRuntime::ComputeMissionBack(15) == 10, "sublevel 15 back -> hub 10");
+        check(GEWorldRuntime::ComputeMissionBack(10) == 1, "hub 10 back -> global hub 1");
+        check(GEWorldRuntime::ComputeMissionBack(50) == 1, "hub 50 back -> global hub 1");
+
+        // BlockTypes::isWorldSelect()/worldSelectIndex() -- real icons
+        // 158-165, 1-8 respectively (renamed from Sp0-Sp7, plan.md `170`).
+        check(isWorldSelect(WorldSelect1) && isWorldSelect(WorldSelect8), "WorldSelect1/8 are recognized markers");
+        check(!isWorldSelect(157) && !isWorldSelect(166), "icons just outside 158-165 are NOT world-select markers");
+        check(worldSelectIndex(WorldSelect1) == 1 && worldSelectIndex(WorldSelect8) == 8,
+              "worldSelectIndex() recovers the real 1-8 marker index");
+        check(worldSelectIndex(GalaxyEggbert::BlockTypes::Ground) == -1,
+              "worldSelectIndex() returns -1 for a non-marker icon");
+    }
+
+    // 17.18. New hub/mission-progression worlds (plan.md hub/mission
+    // system) -- confirm world010/011/012.vwr each load cleanly and report
+    // the right real missionNumber, same sanity level as the existing
+    // world001.vwr load at the top of this file.
+    {
+        GEWorldRuntime hubWorld;
+        check(hubWorld.LoadFromVwrFile("worlds3d/world010.vwr"), "world010.vwr loads cleanly");
+        check(hubWorld.GetMissionNumber() == 10, "world010.vwr reports missionNumber() == 10");
+
+        GEWorldRuntime sub11;
+        check(sub11.LoadFromVwrFile("worlds3d/world011.vwr"), "world011.vwr loads cleanly");
+        check(sub11.GetMissionNumber() == 11, "world011.vwr reports missionNumber() == 11");
+
+        GEWorldRuntime sub12;
+        check(sub12.LoadFromVwrFile("worlds3d/world012.vwr"), "world012.vwr loads cleanly");
+        check(sub12.GetMissionNumber() == 12, "world012.vwr reports missionNumber() == 12");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

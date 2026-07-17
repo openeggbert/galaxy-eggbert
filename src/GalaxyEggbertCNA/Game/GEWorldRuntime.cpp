@@ -236,6 +236,16 @@ namespace GalaxyEggbert::CNA
         missionNumber_ = static_cast<int>(world_->missionNumber());
         bigDecor_.clear();
 
+        // Found 2026-07-17 (hub/mission-progression system): a world switch
+        // at runtime previously leaked the PREVIOUS world's animation phase
+        // into the newly-loaded one (animPhase_/animTimer_ were never part
+        // of "per-world state" before there was any such thing as switching
+        // worlds at runtime) -- cosmetic only (animated tiles would start
+        // mid-cycle instead of at phase 0), but still a real bug now that
+        // LoadFromVwrFile() is called more than once per process lifetime.
+        animPhase_ = 0;
+        animTimer_ = 0.0f;
+
         // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects
         // CAN be embedded directly in the 3D .vwr format itself, via
         // Worlds::World's block-extra-metadata mechanism (see
@@ -286,6 +296,24 @@ namespace GalaxyEggbert::CNA
     {
         const int cycle = (((animPhase / 4) % 20) + 20) % 20; // defensive: handle a negative phase
         return cycle >= 18;
+    }
+
+    int GEWorldRuntime::ComputeWorldSelectTarget(int currentMission, int selectIndex) noexcept
+    {
+        if (currentMission == 1)
+        {
+            return selectIndex * 10;
+        }
+        return (currentMission / 10) * 10 + selectIndex;
+    }
+
+    int GEWorldRuntime::ComputeMissionBack(int currentMission) noexcept
+    {
+        if (currentMission % 10 == 0)
+        {
+            return 1;
+        }
+        return (currentMission / 10) * 10;
     }
 
     std::optional<bool> GEWorldRuntime::TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
