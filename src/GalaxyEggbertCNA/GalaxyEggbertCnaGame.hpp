@@ -176,6 +176,12 @@ namespace GalaxyEggbert::CNA
         bool jumpKeyWasDown_ = false;
         float stepSoundTimer_ = 0.0f;
 
+        // Real "Bye" farewell freeze (plan.md BLUPI-049) -- the mission to
+        // load once `blupi_.IsBye()` naturally clears; set only at the world-
+        // select portal contact site (`Update()`), consumed by the
+        // `wasBye`/`IsBye()` completion check right after `Step()`.
+        int byePendingTarget_ = 0;
+
         // Switch/saw linking (plan.md E3D-MIG-142, see GEWorldRuntime::
         // TryActivateSwitch()) -- Space ("Action", already read as
         // actionPressed) edge-detected the same way jumpKeyWasDown_ is.

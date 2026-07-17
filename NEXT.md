@@ -179,6 +179,18 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: real "Bye" farewell freeze for hub world-select portals (plan.md `BLUPI-049`/`SOUND-042`).**
+  User-reported: stepping onto a hub portal did nothing visually, unlike real mobile-eggbert's
+  ~1.5s "turn and wave". Verified directly against `Decor.cpp:6436` (`Config::ScaleTime(30)` = 1.5s
+  exactly) and `Decor.cpp:5476-5488` (real trigger is narrow — world-select contact only, never
+  exit-reached/PauseBack/PauseRestart, which stay instant in real source too). New
+  `GEBlupiController::TriggerBye()`/`IsBye()` freezes Blupi the same way `TriggerTeleport()` does; a
+  new `AnimState::Bye` falls through to the existing Stop pose (no dedicated wave sprite exists in
+  real source). The world-select touch handler now calls `SetYaw()` once to face the camera and
+  plays the real entry sound (ch32); `LoadMission()` itself moved to a `wasBye`/`IsBye()`
+  before/after-`Step()` completion check, same shape as teleport-transit completion. Live-verified
+  via a temporary debug harness (reverted before commit): freeze holds ~1.5s, yaw updates correctly,
+  `LoadMission()` fires exactly once with the right target. Full regression clean.
 - **fix: north-hill platform lift visibly "clipped through" the crow's-nest floor near the wasp
   (plan.md `PICKUP-020`).** User-reported with a screenshot. The lift's patrol math was actually
   correct (verified twice against the real cube-rendering convention — flush at both ends, zero

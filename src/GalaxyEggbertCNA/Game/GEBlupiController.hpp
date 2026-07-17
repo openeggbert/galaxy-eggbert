@@ -122,6 +122,25 @@ namespace GalaxyEggbert::CNA
         // direct transcription, not an approximation).
         static constexpr float kTeleportDuration = 6.4f;
 
+        // Real "Bye" farewell freeze (plan.md BLUPI-049, found 2026-07-17,
+        // verified directly against Decor.cpp:6436: `m_blupiPhase ==
+        // Config::ScaleTime(30)` -- 30 ticks at the real 20Hz reference
+        // rate = 1.5s exactly, a direct transcription). Real trigger is
+        // narrow: ONLY stepping onto a hub-screen world-select marker
+        // (`Decor::IsWorld()`, `Decor.cpp:5476-5488`) -- NOT the level-
+        // exit-reached path, PauseBack, or PauseRestart, all of which
+        // change level instantly in real source with no Bye at all. Real
+        // behavior during the freeze: `m_blupiFocus=false` (input frozen,
+        // modeled below the same way Teleporte freezes everything),
+        // `m_blupiFront=true` (turns to face the camera -- the caller sets
+        // this via SetYaw() once at trigger time, since only it knows
+        // where the camera is). No dedicated per-frame "wave" sprite table
+        // exists in real source (checked Tables.cpp/Decor.cpp directly) --
+        // the "farewell" is really just standing still, turned front-on,
+        // for 1.5s, so GetAnimIcon() below falls through to the same
+        // static Stop-pose already used for DeathLocked/PickupBusy.
+        static constexpr float kByeDuration = 1.5f;
+
         // Water breath gauge (plan.md E3D-MIG-148, `m_blupiLevel`, verified
         // against mobile-eggbert-reference/12-hazards-and-interactables.md's
         // "Water depth state machine" section): starts at 100, ticks down by
@@ -327,6 +346,12 @@ namespace GalaxyEggbert::CNA
         {
             Stop, March, Jump, Air, Down, Up,
             StopEcrase, MarchEcrase, Balloon, Teleporting,
+            // Real "Bye" farewell freeze (see kByeDuration above and
+            // TriggerBye() below) -- same "single static pose regardless
+            // of grounded/airborne" shape as Teleporting/Balloon/Ecrase,
+            // no dedicated frame table (falls through to the Stop pose in
+            // GetAnimIcon()).
+            Bye,
             // Real hazard-death lock + life-loss Voyage window (see
             // TriggerDeathLock()/IsDeathHidden() below) -- one real BlupiAction
             // status covering both freeze sub-states (locked hurt pose,
@@ -659,6 +684,16 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool IsTeleporting() const noexcept { return m_teleporting; }
         [[nodiscard]] std::uint16_t GetTeleportIcon() const noexcept { return m_teleportIcon; }
 
+        // Real "Bye" farewell freeze (see kByeDuration's own comment above) --
+        // a no-op (returns false) if any other freeze is already active,
+        // matching the same idempotent-re-trigger shape as TriggerTeleport().
+        // The caller (only site: world-select portal contact) is expected to
+        // call SetYaw() right after a successful trigger to face the camera,
+        // and to detect natural completion the same before/after-Step() way
+        // teleport completion is detected (IsBye() was true, now false).
+        bool TriggerBye() noexcept;
+        [[nodiscard]] bool IsBye() const noexcept { return m_bye; }
+
         // Real death-lock + life-loss Voyage (plan.md death-VFX follow-up, verified directly
         // against `Decor.cpp:6374-6392`'s shared per-cause duration dispatch): every real hazard
         // death locks Blupi in a frozen hurt state for a fixed per-cause duration, THEN goes
@@ -903,6 +938,9 @@ namespace GalaxyEggbert::CNA
         bool m_teleporting = false;
         float m_teleportTimer = 0.0f;
         std::uint16_t m_teleportIcon = 0;
+
+        bool m_bye = false;
+        float m_byeTimer = 0.0f;
 
         // Real ScaleTime(40)=40 ticks=2.0s, same conversion as every other duration here.
         static constexpr float kLifeLossVoyageDuration = 2.0f;

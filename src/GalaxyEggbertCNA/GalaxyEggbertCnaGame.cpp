@@ -50,6 +50,7 @@ namespace GalaxyEggbert::CNA
                 case GEBlupiController::AnimState::StopEcrase:
                 case GEBlupiController::AnimState::Balloon:
                 case GEBlupiController::AnimState::Teleporting:
+                case GEBlupiController::AnimState::Bye:
                 default:
                     return kSurvey;
             }
@@ -1355,6 +1356,7 @@ namespace GalaxyEggbert::CNA
             const bool wasOnGround = blupi_.IsOnGround();
             const bool wasEcrased = blupi_.IsEcrased();
             const bool wasTeleporting = blupi_.IsTeleporting();
+            const bool wasBye = blupi_.IsBye();
             // Compared at the very end of Update() (not right after Step(),
             // like wasEcrased above) since the balloon can also end via
             // interaction_.Update() -> PopBalloon() later this same frame,
@@ -1465,6 +1467,18 @@ namespace GalaxyEggbert::CNA
                     blupi_.SetPosition(destX, destY, destZ);
                     sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
                 }
+            }
+
+            // "Bye" farewell completion (plan.md BLUPI-049) -- fires the one
+            // frame the real 1.5s freeze naturally elapses inside Step(),
+            // same before/after-Step() detection shape as the teleport
+            // completion just above. The actual world-select portal contact
+            // below is what calls TriggerBye() and remembers byePendingTarget_;
+            // this is just where the deferred LoadMission() finally happens.
+            if (wasBye && !blupi_.IsBye())
+            {
+                LoadMission(byePendingTarget_);
+                return;
             }
 
             // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
@@ -1765,25 +1779,30 @@ namespace GalaxyEggbert::CNA
             // Hub/mission-progression: world-select portal contact (plan.md
             // hub/mission system, found/implemented 2026-07-17, real
             // `Decor::IsWorld()`/the `Bye`-action mission-change handler).
-            // Contact-triggered, no debounce needed -- unlike every other
-            // ground-tile check here, `LoadMission()` itself repositions
-            // Blupi to a DIFFERENT world's spawn point, so he's never still
-            // standing on the same portal tile the frame after it fires (by
-            // construction: no world in this engine places a portal marker
-            // at its own spawn point). The real ~1.5s "turn and wave" `Bye`
-            // animation delay is NOT modeled (documented simplification,
-            // same category as this session's other timing simplifications).
-            // Returns immediately after LoadMission() (same "freeze this
-            // frame" precedent already used for the fade-transition window)
-            // so nothing below operates on stale locals derived from the
-            // world that just got replaced.
+            // Contact-triggered, no debounce needed. The real ~1.5s "turn and
+            // wave" `Bye` freeze is now modeled (plan.md BLUPI-049, found/
+            // wired 2026-07-17): `TriggerBye()` freezes Blupi and remembers
+            // the target mission; `SetYaw()` turns him to face the camera
+            // (real `m_blupiFront=true`), matching the real trigger scope
+            // exactly (`Decor.cpp:5476-5488`) -- world-select ONLY, not the
+            // exit-goal/PauseBack/PauseRestart paths below/elsewhere, which
+            // stay instant in real source too. `LoadMission()` itself now
+            // happens later, off the `wasBye`/`IsBye()` completion check
+            // right after `Step()` above, once the freeze naturally elapses.
             {
                 const auto groundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
                 if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
                 {
                     const int target = GEWorldRuntime::ComputeWorldSelectTarget(
                         worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock));
-                    LoadMission(target);
+                    if (blupi_.TriggerBye())
+                    {
+                        byePendingTarget_ = target;
+                        const float dx = camera_.GetPosition().X - blupi_.GetX();
+                        const float dz = camera_.GetPosition().Z - blupi_.GetZ();
+                        blupi_.SetYaw(std::atan2(dx, -dz));
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel32);
+                    }
                     return;
                 }
                 // Engine-specific demo/test-world portal (plan.md hub/

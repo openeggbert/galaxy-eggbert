@@ -451,6 +451,19 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerBye() noexcept
+    {
+        if (m_bye || m_teleporting || m_deathLocked || m_deathLossVoyageActive || m_pickupFrozen ||
+            m_balloon || m_ecrase)
+        {
+            return false;
+        }
+        m_bye = true;
+        m_byeTimer = kByeDuration;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
     bool GEBlupiController::TriggerDeathLock(DeathCause cause, bool shouldRespawn) noexcept
     {
         if (m_deathLocked || m_deathLossVoyageActive)
@@ -792,6 +805,22 @@ namespace GalaxyEggbert::CNA
             {
                 m_deathLossVoyageActive = false;
                 m_deathLossVoyageTimer = 0.0f;
+            }
+            UpdateAnim(false, false, false, dt);
+            return;
+        }
+
+        // Real "Bye" farewell freeze (see TriggerBye()'s own comment) -- same freeze shape as
+        // Teleporte, checked after death (a death always takes precedence over a pending Bye,
+        // same reasoning as every other freeze here) but before pickup-freeze/teleport (mutually
+        // exclusive in practice -- TriggerBye()'s own guard already refuses to fire over either).
+        if (m_bye)
+        {
+            m_byeTimer -= dt;
+            if (m_byeTimer <= 0.0f)
+            {
+                m_bye = false;
+                m_byeTimer = 0.0f;
             }
             UpdateAnim(false, false, false, dt);
             return;
@@ -1229,6 +1258,7 @@ namespace GalaxyEggbert::CNA
         // see the AnimState enum's own comment for why this differs from
         // Simple3D's frame-counted trigger window.
         const AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
+                                  : m_bye ? AnimState::Bye
                                   : m_pickupFrozen ? AnimState::PickupBusy
                                   : m_teleporting ? AnimState::Teleporting
                                   : m_balloon     ? AnimState::Balloon

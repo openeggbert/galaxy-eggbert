@@ -2634,7 +2634,30 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-046 — Drown (drowning in deep water)
 - [ ] BLUPI-047 — StopJeep / MarchJeep / TurnJeep (jeep vehicle states)
 - [ ] BLUPI-048 — StopPop / Pop (pop-star costume idle/dance)
-- [ ] BLUPI-049 — Bye (farewell exit animation)
+- [x] BLUPI-049 — Bye (farewell exit animation) — **done 2026-07-17** (user-reported gap: teleporting
+      into a hub world-select portal did nothing visually, unlike real mobile-eggbert's ~1.5s "turn
+      and wave"). Verified directly against `Decor.cpp:6436`: `m_blupiPhase == Config::ScaleTime(30)`
+      — 30 ticks at the real 20Hz reference rate = exactly 1.5s, a direct transcription (the
+      `SCORE-013`/hub-system writeup's earlier "~1.5s" note was already precisely right). Real
+      trigger scope is narrow — confirmed via `Decor.cpp:5476-5488`: Bye fires ONLY for
+      `Decor::IsWorld()` (hub-screen world-select contact), never for the level-exit-reached/
+      PauseBack/PauseRestart paths, which stay instant in real source too — so only the
+      `WorldSelect1-12` portal-touch path in `GalaxyEggbertCnaGame.cpp`'s ground-tile check got this;
+      `DemoPortal`/exit/PauseBack/PauseRestart are deliberately unchanged. New
+      `GEBlupiController::TriggerBye()`/`IsBye()` (+ member timer, same "freeze everything, count a
+      timer down, auto-resume" shape as `TriggerTeleport()`) and a new `AnimState::Bye` (falls
+      through to the existing static Stop-pose in `GetAnimIcon()` — checked Tables.cpp/Decor.cpp
+      directly, no dedicated per-frame "wave" sprite table exists in real source; the real
+      "farewell" is genuinely just standing still, turned front-on, for 1.5s). The caller
+      (`GalaxyEggbertCnaGame.cpp`'s world-select touch handler) calls `SetYaw()` once at trigger time
+      to face the camera (real `m_blupiFront=true`) and plays the real entry sound (channel 32,
+      `Decor.cpp:5480-5483`); `LoadMission()` itself now happens off a `wasBye`/`IsBye()`
+      before/after-`Step()` completion check, the same detection shape already used for teleport-
+      transit completion, instead of firing instantly on contact. Live-verified via a temporary
+      debug harness (reverted before commit): confirmed the freeze holds for the correct ~1.5s
+      duration, yaw updates to face the camera, and `LoadMission()` fires exactly once with the
+      correct target the frame the freeze naturally elapses. Full regression clean (only the
+      pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [ ] BLUPI-050 — StopSuspend / MarchSuspend / TurnSuspend / JumpSuspend (rope hanging)
 - [ ] BLUPI-051 — Hide (hiding in object)
 - [ ] BLUPI-052 — JumpAie (hurt jump on hazard contact)
@@ -3864,10 +3887,11 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-039 — ch29: jeep/tank motor high (loop) — **done 2026-07-17**, see `SOUND-008`.
 - [x] SOUND-040 — ch30: jeep/tank stop — **done 2026-07-17**, see `SOUND-008`.
 - [x] SOUND-041 — ch31: jeep/tank motor low (loop) — **done 2026-07-17**, see `SOUND-008`.
-- [ ] SOUND-042 — ch32: unknown — **identified 2026-07-16**: verified directly against
+- [x] SOUND-042 — ch32: **done 2026-07-17** (was "identified 2026-07-16, out of scope" — the Bye
+  animation itself is now implemented, see `BLUPI-049`): verified directly against
   `Decor.cpp:5476-5489` — real ch32 is the hub-screen world-select entry sound (`Decor::IsWorld()`
-  match, `BlupiAction::Bye`). Out of scope — hub/menu screens (`MENU-*` territory) aren't touched
-  this session.
+  match, `BlupiAction::Bye`), now played (`SoundChannel32`) at the world-select portal contact site
+  the instant `TriggerBye()` succeeds.
 - [x] SOUND-043 — ch33: **corrected 2026-07-13** — real use is door open (confirmed in `GEInteractionSystem.cpp`'s `OpenDoorAt()`), not "bulldozer turn" — no bulldozer-turn sound exists.
 - [ ] SOUND-044 — ch34: unknown — **identified 2026-07-16**: verified directly against
   `Decor.cpp:5440-5453` — real ch34 is the Suspended (hanging-on-a-bar) mode's entry sound.
