@@ -2291,7 +2291,11 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       its own verification before implementing. **Re-checked 2026-07-13 (follow-up)**: also grepped
       for `EXIT`/`ExitOpen`/`OpenExit` across the ENTIRE `src/`+`include/` tree — zero hits. Same
       likely-mistaken status as `HUD-009`/`025`, though not as conclusively ruled out (a
-      localized-string-only trigger could still exist unread).
+      localized-string-only trigger could still exist unread). **Fully ruled out 2026-07-17**:
+      grepped `MyResource.cpp`/`.hpp` (the real localized-string resource file, the last unread
+      possibility) for `exit`/`open`/`sortie` — zero hits there either. No localized string, no
+      code path, nothing — likely mistaken/invented like the others, not merely under-researched;
+      do not implement.
 - [ ] HUD-021 — `[?]` Controls hint bar fades after 8 s (re-show on new level). Not in `DrawInfo`
       (real training-hint overlay there is `HUD-024`, mission-gated, a different thing) --
       **Re-checked 2026-07-13 (follow-up)**: grepped for hint-bar/8-second-timer patterns across
@@ -2583,10 +2587,20 @@ reset to `[ ]` except the small set with direct CNA evidence.
 
 #### 4.5 Blupi Special States & Power-ups
 
-- [ ] BLUPI-104 — Shield (m_blupiShield): 5 s invincibility from ObjectType25; bypasses all hazards
-- [ ] BLUPI-105 — Shield timer (m_blupiTimeShield): counts down 0→100 ticks; gauge shows progress
-- [ ] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active)
-- [ ] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers
+- [x] BLUPI-104 — Shield (m_blupiShield): 5 s invincibility from ObjectType25; bypasses all hazards
+      — **stale checkbox, closed 2026-07-17**: fully done via Phase 17 `170`
+      (`GEBlupiController::SecretPower::Shield`/`IsInvincible()`, `ObjectType25` grant). This
+      entry's "5s" figure is superseded by `172`'s more careful research (real 0.25s/level, 25s
+      total) — not a separate gap, just an older/less precise duration claim.
+- [x] BLUPI-105 — Shield timer (m_blupiTimeShield): counts down 0→100 ticks; gauge shows progress
+      — **stale checkbox, closed 2026-07-17**: done via `m_secretPowerTimer`/`m_secretPowerLevel`
+      (Phase 17 `172`) + the shared HUD gauge (`HUD-008`).
+- [x] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active) — **stale
+      checkbox, closed 2026-07-17**: done — see the `PICKUP-086/087` cancellation note for the
+      full citation (`GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, `kShieldTrack`).
+- [x] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers —
+      **stale checkbox, closed 2026-07-17**: done, see `MENU-095`/`CHEAT-002`
+      (`GEBlupiController::m_cheatSuperBlupi`/`SetCheatSuperBlupi()`, folded into `IsInvincible()`).
 - [x] BLUPI-108 — ~~Cloud mode (m_blupiCloud): from ObjectType31, floats through blocks for N
       ticks~~ **HALLUCINATED — CANCELLED (confirmed by user 2026-07-14)**: grepped real
       `Decor.cpp` for every `m_blupiCloud` reference — none gate any collision/movement-bypass
@@ -2595,7 +2609,12 @@ reset to `[ ]` except the small set with direct CNA evidence.
       item `068` and `PICKUP-010` above for the full citation. The "floats through blocks" premise
       is not supported by any source and is confirmed invented — do not implement it under any
       item number.
-- [ ] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
+- [x] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
+      — **stale checkbox, closed 2026-07-17**: the actual control-inversion IS implemented (real
+      `Decor::SetSpeedX`'s "if (m_blupiInvert) speed = -speed", `GEBlupiController::Step()`'s
+      `m_invert` branch negating `horizontalSpeed`) — see `PICKUP-011` for the full grant/timer
+      citation. Only `BLUPI-110`'s particle-burst half was previously marked done; this entry
+      (the actual gameplay effect) was the still-unmarked duplicate.
 - [x] BLUPI-110 — Invert start/stop particle burst (ObjectType41/42 in 4 directions) — **done
       2026-07-14, see `plan.md` VISUAL-014/015 for the full implementation writeup.**
 - [x] BLUPI-111 — Ghost mode (m_blupiGhost): cheat, passes through walls, no interactions —
@@ -2634,18 +2653,43 @@ reset to `[ ]` except the small set with direct CNA evidence.
       toggle-off in open air vs. rejected inside solid geometry) + 4 new `VerifyGEInputPad` checks
       (letter-by-letter typing, Play-phase gate, held-key-doesn't-repeat, suffix-match-through-a-
       prefix) + full regression on both backends, all pass.
-- [ ] BLUPI-112 — Hide mode (m_blupiHide): concealed in object
-- [ ] BLUPI-113 — Sucette/suction-cup (m_blupiPower): from ObjectType26, walk up walls
-- [ ] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions
+- [x] BLUPI-112 — Hide mode (m_blupiHide): concealed in object — **stale checkbox, closed
+      2026-07-17**: done via Phase 17 `170` (`SecretPower::Hide`, `ObjectType30` grant,
+      `IsInvincible()`).
+- [x] BLUPI-113 — Sucette/suction-cup (m_blupiPower): from ObjectType26, walk up walls — **stale
+      checkbox, closed 2026-07-17, and this entry's "walk up walls" premise is wrong**: verified
+      directly against every real `m_blupiPower` reference in `Decor.cpp` — all of them are jump-
+      velocity boosts (e.g. `-25` vs `-19`), none reference wall-climbing/collision-bypass; "walk
+      up walls" doesn't appear to be real. The actual real effect (higher jump while Power is
+      active) IS done — `kJumpSpeedPowered`/`kSkateboardJumpSpeedPowered` etc. throughout
+      `GEBlupiController.cpp`, granted via `173`. Do not implement wall-climbing under this item.
+- [x] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions
+      — **stale checkbox, closed 2026-07-17**: fully done, see Phase 15 `155`.
 - [x] BLUPI-115 — Bullet count (m_blupiBullet): from ObjectType29; FireTank expends bullets — **firing done 2026-07-13, plan.md `BULLET-001`** (ammo pickup itself already done 2026-07-12, E3D-MIG-175); see `BULLET-001`'s own entry (§ Bullets) for the full real-behavior citation and what's NOT modeled (Helicopter firing, enemy damage -- there is none, real bullets are a hazard not a weapon)
-- [ ] BLUPI-116 — Ecrase mode (m_blupiEcrase): crushed flat under object (StopEcrase/MarchEcrase)
-- [ ] BLUPI-117 — m_blupiPerso: persona counter (shown in HUD as button icon 108 + count)
+- [x] BLUPI-116 — Ecrase mode (m_blupiEcrase): crushed flat under object (StopEcrase/MarchEcrase)
+      — **stale checkbox, closed 2026-07-17**: the mechanic itself is done
+      (`GEBlupiController::TriggerCrush()`, a duration-timed crushed-flat state, wired from the
+      Crusher hazard in `GalaxyEggbertCnaGame.cpp`) — only the `StopEcrase`/`MarchEcrase`
+      ANIMATION-STATE selection remains blocked on the missing visible-Blupi-model work, same as
+      every other `BlupiAction` animation item.
+- [x] BLUPI-117 — m_blupiPerso: persona counter (shown in HUD as button icon 108 + count) —
+      **stale checkbox, closed 2026-07-17**: fully done, see `HUD-017`.
 
 #### 4.6 Blupi Death & Respawn
 
-- [ ] BLUPI-118 — Death: BlupiDead() triggers explosion effect, resets lives-1, respawn
-- [ ] BLUPI-119 — Death freeze: 1 s input lock before respawn
-- [ ] BLUPI-120 — Drown death: different animation (ACTION_DROWN) in deep water
+- [x] BLUPI-118 — Death: BlupiDead() triggers explosion effect, resets lives-1, respawn — **stale
+      checkbox, closed 2026-07-17**: fully done via `GEBlupiController::TriggerDeathLock()` +
+      `GEInteractionSystem::LoseLife()` (the "explosion effect" is the death-cause-specific
+      hurt-sprite/pickup-freeze frame array, `DeathCause`-keyed, see the session's earlier
+      `kClear1Frames`/etc. writeup).
+- [x] BLUPI-119 — Death freeze: 1 s input lock before respawn — **stale checkbox, closed
+      2026-07-17**: done, though more precisely than "1s" — real per-cause duration
+      (`kDeathLockTicks[cause]`), not a flat 1-second lock.
+- [x] BLUPI-120 — Drown death: different animation (ACTION_DROWN) in deep water — **stale
+      checkbox, closed 2026-07-17**: the death-CAUSE distinction is done
+      (`GEBlupiController::JustDrowned()`/`DeathCause::Drown`, channel 26, Phase 14 `E3D-MIG-148`)
+      — only the `ACTION_DROWN` ANIMATION-STATE selection remains blocked on the missing visible-
+      Blupi-model work, same as `BLUPI-116` above.
 - [ ] BLUPI-121 — Electro death: ACTION_ELECTRO animation + electric shake
 - [ ] BLUPI-122 — Glu death: Blupi stuck (ACTION_GLU) for several frames then die
 - [ ] BLUPI-123 — Charge death: enemy charge-hit animation (ACTION_CHARGE)
@@ -2694,7 +2738,10 @@ re-verified individually since it is not a full port yet.
 - [x] BLUPI-130 — Landing sound: ch4 on ground contact (CNA, 2026-07-10)
 - [ ] BLUPI-131 — ~~Stomp kill sound: ch5~~ **HALLUCINATED — CANCELLED, same as BLUPI-126.**
 - [ ] BLUPI-132 — Death sound: ch8
-- [ ] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile type — NOT done in CNA (7 terrain pairs, channels 78-91)
+- [x] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile
+      type — **stale checkbox, closed 2026-07-17**: fully done and tested
+      (`GESound::FootstepChannelFor()`, `E3D-MIG-084`), wired via `sound_.PlayStep()`/`PlayLand()`
+      in `GalaxyEggbertCnaGame.cpp`.
 - [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient)
 - [ ] BLUPI-135 — Swim bubble sound: ch37
 - [ ] BLUPI-136 — Glide sound: ch41
