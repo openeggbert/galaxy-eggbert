@@ -3006,7 +3006,13 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 - [ ] PICKUP-024 — AscenseurVertigo (edge-hang on wide/shiftable platforms, icons 311-316) — NOT started (`153`); blocked on a deferred render/icon-selection decision, not a gameplay-logic gap.
 - [x] PICKUP-025 — AscenseurShift: shift Blupi with moving platform — done, this IS `152`'s `RideLift()` delta-shift mechanism (same feature, different name in this older checklist).
 - [ ] PICKUP-026 — AscenseurSynchro: synchronise multiple lifts — NOT modeled; no evidence of any special multi-lift linking (each lift patrols independently on its own clock, which may already be sufficient for this world's needs).
-- [ ] PICKUP-027 — m_blupiTimeNoAsc: cooldown preventing immediate re-entry — NOT modeled; no such cooldown found in `GEInteractionSystem`/`GEBlupiController`.
+- [ ] PICKUP-027 — m_blupiTimeNoAsc: cooldown preventing immediate re-entry — NOT modeled.
+  **Identified 2026-07-16**: this description was too generic — verified directly against
+  `Decor.cpp:9232-9265` (`Decor::AscenseurVertigo()`): it's not a standalone cooldown, it's an
+  intrinsic PART of the `AscenseurVertigo` wide/shiftable-lift-teeter mechanic itself (icons
+  311-316) — set to 10 ticks specifically when Blupi teeters off one end of a "shift" lift, so he
+  slides off rather than balancing forever. Genuinely blocked on the SAME render-geometry decision
+  as the rest of `AscenseurVertigo` (`PICKUP-024`/`153`) — not independently implementable.
 
 #### 7.3 Crates (ObjectType12)
 
@@ -3017,7 +3023,13 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 - [x] PICKUP-032 — m_rankCaisse / m_nbRankCaisse: array of crate object indices — achieved differently: `150`'s flood-fill walks `worldRuntime`'s live object list directly rather than maintaining a separate rank array, same net effect.
 - [x] PICKUP-033 — TestPushCaisse: check if push is valid (clear path) — folded into `150`'s flood-fill validity check (every linked member must have a clear destination).
 - [x] PICKUP-034 — CaisseInFront: detect crate directly in front of Blupi — folded into the existing single-crate push detection this subsection already had `[x]` (PICKUP-029).
-- [ ] PICKUP-035 — SmallShake on crate land / impact — NOT modeled, no screen-shake system exists for this.
+- [ ] PICKUP-035 — SmallShake on crate land / impact — NOT modeled. **Corrected 2026-07-16**: the
+  premise "no screen-shake system exists" is now stale (the camera-shake system was implemented
+  `CAM-008`/`009`, 2026-07-14) — the real blocker is that crates in this engine have no vertical
+  fall/gravity physics at all (confirmed: `IsCrate()` only appears in the horizontal-push and
+  dynamite-blast-destroy code paths), so there is no "landing" event to hook a shake onto. Same
+  prerequisite as `151` (crate "pop"/fall variant, not started — needs a deeper rework of crate
+  movement to be continuous/timed).
 - [x] PICKUP-035b — Conveyor nudge for ObjectType47/48 — done, same as PICKUP-021/022 (Phase 15 `154`).
 
 #### 7.4 Doors & Keys
