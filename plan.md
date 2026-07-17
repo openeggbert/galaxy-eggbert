@@ -2742,13 +2742,32 @@ accordingly.
 - [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1), div 4 / 200ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, same false-negative — `GetGroundBlockType()==Spike` gate).
 - [x] TILE-018 — Water1 tiles (6-frame: {92..95,94,93}), div 3 / 150ms (CNA, 2026-07-10 — animated decoration, alpha-blended cube, not wavy-edge surface)
 - [x] TILE-019 — Water2 tiles (6-frame: {91,96..98,97,96}), div 3 / 150ms (CNA, 2026-07-10 — same caveat as TILE-018)
-- [ ] TILE-020 — Ventilator/fan Up tiles (icons 126-128, 3-frame: table_decor_ventillog)
-- [ ] TILE-021 — Ventilator/fan Down tiles (icons 129-131, 3-frame: table_decor_ventillod)
-- [ ] TILE-022 — Ventilator/fan Right tiles (icons 132-134, 3-frame: table_decor_ventilloh)
-- [ ] TILE-023 — Ventilator/fan Left tiles (icons 135-137, 3-frame: table_decor_ventillob)
+- [x] TILE-020 — Ventilator/fan tiles, icons 126-128, 3-frame (`table_decor_ventillog`) —
+  **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
+  `case FanLeft: return 126 + (phase % 3);`, `BlockTypes::FanLeft = 126`). **Compass-direction
+  label uncertain**: this checklist calls 126-128 "Up" but this engine's own `BlockTypes.hpp`
+  calls it `FanLeft` (matching French `ventillo-G`=gauche/left more plausibly than "up") — the
+  exact real compass direction wasn't re-verified here (this engine doesn't model directional
+  wind-push physics at all, only Fan-as-hazard, so the label has no gameplay consequence either
+  way; flagged for whoever eventually needs the exact mapping, not blocking this entry's own
+  "done" status).
+- [x] TILE-021 — Ventilator/fan tiles, icons 129-131, 3-frame (`table_decor_ventillod`) — already
+  implemented (`case FanRight: return 129 + (phase % 3);`). Same compass-direction-label caveat as
+  `TILE-020` above.
+- [x] TILE-022 — Ventilator/fan tiles, icons 132-134, 3-frame (`table_decor_ventilloh`) — already
+  implemented (`case FanUp: return 132 + (phase % 3);`). Same compass-direction-label caveat.
+- [x] TILE-023 — Ventilator/fan tiles, icons 135-137, 3-frame (`table_decor_ventillob`) — already
+  implemented (`case FanDown: return 135 + (phase % 3);`). Same compass-direction-label caveat.
 - [ ] TILE-024 — Water drip tiles (icons: table_decor_goutte, 48-frame)
-- [ ] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame), div 4 / 200ms
-- [ ] TILE-026 — Marine tile (icon 203: table_marine, 11 frames, Object channel), div 3 / 150ms
+- [x] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame), div 4 / 200ms —
+  **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
+  `case Temp: return kAnimTemp[phase % 20];`).
+- [x] TILE-026 — Marine tile (icon 203: table_marine, 11 frames, Object channel), div 3 / 150ms —
+  **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
+  `case Marine: return kAnimMarine[phase % 11];`). Note: this "icon 203" is a terrain-tile
+  `BlockTypes` icon, unrelated to the `ObjectType203` (a `MoveObject`, the lethal decoration
+  implemented under `PICKUP-069` this session) despite sharing the same number — separate data
+  spaces.
 - [x] TILE-027 — Terrain renderer's per-frame animation-phase update loop covers all animated tile types (CNA, 2026-07-10)
 
 #### 5.3 Interactive / Hazard Tiles
