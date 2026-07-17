@@ -1,6 +1,6 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-16 (autonomous session, see §7.5 for standing directives)._
+_Last updated: 2026-07-17 (autonomous session, see §7.5 for standing directives)._
 
 ## 1. Project summary
 
@@ -154,6 +154,19 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **docs only**: resolved both remaining `plan.md` §3 Open Questions on user request ("hlubší
+  research na icon 95/440"). **Icon 95**: not ambiguous — `Tables.cpp:1872`'s
+  `table_decor_eau1[6] = {92,93,94,95,94,93}` (triggered only when the placed grid icon is 92,
+  `Decor.cpp:1068-1072`) makes 95 a pure animation-derived frame, never placed directly; already
+  correctly implemented (`GETerrainRenderer.cpp:298`'s `kAnimWater1`, TILE-018). **Icon 440**:
+  `Decor::OpenDoorsTresor()` (`Decor.cpp:11636-11658`) confirms treasure-gated doors are
+  `421 + (N-1)` for N treasures required, so 440 = a legitimate 20-treasure-door id — but a sweep
+  of all 78 real `worlds/*.txt` files found 421-435/437 each placed at least once while 436/438/
+  439/440 are never placed (highest real usage: 437 = 17 treasures); 436-439 still have valid
+  `object-m.png` art despite being unused, so 440's specific out-of-bounds atlas gap is best
+  explained as the atlas simply being sized for exactly 440 slots (0-439) — one short of the
+  numbering scheme's theoretical max — a slot nobody ever needed art for, not a bug ever hit in
+  the shipped game. No code changes; `BlockTypes.hpp` bounds deliberately left untouched as before.
 - `3c65870` **docs only**: fixed 6 stale `TILE-0XX` entries — Fan (all 4 directions), Temperature,
   and Marine tile animations are already implemented in `GETerrainRenderer.cpp` but were still
   marked not done. Flagged an honest, unresolved compass-direction-label mismatch for the 4 Fan

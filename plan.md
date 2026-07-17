@@ -4046,15 +4046,41 @@ doesn't silently re-open them or silently guess an answer:
   transcription — fixed 2026-07-16 alongside this research (new `kExplo5`/`kExplo6`/`kExplo8`,
   same "wrong divisor" bug class as every other explo case). 7 new `VerifyInteractionSystem`
   assertions. This open question is now fully closed, not just partially.
-- `[?]` **Icon 95** — ambiguous, boundary-only reference in mobile-eggbert source, intentionally
-  left unresolved by the reference documentation.
-- `[?]` **Icon 440's real meaning despite having no valid `object-m.png` backing content**
-  (found 2026-07-14, see `TEST-004`) — `Decor.hpp`'s `MAXQUART=441` and `Decor.cpp`'s own
-  `case 440:` branch confirm it's a real, meaningful id in mobile-eggbert's data model, yet
-  `tileUV()`'s atlas math places it entirely outside the real 1301×1431 image (confirmed, not
-  guessed). Is it an intentional sentinel, a real icon whose actual artwork lives in a different
-  file/offset than assumed, or something else? Needs source research before touching
-  `BlockTypes.hpp`'s `kPassable[441]`/`tileUV()` — not something to guess a fix for.
+- ~~`[?]` **Icon 95**~~ — **RESOLVED 2026-07-17**: not ambiguous at all; the "boundary-only
+  reference" framing was stale. `Tables.cpp:1872`: `table_decor_eau1[6] = {92, 93, 94, 95, 94,
+  93}` — real `Decor.cpp:1068-1072` triggers this table only when the *placed* icon is `92`
+  (`if (num2 == 92) { num2 = Tables::table_decor_eau1[(i*13+j*7+m_time/Config::ScaleDiv(3))%6];
+  ... }`), i.e. icon 92 is the only value ever written into a world file's decor grid for
+  Water1; icons 93/94/95 are pure animation-derived output frames, never placed directly.
+  Icon 95 is simply phase index 3 of that 6-frame cycle. Matches
+  `mobile-eggbert-reference/questionnaire-unused-tiles.md`'s own existing answer for icon 95
+  ("Co to je? Odpověď: voda") and is already correctly implemented in this engine —
+  `GETerrainRenderer.cpp:298`'s `kAnimWater1[6] = {92,93,94,95,94,93}` is an exact transcription,
+  keyed off `BlockTypes::Water1` the same way (see TILE-018, already `[x]`). No further action
+  needed; this question is fully closed, not just partially.
+- ~~`[?]` **Icon 440's real meaning despite having no valid `object-m.png` backing content**~~
+  — **RESOLVED 2026-07-17**. `Decor.cpp:11636-11658`'s `Decor::OpenDoorsTresor()` (with its own
+  doc comment already in the real source) confirms the scheme directly: treasure-gated doors use
+  consecutive icons starting at 421, where icon `421 + (N-1)` is a door requiring `N` treasures
+  (`if (icon >= 421 && icon <= 421 + m_nbTresor - 1) { OpenDoor(...); }`). Icon 440 = `421 + 19`
+  = a door requiring **20 treasures** — a real, legitimate id in the numbering scheme, exactly as
+  `Decor.cpp`'s own `case 440:` branch (in the `IsRightBorder`-family passability switch,
+  `10602-10626`, grouped with 421-439 as "passable vertically, blocked horizontally") already
+  implied. Swept all 78 real `worlds/*.txt` files for icons 421-440: **421-435 and 437 are each
+  placed at least once (1-15 occurrences); 436, 438, 439, and 440 are never placed in any real
+  level** — the highest treasure requirement any shipped level actually uses is icon 437 (17
+  treasures). Icons 436-439 nonetheless still have valid `object-m.png` backing art (confirmed by
+  TEST-004: 0-439 all fit), so "unused in practice" alone doesn't explain 440's specific
+  out-of-bounds gap — the actual cause is that the atlas grid is sized for exactly 440 slots
+  (20 cols × 22 rows = indices 0-439), one short of the numbering scheme's theoretical maximum
+  (a 20-treasure door). In other words: the treasure-door formula supports up to 20 doors
+  mathematically, but the atlas was only ever laid out for 440 icons, and since no real level
+  design ever approached needing a 20-treasure door, this final slot was simply never allocated
+  art — not a bug ever actually hit in the shipped game, an intentional sentinel, or a
+  misplaced-offset error. **Still deliberately not touched**: `BlockTypes.hpp`'s
+  `kPassable[441]`/`tileUV()`/`isMobileTransparent()` bounds themselves remain unchanged (per
+  TEST-004's own note) — this research explains the discrepancy, it doesn't newly justify
+  editing those foundational, heavily-relied-upon functions.
 - `[?]` **`E3D-MIG-015`**: whether to ask mobile-eggbert maintainers for a future
   `add_library()` target covering `Tables`/`Def`/`GameData`/`ObjectType`/`SoundChannel` — still
   open, would need explicit user approval as a separate task even if pursued.
