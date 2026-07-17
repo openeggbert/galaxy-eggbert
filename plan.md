@@ -3248,13 +3248,27 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-027 — ch17: helicopter motor stop
 - [ ] SOUND-028 — ch18: helicopter motor low (loop)
 - [x] SOUND-029 — ch19: treasure/key pickup, set-completing variant (CNA, 2026-07-10 — new correct meaning, was previously listed as generic "teleport (alternate)")
-- [ ] SOUND-030 — ch20: bridge completed
-- [ ] SOUND-031 — ch21: secret exit found
-- [ ] SOUND-032 — ch22: unknown
+- [ ] SOUND-030 — ch20: bridge completed — **label wrong, corrected 2026-07-16**: verified
+  directly against `Decor.cpp:3628-3633` — real ch20 plays when standing back up from a crouch
+  (`Down`→`Stop` transition), not "bridge completed". Genuinely not wired under the correct
+  meaning (no crouch-recovery sound exists in this engine).
+- [ ] SOUND-031 — ch21: secret exit found — **label wrong, corrected 2026-07-16**: verified
+  directly against `Decor.cpp:3278-3282` — real ch21 is the look-up ("Up" action) transition
+  sound (paired with ch7's look-down/crouch transition, `SOUND-017`), not "secret exit found" (no
+  such distinct sound exists at all — confirmed via `PICKUP-083`'s own research, the secret exit
+  reuses the regular exit's ch13/ch14). Genuinely not wired under the correct meaning (no
+  look-up-transition sound exists in this engine).
+- [x] SOUND-032 — ch22: **stale, corrected 2026-07-16** — real use is the water entry/exit splash
+  (plays entering EITHER Surf or Nage from fully dry, `GalaxyEggbertCnaGame.cpp`'s water-status
+  block). Already wired.
 - [ ] SOUND-033 — ch23: water plouf
 - [ ] SOUND-034 — ch24: water bubble rise
-- [ ] SOUND-035 — ch25: unknown
-- [ ] SOUND-036 — ch26: unknown
+- [x] SOUND-035 — ch25: **stale, corrected 2026-07-16** — real use is the start-surfing/
+  resurfacing sound (Nage→Surf transition specifically, distinct from ch22's general water-entry
+  splash). Already wired.
+- [x] SOUND-036 — ch26: **stale, corrected 2026-07-16** — real use is the drowning death sound (a
+  dedicated channel distinct from every other death cause's ch8/51/75, per `07-sounds.md`).
+  Already wired.
 - [ ] SOUND-037 — ch27: unknown — **corrected 2026-07-13**: the real projectile-fire channel is ch52, not ch27 (see SOUND-062); this line item's original guess is unconfirmed against source.
 - [ ] SOUND-038 — ch28: jeep/tank start
 - [ ] SOUND-039 — ch29: jeep/tank motor high (loop)
@@ -3266,7 +3280,15 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-045 — ch35: unknown
 - [ ] SOUND-046 — ch36: water walk ambient (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-047 — ch37: swim bubble (idle fidget channel, see SOUND-010c)
-- [ ] SOUND-048 — ch38: electric arc (long)
+- [x] SOUND-048 — ch38: electric arc (long) — **done, label wrong, corrected 2026-07-16**: real
+  use is the crate-push loop sound (verified directly against `Decor.cpp:6138/6147` start,
+  `:3637` stop on leaving `BlupiAction::Push`), not "electric arc". Now implemented: new
+  `GESound::Stop(channel)` (a per-channel stop, since `StopAll()` would incorrectly kill every
+  other playing sound), new `GEInteractionSystem::CrateBeingPushedThisFrame()` signal (true the
+  one frame a push actually moves a crate), and `GalaxyEggbertCnaGame::wasPushingCrate_` turning
+  that per-frame fact into a real start-once/stop-once loop (`sound_.Play(ch38, loop=true)` on
+  the false→true transition, `sound_.Stop(ch38)` on true→false). New `VerifyInteractionSystem`
+  assertions. Full suite green both backends + live headless launch smoke check.
 - [ ] SOUND-049 — ch39: key sparkle effect
 - [x] SOUND-050 — ch40: **corrected 2026-07-13** — real use is wasp balloon-status entry (Phase 13 `135`), not "explosion".
 - [x] SOUND-051 — ch41: **corrected 2026-07-13** — real use is wasp balloon-status recovery/expiry (shared with Crusher's own recovery cue), not "glide".

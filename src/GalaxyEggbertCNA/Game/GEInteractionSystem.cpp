@@ -567,6 +567,7 @@ namespace GalaxyEggbert::CNA
         invertGrantedThisFrame_ = false;
         smallShakeTriggeredThisFrame_ = false;
         bigShakeTriggeredThisFrame_ = false;
+        crateBeingPushedThisFrame_ = false;
         ridingLift_ = false;
         voyagePendingThisFrame_ = false;
         deathLockRequestedThisFrame_ = false;
@@ -1046,6 +1047,15 @@ namespace GalaxyEggbert::CNA
                             {
                                 member->currentX += pushDir;
                             }
+                            // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147
+                            // start, `:3637` stop on leaving `BlupiAction::Push`) -- ch38, not
+                            // "electric arc (long)" as plan.md's own SOUND-048 entry claimed.
+                            // This class has no direct sound-instance-lifetime access (its own
+                            // `sound` parameter is fire-and-forget `Play()` only), so the actual
+                            // start/stop loop control lives in the caller
+                            // (`GalaxyEggbertCnaGame::wasPushingCrate_`) -- this flag is the
+                            // signal it acts on, same shape as `SmallShakeTriggeredThisFrame()`.
+                            crateBeingPushedThisFrame_ = true;
                         }
                     }
                 }

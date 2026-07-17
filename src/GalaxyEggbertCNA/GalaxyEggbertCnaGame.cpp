@@ -1951,6 +1951,24 @@ namespace GalaxyEggbert::CNA
                 cameraShake_.Trigger(CameraShakeType::Big);
             }
 
+            // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`
+            // stop on leaving `BlupiAction::Push`) -- ch38, not "electric arc (long)" as
+            // plan.md's own SOUND-048 entry claimed. `CrateBeingPushedThisFrame()` is a plain
+            // per-frame fact (true only while a push is actually moving a crate this frame, no
+            // memory of its own); comparing it against the previous frame's value here is what
+            // turns that into a real start-once/stop-once loop, matching the real source's own
+            // one-shot `PlaySound()`-on-entry/`StopSound()`-on-exit shape (not a per-frame replay).
+            const bool isPushingCrate = interaction_.CrateBeingPushedThisFrame();
+            if (isPushingCrate && !wasPushingCrate_)
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel38, /*loop=*/true);
+            }
+            else if (!isPushingCrate && wasPushingCrate_)
+            {
+                sound_.Stop(GalaxyEggbert::SoundChannel::SoundChannel38);
+            }
+            wasPushingCrate_ = isPushingCrate;
+
             // Real Win/Lost phase transitions (plan.md HUD-023): Lost
             // fires the instant GameOverCount() increments (real
             // DoorsLost()); Win fires the instant ExitReached() becomes

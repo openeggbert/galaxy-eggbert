@@ -457,16 +457,22 @@ int main(int argc, char** argv)
         const float startX = crate->currentX;
         const float blupiZ = crate->currentZ;
         float blupiX = startX - 0.8f;
+        bool sawCratePushSignal = false;
         for (int i = 0; i < 30; ++i)
         {
             const float moveDX = 0.05f; // walking east this frame
             interaction.Update(dt, world, blupiX, crate->currentY, blupiZ, moveDX, sound);
+            sawCratePushSignal = sawCratePushSignal || interaction.CrateBeingPushedThisFrame();
             blupiX += moveDX;
         }
         const auto* after = findFirst(ObjectType::ObjectType12);
         std::cout << "Crate X after push attempt: " << (after ? after->currentX : -999.0f)
                   << " (started at " << startX << ")" << std::endl;
         check(after != nullptr && after->currentX > startX, "crate was pushed east (currentX increased)");
+        check(sawCratePushSignal,
+              "CrateBeingPushedThisFrame() was true on at least one frame a push actually moved "
+              "the crate (real crate-push loop sound, ch38, found 2026-07-16) -- checked across "
+              "the whole approach since the crate outpaces Blupi's own per-frame step once pushed");
 
         // Real crate-push gate (Decor.cpp:6130-6132, found 2026-07-16) also excludes every
         // vehicle mode + Ecrase -- blupiCanPushCrate=false (e.g. while riding a vehicle) must
@@ -484,6 +490,8 @@ int main(int argc, char** argv)
         const auto* stillGated = findFirst(ObjectType::ObjectType12);
         check(stillGated != nullptr && std::fabs(stillGated->currentX - gatedStartX) < 0.01f,
               "crate does NOT move when blupiCanPushCrate=false (real vehicle-mode gate)");
+        check(!interaction.CrateBeingPushedThisFrame(),
+              "CrateBeingPushedThisFrame() is false when the vehicle-mode gate blocks the push");
     }
     else
     {

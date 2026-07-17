@@ -123,6 +123,20 @@ namespace GalaxyEggbert::CNA
         ch.instance->Play();
     }
 
+    void GESound::Stop(GalaxyEggbert::SoundChannel channel)
+    {
+        const int idx = static_cast<int>(GalaxyEggbert::ToRaw(channel));
+        if (idx < 0 || idx >= kNumChannels)
+        {
+            return;
+        }
+        Channel& ch = channels_[static_cast<std::size_t>(idx)];
+        if (ch.instance)
+        {
+            ch.instance->Stop();
+        }
+    }
+
     void GESound::StopAll()
     {
         for (Channel& ch : channels_)

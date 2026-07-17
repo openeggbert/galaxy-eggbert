@@ -181,6 +181,11 @@ namespace GalaxyEggbert::CNA
         // actionPressed) edge-detected the same way jumpKeyWasDown_ is.
         bool actionKeyWasDown_ = false;
 
+        // Real crate-push loop sound (found 2026-07-16, ch38) -- tracks last frame's
+        // `interaction_.CrateBeingPushedThisFrame()` so the start/stop transition can be
+        // detected (the flag itself carries no memory across frames).
+        bool wasPushingCrate_ = false;
+
         // Platform lift patrol, crate push, and pickup collection
         // (2026-07-10, see GEInteractionSystem.hpp).
         GEInteractionSystem interaction_;

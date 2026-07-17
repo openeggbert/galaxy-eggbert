@@ -47,6 +47,11 @@ namespace GalaxyEggbert::CNA
         // channel 10. A channel with no loaded file (missing WAV) is a
         // silent no-op, not an error.
         void Play(GalaxyEggbert::SoundChannel channel, bool loop = false);
+        // Stops just one channel's instance (a no-op if it isn't currently playing/doesn't
+        // exist) -- needed for real looped sounds with a distinct stop trigger (e.g. the
+        // crate-push loop, ch38) where StopAll() would incorrectly also kill every other
+        // currently-playing sound.
+        void Stop(GalaxyEggbert::SoundChannel channel);
         void StopAll();
 
         void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }

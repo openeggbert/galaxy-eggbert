@@ -262,6 +262,11 @@ namespace GalaxyEggbert::CNA
         // triggers its own GECameraShake with the matching type.
         [[nodiscard]] bool SmallShakeTriggeredThisFrame() const noexcept { return smallShakeTriggeredThisFrame_; }
         [[nodiscard]] bool BigShakeTriggeredThisFrame() const noexcept { return bigShakeTriggeredThisFrame_; }
+        // Real crate-push loop sound (found 2026-07-16, plan.md SOUND-048's real meaning --
+        // ch38, not "electric arc") -- true the one frame a crate actually moved due to a push.
+        // The caller compares this against its own previous-frame value to start/stop the real
+        // looped ch38 sound (this class has no sound-instance-lifetime access of its own).
+        [[nodiscard]] bool CrateBeingPushedThisFrame() const noexcept { return crateBeingPushedThisFrame_; }
 
         // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31)
         // -- true the one frame that pickup's real gate passed and the
@@ -857,6 +862,7 @@ namespace GalaxyEggbert::CNA
         bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
         bool smallShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
+        bool crateBeingPushedThisFrame_ = false; // reset at the top of every Update() call
         bool bigShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
         bool shieldGrantedThisFrame_ = false; // reset at the top of every Update() call
         bool powerGrantedThisFrame_ = false;  // reset at the top of every Update() call
