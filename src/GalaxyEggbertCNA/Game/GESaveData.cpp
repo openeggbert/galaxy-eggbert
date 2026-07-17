@@ -49,6 +49,14 @@ namespace GalaxyEggbert::CNA
                 {
                     gamers_[gamer].hasProgress = (value == "1");
                 }
+                else if (field == "doorsUnlocked")
+                {
+                    auto& doors = gamers_[gamer].doorsUnlocked;
+                    for (std::size_t i = 0; i < doors.size() && i < value.size(); ++i)
+                    {
+                        doors[i] = (value[i] == '1');
+                    }
+                }
             }
         }
     }
@@ -68,6 +76,12 @@ namespace GalaxyEggbert::CNA
             out << "gamer" << gamer << ".lives=" << gamers_[gamer].lives << "\n";
             out << "gamer" << gamer << ".missionNumber=" << gamers_[gamer].missionNumber << "\n";
             out << "gamer" << gamer << ".hasProgress=" << (gamers_[gamer].hasProgress ? "1" : "0") << "\n";
+            out << "gamer" << gamer << ".doorsUnlocked=";
+            for (bool unlocked : gamers_[gamer].doorsUnlocked)
+            {
+                out << (unlocked ? '1' : '0');
+            }
+            out << "\n";
         }
     }
 }

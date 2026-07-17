@@ -154,6 +154,34 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: expand the hub/mission-progression system to full real scope + real progress-gated
+  doors (plan.md SCORE-013/014, SAVE-006).** Explicit user follow-up request: galaxy-eggbert
+  should contain the SAME hub/world scope as real mobile-eggbert (all 78 world files), not just
+  the earlier 3-world proof, plus the real "doors that only open under certain conditions"
+  mechanic gating sublevel access. Researched directly against `Decor.cpp`: the real win-exit
+  formula (`Decor.cpp:6411-6434`) is distinct from the `PauseBack` formula — mission 1's own exit
+  goes to a real final bonus world (199), not `mission/10*10` — new `GEWorldRuntime::
+  ComputeWinExitTarget()` fixes a latent bug where `world001.vwr`'s own pre-existing exit would
+  have computed an invalid mission 0. Confirmed (by tracing `Decor::IsWorld()` directly) that real
+  global-hub world-select markers are NEVER access-gated — the locked/unlocked icon swap is purely
+  cosmetic — so no gating was needed there; but confirmed real per-world sublevel access IS
+  gated by real physical door tiles (`Decor::AdaptDoors()`'s `m_mission%10==0` branch,
+  `SearchDoor()`/icon 182, cross-checked against `worlds/world010.txt`'s own real sign+door
+  layout), opened once the preceding sublevel is won (`Decor::OpenDoorsWin()`). Ported as new
+  `BlockTypes::ProgressDoor2..8` + `GESaveData::IsMissionDoorUnlocked()`/`UnlockMissionDoor()`
+  (a per-gamer persisted flag array keyed directly by mission number), applied at
+  `LoadMission()`-time (matching real `AdaptDoors()` running before the level is ever shown).
+  Extended `BlockTypes::WorldSelect1-8` to `1-12` (all 12 real world hubs). Generated all 78 real
+  mobile-eggbert world files with byte-for-byte identical filenames/mission numbers via a
+  data-driven table in `GenerateSampleWorld3D.cpp` (1 global hub unchanged in content, 12 world
+  hubs with real per-world sublevel counts 4/5/4/6/8/6/5/4/5/7/5/5, 64 minimal placeholder
+  sublevels, 1 final bonus world) — every world beyond `world001` stays a near-empty placeholder
+  per explicit user instruction, until a real 3D world editor exists. `world001.vwr`'s own rich
+  demo content is completely unaffected (confirmed via the full existing test suite still passing
+  unmodified). New tests (`VerifyInteractionSystem`/`VerifyGESaveData`) + 2 separate live headless
+  verifications (the full navigation chain, and the door-gate mechanism itself: a fresh world's
+  door starts closed, unlocking + reloading opens exactly that one door and no others) + full
+  regression clean.
 - **feat: implement the hub/mission-progression system (plan.md SCORE-013..019, MENU-035/036,
   TILE-006).** The single biggest new subsystem this session — real mobile-eggbert's actual
   structure (global hub, mission 1 → world hubs, mission X0 → sublevels, mission X1-X5 → back via

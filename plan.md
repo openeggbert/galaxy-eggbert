@@ -3484,31 +3484,61 @@ reset to `[ ]`.
       "elapsed time" display itself is unrelated to the score hallucination and stays open pending
       its own check (see SCORE-008).
 - [x] SCORE-013 — Mission numbering: world hub (X0) → levels (X1-X5) → next
-      hub ((X+1)0) — **done 2026-07-17.** Full hub/mission-progression
-      system, verified directly against `Decor.cpp`'s real `Bye`/`Win`-
-      action mission handlers and `Game1::MissionBack()`: global hub
-      (mission 1) → world-select marker N → world hub (mission N*10) →
-      level-select marker N → sublevel (mission `X0+N`) → exit reached or
-      `PauseBack`/`PauseRestart` → back to `(mission/10)*10`, or to the
-      global hub if already at a hub. New `GEWorldRuntime::
-      ComputeWorldSelectTarget()`/`ComputeMissionBack()` (pure, unit-
-      tested), `GalaxyEggbertCnaGame::LoadMission(int)` (loads
+      hub ((X+1)0) — **done 2026-07-17, extended to FULL real scope the
+      same day** (initial 3-world proof, then expanded on explicit user
+      request to match mobile-eggbert's actual world/hub count exactly).
+      Full hub/mission-progression system, verified directly against
+      `Decor.cpp`'s real `Bye`/`Win`-action mission handlers, `Game1::
+      MissionBack()`, and `Decor::AdaptDoors()`: global hub (mission 1) →
+      world-select marker N → world hub (mission N*10) → level-select
+      marker N → sublevel (mission `X0+N`) → exit reached/`PauseBack`/
+      `PauseRestart` → back to `(mission/10)*10`, or to the global hub if
+      already at a hub. New `GEWorldRuntime::ComputeWorldSelectTarget()`/
+      `ComputeMissionBack()`/`ComputeWinExitTarget()` (all pure, unit-
+      tested — the last one is the DISTINCT real win-exit formula,
+      `Decor.cpp:6411-6434`, which additionally special-cases mission 1's
+      own exit → the real final bonus world 199, and mission 199's own
+      exit → looping back to the global hub, this engine's simplification
+      of the real true-ending sentinel since no distinct "game complete"
+      screen exists), `GalaxyEggbertCnaGame::LoadMission(int)` (loads
       `worlds3d/world{N:03d}.vwr`, rebuilds terrain/background, resets
       `blupi_`/`interaction_` to fresh per-level defaults preserving only
-      lives — real `PlayPrepare()`'s exact reset scope), and 8 renamed
-      `BlockTypes` constants (`Sp0`-`Sp7` → `WorldSelect1`-`8`, the real
-      icons 158-165 already correctly identified at `170`/`TILE-057` but
-      never wired to anything). Minimal new world content (explicitly
-      authorized this session as an exception to the normal "no 3D world
-      editor work" rule): `worlds3d/world010.vwr` (world-1 hub, 2 portal
-      markers) + `world011`/`012.vwr` (minimal placeholder sublevels, each
-      just a small stone-cube floor + a real exit marker) —
-      `worlds3d/world001.vwr` itself is unchanged in content and now
-      doubles as the real global hub (mission 1), with one new
-      `WorldSelect1` portal marker added to its existing icon-exhibition
-      floor (at a cell past every exhibited specimen, so nothing pre-
-      existing was disturbed — confirmed via the existing test suite's own
-      hardcoded-position checks against that file, all still passing).
+      lives — real `PlayPrepare()`'s exact reset scope), and 12 `BlockTypes`
+      world-select constants (`Sp0`-`Sp7` renamed + extended to
+      `WorldSelect1`-`12` — the real icons 158-165 already correctly
+      identified at `170`/`TILE-057` but never wired to anything, extended
+      with 4 more repurposed icons to cover all 12 real world hubs).
+      **Real progress-gated doors also implemented** (`Decor::AdaptDoors()`'s
+      `m_mission%10==0` branch, `SearchDoor()`/icon `182`, confirmed
+      directly against `worlds/world010.txt`'s own real sign+door layout):
+      within each world hub, sublevel-select marker 1 is always open
+      (matches real source exactly — no adjoining door tile for sign 174 in
+      any real world-hub file); markers 2-8 each sit behind a real solid
+      door (new `BlockTypes::ProgressDoor2`-`8`) that opens once the
+      PRECEDING sublevel has been won — new `GESaveData::
+      IsMissionDoorUnlocked()`/`UnlockMissionDoor()` (a per-gamer-slot
+      persisted flag array keyed directly by mission number, mirroring real
+      `m_doors[mission]` exactly, only the un-modeled per-world cosmetic-
+      gold half of the real array is skipped, see `SAVE-006`/`007`'s own
+      updated note), applied at `LoadMission()`-time (matches real
+      `AdaptDoors()` running inside `StartMission()`, before the level is
+      ever shown — no live open-animation needed) and set at the win-exit
+      handler (mirrors real `Decor::OpenDoorsWin()`'s `m_doors[mission+1]=1`
+      exactly).
+      **Full real world/hub scope, not just a proof-of-mechanism**: all 78
+      real mobile-eggbert world files now exist here too, with byte-for-
+      byte identical filenames/mission numbers — 1 global hub (`world001`,
+      unchanged rich content, now with 12 `WorldSelect` portal markers
+      instead of 1), 12 world hubs (`world010`/`020`/.../`120`, minimal
+      corridor-with-doors layout, real per-world sublevel counts: 4,5,4,6,
+      8,6,5,4,5,7,5,5), 64 minimal placeholder sublevels (small floor + real
+      exit marker each), and `world199` (the real final bonus world,
+      likewise a minimal placeholder). Per explicit user instruction, every
+      NEW world stays a near-empty placeholder until a real 3D world editor
+      exists to flesh them out — `worlds3d/world001.vwr`'s own rich demo
+      content (dynamite/crates/vehicles/water/doors/etc., built earlier
+      this session) is completely unaffected, confirmed via the full
+      existing test suite still passing unmodified against it.
       **Known, deliberate divergence**: every level's exit still shows this
       engine's own Win screen (pulsing `blupiyoupie.png` + Return button)
       before advancing — real source only shows a genuine Win screen for
@@ -3516,19 +3546,34 @@ reset to `[ ]`.
       instantly reloads the next mission with no screen at all. Keeping
       the Win screen for every completion is an intentional, already-
       built-and-tested UX choice from earlier this session, not a new gap.
-      14 new `VerifyInteractionSystem` assertions (mission-math table,
-      `isWorldSelect()`/`worldSelectIndex()`, all 3 new worlds load with
-      the right `missionNumber()`) + a live headless run proving the full
-      chain (mission 1 → walk onto the portal → mission 10 → walk onto a
-      level marker → mission 11, confirmed via stdout diagnostics, temporary
-      instrumentation reverted before commit) + full regression (only the
-      pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
+      Real per-level hidden-secret mechanic (`m_bFoundCle`, an alternate
+      "found the hidden gold → straight back to the global hub" win-exit
+      branch) is NOT modeled — a per-level hidden-pickup mechanic, out of
+      scope here, same "not attempted" precedent as every other hidden/
+      secondary mechanic this session.
+      New tests: `VerifyInteractionSystem` (mission-math table incl.
+      `ComputeWinExitTarget()`, `isWorldSelect()`/`worldSelectIndex()` at
+      the extended 1-12 range, `isProgressDoor()`/`progressDoorIndex()`,
+      all 3 originally-proven worlds still load with the right
+      `missionNumber()`), `VerifyGESaveData` (door-unlock bitset round-
+      trips through Save()/Load() correctly, per-mission not per-neighbor).
+      Live headless verification: the full navigation chain (mission 1 →
+      portal → mission 10 → marker → mission 11) AND the door-gate
+      mechanism itself (fresh world010's marker-2 door starts closed;
+      `UnlockMissionDoor(12)` + reload opens exactly that door, leaves
+      marker-3's door still closed) — both confirmed via stdout
+      diagnostics, temporary instrumentation reverted before commit. Full
+      regression clean both times (only the pre-existing unrelated
+      `easy-gl-resource-smoke-tests` failure).
 - [x] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs)
-      supported — **partially addressed 2026-07-17**: the real per-mission
-      filename FORMULA (`world{N:03d}.vwr`) is now genuinely used by
-      `LoadMission()`; only 4 files exist so far (`001`/`010`/`011`/`012`),
-      not the real game's full 78/55 — see `TILE-005`'s own scope note
-      (content authoring for the other worlds is separate, larger work).
+      supported — **done 2026-07-17**: all 78 real mobile-eggbert world
+      files now exist here too, with identical filenames/mission numbers
+      and the real per-mission filename FORMULA (`world{N:03d}.vwr`)
+      genuinely used by `LoadMission()` (see `SCORE-013`'s full writeup).
+      Every world beyond `world001` is a minimal placeholder, not real
+      themed level content — see `TILE-005`'s own scope note (fleshing out
+      real level content for all 78 is separate, much larger work, blocked
+      on a real 3D world editor not existing yet).
 - [x] SCORE-015 — IsTerminated: -1=lost, -2=win, ≥1=advance to mission N —
       **the ≥1 case is done 2026-07-17** (`ComputeWorldSelectTarget()`/
       `ComputeMissionBack()` feed `LoadMission()` directly). -1/-2
@@ -3942,9 +3987,30 @@ those are specifically about the real byte layout, which stays undone by design.
 - [x] SAVE-003 — 3 gamer slots — **done differently**: `GamerSlot{lives, missionNumber, hasProgress}` × 3 (`kGamerCount`), matching the real slot COUNT and the lives/lastWorld-equivalent fields; the `doors[200]` byte range is NOT ported (see SAVE-006/007).
 - [x] SAVE-004 — Auto-save — **done for win/lost/reset/gamer-select** (confirmed via 5 real `saveData_.Save()` call sites in `GalaxyEggbertCnaGame.cpp`: Win transition, Lost transition, Cheat5/SetupReset full reset, sound toggle, Init gamer-slot tap). **Correction 2026-07-14**: this entry previously called the missing quit/window-close save "a real, if minor, gap" — checked directly against real `Game1::OnExiting()`/`OnDeactivated()` (`Game1.cpp:186-208`) and that premise is wrong: real `OnExiting()` calls `decor.CurrentDelete()` (removes the mid-game snapshot), and `OnDeactivated()` calls `CurrentWrite()`/`CurrentDelete()` — neither ever calls `GameData::Save()` (the profile `GESaveData` actually mirrors). Both belong to the separate `CurrentWrite`/`CurrentRead`/`CurrentDelete` mid-game-save mechanism, already correctly noted as out of scope below (SAVE-009/010). Real mobile-eggbert does NOT save the gamer profile on quit either — galaxy-eggbert's current behavior already matches. No gap here.
 - [x] SAVE-005 — Persistence mechanism chosen and wired for CNA — **done**: plain `key=value` text file (no JSON library is linked in this project; a hand-rolled parser was simpler than adding one for a handful of scalars), a real, working, CNA-appropriate answer to this question.
-- [ ] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors) — confirmed NOT ported, a documented gap (`GEInteractionSystem` reacts to door BLOCKS directly in the world, not a bespoke persisted array); Init's "Secondary gates" HUD line is a static "0/52" text match, not real tracked data.
-- [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub worlds) — same gap as SAVE-006.
-- [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per gamer slot — partially real (`GetLives()`-equivalent per-slot accessors exist and work), but the doors portion of this ask is fake/static per SAVE-006/007 — stays `[ ]` for the full ask.
+- [x] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors)
+      — **the functional per-sublevel unlock half is now done 2026-07-17**,
+      see `SCORE-013`'s hub/mission-progression writeup: `GESaveData::
+      IsMissionDoorUnlocked()`/`UnlockMissionDoor()` persist exactly this
+      real semantic (does sublevel N's door open), just keyed directly by
+      mission number rather than porting the real `m_doors[0..179]` index
+      scheme literally (same net effect). Init's "Secondary gates" HUD text
+      line itself is still a static "0/52" (unrelated display code, not
+      touched by this change) — only the underlying gameplay-functional
+      door-gating is what's now real.
+- [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub
+      worlds) — still correctly NOT ported: this is the real per-world
+      COSMETIC gold-reveal flag (`Decor::OpenGoldsWin()`/`AdaptDoors()`'s
+      `m_mission==1` icon-swap branch, confirmed via direct source read
+      2026-07-17 to be purely visual, not an access gate — see
+      `SCORE-013`'s research notes) — a real, distinct, still-unmodeled gap,
+      not the same one `SAVE-006` closed.
+- [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per
+      gamer slot — **secondaryDoors (the functional half) now has a real
+      backing store** (`IsMissionDoorUnlocked()`, see `SAVE-006`), but no
+      single `GetGamerInfo()`-shaped accessor bundles lives+doors together
+      the way this item literally asks — stays `[ ]` for the full ask;
+      `mainDoors` (the cosmetic gold half) is still fake/static per
+      `SAVE-007`.
 - [ ] SAVE-009 — CurrentWrite / CurrentRead: mid-game save/load (on app deactivate/activate) — confirmed NOT modeled; real trigger is a WP7 OS lifecycle event (`Game1::OnActivated()`) with no desktop equivalent, and the real mechanism itself is a separate, heavier serialized-`Decor`-state snapshot than `GameData`, explicitly out of this engine's single-world scope (`GESaveData.hpp`'s own comment). Resume is offered instead whenever `hasProgress==true` from a prior Win/Lost — a documented simplification of the trigger, not a port of this item.
 - [ ] SAVE-010 — CurrentDelete: remove mid-game save (on OnExiting or normal level exit) — same reasoning as SAVE-009, not modeled.
 - [ ] SAVE-011 — Accelerometer sensitivity setting — NOT modeled, no accelerometer hardware exists on desktop.

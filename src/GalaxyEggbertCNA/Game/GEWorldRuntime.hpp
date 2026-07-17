@@ -279,6 +279,23 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] static int ComputeWorldSelectTarget(int currentMission, int selectIndex) noexcept;
         [[nodiscard]] static int ComputeMissionBack(int currentMission) noexcept;
 
+        // Real win-exit formula (found 2026-07-17, `Decor.cpp:6411-6434`,
+        // the `BlupiAction::Win` mission handler) -- distinct from
+        // ComputeMissionBack() above (which is only the real `else` branch
+        // of this same handler, shared with `MissionBack`/`PauseBack`).
+        // Real special cases: reaching the GLOBAL HUB's own exit
+        // (mission==1) goes to the real final bonus world (199); reaching
+        // mission 199's own exit is the true real ending (`m_term=-2`) --
+        // this engine has no distinct "game complete" screen, so it's
+        // simplified to loop back to the global hub (1) instead of
+        // modeling a new terminal state. The real `m_bFoundCle`-gated
+        // "found a level's hidden secret -> straight to the global hub"
+        // case is a per-level hidden-pickup mechanic, out of scope here
+        // (same "not attempted" precedent as every other hidden/secondary
+        // mechanic this session) -- every other mission falls through to
+        // ComputeMissionBack() exactly as the real `else` branch does.
+        [[nodiscard]] static int ComputeWinExitTarget(int currentMission) noexcept;
+
         // BigDecor: is a second 100x100 background tile layer in
         // mobile-eggbert level files (see mobile-eggbert-2d-reference.md
         // §2.3) — parsed and stored here (same icon-id-to-block-type

@@ -3321,14 +3321,39 @@ int main(int argc, char** argv)
         check(GEWorldRuntime::ComputeMissionBack(10) == 1, "hub 10 back -> global hub 1");
         check(GEWorldRuntime::ComputeMissionBack(50) == 1, "hub 50 back -> global hub 1");
 
-        // BlockTypes::isWorldSelect()/worldSelectIndex() -- real icons
-        // 158-165, 1-8 respectively (renamed from Sp0-Sp7, plan.md `170`).
-        check(isWorldSelect(WorldSelect1) && isWorldSelect(WorldSelect8), "WorldSelect1/8 are recognized markers");
-        check(!isWorldSelect(157) && !isWorldSelect(166), "icons just outside 158-165 are NOT world-select markers");
-        check(worldSelectIndex(WorldSelect1) == 1 && worldSelectIndex(WorldSelect8) == 8,
-              "worldSelectIndex() recovers the real 1-8 marker index");
+        // BlockTypes::isWorldSelect()/worldSelectIndex() -- icons 158-169,
+        // indices 1-12 (extended 2026-07-17 from the original 8, to cover
+        // all 12 real world hubs -- renamed from Sp0-Sp7, plan.md `170`).
+        using GalaxyEggbert::BlockTypes::WorldSelect12;
+        check(isWorldSelect(WorldSelect1) && isWorldSelect(WorldSelect12), "WorldSelect1/12 are recognized markers");
+        check(!isWorldSelect(157) && !isWorldSelect(170), "icons just outside 158-169 are NOT world-select markers");
+        check(worldSelectIndex(WorldSelect1) == 1 && worldSelectIndex(WorldSelect12) == 12,
+              "worldSelectIndex() recovers the real 1-12 marker index");
         check(worldSelectIndex(GalaxyEggbert::BlockTypes::Ground) == -1,
               "worldSelectIndex() returns -1 for a non-marker icon");
+
+        // BlockTypes::isProgressDoor()/progressDoorIndex() -- real per-
+        // world sublevel-select door gate (icons 170-176, indices 2-8,
+        // found 2026-07-17, `Decor::AdaptDoors()`'s hub-level branch).
+        using GalaxyEggbert::BlockTypes::isProgressDoor;
+        using GalaxyEggbert::BlockTypes::progressDoorIndex;
+        using GalaxyEggbert::BlockTypes::ProgressDoor2;
+        using GalaxyEggbert::BlockTypes::ProgressDoor8;
+        check(isProgressDoor(ProgressDoor2) && isProgressDoor(ProgressDoor8), "ProgressDoor2/8 are recognized doors");
+        check(!isProgressDoor(169) && !isProgressDoor(177), "icons just outside 170-176 are NOT progress doors");
+        check(progressDoorIndex(ProgressDoor2) == 2 && progressDoorIndex(ProgressDoor8) == 8,
+              "progressDoorIndex() recovers the real 2-8 gated marker index");
+
+        // GEWorldRuntime::ComputeWinExitTarget() -- the real win-exit
+        // formula (`Decor.cpp:6411-6434`), distinct from ComputeMissionBack()
+        // above: mission 1's own exit goes to the real final bonus world
+        // (199); mission 199's own exit loops back to the global hub (this
+        // engine's simplification of the real true-ending sentinel); every
+        // other mission falls through to the same ComputeMissionBack().
+        check(GEWorldRuntime::ComputeWinExitTarget(1) == 199, "mission 1's own exit -> mission 199 (final bonus world)");
+        check(GEWorldRuntime::ComputeWinExitTarget(199) == 1, "mission 199's own exit -> loops back to mission 1");
+        check(GEWorldRuntime::ComputeWinExitTarget(11) == 10, "sublevel 11's exit -> hub 10 (falls through to ComputeMissionBack)");
+        check(GEWorldRuntime::ComputeWinExitTarget(10) == 1, "hub 10's own exit -> global hub 1 (falls through)");
     }
 
     // 17.18. New hub/mission-progression worlds (plan.md hub/mission

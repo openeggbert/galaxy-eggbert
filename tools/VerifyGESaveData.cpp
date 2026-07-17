@@ -57,6 +57,25 @@ int main()
         check(reloaded.GetLives() == 1 && reloaded.GetMissionNumber() == 11 && reloaded.GetHasProgress(),
               "Save()/Load(): round-trips lives/missionNumber/hasProgress correctly (Win/Lost checkpoint fields)");
     }
+    {
+        // Real per-sublevel door-unlock flags (plan.md hub/mission-
+        // progression system, found 2026-07-17, `Decor::AdaptDoors()`'s
+        // `m_doors[]`) -- default false, settable/persisted per mission
+        // number directly.
+        GESaveData data;
+        check(!data.IsMissionDoorUnlocked(12), "IsMissionDoorUnlocked() defaults to false for a fresh save");
+        data.UnlockMissionDoor(12);
+        data.UnlockMissionDoor(52);
+        check(data.IsMissionDoorUnlocked(12) && data.IsMissionDoorUnlocked(52),
+              "UnlockMissionDoor() sets the flag for the exact mission number given");
+        check(!data.IsMissionDoorUnlocked(13), "UnlockMissionDoor(12) does not also unlock a neighboring mission");
+        data.Save();
+        GESaveData reloaded;
+        reloaded.Load();
+        check(reloaded.IsMissionDoorUnlocked(12) && reloaded.IsMissionDoorUnlocked(52) &&
+                  !reloaded.IsMissionDoorUnlocked(13),
+              "Save()/Load(): round-trips the door-unlock bitset correctly");
+    }
 
     // Phase 3 (2026-07-13, plan.md MENU-006..020): 3 independent gamer
     // slots, selected via GetSelectedGamer()/SetSelectedGamer(), each

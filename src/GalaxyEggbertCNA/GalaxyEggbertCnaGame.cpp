@@ -1,6 +1,7 @@
 #include "GalaxyEggbertCnaGame.hpp"
 
 #include "GalaxyEggbert/BlockTypes.hpp"
+#include "GalaxyEggbert/Worlds/Block.hpp"
 
 #include <Easy3D/BillboardBatch.hpp>
 #include <Easy3D/BillboardMesh.hpp>
@@ -424,6 +425,47 @@ namespace GalaxyEggbert::CNA
         }
 
         RebuildWorldPresentation();
+
+        // Real AdaptDoors() hub-level door gate (plan.md hub/mission-
+        // progression system, found 2026-07-17, `Decor.cpp:11588-11621`):
+        // applied at LOAD time, before the level is ever shown -- matches
+        // real source exactly (`AdaptDoors()` runs inside `StartMission()`,
+        // never live while already playing). Scans the freshly-loaded
+        // world for any `ProgressDoor2..8` tile; each one gates sublevel-
+        // select marker N in THIS hub (mission `missionNumber+N`), opened
+        // once the PRECEDING sublevel has been won (`saveData_::
+        // IsMissionDoorUnlocked(missionNumber+N)`, set by the win-exit
+        // handler below -- mirrors real `m_doors[mission+1]=1`). No
+        // animated slide-open needed here (the real one only plays live,
+        // the instant a door's condition becomes newly true while
+        // standing right there -- this unlock always happened in an
+        // earlier visit/session, so the door is simply already-open by
+        // the time this level is shown, matching the real `AdaptDoors()`
+        // pre-load timing exactly).
+        {
+            auto& terrain = worldRuntime_.GetWorldMutable();
+            const auto axis = terrain.blocksPerAxis();
+            for (std::uint16_t x = 0; x < axis; ++x)
+            {
+                for (std::uint16_t y = 0; y < axis; ++y)
+                {
+                    for (std::uint16_t z = 0; z < axis; ++z)
+                    {
+                        const auto block = terrain.getBlock(x, y, z).type();
+                        if (!GalaxyEggbert::BlockTypes::isProgressDoor(block))
+                        {
+                            continue;
+                        }
+                        const int doorIndex = GalaxyEggbert::BlockTypes::progressDoorIndex(block);
+                        const int targetMission = missionNumber + doorIndex;
+                        if (saveData_.IsMissionDoorUnlocked(targetMission))
+                        {
+                            terrain.setBlock(x, y, z, GalaxyEggbert::Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                        }
+                    }
+                }
+            }
+        }
 
         // Real PlayPrepare() (Decor.cpp:381-429): every mission load resets
         // vehicle mode, all 4 secret powers, Invert, Ghost, keys, dynamite
@@ -1181,15 +1223,28 @@ namespace GalaxyEggbert::CNA
                         // Real WinLostReturn from Win (plan.md TILE-006/
                         // SCORE-013..019): upgraded 2026-07-17 from the
                         // previous origin-respawn simplification -- reaching
-                        // the exit now actually advances to the mission's
-                        // own hub via ComputeMissionBack() (same formula as
-                        // PauseBack above), a genuine "finish a level, go
-                        // somewhere else" transition (real destination is
-                        // actually Init, not straight back into Play -- this
-                        // engine's own already-established "skip Init,
-                        // return to Play directly" simplification is kept
-                        // as-is, only WHICH mission loads is now real).
-                        LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
+                        // the exit now actually advances via the real
+                        // win-exit formula (`ComputeWinExitTarget()`, NOT
+                        // the plain `ComputeMissionBack()` PauseBack above
+                        // uses -- this one additionally special-cases
+                        // mission 1's own exit -> 199 and 199's own exit,
+                        // real destination is actually Init, not straight
+                        // back into Play -- this engine's own already-
+                        // established "skip Init, return to Play directly"
+                        // simplification is kept as-is, only WHICH mission
+                        // loads is now real). Also unlocks the NEXT
+                        // sublevel's door in this world's own hub (real
+                        // `Decor::OpenDoorsWin()`, `m_doors[mission+1]=1`)
+                        // -- only for a genuine sublevel (mission%10!=0);
+                        // real source's `else` branch (hub/global-hub wins)
+                        // uses `OpenGoldsWin()` instead, a different,
+                        // cosmetic-only flag this engine doesn't model.
+                        const int currentMission = worldRuntime_.GetMissionNumber();
+                        if (currentMission % 10 != 0)
+                        {
+                            saveData_.UnlockMissionDoor(currentMission + 1);
+                        }
+                        LoadMission(GEWorldRuntime::ComputeWinExitTarget(currentMission));
                     }
                     else
                     {

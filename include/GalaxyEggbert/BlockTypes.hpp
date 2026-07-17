@@ -81,9 +81,43 @@ constexpr uint16_t WorldSelect5 = 162;
 constexpr uint16_t WorldSelect6 = 163;
 constexpr uint16_t WorldSelect7 = 164;
 constexpr uint16_t WorldSelect8 = 165;
+// Real source's own icons 166-173 are a SECOND bank of the same 8 markers
+// (the "unlocked" cosmetic-icon-swap variant, `Decor::AdaptDoors()`'s
+// `m_mission==1` branch -- confirmed NOT a real access gate, just a visual
+// reveal of a per-world hidden-gold flag, see plan.md SCORE-013's full
+// writeup). Not modeled here (no cosmetic swap), so this engine reuses
+// 166-169 as 4 genuinely NEW indices (9-12) instead, extending the real
+// 8-world-marker range to the full 12 real world hubs this session's
+// content actually needs (found 2026-07-17).
+constexpr uint16_t WorldSelect9  = 166;
+constexpr uint16_t WorldSelect10 = 167;
+constexpr uint16_t WorldSelect11 = 168;
+constexpr uint16_t WorldSelect12 = 169;
 
-inline bool isWorldSelect(uint16_t bt) { return bt >= WorldSelect1 && bt <= WorldSelect8; }
+inline bool isWorldSelect(uint16_t bt) { return bt >= WorldSelect1 && bt <= WorldSelect12; }
 inline int worldSelectIndex(uint16_t bt) { return isWorldSelect(bt) ? static_cast<int>(bt - WorldSelect1 + 1) : -1; }
+
+// Real per-world sublevel-select door gate (`Decor::AdaptDoors()`'s
+// `m_mission % 10 == 0` branch, `SearchDoor()`/icon `182`, found
+// 2026-07-17): within a world hub, sublevel-select marker index N (2-8;
+// index 1 is always ungated) sits behind a real solid door tile that opens
+// once the PREVIOUS sublevel has been completed (`Decor::OpenDoorsWin()`'s
+// `m_doors[mission+1]=1`). This engine keys the same real per-mission
+// unlock flag directly (`GESaveData::IsMissionDoorUnlocked()`) rather than
+// porting the real 200-entry `m_doors[]` array's exact indexing scheme.
+// icons 170-176 are a free, previously-unused range (distinct from real
+// source's own icon 182 -- this engine doesn't need to match that exact
+// value, only the gating BEHAVIOR).
+constexpr uint16_t ProgressDoor2 = 170;
+constexpr uint16_t ProgressDoor3 = 171;
+constexpr uint16_t ProgressDoor4 = 172;
+constexpr uint16_t ProgressDoor5 = 173;
+constexpr uint16_t ProgressDoor6 = 174;
+constexpr uint16_t ProgressDoor7 = 175;
+constexpr uint16_t ProgressDoor8 = 176;
+
+inline bool isProgressDoor(uint16_t bt) { return bt >= ProgressDoor2 && bt <= ProgressDoor8; }
+inline int progressDoorIndex(uint16_t bt) { return isProgressDoor(bt) ? static_cast<int>(bt - ProgressDoor2 + 2) : -1; }
 
 constexpr uint16_t Marker   = 309;
 constexpr uint16_t Tile411  = 411;

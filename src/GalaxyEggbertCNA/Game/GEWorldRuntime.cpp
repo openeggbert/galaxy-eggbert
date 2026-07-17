@@ -316,6 +316,19 @@ namespace GalaxyEggbert::CNA
         return (currentMission / 10) * 10;
     }
 
+    int GEWorldRuntime::ComputeWinExitTarget(int currentMission) noexcept
+    {
+        if (currentMission == 1)
+        {
+            return 199;
+        }
+        if (currentMission == 199)
+        {
+            return 1;
+        }
+        return ComputeMissionBack(currentMission);
+    }
+
     std::optional<bool> GEWorldRuntime::TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
                                                             bool blupiOnGround)
     {

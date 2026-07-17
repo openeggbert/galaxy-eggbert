@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 
 namespace GalaxyEggbert::CNA
@@ -76,6 +77,15 @@ namespace GalaxyEggbert::CNA
         int lives = 3; // matches GEInteractionSystem's own real GameData-derived default
         int missionNumber = 0;
         bool hasProgress = false;
+        // Real per-sublevel door-unlock flags (plan.md hub/mission-progression
+        // system, found 2026-07-17, `Decor::AdaptDoors()`'s `m_doors[]` --
+        // ONLY the per-sublevel half is ported; the per-world cosmetic-gold
+        // half (`m_doors[180..199]`) is still not modeled, see SAVE-006/007's
+        // own note). Sized to `Decor::m_doors[200]`'s own real length so
+        // every real mission number (max 199) has a slot; index == mission
+        // number directly, matching real `m_doors[mission]` semantics 1:1 --
+        // no separate per-world re-indexing.
+        std::array<bool, 200> doorsUnlocked{};
     };
 
     class GESaveData
@@ -115,6 +125,24 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] bool GetHasProgress() const noexcept { return gamers_[selectedGamer_].hasProgress; }
         void SetHasProgress(bool hasProgress) noexcept { gamers_[selectedGamer_].hasProgress = hasProgress; }
+
+        // Real per-sublevel door-unlock state (see `GamerSlot::doorsUnlocked`'s
+        // own comment) -- `mission` indexes directly, same convention as
+        // real `m_doors[mission]`. Out-of-range missions are a silent no-op/
+        // false (defensive; every real mission number fits comfortably).
+        [[nodiscard]] bool IsMissionDoorUnlocked(int mission) const noexcept
+        {
+            const auto& doors = gamers_[selectedGamer_].doorsUnlocked;
+            return mission >= 0 && mission < static_cast<int>(doors.size()) && doors[static_cast<std::size_t>(mission)];
+        }
+        void UnlockMissionDoor(int mission) noexcept
+        {
+            auto& doors = gamers_[selectedGamer_].doorsUnlocked;
+            if (mission >= 0 && mission < static_cast<int>(doors.size()))
+            {
+                doors[static_cast<std::size_t>(mission)] = true;
+            }
+        }
 
         // Real Cheat5 ("R"): `gameData.Reset()` (2026-07-13, plan.md
         // `CHEAT-005`) -- restores every field (all 3 gamer slots
