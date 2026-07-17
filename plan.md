@@ -3086,8 +3086,18 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
       137), confirmed against `mobile-eggbert-reference/07-sounds.md` — not the originally-guessed
       ch20.
 - [x] PICKUP-085 — "Balloon" pickup sound — **description was based on the wrong premise** (see PICKUP-019's correction: `ObjectType46` grants Overcraft, not a Balloon ride) — the real wasp-sting balloon-status sounds are channels **40/41** (entry/recovery), confirmed wired in `GalaxyEggbertCnaGame.cpp`, not ch46. No vehicle-mount-specific pickup sound was found for any of the 5 vehicles.
-- [ ] PICKUP-086 — Shield trail sound: ch48 — NOT modeled, no shield-trail visual/sound system exists.
-- [ ] PICKUP-087 — Shield loop sound: ch49 (looped while shield active) — NOT modeled, no looped-while-active sound system exists for any secret power.
+- [x] PICKUP-086/087 — **HALLUCINATED — CANCELLED (confirmed 2026-07-16)**: "Shield trail sound
+  ch48"/"Shield loop sound ch49" don't exist in real source at all. Verified directly:
+  (1) the real Shield-trail magic-particle VISUAL effect (`ObjectType57`, `m_blupiPosMagic`
+  distance-triggered spawn, `Decor.cpp:5221-5236`) already IS implemented in this engine
+  (`GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, `kShieldTrack` in
+  `GEObjectIcons.cpp`) — this pair of entries' own "no shield-trail visual... system exists"
+  premise was already stale/wrong when written. (2) Real channels 48/49 have nothing to do with
+  Shield at all — they're the `BlupiAction::Ouf3`/`Ouf4` idle-fidget reaction sounds
+  (`Decor.cpp:6286-6304`, part of the same idle "fidget" system already flagged as a known,
+  blocked-on-`AnimState`-values gap in `NEXT.md`). The real trail-spawn code itself
+  (`Decor.cpp:5204-5256`, Power/Shield/Hide) has no `PlaySound()` call anywhere in it — no looped
+  or one-shot trail sound exists for any of the 3. Not a gap to close.
 
 ---
 
