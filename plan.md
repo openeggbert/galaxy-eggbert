@@ -3219,11 +3219,21 @@ ch11 (ch19 if set-completing), egg = ch3 (not ch42 as some entries below still a
 old scheme — cross-check against §7 when wiring these).
 
 - [x] SOUND-011 — ch1: jump (CNA, 2026-07-10)
-- [ ] SOUND-012 — ch2: unknown (research needed)
+- [ ] SOUND-012 — ch2: unknown — **researched 2026-07-16**: grepped every real `.cpp` file, not
+  just `Decor.cpp` — zero uses of `SoundChannel2` anywhere in real mobile-eggbert source. Not a
+  research gap, genuinely unused/reserved in the real game itself; nothing to wire.
 - [x] SOUND-013 — ch3: footstep AND/OR egg pickup — note: ch3 is used for both footstep (BLUPI-129) and egg pickup (PICKUP-072) in the real data; confirm both wire-ups are distinct calls, not a collision (CNA, 2026-07-10 for footstep)
 - [x] SOUND-014 — ch4: landing (CNA, 2026-07-10)
-- [ ] SOUND-015 — ch5: stomp kill — blocked on enemy hit detection
-- [ ] SOUND-016 — ch6: unknown
+- [ ] SOUND-015 — ch5: stomp kill — **HALLUCINATED, corrected 2026-07-16**: same already-cancelled
+  premise as `BLUPI-131`/`ENEMY-036` — no velocity-gated "stomp" concept exists anywhere in real
+  source; enemy contact-kill is an unconditional touch check. This is the 3rd copy of the same
+  debunked claim in this file, missed when the other 2 were cancelled. Not blocked on "enemy hit
+  detection" (that already exists and is unconditional) — there is simply no real stomp mechanic
+  to wire a sound to.
+- [ ] SOUND-016 — ch6: unknown — **identified 2026-07-16**: verified directly against
+  `Decor.cpp:4907-4943` — real ch6 is the `AscenseurVertigo` edge-teeter sound (entering
+  `BlupiAction::Vertigo`/`Advance` on a wide/shiftable lift). Genuinely blocked on the same
+  render-geometry decision as `PICKUP-024`/`027` — not independently implementable.
 - [ ] SOUND-017 — ch7: door open — **corrected 2026-07-16**: label is wrong. Verified directly
   against `Decor.cpp:3283-3286` — real ch7 plays on the `Down`(crouch)-action transition (screen
   scrolls down 150px), not door open (that's ch33, see `SOUND-043`). Genuinely NOT wired in this
@@ -3274,10 +3284,19 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-039 — ch29: jeep/tank motor high (loop)
 - [ ] SOUND-040 — ch30: jeep/tank stop
 - [ ] SOUND-041 — ch31: jeep/tank motor low (loop)
-- [ ] SOUND-042 — ch32: unknown
+- [ ] SOUND-042 — ch32: unknown — **identified 2026-07-16**: verified directly against
+  `Decor.cpp:5476-5489` — real ch32 is the hub-screen world-select entry sound (`Decor::IsWorld()`
+  match, `BlupiAction::Bye`). Out of scope — hub/menu screens (`MENU-*` territory) aren't touched
+  this session.
 - [x] SOUND-043 — ch33: **corrected 2026-07-13** — real use is door open (confirmed in `GEInteractionSystem.cpp`'s `OpenDoorAt()`), not "bulldozer turn" — no bulldozer-turn sound exists.
-- [ ] SOUND-044 — ch34: unknown
-- [ ] SOUND-045 — ch35: unknown
+- [ ] SOUND-044 — ch34: unknown — **identified 2026-07-16**: verified directly against
+  `Decor.cpp:5440-5453` — real ch34 is the Suspended (hanging-on-a-bar) mode's entry sound.
+  Genuinely blocked on the same render-geometry decision as `AscenseurVertigo`/`Suspended`
+  (`mobile-eggbert-reference/`'s own "Suspended mode... blocked on a pending render-geometry
+  decision" note) — not independently implementable.
+- [ ] SOUND-045 — ch35: unknown — **identified 2026-07-16**: verified directly against
+  `Decor.cpp:4780-4790` — real ch35 is the Suspended mode's jump-off/release sound. Same
+  render-geometry blocker as `SOUND-044` above.
 - [ ] SOUND-046 — ch36: water walk ambient (idle fidget channel, see SOUND-010c)
 - [ ] SOUND-047 — ch37: swim bubble (idle fidget channel, see SOUND-010c)
 - [x] SOUND-048 — ch38: electric arc (long) — **done, label wrong, corrected 2026-07-16**: real
@@ -3289,7 +3308,11 @@ old scheme — cross-check against §7 when wiring these).
   that per-frame fact into a real start-once/stop-once loop (`sound_.Play(ch38, loop=true)` on
   the false→true transition, `sound_.Stop(ch38)` on true→false). New `VerifyInteractionSystem`
   assertions. Full suite green both backends + live headless launch smoke check.
-- [ ] SOUND-049 — ch39: key sparkle effect
+- [ ] SOUND-049 — ch39: key sparkle effect — **label wrong, corrected 2026-07-16**: verified
+  directly against `Decor.cpp:3291-3324` — real ch39 is the crate-"Pop" sound (landing on top of a
+  crate from above, `BlupiAction::Pop`/`StopPop`), not "key sparkle". Genuinely blocked on the
+  same crate fall-physics prerequisite as `151`/`PICKUP-035` — no vertical crate-landing event
+  exists in this engine to hook a sound onto.
 - [x] SOUND-050 — ch40: **corrected 2026-07-13** — real use is wasp balloon-status entry (Phase 13 `135`), not "explosion".
 - [x] SOUND-051 — ch41: **corrected 2026-07-13** — real use is wasp balloon-status recovery/expiry (shared with Crusher's own recovery cue), not "glide".
 - [x] SOUND-052 — ch42: **corrected 2026-07-13** — real use is Shield power-up activation (`ObjectType25`, confirmed against `mobile-eggbert-reference/07-sounds.md` + wired in `GalaxyEggbertCnaGame.cpp`), not "life/drink pickup" — see PICKUP-073.
@@ -3343,12 +3366,17 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-073 — ch63: **stale, corrected 2026-07-16** — real use is the Hide secret-power
   warning-threshold sound (@20 levels remaining). Already wired.
 - [ ] SOUND-074 — ch64: small water plouf
-- [ ] SOUND-075 — ch65: suspend detach / rope release (idle fidget channel, see SOUND-010c)
+- [ ] SOUND-075 — ch65: suspend detach / rope release (idle fidget channel, see SOUND-010c) —
+  **label wrong, corrected 2026-07-16**: verified directly against `Decor.cpp:3147-3168` — real
+  ch65 is the `Mockery`/`Mockeryi` idle-taunt-animation sound, not "suspend detach". Correctly
+  categorized as an idle-fidget channel either way (same blocker as `SOUND-010c`).
 - [x] SOUND-076 — ch66: **stale, corrected 2026-07-16** — real use is the Mirror/Invert activate
   sound (confirmed against `mobile-eggbert-reference/13-object-pickups.md`). Already wired.
 - [x] SOUND-077 — ch67: **stale, corrected 2026-07-16** — real use is the Mirror/Invert expire
   sound. Already wired.
-- [ ] SOUND-078 — ch68: unknown
+- [ ] SOUND-078 — ch68: unknown — **researched 2026-07-16**: grepped every real `.cpp` file --
+  zero uses of `SoundChannel68` anywhere in real mobile-eggbert source. Genuinely unused/reserved
+  in the real game itself, same as `SOUND-012`; nothing to wire.
 - [ ] SOUND-079 — ch69: lightning strike
 - [x] SOUND-080 — ch70: **stale, corrected 2026-07-16** — real use is the Crusher squash-entry
   sound (`TriggerCrush()` succeeding). Already wired.
