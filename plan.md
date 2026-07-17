@@ -4020,8 +4020,22 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       for the real trigger/self-delete/icon-formula-fix details specific to this type
       (`table_magictrack`, phase>=24 self-delete, Power's own grant site).
 - [ ] VISUAL-018 — Helicopter debris: ByeByeHelico float-based debris pool when helico destroyed
-- [ ] VISUAL-019 — Bridge construction animation: ObjectType52 (157 frames) modifies static decor
-- [ ] VISUAL-020 — Dynamite fuse animation: ObjectType56 (100 frames) with blast events at phases 50-69
+- [x] VISUAL-019 — Bridge construction animation: ObjectType52 (157 frames) modifies static decor
+      — **stale checkbox, closed 2026-07-17**: the billboard genuinely renders (`IsObjectMPngSourced()`
+      dispatch, `GalaxyEggbertCnaGame.cpp:2707`) and the real GAMEPLAY effect (terrain grid
+      overwritten live during construction) is done (`157`/`PICKUP-064`) — the only real gap is
+      that `GEObjectIcons.cpp`'s icon is frozen at frame 1 (`365`) rather than animating through
+      all 157 frames, because the real frame range overflows `object-m.png`'s bounds
+      (`365+156=521 > 439`, already documented in the code's own comment) — a genuine, previously
+      acknowledged sheet-size limitation, not an unstarted feature.
+- [x] VISUAL-020 — Dynamite fuse animation: ObjectType56 (100 frames) with blast events at phases
+      50-69 — **stale checkbox, closed 2026-07-17**: same situation as `VISUAL-019` — the billboard
+      renders via the generic element.png path (not excluded by `IsUniformCubeObject()`/
+      `IsObjectMPngSourced()`), and the real blast-event GAMEPLAY (9 real blast ticks, `Phase 15
+      155`) is fully done. The icon is frozen at frame 1 (`253`) rather than animating, same reason
+      as `VISUAL-019` — element.png's real 290-icon grid (29 rows x 10 cols, `GEObjectIcons.cpp`'s
+      own comment) is too small for the real 100-frame range (`253+99=352 > 289`), a genuine,
+      already-documented sheet-size limitation, not an unstarted feature.
 - [ ] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png)
 - [ ] VISUAL-022 — Sky gradient per world region (zenith/horizon colours)
 - [ ] VISUAL-023 — Per-world fog (fog color + fog range per region)
