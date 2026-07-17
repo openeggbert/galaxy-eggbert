@@ -2814,35 +2814,80 @@ re-verified individually since it is not a full port yet.
 - [x] BLUPI-129 — Footstep sound: ch3 per march stride (CNA, 2026-07-10 — plain footstep wiring only; surface-dependent remap NOT done, see BLUPI-133)
 - [x] BLUPI-130 — Landing sound: ch4 on ground contact (CNA, 2026-07-10)
 - [ ] BLUPI-131 — ~~Stomp kill sound: ch5~~ **HALLUCINATED — CANCELLED, same as BLUPI-126.**
-- [ ] BLUPI-132 — Death sound: ch8
+- [x] BLUPI-132 — Death sound: ch8 — **stale checkbox, closed 2026-07-17**: done, see
+      `SOUND-018` (already wired across Lava/Blitz/etc.).
 - [x] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile
       type — **stale checkbox, closed 2026-07-17**: fully done and tested
       (`GESound::FootstepChannelFor()`, `E3D-MIG-084`), wired via `sound_.PlayStep()`/`PlayLand()`
       in `GalaxyEggbertCnaGame.cpp`.
-- [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient)
-- [ ] BLUPI-135 — Swim bubble sound: ch37
-- [ ] BLUPI-136 — Glide sound: ch41
-- [ ] BLUPI-137 — Teleport in/out sounds: ch9 / ch12
-- [ ] BLUPI-138 — Shield-on sound: ch50 when shield activated
-- [ ] BLUPI-139 — Shield-off sound: ch44 when shield expires
-- [ ] BLUPI-140 — Dynamite pickup/place sounds: ch52
-- [ ] BLUPI-141 — Tank fire sound: ch53
-- [ ] BLUPI-142 — Switch activate: ch76/ch77 (off/on)
-- [ ] BLUPI-143 — Rope suspend sounds: ch47 (attach), ch65 (detach)
-- [ ] BLUPI-144 — Drink sound: ch58 on Drink action
-- [ ] BLUPI-145 — Key pickup sound: ch11 — see PICKUP-004/005/006, PICKUP-071 (CNA has this wired at the pickup level)
-- [ ] BLUPI-146 — Life / egg pickup sound: ch42 — see PICKUP-002/072, egg pickup uses ch3 per corrected channel table below, not ch42; re-verify against real `Decor.cpp`
-- [ ] BLUPI-147 — Sucette pickup sound: ch62
+- [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient) — still correctly blocked,
+      see `SOUND-046` (idle-fidget `AnimState` gap, same as every other `SOUND-010c`-family item).
+- [ ] BLUPI-135 — Swim bubble sound: ch37 — still correctly blocked, see `SOUND-047` (same
+      idle-fidget gap as `BLUPI-134`). Not to be confused with the real ambient water bubble
+      (`BLUPI-151`/ch24, a different, already-implemented mechanic).
+- [x] BLUPI-136 — Glide sound: ch41 — **stale checkbox closed 2026-07-17, "Glide" label is
+      wrong**: no glide mechanic exists (see `BLUPI-005`'s own cancellation) — real ch41 is the
+      wasp balloon-status recovery/expiry cue (shared with Crusher's own recovery), already wired
+      (`SOUND-051`, `ENEMY-039`).
+- [x] BLUPI-137 — Teleport in/out sounds: ch9 / ch12 — **stale checkbox, closed 2026-07-17**:
+      done, see `SOUND-019`/`SOUND-022`.
+- [x] BLUPI-138 — Shield-on sound: ch50 when shield activated — **stale checkbox closed
+      2026-07-17, channel claim is wrong**: real ch50 is the Sucette pickup-start ("grab") sound
+      (`SOUND-060`, `173`), not shield-related at all — Shield's own real activate sound is a
+      different channel (see `PICKUP-073`, ch42). Already correctly wired under its real meaning.
+- [x] BLUPI-139 — Shield-off sound: ch44 when shield expires — **stale checkbox closed
+      2026-07-17, channel claim is wrong**: real ch44 is the Sucette/Power 2-stage-delay
+      COMPLETION sound (`SOUND-054`, `173`), not shield-off — no distinct "shield expires" sound
+      was found in real source. Already correctly wired under its real meaning.
+- [x] BLUPI-140 — Dynamite pickup/place sounds: ch52 — **stale checkbox, closed 2026-07-17**:
+      done, see `PICKUP-082`/`155`.
+- [x] BLUPI-141 — Tank fire sound: ch53 — **stale checkbox closed 2026-07-17, channel claim is
+      wrong, same correction as `BLUPI-093` (exact duplicate entry)**: ch53 is the real
+      out-of-ammo click, not the fire sound (that's ch52, shared with dynamite) — both already
+      correctly wired in `BULLET-001`.
+- [x] BLUPI-142 — Switch activate: ch76/ch77 (off/on) — **stale checkbox, closed 2026-07-17**:
+      done, see `PICKUP-076`.
+- [ ] BLUPI-143 — Rope suspend sounds: ch47 (attach), ch65 (detach) — still correctly NOT
+      modeled: the Suspend mechanic itself is blocked (`177`/`BLUPI-101`, deferred render
+      decision), and both channel labels are independently wrong anyway (ch47 is an idle-fidget
+      channel per `SOUND-057`; ch65 is the real Mockery idle-taunt sound per `SOUND-075`, not
+      "detach").
+- [x] BLUPI-144 — Drink sound: ch58 on Drink action — **stale checkbox closed 2026-07-17,
+      channel claim is wrong**: ch58 is actually Charge's real immediate "grab" sound (`173`) —
+      Drink's real immediate grab sound is ch57 (`SOUND-067`). Already correctly wired under its
+      real meaning.
+- [x] BLUPI-145 — Key pickup sound: ch11 — **stale checkbox, closed 2026-07-17**: done, see
+      `PICKUP-004/005/006`/`PICKUP-071` (already noted here as wired, just never checked off).
+- [ ] BLUPI-146 — Life / egg pickup sound: ch42 — left as `[ ]`, own note already correctly
+      flags the ch42 claim as needing re-verification (real egg sound is ch3, see `PICKUP-072`);
+      ch42 itself is the real Shield activate sound (`PICKUP-073`), unrelated to eggs.
+- [x] BLUPI-147 — Sucette pickup sound: ch62 — **stale checkbox closed 2026-07-17, channel claim
+      is wrong**: ch62 is actually Drink's real 2-stage-delay completion sound (`SOUND-072`) —
+      Sucette's real completion sound is ch44 (`SOUND-054`, see the `BLUPI-139` correction above
+      too). Already correctly wired under its real meaning.
 - [x] BLUPI-148 — Balloon motor sounds: ch28/ch30 (start/stop), ch29/ch31 (loop low/high) —
       **done 2026-07-17, and this entry's "Balloon" label is wrong**: these are the real Jeep/
       Tank/Overcraft motor sounds (`SOUND-008`), not Balloon-specific — see `BLUPI-096`'s note on
       the same naming trap (`ObjectType46` grants Overcraft, not a separate Balloon ride).
-- [ ] BLUPI-149 — Electro sounds: ch38 (long arc) / ch90 (spark)
-- [ ] BLUPI-150 — Glu splash sounds: ch51
+- [ ] BLUPI-149 — Electro sounds: ch38 (long arc) / ch90 (spark) — **researched 2026-07-17, both
+      channel claims are wrong, likely an invented entry**: ch38 is the real crate-push loop
+      sound (`SOUND-048`, done, unrelated to Electro), and ch90 is one of the real
+      `SoundEnviron()` obstacle-range footstep/landing remap channels (`BLUPI-133`, icons
+      107-109's landing variant), not an "electro spark" sound. No genuine Electro-specific sound
+      channel was found in this pass; whether `BlupiAction::Electro` has any real dedicated sound
+      at all is unresearched — left open rather than guessed.
+- [x] BLUPI-150 — Glu splash sounds: ch51 — **stale checkbox closed 2026-07-17, channel claim is
+      wrong**: real ch51 is the generic hazard-contact death sound (`PICKUP-081`/`SOUND-061`), no
+      glue-specific sound exists.
 - [x] BLUPI-151 — Water splash sounds: ch23 (small plouf), ch64 (tiplouf), ch24 (blup bubble) —
       **done 2026-07-17**, see `SOUND-032/033/034/074`/`PICKUP-078/079/080` for the full writeup.
-- [ ] BLUPI-152 — Secret exit found sound: ch21
-- [ ] BLUPI-153 — Door open sound: ch7
+- [x] BLUPI-152 — Secret exit found sound: ch21 — **stale checkbox closed 2026-07-17, this is a
+      duplicate of `PICKUP-083`'s own already-corrected finding**: no dedicated ch21 secret-exit
+      sound exists — reuses the regular exit's win (ch14)/reject (ch13) sounds. Real ch21 is
+      actually the look-up transition sound (`SOUND-031`).
+- [x] BLUPI-153 — Door open sound: ch7 — **stale checkbox closed 2026-07-17, channel claim is
+      wrong**: real door-open channel is ch33 (`PICKUP-041/075`), already wired — ch7 is actually
+      the descend-start sound (`SOUND-017`).
 
 ---
 
