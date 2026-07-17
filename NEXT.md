@@ -154,6 +154,12 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **docs only**: closed 14 stale `BLUPI-1xx` checkboxes (Shield/Hide/SuperBlupi/Invert/Sucette/
+  Ecrase/Dynamite/Perso/death-cause/footstep) — all already implemented under Phase 14/15/17 or
+  `HUD`/`CAM` items, just never cross-referenced back. Corrected `BLUPI-113`'s "walk up walls"
+  premise (real Sucette/Power effect is a jump-velocity boost only). Also fully ruled out
+  `HUD-020`'s "EXIT OPEN!" popup (grepped the real localized-string resource file too — zero
+  hits, same likely-invented status as its siblings). No code changes.
 - **feat: implement the real Blitz-emitter zap ambient sound (plan.md SOUND-079/VISUAL-024,
   ch69).** Real `Decor::BlitzActif()` plays ch69 per visible Blitz(305)-floor tile that has a
   BlitzEmitter(304) tile directly above it, on a fixed 6-tick-per-100-tick pattern. Since this
