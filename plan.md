@@ -1764,7 +1764,47 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
 
 - [x] BUILD-001 — CMake target `GalaxyEggbertCNA` builds on Linux (CNA backend) (CNA, 2026-07-10)
 - [x] BUILD-002 — `GALAXY_EGGBERT_BUILD_CNA` option wired and defaults to `ON` (CNA, 2026-07-10)
-- [ ] BUILD-003 — Web build (Emscripten / WebAssembly) for `GalaxyEggbertCNA` — not attempted yet
+- [x] BUILD-003 — Web build (Emscripten / WebAssembly) for `GalaxyEggbertCNA` — **done 2026-07-17**
+      (user request: a web prototype build to publish on their own site). The CNA/easy-gl/meta-gl/
+      SDL3 stack turned out to already be Emscripten-ready end to end (vendored SDL3 has a
+      `.sdl-prebuilt-emscripten` install path, `EasyGLGraphicsBackend` already requests
+      `SDL_GL_CONTEXT_PROFILE_ES` unconditionally — maps directly to WebGL2 under Emscripten, no
+      patch needed — and `Game.cpp` already had an `emscripten_set_main_loop` path) — this task was
+      almost entirely CMake wiring + asset-size triage, not engine work. Changes: `CNA_GRAPHICS_BACKEND`
+      now defaults to `EASYGL` under `EMSCRIPTEN` (Vulkan has no web bridge; the existing Vulkan
+      default is untouched for every other platform); new `if(EMSCRIPTEN)` block on the
+      `GalaxyEggbertCNA` target — `SUFFIX .html`, `-sMIN/MAX_WEBGL_VERSION=2 -sFULL_ES3=1`,
+      `-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB`, a new `cmake/web/shell-cna.html` (adapted
+      from the old Simple3D-era `cmake/web/shell.html`, U3D-specific `SetRendererSize` hook
+      removed, rebranded), and `--preload-file` entries baking every asset directory into the
+      `.wasm`'s virtual filesystem at link time (there's no "copy next to the binary" on the web).
+      **Asset-size triage**: preloading mobile-eggbert's full `Content/` (~460MB) would make an
+      unreasonable web download — direct grep confirmed `GalaxyEggbertCNA` only ever reads
+      `Content/icons/`, `Content/backgrounds/`, `Content/sounds/` (never `icons4x/`/`backgrounds4x/`,
+      mobile-eggbert's own 4x-scale variants, ~437MB combined) — so only those 3 subdirectories are
+      preloaded, plus `worlds3d/`/`textures3d/`/`avatars3d/`, for a ~24MB total `.data` package.
+      **Save persistence**: `GESaveData::kSavePath` is now `#if defined(__EMSCRIPTEN__)` (a
+      platform-path difference, not an engine-API one, so it doesn't fall under CLAUDE.md's
+      "no `#ifdef` for engine differences" rule, which is scoped to Simple3D-vs-CNA) —
+      `/save/savedata.txt` under Emscripten, unchanged `savedata.txt` natively — paired with a new
+      `cmake/web/pre.js` (`--pre-js`) that mounts IDBFS at `/save` and syncs it on load/unload, so
+      progress survives a page reload via IndexedDB (`-lidbfs.js` linked in). `CNA_ENABLE_NET` must
+      stay `ON` for the web build too (tried `OFF` first — `GalaxyEggbertCnaGame.cpp` unconditionally
+      references `AvatarRenderer`/`SkinnedModelEXT` symbols from `CNA_GamerServices` regardless of
+      this flag, confirmed by an actual `wasm-ld` link failure); ENet itself builds fine under
+      Emscripten (only its symbols are needed here — Galaxy Eggbert never actually uses networking).
+      Verified via a real headless-Chrome run against the built `.html`/`.wasm`/`.data` (served over
+      local HTTP, `--use-angle=swiftshader` software WebGL, driven over the DevTools protocol so the
+      real async load could be awaited rather than screenshotted mid-download): console output
+      confirmed a real WebGL2 context (`OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium))`),
+      `world001.vwr` loading, terrain/background/sound assets loading (93/93 sound channels), a
+      terrain mesh uploading, and a screenshot showing the real Init/gamer-select screen (Speedy
+      Blupi branding art, Player A/B/C gate/lives stats) rendering correctly. Native `build-cna`
+      rebuilt and full `ctest` re-run after these changes (only the pre-existing unrelated
+      `easy-gl-resource-smoke-tests` failure) to confirm nothing native regressed. Known gap: no
+      CI/hosting wiring yet (that's `BUILD-009`/`BUILD-010`, still open) — this task is just "the
+      build exists and demonstrably runs in a browser," publishing the artifact is a separate step
+      for the user to do on their own site.
 - [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
 - [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
 - [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests

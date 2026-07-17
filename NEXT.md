@@ -45,6 +45,24 @@ Both build trees configure and build cleanly as of the last verification this se
 - `GalaxyEggbertSimple3D` is **not built** (per direction lock above) — its build is known broken
   in this environment (missing/incompatible U3D prebuilt) and this is intentionally left unfixed.
 
+### Web build (Emscripten/WebAssembly, 2026-07-17)
+`GalaxyEggbertCNA` also builds and runs in-browser via Emscripten — see `plan.md` `BUILD-003` for
+the full writeup. Configure/build:
+```bash
+source <path-to-emsdk>/emsdk_env.sh
+cmake -S . -B build-web \
+  -DCMAKE_TOOLCHAIN_FILE=<path-to-emsdk>/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+  -DCMAKE_BUILD_TYPE=Release -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF -DGALAXY_EGGBERT_BUILD_CNA=ON
+cmake --build build-web --target GalaxyEggbertCNA -j2
+```
+Produces `build-web/GalaxyEggbertCNA.{html,js,wasm,data}` — serve that directory over plain HTTP
+(not `file://`, browsers block `.wasm`/`.data` fetches from local files) and open the `.html`.
+`CNA_ENABLE_NET` must stay `ON` (the default) even for the web build — `GalaxyEggbertCnaGame.cpp`
+unconditionally references `AvatarRenderer` symbols from `CNA_GamerServices`, which is gated behind
+it. Verified working via a real headless-Chrome/WebGL2 run (see `BUILD-003`); not yet wired into
+CI or a hosting pipeline (`BUILD-009`/`BUILD-010`, still open) — publishing the built files is a
+manual step for now.
+
 Note observed this session: a `sharp-runtime` (external sibling dependency, `../sharp-runtime`)
 build once failed with a duplicate `Environment::SetEnvironmentVariable` declaration/definition
 conflict, then succeeded on an immediate retry with no changes on this side — that repository
@@ -161,6 +179,22 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: Emscripten/WebAssembly web build for `GalaxyEggbertCNA` (plan.md `BUILD-003`).**
+  User-requested prototype build to publish on their own website. Turned out to be almost entirely
+  CMake wiring — the CNA/easy-gl/meta-gl/SDL3 stack was already Emscripten-ready (vendored SDL3 has
+  a `.sdl-prebuilt-emscripten` path, `EasyGLGraphicsBackend` already requests a GLES context
+  unconditionally which maps straight to WebGL2, `Game.cpp` already had an
+  `emscripten_set_main_loop` path). Made `CNA_GRAPHICS_BACKEND` default to `EASYGL` under
+  `EMSCRIPTEN` (Vulkan has no web bridge), added the `.html`/`--preload-file`/WebGL2 target
+  properties, a new `cmake/web/shell-cna.html`, and IDBFS-backed save persistence
+  (`GESaveData::kSavePath` now `#if defined(__EMSCRIPTEN__)`, paired with a `--pre-js`). Only
+  preloads `Content/icons`/`backgrounds`/`sounds` (~24MB total), not mobile-eggbert's full
+  `Content/` (~460MB) — confirmed via grep that `icons4x`/`backgrounds4x` (~437MB) are never read
+  by this engine. Verified via a real headless-Chrome/WebGL2 run (DevTools-protocol-driven so the
+  async asset load could be awaited): confirmed a real `WebGL 2.0 (OpenGL ES 3.0 Chromium)` context,
+  terrain/sound/background loading, and a screenshot of the real Init/gamer-select screen rendering
+  correctly. Native `build-cna` rebuilt + full regression re-run after these changes, clean (only
+  the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - **feat: split `world001.vwr`'s demo content into a genuine 79th world, `world999.vwr`; enlarge
   world-hub plazas to 18x18 (plan.md SCORE-013).** Explicit user follow-up request: galaxy-eggbert's
   main global hub should contain ONLY the real teleports (matching real mobile-eggbert's own global

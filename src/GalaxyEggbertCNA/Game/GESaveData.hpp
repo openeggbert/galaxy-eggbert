@@ -153,7 +153,15 @@ namespace GalaxyEggbert::CNA
         void Reset() noexcept { *this = GESaveData(); }
 
     private:
+        // Web build (2026-07-17): under /save so it lands on the IDBFS mount
+        // point pre.js sets up (persists across page reloads via IndexedDB) --
+        // a platform path difference, not an engine-API one, so it doesn't
+        // fall under CLAUDE.md's "no #ifdef for engine differences" rule.
+#if defined(__EMSCRIPTEN__)
+        static constexpr const char* kSavePath = "/save/savedata.txt";
+#else
         static constexpr const char* kSavePath = "savedata.txt";
+#endif
         bool soundEnabled_ = true;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];

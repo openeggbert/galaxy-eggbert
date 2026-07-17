@@ -2,12 +2,14 @@
 // Mounts IDBFS at /save so that IsolatedStorage writes (SpeedyBlupi save file)
 // persist across page reloads via the browser's IndexedDB.
 //
-// Virtual filesystem layout at runtime:
+// Virtual filesystem layout at runtime (GalaxyEggbertCNA):
 //   /Content/backgrounds  - preloaded read-only game backgrounds
 //   /Content/icons        - preloaded read-only game icons
 //   /Content/sounds       - preloaded read-only game sounds
-//   /worlds               - preloaded read-only level files
-//   /save                 - IDBFS (persistent; save data written here)
+//   /worlds3d             - preloaded read-only .vwr level files
+//   /textures3d           - preloaded read-only galaxy-eggbert-owned textures
+//   /avatars3d            - preloaded read-only third-person character model
+//   /save                 - IDBFS (persistent; GESaveData's savedata.txt lives here)
 //
 // TODO: call FS.syncfs(false, cb) periodically or on exit to flush IDBFS
 //       writes back to IndexedDB.  Currently data is written to the in-memory

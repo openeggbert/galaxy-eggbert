@@ -252,8 +252,17 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # existing build directory's cache -- it only changes the *default* for
     # a fresh configure, per the user's ask (2026-07-09) to try Vulkan and
     # compare against the EasyGL-backend rendering investigated the same day.
-    set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING
-        "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
+    # Vulkan has no Emscripten/WebGL bridge, so the web build must default to
+    # EasyGL instead (already GLES-first, see EasyGLGraphicsBackend's own
+    # SDL_GL_CONTEXT_PROFILE_ES request — maps directly to WebGL2 under
+    # Emscripten, no patch needed there).
+    if(EMSCRIPTEN)
+        set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING
+            "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
+    else()
+        set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING
+            "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
+    endif()
 
     # Add CNA first: easy-3d's own CMakeLists.txt auto-detects an existing
     # `CNA` target from the parent project and links against it instead of
@@ -432,6 +441,54 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                 "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/avatars3d"
             COMMENT "Copying avatars3d/ next to GalaxyEggbertCNA"
         )
+    endif()
+
+    # -------------------------------------------------------------------
+    # Emscripten (web) build (2026-07-17, user-requested prototype-for-web-
+    # publishing target). Every asset directory above is baked into the
+    # .wasm's virtual filesystem at link time via --preload-file instead of
+    # copied next to a native binary, since there is no "next to the
+    # binary" on the web. Only `Content/icons`, `Content/backgrounds`, and
+    # `Content/sounds` are preloaded from mobile-eggbert's Content/ tree
+    # (not the full ~460MB directory) -- confirmed via direct grep that
+    # GalaxyEggbertCNA never reads `Content/icons4x/` or
+    # `Content/backgrounds4x/` (mobile-eggbert's own 4x-scale asset
+    # variants, ~437MB combined, genuinely unused here), keeping the web
+    # download to a reasonable size (~25MB of assets).
+    # -------------------------------------------------------------------
+    if(EMSCRIPTEN)
+        set_target_properties(GalaxyEggbertCNA PROPERTIES SUFFIX ".html")
+
+        target_link_options(GalaxyEggbertCNA PRIVATE
+            -sALLOW_MEMORY_GROWTH=1
+            -sINITIAL_MEMORY=268435456
+            -sNO_EXIT_RUNTIME=1
+            -sMIN_WEBGL_VERSION=2
+            -sMAX_WEBGL_VERSION=2
+            -sFULL_ES3=1
+            -lidbfs.js
+            "SHELL:--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell-cna.html"
+            "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js"
+        )
+
+        foreach(_me_dir Content/icons Content/backgrounds Content/sounds)
+            if(EXISTS "${MOBILE_EGGBERT_HOME}/${_me_dir}")
+                target_link_options(GalaxyEggbertCNA PRIVATE
+                    "SHELL:--preload-file ${MOBILE_EGGBERT_HOME}/${_me_dir}@/${_me_dir}")
+            else()
+                message(WARNING
+                    "GalaxyEggbertCNA (web): mobile-eggbert ${_me_dir}/ not found at "
+                    "'${MOBILE_EGGBERT_HOME}/${_me_dir}'. The web build will still link, but "
+                    "will have no ${_me_dir}/ in its virtual filesystem.")
+            endif()
+        endforeach()
+
+        foreach(_own_dir worlds3d textures3d avatars3d)
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_own_dir}")
+                target_link_options(GalaxyEggbertCNA PRIVATE
+                    "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/${_own_dir}@/${_own_dir}")
+            endif()
+        endforeach()
     endif()
 
     message(STATUS "GalaxyEggbertCNA target enabled (renders terrain, no gameplay yet).")
