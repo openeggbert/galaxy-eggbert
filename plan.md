@@ -3879,7 +3879,33 @@ damping already work.
 - [ ] CAM-002 — RMB pitch control
 - [ ] CAM-003 — Scroll-wheel zoom (smooth lerp)
 - [ ] CAM-004 — Pitch auto-reset to a default angle when RMB released
-- [ ] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera position)
+- [x] CAM-005 — Wall collision (DDA ray march from Blupi to desired camera
+      position) — **done 2026-07-17**, user-requested after noticing the
+      real risk: a third-person chase camera with no wall check can clip
+      through geometry to end up outside a tunnel/room, looking back in
+      through the wall from an impossible vantage point. New
+      `RaymarchWallDistance()` (`GalaxyEggbertCnaGame.cpp`, anonymous
+      namespace) walks from Blupi's own look-at point toward the desired
+      chase-camera position in small fixed steps (`0.1` world units),
+      stopping at the first solid (`!isAir()`) block — a simplified fixed-
+      step raymarch rather than a literal cell-boundary DDA voxel traversal
+      (this task's own original wording), since the real max distance
+      involved is tiny (a few world units, the chase distance) and a small
+      step is both simpler and plenty precise at that scale; same
+      "documented simplification, not the textbook algorithm" category as
+      several other collision adaptations this session. Solidity uses a
+      plain non-air check (a visual-occlusion query, deliberately NOT
+      reusing `GEBlupiController`'s own movement-collision rules — e.g. a
+      real non-solid-for-Blupi Teleporter pillar still correctly blocks the
+      camera's view through it). First-person is unaffected (the eye IS
+      Blupi's own position, nothing to collide with). Live headless
+      verification: Blupi placed mid-tunnel in `world001.vwr`'s own south
+      tunnel facing a nearby wall — confirmed the naive desired chase
+      distance (4 units) gets clamped to the real available distance
+      (1.5 units) by the wall, keeping the camera inside the tunnel instead
+      of clipping through it (temporary debug instrumentation, reverted
+      before commit). Full regression clean (only the pre-existing
+      unrelated `easy-gl-resource-smoke-tests` failure).
 - [x] CAM-006 — Exponential, framerate-independent damping on camera follow (CNA, 2026-07-10)
 - [ ] CAM-007 — FOV tuned/finalized (verify current FOV value against original 65° reference)
 - [x] CAM-008 — Camera shake: SmallShake — **fully wired 2026-07-14**. The "7 near-identical

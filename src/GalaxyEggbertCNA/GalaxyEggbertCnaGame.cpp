@@ -70,6 +70,52 @@ namespace GalaxyEggbert::CNA
         // separately-owned constant there, same cross-file convention as
         // kWaitDurationSeconds above).
         constexpr float kFadeCommitDurationSeconds = 1.0f;
+
+        // Third-person chase-camera wall collision (plan.md CAM-005, found
+        // 2026-07-17): keeps the camera from clipping through solid
+        // geometry to end up outside a tunnel/room looking back in through
+        // a wall. A simplified fixed-step raymarch from the look-at point
+        // toward the desired eye position, stopping at the first solid
+        // block -- not a literal cell-boundary DDA voxel traversal (the
+        // task's own original wording), since the real max distance
+        // involved is tiny (a few world units, the chase distance) and a
+        // small fixed step is both simpler and plenty precise at that
+        // scale; same "documented simplification, not the textbook
+        // algorithm" category as several other collision adaptations this
+        // session. Solidity uses a plain `!isAir()` check (this is a
+        // visual-occlusion query, not Blupi's own movement-collision rule
+        // set -- e.g. a real non-solid-for-Blupi Teleporter pillar still
+        // visually blocks the camera's view through it, which is the
+        // correct behavior here even though it would be wrong for
+        // GEBlupiController's own `IsSolidAt`). Returns the safe distance
+        // along `direction` (a unit vector), always `<= maxDistance`.
+        float RaymarchWallDistance(const GalaxyEggbert::Worlds::World& world,
+                                   const Easy3D::Camera3D::Vector3& origin,
+                                   const Easy3D::Camera3D::Vector3& direction, float maxDistance)
+        {
+            constexpr float kStep = 0.1f;
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            float traveled = 0.0f;
+            while (traveled < maxDistance)
+            {
+                traveled = std::min(traveled + kStep, maxDistance);
+                const auto point = origin + direction * traveled;
+                const int gx = static_cast<int>(std::lround(point.X)) + GEWorldRuntime::kWorldCenterX;
+                const int gy = static_cast<int>(std::lround(point.Y));
+                const int gz = static_cast<int>(std::lround(point.Z)) + GEWorldRuntime::kWorldCenterZ;
+                if (gx < 0 || gz < 0 || gy < 0 || gx >= blocksPerAxis || gz >= blocksPerAxis || gy >= blocksPerAxis)
+                {
+                    continue; // out of bounds -- treat as open air
+                }
+                if (!world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                     static_cast<std::uint16_t>(gz))
+                         .isAir())
+                {
+                    return std::max(0.0f, traveled - kStep);
+                }
+            }
+            return maxDistance;
+        }
     }
 
     GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
@@ -2489,10 +2535,24 @@ namespace GalaxyEggbert::CNA
                 const float elevation = std::clamp(kBaseElevation + lookPitchOffset_, -1.2f, 1.45f);
                 rawTarget = Easy3D::Camera3D::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
-                rawEye = Easy3D::Camera3D::Vector3(
-                    rawTarget.X - std::sin(yaw) * kChaseDistance * std::cos(elevation),
-                    rawTarget.Y + kChaseDistance * std::sin(elevation),
-                    rawTarget.Z + std::cos(yaw) * kChaseDistance * std::cos(elevation));
+                const Easy3D::Camera3D::Vector3 desiredOffset(
+                    -std::sin(yaw) * kChaseDistance * std::cos(elevation),
+                    kChaseDistance * std::sin(elevation),
+                    std::cos(yaw) * kChaseDistance * std::cos(elevation));
+
+                // Wall collision (plan.md CAM-005, found 2026-07-17): pull
+                // the eye in along the same direction if a solid block
+                // sits between Blupi and the desired chase position, so
+                // the camera never clips through a wall/tunnel ceiling to
+                // end up looking back in from outside.
+                const float desiredDistance = desiredOffset.Length();
+                float safeDistance = desiredDistance;
+                if (desiredDistance > 0.001f)
+                {
+                    const auto direction = desiredOffset * (1.0f / desiredDistance);
+                    safeDistance = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
+                }
+                rawEye = rawTarget + desiredOffset * (desiredDistance > 0.001f ? safeDistance / desiredDistance : 1.0f);
             }
 
             // Exponential damping toward the raw eye/target computed above

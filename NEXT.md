@@ -154,6 +154,16 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: implement third-person camera wall collision (plan.md CAM-005).** User-prompted after
+  discussing chunk streaming for future denser worlds — the real risk identified wasn't chunking,
+  it was the chase camera having no wall check at all, letting it clip through geometry to end up
+  outside a tunnel looking back in. New `RaymarchWallDistance()` (a small fixed-step raymarch from
+  Blupi's look-at point toward the desired chase position, stopping at the first solid block —
+  simplified vs. the task's own "DDA" wording, since the real max distance is tiny and a small
+  step is plenty precise there) pulls the eye in along the same direction whenever a wall sits
+  between Blupi and the full chase distance. First-person is unaffected. Live headless
+  verification: Blupi placed mid-tunnel facing a nearby wall, confirmed the naive 4-unit chase
+  distance gets clamped to the real available ~1.5 units. Full regression clean.
 - **feat: expand the hub/mission-progression system to full real scope + real progress-gated
   doors (plan.md SCORE-013/014, SAVE-006).** Explicit user follow-up request: galaxy-eggbert
   should contain the SAME hub/world scope as real mobile-eggbert (all 78 world files), not just
