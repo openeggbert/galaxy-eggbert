@@ -2458,8 +2458,17 @@ reset to `[ ]` except the small set with direct CNA evidence.
   UpdateSafePosition()`/`GetValidX/Y/Z()`, plan.md `067`), verified directly against
   `Decor.cpp:6467-6478`/`6654-6673` back on 2026-07-11 — this specific checklist entry was just
   never marked done at the time.
-- [ ] BLUPI-009 — Respawn invincibility: 2 s grace period after death
-- [ ] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide)
+- [x] BLUPI-009 — Respawn invincibility: 2 s grace period after death — **CONFIRMED NON-FEATURE,
+      2026-07-14, cross-referenced 2026-07-17** — the same claim as `103` above (Phase 10), just
+      duplicated under this section's own numbering and never closed here too. Direct source
+      research (grepped all of `Decor.cpp`/`Decor.hpp`) found no invincibility flag/timer tied to
+      respawn; the real post-respawn "safety" is purely spatial (the FIFO safe-position system,
+      `067`), not temporal immunity. Per `CLAUDE.md`'s faithful-remake rule, not implemented —
+      closed as a confirmed non-feature, not a remaining gap. See `103`'s own entry for the full
+      citation.
+- [x] BLUPI-010 — Flash during invincibility (10 Hz sprite show/hide) — **closed 2026-07-17,
+      same reason as `BLUPI-009`**: there is no invincibility window to flash during (confirmed
+      non-feature) — nothing to implement here either.
 - [ ] BLUPI-011 — Blob shadow (scans downward, scales with height) *(3D adaptation)*
 - [ ] BLUPI-012 — Sub-pixel accumulator (m_blupiSubPixelX/Y) — prevents drift at high FPS.
   **Clarified 2026-07-16**: this is a real 2D-integer-position-truncation workaround (the real
@@ -2476,15 +2485,29 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-014 — BlupiAdjust: push Blupi out of penetrated tiles after movement — same
   clarification as `BLUPI-013`: covered by this engine's own 3D collision-resolution shape in
   `TryMoveAxis()`, not a separate gap.
-- [ ] BLUPI-015 — SCROLL_SPEED = 8 px/tick camera scroll toward Blupi
+- [x] BLUPI-015 — SCROLL_SPEED = 8 px/tick camera scroll toward Blupi — **cross-referenced and
+      closed 2026-07-17, same item as `CAM-018`** — see that entry for the full evaluation
+      (already delivered by `CAM-006`'s exponential damping; the flat px/tick figure has no
+      portable 3D equivalent).
 - [x] BLUPI-016 — m_blupiLevel: charge level gauge for vehicles/actions — **stale AND label
   imprecise, corrected 2026-07-16**: verified directly against `Decor.cpp:4619-5324` — real
   `m_blupiLevel` is specifically the water/Nage breath gauge (100→0 while submerged, Shield/Hide
   immune), not a general "vehicles/actions charge gauge". Already implemented as `148`'s water
   breath gauge (`GEBlupiController::GetWaterGaugeLevel()`/`kWaterGaugeMax`).
-- [ ] BLUPI-017 — m_blupiTimeNoAsc: timer preventing lift re-entry after a dismount
-- [ ] BLUPI-018 — m_blupiTimeMockery: timer for enemy mockery animation
-- [ ] BLUPI-019 — m_blupiTimeOuf: relief animation timer (Ouf variants)
+- [ ] BLUPI-017 — m_blupiTimeNoAsc: timer preventing lift re-entry after a dismount —
+      **cross-referenced 2026-07-16/17, still correctly blocked**: this is the same real timer
+      already researched at `PICKUP-027`, not a standalone lift-cooldown — it's an intrinsic part
+      of the `AscenseurVertigo` wide/shiftable-lift-teeter mechanic (icons 311-316), blocked on
+      the same deferred render/icon-selection decision as `PICKUP-024`/`153`. Not independently
+      implementable.
+- [ ] BLUPI-018 — m_blupiTimeMockery: timer for enemy mockery animation — **cross-referenced
+      2026-07-17, still correctly blocked**: part of the same idle "fidget" animation-state
+      system flagged blocked in `NEXT.md` (needs `AnimState` values this engine doesn't have,
+      same prerequisite as the missing 3D Blupi model) — see the `SOUND-046`-`057`-family
+      "idle fidget channel" cross-references and the `PICKUP-086/087` cancellation note.
+- [ ] BLUPI-019 — m_blupiTimeOuf: relief animation timer (Ouf variants) — **cross-referenced
+      2026-07-17, same blocker as `BLUPI-018`**: the Ouf1a-5 reaction animations are part of the
+      same idle-fidget system (channels 48/49/etc.), blocked on the missing `AnimState` values.
 - [x] BLUPI-020 — m_blupiFifoPos[10]: history of last 10 positions — **stale AND wrong
   parenthetical, corrected 2026-07-16**: already implemented as part of `067`'s safe-position FIFO
   (same as `BLUPI-008` above). The "(used for teleporter exit placement)" claim is wrong — verified
@@ -2492,7 +2515,11 @@ reset to `[ ]` except the small set with direct CNA evidence.
   (safe respawn), never referenced by teleporter code at all; the real teleporter-exit mechanism
   is the separate paired-teleporter lookup (`Decor::SearchTeleporte()`, already ported as this
   engine's own `GEWorldRuntime::FindTeleportDestination()`).
-- [ ] BLUPI-021 — Blupi "front" flag (m_blupiFront): determines draw order vs objects
+- [x] BLUPI-021 — Blupi "front" flag (m_blupiFront): determines draw order vs objects —
+      **closed 2026-07-17, architecturally moot, same category as `BLUPI-012`**: this is purely a
+      2D-era manual sprite-layering workaround (which of two overlapping flat sprites paints on
+      top). This engine's real depth buffer already resolves draw order correctly for actual 3D
+      geometry/billboards without needing an explicit per-object flag — not a gap to port.
 
 #### 4.2 BlupiAction State Machine (87 states)
 
@@ -3668,7 +3695,14 @@ damping already work.
 - [ ] CAM-015 — HotSpot target: m_hotSpotFinalZoom/X/Y interpolated over N frames
 - [ ] CAM-016 — HotSpot: triggered on special events (secret exit found, level end zoom)
 - [ ] CAM-017 — SCROLL_MARGX = 80 px / SCROLL_MARGY = 40 px viewport scroll margins (2D-era concept — evaluate whether a 3D-equivalent framing margin applies at all before implementing)
-- [ ] CAM-018 — Smooth scroll: camera eases toward Blupi at SCROLL_SPEED = 8 px/tick (2D-era concept — likely superseded by CAM-006's damping; evaluate before implementing separately)
+- [x] CAM-018 — Smooth scroll: camera eases toward Blupi at SCROLL_SPEED = 8 px/tick (2D-era
+      concept) — **evaluated and closed 2026-07-17**: this is the same real "camera eases toward
+      Blupi" behavior as `CAM-006` (done, exponential framerate-independent damping) — a 3D
+      perspective camera has no direct equivalent to a flat 2D px/tick scroll rate, so the real
+      8px/tick figure isn't a portable magnitude (same category as every other "no established
+      real-to-3D unit conversion" approximation this session, e.g. `kConveyorNudgeSpeed`).
+      `CAM-006`'s damping already delivers the same functional purpose (smooth follow, not an
+      instant snap) — not a separate gap to close.
 
 ---
 
