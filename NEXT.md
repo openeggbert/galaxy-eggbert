@@ -118,12 +118,17 @@ gauge decremented unconditionally regardless of Shield/Hide, now fixed. 3 plan.m
 claimed this immunity "wasn't modeled" for fired-projectiles/Spikes/Fan — stale since `170` shipped
 2026-07-12, corrected.
 
-**Family 3 — 2 genuinely new gameplay features (not a gate retrofit)**: `ObjectType201-203`
-lethal contact (`PICKUP-069`) and the Perso-decoy/lethal-decor enemy trap mechanic — both real,
-previously-undiscovered mechanics found via direct `Decor.cpp` reads around the already-implemented
-Perso pickup code (`6088-6115`/`7957-7975`/`9835-9865`), not vehicle/immunity retrofits like
-Families 1-2. The trap mechanic resolves a "what does placing a decoy actually DO" mystery flagged
-back on 2026-07-13.
+**Family 3 — 3 genuinely new gameplay features (not a gate retrofit)**: `ObjectType201-203` lethal
+contact (`PICKUP-069`), the Perso-decoy/lethal-decor enemy trap mechanic, and secret-exit
+(`ObjectType21`) contact (`PICKUP-009`/`083`) — real, previously-undiscovered/unimplemented
+mechanics found via direct `Decor.cpp` reads, not vehicle/immunity retrofits like Families 1-2. The
+trap mechanic resolves a "what does placing a decoy actually DO" mystery flagged back on
+2026-07-13.
+
+**Also this session**: 2 more hallucinated-feature cancellations (PICKUP-086/087, "shield trail
+sound") and 2 clarified-not-fixable notes (PICKUP-027/035, both genuinely blocked on a bigger
+prerequisite — `AscenseurVertigo`'s render decision and crate fall-physics respectively — not
+independent gaps as previously stated).
 
 (Prior session, 2026-07-13/14): real deferred "Voyage" pickup-reward timing, Clear2/3/4 death VFX,
 the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup delay.
@@ -149,6 +154,16 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `2bab5b4` **docs only**: clarified that PICKUP-027 (`m_blupiTimeNoAsc`) and PICKUP-035
+  (crate-land shake) aren't independent gaps — the first is genuinely part of `AscenseurVertigo`
+  (same render-geometry block as `PICKUP-024`), the second needs crate fall-physics that doesn't
+  exist (`151`), not "no shake system" as previously stated (stale since 2026-07-14).
+- `b3cbe64` **feat: implement secret exit (`ObjectType21`) contact (`PICKUP-009`/`083`).** Verified
+  against `Decor.cpp:6158-6184` — shares the exact same real exit-gate logic as the regular exit;
+  this engine previously only recognized `ObjectType7`, so a secret exit did nothing on contact.
+- `7d2e612` **docs only**: cancelled PICKUP-086/087 (hallucinated "shield trail sound" — real
+  channels 48/49 are unrelated Ouf3/Ouf4 idle-fidget sounds; the real trail-spawn code has no
+  `PlaySound()` call at all).
 - `9505fd5` **fix: exact `table_explo5/6/8` transcriptions + resolve the explo-mapping open
   question.** Verified against `Decor.cpp:8395-8489`: the real `explo1-8`→`ObjectType` mapping is
   a plain 1:1 correspondence, not "many-to-one or context-dependent" as the open question in
