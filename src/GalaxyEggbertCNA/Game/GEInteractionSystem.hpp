@@ -464,6 +464,11 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
+        // Testability accessor for the Blitz-emitter zap sound's lazy world
+        // scan (plan.md SOUND-079/VISUAL-024) -- false before the first
+        // Update() call, same "-1 = not yet scanned" convention as
+        // TotalTreasures() above.
+        [[nodiscard]] bool HasBlitzEmitterPair() const noexcept { return blitzEmitterPresent_ == 1; }
         [[nodiscard]] bool ExitReached() const noexcept { return exitReached_; }
         [[nodiscard]] int Key1Count() const noexcept { return keys1_; }
         [[nodiscard]] int Key2Count() const noexcept { return keys2_; }
@@ -819,6 +824,18 @@ namespace GalaxyEggbert::CNA
 
         int treasuresCollected_ = 0;
         int totalTreasures_ = -1; // computed lazily on first Update() call
+        // -1 = not yet scanned, 0 = scanned/none found, 1 = scanned/found.
+        // Real `Decor::BlitzActif()` (plan.md SOUND-079/VISUAL-024, found
+        // 2026-07-17) plays the zap sound (ch69) per visible Blitz(305) tile
+        // that has a BlitzEmitter(304) tile directly above it, on a fixed set
+        // of ticks within a 100-tick cycle. This engine's `GESound::Play()`
+        // has no positional audio at all (just a channel), so which specific
+        // tile triggered it is unobservable either way -- a one-time lazy
+        // scan for "does ANY qualifying pair exist in the whole world" (same
+        // idiom as `totalTreasures_` above) is exactly behaviorally
+        // equivalent to a real per-frame per-visible-tile scan, at a tiny
+        // fraction of the cost.
+        int blitzEmitterPresent_ = -1;
         bool exitReached_ = false;
         bool exitContactActive_ = false; // debounces the exit-touch sound/check to once per contact
         int keys1_ = 0;

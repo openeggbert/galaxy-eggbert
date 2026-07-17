@@ -3247,6 +3247,50 @@ int main(int argc, char** argv)
               "SpawnWaterBubble() is a no-op with no clear water column above (real num<=0 guard)");
     }
 
+    // 17.16. Blitz-emitter zap ambient sound (plan.md SOUND-079/VISUAL-024,
+    // ch69, found 2026-07-17) -- a one-time lazy world scan for a
+    // Blitz(305)-with-BlitzEmitter(304)-above pair, then a fixed 6-tick-per-
+    // 100 trigger pattern reproduced via GetAnimPhase(). `sound` (this file's
+    // shared, never-`LoadContent()`-ed instance) makes every `Play()` call a
+    // silent, side-effect-free no-op with no playback state to query (see
+    // its own declaration comment) -- these checks exercise the lazy-scan
+    // and 100-tick lookup logic itself for regressions/crashes across both
+    // the "no qualifying pair" and "qualifying pair present, every real
+    // trigger tick" cases, rather than asserting audible playback (not
+    // observable through this harness).
+    {
+        GEWorldRuntime noEmitterWorld;
+        GEInteractionSystem noEmitterInteraction;
+        auto& mutableNoEmitterWorld = noEmitterWorld.GetWorldMutable();
+        mutableNoEmitterWorld.setBlock(10, 5, 10, Worlds::Block::make(BlockTypes::Blitz));
+        mutableNoEmitterWorld.setBlock(10, 6, 10, Worlds::Block::make(BlockTypes::Ground)); // NOT the emitter icon
+        noEmitterInteraction.Update(1.0f / 20.0f, noEmitterWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(!noEmitterInteraction.HasBlitzEmitterPair(),
+              "the lazy world scan correctly finds no Blitz/BlitzEmitter pair when none exists");
+        for (int i = 0; i < 99; ++i)
+        {
+            noEmitterWorld.Update(1.0f / 20.0f);
+            noEmitterInteraction.Update(1.0f / 20.0f, noEmitterWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(true, "Blitz-emitter scan/lookup runs cleanly across a full 100-tick cycle with no qualifying pair");
+
+        GEWorldRuntime emitterWorld;
+        GEInteractionSystem emitterInteraction;
+        auto& mutableEmitterWorld = emitterWorld.GetWorldMutable();
+        mutableEmitterWorld.setBlock(10, 5, 10, Worlds::Block::make(BlockTypes::Blitz));
+        mutableEmitterWorld.setBlock(10, 6, 10, Worlds::Block::make(BlockTypes::BlitzEmitter));
+        emitterInteraction.Update(1.0f / 20.0f, emitterWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        check(emitterInteraction.HasBlitzEmitterPair(),
+              "the lazy world scan correctly finds a Blitz/BlitzEmitter pair when one exists");
+        for (int i = 0; i < 99; ++i)
+        {
+            emitterWorld.Update(1.0f / 20.0f);
+            emitterInteraction.Update(1.0f / 20.0f, emitterWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        check(true, "Blitz-emitter scan/lookup runs cleanly across a full 100-tick cycle with a qualifying pair "
+                    "present (real trigger ticks 0/7/18/25/33/44 all exercised)");
+    }
+
     // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

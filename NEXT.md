@@ -154,6 +154,22 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: implement the real Blitz-emitter zap ambient sound (plan.md SOUND-079/VISUAL-024,
+  ch69).** Real `Decor::BlitzActif()` plays ch69 per visible Blitz(305)-floor tile that has a
+  BlitzEmitter(304) tile directly above it, on a fixed 6-tick-per-100-tick pattern. Since this
+  engine's `GESound::Play()` has no positional audio (just a channel), a one-time lazy world scan
+  for "does any qualifying Blitz/BlitzEmitter pair exist anywhere" (new
+  `GEInteractionSystem::HasBlitzEmitterPair()`, same "-1 = not yet scanned" idiom as the existing
+  `totalTreasures_` lazy scan) is behaviorally equivalent to a real per-visible-tile check, at a
+  tiny fraction of the cost — avoids a per-frame whole-world grid scan entirely. New
+  `BlockTypes::BlitzEmitter=304` constant (icon 304 is `kPassable[304]==false`, so this engine's
+  world loader already preserved it verbatim; just needed a named constant). The visual half of
+  the same checklist item ("tiles 66-68 draw 13px higher") is a separate, unrelated `m_bigDecor`
+  sprite-corner-anchor pixel nudge — confirmed non-portable, same category as other already-
+  dismissed 2D-anchoring artifacts, left un-implemented deliberately. 4 new
+  `VerifyInteractionSystem` assertions (lazy-scan correctness with/without a qualifying pair, full
+  100-tick-cycle smoke run both ways). Full regression clean (only the pre-existing unrelated
+  `easy-gl-resource-smoke-tests` failure); live headless launch smoke check clean.
 - **feat: implement real water splash/bubble effects (plan.md PICKUP-078/079/080, SOUND-032/033/
   034/074, BLUPI-151).** Found while auditing the Pickups & Objects checklist: real channel 22 was
   wired backwards (playing on water ENTRY; all 4 real `PlaySound(ch22,...)` call sites are EXIT

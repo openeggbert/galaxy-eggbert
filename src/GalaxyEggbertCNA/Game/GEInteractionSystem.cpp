@@ -625,6 +625,43 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Blitz-emitter zap sound (plan.md SOUND-079/VISUAL-024, ch69) --
+        // see blitzEmitterPresent_'s own comment for why a one-time lazy
+        // world scan is behaviorally equivalent to the real per-tile check.
+        if (blitzEmitterPresent_ < 0)
+        {
+            blitzEmitterPresent_ = 0;
+            const auto axis = world.blocksPerAxis();
+            for (std::uint16_t gx = 0; gx < axis && blitzEmitterPresent_ == 0; ++gx)
+            {
+                for (std::uint16_t gz = 0; gz < axis && blitzEmitterPresent_ == 0; ++gz)
+                {
+                    for (std::uint16_t gy = 0; gy + 1 < axis; ++gy)
+                    {
+                        if (world.getBlock(gx, gy, gz).type() == GalaxyEggbert::BlockTypes::Blitz &&
+                            world.getBlock(gx, static_cast<std::uint16_t>(gy + 1), gz).type() ==
+                                GalaxyEggbert::BlockTypes::BlitzEmitter)
+                        {
+                            blitzEmitterPresent_ = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (blitzEmitterPresent_ == 1)
+        {
+            // Real fixed tick set within the 100-tick cycle (Decor.cpp:624),
+            // reproduced directly via this engine's own 1:1-tick
+            // `GetAnimPhase()`.
+            const int animTick = worldRuntime.GetAnimPhase() % 100;
+            if (animTick == 0 || animTick == 7 || animTick == 18 || animTick == 25 || animTick == 33 ||
+                animTick == 44)
+            {
+                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel69);
+            }
+        }
+
         bool touchingExitThisFrame = false;
         // Fired projectiles (ObjectType23) spawned by blupih/blupit this
         // frame -- collected here rather than appended to `objects`

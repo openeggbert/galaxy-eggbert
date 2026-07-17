@@ -3508,7 +3508,8 @@ old scheme — cross-check against §7 when wiring these).
 - [ ] SOUND-078 — ch68: unknown — **researched 2026-07-16**: grepped every real `.cpp` file --
   zero uses of `SoundChannel68` anywhere in real mobile-eggbert source. Genuinely unused/reserved
   in the real game itself, same as `SOUND-012`; nothing to wire.
-- [ ] SOUND-079 — ch69: lightning strike
+- [x] SOUND-079 — ch69: lightning strike — **done 2026-07-17**, see `VISUAL-024`'s writeup for the
+      full implementation (`GEInteractionSystem`'s lazy Blitz/BlitzEmitter world scan).
 - [x] SOUND-080 — ch70: **stale, corrected 2026-07-16** — real use is the Crusher squash-entry
   sound (`TriggerCrush()` succeeding). Already wired.
 - [x] SOUND-081 — ch71: **stale, corrected 2026-07-16** — real use is the Teleporter entry sound
@@ -4024,7 +4025,20 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
 - [ ] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png)
 - [ ] VISUAL-022 — Sky gradient per world region (zenith/horizon colours)
 - [ ] VISUAL-023 — Per-world fog (fog color + fog range per region)
-- [ ] VISUAL-024 — Lightning visual: tiles 66-68 draw 13 px higher; ch69 sound
+- [ ] VISUAL-024 — Lightning visual: tiles 66-68 draw 13 px higher; ch69 sound — **split
+      2026-07-17**: the ch69 zap sound half is now done (see `SOUND-079`) — real
+      `Decor::BlitzActif()` (`Decor.cpp:620-634`), a Blitz(305)-floor-with-BlitzEmitter(304)-above
+      pair, on a fixed 6-tick-per-100 pattern; this engine plays it once per matching tick
+      globally rather than per-tile (its `GESound::Play()` has no positional audio at all, so a
+      one-time lazy "does any qualifying pair exist in the world" scan is behaviorally equivalent
+      to a real per-visible-tile check, at negligible cost — new `GEInteractionSystem::
+      HasBlitzEmitterPair()`, `BlockTypes::BlitzEmitter=304`). The "tiles 66-68 draw 13px higher"
+      visual half is a DIFFERENT, unrelated mechanic — verified directly against
+      `Decor.cpp:716-735`: it's a pure 2D sprite-corner-anchor pixel nudge in the separate
+      `m_bigDecor` decoration-layer draw loop (icons 66-68 there, nothing to do with the Blitz
+      floor grid), the same category of non-portable 2D-anchoring artifact already dismissed
+      elsewhere in this codebase for center-anchored billboards (e.g. `SpawnFanHitFlash()`'s own
+      -34/-34 pixel offset) — left un-implemented, not a gap.
 - [ ] VISUAL-025 — "EXIT OPEN!" text pop-up with sparkle effect when exit unlocks
 
 ---

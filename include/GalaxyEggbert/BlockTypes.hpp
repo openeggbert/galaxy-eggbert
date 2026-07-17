@@ -121,6 +121,13 @@ constexpr uint16_t Blitz    = 305;
 
 inline bool isBlitz(uint16_t bt) { return bt == Blitz; }
 
+// Blitz emitter -- the icon real `Decor::BlitzActif()` checks one cell above a
+// Blitz(305) floor tile to decide whether to play the zap sound (Decor.cpp:
+// 620-634, found 2026-07-17). Not itself hazardous; kPassable[304]==false so
+// this engine's own world loader (BlockTypes::fromMobileIconId()) already
+// preserves it verbatim rather than collapsing it to Air.
+constexpr uint16_t BlitzEmitter = 304;
+
 // Teleporter tiles — solid pillars; icons 330-333 encode the pair ID.
 // When Blupi is adjacent, scan the world for the matching icon to find the exit.
 constexpr uint16_t Teleport1 = 330;
