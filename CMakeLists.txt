@@ -274,6 +274,27 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         add_subdirectory("${CNA_HOME}" CNA_dep)
     endif()
 
+    # Compatibility shim (found 2026-07-17): when reusing a parent-provided
+    # CNA target (our case, always), easy-3d's own CMakeLists only forwards
+    # the CNA_BACKEND_* compile definition to its `easy3d` target inside its
+    # "build CNA myself" branch -- reused-CNA consumers of CNA's own
+    # GraphicsBackendType.hpp (e.g. easy3d's BillboardMeshRenderer.cpp/
+    # CubeMeshRenderer.cpp) never got it. Previously silent/tolerated;
+    # started hard-failing (`#error "no CNA_BACKEND_* compile definition
+    # set"`) after a large unrelated `../cna` merge (`feature/graphics`)
+    # made that header stricter. This is a sibling-repo (`../cna`/
+    # `../easy-3d`) gap, not something to fix by editing those repos here --
+    # defining the same macro ourselves for this directory scope (inherited
+    # by `easy3d_dep`, added right below) is a harmless, idempotent
+    # workaround regardless of whether upstream fixes it later.
+    if(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL")
+        add_compile_definitions(CNA_BACKEND_EASYGL)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "VULKAN")
+        add_compile_definitions(CNA_BACKEND_VULKAN)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
+        add_compile_definitions(CNA_BACKEND_SDL_RENDERER)
+    endif()
+
     # Keep easy-3d's own tests/examples out of this build too.
     set(EASY3D_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(EASY3D_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
