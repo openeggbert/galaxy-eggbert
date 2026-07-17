@@ -154,6 +154,17 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **docs only**: closed/corrected 15 more `BLUPI-1xx` sound-channel duplicates (`BLUPI-132`-`153`
+  range) — most were exact duplicates of already-fixed `SOUND-0xx`/`PICKUP-0xx` entries just never
+  checked off; several additionally had wrong channel claims (ch41 isn't "glide", ch50 isn't
+  shield-on, ch44 isn't shield-off, ch53 isn't Tank-fire, ch58 isn't Drink's, ch62 isn't Sucette's,
+  ch51 isn't glue, ch21 isn't secret-exit, ch7 isn't door-open), each corrected to point at the
+  real already-wired channel. `BLUPI-149`'s "Electro sounds ch38/ch90" had both claims
+  independently disproven (ch38 is crate-push, ch90 is a footstep-remap channel) and is left open
+  rather than guessed. Also clarified `TILE-024` (water drip animation) is deliberately blocked —
+  the real 48-frame table is a known transcription target, but the real visual is Billboard-
+  rendered (not a terrain-cube atlas swap), so animating it needs the same render-mode decision
+  as the already-deferred Saw-blade/`ThinMechanical` items. No code changes.
 - **feat: implement the real vehicle motor sound crossfade (plan.md SOUND-007/008, ch15-18/28-31).**
   Real `Decor::AdaptMotorVehicleSound()` gives Helicopter its own start/loop-high/loop-low/stop
   sound set (ch15/16/18/17) and Jeep/Tank/Overcraft share a second set (ch28/29/31/30) —
