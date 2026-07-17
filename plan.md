@@ -1805,6 +1805,31 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       CI/hosting wiring yet (that's `BUILD-009`/`BUILD-010`, still open) — this task is just "the
       build exists and demonstrably runs in a browser," publishing the artifact is a separate step
       for the user to do on their own site.
+      **Real bug found + fixed same day (black-screen-on-first-run)**: the above verification had
+      bypassed `cmake/web/shell-cna.html`'s own "Click or tap to begin." gate by patching
+      `Module.noInitialRun` to `false` directly in a throwaway test copy — masking a genuine bug in
+      the shell's normal, unmodified flow. The user tried the real, unpatched build and got exactly
+      what a faithful re-test then reproduced: a near-black screen forever, click or no click. Root
+      cause, found by reading the actual compiled `GalaxyEggbertCNA.js` glue: modern Emscripten's
+      `run()` reads `Module["noInitialRun"]` into a local variable ONCE, synchronously, before any
+      click can possibly happen, then never re-checks the `Module` property again — so the shell's
+      old (U3D-era) recovery pattern of "flip `Module.noInitialRun = false` inside the click
+      handler if `run()` hasn't reached that point yet" is dead code against this toolchain version;
+      clicking never actually invoked `callMain()`. Canvas still went visible (a completely separate,
+      unconditional `setStatus("Running...")` call inside `run()` fires regardless of
+      `noInitialRun`), which is exactly why it looked like "the page loaded fine, just nothing ever
+      draws" rather than an obvious error. Fix: removed the whole click-to-begin gate from
+      `cmake/web/shell-cna.html` (dead/broken code, not a working feature to preserve) and set
+      `noInitialRun: false` so the game starts immediately on page load — re-verified with a FRESH,
+      completely unpatched Chrome run (no click simulated, no test-only JS patches) showing the real
+      Init/gamer-select screen rendering immediately. Also fixed a related CMake gap while here:
+      `--shell-file`/`--pre-js` are just linker-flag strings to CMake, not tracked dependencies, so
+      editing either file alone (no source touched) left `cmake --build` believing the target was
+      already up to date and it kept serving the stale old `.html`/`.js` — added
+      `LINK_DEPENDS` on both files to `GalaxyEggbertCNA` so future edits to either always trigger a
+      real relink. Lesson: a smoke test that patches around the exact interaction path a real user
+      takes doesn't verify that path — the original verification should have used the literal
+      shipped `.html` unmodified, including its click-gate, not a hand-patched copy.
 - [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
 - [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
 - [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests

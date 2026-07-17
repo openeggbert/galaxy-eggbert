@@ -179,6 +179,23 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: web build showed only a black screen on the real, unpatched shell (plan.md `BUILD-003`).**
+  The prior entry's headless verification had patched `Module.noInitialRun` directly in a throwaway
+  test copy, bypassing `shell-cna.html`'s own "Click or tap to begin." gate — masking a real bug the
+  user then hit immediately. Root cause (found by reading the compiled `.js` glue): modern
+  Emscripten's `run()` snapshots `Module["noInitialRun"]` into a local variable once, synchronously,
+  before any click can occur, and never re-reads the `Module` property again — so the shell's old
+  (U3D-era) "flip the flag from the click handler" recovery path was dead code; clicking never
+  actually called `callMain()`. The canvas still went visible regardless (a separate, unconditional
+  `setStatus("Running...")` call fires either way), which is exactly why it looked like a working
+  page that simply never draws anything, not an obvious error. Fix: removed the click-to-begin gate
+  entirely and set `noInitialRun: false` so the game starts immediately — re-verified with a fresh,
+  completely unpatched Chrome run (no test patches, no simulated click) showing the real Init/
+  gamer-select screen rendering right away. Also added `LINK_DEPENDS` on `shell-cna.html`/`pre.js` to
+  the `GalaxyEggbertCNA` target — CMake doesn't treat `--shell-file`/`--pre-js` linker-flag strings
+  as tracked dependencies, so editing either file alone previously left `cmake --build` silently
+  serving the stale old `.html`/`.js` (bit us mid-fix here: the first "fix" build didn't actually
+  relink until a source file was touched to force it).
 - **feat: Emscripten/WebAssembly web build for `GalaxyEggbertCNA` (plan.md `BUILD-003`).**
   User-requested prototype build to publish on their own website. Turned out to be almost entirely
   CMake wiring — the CNA/easy-gl/meta-gl/SDL3 stack was already Emscripten-ready (vendored SDL3 has

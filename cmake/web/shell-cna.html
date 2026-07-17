@@ -6,15 +6,6 @@
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
     <title>Galaxy Eggbert</title>
     <style>
-        #clicktoplaydiv {
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            color: white;
-            background-color: rgba(0,0,0,0.2);
-            position: absolute;
-        }
-
         body, html {
             padding: 0;
             margin: 0;
@@ -201,30 +192,6 @@
             }, 100);
         }
 
-        // Set up the click to play message
-        var div = document.createElement('div');
-        div.id = 'clicktoplaydiv';
-        p = document.createElement('p');
-        p.innerHTML = 'Click or tap to begin.';
-        div.appendChild(p);
-        document.body.appendChild(div);
-        div.addEventListener('click', function (e) {
-            div.remove();
-
-            if (Module.calledRun)
-            {
-                // Loading has finished, we have run but not called main
-                callMain();
-                // This calls ready a second time, but it fixes the screen size
-                ready();
-            }
-            else
-            {
-                // If the module has not been run, just turn off noInitialRun
-                Module.noInitialRun = false;
-            }
-        }, { once: true });
-
         // Patch: SDL2/Emscripten passes 0 (EMSCRIPTEN_EVENT_TARGET_WINDOW) to
         // emscripten_set_pointerlockchange_callback, which becomes querySelector('0').
         // Redirect '0' -> window so pointer-lock events register without throwing.
@@ -251,8 +218,17 @@
                 console.error(text);
             },
 
-            // Disable running until we have interacted with the page so we can run it on click
-            noInitialRun: true,
+            // Run immediately on load (2026-07-17): the click-to-begin recovery
+            // path this shell used to have relied on Module.noInitialRun being
+            // re-checked dynamically when flipped from a click handler -- the
+            // Emscripten runtime this project builds against instead snapshots
+            // it once, synchronously, before any click can occur, so that path
+            // was dead code (confirmed live: canvas became visible via the
+            // unconditional setStatus("Running...") call inside run(), but
+            // main() was never actually invoked, giving a permanent black
+            // canvas). Audio may need a user gesture to start per browser
+            // autoplay policy -- a known, acceptable prototype-stage gap.
+            noInitialRun: false,
 
             // Retrieve the current status of the application
             setStatus: function(text) {

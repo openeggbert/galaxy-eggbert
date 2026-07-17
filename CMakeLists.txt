@@ -459,6 +459,17 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     if(EMSCRIPTEN)
         set_target_properties(GalaxyEggbertCNA PROPERTIES SUFFIX ".html")
 
+        # CMake doesn't parse --shell-file/--pre-js out of target_link_options
+        # to discover them as link dependencies (they're just linker-flag
+        # strings to it) -- without LINK_DEPENDS, editing either file alone
+        # (no source touched) leaves `cmake --build` believing the target is
+        # already up to date and it silently keeps serving the OLD shell/
+        # pre-js baked into the previous .html/.js (found 2026-07-17: a
+        # shell-cna.html fix didn't take effect until a source file was
+        # touched to force a relink).
+        set_target_properties(GalaxyEggbertCNA PROPERTIES
+            LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell-cna.html;${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js")
+
         target_link_options(GalaxyEggbertCNA PRIVATE
             -sALLOW_MEMORY_GROWTH=1
             -sINITIAL_MEMORY=268435456
