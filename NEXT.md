@@ -154,6 +154,19 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- `3c65870` **docs only**: fixed 6 stale `TILE-0XX` entries — Fan (all 4 directions), Temperature,
+  and Marine tile animations are already implemented in `GETerrainRenderer.cpp` but were still
+  marked not done. Flagged an honest, unresolved compass-direction-label mismatch for the 4 Fan
+  entries (no gameplay consequence either way, this engine doesn't model wind-push physics).
+- `8a18d21` **docs only**: fixed `ENEMY-005` (likely hallucinated "5s enemy respawn timer" —
+  verified `Decor::ObjectDelete()` has no such timer, no "respawn"/"revive" found anywhere for
+  enemies) and `ENEMY-027` (stale cross-reference to the already-corrected `136` premise).
+- `f1a96b9` **docs only**: clarified `BLUPI-012`/`013`/`014` are architecturally superseded by
+  this engine's own float-native position/3D collision, not gaps to port literally.
+- `fa13247` **docs only**: fixed 5 stale/wrong `BLUPI-0XX` entries — crouch, respawn, and the
+  position-history FIFO were already implemented but marked not done; `BLUPI-005`'s "look-up
+  glide" premise looks hallucinated (no such mechanic found anywhere in `Decor.cpp`); `BLUPI-016`
+  labeled the water-breath gauge as a generic "vehicle charge gauge".
 - `f570da4` **docs only**: finished the `SOUND-0XX` checklist audit (3rd/final pass) —
   identified real meanings for the remaining "unknown" channels (2/5/6/32/34/35/39/65/68), fixing
   more wrong labels along the way (ch39 is crate-"Pop", not "key sparkle"; ch65 is the Mockery
