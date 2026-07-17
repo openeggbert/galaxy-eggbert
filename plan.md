@@ -549,8 +549,12 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `172`/`174`/`175`, all 2026-07-12) — remaining pickup types are the deliberately-deferred
       ones documented under those same task IDs (2-stage delay, sparkle-fx), not unstarted work.
 - [x] `101` Hazard/kill detection — **done**, see `E3D-MIG-140`s (Phase 14, 10/10 complete).
-- [x] `102` Enemy stomp + contact-kill — **done**, see `E3D-MIG-130`s (Phase 13, fully complete
-      2026-07-11/12). No separate "score/counter" exists in real mobile-eggbert to port (see
+- [x] `102` Enemy contact-kill — **done**, see `E3D-MIG-130`s (Phase 13, fully complete
+      2026-07-11/12). **Title corrected 2026-07-16**: this entry's own title said "stomp +
+      contact-kill", implying stomp is a separate real mechanic alongside contact-kill — it isn't
+      (confirmed repeatedly this session, `BLUPI-126`/`131`, `ENEMY-004`/`036`: no velocity-gated
+      "stomp" concept exists anywhere in real source, contact-kill is a plain unconditional touch
+      check). No separate "score/counter" exists in real mobile-eggbert to port (see
       `107` below) — lives/egg-gauge is the only real counter, already covered by `130`.
 - ~~`103` Respawn invincibility window after death~~ **CONFIRMED NON-FEATURE, 2026-07-14** — direct
       source research (grepped all of `Decor.cpp`/`Decor.hpp`, re-verified the exact life-loss
