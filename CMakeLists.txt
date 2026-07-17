@@ -438,11 +438,11 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     # Scripted verification for GEInteractionSystem (2026-07-10, platform
     # lift patrol/crate push/pickup collection) against the real
-    # worlds3d/world001.vwr sample world. Needs CNA linked (GESound touches
+    # worlds3d/world999.vwr sample world. Needs CNA linked (GESound touches
     # Microsoft::Xna::Framework::Audio types) but not easy3d/SDL3main --
     # GESound::LoadContent() is never called, so no live audio device is
     # exercised at runtime, only symbols resolved at link time. Run from the
-    # repo root (relative default path "worlds3d/world001.vwr"), same
+    # repo root (relative default path "worlds3d/world999.vwr"), same
     # quirk as VerifyBlupiMovement.
     add_executable(VerifyInteractionSystem
         tools/VerifyInteractionSystem.cpp
@@ -473,7 +473,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     endif()
     if(BUILD_TESTING)
         # WORKING_DIRECTORY = repo root: this tool's default world path
-        # ("worlds3d/world001.vwr") is relative, same quirk noted above.
+        # ("worlds3d/world999.vwr") is relative, same quirk noted above.
         add_test(NAME VerifyInteractionSystem COMMAND VerifyInteractionSystem
                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     endif()
@@ -634,7 +634,7 @@ target_include_directories(VerifyBigDecorParsingCna PRIVATE
 # ctest (VerifyInteractionSystem/VerifyGEInputPad are registered next to
 # their own add_executable() above, inside the GALAXY_EGGBERT_BUILD_CNA
 # block). VerifyBlupiMovement/VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna
-# all default to relative paths ("worlds3d/world001.vwr", "../mobile-eggbert/
+# all default to relative paths ("worlds3d/world999.vwr", "../mobile-eggbert/
 # worlds/*.txt") that only resolve from the repo root (NEXT.md §7's own
 # note) -- WORKING_DIRECTORY makes that explicit instead of relying on
 # whatever directory ctest happens to be invoked from. VerifyGESaveData

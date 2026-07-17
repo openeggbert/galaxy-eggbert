@@ -55,10 +55,12 @@ int main()
     // Sanity check: the default .vwr world source has no BigDecor concept
     // (LoadFromVwrFile() clears bigDecor_ to empty) -- confirms the
     // 2026-07-09 segfault fix (guarding the grid-size check before scanning)
-    // by exercising the empty-grid path explicitly.
+    // by exercising the empty-grid path explicitly. world999.vwr (renamed
+    // from world001.vwr 2026-07-17) is this engine's quarantined mechanics
+    // -showcase/test world.
     {
         GalaxyEggbert::CNA::GEWorldRuntime runtime;
-        const bool loaded = runtime.LoadFromVwrFile("worlds3d/world001.vwr");
+        const bool loaded = runtime.LoadFromVwrFile("worlds3d/world999.vwr");
         const bool emptyAsExpected = loaded && runtime.GetBigDecor().empty();
         std::cout << (emptyAsExpected ? "PASS" : "FAIL")
                   << ": .vwr world source has empty BigDecor grid as expected" << std::endl;

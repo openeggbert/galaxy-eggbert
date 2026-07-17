@@ -1786,6 +1786,19 @@ namespace GalaxyEggbert::CNA
                     LoadMission(target);
                     return;
                 }
+                // Engine-specific demo/test-world portal (plan.md hub/
+                // mission system, found 2026-07-17, user-requested) --
+                // NOT a real mobile-eggbert concept: leads directly to
+                // mission 999 (`worlds3d/world999.vwr`, this session's
+                // quarantined mechanics showcase, formerly world001.vwr's
+                // own content before the global hub was cleaned up to
+                // match real mobile-eggbert's structure). Same contact-
+                // trigger/no-debounce reasoning as WorldSelect above.
+                if (groundBlock == GalaxyEggbert::BlockTypes::DemoPortal)
+                {
+                    LoadMission(999);
+                    return;
+                }
             }
 
             // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified

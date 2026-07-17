@@ -3527,18 +3527,40 @@ reset to `[ ]`.
       exactly).
       **Full real world/hub scope, not just a proof-of-mechanism**: all 78
       real mobile-eggbert world files now exist here too, with byte-for-
-      byte identical filenames/mission numbers — 1 global hub (`world001`,
-      unchanged rich content, now with 12 `WorldSelect` portal markers
-      instead of 1), 12 world hubs (`world010`/`020`/.../`120`, minimal
-      corridor-with-doors layout, real per-world sublevel counts: 4,5,4,6,
-      8,6,5,4,5,7,5,5), 64 minimal placeholder sublevels (small floor + real
-      exit marker each), and `world199` (the real final bonus world,
-      likewise a minimal placeholder). Per explicit user instruction, every
-      NEW world stays a near-empty placeholder until a real 3D world editor
-      exists to flesh them out — `worlds3d/world001.vwr`'s own rich demo
-      content (dynamite/crates/vehicles/water/doors/etc., built earlier
-      this session) is completely unaffected, confirmed via the full
-      existing test suite still passing unmodified against it.
+      byte identical filenames/mission numbers — 1 global hub (`world001`),
+      12 world hubs (`world010`/`020`/.../`120`, real per-world sublevel
+      counts: 4,5,4,6,8,6,5,4,5,7,5,5), 64 minimal placeholder sublevels
+      (small floor + real exit marker each), and `world199` (the real final
+      bonus world, likewise a minimal placeholder). Per explicit user
+      instruction, every NEW world stays a near-empty placeholder until a
+      real 3D world editor exists to flesh them out.
+      **`world001`/`world999` split (2026-07-17, explicit user request)**:
+      `world001.vwr`'s pre-existing rich demo/mechanics-showcase content
+      (dynamite/crates/vehicles/water/doors/every tile-icon exhibition/etc.,
+      built earlier this session) has been moved to a genuine, engine-
+      specific **79th world**, `world999.vwr` — beyond mobile-eggbert's real
+      78, purely for this engine's own dev/test use, never confused with a
+      real mission number. `world001.vwr` itself is now the LEAN real
+      global hub: an 18x18 plaza (grid 41-58) holding exactly the 12
+      `WorldSelect` portals + the real `ObjectType7` exit (→ mission 199)
+      and nothing else, matching real mobile-eggbert's own global hub scope
+      exactly (no extra content). A new `BlockTypes::DemoPortal` (icon 177,
+      engine-specific, not a real mobile-eggbert concept) sits in the
+      global-hub plaza and leads directly to mission 999 — the only way to
+      reach the demo/test world in-game, reusing the exact same contact-
+      trigger/no-debounce portal-touch handling as `WorldSelect`. Every
+      `VerifyBlupiMovement`/`VerifyBigDecorParsingCna`/`VerifyInteractionSystem`
+      default world path updated `world001.vwr`→`world999.vwr` accordingly.
+      **World-hub plaza enlarged 2026-07-17** (explicit user request — "at
+      least 10x10, enlarge the floors so everything fits comfortably"):
+      `GenerateWorldHub()`'s spawn area grew from an 11x11 floor to an
+      18x18 plaza (matching the global hub's own size), holding the always-
+      open marker 1; markers 2+ still extend east along the existing tested
+      3-wide gated corridor (wall+`ProgressDoorN`+marker triplets), unchanged
+      mechanism, just attached to a bigger plaza instead of a bare corridor
+      start. Confirmed via the full existing test suite plus a fresh live
+      headless run (see below) that both the enlarged plazas and the
+      `DemoPortal` round-trip work correctly.
       **Known, deliberate divergence**: every level's exit still shows this
       engine's own Win screen (pulsing `blupiyoupie.png` + Return button)
       before advancing — real source only shows a genuine Win screen for
@@ -3564,7 +3586,16 @@ reset to `[ ]`.
       marker-3's door still closed) — both confirmed via stdout
       diagnostics, temporary instrumentation reverted before commit. Full
       regression clean both times (only the pre-existing unrelated
-      `easy-gl-resource-smoke-tests` failure).
+      `easy-gl-resource-smoke-tests` failure). Re-verified again 2026-07-17
+      after the `world001`/`world999` split and plaza enlargement: temporary
+      debug instrumentation confirmed `world001.vwr` (mission 1) has
+      exactly 12 `WorldSelect` markers + 1 `DemoPortal`, `LoadMission(999)`
+      correctly loads the demo world (0 `WorldSelect`/`DemoPortal`, as
+      expected — the exhibition excludes those icons), the enlarged
+      `world010.vwr` (mission 10) shows its correct 4 `WorldSelect`
+      markers, and reloading mission 1 afterward round-trips cleanly —
+      reverted before commit; full regression clean (same single known
+      pre-existing failure).
 - [x] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs)
       supported — **done 2026-07-17**: all 78 real mobile-eggbert world
       files now exist here too, with identical filenames/mission numbers

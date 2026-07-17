@@ -24,20 +24,22 @@ namespace
     // fixed spawn convention this engine already uses everywhere (world
     // (0,1,0) == grid (50,*,50)), so none of them need the .vwr format's
     // still-nonexistent real per-world spawn point.
-    // `sublevelCount` real WorldSelect markers laid out along a single
-    // 3-wide corridor extending east from the shared spawn plaza. Marker 1
-    // sits directly on the open plaza (never gated, matching real source
-    // exactly -- `worlds/world010.txt`'s own sign 174 has no adjoining
-    // door). Markers 2..sublevelCount each sit past a real wall segment
-    // with exactly one door-gap tile (`BlockTypes::ProgressDoorN`, found
-    // 2026-07-17) -- a direct port of `worlds/world010.txt`'s own real
-    // sign-174-181/door-182 layout, using this engine's own icon numbering
-    // (see `BlockTypes.hpp`'s own comment) and reusing the exact wall+gap
-    // corridor shape `world001.vwr`'s pre-existing doors demo already
-    // established. The corridor is real physically ungated open air to
-    // the north/south of the door column, so the only way past a closed
-    // door is through it -- no floor exists off the 3-wide corridor, so
-    // there is no way to walk around.
+    // An 18x18 spawn plaza (2026-07-17, enlarged from the original 11x11
+    // per explicit user request -- "at least 10x10, enlarge the floors so
+    // everything fits comfortably", matching `GenerateGlobalHub()`'s own
+    // plaza size for consistency) holding marker 1, ungated, matching real
+    // source exactly (`worlds/world010.txt`'s own sign 174 has no
+    // adjoining door) -- plus a 3-wide gated corridor continuing east from
+    // the plaza's edge for markers 2..sublevelCount, each past a real wall
+    // segment with exactly one door-gap tile (`BlockTypes::ProgressDoorN`,
+    // found 2026-07-17) -- a direct port of `worlds/world010.txt`'s own
+    // real sign-174-181/door-182 layout, using this engine's own icon
+    // numbering (see `BlockTypes.hpp`'s own comment) and reusing the exact
+    // wall+gap corridor shape `world999.vwr`'s pre-existing doors demo
+    // already established. The corridor is real physically ungated open
+    // air to the north/south of the door column, so the only way past a
+    // closed door is through it -- no floor exists off the 3-wide
+    // corridor, so there is no way to walk around.
     void GenerateWorldHub(int missionNumber, int sublevelCount, const std::filesystem::path& outPath)
     {
         using namespace GalaxyEggbert;
@@ -47,30 +49,46 @@ namespace
         world.setSkyRegion(3);
         world.setMissionNumber(missionNumber);
 
-        // Spawn plaza (11x11) plus the corridor floor extending east far
-        // enough for every marker (spaced 3 apart: 1 wall/door column + 2
-        // open columns per gated marker).
-        const int corridorEndX = 55 + 3 * sublevelCount;
-        for (int x = 45; x <= corridorEndX; ++x)
+        // 18x18 spawn plaza centered on grid (50,*,50).
+        for (int x = 41; x <= 58; ++x)
         {
-            for (int z = 49; z <= 51; ++z)
+            for (int z = 41; z <= 58; ++z)
             {
                 world.setBlock(static_cast<std::uint16_t>(x), 0, static_cast<std::uint16_t>(z),
                                Block::make(BlockTypes::RockPile));
             }
         }
 
-        for (int i = 1; i <= sublevelCount; ++i)
-        {
-            const auto markerIcon = static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + (i - 1));
-            const int markerX = 56 + 3 * (i - 1);
-            world.setBlock(static_cast<std::uint16_t>(markerX), 1, 50, Block::make(markerIcon));
+        // Marker 1 sits inside the plaza itself, clear of spawn.
+        world.setBlock(53, 1, 50, Block::make(BlockTypes::WorldSelect1));
+        std::cout << "GenerateSampleWorld3D: " << outPath << " marker 1 (icon " << BlockTypes::WorldSelect1
+                  << ") -> mission " << (missionNumber + 1) << " (always open)" << std::endl;
 
-            if (i >= 2)
+        if (sublevelCount >= 2)
+        {
+            // Gated corridor continuing east from the plaza's edge (x=59
+            // onward), 3-wide (z=49-51), one wall+door+marker triplet per
+            // remaining sublevel, spaced 3 apart (1 wall/door column + 2
+            // open columns per gated marker).
+            const int corridorEndX = 58 + 3 * (sublevelCount - 1);
+            for (int x = 59; x <= corridorEndX; ++x)
             {
+                for (int z = 49; z <= 51; ++z)
+                {
+                    world.setBlock(static_cast<std::uint16_t>(x), 0, static_cast<std::uint16_t>(z),
+                                   Block::make(BlockTypes::RockPile));
+                }
+            }
+
+            for (int i = 2; i <= sublevelCount; ++i)
+            {
+                const auto markerIcon = static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + (i - 1));
+                const int markerX = 59 + 3 * (i - 2);
+                world.setBlock(static_cast<std::uint16_t>(markerX), 1, 50, Block::make(markerIcon));
+
                 // Wall segment 1 tile before the marker, spanning the full
                 // corridor width, with a single door-gap tile at z=50 --
-                // same shape as world001.vwr's own doors demo.
+                // same shape as world999.vwr's own doors demo.
                 const int wallX = markerX - 1;
                 const auto doorIcon = static_cast<std::uint16_t>(BlockTypes::ProgressDoor2 + (i - 2));
                 world.setBlock(static_cast<std::uint16_t>(wallX), 1, 49, Block::make(BlockTypes::BrickWall));
@@ -79,12 +97,11 @@ namespace
                 world.setBlock(static_cast<std::uint16_t>(wallX), 2, 50, Block::make(BlockTypes::BrickWall));
                 world.setBlock(static_cast<std::uint16_t>(wallX), 1, 51, Block::make(BlockTypes::BrickWall));
                 world.setBlock(static_cast<std::uint16_t>(wallX), 2, 51, Block::make(BlockTypes::BrickWall));
-            }
 
-            const int targetMission = missionNumber + i;
-            std::cout << "GenerateSampleWorld3D: " << outPath << " marker " << i << " (icon " << markerIcon
-                      << ") -> mission " << targetMission << (i >= 2 ? " (door-gated)" : " (always open)")
-                      << std::endl;
+                const int targetMission = missionNumber + i;
+                std::cout << "GenerateSampleWorld3D: " << outPath << " marker " << i << " (icon " << markerIcon
+                          << ") -> mission " << targetMission << " (door-gated)" << std::endl;
+            }
         }
 
         world.saveToFile(outPath);
@@ -155,12 +172,22 @@ namespace
 // grid z=50 to the staircase at grid x=29..20, continue into the west wall
 // at grid x=5), so that one line/corridor stays geometrically identical.
 // Everything off that single tested line was free to redesign.
-int main(int argc, char** argv)
+// This session's quarantined mechanics-showcase/test world (2026-07-17,
+// engine-specific 79th world beyond mobile-eggbert's real 78, user-
+// requested): the ENTIRE original single hand-authored .vwr world this
+// whole file used to build directly as `world001.vwr` (every mechanic
+// demoed this session -- dynamite/crates/vehicles/water/doors/switches/
+// tile+object exhibitions/etc.) -- unchanged content, just no longer
+// pretending to double as the real global hub. Reached from the real
+// clean global hub (`GenerateGlobalHub()` below, now the genuine
+// `world001.vwr`) via its own dedicated `DemoPortal` marker. Every
+// existing test that used to default to `worlds3d/world001.vwr` now
+// defaults to `worlds3d/world999.vwr` instead (see each tool's own
+// updated comment).
+void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
 {
     using namespace GalaxyEggbert;
     using namespace GalaxyEggbert::Worlds;
-
-    const std::filesystem::path outPath = (argc > 1) ? argv[1] : "worlds3d/world001.vwr";
 
     World world;
 
@@ -170,13 +197,7 @@ int main(int argc, char** argv)
     // skyRegion header field/GalaxyEggbertCnaGame background-loading path
     // instead of silently matching the fallback.
     world.setSkyRegion(3);
-
-    // Hub/mission-progression system (plan.md hub/mission system,
-    // 2026-07-17): this world doubles as the real global hub (mission 1),
-    // per Decor.cpp's own real formula (`m_mission==1` is always the global
-    // hub) -- see the WorldSelect1 portal marker placed near the end of
-    // this file for the actual navigation trigger.
-    world.setMissionNumber(1);
+    world.setMissionNumber(missionNumber);
 
     const auto fill = [&world](int x0, int x1, int y0, int y1, int z0, int z1, std::uint16_t type)
     {
@@ -747,15 +768,16 @@ int main(int argc, char** argv)
         // faithfully demonstrating the real "no partner found -> regains
         // control in place" behavior.
         //
-        // Icons 158-165 (WorldSelect1-8, found 2026-07-17) are ALSO
-        // skipped here, same reasoning as Teleport1 -- they're real
-        // gameplay-triggering hub/mission-navigation markers now (not
-        // inert decoration), and this exhibition floor is meant to be a
-        // passive "look but don't interact" specimen catalog; a stray
-        // exhibited copy would silently double as a working (if
-        // undiscoverable) portal, confusingly overlapping with the
-        // deliberately-placed WorldSelect1 marker below.
-        if (icon == BlockTypes::Teleport1 || BlockTypes::isWorldSelect(static_cast<std::uint16_t>(icon)))
+        // Icons 158-177 (WorldSelect1-12/ProgressDoor2-8/DemoPortal, found
+        // 2026-07-17) are ALSO skipped here, same reasoning as Teleport1 --
+        // they're real gameplay-triggering hub/mission-navigation markers
+        // now (not inert decoration), and this world (2026-07-17: no longer
+        // the global hub itself, see `GenerateGlobalHub()`) is meant to be
+        // a passive "look but don't interact" specimen catalog + mechanics
+        // showcase -- a stray exhibited WorldSelect/DemoPortal specimen
+        // would silently double as a working (if undiscoverable) portal.
+        if (icon == BlockTypes::Teleport1 || BlockTypes::isWorldSelect(static_cast<std::uint16_t>(icon)) ||
+            BlockTypes::isProgressDoor(static_cast<std::uint16_t>(icon)) || icon == BlockTypes::DemoPortal)
         {
             continue;
         }
@@ -765,27 +787,6 @@ int main(int argc, char** argv)
         world.setBlock(static_cast<std::uint16_t>(3 + col * 2), 1,
                        static_cast<std::uint16_t>(3 + row * 2),
                        Block::make(static_cast<std::uint16_t>(icon)));
-    }
-
-    // ------------------------------------------------------------------
-    // Hub/mission-progression system, full real scope (plan.md
-    // SCORE-013, 2026-07-17): all 12 real WorldSelect portal markers in
-    // this world (mission 1, the global hub) -- touching marker N loads
-    // world{N*10}.vwr, that world's own hub. Real source never gates
-    // global-hub markers for entry (confirmed directly against
-    // `Decor::IsWorld()` -- the locked/unlocked icon variants map to the
-    // same world number; the swap is purely cosmetic), so all 12 are
-    // placed plainly, no doors. Placed at the north edge of the icon-
-    // exhibition floor (z=23), past the last used specimen row (max row's
-    // z is 3+9*2=21) so they don't collide with any exhibited icon -- a
-    // short, deliberate walk from the exhibition, not buried in it. Not at
-    // (0,1,0) (this world's own spawn point), so re-entering this world
-    // via LoadMission() never re-triggers one on arrival.
-    // ------------------------------------------------------------------
-    for (int i = 0; i < 12; ++i)
-    {
-        world.setBlock(static_cast<std::uint16_t>(50 + i * 2), 1, 23,
-                       Block::make(static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + i)));
     }
 
     // Object exhibition -- every ObjectType the renderer has an icon for
@@ -813,9 +814,9 @@ int main(int argc, char** argv)
             place(type, static_cast<float>(78 + col * 3), 1.0f, static_cast<float>(27 + row * 3));
             ++slot;
         }
-        std::cout << "GenerateSampleWorld3D: exhibition placed -- 426 tile icons in the exhibition slab "
-                     "(icons 330, 158-169 (all 12 WorldSelect markers), and 440 excluded, see the "
-                     "teleporter rooms/WorldSelect markers above and the icon-440 atlas-bounds note above), "
+        std::cout << "GenerateSampleWorld3D: exhibition placed -- 418 tile icons in the exhibition slab "
+                     "(icons 330, 158-177 (WorldSelect/ProgressDoor/DemoPortal), and 440 excluded, see the "
+                     "teleporter rooms above and the icon-440 atlas-bounds note above), "
                   << slot << " object types." << std::endl;
     }
 
@@ -849,19 +850,101 @@ int main(int argc, char** argv)
               << " non-air blocks, Y range [" << minY << ", " << maxY << "], skyRegion="
               << reloaded.skyRegion()
               << " (round-trip verified via World::loadFromFile)." << std::endl;
+}
+
+// The REAL global hub (mission 1, `worlds3d/world001.vwr`) -- rewritten
+// 2026-07-17 (user-requested) to match real mobile-eggbert's actual
+// structure: a clean navigation hub containing ONLY the real 12
+// WorldSelect portal markers (one per world hub, `Decor::IsWorld()`'s own
+// scope -- never gated for entry, see `GenerateWorldHub()`'s own comment)
+// plus this engine's own dedicated `DemoPortal` (an engine-specific 13th
+// marker leading to `world999.vwr`, the quarantined mechanics-showcase
+// world every existing test now uses instead of `world001.vwr`). No other
+// content -- no exhibitions, no demo rooms -- exactly matching the real
+// game's own hub level's actual scope. A big square floor (18x18, well
+// past the requested "at least 10x10" minimum) comfortably fits all 13
+// markers spaced out with room to spare.
+void GenerateGlobalHub(const std::filesystem::path& outPath)
+{
+    using namespace GalaxyEggbert;
+    using namespace GalaxyEggbert::Worlds;
+
+    World world;
+    world.setSkyRegion(3);
+    world.setMissionNumber(1);
+
+    // 18x18 floor centered on the shared spawn point (grid 50,*,50).
+    for (int x = 41; x <= 58; ++x)
+    {
+        for (int z = 41; z <= 58; ++z)
+        {
+            world.setBlock(static_cast<std::uint16_t>(x), 0, static_cast<std::uint16_t>(z),
+                           Block::make(BlockTypes::RockPile));
+        }
+    }
+
+    // 12 real WorldSelect markers in 2 rows of 6, well clear of spawn
+    // (50,1,50) so re-entering this world via LoadMission() never
+    // re-triggers one on arrival.
+    for (int i = 0; i < 12; ++i)
+    {
+        const int row = i / 6;
+        const int col = i % 6;
+        const int x = 44 + col * 2;
+        const int z = 44 + row * 2;
+        world.setBlock(static_cast<std::uint16_t>(x), 1, static_cast<std::uint16_t>(z),
+                       Block::make(static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + i)));
+        std::cout << "GenerateSampleWorld3D: " << outPath << " marker " << (i + 1) << " (icon "
+                  << (BlockTypes::WorldSelect1 + i) << ") -> mission " << ((i + 1) * 10) << std::endl;
+    }
+
+    // The engine-specific DemoPortal, on its own row, clearly separated
+    // from the 12 real world markers.
+    world.setBlock(50, 1, 54, Block::make(BlockTypes::DemoPortal));
+    std::cout << "GenerateSampleWorld3D: " << outPath << " DemoPortal (icon " << BlockTypes::DemoPortal
+              << ") -> mission 999 (engine-specific test/demo world)" << std::endl;
+
+    // Real global-hub exit marker (`Decor.cpp:204`'s own `type=7` in the
+    // real `worlds/world001.txt`) -- reaching it triggers the real win-exit
+    // special case (`GEWorldRuntime::ComputeWinExitTarget(1) == 199`),
+    // making the real final bonus world genuinely reachable via gameplay,
+    // not just correct in the mission-math alone.
+    {
+        MoveObjectRecord exit;
+        exit.type = ObjectType::ObjectType7;
+        exit.posStartX = exit.posEndX = 56.0f;
+        exit.posStartY = exit.posEndY = 1.0f;
+        exit.posStartZ = exit.posEndZ = 56.0f;
+        PlaceMoveObject(world, exit);
+    }
+
+    world.saveToFile(outPath);
+    std::cout << "GenerateSampleWorld3D: wrote " << outPath << " (mission 1, the real global hub -- "
+                 "12 WorldSelect portals + 1 DemoPortal, no other content)." << std::endl;
+}
+
+int main()
+{
+    // This session's quarantined mechanics-showcase/test world -- an
+    // engine-specific 79th world beyond mobile-eggbert's real 78 (see
+    // `GenerateDemoWorld()`'s own comment).
+    GenerateDemoWorld(999, "worlds3d/world999.vwr");
+
+    // The real global hub, now genuinely clean (see `GenerateGlobalHub()`'s
+    // own comment) -- reachable content starts here.
+    GenerateGlobalHub("worlds3d/world001.vwr");
 
     // Hub/mission-progression system, full real scope (plan.md
     // SCORE-013, 2026-07-17) -- the real mobile-eggbert world/hub
-    // structure has exactly 78 world files: this global hub (mission 1),
-    // 12 world hubs (mission X0 = 10,20,...,120), 64 sublevels spread
+    // structure has exactly 78 world files: the global hub above (mission
+    // 1), 12 world hubs (mission X0 = 10,20,...,120), 64 sublevels spread
     // across them (real per-world counts below, confirmed directly
     // against the real `worlds/*.txt` file listing), and 1 final bonus
-    // world (mission 199, reached via this world's own pre-existing exit
-    // marker). Every one of the 12 world hubs/64 sublevels/world199 is a
-    // NEW minimal placeholder world (user-authorized exception to this
-    // session's normal "no 3D world editor work" rule) -- always
-    // (re)generated in this one run, alongside world001.vwr above (this
-    // tool's own "manually run to regenerate" convention).
+    // world (mission 199, reached via the global hub's own real exit
+    // marker, see `GenerateGlobalHub()`). Every one of the 12 world
+    // hubs/64 sublevels/world199 is a NEW minimal placeholder world (user-
+    // authorized exception to this session's normal "no 3D world editor
+    // work" rule) -- always (re)generated in this one run.
     {
         // {world index (1-12), real sublevel count}.
         constexpr struct { int worldIndex; int sublevelCount; } kWorlds[] = {
@@ -884,9 +967,8 @@ int main(int argc, char** argv)
             }
         }
 
-        // The real final bonus world -- reached via world001.vwr's own
-        // pre-existing exit marker (`GEWorldRuntime::ComputeWinExitTarget()`
-        // special-cases mission 1's exit to lead here). A minimal
+        // The real final bonus world -- reached via the global hub's own
+        // real exit marker (see `GenerateGlobalHub()`). A minimal
         // placeholder like every sublevel above; its own exit loops back
         // to the global hub (`ComputeWinExitTarget(199) == 1`, this
         // engine's simplification of the real true-ending sentinel).

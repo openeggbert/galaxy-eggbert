@@ -1,6 +1,7 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-17 (autonomous session, see §7.5 for standing directives)._
+_Last updated: 2026-07-17 (autonomous session, see §7.5 for standing directives; world001/world999
+split + hub-plaza enlargement are the most recent change, see §3)._
 
 ## 1. Project summary
 
@@ -28,7 +29,8 @@ third-person).
   reference-only and require explicit user approval to transcribe.
 - `../simple-3d` may be read for reference only; never modified.
 - No `#ifdef` guards for engine differences — each target speaks its own API directly.
-- Worlds are hand-authored via `tools/GenerateSampleWorld3D.cpp` (writes `worlds3d/world001.vwr`);
+- Worlds are hand-authored via `tools/GenerateSampleWorld3D.cpp` (writes all 79 `worlds3d/*.vwr`
+  files, including `world999.vwr`, this engine's own quarantined mechanics-showcase/test world);
   there is no automatic 2D→3D world converter and none is planned.
 - `GESaveData`/`GEInputPad`/`GEInteractionSystem` are deliberately **not** byte-compatible with
   real mobile-eggbert's own formats — real *behavior* is ported faithfully, byte layout is not.
@@ -60,7 +62,9 @@ Last full run (2026-07-16, both backends, re-verified after this session's 5 veh
 
 ### Tools/binaries available (see `CMakeLists.txt` for exact target names)
 - `GalaxyEggbertCNA` — the main game executable.
-- `GenerateSampleWorld3D` — writes `worlds3d/world001.vwr`, the hand-authored demo world.
+- `GenerateSampleWorld3D` — writes all 79 `worlds3d/*.vwr` files: the real 78-world mobile-eggbert
+  structure (global hub, 12 world hubs, 64 sublevels, world199) plus `world999.vwr`, this engine's
+  own hand-authored mechanics-showcase/test world (found/split out 2026-07-17).
 - Scripted verification tools (each an `add_test()`-registered ctest case): `VerifyBlupiMovement`,
   `VerifyInteractionSystem` (largest suite — pickups, hazards, cheats, secret powers, death/respawn
   timing), `VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`,
@@ -134,9 +138,12 @@ independent gaps as previously stated).
 the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup delay.
 
 ### Known working demo
-`worlds3d/world001.vwr`, loaded automatically by `GalaxyEggbertCNA` on startup. Playable with
-first-/third-person camera toggle (`C` key), tank-control movement, and the full interactive-object
-system (pickups, hazards, enemies, doors, lifts, crates).
+`worlds3d/world999.vwr`, this engine's own quarantined mechanics-showcase/test world (split out of
+`world001.vwr` 2026-07-17 — see `plan.md` `SCORE-013`'s writeup — when `world001.vwr` became the
+real, lean global hub). Reachable in-game from the global hub (mission 1) via its own `DemoPortal`
+marker, or directly via `GE_DEBUG`-style tooling/tests. Playable with first-/third-person camera
+toggle (`C` key), tank-control movement, and the full interactive-object system (pickups, hazards,
+enemies, doors, lifts, crates).
 
 ### What does not work yet
 - **No visible 3D Blupi model** — invisible collision point in first-person; a placeholder model
@@ -154,6 +161,29 @@ system (pickups, hazards, enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: split `world001.vwr`'s demo content into a genuine 79th world, `world999.vwr`; enlarge
+  world-hub plazas to 18x18 (plan.md SCORE-013).** Explicit user follow-up request: galaxy-eggbert's
+  main global hub should contain ONLY the real teleports (matching real mobile-eggbert's own global
+  hub scope exactly), each sub-hub world should have proper teleports to its own sublevel worlds
+  (already true, see the SCORE-013 full-scope expansion above), and hub-world floors should be
+  enlarged to at least 10x10 so the teleport layout fits comfortably. `world001.vwr`'s previous rich
+  demo/mechanics-showcase content (dynamite/crates/vehicles/water/doors/every tile-icon exhibition/
+  etc.) is unaffected in substance — it moved wholesale to a new, engine-specific 79th world,
+  `world999.vwr` (beyond mobile-eggbert's real 78, purely for this engine's own dev/test use).
+  `world001.vwr` itself is now the lean real global hub: an 18x18 plaza holding exactly the 12
+  `WorldSelect` portals + the real `ObjectType7` exit (→ mission 199) and nothing else. A new
+  `BlockTypes::DemoPortal` (icon 177, engine-specific) sits in the global-hub plaza and leads
+  directly to mission 999 — the only in-game way to reach the demo/test world, reusing the exact
+  same contact-trigger portal-touch handling as `WorldSelect`. `GenerateWorldHub()`'s own spawn
+  plaza grew from 11x11 to 18x18 (matching the global hub's size) for the same "fits comfortably"
+  reason; the existing tested wall+`ProgressDoorN`-gate corridor mechanism for markers 2+ is
+  unchanged, just now extends from a bigger plaza. `VerifyBlupiMovement`/`VerifyBigDecorParsingCna`/
+  `VerifyInteractionSystem` default world paths updated `world001.vwr`→`world999.vwr` accordingly.
+  Live headless verification (temporary debug instrumentation, reverted before commit): confirmed
+  `world001.vwr` has exactly 12 `WorldSelect` + 1 `DemoPortal`, `LoadMission(999)` loads the demo
+  world correctly, the enlarged `world010.vwr` shows its correct 4 markers, and reloading mission 1
+  afterward round-trips cleanly. Full regression clean (only the pre-existing unrelated
+  `easy-gl-resource-smoke-tests` failure).
 - **feat: implement third-person camera wall collision (plan.md CAM-005).** User-prompted after
   discussing chunk streaming for future denser worlds — the real risk identified wasn't chunking,
   it was the chase camera having no wall check at all, letting it clip through geometry to end up

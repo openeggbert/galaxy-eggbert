@@ -13,14 +13,15 @@
 // collision (plan.md E3D-MIG-060): loads a world and drives Step() with
 // scripted input instead of live keyboard input, so this proves step-up
 // traversal, wall blocking, and gravity/landing actually work against the
-// real worlds3d/world001.vwr geometry — not just "compiles and doesn't
-// crash".
+// real worlds3d/world999.vwr geometry (renamed from world001.vwr 2026-07-17
+// when the real 78-world hub structure took over world001.vwr as the
+// genuine global hub) — not just "compiles and doesn't crash".
 int main(int argc, char** argv)
 {
     using namespace GalaxyEggbert;
     using namespace GalaxyEggbert::CNA;
 
-    const std::filesystem::path worldPath = (argc > 1) ? argv[1] : "worlds3d/world001.vwr";
+    const std::filesystem::path worldPath = (argc > 1) ? argv[1] : "worlds3d/world999.vwr";
     const Worlds::World world = Worlds::World::loadFromFile(worldPath);
 
     bool allOk = true;
@@ -185,7 +186,7 @@ int main(int argc, char** argv)
     }
 
     // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --
-    // a small synthetic world (not worlds3d/world001.vwr, which has no lava
+    // a small synthetic world (not worlds3d/world999.vwr, which has no lava
     // placed yet) with one lava block and one ordinary ground block,
     // isolated from anything else this tool tests against.
     {

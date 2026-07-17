@@ -119,6 +119,15 @@ constexpr uint16_t ProgressDoor8 = 176;
 inline bool isProgressDoor(uint16_t bt) { return bt >= ProgressDoor2 && bt <= ProgressDoor8; }
 inline int progressDoorIndex(uint16_t bt) { return isProgressDoor(bt) ? static_cast<int>(bt - ProgressDoor2 + 2) : -1; }
 
+// Engine-specific (NOT a real mobile-eggbert concept): a dedicated portal
+// in the global hub leading to `world999.vwr`, this engine's own quarantined
+// mechanics-showcase/test world (found 2026-07-17, user-requested --
+// mobile-eggbert's real 78-world structure gets a genuine 79th world here,
+// purely for this engine's own development/testing use, never confused
+// with a real mission number). Always leads to mission 999 directly,
+// unlike `WorldSelect`'s contextual `N*10`/`X0+N` reinterpretation.
+constexpr uint16_t DemoPortal = 177;
+
 constexpr uint16_t Marker   = 309;
 constexpr uint16_t Tile411  = 411;
 constexpr uint16_t Tile412  = 412;

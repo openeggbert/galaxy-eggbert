@@ -16,9 +16,11 @@
 #include <string>
 
 // Scripted, non-interactive verification of GEInteractionSystem (2026-07-10)
-// against the real worlds3d/world001.vwr sample world -- proves platform
-// lift patrol, crate push, and pickup collection (treasure/egg/key/exit)
-// actually work, not just "compiles and doesn't crash". GESound is
+// against worlds3d/world999.vwr, this engine's quarantined mechanics-showcase
+// test world (renamed from world001.vwr 2026-07-17 when the real 78-world
+// hub structure took over world001.vwr as the genuine global hub) -- proves
+// platform lift patrol, crate push, and pickup collection (treasure/egg/key
+// /exit) actually work, not just "compiles and doesn't crash". GESound is
 // constructed but never LoadContent()-ed, so every Play() call is a no-op
 // against an unloaded channel (no audio device needed for this scripted
 // check).
@@ -27,7 +29,7 @@ int main(int argc, char** argv)
     using namespace GalaxyEggbert;
     using namespace GalaxyEggbert::CNA;
 
-    const std::string worldPath = (argc > 1) ? argv[1] : "worlds3d/world001.vwr";
+    const std::string worldPath = (argc > 1) ? argv[1] : "worlds3d/world999.vwr";
 
     bool allOk = true;
     const auto check = [&allOk](bool cond, const char* what)
@@ -3359,7 +3361,7 @@ int main(int argc, char** argv)
     // 17.18. New hub/mission-progression worlds (plan.md hub/mission
     // system) -- confirm world010/011/012.vwr each load cleanly and report
     // the right real missionNumber, same sanity level as the existing
-    // world001.vwr load at the top of this file.
+    // world999.vwr load at the top of this file.
     {
         GEWorldRuntime hubWorld;
         check(hubWorld.LoadFromVwrFile("worlds3d/world010.vwr"), "world010.vwr loads cleanly");
