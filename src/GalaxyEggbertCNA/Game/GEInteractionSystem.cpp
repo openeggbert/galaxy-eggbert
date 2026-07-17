@@ -1720,7 +1720,8 @@ namespace GalaxyEggbert::CNA
             // set-completing treasure), not channel 10, and egg pickup is
             // channel 3, not channel 42 (42 is Shield activation, unrelated).
             if (obj.type != ObjectType::ObjectType5 && obj.type != ObjectType::ObjectType6 &&
-                obj.type != ObjectType::ObjectType7 && obj.type != ObjectType::ObjectType49 &&
+                obj.type != ObjectType::ObjectType7 && obj.type != ObjectType::ObjectType21 &&
+                obj.type != ObjectType::ObjectType49 &&
                 obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51 &&
                 obj.type != ObjectType::ObjectType55 && obj.type != ObjectType::ObjectType25 &&
                 obj.type != ObjectType::ObjectType26 && obj.type != ObjectType::ObjectType30 &&
@@ -1735,7 +1736,14 @@ namespace GalaxyEggbert::CNA
             const float dz = obj.currentZ - blupiZ;
             const bool touching = (dx * dx + dy * dy + dz * dz) < kPickupRadius * kPickupRadius;
 
-            if (obj.type == ObjectType::ObjectType7)
+            // Secret exit (ObjectType21, plan.md PICKUP-009/083, found 2026-07-16) shares the
+            // EXACT same real exit-gate logic as the regular exit (ObjectType7) below
+            // (Decor.cpp:6158-6184, one `if` covering both types) -- the only real difference is
+            // setting `m_bFoundCle=true` on this variant, a "found the secret" flag with no
+            // known consumer in this engine's own save/ranking scope (not modeled, matching this
+            // engine's deliberately-independent GESaveData format). Previously this engine only
+            // recognized ObjectType7, so a secret exit did nothing at all on contact.
+            if (obj.type == ObjectType::ObjectType7 || obj.type == ObjectType::ObjectType21)
             {
                 // Level-exit goal: debounced to fire once per contact
                 // "session" (real mobile-eggbert re-checks every 50 ticks

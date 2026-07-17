@@ -954,6 +954,28 @@ int main(int argc, char** argv)
         check(interaction.PersoCount() == 1, "PersoCount() unchanged after the vehicle-gated no-op");
     }
 
+    // 3.76. Secret exit (ObjectType21, plan.md PICKUP-009/083, found 2026-07-16) -- shares the
+    // exact same real exit-gate logic as the regular exit (ObjectType7, Decor.cpp:6158-6184).
+    // Previously this engine only recognized ObjectType7, so touching a secret exit did nothing.
+    {
+        GEWorldRuntime secretExitWorld;
+        GEInteractionSystem secretExitInteraction;
+        MobileObjSpec secretExit;
+        secretExit.type = ObjectType::ObjectType21;
+        secretExit.active = true;
+        secretExit.posStartX = secretExit.posEndX = secretExit.currentX = 600.0f;
+        secretExit.posStartY = secretExit.posEndY = secretExit.currentY = 1.0f;
+        secretExit.posStartZ = secretExit.posEndZ = secretExit.currentZ = 600.0f;
+        secretExitWorld.GetMobileObjectsMutable().push_back(secretExit);
+
+        // No treasure objects placed at all -- totalTreasures_ (lazily computed by scanning for
+        // ObjectType5) is 0, trivially satisfying the real m_nbTresor>=m_totalTresor gate.
+        secretExitInteraction.Update(dt, secretExitWorld, 600.0f, 1.0f, 600.0f, 0.0f, sound);
+        check(secretExitInteraction.ExitReached(),
+              "touching a secret exit (ObjectType21) with all treasure collected reaches the real "
+              "exit-gate win condition, same as the regular exit");
+    }
+
     // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own
     // doors demo (tools/GenerateSampleWorld3D.cpp): a key-gated Door1 at
     // grid (48,1,90) with its Key1 at (46,1,88), and a treasure-gated

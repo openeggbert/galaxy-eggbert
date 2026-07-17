@@ -2978,7 +2978,7 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 - [x] PICKUP-006 — ObjectType51: blue key — sets Key3 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
 - [x] PICKUP-007 — ObjectType25: shield orb — done (Phase 17 `170`/`172`), grants `SecretPower::Shield` instantly on contact (real 2-stage delay not modeled); pickup sound wired (ch42, see PICKUP-073 — corrected 2026-07-13, an earlier audit pass this same session wrongly flagged this as unwired since the `sound.Play()` call lives in `GalaxyEggbertCnaGame.cpp`, not `GEInteractionSystem.cpp`).
 - [x] PICKUP-008 — ObjectType30: drink — done (`170`/`173`), grants `SecretPower::Hide` instantly (real name is "Drink→Hide", not "+1 life"; the two-stage grab/delayed-activate animation is NOT modeled, see `173`); pickup sound wired (ch62, see PICKUP-073).
-- [ ] PICKUP-009 — ObjectType21: secret exit — NOT modeled as a pickup; only a render icon lookup exists (`GEObjectIcons.cpp`), no `GEInteractionSystem` contact/trigger logic.
+- [x] PICKUP-009 — ObjectType21: secret exit — **done 2026-07-16**, verified directly against `Decor.cpp:6158-6184` (one `if` covers both `ObjectType7`/`21`): shares the exact same real exit-gate contact logic as the regular exit (treasure-gated win/reject sound). Previously this engine only recognized `ObjectType7`, so touching a secret exit did nothing. Real `m_bFoundCle`-equivalent flag still not modeled (no consumer exists, see PICKUP-038/039). New `VerifyInteractionSystem` assertion.
 - [x] PICKUP-010 — ObjectType31: cloud power-up — done (`170`/`172`/`174`), grants `SecretPower::Cloud` (strictest gate of the 4, matching real source) + real Cloud offensive `BlupiElectro` aura (2026-07-13, ch59); pickup sound wired (ch55, see PICKUP-073).
 - [x] PICKUP-011 — ObjectType40: invert/mirror power-up — **implemented 2026-07-13**: independent
       of the 4 SecretPower buffs (own gauge, real gate only `!Hide`), grants instant on contact,
@@ -3080,7 +3080,7 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 - [ ] PICKUP-080 — Water small plouf: ch64 — NOT modeled, no ObjectType35 implementation exists.
 - [ ] PICKUP-081 — Glu/glue sound: ch51 — NOT modeled (ObjectType34 has no dedicated implementation); real ch51 is actually the generic hazard-contact death sound used elsewhere (crusher/spike/etc. contexts), an unrelated reuse — the "glue" association in this line item appears to be a guess, not confirmed against source.
 - [x] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions) — confirmed correct, matches Phase 15 `155`; also shared by blupih/blupit's projectile-fire sound (`FireBlupihShot()`), a real reused channel not specific to dynamite alone.
-- [ ] PICKUP-083 — Secret exit pickup: ch21 — NOT modeled, `ObjectType21` has no pickup logic at all (see PICKUP-009).
+- [x] PICKUP-083 — Secret exit pickup: ch21 — **description was wrong**: there is no dedicated "ch21" secret-exit sound in real source — done as part of PICKUP-009, it reuses the SAME win (ch14)/reject (ch13) sounds as the regular exit, not a distinct channel.
 - [x] PICKUP-084 — Bridge construction sound — **implemented 2026-07-13** alongside PICKUP-064:
       real channels are **72** (construction start) and **73** (mid-sequence progress cue at tick
       137), confirmed against `mobile-eggbert-reference/07-sounds.md` — not the originally-guessed
@@ -3885,14 +3885,14 @@ doesn't silently re-open them or silently guess an answer:
   but enemies don't have that option yet (no enemy 3D models exist or are planned), so this
   remains genuinely open for them.
 - ~~The 7 partial-support `ObjectType`s (jeep/secret-exit/skateboard/suction-cup/mirror/balloon/
-  dynamite)~~ **STALE, updated 2026-07-13**: 6 of the 7 are now fully implemented (jeep `171`,
+  dynamite)~~ **RESOLVED 2026-07-16**: all 7 are now fully implemented (jeep `171`,
   skateboard `171`, suction-cup `170`/`173`, mirror/invert PICKUP-011, balloon/Overcraft `171`,
-  dynamite `155`) — see §2.7 for each. Only `ObjectType21` (secret-level exit) remains genuinely
-  unimplemented: only a render-icon lookup exists, no `GEInteractionSystem` contact/trigger logic
-  (PICKUP-009). Its real behavior is simple (identical to the existing `ObjectType7` exit-goal
-  contact logic, plus setting a `m_bFoundCle`-equivalent flag) but that flag currently has no
-  consumer in this engine (door-open-on-win isn't modeled, see PICKUP-038/039), so implementing it
-  now would have no observable gameplay effect — low priority until door persistence exists.
+  dynamite `155`, secret-level exit `ObjectType21` fixed 2026-07-16 — see PICKUP-009/083) — see
+  §2.7 for each. `ObjectType21` now shares the exact same real exit-gate contact logic as
+  `ObjectType7` (`Decor.cpp:6158-6184`, one `if` covering both). Still NOT modeled: the real
+  `m_bFoundCle`-equivalent flag it also sets, which has no consumer in this engine (door-open-on-
+  win isn't modeled, see PICKUP-038/039) and so would have no observable gameplay effect anyway —
+  low priority until door-state persistence exists.
 
 ## 4. Documentation Status
 
