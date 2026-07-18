@@ -2608,7 +2608,16 @@ reset to `[ ]` except the small set with direct CNA evidence.
 #### 4.2 BlupiAction State Machine (87 states)
 
 - [x] BLUPI-022 — None (uninitialised) (CNA, 2026-07-10 — trivial default state)
-- [x] BLUPI-023 — Stop (idle standing) (CNA, 2026-07-10)
+- [x] BLUPI-023 — Stop (idle standing) (CNA, 2026-07-10) — **upgraded 2026-07-18** (user question:
+      "does Blupi get bored and tap his foot after standing still a while?"): the real Stop
+      BlupiAction (`table_blupi` id=1) is genuinely 330 frames long, not 1 -- this was previously a
+      Simple3D-era single-frame placeholder (`kStopFrames[]={0}`), now replaced with the real full
+      table. Confirmed this is NOT a separate "boredom timer" mechanism — it's simply the natural
+      consequence of a long (16.5s at the real 20Hz reference rate) idle cycle: mostly icon 0 with
+      periodic short twitches (23, 133) and one longer gesture (135-138) baked directly into the
+      table, restarting from frame 0 every time Blupi re-enters Stop. Live-verified via a temporary
+      debug harness (reverted before commit): standing still long enough genuinely reaches icon 23
+      (the real "twitch/foot-tap" frame). Full regression clean.
 - [x] BLUPI-024 — March (walking) (CNA, 2026-07-10)
 - [ ] BLUPI-025 — Turn (turning around)
 - [x] BLUPI-026 — Jump (jumping) (CNA, 2026-07-10)
@@ -2741,8 +2750,32 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-066 — StopJump / StopJumph (jump landing, high-jump landing) — real data extracted
       (table_blupi IDs 61/62) but NOT wired: no distinct "just landed" transition frame exists (this
       engine snaps straight from Jump/Air to Stop/March on landing).
-- [ ] BLUPI-067 — Mockery / Mockeryi / Mockeryp (enemy mocking Blupi) — real data extracted
-      (table_blupi IDs 63/64/83) but NOT wired: no enemy-mockery mechanic exists in this engine.
+- [x] BLUPI-067 — Mockery / Mockeryi / Mockeryp — **done 2026-07-18, and the label above was
+      backwards** (user question: "does Blupi stick his tongue out at a nearby enemy, without
+      anything happening to him?"). Verified directly against `Decor.cpp:9518-9601`
+      (`MockeryDetect()`) and its caller (`Decor.cpp:5627-5636`): real source has BLUPI taunt a
+      NEARBY enemy, not the reverse ("enemy mocking Blupi") — this session's own earlier note here
+      had the direction wrong. Confirmed genuinely proximity-only (a bounding-box overlap check
+      against `m_blupiPos`, NOT contact/collision), against a real, specific list of 11 enemy
+      ObjectTypes (2/4/16/20/23/32/33/44/54/96/97 — all of which already exist as real, placed
+      creatures in this engine), gated on Blupi being idle (`m_blupiAction==Stop`) and off a real
+      300-tick (15s) cooldown (`m_blupiTimeMockery`) after the previous trigger. `ObjectType54`
+      (large creature) always gets Mockeryp regardless of side; every other qualifying type picks
+      Mockery (ahead of Blupi's facing) or Mockeryi (behind) — except `ObjectType2` (standard patrol
+      enemy) specifically, which never gets the "ahead" Mockery variant (only Mockeryi when behind),
+      ported as-is even though the real reasoning for that asymmetry isn't stated in source.
+      Deliberately NOT modeled as a freeze (real source never drops `m_blupiFocus` for these, unlike
+      Bye/Teleport/pickup-freeze) — new `GEBlupiController::TriggerMockery()` is cancelled the
+      instant `moving` becomes true, matching that real "movement just overwrites the action away"
+      behavior, with no explicit "cancel" needed. Real per-variant entry sound also verified
+      directly: Mockery/Mockeryi both use ch65 (`Decor.cpp:3151/3165`), but Mockeryp uses a
+      DIFFERENT channel, ch47 (`Decor.cpp:3179`) — not assumed from the other two. Proximity scan
+      lives in `GalaxyEggbertCnaGame.cpp` (this class has no MobileObjects access), a natural 3D
+      adaptation of the real ~60px (~1 tile at 64px/tile) box to a ~1-tile grid radius; real
+      source's extra reach while airborne (`m_blupiAir`) is NOT modeled. Live-verified via a
+      temporary debug harness (reverted before commit): standing near world999.vwr's own wasp
+      (`ObjectType44`) correctly triggered `Mockery` (not `Mockeryi`/`Mockeryp`) with the exact real
+      `263,264,265,264` icon cycle. Full regression clean.
 - [x] BLUPI-068 — Balloon (balloon flight mode) — **stale checkbox, closed 2026-07-18** (found while
       auditing this whole section): already done, `AnimState::Balloon`/`kBalloonFrames`, added
       2026-07-11 (plan.md E3D-MIG-064).

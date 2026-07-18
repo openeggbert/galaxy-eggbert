@@ -67,6 +67,9 @@ namespace GalaxyEggbert::CNA
                 case GEBlupiController::AnimState::StopNage:
                 case GEBlupiController::AnimState::StopSurf:
                 case GEBlupiController::AnimState::Hide:
+                case GEBlupiController::AnimState::Mockery:
+                case GEBlupiController::AnimState::Mockeryi:
+                case GEBlupiController::AnimState::Mockeryp:
                 default:
                     return kSurvey;
             }
@@ -1798,6 +1801,96 @@ namespace GalaxyEggbert::CNA
                 blupi_.TriggerSpringBounce(jumpPressed))
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+            }
+
+            // Real Mockery/Mockeryi/Mockeryp (plan.md BLUPI-067, found
+            // 2026-07-18, user question: "does Blupi stick his tongue out
+            // at a nearby enemy?") -- ported directly from
+            // `Decor::MockeryDetect()` (`Decor.cpp:9518-9601`): proximity-
+            // only (bounding-box overlap, NOT contact/collision) against a
+            // real, specific enemy-type list, gated on Blupi already being
+            // idle (real `m_blupiAction==Stop`) so it never fights with
+            // movement/other states, and on `GEBlupiController`'s own
+            // cooldown. The ~1-tile radius here is a natural 3D adaptation
+            // of the real ~60px (~1 tile at 64px/tile) proximity box; real
+            // source also inflates this box when airborne (`m_blupiAir`),
+            // not modeled (a minor simplification, this engine has no
+            // equivalent "extra reach while jumping" adaptation elsewhere
+            // either). Real ObjectType54 (large creature) always gets
+            // Mockeryp regardless of side; every other qualifying type
+            // picks Mockery (ahead of Blupi's facing) or Mockeryi (behind)
+            // by a forward-vector dot product, matching the same
+            // sin(yaw)/-cos(yaw) forward convention used throughout this
+            // file -- except real ObjectType2 (standard patrol enemy)
+            // specifically does NOT trigger the "ahead" Mockery variant
+            // (only Mockeryi when behind), ported as-is even though the
+            // real reasoning isn't stated in source.
+            if (blupi_.GetAnimState() == GEBlupiController::AnimState::Stop && blupi_.IsMockeryCooldownElapsed())
+            {
+                constexpr float kMockeryRadius = 1.0f;
+                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                {
+                    if (!obj.active)
+                    {
+                        continue;
+                    }
+                    const bool qualifies =
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType2 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType4 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType16 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType20 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType23 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType32 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType33 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType44 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType54 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType96 ||
+                        obj.type == GalaxyEggbert::ObjectType::ObjectType97;
+                    if (!qualifies)
+                    {
+                        continue;
+                    }
+                    const float dx = obj.currentX - blupi_.GetX();
+                    const float dz = obj.currentZ - blupi_.GetZ();
+                    if (std::fabs(dx) > kMockeryRadius || std::fabs(dz) > kMockeryRadius)
+                    {
+                        continue;
+                    }
+                    GEBlupiController::AnimState variant;
+                    if (obj.type == GalaxyEggbert::ObjectType::ObjectType54)
+                    {
+                        variant = GEBlupiController::AnimState::Mockeryp;
+                    }
+                    else
+                    {
+                        const float fwdX = std::sin(blupi_.GetYaw());
+                        const float fwdZ = -std::cos(blupi_.GetYaw());
+                        const float dot = fwdX * dx + fwdZ * dz;
+                        if (dot > 0.0f)
+                        {
+                            if (obj.type == GalaxyEggbert::ObjectType::ObjectType2)
+                            {
+                                continue;
+                            }
+                            variant = GEBlupiController::AnimState::Mockery;
+                        }
+                        else
+                        {
+                            variant = GEBlupiController::AnimState::Mockeryi;
+                        }
+                    }
+                    if (blupi_.TriggerMockery(variant))
+                    {
+                        // Real per-variant entry sound (Decor.cpp:3151/3165/3179):
+                        // Mockery/Mockeryi both use ch65, but Mockeryp uses a
+                        // DIFFERENT channel (ch47) -- confirmed directly, not
+                        // assumed from the other two.
+                        sound_.Play(variant == GEBlupiController::AnimState::Mockeryp
+                                        ? GalaxyEggbert::SoundChannel::SoundChannel47
+                                        : GalaxyEggbert::SoundChannel::SoundChannel65);
+                    }
+                    break;
+                }
             }
 
             // Hub/mission-progression: world-select portal contact (plan.md

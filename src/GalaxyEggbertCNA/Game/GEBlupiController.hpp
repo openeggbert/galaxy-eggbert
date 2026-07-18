@@ -148,6 +148,14 @@ namespace GalaxyEggbert::CNA
         static constexpr float kTakeDynamiteDuration = 18.0f / 20.0f;
         static constexpr float kPutDynamiteDuration = 26.0f / 20.0f;
 
+        // Real Mockery(63)/Mockeryi(64)/Mockeryp(83) durations (same
+        // frameCount/20.0f conversion) and the real 300-tick (15s)
+        // re-trigger cooldown (`Decor.cpp:9520/3152/3166`, `m_blupiTimeMockery`).
+        static constexpr float kMockeryDuration = 92.0f / 20.0f;
+        static constexpr float kMockeryiDuration = 104.0f / 20.0f;
+        static constexpr float kMockerypDuration = 60.0f / 20.0f;
+        static constexpr float kMockeryCooldown = 300.0f / 20.0f;
+
         // Water breath gauge (plan.md E3D-MIG-148, `m_blupiLevel`, verified
         // against mobile-eggbert-reference/12-hazards-and-interactables.md's
         // "Water depth state machine" section): starts at 100, ticks down by
@@ -417,7 +425,24 @@ namespace GalaxyEggbert::CNA
             // below for the shared freeze/timer mechanism (same "freeze
             // everything, count a timer down, auto-resume" shape as
             // TriggerBye()/TriggerPickupFreeze()).
-            Switch, TakeDynamite, PutDynamite
+            Switch, TakeDynamite, PutDynamite,
+            // Real Mockery/Mockeryi/Mockeryp (plan.md BLUPI-067, found
+            // 2026-07-18, user question: "does Blupi stick his tongue out
+            // at a nearby enemy?") -- verified directly against
+            // `Decor.cpp:9518-9601`'s `MockeryDetect()`: proximity-only (a
+            // bounding-box overlap check, NOT contact/collision) against a
+            // real, specific list of enemy ObjectTypes, gated on Blupi
+            // being idle and off a real 15s cooldown after the last
+            // trigger. Mockery(63)/Mockeryi(64) are chosen by whether the
+            // qualifying enemy is ahead of or behind Blupi's own facing
+            // direction; Mockeryp(83) always fires instead for
+            // ObjectType54 (the large creature) regardless of side. NOT a
+            // freeze -- real source never sets `m_blupiFocus=false` for
+            // these (unlike Bye/Teleport/pickup-freeze), so movement input
+            // immediately interrupts it, same as `TriggerMockery()` below.
+            // Earlier `plan.md` notes on this session had the direction
+            // backwards ("enemy mocks Blupi") -- corrected 2026-07-18.
+            Mockery, Mockeryi, Mockeryp
         };
 
         // Real `SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -754,6 +779,20 @@ namespace GalaxyEggbert::CNA
         bool TriggerOneShotAnim(AnimState state, float durationSeconds) noexcept;
         [[nodiscard]] bool IsOneShotAnimPlaying() const noexcept { return m_oneShotAnimActive; }
 
+        // Real Mockery/Mockeryi/Mockeryp (see the AnimState enum's own
+        // comment) -- deliberately NOT a freeze, unlike every TriggerX()
+        // above: real source never drops `m_blupiFocus` for these, so
+        // Step() below cancels it the instant `moving` becomes true (the
+        // caller doesn't need to do anything special to interrupt it). A
+        // no-op (returns false) while any real freeze is active, already
+        // mocking, or still on cooldown (`IsMockeryCooldownElapsed()`) --
+        // the caller (a new per-frame proximity scan, since this class has
+        // no MobileObjects access) is expected to call this only while
+        // `GetAnimState() == AnimState::Stop`, matching the real gate
+        // exactly.
+        bool TriggerMockery(AnimState variant) noexcept;
+        [[nodiscard]] bool IsMockeryCooldownElapsed() const noexcept { return m_mockeryCooldownTimer <= 0.0f; }
+
         // Real death-lock + life-loss Voyage (plan.md death-VFX follow-up, verified directly
         // against `Decor.cpp:6374-6392`'s shared per-cause duration dispatch): every real hazard
         // death locks Blupi in a frozen hurt state for a fixed per-cause duration, THEN goes
@@ -1013,6 +1052,11 @@ namespace GalaxyEggbert::CNA
         bool m_oneShotAnimActive = false;
         float m_oneShotAnimTimer = 0.0f;
         AnimState m_oneShotAnimState = AnimState::Stop;
+
+        bool m_mockeryActive = false;
+        float m_mockeryTimer = 0.0f;
+        AnimState m_mockeryVariant = AnimState::Stop;
+        float m_mockeryCooldownTimer = 0.0f;
 
         // Real ScaleTime(40)=40 ticks=2.0s, same conversion as every other duration here.
         static constexpr float kLifeLossVoyageDuration = 2.0f;

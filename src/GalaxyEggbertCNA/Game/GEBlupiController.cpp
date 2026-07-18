@@ -20,10 +20,44 @@ namespace GalaxyEggbert::CNA
         }
 
         // blupi.png icon indices, ported from GalaxyEggbertSimple3D's own
-        // already-approved GEBlupiController.cpp (kStopFrames/kMarchFrames/
-        // kJumpFrames/kDownFrames/kUpFrames/kAirFrames) — not a fresh
-        // mobile-eggbert transcription.
-        constexpr int kStopFrames[]  = {0};
+        // already-approved GEBlupiController.cpp (kMarchFrames/kJumpFrames/
+        // kDownFrames/kUpFrames/kAirFrames) — not a fresh mobile-eggbert
+        // transcription.
+        //
+        // kStopFrames replaced 2026-07-18 (user question: "does Blupi get
+        // bored and tap his foot after standing still for a while?") --
+        // the OLD single-frame `{0}` here was a Simple3D-era placeholder,
+        // never the real data. The real `table_blupi` Stop record (id=1)
+        // is 330 frames long, not 1 -- confirmed this is NOT a separate
+        // "boredom timer" mechanism, just the natural consequence of Stop's
+        // own real animation being a long (16.5s at the 20Hz reference
+        // rate) idle-fidget cycle: mostly icon 0 (plain idle pose) with
+        // periodic short twitches (23, 133) and one longer gesture
+        // (135-138) baked directly into the table. Extracted via the same
+        // table_blupi parser as every other array in this file (see
+        // kChargeFrames' own comment for the validation method).
+        constexpr int kStopFrames[] = {
+            0, 0, 0, 0, 0, 23, 23, 23, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 23, 23, 23, 23, 23, 23, 0, 0, 0, 0, 0, 0, 0, 0, 23,
+            23, 23, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 23, 23,
+            23, 23, 0, 0, 0, 23, 23, 23, 0, 0, 0, 0, 0, 0, 133, 133,
+            0, 0, 0, 133, 133, 0, 0, 0, 0, 0, 0, 0, 133, 133, 0, 0,
+            0, 0, 23, 23, 23, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 23, 23, 0, 0, 0, 0, 0, 23, 23, 23, 0, 0, 0, 135, 135,
+            136, 136, 137, 137, 137, 137, 137, 137, 137, 137, 138, 138, 137, 137, 137, 138,
+            138, 137, 137, 137, 138, 138, 137, 137, 137, 138, 138, 137, 137, 137, 137, 137,
+            137, 136, 136, 135, 135, 135, 0, 0, 0, 0, 0, 23, 23, 23, 0, 0,
+            133, 133, 0, 0, 0, 23, 23, 23, 23, 0, 0, 0, 0, 0, 0, 0,
+            23, 23, 0, 0, 0, 0, 0, 0, 0, 0, 133, 133, 0, 0, 0, 0,
+            0, 23, 23, 23, 23, 0, 0, 0, 135, 135, 136, 136, 137, 137, 137, 137,
+            137, 137, 137, 137, 138, 138, 137, 137, 137, 138, 138, 137, 137, 137, 138, 138,
+            137, 137, 137, 138, 138, 137, 137, 137, 138, 138, 137, 137, 137, 138, 138, 137,
+            137, 137, 138, 138, 137, 137, 137, 138, 138, 137, 137, 137, 138, 138, 137, 137,
+            137, 138, 138, 137, 137, 137, 138, 138, 137, 137, 137, 138, 138, 137, 137, 137,
+            137, 137, 137, 136, 136, 135, 135, 135, 0, 0, 0, 0, 0, 23, 23, 23,
+            0, 0, 133, 133, 0, 0, 0, 23, 23, 23, 23, 0, 0, 0, 0, 0,
+            0, 0, 23, 23, 0, 0, 0, 0, 0, 0, 0, 0, 133, 133, 0, 0,
+            0, 0, 0, 23, 23, 23, 23, 0, 0, 0};
         constexpr int kMarchFrames[] = {5, 6, 7, 8, 9, 10};
         constexpr int kJumpFrames[]  = {17, 18, 19};
         constexpr int kAirFrames[]   = {169, 26, 170, 170, 27};
@@ -168,6 +202,26 @@ namespace GalaxyEggbert::CNA
         constexpr int kPutDynamiteFrames[] = {
             135, 135, 137, 137, 231, 231, 231, 231, 230, 230, 231, 231, 231, 231,
             230, 230, 231, 231, 231, 231, 230, 230, 137, 137, 135, 135};
+        constexpr int kMockeryFrames[] = {
+            263, 264, 265, 264, 263, 264, 265, 264, 263, 264, 265, 264, 263, 264,
+            265, 264, 263, 264, 265, 264, 263, 264, 265, 264, 263, 264, 265, 264,
+            263, 264, 265, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 23, 23, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 23, 23, 0, 0, 0, 0, 0, 0, 0, 133, 133, 0,
+            0, 0, 133, 133, 0, 0, 0, 0, 0, 0, 0, 133, 133, 0, 0, 0, 0, 23, 23,
+            23, 23, 0, 0, 0, 0};
+        constexpr int kMockeryiFrames[] = {
+            1, 1, 2, 2, 3, 3, 285, 286, 287, 286, 285, 286, 287, 286, 285, 286,
+            287, 286, 285, 286, 287, 286, 285, 286, 287, 286, 285, 286, 287, 286,
+            285, 286, 287, 286, 285, 286, 287, 286, 3, 3, 2, 2, 1, 1, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 23, 23, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23,
+            23, 0, 0, 0, 0, 0, 0, 0, 133, 133, 0, 0, 0, 133, 133, 0, 0, 0, 0,
+            0, 0, 0, 133, 133, 0, 0, 0, 0, 23, 23, 23, 23, 0, 0, 0, 0};
+        constexpr int kMockerypFrames[] = {
+            1, 1, 288, 288, 289, 289, 290, 290, 290, 289, 288, 288, 289, 289,
+            290, 290, 290, 289, 288, 288, 289, 289, 290, 290, 290, 289, 288,
+            288, 289, 289, 290, 290, 290, 289, 288, 288, 289, 289, 290, 290,
+            290, 289, 288, 288, 289, 289, 290, 290, 290, 290, 290, 290, 290,
+            290, 290, 290, 290, 290, 1, 1};
 
         // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
         // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
@@ -530,6 +584,32 @@ namespace GalaxyEggbert::CNA
         m_oneShotAnimTimer = durationSeconds;
         m_oneShotAnimState = state;
         m_velocityY = 0.0f;
+        return true;
+    }
+
+    bool GEBlupiController::TriggerMockery(AnimState variant) noexcept
+    {
+        // Real gate is implicitly satisfied by the caller only calling this
+        // while GetAnimState()==Stop (every vehicle/swim/surf/hide/ecrase/
+        // balloon mode already has its OWN AnimState taking precedence over
+        // Stop in UpdateAnim(), so a real Stop reading already means "none
+        // of those modes are active" -- no extra checks needed here beyond
+        // the freezes/already-mocking/cooldown guards below).
+        if (m_mockeryActive || !IsMockeryCooldownElapsed() || m_bye || m_oneShotAnimActive || m_teleporting ||
+            m_deathLocked || m_deathLossVoyageActive || m_pickupFrozen)
+        {
+            return false;
+        }
+        m_mockeryActive = true;
+        m_mockeryVariant = variant;
+        m_mockeryCooldownTimer = kMockeryCooldown;
+        switch (variant)
+        {
+            case AnimState::Mockery:  m_mockeryTimer = kMockeryDuration;  break;
+            case AnimState::Mockeryi: m_mockeryTimer = kMockeryiDuration; break;
+            case AnimState::Mockeryp:
+            default:                  m_mockeryTimer = kMockerypDuration; break;
+        }
         return true;
     }
 
@@ -1127,6 +1207,35 @@ namespace GalaxyEggbert::CNA
         }
 
         const bool moving = std::fabs(horizontalSpeed) > 0.001f;
+
+        // Real Mockery/Mockeryi/Mockeryp (see TriggerMockery()'s own
+        // comment) -- NOT a freeze, so it's ticked/cancelled inline here
+        // instead of via Step()'s early-return freeze pattern. Moving
+        // interrupts it immediately (real source has no explicit "cancel"
+        // for this -- the general movement code just overwrites
+        // `m_blupiAction` away from the mockery variant the instant
+        // `moving` becomes true, since nothing exempts Mockery the way
+        // Ecrase/Balloon/Teleporte are exempted).
+        if (m_mockeryActive)
+        {
+            if (moving)
+            {
+                m_mockeryActive = false;
+            }
+            else
+            {
+                m_mockeryTimer -= dt;
+                if (m_mockeryTimer <= 0.0f)
+                {
+                    m_mockeryActive = false;
+                }
+            }
+        }
+        if (m_mockeryCooldownTimer > 0.0f)
+        {
+            m_mockeryCooldownTimer -= dt;
+        }
+
         if (moving)
         {
             const float dx = std::sin(m_yaw) * horizontalSpeed * dt;
@@ -1376,6 +1485,7 @@ namespace GalaxyEggbert::CNA
                                   : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
                                   : IsInVehicle() ? vehicleAnimState()
                                   : pushingCrate  ? AnimState::Push
+                                  : m_mockeryActive ? m_mockeryVariant
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
                                   : lookUpHeld    ? AnimState::Up
@@ -1505,6 +1615,12 @@ namespace GalaxyEggbert::CNA
                 return kTakeDynamiteFrames[m_animPhase % (sizeof(kTakeDynamiteFrames) / sizeof(kTakeDynamiteFrames[0]))];
             case AnimState::PutDynamite:
                 return kPutDynamiteFrames[m_animPhase % (sizeof(kPutDynamiteFrames) / sizeof(kPutDynamiteFrames[0]))];
+            case AnimState::Mockery:
+                return kMockeryFrames[m_animPhase % (sizeof(kMockeryFrames) / sizeof(kMockeryFrames[0]))];
+            case AnimState::Mockeryi:
+                return kMockeryiFrames[m_animPhase % (sizeof(kMockeryiFrames) / sizeof(kMockeryiFrames[0]))];
+            case AnimState::Mockeryp:
+                return kMockerypFrames[m_animPhase % (sizeof(kMockerypFrames) / sizeof(kMockerypFrames[0]))];
             case AnimState::Stop:
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];

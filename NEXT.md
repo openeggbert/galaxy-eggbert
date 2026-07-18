@@ -179,6 +179,25 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: real Mockery (Blupi taunts nearby enemies) + real Stop idle-fidget cycle (plan.md
+  `BLUPI-067`/`BLUPI-023`).** User asked two pointed questions: does Blupi stick his tongue out at
+  a nearby enemy, and does he get bored and tap his foot after standing still a while? Both
+  verified directly against `Decor.cpp` and both were real, unmodeled gaps — plus one
+  documentation error found and fixed (an earlier note this session had Mockery's direction
+  backwards: it's Blupi taunting a nearby enemy, not the reverse). Ported `Decor::MockeryDetect()`
+  (`Decor.cpp:9518-9601`) as a new proximity scan in `GalaxyEggbertCnaGame.cpp` (a bounding-box
+  check, NOT contact/collision, against 11 real enemy ObjectTypes already placed in this engine),
+  gated on Blupi being idle and a new `GEBlupiController::TriggerMockery()`/15s-cooldown mechanism
+  — deliberately NOT a freeze (real source never drops focus for this, so movement cancels it
+  immediately, no explicit cancel needed). `ObjectType54` always gets the distinct Mockeryp variant;
+  every other qualifying type picks Mockery/Mockeryi by facing direction, with `ObjectType2`'s own
+  real asymmetry (never the "ahead" variant) ported as-is. Also replaced `kStopFrames[]={0}` (a
+  Simple3D-era single-frame placeholder) with the REAL 330-frame Stop table — confirmed this isn't
+  a separate "boredom timer", just a long, naturally-cycling idle animation with fidget frames
+  baked directly into it. Live-verified via a temporary debug harness (reverted before commit):
+  standing near world999.vwr's own wasp correctly triggers `Mockery` with the exact real icon
+  cycle, and standing still long enough genuinely reaches the real "twitch" frame. Full regression
+  clean.
 - **feat: extract mobile-eggbert's full real Blupi animation table, wire ~24 new states into the
   HUD icon (plan.md `BLUPI-036/037/038/040/041/043/044/047/051/053/058/069/073/076`).** User-
   reported: the HUD animation icon only shows a limited set of poses, unlike real mobile-eggbert.
