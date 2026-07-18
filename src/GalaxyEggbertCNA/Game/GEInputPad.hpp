@@ -512,6 +512,11 @@ namespace GalaxyEggbert::CNA
             int gamerSelected = -1; // 0/1/2 if a gamer slot was just tapped (released) this frame, else -1
             bool playPressed = false;
             bool setupPressed = false;
+            // Not a real mobile-eggbert button (plan.md EDITOR-107): opens
+            // the in-game 3D world editor's browser for the CURRENTLY
+            // selected gamer slot -- content-creation tooling, exempt from
+            // the faithful-remake rule (see plan.md section 6).
+            bool editorPressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;

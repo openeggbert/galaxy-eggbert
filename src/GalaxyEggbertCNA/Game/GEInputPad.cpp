@@ -328,6 +328,12 @@ namespace GalaxyEggbert::CNA
         constexpr float kInitPlayX0 = 480.0f, kInitPlayY0 = 300.0f;
         constexpr float kInitPlayX1 = 620.0f, kInitPlayY1 = 440.0f;
 
+        // Not a real mobile-eggbert button (plan.md EDITOR-107): opens the
+        // in-game 3D world editor's browser. Placed in the same left
+        // column as the gamer slots/Setup, in the otherwise-empty space
+        // above GamerA's row -- same 70px row height as Setup below it.
+        constexpr float kInitEditorY0 = 90.0f, kInitEditorY1 = 160.0f;
+
         // Semi-transparent background panels behind the gamer-slot rows /
         // action buttons (plan.md MENU-014/015) -- pure cosmetic decoration,
         // no functional value (real source has these purely for visual
@@ -353,6 +359,14 @@ namespace GalaxyEggbert::CNA
         constexpr int kIconInitGamerCOff = 6, kIconInitGamerCSel = 18;
         constexpr int kIconInitSetup = 19;
         constexpr int kIconInitPlay = 7;
+        // Placeholder icon (plan.md EDITOR-107) -- pad.png icon 14 has no
+        // real mobile-eggbert meaning at all (unused by every other real
+        // screen in this class); picked only because it's free, not
+        // because its actual appearance was confirmed to suit "3D world
+        // editor" -- a cosmetic detail refinable once the user can look at
+        // a screenshot, same category as other deliberately-deferred
+        // visual-judgment items in this project.
+        constexpr int kIconInitEditor = 14;
 
         // Real per-slot text (`Game1::DrawButtonGamerText()`/
         // `MyResource`): "Player {letter}" (scale 0.7) + "Main gates :
@@ -374,12 +388,14 @@ namespace GalaxyEggbert::CNA
         constexpr Rect kInitGamerCRect{kInitGamerColX0, kInitGamerCY0, kInitGamerColX1, kInitGamerCY1};
         constexpr Rect kInitSetupRect{kInitGamerColX0, kInitSetupY0, kInitGamerColX1, kInitSetupY1};
         constexpr Rect kInitPlayRect{kInitPlayX0, kInitPlayY0, kInitPlayX1, kInitPlayY1};
+        constexpr Rect kInitEditorRect{kInitGamerColX0, kInitEditorY0, kInitGamerColX1, kInitEditorY1};
 
         constexpr int kInitControlGamerA = 0;
         constexpr int kInitControlGamerB = 1;
         constexpr int kInitControlGamerC = 2;
         constexpr int kInitControlSetup = 3;
         constexpr int kInitControlPlay = 4;
+        constexpr int kInitControlEditor = 5;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -1677,6 +1693,7 @@ namespace GalaxyEggbert::CNA
         const bool overGamerC = InRect(mouseRefX, mouseRefY, kInitGamerCRect);
         const bool overSetup = InRect(mouseRefX, mouseRefY, kInitSetupRect);
         const bool overPlay = InRect(mouseRefX, mouseRefY, kInitPlayRect);
+        const bool overEditor = InRect(mouseRefX, mouseRefY, kInitEditorRect);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -1685,6 +1702,7 @@ namespace GalaxyEggbert::CNA
             else if (overGamerC) activeControl_ = kInitControlGamerC;
             else if (overSetup) activeControl_ = kInitControlSetup;
             else if (overPlay) activeControl_ = kInitControlPlay;
+            else if (overEditor) activeControl_ = kInitControlEditor;
             else activeControl_ = -1;
         }
 
@@ -1699,6 +1717,7 @@ namespace GalaxyEggbert::CNA
                 case kInitControlGamerC: result.gamerSelected = 2; break;
                 case kInitControlSetup: result.setupPressed = true; break;
                 case kInitControlPlay: result.playPressed = true; break;
+                case kInitControlEditor: result.editorPressed = true; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -1849,6 +1868,8 @@ namespace GalaxyEggbert::CNA
                         kInitGamerColX1 + kInitButtonPanelMargin, kInitSetupY1 + kInitButtonPanelMargin);
             appendPanel(kInitPlayX0 - kInitButtonPanelMargin, kInitPlayY0 - kInitButtonPanelMargin,
                         kInitPlayX1 + kInitButtonPanelMargin, kInitPlayY1 + kInitButtonPanelMargin);
+            appendPanel(kInitGamerColX0 - kInitButtonPanelMargin, kInitEditorY0 - kInitButtonPanelMargin,
+                        kInitGamerColX1 + kInitButtonPanelMargin, kInitEditorY1 + kInitButtonPanelMargin);
 
             const auto appendGamerRow = [&](const Rect& r, int control, int iconOff, int iconSel, bool selected,
                                             char letter, int lives)
@@ -1880,6 +1901,8 @@ namespace GalaxyEggbert::CNA
                           kIconInitSetup);
             appendIconQuad(activeControl_ == kInitControlPlay ? pressedQuads : normalQuads, kInitPlayRect,
                           kIconInitPlay);
+            appendIconQuad(activeControl_ == kInitControlEditor ? pressedQuads : normalQuads, kInitEditorRect,
+                          kIconInitEditor);
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);

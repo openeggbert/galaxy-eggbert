@@ -588,7 +588,19 @@ namespace GalaxyEggbert::CNA
             m_centroidZ = static_cast<float>(sumZ / m_blockCount);
         }
 
-        m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
+        // Guarded the same way m_transparentStaticRenderer/m_grassRenderer
+        // already are below (found 2026-07-18, plan.md EDITOR-107): a
+        // genuinely empty (all-air) World -- e.g. the editor's brand-new
+        // "New World" -- has zero static blocks, and CubeMeshRenderer's
+        // Draw() unconditionally calls device.DrawIndexedPrimitives() with
+        // primitiveCount == indices.size()/3; CNA rejects primitiveCount
+        // <= 0 with an ArgumentOutOfRangeException. Every hand-authored
+        // .vwr world before the editor existed always had at least some
+        // terrain, so this was never reachable until now.
+        if (!staticVertices.empty())
+        {
+            m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
+        }
 
         if (!transparentStaticVertices.empty())
         {

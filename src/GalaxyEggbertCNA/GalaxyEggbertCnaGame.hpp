@@ -27,6 +27,7 @@
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -367,6 +368,19 @@ namespace GalaxyEggbert::CNA
         // load.
         void LoadMission(int missionNumber);
 
+        // Loads a player-authored custom world (plan.md EDITOR-107) for
+        // editing -- NOT a mission (no hub/door-gating scan, no
+        // saveData_ mission-number persistence, unlike LoadMission()
+        // above; these are sandbox worlds outside the real 78-mission
+        // structure). Used by the browser's Open/New actions. A no-op
+        // (logs and returns) if @p path fails to load, same graceful-
+        // failure shape as LoadMission(). On success: rebuilds the
+        // terrain/background presentation, starts the free-fly camera
+        // above the world's own block centroid (or a fixed world-center
+        // point for a brand-new all-air world), sets the editor's
+        // world path to @p path, and calls worldEditor_.ExitBrowser().
+        void LoadCustomWorldForEditing(const std::filesystem::path& path);
+
         // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `GEBlupiController::
         // HasVehicleMotor()`/`IsVehicleMotorHigh()`, found 2026-07-17) -- ports
         // `Decor::AdaptMotorVehicleSound()` exactly: computes the desired loop channel (none,
@@ -471,11 +485,8 @@ namespace GalaxyEggbert::CNA
 
         // In-game 3D world editor (plan.md section 6, EDITOR-1xx tasks) --
         // see GEWorldEditor's own class comment. Entered via GamePhase::
-        // Editor. editorDebugKeyWasDown_ edge-detects the TEMPORARY F9
-        // debug entry point (EDITOR-100) that loads worlds3d/world999.vwr
-        // directly -- removed once EDITOR-107's real menu button exists.
+        // Editor, from the Init screen's own Editor button.
         GEWorldEditor worldEditor_;
-        bool editorDebugKeyWasDown_ = false;
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- real
         // gesture zones are checked only during real Phase::Play

@@ -27,8 +27,8 @@ namespace GalaxyEggbert::CNA
     // GEInputPad's own label-rendering methods stay private (tightly
     // coupled to its own per-screen font-scale conventions, not worth
     // genericizing for this), and building an independent text renderer
-    // is out of scope here. The toolbar's 3 buttons are visually identical
-    // (same flat color, distinguished only by position: Undo/Redo/Save
+    // is out of scope here. The toolbar's 4 buttons are visually identical
+    // (same flat color, distinguished only by position: Undo/Redo/Save/Back
     // top-to-bottom) and the selected palette icon is marked by a
     // highlighted backing square, not a caption -- a documented, later-
     // refinable simplification, not a functional gap (every tool the
@@ -39,7 +39,7 @@ namespace GalaxyEggbert::CNA
     public:
         GEEditorPalette();
 
-        enum class ToolbarAction { None, Undo, Redo, Save };
+        enum class ToolbarAction { None, Undo, Redo, Save, Back };
 
         struct UpdateResult
         {

@@ -330,6 +330,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
         src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
+        src/GalaxyEggbertCNA/Editor/GECustomWorldStorage.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -621,6 +623,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
         src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
+        src/GalaxyEggbertCNA/Editor/GECustomWorldStorage.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         ${GE_SHARED_SOURCES}

@@ -117,6 +117,11 @@ namespace GalaxyEggbert::CNA
                 result.action = ToolbarAction::Save;
                 result.clickConsumed = true;
             }
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(3)))
+            {
+                result.action = ToolbarAction::Back;
+                result.clickConsumed = true;
+            }
             else if (GEQuadBatch::InRect(mx, my, TabToggleRect(viewportWidth, viewportHeight)))
             {
                 showAllTab_ = !showAllTab_;
@@ -198,6 +203,7 @@ namespace GalaxyEggbert::CNA
         addFlat(ToolbarButtonRect(0));
         addFlat(ToolbarButtonRect(1));
         addFlat(ToolbarButtonRect(2));
+        addFlat(ToolbarButtonRect(3));
         addFlat(TabToggleRect(viewportWidth, viewportHeight));
         if (pageCount > 1)
         {

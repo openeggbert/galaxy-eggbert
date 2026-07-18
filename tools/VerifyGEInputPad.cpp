@@ -320,6 +320,21 @@ int main()
         const auto stillHeld = pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
         check(!stillHeld.playPressed, "Init: InitPlay does not fire while still held (only on release)");
     }
+    {
+        // Not a real mobile-eggbert button (plan.md EDITOR-107) -- opens
+        // the in-game 3D world editor's browser. Rect (20,90)-(90,160).
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(55, 125, false), kViewportW, kViewportH);
+        check(release.editorPressed && release.gamerSelected == -1 && !release.playPressed,
+              "Init: InitEditor fires editorPressed on release, not a gamer selection or Play");
+    }
+    {
+        GEInputPad pad;
+        (void)pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
+        const auto stillHeld = pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
+        check(!stillHeld.editorPressed, "Init: InitEditor does not fire while still held (only on release)");
+    }
 
     // --- Cheat gesture: real 10-tap sequence (12,22,32,12,11,21,22,21,
     // 31,32) over 6 invisible zones in a 3-col x 2-row grid spanning the

@@ -1,5 +1,7 @@
 #include "Editor/GEBoxRegion.hpp"
+#include "Editor/GECustomWorldStorage.hpp"
 #include "Editor/GEEditCommandStack.hpp"
+#include "Editor/GEEditorBrowserScreen.hpp"
 #include "Editor/GEEditorPalette.hpp"
 #include "Editor/GEPaletteCategories.hpp"
 #include "Editor/GEVoxelRaycast.hpp"
@@ -44,6 +46,13 @@
 //     click-hit-testing (toolbar buttons, tab toggle, icon selection,
 //     clickConsumed) driven with synthetic MouseState values -- still no
 //     GraphicsDevice needed (only Draw() touches the GPU).
+//   - EDITOR-107: GECustomWorldStorage's real filesystem behavior (dir
+//     naming, listing, NextNewWorldPath's numbering) against a throwaway
+//     gamer-slot fixture directory cleaned up before and after; plus
+//     GEEditorBrowserScreen's New/Open/delete-confirm click-hit-testing
+//     and GEWorldEditor's browsing-state transitions (EnterBrowser/
+//     IsBrowsing/UpdateBrowsing/EnterEditing/ExitBrowser) -- none of this
+//     needs a GraphicsDevice either (only Draw()/DrawBrowsing() do).
 // Later milestones (MoveObject/sky-region round-trips) add their own
 // sections here.
 int main()
@@ -649,6 +658,125 @@ int main()
             check(palette.SelectedBlockType() == 1,
                   "after toggling to the All-Icons tab, the first cell selects icon id 1");
         }
+    }
+
+    // --- GECustomWorldStorage: dir naming, listing, NextNewWorldPath numbering ---
+    {
+        // A gamer slot number unlikely to collide with anything else this
+        // test binary (or the real game) touches; cleaned up before and
+        // after so repeat runs never accumulate or see stale state.
+        constexpr int kTestGamerSlot = 77;
+        std::error_code ec;
+        std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+
+        check(CustomWorldsDir(kTestGamerSlot) == std::filesystem::path("customworlds") / "gamer77",
+              "CustomWorldsDir() builds the expected per-gamer-slot path");
+        check(ListCustomWorlds(kTestGamerSlot).empty(),
+              "ListCustomWorlds() is empty for a gamer slot with no directory yet");
+
+        const auto first = NextNewWorldPath(kTestGamerSlot);
+        check(first.filename() == "custom_001.vwr",
+              "NextNewWorldPath() picks custom_001.vwr when the directory is empty");
+        check(std::filesystem::exists(CustomWorldsDir(kTestGamerSlot)),
+              "NextNewWorldPath() creates the gamer slot's directory");
+
+        // NextNewWorldPath() only reserves a name -- matches how the real
+        // browser's New World action uses it (saving a real World there
+        // is a separate step).
+        World().saveToFile(first);
+        const auto second = NextNewWorldPath(kTestGamerSlot);
+        check(second.filename() == "custom_002.vwr",
+              "NextNewWorldPath() picks the next unused number once the first exists");
+
+        World().saveToFile(second);
+        check(ListCustomWorlds(kTestGamerSlot).size() == 2, "ListCustomWorlds() finds both created worlds");
+
+        std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+    }
+
+    // --- GEEditorBrowserScreen: New/Open/delete-confirm click hit-testing ---
+    {
+        constexpr int kTestGamerSlot = 78;
+        std::error_code ec;
+        std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+        World().saveToFile(NextNewWorldPath(kTestGamerSlot)); // custom_001.vwr
+
+        GEEditorBrowserScreen browser;
+        browser.Refresh(kTestGamerSlot);
+
+        const auto click = [](GEEditorBrowserScreen& b, float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            (void)b.Update(down, 800, 480);
+            return b.Update(up, 800, 480);
+        };
+
+        {
+            // Row 0 ("+ New World"): (200,20)-(520,56).
+            const auto result = click(browser, 300.0f, 38.0f);
+            check(result.action == GEEditorBrowserScreen::Action::New,
+                  "clicking the New World row reports Action::New");
+        }
+        {
+            // Row 1 (the one created world): y0 = 20 + 1*(36+6) = 62, so (200,62)-(520,98).
+            const auto result = click(browser, 300.0f, 80.0f);
+            check(result.action == GEEditorBrowserScreen::Action::Open,
+                  "clicking a world row reports Action::Open");
+            check(!result.path.empty() && result.path.extension() == ".vwr",
+                  "the Open action reports a real .vwr path");
+        }
+        {
+            // Row 1's delete "X": (488,66)-(516,94).
+            const auto firstClick = click(browser, 500.0f, 80.0f);
+            check(firstClick.action == GEEditorBrowserScreen::Action::None,
+                  "the first click on a row's delete X doesn't report an action (just arms the confirm)");
+            check(!ListCustomWorlds(kTestGamerSlot).empty(),
+                  "the world file still exists after only arming delete");
+
+            (void)click(browser, 500.0f, 80.0f);
+            check(ListCustomWorlds(kTestGamerSlot).empty(),
+                  "a second click on the SAME delete X actually deletes the file");
+        }
+
+        std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+    }
+
+    // --- GEWorldEditor: browsing-state transitions ---
+    {
+        constexpr int kTestGamerSlot = 79;
+        std::error_code ec;
+        std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+
+        GEWorldEditor editor;
+        check(editor.IsBrowsing(), "GEWorldEditor starts in browsing mode by default");
+
+        editor.EnterBrowser(kTestGamerSlot);
+        check(editor.IsBrowsing(), "EnterBrowser() stays in browsing mode");
+
+        const MouseState down(300, 38, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                              ButtonState::Released, ButtonState::Released);
+        const MouseState up(300, 38, 0, ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                            ButtonState::Released, ButtonState::Released);
+        (void)editor.UpdateBrowsing(down, 800, 480);
+        const auto request = editor.UpdateBrowsing(up, 800, 480);
+        check(request.shouldCreateNew,
+              "clicking New World reports shouldCreateNew via GEWorldEditor::UpdateBrowsing()");
+
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        check(!editor.IsBrowsing(), "EnterEditing() leaves browsing mode");
+
+        std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+    }
+    {
+        GEWorldEditor editor;
+        editor.EnterBrowser(0);
+        editor.ExitBrowser();
+        check(!editor.IsBrowsing(), "ExitBrowser() leaves browsing mode");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

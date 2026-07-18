@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GEEditCommandStack.hpp"
+#include "GEEditorBrowserScreen.hpp"
 #include "GEEditorHighlightRenderer.hpp"
 #include "GEEditorPalette.hpp"
 
@@ -23,24 +24,61 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-106 (this milestone): free-fly camera (EDITOR-101) + voxel
+    // EDITOR-107 (this milestone): free-fly camera (EDITOR-101) + voxel
     // raycast/highlight (EDITOR-102) + single block place/remove/save
-    // (EDITOR-103) + undo/redo (EDITOR-104) + box-fill (EDITOR-105), now
-    // with a real palette (GEEditorPalette) choosing what LMB/box-fill
-    // place instead of a hardcoded block type. Object editing lands in
-    // later milestones.
+    // (EDITOR-103) + undo/redo (EDITOR-104) + box-fill (EDITOR-105) + a
+    // real block palette (EDITOR-106), now entered through a real
+    // per-gamer-slot world browser (GEEditorBrowserScreen) instead of the
+    // F9 debug entry. Object editing lands in later milestones.
     class GEWorldEditor
     {
     public:
-        // Called once when entering the Editor phase (temporarily from the
-        // F9 debug entry, later from EDITOR-107's real menu flow) -- resets
-        // the free-fly camera to a sensible starting point/orientation
-        // above the loaded world.
+        // Enters (or re-enters) the browser for @p gamerSlot -- called from
+        // the Init screen's new Editor button, and again internally
+        // whenever the toolbar's Back button is pressed while editing.
+        // Rescans disk (GECustomWorldStorage::ListCustomWorlds) fresh each
+        // time. IsBrowsing() reports true afterward, until the caller
+        // (GalaxyEggbertCnaGame) actually loads/creates a world and calls
+        // ExitBrowser().
+        void EnterBrowser(int gamerSlot);
+
+        [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
+
+        // One request the browser screen made this frame -- the caller
+        // (GalaxyEggbertCnaGame) still owns actually loading/creating the
+        // .vwr file (this class has no GEWorldRuntime access), matching
+        // this project's existing "pending signal consumed by the owning
+        // class" idiom (see GEInteractionSystem's own class comment).
+        struct BrowserRequest
+        {
+            bool shouldOpen = false;
+            std::filesystem::path openPath; // valid when shouldOpen
+            bool shouldCreateNew = false;    // GECustomWorldStorage::NextNewWorldPath(gamerSlot) is the target
+        };
+
+        // Drives the browser screen while IsBrowsing() is true -- no World
+        // needed (there isn't one loaded yet).
+        [[nodiscard]] BrowserRequest UpdateBrowsing(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                    int viewportWidth, int viewportHeight);
+
+        void DrawBrowsing(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                          int viewportWidth, int viewportHeight);
+
+        // Called once the caller has actually loaded/created the requested
+        // world -- leaves browsing mode so the next frame's Update()/Draw()
+        // dispatch (IsBrowsing() now false) drives real editing instead.
+        void ExitBrowser() noexcept { browsing_ = false; }
+
+        // Called once when entering editing (after ExitBrowser(), or
+        // temporarily from the F9 debug entry) -- resets the free-fly
+        // camera to a sensible starting point/orientation above the loaded
+        // world.
         void EnterEditing(float startX, float startY, float startZ) noexcept;
 
         // Sets the path Save() (see Update()'s Enter-key handling below)
-        // writes to. Temporary until EDITOR-107's real per-gamer-slot world
-        // browser exists to choose this.
+        // and the toolbar's Save button write to -- set by
+        // GalaxyEggbertCnaGame right after it loads/creates the world this
+        // BrowserRequest pointed at.
         void SetWorldPath(std::filesystem::path path) noexcept { worldPath_ = std::move(path); }
 
         // Reads keyboard/mouse and flies camera around, then raycasts from
@@ -66,7 +104,8 @@ namespace GalaxyEggbert::CNA
         //     keys, not Ctrl-modified -- Left Ctrl already flies downward).
         //     The palette's own Undo/Redo/Save toolbar buttons trigger the
         //     exact same actions via a mouse click, for players who don't
-        //     know the keybindings.
+        //     know the keybindings; its 4th (Back) button returns to the
+        //     browser (EnterBrowser() again, for the same gamer slot).
         //   - F: box-fill tool. First press marks the aimed-at cell as
         //     corner A; while a corner is marked, the highlight tracks a
         //     live box between corner A and wherever the raycast currently
@@ -161,5 +200,9 @@ namespace GalaxyEggbert::CNA
         float boxMaxRenderX_ = 0.0f, boxMaxRenderY_ = 0.0f, boxMaxRenderZ_ = 0.0f;
 
         std::filesystem::path worldPath_;
+
+        bool browsing_ = true;
+        int gamerSlot_ = 0;
+        GEEditorBrowserScreen browserScreen_;
     };
 }

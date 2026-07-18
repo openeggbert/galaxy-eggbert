@@ -20,8 +20,39 @@ namespace GalaxyEggbert::CNA
         constexpr float kMaxRaycastDistance = 200.0f; // > the 100^3 world's ~173-unit diagonal
     }
 
+    void GEWorldEditor::EnterBrowser(int gamerSlot)
+    {
+        gamerSlot_ = gamerSlot;
+        browsing_ = true;
+        browserScreen_.Refresh(gamerSlot);
+    }
+
+    GEWorldEditor::BrowserRequest GEWorldEditor::UpdateBrowsing(
+        const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportWidth, int viewportHeight)
+    {
+        const auto result = browserScreen_.Update(mouse, viewportWidth, viewportHeight);
+        BrowserRequest request;
+        if (result.action == GEEditorBrowserScreen::Action::Open)
+        {
+            request.shouldOpen = true;
+            request.openPath = result.path;
+        }
+        else if (result.action == GEEditorBrowserScreen::Action::New)
+        {
+            request.shouldCreateNew = true;
+        }
+        return request;
+    }
+
+    void GEWorldEditor::DrawBrowsing(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                     int viewportWidth, int viewportHeight)
+    {
+        browserScreen_.Draw(device, viewportWidth, viewportHeight);
+    }
+
     void GEWorldEditor::EnterEditing(float startX, float startY, float startZ) noexcept
     {
+        browsing_ = false; // defensive: correct even if a caller skips the explicit ExitBrowser() call
         camX_ = startX;
         camY_ = startY;
         camZ_ = startZ;
@@ -245,6 +276,16 @@ namespace GalaxyEggbert::CNA
             {
                 needsPresentationRebuild_ = true;
             }
+        }
+        else if (paletteResult.action == GEEditorPalette::ToolbarAction::Back)
+        {
+            // Re-enters the browser for the SAME gamer slot (plan.md
+            // EDITOR-107) -- IsBrowsing() reports true starting next
+            // frame's dispatch. Deliberately does NOT auto-save; a player
+            // who wants to keep changes presses Save/Enter first (an
+            // "unsaved changes?" guard is a later hardening-pass item, not
+            // a functional gap in this milestone).
+            EnterBrowser(gamerSlot_);
         }
         else if (boxKeyHeld && !boxKeyHeldLastFrame_ && hasHighlight_)
         {

@@ -1,5 +1,6 @@
 #include "GalaxyEggbertCnaGame.hpp"
 
+#include "Editor/GECustomWorldStorage.hpp"
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
@@ -555,6 +556,39 @@ namespace GalaxyEggbert::CNA
 
         std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): loaded " << path << "."
                    << std::endl;
+    }
+
+    void GalaxyEggbertCnaGame::LoadCustomWorldForEditing(const std::filesystem::path& path)
+    {
+        if (!worldRuntime_.LoadFromVwrFile(path.string()))
+        {
+            std::cout << "GalaxyEggbertCNA: LoadCustomWorldForEditing(" << path
+                       << "): not found or failed to load." << std::endl;
+            return;
+        }
+
+        RebuildWorldPresentation();
+
+        // Start the free-fly camera above the world's own block centroid
+        // (render space) -- falls back to a fixed point at the world's
+        // own center for a brand-new, all-air world where
+        // CentroidX/Y/Z() would otherwise be a meaningless (0,0,0).
+        // Render-space (0,15,0) is raw grid (50,15,50), the actual center
+        // of the 100^3 world, NOT (50,15,50) in render space (which would
+        // be the far corner, just outside bounds).
+        if (terrainRenderer_ && terrainRenderer_->BlockCount() > 0)
+        {
+            worldEditor_.EnterEditing(terrainRenderer_->CentroidX(), terrainRenderer_->CentroidY() + 8.0f,
+                                      terrainRenderer_->CentroidZ());
+        }
+        else
+        {
+            worldEditor_.EnterEditing(0.0f, 15.0f, 0.0f);
+        }
+        worldEditor_.SetWorldPath(path);
+        worldEditor_.ExitBrowser();
+
+        std::cout << "GalaxyEggbertCNA: LoadCustomWorldForEditing(" << path << "): loaded." << std::endl;
     }
 
     void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade) noexcept
@@ -1158,6 +1192,14 @@ namespace GalaxyEggbert::CNA
                 {
                     SetPhase(GalaxyEggbert::GamePhase::MainSetup);
                 }
+                else if (initInput.editorPressed)
+                {
+                    // Not a real mobile-eggbert transition (plan.md
+                    // EDITOR-107): opens the in-game 3D world editor's
+                    // browser for the currently selected gamer slot.
+                    worldEditor_.EnterBrowser(saveData_.GetSelectedGamer());
+                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                }
                 else if (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_)
                 {
                     // Real hardware Back-button behavior from Init is
@@ -1216,52 +1258,38 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Editor)
             {
-                // In-game 3D world editor (plan.md section 6, EDITOR-100) --
-                // see GEWorldEditor's own class comment.
+                // In-game 3D world editor (plan.md section 6, EDITOR-107) --
+                // see GEWorldEditor's own class comment. IsBrowsing()
+                // distinguishes the per-gamer-slot world browser (no World
+                // loaded yet) from actively editing one.
                 const auto mouse = Mouse::GetState();
-                worldEditor_.Update(phaseKeys, mouse, dt,
-                                     viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
-                                     worldRuntime_.GetWorldMutable());
-                if (worldEditor_.ConsumeNeedsPresentationRebuild())
+                if (worldEditor_.IsBrowsing())
                 {
-                    RebuildWorldPresentation();
+                    const auto request = worldEditor_.UpdateBrowsing(
+                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                    if (request.shouldOpen)
+                    {
+                        LoadCustomWorldForEditing(request.openPath);
+                    }
+                    else if (request.shouldCreateNew)
+                    {
+                        const std::filesystem::path newPath =
+                            NextNewWorldPath(saveData_.GetSelectedGamer());
+                        GalaxyEggbert::Worlds::World().saveToFile(newPath);
+                        LoadCustomWorldForEditing(newPath);
+                    }
+                }
+                else
+                {
+                    worldEditor_.Update(phaseKeys, mouse, dt,
+                                         viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
+                                         worldRuntime_.GetWorldMutable());
+                    if (worldEditor_.ConsumeNeedsPresentationRebuild())
+                    {
+                        RebuildWorldPresentation();
+                    }
                 }
             }
-
-            // TEMPORARY (EDITOR-100 debug entry point, removed once
-            // EDITOR-107's real menu button exists): F9 loads
-            // worlds3d/world999.vwr (the existing GenerateSampleWorld3D
-            // demo/test world, not new content) and enters the Editor
-            // directly, from any phase other than Editor itself.
-            if (phase_ != GalaxyEggbert::GamePhase::Editor &&
-                phaseKeys.IsKeyDown(Keys::F9) && !editorDebugKeyWasDown_)
-            {
-                if (worldRuntime_.LoadFromVwrFile("worlds3d/world999.vwr"))
-                {
-                    RebuildWorldPresentation();
-                    // Start the free-fly camera above the world's own block
-                    // centroid (falls back to a fixed point for a
-                    // brand-new, all-air world where CentroidX/Y/Z() would
-                    // otherwise be a meaningless (0,0,0)).
-                    if (terrainRenderer_ && terrainRenderer_->BlockCount() > 0)
-                    {
-                        worldEditor_.EnterEditing(terrainRenderer_->CentroidX(),
-                                                   terrainRenderer_->CentroidY() + 8.0f,
-                                                   terrainRenderer_->CentroidZ());
-                    }
-                    else
-                    {
-                        worldEditor_.EnterEditing(50.0f, 15.0f, 50.0f);
-                    }
-                    // Distinct scratch path (not world999.vwr itself, which
-                    // several other features/tests load) -- temporary
-                    // until EDITOR-107's real per-gamer-slot world browser
-                    // chooses this.
-                    worldEditor_.SetWorldPath("worlds3d/editor_scratch_test.vwr");
-                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
-                }
-            }
-            editorDebugKeyWasDown_ = phaseKeys.IsKeyDown(Keys::F9);
 
             // Real Pause trigger is gamepad-Back/a touch PlayPause button
             // (see phase_'s own class-comment) -- Escape is this engine's
@@ -2875,8 +2903,13 @@ namespace GalaxyEggbert::CNA
         // their overlay), there is no real game world to show here at all.
         // Skipping this whole block for those two phases removes the
         // bleed-through entirely instead of just papering over it with an
-        // opaque quad.
-        if (phase_ != GalaxyEggbert::GamePhase::Wait && phase_ != GalaxyEggbert::GamePhase::Init)
+        // opaque quad. The Editor phase's own browser screen (plan.md
+        // EDITOR-107, worldEditor_.IsBrowsing()) is the same situation --
+        // no world is loaded yet while browsing -- so it's skipped too;
+        // once a world is actually being edited, IsBrowsing() is false and
+        // this block draws it same as any other phase.
+        if (phase_ != GalaxyEggbert::GamePhase::Wait && phase_ != GalaxyEggbert::GamePhase::Init &&
+            !(phase_ == GalaxyEggbert::GamePhase::Editor && worldEditor_.IsBrowsing()))
         {
         // Real background image backdrop (NEXT.md §3, 2026-07-09) -- one
         // huge camera-facing billboard quad placed far behind the scene
@@ -3541,8 +3574,15 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Editor)
             {
-                worldEditor_.Draw(device, camera_, terrainTexture_,
-                                  viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (worldEditor_.IsBrowsing())
+                {
+                    worldEditor_.DrawBrowsing(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                }
+                else
+                {
+                    worldEditor_.Draw(device, camera_, terrainTexture_,
+                                      viewport.getWidthProperty(), viewport.getHeightProperty());
+                }
             }
 
             // Hidden cheat menu overlay (2026-07-13, plan.md
@@ -3589,7 +3629,6 @@ namespace GalaxyEggbert::CNA
             std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
                       << std::endl;
         }
-
     }
 
     GetTypeNameCPP(GalaxyEggbertCnaGame, "GalaxyEggbertCnaGame")
