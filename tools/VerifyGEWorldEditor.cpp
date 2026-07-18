@@ -1,3 +1,4 @@
+#include "Editor/GEEditCommandStack.hpp"
 #include "Editor/GEVoxelRaycast.hpp"
 #include "Editor/GEWorldEditor.hpp"
 
@@ -26,8 +27,12 @@
 //     driven through GEWorldEditor::Update() with synthetic left/middle-click
 //     MouseState values (both still no GraphicsDevice needed -- place/remove
 //     only touches the World, not the GPU-side highlight mesh).
-// Later milestones (box-fill, undo/redo, palette data, MoveObject/
-// sky-region round-trips) add their own sections here.
+//   - EDITOR-104: GEEditCommandStack's push/undo/redo/truncate/depth-cap
+//     behavior directly, plus GEWorldEditor's U/R undo/redo keys undoing/
+//     redoing a real place through the same synthetic-input path as
+//     EDITOR-103's section.
+// Later milestones (box-fill, palette data, MoveObject/sky-region
+// round-trips) add their own sections here.
 int main()
 {
     using namespace GalaxyEggbert::CNA;
@@ -315,6 +320,114 @@ int main()
         check(reloaded.getBlock(50, 4, 50).type() == 42,
               "Enter saves the world to the path set via SetWorldPath(), and it round-trips");
         std::remove("verify_ge_world_editor_scratch.vwr");
+    }
+
+    // --- GEEditCommandStack: push/undo/redo, replaying real before/after values ---
+    {
+        World world;
+        world.setBlock(10, 5, 10, Block::make(1));
+
+        GEEditCommandStack stack;
+        GEEditCommand place;
+        place.kind = GEEditCommand::Kind::BlockEdit;
+        place.blockChanges.push_back({10, 5, 10, Block::make(1), Block::make(2)});
+        world.setBlock(10, 5, 10, Block::make(2));
+        stack.Push(place);
+
+        check(stack.UndoCount() == 1 && stack.RedoCount() == 0,
+              "Push() records one undo entry and starts with an empty redo stack");
+
+        check(stack.Undo(world), "Undo() reports success when there's something to undo");
+        check(world.getBlock(10, 5, 10).type() == 1, "Undo() restores the real \"before\" value");
+        check(stack.UndoCount() == 0 && stack.RedoCount() == 1,
+              "Undo() moves the entry from the undo stack to the redo stack");
+
+        check(stack.Redo(world), "Redo() reports success when there's something to redo");
+        check(world.getBlock(10, 5, 10).type() == 2, "Redo() re-applies the real \"after\" value");
+        check(stack.UndoCount() == 1 && stack.RedoCount() == 0,
+              "Redo() moves the entry back onto the undo stack");
+    }
+    {
+        World world;
+        GEEditCommandStack stack;
+        check(!stack.Undo(world), "Undo() on an empty stack is a no-op returning false");
+        check(!stack.Redo(world), "Redo() on an empty stack is a no-op returning false");
+    }
+    {
+        // Pushing a new command after an Undo() discards the stale redo
+        // entry -- standard undo/redo semantics, not "branching" history.
+        World world;
+        GEEditCommandStack stack;
+        GEEditCommand first;
+        first.blockChanges.push_back({1, 1, 1, Block::air(), Block::make(1)});
+        stack.Push(first);
+        stack.Undo(world);
+        check(stack.RedoCount() == 1, "test setup sanity: one entry is on the redo stack after Undo()");
+
+        GEEditCommand second;
+        second.blockChanges.push_back({2, 2, 2, Block::air(), Block::make(2)});
+        stack.Push(second);
+        check(stack.RedoCount() == 0,
+              "pushing a new command after an Undo() clears the now-stale redo stack");
+        check(stack.UndoCount() == 1, "the newly pushed command is the only undo entry");
+    }
+    {
+        // Depth cap: pushing well beyond the cap evicts the OLDEST entries
+        // first, keeping the stack bounded.
+        World world;
+        GEEditCommandStack stack;
+        constexpr int kPushCount = 250; // > the 200 documented cap
+        for (int i = 0; i < kPushCount; ++i)
+        {
+            GEEditCommand command;
+            command.blockChanges.push_back(
+                {0, 0, 0, Block::air(), Block::make(static_cast<std::uint16_t>((i % 4000) + 1))});
+            stack.Push(command);
+        }
+        check(stack.UndoCount() == 200, "the undo stack is capped at its documented 200-entry depth");
+    }
+
+    // --- GEWorldEditor: U/R undo/redo a real place through the same synthetic-input path ---
+    {
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        const float cosPitch = std::cos(kDefaultPitch);
+        const RaycastHit expected = Raycast(world, 50.0f, 10.0f, 50.0f,
+                                             std::sin(kDefaultYaw) * cosPitch, std::sin(kDefaultPitch),
+                                             -std::cos(kDefaultYaw) * cosPitch, 200.0f);
+        const std::uint16_t placeX = static_cast<std::uint16_t>(expected.x + expected.normalX);
+        const std::uint16_t placeY = static_cast<std::uint16_t>(expected.y + expected.normalY);
+        const std::uint16_t placeZ = static_cast<std::uint16_t>(expected.z + expected.normalZ);
+
+        const MouseState leftMouse(0, 0, 0, ButtonState::Pressed, ButtonState::Released,
+                                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, leftMouse, 0.0f, 800, 480, camera, world);
+        check(!world.getBlock(placeX, placeY, placeZ).isAir(), "test setup sanity: the left click placed a block");
+        (void)editor.ConsumeNeedsPresentationRebuild();
+
+        const KeyboardState undoKeys{Keys::U};
+        editor.Update(undoKeys, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(placeX, placeY, placeZ).isAir(),
+              "the U key undoes the real placement made through Update()");
+        check(editor.ConsumeNeedsPresentationRebuild(), "a successful undo requests a presentation rebuild");
+
+        const KeyboardState redoKeys{Keys::R};
+        editor.Update(redoKeys, restMouse, 0.0f, 800, 480, camera, world);
+        check(!world.getBlock(placeX, placeY, placeZ).isAir(),
+              "the R key redoes the placement back");
+        check(editor.ConsumeNeedsPresentationRebuild(), "a successful redo requests a presentation rebuild");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace GalaxyEggbert::CNA
 {
@@ -31,6 +32,7 @@ namespace GalaxyEggbert::CNA
         hasLastScrollWheelValue_ = false;
         hasHighlight_ = false;
         highlightRenderer_.Hide();
+        commandStack_ = GEEditCommandStack();
     }
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
@@ -149,10 +151,11 @@ namespace GalaxyEggbert::CNA
         // (e.g. GEInputPad's "!mouseDown && mouseWasDown_" idiom, just
         // inverted here to trigger on press rather than release since
         // there's no on-screen button geometry to still be hovering over).
-        using ButtonState = Microsoft::Xna::Framework::Input::ButtonState;
         const bool leftHeld = mouse.getLeftButtonProperty() == ButtonState::Pressed;
         const bool middleHeld = mouse.getMiddleButtonProperty() == ButtonState::Pressed;
-        const bool enterHeld = keyboard.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Enter);
+        const bool enterHeld = keyboard.IsKeyDown(Keys::Enter);
+        const bool undoKeyHeld = keyboard.IsKeyDown(Keys::U);
+        const bool redoKeyHeld = keyboard.IsKeyDown(Keys::R);
 
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         if (leftHeld && !leftHeldLastFrame_ && hasHighlight_)
@@ -164,24 +167,53 @@ namespace GalaxyEggbert::CNA
                 placeY >= 0 && placeY < blocksPerAxis &&
                 placeZ >= 0 && placeZ < blocksPerAxis)
             {
-                world.setBlock(static_cast<std::uint16_t>(placeX), static_cast<std::uint16_t>(placeY),
-                                static_cast<std::uint16_t>(placeZ),
-                                Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile));
+                const auto px = static_cast<std::uint16_t>(placeX);
+                const auto py = static_cast<std::uint16_t>(placeY);
+                const auto pz = static_cast<std::uint16_t>(placeZ);
+                const Worlds::Block before = world.getBlock(px, py, pz);
+                const Worlds::Block after = Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile);
+                world.setBlock(px, py, pz, after);
+                GEEditCommand command;
+                command.kind = GEEditCommand::Kind::BlockEdit;
+                command.blockChanges.push_back({px, py, pz, before, after});
+                commandStack_.Push(std::move(command));
                 needsPresentationRebuild_ = true;
             }
         }
         else if (middleHeld && !middleHeldLastFrame_ && hasHighlight_)
         {
-            world.setBlock(hitCellX_, hitCellY_, hitCellZ_, Worlds::Block::air());
+            const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
+            const Worlds::Block after = Worlds::Block::air();
+            world.setBlock(hitCellX_, hitCellY_, hitCellZ_, after);
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::BlockEdit;
+            command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
+            commandStack_.Push(std::move(command));
             needsPresentationRebuild_ = true;
         }
         else if (enterHeld && !enterHeldLastFrame_ && !worldPath_.empty())
         {
             world.saveToFile(worldPath_);
         }
+        else if (undoKeyHeld && !undoKeyHeldLastFrame_)
+        {
+            if (commandStack_.Undo(world))
+            {
+                needsPresentationRebuild_ = true;
+            }
+        }
+        else if (redoKeyHeld && !redoKeyHeldLastFrame_)
+        {
+            if (commandStack_.Redo(world))
+            {
+                needsPresentationRebuild_ = true;
+            }
+        }
         leftHeldLastFrame_ = leftHeld;
         middleHeldLastFrame_ = middleHeld;
         enterHeldLastFrame_ = enterHeld;
+        undoKeyHeldLastFrame_ = undoKeyHeld;
+        redoKeyHeldLastFrame_ = redoKeyHeld;
     }
 
     bool GEWorldEditor::ConsumeNeedsPresentationRebuild() noexcept

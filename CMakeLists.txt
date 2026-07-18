@@ -325,6 +325,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -611,6 +612,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyGEWorldEditor PRIVATE

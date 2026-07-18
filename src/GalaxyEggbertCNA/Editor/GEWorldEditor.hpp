@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GEEditCommandStack.hpp"
 #include "GEEditorHighlightRenderer.hpp"
 
 #include <Easy3D/Camera3D.hpp>
@@ -11,6 +12,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <utility>
 
 namespace GalaxyEggbert::CNA
 {
@@ -20,10 +22,10 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-103 (this milestone): free-fly camera (EDITOR-101) + voxel
-    // raycast/highlight (EDITOR-102), now with single block place/remove
-    // and save/load. Undo/redo, box-fill, the real palette UI, and object
-    // editing land in later milestones.
+    // EDITOR-104 (this milestone): free-fly camera (EDITOR-101) + voxel
+    // raycast/highlight (EDITOR-102) + single block place/remove/save
+    // (EDITOR-103), now with undo/redo for block edits. Box-fill, the real
+    // palette UI, and object editing land in later milestones.
     class GEWorldEditor
     {
     public:
@@ -56,6 +58,8 @@ namespace GalaxyEggbert::CNA
         //     adjacent to the aimed-at face.
         //   - Middle click: removes the aimed-at block entirely.
         //   - Enter: saves @p world to the path set via SetWorldPath().
+        //   - U: undoes the most recent block edit; R: redoes it (plain
+        //     keys, not Ctrl-modified -- Left Ctrl already flies downward).
         // Call ConsumeNeedsPresentationRebuild() after Update() returns to
         // find out whether @p world was actually mutated this frame.
         //
@@ -113,7 +117,11 @@ namespace GalaxyEggbert::CNA
         bool leftHeldLastFrame_ = false;
         bool middleHeldLastFrame_ = false;
         bool enterHeldLastFrame_ = false;
+        bool undoKeyHeldLastFrame_ = false;
+        bool redoKeyHeldLastFrame_ = false;
         bool needsPresentationRebuild_ = false;
+
+        GEEditCommandStack commandStack_;
 
         std::filesystem::path worldPath_;
     };
