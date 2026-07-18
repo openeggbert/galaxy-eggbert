@@ -20,6 +20,8 @@ enum class GamePhase : uint8_t
     PlaySetup,  // settings screen during gameplay
     Resume,     // resume-from-checkpoint confirmation
     Ranking,    // high-score screen
+    Editor,     // in-game 3D world editor (not a mobile-eggbert phase --
+                // content-creation tooling, see plan.md section 6)
 };
 
 constexpr uint8_t  ToRaw(GamePhase p)      { return static_cast<uint8_t>(p); }

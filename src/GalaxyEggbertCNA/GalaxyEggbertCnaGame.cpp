@@ -1214,6 +1214,30 @@ namespace GalaxyEggbert::CNA
                     SetPhase(GalaxyEggbert::GamePhase::Init);
                 }
             }
+            else if (phase_ == GalaxyEggbert::GamePhase::Editor)
+            {
+                // In-game 3D world editor (plan.md section 6, EDITOR-100) --
+                // see GEWorldEditor's own class comment.
+                const auto mouse = Mouse::GetState();
+                worldEditor_.Update(phaseKeys, mouse, dt,
+                                     viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
+
+            // TEMPORARY (EDITOR-100 debug entry point, removed once
+            // EDITOR-107's real menu button exists): F9 loads
+            // worlds3d/world999.vwr (the existing GenerateSampleWorld3D
+            // demo/test world, not new content) and enters the Editor
+            // directly, from any phase other than Editor itself.
+            if (phase_ != GalaxyEggbert::GamePhase::Editor &&
+                phaseKeys.IsKeyDown(Keys::F9) && !editorDebugKeyWasDown_)
+            {
+                if (worldRuntime_.LoadFromVwrFile("worlds3d/world999.vwr"))
+                {
+                    RebuildWorldPresentation();
+                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                }
+            }
+            editorDebugKeyWasDown_ = phaseKeys.IsKeyDown(Keys::F9);
 
             // Real Pause trigger is gamepad-Back/a touch PlayPause button
             // (see phase_'s own class-comment) -- Escape is this engine's
@@ -3412,7 +3436,8 @@ namespace GalaxyEggbert::CNA
                                              phase_ == GalaxyEggbert::GamePhase::MainSetup ||
                                              phase_ == GalaxyEggbert::GamePhase::Resume ||
                                              phase_ == GalaxyEggbert::GamePhase::Wait ||
-                                             phase_ == GalaxyEggbert::GamePhase::Init;
+                                             phase_ == GalaxyEggbert::GamePhase::Init ||
+                                             phase_ == GalaxyEggbert::GamePhase::Editor;
             if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
@@ -3489,6 +3514,10 @@ namespace GalaxyEggbert::CNA
             else if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
                 inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
+            else if (phase_ == GalaxyEggbert::GamePhase::Editor)
+            {
+                worldEditor_.Draw();
             }
 
             // Hidden cheat menu overlay (2026-07-13, plan.md

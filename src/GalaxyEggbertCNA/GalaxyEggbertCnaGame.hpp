@@ -12,6 +12,7 @@
 #include "Game/GETrainingHints.hpp"
 #include "Game/GEInputPad.hpp"
 #include "Game/GESaveData.hpp"
+#include "Editor/GEWorldEditor.hpp"
 
 #include <GalaxyEggbert/def/GamePhase.hpp>
 
@@ -467,6 +468,14 @@ namespace GalaxyEggbert::CNA
         // the real source's own "write immediately on toggle press"
         // behavior.
         GESaveData saveData_;
+
+        // In-game 3D world editor (plan.md section 6, EDITOR-1xx tasks) --
+        // see GEWorldEditor's own class comment. Entered via GamePhase::
+        // Editor. editorDebugKeyWasDown_ edge-detects the TEMPORARY F9
+        // debug entry point (EDITOR-100) that loads worlds3d/world999.vwr
+        // directly -- removed once EDITOR-107's real menu button exists.
+        GEWorldEditor worldEditor_;
+        bool editorDebugKeyWasDown_ = false;
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- real
         // gesture zones are checked only during real Phase::Play

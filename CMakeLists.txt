@@ -322,6 +322,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
         src/GalaxyEggbertCNA/Game/GEInputPad.cpp
         src/GalaxyEggbertCNA/Game/GESaveData.cpp
+        src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
         ${GE_SHARED_SOURCES}
     )
 
