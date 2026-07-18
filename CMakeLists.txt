@@ -598,6 +598,36 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         add_test(NAME VerifyGEInputPad COMMAND VerifyGEInputPad)
     endif()
 
+    # Scripted verification for the in-game 3D world editor (plan.md
+    # section 6, EDITOR-1xx) -- GEWorldEditor.cpp depends on
+    # Easy3D::Camera3D and CNA Keyboard/Mouse types, so this links the same
+    # way VerifyGEInputPad above does (CNA + backend + SHARP_RUNTIME +
+    # easy3d), even though the assertions themselves need no
+    # GraphicsDevice/window.
+    add_executable(VerifyGEWorldEditor
+        tools/VerifyGEWorldEditor.cpp
+        src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
+    )
+    target_include_directories(VerifyGEWorldEditor PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+    )
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
+        target_link_libraries(VerifyGEWorldEditor PRIVATE
+            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
+            SHARP_RUNTIME)
+    else()
+        target_link_libraries(VerifyGEWorldEditor PRIVATE CNA SHARP_RUNTIME)
+    endif()
+    if(TARGET easy3d::easy3d)
+        target_link_libraries(VerifyGEWorldEditor PRIVATE easy3d::easy3d)
+    else()
+        target_link_libraries(VerifyGEWorldEditor PRIVATE easy3d)
+    endif()
+    if(BUILD_TESTING)
+        add_test(NAME VerifyGEWorldEditor COMMAND VerifyGEWorldEditor)
+    endif()
+
 endif() # GALAXY_EGGBERT_BUILD_CNA
 
 # =============================================================================

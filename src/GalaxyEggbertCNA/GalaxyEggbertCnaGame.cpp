@@ -1220,7 +1220,7 @@ namespace GalaxyEggbert::CNA
                 // see GEWorldEditor's own class comment.
                 const auto mouse = Mouse::GetState();
                 worldEditor_.Update(phaseKeys, mouse, dt,
-                                     viewport.getWidthProperty(), viewport.getHeightProperty());
+                                     viewport.getWidthProperty(), viewport.getHeightProperty(), camera_);
             }
 
             // TEMPORARY (EDITOR-100 debug entry point, removed once
@@ -1234,6 +1234,20 @@ namespace GalaxyEggbert::CNA
                 if (worldRuntime_.LoadFromVwrFile("worlds3d/world999.vwr"))
                 {
                     RebuildWorldPresentation();
+                    // Start the free-fly camera above the world's own block
+                    // centroid (falls back to a fixed point for a
+                    // brand-new, all-air world where CentroidX/Y/Z() would
+                    // otherwise be a meaningless (0,0,0)).
+                    if (terrainRenderer_ && terrainRenderer_->BlockCount() > 0)
+                    {
+                        worldEditor_.EnterEditing(terrainRenderer_->CentroidX(),
+                                                   terrainRenderer_->CentroidY() + 8.0f,
+                                                   terrainRenderer_->CentroidZ());
+                    }
+                    else
+                    {
+                        worldEditor_.EnterEditing(50.0f, 15.0f, 50.0f);
+                    }
                     SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
                 }
             }
