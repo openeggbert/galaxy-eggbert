@@ -1,8 +1,9 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-18 (see §7.5 for standing directives; the Balloon status is now fully
-faithful — real rise, horizontal drift, and ceiling stop, all closed today — the most recent
-change, see §3)._
+_Last updated: 2026-07-18 (see §7.5 for standing directives — note the "no editor work" directive
+there is **superseded**, see §7.5's own header. The current line of work is the in-game 3D world
+editor: milestones EDITOR-100 through EDITOR-109 are implemented, verified, and pushed;
+EDITOR-110/111/112 remain, see §8)._
 
 ## 1. Project summary
 
@@ -17,6 +18,14 @@ has reached a genuinely playable state: real terrain, objects, enemies, hazards,
 save system, and menus all work. The single largest remaining gap is that Blupi himself has no
 visible 3D model yet (invisible collision point in first-person, a temporary placeholder model in
 third-person).
+
+**Active line of work (2026-07-18): the in-game 3D world editor** (`GamePhase::Editor`,
+`src/GalaxyEggbertCNA/Editor/`), a user-requested feature letting each player create, edit, save
+and play-test their own `.vwr` worlds — inspired by free-eggbert's "Own mission" editor. The user
+approved a 13-milestone plan (EDITOR-100..112); **100-109 are done and pushed**, 110/111/112 remain.
+Note this editor is an explicit, user-approved **exception** to the faithful-remake rule (see
+`plan.md` §6): it is content-creation tooling, not a mobile-eggbert feature, so inventing editor
+UX is fine — inventing new *gameplay* mechanics is still not.
 
 **Important architectural decisions:**
 - **Direct CNA + Easy3D is the locked, sole long-term target** (decided 2026-07-05). The older
@@ -39,8 +48,9 @@ third-person).
 ## 2. Current status
 
 ### Build status
-Both build trees configure and build cleanly as of the last verification this session
-(2026-07-18):
+`build-cna` builds cleanly and was re-verified after every editor milestone (2026-07-18).
+`build-cna-vulkan` has **not** been rebuilt since the editor work began — the editor's own code is
+backend-agnostic, but this is unverified, not known-good (see §5).
 - `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default — switched back from
   Vulkan 2026-07-18, see §3; still fully overridable at configure time).
 - `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`). Has a known, unrelated CNA
@@ -76,13 +86,16 @@ appears to be under active, independent development and the failure was transien
 it is not caused by anything in this repository; check `../sharp-runtime`'s own git log first.
 
 ### Test status
-Last full run (2026-07-18, both backends, re-verified after today's Balloon fixes):
-- `build-cna`: **76 tests, 99% pass** — the only failure is `easy-gl-resource-smoke-tests`, a
-  **pre-existing, unrelated** failure in the `easy-gl` dependency, not caused by this repository's
-  own code. It has been the same single failure across many verification passes this session.
-- `build-cna-vulkan`: **73/73 tests, 100% pass.**
-- `GalaxyEggbertWorldsTests` (gtest, engine-agnostic `World`/`Chunk`/`MoveObjectRecord` model) is
-  included in both totals above.
+Last full run (2026-07-18, `build-cna` only, after EDITOR-109):
+- `build-cna`: **79 tests, 78 pass (99%)** — the only failure is `easy-gl-resource-smoke-tests`, a
+  **pre-existing, unrelated** failure in the `easy-gl` dependency, root-caused entirely to that
+  repository (see §5). It has been the same single failure across every verification pass this
+  session.
+- `GalaxyEggbertWorldsTests` (gtest, engine-agnostic `World`/`Chunk`/`MoveObjectRecord` model):
+  **66/66 pass**, included in the total above.
+- `VerifyGEWorldEditor` (new this session): **165 `PASS:` assertions**, all passing.
+- `build-cna-vulkan`: **not re-run since the editor work began** — last known result was 73/73, but
+  that predates EDITOR-100..109. Re-running it is part of EDITOR-112 (§8).
 
 ### Tools/binaries available (see `CMakeLists.txt` for exact target names)
 - `GalaxyEggbertCNA` — the main game executable.
@@ -92,12 +105,45 @@ Last full run (2026-07-18, both backends, re-verified after today's Balloon fixe
 - Scripted verification tools (each an `add_test()`-registered ctest case): `VerifyBlupiMovement`,
   `VerifyInteractionSystem` (largest suite — pickups, hazards, cheats, secret powers, death/respawn
   timing), `VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`,
-  `VerifyBigDecorParsingCna`, `VerifyTerrainAnimDivisor`, `VerifyTileUvBounds`, `VerifyCameraShake`.
+  `VerifyBigDecorParsingCna`, `VerifyTerrainAnimDivisor`, `VerifyTileUvBounds`, `VerifyCameraShake`,
+  and `VerifyGEWorldEditor` (new — the whole editor's pure logic: camera math, voxel raycast, box
+  region math, undo/redo, palette data + click hit-testing, custom-world storage, browser screen,
+  object placement).
 - `GalaxyEggbertSimple3D`, `VerifyBigDecorParsing`, `VerifyMoveObjectTypes` — Simple3D-only targets,
   not built per the direction lock.
 
-### Recently implemented (this session, 2026-07-16 — see §3 for detail)
-**Two related bug families found and fixed 12 times total** this session, both from the same root
+### Recently implemented (2026-07-18: the in-game 3D world editor — see §3 for detail)
+
+**EDITOR-100..109 are complete, verified and pushed.** What works today, end to end:
+- Enter the editor from the real Init/main menu ("Editor" button), scoped to the selected gamer
+  slot. A browser screen lists that slot's worlds under `customworlds/gamer<N>/`, with create /
+  open / two-tap-delete.
+- Free-fly camera: WASD + Space/Ctrl, hold RMB for mouse-look, scroll adjusts fly speed.
+- Voxel raycast crosshair (Amanatides–Woo DDA) with a live highlight of the aimed-at cell.
+- Left click places the selected block on the aimed-at face; middle click removes a block.
+- `F` starts a box-fill: first press marks corner A, the highlight tracks a live cuboid, a second
+  press fills it as ONE undo command. `Escape` cancels.
+- Undo/redo (`U`/`R` or toolbar), 200-command depth cap.
+- Palette UI: a left-edge toolbar (Undo/Redo/Save/Back/Play-Test/mode-toggle) and a right-side
+  paged icon grid with Confirmed/All tabs. Blocks mode draws real terrain-atlas icons; Objects mode
+  draws flat category-colored cells.
+- Objects mode places real `MoveObjectRecord`s (enemies, pickups, lifts) that appear immediately as
+  billboards — no save/reload round-trip.
+- Save (`Enter` or toolbar) and a full Play-Test loop: saves, launches a real gameplay session
+  against the custom world, and returns to the editor on win/loss/pause-back without touching real
+  save progress.
+
+**Two real bugs found and fixed via this work** (both pre-existing, neither editor-specific):
+- `GETerrainRenderer` built and drew an empty static mesh for an all-air world, throwing
+  `ArgumentOutOfRangeException` (`primitiveCount` must be positive). Only reachable once "New World"
+  could create a genuinely blank world. Fixed by guarding construction, matching sibling renderers.
+- The palette fired on mouse **release** but world edits are edge-triggered on **press**, so every
+  palette icon/toolbar click also placed a block at the crosshair behind the palette. Present since
+  EDITOR-106; fixed by claiming the mouse per-press, with a regression guard confirmed to fail
+  without the fix.
+
+### Previously implemented (2026-07-16 — see §3 for detail)
+**Two related bug families found and fixed 12 times total** that session, both from the same root
 cause: real per-mechanic gate clauses that were correct when first ported but never retrofitted
 once a LATER feature (vehicles, secret powers) shipped and should have applied to them too. Each
 verified directly against `Decor.cpp`, not guessed.
@@ -177,7 +223,13 @@ north-hill plateau reachable only via a staircase + terraced ascent.
   in third-person. Blocked on the user providing a real model/rig.
 - **Saw blade (icon 378) render orientation is wrong** — 3 prior fix attempts were wrong; needs the
   user's own visual judgment (a screenshot review), not another guess.
-- **No 3D world editor** — worlds are hand-edited directly in `tools/GenerateSampleWorld3D.cpp`.
+- **World editor: object *editing* is not implemented yet** (EDITOR-110). Placed objects are always
+  stationary (`posEnd == posStart`); there is no way to give one a patrol path, change its speed or
+  timings, or remove it once placed. Sky-region picking (EDITOR-111) and the hardening pass
+  (EDITOR-112, incl. an unsaved-changes guard) are also still open — see §5.
+- **The editor has no text rendering** — toolbar buttons are distinguished by position and color
+  only, and object palette cells are flat category-colored squares rather than real sprites. Both
+  are documented, deliberate simplifications, not oversights (see §5).
 - Several real HUD buttons render but are intentionally inert (no desktop equivalent exists yet):
   `SetupJump`/`SetupZoom`/`SetupAccel`, `PauseBack`, `InitRanking`/`InitBuy`.
 - Idle "fidget" periodic sounds — blocked on `AnimState` values this engine doesn't have (same
@@ -187,6 +239,42 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### In-game 3D world editor, EDITOR-100..109 (2026-07-18, 10 commits `a9140c2`..`a6ba199`)
+
+New tree `src/GalaxyEggbertCNA/Editor/`:
+- `GEWorldEditor.hpp/.cpp` — owns camera/tool state/undo stack, drives everything else.
+- `GEVoxelRaycast.hpp/.cpp` — Amanatides–Woo DDA against `Worlds::World`.
+- `GEBoxRegion.hpp/.cpp` — corner pair → normalized, world-clamped box.
+- `GEEditCommandStack.hpp/.cpp` — tagged `GEEditCommand` undo/redo stack.
+- `GEPaletteCategories.hpp/.cpp` — curated + exhaustive numeric palette data (blocks and objects).
+- `GEEditorPalette.hpp/.cpp` — toolbar + paged icon grid, Blocks/Objects modes.
+- `GEEditorHighlightRenderer.hpp/.cpp` — cell/box selection overlay.
+- `GEEditorBrowserScreen.hpp/.cpp` — per-gamer world list/create/open/delete UI.
+- `GECustomWorldStorage.hpp/.cpp` — `customworlds/gamer<N>/custom_NNN.vwr` path helpers.
+
+Also added: `src/GalaxyEggbertCNA/Game/GEQuadBatch.hpp/.cpp`, extracted from `GEInputPad` so the
+editor UI reuses the exact same 2D quad primitives (`GEInputPad`'s public API unchanged;
+`VerifyGEInputPad` passes unmodified as the regression guard), and `tools/VerifyGEWorldEditor.cpp`
+(165 assertions).
+
+Modified: `GamePhase.hpp` (new `Editor` value); `Worlds/World.hpp/.cpp`
+(`removeBlockExtraMetadata`); `MoveObjectRecord.hpp/.cpp` (`RemoveMoveObject`);
+`GEWorldRuntime.hpp/.cpp` (new public `ResyncFromWorld()`, refactored out of `LoadFromVwrFile()`'s
+tail); `GEInputPad.hpp/.cpp` (Init-screen Editor button + `GEQuadBatch` extraction);
+`GalaxyEggbertCnaGame.hpp/.cpp` (phase dispatch, `worldEditor_`, `LoadCustomWorldForEditing`/
+`ForPlayTest`, play-test routing, `ResyncFromWorld()` call in `RebuildWorldPresentation()`);
+`CMakeLists.txt`; `tests/GalaxyEggbert/MoveObjectRecordTests.cpp` (+2 gtest cases, 66 total).
+
+Bugs fixed: the empty-world `GETerrainRenderer` crash and the palette press/release click bug —
+both described in §2's "Recently implemented".
+
+Verification method used throughout, worth reusing: pure logic (raycast math, box math, undo/redo,
+palette hit-testing, storage, placement) goes into `VerifyGEWorldEditor` with synthetic
+`KeyboardState`/`MouseState` values and no GraphicsDevice; anything visual is checked live with
+temporary env-var-gated (`GE_EDITOR_AUTOTEST_*`) instrumentation under Xvfb with screenshot capture,
+**always fully reverted before commit** (confirm with `git diff` — a whole-file `git checkout` is
+risky here, it can also revert real uncommitted work; prefer targeted edits).
 
 - **fix: Balloon's last 2 documented gaps closed — horizontal drift + ceiling stop (plan.md
   `E3D-MIG-135`).** User asked to close both limitations left after the rise fix below. (1)
@@ -767,9 +855,18 @@ Most recent first. Full history: `git log`.
 
 ## 4. Current blocker / main problem
 
-**There is no active build or test failure blocking progress.** Both backends build and pass their
-full test suites (see §2). The practical blockers right now are a small number of items that
-genuinely need a **human decision**, not more engineering:
+**There is no active build or test failure blocking progress.** `build-cna` builds and passes
+78/79 (the one failure is the pre-existing `easy-gl` dependency test, see §5). The current line of
+work — the 3D world editor — is mid-plan but not stuck: EDITOR-110 is simply the next unstarted
+milestone, fully specified and unblocked.
+
+The nearest thing to a real risk is **`build-cna-vulkan` has not been rebuilt or re-tested since
+the editor work began** (10 commits). The editor code is backend-agnostic and nothing suggests a
+problem, but this is unverified. Closing it is part of EDITOR-112 and is the cheapest way to rule
+out a regression — if picking this project up cold and wanting a quick confidence check, do that
+first (§7 has the commands).
+
+The remaining blockers are items that genuinely need a **human decision**, not more engineering:
 - Saw blade (icon 378) render orientation — needs the user to look at a screenshot/crop and state
   the correct orientation; 3 prior autonomous guesses were wrong.
 - `AscenseurVertigo` (wide/shiftable lift platforms, icons 311-316) — needs the user to choose
@@ -792,7 +889,28 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   A real fix needs a general airborne-collision primitive shared by all of these, not a per-status
   patch — out of scope for any single-mechanic task; flag if picked up.
 - **Incomplete:** No visible 3D Blupi model (blocked on the user providing one).
-- **Incomplete:** No 3D world editor.
+- **Incomplete (world editor, by design — the remaining plan milestones):**
+  - No object *editing* (EDITOR-110): placed objects are permanently stationary; no patrol path,
+    speed, timing edits, or object removal. `GEEditCommand::Kind::MoveObjectEdit` already supports
+    remove/overwrite at the stack level, so this is UI work, not data-model work.
+  - No sky-region picker (EDITOR-111): `world.skyRegion()` can't be changed from the editor.
+    `GEEditCommand::Kind::SkyRegionEdit` is declared but has no fields or stack handling yet.
+  - No unsaved-changes guard (EDITOR-112): Back/Open/Quit discard silently. Save is explicit
+    (`Enter` or the toolbar button); Play-Test auto-saves first.
+- **Incomplete (world editor, deliberate simplifications, documented in the code):** no text
+  rendering anywhere in the editor — toolbar buttons are distinguished by position, and the
+  mode-toggle by color; object palette cells are flat category-colored squares, because object
+  sprites live across `element.png`/`explo.png`/`blupi.png` selected per type by
+  `GEObjectIcons::GetObjIcon`, and that multi-atlas plumbing was judged disproportionate. Both are
+  refinable later; neither is a functional gap (every tool has a working binding).
+- **Needs verification:** `build-cna-vulkan` has not been rebuilt/re-tested since EDITOR-100 (see
+  §4). Expected fine; unproven.
+- **Risky assumption (world editor):** `ObjectType` category names/membership in
+  `GEPaletteCategories.cpp` were taken **only** from `ObjectType.hpp`'s own documented comment
+  groups. The "Confirmed" tab deliberately excludes types the game spawns itself (explosions,
+  splashes, projectiles, door/bridge animations) — they remain reachable via "All Types". If a type
+  turns out to be placeable/non-placeable contrary to that grouping, fix the grouping rather than
+  inventing new semantics for it.
 - **Fixed 2026-07-16:** Sucette(26)/Drink(30)/Charge(31) pickups and `TriggerTeleport()` now check
   vehicle mode + Balloon/Ecrase (`Decor.cpp:6025-6087`/`:5593-5594`). Shield(25)/Invert(40) confirmed
   to have no such clause in real source (the previous entry here mistakenly listed Shield). See §3.
@@ -856,6 +974,38 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   (`World`/`Chunk`/`Block`, real enum IDs). Shared by any future engine target; keep it that way
   (no CNA/Easy3D-specific dependencies here).
 
+**World editor** (`src/GalaxyEggbertCNA/Editor/`, new 2026-07-18):
+- `GEWorldEditor` is the only class `GalaxyEggbertCnaGame` talks to. It owns the free-fly camera,
+  raycast/highlight state, undo stack, palette, box-fill state, and browsing/editing mode.
+- It follows the **same "pending signal consumed by the owner" idiom** as `GEInteractionSystem`:
+  it has no `GEWorldRuntime`, phase, or file-loading access, so it reports
+  `ConsumeNeedsPresentationRebuild()` / `ConsumePlayTestRequested()` / a `BrowserRequest`, and
+  `GalaxyEggbertCnaGame` performs the actual rebuild/phase-switch/load. Keep it that way.
+- The lower helpers (`GEVoxelRaycast`, `GEBoxRegion`, `GEEditCommandStack`, `GEPaletteCategories`,
+  `GECustomWorldStorage`) are **pure logic with no CNA/Easy3D dependency**, which is what lets
+  `VerifyGEWorldEditor` link and test them headlessly. Do not introduce graphics dependencies into
+  these five — it would silently cost the whole test suite.
+
+**Coordinate invariants (the single easiest thing to get wrong here):**
+- **Block centering:** block index `N` spans `[N-0.5, N+0.5)` — *not* `[N, N+1)`. Position→index
+  conversion uses `std::lround`, not `floor` (see `GEWorldRuntime`). `GEVoxelRaycast` bakes the
+  corresponding `+0.5` shift into its DDA.
+- **Render space vs raw grid space:** render space = raw grid space shifted by
+  `-GEWorldRuntime::kWorldCenterX/Z` (= 50) on **X and Z only**; Y is identical in both.
+  `Worlds::World` and `MoveObjectRecord` are always raw grid space; the camera is always render
+  space. `GEWorldEditor::Update()` converts internally so callers never apply the shift themselves.
+- **`MoveObjectRecord` anchoring:** a record is stored in the block-extra-metadata of
+  `floor(posStart)`, and at most one record may occupy a given anchor cell — placing a second
+  silently replaces the first. Undo of an overwrite must therefore restore the previous record, not
+  just clear the cell (`GEEditCommandStack::ApplyMoveObjectState` does exactly this).
+- **`RebuildWorldPresentation()` now calls `GEWorldRuntime::ResyncFromWorld()` first.** The editor
+  mutates the live `World` in place with no disk round-trip, so `LoadFromVwrFile()` — previously the
+  only thing that populated `mobileObjects_`/`skyRegion_`/`missionNumber_` — never runs for an
+  in-editor edit. Removing this call makes placed objects invisible until save+reload.
+- **Palette vs world clicks:** `GEEditorPalette` claims the mouse from the **press** frame onward
+  (per press, not per cursor position), because world edits are press-triggered while the palette
+  acts on release. Don't "simplify" this back to a release-only check — see §2's bug note.
+
 **Invariants / boundaries that must not be broken:**
 - `../mobile-eggbert` is never modified, not even temporarily, not even for "just looking."
 - `../simple-3d` is read-only.
@@ -900,6 +1050,30 @@ cmake --build build-cna --target VerifyInteractionSystem -j2
 cd build-cna && ./VerifyInteractionSystem
 ```
 
+Build + run the world-editor verification suite (the relevant one for all EDITOR-* work — prints
+every `PASS:`/`FAIL:` line; expect 165 checks and `ALL CHECKS PASSED`):
+```
+cmake --build build-cna --target VerifyGEWorldEditor -j2
+cd build-cna && ./VerifyGEWorldEditor
+```
+
+Run the engine-agnostic world-model gtest suite directly (expect 66/66):
+```
+cmake --build build-cna --target GalaxyEggbertWorldsTests -j2
+cd build-cna && ./GalaxyEggbertWorldsTests
+```
+
+Reproduce the one known ctest failure (pre-existing, in the `easy-gl` dependency — **not** a
+galaxy-eggbert bug, see §5):
+```
+cd build-cna && ctest -R easy-gl-resource-smoke-tests --output-on-failure
+```
+
+Headless live run (for visual verification of editor/gameplay changes; needs `xvfb-run`):
+```
+cd build-cna && timeout 80 xvfb-run -a ./GalaxyEggbertCNA
+```
+
 Regenerate the sample world (only needed after editing `tools/GenerateSampleWorld3D.cpp`):
 ```
 cmake --build build-cna --target GenerateSampleWorld3D -j2
@@ -922,8 +1096,15 @@ user before treating them as permanent beyond it):
 - **`GESaveData` stays an independent format, not byte-compatible with real mobile-eggbert saves**
   (closes `E3D-MIG-106`/the open question in §3 of the main doc) — don't expand `SAVE-*` scope
   toward byte-layout matching.
-- **No 3D world editor work this session** (`EDITOR-000..010`) — a dedicated future effort, not
-  part of this one.
+- ~~**No 3D world editor work this session** (`EDITOR-000..010`) — a dedicated future effort, not
+  part of this one.~~ **SUPERSEDED 2026-07-18**: the user explicitly commissioned the editor as its
+  own effort and approved a 13-milestone plan (EDITOR-100..112), answering three design questions
+  up front: it is an **in-game mode** inside `GalaxyEggbertCNA` (not a separate executable — this
+  also overrides `plan.md`'s own `EDITOR-000` placeholder recommendation), custom worlds belong to
+  the **existing 3-gamer-slot** save system, and the **full feature set** was requested rather than
+  an MVP. A further standing instruction from that session: **any investigation of free-eggbert's
+  code must be delegated to a subagent** that returns only what's needed, to keep it out of the
+  main context.
 - **Blupi-model prep IS authorized, format-agnostic only**: e.g. animation-state timing/signal
   plumbing, third-person placeholder improvements, asset-loading scaffolding that would work
   regardless of the eventual real model's exact format/rig. Do NOT commit to a specific model
@@ -935,7 +1116,42 @@ user before treating them as permanent beyond it):
 
 ## 8. Next smallest tasks
 
-1. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
+The editor plan (EDITOR-110..112) is the active line of work; do these in order first. Each is one
+focused session, and each ends with: build → `VerifyGEWorldEditor` → full `ctest` → live headless
+check of the new behavior → revert instrumentation → commit → push.
+
+1. **EDITOR-110 — MoveObject editing.** Select a placed object and change it: set `posEnd` to the
+   current aim point (giving it a real patrol path), adjust `speed` and the four patrol-timing
+   fields, and remove it. Nearest-billboard picking should reuse the existing
+   `GEHud::ProjectWorldToHudSpace()` static rather than a new projection path. The undo stack
+   already handles remove/overwrite via `Kind::MoveObjectEdit`, so no data-model change is needed.
+   Files: `src/GalaxyEggbertCNA/Editor/GEWorldEditor.{hpp,cpp}`, `GEEditorPalette.{hpp,cpp}`,
+   `tools/VerifyGEWorldEditor.cpp`.
+   Verify: `cmake --build build-cna --target VerifyGEWorldEditor -j2 && cd build-cna &&
+   ./VerifyGEWorldEditor` — add a full place→edit→undo→redo→remove→undo sequence checked against
+   `CollectMoveObjects`; then a live run placing a lift with a real patrol path and play-testing it.
+
+2. **EDITOR-111 — Sky-region picker.** A stepper cycling `world.skyRegion()` 0–31, flagging which
+   ids have real `Content/backgrounds/decorNNN.png` art (only 28 of 32 do — it must degrade
+   gracefully, see `RebuildWorldPresentation()`'s own comment). Implement
+   `GEEditCommand::Kind::SkyRegionEdit` in the stack (currently declared but unhandled).
+   Files: `GEWorldEditor.{hpp,cpp}`, `GEEditCommandStack.{hpp,cpp}`, `GEEditorPalette.{hpp,cpp}`,
+   `tools/VerifyGEWorldEditor.cpp`.
+   Verify: `VerifyGEWorldEditor` (wrap-around at both ends + undo/redo) plus a live screenshot
+   showing the background actually swap.
+
+3. **EDITOR-112 — Hardening pass + full regression.** Unsaved-changes guard (dirty flag + one-tap
+   confirm on Back/Open/Quit), a box-fill test that straddles world bounds, consolidate
+   `VerifyGEWorldEditor` into clearly-named sections, and — the part worth doing even if the rest
+   slips — **re-run the full suite on `build-cna-vulkan`**, which hasn't been rebuilt since the
+   editor work began (see §4).
+   Files: `src/GalaxyEggbertCNA/Editor/*`, `tools/VerifyGEWorldEditor.cpp`.
+   Verify: `cd build-cna && ctest` and `cd build-cna-vulkan && ctest`, plus a final live
+   walkthrough of the whole editor → play-test → editor loop.
+
+Non-editor tasks, available if the editor line is paused:
+
+4. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
    isolate a frame showing the flying icon-48 HUD animation itself (the earlier live check
    confirmed the life-total/position state transition but didn't catch the icon mid-flight at the
    screenshot intervals used).
@@ -965,7 +1181,18 @@ user before treating them as permanent beyond it):
   without explicit user approval, even when it looks like "just data."
 - **No new invented gameplay mechanics.** Every feature must trace to something confirmed in real
   mobile-eggbert source or `mobile-eggbert-reference/` — verify before implementing, don't guess
-  from plausibility.
+  from plausibility. **The world editor is the one approved exception, and only for editor UX**
+  (tools, palettes, camera, undo): the editor must not introduce gameplay behavior that
+  mobile-eggbert doesn't have.
+- **No expanding editor scope beyond EDITOR-110/111/112** until those three are done — no text
+  rendering, no real per-type object icons, no copy/paste or brush tools, no terrain generation.
+  Each is defensible later; none is in the approved plan.
+- **No graphics dependencies in the five pure-logic editor helpers** (`GEVoxelRaycast`,
+  `GEBoxRegion`, `GEEditCommandStack`, `GEPaletteCategories`, `GECustomWorldStorage`) — it would
+  break `VerifyGEWorldEditor`'s headless linkage (see §6).
+- **No whole-file `git checkout` to revert live-test instrumentation.** It can silently discard
+  real uncommitted work in the same file (this happened once during EDITOR-109 and had to be caught
+  and restored). Revert with targeted edits, then confirm with `git diff`.
 - **No refactor of the `GEInteractionSystem`/`GEBlupiController` decoupling** (see §5/§6) — it is a
   deliberate, repeatedly-reaffirmed design choice, not technical debt.
 - **No 3rd guess at the Saw blade orientation** without the user's own visual input — 3 prior
@@ -980,19 +1207,32 @@ user before treating them as permanent beyond it):
 ```
 Read NEXT.md first, in full, before doing anything else.
 
-Then work on exactly ONE task from its "Next smallest tasks" section (§8) — pick the
-first one that isn't blocked on a decision only the user can make. Read only the
-files that task names; do not open or refactor unrelated files.
+Then work on exactly ONE task from its "Next smallest tasks" section (§8) — start
+with task 1 (EDITOR-110, MoveObject editing) unless it is already done. Read only
+the files that task names; do not open or refactor unrelated files.
+
+Before writing editor code, read §6's "Coordinate invariants" — block centering
+(index N spans [N-0.5, N+0.5), lround not floor), the render-space vs raw-grid-space
++50 X/Z shift, and MoveObjectRecord anchoring. These are the easiest things here to
+get subtly wrong.
 
 Do not refactor unrelated code. Do not touch ../mobile-eggbert or
 GalaxyEggbertSimple3D. Do not invent gameplay mechanics not confirmed in real
-mobile-eggbert source.
+mobile-eggbert source (editor UX is the one approved exception — see §9). If you
+need to look at free-eggbert's code, delegate that to a subagent that returns only
+what's needed.
 
-Make one small, verified improvement. Run the exact verification command that task
-lists, on both build-cna and build-cna-vulkan if the change touches shared game code.
+Make one small, verified improvement. Run:
+  cmake --build build-cna --target VerifyGEWorldEditor -j2 && cd build-cna && ./VerifyGEWorldEditor
+then the full suite: cd build-cna && ctest
+For anything visual, verify live under xvfb-run with temporary env-var-gated
+instrumentation, and REVERT it with targeted edits before committing — confirm with
+git diff, never a whole-file git checkout (§9 explains why).
+
+Commit after the task is done and verified, then push to origin/develop.
 
 When done, update NEXT.md: move the completed task out of §8 into §3 (Recent
-changes) with a one-line factual summary, and adjust §2/§4/§5 if the change affects
+changes) with a short factual summary, and adjust §2/§4/§5 if the change affects
 them. Keep the whole file honest and concise — do not describe anything as done
 that you have not actually verified this session.
 ```
