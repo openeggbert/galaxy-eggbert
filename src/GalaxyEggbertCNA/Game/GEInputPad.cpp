@@ -45,6 +45,16 @@ namespace GalaxyEggbert::CNA
         constexpr float kPausePressedAlpha = 0.8f;
         constexpr float kPlayPressedAlpha = 0.6f;
 
+        // Real DrawInfo/Init panel opacity is 0.6 (same value as GEHud.cpp's
+        // own kPanelOpacity, same real panel icon -- kInitPanelIcon's own
+        // comment). Restored 2026-07-18 now that EasyGL (not Vulkan) is the
+        // default graphics backend (CMakeLists.txt); a CNA/Vulkan-only bug
+        // (BasicEffect Alpha<1 doesn't render at all under Vulkan, still
+        // unfixed) means building with `-DCNA_GRAPHICS_BACKEND=VULKAN` will
+        // make these panels vanish again -- see GEHud.cpp's kPanelOpacity
+        // for the full empirical citation.
+        constexpr float kInitPanelOpacity = 0.6f;
+
         // Play on-screen control layout (proportionally adapted into the
         // existing 640x480 reference space -- see GEInputPad.hpp's class
         // comment for why a literal drawBounds-relative port isn't
@@ -1953,11 +1963,7 @@ namespace GalaxyEggbert::CNA
             blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
             blupiyoupieEffect_->setAlphaProperty(1.0f);
         }
-        // Panels drawn opaque (1.0), not truly semi-transparent -- same
-        // CNA/Vulkan `BasicEffect` Alpha<1 workaround already documented by
-        // GEHud.cpp's own kPanelOpacity (a BasicEffect draw with Alpha<1
-        // renders on EasyGL but not at all on CNA's Vulkan backend).
-        FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, kInitPanelOpacity);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);

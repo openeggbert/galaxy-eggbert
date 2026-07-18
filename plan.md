@@ -1981,7 +1981,21 @@ Corrected 2026-07-13 against real source (same research pass) — the draft's ME
 animation descriptions were WRONG on direction/effect; see each item below.
 
 - [x] MENU-006 — Render `init.png` as full-screen background — **done**, `GEInputPad::DrawInit()`.
-      Confirmed exact 640×480.
+      Confirmed exact 640×480. **Pillarbox color fixed 2026-07-18** (user-reported: the blue margin
+      strips on the sides of the main menu should be dark blue, not the visibly lighter/different
+      shade they were): `GalaxyEggbertCnaGame::Draw()`'s `device.Clear(...)` call — the color
+      visible in the pillarbox margins around `init.png`'s own scaled-to-fit content rect during
+      Wait/Init (per that call site's own pre-existing comment) — was still the generic default
+      XNA/MonoGame "CornflowerBlue" template color (0.392, 0.584, 0.929), never customized. Sampled
+      `Content/backgrounds/init.png`'s own corner pixel directly (RGB(0,35,98), a dark navy) and
+      changed the clear color to match exactly, eliminating the visible seam between the pillarbox
+      and the actual background art. Also investigated a separately user-reported "different shade
+      outline" around the SPEEDY BLUPI logo/Blupi image (suspected possible CNA bug) — direct pixel
+      inspection of the source PNG's semi-transparent edge pixels (dark gray, ~20-30 RGB, not any
+      off color) plus a manual alpha-blend calculation over the (now-corrected) dark navy background
+      reproduces the exact "lighter blue ring" visual exactly — this is the mathematically correct,
+      expected result of alpha-blending this real asset's own soft anti-aliased edge over a blue
+      backdrop, not a rendering bug (confirmed NOT a `cna` defect).
 - [x] MENU-007 — Render `speedyblupi.png` (title logo) — **done, but draft was WRONG on
       direction**: real entry is a **vertical slide DOWN from above the screen** (`num=1-(1-t)^2`
       ease-out over 1.0s, Left/Right FIXED at 80/720 the whole time), not "sliding in from top" in
@@ -2371,7 +2385,19 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       NO "+N" overflow text anywhere in the real source. `GalaxyEggbertCNA`'s existing uncapped
       `GEHud` implementation (`HUD-001`) was already correct; no change needed.
 - [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel (CNA, 2026-07-10, `GEHud`): real position (460,450), glyphs from `text.png` whose sheet index IS the ASCII code (read off the asset, not `table_char`); fixed 17px advance approximates the real proportional widths
-- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15) (CNA, 2026-07-10, `GEHud`) — at opacity 1.0 instead of the real 0.6 for now (CNA Vulkan drops `BasicEffect` draws with Alpha<1, see NEXT.md §5)
+- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15) (CNA, 2026-07-10, `GEHud`)
+      — **restored to the real 0.6 opacity 2026-07-18** (user-reported: main-menu buttons/panels
+      render as solid opaque white instead of translucent). Root cause: `kPanelOpacity` (and
+      `GEInputPad::DrawInit()`'s own equivalent Init-screen panel opacity, same `pad.png` icon 15)
+      had been forced to 1.0 since 2026-07-10 specifically because Vulkan was the default backend
+      and CNA's Vulkan `BasicEffect` doesn't render an Alpha<1 draw at all (a genuine, still-unfixed
+      CNA bug). Confirmed the source `pad.png` asset itself already has real alpha baked in
+      (icon 15 sampled directly: uniform RGBA(255,255,255,200), i.e. ~78% opaque white) — the
+      renderer was simply discarding the ADDITIONAL 0.6 multiplier on top of that, not a texture
+      problem. Now that `CMakeLists.txt`'s default backend is EasyGL (switched the same day, see
+      `E3D-MIG-069`'s own writeup), which renders Alpha<1 correctly, both call sites restored to the
+      real 0.6 value. Building with `-DCNA_GRAPHICS_BACKEND=VULKAN` will still make these panels
+      vanish — the underlying CNA bug itself remains unfixed, tracked separately.
 - [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11; since 2026-07-10 at the REAL position (520,418) via `GEHud`)
 - [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held (CNA, 2026-07-11; real position (530,418))
 - [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held (CNA, 2026-07-11; real position (540,418))

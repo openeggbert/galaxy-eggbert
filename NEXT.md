@@ -179,6 +179,22 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: main-menu pillarbox color + panel transparency (plan.md `MENU-006`/`HUD-004`).** Two
+  user-reported main-menu visual bugs, both real. (1) The pillarbox margins on the sides of the
+  Init/Wait screens were the generic default XNA/MonoGame "CornflowerBlue" template clear color,
+  never customized to match the actual dark-navy menu background art — fixed by sampling
+  `Content/backgrounds/init.png`'s own corner pixel (RGB(0,35,98)) and using that exact color for
+  `device.Clear()`, eliminating the visible seam. (2) Every button/panel on the main menu (gamer
+  slots, Play, Settings gear) rendered as fully opaque white instead of translucent — root cause:
+  both `GEHud`'s `kPanelOpacity` and `GEInputPad::DrawInit()`'s equivalent had been forced to 1.0
+  since 2026-07-10 specifically to work around a genuine CNA/Vulkan bug (`BasicEffect` with
+  Alpha<1 doesn't render at all under Vulkan) -- since Vulkan was the default backend at the time.
+  Restored both to the real 0.6 value now that EasyGL (which renders this correctly) is the
+  default. Building with `-DCNA_GRAPHICS_BACKEND=VULKAN` will still lose these panels -- that CNA
+  bug itself remains unfixed, out of scope for today. Also investigated a third reported issue (a
+  "different shade" outline around the SPEEDY BLUPI logo/Blupi image, suspected `cna` bug) and
+  confirmed via direct pixel math it's the correct, expected alpha-blend result of the real asset's
+  own soft edge over the (now-corrected) dark background -- not a bug. Full regression clean.
 - **fix: Balloon visual legibility (no visible change on flat ground) + default graphics backend
   switched to EasyGL (plan.md `E3D-MIG-069`/`135`).** User re-reported "Blupi still doesn't float
   when the wasp stings him" after the physics fix below, ~5th time reporting it — frustrated,

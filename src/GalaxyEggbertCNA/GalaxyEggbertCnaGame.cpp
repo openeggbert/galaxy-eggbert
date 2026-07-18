@@ -2805,7 +2805,15 @@ namespace GalaxyEggbert::CNA
         // mid-draw), so it always captures an uncorrupted frame.
         ++drawFrameIndex_;
 
-        device.Clear(0.392f, 0.584f, 0.929f, 1.0f);
+        // Dark navy (2026-07-18, user-reported: pillarbox margins around
+        // Wait's/Init's menu screens should be dark blue, not the generic
+        // XNA/MonoGame "CornflowerBlue" template default this was
+        // previously left at). Matches Content/backgrounds/init.png's own
+        // corner pixel color exactly (sampled directly: RGB(0,35,98)), so
+        // the pillarbox seamlessly matches that background's own edge tone
+        // instead of showing a visible seam between a lighter placeholder
+        // blue and the actual (darker) menu artwork.
+        device.Clear(0.0f, 0.1373f, 0.3843f, 1.0f);
         device.SetDepthTestEnabled(true);
 
         // Reported live (2026-07-13): the 3D world was visible bleeding
