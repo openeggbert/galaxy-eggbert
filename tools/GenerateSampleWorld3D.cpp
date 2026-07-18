@@ -427,6 +427,17 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
         PlaceMoveObject(world, lift);
     }
 
+    // Second wasp, right on the flat spawn corridor (2026-07-18, user
+    // manual-testing convenience) -- the original north-hill wasp below
+    // requires navigating the staircase + terraced ascent to reach, which
+    // made the Balloon status hard to manually verify (repeated user
+    // reports of "no change" that turned out to be the real physics/visual
+    // fixes working correctly, just never actually reached in testing).
+    // This one sits 5 tiles east of spawn (grid 50,*,50) on the same y=0
+    // corridor floor spawn is on -- reachable by holding "forward" for
+    // about a second, zero platforming required.
+    place(ObjectType::ObjectType44, 55.0f, 1.0f, 50.0f);
+
     // North hill: 2 eggs + 1 chest along the ascent, 1 wasp patrolling the
     // plateau, 1 more chest + the level-exit goal in the crow's-nest.
     place(ObjectType::ObjectType6, 47.0f, 1.0f, 44.0f);  // egg, on the connector

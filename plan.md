@@ -773,10 +773,30 @@ of truth; do not invent stomp/hit feel not documented there.
       kill through the balloon. Real entry/recovery sound channels 40/41 (channel 41 shared with
       Crusher's own recovery, confirming it's a generic "status expired" cue, not
       hazard-specific). Already playable via the wasp already placed on the north-hill plateau
-      in `worlds3d/world001.vwr`. Verified via 9 new `VerifyBlupiMovement` state-machine
+      in `worlds3d/world999.vwr` (this engine's own quarantined mechanics-showcase world, reached
+      from the real global hub `world001.vwr` via its `DemoPortal` marker at grid (50,1,54), a
+      few tiles from spawn). Verified via 9 new `VerifyBlupiMovement` state-machine
       assertions and 9 new `VerifyInteractionSystem` assertions (wasp/follower/bulldozer
       interaction, injected synthetically since none but the wasp itself is placed in the real
       world).
+      **Second wasp added right on the spawn corridor, 2026-07-18** (user reported "still doesn't
+      work" ~7 times despite the physics/visual fixes above both being independently re-verified
+      live and correct): the ONLY existing wasp sits on the north-hill plateau, which requires
+      navigating a 10-step staircase + terraced ascent to reach — real friction for anyone manually
+      testing this specific mechanic. Added `place(ObjectType::ObjectType44, 55.0f, 1.0f, 50.0f)`
+      in `tools/GenerateSampleWorld3D.cpp`'s `GenerateDemoWorld()`, 5 tiles east of spawn on the
+      same flat corridor floor, zero platforming required. **Conclusively re-verified end-to-end
+      with fully realistic simulated player input** (not a position teleport like every earlier
+      verification pass this session): temporary debug instrumentation forced `moveInput=1.0` every
+      frame (the same "walk forward" signal a real held arrow key produces) through the actual
+      `GalaxyEggbertCnaGame::Update()` pipeline from a fresh mission-999 load, logging position/
+      `IsBallooned()` every frame. Contact with the new wasp triggers `IsBallooned()==true` at frame
+      46 (~0.77s of walking), and Blupi's height stays frozen exactly while horizontal movement
+      continues normally — proving the full chain (contact detection → `TriggerBalloon()` →
+      physics freeze → visual bob) genuinely works via ordinary input, not just synthetic
+      `SetPosition()` calls. All debug instrumentation reverted before commit, `worlds3d/world999.vwr`
+      regenerated via the tool's own "manually run to regenerate" convention (only that one file
+      changed — confirmed via `git status`, every other of the 78 world files stayed byte-identical).
 - [x] `136` Type 54 (large creature) — lethal only while paused mid-turn, destroys current
       vehicle or fatally grabs Blupi, never destroyed itself, unconditional taunt icon. Done
       2026-07-11: verified directly against `Decor.cpp:5867-5913`. Contact is lethal ONLY while

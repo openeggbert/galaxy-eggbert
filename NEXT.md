@@ -179,6 +179,20 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: trivially-reachable wasp for manual Balloon testing + conclusive realistic-input
+  verification (plan.md `E3D-MIG-135`).** User reported "wasp sting still doesn't make Blupi float,
+  no change at all" for the ~7th time despite two independent prior fixes (the physics freeze and
+  the visual bob) both already re-verified live and correct. Root suspicion: the ONLY existing wasp
+  sits on a north-hill plateau requiring a staircase + terraced-ascent platforming section to
+  reach — real friction for manual testing that may explain why the fix was never actually being
+  exercised. Added a second wasp directly on the flat spawn corridor of `worlds3d/world999.vwr`
+  (5 tiles from spawn, zero platforming), and — critically — re-verified the ENTIRE chain using
+  fully realistic simulated player input (held-forward `moveInput`, driven through the real
+  `Update()` pipeline) instead of a position teleport like every earlier check this session:
+  contact triggers `IsBallooned()` naturally at frame 46 of ordinary walking, with height
+  correctly frozen while horizontal movement continues. This is the most rigorous verification of
+  this mechanic yet — reachable via `worlds3d/world001.vwr`'s existing `DemoPortal` a few tiles
+  from the global hub's own spawn point.
 - **fix: main-menu pillarbox color + panel transparency (plan.md `MENU-006`/`HUD-004`).** Two
   user-reported main-menu visual bugs, both real. (1) The pillarbox margins on the sides of the
   Init/Wait screens were the generic default XNA/MonoGame "CornflowerBlue" template clear color,
