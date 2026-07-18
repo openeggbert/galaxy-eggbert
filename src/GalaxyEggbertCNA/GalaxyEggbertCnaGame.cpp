@@ -3035,11 +3035,26 @@ namespace GalaxyEggbert::CNA
                 // category of engine-appropriate 3D substitution as
                 // billboard sprites/shadows elsewhere in this project, not a
                 // new mechanic.
-                constexpr float kBalloonBobAmplitude = 0.08f;
-                constexpr float kBalloonBobFrequency = 3.0f; // rad/s
+                // 2026-07-18 (2nd pass): the original +/-0.08 symmetric bob was
+                // mathematically confirmed live (via multiple time-spaced
+                // screenshots matching the expected sine curve) to be
+                // genuinely rendering, but the user, watching directly in
+                // third person, still saw no perceptible difference -- a
+                // +/-0.08 unit wobble (10% of Blupi's own ~0.72-unit height)
+                // read as noise, not "floating", especially since half the
+                // cycle dips BELOW normal standing height. Redesigned as a
+                // sustained upward lift (never below normal stance, so it
+                // never looks like sinking into the ground) with a gentler
+                // bob riding on top -- Blupi now visibly hovers well above
+                // the ground the ENTIRE time he's ballooned, not just a
+                // subtle oscillation around his normal height.
+                constexpr float kBalloonBobBaseLift = 0.22f;
+                constexpr float kBalloonBobRange = 0.10f;
+                constexpr float kBalloonBobFrequency = 2.0f; // rad/s
                 const float balloonBob = blupi_.IsBallooned()
-                    ? kBalloonBobAmplitude *
-                          std::sin(static_cast<float>(blupiClipTimeSeconds_) * kBalloonBobFrequency)
+                    ? kBalloonBobBaseLift +
+                          kBalloonBobRange *
+                              std::sin(static_cast<float>(blupiClipTimeSeconds_) * kBalloonBobFrequency)
                     : 0.0f;
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(kPlaceholderModelScale) *

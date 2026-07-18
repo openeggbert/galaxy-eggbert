@@ -179,6 +179,17 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: Balloon float effect was too subtle to notice during real gameplay (plan.md
+  `E3D-MIG-135`).** User re-reported "still no change" after directly confirming (via targeted
+  follow-up questions) they'd done a genuinely fresh CLion rebuild and watched the wasp sting in
+  third-person view. Time-spaced screenshots (correcting two methodology gaps from the first
+  verification pass: consecutive-frame shots can't show sine motion, and chase-camera damping was
+  confounding an early retry) proved the original +/-0.08-unit bob WAS rendering exactly per the
+  math — just too subtle at normal camera distance to read as "floating" rather than noise, since
+  half the cycle dipped below normal standing height. Redesigned as a sustained upward hover
+  (~0.12-0.32 units above normal stance the entire time, never dropping back down) with a gentle
+  bob on top — confirmed via fresh screenshots to be an unmistakable, continuous gap between
+  Blupi's feet and the ground. Physics untouched (still a real, verified zero-gravity freeze).
 - **feat: trivially-reachable wasp for manual Balloon testing + conclusive realistic-input
   verification (plan.md `E3D-MIG-135`).** User reported "wasp sting still doesn't make Blupi float,
   no change at all" for the ~7th time despite two independent prior fixes (the physics freeze and

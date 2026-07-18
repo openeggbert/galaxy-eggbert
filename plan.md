@@ -523,12 +523,29 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       distinct round/ball shape (`kBalloonFrames`, icon 291+) that reads as "floating" regardless of
       ground contact; the placeholder Fox mesh's own 3-clip Survey/Walk/Run set has nothing
       resembling it. Fixed with a small, purely cosmetic, render-only vertical sine bob
-      (`kBalloonBobAmplitude=0.08f`, `kBalloonBobFrequency=3.0f` rad/s) applied ONLY to the 3D
-      model's translation while `IsBallooned()` — does NOT touch `GetY()`/physics, same category of
-      engine-appropriate 3D substitution as billboard sprites/shadows elsewhere in this project
-      (CLAUDE.md's "natural technical adaptations" allowance), not a new mechanic. Re-verified via
-      screenshot that rendering isn't broken and the physics-only debug log still shows Y frozen
-      across 500+ frames with the bob active.
+      (originally `kBalloonBobAmplitude=0.08f`, `kBalloonBobFrequency=3.0f` rad/s) applied ONLY to
+      the 3D model's translation while `IsBallooned()` — does NOT touch `GetY()`/physics, same
+      category of engine-appropriate 3D substitution as billboard sprites/shadows elsewhere in this
+      project (CLAUDE.md's "natural technical adaptations" allowance), not a new mechanic.
+      **User re-reported "still no change" a further ~2 times after this fix, in a live session
+      confirmed (via targeted questions) to be a genuinely fresh CLion rebuild, watched directly in
+      third-person view.** Root cause of THIS round, found by capturing properly time-spaced
+      screenshots (a real methodology gap in the first verification pass — 3 screenshots taken on
+      *consecutive* frames can never show sine motion, and a naive later attempt was confounded by
+      chase-camera damping settling right after Blupi stopped walking, both fixed by waiting 45
+      frames for the camera to fully settle before capturing 5 shots 20 frames apart): the math and
+      rendering WERE working exactly as coded (screenshots matched the expected `sin()` curve
+      value-for-value), but a symmetric +/-0.08 unit wobble (~10% of Blupi's own ~0.72-unit height,
+      half of it dipping BELOW normal stance) is simply too subtle at normal chase-camera distance
+      to read as "floating" during actual gameplay, as opposed to eyeballing paired screenshots
+      side by side. **Rebuilt as a sustained upward lift** — `kBalloonBobBaseLift=0.22f` +/-
+      `kBalloonBobRange=0.10f` at `kBalloonBobFrequency=2.0f` rad/s, i.e. Blupi now hovers
+      consistently ~0.12-0.32 units above his normal stance the ENTIRE time he's ballooned (never
+      dipping back to/below normal height), with a gentle bob riding on top — confirmed via fresh
+      screenshots to be an unmistakable, continuously visible gap between his feet and the ground.
+      **Also added a second wasp directly on the flat spawn corridor** of `worlds3d/world999.vwr`
+      (see `135`'s own entry below) specifically to make manual re-testing of this exact mechanic
+      trivial going forward — the original wasp requires navigating a staircase + terraced ascent.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
