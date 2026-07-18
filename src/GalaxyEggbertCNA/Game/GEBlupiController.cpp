@@ -1399,13 +1399,30 @@ namespace GalaxyEggbert::CNA
         }
         else if (m_balloon)
         {
-            // Wasp "balloon" status: real source's own fall-trigger check
-            // (Decor.cpp:2823) is gated on `!m_blupiBalloon`, so Blupi never
-            // resumes falling until the status ends -- a true zero-gravity
-            // freeze at whatever height he was stung at (kBalloonDuration's
-            // own comment), not a slow sink. TriggerBalloon() already
-            // zeroed m_velocityY and nothing re-touches it while ballooned.
-            m_velocityY = 0.0f;
+            // Wasp "balloon" status: Blupi RISES, he does not hold still --
+            // a direct port of the real dedicated balloon-movement block at
+            // Decor.cpp:4039-4058 (see kBalloonDuration's own comment for
+            // the full real-source citation and the px/tick -> units/s
+            // conversion behind these constants). Real "Up" is `m_blupiSpeedY
+            // < 0.0` and real "Down" is `> 0.0`; this engine's own
+            // Helicopter/Overcraft branch just above already established
+            // lookUpHeld/crouchHeld as that same up/down pair, so the same
+            // mapping is reused here rather than inventing a second one.
+            const float targetRise = (lookUpHeld || jumpPressed) ? kBalloonRiseSpeedFast
+                                     : crouchHeld                ? 0.0f
+                                                                 : kBalloonRiseSpeed;
+            if (m_velocityY < targetRise)
+            {
+                m_velocityY = std::min(m_velocityY + kBalloonRiseAccel * dt, targetRise);
+            }
+            else if (m_velocityY > targetRise)
+            {
+                // Real Down-held case only ever decelerates a rise back toward
+                // 0 (`if (m_blupiVitesseY < 0.0) m_blupiVitesseY += 1.0;`) --
+                // it never accelerates downward, which a 0.0f target already
+                // reproduces exactly.
+                m_velocityY = std::max(m_velocityY - kBalloonRiseAccel * dt, targetRise);
+            }
         }
         else
         {

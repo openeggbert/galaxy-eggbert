@@ -179,6 +179,21 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: ballooned Blupi now actually RISES — the real behaviour, found at last (plan.md
+  `E3D-MIG-135`).** Reported ~15 times. Every previous attempt asked only "does gravity still pull
+  him down?" and stopped there — first modelling a 20%-gravity slow fall, then a fixed-height
+  freeze, then papering over the invisibility with an invented cosmetic bob. All wrong. Gravity is
+  not merely switched off: Blupi **actively drifts upward** for the full 10s. The real code is a
+  dedicated block at `Decor.cpp:4039-4058` that no earlier pass ever opened — they reasoned only
+  from the `!m_blupiBalloon`-gated fall trigger at `Decor.cpp:2823`. It accelerates him upward
+  every `ScaleTime(6)` ticks to a `-3.0` px/tick terminal rise, `-5.0` with Jump/Up held, or
+  decelerating to a hover with Down held (never a descent). Ported with real unit conversion
+  (px/tick @20fps, 64px/block → 0.9375 / 1.5625 units/s, 1.0417 units/s²) and the invented bob
+  deleted. Verified three ways: 6 new assertions pinning each real terminal speed to within
+  0.02 units/s, a live realistic-input run measuring exactly 0.9375 units/s of climb, and
+  third-person screenshots showing the level drop away beneath him. Documented limitations: the
+  real floaty horizontal drift isn't modelled, and the rise isn't ceiling-clamped (matching the
+  existing Helicopter/Overcraft modes).
 - **fix: Balloon float effect was too subtle to notice during real gameplay (plan.md
   `E3D-MIG-135`).** User re-reported "still no change" after directly confirming (via targeted
   follow-up questions) they'd done a genuinely fresh CLion rebuild and watched the wasp sting in

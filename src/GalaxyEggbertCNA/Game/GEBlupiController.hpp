@@ -90,14 +90,45 @@ namespace GalaxyEggbert::CNA
         // and the recovery block right before Decor.cpp:5549 (same
         // m_blupiTimeShield=100/decremented-every-ScaleTime(2)-ticks
         // pattern as Crusher -- same real 10s duration, NOT the "100-tick"
-        // read literally as 100 raw ticks). Real source's own fall-trigger
-        // check (Decor.cpp:2823) is gated on `!m_blupiBalloon`, and the
-        // trigger itself (Decor.cpp:5834-5849) zeroes m_blupiVitesseY and
-        // m_blupiAir -- Blupi genuinely freezes at a fixed height (true
-        // zero-gravity suspension) for the whole duration, not a slow fall
-        // (2026-07-18, corrected from an earlier 20%-gravity approximation
-        // that was never verified against this exact gate).
+        // read literally as 100 raw ticks).
+        //
+        // Blupi RISES while ballooned -- he does not merely stop falling
+        // (corrected 2026-07-18 after two earlier wrong readings: first a
+        // 20%-gravity "slow fall", then a "frozen at a fixed height"
+        // zero-gravity suspension). The real balloon movement lives in its
+        // own dedicated block, `Decor.cpp:4039-4106` (`if (m_blupiBalloon &&
+        // m_blupiFocus)`), which the earlier passes never read -- they only
+        // ever found the `!m_blupiBalloon`-gated fall trigger at
+        // Decor.cpp:2823 and wrongly concluded "gravity off" meant "hold
+        // still". That block continuously accelerates `m_blupiVitesseY`
+        // UPWARD (negative in the real 2D screen-down Y space) every
+        // `ScaleTime(6)` ticks:
+        //   - no input:        accelerate to a -3.0 px/tick terminal rise
+        //   - Jump or Up held: accelerate to a faster -5.0 px/tick rise
+        //   - Down held:       decelerate back toward 0 (hover), never below
+        // so Blupi drifts steadily up like a balloon until the status ends.
+        //
+        // Real units are px/tick at the pinned 20fps with 64px per block
+        // (Config::FPS == Fps20 so ScaleTime(6) == 6 ticks == 0.3s;
+        // Def.hpp:151-152 DIMOBJX/Y == 64). This engine is 1 block == 1.0
+        // world unit with +Y up, so each real value converts as
+        // `px/tick * 20 / 64`:
+        //   3.0 px/tick -> 0.9375 units/s   (kBalloonRiseSpeed)
+        //   5.0 px/tick -> 1.5625 units/s   (kBalloonRiseSpeedFast)
+        //   1.0 px/tick per 0.3s -> 1.0417 units/s^2 (kBalloonRiseAccel)
+        //
+        // Known remaining difference: the same real block also gives Blupi
+        // floaty momentum-based HORIZONTAL drift while ballooned
+        // (`m_blupiVitesseX` accelerating toward `speedX*10` with a 2.0/tick
+        // friction, Decor.cpp:4059-4106). Not modelled -- horizontal motion
+        // here still goes through this class's ordinary walking path. Rising
+        // is also not ceiling-clamped, matching this engine's existing
+        // Helicopter/Overcraft modes, which already rise through terrain the
+        // same way (Step()'s vertical resolution has a floor clamp only).
         static constexpr float kBalloonDuration = 10.0f;
+        static constexpr float kBalloonRiseSpeed = 0.9375f;
+        static constexpr float kBalloonRiseSpeedFast = 1.5625f;
+        static constexpr float kBalloonRiseAccel = 1.0417f;
 
         // Spring bounce (plan.md E3D-MIG-145, icon 211 = BlockTypes::Spring,
         // verified directly against Decor.cpp:2835-2911/7312-7320). Real

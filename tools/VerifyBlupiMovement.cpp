@@ -405,13 +405,13 @@ int main(int argc, char** argv)
               "ballooned is the Balloon anim state");
         check(ballooned.GetAnimIcon() == 291, "Balloon anim icon starts at the real first frame (icon 291)");
 
-        // True zero-gravity freeze while ballooned (2026-07-18, corrected
-        // from an earlier "falls slower" approximation -- real source's own
-        // fall-trigger check, Decor.cpp:2823, is gated on `!m_blupiBalloon`,
-        // so Blupi never resumes falling at all until the status ends):
-        // stays at EXACTLY the height he was stung at, over a span long
-        // enough that an un-ballooned Blupi dropped from the same height
-        // would already be well underway falling.
+        // Ballooned Blupi RISES (2026-07-18, corrected twice: first from a
+        // "falls slower" 20%-gravity approximation, then from a "frozen at a
+        // fixed height" reading). The real dedicated balloon-movement block
+        // (Decor.cpp:4039-4058, found only on the third pass) continuously
+        // accelerates him upward to a terminal rise -- see
+        // GEBlupiController::kBalloonRiseSpeed's own comment for the full
+        // real-source citation and unit conversion.
         GEBlupiController falling;
         falling.SetPosition(0.0f, 20.0f, 0.0f);
         constexpr int kFallSteps = 30; // ~0.5s, short enough the falling instance doesn't reach the ground
@@ -420,9 +420,51 @@ int main(int argc, char** argv)
             ballooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             falling.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         }
-        check(ballooned.GetY() == 20.0f, "ballooned Blupi's height never changes (true zero-gravity freeze)");
+        check(ballooned.GetY() > 20.0f, "ballooned Blupi RISES above the height he was stung at");
         check(ballooned.GetY() > falling.GetY(),
-              "ballooned Blupi stays put while a normal Blupi keeps falling over the same span");
+              "ballooned Blupi rises while a normal Blupi falls over the same span");
+        check(!ballooned.IsOnGround(), "a risen ballooned Blupi is airborne, not grounded");
+
+        // Real terminal rise speed: no input settles at kBalloonRiseSpeed,
+        // Jump/Up held reaches the faster kBalloonRiseSpeedFast, Down held
+        // decelerates back to a hover at 0 (never into a descent) --
+        // Decor.cpp:4041-4057's own three branches.
+        {
+            GEBlupiController riser;
+            riser.SetPosition(0.0f, 20.0f, 0.0f);
+            riser.TriggerBalloon();
+            // Well past the ~0.9s needed to reach terminal from 0.
+            for (int i = 0; i < 180; ++i)
+            {
+                riser.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            const float coastY = riser.GetY();
+            riser.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            const float coastRise = (riser.GetY() - coastY) / dt;
+            check(std::fabs(coastRise - GEBlupiController::kBalloonRiseSpeed) < 0.02f,
+                  "no-input ballooned rise settles at the real terminal kBalloonRiseSpeed");
+
+            // Jump held -> the faster real terminal rise.
+            for (int i = 0; i < 180; ++i)
+            {
+                riser.Step(synthetic, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            }
+            const float fastY = riser.GetY();
+            riser.Step(synthetic, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            const float fastRise = (riser.GetY() - fastY) / dt;
+            check(std::fabs(fastRise - GEBlupiController::kBalloonRiseSpeedFast) < 0.02f,
+                  "Jump held while ballooned reaches the faster real terminal rise");
+
+            // Down (crouch) held -> decelerates to a hover, never a descent.
+            for (int i = 0; i < 180; ++i)
+            {
+                riser.Step(synthetic, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+            }
+            const float hoverY = riser.GetY();
+            riser.Step(synthetic, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+            check(std::fabs(riser.GetY() - hoverY) < 0.001f,
+                  "Down held while ballooned decelerates to a hover, never into a descent");
+        }
 
         // PopBalloon() clears the status early and forces Blupi briefly
         // airborne, matching the real m_blupiAir=true on a hazard pop.

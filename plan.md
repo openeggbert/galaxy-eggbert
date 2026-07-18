@@ -522,28 +522,37 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       since there's nothing to fall out of. Real mobile-eggbert's own Balloon sprite is a visibly
       distinct round/ball shape (`kBalloonFrames`, icon 291+) that reads as "floating" regardless of
       ground contact; the placeholder Fox mesh's own 3-clip Survey/Walk/Run set has nothing
-      resembling it. Fixed with a small, purely cosmetic, render-only vertical sine bob
-      (originally `kBalloonBobAmplitude=0.08f`, `kBalloonBobFrequency=3.0f` rad/s) applied ONLY to
-      the 3D model's translation while `IsBallooned()` — does NOT touch `GetY()`/physics, same
-      category of engine-appropriate 3D substitution as billboard sprites/shadows elsewhere in this
-      project (CLAUDE.md's "natural technical adaptations" allowance), not a new mechanic.
-      **User re-reported "still no change" a further ~2 times after this fix, in a live session
-      confirmed (via targeted questions) to be a genuinely fresh CLion rebuild, watched directly in
-      third-person view.** Root cause of THIS round, found by capturing properly time-spaced
-      screenshots (a real methodology gap in the first verification pass — 3 screenshots taken on
-      *consecutive* frames can never show sine motion, and a naive later attempt was confounded by
-      chase-camera damping settling right after Blupi stopped walking, both fixed by waiting 45
-      frames for the camera to fully settle before capturing 5 shots 20 frames apart): the math and
-      rendering WERE working exactly as coded (screenshots matched the expected `sin()` curve
-      value-for-value), but a symmetric +/-0.08 unit wobble (~10% of Blupi's own ~0.72-unit height,
-      half of it dipping BELOW normal stance) is simply too subtle at normal chase-camera distance
-      to read as "floating" during actual gameplay, as opposed to eyeballing paired screenshots
-      side by side. **Rebuilt as a sustained upward lift** — `kBalloonBobBaseLift=0.22f` +/-
-      `kBalloonBobRange=0.10f` at `kBalloonBobFrequency=2.0f` rad/s, i.e. Blupi now hovers
-      consistently ~0.12-0.32 units above his normal stance the ENTIRE time he's ballooned (never
-      dipping back to/below normal height), with a gentle bob riding on top — confirmed via fresh
-      screenshots to be an unmistakable, continuously visible gap between his feet and the ground.
-      **Also added a second wasp directly on the flat spawn corridor** of `worlds3d/world999.vwr`
+      resembling it. Two successive cosmetic render-only "bob" attempts were made here (a
+      +/-0.08 symmetric sine, then a sustained ~0.22-unit lift) — **both have since been removed**,
+      because the whole premise was wrong: see the entry immediately below.
+      **THE ACTUAL BUG, found 2026-07-18 on the third investigation (user reported it ~15 times).**
+      Every earlier pass answered the question "does gravity still pull Blupi down while ballooned?"
+      and stopped there. The real answer is that gravity is not merely switched off — **Blupi
+      actively RISES**, drifting upward like a balloon for the whole 10s. The real code for this
+      lives in its own dedicated block, `Decor.cpp:4039-4058` (`if (m_blupiBalloon &&
+      m_blupiFocus)`), which none of the earlier passes ever opened: they only ever found the
+      `!m_blupiBalloon`-gated fall trigger at `Decor.cpp:2823` and reasoned (wrongly) from its
+      absence. That block accelerates `m_blupiVitesseY` upward every `ScaleTime(6)` ticks:
+      no input → terminal `-3.0` px/tick; `Jump`/Up held → faster `-5.0` px/tick; Down held →
+      decelerate back toward `0` (hover), never into a descent. (Negative is up in the real
+      2D screen-down Y space.) Ported into `GEBlupiController::Step()`'s own balloon branch with
+      `kBalloonRiseSpeed`/`kBalloonRiseSpeedFast`/`kBalloonRiseAccel`, converting real px/tick at
+      the pinned 20fps with 64px per block into this engine's 1-block-per-unit, +Y-up space
+      (`px/tick * 20 / 64`): 0.9375 / 1.5625 units/s terminal, 1.0417 units/s^2 acceleration.
+      Up/Down map to `lookUpHeld`/`crouchHeld`, reusing the pair this class's own
+      Helicopter/Overcraft branch had already established rather than inventing a second mapping.
+      The invented cosmetic bob was deleted at the same time — with real rising in place it is both
+      unnecessary and a non-faithful addition (CLAUDE.md's faithful-remake rule). Verified three
+      ways: 6 new `VerifyBlupiMovement` assertions (rises above the sting height, outruns a falling
+      Blupi, is airborne, and settles at each of the three real terminal speeds within 0.02 units/s);
+      a live realistic-input run showing Y climb 1.0 → 4.4+ at a measured 0.9375 units/s, exactly
+      the real terminal rate; and third-person screenshots showing the entire level drop away
+      beneath him. Two real limitations deliberately left, both documented at
+      `kBalloonDuration`: the same real block's floaty horizontal `m_blupiVitesseX` momentum is not
+      modelled (horizontal still uses the ordinary walking path), and the rise is not
+      ceiling-clamped — matching this engine's existing Helicopter/Overcraft modes, which already
+      rise through terrain the same way, so this is a shared pre-existing gap rather than a new one.
+      **A second wasp was also added directly on the flat spawn corridor** of `worlds3d/world999.vwr`
       (see `135`'s own entry below) specifically to make manual re-testing of this exact mechanic
       trivial going forward — the original wasp requires navigating a staircase + terraced ascent.
 
