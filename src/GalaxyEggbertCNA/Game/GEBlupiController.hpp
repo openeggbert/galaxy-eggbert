@@ -90,13 +90,14 @@ namespace GalaxyEggbert::CNA
         // and the recovery block right before Decor.cpp:5549 (same
         // m_blupiTimeShield=100/decremented-every-ScaleTime(2)-ticks
         // pattern as Crusher -- same real 10s duration, NOT the "100-tick"
-        // read literally as 100 raw ticks). kBalloonGravityMultiplier is an
-        // approximation of "Blupi floats rather than dying" -- the real
-        // source sets this up as a status flag other code branches key off
-        // of; the specific floaty-fall-speed feel isn't itself transcribed
-        // from a located constant.
+        // read literally as 100 raw ticks). Real source's own fall-trigger
+        // check (Decor.cpp:2823) is gated on `!m_blupiBalloon`, and the
+        // trigger itself (Decor.cpp:5834-5849) zeroes m_blupiVitesseY and
+        // m_blupiAir -- Blupi genuinely freezes at a fixed height (true
+        // zero-gravity suspension) for the whole duration, not a slow fall
+        // (2026-07-18, corrected from an earlier 20%-gravity approximation
+        // that was never verified against this exact gate).
         static constexpr float kBalloonDuration = 10.0f;
-        static constexpr float kBalloonGravityMultiplier = 0.2f;
 
         // Spring bounce (plan.md E3D-MIG-145, icon 211 = BlockTypes::Spring,
         // verified directly against Decor.cpp:2835-2911/7312-7320). Real
@@ -558,8 +559,11 @@ namespace GalaxyEggbert::CNA
         // no-op (returns false) while already ballooned, matching the real
         // `!m_blupiBalloon` re-trigger guard in the wasp contact check --
         // lets the caller play the real entry sound (channel 40) only on
-        // an actual new trigger. Step() applies reduced gravity while
-        // ballooned and auto-clears it on timeout.
+        // an actual new trigger. Step() freezes vertical motion entirely
+        // while ballooned (see kBalloonDuration's own comment -- real
+        // source's fall-trigger check, Decor.cpp:2823, is itself gated on
+        // `!m_blupiBalloon`, so Blupi genuinely never resumes falling until
+        // the status ends, not a slow float) and auto-clears it on timeout.
         bool TriggerBalloon() noexcept;
         [[nodiscard]] bool IsBallooned() const noexcept { return m_balloon; }
 

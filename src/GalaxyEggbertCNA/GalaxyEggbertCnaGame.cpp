@@ -2948,15 +2948,55 @@ namespace GalaxyEggbert::CNA
             // Third-person placeholder 3D model (2026-07-09, NEXT.md §3) --
             // only drawn in third-person mode (first-person mode has
             // nothing to show, same reasoning as the pre-2026-07-09 comment
-            // this replaced). World transform bakes in a coarse scale (the
-            // placeholder fox mesh is ~79 units tall in its own space,
-            // scaled down to roughly Blupi's ~1.6-unit eye-height scale --
-            // see avatars3d/blupi_placeholder/README.md; not verified against
-            // a real Blupi model yet, since none exists) and a yaw rotation
-            // to face Blupi's movement direction -- exact forward-facing
-            // alignment for this specific placeholder asset hasn't been
-            // visually verified, a real Blupi model may need a different
-            // constant rotation offset here.
+            // this replaced). World transform bakes in a scale and a yaw
+            // rotation to face Blupi's movement direction -- exact
+            // forward-facing alignment for this specific placeholder asset
+            // hasn't been visually verified, a real Blupi model may need a
+            // different constant rotation offset here.
+            //
+            // kPlaceholderModelScale (2026-07-18, user-reported "~160% of
+            // block height" bug): the placeholder fox mesh's own local-space
+            // vertex Y span is -0.122..78.907 (measured directly from
+            // avatars3d/blupi_placeholder/fox1.verts.bin, stride 52 bytes,
+            // position = first 3 floats per convert_avatar.py's own
+            // struct.pack("<3f3f2f4f4B", ...) layout), i.e. ~79.03 units
+            // tall with its feet already at local Y~=0. Real mobile-eggbert
+            // Blupi's own standing collision box (Decor::BlupiRect()'s
+            // default case, Decor.cpp:2519-2520: Top=pos.Y+11,
+            // Bottom=pos.Y+60-2, i.e. 47px inside a 60px DIMBLUPIY cell,
+            // Def.hpp:154) brackets the user's own reported 71.875% figure
+            // (exact source of that specific fraction not located as a
+            // literal constant, likely the user's own sprite measurement) --
+            // since 1 block = 1.0 world unit here (GEBlupiController::
+            // GroundHeightAt() returns topmost-solid-block-Y + 1), target
+            // height = 0.71875 world units, giving scale = 0.71875 / 79.029
+            // =~ 0.009095.
+            //
+            // kPlaceholderModelYOffset (2026-07-18, user-reported "the fox
+            // floats in the air" bug): GEBlupiController's own GetY() is
+            // NOT flush with the terrain's rendered surface -- GETerrainRenderer
+            // renders a solid block at grid Y with Center.Y = Y directly (no
+            // +0.5), so a column's topmost solid block at grid Y=g has its
+            // visual top surface at world Y=g+0.5, while GroundHeightAt()
+            // (by design, matches the MoveObject/BigDecor cube convention of
+            // sitting a full unit above the floor block's own grid index,
+            // see GETerrainRenderer.cpp/CubeMesh.cpp) returns g+1 -- so
+            // GetY() sits a constant 0.5 world units above the true visual
+            // ground surface. This is invisible for the first-person camera
+            // (kEyeHeight is just a feel-tuned offset, already screenshot-
+            // verified against this same convention) and the collision-only
+            // point that existed before this model, but is glaringly visible
+            // now that a real body silhouette is rendered against the
+            // terrain mesh -- confirmed live via a forced third-person
+            // screenshot showing the fox's feet hovering above the floor
+            // tiles. Deliberately NOT fixed by changing GetY()/
+            // GroundHeightAt() itself (would ripple into jump/fall physics,
+            // kFallDeathY, teleporter/water Y thresholds, and every already
+            // screenshot-tuned camera constant that implicitly assumes this
+            // exact convention) -- this is a render-only correction local to
+            // this specific placeholder mesh's own translation, exactly like
+            // kPlaceholderModelScale above.
+            //
             // Real `Hide` during the death-lock's own life-loss-Voyage window
             // (death-VFX follow-up, `IsDeathHidden()`'s own comment) -- first-
             // person mode already renders no Blupi model at all, so this is
@@ -2964,12 +3004,13 @@ namespace GalaxyEggbert::CNA
             if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiAvatarRenderer_ &&
                 !blupi_.IsDeathHidden())
             {
-                constexpr float kPlaceholderModelScale = 0.02f;
+                constexpr float kPlaceholderModelScale = 0.009095f;
+                constexpr float kPlaceholderModelYOffset = -0.5f;
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(kPlaceholderModelScale) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                        blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());
                 blupiAvatarRenderer_->setWorldProperty(world);
                 blupiAvatarRenderer_->setViewProperty(camera_.GetViewMatrix());
                 blupiAvatarRenderer_->setProjectionProperty(camera_.GetProjectionMatrix());

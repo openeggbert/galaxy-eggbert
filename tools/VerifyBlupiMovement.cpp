@@ -405,18 +405,24 @@ int main(int argc, char** argv)
               "ballooned is the Balloon anim state");
         check(ballooned.GetAnimIcon() == 291, "Balloon anim icon starts at the real first frame (icon 291)");
 
-        // Reduced gravity while ballooned: falls less over the same number
-        // of steps than a normal Blupi dropped from the same height.
+        // True zero-gravity freeze while ballooned (2026-07-18, corrected
+        // from an earlier "falls slower" approximation -- real source's own
+        // fall-trigger check, Decor.cpp:2823, is gated on `!m_blupiBalloon`,
+        // so Blupi never resumes falling at all until the status ends):
+        // stays at EXACTLY the height he was stung at, over a span long
+        // enough that an un-ballooned Blupi dropped from the same height
+        // would already be well underway falling.
         GEBlupiController falling;
         falling.SetPosition(0.0f, 20.0f, 0.0f);
-        constexpr int kFallSteps = 30; // ~0.5s, short enough neither instance reaches the ground
+        constexpr int kFallSteps = 30; // ~0.5s, short enough the falling instance doesn't reach the ground
         for (int i = 0; i < kFallSteps; ++i)
         {
             ballooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             falling.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         }
+        check(ballooned.GetY() == 20.0f, "ballooned Blupi's height never changes (true zero-gravity freeze)");
         check(ballooned.GetY() > falling.GetY(),
-              "ballooned Blupi falls slower than normal (reduced gravity, approximates 'floats')");
+              "ballooned Blupi stays put while a normal Blupi keeps falling over the same span");
 
         // PopBalloon() clears the status early and forces Blupi briefly
         // airborne, matching the real m_blupiAir=true on a hazard pop.

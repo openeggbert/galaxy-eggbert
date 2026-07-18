@@ -1397,15 +1397,22 @@ namespace GalaxyEggbert::CNA
                 m_velocityY = std::max(m_velocityY - kVehicleVerticalAccel * dt, targetVelocityY);
             }
         }
+        else if (m_balloon)
+        {
+            // Wasp "balloon" status: real source's own fall-trigger check
+            // (Decor.cpp:2823) is gated on `!m_blupiBalloon`, so Blupi never
+            // resumes falling until the status ends -- a true zero-gravity
+            // freeze at whatever height he was stung at (kBalloonDuration's
+            // own comment), not a slow sink. TriggerBalloon() already
+            // zeroed m_velocityY and nothing re-touches it while ballooned.
+            m_velocityY = 0.0f;
+        }
         else
         {
-            // Wasp "balloon" status: reduced gravity while active (kBalloonGravityMultiplier's own
-            // comment explains this is an approximation of "floats rather than dying"). Nage
-            // (plan.md E3D-MIG-148): same shape, a slow floaty sink instead of a free-fall drop
-            // while genuinely submerged (kNageGravityMultiplier's own comment).
-            const float effectiveGravity = m_balloon ? kGravity * kBalloonGravityMultiplier
-                                          : m_nage    ? kGravity * kNageGravityMultiplier
-                                                      : kGravity;
+            // Nage (plan.md E3D-MIG-148): a slow floaty sink instead of a
+            // free-fall drop while genuinely submerged (kNageGravityMultiplier's
+            // own comment).
+            const float effectiveGravity = m_nage ? kGravity * kNageGravityMultiplier : kGravity;
             m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
         }
         float newY = m_y + m_velocityY * dt;

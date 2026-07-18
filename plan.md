@@ -443,6 +443,38 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       without a visible model (matches the existing default camera; the player never sees it).
       No timeline set; the current placeholder Fox model remains the third-person stand-in until
       this is scoped.
+      **Placeholder scale/grounding fixed 2026-07-18** (user-reported: model floats in the air,
+      and is ~160% of block height instead of the real 71.875%): two independent bugs in the
+      placeholder's own draw block (`GalaxyEggbertCnaGame.cpp`, third-person model transform), not
+      in the real Blupi model target itself.
+      1. **Scale**: `kPlaceholderModelScale` was an unvalidated guess (`0.02`) admitted as such in
+         its own comment. The Fox mesh's real local-space vertex Y span was measured directly by
+         parsing `avatars3d/blupi_placeholder/fox1.verts.bin` (stride 52 bytes, position = first 3
+         floats per `convert_avatar.py`'s own `struct.pack("<3f3f2f4f4B", ...)` layout): -0.122 to
+         78.907, ~79.03 units tall, feet already at local Y~=0. Real mobile-eggbert's own standing
+         collision box (`Decor::BlupiRect()`'s default case, `Decor.cpp:2519-2520`: `Top=pos.Y+11,
+         Bottom=pos.Y+60-2`, 47px inside the 60px `DIMBLUPIY` cell, `Def.hpp:154`) brackets the
+         user's own reported 71.875% figure (exact fraction not located as a literal source
+         constant, likely the user's own sprite measurement). Since 1 block = 1.0 world unit here
+         (`GEBlupiController::GroundHeightAt()` returns topmost-solid-block-Y + 1), target height =
+         0.71875 world units → `kPlaceholderModelScale = 0.71875 / 79.029 ≈ 0.009095`.
+      2. **Grounding**: `GEBlupiController::GetY()` is NOT flush with the terrain's own rendered
+         surface. `GETerrainRenderer` places a solid block's cube `Center.Y` at the block's raw
+         grid index directly (no `+0.5`), so a column's topmost solid block at grid `Y=g` has its
+         visual top surface at world `Y=g+0.5` — but `GroundHeightAt()` returns `g+1` (matching the
+         separate `MoveObject`/`BigDecor` cube convention of sitting a full unit above the floor
+         block's own grid index instead). Net effect: `GetY()` sits a constant 0.5 world units
+         above the true visual ground surface — invisible before now (no rendered body to compare
+         against; the first-person `kEyeHeight`/chase-camera constants were already feel-tuned
+         against this same convention), but glaringly visible once an actual body silhouette
+         renders against the terrain mesh. Confirmed live via a forced third-person screenshot
+         (`GE_DEBUG_FORCE_THIRDPERSON`/`GE_DEBUG_SKIP_TO_PLAY`/`GE_DEBUG_LATE_SCREENSHOT_FRAME`
+         temporary env-var instrumentation, reverted before commit) showing the Fox's feet
+         hovering above the floor tiles before the fix, flush after. Deliberately fixed as a
+         render-only `kPlaceholderModelYOffset = -0.5f` local to this specific placeholder mesh's
+         own translation — NOT by changing `GetY()`/`GroundHeightAt()` itself, which would ripple
+         into jump/fall physics, `kFallDeathY`, teleporter/water Y thresholds, and every already
+         screenshot-tuned camera constant that implicitly assumes the existing convention.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
@@ -666,10 +698,20 @@ of truth; do not invent stomp/hit feel not documented there.
       (trigger) and `5766-5781` (hazard-pop interaction), not just the reference doc. New
       `GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()` (real
       `!m_blupiBalloon` re-trigger guard, real ~10s duration — same `m_blupiTimeShield=100`/
-      decrement-every-`ScaleTime(2)`-ticks pattern as Crusher, NOT literally "100 ticks" —
-      reduced gravity while active, an approximation of "floats rather than dying" since the
-      real source doesn't cleanly transcribe to a specific fall-speed constant). Contact does
-      NOT kill Blupi or destroy the wasp (`GEInteractionSystem::BalloonTouchedThisFrame()`).
+      decrement-every-`ScaleTime(2)`-ticks pattern as Crusher, NOT literally "100 ticks").
+      **Vertical physics corrected 2026-07-18** (user-reported: Blupi should float/hover, not just
+      cosmetically balloon): the original implementation applied 20%-reduced gravity (a slow
+      fall), an approximation explicitly flagged in its own comment as unverified against a
+      located constant. Direct re-verification against `Decor.cpp:2823` (the real "start falling"
+      trigger, gated on `!m_blupiBalloon`) and the trigger itself (`Decor.cpp:5834-5849`, zeroes
+      `m_blupiVitesseY`/`m_blupiAir`) confirms real Blupi genuinely FREEZES at a fixed height —
+      true zero-gravity suspension, not a slow sink — since the only code path that would ever set
+      `m_blupiAir=true`/resume gravity is itself gated off for the whole balloon duration. Fixed by
+      skipping gravity integration entirely while `m_balloon` is active (`GEBlupiController::
+      Step()`) instead of applying a reduced multiplier; `kBalloonGravityMultiplier` removed as
+      dead code. `VerifyBlupiMovement.cpp`'s existing "falls slower" assertion was itself
+      re-verified and tightened to assert the height is EXACTLY unchanged over a multi-step span.
+      Contact does NOT kill Blupi or destroy the wasp (`GEInteractionSystem::BalloonTouchedThisFrame()`).
       **Real hazard-pop interaction implemented**: while ballooned, touching exactly 4 of the 8
       shared-kill-list types (`3`/`16`/`96`/`97` — confirmed via the real source's if/else-if
       chain, NOT all 8) pops the balloon instead of killing, and does NOT destroy the popping

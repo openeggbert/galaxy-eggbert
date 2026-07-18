@@ -1,7 +1,7 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-17 (autonomous session, see §7.5 for standing directives; world001/world999
-split + hub-plaza enlargement are the most recent change, see §3)._
+_Last updated: 2026-07-18 (autonomous session, see §7.5 for standing directives; placeholder Fox
+model floating/scale fix + real zero-gravity Balloon freeze are the most recent change, see §3)._
 
 ## 1. Project summary
 
@@ -179,6 +179,30 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: placeholder Fox model floating + wrong scale, real zero-gravity Balloon freeze (plan.md
+  `E3D-MIG-069`/`135`).** Three user-reported bugs. (1) The third-person placeholder Fox model
+  visibly hovered above the terrain. Root cause independently confirmed via 3 cross-checked
+  sources (`GETerrainRenderer.cpp`'s block-center formula, `easy-3d/CubeMesh.cpp`'s half-extent
+  formula, and the existing first-person `kEyeHeight` usage): `GEBlupiController::GetY()` sits a
+  constant 0.5 world units above the terrain's own rendered surface (an existing, previously-
+  invisible convention — nothing rendered a body against the terrain to reveal it before now).
+  Fixed with a render-only `kPlaceholderModelYOffset = -0.5f` local to this specific placeholder
+  mesh's translation, deliberately NOT by changing `GetY()`/`GroundHeightAt()` itself (would ripple
+  into jump physics, `kFallDeathY`, teleporter/water thresholds, and every already-tuned camera
+  constant assuming the existing convention). (2) The model was ~160% of block height instead of
+  the user-reported real 71.875%. The Fox mesh's local Y-span was measured directly from
+  `fox1.verts.bin` (~79.03 units tall) and rescaled against that 71.875% figure (bracketed by real
+  `Decor::BlupiRect()`'s default collision box, `Decor.cpp:2519-2520`), giving
+  `kPlaceholderModelScale ≈ 0.009095` (was an unvalidated `0.02`). (3) Wasp-sting "Balloon" status
+  used a 20%-reduced-gravity slow fall, an approximation its own comment admitted was unverified.
+  Direct re-check of `Decor.cpp:2823`/`5834-5849` confirms real Blupi genuinely freezes at a fixed
+  height (the real fall-trigger check is itself gated on `!m_blupiBalloon`) — fixed by skipping
+  gravity integration entirely while ballooned; `kBalloonGravityMultiplier` removed as dead code.
+  All three fixes live-verified via temporary env-var-gated debug instrumentation (forced
+  third-person camera, menu-skip, and a delayed screenshot capture showing the model correctly
+  grounded/scaled before-vs-after) and a tightened `VerifyBlupiMovement.cpp` assertion (ballooned
+  height provably unchanged over time, not just "slower"), all reverted/kept minimal before commit.
+  Full regression clean (78/78 minus the 1 known pre-existing unrelated failure).
 - **feat: real Mockery (Blupi taunts nearby enemies) + real Stop idle-fidget cycle (plan.md
   `BLUPI-067`/`BLUPI-023`).** User asked two pointed questions: does Blupi stick his tongue out at
   a nearby enemy, and does he get bored and tap his foot after standing still a while? Both
