@@ -1,7 +1,8 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-18 (autonomous session, see §7.5 for standing directives; placeholder Fox
-model floating/scale fix + real zero-gravity Balloon freeze are the most recent change, see §3)._
+_Last updated: 2026-07-18 (see §7.5 for standing directives; the Balloon status is now fully
+faithful — real rise, horizontal drift, and ceiling stop, all closed today — the most recent
+change, see §3)._
 
 ## 1. Project summary
 
@@ -39,9 +40,14 @@ third-person).
 
 ### Build status
 Both build trees configure and build cleanly as of the last verification this session
-(2026-07-14):
-- `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default).
-- `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`).
+(2026-07-18):
+- `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default — switched back from
+  Vulkan 2026-07-18, see §3; still fully overridable at configure time).
+- `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`). Has a known, unrelated CNA
+  engine bug: `BasicEffect` draws with `Alpha < 1` don't render at all under this backend (see §5),
+  and had a second real bug (missing NDC Y-flip in `SkinnedEffect` shaders, making the third-person
+  placeholder model float) found and fixed **in `../cna` itself** 2026-07-18 — that fix currently
+  sits uncommitted there, needs the user's own call on committing it (a different git repository).
 - `GalaxyEggbertSimple3D` is **not built** (per direction lock above) — its build is known broken
   in this environment (missing/incompatible U3D prebuilt) and this is intentionally left unfixed.
 
@@ -70,8 +76,8 @@ appears to be under active, independent development and the failure was transien
 it is not caused by anything in this repository; check `../sharp-runtime`'s own git log first.
 
 ### Test status
-Last full run (2026-07-16, both backends, re-verified after this session's 5 vehicle-gate fixes):
-- `build-cna`: **78 tests, 99% pass** — the only failure is `easy-gl-resource-smoke-tests`, a
+Last full run (2026-07-18, both backends, re-verified after today's Balloon fixes):
+- `build-cna`: **76 tests, 99% pass** — the only failure is `easy-gl-resource-smoke-tests`, a
   **pre-existing, unrelated** failure in the `easy-gl` dependency, not caused by this repository's
   own code. It has been the same single failure across many verification passes this session.
 - `build-cna-vulkan`: **73/73 tests, 100% pass.**
@@ -161,7 +167,10 @@ the death-lock + life-loss-Voyage system, Sucette/Drink/Charge's 2-stage pickup 
 real, lean global hub). Reachable in-game from the global hub (mission 1) via its own `DemoPortal`
 marker, or directly via `GE_DEBUG`-style tooling/tests. Playable with first-/third-person camera
 toggle (`C` key), tank-control movement, and the full interactive-object system (pickups, hazards,
-enemies, doors, lifts, crates).
+enemies, doors, lifts, crates). A second wasp (`ObjectType44`) sits 5 tiles east of spawn on the
+flat corridor floor (added 2026-07-18) specifically so the Balloon status can be triggered and
+observed within seconds of loading the world, with zero platforming — the original wasp is on a
+north-hill plateau reachable only via a staircase + terraced ascent.
 
 ### What does not work yet
 - **No visible 3D Blupi model** — invisible collision point in first-person; a placeholder model
@@ -775,6 +784,13 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp` (its `InnerFlatPlate` handling) and
   `../easy-3d`'s `CubeMesh.cpp` (`AppendPlateMesh`). Needs user visual input before another fix
   attempt.
+- **Incomplete (found 2026-07-18, while implementing Balloon's horizontal drift):** No
+  horizontal-wall-collision at all for ANY airborne movement — `GEBlupiController::TryMoveAxis()`'s
+  step-up gate only applies while `m_onGround`; otherwise a move always applies unconditionally.
+  Affects plain jumping, every vehicle mode, and now Balloon's own real sideways drift too — a
+  floating/jumping/riding Blupi drifts straight through a side wall he'd stop against while walking.
+  A real fix needs a general airborne-collision primitive shared by all of these, not a per-status
+  patch — out of scope for any single-mechanic task; flag if picked up.
 - **Incomplete:** No visible 3D Blupi model (blocked on the user providing one).
 - **Incomplete:** No 3D world editor.
 - **Fixed 2026-07-16:** Sucette(26)/Drink(30)/Charge(31) pickups and `TriggerTeleport()` now check
