@@ -179,6 +179,25 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: Vulkan-only SkinnedEffect Y-flip bug in `../cna` (sibling repo) — the placeholder Fox was
+  STILL floating on the user's real desktop builds (plan.md `E3D-MIG-069`).** User retested the
+  fix below with a live screenshot showing the Fox still floating, well beyond the earlier 0.5-unit
+  fix's scope. Found the user's actual desktop builds (`cmake-build-debug`, `build-cna-vulkan`) use
+  the **Vulkan** backend, never tested in the earlier fix (only EasyGL). Side-by-side screenshots
+  of the identical committed code, differing only in backend, proved a second, separate, Vulkan-
+  only bug: EasyGL renders the Fox correctly grounded, Vulkan renders it hovering high in the sky.
+  Root cause is in `../cna` (not galaxy-eggbert): every OTHER Vulkan 3D vertex shader applies a
+  manual `pos.y = -pos.y` to compensate for Vulkan's inverted NDC Y axis vs. OpenGL, but all 4
+  `SkinnedEffect` Vulkan shaders (used by `AvatarRenderer`, i.e. the third-person model) were
+  missing this exact line — no Vulkan golden-image test exists for `SkinnedEffect` in `cna`'s own
+  suite (only EasyGL has golden PNGs), so this was a real, previously-undetected upstream gap, not
+  something wrong in galaxy-eggbert's own code. Fixed by adding the missing line to all 4 shaders
+  and recompiling via `cna`'s own `compile_shaders.py`; re-verified via screenshot that Vulkan now
+  matches EasyGL. **This fix currently sits uncommitted in `../cna`** — a genuine upstream engine
+  fix with no possible galaxy-eggbert-side workaround, needs the user's own call on committing it
+  there. All 3 native CNA build dirs (`build-cna`/`cmake-build-debug`/`build-cna-vulkan`) rebuilt
+  and reconfirmed working. Full galaxy-eggbert regression clean (only the 1 known pre-existing
+  failure).
 - **fix: placeholder Fox model floating + wrong scale, real zero-gravity Balloon freeze (plan.md
   `E3D-MIG-069`/`135`).** Three user-reported bugs. (1) The third-person placeholder Fox model
   visibly hovered above the terrain. Root cause independently confirmed via 3 cross-checked

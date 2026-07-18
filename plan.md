@@ -475,6 +475,33 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
          own translation — NOT by changing `GetY()`/`GroundHeightAt()` itself, which would ripple
          into jump/fall physics, `kFallDeathY`, teleporter/water Y thresholds, and every already
          screenshot-tuned camera constant that implicitly assumes the existing convention.
+      **Second, deeper root cause found and fixed 2026-07-18** (user retested with a screenshot
+      still showing the fox floating, well beyond the small 0.5-unit gap the fix above accounts
+      for): the user's actual desktop builds (`cmake-build-debug`, `build-cna-vulkan`) use the
+      **Vulkan** graphics backend, not EasyGL — the only backend this task's fix had been verified
+      against. Side-by-side screenshots of the exact same committed code, differing only in
+      backend, confirmed a genuine, separate Vulkan-only bug: EasyGL showed the Fox correctly
+      grounded, Vulkan showed it hovering high in the sky. Root cause, found in the sibling `cna`
+      engine repo (`../cna`, not galaxy-eggbert): every other Vulkan 3D vertex shader
+      (`textured3d.vert.glsl`, `colored3d.vert.glsl`, `lit_textured3d.vert.glsl`, ...) applies a
+      manual `pos.y = -pos.y` after the MVP transform to compensate for Vulkan's inverted NDC Y
+      axis vs. OpenGL — but all 4 `SkinnedEffect` Vulkan vertex shaders (`skinned3d.vert.glsl`,
+      `skinned3d_color.vert.glsl`, `skinned3d_vertexlit.vert.glsl`,
+      `skinned3d_vertexlit_color.vert.glsl`, used by `AvatarRenderer`/the third-person placeholder
+      model) were missing this exact line — a genuine oversight, not a deliberate difference.
+      Confirmed via `../cna`'s own repo layout that this is a real, previously-undetected gap: no
+      Vulkan golden-image regression test exists for `SkinnedEffect` at all (only EasyGL has golden
+      PNGs under `cna/examples/golden/`), so nothing in `cna`'s own test suite could have caught it.
+      Fixed by adding the identical `gl_Position.y = -gl_Position.y;` line to all 4 shaders
+      (matching `textured3d.vert.glsl`'s exact convention) and recompiling via `cna`'s own
+      `shaders/compile_shaders.py` (regenerates the checked-in `spirv_shaders.hpp`). Re-verified via
+      the same screenshot method on `build-cna-vulkan`: Vulkan now renders the Fox identically to
+      EasyGL, correctly grounded. **This fix lives in `../cna`, currently uncommitted there** — it
+      is a genuine upstream engine bug with no possible workaround from galaxy-eggbert's side (no
+      shim is possible for a missing shader instruction), unlike the earlier sibling-repo CMake gap
+      this session worked around locally; needs the user's own decision on committing it in `cna`.
+      All 3 native CNA-configured build directories (`build-cna` EasyGL, `cmake-build-debug` and
+      `build-cna-vulkan` both Vulkan) rebuilt and reconfirmed working after this fix.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
