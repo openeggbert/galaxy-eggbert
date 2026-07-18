@@ -179,6 +179,21 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: Balloon visual legibility (no visible change on flat ground) + default graphics backend
+  switched to EasyGL (plan.md `E3D-MIG-069`/`135`).** User re-reported "Blupi still doesn't float
+  when the wasp stings him" after the physics fix below, ~5th time reporting it — frustrated,
+  rightly so. Rigorous live re-investigation (temporary debug instrumentation: teleport Blupi onto
+  the real wasp in `worlds3d/world999.vwr`, log every frame, then force him over a genuinely
+  floorless column while already ballooned) proved the physics are 100% correct — `GetY()` holds
+  EXACTLY constant for 500+ frames over open air. The real gap: the placeholder model's Balloon
+  animation state maps to the SAME idle pose as normal standing, so on flat ground (where the wasp
+  is placed) "frozen height" looks identical to just standing there — no visible cue at all. Fixed
+  with a small cosmetic vertical sine bob applied only to the 3D model's render position while
+  ballooned (does not touch physics). Also switched `CMakeLists.txt`'s default `CNA_GRAPHICS_BACKEND`
+  from `VULKAN` back to `EASYGL` (user request, given the Vulkan shader bug found the same day) —
+  still fully overridable, other backends remain buildable. `cmake-build-debug` explicitly
+  reconfigured to pick up the new default (an existing cache doesn't change on its own). Full
+  regression clean.
 - **fix: Vulkan-only SkinnedEffect Y-flip bug in `../cna` (sibling repo) — the placeholder Fox was
   STILL floating on the user's real desktop builds (plan.md `E3D-MIG-069`).** User retested the
   fix below with a live screenshot showing the Fox still floating, well beyond the earlier 0.5-unit

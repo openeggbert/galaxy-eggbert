@@ -242,27 +242,24 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     message(STATUS "CNA source: ${CNA_HOME}")
     message(STATUS "easy-3d source: ${EASY3D_HOME}")
 
-    # Default graphics backend for GalaxyEggbertCNA (2026-07-09) -- CNA's own
-    # CMakeLists.txt defaults CNA_GRAPHICS_BACKEND to EASYGL on Linux; this
-    # sets it to VULKAN instead, BEFORE add_subdirectory(CNA_HOME) below runs
-    # CNA's own (unforced, so lower-priority) default `set(... CACHE ...)`.
-    # A plain (non-FORCE) `set(... CACHE ...)` only takes effect the FIRST
-    # time a cache variable is populated, so this still respects an explicit
-    # `-DCNA_GRAPHICS_BACKEND=...` on the configure command line or an
-    # existing build directory's cache -- it only changes the *default* for
-    # a fresh configure, per the user's ask (2026-07-09) to try Vulkan and
-    # compare against the EasyGL-backend rendering investigated the same day.
-    # Vulkan has no Emscripten/WebGL bridge, so the web build must default to
-    # EasyGL instead (already GLES-first, see EasyGLGraphicsBackend's own
-    # SDL_GL_CONTEXT_PROFILE_ES request — maps directly to WebGL2 under
-    # Emscripten, no patch needed there).
-    if(EMSCRIPTEN)
-        set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING
-            "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
-    else()
-        set(CNA_GRAPHICS_BACKEND "VULKAN" CACHE STRING
-            "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
-    endif()
+    # Default graphics backend for GalaxyEggbertCNA -- EasyGL (2026-07-18,
+    # user request: make EasyGL the strongest/default backend, while keeping
+    # other backends buildable for the future). BEFORE add_subdirectory(CNA_HOME)
+    # below runs CNA's own (unforced, so lower-priority) default
+    # `set(... CACHE ...)`. A plain (non-FORCE) `set(... CACHE ...)` only
+    # takes effect the FIRST time a cache variable is populated, so this
+    # still respects an explicit `-DCNA_GRAPHICS_BACKEND=...` on the configure
+    # command line or an existing build directory's cache -- it only changes
+    # the *default* for a fresh configure. Previously defaulted to VULKAN on
+    # native (2026-07-09, to compare the two backends) -- reverted after this
+    # session found a real Vulkan-only bug (missing NDC Y-flip in `../cna`'s
+    # SkinnedEffect shaders, plan.md `E3D-MIG-069`) that EasyGL never had,
+    # confirming EasyGL is the more reliable backend for this project today.
+    # Vulkan/other backends remain fully buildable via an explicit
+    # `-DCNA_GRAPHICS_BACKEND=VULKAN` (etc.) override -- this is a default
+    # change only, not a removal of multi-backend support.
+    set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING
+        "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
 
     # Add CNA first: easy-3d's own CMakeLists.txt auto-detects an existing
     # `CNA` target from the parent project and links against it instead of

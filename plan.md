@@ -502,6 +502,33 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       this session worked around locally; needs the user's own decision on committing it in `cna`.
       All 3 native CNA-configured build directories (`build-cna` EasyGL, `cmake-build-debug` and
       `build-cna-vulkan` both Vulkan) rebuilt and reconfirmed working after this fix.
+      **Default graphics backend switched to EasyGL 2026-07-18** (user request, given the Vulkan
+      bug above): `CMakeLists.txt`'s native default changed from `VULKAN` to `EASYGL`
+      unconditionally (Emscripten already defaulted to EasyGL). Still fully overridable via
+      `-DCNA_GRAPHICS_BACKEND=VULKAN` etc. for the future — a default change, not a removal of
+      other backends. `cmake-build-debug` (the directory with a pinned `VULKAN` cache from an
+      earlier 2026-07-09 request) explicitly reconfigured with `-DCNA_GRAPHICS_BACKEND=EASYGL` to
+      actually pick up the new default, since an existing cache entry doesn't change on its own.
+      **Balloon visual legibility gap found and fixed, same day**: the user re-reported "Blupi
+      still doesn't float when the wasp stings him" after the Balloon physics fix above. Rigorous
+      live investigation (temporary debug instrumentation: teleport Blupi onto the real wasp in
+      `worlds3d/world999.vwr`, log `IsBallooned()`/`GetY()` every frame, then forcibly move him
+      over a genuinely floorless column while still ballooned) proved the underlying physics are
+      100% correct — contact detection fires immediately, and `GetY()` holds EXACTLY constant for
+      500+ frames over open air, matching real source's true zero-gravity freeze exactly. The real
+      gap: `BlupiAnimStateToPlaceholderClipName()` maps `AnimState::Balloon` to the same idle
+      "Survey" clip as normal standing — so when the wasp (placed on flat ground in
+      `worlds3d/world999.vwr`) stings Blupi, "frozen height" looks IDENTICAL to normal standing,
+      since there's nothing to fall out of. Real mobile-eggbert's own Balloon sprite is a visibly
+      distinct round/ball shape (`kBalloonFrames`, icon 291+) that reads as "floating" regardless of
+      ground contact; the placeholder Fox mesh's own 3-clip Survey/Walk/Run set has nothing
+      resembling it. Fixed with a small, purely cosmetic, render-only vertical sine bob
+      (`kBalloonBobAmplitude=0.08f`, `kBalloonBobFrequency=3.0f` rad/s) applied ONLY to the 3D
+      model's translation while `IsBallooned()` — does NOT touch `GetY()`/physics, same category of
+      engine-appropriate 3D substitution as billboard sprites/shadows elsewhere in this project
+      (CLAUDE.md's "natural technical adaptations" allowance), not a new mechanic. Re-verified via
+      screenshot that rendering isn't broken and the physics-only debug log still shows Y frozen
+      across 500+ frames with the bob active.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 

@@ -3006,11 +3006,38 @@ namespace GalaxyEggbert::CNA
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
                 constexpr float kPlaceholderModelYOffset = -0.5f;
+                // Balloon visual bob (2026-07-18, user-reported: wasp sting
+                // should make Blupi float, but nothing visibly happens). The
+                // underlying physics ARE a real zero-gravity freeze
+                // (kBalloonDuration's own comment) -- confirmed live via a
+                // forced-position debug test holding GetY() exactly constant
+                // for 20+ frames over a genuinely floorless column. But the
+                // common case (the wasp sits on flat ground, e.g.
+                // worlds3d/world999.vwr's own placement) means "frozen
+                // height" looks IDENTICAL to normal standing, since there is
+                // nothing to fall out of -- there is no visual cue at all.
+                // Real mobile-eggbert's own Balloon sprite is a distinctly
+                // different round/ball shape (kBalloonFrames, icon 291+,
+                // GEBlupiController.cpp) that reads as "floating" regardless
+                // of ground contact; this placeholder Fox mesh's own 3-clip
+                // Survey/Walk/Run set (avatars3d/blupi_placeholder/README.md)
+                // has nothing resembling it. A small render-only vertical
+                // bob is the closest natural technical adaptation available
+                // -- purely cosmetic (does not touch GetY()/physics), same
+                // category of engine-appropriate 3D substitution as
+                // billboard sprites/shadows elsewhere in this project, not a
+                // new mechanic.
+                constexpr float kBalloonBobAmplitude = 0.08f;
+                constexpr float kBalloonBobFrequency = 3.0f; // rad/s
+                const float balloonBob = blupi_.IsBallooned()
+                    ? kBalloonBobAmplitude *
+                          std::sin(static_cast<float>(blupiClipTimeSeconds_) * kBalloonBobFrequency)
+                    : 0.0f;
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(kPlaceholderModelScale) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());
+                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset + balloonBob, blupi_.GetZ());
                 blupiAvatarRenderer_->setWorldProperty(world);
                 blupiAvatarRenderer_->setViewProperty(camera_.GetViewMatrix());
                 blupiAvatarRenderer_->setProjectionProperty(camera_.GetProjectionMatrix());
