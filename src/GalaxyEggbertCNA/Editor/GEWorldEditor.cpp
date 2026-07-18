@@ -1,5 +1,6 @@
 #include "GEWorldEditor.hpp"
 
+#include "GEBoxRegion.hpp"
 #include "GEVoxelRaycast.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
@@ -33,6 +34,8 @@ namespace GalaxyEggbert::CNA
         hasHighlight_ = false;
         highlightRenderer_.Hide();
         commandStack_ = GEEditCommandStack();
+        boxFirstCornerPlaced_ = false;
+        showingBox_ = false;
     }
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
@@ -156,9 +159,30 @@ namespace GalaxyEggbert::CNA
         const bool enterHeld = keyboard.IsKeyDown(Keys::Enter);
         const bool undoKeyHeld = keyboard.IsKeyDown(Keys::U);
         const bool redoKeyHeld = keyboard.IsKeyDown(Keys::R);
+        const bool boxKeyHeld = keyboard.IsKeyDown(Keys::F);
+        const bool escapeKeyHeld = keyboard.IsKeyDown(Keys::Escape);
+
+        // Box-fill tool live tracking (plan.md EDITOR-105) -- while a first
+        // corner is placed, the highlight follows a box between it and
+        // wherever the raycast currently aims, updated every frame
+        // regardless of which (if any) trigger key is pressed this frame.
+        showingBox_ = boxFirstCornerPlaced_ && hasHighlight_;
+        if (showingBox_)
+        {
+            const BoxRegion liveRegion = NormalizeAndClamp(
+                boxCorner0X_, boxCorner0Y_, boxCorner0Z_,
+                hitCellX_, hitCellY_, hitCellZ_,
+                static_cast<int>(world.blocksPerAxis()));
+            boxMinRenderX_ = static_cast<float>(liveRegion.minX) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+            boxMinRenderY_ = static_cast<float>(liveRegion.minY);
+            boxMinRenderZ_ = static_cast<float>(liveRegion.minZ) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+            boxMaxRenderX_ = static_cast<float>(liveRegion.maxX) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+            boxMaxRenderY_ = static_cast<float>(liveRegion.maxY);
+            boxMaxRenderZ_ = static_cast<float>(liveRegion.maxZ) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+        }
 
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        if (leftHeld && !leftHeldLastFrame_ && hasHighlight_)
+        if (leftHeld && !leftHeldLastFrame_ && hasHighlight_ && !boxFirstCornerPlaced_)
         {
             const int placeX = static_cast<int>(hitCellX_) + hitNormalX_;
             const int placeY = static_cast<int>(hitCellY_) + hitNormalY_;
@@ -180,7 +204,7 @@ namespace GalaxyEggbert::CNA
                 needsPresentationRebuild_ = true;
             }
         }
-        else if (middleHeld && !middleHeldLastFrame_ && hasHighlight_)
+        else if (middleHeld && !middleHeldLastFrame_ && hasHighlight_ && !boxFirstCornerPlaced_)
         {
             const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
             const Worlds::Block after = Worlds::Block::air();
@@ -209,11 +233,63 @@ namespace GalaxyEggbert::CNA
                 needsPresentationRebuild_ = true;
             }
         }
+        else if (boxKeyHeld && !boxKeyHeldLastFrame_ && hasHighlight_)
+        {
+            if (!boxFirstCornerPlaced_)
+            {
+                boxCorner0X_ = hitCellX_;
+                boxCorner0Y_ = hitCellY_;
+                boxCorner0Z_ = hitCellZ_;
+                boxFirstCornerPlaced_ = true;
+            }
+            else
+            {
+                const BoxRegion region = NormalizeAndClamp(
+                    boxCorner0X_, boxCorner0Y_, boxCorner0Z_,
+                    hitCellX_, hitCellY_, hitCellZ_, blocksPerAxis);
+                GEEditCommand command;
+                command.kind = GEEditCommand::Kind::BlockEdit;
+                const Worlds::Block fillBlock = Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile);
+                for (int x = region.minX; x <= region.maxX; ++x)
+                {
+                    for (int y = region.minY; y <= region.maxY; ++y)
+                    {
+                        for (int z = region.minZ; z <= region.maxZ; ++z)
+                        {
+                            const auto ux = static_cast<std::uint16_t>(x);
+                            const auto uy = static_cast<std::uint16_t>(y);
+                            const auto uz = static_cast<std::uint16_t>(z);
+                            const Worlds::Block before = world.getBlock(ux, uy, uz);
+                            if (before == fillBlock)
+                            {
+                                continue; // no real change -- don't record a no-op undo entry
+                            }
+                            world.setBlock(ux, uy, uz, fillBlock);
+                            command.blockChanges.push_back({ux, uy, uz, before, fillBlock});
+                        }
+                    }
+                }
+                if (!command.blockChanges.empty())
+                {
+                    commandStack_.Push(std::move(command));
+                    needsPresentationRebuild_ = true;
+                }
+                boxFirstCornerPlaced_ = false;
+                showingBox_ = false;
+            }
+        }
+        else if (escapeKeyHeld && !escapeKeyHeldLastFrame_ && boxFirstCornerPlaced_)
+        {
+            boxFirstCornerPlaced_ = false;
+            showingBox_ = false;
+        }
         leftHeldLastFrame_ = leftHeld;
         middleHeldLastFrame_ = middleHeld;
         enterHeldLastFrame_ = enterHeld;
         undoKeyHeldLastFrame_ = undoKeyHeld;
         redoKeyHeldLastFrame_ = redoKeyHeld;
+        boxKeyHeldLastFrame_ = boxKeyHeld;
+        escapeKeyHeldLastFrame_ = escapeKeyHeld;
     }
 
     bool GEWorldEditor::ConsumeNeedsPresentationRebuild() noexcept
@@ -226,7 +302,13 @@ namespace GalaxyEggbert::CNA
     void GEWorldEditor::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                              const Easy3D::Camera3D& camera)
     {
-        if (hasHighlight_)
+        if (showingBox_)
+        {
+            highlightRenderer_.ShowBox(device, boxMinRenderX_, boxMinRenderY_, boxMinRenderZ_,
+                                       boxMaxRenderX_, boxMaxRenderY_, boxMaxRenderZ_);
+            highlightRenderer_.Draw(device, camera);
+        }
+        else if (hasHighlight_)
         {
             highlightRenderer_.ShowCell(device, highlightX_, highlightY_, highlightZ_);
             highlightRenderer_.Draw(device, camera);

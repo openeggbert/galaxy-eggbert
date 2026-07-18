@@ -8,11 +8,12 @@
 
 namespace GalaxyEggbert::CNA
 {
-    // Translucent cube overlay tracking whichever block the editor's
-    // raycast currently aims at (plan.md section 6, EDITOR-102). Rebuilds
-    // its mesh only when the highlighted cell actually changes -- matches
-    // this codebase's "rebuild the whole mesh on change, no in-place
-    // update API" convention (see GETerrainRenderer's own class comment).
+    // Translucent overlay tracking either a single block the editor's
+    // raycast currently aims at (plan.md EDITOR-102) or a box-fill
+    // selection spanning two corners (plan.md EDITOR-105). Rebuilds its
+    // mesh only when the shown bounds actually change -- matches this
+    // codebase's "rebuild the whole mesh on change, no in-place update
+    // API" convention (see GETerrainRenderer's own class comment).
     class GEEditorHighlightRenderer
     {
     public:
@@ -20,23 +21,37 @@ namespace GalaxyEggbert::CNA
         // position -- matches GETerrainRenderer's own block-center
         // convention exactly (integer grid index N renders at N, spanning
         // [N-0.5, N+0.5), not [N, N+1)). A no-op rebuild if this is the
-        // same center already shown.
+        // same cell already shown.
         void ShowCell(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                       float centerX, float centerY, float centerZ);
 
-        // Hides the highlight (Draw() becomes a no-op) until ShowCell() is called again.
+        // Shows a box spanning the two given RENDER-SPACE block centers
+        // (inclusive on both ends, same block-center convention as
+        // ShowCell -- a single-cell box has min==max). A no-op rebuild if
+        // the same bounds are already shown. Drawn in a distinct color
+        // from the single-cell crosshair so a box-fill selection reads as
+        // clearly different from ordinary block picking.
+        void ShowBox(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                     float minCenterX, float minCenterY, float minCenterZ,
+                     float maxCenterX, float maxCenterY, float maxCenterZ);
+
+        // Hides the highlight (Draw() becomes a no-op) until ShowCell()/ShowBox() is called again.
         void Hide() noexcept;
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   const Easy3D::Camera3D& camera);
 
     private:
+        void Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                    float minCenterX, float minCenterY, float minCenterZ,
+                    float maxCenterX, float maxCenterY, float maxCenterZ,
+                    float r, float g, float b);
+
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<Easy3D::CubeMeshRenderer> mesh_;
         bool visible_ = false;
-        bool hasLastCenter_ = false;
-        float lastCenterX_ = 0.0f;
-        float lastCenterY_ = 0.0f;
-        float lastCenterZ_ = 0.0f;
+        bool hasLastBounds_ = false;
+        float lastMinX_ = 0.0f, lastMinY_ = 0.0f, lastMinZ_ = 0.0f;
+        float lastMaxX_ = 0.0f, lastMaxY_ = 0.0f, lastMaxZ_ = 0.0f;
     };
 }

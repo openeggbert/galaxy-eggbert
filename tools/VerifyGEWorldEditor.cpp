@@ -1,7 +1,9 @@
+#include "Editor/GEBoxRegion.hpp"
 #include "Editor/GEEditCommandStack.hpp"
 #include "Editor/GEVoxelRaycast.hpp"
 #include "Editor/GEWorldEditor.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -31,8 +33,12 @@
 //     behavior directly, plus GEWorldEditor's U/R undo/redo keys undoing/
 //     redoing a real place through the same synthetic-input path as
 //     EDITOR-103's section.
-// Later milestones (box-fill, palette data, MoveObject/sky-region
-// round-trips) add their own sections here.
+//   - EDITOR-105: GEBoxRegion::NormalizeAndClamp directly (unordered
+//     corners, world-bounds clamping), plus GEWorldEditor's F-key box-fill
+//     tool filling an exact expected volume as one undo command through
+//     the same synthetic-input path.
+// Later milestones (palette data, MoveObject/sky-region round-trips) add
+// their own sections here.
 int main()
 {
     using namespace GalaxyEggbert::CNA;
@@ -428,6 +434,106 @@ int main()
         check(!world.getBlock(placeX, placeY, placeZ).isAir(),
               "the R key redoes the placement back");
         check(editor.ConsumeNeedsPresentationRebuild(), "a successful redo requests a presentation rebuild");
+    }
+
+    // --- GEBoxRegion::NormalizeAndClamp: unordered corners + world-bounds clamping ---
+    {
+        const BoxRegion region = NormalizeAndClamp(5, 20, 8, 2, 10, 30, 100);
+        check(region.minX == 2 && region.maxX == 5, "X is normalized regardless of which corner is larger");
+        check(region.minY == 10 && region.maxY == 20, "Y is normalized regardless of which corner is larger");
+        check(region.minZ == 8 && region.maxZ == 30, "Z is normalized regardless of which corner is larger");
+    }
+    {
+        const BoxRegion region = NormalizeAndClamp(-5, 50, 105, 3, 200, 99, 100);
+        check(region.minX == 0, "a negative corner clamps to 0, not wrapping/underflowing");
+        check(region.maxY == 99, "a corner beyond blocksPerAxis clamps to the last valid index");
+        check(region.minZ == 99 && region.maxZ == 99,
+              "both corners already at/beyond the last valid index still clamp to a valid single-cell range");
+    }
+
+    // --- GEWorldEditor: F-key box-fill fills an exact expected volume as one undo command ---
+    {
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        constexpr float kDefaultFlySpeed = 15.0f; // GEWorldEditor's own documented default
+        const float cosPitch = std::cos(kDefaultPitch);
+        const float fwdX = std::sin(kDefaultYaw) * cosPitch;
+        const float fwdY = std::sin(kDefaultPitch);
+        const float fwdZ = -std::cos(kDefaultYaw) * cosPitch;
+
+        const RaycastHit cornerAHit = Raycast(world, 50.0f, 10.0f, 50.0f, fwdX, fwdY, fwdZ, 200.0f);
+        check(cornerAHit.hit, "test setup sanity: corner A raycast hits the slab");
+
+        const KeyboardState fKeys{Keys::F};
+        editor.Update(fKeys, restMouse, 0.0f, 800, 480, camera, world); // press F: picks corner A
+
+        // Move the camera (F released, so the edge-trigger re-arms) before
+        // picking corner B, so the two corners are genuinely different
+        // cells. Space (world-up), not W: moving straight up shifts the
+        // ray's ORIGIN off the diagonal look line without changing its
+        // direction, so the new ray is a parallel shift that crosses the
+        // slab's top face at a genuinely different Z -- moving along the
+        // look direction itself (W) would retrace the exact same ray and
+        // hit the exact same point, since it's already the direction being
+        // raycast along.
+        constexpr float kMoveDt = 0.3f;
+        editor.Update(KeyboardState{Keys::Space}, restMouse, kMoveDt, 800, 480, camera, world);
+
+        // Independently compute where the camera/ray ended up, using the
+        // exact same movement math GEWorldEditor::Update() applies.
+        const float camYAfterMove = 10.0f + 1.0f * kDefaultFlySpeed * kMoveDt; // Space moves along world-up (0,1,0)
+        const RaycastHit cornerBHit = Raycast(world, 50.0f, camYAfterMove, 50.0f,
+                                               fwdX, fwdY, fwdZ, 200.0f);
+        check(cornerBHit.hit, "test setup sanity: corner B raycast hits the slab at the new position");
+        check(cornerBHit.z != cornerAHit.z,
+              "test setup sanity: corner B is a genuinely different cell than corner A");
+
+        editor.Update(fKeys, restMouse, 0.0f, 800, 480, camera, world); // press F again: fills
+
+        const auto expectedRegion = NormalizeAndClamp(cornerAHit.x, cornerAHit.y, cornerAHit.z,
+                                                        cornerBHit.x, cornerBHit.y, cornerBHit.z,
+                                                        static_cast<int>(world.blocksPerAxis()));
+        bool allFilled = true;
+        int expectedVolume = 0;
+        for (int x = expectedRegion.minX; x <= expectedRegion.maxX; ++x)
+        {
+            for (int y = expectedRegion.minY; y <= expectedRegion.maxY; ++y)
+            {
+                for (int z = expectedRegion.minZ; z <= expectedRegion.maxZ; ++z)
+                {
+                    ++expectedVolume;
+                    if (world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                        static_cast<std::uint16_t>(z))
+                            .type() != GalaxyEggbert::BlockTypes::RockPile)
+                    {
+                        allFilled = false;
+                    }
+                }
+            }
+        }
+        check(expectedVolume > 1, "test setup sanity: the box spans more than a single cell");
+        check(allFilled, "the second F press fills every cell in the expected region with RockPile");
+        check(editor.ConsumeNeedsPresentationRebuild(), "box-fill requests a presentation rebuild");
+
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(cornerAHit.x, cornerAHit.y, cornerAHit.z).type() == 1,
+              "undo restores corner A's real original block in one step");
+        check(world.getBlock(cornerBHit.x, cornerBHit.y, cornerBHit.z).type() == 1,
+              "undo restores corner B's real original block in the SAME undo step (one fill == one command)");
+        check(editor.ConsumeNeedsPresentationRebuild(), "undoing the fill requests a presentation rebuild");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

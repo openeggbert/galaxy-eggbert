@@ -22,10 +22,11 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-104 (this milestone): free-fly camera (EDITOR-101) + voxel
+    // EDITOR-105 (this milestone): free-fly camera (EDITOR-101) + voxel
     // raycast/highlight (EDITOR-102) + single block place/remove/save
-    // (EDITOR-103), now with undo/redo for block edits. Box-fill, the real
-    // palette UI, and object editing land in later milestones.
+    // (EDITOR-103) + undo/redo (EDITOR-104), now with a two-click box-fill
+    // tool. The real palette UI and object editing land in later
+    // milestones.
     class GEWorldEditor
     {
     public:
@@ -60,6 +61,16 @@ namespace GalaxyEggbert::CNA
         //   - Enter: saves @p world to the path set via SetWorldPath().
         //   - U: undoes the most recent block edit; R: redoes it (plain
         //     keys, not Ctrl-modified -- Left Ctrl already flies downward).
+        //   - F: box-fill tool. First press marks the aimed-at cell as
+        //     corner A; while a corner is marked, the highlight tracks a
+        //     live box between corner A and wherever the raycast currently
+        //     aims (fly anywhere in between -- the two corners can come
+        //     from completely different camera angles/distances, which is
+        //     what gives a true 3D cuboid, not just a flat footprint). A
+        //     second F press marks corner B and immediately fills the
+        //     whole box with BlockTypes::RockPile as ONE undo command
+        //     (only the cells that actually changed); Escape cancels back
+        //     to single-cell picking with no world change.
         // Call ConsumeNeedsPresentationRebuild() after Update() returns to
         // find out whether @p world was actually mutated this frame.
         //
@@ -119,9 +130,22 @@ namespace GalaxyEggbert::CNA
         bool enterHeldLastFrame_ = false;
         bool undoKeyHeldLastFrame_ = false;
         bool redoKeyHeldLastFrame_ = false;
+        bool boxKeyHeldLastFrame_ = false;
+        bool escapeKeyHeldLastFrame_ = false;
         bool needsPresentationRebuild_ = false;
 
         GEEditCommandStack commandStack_;
+
+        // Box-fill tool (plan.md EDITOR-105).
+        bool boxFirstCornerPlaced_ = false;
+        std::uint16_t boxCorner0X_ = 0;
+        std::uint16_t boxCorner0Y_ = 0;
+        std::uint16_t boxCorner0Z_ = 0;
+        // Render-space box bounds for Draw() to show, recomputed each
+        // Update() call while boxFirstCornerPlaced_ is true.
+        bool showingBox_ = false;
+        float boxMinRenderX_ = 0.0f, boxMinRenderY_ = 0.0f, boxMinRenderZ_ = 0.0f;
+        float boxMaxRenderX_ = 0.0f, boxMaxRenderY_ = 0.0f, boxMaxRenderZ_ = 0.0f;
 
         std::filesystem::path worldPath_;
     };

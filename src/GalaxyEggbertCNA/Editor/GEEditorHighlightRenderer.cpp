@@ -9,18 +9,45 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        // Slightly larger than a real 1x1x1 block so the highlight doesn't
-        // z-fight with the actual terrain face it's tracking.
-        constexpr float kHighlightSize = 1.05f;
+        // Slightly larger than a real 1x1x1 block so the single-cell
+        // highlight doesn't z-fight with the actual terrain face it's
+        // tracking.
+        constexpr float kCellHighlightPadding = 0.05f;
     }
 
     void GEEditorHighlightRenderer::ShowCell(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                              float centerX, float centerY, float centerZ)
     {
-        if (visible_ && hasLastCenter_ &&
-            centerX == lastCenterX_ && centerY == lastCenterY_ && centerZ == lastCenterZ_)
+        const float half = 0.5f + kCellHighlightPadding * 0.5f;
+        // Translucent cyan -- reads clearly against both terrain and sky.
+        Rebuild(device, centerX - half, centerY - half, centerZ - half,
+                centerX + half, centerY + half, centerZ + half,
+                0.2f, 0.9f, 1.0f);
+    }
+
+    void GEEditorHighlightRenderer::ShowBox(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                            float minCenterX, float minCenterY, float minCenterZ,
+                                            float maxCenterX, float maxCenterY, float maxCenterZ)
+    {
+        const float half = 0.5f + kCellHighlightPadding * 0.5f;
+        // Translucent yellow -- visually distinct from the single-cell
+        // cyan crosshair, so a box-fill selection reads as clearly
+        // different from ordinary block picking.
+        Rebuild(device, minCenterX - half, minCenterY - half, minCenterZ - half,
+                maxCenterX + half, maxCenterY + half, maxCenterZ + half,
+                1.0f, 0.9f, 0.2f);
+    }
+
+    void GEEditorHighlightRenderer::Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                            float minX, float minY, float minZ,
+                                            float maxX, float maxY, float maxZ,
+                                            float r, float g, float b)
+    {
+        if (visible_ && hasLastBounds_ &&
+            minX == lastMinX_ && minY == lastMinY_ && minZ == lastMinZ_ &&
+            maxX == lastMaxX_ && maxY == lastMaxY_ && maxZ == lastMaxZ_)
         {
-            return; // same cell already shown -- no rebuild needed
+            return; // same bounds already shown -- no rebuild needed
         }
 
         if (!effect_)
@@ -28,23 +55,24 @@ namespace GalaxyEggbert::CNA
             effect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
             effect_->setTextureEnabledProperty(false);
             effect_->VertexColorEnabled = false;
-            // Translucent cyan -- reads clearly against both terrain and sky.
-            effect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(0.2f, 0.9f, 1.0f));
             effect_->setAlphaProperty(0.35f);
         }
+        effect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(r, g, b));
+
+        const Easy3D::CubeBatch::Vector3 center(
+            (minX + maxX) * 0.5f, (minY + maxY) * 0.5f, (minZ + maxZ) * 0.5f);
+        const Easy3D::CubeBatch::Vector3 size(maxX - minX, maxY - minY, maxZ - minZ);
 
         Easy3D::CubeBatch batch;
-        batch.Add(Easy3D::CubeBatch::Vector3(centerX, centerY, centerZ),
-                  Easy3D::CubeBatch::Vector3(kHighlightSize, kHighlightSize, kHighlightSize));
+        batch.Add(center, size);
         std::vector<Easy3D::CubeVertex> vertices;
         std::vector<std::uint32_t> indices;
         Easy3D::BuildCubeMesh(batch, vertices, indices);
         mesh_ = std::make_unique<Easy3D::CubeMeshRenderer>(device, vertices, indices);
 
-        lastCenterX_ = centerX;
-        lastCenterY_ = centerY;
-        lastCenterZ_ = centerZ;
-        hasLastCenter_ = true;
+        lastMinX_ = minX; lastMinY_ = minY; lastMinZ_ = minZ;
+        lastMaxX_ = maxX; lastMaxY_ = maxY; lastMaxZ_ = maxZ;
+        hasLastBounds_ = true;
         visible_ = true;
     }
 
