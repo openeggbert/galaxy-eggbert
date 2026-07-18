@@ -323,6 +323,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEInputPad.cpp
         src/GalaxyEggbertCNA/Game/GESaveData.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
+        src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -607,6 +609,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     add_executable(VerifyGEWorldEditor
         tools/VerifyGEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
+        src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
+        ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyGEWorldEditor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

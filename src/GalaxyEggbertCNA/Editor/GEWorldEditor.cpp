@@ -1,5 +1,8 @@
 #include "GEWorldEditor.hpp"
 
+#include "GEVoxelRaycast.hpp"
+#include "Game/GEWorldRuntime.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -12,6 +15,7 @@ namespace GalaxyEggbert::CNA
         constexpr float kMinFlySpeed = 1.0f;
         constexpr float kMaxFlySpeed = 200.0f;
         constexpr float kScrollSpeedStepPerNotch = 1.15f; // multiplicative -- stays useful close-up and world-spanning
+        constexpr float kMaxRaycastDistance = 200.0f; // > the 100^3 world's ~173-unit diagonal
     }
 
     void GEWorldEditor::EnterEditing(float startX, float startY, float startZ) noexcept
@@ -23,12 +27,15 @@ namespace GalaxyEggbert::CNA
         pitch_ = -0.35f;
         mouseLookHeldLastFrame_ = false;
         hasLastScrollWheelValue_ = false;
+        hasHighlight_ = false;
+        highlightRenderer_.Hide();
     }
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
                                const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                float dt, int /*viewportWidth*/, int /*viewportHeight*/,
-                               Easy3D::Camera3D& camera)
+                               Easy3D::Camera3D& camera,
+                               const Worlds::World& world)
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
@@ -111,10 +118,36 @@ namespace GalaxyEggbert::CNA
         camera.SetTarget(Easy3D::Camera3D::Vector3(
             camX_ + forward.X, camY_ + forward.Y, camZ_ + forward.Z));
         camera.SetUp(worldUp);
+
+        // Voxel raycast (plan.md EDITOR-102) -- camera position/direction
+        // are in RENDER space (shifted by -kWorldCenterX/Z from @p world's
+        // own raw grid space, see GEVoxelRaycast.hpp); only X/Z need the
+        // shift reversed, Y is unshifted in both spaces.
+        const RaycastHit hit = Raycast(world,
+                                        camX_ + static_cast<float>(GEWorldRuntime::kWorldCenterX), camY_,
+                                        camZ_ + static_cast<float>(GEWorldRuntime::kWorldCenterZ),
+                                        forward.X, forward.Y, forward.Z,
+                                        kMaxRaycastDistance);
+        hasHighlight_ = hit.hit;
+        if (hasHighlight_)
+        {
+            highlightX_ = static_cast<float>(hit.x) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+            highlightY_ = static_cast<float>(hit.y);
+            highlightZ_ = static_cast<float>(hit.z) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+        }
     }
 
-    void GEWorldEditor::Draw()
+    void GEWorldEditor::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                             const Easy3D::Camera3D& camera)
     {
-        // EDITOR-102+ adds the highlight/UI overlay here.
+        if (hasHighlight_)
+        {
+            highlightRenderer_.ShowCell(device, highlightX_, highlightY_, highlightZ_);
+            highlightRenderer_.Draw(device, camera);
+        }
+        else
+        {
+            highlightRenderer_.Hide();
+        }
     }
 }

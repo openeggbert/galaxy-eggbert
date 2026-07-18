@@ -1,6 +1,10 @@
 #pragma once
 
+#include "GEEditorHighlightRenderer.hpp"
+
 #include <Easy3D/Camera3D.hpp>
+#include <GalaxyEggbert/Worlds/World.hpp>
+#include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 
@@ -12,8 +16,9 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-101 (this milestone): free-fly camera only. Raycasting
-    // (EDITOR-102) and block/object editing land in later milestones.
+    // EDITOR-102 (this milestone): free-fly camera (EDITOR-101) + a voxel
+    // raycast each frame, tracked with a translucent highlight cube. Block/
+    // object editing land in later milestones.
     class GEWorldEditor
     {
     public:
@@ -23,19 +28,28 @@ namespace GalaxyEggbert::CNA
         // above the loaded world.
         void EnterEditing(float startX, float startY, float startZ) noexcept;
 
-        // Reads keyboard/mouse and flies camera around. While the right
-        // mouse button is held, mouse deltas drive yaw/pitch (relative
-        // mouse mode + cursor capture) and the cursor is hidden from the
-        // OS; releasing it frees the cursor again for future tool-click
-        // handling (EDITOR-103+). WASD move along the camera's own
-        // forward/right axes, Space/Left Ctrl move along world up/down,
-        // the scroll wheel adjusts fly speed.
+        // Reads keyboard/mouse and flies camera around, then raycasts from
+        // the (possibly just-moved) camera into @p world to find whichever
+        // block it's currently aiming at (stored for Draw() to visualize).
+        // While the right mouse button is held, mouse deltas drive
+        // yaw/pitch (relative mouse mode + cursor capture) and the cursor
+        // is hidden from the OS; releasing it frees the cursor again for
+        // future tool-click handling (EDITOR-103+). WASD move along the
+        // camera's own forward/right axes, Space/Left Ctrl move along
+        // world up/down, the scroll wheel adjusts fly speed.
+        //
+        // @p world is in its own RAW GRID space (see GEVoxelRaycast.hpp);
+        // the camera's own position/direction (render space, shifted by
+        // -GEWorldRuntime::kWorldCenterX/Z from that) is converted
+        // internally -- callers never need to apply this shift themselves.
         void Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
                     const Microsoft::Xna::Framework::Input::MouseState& mouse,
                     float dt, int viewportWidth, int viewportHeight,
-                    Easy3D::Camera3D& camera);
+                    Easy3D::Camera3D& camera,
+                    const Worlds::World& world);
 
-        void Draw();
+        void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                  const Easy3D::Camera3D& camera);
 
     private:
         float camX_ = 50.0f;
@@ -49,5 +63,11 @@ namespace GalaxyEggbert::CNA
         bool mouseLookHeldLastFrame_ = false;
         int lastScrollWheelValue_ = 0;
         bool hasLastScrollWheelValue_ = false;
+
+        GEEditorHighlightRenderer highlightRenderer_;
+        bool hasHighlight_ = false;
+        float highlightX_ = 0.0f;
+        float highlightY_ = 0.0f;
+        float highlightZ_ = 0.0f;
     };
 }

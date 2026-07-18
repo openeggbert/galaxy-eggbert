@@ -1220,7 +1220,8 @@ namespace GalaxyEggbert::CNA
                 // see GEWorldEditor's own class comment.
                 const auto mouse = Mouse::GetState();
                 worldEditor_.Update(phaseKeys, mouse, dt,
-                                     viewport.getWidthProperty(), viewport.getHeightProperty(), camera_);
+                                     viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
+                                     worldRuntime_.GetWorld());
             }
 
             // TEMPORARY (EDITOR-100 debug entry point, removed once
@@ -3531,7 +3532,7 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Editor)
             {
-                worldEditor_.Draw();
+                worldEditor_.Draw(device, camera_);
             }
 
             // Hidden cheat menu overlay (2026-07-13, plan.md
