@@ -381,6 +381,21 @@ namespace GalaxyEggbert::CNA
         // world path to @p path, and calls worldEditor_.ExitBrowser().
         void LoadCustomWorldForEditing(const std::filesystem::path& path);
 
+        // Loads @p path (already saved fresh by GEWorldEditor's Play-Test
+        // button) for a real gameplay session (plan.md EDITOR-108) --
+        // deliberately NOT a mission: no hub/door-gating scan, and
+        // crucially no saveData_ persistence at all (a sandbox world has
+        // no real mission number; writing one would corrupt real
+        // progress). Resets interaction_/blupi_ to fresh defaults (no
+        // "preserve lives" concept -- there's no real life total to
+        // preserve for a test session) and spawns at the same fixed
+        // (0,1,0) convention every hand-authored world shares. Sets
+        // editorPlayTestActive_/editorPlayTestWorldPath_ so the existing
+        // Win/Lost/PauseBack/PauseMenu transition sites (see their own
+        // updated comments) route back to the editor instead of the real
+        // hub when this is active.
+        void LoadCustomWorldForPlayTest(const std::filesystem::path& path);
+
         // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `GEBlupiController::
         // HasVehicleMotor()`/`IsVehicleMotorHigh()`, found 2026-07-17) -- ports
         // `Decor::AdaptMotorVehicleSound()` exactly: computes the desired loop channel (none,
@@ -487,6 +502,17 @@ namespace GalaxyEggbert::CNA
         // see GEWorldEditor's own class comment. Entered via GamePhase::
         // Editor, from the Init screen's own Editor button.
         GEWorldEditor worldEditor_;
+
+        // Play-test session state (plan.md EDITOR-108) -- true while
+        // GamePhase::Play is running a custom world launched from the
+        // editor's Play-Test button rather than a real mission. Checked at
+        // every real mission-transition site (Win/Lost return, PauseBack,
+        // PauseMenu) to route back to the editor (LoadCustomWorldForEditing,
+        // see its own comment) instead of the real hub, and to skip the
+        // real saveData_ checkpoint (a sandbox world has no real mission
+        // number to persist).
+        bool editorPlayTestActive_ = false;
+        std::filesystem::path editorPlayTestWorldPath_;
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- real
         // gesture zones are checked only during real Phase::Play

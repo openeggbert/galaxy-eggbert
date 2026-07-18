@@ -53,6 +53,11 @@
 //     and GEWorldEditor's browsing-state transitions (EnterBrowser/
 //     IsBrowsing/UpdateBrowsing/EnterEditing/ExitBrowser) -- none of this
 //     needs a GraphicsDevice either (only Draw()/DrawBrowsing() do).
+//   - EDITOR-108: GEWorldEditor's Play-Test toolbar button -- clicking it
+//     saves the world to GetWorldPath() and sets ConsumePlayTestRequested(),
+//     driven through the same synthetic-input path as earlier sections
+//     (GalaxyEggbertCnaGame's own phase-switch/checkpoint-skip side of
+//     this needs a real GraphicsDevice/game loop, live-verified instead).
 // Later milestones (MoveObject/sky-region round-trips) add their own
 // sections here.
 int main()
@@ -777,6 +782,39 @@ int main()
         editor.EnterBrowser(0);
         editor.ExitBrowser();
         check(!editor.IsBrowsing(), "ExitBrowser() leaves browsing mode");
+    }
+
+    // --- GEWorldEditor: Play-Test toolbar button saves + requests a play-test session ---
+    {
+        World world;
+        world.setBlock(10, 5, 10, Block::make(42));
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        editor.SetWorldPath("verify_ge_world_editor_playtest_scratch.vwr");
+        Easy3D::Camera3D camera;
+
+        check(!editor.ConsumePlayTestRequested(),
+              "test setup sanity: no play-test requested before any click");
+
+        // Toolbar button 4 (Play-Test): y0 = 10 + 4*(48+8) = 234, so (10,234)-(58,282).
+        const MouseState down(30, 258, 0, ButtonState::Pressed, ButtonState::Released,
+                              ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        const MouseState up(30, 258, 0, ButtonState::Released, ButtonState::Released,
+                            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+
+        check(editor.GetWorldPath() == std::filesystem::path("verify_ge_world_editor_playtest_scratch.vwr"),
+              "GetWorldPath() returns the path set via SetWorldPath()");
+        check(editor.ConsumePlayTestRequested(),
+              "clicking the Play-Test toolbar button sets ConsumePlayTestRequested()");
+        check(!editor.ConsumePlayTestRequested(),
+              "ConsumePlayTestRequested() clears back to false once read");
+
+        const World reloaded = World::loadFromFile("verify_ge_world_editor_playtest_scratch.vwr");
+        check(reloaded.getBlock(10, 5, 10).type() == 42,
+              "the Play-Test button saves the world before requesting the session, and it round-trips");
+        std::remove("verify_ge_world_editor_playtest_scratch.vwr");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

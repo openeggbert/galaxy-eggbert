@@ -24,12 +24,14 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-107 (this milestone): free-fly camera (EDITOR-101) + voxel
+    // EDITOR-108 (this milestone): free-fly camera (EDITOR-101) + voxel
     // raycast/highlight (EDITOR-102) + single block place/remove/save
     // (EDITOR-103) + undo/redo (EDITOR-104) + box-fill (EDITOR-105) + a
-    // real block palette (EDITOR-106), now entered through a real
-    // per-gamer-slot world browser (GEEditorBrowserScreen) instead of the
-    // F9 debug entry. Object editing lands in later milestones.
+    // real block palette (EDITOR-106) + a real per-gamer-slot world
+    // browser (EDITOR-107), now with a Play-Test toolbar button that saves
+    // and hands off to GalaxyEggbertCnaGame for a real gameplay session
+    // against the just-saved world. Object editing lands in later
+    // milestones.
     class GEWorldEditor
     {
     public:
@@ -81,6 +83,21 @@ namespace GalaxyEggbert::CNA
         // BrowserRequest pointed at.
         void SetWorldPath(std::filesystem::path path) noexcept { worldPath_ = std::move(path); }
 
+        // The path currently being edited (plan.md EDITOR-108) -- read by
+        // GalaxyEggbertCnaGame after ConsumePlayTestRequested() fires, to
+        // know which file to load for the play-test session.
+        [[nodiscard]] const std::filesystem::path& GetWorldPath() const noexcept { return worldPath_; }
+
+        // True exactly once, right after an Update() call whose Play-Test
+        // toolbar button was clicked -- Update() already saved @p world to
+        // worldPath_ itself before setting this (same "save before
+        // testing" behavior as pressing Save first, then Play-Test). The
+        // caller (GalaxyEggbertCnaGame) still owns actually switching to
+        // GamePhase::Play and loading the saved file fresh (this class has
+        // no GEWorldRuntime/phase access), same "*ThisFrame()"/"Consume*()"
+        // idiom as ConsumeNeedsPresentationRebuild() above.
+        [[nodiscard]] bool ConsumePlayTestRequested() noexcept;
+
         // Reads keyboard/mouse and flies camera around, then raycasts from
         // the (possibly just-moved) camera into @p world to find whichever
         // block it's currently aiming at (stored for Draw() to visualize).
@@ -105,7 +122,9 @@ namespace GalaxyEggbert::CNA
         //     The palette's own Undo/Redo/Save toolbar buttons trigger the
         //     exact same actions via a mouse click, for players who don't
         //     know the keybindings; its 4th (Back) button returns to the
-        //     browser (EnterBrowser() again, for the same gamer slot).
+        //     browser (EnterBrowser() again, for the same gamer slot); its
+        //     5th (Play-Test) button saves @p world then requests a real
+        //     gameplay session -- see ConsumePlayTestRequested() below.
         //   - F: box-fill tool. First press marks the aimed-at cell as
         //     corner A; while a corner is marked, the highlight tracks a
         //     live box between corner A and wherever the raycast currently
@@ -184,6 +203,7 @@ namespace GalaxyEggbert::CNA
         bool boxKeyHeldLastFrame_ = false;
         bool escapeKeyHeldLastFrame_ = false;
         bool needsPresentationRebuild_ = false;
+        bool playTestRequested_ = false;
 
         GEEditCommandStack commandStack_;
         GEEditorPalette palette_;

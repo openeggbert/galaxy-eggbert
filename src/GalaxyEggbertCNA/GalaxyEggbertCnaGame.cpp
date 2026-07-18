@@ -591,6 +591,30 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: LoadCustomWorldForEditing(" << path << "): loaded." << std::endl;
     }
 
+    void GalaxyEggbertCnaGame::LoadCustomWorldForPlayTest(const std::filesystem::path& path)
+    {
+        if (!worldRuntime_.LoadFromVwrFile(path.string()))
+        {
+            std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path
+                       << "): not found or failed to load." << std::endl;
+            return;
+        }
+
+        RebuildWorldPresentation();
+
+        // Fresh defaults, no "preserve lives" concept (unlike LoadMission()) --
+        // there's no real progression state to carry between play-test runs.
+        interaction_ = GEInteractionSystem();
+        blupi_ = GEBlupiController();
+        blupi_.SetPosition(0.0f, 1.0f, 0.0f); // same fixed spawn convention every hand-authored world shares
+
+        editorPlayTestActive_ = true;
+        editorPlayTestWorldPath_ = path;
+        SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+
+        std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path << "): loaded." << std::endl;
+    }
+
     void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade) noexcept
     {
         // Real Game1::SetPhase() (2026-07-13, plan.md MENU-088/089, see
@@ -1288,6 +1312,13 @@ namespace GalaxyEggbert::CNA
                     {
                         RebuildWorldPresentation();
                     }
+                    if (worldEditor_.ConsumePlayTestRequested())
+                    {
+                        // Update()'s own PlayTest handling already saved
+                        // the world to GetWorldPath() before requesting
+                        // this (plan.md EDITOR-108).
+                        LoadCustomWorldForPlayTest(worldEditor_.GetWorldPath());
+                    }
                 }
             }
 
@@ -1316,14 +1347,26 @@ namespace GalaxyEggbert::CNA
             }
             else if (mouseRestartPressed)
             {
-                // Real PauseRestart (plan.md MENU-036): reload the CURRENT
-                // mission fresh -- upgraded 2026-07-17 from the previous
-                // origin-respawn-in-place simplification, now that
-                // LoadMission() exists to do a genuine level reload
-                // (fresh vehicle/secret-power/key/dynamite/treasure state,
-                // same as touching any other mission trigger).
-                LoadMission(worldRuntime_.GetMissionNumber());
-                SetPhase(GalaxyEggbert::GamePhase::Play);
+                if (editorPlayTestActive_)
+                {
+                    // Play-test session (plan.md EDITOR-108): reload the
+                    // SAME custom world fresh, same intent as real
+                    // PauseRestart below -- worldRuntime_.GetMissionNumber()
+                    // is meaningless here (a sandbox world is never a real
+                    // mission), so LoadMission() would be the wrong call.
+                    LoadCustomWorldForPlayTest(editorPlayTestWorldPath_);
+                }
+                else
+                {
+                    // Real PauseRestart (plan.md MENU-036): reload the CURRENT
+                    // mission fresh -- upgraded 2026-07-17 from the previous
+                    // origin-respawn-in-place simplification, now that
+                    // LoadMission() exists to do a genuine level reload
+                    // (fresh vehicle/secret-power/key/dynamite/treasure state,
+                    // same as touching any other mission trigger).
+                    LoadMission(worldRuntime_.GetMissionNumber());
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
             }
             else if (mouseSetupPressed)
             {
@@ -1332,20 +1375,43 @@ namespace GalaxyEggbert::CNA
             }
             else if (mouseMenuPressed)
             {
-                // Real PauseMenu: SetPhase(Init) -- now wired (2026-07-13,
-                // now that Init exists).
-                SetPhase(GalaxyEggbert::GamePhase::Init);
+                if (editorPlayTestActive_)
+                {
+                    // Play-test session (plan.md EDITOR-108): PauseMenu
+                    // returns to the editor on the SAME custom world,
+                    // instead of the real Init hub.
+                    LoadCustomWorldForEditing(editorPlayTestWorldPath_);
+                    editorPlayTestActive_ = false;
+                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                }
+                else
+                {
+                    // Real PauseMenu: SetPhase(Init) -- now wired (2026-07-13,
+                    // now that Init exists).
+                    SetPhase(GalaxyEggbert::GamePhase::Init);
+                }
             }
             else if (mouseBackPressed)
             {
-                // Real PauseBack/MissionBack (plan.md MENU-035): wired
-                // 2026-07-17 now that the hub/mission-progression system
-                // gives it a real destination -- the same
-                // ComputeMissionBack() formula shared by exit-reached
-                // (WinLostReturn below): a hub (mission%10==0) goes to the
-                // global hub (1), a sublevel goes to its own world's hub.
-                LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
-                SetPhase(GalaxyEggbert::GamePhase::Play);
+                if (editorPlayTestActive_)
+                {
+                    // Play-test session (plan.md EDITOR-108): PauseBack
+                    // returns to the editor too, same as PauseMenu above.
+                    LoadCustomWorldForEditing(editorPlayTestWorldPath_);
+                    editorPlayTestActive_ = false;
+                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                }
+                else
+                {
+                    // Real PauseBack/MissionBack (plan.md MENU-035): wired
+                    // 2026-07-17 now that the hub/mission-progression system
+                    // gives it a real destination -- the same
+                    // ComputeMissionBack() formula shared by exit-reached
+                    // (WinLostReturn below): a hub (mission%10==0) goes to the
+                    // global hub (1), a sublevel goes to its own world's hub.
+                    LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
+                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                }
             }
 
             if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
@@ -1360,49 +1426,62 @@ namespace GalaxyEggbert::CNA
                 const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
                 if (returnPressed && !phaseReturnKeyWasDown_)
                 {
-                    if (phase_ == GalaxyEggbert::GamePhase::Win)
+                    if (editorPlayTestActive_)
                     {
-                        // Real WinLostReturn from Win (plan.md TILE-006/
-                        // SCORE-013..019): upgraded 2026-07-17 from the
-                        // previous origin-respawn simplification -- reaching
-                        // the exit now actually advances via the real
-                        // win-exit formula (`ComputeWinExitTarget()`, NOT
-                        // the plain `ComputeMissionBack()` PauseBack above
-                        // uses -- this one additionally special-cases
-                        // mission 1's own exit -> 199 and 199's own exit,
-                        // real destination is actually Init, not straight
-                        // back into Play -- this engine's own already-
-                        // established "skip Init, return to Play directly"
-                        // simplification is kept as-is, only WHICH mission
-                        // loads is now real). Also unlocks the NEXT
-                        // sublevel's door in this world's own hub (real
-                        // `Decor::OpenDoorsWin()`, `m_doors[mission+1]=1`)
-                        // -- only for a genuine sublevel (mission%10!=0);
-                        // real source's `else` branch (hub/global-hub wins)
-                        // uses `OpenGoldsWin()` instead, a different,
-                        // cosmetic-only flag this engine doesn't model.
-                        const int currentMission = worldRuntime_.GetMissionNumber();
-                        if (currentMission % 10 != 0)
-                        {
-                            saveData_.UnlockMissionDoor(currentMission + 1);
-                        }
-                        LoadMission(GEWorldRuntime::ComputeWinExitTarget(currentMission));
+                        // Play-test session (plan.md EDITOR-108):
+                        // WinLostReturn goes back to the editor on the SAME
+                        // custom world either way (Win or Lost), instead of
+                        // the real hub/win-exit-formula destination below.
+                        LoadCustomWorldForEditing(editorPlayTestWorldPath_);
+                        editorPlayTestActive_ = false;
+                        SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
                     }
                     else
                     {
-                        // Real WinLostReturn from Lost: verified directly
-                        // against Decor.cpp:6395-6397/11716 (DoorsLost()) --
-                        // Lost does NOT reload the level or reset treasure/
-                        // key/dynamite progress, only lives (already reset
-                        // to 3 the instant GameOverCount() incremented, see
-                        // HUD-023). Repositioning to spawn (unchanged from
-                        // before) is the correct, already-accepted behavior
-                        // here -- do NOT call LoadMission() on this path,
-                        // it would wrongly wipe the current mission's
-                        // in-progress treasure/key state.
-                        blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                        if (phase_ == GalaxyEggbert::GamePhase::Win)
+                        {
+                            // Real WinLostReturn from Win (plan.md TILE-006/
+                            // SCORE-013..019): upgraded 2026-07-17 from the
+                            // previous origin-respawn simplification -- reaching
+                            // the exit now actually advances via the real
+                            // win-exit formula (`ComputeWinExitTarget()`, NOT
+                            // the plain `ComputeMissionBack()` PauseBack above
+                            // uses -- this one additionally special-cases
+                            // mission 1's own exit -> 199 and 199's own exit,
+                            // real destination is actually Init, not straight
+                            // back into Play -- this engine's own already-
+                            // established "skip Init, return to Play directly"
+                            // simplification is kept as-is, only WHICH mission
+                            // loads is now real). Also unlocks the NEXT
+                            // sublevel's door in this world's own hub (real
+                            // `Decor::OpenDoorsWin()`, `m_doors[mission+1]=1`)
+                            // -- only for a genuine sublevel (mission%10!=0);
+                            // real source's `else` branch (hub/global-hub wins)
+                            // uses `OpenGoldsWin()` instead, a different,
+                            // cosmetic-only flag this engine doesn't model.
+                            const int currentMission = worldRuntime_.GetMissionNumber();
+                            if (currentMission % 10 != 0)
+                            {
+                                saveData_.UnlockMissionDoor(currentMission + 1);
+                            }
+                            LoadMission(GEWorldRuntime::ComputeWinExitTarget(currentMission));
+                        }
+                        else
+                        {
+                            // Real WinLostReturn from Lost: verified directly
+                            // against Decor.cpp:6395-6397/11716 (DoorsLost()) --
+                            // Lost does NOT reload the level or reset treasure/
+                            // key/dynamite progress, only lives (already reset
+                            // to 3 the instant GameOverCount() incremented, see
+                            // HUD-023). Repositioning to spawn (unchanged from
+                            // before) is the correct, already-accepted behavior
+                            // here -- do NOT call LoadMission() on this path,
+                            // it would wrongly wipe the current mission's
+                            // in-progress treasure/key state.
+                            blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                        }
+                        SetPhase(GalaxyEggbert::GamePhase::Play);
                     }
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
                 }
                 phaseReturnKeyWasDown_ = returnPressed;
             }
@@ -2531,18 +2610,27 @@ namespace GalaxyEggbert::CNA
                 // Real MemorizeGamerProgress() checkpoint (2026-07-13,
                 // plan.md MENU-040..045) -- confirmed via research to
                 // fire automatically at exactly this real transition.
-                saveData_.SetLives(interaction_.Lives());
-                saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
-                saveData_.SetHasProgress(true);
-                saveData_.Save();
+                // Skipped during a play-test session (plan.md EDITOR-108):
+                // a sandbox custom world has no real mission number, so
+                // persisting one here would corrupt real save progress.
+                if (!editorPlayTestActive_)
+                {
+                    saveData_.SetLives(interaction_.Lives());
+                    saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
+                    saveData_.SetHasProgress(true);
+                    saveData_.Save();
+                }
                 SetPhase(GalaxyEggbert::GamePhase::Lost);
             }
             else if (interaction_.ExitReached())
             {
-                saveData_.SetLives(interaction_.Lives());
-                saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
-                saveData_.SetHasProgress(true);
-                saveData_.Save();
+                if (!editorPlayTestActive_)
+                {
+                    saveData_.SetLives(interaction_.Lives());
+                    saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
+                    saveData_.SetHasProgress(true);
+                    saveData_.Save();
+                }
                 SetPhase(GalaxyEggbert::GamePhase::Win);
             }
 

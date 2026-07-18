@@ -65,6 +65,7 @@ namespace GalaxyEggbert::CNA
         commandStack_ = GEEditCommandStack();
         boxFirstCornerPlaced_ = false;
         showingBox_ = false;
+        playTestRequested_ = false;
     }
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
@@ -287,6 +288,16 @@ namespace GalaxyEggbert::CNA
             // a functional gap in this milestone).
             EnterBrowser(gamerSlot_);
         }
+        else if (paletteResult.action == GEEditorPalette::ToolbarAction::PlayTest && !worldPath_.empty())
+        {
+            // Save first (plan.md EDITOR-108) so the play-tested session
+            // matches exactly what's on screen, then request a real
+            // gameplay session -- GalaxyEggbertCnaGame still owns actually
+            // switching phase/reloading (this class has no GEWorldRuntime
+            // access).
+            world.saveToFile(worldPath_);
+            playTestRequested_ = true;
+        }
         else if (boxKeyHeld && !boxKeyHeldLastFrame_ && hasHighlight_)
         {
             if (!boxFirstCornerPlaced_)
@@ -350,6 +361,13 @@ namespace GalaxyEggbert::CNA
     {
         const bool result = needsPresentationRebuild_;
         needsPresentationRebuild_ = false;
+        return result;
+    }
+
+    bool GEWorldEditor::ConsumePlayTestRequested() noexcept
+    {
+        const bool result = playTestRequested_;
+        playTestRequested_ = false;
         return result;
     }
 
