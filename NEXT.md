@@ -179,6 +179,28 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **feat: extract mobile-eggbert's full real Blupi animation table, wire ~24 new states into the
+  HUD icon (plan.md `BLUPI-036/037/038/040/041/043/044/047/051/053/058/069/073/076`).** User-
+  reported: the HUD animation icon only shows a limited set of poses, unlike real mobile-eggbert.
+  Wrote a small parser mirroring `Decor.cpp:2393-2400`'s own `{actionId, frameCount, holdFrame,
+  icon0..iconN}` record-scan exactly, ran it against the REAL `Tables::table_blupi[2911]` literal
+  (not hand-transcribed), cross-validated by reproducing the already-approved `kChargeFrames`/
+  `kTeleportingFrames` byte-for-byte before trusting it for anything new — recovered all 84 named
+  `BlupiAction` records that actually exist (3 of the real 87 — Set/Recedeq/Advanceq — have no
+  table_blupi record at all, genuinely dead in the original game too). Wired real Stop/March icon
+  pairs for all 5 vehicle modes (Helicopter/Jeep/Tank/Skateboard/Overcraft), Swim/Surf, Hide, Push
+  (crate-pushing), and 2 one-shot actions (Switch, PutDynamite via a new
+  `TriggerOneShotAnim()`/`IsOneShotAnimPlaying()` mechanism, same freeze shape as the existing
+  Bye/pickup-freeze triggers) — selected by the SAME flags that already drive these already-
+  functional mechanics (`m_vehicleMode`/`m_nage`/`m_surf`/`SecretPower::Hide`/a new `pushingCrate`
+  `Step()` parameter). Real Turn variants (for every vehicle + base humanoid) and Skateboard's own
+  airborne icons are NOT modeled — precise turn-trigger detection needs its own research pass, same
+  gap as the never-implemented base `Turn` action. ~30 more real states have their data extracted
+  and ready but no live trigger yet (no matching mechanic/edge-event exists for them currently) --
+  see `plan.md`'s `BLUPI-047`/`062-067`/`070`/`074`/`075` entries for exactly why each one is
+  deferred. Live-verified via a temporary debug harness (reverted before commit): mounting a Jeep
+  correctly selects `StopJeep` and cycles the real `111,110,111,112` icon sequence. Full regression
+  clean (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - **feat: real "Bye" farewell freeze for hub world-select portals (plan.md `BLUPI-049`/`SOUND-042`).**
   User-reported: stepping onto a hub portal did nothing visually, unlike real mobile-eggbert's
   ~1.5s "turn and wave". Verified directly against `Decor.cpp:6436` (`Config::ScaleTime(30)` = 1.5s

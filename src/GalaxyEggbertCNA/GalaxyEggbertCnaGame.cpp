@@ -41,7 +41,15 @@ namespace GalaxyEggbert::CNA
             switch (state)
             {
                 case GEBlupiController::AnimState::March:
-                case GEBlupiController::AnimState::MarchEcrase: return kWalk;
+                case GEBlupiController::AnimState::MarchEcrase:
+                case GEBlupiController::AnimState::MarchHelico:
+                case GEBlupiController::AnimState::MarchJeep:
+                case GEBlupiController::AnimState::MarchTank:
+                case GEBlupiController::AnimState::MarchSkate:
+                case GEBlupiController::AnimState::MarchOver:
+                case GEBlupiController::AnimState::MarchNage:
+                case GEBlupiController::AnimState::MarchSurf:
+                case GEBlupiController::AnimState::Push: return kWalk;
                 case GEBlupiController::AnimState::Jump:
                 case GEBlupiController::AnimState::Air:   return kRun;
                 case GEBlupiController::AnimState::Stop:
@@ -51,6 +59,14 @@ namespace GalaxyEggbert::CNA
                 case GEBlupiController::AnimState::Balloon:
                 case GEBlupiController::AnimState::Teleporting:
                 case GEBlupiController::AnimState::Bye:
+                case GEBlupiController::AnimState::StopHelico:
+                case GEBlupiController::AnimState::StopJeep:
+                case GEBlupiController::AnimState::StopTank:
+                case GEBlupiController::AnimState::StopSkate:
+                case GEBlupiController::AnimState::StopOver:
+                case GEBlupiController::AnimState::StopNage:
+                case GEBlupiController::AnimState::StopSurf:
+                case GEBlupiController::AnimState::Hide:
                 default:
                     return kSurvey;
             }
@@ -1392,8 +1408,16 @@ namespace GalaxyEggbert::CNA
             const bool inDeepWater = atWaterTile && aboveIsWaterTile;
             const bool wasSurf = blupi_.IsSurf();
             const bool wasNage = blupi_.IsNage();
+            // Push animation state (plan.md BLUPI-036, found 2026-07-18):
+            // `CrateBeingPushedThisFrame()` is only known AFTER
+            // `interaction_.Update()` runs (later this same frame, see
+            // `wasPushingCrate_`'s own edge-detection below), so this
+            // deliberately reads LAST frame's own result -- a one-frame lag,
+            // imperceptible for animation purposes and the same category of
+            // simplification as this engine's existing camera-smoothing lag.
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
-                        crouchHeld, lookUpHeld, dt, tempPassable, inSurfWater, inDeepWater);
+                        crouchHeld, lookUpHeld, dt, tempPassable, inSurfWater, inDeepWater,
+                        wasPushingCrate_);
 
             // Real mobile-eggbert jump/land/footstep sounds (2026-07-10).
             // jumpPressed is edge-detected the same way "C" is below, gated
@@ -2056,6 +2080,13 @@ namespace GalaxyEggbert::CNA
                     {
                         sound_.Play(*turnedOn ? GalaxyEggbert::SoundChannel::SoundChannel77
                                               : GalaxyEggbert::SoundChannel::SoundChannel76);
+                        // Real Switch animation (plan.md BLUPI-073, found
+                        // 2026-07-18) -- purely cosmetic on top of the
+                        // switch already having activated above; a no-op if
+                        // some other freeze is already active, matching
+                        // every other TriggerX() call in this file.
+                        blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::Switch,
+                                                   GEBlupiController::kSwitchDuration);
                     }
                 }
 
@@ -2075,6 +2106,11 @@ namespace GalaxyEggbert::CNA
                                                 blupi_.IsOnGround(), blupiCanUseHands))
                 {
                     sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
+                    // Real PutDynamite animation (plan.md BLUPI-076, found
+                    // 2026-07-18) -- same "cosmetic on top of an action
+                    // that already happened" shape as Switch above.
+                    blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::PutDynamite,
+                                               GEBlupiController::kPutDynamiteDuration);
                 }
                 else
                 {

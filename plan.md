@@ -2621,19 +2621,51 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-033 — Clear1..Clear8 (clearing animations — used for special level events)
 - [ ] BLUPI-034 — Set (placing object — ACTION_SET)
 - [ ] BLUPI-035 — Win (level-win celebration animation)
-- [ ] BLUPI-036 — Push (pushing a crate — ACTION_PUSH)
-- [ ] BLUPI-037 — StopHelico (helicopter hover)
-- [ ] BLUPI-038 — MarchHelico (helicopter fly forward)
-- [ ] BLUPI-039 — TurnHelico (helicopter turn)
-- [ ] BLUPI-040 — StopNage (treading water)
-- [ ] BLUPI-041 — MarchNage (swimming forward)
-- [ ] BLUPI-042 — TurnNage (turning while swimming)
-- [ ] BLUPI-043 — StopSurf (surfboard idle)
-- [ ] BLUPI-044 — MarchSurf (surfing forward)
-- [ ] BLUPI-045 — TurnSurf (turning on surfboard)
-- [ ] BLUPI-046 — Drown (drowning in deep water)
-- [ ] BLUPI-047 — StopJeep / MarchJeep / TurnJeep (jeep vehicle states)
-- [ ] BLUPI-048 — StopPop / Pop (pop-star costume idle/dance)
+- [x] BLUPI-036 — Push (pushing a crate — ACTION_PUSH) — **done 2026-07-18**, see `BLUPI-047`'s shared
+      writeup — real single looping cycle (`table_blupi` ID 14, no idle/moving split in real source)
+      while `Step()`'s new `pushingCrate` parameter is true. The real crate-push LOOP SOUND (ch38) was
+      already implemented independently (`SOUND-048`, 2026-07-16, via `wasPushingCrate_`) — this only
+      adds the missing visual/icon layer on top of already-correct audio.
+- [x] BLUPI-037 — StopHelico (helicopter hover) — **done 2026-07-18**, see the shared writeup at `BLUPI-047`.
+- [x] BLUPI-038 — MarchHelico (helicopter fly forward) — **done 2026-07-18**, see `BLUPI-047`.
+- [ ] BLUPI-039 — TurnHelico (helicopter turn) — NOT modeled, see `BLUPI-047`'s own Turn-variant gap note.
+- [x] BLUPI-040 — StopNage (treading water) — **done 2026-07-18**, see `BLUPI-047`.
+- [x] BLUPI-041 — MarchNage (swimming forward) — **done 2026-07-18**, see `BLUPI-047`.
+- [ ] BLUPI-042 — TurnNage (turning while swimming) — NOT modeled, see `BLUPI-047`'s own Turn-variant gap note.
+- [x] BLUPI-043 — StopSurf (surfboard idle) — **done 2026-07-18**, see `BLUPI-047`.
+- [x] BLUPI-044 — MarchSurf (surfing forward) — **done 2026-07-18**, see `BLUPI-047`.
+- [ ] BLUPI-045 — TurnSurf (turning on surfboard) — NOT modeled, see `BLUPI-047`'s own Turn-variant gap note.
+- [x] BLUPI-046 — Drown (drowning in deep water) — **already done** (real per-cause `DeathLocked` hurt-sprite table, `kDrownFrames`, added 2026-07-16) — not a separate `AnimState`, see `BLUPI-120`.
+- [x] BLUPI-047 — StopJeep / MarchJeep / TurnJeep (jeep vehicle states) — **Stop/March done 2026-07-18,
+      Turn NOT modeled** (user-reported gap: "the HUD icon only shows a limited set of animations" —
+      full audit of `table_blupi` found only ~10 of the real 87 `BlupiAction` states had ever been
+      transcribed). Extracted the REAL data directly: wrote a small parser mirroring
+      `Decor.cpp:2393-2400`'s own `{actionId, frameCount, holdFrame, icon0..iconN}` record-scan
+      exactly, ran it against mobile-eggbert's actual `Tables::table_blupi[2911]` literal (not
+      hand-transcribed), cross-validated by reproducing the ALREADY-approved `kChargeFrames`/
+      `kTeleportingFrames` byte-for-byte before trusting it for anything new. Added real Stop/March
+      icon pairs for all 5 vehicle modes this covers (Helico/Jeep/Tank/Skate/Over, see `BLUPI-037/038/
+      040/041/043/044/053/058/069`), Swim/Surf (`040/041/043/044`), Hide (`051`), Push (`036`), and the
+      3 one-shot actions Switch/TakeDynamite/PutDynamite (`073/076`) — selected in
+      `GEBlupiController::UpdateAnim()`'s existing precedence cascade by the SAME flags that already
+      drive the underlying (already-functional) mechanics: `m_vehicleMode`/`m_nage`/`m_surf`/
+      `SecretPower::Hide`/a new `pushingCrate` `Step()` parameter (the caller's own
+      `GEInteractionSystem::CrateBeingPushedThisFrame()`, one frame delayed since that's only known
+      after `interaction_.Update()` runs). **Real Turn variants (TurnHelico/Jeep/Tank/Skate/Over/Nage/
+      Surf) are NOT modeled** — precise real turn-trigger detection (a direction-change edge, distinct
+      from just "moving") needs its own dedicated research pass, same open gap as the base humanoid
+      `Turn` action itself (`BLUPI-025`, never implemented either). Skateboard's own real JumpSkate/
+      AirSkate airborne variants also NOT modeled (StopSkate/MarchSkate keep showing while airborne on
+      a board). `TakeSkate`/`DeposeSkate`/`SlowdownSkate`/`TakeDynamite`'s own real frame data exists
+      in the extracted table but isn't wired to a live trigger yet (no edge-detected "just
+      mounted/dismounted skateboard" or "just picked up dynamite" signal exists to hook it to — the
+      skate mount/dismount and dynamite pickup are both already-functional mechanics, just not
+      exposed as the kind of one-frame edge event `TriggerOneShotAnim()` needs). Live-verified via a
+      temporary debug harness (reverted before commit): `TriggerMount(Jeep)` correctly selects
+      `StopJeep` and cycles the real `111,110,111,112` icon sequence exactly. Full regression clean
+      (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
+- [ ] BLUPI-048 — StopPop / Pop (pop-star costume idle/dance) — real data extracted (table_blupi IDs
+      28/29) but NOT wired: no "pop-star costume" mechanic/flag exists in this engine to select it.
 - [x] BLUPI-049 — Bye (farewell exit animation) — **done 2026-07-17** (user-reported gap: teleporting
       into a hub world-select portal did nothing visually, unlike real mobile-eggbert's ~1.5s "turn
       and wave"). Verified directly against `Decor.cpp:6436`: `m_blupiPhase == Config::ScaleTime(30)`
@@ -2658,40 +2690,111 @@ reset to `[ ]` except the small set with direct CNA evidence.
       duration, yaw updates to face the camera, and `LoadMission()` fires exactly once with the
       correct target the frame the freeze naturally elapses. Full regression clean (only the
       pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
-- [ ] BLUPI-050 — StopSuspend / MarchSuspend / TurnSuspend / JumpSuspend (rope hanging)
-- [ ] BLUPI-051 — Hide (hiding in object)
-- [ ] BLUPI-052 — JumpAie (hurt jump on hazard contact)
-- [ ] BLUPI-053 — StopSkate / MarchSkate / TurnSkate / JumpSkate / AirSkate (skateboard)
-- [ ] BLUPI-054 — TakeSkate (picking up skateboard)
-- [ ] BLUPI-055 — DeposeSkate (putting down skateboard)
-- [ ] BLUPI-056 — Ouf1a / Ouf1b / Ouf2 / Ouf3 / Ouf4 / Ouf5 (relief animations)
-- [ ] BLUPI-057 — Sucette (collecting lollipop/suction-cup power-up)
-- [ ] BLUPI-058 — StopTank / MarchTank / TurnTank / FireTank (tank vehicle)
-- [ ] BLUPI-059 — Glu (stuck in glue)
-- [ ] BLUPI-060 — Drink (drinking power-up animation)
-- [ ] BLUPI-061 — Charge (being charged at by enemy)
-- [ ] BLUPI-062 — Electro (electrocuted by electric field)
-- [ ] BLUPI-063 — HelicoGlu (helicopter stuck in glue)
-- [ ] BLUPI-064 — TurnAir (turning while airborne)
-- [ ] BLUPI-065 — StopMarch (decelerating from walk to stop)
-- [ ] BLUPI-066 — StopJump / StopJumph (jump landing, high-jump landing)
-- [ ] BLUPI-067 — Mockery / Mockeryi / Mockeryp (enemy mocking Blupi)
-- [ ] BLUPI-068 — Balloon (balloon flight mode)
-- [ ] BLUPI-069 — StopOver / MarchOver / TurnOver (flat/squashed mode)
-- [ ] BLUPI-070 — Recedeq / Advanceq (quick backward/forward movement)
-- [ ] BLUPI-071 — StopEcrase / MarchEcrase (crushed under object)
-- [ ] BLUPI-072 — Teleporte (teleporting animation)
-- [ ] BLUPI-073 — Switch (activating a switch)
-- [ ] BLUPI-074 — Non (refusing / head-shake animation)
-- [ ] BLUPI-075 — SlowdownSkate (skateboard braking)
-- [ ] BLUPI-076 — TakeDynamite / PutDynamite (dynamite pickup/place)
+- [ ] BLUPI-050 — StopSuspend / MarchSuspend / TurnSuspend / JumpSuspend (rope hanging) — real data
+      extracted (table_blupi IDs 31/32/33/34) but NOT wired: the underlying `m_suspended` mechanic
+      itself is real code (`GEBlupiController.cpp:898`) but never actually triggered by
+      `GalaxyEggbertCnaGame.cpp` (no rope-tile world-side detection exists) — genuinely unreachable in
+      practice, matching the already-deferred Suspend mechanic itself (`177`/`BLUPI-101`, a pending
+      icon-202 render-geometry decision the user asked to defer). Not worth animating a state that
+      can never actually be entered; revisit once `BLUPI-101` is un-deferred.
+- [x] BLUPI-051 — Hide (hiding in object) — **done 2026-07-18**, see `BLUPI-047`'s shared writeup —
+      real single static pose (`table_blupi` ID 35, a 9-frame idle-fidget cycle) while
+      `SecretPower::Hide` is active.
+- [ ] BLUPI-052 — JumpAie (hurt jump on hazard contact) — real data extracted (table_blupi ID 36) but
+      NOT wired: no distinct "hurt jump, not yet dead" state exists in this engine (hazard contact
+      goes straight to `DeathLocked`) — would need its own trigger research, not attempted this pass.
+- [x] BLUPI-053 — StopSkate / MarchSkate / TurnSkate / JumpSkate / AirSkate (skateboard) — **Stop/
+      March done 2026-07-18**, see `BLUPI-047`'s shared writeup. Turn/Jump/Air variants NOT modeled
+      (same Turn-variant gap as every other vehicle; Skateboard's own real airborne icons specifically
+      also not modeled, see `BLUPI-047`'s own note).
+- [ ] BLUPI-054 — TakeSkate (picking up skateboard) — real data extracted (table_blupi ID 42) but NOT
+      wired: no edge-detected "just mounted skateboard" signal exists yet to hook it to.
+- [ ] BLUPI-055 — DeposeSkate (putting down skateboard) — real data extracted (table_blupi ID 43) but
+      NOT wired, same reason as `BLUPI-054`.
+- [ ] BLUPI-056 — Ouf1a / Ouf1b / Ouf2 / Ouf3 / Ouf4 / Ouf5 (relief animations) — real data extracted
+      (table_blupi IDs 44/45/46/47/48/65) but NOT wired: blocked on the same "idle-fidget
+      system"/"close call" detection prerequisite as `BLUPI-018/019` (`SOUND-046`-family) — a genuinely
+      separate, larger sub-system, out of scope this pass.
+- [ ] BLUPI-057 — Sucette (collecting lollipop/suction-cup power-up) — already done via `PickupBusy`'s
+      own per-kind frame table (`kSucetteFrames`, added 2026-07-16) — not a separate `AnimState`.
+- [x] BLUPI-058 — StopTank / MarchTank / TurnTank / FireTank (tank vehicle) — **Stop/March done
+      2026-07-18**, see `BLUPI-047`'s shared writeup. Turn/FireTank variants NOT modeled (FireTank's
+      own real data was extracted but has no edge-detected "just fired" signal to hook it to yet,
+      same category as `BLUPI-054/055`).
+- [x] BLUPI-059 — Glu (stuck in glue) — already done via `DeathLocked`'s own per-cause frame table
+      (`kGluFrames`, added 2026-07-16) — not a separate `AnimState`.
+- [x] BLUPI-060 — Drink (drinking power-up animation) — already done via `PickupBusy`'s own per-kind
+      frame table (`kDrinkFrames`, added 2026-07-16) — not a separate `AnimState`.
+- [x] BLUPI-061 — Charge (being charged at by enemy) — already done via `PickupBusy`'s own per-kind
+      frame table (`kChargeFrames`, added 2026-07-16) — not a separate `AnimState`.
+- [ ] BLUPI-062 — Electro (electrocuted by electric field) — real data extracted (table_blupi ID 57)
+      but NOT wired: no electric-field hazard mechanic exists in this engine yet (`BLUPI-149`/
+      `SOUND` note, both channels also blocked on the same missing mechanic).
+- [ ] BLUPI-063 — HelicoGlu (helicopter stuck in glue) — real data extracted (table_blupi ID 58) but
+      NOT wired: no "helicopter stuck in glue" interaction exists in this engine.
+- [ ] BLUPI-064 — TurnAir (turning while airborne) — real data extracted (table_blupi ID 59) but NOT
+      wired, same Turn-variant detection gap as `BLUPI-047`'s own note (applies to the base humanoid
+      too, not just vehicles).
+- [ ] BLUPI-065 — StopMarch (decelerating from walk to stop) — real data extracted (table_blupi ID 60)
+      but NOT wired: this engine's own movement model has no separate "decelerating" sub-state
+      distinct from Stop (instant stop on released input, no coast-down blend frame).
+- [ ] BLUPI-066 — StopJump / StopJumph (jump landing, high-jump landing) — real data extracted
+      (table_blupi IDs 61/62) but NOT wired: no distinct "just landed" transition frame exists (this
+      engine snaps straight from Jump/Air to Stop/March on landing).
+- [ ] BLUPI-067 — Mockery / Mockeryi / Mockeryp (enemy mocking Blupi) — real data extracted
+      (table_blupi IDs 63/64/83) but NOT wired: no enemy-mockery mechanic exists in this engine.
+- [x] BLUPI-068 — Balloon (balloon flight mode) — **stale checkbox, closed 2026-07-18** (found while
+      auditing this whole section): already done, `AnimState::Balloon`/`kBalloonFrames`, added
+      2026-07-11 (plan.md E3D-MIG-064).
+- [x] BLUPI-069 — StopOver / MarchOver / TurnOver (flat/squashed mode) — **Stop/March done
+      2026-07-18**, see `BLUPI-047`'s shared writeup (this is the real Overcraft vehicle mode,
+      `VehicleMode::Overcraft`, NOT the Ecrase "crushed flat" state despite the similar name — those
+      are two distinct real mechanics). Turn variant NOT modeled, same gap as every other vehicle.
+- [ ] BLUPI-070 — Recedeq / Advanceq (quick backward/forward movement) — real data has NO
+      `table_blupi` record at all (confirmed via the full-table extraction) — these 2 real
+      `BlupiAction` values are never actually looked up by `Decor::BlupiSearchIcon()` in practice,
+      genuinely dead/unreachable in the original game too, not just unmodeled here.
+- [x] BLUPI-071 — StopEcrase / MarchEcrase (crushed under object) — **stale checkbox, closed
+      2026-07-18**: already done, `AnimState::StopEcrase`/`MarchEcrase`, added 2026-07-11.
+- [x] BLUPI-072 — Teleporte (teleporting animation) — **stale checkbox, closed 2026-07-18**: already
+      done, `AnimState::Teleporting`/`kTeleportingFrames`, added 2026-07-11.
+- [x] BLUPI-073 — Switch (activating a switch) — **done 2026-07-18**, see `BLUPI-047`'s shared
+      writeup — real one-shot 0.5s animation (`table_blupi` ID 82) via the new
+      `TriggerOneShotAnim()`/`IsOneShotAnimPlaying()` mechanism, wired at `TryActivateSwitch()`'s own
+      success site (purely cosmetic on top of the switch already having activated — its own real
+      sound, ch76/77, was already correctly wired).
+- [ ] BLUPI-074 — Non (refusing / head-shake animation) — real data extracted (table_blupi ID 84) but
+      NOT wired: no "refusal" trigger exists in this engine (real trigger condition unclear without
+      further `Decor.cpp` research, not attempted this pass).
+- [ ] BLUPI-075 — SlowdownSkate (skateboard braking) — real data extracted (table_blupi ID 85, a
+      single static frame) but NOT wired: no "braking" input/state exists distinct from just
+      decelerating normally.
+- [x] BLUPI-076 — TakeDynamite / PutDynamite (dynamite pickup/place) — **PutDynamite done
+      2026-07-18**, see `BLUPI-047`'s shared writeup — real one-shot 1.3s animation (`table_blupi` ID
+      87) via `TriggerOneShotAnim()`, wired at `PlaceDynamite()`'s own success site. TakeDynamite's
+      own real data (table_blupi ID 86) was extracted too but NOT wired: the real pickup goes through
+      the deferred "Voyage" reward system (`RequestVoyage()`), not an immediate edge event, and it was
+      unclear whether the real hand-gesture belongs at touch-time or at Voyage-resolution time without
+      further research — left for a future pass rather than guessing.
 
 #### 4.3 Blupi Sprite Animation
 
-- [ ] BLUPI-077 — Frame tables from `table_blupi` (2911 entries)
+- [x] BLUPI-077 — Frame tables from `table_blupi` (2911 entries) — **extracted in full 2026-07-18**: a
+      small parser (mirroring `Decor.cpp:2393-2400`'s own record-scan exactly) walked the REAL,
+      complete `Tables::table_blupi[2911]` literal and recovered all 84 named `BlupiAction` records
+      that actually have one (3 of the 87 real enum values — Set/Recedeq/Advanceq — genuinely have no
+      table_blupi record at all, confirmed dead/unreachable in the original game too). Of those 84,
+      ~24 are now wired into `GEBlupiController`'s `AnimState` system (see `BLUPI-047`'s shared
+      writeup); the rest have their real data sitting ready in the extraction but no live trigger yet
+      (each one's own entry above says exactly why, mostly "no matching mechanic/edge-event exists in
+      this engine").
 - [ ] BLUPI-078 — Billboard sprite from `blupi.png` (60×60 px cells) — CNA has no visible first-person Blupi yet; only a temporary 2D sprite HUD indicator / optional third-person placeholder model
-- [ ] BLUPI-079 — Direction flipping: mirror sprite when moving right (table_mirror)
-- [ ] BLUPI-080 — All 87 BlupiAction frames resolved from table_blupi via action+phase+dir lookup
+- [ ] BLUPI-079 — Direction flipping: mirror sprite when moving right (table_mirror) — still not
+      modeled; the debug HUD icon this whole system feeds has no left/right mirroring at all yet.
+- [ ] BLUPI-080 — All 87 BlupiAction frames resolved from table_blupi via action+phase+dir lookup —
+      **partially done, see `BLUPI-077`**: extraction is complete for all 84 real records, but only
+      ~24 states are actually wired to a live trigger; "+dir" (left/right mirroring) is also not
+      modeled at all, see `BLUPI-079`.
 - [ ] BLUPI-081 — `blupi1.png` alternate skin channel (Blupi1_11/12/13 variants for ObjectType200-203)
 - [ ] BLUPI-082 — Shield tint: cyan/blue sprite overlay when m_blupiShield active
 - [ ] BLUPI-083 — Shield blink at < 1.5 s remaining (blink 10 Hz)

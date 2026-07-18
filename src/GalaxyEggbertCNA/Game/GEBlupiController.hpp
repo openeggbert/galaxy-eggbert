@@ -141,6 +141,13 @@ namespace GalaxyEggbert::CNA
         // static Stop-pose already used for DeathLocked/PickupBusy.
         static constexpr float kByeDuration = 1.5f;
 
+        // Real `table_blupi` frameCount/20.0f durations for the one-shot
+        // action animations below (Switch 10 frames, TakeDynamite 18,
+        // PutDynamite 26), passed to TriggerOneShotAnim() by the caller.
+        static constexpr float kSwitchDuration = 10.0f / 20.0f;
+        static constexpr float kTakeDynamiteDuration = 18.0f / 20.0f;
+        static constexpr float kPutDynamiteDuration = 26.0f / 20.0f;
+
         // Water breath gauge (plan.md E3D-MIG-148, `m_blupiLevel`, verified
         // against mobile-eggbert-reference/12-hazards-and-interactables.md's
         // "Water depth state machine" section): starts at 100, ticks down by
@@ -358,16 +365,59 @@ namespace GalaxyEggbert::CNA
             // then invisible while the life-loss Voyage flies), same
             // "single animation regardless of grounded/airborne" shape as
             // Teleporting/Balloon/Ecrase. The real per-cause hurt-sprite
-            // frame table (`Tables::table_blupi`) has not been transcribed
-            // -- GetAnimIcon() below uses a static Stop-pose icon instead,
-            // a documented simplification (the real FREEZE/TIMING behavior
-            // is faithful; the exact hurt-face artwork is not).
+            // frame table (`Tables::table_blupi`, Clear1/Clear2/Clear3/
+            // Clear4/Glu/Drown) IS transcribed (added 2026-07-16, see
+            // GetAnimIcon()'s own per-`m_deathCause` switch below).
             DeathLocked,
             // Real Sucette/Drink/Charge 2-stage pickup delay (see
-            // TriggerPickupFreeze() below) -- same static-Stop-pose
-            // simplification as DeathLocked, for the same reason (no real
-            // busy-animation frame table transcribed).
-            PickupBusy
+            // TriggerPickupFreeze() below) -- same real per-kind frame
+            // table shape as DeathLocked (added 2026-07-16, see
+            // GetAnimIcon()'s own per-`m_pickupFreezeKind` switch below).
+            PickupBusy,
+            // Vehicle-mode Stop/March pairs (plan.md BLUPI-037/038/047/058/
+            // 069/084/088/091/094, found 2026-07-18 while auditing the HUD
+            // animation icon's real scope): each real BlupiAction has its
+            // own distinct Stop/March icon sequence (`table_blupi`, IDs
+            // 15/16 Helico, 25/26 Jeep, 50/51 Tank, 37/38 Skate, 67/68
+            // Over) -- selected below purely by `m_vehicleMode` + the same
+            // `moving` bool that already splits the base Stop/March. Real
+            // Turn variants (TurnHelico/Jeep/Tank/Skate/Over) are NOT
+            // modeled -- precise real turn-trigger detection (direction-
+            // change edge, distinct from just "moving") needs its own
+            // research pass, same open gap as the base humanoid `Turn`
+            // action (`BLUPI-025`), never implemented either.
+            StopHelico, MarchHelico,
+            StopJeep, MarchJeep,
+            StopTank, MarchTank,
+            StopSkate, MarchSkate,
+            StopOver, MarchOver,
+            // Swim/Surf Stop/March pairs (plan.md BLUPI-040/041/043/044,
+            // found 2026-07-18) -- same shape as the vehicle pairs above,
+            // selected by `m_nage`/`m_surf`. TurnNage/TurnSurf NOT modeled,
+            // same reason as the vehicle Turn variants above. `Drown`
+            // (real BlupiAction 24) is a distinct death-cause animation,
+            // already covered by `DeathCause::Drown`'s own real frame
+            // table under `DeathLocked` above, not a separate AnimState.
+            StopNage, MarchNage,
+            StopSurf, MarchSurf,
+            // Hide (plan.md BLUPI-051, found 2026-07-18): real single
+            // static pose (`table_blupi` ID 35, 9-frame idle-fidget cycle,
+            // same shape as Stop's own long idle table) while
+            // `SecretPower::Hide` is active.
+            Hide,
+            // Push (plan.md BLUPI-036, found 2026-07-18): real single
+            // looping cycle (`table_blupi` ID 14, no idle/moving split in
+            // real source) while `Step()`'s own `pushingCrate` parameter is
+            // true (the caller's per-frame `GEInteractionSystem::
+            // CrateBeingPushedThisFrame()` result).
+            Push,
+            // Real one-shot action animations (plan.md BLUPI-073/076, found
+            // 2026-07-18): Switch (`table_blupi` ID 82, 0.5s), TakeDynamite/
+            // PutDynamite (IDs 86/87, 0.9s/1.3s) -- see TriggerOneShotAnim()
+            // below for the shared freeze/timer mechanism (same "freeze
+            // everything, count a timer down, auto-resume" shape as
+            // TriggerBye()/TriggerPickupFreeze()).
+            Switch, TakeDynamite, PutDynamite
         };
 
         // Real `SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -694,6 +744,16 @@ namespace GalaxyEggbert::CNA
         bool TriggerBye() noexcept;
         [[nodiscard]] bool IsBye() const noexcept { return m_bye; }
 
+        // Generic one-shot action-animation freeze (plan.md BLUPI-073/076,
+        // found 2026-07-18) shared by Switch/TakeDynamite/PutDynamite --
+        // same idempotent-re-trigger/freeze/auto-resume shape as
+        // TriggerBye(), parameterised on which AnimState + real duration to
+        // play since these 3 states never overlap in practice (one action
+        // button per frame). The caller detects natural completion the same
+        // before/after-Step() way teleport/Bye completion is detected.
+        bool TriggerOneShotAnim(AnimState state, float durationSeconds) noexcept;
+        [[nodiscard]] bool IsOneShotAnimPlaying() const noexcept { return m_oneShotAnimActive; }
+
         // Real death-lock + life-loss Voyage (plan.md death-VFX follow-up, verified directly
         // against `Decor.cpp:6374-6392`'s shared per-cause duration dispatch): every real hazard
         // death locks Blupi in a frozen hurt state for a fixed per-cause duration, THEN goes
@@ -842,9 +902,17 @@ namespace GalaxyEggbert::CNA
         // own per-frame Surf/Nage determination (see IsSurf()/IsNage()'s own
         // comment) -- inDeepWater additionally drives reduced (floaty)
         // gravity and a swim-up jump instead of the normal ground jump.
+        // pushingCrate (plan.md BLUPI-036, found 2026-07-18, default false so
+        // existing callers/tests are unaffected) is the caller's own
+        // per-frame `GEInteractionSystem::CrateBeingPushedThisFrame()`
+        // result -- drives the real Push animation (`table_blupi` ID 14),
+        // which has no separate idle variant in real source (only a single
+        // looping cycle), so it's shown unconditionally while true,
+        // matching how Balloon/Ecrase also have no idle/moving split.
         void Step(const Worlds::World& world, float turnInput, float moveInput,
                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
-                  bool tempPassable = false, bool inSurfWater = false, bool inDeepWater = false);
+                  bool tempPassable = false, bool inSurfWater = false, bool inDeepWater = false,
+                  bool pushingCrate = false);
 
     private:
         // Sentinel GroundHeightAt() returns when a column has no solid
@@ -895,7 +963,7 @@ namespace GalaxyEggbert::CNA
         enum class BarreCellType { None, Hanging, LandingAvailable };
         [[nodiscard]] static BarreCellType GetBarreCellType(const Worlds::World& world, int gx, int gy, int gz);
         void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
-        void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt);
+        void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate = false);
 
         float m_x = 0.0f;
         float m_y = 1.0f;
@@ -941,6 +1009,10 @@ namespace GalaxyEggbert::CNA
 
         bool m_bye = false;
         float m_byeTimer = 0.0f;
+
+        bool m_oneShotAnimActive = false;
+        float m_oneShotAnimTimer = 0.0f;
+        AnimState m_oneShotAnimState = AnimState::Stop;
 
         // Real ScaleTime(40)=40 ticks=2.0s, same conversion as every other duration here.
         static constexpr float kLifeLossVoyageDuration = 2.0f;

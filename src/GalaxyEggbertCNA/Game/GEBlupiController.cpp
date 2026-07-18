@@ -114,6 +114,61 @@ namespace GalaxyEggbert::CNA
             1, 2, 3, 4, 270, 269, 268, 0, 1, 2, 3, 4, 270, 269, 268, 0,
             1, 1, 2, 2, 3, 3, 4, 4, 270, 270, 269, 269, 268, 268, 0, 0};
 
+        // blupi.png icon indices for vehicle Stop/March, Swim/Surf Stop/
+        // March, and Hide (plan.md BLUPI-037/038/047/058/069/084/088/091/
+        // 094/040/041/043/044/051, found 2026-07-18 while auditing the HUD
+        // animation icon's real scope) -- same extraction script as the
+        // block above (validated against it byte-for-byte via kChargeFrames
+        // and kTeleportingFrames), same user data-transcription approval.
+        constexpr int kStopHelicoFrames[]  = {61};
+        constexpr int kMarchHelicoFrames[] = {61, 62, 63, 62, 61, 64, 65, 64};
+        constexpr int kStopJeepFrames[]  = {111, 111, 110, 110, 111, 111, 112, 112};
+        constexpr int kMarchJeepFrames[] = {111, 111, 110, 110, 111, 111, 112, 112};
+        constexpr int kStopTankFrames[] = {
+            238, 238, 239, 239, 240, 240, 241, 241, 241, 241, 241, 241, 241, 241,
+            241, 241, 240, 240, 241, 241, 240, 240, 241, 241, 241, 241, 241, 241,
+            241, 241, 241, 241, 241, 241, 240, 240, 241, 241, 240, 240, 241, 241,
+            241, 241, 241, 241, 241, 241, 240, 240, 239, 239, 238, 238, 238, 238,
+            238, 238, 237, 237, 238, 238, 237, 237};
+        constexpr int kMarchTankFrames[] = {238, 238, 237, 237, 238, 238, 239, 239};
+        constexpr int kStopSkateFrames[] = {
+            182, 182, 182, 182, 208, 208, 208, 208, 208, 182, 182, 182, 182, 182,
+            182, 208, 208, 208, 208, 208, 194, 194, 194, 182, 182, 182, 182, 208,
+            208, 208, 208, 208, 182, 182, 182, 182, 182, 182, 208, 208, 208, 208,
+            182, 182, 182, 182, 182, 182, 182, 182, 194, 194, 194, 195, 195, 195,
+            196, 196, 196, 197, 197, 197, 198, 198, 198, 198, 197, 197, 197, 196,
+            196, 196, 195, 195, 195, 194, 194, 194, 182, 182, 182, 182, 208, 208,
+            208, 208, 182, 182, 182, 182, 194, 194, 194, 195, 195, 195, 196, 196,
+            196, 197, 197, 197, 198, 198, 198, 198, 197, 197, 197, 196, 196, 196,
+            195, 195, 195, 194, 194, 194, 182, 182, 182, 182, 208, 208, 208, 208,
+            182, 182, 182, 182, 210, 210, 211, 211, 211, 211, 211, 211, 210, 210};
+        constexpr int kMarchSkateFrames[] = {
+            182, 183, 184, 185, 186, 187, 182, 183, 184, 185, 186, 187, 182, 183,
+            184, 185, 186, 187, 182, 182, 182, 182, 182, 182, 182, 183, 184, 185,
+            186, 187, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182,
+            182, 183, 184, 185, 186, 187, 182, 182, 182, 182, 182, 182, 182, 182,
+            182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 183, 184, 185,
+            186, 187, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182,
+            182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182};
+        constexpr int kStopOverFrames[]  = {315};
+        constexpr int kMarchOverFrames[] = {
+            296, 297, 298, 299, 300, 301, 302, 301, 300, 299, 298, 297};
+        constexpr int kStopNageFrames[] = {76, 76, 76, 76, 76, 76, 77, 77, 77, 77};
+        constexpr int kMarchNageFrames[] = {
+            76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 39, 39};
+        constexpr int kStopSurfFrames[] = {
+            93, 93, 94, 94, 95, 95, 96, 96, 97, 97, 98, 98};
+        constexpr int kMarchSurfFrames[] = {
+            93, 93, 94, 94, 95, 95, 96, 96, 97, 97, 98, 98};
+        constexpr int kHideFrames[] = {276, 277, 278, 279, 280, 281, 282, 283, 284};
+        constexpr int kPushFrames[] = {49, 50, 51, 52, 53, 54};
+        constexpr int kSwitchFrames[] = {0, 268, 268, 269, 269, 269, 269, 268, 268, 0};
+        constexpr int kTakeDynamiteFrames[] = {
+            1, 1, 2, 2, 41, 41, 42, 42, 43, 43, 42, 42, 41, 41, 2, 2, 1, 1};
+        constexpr int kPutDynamiteFrames[] = {
+            135, 135, 137, 137, 231, 231, 231, 231, 230, 230, 231, 231, 231, 231,
+            230, 230, 231, 231, 231, 231, 230, 230, 137, 137, 135, 135};
+
         // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
         // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
         // phase-gated) -- see GroundHeightAt's own comment for why.
@@ -464,6 +519,20 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    bool GEBlupiController::TriggerOneShotAnim(AnimState state, float durationSeconds) noexcept
+    {
+        if (m_oneShotAnimActive || m_bye || m_teleporting || m_deathLocked || m_deathLossVoyageActive ||
+            m_pickupFrozen || m_balloon || m_ecrase)
+        {
+            return false;
+        }
+        m_oneShotAnimActive = true;
+        m_oneShotAnimTimer = durationSeconds;
+        m_oneShotAnimState = state;
+        m_velocityY = 0.0f;
+        return true;
+    }
+
     bool GEBlupiController::TriggerDeathLock(DeathCause cause, bool shouldRespawn) noexcept
     {
         if (m_deathLocked || m_deathLossVoyageActive)
@@ -697,7 +766,7 @@ namespace GalaxyEggbert::CNA
 
     void GEBlupiController::Step(const Worlds::World& world, float turnInput, float moveInput,
                                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
-                                  bool tempPassable, bool inSurfWater, bool inDeepWater)
+                                  bool tempPassable, bool inSurfWater, bool inDeepWater, bool pushingCrate)
     {
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
@@ -821,6 +890,20 @@ namespace GalaxyEggbert::CNA
             {
                 m_bye = false;
                 m_byeTimer = 0.0f;
+            }
+            UpdateAnim(false, false, false, dt);
+            return;
+        }
+
+        // Real one-shot action-animation freeze (Switch/TakeDynamite/PutDynamite, see
+        // TriggerOneShotAnim()'s own comment) -- same freeze shape as Bye just above.
+        if (m_oneShotAnimActive)
+        {
+            m_oneShotAnimTimer -= dt;
+            if (m_oneShotAnimTimer <= 0.0f)
+            {
+                m_oneShotAnimActive = false;
+                m_oneShotAnimTimer = 0.0f;
             }
             UpdateAnim(false, false, false, dt);
             return;
@@ -1243,26 +1326,56 @@ namespace GalaxyEggbert::CNA
         }
         m_y = newY;
 
-        UpdateAnim(moving, crouchHeld, lookUpHeld, dt);
+        UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate);
     }
 
-    void GEBlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt)
+    void GEBlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate)
     {
-        // Precedence: Teleporting/Balloon/Ecrase (each a real BlupiAction
-        // status with only ONE real animation regardless of grounded/
-        // airborne, see the AnimState enum's own comment) beat the normal
-        // ground/air cascade entirely, which otherwise matches
-        // GalaxyEggbertSimple3D::GEBlupiController::UpdateState: airborne
-        // beats crouch/look-up beats moving beats idle. Airborne itself
-        // splits Jump (ascending) vs Air (falling/apex) by velocity sign --
-        // see the AnimState enum's own comment for why this differs from
-        // Simple3D's frame-counted trigger window.
+        // Vehicle-mode Stop/March selection (plan.md BLUPI-037/038/047/058/
+        // 069/084/088/091/094, found 2026-07-18) -- each mode has its own
+        // real icon pair; falls through to the base Stop/March for
+        // VehicleMode::None (never actually reached below, since the
+        // ternary chain only calls this from the IsInVehicle() branch, but
+        // keeps the lambda total/safe). Skateboard's own real JumpSkate/
+        // AirSkate airborne variants are NOT modeled -- StopSkate/
+        // MarchSkate keep showing even while airborne, same "Turn variants
+        // not modeled" category of documented gap as the enum's own
+        // comment.
+        const auto vehicleAnimState = [this, moving]() -> AnimState
+        {
+            switch (m_vehicleMode)
+            {
+                case VehicleMode::Helicopter: return moving ? AnimState::MarchHelico : AnimState::StopHelico;
+                case VehicleMode::Jeep:       return moving ? AnimState::MarchJeep   : AnimState::StopJeep;
+                case VehicleMode::Tank:       return moving ? AnimState::MarchTank   : AnimState::StopTank;
+                case VehicleMode::Skateboard: return moving ? AnimState::MarchSkate  : AnimState::StopSkate;
+                case VehicleMode::Overcraft:  return moving ? AnimState::MarchOver   : AnimState::StopOver;
+                default: return moving ? AnimState::March : AnimState::Stop;
+            }
+        };
+
+        // Precedence: Teleporting/Balloon/Ecrase/Hide/Nage/Surf/vehicle
+        // (each a real BlupiAction status with only ONE real animation
+        // regardless of grounded/airborne, see the AnimState enum's own
+        // comment) beat the normal ground/air cascade entirely, which
+        // otherwise matches GalaxyEggbertSimple3D::GEBlupiController::
+        // UpdateState: airborne beats crouch/look-up beats moving beats
+        // idle. Airborne itself splits Jump (ascending) vs Air (falling/
+        // apex) by velocity sign -- see the AnimState enum's own comment
+        // for why this differs from Simple3D's frame-counted trigger
+        // window.
         const AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
                                   : m_bye ? AnimState::Bye
+                                  : m_oneShotAnimActive ? m_oneShotAnimState
                                   : m_pickupFrozen ? AnimState::PickupBusy
                                   : m_teleporting ? AnimState::Teleporting
                                   : m_balloon     ? AnimState::Balloon
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
+                                  : m_secretPower == SecretPower::Hide ? AnimState::Hide
+                                  : m_nage        ? (moving ? AnimState::MarchNage : AnimState::StopNage)
+                                  : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
+                                  : IsInVehicle() ? vehicleAnimState()
+                                  : pushingCrate  ? AnimState::Push
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
                                   : lookUpHeld    ? AnimState::Up
@@ -1354,6 +1467,44 @@ namespace GalaxyEggbert::CNA
                         return kChargeFrames[m_animPhase % (sizeof(kChargeFrames) / sizeof(kChargeFrames[0]))];
                 }
             }
+            case AnimState::StopHelico:
+                return kStopHelicoFrames[m_animPhase % (sizeof(kStopHelicoFrames) / sizeof(kStopHelicoFrames[0]))];
+            case AnimState::MarchHelico:
+                return kMarchHelicoFrames[m_animPhase % (sizeof(kMarchHelicoFrames) / sizeof(kMarchHelicoFrames[0]))];
+            case AnimState::StopJeep:
+                return kStopJeepFrames[m_animPhase % (sizeof(kStopJeepFrames) / sizeof(kStopJeepFrames[0]))];
+            case AnimState::MarchJeep:
+                return kMarchJeepFrames[m_animPhase % (sizeof(kMarchJeepFrames) / sizeof(kMarchJeepFrames[0]))];
+            case AnimState::StopTank:
+                return kStopTankFrames[m_animPhase % (sizeof(kStopTankFrames) / sizeof(kStopTankFrames[0]))];
+            case AnimState::MarchTank:
+                return kMarchTankFrames[m_animPhase % (sizeof(kMarchTankFrames) / sizeof(kMarchTankFrames[0]))];
+            case AnimState::StopSkate:
+                return kStopSkateFrames[m_animPhase % (sizeof(kStopSkateFrames) / sizeof(kStopSkateFrames[0]))];
+            case AnimState::MarchSkate:
+                return kMarchSkateFrames[m_animPhase % (sizeof(kMarchSkateFrames) / sizeof(kMarchSkateFrames[0]))];
+            case AnimState::StopOver:
+                return kStopOverFrames[m_animPhase % (sizeof(kStopOverFrames) / sizeof(kStopOverFrames[0]))];
+            case AnimState::MarchOver:
+                return kMarchOverFrames[m_animPhase % (sizeof(kMarchOverFrames) / sizeof(kMarchOverFrames[0]))];
+            case AnimState::StopNage:
+                return kStopNageFrames[m_animPhase % (sizeof(kStopNageFrames) / sizeof(kStopNageFrames[0]))];
+            case AnimState::MarchNage:
+                return kMarchNageFrames[m_animPhase % (sizeof(kMarchNageFrames) / sizeof(kMarchNageFrames[0]))];
+            case AnimState::StopSurf:
+                return kStopSurfFrames[m_animPhase % (sizeof(kStopSurfFrames) / sizeof(kStopSurfFrames[0]))];
+            case AnimState::MarchSurf:
+                return kMarchSurfFrames[m_animPhase % (sizeof(kMarchSurfFrames) / sizeof(kMarchSurfFrames[0]))];
+            case AnimState::Hide:
+                return kHideFrames[m_animPhase % (sizeof(kHideFrames) / sizeof(kHideFrames[0]))];
+            case AnimState::Push:
+                return kPushFrames[m_animPhase % (sizeof(kPushFrames) / sizeof(kPushFrames[0]))];
+            case AnimState::Switch:
+                return kSwitchFrames[m_animPhase % (sizeof(kSwitchFrames) / sizeof(kSwitchFrames[0]))];
+            case AnimState::TakeDynamite:
+                return kTakeDynamiteFrames[m_animPhase % (sizeof(kTakeDynamiteFrames) / sizeof(kTakeDynamiteFrames[0]))];
+            case AnimState::PutDynamite:
+                return kPutDynamiteFrames[m_animPhase % (sizeof(kPutDynamiteFrames) / sizeof(kPutDynamiteFrames[0]))];
             case AnimState::Stop:
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];
