@@ -3,6 +3,8 @@
 #include "GEVoxelRaycast.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
+
 #include <algorithm>
 #include <cmath>
 
@@ -35,7 +37,7 @@ namespace GalaxyEggbert::CNA
                                const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                float dt, int /*viewportWidth*/, int /*viewportHeight*/,
                                Easy3D::Camera3D& camera,
-                               const Worlds::World& world)
+                               Worlds::World& world)
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
@@ -134,7 +136,59 @@ namespace GalaxyEggbert::CNA
             highlightX_ = static_cast<float>(hit.x) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
             highlightY_ = static_cast<float>(hit.y);
             highlightZ_ = static_cast<float>(hit.z) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+            hitCellX_ = hit.x;
+            hitCellY_ = hit.y;
+            hitCellZ_ = hit.z;
+            hitNormalX_ = hit.normalX;
+            hitNormalY_ = hit.normalY;
+            hitNormalZ_ = hit.normalZ;
         }
+
+        // Editing tools (plan.md EDITOR-103) -- edge-triggered on the
+        // press, matching every existing click-handler in this codebase
+        // (e.g. GEInputPad's "!mouseDown && mouseWasDown_" idiom, just
+        // inverted here to trigger on press rather than release since
+        // there's no on-screen button geometry to still be hovering over).
+        using ButtonState = Microsoft::Xna::Framework::Input::ButtonState;
+        const bool leftHeld = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+        const bool middleHeld = mouse.getMiddleButtonProperty() == ButtonState::Pressed;
+        const bool enterHeld = keyboard.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Enter);
+
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        if (leftHeld && !leftHeldLastFrame_ && hasHighlight_)
+        {
+            const int placeX = static_cast<int>(hitCellX_) + hitNormalX_;
+            const int placeY = static_cast<int>(hitCellY_) + hitNormalY_;
+            const int placeZ = static_cast<int>(hitCellZ_) + hitNormalZ_;
+            if (placeX >= 0 && placeX < blocksPerAxis &&
+                placeY >= 0 && placeY < blocksPerAxis &&
+                placeZ >= 0 && placeZ < blocksPerAxis)
+            {
+                world.setBlock(static_cast<std::uint16_t>(placeX), static_cast<std::uint16_t>(placeY),
+                                static_cast<std::uint16_t>(placeZ),
+                                Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile));
+                needsPresentationRebuild_ = true;
+            }
+        }
+        else if (middleHeld && !middleHeldLastFrame_ && hasHighlight_)
+        {
+            world.setBlock(hitCellX_, hitCellY_, hitCellZ_, Worlds::Block::air());
+            needsPresentationRebuild_ = true;
+        }
+        else if (enterHeld && !enterHeldLastFrame_ && !worldPath_.empty())
+        {
+            world.saveToFile(worldPath_);
+        }
+        leftHeldLastFrame_ = leftHeld;
+        middleHeldLastFrame_ = middleHeld;
+        enterHeldLastFrame_ = enterHeld;
+    }
+
+    bool GEWorldEditor::ConsumeNeedsPresentationRebuild() noexcept
+    {
+        const bool result = needsPresentationRebuild_;
+        needsPresentationRebuild_ = false;
+        return result;
     }
 
     void GEWorldEditor::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,

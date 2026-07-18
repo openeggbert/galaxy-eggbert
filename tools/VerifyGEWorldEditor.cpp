@@ -5,6 +5,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 
 // Scripted verification for the in-game 3D world editor (plan.md section 6,
@@ -21,6 +22,10 @@
 //   - EDITOR-102: the Amanatides-Woo voxel raycast (GEVoxelRaycast.hpp)
 //     against a synthetic World with known blocks placed -- pure grid math,
 //     no GraphicsDevice needed either.
+//   - EDITOR-103: single block place/remove + ConsumeNeedsPresentationRebuild(),
+//     driven through GEWorldEditor::Update() with synthetic left/middle-click
+//     MouseState values (both still no GraphicsDevice needed -- place/remove
+//     only touches the World, not the GPU-side highlight mesh).
 // Later milestones (box-fill, undo/redo, palette data, MoveObject/
 // sky-region round-trips) add their own sections here.
 int main()
@@ -47,7 +52,10 @@ int main()
                                ButtonState::Released, ButtonState::Released, ButtonState::Released);
     // An all-air world -- fine for the camera-movement checks below, which
     // don't depend on what Update()'s own internal raycast happens to hit.
-    const World emptyWorld;
+    // Non-const: EDITOR-103 made GEWorldEditor::Update() take a mutable
+    // World& (it now places/removes blocks); none of the movement-only
+    // checks below actually mutate it (both mouse buttons stay at rest).
+    World emptyWorld;
 
     // --- EnterEditing() sets the starting position and a level-ish default look ---
     {
@@ -211,6 +219,102 @@ int main()
         const RaycastHit hit = Raycast(world, -20.0f, 5.0f, 50.0f, 1.0f, 0.0f, 0.0f, 200.0f);
         check(hit.hit && hit.x == 5 && hit.y == 5 && hit.z == 50,
               "a ray starting outside the world bounds still finds a block once it enters the grid");
+    }
+
+    // --- Block place/remove + ConsumeNeedsPresentationRebuild() ---
+    // A thick slab at raw grid X=50 spanning the whole Z range and y=0..3 --
+    // EnterEditing(0,10,0) puts the camera at raw grid (50,10,50) with its
+    // documented default look (yaw=0, pitch=-0.35), so forward.X is exactly
+    // 0 (sin(0)==0) and the ray never drifts off this X=50 plane, guaranteed
+    // to hit the slab somewhere in Z regardless of the exact descent rate.
+    {
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+
+        // Ground truth: the exact same raycast GEWorldEditor::Update() will
+        // perform internally, computed directly against GEVoxelRaycast
+        // (already exhaustively verified above) using EnterEditing()'s own
+        // documented default yaw/pitch.
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        const float cosPitch = std::cos(kDefaultPitch);
+        const RaycastHit expected = Raycast(world, 50.0f, 10.0f, 50.0f,
+                                             std::sin(kDefaultYaw) * cosPitch, std::sin(kDefaultPitch),
+                                             -std::cos(kDefaultYaw) * cosPitch, 200.0f);
+        check(expected.hit, "test setup sanity: the reference raycast against the slab hits");
+        const int placeX = static_cast<int>(expected.x) + expected.normalX;
+        const int placeY = static_cast<int>(expected.y) + expected.normalY;
+        const int placeZ = static_cast<int>(expected.z) + expected.normalZ;
+        check(world.getBlock(static_cast<std::uint16_t>(placeX), static_cast<std::uint16_t>(placeY),
+                              static_cast<std::uint16_t>(placeZ)).isAir(),
+              "test setup sanity: the cell a left-click should place into starts as air");
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        // A plain Update() with no clicks performs the raycast but doesn't
+        // mutate anything.
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        check(!editor.ConsumeNeedsPresentationRebuild(),
+              "a plain Update() with no clicks doesn't request a rebuild");
+
+        // Left click places a block at the expected adjacent cell.
+        const MouseState leftMouse(0, 0, 0, ButtonState::Pressed, ButtonState::Released,
+                                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, leftMouse, 0.0f, 800, 480, camera, world);
+        check(!world.getBlock(static_cast<std::uint16_t>(placeX), static_cast<std::uint16_t>(placeY),
+                               static_cast<std::uint16_t>(placeZ)).isAir(),
+              "left click places a block at the cell adjacent to the hit face");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "placing a block requests a presentation rebuild");
+        check(!editor.ConsumeNeedsPresentationRebuild(),
+              "ConsumeNeedsPresentationRebuild() clears back to false once read");
+
+        // Holding left across a second frame doesn't place a second time
+        // (edge-triggered, not fired every frame while held).
+        editor.Update(KeyboardState{}, leftMouse, 0.0f, 800, 480, camera, world);
+        check(!editor.ConsumeNeedsPresentationRebuild(),
+              "holding the left button across frames only places once (edge-triggered)");
+
+        // Middle click removes the aimed-at block -- by now that's the
+        // block JUST placed above the original slab surface (closer to
+        // the camera, so the fresh raycast this Update() call performs
+        // hits it first, not the original `expected` slab cell underneath).
+        const MouseState middleMouse(0, 0, 0, ButtonState::Released, ButtonState::Pressed,
+                                      ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, middleMouse, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(static_cast<std::uint16_t>(placeX), static_cast<std::uint16_t>(placeY),
+                              static_cast<std::uint16_t>(placeZ)).isAir(),
+              "middle click removes the aimed-at block (the just-placed one, now the nearest hit)");
+        check(!world.getBlock(expected.x, expected.y, expected.z).isAir(),
+              "the original slab surface underneath is untouched by the removal");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "removing a block requests a presentation rebuild");
+    }
+
+    // --- Save/load round-trip via Enter ---
+    {
+        World world;
+        world.setBlock(50, 4, 50, Block::make(42));
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        editor.SetWorldPath("verify_ge_world_editor_scratch.vwr");
+        Easy3D::Camera3D camera;
+
+        const KeyboardState enterKeys{Keys::Enter};
+        editor.Update(enterKeys, restMouse, 0.0f, 800, 480, camera, world);
+
+        const World reloaded = World::loadFromFile("verify_ge_world_editor_scratch.vwr");
+        check(reloaded.getBlock(50, 4, 50).type() == 42,
+              "Enter saves the world to the path set via SetWorldPath(), and it round-trips");
+        std::remove("verify_ge_world_editor_scratch.vwr");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

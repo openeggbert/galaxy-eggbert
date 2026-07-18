@@ -1221,7 +1221,11 @@ namespace GalaxyEggbert::CNA
                 const auto mouse = Mouse::GetState();
                 worldEditor_.Update(phaseKeys, mouse, dt,
                                      viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
-                                     worldRuntime_.GetWorld());
+                                     worldRuntime_.GetWorldMutable());
+                if (worldEditor_.ConsumeNeedsPresentationRebuild())
+                {
+                    RebuildWorldPresentation();
+                }
             }
 
             // TEMPORARY (EDITOR-100 debug entry point, removed once
@@ -1249,6 +1253,11 @@ namespace GalaxyEggbert::CNA
                     {
                         worldEditor_.EnterEditing(50.0f, 15.0f, 50.0f);
                     }
+                    // Distinct scratch path (not world999.vwr itself, which
+                    // several other features/tests load) -- temporary
+                    // until EDITOR-107's real per-gamer-slot world browser
+                    // chooses this.
+                    worldEditor_.SetWorldPath("worlds3d/editor_scratch_test.vwr");
                     SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
                 }
             }
