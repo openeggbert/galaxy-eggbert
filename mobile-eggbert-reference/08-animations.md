@@ -6,6 +6,14 @@ states — 84 with a real `table_blupi`-sourced animation, 3 confirmed to have n
 (12+87+14+9+8+1 = 131; a prior version of this line said 155, which didn't match this
 breakdown — corrected 2026-07-05.)
 
+**2026-07-18 update**: added §8, a galaxy-eggbert (CNA) implementation-status cross-reference (41
+of the 84 recorded actions are now actually wired into `GEBlupiController`'s own `AnimState`
+system — this file itself never tracked that, only mobile-eggbert's real behavior). Also corrected
+the Mockery section (§2, "Table/level-editing" area): its "enemy mocking Blupi" description was
+inherited verbatim from `BlupiAction.hpp`'s own misleading doc comment and is backwards — verified
+directly against `Decor::MockeryDetect()` that it's actually Blupi taunting a nearby enemy, not the
+reverse.
+
 **History**: an earlier pass in this series (2026-07-03) documented only the 8 `BlupiState` values
 `GEBlupiController.cpp` (galaxy-eggbert's own partial Simple3D port) implements, not mobile-eggbert's
 real 87-state `BlupiAction` enum — the user caught that this was the wrong source of truth (both the
@@ -238,13 +246,28 @@ purely that 82 other real actions were never in scope for that port in the first
 | `StopJump` | 61 | Jump landing (ACTION_STOPJUMP). | 5 | blupi.png | ![StopJump](images/blupi-action-61-stopjump.gif) |
 | `StopJumph` | 62 | High-jump landing (ACTION_STOPJUMPh). | 2 | blupi.png | ![StopJumph](images/blupi-action-62-stopjumph.gif) |
 
-### Mockery (enemy taunts Blupi)
+### Mockery (Blupi taunts a nearby enemy)
+
+**Direction corrected 2026-07-18** (galaxy-eggbert session, cross-referenced against
+`Decor.cpp:9518-9601`'s `MockeryDetect()` and its caller `Decor.cpp:5627-5636`): this table's
+"Description" column and section header previously said "enemy mocking Blupi" — inherited verbatim
+from `BlupiAction.hpp`'s own doc comment, which is itself misleading/backwards. The actual
+behavior, confirmed directly against `Decor::BlupiStep()`'s logic (not just the enum comment): BLUPI
+taunts a NEARBY enemy (proximity-only, a bounding-box overlap check, not contact/collision), gated
+on being idle and off a real 300-tick (15s) `m_blupiTimeMockery` cooldown. `Mockeryp` always fires
+for `ObjectType54` (the large creature) regardless of side; `Mockery`/`Mockeryi` are chosen for
+every other qualifying enemy type (a specific list of 11 real `ObjectType`s) by whether the enemy
+is ahead of or behind Blupi's own facing direction — except `ObjectType2` (standard patrol enemy),
+which never gets the "ahead" `Mockery` variant, only `Mockeryi` when behind (the real source doesn't
+state why this one type is asymmetric). Entry sound also confirmed directly: `Mockery`/`Mockeryi`
+both play channel 65 (`Decor.cpp:3151/3165`); `Mockeryp` plays a DIFFERENT channel, 47
+(`Decor.cpp:3179`) — not assumed from the other two. Implemented in galaxy-eggbert, see §8 below.
 
 | Action | ID | Description | Frames | Sheet | GIF |
 |---|---|---|---|---|---|
-| `Mockery` | 63 | Enemy mocking Blupi (ACTION_MOCKERY). | 92 | blupi.png | ![Mockery](images/blupi-action-63-mockery.gif) |
-| `Mockeryi` | 64 | Enemy mocking Blupi, inverted (ACTION_MOCKERYi). | 104 | blupi.png | ![Mockeryi](images/blupi-action-64-mockeryi.gif) |
-| `Mockeryp` | 83 | Enemy mocking, alternate pose (ACTION_MOCKERYp). | 60 | blupi.png | ![Mockeryp](images/blupi-action-83-mockeryp.gif) |
+| `Mockery` | 63 | Blupi taunts a nearby enemy ahead of him (ACTION_MOCKERY). | 92 | blupi.png | ![Mockery](images/blupi-action-63-mockery.gif) |
+| `Mockeryi` | 64 | Blupi taunts a nearby enemy behind him, inverted pose (ACTION_MOCKERYi). | 104 | blupi.png | ![Mockeryi](images/blupi-action-64-mockeryi.gif) |
+| `Mockeryp` | 83 | Blupi taunts `ObjectType54` (large creature) specifically, alternate pose (ACTION_MOCKERYp). | 60 | blupi.png | ![Mockeryp](images/blupi-action-83-mockeryp.gif) |
 
 ### Relief animation, part 2 & balloon
 
@@ -464,3 +487,51 @@ frames), `table_vitesse_march`/`_nage`/`_surf` (movement speed-per-tick paramete
   bounding boxes are unresolved.
 - `06-doors.md`'s exact `Config::ScaleTime(50)` real-time duration for the door slide (§5) wasn't
   resolved (depends on a scale factor not looked up in this pass).
+
+## 8. galaxy-eggbert (CNA) implementation status, all 87 `BlupiAction` values
+
+Added 2026-07-18 after a user asked "did you even check `mobile-eggbert-reference`?" while doing a
+from-scratch `table_blupi` extraction that, in hindsight, exactly duplicated §2 above (independent
+confirmation both are correct: every frame count matched byte-for-byte). This section is the
+cross-reference that should have existed from the start — which of the 84 real recorded actions
+`GEBlupiController.cpp`'s `AnimState` system actually implements, and why not for the rest. See
+`plan.md`'s `BLUPI-0xx` checklist (especially `BLUPI-047`'s shared writeup) for full citations —
+this is a compact index into that, not a duplicate of it.
+
+**Wired (41 of 84):** `Stop`(1), `March`(2), `Jump`(4), `Air`(5), `Down`(6), `Up`(7), `Clear1`(11,
+via `DeathLocked`), `Push`(14), `StopHelico`/`MarchHelico`(15/16), `StopNage`/`MarchNage`(18/19),
+`StopSurf`/`MarchSurf`(21/22), `Drown`(24, via `DeathLocked`), `StopJeep`/`MarchJeep`(25/26),
+`Bye`(30), `Hide`(35), `StopSkate`/`MarchSkate`(37/38), `Sucette`(49, via `PickupBusy`),
+`StopTank`/`MarchTank`(50/51), `Glu`(54, via `DeathLocked`), `Drink`(55, via `PickupBusy`),
+`Charge`(56, via `PickupBusy`), `Mockery`/`Mockeryi`/`Mockeryp`(63/64/83), `Balloon`(66),
+`StopOver`/`MarchOver`(67/68), `StopEcrase`/`MarchEcrase`(72/73), `Teleporte`(74),
+`Clear2`/`Clear3`/`Clear4`(75/76/77, via `DeathLocked`), `Switch`(82), `PutDynamite`(87).
+
+**Not wired — no matching mechanic/edge-event exists in this engine (43 of 84, plus the 3 with no
+real record at all):**
+- **Turn variants** (never modeled for anything, including the base humanoid): `Turn`(3),
+  `TurnHelico`(17), `TurnNage`(20), `TurnSurf`(23), `TurnJeep`(27), `TurnSkate`(39), `TurnTank`(52),
+  `TurnAir`(59), `TurnOver`(69) — precise real turn-trigger detection (a direction-change edge,
+  distinct from just "moving") needs its own dedicated research pass.
+- **Deferred mechanics** (the underlying gameplay feature itself is deliberately not modeled this
+  session, not just the icon): `Vertigo`(8, edge-hang, `PICKUP-024`), `StopSuspend`/`MarchSuspend`/
+  `JumpSuspend`(31/32/34, rope-hang, `BLUPI-101`/`177`, deferred render-geometry decision).
+- **No matching real mechanic exists at all**: `Recede`/`Advance`(9/10, no distinct backward-
+  movement state), `StopPop`/`Pop`(28/29, no pop-star costume), `JumpAie`(36, no distinct
+  "hurt but not dead" state), `Electro`(57, no electric-field hazard), `HelicoGlu`(58, no
+  helicopter-in-glue interaction), `StopMarch`(60, no coast-down sub-state), `StopJump`/
+  `StopJumph`(61/62, no distinct landing-transition frame), `Non`(84, unclear real trigger
+  condition, not researched), `SlowdownSkate`(85, no distinct braking input/state).
+- **Data extracted, real trigger exists but has no edge-detected signal to hook an animation to
+  yet**: `JumpSkate`/`AirSkate`(40/41, Skateboard's own real airborne icons), `TakeSkate`/
+  `DeposeSkate`(42/43, mount/dismount), `TurnSkate`(39, listed twice above under both categories —
+  it's genuinely both a Turn-variant AND has this gap), `FireTank`(53, tank firing), `Ouf1a`-
+  `Ouf5`(44/45/46/47/48/65, blocked on a "close call"/idle-fidget detection prerequisite,
+  `BLUPI-018`/`019`, `SOUND-046`-family), `Clear5`-`Clear8`(78/79/80/81, no real death-cause path
+  currently reaches these 4 specific one-shot variants), `TakeDynamite`(86, real pickup goes
+  through the deferred "Voyage" reward system, unclear whether the hand-gesture belongs at
+  touch-time or Voyage-resolution time without further research), `Win`(13, this engine's own
+  separate Win-screen UI — a static `blupiyoupie.png` background, not this icon system — already
+  covers level-win, so this specific `BlupiAction` was never a gap in practice).
+- **No `table_blupi` record exists at all** (see §2's own note): `Set`(12), `Recedeq`(70),
+  `Advanceq`(71).
