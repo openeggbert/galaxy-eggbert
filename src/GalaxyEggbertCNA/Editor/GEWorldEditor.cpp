@@ -4,8 +4,6 @@
 #include "GEVoxelRaycast.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
-#include <GalaxyEggbert/BlockTypes.hpp>
-
 #include <algorithm>
 #include <cmath>
 #include <utility>
@@ -40,7 +38,7 @@ namespace GalaxyEggbert::CNA
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
                                const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                               float dt, int /*viewportWidth*/, int /*viewportHeight*/,
+                               float dt, int viewportWidth, int viewportHeight,
                                Easy3D::Camera3D& camera,
                                Worlds::World& world)
     {
@@ -154,6 +152,13 @@ namespace GalaxyEggbert::CNA
         // (e.g. GEInputPad's "!mouseDown && mouseWasDown_" idiom, just
         // inverted here to trigger on press rather than release since
         // there's no on-screen button geometry to still be hovering over).
+        // Palette/toolbar click handling (plan.md EDITOR-106) -- checked
+        // BEFORE the 3D-world left-click place logic below, same
+        // "inputPadClaimedMouse" idiom GalaxyEggbertCnaGame.cpp's own Play
+        // on-screen D-pad already uses, so a palette icon/toolbar click
+        // doesn't ALSO place a block at the crosshair this same frame.
+        const GEEditorPalette::UpdateResult paletteResult = palette_.Update(mouse, viewportWidth, viewportHeight);
+
         const bool leftHeld = mouse.getLeftButtonProperty() == ButtonState::Pressed;
         const bool middleHeld = mouse.getMiddleButtonProperty() == ButtonState::Pressed;
         const bool enterHeld = keyboard.IsKeyDown(Keys::Enter);
@@ -182,7 +187,8 @@ namespace GalaxyEggbert::CNA
         }
 
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        if (leftHeld && !leftHeldLastFrame_ && hasHighlight_ && !boxFirstCornerPlaced_)
+        if (leftHeld && !leftHeldLastFrame_ && !paletteResult.clickConsumed && hasHighlight_ &&
+            !boxFirstCornerPlaced_)
         {
             const int placeX = static_cast<int>(hitCellX_) + hitNormalX_;
             const int placeY = static_cast<int>(hitCellY_) + hitNormalY_;
@@ -195,7 +201,7 @@ namespace GalaxyEggbert::CNA
                 const auto py = static_cast<std::uint16_t>(placeY);
                 const auto pz = static_cast<std::uint16_t>(placeZ);
                 const Worlds::Block before = world.getBlock(px, py, pz);
-                const Worlds::Block after = Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile);
+                const Worlds::Block after = Worlds::Block::make(palette_.SelectedBlockType());
                 world.setBlock(px, py, pz, after);
                 GEEditCommand command;
                 command.kind = GEEditCommand::Kind::BlockEdit;
@@ -204,7 +210,8 @@ namespace GalaxyEggbert::CNA
                 needsPresentationRebuild_ = true;
             }
         }
-        else if (middleHeld && !middleHeldLastFrame_ && hasHighlight_ && !boxFirstCornerPlaced_)
+        else if (middleHeld && !middleHeldLastFrame_ && !paletteResult.clickConsumed && hasHighlight_ &&
+                 !boxFirstCornerPlaced_)
         {
             const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
             const Worlds::Block after = Worlds::Block::air();
@@ -215,18 +222,24 @@ namespace GalaxyEggbert::CNA
             commandStack_.Push(std::move(command));
             needsPresentationRebuild_ = true;
         }
-        else if (enterHeld && !enterHeldLastFrame_ && !worldPath_.empty())
+        else if ((enterHeld && !enterHeldLastFrame_ && !worldPath_.empty()) ||
+                 paletteResult.action == GEEditorPalette::ToolbarAction::Save)
         {
-            world.saveToFile(worldPath_);
+            if (!worldPath_.empty())
+            {
+                world.saveToFile(worldPath_);
+            }
         }
-        else if (undoKeyHeld && !undoKeyHeldLastFrame_)
+        else if ((undoKeyHeld && !undoKeyHeldLastFrame_) ||
+                 paletteResult.action == GEEditorPalette::ToolbarAction::Undo)
         {
             if (commandStack_.Undo(world))
             {
                 needsPresentationRebuild_ = true;
             }
         }
-        else if (redoKeyHeld && !redoKeyHeldLastFrame_)
+        else if ((redoKeyHeld && !redoKeyHeldLastFrame_) ||
+                 paletteResult.action == GEEditorPalette::ToolbarAction::Redo)
         {
             if (commandStack_.Redo(world))
             {
@@ -249,7 +262,7 @@ namespace GalaxyEggbert::CNA
                     hitCellX_, hitCellY_, hitCellZ_, blocksPerAxis);
                 GEEditCommand command;
                 command.kind = GEEditCommand::Kind::BlockEdit;
-                const Worlds::Block fillBlock = Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile);
+                const Worlds::Block fillBlock = Worlds::Block::make(palette_.SelectedBlockType());
                 for (int x = region.minX; x <= region.maxX; ++x)
                 {
                     for (int y = region.minY; y <= region.maxY; ++y)
@@ -300,7 +313,9 @@ namespace GalaxyEggbert::CNA
     }
 
     void GEWorldEditor::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                             const Easy3D::Camera3D& camera)
+                             const Easy3D::Camera3D& camera,
+                             Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
+                             int viewportWidth, int viewportHeight)
     {
         if (showingBox_)
         {
@@ -317,5 +332,7 @@ namespace GalaxyEggbert::CNA
         {
             highlightRenderer_.Hide();
         }
+
+        palette_.Draw(device, terrainTexture, viewportWidth, viewportHeight);
     }
 }

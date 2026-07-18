@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GEQuadBatch.hpp"
+
 #include <Easy3D/BillboardMesh.hpp>
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <GalaxyEggbert/def/GamePhase.hpp>
@@ -519,11 +521,12 @@ namespace GalaxyEggbert::CNA
                      GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
 
     private:
-        struct Quad
-        {
-            float x0, y0, x1, y1;
-            float u0, v0, u1, v1;
-        };
+        // Alias, not a redeclaration (plan.md EDITOR-106): the real
+        // definition moved to the shared GEQuadBatch so the editor UI can
+        // reuse it too. Every existing FlushQuads()/AppendXxxLabel() call
+        // site below is unaffected -- Quad is structurally/behaviorally
+        // identical, just no longer privately owned by this class.
+        using Quad = GEQuadBatch::Quad;
 
         void FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         Microsoft::Xna::Framework::Graphics::BasicEffect& effect,

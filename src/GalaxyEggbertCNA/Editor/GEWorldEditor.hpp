@@ -2,6 +2,7 @@
 
 #include "GEEditCommandStack.hpp"
 #include "GEEditorHighlightRenderer.hpp"
+#include "GEEditorPalette.hpp"
 
 #include <Easy3D/Camera3D.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -22,11 +23,12 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-105 (this milestone): free-fly camera (EDITOR-101) + voxel
+    // EDITOR-106 (this milestone): free-fly camera (EDITOR-101) + voxel
     // raycast/highlight (EDITOR-102) + single block place/remove/save
-    // (EDITOR-103) + undo/redo (EDITOR-104), now with a two-click box-fill
-    // tool. The real palette UI and object editing land in later
-    // milestones.
+    // (EDITOR-103) + undo/redo (EDITOR-104) + box-fill (EDITOR-105), now
+    // with a real palette (GEEditorPalette) choosing what LMB/box-fill
+    // place instead of a hardcoded block type. Object editing lands in
+    // later milestones.
     class GEWorldEditor
     {
     public:
@@ -54,13 +56,17 @@ namespace GalaxyEggbert::CNA
         // Editing tools (edge-triggered, once per press -- RMB is already
         // taken by camera look, so this deliberately isn't the usual
         // Minecraft-style left=break/right=place binding):
-        //   - Left click: places BlockTypes::RockPile (a temporary fixed
-        //     type until EDITOR-106's real palette exists) at the cell
-        //     adjacent to the aimed-at face.
+        //   - Left click: places the palette's currently selected block
+        //     type (GEEditorPalette::SelectedBlockType(), clicked from the
+        //     on-screen palette grid -- see Draw()) at the cell adjacent
+        //     to the aimed-at face.
         //   - Middle click: removes the aimed-at block entirely.
         //   - Enter: saves @p world to the path set via SetWorldPath().
         //   - U: undoes the most recent block edit; R: redoes it (plain
         //     keys, not Ctrl-modified -- Left Ctrl already flies downward).
+        //     The palette's own Undo/Redo/Save toolbar buttons trigger the
+        //     exact same actions via a mouse click, for players who don't
+        //     know the keybindings.
         //   - F: box-fill tool. First press marks the aimed-at cell as
         //     corner A; while a corner is marked, the highlight tracks a
         //     live box between corner A and wherever the raycast currently
@@ -68,9 +74,9 @@ namespace GalaxyEggbert::CNA
         //     from completely different camera angles/distances, which is
         //     what gives a true 3D cuboid, not just a flat footprint). A
         //     second F press marks corner B and immediately fills the
-        //     whole box with BlockTypes::RockPile as ONE undo command
-        //     (only the cells that actually changed); Escape cancels back
-        //     to single-cell picking with no world change.
+        //     whole box with the palette's selected block type as ONE undo
+        //     command (only the cells that actually changed); Escape
+        //     cancels back to single-cell picking with no world change.
         // Call ConsumeNeedsPresentationRebuild() after Update() returns to
         // find out whether @p world was actually mutated this frame.
         //
@@ -93,8 +99,14 @@ namespace GalaxyEggbert::CNA
         // GEInteractionSystem/GEBlupiController.
         [[nodiscard]] bool ConsumeNeedsPresentationRebuild() noexcept;
 
+        // @p terrainTexture is the same already-loaded object-m.png texture
+        // GalaxyEggbertCnaGame's own terrain rendering uses -- lent to the
+        // palette so its icon grid can sample the real terrain atlas
+        // directly (GEEditorPalette::Draw()'s own comment).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                  const Easy3D::Camera3D& camera);
+                  const Easy3D::Camera3D& camera,
+                  Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
+                  int viewportWidth, int viewportHeight);
 
     private:
         float camX_ = 50.0f;
@@ -135,6 +147,7 @@ namespace GalaxyEggbert::CNA
         bool needsPresentationRebuild_ = false;
 
         GEEditCommandStack commandStack_;
+        GEEditorPalette palette_;
 
         // Box-fill tool (plan.md EDITOR-105).
         bool boxFirstCornerPlaced_ = false;

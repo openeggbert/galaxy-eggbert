@@ -1,5 +1,7 @@
 #include "Editor/GEBoxRegion.hpp"
 #include "Editor/GEEditCommandStack.hpp"
+#include "Editor/GEEditorPalette.hpp"
+#include "Editor/GEPaletteCategories.hpp"
 #include "Editor/GEVoxelRaycast.hpp"
 #include "Editor/GEWorldEditor.hpp"
 
@@ -37,8 +39,13 @@
 //     corners, world-bounds clamping), plus GEWorldEditor's F-key box-fill
 //     tool filling an exact expected volume as one undo command through
 //     the same synthetic-input path.
-// Later milestones (palette data, MoveObject/sky-region round-trips) add
-// their own sections here.
+//   - EDITOR-106: GEPaletteCategories data sanity (full 1..440 coverage,
+//     every curated id in range), plus GEEditorPalette::Update()'s
+//     click-hit-testing (toolbar buttons, tab toggle, icon selection,
+//     clickConsumed) driven with synthetic MouseState values -- still no
+//     GraphicsDevice needed (only Draw() touches the GPU).
+// Later milestones (MoveObject/sky-region round-trips) add their own
+// sections here.
 int main()
 {
     using namespace GalaxyEggbert::CNA;
@@ -534,6 +541,114 @@ int main()
         check(world.getBlock(cornerBHit.x, cornerBHit.y, cornerBHit.z).type() == 1,
               "undo restores corner B's real original block in the SAME undo step (one fill == one command)");
         check(editor.ConsumeNeedsPresentationRebuild(), "undoing the fill requests a presentation rebuild");
+    }
+
+    // --- GEPaletteCategories: full numeric coverage + curated-id sanity ---
+    {
+        const auto allIds = AllBlockIconIdsInOrder();
+        check(allIds.size() == 440, "AllBlockIconIdsInOrder() covers all 440 valid non-Air block types");
+        check(allIds.front() == 1 && allIds.back() == 440,
+              "AllBlockIconIdsInOrder() is in order, starting at 1 (Air excluded) through 440");
+
+        bool allCuratedInRange = true;
+        int curatedCount = 0;
+        for (const auto& category : ConfirmedBlockCategories())
+        {
+            check(!category.name.empty(), "every curated category has a non-empty name");
+            for (const int iconId : category.iconIds)
+            {
+                ++curatedCount;
+                if (iconId < 1 || iconId > 440)
+                {
+                    allCuratedInRange = false;
+                }
+            }
+        }
+        check(allCuratedInRange, "every curated category's icon ids fall within the valid 1..440 range");
+        check(curatedCount > 0, "test setup sanity: at least one curated category icon exists");
+    }
+
+    // --- GEEditorPalette: click hit-testing (toolbar/tab/icon selection/clickConsumed) ---
+    {
+        constexpr int kViewportW = 800;
+        constexpr int kViewportH = 480;
+
+        const auto click = [&](GEEditorPalette& palette, float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            (void)palette.Update(down, kViewportW, kViewportH);
+            return palette.Update(up, kViewportW, kViewportH);
+        };
+
+        // Layout constants mirroring GEEditorPalette.cpp's own private
+        // anonymous-namespace geometry (kToolbarX/Y0/ButtonSize/Gap,
+        // kPaletteIconSize/Gap/Cols/Rows, kGridMargin, kTabToggle
+        // Width/Height, kControlGap) -- a white-box test of this specific
+        // layout, matching this project's own precedent of pinning exact
+        // internal geometry (e.g. VerifyGEInputPad's real button rects).
+        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 442
+        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 298
+
+        {
+            GEEditorPalette palette;
+            check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
+                  "GEEditorPalette starts with RockPile selected by default");
+
+            const auto result = click(palette, 30.0f, 30.0f); // toolbar button 0 (Undo)
+            check(result.action == GEEditorPalette::ToolbarAction::Undo,
+                  "clicking the first toolbar button reports Undo");
+            check(result.clickConsumed, "a toolbar-button click reports clickConsumed");
+        }
+        {
+            GEEditorPalette palette;
+            const auto result = click(palette, 30.0f, 90.0f); // toolbar button 1 (Redo)
+            check(result.action == GEEditorPalette::ToolbarAction::Redo,
+                  "clicking the second toolbar button reports Redo");
+        }
+        {
+            GEEditorPalette palette;
+            const auto result = click(palette, 30.0f, 146.0f); // toolbar button 2 (Save)
+            check(result.action == GEEditorPalette::ToolbarAction::Save,
+                  "clicking the third toolbar button reports Save");
+        }
+        {
+            GEEditorPalette palette;
+            const auto result = click(palette, 400.0f, 200.0f); // empty space, no UI there
+            check(result.action == GEEditorPalette::ToolbarAction::None &&
+                      !result.clickConsumed,
+                  "clicking empty space away from any control reports no action and doesn't consume the click");
+        }
+        {
+            GEEditorPalette palette;
+            // Confirmed tab, cell index 1 (col=1,row=0): the second icon in
+            // the first curated category ("Terrain"), BrickWall.
+            const float cellX = kGridX0 + 1.0f * (40.0f + 4.0f) + 20.0f;
+            const float cellY = kGridY0 + 20.0f;
+            const auto result = click(palette, cellX, cellY);
+            check(result.clickConsumed, "clicking a palette icon cell reports clickConsumed");
+            check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::BrickWall,
+                  "clicking the Confirmed tab's second icon selects BrickWall");
+        }
+        {
+            GEEditorPalette palette;
+            // Toggle to the All-Icons tab, then click cell index 0 -- should
+            // now select icon id 1 (AllBlockIconIdsInOrder()'s own first
+            // entry), proving the tab toggle actually changed the active list.
+            const float tabX = kGridX0 + 10.0f;
+            const float tabY = kGridY0 - 24.0f - 4.0f + 10.0f;
+            (void)click(palette, tabX, tabY);
+            const float cellX = kGridX0 + 20.0f;
+            const float cellY = kGridY0 + 20.0f;
+            const auto result = click(palette, cellX, cellY);
+            check(result.clickConsumed, "clicking a palette icon cell on the All-Icons tab reports clickConsumed");
+            check(palette.SelectedBlockType() == 1,
+                  "after toggling to the All-Icons tab, the first cell selects icon id 1");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

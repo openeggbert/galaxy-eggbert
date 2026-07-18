@@ -172,7 +172,12 @@ namespace GalaxyEggbert::CNA
         constexpr int kIconSetupReset = 20;
         constexpr int kIconSetupReturn = 8;
 
-        struct Rect { float x0, y0, x1, y1; };
+        // Rect/InRect (plan.md EDITOR-106): moved to the shared GEQuadBatch
+        // so the editor UI can reuse the exact same hit-testing primitive.
+        // Every existing kXxxRect/InRect(...) use below is unaffected --
+        // GEQuadBatch::Rect is structurally/behaviorally identical.
+        using Rect = GEQuadBatch::Rect;
+        using GEQuadBatch::InRect;
 
         constexpr Rect kJumpRect{kJumpX0, kJumpY0, kJumpX1, kJumpY1};
         constexpr Rect kActionRect{kActionX0, kActionY0, kActionX1, kActionY1};
@@ -193,11 +198,6 @@ namespace GalaxyEggbert::CNA
         {
             const float x0 = kPauseRowX0 + static_cast<float>(index) * (kPauseButtonSize + kPauseButtonGap);
             return Rect{x0, kPauseRowY0, x0 + kPauseButtonSize, kPauseRowY1};
-        }
-
-        bool InRect(float x, float y, const Rect& r)
-        {
-            return x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1;
         }
 
         // Logical control indices, local to this file -- Play and Pause
@@ -399,23 +399,8 @@ namespace GalaxyEggbert::CNA
         constexpr float kGear1CenterX = 600.0f, kGear1CenterY = 261.0f, kGear1Half = 113.0f; // (487,148)-(713,374)
         constexpr float kGear2CenterX = 344.0f, kGear2CenterY = 494.0f, kGear2Half = 226.0f; // (118,268)-(570,720)
 
-        void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
-                          std::vector<std::uint32_t>& indices,
-                          float x0, float y0, float x1, float y1,
-                          float u0, float v0, float u1, float v1)
-        {
-            const auto base = static_cast<std::uint32_t>(vertices.size());
-            vertices.push_back({{x0, y0, 0.0f}, {u0, v0}});
-            vertices.push_back({{x1, y0, 0.0f}, {u1, v0}});
-            vertices.push_back({{x1, y1, 0.0f}, {u1, v1}});
-            vertices.push_back({{x0, y1, 0.0f}, {u0, v1}});
-            indices.push_back(base + 0);
-            indices.push_back(base + 1);
-            indices.push_back(base + 2);
-            indices.push_back(base + 0);
-            indices.push_back(base + 2);
-            indices.push_back(base + 3);
-        }
+        // AppendQuadUv (plan.md EDITOR-106): moved to the shared GEQuadBatch.
+        using GEQuadBatch::AppendQuadUv;
 
         void PadIconUv(int icon, float sheetW, float sheetH, float& u0, float& v0, float& u1, float& v1)
         {
@@ -436,38 +421,8 @@ namespace GalaxyEggbert::CNA
         // rotated quad's 4 corners aren't expressible as a single (x0,y0)-
         // (x1,y1) rect. Positive rotationDegrees is clockwise on screen
         // (standard XNA SpriteBatch convention in this Y-down space).
-        void AppendRotatedQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
-                                 std::vector<std::uint32_t>& indices,
-                                 float centerX, float centerY, float halfW, float halfH,
-                                 float rotationDegrees,
-                                 float u0, float v0, float u1, float v1)
-        {
-            const float rad = rotationDegrees * (3.14159265f / 180.0f);
-            const float c = std::cos(rad);
-            const float s = std::sin(rad);
-            const auto rotate = [&](float dx, float dy, float& outX, float& outY)
-            {
-                outX = centerX + dx * c - dy * s;
-                outY = centerY + dx * s + dy * c;
-            };
-            float x0, y0, x1, y1, x2, y2, x3, y3;
-            rotate(-halfW, -halfH, x0, y0);
-            rotate(halfW, -halfH, x1, y1);
-            rotate(halfW, halfH, x2, y2);
-            rotate(-halfW, halfH, x3, y3);
-
-            const auto base = static_cast<std::uint32_t>(vertices.size());
-            vertices.push_back({{x0, y0, 0.0f}, {u0, v0}});
-            vertices.push_back({{x1, y1, 0.0f}, {u1, v0}});
-            vertices.push_back({{x2, y2, 0.0f}, {u1, v1}});
-            vertices.push_back({{x3, y3, 0.0f}, {u0, v1}});
-            indices.push_back(base + 0);
-            indices.push_back(base + 1);
-            indices.push_back(base + 2);
-            indices.push_back(base + 0);
-            indices.push_back(base + 2);
-            indices.push_back(base + 3);
-        }
+        // AppendRotatedQuadUv (plan.md EDITOR-106): moved to the shared GEQuadBatch.
+        using GEQuadBatch::AppendRotatedQuadUv;
     }
 
     void GEInputPad::LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
@@ -548,28 +503,7 @@ namespace GalaxyEggbert::CNA
                                 const std::vector<Quad>& quads, int viewportW, int viewportH,
                                 float alpha)
     {
-        if (quads.empty())
-        {
-            return;
-        }
-        std::vector<Easy3D::BillboardVertex> vertices;
-        std::vector<std::uint32_t> indices;
-        vertices.reserve(quads.size() * 4);
-        indices.reserve(quads.size() * 6);
-        for (const Quad& q : quads)
-        {
-            AppendQuadUv(vertices, indices, q.x0, q.y0, q.x1, q.y1, q.u0, q.v0, q.u1, q.v1);
-        }
-
-        effect.World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-        effect.View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-        effect.Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
-            0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
-        effect.setAlphaProperty(alpha);
-
-        renderer = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
-        renderer->Draw(device, effect);
-        effect.setAlphaProperty(1.0f);
+        GEQuadBatch::FlushQuads(device, effect, renderer, quads, viewportW, viewportH, alpha);
     }
 
     void GEInputPad::AppendCenteredLabel(std::vector<Quad>& quads, const std::string& text,

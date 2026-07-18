@@ -3541,7 +3541,8 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Editor)
             {
-                worldEditor_.Draw(device, camera_);
+                worldEditor_.Draw(device, camera_, terrainTexture_,
+                                  viewport.getWidthProperty(), viewport.getHeightProperty());
             }
 
             // Hidden cheat menu overlay (2026-07-13, plan.md

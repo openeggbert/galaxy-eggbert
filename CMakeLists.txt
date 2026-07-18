@@ -321,12 +321,15 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEHud.cpp
         src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
         src/GalaxyEggbertCNA/Game/GEInputPad.cpp
+        src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GESaveData.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
         src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
         src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
+        src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -579,6 +582,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     add_executable(VerifyGEInputPad
         tools/VerifyGEInputPad.cpp
         src/GalaxyEggbertCNA/Game/GEInputPad.cpp
+        src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
     )
     target_include_directories(VerifyGEInputPad PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -615,6 +619,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
         src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
         src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
+        src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
+        src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
+        src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyGEWorldEditor PRIVATE
