@@ -179,6 +179,24 @@ enemies, doors, lifts, crates).
 
 Most recent first. Full history: `git log`.
 
+- **fix: Balloon's last 2 documented gaps closed — horizontal drift + ceiling stop (plan.md
+  `E3D-MIG-135`).** User asked to close both limitations left after the rise fix below. (1)
+  Horizontal drift: the SAME real `Decor.cpp:4059-4106` block gives Blupi momentum-based
+  left/right drift while ballooned (ramps toward a real terminal speed, decelerates to exactly 0
+  on release) instead of ordinary walking speed — ported as `m_balloonHorizontalSpeed`
+  (3.125 units/s terminal). `TriggerBalloon()` now also force-exits any mounted vehicle (real
+  `ByeByeHelico()`), required so this takes priority immediately. Real wall-stop while drifting
+  NOT ported — this engine has no horizontal-wall-collision for ANY airborne movement today, a
+  shared limitation beyond scope here. (2) Ceiling stop: corrected an earlier WRONG claim that the
+  rise clipped through ceilings like Helicopter/Overcraft — real source's general swept collision
+  (`Decor::TestPath()`) stops it same as walking into a wall. New `CeilingHeightAt()` implements
+  this. **Found and fixed a real integration bug while verifying**: the pre-existing
+  `GroundHeightAt()` misidentified the same ceiling block as ground to land ON TOP of once a rising
+  Blupi got close enough — confirmed live via a standalone debug harness (Blupi teleported from
+  y≈2.0 straight to y≈4.0, well before the real 2.5 contact height). Fixed by suppressing the
+  ground-check for every frame a ceiling is within reach, not just the frame the clamp fires.
+  Re-verified: Blupi now rises smoothly and holds exactly at the real ceiling height indefinitely.
+  4 new test assertions, full regression clean.
 - **fix: ballooned Blupi now actually RISES — the real behaviour, found at last (plan.md
   `E3D-MIG-135`).** Reported ~15 times. Every previous attempt asked only "does gravity still pull
   him down?" and stopped there — first modelling a 20%-gravity slow fall, then a fixed-height

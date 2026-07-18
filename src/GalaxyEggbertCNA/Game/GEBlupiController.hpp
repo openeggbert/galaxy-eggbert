@@ -117,18 +117,76 @@ namespace GalaxyEggbert::CNA
         //   5.0 px/tick -> 1.5625 units/s   (kBalloonRiseSpeedFast)
         //   1.0 px/tick per 0.3s -> 1.0417 units/s^2 (kBalloonRiseAccel)
         //
-        // Known remaining difference: the same real block also gives Blupi
-        // floaty momentum-based HORIZONTAL drift while ballooned
-        // (`m_blupiVitesseX` accelerating toward `speedX*10` with a 2.0/tick
-        // friction, Decor.cpp:4059-4106). Not modelled -- horizontal motion
-        // here still goes through this class's ordinary walking path. Rising
-        // is also not ceiling-clamped, matching this engine's existing
-        // Helicopter/Overcraft modes, which already rise through terrain the
-        // same way (Step()'s vertical resolution has a floor clamp only).
+        // Both remaining gaps closed 2026-07-18 (user request, same day):
+        //
+        // 1) HORIZONTAL drift (`Decor.cpp:4059-4106`, the SAME `if
+        // (m_blupiBalloon && m_blupiFocus)` block, right after the Y-rise
+        // code above): real Blupi doesn't walk at his ordinary ground speed
+        // while ballooned -- `m_blupiVitesseX` independently accelerates
+        // toward a signed target of `m_blupiSpeedX * 10` px/tick (1.0
+        // px/tick added every tick while a direction is held) and
+        // decelerates back toward 0 at 2.0 px/tick/tick when released
+        // (never overshooting past 0 into the opposite sign), with its own
+        // `BlupiBloque` wall check per axis that zeroes the velocity dead
+        // on contact. Ported as `m_balloonHorizontalSpeed`
+        // (kBalloonHorizontalSpeed/Accel/Decel below, same px/tick*20/64
+        // conversion as the rise constants), mirroring the existing
+        // `m_vehicleSpeed` ramp system's shape but with the real distinct
+        // accel/decel rates rather than one shared rate. The real
+        // `BlupiBloque` wall-stop is NOT ported: `TryMoveAxis()`'s own
+        // step-up gate only applies while grounded (`!m_onGround ||
+        // ...` unconditionally allows the move otherwise), so this engine
+        // has no horizontal-wall-collision primitive at all for ANY
+        // airborne movement today (plain jumping/vehicles included) --
+        // adding one is a shared-collision change well beyond "the balloon
+        // gaps" and risks regressing already-verified airborne behavior.
+        // Left as a known, narrower remaining difference: a floating Blupi
+        // drifts straight through a wall he'd normally stop against. Real
+        // `m_blupiSpeedX`/`Y` are simple left/right/none directional flags
+        // (`InputPad.cpp:1104-1105`), the same real-vs-3D reinterpretation
+        // already used everywhere else in this class: "world X" becomes
+        // "along Blupi's current facing" (`moveInput`), since this engine's
+        // tank controls have no independent strafe axis to map real
+        // Y-during-Balloon (real up/down) onto -- Up/Down instead reuse
+        // `lookUpHeld`/`crouchHeld`, the same pair the Helicopter/Overcraft
+        // branch above already established for an analogous "no strafe axis"
+        // reason.
+        //
+        // 2) The rise is CEILING-BLOCKED, not a "clip through anything"
+        // ascent (corrected from an earlier wrong claim that it matched
+        // Helicopter/Overcraft's own free-clip gap): real source's general
+        // per-frame movement resolver, `Decor::TestPath()`
+        // (`Decor.cpp:6782`), is a swept collision check applied to the
+        // FINAL merged `end` position every frame regardless of which
+        // status produced it -- confirmed directly, it stops Blupi against
+        // solid decor in any direction, including straight up during a
+        // balloon rise, exactly like walking into a wall. `CeilingHeightAt()`
+        // (declared below, mirrors `GroundHeightAt()`) finds the first solid
+        // block above; the rise clamps to just beneath it and zeroes
+        // `m_velocityY`, the vertical mirror of the horizontal wall-stop
+        // above. Deliberately NOT extended to the general jump apex or to
+        // Helicopter/Overcraft (no real per-status precedent read for
+        // those, and jump-ceiling collision isn't modelled anywhere in this
+        // class today) -- scoped to exactly what was asked for.
+        //
+        // Real units are px/tick at the pinned 20fps with 64px per block
+        // (Config::FPS == Fps20 so ScaleTime(6) == 6 ticks == 0.3s;
+        // Def.hpp:151-152 DIMOBJX/Y == 64). This engine is 1 block == 1.0
+        // world unit with +Y up, so each real value converts as
+        // `px/tick * 20 / 64`:
+        //   3.0 px/tick        -> 0.9375 units/s    (kBalloonRiseSpeed)
+        //   5.0 px/tick        -> 1.5625 units/s    (kBalloonRiseSpeedFast)
+        //   1.0 px/tick/0.3s   -> 1.0417 units/s^2  (kBalloonRiseAccel)
+        //   10.0 px/tick       -> 3.125 units/s     (kBalloonHorizontalSpeed)
+        //   1.0 px/tick/tick   -> 6.25 units/s^2    (kBalloonHorizontalAccel)
+        //   2.0 px/tick/tick   -> 12.5 units/s^2    (kBalloonHorizontalDecel)
         static constexpr float kBalloonDuration = 10.0f;
         static constexpr float kBalloonRiseSpeed = 0.9375f;
         static constexpr float kBalloonRiseSpeedFast = 1.5625f;
         static constexpr float kBalloonRiseAccel = 1.0417f;
+        static constexpr float kBalloonHorizontalSpeed = 3.125f;
+        static constexpr float kBalloonHorizontalAccel = 6.25f;
+        static constexpr float kBalloonHorizontalDecel = 12.5f;
 
         // Spring bounce (plan.md E3D-MIG-145, icon 211 = BlockTypes::Spring,
         // verified directly against Decor.cpp:2835-2911/7312-7320). Real
@@ -1015,6 +1073,26 @@ namespace GalaxyEggbert::CNA
         // for this purpose without a general per-cell-occupancy rewrite.
         [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable,
                                                  float referenceY);
+
+        // Sentinel CeilingHeightAt() returns when a column has no solid
+        // block anywhere above @p referenceY -- mirrors kNoGround's own
+        // "keep going, nothing to hit" contract for the opposite direction.
+        static constexpr int kNoCeiling = -1;
+        // Scans UPWARD from @p referenceY for the first solid block, mirroring
+        // GroundHeightAt()'s downward scan and the same non-solid exclusions
+        // (Temp/teleporter/fan/water -- real mobile-eggbert's collision is
+        // genuinely per-tile, not "solid above implies solid all the way
+        // up"). Added for the Balloon rise's real ceiling stop (plan.md
+        // E3D-MIG-135, `Decor::TestPath()`'s general swept collision, which
+        // the real balloon block's own `end.Y += vitesseY` result passes
+        // through same as any other movement -- confirmed directly, this
+        // is NOT a "clip through anything" ascent like this engine's
+        // existing Helicopter/Overcraft modes). Returns the solid block's
+        // own grid Y (whose bottom surface sits at gridY-0.5, mirroring
+        // GroundHeightAt()'s "top surface at gridY+0.5" for the same solid
+        // block convention), or kNoCeiling if the column is clear up to the
+        // world's own top.
+        [[nodiscard]] static int CeilingHeightAt(const Worlds::World& world, int gx, int gz, float referenceY);
         // Real Decor::IsNormalJump() headroom probe (see kJumpSpeedPowered's
         // own comment): checks the 2 grid cells directly above Blupi's
         // current standing height for solid blocks. Real source offsets the
@@ -1055,6 +1133,12 @@ namespace GalaxyEggbert::CNA
 
         bool m_balloon = false;
         float m_balloonTimer = 0.0f;
+        // Real "vitesse" momentum ramp for the Balloon status's own
+        // horizontal drift (kBalloonHorizontalSpeed's own comment) -- same
+        // shape as m_vehicleSpeed below, kept separate since the two are
+        // mutually exclusive (TriggerBalloon() force-exits any vehicle) and
+        // have their own distinct real accel/decel rates.
+        float m_balloonHorizontalSpeed = 0.0f;
 
         SecretPower m_secretPower = SecretPower::None;
         int m_secretPowerLevel = 0;

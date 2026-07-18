@@ -336,6 +336,38 @@ namespace GalaxyEggbert::CNA
         return kNoGround;
     }
 
+    int GEBlupiController::CeilingHeightAt(const Worlds::World& world, int gx, int gz, float referenceY)
+    {
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        // +1: start one cell ABOVE referenceY, mirroring GroundHeightAt()'s
+        // own "+1" (there, one cell above referenceY scanning down; here,
+        // one cell above referenceY scanning up) -- excludes whatever cell
+        // referenceY itself is currently embedded in, which must already be
+        // open (that's where the caller is standing/rising through).
+        const int startY = std::max(0, static_cast<int>(std::floor(referenceY)) + 1);
+        for (int y = startY; y < blocksPerAxis; ++y)
+        {
+            if (IsSolidAt(world, gx, y, gz))
+            {
+                const auto blockType = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
+                                                        static_cast<std::uint16_t>(gz))
+                                            .type();
+                // Same non-solid exclusions as GroundHeightAt() -- real
+                // per-tile-independent collision applies the same way
+                // scanning up as scanning down (Temp always solid here since
+                // a rising Blupi isn't the "fall through" case tempPassable
+                // exists for; teleporter/fan/water stay non-solid).
+                if (IsTeleporterIcon(blockType) || GalaxyEggbert::BlockTypes::isFan(blockType) ||
+                    GalaxyEggbert::BlockTypes::isWater(blockType))
+                {
+                    continue;
+                }
+                return y;
+            }
+        }
+        return kNoCeiling;
+    }
+
     bool GEBlupiController::HasJumpHeadroom(const Worlds::World& world) const
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
@@ -398,6 +430,15 @@ namespace GalaxyEggbert::CNA
         m_balloon = true;
         m_balloonTimer = kBalloonDuration;
         m_velocityY = 0.0f;
+        m_balloonHorizontalSpeed = 0.0f;
+        // Real trigger (Decor.cpp:5826-5849) force-exits any vehicle mode
+        // (`ByeByeHelico()` + m_blupiHelico/Over/Jeep/Tank/Skate all set
+        // false) the instant Blupi is stung -- needed here so the balloon
+        // branch's own horizontal-drift momentum in Step() takes over
+        // immediately instead of the vehicle's own ramp system still
+        // holding priority via IsInVehicle().
+        m_vehicleMode = VehicleMode::None;
+        m_vehicleSpeed = 0.0f;
         return true;
     }
 
@@ -1167,7 +1208,51 @@ namespace GalaxyEggbert::CNA
         // Already signed (carries moveInput's own sign), so it's used
         // directly below instead of being multiplied by moveInput again.
         float horizontalSpeed;
-        if (IsInVehicle())
+        if (m_balloon)
+        {
+            // Balloon horizontal drift (kBalloonHorizontalSpeed's own
+            // comment, direct port of Decor.cpp:4059-4106's real 3-branch
+            // shape): a held direction accelerates toward a signed target of
+            // +/-kBalloonHorizontalSpeed at kBalloonHorizontalAccel; no
+            // input decelerates back toward exactly 0 at the real, faster
+            // kBalloonHorizontalDecel rate (never overshooting past 0 into
+            // the opposite sign) -- two visibly different rates, so this is
+            // written as the real 3-way branch on moveInput's sign rather
+            // than force-fit into the single-rate m_vehicleSpeed shape above.
+            if (moveInput < 0.0f)
+            {
+                const float target = moveInput * kBalloonHorizontalSpeed;
+                if (m_balloonHorizontalSpeed > target)
+                {
+                    m_balloonHorizontalSpeed =
+                        std::max(m_balloonHorizontalSpeed - kBalloonHorizontalAccel * dt, target);
+                }
+            }
+            else if (moveInput > 0.0f)
+            {
+                const float target = moveInput * kBalloonHorizontalSpeed;
+                if (m_balloonHorizontalSpeed < target)
+                {
+                    m_balloonHorizontalSpeed =
+                        std::min(m_balloonHorizontalSpeed + kBalloonHorizontalAccel * dt, target);
+                }
+            }
+            else
+            {
+                if (m_balloonHorizontalSpeed > 0.0f)
+                {
+                    m_balloonHorizontalSpeed =
+                        std::max(m_balloonHorizontalSpeed - kBalloonHorizontalDecel * dt, 0.0f);
+                }
+                else if (m_balloonHorizontalSpeed < 0.0f)
+                {
+                    m_balloonHorizontalSpeed =
+                        std::min(m_balloonHorizontalSpeed + kBalloonHorizontalDecel * dt, 0.0f);
+                }
+            }
+            horizontalSpeed = m_balloonHorizontalSpeed;
+        }
+        else if (IsInVehicle())
         {
             float maxSpeed = 0.0f;
             float decel = kVehicleAccel;
@@ -1442,12 +1527,65 @@ namespace GalaxyEggbert::CNA
         // falling" (see GroundHeightAt's own comment).
         const int groundY = GroundHeightAt(world, gx, gz, tempPassable, m_y);
 
+        // Balloon rise ceiling stop (kBalloonHorizontalSpeed's own comment,
+        // point 2): real source's general `TestPath()` swept collision
+        // stops a rising Blupi against solid decor the same as walking into
+        // a wall. Checked every ballooned frame regardless of current
+        // vertical direction (not gated on `newY > m_y`) -- a hovering/
+        // descending Down-held Blupi can't run further INTO a ceiling
+        // above him, but the ground-check-contamination problem below
+        // depends only on static proximity to that block, not on which way
+        // he's currently moving.
+        //
+        // `ceilingInReach` (found true whenever CeilingHeightAt() sees
+        // anything at all, not just once the clamp itself fires) must
+        // suppress the ground-check below for the ENTIRE time a ceiling is
+        // within its scan window, not merely the one frame the clamp
+        // triggers: `groundY` was computed from the same referenceY=m_y,
+        // and GroundHeightAt()'s own scan window grows with that same
+        // value, so a few frames BEFORE m_y actually reaches the ceiling's
+        // real bottom surface, GroundHeightAt() already finds that same
+        // block first and misreports it as ground to land ON TOP of --
+        // confirmed live (a debug run showed Blupi teleport from y~2.0
+        // straight to y~4.0 well before ever reaching the real 2.5 ceiling
+        // contact height, the ceiling block's own "land on top" height,
+        // silently pre-empting this clamp on an earlier frame than
+        // expected). Both scans share the exact same "is this block
+        // reachable from floor(m_y)+1" trigger distance, so gating on
+        // CeilingHeightAt()'s own result (not just the clamp) reliably
+        // covers every frame the ground-check would otherwise be
+        // contaminated by the same block.
+        bool ceilingInReach = false;
+        if (m_balloon)
+        {
+            const int ceilingY = CeilingHeightAt(world, gx, gz, m_y);
+            if (ceilingY != kNoCeiling)
+            {
+                ceilingInReach = true;
+                // The solid block's own bottom surface (mirrors
+                // GroundHeightAt()'s "y+1 sits at the top surface" -- here
+                // the ceiling block at grid Y has its bottom at Y-0.5).
+                const float ceilingBottom = static_cast<float>(ceilingY) - 0.5f;
+                if (newY >= ceilingBottom)
+                {
+                    newY = ceilingBottom;
+                    m_velocityY = 0.0f;
+                }
+            }
+        }
+
+        if (ceilingInReach)
+        {
+            // Suspended just beneath (or still rising toward) the ceiling,
+            // not standing on it.
+            m_onGround = false;
+        }
         // kNoGround (no solid block anywhere in this column) must never
         // clamp Blupi to a fake floor -- he keeps falling under gravity
         // indefinitely, same as walking off any other ledge with a real
         // drop, letting GalaxyEggbertCnaGame::Update()'s kFallDeathY check
         // eventually catch it (plan.md E3D-MIG-067).
-        if (groundY != kNoGround && newY <= static_cast<float>(groundY))
+        else if (groundY != kNoGround && newY <= static_cast<float>(groundY))
         {
             newY = static_cast<float>(groundY);
             m_velocityY = 0.0f;

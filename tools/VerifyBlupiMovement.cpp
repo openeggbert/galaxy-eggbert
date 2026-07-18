@@ -466,6 +466,74 @@ int main(int argc, char** argv)
                   "Down held while ballooned decelerates to a hover, never into a descent");
         }
 
+        // Balloon HORIZONTAL drift (2026-07-18, second remaining gap closed:
+        // kBalloonHorizontalSpeed's own comment) -- a held direction ramps
+        // toward the real terminal drift speed, and releasing it decelerates
+        // back to exactly 0, both at their own distinct real rates.
+        {
+            GEBlupiController drifter;
+            drifter.SetPosition(0.0f, 20.0f, 0.0f);
+            drifter.TriggerBalloon();
+            for (int i = 0; i < 180; ++i)
+            {
+                drifter.Step(synthetic, 0.0f, /*moveInput=*/1.0f, false, false, false, dt);
+            }
+            // Default yaw=0 moves along -Z (this class's own sin/-cos
+            // convention), not X -- measure total horizontal distance per
+            // step instead of a specific axis, so this doesn't depend on
+            // which axis "forward" happens to be.
+            const float dxBefore = drifter.GetX(), dzBefore = drifter.GetZ();
+            drifter.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            const float driftSpeed =
+                std::hypot(drifter.GetX() - dxBefore, drifter.GetZ() - dzBefore) / dt;
+            check(std::fabs(driftSpeed - GEBlupiController::kBalloonHorizontalSpeed) < 0.05f,
+                  "held-direction balloon drift settles at the real terminal kBalloonHorizontalSpeed");
+
+            for (int i = 0; i < 60; ++i)
+            {
+                drifter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            const float coastX = drifter.GetX(), coastZ = drifter.GetZ();
+            drifter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(std::hypot(drifter.GetX() - coastX, drifter.GetZ() - coastZ) < 0.001f,
+                  "releasing the direction decelerates balloon drift back to exactly 0");
+        }
+
+        // Getting stung force-exits any vehicle (real Decor.cpp:5826-5849:
+        // ByeByeHelico() + every vehicle flag cleared) -- needed so the
+        // balloon's own horizontal drift takes over immediately instead of
+        // the vehicle's ramp system still holding priority via IsInVehicle().
+        {
+            GEBlupiController vehicleSting;
+            vehicleSting.SetPosition(0.0f, 1.0f, 0.0f);
+            vehicleSting.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            check(vehicleSting.IsInVehicle(), "sanity: riding a Jeep before the sting");
+            check(vehicleSting.TriggerBalloon(), "TriggerBalloon() succeeds while riding a vehicle");
+            check(!vehicleSting.IsInVehicle(), "getting stung force-exits the vehicle (real ByeByeHelico())");
+        }
+
+        // Balloon rise stops against a real solid ceiling (2026-07-18, third
+        // remaining gap closed: `Decor::TestPath()`'s general swept
+        // collision applies to the balloon rise same as any other movement)
+        // -- NOT a free clip-through-anything ascent.
+        {
+            constexpr std::uint16_t kCeilingX = 90, kCeilingZ = 90;
+            synthetic.setBlock(kCeilingX, 0, kCeilingZ, Worlds::Block::make(BlockTypes::Ground));
+            synthetic.setBlock(kCeilingX, 3, kCeilingZ, Worlds::Block::make(BlockTypes::Ground));
+            GEBlupiController capped;
+            capped.SetPosition(static_cast<float>(kCeilingX) - 50.0f, 1.0f, static_cast<float>(kCeilingZ) - 50.0f);
+            capped.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(capped.IsOnGround(), "sanity: standing under the ceiling block before ballooning");
+            capped.TriggerBalloon();
+            for (int i = 0; i < 300; ++i) // ~5s -- comfortably past reaching the ceiling 2 units up
+            {
+                capped.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(capped.GetY() < 3.0f - 0.5f + 0.01f,
+                  "balloon rise stops at the real solid ceiling instead of clipping through it");
+            check(capped.GetY() > 1.5f, "balloon rise actually reached up near the ceiling, not stuck low");
+        }
+
         // PopBalloon() clears the status early and forces Blupi briefly
         // airborne, matching the real m_blupiAir=true on a hazard pop.
         ballooned.PopBalloon();

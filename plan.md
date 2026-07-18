@@ -547,11 +547,48 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       Blupi, is airborne, and settles at each of the three real terminal speeds within 0.02 units/s);
       a live realistic-input run showing Y climb 1.0 → 4.4+ at a measured 0.9375 units/s, exactly
       the real terminal rate; and third-person screenshots showing the entire level drop away
-      beneath him. Two real limitations deliberately left, both documented at
-      `kBalloonDuration`: the same real block's floaty horizontal `m_blupiVitesseX` momentum is not
-      modelled (horizontal still uses the ordinary walking path), and the rise is not
-      ceiling-clamped — matching this engine's existing Helicopter/Overcraft modes, which already
-      rise through terrain the same way, so this is a shared pre-existing gap rather than a new one.
+      beneath him.
+      **Both remaining limitations closed same day, per explicit user request** (`kBalloonDuration`'s
+      own comment has the full citations):
+      1. **Horizontal drift** — `Decor.cpp:4059-4106`, the SAME real block, right after the Y-rise
+         code: `m_blupiVitesseX` independently ramps toward a signed `speedX*10` px/tick target (1.0
+         px/tick accel while held, 2.0 px/tick/tick decel back to exactly 0 when released — never
+         overshooting past 0). Ported as `m_balloonHorizontalSpeed`
+         (`kBalloonHorizontalSpeed`=3.125, `kBalloonHorizontalAccel`=6.25, `kBalloonHorizontalDecel`=12.5
+         units/s, same px/tick*20/64 conversion as the rise constants), mirroring `m_vehicleSpeed`'s
+         existing ramp shape but with the real distinct rates, written as the real 3-way branch on
+         `moveInput`'s sign rather than force-fit into that single-rate shape. `TriggerBalloon()` now
+         also force-exits any vehicle mode (real `Decor.cpp:5826-5849`'s `ByeByeHelico()` + every
+         vehicle flag cleared) — required so this new branch takes priority over `IsInVehicle()`
+         immediately on being stung, not merely a nice-to-have. **Real `BlupiBloque` wall-stop NOT
+         ported**: `TryMoveAxis()`'s step-up gate only applies while grounded, so this engine has no
+         horizontal-wall-collision at all for ANY airborne movement today (plain jumping/vehicles
+         included) — adding one is a shared-collision change well beyond "the balloon gaps" and risks
+         regressing already-verified airborne behavior; left as a known, narrower difference (a
+         floating Blupi drifts through a wall he'd normally stop against).
+      2. **Ceiling stop** — corrected from an earlier WRONG claim that the rise matched Helicopter/
+         Overcraft's own free-clip gap: real source's general `Decor::TestPath()` swept collision
+         (`Decor.cpp:6782`) is applied to the FINAL merged position every frame regardless of status,
+         confirmed directly to stop Blupi against solid decor in ANY direction including straight up.
+         New `CeilingHeightAt()` (mirrors `GroundHeightAt()`, scans upward instead of down) finds the
+         first solid block above; the rise clamps to just beneath it and zeroes `m_velocityY`.
+         **A real integration bug was found and fixed while verifying this**: `GroundHeightAt()`'s own
+         scan window is keyed off the same pre-frame `m_y`, so once a rising Blupi gets within ~1 unit
+         of that exact ceiling block, `GroundHeightAt()` finds it FIRST too and misreports it as
+         ground to land ON TOP of — confirmed live via a standalone debug harness, Blupi teleported
+         from y≈2.0 straight to y≈4.0 (the ceiling block's own "land on top" height) well before ever
+         reaching the real 2.5 contact height, silently pre-empting the new clamp. Fixed by having the
+         ceiling scan ALSO suppress the ground-check for every frame a ceiling is within its own reach
+         (not merely the frame the clamp itself fires) — both scans share the identical trigger
+         distance, so this reliably covers every contaminated frame. Re-verified via the same
+         standalone harness: Blupi now rises smoothly and holds stable at exactly the real ceiling
+         contact height indefinitely, no teleport. Deliberately NOT extended to the general jump apex
+         or to Helicopter/Overcraft (no real per-status precedent read for those, and jump-ceiling
+         collision isn't modelled anywhere in this class today) — scoped to exactly what was asked.
+      Verified via 4 new `VerifyBlupiMovement` assertions (drift settles at the real terminal speed,
+      decelerates to exactly 0 on release, a mounted vehicle is force-exited on sting, and the rise
+      stops flush at a real solid ceiling instead of clipping through it) plus the standalone debug
+      harnesses above; full regression clean (only the 1 known pre-existing unrelated failure).
       **A second wasp was also added directly on the flat spawn corridor** of `worlds3d/world999.vwr`
       (see `135`'s own entry below) specifically to make manual re-testing of this exact mechanic
       trivial going forward — the original wasp requires navigating a staircase + terraced ascent.
