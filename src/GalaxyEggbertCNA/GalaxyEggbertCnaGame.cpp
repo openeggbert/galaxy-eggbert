@@ -439,6 +439,16 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::RebuildWorldPresentation()
     {
+        // Re-derive skyRegion/missionNumber/mobileObjects_ from the World
+        // itself first (plan.md EDITOR-109): the world editor mutates the
+        // live World in place, with no disk round-trip, so LoadFromVwrFile()
+        // -- which used to be the only thing that populated these -- never
+        // runs for an in-editor edit. Without this, an object placed in the
+        // editor stays invisible until the world is saved and reloaded.
+        // A no-op for every other caller, whose World hasn't changed since
+        // it was loaded.
+        worldRuntime_.ResyncFromWorld();
+
         auto& device = getGraphicsDeviceProperty();
 
         // Real mobile-eggbert background image for this world's skyRegion

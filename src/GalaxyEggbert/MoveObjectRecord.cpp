@@ -96,4 +96,8 @@ std::vector<MoveObjectRecord> CollectMoveObjects(const Worlds::World& world) {
     return records;
 }
 
+bool RemoveMoveObject(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z) {
+    return world.removeBlockExtraMetadata(x, y, z, kMoveObjectMetadataType);
+}
+
 }

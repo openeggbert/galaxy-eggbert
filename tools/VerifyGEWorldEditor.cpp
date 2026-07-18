@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cstdio>
 #include <iostream>
+#include <set>
 
 // Scripted verification for the in-game 3D world editor (plan.md section 6,
 // EDITOR-1xx tasks). Sections so far:
@@ -58,8 +59,17 @@
 //     driven through the same synthetic-input path as earlier sections
 //     (GalaxyEggbertCnaGame's own phase-switch/checkpoint-skip side of
 //     this needs a real GraphicsDevice/game loop, live-verified instead).
-// Later milestones (MoveObject/sky-region round-trips) add their own
-// sections here.
+//   - EDITOR-109: ConfirmedObjectCategories()/AllObjectTypeIdsInOrder()
+//     data sanity (full 1..203 coverage, curated ids in range, no
+//     duplicates, effect-only types excluded), GEEditorPalette's Blocks/
+//     Objects mode toggle and independent per-mode selections,
+//     GEEditCommandStack's MoveObjectEdit undo/redo (place AND overwrite,
+//     where undo must restore the previous record rather than empty the
+//     cell), and a real left click in Objects mode placing a stationary
+//     MoveObjectRecord through GEWorldEditor::Update() -- all still
+//     GraphicsDevice-free.
+// Later milestones (MoveObject editing/sky-region round-trips) add their
+// own sections here.
 int main()
 {
     using namespace GalaxyEggbert::CNA;
@@ -815,6 +825,350 @@ int main()
         check(reloaded.getBlock(10, 5, 10).type() == 42,
               "the Play-Test button saves the world before requesting the session, and it round-trips");
         std::remove("verify_ge_world_editor_playtest_scratch.vwr");
+    }
+
+    // --- Regression: a palette click must not ALSO edit the world behind it ---
+    // The palette fires its action on mouse RELEASE, but GEWorldEditor's own
+    // place/remove clicks are edge-triggered on PRESS -- so before this was
+    // fixed (found while wiring EDITOR-109, but present since EDITOR-106),
+    // every palette icon/toolbar click also placed a block at the crosshair
+    // on the way down. Exercised through GEWorldEditor::Update() rather than
+    // GEEditorPalette::Update() in isolation, because only the two together
+    // show the mismatch.
+    {
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+        // Ground truth for "the world is unchanged": the solid-block count
+        // over the slab's own X plane, which is all a crosshair place/remove
+        // from EnterEditing(0,10,0)'s default look could possibly touch.
+        const auto solidCountOnSlabPlane = [&world]()
+        {
+            int count = 0;
+            for (int y = 0; y < 100; ++y)
+            {
+                for (int z = 0; z < 100; ++z)
+                {
+                    if (!world.getBlock(50, static_cast<std::uint16_t>(y),
+                                        static_cast<std::uint16_t>(z)).isAir())
+                    {
+                        ++count;
+                    }
+                }
+            }
+            return count;
+        };
+        const int before = solidCountOnSlabPlane();
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        const auto pressAndRelease = [&](float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+
+        pressAndRelease(kGridX0 + 20.0f, kGridY0 + 20.0f); // a block-palette icon cell
+        check(solidCountOnSlabPlane() == before,
+              "clicking a palette icon in Blocks mode doesn't also place a block at the crosshair");
+        check(!editor.ConsumeNeedsPresentationRebuild(),
+              "a palette icon click alone doesn't request a presentation rebuild");
+
+        pressAndRelease(30.0f, 30.0f); // toolbar button 0 (Undo) -- nothing to undo
+        check(solidCountOnSlabPlane() == before,
+              "clicking a toolbar button doesn't also place a block at the crosshair");
+
+        // A press that STARTS in the 3D view still edits normally, even
+        // though the release lands on the palette -- the claim is per-press,
+        // not "the cursor is over the palette right now".
+        const MouseState downInView(400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+                                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, downInView, 0.0f, 800, 480, camera, world);
+        check(solidCountOnSlabPlane() == before + 1,
+              "a left click out in the 3D view still places a block normally");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "a real 3D-view place still requests a presentation rebuild");
+    }
+
+    // --- GEPaletteCategories: object-type coverage + curated-id sanity ---
+    {
+        const auto allTypes = AllObjectTypeIdsInOrder();
+        check(allTypes.size() == 203,
+              "AllObjectTypeIdsInOrder() covers all 203 placeable ObjectType ids (ObjectType0 excluded)");
+        check(allTypes.front() == 1 && allTypes.back() == 203,
+              "AllObjectTypeIdsInOrder() is in order, starting at 1 (the null slot excluded) through 203");
+
+        bool allCuratedInRange = true;
+        int curatedCount = 0;
+        std::set<int> seenTypeIds;
+        bool noDuplicatesAcrossCategories = true;
+        for (const auto& category : ConfirmedObjectCategories())
+        {
+            check(!category.name.empty(), "every curated object category has a non-empty name");
+            for (const int typeId : category.iconIds)
+            {
+                ++curatedCount;
+                if (typeId < 1 || typeId > 203)
+                {
+                    allCuratedInRange = false;
+                }
+                if (!seenTypeIds.insert(typeId).second)
+                {
+                    noDuplicatesAcrossCategories = false;
+                }
+            }
+        }
+        check(allCuratedInRange, "every curated object category's ids fall within the valid 1..203 range");
+        check(curatedCount > 0, "test setup sanity: at least one curated object category id exists");
+        check(noDuplicatesAcrossCategories,
+              "no ObjectType id appears in more than one curated object category");
+
+        // Spot-check that the curated groups actually match ObjectType.hpp's
+        // own documented comment groups -- the whole point of the "don't
+        // invent semantics" rule is that these ids are copied from there,
+        // not guessed.
+        const auto categories = ConfirmedObjectCategories();
+        check(categories.front().name == "Platform Lifts" &&
+                  categories.front().iconIds == std::vector<int>{1, 47, 48},
+              "the Platform Lifts category matches ObjectType.hpp's own lift group (1, 47, 48)");
+        check(seenTypeIds.count(6) == 1, "the extra-life egg (ObjectType6) is a curated, placeable object");
+        check(seenTypeIds.count(39) == 0,
+              "the sparkle trail (ObjectType39) is excluded -- an effect the game spawns, not a placement");
+        check(seenTypeIds.count(8) == 0,
+              "explosions (ObjectType8) are excluded -- transient effects, not placements");
+    }
+
+    // --- GEEditorPalette: Blocks/Objects mode toggle + independent selections ---
+    {
+        constexpr int kViewportW = 800;
+        constexpr int kViewportH = 480;
+        const auto click = [&](GEEditorPalette& palette, float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            (void)palette.Update(down, kViewportW, kViewportH);
+            return palette.Update(up, kViewportW, kViewportH);
+        };
+        // Toolbar button 5 (mode toggle): y0 = 10 + 5*(48+8) = 290, so (10,290)-(58,338).
+        constexpr float kModeButtonX = 30.0f;
+        constexpr float kModeButtonY = 314.0f;
+        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 442
+        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 298
+
+        GEEditorPalette palette;
+        check(!palette.IsObjectMode(), "GEEditorPalette starts in Blocks mode");
+        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType6,
+              "GEEditorPalette starts with the extra-life egg selected as its default object type");
+
+        const auto toggleResult = click(palette, kModeButtonX, kModeButtonY);
+        check(toggleResult.clickConsumed, "clicking the mode-toggle button reports clickConsumed");
+        check(toggleResult.action == GEEditorPalette::ToolbarAction::None,
+              "the mode toggle is handled internally -- it reports no ToolbarAction for the caller");
+        check(palette.IsObjectMode(), "clicking the 6th toolbar button switches to Objects mode");
+
+        // Cell index 0 of the Confirmed tab in Objects mode = the first
+        // curated object category's first id (Platform Lifts -> ObjectType1).
+        const auto cellResult = click(palette, kGridX0 + 20.0f, kGridY0 + 20.0f);
+        check(cellResult.clickConsumed, "clicking an object cell reports clickConsumed");
+        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType1,
+              "clicking the Objects tab's first cell selects the standard platform lift (ObjectType1)");
+        check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
+              "selecting an object leaves the block selection untouched");
+
+        (void)click(palette, kModeButtonX, kModeButtonY);
+        check(!palette.IsObjectMode(), "clicking the mode-toggle button again switches back to Blocks mode");
+        const auto blockCellResult = click(palette, kGridX0 + (40.0f + 4.0f) + 20.0f, kGridY0 + 20.0f);
+        check(blockCellResult.clickConsumed, "clicking a block cell after switching back reports clickConsumed");
+        check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::BrickWall,
+              "back in Blocks mode, the icon grid selects block types again");
+        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType1,
+              "selecting a block leaves the object selection untouched");
+    }
+
+    // --- GEEditCommandStack: MoveObjectEdit undo/redo (place, remove, overwrite) ---
+    {
+        using GalaxyEggbert::CollectMoveObjects;
+        using GalaxyEggbert::MoveObjectRecord;
+        using GalaxyEggbert::PlaceMoveObject;
+
+        const auto makeRecord = [](GalaxyEggbert::ObjectType type, float x, float y, float z)
+        {
+            MoveObjectRecord record;
+            record.type = type;
+            record.posStartX = x;
+            record.posStartY = y;
+            record.posStartZ = z;
+            record.posEndX = x;
+            record.posEndY = y;
+            record.posEndZ = z;
+            return record;
+        };
+
+        // Place: no "before", a record "after".
+        {
+            World world;
+            GEEditCommandStack stack;
+            const MoveObjectRecord record = makeRecord(GalaxyEggbert::ObjectType::ObjectType6, 12.0f, 3.0f, 20.0f);
+            PlaceMoveObject(world, record);
+
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::MoveObjectEdit;
+            command.objectAnchorX = 12;
+            command.objectAnchorY = 3;
+            command.objectAnchorZ = 20;
+            command.objectAfter = record;
+            stack.Push(std::move(command));
+            check(CollectMoveObjects(world).size() == 1,
+                  "test setup sanity: the placed MoveObject is in the world before undo");
+
+            check(stack.Undo(world), "undoing a MoveObject placement reports success");
+            check(CollectMoveObjects(world).empty(), "undoing a MoveObject placement removes it from the world");
+            check(stack.Redo(world), "redoing a MoveObject placement reports success");
+            const auto afterRedo = CollectMoveObjects(world);
+            check(afterRedo.size() == 1 && afterRedo[0].type == GalaxyEggbert::ObjectType::ObjectType6,
+                  "redoing a MoveObject placement restores the exact record");
+        }
+
+        // Overwrite: a record "before" AND a different record "after" --
+        // undo must restore the original type, not just clear the cell.
+        {
+            World world;
+            GEEditCommandStack stack;
+            const MoveObjectRecord original = makeRecord(GalaxyEggbert::ObjectType::ObjectType6, 12.0f, 3.0f, 20.0f);
+            PlaceMoveObject(world, original);
+            const MoveObjectRecord replacement =
+                makeRecord(GalaxyEggbert::ObjectType::ObjectType44, 12.0f, 3.0f, 20.0f);
+
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::MoveObjectEdit;
+            command.objectAnchorX = 12;
+            command.objectAnchorY = 3;
+            command.objectAnchorZ = 20;
+            command.objectBefore = original;
+            command.objectAfter = replacement;
+            PlaceMoveObject(world, replacement);
+            stack.Push(std::move(command));
+
+            const auto afterPlace = CollectMoveObjects(world);
+            check(afterPlace.size() == 1 && afterPlace[0].type == GalaxyEggbert::ObjectType::ObjectType44,
+                  "test setup sanity: placing onto an occupied anchor replaces the record there");
+
+            check(stack.Undo(world), "undoing a MoveObject overwrite reports success");
+            const auto afterUndo = CollectMoveObjects(world);
+            check(afterUndo.size() == 1 && afterUndo[0].type == GalaxyEggbert::ObjectType::ObjectType6,
+                  "undoing an overwrite restores the object that was there before, not just empty space");
+
+            check(stack.Redo(world), "redoing a MoveObject overwrite reports success");
+            const auto afterRedo = CollectMoveObjects(world);
+            check(afterRedo.size() == 1 && afterRedo[0].type == GalaxyEggbert::ObjectType::ObjectType44,
+                  "redoing an overwrite re-applies the replacement record");
+        }
+    }
+
+    // --- GEWorldEditor: left click in Objects mode places a real MoveObject ---
+    {
+        using GalaxyEggbert::CollectMoveObjects;
+
+        // Same slab/camera setup as the block place/remove section above, so
+        // the raycast target is already known-good ground truth.
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        const float cosPitch = std::cos(kDefaultPitch);
+        const RaycastHit expected = Raycast(world, 50.0f, 10.0f, 50.0f,
+                                             std::sin(kDefaultYaw) * cosPitch, std::sin(kDefaultPitch),
+                                             -std::cos(kDefaultYaw) * cosPitch, 200.0f);
+        check(expected.hit, "test setup sanity: the reference raycast for object placement hits the slab");
+        const auto placeX = static_cast<std::uint16_t>(static_cast<int>(expected.x) + expected.normalX);
+        const auto placeY = static_cast<std::uint16_t>(static_cast<int>(expected.y) + expected.normalY);
+        const auto placeZ = static_cast<std::uint16_t>(static_cast<int>(expected.z) + expected.normalZ);
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        // Switch the palette into Objects mode through the real UI path
+        // (toolbar button 5), then select the first curated object cell
+        // (Platform Lifts -> ObjectType1) -- both are palette clicks, so
+        // each is consumed and places nothing in the world.
+        const auto paletteClick = [&](float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        paletteClick(30.0f, 314.0f); // mode toggle -> Objects
+        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        paletteClick(kGridX0 + 20.0f, kGridY0 + 20.0f); // first object cell -> ObjectType1
+        (void)editor.ConsumeNeedsPresentationRebuild();
+        check(CollectMoveObjects(world).empty(),
+              "palette clicks in Objects mode are consumed -- they don't place an object in the world");
+
+        // A real left click out in the 3D view (away from any palette
+        // geometry) now places the selected object.
+        const MouseState leftMouse(400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+                                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, leftMouse, 0.0f, 800, 480, camera, world);
+
+        const auto placed = CollectMoveObjects(world);
+        check(placed.size() == 1, "a left click in Objects mode places exactly one MoveObject");
+        check(!placed.empty() && placed[0].type == GalaxyEggbert::ObjectType::ObjectType1,
+              "the placed MoveObject carries the palette's selected ObjectType");
+        check(!placed.empty() && placed[0].posStartX == static_cast<float>(placeX) &&
+                  placed[0].posStartY == static_cast<float>(placeY) &&
+                  placed[0].posStartZ == static_cast<float>(placeZ),
+              "the placed MoveObject sits at the cell adjacent to the aimed-at face");
+        check(!placed.empty() && placed[0].posEndX == placed[0].posStartX &&
+                  placed[0].posEndY == placed[0].posStartY &&
+                  placed[0].posEndZ == placed[0].posStartZ,
+              "a freshly placed MoveObject is stationary (posEnd == posStart)");
+        check(world.getBlock(placeX, placeY, placeZ).isAir(),
+              "placing an object does NOT also place a block in that cell");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "placing an object requests a presentation rebuild");
+
+        // U undoes the placement through the same key path block edits use.
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        check(CollectMoveObjects(world).empty(), "U undoes an object placement");
+        check(editor.ConsumeNeedsPresentationRebuild(), "undoing an object placement requests a rebuild");
+
+        editor.Update(KeyboardState{Keys::R}, restMouse, 0.0f, 800, 480, camera, world);
+        const auto redone = CollectMoveObjects(world);
+        check(redone.size() == 1 && redone[0].type == GalaxyEggbert::ObjectType::ObjectType1,
+              "R redoes an object placement, restoring the exact record");
+        check(editor.ConsumeNeedsPresentationRebuild(), "redoing an object placement requests a rebuild");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

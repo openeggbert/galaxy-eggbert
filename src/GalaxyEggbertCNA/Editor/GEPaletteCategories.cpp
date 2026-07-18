@@ -32,4 +32,27 @@ namespace GalaxyEggbert::CNA
         }
         return ids;
     }
+
+    std::vector<PaletteCategory> ConfirmedObjectCategories()
+    {
+        return {
+            {"Platform Lifts", {1, 47, 48}},
+            {"Patrol Enemies", {2, 3, 96, 97, 4}},
+            {"Patrol Walkers", {16, 17, 18, 20, 32, 33, 44, 54}},
+            {"Collectibles", {5, 6, 7, 21, 49, 50, 51}},
+            {"Pickups", {13, 19, 24, 25, 26, 28, 29, 30, 31, 40, 46, 55}},
+            {"Blupi Skins", {200, 201, 202, 203}},
+        };
+    }
+
+    std::vector<int> AllObjectTypeIdsInOrder()
+    {
+        std::vector<int> ids;
+        ids.reserve(203);
+        for (int type = 1; type <= 203; ++type)
+        {
+            ids.push_back(type);
+        }
+        return ids;
+    }
 }

@@ -93,6 +93,20 @@ namespace GalaxyEggbert::CNA
         // the world is left empty (all air).
         bool LoadFromVwrFile(const std::string& path);
 
+        // Re-derives skyRegion_/missionNumber_/mobileObjects_ from
+        // whatever is CURRENTLY in the loaded World -- no disk I/O, unlike
+        // LoadFromVwrFile() above (plan.md EDITOR-109). Lets the in-game
+        // editor's live GetWorldMutable() edits (block AND MoveObject
+        // placement/removal alike) show up immediately without a real
+        // save-then-reload round trip. Deliberately does NOT touch
+        // spawnTileX_/Z_, bigDecor_, or animPhase_/animTimer_ -- those are
+        // genuine LOAD-time resets (a .txt-only concept, and "start
+        // animations at phase 0 for a newly loaded world" respectively),
+        // not something every in-place edit should redo. LoadFromVwrFile()
+        // itself now just calls this after loading, so both paths share
+        // one implementation.
+        void ResyncFromWorld();
+
         // Advances the animated-tile raw tick (20 fps, matching
         // mobile-eggbert's real Config::ScaleTime(1) reference rate -- fixed
         // 2026-07-09 from an incorrect flat 6 fps shared by every tile type;

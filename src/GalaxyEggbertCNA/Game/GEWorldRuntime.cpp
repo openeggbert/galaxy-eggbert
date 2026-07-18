@@ -229,11 +229,6 @@ namespace GalaxyEggbert::CNA
 
         spawnTileX_ = 0;
         spawnTileZ_ = 0;
-        // .vwr header v2 (2026-07-09) carries a real skyRegion field now --
-        // unlike spawn point (still no .vwr equivalent), this one no longer
-        // needs to reset to 0.
-        skyRegion_ = static_cast<int>(world_->skyRegion());
-        missionNumber_ = static_cast<int>(world_->missionNumber());
         bigDecor_.clear();
 
         // Found 2026-07-17 (hub/mission-progression system): a world switch
@@ -245,6 +240,18 @@ namespace GalaxyEggbert::CNA
         // LoadFromVwrFile() is called more than once per process lifetime.
         animPhase_ = 0;
         animTimer_ = 0.0f;
+
+        ResyncFromWorld();
+        return true;
+    }
+
+    void GEWorldRuntime::ResyncFromWorld()
+    {
+        // .vwr header v2 (2026-07-09) carries a real skyRegion field now --
+        // unlike spawn point (still no .vwr equivalent), this one no longer
+        // needs to reset to 0.
+        skyRegion_ = static_cast<int>(world_->skyRegion());
+        missionNumber_ = static_cast<int>(world_->missionNumber());
 
         // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects
         // CAN be embedded directly in the 3D .vwr format itself, via
@@ -277,7 +284,6 @@ namespace GalaxyEggbert::CNA
             spec.currentZ = spec.posStartZ;
             mobileObjects_.push_back(spec);
         }
-        return true;
     }
 
     bool GEWorldRuntime::IsBlitzActiveAtPhase(int animPhase) noexcept

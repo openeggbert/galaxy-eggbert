@@ -4,12 +4,16 @@
 #include "Game/GEQuadBatch.hpp"
 #include "Game/GETileAtlas.hpp"
 
+#include <GalaxyEggbert/def/ObjectType.hpp>
+
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
+#include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -27,9 +31,12 @@ namespace GalaxyEggbert::CNA
     // GEInputPad's own label-rendering methods stay private (tightly
     // coupled to its own per-screen font-scale conventions, not worth
     // genericizing for this), and building an independent text renderer
-    // is out of scope here. The toolbar's 5 buttons are visually identical
-    // (same flat color, distinguished only by position: Undo/Redo/Save/
-    // Back/Play-Test top-to-bottom) and the selected palette icon is
+    // is out of scope here. The toolbar's first 5 buttons are visually
+    // identical (same flat color, distinguished only by position: Undo/
+    // Redo/Save/Back/Play-Test top-to-bottom); the 6th is the Blocks/
+    // Objects mode toggle, colored by the mode it's currently in
+    // (EDITOR-109) since that state isn't inferable from position. The
+    // selected palette icon is
     // marked by a highlighted backing square, not a caption -- a
     // documented, later-refinable simplification, not a functional gap
     // (every tool the toolbar exposes already has a working keyboard/
@@ -41,6 +48,13 @@ namespace GalaxyEggbert::CNA
         GEEditorPalette();
 
         enum class ToolbarAction { None, Undo, Redo, Save, Back, PlayTest };
+
+        // Which kind of thing the icon grid is currently selecting
+        // (plan.md EDITOR-109). Toggled by the toolbar's 6th button,
+        // handled entirely inside Update() -- there's no ToolbarAction for
+        // it, same as the Confirmed/All tab toggle, because the caller has
+        // nothing to do about it.
+        enum class PaletteMode { Blocks, Objects };
 
         struct UpdateResult
         {
@@ -69,6 +83,17 @@ namespace GalaxyEggbert::CNA
             return static_cast<std::uint16_t>(selectedBlockType_);
         }
 
+        [[nodiscard]] bool IsObjectMode() const noexcept { return mode_ == PaletteMode::Objects; }
+
+        // The MoveObject type a left-click places while IsObjectMode() is
+        // true (plan.md EDITOR-109). Kept independently of
+        // SelectedBlockType() so toggling back and forth between the two
+        // modes doesn't lose either selection.
+        [[nodiscard]] ObjectType SelectedObjectType() const noexcept
+        {
+            return ToObjectType(selectedObjectType_);
+        }
+
         // @p terrainTexture is the SAME already-loaded object-m.png
         // texture GETerrainRenderer/GalaxyEggbertCnaGame already use --
         // palette icons are literally the real terrain atlas, just drawn
@@ -80,9 +105,30 @@ namespace GalaxyEggbert::CNA
     private:
         [[nodiscard]] const std::vector<int>& CurrentIconList() const noexcept
         {
+            if (mode_ == PaletteMode::Objects)
+            {
+                return showAllTab_ ? allObjects_ : confirmedObjectsFlat_;
+            }
             return showAllTab_ ? allIcons_ : confirmedFlat_;
         }
         [[nodiscard]] int PageCount() const noexcept;
+
+        // True when (x,y) lands on ANY palette/toolbar control -- used to
+        // claim the mouse on the press frame (see Update()'s own comment).
+        [[nodiscard]] bool HitsAnyControl(float x, float y, int viewportWidth,
+                                          int viewportHeight) const noexcept;
+
+        // Fill color for an Objects-mode cell, by its index into
+        // ConfirmedObjectCategories() (-1 = not in any confirmed category).
+        // Objects have no single shared atlas to draw a real icon from
+        // (their sprites live across element.png/explo.png/blupi.png,
+        // selected per type by GEObjectIcons::GetObjIcon), so Objects mode
+        // renders flat category-colored cells instead: blue lifts, red
+        // enemies, orange walkers, yellow collectibles, green pickups,
+        // purple skins, gray for anything uncategorized. Multi-atlas icon
+        // plumbing is disproportionate to this milestone -- same documented
+        // simplification as EDITOR-106's "no text labels" decision.
+        [[nodiscard]] static Microsoft::Xna::Framework::Vector3 CategoryColor(int categoryIndex);
 
         [[nodiscard]] GEQuadBatch::Rect ToolbarButtonRect(int index) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect TabToggleRect(int viewportWidth, int viewportHeight) const noexcept;
@@ -93,12 +139,20 @@ namespace GalaxyEggbert::CNA
 
         std::vector<int> confirmedFlat_;
         std::vector<int> allIcons_;
+        std::vector<int> confirmedObjectsFlat_;
+        std::vector<int> allObjects_;
+        // typeId -> index into ConfirmedObjectCategories(), for
+        // ObjectCellColor(); absent means "not in a confirmed category".
+        std::map<int, int> objectCategoryIndex_;
         GETileAtlas tileAtlas_;
 
+        PaletteMode mode_ = PaletteMode::Blocks;
         bool showAllTab_ = false;
         int page_ = 0;
         int selectedBlockType_;
+        int selectedObjectType_;
         bool mouseWasDown_ = false;
+        bool pressStartedOnPalette_ = false;
 
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> paletteEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> paletteRenderer_;

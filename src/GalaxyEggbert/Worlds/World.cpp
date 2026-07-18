@@ -144,6 +144,24 @@ void World::setBlockExtraMetadata(std::uint16_t x,
     chunk(chunkX, chunkY, chunkZ).setExtraMetadata(localBlockIndex, metadataType, std::move(payload));
 }
 
+bool World::removeBlockExtraMetadata(std::uint16_t x,
+                                     std::uint16_t y,
+                                     std::uint16_t z,
+                                     std::uint16_t metadataType) {
+    validateBlockPosition(x, y, z);
+
+    const auto chunkX = static_cast<std::uint8_t>(x / VoxelConfig::ChunkSize);
+    const auto chunkY = static_cast<std::uint8_t>(y / VoxelConfig::ChunkSize);
+    const auto chunkZ = static_cast<std::uint8_t>(z / VoxelConfig::ChunkSize);
+
+    const auto localX = static_cast<std::uint8_t>(x % VoxelConfig::ChunkSize);
+    const auto localY = static_cast<std::uint8_t>(y % VoxelConfig::ChunkSize);
+    const auto localZ = static_cast<std::uint8_t>(z % VoxelConfig::ChunkSize);
+
+    const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(localX, localY, localZ));
+    return chunk(chunkX, chunkY, chunkZ).removeExtraMetadata(localBlockIndex, metadataType);
+}
+
 std::vector<World::BlockExtraMetadataRecord> World::collectExtraMetadata(std::uint16_t metadataType) const {
     std::vector<BlockExtraMetadataRecord> records;
 

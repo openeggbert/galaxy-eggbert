@@ -4,6 +4,26 @@
 
 namespace GalaxyEggbert::CNA
 {
+    namespace
+    {
+        // Restores whichever MoveObjectRecord (or none) a MoveObjectEdit
+        // recorded for its anchor cell. RemoveMoveObject() first in both
+        // directions, so an overwrite (both before and after present) can't
+        // leave a stale record behind if the new one happens to anchor
+        // elsewhere -- PlaceMoveObject() anchors at floor(posStart), which
+        // need not equal the command's own anchor cell after an EDITOR-110
+        // position edit.
+        void ApplyMoveObjectState(Worlds::World& world, const GEEditCommand& command,
+                                  const std::optional<MoveObjectRecord>& state)
+        {
+            RemoveMoveObject(world, command.objectAnchorX, command.objectAnchorY, command.objectAnchorZ);
+            if (state.has_value())
+            {
+                PlaceMoveObject(world, *state);
+            }
+        }
+    }
+
     void GEEditCommandStack::Push(GEEditCommand command)
     {
         redoStack_.clear();
@@ -30,6 +50,10 @@ namespace GalaxyEggbert::CNA
                 world.setBlock(change.x, change.y, change.z, change.before);
             }
         }
+        else if (command.kind == GEEditCommand::Kind::MoveObjectEdit)
+        {
+            ApplyMoveObjectState(world, command, command.objectBefore);
+        }
 
         redoStack_.push_back(std::move(command));
         return true;
@@ -50,6 +74,10 @@ namespace GalaxyEggbert::CNA
             {
                 world.setBlock(change.x, change.y, change.z, change.after);
             }
+        }
+        else if (command.kind == GEEditCommand::Kind::MoveObjectEdit)
+        {
+            ApplyMoveObjectState(world, command, command.objectAfter);
         }
 
         undoStack_.push_back(std::move(command));

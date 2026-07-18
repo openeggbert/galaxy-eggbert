@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <utility>
 
 namespace GalaxyEggbert::CNA
@@ -18,6 +19,28 @@ namespace GalaxyEggbert::CNA
         constexpr float kMaxFlySpeed = 200.0f;
         constexpr float kScrollSpeedStepPerNotch = 1.15f; // multiplicative -- stays useful close-up and world-spanning
         constexpr float kMaxRaycastDistance = 200.0f; // > the 100^3 world's ~173-unit diagonal
+
+        // Whichever MoveObjectRecord is anchored at raw-grid cell (x,y,z),
+        // if any -- captured as a MoveObjectEdit's "before" state so undo
+        // can restore an object that a placement overwrote (PlaceMoveObject
+        // replaces silently when two records share an anchor cell, see its
+        // own header comment). CollectMoveObjects() reports records without
+        // their anchor, so this re-derives it the same way PlaceMoveObject
+        // does: floor(posStart).
+        std::optional<MoveObjectRecord> FindMoveObjectAnchoredAt(
+            const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+        {
+            for (const auto& record : CollectMoveObjects(world))
+            {
+                if (static_cast<std::uint16_t>(std::floor(record.posStartX)) == x &&
+                    static_cast<std::uint16_t>(std::floor(record.posStartY)) == y &&
+                    static_cast<std::uint16_t>(std::floor(record.posStartZ)) == z)
+                {
+                    return record;
+                }
+            }
+            return std::nullopt;
+        }
     }
 
     void GEWorldEditor::EnterBrowser(int gamerSlot)
@@ -232,12 +255,38 @@ namespace GalaxyEggbert::CNA
                 const auto px = static_cast<std::uint16_t>(placeX);
                 const auto py = static_cast<std::uint16_t>(placeY);
                 const auto pz = static_cast<std::uint16_t>(placeZ);
-                const Worlds::Block before = world.getBlock(px, py, pz);
-                const Worlds::Block after = Worlds::Block::make(palette_.SelectedBlockType());
-                world.setBlock(px, py, pz, after);
                 GEEditCommand command;
-                command.kind = GEEditCommand::Kind::BlockEdit;
-                command.blockChanges.push_back({px, py, pz, before, after});
+                if (palette_.IsObjectMode())
+                {
+                    // Stationary placement (plan.md EDITOR-109): posEnd ==
+                    // posStart is the real "this object doesn't move"
+                    // guard (MoveObjectRecord.hpp). Giving it a real patrol
+                    // path is EDITOR-110's job.
+                    MoveObjectRecord record;
+                    record.type = palette_.SelectedObjectType();
+                    record.posStartX = static_cast<float>(px);
+                    record.posStartY = static_cast<float>(py);
+                    record.posStartZ = static_cast<float>(pz);
+                    record.posEndX = record.posStartX;
+                    record.posEndY = record.posStartY;
+                    record.posEndZ = record.posStartZ;
+
+                    command.kind = GEEditCommand::Kind::MoveObjectEdit;
+                    command.objectAnchorX = px;
+                    command.objectAnchorY = py;
+                    command.objectAnchorZ = pz;
+                    command.objectBefore = FindMoveObjectAnchoredAt(world, px, py, pz);
+                    command.objectAfter = record;
+                    PlaceMoveObject(world, record);
+                }
+                else
+                {
+                    const Worlds::Block before = world.getBlock(px, py, pz);
+                    const Worlds::Block after = Worlds::Block::make(palette_.SelectedBlockType());
+                    world.setBlock(px, py, pz, after);
+                    command.kind = GEEditCommand::Kind::BlockEdit;
+                    command.blockChanges.push_back({px, py, pz, before, after});
+                }
                 commandStack_.Push(std::move(command));
                 needsPresentationRebuild_ = true;
             }

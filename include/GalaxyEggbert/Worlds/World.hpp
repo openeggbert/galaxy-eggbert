@@ -162,6 +162,24 @@ public:
                                std::vector<std::uint8_t> payload);
 
     /**
+     * @brief Removes sparse extra metadata for the block at world-space
+     * coordinates, if any (plan.md EDITOR-109 -- e.g. MoveObjectRecord::
+     * RemoveMoveObject()'s own use, deleting a placed enemy/pickup/lift in
+     * the in-game world editor).
+     *
+     * @param x World X coordinate in range <tt>[0, blocksPerAxis())</tt>.
+     * @param y World Y coordinate in range <tt>[0, blocksPerAxis())</tt>.
+     * @param z World Z coordinate in range <tt>[0, blocksPerAxis())</tt>.
+     * @param metadataType Type discriminator of the payload to remove.
+     * @return <tt>true</tt> when a record was actually removed.
+     * @throws std::out_of_range If coordinates are outside world bounds.
+     */
+    bool removeBlockExtraMetadata(std::uint16_t x,
+                                  std::uint16_t y,
+                                  std::uint16_t z,
+                                  std::uint16_t metadataType);
+
+    /**
      * @brief Collects every sparse extra-metadata record of a given type across
      * the whole world, with local block indices resolved back to world-space
      * coordinates.

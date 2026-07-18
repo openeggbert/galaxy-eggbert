@@ -71,4 +71,9 @@ void PlaceMoveObject(Worlds::World& world, const MoveObjectRecord& record);
 // Collects every MoveObjectRecord stored in @p world (from any chunk).
 [[nodiscard]] std::vector<MoveObjectRecord> CollectMoveObjects(const Worlds::World& world);
 
+// Removes whichever MoveObjectRecord is anchored at raw-grid-space cell
+// (x,y,z), if any (plan.md EDITOR-109/110 -- the in-game world editor's
+// object-removal tool). Returns true when a record was actually removed.
+bool RemoveMoveObject(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z);
+
 }

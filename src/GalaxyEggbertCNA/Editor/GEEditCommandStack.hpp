@@ -1,10 +1,12 @@
 #pragma once
 
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace GalaxyEggbert::CNA
@@ -28,10 +30,15 @@ namespace GalaxyEggbert::CNA
     // is one BlockEdit with one BlockChange; a whole box-fill region
     // (EDITOR-105) is still ONE BlockEdit with N BlockChanges (only the
     // cells that actually changed), so undoing a fill restores the whole
-    // region in one step, not block-by-block. MoveObjectEdit/SkyRegionEdit
-    // kinds are declared now for a stable Kind enum but have no fields or
-    // stack-side handling yet -- added when EDITOR-109/110/111 actually
-    // need them.
+    // region in one step, not block-by-block.
+    //
+    // A MoveObjectEdit carries the anchor cell plus the record that was
+    // stored there before and after the action -- either may be empty
+    // (nullopt), which is exactly how place (no before, a record after),
+    // remove (a record before, none after) and overwrite/edit (both) are
+    // all expressed by the same single kind. SkyRegionEdit is declared for
+    // a stable Kind enum but has no fields or stack-side handling yet --
+    // added when EDITOR-111 actually needs it.
     struct GEEditCommand
     {
         enum class Kind
@@ -43,6 +50,12 @@ namespace GalaxyEggbert::CNA
 
         Kind kind = Kind::BlockEdit;
         std::vector<BlockChange> blockChanges;
+
+        std::uint16_t objectAnchorX = 0;
+        std::uint16_t objectAnchorY = 0;
+        std::uint16_t objectAnchorZ = 0;
+        std::optional<MoveObjectRecord> objectBefore;
+        std::optional<MoveObjectRecord> objectAfter;
     };
 
     // Undo/redo stack of GEEditCommand actions against a Worlds::World.

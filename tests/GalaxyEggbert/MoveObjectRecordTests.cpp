@@ -91,4 +91,27 @@ TEST(MoveObjectRecordTests, CollectReturnsEmptyForWorldWithNoMoveObjects) {
     EXPECT_TRUE(CollectMoveObjects(world).empty());
 }
 
+TEST(MoveObjectRecordTests, RemoveMoveObjectRemovesTheAnchoredRecord) {
+    Worlds::World world;
+    MoveObjectRecord record;
+    record.type = ObjectType::ObjectType44;
+    record.posStartX = 12.0f;
+    record.posStartY = 3.0f;
+    record.posStartZ = 20.0f;
+    record.posEndX = 12.0f;
+    record.posEndY = 3.0f;
+    record.posEndZ = 20.0f;
+    PlaceMoveObject(world, record);
+    ASSERT_EQ(CollectMoveObjects(world).size(), 1u);
+
+    const bool removed = RemoveMoveObject(world, 12, 3, 20);
+    EXPECT_TRUE(removed);
+    EXPECT_TRUE(CollectMoveObjects(world).empty());
+}
+
+TEST(MoveObjectRecordTests, RemoveMoveObjectReturnsFalseWhenNothingIsAnchoredThere) {
+    Worlds::World world;
+    EXPECT_FALSE(RemoveMoveObject(world, 5, 5, 5));
+}
+
 }

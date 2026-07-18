@@ -114,7 +114,13 @@ namespace GalaxyEggbert::CNA
         //   - Left click: places the palette's currently selected block
         //     type (GEEditorPalette::SelectedBlockType(), clicked from the
         //     on-screen palette grid -- see Draw()) at the cell adjacent
-        //     to the aimed-at face.
+        //     to the aimed-at face. While the palette is in Objects mode
+        //     (its 6th toolbar button toggles), the same click instead
+        //     places a stationary MoveObjectRecord (posEnd == posStart) of
+        //     the selected ObjectType there -- an enemy/pickup/lift, which
+        //     GEWorldRuntime::ResyncFromWorld() picks up on the caller's
+        //     next RebuildWorldPresentation(), so it shows up as a real
+        //     billboard immediately without a disk round-trip.
         //   - Middle click: removes the aimed-at block entirely.
         //   - Enter: saves @p world to the path set via SetWorldPath().
         //   - U: undoes the most recent block edit; R: redoes it (plain
