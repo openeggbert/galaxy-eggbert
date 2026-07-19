@@ -38,6 +38,17 @@ namespace GalaxyEggbert::CNA
                 1.0f, 0.9f, 0.2f);
     }
 
+    void GEEditorHighlightRenderer::ShowSelectedObject(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                                       float centerX, float centerY, float centerZ)
+    {
+        const float half = 0.5f + kCellHighlightPadding * 0.5f;
+        // Translucent magenta -- distinct from both the cyan crosshair and
+        // the yellow box-fill overlay.
+        Rebuild(device, centerX - half, centerY - half, centerZ - half,
+                centerX + half, centerY + half, centerZ + half,
+                1.0f, 0.25f, 0.85f);
+    }
+
     void GEEditorHighlightRenderer::Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             float minX, float minY, float minZ,
                                             float maxX, float maxY, float maxZ,

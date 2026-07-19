@@ -6,6 +6,7 @@
 #include "GEEditorPalette.hpp"
 
 #include <Easy3D/Camera3D.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
@@ -14,6 +15,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <utility>
 
 namespace GalaxyEggbert::CNA
@@ -24,14 +26,18 @@ namespace GalaxyEggbert::CNA
     // tooling, explicitly exempt from the project's faithful-remake rule
     // (see plan.md section 6 / CLAUDE.md).
     //
-    // EDITOR-108 (this milestone): free-fly camera (EDITOR-101) + voxel
+    // EDITOR-108 (an earlier milestone): free-fly camera (EDITOR-101) + voxel
     // raycast/highlight (EDITOR-102) + single block place/remove/save
     // (EDITOR-103) + undo/redo (EDITOR-104) + box-fill (EDITOR-105) + a
     // real block palette (EDITOR-106) + a real per-gamer-slot world
     // browser (EDITOR-107), now with a Play-Test toolbar button that saves
     // and hands off to GalaxyEggbertCnaGame for a real gameplay session
-    // against the just-saved world. Object editing lands in later
-    // milestones.
+    // against the just-saved world. EDITOR-109 added stationary MoveObject
+    // placement in Objects mode; EDITOR-110 (this milestone) adds selecting
+    // an already-placed one and editing it -- see Update()'s own comment
+    // for the G/T/Tab/OemPlus/OemMinus/Delete bindings, keyboard-only, same
+    // "no toolbar button, no text label" precedent already set by the
+    // box-fill tool (F/Escape).
     class GEWorldEditor
     {
     public:
@@ -141,6 +147,36 @@ namespace GalaxyEggbert::CNA
         //     whole box with the palette's selected block type as ONE undo
         //     command (only the cells that actually changed); Escape
         //     cancels back to single-cell picking with no world change.
+        //   - G: selects whichever already-placed MoveObject's billboard
+        //     projects closest to screen center (plan.md EDITOR-110) --
+        //     objects aren't voxel-grid raycast targets like blocks, so
+        //     picking is nearest-screen-space instead, reusing
+        //     GEHud::ProjectWorldToHudSpace() (no new projection math).
+        //     Pressing G with nothing within the pick radius clears the
+        //     current selection. The selection is highlighted (a distinct
+        //     color from the aim-crosshair/box-fill overlay).
+        //   - T: while an object is selected, sets its posEnd to wherever
+        //     the crosshair currently aims -- gives it a real patrol path
+        //     (posStart != posEnd is the existing "this object moves"
+        //     signal already used by GEEditCommandStack/GEWorldRuntime).
+        //   - Tab: cycles which of the selected object's 5 numeric fields
+        //     (speed, then the 4 real patrol-turn-timing fields, in
+        //     MoveObjectRecord's own declared order) OemPlus/OemMinus
+        //     below adjust.
+        //   - OemPlus/OemMinus (the +/- keys): nudge the active field by a
+        //     fixed editor-UX step (not a transcribed real constant, same
+        //     category as MoveObjectRecord's own placeholder timing
+        //     defaults), clamped so speed/ticks never go negative.
+        //   - Delete: removes the selected object entirely and clears the
+        //     selection.
+        //   All five are edge-triggered on the press, same as every other
+        //   tool key above, and each is one MoveObjectEdit undo command
+        //   (U/R undo/redo them like any other edit) -- no new toolbar
+        //   button exists for any of them, matching the box-fill tool's own
+        //   keyboard-only precedent (every tool already has a working
+        //   binding; toolbar buttons are a discoverability convenience on
+        //   top, not a functional requirement -- see GEEditorPalette's own
+        //   class comment).
         // Call ConsumeNeedsPresentationRebuild() after Update() returns to
         // find out whether @p world was actually mutated this frame.
         //
@@ -224,6 +260,63 @@ namespace GalaxyEggbert::CNA
         bool showingBox_ = false;
         float boxMinRenderX_ = 0.0f, boxMinRenderY_ = 0.0f, boxMinRenderZ_ = 0.0f;
         float boxMaxRenderX_ = 0.0f, boxMaxRenderY_ = 0.0f, boxMaxRenderZ_ = 0.0f;
+
+        // MoveObject select/edit tool (plan.md EDITOR-110). selectedObject_
+        // mirrors the record actually stored in the world -- kept in sync
+        // across edits so each new edit's undo command captures a correct
+        // "before" state, and re-synced from the world after any Undo/Redo
+        // (RefreshSelectedObjectAfterHistoryChange()) so undoing/redoing an
+        // edit doesn't leave this stale. selectedAnchor* is
+        // floor(selectedObject_.posStart*) -- this milestone never moves
+        // posStart, so the anchor cell never changes once selected.
+        bool hasSelectedObject_ = false;
+        MoveObjectRecord selectedObject_;
+        std::uint16_t selectedAnchorX_ = 0;
+        std::uint16_t selectedAnchorY_ = 0;
+        std::uint16_t selectedAnchorZ_ = 0;
+        // Render-space position for Draw()'s selection highlight -- set
+        // once at selection time (see selectedAnchor*'s own comment for why
+        // that's safe to cache).
+        float selectedRenderX_ = 0.0f;
+        float selectedRenderY_ = 0.0f;
+        float selectedRenderZ_ = 0.0f;
+        GEEditorHighlightRenderer selectionHighlightRenderer_;
+
+        // Which field Tab cycles through and OemPlus/OemMinus adjust --
+        // order matches MoveObjectRecord's own declared field order.
+        enum class EditableField
+        {
+            Speed,
+            StepAdvanceTicks,
+            StepRecedeTicks,
+            TimeStopStartTicks,
+            TimeStopEndTicks,
+        };
+        static constexpr int kEditableFieldCount = 5;
+        EditableField activeField_ = EditableField::Speed;
+
+        // Returns @p record with activeField_'s value nudged by @p sign
+        // (+1.0f/-1.0f), clamped to a sane floor -- or std::nullopt if the
+        // clamp left the field unchanged (so Update() can skip pushing a
+        // no-op undo entry, same "don't record a no-op" convention the
+        // box-fill tool already follows).
+        [[nodiscard]] std::optional<MoveObjectRecord> ApplyActiveFieldDelta(
+            const MoveObjectRecord& record, float sign) const noexcept;
+
+        // Re-reads whichever MoveObjectRecord is now anchored at
+        // selectedAnchorX/Y/Z_ from @p world and refreshes selectedObject_
+        // (or clears hasSelectedObject_ if the anchor is empty, e.g. an
+        // undone placement) -- called after every successful Undo()/Redo()
+        // so a later G/T/Tab/OemPlus/OemMinus edit's "before" state can't
+        // go stale relative to the world it's actually about to mutate.
+        void RefreshSelectedObjectAfterHistoryChange(const Worlds::World& world);
+
+        bool selectKeyHeldLastFrame_ = false;
+        bool targetKeyHeldLastFrame_ = false;
+        bool cycleFieldKeyHeldLastFrame_ = false;
+        bool increaseFieldKeyHeldLastFrame_ = false;
+        bool decreaseFieldKeyHeldLastFrame_ = false;
+        bool deleteObjectKeyHeldLastFrame_ = false;
 
         std::filesystem::path worldPath_;
 

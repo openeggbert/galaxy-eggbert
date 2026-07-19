@@ -35,6 +35,17 @@ namespace GalaxyEggbert::CNA
                      float minCenterX, float minCenterY, float minCenterZ,
                      float maxCenterX, float maxCenterY, float maxCenterZ);
 
+        // Shows a highlight cube centered at the given RENDER-SPACE
+        // position, marking whichever MoveObject the world editor's object
+        // tool (G/T/Delete, plan.md EDITOR-110) currently has selected --
+        // same block-center convention as ShowCell, a distinct color from
+        // both ShowCell's crosshair and ShowBox's fill overlay. Callers use
+        // a SEPARATE instance of this class for this (this class tracks
+        // only one set of bounds at a time), so a selection highlight can
+        // stay visible at the same time as the aim-crosshair/box overlay.
+        void ShowSelectedObject(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                float centerX, float centerY, float centerZ);
+
         // Hides the highlight (Draw() becomes a no-op) until ShowCell()/ShowBox() is called again.
         void Hide() noexcept;
 

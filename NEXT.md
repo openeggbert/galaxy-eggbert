@@ -1,9 +1,9 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-18 (see §7.5 for standing directives — note the "no editor work" directive
+_Last updated: 2026-07-19 (see §7.5 for standing directives — note the "no editor work" directive
 there is **superseded**, see §7.5's own header. The current line of work is the in-game 3D world
-editor: milestones EDITOR-100 through EDITOR-109 are implemented, verified, and pushed;
-EDITOR-110/111/112 remain, see §8)._
+editor: milestones EDITOR-100 through EDITOR-110 are implemented, verified, and pushed;
+EDITOR-111/112 remain, see §8)._
 
 ## 1. Project summary
 
@@ -100,16 +100,17 @@ appears to be under active, independent development and the failure was transien
 it is not caused by anything in this repository; check `../sharp-runtime`'s own git log first.
 
 ### Test status
-Last full run (2026-07-18, `build-cna` only, after EDITOR-109):
+Last full run (2026-07-19, `build-cna` only, after EDITOR-110):
 - `build-cna`: **79 tests, 78 pass (99%)** — the only failure is `easy-gl-resource-smoke-tests`, a
   **pre-existing, unrelated** failure in the `easy-gl` dependency, root-caused entirely to that
   repository (see §5). It has been the same single failure across every verification pass this
   session.
 - `GalaxyEggbertWorldsTests` (gtest, engine-agnostic `World`/`Chunk`/`MoveObjectRecord` model):
   **66/66 pass**, included in the total above.
-- `VerifyGEWorldEditor` (new this session): **165 `PASS:` assertions**, all passing.
+- `VerifyGEWorldEditor`: **189 `PASS:` assertions**, all passing (165 through EDITOR-109, +24 for
+  EDITOR-110's select/edit/remove tool).
 - `build-cna-vulkan`: **not re-run since the editor work began** — last known result was 73/73, but
-  that predates EDITOR-100..109. Re-running it is part of EDITOR-112 (§8).
+  that predates EDITOR-100..110. Re-running it is part of EDITOR-112 (§8).
 
 ### Tools/binaries available (see `CMakeLists.txt` for exact target names)
 - `GalaxyEggbertCNA` — the main game executable.
@@ -126,9 +127,9 @@ Last full run (2026-07-18, `build-cna` only, after EDITOR-109):
 - `GalaxyEggbertSimple3D`, `VerifyBigDecorParsing`, `VerifyMoveObjectTypes` — Simple3D-only targets,
   not built per the direction lock.
 
-### Recently implemented (2026-07-18: the in-game 3D world editor — see §3 for detail)
+### Recently implemented (2026-07-18/19: the in-game 3D world editor — see §3 for detail)
 
-**EDITOR-100..109 are complete, verified and pushed.** What works today, end to end:
+**EDITOR-100..110 are complete, verified and pushed.** What works today, end to end:
 - Enter the editor from the real Init/main menu ("Editor" button), scoped to the selected gamer
   slot. A browser screen lists that slot's worlds under `customworlds/gamer<N>/`, with create /
   open / two-tap-delete.
@@ -143,6 +144,13 @@ Last full run (2026-07-18, `build-cna` only, after EDITOR-109):
   draws flat category-colored cells.
 - Objects mode places real `MoveObjectRecord`s (enemies, pickups, lifts) that appear immediately as
   billboards — no save/reload round-trip.
+- `G` selects whichever already-placed `MoveObjectRecord`'s billboard projects nearest screen center
+  (reuses `GEHud::ProjectWorldToHudSpace()`, no new projection code), shown with a magenta highlight
+  cube. `T` sets its `posEnd` to the current aim point, giving it a real patrol path; `Tab` cycles
+  which of its 5 fields (speed + the 4 patrol-timing fields) `OemPlus`/`OemMinus` nudge; `Delete`
+  removes it. All keyboard-only (no new toolbar button), matching the box-fill tool's own
+  keyboard-only precedent; each edit is a real `MoveObjectEdit` undo command (`U`/`R` undo/redo them
+  like any other edit).
 - Save (`Enter` or toolbar) and a full Play-Test loop: saves, launches a real gameplay session
   against the custom world, and returns to the editor on win/loss/pause-back without touching real
   save progress.
@@ -237,10 +245,9 @@ north-hill plateau reachable only via a staircase + terraced ascent.
   in third-person. Blocked on the user providing a real model/rig.
 - **Saw blade (icon 378) render orientation is wrong** — 3 prior fix attempts were wrong; needs the
   user's own visual judgment (a screenshot review), not another guess.
-- **World editor: object *editing* is not implemented yet** (EDITOR-110). Placed objects are always
-  stationary (`posEnd == posStart`); there is no way to give one a patrol path, change its speed or
-  timings, or remove it once placed. Sky-region picking (EDITOR-111) and the hardening pass
-  (EDITOR-112, incl. an unsaved-changes guard) are also still open — see §5.
+- **World editor: sky-region picking (EDITOR-111) and the hardening pass (EDITOR-112, incl. an
+  unsaved-changes guard) are still open** — see §5. Object editing (EDITOR-110: select, patrol path,
+  speed/timing, remove) is now done.
 - **The editor has no text rendering** — toolbar buttons are distinguished by position and color
   only, and object palette cells are flat category-colored squares rather than real sprites. Both
   are documented, deliberate simplifications, not oversights (see §5).
@@ -253,6 +260,57 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### World editor: MoveObject select/edit/remove tool, EDITOR-110 (2026-07-19)
+
+Adds a select-and-edit tool for already-placed `MoveObjectRecord`s, keyboard-only (no new toolbar
+button, matching the box-fill tool's own keyboard-only precedent):
+- `G` selects whichever placed object's billboard projects nearest screen center — nearest-billboard
+  picking reuses `GEHud::ProjectWorldToHudSpace()` (no new projection code was written), so this
+  section links `src/GalaxyEggbertCNA/Game/GEHud.cpp` into `VerifyGEWorldEditor` for the first time
+  (`CMakeLists.txt`). Shown with a new magenta selection-highlight cube — `GEEditorHighlightRenderer`
+  gained a second public method, `ShowSelectedObject()`, and `GEWorldEditor` owns a *second* instance
+  of that class so the selection highlight can stay visible alongside the existing aim-crosshair/
+  box-fill one (each instance only tracks one set of bounds).
+- `T` sets the selected object's `posEnd` to the current raycast aim cell, giving it a real patrol
+  path (`posEnd != posStart`).
+- `Tab` cycles which of the object's 5 numeric fields (`speed`, then the 4 real patrol-timing fields)
+  `OemPlus`/`OemMinus` nudge by a fixed editor-UX step (not a transcribed real constant).
+- `Delete` removes the selected object entirely.
+
+Each action is a real `GEEditCommand::Kind::MoveObjectEdit` pushed onto the existing undo stack
+(`U`/`R` already undo/redo these correctly — no undo/redo code changes were needed, confirming the
+EDITOR-109-era design note that anticipated this). New `GEWorldEditor::RefreshSelectedObjectAfterHistoryChange()`
+re-syncs the cached `selectedObject_` from the world after every Undo/Redo, so a later edit's "before"
+state can't go stale relative to what Undo/Redo just wrote (a real bug caught and fixed during this
+session's own testing, before it ever reached the live build — see below).
+
+**A real test bug found and fixed while writing `VerifyGEWorldEditor`'s new section**: the first
+draft pressed the same edge-triggered key (`U`) four times in a row across separate `Update()` calls
+expecting each to undo one more step — but `GEWorldEditor::Update()`'s edge-triggering (matching
+every other tool key in this class) only fires on a **press following a release**, so only the FIRST
+of the four consecutive presses actually did anything; the other three were silent no-ops. Fixed by
+adding a `pressKey()` test helper that presses then releases within two `Update()` calls, same
+requirement a real keyboard has. Not a bug in `GEWorldEditor` itself — an easy trap to fall into
+when scripting multiple presses of the same key in a test, worth remembering for any future section
+that does this.
+
+24 new `VerifyGEWorldEditor` assertions (189 total): place → G-select → T (patrol path) → OemPlus/
+OemMinus (speed, then Tab + stepAdvanceTicks) → 4×undo → 4×redo → Delete → undo-the-delete, all
+checked against `CollectMoveObjects`, plus a no-op sanity check (G with no objects anywhere in the
+world selects nothing, and a Delete right after is a safe no-op).
+
+Live-verified end-to-end under `xvfb-run` with temporary env-var-gated (`GE_EDITOR_AUTOTEST_110`)
+instrumentation (fully reverted before commit, confirmed via `git diff`): a scripted place → G-select
+→ fly → T → Play-Test sequence, driven through synthetic `KeyboardState`/`MouseState` fed into the
+SAME real `GEWorldEditor::Update()` call site real player input uses. Confirmed the play-tested
+world's `MoveObjectRecord` carried the real edited patrol path (`posStart=(50,4,33)
+posEnd=(50,3,17)`), and — since the two screenshots taken during play-test looked visually
+near-identical at that camera angle/distance — added a temporary numeric trace of the live
+`MobileObjSpec::current{X,Y,Z}` during `Play` phase to settle it conclusively: `currentZ` advanced
+continuously frame-by-frame from render-space -17 toward -33 (raw grid 33→17), proving the lift
+genuinely patrols at runtime; the screenshots just weren't a legible way to see a mostly-depthwise
+motion at that angle. No code bugs found in the live pass — instrumentation fully reverted afterward.
 
 ### In-game 3D world editor, EDITOR-100..109 (2026-07-18, 10 commits `a9140c2`..`a6ba199`)
 
@@ -871,11 +929,11 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
 
 **There is no active build or test failure blocking progress.** `build-cna` builds and passes
 78/79 (the one failure is the pre-existing `easy-gl` dependency test, see §5). The current line of
-work — the 3D world editor — is mid-plan but not stuck: EDITOR-110 is simply the next unstarted
+work — the 3D world editor — is mid-plan but not stuck: EDITOR-111 is simply the next unstarted
 milestone, fully specified and unblocked.
 
 The nearest thing to a real risk is **`build-cna-vulkan` has not been rebuilt or re-tested since
-the editor work began** (10 commits). The editor code is backend-agnostic and nothing suggests a
+the editor work began** (11 commits). The editor code is backend-agnostic and nothing suggests a
 problem, but this is unverified. Closing it is part of EDITOR-112 and is the cheapest way to rule
 out a regression — if picking this project up cold and wanting a quick confidence check, do that
 first (§7 has the commands).
@@ -904,9 +962,6 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   patch — out of scope for any single-mechanic task; flag if picked up.
 - **Incomplete:** No visible 3D Blupi model (blocked on the user providing one).
 - **Incomplete (world editor, by design — the remaining plan milestones):**
-  - No object *editing* (EDITOR-110): placed objects are permanently stationary; no patrol path,
-    speed, timing edits, or object removal. `GEEditCommand::Kind::MoveObjectEdit` already supports
-    remove/overwrite at the stack level, so this is UI work, not data-model work.
   - No sky-region picker (EDITOR-111): `world.skyRegion()` can't be changed from the editor.
     `GEEditCommand::Kind::SkyRegionEdit` is declared but has no fields or stack handling yet.
   - No unsaved-changes guard (EDITOR-112): Back/Open/Quit discard silently. Save is explicit
@@ -1130,22 +1185,11 @@ user before treating them as permanent beyond it):
 
 ## 8. Next smallest tasks
 
-The editor plan (EDITOR-110..112) is the active line of work; do these in order first. Each is one
+The editor plan (EDITOR-111/112) is the active line of work; do these in order first. Each is one
 focused session, and each ends with: build → `VerifyGEWorldEditor` → full `ctest` → live headless
 check of the new behavior → revert instrumentation → commit → push.
 
-1. **EDITOR-110 — MoveObject editing.** Select a placed object and change it: set `posEnd` to the
-   current aim point (giving it a real patrol path), adjust `speed` and the four patrol-timing
-   fields, and remove it. Nearest-billboard picking should reuse the existing
-   `GEHud::ProjectWorldToHudSpace()` static rather than a new projection path. The undo stack
-   already handles remove/overwrite via `Kind::MoveObjectEdit`, so no data-model change is needed.
-   Files: `src/GalaxyEggbertCNA/Editor/GEWorldEditor.{hpp,cpp}`, `GEEditorPalette.{hpp,cpp}`,
-   `tools/VerifyGEWorldEditor.cpp`.
-   Verify: `cmake --build build-cna --target VerifyGEWorldEditor -j2 && cd build-cna &&
-   ./VerifyGEWorldEditor` — add a full place→edit→undo→redo→remove→undo sequence checked against
-   `CollectMoveObjects`; then a live run placing a lift with a real patrol path and play-testing it.
-
-2. **EDITOR-111 — Sky-region picker.** A stepper cycling `world.skyRegion()` 0–31, flagging which
+1. **EDITOR-111 — Sky-region picker.** A stepper cycling `world.skyRegion()` 0–31, flagging which
    ids have real `Content/backgrounds/decorNNN.png` art (only 28 of 32 do — it must degrade
    gracefully, see `RebuildWorldPresentation()`'s own comment). Implement
    `GEEditCommand::Kind::SkyRegionEdit` in the stack (currently declared but unhandled).
@@ -1154,7 +1198,7 @@ check of the new behavior → revert instrumentation → commit → push.
    Verify: `VerifyGEWorldEditor` (wrap-around at both ends + undo/redo) plus a live screenshot
    showing the background actually swap.
 
-3. **EDITOR-112 — Hardening pass + full regression.** Unsaved-changes guard (dirty flag + one-tap
+2. **EDITOR-112 — Hardening pass + full regression.** Unsaved-changes guard (dirty flag + one-tap
    confirm on Back/Open/Quit), a box-fill test that straddles world bounds, consolidate
    `VerifyGEWorldEditor` into clearly-named sections, and — the part worth doing even if the rest
    slips — **re-run the full suite on `build-cna-vulkan`**, which hasn't been rebuilt since the
@@ -1165,7 +1209,7 @@ check of the new behavior → revert instrumentation → commit → push.
 
 Non-editor tasks, available if the editor line is paused:
 
-4. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
+1. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
    isolate a frame showing the flying icon-48 HUD animation itself (the earlier live check
    confirmed the life-total/position state transition but didn't catch the icon mid-flight at the
    screenshot intervals used).
@@ -1222,7 +1266,7 @@ Non-editor tasks, available if the editor line is paused:
 Read NEXT.md first, in full, before doing anything else.
 
 Then work on exactly ONE task from its "Next smallest tasks" section (§8) — start
-with task 1 (EDITOR-110, MoveObject editing) unless it is already done. Read only
+with task 1 (EDITOR-111, sky-region picker) unless it is already done. Read only
 the files that task names; do not open or refactor unrelated files.
 
 Before writing editor code, read §6's "Coordinate invariants" — block centering

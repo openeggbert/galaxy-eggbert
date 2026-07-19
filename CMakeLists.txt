@@ -613,7 +613,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # Easy3D::Camera3D and CNA Keyboard/Mouse types, so this links the same
     # way VerifyGEInputPad above does (CNA + backend + SHARP_RUNTIME +
     # easy3d), even though the assertions themselves need no
-    # GraphicsDevice/window.
+    # GraphicsDevice/window. GEHud.cpp added for EDITOR-110's nearest-object
+    # picking, which reuses GEHud::ProjectWorldToHudSpace() rather than a
+    # new projection path (same reason VerifyInteractionSystem already
+    # links it).
     add_executable(VerifyGEWorldEditor
         tools/VerifyGEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
@@ -627,6 +630,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
+        src/GalaxyEggbertCNA/Game/GEHud.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyGEWorldEditor PRIVATE

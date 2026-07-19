@@ -68,7 +68,14 @@
 //     cell), and a real left click in Objects mode placing a stationary
 //     MoveObjectRecord through GEWorldEditor::Update() -- all still
 //     GraphicsDevice-free.
-// Later milestones (MoveObject editing/sky-region round-trips) add their
+//   - EDITOR-110: nearest-billboard object picking (G, reusing
+//     GEHud::ProjectWorldToHudSpace() -- so this section links GEHud.cpp
+//     too, see CMakeLists.txt), patrol-target assignment (T), the 5-field
+//     cycle + adjust tool (Tab/OemPlus/OemMinus), and object removal
+//     (Delete), each as a real GEEditCommand::Kind::MoveObjectEdit pushed
+//     through GEWorldEditor::Update() -- still GraphicsDevice-free (only
+//     Draw()'s new selection-highlight cube needs one).
+// Later milestones (sky-region round-trips, the hardening pass) add their
 // own sections here.
 int main()
 {
@@ -1169,6 +1176,194 @@ int main()
         check(redone.size() == 1 && redone[0].type == GalaxyEggbert::ObjectType::ObjectType1,
               "R redoes an object placement, restoring the exact record");
         check(editor.ConsumeNeedsPresentationRebuild(), "redoing an object placement requests a rebuild");
+    }
+
+    // --- GEWorldEditor: G/T/Tab/OemPlus/OemMinus/Delete select-and-edit tool (plan.md EDITOR-110) ---
+    {
+        using GalaxyEggbert::CollectMoveObjects;
+
+        // Same slab/camera setup as the object-placement section above, so
+        // the raycast target (and so the placed object's cell) is already
+        // known-good ground truth.
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        const float cosPitch = std::cos(kDefaultPitch);
+        const RaycastHit expected = Raycast(world, 50.0f, 10.0f, 50.0f,
+                                             std::sin(kDefaultYaw) * cosPitch, std::sin(kDefaultPitch),
+                                             -std::cos(kDefaultYaw) * cosPitch, 200.0f);
+        check(expected.hit, "test setup sanity: the reference raycast for object editing hits the slab");
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        // Switch to Objects mode, select ObjectType1, and place a
+        // stationary object at the aimed-at cell -- same real-UI-path
+        // setup as the placement section above, so GEEditCommandStack has
+        // a real place command underneath everything this section does.
+        const auto paletteClick = [&](float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        paletteClick(30.0f, 314.0f); // mode toggle -> Objects
+        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        paletteClick(kGridX0 + 20.0f, kGridY0 + 20.0f); // first object cell -> ObjectType1
+        (void)editor.ConsumeNeedsPresentationRebuild();
+
+        const MouseState leftMouse(400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+                                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, leftMouse, 0.0f, 800, 480, camera, world);
+        (void)editor.ConsumeNeedsPresentationRebuild();
+        check(CollectMoveObjects(world).size() == 1, "test setup sanity: an object is placed before editing it");
+
+        // Presses a single key for exactly one edge-triggered frame, then
+        // releases it -- every G/T/Tab/OemPlus/OemMinus/U/R/Delete key in
+        // GEWorldEditor::Update() is edge-triggered on the press, so
+        // driving the SAME key multiple times in a row (as several checks
+        // below do) needs a released frame in between to re-arm it, same
+        // requirement as a real keyboard's up/down events.
+        const auto pressKey = [&](Microsoft::Xna::Framework::Input::Keys key)
+        {
+            editor.Update(KeyboardState{key}, restMouse, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        };
+
+        // G selects the placed object -- it sits right where the crosshair
+        // just aimed, so its billboard projects near screen center. G
+        // itself never mutates the world.
+        pressKey(Keys::G);
+        check(!editor.ConsumeNeedsPresentationRebuild(), "G alone doesn't request a presentation rebuild");
+
+        // T gives the selected object a real patrol path: posEnd becomes
+        // the current raycast aim cell (still the same slab surface).
+        pressKey(Keys::T);
+        check(editor.ConsumeNeedsPresentationRebuild(), "T requests a presentation rebuild");
+        {
+            const auto afterTarget = CollectMoveObjects(world);
+            check(afterTarget.size() == 1, "T doesn't change the object count");
+            check(!afterTarget.empty() &&
+                      (afterTarget[0].posEndX != afterTarget[0].posStartX ||
+                       afterTarget[0].posEndY != afterTarget[0].posStartY ||
+                       afterTarget[0].posEndZ != afterTarget[0].posStartZ),
+                  "T gives the selected object a real patrol path (posEnd != posStart) -- "
+                  "this ALSO confirms G actually selected the object above (T is a no-op otherwise)");
+            check(!afterTarget.empty() && afterTarget[0].posEndX == static_cast<float>(expected.x) &&
+                      afterTarget[0].posEndY == static_cast<float>(expected.y) &&
+                      afterTarget[0].posEndZ == static_cast<float>(expected.z),
+                  "T's new posEnd is exactly the current raycast hit cell");
+        }
+
+        // OemPlus/OemMinus adjust the active field, which defaults to Speed.
+        const float speedBefore = CollectMoveObjects(world)[0].speed;
+        pressKey(Keys::OemPlus);
+        check(editor.ConsumeNeedsPresentationRebuild(), "OemPlus (speed) requests a presentation rebuild");
+        check(CollectMoveObjects(world)[0].speed > speedBefore, "OemPlus increases the active field (speed)");
+
+        pressKey(Keys::OemMinus);
+        check(editor.ConsumeNeedsPresentationRebuild(), "OemMinus (speed) requests a presentation rebuild");
+        check(std::fabs(CollectMoveObjects(world)[0].speed - speedBefore) < 0.0001f,
+              "OemMinus undoes OemPlus's own speed nudge back to the original value");
+
+        // Tab cycles to the next field (StepAdvanceTicks) -- OemPlus now
+        // touches that field instead of speed.
+        pressKey(Keys::Tab);
+        check(!editor.ConsumeNeedsPresentationRebuild(), "Tab alone doesn't request a presentation rebuild");
+        const float stepAdvanceBefore = CollectMoveObjects(world)[0].stepAdvanceTicks;
+        pressKey(Keys::OemPlus);
+        check(editor.ConsumeNeedsPresentationRebuild(), "OemPlus (stepAdvanceTicks) requests a presentation rebuild");
+        {
+            const auto afterFieldEdit = CollectMoveObjects(world)[0];
+            check(afterFieldEdit.stepAdvanceTicks > stepAdvanceBefore,
+                  "after Tab, OemPlus adjusts stepAdvanceTicks instead of speed");
+            check(afterFieldEdit.speed == speedBefore, "adjusting stepAdvanceTicks leaves speed untouched");
+        }
+
+        // U undoes all 4 edits above, one at a time, in exact reverse order:
+        // the stepAdvanceTicks bump, the OemPlus/OemMinus speed round-trip
+        // (2 distinct commands even though they net back to the same
+        // value), then T's patrol target -- landing back on the original
+        // stationary placement.
+        pressKey(Keys::U);
+        check(CollectMoveObjects(world)[0].stepAdvanceTicks == stepAdvanceBefore,
+              "U undoes the stepAdvanceTicks edit");
+        pressKey(Keys::U);
+        check(CollectMoveObjects(world)[0].speed > speedBefore,
+              "U undoes the OemMinus speed edit, landing back on the OemPlus-bumped speed");
+        pressKey(Keys::U);
+        check(std::fabs(CollectMoveObjects(world)[0].speed - speedBefore) < 0.0001f,
+              "U undoes the OemPlus speed edit, landing back on the original speed");
+        pressKey(Keys::U);
+        {
+            const auto afterAllUndo = CollectMoveObjects(world);
+            check(afterAllUndo.size() == 1 &&
+                      afterAllUndo[0].posEndX == afterAllUndo[0].posStartX &&
+                      afterAllUndo[0].posEndY == afterAllUndo[0].posStartY &&
+                      afterAllUndo[0].posEndZ == afterAllUndo[0].posStartZ,
+                  "undoing all 4 edits restores the original stationary placement");
+        }
+
+        // R redoes all 4 edits back forward, exactly.
+        pressKey(Keys::R);
+        pressKey(Keys::R);
+        pressKey(Keys::R);
+        pressKey(Keys::R);
+        {
+            const auto afterAllRedo = CollectMoveObjects(world);
+            check(afterAllRedo.size() == 1 &&
+                      (afterAllRedo[0].posEndX != afterAllRedo[0].posStartX ||
+                       afterAllRedo[0].posEndY != afterAllRedo[0].posStartY ||
+                       afterAllRedo[0].posEndZ != afterAllRedo[0].posStartZ) &&
+                      std::fabs(afterAllRedo[0].speed - speedBefore) < 0.0001f &&
+                      afterAllRedo[0].stepAdvanceTicks > stepAdvanceBefore,
+                  "redoing all 4 edits restores the exact post-edit state");
+        }
+
+        // Delete removes the selected object entirely.
+        pressKey(Keys::Delete);
+        check(editor.ConsumeNeedsPresentationRebuild(), "Delete requests a presentation rebuild");
+        check(CollectMoveObjects(world).empty(), "Delete removes the selected object from the world");
+
+        // U undoes the delete, restoring the object with its full edited
+        // state intact (not just an empty placeholder).
+        pressKey(Keys::U);
+        {
+            const auto afterUndoDelete = CollectMoveObjects(world);
+            check(afterUndoDelete.size() == 1 &&
+                      std::fabs(afterUndoDelete[0].speed - speedBefore) < 0.0001f &&
+                      afterUndoDelete[0].stepAdvanceTicks > stepAdvanceBefore,
+                  "U undoes the delete, restoring the object with its full edited state intact");
+        }
+
+        // A fresh editor/world pair with no MoveObjects placed anywhere --
+        // G has nothing to select, and a Delete right after it is
+        // confirmed to be a harmless no-op (no crash, no accidental
+        // mutation of an unrelated cell).
+        {
+            World emptyObjWorld;
+            GEWorldEditor freshEditor;
+            freshEditor.EnterEditing(0.0f, 10.0f, 0.0f);
+            Easy3D::Camera3D freshCamera;
+            freshEditor.Update(KeyboardState{Keys::G}, restMouse, 0.0f, 800, 480, freshCamera, emptyObjWorld);
+            freshEditor.Update(KeyboardState{Keys::Delete}, restMouse, 0.0f, 800, 480, freshCamera, emptyObjWorld);
+            check(CollectMoveObjects(emptyObjWorld).empty(),
+                  "G with no MoveObjects anywhere selects nothing; Delete afterward is a safe no-op");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

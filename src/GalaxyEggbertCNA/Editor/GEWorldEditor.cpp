@@ -2,6 +2,7 @@
 
 #include "GEBoxRegion.hpp"
 #include "GEVoxelRaycast.hpp"
+#include "Game/GEHud.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
 #include <algorithm>
@@ -19,6 +20,20 @@ namespace GalaxyEggbert::CNA
         constexpr float kMaxFlySpeed = 200.0f;
         constexpr float kScrollSpeedStepPerNotch = 1.15f; // multiplicative -- stays useful close-up and world-spanning
         constexpr float kMaxRaycastDistance = 200.0f; // > the 100^3 world's ~173-unit diagonal
+
+        // MoveObject select tool (plan.md EDITOR-110). kHudCenterX/Y is
+        // screen center in GEHud::ProjectWorldToHudSpace()'s own private
+        // 640x480 reference space (GEHud.cpp's kRefW/kRefH) -- G selects
+        // whichever placed object projects nearest this point, within
+        // kObjectPickRadius reference-space pixels.
+        constexpr float kHudCenterX = 320.0f;
+        constexpr float kHudCenterY = 240.0f;
+        constexpr float kObjectPickRadius = 80.0f;
+        // Editor-UX step sizes (not transcribed real constants -- same
+        // category as MoveObjectRecord's own placeholder timing defaults).
+        constexpr float kMinObjectSpeed = 0.25f;
+        constexpr float kObjectSpeedStep = 0.25f;
+        constexpr float kObjectTicksStep = 5.0f; // 0.25s at the real 20Hz reference rate
 
         // Whichever MoveObjectRecord is anchored at raw-grid cell (x,y,z),
         // if any -- captured as a MoveObjectEdit's "before" state so undo
@@ -89,6 +104,8 @@ namespace GalaxyEggbert::CNA
         boxFirstCornerPlaced_ = false;
         showingBox_ = false;
         playTestRequested_ = false;
+        hasSelectedObject_ = false;
+        selectionHighlightRenderer_.Hide();
     }
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
@@ -221,6 +238,12 @@ namespace GalaxyEggbert::CNA
         const bool redoKeyHeld = keyboard.IsKeyDown(Keys::R);
         const bool boxKeyHeld = keyboard.IsKeyDown(Keys::F);
         const bool escapeKeyHeld = keyboard.IsKeyDown(Keys::Escape);
+        const bool selectKeyHeld = keyboard.IsKeyDown(Keys::G);
+        const bool targetKeyHeld = keyboard.IsKeyDown(Keys::T);
+        const bool cycleFieldKeyHeld = keyboard.IsKeyDown(Keys::Tab);
+        const bool increaseFieldKeyHeld = keyboard.IsKeyDown(Keys::OemPlus);
+        const bool decreaseFieldKeyHeld = keyboard.IsKeyDown(Keys::OemMinus);
+        const bool deleteObjectKeyHeld = keyboard.IsKeyDown(Keys::Delete);
 
         // Box-fill tool live tracking (plan.md EDITOR-105) -- while a first
         // corner is placed, the highlight follows a box between it and
@@ -317,6 +340,7 @@ namespace GalaxyEggbert::CNA
             if (commandStack_.Undo(world))
             {
                 needsPresentationRebuild_ = true;
+                RefreshSelectedObjectAfterHistoryChange(world);
             }
         }
         else if ((redoKeyHeld && !redoKeyHeldLastFrame_) ||
@@ -325,6 +349,7 @@ namespace GalaxyEggbert::CNA
             if (commandStack_.Redo(world))
             {
                 needsPresentationRebuild_ = true;
+                RefreshSelectedObjectAfterHistoryChange(world);
             }
         }
         else if (paletteResult.action == GEEditorPalette::ToolbarAction::Back)
@@ -397,6 +422,107 @@ namespace GalaxyEggbert::CNA
             boxFirstCornerPlaced_ = false;
             showingBox_ = false;
         }
+        else if (selectKeyHeld && !selectKeyHeldLastFrame_)
+        {
+            // G: pick whichever placed MoveObject's billboard projects
+            // closest to screen center (plan.md EDITOR-110) -- see this
+            // class's own Update() doc comment. Reselecting with nothing
+            // within the pick radius clears the current selection.
+            hasSelectedObject_ = false;
+            float bestDistSq = kObjectPickRadius * kObjectPickRadius;
+            for (const auto& record : CollectMoveObjects(world))
+            {
+                const Easy3D::Camera3D::Vector3 renderPos(
+                    record.posStartX - static_cast<float>(GEWorldRuntime::kWorldCenterX),
+                    record.posStartY,
+                    record.posStartZ - static_cast<float>(GEWorldRuntime::kWorldCenterZ));
+                float projX = 0.0f;
+                float projY = 0.0f;
+                if (!GEHud::ProjectWorldToHudSpace(renderPos, camera.GetViewMatrix(), camera.GetProjectionMatrix(),
+                                                    viewportWidth, viewportHeight, projX, projY))
+                {
+                    continue; // behind the camera -- not a real pick candidate
+                }
+                const float dx = projX - kHudCenterX;
+                const float dy = projY - kHudCenterY;
+                const float distSq = dx * dx + dy * dy;
+                if (distSq < bestDistSq)
+                {
+                    bestDistSq = distSq;
+                    hasSelectedObject_ = true;
+                    selectedObject_ = record;
+                    selectedAnchorX_ = static_cast<std::uint16_t>(std::floor(record.posStartX));
+                    selectedAnchorY_ = static_cast<std::uint16_t>(std::floor(record.posStartY));
+                    selectedAnchorZ_ = static_cast<std::uint16_t>(std::floor(record.posStartZ));
+                    selectedRenderX_ = renderPos.X;
+                    selectedRenderY_ = renderPos.Y;
+                    selectedRenderZ_ = renderPos.Z;
+                }
+            }
+        }
+        else if (targetKeyHeld && !targetKeyHeldLastFrame_ && hasSelectedObject_ && hasHighlight_)
+        {
+            // T: give the selected object a real patrol path by setting its
+            // posEnd to wherever the crosshair currently aims. posStart (and
+            // so the anchor cell) is untouched, so this always overwrites
+            // the same anchor PlaceMoveObject already replaced it at.
+            MoveObjectRecord after = selectedObject_;
+            after.posEndX = static_cast<float>(hitCellX_);
+            after.posEndY = static_cast<float>(hitCellY_);
+            after.posEndZ = static_cast<float>(hitCellZ_);
+
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::MoveObjectEdit;
+            command.objectAnchorX = selectedAnchorX_;
+            command.objectAnchorY = selectedAnchorY_;
+            command.objectAnchorZ = selectedAnchorZ_;
+            command.objectBefore = selectedObject_;
+            command.objectAfter = after;
+            PlaceMoveObject(world, after);
+            commandStack_.Push(std::move(command));
+            selectedObject_ = after;
+            needsPresentationRebuild_ = true;
+        }
+        else if (cycleFieldKeyHeld && !cycleFieldKeyHeldLastFrame_ && hasSelectedObject_)
+        {
+            activeField_ = static_cast<EditableField>(
+                (static_cast<int>(activeField_) + 1) % kEditableFieldCount);
+        }
+        else if (((increaseFieldKeyHeld && !increaseFieldKeyHeldLastFrame_) ||
+                  (decreaseFieldKeyHeld && !decreaseFieldKeyHeldLastFrame_)) &&
+                 hasSelectedObject_)
+        {
+            const float sign = (increaseFieldKeyHeld && !increaseFieldKeyHeldLastFrame_) ? 1.0f : -1.0f;
+            const std::optional<MoveObjectRecord> after = ApplyActiveFieldDelta(selectedObject_, sign);
+            if (after.has_value())
+            {
+                GEEditCommand command;
+                command.kind = GEEditCommand::Kind::MoveObjectEdit;
+                command.objectAnchorX = selectedAnchorX_;
+                command.objectAnchorY = selectedAnchorY_;
+                command.objectAnchorZ = selectedAnchorZ_;
+                command.objectBefore = selectedObject_;
+                command.objectAfter = *after;
+                PlaceMoveObject(world, *after);
+                commandStack_.Push(std::move(command));
+                selectedObject_ = *after;
+                needsPresentationRebuild_ = true;
+            }
+        }
+        else if (deleteObjectKeyHeld && !deleteObjectKeyHeldLastFrame_ && hasSelectedObject_)
+        {
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::MoveObjectEdit;
+            command.objectAnchorX = selectedAnchorX_;
+            command.objectAnchorY = selectedAnchorY_;
+            command.objectAnchorZ = selectedAnchorZ_;
+            command.objectBefore = selectedObject_;
+            command.objectAfter = std::nullopt;
+            RemoveMoveObject(world, selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
+            commandStack_.Push(std::move(command));
+            hasSelectedObject_ = false;
+            needsPresentationRebuild_ = true;
+        }
         leftHeldLastFrame_ = leftHeld;
         middleHeldLastFrame_ = middleHeld;
         enterHeldLastFrame_ = enterHeld;
@@ -404,6 +530,74 @@ namespace GalaxyEggbert::CNA
         redoKeyHeldLastFrame_ = redoKeyHeld;
         boxKeyHeldLastFrame_ = boxKeyHeld;
         escapeKeyHeldLastFrame_ = escapeKeyHeld;
+        selectKeyHeldLastFrame_ = selectKeyHeld;
+        targetKeyHeldLastFrame_ = targetKeyHeld;
+        cycleFieldKeyHeldLastFrame_ = cycleFieldKeyHeld;
+        increaseFieldKeyHeldLastFrame_ = increaseFieldKeyHeld;
+        decreaseFieldKeyHeldLastFrame_ = decreaseFieldKeyHeld;
+        deleteObjectKeyHeldLastFrame_ = deleteObjectKeyHeld;
+    }
+
+    std::optional<MoveObjectRecord> GEWorldEditor::ApplyActiveFieldDelta(
+        const MoveObjectRecord& record, float sign) const noexcept
+    {
+        MoveObjectRecord updated = record;
+        switch (activeField_)
+        {
+            case EditableField::Speed:
+            {
+                const float value = std::max(kMinObjectSpeed, record.speed + sign * kObjectSpeedStep);
+                if (value == record.speed) return std::nullopt;
+                updated.speed = value;
+                break;
+            }
+            case EditableField::StepAdvanceTicks:
+            {
+                const float value = std::max(0.0f, record.stepAdvanceTicks + sign * kObjectTicksStep);
+                if (value == record.stepAdvanceTicks) return std::nullopt;
+                updated.stepAdvanceTicks = value;
+                break;
+            }
+            case EditableField::StepRecedeTicks:
+            {
+                const float value = std::max(0.0f, record.stepRecedeTicks + sign * kObjectTicksStep);
+                if (value == record.stepRecedeTicks) return std::nullopt;
+                updated.stepRecedeTicks = value;
+                break;
+            }
+            case EditableField::TimeStopStartTicks:
+            {
+                const float value = std::max(0.0f, record.timeStopStartTicks + sign * kObjectTicksStep);
+                if (value == record.timeStopStartTicks) return std::nullopt;
+                updated.timeStopStartTicks = value;
+                break;
+            }
+            case EditableField::TimeStopEndTicks:
+            {
+                const float value = std::max(0.0f, record.timeStopEndTicks + sign * kObjectTicksStep);
+                if (value == record.timeStopEndTicks) return std::nullopt;
+                updated.timeStopEndTicks = value;
+                break;
+            }
+        }
+        return updated;
+    }
+
+    void GEWorldEditor::RefreshSelectedObjectAfterHistoryChange(const Worlds::World& world)
+    {
+        if (!hasSelectedObject_)
+        {
+            return;
+        }
+        const auto refreshed = FindMoveObjectAnchoredAt(world, selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
+        if (refreshed.has_value())
+        {
+            selectedObject_ = *refreshed;
+        }
+        else
+        {
+            hasSelectedObject_ = false;
+        }
     }
 
     bool GEWorldEditor::ConsumeNeedsPresentationRebuild() noexcept
@@ -439,6 +633,17 @@ namespace GalaxyEggbert::CNA
         else
         {
             highlightRenderer_.Hide();
+        }
+
+        if (hasSelectedObject_)
+        {
+            selectionHighlightRenderer_.ShowSelectedObject(device, selectedRenderX_, selectedRenderY_,
+                                                            selectedRenderZ_);
+            selectionHighlightRenderer_.Draw(device, camera);
+        }
+        else
+        {
+            selectionHighlightRenderer_.Hide();
         }
 
         palette_.Draw(device, terrainTexture, viewportWidth, viewportHeight);
