@@ -751,6 +751,15 @@ namespace GalaxyEggbert::CNA
             case GEBlupiController::VehicleMode::Skateboard:  depositType = GalaxyEggbert::ObjectType::ObjectType24; break;
             default:                                          depositType = GalaxyEggbert::ObjectType::ObjectType46; break;
         }
+        // Real DeposeSkate anim (plan.md BLUPI-091 gap, table_blupi ID 43,
+        // wired 2026-07-19) -- Skateboard is the only vehicle with a
+        // dedicated dismount pose (checked the reference doc for the
+        // other 4 modes; none exist), so this fires only for it.
+        if (blupi_.GetVehicleMode() == GEBlupiController::VehicleMode::Skateboard)
+        {
+            blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::DeposeSkate,
+                                       GEBlupiController::kDeposeSkateDuration);
+        }
         blupi_.TriggerDismount();
         auto& objects = worldRuntime_.GetMobileObjectsMutable();
         MobileObjSpec deposited;
@@ -2437,6 +2446,15 @@ namespace GalaxyEggbert::CNA
                         if (mdx * mdx + mdy * mdy + mdz * mdz < kVehicleMountRadius * kVehicleMountRadius &&
                             blupi_.TriggerMount(mode, blupi_.IsNage(), blupi_.IsSurf()))
                         {
+                            // Real TakeSkate anim (plan.md BLUPI-091 gap,
+                            // table_blupi ID 42, wired 2026-07-19) -- same
+                            // "only Skateboard has this" reasoning as
+                            // DeposeSkate in DismountAndDepositVehicle().
+                            if (mode == GEBlupiController::VehicleMode::Skateboard)
+                            {
+                                blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::TakeSkate,
+                                                           GEBlupiController::kTakeSkateDuration);
+                            }
                             obj.active = false;
                             break;
                         }

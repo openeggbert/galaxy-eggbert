@@ -204,6 +204,12 @@ namespace GalaxyEggbert::CNA
         constexpr int kPutDynamiteFrames[] = {
             135, 135, 137, 137, 231, 231, 231, 231, 230, 230, 231, 231, 231, 231,
             230, 230, 231, 231, 231, 231, 230, 230, 137, 137, 135, 135};
+        constexpr int kTakeSkateFrames[] = {
+            17, 17, 18, 18, 19, 19, 1, 1, 215, 215, 214, 214, 213, 213, 212, 212,
+            211, 211, 210, 210};
+        constexpr int kDeposeSkateFrames[] = {
+            210, 210, 211, 211, 212, 212, 213, 213, 214, 214, 215, 215, 1, 1, 19,
+            19, 18, 18, 17, 17};
         constexpr int kMockeryFrames[] = {
             263, 264, 265, 264, 263, 264, 265, 264, 263, 264, 265, 264, 263, 264,
             265, 264, 263, 264, 265, 264, 263, 264, 265, 264, 263, 264, 265, 264,
@@ -1788,6 +1794,10 @@ namespace GalaxyEggbert::CNA
                 return kTakeDynamiteFrames[m_animPhase % (sizeof(kTakeDynamiteFrames) / sizeof(kTakeDynamiteFrames[0]))];
             case AnimState::PutDynamite:
                 return kPutDynamiteFrames[m_animPhase % (sizeof(kPutDynamiteFrames) / sizeof(kPutDynamiteFrames[0]))];
+            case AnimState::TakeSkate:
+                return kTakeSkateFrames[m_animPhase % (sizeof(kTakeSkateFrames) / sizeof(kTakeSkateFrames[0]))];
+            case AnimState::DeposeSkate:
+                return kDeposeSkateFrames[m_animPhase % (sizeof(kDeposeSkateFrames) / sizeof(kDeposeSkateFrames[0]))];
             case AnimState::Mockery:
                 return kMockeryFrames[m_animPhase % (sizeof(kMockeryFrames) / sizeof(kMockeryFrames[0]))];
             case AnimState::Mockeryi:

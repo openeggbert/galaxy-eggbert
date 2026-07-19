@@ -1828,6 +1828,52 @@ int main(int argc, char** argv)
               "back on the ground and idle on a Skateboard returns to StopSkate, not stuck in AirSkate");
     }
 
+    // TakeSkate/DeposeSkate one-shot mount/dismount anim (table_blupi actions
+    // 42/43, wired 2026-07-19 in GalaxyEggbertCnaGame.cpp's mount/dismount
+    // hook points) -- direct GEBlupiController-level coverage of the
+    // TriggerOneShotAnim() mechanism itself, same "freeze, count down,
+    // auto-resume" shape already used by Switch/TakeDynamite/PutDynamite.
+    {
+        GEBlupiController mounting;
+        mounting.SetPosition(0.0f, 1.0f, 0.0f);
+        check(mounting.TriggerOneShotAnim(GEBlupiController::AnimState::TakeSkate,
+                                           GEBlupiController::kTakeSkateDuration),
+              "TriggerOneShotAnim(TakeSkate) returns true when not already frozen/locked");
+        check(mounting.IsOneShotAnimPlaying(), "IsOneShotAnimPlaying() is true immediately after triggering TakeSkate");
+        mounting.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(mounting.GetAnimState() == GEBlupiController::AnimState::TakeSkate,
+              "TakeSkate anim state takes precedence over Stop/StopSkate while playing");
+        check(mounting.GetAnimIcon() == 17, "TakeSkate anim icon starts at the real first frame (icon 17)");
+
+        int stepsToResume = 0;
+        while (mounting.IsOneShotAnimPlaying() && stepsToResume < 200)
+        {
+            mounting.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToResume;
+        }
+        check(stepsToResume < 200, "TakeSkate one-shot anim resolves within a bounded time");
+        check(!mounting.IsOneShotAnimPlaying(), "TakeSkate one-shot anim ends on its own after kTakeSkateDuration");
+
+        GEBlupiController dismounting;
+        dismounting.SetPosition(0.0f, 1.0f, 0.0f);
+        check(dismounting.TriggerOneShotAnim(GEBlupiController::AnimState::DeposeSkate,
+                                              GEBlupiController::kDeposeSkateDuration),
+              "TriggerOneShotAnim(DeposeSkate) returns true when not already frozen/locked");
+        dismounting.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(dismounting.GetAnimState() == GEBlupiController::AnimState::DeposeSkate,
+              "DeposeSkate anim state takes precedence while playing");
+        check(dismounting.GetAnimIcon() == 210, "DeposeSkate anim icon starts at the real first frame (icon 210)");
+
+        int stepsToResumeDepose = 0;
+        while (dismounting.IsOneShotAnimPlaying() && stepsToResumeDepose < 200)
+        {
+            dismounting.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToResumeDepose;
+        }
+        check(stepsToResumeDepose < 200, "DeposeSkate one-shot anim resolves within a bounded time");
+        check(!dismounting.IsOneShotAnimPlaying(), "DeposeSkate one-shot anim ends on its own after kDeposeSkateDuration");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

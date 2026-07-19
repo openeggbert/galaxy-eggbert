@@ -237,6 +237,8 @@ namespace GalaxyEggbert::CNA
         static constexpr float kSwitchDuration = 10.0f / 20.0f;
         static constexpr float kTakeDynamiteDuration = 18.0f / 20.0f;
         static constexpr float kPutDynamiteDuration = 26.0f / 20.0f;
+        static constexpr float kTakeSkateDuration = 20.0f / 20.0f;
+        static constexpr float kDeposeSkateDuration = 20.0f / 20.0f;
 
         // Real Mockery(63)/Mockeryi(64)/Mockeryp(83) durations (same
         // frameCount/20.0f conversion) and the real 300-tick (15s)
@@ -521,6 +523,15 @@ namespace GalaxyEggbert::CNA
             // everything, count a timer down, auto-resume" shape as
             // TriggerBye()/TriggerPickupFreeze()).
             Switch, TakeDynamite, PutDynamite,
+            // TakeSkate/DeposeSkate (`table_blupi` IDs 42/43, 20 frames each
+            // = 1.0s, wired 2026-07-19): real mount/dismount pose, the only
+            // vehicle with a dedicated one (checked the reference doc for
+            // Helicopter/Jeep/Tank/Overcraft equivalents -- none exist).
+            // Same TriggerOneShotAnim() freeze/timer shape as Switch/
+            // TakeDynamite/PutDynamite above; caller fires these from the
+            // real Skateboard mount/dismount hook points in
+            // GalaxyEggbertCnaGame.cpp.
+            TakeSkate, DeposeSkate,
             // Real Mockery/Mockeryi/Mockeryp (plan.md BLUPI-067, found
             // 2026-07-18, user question: "does Blupi stick his tongue out
             // at a nearby enemy?") -- verified directly against
