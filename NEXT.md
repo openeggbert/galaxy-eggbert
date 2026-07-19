@@ -79,6 +79,20 @@ it. Verified working via a real headless-Chrome/WebGL2 run (see `BUILD-003`); no
 CI or a hosting pipeline (`BUILD-009`/`BUILD-010`, still open) — publishing the built files is a
 manual step for now.
 
+**Re-verified 2026-07-19** (user request: rebuild for their own site) — `build-web` was stale
+(last built 2026-07-17, before EDITOR-100..109 landed 2026-07-18); the editor sources were already
+wired into the `EMSCRIPTEN` branch of the `GalaxyEggbertCNA` target in `CMakeLists.txt`, so this
+was a plain reconfigure + rebuild, no CMake changes needed. Rebuilt cleanly (`-j2`, only
+pre-existing harmless warnings), produced a fresh ~24MB `.data` + `.html`/`.js`/`.wasm`, and
+re-verified with a real headless-Chrome/WebGL2 run driven over the DevTools protocol (served from
+`build-web/` over local HTTP): console showed a real WebGL2 context, `world001.vwr` loading,
+terrain/background/sound assets loading (93/93 sound channels), a terrain mesh uploading, and a
+screenshot confirmed the real Init/gamer-select "Speedy Blupi" screen rendering correctly. (A
+headless run using Chrome's `--virtual-time-budget` flag instead produced a black canvas — a
+headless-testing-harness artifact from virtual time desyncing with the app's real async asset
+loads, not a build regression; the DevTools-protocol approach with a real wall-clock wait, same as
+the original `BUILD-003` verification, is the reliable way to test this.)
+
 Note observed this session: a `sharp-runtime` (external sibling dependency, `../sharp-runtime`)
 build once failed with a duplicate `Environment::SetEnvironmentVariable` declaration/definition
 conflict, then succeeded on an immediate retry with no changes on this side — that repository
