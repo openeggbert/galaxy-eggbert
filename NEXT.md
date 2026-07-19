@@ -136,14 +136,17 @@ Last full run (2026-07-19, `build-cna` only, after EDITOR-110):
 - Free-fly camera: WASD + Space/Ctrl, hold RMB for mouse-look, scroll adjusts fly speed.
 - Voxel raycast crosshair (Amanatides–Woo DDA) with a live highlight of the aimed-at cell.
 - Left click places the selected block on the aimed-at face; middle click removes a block.
-- `F` starts a box-fill: first press marks corner A, the highlight tracks a live cuboid, a second
-  press fills it as ONE undo command. `Escape` cancels.
+- `F` (or the palette's BoxFill button) starts a box-fill: first press/click marks corner A, the
+  highlight tracks a live cuboid, a second press/click fills it as ONE undo command. `Escape`
+  cancels.
 - Undo/redo (`U`/`R` or toolbar), 200-command depth cap.
-- Palette UI: a left-edge toolbar (Undo/Redo/Save/Back/Play-Test/mode-toggle) and a right-side
-  paged icon grid with Confirmed/All tabs. Both Blocks and Objects mode draw the real per-type
-  sprite (object-m.png/element.png/explo.png/blupi.png/blupi1.png, whichever `GEObjectIcons` says
-  the type actually lives on), each cell on a translucent backing square (2026-07-19 redesign,
-  replacing the original flat category-colored-cell placeholder — see §3).
+- Palette UI: a single vertical column of solid-green buttons at the left edge (2026-07-19 redesign
+  to match free-eggbert's own editor palette, a user-supplied reference screenshot — supersedes the
+  earlier left-toolbar + right-grid layout) — 8 fixed action buttons paired 2-per-row (Undo/Redo,
+  Save/Back, Play-Test/mode-toggle, BoxFill/Confirmed-All-tab-toggle), a paging row, then the
+  current page's block/object icons one per row. Both Blocks and Objects mode draw the real
+  per-type sprite (object-m.png/element.png/explo.png/blupi.png/blupi1.png, whichever
+  `GEObjectIcons` says the type actually lives on) on a solid green backing — see §3.
 - Objects mode places real `MoveObjectRecord`s (enemies, pickups, lifts) that appear immediately as
   billboards — no save/reload round-trip.
 - `G` selects whichever already-placed `MoveObjectRecord`'s billboard projects nearest screen center
@@ -263,6 +266,38 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 
 Most recent first. Full history: `git log`.
 
+### World editor: single-column green palette layout + BoxFill button (2026-07-19)
+
+Follow-up to the per-type-icons redesign below, same session: the user clarified (with the same
+`freeeggbert_editor.jpg` reference) that the *layout* also needed to match free-eggbert, not just
+the icon style — one vertical column of solid-green buttons at the left edge, no separate grid
+elsewhere on screen, plus a real toolbar button for box-fill ("beyond free-eggbert scope").
+`GEEditorPalette` was rewritten from left-toolbar-plus-right-8x4-grid to a single left column:
+- 8 fixed action buttons, paired 2-per-row (`ToolbarButtonRect(index)`: `index/2` = row, `index%2`
+  = left/right half) — Undo/Redo, Save/Back, Play-Test/mode-toggle, BoxFill/Confirmed-All-tab —
+  then a paging row, then content cells one per row. Pairing was necessary, not cosmetic: 9
+  full-width rows (the original one-row-per-action draft) need 514px of vertical space alone, more
+  than this engine's actual default 800x480 window has room for at all; 5 paired rows leaves real
+  space for content.
+- `PageCount()`/a new `ItemsPerPage()` now take the real `viewportHeight` and compute how many
+  content rows fit below the fixed header, replacing the old compile-time `kIconsPerPage=32`
+  constant — a single column has much less room per page than an 8x4 grid did.
+- New `ToolbarAction::BoxFill`, wired into `GEWorldEditor::Update()`'s existing box-fill state
+  machine via a simple `||` alongside the F-key condition — clicking the button behaves exactly
+  like pressing F (first click marks corner A, second click fills), no new state needed.
+- Solid green backing (not translucent) for every button, matching the reference's opaque style;
+  the mode-toggle and Confirmed/All-tab buttons brighten to a lighter green when "on" (position
+  alone can't convey that state); the selected content icon gets a gold highlight instead of the
+  old enlarged-white-square treatment, so it stands out clearly against the now-green background.
+5 new `VerifyGEWorldEditor` assertions (the BoxFill button drives the identical fill/undo behavior
+the F key already had, verified against the same expected-region math). All existing palette-click
+tests' hardcoded pixel coordinates were recomputed for the new geometry (the old ones silently
+clicked the wrong control after the layout changed, until a full rebuild+rerun caught it as a wall
+of new failures — fixed by walking every hardcoded coordinate in the test file, not by guessing).
+Live-verified under `xvfb-run` with temporary env-var-gated instrumentation (fully reverted before
+commit): both Blocks and Objects mode screenshots confirmed the single green column, real icons,
+and the mode-toggle's brighter-green "on" state.
+
 ### World editor: real per-type object icons, replacing flat category-colored cells (2026-07-19)
 
 User-requested redesign (unprompted user feedback, screenshot-driven, referencing free-eggbert's
@@ -286,7 +321,10 @@ Every Objects-mode cell also gained a translucent white backing square (same tec
 toolbar buttons, which the user explicitly asked to keep) so a real sprite's transparent margins
 still read clearly against the animated 3D scene behind the palette — this was the SAME flat-quad
 mechanism already used for the toolbar/selection-highlight, just now applied to every cell in
-Objects mode (Blocks mode is untouched, its icons are already opaque).
+Objects mode (Blocks mode is untouched, its icons are already opaque). **Superseded within the same
+session** by the layout entry above: the backing is now solid green (matching the reference's
+opaque button style, not translucent), applied uniformly to Blocks mode too, once the user
+clarified the reference meant the whole layout, not just per-cell icons.
 
 No `VerifyGEWorldEditor` test changes were needed (`Draw()` is not exercised by that suite — it's
 the one method needing a real `GraphicsDevice`, per this class's own established convention).

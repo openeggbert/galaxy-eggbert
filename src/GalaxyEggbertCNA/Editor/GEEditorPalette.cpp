@@ -11,27 +11,52 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        constexpr float kToolbarButtonSize = 48.0f;
-        constexpr float kToolbarGap = 8.0f;
-        constexpr float kToolbarX = 10.0f;
-        constexpr float kToolbarY0 = 10.0f;
+        // Smaller than the old 48px toolbar buttons -- 9 full-width rows
+        // (the old design's action-button count) would need 514px of
+        // vertical space alone, more than this engine's actual default
+        // 800x480 window has room for. Pairing 2 actions per row (like the
+        // existing Prev/Next paging split) keeps 8 actions + paging in 5
+        // rows instead of 9, leaving real room for content below.
+        constexpr float kButtonSize = 32.0f;
+        constexpr float kButtonGap = 4.0f;
+        constexpr float kColumnX = 10.0f;
+        constexpr float kColumnY0 = 10.0f;
 
-        constexpr float kPaletteIconSize = 40.0f;
-        constexpr float kPaletteIconGap = 4.0f;
-        constexpr int kPaletteCols = 8;
-        constexpr int kPaletteRows = 4;
-        constexpr int kIconsPerPage = kPaletteCols * kPaletteRows;
-        constexpr float kGridMargin = 10.0f;
+        // Fixed action-button indices, top to bottom, 2 per row (left/right
+        // half) -- see ToolbarButtonRect().
+        constexpr int kIndexUndo = 0;
+        constexpr int kIndexRedo = 1;
+        constexpr int kIndexSave = 2;
+        constexpr int kIndexBack = 3;
+        constexpr int kIndexPlayTest = 4;
+        constexpr int kIndexModeToggle = 5;
+        constexpr int kIndexBoxFill = 6;
+        constexpr int kIndexTabToggle = 7;
+        constexpr int kHeaderRowCount = 5; // (Undo/Redo),(Save/Back),(PlayTest/ModeToggle),(BoxFill/TabToggle),(Paging)
 
-        constexpr float kTabToggleWidth = 80.0f;
-        constexpr float kTabToggleHeight = 24.0f;
-        constexpr float kPageButtonSize = 24.0f;
-        constexpr float kControlGap = 4.0f;
+        constexpr float kSelectionHighlightPadding = 3.0f;
 
-        constexpr float kSelectionHighlightPadding = 4.0f;
-
-        float GridWidth() { return kPaletteCols * (kPaletteIconSize + kPaletteIconGap) - kPaletteIconGap; }
-        float GridHeight() { return kPaletteRows * (kPaletteIconSize + kPaletteIconGap) - kPaletteIconGap; }
+        // Free-eggbert's own solid-green editor button color (2026-07-19
+        // redesign, user-supplied reference screenshot) -- opaque, not
+        // translucent like the old grey backing: every button reads as a
+        // real, solid UI element, not a faint overlay on the 3D scene.
+        Microsoft::Xna::Framework::Vector3 ButtonGreen()
+        {
+            return {0.20f, 0.62f, 0.22f};
+        }
+        // Brighter green for a button's "on" state (Objects mode, All tab)
+        // -- position alone can't convey this, same reasoning the old
+        // mode-toggle color-swap already used.
+        Microsoft::Xna::Framework::Vector3 ButtonGreenActive()
+        {
+            return {0.45f, 0.90f, 0.35f};
+        }
+        // Gold highlight behind the selected palette icon -- distinct from
+        // both greens so the selection reads unambiguously.
+        Microsoft::Xna::Framework::Vector3 SelectionGold()
+        {
+            return {0.95f, 0.80f, 0.20f};
+        }
     }
 
     GEEditorPalette::GEEditorPalette()
@@ -52,73 +77,87 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    int GEEditorPalette::PageCount() const noexcept
+    int GEEditorPalette::ItemsPerPage(int viewportHeight) const noexcept
     {
+        const float used = kColumnY0 + static_cast<float>(kHeaderRowCount) * (kButtonSize + kButtonGap);
+        const float available = static_cast<float>(viewportHeight) - used;
+        const int count = static_cast<int>(available / (kButtonSize + kButtonGap));
+        return std::max(1, count);
+    }
+
+    int GEEditorPalette::PageCount(int viewportHeight) const noexcept
+    {
+        const int perPage = ItemsPerPage(viewportHeight);
         const int count = static_cast<int>(CurrentIconList().size());
-        return std::max(1, (count + kIconsPerPage - 1) / kIconsPerPage);
+        return std::max(1, (count + perPage - 1) / perPage);
+    }
+
+    namespace
+    {
+        GEQuadBatch::Rect RowRect(int row) noexcept
+        {
+            const float y0 = kColumnY0 + static_cast<float>(row) * (kButtonSize + kButtonGap);
+            return {kColumnX, y0, kColumnX + kButtonSize, y0 + kButtonSize};
+        }
+        GEQuadBatch::Rect LeftHalf(const GEQuadBatch::Rect& row) noexcept
+        {
+            const float mid = (row.x0 + row.x1) * 0.5f - kButtonGap * 0.25f;
+            return {row.x0, row.y0, mid, row.y1};
+        }
+        GEQuadBatch::Rect RightHalf(const GEQuadBatch::Rect& row) noexcept
+        {
+            const float mid = (row.x0 + row.x1) * 0.5f + kButtonGap * 0.25f;
+            return {mid, row.y0, row.x1, row.y1};
+        }
     }
 
     GEQuadBatch::Rect GEEditorPalette::ToolbarButtonRect(int index) const noexcept
     {
-        const float y0 = kToolbarY0 + static_cast<float>(index) * (kToolbarButtonSize + kToolbarGap);
-        return {kToolbarX, y0, kToolbarX + kToolbarButtonSize, y0 + kToolbarButtonSize};
+        const GEQuadBatch::Rect row = RowRect(index / 2);
+        return (index % 2 == 1) ? RightHalf(row) : LeftHalf(row);
     }
 
-    GEQuadBatch::Rect GEEditorPalette::TabToggleRect(int viewportWidth, int viewportHeight) const noexcept
+    GEQuadBatch::Rect GEEditorPalette::TabToggleRect(int, int) const noexcept
     {
-        const float gridX0 = static_cast<float>(viewportWidth) - GridWidth() - kGridMargin;
-        const float gridY0 = static_cast<float>(viewportHeight) - GridHeight() - kGridMargin;
-        const float y0 = gridY0 - kTabToggleHeight - kControlGap;
-        return {gridX0, y0, gridX0 + kTabToggleWidth, y0 + kTabToggleHeight};
+        return ToolbarButtonRect(kIndexTabToggle);
     }
 
-    GEQuadBatch::Rect GEEditorPalette::PagePrevRect(int viewportWidth, int viewportHeight) const noexcept
+    GEQuadBatch::Rect GEEditorPalette::PagePrevRect(int, int) const noexcept
     {
-        const GEQuadBatch::Rect tab = TabToggleRect(viewportWidth, viewportHeight);
-        return {tab.x1 + kControlGap, tab.y0, tab.x1 + kControlGap + kPageButtonSize, tab.y0 + kPageButtonSize};
+        return LeftHalf(RowRect(kHeaderRowCount - 1));
     }
 
-    GEQuadBatch::Rect GEEditorPalette::PageNextRect(int viewportWidth, int viewportHeight) const noexcept
+    GEQuadBatch::Rect GEEditorPalette::PageNextRect(int, int) const noexcept
     {
-        const GEQuadBatch::Rect prev = PagePrevRect(viewportWidth, viewportHeight);
-        return {prev.x1 + kControlGap, prev.y0, prev.x1 + kControlGap + kPageButtonSize, prev.y0 + kPageButtonSize};
+        return RightHalf(RowRect(kHeaderRowCount - 1));
     }
 
-    GEQuadBatch::Rect GEEditorPalette::PaletteCellRect(int indexOnPage, int viewportWidth,
-                                                       int viewportHeight) const noexcept
+    GEQuadBatch::Rect GEEditorPalette::PaletteCellRect(int indexOnPage, int, int) const noexcept
     {
-        const int col = indexOnPage % kPaletteCols;
-        const int row = indexOnPage / kPaletteCols;
-        const float gridX0 = static_cast<float>(viewportWidth) - GridWidth() - kGridMargin;
-        const float gridY0 = static_cast<float>(viewportHeight) - GridHeight() - kGridMargin;
-        const float x0 = gridX0 + static_cast<float>(col) * (kPaletteIconSize + kPaletteIconGap);
-        const float y0 = gridY0 + static_cast<float>(row) * (kPaletteIconSize + kPaletteIconGap);
-        return {x0, y0, x0 + kPaletteIconSize, y0 + kPaletteIconSize};
+        return RowRect(kHeaderRowCount + indexOnPage);
     }
 
     bool GEEditorPalette::HitsAnyControl(float x, float y, int viewportWidth,
                                           int viewportHeight) const noexcept
     {
-        for (int i = 0; i <= 5; ++i)
+        for (int i = 0; i <= kIndexTabToggle; ++i)
         {
             if (GEQuadBatch::InRect(x, y, ToolbarButtonRect(i)))
             {
                 return true;
             }
         }
-        if (GEQuadBatch::InRect(x, y, TabToggleRect(viewportWidth, viewportHeight)))
-        {
-            return true;
-        }
-        if (PageCount() > 1 &&
+        const int pageCount = PageCount(viewportHeight);
+        if (pageCount > 1 &&
             (GEQuadBatch::InRect(x, y, PagePrevRect(viewportWidth, viewportHeight)) ||
              GEQuadBatch::InRect(x, y, PageNextRect(viewportWidth, viewportHeight))))
         {
             return true;
         }
         const auto& icons = CurrentIconList();
-        const int startIdx = std::clamp(page_, 0, PageCount() - 1) * kIconsPerPage;
-        for (int i = 0; i < kIconsPerPage; ++i)
+        const int perPage = ItemsPerPage(viewportHeight);
+        const int startIdx = std::clamp(page_, 0, pageCount - 1) * perPage;
+        for (int i = 0; i < perPage; ++i)
         {
             if (startIdx + i >= static_cast<int>(icons.size()))
             {
@@ -168,38 +207,43 @@ namespace GalaxyEggbert::CNA
                 return result;
             }
 
-            const int pageCount = PageCount();
+            const int pageCount = PageCount(viewportHeight);
             page_ = std::clamp(page_, 0, pageCount - 1);
 
-            if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(0)))
+            if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexUndo)))
             {
                 result.action = ToolbarAction::Undo;
                 result.clickConsumed = true;
             }
-            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(1)))
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexRedo)))
             {
                 result.action = ToolbarAction::Redo;
                 result.clickConsumed = true;
             }
-            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(2)))
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexSave)))
             {
                 result.action = ToolbarAction::Save;
                 result.clickConsumed = true;
             }
-            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(3)))
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexBack)))
             {
                 result.action = ToolbarAction::Back;
                 result.clickConsumed = true;
             }
-            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(4)))
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexPlayTest)))
             {
                 result.action = ToolbarAction::PlayTest;
                 result.clickConsumed = true;
             }
-            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(5)))
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexModeToggle)))
             {
                 mode_ = mode_ == PaletteMode::Blocks ? PaletteMode::Objects : PaletteMode::Blocks;
                 page_ = 0;
+                result.clickConsumed = true;
+            }
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexBoxFill)))
+            {
+                result.action = ToolbarAction::BoxFill;
                 result.clickConsumed = true;
             }
             else if (GEQuadBatch::InRect(mx, my, TabToggleRect(viewportWidth, viewportHeight)))
@@ -221,8 +265,9 @@ namespace GalaxyEggbert::CNA
             else
             {
                 const auto& icons = CurrentIconList();
-                const int startIdx = page_ * kIconsPerPage;
-                for (int i = 0; i < kIconsPerPage; ++i)
+                const int perPage = ItemsPerPage(viewportHeight);
+                const int startIdx = page_ * perPage;
+                for (int i = 0; i < perPage; ++i)
                 {
                     const int idx = startIdx + i;
                     if (idx >= static_cast<int>(icons.size()))
@@ -275,42 +320,63 @@ namespace GalaxyEggbert::CNA
             flatEffect_ = std::make_unique<BasicEffect>(device);
             flatEffect_->VertexColorEnabled = false;
             flatEffect_->setTextureEnabledProperty(false);
-            flatEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
         }
 
-        const int pageCount = PageCount();
+        const int pageCount = PageCount(viewportHeight);
         const int clampedPage = std::clamp(page_, 0, pageCount - 1);
         const auto& icons = CurrentIconList();
-        const int startIdx = clampedPage * kIconsPerPage;
+        const int perPage = ItemsPerPage(viewportHeight);
+        const int startIdx = clampedPage * perPage;
 
         device.setBlendStateProperty(BlendState::NonPremultiplied);
 
-        // Flat-colored UI drawn FIRST: toolbar buttons, tab toggle, paging
-        // buttons, a translucent backing behind every Objects-mode cell
-        // (real object sprites can have transparent margins, so a plain
-        // backing keeps them legible against the 3D scene behind -- same
-        // technique/color as the toolbar buttons above), and a
-        // slightly-larger backing square behind the selected icon (added
-        // after that cell's own backing, so it reads as a highlighted
-        // border once the icon renders on top).
-        std::vector<GEQuadBatch::Quad> flatQuads;
-        const auto addFlat = [&flatQuads](const GEQuadBatch::Rect& r)
+        // Solid green backing FIRST: the always-green action buttons, the
+        // mode-toggle/tab-toggle "on"-state buttons (brighter green), and
+        // every content cell (2026-07-19 redesign, matching free-eggbert's
+        // own solid-green button style) -- the real icon (or, for the
+        // fixed action buttons, nothing further) draws on top of this.
+        std::vector<GEQuadBatch::Quad> greenQuads;
+        std::vector<GEQuadBatch::Quad> greenActiveQuads;
+        std::vector<GEQuadBatch::Quad> highlightQuads;
+        const auto addGreen = [&greenQuads](const GEQuadBatch::Rect& r)
         {
-            flatQuads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
+            greenQuads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
         };
-        addFlat(ToolbarButtonRect(0));
-        addFlat(ToolbarButtonRect(1));
-        addFlat(ToolbarButtonRect(2));
-        addFlat(ToolbarButtonRect(3));
-        addFlat(ToolbarButtonRect(4));
-        addFlat(TabToggleRect(viewportWidth, viewportHeight));
-        const int selectedId = mode_ == PaletteMode::Objects ? selectedObjectType_ : selectedBlockType_;
+        const auto addGreenActive = [&greenActiveQuads](const GEQuadBatch::Rect& r)
+        {
+            greenActiveQuads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
+        };
+
+        addGreen(ToolbarButtonRect(kIndexUndo));
+        addGreen(ToolbarButtonRect(kIndexRedo));
+        addGreen(ToolbarButtonRect(kIndexSave));
+        addGreen(ToolbarButtonRect(kIndexBack));
+        addGreen(ToolbarButtonRect(kIndexPlayTest));
+        if (mode_ == PaletteMode::Objects)
+        {
+            addGreenActive(ToolbarButtonRect(kIndexModeToggle));
+        }
+        else
+        {
+            addGreen(ToolbarButtonRect(kIndexModeToggle));
+        }
+        addGreen(ToolbarButtonRect(kIndexBoxFill));
+        if (showAllTab_)
+        {
+            addGreenActive(ToolbarButtonRect(kIndexTabToggle));
+        }
+        else
+        {
+            addGreen(ToolbarButtonRect(kIndexTabToggle));
+        }
         if (pageCount > 1)
         {
-            addFlat(PagePrevRect(viewportWidth, viewportHeight));
-            addFlat(PageNextRect(viewportWidth, viewportHeight));
+            addGreen(PagePrevRect(viewportWidth, viewportHeight));
+            addGreen(PageNextRect(viewportWidth, viewportHeight));
         }
-        for (int i = 0; i < kIconsPerPage; ++i)
+
+        const int selectedId = mode_ == PaletteMode::Objects ? selectedObjectType_ : selectedBlockType_;
+        for (int i = 0; i < perPage; ++i)
         {
             const int idx = startIdx + i;
             if (idx >= static_cast<int>(icons.size()))
@@ -318,42 +384,42 @@ namespace GalaxyEggbert::CNA
                 break;
             }
             const GEQuadBatch::Rect cell = PaletteCellRect(i, viewportWidth, viewportHeight);
-            if (mode_ == PaletteMode::Objects)
-            {
-                addFlat(cell);
-            }
+            addGreen(cell);
             if (icons[static_cast<std::size_t>(idx)] == selectedId)
             {
-                addFlat({cell.x0 - kSelectionHighlightPadding, cell.y0 - kSelectionHighlightPadding,
-                        cell.x1 + kSelectionHighlightPadding, cell.y1 + kSelectionHighlightPadding});
+                highlightQuads.push_back(
+                    {cell.x0 - kSelectionHighlightPadding, cell.y0 - kSelectionHighlightPadding,
+                     cell.x1 + kSelectionHighlightPadding, cell.y1 + kSelectionHighlightPadding,
+                     0.0f, 0.0f, 1.0f, 1.0f});
             }
         }
-        flatEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
-        GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, flatQuads, viewportWidth, viewportHeight, 0.5f);
 
-        // Mode-toggle button, drawn in its own flush so it can carry the
-        // current mode's own color -- the only cue distinguishing the two
-        // modes at a glance, since no toolbar button has a text label.
-        flatEffect_->setDiffuseColorProperty(mode_ == PaletteMode::Objects
-                                                 ? Microsoft::Xna::Framework::Vector3(1.0f, 0.6f, 0.2f)
-                                                 : Microsoft::Xna::Framework::Vector3(0.4f, 0.6f, 0.9f));
-        const GEQuadBatch::Rect modeRect = ToolbarButtonRect(5);
-        const std::vector<GEQuadBatch::Quad> modeQuad{
-            {modeRect.x0, modeRect.y0, modeRect.x1, modeRect.y1, 0.0f, 0.0f, 1.0f, 1.0f}};
-        GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, modeQuad, viewportWidth, viewportHeight, 0.85f);
+        flatEffect_->setDiffuseColorProperty(ButtonGreen());
+        GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, greenQuads, viewportWidth, viewportHeight, 1.0f);
+        if (!greenActiveQuads.empty())
+        {
+            flatEffect_->setDiffuseColorProperty(ButtonGreenActive());
+            GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, greenActiveQuads, viewportWidth,
+                                    viewportHeight, 1.0f);
+        }
+        if (!highlightQuads.empty())
+        {
+            flatEffect_->setDiffuseColorProperty(SelectionGold());
+            GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, highlightQuads, viewportWidth,
+                                    viewportHeight, 1.0f);
+        }
 
         if (mode_ == PaletteMode::Objects)
         {
-            // Real per-type icons (2026-07-19): GEObjectIcons::GetObjIcon()
-            // plus its atlas-selection predicates say which of the 5 real
-            // sprite sheets each type's icon actually lives on -- the SAME
-            // lookup already used to render real MoveObject billboards
-            // during gameplay. Batched per atlas so each needs only one
-            // draw call per page, same shape as the single-atlas
-            // Blocks-mode batch below. Always phase 0 -- a static preview,
-            // no per-cell animation.
+            // Real per-type icons: GEObjectIcons::GetObjIcon() plus its
+            // atlas-selection predicates say which of the 5 real sprite
+            // sheets each type's icon actually lives on -- the SAME lookup
+            // already used to render real MoveObject billboards during
+            // gameplay. Batched per atlas so each needs only one draw call
+            // per page. Always phase 0 -- a static preview, no per-cell
+            // animation.
             std::vector<GEQuadBatch::Quad> terrainQuads, elementQuads, exploQuads, blupiQuads, blupi1Quads;
-            for (int i = 0; i < kIconsPerPage; ++i)
+            for (int i = 0; i < perPage; ++i)
             {
                 const int idx = startIdx + i;
                 if (idx >= static_cast<int>(icons.size()))
@@ -414,9 +480,9 @@ namespace GalaxyEggbert::CNA
         }
         else
         {
-            // Textured palette icons, drawn on top of the flat pass above.
+            // Textured palette icons, drawn on top of the green pass above.
             std::vector<GEQuadBatch::Quad> paletteQuads;
-            for (int i = 0; i < kIconsPerPage; ++i)
+            for (int i = 0; i < perPage; ++i)
             {
                 const int idx = startIdx + i;
                 if (idx >= static_cast<int>(icons.size()))

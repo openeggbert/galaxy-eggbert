@@ -574,6 +574,84 @@ int main()
         check(editor.ConsumeNeedsPresentationRebuild(), "undoing the fill requests a presentation rebuild");
     }
 
+    // --- GEWorldEditor: the palette's BoxFill button drives the exact same box-fill tool as F ---
+    {
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        // Fixed action index 6 (BoxFill): row 3, left half -- (10,118)-(25,150).
+        constexpr float kBoxFillX = 17.0f, kBoxFillY = 134.0f;
+        const auto clickBoxFillButton = [&]()
+        {
+            const MouseState down(static_cast<int>(kBoxFillX), static_cast<int>(kBoxFillY), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(kBoxFillX), static_cast<int>(kBoxFillY), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        constexpr float kDefaultFlySpeed = 15.0f;
+        const float cosPitch = std::cos(kDefaultPitch);
+        const float fwdX = std::sin(kDefaultYaw) * cosPitch;
+        const float fwdY = std::sin(kDefaultPitch);
+        const float fwdZ = -std::cos(kDefaultYaw) * cosPitch;
+
+        const RaycastHit cornerAHit = Raycast(world, 50.0f, 10.0f, 50.0f, fwdX, fwdY, fwdZ, 200.0f);
+        check(cornerAHit.hit, "test setup sanity: corner A raycast hits the slab (BoxFill-button variant)");
+
+        clickBoxFillButton(); // first click: picks corner A, same as the first F press
+
+        constexpr float kMoveDt = 0.3f;
+        editor.Update(KeyboardState{Keys::Space}, restMouse, kMoveDt, 800, 480, camera, world);
+        const float camYAfterMove = 10.0f + 1.0f * kDefaultFlySpeed * kMoveDt;
+        const RaycastHit cornerBHit = Raycast(world, 50.0f, camYAfterMove, 50.0f, fwdX, fwdY, fwdZ, 200.0f);
+        check(cornerBHit.hit && cornerBHit.z != cornerAHit.z,
+              "test setup sanity: corner B is a genuinely different cell (BoxFill-button variant)");
+
+        clickBoxFillButton(); // second click: fills, same as the second F press
+
+        const auto expectedRegion = NormalizeAndClamp(cornerAHit.x, cornerAHit.y, cornerAHit.z,
+                                                        cornerBHit.x, cornerBHit.y, cornerBHit.z,
+                                                        static_cast<int>(world.blocksPerAxis()));
+        bool allFilled = true;
+        for (int x = expectedRegion.minX; x <= expectedRegion.maxX; ++x)
+        {
+            for (int y = expectedRegion.minY; y <= expectedRegion.maxY; ++y)
+            {
+                for (int z = expectedRegion.minZ; z <= expectedRegion.maxZ; ++z)
+                {
+                    if (world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                        static_cast<std::uint16_t>(z))
+                            .type() != GalaxyEggbert::BlockTypes::RockPile)
+                    {
+                        allFilled = false;
+                    }
+                }
+            }
+        }
+        check(allFilled, "clicking the BoxFill toolbar button twice fills the same region the F key would");
+        check(editor.ConsumeNeedsPresentationRebuild(), "the BoxFill button's fill requests a presentation rebuild");
+
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(cornerAHit.x, cornerAHit.y, cornerAHit.z).type() == 1,
+              "undo restores the BoxFill-button fill in one step, same as the F-key path");
+    }
+
     // --- GEPaletteCategories: full numeric coverage + curated-id sanity ---
     {
         const auto allIds = AllBlockIconIdsInOrder();
@@ -617,33 +695,39 @@ int main()
         };
 
         // Layout constants mirroring GEEditorPalette.cpp's own private
-        // anonymous-namespace geometry (kToolbarX/Y0/ButtonSize/Gap,
-        // kPaletteIconSize/Gap/Cols/Rows, kGridMargin, kTabToggle
-        // Width/Height, kControlGap) -- a white-box test of this specific
-        // layout, matching this project's own precedent of pinning exact
-        // internal geometry (e.g. VerifyGEInputPad's real button rects).
-        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 442
-        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 298
+        // anonymous-namespace geometry (2026-07-19 single-column redesign:
+        // kColumnX/Y0/ButtonSize/Gap, 8 fixed action buttons paired
+        // 2-per-row (kIndexUndo..kIndexTabToggle), then content cells one
+        // per row starting at kHeaderRowCount=5) -- a white-box test of
+        // this specific layout, matching this project's own precedent of
+        // pinning exact internal geometry (e.g. VerifyGEInputPad's real
+        // button rects).
+        constexpr float kUndoX = 17.0f, kUndoY = 26.0f;       // index 0, row 0 left half
+        constexpr float kRedoX = 34.0f, kRedoY = 26.0f;       // index 1, row 0 right half
+        constexpr float kSaveX = 17.0f, kSaveY = 62.0f;       // index 2, row 1 left half
+        constexpr float kTabToggleX = 34.0f, kTabToggleY = 134.0f; // index 7, row 3 right half
+        constexpr float kFirstCellX = 26.0f, kFirstCellY = 206.0f;   // content row 0 (row 5)
+        constexpr float kSecondCellY = 242.0f;                        // content row 1 (row 6)
 
         {
             GEEditorPalette palette;
             check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
                   "GEEditorPalette starts with RockPile selected by default");
 
-            const auto result = click(palette, 30.0f, 30.0f); // toolbar button 0 (Undo)
+            const auto result = click(palette, kUndoX, kUndoY); // toolbar button 0 (Undo)
             check(result.action == GEEditorPalette::ToolbarAction::Undo,
                   "clicking the first toolbar button reports Undo");
             check(result.clickConsumed, "a toolbar-button click reports clickConsumed");
         }
         {
             GEEditorPalette palette;
-            const auto result = click(palette, 30.0f, 90.0f); // toolbar button 1 (Redo)
+            const auto result = click(palette, kRedoX, kRedoY); // toolbar button 1 (Redo)
             check(result.action == GEEditorPalette::ToolbarAction::Redo,
                   "clicking the second toolbar button reports Redo");
         }
         {
             GEEditorPalette palette;
-            const auto result = click(palette, 30.0f, 146.0f); // toolbar button 2 (Save)
+            const auto result = click(palette, kSaveX, kSaveY); // toolbar button 2 (Save)
             check(result.action == GEEditorPalette::ToolbarAction::Save,
                   "clicking the third toolbar button reports Save");
         }
@@ -656,26 +740,20 @@ int main()
         }
         {
             GEEditorPalette palette;
-            // Confirmed tab, cell index 1 (col=1,row=0): the second icon in
-            // the first curated category ("Terrain"), BrickWall.
-            const float cellX = kGridX0 + 1.0f * (40.0f + 4.0f) + 20.0f;
-            const float cellY = kGridY0 + 20.0f;
-            const auto result = click(palette, cellX, cellY);
+            // Confirmed tab, content row 1: the second icon in the first
+            // curated category ("Terrain"), BrickWall.
+            const auto result = click(palette, kFirstCellX, kSecondCellY);
             check(result.clickConsumed, "clicking a palette icon cell reports clickConsumed");
             check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::BrickWall,
                   "clicking the Confirmed tab's second icon selects BrickWall");
         }
         {
             GEEditorPalette palette;
-            // Toggle to the All-Icons tab, then click cell index 0 -- should
+            // Toggle to the All-Icons tab, then click content row 0 -- should
             // now select icon id 1 (AllBlockIconIdsInOrder()'s own first
             // entry), proving the tab toggle actually changed the active list.
-            const float tabX = kGridX0 + 10.0f;
-            const float tabY = kGridY0 - 24.0f - 4.0f + 10.0f;
-            (void)click(palette, tabX, tabY);
-            const float cellX = kGridX0 + 20.0f;
-            const float cellY = kGridY0 + 20.0f;
-            const auto result = click(palette, cellX, cellY);
+            (void)click(palette, kTabToggleX, kTabToggleY);
+            const auto result = click(palette, kFirstCellX, kFirstCellY);
             check(result.clickConsumed, "clicking a palette icon cell on the All-Icons tab reports clickConsumed");
             check(palette.SelectedBlockType() == 1,
                   "after toggling to the All-Icons tab, the first cell selects icon id 1");
@@ -813,10 +891,10 @@ int main()
         check(!editor.ConsumePlayTestRequested(),
               "test setup sanity: no play-test requested before any click");
 
-        // Toolbar button 4 (Play-Test): y0 = 10 + 4*(48+8) = 234, so (10,234)-(58,282).
-        const MouseState down(30, 258, 0, ButtonState::Pressed, ButtonState::Released,
+        // Fixed action index 4 (Play-Test): row 2, left half -- (10,82)-(25,114).
+        const MouseState down(17, 98, 0, ButtonState::Pressed, ButtonState::Released,
                               ButtonState::Released, ButtonState::Released, ButtonState::Released);
-        const MouseState up(30, 258, 0, ButtonState::Released, ButtonState::Released,
+        const MouseState up(17, 98, 0, ButtonState::Released, ButtonState::Released,
                             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
@@ -876,8 +954,11 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
-        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f;
-        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f;
+        // 2026-07-19 single-column layout: content row 0 sits at (10..42,
+        // 190..222); toolbar button 0 (Undo) is row 0's left half, (10..25,
+        // 10..42) -- see GEEditorPalette.cpp's own geometry.
+        constexpr float kFirstCellX = 26.0f, kFirstCellY = 206.0f;
+        constexpr float kUndoX = 17.0f, kUndoY = 26.0f;
         const auto pressAndRelease = [&](float x, float y)
         {
             const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
@@ -890,13 +971,13 @@ int main()
             editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
         };
 
-        pressAndRelease(kGridX0 + 20.0f, kGridY0 + 20.0f); // a block-palette icon cell
+        pressAndRelease(kFirstCellX, kFirstCellY); // a block-palette icon cell
         check(solidCountOnSlabPlane() == before,
               "clicking a palette icon in Blocks mode doesn't also place a block at the crosshair");
         check(!editor.ConsumeNeedsPresentationRebuild(),
               "a palette icon click alone doesn't request a presentation rebuild");
 
-        pressAndRelease(30.0f, 30.0f); // toolbar button 0 (Undo) -- nothing to undo
+        pressAndRelease(kUndoX, kUndoY); // toolbar button 0 (Undo) -- nothing to undo
         check(solidCountOnSlabPlane() == before,
               "clicking a toolbar button doesn't also place a block at the crosshair");
 
@@ -975,11 +1056,13 @@ int main()
             (void)palette.Update(down, kViewportW, kViewportH);
             return palette.Update(up, kViewportW, kViewportH);
         };
-        // Toolbar button 5 (mode toggle): y0 = 10 + 5*(48+8) = 290, so (10,290)-(58,338).
-        constexpr float kModeButtonX = 30.0f;
-        constexpr float kModeButtonY = 314.0f;
-        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 442
-        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f; // 298
+        // 2026-07-19 single-column layout: mode toggle is fixed action
+        // index 5 (row 2, right half), content row 0/1 as in the section
+        // above -- see GEEditorPalette.cpp's own geometry.
+        constexpr float kModeButtonX = 34.0f;
+        constexpr float kModeButtonY = 98.0f;
+        constexpr float kFirstCellX = 26.0f, kFirstCellY = 206.0f;
+        constexpr float kSecondCellY = 242.0f;
 
         GEEditorPalette palette;
         check(!palette.IsObjectMode(), "GEEditorPalette starts in Blocks mode");
@@ -990,11 +1073,11 @@ int main()
         check(toggleResult.clickConsumed, "clicking the mode-toggle button reports clickConsumed");
         check(toggleResult.action == GEEditorPalette::ToolbarAction::None,
               "the mode toggle is handled internally -- it reports no ToolbarAction for the caller");
-        check(palette.IsObjectMode(), "clicking the 6th toolbar button switches to Objects mode");
+        check(palette.IsObjectMode(), "clicking the mode-toggle button switches to Objects mode");
 
-        // Cell index 0 of the Confirmed tab in Objects mode = the first
+        // Content row 0 of the Confirmed tab in Objects mode = the first
         // curated object category's first id (Platform Lifts -> ObjectType1).
-        const auto cellResult = click(palette, kGridX0 + 20.0f, kGridY0 + 20.0f);
+        const auto cellResult = click(palette, kFirstCellX, kFirstCellY);
         check(cellResult.clickConsumed, "clicking an object cell reports clickConsumed");
         check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType1,
               "clicking the Objects tab's first cell selects the standard platform lift (ObjectType1)");
@@ -1003,7 +1086,7 @@ int main()
 
         (void)click(palette, kModeButtonX, kModeButtonY);
         check(!palette.IsObjectMode(), "clicking the mode-toggle button again switches back to Blocks mode");
-        const auto blockCellResult = click(palette, kGridX0 + (40.0f + 4.0f) + 20.0f, kGridY0 + 20.0f);
+        const auto blockCellResult = click(palette, kFirstCellX, kSecondCellY);
         check(blockCellResult.clickConsumed, "clicking a block cell after switching back reports clickConsumed");
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::BrickWall,
               "back in Blocks mode, the icon grid selects block types again");
@@ -1135,10 +1218,12 @@ int main()
             editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
             editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
         };
-        paletteClick(30.0f, 314.0f); // mode toggle -> Objects
-        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f;
-        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f;
-        paletteClick(kGridX0 + 20.0f, kGridY0 + 20.0f); // first object cell -> ObjectType1
+        // 2026-07-19 single-column layout: mode toggle is fixed action
+        // index 5 (row 2, right half); content row 0 is the first
+        // Confirmed-tab object cell -- see GEEditorPalette.cpp's own
+        // geometry.
+        paletteClick(34.0f, 98.0f); // mode toggle -> Objects
+        paletteClick(26.0f, 206.0f); // first object cell -> ObjectType1
         (void)editor.ConsumeNeedsPresentationRebuild();
         check(CollectMoveObjects(world).empty(),
               "palette clicks in Objects mode are consumed -- they don't place an object in the world");
@@ -1220,10 +1305,12 @@ int main()
             editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
             editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
         };
-        paletteClick(30.0f, 314.0f); // mode toggle -> Objects
-        constexpr float kGridX0 = 800.0f - (8 * (40.0f + 4.0f) - 4.0f) - 10.0f;
-        constexpr float kGridY0 = 480.0f - (4 * (40.0f + 4.0f) - 4.0f) - 10.0f;
-        paletteClick(kGridX0 + 20.0f, kGridY0 + 20.0f); // first object cell -> ObjectType1
+        // 2026-07-19 single-column layout: mode toggle is fixed action
+        // index 5 (row 2, right half); content row 0 is the first
+        // Confirmed-tab object cell -- see GEEditorPalette.cpp's own
+        // geometry.
+        paletteClick(34.0f, 98.0f); // mode toggle -> Objects
+        paletteClick(26.0f, 206.0f); // first object cell -> ObjectType1
         (void)editor.ConsumeNeedsPresentationRebuild();
 
         const MouseState leftMouse(400, 200, 0, ButtonState::Pressed, ButtonState::Released,

@@ -18,48 +18,48 @@
 
 namespace GalaxyEggbert::CNA
 {
-    // Left-edge toolbar + right-side categorized icon palette for the
-    // world editor (plan.md EDITOR-106). Reuses GETileAtlas::GetTileUv()
-    // and the caller's already-loaded object-m.png texture directly (no
-    // separate asset load) for block icon rendering, and the shared
-    // GEQuadBatch primitives (extracted from GEInputPad this same
-    // milestone) for all 2D quad drawing/hit-testing -- the "reuse the
-    // exact same drawing primitive, don't invent a new one" instruction
-    // taken literally.
+    // Single vertical column of green buttons at the left edge of the
+    // world editor screen (plan.md EDITOR-106, redesigned 2026-07-19 to
+    // match free-eggbert's own editor palette style -- user-supplied
+    // reference screenshot: one column, real per-item icons on solid green
+    // squares, no separate grid elsewhere on screen). Top to bottom: 7
+    // fixed action buttons (Undo/Redo/Save/Back/Play-Test/mode-toggle/
+    // box-fill), the Confirmed/All tab toggle, a paging row (split into
+    // Prev/Next halves), then the current page's block or object icons,
+    // one per row. Reuses GETileAtlas::GetTileUv() and the caller's
+    // already-loaded object-m.png texture directly (no separate asset
+    // load) for Blocks-mode icons, and the shared GEQuadBatch primitives
+    // (extracted from GEInputPad) for all 2D quad drawing/hit-testing.
     //
-    // Object-mode icons (2026-07-19, user-requested redesign away from the
-    // original flat category-colored-cell placeholder) reuse
-    // GEObjectIcons::GetObjIcon() plus its atlas-selection predicates
-    // (IsUniformCubeObject/IsObjectMPngSourced/IsExploPngSourced/
-    // IsBlupiPngSourcedAtPhase/UsesBlupi1Texture) -- the SAME lookup already
-    // used to render real MoveObject billboards during gameplay -- so a
-    // page of object cells can draw the real per-type sprite from whichever
-    // of object-m.png/element.png/explo.png/blupi.png/blupi1.png it
-    // actually lives on, batched per atlas the same way Blocks-mode already
-    // batches per texture. Every cell also gets a translucent white backing
-    // square (same technique/color as the toolbar buttons) so a
-    // transparent-background sprite still reads clearly against the 3D
-    // scene behind it.
+    // Object-mode icons reuse GEObjectIcons::GetObjIcon() plus its
+    // atlas-selection predicates (IsUniformCubeObject/IsObjectMPngSourced/
+    // IsExploPngSourced/IsBlupiPngSourcedAtPhase/UsesBlupi1Texture) -- the
+    // SAME lookup already used to render real MoveObject billboards during
+    // gameplay -- so a page of object cells can draw the real per-type
+    // sprite from whichever of object-m.png/element.png/explo.png/
+    // blupi.png/blupi1.png it actually lives on, batched per atlas.
     //
     // Still no text labels: GEInputPad's own label-rendering methods stay
     // private (tightly coupled to its own per-screen font-scale
     // conventions, not worth genericizing for this), and building an
-    // independent text renderer remains out of scope. The toolbar's first 5
-    // buttons are visually identical (same flat color, distinguished only
-    // by position: Undo/Redo/Save/Back/Play-Test top-to-bottom); the 6th is
-    // the Blocks/Objects mode toggle, colored by the mode it's currently in
-    // (EDITOR-109) since that state isn't inferable from position. The
-    // selected palette icon is marked by a highlighted backing square, not
-    // a caption -- a documented, later-refinable simplification, not a
-    // functional gap (every tool the toolbar exposes already has a working
-    // keyboard/mouse binding in GEWorldEditor; this is a discoverability
-    // convenience on top).
+    // independent text renderer remains out of scope. The action buttons
+    // are visually identical solid green (distinguished only by position);
+    // the mode-toggle/tab-toggle buttons brighten when their "on" state is
+    // active, since that state isn't inferable from position. The selected
+    // palette icon is marked by a highlighted (gold) backing square, not a
+    // caption -- a documented, later-refinable simplification, not a
+    // functional gap (every tool already has a working keyboard binding in
+    // GEWorldEditor; this is a discoverability convenience on top).
     class GEEditorPalette
     {
     public:
         GEEditorPalette();
 
-        enum class ToolbarAction { None, Undo, Redo, Save, Back, PlayTest };
+        // BoxFill reports the click; GEWorldEditor::Update() treats it as
+        // an F-key press through the exact same box-fill state machine
+        // (first click marks corner A, second click fills) -- no separate
+        // state lives in this class for it.
+        enum class ToolbarAction { None, Undo, Redo, Save, Back, PlayTest, BoxFill };
 
         // Which kind of thing the icon grid is currently selecting
         // (plan.md EDITOR-109). Toggled by the toolbar's 6th button,
@@ -134,13 +134,25 @@ namespace GalaxyEggbert::CNA
             }
             return showAllTab_ ? allIcons_ : confirmedFlat_;
         }
-        [[nodiscard]] int PageCount() const noexcept;
+        // How many content rows (block/object icons) fit below the fixed
+        // action rows, given the real viewport height -- unlike the old
+        // 8x4 grid this replaces, page size is no longer a compile-time
+        // constant, since a single column has much less room per page.
+        [[nodiscard]] int ItemsPerPage(int viewportHeight) const noexcept;
+        [[nodiscard]] int PageCount(int viewportHeight) const noexcept;
 
-        // True when (x,y) lands on ANY palette/toolbar control -- used to
-        // claim the mouse on the press frame (see Update()'s own comment).
+        // True when (x,y) lands on ANY palette control -- used to claim
+        // the mouse on the press frame (see Update()'s own comment).
         [[nodiscard]] bool HitsAnyControl(float x, float y, int viewportWidth,
                                           int viewportHeight) const noexcept;
 
+        // Rect for fixed action button @p index (0=Undo, 1=Redo, 2=Save,
+        // 3=Back, 4=PlayTest, 5=ModeToggle, 6=BoxFill, 7=TabToggle) --
+        // buttons pair up 2-per-row (index/2 = row, index%2 = left/right
+        // half) so 8 actions + the paging row fit in 5 rows instead of 9,
+        // leaving real room for content below at this engine's actual
+        // (fairly short) default window height. PaletteCellRect uses the
+        // same row geometry but full-width, one content item per row.
         [[nodiscard]] GEQuadBatch::Rect ToolbarButtonRect(int index) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect TabToggleRect(int viewportWidth, int viewportHeight) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect PagePrevRect(int viewportWidth, int viewportHeight) const noexcept;

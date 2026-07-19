@@ -372,7 +372,9 @@ namespace GalaxyEggbert::CNA
             world.saveToFile(worldPath_);
             playTestRequested_ = true;
         }
-        else if (boxKeyHeld && !boxKeyHeldLastFrame_ && hasHighlight_)
+        else if (((boxKeyHeld && !boxKeyHeldLastFrame_) ||
+                  paletteResult.action == GEEditorPalette::ToolbarAction::BoxFill) &&
+                 hasHighlight_)
         {
             if (!boxFirstCornerPlaced_)
             {
