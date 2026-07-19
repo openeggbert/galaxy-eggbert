@@ -1,9 +1,12 @@
 # NEXT.md — Galaxy Eggbert
 
 _Last updated: 2026-07-19 (see §7.5 for standing directives — note the "no editor work" directive
-there is **superseded**, see §7.5's own header. The current line of work is the in-game 3D world
-editor: milestones EDITOR-100 through EDITOR-110 are implemented, verified, and pushed;
-EDITOR-111/112 remain, see §8)._
+there is **superseded**, see §7.5's own header. The in-game 3D world editor: milestones EDITOR-100
+through EDITOR-110 are implemented, verified, and pushed; EDITOR-111/112 remain, see §8 — but
+**editor work is now PAUSED, by explicit 2026-07-19 user request** (see plan.md §6's own status
+note for the full write-up, including an unresolved keyboard-input concern to check first if this
+is picked back up). The user wants to work on other areas of `galaxy-eggbert` next — do not resume
+EDITOR-111/112 without the user explicitly asking to.)._
 
 ## 1. Project summary
 
@@ -19,10 +22,14 @@ save system, and menus all work. The single largest remaining gap is that Blupi 
 visible 3D model yet (invisible collision point in first-person, a temporary placeholder model in
 third-person).
 
-**Active line of work (2026-07-18): the in-game 3D world editor** (`GamePhase::Editor`,
-`src/GalaxyEggbertCNA/Editor/`), a user-requested feature letting each player create, edit, save
+**In-game 3D world editor (paused 2026-07-19, see plan.md §6):** `GamePhase::Editor`,
+`src/GalaxyEggbertCNA/Editor/`, a user-requested feature letting each player create, edit, save
 and play-test their own `.vwr` worlds — inspired by free-eggbert's "Own mission" editor. The user
-approved a 13-milestone plan (EDITOR-100..112); **100-109 are done and pushed**, 110/111/112 remain.
+approved a 13-milestone plan (EDITOR-100..112); **100-110 are done and pushed**, 111/112 remain
+but development is paused here by explicit user request while other areas of the project get
+attention instead — see plan.md §6 for the full current-state write-up (what's built, what
+remains, and a real open concern about keyboard input possibly being a window-focus issue, not
+yet confirmed resolved).
 Note this editor is an explicit, user-approved **exception** to the faithful-remake rule (see
 `plan.md` §6): it is content-creation tooling, not a mobile-eggbert feature, so inventing editor
 UX is fine — inventing new *gameplay* mechanics is still not.
@@ -1334,6 +1341,13 @@ Non-editor tasks, available if the editor line is paused:
   the locked Direct-CNA-+-Easy3D direction.
 
 ## 10. Resume prompt
+
+**PAUSED 2026-07-19 — do not use the prompt below until the user explicitly asks to resume editor
+work.** The user asked to pause the world editor line of work (EDITOR-111/112 remain undone) and
+move on to other areas of `galaxy-eggbert` instead — see plan.md §6 for the full status write-up
+(what's built, what's left, and an unresolved keyboard-input concern to check first if this does
+get picked back up). If you're starting a session cold and this note is still here, ask the user
+what they want worked on next rather than defaulting to the prompt below.
 
 ```
 Read NEXT.md first, in full, before doing anything else.

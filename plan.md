@@ -5111,6 +5111,63 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 
 ## 6. Development Tooling — 3D World Editor
 
+**Status (2026-07-19): PAUSED, by explicit user request.** EDITOR-100 through EDITOR-110 are
+implemented, tested, and pushed (see "What's actually built" below) — the editor is genuinely
+usable today (enter from the menu, fly around, place/remove blocks and objects, box-fill, undo/
+redo, save, play-test). Development stops here for now; the user wants to work on other areas of
+`galaxy-eggbert` next. EDITOR-111 (sky-region picker) and EDITOR-112 (hardening pass + a
+`build-cna-vulkan` re-verification) are the two remaining milestones of the approved plan, **not
+started**. Picking this back up later should start from NEXT.md §8 (which still lists them as the
+next smallest tasks), not from the old draft list at the bottom of this section (see its own note).
+
+### What's actually built (EDITOR-100..110, 2026-07-18/19)
+
+Full detail and exact commit history live in NEXT.md §2/§3 (kept there since it changes every
+session); summary for anyone picking this up cold:
+- Enter the editor from the real Init menu ("Editor" button), scoped to the selected gamer slot;
+  a browser screen lists/creates/opens/deletes that slot's worlds under `customworlds/gamer<N>/`.
+- Free-fly camera (WASD/Space/Ctrl, RMB mouse-look, scroll = fly speed), voxel raycast crosshair
+  (Amanatides–Woo DDA), left-click place / middle-click remove a block, `F`-key or toolbar
+  box-fill (drag a cuboid across two clicks, fills as one undo command), `U`/`R` undo/redo
+  (200-deep), `Enter`/toolbar save, and a full Play-Test loop (saves, launches a real gameplay
+  session against the custom world, returns to the editor on win/loss/pause-back).
+- Objects mode places real `MoveObjectRecord`s (enemies, pickups, lifts) with no save/reload
+  round-trip; `G`/`T`/`Tab`/`OemPlus`/`OemMinus`/`Delete` select an already-placed object, give it
+  a real patrol path, and edit its speed/timing fields or remove it (EDITOR-110).
+- Palette UI (redesigned twice this session, both times from direct user screenshot feedback): a
+  single vertical column of solid-green buttons at the screen's left edge, matching free-eggbert's
+  own editor palette — 8 paired action buttons (Undo/Redo, Save/Back, Play-Test/mode-toggle,
+  BoxFill/Confirmed-All-tab), a paging row, then the current page's block/object icons one per
+  row. Every cell draws the real per-type sprite (`GEObjectIcons::GetObjIcon()` plus its
+  atlas-selection predicates — the same lookup already used to render real gameplay billboards),
+  not a placeholder color.
+
+### Known problems / open concerns when resuming
+
+- **Unresolved, potentially significant**: the user reported that on a real desktop test of
+  `build-cna`, no keyboard shortcut did anything at all (not even WASD camera movement), while the
+  screen kept rendering/updating normally. A full read of the real SDL/CNA input pipeline
+  (`Game::PollEvents()`, `SdlInputBridge`, `Keyboard::GetState()`) found nothing in it or in
+  `GalaxyEggbertCnaGame`/`GEWorldEditor` that gates on window-focus state or game phase — input
+  reading is unconditional every frame. A live reproduction (a windowless Xvfb display + `xdotool`
+  window-focus calls, which errored since no window manager was present) made the window's
+  `IsActive` flag drop to false and never recover, while the game kept rendering — the same visible
+  symptom the user described. This strongly points at an OS/desktop window-focus issue (the user
+  also mentioned a GNOME crash earlier the same session) rather than a code bug, but **this has not
+  been confirmed fixed by the user** — the suggested next step (click directly into the game window
+  before pressing keys) was given but not yet confirmed to work. If resuming editor work, check
+  this first; don't assume it's resolved.
+- `build-cna-vulkan` has still never been rebuilt or re-tested since the editor work began
+  (EDITOR-100..110, 11 commits) — closing this gap is EDITOR-112's own job.
+- The palette needed two live redesigns this session, both triggered by the user reacting to an
+  actual screenshot rather than a description — first flat category-colored cells → real per-type
+  icons, then that grid layout → a single-column green layout matching a `free-eggbert` reference
+  screenshot the user provided (`/rv/data/documents/freeeggbert_editor.jpg`, not part of this repo).
+  Worth remembering: for UI work like this, a live screenshot check earlier (before writing much
+  code) would likely have caught the layout mismatch in one pass instead of two.
+- No text rendering anywhere in the editor (toolbar buttons/tabs are distinguished by position and
+  color only) — a deliberate, documented simplification, not an oversight; see NEXT.md §5.
+
 Not a mobile-eggbert feature, so the faithful-remake rule (`## 0`/`CLAUDE.md`) doesn't govern
 this section — it's a content-creation tool for building `.vwr` worlds, the same category as the
 already-existing `tools/GenerateSampleWorld3D.cpp` (a fixed, hand-coded C++ generator) and
@@ -5122,6 +5179,13 @@ already assumes exists. Today, hand-authoring a `.vwr` world means writing/editi
 `E3D-MIG-058` history: a real data-loss bug, `Chunk::isEmpty()` ignoring `extraMetadata_`, and a
 real zero-patrol-range lift bug were both introduced this way and only caught by scripted
 verification after the fact, not while authoring). An interactive editor is aimed at that gap.
+
+**The task list immediately below (`EDITOR-000`-`EDITOR-010`) is the original pre-implementation
+draft, written before the user approved a different, more detailed 13-milestone plan
+(`EDITOR-100`-`EDITOR-112`) that the actual implementation followed instead.** Kept here only as
+historical scoping context (it's still a reasonable description of the overall problem space) —
+**do not use it for task tracking going forward; NEXT.md §3/§8 is the real, current source of
+truth for what's done and what's next.**
 
 Much of the needed infrastructure already exists and should be reused, not rebuilt:
 `GalaxyEggbert::Worlds::World::loadFromFile()`/`saveToFile()` (engine-agnostic, already tested,
