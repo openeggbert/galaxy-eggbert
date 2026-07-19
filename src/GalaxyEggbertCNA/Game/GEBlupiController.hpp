@@ -239,6 +239,7 @@ namespace GalaxyEggbert::CNA
         static constexpr float kPutDynamiteDuration = 26.0f / 20.0f;
         static constexpr float kTakeSkateDuration = 20.0f / 20.0f;
         static constexpr float kDeposeSkateDuration = 20.0f / 20.0f;
+        static constexpr float kFireTankDuration = 6.0f / 20.0f;
 
         // Real Mockery(63)/Mockeryi(64)/Mockeryp(83) durations (same
         // frameCount/20.0f conversion) and the real 300-tick (15s)
@@ -523,6 +524,15 @@ namespace GalaxyEggbert::CNA
             // everything, count a timer down, auto-resume" shape as
             // TriggerBye()/TriggerPickupFreeze()).
             Switch, TakeDynamite, PutDynamite,
+            // FireTank (`table_blupi` ID 53, 6 frames = 0.3s, wired
+            // 2026-07-19): real Tank-firing recoil pose. Fired from the
+            // caller alongside `GEInteractionSystem::TankFiredThisFrame()`
+            // (this class has no access to that system's bullet-fire
+            // logic), same "this class has no X access" shape as Push's
+            // own `CrateBeingPushedThisFrame()` signal above. Independent
+            // of the real 0.5s fire cooldown, which gates re-firing, not
+            // the cosmetic recoil pose.
+            FireTank,
             // TakeSkate/DeposeSkate (`table_blupi` IDs 42/43, 20 frames each
             // = 1.0s, wired 2026-07-19): real mount/dismount pose, the only
             // vehicle with a dedicated one (checked the reference doc for

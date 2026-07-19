@@ -2603,6 +2603,16 @@ namespace GalaxyEggbert::CNA
                 cameraShake_.Trigger(CameraShakeType::Big);
             }
 
+            // Real FireTank recoil anim (plan.md BLUPI-091 gap, table_blupi
+            // ID 53, wired 2026-07-19) -- fires only the frame a bullet
+            // actually launched (TankFiredThisFrame(), gated on canFire
+            // already requiring Tank mode above), not the empty-clip click.
+            if (interaction_.TankFiredThisFrame())
+            {
+                blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::FireTank,
+                                           GEBlupiController::kFireTankDuration);
+            }
+
             // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`
             // stop on leaving `BlupiAction::Push`) -- ch38, not "electric arc (long)" as
             // plan.md's own SOUND-048 entry claimed. `CrateBeingPushedThisFrame()` is a plain

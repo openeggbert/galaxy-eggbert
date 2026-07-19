@@ -574,6 +574,7 @@ namespace GalaxyEggbert::CNA
         smallShakeTriggeredThisFrame_ = false;
         bigShakeTriggeredThisFrame_ = false;
         crateBeingPushedThisFrame_ = false;
+        tankFiredThisFrame_ = false;
         ridingLift_ = false;
         voyagePendingThisFrame_ = false;
         deathLockRequestedThisFrame_ = false;
@@ -2187,6 +2188,7 @@ namespace GalaxyEggbert::CNA
                 const int dist = SearchAirDistance(world, gx, gy, gz, blupiFacingDX, 0, blupiFacingDZ);
                 --bulletCount_;
                 fireCooldownTimer_ = kFireCooldownSeconds;
+                tankFiredThisFrame_ = true;
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
                 if (dist > 0)
                 {

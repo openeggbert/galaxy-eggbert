@@ -764,18 +764,24 @@ int main(int argc, char** argv)
                             /*blupiFirePressed=*/true, /*blupiCanFire=*/false);
         check(interaction.BulletCount() == bulletsBeforeFiring,
               "firing while not in a Tank (canFire=false) does not consume ammo");
+        check(!interaction.TankFiredThisFrame(),
+              "TankFiredThisFrame() is false when not in a Tank (real FireTank anim gate)");
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == bulletsBeforeFiring - 1,
               "firing while in a Tank consumes exactly 1 bullet");
+        check(interaction.TankFiredThisFrame(),
+              "TankFiredThisFrame() is true the exact frame a bullet actually launches");
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == bulletsBeforeFiring - 1,
               "holding Fire within the real 0.5s cooldown does not fire again");
+        check(!interaction.TankFiredThisFrame(),
+              "TankFiredThisFrame() is false while blocked by the real 0.5s cooldown");
 
         // Advance past the real 0.5s cooldown (Fire not held during the
         // wait, matching a real "tap" cadence) then fire again.
@@ -808,6 +814,8 @@ int main(int argc, char** argv)
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == 0, "firing with no ammo left does not underflow BulletCount()");
+        check(!interaction.TankFiredThisFrame(),
+              "TankFiredThisFrame() is false on the empty-clip click, no real recoil pose then");
     }
 
     // 3.74. Types 201-203 (plan.md PICKUP-069, found 2026-07-16, real Decor.cpp:6088-6115) --

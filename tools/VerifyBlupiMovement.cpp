@@ -1874,6 +1874,31 @@ int main(int argc, char** argv)
         check(!dismounting.IsOneShotAnimPlaying(), "DeposeSkate one-shot anim ends on its own after kDeposeSkateDuration");
     }
 
+    // FireTank one-shot recoil anim (table_blupi action 53, wired
+    // 2026-07-19 alongside GEInteractionSystem::TankFiredThisFrame() in
+    // GalaxyEggbertCnaGame.cpp) -- same direct GEBlupiController-level
+    // TriggerOneShotAnim() coverage as TakeSkate/DeposeSkate above.
+    {
+        GEBlupiController firing;
+        firing.SetPosition(0.0f, 1.0f, 0.0f);
+        check(firing.TriggerOneShotAnim(GEBlupiController::AnimState::FireTank,
+                                         GEBlupiController::kFireTankDuration),
+              "TriggerOneShotAnim(FireTank) returns true when not already frozen/locked");
+        firing.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(firing.GetAnimState() == GEBlupiController::AnimState::FireTank,
+              "FireTank anim state takes precedence while playing");
+        check(firing.GetAnimIcon() == 251, "FireTank anim icon starts at the real first frame (icon 251)");
+
+        int stepsToResumeFiring = 0;
+        while (firing.IsOneShotAnimPlaying() && stepsToResumeFiring < 200)
+        {
+            firing.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToResumeFiring;
+        }
+        check(stepsToResumeFiring < 200, "FireTank one-shot anim resolves within a bounded time");
+        check(!firing.IsOneShotAnimPlaying(), "FireTank one-shot anim ends on its own after kFireTankDuration");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

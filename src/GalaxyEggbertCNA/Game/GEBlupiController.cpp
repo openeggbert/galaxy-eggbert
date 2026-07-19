@@ -199,6 +199,7 @@ namespace GalaxyEggbert::CNA
         constexpr int kHideFrames[] = {276, 277, 278, 279, 280, 281, 282, 283, 284};
         constexpr int kPushFrames[] = {49, 50, 51, 52, 53, 54};
         constexpr int kSwitchFrames[] = {0, 268, 268, 269, 269, 269, 269, 268, 268, 0};
+        constexpr int kFireTankFrames[] = {251, 251, 238, 238, 238, 238};
         constexpr int kTakeDynamiteFrames[] = {
             1, 1, 2, 2, 41, 41, 42, 42, 43, 43, 42, 42, 41, 41, 2, 2, 1, 1};
         constexpr int kPutDynamiteFrames[] = {
@@ -1790,6 +1791,8 @@ namespace GalaxyEggbert::CNA
                 return kPushFrames[m_animPhase % (sizeof(kPushFrames) / sizeof(kPushFrames[0]))];
             case AnimState::Switch:
                 return kSwitchFrames[m_animPhase % (sizeof(kSwitchFrames) / sizeof(kSwitchFrames[0]))];
+            case AnimState::FireTank:
+                return kFireTankFrames[m_animPhase % (sizeof(kFireTankFrames) / sizeof(kFireTankFrames[0]))];
             case AnimState::TakeDynamite:
                 return kTakeDynamiteFrames[m_animPhase % (sizeof(kTakeDynamiteFrames) / sizeof(kTakeDynamiteFrames[0]))];
             case AnimState::PutDynamite:

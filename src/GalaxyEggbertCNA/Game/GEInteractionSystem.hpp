@@ -267,6 +267,11 @@ namespace GalaxyEggbert::CNA
         // The caller compares this against its own previous-frame value to start/stop the real
         // looped ch38 sound (this class has no sound-instance-lifetime access of its own).
         [[nodiscard]] bool CrateBeingPushedThisFrame() const noexcept { return crateBeingPushedThisFrame_; }
+        // Real FireTank anim trigger (plan.md BLUPI-091 gap, table_blupi ID 53) -- true the one
+        // frame a Tank bullet actually launched (bulletCount_ > 0 path below), NOT the empty-clip
+        // "click" case (ch53). Same "this class has no GEBlupiController access" reason as the
+        // crate-push signal above -- the caller fires TriggerOneShotAnim(FireTank, ...) itself.
+        [[nodiscard]] bool TankFiredThisFrame() const noexcept { return tankFiredThisFrame_; }
 
         // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31)
         // -- true the one frame that pickup's real gate passed and the
@@ -918,6 +923,7 @@ namespace GalaxyEggbert::CNA
         bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
         bool smallShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
         bool crateBeingPushedThisFrame_ = false; // reset at the top of every Update() call
+        bool tankFiredThisFrame_ = false; // reset at the top of every Update() call
         bool bigShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
         bool shieldGrantedThisFrame_ = false; // reset at the top of every Update() call
         bool powerGrantedThisFrame_ = false;  // reset at the top of every Update() call
