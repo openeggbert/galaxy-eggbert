@@ -6,7 +6,6 @@
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
 
 #include <algorithm>
-#include <iterator>
 
 namespace GalaxyEggbert::CNA
 {
@@ -46,33 +45,11 @@ namespace GalaxyEggbert::CNA
             confirmedFlat_.insert(confirmedFlat_.end(), category.iconIds.begin(), category.iconIds.end());
         }
 
-        const auto objectCategories = ConfirmedObjectCategories();
-        for (std::size_t i = 0; i < objectCategories.size(); ++i)
+        for (const auto& category : ConfirmedObjectCategories())
         {
-            for (const int typeId : objectCategories[i].iconIds)
-            {
-                confirmedObjectsFlat_.push_back(typeId);
-                objectCategoryIndex_[typeId] = static_cast<int>(i);
-            }
+            confirmedObjectsFlat_.insert(confirmedObjectsFlat_.end(), category.iconIds.begin(),
+                                         category.iconIds.end());
         }
-    }
-
-    Microsoft::Xna::Framework::Vector3 GEEditorPalette::CategoryColor(int categoryIndex)
-    {
-        using Microsoft::Xna::Framework::Vector3;
-        static const Vector3 kCategoryColors[] = {
-            Vector3(0.35f, 0.65f, 1.00f), // Platform Lifts
-            Vector3(1.00f, 0.35f, 0.30f), // Patrol Enemies
-            Vector3(1.00f, 0.60f, 0.20f), // Patrol Walkers
-            Vector3(1.00f, 0.90f, 0.30f), // Collectibles
-            Vector3(0.40f, 0.90f, 0.45f), // Pickups
-            Vector3(0.85f, 0.50f, 1.00f), // Blupi Skins
-        };
-        if (categoryIndex < 0 || categoryIndex >= static_cast<int>(std::size(kCategoryColors)))
-        {
-            return Vector3(0.55f, 0.55f, 0.55f);
-        }
-        return kCategoryColors[categoryIndex];
     }
 
     int GEEditorPalette::PageCount() const noexcept
@@ -268,18 +245,31 @@ namespace GalaxyEggbert::CNA
 
     void GEEditorPalette::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
+                               Microsoft::Xna::Framework::Graphics::Texture2D& elementTexture,
+                               Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
+                               Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
+                               Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
                                int viewportWidth, int viewportHeight)
     {
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::BlendState;
+        using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        if (!paletteEffect_)
+        const auto ensureTexturedEffect = [&device](std::unique_ptr<BasicEffect>& effect, Texture2D& texture)
         {
-            paletteEffect_ = std::make_unique<BasicEffect>(device);
-            paletteEffect_->VertexColorEnabled = false;
-            paletteEffect_->setTextureEnabledProperty(true);
-        }
-        paletteEffect_->setTextureProperty(&terrainTexture);
+            if (!effect)
+            {
+                effect = std::make_unique<BasicEffect>(device);
+                effect->VertexColorEnabled = false;
+                effect->setTextureEnabledProperty(true);
+            }
+            effect->setTextureProperty(&texture);
+        };
+        ensureTexturedEffect(paletteEffect_, terrainTexture);
+        ensureTexturedEffect(elementEffect_, elementTexture);
+        ensureTexturedEffect(exploEffect_, exploTexture);
+        ensureTexturedEffect(blupiEffect_, blupiTexture);
+        ensureTexturedEffect(blupi1Effect_, blupi1Texture);
         if (!flatEffect_)
         {
             flatEffect_ = std::make_unique<BasicEffect>(device);
@@ -296,9 +286,13 @@ namespace GalaxyEggbert::CNA
         device.setBlendStateProperty(BlendState::NonPremultiplied);
 
         // Flat-colored UI drawn FIRST: toolbar buttons, tab toggle, paging
-        // buttons, and a slightly-larger backing square behind the
-        // selected icon (drawn before the textured icon pass below, so it
-        // reads as a highlighted border once the icon renders on top).
+        // buttons, a translucent backing behind every Objects-mode cell
+        // (real object sprites can have transparent margins, so a plain
+        // backing keeps them legible against the 3D scene behind -- same
+        // technique/color as the toolbar buttons above), and a
+        // slightly-larger backing square behind the selected icon (added
+        // after that cell's own backing, so it reads as a highlighted
+        // border once the icon renders on top).
         std::vector<GEQuadBatch::Quad> flatQuads;
         const auto addFlat = [&flatQuads](const GEQuadBatch::Rect& r)
         {
@@ -323,12 +317,15 @@ namespace GalaxyEggbert::CNA
             {
                 break;
             }
+            const GEQuadBatch::Rect cell = PaletteCellRect(i, viewportWidth, viewportHeight);
+            if (mode_ == PaletteMode::Objects)
+            {
+                addFlat(cell);
+            }
             if (icons[static_cast<std::size_t>(idx)] == selectedId)
             {
-                const GEQuadBatch::Rect cell = PaletteCellRect(i, viewportWidth, viewportHeight);
                 addFlat({cell.x0 - kSelectionHighlightPadding, cell.y0 - kSelectionHighlightPadding,
                         cell.x1 + kSelectionHighlightPadding, cell.y1 + kSelectionHighlightPadding});
-                break;
             }
         }
         flatEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
@@ -347,11 +344,15 @@ namespace GalaxyEggbert::CNA
 
         if (mode_ == PaletteMode::Objects)
         {
-            // Object cells: flat category-colored squares (see
-            // ObjectCellColor()'s own comment for why these aren't real
-            // icons), batched per distinct color so each color needs only
-            // one flush rather than one per cell.
-            std::map<int, std::vector<GEQuadBatch::Quad>> quadsByCategory;
+            // Real per-type icons (2026-07-19): GEObjectIcons::GetObjIcon()
+            // plus its atlas-selection predicates say which of the 5 real
+            // sprite sheets each type's icon actually lives on -- the SAME
+            // lookup already used to render real MoveObject billboards
+            // during gameplay. Batched per atlas so each needs only one
+            // draw call per page, same shape as the single-atlas
+            // Blocks-mode batch below. Always phase 0 -- a static preview,
+            // no per-cell animation.
+            std::vector<GEQuadBatch::Quad> terrainQuads, elementQuads, exploQuads, blupiQuads, blupi1Quads;
             for (int i = 0; i < kIconsPerPage; ++i)
             {
                 const int idx = startIdx + i;
@@ -359,20 +360,57 @@ namespace GalaxyEggbert::CNA
                 {
                     break;
                 }
-                const int typeId = icons[static_cast<std::size_t>(idx)];
-                const auto found = objectCategoryIndex_.find(typeId);
-                const int categoryKey = found == objectCategoryIndex_.end() ? -1 : found->second;
+                const ObjectType type = ToObjectType(icons[static_cast<std::size_t>(idx)]);
+                const int icon = GetObjIcon(type, /*phase=*/0);
                 const GEQuadBatch::Rect cell = PaletteCellRect(i, viewportWidth, viewportHeight);
-                quadsByCategory[categoryKey].push_back(
-                    {cell.x0, cell.y0, cell.x1, cell.y1, 0.0f, 0.0f, 1.0f, 1.0f});
+
+                if (IsUniformCubeObject(type) || IsObjectMPngSourced(type))
+                {
+                    const Easy3D::UvRect uv = tileAtlas_.GetTileUv(icon);
+                    terrainQuads.push_back({cell.x0, cell.y0, cell.x1, cell.y1, uv.U0, uv.V0, uv.U1, uv.V1});
+                }
+                else if (IsExploPngSourced(type))
+                {
+                    const ObjectIconUv uv = GetExploIconUv(icon);
+                    exploQuads.push_back({cell.x0, cell.y0, cell.x1, cell.y1, uv.U0, uv.V0, uv.U1, uv.V1});
+                }
+                else if (IsBlupiPngSourcedAtPhase(type, 0))
+                {
+                    const ObjectIconUv uv = GetBlupiIconUv(icon);
+                    std::vector<GEQuadBatch::Quad>& target = UsesBlupi1Texture(type) ? blupi1Quads : blupiQuads;
+                    target.push_back({cell.x0, cell.y0, cell.x1, cell.y1, uv.U0, uv.V0, uv.U1, uv.V1});
+                }
+                else
+                {
+                    const ObjectIconUv uv = GetElementIconUv(icon);
+                    elementQuads.push_back({cell.x0, cell.y0, cell.x1, cell.y1, uv.U0, uv.V0, uv.U1, uv.V1});
+                }
             }
-            for (const auto& [categoryKey, quads] : quadsByCategory)
+            if (!terrainQuads.empty())
             {
-                flatEffect_->setDiffuseColorProperty(CategoryColor(categoryKey));
-                GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, quads, viewportWidth,
+                GEQuadBatch::FlushQuads(device, *paletteEffect_, paletteRenderer_, terrainQuads, viewportWidth,
                                         viewportHeight, 1.0f);
             }
-            flatEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
+            if (!elementQuads.empty())
+            {
+                GEQuadBatch::FlushQuads(device, *elementEffect_, elementRenderer_, elementQuads, viewportWidth,
+                                        viewportHeight, 1.0f);
+            }
+            if (!exploQuads.empty())
+            {
+                GEQuadBatch::FlushQuads(device, *exploEffect_, exploRenderer_, exploQuads, viewportWidth,
+                                        viewportHeight, 1.0f);
+            }
+            if (!blupiQuads.empty())
+            {
+                GEQuadBatch::FlushQuads(device, *blupiEffect_, blupiRenderer_, blupiQuads, viewportWidth,
+                                        viewportHeight, 1.0f);
+            }
+            if (!blupi1Quads.empty())
+            {
+                GEQuadBatch::FlushQuads(device, *blupi1Effect_, blupi1Renderer_, blupi1Quads, viewportWidth,
+                                        viewportHeight, 1.0f);
+            }
         }
         else
         {

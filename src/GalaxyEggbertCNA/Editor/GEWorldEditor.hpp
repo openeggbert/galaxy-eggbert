@@ -199,13 +199,19 @@ namespace GalaxyEggbert::CNA
         // GEInteractionSystem/GEBlupiController.
         [[nodiscard]] bool ConsumeNeedsPresentationRebuild() noexcept;
 
-        // @p terrainTexture is the same already-loaded object-m.png texture
-        // GalaxyEggbertCnaGame's own terrain rendering uses -- lent to the
-        // palette so its icon grid can sample the real terrain atlas
-        // directly (GEEditorPalette::Draw()'s own comment).
+        // @p terrainTexture/elementTexture/exploTexture/blupiTexture/
+        // blupi1Texture are the same already-loaded object-m.png/
+        // element.png/explo.png/blupi.png/blupi1.png textures
+        // GalaxyEggbertCnaGame's own terrain/object rendering uses -- lent
+        // to the palette so its Objects-mode icon grid can draw each
+        // type's real sprite (GEEditorPalette::Draw()'s own comment).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   const Easy3D::Camera3D& camera,
                   Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
+                  Microsoft::Xna::Framework::Graphics::Texture2D& elementTexture,
+                  Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
+                  Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
+                  Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
                   int viewportWidth, int viewportHeight);
 
     private:

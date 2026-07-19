@@ -140,8 +140,10 @@ Last full run (2026-07-19, `build-cna` only, after EDITOR-110):
   press fills it as ONE undo command. `Escape` cancels.
 - Undo/redo (`U`/`R` or toolbar), 200-command depth cap.
 - Palette UI: a left-edge toolbar (Undo/Redo/Save/Back/Play-Test/mode-toggle) and a right-side
-  paged icon grid with Confirmed/All tabs. Blocks mode draws real terrain-atlas icons; Objects mode
-  draws flat category-colored cells.
+  paged icon grid with Confirmed/All tabs. Both Blocks and Objects mode draw the real per-type
+  sprite (object-m.png/element.png/explo.png/blupi.png/blupi1.png, whichever `GEObjectIcons` says
+  the type actually lives on), each cell on a translucent backing square (2026-07-19 redesign,
+  replacing the original flat category-colored-cell placeholder — see §3).
 - Objects mode places real `MoveObjectRecord`s (enemies, pickups, lifts) that appear immediately as
   billboards — no save/reload round-trip.
 - `G` selects whichever already-placed `MoveObjectRecord`'s billboard projects nearest screen center
@@ -249,8 +251,8 @@ north-hill plateau reachable only via a staircase + terraced ascent.
   unsaved-changes guard) are still open** — see §5. Object editing (EDITOR-110: select, patrol path,
   speed/timing, remove) is now done.
 - **The editor has no text rendering** — toolbar buttons are distinguished by position and color
-  only, and object palette cells are flat category-colored squares rather than real sprites. Both
-  are documented, deliberate simplifications, not oversights (see §5).
+  only (object palette cells now draw real per-type sprites, not flat colors, since the 2026-07-19
+  redesign — see §3). A documented, deliberate simplification, not an oversight (see §5).
 - Several real HUD buttons render but are intentionally inert (no desktop equivalent exists yet):
   `SetupJump`/`SetupZoom`/`SetupAccel`, `PauseBack`, `InitRanking`/`InitBuy`.
 - Idle "fidget" periodic sounds — blocked on `AnimState` values this engine doesn't have (same
@@ -260,6 +262,39 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### World editor: real per-type object icons, replacing flat category-colored cells (2026-07-19)
+
+User-requested redesign (unprompted user feedback, screenshot-driven, referencing free-eggbert's
+own editor palette as the target look): the Objects-mode palette previously drew a flat
+category-colored square per cell (EDITOR-106/109's own documented simplification, judged
+"disproportionate" to build the real multi-atlas icon plumbing at the time). Now every cell draws
+the real per-type sprite via `GEObjectIcons::GetObjIcon()` plus its atlas-selection predicates
+(`IsUniformCubeObject`/`IsObjectMPngSourced`/`IsExploPngSourced`/`IsBlupiPngSourcedAtPhase`/
+`UsesBlupi1Texture`) — the SAME lookup already used to render real `MoveObject` billboards during
+gameplay, so no new icon data or mapping was invented. Icons are batched per atlas (object-m.png/
+element.png/explo.png/blupi.png/blupi1.png) so a page still costs at most 5 draw calls, same shape
+as the pre-existing single-atlas Blocks-mode batch. `GEEditorPalette::Draw()` now takes 4 more
+`Texture2D&` parameters (the game's own already-loaded `objectTexture_`/`exploTexture_`/
+`blupiObjectTexture_`/`blupi1ObjectTexture_`, no new asset loads) threaded through
+`GEWorldEditor::Draw()` from `GalaxyEggbertCnaGame`; `CMakeLists.txt`'s `VerifyGEWorldEditor` target
+gained `GEObjectIcons.cpp` (a link-time dependency, engine-agnostic, same precedent as
+`GenerateSampleWorld3D` already linking it). `GEEditorPalette::CategoryColor()` and its
+`objectCategoryIndex_` map were removed (no longer used, not referenced by any test).
+
+Every Objects-mode cell also gained a translucent white backing square (same technique/color as the
+toolbar buttons, which the user explicitly asked to keep) so a real sprite's transparent margins
+still read clearly against the animated 3D scene behind the palette — this was the SAME flat-quad
+mechanism already used for the toolbar/selection-highlight, just now applied to every cell in
+Objects mode (Blocks mode is untouched, its icons are already opaque).
+
+No `VerifyGEWorldEditor` test changes were needed (`Draw()` is not exercised by that suite — it's
+the one method needing a real `GraphicsDevice`, per this class's own established convention).
+Live-verified under `xvfb-run` with temporary env-var-gated (`GE_EDITOR_AUTOTEST_PALETTE`)
+instrumentation (jump straight to a fresh Editor world, synthetic click on the mode-toggle button,
+screenshot, fully reverted before commit): confirmed real, distinct per-type icons (platform lift,
+several enemies, explosions, a bee, key, egg, lollipop, balloons, a bomb, etc.) each on a legible
+translucent backing, replacing the flat-colored placeholder.
 
 ### World editor: MoveObject select/edit/remove tool, EDITOR-110 (2026-07-19)
 
@@ -966,12 +1001,12 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
     `GEEditCommand::Kind::SkyRegionEdit` is declared but has no fields or stack handling yet.
   - No unsaved-changes guard (EDITOR-112): Back/Open/Quit discard silently. Save is explicit
     (`Enter` or the toolbar button); Play-Test auto-saves first.
-- **Incomplete (world editor, deliberate simplifications, documented in the code):** no text
+- **Incomplete (world editor, deliberate simplification, documented in the code):** no text
   rendering anywhere in the editor — toolbar buttons are distinguished by position, and the
-  mode-toggle by color; object palette cells are flat category-colored squares, because object
-  sprites live across `element.png`/`explo.png`/`blupi.png` selected per type by
-  `GEObjectIcons::GetObjIcon`, and that multi-atlas plumbing was judged disproportionate. Both are
-  refinable later; neither is a functional gap (every tool has a working binding).
+  mode-toggle by color. (Object palette cells now draw real per-type sprites, not flat colors —
+  the multi-atlas `GEObjectIcons::GetObjIcon` plumbing this needed was implemented 2026-07-19, see
+  §3; this is no longer a gap.) Refinable later; not a functional gap (every tool has a working
+  binding).
 - **Needs verification:** `build-cna-vulkan` has not been rebuilt/re-tested since EDITOR-100 (see
   §4). Expected fine; unproven.
 - **Risky assumption (world editor):** `ObjectType` category names/membership in

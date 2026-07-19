@@ -617,6 +617,10 @@ namespace GalaxyEggbert::CNA
     void GEWorldEditor::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                              const Easy3D::Camera3D& camera,
                              Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
+                             Microsoft::Xna::Framework::Graphics::Texture2D& elementTexture,
+                             Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
+                             Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
+                             Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
                              int viewportWidth, int viewportHeight)
     {
         if (showingBox_)
@@ -646,6 +650,7 @@ namespace GalaxyEggbert::CNA
             selectionHighlightRenderer_.Hide();
         }
 
-        palette_.Draw(device, terrainTexture, viewportWidth, viewportHeight);
+        palette_.Draw(device, terrainTexture, elementTexture, exploTexture, blupiTexture, blupi1Texture,
+                      viewportWidth, viewportHeight);
     }
 }

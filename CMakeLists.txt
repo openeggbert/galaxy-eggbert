@@ -616,7 +616,11 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # GraphicsDevice/window. GEHud.cpp added for EDITOR-110's nearest-object
     # picking, which reuses GEHud::ProjectWorldToHudSpace() rather than a
     # new projection path (same reason VerifyInteractionSystem already
-    # links it).
+    # links it). GEObjectIcons.cpp added for GEEditorPalette's real
+    # per-type object icons (2026-07-19, user-requested redesign away from
+    # flat category-colored cells) -- engine-agnostic (only depends on
+    # def/ObjectType.hpp), same precedent as GenerateSampleWorld3D linking
+    # it below.
     add_executable(VerifyGEWorldEditor
         tools/VerifyGEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
@@ -631,6 +635,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         src/GalaxyEggbertCNA/Game/GEHud.cpp
+        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyGEWorldEditor PRIVATE

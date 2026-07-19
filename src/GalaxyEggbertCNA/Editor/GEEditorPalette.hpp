@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GEPaletteCategories.hpp"
+#include "Game/GEObjectIcons.hpp"
 #include "Game/GEQuadBatch.hpp"
 #include "Game/GETileAtlas.hpp"
 
@@ -10,10 +11,8 @@
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
-#include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <vector>
 
@@ -22,25 +21,38 @@ namespace GalaxyEggbert::CNA
     // Left-edge toolbar + right-side categorized icon palette for the
     // world editor (plan.md EDITOR-106). Reuses GETileAtlas::GetTileUv()
     // and the caller's already-loaded object-m.png texture directly (no
-    // separate asset load) for icon rendering, and the shared GEQuadBatch
-    // primitives (extracted from GEInputPad this same milestone) for all
-    // 2D quad drawing/hit-testing -- the "reuse the exact same drawing
-    // primitive, don't invent a new one" instruction taken literally.
+    // separate asset load) for block icon rendering, and the shared
+    // GEQuadBatch primitives (extracted from GEInputPad this same
+    // milestone) for all 2D quad drawing/hit-testing -- the "reuse the
+    // exact same drawing primitive, don't invent a new one" instruction
+    // taken literally.
     //
-    // Deliberately icon/flat-color only, no text labels this milestone:
-    // GEInputPad's own label-rendering methods stay private (tightly
-    // coupled to its own per-screen font-scale conventions, not worth
-    // genericizing for this), and building an independent text renderer
-    // is out of scope here. The toolbar's first 5 buttons are visually
-    // identical (same flat color, distinguished only by position: Undo/
-    // Redo/Save/Back/Play-Test top-to-bottom); the 6th is the Blocks/
-    // Objects mode toggle, colored by the mode it's currently in
+    // Object-mode icons (2026-07-19, user-requested redesign away from the
+    // original flat category-colored-cell placeholder) reuse
+    // GEObjectIcons::GetObjIcon() plus its atlas-selection predicates
+    // (IsUniformCubeObject/IsObjectMPngSourced/IsExploPngSourced/
+    // IsBlupiPngSourcedAtPhase/UsesBlupi1Texture) -- the SAME lookup already
+    // used to render real MoveObject billboards during gameplay -- so a
+    // page of object cells can draw the real per-type sprite from whichever
+    // of object-m.png/element.png/explo.png/blupi.png/blupi1.png it
+    // actually lives on, batched per atlas the same way Blocks-mode already
+    // batches per texture. Every cell also gets a translucent white backing
+    // square (same technique/color as the toolbar buttons) so a
+    // transparent-background sprite still reads clearly against the 3D
+    // scene behind it.
+    //
+    // Still no text labels: GEInputPad's own label-rendering methods stay
+    // private (tightly coupled to its own per-screen font-scale
+    // conventions, not worth genericizing for this), and building an
+    // independent text renderer remains out of scope. The toolbar's first 5
+    // buttons are visually identical (same flat color, distinguished only
+    // by position: Undo/Redo/Save/Back/Play-Test top-to-bottom); the 6th is
+    // the Blocks/Objects mode toggle, colored by the mode it's currently in
     // (EDITOR-109) since that state isn't inferable from position. The
-    // selected palette icon is
-    // marked by a highlighted backing square, not a caption -- a
-    // documented, later-refinable simplification, not a functional gap
-    // (every tool the toolbar exposes already has a working keyboard/
-    // mouse binding in GEWorldEditor; this is a discoverability
+    // selected palette icon is marked by a highlighted backing square, not
+    // a caption -- a documented, later-refinable simplification, not a
+    // functional gap (every tool the toolbar exposes already has a working
+    // keyboard/mouse binding in GEWorldEditor; this is a discoverability
     // convenience on top).
     class GEEditorPalette
     {
@@ -96,10 +108,21 @@ namespace GalaxyEggbert::CNA
 
         // @p terrainTexture is the SAME already-loaded object-m.png
         // texture GETerrainRenderer/GalaxyEggbertCnaGame already use --
-        // palette icons are literally the real terrain atlas, just drawn
-        // as flat 2D UI quads instead of 3D cubes.
+        // Blocks-mode icons (and the object-m.png-sourced object types,
+        // IsUniformCubeObject/IsObjectMPngSourced) are literally the real
+        // terrain atlas, just drawn as flat 2D UI quads instead of 3D
+        // cubes. @p elementTexture/exploTexture/blupiTexture/blupi1Texture
+        // are the other 4 already-loaded object sprite sheets
+        // (GalaxyEggbertCnaGame's own objectTexture_/exploTexture_/
+        // blupiObjectTexture_/blupi1ObjectTexture_) -- lent here so
+        // Objects mode can draw each type's real icon from whichever sheet
+        // GEObjectIcons says it actually lives on.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                  Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
+                 Microsoft::Xna::Framework::Graphics::Texture2D& elementTexture,
+                 Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
+                 Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
+                 Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
                  int viewportWidth, int viewportHeight);
 
     private:
@@ -118,18 +141,6 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool HitsAnyControl(float x, float y, int viewportWidth,
                                           int viewportHeight) const noexcept;
 
-        // Fill color for an Objects-mode cell, by its index into
-        // ConfirmedObjectCategories() (-1 = not in any confirmed category).
-        // Objects have no single shared atlas to draw a real icon from
-        // (their sprites live across element.png/explo.png/blupi.png,
-        // selected per type by GEObjectIcons::GetObjIcon), so Objects mode
-        // renders flat category-colored cells instead: blue lifts, red
-        // enemies, orange walkers, yellow collectibles, green pickups,
-        // purple skins, gray for anything uncategorized. Multi-atlas icon
-        // plumbing is disproportionate to this milestone -- same documented
-        // simplification as EDITOR-106's "no text labels" decision.
-        [[nodiscard]] static Microsoft::Xna::Framework::Vector3 CategoryColor(int categoryIndex);
-
         [[nodiscard]] GEQuadBatch::Rect ToolbarButtonRect(int index) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect TabToggleRect(int viewportWidth, int viewportHeight) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect PagePrevRect(int viewportWidth, int viewportHeight) const noexcept;
@@ -141,9 +152,6 @@ namespace GalaxyEggbert::CNA
         std::vector<int> allIcons_;
         std::vector<int> confirmedObjectsFlat_;
         std::vector<int> allObjects_;
-        // typeId -> index into ConfirmedObjectCategories(), for
-        // ObjectCellColor(); absent means "not in a confirmed category".
-        std::map<int, int> objectCategoryIndex_;
         GETileAtlas tileAtlas_;
 
         PaletteMode mode_ = PaletteMode::Blocks;
@@ -158,5 +166,17 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> paletteRenderer_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flatEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> flatRenderer_;
+
+        // One more effect/renderer pair per additional object-icon sheet
+        // (object-m.png reuses paletteEffect_/paletteRenderer_ above --
+        // same atlas Blocks mode already draws from).
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> elementEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> elementRenderer_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> exploEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> exploRenderer_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiEffect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiRenderer_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupi1Effect_;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupi1Renderer_;
     };
 }

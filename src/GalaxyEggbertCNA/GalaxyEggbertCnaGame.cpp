@@ -3678,7 +3678,8 @@ namespace GalaxyEggbert::CNA
                 }
                 else
                 {
-                    worldEditor_.Draw(device, camera_, terrainTexture_,
+                    worldEditor_.Draw(device, camera_, terrainTexture_, objectTexture_, exploTexture_,
+                                      blupiObjectTexture_, blupi1ObjectTexture_,
                                       viewport.getWidthProperty(), viewport.getHeightProperty());
                 }
             }
