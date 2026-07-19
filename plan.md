@@ -2851,7 +2851,13 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-030 — Vertigo (hanging on ledge in fear — ACTION_VERTIGO)
 - [ ] BLUPI-031 — Recede (moving backward — ACTION_RECEDE)
 - [ ] BLUPI-032 — Advance (moving forward — ACTION_ADVANCE)
-- [ ] BLUPI-033 — Clear1..Clear8 (clearing animations — used for special level events)
+- [x] BLUPI-033 — Clear1..Clear8 (clearing animations — used for special level events) — **stale
+      checkbox, closed 2026-07-19** (this stub predates the detailed per-cause breakdown done
+      2026-07-16/18): Clear1-4/Glu/Drown are wired via `DeathLocked`'s own per-cause frame table
+      (see the line-1468-1491 note above and `mobile-eggbert-reference/08-animations.md` §8).
+      Clear5-Clear8 are confirmed real dead code (re-verified 2026-07-19 by a dedicated research
+      fork): `Decor::BlupiDead()` (`Decor.cpp:6547-6552`) never assigns them as a death cause —
+      intentionally not implemented, not an engine gap.
 - [ ] BLUPI-034 — Set (placing object — ACTION_SET)
 - [ ] BLUPI-035 — Win (level-win celebration animation)
 - [x] BLUPI-036 — Push (pushing a crate — ACTION_PUSH) — **done 2026-07-18**, see `BLUPI-047`'s shared
@@ -2897,6 +2903,13 @@ reset to `[ ]` except the small set with direct CNA evidence.
       temporary debug harness (reverted before commit): `TriggerMount(Jeep)` correctly selects
       `StopJeep` and cycles the real `111,110,111,112` icon sequence exactly. Full regression clean
       (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
+      **Follow-up 2026-07-19**: JumpSkate/AirSkate, TakeSkate/DeposeSkate, and FireTank (the three
+      gaps called out above) are now wired — see `BLUPI-053/054/055/058`'s own updated entries for
+      the details. Real Turn variants remain the one deliberately-deferred category; two research
+      forks this session found the exact real trigger condition (`Decor::BlupiStep()`'s
+      direction-mismatch between `m_blupiSpeedX`'s sign and `m_blupiDir`) and reconfirmed
+      Clear5-Clear8 as genuine dead code (`Decor::BlupiDead()` never assigns them) — see
+      `mobile-eggbert-reference/08-animations.md` §8 for the full citations.
 - [ ] BLUPI-048 — StopPop / Pop (pop-star costume idle/dance) — real data extracted (table_blupi IDs
       28/29) but NOT wired: no "pop-star costume" mechanic/flag exists in this engine to select it.
 - [x] BLUPI-049 — Bye (farewell exit animation) — **done 2026-07-17** (user-reported gap: teleporting
@@ -2937,13 +2950,18 @@ reset to `[ ]` except the small set with direct CNA evidence.
       NOT wired: no distinct "hurt jump, not yet dead" state exists in this engine (hazard contact
       goes straight to `DeathLocked`) — would need its own trigger research, not attempted this pass.
 - [x] BLUPI-053 — StopSkate / MarchSkate / TurnSkate / JumpSkate / AirSkate (skateboard) — **Stop/
-      March done 2026-07-18**, see `BLUPI-047`'s shared writeup. Turn/Jump/Air variants NOT modeled
-      (same Turn-variant gap as every other vehicle; Skateboard's own real airborne icons specifically
-      also not modeled, see `BLUPI-047`'s own note).
-- [ ] BLUPI-054 — TakeSkate (picking up skateboard) — real data extracted (table_blupi ID 42) but NOT
-      wired: no edge-detected "just mounted skateboard" signal exists yet to hook it to.
-- [ ] BLUPI-055 — DeposeSkate (putting down skateboard) — real data extracted (table_blupi ID 43) but
-      NOT wired, same reason as `BLUPI-054`.
+      March done 2026-07-18; JumpSkate/AirSkate done 2026-07-19** (`vehicleAnimState()`'s
+      `Skateboard` case now splits airborne by `m_velocityY` sign, same as the base `Jump`/`Air`
+      split — the only vehicle mode with its own airborne icon pair; `table_blupi` actions 40/41,
+      3/8 frames, extracted and cross-validated against the real table this session). Turn variant
+      still NOT modeled (same Turn-variant gap as every other vehicle, see `BLUPI-047`'s own note).
+- [x] BLUPI-054 — TakeSkate (picking up skateboard) — **done 2026-07-19**: real data (`table_blupi`
+      ID 42, 20 frames) wired via `TriggerOneShotAnim()` at the real Skateboard mount hook point
+      (`GalaxyEggbertCnaGame.cpp`'s vehicle-mount scan) — confirmed the only vehicle mode with a
+      dedicated mount pose (checked the reference doc for the other 4 modes; none exist).
+- [x] BLUPI-055 — DeposeSkate (putting down skateboard) — **done 2026-07-19**: real data
+      (`table_blupi` ID 43, 20 frames) wired via `TriggerOneShotAnim()` at the real dismount hook
+      point (`DismountAndDepositVehicle()`), same reasoning as `BLUPI-054`.
 - [ ] BLUPI-056 — Ouf1a / Ouf1b / Ouf2 / Ouf3 / Ouf4 / Ouf5 (relief animations) — real data extracted
       (table_blupi IDs 44/45/46/47/48/65) but NOT wired: blocked on the same "idle-fidget
       system"/"close call" detection prerequisite as `BLUPI-018/019` (`SOUND-046`-family) — a genuinely
@@ -2951,9 +2969,12 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-057 — Sucette (collecting lollipop/suction-cup power-up) — already done via `PickupBusy`'s
       own per-kind frame table (`kSucetteFrames`, added 2026-07-16) — not a separate `AnimState`.
 - [x] BLUPI-058 — StopTank / MarchTank / TurnTank / FireTank (tank vehicle) — **Stop/March done
-      2026-07-18**, see `BLUPI-047`'s shared writeup. Turn/FireTank variants NOT modeled (FireTank's
-      own real data was extracted but has no edge-detected "just fired" signal to hook it to yet,
-      same category as `BLUPI-054/055`).
+      2026-07-18; FireTank done 2026-07-19**: real data (`table_blupi` ID 53, 6 frames) wired via a
+      new `GEInteractionSystem::TankFiredThisFrame()` per-frame signal (mirrors the existing
+      `CrateBeingPushedThisFrame()` pattern, since that class has no `GEBlupiController` access) —
+      fires only the frame a bullet actually launches, not the empty-clip click; independent of the
+      existing 0.5s fire cooldown, which only gates re-firing. Turn variant still NOT modeled, same
+      gap as every other vehicle.
 - [x] BLUPI-059 — Glu (stuck in glue) — already done via `DeathLocked`'s own per-cause frame table
       (`kGluFrames`, added 2026-07-16) — not a separate `AnimState`.
 - [x] BLUPI-060 — Drink (drinking power-up animation) — already done via `PickupBusy`'s own per-kind

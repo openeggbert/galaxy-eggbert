@@ -498,21 +498,40 @@ cross-reference that should have existed from the start — which of the 84 real
 `plan.md`'s `BLUPI-0xx` checklist (especially `BLUPI-047`'s shared writeup) for full citations —
 this is a compact index into that, not a duplicate of it.
 
-**Wired (41 of 84):** `Stop`(1), `March`(2), `Jump`(4), `Air`(5), `Down`(6), `Up`(7), `Clear1`(11,
-via `DeathLocked`), `Push`(14), `StopHelico`/`MarchHelico`(15/16), `StopNage`/`MarchNage`(18/19),
+**Wired (46 of 84):** `Stop`(1), `March`(2), `Jump`(4), `Air`(5), `Down`(6, real 3-frame icon set
+33/34/35 — was truncated to a single frame `{33}` until fixed 2026-07-19, found while
+cross-checking `table_blupi` for the skate/tank items below), `Up`(7), `Clear1`(11, via
+`DeathLocked`), `Push`(14), `StopHelico`/`MarchHelico`(15/16), `StopNage`/`MarchNage`(18/19),
 `StopSurf`/`MarchSurf`(21/22), `Drown`(24, via `DeathLocked`), `StopJeep`/`MarchJeep`(25/26),
-`Bye`(30), `Hide`(35), `StopSkate`/`MarchSkate`(37/38), `Sucette`(49, via `PickupBusy`),
-`StopTank`/`MarchTank`(50/51), `Glu`(54, via `DeathLocked`), `Drink`(55, via `PickupBusy`),
-`Charge`(56, via `PickupBusy`), `Mockery`/`Mockeryi`/`Mockeryp`(63/64/83), `Balloon`(66),
-`StopOver`/`MarchOver`(67/68), `StopEcrase`/`MarchEcrase`(72/73), `Teleporte`(74),
-`Clear2`/`Clear3`/`Clear4`(75/76/77, via `DeathLocked`), `Switch`(82), `PutDynamite`(87).
+`Bye`(30), `Hide`(35), `StopSkate`/`MarchSkate`(37/38), `JumpSkate`/`AirSkate`(40/41, wired
+2026-07-19: the airborne case in `vehicleAnimState()`'s `Skateboard` branch, split by
+`m_velocityY` sign the same way the base `Jump`/`Air` split already works — the only vehicle mode
+with its own airborne icon pair), `TakeSkate`/`DeposeSkate`(42/43, wired 2026-07-19 via
+`TriggerOneShotAnim()` at the real Skateboard mount/dismount hook points in
+`GalaxyEggbertCnaGame.cpp` — confirmed the only vehicle mode with a dedicated mount/dismount
+pose), `Sucette`(49, via `PickupBusy`), `StopTank`/`MarchTank`(50/51), `FireTank`(53, wired
+2026-07-19 via a new `GEInteractionSystem::TankFiredThisFrame()` per-frame signal, mirroring the
+existing `CrateBeingPushedThisFrame()` pattern since that class has no `GEBlupiController` access —
+fires only the frame a bullet actually launches, not the empty-clip click), `Glu`(54, via
+`DeathLocked`), `Drink`(55, via `PickupBusy`), `Charge`(56, via `PickupBusy`),
+`Mockery`/`Mockeryi`/`Mockeryp`(63/64/83), `Balloon`(66), `StopOver`/`MarchOver`(67/68),
+`StopEcrase`/`MarchEcrase`(72/73), `Teleporte`(74), `Clear2`/`Clear3`/`Clear4`(75/76/77, via
+`DeathLocked`), `Switch`(82), `PutDynamite`(87).
 
-**Not wired — no matching mechanic/edge-event exists in this engine (43 of 84, plus the 3 with no
+**Not wired — no matching mechanic/edge-event exists in this engine (38 of 84, plus the 3 with no
 real record at all):**
 - **Turn variants** (never modeled for anything, including the base humanoid): `Turn`(3),
   `TurnHelico`(17), `TurnNage`(20), `TurnSurf`(23), `TurnJeep`(27), `TurnSkate`(39), `TurnTank`(52),
   `TurnAir`(59), `TurnOver`(69) — precise real turn-trigger detection (a direction-change edge,
-  distinct from just "moving") needs its own dedicated research pass.
+  distinct from just "moving") needs its own dedicated research pass. **Re-checked 2026-07-19**
+  (a fork tasked with finding the exact real trigger, not just confirming the gap): the real
+  condition lives in `Decor::BlupiStep()` (`Decor.cpp` ~2734-3596) as a direction-mismatch between
+  the sign of `m_blupiSpeedX` and the current `m_blupiDir` — i.e. Blupi's horizontal velocity
+  points opposite his facing, for one frame, right as he reverses direction while moving. This is
+  a genuine edge-detection problem (needs last-frame facing compared to this-frame facing, plus
+  the base humanoid `Turn`(3) itself still isn't modeled either, `BLUPI-025`) — still deliberately
+  deferred, not implemented this session; the citation above is so a future pass doesn't have to
+  re-derive it from scratch.
 - **Deferred mechanics** (the underlying gameplay feature itself is deliberately not modeled this
   session, not just the icon): `Vertigo`(8, edge-hang, `PICKUP-024`), `StopSuspend`/`MarchSuspend`/
   `JumpSuspend`(31/32/34, rope-hang, `BLUPI-101`/`177`, deferred render-geometry decision).
@@ -522,13 +541,15 @@ real record at all):**
   helicopter-in-glue interaction), `StopMarch`(60, no coast-down sub-state), `StopJump`/
   `StopJumph`(61/62, no distinct landing-transition frame), `Non`(84, unclear real trigger
   condition, not researched), `SlowdownSkate`(85, no distinct braking input/state).
+- **Confirmed real dead code, no death-cause path can ever reach these** (re-verified 2026-07-19,
+  same fork pass as the Turn-trigger research above): `Clear5`-`Clear8`(78/79/80/81). Checked
+  `Decor::BlupiDead()` directly (`Decor.cpp:6547-6552`) — it only ever assigns
+  `Clear1`/`Clear2`/`Clear3`/`Clear4`/`Glu` as a death-cause action; nothing in real source ever
+  produces `Clear5`-`Clear8`. Intentionally not implemented — this is not an engine gap, the real
+  game never plays these either. A future session finding this doesn't need to re-investigate.
 - **Data extracted, real trigger exists but has no edge-detected signal to hook an animation to
-  yet**: `JumpSkate`/`AirSkate`(40/41, Skateboard's own real airborne icons), `TakeSkate`/
-  `DeposeSkate`(42/43, mount/dismount), `TurnSkate`(39, listed twice above under both categories —
-  it's genuinely both a Turn-variant AND has this gap), `FireTank`(53, tank firing), `Ouf1a`-
-  `Ouf5`(44/45/46/47/48/65, blocked on a "close call"/idle-fidget detection prerequisite,
-  `BLUPI-018`/`019`, `SOUND-046`-family), `Clear5`-`Clear8`(78/79/80/81, no real death-cause path
-  currently reaches these 4 specific one-shot variants), `TakeDynamite`(86, real pickup goes
+  yet**: `Ouf1a`-`Ouf5`(44/45/46/47/48/65, blocked on a "close call"/idle-fidget detection
+  prerequisite, `BLUPI-018`/`019`, `SOUND-046`-family), `TakeDynamite`(86, real pickup goes
   through the deferred "Voyage" reward system, unclear whether the hand-gesture belongs at
   touch-time or Voyage-resolution time without further research), `Win`(13, this engine's own
   separate Win-screen UI — a static `blupiyoupie.png` background, not this icon system — already

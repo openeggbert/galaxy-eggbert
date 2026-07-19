@@ -273,6 +273,40 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 
 Most recent first. Full history: `git log`.
 
+### feat: wired JumpSkate/AirSkate, TakeSkate/DeposeSkate, FireTank anim icons; fixed a Down frame-count bug (2026-07-19)
+
+Follow-up to the animation-icon-sheet fix below, same session, done autonomously overnight per the
+user's explicit request to continue implementing everything possible from
+`mobile-eggbert-reference/08-animations.md` §8's "not wired" list. Extracted and cross-validated
+the real `table_blupi` frame arrays (a from-scratch parser, validated byte-for-byte against 37
+already-approved arrays before trusting any new one) for the 5 items research forks confirmed were
+genuinely wireable (see `plan.md` `BLUPI-053/054/055/058` and their `BLUPI-047` follow-up note):
+- **JumpSkate/AirSkate** (`table_blupi` 40/41) — Skateboard is the only vehicle mode with its own
+  real airborne icon pair; `vehicleAnimState()`'s `Skateboard` case now splits by `m_velocityY`
+  sign, same as the base `Jump`/`Air` split.
+- **TakeSkate/DeposeSkate** (42/43) — wired via `TriggerOneShotAnim()` at the real Skateboard
+  mount/dismount hook points in `GalaxyEggbertCnaGame.cpp` (confirmed the only vehicle with a
+  dedicated mount/dismount pose).
+- **FireTank** (53) — new `GEInteractionSystem::TankFiredThisFrame()` per-frame signal (mirrors
+  `CrateBeingPushedThisFrame()`, since that class has no `GEBlupiController` access), true only the
+  frame a bullet actually launches, not the empty-clip click.
+- **Bonus fix**: `kDownFrames` was `{33}` (1 frame) but the real table (and the reference doc) both
+  say Down(6) has 3 frames (`33,34,35`) — found while cross-validating the parser, fixed
+  independently.
+
+Also re-confirmed (via 2 research forks, not implemented — deliberately deferred/dead):
+Turn variants' real trigger condition (`Decor::BlupiStep()`'s `m_blupiSpeedX`-sign-vs-`m_blupiDir`
+mismatch, a genuine edge-detection problem) documented for a future pass; Clear5-Clear8 reconfirmed
+as real dead code (`Decor::BlupiDead()` never assigns them). See
+`mobile-eggbert-reference/08-animations.md` §8 for the updated full status (46/84 wired).
+
+New test coverage: `VerifyBlupiMovement` (Down cycling, JumpSkate/AirSkate state+icon+apex/landing,
+TakeSkate/DeposeSkate one-shot trigger+resume, FireTank one-shot trigger+resume) and
+`VerifyInteractionSystem` (`TankFiredThisFrame()` true/false across the not-in-tank/cooldown/
+empty-clip cases). Full regression clean (only the pre-existing unrelated
+`easy-gl-resource-smoke-tests` failure), built/tested at `-j2` throughout per the user's standing
+CPU-core-limit instruction.
+
 ### fix: HUD's bottom-right animation icon used the wrong sprite sheet for 4 death causes (2026-07-19)
 
 User request: "make sure the bottom-right animation icon actually corresponds to what should be
