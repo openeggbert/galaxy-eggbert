@@ -184,6 +184,8 @@ namespace GalaxyEggbert::CNA
             182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 183, 184, 185,
             186, 187, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182,
             182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182};
+        constexpr int kJumpSkateFrames[] = {210, 211, 212};
+        constexpr int kAirSkateFrames[]  = {213, 213, 214, 214, 215, 215, 214, 214};
         constexpr int kStopOverFrames[]  = {315};
         constexpr int kMarchOverFrames[] = {
             296, 297, 298, 299, 300, 301, 302, 301, 300, 299, 298, 297};
@@ -1607,11 +1609,11 @@ namespace GalaxyEggbert::CNA
         // real icon pair; falls through to the base Stop/March for
         // VehicleMode::None (never actually reached below, since the
         // ternary chain only calls this from the IsInVehicle() branch, but
-        // keeps the lambda total/safe). Skateboard's own real JumpSkate/
-        // AirSkate airborne variants are NOT modeled -- StopSkate/
-        // MarchSkate keep showing even while airborne, same "Turn variants
-        // not modeled" category of documented gap as the enum's own
-        // comment.
+        // keeps the lambda total/safe). Skateboard additionally splits into
+        // its own real JumpSkate/AirSkate airborne variants (ACTION_JUMPSKATE/
+        // ACTION_AIRSKATE, table_blupi actions 40/41), wired 2026-07-19 --
+        // the only vehicle mode with a distinct airborne icon pair, mirroring
+        // the base Jump/Air ascending-vs-falling split below.
         const auto vehicleAnimState = [this, moving]() -> AnimState
         {
             switch (m_vehicleMode)
@@ -1619,7 +1621,12 @@ namespace GalaxyEggbert::CNA
                 case VehicleMode::Helicopter: return moving ? AnimState::MarchHelico : AnimState::StopHelico;
                 case VehicleMode::Jeep:       return moving ? AnimState::MarchJeep   : AnimState::StopJeep;
                 case VehicleMode::Tank:       return moving ? AnimState::MarchTank   : AnimState::StopTank;
-                case VehicleMode::Skateboard: return moving ? AnimState::MarchSkate  : AnimState::StopSkate;
+                case VehicleMode::Skateboard:
+                    if (!m_onGround)
+                    {
+                        return m_velocityY > 0.0f ? AnimState::JumpSkate : AnimState::AirSkate;
+                    }
+                    return moving ? AnimState::MarchSkate : AnimState::StopSkate;
                 case VehicleMode::Overcraft:  return moving ? AnimState::MarchOver   : AnimState::StopOver;
                 default: return moving ? AnimState::March : AnimState::Stop;
             }
@@ -1755,6 +1762,10 @@ namespace GalaxyEggbert::CNA
                 return kStopSkateFrames[m_animPhase % (sizeof(kStopSkateFrames) / sizeof(kStopSkateFrames[0]))];
             case AnimState::MarchSkate:
                 return kMarchSkateFrames[m_animPhase % (sizeof(kMarchSkateFrames) / sizeof(kMarchSkateFrames[0]))];
+            case AnimState::JumpSkate:
+                return kJumpSkateFrames[m_animPhase % (sizeof(kJumpSkateFrames) / sizeof(kJumpSkateFrames[0]))];
+            case AnimState::AirSkate:
+                return kAirSkateFrames[m_animPhase % (sizeof(kAirSkateFrames) / sizeof(kAirSkateFrames[0]))];
             case AnimState::StopOver:
                 return kStopOverFrames[m_animPhase % (sizeof(kStopOverFrames) / sizeof(kStopOverFrames[0]))];
             case AnimState::MarchOver:

@@ -1788,6 +1788,46 @@ int main(int argc, char** argv)
               "headroom-modulated ordinary-Blupi values");
     }
 
+    // JumpSkate/AirSkate (table_blupi actions 40/41, wired 2026-07-19) --
+    // Skateboard is the only vehicle mode with its own real airborne icon
+    // pair, split by velocity sign exactly like the base humanoid Jump/Air
+    // (plan.md E3D-MIG-064).
+    {
+        GEBlupiController skateAirborne;
+        skateAirborne.SetPosition(0.0f, 1.0f, 0.0f);
+        for (int i = 0; i < 5; ++i) skateAirborne.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        skateAirborne.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+        skateAirborne.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(!skateAirborne.IsOnGround(), "Skateboard jump launches Blupi airborne");
+        check(skateAirborne.GetAnimState() == GEBlupiController::AnimState::JumpSkate,
+              "ascending on a Skateboard is the JumpSkate anim state, not the base Jump or StopSkate");
+        check(skateAirborne.GetAnimIcon() == 210,
+              "JumpSkate anim icon starts at the real first frame (icon 210)");
+
+        int stepsToApex = 0;
+        while (skateAirborne.GetAnimState() == GEBlupiController::AnimState::JumpSkate && stepsToApex < 200)
+        {
+            skateAirborne.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToApex;
+        }
+        check(stepsToApex < 200, "Skateboard jump reaches its apex within a bounded time");
+        check(skateAirborne.GetAnimState() == GEBlupiController::AnimState::AirSkate,
+              "past the apex, falling on a Skateboard switches to the AirSkate anim state, not "
+              "MarchSkate/StopSkate");
+        check(skateAirborne.GetAnimIcon() == 213,
+              "AirSkate anim icon starts at the real first frame (icon 213)");
+
+        int stepsToLand = 0;
+        while (!skateAirborne.IsOnGround() && stepsToLand < 200)
+        {
+            skateAirborne.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToLand;
+        }
+        check(skateAirborne.IsOnGround(), "lands again after the Skateboard jump arc completes");
+        check(skateAirborne.GetAnimState() == GEBlupiController::AnimState::StopSkate,
+              "back on the ground and idle on a Skateboard returns to StopSkate, not stuck in AirSkate");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

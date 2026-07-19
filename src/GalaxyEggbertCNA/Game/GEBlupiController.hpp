@@ -488,6 +488,11 @@ namespace GalaxyEggbert::CNA
             StopJeep, MarchJeep,
             StopTank, MarchTank,
             StopSkate, MarchSkate,
+            // JumpSkate/AirSkate (`table_blupi` IDs 40/41, wired 2026-07-19):
+            // Skateboard is the only vehicle mode with its own real airborne
+            // icon pair, selected by `m_velocityY` sign in `vehicleAnimState()`
+            // exactly like the base Jump/Air split below.
+            JumpSkate, AirSkate,
             StopOver, MarchOver,
             // Swim/Surf Stop/March pairs (plan.md BLUPI-040/041/043/044,
             // found 2026-07-18) -- same shape as the vehicle pairs above,
