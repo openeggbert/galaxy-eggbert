@@ -56,8 +56,10 @@ UX is fine — inventing new *gameplay* mechanics is still not.
 
 ### Build status
 `build-cna` builds cleanly and was re-verified after every editor milestone (2026-07-18).
-`build-cna-vulkan` has **not** been rebuilt since the editor work began — the editor's own code is
-backend-agnostic, but this is unverified, not known-good (see §5).
+`build-cna-vulkan` was rebuilt and re-tested 2026-07-19 (through the skate/tank animation-wiring
+work) — 76/76 (100%) tests pass, cleaner than `build-cna`'s own 78/79 (the unrelated `easy-gl`
+smoke-test failure doesn't reproduce there, presumably a different target set). The editor's own
+code is confirmed backend-agnostic through this.
 - `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default — switched back from
   Vulkan 2026-07-18, see §3; still fully overridable at configure time).
 - `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`). Has a known, unrelated CNA
@@ -1068,11 +1070,10 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
 work — the 3D world editor — is mid-plan but not stuck: EDITOR-111 is simply the next unstarted
 milestone, fully specified and unblocked.
 
-The nearest thing to a real risk is **`build-cna-vulkan` has not been rebuilt or re-tested since
-the editor work began** (11 commits). The editor code is backend-agnostic and nothing suggests a
-problem, but this is unverified. Closing it is part of EDITOR-112 and is the cheapest way to rule
-out a regression — if picking this project up cold and wanting a quick confidence check, do that
-first (§7 has the commands).
+**Resolved 2026-07-19**: `build-cna-vulkan` was rebuilt and re-tested through the editor work plus
+this session's animation wiring — 76/76 (100%), confirming the editor code (and everything else
+changed since) really is backend-agnostic. EDITOR-112's own copy of this task is now done; only its
+unsaved-changes-guard part remains.
 
 The remaining blockers are items that genuinely need a **human decision**, not more engineering:
 - Saw blade (icon 378) render orientation — needs the user to look at a screenshot/crop and state
@@ -1108,8 +1109,7 @@ of the concrete, non-blocked tasks in §8 below, not a bug fix.
   the multi-atlas `GEObjectIcons::GetObjIcon` plumbing this needed was implemented 2026-07-19, see
   §3; this is no longer a gap.) Refinable later; not a functional gap (every tool has a working
   binding).
-- **Needs verification:** `build-cna-vulkan` has not been rebuilt/re-tested since EDITOR-100 (see
-  §4). Expected fine; unproven.
+- **Resolved 2026-07-19:** `build-cna-vulkan` rebuilt/re-tested (see §4) — 76/76 (100%).
 - **Risky assumption (world editor):** `ObjectType` category names/membership in
   `GEPaletteCategories.cpp` were taken **only** from `ObjectType.hpp`'s own documented comment
   groups. The "Confirmed" tab deliberately excludes types the game spawns itself (explosions,
@@ -1336,9 +1336,9 @@ check of the new behavior → revert instrumentation → commit → push.
 
 2. **EDITOR-112 — Hardening pass + full regression.** Unsaved-changes guard (dirty flag + one-tap
    confirm on Back/Open/Quit), a box-fill test that straddles world bounds, consolidate
-   `VerifyGEWorldEditor` into clearly-named sections, and — the part worth doing even if the rest
-   slips — **re-run the full suite on `build-cna-vulkan`**, which hasn't been rebuilt since the
-   editor work began (see §4).
+   `VerifyGEWorldEditor` into clearly-named sections. (**The `build-cna-vulkan` re-run this item
+   also called for is done — see §4, done 2026-07-19 independent of the rest of this task, since
+   it needed no editor-specific judgment call.**)
    Files: `src/GalaxyEggbertCNA/Editor/*`, `tools/VerifyGEWorldEditor.cpp`.
    Verify: `cd build-cna && ctest` and `cd build-cna-vulkan && ctest`, plus a final live
    walkthrough of the whole editor → play-test → editor loop.
