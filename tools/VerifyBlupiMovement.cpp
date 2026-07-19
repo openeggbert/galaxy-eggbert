@@ -187,6 +187,36 @@ int main(int argc, char** argv)
               "back on the ground and idle returns to the Stop anim state, not stuck in Air");
     }
 
+    // 4d. Animation state: Down (grounded crouch) icon cycling. Real
+    // BlupiAction ID 6 has 3 real icon frames (33, 34, 35) per
+    // table_blupi/mobile-eggbert-reference/08-animations.md -- this used
+    // to be a single-frame array (icon 33 only), a transcription bug fixed
+    // 2026-07-19 while cross-checking table_blupi for the skate/tank
+    // animation wiring below.
+    {
+        GEBlupiController crouching;
+        crouching.SetPosition(0.0f, 1.0f, 0.0f);
+        crouching.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        check(crouching.GetAnimState() == GEBlupiController::AnimState::Down,
+              "grounded crouch input enters the Down anim state");
+        check(crouching.GetAnimIcon() == 33, "Down anim icon starts at the real first frame (icon 33)");
+
+        const int expectedCycle[] = {34, 35, 33};
+        for (int expectedIcon : expectedCycle)
+        {
+            int steps = 0;
+            const int previousIcon = crouching.GetAnimIcon();
+            while (crouching.GetAnimIcon() == previousIcon && steps < 200)
+            {
+                crouching.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+                ++steps;
+            }
+            check(steps < 200, "Down anim icon advances to its next frame within a bounded time");
+            check(crouching.GetAnimIcon() == expectedIcon,
+                  "Down anim icon cycles through its real 3-frame sequence (33, 34, 35, then back to 33)");
+        }
+    }
+
     // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --
     // a small synthetic world (not worlds3d/world999.vwr, which has no lava
     // placed yet) with one lava block and one ordinary ground block,

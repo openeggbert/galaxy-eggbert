@@ -61,7 +61,7 @@ namespace GalaxyEggbert::CNA
         constexpr int kMarchFrames[] = {5, 6, 7, 8, 9, 10};
         constexpr int kJumpFrames[]  = {17, 18, 19};
         constexpr int kAirFrames[]   = {169, 26, 170, 170, 27};
-        constexpr int kDownFrames[]  = {33};
+        constexpr int kDownFrames[]  = {33, 34, 35};
         constexpr int kUpFrames[]    = {44};
 
         // blupi.png icon indices for StopEcrase(72)/MarchEcrase(73)/
