@@ -140,7 +140,7 @@ namespace GalaxyEggbert::CNA
                   bool powerGaugeVisible, int powerGaugeLevel,
                   const char* trainingHint,
                   const char* overlayMessage,
-                  int animIcon,
+                  int animIcon, bool animIconUsesElementSheet,
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                   float voyageX, float voyageY);
 

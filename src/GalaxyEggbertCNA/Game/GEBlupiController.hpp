@@ -1006,11 +1006,27 @@ namespace GalaxyEggbert::CNA
         // driven directly by turning, not derived from movement direction.
         [[nodiscard]] float GetYaw() const noexcept { return m_yaw; }
 
-        // Current coarse animation state and the blupi.png icon index to
-        // display for it right now (10 columns, 60x60 px tiles — see
+        // Current coarse animation state and the icon index to display for
+        // it right now (10 columns, 60x60 px tiles — see
         // GalaxyEggbertSimple3D::GEBlupiController for the same convention).
+        // Almost always a blupi.png index -- AnimIconUsesElementSheet()
+        // below is what tells a caller when it's an element.png index
+        // instead, since the same numeric icon range means something
+        // different on each sheet.
         [[nodiscard]] AnimState GetAnimState() const noexcept { return m_animState; }
         [[nodiscard]] int GetAnimIcon() const noexcept;
+
+        // True exactly when GetAnimIcon()'s current value indexes into
+        // element.png rather than blupi.png -- real mobile-eggbert's
+        // BlupiSearchIcon() (Decor.cpp) selects the sheet per-action, not
+        // per-controller: only Clear1/Clear2/Clear3/Glu (of the states this
+        // engine currently animates -- Electro, the 5th real element.png
+        // case, has no modeled mechanic yet) use element.png; every other
+        // wired AnimState, including DeathLocked's own Clear4/Drown causes,
+        // uses blupi.png. A caller that always assumes blupi.png (e.g. the
+        // HUD's interim animation-state indicator) shows the wrong sprite
+        // for exactly these 4 causes.
+        [[nodiscard]] bool AnimIconUsesElementSheet() const noexcept;
 
         // Tank controls, matching GalaxyEggbertSimple3D's already-shipped
         // scheme (GalaxyEggbertSimpleGame::SetupInput's "Move" axis) and

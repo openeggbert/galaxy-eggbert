@@ -261,7 +261,7 @@ namespace GalaxyEggbert::CNA
                      bool powerGaugeVisible, int powerGaugeLevel,
                      const char* trainingHint,
                      const char* overlayMessage,
-                     int animIcon,
+                     int animIcon, bool animIconUsesElementSheet,
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                      float voyageX, float voyageY)
     {
@@ -379,14 +379,27 @@ namespace GalaxyEggbert::CNA
         }
 
         // Interim animation-state indicator, bottom-right (see GEHud.hpp).
+        // Real BlupiSearchIcon() picks the sheet per-action, not a single
+        // constant one (mobile-eggbert-reference/08-animations.md §2's own
+        // "Channel selection" note) -- animIconUsesElementSheet tells us
+        // which of the two this frame's icon actually indexes into (see
+        // GEBlupiController::AnimIconUsesElementSheet()'s own comment).
         {
             Quad q;
             q.x1 = static_cast<float>(viewportW) - kAnimIndicatorMargin * scale;
             q.y1 = static_cast<float>(viewportH) - kAnimIndicatorMargin * scale;
             q.x0 = q.x1 - kAnimIndicatorSize * scale;
             q.y0 = q.y1 - kAnimIndicatorSize * scale;
-            IconUv(animIcon, blupiSheetW, blupiSheetH, q.u0, q.v0, q.u1, q.v1);
-            blupiQuads.push_back(q);
+            if (animIconUsesElementSheet)
+            {
+                IconUv(animIcon, elementSheetW, elementSheetH, q.u0, q.v0, q.u1, q.v1);
+                elementQuads.push_back(q);
+            }
+            else
+            {
+                IconUv(animIcon, blupiSheetW, blupiSheetH, q.u0, q.v0, q.u1, q.v1);
+                blupiQuads.push_back(q);
+            }
         }
 
         // Held keys, element.png 215/222/229 at their real positions.

@@ -273,6 +273,28 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 
 Most recent first. Full history: `git log`.
 
+### fix: HUD's bottom-right animation icon used the wrong sprite sheet for 4 death causes (2026-07-19)
+
+User request: "make sure the bottom-right animation icon actually corresponds to what should be
+animated" (the interim debug indicator, `GEHud.hpp`'s own class comment, not part of the real
+mobile-eggbert HUD). Cross-checked against `mobile-eggbert-reference/08-animations.md` §2's own
+"Channel selection" note (verified there directly against `Decor.cpp`'s real `BlupiSearchIcon()`):
+only `Clear1`/`Clear2`/`Clear3`/`Glu`/`Electro` use `element.png`, every other real `BlupiAction`
+uses `blupi.png`. `GEHud`'s indicator always sampled `blupi.png` regardless — since `Clear1`/
+`Clear2`/`Clear3`/`Glu` are 4 of this engine's real, already-wired `DeathLocked` causes, all 4 were
+showing whatever unrelated `blupi.png` pixels happened to sit at that numeric icon index (`Electro`
+has no modeled mechanic here, so it never came up). Fixed with new
+`GEBlupiController::AnimIconUsesElementSheet()` (true only for those 4 causes) threaded through a
+new `GEHud::Draw()` parameter, selecting the already-loaded `element.png` batch instead of
+`blupi.png` for just this one HUD element when it applies — `GEHud` already draws other element.png
+icons elsewhere (keys/bullets/dynamite/Voyage), so no new asset load or render path was needed.
+8 new `VerifyBlupiMovement` assertions (a Stop-state baseline plus the sheet flag for all 6
+`DeathCause` values, including 2 that had no dedicated test before, `Clear3`/`Glu`). Live-verified
+under `xvfb-run` with temporary instrumentation (forced a `Clear1` death-lock, screenshot, fully
+reverted before commit): the icon now shows a coherent Blupi silhouette instead of a mismatched
+crop. Full regression clean (only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+failure). See `plan.md` `064`'s own entry for the full writeup.
+
 ### World editor: single-column green palette layout + BoxFill button (2026-07-19)
 
 Follow-up to the per-type-icons redesign below, same session: the user clarified (with the same

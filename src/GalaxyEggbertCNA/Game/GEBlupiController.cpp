@@ -1788,4 +1788,19 @@ namespace GalaxyEggbert::CNA
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];
         }
     }
+
+    bool GEBlupiController::AnimIconUsesElementSheet() const noexcept
+    {
+        // Real BlupiSearchIcon() channel rule (mobile-eggbert-reference/08-animations.md §2's own
+        // "Channel selection" note, verified directly against Decor.cpp): only Clear1/Clear2/
+        // Clear3/Glu/Electro use element.png -- everything else, including DeathLocked's own
+        // Clear4/Drown causes, uses blupi.png. Electro has no modeled mechanic in this engine yet
+        // (see AnimState's own class comment), so it never reaches m_animState here.
+        if (m_animState != AnimState::DeathLocked)
+        {
+            return false;
+        }
+        return m_deathCause == DeathCause::Clear1 || m_deathCause == DeathCause::Clear2 ||
+               m_deathCause == DeathCause::Clear3 || m_deathCause == DeathCause::Glu;
+    }
 }

@@ -156,6 +156,8 @@ int main(int argc, char** argv)
         check(anim.GetAnimState() == GEBlupiController::AnimState::Stop,
               "grounded and idle starts in the Stop anim state");
         check(anim.GetAnimIcon() == 0, "Stop anim icon is the real icon 0");
+        check(!anim.AnimIconUsesElementSheet(),
+              "Stop's anim icon is on blupi.png, not element.png (the real BlupiSearchIcon() default)");
 
         anim.Step(world, 0.0f, 0.0f, true, false, false, dt); // jumpPressed
         check(!anim.IsOnGround(), "jump launches Blupi airborne");
@@ -749,6 +751,11 @@ int main(int argc, char** argv)
             // Blupi to animate). GetAnimIcon() substitutes icon 0, same convention as Teleporting.
             check(deathLocked.GetAnimIcon() == 0,
                   "Clear2's DeathLocked anim icon substitutes icon 0 for its real invisible-only frame");
+            // Real BlupiSearchIcon() channel rule (mobile-eggbert-reference/08-animations.md §2):
+            // Clear2 is one of the 4 real element.png death causes, even though its own icon here
+            // is the substituted "0" fallback, not a genuine Clear2 frame.
+            check(deathLocked.AnimIconUsesElementSheet(),
+                  "Clear2's DeathLocked anim icon is on element.png, not blupi.png");
 
             // Real per-cause hurt-sprite frames (plan.md `067`, added 2026-07-16) -- Clear1 has a
             // real distinct first frame (icon 40), unlike Clear2's invisible-only case above.
@@ -758,6 +765,28 @@ int main(int argc, char** argv)
             clear1Locked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(clear1Locked.GetAnimIcon() == 40,
                   "Clear1's DeathLocked anim icon starts at the real first frame (icon 40)");
+            check(clear1Locked.AnimIconUsesElementSheet(),
+                  "Clear1's DeathLocked anim icon is on element.png too (real BlupiSearchIcon() rule)");
+
+            // Real Clear3/Glu causes (plan.md `067`) -- the other 2 of the 4 real element.png
+            // death causes this engine models (Electro, the 5th, has no modeled mechanic yet).
+            GEBlupiController clear3Locked;
+            clear3Locked.SetPosition(0.0f, 1.0f, 0.0f);
+            clear3Locked.TriggerDeathLock(GEBlupiController::DeathCause::Clear3, true);
+            clear3Locked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(clear3Locked.GetAnimIcon() == 40,
+                  "Clear3's DeathLocked anim icon starts at the real first frame (icon 40)");
+            check(clear3Locked.AnimIconUsesElementSheet(),
+                  "Clear3's DeathLocked anim icon is on element.png too");
+
+            GEBlupiController gluLocked;
+            gluLocked.SetPosition(0.0f, 1.0f, 0.0f);
+            gluLocked.TriggerDeathLock(GEBlupiController::DeathCause::Glu, true);
+            gluLocked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(gluLocked.GetAnimIcon() == 168,
+                  "Glu's DeathLocked anim icon starts at the real first frame (icon 168)");
+            check(gluLocked.AnimIconUsesElementSheet(),
+                  "Glu's DeathLocked anim icon is on element.png too");
 
             // Real Clear2 lock duration = 100 ticks = 5.0s (Decor.cpp:6374-6392) --
             // advance to just under it (still locked), matching
@@ -823,6 +852,8 @@ int main(int argc, char** argv)
                 clear4Lock.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             }
             check(clear4Lock.IsDeathLocked(), "still locked just under the real Clear4 duration (110 ticks=5.5s)");
+            check(!clear4Lock.AnimIconUsesElementSheet(),
+                  "Clear4's DeathLocked anim icon stays on blupi.png (only Clear1/2/3/Glu use element.png)");
             for (int i = 0; i < 10; ++i)
             {
                 clear4Lock.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
@@ -842,6 +873,8 @@ int main(int argc, char** argv)
                 drownLock.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             }
             check(drownLock.IsDeathLocked(), "still locked just under the real Drown duration (90 ticks=4.5s)");
+            check(!drownLock.AnimIconUsesElementSheet(),
+                  "Drown's DeathLocked anim icon also stays on blupi.png");
         }
 
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`, verified directly

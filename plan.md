@@ -292,6 +292,25 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       documented simplification (this debug HUD slot has no "draw nothing" mechanism), not a
       fidelity claim. New `VerifyBlupiMovement.cpp` assertions cover all 3 states' exact icon
       values; full suite + both backends re-verified.
+      **Real bug found and fixed 2026-07-19** (user request: "make sure the bottom-right animation
+      icon actually corresponds to what's being animated"): `GEHud`'s indicator always sampled
+      `blupi.png` for `GetAnimIcon()`'s value, but real `BlupiSearchIcon()`
+      (`mobile-eggbert-reference/08-animations.md` §2's own "Channel selection" note, verified
+      directly against `Decor.cpp`) selects `element.png` instead for `Clear1`/`Clear2`/`Clear3`/
+      `Glu`/`Electro` specifically — of those, `Clear1`/`Clear2`/`Clear3`/`Glu` are all real,
+      already-wired `DeathLocked` causes in this engine (`Electro` has no modeled mechanic yet), so
+      every one of those 4 death animations was showing the wrong sheet's pixels at the same icon
+      index. Fixed with a new `GEBlupiController::AnimIconUsesElementSheet()` predicate (true only
+      for those 4 `DeathLocked` causes) threaded through `GEHud::Draw()`'s new
+      `animIconUsesElementSheet` parameter, selecting `elementQuads`/`elementSheetW/H` instead of
+      `blupiQuads`/`blupiSheetW/H` for exactly this one HUD element when it applies -- `GEHud`
+      already drew other element.png icons elsewhere (keys, bullets, dynamite, Voyage), so no new
+      texture load or render path was needed. 8 new `VerifyBlupiMovement` assertions (one baseline
+      "Stop stays on blupi.png" + the sheet flag for all 6 `DeathCause` values, including 2
+      previously test-uncovered ones, `Clear3`/`Glu`, added along the way). Live-verified under
+      `xvfb-run` with temporary instrumentation (forced a `Clear1` death-lock, screenshot,
+      reverted before commit): the icon now shows a coherent Blupi silhouette instead of whatever
+      unrelated `blupi.png` region the same numeric index happened to land on.
 - [~] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
       +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
       Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to
