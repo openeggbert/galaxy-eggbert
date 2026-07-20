@@ -4620,12 +4620,30 @@ those are specifically about the real byte layout, which stays undone by design.
       touched by this change) — only the underlying gameplay-functional
       door-gating is what's now real.
 - [ ] SAVE-007 — doors[180..199]: main door states (20 main doors / hub
-      worlds) — still correctly NOT ported: this is the real per-world
-      COSMETIC gold-reveal flag (`Decor::OpenGoldsWin()`/`AdaptDoors()`'s
-      `m_mission==1` icon-swap branch, confirmed via direct source read
-      2026-07-17 to be purely visual, not an access gate — see
-      `SCORE-013`'s research notes) — a real, distinct, still-unmodeled gap,
-      not the same one `SAVE-006` closed.
+      worlds) — still correctly NOT ported, but **the "purely cosmetic"
+      characterization above is wrong/incomplete (found 2026-07-20, direct
+      re-read of `Decor::AdaptDoors()`, `Decor.cpp:11533-11621`)**. On the
+      global hub (`m_mission==1`) it's actually TWO distinct sub-effects:
+      (1) a real FUNCTIONAL removal of a gold-covered obstacle tile (icon
+      183) per unlocked main door, via the SAME animated door-slide-open
+      object (`ObjectType22`) the regular door system (`160`) already
+      uses -- gated on `m_doors[180+i]==1`, i.e. `IsMissionDoorUnlocked()`
+      already has the real backing data for this, it's the reveal LOGIC
+      that's missing, not the persistence; (2) a genuinely cosmetic icon
+      swap for world-select markers (icons 158-165/309/410-415, +8/+5) --
+      this half really is purely visual and matches the earlier summary.
+      **Subtlety worth flagging for whoever implements this**:
+      `Decor::SearchGold(n, cel)` (`Decor.cpp:11486-11501`) ignores its own
+      `n` parameter entirely -- it's a linear scan for the first tile with
+      icon==183 in the whole 100x100 grid, self-consuming (a match only
+      gets cleared to icon=-1 if that specific door index is ALSO
+      unlocked; otherwise the same tile is found again on the next `i`).
+      So the mapping from "gold tile in scan order" to "which of the 20
+      main-door indices reveals it" is first-come-first-served, not a
+      fixed per-world assignment -- easy to mis-port without noticing.
+      Needs its own dedicated research+implementation pass, not attempted
+      this session (found while investigating whether this was a quick
+      win; it is not).
 - [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per
       gamer slot — **secondaryDoors (the functional half) now has a real
       backing store** (`IsMissionDoorUnlocked()`, see `SAVE-006`), but no
