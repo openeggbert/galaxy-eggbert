@@ -3572,7 +3572,14 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 - [x] TILE-049 — Background sky PNG per region (`decor000.png`..`decor031.png`, not all consecutive) — **done** (see TILE-011): loads the exact real file matching the world's `skyRegion`, degrades gracefully (no crash) for the 4 real region ids confirmed never used by any real level.
 - [ ] TILE-050 — 5 sky colour palettes (ambient + fog per world region)
 - [ ] TILE-051 — Per-zone fog colour changes mid-level (region changes between areas)
-- [ ] TILE-052 — Lightning tile visual effect (icon 66-68 drawn 13 px higher, ch69 sound)
+- [ ] TILE-052 — Lightning tile visual effect (icon 66-68 drawn 13 px higher, ch69 sound) --
+  **premise wrong, checked 2026-07-20**: icons 66-68 are NOT lightning
+  (`mobile-eggbert-reference/02-tiles.md`: 66 = unnamed ladder-like ThinMechanical column, 67 =
+  unnamed brick Billboard, 68 = `Lava`'s own base animation frame). The real lightning/Blitz
+  hazard is icon 305 (`Decor::BlitzActif`, `Decor.cpp:620-634`), already fully implemented in this
+  engine (one of the 4 lethal hazard tiles, Phase 14 `141`). Whatever this line item's icon-66-68
+  claim was originally based on, it does not correspond to any real mechanic at those icons --
+  don't implement as written; either correct with a real citation or drop.
 
 #### 5.6 Open Rendering-Mode Decisions (CNA-specific, new)
 
