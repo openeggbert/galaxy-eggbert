@@ -1,12 +1,18 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-19 (see §7.5 for standing directives — note the "no editor work" directive
+_Last updated: 2026-07-20 (see §7.5 for standing directives — note the "no editor work" directive
 there is **superseded**, see §7.5's own header. The in-game 3D world editor: milestones EDITOR-100
 through EDITOR-110 are implemented, verified, and pushed; EDITOR-111/112 remain, see §8 — but
 **editor work is now PAUSED, by explicit 2026-07-19 user request** (see plan.md §6's own status
 note for the full write-up, including an unresolved keyboard-input concern to check first if this
 is picked back up). The user wants to work on other areas of `galaxy-eggbert` next — do not resume
 EDITOR-111/112 without the user explicitly asking to.)._
+
+_2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
+**resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
+Infrastructure & Dual-Renderer — Vision") is new: a non-binding assessment of merged
+`REMAKE-ANALYSIS.md`/`renderers.md` material, read it before starting anything framed as
+"modernization" or "reduce the bug factory."_
 
 ## 1. Project summary
 
@@ -252,13 +258,13 @@ toggle (`C` key), tank-control movement, and the full interactive-object system 
 enemies, doors, lifts, crates). A second wasp (`ObjectType44`) sits 5 tiles east of spawn on the
 flat corridor floor (added 2026-07-18) specifically so the Balloon status can be triggered and
 observed within seconds of loading the world, with zero platforming — the original wasp is on a
-north-hill plateau reachable only via a staircase + terraced ascent.
+north-hill plateau reachable only via a staircase + terraced ascent. Both wasps (and the
+object-exhibition grid's bird/wasp specimens) now have a real patrol range and actually
+move/animate (fixed 2026-07-20, see §3) — they were silently stationary before.
 
 ### What does not work yet
 - **No visible 3D Blupi model** — invisible collision point in first-person; a placeholder model
   in third-person. Blocked on the user providing a real model/rig.
-- **Saw blade (icon 378) render orientation is wrong** — 3 prior fix attempts were wrong; needs the
-  user's own visual judgment (a screenshot review), not another guess.
 - **World editor: sky-region picking (EDITOR-111) and the hardening pass (EDITOR-112, incl. an
   unsaved-changes guard) are still open** — see §5. Object editing (EDITOR-110: select, patrol path,
   speed/timing, remove) is now done.
@@ -274,6 +280,97 @@ north-hill plateau reachable only via a staircase + terraced ascent.
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### docs: merge REMAKE-ANALYSIS.md/renderers.md from a separate branch; record vision in plan.md §7 (2026-07-20)
+
+User asked to merge `origin/claude/galaxy-eggbert-3d-remake-n0ga3y` into `develop` (a separate
+session's exploratory work) and review the result. Merged cleanly (purely additive — 3 new docs
+plus one new, currently-unwired header, no conflicts with this session's own Saw/wasp work):
+`REMAKE-ANALYSIS.md` (root-cause analysis of the recurring bug pattern — correctness is verified by
+a human looking at a screenshot, not automated, plus 6 other root causes), `renderers.md` +
+`renderers-next-steps.md` (a dual-renderer architecture proposal, path A = same CNA/Easy3D base),
+and `src/GalaxyEggbertCNA/Game/GESceneFrame.hpp` (the first data-contract artifact of that proposal
+— unwired, nothing includes it yet).
+
+Independently spot-checked the analysis' headline numbers against this codebase before writing
+anything up (34 `Fixed` notes in `GEObjectIcons.cpp`, `Update()`/`Draw()` line counts) — all
+confirmed accurate, not exaggerated. Recorded the assessment as `plan.md` §7 ("Correctness
+Infrastructure & Dual-Renderer — Vision"): the diagnosis is accurate (the same-day Saw-blade saga
+below is a live instance of it), a small P0 slice (permanent golden-screenshot harness +
+`GetObjIcon()` data-integrity checks) is cheap and worth doing when there's appetite, but the larger
+items (a shared collision resolver, an `ObjectType` handler-table refactor) and the separate
+dual-renderer direction change each need their own scoped task and explicit user sign-off — not to
+be bundled into one "modernization" effort. Written as direction, not a task queue. The foreign
+branch was deleted from the remote after merging (explicit user request).
+
+### fix: bird + wasp exhibition specimens patrol instead of standing frozen (2026-07-20)
+
+Follow-up to the wasp-patrol fix below, same session, user-requested: the object-exhibition grid's
+bird (`ObjectType20`) and wasp (`ObjectType44`) specimens — built via a loop that places every
+confirmed `ObjectType` as a static catalog piece (`posEnd==posStart` by explicit design, "nothing
+patrols") — now get a small real ±1-unit patrol range instead, so their real per-direction/
+turn-transition icon animation (`GetBirdIcon()`/`GetWaspIcon()`, both `patrolStep`/`patrolTime`
+driven) actually plays. Kept small enough to stay inside each specimen's own 3-unit-spaced grid
+cell. Verified live (Xvfb): both now show `patrolStep`/`patrolTime` advancing exactly like the
+already-fixed gameplay wasps. The rest of the ~40-type exhibition grid is unchanged (still static
+by design).
+
+### fix: both gameplay wasp placements were silently frozen — no real patrol range (2026-07-20)
+
+User report: "wasp and bird are frozen." Root cause found: both `ObjectType44` (wasp) placements in
+the demo world (`tools/GenerateSampleWorld3D.cpp`) were built via the `place()` helper, which always
+sets `posStart==posEnd`. That's a real, faithful no-op for `GEInteractionSystem`'s shared
+patrol-turn mechanic (`AdvancePatrolStep()`'s own "no-op if posStart==posEnd" guard, already
+verified against the real source's own equivalent guard in an earlier session) — but the wasp is a
+confirmed real "patrol walker enemy" (`mobile-eggbert-reference/03-objects.md`) that's never
+stationary in mobile-eggbert, so the zero-range placement also froze its per-direction/
+turn-transition icon animation (`GetWaspIcon()` reads `patrolStep`/`patrolTime`, both permanently
+stuck at their initial values without a real patrol tick), not just its movement. Same bug already
+found and fixed for the platform lift (2026-07-10) — both wasps now built directly via
+`PlaceMoveObject` with a real `posStart != posEnd`, matching that precedent, instead of `place()`.
+Verified live (Xvfb): both wasps now show `patrolStep` advancing 1→2→3→4 and position interpolating
+smoothly over their real patrol range. (No bird is placed anywhere via a named `ObjectType20` token
+in this generator — the "bird" half of the report turned out to be the object-exhibition grid's own
+dynamically-typed specimen, see the follow-up entry above.)
+
+### fix: Saw/SawStopped (icon 378/379) render orientation — 6-round live-feedback saga, resolved (2026-07-20)
+
+The single most-argued-over item in the whole session. Starting state: 2 prior rounds (2026-07-11)
+had only ever adjusted the VERTICAL position of a vertical `InnerFlatPlate` (bottom-anchored, then
+top-anchored-hanging-down); this session picked it up again after a live screenshot showed it as a
+thin diagonal wedge jammed into a corridor's side wall.
+
+Round-by-round (each against a fresh live Xvfb screenshot, most reverted before the next):
+1. Read at the time as "should lie FLAT on the floor" (`PlateAxis::Y`) — implemented, but as an
+   EXCLUSIVE `InnerFlatPlate` (hollow block, no solid cube), which read as a hole/pit in the floor.
+2. Fixed additively instead (same idiom as the existing grass-top overlay): a normal, fully opaque
+   RockPile-textured floor cube (NOT the confusingly-named `Ground`/icon 10, actually a
+   machine-piece graphic per `BlockTypes.hpp`'s own NOTE) PLUS the blade as a horizontal overlay
+   plate. This is when the icon's real, previously-unnoticed transparency was found: the top half of
+   every 378-383 animation frame is fully transparent (confirmed via direct alpha-channel
+   inspection), blade only in the bottom half.
+3. User's final word, against this round's own screenshot: the blade should be **upright after
+   all** (round 1's diagonal-wedge problem was the vertical PLATE'S position/hole, not the vertical
+   axis itself) — reverted back to vertical, rooted at the floor's walkable surface, extending
+   upward, still additive on the round-2 solid floor cube. **This is the confirmed-stable
+   orientation** committed as `d4cc7f5`.
+4. A further live-only investigation chased an exact-180-degree in-plane texture rotation, a
+   precise centering position, and a size increase, each shown live and each reverted at the user's
+   explicit instruction — none of that survived to the commit. Two genuine, reusable findings from
+   that investigation, kept only as code comments (not applied): (a) rotating a `PlateItem`'s UV by
+   180° via `U0<->U1`/`V0<->V1` swap or negative Width/Height both silently vanish the whole plate
+   with THIS icon specifically — isolated to atlas mip-level bleeding from its mostly-transparent
+   tile (confirmed via a decisive test: the identical rotation renders fine on an opaque tile, and
+   fine on this same tile cropped to just its own opaque bounding box); (b) the wasp/bird patrol fix
+   above was actually found as a side effect of this same live-testing session.
+
+Also moved `Saw`/`SawStopped` out of `GEInnerFlatPlateTiles`'s shared icon list into their own
+`IsGroundAnchoredPlateIcon()` handling directly in `GETerrainRenderer.cpp`'s `RebuildAnimatedRenderer()`
+(not the constructor's main `Build()` loop, since both icons are always animated and routed there
+first) — the only 2 icons needing the additive solid-cube-plus-overlay treatment. Committed as
+`d4cc7f5`. Full regression clean throughout (78/79, only the pre-existing unrelated
+`easy-gl-resource-smoke-tests` failure). See `GETerrainRenderer.cpp`'s own
+`IsGroundAnchoredPlateIcon` comment block for the complete citation trail if this needs revisiting.
 
 ### feat: wired JumpSkate/AirSkate, TakeSkate/DeposeSkate, FireTank anim icons; fixed a Down frame-count bug (2026-07-19)
 
@@ -1076,20 +1173,19 @@ changed since) really is backend-agnostic. EDITOR-112's own copy of this task is
 unsaved-changes-guard part remains.
 
 The remaining blockers are items that genuinely need a **human decision**, not more engineering:
-- Saw blade (icon 378) render orientation — needs the user to look at a screenshot/crop and state
-  the correct orientation; 3 prior autonomous guesses were wrong.
 - `AscenseurVertigo` (wide/shiftable lift platforms, icons 311-316) — needs the user to choose
   which of 3 existing render approaches to use.
 
-If picking up this project without either of those answers, the honest "next thing to do" is one
-of the concrete, non-blocked tasks in §8 below, not a bug fix.
+(Saw blade (icon 378) render orientation — resolved 2026-07-20 after a 6-round live-feedback
+session; see §3's own writeup.)
+
+If picking up this project without that answer, the honest "next thing to do" is one of the
+concrete, non-blocked tasks in §8 below, not a bug fix.
 
 ## 5. Known bugs and limitations
 
-- **Confirmed bug:** Saw blade (icon 378) render orientation is wrong. Location:
-  `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp` (its `InnerFlatPlate` handling) and
-  `../easy-3d`'s `CubeMesh.cpp` (`AppendPlateMesh`). Needs user visual input before another fix
-  attempt.
+- **Resolved 2026-07-20** (was here as a confirmed bug for over a week): Saw blade (icon 378)
+  render orientation. See §3 for the full 6-round live-feedback history.
 - **Incomplete (found 2026-07-18, while implementing Balloon's horizontal drift):** No
   horizontal-wall-collision at all for ANY airborne movement — `GEBlupiController::TryMoveAxis()`'s
   step-up gate only applies while `m_onGround`; otherwise a move always applies unconditionally.
@@ -1293,11 +1389,11 @@ The user authorized an extended unattended session and pre-answered the question
 otherwise block it. These answers stand for the remainder of THIS session (re-confirm with the
 user before treating them as permanent beyond it):
 
-- **Skip every task that needs visual judgment on a render/screenshot entirely** — Saw blade
-  orientation, `ThinMechanical` geometry (`510`), water surface treatment (`512`),
-  architectural-kit assembly (`514`), enemy billboard walk-cycle angle (`179`), `AscenseurVertigo`
-  (`153`/`PICKUP-024`). Do not touch their rendering code or take "best guesses" at geometry —
-  leave them exactly as flagged until the user can look at a screenshot themselves.
+- **Skip every task that needs visual judgment on a render/screenshot entirely** — ~~Saw blade
+  orientation~~ (**resolved 2026-07-20**, see §3), `ThinMechanical` geometry (`510`), water surface
+  treatment (`512`), architectural-kit assembly (`514`), enemy billboard walk-cycle angle (`179`),
+  `AscenseurVertigo` (`153`/`PICKUP-024`). Do not touch their rendering code or take "best guesses"
+  at geometry — leave them exactly as flagged until the user can look at a screenshot themselves.
 - **`GESaveData` stays an independent format, not byte-compatible with real mobile-eggbert saves**
   (closes `E3D-MIG-106`/the open question in §3 of the main doc) — don't expand `SAVE-*` scope
   toward byte-layout matching.
@@ -1359,16 +1455,23 @@ Non-editor tasks, available if the editor line is paused:
    through the window, gone once the Voyage completes) — the specific gap the previous pass
    (`b03b827`) missed. No production code changes survive (confirmed via `git diff` showing zero
    diff after revert).
-2. **Get the user's visual judgment on the Saw blade (icon 378) orientation**, then fix it.
-   Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`, `../easy-3d`'s `CubeMesh.cpp`
-   (`AppendPlateMesh`).
-   Verify: live headless screenshot at the Saw demo block in `worlds3d/world001.vwr` +
-   `VerifyBlupiMovement`.
+2. ~~Get the user's visual judgment on the Saw blade (icon 378) orientation, then fix it.~~ —
+   **done 2026-07-20**, see §3's own 6-round writeup.
 
 3. **Get the user's decision on `AscenseurVertigo` render geometry** (icons 311-316, which of the
    3 existing render approaches to reuse), then implement it.
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`.
    Verify: `cmake --build build-cna --target VerifyTileUvBounds -j2` plus a live screenshot.
+
+4. **A small, self-contained P0 slice from `plan.md` §7** ("Correctness Infrastructure &
+   Dual-Renderer — Vision"), if there's appetite for infrastructure work rather than another
+   feature/bug: either a permanent, committed golden-screenshot harness (promoting the ad-hoc
+   `xvfb-run` + revert pattern already used every session into something that stays and is diffed
+   in `ctest`), or a first data-integrity pass over `GetObjIcon()` against
+   `mobile-eggbert-reference/08-animations.md`. Both are scoped small and self-contained — do NOT
+   read this as a green light for the larger items in that same section (a shared collision
+   resolver, an `ObjectType` handler-table refactor, the dual-renderer direction) — those need
+   their own explicit user sign-off first.
 
 ## 9. Do not do yet
 
@@ -1394,12 +1497,17 @@ Non-editor tasks, available if the editor line is paused:
   and restored). Revert with targeted edits, then confirm with `git diff`.
 - **No refactor of the `GEInteractionSystem`/`GEBlupiController` decoupling** (see §5/§6) — it is a
   deliberate, repeatedly-reaffirmed design choice, not technical debt.
-- **No 3rd guess at the Saw blade orientation** without the user's own visual input — 3 prior
-  autonomous attempts were wrong.
+- ~~No 3rd guess at the Saw blade orientation without the user's own visual input~~ — **resolved
+  2026-07-20**, see §3. Still: don't second-guess it again without a fresh, explicit user report.
 - **No broad refactor or unrelated cleanup** while any of the §8 tasks are in flight — each is
   meant to be a single, small, independently-verifiable session.
 - **No Lua**, no MeshCraft/Mesh World/Nova3D/further-Simple3D features — none of these are part of
   the locked Direct-CNA-+-Easy3D direction.
+- **No starting the larger items in `plan.md` §7** (a shared collision/movement resolver, an
+  `ObjectType` handler-table refactor, or any dual-renderer work beyond the already-merged, unwired
+  `GESceneFrame.hpp`) without the user's own explicit go-ahead on that specific item — see §7's own
+  "do not bundle into one modernization effort" framing. The small P0 slice (§8 task 4) is fine to
+  pick up on its own.
 
 ## 10. Resume prompt
 
