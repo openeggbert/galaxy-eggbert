@@ -86,6 +86,14 @@ namespace GalaxyEggbert::CNA
     // direction parameter to take here.
     int GetCreatureIcon(int patrolStep, int patrolTimeTicks);
 
+    // ObjectType32 (blupih, ENEMY-041) / ObjectType33 (blupit, ENEMY-042),
+    // added 2026-07-20 -- same shape as GetBulldozerIcon()/GetFishIcon()/
+    // GetBirdIcon()/GetWaspIcon(). The real projectile-fire trigger at the
+    // same site in Decor.cpp is a separate, already-implemented mechanic
+    // (ENEMY-020/022) -- these only port the icon selection.
+    int GetBlupihIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+    int GetBlupitIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+
     // element.png UV rect for a given icon: 600x1740 px, 60x60 px tiles, 10
     // columns, no gap/leading margin (confirmed by direct file inspection --
     // unlike object-m.png, element.png's dimensions divide evenly, see

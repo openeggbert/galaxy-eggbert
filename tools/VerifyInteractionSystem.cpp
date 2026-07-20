@@ -412,6 +412,24 @@ int main(int argc, char** argv)
         check(GetCreatureIcon(1, 152) == GetCreatureIcon(1, 0), "creature turn icon wraps around after the real 152-frame table length");
     }
 
+    // GetBlupihIcon()/GetBlupitIcon() (ENEMY-041/042, added 2026-07-20) -- same real 4-state step
+    // machine, direct cross-checks against table_blupih_*/table_blupit_* (Tables.cpp:1314-1360).
+    {
+        check(GetBlupihIcon(true, 1, 0) == 71, "blupih left-from-start step 1 (turn-to-left) starts at the real first frame (icon 71)");
+        check(GetBlupihIcon(true, 1, 25) == 275, "blupih left-from-start step 1 (turn-to-left) ends at the real last frame (icon 275)");
+        check(GetBlupihIcon(true, 2, 0) == 66, "blupih left-from-start step 2 (fly left) starts at the real first frame (icon 66)");
+        check(GetBlupihIcon(false, 1, 0) == 75, "blupih right-from-start step 1 (turn-to-right) starts at the real first frame (icon 75)");
+        check(GetBlupihIcon(false, 2, 0) == 61, "blupih right-from-start step 2 (fly right) starts at the real first frame (icon 61)");
+        check(GetBlupihIcon(true, 1, 26) == GetBlupihIcon(true, 1, 0), "blupih turn icon wraps around after the real 26-frame table length");
+
+        check(GetBlupitIcon(true, 1, 0) == 238, "blupit left-from-start step 1 (turn-to-left) starts at the real first frame (icon 238)");
+        check(GetBlupitIcon(true, 1, 23) == 249, "blupit left-from-start step 1 (turn-to-left) ends at the real last frame (icon 249)");
+        check(GetBlupitIcon(true, 2, 0) == 249, "blupit left-from-start step 2 (drive left) starts at the real first frame (icon 249)");
+        check(GetBlupitIcon(false, 1, 0) == 249, "blupit right-from-start step 1 (turn-to-right) starts at the real first frame (icon 249)");
+        check(GetBlupitIcon(false, 2, 0) == 238, "blupit right-from-start step 2 (drive right) starts at the real first frame (icon 238)");
+        check(GetBlupitIcon(true, 1, 24) == GetBlupitIcon(true, 1, 0), "blupit turn icon wraps around after the real 24-frame table length");
+    }
+
     if (const auto* key = findFirst(ObjectType::ObjectType49))
     {
         const float kx = key->currentX, ky = key->currentY, kz = key->currentZ;

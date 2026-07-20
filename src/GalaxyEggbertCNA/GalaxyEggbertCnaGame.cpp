@@ -3374,12 +3374,12 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                // 5 patrol enemies with a real per-direction/turn-transition
-                // icon table (ENEMY-013/016/018/024/026, bulldozer/fish/
-                // bird/wasp/creature) get it here instead of GetObjIcon()'s
-                // generic phase-indexed fallback -- this is the one call
-                // site with real patrol state (posStart/posEnd/patrolStep/
-                // patrolTime) available to feed it.
+                // 7 patrol enemies with a real per-direction/turn-transition
+                // icon table (ENEMY-013/016/018/024/026/041/042, bulldozer/
+                // fish/bird/wasp/creature/blupih/blupit) get it here instead
+                // of GetObjIcon()'s generic phase-indexed fallback -- this
+                // is the one call site with real patrol state (posStart/
+                // posEnd/patrolStep/patrolTime) available to feed it.
                 const bool patrolGoesLeftFromStart = obj.posStartX > obj.posEndX;
                 const int patrolTimeTicks = static_cast<int>(obj.patrolTime);
                 int icon;
@@ -3393,6 +3393,12 @@ namespace GalaxyEggbert::CNA
                         break;
                     case GalaxyEggbert::ObjectType::ObjectType20:
                         icon = GetBirdIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
+                        break;
+                    case GalaxyEggbert::ObjectType::ObjectType32:
+                        icon = GetBlupihIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
+                        break;
+                    case GalaxyEggbert::ObjectType::ObjectType33:
+                        icon = GetBlupitIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
                         break;
                     case GalaxyEggbert::ObjectType::ObjectType44:
                         icon = GetWaspIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);

@@ -532,6 +532,83 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    int GetBlupihIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8838-8887, ObjectType32 (ENEMY-041) -- same shape
+        // as GetBulldozerIcon()/GetFishIcon()/GetBirdIcon()/GetWaspIcon(),
+        // real table_blupih_left/right/turn2l/turn2r (Tables.cpp:1314-1333).
+        // The real projectile-fire trigger at the same site (step 1 or 3,
+        // time==ScaleTime(21)) is a SEPARATE, already-implemented mechanic
+        // (ENEMY-022) -- this function only ports the icon selection.
+        static const int kLeft[8] = {66,67,68,67,66,69,70,69};
+        static const int kRight[8] = {61,62,63,62,61,64,65,64};
+        static const int kTurnToLeft[26] = {
+            71,71,72,72,73,73,74,74,75,75,
+            68,68,275,275,271,271,271,271,272,272,
+            273,273,273,273,275,275};
+        static const int kTurnToRight[26] = {
+            75,75,74,74,73,73,72,72,71,71,
+            63,63,274,274,271,271,271,271,272,272,
+            273,273,273,273,274,274};
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        if (patrolGoesLeftFromStart)
+        {
+            switch (patrolStep)
+            {
+                case 1:  return kTurnToLeft[t % 26];
+                case 3:  return kTurnToRight[t % 26];
+                case 4:  return kRight[t % 8];
+                default: return kLeft[t % 8]; // step 2
+            }
+        }
+        switch (patrolStep)
+        {
+            case 1:  return kTurnToRight[t % 26];
+            case 3:  return kTurnToLeft[t % 26];
+            case 4:  return kLeft[t % 8];
+            default: return kRight[t % 8]; // step 2
+        }
+    }
+
+    int GetBlupitIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8888-8931 (continues past the read window above,
+        // same shape confirmed), ObjectType33 (ENEMY-042) -- real
+        // table_blupit_left/right/turn2l/turn2r (Tables.cpp:1340-1360). The
+        // real projectile-fire trigger at this site is ENEMY-020, already
+        // implemented separately.
+        static const int kLeft[8] = {249,249,250,250,249,249,248,248};
+        static const int kRight[8] = {238,238,237,237,238,238,239,239};
+        static const int kTurnToLeft[24] = {
+            238,238,251,251,238,238,238,239,240,241,
+            242,243,244,245,246,247,248,249,249,249,
+            252,252,249,249};
+        static const int kTurnToRight[24] = {
+            249,249,252,252,249,249,249,248,247,246,
+            245,244,243,242,241,240,239,238,238,238,
+            251,251,238,238};
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        if (patrolGoesLeftFromStart)
+        {
+            switch (patrolStep)
+            {
+                case 1:  return kTurnToLeft[t % 24];
+                case 3:  return kTurnToRight[t % 24];
+                case 4:  return kRight[t % 8];
+                default: return kLeft[t % 8]; // step 2
+            }
+        }
+        switch (patrolStep)
+        {
+            case 1:  return kTurnToRight[t % 24];
+            case 3:  return kTurnToLeft[t % 24];
+            case 4:  return kLeft[t % 8];
+            default: return kRight[t % 8]; // step 2
+        }
+    }
+
     bool IsUniformCubeObject(ObjectType type)
     {
         switch (type)

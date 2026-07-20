@@ -3763,6 +3763,16 @@ ObjectType-to-sheet corrections repeated in §7.
       item (no explicit "movement sound" claim was ever traced to a specific real source line to
       definitively refute, unlike the 3 already-cancelled hallucinations), but there is now no
       positive evidence for it after 2 independent research passes.
+- [x] ENEMY-041 — ObjectType32 (blupih): real per-direction/turn-transition icon animation —
+      **added 2026-07-20**, found while completing the same real gap for bulldozer/fish/bird/wasp/
+      creature (`ENEMY-013/016/018/024/026`) -- no pre-existing checklist item covered this one.
+      `GEObjectIcons::GetBlupihIcon()`, direct port of `Decor.cpp:8838-8887`
+      (`table_blupih_left/right/turn2l/turn2r`, `Tables.cpp:1314-1333`). The real projectile-fire
+      trigger at the same source site is `ENEMY-022`, already implemented separately -- untouched.
+- [x] ENEMY-042 — ObjectType33 (blupit): real per-direction/turn-transition icon animation —
+      **added 2026-07-20**, same pass as `ENEMY-041`. `GEObjectIcons::GetBlupitIcon()`, direct port
+      of `Decor.cpp:8888-8927` (`table_blupit_left/right/turn2l/turn2r`, `Tables.cpp:1340-1360`).
+      Real projectile-fire trigger is `ENEMY-020`, already implemented separately -- untouched.
 
 ---
 
