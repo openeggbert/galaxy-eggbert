@@ -3087,13 +3087,16 @@ reset to `[ ]` except the small set with direct CNA evidence.
       now done too, see `SOUND-008`.
 - [x] BLUPI-085 — Helicopter boarding: touch ObjectType13 → sets m_blupiHelico, removes object —
       **stale checkbox, closed 2026-07-17**: done via `171`'s real pickup->vehicle mapping.
-- [ ] BLUPI-086 — Helicopter dismount: press Down → drops Blupi, reverts to normal mode —
-      **partially researched 2026-07-17, left open**: dismounting itself IS implemented
-      (`171`'s `TriggerDismount()`), but this engine's voluntary dismount is bound to the shared
-      action button for every vehicle uniformly, not specifically "press Down" for Helicopter —
-      whether real source actually uses a different per-vehicle dismount key (Down specifically
-      for Helicopter) was not conclusively re-verified this pass; left unchecked pending that,
-      not because dismounting doesn't work.
+- [x] BLUPI-086 — Helicopter dismount: reverts to normal mode, drops the vehicle pickup back into
+      the world — **resolved 2026-07-20**: the task's own "press Down" title was wrong, unverified
+      from the start (no research citation ever backed it). Confirmed directly against
+      `Decor.cpp:3889` — real Helicopter voluntary dismount checks
+      `getButtonPressedProperty() == Def::ButtonGlyph::PlayAction`, the exact same shared action
+      button every other vehicle mode uses (Jeep/Tank/Skateboard/Overcraft all follow the
+      identical pattern at their own `ObjectStart(..., ObjectType19/28/24/46, ...)` sites nearby).
+      No per-vehicle "Down" dismount key exists anywhere in real source. This engine's existing
+      shared-action-button dismount (`171`'s `TriggerDismount()`) was already correct; no code
+      change needed.
 - [ ] BLUPI-087 — Helicopter destroyed by creature (ObjectType54): ByeByeHelico debris effect —
       still correctly NOT modeled, see `VISUAL-018`/`156` (needs a particle/fragment rendering
       system that doesn't exist yet).
@@ -3141,7 +3144,23 @@ reset to `[ ]` except the small set with direct CNA evidence.
       `GalaxyEggbertCnaGame.cpp` for any Fan-tile physics interaction — none exists; Fan
       tiles (`BlockTypes::FanLeft/Right/Up/Down`) are purely a visual terrain animation
       (`GETerrainRenderer.cpp`), with no effect on Blupi's movement at all. A genuine, real,
-      still-open gap — correctly left unchecked, not stale.
+      still-open gap — correctly left unchecked, not stale. **NOT the same thing as the Fan
+      hazard/`IsVentillo` mechanic already implemented (Phase 14 `149`)** — confirmed
+      2026-07-20 (re-checked while a research fork mistakenly proposed this as a "next task",
+      having only read this stale-sounding checklist line without cross-checking the actual
+      already-shipped Fan hazard code first): `m_blupiVent` is a genuinely separate real field
+      (`Decor.hpp:358`), set by standing on icons 110-125 specifically (`Decor.cpp:2796-2798`,
+      a continuous per-tick push: 9px/tick horizontal for 110/114, 20px/tick vertical for
+      118/122, while not in Jeep/Tank/Skate), NOT by the fan HEAD icons 126-137 `IsVentillo`
+      already handles. Blocked on the exact same prerequisite as `149`'s own already-documented
+      gap (its trail-chain-walk, which reads these same icons 110-125 but doesn't act on them
+      either): these icons have no `BlockTypes` constant, no render-geometry decision, and are
+      never placed in any level this project has inspected yet (`mobile-eggbert-reference/
+      12-hazards-and-interactables.md`'s own "Fan tiles" section, last paragraph). Implementing
+      the propulsion physics alone, with no tile family to trigger it and nothing to test it
+      against, would mean either inventing placement data or leaving it permanently unexercised
+      — needs the same user render-geometry decision as `AscenseurVertigo`/`177` before this is
+      a real, verifiable task, not a per-mechanic gap to just go implement.
 - [ ] BLUPI-101 — Suspend (rope hang): entered when Blupi grabs a rope tile — still correctly
       blocked, see `177`'s own research (real, fully-speced, cheap mechanic, but blocked on the
       pending icon-202 render-geometry decision the user asked to defer this session).
