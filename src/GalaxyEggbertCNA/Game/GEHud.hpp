@@ -131,10 +131,16 @@ namespace GalaxyEggbert::CNA
         // caller interpolates via GEInteractionSystem::VoyageDrawX/Y()).
         // voyageIsButtonChannel selects button.png (Perso) vs element.png
         // (every other kind in scope).
+        // showTreasureCounter (SCORE-017, added 2026-07-20): real
+        // `Decor.cpp:1236` hides the treasure panel/text on hub screens
+        // (`m_mission==1` or `m_mission%10==0`) -- the caller computes this
+        // the same way `showRestart` already does at the Pause-menu call
+        // site (`mission != 1 && mission % 10 != 0`), since GEHud itself
+        // has no mission-number concept.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
-                  int treasures, int totalTreasures,
+                  int treasures, int totalTreasures, bool showTreasureCounter,
                   int bullets, int dynamite, int perso,
                   bool waterGaugeVisible, int waterGaugeLevel,
                   bool powerGaugeVisible, int powerGaugeLevel,

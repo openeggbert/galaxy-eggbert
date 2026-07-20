@@ -255,7 +255,7 @@ namespace GalaxyEggbert::CNA
     void GEHud::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH,
                      int lives, bool key1, bool key2, bool key3,
-                     int treasures, int totalTreasures,
+                     int treasures, int totalTreasures, bool showTreasureCounter,
                      int bullets, int dynamite, int perso,
                      bool waterGaugeVisible, int waterGaugeLevel,
                      bool powerGaugeVisible, int powerGaugeLevel,
@@ -516,9 +516,16 @@ namespace GalaxyEggbert::CNA
         }
 
         // Treasure counter: pad.png icon-15 panel + centered "N/M" text.
-        // Real DrawInfo gates this on being in a real level (mission
-        // checks); the CNA equivalent is simply "the world has treasures".
-        if (totalTreasures > 0)
+        // Real gate (SCORE-017, wired 2026-07-20): `Decor.cpp:1236`,
+        // `(m_mission != 1 && m_mission % 10 != 0) || m_bPrivate` -- hidden
+        // on the global hub and every world hub (m_bPrivate never applies
+        // here, no custom-level-load path exists). showTreasureCounter is
+        // the caller's own version of that same check (mirrors the
+        // Pause-menu `showRestart` gate already computed the identical
+        // way). This used to be approximated as just "the world has
+        // treasures" -- true in practice since hub worlds have none, but
+        // not the real gate.
+        if (totalTreasures > 0 && showTreasureCounter)
         {
             Quad panel;
             panel.x0 = refToScreenX(kPanelX0);

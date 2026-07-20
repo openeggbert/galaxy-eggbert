@@ -3687,11 +3687,16 @@ namespace GalaxyEggbert::CNA
                 const char* trainingHint = FindTrainingHint(
                     worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
                     interaction_.TreasuresCollected(), blupi_.IsInVehicle(), interaction_.DynamiteCount() > 0);
+                // Real treasure-counter hub gate (SCORE-017, Decor.cpp:1236)
+                // -- same "mission != 1 && mission % 10 != 0" expression
+                // already used for the Pause-menu showRestart gate above.
+                const int hudMission = worldRuntime_.GetMissionNumber();
+                const bool showTreasureCounter = hudMission != 1 && hudMission % 10 != 0;
                 hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                           interaction_.Lives(),
                           interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
                           interaction_.Key3Count() > 0,
-                          interaction_.TreasuresCollected(), interaction_.TotalTreasures(),
+                          interaction_.TreasuresCollected(), interaction_.TotalTreasures(), showTreasureCounter,
                           interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
                           blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
                           blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,

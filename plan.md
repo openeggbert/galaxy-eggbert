@@ -4167,11 +4167,16 @@ reset to `[ ]`.
       — **done 2026-07-17**, see `SCORE-013` (`ComputeWorldSelectTarget()`
       is the exact real formula, contextually applied depending on whether
       the current mission is the global hub or a world hub).
-- [ ] SCORE-017 — Hub mission (mission % 10 == 0): no treasure counter in
-      HUD — still not modeled; `GEHud` has no mission-number-gated
-      visibility logic for the treasure counter (it currently shows/hides
-      based on "does this world have any treasures", `GEHud.cpp:503`'s own
-      note) — a real, small remaining gap, not attempted this pass.
+- [x] SCORE-017 — Hub mission (mission % 10 == 0): no treasure counter in
+      HUD — **wired 2026-07-20**: real gate confirmed directly against
+      `Decor.cpp:1236`, `(m_mission != 1 && m_mission % 10 != 0) ||
+      m_bPrivate` (`m_bPrivate` never applies here, no custom-level-load
+      path exists). New `showTreasureCounter` parameter on `GEHud::Draw()`,
+      computed at the call site the same way the Pause-menu's own
+      `showRestart` already does (`mission != 1 && mission % 10 != 0`).
+      Previously approximated as just "does this world have any
+      treasures" -- true in practice since hub worlds have none, but not
+      the real gate.
 - [x] SCORE-018 — Training missions (11-14): show tutorial hint overlay —
       **stale checkbox, closed 2026-07-17**: already fully done, see
       `HUD-024`/`MENU-080..082` (`GETrainingHints`, gated on exactly
