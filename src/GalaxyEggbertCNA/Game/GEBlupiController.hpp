@@ -1062,6 +1062,21 @@ namespace GalaxyEggbert::CNA
         // for exactly these 4 causes.
         [[nodiscard]] bool AnimIconUsesElementSheet() const noexcept;
 
+        // GetAnimIcon()'s value with the real direction-mirror step applied
+        // (table_mirror, BLUPI-079, added 2026-07-20, Decor.cpp:2412-2449)
+        // -- real source substitutes the mirrored icon whenever
+        // Direction::Left (base data is right-facing by convention),
+        // flipped again by m_blupiInvert. This engine has no discrete
+        // left/right facing, only a continuous 3D yaw -- approximated via
+        // the same std::sin(yaw)-sign convention GalaxyEggbertCnaGame.cpp
+        // already uses for blupiFacingDX (a deliberate approximation for
+        // this temporary debug-icon consumer, not a claim that "facing
+        // left" is precisely defined in a free 3D camera). Deliberately
+        // does NOT model the 3 StopSuspend-specific remaps inside the same
+        // real block (144->158 etc.) -- that AnimState doesn't exist here
+        // (BLUPI-101).
+        [[nodiscard]] int GetDisplayAnimIcon() const noexcept;
+
         // Tank controls, matching GalaxyEggbertSimple3D's already-shipped
         // scheme (GalaxyEggbertSimpleGame::SetupInput's "Move" axis) and
         // mobile-eggbert's own control feel: turnInput (-1/0/+1, Left/Right)

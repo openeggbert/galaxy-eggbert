@@ -187,6 +187,52 @@ int main(int argc, char** argv)
               "back on the ground and idle returns to the Stop anim state, not stuck in Air");
     }
 
+    // GetDisplayAnimIcon() (BLUPI-079, added 2026-07-20) -- real
+    // table_mirror direction-substitution, approximated via sin(yaw) sign
+    // since this engine has no discrete left/right facing. Jump (icon 17)
+    // is a convenient known value: real table_mirror[17]=20.
+    {
+        GEBlupiController facingRight;
+        facingRight.SetPosition(0.0f, 1.0f, 0.0f);
+        facingRight.SetYaw(2.0f); // sin(2.0) > 0 -- "facing right" proxy
+        facingRight.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle onto ground first
+        facingRight.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(facingRight.GetAnimIcon() == 17, "Jump base icon is still the real unmirrored first frame (icon 17)");
+        check(facingRight.GetDisplayAnimIcon() == 17,
+              "GetDisplayAnimIcon() matches GetAnimIcon() unmirrored while facing right");
+
+        GEBlupiController facingLeft;
+        facingLeft.SetPosition(0.0f, 1.0f, 0.0f);
+        facingLeft.SetYaw(-2.0f); // sin(-2.0) < 0 -- "facing left" proxy
+        facingLeft.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle onto ground first
+        facingLeft.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(facingLeft.GetAnimIcon() == 17, "Jump base icon is unaffected by yaw (GetAnimIcon() never mirrors)");
+        check(facingLeft.GetDisplayAnimIcon() == 20,
+              "GetDisplayAnimIcon() applies the real table_mirror substitution while facing left (icon 17 -> 20)");
+
+        GEBlupiController invertedLeft;
+        invertedLeft.SetPosition(0.0f, 1.0f, 0.0f);
+        invertedLeft.SetYaw(-2.0f);
+        check(invertedLeft.TriggerInvert(), "TriggerInvert() succeeds from a fresh, non-Hide state");
+        invertedLeft.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle onto ground first
+        invertedLeft.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+        check(invertedLeft.GetDisplayAnimIcon() == 17,
+              "m_invert flips the facing sense back, matching the real m_blupiInvert twist "
+              "(facing-left yaw + Invert active = no mirroring, same as facing right unmodified)");
+
+        GEBlupiController gluLeft;
+        gluLeft.SetPosition(0.0f, 1.0f, 0.0f);
+        gluLeft.SetYaw(-2.0f);
+        check(gluLeft.TriggerDeathLock(GEBlupiController::DeathCause::Glu, true),
+              "TriggerDeathLock(Glu) succeeds from a fresh state");
+        gluLeft.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(gluLeft.AnimIconUsesElementSheet(), "Glu is one of the real element.png-sourced death causes");
+        check(gluLeft.GetAnimIcon() == 168, "Glu base icon starts at the real first frame (icon 168)");
+        check(gluLeft.GetDisplayAnimIcon() == 172,
+              "GetDisplayAnimIcon() applies the real +4 element.png special case for icons 168-171 "
+              "while facing left (icon 168 -> 172), NOT the main table_mirror substitution");
+    }
+
     // 4d. Animation state: Down (grounded crouch) icon cycling. Real
     // BlupiAction ID 6 has 3 real icon frames (33, 34, 35) per
     // table_blupi/mobile-eggbert-reference/08-animations.md -- this used

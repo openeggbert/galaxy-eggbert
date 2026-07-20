@@ -3703,7 +3703,7 @@ namespace GalaxyEggbert::CNA
                           blupi_.GetSecretPowerLevel(),
                           trainingHint,
                           PhaseOverlayMessage(),
-                          blupi_.GetAnimIcon(), blupi_.AnimIconUsesElementSheet(),
+                          blupi_.GetDisplayAnimIcon(), blupi_.AnimIconUsesElementSheet(),
                           interaction_.VoyageActive(), interaction_.VoyageIconId(),
                           interaction_.VoyageIsButtonChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY());
