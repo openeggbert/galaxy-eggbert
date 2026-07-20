@@ -2483,6 +2483,23 @@ pre-existing `MENU-092..102` numbering.
       `m_nbTresor >= m_totalTresor` already, otherwise Blupi is just moved there (real source also
       plays a "not enough" sound in that case, not modeled — ported as the teleport only). Confirmed
       live (headless run): Blupi position moved from spawn to the level's real exit marker.
+- [x] CHEAT-010 — F12: second, direct way to open/close the cheat overlay — **done 2026-07-20**,
+      real `InputPad.cpp:678-683` (`#ifdef MODERN`) — layered on top of (not instead of) the
+      existing 10-tap gesture (`MENU-092`), same "layered" idiom as the typed-cheat methods below.
+- [x] CHEAT-011 — "quick" typed cheat: unlocks F7/F8 (`GameSpeed::Faster`/`Fastest`, see
+      `SCORE-009/010`) — **done 2026-07-20**, real `quick_cheat_enabled` (`InputPad.cpp:` typed-
+      cheat table). Extends `GEInputPad::UpdateTypedGhostCheat()`'s existing rolling buffer (now
+      returns a `TypedCheatResult{ghostTyped, quickTyped}` instead of a plain bool) — both share the
+      SAME buffer, matching real source's own single-buffer `cheatEntries[]` design (typing
+      "quickghost" fires both, same as real source).
+- **Deferred, documented but not implemented (2026-07-20)**: real `InputPad.cpp:686-838+` has a much
+  larger ~19-entry typed-cheat-word table beyond the 9-button menu + ghost/quick — most already
+  covered by the `CHEAT-001..009` buttons under different names (opendoors/superblupi/showsecret/
+  layegg/roundshield/quicklollypop/tenbombs/birdlime/drivetank/powercharge/hidedrink/iovercraft/
+  udynamite/weelkeys), plus 3 standalone sub-features not yet triaged: `debug` (a debug overlay),
+  `zoom` (camera zoom-level cycling), `cheats` (a 5-second on-screen cheat-list display). Each is a
+  real, separate, faithful port task (own research + verification pass, not a blind mass-port) —
+  left as a future task, not silently dropped.
 
 Live headless verification (2026-07-13): forced the overlay open and captured a screenshot
 confirming the 9-button row renders correctly (icons, letters, transparent overlay with the 3D
@@ -4054,25 +4071,42 @@ reset to `[ ]`.
 - [ ] SCORE-006 — ~~+100 bonus when all treasures collected~~ **HALLUCINATED — CANCELLED, see note above.**
 - [ ] SCORE-007 — ~~High score per gamer slot persisted~~ **HALLUCINATED — CANCELLED, see note above (depends entirely on the non-existent score value).**
 - [ ] SCORE-008 — Level elapsed timer displayed in HUD
-- [ ] SCORE-009 — ~~Game speed selector: G key cycles Slow(0.6×) → Normal(1.0×) → Fast(1.5×)~~
-      **description was wrong, researched 2026-07-14**: direct read of real
-      `include/WindowsPhoneSpeedyBlupi/def/GameSpeed.hpp` — `GameSpeed` is NOT a continuous dt
-      multiplier at all. It's a "how many simulation ticks run per rendered frame" enum with 5
-      levels (`Slow=0, Normal=1, Fast=2, Faster=4, Fastest=8`), set via real keys **F5-F8** (F5=
-      Normal, F6=Fast, F7=Faster, F8=Fastest — no key is documented for Slow=0 in this mapping
-      function; a separate real site presumably sets it, not yet found). Not "G key", not
-      "0.6×/1.0×/1.5×", not 3 levels — 5 real levels, integer tick-multiplier semantics. Needs a
-      proper research pass into how "N ticks per frame" is actually driven in the real game loop
-      before implementing — this engine's own fixed-timestep `Update()`/`Draw()` split isn't
-      obviously the same shape, and guessing an adaptation here risks the same "wrong premise"
-      category as several other already-corrected items this session.
-- [ ] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes (from mobile-eggbert enum) — real
-      enum values confirmed (`Faster=4, Fastest=8` ticks/frame, see SCORE-009's correction) — not
-      yet implemented.
-- [ ] SCORE-011 — ~~Slow game speed: alternate-frame skip (`slow_frame` toggle in game loop)~~ —
-      **plausible given `Slow=0` (see SCORE-009), but the exact real frame-skip mechanism (which
-      variable, which function) was NOT found in this pass** — needs its own confirmation before
-      implementing, not assumed from the enum doc comment alone.
+- [x] SCORE-009 — Game speed selector — **done 2026-07-20.** Full research
+      pass into real `InputPad.cpp:582-684` (`#ifdef MODERN`-gated, which is
+      mobile-eggbert's own default/active build mode, not an unused legacy
+      variant): F5=Normal/F6=Fast always work; F7=Faster/F8=Fastest need
+      `quick_cheat_enabled` (see SCORE's own "quick" typed-cheat note
+      below); Tab toggles Slow<->Normal; a real safety net drops back to
+      Normal every frame if speed>Fast with neither quick/ghost/Shift-boost
+      active. Real mechanism is discrete "N simulation ticks per rendered
+      frame" (`Game1.cpp:394-416`, `for(i<ToRaw(speed)) decor.MoveStep()`,
+      Slow = alternate-frame skip via a `slow_frame` toggle) — **user
+      explicitly chose NOT to replicate this literally** (would mean
+      repeating the whole ~1000-line Play-phase `Update()` block N times
+      per frame, risking already-tuned once-per-frame sound/camera/HUD
+      logic that assumes "runs exactly once"). Implemented instead as a
+      continuous dt-scale factor (`GameSpeedFactor()`: Slow=0.5x/Normal=1x/
+      Fast=2x/Faster=4x/Fastest=8x) applied to the 3 core simulation calls
+      only (`worldRuntime_.Update`, `blupi_.Step`, `interaction_.Update`) —
+      a deliberate, user-approved approximation, not a literal port. Real
+      Shift-hold temporary boost-to-Fast(-or-Fastest) deliberately NOT
+      ported: both LeftShift and RightShift are already this engine's own
+      crouch/look-up controls, so there is no free Shift key without a real
+      conflict — documented gap. Verified live under Xvfb via a temporary,
+      since-reverted env-var hook: `simDt`/`animPhase` advance at exactly
+      0.5x/1x/2x for Slow/Normal/Fast. Also added the real on-screen speed
+      indicator (`InputPad.cpp:1383-1404`: "0.5x"/"Nx" text over a
+      `pad.png` icon-15 panel, shown only while speed != Normal).
+- [x] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes — **done
+      2026-07-20, see SCORE-009.** Reachable via F7/F8 once the real
+      "quick" typed cheat (extends the existing ghost-cheat rolling
+      buffer, `GEInputPad::UpdateTypedGhostCheat()` → `TypedCheatResult`)
+      is typed — matches real `quick_cheat_enabled`'s gate on F7/F8 exactly.
+- [x] SCORE-011 — Slow game speed — **done 2026-07-20, see SCORE-009.**
+      Real alternate-frame-skip mechanism approximated as a continuous
+      0.5x dt-scale factor (same average simulation rate, no frame-parity
+      bookkeeping needed) — user-approved simplification, not a literal
+      port of the real `slow_frame` toggle.
 - [ ] SCORE-012 — ~~Win screen: display total score~~, elapsed time, new-record indicator —
       **the "total score"/"new-record" parts are HALLUCINATED — CANCELLED** (see note above);
       "elapsed time" display itself is unrelated to the score hallucination and stays open pending
