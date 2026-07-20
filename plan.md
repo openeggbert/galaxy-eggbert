@@ -4660,9 +4660,24 @@ those are specifically about the real byte layout, which stays undone by design.
       So the mapping from "gold tile in scan order" to "which of the 20
       main-door indices reveals it" is first-come-first-served, not a
       fixed per-world assignment -- easy to mis-port without noticing.
-      Needs its own dedicated research+implementation pass, not attempted
-      this session (found while investigating whether this was a quick
-      win; it is not).
+      **Root blocker found 2026-07-20 (the actual reason this needs its
+      own pass, not just careful porting)**: `m_doors[180+i]` is ONLY ever
+      set by `Decor::OpenGoldsWin()` (`Decor.cpp:11707-11710`,
+      `m_doors[180 + m_mission/10] = 1`), which is ONLY ever called from
+      the real win-trigger (`Decor.cpp:6425-6429`) gated on `m_bFoundCle`
+      being true. `m_bFoundCle` is the real per-level hidden-secret flag
+      ("found the hidden gold -> straight back to the global hub" instead
+      of the normal "back to this world's own hub" exit) -- and this is
+      **already documented elsewhere in this file (§2.8/`SCORE-013`'s own
+      writeup, `PICKUP-009`'s note) as NOT modeled, deliberately out of
+      scope** (a per-level hidden-pickup mechanic with no defined content
+      in this project's single hand-authored world yet). So `SAVE-007`
+      has no real path to ever fire in this engine as it stands --
+      implementing just the hub-side reveal logic without also
+      implementing `m_bFoundCle` detection would be dead code with
+      nothing to trigger or test it against. Genuinely blocked on that
+      separate, already-deferred prerequisite, not just "needs careful
+      porting" -- don't attempt this in isolation.
 - [ ] SAVE-008 — GetGamerInfo: return lives, mainDoors, secondaryDoors per
       gamer slot — **secondaryDoors (the functional half) now has a real
       backing store** (`IsMissionDoorUnlocked()`, see `SAVE-006`), but no
