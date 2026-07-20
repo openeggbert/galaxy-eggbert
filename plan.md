@@ -3069,6 +3069,23 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [ ] BLUPI-078 — Billboard sprite from `blupi.png` (60×60 px cells) — CNA has no visible first-person Blupi yet; only a temporary 2D sprite HUD indicator / optional third-person placeholder model
 - [ ] BLUPI-079 — Direction flipping: mirror sprite when moving right (table_mirror) — still not
       modeled; the debug HUD icon this whole system feeds has no left/right mirroring at all yet.
+      **Bigger than it sounds, re-scoped 2026-07-20** (investigated as a possible quick win; it is
+      not): confirmed directly against `Decor.cpp:2412-2444` that `table_mirror` isn't a cosmetic
+      nicety -- it's the mechanism that makes EVERY `table_blupi` icon this session has been
+      transcribing correct for `Direction::Left` specifically (the base data is right-facing by
+      convention; real source substitutes the mirrored icon via `table_mirror[num]` whenever
+      `m_blupiDir==Left` on the blupi.png channel, plus an extra +4 special case for element.png
+      icons 168-171, plus 3 one-off remaps for the not-yet-implemented `StopSuspend` state, plus an
+      `m_blupiInvert` twist that flips the sense entirely). The blocker: this engine has **no
+      discrete left/right facing concept at all** (`GEBlupiController` only tracks a continuous 3D
+      `m_yaw`) -- `blupiFacingDX/DZ` (`GalaxyEggbertCnaGame.cpp:2501-2502`,
+      `round(sin(yaw))`/`round(-cos(yaw))`) is the closest existing analog, already used for
+      compass-quadrant enemy checks, but mapping a free 3D yaw to a binary "mirrored or not" sprite
+      convention for THIS specific purpose is a judgment call, not a data port -- same shape as the
+      already-blocked render-geometry decisions, though lower-stakes since the target is an
+      explicitly temporary debug icon, not permanent geometry. Real payoff is also low right now
+      (no visible 3D Blupi model exists yet to actually show the mirrored sprite on) -- deferred,
+      not attempted this session.
 - [ ] BLUPI-080 — All 87 BlupiAction frames resolved from table_blupi via action+phase+dir lookup —
       **partially done, see `BLUPI-077`**: extraction is complete for all 84 real records, but only
       ~24 states are actually wired to a live trigger; "+dir" (left/right mirroring) is also not
