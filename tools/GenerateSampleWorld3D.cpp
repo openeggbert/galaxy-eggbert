@@ -875,7 +875,29 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
             }
             const int col = slot % 7;
             const int row = slot / 7;
-            place(type, static_cast<float>(78 + col * 3), 1.0f, static_cast<float>(27 + row * 3));
+            const float px = static_cast<float>(78 + col * 3);
+            const float pz = static_cast<float>(27 + row * 3);
+            // Bird/wasp (2026-07-20, live user request): unlike every other
+            // static exhibit here (posEnd==posStart, deliberately not
+            // patrolling, see this block's own comment above), these two
+            // get a small real patrol range instead, so their real per-
+            // direction/turn-transition icon animation (GetBirdIcon()/
+            // GetWaspIcon(), both patrolStep/patrolTime-driven) actually
+            // plays in the exhibition too. Kept small (+-1 unit) to stay
+            // inside this specimen's own 3-unit-spaced grid cell, clear of
+            // its neighbors.
+            if (type == ObjectType::ObjectType20 || type == ObjectType::ObjectType44)
+            {
+                MoveObjectRecord spec;
+                spec.type = type;
+                spec.posStartX = px - 1.0f; spec.posStartY = 1.0f; spec.posStartZ = pz;
+                spec.posEndX = px + 1.0f;   spec.posEndY = 1.0f;   spec.posEndZ = pz;
+                PlaceMoveObject(world, spec);
+            }
+            else
+            {
+                place(type, px, 1.0f, pz);
+            }
             ++slot;
         }
         std::cout << "GenerateSampleWorld3D: exhibition placed -- 418 tile icons in the exhibition slab "
