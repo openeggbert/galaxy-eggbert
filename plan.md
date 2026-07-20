@@ -4259,10 +4259,12 @@ old scheme — cross-check against §7 when wiring these).
   `Decor.cpp:4907-4943` — real ch6 is the `AscenseurVertigo` edge-teeter sound (entering
   `BlupiAction::Vertigo`/`Advance` on a wide/shiftable lift). Genuinely blocked on the same
   render-geometry decision as `PICKUP-024`/`027` — not independently implementable.
-- [ ] SOUND-017 — ch7: door open — **corrected 2026-07-16**: label is wrong. Verified directly
-  against `Decor.cpp:3283-3286` — real ch7 plays on the `Down`(crouch)-action transition (screen
-  scrolls down 150px), not door open (that's ch33, see `SOUND-043`). Genuinely NOT wired in this
-  engine (no crouch-transition sound exists), but under the correct real meaning.
+- [x] SOUND-017 — ch7: door open — **corrected 2026-07-16, wired 2026-07-20**: label is wrong.
+  Verified directly against `Decor.cpp:3283-3286` — real ch7 plays on the `Down`(crouch)-action
+  transition (screen scrolls down 150px), not door open (that's ch33, see `SOUND-043`). Now wired
+  under the correct real meaning: new `GEBlupiController::DownEntrySoundFiredThisFrame()` (fires
+  once, real `Config::ScaleTime(4)`=0.2s after entering `Down`), consumed in
+  `GalaxyEggbertCnaGame.cpp` right after `blupi_.Step()`.
 - [x] SOUND-018 — ch8: death / hit — **stale, corrected 2026-07-16**: already wired (Lava/Blitz/
   fall-death `triggerDeath()` calls in `GalaxyEggbertCnaGame.cpp`), label is accurate.
 - [x] SOUND-019 — ch9: teleport in — **label wrong AND stale, corrected 2026-07-16**: verified
@@ -4283,16 +4285,20 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-027 — ch17: helicopter motor stop — **done 2026-07-17**, see `SOUND-008`.
 - [x] SOUND-028 — ch18: helicopter motor low (loop) — **done 2026-07-17**, see `SOUND-008`.
 - [x] SOUND-029 — ch19: treasure/key pickup, set-completing variant (CNA, 2026-07-10 — new correct meaning, was previously listed as generic "teleport (alternate)")
-- [ ] SOUND-030 — ch20: bridge completed — **label wrong, corrected 2026-07-16**: verified
-  directly against `Decor.cpp:3628-3633` — real ch20 plays when standing back up from a crouch
-  (`Down`→`Stop` transition), not "bridge completed". Genuinely not wired under the correct
-  meaning (no crouch-recovery sound exists in this engine).
-- [ ] SOUND-031 — ch21: secret exit found — **label wrong, corrected 2026-07-16**: verified
-  directly against `Decor.cpp:3278-3282` — real ch21 is the look-up ("Up" action) transition
-  sound (paired with ch7's look-down/crouch transition, `SOUND-017`), not "secret exit found" (no
-  such distinct sound exists at all — confirmed via `PICKUP-083`'s own research, the secret exit
-  reuses the regular exit's ch13/ch14). Genuinely not wired under the correct meaning (no
-  look-up-transition sound exists in this engine).
+- [x] SOUND-030 — ch20: bridge completed — **label wrong, corrected 2026-07-16, wired 2026-07-20**:
+  verified directly against `Decor.cpp:3628-3633` — real ch20 plays when standing back up from a
+  crouch (`Down`→`Stop` transition), not "bridge completed". Now wired: new
+  `GEBlupiController::DownReleaseSoundFiredThisFrame()`, fires exactly on that transition -- real
+  gate is `m_blupiSpeedX==0 && m_blupiSpeedY==0`, which needed no separate modeling since this
+  engine's own `crouchHeld` ternary only ever resolves to `Stop` (not `March`) under the same
+  condition; verified a `Down`→`March` transition (crouch released WITH movement held) does NOT
+  fire it, matching the real gate.
+- [x] SOUND-031 — ch21: secret exit found — **label wrong, corrected 2026-07-16, wired
+  2026-07-20**: verified directly against `Decor.cpp:3278-3282` — real ch21 is the look-up ("Up"
+  action) transition sound (paired with ch7's look-down/crouch transition, `SOUND-017`), not
+  "secret exit found" (no such distinct sound exists at all — confirmed via `PICKUP-083`'s own
+  research, the secret exit reuses the regular exit's ch13/ch14). Now wired: new
+  `GEBlupiController::UpEntrySoundFiredThisFrame()`, same real 0.2s-delay shape as `SOUND-017`.
 - [x] SOUND-032 — ch22: **corrected again 2026-07-17** (the 2026-07-16 pass had it backwards) —
   verified directly against all 4 real `PlaySound(SoundChannel22, ...)` call sites
   (`Decor.cpp:5356/5378/5392/5405`): every one is in a water-EXIT path (jump-out, transport-out,

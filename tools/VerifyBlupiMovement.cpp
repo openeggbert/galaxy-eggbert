@@ -217,6 +217,61 @@ int main(int argc, char** argv)
         }
     }
 
+    // 4e. Real crouch/look-up one-shot sound signals (SOUND-017/030/031,
+    // added 2026-07-20, Decor.cpp:3278-3287/3628-3633): ch7/ch21 fire once,
+    // real 0.2s (Config::ScaleTime(4)) after entering Down/Up; ch20 fires
+    // once specifically on the Down->Stop release transition, NOT
+    // Down->March (real gate: m_blupiSpeedX==0 && m_blupiSpeedY==0, i.e.
+    // no movement input either -- this engine's own crouchHeld ternary
+    // only reaches Stop, not March, under that same condition).
+    {
+        GEBlupiController crouchSound;
+        crouchSound.SetPosition(0.0f, 1.0f, 0.0f);
+        crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        check(!crouchSound.DownEntrySoundFiredThisFrame(),
+              "DownEntrySoundFiredThisFrame() is false the instant Down is entered (real 0.2s delay)");
+
+        int stepsToDownSound = 0;
+        while (!crouchSound.DownEntrySoundFiredThisFrame() && stepsToDownSound < 200)
+        {
+            crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+            ++stepsToDownSound;
+        }
+        check(stepsToDownSound < 200, "DownEntrySoundFiredThisFrame() fires within a bounded time");
+        crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        check(!crouchSound.DownEntrySoundFiredThisFrame(),
+              "DownEntrySoundFiredThisFrame() is true for exactly one Step() call, not every frame after");
+
+        crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/false, false, dt);
+        check(crouchSound.GetAnimState() == GEBlupiController::AnimState::Stop,
+              "releasing crouch with no movement input returns to Stop");
+        check(crouchSound.DownReleaseSoundFiredThisFrame(),
+              "DownReleaseSoundFiredThisFrame() fires on the real Down->Stop release transition");
+
+        GEBlupiController crouchToMarch;
+        crouchToMarch.SetPosition(0.0f, 1.0f, 0.0f);
+        crouchToMarch.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        crouchToMarch.Step(world, 1.0f, 1.0f, false, /*crouchHeld=*/false, false, dt);
+        check(crouchToMarch.GetAnimState() == GEBlupiController::AnimState::March,
+              "releasing crouch WITH movement input transitions to March, not Stop");
+        check(!crouchToMarch.DownReleaseSoundFiredThisFrame(),
+              "DownReleaseSoundFiredThisFrame() does NOT fire on a Down->March transition (real gate "
+              "requires speedX==0 too)");
+
+        GEBlupiController lookingUp;
+        lookingUp.SetPosition(0.0f, 1.0f, 0.0f);
+        lookingUp.Step(world, 0.0f, 0.0f, false, false, /*lookUpHeld=*/true, dt);
+        check(!lookingUp.UpEntrySoundFiredThisFrame(),
+              "UpEntrySoundFiredThisFrame() is false the instant Up is entered (real 0.2s delay)");
+        int stepsToUpSound = 0;
+        while (!lookingUp.UpEntrySoundFiredThisFrame() && stepsToUpSound < 200)
+        {
+            lookingUp.Step(world, 0.0f, 0.0f, false, false, /*lookUpHeld=*/true, dt);
+            ++stepsToUpSound;
+        }
+        check(stepsToUpSound < 200, "UpEntrySoundFiredThisFrame() fires within a bounded time");
+    }
+
     // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --
     // a small synthetic world (not worlds3d/world999.vwr, which has no lava
     // placed yet) with one lava block and one ordinary ground block,

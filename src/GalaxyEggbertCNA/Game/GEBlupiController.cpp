@@ -1611,6 +1611,21 @@ namespace GalaxyEggbert::CNA
 
     void GEBlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate)
     {
+        // Real SOUND-017/030/031 one-shot cues (plan.md, added 2026-07-20):
+        // ch7/ch21 fire once, real Config::ScaleTime(4)=4 ticks=0.2s after
+        // entering Down/Up (Decor.cpp:3278-3287); ch20 fires once on the
+        // real Down->Stop transition specifically (Decor.cpp:3628-3633,
+        // gated there on m_blupiSpeedX==0 && m_blupiSpeedY==0 -- this
+        // engine's own crouchHeld ternary already IS that exact edge: Down
+        // only ever transitions to Stop, never March, while crouchHeld is
+        // still literally held, so the real gate needs no separate
+        // modeling here). Reset every call; the caller consumes each once
+        // per frame, same "*ThisFrame()" convention used throughout
+        // GEInteractionSystem.
+        m_downEntrySoundFiredThisFrame = false;
+        m_upEntrySoundFiredThisFrame = false;
+        m_downReleaseSoundFiredThisFrame = false;
+
         // Vehicle-mode Stop/March selection (plan.md BLUPI-037/038/047/058/
         // 069/084/088/091/094, found 2026-07-18) -- each mode has its own
         // real icon pair; falls through to the base Stop/March for
@@ -1669,9 +1684,14 @@ namespace GalaxyEggbert::CNA
                                                   : AnimState::Stop;
         if (newState != m_animState)
         {
+            if (m_animState == AnimState::Down && newState == AnimState::Stop)
+            {
+                m_downReleaseSoundFiredThisFrame = true;
+            }
             m_animState = newState;
             m_animPhase = 0;
             m_animTimer = 0.0f;
+            m_animStateTimer = 0.0f;
             return;
         }
 
@@ -1681,6 +1701,20 @@ namespace GalaxyEggbert::CNA
         {
             m_animTimer -= frameDuration;
             ++m_animPhase;
+        }
+
+        const float previousStateTimer = m_animStateTimer;
+        m_animStateTimer += dt;
+        if (previousStateTimer < kDownUpSoundDelay && m_animStateTimer >= kDownUpSoundDelay)
+        {
+            if (m_animState == AnimState::Down)
+            {
+                m_downEntrySoundFiredThisFrame = true;
+            }
+            else if (m_animState == AnimState::Up)
+            {
+                m_upEntrySoundFiredThisFrame = true;
+            }
         }
     }
 

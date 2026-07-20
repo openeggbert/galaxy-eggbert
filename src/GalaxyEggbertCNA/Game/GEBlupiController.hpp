@@ -1042,6 +1042,14 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] AnimState GetAnimState() const noexcept { return m_animState; }
         [[nodiscard]] int GetAnimIcon() const noexcept;
 
+        // Real one-shot sound cues SOUND-017/030/031 (added 2026-07-20) --
+        // see UpdateAnim()'s own comment for the exact real trigger
+        // conditions. Each is true for exactly one Step() call; the caller
+        // (GalaxyEggbertCnaGame.cpp) plays the matching real channel.
+        [[nodiscard]] bool DownEntrySoundFiredThisFrame() const noexcept { return m_downEntrySoundFiredThisFrame; }
+        [[nodiscard]] bool UpEntrySoundFiredThisFrame() const noexcept { return m_upEntrySoundFiredThisFrame; }
+        [[nodiscard]] bool DownReleaseSoundFiredThisFrame() const noexcept { return m_downReleaseSoundFiredThisFrame; }
+
         // True exactly when GetAnimIcon()'s current value indexes into
         // element.png rather than blupi.png -- real mobile-eggbert's
         // BlupiSearchIcon() (Decor.cpp) selects the sheet per-action, not
@@ -1169,6 +1177,16 @@ namespace GalaxyEggbert::CNA
         AnimState m_animState = AnimState::Stop;
         int m_animPhase = 0;
         float m_animTimer = 0.0f;
+        // Real seconds elapsed since entering m_animState (SOUND-017/030/031,
+        // added 2026-07-20) -- separate from m_animTimer/m_animPhase above,
+        // which run at kAnimFps (8Hz, icon-cycling only); this instead
+        // matches the real 20Hz reference-tick convention used for the
+        // ch7/ch21 entry-delay sounds below.
+        float m_animStateTimer = 0.0f;
+        static constexpr float kDownUpSoundDelay = 4.0f / 20.0f; // real Config::ScaleTime(4)
+        bool m_downEntrySoundFiredThisFrame = false;
+        bool m_upEntrySoundFiredThisFrame = false;
+        bool m_downReleaseSoundFiredThisFrame = false;
 
         bool m_ecrase = false;
         float m_ecraseTimer = 0.0f;

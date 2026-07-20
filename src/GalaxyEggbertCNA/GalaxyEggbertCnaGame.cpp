@@ -1632,6 +1632,26 @@ namespace GalaxyEggbert::CNA
             {
                 stepSoundTimer_ = 0.0f;
             }
+
+            // Real crouch/look-up transition sounds (SOUND-017/030/031,
+            // added 2026-07-20, Decor.cpp:3278-3287/3628-3633) -- ch7/ch21
+            // fire once, 0.2s after entering Down/Up; ch20 fires once on
+            // the Down->Stop release transition. See
+            // GEBlupiController::UpdateAnim()'s own comment for why the
+            // real speedX==0/speedY==0 gate needs no separate modeling
+            // here.
+            if (blupi_.DownEntrySoundFiredThisFrame())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel7);
+            }
+            if (blupi_.UpEntrySoundFiredThisFrame())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel21);
+            }
+            if (blupi_.DownReleaseSoundFiredThisFrame())
+            {
+                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel20);
+            }
             jumpKeyWasDown_ = jumpPressed;
 
             // Crusher squash recovery sound (real channel 41, per
