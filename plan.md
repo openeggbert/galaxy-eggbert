@@ -200,6 +200,23 @@ Easy3D does not hide CNA and must not grow into a scene graph/ECS/engine (see `e
 mobile-eggbert is read-only; `GalaxyEggbertSimple3D` stays intact but historical
 (never build/fix it as of 2026-07-08). Full rules: `CLAUDE.md` "Current Direction Lock".
 
+**How this section relates to `## 2` below (clarified 2026-07-20, after a session found the two
+looked like duplicate tracking and asked about cleanup):** the Phases below (`E3D-MIG-0xx`-`1xx`)
+are a **chronological development narrative** — one porting effort per phase, told mostly in the
+order it happened, with the reasoning/dead-ends/live-playtest revisions kept in. `## 2` (Feature
+Parity Checklist) is a **flat, granular, per-feature status list** (`BLUPI-xxx`/`PICKUP-xxx`/
+`ENEMY-xxx`/`SOUND-xxx`/etc. — a completely separate ID space from `E3D-MIG-xxx`, not aliases of
+each other) that keeps growing as work continues; `## 2` cross-references INTO specific `E3D-MIG`
+phase entries for their full technical story (30+ such cross-references already exist). These are
+genuinely complementary, not redundant — the phase narrative below is largely a frozen record of
+2026-07-01 through 2026-07-12 and is **not** kept in sync with later work, while `## 2` is the
+document's actively-maintained, current source of truth. **When they disagree, or when checking
+whether something is currently done, trust `## 2` first** — a Phase item below marked incomplete
+or "blocked" may well have since been finished under its own separate `## 2` ID (the granular
+per-`BlupiAction`/enemy/pickup breakdown didn't fully exist yet when most phases below were
+written). Read a Phase entry below for the *why* and the war story behind a decision, not for
+today's status.
+
 ### Phases 0–5B: done (2026-07-01 through 2026-07-09)
 
 All of documentation/direction-lock (`E3D-MIG-000`-`005`), CNA target skeleton
@@ -1952,6 +1969,11 @@ Enumerates every mobile-eggbert feature that must eventually exist in some form 
 2026-07-10 (see the note at the top of this file); GalaxyEggbertSimple3D's historical
 status has no bearing here. Where a task's assumption was found to be wrong by more
 recent `mobile-eggbert-reference/` research, a correction note is inlined.
+
+**This is the current, actively-maintained status tracker (see `## 1`'s own orientation note for
+the full relationship) — its own `BLUPI-xxx`/`PICKUP-xxx`/etc. IDs are a separate space from `## 1`'s
+`E3D-MIG-xxx` phase IDs, not aliases; when `## 1`'s narrative and this checklist disagree on
+whether something is done, trust this section.**
 
 ### 2.1 Engine & Build
 
