@@ -420,19 +420,27 @@ namespace GalaxyEggbert::CNA
         // down-edge (not held-repeat). Each real cheat name is matched
         // against the buffer's own SUFFIX (not a full-buffer-reset
         // match), so typing "...ghost" anywhere fires it without needing
-        // to clear the buffer first. Only "ghost" is wired here for now
-        // (plan.md BLUPI-111) -- the real table has ~26 entries total
-        // (most of the already-implemented CHEAT-001..009 plus several
-        // requiring features this engine doesn't have yet, e.g. Debug
-        // overlay/Zoom levels/game-speed Quick toggle) -- extending this
-        // to more names is a real, faithful, but separate task each time
-        // (needs its own verification pass per name, same as every other
-        // secret power/cheat this session), not a blind mass-port.
-        // Returns true for exactly the one Update() call where "ghost"
-        // was just completed (one-shot signal, same idiom as this
-        // class's edge-triggered button presses) -- a no-op (always
-        // false) outside Play.
-        [[nodiscard]] bool UpdateTypedGhostCheat(
+        // to clear the buffer first. "ghost" and "quick" are wired here
+        // (plan.md BLUPI-111, SCORE-009/010/011's game-speed follow-up,
+        // added 2026-07-20) -- the real table has ~26 entries total (most
+        // of the already-implemented CHEAT-001..009 plus several requiring
+        // features this engine doesn't have yet, e.g. Debug overlay/Zoom
+        // levels) -- extending this to more names is a real, faithful, but
+        // separate task each time (needs its own verification pass per
+        // name, same as every other secret power/cheat this session), not
+        // a blind mass-port. Both share the SAME rolling buffer (real
+        // source's own `cheatEntries[]` loop checks all known suffixes
+        // against one shared buffer too, not a separate buffer per cheat).
+        struct TypedCheatResult
+        {
+            bool ghostTyped = false;
+            bool quickTyped = false;
+        };
+        // Each flag is true for exactly the one Update() call where that
+        // word was just completed (one-shot signal, same idiom as this
+        // class's edge-triggered button presses) -- both always false
+        // outside Play.
+        [[nodiscard]] TypedCheatResult UpdateTypedGhostCheat(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept;
 
         // Wait phase (plan.md MENU-001..005), verified directly against

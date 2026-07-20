@@ -263,7 +263,8 @@ namespace GalaxyEggbert::CNA
                      const char* overlayMessage,
                      int animIcon, bool animIconUsesElementSheet,
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
-                     float voyageX, float voyageY)
+                     float voyageX, float voyageY,
+                     GalaxyEggbert::GameSpeed gameSpeed)
     {
         if (!loaded_)
         {
@@ -563,6 +564,58 @@ namespace GalaxyEggbert::CNA
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
                 penX += kGlyphAdvance;
+            }
+        }
+
+        // Real GameSpeed indicator (SCORE-009/010/011, added 2026-07-20,
+        // `InputPad.cpp:1383-1404`): shown only while speed != Normal, a
+        // small pad.png icon-15 panel + "0.5x"/"Nx" text at the real
+        // (5, drawBoundsHeight-22) position -- same panel/text idiom as
+        // the treasure counter above, just a different real position/scale.
+        if (gameSpeed != GalaxyEggbert::GameSpeed::Normal)
+        {
+            const bool isSlow = gameSpeed == GalaxyEggbert::GameSpeed::Slow;
+            const std::string speedText = isSlow ? "0.5x" : std::to_string(GalaxyEggbert::ToRaw(gameSpeed)) + "x";
+            constexpr float kSpeedTextScale = 0.55f;
+            constexpr float kSpeedPadding = 3.0f;
+            constexpr float kSpeedTextH = 14.0f;
+            constexpr float kSpeedBaseY = kRefH - 22.0f;
+            const float speedTextW = static_cast<float>(speedText.size()) * kGlyphAdvance * kSpeedTextScale;
+
+            Quad speedPanel;
+            speedPanel.x0 = refToScreenX(5.0f - kSpeedPadding);
+            speedPanel.y0 = refToScreenY(kSpeedBaseY - kSpeedPadding);
+            speedPanel.x1 = refToScreenX(5.0f + speedTextW + kSpeedPadding);
+            speedPanel.y1 = refToScreenY(kSpeedBaseY + kSpeedTextH + kSpeedPadding);
+            const int speedCol = kPanelIcon % kPadCols;
+            const int speedRow = kPanelIcon / kPadCols;
+            const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+            const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+            speedPanel.u0 = (static_cast<float>(speedCol) * kPadCellPx) / padSheetW;
+            speedPanel.v0 = (static_cast<float>(speedRow) * kPadCellPx) / padSheetH;
+            speedPanel.u1 = (static_cast<float>(speedCol + 1) * kPadCellPx) / padSheetW;
+            speedPanel.v1 = (static_cast<float>(speedRow + 1) * kPadCellPx) / padSheetH;
+            padQuads.push_back(speedPanel);
+
+            const float speedCellPx = kGlyphCellPx * kSpeedTextScale;
+            const float speedAdvance = kGlyphAdvance * kSpeedTextScale;
+            float speedPenX = 5.0f;
+            for (const char c : speedText)
+            {
+                const int rank = static_cast<int>(static_cast<unsigned char>(c));
+                const int gcol = rank % kGlyphCols;
+                const int grow = rank / kGlyphCols;
+                Quad q;
+                q.x0 = refToScreenX(speedPenX);
+                q.y0 = refToScreenY(kSpeedBaseY);
+                q.x1 = q.x0 + speedCellPx * scale;
+                q.y1 = q.y0 + speedCellPx * scale;
+                q.u0 = (static_cast<float>(gcol) * kGlyphCellPx) / textSheetW;
+                q.v0 = (static_cast<float>(grow) * kGlyphCellPx) / textSheetH;
+                q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
+                q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
+                textQuads.push_back(q);
+                speedPenX += speedAdvance;
             }
         }
 

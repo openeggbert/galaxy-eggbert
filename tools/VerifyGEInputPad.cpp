@@ -442,7 +442,7 @@ int main()
         // match.
         for (Keys k : {Keys::G, Keys::H, Keys::O, Keys::S, Keys::T})
         {
-            const bool firedOnPress = pad.UpdateTypedGhostCheat(KeyboardState{k}, /*isPlayPhase=*/true);
+            const bool firedOnPress = pad.UpdateTypedGhostCheat(KeyboardState{k}, /*isPlayPhase=*/true).ghostTyped;
             anyTrue = anyTrue || firedOnPress;
             (void)pad.UpdateTypedGhostCheat(KeyboardState{}, /*isPlayPhase=*/true); // release edge
         }
@@ -455,7 +455,7 @@ int main()
         bool anyTrue = false;
         for (Keys k : {Keys::G, Keys::H, Keys::O, Keys::S, Keys::T})
         {
-            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, /*isPlayPhase=*/false);
+            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, /*isPlayPhase=*/false).ghostTyped;
             (void)pad.UpdateTypedGhostCheat(KeyboardState{}, /*isPlayPhase=*/false);
         }
         check(!anyTrue, "Typed cheat: typing \"ghost\" outside Play phase never fires (real Phase::Play gate)");
@@ -473,7 +473,7 @@ int main()
         bool anyTrue = false;
         for (Keys k : {Keys::H, Keys::O, Keys::S, Keys::T})
         {
-            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, true);
+            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, true).ghostTyped;
             (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
         }
         check(anyTrue,
@@ -490,10 +490,26 @@ int main()
         bool anyTrue = false;
         for (Keys k : {Keys::X, Keys::Y, Keys::Z, Keys::G, Keys::H, Keys::O, Keys::S, Keys::T})
         {
-            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, true);
+            anyTrue = anyTrue || pad.UpdateTypedGhostCheat(KeyboardState{k}, true).ghostTyped;
             (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
         }
         check(anyTrue, "Typed cheat: an unrelated prefix before \"ghost\" doesn't prevent the suffix match");
+    }
+    {
+        // "quick" toggles quickCheatEnabled_ (SCORE-009/010/011 follow-up,
+        // added 2026-07-20) -- same rolling-buffer mechanism as "ghost",
+        // sharing the SAME buffer (typing "quickghost" should fire ghost
+        // too, matching real source's one-shared-buffer design).
+        GEInputPad pad;
+        using Keys = Microsoft::Xna::Framework::Input::Keys;
+        using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
+        bool anyQuick = false;
+        for (Keys k : {Keys::Q, Keys::U, Keys::I, Keys::C, Keys::K})
+        {
+            anyQuick = anyQuick || pad.UpdateTypedGhostCheat(KeyboardState{k}, true).quickTyped;
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
+        }
+        check(anyQuick, "Typed cheat: typing \"quick\" letter by letter fires quickTyped exactly once");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

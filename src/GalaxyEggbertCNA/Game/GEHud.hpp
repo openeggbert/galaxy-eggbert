@@ -1,5 +1,7 @@
 #pragma once
 
+#include <GalaxyEggbert/def/GameSpeed.hpp>
+
 #include <Easy3D/BillboardMesh.hpp>
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
@@ -137,6 +139,10 @@ namespace GalaxyEggbert::CNA
         // the same way `showRestart` already does at the Pause-menu call
         // site (`mission != 1 && mission % 10 != 0`), since GEHud itself
         // has no mission-number concept.
+        // gameSpeed (SCORE-009/010/011, added 2026-07-20): real
+        // `InputPad.cpp:1383-1404` speed indicator -- shown only while
+        // speed != Normal, real "0.5x"/"Nx" text over a `pad.png` icon-15
+        // panel at the real (5, drawBoundsHeight-22) position.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   int viewportW, int viewportH,
                   int lives, bool key1, bool key2, bool key3,
@@ -148,7 +154,8 @@ namespace GalaxyEggbert::CNA
                   const char* overlayMessage,
                   int animIcon, bool animIconUsesElementSheet,
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
-                  float voyageX, float voyageY);
+                  float voyageX, float voyageY,
+                  GalaxyEggbert::GameSpeed gameSpeed);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage

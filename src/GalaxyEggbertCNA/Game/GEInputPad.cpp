@@ -1518,14 +1518,15 @@ namespace GalaxyEggbert::CNA
         return pressedCheat;
     }
 
-    bool GEInputPad::UpdateTypedGhostCheat(
+    GEInputPad::TypedCheatResult GEInputPad::UpdateTypedGhostCheat(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept
     {
         using Microsoft::Xna::Framework::Input::Keys;
 
+        TypedCheatResult result;
         if (!isPlayPhase)
         {
-            return false;
+            return result;
         }
 
         static constexpr Keys kLetterKeys[26] = {
@@ -1534,7 +1535,6 @@ namespace GalaxyEggbert::CNA
             Keys::Q, Keys::R, Keys::S, Keys::T, Keys::U, Keys::V, Keys::W, Keys::X,
             Keys::Y, Keys::Z};
 
-        bool ghostTyped = false;
         for (int li = 0; li < 26; ++li)
         {
             const bool down = keyboard.IsKeyDown(kLetterKeys[li]);
@@ -1550,12 +1550,18 @@ namespace GalaxyEggbert::CNA
                 if (typedCheatBuffer_.size() >= kGhostName.size() &&
                     typedCheatBuffer_.substr(typedCheatBuffer_.size() - kGhostName.size()) == kGhostName)
                 {
-                    ghostTyped = true;
+                    result.ghostTyped = true;
+                }
+                static const std::string kQuickName = "quick";
+                if (typedCheatBuffer_.size() >= kQuickName.size() &&
+                    typedCheatBuffer_.substr(typedCheatBuffer_.size() - kQuickName.size()) == kQuickName)
+                {
+                    result.quickTyped = true;
                 }
             }
             letterKeyWasDown_[li] = down;
         }
-        return ghostTyped;
+        return result;
     }
 
     void GEInputPad::DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,

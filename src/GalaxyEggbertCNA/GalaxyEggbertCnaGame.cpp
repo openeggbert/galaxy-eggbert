@@ -137,6 +137,18 @@ namespace GalaxyEggbert::CNA
             }
             return maxDistance;
         }
+
+        // Real GameSpeed (SCORE-009/010/011) as a continuous dt-scale
+        // factor -- see gameSpeed_'s own member comment for the "why a
+        // factor, not a literal N-repeat" rationale. Slow's real "every
+        // OTHER frame runs one tick" behavior is approximated as a
+        // continuous 0.5x here (same average effect, no frame-parity
+        // bookkeeping needed).
+        float GameSpeedFactor(GalaxyEggbert::GameSpeed speed) noexcept
+        {
+            return (speed == GalaxyEggbert::GameSpeed::Slow) ? 0.5f
+                                                               : static_cast<float>(GalaxyEggbert::ToRaw(speed));
+        }
     }
 
     GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
@@ -1107,13 +1119,87 @@ namespace GalaxyEggbert::CNA
 
                 // Real SECOND, independent cheat-entry method (plan.md
                 // BLUPI-111, see GEInputPad::UpdateTypedGhostCheat()'s own
-                // comment) -- typing "ghost" toggles Ghost mode, layered
-                // on top of (not instead of) the on-screen cheat menu
-                // above, same "layered" idiom already established there.
-                if (inputPad_.UpdateTypedGhostCheat(phaseKeys, /*isPlayPhase=*/true))
+                // comment) -- typing "ghost" toggles Ghost mode, "quick"
+                // unlocks F7/F8 (see gameSpeed_'s own member comment),
+                // layered on top of (not instead of) the on-screen cheat
+                // menu above, same "layered" idiom already established
+                // there.
+                const auto typedCheat = inputPad_.UpdateTypedGhostCheat(phaseKeys, /*isPlayPhase=*/true);
+                if (typedCheat.ghostTyped)
                 {
                     blupi_.ToggleGhost(worldRuntime_.GetWorld());
                 }
+                if (typedCheat.quickTyped)
+                {
+                    quickCheatEnabled_ = !quickCheatEnabled_;
+                    if (!quickCheatEnabled_ && gameSpeed_ > GalaxyEggbert::GameSpeed::Fast)
+                    {
+                        gameSpeed_ = GalaxyEggbert::GameSpeed::Fast;
+                    }
+                }
+
+                // Real GameSpeed key mapping (InputPad.cpp:596-684) --
+                // F5/F6 always work; F7/F8 need quickCheatEnabled_ (the
+                // "quick" typed cheat above). Real source ALSO has a
+                // Shift-hold temporary boost, deliberately NOT ported here:
+                // both LeftShift and RightShift are already this engine's
+                // own crouch/look-up controls (a pre-existing, more central
+                // design decision), so there is no free Shift key left for
+                // it without conflicting with core movement -- documented
+                // gap, not an oversight. Real safety net (InputPad.cpp:
+                // 582-594): drop back to Normal if speed is still >Fast
+                // with neither quick nor ghost active (this engine has no
+                // Shift-boost to also check, per the above).
+                if (!quickCheatEnabled_ && !blupi_.IsGhost() && gameSpeed_ > GalaxyEggbert::GameSpeed::Fast)
+                {
+                    gameSpeed_ = GalaxyEggbert::GameSpeed::Normal;
+                }
+                const bool f5Down = phaseKeys.IsKeyDown(Keys::F5);
+                if (f5Down && !f5KeyWasDown_)
+                {
+                    gameSpeed_ = GalaxyEggbert::GameSpeed::Normal;
+                }
+                f5KeyWasDown_ = f5Down;
+                const bool f6Down = phaseKeys.IsKeyDown(Keys::F6);
+                if (f6Down && !f6KeyWasDown_)
+                {
+                    gameSpeed_ = GalaxyEggbert::GameSpeed::Fast;
+                }
+                f6KeyWasDown_ = f6Down;
+                if (quickCheatEnabled_)
+                {
+                    const bool f7Down = phaseKeys.IsKeyDown(Keys::F7);
+                    if (f7Down && !f7KeyWasDown_)
+                    {
+                        gameSpeed_ = GalaxyEggbert::GameSpeed::Faster;
+                    }
+                    f7KeyWasDown_ = f7Down;
+                    const bool f8Down = phaseKeys.IsKeyDown(Keys::F8);
+                    if (f8Down && !f8KeyWasDown_)
+                    {
+                        gameSpeed_ = GalaxyEggbert::GameSpeed::Fastest;
+                    }
+                    f8KeyWasDown_ = f8Down;
+                }
+                // Real Tab: toggle Slow<->Normal (InputPad.cpp:657-676).
+                const bool tabDown = phaseKeys.IsKeyDown(Keys::Tab);
+                if (tabDown && !tabKeyWasDown_)
+                {
+                    gameSpeed_ = (gameSpeed_ == GalaxyEggbert::GameSpeed::Slow)
+                                     ? GalaxyEggbert::GameSpeed::Normal
+                                     : GalaxyEggbert::GameSpeed::Slow;
+                }
+                tabKeyWasDown_ = tabDown;
+                // Real F12: a second, direct way to open/close the cheat
+                // overlay (InputPad.cpp:678-683), alongside the existing
+                // 10-tap gesture above (layered, not exclusive -- same
+                // idiom as the typed-cheat methods).
+                const bool f12Down = phaseKeys.IsKeyDown(Keys::F12);
+                if (f12Down && !f12KeyWasDown_)
+                {
+                    cheatMenuShown_ = !cheatMenuShown_;
+                }
+                f12KeyWasDown_ = f12Down;
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Pause)
             {
@@ -1511,7 +1597,15 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
-        worldRuntime_.Update(dt);
+        // Real GameSpeed (SCORE-009/010/011) applied as a continuous
+        // dt-scale factor on the core simulation only (see gameSpeed_'s
+        // own member comment for the full rationale) -- everything else in
+        // this Update() (camera, sound one-shot timers, animation-icon
+        // selection, cheat/menu input already handled above) keeps using
+        // the real, unscaled `dt` from the top of this function.
+        const float simDt = dt * GameSpeedFactor(gameSpeed_);
+
+        worldRuntime_.Update(simDt);
 
         if (terrainRenderer_)
         {
@@ -1593,7 +1687,7 @@ namespace GalaxyEggbert::CNA
             // imperceptible for animation purposes and the same category of
             // simplification as this engine's existing camera-smoothing lag.
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
-                        crouchHeld, lookUpHeld, dt, tempPassable, inSurfWater, inDeepWater,
+                        crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_);
 
             // Real mobile-eggbert jump/land/footstep sounds (2026-07-10).
@@ -2569,7 +2663,7 @@ namespace GalaxyEggbert::CNA
             // every vehicle mode + Ecrase (Balloon is covered separately by the existing
             // blupi_.IsBallooned() argument just below).
             const bool canPushCrate = !blupi_.IsInVehicle() && !blupi_.IsEcrased();
-            interaction_.Update(dt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
+            interaction_.Update(simDt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
                                  blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
@@ -3706,7 +3800,8 @@ namespace GalaxyEggbert::CNA
                           blupi_.GetDisplayAnimIcon(), blupi_.AnimIconUsesElementSheet(),
                           interaction_.VoyageActive(), interaction_.VoyageIconId(),
                           interaction_.VoyageIsButtonChannel(),
-                          interaction_.VoyageDrawX(), interaction_.VoyageDrawY());
+                          interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
+                          gameSpeed_);
             }
 
             // On-screen touch controls (2026-07-13, plan.md

@@ -15,6 +15,7 @@
 #include "Editor/GEWorldEditor.hpp"
 
 #include <GalaxyEggbert/def/GamePhase.hpp>
+#include <GalaxyEggbert/def/GameSpeed.hpp>
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
@@ -522,6 +523,36 @@ namespace GalaxyEggbert::CNA
         // button is pressed. See `GEInputPad::UpdateCheatGesture()`'s own
         // class comment for the full real-behavior citation.
         bool cheatMenuShown_ = false;
+
+        // Real GameSpeed (SCORE-009/010/011, added 2026-07-20, see
+        // include/GalaxyEggbert/def/GameSpeed.hpp and InputPad.cpp:582-684
+        // for the full real key-mapping citations) -- F5/F6 always work,
+        // F7/F8 need quickCheatEnabled_ (real "quick" typed cheat, see
+        // GEInputPad::UpdateTypedGhostCheat()'s own TypedCheatResult), Tab
+        // toggles Slow<->Normal, F12 gives a second way to open/close the
+        // existing cheat-button overlay (alongside the already-implemented
+        // 10-tap gesture) -- all real, all `#ifdef MODERN`-gated in real
+        // source, which is mobile-eggbert's own default/active build mode
+        // (not some unused legacy variant), so in scope here. Real source
+        // ALSO has a Shift-hold temporary boost -- deliberately NOT ported:
+        // both LeftShift/RightShift are already this engine's own crouch/
+        // look-up controls (a pre-existing, more central design decision),
+        // so there is no free Shift key for it without a real conflict.
+        // Applied as a continuous dt-scale factor (0.5x/1x/2x/4x/8x) on
+        // the core simulation calls only, NOT a literal discrete
+        // N-ticks-per-frame repeat of the whole Update() block (deliberate
+        // simplification, agreed with the user 2026-07-20 -- repeating the
+        // whole ~1000-line Play-phase block would risk breaking a lot of
+        // already-tuned once-per-frame sound/camera/HUD logic that assumes
+        // "runs exactly once").
+        GalaxyEggbert::GameSpeed gameSpeed_ = GalaxyEggbert::GameSpeed::Normal;
+        bool quickCheatEnabled_ = false;
+        bool f5KeyWasDown_ = false;
+        bool f6KeyWasDown_ = false;
+        bool f7KeyWasDown_ = false;
+        bool f8KeyWasDown_ = false;
+        bool f12KeyWasDown_ = false;
+        bool tabKeyWasDown_ = false;
 
         // Mouse drag-look (2026-07-10, user request): while the left
         // button is held, mouse deltas rotate the camera around Blupi
