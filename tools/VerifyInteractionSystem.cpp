@@ -2307,6 +2307,45 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType5, 0) == 0, "ObjectType5 icon at phase=0 (q=0) is still the real icon 0 (wave start unaffected)");
     }
 
+    // GetObjIcon() audit sweep, part 2 (found 2026-07-20 completing the pass over ObjectType14/15/
+    // 35 and the key/shield/power/invert/chenille/follow1 family) -- 11 more wrong divisors (the
+    // arrays themselves were already byte-correct) plus kShield being half its real 16-entry size.
+    {
+        // ObjectType14/15/35 (object-m.png water splash/bubble types): wrong divisor (was 1, real
+        // Config::ScaleDiv(2)==2).
+        check(GetObjIcon(ObjectType::ObjectType14, 2) == 100, "ObjectType14 icon at phase=2 is table_plouf[(2/2)%7]=100 (real divisor 2)");
+        check(GetObjIcon(ObjectType::ObjectType15, 2) == 104, "ObjectType15 icon at phase=2 is table_blup[(2/2)%20]=104 (real divisor 2)");
+        check(GetObjIcon(ObjectType::ObjectType35, 2) == 99, "ObjectType35 icon at phase=2 is table_tiplouf[(2/2)%3]=99 (real divisor 2)");
+
+        // ObjectType49/50/51/21 (keys): wrong divisor (was 9, real Config::ScaleDiv(3)==3).
+        check(GetObjIcon(ObjectType::ObjectType49, 3) == 210, "ObjectType49 icon at phase=3 is table_cle1[(3/3)%12]=210 (real divisor 3)");
+        check(GetObjIcon(ObjectType::ObjectType50, 3) == 221, "ObjectType50 icon at phase=3 is table_cle2[(3/3)%12]=221 (real divisor 3)");
+        check(GetObjIcon(ObjectType::ObjectType51, 3) == 228, "ObjectType51 icon at phase=3 is table_cle3[(3/3)%12]=228 (real divisor 3)");
+        check(GetObjIcon(ObjectType::ObjectType21, 3) == 123, "ObjectType21 icon at phase=3 is table_cle[(3/3)%12]=123 (real divisor 3)");
+
+        // ObjectType25 (shield): wrong divisor (was 6, real ScaleDiv(2)==2) AND the real
+        // table_shield has 16 entries (144-151, then 266-273), not 8 -- kShield was half its
+        // real size.
+        check(GetObjIcon(ObjectType::ObjectType25, 2) == 145, "ObjectType25 icon at phase=2 is table_shield[(2/2)%16]=145 (real divisor 2)");
+        check(GetObjIcon(ObjectType::ObjectType25, 16) == 266, "ObjectType25 icon at phase=16 is table_shield[(16/2)%16]=266 (the real second half of the table, previously missing entirely)");
+
+        // ObjectType24 (skateboard pickup shimmer): wrong divisor (was 3, real ScaleDiv(1)==1).
+        check(GetObjIcon(ObjectType::ObjectType24, 4) == 130, "ObjectType24 icon at phase=4 is table_skate[4%34]=130 (real divisor 1)");
+
+        // ObjectType26 (power pickup): wrong divisor (was 6, real ScaleDiv(2)==2).
+        check(GetObjIcon(ObjectType::ObjectType26, 2) == 137, "ObjectType26 icon at phase=2 is table_power[(2/2)%8]=137 (real divisor 2)");
+
+        // ObjectType40 (invert pickup): wrong divisor (was 4, real ScaleDiv(2)==2).
+        check(GetObjIcon(ObjectType::ObjectType40, 10) == 190, "ObjectType40 icon at phase=10 is table_invert[(10/2)%20]=190 (real divisor 2)");
+
+        // ObjectType47/48 (caterpillar lift tracks): wrong divisor (was 6, real ScaleDiv(1)==1).
+        check(GetObjIcon(ObjectType::ObjectType47, 1) == 312, "ObjectType47 icon at phase=1 is table_chenille[1%6]=312 (real divisor 1)");
+        check(GetObjIcon(ObjectType::ObjectType48, 1) == 315, "ObjectType48 icon at phase=1 is table_chenillei[1%6]=315 (real divisor 1)");
+
+        // ObjectType96 (follower wake indicator): wrong divisor (was 3, real ScaleDiv(1)==1).
+        check(GetObjIcon(ObjectType::ObjectType96, 3) == 257, "ObjectType96 icon at phase=3 is table_follow1[3%26]=257 (real divisor 1)");
+    }
+
     // 17.6. Dynamite-blast explosion flash self-delete timing (plan.md
     // VISUAL-008, ObjectType8) -- the actual spawn (via the real
     // 9-blast dynamite-fuse sequence) is already exercised in 3.6 above;
@@ -3377,13 +3416,15 @@ int main(int argc, char** argv)
               "the Tiplouf splash self-deletes once phase reaches the real 6-tick lifetime");
 
         // Corrected icon tables (real table_plouf/tiplouf/blup, Tables.cpp:1508-1519, previously
-        // wrong monotonic-range approximations here).
+        // wrong monotonic-range approximations here). Phase values below are 2x the array index
+        // (real divisor Config::ScaleDiv(2)==2, fixed 2026-07-20 -- was previously indexed
+        // directly by phase with no division at all).
         check(GetObjIcon(ObjectType::ObjectType14, 0) == 99, "Plouf icon at phase=0 is the real table_plouf[0]=99");
-        check(GetObjIcon(ObjectType::ObjectType14, 3) == 102, "Plouf icon at phase=3 is the real table_plouf[3]=102 (ripple peak)");
-        check(GetObjIcon(ObjectType::ObjectType14, 6) == 99, "Plouf icon at phase=6 is the real table_plouf[6]=99 (back down)");
+        check(GetObjIcon(ObjectType::ObjectType14, 6) == 102, "Plouf icon at phase=6 is the real table_plouf[3]=102 (ripple peak)");
+        check(GetObjIcon(ObjectType::ObjectType14, 12) == 99, "Plouf icon at phase=12 is the real table_plouf[6]=99 (back down)");
         check(GetObjIcon(ObjectType::ObjectType35, 0) == 244, "Tiplouf icon at phase=0 is the real table_tiplouf[0]=244 (ambient)");
-        check(GetObjIcon(ObjectType::ObjectType35, 1) == 99, "Tiplouf icon at phase=1 is the real table_tiplouf[1]=99 (the droplet)");
-        check(GetObjIcon(ObjectType::ObjectType35, 2) == 244, "Tiplouf icon at phase=2 is the real table_tiplouf[2]=244 (back to ambient)");
+        check(GetObjIcon(ObjectType::ObjectType35, 2) == 99, "Tiplouf icon at phase=2 is the real table_tiplouf[1]=99 (the droplet)");
+        check(GetObjIcon(ObjectType::ObjectType35, 4) == 244, "Tiplouf icon at phase=4 is the real table_tiplouf[2]=244 (back to ambient)");
         check(GetObjIcon(ObjectType::ObjectType15, 0) == 103, "Blup icon at phase=0 is the real table_blup[0]=103");
         check(GetObjIcon(ObjectType::ObjectType15, 6) == 106, "Blup icon at phase=6 is the real table_blup[6]=106 (shuffled, not a growing range)");
 

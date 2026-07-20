@@ -5134,10 +5134,41 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
         `Decor.cpp:8297-8307` peaks at icon 11 (not 10) and descends to icon 1 (not 0) before
         wrapping, an asymmetric 0..11..1 triangle, previously computed as a smooth symmetric
         0..10..0 wave.
-      20 new `VerifyInteractionSystem` assertions, one per confirmed real value. Not yet swept:
-      `ObjectType38`'s `kElectro` (only spot-checked via the shared `table_clear` pattern, not
-      independently re-verified line-by-line) and the object-m.png Category B types beyond what's
-      listed above -- flagged for a future pass, not confirmed broken.
+      20 new `VerifyInteractionSystem` assertions, one per confirmed real value.
+
+      **Part 2, same day**: finished the sweep. `ObjectType38`'s `kElectro` (`Tables.cpp:1640-1651`)
+      cross-checked byte-for-byte -- already exactly correct, no bug. The remaining object-m.png
+      Category B types and the key/shield/power/invert/chenille/follow1 family turned up **12 more
+      real bugs** (11 wrong divisors + 1 undersized array), all in the same "mistranscribed
+      `Config::ScaleDiv()` divisor" shape found in part 1 above -- every affected array's *values*
+      were already byte-correct, only the pacing was wrong:
+      - `ObjectType14`/`15`/`35` (object-m.png water splash/bubble/tiplouf): divisor was 1
+        (undivided), real is `ScaleDiv(2)==2` (`Decor.cpp:8607/8619/8625`).
+      - `ObjectType49`/`50`/`51`/`21` (the 4 key types): divisor was 9, real is `ScaleDiv(3)==3`
+        (`Decor.cpp:8319-8337`).
+      - `ObjectType25` (shield pickup): divisor was 6, real is `ScaleDiv(2)==2`
+        (`Decor.cpp:8344-8348`) -- **and** the real `table_shield` (`Tables.cpp:1709-1713`) has 16
+        entries (144-151, then 266-273), not 8 -- `kShield` was silently missing its entire second
+        half.
+      - `ObjectType24` (skateboard pickup shimmer): divisor was 3, real is `ScaleDiv(1)==1`
+        (`Decor.cpp:8339-8343`).
+      - `ObjectType26` (power pickup): divisor was 6, real is `ScaleDiv(2)==2`
+        (`Decor.cpp:8349-8353`).
+      - `ObjectType40` (invert pickup): divisor was 4, real is `ScaleDiv(2)==2`
+        (`Decor.cpp:8354-8358`).
+      - `ObjectType47`/`48` (caterpillar lift tracks): divisor was 6, real is `ScaleDiv(1)==1`
+        (`Decor.cpp:8193-8200`).
+      - `ObjectType96` (follower wake indicator): divisor was 3, real is `ScaleDiv(1)==1`
+        (`Decor.cpp:8217-8221`).
+      Deliberately left alone: `ObjectType4`/`17`/`20`/`32`/`33`/`44`/`54` (bulldozer/fish/bird/
+      blupih/wasp/creature)'s `GetObjIcon()` fallback cases -- these have no real matching formula
+      to compare against at all (the real animation for these 7 types is driven by the patrol
+      turn/walk step machine, `GetBulldozerIcon()`/`GetFishIcon()`/etc. above, already fixed
+      separately, `ENEMY-013` onward); this fallback is a deliberate, already-documented
+      approximation for context-free callers (the editor palette), not a mistranscription.
+      15 more `VerifyInteractionSystem` assertions (35 total for `VISUAL-026`), plus 4 pre-existing
+      `Plouf`/`Tiplouf` assertions elsewhere in the file updated (they were unknowingly written
+      against the old wrong divisor -- same array indices, phase values doubled to match).
 
 ---
 

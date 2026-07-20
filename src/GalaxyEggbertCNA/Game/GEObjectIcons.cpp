@@ -7,7 +7,11 @@ namespace GalaxyEggbert::CNA
         static const int kCle1[12]    = {209,210,211,212,213,214,215,214,213,212,211,210};
         static const int kCle2[12]    = {220,221,222,221,220,219,218,217,216,217,218,219};
         static const int kCle3[12]    = {229,228,227,226,225,224,223,224,225,226,227,228};
-        static const int kShield[8]   = {144,145,146,147,148,149,150,151};
+        // Fixed 2026-07-20 -- real table_shield (Tables.cpp:1709-1713) has
+        // 16 entries (144-151, then 266-273), not 8 -- the second half was
+        // simply missing.
+        static const int kShield[16]  = {144,145,146,147,148,149,150,151,
+                                          266,267,268,269,270,271,272,273};
         static const int kBulldozer[8]= {66,66,67,67,66,66,65,65};
         static const int kBird[8]     = {98,99,100,101,102,103,104,105};
         static const int kFish[8]     = {82,82,81,81,82,82,83,83};
@@ -272,15 +276,19 @@ namespace GalaxyEggbert::CNA
             // (object-m.png's 440-icon grid) -- see IsObjectMPngSourced()
             // and GalaxyEggbertCnaGame.cpp's dedicated dispatch, mirroring
             // the existing IsUniformCubeObject() precedent.
-            case ObjectType::ObjectType14: return kPlouf[p % 7];
-            case ObjectType::ObjectType15: return kBlup[p % 20];
+            // Fixed 2026-07-20 -- wrong divisor (missing entirely, i.e. 1,
+            // instead of the real Config::ScaleDiv(2)==2, Decor.cpp:8607/
+            // 8619/8625) for ObjectType14/15/35 -- the arrays themselves
+            // were already correct, only the pacing was 2x too fast.
+            case ObjectType::ObjectType14: return kPlouf[(p / 2) % 7];
+            case ObjectType::ObjectType15: return kBlup[(p / 2) % 20];
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8359-8363); table_charge
             // (Tables.cpp:1742) is a plain ascending range, so only the
             // divisor needed fixing, matching ObjectType36/41's own
             // already-documented category above.
             case ObjectType::ObjectType31: return 238 + (p / 2) % 6;
-            case ObjectType::ObjectType35: return kTiplouf[p % 3];
+            case ObjectType::ObjectType35: return kTiplouf[(p / 2) % 3];
             case ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
             case ObjectType::ObjectType1:  return 29;
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
@@ -312,23 +320,43 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType5: { int q = (p / 3) % 22; return (q < 11) ? q : (22 - q); }
             case ObjectType::ObjectType6:  return 21 + (p / 4) % 8;
             case ObjectType::ObjectType7:  return 29 + (p / 3) % 8;
-            case ObjectType::ObjectType49: return kCle1[(p / 9) % 12];
-            case ObjectType::ObjectType50: return kCle2[(p / 9) % 12];
-            case ObjectType::ObjectType51: return kCle3[(p / 9) % 12];
-            case ObjectType::ObjectType25: return kShield[(p / 6) % 8];
+            // Fixed 2026-07-20 -- wrong divisor (9 instead of the real
+            // Config::ScaleDiv(3)==3, Decor.cpp:8319-8337) for the 4 key
+            // types below -- the arrays themselves were already correct.
+            case ObjectType::ObjectType49: return kCle1[(p / 3) % 12];
+            case ObjectType::ObjectType50: return kCle2[(p / 3) % 12];
+            case ObjectType::ObjectType51: return kCle3[(p / 3) % 12];
+            // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
+            // Config::ScaleDiv(2)==2, Decor.cpp:8344-8348); real
+            // table_shield also has 16 entries, not 8 (see kShield above).
+            case ObjectType::ObjectType25: return kShield[(p / 2) % 16];
             case ObjectType::ObjectType19: return 89;
             case ObjectType::ObjectType46: return 208;
             case ObjectType::ObjectType55: return 252;
-            case ObjectType::ObjectType21: return kCleGeneric[(p / 9) % 12];
-            case ObjectType::ObjectType24: return kSkate[(p / 3) % 34];
-            case ObjectType::ObjectType26: return kPower[(p / 6) % 8];
-            case ObjectType::ObjectType40: return kInvert[(p / 4) % 20];
-            case ObjectType::ObjectType47: return kChenille[(p / 6) % 6];
-            case ObjectType::ObjectType48: return kChenillei[(p / 6) % 6];
+            // Fixed 2026-07-20 -- same wrong-divisor bug as ObjectType49-51
+            // above (9 instead of the real Config::ScaleDiv(3)==3,
+            // Decor.cpp:8319-8322).
+            case ObjectType::ObjectType21: return kCleGeneric[(p / 3) % 12];
+            // Fixed 2026-07-20 -- wrong divisor (3 instead of the real
+            // Config::ScaleDiv(1)==1, Decor.cpp:8339-8343).
+            case ObjectType::ObjectType24: return kSkate[p % 34];
+            // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
+            // Config::ScaleDiv(2)==2, Decor.cpp:8349-8353).
+            case ObjectType::ObjectType26: return kPower[(p / 2) % 8];
+            // Fixed 2026-07-20 -- wrong divisor (4 instead of the real
+            // Config::ScaleDiv(2)==2, Decor.cpp:8354-8358).
+            case ObjectType::ObjectType40: return kInvert[(p / 2) % 20];
+            // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
+            // Config::ScaleDiv(1)==1, Decor.cpp:8193-8200) for both
+            // caterpillar-track types.
+            case ObjectType::ObjectType47: return kChenille[p % 6];
+            case ObjectType::ObjectType48: return kChenillei[p % 6];
             case ObjectType::ObjectType32: return kBlupihLeft[(p / 6) % 8];
             case ObjectType::ObjectType44: return kGuepeLeft[(p / 6) % 6];
             case ObjectType::ObjectType54: return kCreature[(p / 6) % 8];
-            case ObjectType::ObjectType96: return kFollow1[(p / 3) % 26];
+            // Fixed 2026-07-20 -- wrong divisor (3 instead of the real
+            // Config::ScaleDiv(1)==1, Decor.cpp:8217-8221).
+            case ObjectType::ObjectType96: return kFollow1[p % 26];
 
             // explo.png-sourced Category B types (2026-07-09) -- explosions/
             // visual effects, 100-icon grid (0-99). Icon numbers are only
