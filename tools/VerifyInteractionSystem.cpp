@@ -2266,6 +2266,47 @@ int main(int argc, char** argv)
               "geometry\" behavior) -- it will never recede back via step 4, unlike a normal patrol object");
     }
 
+    // GetObjIcon() audit sweep (found 2026-07-20 via a systematic pass over every case against
+    // its real Decor.cpp/Tables.cpp source, following the tentacle/goo discoveries above) -- 7
+    // more real bugs, mostly wrong divisors (this build's 20Hz-reference-rate ScaleDiv() constant
+    // mistranscribed), plus 2 more non-monotonic tables collapsed to a naive ascending guess.
+    {
+        // ObjectType37: real table_clear oscillates 40-47 (identical to GEBlupiController's own
+        // kClear1Frames), not an ascending 40+range70 guess; wrong divisor too (was 6, real 1).
+        check(GetObjIcon(ObjectType::ObjectType37, 0) == 40, "ObjectType37 icon at phase=0 is the real table_clear[0]=40");
+        check(GetObjIcon(ObjectType::ObjectType37, 4) == 41, "ObjectType37 icon at phase=4 is the real table_clear[4]=41");
+        check(GetObjIcon(ObjectType::ObjectType37, 30) == 42, "ObjectType37 icon at phase=30 is the real table_clear[30]=42 (past the oscillating head)");
+        check(GetObjIcon(ObjectType::ObjectType37, 69) == 47, "ObjectType37 icon at phase=69 is the real table_clear[69]=47 (last frame)");
+
+        // ObjectType97: real table_follow2 steps by 2 (256,258,260,262,264), not by 1; wrong
+        // divisor too (was 6, real 1).
+        check(GetObjIcon(ObjectType::ObjectType97, 0) == 256, "ObjectType97 icon at phase=0 is the real table_follow2[0]=256");
+        check(GetObjIcon(ObjectType::ObjectType97, 1) == 258, "ObjectType97 icon at phase=1 is the real table_follow2[1]=258 (step of 2, not 1)");
+        check(GetObjIcon(ObjectType::ObjectType97, 4) == 264, "ObjectType97 icon at phase=4 is the real table_follow2[4]=264");
+
+        // ObjectType31 (charge power-up): wrong divisor only (was 6, real Config::ScaleDiv(2)==2).
+        check(GetObjIcon(ObjectType::ObjectType31, 2) == 239, "ObjectType31 icon at phase=2 is 238+(2/2)%6=239 (real divisor 2)");
+
+        // ObjectType2/3 (generic patrol hazards): wrong divisor only (was 6, real ScaleDiv(2)==2).
+        check(GetObjIcon(ObjectType::ObjectType2, 2) == 13, "ObjectType2 icon at phase=2 is 12+(2/2)%9=13 (real divisor 2)");
+        check(GetObjIcon(ObjectType::ObjectType3, 2) == 49, "ObjectType3 icon at phase=2 is 48+(2/2)%9=49 (real divisor 2)");
+
+        // ObjectType16 (spider): wrong divisor only (was 3, real ScaleDiv(1)==1).
+        check(GetObjIcon(ObjectType::ObjectType16, 1) == 70, "ObjectType16 icon at phase=1 is 69+1%9=70 (real divisor 1)");
+
+        // ObjectType200-203 (Blupi-skin types): wrong divisor only (was 6, real ScaleDiv(1)==1).
+        check(GetObjIcon(ObjectType::ObjectType200, 1) == 258, "ObjectType200 icon at phase=1 is 257+1%6=258 (real divisor 1)");
+        check(GetObjIcon(ObjectType::ObjectType203, 1) == 258, "ObjectType203 icon at phase=1 is 257+1%6=258 (real divisor 1)");
+
+        // ObjectType5 (treasure chest): the wave's reversal peaks at icon 11 (not 10) and descends
+        // to icon 1 (not 0) before wrapping -- an asymmetric 0..11..1 triangle, real
+        // Decor.cpp:8297-8307, previously computed as a smooth symmetric 0..10..0 wave.
+        check(GetObjIcon(ObjectType::ObjectType5, 30) == 10, "ObjectType5 icon at phase=30 (q=10) is the real last ascending value (icon 10)");
+        check(GetObjIcon(ObjectType::ObjectType5, 33) == 11, "ObjectType5 icon at phase=33 (q=11) is the real overshoot peak (icon 11, not 10)");
+        check(GetObjIcon(ObjectType::ObjectType5, 63) == 1, "ObjectType5 icon at phase=63 (q=21) is the real value just before wrap (icon 1, not 0)");
+        check(GetObjIcon(ObjectType::ObjectType5, 0) == 0, "ObjectType5 icon at phase=0 (q=0) is still the real icon 0 (wave start unaffected)");
+    }
+
     // 17.6. Dynamite-blast explosion flash self-delete timing (plan.md
     // VISUAL-008, ObjectType8) -- the actual spawn (via the real
     // 9-blast dynamite-fuse sequence) is already exercised in 3.6 above;

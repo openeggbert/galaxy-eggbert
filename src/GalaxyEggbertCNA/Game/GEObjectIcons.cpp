@@ -98,6 +98,21 @@ namespace GalaxyEggbert::CNA
             168,168,169,169,170,170,171,171,170,170,
             169,169,168,168,169,169,169,168,168,169,
             169,170,170,169,168};
+        // Real table_clear (Tables.cpp:1623-1632, fixed 2026-07-20) --
+        // ObjectType37's cycle; identical values to GEBlupiController's own
+        // already-approved kClear1Frames (same real table, reused for
+        // Blupi's Clear1 death-cause animation).
+        static const int kClear[70] = {
+            40,40,40,40,41,41,41,41,40,40,
+            40,40,40,40,40,41,41,41,40,40,
+            40,40,40,40,40,41,41,41,40,40,
+            42,42,42,43,43,43,44,44,44,45,
+            45,45,46,46,47,47,46,46,47,47,
+            46,46,47,47,46,46,47,47,46,46,
+            47,47,46,46,47,47,46,46,47,47};
+        // Real table_follow2 (Tables.cpp:1539, fixed 2026-07-20) --
+        // ObjectType97's follower-creature cycle, step of 2, not 1.
+        static const int kFollow2[5] = {256,258,260,262,264};
         // Real table_plouf/table_tiplouf/table_blup (Tables.cpp:1508-1519,
         // found 2026-07-17 during water-splash research) -- same "wrong
         // approximation formula" bug class as every array above. Plouf is a
@@ -217,7 +232,14 @@ namespace GalaxyEggbert::CNA
             // ascending range (179..186), so only the divisor needed
             // fixing, unlike the non-monotonic tables fixed elsewhere.
             case ObjectType::ObjectType36: return 179 + (p / 2) % 8;
-            case ObjectType::ObjectType37: return 40 + (p / 6) % 70;
+            // Fixed 2026-07-20 -- same bug shape as ObjectType34/53 above:
+            // the real table_clear (Tables.cpp:1623-1632) oscillates within
+            // icons 40-47 (identical to GEBlupiController's own
+            // already-approved kClear1Frames, the same real table reused
+            // for Blupi's Clear1 death-cause animation), NOT an ascending
+            // range from 40; also had the wrong divisor (6 instead of the
+            // real Config::ScaleDiv(1)==1).
+            case ObjectType::ObjectType37: return kClear[p % 70];
             // Fixed 2026-07-14 (plan.md VISUAL-012): was a wrong "166 +
             // ascending" arithmetic formula; the real table_tresortrack is
             // an oscillating shimmer (see kTresorTrack above), and the real
@@ -238,7 +260,11 @@ namespace GalaxyEggbert::CNA
             // fits the sheet fine, so the full 20-frame animation is now
             // modeled instead of a static first-frame return.
             case ObjectType::ObjectType57: return kShieldTrack[p % 20];
-            case ObjectType::ObjectType97: return 256 + (p / 6) % 5;
+            // Fixed 2026-07-20 -- real table_follow2 (Tables.cpp:1539) is
+            // {256,258,260,262,264} (step of 2), not the previous
+            // consecutive-step-of-1 assumption; also had the wrong divisor
+            // (6 instead of the real Config::ScaleDiv(1)==1).
+            case ObjectType::ObjectType97: return kFollow2[p % 5];
             // object-m.png-sourced Category B types (2026-07-09) -- these
             // are NOT element.png icons; GetElementIconUv() would compute
             // the wrong UV rect for them. The icon numbers below are only
@@ -248,16 +274,27 @@ namespace GalaxyEggbert::CNA
             // the existing IsUniformCubeObject() precedent.
             case ObjectType::ObjectType14: return kPlouf[p % 7];
             case ObjectType::ObjectType15: return kBlup[p % 20];
-            case ObjectType::ObjectType31: return 238 + (p / 6) % 6;
+            // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
+            // Config::ScaleDiv(2)==2, Decor.cpp:8359-8363); table_charge
+            // (Tables.cpp:1742) is a plain ascending range, so only the
+            // divisor needed fixing, matching ObjectType36/41's own
+            // already-documented category above.
+            case ObjectType::ObjectType31: return 238 + (p / 2) % 6;
             case ObjectType::ObjectType35: return kTiplouf[p % 3];
             case ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
             case ObjectType::ObjectType1:  return 29;
-            case ObjectType::ObjectType2:  return 12 + (p / 6) % 9;
-            case ObjectType::ObjectType3:  return 48 + (p / 6) % 9;
+            // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
+            // Config::ScaleDiv(2)==2, Decor.cpp:8202-8210); both are plain
+            // ascending ranges, only the divisor needed fixing.
+            case ObjectType::ObjectType2:  return 12 + (p / 2) % 9;
+            case ObjectType::ObjectType3:  return 48 + (p / 2) % 9;
             case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8];
             case ObjectType::ObjectType12: return 32;
             case ObjectType::ObjectType13: return 68;
-            case ObjectType::ObjectType16: return 69 + (p / 3) % 9;
+            // Fixed 2026-07-20 -- wrong divisor (3 instead of the real
+            // Config::ScaleDiv(1)==1, Decor.cpp:8212-8216); a plain
+            // ascending range, only the divisor needed fixing.
+            case ObjectType::ObjectType16: return 69 + p % 9;
             case ObjectType::ObjectType17: return kFish[(p / 6) % 8];
             case ObjectType::ObjectType20: return kBird[(p / 6) % 8];
             case ObjectType::ObjectType30: return 178;
@@ -266,7 +303,13 @@ namespace GalaxyEggbert::CNA
             // ScaleDiv(3) respectively) were mistranscribed as 9/12/9 (each real
             // value x3) -- fixed 2026-07-10, reported live as "truhla" (the
             // ObjectType5 treasure chest) animating 3x too slowly.
-            case ObjectType::ObjectType5: { int q = (p / 3) % 22; return (q < 11) ? q : (21 - q); }
+            // Fixed 2026-07-20 -- off-by-one at the wave's reversal point:
+            // real Decor.cpp:8297-8307 is `icon = q<11 ? q%11 : 11-q%11`
+            // (q = phase/ScaleDiv(3)%22), which peaks at icon 11 (not 10)
+            // when q==11, then descends to icon 1 (not 0) at q==21 before
+            // wrapping -- an asymmetric 0..11..1 triangle, not the smooth
+            // symmetric 0..10..0 wave this case previously computed.
+            case ObjectType::ObjectType5: { int q = (p / 3) % 22; return (q < 11) ? q : (22 - q); }
             case ObjectType::ObjectType6:  return 21 + (p / 4) % 8;
             case ObjectType::ObjectType7:  return 29 + (p / 3) % 8;
             case ObjectType::ObjectType49: return kCle1[(p / 9) % 12];
@@ -362,10 +405,14 @@ namespace GalaxyEggbert::CNA
             // blupi.png/blupi1.png-sourced Blupi-skin types (2026-07-09) --
             // 340-icon grid (0-339). Icon numbers are only meaningful via
             // GetBlupiIconUv() -- see IsBlupiPngSourced()/UsesBlupi1Texture().
-            case ObjectType::ObjectType200: return 257 + (p / 6) % 6;
-            case ObjectType::ObjectType201: return 257 + (p / 6) % 6;
-            case ObjectType::ObjectType202: return 257 + (p / 6) % 6;
-            case ObjectType::ObjectType203: return 257 + (p / 6) % 6;
+            // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
+            // Config::ScaleDiv(1)==1, Decor.cpp:8227-8246); a plain
+            // ascending range, only the divisor needed fixing (the
+            // animation was playing 6x too slowly).
+            case ObjectType::ObjectType200: return 257 + p % 6;
+            case ObjectType::ObjectType201: return 257 + p % 6;
+            case ObjectType::ObjectType202: return 257 + p % 6;
+            case ObjectType::ObjectType203: return 257 + p % 6;
 
             // ObjectType38 (electric arc, 2026-07-09) -- now animated with
             // real per-instance phase (MobileObjSpec::phase,

@@ -5117,6 +5117,27 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       elsewhere in this codebase for center-anchored billboards (e.g. `SpawnFanHitFlash()`'s own
       -34/-34 pixel offset) — left un-implemented, not a gap.
 - [ ] VISUAL-025 — "EXIT OPEN!" text pop-up with sparkle effect when exit unlocks
+- [x] VISUAL-026 — `GetObjIcon()` systematic audit sweep — **7 more real bugs found and fixed
+      2026-07-20**, a follow-up pass after `VISUAL-016`/`021` (systematically checked every
+      remaining case against its real `Decor.cpp`/`Tables.cpp` source, not just a sample):
+      - `ObjectType37`: real `table_clear` (`Tables.cpp:1623-1632`) oscillates within icons 40-47
+        (identical to `GEBlupiController`'s own already-approved `kClear1Frames`), was a naive
+        ascending-range guess, same category as `VISUAL-016`/`021`; wrong divisor too (6 vs real 1).
+      - `ObjectType97`: real `table_follow2` (`Tables.cpp:1539`) steps by 2 (256,258,260,262,264),
+        was assumed step-of-1; wrong divisor too (6 vs real 1).
+      - `ObjectType31`/`2`/`3`/`16`/`200`/`201`/`202`/`203`: all plain ascending ranges with the
+        shape already correct, but the divisor was wrong in every case (mistranscribed as 6
+        instead of the real per-type `Config::ScaleDiv()` value -- 2 for `31`/`2`/`3`, 1 for
+        `16`/`200`-`203`), so each animated 2-6x too slowly. Verified directly against
+        `Decor.cpp:8202-8246`/`8359-8363`.
+      - `ObjectType5` (treasure chest): the wave's reversal point was off by one -- real
+        `Decor.cpp:8297-8307` peaks at icon 11 (not 10) and descends to icon 1 (not 0) before
+        wrapping, an asymmetric 0..11..1 triangle, previously computed as a smooth symmetric
+        0..10..0 wave.
+      20 new `VerifyInteractionSystem` assertions, one per confirmed real value. Not yet swept:
+      `ObjectType38`'s `kElectro` (only spot-checked via the shared `table_clear` pattern, not
+      independently re-verified line-by-line) and the object-m.png Category B types beyond what's
+      listed above -- flagged for a future pass, not confirmed broken.
 
 ---
 
