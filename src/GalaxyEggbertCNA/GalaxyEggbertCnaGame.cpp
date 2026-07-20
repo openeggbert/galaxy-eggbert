@@ -3374,7 +3374,15 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, objPhase);
+                // ObjectType4 (bulldozer, ENEMY-013) gets its real per-
+                // direction/turn-transition icon here instead of
+                // GetObjIcon()'s generic phase-indexed fallback -- this is
+                // the one call site with real patrol state (posStart/
+                // posEnd/patrolStep/patrolTime) available to feed it.
+                const int icon = (obj.type == GalaxyEggbert::ObjectType::ObjectType4)
+                    ? GetBulldozerIcon(obj.posStartX > obj.posEndX, obj.patrolStep,
+                                       static_cast<int>(obj.patrolTime))
+                    : GetObjIcon(obj.type, objPhase);
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),

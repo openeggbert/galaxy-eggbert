@@ -349,6 +349,36 @@ int main(int argc, char** argv)
         check(false, "found a chest (ObjectType5) in the sample world for the sparkle-burst test");
     }
 
+    // GetBulldozerIcon() (ENEMY-013, added 2026-07-20) -- real ObjectType4
+    // 4-state turn/walk step machine (Decor.cpp:8628-8668), direct
+    // cross-check against the real table_bulldozer_left/right/turn2l/turn2r
+    // values (Tables.cpp:1186-1205). patrolGoesLeftFromStart=true is the
+    // real "posStart.X > posEnd.X" case.
+    {
+        // Left-from-start: step 1/3 are the turn poses telegraphing the
+        // upcoming step 2 (walk left) / step 4 (walk right) respectively.
+        check(GetBulldozerIcon(true, 1, 0) == 58, "left-from-start step 1 (turn-to-left) starts at the real first frame (icon 58)");
+        check(GetBulldozerIcon(true, 1, 21) == 66, "left-from-start step 1 (turn-to-left) ends at the real last frame (icon 66)");
+        check(GetBulldozerIcon(true, 2, 0) == 66, "left-from-start step 2 (walk left) starts at the real first frame (icon 66)");
+        check(GetBulldozerIcon(true, 2, 2) == 67, "left-from-start step 2 (walk left) cycles through table_bulldozer_left (icon 67 at tick 2)");
+        check(GetBulldozerIcon(true, 3, 0) == 66, "left-from-start step 3 (turn-to-right) starts at the real first frame (icon 66)");
+        check(GetBulldozerIcon(true, 3, 21) == 58, "left-from-start step 3 (turn-to-right) ends at the real last frame (icon 58)");
+        check(GetBulldozerIcon(true, 4, 0) == 58, "left-from-start step 4 (walk right) starts at the real first frame (icon 58)");
+        check(GetBulldozerIcon(true, 4, 2) == 57, "left-from-start step 4 (walk right) cycles through table_bulldozer_right (icon 57 at tick 2)");
+
+        // Right-from-start (posStart.X <= posEnd.X): every mapping mirrors.
+        check(GetBulldozerIcon(false, 1, 0) == 66, "right-from-start step 1 (turn-to-right) starts at the real first frame (icon 66)");
+        check(GetBulldozerIcon(false, 2, 0) == 58, "right-from-start step 2 (walk right) starts at the real first frame (icon 58)");
+        check(GetBulldozerIcon(false, 3, 0) == 58, "right-from-start step 3 (turn-to-left) starts at the real first frame (icon 58)");
+        check(GetBulldozerIcon(false, 4, 0) == 66, "right-from-start step 4 (walk left) starts at the real first frame (icon 66)");
+
+        // Modulo wraparound past each table's real length.
+        check(GetBulldozerIcon(true, 2, 8) == GetBulldozerIcon(true, 2, 0),
+              "walk-left icon wraps around after the real 8-frame table_bulldozer_left length");
+        check(GetBulldozerIcon(true, 1, 22) == GetBulldozerIcon(true, 1, 0),
+              "turn-to-left icon wraps around after the real 22-frame table_bulldozer_turn2l length");
+    }
+
     if (const auto* key = findFirst(ObjectType::ObjectType49))
     {
         const float kx = key->currentX, ky = key->currentY, kz = key->currentZ;

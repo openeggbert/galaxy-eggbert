@@ -56,6 +56,20 @@ namespace GalaxyEggbert::CNA
     // though phase itself now advances.
     int GetObjIcon(ObjectType type, int phase);
 
+    // ObjectType4 (bulldozer) real per-direction/per-turn-transition icon
+    // (ENEMY-013, added 2026-07-20) -- unlike GetObjIcon()'s own ObjectType4
+    // case above (a continuous phase-indexed cycle, only ever "left"-facing
+    // frames, kept as the fallback for callers with no patrol-state
+    // context), this ports the real `Decor.cpp:8628-8668` 4-state turn/walk
+    // step machine exactly. @p patrolGoesLeftFromStart is a static per-
+    // object property (real posStart.X > posEnd.X); @p patrolStep matches
+    // MobileObjSpec::patrolStep (1=dwell@start, 2=advance, 3=dwell@end,
+    // 4=recede); @p patrolTimeTicks matches MobileObjSpec::patrolTime cast
+    // to ticks (real `m_moveObject[i].time`, resets to 0 each step
+    // transition, same 20Hz-reference-rate convention used throughout this
+    // engine).
+    int GetBulldozerIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+
     // element.png UV rect for a given icon: 600x1740 px, 60x60 px tiles, 10
     // columns, no gap/leading margin (confirmed by direct file inspection --
     // unlike object-m.png, element.png's dimensions divide evenly, see

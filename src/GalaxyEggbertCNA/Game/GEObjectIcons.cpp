@@ -347,6 +347,49 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    int GetBulldozerIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8628-8668 -- ObjectType4's own 4-state turn/walk
+        // step machine (`patrolStep` here matches its real `step` field
+        // exactly: 1=dwell@start, 2=advance, 3=dwell@end, 4=recede; see
+        // AdvancePatrolStep()'s own comment), NOT the generic phase-indexed
+        // cycle GetObjIcon()'s ObjectType4 case above uses (that one stays,
+        // for callers with no patrol-state context, e.g. the editor
+        // palette). Real direction split is a static per-object property
+        // (posStart.X > posEnd.X, i.e. whether this bulldozer's own patrol
+        // range runs right-to-left), not a per-frame check -- step 1/3's
+        // turn pose always telegraphs the upcoming step 2/4 walk direction.
+        static const int kLeft[8]        = {66,66,67,67,66,66,65,65}; // table_bulldozer_left
+        static const int kRight[8]       = {58,58,57,57,58,58,59,59}; // table_bulldozer_right
+        static const int kTurnToLeft[22] = {
+            58,59,59,59,60,60,60,61,61,62,
+            62,63,63,64,64,64,65,65,65,66,
+            66,66}; // table_bulldozer_turn2l
+        static const int kTurnToRight[22] = {
+            66,65,65,65,64,64,64,63,63,62,
+            62,61,61,60,60,60,59,59,59,58,
+            58,58}; // table_bulldozer_turn2r
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        if (patrolGoesLeftFromStart)
+        {
+            switch (patrolStep)
+            {
+                case 1:  return kTurnToLeft[t % 22];
+                case 3:  return kTurnToRight[t % 22];
+                case 4:  return kRight[t % 8];
+                default: return kLeft[t % 8]; // step 2 (and any other value, defensively)
+            }
+        }
+        switch (patrolStep)
+        {
+            case 1:  return kTurnToRight[t % 22];
+            case 3:  return kTurnToLeft[t % 22];
+            case 4:  return kLeft[t % 8];
+            default: return kRight[t % 8]; // step 2
+        }
+    }
+
     bool IsUniformCubeObject(ObjectType type)
     {
         switch (type)

@@ -3647,8 +3647,24 @@ ENEMY-XXX numbering rather than re-deriving it.
 - [x] ENEMY-011 — ObjectType3: patrol enemy B — same as ENEMY-010 (`131`/`132`); real duck-immunity
       for this type specifically IS modeled (`blupiCrouching` parameter).
 - [x] ENEMY-012 — ObjectType4: bulldozer — patrol + contact-kill done (`131`/`132`).
-- [ ] ENEMY-013 — ObjectType4: bulldozer charge behaviour distinct from patrol — NOT modeled, only
-      the shared generic patrol/contact-kill applies.
+- [x] ENEMY-013 — ObjectType4: bulldozer real per-direction/turn-transition icon animation —
+      **resolved 2026-07-20, and the original title was based on a misconception**: direct
+      research (`Decor.cpp:8628-8668`) found no distinct "charge" AI at all -- the bulldozer uses
+      the exact same shared 4-phase dwell/advance/dwell/recede patrol as every other `MoveObject`
+      (already implemented, `AdvancePatrolStep()`); what's real and was genuinely missing is its
+      own 4-table turn/walk icon selection (`table_bulldozer_left/right/turn2l/turn2r`,
+      `Tables.cpp:1186-1205`) -- this engine's `GetObjIcon()` only ever used the "left" table
+      regardless of direction or turn-transition step (documented simplification, `GEObjectIcons.
+      hpp`'s own header comment). Added `GEObjectIcons::GetBulldozerIcon(patrolGoesLeftFromStart,
+      patrolStep, patrolTimeTicks)` -- a direct port of the real switch, fed by the exact same
+      `MobileObjSpec::posStartX/posEndX/patrolStep/patrolTime` fields `AdvancePatrolStep()` already
+      maintains -- wired at the one render call site with real patrol-state access (the
+      element.png billboard batch in `GalaxyEggbertCnaGame.cpp`); `GetObjIcon()`'s own generic
+      ObjectType4 case is left untouched as the fallback for context-free callers (e.g. the editor
+      palette). 14 new `VerifyInteractionSystem` assertions (all 8 direction×step combinations
+      plus 2 modulo-wraparound checks), byte-matched against the real table values. No bulldozer
+      is placed in the current sample world, so no live screenshot was taken -- verification relies
+      on the exhaustive unit-level match against real source instead.
 - [x] ENEMY-014 — ObjectType16: spider — contact-kill done (`133`, part of `132`'s widened list);
       the real 9-frame crawl / vertical hang↔drop-specific visual pattern is not separately
       verified (uses the same generic patrol/icon-cycling as every other type).
