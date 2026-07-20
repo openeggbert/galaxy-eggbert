@@ -5052,7 +5052,23 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       ascended past 186 (`186 + (p/6)%8`, reading out-of-range/unrelated sprite-sheet icons)
       instead of matching the real `table_invertstop` array's exact reverse order (186 down to
       179) — corrected to `186 - (p/2)%8`.
-- [ ] VISUAL-016 — Goo particle: ObjectType34 sticks to geometry (element.png, 25 frames)
+- [x] VISUAL-016 — Goo particle: ObjectType34 sticks to geometry (element.png, 25 frames) —
+      **fixed 2026-07-20**: 2 real bugs, same shape as `VISUAL-021`. (1) `GEObjectIcons.cpp`'s icon
+      formula (`168 + (p/6)%25`) assumed an ascending range with the wrong divisor -- the real
+      `table_glu` (`Tables.cpp:1610-1615`) is byte-identical to `GEBlupiController`'s own already-
+      approved `kGluFrames` (same real table, reused for Blupi's Glu death-cause animation),
+      oscillating within icons 168-171 with `Config::ScaleDiv(1)==1` (no division). (2) the real
+      "sticks to geometry" behavior (`Decor.cpp:8099-8104`) was entirely unmodeled: arriving at
+      posEnd collapses `posStart`/`posEnd` onto the landing spot (added as a 3rd branch in
+      `AdvancePatrolStep()`'s existing per-type arrival special-case, alongside `ObjectType23`/`15`'s
+      self-delete), so it never recedes back via step 4 like a normal patrol object. **Confirmed
+      via a direct search of every `worlds/*.txt` file that ObjectType34 is never actually placed
+      in any real mobile-eggbert level** (no `MoveObject: type=34` anywhere), and no `ObjectStart`
+      call spawns it dynamically either -- genuinely dead/unexercised content in the original game
+      itself, same category as `Clear5-Clear8`, not a gap unique to this port. Fixed anyway since
+      the fix is small, safe, and reuses already-validated data, in case a future custom/edited
+      world ever places it. 6 new `VerifyInteractionSystem` assertions (icon formula + a synthetic
+      patrol-to-arrival rig, since no real placement exists to test against).
 - [x] VISUAL-017 — Magic track sparkle: ObjectType27 trail effect — **done 2026-07-14**, built
       together with VISUAL-011 (Shield trail, ObjectType57) — same mechanic, same
       `GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, see VISUAL-011's full writeup

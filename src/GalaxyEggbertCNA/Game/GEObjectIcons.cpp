@@ -90,6 +90,14 @@ namespace GalaxyEggbert::CNA
             74,73,72,71,70,70,70,70,71,72,
             73,74,75,76,77,78,79,80,81,82,
             83,84,85,86,-1};
+        // Real table_glu (Tables.cpp:1610-1615, VISUAL-016, fixed
+        // 2026-07-20) -- ObjectType34's goo-particle cycle; identical
+        // values to GEBlupiController's own already-approved kGluFrames
+        // (same real table, reused for Blupi's Glu death-cause animation).
+        static const int kGlu[25] = {
+            168,168,169,169,170,170,171,171,170,170,
+            169,169,168,168,169,169,169,168,168,169,
+            169,170,170,169,168};
         // Real table_plouf/table_tiplouf/table_blup (Tables.cpp:1508-1519,
         // found 2026-07-17 during water-splash research) -- same "wrong
         // approximation formula" bug class as every array above. Plouf is a
@@ -197,7 +205,12 @@ namespace GalaxyEggbert::CNA
             case ObjectType::ObjectType27: return kMagicTrack[p % 24];
             case ObjectType::ObjectType28: return 167;
             case ObjectType::ObjectType29: return 177;
-            case ObjectType::ObjectType34: return 168 + (p / 6) % 25;
+            // Fixed 2026-07-20 (VISUAL-016) -- real table_glu (Tables.cpp:1610-1615)
+            // oscillates within icons 168-171 (identical to GEBlupiController's own
+            // already-approved kGluFrames, the same real table reused for Blupi's
+            // Glu death-cause animation), NOT an ascending range from 168; also had
+            // the wrong divisor (6 instead of the real Config::ScaleDiv(1)==1).
+            case ObjectType::ObjectType34: return kGlu[p % 25];
             // Fixed 2026-07-14 (plan.md VISUAL-013, Pollution puff): wrong
             // divisor (6 instead of the real `Config::ScaleDiv(2)==2`) --
             // real `table_pollution` (`Tables.cpp:1494`) is a plain

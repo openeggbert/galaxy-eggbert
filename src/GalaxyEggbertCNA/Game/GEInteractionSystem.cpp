@@ -155,6 +155,26 @@ namespace GalaxyEggbert::CNA
                         {
                             obj.active = false;
                         }
+                        else if (obj.type == ObjectType::ObjectType34)
+                        {
+                            // Real Decor.cpp:8099-8104 (VISUAL-016) -- the
+                            // goo particle "sticks to geometry": unlike
+                            // every other MoveObject, which just starts
+                            // dwelling at posEnd (and later recedes back via
+                            // step 4), this type also collapses its own
+                            // posStart/posEnd onto its landing spot, so it
+                            // never recedes -- it's stuck there permanently.
+                            // Not exercised by any placed content in real
+                            // mobile-eggbert (no world file places type 34)
+                            // or this project's own worlds; ported for
+                            // correctness in case a future custom/edited
+                            // world ever does.
+                            obj.posStartX = obj.posEndX = obj.currentX;
+                            obj.posStartY = obj.posEndY = obj.currentY;
+                            obj.posStartZ = obj.posEndZ = obj.currentZ;
+                            obj.patrolStep = 3;
+                            obj.patrolTime = 0.0f;
+                        }
                         else
                         {
                             obj.patrolStep = 3;

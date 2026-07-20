@@ -2221,6 +2221,51 @@ int main(int argc, char** argv)
               "ObjectType53 icon wraps around after the real 45-frame table length");
     }
 
+    // GetObjIcon()'s corrected formula for ObjectType34 (VISUAL-016, fixed 2026-07-20 -- real
+    // table_glu oscillates within icons 168-171, identical to GEBlupiController's own kGluFrames,
+    // NOT an ascending range), plus the real "sticks to geometry" AdvancePatrolStep() special case
+    // (Decor.cpp:8099-8104): unlike every other MoveObject, arriving at posEnd also collapses
+    // posStart/posEnd onto the landing spot, so it never recedes. Not exercised by any placed
+    // content in real mobile-eggbert or this project's own worlds (no world file places type 34) --
+    // injected directly, same synthetic-rig style as the large-creature test above.
+    {
+        check(GetObjIcon(ObjectType::ObjectType34, 0) == 168, "ObjectType34 icon at phase=0 is the real table_glu[0]=168");
+        check(GetObjIcon(ObjectType::ObjectType34, 6) == 171, "ObjectType34 icon at phase=6 is the real table_glu[6]=171 (peak)");
+        check(GetObjIcon(ObjectType::ObjectType34, 25) == GetObjIcon(ObjectType::ObjectType34, 0),
+              "ObjectType34 icon wraps around after the real 25-frame table length");
+
+        GEWorldRuntime gooWorld;
+        GEInteractionSystem gooInteraction;
+        MobileObjSpec goo;
+        goo.type = ObjectType::ObjectType34;
+        goo.posStartX = goo.currentX = 0.0f;
+        goo.posStartY = goo.currentY = 1.0f;
+        goo.posStartZ = goo.currentZ = 0.0f;
+        goo.posEndX = 5.0f;
+        goo.posEndY = 1.0f;
+        goo.posEndZ = 0.0f;
+        goo.patrolStep = 2;
+        goo.stepAdvanceTicks = 10.0f;
+        gooWorld.GetMobileObjectsMutable().push_back(goo);
+
+        constexpr float gooDt = 1.0f / 20.0f; // matches the real 20Hz tick rate patrolTime advances at
+        for (int i = 0; i < 60; ++i)
+        {
+            gooWorld.Update(gooDt);
+            gooInteraction.Update(gooDt, gooWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
+        }
+        const auto stuckGoo = std::find_if(gooWorld.GetMobileObjects().begin(), gooWorld.GetMobileObjects().end(),
+                                              [](const auto& o) { return o.type == ObjectType::ObjectType34; });
+        check(stuckGoo != gooWorld.GetMobileObjects().end() && stuckGoo->active,
+              "the goo particle is still active after reaching posEnd, not self-deleted");
+        check(stuckGoo != gooWorld.GetMobileObjects().end() && stuckGoo->patrolStep == 3,
+              "the goo particle dwells (step 3) after reaching posEnd, same as any other MoveObject");
+        check(stuckGoo != gooWorld.GetMobileObjects().end() &&
+                  std::fabs(stuckGoo->posStartX - 5.0f) < 0.01f && std::fabs(stuckGoo->posEndX - 5.0f) < 0.01f,
+              "the goo particle's posStart/posEnd both collapse onto its landing spot (real \"sticks to "
+              "geometry\" behavior) -- it will never recede back via step 4, unlike a normal patrol object");
+    }
+
     // 17.6. Dynamite-blast explosion flash self-delete timing (plan.md
     // VISUAL-008, ObjectType8) -- the actual spawn (via the real
     // 9-blast dynamite-fuse sequence) is already exercised in 3.6 above;
