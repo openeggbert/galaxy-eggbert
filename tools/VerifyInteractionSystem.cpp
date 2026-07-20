@@ -379,6 +379,39 @@ int main(int argc, char** argv)
               "turn-to-left icon wraps around after the real 22-frame table_bulldozer_turn2l length");
     }
 
+    // GetFishIcon()/GetBirdIcon()/GetWaspIcon()/GetCreatureIcon() (ENEMY-016/018/024/026, added
+    // 2026-07-20) -- same real 4-state step machine as the bulldozer above, direct cross-checks
+    // against table_poisson_*/table_oiseau_*/table_guepe_*/table_creature_* (Tables.cpp:1212-1307).
+    {
+        check(GetFishIcon(true, 1, 0) == 79, "fish left-from-start step 1 (turn-to-left) starts at the real first frame (icon 79)");
+        check(GetFishIcon(true, 1, 47) == 83, "fish left-from-start step 1 (turn-to-left) ends at the real last frame (icon 83)");
+        check(GetFishIcon(true, 2, 0) == 82, "fish left-from-start step 2 (walk left) starts at the real first frame (icon 82)");
+        check(GetFishIcon(false, 1, 0) == 82, "fish right-from-start step 1 (turn-to-right) starts at the real first frame (icon 82)");
+        check(GetFishIcon(false, 2, 0) == 79, "fish right-from-start step 2 (walk right) starts at the real first frame (icon 79)");
+        check(GetFishIcon(true, 1, 48) == GetFishIcon(true, 1, 0), "fish turn icon wraps around after the real 48-frame table length");
+
+        check(GetBirdIcon(true, 1, 0) == 106, "bird left-from-start step 1 (turn-to-left) starts at the real first frame (icon 106)");
+        check(GetBirdIcon(true, 1, 9) == 105, "bird left-from-start step 1 (turn-to-left) ends holding the real settled pose (icon 105)");
+        check(GetBirdIcon(true, 2, 0) == 98, "bird left-from-start step 2 (fly left) starts at the real first frame (icon 98)");
+        check(GetBirdIcon(false, 1, 0) == 114, "bird right-from-start step 1 (turn-to-right) starts at the real first frame (icon 114)");
+        check(GetBirdIcon(false, 2, 0) == 90, "bird right-from-start step 2 (fly right) starts at the real first frame (icon 90)");
+        check(GetBirdIcon(true, 1, 10) == GetBirdIcon(true, 1, 0), "bird turn icon wraps around after the real 10-frame table length");
+
+        check(GetWaspIcon(true, 1, 0) == 207, "wasp left-from-start step 1 (turn-to-left) starts at the real first frame (icon 207)");
+        check(GetWaspIcon(true, 1, 4) == 203, "wasp left-from-start step 1 (turn-to-left) ends at the real last frame (icon 203)");
+        check(GetWaspIcon(true, 2, 0) == 195, "wasp left-from-start step 2 (fly left) starts at the real first frame (icon 195)");
+        check(GetWaspIcon(false, 1, 0) == 203, "wasp right-from-start step 1 (turn-to-right) starts at the real first frame (icon 203)");
+        check(GetWaspIcon(false, 2, 0) == 199, "wasp right-from-start step 2 (fly right) starts at the real first frame (icon 199)");
+        check(GetWaspIcon(true, 1, 5) == GetWaspIcon(true, 1, 0), "wasp turn icon wraps around after the real 5-frame table length");
+
+        check(GetCreatureIcon(1, 0) == 244, "creature step 1 (turn) starts at the real first frame (icon 244)");
+        check(GetCreatureIcon(3, 0) == 244, "creature step 3 (turn) uses the SAME real single turn table as step 1 (icon 244)");
+        check(GetCreatureIcon(1, 151) == 244, "creature turn ends at the real last frame (icon 244)");
+        check(GetCreatureIcon(2, 0) == 247, "creature step 2 (walk) starts at the real first frame (icon 247)");
+        check(GetCreatureIcon(4, 0) == 247, "creature step 4 (walk) is identical to step 2 (real table_creature_left/right are byte-identical)");
+        check(GetCreatureIcon(1, 152) == GetCreatureIcon(1, 0), "creature turn icon wraps around after the real 152-frame table length");
+    }
+
     if (const auto* key = findFirst(ObjectType::ObjectType49))
     {
         const float kx = key->currentX, ky = key->currentY, kz = key->currentZ;

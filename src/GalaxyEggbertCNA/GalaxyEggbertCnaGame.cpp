@@ -3374,15 +3374,36 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                // ObjectType4 (bulldozer, ENEMY-013) gets its real per-
-                // direction/turn-transition icon here instead of
-                // GetObjIcon()'s generic phase-indexed fallback -- this is
-                // the one call site with real patrol state (posStart/
-                // posEnd/patrolStep/patrolTime) available to feed it.
-                const int icon = (obj.type == GalaxyEggbert::ObjectType::ObjectType4)
-                    ? GetBulldozerIcon(obj.posStartX > obj.posEndX, obj.patrolStep,
-                                       static_cast<int>(obj.patrolTime))
-                    : GetObjIcon(obj.type, objPhase);
+                // 5 patrol enemies with a real per-direction/turn-transition
+                // icon table (ENEMY-013/016/018/024/026, bulldozer/fish/
+                // bird/wasp/creature) get it here instead of GetObjIcon()'s
+                // generic phase-indexed fallback -- this is the one call
+                // site with real patrol state (posStart/posEnd/patrolStep/
+                // patrolTime) available to feed it.
+                const bool patrolGoesLeftFromStart = obj.posStartX > obj.posEndX;
+                const int patrolTimeTicks = static_cast<int>(obj.patrolTime);
+                int icon;
+                switch (obj.type)
+                {
+                    case GalaxyEggbert::ObjectType::ObjectType4:
+                        icon = GetBulldozerIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
+                        break;
+                    case GalaxyEggbert::ObjectType::ObjectType17:
+                        icon = GetFishIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
+                        break;
+                    case GalaxyEggbert::ObjectType::ObjectType20:
+                        icon = GetBirdIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
+                        break;
+                    case GalaxyEggbert::ObjectType::ObjectType44:
+                        icon = GetWaspIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
+                        break;
+                    case GalaxyEggbert::ObjectType::ObjectType54:
+                        icon = GetCreatureIcon(obj.patrolStep, patrolTimeTicks);
+                        break;
+                    default:
+                        icon = GetObjIcon(obj.type, objPhase);
+                        break;
+                }
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),

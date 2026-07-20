@@ -70,6 +70,22 @@ namespace GalaxyEggbert::CNA
     // engine).
     int GetBulldozerIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
 
+    // Same shape as GetBulldozerIcon() above, for the other 3 patrol
+    // enemies with a real, distinct per-direction/turn-transition icon
+    // table (ENEMY-016/018/024, added 2026-07-20): ObjectType17 (fish),
+    // ObjectType20 (bird), ObjectType44 (wasp/bee). Same parameter meaning
+    // in each case.
+    int GetFishIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+    int GetBirdIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+    int GetWaspIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+
+    // ObjectType54 (large creature, ENEMY-026, added 2026-07-20) -- same
+    // real 4-state step machine, but the real data has no left/right
+    // distinction at all (table_creature_left/right are byte-identical;
+    // both turn steps share one table_creature_turn2), so there is no
+    // direction parameter to take here.
+    int GetCreatureIcon(int patrolStep, int patrolTimeTicks);
+
     // element.png UV rect for a given icon: 600x1740 px, 60x60 px tiles, 10
     // columns, no gap/leading margin (confirmed by direct file inspection --
     // unlike object-m.png, element.png's dimensions divide evenly, see

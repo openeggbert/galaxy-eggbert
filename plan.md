@@ -3670,11 +3670,15 @@ ENEMY-XXX numbering rather than re-deriving it.
       verified (uses the same generic patrol/icon-cycling as every other type).
 - [x] ENEMY-015 — ObjectType17: fish — contact-kill done (`133`); water-specific patrol context not
       separately modeled (functionally unnecessary since collision doesn't distinguish).
-- [ ] ENEMY-016 — ObjectType17: turn animation (48 frames) — not verified as a distinct per-type
-      table (generic icon-cycling only).
+- [x] ENEMY-016 — ObjectType17: turn animation (48 frames) — **resolved 2026-07-20**, same pass as
+      `ENEMY-013`: added `GEObjectIcons::GetFishIcon()`, a direct port of the real
+      `Decor.cpp:8670-8711` switch (`table_poisson_left/right/turn2l/turn2r`,
+      `Tables.cpp:1212-1236`), wired at the same bulldozer render call site.
 - [x] ENEMY-017 — ObjectType20: bird — contact-kill done (`133`); aerial Y=3.0 patrol positioning
       is level-authored data, not a special-cased behavior.
-- [ ] ENEMY-018 — ObjectType20: turn animation (10 frames) — same caveat as ENEMY-016.
+- [x] ENEMY-018 — ObjectType20: turn animation (10 frames) — **resolved 2026-07-20**, same pass as
+      `ENEMY-016`: added `GEObjectIcons::GetBirdIcon()`, real `Decor.cpp:8712-8753`
+      (`table_oiseau_left/right/turn2l/turn2r`, `Tables.cpp:1243-1254`).
 - [x] ENEMY-019 — ObjectType33: blupit — patrol + turn-dwell-timed attack done (`134`).
 - [x] ENEMY-020 — ObjectType33: blupit fires ObjectType23 at phase 3/21 during turn — done (`134`,
       real two-horizontal-shots-per-turn-dwell behavior, direction/frame pairing corrected during
@@ -3684,11 +3688,18 @@ ENEMY-XXX numbering rather than re-deriving it.
       at dwell-frame 21).
 - [x] ENEMY-023 — ObjectType44: wasp/bee — fast patrol + real balloon-status trigger/hazard-pop
       interaction done (`135`).
-- [ ] ENEMY-024 — ObjectType44: turn animation (5 frames) — not verified as a distinct table.
+- [x] ENEMY-024 — ObjectType44: turn animation (5 frames) — **resolved 2026-07-20**, same pass:
+      added `GEObjectIcons::GetWaspIcon()`, real `Decor.cpp:8754-8795`
+      (`table_guepe_left/right/turn2l/turn2r`, `Tables.cpp:1261-1270`) -- the patrol/idle animation
+      only, distinct from the already-implemented balloon-transform hazard interaction.
 - [x] ENEMY-025 — ObjectType54: creature — slow patrol + turn-dwell-gated lethality done (`136`).
-- [ ] ENEMY-026 — ObjectType54: long turn animation (152 frames) — not verified as a distinct
-      table; the real unconditional taunt icon is also NOT modeled (`136`'s own note — no
-      idle-taunt animation system exists).
+- [~] ENEMY-026 — ObjectType54: long turn animation (152 frames) — **turn/walk icon resolved
+      2026-07-20**: added `GEObjectIcons::GetCreatureIcon()`, real `Decor.cpp:8796-8837`
+      (`table_creature_left/right/turn2`, `Tables.cpp:1278-1307`) -- confirmed the real
+      left/right walk tables are byte-identical and both turn steps (1 and 3) share one table, so
+      unlike the other 4 in this family there's no direction parameter to take. **Still open**: the
+      real unconditional taunt icon is NOT modeled (no idle-taunt animation system exists at all,
+      same gap as `136`'s own note) -- a separate, larger feature, not attempted this pass.
 - [x] ENEMY-027 — ObjectType54: destroys Blupi's helicopter on contact (ByeByeHelico) — **stale
   cross-reference, corrected 2026-07-16**: this entry's own premise was already corrected in
   `136`'s own writeup — contact does NOT spare Blupi/only-destroy-the-vehicle instead of killing;

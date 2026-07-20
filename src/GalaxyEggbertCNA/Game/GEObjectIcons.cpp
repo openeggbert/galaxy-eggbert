@@ -390,6 +390,148 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    int GetFishIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8670-8711, ObjectType17 (ENEMY-016) -- same
+        // 4-state turn/walk shape as GetBulldozerIcon() above, real
+        // table_poisson_left/right/turn2l/turn2r (Tables.cpp:1212-1236).
+        static const int kLeft[8] = {82,82,81,81,82,82,83,83};
+        static const int kRight[8] = {79,79,78,78,79,79,80,80};
+        static const int kTurnToLeft[48] = {
+            79,79,80,80,84,84,85,85,86,86,
+            87,87,88,88,83,83,82,82,83,83,
+            88,88,87,87,86,86,85,85,84,84,
+            79,79,79,79,80,80,84,84,85,85,
+            86,86,87,87,88,88,83,83};
+        static const int kTurnToRight[48] = {
+            82,82,83,83,88,88,87,87,86,86,
+            85,85,84,84,79,79,79,79,80,80,
+            84,84,85,85,86,86,87,87,88,88,
+            83,83,82,82,83,83,88,88,87,87,
+            86,86,85,85,84,84,79,79};
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        if (patrolGoesLeftFromStart)
+        {
+            switch (patrolStep)
+            {
+                case 1:  return kTurnToLeft[t % 48];
+                case 3:  return kTurnToRight[t % 48];
+                case 4:  return kRight[t % 8];
+                default: return kLeft[t % 8]; // step 2
+            }
+        }
+        switch (patrolStep)
+        {
+            case 1:  return kTurnToRight[t % 48];
+            case 3:  return kTurnToLeft[t % 48];
+            case 4:  return kLeft[t % 8];
+            default: return kRight[t % 8]; // step 2
+        }
+    }
+
+    int GetBirdIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8712-8753, ObjectType20 (ENEMY-018) -- same shape
+        // again, real table_oiseau_left/right/turn2l/turn2r
+        // (Tables.cpp:1243-1254).
+        static const int kLeft[8] = {98,99,100,101,102,103,104,105};
+        static const int kRight[8] = {90,91,92,93,94,95,96,97};
+        static const int kTurnToLeft[10] = {106,107,108,109,110,111,112,113,105,105};
+        static const int kTurnToRight[10] = {114,115,116,117,118,119,120,121,97,97};
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        if (patrolGoesLeftFromStart)
+        {
+            switch (patrolStep)
+            {
+                case 1:  return kTurnToLeft[t % 10];
+                case 3:  return kTurnToRight[t % 10];
+                case 4:  return kRight[t % 8];
+                default: return kLeft[t % 8]; // step 2
+            }
+        }
+        switch (patrolStep)
+        {
+            case 1:  return kTurnToRight[t % 10];
+            case 3:  return kTurnToLeft[t % 10];
+            case 4:  return kLeft[t % 8];
+            default: return kRight[t % 8]; // step 2
+        }
+    }
+
+    int GetWaspIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8754-8795, ObjectType44 (ENEMY-024) -- same shape
+        // again, real table_guepe_left/right/turn2l/turn2r
+        // (Tables.cpp:1261-1270). This is the patrol/idle animation only --
+        // unrelated to the already-implemented balloon-transform hazard
+        // interaction (TriggerBalloon()), which is a separate real mechanic.
+        static const int kLeft[6] = {195,196,197,198,197,196};
+        static const int kRight[6] = {199,200,201,202,201,200};
+        static const int kTurnToLeft[5] = {207,206,205,204,203};
+        static const int kTurnToRight[5] = {203,204,205,206,207};
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        if (patrolGoesLeftFromStart)
+        {
+            switch (patrolStep)
+            {
+                case 1:  return kTurnToLeft[t % 5];
+                case 3:  return kTurnToRight[t % 5];
+                case 4:  return kRight[t % 6];
+                default: return kLeft[t % 6]; // step 2
+            }
+        }
+        switch (patrolStep)
+        {
+            case 1:  return kTurnToRight[t % 5];
+            case 3:  return kTurnToLeft[t % 5];
+            case 4:  return kLeft[t % 6];
+            default: return kRight[t % 6]; // step 2
+        }
+    }
+
+    int GetCreatureIcon(int patrolStep, int patrolTimeTicks)
+    {
+        // Real Decor.cpp:8796-8837, ObjectType54 (ENEMY-026) -- same 4-state
+        // step machine, but the real table_creature_left/right are BYTE-
+        // IDENTICAL (Tables.cpp:1278-1282, confirmed directly) and both
+        // turn steps (1 and 3) use the SAME single table_creature_turn2
+        // (Tables.cpp:1289-1307) regardless of direction -- so, unlike the
+        // 3 functions above, there is genuinely no direction parameter to
+        // take here; the real data itself has no left/right distinction
+        // for this type. The real, separate "unconditional idle taunt"
+        // animation this type also has is NOT modeled (no idle-taunt
+        // system exists, same documented gap as ENEMY-026's own note).
+        static const int kWalk[8] = {247,248,249,250,251,250,249,248};
+        static const int kTurn[152] = {
+            244,244,244,244,244,244,244,244,243,243,
+            242,242,242,242,242,242,242,242,243,243,
+            244,244,245,245,246,246,246,246,246,246,
+            246,246,245,245,244,244,243,243,242,242,
+            242,242,242,242,243,243,244,244,245,245,
+            246,246,246,246,246,246,245,245,244,244,
+            243,243,242,242,242,242,243,243,244,244,
+            245,245,246,246,246,246,245,245,244,244,
+            243,243,242,242,243,243,244,244,245,245,
+            246,246,245,245,244,244,243,243,242,242,
+            242,242,243,243,244,244,245,245,246,246,
+            246,246,245,245,244,244,243,243,242,242,
+            242,242,242,242,243,243,244,244,245,245,
+            246,246,246,246,246,246,245,245,244,244,
+            244,244,244,244,244,244,244,244,244,244,
+            244,244};
+
+        const int t = patrolTimeTicks < 0 ? 0 : patrolTimeTicks;
+        switch (patrolStep)
+        {
+            case 1:
+            case 3:  return kTurn[t % 152];
+            default: return kWalk[t % 8]; // step 2/4 (identical either direction)
+        }
+    }
+
     bool IsUniformCubeObject(ObjectType type)
     {
         switch (type)
