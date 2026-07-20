@@ -47,24 +47,46 @@ namespace GalaxyEggbert::CNA
         constexpr float kTripleCrossWidth = 0.8f;
         constexpr float kTripleCrossHeight = 1.0f;
 
-        // Saw/SawStopped (2026-07-11, user feedback, 2 rounds): the saw
-        // should sit AT the walkable floor plane, not floating mid-block
-        // like every other confirmed InnerFlatPlate icon (small centered
-        // props -- signposts/screens -- where filling most of the block
-        // height AND centering both make sense), and NOT sunk below it
-        // either. Round 1 tried bottom-anchoring (flush with the block's
-        // own -0.5 bottom face) -- still wrong, since neighboring floor
-        // tiles' own walkable surface sits at +0.5 (their solid tops), not
-        // -0.5, so a bottom-anchored blade sits entirely BELOW the visible
-        // floor line, reading as buried/cutting into the ground. Round 2:
-        // anchored to the block's TOP face instead (matching where Blupi's
-        // feet actually are), extending downward from there. Short (not
-        // the shared 0.9 height -- a full-height panel reads as a wall
-        // panel regardless of anchor), so it reads as a blade emerging
-        // from a floor-level slot. A Saw-specific positioning override,
-        // not a change to the shared InnerFlatPlate default (every other
-        // confirmed icon keeps the original full-height centered look).
-        constexpr float kSawPlateHeight = 0.5f;
+        // Saw/SawStopped: 5 rounds of live user feedback, all 2026-07-11
+        // except the last two (2026-07-20). Several further rounds the
+        // same day (exact 180-degree in-plane rotation, size, and
+        // position/offset tweaks) were tried and explicitly reverted --
+        // this 5-round state is the confirmed-good one; do not re-attempt
+        // those without new, explicit user direction.
+        // (1) bottom-anchored vertical plate -- sank below the visible
+        //     floor line, read as buried/cutting into the ground;
+        // (2) top-anchored vertical plate, hanging down from the block's
+        //     top face -- fixed the sinking, but neither round questioned
+        //     the VERTICAL axis itself;
+        // (3) a live screenshot showed the vertical plate as a thin
+        //     diagonal wedge jammed into the corridor's side wall, clearly
+        //     wrong -- read at the time as "should lie FLAT on the floor
+        //     instead" (PlateAxis::Y);
+        // (4) making it an EXCLUSIVE InnerFlatPlate (hollow block, no solid
+        //     cube at all -- the same category every other InnerFlatPlate
+        //     icon uses) then read as a hole/pit in the floor, since
+        //     nothing filled the gap where an ordinary solid floor block
+        //     would be -- fixed additively (a normal solid floor cube PLUS
+        //     the blade as an overlay, same idiom as IsGrassTopIcon's
+        //     grass-top overlay just below in the main Build() loop);
+        // (5) with the hole fixed, the user's final word against THIS
+        //     round's own screenshot: the blade should be upright again
+        //     after all (round 3's actual problem was being hidden in a
+        //     hole/wrong-looking, not the vertical axis itself) -- rooted
+        //     AT the floor (bottom edge at the walkable surface, extending
+        //     UP), same idiom as every other InnerFlatPlate icon's vertical
+        //     default, still additive on top of the solid floor cube from
+        //     round 4 (not reverting to an exclusive/hollow InnerFlatPlate).
+        // The solid floor cube uses the standard RockPile tile (NOT the
+        // confusingly-named Ground/icon 10, a machine-piece graphic per
+        // BlockTypes.hpp's own NOTE -- no per-placement floor-texture
+        // concept exists in the world format either way).
+        // Shifts the underlying floor cube DOWN so its own top face sits
+        // strictly clear of the blade plate's bottom edge (real,
+        // unambiguous geometry, not same-buffer depth-test tie-breaking --
+        // see RebuildAnimatedRenderer()'s own comment for why that
+        // mattered when the plate was still horizontal).
+        constexpr float kSawPlateEpsilon = 0.02f;
 
         bool IsGroundAnchoredPlateIcon(int icon)
         {
@@ -242,34 +264,10 @@ namespace GalaxyEggbert::CNA
             {
                 Easy3D::PlateItem item;
                 item.Width = kInnerFlatPlateWidth;
+                item.Height = kInnerFlatPlateHeight;
                 item.Uv = tileUv;
                 item.Axis = GetInnerFlatPlateAxis(lookupIcon, plateRotated);
-                if (IsGroundAnchoredPlateIcon(lookupIcon))
-                {
-                    // Saw specifically (2026-07-11, user feedback -- 2nd
-                    // round: "pila je obracene reze do zeme ale mela by
-                    // rezat nahoru", i.e. it was anchored to the block's
-                    // own BOTTOM face, sinking the whole blade below the
-                    // walkable floor plane of every neighboring tile
-                    // (their solid tops sit at +0.5, not this block's own
-                    // -0.5) -- it read as buried, cutting DOWN into the
-                    // ground instead of poking UP into the space Blupi
-                    // actually walks through. Anchored to the block's TOP
-                    // face instead (matching the neighboring floor tiles'
-                    // own walkable surface, where Blupi's feet are),
-                    // extending downward from there -- shorter than the
-                    // shared kInnerFlatPlateHeight so it still reads as a
-                    // blade emerging from a floor-level slot, not a
-                    // wall-height panel.
-                    item.Height = kSawPlateHeight;
-                    item.Center = Easy3D::CubeBatch::Vector3(
-                        center.X, center.Y + 0.5f - kSawPlateHeight * 0.5f, center.Z);
-                }
-                else
-                {
-                    item.Height = kInnerFlatPlateHeight;
-                    item.Center = center;
-                }
+                item.Center = center;
                 Easy3D::AppendPlateMesh(item, vertices, indices);
                 return true;
             }
@@ -544,11 +542,6 @@ namespace GalaxyEggbert::CNA
                         Easy3D::AppendPlateMesh(grassItem, grassVertices, grassIndices);
                     }
 
-                    if (AppendSpecialGeometry(icon, tileUv, icon107Uv, center, plateRotated, staticVertices, staticIndices))
-                    {
-                        continue;
-                    }
-
                     // Face culling (NEXT.md §8): only emit a face when its
                     // neighbor doesn't fully occlude it (see IsOccluderBlock).
                     // Uses the same DirectionalCubeItem geometry AppendSpecialGeometry
@@ -561,6 +554,20 @@ namespace GalaxyEggbert::CNA
                     // sample world) -- only interior faces between two solid
                     // blocks (the common case in bulk fills like the ground
                     // floor/walls/staircase) actually get culled.
+                    //
+                    // Note: Saw/SawStopped (IsGroundAnchoredPlateIcon) never
+                    // reaches this point -- both are always animated
+                    // (IsAnimated(Saw) above), so they're diverted into
+                    // m_animBlocks earlier in this same loop; their ground-
+                    // anchored-overlay handling lives in
+                    // RebuildAnimatedRenderer() instead (see
+                    // IsGroundAnchoredPlateIcon's own comment above and that
+                    // call site for the full history).
+                    if (AppendSpecialGeometry(icon, tileUv, icon107Uv, center, plateRotated, staticVertices, staticIndices))
+                    {
+                        continue;
+                    }
+
                     Easy3D::DirectionalCubeItem item;
                     item.Center = center;
                     item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
@@ -653,6 +660,76 @@ namespace GalaxyEggbert::CNA
             // demo block: without this, fan blocks always fell through to a
             // plain untextured-on-every-face UniformCube and their
             // GEDirectionalCubeTiles entry was silently dead code.
+            if (IsGroundAnchoredPlateIcon(static_cast<int>(block.base)))
+            {
+                // Saw/SawStopped (2026-07-20): animated (378-383 cycle), so
+                // this path -- NOT the constructor's main Build() loop
+                // (which routes these into m_animBlocks before it would
+                // ever reach an equivalent check) -- is what actually
+                // renders it; see the constructor's own IsGroundAnchoredPlateIcon
+                // comment block for the full round-by-round history. No
+                // face-culling here since RebuildAnimatedRenderer never had
+                // any (every animated block already renders all 6 faces via
+                // plain `batch.Add()` below) -- consistent with that, the
+                // underlying floor cube is likewise always-6-faces-visible.
+                //
+                // Uses RockPile, NOT Ground (icon 10) -- despite the name,
+                // `Ground` is a confirmed machine-piece DirectionalCube
+                // graphic (BlockTypes.hpp's own NOTE), not bulk floor
+                // material; it rendered as a jarring blue riveted plate
+                // here. RockPile is confirmed genuine bulk UniformCube
+                // terrain, matching the surrounding demo corridor's own
+                // floor. kSawPlateEpsilon shifts the cube's own top face
+                // down, strictly clear of the vertical plate's bottom edge
+                // (from back when the plate was horizontal and exactly
+                // coplanar with the cube's top face, a genuine same-buffer
+                // depth-test tie; kept even now that the plate is vertical
+                // again, since a hairline gap there is harmless and
+                // removing it would need re-verifying that concern).
+                // Vertical again (2026-07-20, 5th round): the user's own
+                // "flat on the floor" read of round 3's screenshot turned
+                // out to mean "don't hide it in a hole" (round 4's actual
+                // fix), not "the blade itself should lie flat" -- final
+                // word, against this round's own screenshot: upright,
+                // rooted AT the floor (bottom edge at the walkable surface,
+                // extending UP), same idiom as every other InnerFlatPlate
+                // icon's vertical default. Axis still respects the per-
+                // placement rotation flag (GEPlateRotationMetadata.hpp) so
+                // it can face whichever way its own corridor runs. This is
+                // the confirmed-good state as of this round -- do not
+                // pursue exact-180-degree in-plane rotation or size/offset
+                // tweaks again without explicit new user direction; several
+                // rounds of that were tried and reverted.
+                {
+                    constexpr float kSawPlateHeight = 0.6f;
+                    Easy3D::PlateItem sawItem;
+                    sawItem.Center =
+                        Easy3D::CubeBatch::Vector3(block.x, block.y + 0.5f + kSawPlateHeight * 0.5f, block.z);
+                    sawItem.Width = kInnerFlatPlateWidth;
+                    sawItem.Height = kSawPlateHeight;
+                    sawItem.Uv = tileUv;
+                    sawItem.Axis = plateRotated ? Easy3D::PlateAxis::X : Easy3D::PlateAxis::Z;
+                    Easy3D::AppendPlateMesh(sawItem, vertices, indices);
+                }
+
+                // Floor cube shifted down by kSawPlateEpsilon (not the plate
+                // shifted up) -- this batch's cubes are only turned into
+                // triangles by BuildCubeMesh() AFTER the whole per-block
+                // loop finishes, always landing later in the shared vertex
+                // buffer than every plate appended during the loop, so an
+                // apparent depth-test tie always resolved in the cube's
+                // favor regardless of a same-buffer Y epsilon on the plate
+                // (confirmed live -- a 0.05 plate-side epsilon still didn't
+                // show the blade). Moving the cube's OWN top face strictly
+                // below y+0.5 instead removes the ambiguity as real,
+                // unambiguous geometry rather than relying on depth-test
+                // tie-breaking at all.
+                batch.Add(Easy3D::CubeBatch::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
+                          Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f),
+                          m_tileAtlas->GetTileUv(GalaxyEggbert::BlockTypes::RockPile));
+                continue;
+            }
+
             if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, icon107Uv, center, plateRotated, vertices, indices))
             {
                 continue;

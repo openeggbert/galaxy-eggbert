@@ -27,7 +27,10 @@ namespace GalaxyEggbert::CNA
     // horizontally-lying segmented shape sitting mid-tile, not a vertical
     // frame/bracket), so GetInnerFlatPlateAxis() returns PlateAxis::Y
     // (horizontal, matching the grass-top overlay's usage of the same axis)
-    // for those 5 only.
+    // for those 5 only. Saw/SawStopped (378/379) is deliberately NOT in
+    // this list -- see GETerrainRenderer.cpp's IsGroundAnchoredPlateIcon()
+    // for why it needs its own additive (solid-cube-plus-overlay) handling
+    // instead of an exclusive InnerFlatPlate.
     bool IsInnerFlatPlateIcon(int icon);
 
     // The icon's own default axis (PlateAxis::Z for every confirmed icon

@@ -20,20 +20,17 @@ namespace GalaxyEggbert::CNA
             292, 293, 294, 295, 296, 297, 298, 299, 300, 302, 303,
             367, 368, 369, 370, 371, 372,
             398,
-            // Saw/SawStopped (378/379, plan.md E3D-MIG-149/142) added
-            // 2026-07-11 per direct live user Q&A ("pila bude staticky
-            // billboard tedy uprostred daneho bloku se textura nanese na
-            // obe strany jakoby neviditelen desky v puli krychle") --
-            // supersedes the questionnaire's earlier "ThinMechanical,
-            // geometry not decided" placeholder categorization (§10.3, a
-            // circular-blade shape flagged as thin/non-bulk but never given
-            // a confirmed render mode), see mobile-eggbert-reference/
-            // 02-tiles.md's own updated note. Was previously falling
-            // through every special-geometry table into the generic
-            // fully-textured UniformCube fallback, which the user reported
-            // as visibly wrong.
-            GalaxyEggbert::BlockTypes::Saw,
-            GalaxyEggbert::BlockTypes::SawStopped,
+            // Saw/SawStopped (378/379) is NOT in this list -- moved out
+            // 2026-07-20 (3rd round of live user feedback) into its own
+            // dedicated ground-anchored-overlay system in
+            // GETerrainRenderer.cpp (IsGroundAnchoredPlateIcon(), handled
+            // the same additive way as IsGrassTopIcon() -- a normal solid
+            // floor cube PLUS a horizontal blade plate on top), since an
+            // exclusive InnerFlatPlate (hollow block, no solid cube at all)
+            // read as a hole/pit in the floor once the blade itself was
+            // correctly reoriented to lie flat. See that file's own comment
+            // for the full history (2 earlier rounds, 2026-07-11, only
+            // repositioned a VERTICAL plate before this axis correction).
         };
     }
 
