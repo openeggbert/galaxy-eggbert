@@ -1648,6 +1648,19 @@ end = Blupi's own post-respawn position). Only THEN does control return.
     small at this screenshot resolution/interval spacing and wasn't specifically isolated in a
     frame, but the core state transition (deferred life loss + deferred respawn) is confirmed
     working end-to-end, not just in unit tests.
+  - **Follow-up, done 2026-07-20 (NEXT.md §8 non-editor task 1):** isolated the icon-48 flight
+    itself. New temporary debug scaffold placed Lava directly under Blupi's spawn (via
+    `GEWorldRuntime::GetWorldMutable().setBlock()`, the same grid-coordinate formula
+    `GetGroundBlockType()` uses: `round(x+kWorldCenterX)`, `round(z+kWorldCenterZ)`, `round(y)-1`)
+    and captured screenshots post-HUD-draw at 0.15s intervals through the transition window
+    (gated on `drawFrameIndex_ > terrainPixelPrintedFrame_`, the same Vulkan-mid-draw-readback
+    fix `screenshot_hud.png` already established). Confirmed live: a real Clear3 lock (70
+    ticks=3.5s) runs concurrently with a Clear3Ascend cosmetic VFX voyage (icon 40, fixed 50
+    ticks=2.5s) that completes partway through the lock; at lock-end the LifeLoss Voyage begins
+    (icon 48, fixed 40 ticks=2.0s) with `lives_` dropping 3→2 in the exact same frame the icon
+    appears (matching the real "decrements at Voyage START" citation precisely) — the icon 48 is
+    now visibly present in mid-window screenshots and gone once the Voyage resolves. All debug
+    code fully reverted (confirmed via a zero-diff `git diff` after revert), no production changes.
 
 ### Phase 16 — Doors & keys (`E3D-MIG-160`-`165`)
 

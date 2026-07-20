@@ -1345,15 +1345,20 @@ check of the new behavior → revert instrumentation → commit → push.
 
 Non-editor tasks, available if the editor line is paused:
 
-1. **Take the live screenshot verification of the death-lock/life-loss Voyage one step further**:
-   isolate a frame showing the flying icon-48 HUD animation itself (the earlier live check
-   confirmed the life-total/position state transition but didn't catch the icon mid-flight at the
-   screenshot intervals used).
-   Files: temporary debug scaffold only (see `plan.md`'s "death-lock" writeup, Phase 15, for the
-   exact technique used last time — spawn Blupi on a hazard tile, skip to `Play` phase, capture
-   timed screenshots, fully revert before committing).
-   Verify: visual inspection of the captured `.png`, no code changes should survive.
-
+1. ~~Take the live screenshot verification of the death-lock/life-loss Voyage one step further~~
+   — **done 2026-07-20.** Temporary, fully-reverted debug scaffold (env-var-gated: skip to Play,
+   overwrite the ground block directly under Blupi's spawn with Lava via
+   `GEWorldRuntime::GetWorldMutable().setBlock()`, periodic stderr state log + timed screenshots
+   captured post-HUD-draw, gated on `drawFrameIndex_ > terrainPixelPrintedFrame_` same as
+   `screenshot_hud.png`'s own established fix) confirmed the FULL real sequence live: Lava contact
+   → real Clear3 lock (70 ticks=3.5s, with a concurrent Clear3Ascend cosmetic VFX voyage, icon 40,
+   fixed 50 ticks=2.5s, completing partway through) → LifeLoss Voyage begins (icon 48, fixed 40
+   ticks=2.0s) with lives visibly dropping 3→2 in the SAME frame the icon starts (matches the real
+   "decrements at Voyage START, not completion" citation exactly) → icon 48 now VISIBLY CAUGHT
+   mid-flight in a screenshot (a small icon near the HUD's treasure-counter row, present partway
+   through the window, gone once the Voyage completes) — the specific gap the previous pass
+   (`b03b827`) missed. No production code changes survive (confirmed via `git diff` showing zero
+   diff after revert).
 2. **Get the user's visual judgment on the Saw blade (icon 378) orientation**, then fix it.
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`, `../easy-3d`'s `CubeMesh.cpp`
    (`AppendPlateMesh`).
