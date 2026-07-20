@@ -5539,3 +5539,89 @@ new rendering or file-format stack.
 - [ ] `EDITOR-010` Multi-block brush/fill tool, mirroring `GenerateSampleWorld3D.cpp`'s own
       `fill()` helper interactively (drag a box, apply one `BlockType` to the whole region) —
       optional, later.
+
+## 7. Correctness Infrastructure & Dual-Renderer — Vision (not a committed task list)
+
+Source documents (2026-07-20, merged from a separate branch into `develop`): `REMAKE-ANALYSIS.md`
+(root-cause analysis of why the same bug classes keep recurring), `renderers.md` +
+`renderers-next-steps.md` (a dual-renderer architecture proposal), and the first data-contract
+artifact of that proposal, `src/GalaxyEggbertCNA/Game/GESceneFrame.hpp` (currently unwired —
+nothing includes it, `Draw()` is not repointed to it, no `IGameRenderer` exists yet). This section
+records the assessment of that material after independent review, so a future session doesn't have
+to re-derive it. It is deliberately written as **direction, not a queue of tasks to execute** —
+nothing here is authorized to start without its own explicit scoping and user sign-off, same as
+every other "needs the user's own call" item elsewhere in this file.
+
+### The diagnosis is accurate, not theoretical
+
+`REMAKE-ANALYSIS.md`'s central claim — **correctness is verified by a human looking at a
+screenshot, and that is the actual bug factory** — was independently checked against this
+codebase (not taken on faith): `GEObjectIcons.cpp` really does carry 34 `Fixed 202...` annotations,
+`GalaxyEggbertCnaGame::Update()`/`Draw()` really are ~2073/~817 lines respectively. The Saw-blade
+render-orientation saga the same day (2026-07-20, 6+ rounds of "here's a screenshot, is this
+right?" before landing on a stable answer) is a live, first-hand instance of exactly the failure
+mode the document describes (RC-1) — not a hypothetical.
+
+### What is cheap and worth doing when there is appetite for it (hours, not a 30-hour epic)
+
+These are small, self-contained, and each pays for itself immediately — no dependency on the
+riskier items below:
+
+- **A permanent, committed golden-screenshot harness (`REMAKE-ANALYSIS.md` P0-1a/b, scoped down to
+  a first useful slice).** The ad-hoc pattern already used every session (`xvfb-run` + an
+  env-var-gated debug hook, a screenshot, then a full revert before commit) is 90% of this already
+  — the only change is to stop throwing it away and instead commit one small, deterministic
+  headless-capture target wired into `ctest`, with a handful of golden images diffed. This does not
+  require the `SceneFrame`/`IGameRenderer` refactor below; it can be built directly against
+  today's `Draw()`.
+- **A first data-integrity pass over `GetObjIcon()` (P0-2, scoped down).** A test that checks frame-
+  array lengths and known values against `mobile-eggbert-reference/08-animations.md` for the
+  objects already flagged `Fixed` would have caught several of this session's own bugs before a
+  screenshot was needed. Does not require or license copying mobile-eggbert data — it validates
+  numbers already transcribed into this repo, against the existing reference *doc*, not against
+  `../mobile-eggbert` source directly (that would need separate approval, see `easy3d.md` §5.7 and
+  this file's own reuse rules).
+- **Marking the ~137 unverified render-mapping icons as an explicit, queryable set (P0-3).**
+  Bookkeeping, not code.
+
+### What is a real, multi-day undertaking and should NOT be started casually
+
+- **A shared collision/movement resolver (P1-1)**, replacing the fragmented per-mechanic probes
+  (`GroundHeightAt`/`CeilingHeightAt`/`TryMoveAxis`'s step-up gate/etc.) with one swept resolver all
+  movement modes route through. Real value (it would close the known airborne-wall-clip gap as a
+  side effect), but it touches already-tuned, already-verified movement across every mode
+  (grounded, airborne, every vehicle) — exactly the kind of change that needs its own scoped task,
+  a behavioral-trace safety net, and the user's explicit go-ahead before a line of code changes.
+- **A handler-table refactor for `ObjectType` dispatch (P1-2)**, replacing the open-coded
+  `if (type == N)` chains inside `GalaxyEggbertCnaGame::Update()` (~2073 lines) and
+  `GEInteractionSystem::Update()` (~1677 lines, `ObjectType` referenced 214 times) with a per-type
+  handler table. Real leverage (would make "fix object X" touch one place instead of scattered
+  sites across two god-methods), but ~70 object types is a large, multi-session migration with
+  real regression risk if not done one family at a time behind a golden harness.
+- Both P1 items explicitly depend on the P0 harness existing first (per `REMAKE-ANALYSIS.md`'s own
+  sequencing) — doing them before P0 exists would reintroduce the exact "unverified churn" problem
+  the whole document is arguing against.
+
+### The dual-renderer proposal (`renderers.md`) is a separate, bigger decision — do not fold it in
+
+`renderers.md` proposes something structurally different from "reduce the bug factory": a second,
+hi-fi renderer (`GERendererHi`) alongside today's renderer, both consuming a shared `SceneFrame`.
+This **widens the "Direct CNA + Easy3D is the sole target" lock** (see "Current Direction Lock" in
+`CLAUDE.md`) rather than just fixing how correctness is checked — a materially different kind of
+decision that belongs to the project owner alone, same weight as the original Simple3D-to-CNA
+pivot. The document's own owner-decision log records path A (same CNA/Easy3D base, hi-fi via
+upgraded shaders/materials, not a second engine) as already chosen (2026-07-20) — but choosing
+*which* dual-renderer path is not the same as choosing *to build one at all*, and that broader
+choice is not recorded as settled anywhere in this file. Note also the genuine synergy if it is
+ever pursued: `renderers.md` Phase 1's `SceneFrame` is the same artifact the P0-1 golden harness
+above needs, so a future decision to do the `SceneFrame` extraction would advance both efforts at
+once — but that is a reason to notice the overlap, not a reason to start the extraction
+unprompted.
+
+### Recommendation, if and when this is picked up
+
+Start (if at all) with the cheap P0 slice above, scoped to a single small deterministic scenario —
+it is useful on its own, blocks nothing else, and does not require deciding anything about
+collision, object dispatch, or a second renderer. Treat P1-1, P1-2, and the dual-renderer direction
+as three independent, later decisions, each requiring its own explicit user go-ahead before any
+code is written — do not bundle them into one "modernization" effort.
