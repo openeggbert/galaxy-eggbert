@@ -5075,7 +5075,15 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       as `VISUAL-019` — element.png's real 290-icon grid (29 rows x 10 cols, `GEObjectIcons.cpp`'s
       own comment) is too small for the real 100-frame range (`253+99=352 > 289`), a genuine,
       already-documented sheet-size limitation, not an unstarted feature.
-- [ ] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png)
+- [x] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png) — **fixed
+      2026-07-20**: the previous frozen-at-frame-86 case (`GEObjectIcons.cpp`) reasoned "45 frames
+      would exceed the sheet" from a naive ascending-range assumption -- checked the real
+      `table_tentacule` (`Tables.cpp:1457-1464`) directly and it's bounded, oscillating within
+      icons 70-86 (rise, blank at the peak, descend through full extension, blank fully retracted)
+      -- it never overflows explo.png's valid range at all, same category of previously-wrong
+      assumption as `kExplo1-4`/`kTresorTrack` (all fixed 2026-07-14). Now animates through the
+      real 45-frame table, including its 2 real `-1` blank frames (the renderer's existing
+      `-1`-skip support already handles them). 6 new `VerifyInteractionSystem` assertions.
 - [ ] VISUAL-022 — Sky gradient per world region (zenith/horizon colours)
 - [ ] VISUAL-023 — Per-world fog (fog color + fog range per region)
 - [ ] VISUAL-024 — Lightning visual: tiles 66-68 draw 13 px higher; ch69 sound — **split

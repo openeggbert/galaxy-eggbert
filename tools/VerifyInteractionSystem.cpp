@@ -2207,6 +2207,18 @@ int main(int argc, char** argv)
         check(GetObjIcon(ObjectType::ObjectType11, 3) == 15, "ObjectType11 icon at phase=3 is the real table_explo4[3]=15");
         check(GetObjIcon(ObjectType::ObjectType11, 4) == 7, "ObjectType11 icon at phase=4 is the real table_explo4[4]=7 (the non-monotonic jump)");
         check(GetObjIcon(ObjectType::ObjectType11, 8) == 11, "ObjectType11 icon at phase=8 is the real table_explo4[8]=11 (last frame before self-delete)");
+
+        // GetObjIcon()'s corrected formula (VISUAL-021, fixed 2026-07-20 --
+        // real table_tentacule oscillates within icons 70-86 and never
+        // overflows explo.png, unlike the naive ascending-range assumption
+        // the previous frozen-frame-86 case used).
+        check(GetObjIcon(ObjectType::ObjectType53, 0) == 86, "ObjectType53 icon at phase=0 is the real table_tentacule[0]=86");
+        check(GetObjIcon(ObjectType::ObjectType53, 3) == 83, "ObjectType53 icon at phase=3 is the real table_tentacule[3]=83 (rise peak)");
+        check(GetObjIcon(ObjectType::ObjectType53, 7) == -1, "ObjectType53 icon at phase=7 is the real table_tentacule[7]=-1 (blank at the peak)");
+        check(GetObjIcon(ObjectType::ObjectType53, 24) == 70, "ObjectType53 icon at phase=24 is the real table_tentacule[24]=70 (full extension)");
+        check(GetObjIcon(ObjectType::ObjectType53, 44) == -1, "ObjectType53 icon at phase=44 is the real table_tentacule[44]=-1 (fully retracted)");
+        check(GetObjIcon(ObjectType::ObjectType53, 45) == GetObjIcon(ObjectType::ObjectType53, 0),
+              "ObjectType53 icon wraps around after the real 45-frame table length");
     }
 
     // 17.6. Dynamite-blast explosion flash self-delete timing (plan.md

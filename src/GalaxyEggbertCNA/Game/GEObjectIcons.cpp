@@ -81,6 +81,15 @@ namespace GalaxyEggbert::CNA
         static const int kExplo5[12] = {54,-1,55,-1,56,-1,57,-1,58,-1,59,-1};
         static const int kExplo6[6]  = {54,55,56,57,58,59};
         static const int kExplo8[5]  = {7,8,9,10,11};
+        // Real table_tentacule (Tables.cpp:1457-1464, VISUAL-021, fixed
+        // 2026-07-20) -- ObjectType53's tentacle rise/hold/retract cycle;
+        // bounded within icons 70-86, 2 real -1 blank frames.
+        static const int kTentacule[45] = {
+            86,85,84,83,84,85,86,-1,86,85,
+            84,83,82,81,80,79,78,77,76,75,
+            74,73,72,71,70,70,70,70,71,72,
+            73,74,75,76,77,78,79,80,81,82,
+            83,84,85,86,-1};
         // Real table_plouf/table_tiplouf/table_blup (Tables.cpp:1508-1519,
         // found 2026-07-17 during water-splash research) -- same "wrong
         // approximation formula" bug class as every array above. Plouf is a
@@ -298,7 +307,17 @@ namespace GalaxyEggbert::CNA
             // ascending-arithmetic assumption -- real table_explo4 jumps
             // non-monotonically (see kExplo4 above).
             case ObjectType::ObjectType11:  return kExplo4[p % 9];
-            case ObjectType::ObjectType53:  return 86; // 45 frames would exceed the sheet (86+44=130 > 99)
+            // Fixed 2026-07-20 (VISUAL-021) -- the "45 frames would exceed
+            // the sheet" reasoning this case used to have was based on a
+            // wrong naive-ascending-range assumption, same category of bug
+            // as kExplo1-4/kTresorTrack above: the real table_tentacule
+            // (Tables.cpp:1457-1464) oscillates within icons 70-86 (rise,
+            // -1 blank at the peak, descend through full extension, -1
+            // blank fully retracted) -- it never leaves explo.png's valid
+            // 0-99 range, so the sheet-size concern was never real for
+            // this type. The renderer's existing -1-skip support (already
+            // used by kExplo2/kExplo7 above) handles the 2 blank frames.
+            case ObjectType::ObjectType53:  return kTentacule[p % 45];
             // Fixed 2026-07-16 -- exact table_explo5 transcription (see kExplo5 above), same
             // wrong-divisor bug as every other explo case here.
             case ObjectType::ObjectType90:  return kExplo5[p % 12];
