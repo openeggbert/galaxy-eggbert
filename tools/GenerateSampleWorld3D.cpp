@@ -436,14 +436,47 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // This one sits 5 tiles east of spawn (grid 50,*,50) on the same y=0
     // corridor floor spawn is on -- reachable by holding "forward" for
     // about a second, zero platforming required.
-    place(ObjectType::ObjectType44, 55.0f, 1.0f, 50.0f);
+    //
+    // Real patrol range (fixed 2026-07-20, live user report: "wasp is
+    // frozen") -- `place()` always sets posStart==posEnd (a stationary
+    // demo pin), which is a real, faithful no-op for GEInteractionSystem's
+    // shared patrol-turn mechanic (`AdvancePatrolStep`'s own "no-op if
+    // posStart==posEnd" guard, already verified against the real source's
+    // own equivalent guard) -- but the wasp (ObjectType44) is a confirmed
+    // real "patrol walker enemy" (mobile-eggbert-reference/03-objects.md),
+    // never stationary, so a zero-range placement also freezes its
+    // per-direction/turn-transition icon animation (GetWaspIcon() reads
+    // patrolStep/patrolTime, both permanently stuck without a real patrol
+    // tick). Same bug already found and fixed for the platform lift below
+    // 2026-07-10 -- built directly via PlaceMoveObject with real
+    // posStart != posEnd instead of the place() helper, default
+    // stepAdvance/stepRecede/timeStop ticks (MoveObjectRecord.hpp)
+    // unchanged. A short 4-unit patrol along the flat corridor floor.
+    {
+        MoveObjectRecord wasp;
+        wasp.type = ObjectType::ObjectType44;
+        wasp.posStartX = 53.0f; wasp.posStartY = 1.0f; wasp.posStartZ = 50.0f;
+        wasp.posEndX = 57.0f;   wasp.posEndY = 1.0f;   wasp.posEndZ = 50.0f;
+        PlaceMoveObject(world, wasp);
+    }
 
     // North hill: 2 eggs + 1 chest along the ascent, 1 wasp patrolling the
     // plateau, 1 more chest + the level-exit goal in the crow's-nest.
     place(ObjectType::ObjectType6, 47.0f, 1.0f, 44.0f);  // egg, on the connector
     place(ObjectType::ObjectType6, 52.0f, 3.0f, 36.0f);  // egg, partway up the steps
     place(ObjectType::ObjectType5, 45.0f, 5.0f, 29.0f);  // chest, on the plateau
-    place(ObjectType::ObjectType44, 50.0f, 5.0f, 30.0f); // wasp, patrolling the plateau
+    // Real patrol range (fixed 2026-07-20, same wasp-freeze bug as the
+    // spawn-corridor wasp above -- see that one's own comment for the
+    // full citation). Plateau spans grid x=45..55, z=25..32 (y=4 floor) --
+    // a 6-unit east-west patrol comfortably inside those bounds, clear of
+    // the chests/grass-demo tiles nearby.
+    {
+        MoveObjectRecord wasp;
+        wasp.type = ObjectType::ObjectType44;
+        wasp.posStartX = 47.0f; wasp.posStartY = 5.0f; wasp.posStartZ = 30.0f;
+        wasp.posEndX = 53.0f;   wasp.posEndY = 5.0f;   wasp.posEndZ = 30.0f;
+        PlaceMoveObject(world, wasp);
+    }
     place(ObjectType::ObjectType5, 51.0f, 9.0f, 28.0f);  // chest, in the crow's-nest
     place(ObjectType::ObjectType7, 49.0f, 9.0f, 28.0f);  // level-exit goal, in the crow's-nest
 
