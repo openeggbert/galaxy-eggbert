@@ -58,6 +58,28 @@ namespace GalaxyEggbert::CNA
         void Update(Microsoft::Xna::Framework::GameTime& gameTime) override;
         void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
+        // INFRA-001 (plan.md §7, "Correctness Infrastructure" vision): a
+        // permanent, committed deterministic golden-screenshot capture
+        // mode, replacing the ad-hoc "xvfb-run + env-var-gated debug hook,
+        // reverted before commit" pattern used throughout this project's
+        // history (see NEXT.md §3 for recent examples) with a real,
+        // always-available feature. Must be called before Run() (see
+        // main.cpp's `--golden-capture` flag). Once enabled: skips
+        // straight to Play (bypassing the menu), loads the fixed demo
+        // world (`worlds3d/world999.vwr`, this engine's own established
+        // "known working demo" — see NEXT.md §2), and lets the game's
+        // already-deterministic fixed timestep (CNA's default
+        // `IsFixedTimeStep=true`, 1/60s, confirmed in `Game::Game()`) run
+        // for a fixed number of ticks. At each of a few fixed tick
+        // indices (`kGoldenCaptureTicks` in the .cpp), captures a
+        // screenshot to a well-known filename (`golden_frame_NNNN.png`),
+        // then calls `Exit()` once the last one is captured — so this can
+        // run unattended (e.g. under `xvfb-run`) and terminate on its
+        // own, no external timeout needed. No golden-image diffing yet
+        // (`INFRA-002`) — this step only proves the capture itself is
+        // stable/reproducible run to run.
+        void EnableGoldenCaptureMode() noexcept { goldenCaptureMode_ = true; }
+
         GetTypeNameHPP()
 
     private:
@@ -446,6 +468,17 @@ namespace GalaxyEggbert::CNA
         // avoiding the Vulkan-only same-frame corruption that call causes.
         int drawFrameIndex_ = 0;
         int terrainPixelPrintedFrame_ = -1;
+
+        // INFRA-001 (plan.md §7) -- see EnableGoldenCaptureMode()'s own
+        // comment for the full behavior. `goldenCaptureArmed_` latches the
+        // one-time setup (phase skip + fixed world load); `goldenCaptureTick_`
+        // is a plain per-Update() tick count (not phaseTimeSeconds_, which
+        // resets on phase transitions); `goldenCaptureNextIndex_` walks
+        // through `kGoldenCaptureTicks` (GalaxyEggbertCnaGame.cpp) in Draw().
+        bool goldenCaptureMode_ = false;
+        bool goldenCaptureArmed_ = false;
+        int goldenCaptureTick_ = 0;
+        int goldenCaptureNextIndex_ = 0;
 
         // Real `fadeOutPhase` (plan.md MENU-088/089) -- see SetPhase()'s
         // own comment above for the full real deferred-transition

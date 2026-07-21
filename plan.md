@@ -5638,15 +5638,23 @@ the assessment above; that requirement is about the *moment code starts*, not ab
 task may be described here. Confirm with the user before starting `INFRA-005`/`INFRA-006`
 specifically, same as any other large/risky item elsewhere in this file.
 
-- [ ] `INFRA-001` (`REMAKE-ANALYSIS.md` P0-1a) Promote the existing throwaway `xvfb-run` +
-      env-var-gated debug-hook pattern (used and fully reverted every session so far — see NEXT.md
-      §3's own Saw/death-lock/life-loss writeups for recent examples) into a **permanent, committed**
-      deterministic headless-capture target: a fixed world (`worlds3d/world999.vwr`), a fixed
-      camera, a scripted input sequence, N deterministic ticks, screenshots saved at known frame
-      indices. No golden-image diffing yet — this step only proves the capture itself is stable/
-      reproducible across runs. New `tools/` target (or a new `ctest`-registered mode of an
-      existing one), following the `VerifyXxx`/`GenerateSampleWorld3D` precedent of dedicated tool
-      targets.
+- [x] `INFRA-001` (`REMAKE-ANALYSIS.md` P0-1a) — **done 2026-07-21.** Promoted the ad-hoc
+      `xvfb-run` + env-var-gated debug-hook pattern (used and fully reverted every session before
+      this — see NEXT.md §3's own Saw/death-lock/life-loss writeups) into a **permanent, committed**
+      deterministic capture mode, not a new tool target: `GalaxyEggbertCnaGame::
+      EnableGoldenCaptureMode()` (set via a real `--golden-capture` CLI flag parsed in `main.cpp`,
+      not an env var this time — a genuinely discoverable, documented feature). On enable: skips to
+      Play, loads the fixed `worlds3d/world999.vwr` demo world, lets the game's already-deterministic
+      fixed timestep (CNA's default `IsFixedTimeStep=true`, 1/60s, confirmed in `Game::Game()` — no
+      new timestep-injection code needed) run, captures `golden_frame_0060/0120/0180.png` at 3 fixed
+      tick indices, then calls `Exit()` once the last one is written — self-terminating, no external
+      `timeout` needed (confirmed: exit code 0, not a `timeout`-forced 124). **Reproducibility
+      confirmed empirically**: 2 independent runs produced byte-identical PNGs (`md5sum` match on
+      all 3 files). No golden-image diffing yet (`INFRA-002`) — this step only proves the capture
+      itself is stable/reproducible, which it now is. Deliberately **not** wired into the default
+      `ctest` run (needs a real display/GL context, same reason the existing live-headless-check
+      step is already separate from `ctest` throughout this project) — documented as its own command
+      in `NEXT.md` §7 instead.
 - [ ] `INFRA-002` (`REMAKE-ANALYSIS.md` P0-1b) Add golden-image diffing on top of `INFRA-001`: store
       approved reference screenshots for a handful of representative scenes/objects, diff newly
       captured frames against them, and wire the diff into `ctest` so a real pixel change fails the

@@ -281,6 +281,22 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-001 — permanent deterministic golden-screenshot capture mode (2026-07-21)
+
+First implemented item from `plan.md` §7's correctness-infrastructure task breakdown. A real,
+committed `--golden-capture` CLI flag (`main.cpp`, parsed and passed to a new
+`GalaxyEggbertCnaGame::EnableGoldenCaptureMode()`) — not another throwaway env-var hack. Skips to
+Play, loads the fixed `worlds3d/world999.vwr` demo world, lets the game's existing 60Hz fixed
+timestep run, writes `golden_frame_0060/0120/0180.png` at 3 fixed tick indices, then self-terminates
+via `Exit()` (confirmed: process exits 0 on its own, not killed by an external `timeout`).
+Reproducibility verified empirically, not assumed: 2 independent runs under `xvfb-run` produced
+byte-identical PNGs (`md5sum` match on all 3 files) — the actual bar `INFRA-001` set for itself
+("proves the capture itself is stable/reproducible"). Deliberately not wired into the default
+`ctest` (needs a real display/GL context, same reason the existing live-headless-check step has
+always been separate from `ctest` in this project) — documented as its own command in §7 above.
+`INFRA-002` (golden-image diffing on top of this) is the natural next step, not done yet. Full
+regression clean (78/79, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
+
 ### docs: merge REMAKE-ANALYSIS.md/renderers.md from a separate branch; record vision in plan.md §7 (2026-07-20)
 
 User asked to merge `origin/claude/galaxy-eggbert-3d-remake-n0ga3y` into `develop` (a separate
@@ -1373,6 +1389,16 @@ cd build-cna && ctest -R easy-gl-resource-smoke-tests --output-on-failure
 Headless live run (for visual verification of editor/gameplay changes; needs `xvfb-run`):
 ```
 cd build-cna && timeout 80 xvfb-run -a ./GalaxyEggbertCNA
+```
+
+`INFRA-001`'s deterministic golden-screenshot capture (plan.md §7): loads the fixed demo world,
+runs a fixed 180 ticks, writes `golden_frame_0060/0120/0180.png`, then exits on its own (needs
+`xvfb-run`, no `timeout` required since it self-terminates — confirmed via 2 independent runs
+producing byte-identical PNGs). **Not wired into the default `ctest` run** — like the live headless
+check above, it needs a real display/GL context, which isn't guaranteed in every environment that
+runs `ctest`; run it explicitly:
+```
+cd build-cna && xvfb-run -a ./GalaxyEggbertCNA --golden-capture
 ```
 
 Regenerate the sample world (only needed after editing `tools/GenerateSampleWorld3D.cpp`):

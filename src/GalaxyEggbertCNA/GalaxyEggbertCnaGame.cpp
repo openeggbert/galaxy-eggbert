@@ -1028,6 +1028,23 @@ namespace GalaxyEggbert::CNA
     {
         Game::Update(gameTime);
 
+        // INFRA-001 (plan.md §7) -- see EnableGoldenCaptureMode()'s own
+        // comment. The one-time setup runs here; the actual screenshot
+        // capture (needs a rendered frame) happens in Draw().
+        if (goldenCaptureMode_)
+        {
+            if (!goldenCaptureArmed_)
+            {
+                goldenCaptureArmed_ = true;
+                if (phase_ != GalaxyEggbert::GamePhase::Play)
+                {
+                    SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+                }
+                LoadMission(999);
+            }
+            ++goldenCaptureTick_;
+        }
+
         // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --
         // incremented unconditionally every Update() tick, regardless of
         // phase, matching the real source's own `phaseTime++` placement.
@@ -3910,6 +3927,44 @@ namespace GalaxyEggbert::CNA
             hudScreenshot.SaveAsPng("screenshot_hud.png");
             std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
                       << std::endl;
+        }
+
+        // INFRA-001 (plan.md §7) -- see EnableGoldenCaptureMode()'s own
+        // comment. Fixed tick indices chosen to let the world settle
+        // (terrain/camera/spawn) and cover a couple of seconds of
+        // deterministic simulation at the default 60Hz fixed timestep.
+        // Gated the same way as the HUD screenshot above (avoids the
+        // Vulkan mid-draw-readback corruption).
+        if (goldenCaptureMode_ && drawFrameIndex_ > terrainPixelPrintedFrame_)
+        {
+            static constexpr int kGoldenCaptureTicks[] = {60, 120, 180};
+            constexpr int kGoldenCaptureCount =
+                static_cast<int>(sizeof(kGoldenCaptureTicks) / sizeof(kGoldenCaptureTicks[0]));
+            if (goldenCaptureNextIndex_ < kGoldenCaptureCount &&
+                goldenCaptureTick_ >= kGoldenCaptureTicks[goldenCaptureNextIndex_])
+            {
+                const auto& viewport = device.getViewportProperty();
+                const int w = viewport.getWidthProperty();
+                const int h = viewport.getHeightProperty();
+                std::vector<Microsoft::Xna::Framework::Color> backBuffer(
+                    static_cast<std::size_t>(w) * static_cast<std::size_t>(h),
+                    Microsoft::Xna::Framework::Color(0, 0, 0, 0));
+                device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
+                Microsoft::Xna::Framework::Graphics::Texture2D goldenShot(device, w, h);
+                goldenShot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
+                char filename[64];
+                std::snprintf(filename, sizeof(filename), "golden_frame_%04d.png",
+                              kGoldenCaptureTicks[goldenCaptureNextIndex_]);
+                goldenShot.SaveAsPng(filename);
+                std::cout << "GalaxyEggbertCNA: wrote " << filename << " (" << w << "x" << h << ")."
+                          << std::endl;
+                ++goldenCaptureNextIndex_;
+                if (goldenCaptureNextIndex_ >= kGoldenCaptureCount)
+                {
+                    std::cout << "GalaxyEggbertCNA: golden capture complete, exiting." << std::endl;
+                    Exit();
+                }
+            }
         }
     }
 
