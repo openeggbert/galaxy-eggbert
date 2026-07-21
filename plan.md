@@ -5775,6 +5775,26 @@ specifically, same as any other large/risky item elsewhere in this file.
       reference copy, restored after). **Not wired into the default `ctest` run** (needs a real
       display/GL context, same reason `INFRA-001` isn't) — run explicitly, documented in `NEXT.md`
       §7.
+      **Corrected 2026-07-22 — was marked "done" too broadly against `REMAKE-ANALYSIS.md` P0-1's
+      actual scope (external audit, independently re-verified by direct code/spec reading before
+      accepting)**: two real gaps, not previously disclosed:
+      1. **Script bug, fixed same day**: `verify_golden_frames.sh` ran under `set -euo pipefail`
+         with no `|| true` after the game-launch line — if the binary itself fails to start (no
+         display/GPU, confirmed as the exact failure mode in at least one other environment: "No
+         available video device"), the script died right there under `set -e`, before ever reaching
+         the per-frame `FAIL`-reporting loop below it — a genuinely silent failure (zero output,
+         just a bare nonzero exit code), not the intended "FAIL: golden_frame_NNNN.png was not
+         captured" per frame. Reproduced directly (a fake binary that exits 1): old script produced
+         zero output; fixed script (`|| true` added) correctly prints all 3 `FAIL: ... was not
+         captured` lines. `INFRA-001`'s own "fully deterministic" claim was never at risk — this was
+         purely the wrapper script's own error handling, not the capture mode itself.
+      2. **"Behavioral trace" half of P0-1 was never built, still open**: `REMAKE-ANALYSIS.md`'s own
+         P0-1 text asks for TWO things — a golden-image harness (this task, done) AND "a
+         deterministic-tick trace (position/velocity/anim-state per tick) captured to a text log and
+         diffed" so "passes unit tests but feels wrong live" becomes a checkable regression, same as
+         visuals. Only the screenshot half exists; no per-tick behavioral log/diff harness exists
+         anywhere in this repo. Left genuinely open — needs its own scoped task, not silently folded
+         into "INFRA-002 done."
 - [x] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) — **done 2026-07-21.** New
       `tools/VerifyGetObjIcon.cpp` (headless, engine-agnostic — `GEObjectIcons.cpp` only depends on
       `def/ObjectType.hpp`, same precedent `GenerateSampleWorld3D` already established), registered
@@ -5794,6 +5814,17 @@ specifically, same as any other large/risky item elsewhere in this file.
       **verified it actually catches regressions**, not just trivially passing: deliberately
       mutated one divisor in `GEObjectIcons.cpp` (6→9 for `ObjectType17`), confirmed the test fails
       with a precise mismatch message, then reverted (confirmed via a clean `git diff`).
+      **Corrected 2026-07-22 — marked "done" too broadly against P0-2's actual full ask (external
+      audit, independently re-verified against `REMAKE-ANALYSIS.md`'s own text before accepting)**:
+      P0-2 explicitly asks to "cross-check every `GetObjIcon` array/divisor against the reference
+      doc **programmatically** (parse the reference tables, compare) so the 34-and-counting 'Fixed'
+      notes stop being discovered by hand." What was actually delivered is (a) a regression lock
+      whose expected values are transcribed FROM `GEObjectIcons.cpp` itself, not derived
+      independently, plus (b) exactly ONE manual inline cross-check against
+      `08-animations.md` (the `ObjectType25` frame-count discrepancy). That is real, useful
+      value — but it is not the systematic parse-`08-animations.md`-and-compare-every-entry tool
+      P0-2 describes, which still does not exist. Left genuinely open, not silently closed by this
+      task.
 - [x] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) done (2026-07-21). Marked the still-unverified 2D→3D
       render-mapping icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`
       §10.2-§10.5, as applied per-icon in `02-tiles.md`'s Category column) as an explicit,
@@ -5823,6 +5854,15 @@ specifically, same as any other large/risky item elsewhere in this file.
         change to one of these 131 icons, so such a change can't quietly be treated as "already
         correct" without going through the same direct-identification process §11 used for the
         other 34.
+      **Clarified 2026-07-22 (external audit)**: confirmed via direct `grep` that
+      `UnverifiedRenderMapping.hpp` is referenced ONLY by its own test, nowhere in `src/` — the
+      *production renderer itself* never consults this table (e.g. no debug-overlay flag, no
+      CI check tying a diff touching one of these 131 icons to a required golden re-verification).
+      The "gate them behind the golden harness" framing above is accurate only in the loose sense
+      that ANY render change shows up in a golden-frame diff regardless of this table's own wiring
+      — the table is a documented reference list for a human to check against, not a structural,
+      automatic enforcement mechanism. That distinction was already implicit in the "Bookkeeping
+      only" line above, just not spelled out this explicitly before.
 - [x] `INFRA-005` (`REMAKE-ANALYSIS.md` P1-1) done (2026-07-21). Scoped with the user first (full
       unified resolver, sub-tile fidelity, `BlupiAdjust`-style penetration recovery all explicitly
       chosen over the smaller/cheaper alternatives offered), then researched real mobile-eggbert
@@ -5905,6 +5945,28 @@ specifically, same as any other large/risky item elsewhere in this file.
         reverting the temporary bug re-injection (confirmed via `git diff`). Full regression clean
         (80/81, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure); golden-frame
         byte-match unchanged (idle-spawn baseline untouched); live headless smoke run clean.
+      **Corrected 2026-07-22 — the single biggest overclaim in this whole `INFRA-*` series (external
+      audit, independently re-verified by re-reading `REMAKE-ANALYSIS.md`'s exact P1-1 wording and
+      the current code side by side before accepting)**: P1-1 literally asks to "compute the merged
+      intended end position, then resolve it once against terrain for **both** axes and **both**
+      grounded and airborne states" — mirroring real `Decor::TestPath()`'s own shape (one rect, X+Y
+      resolved TOGETHER in a single Bresenham march, confirmed by this task's own research earlier
+      in this entry). What was actually built is **3 separate, sequential per-axis `ResolveMove()`
+      calls** (`GEBlupiController.cpp`: X first, then Z, then — in the vertical block further down —
+      Y last), each resolving against a snapshot of the OTHER two axes' already-updated position, not
+      one merged 3D delta resolved in a single pass. This was a real, reasoned design choice (per-axis
+      resolution preserves this engine's existing "slide along a wall" behavior when a diagonal move
+      is partially blocked — a merged single-sweep resolver would need its own new logic to reproduce
+      that, not get it for free) — but it was never disclosed AS a deviation from P1-1's literal
+      spec, and "done" was too strong a word for it. The airborne-wall-clip bug this task actually
+      set out to fix (the concrete, user-facing symptom) IS genuinely fixed either way — per-axis
+      resolution still correctly stops each axis independently against solid terrain regardless of
+      grounded state, which is what closed that gap — so this correction is about the *algorithm
+      shape* not matching the spec's literal request, not about the fix itself being wrong or
+      incomplete for the bug it targeted. Whether to actually merge X/Z(/Y) into one true combined-
+      delta resolve, matching P1-1's literal ask, is a separate, real, undecided question — it would
+      touch already-verified movement code again and needs the same explicit user sign-off P1-1
+      itself already requires before any such change starts.
 - [~] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **pilot done (2026-07-21), full migration still open.**
       Replace the open-coded `if (obj.type == ObjectTypeN)` chains inside
       `GalaxyEggbertCnaGame::Update()` (~2073 lines) and `GEInteractionSystem::Update()` (~1677

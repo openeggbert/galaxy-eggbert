@@ -315,6 +315,37 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### docs+fix: external audit of INFRA-001..005 "done" claims — 4 confirmed overclaims corrected (2026-07-22)
+
+An independent audit challenged several `plan.md` `[x] done` markers against `REMAKE-ANALYSIS.md`'s
+actual requirement text. Rather than accept or dismiss it, independently re-verified every specific
+claim by reading the cited file:line locations and the original P0-1/P0-2/P1-1 spec wording directly
+— all held up. Confirmed and fixed:
+
+- **`INFRA-002`**: `verify_golden_frames.sh` ran under `set -euo pipefail` with no `|| true` after
+  the game-launch line — if the binary can't even start (no display/GPU), the script died there,
+  before reaching its own per-frame `FAIL` reporting, producing zero output instead of the intended
+  "FAIL: golden_frame_NNNN.png was not captured" per frame. Reproduced with a fake binary that exits
+  1 (old script: silent; fixed script: correct 3 `FAIL` lines) — a real bug, now fixed. Separately,
+  P0-1's "behavioral trace" (deterministic per-tick position/velocity/anim-state log, diffed) was
+  never built — only the screenshot half of P0-1 exists. Left open, not silently folded in.
+- **`INFRA-003`**: P0-2 asked for a *programmatic* cross-check of every `GetObjIcon` entry against
+  `08-animations.md`. What exists is a regression lock (data copied from the source file itself)
+  plus one manual spot-check — real value, but not what P0-2 describes. Left open.
+- **`INFRA-004`**: confirmed via `grep` that `UnverifiedRenderMapping.hpp` is used only by its own
+  test, nowhere in the actual renderer — a documented reference list a human can check against, not
+  automatic enforcement. Already implicit in the task's own "bookkeeping only" line, now stated
+  explicitly.
+- **`INFRA-005`**: the biggest one. P1-1 asked for ONE merged-position resolve covering both axes;
+  the actual code is 3 sequential per-axis `ResolveMove()` calls (X, then Z, then Y) — a real,
+  reasoned design choice (preserves slide-along-wall behavior) that was never disclosed as a
+  deviation from spec. The airborne-wall-clip bug this task actually targeted is still genuinely
+  fixed either way — this correction is about algorithm shape, not that fix being wrong.
+
+All 4 corrections written directly into `plan.md`'s own `INFRA-002`/`003`/`004`/`005` entries (dated
+2026-07-22, not silently edited into the original "done" text) so the history stays honest. No
+functional code changed except the one-line script fix.
+
 ### fix: third-person fox placeholder wall-clip (2026-07-21)
 
 Live user bug report: "liska... muze vejit skoro cela do zdi" (the fox can walk almost entirely
@@ -1882,16 +1913,19 @@ Non-editor tasks, available if the editor line is paused:
    Verify: `cmake --build build-cna --target VerifyTileUvBounds -j2` plus a live screenshot.
 
 4. **`plan.md` §7's correctness-infrastructure task breakdown** (2026-07-21, `INFRA-001`
-   through `INFRA-010`), if there's appetite for infrastructure work rather than another
-   feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004`/`INFRA-007`/`INFRA-009` are **done**
-   (2026-07-21 — golden-screenshot harness + diffing, `GetObjIcon()` data-integrity test,
-   unverified-render-mapping table, the full 17-flag `*ThisFrame()` → typed-event-queue migration,
-   sibling-repo commit pins). Remaining: `INFRA-010` (compact "current truth" index),
-   small/self-contained/lowest-priority. `INFRA-005`/`INFRA-006` (shared collision
-   resolver, `ObjectType` handler table) explicitly need their own scoping session + the user's
-   go-ahead before any code changes — do not start those from this line alone. The dual-renderer
-   thread (`renderers.md`) has no task IDs yet by explicit user choice (2026-07-21) — ask before
-   breaking that one down too.
+   through `INFRA-010`) — this whole paragraph is now stale (INFRA-005/006/BUILD-011 landed since
+   it was written) and had 4 outright "done" overclaims (external audit, 2026-07-22, independently
+   re-verified against `REMAKE-ANALYSIS.md`'s own wording before accepting — see `plan.md`'s own
+   `INFRA-002`/`003`/`004`/`005` entries for the specific corrections). Read those entries directly
+   rather than trust a status summary here — in short: `INFRA-001`/`007`/`009` hold up as described;
+   `INFRA-002` had a real script bug (fixed) and is missing P0-1's "behavioral trace" half (still
+   open); `INFRA-003` is a regression lock only, not the programmatic reference-doc cross-check
+   P0-2 asked for (still open); `INFRA-004`'s table is unused by the actual renderer (a documented
+   reference list, not automatic enforcement); `INFRA-005` uses 3 sequential per-axis resolves, not
+   the single merged-position resolve P1-1 literally asked for (the airborne-wall-clip bug it set
+   out to fix is still genuinely fixed either way — this is about the algorithm shape, not that
+   fix). `INFRA-006` is an honest partial (3 families migrated). `INFRA-010` remains untouched,
+   correctly low-priority.
 
 ## 9. Do not do yet
 

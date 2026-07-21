@@ -43,7 +43,7 @@ for f in "${frames[@]}"; do
     rm -f "${build_dir}/${f}"
 done
 
-(cd "${build_dir}" && timeout 20 "./GalaxyEggbertCNA" --golden-capture) > /dev/null 2>&1
+(cd "${build_dir}" && timeout 20 "./GalaxyEggbertCNA" --golden-capture) > /dev/null 2>&1 || true
 
 all_ok=1
 for f in "${frames[@]}"; do
