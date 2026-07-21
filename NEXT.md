@@ -317,6 +317,19 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### chore: fix a `-Wtype-limits` dead-code warning, sweep for more (2026-07-23)
+
+With the editor plan complete, swept every `galaxy-eggbert`-only source file (engine-agnostic
+`src/GalaxyEggbert/Worlds/`, `MoveObjectRecord.cpp`, plus the handful of CNA-side files with no
+Easy3D/CNA/Microsoft::Xna header dependency — most CNA game code couldn't be checked this way
+without pulling in sibling-repo headers, out of this session's repo-only scope) for compiler
+warnings via `g++ -Wall -Wextra -fsyntax-only`. Found exactly one, in
+`GEBlupiController::IsPointSolid()`: `blockType < 0` where `blockType` is `world.getBlock(...).type()`
+(`std::uint16_t`, unsigned) — always false, dead code, functionally harmless (the upper-bound half
+of the same check already covered every actually-reachable case). Removed the dead clause; full
+regression clean on all 3 native backends (behavior-preserving by construction, confirmed unchanged
+test results).
+
 ### test: re-investigated "grass-topped cubes walkable-through", does not reproduce (2026-07-23)
 
 With the editor plan complete, swept `plan.md`'s "Known open bugs" for stale entries. Found one

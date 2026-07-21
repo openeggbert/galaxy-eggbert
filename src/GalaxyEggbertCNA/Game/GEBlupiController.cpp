@@ -312,7 +312,7 @@ namespace GalaxyEggbert::CNA
         {
             return false;
         }
-        if (!checkSubcell || blockType < 0 || blockType > 440)
+        if (!checkSubcell || blockType > 440)
         {
             // checkSubcell=false: caller wants the same coarse "non-air
             // (minus the 4 exceptions above)" answer IsSolidAt() always
