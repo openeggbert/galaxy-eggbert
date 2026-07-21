@@ -106,6 +106,8 @@ namespace GalaxyEggbert::CNA
         playTestRequested_ = false;
         hasSelectedObject_ = false;
         selectionHighlightRenderer_.Hide();
+        dirty_ = false; // EDITOR-112: a freshly loaded/created world starts clean
+        backConfirmArmed_ = false;
     }
 
     void GEWorldEditor::Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
@@ -313,7 +315,7 @@ namespace GalaxyEggbert::CNA
                     command.blockChanges.push_back({px, py, pz, before, after});
                 }
                 commandStack_.Push(std::move(command));
-                needsPresentationRebuild_ = true;
+                MarkMutated();
             }
         }
         else if (middleHeld && !middleHeldLastFrame_ && !paletteResult.clickConsumed && hasHighlight_ &&
@@ -326,7 +328,7 @@ namespace GalaxyEggbert::CNA
             command.kind = GEEditCommand::Kind::BlockEdit;
             command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
             commandStack_.Push(std::move(command));
-            needsPresentationRebuild_ = true;
+            MarkMutated();
         }
         else if ((enterHeld && !enterHeldLastFrame_ && !worldPath_.empty()) ||
                  paletteResult.action == GEEditorPalette::ToolbarAction::Save)
@@ -334,6 +336,8 @@ namespace GalaxyEggbert::CNA
             if (!worldPath_.empty())
             {
                 world.saveToFile(worldPath_);
+                dirty_ = false; // EDITOR-112: matches disk again, Back no longer needs to confirm
+                backConfirmArmed_ = false;
             }
         }
         else if ((undoKeyHeld && !undoKeyHeldLastFrame_) ||
@@ -341,7 +345,7 @@ namespace GalaxyEggbert::CNA
         {
             if (commandStack_.Undo(world))
             {
-                needsPresentationRebuild_ = true;
+                MarkMutated();
                 RefreshSelectedObjectAfterHistoryChange(world);
             }
         }
@@ -350,7 +354,7 @@ namespace GalaxyEggbert::CNA
         {
             if (commandStack_.Redo(world))
             {
-                needsPresentationRebuild_ = true;
+                MarkMutated();
                 RefreshSelectedObjectAfterHistoryChange(world);
             }
         }
@@ -359,10 +363,28 @@ namespace GalaxyEggbert::CNA
             // Re-enters the browser for the SAME gamer slot (plan.md
             // EDITOR-107) -- IsBrowsing() reports true starting next
             // frame's dispatch. Deliberately does NOT auto-save; a player
-            // who wants to keep changes presses Save/Enter first (an
-            // "unsaved changes?" guard is a later hardening-pass item, not
-            // a functional gap in this milestone).
-            EnterBrowser(gamerSlot_);
+            // who wants to keep changes presses Save/Enter first.
+            //
+            // Unsaved-changes guard (EDITOR-112): if dirty_, the FIRST Back
+            // press only arms a confirm (backConfirmArmed_) instead of
+            // leaving -- same real "two-tap" idiom this editor's own
+            // GEEditorBrowserScreen already uses for its delete button
+            // (armedDeleteIndex_). The palette's Back button brightens
+            // while armed (ButtonGreenActive(), see GEEditorPalette::Draw())
+            // so the "click again to discard" state is visible without any
+            // text. A SECOND Back press while armed actually leaves,
+            // discarding whatever wasn't saved. PlayTest/Save below both
+            // clear backConfirmArmed_ too (dirty_ became false, so there's
+            // nothing left to confirm).
+            if (dirty_ && !backConfirmArmed_)
+            {
+                backConfirmArmed_ = true;
+            }
+            else
+            {
+                backConfirmArmed_ = false;
+                EnterBrowser(gamerSlot_);
+            }
         }
         else if (paletteResult.action == GEEditorPalette::ToolbarAction::PlayTest && !worldPath_.empty())
         {
@@ -372,6 +394,8 @@ namespace GalaxyEggbert::CNA
             // switching phase/reloading (this class has no GEWorldRuntime
             // access).
             world.saveToFile(worldPath_);
+            dirty_ = false;
+            backConfirmArmed_ = false;
             playTestRequested_ = true;
         }
         else if (((boxKeyHeld && !boxKeyHeldLastFrame_) ||
@@ -415,7 +439,7 @@ namespace GalaxyEggbert::CNA
                 if (!command.blockChanges.empty())
                 {
                     commandStack_.Push(std::move(command));
-                    needsPresentationRebuild_ = true;
+                    MarkMutated();
                 }
                 boxFirstCornerPlaced_ = false;
                 showingBox_ = false;
@@ -438,7 +462,7 @@ namespace GalaxyEggbert::CNA
             command.skyRegionBefore = before;
             command.skyRegionAfter = after;
             commandStack_.Push(std::move(command));
-            needsPresentationRebuild_ = true;
+            MarkMutated();
         }
         else if ((skyRegionNextKeyHeld && !skyRegionNextKeyHeldLastFrame_) ||
                  paletteResult.action == GEEditorPalette::ToolbarAction::SkyRegionNext)
@@ -452,7 +476,7 @@ namespace GalaxyEggbert::CNA
             command.skyRegionBefore = before;
             command.skyRegionAfter = after;
             commandStack_.Push(std::move(command));
-            needsPresentationRebuild_ = true;
+            MarkMutated();
         }
         else if (selectKeyHeld && !selectKeyHeldLastFrame_)
         {
@@ -513,7 +537,7 @@ namespace GalaxyEggbert::CNA
             PlaceMoveObject(world, after);
             commandStack_.Push(std::move(command));
             selectedObject_ = after;
-            needsPresentationRebuild_ = true;
+            MarkMutated();
         }
         else if (cycleFieldKeyHeld && !cycleFieldKeyHeldLastFrame_ && hasSelectedObject_)
         {
@@ -538,7 +562,7 @@ namespace GalaxyEggbert::CNA
                 PlaceMoveObject(world, *after);
                 commandStack_.Push(std::move(command));
                 selectedObject_ = *after;
-                needsPresentationRebuild_ = true;
+                MarkMutated();
             }
         }
         else if (deleteObjectKeyHeld && !deleteObjectKeyHeldLastFrame_ && hasSelectedObject_)
@@ -553,7 +577,7 @@ namespace GalaxyEggbert::CNA
             RemoveMoveObject(world, selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
             commandStack_.Push(std::move(command));
             hasSelectedObject_ = false;
-            needsPresentationRebuild_ = true;
+            MarkMutated();
         }
         leftHeldLastFrame_ = leftHeld;
         middleHeldLastFrame_ = middleHeld;
@@ -685,6 +709,6 @@ namespace GalaxyEggbert::CNA
         }
 
         palette_.Draw(device, terrainTexture, elementTexture, exploTexture, blupiTexture, blupi1Texture,
-                      viewportWidth, viewportHeight);
+                      viewportWidth, viewportHeight, backConfirmArmed_);
     }
 }

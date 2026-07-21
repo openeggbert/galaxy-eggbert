@@ -123,13 +123,18 @@ namespace GalaxyEggbert::CNA
         // blupiObjectTexture_/blupi1ObjectTexture_) -- lent here so
         // Objects mode can draw each type's real icon from whichever sheet
         // GEObjectIcons says it actually lives on.
+        // @p backConfirmArmed (EDITOR-112) brightens the Back button the
+        // same way the mode-toggle/tab-toggle "on" state already does --
+        // GEWorldEditor's own unsaved-changes guard armed a 2nd-tap
+        // confirm, and this is the only visual signal for it (no text
+        // labels anywhere in this class, see its own class comment).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                  Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
                  Microsoft::Xna::Framework::Graphics::Texture2D& elementTexture,
                  Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
                  Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
                  Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
-                 int viewportWidth, int viewportHeight);
+                 int viewportWidth, int viewportHeight, bool backConfirmArmed = false);
 
     private:
         [[nodiscard]] const std::vector<int>& CurrentIconList() const noexcept

@@ -75,8 +75,19 @@
 //     (Delete), each as a real GEEditCommand::Kind::MoveObjectEdit pushed
 //     through GEWorldEditor::Update() -- still GraphicsDevice-free (only
 //     Draw()'s new selection-highlight cube needs one).
-// Later milestones (sky-region round-trips, the hardening pass) add their
-// own sections here.
+//   - EDITOR-111: GEEditCommandStack's SkyRegionEdit undo/redo directly,
+//     GEWorldEditor's Left/Right arrow sky-region stepper (wrap-around at
+//     both ends, 0<->31) driven through the same synthetic-input path, and
+//     the palette's SkyRegionPrev/Next toolbar buttons driving the
+//     identical action -- still GraphicsDevice-free.
+//   - EDITOR-112 (hardening pass): a box-fill test straddling the world's
+//     own Z=0/Z=99 bounds (a real GEWorldEditor-level integration case,
+//     not just GEBoxRegion::NormalizeAndClamp's own EDITOR-105 unit test),
+//     and the unsaved-changes guard -- GEWorldEditor's dirty_ flag and the
+//     Back button's 2-tap confirm (armed on the first press while dirty,
+//     leaves on the second; a further edit while armed disarms it; saving
+//     clears it), same synthetic-input path, still GraphicsDevice-free.
+// Later milestones add their own sections here.
 int main()
 {
     using namespace GalaxyEggbert::CNA;
@@ -652,6 +663,108 @@ int main()
               "undo restores the BoxFill-button fill in one step, same as the F-key path");
     }
 
+    // --- GEWorldEditor: box-fill straddling the world's own Z bounds (plan.md EDITOR-112) ---
+    {
+        World world;
+        for (int z = 0; z < 100; ++z)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                world.setBlock(50, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(1));
+            }
+        }
+
+        constexpr float kDefaultYaw = 0.0f;
+        constexpr float kDefaultPitch = -0.35f;
+        constexpr float kDefaultFlySpeed = 15.0f;
+        const float cosPitch = std::cos(kDefaultPitch);
+        const float fwdX = std::sin(kDefaultYaw) * cosPitch;
+        const float fwdY = std::sin(kDefaultPitch);
+        const float fwdZ = -std::cos(kDefaultYaw) * cosPitch;
+
+        // hit.z = camZ + zOffset at this fixed camY/pitch/yaw (zOffset is a
+        // pure function of camY alone, from the ray-plane intersection's
+        // own linear geometry) -- measured once via an arbitrary probe
+        // camZ (confirmed additive: a 2nd probe at a different camZ landed
+        // exactly zOffset away too, not just assumed), then solved for the
+        // exact camZ that lands the raycast precisely on the world's own
+        // Z=0 and Z=99 edge cells.
+        constexpr float kStartCamY = 10.0f, kProbeCamZ = 50.0f;
+        const RaycastHit probeHit = Raycast(world, 50.0f, kStartCamY, kProbeCamZ, fwdX, fwdY, fwdZ, 200.0f);
+        check(probeHit.hit, "test setup sanity: the reference probe raycast hits the slab");
+        const float zOffset = static_cast<float>(probeHit.z) - kProbeCamZ;
+        const float camZForZ0 = 0.0f - zOffset;
+        const float camZForZ99 = 99.0f - zOffset;
+        const float deltaZ = camZForZ99 - camZForZ0;
+
+        // GEWorldEditor's own camX_/camZ_ are RENDER space (shifted by
+        // -GEWorldRuntime::kWorldCenterX/Z=50 from the RAW GRID space this
+        // test's own direct Raycast() calls above use directly) -- render
+        // X=0 is raw-grid X=50 (matching the slab), same convention the
+        // existing box-fill tests above already establish via their own
+        // EnterEditing(0.0f, 10.0f, 0.0f) start.
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, kStartCamY, camZForZ0 - 50.0f);
+        Easy3D::Camera3D camera;
+
+        const RaycastHit cornerAHit = Raycast(world, 50.0f, kStartCamY, camZForZ0, fwdX, fwdY, fwdZ, 200.0f);
+        check(cornerAHit.hit && cornerAHit.z == 0,
+              "test setup sanity: corner A lands exactly on the world's own Z=0 edge cell");
+
+        const KeyboardState fKeys{Keys::F};
+        editor.Update(fKeys, restMouse, 0.0f, 800, 480, camera, world); // press F: picks corner A at Z=0
+
+        // Reaching corner B needs a pure +Z shift with NO net Y change --
+        // but S (the only key that moves along Z at this pitch) is tied to
+        // the pitched-down forward vector, which has its OWN Y component
+        // too (GEWorldEditor.cpp's own `move()`), so a plain S press would
+        // also drift camY_ and land on the wrong Z (confirmed empirically:
+        // the naive single-key version of this test missed edge cases
+        // exactly this way). Two Update() calls instead: first S for dt1
+        // (the exact dt solving camZ_ += cosPitch*flySpeed*dt1 = deltaZ),
+        // which ALSO bumps camY_ by -sinPitch*flySpeed*dt1 as a side
+        // effect; then LeftControl (pure world-down, zero X/Z component)
+        // for dt2 that exactly cancels that same bump, restoring camY_ to
+        // kStartCamY before the second raycast.
+        const float dt1 = deltaZ / (cosPitch * kDefaultFlySpeed);
+        check(dt1 > 0.0f, "test setup sanity: corner B requires moving further away (+Z), not backward");
+        editor.Update(KeyboardState{Keys::S}, restMouse, dt1, 800, 480, camera, world);
+        const float deltaY1 = -std::sin(kDefaultPitch) * kDefaultFlySpeed * dt1;
+        const float dt2 = std::fabs(deltaY1) / kDefaultFlySpeed;
+        editor.Update(KeyboardState{deltaY1 > 0.0f ? Keys::LeftControl : Keys::Space}, restMouse, dt2, 800, 480,
+                     camera, world);
+
+        const RaycastHit cornerBHit = Raycast(world, 50.0f, kStartCamY, camZForZ99, fwdX, fwdY, fwdZ, 200.0f);
+        check(cornerBHit.hit && cornerBHit.z == 99,
+              "test setup sanity: corner B lands exactly on the world's own Z=99 edge cell");
+
+        editor.Update(fKeys, restMouse, 0.0f, 800, 480, camera, world); // press F again: fills
+
+        const auto expectedRegion = NormalizeAndClamp(cornerAHit.x, cornerAHit.y, cornerAHit.z,
+                                                        cornerBHit.x, cornerBHit.y, cornerBHit.z,
+                                                        static_cast<int>(world.blocksPerAxis()));
+        check(expectedRegion.minZ == 0 && expectedRegion.maxZ == 99,
+              "the fill region straddles the world's FULL Z range, from edge to edge");
+
+        bool allFilled = true;
+        for (int z = expectedRegion.minZ; z <= expectedRegion.maxZ; ++z)
+        {
+            if (world.getBlock(50, static_cast<std::uint16_t>(cornerAHit.y), static_cast<std::uint16_t>(z))
+                    .type() != GalaxyEggbert::BlockTypes::RockPile)
+            {
+                allFilled = false;
+            }
+        }
+        check(allFilled, "the fill correctly covers every Z cell from 0 to 99 inclusive, including both edges");
+        check(editor.ConsumeNeedsPresentationRebuild(), "the edge-to-edge fill requests a presentation rebuild");
+
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(50, static_cast<std::uint16_t>(cornerAHit.y), 0).type() == 1,
+              "undo restores the real original block at the Z=0 edge");
+        check(world.getBlock(50, static_cast<std::uint16_t>(cornerAHit.y), 99).type() == 1,
+              "undo restores the real original block at the Z=99 edge, in the SAME undo step");
+    }
+
     // --- GEEditCommandStack: SkyRegionEdit undo/redo (plan.md EDITOR-111) ---
     {
         World world;
@@ -744,6 +857,104 @@ int main()
         clickButton(kSkyRegionPrevX, kSkyRegionPrevY);
         check(world.skyRegion() == 0,
               "clicking the SkyRegionPrev toolbar button steps the region back down, same as Left");
+    }
+
+    // --- GEWorldEditor: unsaved-changes guard, Back button 2-tap confirm (plan.md EDITOR-112) ---
+    {
+        // Fixed action index 3 (Back): row 1, right half -- center ~(34,62).
+        constexpr float kBackX = 34.0f, kBackY = 62.0f;
+        const auto clickBack = [&](GEWorldEditor& editor, World& world, Easy3D::Camera3D& camera)
+        {
+            const MouseState down(static_cast<int>(kBackX), static_cast<int>(kBackY), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(kBackX), static_cast<int>(kBackY), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+
+        // No unsaved changes at all: a single Back press leaves immediately,
+        // same as before this guard existed.
+        {
+            World world;
+            GEWorldEditor editor;
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            Easy3D::Camera3D camera;
+            clickBack(editor, world, camera);
+            check(editor.IsBrowsing(),
+                  "Back leaves immediately when there are no unsaved changes (single tap, unchanged behavior)");
+        }
+
+        // A real edit (Right arrow, sky region) makes the world dirty --
+        // the FIRST Back press must only arm the confirm, not leave.
+        {
+            World world;
+            GEWorldEditor editor;
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            Easy3D::Camera3D camera;
+
+            editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+            (void)editor.ConsumeNeedsPresentationRebuild();
+
+            clickBack(editor, world, camera);
+            check(!editor.IsBrowsing(),
+                  "the first Back press while dirty only arms the confirm -- it does not leave");
+
+            clickBack(editor, world, camera);
+            check(editor.IsBrowsing(),
+                  "a second Back press while still armed actually leaves, discarding the unsaved change");
+        }
+
+        // Saving clears dirty_ -- Back goes back to a single, immediate tap.
+        {
+            constexpr int kTestGamerSlot = 80;
+            std::error_code ec;
+            std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+            const auto path = NextNewWorldPath(kTestGamerSlot);
+
+            World world;
+            GEWorldEditor editor;
+            editor.SetWorldPath(path);
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            Easy3D::Camera3D camera;
+
+            editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+            (void)editor.ConsumeNeedsPresentationRebuild();
+            clickBack(editor, world, camera);
+            check(!editor.IsBrowsing(), "test setup sanity: Back is armed (dirty) before saving");
+
+            editor.Update(KeyboardState{Keys::Enter}, restMouse, 0.0f, 800, 480, camera, world);
+            clickBack(editor, world, camera);
+            check(editor.IsBrowsing(),
+                  "after saving (Enter), a single Back press leaves immediately -- nothing left to confirm");
+
+            std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
+        }
+
+        // A further edit while armed disarms the confirm (MarkMutated()'s
+        // own documented behavior) -- Back needs a fresh 2 taps again.
+        {
+            World world;
+            GEWorldEditor editor;
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            Easy3D::Camera3D camera;
+
+            editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+            (void)editor.ConsumeNeedsPresentationRebuild();
+            clickBack(editor, world, camera);
+            check(!editor.IsBrowsing(), "test setup sanity: Back is armed before the further edit");
+
+            editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+            (void)editor.ConsumeNeedsPresentationRebuild();
+
+            clickBack(editor, world, camera);
+            check(!editor.IsBrowsing(),
+                  "a further edit while armed disarms the confirm -- this Back press only re-arms it");
+            clickBack(editor, world, camera);
+            check(editor.IsBrowsing(), "a 2nd fresh Back press after the re-arm actually leaves");
+        }
     }
 
     // --- GEPaletteCategories: full numeric coverage + curated-id sanity ---

@@ -134,7 +134,12 @@ namespace GalaxyEggbert::CNA
         //     The palette's own Undo/Redo/Save toolbar buttons trigger the
         //     exact same actions via a mouse click, for players who don't
         //     know the keybindings; its 4th (Back) button returns to the
-        //     browser (EnterBrowser() again, for the same gamer slot); its
+        //     browser (EnterBrowser() again, for the same gamer slot) --
+        //     EDITOR-112's unsaved-changes guard means this is a real 2-tap
+        //     when dirty (see MarkMutated()'s own comment): the first press
+        //     only brightens the button (armed, no text label to say so),
+        //     the second actually leaves, discarding whatever wasn't
+        //     saved. A no-op single tap when there's nothing unsaved. Its
         //     5th (Play-Test) button saves @p world then requests a real
         //     gameplay session -- see ConsumePlayTestRequested() below.
         //   - F: box-fill tool. First press marks the aimed-at cell as
@@ -271,6 +276,32 @@ namespace GalaxyEggbert::CNA
         bool skyRegionNextKeyHeldLastFrame_ = false;
         bool needsPresentationRebuild_ = false;
         bool playTestRequested_ = false;
+
+        // Unsaved-changes guard (EDITOR-112). dirty_ is true from the first
+        // edit after EnterEditing()/Save()/PlayTest() until the next actual
+        // save -- see MarkMutated()'s own comment. backConfirmArmed_ is the
+        // Back button's own 2-tap state, same idiom as
+        // GEEditorBrowserScreen's armedDeleteIndex_.
+        bool dirty_ = false;
+        bool backConfirmArmed_ = false;
+
+        // Every real edit (block/object/sky-region place, remove, fill,
+        // undo, redo) calls this instead of setting needsPresentationRebuild_
+        // directly -- centralizes "the world just changed" so dirty_ can't
+        // drift out of sync with it, and doubles as the Back-confirm's own
+        // disarm signal (a further edit while armed means the player is
+        // still working, not trying to confirm leaving). Non-mutating
+        // actions (G-select, Tab-cycle-field, Escape-cancel-box) don't
+        // disarm it -- a documented, minor scope narrowing, not an
+        // oversight: the guard's real job is catching an accidental
+        // double-click on Back itself, not tracking every possible
+        // interleaved non-mutating keystroke.
+        void MarkMutated() noexcept
+        {
+            needsPresentationRebuild_ = true;
+            dirty_ = true;
+            backConfirmArmed_ = false;
+        }
 
         GEEditCommandStack commandStack_;
         GEEditorPalette palette_;

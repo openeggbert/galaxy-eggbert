@@ -308,7 +308,7 @@ namespace GalaxyEggbert::CNA
                                Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
                                Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
                                Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
-                               int viewportWidth, int viewportHeight)
+                               int viewportWidth, int viewportHeight, bool backConfirmArmed)
     {
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::BlendState;
@@ -364,7 +364,14 @@ namespace GalaxyEggbert::CNA
         addGreen(ToolbarButtonRect(kIndexUndo));
         addGreen(ToolbarButtonRect(kIndexRedo));
         addGreen(ToolbarButtonRect(kIndexSave));
-        addGreen(ToolbarButtonRect(kIndexBack));
+        if (backConfirmArmed)
+        {
+            addGreenActive(ToolbarButtonRect(kIndexBack));
+        }
+        else
+        {
+            addGreen(ToolbarButtonRect(kIndexBack));
+        }
         addGreen(ToolbarButtonRect(kIndexPlayTest));
         if (mode_ == PaletteMode::Objects)
         {
