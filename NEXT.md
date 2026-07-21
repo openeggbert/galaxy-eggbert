@@ -69,12 +69,44 @@ code is confirmed backend-agnostic through this.
 - `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default — switched back from
   Vulkan 2026-07-18, see §3; still fully overridable at configure time).
 - `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`). Has a known, unrelated CNA
-  engine bug: `BasicEffect` draws with `Alpha < 1` don't render at all under this backend (see §5),
-  and had a second real bug (missing NDC Y-flip in `SkinnedEffect` shaders, making the third-person
-  placeholder model float) found and fixed **in `../cna` itself** 2026-07-18 — that fix currently
-  sits uncommitted there, needs the user's own call on committing it (a different git repository).
+  engine bug: `BasicEffect` draws with `Alpha < 1` don't render at all under this backend (see §5;
+  not independently re-verified this session — status as last checked). The second real bug found
+  the same day (missing NDC Y-flip in `SkinnedEffect` shaders, making the third-person placeholder
+  model float) — **confirmed committed in `../cna`** (checked 2026-07-21, `INFRA-009`: all 4
+  originally-reported Vulkan `skinned3d*.vert.glsl` shaders carry the `gl_Position.y = -gl_Position.y`
+  fix line; this had previously sat uncommitted, see `plan.md` for the earlier writeup). Note in
+  passing (not otherwise investigated, out of `INFRA-009`'s bookkeeping scope): `pbr3d_skinned.vert.glsl`
+  does not have the same line — unclear if that effect is on `AvatarRenderer`'s actual render path
+  or a separate, unrelated pipeline; flag if a floating-model bug ever resurfaces specifically under
+  a PBR-skinned material.
 - `GalaxyEggbertSimple3D` is **not built** (per direction lock above) — its build is known broken
   in this environment (missing/incompatible U3D prebuilt) and this is intentionally left unfixed.
+
+### Sibling-repo commit pins (`INFRA-009`, plan.md §7)
+
+Galaxy Eggbert depends on 4 sibling repositories, each under independent development (see the
+`sharp-runtime` note above) — the commits below are what this repo was last verified to build/pass
+against. Update this list whenever a sibling repo is rebuilt against (a full local rebuild + `ctest`
+pass), not on every unrelated galaxy-eggbert commit.
+
+| Repo | Commit (as of 2026-07-21) | Date |
+|---|---|---|
+| `../easy-3d` | `e2d1cfa2` | 2026-07-11 |
+| `../cna` | `ac3aaaeb` | 2026-07-18 |
+| `../easy-gl` | `62c0a248` | 2026-07-19 |
+| `../sharp-runtime` | `d2cc9cce` | 2026-07-16 |
+
+**Known upstream failures, quarantined (not Galaxy Eggbert regressions if they reproduce again):**
+- `easy-gl-resource-smoke-tests` (ctest) — root-caused entirely in `../easy-gl`
+  (`test_texture_upload_sets_unpack_alignment_wrap_and_unit0_binding`, see §5 for the full
+  root-cause writeup). Every full `ctest` run this session shows exactly this one failure and no
+  others — if a future run shows a *different* failure count/name here, treat that as a real signal
+  worth investigating, not more of the same known issue.
+- `build-cna-vulkan`'s `BasicEffect` `Alpha < 1` non-render bug (see §5/above) — CNA engine bug, not
+  galaxy-eggbert. Still open as far as this repo's records show; worth a fresh live check next time
+  `build-cna-vulkan` is touched for an unrelated reason, since `../cna`'s blend-state handling has
+  changed since this was first found (e.g. `ddef5e8f`, a Vulkan blend-function-mapping fix already
+  merged before this bug was even reported) — plausible but **not confirmed** to be related.
 
 ### Web build (Emscripten/WebAssembly, 2026-07-17)
 `GalaxyEggbertCNA` also builds and runs in-browser via Emscripten — see `plan.md` `BUILD-003` for
@@ -756,7 +788,8 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
   fix with no possible galaxy-eggbert-side workaround, needs the user's own call on committing it
   there. All 3 native CNA build dirs (`build-cna`/`cmake-build-debug`/`build-cna-vulkan`) rebuilt
   and reconfirmed working. Full galaxy-eggbert regression clean (only the 1 known pre-existing
-  failure).
+  failure). **Update (2026-07-21, `INFRA-009`): confirmed committed** in `../cna` — see §2's new
+  "Sibling-repo commit pins" subsection.
 - **fix: placeholder Fox model floating + wrong scale, real zero-gravity Balloon freeze (plan.md
   `E3D-MIG-069`/`135`).** Three user-reported bugs. (1) The third-person placeholder Fox model
   visibly hovered above the terrain. Root cause independently confirmed via 3 cross-checked

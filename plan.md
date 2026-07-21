@@ -5750,12 +5750,27 @@ specifically, same as any other large/risky item elsewhere in this file.
   lesson (a UV-bleed bug CNA reintroduced despite `BlockTypes::tileUV()` already solving it
   years earlier). No task ID; this is a practice to apply on every future render/math bug, not a
   thing to close.
-- [ ] `INFRA-009` (`REMAKE-ANALYSIS.md` P2-3) Record which sibling-repo commits (`../easy-3d`,
-      `../cna`, `../easy-gl`, `../sharp-runtime`) Galaxy Eggbert is currently verified against (a
-      short note in `NEXT.md`, updated when a sibling repo is rebuilt against), and clearly
-      quarantine the known-upstream failures already identified (`easy-gl-resource-smoke-tests`,
-      the Vulkan-backend `BasicEffect`/`SkinnedEffect` alpha bug) so they keep reading as sibling-
-      repo issues, not Galaxy Eggbert regressions, when the full suite is re-run.
+- [x] `INFRA-009` (`REMAKE-ANALYSIS.md` P2-3) done (2026-07-21). New `NEXT.md` §2 "Sibling-repo
+      commit pins" subsection: a table recording the exact commit each of the 4 sibling repos
+      (`../easy-3d` `e2d1cfa2`, `../cna` `ac3aaaeb`, `../easy-gl` `62c0a248`, `../sharp-runtime`
+      `d2cc9cce`) is currently verified against, plus a consolidated quarantine list for the known
+      upstream failures (`easy-gl-resource-smoke-tests`; `build-cna-vulkan`'s `BasicEffect` `Alpha
+      < 1` bug) cross-referencing `NEXT.md` §5's full root-cause writeups, with explicit guidance:
+      a *different* failure showing up in a future full `ctest` run is a real signal, not more of
+      the same known issue.
+      While recording this, found and fixed one real staleness in the existing quarantine notes:
+      the `SkinnedEffect` Vulkan Y-flip fix (§3's 2026-07-18 entry) was noted as "sits uncommitted
+      in `../cna`" — checked `../cna`'s current shader source directly and confirmed all 4
+      originally-reported `skinned3d*.vert.glsl` files now carry the fix line, committed. Noted in
+      passing, not investigated further (out of this task's bookkeeping scope): a 5th, related
+      shader (`pbr3d_skinned.vert.glsl`) lacks the same line — flagged in `NEXT.md` in case a
+      floating-model bug resurfaces under a PBR-skinned material specifically. Also noted, but
+      explicitly did **not** re-verify: `../cna`'s Vulkan blend-state handling has a merged fix
+      (`ddef5e8f`, predates the `BasicEffect Alpha<1` bug report) that's plausibly related but
+      unconfirmed — attempted one live headless check via `build-cna-vulkan` (a temporary,
+      fully-reverted `phase_ == Init` screenshot gate) but the Vulkan backend never reached the
+      Init screen within 15s wall-clock under `xvfb-run` in this environment, so the bug's current
+      status is recorded as "not independently re-verified this session," not asserted either way.
 - [ ] `INFRA-010` (`REMAKE-ANALYSIS.md` P2-4) Consider a compact, authoritative "current truth"
       index, separate from `plan.md`'s own historical log (505 KB / 5500+ lines) and `NEXT.md`
       (115 KB), so a session doesn't have to re-derive current state by reading the whole history
