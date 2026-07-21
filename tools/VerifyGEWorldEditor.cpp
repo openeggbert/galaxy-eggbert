@@ -769,7 +769,15 @@ int main()
         std::error_code ec;
         std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
 
-        check(CustomWorldsDir(kTestGamerSlot) == std::filesystem::path("customworlds") / "gamer77",
+        // GECustomWorldStorage.cpp roots this under "/save" on Emscripten
+        // (same documented IDBFS-mount-point difference as GESaveData::
+        // kSavePath) -- the expected path must follow the same branch.
+#if defined(__EMSCRIPTEN__)
+        const std::filesystem::path kExpectedCustomWorldsRoot = "/save/customworlds";
+#else
+        const std::filesystem::path kExpectedCustomWorldsRoot = "customworlds";
+#endif
+        check(CustomWorldsDir(kTestGamerSlot) == kExpectedCustomWorldsRoot / "gamer77",
               "CustomWorldsDir() builds the expected per-gamer-slot path");
         check(ListCustomWorlds(kTestGamerSlot).empty(),
               "ListCustomWorlds() is empty for a gamer slot with no directory yet");

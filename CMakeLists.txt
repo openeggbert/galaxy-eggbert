@@ -555,6 +555,15 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
     )
+    # Web/Node test wiring: this console tool is only ever run under Node
+    # (via ctest, never in a browser -- no .html/SUFFIX set below), so
+    # NODERAWFS gives it direct access to the real host filesystem instead
+    # of an empty MEMFS, matching native behavior for its relative
+    # "worlds3d/world999.vwr" default path with no --preload-file/embed
+    # list to maintain.
+    if(EMSCRIPTEN)
+        target_link_options(VerifyInteractionSystem PRIVATE -sNODERAWFS=1)
+    endif()
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
         target_link_libraries(VerifyInteractionSystem PRIVATE
             -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
@@ -695,6 +704,13 @@ target_include_directories(VerifyBlupiMovement PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# Web/Node test wiring, same rationale as VerifyInteractionSystem above:
+# Node-only console tool, NODERAWFS gives it real host filesystem access
+# for its relative "worlds3d/world999.vwr" default path.
+if(EMSCRIPTEN)
+    target_link_options(VerifyBlupiMovement PRIVATE -sNODERAWFS=1)
+endif()
+
 # GESaveData.hpp/.cpp are deliberately engine-agnostic (only <string>/
 # <fstream>) despite living under src/GalaxyEggbertCNA/ -- this tool links
 # it without needing CNA at all, same precedent as VerifyBlupiMovement
@@ -708,6 +724,21 @@ target_include_directories(VerifyGESaveData PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
+
+# Web/Node test wiring: unlike the NODERAWFS tools above, GESaveData's own
+# kSavePath is "/save/savedata.txt" under __EMSCRIPTEN__ (an absolute IDBFS
+# mount point the real app's pre.js sets up for browser persistence, see
+# GESaveData.hpp) -- NODERAWFS would instead map that absolute path onto the
+# real host's own "/save" directory, which is wrong here. Reuses a minimal
+# pre-js that just creates "/save" in this tool's own in-memory MEMFS (no
+# IDBFS/persistence needed -- the test runs and exits within one process).
+if(EMSCRIPTEN)
+    set_target_properties(VerifyGESaveData PROPERTIES
+        LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre-test-save-dir.js")
+    target_link_options(VerifyGESaveData PRIVATE
+        -sFORCE_FILESYSTEM=1
+        "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre-test-save-dir.js")
+endif()
 
 # GETerrainAnimDivisor.hpp/.cpp (plan.md TEST-007, 2026-07-14) is a pure
 # function of a BlockTypes icon id -- no CNA/graphics dependency at all,
@@ -790,6 +821,13 @@ target_include_directories(VerifyMoveObjectTypesCna PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# Web/Node test wiring, same rationale as VerifyInteractionSystem above:
+# Node-only console tool, NODERAWFS gives it real host filesystem access
+# for its relative "../mobile-eggbert/worlds/*.txt" reads.
+if(EMSCRIPTEN)
+    target_link_options(VerifyMoveObjectTypesCna PRIVATE -sNODERAWFS=1)
+endif()
+
 # Same engine-agnostic-parser rationale as VerifyMoveObjectTypesCna above,
 # for BigDecor: section parsing (NEXT.md §8 task 3) instead of MoveObject:.
 add_executable(VerifyBigDecorParsingCna
@@ -802,6 +840,11 @@ target_include_directories(VerifyBigDecorParsingCna PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
+
+# Web/Node test wiring, same rationale as VerifyMoveObjectTypesCna above.
+if(EMSCRIPTEN)
+    target_link_options(VerifyBigDecorParsingCna PRIVATE -sNODERAWFS=1)
+endif()
 
 # plan.md TEST-002/008/009/010: registers these 4 engine-agnostic tools with
 # ctest (VerifyInteractionSystem/VerifyGEInputPad are registered next to

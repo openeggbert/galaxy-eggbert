@@ -315,6 +315,32 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: BUILD-011 — web ctest console tools actually run under Node (2026-07-21)
+
+Found while re-verifying INFRA-005/006 on `build-web`: `ctest`'s own `add_test()` registrations for
+`VerifyBlupiMovement`/`VerifyInteractionSystem`/etc. have always been unconditional (no
+`NOT EMSCRIPTEN` guard), but nobody had ever actually run `ctest --test-dir build-web` before —
+prior web verification (`BUILD-003`) only checked the live app via headless Chrome. Doing so
+aborted immediately: only the main `GalaxyEggbertCNA` target gets `--preload-file`'d assets, so
+these standalone console tools got an empty virtual filesystem.
+
+Fixed with `-sNODERAWFS=1` (real host filesystem access, matching native exactly, zero source
+changes) for the 4 tools with relative repo/sibling-dir path reads
+(`VerifyBlupiMovement`/`VerifyInteractionSystem`/`VerifyMoveObjectTypesCna`/
+`VerifyBigDecorParsingCna`); `VerifyGESaveData` needed a different fix instead (its `/save` path is
+an absolute IDBFS mount point, not a relative repo path — NODERAWFS would wrongly map it onto the
+real host's own `/save`) — a new minimal `cmake/web/pre-test-save-dir.js` just creates `/save` in
+that tool's own in-memory MEMFS.
+
+**Second, unrelated bug found along the way**: `VerifyGEWorldEditor`'s `CustomWorldsDir()` check
+hardcoded the native-only expected path, missing `GECustomWorldStorage.cpp`'s own
+`#if defined(__EMSCRIPTEN__)` branch (`/save/customworlds`) — fixed by mirroring the same branch in
+the test. Confirmed pre-existing (not something the NODERAWFS change touched) and re-verified clean
+on `build-cna`/`build-cna-vulkan`/`cmake-build-debug` too after the fix (shared test file).
+
+Full `ctest --test-dir build-web`: **15/15 (100%)**, up from an immediate abort. See `plan.md`'s
+`BUILD-011` entry for the full writeup.
+
 ### chore: INFRA-005/INFRA-006 verified backend-agnostic on build-cna-vulkan and cmake-build-debug (2026-07-21)
 
 Following the same precedent already used for the world editor, rebuilt (incremental, `-j2`,

@@ -2063,6 +2063,37 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       real relink. Lesson: a smoke test that patches around the exact interaction path a real user
       takes doesn't verify that path — the original verification should have used the literal
       shipped `.html` unmodified, including its click-gate, not a hand-patched copy.
+- [x] BUILD-011 — `ctest` console-tool binaries (`VerifyBlupiMovement` etc.) actually run and pass
+      under Node for `build-web` — **done 2026-07-21**. Found while re-verifying INFRA-005/006 on
+      every build variant: `add_test()` for these tools has always been unconditional (not guarded
+      by `NOT EMSCRIPTEN`), so `ctest --test-dir build-web` genuinely tried to run them under Node —
+      but nobody had ever actually done so before (`BUILD-003` only verified the live app via
+      headless Chrome). Running them surfaced a real, pre-existing gap: only the main
+      `GalaxyEggbertCNA` target gets `--preload-file`'d assets; these standalone console tools got
+      an empty MEMFS, so any test reading a real file aborted before printing anything.
+      **`VerifyBlupiMovement`/`VerifyInteractionSystem`/`VerifyMoveObjectTypesCna`/
+      `VerifyBigDecorParsingCna`** (relative repo/sibling-dir paths — `worlds3d/world999.vwr`,
+      `../mobile-eggbert/worlds/*.txt`): fixed with `-sNODERAWFS=1` (`if(EMSCRIPTEN)`, `CMakeLists.txt`)
+      — since these are Node-only tools (no `.html`/browser use), NODERAWFS gives them the real host
+      filesystem directly, matching native behavior exactly with zero source changes and no
+      per-file `--preload-file` list to maintain. **`VerifyGESaveData`**: NODERAWFS was wrong here —
+      `GESaveData::kSavePath` is the absolute `/save/savedata.txt` IDBFS mount point (see `BUILD-003`),
+      and NODERAWFS would instead map that onto the real host's own `/save` (wrong, and would need
+      root permission). Fixed with a new minimal `cmake/web/pre-test-save-dir.js` (`--pre-js`, `
+      -sFORCE_FILESYSTEM=1`) that just creates `/save` in this tool's own in-memory MEMFS — no IDBFS
+      mount needed since the test runs and exits within one process, nothing to persist.
+      **Second, unrelated bug found while verifying**: `VerifyGEWorldEditor`'s own
+      `CustomWorldsDir()` check hardcoded the native-only expected path
+      (`"customworlds/gamer77"`), never accounting for `GECustomWorldStorage.cpp`'s own
+      `#if defined(__EMSCRIPTEN__)` branch (`/save/customworlds`, same precedent as
+      `GESaveData::kSavePath`) — fixed by mirroring the same platform branch in the test's own
+      expected value (`tools/VerifyGEWorldEditor.cpp`). Confirmed this was a pre-existing test gap,
+      not something the NODERAWFS change touched (`VerifyGEWorldEditor` needs no NODERAWFS —
+      Emscripten's MEMFS already allows creating nested directories anywhere under `/` without a
+      preload/mount). **Verification**: full `ctest --test-dir build-web` now **15/15 (100%)**;
+      re-confirmed the fix (a one-line test-file change, shared across all targets) on
+      `build-cna`/`build-cna-vulkan`/`cmake-build-debug` too — all still clean (only the
+      pre-existing quarantined `easy-gl-resource-smoke-tests` failure on the native dirs).
 - [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
 - [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
 - [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests
