@@ -315,6 +315,21 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: third-person fox placeholder wall-clip (2026-07-21)
+
+Live user bug report: "liska... muze vejit skoro cela do zdi" (the fox can walk almost entirely
+into a wall) — turned out to be about Blupi's own third-person placeholder model, not an enemy.
+Blupi's collision is a single point, stopping exactly flush with a wall's face; the fox mesh has
+real nose-to-tail depth with no compensating render offset, so roughly half its body visually
+projected past the collision point into any touched wall. Measured the model's real depth from
+`fox1.verts.bin` (same method as the existing `kPlaceholderModelScale`): local Z span ~154.72
+units, by far the largest axis, consistent with a quadruped body-length axis. Fixed with a new
+3rd tuning constant, `kPlaceholderModelDepthOffset = 0.6f`, applied through the yaw rotation so it
+always points opposite the model's current facing. Tuned by eye via live screenshot iteration
+(same rigor as the existing `kPlaceholderModelScale`/`kPlaceholderModelYOffset`) — confirmed fixed
+against a wall and unchanged/correct in open floor. Render-only, doesn't touch collision. Full
+regression clean on all 3 native builds. See `plan.md`'s `069` entry for the full writeup.
+
 ### fix: WorldSelect/DemoPortal hub-navigation contact detection (2026-07-21)
 
 Live user bug report ("teleporty nefunguji a blupi jimi prochazi skrz" — turned out to mean the

@@ -3381,6 +3381,34 @@ namespace GalaxyEggbert::CNA
             // this specific placeholder mesh's own translation, exactly like
             // kPlaceholderModelScale above.
             //
+            // kPlaceholderModelDepthOffset (2026-07-21, live user bug report:
+            // "liska... muze vejit skoro cela do zdi" -- the fox model can
+            // walk almost entirely into a wall): Blupi's own collision is a
+            // single POINT (not a rect), so it stops exactly flush with a
+            // wall's face -- but the fox mesh has real nose-to-tail depth
+            // (measured directly from fox1.verts.bin the same way as
+            // kPlaceholderModelScale above: local Z span -88.095..66.625,
+            // ~154.72 units, by far the largest of the 3 axes, consistent
+            // with a quadruped's body-length axis -- X's 25.19 span is
+            // shoulder width, Y's already-established 79.03 span is height).
+            // With the model's own origin centered on Blupi's collision
+            // point and no compensating offset, roughly half that real body
+            // depth (~0.7 world units at kPlaceholderModelScale) visually
+            // projected forward past the point where collision actually
+            // stops, into any wall Blupi walked up to. Confirmed live
+            // (forced third-person screenshot, Blupi placed flush against a
+            // wall): baseline showed only a tiny sliver of the fox visible;
+            // a local-space translation of +0.6 along the model's own
+            // (pre-rotation) Z axis -- applied THROUGH the yaw rotation
+            // below, not after it, so it always points opposite the model's
+            // current facing regardless of which way Blupi is turned --
+            // fully clears the mesh's front half of the wall while still
+            // looking correctly grounded/positioned in open floor (both
+            // re-verified live). Empirically tuned by eye, same category and
+            // rigor as kPlaceholderModelScale/YOffset above, not a computed
+            // value -- render-only, does not touch Blupi's own collision
+            // point at all.
+            //
             // Real `Hide` during the death-lock's own life-loss-Voyage window
             // (death-VFX follow-up, `IsDeathHidden()`'s own comment) -- first-
             // person mode already renders no Blupi model at all, so this is
@@ -3390,6 +3418,7 @@ namespace GalaxyEggbert::CNA
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
                 constexpr float kPlaceholderModelYOffset = -0.5f;
+                constexpr float kPlaceholderModelDepthOffset = 0.6f;
                 // No render-only Balloon offset here: Blupi's own physics
                 // now genuinely lift him while ballooned (GEBlupiController's
                 // kBalloonRiseSpeed, a direct port of the real
@@ -3402,6 +3431,7 @@ namespace GalaxyEggbert::CNA
                 // rule: nothing that isn't in mobile-eggbert).
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(kPlaceholderModelScale) *
+                    Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.0f, kPlaceholderModelDepthOffset) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
                         blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());

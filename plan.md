@@ -628,6 +628,35 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       **A second wasp was also added directly on the flat spawn corridor** of `worlds3d/world999.vwr`
       (see `135`'s own entry below) specifically to make manual re-testing of this exact mechanic
       trivial going forward — the original wasp requires navigating a staircase + terraced ascent.
+      **Third placeholder tuning constant found + fixed 2026-07-21** (live user bug report: "liska
+      [the fox]... muze vejit skoro cela do zdi" -- the fox can walk almost entirely into a wall):
+      Blupi's own collision is a single POINT (not a rect), so it stops exactly flush with a wall's
+      face — but the fox mesh has real nose-to-tail depth, and the model's own origin sits exactly
+      on that collision point with no compensating offset, so roughly half its real body depth
+      visually projects forward past where collision actually stops, into whatever wall Blupi
+      touches. Measured the model's own local-space Z span directly from `fox1.verts.bin` (same
+      method as `kPlaceholderModelScale`): -88.095..66.625, ~154.72 units — by far the largest of
+      the 3 axes (X's 25.19 is shoulder width, Y's already-established 79.03 is height), consistent
+      with a quadruped's nose-to-tail body-length axis. Confirmed live (forced third-person
+      screenshot, Blupi placed flush against a real wall in `worlds3d/world999.vwr`'s walled room):
+      baseline showed only a tiny sliver of the fox visible, matching the report exactly. Fixed with
+      a 3rd render-only constant, `kPlaceholderModelDepthOffset = 0.6f` — a local-space translation
+      along the model's own (pre-rotation) Z axis, applied THROUGH the yaw rotation (not after it)
+      so it always points opposite the model's current facing regardless of which way Blupi turns.
+      Empirically tuned by eye via 5 live screenshot iterations (±3.0 both directions moved the
+      model out of the camera's frame entirely, since the third-person camera tracks Blupi's own
+      position, not this render-only offset — confirmed the correct sign then narrowed with smaller
+      values; 0.8 looked worse/smaller than 0.6, settled on 0.6) — same category and rigor as
+      `kPlaceholderModelScale`/`kPlaceholderModelYOffset`, not a computed value. Re-verified live in
+      open floor (no wall nearby) to confirm no new "floating"/mispositioned look was introduced.
+      Render-only — does not touch `GEBlupiController`'s own collision point at all. Full regression
+      clean on all 3 native build dirs (same single pre-existing unrelated failure); no `ctest`
+      coverage exists for avatar rendering specifically (third-person-only, screenshot-based),
+      matching the same verification shape as the two sibling constants.
+      **Separately confirmed during this same investigation**: the actual `Teleport1-4` pillars (the
+      OTHER thing "liska" was initially confused with) are unaffected and already verified working
+      correctly (see `SCORE-013`'s own entry for the WorldSelect regression found/fixed the same
+      session) — this fix is unrelated to that one, a pure third-person rendering correction.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
