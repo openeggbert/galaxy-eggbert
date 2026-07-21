@@ -5905,6 +5905,39 @@ specifically, same as any other large/risky item elsewhere in this file.
       meaningfully-divergent enemy/hazard/combat family — blupih/blupit/wasp/creature/follower/
       projectiles — was surveyed and explicitly NOT recommended as a near-term target, being core
       kill/hazard logic with genuinely different per-type rules, a poor fit for this table shape).
+
+      **3rd family migrated (2026-07-21): the 5 "basic" pickups** (Treasure/5, Key1/49, Key2/50,
+      Key3/51, Dynamite/55) that share one real shape — self-delete on contact, defer their reward
+      to voyage completion (plan.md `158`), no gate or one plain caller-supplied bool gate. New
+      `kBasicPickupHandlers[]` + `TryCollectBasicPickup()` (a member function this time, unlike the
+      free-function particle-effect dispatch — needs `RequestVoyage()`, a private member) replace 5
+      near-identical `case` bodies.
+
+      **Deliberately excluded from this table, confirmed by reading the actual code before writing
+      it** (matching the pilot's own "table the uniform majority" precedent, not an oversight):
+      Egg(6) computes its voyage endpoint X from LIVE state (`lifeEggCount_`) at grant time — not
+      expressible as fixed table data without a per-entry function hook, costing more complexity
+      than a single type is worth collapsing. BulletPack(29) has a real immediate side effect
+      (`bulletCount_ = kBulletCap`) BEFORE deactivating, unlike every other pickup here (whose
+      reward is deferred) — same reasoning. Both stay open-coded `case` bodies.
+
+      **Verification**: `VerifyInteractionSystem` unchanged at 547/547. Bug-injection teeth check:
+      flipping Key1's `spawnsSparkleBurst` to false caught exactly 1 precise failure ("collecting a
+      key spawns the real 4-instance ObjectType39 sparkle burst too"), reverted. **Honest gap found,
+      not fixed here (pre-existing, not introduced by this refactor)**: temporarily disabling
+      Dynamite's `requiresDynamiteGate` (equivalent to deleting the real "can't carry a second
+      stick" gate entirely) was caught by **zero** tests — `VerifyInteractionSystem`'s existing
+      dynamite coverage (§3.6) only exercises the single-pickup-then-place happy path, never
+      "touch a second stick while already carrying one." The same gap likely exists for Egg's
+      `MAX_EGG_COUNT` cap and BulletPack's ammo cap too (neither has a synthetic-second-instance
+      test either) — a pre-existing, cross-cutting test-coverage gap spanning all 3 capped pickups,
+      not unique to Dynamite or to this migration; left undocumented-as-a-task deliberately rather
+      than folding an unrelated 3-pickup-wide test-coverage fix into this scoped migration. Verified
+      correct by code inspection instead: `TryCollectBasicPickup()`'s
+      `if (handler.requiresDynamiteGate && !dynamiteGateOpen) return;` is a direct, faithful
+      translation of the original `if (dynamiteCount_ == 0) { ... }` gate. Full regression clean
+      (80/81 on `build-cna`, pre-existing unrelated failure only; also re-verified clean on
+      `cmake-build-debug`); golden-frame byte-match unchanged.
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed

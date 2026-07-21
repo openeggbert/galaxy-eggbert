@@ -315,6 +315,26 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-006 3rd family — handler-table dispatch for the "basic" pickups (2026-07-21)
+
+Migrated Treasure(5)/Key1(49)/Key2(50)/Key3(51)/Dynamite(55) — pickups that self-delete on contact
+and defer their reward to voyage completion, no gate or one plain bool gate — to
+`kBasicPickupHandlers[]` + `TryCollectBasicPickup()`, replacing 5 near-identical `case` bodies.
+Egg(6) and BulletPack(29) deliberately stay open-coded: Egg's voyage endpoint depends on live
+`lifeEggCount_` state at grant time, and BulletPack has an immediate side effect
+(`bulletCount_ = kBulletCap`) before deactivating — neither fits fixed table data without adding
+more complexity than migrating one type is worth.
+
+**Verification found an honest, pre-existing gap, not introduced here**: bug-injection testing
+caught a flipped sparkle-burst flag (1 precise failure), but disabling Dynamite's carry-cap gate
+entirely was caught by zero tests — `VerifyInteractionSystem`'s dynamite coverage only exercises
+the single-pickup-then-place path, never "touch a second stick while already carrying one." The
+same gap likely applies to Egg's/BulletPack's own caps. Left undocumented-as-a-task deliberately
+(a 3-pickup-wide test-coverage gap, not something to fold into this one scoped migration) —
+verified the gate is correct by direct code inspection instead. `VerifyInteractionSystem` unchanged
+at 547/547; full regression clean on `build-cna`/`cmake-build-debug`; golden-frame byte-match
+unchanged. See `plan.md`'s `INFRA-006` entry for the full writeup.
+
 ### feat: INFRA-006 2nd family — handler-table dispatch for the 17 self-expiring particle types (2026-07-21)
 
 Continued the migration started by the secret-power-pickup pilot. Surveyed both god-methods fresh

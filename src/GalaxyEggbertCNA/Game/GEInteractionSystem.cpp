@@ -139,6 +139,46 @@ namespace GalaxyEggbert::CNA
             return false;
         }
 
+        // INFRA-006 3rd family (plan.md §7): the 5 "basic" pickups that share
+        // one real shape -- self-delete on contact, defer their reward to
+        // voyage completion (plan.md `158`), and either need no gate at all
+        // (Treasure/Key1/2/3) or one plain caller-supplied bool gate
+        // (Dynamite, same "Gate is a plain bool, not independent logic"
+        // pattern as the secret-power-pickup pilot). New
+        // `TryCollectBasicPickup()` below replaces these 5 near-identical
+        // `case` bodies with one lookup + one dispatch.
+        //
+        // Deliberately excluded from this table (kept as their own case
+        // bodies, not an oversight): Egg(6) computes its voyage endpoint X
+        // from LIVE state (`lifeEggCount_`) at grant time -- not expressible
+        // as fixed table data without a per-entry function hook, which would
+        // cost more real complexity than a single type is worth collapsing.
+        // BulletPack(29) has a real immediate side effect
+        // (`bulletCount_ = kBulletCap`) BEFORE deactivating, unlike every
+        // other pickup here (whose reward is deferred to voyage completion)
+        // -- same reasoning, left open-coded. This mirrors the pilot's own
+        // "table the uniform majority, leave genuinely special cases
+        // open-coded" precedent rather than forcing a false-generic shape.
+        struct BasicPickupHandler
+        {
+            ObjectType type;
+            GEInteractionSystem::VoyageKind voyageKind;
+            int voyageIcon;
+            float endX;
+            float endY;
+            // Only Dynamite sets this -- Treasure/Key1/2/3 are always granted
+            // on contact, matching the real source exactly.
+            bool requiresDynamiteGate;
+            bool spawnsSparkleBurst;
+        };
+        constexpr BasicPickupHandler kBasicPickupHandlers[] = {
+            {ObjectType::ObjectType5, GEInteractionSystem::VoyageKind::Treasure, 6, 430.0f, 430.0f, false, true},    // treasure, Decor.cpp:5956
+            {ObjectType::ObjectType49, GEInteractionSystem::VoyageKind::Key1, 215, 520.0f, 418.0f, false, true},     // key 1, Decor.cpp:5971
+            {ObjectType::ObjectType50, GEInteractionSystem::VoyageKind::Key2, 222, 530.0f, 418.0f, false, true},     // key 2, Decor.cpp:5986
+            {ObjectType::ObjectType51, GEInteractionSystem::VoyageKind::Key3, 229, 540.0f, 418.0f, false, true},     // key 3, Decor.cpp:6001
+            {ObjectType::ObjectType55, GEInteractionSystem::VoyageKind::Dynamite, 252, 505.0f, 414.0f, true, false}, // dynamite, Decor.cpp:6123-6125
+        };
+
         // Opens a door tile (plan.md E3D-MIG-160/162, real `Decor::OpenDoor`,
         // ~11667): removes the tile from the terrain grid (becomes passable)
         // and spawns a transient ObjectType22 at that cell (real
@@ -1823,23 +1863,21 @@ namespace GalaxyEggbert::CNA
             // returns.
             switch (obj.type)
             {
-                case ObjectType::ObjectType5: // treasure
-                    obj.active = false;
-                    // Real end point (430,430), Decor.cpp:5956.
-                    RequestVoyage(VoyageKind::Treasure, 6, false, obj.currentX, obj.currentY, obj.currentZ, 430.0f,
-                                  430.0f, true);
-                    // Real sparkle burst (plan.md VISUAL-012) -- see
-                    // AppendSparkleBurst()'s own comment for the full real
-                    // citation. Real source also fires this same burst for
-                    // ObjectType49/50/51 -- corrected 2026-07-14: these are
-                    // the 3 KEY PICKUPS themselves (`Decor.cpp:5962-6006`,
-                    // confirmed via ObjectType.hpp's own "Key 1/2/3
-                    // collectible" doc comments), not door tiles as
-                    // previously assumed here; now wired below alongside
-                    // this engine's own existing key-pickup collection.
-                    // Real source spawns this immediately at touch time,
-                    // NOT deferred to voyage completion -- unchanged here.
-                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
+                // INFRA-006 3rd family (plan.md §7): Treasure/Key1/2/3/
+                // Dynamite share one handler-table-driven dispatch,
+                // TryCollectBasicPickup() -- see its own comment and
+                // kBasicPickupHandlers above. Real sparkle burst
+                // (plan.md VISUAL-012) fires for Treasure AND the 3 key
+                // pickups (`Decor.cpp:5956-6006`, confirmed via
+                // ObjectType.hpp's own "Key 1/2/3 collectible" doc comments),
+                // spawned immediately at touch time, NOT deferred to voyage
+                // completion.
+                case ObjectType::ObjectType5:  // treasure
+                case ObjectType::ObjectType49: // key 1
+                case ObjectType::ObjectType50: // key 2
+                case ObjectType::ObjectType51: // key 3
+                case ObjectType::ObjectType55: // dynamite stick
+                    TryCollectBasicPickup(obj, dynamiteCount_ == 0, pendingSpawns);
                     break;
                 case ObjectType::ObjectType6: // extra-life egg
                     // Real MAX_EGG_COUNT=10 gate: at the cap, touching an
@@ -1854,47 +1892,6 @@ namespace GalaxyEggbert::CNA
                         // 10147/6012.
                         RequestVoyage(VoyageKind::Egg, 21, false, obj.currentX, obj.currentY, obj.currentZ,
                                       210.0f + 16.0f * static_cast<float>(lifeEggCount_ + 1), 417.0f, true);
-                    }
-                    break;
-                case ObjectType::ObjectType49: // key 1
-                    obj.active = false;
-                    // Real end point (520,418), Decor.cpp:5971.
-                    RequestVoyage(VoyageKind::Key1, 215, false, obj.currentX, obj.currentY, obj.currentZ, 520.0f,
-                                  418.0f, true);
-                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
-                    break;
-                case ObjectType::ObjectType50: // key 2
-                    obj.active = false;
-                    // Real end point (530,418), Decor.cpp:5986.
-                    RequestVoyage(VoyageKind::Key2, 222, false, obj.currentX, obj.currentY, obj.currentZ, 530.0f,
-                                  418.0f, true);
-                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
-                    break;
-                case ObjectType::ObjectType51: // key 3
-                    obj.active = false;
-                    // Real end point (540,418), Decor.cpp:6001.
-                    RequestVoyage(VoyageKind::Key3, 229, false, obj.currentX, obj.currentY, obj.currentZ, 540.0f,
-                                  418.0f, true);
-                    AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
-                    break;
-                case ObjectType::ObjectType55: // dynamite stick
-                    // Real gate: only picked up while carrying none (real
-                    // m_blupiDynamite caps at 1) -- touching a second stick
-                    // while already carrying one does nothing at all, not
-                    // even removed (mobile-eggbert-reference/
-                    // 13-object-pickups.md). Real source plays NO immediate
-                    // sound at all here (confirmed via direct source read,
-                    // Decor.cpp:6116-6129 -- no PlaySound call, and
-                    // VoyageInit has no icon==252 case) -- the previous
-                    // immediate `SoundChannel60` was a mismatch, removed
-                    // 2026-07-14 (only the deferred completion sound
-                    // remains, in ApplyVoyageReward()).
-                    if (dynamiteCount_ == 0)
-                    {
-                        obj.active = false;
-                        // Real end point (505,414), Decor.cpp:6123-6125.
-                        RequestVoyage(VoyageKind::Dynamite, 252, false, obj.currentX, obj.currentY, obj.currentZ,
-                                      505.0f, 414.0f, true);
                     }
                     break;
                 case ObjectType::ObjectType29: // bullet pack
@@ -2915,6 +2912,30 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    void GEInteractionSystem::TryCollectBasicPickup(MobileObjSpec& obj, bool dynamiteGateOpen,
+                                                     std::vector<MobileObjSpec>& pendingSpawns)
+    {
+        for (const auto& handler : kBasicPickupHandlers)
+        {
+            if (handler.type != obj.type)
+            {
+                continue;
+            }
+            if (handler.requiresDynamiteGate && !dynamiteGateOpen)
+            {
+                return;
+            }
+            obj.active = false;
+            RequestVoyage(handler.voyageKind, handler.voyageIcon, false, obj.currentX, obj.currentY, obj.currentZ,
+                          handler.endX, handler.endY, true);
+            if (handler.spawnsSparkleBurst)
+            {
+                AppendSparkleBurst(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
+            }
+            return;
+        }
+    }
+
     void GEInteractionSystem::BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId,
                                            bool isButtonChannel, float startX, float startY, float endX, float endY,
                                            GESound& sound, float worldAnchorX, float worldAnchorY,
@@ -2968,16 +2989,16 @@ namespace GalaxyEggbert::CNA
         // since Treasure hasn't incremented yet at this point).
         switch (kind)
         {
-            case VoyageKind::Treasure:
+            case GEInteractionSystem::VoyageKind::Treasure:
             {
                 const bool completesSet = (treasuresCollected_ + 1 >= totalTreasures_);
                 sound.Play(completesSet ? GalaxyEggbert::SoundChannel::SoundChannel19
                                         : GalaxyEggbert::SoundChannel::SoundChannel11);
                 break;
             }
-            case VoyageKind::Key1:
-            case VoyageKind::Key2:
-            case VoyageKind::Key3:
+            case GEInteractionSystem::VoyageKind::Key1:
+            case GEInteractionSystem::VoyageKind::Key2:
+            case GEInteractionSystem::VoyageKind::Key3:
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
                 break;
             case VoyageKind::Egg:
@@ -2986,7 +3007,7 @@ namespace GalaxyEggbert::CNA
             case VoyageKind::Perso:
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
                 break;
-            case VoyageKind::Dynamite:
+            case GEInteractionSystem::VoyageKind::Dynamite:
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
                 break;
             case VoyageKind::BulletPack:
@@ -3114,20 +3135,20 @@ namespace GalaxyEggbert::CNA
         constexpr int kMaxEggCount = 10; // real MAX_EGG_COUNT, same value as Update()'s own local constant
         switch (voyageKind_)
         {
-            case VoyageKind::Treasure:
+            case GEInteractionSystem::VoyageKind::Treasure:
                 ++treasuresCollected_;
                 ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
-            case VoyageKind::Key1:
+            case GEInteractionSystem::VoyageKind::Key1:
                 ++keys1_;
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
-            case VoyageKind::Key2:
+            case GEInteractionSystem::VoyageKind::Key2:
                 ++keys2_;
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
-            case VoyageKind::Key3:
+            case GEInteractionSystem::VoyageKind::Key3:
                 ++keys3_;
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
@@ -3139,7 +3160,7 @@ namespace GalaxyEggbert::CNA
                 }
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
-            case VoyageKind::Dynamite:
+            case GEInteractionSystem::VoyageKind::Dynamite:
                 ++dynamiteCount_;
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
                 break;
