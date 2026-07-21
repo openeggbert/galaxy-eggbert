@@ -677,7 +677,19 @@ int main(int argc, char** argv)
             {
                 capped.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             }
-            check(capped.GetY() < 3.0f - 0.5f + 0.01f,
+            // Boundary corrected 2026-07-21 (INFRA-005, plan.md §7): the old
+            // CeilingHeightAt() used a "-0.5" convention here that turned out
+            // to be INCONSISTENT with GroundHeightAt()'s own "+1" convention
+            // for the exact same physical relationship (confirmed against
+            // GetGroundBlockType()'s own `lround(m_y) - 1`) -- ground cells
+            // are bottom-anchored (grid Y owns continuous [Y, Y+1)), so a
+            // solid ceiling block at grid Y=3 has its OWN bottom at
+            // continuous Y=3.0, not Y=2.5. ResolveMove() now uses one
+            // consistent convention for both ground and ceiling (closing
+            // this minor, previously-unnoticed inconsistency as a side
+            // effect of unification), so the real stopping boundary moved
+            // from ~2.5 to ~3.0.
+            check(capped.GetY() < 3.0f + 0.01f,
                   "balloon rise stops at the real solid ceiling instead of clipping through it");
             check(capped.GetY() > 1.5f, "balloon rise actually reached up near the ceiling, not stuck low");
         }
@@ -2013,6 +2025,67 @@ int main(int argc, char** argv)
         }
         check(stepsToResumeFiring < 200, "FireTank one-shot anim resolves within a bounded time");
         check(!firing.IsOneShotAnimPlaying(), "FireTank one-shot anim ends on its own after kFireTankDuration");
+    }
+
+    // Airborne horizontal wall collision (INFRA-005, plan.md §7) -- the
+    // CONFIRMED bug this whole resolver refactor set out to fix:
+    // TryMoveAxis() used to short-circuit its wall check entirely while
+    // `!m_onGround`, so a jumping/floating Blupi passed straight through
+    // any side wall. ResolveMove() now applies the same real wall check
+    // unconditionally regardless of grounded state (matching real
+    // Decor::BlupiStep()'s own unconditional TestPath() call, confirmed via
+    // direct source research 2026-07-21) -- this test proves it directly:
+    // launch a jump, then walk into a wall entirely while airborne (the
+    // wall is tall enough that Blupi never lands on it mid-approach), and
+    // confirm he's blocked, not clipped through.
+    {
+        Worlds::World airborneWallWorld;
+        constexpr std::uint16_t kFloorX = 90, kFloorZ = 90;
+        // A floor strip Blupi walks along, and a wall 10 tiles tall (kJumpSpeed=12,
+        // kGravity=25 -> max real jump apex is 12*12/(2*25)=2.88 units, so 10 is
+        // comfortably unreachable -- Blupi can never land ON TOP of this wall
+        // during the jump arc below, which would otherwise let a reintroduced
+        // bug hide by "landing" on the wall's top instead of genuinely clipping
+        // past it in open air).
+        for (std::uint16_t dx = 0; dx <= 5; ++dx)
+        {
+            airborneWallWorld.setBlock(static_cast<std::uint16_t>(kFloorX + dx), 0, kFloorZ,
+                                        Worlds::Block::make(BlockTypes::Ground));
+        }
+        for (std::uint16_t dy = 0; dy <= 9; ++dy)
+        {
+            airborneWallWorld.setBlock(static_cast<std::uint16_t>(kFloorX + 5), dy, kFloorZ,
+                                        Worlds::Block::make(BlockTypes::Ground));
+        }
+        // Starts RIGHT NEXT TO the wall (0.7 units away -- the wall's own
+        // solid footprint is center-anchored, spanning [wallX-0.5,
+        // wallX+0.5), so anything closer than 0.5 would already be
+        // INSIDE it) so the jump's own brief airborne window is what
+        // actually meets the wall -- placing him further back would let
+        // him LAND again (back to normal, already-tested grounded wall
+        // collision) well before ever reaching it, never exercising the
+        // airborne case this test exists for at all.
+        const float wallX = static_cast<float>(kFloorX + 5) - 50.0f;
+        GEBlupiController jumper;
+        jumper.SetPosition(wallX - 0.7f, 1.0f, static_cast<float>(kFloorZ) - 50.0f);
+        jumper.SetYaw(0.0f);
+        jumper.Step(airborneWallWorld, 0.0f, 0.0f, false, false, false, dt);
+        check(jumper.IsOnGround(), "sanity: airborne-wall test's jumper starts grounded next to the wall");
+
+        // Face toward the wall (+X, matching how the floor strip/wall were
+        // placed) -- sin(yaw)=1 needs yaw=pi/2. Jump AND move toward the
+        // wall in the same frame, so he's genuinely airborne for the very
+        // first step that could contact it.
+        jumper.SetYaw(1.57079633f);
+        jumper.Step(airborneWallWorld, 0.0f, 1.0f, /*jumpPressed=*/true, false, false, dt);
+        check(!jumper.IsOnGround(), "sanity: jumper is airborne after jumping");
+
+        for (int i = 0; i < 10 && !jumper.IsOnGround(); ++i) // a handful of frames, well within the airborne window
+        {
+            jumper.Step(airborneWallWorld, 0.0f, 1.0f, false, false, false, dt);
+        }
+        check(jumper.GetX() < wallX - 0.45f,
+              "airborne movement is blocked by a wall, same as grounded movement (the INFRA-005 fix)");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -134,15 +134,15 @@ namespace GalaxyEggbert::CNA
         // conversion as the rise constants), mirroring the existing
         // `m_vehicleSpeed` ramp system's shape but with the real distinct
         // accel/decel rates rather than one shared rate. The real
-        // `BlupiBloque` wall-stop is NOT ported: `TryMoveAxis()`'s own
-        // step-up gate only applies while grounded (`!m_onGround ||
-        // ...` unconditionally allows the move otherwise), so this engine
-        // has no horizontal-wall-collision primitive at all for ANY
-        // airborne movement today (plain jumping/vehicles included) --
-        // adding one is a shared-collision change well beyond "the balloon
-        // gaps" and risks regressing already-verified airborne behavior.
-        // Left as a known, narrower remaining difference: a floating Blupi
-        // drifts straight through a wall he'd normally stop against. Real
+        // `BlupiBloque` wall-stop itself is NOT separately ported (it's a
+        // narrow, mode-specific "easy move" acceleration-assist helper in
+        // real source, not the main collision gate -- see ResolveMove()'s
+        // own comment below) -- but as of INFRA-005 (plan.md §7, 2026-07-21)
+        // this engine's real movement gate, `ResolveMove()`, DOES now apply
+        // unconditionally regardless of grounded/airborne state, closing the
+        // "no horizontal-wall-collision for any airborne movement" gap this
+        // comment used to describe here. A floating/ballooned Blupi drifting
+        // into a wall now stops against it, same as walking. Real
         // `m_blupiSpeedX`/`Y` are simple left/right/none directional flags
         // (`InputPad.cpp:1104-1105`), the same real-vs-3D reinterpretation
         // already used everywhere else in this class: "world X" becomes
@@ -161,14 +161,12 @@ namespace GalaxyEggbert::CNA
         // FINAL merged `end` position every frame regardless of which
         // status produced it -- confirmed directly, it stops Blupi against
         // solid decor in any direction, including straight up during a
-        // balloon rise, exactly like walking into a wall. `CeilingHeightAt()`
-        // (declared below, mirrors `GroundHeightAt()`) finds the first solid
-        // block above; the rise clamps to just beneath it and zeroes
-        // `m_velocityY`, the vertical mirror of the horizontal wall-stop
-        // above. Deliberately NOT extended to the general jump apex or to
-        // Helicopter/Overcraft (no real per-status precedent read for
-        // those, and jump-ceiling collision isn't modelled anywhere in this
-        // class today) -- scoped to exactly what was asked for.
+        // balloon rise, exactly like walking into a wall. As of INFRA-005
+        // (plan.md §7, 2026-07-21), `ResolveMove()` (this engine's own
+        // `TestPath()` equivalent) provides this same real behavior
+        // unconditionally for every mode, including the jump apex and
+        // Helicopter/Overcraft -- no longer scoped to the balloon rise
+        // specifically the way this comment originally described it.
         //
         // Real units are px/tick at the pinned 20fps with 64px per block
         // (Config::FPS == Fps20 so ScaleTime(6) == 6 ticks == 0.3s;
@@ -635,10 +633,12 @@ namespace GalaxyEggbert::CNA
         // An earlier attempt found this genuinely unreachable in this
         // engine's collision model (a solid pillar one cell above open
         // floor in the same column made Blupi land ON the pillar, since
-        // GroundHeightAt treats the topmost solid block in a column as
-        // that column's floor) -- resolved by making teleporter icons
-        // ALWAYS non-solid for collision purposes (GroundHeightAt's own
-        // IsTeleporterIcon() skip, plan.md E3D-MIG-147 §3), reproducing
+        // this engine's ground resolution treats the topmost solid block
+        // in a column as that column's floor) -- resolved by making
+        // teleporter icons ALWAYS non-solid for collision purposes
+        // (IsPointSolid()'s own IsTeleporterIcon() skip, still in force
+        // after INFRA-005's move to ResolveMove(), plan.md E3D-MIG-147 §3),
+        // reproducing
         // real mobile-eggbert's genuinely per-tile-independent 2D
         // collision (a tile's solidity has no bearing on the tile below
         // it) well enough for this one purpose without a general
@@ -1106,10 +1106,11 @@ namespace GalaxyEggbert::CNA
         // dependency so this class stays engine-agnostic/scriptable (see
         // the class comment). When true, any BlockTypes::Temp cell is
         // treated as non-solid for ground-height purposes (both the main
-        // landing check and TryMoveAxis's step-up gate), so Blupi
-        // genuinely falls through a vanished Temp tile instead of standing
-        // on it. inSurfWater/inDeepWater (plan.md E3D-MIG-148, both default
-        // false so existing callers/tests are unaffected) are the caller's
+        // landing resolve and the step-up gate, see IsPointSolid()'s own
+        // comment), so Blupi genuinely falls through a vanished Temp tile
+        // instead of standing on it. inSurfWater/inDeepWater (plan.md
+        // E3D-MIG-148, both default false so existing callers/tests are
+        // unaffected) are the caller's
         // own per-frame Surf/Nage determination (see IsSurf()/IsNage()'s own
         // comment) -- inDeepWater additionally drives reduced (floaty)
         // gravity and a swim-up jump instead of the normal ground jump.
@@ -1126,52 +1127,141 @@ namespace GalaxyEggbert::CNA
                   bool pushingCrate = false);
 
     private:
-        // Sentinel GroundHeightAt() returns when a column has no solid
-        // block anywhere (plan.md E3D-MIG-067) -- distinct from every real
-        // returned height (always >= 1, since it's y+1 for a solid block
-        // at y>=0). Callers must treat this as "keep falling", not as
-        // solid ground at Y=0 (a real bug found and fixed 2026-07-11: the
-        // old `return 0` fallback silently acted as a floor, making
-        // Blupi's fall-off-world death unreachable via normal walking).
-        static constexpr int kNoGround = -1;
-
+        // Whole-block coarse solidity (non-air only -- deliberately NOT
+        // sub-tile-aware, see IsPointSolid()'s own comment on checkSubcell
+        // for why, INFRA-005, plan.md §7) -- used by HasJumpHeadroom/
+        // GetBarreCellType/ToggleGhost, which only ever needed whole-grid-
+        // cell granularity to begin with (their own "single stance"
+        // simplifications, not a transcription gap), and by IsPointSolid()
+        // itself as its own coarse gate/fallback. The precise movement
+        // resolver (IsPointSolid/ResolveMove) does its own finer-than-
+        // whole-block sub-tile lookup on top of this, not through it.
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
-        // @p referenceY bounds the scan to grid Y <= floor(referenceY) + 1
-        // (fixed 2026-07-13, NEXT.md §4/§5's "roofed-interior" limitation):
-        // previously this always scanned from the TOP of the entire world
-        // down, so a solid ceiling anywhere above an open interior (e.g. a
-        // roofed tunnel) registered as that column's "floor", making the
-        // real floor beneath it unreachable -- Blupi got resolved onto TOP
-        // of the ceiling instead of standing on the real ground below it.
-        // Bounding the scan by the caller's own current height (or current
-        // height + a reachable step-up allowance, for TryMoveAxis) means
-        // only solid blocks AT OR BELOW roughly where the caller already
-        // is can ever be treated as ground -- a real ceiling above stays
-        // irrelevant once the caller is already beneath it, matching real
-        // mobile-eggbert's per-tile-independent 2D collision well enough
-        // for this purpose without a general per-cell-occupancy rewrite.
-        [[nodiscard]] static int GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable,
-                                                 float referenceY);
 
-        // Sentinel CeilingHeightAt() returns when a column has no solid
-        // block anywhere above @p referenceY -- mirrors kNoGround's own
-        // "keep going, nothing to hit" contract for the opposite direction.
-        static constexpr int kNoCeiling = -1;
-        // Scans UPWARD from @p referenceY for the first solid block, mirroring
-        // GroundHeightAt()'s downward scan and the same non-solid exclusions
-        // (Temp/teleporter/fan/water -- real mobile-eggbert's collision is
-        // genuinely per-tile, not "solid above implies solid all the way
-        // up"). Added for the Balloon rise's real ceiling stop (plan.md
-        // E3D-MIG-135, `Decor::TestPath()`'s general swept collision, which
-        // the real balloon block's own `end.Y += vitesseY` result passes
-        // through same as any other movement -- confirmed directly, this
-        // is NOT a "clip through anything" ascent like this engine's
-        // existing Helicopter/Overcraft modes). Returns the solid block's
-        // own grid Y (whose bottom surface sits at gridY-0.5, mirroring
-        // GroundHeightAt()'s "top surface at gridY+0.5" for the same solid
-        // block convention), or kNoCeiling if the column is clear up to the
-        // world's own top.
-        [[nodiscard]] static int CeilingHeightAt(const Worlds::World& world, int gx, int gz, float referenceY);
+        // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
+        // precise sub-tile solidity for a specific continuous-space point,
+        // using the real per-icon 4x4 (16px) quarter-cell mask
+        // (GEDecorQuartTable.hpp, Tables::table_decor_quart, explicit user
+        // approval 2026-07-21) instead of IsSolidAt()'s whole-block
+        // approximation. The real mask is inherently 2D (screen X = this
+        // engine's X, screen Y = this engine's height/Y -- the original 2D
+        // game never had a depth axis to subdivide) -- applied here as a
+        // uniform extrusion along this engine's own Z (depth) axis: any Z
+        // position within a cell maps to the SAME (row,col) query, since no
+        // real source data describes depth-wise variation. A natural,
+        // necessary 3D adaptation, not a literal port. Preserves every
+        // existing special-case exclusion (tempPassable phase-gate,
+        // teleporter/fan/water always-non-solid, previously hard-coded into
+        // GroundHeightAt/CeilingHeightAt) exactly as before -- sub-tile
+        // fidelity is additive precision on top of these already-verified
+        // simplifications, not a replacement for them.
+        //
+        // @p checkSubcell (default true) -- false makes this return the
+        // SAME coarse "non-air, minus the 4 exceptions above" answer
+        // IsSolidAt() always gave, skipping the fine quarter-cell lookup
+        // entirely. Needed for ground/ceiling resolution specifically
+        // (ResolveMove()'s vertical-only calls, FindColumnGroundY()):
+        // several real hazard tiles this engine's own hazard-detection
+        // design (GetGroundBlockType(), checked by GalaxyEggbertCnaGame.cpp)
+        // depends on Blupi physically resting ON -- Lava(68)/Crusher(317)/
+        // Saw(378)/Blitz(305)/Drip(404) -- have an all-zero real quarter-cell
+        // mask (confirmed 2026-07-21: they are genuinely thin/non-bulk per
+        // mobile-eggbert-reference/15-3d-render-mapping-design.md's own
+        // "ThinMechanical" findings, not floors at all in the real game).
+        // Applying fine sub-tile precision to GROUND detection would make
+        // Blupi fall straight through these already-verified hazard tiles,
+        // silently breaking existing, working hazard-contact detection --
+        // an out-of-scope hazard-detection redesign this hazard, not
+        // something INFRA-005's movement-resolver work should cause as a
+        // side effect. Horizontal wall collision has no such pre-existing
+        // dependency, so it keeps the fine check (checkSubcell=true, the
+        // default) -- this is a deliberate, documented scope boundary, not
+        // an inconsistency: "one shared resolver algorithm, axis-appropriate
+        // solidity granularity," not "one solidity model for everything."
+        [[nodiscard]] static bool IsPointSolid(const Worlds::World& world, float x, float y, float z,
+                                                bool tempPassable, bool checkSubcell = true);
+
+        // Real Decor::TestPath() equivalent (INFRA-005, plan.md §7): one
+        // swept resolver for the FULL merged move (dx,dy,dz), replacing the
+        // former separate TryMoveAxis()/GroundHeightAt()/CeilingHeightAt()
+        // probes (removed) that used to fragment horizontal step-up,
+        // vertical ground/ceiling, and airborne handling into 3 independent,
+        // occasionally-contaminating-each-other scans (see NEXT.md §5's old
+        // "ceiling-contamination" writeup -- the unified march below has no
+        // such interaction to guard against in the first place, since it
+        // resolves one real path, not several independent nearest-solid
+        // scans). Marches the intended move in small steps (mirrors
+        // TestPath's real per-pixel Bresenham march, extended to this
+        // engine's 2 horizontal axes since the original never had a second
+        // one to resolve against -- a necessary 3D adaptation, not a literal
+        // port of cross-axis behavior that doesn't exist in source), testing
+        // IsPointSolid() at each step; on the first blocked step, rewinds to
+        // the last confirmed-clear position (mirrors real TestPath's
+        // out-param rewind) rather than continuing. Runs UNCONDITIONALLY
+        // regardless of grounded/airborne state or which mode produced the
+        // move -- the real source has no such branch either (confirmed
+        // directly against Decor::BlupiStep(), INFRA-005 research 2026-07-21)
+        // -- closing this engine's own former airborne-wall-clip gap as a
+        // natural side effect of no longer having a fragmented, mode-specific
+        // gate to forget to apply, rather than a targeted patch for that one
+        // gap specifically. `onGround` is true when the resolved position has
+        // solid ground directly beneath it (a real block downward probe, not
+        // merely "did this frame's own vertical march get blocked going
+        // down" -- needed for the dy==0 resting case a zero-length vertical
+        // march wouldn't otherwise detect).
+        struct MoveResult
+        {
+            float x = 0.0f, y = 0.0f, z = 0.0f;
+            bool onGround = false;
+            bool blockedX = false, blockedY = false, blockedZ = false;
+        };
+        // @p checkSubcell forwards to IsPointSolid() (see its own comment) --
+        // pass false for vertical-only calls (ground/ceiling), true (the
+        // default) for horizontal calls.
+        [[nodiscard]] static MoveResult ResolveMove(const Worlds::World& world, float startX, float startY,
+                                                     float startZ, float dx, float dy, float dz,
+                                                     bool tempPassable, bool checkSubcell = true);
+
+        // Real Decor::BlupiAdjust() equivalent (INFRA-005, plan.md §7):
+        // penetration recovery, called once at the top of Step() before any
+        // movement is computed, mirroring the real call's own unconditional
+        // "first thing every frame" placement (Decor.cpp:2745, right after
+        // the ghost-mode early-return). No-op unless the current position is
+        // already inside solid geometry. Real source pushes a RECT
+        // (BlupiRect, shape varies per mode) out of solid geometry via 5
+        // phases (down, right, left, right-again-with-a-DIFFERENT-vertical-
+        // test-band, left-again) -- this engine's Blupi has always been a
+        // collision POINT, not a rect (a deliberate, pre-existing scope
+        // boundary, not newly introduced here), so the phase-2/3-vs-4/5
+        // distinction (which only ever differed in which vertical band of
+        // the RECT got tested) is meaningless for a dimensionless point --
+        // collapses to 3 real distinct attempts (down, right, left), same
+        // order, same real 2px-equivalent step size, same real 50-iteration
+        // bound per phase, same real "silently give up and fall through to
+        // the next phase regardless" semantics (no success/failure signal,
+        // matching the real `void` return and its own `@warning` that
+        // residual penetration is accepted, known, original-game behavior).
+        static void RecoverFromPenetration(const Worlds::World& world, float& x, float& y, float& z,
+                                            bool tempPassable);
+
+        // This engine's own invented step-up allowance (kStepLimit's own
+        // comment -- real Decor::TestPath has no step-up concept at all, a
+        // pure sweep with no such allowance; real 2D ground-height changes
+        // are pixel-precise tile geometry, not a voxel-grid quantization
+        // needing this kind of help). Deliberately kept as its own small
+        // scan, separate from ResolveMove() (the real TestPath() equivalent
+        // above), so that resolver stays a faithful, real-behavior-only
+        // sweep -- this is a CNA-only addition layered on top of it, same
+        // role kStepLimit's own logic always played before this refactor,
+        // just now built on the sub-tile-aware IsPointSolid() primitive
+        // instead of a whole-block column scan. Returns the destination
+        // column's actual ground surface height (mirrors the old
+        // GroundHeightAt()'s own "+1 sits at the top surface" convention),
+        // or a negative sentinel if the column has no solid floor within
+        // reach at all.
+        [[nodiscard]] static float FindColumnGroundY(const Worlds::World& world, float x, float z, float referenceY,
+                                                      bool tempPassable);
+
         // Real Decor::IsNormalJump() headroom probe (see kJumpSpeedPowered's
         // own comment): checks the 2 grid cells directly above Blupi's
         // current standing height for solid blocks. Real source offsets the
@@ -1193,7 +1283,6 @@ namespace GalaxyEggbert::CNA
         // separate DecorDetect landing-rect check aren't modeled.
         enum class BarreCellType { None, Hanging, LandingAvailable };
         [[nodiscard]] static BarreCellType GetBarreCellType(const Worlds::World& world, int gx, int gy, int gz);
-        void TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable);
         void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate = false);
 
         float m_x = 0.0f;

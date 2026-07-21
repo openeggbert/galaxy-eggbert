@@ -315,6 +315,58 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-005 — unified movement/collision resolver, closes the airborne-wall-clip gap (2026-07-21)
+
+Scoped with the user first (full unified resolver + sub-tile fidelity + `BlupiAdjust`-style
+penetration recovery, the more ambitious options each time), then researched real mobile-eggbert
+(`Decor::TestPath`/`BlupiAdjust`/`DecorDetect`) before writing any code. Real `TestPath` is a
+Bresenham pixel march (one rect, X+Y resolved together, rewinds to last clear position on the first
+hit) with **no grounded/airborne branch anywhere** — called unconditionally for every mode including
+every vehicle, confirming this engine's old `!m_onGround` bypass in `TryMoveAxis` was a real,
+confirmed bug, not a simplification. Real solidity (`DecorDetect`) is a 4x4 (16px) per-icon
+quarter-cell mask (`Tables::table_decor_quart`, 7056 entries), not whole-tile.
+
+New `GEBlupiController` API: `IsPointSolid()` (sub-tile precision via the real quarter-cell mask,
+extruded uniformly along this engine's own Z axis since the real mask is inherently 2D),
+`ResolveMove()` (one march per call, mirrors real `TestPath`, reports which axis blocked +
+`onGround`), `RecoverFromPenetration()` (real `BlupiAdjust` equivalent, called unconditionally at
+the top of `Step()`, 3 real distinct attempts — down/right/left — since this engine's Blupi has
+always been a point, not the real rect `BlupiAdjust` pushes). `GroundHeightAt`/`CeilingHeightAt`/
+`TryMoveAxis` removed entirely. New `src/GalaxyEggbertCNA/Game/GEDecorQuartTable.hpp` holds the
+transcribed quarter-cell data (mechanically extracted, cross-checked via a second independent
+extraction — byte-identical).
+
+**Two real problems found and fixed during implementation** (not by the research):
+1. **A coordinate-convention bug this refactor itself introduced, then found and fixed**: this
+   engine's Y axis uses a bottom-anchored grid convention (`[g, g+1)`, confirmed against
+   `GetGroundBlockType()`'s own `lround(m_y) - 1`) that's DIFFERENT from X/Z's center-anchored one
+   (`[g-0.5, g+0.5)`, matching the terrain renderer's own `CubeMesh`) — a real, pre-existing
+   asymmetry already known and worked around elsewhere in this codebase
+   (`GalaxyEggbertCnaGame.cpp`'s `kPlaceholderModelYOffset` comment literally documents this same
+   0.5-unit collision-vs-render gap). First draft used the wrong (center-anchored) formula for Y,
+   breaking 59 of 311 `VerifyBlupiMovement` checks; fixed by using `floor(y)` for Y specifically.
+2. **A real design tension, resolved via a `checkSubcell` parameter**: several hazard tiles Blupi's
+   own hazard-detection depends on physically resting on (Lava/Crusher/Saw/Blitz/Drip) have an
+   all-zero real quarter-cell mask (genuinely thin, independently corroborating
+   `15-3d-render-mapping-design.md`'s own "ThinMechanical" findings for the exact same icons) —
+   applying sub-tile precision to ground detection would make Blupi fall through already-verified
+   hazards. Ground/ceiling resolution now explicitly uses the coarse (non-sub-tile) check;
+   horizontal wall collision keeps the fine one — a deliberate, documented scope boundary.
+
+`kStepLimit` step-up (already a CNA-only invention, not a real `TestPath` concept) kept as its own
+explicit mechanism (`FindColumnGroundY`), not folded into `ResolveMove` itself.
+
+**Verification**: `VerifyBlupiMovement` 252→311/311 after both fixes above. One pre-existing test's
+own expected value corrected (not a regression): the balloon-ceiling-stop boundary moved from ~2.5
+to ~3.0 once ground/ceiling used one consistent convention instead of two subtly different ones (the
+old `-0.5` was itself a minor, previously-unnoticed inconsistency). New dedicated test for the actual
+airborne-wall-clip bug — verified it has real teeth (a first draft passed even with the old bug
+deliberately reintroduced since the jump landed before reaching the wall; redesigned to contact the
+wall within the airborne window, then reconfirmed FAIL-with-bug/PASS-with-fix before reverting the
+temporary re-injection). Full regression clean (80/81, pre-existing unrelated failure only);
+golden-frame byte-match unchanged; live smoke run clean. See `plan.md`'s `INFRA-005` entry for the
+full writeup.
+
 ### feat: INFRA-007 step 3/3 — Voyage/DeathLock moved to the typed event queue, INFRA-007 fully complete (2026-07-21)
 
 Completes the migration (steps 1/2 below): all 17 of `GEInteractionSystem`/`GEBlupiController`'s
@@ -1362,13 +1414,12 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
 
 - **Resolved 2026-07-20** (was here as a confirmed bug for over a week): Saw blade (icon 378)
   render orientation. See §3 for the full 6-round live-feedback history.
-- **Incomplete (found 2026-07-18, while implementing Balloon's horizontal drift):** No
-  horizontal-wall-collision at all for ANY airborne movement — `GEBlupiController::TryMoveAxis()`'s
-  step-up gate only applies while `m_onGround`; otherwise a move always applies unconditionally.
-  Affects plain jumping, every vehicle mode, and now Balloon's own real sideways drift too — a
-  floating/jumping/riding Blupi drifts straight through a side wall he'd stop against while walking.
-  A real fix needs a general airborne-collision primitive shared by all of these, not a per-status
-  patch — out of scope for any single-mechanic task; flag if picked up.
+- **Resolved 2026-07-21** (INFRA-005, plan.md §7): the airborne-wall-clip gap found 2026-07-18 while
+  implementing Balloon's horizontal drift (`GEBlupiController::TryMoveAxis()`'s step-up gate only
+  applying while `m_onGround`) is fixed — `ResolveMove()` now applies the same real wall check
+  unconditionally for every mode (plain jumping, every vehicle, Balloon's drift), matching real
+  `Decor::BlupiStep()`'s own unconditional `TestPath()` call. See §3's own writeup for the full
+  resolver rewrite this came from.
 - **Incomplete:** No visible 3D Blupi model (blocked on the user providing one).
 - **Incomplete (world editor, by design — the remaining plan milestones):**
   - No sky-region picker (EDITOR-111): `world.skyRegion()` can't be changed from the editor.

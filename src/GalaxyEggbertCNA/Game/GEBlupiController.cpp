@@ -1,4 +1,5 @@
 #include "GEBlupiController.hpp"
+#include "GEDecorQuartTable.hpp"
 #include "GEWorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -234,7 +235,7 @@ namespace GalaxyEggbert::CNA
 
         // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
         // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
-        // phase-gated) -- see GroundHeightAt's own comment for why.
+        // phase-gated) -- see IsPointSolid()'s own comment for why.
         bool IsTeleporterIcon(std::uint16_t type)
         {
             return type == GalaxyEggbert::BlockTypes::Teleport1 || type == GalaxyEggbert::BlockTypes::Teleport2 ||
@@ -262,119 +263,169 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::IsSolidAt(const Worlds::World& world, int gx, int gy, int gz)
     {
+        // Deliberately just "non-air", NOT sub-tile-aware (reverted
+        // 2026-07-21 after discovering it broke ground detection for real
+        // hazard tiles with an all-zero quarter-cell mask -- see
+        // IsPointSolid()'s own comment on checkSubcell for the full
+        // reasoning). HasJumpHeadroom()/GetBarreCellType()/ToggleGhost()
+        // only ever needed this same whole-block coarseness to begin with.
         return !world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                static_cast<std::uint16_t>(gz)).isAir();
     }
 
-    int GEBlupiController::GroundHeightAt(const Worlds::World& world, int gx, int gz, bool tempPassable,
-                                           float referenceY)
+    bool GEBlupiController::IsPointSolid(const Worlds::World& world, float x, float y, float z, bool tempPassable,
+                                          bool checkSubcell)
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        // See this method's own header comment (GEBlupiController.hpp) for
-        // why the scan no longer unconditionally starts at the world's
-        // topmost Y.
-        const int startY = std::min(blocksPerAxis - 1, static_cast<int>(std::floor(referenceY)) + 1);
-        for (int y = startY; y >= 0; --y)
+        const float gxf = x + kWorldCenterX;
+        const float gzf = z + kWorldCenterZ;
+        const int gx = ClampGrid(static_cast<int>(std::floor(gxf + 0.5f)), blocksPerAxis);
+        // Y uses a DIFFERENT (bottom-anchored) convention than X/Z's
+        // center-anchored one -- confirmed against GetGroundBlockType()'s
+        // own `lround(m_y) - 1` and the old GroundHeightAt()'s own "+1 sits
+        // at the top surface" contract: a solid block at grid index G gives
+        // a standing surface at continuous Y=G+1, meaning grid cell G owns
+        // continuous range [G, G+1), NOT [G-0.5, G+0.5) the way X/Z (and
+        // the terrain renderer's own CENTER-anchored CubeMesh) do. This is
+        // a real, pre-existing asymmetry between collision-space Y and
+        // render-space Y in this engine (not something this refactor
+        // introduces or should try to "fix") -- floor(y), not floor(y+0.5).
+        const int gy = ClampGrid(static_cast<int>(std::floor(y)), blocksPerAxis);
+        const int gz = ClampGrid(static_cast<int>(std::floor(gzf + 0.5f)), blocksPerAxis);
+        if (!IsSolidAt(world, gx, gy, gz))
         {
-            if (IsSolidAt(world, gx, y, gz))
-            {
-                const auto blockType = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
-                                                        static_cast<std::uint16_t>(gz))
-                                            .type();
-                // Vanishing/Temp tile (plan.md E3D-MIG-146): during its
-                // real passable window, it is NOT solid ground -- keep
-                // scanning downward instead of stopping here, so Blupi
-                // genuinely falls through to whatever (if anything) is
-                // beneath it, matching the real IsBlocIcon(324) becoming
-                // false for those 2 of 20 phase buckets.
-                if (tempPassable && blockType == GalaxyEggbert::BlockTypes::Temp)
-                {
-                    continue;
-                }
-                // Teleporter pillar (plan.md E3D-MIG-147): ALWAYS non-solid
-                // for collision, not phase-gated like Temp. Real
-                // mobile-eggbert's collision is genuinely per-tile-
-                // independent (a tile's solidity has no bearing on the
-                // tile below it in the same column), which is how Blupi
-                // can walk directly beneath a solid-LOOKING teleporter
-                // pillar in the real game. This engine's simplified
-                // column-based collision (topmost solid block = that
-                // column's floor) would otherwise make Blupi land ON a
-                // floating pillar instead of standing in the open space
-                // beneath it -- confirmed empirically during this task.
-                // Excluding teleporter icons from ground-height resolution
-                // entirely reproduces the real walk-under behavior without
-                // a general per-cell-occupancy collision rewrite.
-                if (IsTeleporterIcon(blockType))
-                {
-                    continue;
-                }
-                // Fan head icons (plan.md E3D-MIG-149): ALWAYS non-solid,
-                // same reasoning and same real per-tile-independent-
-                // collision precedent as the teleporter pillar above --
-                // real mobile-eggbert's IsVentillo() check requires Blupi
-                // to actually be AT the fan's own tile, which is
-                // unreachable here unless the fan (and anything else
-                // occupying its column) stops blocking the column's
-                // ground-height resolution.
-                if (GalaxyEggbert::BlockTypes::isFan(blockType))
-                {
-                    continue;
-                }
-                // Water (plan.md E3D-MIG-148): ALWAYS non-solid, same
-                // reasoning/precedent as teleporter pillars and fan heads
-                // above -- real mobile-eggbert's water is genuinely
-                // passable (Blupi swims/sinks through it, resting on
-                // whatever solid floor is beneath), unlike this engine's
-                // default "any non-air block is solid ground" rule. Without
-                // this, Blupi would always rest ON TOP of the topmost water
-                // layer (same as standing on land), making a multi-layer
-                // deep pool -- and therefore Nage/drowning -- structurally
-                // unreachable, the same category of bug already fixed for
-                // the teleporter/fan.
-                if (GalaxyEggbert::BlockTypes::isWater(blockType))
-                {
-                    continue;
-                }
-                return y + 1;
-            }
+            return false;
         }
-        // No solid block anywhere in this column -- see kNoGround's own
-        // comment for why this must not be treated as solid ground at
-        // Y=0.
-        return kNoGround;
+        const auto blockType = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                               static_cast<std::uint16_t>(gz))
+                                   .type();
+        // Same 4 special-case exclusions GroundHeightAt()/CeilingHeightAt()
+        // used to hard-code (plan.md E3D-MIG-146/147/148/149) -- preserved
+        // exactly, sub-tile fidelity below is additive precision on top of
+        // these, not a replacement for them.
+        if (tempPassable && blockType == GalaxyEggbert::BlockTypes::Temp)
+        {
+            return false;
+        }
+        if (IsTeleporterIcon(blockType) || GalaxyEggbert::BlockTypes::isFan(blockType) ||
+            GalaxyEggbert::BlockTypes::isWater(blockType))
+        {
+            return false;
+        }
+        if (!checkSubcell || blockType < 0 || blockType > 440)
+        {
+            // checkSubcell=false: caller wants the same coarse "non-air
+            // (minus the 4 exceptions above)" answer IsSolidAt() always
+            // gave -- see this function's own header comment for why
+            // ground/ceiling resolution needs this (several real hazard
+            // tiles are genuinely thin/non-bulk per real quarter-cell data,
+            // but this engine's own hazard-detection design depends on
+            // Blupi resting on them). Out-of-catalog icon: no quarter-cell
+            // data either way, matches the old whole-block default.
+            return true;
+        }
+        // Real per-icon quarter-cell mask is inherently 2D (see this
+        // function's own header comment) -- Z is deliberately unused, the
+        // mask is extruded uniformly through this engine's own Z axis.
+        // fracX is center-anchored (X uses that convention); fracY is
+        // bottom-anchored (0 at the cell's own floor, 1 at its ceiling --
+        // matches gy's own convention just above), 0..1 either way.
+        const float fracX = gxf - (static_cast<float>(gx) - 0.5f);
+        const float fracY = y - static_cast<float>(gy);
+        const int col = std::clamp(static_cast<int>(fracX * 4.0f), 0, 3);
+        const int row = std::clamp(static_cast<int>((1.0f - fracY) * 4.0f), 0, 3); // real row 0 = TOP
+        return kDecorQuartTable[blockType * 16 + row * 4 + col] != 0;
     }
 
-    int GEBlupiController::CeilingHeightAt(const Worlds::World& world, int gx, int gz, float referenceY)
+    GEBlupiController::MoveResult GEBlupiController::ResolveMove(const Worlds::World& world, float startX,
+                                                                  float startY, float startZ, float dx, float dy,
+                                                                  float dz, bool tempPassable, bool checkSubcell)
     {
-        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        // +1: start one cell ABOVE referenceY, mirroring GroundHeightAt()'s
-        // own "+1" (there, one cell above referenceY scanning down; here,
-        // one cell above referenceY scanning up) -- excludes whatever cell
-        // referenceY itself is currently embedded in, which must already be
-        // open (that's where the caller is standing/rising through).
-        const int startY = std::max(0, static_cast<int>(std::floor(referenceY)) + 1);
-        for (int y = startY; y < blocksPerAxis; ++y)
+        MoveResult result;
+        result.x = startX;
+        result.y = startY;
+        result.z = startZ;
+
+        // March step count: fine enough that the resolved landing position
+        // stays within existing test tolerances (VerifyBlupiMovement's
+        // tightest ground-precision check is 0.01 units -- 0.005 gives a 2x
+        // margin), mirroring real TestPath()'s "test every pixel" spirit at
+        // a real-unit step this engine has no reason to make as fine as the
+        // literal 1/64-unit (real single-pixel) resolution.
+        const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+        constexpr float kMaxStep = 0.005f;
+        const int steps = std::max(1, static_cast<int>(std::ceil(distance / kMaxStep)));
+        const float stepDx = dx / static_cast<float>(steps);
+        const float stepDy = dy / static_cast<float>(steps);
+        const float stepDz = dz / static_cast<float>(steps);
+
+        float clearX = startX, clearY = startY, clearZ = startZ;
+        for (int i = 1; i <= steps; ++i)
         {
-            if (IsSolidAt(world, gx, y, gz))
+            const float candidateX = startX + stepDx * static_cast<float>(i);
+            const float candidateY = startY + stepDy * static_cast<float>(i);
+            const float candidateZ = startZ + stepDz * static_cast<float>(i);
+            if (IsPointSolid(world, candidateX, candidateY, candidateZ, tempPassable, checkSubcell))
             {
-                const auto blockType = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
-                                                        static_cast<std::uint16_t>(gz))
-                                            .type();
-                // Same non-solid exclusions as GroundHeightAt() -- real
-                // per-tile-independent collision applies the same way
-                // scanning up as scanning down (Temp always solid here since
-                // a rising Blupi isn't the "fall through" case tempPassable
-                // exists for; teleporter/fan/water stay non-solid).
-                if (IsTeleporterIcon(blockType) || GalaxyEggbert::BlockTypes::isFan(blockType) ||
-                    GalaxyEggbert::BlockTypes::isWater(blockType))
-                {
-                    continue;
-                }
-                return y;
+                // Rewind to the last confirmed-clear position (mirrors real
+                // TestPath()'s own out-param rewind) -- report which axis
+                // actually caused the block by testing each axis
+                // independently from the last clear point, so a diagonal
+                // move against a wall still resolves the OTHER axis/axes
+                // that aren't actually blocked (matches this engine's own
+                // pre-existing "slide along a wall" behavior from the old
+                // per-axis TryMoveAxis calls).
+                result.blockedX = IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcell);
+                result.blockedY = IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcell);
+                result.blockedZ = IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcell);
+                result.x = result.blockedX ? clearX : candidateX;
+                result.y = result.blockedY ? clearY : candidateY;
+                result.z = result.blockedZ ? clearZ : candidateZ;
+                // onGround is always a ground-detection question, regardless
+                // of this call's own checkSubcell -- always coarse (see
+                // IsPointSolid()'s own comment for why).
+                result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false);
+                return result;
             }
+            clearX = candidateX;
+            clearY = candidateY;
+            clearZ = candidateZ;
         }
-        return kNoCeiling;
+        result.x = clearX;
+        result.y = clearY;
+        result.z = clearZ;
+        result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false);
+        return result;
+    }
+
+    void GEBlupiController::RecoverFromPenetration(const Worlds::World& world, float& x, float& y, float& z,
+                                                    bool tempPassable)
+    {
+        if (!IsPointSolid(world, x, y, z, tempPassable))
+        {
+            return;
+        }
+        constexpr float kStep = 2.0f / 64.0f; // real BlupiAdjust()'s 2px step, converted at 64px/block
+        constexpr int kMaxIterations = 50; // real BlupiAdjust()'s own bound, every phase
+        // Real phase order: down, right, left, right-again, left-again (the
+        // last 2 only differ from the first 2 by which RECT vertical band
+        // they test -- meaningless for a point, see this function's own
+        // header comment) -- collapses to 3 real distinct attempts.
+        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y, z, tempPassable); ++i)
+        {
+            y -= kStep;
+        }
+        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y, z, tempPassable); ++i)
+        {
+            x += kStep;
+        }
+        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y, z, tempPassable); ++i)
+        {
+            x -= kStep;
+        }
+        // Real source silently accepts residual penetration if all 5 (here:
+        // 3) phases exhaust their bound without clearing -- no success/
+        // failure signal, matching the real `void` return exactly.
     }
 
     bool GEBlupiController::HasJumpHeadroom(const Worlds::World& world) const
@@ -850,48 +901,19 @@ namespace GalaxyEggbert::CNA
             .type();
     }
 
-    void GEBlupiController::TryMoveAxis(const Worlds::World& world, float ddx, float ddz, bool tempPassable)
+    float GEBlupiController::FindColumnGroundY(const Worlds::World& world, float x, float z, float referenceY,
+                                                bool tempPassable)
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        const float candidateX = m_x + ddx;
-        const float candidateZ = m_z + ddz;
-
-        const int gx = ClampGrid(static_cast<int>(std::lround(candidateX + kWorldCenterX)), blocksPerAxis);
-        const int gz = ClampGrid(static_cast<int>(std::lround(candidateZ + kWorldCenterZ)), blocksPerAxis);
-
-        // referenceY = m_y + kStepLimit: allows detecting legitimate
-        // step-up ground within reach, while a real ceiling higher than
-        // that stays irrelevant (see GroundHeightAt's own comment).
-        const int targetGroundY = GroundHeightAt(world, gx, gz, tempPassable, m_y + kStepLimit);
-
-        // Allow the move if the destination column's ground is at most
-        // kStepLimit above the current feet Y (step-up); any amount lower
-        // is always fine (falling is handled by the vertical pass in
-        // Step()). This step-up restriction only makes sense while
-        // GROUNDED (climbing a curb while walking) -- while airborne
-        // (`!m_onGround`, mid-jump or mid-fall), it's skipped entirely.
-        // Real bug found 2026-07-12 while live-testing vehicles
-        // (E3D-MIG-171): while falling through a floorless column, m_y
-        // keeps dropping below any OTHER nearby column's real ground
-        // height (or the kNoGround sentinel itself, once m_y drops below
-        // about -2) -- the plain `targetGroundY <= m_y + kStepLimit`
-        // comparison then flips false and silently blocks ALL further
-        // horizontal movement for the rest of the fall, misreading "I'm
-        // currently far below that column's ground because I'm falling"
-        // as "that's an unclimbable wall". Not a vehicle-specific bug --
-        // any sustained directional input held while falling off the
-        // world edge hits this; previous fall-death tests only ever
-        // dropped straight down with no horizontal input during the fall,
-        // so it went uncaught until now.
-        if (!m_onGround || static_cast<float>(targetGroundY) <= m_y + kStepLimit)
+        const float startY = std::min(static_cast<float>(blocksPerAxis - 1), std::floor(referenceY) + 1.0f);
+        for (float y = startY; y >= 0.0f; y -= 1.0f)
         {
-            m_x = candidateX;
-            m_z = candidateZ;
-            if (m_onGround && static_cast<float>(targetGroundY) > m_y)
+            if (IsPointSolid(world, x, y, z, tempPassable, /*checkSubcell=*/false))
             {
-                m_y = static_cast<float>(targetGroundY);
+                return y + 1.0f;
             }
         }
+        return -1.0f;
     }
 
     void GEBlupiController::Step(const Worlds::World& world, float turnInput, float moveInput,
@@ -941,6 +963,12 @@ namespace GalaxyEggbert::CNA
             UpdateAnim(moving, false, false, dt);
             return;
         }
+
+        // Real Decor::BlupiAdjust() equivalent (INFRA-005, plan.md §7) --
+        // penetration recovery, unconditional for every mode except ghost
+        // (already returned above), same as real source. See
+        // RecoverFromPenetration()'s own comment for the full algorithm.
+        RecoverFromPenetration(world, m_x, m_y, m_z, tempPassable);
 
         // Water Surf/Nage status (plan.md E3D-MIG-148) -- set directly from
         // the caller's own per-frame terrain determination, same split as
@@ -1334,13 +1362,55 @@ namespace GalaxyEggbert::CNA
         {
             const float dx = std::sin(m_yaw) * horizontalSpeed * dt;
             const float dz = -std::cos(m_yaw) * horizontalSpeed * dt;
+            // Real Decor::TestPath() equivalent (INFRA-005, plan.md §7):
+            // each axis routes through the same ResolveMove() the vertical
+            // pass below uses, applied UNCONDITIONALLY regardless of
+            // m_onGround -- this is the fix for the former airborne-wall-
+            // clip gap (a jumping/floating/riding Blupi now stops against a
+            // wall exactly like a walking one, matching real
+            // Decor::BlupiStep()'s own unconditional TestPath() call).
+            // Step-up (FindColumnGroundY's own comment) is a separate,
+            // explicitly CNA-only fallback tried only when grounded and the
+            // real check above found a wall.
             if (dx != 0.0f)
             {
-                TryMoveAxis(world, dx, 0.0f, tempPassable);
+                const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, 0.0f, 0.0f, tempPassable);
+                if (!moveResult.blockedX)
+                {
+                    m_x = moveResult.x;
+                }
+                else if (m_onGround)
+                {
+                    const float steppedGroundY = FindColumnGroundY(world, m_x + dx, m_z, m_y + kStepLimit, tempPassable);
+                    if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
+                    {
+                        m_x += dx;
+                        if (steppedGroundY > m_y)
+                        {
+                            m_y = steppedGroundY;
+                        }
+                    }
+                }
             }
             if (dz != 0.0f)
             {
-                TryMoveAxis(world, 0.0f, dz, tempPassable);
+                const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, 0.0f, 0.0f, dz, tempPassable);
+                if (!moveResult.blockedZ)
+                {
+                    m_z = moveResult.z;
+                }
+                else if (m_onGround)
+                {
+                    const float steppedGroundY = FindColumnGroundY(world, m_x, m_z + dz, m_y + kStepLimit, tempPassable);
+                    if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
+                    {
+                        m_z += dz;
+                        if (steppedGroundY > m_y)
+                        {
+                            m_y = steppedGroundY;
+                        }
+                    }
+                }
             }
         }
 
@@ -1526,85 +1596,30 @@ namespace GalaxyEggbert::CNA
             const float effectiveGravity = m_nage ? kGravity * kNageGravityMultiplier : kGravity;
             m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
         }
-        float newY = m_y + m_velocityY * dt;
-
-        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
-        const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
-        // referenceY = m_y (pre-fall position): a real ceiling above where
-        // Blupi already is stays irrelevant to "what does he land on while
-        // falling" (see GroundHeightAt's own comment).
-        const int groundY = GroundHeightAt(world, gx, gz, tempPassable, m_y);
-
-        // Balloon rise ceiling stop (kBalloonHorizontalSpeed's own comment,
-        // point 2): real source's general `TestPath()` swept collision
-        // stops a rising Blupi against solid decor the same as walking into
-        // a wall. Checked every ballooned frame regardless of current
-        // vertical direction (not gated on `newY > m_y`) -- a hovering/
-        // descending Down-held Blupi can't run further INTO a ceiling
-        // above him, but the ground-check-contamination problem below
-        // depends only on static proximity to that block, not on which way
-        // he's currently moving.
-        //
-        // `ceilingInReach` (found true whenever CeilingHeightAt() sees
-        // anything at all, not just once the clamp itself fires) must
-        // suppress the ground-check below for the ENTIRE time a ceiling is
-        // within its scan window, not merely the one frame the clamp
-        // triggers: `groundY` was computed from the same referenceY=m_y,
-        // and GroundHeightAt()'s own scan window grows with that same
-        // value, so a few frames BEFORE m_y actually reaches the ceiling's
-        // real bottom surface, GroundHeightAt() already finds that same
-        // block first and misreports it as ground to land ON TOP of --
-        // confirmed live (a debug run showed Blupi teleport from y~2.0
-        // straight to y~4.0 well before ever reaching the real 2.5 ceiling
-        // contact height, the ceiling block's own "land on top" height,
-        // silently pre-empting this clamp on an earlier frame than
-        // expected). Both scans share the exact same "is this block
-        // reachable from floor(m_y)+1" trigger distance, so gating on
-        // CeilingHeightAt()'s own result (not just the clamp) reliably
-        // covers every frame the ground-check would otherwise be
-        // contaminated by the same block.
-        bool ceilingInReach = false;
-        if (m_balloon)
+        // Real Decor::TestPath() equivalent (INFRA-005, plan.md §7): the
+        // SAME resolver the horizontal pass above uses, applied to the
+        // vertical delta. Real source's general swept collision stops
+        // Blupi against solid decor in ANY direction including straight up
+        // (the balloon-rise ceiling stop this block used to special-case)
+        // -- ResolveMove()'s own single march naturally covers this for
+        // every mode uniformly (jump apex, Helicopter/Overcraft, balloon
+        // rise) with no per-mode branch needed. This also eliminates the
+        // former "ceiling-contamination" workaround entirely (see git
+        // history/NEXT.md §5 for that old writeup): the bug it worked
+        // around was an artifact of GroundHeightAt()/CeilingHeightAt() being
+        // two INDEPENDENT nearest-solid scans sharing the same trigger
+        // window -- a single forward march along the real intended path has
+        // no such pair of independent scans to contaminate each other in
+        // the first place, so there's nothing left to guard against here.
+        const float dy = m_velocityY * dt;
+        const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, 0.0f, dy, 0.0f, tempPassable,
+                                                   /*checkSubcell=*/false);
+        m_y = moveResult.y;
+        if (moveResult.blockedY)
         {
-            const int ceilingY = CeilingHeightAt(world, gx, gz, m_y);
-            if (ceilingY != kNoCeiling)
-            {
-                ceilingInReach = true;
-                // The solid block's own bottom surface (mirrors
-                // GroundHeightAt()'s "y+1 sits at the top surface" -- here
-                // the ceiling block at grid Y has its bottom at Y-0.5).
-                const float ceilingBottom = static_cast<float>(ceilingY) - 0.5f;
-                if (newY >= ceilingBottom)
-                {
-                    newY = ceilingBottom;
-                    m_velocityY = 0.0f;
-                }
-            }
-        }
-
-        if (ceilingInReach)
-        {
-            // Suspended just beneath (or still rising toward) the ceiling,
-            // not standing on it.
-            m_onGround = false;
-        }
-        // kNoGround (no solid block anywhere in this column) must never
-        // clamp Blupi to a fake floor -- he keeps falling under gravity
-        // indefinitely, same as walking off any other ledge with a real
-        // drop, letting GalaxyEggbertCnaGame::Update()'s kFallDeathY check
-        // eventually catch it (plan.md E3D-MIG-067).
-        else if (groundY != kNoGround && newY <= static_cast<float>(groundY))
-        {
-            newY = static_cast<float>(groundY);
             m_velocityY = 0.0f;
-            m_onGround = true;
         }
-        else
-        {
-            m_onGround = false;
-        }
-        m_y = newY;
+        m_onGround = moveResult.onGround;
 
         UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate);
     }

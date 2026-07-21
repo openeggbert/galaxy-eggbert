@@ -5717,16 +5717,88 @@ specifically, same as any other large/risky item elsewhere in this file.
         change to one of these 131 icons, so such a change can't quietly be treated as "already
         correct" without going through the same direct-identification process §11 used for the
         other 34.
-- [ ] `INFRA-005` (`REMAKE-ANALYSIS.md` P1-1) **Needs its own scoping session + explicit user
-      go-ahead before any code changes — do not start from this line alone.** A single shared
-      swept-collision/movement resolver that every movement mode (grounded, airborne, every
-      vehicle) routes its final move through, replacing the fragmented per-mechanic probes
-      (`GEBlupiController::GroundHeightAt`/`CeilingHeightAt`/`HasJumpHeadroom`/`IsSolidAt`/
-      `GetBarreCellType`, `TryMoveAxis`'s step-up gate) — mirrors the real `Decor::TestPath`'s
-      single-resolver shape. Would close the known airborne-wall-clip gap (`TryMoveAxis` currently
-      short-circuits on `!m_onGround`, see NEXT.md §5) as a side effect. Touches already-tuned,
-      already-verified movement — must be guarded by `INFRA-001`/`INFRA-002`'s behavioral/visual
-      trace so already-correct grounded behavior can't silently regress.
+- [x] `INFRA-005` (`REMAKE-ANALYSIS.md` P1-1) done (2026-07-21). Scoped with the user first (full
+      unified resolver, sub-tile fidelity, `BlupiAdjust`-style penetration recovery all explicitly
+      chosen over the smaller/cheaper alternatives offered), then researched real mobile-eggbert
+      before writing any code:
+      - **Research** (2 forks): `Decor::TestPath` is a Bresenham pixel march of one rect from
+        `start` to `end`, testing `DecorDetect()` at every step, rewinding to the last clear
+        position on the first hit — X and Y resolved TOGETHER in one march, no grounded/airborne
+        branch anywhere, called unconditionally from `BlupiStep()` for every mode including every
+        vehicle (confirms this engine's old `!m_onGround` bypass was a real, confirmed divergence,
+        not a simplification). `DecorDetect()`'s real solidity is a 4x4 (16px) per-icon quarter-cell
+        mask (`Tables::table_decor_quart`, 7056 entries), not whole-tile. `BlupiAdjust()` (real
+        penetration recovery, called unconditionally first thing every frame except ghost mode) is
+        5 phases (down/right/left/right-again/left-again, 50 iterations of 2px each, silently
+        accepts residual penetration) — phases 2/3 vs 4/5 only differed by which vertical band of
+        the real RECT (`BlupiRect`, this engine has always used a point instead) they tested,
+        meaningless for a point, so this collapses to 3 real distinct attempts.
+      - **Data**: `Tables::table_decor_quart` (441 icons × 16 subcells, 0/1, row-major top-left
+        origin) extracted mechanically (not hand-retyped) and independently re-extracted a second
+        time to cross-check — byte-identical, zero discrepancies. Transcribed verbatim into
+        `include`-free, header-only `src/GalaxyEggbertCNA/Game/GEDecorQuartTable.hpp`
+        (`kDecorQuartTable[7056]`), explicit user approval (a real data transcription beyond the
+        standing blanket approval for small tables).
+      - **New API** (`GEBlupiController`): `IsPointSolid(world,x,y,z,tempPassable,checkSubcell=true)`
+        (real `DecorDetect()` equivalent — sub-tile precision, real per-icon mask extruded uniformly
+        along this engine's own Z axis since the real mask is inherently 2D and the original never
+        had a depth axis), `ResolveMove(...)` (real `TestPath()` equivalent — one march per call,
+        rewinds to last-clear on block, reports which axis blocked + `onGround`), and
+        `RecoverFromPenetration(...)` (real `BlupiAdjust()` equivalent, called unconditionally at
+        the top of `Step()` right after the ghost-mode early-return, matching the real call site
+        exactly). `GroundHeightAt`/`CeilingHeightAt`/`TryMoveAxis` removed entirely — their only
+        3 call sites now go through the new API. `HasJumpHeadroom`/`GetBarreCellType`/`ToggleGhost`
+        keep using the existing coarse `IsSolidAt` (their own pre-existing "single stance"
+        simplifications, unaffected by this refactor).
+      - **Real bug found and fixed during implementation** (not by the research, empirically via
+        `VerifyBlupiMovement` failures): this engine's Y axis uses a DIFFERENT grid convention than
+        X/Z. X/Z are center-anchored (grid cell `g` owns continuous `[g-0.5, g+0.5)`, matching the
+        terrain renderer's own `CubeMesh` — confirmed by reading `easy-3d/src/CubeMesh.cpp` directly:
+        `min = Center - half; max = Center + half`). Y is bottom-anchored (grid cell `g` owns
+        `[g, g+1)`, confirmed against the pre-existing `GetGroundBlockType()`'s own
+        `lround(m_y) - 1` and old `GroundHeightAt()`'s own "+1 sits at the top surface" contract) —
+        a real, pre-existing asymmetry between collision-space Y and render-space Y already known
+        and explicitly worked around elsewhere in this codebase (`GalaxyEggbertCnaGame.cpp`'s
+        `kPlaceholderModelYOffset`, "GetY() sits a constant 0.5 world units above the true visual
+        ground surface... Deliberately NOT fixed by changing GetY()/GroundHeightAt()"). My first
+        `IsPointSolid` draft wrongly used the center-anchored formula for Y too, breaking 59 of
+        311 `VerifyBlupiMovement` checks (starting with "spawns grounded on the ground floor"); the
+        real fix was recognizing Y needed `floor(y)`, not `floor(y+0.5)`, while X/Z keep the
+        center-anchored formula.
+      - **Real design tension found and resolved**: several `IsGenericHazard()` tiles Blupi's own
+        hazard-detection depends on physically resting on (`GetGroundBlockType()`, checked by
+        `GalaxyEggbertCnaGame.cpp`) — Lava(68), Crusher(317), Saw(378), Blitz(305), and Drip(404) —
+        turned out to have an all-zero real quarter-cell mask (genuinely thin/non-bulk, independently
+        corroborating `15-3d-render-mapping-design.md`'s own "ThinMechanical" findings for the exact
+        same icons). Applying sub-tile precision to GROUND detection would make Blupi fall straight
+        through these already-verified hazard tiles. Resolved via `checkSubcell` (default true):
+        ground/ceiling resolution (`ResolveMove`'s vertical-only calls, `FindColumnGroundY`, the
+        `onGround` probe) passes `false` (coarse, unaffected by real tile shape, preserving existing
+        hazard-detection behavior exactly); horizontal wall collision keeps the default fine check
+        (no pre-existing dependency to break, and this is where sub-tile precision + the airborne
+        fix both matter). A deliberate, documented scope boundary — "one shared resolver algorithm,
+        axis-appropriate solidity granularity" — not an architectural inconsistency.
+      - **Step-up** (`kStepLimit`, already a CNA-only invention pre-dating this refactor — real
+        `TestPath` has no such concept at all) kept as its own explicit, separate mechanism
+        (`FindColumnGroundY`, mirrors old `GroundHeightAt`'s exact shape, built on the same coarse
+        `IsPointSolid(checkSubcell=false)`), tried only when grounded and the general resolve found
+        a horizontal block — not folded into `ResolveMove` itself, which stays a faithful,
+        real-behavior-only sweep.
+      - **Verification**: `VerifyBlupiMovement` went from 252/311 (59 failures, mostly the Y-axis
+        bug) → 311/311 after both fixes (Y-axis convention, `checkSubcell` ground/wall split). One
+        pre-existing test's expected value corrected (not a regression): the balloon-ceiling-stop
+        test's old `-0.5` boundary was itself inconsistent with ground's own `+1` convention for the
+        identical physical relationship — the unified resolver fixed this minor, previously-
+        unnoticed inconsistency as a side effect, moving the real stopping boundary from ~2.5 to
+        ~3.0 (documented inline in the test). A NEW dedicated test added for the actual confirmed
+        bug this task set out to fix (airborne wall collision) — **verified it has real teeth**: a
+        first draft of this test passed even with the old bug deliberately reintroduced (the jump
+        landed before ever reaching the wall, never exercising the airborne case at all); redesigned
+        to start right at the wall so contact happens within the brief airborne window, then
+        re-confirmed it correctly FAILS with the bug reintroduced and PASSES with the fix, before
+        reverting the temporary bug re-injection (confirmed via `git diff`). Full regression clean
+        (80/81, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure); golden-frame
+        byte-match unchanged (idle-spawn baseline untouched); live headless smoke run clean.
 - [ ] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **Needs its own scoping session + explicit user
       go-ahead before any code changes — do not start from this line alone.** Replace the
       open-coded `if (obj.type == ObjectTypeN)` chains inside `GalaxyEggbertCnaGame::Update()`
