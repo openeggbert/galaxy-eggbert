@@ -6350,6 +6350,41 @@ specifically, same as any other large/risky item elsewhere in this file.
       (80/81 on `build-cna`, pre-existing unrelated failure only; also re-verified clean on
       `cmake-build-debug`); golden-frame byte-match unchanged.
 
+      **Gap closed 2026-07-23 (autonomous session)**: re-checked all 3 capped pickups fresh.
+      BulletPack's own synthetic-second-instance-at-the-cap test already existed by this point (not
+      clear when it was added — the note above may simply have been stale even when written, or it
+      landed in an intervening commit) — confirmed present and passing. Dynamite's "second stick
+      while already carrying one" and Egg's `MAX_EGG_COUNT=10` cap were both still genuinely
+      missing, confirmed by grep before writing anything. Added both: a synthetic second dynamite
+      stick pushed directly into the mobile-object list (same idiom BulletPack's own test already
+      used) confirms `DynamiteCount()` stays at 1, no voyage is even requested (not just "count
+      looks unchanged immediately post-touch," which a broken gate would ALSO show given the reward
+      is deferred to voyage completion — confirmed this distinction matters via bug injection, see
+      below), and the stick isn't removed; 9 synthetic eggs (plus the 1 already collected above)
+      reach the real cap, then a 10th confirms the cap holds (no further increment, no life granted,
+      object not removed).
+
+      **Real test-harness bug found and fixed while writing the Egg test, not a production bug**: a
+      first draft reused the SAME real egg object in place (reactivated between touches) rather than
+      pushing fresh synthetic instances. That broke partway through — the sample world has 3 real
+      eggs, and once the reused object's now-permanently-inactive record got pruned from the
+      mobile-object vector after enough real `world.Update()` ticks, the next "find the first
+      ObjectType6" search silently matched a genuinely DIFFERENT egg elsewhere in the vector, whose
+      position no longer matched this test's fixed touch position — later iterations touched
+      nothing and `LifeEggCount()` plateaued, which read exactly like a stuck-cap bug until traced
+      with temporary debug prints (tracking both the matched object's own position and the live
+      in-world egg count across iterations). Fixed by switching to fresh synthetic push_backs per
+      touch throughout, matching BulletPack's own already-proven-reliable pattern, avoiding reuse
+      across a `world.Update()` boundary entirely.
+
+      **Verified real teeth via deliberate bug injection** on both new tests: disabling Dynamite's
+      gate check entirely caught all 3 of its new assertions; disabling Egg's touch-time cap check
+      caught 1 of its 3 (the "not removed" one specifically) — the other 2 stayed green because
+      `ApplyVoyageReward()`'s own SEPARATE, redundant cap check at voyage-completion time still
+      correctly blocked the reward even with the touch-time gate broken, a genuine defense-in-depth
+      pair in the real code, not a test weakness (confirmed by re-reading both gate sites). Both
+      injections reverted, confirmed via `git diff`. Full regression clean on all 3 native backends.
+
       **Enemy/hazard/combat family investigated in detail (2026-07-21), confirmed NOT a good fit,
       no code changed**: after the 2 low-risk families above, the user asked to attempt this
       explicitly-flagged-risky family "carefully" anyway. Read the full ~350-line block

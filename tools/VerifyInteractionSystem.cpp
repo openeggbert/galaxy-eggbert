@@ -246,6 +246,66 @@ int main(int argc, char** argv)
         const auto* after = findFirst(ObjectType::ObjectType6);
         check(after == nullptr || !after->active, "collected egg is no longer active (stops rendering)");
         check(interaction.Lives() == 4, "egg pickup granted a life (Lives() == 4, started at 3)");
+
+        // Real MAX_EGG_COUNT=10 gate (Decor.cpp:6007) -- an honest gap
+        // noted but not closed when this pickup family was investigated
+        // (INFRA-006, plan.md §7): only the ordinary single-pickup case
+        // above was covered, never the cap itself. Pushes 9 FRESH
+        // synthetic egg objects, one at a time, at an isolated position
+        // far from the sample world's own real content -- same "fresh
+        // synthetic instance per touch" idiom the bullet-pack cap test
+        // below already uses. A first draft tried reactivating the SAME
+        // real egg object in place instead; that broke once its
+        // now-permanently-inactive record got pruned from the world's
+        // own mobile-object vector after enough real `world.Update()`
+        // ticks (confirmed via temporary debug prints), silently leaving
+        // later touches aimed at nothing -- a test-harness bug, not a
+        // production one, avoided entirely by never reusing an object
+        // across a `world.Update()` boundary. lifeEggCount_ only
+        // increments at voyage COMPLETION (deferred reward, same as
+        // every other pickup here), so each touch needs its own
+        // completePendingVoyage() before the next.
+        constexpr float kEggCapTestX = 300.0f, kEggCapTestY = 1.0f, kEggCapTestZ = 300.0f;
+        for (int i = 0; i < 9; ++i) // already at 1 above -- 9 more reaches the real cap of 10
+        {
+            MobileObjSpec freshEgg;
+            freshEgg.type = ObjectType::ObjectType6;
+            freshEgg.active = true;
+            freshEgg.currentX = freshEgg.posStartX = freshEgg.posEndX = kEggCapTestX;
+            freshEgg.currentY = freshEgg.posStartY = freshEgg.posEndY = kEggCapTestY;
+            freshEgg.currentZ = freshEgg.posStartZ = freshEgg.posEndZ = kEggCapTestZ;
+            world.GetMobileObjectsMutable().push_back(freshEgg);
+            interaction.Update(dt, world, kEggCapTestX, kEggCapTestY, kEggCapTestZ, 0.0f, sound);
+            completePendingVoyage(world, interaction);
+        }
+        check(interaction.LifeEggCount() == 10, "9 more egg touches reach the real MAX_EGG_COUNT=10 cap");
+
+        // At the cap: a further touch is a total no-op -- not even
+        // removed (real gate is on the WHOLE touch-time block,
+        // Decor.cpp:6007, not just the reward).
+        MobileObjSpec eggAtCap;
+        eggAtCap.type = ObjectType::ObjectType6;
+        eggAtCap.active = true;
+        eggAtCap.currentX = eggAtCap.posStartX = eggAtCap.posEndX = kEggCapTestX;
+        eggAtCap.currentY = eggAtCap.posStartY = eggAtCap.posEndY = kEggCapTestY;
+        eggAtCap.currentZ = eggAtCap.posStartZ = eggAtCap.posEndZ = kEggCapTestZ;
+        world.GetMobileObjectsMutable().push_back(eggAtCap);
+        const int livesBeforeCappedTouch = interaction.Lives();
+        interaction.Update(dt, world, kEggCapTestX, kEggCapTestY, kEggCapTestZ, 0.0f, sound);
+        bool cappedEggStillActive = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType6 && obj.active &&
+                std::fabs(obj.currentX - kEggCapTestX) < 0.01f && std::fabs(obj.currentZ - kEggCapTestZ) < 0.01f)
+            {
+                cappedEggStillActive = true;
+            }
+        }
+        check(interaction.LifeEggCount() == 10,
+              "LifeEggCount() stays at the cap after touching an egg while already full");
+        check(cappedEggStillActive, "an egg touched while already at the cap is NOT removed");
+        check(interaction.Lives() == livesBeforeCappedTouch,
+              "no life is granted for touching an egg while already at the cap (no voyage requested)");
     }
     else
     {
@@ -789,6 +849,60 @@ int main(int argc, char** argv)
         check(interaction.Lives() < livesBeforeBlast || interaction.GameOverCount() > gameOversBeforeBlast,
               "standing in the blast radius cost Blupi a life (or triggered game-over)");
         check(!fuseStillActive, "the fuse object self-destructs once its sequence completes");
+
+        // Real "can't carry a second stick" gate (Decor.cpp, requiresDynamiteGate
+        // in kBasicPickupHandlers) -- an honest gap noted but not closed
+        // when this pickup family was migrated to a handler table
+        // (INFRA-006, plan.md §7): the existing dynamite coverage above
+        // only exercises the single-pickup-then-place happy path, never
+        // "touch a second stick while already carrying one." Two fresh
+        // synthetic sticks, isolated from the real sample-world content
+        // above, at a shared position far from anything else.
+        constexpr float kSecondStickX = 250.0f, kSecondStickY = 1.0f, kSecondStickZ = 250.0f;
+        {
+            MobileObjSpec firstStick;
+            firstStick.type = ObjectType::ObjectType55;
+            firstStick.active = true;
+            firstStick.currentX = firstStick.posStartX = firstStick.posEndX = kSecondStickX;
+            firstStick.currentY = firstStick.posStartY = firstStick.posEndY = kSecondStickY;
+            firstStick.currentZ = firstStick.posStartZ = firstStick.posEndZ = kSecondStickZ;
+            world.GetMobileObjectsMutable().push_back(firstStick);
+        }
+        interaction.Update(dt, world, kSecondStickX, kSecondStickY, kSecondStickZ, 0.0f, sound);
+        completePendingVoyage(world, interaction);
+        check(interaction.DynamiteCount() == 1, "test setup sanity: carrying one stick again before the gate test");
+
+        {
+            MobileObjSpec secondStick;
+            secondStick.type = ObjectType::ObjectType55;
+            secondStick.active = true;
+            secondStick.currentX = secondStick.posStartX = secondStick.posEndX = kSecondStickX;
+            secondStick.currentY = secondStick.posStartY = secondStick.posEndY = kSecondStickY;
+            secondStick.currentZ = secondStick.posStartZ = secondStick.posEndZ = kSecondStickZ;
+            world.GetMobileObjectsMutable().push_back(secondStick);
+        }
+        interaction.Update(dt, world, kSecondStickX, kSecondStickY, kSecondStickZ, 0.0f, sound);
+        // The reward is deferred to voyage completion (same as every
+        // other pickup here) -- a gated (correctly-closed) touch never
+        // requests a voyage at all, so completing "whatever's pending"
+        // must be a no-op here, not just DynamiteCount() looking
+        // unchanged immediately post-touch (which a broken gate would
+        // ALSO show, since its own reward hasn't been applied yet
+        // either -- confirmed via deliberate bug injection below).
+        check(!completePendingVoyage(world, interaction),
+              "touching a second stick while already carrying one requests no voyage at all");
+        check(interaction.DynamiteCount() == 1,
+              "DynamiteCount() stays at 1 after touching a second stick while already carrying one");
+        bool secondStickStillActive = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == ObjectType::ObjectType55 && obj.active &&
+                std::fabs(obj.currentX - kSecondStickX) < 0.01f && std::fabs(obj.currentZ - kSecondStickZ) < 0.01f)
+            {
+                secondStickStillActive = true;
+            }
+        }
+        check(secondStickStillActive, "a second stick touched while already carrying one is NOT removed");
     }
     else
     {

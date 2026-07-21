@@ -317,6 +317,28 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### test: close the 3-pickup-wide "second instance at the cap" test-coverage gap (2026-07-23)
+
+A gap noted but deliberately left open during INFRA-006's basic-pickup migration: Dynamite's "can't
+carry a second stick" gate and Egg's `MAX_EGG_COUNT=10` cap both had zero test coverage for the
+"touch a second one while already at the limit" case (only BulletPack's own cap already had this,
+turns out — the old note may have been stale even when written). Added both, matching BulletPack's
+own "push a fresh synthetic instance" pattern.
+
+Found and fixed a real test-harness bug (not production) while writing the Egg test: a first draft
+reactivated the SAME real egg object in place between touches; the sample world actually has 3 real
+eggs, and once the reused object got pruned from the mobile-object vector after enough real
+`world.Update()` ticks, the next "first ObjectType6" search silently matched a different egg
+elsewhere, whose position no longer matched the touch position — later iterations silently touched
+nothing, which read exactly like a stuck cap until traced with temporary debug prints. Fixed by
+switching to fresh synthetic pushes throughout.
+
+Verified real teeth via bug injection on both new tests (Dynamite: disabling its gate caught all 3
+new checks; Egg: disabling its touch-time gate caught 1 of 3 — the other 2 stayed green because
+`ApplyVoyageReward()`'s own separate completion-time cap check still blocked the reward, a genuine
+defense-in-depth pair in the real code, not a test weakness). Both reverted. Full regression clean
+on all 3 native backends. See `plan.md`'s `INFRA-006` entry for the full writeup.
+
 ### chore: fix a `-Wtype-limits` dead-code warning, sweep for more (2026-07-23)
 
 With the editor plan complete, swept every `galaxy-eggbert`-only source file (engine-agnostic
