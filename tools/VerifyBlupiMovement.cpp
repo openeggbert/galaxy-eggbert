@@ -1991,7 +1991,7 @@ int main(int argc, char** argv)
     }
 
     // FireTank one-shot recoil anim (table_blupi action 53, wired
-    // 2026-07-19 alongside GEInteractionSystem::TankFiredThisFrame() in
+    // 2026-07-19 alongside GEInteractionSystem::EventKind::TankFired in
     // GalaxyEggbertCnaGame.cpp) -- same direct GEBlupiController-level
     // TriggerOneShotAnim() coverage as TakeSkate/DeposeSkate above.
     {

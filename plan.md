@@ -5785,9 +5785,39 @@ specifically, same as any other large/risky item elsewhere in this file.
       one test file) — no old getters/members left behind (`grep` confirms zero remaining
       references). Full regression clean (80/81, only the pre-existing unrelated
       `easy-gl-resource-smoke-tests` failure); `VerifyBlupiMovement`'s own sound-cue assertions
-      re-run individually and confirmed passing. Steps 2/3 (the `GEInteractionSystem` side, 13
-      flags, largest test-file impact — `VerifyInteractionSystem.cpp` alone has ~64
-      `*ThisFrame()` references) not started yet.
+      re-run individually and confirmed passing.
+
+      **Step 2 done (2026-07-21):** `GEInteractionSystem`'s 11 remaining flags (excluding
+      `CrateBeingPushedThisFrame` and the step-3 Voyage/DeathLock pair) replaced by
+      `GEInteractionSystem::EventKind`/`Event`/`EventsThisFrame()`. Re-checking the exact payload
+      shape while implementing this surfaced a correction to the design summary above: 3 of the
+      11 (`PowerGranted`/`CloudGranted`/`HideGranted`) actually carry a real payload (the pickup's
+      world position, previously 9 separate float members + getters,
+      `Power/Cloud/HidePickupX/Y/Z()`) — only 8 of the 11 are truly payload-free. The approved
+      tagged-struct shape already accommodated this without any design change, same as
+      Voyage/DeathLock's own extra fields. `Died`'s "tested but no live-game-loop consumer" status
+      carried over unchanged, as decided. Consumer side: added a
+      `GalaxyEggbertCnaGame::FindInteractionEvent(EventKind)` private helper (returns
+      `const Event*`, `nullptr` if absent this frame) so payload-carrying kinds can read their
+      pickup position at the same call site, no separate position getter needed; every one of the
+      8 scattered consumption sites in `GalaxyEggbertCnaGame.cpp` (`Update()`/
+      `ResolvePickupFreeze()`) rewritten against it in place — same order, same interleaving with
+      surrounding logic, only the storage/lookup mechanism changed (in scope: transport only, not
+      restructuring when/where each signal is consumed). `tools/VerifyInteractionSystem.cpp`
+      (~64 references, this task's largest test-file impact) rewritten via two small local
+      helpers (`hasEvent`/`findEvent`); message-string wording updated to match (no code meaning
+      change). All stale doc comments referencing the old getter names (in
+      `GEInteractionSystem.hpp`/`.cpp`, `GEBlupiController.hpp`, `VerifyBlupiMovement.cpp`) updated
+      too — confirmed via `grep` that zero references to any of the 11 old getter/member names
+      remain anywhere in `src/`/`include/`/`tools/`. Full regression clean (80/81, only the
+      pre-existing unrelated `easy-gl-resource-smoke-tests` failure); `VerifyInteractionSystem`
+      itself: 547 checks, all passing. Live smoke check: `--golden-capture` run against
+      `worlds3d/world999.vwr` (this refactor's own test world, exercises
+      `GEInteractionSystem::Update()` every frame) completes cleanly with no crash, and
+      `tools/verify_golden_frames.sh`'s 3 reference frames still byte-match exactly — confirms the
+      render pipeline is untouched by this transport-only change. Step 3 (Voyage/DeathLock, the 2
+      payload-carrying signals excluded from steps 1/2, largest payloads — Voyage alone has 7
+      extra fields) not started yet.
 - Standing rule, not a one-shot task (`REMAKE-ANALYSIS.md` P2-2): **reuse before re-deriving.**
   When a CNA render/math bug has a plausible 2D/pixel root cause, check whether the engine-agnostic
   `include/GalaxyEggbert/` tree or `GalaxyEggbertSimple3D` (historical reference only, but still

@@ -908,32 +908,48 @@ namespace GalaxyEggbert::CNA
                                  false, startX, kLivesY, endX, endY, sound_);
     }
 
+    const GalaxyEggbert::CNA::GEInteractionSystem::Event* GalaxyEggbertCnaGame::FindInteractionEvent(
+        GalaxyEggbert::CNA::GEInteractionSystem::EventKind kind) const noexcept
+    {
+        for (const auto& event : interaction_.EventsThisFrame())
+        {
+            if (event.kind == kind)
+            {
+                return &event;
+            }
+        }
+        return nullptr;
+    }
+
     void GalaxyEggbertCnaGame::ResolvePickupFreeze()
     {
         using GalaxyEggbert::CNA::GEBlupiController;
+        using GalaxyEggbert::CNA::GEInteractionSystem;
+
+        const auto* powerEvent = FindInteractionEvent(GEInteractionSystem::EventKind::PowerGranted);
+        const auto* hideEvent = FindInteractionEvent(GEInteractionSystem::EventKind::HideGranted);
+        const auto* cloudEvent = FindInteractionEvent(GEInteractionSystem::EventKind::CloudGranted);
 
         // Starts a new freeze for whichever of the 3 real 2-stage pickups was touched this frame
         // (real immediate "grab" sound: Sucette ch50, Drink ch57, Charge ch58, Decor.cpp:
         // 6025-6087) -- the world object was already destroyed by interaction_.Update() itself.
-        if (interaction_.PowerGrantedThisFrame() && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette))
+        if (powerEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette))
         {
             sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel50);
-            pendingPickupX_ = interaction_.PowerPickupX();
-            pendingPickupY_ = interaction_.PowerPickupY();
-            pendingPickupZ_ = interaction_.PowerPickupZ();
+            pendingPickupX_ = powerEvent->pickupX;
+            pendingPickupY_ = powerEvent->pickupY;
+            pendingPickupZ_ = powerEvent->pickupZ;
             pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType26;
         }
-        else if (interaction_.HideGrantedThisFrame() &&
-                 blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink))
+        else if (hideEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink))
         {
             sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel57);
-            pendingPickupX_ = interaction_.HidePickupX();
-            pendingPickupY_ = interaction_.HidePickupY();
-            pendingPickupZ_ = interaction_.HidePickupZ();
+            pendingPickupX_ = hideEvent->pickupX;
+            pendingPickupY_ = hideEvent->pickupY;
+            pendingPickupZ_ = hideEvent->pickupZ;
             pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType30;
         }
-        else if (interaction_.CloudGrantedThisFrame() &&
-                 blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge))
+        else if (cloudEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge))
         {
             sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel58);
             // Real m_blupiCloud grants at CONTACT, not completion (confirmed via direct source
@@ -943,9 +959,9 @@ namespace GalaxyEggbert::CNA
             // completion (same values) -- NOT re-applied here, a documented, minor simplification
             // (the gauge decays for those ~3.2s during the freeze instead of being refreshed).
             blupi_.TriggerCloud();
-            pendingPickupX_ = interaction_.CloudPickupX();
-            pendingPickupY_ = interaction_.CloudPickupY();
-            pendingPickupZ_ = interaction_.CloudPickupZ();
+            pendingPickupX_ = cloudEvent->pickupX;
+            pendingPickupY_ = cloudEvent->pickupY;
+            pendingPickupZ_ = cloudEvent->pickupZ;
             pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType31;
         }
 
@@ -2728,20 +2744,20 @@ namespace GalaxyEggbert::CNA
             // contact-kill (most types SmallShake, fish/bird BigShake) and
             // the dynamite blast's own center-tile SmallShake, both
             // signaled from GEInteractionSystem::Update() above.
-            if (interaction_.SmallShakeTriggeredThisFrame())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::SmallShakeTriggered))
             {
                 cameraShake_.Trigger(CameraShakeType::Small);
             }
-            if (interaction_.BigShakeTriggeredThisFrame())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::BigShakeTriggered))
             {
                 cameraShake_.Trigger(CameraShakeType::Big);
             }
 
             // Real FireTank recoil anim (plan.md BLUPI-091 gap, table_blupi
             // ID 53, wired 2026-07-19) -- fires only the frame a bullet
-            // actually launched (TankFiredThisFrame(), gated on canFire
+            // actually launched (EventKind::TankFired, gated on canFire
             // already requiring Tank mode above), not the empty-clip click.
-            if (interaction_.TankFiredThisFrame())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::TankFired))
             {
                 blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::FireTank,
                                            GEBlupiController::kFireTankDuration);
@@ -2824,7 +2840,7 @@ namespace GalaxyEggbert::CNA
             // Charge/Drink) are real 2-stage pickups -- see
             // ResolvePickupFreeze() below for their own grab/freeze/
             // complete handling (plan.md `173`, 2026-07-14).
-            if (interaction_.ShieldGrantedThisFrame() && blupi_.TriggerShield())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::ShieldGranted) && blupi_.TriggerShield())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel42);
                 // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent,
@@ -2839,7 +2855,7 @@ namespace GalaxyEggbert::CNA
             // Invert" section. No warning-threshold sound (unlike the 4
             // powers above) -- real source has no warning stage for this
             // buff either.
-            if (interaction_.InvertGrantedThisFrame() && blupi_.TriggerInvert())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::InvertGranted) && blupi_.TriggerInvert())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel66);
                 interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
@@ -2877,8 +2893,8 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
-            // Real respawn/life-loss for hazard-contact deaths (DiedThisFrame()
-            // still true instantly on contact, for tests/other consumers) is
+            // Real respawn/life-loss for hazard-contact deaths (EventKind::Died
+            // still fires instantly on contact, for tests/other consumers) is
             // now deferred to the death-lock/life-loss-Voyage system --
             // resolved via ResolveDeathLock() above, not here (death-VFX
             // follow-up, 2026-07-14; this used to respawn instantly).
@@ -2892,12 +2908,12 @@ namespace GalaxyEggbert::CNA
             // read) -- despite the enum's own generic "electric field"
             // doc comment, the real trigger IS specifically wasp-sting/
             // balloon entry, not a separate electric-field-tile hazard.
-            if (interaction_.BalloonTouchedThisFrame() && blupi_.TriggerBalloon())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::BalloonTouched) && blupi_.TriggerBalloon())
             {
                 sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel40);
                 cameraShake_.Trigger(CameraShakeType::Electric);
             }
-            if (interaction_.BalloonPoppedThisFrame())
+            if (FindInteractionEvent(GEInteractionSystem::EventKind::BalloonPopped))
             {
                 blupi_.PopBalloon();
             }

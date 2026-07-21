@@ -583,18 +583,8 @@ namespace GalaxyEggbert::CNA
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate)
     {
-        diedThisFrame_ = false;
-        balloonTouchedThisFrame_ = false;
-        balloonPoppedThisFrame_ = false;
-        shieldGrantedThisFrame_ = false;
-        powerGrantedThisFrame_ = false;
-        cloudGrantedThisFrame_ = false;
-        hideGrantedThisFrame_ = false;
-        invertGrantedThisFrame_ = false;
-        smallShakeTriggeredThisFrame_ = false;
-        bigShakeTriggeredThisFrame_ = false;
+        events_.clear();
         crateBeingPushedThisFrame_ = false;
-        tankFiredThisFrame_ = false;
         ridingLift_ = false;
         voyagePendingThisFrame_ = false;
         deathLockRequestedThisFrame_ = false;
@@ -752,7 +742,7 @@ namespace GalaxyEggbert::CNA
                         AppendExplosionFlash(ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
-                        smallShakeTriggeredThisFrame_ = true;
+                        events_.push_back(Event{EventKind::SmallShakeTriggered});
                         AppendExplosionFlash(ObjectType::ObjectType37, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
                         other.active = false;
@@ -1139,7 +1129,9 @@ namespace GalaxyEggbert::CNA
                             // `sound` parameter is fire-and-forget `Play()` only), so the actual
                             // start/stop loop control lives in the caller
                             // (`GalaxyEggbertCnaGame::wasPushingCrate_`) -- this flag is the
-                            // signal it acts on, same shape as `SmallShakeTriggeredThisFrame()`.
+                            // signal it acts on. Deliberately still a plain bool, NOT part of
+                            // `events_` (INFRA-007, plan.md §7) -- this is continuous per-frame
+                            // state the caller edge-detects itself, not a one-shot event.
                             crateBeingPushedThisFrame_ = true;
                         }
                     }
@@ -1219,7 +1211,7 @@ namespace GalaxyEggbert::CNA
                             // fires ONLY for the center blast (dx=0,dy=0),
                             // not for every peripheral tick in the 9-blast
                             // sequence.
-                            smallShakeTriggeredThisFrame_ = true;
+                            events_.push_back(Event{EventKind::SmallShakeTriggered});
                         }
 
                         // Real 128x128px (2x2 tile) area -- +-1 grid unit
@@ -1349,7 +1341,7 @@ namespace GalaxyEggbert::CNA
                             std::fabs(blupiY - centerY) <= kBlastHalfExtent + 0.5f &&
                             std::fabs(blupiZ - centerZ) <= 0.5f)
                         {
-                            diedThisFrame_ = true;
+                            events_.push_back(Event{EventKind::Died});
                             // Real LoseLife()/respawn deferred to the death-lock resolution point
                             // (death-VFX follow-up) -- deterministic Clear1 (no VFX, matches
                             // `159`), shouldRespawn=false, confirmed no `m_blupiRestart=true` near
@@ -1513,7 +1505,7 @@ namespace GalaxyEggbert::CNA
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
                     AppendExplosionFlash(ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
-                    smallShakeTriggeredThisFrame_ = true;
+                    events_.push_back(Event{EventKind::SmallShakeTriggered});
                     continue;
                 }
                 obj.currentX = obj.posStartX = obj.posEndX = endX;
@@ -1593,7 +1585,7 @@ namespace GalaxyEggbert::CNA
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     obj.active = false;
-                    diedThisFrame_ = true;
+                    events_.push_back(Event{EventKind::Died});
                     // Real LoseLife()/respawn deferred to the death-lock resolution point
                     // (death-VFX follow-up) -- this is one of the real Glu trigger sites (direct
                     // `m_blupiAction=Glu` assignment, Decor.cpp:5914-5946, NOT via BlupiDead),
@@ -1607,7 +1599,7 @@ namespace GalaxyEggbert::CNA
             }
 
             // Wasp (ObjectType44, plan.md E3D-MIG-135) -- does NOT kill or
-            // destroy itself; contact signals BalloonTouchedThisFrame() so
+            // destroy itself; contact signals a BalloonTouched event so
             // the caller can attempt GEBlupiController::TriggerBalloon()
             // (idempotent there, not here -- see the class comment). Real
             // gate also includes `!m_blupiShield && !m_blupiHide`
@@ -1620,7 +1612,7 @@ namespace GalaxyEggbert::CNA
                 const float wdz = obj.currentZ - blupiZ;
                 if (!blupiInvincible && wdx * wdx + wdy * wdy + wdz * wdz < kHazardContactRadius * kHazardContactRadius)
                 {
-                    balloonTouchedThisFrame_ = true;
+                    events_.push_back(Event{EventKind::BalloonTouched});
                 }
                 continue;
             }
@@ -1673,7 +1665,7 @@ namespace GalaxyEggbert::CNA
                     const float gdz = obj.currentZ - blupiZ;
                     if (gdx * gdx + gdy * gdy + gdz * gdz < kHazardContactRadius * kHazardContactRadius)
                     {
-                        diedThisFrame_ = true;
+                        events_.push_back(Event{EventKind::Died});
                         // Real LoseLife()/respawn deferred to the death-lock resolution point
                         // (death-VFX follow-up) -- this is one of the real Glu trigger sites
                         // (direct `m_blupiAction=Glu` assignment, Decor.cpp:5867-5910, NOT via
@@ -1721,12 +1713,12 @@ namespace GalaxyEggbert::CNA
                 {
                     if (blupiBallooned && IsBalloonPoppableHazard(obj.type))
                     {
-                        balloonPoppedThisFrame_ = true;
+                        events_.push_back(Event{EventKind::BalloonPopped});
                     }
                     else
                     {
                         obj.active = false;
-                        diedThisFrame_ = true;
+                        events_.push_back(Event{EventKind::Died});
                         // Real LoseLife()/respawn now deferred to the death-lock/life-loss-Voyage
                         // resolution point (death-VFX follow-up) -- shouldRespawn=false, confirmed
                         // no `m_blupiRestart=true` near this real site (Decor.cpp:5782-5815).
@@ -1752,13 +1744,13 @@ namespace GalaxyEggbert::CNA
                         // other hazard type.
                         if (obj.type == ObjectType::ObjectType17 || obj.type == ObjectType::ObjectType20)
                         {
-                            bigShakeTriggeredThisFrame_ = true;
+                            events_.push_back(Event{EventKind::BigShakeTriggered});
                             AppendExplosionFlash(ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
                                                   pendingSpawns);
                         }
                         else
                         {
-                            smallShakeTriggeredThisFrame_ = true;
+                            events_.push_back(Event{EventKind::SmallShakeTriggered});
                             AppendExplosionFlash(ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
                                                   pendingSpawns);
                         }
@@ -1786,7 +1778,7 @@ namespace GalaxyEggbert::CNA
                     sdx * sdx + sdy * sdy + sdz * sdz < kHazardContactRadius * kHazardContactRadius)
                 {
                     obj.active = false;
-                    diedThisFrame_ = true;
+                    events_.push_back(Event{EventKind::Died});
                     const bool isClear2 = RollClear2Coinflip();
                     deathLockRequestedThisFrame_ = true;
                     deathLockPendingKind_ = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
@@ -1796,7 +1788,7 @@ namespace GalaxyEggbert::CNA
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
                         RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
                     }
-                    smallShakeTriggeredThisFrame_ = true;
+                    events_.push_back(Event{EventKind::SmallShakeTriggered});
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
                     AppendExplosionFlash(ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
@@ -2009,44 +2001,35 @@ namespace GalaxyEggbert::CNA
                     if (blupiCanGrantShield)
                     {
                         obj.active = false;
-                        shieldGrantedThisFrame_ = true;
+                        events_.push_back(Event{EventKind::ShieldGranted});
                     }
                     break;
                 case ObjectType::ObjectType26: // suction-cup ("Sucette" -> Power)
                     if (blupiCanGrantPower && blupiActionPressedEdge)
                     {
                         obj.active = false;
-                        powerGrantedThisFrame_ = true;
-                        powerPickupX_ = obj.currentX;
-                        powerPickupY_ = obj.currentY;
-                        powerPickupZ_ = obj.currentZ;
+                        events_.push_back(Event{EventKind::PowerGranted, obj.currentX, obj.currentY, obj.currentZ});
                     }
                     break;
                 case ObjectType::ObjectType30: // drink ("Drink" -> Hide)
                     if (blupiCanGrantHide && blupiActionPressedEdge)
                     {
                         obj.active = false;
-                        hideGrantedThisFrame_ = true;
-                        hidePickupX_ = obj.currentX;
-                        hidePickupY_ = obj.currentY;
-                        hidePickupZ_ = obj.currentZ;
+                        events_.push_back(Event{EventKind::HideGranted, obj.currentX, obj.currentY, obj.currentZ});
                     }
                     break;
                 case ObjectType::ObjectType31: // charge ("Charge" -> Cloud)
                     if (blupiCanGrantCloud)
                     {
                         obj.active = false;
-                        cloudGrantedThisFrame_ = true;
-                        cloudPickupX_ = obj.currentX;
-                        cloudPickupY_ = obj.currentY;
-                        cloudPickupZ_ = obj.currentZ;
+                        events_.push_back(Event{EventKind::CloudGranted, obj.currentX, obj.currentY, obj.currentZ});
                     }
                     break;
                 case ObjectType::ObjectType40: // mirror/invert
                     if (blupiCanGrantInvert)
                     {
                         obj.active = false;
-                        invertGrantedThisFrame_ = true;
+                        events_.push_back(Event{EventKind::InvertGranted});
                     }
                     break;
                 default:
@@ -2208,7 +2191,7 @@ namespace GalaxyEggbert::CNA
                 const int dist = SearchAirDistance(world, gx, gy, gz, blupiFacingDX, 0, blupiFacingDZ);
                 --bulletCount_;
                 fireCooldownTimer_ = kFireCooldownSeconds;
-                tankFiredThisFrame_ = true;
+                events_.push_back(Event{EventKind::TankFired});
                 sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
                 if (dist > 0)
                 {

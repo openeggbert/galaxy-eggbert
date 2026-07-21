@@ -38,6 +38,23 @@ int main(int argc, char** argv)
         if (!cond) allOk = false;
     };
 
+    // INFRA-007 (plan.md §7, step 2/3): GEInteractionSystem's 11 simple/position-payload
+    // *ThisFrame() flags moved to one typed EventsThisFrame() queue -- these two helpers mirror
+    // what the old individual getters used to check, so the assertions below read the same.
+    const auto findEvent = [](const GEInteractionSystem& interaction, GEInteractionSystem::EventKind kind)
+        -> const GEInteractionSystem::Event*
+    {
+        for (const auto& event : interaction.EventsThisFrame())
+        {
+            if (event.kind == kind) return &event;
+        }
+        return nullptr;
+    };
+    const auto hasEvent = [&findEvent](const GEInteractionSystem& interaction, GEInteractionSystem::EventKind kind)
+    {
+        return findEvent(interaction, kind) != nullptr;
+    };
+
     GEWorldRuntime world;
     if (!world.LoadFromVwrFile(worldPath))
     {
@@ -473,16 +490,16 @@ int main(int argc, char** argv)
     // 2.5. Generic hazard contact (ObjectType2, plan.md E3D-MIG-132) -- the
     // sample world places one at world (41,1,67) and one at (18,11,49);
     // walking onto either should kill Blupi (lives lost, hazard destroyed,
-    // DiedThisFrame() true for that one Update() call only).
+    // the Died event fires for that one Update() call only).
     if (const auto* hazard = findFirst(ObjectType::ObjectType2))
     {
         const float hx = hazard->currentX, hy = hazard->currentY, hz = hazard->currentZ;
         const int livesBeforeHazard = interaction.Lives();
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
-        check(interaction.DiedThisFrame(), "DiedThisFrame() is true the frame Blupi touches a generic hazard");
-        check(interaction.SmallShakeTriggeredThisFrame(),
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event fires the frame Blupi touches a generic hazard");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "generic hazard contact-kill triggers SmallShake (plan.md CAM-008, real Decor.cpp behavior)");
-        check(!interaction.BigShakeTriggeredThisFrame(),
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::BigShakeTriggered),
               "a non-fish/bird hazard contact-kill does NOT trigger BigShake");
         // Real explosion flash (plan.md VISUAL-008) spawned at the same
         // site: ObjectType8 for this non-fish/bird hazard, exactly at the
@@ -525,7 +542,7 @@ int main(int argc, char** argv)
         completeDeathLock(world, interaction, hazardDeathBlupi);
         check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
-        check(!interaction.DiedThisFrame(), "DiedThisFrame() is false again the very next frame");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event does not fire again the very next frame");
     }
     else
     {
@@ -733,7 +750,7 @@ int main(int argc, char** argv)
                                             0.0f, 0.0f, sound);
                 }
             }
-            smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || interaction.SmallShakeTriggeredThisFrame();
+            smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered);
             for (const auto& obj : world.GetMobileObjects())
             {
                 if (obj.active && obj.type == ObjectType::ObjectType8 &&
@@ -845,24 +862,24 @@ int main(int argc, char** argv)
                             /*blupiFirePressed=*/true, /*blupiCanFire=*/false);
         check(interaction.BulletCount() == bulletsBeforeFiring,
               "firing while not in a Tank (canFire=false) does not consume ammo");
-        check(!interaction.TankFiredThisFrame(),
-              "TankFiredThisFrame() is false when not in a Tank (real FireTank anim gate)");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+              "the TankFired event does not fire when not in a Tank (real FireTank anim gate)");
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == bulletsBeforeFiring - 1,
               "firing while in a Tank consumes exactly 1 bullet");
-        check(interaction.TankFiredThisFrame(),
-              "TankFiredThisFrame() is true the exact frame a bullet actually launches");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+              "the TankFired event fires the exact frame a bullet actually launches");
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == bulletsBeforeFiring - 1,
               "holding Fire within the real 0.5s cooldown does not fire again");
-        check(!interaction.TankFiredThisFrame(),
-              "TankFiredThisFrame() is false while blocked by the real 0.5s cooldown");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+              "the TankFired event does not fire while blocked by the real 0.5s cooldown");
 
         // Advance past the real 0.5s cooldown (Fire not held during the
         // wait, matching a real "tap" cadence) then fire again.
@@ -895,8 +912,8 @@ int main(int argc, char** argv)
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == 0, "firing with no ammo left does not underflow BulletCount()");
-        check(!interaction.TankFiredThisFrame(),
-              "TankFiredThisFrame() is false on the empty-clip click, no real recoil pose then");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+              "the TankFired event does not fire on the empty-clip click, no real recoil pose then");
     }
 
     // 3.74. Types 201-203 (plan.md PICKUP-069, found 2026-07-16, real Decor.cpp:6088-6115) --
@@ -916,14 +933,14 @@ int main(int argc, char** argv)
         // Shield/Hide immunity (blupiInvincible=true) -- no death, object survives.
         lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound, false, false, 0, 0,
                                        /*blupiInvincible=*/true);
-        check(!lethalDecorInteraction.DiedThisFrame(),
+        check(!hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::Died),
               "touching ObjectType201 with blupiInvincible=true does not kill Blupi (real Shield/Hide gate)");
         check(lethalDecorWorld.GetMobileObjects().front().active,
               "ObjectType201 survives contact while Blupi is invincible");
 
         // Now without invincibility -- lethal, real Clear1/Clear2 coinflip + effects.
         lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound);
-        check(lethalDecorInteraction.DiedThisFrame(), "touching ObjectType201 kills Blupi (real BlupiDead(Clear1,Clear2))");
+        check(hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::Died), "touching ObjectType201 kills Blupi (real BlupiDead(Clear1,Clear2))");
         const bool anyActive201 = std::any_of(lethalDecorWorld.GetMobileObjects().begin(),
                                                lethalDecorWorld.GetMobileObjects().end(),
                                                [](const auto& o) { return o.active && o.type == ObjectType::ObjectType201; });
@@ -936,7 +953,7 @@ int main(int argc, char** argv)
               "the death lock's pending kind is the real Clear1/Clear2 coinflip, nothing else");
         check(!lethalDecorInteraction.DeathLockShouldRespawn(),
               "shouldRespawn is false (real: no m_blupiRestart=true anywhere in this block)");
-        check(lethalDecorInteraction.SmallShakeTriggeredThisFrame(),
+        check(hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "lethal contact always triggers SmallShake (real: no fish/bird BigShake variant here)");
     }
 
@@ -964,7 +981,7 @@ int main(int argc, char** argv)
 
         // Blupi is far away -- this mechanic doesn't involve his position at all.
         trapInteraction.Update(dt, trapWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
-        check(trapInteraction.SmallShakeTriggeredThisFrame(),
+        check(hasEvent(trapInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "the Perso-decoy trap triggers SmallShake when a small enemy touches a placed decoy");
         const bool anyActiveDecoyOrEnemy =
             std::any_of(trapWorld.GetMobileObjects().begin(), trapWorld.GetMobileObjects().end(),
@@ -989,7 +1006,7 @@ int main(int argc, char** argv)
         farBulldozer.posStartZ = farBulldozer.posEndZ = farBulldozer.currentZ = 700.0f;
         noTrapWorld.GetMobileObjectsMutable().push_back(farBulldozer);
         noTrapInteraction.Update(dt, noTrapWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
-        check(!noTrapInteraction.SmallShakeTriggeredThisFrame(),
+        check(!hasEvent(noTrapInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "no trap trigger when the enemy is far from any 200-203 object");
         const bool bothStillActive =
             noTrapWorld.GetMobileObjects()[0].active && noTrapWorld.GetMobileObjects()[1].active;
@@ -1158,15 +1175,15 @@ int main(int argc, char** argv)
         shieldInteraction.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
                                   shieldStick->currentZ, 0.0f, sound, false, false, 0, 0,
                                   /*blupiInvincible=*/false, /*canGrantShield=*/false);
-        check(!shieldInteraction.ShieldGrantedThisFrame(),
-              "ShieldGrantedThisFrame() is false when the caller reports canGrantShield=false");
+        check(!hasEvent(shieldInteraction, GEInteractionSystem::EventKind::ShieldGranted),
+              "the ShieldGranted event does not fire when the caller reports canGrantShield=false");
 
         GEInteractionSystem shieldInteraction2;
         shieldInteraction2.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
                                    shieldStick->currentZ, 0.0f, sound, false, false, 0, 0,
                                    /*blupiInvincible=*/false, /*canGrantShield=*/true);
-        check(shieldInteraction2.ShieldGrantedThisFrame(),
-              "ShieldGrantedThisFrame() is true on contact when canGrantShield=true");
+        check(hasEvent(shieldInteraction2, GEInteractionSystem::EventKind::ShieldGranted),
+              "the ShieldGranted event fires on contact when canGrantShield=true");
     }
     else
     {
@@ -1183,8 +1200,8 @@ int main(int argc, char** argv)
                                   /*blupiInvincible=*/false, /*canGrantShield=*/true, /*canGrantPower=*/true,
                                   /*canGrantCloud=*/true, /*canGrantHide=*/true, /*blupiFirePressed=*/false,
                                   /*blupiCanFire=*/false, /*blupiCloudActive=*/false, /*canGrantInvert=*/false);
-        check(!invertInteraction.InvertGrantedThisFrame(),
-              "InvertGrantedThisFrame() is false when the caller reports canGrantInvert=false");
+        check(!hasEvent(invertInteraction, GEInteractionSystem::EventKind::InvertGranted),
+              "the InvertGranted event does not fire when the caller reports canGrantInvert=false");
 
         GEInteractionSystem invertInteraction2;
         invertInteraction2.Update(dt, world, invertPickup->currentX, invertPickup->currentY,
@@ -1192,8 +1209,8 @@ int main(int argc, char** argv)
                                    /*blupiInvincible=*/false, /*canGrantShield=*/true, /*canGrantPower=*/true,
                                    /*canGrantCloud=*/true, /*canGrantHide=*/true, /*blupiFirePressed=*/false,
                                    /*blupiCanFire=*/false, /*blupiCloudActive=*/false, /*canGrantInvert=*/true);
-        check(invertInteraction2.InvertGrantedThisFrame(),
-              "InvertGrantedThisFrame() is true on contact when canGrantInvert=true");
+        check(hasEvent(invertInteraction2, GEInteractionSystem::EventKind::InvertGranted),
+              "the InvertGranted event fires on contact when canGrantInvert=true");
     }
     else
     {
@@ -1321,8 +1338,8 @@ int main(int argc, char** argv)
         const int livesBefore = invincibleInteraction.Lives();
         invincibleInteraction.Update(dt, world, hazard2->currentX, hazard2->currentY, hazard2->currentZ, 0.0f,
                                       sound, false, false, 0, 0, /*blupiInvincible=*/true);
-        check(!invincibleInteraction.DiedThisFrame(),
-              "DiedThisFrame() stays false touching a generic hazard while blupiInvincible=true");
+        check(!hasEvent(invincibleInteraction, GEInteractionSystem::EventKind::Died),
+              "the Died event still does not fire touching a generic hazard while blupiInvincible=true");
         check(invincibleInteraction.Lives() == livesBefore,
               "no life is lost touching a generic hazard while invincible (real Shield/Hide immunity)");
         check(hazard2->active,
@@ -1403,7 +1420,7 @@ int main(int argc, char** argv)
         const int livesBeforeSpider = interaction.Lives();
         const int gameOverBeforeSpider = interaction.GameOverCount();
         interaction.Update(dt, world, 5.0f, 1.0f, 5.0f, 0.0f, sound);
-        check(interaction.DiedThisFrame(), "DiedThisFrame() is true touching an injected spider (ObjectType16)");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event fires touching an injected spider (ObjectType16)");
         GEBlupiController spiderDeathBlupi;
         completeDeathLock(world, interaction, spiderDeathBlupi);
         // Lives() may already be down to 1 from earlier sections in this
@@ -1447,10 +1464,10 @@ int main(int argc, char** argv)
         world.GetMobileObjectsMutable().push_back(fish);
 
         interaction.Update(dt, world, 6.0f, 1.0f, 6.0f, 0.0f, sound);
-        check(interaction.DiedThisFrame(), "DiedThisFrame() is true touching an injected fish (ObjectType17)");
-        check(interaction.BigShakeTriggeredThisFrame(),
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event fires touching an injected fish (ObjectType17)");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::BigShakeTriggered),
               "fish contact-kill triggers BigShake specifically, not SmallShake");
-        check(!interaction.SmallShakeTriggeredThisFrame(),
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "fish contact-kill does NOT also trigger SmallShake the same frame");
         // Real explosion flash (plan.md VISUAL-008): ObjectType10 for
         // fish/bird specifically, matching the BigShake split exactly.
@@ -1479,8 +1496,8 @@ int main(int argc, char** argv)
 
         const int livesBeforeWasp = interaction.Lives();
         interaction.Update(dt, world, 10.0f, 1.0f, 10.0f, 0.0f, sound);
-        check(interaction.BalloonTouchedThisFrame(), "BalloonTouchedThisFrame() is true touching a wasp");
-        check(!interaction.DiedThisFrame(), "touching a wasp does not kill Blupi");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::BalloonTouched), "the BalloonTouched event fires touching a wasp");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "touching a wasp does not kill Blupi");
         check(interaction.Lives() == livesBeforeWasp, "touching a wasp costs no life");
         bool waspStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
@@ -1510,8 +1527,8 @@ int main(int argc, char** argv)
 
         const int livesBeforeFollower = interaction.Lives();
         interaction.Update(dt, world, 15.0f, 20.0f, 15.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
-        check(interaction.BalloonPoppedThisFrame(), "BalloonPoppedThisFrame() is true touching a follower while ballooned");
-        check(!interaction.DiedThisFrame(), "the pop happens instead of a kill while ballooned");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::BalloonPopped), "the BalloonPopped event fires touching a follower while ballooned");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the pop happens instead of a kill while ballooned");
         check(interaction.Lives() == livesBeforeFollower, "a popped balloon costs no life");
         bool followerStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
@@ -1541,7 +1558,7 @@ int main(int argc, char** argv)
         const int livesBeforeBulldozer = interaction.Lives();
         const int gameOverCountBeforeBulldozer = interaction.GameOverCount();
         interaction.Update(dt, world, 20.0f, 1.0f, 20.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
-        check(interaction.DiedThisFrame(), "bulldozer (type 4) still kills Blupi even while ballooned");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "bulldozer (type 4) still kills Blupi even while ballooned");
         GEBlupiController bulldozerDeathBlupi;
         completeDeathLock(world, interaction, bulldozerDeathBlupi);
         const bool bulldozerCostALife =
@@ -1687,7 +1704,7 @@ int main(int argc, char** argv)
         // spawned should register a kill this frame.
         const int livesBeforeBullet = interaction.Lives();
         interaction.Update(dt, world, bhX, 15.0f, bhZ, 0.0f, sound);
-        check(interaction.DiedThisFrame(), "blupih's projectile is fatal on contact");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "blupih's projectile is fatal on contact");
 
         const int bulletCountAfterContact = countBulletsAt(bhX, bhZ);
         check(bulletCountAfterContact == bulletCountBefore, "the projectile that killed Blupi is destroyed (no longer active)");
@@ -1850,14 +1867,14 @@ int main(int argc, char** argv)
         if (auto* c = findCreature()) c->patrolStep = 2;
         int livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(!interaction.DiedThisFrame(), "large creature contact is safe while it's mid-walk (patrolStep 2)");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is safe while it's mid-walk (patrolStep 2)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature mid-walk");
 
         // Also safe mid-recede (patrolStep 4).
         if (auto* c = findCreature()) c->patrolStep = 4;
         livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(!interaction.DiedThisFrame(), "large creature contact is safe while it's mid-recede (patrolStep 4)");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is safe while it's mid-recede (patrolStep 4)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature mid-recede");
 
         // Turn-dwell (patrolStep 1): contact is lethal, and the creature
@@ -1866,7 +1883,7 @@ int main(int argc, char** argv)
         livesBefore = interaction.Lives();
         const int gameOverBefore = interaction.GameOverCount();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(interaction.DiedThisFrame(), "large creature contact is lethal during turn-dwell (patrolStep 1)");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is lethal during turn-dwell (patrolStep 1)");
         GEBlupiController turnDwellDeathBlupi;
         completeDeathLock(world, interaction, turnDwellDeathBlupi);
         const bool costALife =
@@ -1881,7 +1898,7 @@ int main(int argc, char** argv)
         if (auto* c = findCreature()) c->patrolStep = 3;
         livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(interaction.DiedThisFrame(), "large creature contact is also lethal at patrolStep 3 (the other dwell)");
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is also lethal at patrolStep 3 (the other dwell)");
 
         // Balloon immunity (real `!m_blupiBalloon` gate) -- while
         // ballooned, contact during turn-dwell does nothing at all (no
@@ -1889,8 +1906,8 @@ int main(int argc, char** argv)
         if (auto* c = findCreature()) c->patrolStep = 1;
         livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
-        check(!interaction.DiedThisFrame(), "large creature contact is harmless during turn-dwell while ballooned");
-        check(!interaction.BalloonPoppedThisFrame(), "large creature contact does not pop the balloon either (no pop path for type 54)");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is harmless during turn-dwell while ballooned");
+        check(!hasEvent(interaction, GEInteractionSystem::EventKind::BalloonPopped), "large creature contact does not pop the balloon either (no pop path for type 54)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature during turn-dwell while ballooned");
     }
 
@@ -2037,7 +2054,7 @@ int main(int argc, char** argv)
         }
         std::cout << "Follower self-destructed after " << framesToDestruct << " frame(s) approaching the wall" << std::endl;
         check(selfDestructed, "a homing follower self-destructs when its next step would land inside solid terrain");
-        check(interaction.SmallShakeTriggeredThisFrame(),
+        check(hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "the follower's blocked-path self-destruct triggers SmallShake (plan.md CAM-008, a site the "
               "earlier camera-shake audit missed)");
 
@@ -3267,17 +3284,18 @@ int main(int argc, char** argv)
         // 2026-07-14) -- touching it WITHOUT the button (blupiActionPressedEdge=false, the
         // default) must not grant anything.
         pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound);
-        check(!pickupInteraction.PowerGrantedThisFrame(),
+        check(!hasEvent(pickupInteraction, GEInteractionSystem::EventKind::PowerGranted),
               "touching Sucette(26) WITHOUT the action button does not grant Power (real gate)");
         // Now with the button held -- blupiActionPressedEdge=true, every other trailing param
         // left at its real default.
         pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound, false, false, 0, 0, false, true,
                                   true, true, true, false, false, false, true, /*blupiActionPressedEdge=*/true);
-        check(pickupInteraction.PowerGrantedThisFrame(), "touching Sucette(26) sets PowerGrantedThisFrame()");
-        check(std::fabs(pickupInteraction.PowerPickupX() - 12.0f) < 0.01f &&
-                  std::fabs(pickupInteraction.PowerPickupY() - 1.0f) < 0.01f &&
-                  std::fabs(pickupInteraction.PowerPickupZ() - 34.0f) < 0.01f,
-              "PowerPickupX/Y/Z() capture the real pickup's own contact position");
+        const auto* powerGrantedEvent = findEvent(pickupInteraction, GEInteractionSystem::EventKind::PowerGranted);
+        check(powerGrantedEvent != nullptr, "touching Sucette(26) fires a PowerGranted event");
+        check(powerGrantedEvent != nullptr && std::fabs(powerGrantedEvent->pickupX - 12.0f) < 0.01f &&
+                  std::fabs(powerGrantedEvent->pickupY - 1.0f) < 0.01f &&
+                  std::fabs(powerGrantedEvent->pickupZ - 34.0f) < 0.01f,
+              "PowerGranted event's pickupX/Y/Z capture the real pickup's own contact position");
 
         // Vehicle-mode/Balloon/Ecrase gate (real Decor.cpp:6025-6087) -- caller
         // (GalaxyEggbertCnaGame::canGrantPower) reports false while Blupi is mounted/ballooned/
@@ -3296,7 +3314,7 @@ int main(int argc, char** argv)
         pickupInteraction.Update(dt, pickupWorld, 50.0f, 1.0f, 60.0f, 0.0f, sound, false, false, 0, 0, false, true,
                                   /*blupiCanGrantPower=*/false, true, true, false, false, false, true,
                                   /*blupiActionPressedEdge=*/true);
-        check(!pickupInteraction.PowerGrantedThisFrame(),
+        check(!hasEvent(pickupInteraction, GEInteractionSystem::EventKind::PowerGranted),
               "touching Sucette(26) with the action button held but blupiCanGrantPower=false "
               "(vehicle/balloon/squash gate) does not grant Power");
 
@@ -3308,15 +3326,16 @@ int main(int argc, char** argv)
         pickupWorld.GetMobileObjectsMutable().push_back(drink);
         // Same real action-button gate as Sucette above -- without it, nothing grants.
         pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound);
-        check(!pickupInteraction.HideGrantedThisFrame(),
+        check(!hasEvent(pickupInteraction, GEInteractionSystem::EventKind::HideGranted),
               "touching Drink(30) WITHOUT the action button does not grant Hide (real gate)");
         pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound, false, false, 0, 0, false, true,
                                   true, true, true, false, false, false, true, /*blupiActionPressedEdge=*/true);
-        check(pickupInteraction.HideGrantedThisFrame(), "touching Drink(30) sets HideGrantedThisFrame()");
-        check(std::fabs(pickupInteraction.HidePickupX() - 20.0f) < 0.01f &&
-                  std::fabs(pickupInteraction.HidePickupY() - 1.0f) < 0.01f &&
-                  std::fabs(pickupInteraction.HidePickupZ() - 41.0f) < 0.01f,
-              "HidePickupX/Y/Z() capture the real pickup's own contact position");
+        const auto* hideGrantedEvent = findEvent(pickupInteraction, GEInteractionSystem::EventKind::HideGranted);
+        check(hideGrantedEvent != nullptr, "touching Drink(30) fires a HideGranted event");
+        check(hideGrantedEvent != nullptr && std::fabs(hideGrantedEvent->pickupX - 20.0f) < 0.01f &&
+                  std::fabs(hideGrantedEvent->pickupY - 1.0f) < 0.01f &&
+                  std::fabs(hideGrantedEvent->pickupZ - 41.0f) < 0.01f,
+              "HideGranted event's pickupX/Y/Z capture the real pickup's own contact position");
 
         MobileObjSpec charge;
         charge.type = ObjectType::ObjectType31;
@@ -3328,12 +3347,13 @@ int main(int argc, char** argv)
         // automatically on contact alone, unlike Sucette/Drink above (confirmed via direct source
         // read, Decor.cpp:6069-6087 has no getButtonPressedProperty() check at all).
         pickupInteraction.Update(dt, pickupWorld, 7.0f, 1.0f, 9.0f, 0.0f, sound);
-        check(pickupInteraction.CloudGrantedThisFrame(),
-              "touching Charge(31) sets CloudGrantedThisFrame() with NO action button needed (real gate)");
-        check(std::fabs(pickupInteraction.CloudPickupX() - 7.0f) < 0.01f &&
-                  std::fabs(pickupInteraction.CloudPickupY() - 1.0f) < 0.01f &&
-                  std::fabs(pickupInteraction.CloudPickupZ() - 9.0f) < 0.01f,
-              "CloudPickupX/Y/Z() capture the real pickup's own contact position");
+        const auto* cloudGrantedEvent = findEvent(pickupInteraction, GEInteractionSystem::EventKind::CloudGranted);
+        check(cloudGrantedEvent != nullptr,
+              "touching Charge(31) fires a CloudGranted event with NO action button needed (real gate)");
+        check(cloudGrantedEvent != nullptr && std::fabs(cloudGrantedEvent->pickupX - 7.0f) < 0.01f &&
+                  std::fabs(cloudGrantedEvent->pickupY - 1.0f) < 0.01f &&
+                  std::fabs(cloudGrantedEvent->pickupZ - 9.0f) < 0.01f,
+              "CloudGranted event's pickupX/Y/Z capture the real pickup's own contact position");
 
         // RespawnPickupItem() -- real ObjectStart(pos, type, 0) at the freeze's own completion.
         const int type26CountBefore = static_cast<int>(std::count_if(

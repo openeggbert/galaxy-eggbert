@@ -428,12 +428,20 @@ namespace GalaxyEggbert::CNA
         // active one (matches the real early-out exactly). Called once per frame.
         void UpdateVehicleMotorSound();
 
+        // INFRA-007 (plan.md §7, step 2/3): GEInteractionSystem's 11 simple/position-payload
+        // *ThisFrame() signals are now one typed EventsThisFrame() queue instead of 11 parallel
+        // booleans -- this finds the (at most one, per-Kind) event of a given Kind this frame, or
+        // nullptr if none fired. Returns a pointer rather than bool so payload-carrying kinds
+        // (PowerGranted/CloudGranted/HideGranted) can read their pickup position straight off the
+        // returned Event, same call site, no separate position getter needed.
+        [[nodiscard]] const GalaxyEggbert::CNA::GEInteractionSystem::Event*
+        FindInteractionEvent(GalaxyEggbert::CNA::GEInteractionSystem::EventKind kind) const noexcept;
+
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
-        // a no-op unless `interaction_.PowerGrantedThisFrame()`/
-        // `CloudGrantedThisFrame()`/`HideGrantedThisFrame()` fires this
-        // frame (plays the real immediate "grab" sound, starts
-        // `blupi_.TriggerPickupFreeze()`, and stashes the pickup's own
-        // position from `interaction_.Power/Cloud/HidePickupX/Y/Z()` into
+        // a no-op unless FindInteractionEvent() finds a PowerGranted/
+        // CloudGranted/HideGranted event this frame (plays the real
+        // immediate "grab" sound, starts `blupi_.TriggerPickupFreeze()`,
+        // and stashes the event's own pickup position into
         // `pendingPickup*_` below since the freeze outlives this frame) OR
         // `blupi_.ConsumePickupFreezeResolved()` fires (plays the real
         // "complete" sound, grants Power/Hide via `blupi_.TriggerPower()`/

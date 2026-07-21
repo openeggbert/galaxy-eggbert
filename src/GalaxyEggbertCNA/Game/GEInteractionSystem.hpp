@@ -4,6 +4,7 @@
 #include "GEWorldRuntime.hpp"
 
 #include <random>
+#include <vector>
 
 namespace GalaxyEggbert::CNA
 {
@@ -62,9 +63,9 @@ namespace GalaxyEggbert::CNA
     // Wasp (ObjectType44) "balloon" status now works (2026-07-11, plan.md
     // E3D-MIG-135), verified directly against Decor.cpp:5826-5863 (trigger)
     // and 5766-5781 (the balloon-pop interaction with hazards). Contact
-    // does NOT kill Blupi or destroy the wasp -- it signals
-    // BalloonTouchedThisFrame() every frame Blupi overlaps it; the real
-    // `!m_blupiBalloon` re-trigger guard lives in
+    // does NOT kill Blupi or destroy the wasp -- it signals a
+    // BalloonTouched event (EventsThisFrame()) every frame Blupi overlaps
+    // it; the real `!m_blupiBalloon` re-trigger guard lives in
     // GEBlupiController::TriggerBalloon() itself (idempotent, same pattern
     // as TriggerCrush()), not here, since GEInteractionSystem has no access
     // to Blupi's current balloon state. While ballooned (the caller passes
@@ -73,8 +74,8 @@ namespace GalaxyEggbert::CNA
     // real source's if/else-if chain: the pop check for 3/16/96/97 comes
     // FIRST and is mutually exclusive with the kill check right after it,
     // but 2/4/17/20 only ever reach the kill check) pops the balloon
-    // instead of killing -- signaled via BalloonPoppedThisFrame(), same
-    // caller-applies-the-actual-state-change split as DiedThisFrame().
+    // instead of killing -- signaled via a BalloonPopped event, same
+    // caller-applies-the-actual-state-change split as Died.
     //
     // Blupih/blupit (ObjectType32/33) stationary shooters now work
     // (2026-07-10, plan.md E3D-MIG-134), verified directly against
@@ -159,8 +160,8 @@ namespace GalaxyEggbert::CNA
         // whole branch, no pop path for it) -- the caller reads this back
         // from GEBlupiController::IsBallooned() before calling Update(),
         // same as blupiCrouching's own GetAnimState()-derived source. If this
-        // call kills Blupi via enemy contact, DiedThisFrame() returns true
-        // for the rest of this frame only -- GEInteractionSystem has no
+        // call kills Blupi via enemy contact, a Died event (EventsThisFrame())
+        // fires for the rest of this frame only -- GEInteractionSystem has no
         // access to GEBlupiController, so the caller is the one that must
         // actually respawn Blupi (see GalaxyEggbertCnaGame::Update()).
         // blupiFacingDX/DZ (plan.md E3D-MIG-160, both default 0 so existing
@@ -246,76 +247,98 @@ namespace GalaxyEggbert::CNA
                     // (synthetic tests included) keeps pushing crates unless it opts in.
                     bool blupiCanPushCrate = true);
 
-        [[nodiscard]] bool DiedThisFrame() const noexcept { return diedThisFrame_; }
-        // Wasp contact (see the class comment above) -- true every frame
-        // Blupi overlaps a wasp, NOT debounced to once per contact (the
-        // real `!m_blupiBalloon` re-trigger guard lives in
-        // GEBlupiController::TriggerBalloon() instead).
-        [[nodiscard]] bool BalloonTouchedThisFrame() const noexcept { return balloonTouchedThisFrame_; }
-        // True the one frame a 3/16/96/97 hazard was popped instead of
-        // killing (see the class comment above) -- the caller must call
-        // GEBlupiController::PopBalloon() itself.
-        [[nodiscard]] bool BalloonPoppedThisFrame() const noexcept { return balloonPoppedThisFrame_; }
-        // Real camera shake (plan.md CAM-008/009) -- true the one frame a
-        // generic-hazard contact-kill fired SmallShake (most types) or
-        // BigShake (fish/bird, ObjectType17/20) instead; the caller
-        // triggers its own GECameraShake with the matching type.
-        [[nodiscard]] bool SmallShakeTriggeredThisFrame() const noexcept { return smallShakeTriggeredThisFrame_; }
-        [[nodiscard]] bool BigShakeTriggeredThisFrame() const noexcept { return bigShakeTriggeredThisFrame_; }
+        // INFRA-007 (plan.md §7, step 2/3): the 11 simple/position-payload
+        // *ThisFrame() signals below (Died through InvertGranted) are
+        // carried by one typed per-frame event queue instead of 11 parallel
+        // booleans (+ 9 more float members for Power/Cloud/Hide's pickup
+        // position). VoyagePendingThisFrame()/DeathLockRequestedThisFrame()
+        // (below) and CrateBeingPushedThisFrame() (above) are explicitly
+        // OUT of this queue -- Voyage/DeathLock are step 3 (their own
+        // larger payloads deserve their own care), and CrateBeingPushed
+        // isn't a one-shot event at all (see its own comment).
+        enum class EventKind : std::uint8_t
+        {
+            // True the frame Blupi is killed via enemy/hazard contact (see
+            // the class comment above) -- GEInteractionSystem has no
+            // access to GEBlupiController, so the caller is the one that
+            // must actually respawn Blupi. As of 2026-07-14 the caller
+            // defers this to the death-lock/life-loss-Voyage system
+            // instead (see DeathLockRequestedThisFrame() below) and does
+            // NOT consume this Kind directly any more -- kept for tests/
+            // other consumers, not dead, just not read by the live game
+            // loop today (a deliberate choice, not an oversight -- don't
+            // "clean it up" as a side effect of an unrelated change).
+            Died,
+            // Wasp contact -- fires every frame Blupi overlaps a wasp, NOT
+            // debounced to once per contact (the real `!m_blupiBalloon`
+            // re-trigger guard lives in GEBlupiController::TriggerBalloon()
+            // instead, which is why the caller's own TriggerBalloon() call
+            // is safely idempotent against repeated events here).
+            BalloonTouched,
+            // True the one frame a 3/16/96/97 hazard was popped instead of
+            // killing (see the class comment above) -- the caller must
+            // call GEBlupiController::PopBalloon() itself.
+            BalloonPopped,
+            // Real camera shake (plan.md CAM-008/009) -- generic-hazard
+            // contact-kill fires SmallShake (most types) or BigShake
+            // (fish/bird, ObjectType17/20) instead; the caller triggers
+            // its own GECameraShake with the matching type.
+            SmallShakeTriggered,
+            BigShakeTriggered,
+            // Real FireTank anim trigger (plan.md BLUPI-091 gap, table_blupi ID 53) -- fires the
+            // one frame a Tank bullet actually launched, NOT the empty-clip "click" case (ch53) --
+            // the caller fires TriggerOneShotAnim(FireTank, ...) itself.
+            TankFired,
+            // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31) -- fires the one
+            // frame that pickup's real gate passed and the world object was actually removed; the
+            // caller then calls the matching GEBlupiController::TriggerX() (its own internal gate
+            // should agree, since both check the same state) and plays the real grant sound only
+            // if that returns true. Shield grants instantly on contact (real, single-stage).
+            ShieldGranted,
+            // Power/Cloud/Hide (Sucette/Charge/Drink, plan.md `173`, 2026-07-14) are real 2-stage
+            // pickups -- the world object is still destroyed HERE at contact (matching real
+            // immediate ObjectDelete), and the caller plays the real immediate "grab" sound +
+            // starts GEBlupiController::TriggerPickupFreeze() here, but the actual buff grant
+            // (Power/Hide only -- Cloud's own buff already grants at contact in real source too)
+            // and the "complete" sound are deferred to
+            // GEBlupiController::ConsumePickupFreezeResolved(), which also needs the pickup's own
+            // original position to respawn it (real ObjectStart(pos, type, 0) at completion) --
+            // these are the ONLY 3 of these 11 kinds whose Event carries a real payload (below),
+            // captured at the same moment as the event itself.
+            PowerGranted,
+            CloudGranted,
+            HideGranted,
+            // Invert/Mirror pickup (plan.md PICKUP-011, ObjectType40) -- same one-shot shape as
+            // Shield above; the caller calls GEBlupiController::TriggerInvert() and plays channel
+            // 66 only if that returns true.
+            InvertGranted,
+        };
+        struct Event
+        {
+            EventKind kind;
+            // Only meaningful for PowerGranted/CloudGranted/HideGranted --
+            // see EventKind's own comment above.
+            float pickupX = 0.0f;
+            float pickupY = 0.0f;
+            float pickupZ = 0.0f;
+        };
+        [[nodiscard]] const std::vector<Event>& EventsThisFrame() const noexcept { return events_; }
+
         // Real crate-push loop sound (found 2026-07-16, plan.md SOUND-048's real meaning --
         // ch38, not "electric arc") -- true the one frame a crate actually moved due to a push.
         // The caller compares this against its own previous-frame value to start/stop the real
         // looped ch38 sound (this class has no sound-instance-lifetime access of its own).
+        // NOT part of EventsThisFrame() above -- unlike every Kind there, this is a plain
+        // per-frame FACT with no memory of its own, not a discrete one-shot event (INFRA-007
+        // explicitly excluded it, see plan.md §7).
         [[nodiscard]] bool CrateBeingPushedThisFrame() const noexcept { return crateBeingPushedThisFrame_; }
-        // Real FireTank anim trigger (plan.md BLUPI-091 gap, table_blupi ID 53) -- true the one
-        // frame a Tank bullet actually launched (bulletCount_ > 0 path below), NOT the empty-clip
-        // "click" case (ch53). Same "this class has no GEBlupiController access" reason as the
-        // crate-push signal above -- the caller fires TriggerOneShotAnim(FireTank, ...) itself.
-        [[nodiscard]] bool TankFiredThisFrame() const noexcept { return tankFiredThisFrame_; }
 
-        // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31)
-        // -- true the one frame that pickup's real gate passed and the
-        // world object was actually removed; the caller then calls the
-        // matching `GEBlupiController::TriggerX()` (its own internal gate
-        // should agree, since both check the same state) and plays the
-        // real grant sound only if that returns true. Shield grants
-        // instantly on contact (real, single-stage). Power/Cloud/Hide
-        // (plan.md `173`, 2026-07-14) are real 2-stage pickups -- the world
-        // object is still destroyed HERE at contact (matching real
-        // immediate `ObjectDelete`), and the caller plays the real
-        // immediate "grab" sound + starts `GEBlupiController::
-        // TriggerPickupFreeze()` here, but the actual buff grant (Power/
-        // Hide only -- Cloud's own buff already grants at contact in real
-        // source too) and the "complete" sound are deferred to
-        // `GEBlupiController::ConsumePickupFreezeResolved()`, which also
-        // needs the pickup's own original position to respawn it (real
-        // `ObjectStart(pos, type, 0)` at completion) -- the Pickup*X/Y/Z()
-        // getters below capture that position at the same moment as the
-        // *ThisFrame() flag.
-        [[nodiscard]] bool ShieldGrantedThisFrame() const noexcept { return shieldGrantedThisFrame_; }
-        [[nodiscard]] bool PowerGrantedThisFrame() const noexcept { return powerGrantedThisFrame_; }
-        [[nodiscard]] bool CloudGrantedThisFrame() const noexcept { return cloudGrantedThisFrame_; }
-        [[nodiscard]] bool HideGrantedThisFrame() const noexcept { return hideGrantedThisFrame_; }
-        [[nodiscard]] float PowerPickupX() const noexcept { return powerPickupX_; }
-        [[nodiscard]] float PowerPickupY() const noexcept { return powerPickupY_; }
-        [[nodiscard]] float PowerPickupZ() const noexcept { return powerPickupZ_; }
-        [[nodiscard]] float CloudPickupX() const noexcept { return cloudPickupX_; }
-        [[nodiscard]] float CloudPickupY() const noexcept { return cloudPickupY_; }
-        [[nodiscard]] float CloudPickupZ() const noexcept { return cloudPickupZ_; }
-        [[nodiscard]] float HidePickupX() const noexcept { return hidePickupX_; }
-        [[nodiscard]] float HidePickupY() const noexcept { return hidePickupY_; }
-        [[nodiscard]] float HidePickupZ() const noexcept { return hidePickupZ_; }
         // Re-spawns a pickup at its original position as a static, active
         // object (real `ObjectStart(pos, type, 0)`, speed=0) -- called by
         // the game class once the real 2-stage freeze resolves for
         // Sucette/Drink/Charge (plan.md `173`).
         void RespawnPickupItem(GEWorldRuntime& worldRuntime, float x, float y, float z,
                                 GalaxyEggbert::ObjectType type);
-        // Invert/Mirror pickup (plan.md PICKUP-011, ObjectType40) -- same
-        // one-shot shape as the 4 signals above; the caller calls
-        // GEBlupiController::TriggerInvert() and plays channel 66 only if
-        // that returns true.
-        [[nodiscard]] bool InvertGrantedThisFrame() const noexcept { return invertGrantedThisFrame_; }
 
         // Invert start/stop particle burst (plan.md VISUAL-014/015,
         // ObjectType41 on grant / ObjectType42 on expiry) -- spawns 4
@@ -918,20 +941,7 @@ namespace GalaxyEggbert::CNA
         float fireCooldownTimer_ = 0.0f;
         static constexpr int kPersoCap = 5; // real m_blupiPerso cap
         int persoCount_ = 0;
-        bool diedThisFrame_ = false; // reset at the top of every Update() call
-        bool balloonTouchedThisFrame_ = false; // reset at the top of every Update() call
-        bool balloonPoppedThisFrame_ = false; // reset at the top of every Update() call
-        bool smallShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
-        bool crateBeingPushedThisFrame_ = false; // reset at the top of every Update() call
-        bool tankFiredThisFrame_ = false; // reset at the top of every Update() call
-        bool bigShakeTriggeredThisFrame_ = false; // reset at the top of every Update() call
-        bool shieldGrantedThisFrame_ = false; // reset at the top of every Update() call
-        bool powerGrantedThisFrame_ = false;  // reset at the top of every Update() call
-        bool cloudGrantedThisFrame_ = false;  // reset at the top of every Update() call
-        bool hideGrantedThisFrame_ = false;   // reset at the top of every Update() call
-        bool invertGrantedThisFrame_ = false; // reset at the top of every Update() call
-        float powerPickupX_ = 0.0f, powerPickupY_ = 0.0f, powerPickupZ_ = 0.0f;
-        float cloudPickupX_ = 0.0f, cloudPickupY_ = 0.0f, cloudPickupZ_ = 0.0f;
-        float hidePickupX_ = 0.0f, hidePickupY_ = 0.0f, hidePickupZ_ = 0.0f;
+        bool crateBeingPushedThisFrame_ = false; // reset at the top of every Update() call; NOT part of events_ (see its own comment)
+        std::vector<Event> events_; // cleared and refilled every Update() call (INFRA-007)
     };
 }

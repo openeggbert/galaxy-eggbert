@@ -315,6 +315,30 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-007 step 2/3 — GEInteractionSystem's 11 remaining flags moved to the typed event queue (2026-07-21)
+
+Continues step 1 (below). Migrated `GEInteractionSystem`'s 11 flags (everything except
+`CrateBeingPushedThisFrame` — stays a bool, see step 1 — and the Voyage/DeathLock pair, step 3)
+to `EventKind`/`Event`/`EventsThisFrame()`. Re-verifying the exact payload shape while implementing
+this caught a real correction to step 1's own design summary: 3 of the 11
+(`PowerGranted`/`CloudGranted`/`HideGranted`) actually carry a payload — the pickup's world
+position, previously 9 separate float members (`Power/Cloud/HidePickupX/Y/Z()`) — only 8 of the 11
+are truly payload-free. The already-approved tagged-struct shape absorbed this without needing a
+design change. `DiedThisFrame()`'s "tested, no live-game-loop consumer" status carried over
+unchanged, as decided in step 1. New `GalaxyEggbertCnaGame::FindInteractionEvent(EventKind)`
+private helper (`const Event*`, `nullptr` if absent) lets payload-carrying kinds read their pickup
+position at the same call site. All 8 scattered consumption sites in `GalaxyEggbertCnaGame.cpp`
+rewritten in place — same order/interleaving, only the storage mechanism changed.
+`tools/VerifyInteractionSystem.cpp` (~64 references — this task's largest test-file impact)
+rewritten via two small local helpers (`hasEvent`/`findEvent`). Confirmed via `grep`: zero
+references to any of the 11 old getter/member names remain anywhere in `src/`/`include/`/`tools/`.
+Full regression clean (80/81, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+failure); `VerifyInteractionSystem` itself: 547 checks, all passing. Live smoke check:
+`--golden-capture` against `worlds3d/world999.vwr` (exercises `GEInteractionSystem::Update()` every
+frame) completes cleanly, and all 3 golden reference frames still byte-match exactly — the render
+pipeline is untouched. See `plan.md`'s `INFRA-007` entry for the full writeup. Step 3
+(Voyage/DeathLock, the largest payloads, explicitly saved for last) not started yet.
+
 ### feat: INFRA-007 step 1/3 — GEBlupiController's 3 sound-cue flags moved to a typed event queue (2026-07-21)
 
 Design proposed to and approved by the user before any code changed (this task's own
@@ -1608,10 +1632,11 @@ Non-editor tasks, available if the editor line is paused:
    feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004`/`INFRA-009` are **done** (2026-07-21
    — golden-screenshot harness + diffing, `GetObjIcon()` data-integrity test, unverified-
    render-mapping table, sibling-repo commit pins). `INFRA-007` (typed per-frame event queue
-   replacing the 17 `*ThisFrame()` bools) has its design approved and **step 1/3 done**
-   (`GEBlupiController`'s 3 sound-cue flags) — continue with step 2 (`GEInteractionSystem`'s 11
-   no-payload flags) next, then step 3 (Voyage/DeathLock, the 2 payload-carrying ones), see
-   `plan.md`'s own entry for the full approved design. `INFRA-010` (compact "current truth" index)
+   replacing the 17 `*ThisFrame()` bools) has its design approved and **steps 1/2 of 3 done**
+   (`GEBlupiController`'s 3 sound-cue flags, then `GEInteractionSystem`'s 11 remaining flags) —
+   continue with step 3 (Voyage/DeathLock, the 2 payload-carrying signals with the largest
+   payloads, saved for last on purpose) next, see `plan.md`'s own entry for the full approved
+   design. `INFRA-010` (compact "current truth" index)
    remains, small/self-contained/lowest-priority. `INFRA-005`/`INFRA-006` (shared collision
    resolver, `ObjectType` handler table) explicitly need their own scoping session + the user's
    go-ahead before any code changes — do not start those from this line alone. The dual-renderer

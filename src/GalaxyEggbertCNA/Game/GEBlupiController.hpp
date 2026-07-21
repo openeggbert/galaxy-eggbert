@@ -527,7 +527,7 @@ namespace GalaxyEggbert::CNA
             Switch, TakeDynamite, PutDynamite,
             // FireTank (`table_blupi` ID 53, 6 frames = 0.3s, wired
             // 2026-07-19): real Tank-firing recoil pose. Fired from the
-            // caller alongside `GEInteractionSystem::TankFiredThisFrame()`
+            // caller alongside `GEInteractionSystem::EventKind::TankFired`
             // (this class has no access to that system's bullet-fire
             // logic), same "this class has no X access" shape as Push's
             // own `CrateBeingPushedThisFrame()` signal above. Independent
