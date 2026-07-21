@@ -2219,7 +2219,46 @@ Non-editor tasks:
 
 ## 10. Resume prompt
 
-**EDITOR PLAN COMPLETE as of 2026-07-23** (all 13 milestones, EDITOR-100..112 — see plan.md §6).
-This section's prompt is being rewritten for whatever the genuine next priority is once this
-autonomous session's remaining work is finished — see the very end of §3 (Recent changes) for
-the actual current state and recommended starting point before trusting anything below.
+**Status as of the end of the 2026-07-23 autonomous session**: repository is clean, builds and
+passes on all 3 native backends (`build-cna`/`build-cna-vulkan`/`cmake-build-debug`, 81/82 or 79/79
+— the one failure is the pre-existing unrelated `easy-gl-resource-smoke-tests`), everything is
+committed and pushed to `origin/develop`. This session (in order): fixed a real ~19x horizontal-
+walking-speed regression in the just-approved `ResolveMove()` merge (INFRA-005 follow-up); migrated
+2 more `INFRA-006` families (vehicle mapping, patrol-enemy icon dispatch) plus one predicate
+extraction; **completed the entire 3D world editor plan** (EDITOR-111 sky-region picker, EDITOR-112
+hardening pass — all 13 milestones, EDITOR-100..112, now done); re-investigated and closed a stale
+"grass-topped cubes walkable-through" bug report (does not reproduce — was step-up behavior, not a
+bug); swept for and fixed a compiler warning; closed a 3-pickup-wide test-coverage gap (Dynamite/
+Egg/BulletPack "second instance at the cap"). See §3 for each entry's full writeup.
+
+**Genuinely next, in order of what's actually startable**:
+
+1. **Nothing further is a clean, well-scoped, no-human-input task right now.** A fresh sweep this
+   session (TODO/FIXME markers, compiler warnings, stale "not yet reproduced"/"honest gap" notes
+   across `plan.md`) turned up real, closeable work each of the first few times, then genuinely
+   dried up — the remaining backlog items below all need either a human visual/design call or are
+   large, open-ended content authoring, not more of the same "quick, safe, verifiable" shape this
+   session's items had.
+2. **`AscenseurVertigo` render geometry** (icons 311-316) and **Suspended/hanging-bar mode**
+   (blocked on a NEW "thin-bar" render geometry for icon 202) both need the user to look at a
+   screenshot/mockup and choose an approach — see plan.md §0's "Known open bugs" and the
+   `Suspended` writeup in plan.md's `171`/`178` area. Do not guess at geometry; ask first.
+3. **Residual seam-line transparency** (plan.md's pre-`## 1` preamble list) has 2 untested
+   hypotheses (MSAA edge AA; UV inset too small at extreme viewing angles) but assessing either
+   fix ultimately means judging "does this look better," the same category of task explicitly
+   deferred this session for the 2 items above — don't start this without checking whether the
+   user wants to weigh in live first.
+4. **`TILE-005`** (`plan.md`) — 4 more hand-authored 3D worlds (Grassland, Forest, Ice Caves, Lava
+   Fields, Space Station; only one small sample world exists so far) is real, substantial, valid
+   work, but large-scope content creation, not a quick task — confirm scope/priority with the user
+   before starting rather than assuming it's wanted next.
+5. `INFRA-006`'s remaining `ObjectType` families: already surveyed twice this session with
+   genuinely diminishing returns (most of what's left is either already covered by existing
+   predicates or has real per-type behavioral divergence unsuited to a shared table — see plan.md's
+   own `INFRA-006` entry for the specific candidates already ruled out). A fresh survey could still
+   be tried, but temper expectations.
+6. `INFRA-010` (a compact "current truth" index separate from `plan.md`'s own 500+KB historical
+   log) — explicitly the lowest priority in its own task description, opportunistic only.
+
+If picking this up cold: read this whole file first, then `plan.md`'s most recent (top-dated)
+entries under whichever section a task references, not just this prompt.
