@@ -315,6 +315,28 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-006 4th family — handler-table dispatch for the vehicle ObjectType↔VehicleMode mapping (2026-07-23)
+
+Continued the migration after a fresh survey of both god-methods (enemy/hazard family already ruled
+out, see the entry below). Picked the cleanest of 2 new candidates: the vehicle mount/dismount
+mapping in `GalaxyEggbertCnaGame.cpp` (Helicopter13/Jeep19/Tank28/Skateboard24/Overcraft46) — 2
+separate 5-case switches doing the SAME bijection in opposite directions (mode→type in
+`DismountAndDepositVehicle()`, type→mode in the action-button mount scan), not a per-type behavior
+dispatch like the prior 3 families. New `kVehicleModeTable[]` + `VehicleModeToObjectType()`/
+`ObjectTypeToVehicleMode()` replace both switches with one shared lookup. Skateboard's real
+TakeSkate/DeposeSkate anim (the only real per-vehicle divergence) stays its own explicit check at
+each call site, outside the table — unchanged from before.
+
+Stated plainly: this exact dispatch has no existing automated test (`VerifyBlupiMovement`/
+`VerifyInteractionSystem` both exercise `TriggerMount()` directly, bypassing this file's mapping
+entirely — confirmed by grep). Verified instead by direct value-for-value comparison against the
+old switches (both directions, including the `default` fallback) — a provably pure bijective
+refactor with no new combined behavior, a proportionate verification bar unlike `INFRA-005`'s merge.
+Full regression clean on all 3 native backends; golden-trace byte-match unchanged (its scripted
+input never presses the action button, so this path is provably unreached); golden-frame flakiness
+reproduced identically with the change reverted (confirmed unrelated, same pre-existing issue).
+See `plan.md`'s `INFRA-006` entry for the full writeup.
+
 ### feat: INFRA-005 follow-up — true merged X+Z+Y `ResolveMove()` (2026-07-23)
 
 Closes the last of `INFRA-005`'s corrected deviations (see the 2026-07-22 audit entry below): the

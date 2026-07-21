@@ -76,6 +76,57 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2) handler-table
+        // migration, 4th family: the vehicle ObjectType<->VehicleMode
+        // mapping, previously 2 separate 5-case switches (mount-scan and
+        // dismount-deposit) doing the same bijection in opposite
+        // directions. A pure 1:1 lookup with no per-type divergence --
+        // Skateboard's real TakeSkate/DeposeSkate anim (the one thing that
+        // varies per vehicle) stays its own explicit check at each call
+        // site, deliberately kept outside this table since it's not part
+        // of the type<->mode mapping itself.
+        struct VehicleModeMapping
+        {
+            GalaxyEggbert::ObjectType type;
+            GEBlupiController::VehicleMode mode;
+        };
+        constexpr VehicleModeMapping kVehicleModeTable[] = {
+            {GalaxyEggbert::ObjectType::ObjectType13, GEBlupiController::VehicleMode::Helicopter},
+            {GalaxyEggbert::ObjectType::ObjectType19, GEBlupiController::VehicleMode::Jeep},
+            {GalaxyEggbert::ObjectType::ObjectType28, GEBlupiController::VehicleMode::Tank},
+            {GalaxyEggbert::ObjectType::ObjectType24, GEBlupiController::VehicleMode::Skateboard},
+            {GalaxyEggbert::ObjectType::ObjectType46, GEBlupiController::VehicleMode::Overcraft},
+        };
+
+        // Mirrors the old switch's own `default: -> Overcraft` fallback
+        // exactly -- `IsInVehicle()` already gates every caller so `mode`
+        // is never actually `None` here, and Overcraft is the only real
+        // mode left unmatched by a linear scan miss.
+        GalaxyEggbert::ObjectType VehicleModeToObjectType(GEBlupiController::VehicleMode mode)
+        {
+            for (const auto& entry : kVehicleModeTable)
+            {
+                if (entry.mode == mode)
+                {
+                    return entry.type;
+                }
+            }
+            return GalaxyEggbert::ObjectType::ObjectType46;
+        }
+
+        bool ObjectTypeToVehicleMode(GalaxyEggbert::ObjectType type, GEBlupiController::VehicleMode& outMode)
+        {
+            for (const auto& entry : kVehicleModeTable)
+            {
+                if (entry.type == type)
+                {
+                    outMode = entry.mode;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // Real fixed 5.0s Wait-phase cosmetic timer (plan.md
         // MENU-001..005, confirmed via research: `Game1.cpp`'s real
         // `waitProgress = ticks/50,000,000`) -- must match
@@ -755,15 +806,7 @@ namespace GalaxyEggbert::CNA
         {
             return;
         }
-        GalaxyEggbert::ObjectType depositType;
-        switch (blupi_.GetVehicleMode())
-        {
-            case GEBlupiController::VehicleMode::Helicopter: depositType = GalaxyEggbert::ObjectType::ObjectType13; break;
-            case GEBlupiController::VehicleMode::Jeep:        depositType = GalaxyEggbert::ObjectType::ObjectType19; break;
-            case GEBlupiController::VehicleMode::Tank:        depositType = GalaxyEggbert::ObjectType::ObjectType28; break;
-            case GEBlupiController::VehicleMode::Skateboard:  depositType = GalaxyEggbert::ObjectType::ObjectType24; break;
-            default:                                          depositType = GalaxyEggbert::ObjectType::ObjectType46; break;
-        }
+        const GalaxyEggbert::ObjectType depositType = VehicleModeToObjectType(blupi_.GetVehicleMode());
         // Real DeposeSkate anim (plan.md BLUPI-091 gap, table_blupi ID 43,
         // wired 2026-07-19) -- Skateboard is the only vehicle with a
         // dedicated dismount pose (checked the reference doc for the
@@ -2666,14 +2709,9 @@ namespace GalaxyEggbert::CNA
                     {
                         if (!obj.active) continue;
                         GEBlupiController::VehicleMode mode;
-                        switch (obj.type)
+                        if (!ObjectTypeToVehicleMode(obj.type, mode))
                         {
-                            case GalaxyEggbert::ObjectType::ObjectType13: mode = GEBlupiController::VehicleMode::Helicopter; break;
-                            case GalaxyEggbert::ObjectType::ObjectType19: mode = GEBlupiController::VehicleMode::Jeep; break;
-                            case GalaxyEggbert::ObjectType::ObjectType28: mode = GEBlupiController::VehicleMode::Tank; break;
-                            case GalaxyEggbert::ObjectType::ObjectType24: mode = GEBlupiController::VehicleMode::Skateboard; break;
-                            case GalaxyEggbert::ObjectType::ObjectType46: mode = GEBlupiController::VehicleMode::Overcraft; break;
-                            default: continue;
+                            continue;
                         }
                         const float mdx = obj.currentX - blupi_.GetX();
                         const float mdy = obj.currentY - blupi_.GetY();

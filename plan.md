@@ -6215,6 +6215,36 @@ specifically, same as any other large/risky item elsewhere in this file.
       avoid. Verdict: don't migrate this family; re-attempt only if new information changes this
       assessment (e.g. a future family shares enough of blupih/blupit's shooter-timing shape to
       justify a purpose-built abstraction, which none so far do).
+
+      **4th family migrated (2026-07-23): vehicle `ObjectType`↔`VehicleMode` mapping** (Helicopter13/
+      Jeep19/Tank28/Skateboard24/Overcraft46) — chosen from a fresh survey of both god-methods after
+      the enemy/hazard family was ruled out, as the cleanest of 2 candidates offered (the other,
+      7-enemy patrol-icon dispatch, was left for a future pass — cosmetic-only, not the ruled-out
+      kill/damage logic, but still enemy-adjacent code worth its own explicit go-ahead). Unlike every
+      prior family, this one lives in `GalaxyEggbertCnaGame.cpp` (not `GEInteractionSystem.cpp`) —
+      **2 separate 5-case switches doing the SAME bijection in opposite directions**
+      (`DismountAndDepositVehicle()`'s mode→type, and the action-button mount-scan's type→mode), not
+      a per-type behavior dispatch. New `kVehicleModeTable[]` (anonymous namespace) +
+      `VehicleModeToObjectType()`/`ObjectTypeToVehicleMode()` replace both switches with lookups
+      against the one shared table. Skateboard's real TakeSkate/DeposeSkate anim (the only thing
+      that actually varies per vehicle) stays its own explicit `if (mode == Skateboard)` check at
+      each call site, deliberately kept outside the table since it isn't part of the type↔mode
+      mapping itself — unchanged from before this refactor.
+
+      **Verification note, stated plainly**: this exact dispatch code has no existing automated
+      test — `VerifyBlupiMovement`/`VerifyInteractionSystem` exercise `GEBlupiController::TriggerMount()`
+      directly, bypassing `GalaxyEggbertCnaGame.cpp`'s own mapping entirely (confirmed by grep before
+      claiming this). This is a provably pure, bijective, value-for-value-identical refactor (each of
+      the 5 table rows checked directly against the old switch's own case, both directions, including
+      the exact `default → Overcraft` / `default → continue` fallback behavior) — verified by direct
+      code inspection rather than a new test, a proportionate bar for this shape of change (unlike
+      `INFRA-005`'s merge, this introduces no new combined behavior for a bug to hide in). Full
+      regression clean on all 3 native backends (`ctest` 81/82 on `build-cna`/`cmake-build-debug`,
+      79/79 on `build-cna-vulkan` which doesn't build the easy-gl smoke-test target — pre-existing,
+      unrelated); golden-trace byte-match unchanged (its scripted walk+jump input never presses the
+      action button, so this code path is provably unreached by that harness); golden-frame flakiness
+      reproduced identically with this change fully reverted (all 3 frames, under the heavier system
+      load this round — confirmed unrelated, same pre-existing issue as before, now flaking harder).
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
