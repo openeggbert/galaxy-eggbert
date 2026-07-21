@@ -5938,6 +5938,30 @@ specifically, same as any other large/risky item elsewhere in this file.
       translation of the original `if (dynamiteCount_ == 0) { ... }` gate. Full regression clean
       (80/81 on `build-cna`, pre-existing unrelated failure only; also re-verified clean on
       `cmake-build-debug`); golden-frame byte-match unchanged.
+
+      **Enemy/hazard/combat family investigated in detail (2026-07-21), confirmed NOT a good fit,
+      no code changed**: after the 2 low-risk families above, the user asked to attempt this
+      explicitly-flagged-risky family "carefully" anyway. Read the full ~350-line block
+      (blupih/blupit shooters, fired projectile, wasp, creature, follower wake+homing, generic
+      hazards) line by line before writing anything. Confirmed concretely, not just by the earlier
+      survey's guess: 5 of the 6 distinct behaviors here are genuinely different in KIND, not
+      different constants within one shape — ObjectType23 (fired projectile) is always fatal and
+      destroys itself; ObjectType44 (wasp) is never lethal, never destroys itself, only fires
+      `BalloonTouched`; ObjectType54 (creature) is lethal ONLY mid-patrol-turn and always survives;
+      ObjectType32/33 (blupih/blupit) aren't contact hazards at all — their firing timing is woven
+      into the shared patrol-turn/dwell-frame mechanic (`prevPatrolStep`/`CrossedTick`, computed
+      BEFORE `AdvancePatrolStep()` runs); ObjectType96→97 (follower) is a wake-then-home state
+      machine with its own blocked-path self-destruct. The one genuinely uniform sub-part — the
+      8-type "generic hazard" list (2/3/4/16/17/20/96/97, 50/50 death coinflip, balloon-pop for 4 of
+      them) — is already exactly as data-driven as it should be, via existing
+      `IsGenericHazard()`/`IsBalloonPoppableHazard()` predicate functions; nothing left to compress
+      there. Forcing the rest into one handler table would mean either a per-type switch hidden
+      inside a "generic" dispatch function (same complexity, just relocated) or function pointers
+      per table entry (pure added indirection over the current well-commented if-chain, no real
+      win) — either risks exactly the kind of subtle behavior bug this project has worked hard to
+      avoid. Verdict: don't migrate this family; re-attempt only if new information changes this
+      assessment (e.g. a future family shares enough of blupih/blupit's shooter-timing shape to
+      justify a purpose-built abstraction, which none so far do).
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed

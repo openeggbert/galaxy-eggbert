@@ -315,6 +315,23 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### chore: INFRA-006 enemy/hazard/combat family investigated, confirmed not a fit (2026-07-21)
+
+After 2 low-risk families migrated, the user asked to attempt the explicitly-flagged-risky
+enemy/hazard/combat family (blupih/blupit/wasp/creature/follower/projectiles) anyway, carefully.
+Read the full ~350-line block line by line before writing anything — confirmed concretely (not
+just per the earlier survey's guess) that 5 of its 6 distinct behaviors are genuinely different in
+KIND: fired-projectile is always-fatal-and-self-destroys, wasp is never-lethal-never-destroys,
+creature is lethal only mid-patrol-turn, blupih/blupit aren't contact hazards at all (their firing
+is woven into the shared patrol-turn/dwell-frame timing), follower is a wake-then-home state
+machine with its own self-destruct. The one uniform sub-part (the 8-type generic-hazard list) is
+already exactly as data-driven as it should be via existing `IsGenericHazard()`/
+`IsBalloonPoppableHazard()` predicates. Forcing a single handler table over the rest would add
+indirection without removing real complexity, risking exactly the kind of subtle bug this project
+has worked to avoid. No code changed — this is a deliberate "don't migrate" verdict backed by
+having actually read the code, not a shortcut. See `plan.md`'s `INFRA-006` entry for the full
+writeup.
+
 ### feat: INFRA-006 3rd family — handler-table dispatch for the "basic" pickups (2026-07-21)
 
 Migrated Treasure(5)/Key1(49)/Key2(50)/Key3(51)/Dynamite(55) — pickups that self-delete on contact
