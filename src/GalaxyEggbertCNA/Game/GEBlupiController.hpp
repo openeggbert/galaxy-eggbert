@@ -1215,12 +1215,24 @@ namespace GalaxyEggbert::CNA
             bool onGround = false;
             bool blockedX = false, blockedY = false, blockedZ = false;
         };
-        // @p checkSubcell forwards to IsPointSolid() (see its own comment) --
-        // pass false for vertical-only calls (ground/ceiling), true (the
-        // default) for horizontal calls.
+        // INFRA-005 follow-up (plan.md §7, `REMAKE-ANALYSIS.md` P1-1) --
+        // merged 2026-07-22 to resolve X/Y/Z in ONE march (previously 3
+        // sequential per-axis calls, an audited deviation from P1-1's own
+        // "compute the merged intended end position, resolve it once"
+        // wording). Two SEPARATE checkSubcell flags, not one, because the
+        // fine/coarse requirement is genuinely different per axis and both
+        // sides are load-bearing for already-fixed bugs: horizontal (X/Z)
+        // needs `true` (fine/sub-tile) -- this is what makes WorldSelect/
+        // DemoPortal markers correctly non-solid on contact (their real
+        // quarter-cell data is thin); vertical (Y) needs `false` (coarse)
+        // -- this is what lets Blupi stand on Lava/Crusher/Saw/Blitz/Drip
+        // (also thin, but must still read as solid GROUND, see
+        // IsPointSolid()'s own comment). A single shared flag would have to
+        // pick one and silently break the other.
         [[nodiscard]] static MoveResult ResolveMove(const Worlds::World& world, float startX, float startY,
-                                                     float startZ, float dx, float dy, float dz,
-                                                     bool tempPassable, bool checkSubcell = true);
+                                                     float startZ, float dx, float dy, float dz, bool tempPassable,
+                                                     bool checkSubcellHorizontal = true,
+                                                     bool checkSubcellVertical = false);
 
         // Real Decor::BlupiAdjust() equivalent (INFRA-005, plan.md §7):
         // penetration recovery, called once at the top of Step() before any

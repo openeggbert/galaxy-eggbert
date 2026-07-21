@@ -315,6 +315,41 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-005 follow-up — true merged X+Z+Y `ResolveMove()` (2026-07-23)
+
+Closes the last of `INFRA-005`'s corrected deviations (see the 2026-07-22 audit entry below): the
+user chose the most ambitious of 3 offered scopes — a real single merged 3D resolve, not just X+Z —
+after 2 further conflicts were surfaced and approved individually first: (1) splitting `checkSubcell`
+into separate horizontal/vertical flags (X/Z need fine sub-tile precision for WorldSelect/DemoPortal;
+Y needs coarse whole-block precision so Lava/Crusher/Saw/Blitz/Drip still read as solid ground —
+one shared flag can't do both in the same march), and (2) computing `dy` before the merged call
+(verified safe except one accepted narrow edge case in `HasJumpHeadroom()`, step-up + jump same-tick).
+
+Found and fixed a real bug during implementation, not by research: the first draft's march loop
+returned the WHOLE result the instant ANY single axis blocked. Since a grounded landing zeroes
+`m_velocityY` and gravity re-accumulates for exactly one frame before the next landing, the per-tick
+`dy` is small but genuinely nonzero almost every tick while standing still — and the per-step Y check
+has no ground-clearance epsilon (unlike the final `onGround` probe's own `y - 0.05f`), so Y read as
+blocked on the FIRST micro-step nearly every tick. The early return threw away ~18/19 of that tick's
+`dx`/`dz` too, even though X/Z were never blocked — an observed ~19x walking-speed regression, caught
+by `VerifyBlupiMovement`'s existing WorldSelect-contact test (the walker never covered enough ground
+to reach the marker). Root-caused via a standalone scratch reproduction tracing X per tick, fixed by
+letting each axis march to its own full distance independently within the one shared loop (freezing
+only itself on its own block, never stopping the other two).
+
+Golden-trace reference (`tests/golden/golden_trace.txt`) regenerated: a real, intended behavior
+change vs. the pre-merge trace — resting height on ground settles ~0.002 units lower, the direct
+consequence of `checkSubcellVertical=false` (coarse) superseding the old fine per-icon-mask resting
+height — plus ~1e-6 rounding noise during airborne arcs from the merged step count. Re-verified
+byte-identical across all 3 native backends after regenerating. Also found `--golden-capture-trace`
+itself is occasionally non-deterministic under system load (independent of this change — reproduced
+identically with the fix fully reverted via `git stash`), extending the already-known
+`--golden-capture` screenshot flakiness to the trace mode too; not chased further, out of scope here.
+
+Full regression clean on all 3 native backends (`VerifyBlupiMovement` all-pass, `ctest` 81/82, only
+the pre-existing unrelated `easy-gl-resource-smoke-tests` failure). See `plan.md`'s `INFRA-005`
+entry for the full writeup.
+
 ### feat: INFRA-003's programmatic reference-doc cross-check (2026-07-22)
 
 Second of the 3 gaps the audit surfaced, now closed. P0-2 asked for GetObjIcon() to be
@@ -1972,11 +2007,12 @@ Non-editor tasks, available if the editor line is paused:
    reference-doc cross-check P0-2 asked for — **closed 2026-07-22**
    (`tools/VerifyObjIconAgainstReferenceDoc.cpp`, see plan.md's own `INFRA-003` entry);
    `INFRA-004`'s table is unused by the actual renderer (a
-   documented reference list, not automatic enforcement); `INFRA-005` uses 3 sequential per-axis
-   resolves, not the single merged-position resolve P1-1 literally asked for (the airborne-wall-clip
-   bug it set out to fix is still genuinely fixed either way — this is about the algorithm shape,
-   not that fix; needs its own scoping session before any attempt to actually merge them, same as
-   starting `INFRA-005` itself did). `INFRA-006` is an honest partial (3 families migrated).
+   documented reference list, not automatic enforcement); `INFRA-005`'s 3-sequential-per-axis
+   deviation from P1-1's literal single merged-position resolve — **closed 2026-07-23**, true merged
+   X+Z+Y `ResolveMove()` now landed after a scoping session picked the most ambitious of 3 offered
+   options, see §3's own writeup and `plan.md`'s `INFRA-005` entry for the full history (including a
+   real ~19x walking-speed regression found and fixed during implementation, not just the merge
+   itself). `INFRA-006` is an honest partial (3 families migrated).
    `INFRA-010` remains untouched, correctly low-priority.
 
 ## 9. Do not do yet

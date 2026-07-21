@@ -339,7 +339,9 @@ namespace GalaxyEggbert::CNA
 
     GEBlupiController::MoveResult GEBlupiController::ResolveMove(const Worlds::World& world, float startX,
                                                                   float startY, float startZ, float dx, float dy,
-                                                                  float dz, bool tempPassable, bool checkSubcell)
+                                                                  float dz, bool tempPassable,
+                                                                  bool checkSubcellHorizontal,
+                                                                  bool checkSubcellVertical)
     {
         MoveResult result;
         result.x = startX;
@@ -360,40 +362,83 @@ namespace GalaxyEggbert::CNA
         const float stepDz = dz / static_cast<float>(steps);
 
         float clearX = startX, clearY = startY, clearZ = startZ;
-        for (int i = 1; i <= steps; ++i)
+        // Each axis marches to its OWN full distance independently within
+        // this one shared loop -- it freezes the instant IT hits something,
+        // but does not stop the other two axes (fixed 2026-07-23, see
+        // ResolveMove's header comment: this used to `return` the whole
+        // march the instant ANY single axis blocked, which meant Y's tiny
+        // per-tick gravity `dy` -- reasserted every frame while standing on
+        // solid ground, since a grounded landing zeroes m_velocityY and
+        // gravity only gets one frame to re-accumulate before the next
+        // landing -- blocked on literally the FIRST micro-step almost every
+        // tick, discarding essentially all of that tick's horizontal `dx`/
+        // `dz` too even though X/Z were never themselves blocked: an
+        // observed ~19x walking-speed regression). Tested as 3 axis-isolated
+        // queries (not a combined (candidateX,candidateY,candidateZ) point)
+        // so each axis can use its own checkSubcell setting within the SAME
+        // merged march (INFRA-005 follow-up, 2026-07-22) -- a single
+        // combined query has no way to apply fine precision to X/Z while
+        // staying coarse for Y at the same time. Known, accepted scope
+        // narrowing: a true diagonal "corner-cut" through a gap that
+        // neither axis alone would block (all 3 coordinates solid only in
+        // combination) is no longer separately detected -- this engine's
+        // point-based collision was already an approximation of the real
+        // rect-sweep TestPath() here, and this specific edge case is not
+        // known to matter for this project's (axis-aligned) world content.
+        bool xBlocked = false, yBlocked = false, zBlocked = false;
+        for (int i = 1; i <= steps && !(xBlocked && yBlocked && zBlocked); ++i)
         {
-            const float candidateX = startX + stepDx * static_cast<float>(i);
-            const float candidateY = startY + stepDy * static_cast<float>(i);
-            const float candidateZ = startZ + stepDz * static_cast<float>(i);
-            if (IsPointSolid(world, candidateX, candidateY, candidateZ, tempPassable, checkSubcell))
+            if (!xBlocked)
             {
-                // Rewind to the last confirmed-clear position (mirrors real
-                // TestPath()'s own out-param rewind) -- report which axis
-                // actually caused the block by testing each axis
-                // independently from the last clear point, so a diagonal
-                // move against a wall still resolves the OTHER axis/axes
-                // that aren't actually blocked (matches this engine's own
-                // pre-existing "slide along a wall" behavior from the old
-                // per-axis TryMoveAxis calls).
-                result.blockedX = IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcell);
-                result.blockedY = IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcell);
-                result.blockedZ = IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcell);
-                result.x = result.blockedX ? clearX : candidateX;
-                result.y = result.blockedY ? clearY : candidateY;
-                result.z = result.blockedZ ? clearZ : candidateZ;
-                // onGround is always a ground-detection question, regardless
-                // of this call's own checkSubcell -- always coarse (see
-                // IsPointSolid()'s own comment for why).
-                result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false);
-                return result;
+                const float candidateX = startX + stepDx * static_cast<float>(i);
+                if (IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcellHorizontal))
+                {
+                    xBlocked = true;
+                }
+                else
+                {
+                    clearX = candidateX;
+                }
             }
-            clearX = candidateX;
-            clearY = candidateY;
-            clearZ = candidateZ;
+            if (!yBlocked)
+            {
+                const float candidateY = startY + stepDy * static_cast<float>(i);
+                if (IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcellVertical))
+                {
+                    yBlocked = true;
+                }
+                else
+                {
+                    clearY = candidateY;
+                }
+            }
+            if (!zBlocked)
+            {
+                const float candidateZ = startZ + stepDz * static_cast<float>(i);
+                if (IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcellHorizontal))
+                {
+                    zBlocked = true;
+                }
+                else
+                {
+                    clearZ = candidateZ;
+                }
+            }
         }
+        // Rewind to the last confirmed-clear position per axis (mirrors real
+        // TestPath()'s own out-param rewind) -- a diagonal move against a
+        // wall still resolves the OTHER axis/axes that aren't actually
+        // blocked (matches this engine's own pre-existing "slide along a
+        // wall" behavior from the old per-axis TryMoveAxis calls).
+        result.blockedX = xBlocked;
+        result.blockedY = yBlocked;
+        result.blockedZ = zBlocked;
         result.x = clearX;
         result.y = clearY;
         result.z = clearZ;
+        // onGround is always a ground-detection question, regardless of this
+        // call's own checkSubcellVertical -- always coarse (see
+        // IsPointSolid()'s own comment for why).
         result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false);
         return result;
     }
@@ -1358,60 +1403,31 @@ namespace GalaxyEggbert::CNA
             m_mockeryCooldownTimer -= dt;
         }
 
+        // Horizontal movement delta -- computed here as before, but the
+        // actual collision resolve is now DEFERRED and merged with the
+        // vertical delta below (INFRA-005 follow-up, 2026-07-22, plan.md
+        // §7, `REMAKE-ANALYSIS.md` P1-1): P1-1 asks for one merged
+        // intended-end-position resolve covering every axis, not 3
+        // sequential per-axis calls (an audited deviation from that
+        // wording). Computing dx/dz here (same place as before `moving`
+        // was already established) and dy further below (once the jump/
+        // secret-power/vehicle-flight/balloon/gravity logic that decides
+        // `m_velocityY` has run) means that logic now runs BEFORE
+        // horizontal movement instead of after -- verified safe: none of
+        // it reads a post-horizontal-move position except
+        // `HasJumpHeadroom()` (m_onGround itself is untouched by
+        // horizontal movement either way, before or after this reorder).
+        // The one accepted, narrow behavioral nuance: if Blupi both
+        // steps up AND jumps on the exact same tick, the headroom check
+        // now reads his pre-step-up height instead of post-step-up --
+        // step-up is already a CNA-only invention with no real-source
+        // equivalent, and this specific double-edge-case combination
+        // isn't known to matter for this project's content.
+        float dx = 0.0f, dz = 0.0f;
         if (moving)
         {
-            const float dx = std::sin(m_yaw) * horizontalSpeed * dt;
-            const float dz = -std::cos(m_yaw) * horizontalSpeed * dt;
-            // Real Decor::TestPath() equivalent (INFRA-005, plan.md §7):
-            // each axis routes through the same ResolveMove() the vertical
-            // pass below uses, applied UNCONDITIONALLY regardless of
-            // m_onGround -- this is the fix for the former airborne-wall-
-            // clip gap (a jumping/floating/riding Blupi now stops against a
-            // wall exactly like a walking one, matching real
-            // Decor::BlupiStep()'s own unconditional TestPath() call).
-            // Step-up (FindColumnGroundY's own comment) is a separate,
-            // explicitly CNA-only fallback tried only when grounded and the
-            // real check above found a wall.
-            if (dx != 0.0f)
-            {
-                const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, 0.0f, 0.0f, tempPassable);
-                if (!moveResult.blockedX)
-                {
-                    m_x = moveResult.x;
-                }
-                else if (m_onGround)
-                {
-                    const float steppedGroundY = FindColumnGroundY(world, m_x + dx, m_z, m_y + kStepLimit, tempPassable);
-                    if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
-                    {
-                        m_x += dx;
-                        if (steppedGroundY > m_y)
-                        {
-                            m_y = steppedGroundY;
-                        }
-                    }
-                }
-            }
-            if (dz != 0.0f)
-            {
-                const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, 0.0f, 0.0f, dz, tempPassable);
-                if (!moveResult.blockedZ)
-                {
-                    m_z = moveResult.z;
-                }
-                else if (m_onGround)
-                {
-                    const float steppedGroundY = FindColumnGroundY(world, m_x, m_z + dz, m_y + kStepLimit, tempPassable);
-                    if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
-                    {
-                        m_z += dz;
-                        if (steppedGroundY > m_y)
-                        {
-                            m_y = steppedGroundY;
-                        }
-                    }
-                }
-            }
+            dx = std::sin(m_yaw) * horizontalSpeed * dt;
+            dz = -std::cos(m_yaw) * horizontalSpeed * dt;
         }
 
         // Nage (fully submerged, plan.md E3D-MIG-148): Jump swims upward
@@ -1596,30 +1612,82 @@ namespace GalaxyEggbert::CNA
             const float effectiveGravity = m_nage ? kGravity * kNageGravityMultiplier : kGravity;
             m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
         }
-        // Real Decor::TestPath() equivalent (INFRA-005, plan.md §7): the
-        // SAME resolver the horizontal pass above uses, applied to the
-        // vertical delta. Real source's general swept collision stops
-        // Blupi against solid decor in ANY direction including straight up
-        // (the balloon-rise ceiling stop this block used to special-case)
-        // -- ResolveMove()'s own single march naturally covers this for
-        // every mode uniformly (jump apex, Helicopter/Overcraft, balloon
-        // rise) with no per-mode branch needed. This also eliminates the
-        // former "ceiling-contamination" workaround entirely (see git
-        // history/NEXT.md §5 for that old writeup): the bug it worked
-        // around was an artifact of GroundHeightAt()/CeilingHeightAt() being
-        // two INDEPENDENT nearest-solid scans sharing the same trigger
-        // window -- a single forward march along the real intended path has
-        // no such pair of independent scans to contaminate each other in
-        // the first place, so there's nothing left to guard against here.
+        // Real Decor::TestPath() equivalent, MERGED across all 3 axes in one
+        // call (INFRA-005 follow-up, 2026-07-22, plan.md §7,
+        // `REMAKE-ANALYSIS.md` P1-1): "compute the merged intended end
+        // position, then resolve it once against terrain" -- the fix this
+        // task originally shipped (2026-07-21) closed the airborne-wall-
+        // clip gap but still used 3 sequential per-axis calls, an audited
+        // deviation from that exact wording. One call now resolves the
+        // real intended 3D delta (dx horizontal + dy vertical + dz
+        // horizontal together), stopping Blupi against solid decor in ANY
+        // direction uniformly (jump apex, Helicopter/Overcraft, balloon
+        // rise, walking into a wall) with no per-mode branch needed --
+        // still eliminates the old "ceiling-contamination" workaround for
+        // the same reason as before (a single forward march has no pair of
+        // independent ground/ceiling scans left to contaminate each
+        // other). `checkSubcellHorizontal=true`/`checkSubcellVertical=
+        // false` preserve both already-fixed, load-bearing behaviors this
+        // one merged march must keep separate (see ResolveMove()'s own
+        // header comment): thin WorldSelect/DemoPortal markers stay
+        // correctly non-solid on horizontal contact, while thin Lava/
+        // Crusher/Saw/Blitz/Drip still read as solid GROUND to stand on.
         const float dy = m_velocityY * dt;
-        const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, 0.0f, dy, 0.0f, tempPassable,
-                                                   /*checkSubcell=*/false);
-        m_y = moveResult.y;
+        const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, dy, dz, tempPassable,
+                                                   /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false);
+
+        // Step-up (FindColumnGroundY's own comment) is a separate,
+        // explicitly CNA-only fallback tried only when grounded and the
+        // real check above found a wall on that axis -- unchanged in
+        // spirit from the pre-merge version, just applied to the ONE
+        // merged result instead of 2 separate per-axis ones. Each axis's
+        // own check uses the OTHER horizontal axis's raw merged-resolve
+        // value (not the other axis's OWN step-up outcome, decided below)
+        // for symmetry: both checks are independent "what if only this
+        // axis steps up" queries against the same one shared march result.
+        float newX = moveResult.x;
+        float newZ = moveResult.z;
+        float newY = moveResult.y;
+        bool steppedUp = false;
+        if (moveResult.blockedX && dx != 0.0f && m_onGround)
+        {
+            const float steppedGroundY = FindColumnGroundY(world, m_x + dx, moveResult.z, m_y + kStepLimit, tempPassable);
+            if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
+            {
+                newX = m_x + dx;
+                if (steppedGroundY > newY)
+                {
+                    newY = steppedGroundY;
+                    steppedUp = true;
+                }
+            }
+        }
+        if (moveResult.blockedZ && dz != 0.0f && m_onGround)
+        {
+            const float steppedGroundY = FindColumnGroundY(world, moveResult.x, m_z + dz, m_y + kStepLimit, tempPassable);
+            if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
+            {
+                newZ = m_z + dz;
+                if (steppedGroundY > newY)
+                {
+                    newY = steppedGroundY;
+                    steppedUp = true;
+                }
+            }
+        }
+
+        m_x = newX;
+        m_z = newZ;
+        m_y = newY;
         if (moveResult.blockedY)
         {
             m_velocityY = 0.0f;
         }
-        m_onGround = moveResult.onGround;
+        // A step-up override needs its own fresh ground check (the merged
+        // result's own `onGround` reflects the PRE-step-up trajectory) --
+        // otherwise reuse the merged result directly, same as before.
+        m_onGround = steppedUp ? IsPointSolid(world, newX, newY - 0.05f, newZ, tempPassable, false)
+                               : moveResult.onGround;
 
         UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate);
     }

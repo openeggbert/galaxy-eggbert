@@ -6029,6 +6029,60 @@ specifically, same as any other large/risky item elsewhere in this file.
       delta resolve, matching P1-1's literal ask, is a separate, real, undecided question — it would
       touch already-verified movement code again and needs the same explicit user sign-off P1-1
       itself already requires before any such change starts.
+      **Follow-up done 2026-07-23 — the merge above.** User explicitly chose the most ambitious of
+      3 offered scopes (fully merged X+Z+Y in one `ResolveMove()` call, not just X+Z) after 2
+      further real conflicts were surfaced and approved one at a time, before any code was written:
+      1. **`checkSubcell` split.** A single shared flag can't give X/Z fine sub-tile precision
+         (needed so WorldSelect/DemoPortal markers stay correctly non-solid on horizontal contact)
+         while also giving Y coarse whole-block precision (needed so Lava/Crusher/Saw/Blitz/Drip
+         still read as solid ground) within the SAME merged march. Resolved by splitting the one
+         `checkSubcell` parameter into `checkSubcellHorizontal`/`checkSubcellVertical`, applied
+         per-axis inside the same loop.
+      2. **Reorder.** A true merged call needs `dy` (from `m_velocityY`, itself set by jump/secret-
+         power gauges/vehicle vertical flight/balloon rise/gravity, ~180 lines) computed before the
+         merged `ResolveMove()` call — verified none of that logic reads a post-horizontal-move
+         position except `HasJumpHeadroom()`, an accepted narrow edge case (step-up + jump same-tick
+         now uses pre-step-up height for the headroom check). In practice this only required
+         deferring the 2-line `dx`/`dz` computation to just before the merged call, not physically
+         relocating the velocity-computation block itself.
+
+      **Real bug found and fixed during implementation** (not by research, empirically via
+      `VerifyBlupiMovement`'s WorldSelect-contact test failing after the merge): the march loop's
+      first draft returned the WHOLE result the instant ANY single axis blocked. Since a grounded
+      landing zeroes `m_velocityY` and gravity only gets one frame to re-accumulate before the next
+      landing, `dy` is small but genuinely nonzero almost every tick while standing still — and
+      because the per-step Y check has no ground-clearance epsilon (unlike the final `onGround`
+      probe's own `y - 0.05f`), Y read as blocked on literally the FIRST micro-step of the march
+      (i=1 of ~19) nearly every tick. The early `return` threw away the other 18/19 of that tick's
+      `dx`/`dz` too, even though X/Z were never themselves blocked — an observed ~19x horizontal-
+      walking-speed regression, caught by the existing WorldSelect test (the walker never covered
+      enough distance to reach the marker within its 200-tick window). Root-caused via a standalone
+      scratch reproduction tracing `x` per tick, then fixed by making each axis march to its OWN
+      full distance independently within the one shared loop — freezing the instant IT blocks, but
+      never stopping the other two — rather than one axis's block vetoing the whole step. Diagonal
+      "corner-cut" detection (all 3 coordinates solid only in combination, no single axis alone
+      blocked) is a knowingly accepted scope narrowing from this per-axis-isolated-query design, not
+      believed to matter for this project's axis-aligned world content (documented inline at the
+      call site).
+
+      **Golden-trace reference regenerated** (`tests/golden/golden_trace.txt`) — the merge is a real,
+      intended behavior change versus the reference captured under the pre-merge 3-sequential-calls
+      code: resting height on ground now settles ~0.002 units lower (the direct, intended consequence
+      of `checkSubcellVertical=false`, i.e. coarse ground precision, superseding the OLD trace's fine
+      per-icon-mask resting height), plus ~1e-6 rounding noise during airborne arcs from computing
+      step count off the combined 3D distance instead of each axis's own distance. Re-verified
+      byte-identical across all 3 native backends after regenerating (same cross-backend determinism
+      bar the original harness set).
+      **Also found while re-running the golden harness this round**: `--golden-capture-trace`
+      (not just `--golden-capture` screenshots, previously the only mode known to be flaky) is ALSO
+      occasionally non-deterministic under system load (differing `golden_trace.txt` md5sums, and
+      one outright "not captured" run, across repeated identical-binary runs) — reproduced identically
+      with this merge's changes fully reverted via `git stash`, confirming it's the same pre-existing,
+      unrelated timing issue already known for screenshot capture, not something this change caused.
+      Not chased further (out of scope here, same as the original screenshot flakiness finding).
+      Full regression clean on all 3 native backends (`build-cna`, `build-cna-vulkan`,
+      `cmake-build-debug`): `VerifyBlupiMovement` all-pass, full `ctest` 81/82 (only the
+      pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [~] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **pilot done (2026-07-21), full migration still open.**
       Replace the open-coded `if (obj.type == ObjectTypeN)` chains inside
       `GalaxyEggbertCnaGame::Update()` (~2073 lines) and `GEInteractionSystem::Update()` (~1677
