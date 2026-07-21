@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 namespace GalaxyEggbert::CNA
 {
@@ -1044,11 +1045,24 @@ namespace GalaxyEggbert::CNA
 
         // Real one-shot sound cues SOUND-017/030/031 (added 2026-07-20) --
         // see UpdateAnim()'s own comment for the exact real trigger
-        // conditions. Each is true for exactly one Step() call; the caller
-        // (GalaxyEggbertCnaGame.cpp) plays the matching real channel.
-        [[nodiscard]] bool DownEntrySoundFiredThisFrame() const noexcept { return m_downEntrySoundFiredThisFrame; }
-        [[nodiscard]] bool UpEntrySoundFiredThisFrame() const noexcept { return m_upEntrySoundFiredThisFrame; }
-        [[nodiscard]] bool DownReleaseSoundFiredThisFrame() const noexcept { return m_downReleaseSoundFiredThisFrame; }
+        // conditions. Each fires for exactly one Step() call, carried in
+        // EventsThisFrame() below -- INFRA-007 (plan.md §7): replaces what
+        // used to be 3 parallel *ThisFrame() booleans with one typed
+        // per-frame event queue, cleared and refilled every Step() call the
+        // same way those booleans were reset/set. The caller
+        // (GalaxyEggbertCnaGame.cpp) iterates it and plays the matching
+        // real channel per Kind.
+        enum class EventKind : std::uint8_t
+        {
+            DownEntrySoundFired,
+            UpEntrySoundFired,
+            DownReleaseSoundFired,
+        };
+        struct Event
+        {
+            EventKind kind;
+        };
+        [[nodiscard]] const std::vector<Event>& EventsThisFrame() const noexcept { return m_eventsThisFrame; }
 
         // True exactly when GetAnimIcon()'s current value indexes into
         // element.png rather than blupi.png -- real mobile-eggbert's
@@ -1199,9 +1213,7 @@ namespace GalaxyEggbert::CNA
         // ch7/ch21 entry-delay sounds below.
         float m_animStateTimer = 0.0f;
         static constexpr float kDownUpSoundDelay = 4.0f / 20.0f; // real Config::ScaleTime(4)
-        bool m_downEntrySoundFiredThisFrame = false;
-        bool m_upEntrySoundFiredThisFrame = false;
-        bool m_downReleaseSoundFiredThisFrame = false;
+        std::vector<Event> m_eventsThisFrame;
 
         bool m_ecrase = false;
         float m_ecraseTimer = 0.0f;

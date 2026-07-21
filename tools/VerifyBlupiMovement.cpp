@@ -31,6 +31,19 @@ int main(int argc, char** argv)
         if (!cond) allOk = false;
     };
 
+    // INFRA-007 (plan.md §7): GEBlupiController's 3 one-shot sound cues
+    // moved from parallel *ThisFrame() booleans to one typed event queue
+    // (EventsThisFrame()) -- this helper mirrors what the old individual
+    // getters used to check, so the assertions below read the same.
+    const auto hasEvent = [](const GEBlupiController& controller, GEBlupiController::EventKind kind)
+    {
+        for (const auto& event : controller.EventsThisFrame())
+        {
+            if (event.kind == kind) return true;
+        }
+        return false;
+    };
+
     constexpr float dt = 1.0f / 60.0f;
 
     // 1. Spawn on the ground floor (world (0,1,0) == grid (50,*,50)); the
@@ -271,28 +284,30 @@ int main(int argc, char** argv)
     // no movement input either -- this engine's own crouchHeld ternary
     // only reaches Stop, not March, under that same condition).
     {
+        using EventKind = GEBlupiController::EventKind;
+
         GEBlupiController crouchSound;
         crouchSound.SetPosition(0.0f, 1.0f, 0.0f);
         crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
-        check(!crouchSound.DownEntrySoundFiredThisFrame(),
-              "DownEntrySoundFiredThisFrame() is false the instant Down is entered (real 0.2s delay)");
+        check(!hasEvent(crouchSound, EventKind::DownEntrySoundFired),
+              "DownEntrySoundFired is not in EventsThisFrame() the instant Down is entered (real 0.2s delay)");
 
         int stepsToDownSound = 0;
-        while (!crouchSound.DownEntrySoundFiredThisFrame() && stepsToDownSound < 200)
+        while (!hasEvent(crouchSound, EventKind::DownEntrySoundFired) && stepsToDownSound < 200)
         {
             crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
             ++stepsToDownSound;
         }
-        check(stepsToDownSound < 200, "DownEntrySoundFiredThisFrame() fires within a bounded time");
+        check(stepsToDownSound < 200, "DownEntrySoundFired fires within a bounded time");
         crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
-        check(!crouchSound.DownEntrySoundFiredThisFrame(),
-              "DownEntrySoundFiredThisFrame() is true for exactly one Step() call, not every frame after");
+        check(!hasEvent(crouchSound, EventKind::DownEntrySoundFired),
+              "DownEntrySoundFired is in EventsThisFrame() for exactly one Step() call, not every frame after");
 
         crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/false, false, dt);
         check(crouchSound.GetAnimState() == GEBlupiController::AnimState::Stop,
               "releasing crouch with no movement input returns to Stop");
-        check(crouchSound.DownReleaseSoundFiredThisFrame(),
-              "DownReleaseSoundFiredThisFrame() fires on the real Down->Stop release transition");
+        check(hasEvent(crouchSound, EventKind::DownReleaseSoundFired),
+              "DownReleaseSoundFired fires on the real Down->Stop release transition");
 
         GEBlupiController crouchToMarch;
         crouchToMarch.SetPosition(0.0f, 1.0f, 0.0f);
@@ -300,22 +315,22 @@ int main(int argc, char** argv)
         crouchToMarch.Step(world, 1.0f, 1.0f, false, /*crouchHeld=*/false, false, dt);
         check(crouchToMarch.GetAnimState() == GEBlupiController::AnimState::March,
               "releasing crouch WITH movement input transitions to March, not Stop");
-        check(!crouchToMarch.DownReleaseSoundFiredThisFrame(),
-              "DownReleaseSoundFiredThisFrame() does NOT fire on a Down->March transition (real gate "
+        check(!hasEvent(crouchToMarch, EventKind::DownReleaseSoundFired),
+              "DownReleaseSoundFired does NOT fire on a Down->March transition (real gate "
               "requires speedX==0 too)");
 
         GEBlupiController lookingUp;
         lookingUp.SetPosition(0.0f, 1.0f, 0.0f);
         lookingUp.Step(world, 0.0f, 0.0f, false, false, /*lookUpHeld=*/true, dt);
-        check(!lookingUp.UpEntrySoundFiredThisFrame(),
-              "UpEntrySoundFiredThisFrame() is false the instant Up is entered (real 0.2s delay)");
+        check(!hasEvent(lookingUp, EventKind::UpEntrySoundFired),
+              "UpEntrySoundFired is not in EventsThisFrame() the instant Up is entered (real 0.2s delay)");
         int stepsToUpSound = 0;
-        while (!lookingUp.UpEntrySoundFiredThisFrame() && stepsToUpSound < 200)
+        while (!hasEvent(lookingUp, EventKind::UpEntrySoundFired) && stepsToUpSound < 200)
         {
             lookingUp.Step(world, 0.0f, 0.0f, false, false, /*lookUpHeld=*/true, dt);
             ++stepsToUpSound;
         }
-        check(stepsToUpSound < 200, "UpEntrySoundFiredThisFrame() fires within a bounded time");
+        check(stepsToUpSound < 200, "UpEntrySoundFired fires within a bounded time");
     }
 
     // 5. GetGroundBlockType() (plan.md E3D-MIG-140, lava-hazard detection) --

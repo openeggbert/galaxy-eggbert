@@ -1619,12 +1619,9 @@ namespace GalaxyEggbert::CNA
         // engine's own crouchHeld ternary already IS that exact edge: Down
         // only ever transitions to Stop, never March, while crouchHeld is
         // still literally held, so the real gate needs no separate
-        // modeling here). Reset every call; the caller consumes each once
-        // per frame, same "*ThisFrame()" convention used throughout
-        // GEInteractionSystem.
-        m_downEntrySoundFiredThisFrame = false;
-        m_upEntrySoundFiredThisFrame = false;
-        m_downReleaseSoundFiredThisFrame = false;
+        // modeling here). Cleared every call; the caller consumes
+        // EventsThisFrame() once per frame (INFRA-007, plan.md §7).
+        m_eventsThisFrame.clear();
 
         // Vehicle-mode Stop/March selection (plan.md BLUPI-037/038/047/058/
         // 069/084/088/091/094, found 2026-07-18) -- each mode has its own
@@ -1686,7 +1683,7 @@ namespace GalaxyEggbert::CNA
         {
             if (m_animState == AnimState::Down && newState == AnimState::Stop)
             {
-                m_downReleaseSoundFiredThisFrame = true;
+                m_eventsThisFrame.push_back(Event{EventKind::DownReleaseSoundFired});
             }
             m_animState = newState;
             m_animPhase = 0;
@@ -1709,11 +1706,11 @@ namespace GalaxyEggbert::CNA
         {
             if (m_animState == AnimState::Down)
             {
-                m_downEntrySoundFiredThisFrame = true;
+                m_eventsThisFrame.push_back(Event{EventKind::DownEntrySoundFired});
             }
             else if (m_animState == AnimState::Up)
             {
-                m_upEntrySoundFiredThisFrame = true;
+                m_eventsThisFrame.push_back(Event{EventKind::UpEntrySoundFired});
             }
         }
     }

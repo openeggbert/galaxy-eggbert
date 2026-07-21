@@ -1751,17 +1751,20 @@ namespace GalaxyEggbert::CNA
             // GEBlupiController::UpdateAnim()'s own comment for why the
             // real speedX==0/speedY==0 gate needs no separate modeling
             // here.
-            if (blupi_.DownEntrySoundFiredThisFrame())
+            for (const auto& blupiEvent : blupi_.EventsThisFrame())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel7);
-            }
-            if (blupi_.UpEntrySoundFiredThisFrame())
-            {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel21);
-            }
-            if (blupi_.DownReleaseSoundFiredThisFrame())
-            {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel20);
+                switch (blupiEvent.kind)
+                {
+                    case GEBlupiController::EventKind::DownEntrySoundFired:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel7);
+                        break;
+                    case GEBlupiController::EventKind::UpEntrySoundFired:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel21);
+                        break;
+                    case GEBlupiController::EventKind::DownReleaseSoundFired:
+                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel20);
+                        break;
+                }
             }
             jumpKeyWasDown_ = jumpPressed;
 

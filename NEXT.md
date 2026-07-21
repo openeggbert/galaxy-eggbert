@@ -315,6 +315,30 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-007 step 1/3 — GEBlupiController's 3 sound-cue flags moved to a typed event queue (2026-07-21)
+
+Design proposed to and approved by the user before any code changed (this task's own
+precondition, since it touches already-working signal plumbing). Surveyed all 17 `*ThisFrame()`
+flags first (14 in `GEInteractionSystem`, 3 in `GEBlupiController`) and found 3 different real
+shapes hiding under one name: 14 simple no-payload one-shots, 2 that carry extra payload fields
+and can co-occur in the same frame (Voyage/DeathLock), and 1 (`CrateBeingPushedThisFrame()`) that
+isn't a one-shot event at all — it's documented as continuous per-frame state with the caller
+doing its own edge detection, so it's explicitly excluded from the queue. Also found
+`DiedThisFrame()` is tested but has no real consumer in the shipped game — decided to carry it
+into the new queue unchanged rather than use this transport-only refactor as cover to also drop
+it. Approved shape: two independent event queues (one per emitting class, preserving their
+existing decoupling), each a tagged struct (not `std::variant` — no precedent for it in this
+codebase). Migration ordered smallest-risk first. **Step 1 (this entry):**
+`GEBlupiController::DownEntrySoundFiredThisFrame()`/`UpEntrySoundFiredThisFrame()`/
+`DownReleaseSoundFiredThisFrame()` replaced by `EventKind`/`Event`/`EventsThisFrame()`
+(`std::vector<Event>`, cleared/refilled every `Step()`); the 3 `if` checks in
+`GalaxyEggbertCnaGame.cpp` became one loop + `switch`; `VerifyBlupiMovement.cpp`'s 10 assertions
+rewritten against a small `hasEvent()` helper, same coverage. Clean 4-file diff, no old
+getters/members left behind. Full regression clean (80/81, only the pre-existing unrelated
+`easy-gl-resource-smoke-tests` failure). See `plan.md` `INFRA-007` for the full design writeup.
+Steps 2/3 (`GEInteractionSystem`'s 13 remaining flags, including the much larger
+`VerifyInteractionSystem.cpp` test-file impact) not started yet.
+
 ### feat: INFRA-004 — mark ~131 unverified 2D→3D render-mapping icons as an explicit, queryable set (2026-07-21)
 
 Fourth item from `plan.md` §7's task breakdown. Bookkeeping only, no rendering code touched. New
@@ -1581,11 +1605,14 @@ Non-editor tasks, available if the editor line is paused:
 
 4. **`plan.md` §7's correctness-infrastructure task breakdown** (2026-07-21, `INFRA-001`
    through `INFRA-010`), if there's appetite for infrastructure work rather than another
-   feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004` are **done** (2026-07-21 — golden-
-   screenshot harness + diffing, `GetObjIcon()` data-integrity test, unverified-render-mapping
-   table). Remaining: `INFRA-007` (typed per-frame event queue replacing 17 `*ThisFrame()` bools),
-   `INFRA-009` (pin sibling-repo commits / quarantine known failures), `INFRA-010` (compact
-   "current truth" index) are small and self-contained. `INFRA-005`/`INFRA-006` (shared collision
+   feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004`/`INFRA-009` are **done** (2026-07-21
+   — golden-screenshot harness + diffing, `GetObjIcon()` data-integrity test, unverified-
+   render-mapping table, sibling-repo commit pins). `INFRA-007` (typed per-frame event queue
+   replacing the 17 `*ThisFrame()` bools) has its design approved and **step 1/3 done**
+   (`GEBlupiController`'s 3 sound-cue flags) — continue with step 2 (`GEInteractionSystem`'s 11
+   no-payload flags) next, then step 3 (Voyage/DeathLock, the 2 payload-carrying ones), see
+   `plan.md`'s own entry for the full approved design. `INFRA-010` (compact "current truth" index)
+   remains, small/self-contained/lowest-priority. `INFRA-005`/`INFRA-006` (shared collision
    resolver, `ObjectType` handler table) explicitly need their own scoping session + the user's
    go-ahead before any code changes — do not start those from this line alone. The dual-renderer
    thread (`renderers.md`) has no task IDs yet by explicit user choice (2026-07-21) — ask before

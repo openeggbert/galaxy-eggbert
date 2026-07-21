@@ -5740,9 +5740,54 @@ specifically, same as any other large/risky item elsewhere in this file.
       per-frame event queue. Keeps the existing, deliberately-reaffirmed `GEInteractionSystem`/
       `GEBlupiController` decoupling (see `plan.md` §6/`NEXT.md` §9 on that boundary) — only the
       hand-rolled parallel-boolean *transport* changes, not the architectural boundary itself.
-      Propose the concrete design to the user before starting (this is a refactor of already-
-      working signal plumbing touched by nearly every interaction, so a mid-refactor mistake is
-      expensive).
+
+      **Design proposed to and approved by the user 2026-07-21** (before any code was touched, per
+      this task's own precondition above): exact count confirmed as 17 (14 in
+      `GEInteractionSystem`, 3 in `GEBlupiController`), which turn out to be 3 different real
+      shapes, not one:
+      - 14 simple one-shot signals, no payload (11 in `GEInteractionSystem`: shake×2, TankFired,
+        5× secret-power grant, balloon touch/pop, Died; 3 in `GEBlupiController`: the crouch/
+        look-up sound cues).
+      - 2 one-shot signals WITH payload, and which can both be true in the SAME frame, consumed
+        independently (`VoyagePendingThisFrame()` — 7 extra parallel fields: kind/iconId/
+        isButtonChannel/worldX/worldY/isAscend/ascendOffsetY; `DeathLockRequestedThisFrame()` —
+        1 extra field, `PendingDeathKind`).
+      - 1 that is NOT actually a one-shot event at all: `CrateBeingPushedThisFrame()` is documented
+        in its own comment as "a plain per-frame fact... no memory of its own" — the caller already
+        does its own start/stop edge detection (`wasPushingCrate_`). **Explicitly excluded from the
+        event queue** — forcing continuous per-frame state into a discrete event model would be a
+        worse fit than what exists today, not an improvement.
+      Side finding while surveying this: `DiedThisFrame()` is exercised by `VerifyInteractionSystem`
+      (real, checked behavior) but never actually read by `GalaxyEggbertCnaGame.cpp` — the shipped
+      game has no consumer for it today. **Decision: carry it into the new queue unchanged, don't
+      use this transport-only refactor as an occasion to also drop/change it** — that's a separate
+      decision for a separate day if it ever comes up.
+      Approved shape: **two independent event queues** (`GEInteractionSystem::EventsThisFrame()`,
+      `GEBlupiController::EventsThisFrame()`), not one shared type — preserves the existing
+      deliberate decoupling between the two classes. Each event is a tagged struct (`Kind` enum +
+      a few optional payload fields), matching this codebase's existing style, not `std::variant`
+      (explicitly considered and declined — no precedent for it anywhere else in this codebase).
+      Migration ordered smallest/lowest-risk first: **(1) `GEBlupiController`'s 3 sound-cue flags
+      (done, see below) → (2) `GEInteractionSystem`'s 11 no-payload flags → (3) the 2
+      payload-carrying ones (Voyage, DeathLock), most care since they touch camera-projection
+      timing.** `CrateBeingPushedThisFrame()` stays a plain bool throughout, out of scope.
+
+      **Step 1 done (2026-07-21):** `GEBlupiController`'s 3 sound-cue flags
+      (`DownEntrySoundFiredThisFrame`/`UpEntrySoundFiredThisFrame`/`DownReleaseSoundFiredThisFrame`)
+      replaced by `GEBlupiController::EventKind`/`Event`/`EventsThisFrame()` (a
+      `std::vector<Event>`, cleared and refilled every `Step()` call the same way the 3 booleans
+      used to be reset/set). Consumer (`GalaxyEggbertCnaGame.cpp`, the 3 `if (blupi_.FooThisFrame())`
+      checks around the crouch/look-up sound cues) rewritten as one loop + `switch` over
+      `EventsThisFrame()`. `tools/VerifyBlupiMovement.cpp`'s 10 direct-getter assertions rewritten
+      against a small `hasEvent(controller, kind)` test helper, same coverage as before (entry-delay
+      timing, exactly-one-frame firing, the Down→Stop-only release gate). Clean, scoped diff (4
+      files: the two `GEBlupiController` files, the one `GalaxyEggbertCnaGame.cpp` call site, the
+      one test file) — no old getters/members left behind (`grep` confirms zero remaining
+      references). Full regression clean (80/81, only the pre-existing unrelated
+      `easy-gl-resource-smoke-tests` failure); `VerifyBlupiMovement`'s own sound-cue assertions
+      re-run individually and confirmed passing. Steps 2/3 (the `GEInteractionSystem` side, 13
+      flags, largest test-file impact — `VerifyInteractionSystem.cpp` alone has ~64
+      `*ThisFrame()` references) not started yet.
 - Standing rule, not a one-shot task (`REMAKE-ANALYSIS.md` P2-2): **reuse before re-deriving.**
   When a CNA render/math bug has a plausible 2D/pixel root cause, check whether the engine-agnostic
   `include/GalaxyEggbert/` tree or `GalaxyEggbertSimple3D` (historical reference only, but still
