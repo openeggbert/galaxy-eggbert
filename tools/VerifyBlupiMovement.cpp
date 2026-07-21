@@ -1815,6 +1815,70 @@ int main(int argc, char** argv)
               "(otherwise this repro attempt tested nothing)");
     }
 
+    // The repro attempt above only tested VERTICAL collision (landing on
+    // top from above) -- "walkable-through" more naturally describes
+    // walking INTO the block horizontally, never tested. Two synthetic
+    // setups on a fresh isolated floor (not the shared `world`, to avoid
+    // any interaction with real placed content): a single-height
+    // grass-topped block (expected to be climbed via the existing
+    // kStepLimit step-up mechanic, same as any other curb-height obstacle
+    // -- NOT a bug, this engine's designed terrain-traversal behavior) and
+    // a 3-tall grass-topped wall (taller than kStepLimit, so it must
+    // genuinely block like any other wall). Both confirmed correct via a
+    // standalone repro before writing this -- included as a real,
+    // permanent regression lock, not just a one-off investigation.
+    {
+        GalaxyEggbert::Worlds::World grassWallWorld;
+        for (int x = 45; x <= 60; ++x)
+        {
+            for (int z = 45; z <= 60; ++z)
+            {
+                grassWallWorld.setBlock(static_cast<std::uint16_t>(x), 0, static_cast<std::uint16_t>(z),
+                                         GalaxyEggbert::Worlds::Block::make(1));
+            }
+        }
+        grassWallWorld.setBlock(55, 1, 50, GalaxyEggbert::Worlds::Block::make(107));
+
+        GEBlupiController stepUpWalker;
+        stepUpWalker.SetPosition(0.0f, 1.0f, 0.0f);
+        stepUpWalker.SetYaw(1.57079633f); // face east (+X), toward the block at render X=5
+        for (int i = 0; i < 300; ++i)
+        {
+            stepUpWalker.Step(grassWallWorld, 0.0f, 1.0f, false, false, false, dt);
+        }
+        check(stepUpWalker.GetX() > 5.0f,
+              "a single-height grass-topped block (icon 107) is climbed via step-up, not a wall to "
+              "be blocked by -- matches this engine's own kStepLimit traversal, not the "
+              "\"walkable-through\" bug report");
+    }
+    {
+        GalaxyEggbert::Worlds::World grassTallWallWorld;
+        for (int x = 45; x <= 60; ++x)
+        {
+            for (int z = 45; z <= 60; ++z)
+            {
+                grassTallWallWorld.setBlock(static_cast<std::uint16_t>(x), 0, static_cast<std::uint16_t>(z),
+                                             GalaxyEggbert::Worlds::Block::make(1));
+            }
+        }
+        for (int y = 1; y <= 3; ++y)
+        {
+            grassTallWallWorld.setBlock(55, static_cast<std::uint16_t>(y), 50,
+                                         GalaxyEggbert::Worlds::Block::make(107));
+        }
+
+        GEBlupiController blockedWalker;
+        blockedWalker.SetPosition(0.0f, 1.0f, 0.0f);
+        blockedWalker.SetYaw(1.57079633f);
+        for (int i = 0; i < 300; ++i)
+        {
+            blockedWalker.Step(grassTallWallWorld, 0.0f, 1.0f, false, false, false, dt);
+        }
+        check(blockedWalker.GetX() < 5.0f && blockedWalker.IsOnGround(),
+              "a 3-tall grass-topped wall (icon 107), too tall to step up, correctly blocks "
+              "horizontal movement like any other wall -- \"walkable-through\" does not reproduce");
+    }
+
     // GroundHeightAt()'s roofed-interior fix (plan.md/NEXT.md §4/§5,
     // 2026-07-13): the south tunnel (tools/GenerateSampleWorld3D.cpp) is a
     // REAL enclosed interior already in this world -- floor at grid y=0,

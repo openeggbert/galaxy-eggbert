@@ -317,6 +317,21 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### test: re-investigated "grass-topped cubes walkable-through", does not reproduce (2026-07-23)
+
+With the editor plan complete, swept `plan.md`'s "Known open bugs" for stale entries. Found one
+(`plan.md`'s pre-`## 1` preamble list) referencing a `NEXT.md §5/§8 task 4` pointer that no longer
+exists in this file, and a prior repro attempt in `tools/VerifyBlupiMovement.cpp` that only tested
+VERTICAL collision (landing on top, already passing) — the literal "walkable-through" wording more
+naturally means walking INTO the block horizontally, never tested. Added that missing case: a
+single-height grass-topped block (icon 107) correctly climbs via the existing `kStepLimit` step-up
+mechanic (same as any curb-height obstacle — likely what the original report actually saw), while a
+3-tall wall of the same icon (too tall to step up) correctly blocks like any other wall. Verified
+real teeth via bug injection (disabled the step-up branch, caught this new test plus 1 pre-existing
+staircase test, reverted). Two new permanent regression checks in `VerifyBlupiMovement.cpp`, full
+suite clean on all 3 native backends. See `plan.md`'s own updated entry for the full writeup — as
+far as this investigation could determine, this was never a reproducible bug.
+
 ### feat: EDITOR-112 — hardening pass, editor plan COMPLETE (2026-07-23)
 
 The last of the 13 approved editor milestones. Three parts:

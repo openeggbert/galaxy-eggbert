@@ -182,8 +182,20 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   (2026-07-09); accepted as a known limitation, do not attempt without new approval.
 - **Residual seam-line transparency** — 60%-mitigated (UV atlas half-texel inset), not fully
   eliminated. Two untested hypotheses (MSAA edge AA, inset too small at extreme angles).
-- **Grass-topped cubes reported walkable-through** (no collision) — reported live, not yet
-  reproduced (no specific coordinates given).
+- ~~Grass-topped cubes reported walkable-through (no collision) — reported live, not yet
+  reproduced (no specific coordinates given).~~ **Re-investigated 2026-07-23 (autonomous session),
+  does not reproduce.** A prior repro attempt (`tools/VerifyBlupiMovement.cpp`, referenced from an
+  already-stale `NEXT.md §5/§8 task 4` pointer that no longer exists in that file) only tested
+  VERTICAL collision (landing on top from above, which already passes). This session added the
+  missing HORIZONTAL case: a synthetic single-height grass-topped block (icon 107) is correctly
+  climbed via the existing `kStepLimit` step-up mechanic (same as any other curb-height obstacle —
+  likely what the original report actually saw, mistaking designed terrain-traversal for "walking
+  through"), while a 3-tall grass-topped wall (too tall to step up) correctly blocks like any other
+  wall. Both confirmed via a standalone scratch repro before writing permanent tests; verified real
+  teeth via deliberate bug injection (disabled the step-up branch entirely, caught precisely — this
+  new test plus 1 pre-existing staircase test — reverted). New permanent regression coverage added
+  to `VerifyBlupiMovement.cpp`, full suite clean on all 3 native backends. Not a live-reproducible
+  bug as far as this investigation could determine.
 
 ---
 
