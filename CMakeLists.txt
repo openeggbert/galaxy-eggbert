@@ -749,6 +749,17 @@ target_include_directories(VerifyTileUvBounds PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+# INFRA-004 (plan.md §7): UnverifiedRenderMapping.hpp is a header-only data
+# table (no CNA/graphics dependency), same engine-independent precedent as
+# VerifyTileUvBounds above.
+add_executable(VerifyUnverifiedRenderMapping
+        tools/VerifyUnverifiedRenderMapping.cpp
+)
+
+target_include_directories(VerifyUnverifiedRenderMapping PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 # GECameraShake.hpp/.cpp (plan.md CAM-008..013) is deliberately
 # engine-agnostic (no CNA/graphics dependency) despite living under
 # src/GalaxyEggbertCNA/ -- this tool links it without needing CNA at all,
@@ -820,6 +831,9 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- GetObjIcon() is a pure function
     # of (ObjectType, phase) (plan.md INFRA-003).
     add_test(NAME VerifyGetObjIcon COMMAND VerifyGetObjIcon)
+    # No file/working-directory dependency -- pure data-table integrity check
+    # (plan.md INFRA-004).
+    add_test(NAME VerifyUnverifiedRenderMapping COMMAND VerifyUnverifiedRenderMapping)
     # No file/working-directory dependency -- GECameraShake is a pure
     # tick-based state machine (plan.md CAM-008..013).
     add_test(NAME VerifyCameraShake COMMAND VerifyCameraShake)

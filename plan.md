@@ -5688,12 +5688,35 @@ specifically, same as any other large/risky item elsewhere in this file.
       **verified it actually catches regressions**, not just trivially passing: deliberately
       mutated one divisor in `GEObjectIcons.cpp` (6→9 for `ObjectType17`), confirmed the test fails
       with a precise mismatch message, then reverted (confirmed via a clean `git diff`).
-- [ ] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) Mark the ~137 still-unverified 2D→3D render-mapping
-      icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`) as an explicit,
-      queryable "unverified" set (e.g. a small table/list checked by a test) so they can't be
-      silently treated as confirmed by a future pass, and so `INFRA-001`/`INFRA-002` can gate any
-      render change touching one of them behind a regression check. Bookkeeping, not a rendering
-      change.
+- [x] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) done (2026-07-21). Marked the still-unverified 2D→3D
+      render-mapping icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`
+      §10.2-§10.5, as applied per-icon in `02-tiles.md`'s Category column) as an explicit,
+      queryable "unverified" set:
+      - New `include/GalaxyEggbert/UnverifiedRenderMapping.hpp` — a header-only, engine-agnostic
+        table (`GalaxyEggbert::UnverifiedRenderMapping::kEntries[]`, `IsUnverified(iconId)`)
+        listing every icon ID whose render-mode recommendation is still only a first-pass agent
+        visual guess, never confirmed by direct user identification the way §11's other 34 icons
+        were. **131 icons**, not the ~137 originally estimated in this doc's own prose — generated
+        directly from `02-tiles.md`'s actual `"(§10.N)"`-cited rows (the current, applied ground
+        truth) rather than recounting the design doc's older approximate estimate; the 4-icon gap
+        is explained by icons 61/62/65/67 (Billboard, but tagged `"(user 2026-07-07)"` — already
+        resolved by direct identification in §11, correctly excluded) and Saw/SawStopped
+        (378/379, resolved to `InnerFlatPlate` via the 6-round live-feedback saga, also correctly
+        excluded — see `NEXT.md`).
+      - New `tools/VerifyUnverifiedRenderMapping.cpp`, wired into `ctest` (pure data table, no
+        graphics dependency, same precedent as `VerifyTileUvBounds`): asserts the exact count
+        (131, so a future identification pass shrinking the table is a deliberate, visible edit to
+        this test rather than a silent drift), no duplicate/out-of-range icon IDs, and spot-checks
+        `IsUnverified()` both ways (378/379/401/61/10 must read as NOT unverified; 201/391/92/182
+        must read as unverified).
+      - Verified the test has teeth: deliberately duplicated an entry (count 131→132), rebuilt,
+        confirmed both the count-mismatch and duplicate-entry checks failed with precise messages,
+        then reverted and confirmed a clean re-run (131 entries, all 8656 checks pass).
+      - Bookkeeping only, as scoped — no rendering code touched. This table is what `INFRA-001`/
+        `INFRA-002`'s golden-frame harness can be checked against before/after any future render
+        change to one of these 131 icons, so such a change can't quietly be treated as "already
+        correct" without going through the same direct-identification process §11 used for the
+        other 34.
 - [ ] `INFRA-005` (`REMAKE-ANALYSIS.md` P1-1) **Needs its own scoping session + explicit user
       go-ahead before any code changes — do not start from this line alone.** A single shared
       swept-collision/movement resolver that every movement mode (grounded, airborne, every

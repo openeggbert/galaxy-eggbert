@@ -115,8 +115,8 @@ appears to be under active, independent development and the failure was transien
 it is not caused by anything in this repository; check `../sharp-runtime`'s own git log first.
 
 ### Test status
-Last full run (2026-07-19, `build-cna` only, after EDITOR-110):
-- `build-cna`: **79 tests, 78 pass (99%)** — the only failure is `easy-gl-resource-smoke-tests`, a
+Last full run (2026-07-21, `build-cna` only, after `INFRA-004`):
+- `build-cna`: **81 tests, 80 pass (99%)** — the only failure is `easy-gl-resource-smoke-tests`, a
   **pre-existing, unrelated** failure in the `easy-gl` dependency, root-caused entirely to that
   repository (see §5). It has been the same single failure across every verification pass this
   session.
@@ -136,9 +136,11 @@ Last full run (2026-07-19, `build-cna` only, after EDITOR-110):
   `VerifyInteractionSystem` (largest suite — pickups, hazards, cheats, secret powers, death/respawn
   timing), `VerifyGEInputPad`, `VerifyGESaveData`, `VerifyMoveObjectTypesCna`,
   `VerifyBigDecorParsingCna`, `VerifyTerrainAnimDivisor`, `VerifyTileUvBounds`, `VerifyCameraShake`,
-  and `VerifyGEWorldEditor` (new — the whole editor's pure logic: camera math, voxel raycast, box
-  region math, undo/redo, palette data + click hit-testing, custom-world storage, browser screen,
-  object placement).
+  `VerifyGEWorldEditor` (the whole editor's pure logic: camera math, voxel raycast, box region math,
+  undo/redo, palette data + click hit-testing, custom-world storage, browser screen, object
+  placement), `VerifyGetObjIcon` (`INFRA-003` — `GetObjIcon()` data-integrity regression test), and
+  `VerifyUnverifiedRenderMapping` (`INFRA-004` — locks the ~131-icon "unverified render-mode guess"
+  table's shape).
 - `GalaxyEggbertSimple3D`, `VerifyBigDecorParsing`, `VerifyMoveObjectTypes` — Simple3D-only targets,
   not built per the direction lock.
 
@@ -280,6 +282,23 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### feat: INFRA-004 — mark ~131 unverified 2D→3D render-mapping icons as an explicit, queryable set (2026-07-21)
+
+Fourth item from `plan.md` §7's task breakdown. Bookkeeping only, no rendering code touched. New
+`include/GalaxyEggbert/UnverifiedRenderMapping.hpp` (header-only, engine-agnostic): a table of every
+icon ID whose 3D render-mode recommendation (`mobile-eggbert-reference/
+15-3d-render-mapping-design.md` §10.2-§10.5, as applied per-icon in `02-tiles.md`'s Category column)
+is still only a first-pass agent visual guess, never confirmed by direct user identification the
+way §11's other 34 icons were — **131 icons** (generated straight from `02-tiles.md`'s actual
+`"(§10.N)"`-cited rows, the current applied ground truth, not the design doc's older ~137 prose
+estimate; the gap is explained by icons already resolved by direct identification — 61/62/65/67 and
+Saw/SawStopped 378/379 — correctly excluded). New `tools/VerifyUnverifiedRenderMapping.cpp`, wired
+into `ctest` (pure data table, no display needed): asserts the exact count, no duplicate/
+out-of-range IDs, and spot-checks `IsUnverified()` both ways. **Verified the test has teeth**:
+deliberately duplicated an entry, confirmed both the count and duplicate checks failed with precise
+messages, reverted, confirmed a clean re-run. Full regression clean (80/81, only the pre-existing
+unrelated `easy-gl-resource-smoke-tests` failure).
 
 ### feat: INFRA-003 — GetObjIcon() data-integrity regression test, wired into ctest (2026-07-21)
 
@@ -1529,14 +1548,15 @@ Non-editor tasks, available if the editor line is paused:
 
 4. **`plan.md` §7's correctness-infrastructure task breakdown** (2026-07-21, `INFRA-001`
    through `INFRA-010`), if there's appetite for infrastructure work rather than another
-   feature/bug. Start with `INFRA-001` (a permanent, committed golden-screenshot harness,
-   promoting the ad-hoc `xvfb-run` + revert pattern already used every session into something
-   that stays) or `INFRA-003` (a first `GetObjIcon()` data-integrity pass) — both small and
-   self-contained. `INFRA-005`/`INFRA-006` (shared collision resolver, `ObjectType` handler
-   table) explicitly need their own scoping session + the user's go-ahead before any code
-   changes — do not start those from this line alone. The dual-renderer thread (`renderers.md`)
-   has no task IDs yet by explicit user choice (2026-07-21) — ask before breaking that one down
-   too.
+   feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004` are **done** (2026-07-21 — golden-
+   screenshot harness + diffing, `GetObjIcon()` data-integrity test, unverified-render-mapping
+   table). Remaining: `INFRA-007` (typed per-frame event queue replacing 17 `*ThisFrame()` bools),
+   `INFRA-009` (pin sibling-repo commits / quarantine known failures), `INFRA-010` (compact
+   "current truth" index) are small and self-contained. `INFRA-005`/`INFRA-006` (shared collision
+   resolver, `ObjectType` handler table) explicitly need their own scoping session + the user's
+   go-ahead before any code changes — do not start those from this line alone. The dual-renderer
+   thread (`renderers.md`) has no task IDs yet by explicit user choice (2026-07-21) — ask before
+   breaking that one down too.
 
 ## 9. Do not do yet
 
