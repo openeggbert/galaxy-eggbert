@@ -152,9 +152,10 @@ int main(int argc, char** argv)
     // updates (using the sentinel-position idiom already established
     // elsewhere in this file, so nothing else triggers meanwhile) until
     // the voyage completes. Returns false if no voyage was pending.
-    const auto completePendingVoyage = [&sound](GEWorldRuntime& w, GEInteractionSystem& ir)
+    const auto completePendingVoyage = [&sound, &findEvent](GEWorldRuntime& w, GEInteractionSystem& ir)
     {
-        if (!ir.VoyagePendingThisFrame())
+        const auto* voyageEvent = findEvent(ir, GEInteractionSystem::EventKind::VoyageRequested);
+        if (!voyageEvent)
         {
             return false;
         }
@@ -168,7 +169,7 @@ int main(int argc, char** argv)
         // blupih/blupit's own firing cooldown) fire too, an unwanted side
         // effect this helper's callers don't want.
         constexpr float kCollapsed = 0.0f;
-        ir.BeginVoyage(w, ir.VoyagePendingKind(), ir.VoyagePendingIconId(), ir.VoyagePendingIsButtonChannel(),
+        ir.BeginVoyage(w, voyageEvent->voyageKind, voyageEvent->voyageIconId, voyageEvent->voyageIsButtonChannel,
                        kCollapsed, kCollapsed, kCollapsed, kCollapsed, sound);
         constexpr float voyageDt = 1.0f / 20.0f;
         w.Update(voyageDt);
@@ -181,21 +182,21 @@ int main(int argc, char** argv)
     // ticks) then a fixed 40-tick life-loss Voyage, mirroring
     // GalaxyEggbertCnaGame::ResolveDeathLock()'s own orchestration (which
     // this standalone tool has no access to, so it's replicated here).
-    // Starts the lock if `ir.DeathLockRequestedThisFrame()` is set, then
+    // Starts the lock if a DeathLockRequested event fired, then
     // fast-forwards `b`/`w`/`ir` together until it fully resolves (respawn
     // applied, LoseLife()/life-loss Voyage started). The real longest
     // duration is Clear4's 110-tick lock (5.5s) + the 40-tick (2.0s)
     // life-loss Voyage = 7.5s worst case -- 200 real-time-second iterations
     // at dt=1/20 comfortably covers every real cause with margin.
-    const auto completeDeathLock = [&sound](GEWorldRuntime& w, GEInteractionSystem& ir, GEBlupiController& b)
+    const auto completeDeathLock = [&sound, &findEvent](GEWorldRuntime& w, GEInteractionSystem& ir, GEBlupiController& b)
     {
-        if (ir.DeathLockRequestedThisFrame())
+        if (const auto* deathLockEvent = findEvent(ir, GEInteractionSystem::EventKind::DeathLockRequested))
         {
-            const auto kind = ir.DeathLockPendingKind();
+            const auto kind = deathLockEvent->deathLockKind;
             const auto cause = (kind == GEInteractionSystem::PendingDeathKind::Clear1) ? GEBlupiController::DeathCause::Clear1
                               : (kind == GEInteractionSystem::PendingDeathKind::Clear2) ? GEBlupiController::DeathCause::Clear2
                                                                                          : GEBlupiController::DeathCause::Glu;
-            b.TriggerDeathLock(cause, ir.DeathLockShouldRespawn());
+            b.TriggerDeathLock(cause, deathLockEvent->deathLockShouldRespawn);
         }
         constexpr float lockDt = 1.0f / 20.0f;
         for (int i = 0; i < 200; ++i)
@@ -536,8 +537,8 @@ int main(int argc, char** argv)
         // Real life loss is now deferred behind the death-lock/life-loss-
         // Voyage (death-VFX follow-up) -- consumed BEFORE the "next frame"
         // check below, whose own interaction.Update() call would otherwise
-        // wipe the still-pending DeathLockRequestedThisFrame() signal
-        // first (a *ThisFrame() flag, reset every Update() call).
+        // wipe the still-pending DeathLockRequested event first (events_ is
+        // cleared every Update() call).
         GEBlupiController hazardDeathBlupi;
         completeDeathLock(world, interaction, hazardDeathBlupi);
         check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
@@ -721,15 +722,15 @@ int main(int argc, char** argv)
         {
             world.Update(dt);
             interaction.Update(dt, world, placeX, placeY, placeZ, 0.0f, sound);
-            if (interaction.DeathLockRequestedThisFrame())
+            if (const auto* deathLockEvent = findEvent(interaction, GEInteractionSystem::EventKind::DeathLockRequested))
             {
-                const auto kind = interaction.DeathLockPendingKind();
+                const auto kind = deathLockEvent->deathLockKind;
                 const auto cause = (kind == GEInteractionSystem::PendingDeathKind::Clear1)
                                         ? GEBlupiController::DeathCause::Clear1
                                     : (kind == GEInteractionSystem::PendingDeathKind::Clear2)
                                         ? GEBlupiController::DeathCause::Clear2
                                         : GEBlupiController::DeathCause::Glu;
-                blastDeathBlupi.TriggerDeathLock(cause, interaction.DeathLockShouldRespawn());
+                blastDeathBlupi.TriggerDeathLock(cause, deathLockEvent->deathLockShouldRespawn);
             }
             blastDeathBlupi.Step(world.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
             bool blastShouldRespawn = false;
@@ -946,12 +947,14 @@ int main(int argc, char** argv)
                                                [](const auto& o) { return o.active && o.type == ObjectType::ObjectType201; });
         check(!anyActive201, "ObjectType201 is destroyed on lethal contact (real ObjectDelete) -- the destroyed "
                              "slot may be reused by the real ObjectType10 pop effect spawned the same frame");
-        check(lethalDecorInteraction.DeathLockRequestedThisFrame(),
-              "lethal contact requests a death lock");
-        check(lethalDecorInteraction.DeathLockPendingKind() == GEInteractionSystem::PendingDeathKind::Clear1 ||
-                  lethalDecorInteraction.DeathLockPendingKind() == GEInteractionSystem::PendingDeathKind::Clear2,
+        const auto* lethalDecorDeathLockEvent =
+            findEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::DeathLockRequested);
+        check(lethalDecorDeathLockEvent != nullptr, "lethal contact requests a death lock");
+        check(lethalDecorDeathLockEvent != nullptr &&
+                  (lethalDecorDeathLockEvent->deathLockKind == GEInteractionSystem::PendingDeathKind::Clear1 ||
+                   lethalDecorDeathLockEvent->deathLockKind == GEInteractionSystem::PendingDeathKind::Clear2),
               "the death lock's pending kind is the real Clear1/Clear2 coinflip, nothing else");
-        check(!lethalDecorInteraction.DeathLockShouldRespawn(),
+        check(lethalDecorDeathLockEvent != nullptr && !lethalDecorDeathLockEvent->deathLockShouldRespawn,
               "shouldRespawn is false (real: no m_blupiRestart=true anywhere in this block)");
         check(hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
               "lethal contact always triggers SmallShake (real: no fish/bird BigShake variant here)");

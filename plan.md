@@ -5815,9 +5815,59 @@ specifically, same as any other large/risky item elsewhere in this file.
       `worlds3d/world999.vwr` (this refactor's own test world, exercises
       `GEInteractionSystem::Update()` every frame) completes cleanly with no crash, and
       `tools/verify_golden_frames.sh`'s 3 reference frames still byte-match exactly — confirms the
-      render pipeline is untouched by this transport-only change. Step 3 (Voyage/DeathLock, the 2
-      payload-carrying signals excluded from steps 1/2, largest payloads — Voyage alone has 7
-      extra fields) not started yet.
+      render pipeline is untouched by this transport-only change.
+
+      **Step 3 done (2026-07-21) — INFRA-007 fully complete, all 17 original *ThisFrame() flags
+      migrated.** Voyage/DeathLock turned out to carry a much larger payload than steps 1/2's own
+      design summary estimated: re-reading the header carefully before touching anything found
+      Voyage actually has **11** payload fields (kind, iconId, isButtonChannel, worldX/Y/Z,
+      fixedX/Y, worldIsStart, isAscend, ascendOffsetY — not "7" as first estimated), and DeathLock
+      has **2** (kind, shouldRespawn — not "1"). The approved tagged-struct shape absorbed this
+      without any design change, same as step 2's own Power/Cloud/Hide correction.
+
+      New complication this step actually needed to solve (steps 1/2 didn't): unlike every other
+      Kind, at most ONE `VoyageRequested`/`DeathLockRequested` event may exist per frame — the
+      pre-queue flat-member representation gave this "last request this frame wins, an earlier one
+      is silently dropped" behavior for free via plain assignment (already a documented, accepted
+      simplification on `VoyageKind`'s own class comment, predating this queue). A `std::vector`
+      wouldn't give this for free — pushing both would silently break the "at most one" invariant.
+      Solved with a new private `GEInteractionSystem::ReplaceEvent(EventKind, Event)` (removes any
+      existing entry of that Kind via `std::remove_if`/`erase`, then appends) — used by
+      `RequestVoyage()`/`RequestClear2Ascend()` (now build an `Event` via named-member assignment
+      and call `ReplaceEvent()` instead of 8-10 flat member assignments each) and all 4 death-lock
+      trigger sites inside `Update()` itself (each replaced its 3-line flat-assignment block with a
+      local `Event` + `ReplaceEvent()` call, same surrounding control flow/order untouched). Two
+      `enum class ... : std::uint8_t;` forward declarations added (`VoyageKind`, `PendingDeathKind`)
+      so `Event`'s new payload fields can be typed by them before their full definitions (which stay
+      exactly where they've always lived, next to `RequestVoyage()`/the death-lock trigger sites,
+      not moved for this refactor) — the only structural header change beyond straight field/getter
+      swaps.
+
+      Consumer side: `GalaxyEggbertCnaGame::ResolvePendingVoyage()`/`ResolveDeathLock()` (the only 2
+      places these ever get read) rewritten against `FindInteractionEvent()` (added in step 2),
+      reading payload straight off the returned `Event*` instead of ~9 individual getters each —
+      confirmed the pointer stays valid across the `BeginVoyage()`/`TriggerDeathLock()` calls in the
+      same function (neither touches `events_`). Test file: `tools/VerifyInteractionSystem.cpp`'s 2
+      self-contained helper lambdas (`completePendingVoyage`/`completeDeathLock`, mirroring the real
+      consumer functions since no test can construct a full `GalaxyEggbertCnaGame`) plus ~10 direct
+      call sites rewritten the same way. All stale doc comments referencing the old getter names
+      updated too (`GEInteractionSystem.hpp`'s own class comment, `GalaxyEggbertCnaGame.hpp`'s
+      `ResolvePendingVoyage()`/`ResolveDeathLock()` comments). Confirmed via `grep`: zero references
+      to any of `VoyagePending*`/`DeathLockRequestedThisFrame`/`DeathLockPendingKind`/
+      `DeathLockShouldRespawn` remain anywhere in `src/`/`include/`/`tools/`.
+
+      Full regression clean (80/81, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+      failure); `VerifyInteractionSystem`: still 547 checks, all passing (same count as step 2 —
+      confirms no coverage was lost). Live smoke check: `--golden-capture` clean, no crash, all 3
+      golden reference frames still byte-match exactly. **Honest gap, not silently glossed over:**
+      `ResolvePendingVoyage()`/`ResolveDeathLock()`'s real camera-projection consumer path
+      (`GEHud::ProjectWorldToHudSpace()`, `BeginVoyage()` with real view/projection matrices) has no
+      dedicated test coverage — this predates this refactor (no test constructs a full
+      `GalaxyEggbertCnaGame`, which needs a real graphics device) and this step did not add live
+      instrumentation to specifically exercise it, since every line touched there is a mechanical
+      1:1 substitution (getter call → pointer-member read) with zero logic/arithmetic change, on
+      top of a projection call chain this refactor never modified. Flagged here rather than
+      claiming a live check that wasn't actually done.
 - Standing rule, not a one-shot task (`REMAKE-ANALYSIS.md` P2-2): **reuse before re-deriving.**
   When a CNA render/math bug has a plausible 2D/pixel root cause, check whether the engine-agnostic
   `include/GalaxyEggbert/` tree or `GalaxyEggbertSimple3D` (historical reference only, but still

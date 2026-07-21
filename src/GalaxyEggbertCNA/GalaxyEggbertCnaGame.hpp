@@ -326,7 +326,7 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
 
         // Voyage (plan.md `158`) -- a no-op unless
-        // `interaction_.VoyagePendingThisFrame()` is true. Projects
+        // `FindInteractionEvent(GEInteractionSystem::EventKind::VoyageRequested)` finds one. Projects
         // whichever endpoint is still a 3D world position (via
         // `GEHud::ProjectWorldToHudSpace()`, using `camera_` and the real
         // GraphicsDevice's current viewport -- accessible here via
@@ -340,10 +340,10 @@ namespace GalaxyEggbert::CNA
         void ResolvePendingVoyage();
 
         // Death-lock/life-loss-Voyage follow-up -- a no-op unless
-        // `interaction_.DeathLockRequestedThisFrame()` is set (the generic-
-        // hazard-contact/dynamite/projectile/large-creature-grab pending
+        // `FindInteractionEvent(GEInteractionSystem::EventKind::DeathLockRequested)` finds one
+        // (the generic-hazard-contact/dynamite/projectile/large-creature-grab pending
         // signal from inside `interaction_.Update()`, see
-        // `GEInteractionSystem::DeathLockRequestedThisFrame()`'s own
+        // `GEInteractionSystem::EventKind::DeathLockRequested`'s own
         // comment) OR `blupi_.ConsumeDeathLockResolved()` fires (an
         // ALREADY-active lock, possibly started a previous frame,
         // elapsing). Starts a new lock via `blupi_.TriggerDeathLock()` for

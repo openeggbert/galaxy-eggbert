@@ -247,15 +247,24 @@ namespace GalaxyEggbert::CNA
                     // (synthetic tests included) keeps pushing crates unless it opts in.
                     bool blupiCanPushCrate = true);
 
-        // INFRA-007 (plan.md §7, step 2/3): the 11 simple/position-payload
-        // *ThisFrame() signals below (Died through InvertGranted) are
-        // carried by one typed per-frame event queue instead of 11 parallel
-        // booleans (+ 9 more float members for Power/Cloud/Hide's pickup
-        // position). VoyagePendingThisFrame()/DeathLockRequestedThisFrame()
-        // (below) and CrateBeingPushedThisFrame() (above) are explicitly
-        // OUT of this queue -- Voyage/DeathLock are step 3 (their own
-        // larger payloads deserve their own care), and CrateBeingPushed
-        // isn't a one-shot event at all (see its own comment).
+        // INFRA-007 (plan.md §7): all 14 of this class's former *ThisFrame() signals (Died
+        // through DeathLockRequested below) are carried by one typed per-frame event queue
+        // instead of 14 parallel booleans (+ 9 more float members for Power/Cloud/Hide's pickup
+        // position, + a dozen more for Voyage/DeathLock's own payload). Migrated in 3 steps (see
+        // plan.md's own writeup for the full history): step 1 was GEBlupiController's separate 3
+        // sound-cue flags (its own EventKind/Event, unrelated to this class's); step 2 was the 11
+        // simple/position-payload Kinds here (Died through InvertGranted); step 3 (this) is
+        // VoyageRequested/DeathLockRequested, saved for last since they carry the largest
+        // payloads and need ReplaceEvent()'s extra "only one survives per frame" care (see its
+        // own comment). CrateBeingPushedThisFrame() (above) stays explicitly OUT of this queue --
+        // it isn't a one-shot event at all (see its own comment).
+        // Forward-declared so Event (below) can carry VoyageRequested/DeathLockRequested payload
+        // fields typed by these -- full definitions live further down (VoyageKind next to
+        // RequestVoyage()/BeginVoyage(), PendingDeathKind next to the death-lock trigger sites),
+        // where they've always been documented, closer to their own real behavioral context.
+        enum class VoyageKind : std::uint8_t;
+        enum class PendingDeathKind : std::uint8_t;
+
         enum class EventKind : std::uint8_t
         {
             // True the frame Blupi is killed via enemy/hazard contact (see
@@ -263,7 +272,7 @@ namespace GalaxyEggbert::CNA
             // access to GEBlupiController, so the caller is the one that
             // must actually respawn Blupi. As of 2026-07-14 the caller
             // defers this to the death-lock/life-loss-Voyage system
-            // instead (see DeathLockRequestedThisFrame() below) and does
+            // instead (see EventKind::DeathLockRequested below) and does
             // NOT consume this Kind directly any more -- kept for tests/
             // other consumers, not dead, just not read by the live game
             // loop today (a deliberate choice, not an oversight -- don't
@@ -312,6 +321,20 @@ namespace GalaxyEggbert::CNA
             // Shield above; the caller calls GEBlupiController::TriggerInvert() and plays channel
             // 66 only if that returns true.
             InvertGranted,
+            // A pickup/death-VFX site recorded a pending Voyage this frame -- see VoyageKind's own
+            // comment (further down) and RequestVoyage()/RequestClear2Ascend() for the full real
+            // behavior. Unlike every Kind above, at most ONE VoyageRequested event can exist in
+            // EventsThisFrame() at a time -- RequestVoyage()/RequestClear2Ascend() replace any
+            // existing one rather than appending (matching the real "last request this frame wins,
+            // the rest are silently dropped" behavior already documented on VoyageKind, which
+            // predates this queue and was a flat single-struct overwrite before it).
+            VoyageRequested,
+            // One of the 4 real death-lock trigger sites living inside Update() itself fired this
+            // frame -- see PendingDeathKind's own comment (further down). Same "at most one, last
+            // wins" rule as VoyageRequested above, and the two ARE independent (a Clear2 outcome
+            // sets both in the same frame, see PendingDeathKind's comment) -- this rule only
+            // dedupes within a single Kind, never across different Kinds.
+            DeathLockRequested,
         };
         struct Event
         {
@@ -321,6 +344,21 @@ namespace GalaxyEggbert::CNA
             float pickupX = 0.0f;
             float pickupY = 0.0f;
             float pickupZ = 0.0f;
+            // Only meaningful for VoyageRequested -- see RequestVoyage()/RequestClear2Ascend()
+            // (further down) for what each field means; mirrors the pre-queue flat pendingX_
+            // members exactly, just grouped onto the event that carries them.
+            VoyageKind voyageKind = VoyageKind::None;
+            int voyageIconId = 0;
+            bool voyageIsButtonChannel = false;
+            float voyageWorldX = 0.0f, voyageWorldY = 0.0f, voyageWorldZ = 0.0f;
+            float voyageFixedX = 0.0f, voyageFixedY = 0.0f;
+            bool voyageWorldIsStart = false;
+            bool voyageIsAscend = false;
+            float voyageAscendOffsetY = 0.0f;
+            // Only meaningful for DeathLockRequested -- see the death-lock trigger sites (further
+            // down) for what each field means.
+            PendingDeathKind deathLockKind = PendingDeathKind::Clear1;
+            bool deathLockShouldRespawn = false;
         };
         [[nodiscard]] const std::vector<Event>& EventsThisFrame() const noexcept { return events_; }
 
@@ -603,11 +641,11 @@ namespace GalaxyEggbert::CNA
         //
         // This class has no camera access, so it can't project a pickup's
         // 3D world position into 2D screen space itself. Instead, pickup
-        // sites record a "pending" voyage request (this-frame flag +
+        // sites record a "pending" voyage request (a VoyageRequested event +
         // whichever ONE endpoint still needs projecting, plus the other,
         // already-resolved endpoint) via `RequestVoyage()`; the caller
-        // (`GalaxyEggbertCnaGame.cpp`, which has `camera_`) checks
-        // `VoyagePendingThisFrame()` right after `Update()` returns,
+        // (`GalaxyEggbertCnaGame.cpp`, which has `camera_`) looks for a
+        // VoyageRequested event right after `Update()` returns,
         // projects the world point via `GEHud::ProjectWorldToHudSpace()`,
         // and calls `BeginVoyage()` with both fully-resolved endpoints --
         // the same "called by the game class right after Update()
@@ -654,31 +692,19 @@ namespace GalaxyEggbert::CNA
             LifeLoss
         };
 
-        [[nodiscard]] bool VoyagePendingThisFrame() const noexcept { return voyagePendingThisFrame_; }
-        [[nodiscard]] VoyageKind VoyagePendingKind() const noexcept { return pendingKind_; }
-        [[nodiscard]] int VoyagePendingIconId() const noexcept { return pendingIconId_; }
-        [[nodiscard]] bool VoyagePendingIsButtonChannel() const noexcept { return pendingIsButton_; }
-        [[nodiscard]] float VoyagePendingWorldX() const noexcept { return pendingWorldX_; }
-        [[nodiscard]] float VoyagePendingWorldY() const noexcept { return pendingWorldY_; }
-        [[nodiscard]] float VoyagePendingWorldZ() const noexcept { return pendingWorldZ_; }
-        [[nodiscard]] float VoyagePendingFixedX() const noexcept { return pendingFixedX_; }
-        [[nodiscard]] float VoyagePendingFixedY() const noexcept { return pendingFixedY_; }
-        // True: the projected world point is the voyage's START (every
-        // pickup -- flies FROM the pickup's own position TO a fixed HUD
-        // point). False: the world point is the voyage's END (real
-        // door-unlock key-consumption flourish only -- flies FROM the
-        // fixed HUD key position TO the door's own world position).
-        [[nodiscard]] bool VoyagePendingWorldIsStart() const noexcept { return pendingWorldIsStart_; }
-        // True only for the generic-hazard-contact Clear2 coinflip site
-        // (inside Update(), no camera access -- unlike Clear2/Clear3's
-        // OTHER 2 real trigger sites, fall-off-world and Lava, which live
-        // directly in `GalaxyEggbertCnaGame.cpp` and so call `BeginVoyage()`
-        // straight away, no pending round-trip needed). When true, the
-        // caller computes end = (projectedX, projectedY -
-        // VoyagePendingAscendOffsetY()) instead of reading
-        // VoyagePendingFixedX/Y() (which are unused/stale in this mode).
-        [[nodiscard]] bool VoyagePendingIsAscend() const noexcept { return pendingIsAscend_; }
-        [[nodiscard]] float VoyagePendingAscendOffsetY() const noexcept { return pendingAscendOffsetY_; }
+        // A VoyageRequested event's payload fields (Event, above) mean:
+        //   voyageWorldX/Y/Z, voyageFixedX/Y -- the world-position endpoint (still needing
+        //     projection) and the already-resolved fixed HUD-space endpoint.
+        //   voyageWorldIsStart -- true: the projected world point is the voyage's START (every
+        //     pickup -- flies FROM the pickup's own position TO a fixed HUD point). False: the
+        //     world point is the voyage's END (real door-unlock key-consumption flourish only --
+        //     flies FROM the fixed HUD key position TO the door's own world position).
+        //   voyageIsAscend -- true only for the generic-hazard-contact Clear2 coinflip site
+        //     (inside Update(), no camera access -- unlike Clear2/Clear3's OTHER 2 real trigger
+        //     sites, fall-off-world and Lava, which live directly in `GalaxyEggbertCnaGame.cpp`
+        //     and so call `BeginVoyage()` straight away, no pending round-trip needed). When
+        //     true, the caller computes end = (projectedX, projectedY - voyageAscendOffsetY)
+        //     instead of reading voyageFixedX/Y (which are unused/stale in this mode).
 
         // Death-lock request (death-lock/life-loss-Voyage follow-up) from the 4 real trigger sites
         // living inside Update() itself, which has no `GEBlupiController&`/camera access (every
@@ -693,14 +719,11 @@ namespace GalaxyEggbert::CNA
         // (confirmed `m_blupiRestart=true` at Decor.cpp:5879/5927). A LOCAL enum, deliberately NOT
         // shared with `GEBlupiController::DeathCause` (this class stays fully decoupled from it,
         // same reasoning as every other pending signal here) -- the caller maps this to the real
-        // `DeathCause` when calling `TriggerDeathLock()`. This is a SEPARATE signal from the
-        // VoyagePending* fields above -- a Clear2 outcome sets BOTH in the same frame (the
-        // cosmetic Clear2Ascend request via RequestClear2Ascend() below, AND this one), consumed
+        // `DeathCause` when calling `TriggerDeathLock()`. This is a SEPARATE Kind from
+        // VoyageRequested above -- a Clear2 outcome sets BOTH in the same frame (the cosmetic
+        // Clear2Ascend request via RequestClear2Ascend() below, AND this one), consumed
         // independently by the caller.
         enum class PendingDeathKind : std::uint8_t { Clear1, Clear2, Glu };
-        [[nodiscard]] bool DeathLockRequestedThisFrame() const noexcept { return deathLockRequestedThisFrame_; }
-        [[nodiscard]] PendingDeathKind DeathLockPendingKind() const noexcept { return deathLockPendingKind_; }
-        [[nodiscard]] bool DeathLockShouldRespawn() const noexcept { return deathLockShouldRespawn_; }
 
         // Called by the game class once it has resolved both endpoints
         // (projecting whichever one was still a world position). Force-
@@ -890,19 +913,11 @@ namespace GalaxyEggbert::CNA
         // started (see BeginVoyage()'s own comment) -- only meaningful for
         // Clear3Ascend's continuous puff-particle spawn.
         float voyageWorldAnchorX_ = 0.0f, voyageWorldAnchorY_ = 0.0f, voyageWorldAnchorZ_ = 0.0f;
-        // This-frame pending request (consumed by the game class):
-        bool voyagePendingThisFrame_ = false;
-        VoyageKind pendingKind_ = VoyageKind::None;
-        int pendingIconId_ = 0;
-        bool pendingIsButton_ = false;
-        float pendingWorldX_ = 0.0f, pendingWorldY_ = 0.0f, pendingWorldZ_ = 0.0f;
-        float pendingFixedX_ = 0.0f, pendingFixedY_ = 0.0f;
-        bool pendingWorldIsStart_ = true;
-        bool pendingIsAscend_ = false;
-        float pendingAscendOffsetY_ = 0.0f;
-        bool deathLockRequestedThisFrame_ = false;
-        PendingDeathKind deathLockPendingKind_ = PendingDeathKind::Clear1;
-        bool deathLockShouldRespawn_ = false;
+        // This-frame pending request (consumed by the game class) -- now carried as a
+        // VoyageRequested/DeathLockRequested entry in events_ (INFRA-007, plan.md §7) instead of
+        // this flat member block; ReplaceEvent() (declared below) preserves the exact "only one
+        // pending request survives per frame" behavior this flat representation used to give for
+        // free via plain assignment.
         // First randomness needed anywhere in this engine's gameplay code
         // (real `Decor::BlupiDead`'s own `m_random`, Decor.cpp:6551) --
         // seeded from real entropy since the real coinflip this ports is
@@ -912,6 +927,14 @@ namespace GalaxyEggbert::CNA
 
         void TickVoyage(float dt, GEWorldRuntime& worldRuntime, GESound& sound);
         void ApplyVoyageReward(GEWorldRuntime& worldRuntime, GESound& sound);
+        // Removes any existing EventsThisFrame() entry of the same Kind before appending newEvent
+        // -- used by RequestVoyage()/RequestClear2Ascend() and the 4 death-lock trigger sites
+        // below (INFRA-007, plan.md §7) to preserve the exact "only one such request can be
+        // pending at a time, a later one silently replaces an earlier same-frame one" behavior the
+        // pre-queue flat member representation gave for free via plain assignment (see
+        // EventKind::VoyageRequested/DeathLockRequested's own comments). NOT used for any of the
+        // other 11 Kinds -- those never had a single-flat-member representation to begin with.
+        void ReplaceEvent(EventKind kind, Event newEvent);
         // Records a this-frame voyage request (see the public API comment
         // above for the world/fixed-point split). Called from the pickup
         // switch, TryPerso(), and the key-gated-door block.
@@ -920,7 +943,7 @@ namespace GalaxyEggbert::CNA
         // Records a this-frame Clear2Ascend request from the generic-
         // hazard-contact site (the only Clear2 trigger site inside
         // Update() itself, with no camera access -- see
-        // VoyagePendingIsAscend()'s own comment).
+        // EventKind::VoyageRequested's own comment).
         void RequestClear2Ascend(float worldX, float worldY, float worldZ);
         // Real `Decor::VoyageDraw`'s icon==40 puff spawn (Decor.cpp:
         // 10331-10348), called once per TickVoyage() while Clear3Ascend is

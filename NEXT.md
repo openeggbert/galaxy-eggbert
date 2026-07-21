@@ -315,6 +315,35 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-007 step 3/3 — Voyage/DeathLock moved to the typed event queue, INFRA-007 fully complete (2026-07-21)
+
+Completes the migration (steps 1/2 below): all 17 of `GEInteractionSystem`/`GEBlupiController`'s
+original `*ThisFrame()` flags now go through a typed event queue. Voyage/DeathLock turned out to
+carry a much bigger payload than earlier estimated — Voyage has **11** fields (kind, iconId,
+isButtonChannel, worldX/Y/Z, fixedX/Y, worldIsStart, isAscend, ascendOffsetY), DeathLock has **2**
+(kind, shouldRespawn) — the approved tagged-struct shape absorbed this fine, no design change
+needed. New wrinkle this step had to solve: unlike every other Kind, at most ONE
+`VoyageRequested`/`DeathLockRequested` event can exist per frame (the old flat members gave this
+"last request wins" behavior for free via plain assignment) — solved with a new private
+`GEInteractionSystem::ReplaceEvent(EventKind, Event)` that removes any existing entry of that Kind
+before appending, used by `RequestVoyage()`/`RequestClear2Ascend()` and all 4 death-lock trigger
+sites. Two `enum class ... : std::uint8_t;` forward declarations (`VoyageKind`, `PendingDeathKind`)
+let `Event`'s new fields be typed by them ahead of their full definitions, which stay exactly where
+they've always lived. Consumer side: `GalaxyEggbertCnaGame::ResolvePendingVoyage()`/
+`ResolveDeathLock()` rewritten against `FindInteractionEvent()`, reading payload off the returned
+pointer instead of ~9 individual getters each. `VerifyInteractionSystem.cpp`'s 2 helper lambdas
+(mirroring the real consumer functions) plus ~10 direct call sites rewritten the same way; all
+stale doc comments updated; zero references to any old getter/member name remain anywhere in
+`src`/`include`/`tools` (confirmed via `grep`). Full regression clean (80/81, only the pre-existing
+unrelated `easy-gl-resource-smoke-tests` failure); `VerifyInteractionSystem`: still 547 checks, all
+passing (same as step 2 — no coverage lost). Live smoke check (`--golden-capture` + golden-frame
+byte-compare) clean. **Honest gap:** the real camera-projection consumer path
+(`ResolvePendingVoyage()`'s `GEHud::ProjectWorldToHudSpace()`/`BeginVoyage()` call) has no dedicated
+test coverage (predates this refactor — needs a full `GalaxyEggbertCnaGame` with a real graphics
+device) and wasn't separately live-instrumented this step, since every line touched there is a
+mechanical getter-to-pointer-member substitution with no logic change, on an unmodified projection
+call chain. See `plan.md`'s `INFRA-007` entry for the full writeup.
+
 ### feat: INFRA-007 step 2/3 — GEInteractionSystem's 11 remaining flags moved to the typed event queue (2026-07-21)
 
 Continues step 1 (below). Migrated `GEInteractionSystem`'s 11 flags (everything except
@@ -1629,15 +1658,11 @@ Non-editor tasks, available if the editor line is paused:
 
 4. **`plan.md` §7's correctness-infrastructure task breakdown** (2026-07-21, `INFRA-001`
    through `INFRA-010`), if there's appetite for infrastructure work rather than another
-   feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004`/`INFRA-009` are **done** (2026-07-21
-   — golden-screenshot harness + diffing, `GetObjIcon()` data-integrity test, unverified-
-   render-mapping table, sibling-repo commit pins). `INFRA-007` (typed per-frame event queue
-   replacing the 17 `*ThisFrame()` bools) has its design approved and **steps 1/2 of 3 done**
-   (`GEBlupiController`'s 3 sound-cue flags, then `GEInteractionSystem`'s 11 remaining flags) —
-   continue with step 3 (Voyage/DeathLock, the 2 payload-carrying signals with the largest
-   payloads, saved for last on purpose) next, see `plan.md`'s own entry for the full approved
-   design. `INFRA-010` (compact "current truth" index)
-   remains, small/self-contained/lowest-priority. `INFRA-005`/`INFRA-006` (shared collision
+   feature/bug. `INFRA-001`/`INFRA-002`/`INFRA-003`/`INFRA-004`/`INFRA-007`/`INFRA-009` are **done**
+   (2026-07-21 — golden-screenshot harness + diffing, `GetObjIcon()` data-integrity test,
+   unverified-render-mapping table, the full 17-flag `*ThisFrame()` → typed-event-queue migration,
+   sibling-repo commit pins). Remaining: `INFRA-010` (compact "current truth" index),
+   small/self-contained/lowest-priority. `INFRA-005`/`INFRA-006` (shared collision
    resolver, `ObjectType` handler table) explicitly need their own scoping session + the user's
    go-ahead before any code changes — do not start those from this line alone. The dual-renderer
    thread (`renderers.md`) has no task IDs yet by explicit user choice (2026-07-21) — ask before

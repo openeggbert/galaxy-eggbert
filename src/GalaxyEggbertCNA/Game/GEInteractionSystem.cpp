@@ -586,8 +586,6 @@ namespace GalaxyEggbert::CNA
         events_.clear();
         crateBeingPushedThisFrame_ = false;
         ridingLift_ = false;
-        voyagePendingThisFrame_ = false;
-        deathLockRequestedThisFrame_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -1346,9 +1344,10 @@ namespace GalaxyEggbert::CNA
                             // (death-VFX follow-up) -- deterministic Clear1 (no VFX, matches
                             // `159`), shouldRespawn=false, confirmed no `m_blupiRestart=true` near
                             // this real site (Decor.cpp:9168-9173).
-                            deathLockRequestedThisFrame_ = true;
-                            deathLockPendingKind_ = PendingDeathKind::Clear1;
-                            deathLockShouldRespawn_ = false;
+                            Event deathLockEvent{EventKind::DeathLockRequested};
+                            deathLockEvent.deathLockKind = PendingDeathKind::Clear1;
+                            deathLockEvent.deathLockShouldRespawn = false;
+                            ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                         }
                     }
                 }
@@ -1590,9 +1589,12 @@ namespace GalaxyEggbert::CNA
                     // (death-VFX follow-up) -- this is one of the real Glu trigger sites (direct
                     // `m_blupiAction=Glu` assignment, Decor.cpp:5914-5946, NOT via BlupiDead),
                     // shouldRespawn=true (confirmed `m_blupiRestart=true` at Decor.cpp:5927).
-                    deathLockRequestedThisFrame_ = true;
-                    deathLockPendingKind_ = PendingDeathKind::Glu;
-                    deathLockShouldRespawn_ = true;
+                    {
+                        Event deathLockEvent{EventKind::DeathLockRequested};
+                        deathLockEvent.deathLockKind = PendingDeathKind::Glu;
+                        deathLockEvent.deathLockShouldRespawn = true;
+                        ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
+                    }
                     sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
                 }
                 continue;
@@ -1671,9 +1673,10 @@ namespace GalaxyEggbert::CNA
                         // (direct `m_blupiAction=Glu` assignment, Decor.cpp:5867-5910, NOT via
                         // BlupiDead), shouldRespawn=true (confirmed `m_blupiRestart=true` at
                         // Decor.cpp:5879).
-                        deathLockRequestedThisFrame_ = true;
-                        deathLockPendingKind_ = PendingDeathKind::Glu;
-                        deathLockShouldRespawn_ = true;
+                        Event deathLockEvent{EventKind::DeathLockRequested};
+                        deathLockEvent.deathLockKind = PendingDeathKind::Glu;
+                        deathLockEvent.deathLockShouldRespawn = true;
+                        ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel51);
                     }
                 }
@@ -1723,9 +1726,10 @@ namespace GalaxyEggbert::CNA
                         // resolution point (death-VFX follow-up) -- shouldRespawn=false, confirmed
                         // no `m_blupiRestart=true` near this real site (Decor.cpp:5782-5815).
                         const bool isClear2 = RollClear2Coinflip();
-                        deathLockRequestedThisFrame_ = true;
-                        deathLockPendingKind_ = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
-                        deathLockShouldRespawn_ = false;
+                        Event deathLockEvent{EventKind::DeathLockRequested};
+                        deathLockEvent.deathLockKind = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
+                        deathLockEvent.deathLockShouldRespawn = false;
+                        ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                         if (isClear2)
                         {
                             sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
@@ -1780,9 +1784,10 @@ namespace GalaxyEggbert::CNA
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
                     const bool isClear2 = RollClear2Coinflip();
-                    deathLockRequestedThisFrame_ = true;
-                    deathLockPendingKind_ = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
-                    deathLockShouldRespawn_ = false;
+                    Event deathLockEvent{EventKind::DeathLockRequested};
+                    deathLockEvent.deathLockKind = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
+                    deathLockEvent.deathLockShouldRespawn = false;
+                    ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                     if (isClear2)
                     {
                         sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
@@ -2915,37 +2920,47 @@ namespace GalaxyEggbert::CNA
         ResetMagicTrail(blupiX, blupiY, blupiZ);
     }
 
+    void GEInteractionSystem::ReplaceEvent(EventKind kind, Event newEvent)
+    {
+        events_.erase(std::remove_if(events_.begin(), events_.end(),
+                                      [kind](const Event& event) { return event.kind == kind; }),
+                      events_.end());
+        events_.push_back(newEvent);
+    }
+
     void GEInteractionSystem::RequestVoyage(VoyageKind kind, int iconId, bool isButtonChannel, float worldX,
                                              float worldY, float worldZ, float fixedX, float fixedY,
                                              bool worldIsStart)
     {
         // Overwrites any UN-CONSUMED same-frame request (see the public
         // API comment's documented rare-edge-case simplification).
-        voyagePendingThisFrame_ = true;
-        pendingKind_ = kind;
-        pendingIconId_ = iconId;
-        pendingIsButton_ = isButtonChannel;
-        pendingWorldX_ = worldX;
-        pendingWorldY_ = worldY;
-        pendingWorldZ_ = worldZ;
-        pendingFixedX_ = fixedX;
-        pendingFixedY_ = fixedY;
-        pendingWorldIsStart_ = worldIsStart;
-        pendingIsAscend_ = false;
+        Event event{EventKind::VoyageRequested};
+        event.voyageKind = kind;
+        event.voyageIconId = iconId;
+        event.voyageIsButtonChannel = isButtonChannel;
+        event.voyageWorldX = worldX;
+        event.voyageWorldY = worldY;
+        event.voyageWorldZ = worldZ;
+        event.voyageFixedX = fixedX;
+        event.voyageFixedY = fixedY;
+        event.voyageWorldIsStart = worldIsStart;
+        event.voyageIsAscend = false;
+        ReplaceEvent(EventKind::VoyageRequested, event);
     }
 
     void GEInteractionSystem::RequestClear2Ascend(float worldX, float worldY, float worldZ)
     {
-        voyagePendingThisFrame_ = true;
-        pendingKind_ = VoyageKind::Clear2Ascend;
-        pendingIconId_ = 230;
-        pendingIsButton_ = false;
-        pendingWorldX_ = worldX;
-        pendingWorldY_ = worldY;
-        pendingWorldZ_ = worldZ;
-        pendingWorldIsStart_ = true;
-        pendingIsAscend_ = true;
-        pendingAscendOffsetY_ = 300.0f; // real Decor.cpp:6595 (Clear2's own pos2.Y offset)
+        Event event{EventKind::VoyageRequested};
+        event.voyageKind = VoyageKind::Clear2Ascend;
+        event.voyageIconId = 230;
+        event.voyageIsButtonChannel = false;
+        event.voyageWorldX = worldX;
+        event.voyageWorldY = worldY;
+        event.voyageWorldZ = worldZ;
+        event.voyageWorldIsStart = true;
+        event.voyageIsAscend = true;
+        event.voyageAscendOffsetY = 300.0f; // real Decor.cpp:6595 (Clear2's own pos2.Y offset)
+        ReplaceEvent(EventKind::VoyageRequested, event);
     }
 
     void GEInteractionSystem::BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId,

@@ -696,7 +696,8 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::ResolvePendingVoyage()
     {
-        if (!interaction_.VoyagePendingThisFrame())
+        const auto* voyageEvent = FindInteractionEvent(GEInteractionSystem::EventKind::VoyageRequested);
+        if (!voyageEvent)
         {
             return;
         }
@@ -705,10 +706,10 @@ namespace GalaxyEggbert::CNA
         const int viewportH = viewport.getHeightProperty();
 
         float projectedX = 0.0f, projectedY = 0.0f;
-        const bool worldIsStart = interaction_.VoyagePendingWorldIsStart();
+        const bool worldIsStart = voyageEvent->voyageWorldIsStart;
         const bool projected = GEHud::ProjectWorldToHudSpace(
-            Microsoft::Xna::Framework::Vector3(interaction_.VoyagePendingWorldX(), interaction_.VoyagePendingWorldY(),
-                                                interaction_.VoyagePendingWorldZ()),
+            Microsoft::Xna::Framework::Vector3(voyageEvent->voyageWorldX, voyageEvent->voyageWorldY,
+                                                voyageEvent->voyageWorldZ),
             camera_.GetViewMatrix(), camera_.GetProjectionMatrix(), viewportW, viewportH, projectedX, projectedY);
         // Clear2Ascend (real death-VFX coinflip, plan.md `158` follow-up):
         // BOTH endpoints derive from the SAME projected world point (start
@@ -717,15 +718,15 @@ namespace GalaxyEggbert::CNA
         // to fall back to if projection fails, so an un-projectable
         // ascend request is simply dropped (a dying Blupi behind the
         // camera is not a real scenario this needs to handle robustly).
-        if (interaction_.VoyagePendingIsAscend())
+        if (voyageEvent->voyageIsAscend)
         {
             if (projected)
             {
-                interaction_.BeginVoyage(worldRuntime_, interaction_.VoyagePendingKind(),
-                                         interaction_.VoyagePendingIconId(), false, projectedX, projectedY, projectedX,
-                                         projectedY - interaction_.VoyagePendingAscendOffsetY(), sound_,
-                                         interaction_.VoyagePendingWorldX(), interaction_.VoyagePendingWorldY(),
-                                         interaction_.VoyagePendingWorldZ());
+                interaction_.BeginVoyage(worldRuntime_, voyageEvent->voyageKind, voyageEvent->voyageIconId, false,
+                                         projectedX, projectedY, projectedX,
+                                         projectedY - voyageEvent->voyageAscendOffsetY, sound_,
+                                         voyageEvent->voyageWorldX, voyageEvent->voyageWorldY,
+                                         voyageEvent->voyageWorldZ);
             }
             return;
         }
@@ -736,16 +737,16 @@ namespace GalaxyEggbert::CNA
             // pickup) -- fall back to collapsing this endpoint onto the
             // OTHER (fixed) one, giving a real total=0 (the reward applies
             // on the very next tick) rather than leaving the voyage stuck.
-            projectedX = interaction_.VoyagePendingFixedX();
-            projectedY = interaction_.VoyagePendingFixedY();
+            projectedX = voyageEvent->voyageFixedX;
+            projectedY = voyageEvent->voyageFixedY;
         }
 
-        const float startX = worldIsStart ? projectedX : interaction_.VoyagePendingFixedX();
-        const float startY = worldIsStart ? projectedY : interaction_.VoyagePendingFixedY();
-        const float endX = worldIsStart ? interaction_.VoyagePendingFixedX() : projectedX;
-        const float endY = worldIsStart ? interaction_.VoyagePendingFixedY() : projectedY;
-        interaction_.BeginVoyage(worldRuntime_, interaction_.VoyagePendingKind(), interaction_.VoyagePendingIconId(),
-                                 interaction_.VoyagePendingIsButtonChannel(), startX, startY, endX, endY, sound_);
+        const float startX = worldIsStart ? projectedX : voyageEvent->voyageFixedX;
+        const float startY = worldIsStart ? projectedY : voyageEvent->voyageFixedY;
+        const float endX = worldIsStart ? voyageEvent->voyageFixedX : projectedX;
+        const float endY = worldIsStart ? voyageEvent->voyageFixedY : projectedY;
+        interaction_.BeginVoyage(worldRuntime_, voyageEvent->voyageKind, voyageEvent->voyageIconId,
+                                 voyageEvent->voyageIsButtonChannel, startX, startY, endX, endY, sound_);
     }
 
     void GalaxyEggbertCnaGame::DismountAndDepositVehicle()
@@ -848,19 +849,19 @@ namespace GalaxyEggbert::CNA
     {
         // Starts a NEW lock for the 4 real trigger sites living inside
         // interaction_.Update() itself (see GEInteractionSystem::
-        // DeathLockRequestedThisFrame()'s own comment for the exact
+        // EventKind::DeathLockRequested's own comment for the exact
         // shouldRespawn/PendingDeathKind->DeathCause mapping).
-        if (interaction_.DeathLockRequestedThisFrame())
+        if (const auto* deathLockEvent = FindInteractionEvent(GEInteractionSystem::EventKind::DeathLockRequested))
         {
             using GalaxyEggbert::CNA::GEBlupiController;
             using GalaxyEggbert::CNA::GEInteractionSystem;
-            const GEInteractionSystem::PendingDeathKind pendingKind = interaction_.DeathLockPendingKind();
+            const GEInteractionSystem::PendingDeathKind pendingKind = deathLockEvent->deathLockKind;
             const GEBlupiController::DeathCause cause = (pendingKind == GEInteractionSystem::PendingDeathKind::Clear1)
                                                              ? GEBlupiController::DeathCause::Clear1
                                                          : (pendingKind == GEInteractionSystem::PendingDeathKind::Clear2)
                                                              ? GEBlupiController::DeathCause::Clear2
                                                              : GEBlupiController::DeathCause::Glu;
-            blupi_.TriggerDeathLock(cause, interaction_.DeathLockShouldRespawn());
+            blupi_.TriggerDeathLock(cause, deathLockEvent->deathLockShouldRespawn);
         }
 
         // Resolves an ALREADY-active lock (possibly started a prior frame)
