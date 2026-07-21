@@ -5869,6 +5869,42 @@ specifically, same as any other large/risky item elsewhere in this file.
       pilot proves the table shape works and is low-risk to repeat, not that the whole migration is
       done. Continuing to the next family (or deciding the 2 cross-cutting lists are worth tackling
       once more families land) needs a fresh go-ahead, same as starting this pilot did.
+
+      **2nd family migrated (2026-07-21): the 17 purely-cosmetic self-expiring particle/effect
+      types** (VISUAL-008/009/010/012/013/014/015, CAM-009-adjacent, PICKUP-078/080,
+      Clear3Ascend/"158" — ObjectType 8/9/10/11/14/27/35/36/39/41/42/57/92/93/98/99/100), chosen via
+      a fresh scoping survey (both god-methods audited for remaining families) as the next
+      lowest-risk, most self-contained candidate — no interaction with Blupi, no kill/hazard logic,
+      confined to one region of `Update()`'s switch (~190 lines). New `kExpiringParticleHandlers[]`
+      table + `TryTickExpiringParticle()` free function (anonymous namespace, no member-state access
+      needed, unlike the pilot's `TryGrantSecretPowerPickup()`) replace the 17 near-identical
+      `if (obj.type == ObjectTypeN)` blocks with one lookup + one dispatch call.
+
+      **Real, non-obvious wrinkle preserved via a per-entry bool** (`alwaysContinueEvenBeforeExpiry`):
+      the original code had two genuinely different shapes, not one — 7 types (`Fan-hit/water-splash/
+      dynamite-flash/fish-bird-flash/Clear3Ascend-puff/follower-debris`, ObjectType 8/9/10/11/14/35/93)
+      always `continue`d regardless of expiry state, deliberately never reaching the shared
+      `AdvancePatrolStep()` call; the other 10 (ObjectType 27/36/39/41/42/57/92/98/99/100) only
+      `continue`d once actually expired, falling through to `AdvancePatrolStep()` while still alive —
+      load-bearing for ObjectType36/39/41/42's real posStart→posEnd slides, harmless-but-preserved for
+      the 6 static-marker types coded the same way. Collapsing both shapes into one would have
+      silently broken the slide types. Caught by reading the original code carefully before writing
+      the table, not by a test failure.
+
+      **Verification**: `VerifyInteractionSystem` unchanged at 547/547 — nearly all 17 types already
+      had direct "still active just before/self-deletes once phase reaches" boundary test pairs from
+      earlier work, giving strong pre-existing coverage for this refactor. Verified the table has real
+      teeth the same way the pilot did: temporarily changed ObjectType39's `expiryPhase` from 11.0 to
+      12.0, confirmed exactly 1 test failed with the precise expected message, reverted (confirmed via
+      `git diff --stat`). Full regression clean (80/81 on `build-cna`, pre-existing unrelated failure
+      only; also re-verified clean on `cmake-build-debug`); golden-frame byte-match unchanged
+      (`tools/verify_golden_frames.sh build-cna`, all 3 reference frames byte-identical — expected,
+      since this is pure dispatch-logic reshaping, no rendering code touched).
+
+      Still not migrated: ~48 more `ObjectType`s (the 2 cross-cutting lists remain open-coded; the
+      meaningfully-divergent enemy/hazard/combat family — blupih/blupit/wasp/creature/follower/
+      projectiles — was surveyed and explicitly NOT recommended as a near-term target, being core
+      kill/hazard logic with genuinely different per-type rules, a poor fit for this table shape).
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed

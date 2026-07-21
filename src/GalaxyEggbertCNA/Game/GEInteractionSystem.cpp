@@ -66,6 +66,79 @@ namespace GalaxyEggbert::CNA
              GEInteractionSystem::EventKind::InvertGranted, false},
         };
 
+        // INFRA-006 2nd family (plan.md §7, `REMAKE-ANALYSIS.md` P1-2): the
+        // 17 purely-cosmetic particle/effect types that just self-expire
+        // after a fixed `phase` lifetime, replacing what used to be 17
+        // near-identical `if (obj.type == ObjectTypeN)` blocks (~190 lines)
+        // with one table + one dispatch (`TryTickExpiringParticle()` below).
+        // Chosen as the pilot's follow-up for the same low-risk reason the
+        // pilot itself was: no interaction with Blupi, no kill/hazard logic.
+        //
+        // Two real, DIFFERENT shapes existed in the original code, preserved
+        // here via `alwaysContinueEvenBeforeExpiry` per entry -- collapsing
+        // them into one shape would silently change behavior:
+        //   - `false` (10 types): the original `if (type==N && phase>=T)`
+        //     only matched (and only ever `continue`d) once actually
+        //     expired -- while still alive, execution fell through to the
+        //     shared `AdvancePatrolStep()` call further down. Load-bearing
+        //     for ObjectType36/39/41/42 (real posStart->posEnd slides);
+        //     harmless-but-preserved for ObjectType27/57/92/98/99/100
+        //     (static markers where that call is already a no-op).
+        //   - `true` (7 types): the original `if (type==N) { ...; continue; }`
+        //     always continued regardless of expiry state, deliberately
+        //     never reaching `AdvancePatrolStep()` at all.
+        struct ExpiringParticleHandler
+        {
+            ObjectType type;
+            float expiryPhase;
+            bool alwaysContinueEvenBeforeExpiry;
+        };
+        constexpr ExpiringParticleHandler kExpiringParticleHandlers[] = {
+            // Always-continue family (never reaches AdvancePatrolStep()).
+            {ObjectType::ObjectType11, 9.0f, true},   // CAM-009-adjacent fan-hit shockwave flash
+            {ObjectType::ObjectType14, 14.0f, true},  // PICKUP-078/080 water splash (Plouf)
+            {ObjectType::ObjectType35, 6.0f, true},   // PICKUP-078/080 water splash (Tiplouf)
+            {ObjectType::ObjectType8, 39.0f, true},   // VISUAL-008 dynamite-blast explosion flash
+            {ObjectType::ObjectType10, 20.0f, true},  // VISUAL-008 fish/bird explosion flash
+            {ObjectType::ObjectType93, 5.0f, true},   // Clear3Ascend Lava-death puff ("158" death-VFX)
+            {ObjectType::ObjectType9, 20.0f, true},   // VISUAL-008 follower-blocked-path debris flash
+            // Falls-through-pre-expiry family (real slide types + static markers coded the same way).
+            {ObjectType::ObjectType41, 16.0f, false}, // VISUAL-014/015 Invert start burst (real slide)
+            {ObjectType::ObjectType42, 16.0f, false}, // VISUAL-014/015 Invert stop burst (real slide)
+            {ObjectType::ObjectType39, 11.0f, false}, // VISUAL-012 treasure/collectible sparkle burst (real slide)
+            {ObjectType::ObjectType36, 16.0f, false}, // VISUAL-013 Pollution puff (real slide)
+            {ObjectType::ObjectType57, 20.0f, false},  // VISUAL-011-adjacent Shield magic trail (static)
+            {ObjectType::ObjectType27, 24.0f, false},  // VISUAL-011-adjacent Power magic trail (static)
+            {ObjectType::ObjectType98, 10.0f, false},  // VISUAL-009 bullet-hit splat, small (static)
+            {ObjectType::ObjectType99, 13.0f, false},  // VISUAL-009 bullet-hit splat, medium (static)
+            {ObjectType::ObjectType100, 18.0f, false}, // VISUAL-009 bullet-hit splat, large (static)
+            {ObjectType::ObjectType92, 128.0f, false}, // VISUAL-010 teleporter arc (static)
+        };
+
+        // Returns true if the caller should `continue` the per-object loop
+        // (obj.type is a member of this family, either just expired-and-
+        // deactivated or a pre-expiry state that never needs anything below
+        // this point); false if obj.type isn't in this family at all, OR is
+        // a still-alive `alwaysContinueEvenBeforeExpiry=false` entry that
+        // must fall through to the shared `AdvancePatrolStep()` call.
+        bool TryTickExpiringParticle(MobileObjSpec& obj)
+        {
+            for (const auto& handler : kExpiringParticleHandlers)
+            {
+                if (handler.type != obj.type)
+                {
+                    continue;
+                }
+                const bool expired = obj.phase >= handler.expiryPhase;
+                if (expired)
+                {
+                    obj.active = false;
+                }
+                return handler.alwaysContinueEvenBeforeExpiry || expired;
+            }
+            return false;
+        }
+
         // Opens a door tile (plan.md E3D-MIG-160/162, real `Decor::OpenDoor`,
         // ~11667): removes the tile from the terrain grid (becomes passable)
         // and spawns a transient ObjectType22 at that cell (real
@@ -799,196 +872,14 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
-            // Invert start/stop particle burst (plan.md VISUAL-014/015,
-            // ObjectType41/42) -- purely cosmetic, no interaction with
-            // Blupi. Real self-delete at phase>=16 (`Decor.cpp:8575-8596`,
-            // `Config::ScaleTime(16)==16` at this build's 20Hz reference
-            // rate) -- `phase` itself is already advanced generically by
-            // `GEWorldRuntime::Update()` (called every frame before this
-            // one), so this only needs to check it, not increment it. Real
-            // `stepAdvance` (`Decor::ObjectStart()`, `Decor.cpp:7866`) is 78
-            // ticks for every direction of this burst; `SpawnInvertBurst()`
-            // sets `stepAdvanceTicks`/`patrolStep=2` at spawn, so (like
-            // Pollution puff, plan.md VISUAL-013) this does NOT hand-roll
-            // its own interpolation -- it falls through to the existing
-            // generic `AdvancePatrolStep()` call below for the real
-            // posStart->posEnd slide (cleanup applied 2026-07-14: this used
-            // to duplicate that same machinery here).
-            if ((obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42) && obj.phase >= 16.0f)
+            // INFRA-006 2nd family (plan.md §7): the 17 purely-cosmetic
+            // particle/effect types (VISUAL-008/009/010/012/013/014/015,
+            // CAM-009-adjacent, PICKUP-078/080, Clear3Ascend/"158") that just
+            // self-expire after a fixed `phase` lifetime -- see
+            // kExpiringParticleHandlers/TryTickExpiringParticle() above for
+            // the full per-type table and the two real shapes it preserves.
+            if (TryTickExpiringParticle(obj))
             {
-                obj.active = false;
-                continue;
-            }
-
-            // Treasure/collectible sparkle burst (plan.md VISUAL-012,
-            // ObjectType39) -- purely cosmetic. Real self-delete at
-            // phase>=11 (`Decor.cpp:8382-8389`, `Config::ScaleTime(11)==11`
-            // at this build's 20Hz reference rate) -- an 11-frame lifetime,
-            // shorter than Invert's 16. Same real `stepAdvance`=78 slide via
-            // the shared `AdvancePatrolStep()` machinery as the Invert burst
-            // above (cleanup applied 2026-07-14, see its own comment).
-            if (obj.type == ObjectType::ObjectType39 && obj.phase >= 11.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-
-            // Fan-hit shockwave flash (plan.md CAM-009-adjacent,
-            // ObjectType11) -- purely cosmetic, completes the real Fan-hit
-            // effect alongside the already-wired BigShake camera shake.
-            // Real self-delete at phase>=9 (`Decor.cpp:8431-8440`,
-            // `Config::ScaleTime(9)==9` at this build's 20Hz reference
-            // rate) -- a 9-frame lifetime.
-            if (obj.type == ObjectType::ObjectType11)
-            {
-                if (obj.phase >= 9.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Water splash burst (plan.md PICKUP-078/080, ObjectType14/35)
-            // -- purely cosmetic, see SpawnWaterSplash()'s own comment.
-            // Real self-delete: Plouf (14) at phase>=14, Tiplouf (35) at
-            // phase>=6 (`Decor.cpp:8599-8622`).
-            if (obj.type == ObjectType::ObjectType14)
-            {
-                if (obj.phase >= 14.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-            if (obj.type == ObjectType::ObjectType35)
-            {
-                if (obj.phase >= 6.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Dynamite-blast explosion flash (plan.md VISUAL-008,
-            // ObjectType8) -- purely cosmetic. Real self-delete at
-            // phase>=39 (`Decor.cpp:8397-8399`,
-            // `Tables::table_explo1Length==39`, `Config::ScaleDiv(1)==1`
-            // at this build's 20Hz reference rate) -- the longest of the 4
-            // particle-effect lifetimes modeled so far.
-            if (obj.type == ObjectType::ObjectType8)
-            {
-                if (obj.phase >= 39.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Fish/bird explosion flash (plan.md VISUAL-008, ObjectType10)
-            // -- purely cosmetic, same real spawn shape as ObjectType8
-            // above (see `AppendExplosionFlash()`'s own comment). Real
-            // self-delete at phase>=20 (`Decor.cpp:8419-8430`).
-            if (obj.type == ObjectType::ObjectType10)
-            {
-                if (obj.phase >= 20.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Clear3Ascend (Lava death) puff (plan.md `158` death-VFX
-            // follow-up, ObjectType93) -- purely cosmetic, spawned every
-            // tick by SpawnLavaAscendPuff() while active. Real self-delete
-            // at phase>=5 (`Decor.cpp:8479-8481`) -- the shortest-lived
-            // particle type modeled so far, a 5-frame "tiny flash".
-            if (obj.type == ObjectType::ObjectType93)
-            {
-                if (obj.phase >= 5.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Follower-blocked-path debris flash (plan.md VISUAL-008,
-            // ObjectType9) -- purely cosmetic, same real spawn shape as
-            // ObjectType8/10 above. Real self-delete at phase>=20
-            // (`Decor.cpp:8407-8417`).
-            if (obj.type == ObjectType::ObjectType9)
-            {
-                if (obj.phase >= 20.0f)
-                {
-                    obj.active = false;
-                }
-                continue;
-            }
-
-            // Pollution puff (plan.md VISUAL-013, ObjectType36) -- purely
-            // cosmetic. Real self-delete at phase>=16 (`Decor.cpp:8563-
-            // 8567`). Unlike the self-contained blocks above, this does NOT
-            // `continue` on the "still alive" path -- `TickPollutionPuff()`
-            // sets up `posStart`/`posEnd`/`stepAdvanceTicks`/`patrolStep=2`
-            // directly, so this object falls through to the existing
-            // generic `AdvancePatrolStep()` call below for its real
-            // posStart->posEnd slide, rather than a fourth duplicate
-            // hand-rolled interpolation block.
-            if (obj.type == ObjectType::ObjectType36 && obj.phase >= 16.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-
-            // Shield/Power magic trail (plan.md VISUAL-011-adjacent,
-            // ObjectType57/27) -- purely cosmetic, static markers (real
-            // `speed=0`-equivalent, no offset -- see `TickMagicTrail()`'s
-            // own comment), so unlike Pollution puff above there's nothing
-            // for the shared `AdvancePatrolStep()` call to do (posStart==
-            // posEnd is already its own no-op guard); self-contained here,
-            // same shape as Fan-hit/dynamite-blast flash. Real self-delete
-            // at phase>=20 (Shield, `Decor.cpp:8373-8380`) / phase>=24
-            // (Power, `Decor.cpp:8365-8372`).
-            if (obj.type == ObjectType::ObjectType57 && obj.phase >= 20.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-            if (obj.type == ObjectType::ObjectType27 && obj.phase >= 24.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-
-            // Bullet-hit splat effect (plan.md VISUAL-009, ObjectType98/
-            // 99/100) -- purely cosmetic, static (real `speed=0`), same
-            // self-contained shape as the magic trail above. Real
-            // self-delete: phase>=10 (98), >=13 (99), >=18 (100)
-            // (`Decor.cpp:8491-8526`).
-            if (obj.type == ObjectType::ObjectType98 && obj.phase >= 10.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-            if (obj.type == ObjectType::ObjectType99 && obj.phase >= 13.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-            if (obj.type == ObjectType::ObjectType100 && obj.phase >= 18.0f)
-            {
-                obj.active = false;
-                continue;
-            }
-
-            // Teleporter arc (plan.md VISUAL-010, ObjectType92) -- purely
-            // cosmetic, static (real `speed=0`), same self-contained shape
-            // as the splat effect above. Real self-delete at phase>=128
-            // (`Decor.cpp:8467-8477`) -- a long 128-tick (6.4s) lifetime
-            // matching this engine's own `kTeleportDuration` exactly (the
-            // arc plays for the whole real teleport transit).
-            if (obj.type == ObjectType::ObjectType92 && obj.phase >= 128.0f)
-            {
-                obj.active = false;
                 continue;
             }
 

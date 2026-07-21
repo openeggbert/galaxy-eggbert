@@ -315,6 +315,33 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-006 2nd family — handler-table dispatch for the 17 self-expiring particle types (2026-07-21)
+
+Continued the migration started by the secret-power-pickup pilot. Surveyed both god-methods fresh
+(a dedicated scoping pass, matching the project's own "needs a fresh go-ahead per family"
+convention) — `GalaxyEggbertCnaGame.cpp`'s own `ObjectType` handling turned out thin (37 refs,
+mostly already-clean lookup tables); nearly all remaining work is in
+`GEInteractionSystem.cpp::Update()`. Picked the 17 purely-cosmetic self-expiring particle/effect
+types (explosion flashes, splash/sparkle/magic-trail/splat/teleporter-arc effects — full
+`ObjectType` list in `plan.md`'s `INFRA-006` entry) as the lowest-risk next family: no Blupi
+interaction, no kill/hazard logic, confined to one ~190-line region of the switch. New
+`kExpiringParticleHandlers[]` table + `TryTickExpiringParticle()` replace the 17 near-identical
+`if` blocks with one lookup + one dispatch.
+
+**Real wrinkle preserved, not smoothed over**: the original code had two genuinely different
+shapes — 7 types always `continue`d regardless of expiry state; the other 10 only `continue`d once
+expired, otherwise falling through to the shared `AdvancePatrolStep()` call (load-bearing for 4 of
+them with real posStart→posEnd slides). A per-entry `alwaysContinueEvenBeforeExpiry` bool keeps
+both shapes intact — collapsing them into one would have silently broken the slide types.
+
+**Verification**: `VerifyInteractionSystem` unchanged at 547/547 (nearly all 17 types already had
+direct expiry-boundary test pairs from earlier work). Confirmed the table has teeth: temporarily
+shifted one entry's expiry phase by 1, exactly 1 test failed with the precise message, reverted.
+Full regression clean on `build-cna` (80/81, pre-existing unrelated failure only) and
+`cmake-build-debug`; golden-frame byte-match unchanged (pure dispatch-logic reshaping, no rendering
+touched). See `plan.md`'s `INFRA-006` entry for the full writeup, including which family (core
+enemy/hazard/combat logic) was surveyed and explicitly ruled out as a poor near-term fit.
+
 ### fix: BUILD-011 — web ctest console tools actually run under Node (2026-07-21)
 
 Found while re-verifying INFRA-005/006 on `build-web`: `ctest`'s own `add_test()` registrations for
