@@ -5669,15 +5669,25 @@ specifically, same as any other large/risky item elsewhere in this file.
       reference copy, restored after). **Not wired into the default `ctest` run** (needs a real
       display/GL context, same reason `INFRA-001` isn't) — run explicitly, documented in `NEXT.md`
       §7.
-- [ ] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) A data-integrity test suite for the hand-transcribed
-      `GEObjectIcons.cpp` tables: verify each frame array's length and the animation divisor
-      against the counts already recorded in `mobile-eggbert-reference/08-animations.md`, and
-      check that non-monotonic/`-1`-sentinel arrays haven't been silently "fixed" back to a
-      monotonic guess. Validates numbers already transcribed into this repo against the existing
-      reference *doc* — does not copy or require reading `../mobile-eggbert` source directly (that
-      would need separate approval, see this file's own reuse rules and `easy3d.md` §5.7). Start
-      with the 34 objects `GEObjectIcons.cpp` already carries a `Fixed 202...` note for — they are
-      the confirmed historical trouble spots.
+- [x] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) — **done 2026-07-21.** New
+      `tools/VerifyGetObjIcon.cpp` (headless, engine-agnostic — `GEObjectIcons.cpp` only depends on
+      `def/ObjectType.hpp`, same precedent `GenerateSampleWorld3D` already established), registered
+      with `ctest`. 232 checks covering every `case` in `GetObjIcon()`'s switch (all confirmed-real
+      `ObjectType`s, not just the 34 with a `Fixed 202...` note — the extra coverage was cheap once
+      the harness existed): exact per-tick sequence for every table-driven type (transcribed
+      directly from `GEObjectIcons.cpp`'s own already-committed arrays), exact formula for every
+      plain-ascending/descending/triangle-wave type, and the fixed icon for every static type.
+      Frame-array length (period) cross-checked inline against `mobile-eggbert-reference/
+      08-animations.md` §3.1/§3.2/§4 wherever that doc documents one — including one genuine
+      discrepancy the check surfaced: `08-animations.md`'s own `ObjectType25` row still says "8
+      frames," but that row's own text already flags itself as stale (the real `table_shield` has
+      16 entries, matching `GEObjectIcons.cpp`'s current, already-fixed array) — the test asserts
+      16, the correct current value, with a comment explaining the doc's own self-flagged staleness
+      rather than silently trusting either source. A regression test, not a fresh independent
+      re-verification against `../mobile-eggbert` (out of scope, would need separate approval) —
+      **verified it actually catches regressions**, not just trivially passing: deliberately
+      mutated one divisor in `GEObjectIcons.cpp` (6→9 for `ObjectType17`), confirmed the test fails
+      with a precise mismatch message, then reverted (confirmed via a clean `git diff`).
 - [ ] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) Mark the ~137 still-unverified 2D→3D render-mapping
       icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`) as an explicit,
       queryable "unverified" set (e.g. a small table/list checked by a test) so they can't be

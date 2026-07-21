@@ -281,6 +281,23 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-003 — GetObjIcon() data-integrity regression test, wired into ctest (2026-07-21)
+
+Third item from `plan.md` §7's task breakdown. New `tools/VerifyGetObjIcon.cpp` (headless,
+engine-agnostic, registered with `ctest` — unlike `INFRA-001`/`002` this one needs no display, so
+it runs in the normal suite): 232 checks covering every real `ObjectType` case in
+`GEObjectIcons::GetObjIcon()`'s switch, not just the 34 with a historical `Fixed 202...` note —
+exact per-tick sequence for table-driven types, exact formula for ascending/descending/
+triangle-wave types, fixed icon for static types, transcribed directly from the production code's
+own already-committed values. Cross-checked frame-array length against
+`mobile-eggbert-reference/08-animations.md` §3.1/§3.2/§4 wherever documented, surfacing one real
+discrepancy: the doc's own `ObjectType25` row still says "8 frames" but flags itself as stale in
+its own text (real `table_shield` has 16 — matches the current, already-fixed code); the test
+asserts 16. **Verified the test actually catches regressions**, not just trivially passing:
+deliberately mutated a divisor in `GEObjectIcons.cpp`, confirmed a precise `FAIL` message, reverted
+(clean `git diff`). Full regression clean (79/80 counting the new test, only the pre-existing
+unrelated `easy-gl-resource-smoke-tests` failure).
+
 ### feat: INFRA-002 — golden-image diffing on top of INFRA-001 (2026-07-21)
 
 Second item from `plan.md` §7's task breakdown, straight after `INFRA-001`. `tests/golden/

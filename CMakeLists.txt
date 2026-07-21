@@ -723,6 +723,21 @@ target_include_directories(VerifyTerrainAnimDivisor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# INFRA-003 (plan.md §7): GEObjectIcons.hpp/.cpp is engine-agnostic (only
+# depends on def/ObjectType.hpp, see GenerateSampleWorld3D's own comment
+# above) -- a data-integrity regression test for its 34 historical "Fixed"
+# transcription bugs, same engine-independent precedent as
+# VerifyTerrainAnimDivisor above.
+add_executable(VerifyGetObjIcon
+        tools/VerifyGetObjIcon.cpp
+        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+)
+
+target_include_directories(VerifyGetObjIcon PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
 # BlockTypes::tileUV() (plan.md TEST-004) is a pure header-only function --
 # no CNA/graphics dependency at all, same engine-independent precedent as
 # VerifyGESaveData/VerifyBlupiMovement/VerifyTerrainAnimDivisor above.
@@ -802,6 +817,9 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- tileUV() is a pure header-only
     # function of a BlockTypes icon id (plan.md TEST-004).
     add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)
+    # No file/working-directory dependency -- GetObjIcon() is a pure function
+    # of (ObjectType, phase) (plan.md INFRA-003).
+    add_test(NAME VerifyGetObjIcon COMMAND VerifyGetObjIcon)
     # No file/working-directory dependency -- GECameraShake is a pure
     # tick-based state machine (plan.md CAM-008..013).
     add_test(NAME VerifyCameraShake COMMAND VerifyCameraShake)
