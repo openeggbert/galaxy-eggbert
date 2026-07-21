@@ -652,6 +652,100 @@ int main()
               "undo restores the BoxFill-button fill in one step, same as the F-key path");
     }
 
+    // --- GEEditCommandStack: SkyRegionEdit undo/redo (plan.md EDITOR-111) ---
+    {
+        World world;
+        world.setSkyRegion(5);
+
+        GEEditCommandStack stack;
+        GEEditCommand command;
+        command.kind = GEEditCommand::Kind::SkyRegionEdit;
+        command.skyRegionBefore = 5;
+        command.skyRegionAfter = 6;
+        world.setSkyRegion(6);
+        stack.Push(std::move(command));
+
+        check(world.skyRegion() == 6, "test setup sanity: the sky region is 6 before undo");
+        check(stack.Undo(world), "undoing a SkyRegionEdit reports success");
+        check(world.skyRegion() == 5, "undoing a SkyRegionEdit restores the exact prior region id");
+        check(stack.Redo(world), "redoing a SkyRegionEdit reports success");
+        check(world.skyRegion() == 6, "redoing a SkyRegionEdit re-applies the exact new region id");
+    }
+
+    // --- GEWorldEditor: Left/Right arrow sky-region stepper, wrap-around at both ends (plan.md EDITOR-111) ---
+    {
+        World world;
+        check(world.skyRegion() == 0, "test setup sanity: a fresh World defaults to sky region 0");
+
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.skyRegion() == 1, "Right arrow steps the sky region up by 1");
+        check(editor.ConsumeNeedsPresentationRebuild(), "stepping the sky region requests a presentation rebuild");
+
+        // Release (edge-trigger re-arm), then step down back to 0 and one
+        // further, to prove Left wraps 0 -> 31 rather than clamping or
+        // going negative (world.hpp's own documented 0-31 range).
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::Left}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.skyRegion() == 0, "Left arrow steps the sky region back down to 0");
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::Left}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.skyRegion() == 31, "Left arrow wraps from 0 to the real last valid id, 31, not -1");
+
+        // Symmetric wrap at the other end: one more Right step from 31
+        // must land back on 0, not 32.
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.skyRegion() == 0, "Right arrow wraps from 31 back to 0, not 32");
+
+        // Undo/redo the last step (0 -> back to 31) via the same U/R keys
+        // every other editor tool already uses.
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.skyRegion() == 31, "U undoes the last sky-region step, restoring the prior region id");
+        check(editor.ConsumeNeedsPresentationRebuild(), "undoing a sky-region step requests a presentation rebuild");
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::R}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.skyRegion() == 0, "R redoes the sky-region step, re-applying the wrap-to-0 result");
+    }
+
+    // --- GEWorldEditor: the palette's SkyRegionPrev/Next buttons drive the exact same stepper as Left/Right ---
+    {
+        World world;
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        // Fixed action indices 8/9 (SkyRegionPrev/Next): row 4, left/right
+        // halves -- (10,154)-(25,186) and (27,154)-(42,186) respectively,
+        // same approximate-center convention as kUndoX/kRedoX above.
+        constexpr float kSkyRegionNextX = 34.0f, kSkyRegionNextY = 170.0f;
+        constexpr float kSkyRegionPrevX = 17.0f, kSkyRegionPrevY = 170.0f;
+        const auto clickButton = [&](float x, float y)
+        {
+            const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released);
+            const MouseState up(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+
+        clickButton(kSkyRegionNextX, kSkyRegionNextY);
+        check(world.skyRegion() == 1, "clicking the SkyRegionNext toolbar button steps the region up, same as Right");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "the SkyRegionNext button's step requests a presentation rebuild");
+
+        clickButton(kSkyRegionPrevX, kSkyRegionPrevY);
+        check(world.skyRegion() == 0,
+              "clicking the SkyRegionPrev toolbar button steps the region back down, same as Left");
+    }
+
     // --- GEPaletteCategories: full numeric coverage + curated-id sanity ---
     {
         const auto allIds = AllBlockIconIdsInOrder();
@@ -695,19 +789,22 @@ int main()
         };
 
         // Layout constants mirroring GEEditorPalette.cpp's own private
-        // anonymous-namespace geometry (2026-07-19 single-column redesign:
-        // kColumnX/Y0/ButtonSize/Gap, 8 fixed action buttons paired
-        // 2-per-row (kIndexUndo..kIndexTabToggle), then content cells one
-        // per row starting at kHeaderRowCount=5) -- a white-box test of
-        // this specific layout, matching this project's own precedent of
+        // anonymous-namespace geometry (2026-07-19 single-column redesign;
+        // EDITOR-111, 2026-07-23, added a 9th/10th fixed action button pair
+        // -- SkyRegionPrev/Next -- pushing kHeaderRowCount from 5 to 6, so
+        // content cells now start one row lower than before: kColumnX/Y0/
+        // ButtonSize/Gap, 10 fixed action buttons paired 2-per-row
+        // (kIndexUndo..kIndexSkyRegionNext), then content cells one per row
+        // starting at kHeaderRowCount=6) -- a white-box test of this
+        // specific layout, matching this project's own precedent of
         // pinning exact internal geometry (e.g. VerifyGEInputPad's real
         // button rects).
         constexpr float kUndoX = 17.0f, kUndoY = 26.0f;       // index 0, row 0 left half
         constexpr float kRedoX = 34.0f, kRedoY = 26.0f;       // index 1, row 0 right half
         constexpr float kSaveX = 17.0f, kSaveY = 62.0f;       // index 2, row 1 left half
         constexpr float kTabToggleX = 34.0f, kTabToggleY = 134.0f; // index 7, row 3 right half
-        constexpr float kFirstCellX = 26.0f, kFirstCellY = 206.0f;   // content row 0 (row 5)
-        constexpr float kSecondCellY = 242.0f;                        // content row 1 (row 6)
+        constexpr float kFirstCellX = 26.0f, kFirstCellY = 242.0f;   // content row 0 (row 6)
+        constexpr float kSecondCellY = 278.0f;                        // content row 1 (row 7)
 
         {
             GEEditorPalette palette;
@@ -962,10 +1059,12 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
-        // 2026-07-19 single-column layout: content row 0 sits at (10..42,
-        // 190..222); toolbar button 0 (Undo) is row 0's left half, (10..25,
+        // 2026-07-19 single-column layout (EDITOR-111, 2026-07-23, shifted
+        // content down one row -- see the layout-constants comment above
+        // this section's sibling block): content row 0 sits at (10..42,
+        // 226..258); toolbar button 0 (Undo) is row 0's left half, (10..25,
         // 10..42) -- see GEEditorPalette.cpp's own geometry.
-        constexpr float kFirstCellX = 26.0f, kFirstCellY = 206.0f;
+        constexpr float kFirstCellX = 26.0f, kFirstCellY = 242.0f;
         constexpr float kUndoX = 17.0f, kUndoY = 26.0f;
         const auto pressAndRelease = [&](float x, float y)
         {
@@ -1069,8 +1168,8 @@ int main()
         // above -- see GEEditorPalette.cpp's own geometry.
         constexpr float kModeButtonX = 34.0f;
         constexpr float kModeButtonY = 98.0f;
-        constexpr float kFirstCellX = 26.0f, kFirstCellY = 206.0f;
-        constexpr float kSecondCellY = 242.0f;
+        constexpr float kFirstCellX = 26.0f, kFirstCellY = 242.0f;
+        constexpr float kSecondCellY = 278.0f;
 
         GEEditorPalette palette;
         check(!palette.IsObjectMode(), "GEEditorPalette starts in Blocks mode");
@@ -1231,7 +1330,7 @@ int main()
         // Confirmed-tab object cell -- see GEEditorPalette.cpp's own
         // geometry.
         paletteClick(34.0f, 98.0f); // mode toggle -> Objects
-        paletteClick(26.0f, 206.0f); // first object cell -> ObjectType1
+        paletteClick(26.0f, 242.0f); // first object cell -> ObjectType1
         (void)editor.ConsumeNeedsPresentationRebuild();
         check(CollectMoveObjects(world).empty(),
               "palette clicks in Objects mode are consumed -- they don't place an object in the world");
@@ -1318,7 +1417,7 @@ int main()
         // Confirmed-tab object cell -- see GEEditorPalette.cpp's own
         // geometry.
         paletteClick(34.0f, 98.0f); // mode toggle -> Objects
-        paletteClick(26.0f, 206.0f); // first object cell -> ObjectType1
+        paletteClick(26.0f, 242.0f); // first object cell -> ObjectType1
         (void)editor.ConsumeNeedsPresentationRebuild();
 
         const MouseState leftMouse(400, 200, 0, ButtonState::Pressed, ButtonState::Released,

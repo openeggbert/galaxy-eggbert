@@ -24,8 +24,11 @@ namespace GalaxyEggbert::CNA
     // reference screenshot: one column, real per-item icons on solid green
     // squares, no separate grid elsewhere on screen). Top to bottom: 7
     // fixed action buttons (Undo/Redo/Save/Back/Play-Test/mode-toggle/
-    // box-fill), the Confirmed/All tab toggle, a paging row (split into
-    // Prev/Next halves), then the current page's block or object icons,
+    // box-fill), the Confirmed/All tab toggle, a sky-region Prev/Next
+    // stepper (EDITOR-111 -- same Left/Right arrow-key idiom as
+    // GEWorldEditor's own binding, see ToolbarAction::SkyRegionPrev/Next),
+    // a paging row (split into Prev/Next halves), then the current page's
+    // block or object icons,
     // one per row. Reuses GETileAtlas::GetTileUv() and the caller's
     // already-loaded object-m.png texture directly (no separate asset
     // load) for Blocks-mode icons, and the shared GEQuadBatch primitives
@@ -58,8 +61,11 @@ namespace GalaxyEggbert::CNA
         // BoxFill reports the click; GEWorldEditor::Update() treats it as
         // an F-key press through the exact same box-fill state machine
         // (first click marks corner A, second click fills) -- no separate
-        // state lives in this class for it.
-        enum class ToolbarAction { None, Undo, Redo, Save, Back, PlayTest, BoxFill };
+        // state lives in this class for it. SkyRegionPrev/Next (EDITOR-111)
+        // are the same idiom as BoxFill: this class only reports the click,
+        // GEWorldEditor::Update() treats it identically to its own Left/
+        // Right arrow-key stepper.
+        enum class ToolbarAction { None, Undo, Redo, Save, Back, PlayTest, BoxFill, SkyRegionPrev, SkyRegionNext };
 
         // Which kind of thing the icon grid is currently selecting
         // (plan.md EDITOR-109). Toggled by the toolbar's 6th button,
@@ -147,12 +153,13 @@ namespace GalaxyEggbert::CNA
                                           int viewportHeight) const noexcept;
 
         // Rect for fixed action button @p index (0=Undo, 1=Redo, 2=Save,
-        // 3=Back, 4=PlayTest, 5=ModeToggle, 6=BoxFill, 7=TabToggle) --
-        // buttons pair up 2-per-row (index/2 = row, index%2 = left/right
-        // half) so 8 actions + the paging row fit in 5 rows instead of 9,
-        // leaving real room for content below at this engine's actual
-        // (fairly short) default window height. PaletteCellRect uses the
-        // same row geometry but full-width, one content item per row.
+        // 3=Back, 4=PlayTest, 5=ModeToggle, 6=BoxFill, 7=TabToggle,
+        // 8=SkyRegionPrev, 9=SkyRegionNext) -- buttons pair up 2-per-row
+        // (index/2 = row, index%2 = left/right half) so 10 actions + the
+        // paging row fit in 6 rows instead of 11, leaving real room for
+        // content below at this engine's actual (fairly short) default
+        // window height. PaletteCellRect uses the same row geometry but
+        // full-width, one content item per row.
         [[nodiscard]] GEQuadBatch::Rect ToolbarButtonRect(int index) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect TabToggleRect(int viewportWidth, int viewportHeight) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect PagePrevRect(int viewportWidth, int viewportHeight) const noexcept;

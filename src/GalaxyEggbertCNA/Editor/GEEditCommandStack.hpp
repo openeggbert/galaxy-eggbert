@@ -36,9 +36,12 @@ namespace GalaxyEggbert::CNA
     // stored there before and after the action -- either may be empty
     // (nullopt), which is exactly how place (no before, a record after),
     // remove (a record before, none after) and overwrite/edit (both) are
-    // all expressed by the same single kind. SkyRegionEdit is declared for
-    // a stable Kind enum but has no fields or stack-side handling yet --
-    // added when EDITOR-111 actually needs it.
+    // all expressed by the same single kind.
+    //
+    // A SkyRegionEdit (EDITOR-111) carries just the world-level
+    // skyRegion() value before/after -- a single scalar, not a per-cell
+    // vector like BlockChange, since exactly one thing changes and it
+    // isn't addressed by a grid position at all.
     struct GEEditCommand
     {
         enum class Kind
@@ -56,6 +59,9 @@ namespace GalaxyEggbert::CNA
         std::uint16_t objectAnchorZ = 0;
         std::optional<MoveObjectRecord> objectBefore;
         std::optional<MoveObjectRecord> objectAfter;
+
+        std::uint32_t skyRegionBefore = 0;
+        std::uint32_t skyRegionAfter = 0;
     };
 
     // Undo/redo stack of GEEditCommand actions against a Worlds::World.

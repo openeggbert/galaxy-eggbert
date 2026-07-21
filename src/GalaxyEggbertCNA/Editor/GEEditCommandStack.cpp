@@ -54,6 +54,10 @@ namespace GalaxyEggbert::CNA
         {
             ApplyMoveObjectState(world, command, command.objectBefore);
         }
+        else if (command.kind == GEEditCommand::Kind::SkyRegionEdit)
+        {
+            world.setSkyRegion(command.skyRegionBefore);
+        }
 
         redoStack_.push_back(std::move(command));
         return true;
@@ -78,6 +82,10 @@ namespace GalaxyEggbert::CNA
         else if (command.kind == GEEditCommand::Kind::MoveObjectEdit)
         {
             ApplyMoveObjectState(world, command, command.objectAfter);
+        }
+        else if (command.kind == GEEditCommand::Kind::SkyRegionEdit)
+        {
+            world.setSkyRegion(command.skyRegionAfter);
         }
 
         undoStack_.push_back(std::move(command));

@@ -32,7 +32,11 @@ namespace GalaxyEggbert::CNA
         constexpr int kIndexModeToggle = 5;
         constexpr int kIndexBoxFill = 6;
         constexpr int kIndexTabToggle = 7;
-        constexpr int kHeaderRowCount = 5; // (Undo/Redo),(Save/Back),(PlayTest/ModeToggle),(BoxFill/TabToggle),(Paging)
+        // EDITOR-111: sky-region Prev/Next stepper, its own row between
+        // BoxFill/TabToggle and the paging row.
+        constexpr int kIndexSkyRegionPrev = 8;
+        constexpr int kIndexSkyRegionNext = 9;
+        constexpr int kHeaderRowCount = 6; // (Undo/Redo),(Save/Back),(PlayTest/ModeToggle),(BoxFill/TabToggle),(SkyRegionPrev/Next),(Paging)
 
         constexpr float kSelectionHighlightPadding = 3.0f;
 
@@ -140,7 +144,7 @@ namespace GalaxyEggbert::CNA
     bool GEEditorPalette::HitsAnyControl(float x, float y, int viewportWidth,
                                           int viewportHeight) const noexcept
     {
-        for (int i = 0; i <= kIndexTabToggle; ++i)
+        for (int i = 0; i <= kIndexSkyRegionNext; ++i)
         {
             if (GEQuadBatch::InRect(x, y, ToolbarButtonRect(i)))
             {
@@ -250,6 +254,16 @@ namespace GalaxyEggbert::CNA
             {
                 showAllTab_ = !showAllTab_;
                 page_ = 0;
+                result.clickConsumed = true;
+            }
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexSkyRegionPrev)))
+            {
+                result.action = ToolbarAction::SkyRegionPrev;
+                result.clickConsumed = true;
+            }
+            else if (GEQuadBatch::InRect(mx, my, ToolbarButtonRect(kIndexSkyRegionNext)))
+            {
+                result.action = ToolbarAction::SkyRegionNext;
                 result.clickConsumed = true;
             }
             else if (pageCount > 1 && GEQuadBatch::InRect(mx, my, PagePrevRect(viewportWidth, viewportHeight)))
@@ -369,6 +383,8 @@ namespace GalaxyEggbert::CNA
         {
             addGreen(ToolbarButtonRect(kIndexTabToggle));
         }
+        addGreen(ToolbarButtonRect(kIndexSkyRegionPrev));
+        addGreen(ToolbarButtonRect(kIndexSkyRegionNext));
         if (pageCount > 1)
         {
             addGreen(PagePrevRect(viewportWidth, viewportHeight));

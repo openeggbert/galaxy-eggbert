@@ -177,6 +177,23 @@ namespace GalaxyEggbert::CNA
         //   binding; toolbar buttons are a discoverability convenience on
         //   top, not a functional requirement -- see GEEditorPalette's own
         //   class comment).
+        //   - Left/Right arrow keys (EDITOR-111): step @p world's
+        //     skyRegion() down/up by 1, wrapping 0<->31 (world.hpp's own
+        //     documented valid range) -- one SkyRegionEdit undo command per
+        //     press, same edge-triggered/undoable shape as every tool
+        //     above. No live visual feedback needed beyond the real
+        //     background itself: ConsumeNeedsPresentationRebuild() fires
+        //     the same way a block edit does, so the caller's
+        //     RebuildWorldPresentation() reloads Content/backgrounds/
+        //     decorNNN.png (or falls back to a flat clear color for the 4
+        //     ids with no real art, exactly as it already does for a
+        //     freshly-loaded world) immediately -- the player SEES the sky
+        //     change, no text readout needed (this class draws no text at
+        //     all, see GEEditorPalette's own class comment). The palette's
+        //     own SkyRegionPrev/Next toolbar buttons trigger the identical
+        //     action via a mouse click, same "keyboard-first, toolbar
+        //     button as discoverability convenience" precedent as
+        //     Undo/Redo/Save/Back/PlayTest/BoxFill above.
         // Call ConsumeNeedsPresentationRebuild() after Update() returns to
         // find out whether @p world was actually mutated this frame.
         //
@@ -250,6 +267,8 @@ namespace GalaxyEggbert::CNA
         bool redoKeyHeldLastFrame_ = false;
         bool boxKeyHeldLastFrame_ = false;
         bool escapeKeyHeldLastFrame_ = false;
+        bool skyRegionPrevKeyHeldLastFrame_ = false; // EDITOR-111
+        bool skyRegionNextKeyHeldLastFrame_ = false;
         bool needsPresentationRebuild_ = false;
         bool playTestRequested_ = false;
 

@@ -5528,14 +5528,26 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 
 ## 6. Development Tooling — 3D World Editor
 
-**Status (2026-07-19): PAUSED, by explicit user request.** EDITOR-100 through EDITOR-110 are
-implemented, tested, and pushed (see "What's actually built" below) — the editor is genuinely
-usable today (enter from the menu, fly around, place/remove blocks and objects, box-fill, undo/
-redo, save, play-test). Development stops here for now; the user wants to work on other areas of
-`galaxy-eggbert` next. EDITOR-111 (sky-region picker) and EDITOR-112 (hardening pass + a
-`build-cna-vulkan` re-verification) are the two remaining milestones of the approved plan, **not
-started**. Picking this back up later should start from NEXT.md §8 (which still lists them as the
-next smallest tasks), not from the old draft list at the bottom of this section (see its own note).
+**Status (2026-07-23): RESUMED, by explicit user authorization at the start of this autonomous
+session** (was paused 2026-07-19 — see the history below for that pause's own reasoning). EDITOR-100
+through EDITOR-111 are implemented, tested, and pushed (see "What's actually built" below) — the
+editor is genuinely usable today (enter from the menu, fly around, place/remove blocks and objects,
+box-fill, undo/redo, sky-region picker, save, play-test). EDITOR-112 (hardening pass + a
+`build-cna-vulkan` re-verification) is the one remaining milestone of the approved plan.
+
+**Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
+"Known problems / open concerns" keyboard-input issue below still holds — fresh read of
+`GalaxyEggbertCnaGame::Update()`'s `Keyboard::GetState()` call site and `GEWorldEditor`'s own key
+handling confirms neither gates on window-focus/`IsActive` state or game phase (same finding as
+2026-07-19). Could not improve on the original Xvfb+`xdotool` repro in this environment (no window
+manager available to install — out of this session's repo-only scope). Proceeding on the same
+conclusion as before: this is not a galaxy-eggbert code bug, most likely an OS/window-manager-level
+focus issue outside this codebase's control.
+
+**2026-07-19 pause (historical)**: development stopped here at that time by explicit user request,
+to work on other areas of `galaxy-eggbert` first. Picking this back up should start from NEXT.md §8
+(which lists EDITOR-111/112 as the next smallest tasks), not from the old draft list at the bottom
+of this section (see its own note).
 
 ### What's actually built (EDITOR-100..110, 2026-07-18/19)
 
@@ -5558,6 +5570,55 @@ session); summary for anyone picking this up cold:
   row. Every cell draws the real per-type sprite (`GEObjectIcons::GetObjIcon()` plus its
   atlas-selection predicates — the same lookup already used to render real gameplay billboards),
   not a placeholder color.
+
+### EDITOR-111 — sky-region picker (2026-07-23, done)
+
+A stepper cycling `world.skyRegion()` 0-31 (world.hpp's own documented valid range — a direct
+pass-through of mobile-eggbert's level-header `region=` field). New `Kind::SkyRegionEdit` handling
+in `GEEditCommandStack` (declared since EDITOR-105 but unhandled until now): 2 new scalar fields,
+`skyRegionBefore`/`skyRegionAfter` (a single value changing, not a per-cell vector like
+`BlockChange`, since this isn't addressed by a grid position at all), Undo/Redo call
+`world.setSkyRegion()` with the appropriate one.
+
+**Input**: Left/Right arrow keys (confirmed genuinely unused anywhere in `GEWorldEditor.cpp` before
+this — a natural, unused pairing), edge-triggered same as every other tool, wrapping 0<->31 via
+modular arithmetic rather than clamping (an invented mobile-eggbert-adjacent world could reference
+any of the 32 real ids, so wrap is the correct "keep cycling" behavior, not clamp-at-the-ends).
+Palette gets a 2nd new fixed-action-button pair, `SkyRegionPrev`/`SkyRegionNext` (indices 8/9, a
+new row between BoxFill/TabToggle and the paging row, pushing `kHeaderRowCount` from 5 to 6) — same
+"keyboard-first, toolbar button as discoverability convenience" precedent as every other tool,
+solid green like every other button (no text labels, matching this class's own established
+convention).
+
+**No text readout needed for the current region id**: the real background itself IS the feedback —
+each step calls `needsPresentationRebuild_ = true`, the same signal a block/object edit already
+uses, so the caller's `RebuildWorldPresentation()` reloads `Content/backgrounds/decorNNN.png` (or
+falls back to a flat clear color for the 4 ids with no real art — 5/14/17/23, confirmed by listing
+the actual copied `Content/backgrounds/` directory next to the binary, not just the reference doc)
+immediately, live, matching exactly how a freshly-loaded world already behaves.
+
+**Verification**: `VerifyGEWorldEditor` — a direct `GEEditCommandStack`-level Undo/Redo test, plus a
+`GEWorldEditor`-level integration test proving wrap-around at BOTH ends (0->31 via Left, 31->0 via
+Right) and Undo/Redo via the same U/R keys every other tool uses, plus a palette-button-drives-the-
+same-action test (mirroring the existing BoxFill-button-vs-F-key precedent). Adding the new toolbar-
+button row shifted every existing content-cell/paging hit-test coordinate down by one row (36px) —
+13 pre-existing tests initially broke; fixed by updating the affected hardcoded pixel constants
+(`kFirstCellY`/`kSecondCellY`/2 `paletteClick()` call sites) to the new row positions, not by
+reverting the new row. Verified real teeth via deliberate bug injection (wraparound formula replaced
+with plain unwrapped subtraction): caught precisely 2 failures (the Left-wrap test itself, and the
+Undo test that depends on having reached 31 via wraparound), reverted, confirmed via `git diff`.
+
+**Live verification**: a temporary, env-var-gated debug scaffold (`GE_DEBUG_SKY_REGION_TEST`,
+skipped straight to `GamePhase::Editor` on a fresh world, bypassing the Init/browser UI flow) plus
+real `xdotool` key sends to the live window under Xvfb (`SDL_VIDEODRIVER=x11`, `WAYLAND_DISPLAY`
+unset) confirmed the full real path end to end: 3 real Right-arrow key presses stepped the visible
+background from region 0's real art to region 3's, a completely different image, screenshotted
+before/after. Scaffold fully reverted afterward (confirmed via `git diff` showing zero residual
+diff in `GalaxyEggbertCnaGame.cpp`).
+
+Full regression clean on all 3 native backends (`ctest` 81/82 on `build-cna`/`cmake-build-debug`,
+79/79 on `build-cna-vulkan`, same pre-existing unrelated `easy-gl-resource-smoke-tests` failure
+only).
 
 ### Known problems / open concerns when resuming
 

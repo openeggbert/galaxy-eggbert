@@ -1,12 +1,19 @@
 # NEXT.md — Galaxy Eggbert
 
-_Last updated: 2026-07-20 (see §7.5 for standing directives — note the "no editor work" directive
-there is **superseded**, see §7.5's own header. The in-game 3D world editor: milestones EDITOR-100
-through EDITOR-110 are implemented, verified, and pushed; EDITOR-111/112 remain, see §8 — but
-**editor work is now PAUSED, by explicit 2026-07-19 user request** (see plan.md §6's own status
-note for the full write-up, including an unresolved keyboard-input concern to check first if this
-is picked back up). The user wants to work on other areas of `galaxy-eggbert` next — do not resume
-EDITOR-111/112 without the user explicitly asking to.)._
+_Last updated: 2026-07-23 (autonomous session). The in-game 3D world editor: milestones EDITOR-100
+through EDITOR-110 are implemented, verified, and pushed. **Editor work resumed 2026-07-23, by
+explicit user authorization** (was paused 2026-07-19; user explicitly re-approved resuming
+EDITOR-111/112 at the start of this autonomous session — see plan.md §6's own status note for the
+full history). Before resuming, re-checked the unresolved keyboard-input/window-focus concern
+noted when work was paused: re-confirmed fresh (this session) that neither
+`GalaxyEggbertCnaGame::Update()` nor `GEWorldEditor`'s own key handling gates `Keyboard::GetState()`
+on window-focus/IsActive state or game phase — reads are unconditional every frame, same finding as
+before. Could not improve on the prior Xvfb+xdotool repro attempt in this environment (no window
+manager available — fluxbox/openbox/twm/icewm/wmctrl all absent; installing one is a system-level
+change outside this autonomous session's repo-only scope, so not attempted). Treating this as
+confirmed-not-a-galaxy-eggbert-code-bug (consistent with the original finding) and proceeding with
+EDITOR-111/112 — if the symptom recurs on a real desktop, it remains an OS/window-manager-level
+question, not something these milestones' own code should need to work around._
 
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
@@ -28,14 +35,13 @@ save system, and menus all work. The single largest remaining gap is that Blupi 
 visible 3D model yet (invisible collision point in first-person, a temporary placeholder model in
 third-person).
 
-**In-game 3D world editor (paused 2026-07-19, see plan.md §6):** `GamePhase::Editor`,
+**In-game 3D world editor (resumed 2026-07-23, see plan.md §6):** `GamePhase::Editor`,
 `src/GalaxyEggbertCNA/Editor/`, a user-requested feature letting each player create, edit, save
 and play-test their own `.vwr` worlds — inspired by free-eggbert's "Own mission" editor. The user
-approved a 13-milestone plan (EDITOR-100..112); **100-110 are done and pushed**, 111/112 remain
-but development is paused here by explicit user request while other areas of the project get
-attention instead — see plan.md §6 for the full current-state write-up (what's built, what
-remains, and a real open concern about keyboard input possibly being a window-focus issue, not
-yet confirmed resolved).
+approved a 13-milestone plan (EDITOR-100..112); **100-111 are done and pushed**, only EDITOR-112
+(hardening pass) remains — see plan.md §6 for the full current-state write-up (what's built, what
+remains, and a real open concern about keyboard input possibly being a window-focus issue,
+re-confirmed still not a code bug as of 2026-07-23, not yet confirmed fixed on a real desktop).
 Note this editor is an explicit, user-approved **exception** to the faithful-remake rule (see
 `plan.md` §6): it is content-creation tooling, not a mobile-eggbert feature, so inventing editor
 UX is fine — inventing new *gameplay* mechanics is still not.
@@ -299,9 +305,9 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 ### What does not work yet
 - **No visible 3D Blupi model** — invisible collision point in first-person; a placeholder model
   in third-person. Blocked on the user providing a real model/rig.
-- **World editor: sky-region picking (EDITOR-111) and the hardening pass (EDITOR-112, incl. an
-  unsaved-changes guard) are still open** — see §5. Object editing (EDITOR-110: select, patrol path,
-  speed/timing, remove) is now done.
+- **World editor: the hardening pass (EDITOR-112, incl. an unsaved-changes guard) is the one
+  remaining milestone** — see §5. Object editing (EDITOR-110) and the sky-region picker
+  (EDITOR-111) are both done.
 - **The editor has no text rendering** — toolbar buttons are distinguished by position and color
   only (object palette cells now draw real per-type sprites, not flat colors, since the 2026-07-19
   redesign — see §3). A documented, deliberate simplification, not an oversight (see §5).
@@ -314,6 +320,30 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### feat: EDITOR-111 — sky-region picker (2026-07-23)
+
+World editor work resumed this session (was paused 2026-07-19) after re-confirming the "Known
+problems" keyboard-input/window-focus concern below still holds (fresh re-read of the input
+pipeline, same conclusion as before: not a galaxy-eggbert code bug). A stepper cycling
+`world.skyRegion()` 0-31: Left/Right arrow keys (confirmed unused anywhere in `GEWorldEditor.cpp`
+before this) plus a new palette toolbar-button pair (`SkyRegionPrev`/`SkyRegionNext`), wrapping
+0<->31 rather than clamping. New `Kind::SkyRegionEdit` handling in `GEEditCommandStack` (declared
+since EDITOR-105, unhandled until now) — 2 scalar before/after fields, Undo/Redo call
+`world.setSkyRegion()`. No text readout needed: each step requests a presentation rebuild, so the
+real background itself IS the feedback, reusing the exact mechanism a fresh world-load already has
+(falls back to a flat clear color for the 4 ids with no real art, confirmed against the actual
+copied `Content/backgrounds/` directory, not just the reference doc).
+
+Adding the new toolbar-button row shifted every content-cell/paging hit-test coordinate down one
+row; fixed 13 tests broken by the shift (updated hardcoded pixel constants, not reverted the new
+row). Verified real teeth via bug injection (wraparound formula briefly replaced with unwrapped
+subtraction — caught 2 precise failures, reverted). Live end-to-end verification: a temporary
+env-var-gated debug scaffold + real `xdotool` key sends to the live window under Xvfb confirmed 3
+real Right-arrow presses visibly swap the background from region 0's art to region 3's completely
+different image; scaffold fully reverted (zero diff in `GalaxyEggbertCnaGame.cpp` afterward). Full
+regression clean on all 3 native backends. See `plan.md`'s `EDITOR-111` entry (§6) for the full
+writeup.
 
 ### refactor: INFRA-006 — extract `IsDestructibleByDynamite()` (2026-07-23)
 
@@ -1730,9 +1760,9 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
 ## 4. Current blocker / main problem
 
 **There is no active build or test failure blocking progress.** `build-cna` builds and passes
-78/79 (the one failure is the pre-existing `easy-gl` dependency test, see §5). The current line of
-work — the 3D world editor — is mid-plan but not stuck: EDITOR-111 is simply the next unstarted
-milestone, fully specified and unblocked.
+81/82 (the one failure is the pre-existing `easy-gl` dependency test, see §5). The current line of
+work — the 3D world editor — is mid-plan but not stuck: EDITOR-112 is simply the next (and last)
+unstarted milestone, fully specified and unblocked (EDITOR-111 done 2026-07-23, see §3).
 
 **Resolved 2026-07-19**: `build-cna-vulkan` was rebuilt and re-tested through the editor work plus
 this session's animation wiring — 76/76 (100%), confirming the editor code (and everything else
@@ -1760,11 +1790,10 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
   `Decor::BlupiStep()`'s own unconditional `TestPath()` call. See §3's own writeup for the full
   resolver rewrite this came from.
 - **Incomplete:** No visible 3D Blupi model (blocked on the user providing one).
-- **Incomplete (world editor, by design — the remaining plan milestones):**
-  - No sky-region picker (EDITOR-111): `world.skyRegion()` can't be changed from the editor.
-    `GEEditCommand::Kind::SkyRegionEdit` is declared but has no fields or stack handling yet.
+- **Incomplete (world editor, by design — the remaining plan milestone):**
   - No unsaved-changes guard (EDITOR-112): Back/Open/Quit discard silently. Save is explicit
     (`Enter` or the toolbar button); Play-Test auto-saves first.
+  - (Sky-region picker, EDITOR-111, is done as of 2026-07-23 — see §3.)
 - **Incomplete (world editor, deliberate simplification, documented in the code):** no text
   rendering anywhere in the editor — toolbar buttons are distinguished by position, and the
   mode-toggle by color. (Object palette cells now draw real per-type sprites, not flat colors —
@@ -2012,14 +2041,9 @@ The editor plan (EDITOR-111/112) is the active line of work; do these in order f
 focused session, and each ends with: build → `VerifyGEWorldEditor` → full `ctest` → live headless
 check of the new behavior → revert instrumentation → commit → push.
 
-1. **EDITOR-111 — Sky-region picker.** A stepper cycling `world.skyRegion()` 0–31, flagging which
-   ids have real `Content/backgrounds/decorNNN.png` art (only 28 of 32 do — it must degrade
-   gracefully, see `RebuildWorldPresentation()`'s own comment). Implement
-   `GEEditCommand::Kind::SkyRegionEdit` in the stack (currently declared but unhandled).
-   Files: `GEWorldEditor.{hpp,cpp}`, `GEEditCommandStack.{hpp,cpp}`, `GEEditorPalette.{hpp,cpp}`,
-   `tools/VerifyGEWorldEditor.cpp`.
-   Verify: `VerifyGEWorldEditor` (wrap-around at both ends + undo/redo) plus a live screenshot
-   showing the background actually swap.
+1. ~~EDITOR-111 — Sky-region picker.~~ — **done 2026-07-23**, see §3's own writeup and `plan.md`
+   §6's `EDITOR-111` entry for the full history (including the live Xvfb+`xdotool` screenshot
+   verification and a deliberate bug-injection teeth-check).
 
 2. **EDITOR-112 — Hardening pass + full regression.** Unsaved-changes guard (dirty flag + one-tap
    confirm on Back/Open/Quit), a box-fill test that straddles world bounds, consolidate
@@ -2112,18 +2136,17 @@ Non-editor tasks, available if the editor line is paused:
 
 ## 10. Resume prompt
 
-**PAUSED 2026-07-19 — do not use the prompt below until the user explicitly asks to resume editor
-work.** The user asked to pause the world editor line of work (EDITOR-111/112 remain undone) and
-move on to other areas of `galaxy-eggbert` instead — see plan.md §6 for the full status write-up
-(what's built, what's left, and an unresolved keyboard-input concern to check first if this does
-get picked back up). If you're starting a session cold and this note is still here, ask the user
-what they want worked on next rather than defaulting to the prompt below.
+**RESUMED 2026-07-23** (was paused 2026-07-19; the user explicitly re-authorized resuming editor
+work at the start of an autonomous session). EDITOR-100 through EDITOR-111 are done; EDITOR-112
+(hardening pass) is the one remaining milestone — see plan.md §6 for the full status write-up
+(what's built, what's left, and the keyboard-input/window-focus concern, re-confirmed 2026-07-23
+still not a code bug but not yet confirmed fixed on a real desktop either).
 
 ```
 Read NEXT.md first, in full, before doing anything else.
 
 Then work on exactly ONE task from its "Next smallest tasks" section (§8) — start
-with task 1 (EDITOR-111, sky-region picker) unless it is already done. Read only
+with task 2 (EDITOR-112, hardening pass) unless it is already done. Read only
 the files that task names; do not open or refactor unrelated files.
 
 Before writing editor code, read §6's "Coordinate invariants" — block centering

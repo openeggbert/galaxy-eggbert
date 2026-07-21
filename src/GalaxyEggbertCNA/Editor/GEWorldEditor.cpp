@@ -244,6 +244,8 @@ namespace GalaxyEggbert::CNA
         const bool increaseFieldKeyHeld = keyboard.IsKeyDown(Keys::OemPlus);
         const bool decreaseFieldKeyHeld = keyboard.IsKeyDown(Keys::OemMinus);
         const bool deleteObjectKeyHeld = keyboard.IsKeyDown(Keys::Delete);
+        const bool skyRegionPrevKeyHeld = keyboard.IsKeyDown(Keys::Left);
+        const bool skyRegionNextKeyHeld = keyboard.IsKeyDown(Keys::Right);
 
         // Box-fill tool live tracking (plan.md EDITOR-105) -- while a first
         // corner is placed, the highlight follows a box between it and
@@ -424,6 +426,34 @@ namespace GalaxyEggbert::CNA
             boxFirstCornerPlaced_ = false;
             showingBox_ = false;
         }
+        else if ((skyRegionPrevKeyHeld && !skyRegionPrevKeyHeldLastFrame_) ||
+                 paletteResult.action == GEEditorPalette::ToolbarAction::SkyRegionPrev)
+        {
+            constexpr std::uint32_t kSkyRegionCount = 32; // world.hpp's own documented valid range, 0-31
+            const std::uint32_t before = world.skyRegion();
+            const std::uint32_t after = (before + kSkyRegionCount - 1) % kSkyRegionCount;
+            world.setSkyRegion(after);
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::SkyRegionEdit;
+            command.skyRegionBefore = before;
+            command.skyRegionAfter = after;
+            commandStack_.Push(std::move(command));
+            needsPresentationRebuild_ = true;
+        }
+        else if ((skyRegionNextKeyHeld && !skyRegionNextKeyHeldLastFrame_) ||
+                 paletteResult.action == GEEditorPalette::ToolbarAction::SkyRegionNext)
+        {
+            constexpr std::uint32_t kSkyRegionCount = 32;
+            const std::uint32_t before = world.skyRegion();
+            const std::uint32_t after = (before + 1) % kSkyRegionCount;
+            world.setSkyRegion(after);
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::SkyRegionEdit;
+            command.skyRegionBefore = before;
+            command.skyRegionAfter = after;
+            commandStack_.Push(std::move(command));
+            needsPresentationRebuild_ = true;
+        }
         else if (selectKeyHeld && !selectKeyHeldLastFrame_)
         {
             // G: pick whichever placed MoveObject's billboard projects
@@ -538,6 +568,8 @@ namespace GalaxyEggbert::CNA
         increaseFieldKeyHeldLastFrame_ = increaseFieldKeyHeld;
         decreaseFieldKeyHeldLastFrame_ = decreaseFieldKeyHeld;
         deleteObjectKeyHeldLastFrame_ = deleteObjectKeyHeld;
+        skyRegionPrevKeyHeldLastFrame_ = skyRegionPrevKeyHeld;
+        skyRegionNextKeyHeldLastFrame_ = skyRegionNextKeyHeld;
     }
 
     std::optional<MoveObjectRecord> GEWorldEditor::ApplyActiveFieldDelta(
