@@ -769,6 +769,22 @@ target_include_directories(VerifyGetObjIcon PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
 )
 
+# INFRA-003 follow-up (plan.md §7): the independent programmatic
+# reference-doc cross-check REMAKE-ANALYSIS.md's P0-2 actually asked for
+# (VerifyGetObjIcon above is a regression lock, not this) -- parses
+# mobile-eggbert-reference/08-animations.md's own §3.1/§3.2 tables at
+# runtime and black-box-verifies GetObjIcon()'s actual cycle behavior
+# against them. Same engine-independent precedent as VerifyGetObjIcon.
+add_executable(VerifyObjIconAgainstReferenceDoc
+        tools/VerifyObjIconAgainstReferenceDoc.cpp
+        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+)
+
+target_include_directories(VerifyObjIconAgainstReferenceDoc PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+)
+
 # BlockTypes::tileUV() (plan.md TEST-004) is a pure header-only function --
 # no CNA/graphics dependency at all, same engine-independent precedent as
 # VerifyGESaveData/VerifyBlupiMovement/VerifyTerrainAnimDivisor above.
@@ -874,6 +890,11 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- GetObjIcon() is a pure function
     # of (ObjectType, phase) (plan.md INFRA-003).
     add_test(NAME VerifyGetObjIcon COMMAND VerifyGetObjIcon)
+    # Reads mobile-eggbert-reference/08-animations.md, a repo-root-relative
+    # path -- same WORKING_DIRECTORY reasoning as VerifyBlupiMovement above
+    # (plan.md INFRA-003 follow-up).
+    add_test(NAME VerifyObjIconAgainstReferenceDoc COMMAND VerifyObjIconAgainstReferenceDoc
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     # No file/working-directory dependency -- pure data-table integrity check
     # (plan.md INFRA-004).
     add_test(NAME VerifyUnverifiedRenderMapping COMMAND VerifyUnverifiedRenderMapping)

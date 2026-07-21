@@ -5849,6 +5849,44 @@ specifically, same as any other large/risky item elsewhere in this file.
       value — but it is not the systematic parse-`08-animations.md`-and-compare-every-entry tool
       P0-2 describes, which still does not exist. Left genuinely open, not silently closed by this
       task.
+
+      **Closed 2026-07-22.** New `tools/VerifyObjIconAgainstReferenceDoc.cpp`, registered with
+      `ctest`: parses `08-animations.md`'s own §3.1/§3.2 tables at runtime (regex over the file, not
+      hand-copied numbers) and black-box-measures `GetObjIcon()`'s actual per-type frame count
+      against what the doc claims, for all 25 rows (14 in §3.1, 11 in §3.2 including one label-only
+      correction, see below). §4 (explosions) deliberately excluded — the doc's own text admits
+      "which `ObjectType` triggers which `explo1..8` table was not resolved in this pass", so there
+      is no `ObjectType`→table mapping to cross-check without inventing one.
+
+      **A real, information-theoretic limit found and worked through, not glossed over**: a first
+      draft tried pure black-box period/segment-counting with zero source knowledge at all, and got
+      6 of 24 rows "wrong". Root-caused by hand: several tables (`kBulldozer = {66,66,67,67,66,66,
+      65,65}`, `kFollow1`'s `256,256,256`/`265,265,265` runs, etc.) deliberately hold the SAME icon
+      across 2+ adjacent array slots as a real animation-authoring choice — a repeated-value array
+      and a genuinely-shorter array produce IDENTICAL output sequences, so no amount of black-box
+      observation can tell them apart; confirmed this isn't a bug in the counting approach, it's a
+      hard limit. **Explicit user decision**: read just the per-type hold DIVISOR from
+      `GEObjectIcons.cpp`'s own case bodies (a small `std::map<int,int>` in the tool, 24 entries) —
+      a structural fact analogous to a function's calling convention, not the expected animation
+      DATA itself (which stays fully independent: the actual measured frame count still comes from
+      calling `GetObjIcon()` live, sampled at the right stride, never hand-copied). With the correct
+      divisor known, 23 of 24 rows match exactly; the 24th (`ObjectType25`/shield) is the SAME
+      already-known, already-accepted doc staleness `VerifyGetObjIcon.cpp` already documents (real
+      `table_shield` has 16 frames, the doc's own row still says 8) — asserted as an explicit,
+      named exception (fails loudly if the code ever regresses back to 8, or if the doc gets fixed
+      without this exception being removed), not silently treated as a fresh failure every run.
+
+      One deliberate manual correction, not silent guessing: the doc's own "96 (follower, awake/
+      homing)" row is a labeling artifact — the real awake/homing table (`kFollow2`) is keyed by
+      `ObjectType97` in the code (confirmed: the object's own `obj.type` genuinely changes from 96
+      to 97 on waking, in `GEInteractionSystem.cpp`'s own wake-up transition), not still 96 — mapped
+      explicitly in the tool, not inferred.
+
+      **Verified it has real teeth**: deliberately shrank `kBulldozer`'s own modulo from 8 to 4 in
+      `GEObjectIcons.cpp`, confirmed the tool fails with a precise mismatch message, reverted
+      (confirmed via `git diff`). Full regression clean on all 3 native builds (`build-cna`/
+      `cmake-build-debug`: 81/82, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
+      failure; `build-cna-vulkan`: 79/79 clean, that failure doesn't reproduce there).
 - [x] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) done (2026-07-21). Marked the still-unverified 2D→3D
       render-mapping icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`
       §10.2-§10.5, as applied per-icon in `02-tiles.md`'s Category column) as an explicit,

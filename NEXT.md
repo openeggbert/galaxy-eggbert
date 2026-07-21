@@ -315,6 +315,26 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-003's programmatic reference-doc cross-check (2026-07-22)
+
+Second of the 3 gaps the audit surfaced, now closed. P0-2 asked for GetObjIcon() to be
+cross-checked against `08-animations.md` *programmatically* — new `tools/
+VerifyObjIconAgainstReferenceDoc.cpp` parses that doc's §3.1/§3.2 tables at runtime (regex, not
+hand-copied numbers) and black-box-measures GetObjIcon()'s actual frame count against what the doc
+claims, for all 25 rows.
+
+Found and worked through a genuine information-theoretic limit along the way: a first draft using
+pure black-box period/segment-counting (zero source knowledge) got 6 of 24 rows "wrong" — several
+tables (`kBulldozer = {66,66,67,67,66,66,65,65}`, etc.) deliberately hold the same icon across
+adjacent slots as an authoring choice, and a repeated-value array is output-indistinguishable from
+a genuinely shorter one. Resolved by explicit user decision: read just the per-type hold divisor
+from the source (a small structural fact, not the expected data) — with that, 23/24 rows match
+exactly, and the 24th (ObjectType25/shield) is the same already-known, already-accepted doc
+staleness `VerifyGetObjIcon.cpp` documents, asserted as a named exception rather than a fresh
+failure. Verified real teeth via a deliberate array-size mutation (caught, precise message,
+reverted). Full regression clean on all 3 native builds. See `plan.md`'s `INFRA-003` entry for the
+full writeup.
+
 ### feat: INFRA-002's "behavioral trace" half — --golden-capture-trace + verify_golden_trace.sh (2026-07-22)
 
 Closes the first of the 3 gaps the same-day audit (below) surfaced. `REMAKE-ANALYSIS.md`'s P0-1
@@ -1948,8 +1968,10 @@ Non-editor tasks, available if the editor line is paused:
    rather than trust a status summary here — in short: `INFRA-001`/`007`/`009` hold up as described;
    `INFRA-002` had a real script bug (fixed) and was missing P0-1's "behavioral trace" half —
    **closed 2026-07-22** (`--golden-capture-trace`/`verify_golden_trace.sh`, see plan.md's own
-   `INFRA-002` entry); `INFRA-003` is a regression lock only, not the programmatic reference-doc
-   cross-check P0-2 asked for (still open); `INFRA-004`'s table is unused by the actual renderer (a
+   `INFRA-002` entry); `INFRA-003` was a regression lock only, missing the programmatic
+   reference-doc cross-check P0-2 asked for — **closed 2026-07-22**
+   (`tools/VerifyObjIconAgainstReferenceDoc.cpp`, see plan.md's own `INFRA-003` entry);
+   `INFRA-004`'s table is unused by the actual renderer (a
    documented reference list, not automatic enforcement); `INFRA-005` uses 3 sequential per-axis
    resolves, not the single merged-position resolve P1-1 literally asked for (the airborne-wall-clip
    bug it set out to fix is still genuinely fixed either way — this is about the algorithm shape,
