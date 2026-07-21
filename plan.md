@@ -5799,15 +5799,47 @@ specifically, same as any other large/risky item elsewhere in this file.
         reverting the temporary bug re-injection (confirmed via `git diff`). Full regression clean
         (80/81, only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure); golden-frame
         byte-match unchanged (idle-spawn baseline untouched); live headless smoke run clean.
-- [ ] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **Needs its own scoping session + explicit user
-      go-ahead before any code changes — do not start from this line alone.** Replace the
-      open-coded `if (obj.type == ObjectTypeN)` chains inside `GalaxyEggbertCnaGame::Update()`
-      (~2073 lines) and `GEInteractionSystem::Update()` (~1677 lines, `ObjectType` referenced 214
-      times) with a per-type handler table (`{ObjectType → update fn, icon fn, hitbox}` — a plain
-      data-oriented table, not a class-per-object rewrite). Migrate one object-type family at a
-      time, each behind `INFRA-001`/`INFRA-002`'s golden harness, so "fix object X" stops requiring
-      a search across two god-methods.
-- [ ] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) Replace the 17 parallel `*ThisFrame()` one-frame
+- [~] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **pilot done (2026-07-21), full migration still open.**
+      Replace the open-coded `if (obj.type == ObjectTypeN)` chains inside
+      `GalaxyEggbertCnaGame::Update()` (~2073 lines) and `GEInteractionSystem::Update()` (~1677
+      lines, `ObjectType` referenced 214 times) with a per-type handler table (`{ObjectType →
+      update fn, icon fn, hitbox}` — a plain data-oriented table, not a class-per-object rewrite).
+      Migrate one object-type family at a time, each behind `INFRA-001`/`INFRA-002`'s golden
+      harness, so "fix object X" stops requiring a search across two god-methods.
+
+      **Pilot family migrated: the 5 secret-power pickups (Shield/Power/Cloud/Hide/Invert,
+      ObjectType 25/26/30/31/40)**, chosen for lowest risk (not core kill/hazard logic) and freshest
+      familiarity (just touched in `INFRA-007`). New `kSecretPowerPickupHandlers[]` table in
+      `GEInteractionSystem.cpp`'s anonymous namespace (`{ObjectType, Gate, requiresActionButton,
+      grantedEvent, hasPositionPayload}` per entry — `Gate` is an enum, not a function pointer,
+      since every gate is a plain caller-supplied bool, not independent logic) + one new
+      `TryGrantSecretPowerPickup()` member function doing the lookup + generic dispatch. The
+      5 near-identical `case` bodies in `Update()`'s own switch collapsed to one 5-label group
+      calling the new function — "add/fix a 6th secret-power pickup" now touches only the table +
+      the small `Gate` switch inside the one function, not the god-method's own case list.
+
+      **Explicit, deliberate scope boundary found while investigating**: 2 OTHER dispatch sites in
+      the SAME file reference these same 5 types — the dynamite-blast destructible-type list (~27
+      types total) and the pickup-touch-radius gate (~13 types total) — but both are cross-cutting
+      concepts spanning many MORE types than just this one family. Fully replacing either would
+      require every OTHER family sharing that list to ALSO have table entries, which is out of
+      scope for a single-family pilot — left as open-coded lists for now, not an oversight. This is
+      the real, honest shape of "migrate one family at a time": a first pilot can only fully absorb
+      dispatch logic that's entirely confined to its own family; cross-cutting gates only shrink
+      once enough families are migrated to cover them.
+
+      **Verification**: behavior-neutral by design — `VerifyInteractionSystem` unchanged at
+      547/547. Verified the new table-driven dispatch actually has teeth (not just a passive
+      refactor): temporarily flipped one handler's `requiresActionButton` flag, confirmed 3 tests
+      failed with precise messages, reverted (confirmed via `git diff --stat`). Full regression
+      clean (80/81, pre-existing unrelated failure only); golden-frame byte-match unchanged.
+
+      Not yet migrated: everything else (~65 more `ObjectType`s across both god-methods) — this
+      pilot proves the table shape works and is low-risk to repeat, not that the whole migration is
+      done. Continuing to the next family (or deciding the 2 cross-cutting lists are worth tackling
+      once more families land) needs a fresh go-ahead, same as starting this pilot did.
+- [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
+      parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
       per-frame event queue. Keeps the existing, deliberately-reaffirmed `GEInteractionSystem`/
       `GEBlupiController` decoupling (see `plan.md` §6/`NEXT.md` §9 on that boundary) — only the

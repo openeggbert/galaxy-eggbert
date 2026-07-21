@@ -315,6 +315,32 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-006 pilot — handler-table dispatch for the secret-power pickup family (2026-07-21)
+
+First `ObjectType` family migrated off the open-coded `if (obj.type == ObjectTypeN)` god-methods
+(`REMAKE-ANALYSIS.md` P1-2). Chose the 5 secret-power pickups (Shield/Power/Cloud/Hide/Invert,
+ObjectType 25/26/30/31/40) as the pilot — lowest risk (not core kill/hazard logic), freshest
+familiarity (just touched in `INFRA-007`). New `kSecretPowerPickupHandlers[]` table
+(`GEInteractionSystem.cpp`'s own anonymous namespace) + one `TryGrantSecretPowerPickup()` member
+function replace what used to be 5 near-identical `case` bodies in `Update()`'s big switch with a
+single 5-label group calling one shared dispatch — "add/fix a 6th secret-power pickup" now touches
+only the table, not the god-method's own case list.
+
+**Real scope boundary found while investigating** (kept deliberately out of this pilot): 2 OTHER
+dispatch sites in the same file reference these same 5 types — a dynamite-blast destructible-type
+list (~27 types) and a pickup-touch-radius gate (~13 types) — but both are cross-cutting concepts
+spanning far more types than just this family. Fully replacing either would need every other family
+sharing them migrated too; left as open-coded lists for now. This is the honest shape of "migrate
+one family at a time" — a first pilot can only absorb dispatch logic entirely confined to its own
+family.
+
+Behavior-neutral by design: `VerifyInteractionSystem` unchanged at 547/547. Verified the new
+dispatch has real teeth — temporarily flipped one handler's `requiresActionButton` flag, confirmed 3
+tests failed with precise messages, reverted. Full regression clean (80/81, pre-existing unrelated
+failure only); golden-frame byte-match unchanged. See `plan.md`'s `INFRA-006` entry (marked `[~]`,
+pilot done, full migration still open — ~65 more `ObjectType`s remain across both god-methods) for
+the full writeup.
+
 ### feat: INFRA-005 — unified movement/collision resolver, closes the airborne-wall-clip gap (2026-07-21)
 
 Scoped with the user first (full unified resolver + sub-tile fidelity + `BlupiAdjust`-style

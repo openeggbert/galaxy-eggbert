@@ -945,6 +945,16 @@ namespace GalaxyEggbert::CNA
         // Update() itself, with no camera access -- see
         // EventKind::VoyageRequested's own comment).
         void RequestClear2Ascend(float worldX, float worldY, float worldZ);
+        // INFRA-006 pilot (plan.md §7): looks up `obj.type` in
+        // kSecretPowerPickupHandlers (GEInteractionSystem.cpp's own
+        // anonymous namespace) and applies its rule -- replaces what used
+        // to be 5 near-identical `case` bodies in Update()'s own switch
+        // with one shared dispatch. No-op if `obj.type` isn't one of the 5
+        // handled types (only ever called from those 5 case labels, see
+        // the call site's own comment).
+        void TryGrantSecretPowerPickup(MobileObjSpec& obj, bool blupiCanGrantShield, bool blupiCanGrantPower,
+                                        bool blupiCanGrantCloud, bool blupiCanGrantHide, bool blupiCanGrantInvert,
+                                        bool blupiActionPressedEdge);
         // Real `Decor::VoyageDraw`'s icon==40 puff spawn (Decor.cpp:
         // 10331-10348), called once per TickVoyage() while Clear3Ascend is
         // active (see TickVoyage()'s own comment).

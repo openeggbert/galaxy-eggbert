@@ -21,6 +21,51 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
+        // INFRA-006 pilot (plan.md §7, `REMAKE-ANALYSIS.md` P1-2): the first
+        // object-type family migrated to a per-type handler table, replacing
+        // the 5 near-identical `case` bodies this used to be (see
+        // `TryGrantSecretPowerPickup()` below) with one lookup + one generic
+        // dispatch -- "add/fix a 6th secret-power pickup" now touches only
+        // this table + the small `Gate` switch below, not the god-method's
+        // own case list. Deliberately narrow scope for this first migrated
+        // family: 2 OTHER dispatch sites in this file reference these same
+        // 5 types (the dynamite-blast destructible-type list, ~27 types; the
+        // pickup-touch-radius gate, ~13 types) but are cross-cutting
+        // concepts spanning many MORE types than just this family -- fully
+        // replacing those would need the other families sharing them
+        // migrated too, so they're left as open-coded lists for now, a
+        // deliberate scope boundary for a first pilot, not an oversight.
+        struct SecretPowerPickupHandler
+        {
+            ObjectType type;
+            // Which of Update()'s own caller-supplied blupiCanGrantX gates
+            // applies -- an enum, not a function pointer, since every gate
+            // is a plain bool parameter, not independent logic.
+            enum class Gate : std::uint8_t { Shield, Power, Cloud, Hide, Invert } gate;
+            // Sucette/Drink need the real action-button edge
+            // (blupiActionPressedEdge, Decor.cpp:6025/6053); Shield/Charge/
+            // Invert grant automatically on contact.
+            bool requiresActionButton;
+            GEInteractionSystem::EventKind grantedEvent;
+            // Only Power/Cloud/Hide carry the pickup-position payload their
+            // real 2-stage grab/freeze/complete delay needs (see
+            // GEInteractionSystem::EventKind's own comment) -- Shield/Invert
+            // grant instantly, no position needed.
+            bool hasPositionPayload;
+        };
+        constexpr SecretPowerPickupHandler kSecretPowerPickupHandlers[] = {
+            {ObjectType::ObjectType25, SecretPowerPickupHandler::Gate::Shield, false,
+             GEInteractionSystem::EventKind::ShieldGranted, false},
+            {ObjectType::ObjectType26, SecretPowerPickupHandler::Gate::Power, true,
+             GEInteractionSystem::EventKind::PowerGranted, true},
+            {ObjectType::ObjectType30, SecretPowerPickupHandler::Gate::Hide, true,
+             GEInteractionSystem::EventKind::HideGranted, true},
+            {ObjectType::ObjectType31, SecretPowerPickupHandler::Gate::Cloud, false,
+             GEInteractionSystem::EventKind::CloudGranted, true},
+            {ObjectType::ObjectType40, SecretPowerPickupHandler::Gate::Invert, false,
+             GEInteractionSystem::EventKind::InvertGranted, false},
+        };
+
         // Opens a door tile (plan.md E3D-MIG-160/162, real `Decor::OpenDoor`,
         // ~11667): removes the tile from the terrain grid (becomes passable)
         // and spawns a transient ObjectType22 at that cell (real
@@ -1991,51 +2036,28 @@ namespace GalaxyEggbert::CNA
                 // Power/Cloud/Hide's own real 2-stage grab/freeze/complete
                 // delay is handled by the caller (GEBlupiController::
                 // TriggerPickupFreeze(), since this class has no access to
-                // it) -- see the *PickupX/Y/Z() getters below. Invert/Mirror
-                // (ObjectType40, plan.md PICKUP-011) is a separate real
-                // pickup family sharing the same instant-grant-on-contact
-                // shape as Shield/Charge. Real per-pickup gates, including
-                // Power/Cloud/Hide's real vehicle-mode + Balloon/Ecrase
-                // exclusions (Decor.cpp:6025-6087; Shield/Invert have none,
-                // verified 2026-07-16), are passed in from the caller's own
-                // GEBlupiController state (blupiCanGrantShield/Power/Cloud/
-                // Hide/Invert) since this class has no access to
-                // GEBlupiController itself -- consistent with the
-                // blupiBallooned/blupiCrouching precedent.
+                // it) -- see EventKind's own comment on the position
+                // payload. Invert/Mirror (ObjectType40, plan.md PICKUP-011)
+                // is a separate real pickup family sharing the same
+                // instant-grant-on-contact shape as Shield/Charge. Real
+                // per-pickup gates, including Power/Cloud/Hide's real
+                // vehicle-mode + Balloon/Ecrase exclusions (Decor.cpp:
+                // 6025-6087; Shield/Invert have none, verified 2026-07-16),
+                // are passed in from the caller's own GEBlupiController
+                // state (blupiCanGrantShield/Power/Cloud/Hide/Invert) since
+                // this class has no access to GEBlupiController itself --
+                // consistent with the blupiBallooned/blupiCrouching
+                // precedent. INFRA-006 pilot (plan.md §7): these 5 types
+                // share one handler-table-driven dispatch,
+                // TryGrantSecretPowerPickup() -- see its own comment and
+                // kSecretPowerPickupHandlers above.
                 case ObjectType::ObjectType25: // shield stick
-                    if (blupiCanGrantShield)
-                    {
-                        obj.active = false;
-                        events_.push_back(Event{EventKind::ShieldGranted});
-                    }
-                    break;
                 case ObjectType::ObjectType26: // suction-cup ("Sucette" -> Power)
-                    if (blupiCanGrantPower && blupiActionPressedEdge)
-                    {
-                        obj.active = false;
-                        events_.push_back(Event{EventKind::PowerGranted, obj.currentX, obj.currentY, obj.currentZ});
-                    }
-                    break;
                 case ObjectType::ObjectType30: // drink ("Drink" -> Hide)
-                    if (blupiCanGrantHide && blupiActionPressedEdge)
-                    {
-                        obj.active = false;
-                        events_.push_back(Event{EventKind::HideGranted, obj.currentX, obj.currentY, obj.currentZ});
-                    }
-                    break;
                 case ObjectType::ObjectType31: // charge ("Charge" -> Cloud)
-                    if (blupiCanGrantCloud)
-                    {
-                        obj.active = false;
-                        events_.push_back(Event{EventKind::CloudGranted, obj.currentX, obj.currentY, obj.currentZ});
-                    }
-                    break;
                 case ObjectType::ObjectType40: // mirror/invert
-                    if (blupiCanGrantInvert)
-                    {
-                        obj.active = false;
-                        events_.push_back(Event{EventKind::InvertGranted});
-                    }
+                    TryGrantSecretPowerPickup(obj, blupiCanGrantShield, blupiCanGrantPower, blupiCanGrantCloud,
+                                              blupiCanGrantHide, blupiCanGrantInvert, blupiActionPressedEdge);
                     break;
                 default:
                     break;
@@ -2961,6 +2983,45 @@ namespace GalaxyEggbert::CNA
         event.voyageIsAscend = true;
         event.voyageAscendOffsetY = 300.0f; // real Decor.cpp:6595 (Clear2's own pos2.Y offset)
         ReplaceEvent(EventKind::VoyageRequested, event);
+    }
+
+    void GEInteractionSystem::TryGrantSecretPowerPickup(MobileObjSpec& obj, bool blupiCanGrantShield,
+                                                         bool blupiCanGrantPower, bool blupiCanGrantCloud,
+                                                         bool blupiCanGrantHide, bool blupiCanGrantInvert,
+                                                         bool blupiActionPressedEdge)
+    {
+        for (const auto& handler : kSecretPowerPickupHandlers)
+        {
+            if (handler.type != obj.type)
+            {
+                continue;
+            }
+            const bool gateOpen = [&]
+            {
+                switch (handler.gate)
+                {
+                    case SecretPowerPickupHandler::Gate::Shield: return blupiCanGrantShield;
+                    case SecretPowerPickupHandler::Gate::Power:  return blupiCanGrantPower;
+                    case SecretPowerPickupHandler::Gate::Cloud:  return blupiCanGrantCloud;
+                    case SecretPowerPickupHandler::Gate::Hide:   return blupiCanGrantHide;
+                    case SecretPowerPickupHandler::Gate::Invert: return blupiCanGrantInvert;
+                }
+                return false;
+            }();
+            if (gateOpen && (!handler.requiresActionButton || blupiActionPressedEdge))
+            {
+                obj.active = false;
+                Event event{handler.grantedEvent};
+                if (handler.hasPositionPayload)
+                {
+                    event.pickupX = obj.currentX;
+                    event.pickupY = obj.currentY;
+                    event.pickupZ = obj.currentZ;
+                }
+                events_.push_back(event);
+            }
+            return;
+        }
     }
 
     void GEInteractionSystem::BeginVoyage(GEWorldRuntime& worldRuntime, VoyageKind kind, int iconId,
