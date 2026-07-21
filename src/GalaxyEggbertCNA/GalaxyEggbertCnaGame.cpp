@@ -2231,8 +2231,26 @@ namespace GalaxyEggbert::CNA
             // stay instant in real source too. `LoadMission()` itself now
             // happens later, off the `wasBye`/`IsBye()` completion check
             // right after `Step()` above, once the freeze naturally elapses.
+            //
+            // Uses `GetBlockTypeAt()` (Blupi's own occupied cell), NOT
+            // `GetGroundBlockType()` (found/fixed 2026-07-21, live bug
+            // report): real `Decor::IsWorld(m_blupiPos)` is a plain direct
+            // position lookup, independent of solidity/grounding entirely
+            // -- matching that exactly needs the query that already exists
+            // for the same reason as water detection, not the one gated on
+            // IsOnGround(). These markers' real per-icon quarter-cell mask
+            // is genuinely all-zero/thin (same category as Lava/Crusher/
+            // Saw), so INFRA-005's sub-tile-precision wall collision
+            // correctly stopped treating them as solid enough to
+            // (accidentally) step up onto -- `GetGroundBlockType()` alone
+            // then never saw them again, since nothing elevates Blupi onto
+            // them any more. The real game was never checking "am I
+            // standing ON the marker" in the first place, only "is the
+            // marker AT my own position" -- mere contact, exactly as the
+            // real 2D game and this engine's own pre-INFRA-005 (buggier)
+            // collision both allowed by different, unrelated routes.
             {
-                const auto groundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
+                const auto groundBlock = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
                 if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
                 {
                     const int target = GEWorldRuntime::ComputeWorldSelectTarget(

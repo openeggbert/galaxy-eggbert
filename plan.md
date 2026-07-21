@@ -4268,6 +4268,52 @@ reset to `[ ]`.
       markers, and reloading mission 1 afterward round-trips cleanly —
       reverted before commit; full regression clean (same single known
       pre-existing failure).
+      **Regression found + fixed 2026-07-21 (live user bug report: "teleporty
+      nefunguji a blupi jimi prochazi skrz")**: WorldSelect/DemoPortal contact
+      detection silently broke as a side effect of `INFRA-005`'s sub-tile-
+      precision collision (unrelated commit, same day). Root-caused via a
+      live end-to-end investigation, not guesswork: these markers' real
+      per-icon quarter-cell mask (`GEDecorQuartTable.hpp`) is genuinely
+      all-zero/thin, same category as Lava/Crusher/Saw — before INFRA-005,
+      this engine's coarse (non-sub-tile) collision treated them as fully
+      solid, so walking into one triggered the pre-existing CNA-only
+      step-up mechanic, ACCIDENTALLY elevating Blupi onto it (confirmed via
+      a direct pre/post-INFRA-005 A/B test using a git worktree at the prior
+      commit: old code elevates y 1→2 and detects the marker on contact,
+      new code correctly recognizes the thin sub-tile data and never
+      elevates him at all). `GetGroundBlockType()` (one cell below Blupi's
+      feet, gated on `IsOnGround()`) then never saw the marker again, since
+      nothing elevates him onto it any more. Real `Decor::IsWorld(m_blupiPos)`
+      was never a "standing on solid ground" check in the first place — it's
+      a plain direct lookup of whichever tile Blupi's own body currently
+      occupies, independent of solidity/grounding entirely. Fix: the
+      WorldSelect/DemoPortal trigger site now calls the already-existing
+      `GEBlupiController::GetBlockTypeAt()` (built for water-Surf/Nage
+      detection, same "not gated on IsOnGround()" shape) instead of
+      `GetGroundBlockType()` — no new function needed, one call-site swap.
+      Verified live end-to-end twice (temporary debug instrumentation,
+      reverted before commit): spawning Blupi already standing on a marker
+      still works (pre-existing behavior, unaffected), AND — the actual
+      reported bug — walking into one at normal floor height from 3 tiles
+      away now correctly triggers the mission change (confirmed real
+      `mission 1 → WorldSelect1 contact → mission 10` transition). New
+      `VerifyBlupiMovement` regression test added: walks a synthetic
+      `GEBlupiController` through a `WorldSelect1` marker and asserts
+      `GetBlockTypeAt()` sees it (the fix) while `GetGroundBlockType()`
+      never does (documents the exact distinction, guards against a future
+      "simplification" reintroducing the bug) — 318/318 (was 311/311,
+      +7 new checks). Full regression clean on `build-cna`/`cmake-build-
+      debug`/`build-cna-vulkan` (same single known pre-existing
+      `easy-gl-resource-smoke-tests` failure on the native dirs).
+      **Separate, unrelated finding while re-verifying golden frames**: the
+      golden-screenshot capture (`INFRA-001`/`002`) turned out to be
+      genuinely NON-deterministic in this environment on repeat runs of the
+      *same* binary with *no* code change (passed, then failed, then passed
+      again) — confirmed via a `git stash` A/B test that this flakiness is
+      completely unrelated to this fix. Contradicts `INFRA-001`'s original
+      "confirmed deterministic across 2 runs" claim; worth a fresh look next
+      time golden-frame work is touched, not chased further here since it
+      has nothing to do with today's bug.
 - [x] SCORE-014 — 78 world files (world001.txt … world055.txt + hubs)
       supported — **done 2026-07-17**: all 78 real mobile-eggbert world
       files now exist here too, with identical filenames/mission numbers

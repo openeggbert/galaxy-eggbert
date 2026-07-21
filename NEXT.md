@@ -315,6 +315,31 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: WorldSelect/DemoPortal hub-navigation contact detection (2026-07-21)
+
+Live user bug report ("teleporty nefunguji a blupi jimi prochazi skrz" — turned out to mean the
+hub-navigation "booth" markers, not the actual Teleport1-4 pillars, which were separately verified
+working). Root-caused as a real regression from `INFRA-005` (unrelated commit, same day): these
+markers' real per-icon quarter-cell mask is genuinely thin (same category as Lava/Crusher/Saw), so
+INFRA-005's sub-tile-precision collision correctly stopped treating them as solid — which broke an
+*accidental* dependency, the old coarse collision's step-up mechanic used to elevate Blupi onto
+them on contact, which is what let `GetGroundBlockType()` (gated on `IsOnGround()`) see them at
+all. Confirmed via a direct git-worktree A/B test against the pre-INFRA-005 commit. Real
+`Decor::IsWorld(m_blupiPos)` was never a grounded-check to begin with — fixed by swapping the
+trigger site to the already-existing `GetBlockTypeAt()` (built for water detection, same
+"not gated on IsOnGround()" shape) instead of `GetGroundBlockType()`.
+
+Verified live end-to-end twice with temporary instrumentation (reverted before commit): standing
+already-on-a-marker still works, and — the actual reported bug — walking into one from a few tiles
+away now correctly triggers mission 1 → 10. New `VerifyBlupiMovement` test documents the exact
+distinction (318/318, was 311/311). Full regression clean on all 3 native build dirs.
+
+Also found, unrelated: golden-frame capture (`INFRA-001`/`002`) is genuinely non-deterministic in
+this environment on repeat runs with zero code change — confirmed via `git stash` that it's
+unrelated to this fix. Contradicts the original "confirmed deterministic" claim; flagged for a
+fresh look next time golden-frame work is touched, not chased down here. See `plan.md`'s
+`SCORE-013` entry for the full writeup.
+
 ### chore: INFRA-006 enemy/hazard/combat family investigated, confirmed not a fit (2026-07-21)
 
 After 2 low-risk families migrated, the user asked to attempt the explicitly-flagged-risky

@@ -2088,6 +2088,71 @@ int main(int argc, char** argv)
               "airborne movement is blocked by a wall, same as grounded movement (the INFRA-005 fix)");
     }
 
+    // WorldSelect hub-navigation marker contact detection (live bug report,
+    // found/fixed 2026-07-21) -- WorldSelect1-12/ProgressDoor2-8/DemoPortal
+    // (icons 158-177) have a genuinely all-zero real per-icon quarter-cell
+    // mask (same category as Lava/Crusher/Saw, GEDecorQuartTable.hpp),
+    // so INFRA-005's sub-tile-precision wall collision correctly does NOT
+    // treat them as solid -- Blupi walks straight through at his normal
+    // floor height, never elevated onto them. The real
+    // `Decor::IsWorld(m_blupiPos)` this ports is a plain direct position
+    // lookup with no notion of solidity/grounding at all, so the trigger
+    // site must use `GetBlockTypeAt()` (Blupi's own occupied cell, NOT
+    // gated on IsOnGround()) -- `GetGroundBlockType()` (one cell BELOW,
+    // gated on IsOnGround()) can never see a marker that nothing elevates
+    // Blupi onto. This test demonstrates the exact distinction directly:
+    // walking through the marker's cell, `GetBlockTypeAt()` sees it while
+    // `GetGroundBlockType()` does not, at every single frame of contact.
+    {
+        Worlds::World worldSelectWorld;
+        constexpr std::uint16_t kFloorX = 50, kFloorZ = 50, kMarkerX = 53;
+        // Long enough that 200 ticks of continuous forward walking (~18
+        // units at this engine's real horizontal speed) never runs off the
+        // far end -- an earlier draft used a 6-tile floor and the walker
+        // fell off it partway through, which looked exactly like a false
+        // "elevated" reading but was actually just "ran out of floor".
+        for (std::uint16_t dx = 0; dx <= 25; ++dx)
+        {
+            worldSelectWorld.setBlock(static_cast<std::uint16_t>(kFloorX + dx), 0, kFloorZ,
+                                       Worlds::Block::make(BlockTypes::RockPile));
+        }
+        worldSelectWorld.setBlock(kMarkerX, 1, kFloorZ, Worlds::Block::make(BlockTypes::WorldSelect1));
+
+        GEBlupiController walker;
+        walker.SetPosition(static_cast<float>(kFloorX) - 50.0f, 1.0f, static_cast<float>(kFloorZ) - 50.0f);
+        walker.SetYaw(1.57079633f); // face +X, toward the marker
+        walker.Step(worldSelectWorld, 0.0f, 0.0f, false, false, false, dt);
+        check(walker.IsOnGround(), "sanity: WorldSelect contact test's walker starts grounded");
+
+        bool sawMarkerViaBlockTypeAt = false;
+        bool everSawMarkerViaGroundBlockType = false;
+        bool everElevated = false;
+        for (int i = 0; i < 200; ++i)
+        {
+            walker.Step(worldSelectWorld, 0.0f, 1.0f, false, false, false, dt);
+            if (std::fabs(walker.GetY() - 1.0f) > 0.01f)
+            {
+                everElevated = true;
+            }
+            if (walker.GetBlockTypeAt(worldSelectWorld) == BlockTypes::WorldSelect1)
+            {
+                sawMarkerViaBlockTypeAt = true;
+            }
+            if (walker.GetGroundBlockType(worldSelectWorld) == BlockTypes::WorldSelect1)
+            {
+                everSawMarkerViaGroundBlockType = true;
+            }
+        }
+        check(!everElevated,
+              "walking through a WorldSelect marker never elevates Blupi (its real quarter-cell mask is thin, "
+              "same category as Lava/Crusher/Saw)");
+        check(sawMarkerViaBlockTypeAt,
+              "GetBlockTypeAt() detects the WorldSelect marker while walking through it (the fix)");
+        check(!everSawMarkerViaGroundBlockType,
+              "GetGroundBlockType() never detects it (the exact bug -- nothing elevates Blupi onto it, so "
+              "the one-cell-below/IsOnGround()-gated check never fires)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }
