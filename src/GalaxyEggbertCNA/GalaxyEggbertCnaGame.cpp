@@ -127,6 +127,55 @@ namespace GalaxyEggbert::CNA
             return false;
         }
 
+        // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2) handler-table
+        // migration, 5th family: the 7 patrol enemies with a real
+        // per-direction/turn-transition icon table (bulldozer/fish/bird/
+        // blupih/blupit/wasp/creature) -- purely cosmetic icon-selection
+        // for the billboard-render loop, NOT the kill/damage/contact logic
+        // that ruled out migrating the wider enemy/hazard family (see that
+        // family's own "investigated, not a fit" writeup). 6 of the 7 real
+        // icon functions share one signature; `GetCreatureIcon()` alone
+        // drops the direction bool, so it gets a thin same-signature
+        // wrapper purely to fit the shared table -- not a behavior change.
+        using PatrolIconFn = int (*)(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks);
+
+        int GetCreatureIconIgnoringDirection(bool /*patrolGoesLeftFromStart*/, int patrolStep, int patrolTimeTicks)
+        {
+            return GetCreatureIcon(patrolStep, patrolTimeTicks);
+        }
+
+        struct PatrolIconHandler
+        {
+            GalaxyEggbert::ObjectType type;
+            PatrolIconFn iconFn;
+        };
+        constexpr PatrolIconHandler kPatrolIconHandlers[] = {
+            {GalaxyEggbert::ObjectType::ObjectType4, GetBulldozerIcon},
+            {GalaxyEggbert::ObjectType::ObjectType17, GetFishIcon},
+            {GalaxyEggbert::ObjectType::ObjectType20, GetBirdIcon},
+            {GalaxyEggbert::ObjectType::ObjectType32, GetBlupihIcon},
+            {GalaxyEggbert::ObjectType::ObjectType33, GetBlupitIcon},
+            {GalaxyEggbert::ObjectType::ObjectType44, GetWaspIcon},
+            {GalaxyEggbert::ObjectType::ObjectType54, GetCreatureIconIgnoringDirection},
+        };
+
+        // Returns false (caller keeps its own `GetObjIcon()` fallback) for
+        // any type not in this 7-member family, same as the old switch's
+        // own `default` case.
+        bool TryGetPatrolIcon(GalaxyEggbert::ObjectType type, bool patrolGoesLeftFromStart, int patrolStep,
+                               int patrolTimeTicks, int& outIcon)
+        {
+            for (const auto& entry : kPatrolIconHandlers)
+            {
+                if (entry.type == type)
+                {
+                    outIcon = entry.iconFn(patrolGoesLeftFromStart, patrolStep, patrolTimeTicks);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // Real fixed 5.0s Wait-phase cosmetic timer (plan.md
         // MENU-001..005, confirmed via research: `Game1.cpp`'s real
         // `waitProgress = ticks/50,000,000`) -- must match
@@ -3686,32 +3735,9 @@ namespace GalaxyEggbert::CNA
                 const bool patrolGoesLeftFromStart = obj.posStartX > obj.posEndX;
                 const int patrolTimeTicks = static_cast<int>(obj.patrolTime);
                 int icon;
-                switch (obj.type)
+                if (!TryGetPatrolIcon(obj.type, patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks, icon))
                 {
-                    case GalaxyEggbert::ObjectType::ObjectType4:
-                        icon = GetBulldozerIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
-                        break;
-                    case GalaxyEggbert::ObjectType::ObjectType17:
-                        icon = GetFishIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
-                        break;
-                    case GalaxyEggbert::ObjectType::ObjectType20:
-                        icon = GetBirdIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
-                        break;
-                    case GalaxyEggbert::ObjectType::ObjectType32:
-                        icon = GetBlupihIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
-                        break;
-                    case GalaxyEggbert::ObjectType::ObjectType33:
-                        icon = GetBlupitIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
-                        break;
-                    case GalaxyEggbert::ObjectType::ObjectType44:
-                        icon = GetWaspIcon(patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks);
-                        break;
-                    case GalaxyEggbert::ObjectType::ObjectType54:
-                        icon = GetCreatureIcon(obj.patrolStep, patrolTimeTicks);
-                        break;
-                    default:
-                        icon = GetObjIcon(obj.type, objPhase);
-                        break;
+                    icon = GetObjIcon(obj.type, objPhase);
                 }
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(

@@ -315,6 +315,25 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-006 5th family — handler-table dispatch for the 7 patrol enemies' icon selection (2026-07-23)
+
+The other candidate from the survey that found the vehicle mapping (below), taken after explicit
+go-ahead given its enemy-adjacent-code caveat. Bulldozer4/fish17/bird20/blupih32/blupit33/wasp44/
+creature54's per-direction/turn-transition icon dispatch in `GalaxyEggbertCnaGame.cpp`'s billboard-
+render loop — purely cosmetic icon selection, NOT the kill/damage/contact logic the wider enemy/
+hazard family was ruled out for. New `kPatrolIconHandlers[]` (function-pointer table) +
+`TryGetPatrolIcon()` replace the 7-case switch; `GetCreatureIcon()` alone drops the shared
+signature's direction bool, so it gets a thin same-signature wrapper purely to fit the table.
+
+No existing test covers this exact dispatch switch (`VerifyInteractionSystem`'s icon assertions
+call each `GetXIcon()` directly) — verified via direct value-for-value comparison against the old
+switch instead. Unlike the vehicle mapping, this code path IS exercised by the golden harnesses
+(`world999.vwr`'s wasp/creature/blupih/blupit patrol objects run every tick during golden capture)
+— `golden_trace.txt` stayed byte-identical (only logs Blupi's own state, so an exercise-only check
+here); golden-frame screenshots failed all 3, reproduced identically with the change reverted (same
+pre-existing flakiness as before, confirmed unrelated). Full regression clean on all 3 native
+backends. See `plan.md`'s `INFRA-006` entry for the full writeup.
+
 ### feat: INFRA-006 4th family — handler-table dispatch for the vehicle ObjectType↔VehicleMode mapping (2026-07-23)
 
 Continued the migration after a fresh survey of both god-methods (enemy/hazard family already ruled

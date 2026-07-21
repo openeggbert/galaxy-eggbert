@@ -6245,6 +6245,37 @@ specifically, same as any other large/risky item elsewhere in this file.
       action button, so this code path is provably unreached by that harness); golden-frame flakiness
       reproduced identically with this change fully reverted (all 3 frames, under the heavier system
       load this round — confirmed unrelated, same pre-existing issue as before, now flaking harder).
+
+      **5th family migrated (2026-07-23): the 7 patrol enemies' icon dispatch** (bulldozer4/fish17/
+      bird20/blupih32/blupit33/wasp44/creature54) in `GalaxyEggbertCnaGame.cpp`'s billboard-render
+      loop — the other candidate from the same fresh survey that found the vehicle mapping, taken
+      after explicit go-ahead given the enemy-adjacent-code caveat attached to it. Purely cosmetic:
+      picks which `GetXIcon()` function to call for per-direction/turn-transition patrol animation,
+      NOT the kill/damage/contact logic the wider enemy/hazard family was ruled out for. New
+      `kPatrolIconHandlers[]` (function-pointer table, `PatrolIconFn = int(*)(bool, int, int)`) +
+      `TryGetPatrolIcon()` replace the 7-case switch; falls through to the caller's existing
+      `GetObjIcon()` fallback for every other type, same as the old `default` case. 6 of the 7 real
+      icon functions already share that exact signature; `GetCreatureIcon(int,int)` alone drops the
+      direction bool, so it gets a thin `GetCreatureIconIgnoringDirection()` wrapper purely to fit
+      the table — not a behavior change (confirmed: the real function never read that argument to
+      begin with, per the wrapper's own `//` marking it unused).
+
+      **Verification note, same shape as the vehicle mapping above**: this dispatch switch itself
+      has no existing automated test — `VerifyInteractionSystem`'s own `GetBulldozerIcon()`/etc.
+      assertions call each icon function directly, bypassing this file's `obj.type` dispatch
+      entirely (confirmed by grep). Verified via direct value-for-value comparison against the old
+      switch instead (all 7 cases, including the `default → GetObjIcon()` fallback). Unlike the
+      vehicle mapping, though, this code path IS genuinely exercised by the golden-capture harnesses
+      — `GenerateSampleWorld3D.cpp`'s `world999.vwr` demo world (loaded by both `--golden-capture`
+      and `--golden-capture-trace` via `LoadMission(999)`) places live wasp/creature/blupih/blupit
+      patrol objects, so this dispatch runs every tick regardless of camera framing. `golden_trace.txt`
+      stayed byte-identical (it only logs Blupi's own state, not other objects' selected icons, so
+      it's an exercise-only check here, not a sensitive one for this specific change). Golden-frame
+      screenshots failed all 3 — reproduced identically with this change fully reverted via
+      `git stash` (same pre-existing flakiness noted in the vehicle-mapping entry just above, now
+      failing more consistently under this session's accumulated system load), confirming it's
+      unrelated. Full regression clean on all 3 native backends (same counts as the vehicle-mapping
+      entry above).
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
