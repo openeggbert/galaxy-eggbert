@@ -281,6 +281,20 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-002 — golden-image diffing on top of INFRA-001 (2026-07-21)
+
+Second item from `plan.md` §7's task breakdown, straight after `INFRA-001`. `tests/golden/
+golden_frame_0060/0120/0180.png` are the approved reference frames (captured the same
+`--golden-capture` way `INFRA-001` proved reproducible). New `tools/verify_golden_frames.sh
+<build-dir>`: runs the capture, then exact-byte-compares (`cmp`) each fresh frame against its
+reference, printing `PASS`/`FAIL` per frame and an `ALL CHECKS PASSED`/`SOME CHECKS FAILED`
+summary with a matching exit code — same convention as the `VerifyXxx` C++ tools, just a shell
+script since this one launches a subprocess and diffs files rather than exercising game logic
+directly. Verified both directions live: passes against the real references, and correctly reports
+`FAIL` against a deliberately corrupted reference copy (restored afterward, confirmed via `git
+status` showing no unintended changes). Not wired into the default `ctest` run, same reason as
+`INFRA-001` (needs a real display/GL context) — see §7's own new command.
+
 ### feat: INFRA-001 — permanent deterministic golden-screenshot capture mode (2026-07-21)
 
 First implemented item from `plan.md` §7's correctness-infrastructure task breakdown. A real,
@@ -1399,6 +1413,13 @@ check above, it needs a real display/GL context, which isn't guaranteed in every
 runs `ctest`; run it explicitly:
 ```
 cd build-cna && xvfb-run -a ./GalaxyEggbertCNA --golden-capture
+```
+
+`INFRA-002`'s golden-image diffing (plan.md §7): runs the capture above and byte-compares each
+frame against the approved reference under `tests/golden/`, printing `PASS`/`FAIL` per frame
+(same precondition as `INFRA-001` — needs a real display, not wired into default `ctest`):
+```
+xvfb-run -a tools/verify_golden_frames.sh build-cna
 ```
 
 Regenerate the sample world (only needed after editing `tools/GenerateSampleWorld3D.cpp`):

@@ -5655,12 +5655,20 @@ specifically, same as any other large/risky item elsewhere in this file.
       `ctest` run (needs a real display/GL context, same reason the existing live-headless-check
       step is already separate from `ctest` throughout this project) — documented as its own command
       in `NEXT.md` §7 instead.
-- [ ] `INFRA-002` (`REMAKE-ANALYSIS.md` P0-1b) Add golden-image diffing on top of `INFRA-001`: store
-      approved reference screenshots for a handful of representative scenes/objects, diff newly
-      captured frames against them, and wire the diff into `ctest` so a real pixel change fails the
-      suite instead of needing a human to notice. Where no true "original game" golden exists,
-      diff against a previously-approved Galaxy Eggbert frame (catches regressions even before
-      full parity is claimed) rather than blocking on that distinction.
+- [x] `INFRA-002` (`REMAKE-ANALYSIS.md` P0-1b) — **done 2026-07-21.** Golden-image diffing on top
+      of `INFRA-001`: `tests/golden/golden_frame_0060/0120/0180.png` are the approved reference
+      copies (captured the same way `INFRA-001` proved reproducible — no true "original game"
+      golden exists for this engine-specific demo world, so these are previously-approved Galaxy
+      Eggbert frames, catching *regressions*, which is the framing this task itself allows). New
+      `tools/verify_golden_frames.sh <build-dir>`: runs `GalaxyEggbertCNA --golden-capture`, then
+      exact-byte-compares (`cmp`, not a perceptual/fuzzy diff — full determinism is already proven)
+      each fresh capture against its reference, printing `PASS`/`FAIL` per frame plus an
+      `ALL CHECKS PASSED`/`SOME CHECKS FAILED` summary line and a matching exit code, same
+      convention as the `VerifyXxx` C++ tools. Verified both directions live: passes against the
+      real references, and correctly reports `FAIL` (confirmed via a deliberately corrupted
+      reference copy, restored after). **Not wired into the default `ctest` run** (needs a real
+      display/GL context, same reason `INFRA-001` isn't) — run explicitly, documented in `NEXT.md`
+      §7.
 - [ ] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) A data-integrity test suite for the hand-transcribed
       `GEObjectIcons.cpp` tables: verify each frame array's length and the animation divisor
       against the counts already recorded in `mobile-eggbert-reference/08-animations.md`, and
