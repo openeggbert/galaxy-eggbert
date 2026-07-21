@@ -6276,6 +6276,40 @@ specifically, same as any other large/risky item elsewhere in this file.
       failing more consistently under this session's accumulated system load), confirming it's
       unrelated. Full regression clean on all 3 native backends (same counts as the vehicle-mapping
       entry above).
+
+      **6th "family" (2026-07-23): `IsDestructibleByDynamite()` predicate extraction** — a smaller,
+      lower-risk shape than the 5 prior handler-table families, from a fresh survey (also checked
+      the 2 cross-cutting lists left open during the pilot; the pickup-touch-radius gate and the
+      mockery-taunt list were both explicitly NOT recommended, see below). The dynamite-blast
+      victim-membership check (27 types: 2/3/4/6/12/13/16/17/18/19/20/24/25/26/28/30/32/33/34/40/
+      44/46/52/54/96/97/200-203) was an inline 27-way `||` chain at its one call site
+      (`GEInteractionSystem.cpp`'s blast-victim loop) — every member gets IDENTICAL treatment
+      (crates as a linked group via the existing `IsCrate()`, everything else a plain deactivate),
+      so this is a pure membership predicate, not per-type divergent behavior — it matches the
+      file's own pre-existing `IsPlatformLift()`/`IsCrate()`/`IsGenericHazard()` pattern directly,
+      not a new handler table. Extracted verbatim (same 27 comparisons, same order) into
+      `IsDestructibleByDynamite(ObjectType)`, called from the one site.
+
+      **Verified real teeth**: `VerifyInteractionSystem`'s existing dynamite-blast test only
+      exercises 1 of the 27 members directly (the crate, ObjectType12) — temporarily removed it from
+      the predicate, confirmed the crate-destruction check failed with a precise message ("the
+      dynamite blast destroyed the crate within its blast radius"), reverted (confirmed via
+      `git diff`). The other 26 members have no dedicated test either way — same coverage as before
+      this extraction, not a regression, since the old inline chain wasn't tested per-member any
+      more thoroughly. Full regression clean on all 3 native backends (`ctest` 81/82 on
+      `build-cna`/`cmake-build-debug`, 79/79 on `build-cna-vulkan`). No golden-capture check needed
+      — dynamite blasts aren't part of either harness's scripted input (`PlaceDynamite()` is never
+      called), so this code path is provably unreached by them.
+
+      **2 other candidates from this round's survey, explicitly NOT taken**: the pickup-touch-radius
+      gate (13-type exclusion list, `GEInteractionSystem.cpp:1783-1791`) is mostly already covered by
+      the 2 migrated pickup tables (9 of 13 members) — rewriting the remaining 4-member gap as "in
+      either table OR {6,7,21,29}" would be marginal DRY benefit on an already-working, already-
+      verified gate, not a genuine family migration; left as-is. The mockery-taunt qualifying list
+      (11 enemy-adjacent types, `GalaxyEggbertCnaGame.cpp:2320-2331`) has real per-type divergence
+      (ObjectType54 always gets one variant unconditionally; ObjectType2 has an unexplained special-
+      case skip) — same "different in KIND, not constants" shape that ruled out the wider enemy/
+      hazard family; not migrated.
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed

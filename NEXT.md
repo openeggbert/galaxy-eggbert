@@ -315,6 +315,24 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### refactor: INFRA-006 — extract `IsDestructibleByDynamite()` (2026-07-23)
+
+A fresh survey for a 6th family found only one clean candidate, and it's smaller than the 5 prior
+handler-table families: the dynamite-blast victim-membership check (27 types) was an inline 27-way
+`||` chain at its one call site — every member gets identical treatment (crates as a linked group,
+everything else a plain deactivate), so it's a pure membership predicate, not per-type divergent
+behavior. Extracted verbatim into `IsDestructibleByDynamite(ObjectType)`, matching the file's
+existing `IsPlatformLift()`/`IsCrate()`/`IsGenericHazard()` pattern rather than a new table.
+
+Verified real teeth: temporarily removed the crate (ObjectType12) from the predicate, confirmed the
+existing dynamite-blast test's crate-destruction check failed with a precise message, reverted. The
+other 26 members have no dedicated test either way — same coverage as before, not a regression.
+Two other candidates surfaced by the survey were explicitly NOT taken: the pickup-touch-radius gate
+(mostly already covered by the 2 migrated pickup tables, marginal DRY benefit on working code) and
+the mockery-taunt qualifying list (real per-type divergence, same shape that ruled out the wider
+enemy/hazard family). Full regression clean on all 3 native backends. See `plan.md`'s `INFRA-006`
+entry for the full writeup.
+
 ### feat: INFRA-006 5th family — handler-table dispatch for the 7 patrol enemies' icon selection (2026-07-23)
 
 The other candidate from the survey that found the vehicle mapping (below), taken after explicit

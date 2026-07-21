@@ -21,6 +21,34 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
+        // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2), 6th family
+        // (2026-07-23): the dynamite-blast victim membership check,
+        // extracted verbatim from an inline 27-way `||` chain at its one
+        // call site -- a pure membership predicate (every member gets
+        // IDENTICAL treatment, crates as a linked group via `IsCrate()`
+        // below, everything else a plain deactivate), not per-type
+        // divergent behavior, so this matches the existing
+        // `IsPlatformLift()`/`IsCrate()`/`IsGenericHazard()` predicate
+        // pattern directly rather than a handler table.
+        bool IsDestructibleByDynamite(ObjectType t)
+        {
+            return t == ObjectType::ObjectType2 || t == ObjectType::ObjectType3 ||
+                   t == ObjectType::ObjectType4 || t == ObjectType::ObjectType6 ||
+                   t == ObjectType::ObjectType12 || t == ObjectType::ObjectType13 ||
+                   t == ObjectType::ObjectType16 || t == ObjectType::ObjectType17 ||
+                   t == ObjectType::ObjectType18 || t == ObjectType::ObjectType19 ||
+                   t == ObjectType::ObjectType20 || t == ObjectType::ObjectType24 ||
+                   t == ObjectType::ObjectType25 || t == ObjectType::ObjectType26 ||
+                   t == ObjectType::ObjectType28 || t == ObjectType::ObjectType30 ||
+                   t == ObjectType::ObjectType32 || t == ObjectType::ObjectType33 ||
+                   t == ObjectType::ObjectType34 || t == ObjectType::ObjectType40 ||
+                   t == ObjectType::ObjectType44 || t == ObjectType::ObjectType46 ||
+                   t == ObjectType::ObjectType52 || t == ObjectType::ObjectType54 ||
+                   t == ObjectType::ObjectType96 || t == ObjectType::ObjectType97 ||
+                   t == ObjectType::ObjectType200 || t == ObjectType::ObjectType201 ||
+                   t == ObjectType::ObjectType202 || t == ObjectType::ObjectType203;
+        }
+
         // INFRA-006 pilot (plan.md §7, `REMAKE-ANALYSIS.md` P1-2): the first
         // object-type family migrated to a per-type handler table, replacing
         // the 5 near-identical `case` bodies this used to be (see
@@ -1240,23 +1268,7 @@ namespace GalaxyEggbert::CNA
                             {
                                 continue;
                             }
-                            const bool isDestructibleType =
-                                victim.type == ObjectType::ObjectType2 || victim.type == ObjectType::ObjectType3 ||
-                                victim.type == ObjectType::ObjectType4 || victim.type == ObjectType::ObjectType6 ||
-                                victim.type == ObjectType::ObjectType12 || victim.type == ObjectType::ObjectType13 ||
-                                victim.type == ObjectType::ObjectType16 || victim.type == ObjectType::ObjectType17 ||
-                                victim.type == ObjectType::ObjectType18 || victim.type == ObjectType::ObjectType19 ||
-                                victim.type == ObjectType::ObjectType20 || victim.type == ObjectType::ObjectType24 ||
-                                victim.type == ObjectType::ObjectType25 || victim.type == ObjectType::ObjectType26 ||
-                                victim.type == ObjectType::ObjectType28 || victim.type == ObjectType::ObjectType30 ||
-                                victim.type == ObjectType::ObjectType32 || victim.type == ObjectType::ObjectType33 ||
-                                victim.type == ObjectType::ObjectType34 || victim.type == ObjectType::ObjectType40 ||
-                                victim.type == ObjectType::ObjectType44 || victim.type == ObjectType::ObjectType46 ||
-                                victim.type == ObjectType::ObjectType52 || victim.type == ObjectType::ObjectType54 ||
-                                victim.type == ObjectType::ObjectType96 || victim.type == ObjectType::ObjectType97 ||
-                                victim.type == ObjectType::ObjectType200 || victim.type == ObjectType::ObjectType201 ||
-                                victim.type == ObjectType::ObjectType202 || victim.type == ObjectType::ObjectType203;
-                            if (!isDestructibleType)
+                            if (!IsDestructibleByDynamite(victim.type))
                             {
                                 continue;
                             }
