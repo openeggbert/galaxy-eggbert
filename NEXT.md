@@ -315,6 +315,24 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### chore: INFRA-005/INFRA-006 verified backend-agnostic on build-cna-vulkan and cmake-build-debug (2026-07-21)
+
+Following the same precedent already used for the world editor, rebuilt (incremental, `-j2`,
+already-configured targets per CLAUDE.md's "reuse before rebuilding") and re-tested the two other
+native CNA build directories after the collision-resolver rewrite and pickup-handler-table pilot
+landed, since both had so far only been built/tested against `build-cna` (EasyGL):
+
+- `build-cna-vulkan` (Vulkan backend): clean incremental rebuild; `VerifyBlupiMovement` and
+  `VerifyInteractionSystem` both fully pass standalone; full `ctest` **78/78 (100%)**.
+- `cmake-build-debug` (EasyGL, the "default" build target per project docs): clean incremental
+  rebuild; both Verify binaries pass standalone; full `ctest` **80/81**, the one failure being the
+  same pre-existing, already-quarantined `easy-gl-resource-smoke-tests` upstream bug (see "Known
+  upstream failures, quarantined" below) — not a regression.
+
+Confirms the unified movement/collision resolver (`IsPointSolid`/`ResolveMove`/
+`RecoverFromPenetration`) and the secret-power-pickup handler table are genuinely backend-agnostic,
+with no graphics-backend-specific assumptions leaking into either.
+
 ### feat: INFRA-006 pilot — handler-table dispatch for the secret-power pickup family (2026-07-21)
 
 First `ObjectType` family migrated off the open-coded `if (obj.type == ObjectTypeN)` god-methods
