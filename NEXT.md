@@ -1463,15 +1463,16 @@ Non-editor tasks, available if the editor line is paused:
    Files: `src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp`.
    Verify: `cmake --build build-cna --target VerifyTileUvBounds -j2` plus a live screenshot.
 
-4. **A small, self-contained P0 slice from `plan.md` §7** ("Correctness Infrastructure &
-   Dual-Renderer — Vision"), if there's appetite for infrastructure work rather than another
-   feature/bug: either a permanent, committed golden-screenshot harness (promoting the ad-hoc
-   `xvfb-run` + revert pattern already used every session into something that stays and is diffed
-   in `ctest`), or a first data-integrity pass over `GetObjIcon()` against
-   `mobile-eggbert-reference/08-animations.md`. Both are scoped small and self-contained — do NOT
-   read this as a green light for the larger items in that same section (a shared collision
-   resolver, an `ObjectType` handler-table refactor, the dual-renderer direction) — those need
-   their own explicit user sign-off first.
+4. **`plan.md` §7's correctness-infrastructure task breakdown** (2026-07-21, `INFRA-001`
+   through `INFRA-010`), if there's appetite for infrastructure work rather than another
+   feature/bug. Start with `INFRA-001` (a permanent, committed golden-screenshot harness,
+   promoting the ad-hoc `xvfb-run` + revert pattern already used every session into something
+   that stays) or `INFRA-003` (a first `GetObjIcon()` data-integrity pass) — both small and
+   self-contained. `INFRA-005`/`INFRA-006` (shared collision resolver, `ObjectType` handler
+   table) explicitly need their own scoping session + the user's go-ahead before any code
+   changes — do not start those from this line alone. The dual-renderer thread (`renderers.md`)
+   has no task IDs yet by explicit user choice (2026-07-21) — ask before breaking that one down
+   too.
 
 ## 9. Do not do yet
 
@@ -1503,11 +1504,11 @@ Non-editor tasks, available if the editor line is paused:
   meant to be a single, small, independently-verifiable session.
 - **No Lua**, no MeshCraft/Mesh World/Nova3D/further-Simple3D features — none of these are part of
   the locked Direct-CNA-+-Easy3D direction.
-- **No starting the larger items in `plan.md` §7** (a shared collision/movement resolver, an
-  `ObjectType` handler-table refactor, or any dual-renderer work beyond the already-merged, unwired
-  `GESceneFrame.hpp`) without the user's own explicit go-ahead on that specific item — see §7's own
-  "do not bundle into one modernization effort" framing. The small P0 slice (§8 task 4) is fine to
-  pick up on its own.
+- **No starting `INFRA-005`/`INFRA-006` (`plan.md` §7's shared collision resolver / `ObjectType`
+  handler-table task entries), or any dual-renderer work beyond the already-merged, unwired
+  `GESceneFrame.hpp`,** without the user's own explicit go-ahead on that specific item — see §7's
+  own "do not bundle into one modernization effort" framing. `INFRA-001`/`003`/`004` (§8 task 4)
+  are fine to pick up on their own.
 
 ## 10. Resume prompt
 

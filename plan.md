@@ -5625,3 +5625,90 @@ it is useful on its own, blocks nothing else, and does not require deciding anyt
 collision, object dispatch, or a second renderer. Treat P1-1, P1-2, and the dual-renderer direction
 as three independent, later decisions, each requiring its own explicit user go-ahead before any
 code is written — do not bundle them into one "modernization" effort.
+
+### Task breakdown — correctness infrastructure only (2026-07-21)
+
+Turned into concrete tasks at the user's explicit request, **scoped to the correctness-
+infrastructure thread only** (`REMAKE-ANALYSIS.md`'s P0/P1/P2) — the dual-renderer thread
+(`renderers.md`'s 5 phases) is deliberately NOT broken into tasks here; it stays as direction-only
+prose above until the user separately asks for that breakdown too. Listed as a normal, unblocked
+task queue (the user's own call, given when asked) — this does **not** relax the P1 items' own
+"needs its own scoped task and explicit sign-off before a line of code changes" requirement from
+the assessment above; that requirement is about the *moment code starts*, not about whether the
+task may be described here. Confirm with the user before starting `INFRA-005`/`INFRA-006`
+specifically, same as any other large/risky item elsewhere in this file.
+
+- [ ] `INFRA-001` (`REMAKE-ANALYSIS.md` P0-1a) Promote the existing throwaway `xvfb-run` +
+      env-var-gated debug-hook pattern (used and fully reverted every session so far — see NEXT.md
+      §3's own Saw/death-lock/life-loss writeups for recent examples) into a **permanent, committed**
+      deterministic headless-capture target: a fixed world (`worlds3d/world999.vwr`), a fixed
+      camera, a scripted input sequence, N deterministic ticks, screenshots saved at known frame
+      indices. No golden-image diffing yet — this step only proves the capture itself is stable/
+      reproducible across runs. New `tools/` target (or a new `ctest`-registered mode of an
+      existing one), following the `VerifyXxx`/`GenerateSampleWorld3D` precedent of dedicated tool
+      targets.
+- [ ] `INFRA-002` (`REMAKE-ANALYSIS.md` P0-1b) Add golden-image diffing on top of `INFRA-001`: store
+      approved reference screenshots for a handful of representative scenes/objects, diff newly
+      captured frames against them, and wire the diff into `ctest` so a real pixel change fails the
+      suite instead of needing a human to notice. Where no true "original game" golden exists,
+      diff against a previously-approved Galaxy Eggbert frame (catches regressions even before
+      full parity is claimed) rather than blocking on that distinction.
+- [ ] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) A data-integrity test suite for the hand-transcribed
+      `GEObjectIcons.cpp` tables: verify each frame array's length and the animation divisor
+      against the counts already recorded in `mobile-eggbert-reference/08-animations.md`, and
+      check that non-monotonic/`-1`-sentinel arrays haven't been silently "fixed" back to a
+      monotonic guess. Validates numbers already transcribed into this repo against the existing
+      reference *doc* — does not copy or require reading `../mobile-eggbert` source directly (that
+      would need separate approval, see this file's own reuse rules and `easy3d.md` §5.7). Start
+      with the 34 objects `GEObjectIcons.cpp` already carries a `Fixed 202...` note for — they are
+      the confirmed historical trouble spots.
+- [ ] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) Mark the ~137 still-unverified 2D→3D render-mapping
+      icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`) as an explicit,
+      queryable "unverified" set (e.g. a small table/list checked by a test) so they can't be
+      silently treated as confirmed by a future pass, and so `INFRA-001`/`INFRA-002` can gate any
+      render change touching one of them behind a regression check. Bookkeeping, not a rendering
+      change.
+- [ ] `INFRA-005` (`REMAKE-ANALYSIS.md` P1-1) **Needs its own scoping session + explicit user
+      go-ahead before any code changes — do not start from this line alone.** A single shared
+      swept-collision/movement resolver that every movement mode (grounded, airborne, every
+      vehicle) routes its final move through, replacing the fragmented per-mechanic probes
+      (`GEBlupiController::GroundHeightAt`/`CeilingHeightAt`/`HasJumpHeadroom`/`IsSolidAt`/
+      `GetBarreCellType`, `TryMoveAxis`'s step-up gate) — mirrors the real `Decor::TestPath`'s
+      single-resolver shape. Would close the known airborne-wall-clip gap (`TryMoveAxis` currently
+      short-circuits on `!m_onGround`, see NEXT.md §5) as a side effect. Touches already-tuned,
+      already-verified movement — must be guarded by `INFRA-001`/`INFRA-002`'s behavioral/visual
+      trace so already-correct grounded behavior can't silently regress.
+- [ ] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **Needs its own scoping session + explicit user
+      go-ahead before any code changes — do not start from this line alone.** Replace the
+      open-coded `if (obj.type == ObjectTypeN)` chains inside `GalaxyEggbertCnaGame::Update()`
+      (~2073 lines) and `GEInteractionSystem::Update()` (~1677 lines, `ObjectType` referenced 214
+      times) with a per-type handler table (`{ObjectType → update fn, icon fn, hitbox}` — a plain
+      data-oriented table, not a class-per-object rewrite). Migrate one object-type family at a
+      time, each behind `INFRA-001`/`INFRA-002`'s golden harness, so "fix object X" stops requiring
+      a search across two god-methods.
+- [ ] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) Replace the 17 parallel `*ThisFrame()` one-frame
+      boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
+      per-frame event queue. Keeps the existing, deliberately-reaffirmed `GEInteractionSystem`/
+      `GEBlupiController` decoupling (see `plan.md` §6/`NEXT.md` §9 on that boundary) — only the
+      hand-rolled parallel-boolean *transport* changes, not the architectural boundary itself.
+      Propose the concrete design to the user before starting (this is a refactor of already-
+      working signal plumbing touched by nearly every interaction, so a mid-refactor mistake is
+      expensive).
+- Standing rule, not a one-shot task (`REMAKE-ANALYSIS.md` P2-2): **reuse before re-deriving.**
+  When a CNA render/math bug has a plausible 2D/pixel root cause, check whether the engine-agnostic
+  `include/GalaxyEggbert/` tree or `GalaxyEggbertSimple3D` (historical reference only, but still
+  readable) already solved it before re-deriving the logic from scratch — `missing.md`'s own
+  lesson (a UV-bleed bug CNA reintroduced despite `BlockTypes::tileUV()` already solving it
+  years earlier). No task ID; this is a practice to apply on every future render/math bug, not a
+  thing to close.
+- [ ] `INFRA-009` (`REMAKE-ANALYSIS.md` P2-3) Record which sibling-repo commits (`../easy-3d`,
+      `../cna`, `../easy-gl`, `../sharp-runtime`) Galaxy Eggbert is currently verified against (a
+      short note in `NEXT.md`, updated when a sibling repo is rebuilt against), and clearly
+      quarantine the known-upstream failures already identified (`easy-gl-resource-smoke-tests`,
+      the Vulkan-backend `BasicEffect`/`SkinnedEffect` alpha bug) so they keep reading as sibling-
+      repo issues, not Galaxy Eggbert regressions, when the full suite is re-run.
+- [ ] `INFRA-010` (`REMAKE-ANALYSIS.md` P2-4) Consider a compact, authoritative "current truth"
+      index, separate from `plan.md`'s own historical log (505 KB / 5500+ lines) and `NEXT.md`
+      (115 KB), so a session doesn't have to re-derive current state by reading the whole history
+      every time. Lowest priority of this list — opportunistic, not blocking anything else; revisit
+      only if doc-reading overhead becomes a recurring complaint.
