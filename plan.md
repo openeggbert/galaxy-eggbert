@@ -5788,13 +5788,37 @@ specifically, same as any other large/risky item elsewhere in this file.
          zero output; fixed script (`|| true` added) correctly prints all 3 `FAIL: ... was not
          captured` lines. `INFRA-001`'s own "fully deterministic" claim was never at risk — this was
          purely the wrapper script's own error handling, not the capture mode itself.
-      2. **"Behavioral trace" half of P0-1 was never built, still open**: `REMAKE-ANALYSIS.md`'s own
-         P0-1 text asks for TWO things — a golden-image harness (this task, done) AND "a
-         deterministic-tick trace (position/velocity/anim-state per tick) captured to a text log and
-         diffed" so "passes unit tests but feels wrong live" becomes a checkable regression, same as
-         visuals. Only the screenshot half exists; no per-tick behavioral log/diff harness exists
-         anywhere in this repo. Left genuinely open — needs its own scoped task, not silently folded
-         into "INFRA-002 done."
+      2. **"Behavioral trace" half of P0-1 — closed 2026-07-22.** `REMAKE-ANALYSIS.md`'s own P0-1
+         text asks for TWO things — a golden-image harness (done above) AND "a deterministic-tick
+         trace (position/velocity/anim-state per tick) captured to a text log and diffed" so "passes
+         unit tests but feels wrong live" becomes a checkable regression, same as visuals. Built as a
+         genuinely SEPARATE mode, `GalaxyEggbertCnaGame::EnableGoldenTraceMode()`
+         (`--golden-capture-trace`), not folded into `EnableGoldenCaptureMode()` — a deliberate
+         2026-07-22 scoping decision so the already-approved `golden_frame_*.png` references stay
+         completely unaffected. The key gap the passive screenshot mode has (confirmed while
+         designing this: Blupi receives NO simulated input during golden-capture at all — he sits at
+         spawn the whole 180-tick window, only the world's own autonomous objects move) is fixed
+         here specifically: this mode ALSO drives Blupi through a small fixed, deterministic input
+         script — walk west down the same "tested corridor" `VerifyBlupiMovement.cpp` already
+         depends on staying geometrically unchanged, jump once at tick 40-46, continue walking,
+         150 ticks total — so real movement/collision/gravity code is actually exercised per tick,
+         not just watched at rest. Records one line per tick
+         (`tick=N x=.. y=.. z=.. velY=.. onGround=.. animState=.. animIcon=..`) to an in-memory
+         buffer, writes `golden_trace.txt` once on completion, same "write a well-known file, exit"
+         shape as the screenshot mode (needed its own `goldenTraceWritten_` latch — `Exit()` doesn't
+         stop `Update()` immediately, an early draft rewrote the file every subsequent tick before
+         this was added). New sibling script `tools/verify_golden_trace.sh` (exact byte-diff against
+         `tests/golden/golden_trace.txt`, same shape as `verify_golden_frames.sh`) — verified both
+         directions live (passes against the real reference; correctly reports `FAIL` with a diff
+         excerpt via a deliberately appended bogus line, reverted after). **Determinism confirmed
+         two ways**: 2 independent runs on the same build produced an identical md5sum (same bar
+         `INFRA-001` set for screenshots), AND — a stronger check than screenshots got — the trace is
+         byte-identical across all 3 native backends (`build-cna` EasyGL, `cmake-build-debug`
+         EasyGL, `build-cna-vulkan` Vulkan), confirming the underlying simulation genuinely doesn't
+         depend on which graphics backend is active. Not wired into the default `ctest` run, same
+         reason as `verify_golden_frames.sh` (needs a real display/GL context to open the window at
+         all, even though nothing is ever screenshotted). Full regression clean on all 3 native
+         builds (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [x] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) — **done 2026-07-21.** New
       `tools/VerifyGetObjIcon.cpp` (headless, engine-agnostic — `GEObjectIcons.cpp` only depends on
       `def/ObjectType.hpp`, same precedent `GenerateSampleWorld3D` already established), registered

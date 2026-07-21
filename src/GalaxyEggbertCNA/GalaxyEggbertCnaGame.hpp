@@ -80,6 +80,27 @@ namespace GalaxyEggbert::CNA
         // stable/reproducible run to run.
         void EnableGoldenCaptureMode() noexcept { goldenCaptureMode_ = true; }
 
+        // INFRA-002's "behavioral trace" half of `REMAKE-ANALYSIS.md` P0-1
+        // (plan.md §7) -- found missing 2026-07-22 during an external audit
+        // of the already-"done" `INFRA-001`/`002` entries (see plan.md's own
+        // corrected writeups). Unlike `EnableGoldenCaptureMode()` above (a
+        // completely passive capture -- Blupi never receives any simulated
+        // input, only the world's own autonomous objects move), this mode
+        // ALSO drives Blupi through a small fixed, deterministic input
+        // script (walk forward down the same "tested corridor" `VerifyBlupiMovement.cpp`
+        // already depends on staying geometrically unchanged, jump partway
+        // through, then stop) so real movement/collision code is actually
+        // exercised, not just watched at rest. Deliberately a SEPARATE mode
+        // from `EnableGoldenCaptureMode()` rather than added to it -- the
+        // existing golden_frame_*.png references stay valid/unaffected by
+        // this addition (2026-07-22 scoping decision, not adding scripted
+        // input retroactively to the approved screenshot baseline). Records
+        // one line per tick (position/velocity-Y/grounded/anim state) to an
+        // in-memory buffer, writes it to `golden_trace.txt` once the fixed
+        // tick count completes, then exits -- same "run once, write a
+        // well-known file, exit" shape as the screenshot mode.
+        void EnableGoldenTraceMode() noexcept { goldenTraceMode_ = true; }
+
         GetTypeNameHPP()
 
     private:
@@ -487,6 +508,16 @@ namespace GalaxyEggbert::CNA
         bool goldenCaptureArmed_ = false;
         int goldenCaptureTick_ = 0;
         int goldenCaptureNextIndex_ = 0;
+
+        // Behavioral trace mode -- see EnableGoldenTraceMode()'s own
+        // comment for the full behavior. Same latch/tick-count shape as
+        // the golden-capture members above; goldenTraceLines_ accumulates
+        // one line per tick, written out in one shot on completion.
+        bool goldenTraceMode_ = false;
+        bool goldenTraceArmed_ = false;
+        bool goldenTraceWritten_ = false;
+        int goldenTraceTick_ = 0;
+        std::string goldenTraceLines_;
 
         // Real `fadeOutPhase` (plan.md MENU-088/089) -- see SetPhase()'s
         // own comment above for the full real deferred-transition

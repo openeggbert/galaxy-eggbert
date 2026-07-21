@@ -1062,6 +1062,26 @@ namespace GalaxyEggbert::CNA
             ++goldenCaptureTick_;
         }
 
+        // INFRA-002's behavioral-trace mode -- see EnableGoldenTraceMode()'s
+        // own comment. One-time setup mirrors goldenCaptureMode_'s own
+        // shape above; SetYaw() here (not a turnInput tick) is the "fixed
+        // camera/orientation" part of the scripted scenario, same category
+        // as LoadMission(999)'s own fixed-world setup, not something a real
+        // player's turn input would organically reach in exactly 1 tick.
+        if (goldenTraceMode_)
+        {
+            if (!goldenTraceArmed_)
+            {
+                goldenTraceArmed_ = true;
+                if (phase_ != GalaxyEggbert::GamePhase::Play)
+                {
+                    SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+                }
+                LoadMission(999);
+                blupi_.SetYaw(-1.5707963f); // face west, down the tested corridor
+            }
+        }
+
         // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --
         // incremented unconditionally every Update() tick, regardless of
         // phase, matching the real source's own `phaseTime++` placement.
@@ -1670,7 +1690,18 @@ namespace GalaxyEggbert::CNA
             // without needing a separate "which source wins" rule.
             turnInput = std::clamp(turnInput + padPlayInput.turnInput, -1.0f, 1.0f);
             moveInput = std::clamp(moveInput + padPlayInput.moveInput, -1.0f, 1.0f);
-            const bool jumpPressed = keys.IsKeyDown(Keys::LeftControl) || padPlayInput.jumpHeld;
+            bool jumpPressed = keys.IsKeyDown(Keys::LeftControl) || padPlayInput.jumpHeld;
+            // INFRA-002's behavioral-trace scripted input (plan.md §7) --
+            // walk forward down the tested corridor for the whole capture,
+            // with one jump partway through, so real movement/collision/
+            // gravity code is actually exercised, not just watched at rest
+            // (see EnableGoldenTraceMode()'s own comment for why this is a
+            // separate mode from the passive screenshot capture).
+            if (goldenTraceMode_)
+            {
+                moveInput = 1.0f;
+                jumpPressed = goldenTraceTick_ >= 40 && goldenTraceTick_ < 46;
+            }
             const bool actionPressed = keys.IsKeyDown(Keys::Space) || padPlayInput.actionPressed;
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
@@ -1723,6 +1754,41 @@ namespace GalaxyEggbert::CNA
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_);
+
+            // INFRA-002's behavioral-trace capture (plan.md §7) -- one line
+            // per tick, POST-step so it reflects this frame's real result.
+            // Fixed tick count (kGoldenTraceTicks) chosen to comfortably
+            // cover the whole walk-jump-land-settle script above with a
+            // margin, same reasoning as kGoldenCaptureTicks' own comment.
+            if (goldenTraceMode_ && !goldenTraceWritten_)
+            {
+                constexpr int kGoldenTraceTicks = 150;
+                char line[160];
+                std::snprintf(line, sizeof(line),
+                               "tick=%d x=%.6f y=%.6f z=%.6f velY=%.6f onGround=%d animState=%d animIcon=%d\n",
+                               goldenTraceTick_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.GetVelocityY(),
+                               blupi_.IsOnGround() ? 1 : 0, static_cast<int>(blupi_.GetAnimState()),
+                               blupi_.GetAnimIcon());
+                goldenTraceLines_ += line;
+                ++goldenTraceTick_;
+                if (goldenTraceTick_ >= kGoldenTraceTicks)
+                {
+                    goldenTraceWritten_ = true;
+                    std::FILE* f = std::fopen("golden_trace.txt", "wb");
+                    if (f)
+                    {
+                        std::fwrite(goldenTraceLines_.data(), 1, goldenTraceLines_.size(), f);
+                        std::fclose(f);
+                        std::cout << "GalaxyEggbertCNA: wrote golden_trace.txt (" << goldenTraceTick_ << " ticks)."
+                                  << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "GalaxyEggbertCNA: FAILED to write golden_trace.txt." << std::endl;
+                    }
+                    Exit();
+                }
+            }
 
             // Real mobile-eggbert jump/land/footstep sounds (2026-07-10).
             // jumpPressed is edge-detected the same way "C" is below, gated

@@ -315,6 +315,26 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: INFRA-002's "behavioral trace" half — --golden-capture-trace + verify_golden_trace.sh (2026-07-22)
+
+Closes the first of the 3 gaps the same-day audit (below) surfaced. `REMAKE-ANALYSIS.md`'s P0-1
+asked for TWO harnesses — golden-image (done) and a deterministic per-tick behavioral trace
+(never built). While designing this, found the passive `--golden-capture` mode never fed Blupi
+any simulated input at all (he sits at spawn the whole 180-tick window) — so a meaningful
+behavioral trace needed its own scripted input, kept in a genuinely separate mode
+(`EnableGoldenTraceMode()`/`--golden-capture-trace`) so the already-approved `golden_frame_*.png`
+references stay completely untouched.
+
+New mode drives Blupi through a small fixed script (walk west down the same "tested corridor"
+`VerifyBlupiMovement.cpp` depends on staying unchanged, jump once at tick 40-46, keep walking,
+150 ticks), recording one line per tick (position/velocity-Y/grounded/anim-state/anim-icon) to
+`golden_trace.txt`. New sibling script `tools/verify_golden_trace.sh`, same shape as
+`verify_golden_frames.sh`. Determinism confirmed two ways: identical md5sum across 2 independent
+runs (same bar `INFRA-001` set), and — stronger than the screenshot check got — byte-identical
+across all 3 native backends (`build-cna` EasyGL, `cmake-build-debug` EasyGL, `build-cna-vulkan`
+Vulkan), confirming the simulation itself is genuinely backend-agnostic. Full regression clean on
+all 3 builds. See `plan.md`'s `INFRA-002` entry for the full writeup.
+
 ### docs+fix: external audit of INFRA-001..005 "done" claims — 4 confirmed overclaims corrected (2026-07-22)
 
 An independent audit challenged several `plan.md` `[x] done` markers against `REMAKE-ANALYSIS.md`'s
@@ -1824,6 +1844,14 @@ frame against the approved reference under `tests/golden/`, printing `PASS`/`FAI
 xvfb-run -a tools/verify_golden_frames.sh build-cna
 ```
 
+`INFRA-002`'s "behavioral trace" half (plan.md §7, closed 2026-07-22): a SEPARATE mode,
+`--golden-capture-trace`, that ALSO drives Blupi through a small scripted walk+jump down the
+tested corridor (unlike `--golden-capture` above, which never feeds him any input at all) and
+diffs the resulting per-tick `golden_trace.txt` against `tests/golden/golden_trace.txt`:
+```
+xvfb-run -a tools/verify_golden_trace.sh build-cna
+```
+
 Regenerate the sample world (only needed after editing `tools/GenerateSampleWorld3D.cpp`):
 ```
 cmake --build build-cna --target GenerateSampleWorld3D -j2
@@ -1918,14 +1946,16 @@ Non-editor tasks, available if the editor line is paused:
    re-verified against `REMAKE-ANALYSIS.md`'s own wording before accepting — see `plan.md`'s own
    `INFRA-002`/`003`/`004`/`005` entries for the specific corrections). Read those entries directly
    rather than trust a status summary here — in short: `INFRA-001`/`007`/`009` hold up as described;
-   `INFRA-002` had a real script bug (fixed) and is missing P0-1's "behavioral trace" half (still
-   open); `INFRA-003` is a regression lock only, not the programmatic reference-doc cross-check
-   P0-2 asked for (still open); `INFRA-004`'s table is unused by the actual renderer (a documented
-   reference list, not automatic enforcement); `INFRA-005` uses 3 sequential per-axis resolves, not
-   the single merged-position resolve P1-1 literally asked for (the airborne-wall-clip bug it set
-   out to fix is still genuinely fixed either way — this is about the algorithm shape, not that
-   fix). `INFRA-006` is an honest partial (3 families migrated). `INFRA-010` remains untouched,
-   correctly low-priority.
+   `INFRA-002` had a real script bug (fixed) and was missing P0-1's "behavioral trace" half —
+   **closed 2026-07-22** (`--golden-capture-trace`/`verify_golden_trace.sh`, see plan.md's own
+   `INFRA-002` entry); `INFRA-003` is a regression lock only, not the programmatic reference-doc
+   cross-check P0-2 asked for (still open); `INFRA-004`'s table is unused by the actual renderer (a
+   documented reference list, not automatic enforcement); `INFRA-005` uses 3 sequential per-axis
+   resolves, not the single merged-position resolve P1-1 literally asked for (the airborne-wall-clip
+   bug it set out to fix is still genuinely fixed either way — this is about the algorithm shape,
+   not that fix; needs its own scoping session before any attempt to actually merge them, same as
+   starting `INFRA-005` itself did). `INFRA-006` is an honest partial (3 families migrated).
+   `INFRA-010` remains untouched, correctly low-priority.
 
 ## 9. Do not do yet
 

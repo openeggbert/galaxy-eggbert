@@ -16,6 +16,12 @@ int main(int argc, char** argv)
         {
             game->EnableGoldenCaptureMode();
         }
+        // INFRA-002's "behavioral trace" half (plan.md §7) -- see
+        // EnableGoldenTraceMode()'s own comment for the full behavior.
+        if (std::strcmp(argv[i], "--golden-capture-trace") == 0)
+        {
+            game->EnableGoldenTraceMode();
+        }
     }
     game->Run();
     delete game;
