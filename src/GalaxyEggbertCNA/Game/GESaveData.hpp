@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <string>
 
@@ -109,7 +110,17 @@ namespace GalaxyEggbert::CNA
         // Init gamer-slot button immediately selects AND persists that
         // slot, independent of entering Play.
         [[nodiscard]] int GetSelectedGamer() const noexcept { return selectedGamer_; }
-        void SetSelectedGamer(int gamer) noexcept { selectedGamer_ = gamer; }
+        // Clamped, not just assigned: every GetLives()/SetLives()/etc.
+        // accessor below indexes gamers_[selectedGamer_] with no bounds
+        // check of its own, so this is the one place that must keep
+        // selectedGamer_ always valid regardless of what a caller passes.
+        // The one real call site today (GalaxyEggbertCnaGame.cpp, the
+        // Init gamer-select buttons) only ever passes 0/1/2, but a public
+        // setter shouldn't rely on that staying true forever.
+        void SetSelectedGamer(int gamer) noexcept
+        {
+            selectedGamer_ = std::clamp(gamer, 0, kGamerCount - 1);
+        }
 
         // Read-only per-slot accessors for the Init menu's 3-button
         // display (does NOT change which slot GetLives()/SetLives()/etc.

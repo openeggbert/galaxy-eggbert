@@ -1,6 +1,7 @@
 #include "Game/GESaveData.hpp"
 
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 
 // Scripted, non-interactive verification of GESaveData (2026-07-13,
@@ -112,6 +113,48 @@ int main()
         data.Reset();
         check(data.GetSelectedGamer() == 0 && data.GetLivesForGamer(2) == 3 && !data.GetHasProgressForGamer(2),
               "Reset(): restores selectedGamer and every gamer slot to its default (real gameData.Reset())");
+    }
+
+    // Out-of-range selectedGamer guard -- a real, reachable path is a
+    // hand-edited or corrupted save file, not just a hypothetical: every
+    // GetLives()/SetLives()/etc. accessor indexes gamers_[selectedGamer_]
+    // with no bounds check of its own, so an unvalidated value here was a
+    // genuine out-of-bounds array access on the very next accessor call,
+    // not just a logic bug (found via a fresh code audit, 2026-07-23).
+    {
+        std::ofstream out("savedata.txt");
+        out << "selectedGamer=99\n";
+        out.close();
+        GESaveData data;
+        data.Load();
+        check(data.GetSelectedGamer() == 0,
+              "Load() rejects an out-of-range selectedGamer (99) from a corrupted save file, "
+              "keeping the safe default (0) instead of an out-of-bounds index");
+        // Confirms the rejection genuinely leaves the object in a usable
+        // state -- not just that the getter reports 0, but that indexing
+        // through it (GetLives(), which the real Init/Resume/Win-Lost
+        // code paths call unconditionally) doesn't touch anything outside
+        // the real 3-slot array.
+        check(data.GetLives() == 3, "GetLives() is still safe to call after rejecting an invalid selectedGamer");
+    }
+    {
+        std::ofstream out("savedata.txt");
+        out << "selectedGamer=-1\n";
+        out.close();
+        GESaveData data;
+        data.Load();
+        check(data.GetSelectedGamer() == 0,
+              "Load() rejects a negative selectedGamer (-1) the same way as an out-of-range positive one");
+    }
+    {
+        // SetSelectedGamer() itself clamps too -- a public setter shouldn't
+        // rely on every future caller only ever passing 0/1/2.
+        GESaveData data;
+        data.SetSelectedGamer(99);
+        check(data.GetSelectedGamer() == GESaveData::kGamerCount - 1,
+              "SetSelectedGamer() clamps an out-of-range value to the last real gamer slot");
+        data.SetSelectedGamer(-5);
+        check(data.GetSelectedGamer() == 0, "SetSelectedGamer() clamps a negative value to gamer slot 0");
     }
 
     std::remove("savedata.txt");

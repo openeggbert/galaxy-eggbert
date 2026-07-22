@@ -2417,6 +2417,30 @@ layout/labels/icon state, and a live two-run save/load round-trip test. The spee
 later the same session as part of the MENU-088/089 fade-transitions pass, once real entry/exit
 timing needed them anyway.
 
+**Real out-of-bounds bug found and fixed (2026-07-23, autonomous session, found via a fresh code
+audit)**: `GESaveData::Load()`'s `selectedGamer` parser (`GESaveData.cpp`) had ZERO bounds
+validation, unlike the sibling `gamer.N.field` parser 2 lines below it which already rejects an
+out-of-range `gamer` index. Every accessor that reads the selected slot
+(`GetLives()`/`SetLives()`/`GetMissionNumber()`/`SetMissionNumber()`/`GetHasProgress()`/
+`SetHasProgress()`/`IsMissionDoorUnlocked()`/`UnlockMissionDoor()`) indexes
+`gamers_[selectedGamer_]` directly with no bounds check of its own, and `gamers_` is a fixed
+3-element array — a hand-edited or corrupted save file with `selectedGamer=99` (or negative) is a
+real, reachable out-of-bounds array access on the very next accessor call, not just a latent logic
+bug. **Confirmed as a genuine crash, not just theoretical**: reproduced via a deliberate bug
+injection (disabling the new guard) — `VerifyGESaveData` segfaulted outright (exit code 139) the
+instant `GetLives()` ran against the unvalidated index.
+
+Fixed both ends: `Load()` now rejects an out-of-range `selectedGamer` value (same "reject, leave at
+whatever it already was" shape as the sibling `gamer.N.field` parser), and the public
+`SetSelectedGamer(int)` setter now clamps to `[0, kGamerCount-1]` rather than assigning unchecked —
+the one real call site today (`GalaxyEggbertCnaGame.cpp`'s Init gamer-select buttons) only ever
+passes 0/1/2, but a public setter indexing a fixed array right afterward shouldn't rely on that
+staying true forever. 5 new `VerifyGESaveData` checks (out-of-range/negative rejection on Load, a
+post-rejection `GetLives()` sanity call, and both setter-clamp directions); verified real teeth via
+2 separate deliberate bug injections (one reproducing the actual segfault above, one confirming the
+setter's own clamp), both reverted, confirmed via `git diff`. Full regression clean on all 3 native
+backends.
+
 #### 2.9 Phase: Ranking
 
 - [ ] MENU-070 — Render `pause.png` background (same as Pause/Resume)

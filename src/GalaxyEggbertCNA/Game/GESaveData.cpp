@@ -30,7 +30,18 @@ namespace GalaxyEggbert::CNA
             }
             else if (key == "selectedGamer")
             {
-                selectedGamer_ = std::atoi(value.c_str());
+                // Out-of-range guard (a hand-edited or corrupted save file
+                // is the real, reachable path here -- every GetLives()/
+                // SetLives()/etc. accessor below indexes gamers_[selectedGamer_]
+                // with no bounds check of its own, so an unvalidated value
+                // here is a real out-of-bounds array access later, not just
+                // a logic bug). Same "reject, leave at whatever it already
+                // was" shape as the sibling gamer.N.field parser just below.
+                const int parsed = std::atoi(value.c_str());
+                if (parsed >= 0 && parsed < kGamerCount)
+                {
+                    selectedGamer_ = parsed;
+                }
             }
             else if (key.rfind("gamer", 0) == 0 && key.size() > 6 && key[6] == '.')
             {

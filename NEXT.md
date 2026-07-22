@@ -317,6 +317,22 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: real out-of-bounds crash in `GESaveData::Load()`'s selectedGamer parsing (2026-07-23)
+
+A fresh code audit found `GESaveData::Load()`'s `selectedGamer` parser had zero bounds validation,
+unlike the sibling `gamer.N.field` parser right next to it. Every accessor indexing the selected
+slot (`GetLives()`/`SetLives()`/etc.) reads `gamers_[selectedGamer_]` with no check of its own, and
+`gamers_` is a fixed 3-element array — a hand-edited or corrupted save file with an out-of-range
+`selectedGamer` is a real out-of-bounds access, not just a latent bug. **Confirmed as an actual
+crash**: a deliberate bug-injection test (disabling the new guard) segfaulted `VerifyGESaveData`
+outright.
+
+Fixed both `Load()` (rejects an out-of-range value, same shape as the sibling parser) and the
+public `SetSelectedGamer(int)` setter (now clamps instead of assigning unchecked). 5 new
+`VerifyGESaveData` checks; verified real teeth via 2 separate bug injections (one reproducing the
+actual segfault), both reverted. Full regression clean on all 3 native backends. See `plan.md`'s
+`MENU-058..069` area for the full writeup.
+
 ### test: close the 3-pickup-wide "second instance at the cap" test-coverage gap (2026-07-23)
 
 A gap noted but deliberately left open during INFRA-006's basic-pickup migration: Dynamite's "can't
