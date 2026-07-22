@@ -113,6 +113,13 @@ pass), not on every unrelated galaxy-eggbert commit.
 build dependency of `../easy-gl`, not previously tracked here even though it's always been required
 locally too).
 
+`../mobile-eggbert` is deliberately NOT in the table above — it's a **test-data**, not build,
+dependency: `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` read real
+`../mobile-eggbert/worlds/*.txt` files directly (found missing the same way, 2026-07-23, when
+`BUILD-009`'s CI ran `ctest` for the first time against a fresh checkout with no `../mobile-eggbert`
+at all). `cna-ci.yml` sparse-checks-out only `worlds/` (a few MB, not the full ~2.3 GB repo —
+`Content/` is irrelevant to these 2 tests), pinned to `07e0a673`, 2026-07-16.
+
 **Known upstream failures, quarantined (not Galaxy Eggbert regressions if they reproduce again):**
 - `easy-gl-resource-smoke-tests` (ctest) — root-caused entirely in `../easy-gl`
   (`test_texture_upload_sets_unpack_alignment_wrap_and_unit0_binding`, see §5 for the full

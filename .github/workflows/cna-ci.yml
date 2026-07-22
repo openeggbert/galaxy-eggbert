@@ -10,6 +10,8 @@
 # the exact commits NEXT.md's "Sibling-repo commit pins" table records as last verified to
 # build/pass against (meta-gl is a transitive dependency of ../easy-gl, not in that table -- see
 # the Checkout meta-gl step below) -- update both places together when bumping a sibling.
+# mobile-eggbert is a separate, sparse (worlds/ only) checkout -- test DATA, not a build
+# dependency (never add_subdirectory()'d); see the Checkout mobile-eggbert step below.
 
 name: GalaxyEggbertCNA CI
 
@@ -70,6 +72,20 @@ jobs:
           repository: openeggbert/meta-gl
           ref: d51fcd7f455de8e3df3549edbed84f2b5527f18a
           path: meta-gl
+
+      # VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna (CMakeLists.txt WORKING_DIRECTORY =
+      # repo root) read real "../mobile-eggbert/worlds/*.txt" files directly off disk, not
+      # embedded fixtures -- a genuine test-data dependency, not a build dependency (mobile-eggbert
+      # is never add_subdirectory()'d). Sparse-checkout just worlds/ (a few MB): the full repo is
+      # ~2.3 GB, almost all of it Content/ (sprite sheets/sounds) neither test needs.
+      - name: Checkout mobile-eggbert (worlds/ only)
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/mobile-eggbert
+          ref: 07e0a67365535154e614d1baed192e489cb28393
+          path: mobile-eggbert
+          sparse-checkout: worlds
+          sparse-checkout-cone-mode: true
 
       # Same package list as ../cna's own devices-tests.yml (proven to build this dependency
       # tree on ubuntu-latest already) plus ccache, which that workflow doesn't use.
