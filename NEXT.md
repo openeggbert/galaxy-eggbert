@@ -2313,20 +2313,25 @@ save file segfaulted on the very next accessor call — confirmed via deliberate
 unified a duplicated `kMaxEggCount` constant; a final systematic public-API-vs-test-coverage sweep
 (every public method in `GEBlupiController`/`GEObjectIcons`/`GEInputPad`/`GEWorldRuntime` grepped
 against its own test file) closed 3 more zero-coverage gaps (5 texture-atlas-selection predicates,
-`TriggerBye()`, `TriggerMockery()`) before that fork explicitly concluded the category had reached
-real diminishing returns (only 3 genuine gaps found across ~50 methods checked). See §3 for each
-entry's full writeup.
+`TriggerBye()`, `TriggerMockery()`); one more follow-up audit with yet another fresh angle (file-I/O
+trust boundaries — external/parsed data flowing unvalidated into array indices or numeric
+conversions) swept every disk-reading path in `src/GalaxyEggbertCNA/`/`src/GalaxyEggbert/` and found
+one more real bug: an uncaught `std::stoi` crash in `LoadFromMobileEggbertFile()`'s `Decor:`/
+`BigDecor:` cell parser (confirmed via bug injection, fixed via a `SafeStoi()` wrapper), plus 2 minor
+hardening gaps consciously left alone (see plan.md's TEST-005 follow-up note for the reasoning). See
+§3 for each entry's full writeup.
 
 **Genuinely next, in order of what's actually startable**:
 
 1. **The code-quality/edge-case audit category is now genuinely close to exhausted, not just
-   "worth trying again."** 6 rounds this session (TODO/FIXME sweep, stale-doc sweep, compiler
-   warnings, a broad edge-case pass that found the `GESaveData` crash, and a systematic public-API
-   sweep) each found real work, narrowing every time, until the last round's own fork explicitly
-   concluded further sweeps of the SAME shape would likely surface little more. A fresh round could
-   still be tried with a genuinely different angle (not just repeating "grep for TODOs" or "grep
-   method names against test files" again) if picking this up cold, but temper expectations more
-   than earlier entries in this list did.
+   "worth trying again."** 7 rounds this session (TODO/FIXME sweep, stale-doc sweep, compiler
+   warnings, a broad edge-case pass that found the `GESaveData` crash, a systematic public-API
+   sweep, and a file-I/O trust-boundary sweep) each found real work, narrowing every time — the last
+   2 rounds each found exactly one real bug plus a couple of consciously-declined minor items. A
+   fresh round could still be tried with a genuinely different angle (not "grep for TODOs" or "grep
+   method names against test files" again — those angles are now spent) if picking this up cold, but
+   temper expectations more than earlier entries in this list did; the marginal yield per round is
+   visibly shrinking.
 2. **`AscenseurVertigo` render geometry** (icons 311-316) and **Suspended/hanging-bar mode**
    (blocked on a NEW "thin-bar" render geometry for icon 202) both need the user to look at a
    screenshot/mockup and choose an approach — see plan.md §0's "Known open bugs" and the
