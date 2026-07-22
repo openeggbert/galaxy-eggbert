@@ -325,6 +325,19 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### docs: confirm golden-capture/trace scripts actually run in this container via `xvfb-run` (2026-07-23)
+
+A prior conversational claim (not written into this file) said golden capture "couldn't be
+completed here" due to a missing SDL/X video device. Re-checked directly rather than trusting that:
+`xvfb-run`/`Xvfb` ARE installed in this container, and `xvfb-run -a ./GalaxyEggbertCNA
+--golden-capture` (using the existing `build-cna` binary) succeeds cleanly — no display error at
+all. Both wrapper scripts confirmed green the same way: `xvfb-run -a tools/verify_golden_frames.sh
+build-cna` → `ALL CHECKS PASSED` (all 3 frames byte-match); `xvfb-run -a tools/verify_golden_trace.sh
+build-cna` → `ALL CHECKS PASSED`. This file's own §7 commands were already correct (they specify
+`xvfb-run`) — nothing here was actually wrong in the docs, the earlier claim was just an
+unverified/incorrect statement made in conversation, not a doc bug. Noted here so it isn't
+re-asserted as an open blocker again without re-checking.
+
 ### chore: editor undo/redo/command-stack invariant audit — clean, nothing found (2026-07-23)
 
 One more fresh-angle audit round, this time targeted rather than a generic sweep: the world
