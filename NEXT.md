@@ -317,6 +317,15 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### chore: unify `kMaxEggCount`'s 2 duplicate definitions (2026-07-23)
+
+Same code audit that found the `GESaveData` bug also flagged `kMaxEggCount` (real `MAX_EGG_COUNT`,
+Decor.cpp:96) defined twice in `GEInteractionSystem.cpp` — once as `float` at the egg-touch gate,
+once as `int` at the voyage-completion gate. Harmless while both agree (both correctly 10), but a
+future rebalance touching only one site would silently desync the two independently-enforced gates.
+Hoisted to one shared `constexpr int` both sites now use. Behavior-preserving (both were already
+10); full regression clean on all 3 native backends.
+
 ### fix: real out-of-bounds crash in `GESaveData::Load()`'s selectedGamer parsing (2026-07-23)
 
 A fresh code audit found `GESaveData::Load()`'s `selectedGamer` parser had zero bounds validation,

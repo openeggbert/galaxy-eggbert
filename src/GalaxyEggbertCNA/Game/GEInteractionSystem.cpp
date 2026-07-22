@@ -21,6 +21,15 @@ namespace GalaxyEggbert::CNA
             return t == ObjectType::ObjectType12;
         }
 
+        // Real MAX_EGG_COUNT (Decor.cpp:96) -- was two separate local
+        // constexpr constants (one `int`, one `float`, both correctly 10
+        // today) at the egg-touch and voyage-completion gate sites, found
+        // via a fresh code audit (2026-07-23): harmless while they agree,
+        // but a future rebalance touching only one site would silently
+        // desync the two independently-enforced gates. Hoisted to one
+        // shared constant both sites now use.
+        constexpr int kMaxEggCount = 10;
+
         // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2), 6th family
         // (2026-07-23): the dynamite-blast victim membership check,
         // extracted verbatim from an inline 27-way `||` chain at its one
@@ -715,7 +724,6 @@ namespace GalaxyEggbert::CNA
 
         // Matches GalaxyEggbertSimple3D's GEDecorSystem (AddTriggerSphere(0.7f)).
         constexpr float kPickupRadius = 0.7f;
-        constexpr float kMaxEggCount = 10; // real mobile-eggbert MAX_EGG_COUNT (Decor.cpp:96)
         // The real contact hitbox is a tile-based rectangle overlap
         // (MoveObjectDetect), not a radius -- kPickupRadius is reused here
         // as the closest existing documented approximation, same
@@ -3144,7 +3152,6 @@ namespace GalaxyEggbert::CNA
         // applied" sound (channel 3) for every kind EXCEPT DoorUnlock
         // (whose dynamic icon never matches any of VoyageStep's own
         // fixed-icon checks, so real completion is silent for it).
-        constexpr int kMaxEggCount = 10; // real MAX_EGG_COUNT, same value as Update()'s own local constant
         switch (voyageKind_)
         {
             case GEInteractionSystem::VoyageKind::Treasure:
