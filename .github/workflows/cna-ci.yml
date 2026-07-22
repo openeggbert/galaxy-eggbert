@@ -1,0 +1,113 @@
+# BUILD-009 (plan.md, NEXT.md "Sibling-repo commit pins"): CI for GalaxyEggbertCNA, the sole
+# actively-developed target (see CLAUDE.md "Current Direction Lock" -- GalaxyEggbertSimple3D is
+# historical reference only and is deliberately NOT built here). Linux only (Web CI is BUILD-003,
+# not done yet); no golden-frame/golden-trace steps (those need a real/virtual GPU display and
+# stay a manual, explicit local step -- see NEXT.md section 7).
+#
+# Sibling repos (cna, easy-3d, easy-gl, sharp-runtime) are plain sibling checkouts referenced via
+# add_subdirectory(../x) in CMakeLists.txt, not git submodules of this repo -- same pattern
+# ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pinned to the exact
+# commits NEXT.md's "Sibling-repo commit pins" table records as last verified to build/pass
+# against -- update both places together when bumping a sibling.
+
+name: GalaxyEggbertCNA CI
+
+on:
+  push:
+    branches: [ develop, master ]
+  pull_request:
+    branches: [ develop, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-test:
+    name: Build + ctest (build-cna, Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout galaxy-eggbert
+        uses: actions/checkout@v4
+        with:
+          path: galaxy-eggbert
+
+      - name: Checkout cna
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/cna
+          ref: ac3aaaeb
+          path: cna
+          submodules: true # non-recursive on purpose -- avoids SDL_image's/SDL_mixer's own
+                            # nested optional-codec submodules this project's CMake args disable
+
+      - name: Checkout easy-3d
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/easy-3d
+          ref: e2d1cfa2
+          path: easy-3d
+
+      - name: Checkout easy-gl
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/easy-gl
+          ref: 62c0a248
+          path: easy-gl
+
+      - name: Checkout sharp-runtime
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/sharp-runtime
+          ref: d2cc9cce
+          path: sharp-runtime
+
+      # Same package list as ../cna's own devices-tests.yml (proven to build this dependency
+      # tree on ubuntu-latest already) plus ccache, which that workflow doesn't use.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            build-essential ninja-build pkg-config ccache \
+            libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-dev \
+            libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+            libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libthai-dev libwayland-dev libdecor-0-dev \
+            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev
+
+      # Vendored SDL3/SDL3_image/SDL3_mixer are built from source on first configure (several
+      # minutes) into cna/.sdl-prebuilt-Linux-x86_64/ -- keyed off the exact submodule commits so
+      # a submodule bump invalidates it automatically, same pattern as ../cna's own CI.
+      - name: Cache vendored SDL prebuilt tree
+        uses: actions/cache@v4
+        with:
+          path: cna/.sdl-prebuilt-Linux-x86_64
+          key: sdl-prebuilt-linux-x86_64-${{ hashFiles('cna/third_party/SDL/**', 'cna/third_party/SDL_image/**', 'cna/third_party/SDL_mixer/**') }}
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-galaxy-eggbert-cna-${{ github.sha }}
+          restore-keys: |
+            ccache-galaxy-eggbert-cna-
+
+      - name: Configure
+        run: |
+          cmake -S galaxy-eggbert -B galaxy-eggbert/build-cna \
+            -DGALAXY_EGGBERT_BUILD_CNA=ON \
+            -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: cmake --build galaxy-eggbert/build-cna -j2
+
+      # easy-gl-resource-smoke-tests is a known, pre-existing upstream ../easy-gl failure,
+      # unrelated to galaxy-eggbert (see NEXT.md "Sibling-repo commit pins" -- "Known upstream
+      # failures, quarantined"). Excluded here so CI stays green for genuine galaxy-eggbert
+      # regressions; if this ever starts failing for a DIFFERENT reason, that's a real signal.
+      - name: Run ctest
+        run: |
+          ctest --test-dir galaxy-eggbert/build-cna --output-on-failure \
+            -E 'easy-gl-resource-smoke-tests'

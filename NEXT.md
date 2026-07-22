@@ -325,6 +325,26 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: BUILD-009 — GitHub Actions CI for GalaxyEggbertCNA (Linux, ctest only) (2026-07-23)
+
+New `.github/workflows/cna-ci.yml`, closing the last open item in `plan.md`'s BUILD-00x list
+besides Windows cross-compile/packaging. Checks out `galaxy-eggbert` plus the 4 pinned sibling
+repos (`cna`/`easy-3d`/`easy-gl`/`sharp-runtime`, same commits as this file's "Sibling-repo commit
+pins" table above) as directory siblings, reuses `../cna`'s own already-proven
+`devices-tests.yml` apt package list + vendored-SDL cache pattern, adds a ccache cache on top,
+configures `-DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`, builds, then runs
+`ctest --test-dir build-cna -E 'easy-gl-resource-smoke-tests'` (excluding the one known,
+pre-existing, unrelated upstream failure documented above).
+
+Scoped out by explicit user decision: no golden-frame/golden-trace steps in CI (no `xvfb-run`) —
+those stay a manual local step, see the entry directly below and §7's commands. Verified locally
+what could be verified without an actual GitHub-hosted runner: `ctest --test-dir build-cna` with
+`DISPLAY` unset (no `xvfb-run`) passes 81/82 in this container, same single known-quarantined
+failure this workflow's `-E` excludes — confirms the exclusion is correct against today's sibling
+pins. The apt/SDL-cache steps are copied from `../cna`'s own working CI, not newly invented, but a
+genuinely fresh GitHub Actions run has not been triggered from here — see `plan.md`'s `BUILD-009`
+entry for the full caveat. Full `plan.md` `BUILD-009` entry has the complete writeup.
+
 ### docs: confirm golden-capture/trace scripts actually run in this container via `xvfb-run` (2026-07-23)
 
 A prior conversational claim (not written into this file) said golden capture "couldn't be

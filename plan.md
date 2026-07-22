@@ -2138,7 +2138,29 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
 - [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
 - [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
 - [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests
-- [ ] BUILD-009 — CI: automated build on push (GitHub Actions), CNA target only (Linux; Web once BUILD-003 exists)
+- [x] BUILD-009 — CI: automated build on push (GitHub Actions), CNA target only (Linux; Web once
+      BUILD-003 exists) — **done (2026-07-23)**. New `.github/workflows/cna-ci.yml`: checks out
+      `galaxy-eggbert` plus the 4 pinned sibling repos (`cna`/`easy-3d`/`easy-gl`/`sharp-runtime`,
+      exact commits from this file's "Sibling-repo commit pins" table) as true directory siblings,
+      installs the same apt package list `../cna`'s own `devices-tests.yml` already proved builds
+      this dependency tree on `ubuntu-latest`, caches the vendored SDL3 prebuilt tree (keyed on
+      submodule commit hashes) and ccache, configures with `-DGALAXY_EGGBERT_BUILD_CNA=ON
+      -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`, builds, then runs `ctest --test-dir build-cna`
+      excluding the one known, pre-existing, unrelated `easy-gl-resource-smoke-tests` failure.
+      Deliberately scoped OUT, per explicit user decision: no golden-frame/golden-trace steps (no
+      `xvfb-run`) — those stay a manual local step (NEXT.md §7), keeping this job simpler and not
+      dependent on a virtual display/GPU driver behaving identically to a dev machine.
+      **Locally verified the parts that don't require a fresh GitHub-hosted runner**: this
+      environment's own `build-cna` already has `easy-gl` linked in (proving the same sibling set
+      this workflow checks out is sufficient), and `ctest --test-dir build-cna` with `DISPLAY`
+      unset (no `xvfb-run` at all) passed 81/82 here — only the same known `easy-gl-resource-
+      smoke-tests` failure this workflow excludes, confirming the exclusion is both necessary and
+      sufficient with today's sibling pins. **Not yet verified**: an actual clean GitHub Actions
+      run (this session has no way to trigger one) — the apt package list, SDL vendored-build step,
+      and submodule-checkout shape are reused verbatim from `../cna`'s own already-working CI, not
+      newly invented, but a first real run on `push`/`pull_request` could still surface a
+      runner-specific gap (network, disk, memory limits) this environment can't reproduce. Treat
+      the first live run's result as the actual confirmation, not this entry.
 - [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets) for `GalaxyEggbertCNA`
 
 Dropped (dead Simple3D/U3D/Nova3D/Android direction, do not carry forward): old BUILD-001..002 as
