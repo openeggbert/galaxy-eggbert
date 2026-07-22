@@ -95,7 +95,7 @@ code is confirmed backend-agnostic through this.
 
 ### Sibling-repo commit pins (`INFRA-009`, plan.md §7)
 
-Galaxy Eggbert depends on 4 sibling repositories, each under independent development (see the
+Galaxy Eggbert depends on 5 sibling repositories, each under independent development (see the
 `sharp-runtime` note above) — the commits below are what this repo was last verified to build/pass
 against. Update this list whenever a sibling repo is rebuilt against (a full local rebuild + `ctest`
 pass), not on every unrelated galaxy-eggbert commit.
@@ -106,6 +106,12 @@ pass), not on every unrelated galaxy-eggbert commit.
 | `../cna` | `ac3aaaeb` | 2026-07-18 |
 | `../easy-gl` | `62c0a248` | 2026-07-19 |
 | `../sharp-runtime` | `d2cc9cce` | 2026-07-16 |
+| `../meta-gl` | `d51fcd7f` | 2026-07-18 |
+
+`../meta-gl` was added to this table 2026-07-23, found missing while setting up `BUILD-009`'s CI
+(`../easy-gl/CMakeLists.txt` unconditionally `add_subdirectory(../meta-gl)` — a genuine transitive
+build dependency of `../easy-gl`, not previously tracked here even though it's always been required
+locally too).
 
 **Known upstream failures, quarantined (not Galaxy Eggbert regressions if they reproduce again):**
 - `easy-gl-resource-smoke-tests` (ctest) — root-caused entirely in `../easy-gl`

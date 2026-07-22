@@ -4,11 +4,12 @@
 # not done yet); no golden-frame/golden-trace steps (those need a real/virtual GPU display and
 # stay a manual, explicit local step -- see NEXT.md section 7).
 #
-# Sibling repos (cna, easy-3d, easy-gl, sharp-runtime) are plain sibling checkouts referenced via
-# add_subdirectory(../x) in CMakeLists.txt, not git submodules of this repo -- same pattern
-# ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pinned to the exact
-# commits NEXT.md's "Sibling-repo commit pins" table records as last verified to build/pass
-# against -- update both places together when bumping a sibling.
+# Sibling repos (cna, easy-3d, easy-gl, sharp-runtime, meta-gl) are plain sibling checkouts
+# referenced via add_subdirectory(../x) in CMakeLists.txt, not git submodules of this repo -- same
+# pattern ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pinned to
+# the exact commits NEXT.md's "Sibling-repo commit pins" table records as last verified to
+# build/pass against (meta-gl is a transitive dependency of ../easy-gl, not in that table -- see
+# the Checkout meta-gl step below) -- update both places together when bumping a sibling.
 
 name: GalaxyEggbertCNA CI
 
@@ -59,6 +60,16 @@ jobs:
           repository: openeggbert/sharp-runtime
           ref: d2cc9cce5b494294e4c34594b85e7948f81be214
           path: sharp-runtime
+
+      # Not in NEXT.md's "Sibling-repo commit pins" table (a real gap fixed alongside this
+      # workflow) -- ../easy-gl/CMakeLists.txt unconditionally add_subdirectory(../meta-gl), so
+      # this is a genuine transitive build dependency, not optional.
+      - name: Checkout meta-gl
+        uses: actions/checkout@v4
+        with:
+          repository: openeggbert/meta-gl
+          ref: d51fcd7f455de8e3df3549edbed84f2b5527f18a
+          path: meta-gl
 
       # Same package list as ../cna's own devices-tests.yml (proven to build this dependency
       # tree on ubuntu-latest already) plus ccache, which that workflow doesn't use.
