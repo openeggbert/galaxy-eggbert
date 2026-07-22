@@ -1,11 +1,23 @@
 # NEXT.md — Galaxy Eggbert
 
-_Session paused 2026-07-23: the autonomous session's safe, independent, in-scope work is done and
-committed/pushed (see §3/§10). Everything remaining in the backlog needs the user's own input before
-proceeding — either visual/design judgment (`AscenseurVertigo`/`Suspended` render geometry, seam-line
-transparency) or scope/priority confirmation for large content work (`TILE-005`'s 4 remaining
-worlds). The code-quality/edge-case audit category is confirmed exhausted for this session (8 rounds,
-last one genuinely clean — see §3/§10). Do not manufacture more audit rounds by default; ask the user
+_Session paused 2026-07-23 (updated): since the note below was first written, a separate
+user-directed pass closed out the `INFRA-*` doc-audit follow-ups and `BUILD-009` (CI). Concretely:
+the P0-1 behavioral trace, `INFRA-003`'s programmatic reference-doc check, and `INFRA-005`'s merged
+X+Z+Y resolve were all confirmed genuinely done (not overclaims); one real doc mismatch (24 vs 25
+rows) was fixed; golden-capture/trace were confirmed to actually run in this container via
+`xvfb-run`; and `BUILD-009` (GitHub Actions CI for `GalaxyEggbertCNA`) was built, live-debugged
+through 4 real pushes (abbreviated-SHA, missing `meta-gl` sibling, missing `mobile-eggbert` test
+data — see §3), and confirmed fully green on a real run. Two items from that pass remain
+deliberately open, not silently closed: `INFRA-004`'s unverified-icon table is still bookkeeping
+only, not wired into the renderer/CI as an enforcement gate; `INFRA-006`'s handler-table migration
+is still genuinely partial (6 families done, ~48 `ObjectType`s and 2 cross-cutting lists remain).
+Neither was picked up — awaiting direction on which (if either) to tackle next.
+
+Everything else in the backlog still needs the user's own input before proceeding — either
+visual/design judgment (`AscenseurVertigo`/`Suspended` render geometry, seam-line transparency) or
+scope/priority confirmation for large content work (`TILE-005`'s 4 remaining worlds). The
+code-quality/edge-case audit category is confirmed exhausted for the prior session (8 rounds, last
+one genuinely clean — see §3/§10). Do not manufacture more audit rounds by default; ask the user
 which backlog item to pick up next, or wait for new direction._
 
 _Last updated: 2026-07-23 (autonomous session). The in-game 3D world editor is **COMPLETE**: all 13
