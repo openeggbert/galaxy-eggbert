@@ -2284,16 +2284,23 @@ bug); swept for and fixed a compiler warning; closed a 3-pickup-wide test-covera
 Egg/BulletPack "second instance at the cap"); a further broader audit then found and fixed a real
 out-of-bounds **crash** in `GESaveData::Load()` (an unvalidated `selectedGamer` from a corrupted
 save file segfaulted on the very next accessor call — confirmed via deliberate bug injection) plus
-unified a duplicated `kMaxEggCount` constant. See §3 for each entry's full writeup.
+unified a duplicated `kMaxEggCount` constant; a final systematic public-API-vs-test-coverage sweep
+(every public method in `GEBlupiController`/`GEObjectIcons`/`GEInputPad`/`GEWorldRuntime` grepped
+against its own test file) closed 3 more zero-coverage gaps (5 texture-atlas-selection predicates,
+`TriggerBye()`, `TriggerMockery()`) before that fork explicitly concluded the category had reached
+real diminishing returns (only 3 genuine gaps found across ~50 methods checked). See §3 for each
+entry's full writeup.
 
 **Genuinely next, in order of what's actually startable**:
 
-1. **A fresh, focused code-quality/edge-case audit still found real, closeable work every time it
-   was tried this session** (4 rounds: TODO/FIXME sweep, stale-doc sweep, compiler warnings, and a
-   broader edge-case pass that found the `GESaveData` crash) — worth trying again before assuming
-   there's nothing left, rather than declaring this category exhausted. Each round narrowed further
-   (compiler warnings found exactly 1; the broadest pass still found a real crash) — genuinely
-   diminishing, but not yet zero.
+1. **The code-quality/edge-case audit category is now genuinely close to exhausted, not just
+   "worth trying again."** 6 rounds this session (TODO/FIXME sweep, stale-doc sweep, compiler
+   warnings, a broad edge-case pass that found the `GESaveData` crash, and a systematic public-API
+   sweep) each found real work, narrowing every time, until the last round's own fork explicitly
+   concluded further sweeps of the SAME shape would likely surface little more. A fresh round could
+   still be tried with a genuinely different angle (not just repeating "grep for TODOs" or "grep
+   method names against test files" again) if picking this up cold, but temper expectations more
+   than earlier entries in this list did.
 2. **`AscenseurVertigo` render geometry** (icons 311-316) and **Suspended/hanging-bar mode**
    (blocked on a NEW "thin-bar" render geometry for icon 202) both need the user to look at a
    screenshot/mockup and choose an approach — see plan.md §0's "Known open bugs" and the
