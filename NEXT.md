@@ -317,6 +317,29 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### chore: editor undo/redo/command-stack invariant audit — clean, nothing found (2026-07-23)
+
+One more fresh-angle audit round, this time targeted rather than a generic sweep: the world
+editor's `GEEditCommandStack`/`GEWorldEditor` dirty-tracking/undo-redo state machine, which reached
+feature completeness this session (EDITOR-100..112) but had never had this specific lens applied.
+Checked, by direct code reading (not speculation): every `EditCommand::Kind` variant's `Undo()`/
+`Redo()` correctly inverts what its matching `Push()` site populated (no stale/default field found
+in any variant); `Push()` unconditionally clears the redo stack so a post-undo edit can never let
+redo resurrect a stale command (already tested); undo/redo on an empty stack are no-op `false`
+returns (already tested); `dirty_`'s sticky-until-Save behavior (even across Undo) is a deliberate,
+documented design choice, not a bug, since an undo doesn't guarantee the on-disk file matches;
+`backConfirmArmed_` is correctly reset by every path that should reset it, including both Undo and
+Redo; every `GEEditCommand` field is a plain value type (`Worlds::Block`, `MoveObjectRecord`,
+scalars) with no pointers/references, so no dangling-reference risk exists.
+**Result: no genuine bug found — nothing changed, nothing committed.** One coverage-only note (not
+a defect): `RefreshSelectedObjectAfterHistoryChange()` (GEWorldEditor.cpp:644-659), which re-syncs
+`hasSelectedObject_`/`selectedObject_` after every undo/redo, is verifiably correct by inspection
+but has no test at the `GEWorldEditor::Update()` level (no public accessor exists to inspect
+selection state from a test) — left as a documented gap, not invented a test around a nonexistent
+accessor just to have one. Together with the file-I/O trust-boundary audit above (which DID find a
+real bug) and the immediately-prior public-API sweep, this confirms the code-quality/edge-case audit
+category has now genuinely reached diminishing returns rather than just "narrowing" — see §10.
+
 ### fix: uncaught `std::stoi` crash in `LoadFromMobileEggbertFile()` (2026-07-23)
 
 A follow-up file-I/O trust-boundary audit (a different angle from the public-API sweep below —
@@ -2318,20 +2341,23 @@ trust boundaries — external/parsed data flowing unvalidated into array indices
 conversions) swept every disk-reading path in `src/GalaxyEggbertCNA/`/`src/GalaxyEggbert/` and found
 one more real bug: an uncaught `std::stoi` crash in `LoadFromMobileEggbertFile()`'s `Decor:`/
 `BigDecor:` cell parser (confirmed via bug injection, fixed via a `SafeStoi()` wrapper), plus 2 minor
-hardening gaps consciously left alone (see plan.md's TEST-005 follow-up note for the reasoning). See
-§3 for each entry's full writeup.
+hardening gaps consciously left alone (see plan.md's TEST-005 follow-up note for the reasoning); one
+final targeted audit (editor undo/redo/command-stack invariants — a fresh, specific angle, not a
+repeat of the generic sweeps) came back **clean, nothing found**, after genuinely careful direct
+code reading (not a rushed pass) — see §3's own entry for exactly what was checked. See §3 for each
+entry's full writeup.
 
 **Genuinely next, in order of what's actually startable**:
 
-1. **The code-quality/edge-case audit category is now genuinely close to exhausted, not just
-   "worth trying again."** 7 rounds this session (TODO/FIXME sweep, stale-doc sweep, compiler
-   warnings, a broad edge-case pass that found the `GESaveData` crash, a systematic public-API
-   sweep, and a file-I/O trust-boundary sweep) each found real work, narrowing every time — the last
-   2 rounds each found exactly one real bug plus a couple of consciously-declined minor items. A
-   fresh round could still be tried with a genuinely different angle (not "grep for TODOs" or "grep
-   method names against test files" again — those angles are now spent) if picking this up cold, but
-   temper expectations more than earlier entries in this list did; the marginal yield per round is
-   visibly shrinking.
+1. **The code-quality/edge-case audit category is now confirmed exhausted for this session, not
+   just narrowing.** 8 rounds (TODO/FIXME sweep, stale-doc sweep, compiler warnings, a broad
+   edge-case pass that found the `GESaveData` crash, a systematic public-API sweep, a file-I/O
+   trust-boundary sweep, and a targeted editor-invariant audit) found real work every time except
+   the last, which came back genuinely clean after a careful, specific-angle look. Don't reach for
+   "audit round 9" with another generic sweep as the default next move — the remaining items below
+   are the actual backlog, and most need the user's input before proceeding (visual/design judgment,
+   or scope confirmation for large content work). If truly nothing else is startable, that is the
+   correct point to report back and ask, not to manufacture another audit.
 2. **`AscenseurVertigo` render geometry** (icons 311-316) and **Suspended/hanging-bar mode**
    (blocked on a NEW "thin-bar" render geometry for icon 202) both need the user to look at a
    screenshot/mockup and choose an approach — see plan.md §0's "Known open bugs" and the
