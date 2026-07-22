@@ -317,6 +317,33 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### test: close 3 more zero-coverage gaps found by a systematic public-API sweep (2026-07-23)
+
+A follow-up audit systematically grepped every public method in `GEBlupiController.hpp`/
+`GEObjectIcons.hpp`/`GEInputPad.hpp`/`GEWorldRuntime.hpp` against its own test file, treating zero
+hits (after ruling out coverage split across a sibling test file) as a real finding. `GEInputPad`
+and `GEWorldRuntime` came back fully covered; 3 real gaps closed:
+
+- **`GEObjectIcons`'s 5 texture-atlas-selection predicates** (`IsUniformCubeObject`/
+  `IsObjectMPngSourced`/`IsExploPngSourced`/`IsBlupiPngSourced`/`UsesBlupi1Texture`) had zero
+  coverage anywhere — these gate which of 5 real sprite sheets an `ObjectType`'s billboard samples
+  from; a type moved between lists would render with a completely wrong/garbage texture, silently,
+  with no assertion catching it. Added a regression lock on today's exact membership plus 2
+  exhaustive invariant checks across every real `ObjectType` (0-255): the 4 predicates are mutually
+  exclusive, and `UsesBlupi1Texture` is always a subset of `IsBlupiPngSourced`.
+- **`GEBlupiController::TriggerBye()`** (real "Bye" farewell freeze) had zero coverage — added the
+  same "freeze, count down, auto-resume" test shape already used for `TriggerOneShotAnim()`/
+  `TriggerTeleport()`, plus 2 of its 7 real exclusion-condition checks.
+- **`GEBlupiController::TriggerMockery()`** (real taunt animations) had zero coverage — added
+  success/already-mocking/cooldown/variant-duration checks. One test-design mistake caught and
+  fixed while writing it: `TriggerMockery()` has no internal balloon/vehicle exclusion check by
+  design (its own comment says the real gate is satisfied by the CALLER only invoking it while
+  `GetAnimState()==Stop`) — a first draft wrongly expected an internal check; fixed to instead
+  verify the actual relied-upon invariant (ballooned state never reads as `Stop`).
+
+Verified real teeth via bug injection on all 3 (texture-predicate exclusivity/subset checks, and
+`TriggerBye()`'s exclusion gate), all reverted. Full regression clean on all 3 native backends.
+
 ### chore: unify `kMaxEggCount`'s 2 duplicate definitions (2026-07-23)
 
 Same code audit that found the `GESaveData` bug also flagged `kMaxEggCount` (real `MAX_EGG_COUNT`,

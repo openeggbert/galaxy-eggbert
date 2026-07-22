@@ -309,6 +309,79 @@ int main()
     checkStatic(ObjectType::ObjectType22, 0, "ObjectType22 (no real icon -- confirmed gap, not a bug)");
     checkStatic(ObjectType::ObjectType58, 0, "ObjectType58 (no real icon -- confirmed gap, not a bug)");
 
+    // Texture-atlas-selection predicates (2026-07-23, found via a fresh
+    // code audit to have zero test coverage anywhere in tools/):
+    // IsUniformCubeObject/IsObjectMPngSourced/IsExploPngSourced/
+    // IsBlupiPngSourced gate which of 5 real sheets (object-m.png,
+    // element.png [the implicit "none of the above" default],
+    // explo.png, blupi.png/blupi1.png) a type's billboard actually
+    // samples from -- used by both real gameplay rendering and the
+    // editor palette (GEEditorPalette.cpp). A type accidentally moved
+    // between lists renders with a completely wrong/garbage texture --
+    // visually broken, silent, no assertion elsewhere would catch it,
+    // only a live screenshot would. The 4 predicates must be mutually
+    // EXCLUSIVE (each type samples exactly one sheet); UsesBlupi1Texture
+    // must be a subset of IsBlupiPngSourced (blupi1.png selection is
+    // only meaningful for types already on the blupi-png path).
+    {
+        // Regression lock: exact current membership, transcribed directly
+        // from GEObjectIcons.cpp's own switch statements (not re-derived
+        // from mobile-eggbert -- see this file's own top comment on scope).
+        check(IsUniformCubeObject(ObjectType::ObjectType1) && IsUniformCubeObject(ObjectType::ObjectType12) &&
+                  IsUniformCubeObject(ObjectType::ObjectType47) && IsUniformCubeObject(ObjectType::ObjectType48),
+              "IsUniformCubeObject() matches its real membership list (1/12/47/48)");
+        check(IsObjectMPngSourced(ObjectType::ObjectType14) && IsObjectMPngSourced(ObjectType::ObjectType15) &&
+                  IsObjectMPngSourced(ObjectType::ObjectType31) && IsObjectMPngSourced(ObjectType::ObjectType35) &&
+                  IsObjectMPngSourced(ObjectType::ObjectType52),
+              "IsObjectMPngSourced() matches its real membership list (14/15/31/35/52)");
+        check(IsExploPngSourced(ObjectType::ObjectType8) && IsExploPngSourced(ObjectType::ObjectType53) &&
+                  IsExploPngSourced(ObjectType::ObjectType100),
+              "IsExploPngSourced() matches its real membership list (spot-checked: 8/53/100)");
+        check(IsBlupiPngSourced(ObjectType::ObjectType200) && IsBlupiPngSourced(ObjectType::ObjectType38),
+              "IsBlupiPngSourced() matches its real membership list (spot-checked: 200/38)");
+        check(!IsUniformCubeObject(ObjectType::ObjectType6) && !IsObjectMPngSourced(ObjectType::ObjectType6) &&
+                  !IsExploPngSourced(ObjectType::ObjectType6) && !IsBlupiPngSourced(ObjectType::ObjectType6),
+              "the extra-life egg (ObjectType6) is on none of the 4 special sheets -- falls to element.png");
+
+        // Exhaustive mutual-exclusivity check across ObjectType's full
+        // real range (a uint8_t enum, 0-255) -- no type may be claimed by
+        // more than one of the 4 predicates at once.
+        bool exclusive = true;
+        int overlapType = -1;
+        for (int i = 0; i <= 255; ++i)
+        {
+            const ObjectType t = GalaxyEggbert::ToObjectType(i);
+            const int claims = (IsUniformCubeObject(t) ? 1 : 0) + (IsObjectMPngSourced(t) ? 1 : 0) +
+                               (IsExploPngSourced(t) ? 1 : 0) + (IsBlupiPngSourced(t) ? 1 : 0);
+            if (claims > 1)
+            {
+                exclusive = false;
+                overlapType = i;
+                break;
+            }
+        }
+        check(exclusive, "the 4 texture-sheet predicates are mutually exclusive across every ObjectType (0-255)" +
+                              (exclusive ? std::string() : ", first overlap at type " + std::to_string(overlapType)));
+
+        // UsesBlupi1Texture must never claim a type IsBlupiPngSourced()
+        // itself doesn't -- blupi1.png selection only makes sense for
+        // types already routed onto the blupi-png path.
+        bool subsetHolds = true;
+        int violatingType = -1;
+        for (int i = 0; i <= 255; ++i)
+        {
+            const ObjectType t = GalaxyEggbert::ToObjectType(i);
+            if (UsesBlupi1Texture(t) && !IsBlupiPngSourced(t))
+            {
+                subsetHolds = false;
+                violatingType = i;
+                break;
+            }
+        }
+        check(subsetHolds, "UsesBlupi1Texture() is always a subset of IsBlupiPngSourced()" +
+                                (subsetHolds ? std::string() : ", violated at type " + std::to_string(violatingType)));
+    }
+
     std::cout << checksRun << " checks run, " << checksFailed << " failed." << std::endl;
     std::cout << (checksFailed == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return checksFailed == 0 ? 0 : 1;

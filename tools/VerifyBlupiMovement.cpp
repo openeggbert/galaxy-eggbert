@@ -2091,6 +2091,105 @@ int main(int argc, char** argv)
         check(!firing.IsOneShotAnimPlaying(), "FireTank one-shot anim ends on its own after kFireTankDuration");
     }
 
+    // TriggerBye() -- real "Bye" farewell freeze (world-select portal
+    // contact). Zero existing coverage anywhere, found via a fresh code
+    // audit (2026-07-23) -- same "freeze, count down, auto-resume" shape
+    // already covered for TriggerOneShotAnim()/TriggerTeleport() above,
+    // just never exercised for this specific trigger.
+    {
+        GEBlupiController bye;
+        bye.SetPosition(0.0f, 1.0f, 0.0f);
+        check(bye.TriggerBye(), "TriggerBye() returns true when not already frozen/locked");
+        check(bye.IsBye(), "IsBye() is true immediately after a successful TriggerBye()");
+        check(!bye.TriggerBye(), "TriggerBye() is a no-op (returns false) while already Bye");
+
+        int stepsToResumeBye = 0;
+        while (bye.IsBye() && stepsToResumeBye < 200)
+        {
+            bye.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToResumeBye;
+        }
+        check(stepsToResumeBye < 200, "Bye resolves within a bounded time");
+        check(!bye.IsBye(), "Bye ends on its own after kByeDuration");
+
+        // 2 of the real gate's 7 exclusion conditions, representative
+        // samples matching the same rigor TriggerTeleport()'s own test
+        // above already applies (not exhaustively all 7).
+        GEBlupiController ballooned;
+        ballooned.SetPosition(0.0f, 1.0f, 0.0f);
+        check(ballooned.TriggerBalloon(), "test setup sanity: TriggerBalloon() succeeds");
+        check(!ballooned.TriggerBye(), "TriggerBye() is a no-op while ballooned (real !m_blupiBalloon gate)");
+
+        GEBlupiController crushed;
+        crushed.SetPosition(0.0f, 1.0f, 0.0f);
+        check(crushed.TriggerCrush(), "test setup sanity: TriggerCrush() succeeds");
+        check(!crushed.TriggerBye(), "TriggerBye() is a no-op while squashed (real !m_blupiEcrase gate)");
+    }
+
+    // TriggerMockery() -- real Mockery/Mockeryi/Mockeryp taunt animations.
+    // Zero existing coverage anywhere, found via the same fresh code audit.
+    // Unlike every TriggerX() above, this is deliberately NOT a freeze
+    // (real source never drops m_blupiFocus for it) -- GetAnimState()
+    // itself, not a separate IsXPlaying()-style flag, is how the caller
+    // observes it (matching this class's own header comment).
+    {
+        GEBlupiController mocking;
+        mocking.SetPosition(0.0f, 1.0f, 0.0f);
+        check(mocking.IsMockeryCooldownElapsed(), "test setup sanity: cooldown already elapsed on a fresh controller");
+        check(mocking.TriggerMockery(GEBlupiController::AnimState::Mockery),
+              "TriggerMockery(Mockery) returns true when not already mocking/frozen/on-cooldown");
+        mocking.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(mocking.GetAnimState() == GEBlupiController::AnimState::Mockery,
+              "Mockery anim state takes precedence over Stop while playing");
+        check(!mocking.TriggerMockery(GEBlupiController::AnimState::Mockeryi),
+              "TriggerMockery() is a no-op while already mocking (even for a different variant)");
+
+        int stepsToResumeMockery = 0;
+        while (mocking.GetAnimState() == GEBlupiController::AnimState::Mockery && stepsToResumeMockery < 300)
+        {
+            mocking.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            ++stepsToResumeMockery;
+        }
+        check(stepsToResumeMockery < 300, "Mockery resolves within a bounded time (real kMockeryDuration)");
+        check(!mocking.IsMockeryCooldownElapsed(),
+              "the real cooldown (kMockeryCooldown) is active immediately after Mockery ends");
+        check(!mocking.TriggerMockery(GEBlupiController::AnimState::Mockery),
+              "TriggerMockery() is a no-op while on cooldown, even though no longer actively mocking");
+
+        // A different variant (Mockeryi) uses its own real distinct
+        // duration (kMockeryiDuration), on a fresh controller so the
+        // cooldown above doesn't gate it.
+        GEBlupiController mockingI;
+        mockingI.SetPosition(0.0f, 1.0f, 0.0f);
+        check(mockingI.TriggerMockery(GEBlupiController::AnimState::Mockeryi),
+              "TriggerMockery(Mockeryi) returns true on a fresh controller");
+        mockingI.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(mockingI.GetAnimState() == GEBlupiController::AnimState::Mockeryi,
+              "Mockeryi anim state takes precedence over Stop while playing");
+
+        // TriggerMockery() itself has NO explicit vehicle/balloon/etc.
+        // exclusion check (unlike TriggerBye() above) -- its own header
+        // comment says this is intentional: the real gate is satisfied
+        // implicitly by the CALLER only invoking it while
+        // GetAnimState()==Stop, since every other mode already has its
+        // own distinct AnimState taking precedence over Stop in
+        // UpdateAnim(). What this test can actually verify is that
+        // exact relied-upon invariant: while ballooned, GetAnimState()
+        // genuinely never reads as Stop, so a real, correctly-written
+        // caller (checking GetAnimState()==Stop first) could never reach
+        // TriggerMockery() while ballooned in practice. (Calling
+        // TriggerMockery() directly here without that caller-side check,
+        // as a first draft of this test did, is not a real scenario --
+        // confirmed by re-reading this function's own doc comment.)
+        GEBlupiController ballooned2;
+        ballooned2.SetPosition(0.0f, 1.0f, 0.0f);
+        check(ballooned2.TriggerBalloon(), "test setup sanity: TriggerBalloon() succeeds");
+        ballooned2.Step(world, 0.0f, 0.0f, false, false, false, dt);
+        check(ballooned2.GetAnimState() != GEBlupiController::AnimState::Stop,
+              "while ballooned, GetAnimState() never reads Stop -- the invariant TriggerMockery()'s "
+              "own caller-side gate relies on instead of an internal balloon check");
+    }
+
     // Airborne horizontal wall collision (INFRA-005, plan.md §7) -- the
     // CONFIRMED bug this whole resolver refactor set out to fix:
     // TryMoveAxis() used to short-circuit its wall check entirely while

@@ -3169,6 +3169,21 @@ reset to `[ ]` except the small set with direct CNA evidence.
       temporary debug harness (reverted before commit): standing near world999.vwr's own wasp
       (`ObjectType44`) correctly triggered `Mockery` (not `Mockeryi`/`Mockeryp`) with the exact real
       `263,264,265,264` icon cycle. Full regression clean.
+
+      **Test-coverage gap closed 2026-07-23 (autonomous session, found via a systematic public-API
+      sweep)**: `TriggerBye()`/`TriggerMockery()` (this entry) both had ZERO coverage in
+      `tools/VerifyBlupiMovement.cpp` despite being real, non-trivial gated triggers (7 and 8
+      exclusion conditions respectively) — every OTHER `TriggerX()` in the class already had at
+      least some coverage. Added the same "freeze/trigger, count down, auto-resume" test shape
+      already used for `TriggerOneShotAnim()`/`TriggerTeleport()`, plus representative exclusion-
+      gate spot-checks (ballooned/squashed for both). One real test-design mistake caught while
+      writing `TriggerMockery()`'s own test: a first draft assumed an internal balloon-exclusion
+      check that doesn't exist by design (this entry's own text above already explains why: the
+      real gate is the CALLER's job, via `GetAnimState()==Stop`, not an internal check) — fixed to
+      verify the actual relied-upon invariant instead (ballooned state never reads as `Stop`).
+      Verified real teeth on `TriggerBye()`'s exclusion gate via deliberate bug injection (dropped
+      the balloon/ecrase conditions, caught precisely, reverted). Full regression clean on all 3
+      native backends.
 - [x] BLUPI-068 — Balloon (balloon flight mode) — **stale checkbox, closed 2026-07-18** (found while
       auditing this whole section): already done, `AnimState::Balloon`/`kBalloonFrames`, added
       2026-07-11 (plan.md E3D-MIG-064).
@@ -6069,6 +6084,26 @@ specifically, same as any other large/risky item elsewhere in this file.
       (confirmed via `git diff`). Full regression clean on all 3 native builds (`build-cna`/
       `cmake-build-debug`: 81/82, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
       failure; `build-cna-vulkan`: 79/79 clean, that failure doesn't reproduce there).
+
+      **Sibling gap closed 2026-07-23 (autonomous session, found via a systematic public-API
+      sweep)**: `GEObjectIcons.hpp`'s 5 texture-atlas-selection predicates
+      (`IsUniformCubeObject`/`IsObjectMPngSourced`/`IsExploPngSourced`/`IsBlupiPngSourced`/
+      `UsesBlupi1Texture`) had zero test coverage anywhere in `tools/` despite `GetObjIcon()` itself
+      (this entry) being thoroughly covered — these gate which of 5 real sprite sheets
+      (object-m.png/element.png/explo.png/blupi.png/blupi1.png) an `ObjectType`'s billboard
+      actually samples from, used by both real gameplay rendering and the editor palette. A type
+      accidentally moved between lists renders with a completely wrong/garbage texture — visually
+      broken, silent, no assertion anywhere would catch it, only a live screenshot would. Added to
+      `tools/VerifyGetObjIcon.cpp`: a regression lock on today's exact membership (transcribed
+      directly from `GEObjectIcons.cpp`'s own switch statements) plus 2 EXHAUSTIVE invariant checks
+      swept across every real `ObjectType` value (0-255, the enum's own full `uint8_t` range): the
+      4 sheet-selection predicates are mutually exclusive (no type claimed by more than one), and
+      `UsesBlupi1Texture` is always a subset of `IsBlupiPngSourced` (blupi1.png selection is only
+      meaningful for types already routed onto the blupi-png path). Verified real teeth via 2
+      separate deliberate bug injections (a manufactured overlap between `IsUniformCubeObject`/
+      `IsObjectMPngSourced`; a manufactured `UsesBlupi1Texture` violation) — both caught precisely,
+      identifying the exact offending type, both reverted. Full regression clean on all 3 native
+      backends.
 - [x] `INFRA-004` (`REMAKE-ANALYSIS.md` P0-3) done (2026-07-21). Marked the still-unverified 2D→3D
       render-mapping icon identities (`mobile-eggbert-reference/15-3d-render-mapping-design.md`
       §10.2-§10.5, as applied per-icon in `02-tiles.md`'s Category column) as an explicit,
