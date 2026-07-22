@@ -2139,28 +2139,53 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
 - [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
 - [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests
 - [x] BUILD-009 — CI: automated build on push (GitHub Actions), CNA target only (Linux; Web once
-      BUILD-003 exists) — **done (2026-07-23)**. New `.github/workflows/cna-ci.yml`: checks out
-      `galaxy-eggbert` plus the 4 pinned sibling repos (`cna`/`easy-3d`/`easy-gl`/`sharp-runtime`,
-      exact commits from this file's "Sibling-repo commit pins" table) as true directory siblings,
-      installs the same apt package list `../cna`'s own `devices-tests.yml` already proved builds
-      this dependency tree on `ubuntu-latest`, caches the vendored SDL3 prebuilt tree (keyed on
+      BUILD-003 exists) — **done and confirmed green on a real GitHub Actions run (2026-07-23)**.
+      New `.github/workflows/cna-ci.yml`: checks out `galaxy-eggbert` plus 5 pinned sibling repos
+      (`cna`/`easy-3d`/`easy-gl`/`sharp-runtime`/`meta-gl`, exact commits from this file's
+      "Sibling-repo commit pins" table) as true directory siblings, plus a sparse (`worlds/`-only)
+      checkout of `../mobile-eggbert` (test data, not a build dependency — see below), installs
+      the same apt package list `../cna`'s own `devices-tests.yml` already proved builds this
+      dependency tree on `ubuntu-latest`, caches the vendored SDL3 prebuilt tree (keyed on
       submodule commit hashes) and ccache, configures with `-DGALAXY_EGGBERT_BUILD_CNA=ON
       -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`, builds, then runs `ctest --test-dir build-cna`
       excluding the one known, pre-existing, unrelated `easy-gl-resource-smoke-tests` failure.
       Deliberately scoped OUT, per explicit user decision: no golden-frame/golden-trace steps (no
       `xvfb-run`) — those stay a manual local step (NEXT.md §7), keeping this job simpler and not
       dependent on a virtual display/GPU driver behaving identically to a dev machine.
-      **Locally verified the parts that don't require a fresh GitHub-hosted runner**: this
-      environment's own `build-cna` already has `easy-gl` linked in (proving the same sibling set
-      this workflow checks out is sufficient), and `ctest --test-dir build-cna` with `DISPLAY`
-      unset (no `xvfb-run` at all) passed 81/82 here — only the same known `easy-gl-resource-
-      smoke-tests` failure this workflow excludes, confirming the exclusion is both necessary and
-      sufficient with today's sibling pins. **Not yet verified**: an actual clean GitHub Actions
-      run (this session has no way to trigger one) — the apt package list, SDL vendored-build step,
-      and submodule-checkout shape are reused verbatim from `../cna`'s own already-working CI, not
-      newly invented, but a first real run on `push`/`pull_request` could still surface a
-      runner-specific gap (network, disk, memory limits) this environment can't reproduce. Treat
-      the first live run's result as the actual confirmation, not this entry.
+
+      **3 real bugs found and fixed only by actually triggering live runs, not by local
+      inspection** (4 pushes total before green — each fix informed by that run's own failure, not
+      guessed ahead of time):
+      1. `ref: ac3aaaeb` (abbreviated 8-char SHA) failed — `actions/checkout` only supports a full
+         40-character commit SHA for an arbitrary-commit fetch; abbreviated SHAs get treated as a
+         branch/tag-name pattern instead and fail to resolve. Fixed by expanding all 4 sibling
+         pins to full SHAs (`git rev-parse <short>` against each local checkout).
+      2. Configure failed: `../easy-gl/CMakeLists.txt` unconditionally `add_subdirectory(../meta-gl)`
+         — a real, previously-untracked transitive build dependency, missing from both this
+         workflow and NEXT.md's own "Sibling-repo commit pins" table (now fixed in both; meta-gl
+         pinned to `d51fcd7f`, the commit this environment already had checked out locally).
+      3. `ctest` failed 2 of 81 (`VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna`,
+         `Subprocess aborted`/`FAIL: could not load ../mobile-eggbert/worlds/worldNNN.txt`) — these
+         2 tests read real `../mobile-eggbert/worlds/*.txt` files directly off disk
+         (`CMakeLists.txt`'s own `WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` + a literal
+         `"../mobile-eggbert/worlds/..."` relative path), a genuine test-DATA dependency this
+         workflow hadn't checked out at all. Fixed with a `sparse-checkout: worlds` (cone mode)
+         checkout — the full `../mobile-eggbert` repo is ~2.3 GB (almost entirely `Content/`,
+         irrelevant to these 2 tests), `worlds/` alone is a few MB. Pinned to `07e0a673`. Not
+         added to the sibling-repo build-dependency pin table (it isn't one) — documented as its
+         own note directly below that table instead.
+
+      **Locally verified in advance what could be verified without a fresh runner** (before the
+      first live run): this environment's own `build-cna` already has `easy-gl` linked in, and
+      `ctest --test-dir build-cna` with `DISPLAY` unset (no `xvfb-run`) passed 81/82 here — only
+      the known `easy-gl-resource-smoke-tests` failure. That prediction held (the exclusion was
+      correct), but it did NOT catch the meta-gl or mobile-eggbert gaps above, since both are
+      sibling-checkout/workspace-layout issues invisible from an environment where every sibling
+      is already present locally — exactly the kind of gap only a genuine clean-checkout CI run
+      surfaces. **Final confirmed result, run `29944268525`: all steps green, `ctest` 79/81 passed
+      (2 excluded: the known unrelated `easy-gl-resource-smoke-tests` failure), ~6.5 minutes
+      end-to-end on a cold cache.** Not yet observed: a cache-hit run (SDL/ccache caches populated
+      by this run should make the next push noticeably faster, unconfirmed until it happens).
 - [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets) for `GalaxyEggbertCNA`
 
 Dropped (dead Simple3D/U3D/Nova3D/Android direction, do not carry forward): old BUILD-001..002 as

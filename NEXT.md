@@ -338,25 +338,37 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
-### feat: BUILD-009 — GitHub Actions CI for GalaxyEggbertCNA (Linux, ctest only) (2026-07-23)
+### feat: BUILD-009 — GitHub Actions CI for GalaxyEggbertCNA, confirmed green on a real run (2026-07-23)
 
 New `.github/workflows/cna-ci.yml`, closing the last open item in `plan.md`'s BUILD-00x list
-besides Windows cross-compile/packaging. Checks out `galaxy-eggbert` plus the 4 pinned sibling
-repos (`cna`/`easy-3d`/`easy-gl`/`sharp-runtime`, same commits as this file's "Sibling-repo commit
-pins" table above) as directory siblings, reuses `../cna`'s own already-proven
+besides Windows cross-compile/packaging. Checks out `galaxy-eggbert` plus 5 pinned sibling repos
+(`cna`/`easy-3d`/`easy-gl`/`sharp-runtime`/`meta-gl`, same commits as this file's "Sibling-repo
+commit pins" table above) as directory siblings, plus a sparse (`worlds/`-only) checkout of
+`../mobile-eggbert` (test data, not a build dependency), reuses `../cna`'s own already-proven
 `devices-tests.yml` apt package list + vendored-SDL cache pattern, adds a ccache cache on top,
 configures `-DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`, builds, then runs
 `ctest --test-dir build-cna -E 'easy-gl-resource-smoke-tests'` (excluding the one known,
 pre-existing, unrelated upstream failure documented above).
 
 Scoped out by explicit user decision: no golden-frame/golden-trace steps in CI (no `xvfb-run`) —
-those stay a manual local step, see the entry directly below and §7's commands. Verified locally
-what could be verified without an actual GitHub-hosted runner: `ctest --test-dir build-cna` with
-`DISPLAY` unset (no `xvfb-run`) passes 81/82 in this container, same single known-quarantined
-failure this workflow's `-E` excludes — confirms the exclusion is correct against today's sibling
-pins. The apt/SDL-cache steps are copied from `../cna`'s own working CI, not newly invented, but a
-genuinely fresh GitHub Actions run has not been triggered from here — see `plan.md`'s `BUILD-009`
-entry for the full caveat. Full `plan.md` `BUILD-009` entry has the complete writeup.
+those stay a manual local step, see the entry directly below and §7's commands.
+
+**Actually triggered 4 live pushes to `develop` and let each real failure drive the next fix**,
+rather than stopping at "looks right by inspection" — 3 real gaps found this way, invisible from
+this environment where every sibling repo already happens to be checked out locally:
+1. Abbreviated 8-char sibling SHAs (`ac3aaaeb` etc.) failed — `actions/checkout` needs the full
+   40-char commit hash for an arbitrary-commit fetch. Expanded all 4 original pins.
+2. Configure failed: `../easy-gl` unconditionally needs `../meta-gl` too (a real transitive build
+   dependency, missing from this file's own pin table until now — added above, pinned `d51fcd7f`).
+3. `ctest` failed 2/81 — `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` read real
+   `../mobile-eggbert/worlds/*.txt` off disk, which nothing had checked out. Added a sparse
+   `worlds/`-only checkout (a few MB, not the full ~2.3 GB repo), pinned `07e0a673`.
+
+**Final result, run `29944268525`: fully green, `ctest` 79/81 (2 correctly excluded), ~6.5 minutes
+cold-cache end-to-end.** The earlier local-only check (`DISPLAY` unset, no `xvfb-run`, 81/82 in
+this container) correctly predicted the `easy-gl-resource-smoke-tests` exclusion but could not
+have caught the meta-gl/mobile-eggbert gaps — both are workspace-layout issues only a genuine
+clean-checkout run surfaces. Full `plan.md` `BUILD-009` entry has the complete writeup.
 
 ### docs: confirm golden-capture/trace scripts actually run in this container via `xvfb-run` (2026-07-23)
 
