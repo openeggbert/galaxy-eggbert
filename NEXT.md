@@ -2254,16 +2254,19 @@ extraction; **completed the entire 3D world editor plan** (EDITOR-111 sky-region
 hardening pass — all 13 milestones, EDITOR-100..112, now done); re-investigated and closed a stale
 "grass-topped cubes walkable-through" bug report (does not reproduce — was step-up behavior, not a
 bug); swept for and fixed a compiler warning; closed a 3-pickup-wide test-coverage gap (Dynamite/
-Egg/BulletPack "second instance at the cap"). See §3 for each entry's full writeup.
+Egg/BulletPack "second instance at the cap"); a further broader audit then found and fixed a real
+out-of-bounds **crash** in `GESaveData::Load()` (an unvalidated `selectedGamer` from a corrupted
+save file segfaulted on the very next accessor call — confirmed via deliberate bug injection) plus
+unified a duplicated `kMaxEggCount` constant. See §3 for each entry's full writeup.
 
 **Genuinely next, in order of what's actually startable**:
 
-1. **Nothing further is a clean, well-scoped, no-human-input task right now.** A fresh sweep this
-   session (TODO/FIXME markers, compiler warnings, stale "not yet reproduced"/"honest gap" notes
-   across `plan.md`) turned up real, closeable work each of the first few times, then genuinely
-   dried up — the remaining backlog items below all need either a human visual/design call or are
-   large, open-ended content authoring, not more of the same "quick, safe, verifiable" shape this
-   session's items had.
+1. **A fresh, focused code-quality/edge-case audit still found real, closeable work every time it
+   was tried this session** (4 rounds: TODO/FIXME sweep, stale-doc sweep, compiler warnings, and a
+   broader edge-case pass that found the `GESaveData` crash) — worth trying again before assuming
+   there's nothing left, rather than declaring this category exhausted. Each round narrowed further
+   (compiler warnings found exactly 1; the broadest pass still found a real crash) — genuinely
+   diminishing, but not yet zero.
 2. **`AscenseurVertigo` render geometry** (icons 311-316) and **Suspended/hanging-bar mode**
    (blocked on a NEW "thin-bar" render geometry for icon 202) both need the user to look at a
    screenshot/mockup and choose an approach — see plan.md §0's "Known open bugs" and the
