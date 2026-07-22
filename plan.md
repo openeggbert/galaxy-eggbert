@@ -6083,7 +6083,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       **Closed 2026-07-22.** New `tools/VerifyObjIconAgainstReferenceDoc.cpp`, registered with
       `ctest`: parses `08-animations.md`'s own §3.1/§3.2 tables at runtime (regex over the file, not
       hand-copied numbers) and black-box-measures `GetObjIcon()`'s actual per-type frame count
-      against what the doc claims, for all 25 rows (14 in §3.1, 11 in §3.2 including one label-only
+      against what the doc claims, for all 24 rows (14 in §3.1, 10 in §3.2 including one label-only
       correction, see below). §4 (explosions) deliberately excluded — the doc's own text admits
       "which `ObjectType` triggers which `explo1..8` table was not resolved in this pass", so there
       is no `ObjectType`→table mapping to cross-check without inventing one.

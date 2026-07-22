@@ -640,7 +640,7 @@ Second of the 3 gaps the audit surfaced, now closed. P0-2 asked for GetObjIcon()
 cross-checked against `08-animations.md` *programmatically* — new `tools/
 VerifyObjIconAgainstReferenceDoc.cpp` parses that doc's §3.1/§3.2 tables at runtime (regex, not
 hand-copied numbers) and black-box-measures GetObjIcon()'s actual frame count against what the doc
-claims, for all 25 rows.
+claims, for all 24 rows.
 
 Found and worked through a genuine information-theoretic limit along the way: a first draft using
 pure black-box period/segment-counting (zero source knowledge) got 6 of 24 rows "wrong" — several
