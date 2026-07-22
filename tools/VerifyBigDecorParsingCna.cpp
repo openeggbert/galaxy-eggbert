@@ -3,6 +3,8 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
 
 #include <cstdint>
+#include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -68,6 +70,37 @@ int main()
         {
             allOk = false;
         }
+    }
+
+    // Malformed-cell regression (found via a fresh code audit, 2026-07-23):
+    // std::stoi() used to run directly on a Decor:/BigDecor: cell with no
+    // try/catch anywhere in LoadFromMobileEggbertFile() or its callers --
+    // a non-numeric cell threw std::invalid_argument, uncaught, which
+    // would terminate the process. Not reachable via any real gameplay
+    // path today (this function's only real callers, all in tools/, pass
+    // known-good ../mobile-eggbert reference files) but it stays a real,
+    // callable API (see this function's own comment) -- a genuinely
+    // malformed file, hand-edited or from a future caller, is a real
+    // input here. Writes a synthetic file with a non-numeric Decor: cell
+    // directly (not a ../mobile-eggbert file -- that tree is read-only)
+    // and confirms Load() completes without crashing.
+    {
+        const char* path = "malformed_decor_test.txt";
+        {
+            std::ofstream out(path);
+            out << "blupiPos=0;0\n";
+            out << "Decor:\n";
+            out << "abc,1,2\n"; // non-numeric first cell -- used to throw uncaught
+        }
+        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        const bool loadedWithoutCrashing = runtime.LoadFromMobileEggbertFile(path);
+        std::cout << (loadedWithoutCrashing ? "PASS" : "FAIL")
+                  << ": a malformed (non-numeric) Decor: cell doesn't crash the loader" << std::endl;
+        if (!loadedWithoutCrashing)
+        {
+            allOk = false;
+        }
+        std::remove(path);
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

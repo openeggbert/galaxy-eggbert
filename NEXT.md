@@ -317,6 +317,32 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: uncaught `std::stoi` crash in `LoadFromMobileEggbertFile()` (2026-07-23)
+
+A follow-up file-I/O trust-boundary audit (a different angle from the public-API sweep below —
+specifically looking for external/parsed data flowing unvalidated into array indices or numeric
+conversions, the same shape as the `GESaveData` bug) checked every disk-reading path in
+`src/GalaxyEggbertCNA/` and `src/GalaxyEggbert/`. The core `.vwr`/`.vch` binary loaders
+(`World::loadFromFile()`, `Chunk::read()`) were already exhaustively guarded at every parsed field.
+One real gap found: `GEWorldRuntime::LoadFromMobileEggbertFile()`'s `Decor:`/`BigDecor:` cell
+parser called `std::stoi()` directly with no try/catch anywhere in the function or its callers — a
+non-numeric or over-long cell throws, uncaught, terminating the process. **Confirmed as an actual
+crash** via deliberate bug injection (removing the fix's own try/catch): `terminate()` from an
+uncaught `std::invalid_argument`.
+
+Not reachable from any real gameplay path today (this function's only actual callers are 4 test
+tools, all reading trusted `../mobile-eggbert` reference files — confirmed by grepping every call
+site) — lower severity than the `GESaveData` crash, which was reachable through live save-file
+loading. Fixed anyway since it's real defect in a genuine public API this project deliberately keeps
+callable (not dead code). Fix: a `SafeStoi()` wrapper returning 0 on parse failure, which the
+existing `if (tileId > 0)` gate at both call sites already treats as "nothing here" — no separate
+error path needed. New regression test (a synthetic malformed file with a non-numeric cell,
+confirming the loader survives it) in `tools/VerifyBigDecorParsingCna.cpp`; verified real teeth via
+bug injection (reproduced the actual crash), reverted. Full regression clean on all 3 native
+backends. 2 other minor hardening opportunities were found and consciously left alone (an unbounded
+`chunksPerAxis` resource-exhaustion shape in `World.cpp`, and a defense-in-depth-only gap in
+`BlockTypes::fromMobileIconId()`) — see `plan.md`'s own note for the reasoning.
+
 ### test: close 3 more zero-coverage gaps found by a systematic public-API sweep (2026-07-23)
 
 A follow-up audit systematically grepped every public method in `GEBlupiController.hpp`/

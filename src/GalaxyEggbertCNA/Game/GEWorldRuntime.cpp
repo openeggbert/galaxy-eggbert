@@ -43,6 +43,28 @@ namespace GalaxyEggbert::CNA
             return type == 2 || type == 3 || type == 4 || type == 20 || type == 32 ||
                    type == 33 || type == 44 || type == 54;
         }
+
+        // Real mobile-eggbert .txt world files are read-only external data
+        // (a hand-edited or malformed cell is a real, reachable input here,
+        // even though this parser's only current callers pass known-good
+        // reference files -- see this function's own comment on why it
+        // stays a real, callable API rather than dead code) -- std::stoi()
+        // throws on non-numeric or over-long text, uncaught, which would
+        // otherwise terminate the process (found via a fresh code audit,
+        // 2026-07-23). Returns 0 on any parse failure, which the existing
+        // `if (tileId > 0)` gate at both call sites already treats as
+        // "nothing here" -- no separate error path needed.
+        int SafeStoi(const std::string& cell)
+        {
+            try
+            {
+                return std::stoi(cell);
+            }
+            catch (const std::exception&)
+            {
+                return 0;
+            }
+        }
     }
 
     GEWorldRuntime::GEWorldRuntime()
@@ -174,7 +196,7 @@ namespace GalaxyEggbert::CNA
                 {
                     if (!cell.empty())
                     {
-                        const int tileId = std::stoi(cell);
+                        const int tileId = SafeStoi(cell);
                         if (tileId > 0)
                         {
                             const std::uint16_t blockType = BlockTypes::fromMobileIconId(tileId);
@@ -199,7 +221,7 @@ namespace GalaxyEggbert::CNA
                 {
                     if (!cell.empty())
                     {
-                        const int tileId = std::stoi(cell);
+                        const int tileId = SafeStoi(cell);
                         if (tileId > 0)
                         {
                             bigDecor_[static_cast<std::size_t>(bigDecorRow) * kDecorGridSize +

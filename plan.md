@@ -5451,6 +5451,39 @@ now closed too.
       that makes icon 440 valid too, this test will correctly need updating, rather than staying
       silently green on a stale assumption forever.
 - [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files, now ctest-integrated (TEST-002).
+    - **Follow-up (2026-07-23, file-I/O trust-boundary audit):** a fresh audit pass — a different
+      angle from the public-API sweep above, specifically looking for external/parsed data flowing
+      unvalidated into array indices or numeric conversions, the same shape as the `GESaveData`
+      `selectedGamer` bug (§11) — checked every disk-reading path in `src/GalaxyEggbertCNA/` and
+      `src/GalaxyEggbert/`. The core `.vwr`/`.vch` binary loaders (`World::loadFromFile()`,
+      `Chunk::read()`) were already exhaustively guarded at every parsed field. One real gap found:
+      `LoadFromMobileEggbertFile()`'s `Decor:`/`BigDecor:` cell parser called `std::stoi(cell)`
+      directly with no try/catch anywhere in the function or its callers — a non-numeric or
+      over-long cell throws `std::invalid_argument`, uncaught, terminating the process. **Confirmed
+      as an actual crash** via deliberate bug injection (temporarily removing the fix's own
+      try/catch and rebuilding): reproduced `terminate() ... what(): stoi` exactly as predicted.
+      Not reachable from any real gameplay path today — this function's only actual callers are the
+      4 test tools in `tools/`, all reading trusted `../mobile-eggbert` reference files (confirmed
+      by grepping every call site; `GalaxyEggbertCnaGame.cpp` only references the function in a
+      comment, never calls it) — lower severity than the `GESaveData` crash, which was reachable
+      through live save-file loading. Fixed anyway since it's a real defect in a genuinely callable
+      public API this project deliberately keeps around (see the function's own doc comment) rather
+      than dead code. Fix: a `SafeStoi()` wrapper in `GEWorldRuntime.cpp`'s anonymous namespace,
+      returning 0 on parse failure — which the existing `if (tileId > 0)` gate at both call sites
+      already treats as "nothing here," so no separate error path was needed. New regression test
+      in `VerifyBigDecorParsingCna.cpp` (writes a synthetic file — not a `../mobile-eggbert` file,
+      that tree is read-only — with a non-numeric `Decor:` cell, confirms the loader survives it);
+      teeth confirmed via the same bug-injection technique above, then reverted. Full regression
+      clean on all 3 native backends (`build-cna`, `build-cna-vulkan`, `cmake-build-debug`).
+      Two other minor hardening opportunities were found in the same audit pass and consciously
+      left alone rather than fixed speculatively: (1) `World.cpp`'s chunk-grid loader computes
+      `chunksPerAxis` from a parsed header field with no upper bound, so a crafted `.vwr` could
+      request an unbounded allocation — a resource-exhaustion shape, not a crash, and no such file
+      is ever produced by this project's own tooling today; (2) `BlockTypes::fromMobileIconId()`
+      has no upper-bound check on the icon id it's handed, but every real call site already passes
+      a value from a bounded source (either a loop over a fixed grid or `SafeStoi()`'s own
+      now-validated output), so it's defense-in-depth only, not a reachable defect. Both are
+      candidates for a future pass if this audit style continues, not silently dropped.
 - [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `GESaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
 - [x] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw div 1, Lava div 2, Water1/Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) — **done 2026-07-14**. `AnimDivisor()` was a pure function trapped in `GETerrainRenderer.cpp`'s anonymous namespace with no graphics dependency of its own — extracted into `GETerrainAnimDivisor.hpp`/`.cpp` (behavior unchanged, `GETerrainRenderer.cpp` now calls the extracted version) so it could be linked into a new lightweight, engine-independent tool (`tools/VerifyTerrainAnimDivisor.cpp`, no CNA/graphics link needed, same precedent as `VerifyGESaveData`/`VerifyBlupiMovement`), now ctest-registered. 13 checks (all 8 real per-type divisor values + the non-animated-icon default fallback) confirm the exact mapping this item asked for. Full regression on both backends passes (76 tests on EasyGL, only the known pre-existing unrelated `easy-gl-resource-smoke-tests` failure; 71/71 on Vulkan).
 - [x] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected — done and now ctest-integrated (`VerifyInteractionSystem`, 190+ checks as of 2026-07-13, TEST-002).
