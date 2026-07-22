@@ -1,5 +1,13 @@
 # NEXT.md — Galaxy Eggbert
 
+_Session paused 2026-07-23: the autonomous session's safe, independent, in-scope work is done and
+committed/pushed (see §3/§10). Everything remaining in the backlog needs the user's own input before
+proceeding — either visual/design judgment (`AscenseurVertigo`/`Suspended` render geometry, seam-line
+transparency) or scope/priority confirmation for large content work (`TILE-005`'s 4 remaining
+worlds). The code-quality/edge-case audit category is confirmed exhausted for this session (8 rounds,
+last one genuinely clean — see §3/§10). Do not manufacture more audit rounds by default; ask the user
+which backlog item to pick up next, or wait for new direction._
+
 _Last updated: 2026-07-23 (autonomous session). The in-game 3D world editor is **COMPLETE**: all 13
 approved milestones (EDITOR-100 through EDITOR-112) are implemented, verified, and pushed. Editor
 work resumed 2026-07-23 by explicit user authorization (was paused 2026-07-19 — see plan.md §6's
