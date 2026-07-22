@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: openeggbert/cna
-          ref: ac3aaaeb
+          ref: ac3aaaeb2a5ba27dbd9e22e782c7041e6e40947c
           path: cna
           submodules: true # non-recursive on purpose -- avoids SDL_image's/SDL_mixer's own
                             # nested optional-codec submodules this project's CMake args disable
@@ -43,21 +43,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: openeggbert/easy-3d
-          ref: e2d1cfa2
+          ref: e2d1cfa277a3ffe9637ddab5a4fe3ff2f8bf5887
           path: easy-3d
 
       - name: Checkout easy-gl
         uses: actions/checkout@v4
         with:
           repository: openeggbert/easy-gl
-          ref: 62c0a248
+          ref: 62c0a248a6c4144abaf92c0530cc2a2395e5fd37
           path: easy-gl
 
       - name: Checkout sharp-runtime
         uses: actions/checkout@v4
         with:
           repository: openeggbert/sharp-runtime
-          ref: d2cc9cce
+          ref: d2cc9cce5b494294e4c34594b85e7948f81be214
           path: sharp-runtime
 
       # Same package list as ../cna's own devices-tests.yml (proven to build this dependency
