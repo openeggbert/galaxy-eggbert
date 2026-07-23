@@ -3,20 +3,19 @@
 Galaxy Eggbert is a faithful 3D remake of **mobile-eggbert** (a C++ port of the original
 *Speedy Blupi*, a Windows Phone XNA game from 2013).
 
+> **Current project status:** read [CURRENT.md](CURRENT.md) first. This README retains project
+> background and onboarding material; `CURRENT.md` is the concise authority for active targets,
+> verification, limitations, and next work.
+
 ## Current status
 
-**`GalaxyEggbertCNA` is the actively developed target.** Built directly on **CNA** (a C++
-reimplementation of the XNA 4.0 API), with **Easy3D** used as a small helper library beside CNA
-(cameras, texture atlas, billboard/cube batching) — Easy3D does not hide CNA, Galaxy Eggbert code
-is free to call CNA directly at any time. It is an opt-in build target
-(`src/GalaxyEggbertCNA/`, `-DGALAXY_EGGBERT_BUILD_CNA=ON`, default OFF) that builds, opens a
-window, and renders real, textured, animated 3D terrain from a hand-authored world — all 4
-confirmed tile render modes plus water, `MoveObject`/`BigDecor` billboards and platform-lift/crate
-objects (embeddable directly in the 3D `.vwr` format itself), and face-culled terrain. It has **no
-visible Blupi (an invisible collision point only), no HUD, no sound, and no real gameplay logic
-yet**. See `NEXT.md` for full current status, `easy3d.md` for the original migration analysis (now
-a dated snapshot — see its own status-update banner), and `plan.md` (section "Direct CNA + Easy3D
-Migration") for the task list.
+**`GalaxyEggbertCNA` is the actively developed target.** It is playable and includes 3D terrain,
+objects, gameplay, HUD, sound, menus, save/progress, and a complete in-game 3D world editor. It is
+built directly on **CNA** (a C++ reimplementation of the XNA 4.0 API), with **Easy3D** used as a
+small helper library beside CNA (cameras, texture atlas, billboard/cube batching); Easy3D does not
+hide CNA and game code can call CNA directly. See [CURRENT.md](CURRENT.md) for verified current
+status, [NEXT.md](NEXT.md) for commands and detailed history, and [plan.md](plan.md) for research
+and the full historical task inventory.
 
 `GalaxyEggbertSimple3D`, built on the `simple-3d` library (which wraps U3D/Urho3D), was the
 working, playable target through 2026-07-08. **As of 2026-07-08 it is historical reference
@@ -49,10 +48,10 @@ git submodule init --recursive
 git submodule update --recursive
 ```
 
-### `GalaxyEggbertCNA` build — the active target, opt-in (default OFF)
+### `GalaxyEggbertCNA` build — the active target (default ON)
 
-Not at gameplay parity with Simple3D yet (no Blupi/HUD/sound/gameplay logic) — see `NEXT.md` §2
-for current status. Requires sibling checkouts of `../cna` and `../easy-3d` (or
+For the verified capability and test baseline, see [CURRENT.md](CURRENT.md). Building requires
+sibling checkouts of `../cna` and `../easy-3d` (or
 `-DCNA_HOME=`/`-DEASY3D_HOME=` overrides).
 
 #### Linux native build (confirmed working)
@@ -104,7 +103,7 @@ cmake --build build-windows --target GalaxyEggbertCNA
 via `CMAKE_PREFIX_PATH` or a similar override — the exact mechanism has not been re-verified
 against the current `CMakeLists.txt` in this session.*
 
-#### Web / Emscripten build (not verified in this session — CNA's CMake path has no Emscripten-specific handling confirmed yet)
+#### Web / Emscripten build (manually verified; not in CI or a release pipeline)
 
 ##### Prerequisites
 
@@ -173,18 +172,15 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 - Linux: confirmed working, EasyGL backend by default (`CNA_GRAPHICS_BACKEND=EASYGL`).
 - Windows: SDL_Renderer is the intended supported backend; not verified in this session (see
   `WINDOWS.md` for known gaps).
-- Web (Emscripten): SDL_Renderer backend, experimental — the CMake plumbing for it has not been
-  confirmed to exist for `GalaxyEggbertCNA` specifically (no Emscripten-specific handling found in
-  its part of `CMakeLists.txt` as of 2026-07-05).
+- Web (Emscripten): manually verified WebGL2 build; not exercised by CI or a publishing pipeline.
 - Android: intended, see `ANDROID.md`. The Gradle build doesn't pass explicit
   `GALAXY_EGGBERT_BUILD_*` CMake args, but that's no longer a problem — `CMakeLists.txt`'s
   defaults were flipped 2026-07-09 (`GALAXY_EGGBERT_BUILD_CNA` now `ON`,
   `GALAXY_EGGBERT_BUILD_SIMPLE3D` now `OFF`), so it now correctly targets `GalaxyEggbertCNA`.
 
-`GalaxyEggbertCNA` builds and renders real terrain, objects, and `BigDecor` on Linux today, but is
-not yet at gameplay parity (no Blupi/HUD/sound/gameplay logic) and its non-Linux backends are
-unverified. `GalaxyEggbertSimple3D` is not built/verified going forward (historical reference
-only, see "Current status" above).
+`GalaxyEggbertCNA` is the maintained, playable target. Its full verified state and backend status
+live in [CURRENT.md](CURRENT.md). `GalaxyEggbertSimple3D` is not built or verified going forward
+(historical reference only, see "Current status" above).
 
 ### `GalaxyEggbertSimple3D` build — historical reference only, do not build (as of 2026-07-08)
 
@@ -200,4 +196,5 @@ cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
 
 ## Progress
 
-See `NEXT.md` for current build status, recent changes, known bugs, and the next planned tasks.
+See [CURRENT.md](CURRENT.md) for current build status, limitations, and active work; use
+[NEXT.md](NEXT.md) for commands and detailed recent history.

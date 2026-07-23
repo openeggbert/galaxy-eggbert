@@ -3602,6 +3602,31 @@ int main(int argc, char** argv)
         check(findBubble() == bubbleWorld.GetMobileObjects().end(),
               "the bubble self-deletes on reaching posEnd (real ObjectType15/ObjectType23 shared arrival branch), not dwelling there");
 
+        // The other member of that same real arrival-deletion branch is a
+        // fired projectile. Keep this synthetic one away from Blupi so the
+        // test isolates terminal patrol behavior, not the separate contact-
+        // kill branch that normally handles ObjectType23.
+        GEWorldRuntime projectileArrivalWorld;
+        GEInteractionSystem projectileArrivalInteraction;
+        MobileObjSpec projectile;
+        projectile.type = ObjectType::ObjectType23;
+        projectile.posStartX = projectile.currentX = 30.0f;
+        projectile.posStartY = projectile.currentY = 5.0f;
+        projectile.posStartZ = projectile.currentZ = 30.0f;
+        projectile.posEndX = 31.0f;
+        projectile.posEndY = 5.0f;
+        projectile.posEndZ = 30.0f;
+        projectile.patrolStep = 2;
+        projectile.stepAdvanceTicks = 1.0f;
+        projectileArrivalWorld.GetMobileObjectsMutable().push_back(projectile);
+        projectileArrivalInteraction.Update(dt, projectileArrivalWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f,
+                                            sound);
+        const auto projectileIt = std::find_if(
+            projectileArrivalWorld.GetMobileObjects().begin(), projectileArrivalWorld.GetMobileObjects().end(),
+            [](const auto& o) { return o.type == ObjectType::ObjectType23; });
+        check(projectileIt != projectileArrivalWorld.GetMobileObjects().end() && !projectileIt->active,
+              "the fired projectile self-deletes exactly on reaching posEnd (the shared ObjectType23/15 arrival handler)");
+
         // No-op guard: no water column above (dry tile immediately above the spawn point).
         GEWorldRuntime dryWorld;
         GEInteractionSystem dryInteraction;

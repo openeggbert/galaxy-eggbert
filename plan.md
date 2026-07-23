@@ -6642,6 +6642,27 @@ specifically, same as any other large/risky item elsewhere in this file.
       (ObjectType54 always gets one variant unconditionally; ObjectType2 has an unexplained special-
       case skip) — same "different in KIND, not constants" shape that ruled out the wider enemy/
       hazard family; not migrated.
+
+      **7th family migrated (2026-07-23): terminal patrol-arrival behavior** — a fresh, narrow
+      follow-up found the remaining three `ObjectType` exceptions at the one shared
+      `AdvancePatrolStep()` arrival junction. ObjectType23 (fired projectile) and ObjectType15
+      (rising water bubble) both self-delete immediately at `posEnd` (real `Decor.cpp:8095-8098`),
+      while ObjectType34 (goo) instead collapses `posStart`/`posEnd` onto the landing point so it
+      dwells there and never recedes (real `Decor.cpp:8099-8104`). New
+      `kPatrolArrivalHandlers[]` maps the three types to a small `PatrolArrivalAction` enum
+      (`Deactivate`/`StickAtDestination`); `AdvancePatrolStep()` now does the generic state
+      transition from that data rather than a local `if type==23 || type==15 / else-if type==34`
+      chain. The normal no-entry case remains the existing generic arrival-to-dwell transition.
+
+      **Verification**: ObjectType15's terminal deletion and ObjectType34's sticky landing already
+      had direct tests. Added a dedicated synthetic ObjectType23 that reaches `posEnd` away from
+      Blupi (isolates patrol arrival from the separate projectile contact-kill branch), asserting
+      that its slot becomes inactive on that exact update. Real teeth check: temporarily removing
+      ObjectType23 from the new table produced exactly that new test failure, then was reverted.
+      Full regression clean on all three native builds: `build-cna` and `cmake-build-debug` 81/81
+      with only the known unrelated `easy-gl-resource-smoke-tests` excluded, `build-cna-vulkan`
+      79/79. No golden capture was required: its scripted input never fires a projectile or creates
+      a water bubble, so it cannot exercise this terminal-arrival path.
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
@@ -6804,8 +6825,11 @@ specifically, same as any other large/risky item elsewhere in this file.
       fully-reverted `phase_ == Init` screenshot gate) but the Vulkan backend never reached the
       Init screen within 15s wall-clock under `xvfb-run` in this environment, so the bug's current
       status is recorded as "not independently re-verified this session," not asserted either way.
-- [ ] `INFRA-010` (`REMAKE-ANALYSIS.md` P2-4) Consider a compact, authoritative "current truth"
-      index, separate from `plan.md`'s own historical log (505 KB / 5500+ lines) and `NEXT.md`
-      (115 KB), so a session doesn't have to re-derive current state by reading the whole history
-      every time. Lowest priority of this list — opportunistic, not blocking anything else; revisit
-      only if doc-reading overhead becomes a recurring complaint.
+- [x] `INFRA-010` (`REMAKE-ANALYSIS.md` P2-4) done (2026-07-23). New `CURRENT.md`: a compact,
+      authoritative current-state index separate from `plan.md`'s historical log and `NEXT.md`'s
+      chronological operational detail. It records the active target, shipped capabilities,
+      verification baseline, known limitations, actionable work, non-negotiable boundaries, and
+      explicit document ownership. `README.md` now directs readers to it and its stale CNA-status
+      paragraph was corrected (it had incorrectly claimed there was no HUD, sound, or gameplay).
+      Update `CURRENT.md` whenever a change affects status, verification, limitations, or the
+      actionable backlog; retain evidence and long write-ups in the existing documents.

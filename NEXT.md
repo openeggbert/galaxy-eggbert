@@ -10,8 +10,10 @@ through 4 real pushes (abbreviated-SHA, missing `meta-gl` sibling, missing `mobi
 data — see §3), and confirmed fully green on a real run. Two items from that pass remain
 deliberately open, not silently closed: `INFRA-004`'s unverified-icon table is still bookkeeping
 only, not wired into the renderer/CI as an enforcement gate; `INFRA-006`'s handler-table migration
-is still genuinely partial (6 families done, ~48 `ObjectType`s and 2 cross-cutting lists remain).
-Neither was picked up — awaiting direction on which (if either) to tackle next.
+is still genuinely partial (7 focused families/extractions done, ~48 `ObjectType`s and 2
+cross-cutting lists remain).
+`INFRA-004` remains intentionally untouched; `INFRA-006`'s latest small, isolated follow-up is
+recorded in §3 below and the broader migration still needs a separately scoped next family.
 
 Everything else in the backlog still needs the user's own input before proceeding — either
 visual/design judgment (`AscenseurVertigo`/`Suspended` render geometry, seam-line transparency) or
@@ -609,6 +611,17 @@ real Right-arrow presses visibly swap the background from region 0's art to regi
 different image; scaffold fully reverted (zero diff in `GalaxyEggbertCnaGame.cpp` afterward). Full
 regression clean on all 3 native backends. See `plan.md`'s `EDITOR-111` entry (§6) for the full
 writeup.
+
+### refactor: INFRA-006 7th family — table-driven terminal patrol arrival (2026-07-23)
+
+Moved the three `ObjectType` exceptions at the shared `AdvancePatrolStep()` arrival junction into
+`kPatrolArrivalHandlers[]`: projectile 23 and water bubble 15 deactivate at `posEnd`; goo 34
+sticks there by collapsing its patrol endpoints. The default remains the normal transition into the
+end-dwell phase. Existing direct coverage already checked bubble deletion and goo sticking; added a
+synthetic projectile-arrival test. Removing its table row deliberately caused precisely the new
+assertion to fail, then was reverted. Full regression passed on all three native backends (81/81,
+79/79 Vulkan, 81/81 debug; the sole known unrelated easy-gl test is excluded where present). See
+`plan.md`'s `INFRA-006` entry for the full detail.
 
 ### refactor: INFRA-006 — extract `IsDestructibleByDynamite()` (2026-07-23)
 
@@ -2357,8 +2370,9 @@ Non-editor tasks:
    X+Z+Y `ResolveMove()` now landed after a scoping session picked the most ambitious of 3 offered
    options, see §3's own writeup and `plan.md`'s `INFRA-005` entry for the full history (including a
    real ~19x walking-speed regression found and fixed during implementation, not just the merge
-   itself). `INFRA-006` is an honest partial (3 families migrated).
-   `INFRA-010` remains untouched, correctly low-priority.
+   itself). `INFRA-006` is an honest partial (7 focused families/extractions migrated).
+   `INFRA-010` is now complete: `CURRENT.md` is the compact current-status index; use its own
+   document-ownership table rather than adding another summary here.
 
 ## 9. Do not do yet
 
@@ -2403,8 +2417,8 @@ passes on all 3 native backends (`build-cna`/`build-cna-vulkan`/`cmake-build-deb
 — the one failure is the pre-existing unrelated `easy-gl-resource-smoke-tests`), everything is
 committed and pushed to `origin/develop`. This session (in order): fixed a real ~19x horizontal-
 walking-speed regression in the just-approved `ResolveMove()` merge (INFRA-005 follow-up); migrated
-2 more `INFRA-006` families (vehicle mapping, patrol-enemy icon dispatch) plus one predicate
-extraction; **completed the entire 3D world editor plan** (EDITOR-111 sky-region picker, EDITOR-112
+2 more `INFRA-006` families (vehicle mapping, patrol-enemy icon dispatch), one predicate
+extraction, and one terminal-patrol-arrival table; **completed the entire 3D world editor plan** (EDITOR-111 sky-region picker, EDITOR-112
 hardening pass — all 13 milestones, EDITOR-100..112, now done); re-investigated and closed a stale
 "grass-topped cubes walkable-through" bug report (does not reproduce — was step-up behavior, not a
 bug); swept for and fixed a compiler warning; closed a 3-pickup-wide test-coverage gap (Dynamite/
@@ -2454,8 +2468,8 @@ entry's full writeup.
    predicates or has real per-type behavioral divergence unsuited to a shared table — see plan.md's
    own `INFRA-006` entry for the specific candidates already ruled out). A fresh survey could still
    be tried, but temper expectations.
-6. `INFRA-010` (a compact "current truth" index separate from `plan.md`'s own 500+KB historical
-   log) — explicitly the lowest priority in its own task description, opportunistic only.
+6. ~~`INFRA-010`~~ — **done 2026-07-23**: [CURRENT.md](CURRENT.md) is the compact current-truth
+   index; keep its status fields current and leave detailed history in this file and `plan.md`.
 
 If picking this up cold: read this whole file first, then `plan.md`'s most recent (top-dated)
 entries under whichever section a task references, not just this prompt.

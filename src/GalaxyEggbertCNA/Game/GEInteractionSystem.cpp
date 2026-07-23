@@ -310,6 +310,48 @@ namespace GalaxyEggbert::CNA
         // real guard exactly -- see Update()'s call site).
         constexpr float kTicksPerSecond = 20.0f;
 
+        // INFRA-006 7th family (plan.md §7): per-type terminal behavior at
+        // the shared AdvancePatrolStep() arrival junction. These are the
+        // only three ObjectTypes that override the normal "start dwelling at
+        // posEnd" behavior after an advance. Keeping the action as table
+        // data makes adding or auditing such an exception local to this
+        // list, rather than extending the generic patrol state machine with
+        // another open-coded type comparison.
+        enum class PatrolArrivalAction : std::uint8_t
+        {
+            None,
+            Deactivate,
+            StickAtDestination,
+        };
+
+        struct PatrolArrivalHandler
+        {
+            ObjectType type;
+            PatrolArrivalAction action;
+        };
+
+        constexpr PatrolArrivalHandler kPatrolArrivalHandlers[] = {
+            // Fired projectile / rising water bubble: ObjectDelete as soon
+            // as the precomputed clear path ends (Decor.cpp:8095-8098).
+            {ObjectType::ObjectType23, PatrolArrivalAction::Deactivate},
+            {ObjectType::ObjectType15, PatrolArrivalAction::Deactivate},
+            // Goo: stop at the landing point instead of ever receding
+            // (Decor.cpp:8099-8104).
+            {ObjectType::ObjectType34, PatrolArrivalAction::StickAtDestination},
+        };
+
+        PatrolArrivalAction GetPatrolArrivalAction(ObjectType type)
+        {
+            for (const auto& handler : kPatrolArrivalHandlers)
+            {
+                if (handler.type == type)
+                {
+                    return handler.action;
+                }
+            }
+            return PatrolArrivalAction::None;
+        }
+
         void AdvancePatrolStep(MobileObjSpec& obj, float dt)
         {
             const float dtTicks = dt * kTicksPerSecond;
@@ -333,47 +375,20 @@ namespace GalaxyEggbert::CNA
                     obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
                     if (t >= 1.0f)
                     {
-                        // Real per-type special case at this exact junction
-                        // (Decor.cpp:8095-8098): a fired projectile
-                        // (ObjectType23) does NOT dwell at posEnd like every
-                        // other MoveObject -- it self-destructs the instant
-                        // it reaches the end of its pre-computed clear path
-                        // (real: type reset to ObjectType0; here: active=false,
-                        // this class's existing "destroyed" convention). Real
-                        // source treats the rising water bubble (ObjectType15,
-                        // plan.md PICKUP-079) identically at this same exact
-                        // junction (`|| m_moveObject[i].type ==
-                        // ObjectType::ObjectType15` in the real condition) --
-                        // it self-deletes on reaching the surface rather than
-                        // dwelling there, found 2026-07-17.
-                        if (obj.type == ObjectType::ObjectType23 || obj.type == ObjectType::ObjectType15)
+                        switch (GetPatrolArrivalAction(obj.type))
                         {
-                            obj.active = false;
-                        }
-                        else if (obj.type == ObjectType::ObjectType34)
-                        {
-                            // Real Decor.cpp:8099-8104 (VISUAL-016) -- the
-                            // goo particle "sticks to geometry": unlike
-                            // every other MoveObject, which just starts
-                            // dwelling at posEnd (and later recedes back via
-                            // step 4), this type also collapses its own
-                            // posStart/posEnd onto its landing spot, so it
-                            // never recedes -- it's stuck there permanently.
-                            // Not exercised by any placed content in real
-                            // mobile-eggbert (no world file places type 34)
-                            // or this project's own worlds; ported for
-                            // correctness in case a future custom/edited
-                            // world ever does.
-                            obj.posStartX = obj.posEndX = obj.currentX;
-                            obj.posStartY = obj.posEndY = obj.currentY;
-                            obj.posStartZ = obj.posEndZ = obj.currentZ;
-                            obj.patrolStep = 3;
-                            obj.patrolTime = 0.0f;
-                        }
-                        else
-                        {
-                            obj.patrolStep = 3;
-                            obj.patrolTime = 0.0f;
+                            case PatrolArrivalAction::Deactivate:
+                                obj.active = false;
+                                break;
+                            case PatrolArrivalAction::StickAtDestination:
+                                obj.posStartX = obj.posEndX = obj.currentX;
+                                obj.posStartY = obj.posEndY = obj.currentY;
+                                obj.posStartZ = obj.posEndZ = obj.currentZ;
+                                [[fallthrough]];
+                            case PatrolArrivalAction::None:
+                                obj.patrolStep = 3;
+                                obj.patrolTime = 0.0f;
+                                break;
                         }
                     }
                     break;
