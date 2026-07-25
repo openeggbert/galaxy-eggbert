@@ -156,7 +156,7 @@ int main(int argc, char** argv)
     // 4c. Animation state: Jump (ascending) vs Air (falling) split
     // (2026-07-11, plan.md E3D-MIG-064 -- expanding the bottom-right
     // animation indicator beyond its original Stop/March/Jump/Down/Up
-    // debug-stopgap set). Real BlupiAction IDs 4 (Jump) and 5 (Air); Air's
+    // debug-stopgap set). Real GalaxyEggbert::Def::BlupiAction IDs 4 (Jump) and 5 (Air); Air's
     // frame data is grounded in mobile-eggbert-reference/08-animations.md.
     // Verifies the velocity-sign-based split this class uses (ascending =
     // Jump, falling/apex = Air), the active 3D physics adaptation of the
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
     }
 
     // 4d. Animation state: Down (grounded crouch) icon cycling. Real
-    // BlupiAction ID 6 has 3 real icon frames (33, 34, 35) per
+    // GalaxyEggbert::Def::BlupiAction ID 6 has 3 real icon frames (33, 34, 35) per
     // table_blupi/mobile-eggbert-reference/08-animations.md -- this used
     // to be a single-frame array (icon 33 only), a transcription bug fixed
     // 2026-07-19 while cross-checking table_blupi for the skate/tank
@@ -494,7 +494,7 @@ int main(int argc, char** argv)
         check(!crushed.TriggerCrush(), "TriggerCrush() is a no-op (returns false) while already squashed");
 
         // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
-        // BlupiAction IDs 72/73, `table_blupi` icon data transcribed with
+        // GalaxyEggbert::Def::BlupiAction IDs 72/73, `table_blupi` icon data transcribed with
         // explicit user approval): squashed+idle is StopEcrase, real icon
         // 320.
         crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
@@ -543,7 +543,7 @@ int main(int argc, char** argv)
         check(!ballooned.TriggerBalloon(), "TriggerBalloon() is a no-op (returns false) while already ballooned");
 
         // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
-        // BlupiAction ID 66, `table_blupi` icon data transcribed with
+        // GalaxyEggbert::Def::BlupiAction ID 66, `table_blupi` icon data transcribed with
         // explicit user approval): ballooned is always the Balloon anim
         // state, regardless of grounded/airborne (the real data has no
         // separate air variant).
@@ -820,7 +820,7 @@ int main(int argc, char** argv)
               "TriggerTeleport() is a no-op (returns false) while already teleporting");
 
         // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
-        // BlupiAction ID 74, `table_blupi` icon data transcribed with
+        // GalaxyEggbert::Def::BlupiAction ID 74, `table_blupi` icon data transcribed with
         // explicit user approval): teleporting is always the Teleporting
         // anim state. Real frame 0 is icon 1 (not -1), so no invisible-
         // frame substitution is exercised at this specific phase -- see
@@ -1140,12 +1140,12 @@ int main(int argc, char** argv)
             fullyLoaded.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
             fullyLoaded.TriggerShield();
             fullyLoaded.TriggerInvert();
-            check(fullyLoaded.IsInVehicle() && fullyLoaded.GetSecretPower() == GEBlupiController::SecretPower::Shield &&
+            check(fullyLoaded.IsInVehicle() && fullyLoaded.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Shield &&
                       fullyLoaded.IsInverted(),
                   "sanity: vehicle/Shield/Invert are all active before the death lock clears them");
             fullyLoaded.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
             check(!fullyLoaded.IsInVehicle(), "TriggerDeathLock() clears the vehicle mount (real BlupiDead())");
-            check(fullyLoaded.GetSecretPower() == GEBlupiController::SecretPower::None,
+            check(fullyLoaded.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
                   "TriggerDeathLock() clears the active secret power (real BlupiDead())");
             check(!fullyLoaded.IsInverted(), "TriggerDeathLock() clears Invert too (real BlupiDead())");
 
@@ -1384,7 +1384,7 @@ int main(int argc, char** argv)
             {
                 expiring.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
             }
-            check(expiring.GetSecretPower() == GEBlupiController::SecretPower::None,
+            check(expiring.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
                   "Shield expires back to None after its real ~25s duration");
             check(!expiring.IsInvincible(), "IsInvincible() is false again once Shield expires");
 
@@ -1533,16 +1533,16 @@ int main(int argc, char** argv)
 
             GEBlupiController cloudMounter;
             cloudMounter.TriggerCloud();
-            check(cloudMounter.GetSecretPower() == GEBlupiController::SecretPower::Cloud,
+            check(cloudMounter.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Cloud,
                   "sanity: Cloud is active before mounting");
             cloudMounter.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
-            check(cloudMounter.GetSecretPower() == GEBlupiController::SecretPower::None,
+            check(cloudMounter.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
                   "mounting a vehicle silently cancels an active Cloud (real behavior)");
 
             GEBlupiController shieldMounter;
             shieldMounter.TriggerShield();
             shieldMounter.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
-            check(shieldMounter.GetSecretPower() == GEBlupiController::SecretPower::Shield,
+            check(shieldMounter.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Shield,
                   "mounting a vehicle does NOT cancel Shield (real: 'none of them check Shield or Power')");
 
             GEBlupiController dismounter;

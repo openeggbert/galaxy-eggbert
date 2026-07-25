@@ -11,15 +11,15 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        bool IsPlatformLift(ObjectType t)
+        bool IsPlatformLift(GalaxyEggbert::Def::ObjectType t)
         {
-            return t == ObjectType::ObjectType1 || t == ObjectType::ObjectType47 ||
-                   t == ObjectType::ObjectType48;
+            return t == GalaxyEggbert::Def::ObjectType::ObjectType1 || t == GalaxyEggbert::Def::ObjectType::ObjectType47 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType48;
         }
 
-        bool IsCrate(ObjectType t)
+        bool IsCrate(GalaxyEggbert::Def::ObjectType t)
         {
-            return t == ObjectType::ObjectType12;
+            return t == GalaxyEggbert::Def::ObjectType::ObjectType12;
         }
 
         // Real MAX_EGG_COUNT (Decor.cpp:96) -- was two separate local
@@ -40,23 +40,23 @@ namespace GalaxyEggbert::CNA
         // divergent behavior, so this matches the existing
         // `IsPlatformLift()`/`IsCrate()`/`IsGenericHazard()` predicate
         // pattern directly rather than a handler table.
-        bool IsDestructibleByDynamite(ObjectType t)
+        bool IsDestructibleByDynamite(GalaxyEggbert::Def::ObjectType t)
         {
-            return t == ObjectType::ObjectType2 || t == ObjectType::ObjectType3 ||
-                   t == ObjectType::ObjectType4 || t == ObjectType::ObjectType6 ||
-                   t == ObjectType::ObjectType12 || t == ObjectType::ObjectType13 ||
-                   t == ObjectType::ObjectType16 || t == ObjectType::ObjectType17 ||
-                   t == ObjectType::ObjectType18 || t == ObjectType::ObjectType19 ||
-                   t == ObjectType::ObjectType20 || t == ObjectType::ObjectType24 ||
-                   t == ObjectType::ObjectType25 || t == ObjectType::ObjectType26 ||
-                   t == ObjectType::ObjectType28 || t == ObjectType::ObjectType30 ||
-                   t == ObjectType::ObjectType32 || t == ObjectType::ObjectType33 ||
-                   t == ObjectType::ObjectType34 || t == ObjectType::ObjectType40 ||
-                   t == ObjectType::ObjectType44 || t == ObjectType::ObjectType46 ||
-                   t == ObjectType::ObjectType52 || t == ObjectType::ObjectType54 ||
-                   t == ObjectType::ObjectType96 || t == ObjectType::ObjectType97 ||
-                   t == ObjectType::ObjectType200 || t == ObjectType::ObjectType201 ||
-                   t == ObjectType::ObjectType202 || t == ObjectType::ObjectType203;
+            return t == GalaxyEggbert::Def::ObjectType::ObjectType2 || t == GalaxyEggbert::Def::ObjectType::ObjectType3 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType4 || t == GalaxyEggbert::Def::ObjectType::ObjectType6 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType12 || t == GalaxyEggbert::Def::ObjectType::ObjectType13 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType16 || t == GalaxyEggbert::Def::ObjectType::ObjectType17 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType18 || t == GalaxyEggbert::Def::ObjectType::ObjectType19 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType20 || t == GalaxyEggbert::Def::ObjectType::ObjectType24 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType25 || t == GalaxyEggbert::Def::ObjectType::ObjectType26 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType28 || t == GalaxyEggbert::Def::ObjectType::ObjectType30 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType32 || t == GalaxyEggbert::Def::ObjectType::ObjectType33 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType34 || t == GalaxyEggbert::Def::ObjectType::ObjectType40 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType44 || t == GalaxyEggbert::Def::ObjectType::ObjectType46 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType52 || t == GalaxyEggbert::Def::ObjectType::ObjectType54 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType96 || t == GalaxyEggbert::Def::ObjectType::ObjectType97 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType200 || t == GalaxyEggbert::Def::ObjectType::ObjectType201 ||
+                   t == GalaxyEggbert::Def::ObjectType::ObjectType202 || t == GalaxyEggbert::Def::ObjectType::ObjectType203;
         }
 
         // INFRA-006 pilot (plan.md §7, `REMAKE-ANALYSIS.md` P1-2): the first
@@ -75,7 +75,7 @@ namespace GalaxyEggbert::CNA
         // deliberate scope boundary for a first pilot, not an oversight.
         struct SecretPowerPickupHandler
         {
-            ObjectType type;
+            GalaxyEggbert::Def::ObjectType type;
             // Which of Update()'s own caller-supplied blupiCanGrantX gates
             // applies -- an enum, not a function pointer, since every gate
             // is a plain bool parameter, not independent logic.
@@ -92,15 +92,15 @@ namespace GalaxyEggbert::CNA
             bool hasPositionPayload;
         };
         constexpr SecretPowerPickupHandler kSecretPowerPickupHandlers[] = {
-            {ObjectType::ObjectType25, SecretPowerPickupHandler::Gate::Shield, false,
+            {GalaxyEggbert::Def::ObjectType::ObjectType25, SecretPowerPickupHandler::Gate::Shield, false,
              GEInteractionSystem::EventKind::ShieldGranted, false},
-            {ObjectType::ObjectType26, SecretPowerPickupHandler::Gate::Power, true,
+            {GalaxyEggbert::Def::ObjectType::ObjectType26, SecretPowerPickupHandler::Gate::Power, true,
              GEInteractionSystem::EventKind::PowerGranted, true},
-            {ObjectType::ObjectType30, SecretPowerPickupHandler::Gate::Hide, true,
+            {GalaxyEggbert::Def::ObjectType::ObjectType30, SecretPowerPickupHandler::Gate::Hide, true,
              GEInteractionSystem::EventKind::HideGranted, true},
-            {ObjectType::ObjectType31, SecretPowerPickupHandler::Gate::Cloud, false,
+            {GalaxyEggbert::Def::ObjectType::ObjectType31, SecretPowerPickupHandler::Gate::Cloud, false,
              GEInteractionSystem::EventKind::CloudGranted, true},
-            {ObjectType::ObjectType40, SecretPowerPickupHandler::Gate::Invert, false,
+            {GalaxyEggbert::Def::ObjectType::ObjectType40, SecretPowerPickupHandler::Gate::Invert, false,
              GEInteractionSystem::EventKind::InvertGranted, false},
         };
 
@@ -127,30 +127,30 @@ namespace GalaxyEggbert::CNA
         //     never reaching `AdvancePatrolStep()` at all.
         struct ExpiringParticleHandler
         {
-            ObjectType type;
+            GalaxyEggbert::Def::ObjectType type;
             float expiryPhase;
             bool alwaysContinueEvenBeforeExpiry;
         };
         constexpr ExpiringParticleHandler kExpiringParticleHandlers[] = {
             // Always-continue family (never reaches AdvancePatrolStep()).
-            {ObjectType::ObjectType11, 9.0f, true},   // CAM-009-adjacent fan-hit shockwave flash
-            {ObjectType::ObjectType14, 14.0f, true},  // PICKUP-078/080 water splash (Plouf)
-            {ObjectType::ObjectType35, 6.0f, true},   // PICKUP-078/080 water splash (Tiplouf)
-            {ObjectType::ObjectType8, 39.0f, true},   // VISUAL-008 dynamite-blast explosion flash
-            {ObjectType::ObjectType10, 20.0f, true},  // VISUAL-008 fish/bird explosion flash
-            {ObjectType::ObjectType93, 5.0f, true},   // Clear3Ascend Lava-death puff ("158" death-VFX)
-            {ObjectType::ObjectType9, 20.0f, true},   // VISUAL-008 follower-blocked-path debris flash
+            {GalaxyEggbert::Def::ObjectType::ObjectType11, 9.0f, true},   // CAM-009-adjacent fan-hit shockwave flash
+            {GalaxyEggbert::Def::ObjectType::ObjectType14, 14.0f, true},  // PICKUP-078/080 water splash (Plouf)
+            {GalaxyEggbert::Def::ObjectType::ObjectType35, 6.0f, true},   // PICKUP-078/080 water splash (Tiplouf)
+            {GalaxyEggbert::Def::ObjectType::ObjectType8, 39.0f, true},   // VISUAL-008 dynamite-blast explosion flash
+            {GalaxyEggbert::Def::ObjectType::ObjectType10, 20.0f, true},  // VISUAL-008 fish/bird explosion flash
+            {GalaxyEggbert::Def::ObjectType::ObjectType93, 5.0f, true},   // Clear3Ascend Lava-death puff ("158" death-VFX)
+            {GalaxyEggbert::Def::ObjectType::ObjectType9, 20.0f, true},   // VISUAL-008 follower-blocked-path debris flash
             // Falls-through-pre-expiry family (real slide types + static markers coded the same way).
-            {ObjectType::ObjectType41, 16.0f, false}, // VISUAL-014/015 Invert start burst (real slide)
-            {ObjectType::ObjectType42, 16.0f, false}, // VISUAL-014/015 Invert stop burst (real slide)
-            {ObjectType::ObjectType39, 11.0f, false}, // VISUAL-012 treasure/collectible sparkle burst (real slide)
-            {ObjectType::ObjectType36, 16.0f, false}, // VISUAL-013 Pollution puff (real slide)
-            {ObjectType::ObjectType57, 20.0f, false},  // VISUAL-011-adjacent Shield magic trail (static)
-            {ObjectType::ObjectType27, 24.0f, false},  // VISUAL-011-adjacent Power magic trail (static)
-            {ObjectType::ObjectType98, 10.0f, false},  // VISUAL-009 bullet-hit splat, small (static)
-            {ObjectType::ObjectType99, 13.0f, false},  // VISUAL-009 bullet-hit splat, medium (static)
-            {ObjectType::ObjectType100, 18.0f, false}, // VISUAL-009 bullet-hit splat, large (static)
-            {ObjectType::ObjectType92, 128.0f, false}, // VISUAL-010 teleporter arc (static)
+            {GalaxyEggbert::Def::ObjectType::ObjectType41, 16.0f, false}, // VISUAL-014/015 Invert start burst (real slide)
+            {GalaxyEggbert::Def::ObjectType::ObjectType42, 16.0f, false}, // VISUAL-014/015 Invert stop burst (real slide)
+            {GalaxyEggbert::Def::ObjectType::ObjectType39, 11.0f, false}, // VISUAL-012 treasure/collectible sparkle burst (real slide)
+            {GalaxyEggbert::Def::ObjectType::ObjectType36, 16.0f, false}, // VISUAL-013 Pollution puff (real slide)
+            {GalaxyEggbert::Def::ObjectType::ObjectType57, 20.0f, false},  // VISUAL-011-adjacent Shield magic trail (static)
+            {GalaxyEggbert::Def::ObjectType::ObjectType27, 24.0f, false},  // VISUAL-011-adjacent Power magic trail (static)
+            {GalaxyEggbert::Def::ObjectType::ObjectType98, 10.0f, false},  // VISUAL-009 bullet-hit splat, small (static)
+            {GalaxyEggbert::Def::ObjectType::ObjectType99, 13.0f, false},  // VISUAL-009 bullet-hit splat, medium (static)
+            {GalaxyEggbert::Def::ObjectType::ObjectType100, 18.0f, false}, // VISUAL-009 bullet-hit splat, large (static)
+            {GalaxyEggbert::Def::ObjectType::ObjectType92, 128.0f, false}, // VISUAL-010 teleporter arc (static)
         };
 
         // Returns true if the caller should `continue` the per-object loop
@@ -199,7 +199,7 @@ namespace GalaxyEggbert::CNA
         // open-coded" precedent rather than forcing a false-generic shape.
         struct BasicPickupHandler
         {
-            ObjectType type;
+            GalaxyEggbert::Def::ObjectType type;
             GEInteractionSystem::VoyageKind voyageKind;
             int voyageIcon;
             float endX;
@@ -210,11 +210,11 @@ namespace GalaxyEggbert::CNA
             bool spawnsSparkleBurst;
         };
         constexpr BasicPickupHandler kBasicPickupHandlers[] = {
-            {ObjectType::ObjectType5, GEInteractionSystem::VoyageKind::Treasure, 6, 430.0f, 430.0f, false, true},    // treasure, Decor.cpp:5956
-            {ObjectType::ObjectType49, GEInteractionSystem::VoyageKind::Key1, 215, 520.0f, 418.0f, false, true},     // key 1, Decor.cpp:5971
-            {ObjectType::ObjectType50, GEInteractionSystem::VoyageKind::Key2, 222, 530.0f, 418.0f, false, true},     // key 2, Decor.cpp:5986
-            {ObjectType::ObjectType51, GEInteractionSystem::VoyageKind::Key3, 229, 540.0f, 418.0f, false, true},     // key 3, Decor.cpp:6001
-            {ObjectType::ObjectType55, GEInteractionSystem::VoyageKind::Dynamite, 252, 505.0f, 414.0f, true, false}, // dynamite, Decor.cpp:6123-6125
+            {GalaxyEggbert::Def::ObjectType::ObjectType5, GEInteractionSystem::VoyageKind::Treasure, 6, 430.0f, 430.0f, false, true},    // treasure, Decor.cpp:5956
+            {GalaxyEggbert::Def::ObjectType::ObjectType49, GEInteractionSystem::VoyageKind::Key1, 215, 520.0f, 418.0f, false, true},     // key 1, Decor.cpp:5971
+            {GalaxyEggbert::Def::ObjectType::ObjectType50, GEInteractionSystem::VoyageKind::Key2, 222, 530.0f, 418.0f, false, true},     // key 2, Decor.cpp:5986
+            {GalaxyEggbert::Def::ObjectType::ObjectType51, GEInteractionSystem::VoyageKind::Key3, 229, 540.0f, 418.0f, false, true},     // key 3, Decor.cpp:6001
+            {GalaxyEggbert::Def::ObjectType::ObjectType55, GEInteractionSystem::VoyageKind::Dynamite, 252, 505.0f, 414.0f, true, false}, // dynamite, Decor.cpp:6123-6125
         };
 
         // Opens a door tile (plan.md E3D-MIG-160/162, real `Decor::OpenDoor`,
@@ -237,7 +237,7 @@ namespace GalaxyEggbert::CNA
                                                       Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
 
             MobileObjSpec slide;
-            slide.type = ObjectType::ObjectType22;
+            slide.type = GalaxyEggbert::Def::ObjectType::ObjectType22;
             slide.posStartX = slide.posEndX = slide.currentX =
                 static_cast<float>(gx) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
             slide.posStartY = slide.posEndY = slide.currentY = static_cast<float>(gy);
@@ -261,7 +261,7 @@ namespace GalaxyEggbert::CNA
             {
                 objects.push_back(slide);
             }
-            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel33);
+            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel33);
         }
 
         // Real Decor::OpenDoorsTresor (~11642): scans the whole grid,
@@ -327,21 +327,21 @@ namespace GalaxyEggbert::CNA
 
         struct PatrolArrivalHandler
         {
-            ObjectType type;
+            GalaxyEggbert::Def::ObjectType type;
             PatrolArrivalAction action;
         };
 
         constexpr PatrolArrivalHandler kPatrolArrivalHandlers[] = {
             // Fired projectile / rising water bubble: ObjectDelete as soon
             // as the precomputed clear path ends (Decor.cpp:8095-8098).
-            {ObjectType::ObjectType23, PatrolArrivalAction::Deactivate},
-            {ObjectType::ObjectType15, PatrolArrivalAction::Deactivate},
+            {GalaxyEggbert::Def::ObjectType::ObjectType23, PatrolArrivalAction::Deactivate},
+            {GalaxyEggbert::Def::ObjectType::ObjectType15, PatrolArrivalAction::Deactivate},
             // Goo: stop at the landing point instead of ever receding
             // (Decor.cpp:8099-8104).
-            {ObjectType::ObjectType34, PatrolArrivalAction::StickAtDestination},
+            {GalaxyEggbert::Def::ObjectType::ObjectType34, PatrolArrivalAction::StickAtDestination},
         };
 
-        PatrolArrivalAction GetPatrolArrivalAction(ObjectType type)
+        PatrolArrivalAction GetPatrolArrivalAction(GalaxyEggbert::Def::ObjectType type)
         {
             for (const auto& handler : kPatrolArrivalHandlers)
             {
@@ -430,7 +430,7 @@ namespace GalaxyEggbert::CNA
         // (follower, both dormant and awake) all use the exact same contact-
         // death check -- the only difference in that source block is purely
         // cosmetic (17/20 get a bigger screen-shake + a different explosion
-        // ObjectType than the rest), not a behavioral difference in whether
+        // GalaxyEggbert::Def::ObjectType than the rest), not a behavioral difference in whether
         // or how Blupi dies, so this deliberately does NOT split them into
         // separate per-type checks. Real per-type quirks that ARE modeled:
         // type3's duck-immunity (see the blupiCrouching check below). Real
@@ -442,18 +442,18 @@ namespace GalaxyEggbert::CNA
         // homing-toward-Blupi movement AI (a separate, NOT-yet-implemented
         // feature from this contact-death check -- an un-homing follower
         // still correctly kills Blupi on contact if he touches it).
-        bool IsGenericHazard(ObjectType t)
+        bool IsGenericHazard(GalaxyEggbert::Def::ObjectType t)
         {
             switch (t)
             {
-                case ObjectType::ObjectType2:
-                case ObjectType::ObjectType3:
-                case ObjectType::ObjectType4:
-                case ObjectType::ObjectType16:
-                case ObjectType::ObjectType17:
-                case ObjectType::ObjectType20:
-                case ObjectType::ObjectType96:
-                case ObjectType::ObjectType97:
+                case GalaxyEggbert::Def::ObjectType::ObjectType2:
+                case GalaxyEggbert::Def::ObjectType::ObjectType3:
+                case GalaxyEggbert::Def::ObjectType::ObjectType4:
+                case GalaxyEggbert::Def::ObjectType::ObjectType16:
+                case GalaxyEggbert::Def::ObjectType::ObjectType17:
+                case GalaxyEggbert::Def::ObjectType::ObjectType20:
+                case GalaxyEggbert::Def::ObjectType::ObjectType96:
+                case GalaxyEggbert::Def::ObjectType::ObjectType97:
                     return true;
                 default:
                     return false;
@@ -466,14 +466,14 @@ namespace GalaxyEggbert::CNA
         // if/else-if chain (the pop check comes first and is mutually
         // exclusive with the kill check; only these 4 types are ever
         // eligible for the pop branch at all).
-        bool IsBalloonPoppableHazard(ObjectType t)
+        bool IsBalloonPoppableHazard(GalaxyEggbert::Def::ObjectType t)
         {
             switch (t)
             {
-                case ObjectType::ObjectType3:
-                case ObjectType::ObjectType16:
-                case ObjectType::ObjectType96:
-                case ObjectType::ObjectType97:
+                case GalaxyEggbert::Def::ObjectType::ObjectType3:
+                case GalaxyEggbert::Def::ObjectType::ObjectType16:
+                case GalaxyEggbert::Def::ObjectType::ObjectType96:
+                case GalaxyEggbert::Def::ObjectType::ObjectType97:
                     return true;
                 default:
                     return false;
@@ -568,7 +568,7 @@ namespace GalaxyEggbert::CNA
         MobileObjSpec MakeBullet(const MobileObjSpec& obj, float dirX, float dirY, float dirZ, int dist)
         {
             MobileObjSpec bullet;
-            bullet.type = ObjectType::ObjectType23;
+            bullet.type = GalaxyEggbert::Def::ObjectType::ObjectType23;
             bullet.posStartX = bullet.currentX = obj.currentX;
             bullet.posStartY = bullet.currentY = obj.currentY;
             bullet.posStartZ = bullet.currentZ = obj.currentZ;
@@ -588,7 +588,7 @@ namespace GalaxyEggbert::CNA
         // (`speed ∈ {-60,60,10,-10}`, encoding up/down/+X/-X) at the
         // collected object's own position, no pre-offset -- same real
         // `SearchDistRight()` short-circuit as Invert's burst
-        // (`Decor.cpp:7628-7653`, flat 500 real-px for this ObjectType
+        // (`Decor.cpp:7628-7653`, flat 500 real-px for this GalaxyEggbert::Def::ObjectType
         // too), same 64px-per-tile conversion, same real screen-Y-to-
         // world-Y sign flip. Appends directly to pendingSpawns since,
         // unlike Invert's grant/expiry (fired from the game class after
@@ -614,7 +614,7 @@ namespace GalaxyEggbert::CNA
             for (const auto& dir : dirs)
             {
                 MobileObjSpec spec;
-                spec.type = ObjectType::ObjectType39;
+                spec.type = GalaxyEggbert::Def::ObjectType::ObjectType39;
                 spec.active = true;
                 spec.phase = 0.0f;
                 spec.currentX = spec.posStartX = x;
@@ -645,7 +645,7 @@ namespace GalaxyEggbert::CNA
         // type, paired with SmallShake). Appends directly to pendingSpawns
         // since both real spawn sites are INSIDE this class's own
         // per-object loop.
-        void AppendExplosionFlash(ObjectType type, float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
+        void AppendExplosionFlash(GalaxyEggbert::Def::ObjectType type, float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
         {
             MobileObjSpec spec;
             spec.type = type;
@@ -658,7 +658,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // Bullet-hit splat effect (plan.md VISUAL-009, ObjectType98/99/100
-        // -- despite ObjectType.hpp's own "water splash" doc comments,
+        // -- despite Def/ObjectType.hpp's own "water splash" doc comments,
         // the ONLY real spawn site is `Decor::StartSploutchGlu()`
         // (`Decor.cpp:7763-7789`), called exactly once, from the
         // ObjectType23-bullet-kills-Blupi block (`Decor.cpp:5914-5947`,
@@ -672,16 +672,16 @@ namespace GalaxyEggbert::CNA
         // class's own per-object loop.
         void AppendSplatEffect(float x, float y, float z, std::vector<MobileObjSpec>& pendingSpawns)
         {
-            struct Splat { ObjectType type; float dx, dy; };
+            struct Splat { GalaxyEggbert::Def::ObjectType type; float dx, dy; };
             static constexpr float k = 64.0f; // real px-per-tile scale
             static const Splat splats[7] = {
-                {ObjectType::ObjectType98, 0.0f / k, 0.0f / k},
-                {ObjectType::ObjectType99, 15.0f / k, -20.0f / k},
-                {ObjectType::ObjectType99, -20.0f / k, -18.0f / k},
-                {ObjectType::ObjectType99, 23.0f / k, 18.0f / k},
-                {ObjectType::ObjectType99, -15.0f / k, 18.0f / k},
-                {ObjectType::ObjectType100, 32.0f / k, -10.0f / k},
-                {ObjectType::ObjectType100, -28.0f / k, -15.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType98, 0.0f / k, 0.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType99, 15.0f / k, -20.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType99, -20.0f / k, -18.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType99, 23.0f / k, 18.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType99, -15.0f / k, 18.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType100, 32.0f / k, -10.0f / k},
+                {GalaxyEggbert::Def::ObjectType::ObjectType100, -28.0f / k, -15.0f / k},
             };
             for (const auto& splat : splats)
             {
@@ -709,7 +709,7 @@ namespace GalaxyEggbert::CNA
             int gx, gy, gz;
             ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
             const int dist = SearchAirDistance(world, gx, gy, gz, 0, -1, 0);
-            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
+            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
             if (dist > 0)
             {
                 pendingSpawns.push_back(MakeBullet(obj, 0.0f, -1.0f, 0.0f, dist));
@@ -731,7 +731,7 @@ namespace GalaxyEggbert::CNA
             ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
             const int dirSign = (dirXSign > 0.0f) ? 1 : -1;
             const int dist = SearchAirDistance(world, gx, gy, gz, dirSign, 0, 0);
-            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
+            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
             if (dist > 0)
             {
                 pendingSpawns.push_back(MakeBullet(obj, dirXSign, 0.0f, 0.0f, dist));
@@ -748,7 +748,7 @@ namespace GalaxyEggbert::CNA
 
         // Real `BlupiElectro` aura (plan.md `068`, Decor.cpp:9610-9638,
         // mobile-eggbert-reference/10-blupi-mechanics.md §9): while
-        // `m_blupiCloud` (this engine's SecretPower::Cloud) is active,
+        // `m_blupiCloud` (this engine's GalaxyEggbert::Def::SecretPower::Cloud) is active,
         // instantly destroys small enemies within 40px of Blupi's own
         // box -- an offensive aura Blupi carries, unrelated to the
         // `Blitz` lightning HAZARD despite the similarly-named real
@@ -837,7 +837,7 @@ namespace GalaxyEggbert::CNA
             totalTreasures_ = 0;
             for (const auto& obj : objects)
             {
-                if (obj.type == ObjectType::ObjectType5)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType5)
                 {
                     ++totalTreasures_;
                 }
@@ -877,7 +877,7 @@ namespace GalaxyEggbert::CNA
             if (animTick == 0 || animTick == 7 || animTick == 18 || animTick == 25 || animTick == 33 ||
                 animTick == 44)
             {
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel69);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel69);
             }
         }
 
@@ -903,8 +903,8 @@ namespace GalaxyEggbert::CNA
             // IsGenericHazard's own list) is destroyed by the aura rather
             // than also killing Blupi via hazard contact the same frame.
             if (blupiCloudActive &&
-                (obj.type == ObjectType::ObjectType4 || obj.type == ObjectType::ObjectType32 ||
-                 obj.type == ObjectType::ObjectType33))
+                (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
+                 obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33))
             {
                 const float adx = obj.currentX - blupiX;
                 const float ady = obj.currentY - blupiY;
@@ -912,7 +912,7 @@ namespace GalaxyEggbert::CNA
                 if (adx * adx + ady * ady + adz * adz < kCloudAuraRadius * kCloudAuraRadius)
                 {
                     obj.active = false;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel59);
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel59);
                     continue;
                 }
             }
@@ -928,8 +928,8 @@ namespace GalaxyEggbert::CNA
             // Checked before the Cloud aura above in real source's own per-object loop (this
             // engine's own ordering here is a natural adaptation, not a faithfulness question --
             // the two can't both apply to the same enemy the same frame regardless of order).
-            if (obj.type == ObjectType::ObjectType4 || obj.type == ObjectType::ObjectType32 ||
-                obj.type == ObjectType::ObjectType33)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
+                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
             {
                 for (auto& other : objects)
                 {
@@ -937,8 +937,8 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
-                    if (other.type != ObjectType::ObjectType200 && other.type != ObjectType::ObjectType201 &&
-                        other.type != ObjectType::ObjectType202 && other.type != ObjectType::ObjectType203)
+                    if (other.type != GalaxyEggbert::Def::ObjectType::ObjectType200 && other.type != GalaxyEggbert::Def::ObjectType::ObjectType201 &&
+                        other.type != GalaxyEggbert::Def::ObjectType::ObjectType202 && other.type != GalaxyEggbert::Def::ObjectType::ObjectType203)
                     {
                         continue;
                     }
@@ -947,11 +947,11 @@ namespace GalaxyEggbert::CNA
                     const float pdz = other.currentZ - obj.currentZ;
                     if (pdx * pdx + pdy * pdy + pdz * pdz < kHazardContactRadius * kHazardContactRadius)
                     {
-                        AppendExplosionFlash(ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
+                        AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
                         events_.push_back(Event{EventKind::SmallShakeTriggered});
-                        AppendExplosionFlash(ObjectType::ObjectType37, obj.currentX, obj.currentY, obj.currentZ,
+                        AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType37, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
                         other.active = false;
                         obj.active = false;
@@ -1014,8 +1014,8 @@ namespace GalaxyEggbert::CNA
                 {
                     constexpr float kConveyorNudgeSpeed = 0.3f;
                     float nudgeX = 0.0f;
-                    if (obj.type == ObjectType::ObjectType47) nudgeX = kConveyorNudgeSpeed * dt;
-                    else if (obj.type == ObjectType::ObjectType48) nudgeX = -kConveyorNudgeSpeed * dt;
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType47) nudgeX = kConveyorNudgeSpeed * dt;
+                    else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType48) nudgeX = -kConveyorNudgeSpeed * dt;
 
                     ridingLift_ = true;
                     rideDeltaX_ = (obj.currentX - riddenLiftOldX) + nudgeX;
@@ -1147,7 +1147,7 @@ namespace GalaxyEggbert::CNA
                                 member->currentX += pushDir;
                             }
                             // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147
-                            // start, `:3637` stop on leaving `BlupiAction::Push`) -- ch38, not
+                            // start, `:3637` stop on leaving `GalaxyEggbert::Def::BlupiAction::Push`) -- ch38, not
                             // "electric arc (long)" as plan.md's own SOUND-048 entry claimed.
                             // This class has no direct sound-instance-lifetime access (its own
                             // `sound` parameter is fire-and-forget `Play()` only), so the actual
@@ -1171,7 +1171,7 @@ namespace GalaxyEggbert::CNA
             // dwell/advance/dwell/recede patrol (which loops and doesn't
             // fit a "play once and vanish" effect), so it's handled
             // directly here instead.
-            if (obj.type == ObjectType::ObjectType22)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType22)
             {
                 constexpr float kSlideTicks = 50.0f;
                 const float t = std::min(obj.phase / kSlideTicks, 1.0f);
@@ -1197,7 +1197,7 @@ namespace GalaxyEggbert::CNA
             // rate (GEWorldRuntime::Update()); reconstructing the phase as
             // of the START of this frame (`prevPhase`) lets each blast fire
             // on the exact frame its tick is crossed, not every frame after.
-            if (obj.type == ObjectType::ObjectType56)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56)
             {
                 struct Blast { float tick, dx, dy; };
                 static constexpr Blast kBlasts[] = {
@@ -1224,11 +1224,11 @@ namespace GalaxyEggbert::CNA
                         // VISUAL-008, ObjectType8, Decor.cpp:9065) -- one
                         // instance per blast, at its own center, not just
                         // the central (dx=0,dy=0) one.
-                        AppendExplosionFlash(ObjectType::ObjectType8, centerX, centerY, centerZ, pendingSpawns);
+                        AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, centerX, centerY, centerZ, pendingSpawns);
 
                         if (blast.dx == 0.0f && blast.dy == 0.0f)
                         {
-                            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
                             // Real camera shake (plan.md CAM-008,
                             // Decor::DynamiteStart(), Decor.cpp:9068-9070,
                             // confirmed via direct source read): SmallShake
@@ -1386,7 +1386,7 @@ namespace GalaxyEggbert::CNA
             // ending at the original 364 -- with this engine's own
             // reasonable uniform pacing within each of those 3 documented
             // windows, not a copied per-tick table.
-            if (obj.type == ObjectType::ObjectType52)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52)
             {
                 constexpr float kAscendTicks = 28.0f;
                 constexpr float kHoldTicks = 112.0f;
@@ -1397,7 +1397,7 @@ namespace GalaxyEggbert::CNA
                 const float prevPhase = obj.phase - dt * 20.0f;
                 if (prevPhase < kProgressSoundTick && obj.phase >= kProgressSoundTick)
                 {
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel73);
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel73);
                 }
 
                 int icon;
@@ -1443,15 +1443,15 @@ namespace GalaxyEggbert::CNA
             // (real channel 92) exactly once at the transition. Does NOT
             // `continue` -- a follower that wakes this exact frame also
             // takes its first homing step this same frame, below.
-            if (obj.type == ObjectType::ObjectType96)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96)
             {
                 const float fwdx = obj.currentX - blupiX;
                 const float fwdy = obj.currentY - blupiY;
                 const float fwdz = obj.currentZ - blupiZ;
                 if (fwdx * fwdx + fwdy * fwdy + fwdz * fwdz < kFollowerWakeRadius * kFollowerWakeRadius)
                 {
-                    obj.type = ObjectType::ObjectType97;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel92);
+                    obj.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel92);
                 }
             }
 
@@ -1481,7 +1481,7 @@ namespace GalaxyEggbert::CNA
             // rectangle, not a point, same simplification as every other
             // collision check in this file. The cosmetic `ObjectType9`
             // debris flash (plan.md VISUAL-008) and real `SmallShake`
-            // camera shake (`m_decorAction = DecorAction::SmallShake`,
+            // camera shake (`m_decorAction = GalaxyEggbert::Def::DecorAction::SmallShake`,
             // `Decor.cpp:8062-8063`, plan.md CAM-008 -- this exact site was
             // missed by that earlier audit) are both now modeled too,
             // found and fixed 2026-07-14 (this class's own real `-1`
@@ -1496,7 +1496,7 @@ namespace GalaxyEggbert::CNA
             // through (no `continue`) on a successful step, since that
             // check is exactly how a follower that catches up to Blupi is
             // supposed to kill him.
-            if (obj.type == ObjectType::ObjectType97)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97)
             {
                 float endX = obj.currentX;
                 float endY = obj.currentY;
@@ -1511,8 +1511,8 @@ namespace GalaxyEggbert::CNA
                 if (IsSolidAt(world, fgx, fgy, fgz))
                 {
                     obj.active = false;
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
-                    AppendExplosionFlash(ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                    AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
                     events_.push_back(Event{EventKind::SmallShakeTriggered});
                     continue;
@@ -1545,11 +1545,11 @@ namespace GalaxyEggbert::CNA
                 if (prevPatrolStep == 1 || prevPatrolStep == 3)
                 {
                     const float dtTicks = dt * kTicksPerSecond;
-                    if (obj.type == ObjectType::ObjectType32 && CrossedTick(prevPatrolTime, dtTicks, 21.0f))
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 && CrossedTick(prevPatrolTime, dtTicks, 21.0f))
                     {
                         FireBlupihShot(obj, world, sound, pendingSpawns);
                     }
-                    else if (obj.type == ObjectType::ObjectType33)
+                    else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
                     {
                         const bool aboutToWalkRight =
                             (obj.posStartX < obj.posEndX && prevPatrolStep == 1) ||
@@ -1585,7 +1585,7 @@ namespace GalaxyEggbert::CNA
             // AppendSplatEffect()'s own comment) -- channel 74 reused here
             // for consistency with this class's existing hazard-death
             // sound approximation.
-            if (obj.type == ObjectType::ObjectType23)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23)
             {
                 const float bdx = obj.currentX - blupiX;
                 const float bdy = obj.currentY - blupiY;
@@ -1605,7 +1605,7 @@ namespace GalaxyEggbert::CNA
                         deathLockEvent.deathLockShouldRespawn = true;
                         ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                     }
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
                 }
                 continue;
             }
@@ -1617,7 +1617,7 @@ namespace GalaxyEggbert::CNA
             // gate also includes `!m_blupiShield && !m_blupiHide`
             // (Decor.cpp:5826, plan.md E3D-MIG-170) -- a shielded/hidden
             // Blupi doesn't get ballooned at all.
-            if (obj.type == ObjectType::ObjectType44)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType44)
             {
                 const float wdx = obj.currentX - blupiX;
                 const float wdy = obj.currentY - blupiY;
@@ -1648,7 +1648,7 @@ namespace GalaxyEggbert::CNA
             // types below) -- it always survives to keep guarding.
             // **Corrected 2026-07-16** (this comment previously mis-stated the
             // real behavior): contact does NOT spare Blupi if he's riding a
-            // vehicle -- real source sets `BlupiAction::Glu` unconditionally
+            // vehicle -- real source sets `GalaxyEggbert::Def::BlupiAction::Glu` unconditionally
             // either way (still a real death via the shared per-action
             // life-loss dispatch, `Decor.cpp:6374-6392`), it just ALSO plays a
             // different sound/shake (channel 10 + SmallShake + a pop effect,
@@ -1668,7 +1668,7 @@ namespace GalaxyEggbert::CNA
             // facing, Decor.cpp:9575-9578) is also NOT modeled -- no idle-
             // taunt animation system exists in this engine at all yet
             // (cosmetic, same as type2's taunt-suppression above).
-            if (obj.type == ObjectType::ObjectType54)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
             {
                 if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned && !blupiInvincible)
                 {
@@ -1687,7 +1687,7 @@ namespace GalaxyEggbert::CNA
                         deathLockEvent.deathLockKind = PendingDeathKind::Glu;
                         deathLockEvent.deathLockShouldRespawn = true;
                         ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel51);
+                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
                     }
                 }
                 continue;
@@ -1715,7 +1715,7 @@ namespace GalaxyEggbert::CNA
             // balloon-pop either).
             if (IsGenericHazard(obj.type))
             {
-                if (obj.type == ObjectType::ObjectType3 && blupiCrouching)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType3 && blupiCrouching)
                 {
                     continue;
                 }
@@ -1742,7 +1742,7 @@ namespace GalaxyEggbert::CNA
                         ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                         if (isClear2)
                         {
-                            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
                             RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
                         }
                         // Real camera shake (plan.md CAM-008/009, Decor.cpp
@@ -1756,16 +1756,16 @@ namespace GalaxyEggbert::CNA
                         // at the SAME site, same fish/bird split:
                         // ObjectType10 for fish/bird, ObjectType8 for every
                         // other hazard type.
-                        if (obj.type == ObjectType::ObjectType17 || obj.type == ObjectType::ObjectType20)
+                        if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType17 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType20)
                         {
                             events_.push_back(Event{EventKind::BigShakeTriggered});
-                            AppendExplosionFlash(ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
+                            AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
                                                   pendingSpawns);
                         }
                         else
                         {
                             events_.push_back(Event{EventKind::SmallShakeTriggered});
-                            AppendExplosionFlash(ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
+                            AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
                                                   pendingSpawns);
                         }
                     }
@@ -1782,8 +1782,8 @@ namespace GalaxyEggbert::CNA
             // m_blupiRestart=true anywhere in this real block (shouldRespawn=false, same as the
             // generic-hazard list) -- but ALWAYS channel 10 + SmallShake + an ObjectType10 pop
             // effect (no fish/bird BigShake variant here, unlike the generic-hazard list).
-            if (obj.type == ObjectType::ObjectType201 || obj.type == ObjectType::ObjectType202 ||
-                obj.type == ObjectType::ObjectType203)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType201 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType202 ||
+                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType203)
             {
                 const float sdx = obj.currentX - blupiX;
                 const float sdy = obj.currentY - blupiY;
@@ -1800,12 +1800,12 @@ namespace GalaxyEggbert::CNA
                     ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                     if (isClear2)
                     {
-                        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
                         RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
                     }
                     events_.push_back(Event{EventKind::SmallShakeTriggered});
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
-                    AppendExplosionFlash(ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                    AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
                 }
                 continue;
@@ -1819,14 +1819,14 @@ namespace GalaxyEggbert::CNA
             // channel 11 (or 19 for the
             // set-completing treasure), not channel 10, and egg pickup is
             // channel 3, not channel 42 (42 is Shield activation, unrelated).
-            if (obj.type != ObjectType::ObjectType5 && obj.type != ObjectType::ObjectType6 &&
-                obj.type != ObjectType::ObjectType7 && obj.type != ObjectType::ObjectType21 &&
-                obj.type != ObjectType::ObjectType49 &&
-                obj.type != ObjectType::ObjectType50 && obj.type != ObjectType::ObjectType51 &&
-                obj.type != ObjectType::ObjectType55 && obj.type != ObjectType::ObjectType25 &&
-                obj.type != ObjectType::ObjectType26 && obj.type != ObjectType::ObjectType30 &&
-                obj.type != ObjectType::ObjectType31 && obj.type != ObjectType::ObjectType29 &&
-                obj.type != ObjectType::ObjectType40)
+            if (obj.type != GalaxyEggbert::Def::ObjectType::ObjectType5 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType6 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType7 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType21 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType49 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType50 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType51 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType55 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType25 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType26 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType30 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType31 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType29 &&
+                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType40)
             {
                 continue;
             }
@@ -1843,7 +1843,7 @@ namespace GalaxyEggbert::CNA
             // known consumer in this engine's own save/ranking scope (not modeled, matching this
             // engine's deliberately-independent GESaveData format). Previously this engine only
             // recognized ObjectType7, so a secret exit did nothing at all on contact.
-            if (obj.type == ObjectType::ObjectType7 || obj.type == ObjectType::ObjectType21)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType7 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType21)
             {
                 // Level-exit goal: debounced to fire once per contact
                 // "session" (real mobile-eggbert re-checks every 50 ticks
@@ -1865,11 +1865,11 @@ namespace GalaxyEggbert::CNA
                         if (treasuresCollected_ >= totalTreasures_)
                         {
                             exitReached_ = true;
-                            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel14);
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel14);
                         }
                         else
                         {
-                            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel13);
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel13);
                         }
                     }
                 }
@@ -1901,17 +1901,17 @@ namespace GalaxyEggbert::CNA
                 // kBasicPickupHandlers above. Real sparkle burst
                 // (plan.md VISUAL-012) fires for Treasure AND the 3 key
                 // pickups (`Decor.cpp:5956-6006`, confirmed via
-                // ObjectType.hpp's own "Key 1/2/3 collectible" doc comments),
+                // Def/ObjectType.hpp's own "Key 1/2/3 collectible" doc comments),
                 // spawned immediately at touch time, NOT deferred to voyage
                 // completion.
-                case ObjectType::ObjectType5:  // treasure
-                case ObjectType::ObjectType49: // key 1
-                case ObjectType::ObjectType50: // key 2
-                case ObjectType::ObjectType51: // key 3
-                case ObjectType::ObjectType55: // dynamite stick
+                case GalaxyEggbert::Def::ObjectType::ObjectType5:  // treasure
+                case GalaxyEggbert::Def::ObjectType::ObjectType49: // key 1
+                case GalaxyEggbert::Def::ObjectType::ObjectType50: // key 2
+                case GalaxyEggbert::Def::ObjectType::ObjectType51: // key 3
+                case GalaxyEggbert::Def::ObjectType::ObjectType55: // dynamite stick
                     TryCollectBasicPickup(obj, dynamiteCount_ == 0, pendingSpawns);
                     break;
-                case ObjectType::ObjectType6: // extra-life egg
+                case GalaxyEggbert::Def::ObjectType::ObjectType6: // extra-life egg
                     // Real MAX_EGG_COUNT=10 gate: at the cap, touching an
                     // egg does nothing at all -- not even removed (real
                     // gate is on the WHOLE touch-time block, Decor.cpp:6007,
@@ -1926,7 +1926,7 @@ namespace GalaxyEggbert::CNA
                                       210.0f + 16.0f * static_cast<float>(lifeEggCount_ + 1), 417.0f, true);
                     }
                     break;
-                case ObjectType::ObjectType29: // bullet pack
+                case GalaxyEggbert::Def::ObjectType::ObjectType29: // bullet pack
                     // Real gate: only picked up below the cap (real
                     // m_blupiBullet < 10) -- touching a pack while already
                     // at max ammo does nothing at all, not even removed.
@@ -1971,11 +1971,11 @@ namespace GalaxyEggbert::CNA
                 // share one handler-table-driven dispatch,
                 // TryGrantSecretPowerPickup() -- see its own comment and
                 // kSecretPowerPickupHandlers above.
-                case ObjectType::ObjectType25: // shield stick
-                case ObjectType::ObjectType26: // suction-cup ("Sucette" -> Power)
-                case ObjectType::ObjectType30: // drink ("Drink" -> Hide)
-                case ObjectType::ObjectType31: // charge ("Charge" -> Cloud)
-                case ObjectType::ObjectType40: // mirror/invert
+                case GalaxyEggbert::Def::ObjectType::ObjectType25: // shield stick
+                case GalaxyEggbert::Def::ObjectType::ObjectType26: // suction-cup ("Sucette" -> Power)
+                case GalaxyEggbert::Def::ObjectType::ObjectType30: // drink ("Drink" -> Hide)
+                case GalaxyEggbert::Def::ObjectType::ObjectType31: // charge ("Charge" -> Cloud)
+                case GalaxyEggbert::Def::ObjectType::ObjectType40: // mirror/invert
                     TryGrantSecretPowerPickup(obj, blupiCanGrantShield, blupiCanGrantPower, blupiCanGrantCloud,
                                               blupiCanGrantHide, blupiCanGrantInvert, blupiActionPressedEdge);
                     break;
@@ -2096,7 +2096,7 @@ namespace GalaxyEggbert::CNA
                 bool alreadyBuilding = false;
                 for (const auto& obj : objects)
                 {
-                    if (obj.active && obj.type == ObjectType::ObjectType52 &&
+                    if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52 &&
                         std::lround(obj.currentX) == std::lround(blupiX) &&
                         std::lround(obj.currentZ) == std::lround(blupiZ))
                     {
@@ -2112,14 +2112,14 @@ namespace GalaxyEggbert::CNA
                     // to a grid index the same way TryActivateSwitch's own
                     // standing-cell check does.
                     MobileObjSpec bridge{};
-                    bridge.type = ObjectType::ObjectType52;
+                    bridge.type = GalaxyEggbert::Def::ObjectType::ObjectType52;
                     bridge.posStartX = bridge.posEndX = bridge.currentX = static_cast<float>(std::lround(blupiX));
                     bridge.posStartY = bridge.posEndY = bridge.currentY = static_cast<float>(bridgeGY) + 1.0f;
                     bridge.posStartZ = bridge.posEndZ = bridge.currentZ = static_cast<float>(std::lround(blupiZ));
                     bridge.phase = 0.0f;
                     bridge.active = true;
                     pendingSpawns.push_back(bridge);
-                    sound.Play(GalaxyEggbert::SoundChannel::SoundChannel72);
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel72);
                 }
             }
         }
@@ -2139,7 +2139,7 @@ namespace GalaxyEggbert::CNA
                 --bulletCount_;
                 fireCooldownTimer_ = kFireCooldownSeconds;
                 events_.push_back(Event{EventKind::TankFired});
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel52);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
                 if (dist > 0)
                 {
                     MobileObjSpec blupiPos{};
@@ -2152,7 +2152,7 @@ namespace GalaxyEggbert::CNA
             }
             else
             {
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel53);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel53);
             }
         }
 
@@ -2208,7 +2208,7 @@ namespace GalaxyEggbert::CNA
         --dynamiteCount_;
 
         MobileObjSpec fuse;
-        fuse.type = ObjectType::ObjectType56;
+        fuse.type = GalaxyEggbert::Def::ObjectType::ObjectType56;
         fuse.posStartX = fuse.posEndX = fuse.currentX = x;
         fuse.posStartY = fuse.posEndY = fuse.currentY = y;
         fuse.posStartZ = fuse.posEndZ = fuse.currentZ = z;
@@ -2243,7 +2243,7 @@ namespace GalaxyEggbert::CNA
         constexpr float kPersoRadius = 1.1f;
         for (auto& obj : objects)
         {
-            if (!obj.active || obj.type != ObjectType::ObjectType200)
+            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType200)
             {
                 continue;
             }
@@ -2276,7 +2276,7 @@ namespace GalaxyEggbert::CNA
         --persoCount_;
 
         MobileObjSpec decoy;
-        decoy.type = ObjectType::ObjectType200;
+        decoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
         decoy.posStartX = decoy.posEndX = decoy.currentX = x;
         decoy.posStartY = decoy.posEndY = decoy.currentY = y;
         decoy.posStartZ = decoy.posEndZ = decoy.currentZ = z;
@@ -2333,9 +2333,9 @@ namespace GalaxyEggbert::CNA
             {
                 continue;
             }
-            if (IsGenericHazard(obj.type) || obj.type == ObjectType::ObjectType32 ||
-                obj.type == ObjectType::ObjectType33 || obj.type == ObjectType::ObjectType44 ||
-                obj.type == ObjectType::ObjectType54)
+            if (IsGenericHazard(obj.type) || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
+                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType44 ||
+                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
             {
                 obj.active = false;
                 anyDestroyed = true;
@@ -2365,7 +2365,7 @@ namespace GalaxyEggbert::CNA
         // movement math.
         constexpr float kReach = 500.0f / 64.0f;
         constexpr float kExpiryPreOffset = 100.0f / 64.0f;
-        const ObjectType type = isGrant ? ObjectType::ObjectType41 : ObjectType::ObjectType42;
+        const GalaxyEggbert::Def::ObjectType type = isGrant ? GalaxyEggbert::Def::ObjectType::ObjectType41 : GalaxyEggbert::Def::ObjectType::ObjectType42;
 
         // Real screen-Y (up/down) maps to this engine's world-Y (height),
         // same convention already established for camera shake and Ghost
@@ -2443,7 +2443,7 @@ namespace GalaxyEggbert::CNA
         for (const auto& dir : dirs)
         {
             MobileObjSpec spec;
-            spec.type = ObjectType::ObjectType41;
+            spec.type = GalaxyEggbert::Def::ObjectType::ObjectType41;
             spec.active = true;
             spec.phase = 0.0f;
             spec.currentX = spec.posStartX = blupiX;
@@ -2471,13 +2471,13 @@ namespace GalaxyEggbert::CNA
                 objects.push_back(spec);
             }
         }
-        sound.Play(GalaxyEggbert::SoundChannel::SoundChannel75);
+        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel75);
     }
 
     void GEInteractionSystem::SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z)
     {
         MobileObjSpec spec;
-        spec.type = ObjectType::ObjectType11;
+        spec.type = GalaxyEggbert::Def::ObjectType::ObjectType11;
         spec.active = true;
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spec.posEndX = x;
@@ -2497,7 +2497,7 @@ namespace GalaxyEggbert::CNA
     }
 
     void GEInteractionSystem::RespawnPickupItem(GEWorldRuntime& worldRuntime, float x, float y, float z,
-                                                 GalaxyEggbert::ObjectType type)
+                                                 GalaxyEggbert::Def::ObjectType type)
     {
         // Real `ObjectStart(pos, type, 0)` at the real 2-stage pickup's own completion
         // (Decor.cpp:3212-3235/3048-3057, plan.md `173`) -- a static respawn (speed=0, no
@@ -2525,7 +2525,7 @@ namespace GalaxyEggbert::CNA
     void GEInteractionSystem::SpawnTeleportArc(GEWorldRuntime& worldRuntime, float x, float y, float z)
     {
         MobileObjSpec spec;
-        spec.type = ObjectType::ObjectType92;
+        spec.type = GalaxyEggbert::Def::ObjectType::ObjectType92;
         spec.active = true;
         spec.phase = 0.0f;
         constexpr float kOffsetY = 5.0f / 64.0f; // real celSwitch.Y = blupiPos.Y - 5 (screen), world Y+ (sign flip)
@@ -2545,7 +2545,7 @@ namespace GalaxyEggbert::CNA
         objects.push_back(spec);
     }
 
-    bool GEInteractionSystem::HasActiveObjectOfType(const GEWorldRuntime& worldRuntime, ObjectType type) const
+    bool GEInteractionSystem::HasActiveObjectOfType(const GEWorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type) const
     {
         for (const auto& obj : worldRuntime.GetMobileObjects())
         {
@@ -2557,7 +2557,7 @@ namespace GalaxyEggbert::CNA
         return false;
     }
 
-    void GEInteractionSystem::SpawnWaterSplash(GEWorldRuntime& worldRuntime, ObjectType type, float x, float y,
+    void GEInteractionSystem::SpawnWaterSplash(GEWorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type, float x, float y,
                                                 float z)
     {
         MobileObjSpec spec;
@@ -2618,7 +2618,7 @@ namespace GalaxyEggbert::CNA
         }
 
         MobileObjSpec spec;
-        spec.type = ObjectType::ObjectType15;
+        spec.type = GalaxyEggbert::Def::ObjectType::ObjectType15;
         spec.active = true;
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spec.posEndX = x;
@@ -2745,7 +2745,7 @@ namespace GalaxyEggbert::CNA
         }
 
         float spawnX = blupiX;
-        if (facingDX >= 0) // real Direction::Right
+        if (facingDX >= 0) // real GalaxyEggbert::Def::Direction::Right
         {
             spawnX -= (pointX - 5.0f) / 64.0f;
             if (num < 50)
@@ -2763,7 +2763,7 @@ namespace GalaxyEggbert::CNA
         // Real `ObjectStart()`'s speed-bucket encoding (same as
         // SpawnInvertBurst()/AppendSparkleBurst() -- >50 down, <-50 up
         // [never reached here, |num|<=58], >0 right, <0 left) and its real
-        // flat 500px reach for this ObjectType (`Decor::SearchDistRight()`,
+        // flat 500px reach for this GalaxyEggbert::Def::ObjectType (`Decor::SearchDistRight()`,
         // `Decor.cpp:7628-7653`).
         constexpr float kReach = 500.0f / 64.0f;
         float endX = spawnX, endY = spawnY;
@@ -2785,7 +2785,7 @@ namespace GalaxyEggbert::CNA
         }
 
         MobileObjSpec spec;
-        spec.type = ObjectType::ObjectType36;
+        spec.type = GalaxyEggbert::Def::ObjectType::ObjectType36;
         spec.active = true;
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spawnX;
@@ -2836,7 +2836,7 @@ namespace GalaxyEggbert::CNA
         }
 
         MobileObjSpec spec;
-        spec.type = isShielded ? ObjectType::ObjectType57 : ObjectType::ObjectType27;
+        spec.type = isShielded ? GalaxyEggbert::Def::ObjectType::ObjectType57 : GalaxyEggbert::Def::ObjectType::ObjectType27;
         spec.active = true;
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spec.posEndX = blupiX;
@@ -3024,30 +3024,30 @@ namespace GalaxyEggbert::CNA
             case GEInteractionSystem::VoyageKind::Treasure:
             {
                 const bool completesSet = (treasuresCollected_ + 1 >= totalTreasures_);
-                sound.Play(completesSet ? GalaxyEggbert::SoundChannel::SoundChannel19
-                                        : GalaxyEggbert::SoundChannel::SoundChannel11);
+                sound.Play(completesSet ? GalaxyEggbert::Def::SoundChannel::SoundChannel19
+                                        : GalaxyEggbert::Def::SoundChannel::SoundChannel11);
                 break;
             }
             case GEInteractionSystem::VoyageKind::Key1:
             case GEInteractionSystem::VoyageKind::Key2:
             case GEInteractionSystem::VoyageKind::Key3:
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel11);
                 break;
             case VoyageKind::Egg:
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel12);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel12);
                 break;
             case VoyageKind::Perso:
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel60);
                 break;
             case GEInteractionSystem::VoyageKind::Dynamite:
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel60);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel60);
                 break;
             case VoyageKind::BulletPack:
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel54);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel54);
                 break;
             case VoyageKind::Clear2Ascend:
             case VoyageKind::Clear3Ascend:
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel74);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
                 break;
             // LifeLoss: the ONLY Voyage kind whose effect fires at START, not
             // completion -- matches real VoyageInit's own inline `m_nbVies--`
@@ -3061,7 +3061,7 @@ namespace GalaxyEggbert::CNA
             // would NOT be game-over).
             case VoyageKind::LifeLoss:
                 LoseLife();
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel9);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel9);
                 break;
             // DoorUnlock: real source plays no immediate sound at all --
             // its dynamic icon never matches any of VoyageInit's
@@ -3132,7 +3132,7 @@ namespace GalaxyEggbert::CNA
         }
 
         MobileObjSpec spec;
-        spec.type = ObjectType::ObjectType93;
+        spec.type = GalaxyEggbert::Def::ObjectType::ObjectType93;
         spec.active = true;
         spec.phase = 0.0f;
         spec.currentX = spec.posStartX = spec.posEndX = voyageWorldAnchorX_ + horizOffset / 64.0f;
@@ -3169,19 +3169,19 @@ namespace GalaxyEggbert::CNA
             case GEInteractionSystem::VoyageKind::Treasure:
                 ++treasuresCollected_;
                 ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case GEInteractionSystem::VoyageKind::Key1:
                 ++keys1_;
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case GEInteractionSystem::VoyageKind::Key2:
                 ++keys2_;
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case GEInteractionSystem::VoyageKind::Key3:
                 ++keys3_;
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::Egg:
                 if (lifeEggCount_ < kMaxEggCount)
@@ -3189,21 +3189,21 @@ namespace GalaxyEggbert::CNA
                     ++lifeEggCount_;
                     ++lives_;
                 }
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case GEInteractionSystem::VoyageKind::Dynamite:
                 ++dynamiteCount_;
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::Perso:
                 ++persoCount_;
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::BulletPack:
                 // Real reward already applied immediately at touch time
                 // (matches this engine's own bulletCount_ handling) --
                 // only the deferred completion sound fires here.
-                sound.Play(GalaxyEggbert::SoundChannel::SoundChannel3);
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::DoorUnlock:
             // Clear2Ascend/Clear3Ascend: real completion is silent with no
@@ -3268,7 +3268,7 @@ namespace GalaxyEggbert::CNA
         bool anyCollected = false;
         for (auto& obj : worldRuntime.GetMobileObjectsMutable())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType5)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType5)
             {
                 obj.active = false;
                 ++treasuresCollected_;
@@ -3277,7 +3277,7 @@ namespace GalaxyEggbert::CNA
         }
         if (anyCollected)
         {
-            sound.Play(GalaxyEggbert::SoundChannel::SoundChannel11);
+            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel11);
             ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
         }
     }
@@ -3287,7 +3287,7 @@ namespace GalaxyEggbert::CNA
     {
         for (const auto& obj : worldRuntime.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType7)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType7)
             {
                 outX = obj.currentX;
                 outY = obj.currentY;

@@ -14,8 +14,8 @@
 #include "Game/GESaveData.hpp"
 #include "Editor/GEWorldEditor.hpp"
 
-#include <GalaxyEggbert/def/GamePhase.hpp>
-#include <GalaxyEggbert/def/GameSpeed.hpp>
+#include <GalaxyEggbert/Def/GamePhase.hpp>
+#include <GalaxyEggbert/Def/GameSpeed.hpp>
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
@@ -202,7 +202,7 @@ namespace GalaxyEggbert::CNA
         // TriggerPickupFreeze() is a no-op while already frozen), so a
         // single pending slot is sufficient.
         float pendingPickupX_ = 0.0f, pendingPickupY_ = 0.0f, pendingPickupZ_ = 0.0f;
-        GalaxyEggbert::ObjectType pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType0;
+        GalaxyEggbert::Def::ObjectType pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
 
         // Real screen-shake/forced-pan camera effect (plan.md CAM-008..013,
         // see GECameraShake.hpp's own comment for the full real-behavior
@@ -242,15 +242,15 @@ namespace GalaxyEggbert::CNA
         // change directly from one loop to another (e.g. moving->idle) without ever passing
         // through "no motor", so a plain this-frame/last-frame bool (like wasPushingCrate_ above)
         // isn't enough -- see UpdateVehicleMotorSound()'s own comment for the full crossfade.
-        GalaxyEggbert::SoundChannel activeMotorLoop_ = GalaxyEggbert::SoundChannel::SoundChannel0;
+        GalaxyEggbert::Def::SoundChannel activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
 
         // Platform lift patrol, crate push, and pickup collection
         // (2026-07-10, see GEInteractionSystem.hpp).
         GEInteractionSystem interaction_;
 
-        // Real Def::Phase state machine (2026-07-13, plan.md HUD-023),
+        // Real GalaxyEggbert::Def::Phase state machine (2026-07-13, plan.md HUD-023),
         // verified directly against Def.hpp's own enum (already ported
-        // verbatim as GalaxyEggbert::GamePhase) and Game1.cpp's real
+        // verbatim as GalaxyEggbert::Def::GamePhase) and Game1.cpp's real
         // SetPhase()/Update() dispatch. Real source's ONLY phase that runs
         // simulation (Decor::MoveStep(), i.e. this class's own worldRuntime_/
         // blupi_/interaction_ Update() calls) is Play -- every other phase
@@ -341,7 +341,7 @@ namespace GalaxyEggbert::CNA
         // checkpoint `saveData_` (2026-07-13, plan.md MENU-040..045),
         // matching the real `MemorizeGamerProgress()` call sites
         // confirmed at exactly these same 2 real transition points.
-        void SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade = false) noexcept;
+        void SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade = false) noexcept;
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
 
         // Voyage (plan.md `158`) -- a no-op unless
@@ -486,7 +486,7 @@ namespace GalaxyEggbert::CNA
         // guessing risks silently reusing the crate machinery for the
         // wrong feature. A documented gap, not a silent omission.
         void ApplyCheat(int cheatNumber);
-        GalaxyEggbert::GamePhase phase_ = GalaxyEggbert::GamePhase::Wait;
+        GalaxyEggbert::Def::GamePhase phase_ = GalaxyEggbert::Def::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
         // Draw()'s own frame counter (NEXT.md §5, 2026-07-13) -- lets the
@@ -527,7 +527,7 @@ namespace GalaxyEggbert::CNA
         // (covers both Play and every other phase's own settled/idle
         // state); any other value is the real pending destination during
         // an active ~1.0s exit fade.
-        GalaxyEggbert::GamePhase fadeOutPhase_ = GalaxyEggbert::GamePhase::None;
+        GalaxyEggbert::Def::GamePhase fadeOutPhase_ = GalaxyEggbert::Def::GamePhase::None;
 
         // Real `phaseTime` (2026-07-13, plan.md MENU-046..057), verified
         // directly against `Game1.hpp`'s own doc comment ("phaseTime==0"
@@ -574,12 +574,12 @@ namespace GalaxyEggbert::CNA
         GESaveData saveData_;
 
         // In-game 3D world editor (plan.md section 6, EDITOR-1xx tasks) --
-        // see GEWorldEditor's own class comment. Entered via GamePhase::
+        // see GEWorldEditor's own class comment. Entered via GalaxyEggbert::Def::GamePhase::
         // Editor, from the Init screen's own Editor button.
         GEWorldEditor worldEditor_;
 
         // Play-test session state (plan.md EDITOR-108) -- true while
-        // GamePhase::Play is running a custom world launched from the
+        // GalaxyEggbert::Def::GamePhase::Play is running a custom world launched from the
         // editor's Play-Test button rather than a real mission. Checked at
         // every real mission-transition site (Win/Lost return, PauseBack,
         // PauseMenu) to route back to the editor (LoadCustomWorldForEditing,
@@ -598,8 +598,8 @@ namespace GalaxyEggbert::CNA
         // class comment for the full real-behavior citation.
         bool cheatMenuShown_ = false;
 
-        // Real GameSpeed (SCORE-009/010/011, added 2026-07-20, see
-        // include/GalaxyEggbert/def/GameSpeed.hpp and InputPad.cpp:582-684
+        // Real GalaxyEggbert::Def::GameSpeed (SCORE-009/010/011, added 2026-07-20, see
+        // include/GalaxyEggbert/Def/GameSpeed.hpp and InputPad.cpp:582-684
         // for the full real key-mapping citations) -- F5/F6 always work,
         // F7/F8 need quickCheatEnabled_ (real "quick" typed cheat, see
         // GEInputPad::UpdateTypedGhostCheat()'s own TypedCheatResult), Tab
@@ -619,7 +619,7 @@ namespace GalaxyEggbert::CNA
         // whole ~1000-line Play-phase block would risk breaking a lot of
         // already-tuned once-per-frame sound/camera/HUD logic that assumes
         // "runs exactly once").
-        GalaxyEggbert::GameSpeed gameSpeed_ = GalaxyEggbert::GameSpeed::Normal;
+        GalaxyEggbert::Def::GameSpeed gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
         bool quickCheatEnabled_ = false;
         bool f5KeyWasDown_ = false;
         bool f6KeyWasDown_ = false;

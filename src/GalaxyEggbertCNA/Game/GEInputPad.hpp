@@ -4,7 +4,7 @@
 
 #include <Easy3D/BillboardMesh.hpp>
 #include <Easy3D/BillboardMeshRenderer.hpp>
-#include <GalaxyEggbert/def/GamePhase.hpp>
+#include <GalaxyEggbert/Def/GamePhase.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
@@ -174,7 +174,7 @@ namespace GalaxyEggbert::CNA
         void DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool showBack, bool showRestart,
                        float phaseTimeSeconds,
-                       GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
+                       GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
         // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
         // (win.png/lost.png, confirmed 640x480) plus the real
@@ -293,7 +293,7 @@ namespace GalaxyEggbert::CNA
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer,
                        float phaseTimeSeconds,
-                       GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
+                       GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
@@ -351,7 +351,7 @@ namespace GalaxyEggbert::CNA
                                                int viewportW, int viewportH) noexcept;
         void DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         int viewportW, int viewportH, float phaseTimeSeconds,
-                        GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
+                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13), verified
         // directly against the real gesture-recognition/cheat-overlay code
@@ -531,7 +531,7 @@ namespace GalaxyEggbert::CNA
         void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds,
                      int selectedGamer, int livesA, int livesB, int livesC,
-                     GalaxyEggbert::GamePhase fadeOutPhase = GalaxyEggbert::GamePhase::None);
+                     GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
     private:
         // Alias, not a redeclaration (plan.md EDITOR-106): the real
@@ -583,7 +583,7 @@ namespace GalaxyEggbert::CNA
             bool visible;
         };
         [[nodiscard]] CharacterAnim ComputePauseResumeCharacterAnim(
-            float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase) const;
+            float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase) const;
 
         // Real MainSetup/PlaySetup speedyblupi+gear decoration (plan.md
         // MENU-088/089): shared by entry (fadeOutPhase==None) and exit

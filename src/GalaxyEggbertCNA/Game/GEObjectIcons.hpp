@@ -1,10 +1,10 @@
 #pragma once
 
-#include <GalaxyEggbert/def/ObjectType.hpp>
+#include <GalaxyEggbert/Def/ObjectType.hpp>
 
 namespace GalaxyEggbert::CNA
 {
-    // element.png icon index for a MoveObject's ObjectType + animation phase.
+    // element.png icon index for a MoveObject's GalaxyEggbert::Def::ObjectType + animation phase.
     // Grounded in the reference Tables.cpp/Decor.cpp data summarized by
     // mobile-eggbert-reference/03-objects.md and 08-animations.md, with the
     // same documented 3D simplifications
@@ -53,7 +53,7 @@ namespace GalaxyEggbert::CNA
     // represented by a single per-tick icon return without a richer
     // "sometimes render nothing" mechanism, which doesn't exist yet even
     // though phase itself now advances.
-    int GetObjIcon(ObjectType type, int phase);
+    int GetObjIcon(GalaxyEggbert::Def::ObjectType type, int phase);
 
     // ObjectType4 (bulldozer) real per-direction/per-turn-transition icon
     // (ENEMY-013, added 2026-07-20) -- unlike GetObjIcon()'s own ObjectType4
@@ -108,7 +108,7 @@ namespace GalaxyEggbert::CNA
     // pushable box is naturally a cube in every direction). Both are
     // confirmed sourced from object-m.png (channel=1, PixmapChannel::Object,
     // see 03-objects.md), the same sheet as terrain, not element.png.
-    bool IsUniformCubeObject(ObjectType type);
+    bool IsUniformCubeObject(GalaxyEggbert::Def::ObjectType type);
 
     // True for the 5 confirmed Category B ObjectTypes that are billboards
     // (unlike IsUniformCubeObject's cubes) but sourced from object-m.png
@@ -117,7 +117,7 @@ namespace GalaxyEggbert::CNA
     // reference/03-objects.md, added 2026-07-09). The icon GetObjIcon()
     // returns for these types is an object-m.png index -- look it up via
     // GETileAtlas::GetTileUv(), NOT GetElementIconUv().
-    bool IsObjectMPngSourced(ObjectType type);
+    bool IsObjectMPngSourced(GalaxyEggbert::Def::ObjectType type);
 
     // explo.png UV rect for a given icon: 1440x1440 px, 144x144 px tiles, 10
     // columns x 10 rows (100 icons, 0-99), no gap (confirmed by direct file
@@ -137,7 +137,7 @@ namespace GalaxyEggbert::CNA
     // 2026-07-09). The icon GetObjIcon() returns for these types is an
     // explo.png index -- look it up via GetExploIconUv(), NOT
     // GetElementIconUv() or GETileAtlas::GetTileUv().
-    bool IsExploPngSourced(ObjectType type);
+    bool IsExploPngSourced(GalaxyEggbert::Def::ObjectType type);
 
     // blupi.png/blupi1.png UV rect for a given icon: 600x2040 px, 60x60 px
     // tiles, 10 columns x 34 rows (340 icons, 0-339), no gap (confirmed by
@@ -154,7 +154,7 @@ namespace GalaxyEggbert::CNA
     // -- this predicate alone is phase-blind and returns true for it
     // unconditionally; renderers that need the correct per-instance,
     // per-tick answer must use IsBlupiPngSourcedAtPhase() below instead.
-    bool IsBlupiPngSourced(ObjectType type);
+    bool IsBlupiPngSourced(GalaxyEggbert::Def::ObjectType type);
 
     // Phase-aware version of IsBlupiPngSourced() (2026-07-09) -- for
     // ObjectType200/201/202/203 identical to IsBlupiPngSourced() (always
@@ -166,7 +166,7 @@ namespace GalaxyEggbert::CNA
     // channel at any phase, but the CALLER still has to pick the right
     // texture/UV function (GetBlupiIconUv() vs GetElementIconUv()) via this
     // predicate, since a single MoveObject switches sheets mid-animation.
-    bool IsBlupiPngSourcedAtPhase(ObjectType type, int phase);
+    bool IsBlupiPngSourcedAtPhase(GalaxyEggbert::Def::ObjectType type, int phase);
 
     // True for the ObjectTypes that source blupi1.png instead of blupi.png
     // whenever they ARE blupi-sourced (see IsBlupiPngSourcedAtPhase() for
@@ -179,5 +179,5 @@ namespace GalaxyEggbert::CNA
     // mobile-eggbert, not reproduced here (no per-instance tinting exists
     // in GalaxyEggbertCNA yet), so all 3 render identically to each other
     // today.
-    bool UsesBlupi1Texture(ObjectType type);
+    bool UsesBlupi1Texture(GalaxyEggbert::Def::ObjectType type);
 }

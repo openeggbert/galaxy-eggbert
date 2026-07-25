@@ -72,7 +72,7 @@ namespace GalaxyEggbert::CNA
     GalaxyEggbert::Worlds::World CreateEditorStarterWorld()
     {
         using GalaxyEggbert::MoveObjectRecord;
-        using GalaxyEggbert::ObjectType;
+        using GalaxyEggbert::Def::ObjectType;
         using GalaxyEggbert::PlaceMoveObject;
         using GalaxyEggbert::Worlds::Block;
 
@@ -86,7 +86,7 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        const auto placeStationary = [&world](ObjectType type, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+        const auto placeStationary = [&world](GalaxyEggbert::Def::ObjectType type, std::uint16_t x, std::uint16_t y, std::uint16_t z)
         {
             MoveObjectRecord record;
             record.type = type;
@@ -98,8 +98,8 @@ namespace GalaxyEggbert::CNA
             record.posEndZ = record.posStartZ;
             PlaceMoveObject(world, record);
         };
-        placeStationary(ObjectType::ObjectType5, kCenter, 1, kCenter);       // chest in the centre
-        placeStationary(ObjectType::ObjectType7, kCenter - 1, 1, kCenter);   // exit arrow at one edge
+        placeStationary(GalaxyEggbert::Def::ObjectType::ObjectType5, kCenter, 1, kCenter);       // chest in the centre
+        placeStationary(GalaxyEggbert::Def::ObjectType::ObjectType7, kCenter - 1, 1, kCenter);   // exit arrow at one edge
         return world;
     }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GalaxyEggbert/def/GameSpeed.hpp>
+#include <GalaxyEggbert/Def/GameSpeed.hpp>
 
 #include <Easy3D/BillboardMesh.hpp>
 #include <Easy3D/BillboardMeshRenderer.hpp>
@@ -97,7 +97,7 @@ namespace GalaxyEggbert::CNA
         // `Decor.cpp:5071-5137` -- not 4 separate gauges). Real Mirror/
         // Invert, Balloon, and Ecrase also reuse this same gauge -- NOT
         // wired in here since those aren't modeled by this engine's
-        // `SecretPower` enum (Balloon/Ecrase have their own separate,
+        // `GalaxyEggbert::Def::SecretPower` enum (Balloon/Ecrase have their own separate,
         // un-gauged timers already; Mirror/Invert isn't modeled at all).
         // perso added 2026-07-13 (plan.md HUD-017), verified directly
         // against `Decor.cpp:1202-1211`: button.png icon 108 (40px tiles,
@@ -118,7 +118,7 @@ namespace GalaxyEggbert::CNA
         // handles the real mission/position/state gating -- this parameter
         // is just "what to show, if anything").
         // overlayMessage added 2026-07-13 (plan.md HUD-023, real
-        // `Def::Phase`): when non-null, the REAL `Decor::DrawInfo` HUD this
+        // `GalaxyEggbert::Def::Phase`): when non-null, the REAL `Decor::DrawInfo` HUD this
         // class otherwise ports is skipped entirely -- matching the real
         // "HUD hidden outside Play" behavior exactly -- and instead just
         // this one message is drawn, big and centered mid-screen. Not part
@@ -155,7 +155,7 @@ namespace GalaxyEggbert::CNA
                   int animIcon, bool animIconUsesElementSheet,
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                   float voyageX, float voyageY,
-                  GalaxyEggbert::GameSpeed gameSpeed);
+                  GalaxyEggbert::Def::GameSpeed gameSpeed);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage

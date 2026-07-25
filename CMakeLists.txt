@@ -601,7 +601,7 @@ endif() # GALAXY_EGGBERT_BUILD_CNA
 # Tools (engine-independent — pure C++ data model, no graphics)
 # =============================================================================
 
-# GEObjectIcons.hpp/.cpp is engine-agnostic (only depends on def/
+# GEObjectIcons.hpp/.cpp is engine-agnostic (only depends on Def/
 # ObjectType.hpp) despite living under src/GalaxyEggbertCNA/ -- linked here
 # so the exhibition area can enumerate every ObjectType the renderer has an
 # icon for (GetObjIcon), instead of duplicating that list by hand (same
@@ -683,7 +683,7 @@ target_include_directories(VerifyTerrainAnimDivisor PRIVATE
 )
 
 # INFRA-003 (plan.md §7): GEObjectIcons.hpp/.cpp is engine-agnostic (only
-# depends on def/ObjectType.hpp, see GenerateSampleWorld3D's own comment
+# depends on Def/ObjectType.hpp, see GenerateSampleWorld3D's own comment
 # above) -- a data-integrity regression test for its 34 historical "Fixed"
 # transcription bugs, same engine-independent precedent as
 # VerifyTerrainAnimDivisor above.

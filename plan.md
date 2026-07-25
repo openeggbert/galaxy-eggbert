@@ -2871,8 +2871,8 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       Verified directly against `Def.hpp:51-66` (the enum itself) and `Game1.cpp:394-438`/
       `979-1058` (`Update()`'s `if (phase==Play)` simulation gate, `SetPhase()`'s own transition
       funnel).
-      - The real 13-value enum was already ported verbatim as `GalaxyEggbert::GamePhase`
-        (`include/GalaxyEggbert/def/GamePhase.hpp`, from an earlier session's blanket
+      - The real 13-value enum was already ported verbatim as `GalaxyEggbert::Def::GamePhase`
+        (`include/GalaxyEggbert/Def/GamePhase.hpp`, from an earlier session's blanket
         transcription pass, previously unused anywhere). `GalaxyEggbertCnaGame` gained a real
         `phase_` field + `SetPhase()`, matching the real source's own "never assign `phase_`
         directly, always through `SetPhase()`" discipline.
@@ -3454,7 +3454,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
 
 - [x] BLUPI-104 — Shield (m_blupiShield): 5 s invincibility from ObjectType25; bypasses all hazards
       — **stale checkbox, closed 2026-07-17**: fully done via Phase 17 `170`
-      (`GEBlupiController::SecretPower::Shield`/`IsInvincible()`, `ObjectType25` grant). This
+      (`GalaxyEggbert::Def::SecretPower::Shield`/`IsInvincible()`, `ObjectType25` grant). This
       entry's "5s" figure is superseded by `172`'s more careful research (real 0.25s/level, 25s
       total) — not a separate gap, just an older/less precise duration claim.
 - [x] BLUPI-105 — Shield timer (m_blupiTimeShield): counts down 0→100 ticks; gauge shows progress
@@ -6332,7 +6332,7 @@ specifically, same as any other large/risky item elsewhere in this file.
          builds (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [x] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) — **done 2026-07-21.** New
       `tools/VerifyGetObjIcon.cpp` (headless, engine-agnostic — `GEObjectIcons.cpp` only depends on
-      `def/ObjectType.hpp`, same precedent `GenerateSampleWorld3D` already established), registered
+      `Def/ObjectType.hpp`, same precedent `GenerateSampleWorld3D` already established), registered
       with `ctest`. 232 checks covering every `case` in `GetObjIcon()`'s switch (all confirmed-real
       `ObjectType`s, not just the 34 with a `Fixed 202...` note — the extra coverage was cheap once
       the harness existed): exact per-tick sequence for every table-driven type (transcribed
@@ -7067,3 +7067,10 @@ specifically, same as any other large/risky item elsewhere in this file.
       paragraph was corrected (it had incorrectly claimed there was no HUD, sound, or gameplay).
       Update `CURRENT.md` whenever a change affects status, verification, limitations, or the
       actionable backlog; retain evidence and long write-ups in the existing documents.
+- [x] `INFRA-011` done (2026-07-25). Renamed the shared definition directory from
+      `include/GalaxyEggbert/def/` to `include/GalaxyEggbert/Def/` and moved all 12 declarations
+      and conversion helpers into namespace `GalaxyEggbert::Def`. Updated every include and
+      consumer without compatibility aliases. Removed the duplicate
+      `GEBlupiController::SecretPower` enum and reused `GalaxyEggbert::Def::SecretPower`.
+      Verification: the full `build-cna` build succeeds with `-j2`; all 90 applicable CTest tests
+      pass (`easy-gl-resource-smoke-tests` remains the separately documented upstream exclusion).

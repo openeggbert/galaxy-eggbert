@@ -35,7 +35,7 @@ int main()
     check(LiftRiderCenterY(7.0f) == 8.0f,
           "a rider stands one cell-center unit above a lift cube");
 
-    const auto makeRecord = [](GalaxyEggbert::ObjectType type, float x, float y, float z)
+    const auto makeRecord = [](GalaxyEggbert::Def::ObjectType type, float x, float y, float z)
     {
         MoveObjectRecord record;
         record.type = type;
@@ -52,7 +52,7 @@ int main()
         World world;
         GEEditCommandStack stack;
         const auto placed =
-            makeRecord(GalaxyEggbert::ObjectType::ObjectType6, 12.0f, 3.0f, 20.0f);
+            makeRecord(GalaxyEggbert::Def::ObjectType::ObjectType6, 12.0f, 3.0f, 20.0f);
         PlaceMoveObject(world, placed);
 
         GEEditCommand command;
@@ -67,11 +67,11 @@ int main()
               "undo removes a newly placed object");
         check(stack.Redo(world) &&
                   CollectMoveObjects(world).front().type ==
-                      GalaxyEggbert::ObjectType::ObjectType6,
+                      GalaxyEggbert::Def::ObjectType::ObjectType6,
               "redo restores the placed object");
 
         const auto replacement =
-            makeRecord(GalaxyEggbert::ObjectType::ObjectType44, 12.0f, 3.0f, 20.0f);
+            makeRecord(GalaxyEggbert::Def::ObjectType::ObjectType44, 12.0f, 3.0f, 20.0f);
         GEEditCommand overwrite;
         overwrite.kind = GEEditCommand::Kind::MoveObjectEdit;
         overwrite.objectAnchorX = 12;
@@ -84,11 +84,11 @@ int main()
 
         check(stack.Undo(world) &&
                   CollectMoveObjects(world).front().type ==
-                      GalaxyEggbert::ObjectType::ObjectType6,
+                      GalaxyEggbert::Def::ObjectType::ObjectType6,
               "undoing an overwrite restores the previous object");
         check(stack.Redo(world) &&
                   CollectMoveObjects(world).front().type ==
-                      GalaxyEggbert::ObjectType::ObjectType44,
+                      GalaxyEggbert::Def::ObjectType::ObjectType44,
               "redoing an overwrite restores the replacement");
     }
 
@@ -143,7 +143,7 @@ int main()
     click(400, 200);
     auto objects = CollectMoveObjects(world);
     check(objects.size() == 1 &&
-              objects[0].type == GalaxyEggbert::ObjectType::ObjectType5,
+              objects[0].type == GalaxyEggbert::Def::ObjectType::ObjectType5,
           "a 3D-view click places the selected chest object");
     check(objects.size() == 1 &&
               objects[0].posStartX == placeX &&

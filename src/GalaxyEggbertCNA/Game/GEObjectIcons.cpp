@@ -2,7 +2,7 @@
 
 namespace GalaxyEggbert::CNA
 {
-    int GetObjIcon(ObjectType type, int p)
+    int GetObjIcon(GalaxyEggbert::Def::ObjectType type, int p)
     {
         static const int kCle1[12]    = {209,210,211,212,213,214,215,214,213,212,211,210};
         static const int kCle2[12]    = {220,221,222,221,220,219,218,217,216,217,218,219};
@@ -215,27 +215,27 @@ namespace GalaxyEggbert::CNA
             // would run off the sheet. (57 was in this category too until
             // 2026-07-14, when Tables.cpp confirmed its real table fits
             // the sheet after all -- see its own case below.)
-            case ObjectType::ObjectType23: return 176;
+            case GalaxyEggbert::Def::ObjectType::ObjectType23: return 176;
             // Fixed 2026-07-14 (plan.md VISUAL-011-adjacent, Shield/Power
             // magic trail): wrong divisor (6 instead of the real
             // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
             // assumption -- real table_magictrack repeats icons 152-156
             // twice before continuing (see kMagicTrack above).
-            case ObjectType::ObjectType27: return kMagicTrack[p % 24];
-            case ObjectType::ObjectType28: return 167;
-            case ObjectType::ObjectType29: return 177;
+            case GalaxyEggbert::Def::ObjectType::ObjectType27: return kMagicTrack[p % 24];
+            case GalaxyEggbert::Def::ObjectType::ObjectType28: return 167;
+            case GalaxyEggbert::Def::ObjectType::ObjectType29: return 177;
             // Fixed 2026-07-20 (VISUAL-016) -- real table_glu (Tables.cpp:1610-1615)
             // oscillates within icons 168-171 (identical to GEBlupiController's own
             // already-approved kGluFrames, the same real table reused for Blupi's
             // Glu death-cause animation), NOT an ascending range from 168; also had
             // the wrong divisor (6 instead of the real Config::ScaleDiv(1)==1).
-            case ObjectType::ObjectType34: return kGlu[p % 25];
+            case GalaxyEggbert::Def::ObjectType::ObjectType34: return kGlu[p % 25];
             // Fixed 2026-07-14 (plan.md VISUAL-013, Pollution puff): wrong
             // divisor (6 instead of the real `Config::ScaleDiv(2)==2`) --
             // real `table_pollution` (`Tables.cpp:1494`) is a plain
             // ascending range (179..186), so only the divisor needed
             // fixing, unlike the non-monotonic tables fixed elsewhere.
-            case ObjectType::ObjectType36: return 179 + (p / 2) % 8;
+            case GalaxyEggbert::Def::ObjectType::ObjectType36: return 179 + (p / 2) % 8;
             // Fixed 2026-07-20 -- same bug shape as ObjectType34/53 above:
             // the real table_clear (Tables.cpp:1623-1632) oscillates within
             // icons 40-47 (identical to GEBlupiController's own
@@ -243,32 +243,32 @@ namespace GalaxyEggbert::CNA
             // for Blupi's Clear1 death-cause animation), NOT an ascending
             // range from 40; also had the wrong divisor (6 instead of the
             // real Config::ScaleDiv(1)==1).
-            case ObjectType::ObjectType37: return kClear[p % 70];
+            case GalaxyEggbert::Def::ObjectType::ObjectType37: return kClear[p % 70];
             // Fixed 2026-07-14 (plan.md VISUAL-012): was a wrong "166 +
             // ascending" arithmetic formula; the real table_tresortrack is
             // an oscillating shimmer (see kTresorTrack above), and the real
             // divisor is Config::ScaleDiv(1)==1, not 6.
-            case ObjectType::ObjectType39: return kTresorTrack[p % 11];
+            case GalaxyEggbert::Def::ObjectType::ObjectType39: return kTresorTrack[p % 11];
             // Fixed 2026-07-14 (plan.md VISUAL-014/015): divisor was 6, real
             // is Config::ScaleDiv(2)==2 at this build's 20Hz reference rate
             // (Tables.cpp:table_invertstart/table_invertstop, confirmed via
             // direct source read); ObjectType42 also wrongly ASCENDED past
             // 186 (out of the real icon range) instead of matching the
             // real table's exact reverse order (186 down to 179).
-            case ObjectType::ObjectType41: return 179 + (p / 2) % 8;
-            case ObjectType::ObjectType42: return 186 - (p / 2) % 8;
-            case ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
+            case GalaxyEggbert::Def::ObjectType::ObjectType41: return 179 + (p / 2) % 8;
+            case GalaxyEggbert::Def::ObjectType::ObjectType42: return 186 - (p / 2) % 8;
+            case GalaxyEggbert::Def::ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
             // Fixed 2026-07-14 (plan.md VISUAL-011-adjacent, Shield/Power
             // magic trail): the real table only reaches 288 (see
             // kShieldTrack above), not the previously-assumed 293 -- it
             // fits the sheet fine, so the full 20-frame animation is now
             // modeled instead of a static first-frame return.
-            case ObjectType::ObjectType57: return kShieldTrack[p % 20];
+            case GalaxyEggbert::Def::ObjectType::ObjectType57: return kShieldTrack[p % 20];
             // Fixed 2026-07-20 -- real table_follow2 (Tables.cpp:1539) is
             // {256,258,260,262,264} (step of 2), not the previous
             // consecutive-step-of-1 assumption; also had the wrong divisor
             // (6 instead of the real Config::ScaleDiv(1)==1).
-            case ObjectType::ObjectType97: return kFollow2[p % 5];
+            case GalaxyEggbert::Def::ObjectType::ObjectType97: return kFollow2[p % 5];
             // object-m.png-sourced Category B types (2026-07-09) -- these
             // are NOT element.png icons; GetElementIconUv() would compute
             // the wrong UV rect for them. The icon numbers below are only
@@ -280,33 +280,33 @@ namespace GalaxyEggbert::CNA
             // instead of the real Config::ScaleDiv(2)==2, Decor.cpp:8607/
             // 8619/8625) for ObjectType14/15/35 -- the arrays themselves
             // were already correct, only the pacing was 2x too fast.
-            case ObjectType::ObjectType14: return kPlouf[(p / 2) % 7];
-            case ObjectType::ObjectType15: return kBlup[(p / 2) % 20];
+            case GalaxyEggbert::Def::ObjectType::ObjectType14: return kPlouf[(p / 2) % 7];
+            case GalaxyEggbert::Def::ObjectType::ObjectType15: return kBlup[(p / 2) % 20];
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8359-8363); table_charge
             // (Tables.cpp:1742) is a plain ascending range, so only the
             // divisor needed fixing, matching ObjectType36/41's own
             // already-documented category above.
-            case ObjectType::ObjectType31: return 238 + (p / 2) % 6;
-            case ObjectType::ObjectType35: return kTiplouf[(p / 2) % 3];
-            case ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
-            case ObjectType::ObjectType1:  return 29;
+            case GalaxyEggbert::Def::ObjectType::ObjectType31: return 238 + (p / 2) % 6;
+            case GalaxyEggbert::Def::ObjectType::ObjectType35: return kTiplouf[(p / 2) % 3];
+            case GalaxyEggbert::Def::ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
+            case GalaxyEggbert::Def::ObjectType::ObjectType1:  return 29;
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8202-8210); both are plain
             // ascending ranges, only the divisor needed fixing.
-            case ObjectType::ObjectType2:  return 12 + (p / 2) % 9;
-            case ObjectType::ObjectType3:  return 48 + (p / 2) % 9;
-            case ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8];
-            case ObjectType::ObjectType12: return 32;
-            case ObjectType::ObjectType13: return 68;
+            case GalaxyEggbert::Def::ObjectType::ObjectType2:  return 12 + (p / 2) % 9;
+            case GalaxyEggbert::Def::ObjectType::ObjectType3:  return 48 + (p / 2) % 9;
+            case GalaxyEggbert::Def::ObjectType::ObjectType4:  return kBulldozer[(p / 9) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType12: return 32;
+            case GalaxyEggbert::Def::ObjectType::ObjectType13: return 68;
             // Fixed 2026-07-20 -- wrong divisor (3 instead of the real
             // Config::ScaleDiv(1)==1, Decor.cpp:8212-8216); a plain
             // ascending range, only the divisor needed fixing.
-            case ObjectType::ObjectType16: return 69 + p % 9;
-            case ObjectType::ObjectType17: return kFish[(p / 6) % 8];
-            case ObjectType::ObjectType20: return kBird[(p / 6) % 8];
-            case ObjectType::ObjectType30: return 178;
-            case ObjectType::ObjectType33: return kBlupit[(p / 6) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType16: return 69 + p % 9;
+            case GalaxyEggbert::Def::ObjectType::ObjectType17: return kFish[(p / 6) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType20: return kBird[(p / 6) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType30: return 178;
+            case GalaxyEggbert::Def::ObjectType::ObjectType33: return kBlupit[(p / 6) % 8];
             // ObjectType5/6/7's real divisors (Decor.cpp: ScaleDiv(3), ScaleDiv(4),
             // ScaleDiv(3) respectively) were mistranscribed as 9/12/9 (each real
             // value x3) -- fixed 2026-07-10, reported live as "truhla" (the
@@ -317,46 +317,46 @@ namespace GalaxyEggbert::CNA
             // when q==11, then descends to icon 1 (not 0) at q==21 before
             // wrapping -- an asymmetric 0..11..1 triangle, not the smooth
             // symmetric 0..10..0 wave this case previously computed.
-            case ObjectType::ObjectType5: { int q = (p / 3) % 22; return (q < 11) ? q : (22 - q); }
-            case ObjectType::ObjectType6:  return 21 + (p / 4) % 8;
-            case ObjectType::ObjectType7:  return 29 + (p / 3) % 8;
+            case GalaxyEggbert::Def::ObjectType::ObjectType5: { int q = (p / 3) % 22; return (q < 11) ? q : (22 - q); }
+            case GalaxyEggbert::Def::ObjectType::ObjectType6:  return 21 + (p / 4) % 8;
+            case GalaxyEggbert::Def::ObjectType::ObjectType7:  return 29 + (p / 3) % 8;
             // Fixed 2026-07-20 -- wrong divisor (9 instead of the real
             // Config::ScaleDiv(3)==3, Decor.cpp:8319-8337) for the 4 key
             // types below -- the arrays themselves were already correct.
-            case ObjectType::ObjectType49: return kCle1[(p / 3) % 12];
-            case ObjectType::ObjectType50: return kCle2[(p / 3) % 12];
-            case ObjectType::ObjectType51: return kCle3[(p / 3) % 12];
+            case GalaxyEggbert::Def::ObjectType::ObjectType49: return kCle1[(p / 3) % 12];
+            case GalaxyEggbert::Def::ObjectType::ObjectType50: return kCle2[(p / 3) % 12];
+            case GalaxyEggbert::Def::ObjectType::ObjectType51: return kCle3[(p / 3) % 12];
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8344-8348); real
             // table_shield also has 16 entries, not 8 (see kShield above).
-            case ObjectType::ObjectType25: return kShield[(p / 2) % 16];
-            case ObjectType::ObjectType19: return 89;
-            case ObjectType::ObjectType46: return 208;
-            case ObjectType::ObjectType55: return 252;
+            case GalaxyEggbert::Def::ObjectType::ObjectType25: return kShield[(p / 2) % 16];
+            case GalaxyEggbert::Def::ObjectType::ObjectType19: return 89;
+            case GalaxyEggbert::Def::ObjectType::ObjectType46: return 208;
+            case GalaxyEggbert::Def::ObjectType::ObjectType55: return 252;
             // Fixed 2026-07-20 -- same wrong-divisor bug as ObjectType49-51
             // above (9 instead of the real Config::ScaleDiv(3)==3,
             // Decor.cpp:8319-8322).
-            case ObjectType::ObjectType21: return kCleGeneric[(p / 3) % 12];
+            case GalaxyEggbert::Def::ObjectType::ObjectType21: return kCleGeneric[(p / 3) % 12];
             // Fixed 2026-07-20 -- wrong divisor (3 instead of the real
             // Config::ScaleDiv(1)==1, Decor.cpp:8339-8343).
-            case ObjectType::ObjectType24: return kSkate[p % 34];
+            case GalaxyEggbert::Def::ObjectType::ObjectType24: return kSkate[p % 34];
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8349-8353).
-            case ObjectType::ObjectType26: return kPower[(p / 2) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType26: return kPower[(p / 2) % 8];
             // Fixed 2026-07-20 -- wrong divisor (4 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8354-8358).
-            case ObjectType::ObjectType40: return kInvert[(p / 2) % 20];
+            case GalaxyEggbert::Def::ObjectType::ObjectType40: return kInvert[(p / 2) % 20];
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(1)==1, Decor.cpp:8193-8200) for both
             // caterpillar-track types.
-            case ObjectType::ObjectType47: return kChenille[p % 6];
-            case ObjectType::ObjectType48: return kChenillei[p % 6];
-            case ObjectType::ObjectType32: return kBlupihLeft[(p / 6) % 8];
-            case ObjectType::ObjectType44: return kGuepeLeft[(p / 6) % 6];
-            case ObjectType::ObjectType54: return kCreature[(p / 6) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType47: return kChenille[p % 6];
+            case GalaxyEggbert::Def::ObjectType::ObjectType48: return kChenillei[p % 6];
+            case GalaxyEggbert::Def::ObjectType::ObjectType32: return kBlupihLeft[(p / 6) % 8];
+            case GalaxyEggbert::Def::ObjectType::ObjectType44: return kGuepeLeft[(p / 6) % 6];
+            case GalaxyEggbert::Def::ObjectType::ObjectType54: return kCreature[(p / 6) % 8];
             // Fixed 2026-07-20 -- wrong divisor (3 instead of the real
             // Config::ScaleDiv(1)==1, Decor.cpp:8217-8221).
-            case ObjectType::ObjectType96: return kFollow1[p % 26];
+            case GalaxyEggbert::Def::ObjectType::ObjectType96: return kFollow1[p % 26];
 
             // explo.png-sourced Category B types (2026-07-09) -- explosions/
             // visual effects, 100-icon grid (0-99). Icon numbers are only
@@ -372,25 +372,25 @@ namespace GalaxyEggbert::CNA
             // wrong divisor (6 instead of the real Config::ScaleDiv(1)==1)
             // and wrong ascending-arithmetic assumption -- real
             // table_explo1 bounces back and forth (see kExplo1 above).
-            case ObjectType::ObjectType8:   return kExplo1[p % 39];
+            case GalaxyEggbert::Def::ObjectType::ObjectType8:   return kExplo1[p % 39];
             // Fixed 2026-07-14 (plan.md VISUAL-008, follower-blocked-path
             // debris flash): wrong divisor (6 instead of the real
             // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
             // assumption -- real table_explo2 has real `-1` blank-frame
             // sentinels interspersed throughout (see kExplo2 above).
-            case ObjectType::ObjectType9:   return kExplo2[p % 20];
+            case GalaxyEggbert::Def::ObjectType::ObjectType9:   return kExplo2[p % 20];
             // Fixed 2026-07-14 (plan.md VISUAL-008, fish/bird explosion
             // flash): wrong divisor (6 instead of the real
             // `Config::ScaleDiv(1)==1`) and wrong ascending-arithmetic
             // assumption -- real table_explo3 oscillates (see kExplo3
             // above).
-            case ObjectType::ObjectType10:  return kExplo3[p % 20];
+            case GalaxyEggbert::Def::ObjectType::ObjectType10:  return kExplo3[p % 20];
             // Fixed 2026-07-14 (plan.md VISUAL-008-adjacent, the Fan-hit
             // shockwave completing CAM-009's BigShake): wrong divisor (6
             // instead of the real Config::ScaleDiv(1)==1) and wrong
             // ascending-arithmetic assumption -- real table_explo4 jumps
             // non-monotonically (see kExplo4 above).
-            case ObjectType::ObjectType11:  return kExplo4[p % 9];
+            case GalaxyEggbert::Def::ObjectType::ObjectType11:  return kExplo4[p % 9];
             // Fixed 2026-07-20 (VISUAL-021) -- the "45 frames would exceed
             // the sheet" reasoning this case used to have was based on a
             // wrong naive-ascending-range assumption, same category of bug
@@ -401,25 +401,25 @@ namespace GalaxyEggbert::CNA
             // 0-99 range, so the sheet-size concern was never real for
             // this type. The renderer's existing -1-skip support (already
             // used by kExplo2/kExplo7 above) handles the 2 blank frames.
-            case ObjectType::ObjectType53:  return kTentacule[p % 45];
+            case GalaxyEggbert::Def::ObjectType::ObjectType53:  return kTentacule[p % 45];
             // Fixed 2026-07-16 -- exact table_explo5 transcription (see kExplo5 above), same
             // wrong-divisor bug as every other explo case here.
-            case ObjectType::ObjectType90:  return kExplo5[p % 12];
+            case GalaxyEggbert::Def::ObjectType::ObjectType90:  return kExplo5[p % 12];
             // Fixed 2026-07-16 -- exact table_explo6 transcription (see kExplo6 above).
-            case ObjectType::ObjectType91:  return kExplo6[p % 6];
+            case GalaxyEggbert::Def::ObjectType::ObjectType91:  return kExplo6[p % 6];
             // Fixed 2026-07-14 (plan.md VISUAL-010, teleporter arc): the
             // real table_explo7 stays within icons 60-65 (see kExplo7
             // above), well within the sheet -- the previous "would exceed
             // the sheet" assumption was based on a wrong naive-ascending
             // guess, same mistake as ObjectType57's own fix.
-            case ObjectType::ObjectType92:  return kExplo7[p % 128];
+            case GalaxyEggbert::Def::ObjectType::ObjectType92:  return kExplo7[p % 128];
             // Fixed 2026-07-16 -- exact table_explo8 transcription (see kExplo8 above).
-            case ObjectType::ObjectType93:  return kExplo8[p % 5];
+            case GalaxyEggbert::Def::ObjectType::ObjectType93:  return kExplo8[p % 5];
             // Fixed 2026-07-14 (plan.md VISUAL-009, bullet-splat effect):
             // wrong divisor (6 instead of the real `Config::ScaleDiv(1)==1`)
             // -- real `table_sploutch1` is a plain ascending range (90..99),
             // so only the divisor needed fixing.
-            case ObjectType::ObjectType98:  return 90 + p % 10;
+            case GalaxyEggbert::Def::ObjectType::ObjectType98:  return 90 + p % 10;
             // Fixed 2026-07-14: previously a static "first real frame"
             // return -- the real tables (`table_sploutch2/3`) are now
             // transcribed verbatim (see kSploutch2/3 below) and fully
@@ -427,8 +427,8 @@ namespace GalaxyEggbert::CNA
             // delay (3 ticks for 99, 8 for 100) -- the renderer skips
             // drawing this tick when the icon is negative (see
             // GalaxyEggbertCnaGame.cpp's explo.png billboard pass).
-            case ObjectType::ObjectType99:  return kSploutch2[p % 13];
-            case ObjectType::ObjectType100: return kSploutch3[p % 18];
+            case GalaxyEggbert::Def::ObjectType::ObjectType99:  return kSploutch2[p % 13];
+            case GalaxyEggbert::Def::ObjectType::ObjectType100: return kSploutch3[p % 18];
 
             // blupi.png/blupi1.png-sourced Blupi-skin types (2026-07-09) --
             // 340-icon grid (0-339). Icon numbers are only meaningful via
@@ -437,10 +437,10 @@ namespace GalaxyEggbert::CNA
             // Config::ScaleDiv(1)==1, Decor.cpp:8227-8246); a plain
             // ascending range, only the divisor needed fixing (the
             // animation was playing 6x too slowly).
-            case ObjectType::ObjectType200: return 257 + p % 6;
-            case ObjectType::ObjectType201: return 257 + p % 6;
-            case ObjectType::ObjectType202: return 257 + p % 6;
-            case ObjectType::ObjectType203: return 257 + p % 6;
+            case GalaxyEggbert::Def::ObjectType::ObjectType200: return 257 + p % 6;
+            case GalaxyEggbert::Def::ObjectType::ObjectType201: return 257 + p % 6;
+            case GalaxyEggbert::Def::ObjectType::ObjectType202: return 257 + p % 6;
+            case GalaxyEggbert::Def::ObjectType::ObjectType203: return 257 + p % 6;
 
             // ObjectType38 (electric arc, 2026-07-09) -- now animated with
             // real per-instance phase (MobileObjSpec::phase,
@@ -449,7 +449,7 @@ namespace GalaxyEggbert::CNA
             // 267 while p%90<30 on blupi1.png, 40-47 afterward on
             // element.png) -- see IsBlupiPngSourcedAtPhase() below for the
             // matching per-instance channel dispatch used by the renderer.
-            case ObjectType::ObjectType38:  return kElectro[p % 90];
+            case GalaxyEggbert::Def::ObjectType::ObjectType38:  return kElectro[p % 90];
             default:                       return 0;
         }
     }
@@ -716,29 +716,29 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    bool IsUniformCubeObject(ObjectType type)
+    bool IsUniformCubeObject(GalaxyEggbert::Def::ObjectType type)
     {
         switch (type)
         {
-            case ObjectType::ObjectType1:
-            case ObjectType::ObjectType12:
-            case ObjectType::ObjectType47:
-            case ObjectType::ObjectType48:
+            case GalaxyEggbert::Def::ObjectType::ObjectType1:
+            case GalaxyEggbert::Def::ObjectType::ObjectType12:
+            case GalaxyEggbert::Def::ObjectType::ObjectType47:
+            case GalaxyEggbert::Def::ObjectType::ObjectType48:
                 return true;
             default:
                 return false;
         }
     }
 
-    bool IsObjectMPngSourced(ObjectType type)
+    bool IsObjectMPngSourced(GalaxyEggbert::Def::ObjectType type)
     {
         switch (type)
         {
-            case ObjectType::ObjectType14:
-            case ObjectType::ObjectType15:
-            case ObjectType::ObjectType31:
-            case ObjectType::ObjectType35:
-            case ObjectType::ObjectType52:
+            case GalaxyEggbert::Def::ObjectType::ObjectType14:
+            case GalaxyEggbert::Def::ObjectType::ObjectType15:
+            case GalaxyEggbert::Def::ObjectType::ObjectType31:
+            case GalaxyEggbert::Def::ObjectType::ObjectType35:
+            case GalaxyEggbert::Def::ObjectType::ObjectType52:
                 return true;
             default:
                 return false;
@@ -760,22 +760,22 @@ namespace GalaxyEggbert::CNA
         return ObjectIconUv{u0, v0, u1, v1};
     }
 
-    bool IsExploPngSourced(ObjectType type)
+    bool IsExploPngSourced(GalaxyEggbert::Def::ObjectType type)
     {
         switch (type)
         {
-            case ObjectType::ObjectType8:
-            case ObjectType::ObjectType9:
-            case ObjectType::ObjectType10:
-            case ObjectType::ObjectType11:
-            case ObjectType::ObjectType53:
-            case ObjectType::ObjectType90:
-            case ObjectType::ObjectType91:
-            case ObjectType::ObjectType92:
-            case ObjectType::ObjectType93:
-            case ObjectType::ObjectType98:
-            case ObjectType::ObjectType99:
-            case ObjectType::ObjectType100:
+            case GalaxyEggbert::Def::ObjectType::ObjectType8:
+            case GalaxyEggbert::Def::ObjectType::ObjectType9:
+            case GalaxyEggbert::Def::ObjectType::ObjectType10:
+            case GalaxyEggbert::Def::ObjectType::ObjectType11:
+            case GalaxyEggbert::Def::ObjectType::ObjectType53:
+            case GalaxyEggbert::Def::ObjectType::ObjectType90:
+            case GalaxyEggbert::Def::ObjectType::ObjectType91:
+            case GalaxyEggbert::Def::ObjectType::ObjectType92:
+            case GalaxyEggbert::Def::ObjectType::ObjectType93:
+            case GalaxyEggbert::Def::ObjectType::ObjectType98:
+            case GalaxyEggbert::Def::ObjectType::ObjectType99:
+            case GalaxyEggbert::Def::ObjectType::ObjectType100:
                 return true;
             default:
                 return false;
@@ -802,38 +802,38 @@ namespace GalaxyEggbert::CNA
         return GetExploIconUv(icon);
     }
 
-    bool IsBlupiPngSourced(ObjectType type)
+    bool IsBlupiPngSourced(GalaxyEggbert::Def::ObjectType type)
     {
         switch (type)
         {
-            case ObjectType::ObjectType200:
-            case ObjectType::ObjectType201:
-            case ObjectType::ObjectType202:
-            case ObjectType::ObjectType203:
-            case ObjectType::ObjectType38:
+            case GalaxyEggbert::Def::ObjectType::ObjectType200:
+            case GalaxyEggbert::Def::ObjectType::ObjectType201:
+            case GalaxyEggbert::Def::ObjectType::ObjectType202:
+            case GalaxyEggbert::Def::ObjectType::ObjectType203:
+            case GalaxyEggbert::Def::ObjectType::ObjectType38:
                 return true;
             default:
                 return false;
         }
     }
 
-    bool UsesBlupi1Texture(ObjectType type)
+    bool UsesBlupi1Texture(GalaxyEggbert::Def::ObjectType type)
     {
         switch (type)
         {
-            case ObjectType::ObjectType201:
-            case ObjectType::ObjectType202:
-            case ObjectType::ObjectType203:
-            case ObjectType::ObjectType38:
+            case GalaxyEggbert::Def::ObjectType::ObjectType201:
+            case GalaxyEggbert::Def::ObjectType::ObjectType202:
+            case GalaxyEggbert::Def::ObjectType::ObjectType203:
+            case GalaxyEggbert::Def::ObjectType::ObjectType38:
                 return true;
             default:
                 return false;
         }
     }
 
-    bool IsBlupiPngSourcedAtPhase(ObjectType type, int phase)
+    bool IsBlupiPngSourcedAtPhase(GalaxyEggbert::Def::ObjectType type, int phase)
     {
-        if (type == ObjectType::ObjectType38)
+        if (type == GalaxyEggbert::Def::ObjectType::ObjectType38)
         {
             // Matches Decor.cpp's channel switch (~line 8997): blupi1.png
             // for the first 30 of the 90-tick cycle, element.png after.

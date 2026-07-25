@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Bitmask of logical game buttons active this frame. Powers of two — combinable with OR.
 enum class KeyPressFlags : uint8_t
@@ -18,4 +18,4 @@ constexpr KeyPressFlags ToKeyPressFlags(int v)      { return static_cast<KeyPres
 constexpr KeyPressFlags operator|(KeyPressFlags a, KeyPressFlags b) { return static_cast<KeyPressFlags>(ToRaw(a) | ToRaw(b)); }
 constexpr KeyPressFlags operator&(KeyPressFlags a, KeyPressFlags b) { return static_cast<KeyPressFlags>(ToRaw(a) & ToRaw(b)); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

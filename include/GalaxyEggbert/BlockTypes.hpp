@@ -65,8 +65,8 @@ constexpr uint16_t Platform = 200;   // floating platform
 
 // Real hub-screen world-select markers (`Decor::IsWorld()`, icons 158-165,
 // plan.md `170`/`TILE-057`) -- these 8 constants used to be named `Sp0`-`Sp7`
-// under an earlier, now-debunked "SecretPower 0-7" hypothesis (the real
-// SecretPower enum only has 5 values and comes from unrelated MoveObject
+// under an earlier, now-debunked "GalaxyEggbert::Def::SecretPower 0-7" hypothesis (the real
+// GalaxyEggbert::Def::SecretPower enum only has 5 values and comes from unrelated MoveObject
 // pickups instead, see `170`'s own writeup). Renamed 2026-07-17 once put to
 // actual use for the hub/mission-progression system: touching one selects
 // world/level N (1-8), the real destination computed contextually by
@@ -139,7 +139,7 @@ constexpr uint16_t Spike    = 373;   // kills Blupi on contact (anim group 347,3
 constexpr uint16_t Crusher  = 317;   // kills Blupi on contact (anim group 317–323)
 constexpr uint16_t Saw      = 378;   // kills Blupi on contact (anim group 378–383)
 // "Water drip" (real Decor::IsGoutte, confirmed 2026-07-14 via direct
-// Decor.cpp read: icon 404 kills on contact, real BlupiAction::Glu, same
+// Decor.cpp read: icon 404 kills on contact, real GalaxyEggbert::Def::BlupiAction::Glu, same
 // gate/sound/behavior shape as Spike -- NOT a slow/glue debuff despite the
 // name, a real 6th confirmed instant-kill hazard). Real visual appearance is
 // a green vase/bulb-on-a-neck (Billboard render mode per

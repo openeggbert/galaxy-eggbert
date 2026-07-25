@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // High-level game screen/mode. The game is always in exactly one phase.
 // Transitions are performed by the game state machine.
@@ -27,4 +27,4 @@ enum class GamePhase : uint8_t
 constexpr uint8_t  ToRaw(GamePhase p)      { return static_cast<uint8_t>(p); }
 constexpr GamePhase ToGamePhase(int v)     { return static_cast<GamePhase>(static_cast<uint8_t>(v)); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

@@ -84,7 +84,7 @@ int main()
               "a new editor world contains the complete 3x3 RockPile board");
 
         const auto objects = GalaxyEggbert::CollectMoveObjects(starter);
-        const auto contains = [&objects](GalaxyEggbert::ObjectType type, float x, float z)
+        const auto contains = [&objects](GalaxyEggbert::Def::ObjectType type, float x, float z)
         {
             return std::any_of(objects.begin(), objects.end(), [=](const auto& object)
             {
@@ -94,9 +94,9 @@ int main()
                        object.posStartZ == z;
             });
         };
-        check(contains(GalaxyEggbert::ObjectType::ObjectType5, 50.0f, 50.0f),
+        check(contains(GalaxyEggbert::Def::ObjectType::ObjectType5, 50.0f, 50.0f),
               "the starter board has a treasure chest in its centre");
-        check(contains(GalaxyEggbert::ObjectType::ObjectType7, 49.0f, 50.0f),
+        check(contains(GalaxyEggbert::Def::ObjectType::ObjectType7, 49.0f, 50.0f),
               "the starter board has an exit arrow opposite Blupi");
     }
 

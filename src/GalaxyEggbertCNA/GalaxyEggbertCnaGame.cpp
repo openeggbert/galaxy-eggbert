@@ -96,7 +96,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2) handler-table
-        // migration, 4th family: the vehicle ObjectType<->VehicleMode
+        // migration, 4th family: the vehicle GalaxyEggbert::Def::ObjectType<->VehicleMode
         // mapping, previously 2 separate 5-case switches (mount-scan and
         // dismount-deposit) doing the same bijection in opposite
         // directions. A pure 1:1 lookup with no per-type divergence --
@@ -106,22 +106,22 @@ namespace GalaxyEggbert::CNA
         // of the type<->mode mapping itself.
         struct VehicleModeMapping
         {
-            GalaxyEggbert::ObjectType type;
+            GalaxyEggbert::Def::ObjectType type;
             GEBlupiController::VehicleMode mode;
         };
         constexpr VehicleModeMapping kVehicleModeTable[] = {
-            {GalaxyEggbert::ObjectType::ObjectType13, GEBlupiController::VehicleMode::Helicopter},
-            {GalaxyEggbert::ObjectType::ObjectType19, GEBlupiController::VehicleMode::Jeep},
-            {GalaxyEggbert::ObjectType::ObjectType28, GEBlupiController::VehicleMode::Tank},
-            {GalaxyEggbert::ObjectType::ObjectType24, GEBlupiController::VehicleMode::Skateboard},
-            {GalaxyEggbert::ObjectType::ObjectType46, GEBlupiController::VehicleMode::Overcraft},
+            {GalaxyEggbert::Def::ObjectType::ObjectType13, GEBlupiController::VehicleMode::Helicopter},
+            {GalaxyEggbert::Def::ObjectType::ObjectType19, GEBlupiController::VehicleMode::Jeep},
+            {GalaxyEggbert::Def::ObjectType::ObjectType28, GEBlupiController::VehicleMode::Tank},
+            {GalaxyEggbert::Def::ObjectType::ObjectType24, GEBlupiController::VehicleMode::Skateboard},
+            {GalaxyEggbert::Def::ObjectType::ObjectType46, GEBlupiController::VehicleMode::Overcraft},
         };
 
         // Mirrors the old switch's own `default: -> Overcraft` fallback
         // exactly -- `IsInVehicle()` already gates every caller so `mode`
         // is never actually `None` here, and Overcraft is the only real
         // mode left unmatched by a linear scan miss.
-        GalaxyEggbert::ObjectType VehicleModeToObjectType(GEBlupiController::VehicleMode mode)
+        GalaxyEggbert::Def::ObjectType VehicleModeToObjectType(GEBlupiController::VehicleMode mode)
         {
             for (const auto& entry : kVehicleModeTable)
             {
@@ -130,10 +130,10 @@ namespace GalaxyEggbert::CNA
                     return entry.type;
                 }
             }
-            return GalaxyEggbert::ObjectType::ObjectType46;
+            return GalaxyEggbert::Def::ObjectType::ObjectType46;
         }
 
-        bool ObjectTypeToVehicleMode(GalaxyEggbert::ObjectType type, GEBlupiController::VehicleMode& outMode)
+        bool ObjectTypeToVehicleMode(GalaxyEggbert::Def::ObjectType type, GEBlupiController::VehicleMode& outMode)
         {
             for (const auto& entry : kVehicleModeTable)
             {
@@ -165,23 +165,23 @@ namespace GalaxyEggbert::CNA
 
         struct PatrolIconHandler
         {
-            GalaxyEggbert::ObjectType type;
+            GalaxyEggbert::Def::ObjectType type;
             PatrolIconFn iconFn;
         };
         constexpr PatrolIconHandler kPatrolIconHandlers[] = {
-            {GalaxyEggbert::ObjectType::ObjectType4, GetBulldozerIcon},
-            {GalaxyEggbert::ObjectType::ObjectType17, GetFishIcon},
-            {GalaxyEggbert::ObjectType::ObjectType20, GetBirdIcon},
-            {GalaxyEggbert::ObjectType::ObjectType32, GetBlupihIcon},
-            {GalaxyEggbert::ObjectType::ObjectType33, GetBlupitIcon},
-            {GalaxyEggbert::ObjectType::ObjectType44, GetWaspIcon},
-            {GalaxyEggbert::ObjectType::ObjectType54, GetCreatureIconIgnoringDirection},
+            {GalaxyEggbert::Def::ObjectType::ObjectType4, GetBulldozerIcon},
+            {GalaxyEggbert::Def::ObjectType::ObjectType17, GetFishIcon},
+            {GalaxyEggbert::Def::ObjectType::ObjectType20, GetBirdIcon},
+            {GalaxyEggbert::Def::ObjectType::ObjectType32, GetBlupihIcon},
+            {GalaxyEggbert::Def::ObjectType::ObjectType33, GetBlupitIcon},
+            {GalaxyEggbert::Def::ObjectType::ObjectType44, GetWaspIcon},
+            {GalaxyEggbert::Def::ObjectType::ObjectType54, GetCreatureIconIgnoringDirection},
         };
 
         // Returns false (caller keeps its own `GetObjIcon()` fallback) for
         // any type not in this 7-member family, same as the old switch's
         // own `default` case.
-        bool TryGetPatrolIcon(GalaxyEggbert::ObjectType type, bool patrolGoesLeftFromStart, int patrolStep,
+        bool TryGetPatrolIcon(GalaxyEggbert::Def::ObjectType type, bool patrolGoesLeftFromStart, int patrolStep,
                                int patrolTimeTicks, int& outIcon)
         {
             for (const auto& entry : kPatrolIconHandlers)
@@ -257,16 +257,16 @@ namespace GalaxyEggbert::CNA
             return maxDistance;
         }
 
-        // Real GameSpeed (SCORE-009/010/011) as a continuous dt-scale
+        // Real GalaxyEggbert::Def::GameSpeed (SCORE-009/010/011) as a continuous dt-scale
         // factor -- see gameSpeed_'s own member comment for the "why a
         // factor, not a literal N-repeat" rationale. Slow's real "every
         // OTHER frame runs one tick" behavior is approximated as a
         // continuous 0.5x here (same average effect, no frame-parity
         // bookkeeping needed).
-        float GameSpeedFactor(GalaxyEggbert::GameSpeed speed) noexcept
+        float GameSpeedFactor(GalaxyEggbert::Def::GameSpeed speed) noexcept
         {
-            return (speed == GalaxyEggbert::GameSpeed::Slow) ? 0.5f
-                                                               : static_cast<float>(GalaxyEggbert::ToRaw(speed));
+            return (speed == GalaxyEggbert::Def::GameSpeed::Slow) ? 0.5f
+                                                               : static_cast<float>(GalaxyEggbert::Def::ToRaw(speed));
         }
     }
 
@@ -535,7 +535,7 @@ namespace GalaxyEggbert::CNA
         // Real Wait->Resume-or-Init branch (plan.md MENU-001..020) now
         // decides this at the END of the real 5.0s Wait timer, in
         // Update(), not here at load time -- see phase_'s own default
-        // member initializer (now Wait, not Play) and GamePhase's own
+        // member initializer (now Wait, not Play) and GalaxyEggbert::Def::GamePhase's own
         // class comment for the full reasoning.
 
         std::cout << "GalaxyEggbertCNA: terrain mesh uploaded — "
@@ -754,12 +754,12 @@ namespace GalaxyEggbert::CNA
 
         editorPlayTestActive_ = true;
         editorPlayTestWorldPath_ = path;
-        SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
 
         std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path << "): loaded." << std::endl;
     }
 
-    void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::GamePhase next, bool bypassFade) noexcept
+    void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
         // Real Game1::SetPhase() (2026-07-13, plan.md MENU-088/089, see
         // this method's own declaration comment for the full real
@@ -770,12 +770,12 @@ namespace GalaxyEggbert::CNA
         // the real source exactly (confirmed via research: Play->Pause,
         // Play->Win/Lost, and Resume->Play-via-Continue are ALL genuinely
         // instant in the real game, not merely fast).
-        const bool sourceDefers = phase_ == GalaxyEggbert::GamePhase::Init ||
-                                   phase_ == GalaxyEggbert::GamePhase::MainSetup ||
-                                   phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
-                                   phase_ == GalaxyEggbert::GamePhase::Pause ||
-                                   phase_ == GalaxyEggbert::GamePhase::Resume;
-        if (sourceDefers && fadeOutPhase_ == GalaxyEggbert::GamePhase::None && !bypassFade)
+        const bool sourceDefers = phase_ == GalaxyEggbert::Def::GamePhase::Init ||
+                                   phase_ == GalaxyEggbert::Def::GamePhase::MainSetup ||
+                                   phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||
+                                   phase_ == GalaxyEggbert::Def::GamePhase::Pause ||
+                                   phase_ == GalaxyEggbert::Def::GamePhase::Resume;
+        if (sourceDefers && fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None && !bypassFade)
         {
             fadeOutPhase_ = next;
             phaseTimeSeconds_ = 0.0f;
@@ -788,7 +788,7 @@ namespace GalaxyEggbert::CNA
         // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
         // 2 key-debounce trackers below.
         phase_ = next;
-        fadeOutPhase_ = GalaxyEggbert::GamePhase::None;
+        fadeOutPhase_ = GalaxyEggbert::Def::GamePhase::None;
         pauseKeyWasDown_ = false;
         phaseReturnKeyWasDown_ = false;
         phaseTimeSeconds_ = 0.0f;
@@ -799,13 +799,13 @@ namespace GalaxyEggbert::CNA
     {
         switch (phase_)
         {
-            case GalaxyEggbert::GamePhase::Pause:
+            case GalaxyEggbert::Def::GamePhase::Pause:
                 // Handled by inputPad_.DrawPause() instead (2026-07-13,
                 // plan.md MENU-028..039) -- the real background/character/
                 // buttons, not a generic text overlay.
                 return nullptr;
-            case GalaxyEggbert::GamePhase::Win:
-            case GalaxyEggbert::GamePhase::Lost:
+            case GalaxyEggbert::Def::GamePhase::Win:
+            case GalaxyEggbert::Def::GamePhase::Lost:
                 // Handled by inputPad_.DrawWinLost() instead (2026-07-13,
                 // plan.md MENU-046..057) -- the real win.png/lost.png
                 // background + blupiyoupie.png animation, not a generic
@@ -877,7 +877,7 @@ namespace GalaxyEggbert::CNA
         {
             return;
         }
-        const GalaxyEggbert::ObjectType depositType = VehicleModeToObjectType(blupi_.GetVehicleMode());
+        const GalaxyEggbert::Def::ObjectType depositType = VehicleModeToObjectType(blupi_.GetVehicleMode());
         // Real DeposeSkate anim (plan.md BLUPI-091 gap, table_blupi ID 43,
         // wired 2026-07-19) -- Skateboard is the only vehicle with a
         // dedicated dismount pose (checked the reference doc for the
@@ -913,24 +913,24 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::UpdateVehicleMotorSound()
     {
-        using GalaxyEggbert::SoundChannel;
+        using GalaxyEggbert::Def::SoundChannel;
 
-        SoundChannel desiredLoop = SoundChannel::SoundChannel0;
-        SoundChannel startSound = SoundChannel::SoundChannel0;
-        SoundChannel stopSound = SoundChannel::SoundChannel0;
+        GalaxyEggbert::Def::SoundChannel desiredLoop = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
+        GalaxyEggbert::Def::SoundChannel startSound = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
+        GalaxyEggbert::Def::SoundChannel stopSound = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
         switch (blupi_.GetVehicleMode())
         {
             case GEBlupiController::VehicleMode::Helicopter:
-                desiredLoop = blupi_.IsVehicleMotorHigh() ? SoundChannel::SoundChannel16 : SoundChannel::SoundChannel18;
-                startSound = SoundChannel::SoundChannel15;
-                stopSound = SoundChannel::SoundChannel17;
+                desiredLoop = blupi_.IsVehicleMotorHigh() ? GalaxyEggbert::Def::SoundChannel::SoundChannel16 : GalaxyEggbert::Def::SoundChannel::SoundChannel18;
+                startSound = GalaxyEggbert::Def::SoundChannel::SoundChannel15;
+                stopSound = GalaxyEggbert::Def::SoundChannel::SoundChannel17;
                 break;
             case GEBlupiController::VehicleMode::Jeep:
             case GEBlupiController::VehicleMode::Tank:
             case GEBlupiController::VehicleMode::Overcraft:
-                desiredLoop = blupi_.IsVehicleMotorHigh() ? SoundChannel::SoundChannel29 : SoundChannel::SoundChannel31;
-                startSound = SoundChannel::SoundChannel28;
-                stopSound = SoundChannel::SoundChannel30;
+                desiredLoop = blupi_.IsVehicleMotorHigh() ? GalaxyEggbert::Def::SoundChannel::SoundChannel29 : GalaxyEggbert::Def::SoundChannel::SoundChannel31;
+                startSound = GalaxyEggbert::Def::SoundChannel::SoundChannel28;
+                stopSound = GalaxyEggbert::Def::SoundChannel::SoundChannel30;
                 break;
             default:
                 break; // None/Skateboard: no motor sound in real source either
@@ -940,20 +940,20 @@ namespace GalaxyEggbert::CNA
         {
             return;
         }
-        if (activeMotorLoop_ == SoundChannel::SoundChannel0 && desiredLoop != SoundChannel::SoundChannel0)
+        if (activeMotorLoop_ == GalaxyEggbert::Def::SoundChannel::SoundChannel0 && desiredLoop != GalaxyEggbert::Def::SoundChannel::SoundChannel0)
         {
             sound_.Play(startSound);
         }
-        if (activeMotorLoop_ != SoundChannel::SoundChannel0 && desiredLoop == SoundChannel::SoundChannel0)
+        if (activeMotorLoop_ != GalaxyEggbert::Def::SoundChannel::SoundChannel0 && desiredLoop == GalaxyEggbert::Def::SoundChannel::SoundChannel0)
         {
             sound_.Play(stopSound);
         }
-        if (activeMotorLoop_ != SoundChannel::SoundChannel0)
+        if (activeMotorLoop_ != GalaxyEggbert::Def::SoundChannel::SoundChannel0)
         {
             sound_.Stop(activeMotorLoop_);
         }
         activeMotorLoop_ = desiredLoop;
-        if (activeMotorLoop_ != SoundChannel::SoundChannel0)
+        if (activeMotorLoop_ != GalaxyEggbert::Def::SoundChannel::SoundChannel0)
         {
             sound_.Play(activeMotorLoop_, /*loop=*/true);
         }
@@ -1050,23 +1050,23 @@ namespace GalaxyEggbert::CNA
         // 6025-6087) -- the world object was already destroyed by interaction_.Update() itself.
         if (powerEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette))
         {
-            sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel50);
+            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel50);
             pendingPickupX_ = powerEvent->pickupX;
             pendingPickupY_ = powerEvent->pickupY;
             pendingPickupZ_ = powerEvent->pickupZ;
-            pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType26;
+            pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType26;
         }
         else if (hideEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink))
         {
-            sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel57);
+            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel57);
             pendingPickupX_ = hideEvent->pickupX;
             pendingPickupY_ = hideEvent->pickupY;
             pendingPickupZ_ = hideEvent->pickupZ;
-            pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType30;
+            pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType30;
         }
         else if (cloudEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge))
         {
-            sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel58);
+            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel58);
             // Real m_blupiCloud grants at CONTACT, not completion (confirmed via direct source
             // read, unlike Sucette/Drink) -- this engine's existing instant TriggerCloud() call
             // below (already correct) stays; only the freeze/grab-sound/completion-sound were
@@ -1077,7 +1077,7 @@ namespace GalaxyEggbert::CNA
             pendingPickupX_ = cloudEvent->pickupX;
             pendingPickupY_ = cloudEvent->pickupY;
             pendingPickupZ_ = cloudEvent->pickupZ;
-            pendingPickupType_ = GalaxyEggbert::ObjectType::ObjectType31;
+            pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType31;
         }
 
         // Resolves an ALREADY-active freeze (possibly started a prior frame) that just elapsed --
@@ -1092,7 +1092,7 @@ namespace GalaxyEggbert::CNA
         {
             case GEBlupiController::PickupFreezeKind::Sucette:
                 blupi_.TriggerPower();
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel44);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel44);
                 // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent) -- moved here from the
                 // old instant-grant site since the Power buff (and thus the magic trail) only
                 // actually starts now, at completion, not at contact.
@@ -1100,10 +1100,10 @@ namespace GalaxyEggbert::CNA
                 break;
             case GEBlupiController::PickupFreezeKind::Drink:
                 blupi_.TriggerHide();
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel62);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel62);
                 break;
             case GEBlupiController::PickupFreezeKind::Charge:
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel55);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel55);
                 break;
         }
         interaction_.RespawnPickupItem(worldRuntime_, pendingPickupX_, pendingPickupY_, pendingPickupZ_,
@@ -1172,9 +1172,9 @@ namespace GalaxyEggbert::CNA
             if (!goldenCaptureArmed_)
             {
                 goldenCaptureArmed_ = true;
-                if (phase_ != GalaxyEggbert::GamePhase::Play)
+                if (phase_ != GalaxyEggbert::Def::GamePhase::Play)
                 {
-                    SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
                 }
                 LoadMission(999);
             }
@@ -1192,9 +1192,9 @@ namespace GalaxyEggbert::CNA
             if (!goldenTraceArmed_)
             {
                 goldenTraceArmed_ = true;
-                if (phase_ != GalaxyEggbert::GamePhase::Play)
+                if (phase_ != GalaxyEggbert::Def::GamePhase::Play)
                 {
-                    SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
                 }
                 LoadMission(999);
                 blupi_.SetYaw(-1.5707963f); // face west, down the tested corridor
@@ -1213,7 +1213,7 @@ namespace GalaxyEggbert::CNA
         // `decor.MoveStep()`), committing the deferred phase once the
         // real 1.0s window elapses. See SetPhase()'s own comment for the
         // full real deferred-transition mechanic this drives.
-        if (fadeOutPhase_ != GalaxyEggbert::GamePhase::None)
+        if (fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None)
         {
             if (phaseTimeSeconds_ >= kFadeCommitDurationSeconds)
             {
@@ -1256,7 +1256,7 @@ namespace GalaxyEggbert::CNA
             bool mouseSetupPressed = false;
             bool mouseMenuPressed = false;
             bool mouseBackPressed = false;
-            if (phase_ == GalaxyEggbert::GamePhase::Play)
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
@@ -1303,13 +1303,13 @@ namespace GalaxyEggbert::CNA
                 if (typedCheat.quickTyped)
                 {
                     quickCheatEnabled_ = !quickCheatEnabled_;
-                    if (!quickCheatEnabled_ && gameSpeed_ > GalaxyEggbert::GameSpeed::Fast)
+                    if (!quickCheatEnabled_ && gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
                     {
-                        gameSpeed_ = GalaxyEggbert::GameSpeed::Fast;
+                        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fast;
                     }
                 }
 
-                // Real GameSpeed key mapping (InputPad.cpp:596-684) --
+                // Real GalaxyEggbert::Def::GameSpeed key mapping (InputPad.cpp:596-684) --
                 // F5/F6 always work; F7/F8 need quickCheatEnabled_ (the
                 // "quick" typed cheat above). Real source ALSO has a
                 // Shift-hold temporary boost, deliberately NOT ported here:
@@ -1321,20 +1321,20 @@ namespace GalaxyEggbert::CNA
                 // 582-594): drop back to Normal if speed is still >Fast
                 // with neither quick nor ghost active (this engine has no
                 // Shift-boost to also check, per the above).
-                if (!quickCheatEnabled_ && !blupi_.IsGhost() && gameSpeed_ > GalaxyEggbert::GameSpeed::Fast)
+                if (!quickCheatEnabled_ && !blupi_.IsGhost() && gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
                 {
-                    gameSpeed_ = GalaxyEggbert::GameSpeed::Normal;
+                    gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
                 }
                 const bool f5Down = phaseKeys.IsKeyDown(Keys::F5);
                 if (f5Down && !f5KeyWasDown_)
                 {
-                    gameSpeed_ = GalaxyEggbert::GameSpeed::Normal;
+                    gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
                 }
                 f5KeyWasDown_ = f5Down;
                 const bool f6Down = phaseKeys.IsKeyDown(Keys::F6);
                 if (f6Down && !f6KeyWasDown_)
                 {
-                    gameSpeed_ = GalaxyEggbert::GameSpeed::Fast;
+                    gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fast;
                 }
                 f6KeyWasDown_ = f6Down;
                 if (quickCheatEnabled_)
@@ -1342,13 +1342,13 @@ namespace GalaxyEggbert::CNA
                     const bool f7Down = phaseKeys.IsKeyDown(Keys::F7);
                     if (f7Down && !f7KeyWasDown_)
                     {
-                        gameSpeed_ = GalaxyEggbert::GameSpeed::Faster;
+                        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Faster;
                     }
                     f7KeyWasDown_ = f7Down;
                     const bool f8Down = phaseKeys.IsKeyDown(Keys::F8);
                     if (f8Down && !f8KeyWasDown_)
                     {
-                        gameSpeed_ = GalaxyEggbert::GameSpeed::Fastest;
+                        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fastest;
                     }
                     f8KeyWasDown_ = f8Down;
                 }
@@ -1356,9 +1356,9 @@ namespace GalaxyEggbert::CNA
                 const bool tabDown = phaseKeys.IsKeyDown(Keys::Tab);
                 if (tabDown && !tabKeyWasDown_)
                 {
-                    gameSpeed_ = (gameSpeed_ == GalaxyEggbert::GameSpeed::Slow)
-                                     ? GalaxyEggbert::GameSpeed::Normal
-                                     : GalaxyEggbert::GameSpeed::Slow;
+                    gameSpeed_ = (gameSpeed_ == GalaxyEggbert::Def::GameSpeed::Slow)
+                                     ? GalaxyEggbert::Def::GameSpeed::Normal
+                                     : GalaxyEggbert::Def::GameSpeed::Slow;
                 }
                 tabKeyWasDown_ = tabDown;
                 // Real F12: a second, direct way to open/close the cheat
@@ -1372,7 +1372,7 @@ namespace GalaxyEggbert::CNA
                 }
                 f12KeyWasDown_ = f12Down;
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Pause)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 // Real conditional visibility: Back/Restart hidden on
@@ -1390,8 +1390,8 @@ namespace GalaxyEggbert::CNA
                 mouseMenuPressed = pauseInput.menuPressed;
                 mouseBackPressed = pauseInput.backPressed;
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
-                     phase_ == GalaxyEggbert::GamePhase::MainSetup)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||
+                     phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
             {
                 // Real PlaySetup (2026-07-13, plan.md MENU-058..069),
                 // reachable via Pause's real Setup button, and MainSetup
@@ -1400,7 +1400,7 @@ namespace GalaxyEggbert::CNA
                 // DrawSetup(), the real "MainSetup additionally shows
                 // SetupReset" difference (see GEInputPad::UpdateSetup()'s
                 // own class comment) is the only distinction made here.
-                const bool isMainSetup = phase_ == GalaxyEggbert::GamePhase::MainSetup;
+                const bool isMainSetup = phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const auto setupInput = inputPad_.UpdateSetup(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup);
@@ -1435,10 +1435,10 @@ namespace GalaxyEggbert::CNA
                     // reachable here. Escape is this engine's own
                     // keyboard pick for the same action (real source has
                     // no separate Setup-phase keyboard binding confirmed).
-                    SetPhase(isMainSetup ? GalaxyEggbert::GamePhase::Init : GalaxyEggbert::GamePhase::Play);
+                    SetPhase(isMainSetup ? GalaxyEggbert::Def::GamePhase::Init : GalaxyEggbert::Def::GamePhase::Play);
                 }
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Wait)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Wait)
             {
                 // Real Wait (plan.md MENU-001..005): a fixed 5.0s
                 // wall-clock cosmetic timer (confirmed via research,
@@ -1449,14 +1449,14 @@ namespace GalaxyEggbert::CNA
                 if (phaseTimeSeconds_ >= kWaitDurationSeconds)
                 {
                     // Real Wait->Resume-or-Init branch -- ADAPTED trigger
-                    // (see GamePhase's own comment for the full
+                    // (see GalaxyEggbert::Def::GamePhase's own comment for the full
                     // real-vs-adapted reasoning, same one already
                     // established for Resume itself).
-                    SetPhase(saveData_.GetHasProgress() ? GalaxyEggbert::GamePhase::Resume
-                                                         : GalaxyEggbert::GamePhase::Init);
+                    SetPhase(saveData_.GetHasProgress() ? GalaxyEggbert::Def::GamePhase::Resume
+                                                         : GalaxyEggbert::Def::GamePhase::Init);
                 }
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Init)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {
                 // Real Init / gamer-select menu (2026-07-13, plan.md
                 // MENU-006..020) -- see GEInputPad::UpdateInit()/
@@ -1486,11 +1486,11 @@ namespace GalaxyEggbert::CNA
                     // would otherwise reset lives to the default 3.
                     LoadMission(1);
                     interaction_.SetLives(saveData_.GetHasProgress() ? saveData_.GetLives() : 3);
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
                 else if (initInput.setupPressed)
                 {
-                    SetPhase(GalaxyEggbert::GamePhase::MainSetup);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::MainSetup);
                 }
                 else if (initInput.editorPressed)
                 {
@@ -1498,7 +1498,7 @@ namespace GalaxyEggbert::CNA
                     // EDITOR-107): opens the in-game 3D world editor's
                     // browser for the currently selected gamer slot.
                     worldEditor_.EnterBrowser(saveData_.GetSelectedGamer());
-                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
                 }
                 else if (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_)
                 {
@@ -1517,7 +1517,7 @@ namespace GalaxyEggbert::CNA
                     Exit();
                 }
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Resume)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {
                 // Real Resume (2026-07-13, plan.md MENU-040..045) -- see
                 // GEInputPad::UpdateResume()'s class comment for the
@@ -1541,7 +1541,7 @@ namespace GalaxyEggbert::CNA
                     // Resume->Play is genuinely instant in the real game.
                     LoadMission(saveData_.GetMissionNumber());
                     interaction_.SetLives(saveData_.GetLives());
-                    SetPhase(GalaxyEggbert::GamePhase::Play, /*bypassFade=*/true);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
                 }
                 else if (resumeInput.menuPressed ||
                          (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
@@ -1553,10 +1553,10 @@ namespace GalaxyEggbert::CNA
                     // shrink+reverse-spin fade, plan.md MENU-088/089),
                     // since Resume IS one of the 5 real deferring phases
                     // and this path doesn't pass bypassFade.
-                    SetPhase(GalaxyEggbert::GamePhase::Init);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Init);
                 }
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Editor)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {
                 // In-game 3D world editor (plan.md section 6, EDITOR-107) --
                 // see GEWorldEditor's own class comment. IsBrowsing()
@@ -1570,7 +1570,7 @@ namespace GalaxyEggbert::CNA
                         phaseKeys.IsKeyDown(Keys::Escape));
                     if (request.shouldReturnToMenu)
                     {
-                        SetPhase(GalaxyEggbert::GamePhase::Init, /*bypassFade=*/true);
+                        SetPhase(GalaxyEggbert::Def::GamePhase::Init, /*bypassFade=*/true);
                     }
                     else if (request.shouldOpen)
                     {
@@ -1610,13 +1610,13 @@ namespace GalaxyEggbert::CNA
             const bool pausePressed = phaseKeys.IsKeyDown(Keys::Escape) || mousePausePressed;
             if (pausePressed && !pauseKeyWasDown_)
             {
-                if (phase_ == GalaxyEggbert::GamePhase::Play)
+                if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
                 {
-                    SetPhase(GalaxyEggbert::GamePhase::Pause);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Pause);
                 }
-                else if (phase_ == GalaxyEggbert::GamePhase::Pause)
+                else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
                 {
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
             }
             pauseKeyWasDown_ = pausePressed;
@@ -1624,7 +1624,7 @@ namespace GalaxyEggbert::CNA
             if (mouseContinuePressed)
             {
                 // Real PauseContinue: resume in place.
-                SetPhase(GalaxyEggbert::GamePhase::Play);
+                SetPhase(GalaxyEggbert::Def::GamePhase::Play);
             }
             else if (mouseRestartPressed)
             {
@@ -1646,13 +1646,13 @@ namespace GalaxyEggbert::CNA
                     // (fresh vehicle/secret-power/key/dynamite/treasure state,
                     // same as touching any other mission trigger).
                     LoadMission(worldRuntime_.GetMissionNumber());
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
             }
             else if (mouseSetupPressed)
             {
                 // Real PauseSetup: SetPhase(PlaySetup).
-                SetPhase(GalaxyEggbert::GamePhase::PlaySetup);
+                SetPhase(GalaxyEggbert::Def::GamePhase::PlaySetup);
             }
             else if (mouseMenuPressed)
             {
@@ -1663,13 +1663,13 @@ namespace GalaxyEggbert::CNA
                     // instead of the real Init hub.
                     LoadCustomWorldForEditing(editorPlayTestWorldPath_);
                     editorPlayTestActive_ = false;
-                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
                 }
                 else
                 {
                     // Real PauseMenu: SetPhase(Init) -- now wired (2026-07-13,
                     // now that Init exists).
-                    SetPhase(GalaxyEggbert::GamePhase::Init);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Init);
                 }
             }
             else if (mouseBackPressed)
@@ -1680,7 +1680,7 @@ namespace GalaxyEggbert::CNA
                     // returns to the editor too, same as PauseMenu above.
                     LoadCustomWorldForEditing(editorPlayTestWorldPath_);
                     editorPlayTestActive_ = false;
-                    SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
                 }
                 else
                 {
@@ -1691,11 +1691,11 @@ namespace GalaxyEggbert::CNA
                     // (WinLostReturn below): a hub (mission%10==0) goes to the
                     // global hub (1), a sublevel goes to its own world's hub.
                     LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
-                    SetPhase(GalaxyEggbert::GamePhase::Play);
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
             }
 
-            if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Win || phase_ == GalaxyEggbert::Def::GamePhase::Lost)
             {
                 // Real WinLostReturn button (icon 3), OR'd with this
                 // engine's own Space-key pick -- edge-triggered already
@@ -1715,11 +1715,11 @@ namespace GalaxyEggbert::CNA
                         // the real hub/win-exit-formula destination below.
                         LoadCustomWorldForEditing(editorPlayTestWorldPath_);
                         editorPlayTestActive_ = false;
-                        SetPhase(GalaxyEggbert::GamePhase::Editor, /*bypassFade=*/true);
+                        SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
                     }
                     else
                     {
-                        if (phase_ == GalaxyEggbert::GamePhase::Win)
+                        if (phase_ == GalaxyEggbert::Def::GamePhase::Win)
                         {
                             // Real WinLostReturn from Win (plan.md TILE-006/
                             // SCORE-013..019): upgraded 2026-07-17 from the
@@ -1761,19 +1761,19 @@ namespace GalaxyEggbert::CNA
                             // in-progress treasure/key state.
                             blupi_.SetPosition(0.0f, 1.0f, 0.0f);
                         }
-                        SetPhase(GalaxyEggbert::GamePhase::Play);
+                        SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                     }
                 }
                 phaseReturnKeyWasDown_ = returnPressed;
             }
         }
 
-        if (phase_ != GalaxyEggbert::GamePhase::Play)
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Play)
         {
             return;
         }
 
-        // Real GameSpeed (SCORE-009/010/011) applied as a continuous
+        // Real GalaxyEggbert::Def::GameSpeed (SCORE-009/010/011) applied as a continuous
         // dt-scale factor on the core simulation only (see gameSpeed_'s
         // own member comment for the full rationale) -- everything else in
         // this Update() (camera, sound one-shot timers, animation-icon
@@ -1959,13 +1959,13 @@ namespace GalaxyEggbert::CNA
                 switch (blupiEvent.kind)
                 {
                     case GEBlupiController::EventKind::DownEntrySoundFired:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel7);
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel7);
                         break;
                     case GEBlupiController::EventKind::UpEntrySoundFired:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel21);
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel21);
                         break;
                     case GEBlupiController::EventKind::DownReleaseSoundFired:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel20);
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel20);
                         break;
                 }
             }
@@ -1980,7 +1980,7 @@ namespace GalaxyEggbert::CNA
             // returns false, a no-op, if already squashed).
             if (wasEcrased && !blupi_.IsEcrased())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
             }
 
             // Teleporter transit completion (plan.md E3D-MIG-147, real
@@ -2003,7 +2003,7 @@ namespace GalaxyEggbert::CNA
                                                             blupi_.GetZ(), destX, destY, destZ))
                 {
                     blupi_.SetPosition(destX, destY, destZ);
-                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
                 }
             }
 
@@ -2032,7 +2032,7 @@ namespace GalaxyEggbert::CNA
             // per-type lock duration; `shouldRespawn` is the real
             // `m_blupiRestart` flag for this specific site (see each call
             // site's own comment for its citation).
-            const auto triggerDeath = [this](GalaxyEggbert::SoundChannel channel,
+            const auto triggerDeath = [this](GalaxyEggbert::Def::SoundChannel channel,
                                               GalaxyEggbert::CNA::GEBlupiController::DeathCause cause,
                                               bool shouldRespawn, bool playChannel = true)
             {
@@ -2129,7 +2129,7 @@ namespace GalaxyEggbert::CNA
                 const float deathY = blupi_.GetY();
                 const float deathZ = blupi_.GetZ();
                 // Real m_blupiRestart=true at this site (Decor.cpp:2757).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8,
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear2, true);
                 // Real Clear2 ascend (plan.md `158` death-VFX follow-up,
                 // Decor.cpp:2754-2761) -- deterministic, no coinflip.
@@ -2161,7 +2161,7 @@ namespace GalaxyEggbert::CNA
                 const float deathY = blupi_.GetY();
                 const float deathZ = blupi_.GetZ();
                 // Real m_blupiRestart=true at this site (Decor.cpp:5500).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8,
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear3, true);
                 // Real Clear3 ascend (plan.md `158` death-VFX follow-up,
                 // Decor.cpp:5497-5499) -- deterministic, no coinflip.
@@ -2187,8 +2187,8 @@ namespace GalaxyEggbert::CNA
             if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
             {
-                // Real BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51,
+                // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510).
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Glu, true);
             }
 
@@ -2196,14 +2196,14 @@ namespace GalaxyEggbert::CNA
             // confirmed 2026-07-14 via direct Decor.cpp read -- despite the
             // "drip"/glue-sounding name, real behavior is a deterministic
             // kill, mechanically identical to Spike above: same
-            // BlupiAction::Glu death, same gate shape, same real channel 51
+            // GalaxyEggbert::Def::BlupiAction::Glu death, same gate shape, same real channel 51
             // sound (Decor.cpp:5513-5519), same real Over/Jeep/Tank vehicle
             // immunity (fixed 2026-07-16, same as Spike above).
             if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
             {
-                // Real BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel51,
+                // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Glu, true);
             }
 
@@ -2227,8 +2227,8 @@ namespace GalaxyEggbert::CNA
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
                 GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
             {
-                // Real BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel8,
+                // Real GalaxyEggbert::Def::BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear1, true);
             }
 
@@ -2247,7 +2247,7 @@ namespace GalaxyEggbert::CNA
                 GEWorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
                 blupi_.TriggerCrush())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel70);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel70);
             }
 
             // Saw hazard (plan.md E3D-MIG-142) -- real channel 75 (the
@@ -2277,7 +2277,7 @@ namespace GalaxyEggbert::CNA
                 // death-VFX follow-up, Decor.cpp:5521-5524/6608-6613), so
                 // triggerDeath() must NOT also play it here. Real
                 // m_blupiRestart=true at this site (Decor.cpp:5526).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel75,
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel75,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear4, true, false);
                 interaction_.SpawnSawDeathBurst(worldRuntime_, deathX, deathY, deathZ, sound_);
             }
@@ -2299,17 +2299,17 @@ namespace GalaxyEggbert::CNA
             // applies on the same contact, real source does not treat
             // these as mutually exclusive.
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
-                blupi_.IsInVehicle() && blupi_.GetSecretPower() != GEBlupiController::SecretPower::Shield &&
-                blupi_.GetSecretPower() != GEBlupiController::SecretPower::Hide)
+                blupi_.IsInVehicle() && blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Shield &&
+                blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide)
             {
                 DismountAndDepositVehicle();
                 cameraShake_.Trigger(CameraShakeType::Small);
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel10);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
             }
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
                 blupi_.TriggerSpringBounce(jumpPressed))
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
             }
 
             // Real Mockery/Mockeryi/Mockeryp (plan.md BLUPI-067, found
@@ -2344,17 +2344,17 @@ namespace GalaxyEggbert::CNA
                         continue;
                     }
                     const bool qualifies =
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType2 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType4 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType16 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType20 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType23 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType32 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType33 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType44 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType54 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType96 ||
-                        obj.type == GalaxyEggbert::ObjectType::ObjectType97;
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType16 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType20 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType44 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 ||
+                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97;
                     if (!qualifies)
                     {
                         continue;
@@ -2366,7 +2366,7 @@ namespace GalaxyEggbert::CNA
                         continue;
                     }
                     GEBlupiController::AnimState variant;
-                    if (obj.type == GalaxyEggbert::ObjectType::ObjectType54)
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
                     {
                         variant = GEBlupiController::AnimState::Mockeryp;
                     }
@@ -2377,7 +2377,7 @@ namespace GalaxyEggbert::CNA
                         const float dot = fwdX * dx + fwdZ * dz;
                         if (dot > 0.0f)
                         {
-                            if (obj.type == GalaxyEggbert::ObjectType::ObjectType2)
+                            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2)
                             {
                                 continue;
                             }
@@ -2395,8 +2395,8 @@ namespace GalaxyEggbert::CNA
                         // DIFFERENT channel (ch47) -- confirmed directly, not
                         // assumed from the other two.
                         sound_.Play(variant == GEBlupiController::AnimState::Mockeryp
-                                        ? GalaxyEggbert::SoundChannel::SoundChannel47
-                                        : GalaxyEggbert::SoundChannel::SoundChannel65);
+                                        ? GalaxyEggbert::Def::SoundChannel::SoundChannel47
+                                        : GalaxyEggbert::Def::SoundChannel::SoundChannel65);
                     }
                     break;
                 }
@@ -2445,7 +2445,7 @@ namespace GalaxyEggbert::CNA
                         const float dx = camera_.GetPosition().X - blupi_.GetX();
                         const float dz = camera_.GetPosition().Z - blupi_.GetZ();
                         blupi_.SetYaw(std::atan2(dx, -dz));
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel32);
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel32);
                     }
                     return;
                 }
@@ -2489,9 +2489,9 @@ namespace GalaxyEggbert::CNA
                  aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4) &&
                 blupi_.TriggerTeleport(aboveIcon))
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel71);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
                 // Real teleporter arc (plan.md VISUAL-010, ObjectType92,
-                // Decor.cpp:5606) -- despite ObjectType.hpp's own "charged
+                // Decor.cpp:5606) -- despite Def/ObjectType.hpp's own "charged
                 // attack" doc comment, this is the real, only spawn site.
                 interaction_.SpawnTeleportArc(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
@@ -2537,7 +2537,7 @@ namespace GalaxyEggbert::CNA
                 // Clear2. Real m_blupiRestart=false at this site (no
                 // `m_blupiRestart=true` anywhere near Decor.cpp:5458-5472).
                 const bool isClear2 = interaction_.RollClear2Coinflip();
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel10,
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel10,
                              isClear2 ? GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear2
                                       : GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear1,
                              false);
@@ -2581,25 +2581,25 @@ namespace GalaxyEggbert::CNA
             // whole swim-up-and-surface action).
             const bool wasDry = !wasSurf && !wasNage;
             const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
-            if (wasDry && !nowDry && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType14))
+            if (wasDry && !nowDry && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14))
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel23);
-                interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType14, blupi_.GetX(),
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel23);
+                interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14, blupi_.GetX(),
                                                blupi_.GetY(), blupi_.GetZ());
             }
             if (!wasDry && nowDry)
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel22);
-                if (jumpPressed && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType35))
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
+                if (jumpPressed && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35))
                 {
-                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel64);
-                    interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::ObjectType::ObjectType35, blupi_.GetX(),
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel64);
+                    interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35, blupi_.GetX(),
                                                    blupi_.GetY(), blupi_.GetZ());
                 }
             }
             if (wasNage && blupi_.IsSurf())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel25);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel25);
             }
             // Ambient rising bubbles while fully submerged (plan.md
             // PICKUP-079, ObjectType15/channel 24) -- real trigger
@@ -2612,12 +2612,12 @@ namespace GalaxyEggbert::CNA
                 const int animTick = worldRuntime_.GetAnimPhase();
                 if (animTick % 70 == 0 || animTick % 70 == 28)
                 {
-                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel24);
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel24);
                     interaction_.SpawnWaterBubble(worldRuntime_, worldRuntime_.GetWorld(), blupi_.GetX(), blupi_.GetY(),
                                                    blupi_.GetZ());
                 }
             }
-            // Drowning (real BlupiAction::Drown, channel 26 -- a dedicated
+            // Drowning (real GalaxyEggbert::Def::BlupiAction::Drown, channel 26 -- a dedicated
             // death sound distinct from every other cause's channel 8/51/75,
             // per 07-sounds.md's own note). Real Shield/Hide/SuperBlupi
             // immunity gates the death itself (plan.md E3D-MIG-170); the
@@ -2626,8 +2626,8 @@ namespace GalaxyEggbert::CNA
             // superBlupi isn't modeled.
             if (blupi_.JustDrowned() && !blupi_.IsInvincible())
             {
-                // Real BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).
-                triggerDeath(GalaxyEggbert::SoundChannel::SoundChannel26,
+                // Real GalaxyEggbert::Def::BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).
+                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel26,
                              GalaxyEggbert::CNA::GEBlupiController::DeathCause::Drown, true);
             }
 
@@ -2698,8 +2698,8 @@ namespace GalaxyEggbert::CNA
                     if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
                             blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
                     {
-                        sound_.Play(*turnedOn ? GalaxyEggbert::SoundChannel::SoundChannel77
-                                              : GalaxyEggbert::SoundChannel::SoundChannel76);
+                        sound_.Play(*turnedOn ? GalaxyEggbert::Def::SoundChannel::SoundChannel77
+                                              : GalaxyEggbert::Def::SoundChannel::SoundChannel76);
                         // Real Switch animation (plan.md BLUPI-073, found
                         // 2026-07-18) -- purely cosmetic on top of the
                         // switch already having activated above; a no-op if
@@ -2725,7 +2725,7 @@ namespace GalaxyEggbert::CNA
                 if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                                 blupi_.IsOnGround(), blupiCanUseHands))
                 {
-                    sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
                     // Real PutDynamite animation (plan.md BLUPI-076, found
                     // 2026-07-18) -- same "cosmetic on top of an action
                     // that already happened" shape as Switch above.
@@ -2751,7 +2751,7 @@ namespace GalaxyEggbert::CNA
                                                blupi_.IsOnGround(), blupiCanUseHands) &&
                         interaction_.PersoCount() < persoBefore)
                     {
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel61);
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
                     }
                     ResolvePendingVoyage();
                 }
@@ -2834,9 +2834,9 @@ namespace GalaxyEggbert::CNA
             // own comments), computed here from GetSecretPower() since
             // GEInteractionSystem has no access to GEBlupiController.
             const auto secretPower = blupi_.GetSecretPower();
-            const bool canGrantShield = secretPower != GEBlupiController::SecretPower::Shield &&
-                                        secretPower != GEBlupiController::SecretPower::Hide &&
-                                        secretPower != GEBlupiController::SecretPower::Power;
+            const bool canGrantShield = secretPower != GalaxyEggbert::Def::SecretPower::Shield &&
+                                        secretPower != GalaxyEggbert::Def::SecretPower::Hide &&
+                                        secretPower != GalaxyEggbert::Def::SecretPower::Power;
             // Real Sucette(26)/Drink(30)/Charge(31) gates also exclude every
             // vehicle mount plus Balloon/Ecrase (Decor.cpp:6025-6087:
             // !m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate) -- Shield
@@ -2845,19 +2845,19 @@ namespace GalaxyEggbert::CNA
             // canGrantShield/canGrantInvert deliberately don't get this.
             const bool blupiVehicleOrSquashed = blupi_.GetVehicleMode() != GEBlupiController::VehicleMode::None ||
                                                  blupi_.IsBallooned() || blupi_.IsEcrased();
-            const bool canGrantPower = secretPower != GEBlupiController::SecretPower::Shield &&
+            const bool canGrantPower = secretPower != GalaxyEggbert::Def::SecretPower::Shield &&
                                         !blupiVehicleOrSquashed;
-            const bool canGrantCloud = secretPower == GEBlupiController::SecretPower::None &&
+            const bool canGrantCloud = secretPower == GalaxyEggbert::Def::SecretPower::None &&
                                         !blupiVehicleOrSquashed;
-            const bool canGrantHide = secretPower != GEBlupiController::SecretPower::Shield &&
-                                       secretPower != GEBlupiController::SecretPower::Cloud &&
+            const bool canGrantHide = secretPower != GalaxyEggbert::Def::SecretPower::Shield &&
+                                       secretPower != GalaxyEggbert::Def::SecretPower::Cloud &&
                                        !blupiVehicleOrSquashed;
             // Invert/Mirror (plan.md PICKUP-011) -- mirrors
             // GEBlupiController::TriggerInvert()'s own gate exactly (not
             // already Invert, not Hide); independent of the 4 powers above.
-            const bool canGrantInvert = !blupi_.IsInverted() && secretPower != GEBlupiController::SecretPower::Hide;
+            const bool canGrantInvert = !blupi_.IsInverted() && secretPower != GalaxyEggbert::Def::SecretPower::Hide;
             // Real Tank "Fire" (2026-07-13, plan.md BULLET-001) -- a
-            // dedicated key (real `KeyPressFlags::Fire`), NOT the Action
+            // dedicated key (real `GalaxyEggbert::Def::KeyPressFlags::Fire`), NOT the Action
             // button used for dynamite/Perso/switches/vehicle mount above.
             // "F" is this engine's own keyboard pick (no real keyboard
             // binding exists to match -- WP7 touch-only). Level state, not
@@ -2873,8 +2873,8 @@ namespace GalaxyEggbert::CNA
             const int gameOverCountBeforeUpdate = interaction_.GameOverCount();
             // Real BlupiElectro aura (plan.md `068`) -- active whenever
             // Cloud is the current secret power (this engine's own
-            // SecretPower::Cloud, matching the real Power-Charge pickup).
-            const bool cloudActive = secretPower == GEBlupiController::SecretPower::Cloud;
+            // GalaxyEggbert::Def::SecretPower::Cloud, matching the real Power-Charge pickup).
+            const bool cloudActive = secretPower == GalaxyEggbert::Def::SecretPower::Cloud;
 
             // Ghost mode (plan.md BLUPI-111) real "no interactions"
             // behavior: real `MoveObjectDetect()` (the shared query nearly
@@ -2935,8 +2935,8 @@ namespace GalaxyEggbert::CNA
             // called unconditionally every frame; TickMagicTrail() itself
             // is the gate (a no-op unless Shield or Power is active).
             interaction_.TickMagicTrail(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                        secretPower == GEBlupiController::SecretPower::Shield,
-                                        secretPower == GEBlupiController::SecretPower::Power);
+                                        secretPower == GalaxyEggbert::Def::SecretPower::Shield,
+                                        secretPower == GalaxyEggbert::Def::SecretPower::Power);
 
             // Real camera shake (plan.md CAM-008/009) -- generic-hazard
             // contact-kill (most types SmallShake, fish/bird BigShake) and
@@ -2962,7 +2962,7 @@ namespace GalaxyEggbert::CNA
             }
 
             // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`
-            // stop on leaving `BlupiAction::Push`) -- ch38, not "electric arc (long)" as
+            // stop on leaving `GalaxyEggbert::Def::BlupiAction::Push`) -- ch38, not "electric arc (long)" as
             // plan.md's own SOUND-048 entry claimed. `CrateBeingPushedThisFrame()` is a plain
             // per-frame fact (true only while a push is actually moving a crate this frame, no
             // memory of its own); comparing it against the previous frame's value here is what
@@ -2971,11 +2971,11 @@ namespace GalaxyEggbert::CNA
             const bool isPushingCrate = interaction_.CrateBeingPushedThisFrame();
             if (isPushingCrate && !wasPushingCrate_)
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel38, /*loop=*/true);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel38, /*loop=*/true);
             }
             else if (!isPushingCrate && wasPushingCrate_)
             {
-                sound_.Stop(GalaxyEggbert::SoundChannel::SoundChannel38);
+                sound_.Stop(GalaxyEggbert::Def::SoundChannel::SoundChannel38);
             }
             wasPushingCrate_ = isPushingCrate;
 
@@ -3006,7 +3006,7 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetHasProgress(true);
                     saveData_.Save();
                 }
-                SetPhase(GalaxyEggbert::GamePhase::Lost);
+                SetPhase(GalaxyEggbert::Def::GamePhase::Lost);
             }
             else if (interaction_.ExitReached())
             {
@@ -3017,7 +3017,7 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetHasProgress(true);
                     saveData_.Save();
                 }
-                SetPhase(GalaxyEggbert::GamePhase::Win);
+                SetPhase(GalaxyEggbert::Def::GamePhase::Win);
             }
 
             // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()
@@ -3040,7 +3040,7 @@ namespace GalaxyEggbert::CNA
             // complete handling (plan.md `173`, 2026-07-14).
             if (FindInteractionEvent(GEInteractionSystem::EventKind::ShieldGranted) && blupi_.TriggerShield())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel42);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel42);
                 // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent,
                 // Decor.cpp:6022) -- the magic trail's first marker only
                 // appears after a further real 40px of movement from here.
@@ -3055,13 +3055,13 @@ namespace GalaxyEggbert::CNA
             // buff either.
             if (FindInteractionEvent(GEInteractionSystem::EventKind::InvertGranted) && blupi_.TriggerInvert())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel66);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel66);
                 interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                                /*isGrant=*/true);
             }
             if (blupi_.JustExpiredInvert())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel67);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel67);
                 interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                                /*isGrant=*/false);
             }
@@ -3074,17 +3074,17 @@ namespace GalaxyEggbert::CNA
             {
                 switch (blupi_.GetSecretPower())
                 {
-                    case GEBlupiController::SecretPower::Shield:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel43);
+                    case GalaxyEggbert::Def::SecretPower::Shield:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel43);
                         break;
-                    case GEBlupiController::SecretPower::Power:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel45);
+                    case GalaxyEggbert::Def::SecretPower::Power:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel45);
                         break;
-                    case GEBlupiController::SecretPower::Cloud:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel56);
+                    case GalaxyEggbert::Def::SecretPower::Cloud:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel56);
                         break;
-                    case GEBlupiController::SecretPower::Hide:
-                        sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel63);
+                    case GalaxyEggbert::Def::SecretPower::Hide:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel63);
                         break;
                     default:
                         break;
@@ -3108,7 +3108,7 @@ namespace GalaxyEggbert::CNA
             // balloon entry, not a separate electric-field-tile hazard.
             if (FindInteractionEvent(GEInteractionSystem::EventKind::BalloonTouched) && blupi_.TriggerBalloon())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel40);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel40);
                 cameraShake_.Trigger(CameraShakeType::Electric);
             }
             if (FindInteractionEvent(GEInteractionSystem::EventKind::BalloonPopped))
@@ -3123,7 +3123,7 @@ namespace GalaxyEggbert::CNA
             // either cause.
             if (wasBallooned && !blupi_.IsBallooned())
             {
-                sound_.Play(GalaxyEggbert::SoundChannel::SoundChannel41);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
             }
 
             // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
@@ -3298,7 +3298,7 @@ namespace GalaxyEggbert::CNA
             // target, preserving look direction) along world X/height,
             // using the same 64px-per-world-unit conversion already used
             // throughout this engine's own tile/atlas math.
-            if (phase_ == GalaxyEggbert::GamePhase::Play)
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
                 cameraShake_.Update(dt);
             }
@@ -3387,8 +3387,8 @@ namespace GalaxyEggbert::CNA
         // no world is loaded yet while browsing -- so it's skipped too;
         // once a world is actually being edited, IsBrowsing() is false and
         // this block draws it same as any other phase.
-        if (phase_ != GalaxyEggbert::GamePhase::Wait && phase_ != GalaxyEggbert::GamePhase::Init &&
-            !(phase_ == GalaxyEggbert::GamePhase::Editor && worldEditor_.IsBrowsing()))
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Wait && phase_ != GalaxyEggbert::Def::GamePhase::Init &&
+            !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing()))
         {
         // Real background image backdrop (NEXT.md §3, 2026-07-09) -- one
         // huge camera-facing billboard quad placed far behind the scene
@@ -4007,15 +4007,15 @@ namespace GalaxyEggbert::CNA
             // character/buttons below -- fully hiding the normal HUD
             // outside Play via a dedicated draw call instead of a generic
             // text message.
-            const bool phaseHasRealScreen = phase_ == GalaxyEggbert::GamePhase::Pause ||
-                                             phase_ == GalaxyEggbert::GamePhase::Win ||
-                                             phase_ == GalaxyEggbert::GamePhase::Lost ||
-                                             phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
-                                             phase_ == GalaxyEggbert::GamePhase::MainSetup ||
-                                             phase_ == GalaxyEggbert::GamePhase::Resume ||
-                                             phase_ == GalaxyEggbert::GamePhase::Wait ||
-                                             phase_ == GalaxyEggbert::GamePhase::Init ||
-                                             phase_ == GalaxyEggbert::GamePhase::Editor;
+            const bool phaseHasRealScreen = phase_ == GalaxyEggbert::Def::GamePhase::Pause ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::Win ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::Lost ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::MainSetup ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::Resume ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::Wait ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::Init ||
+                                             phase_ == GalaxyEggbert::Def::GamePhase::Editor;
             if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
@@ -4039,7 +4039,7 @@ namespace GalaxyEggbert::CNA
                           interaction_.TreasuresCollected(), interaction_.TotalTreasures(), showTreasureCounter,
                           interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
                           blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
-                          blupi_.GetSecretPower() != GEBlupiController::SecretPower::None,
+                          blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::None,
                           blupi_.GetSecretPowerLevel(),
                           trainingHint,
                           PhaseOverlayMessage(),
@@ -4057,7 +4057,7 @@ namespace GalaxyEggbert::CNA
             // character animation/Return button) while won/lost, or the
             // real D-pad/Jump/Action/Pause overlay on top of the live 3D
             // scene + HUD while playing.
-            if (phase_ == GalaxyEggbert::GamePhase::Pause)
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
                 const int mission = worldRuntime_.GetMissionNumber();
                 const bool showBack = mission != 1;
@@ -4066,40 +4066,40 @@ namespace GalaxyEggbert::CNA
                     device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
                     phaseTimeSeconds_, fadeOutPhase_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Win || phase_ == GalaxyEggbert::GamePhase::Lost)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Win || phase_ == GalaxyEggbert::Def::GamePhase::Lost)
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                     phase_ == GalaxyEggbert::GamePhase::Win, phaseTimeSeconds_);
+                                     phase_ == GalaxyEggbert::Def::GamePhase::Win, phaseTimeSeconds_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::PlaySetup ||
-                     phase_ == GalaxyEggbert::GamePhase::MainSetup)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||
+                     phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
             {
                 inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                    sound_.IsEnabled(), phase_ == GalaxyEggbert::GamePhase::MainSetup,
+                                    sound_.IsEnabled(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), phaseTimeSeconds_, fadeOutPhase_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Resume)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {
                 inputPad_.DrawResume(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phaseTimeSeconds_, fadeOutPhase_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Wait)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Wait)
             {
                 inputPad_.DrawWait(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                    phaseTimeSeconds_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Init)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                    phaseTimeSeconds_, saveData_.GetSelectedGamer(),
                                    saveData_.GetLivesForGamer(0), saveData_.GetLivesForGamer(1),
                                    saveData_.GetLivesForGamer(2), fadeOutPhase_);
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Play)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
                 inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }
-            else if (phase_ == GalaxyEggbert::GamePhase::Editor)
+            else if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {
                 if (worldEditor_.IsBrowsing())
                 {
@@ -4118,7 +4118,7 @@ namespace GalaxyEggbert::CNA
             // background swap and no phase change, so this draws LAST,
             // on top of the just-drawn Play controls above (only ever
             // shown during Play, see Update()'s own gating).
-            if (cheatMenuShown_ && phase_ == GalaxyEggbert::GamePhase::Play)
+            if (cheatMenuShown_ && phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
                 inputPad_.DrawCheatMenu(device, viewport.getWidthProperty(), viewport.getHeightProperty());
             }

@@ -618,9 +618,9 @@ namespace GalaxyEggbert::CNA
     }
 
     GEInputPad::CharacterAnim GEInputPad::ComputePauseResumeCharacterAnim(
-        float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase) const
+        float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase) const
     {
-        using GalaxyEggbert::GamePhase;
+        using GalaxyEggbert::Def::GamePhase;
 
         CharacterAnim anim{};
         anim.centerX = kCharacterCenterX;
@@ -630,7 +630,7 @@ namespace GalaxyEggbert::CNA
         const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
         const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
 
-        if (fadeOutPhase == GamePhase::None)
+        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
             // Real entrance flourish (NOT part of the generic commit
             // fade): grow from a point + decelerating 360 degree spin
@@ -640,7 +640,7 @@ namespace GalaxyEggbert::CNA
             anim.halfH = (charH * 0.5f) * t;
             anim.rotationDegrees = (1.0f - t) * (1.0f - t) * 360.0f;
         }
-        else if (fadeOutPhase == GamePhase::Play)
+        else if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::Play)
         {
             // Real exit-to-Play: blow up to 11x native size while
             // linearly fading out, no rotation (same idiom as Init->Play).
@@ -651,7 +651,7 @@ namespace GalaxyEggbert::CNA
             anim.rotationDegrees = 0.0f;
             anim.opacity = 1.0f - t;
         }
-        else if (fadeOutPhase == GamePhase::PlaySetup)
+        else if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::PlaySetup)
         {
             // Real exit-to-PlaySetup (Pause only): fixed native size/
             // opacity, slides horizontally off to the right, quadratic
@@ -898,7 +898,7 @@ namespace GalaxyEggbert::CNA
 
     void GEInputPad::DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                               int viewportW, int viewportH, bool showBack, bool showRestart,
-                              float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase)
+                              float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -946,7 +946,7 @@ namespace GalaxyEggbert::CNA
         // active (`fadeOutPhase != None`), confirmed via research -- NOT
         // during the entrance flourish (`fadeOutPhase == None` covers
         // both a fresh entry and the settled idle state).
-        if (fadeOutPhase == GalaxyEggbert::GamePhase::None)
+        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
             // Real button labels (confirmed 2026-07-13 against `Game1::
             // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
@@ -1184,7 +1184,7 @@ namespace GalaxyEggbert::CNA
 
     void GEInputPad::DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                               int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer,
-                              float phaseTimeSeconds, GalaxyEggbert::GamePhase fadeOutPhase)
+                              float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1213,7 +1213,7 @@ namespace GalaxyEggbert::CNA
         // (plan.md MENU-088/089, MENU-059/060) -- see
         // ComputeSetupFadeAnim()'s own comment for the exact real formula,
         // shared verbatim by entry and exit (num/num2 inverted on exit).
-        const bool exiting = fadeOutPhase != GalaxyEggbert::GamePhase::None;
+        const bool exiting = fadeOutPhase != GalaxyEggbert::Def::GamePhase::None;
         const auto anim = ComputeSetupFadeAnim(phaseTimeSeconds, exiting);
 
         Quad speedyQuad;
@@ -1349,7 +1349,7 @@ namespace GalaxyEggbert::CNA
 
     void GEInputPad::DrawResume(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                int viewportW, int viewportH, float phaseTimeSeconds,
-                               GalaxyEggbert::GamePhase fadeOutPhase)
+                               GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1396,7 +1396,7 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
 
-        if (fadeOutPhase == GalaxyEggbert::GamePhase::None)
+        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
             const auto appendButton = [&](const Rect& r, int icon, int controlId)
             {
@@ -1735,7 +1735,7 @@ namespace GalaxyEggbert::CNA
 
     void GEInputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, float phaseTimeSeconds, int selectedGamer, int livesA, int livesB,
-                             int livesC, GalaxyEggbert::GamePhase fadeOutPhase)
+                             int livesC, GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1766,8 +1766,8 @@ namespace GalaxyEggbert::CNA
         float titleOpacity = 1.0f;
         float charHalfW, charHalfH, charOpacity, charRotation = 0.0f;
 
-        using GalaxyEggbert::GamePhase;
-        if (fadeOutPhase == GamePhase::None)
+        using GalaxyEggbert::Def::GamePhase;
+        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
             // Real title-logo entry: vertical ease-out slide-down from
             // above the screen, Left/Right fixed.
@@ -1782,7 +1782,7 @@ namespace GalaxyEggbert::CNA
             charHalfW = (charW * 0.5f) * charNum;
             charHalfH = (charH * 0.5f) * charNum;
         }
-        else if (fadeOutPhase == GamePhase::Play)
+        else if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::Play)
         {
             // Real exit-to-Play: title reverses at 2x speed (already
             // off-screen again by 0.5s, keeps going); blupiyoupie blows up
@@ -1844,7 +1844,7 @@ namespace GalaxyEggbert::CNA
         std::vector<Quad> panelQuads;
 
         // Real: buttons are hidden entirely while an exit fade is active.
-        if (fadeOutPhase == GamePhase::None)
+        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
             const auto appendIconQuad = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
             {

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Identifies which sprite sheet (texture atlas) to use for a draw call.
 // Values mirror the CH* constants from the original game. Gaps at 7 and 8 are unused.
@@ -29,4 +29,4 @@ enum class SpriteChannel : uint8_t
 constexpr uint8_t     ToRaw(SpriteChannel c)       { return static_cast<uint8_t>(c); }
 constexpr SpriteChannel ToSpriteChannel(int v)     { return static_cast<SpriteChannel>(static_cast<uint8_t>(v)); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

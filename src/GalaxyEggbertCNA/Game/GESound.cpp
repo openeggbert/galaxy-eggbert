@@ -65,7 +65,7 @@ namespace GalaxyEggbert::CNA
         return count;
     }
 
-    void GESound::Play(GalaxyEggbert::SoundChannel channel, bool loop)
+    void GESound::Play(GalaxyEggbert::Def::SoundChannel channel, bool loop)
     {
         using Microsoft::Xna::Framework::Audio::SoundEffectInstance;
         using Microsoft::Xna::Framework::Audio::SoundState;
@@ -74,7 +74,7 @@ namespace GalaxyEggbert::CNA
         {
             return;
         }
-        const int idx = static_cast<int>(GalaxyEggbert::ToRaw(channel));
+        const int idx = static_cast<int>(GalaxyEggbert::Def::ToRaw(channel));
         if (idx < 0 || idx >= kNumChannels)
         {
             return;
@@ -87,7 +87,7 @@ namespace GalaxyEggbert::CNA
 
         // Channel 10 always restarts; every other channel doesn't interrupt
         // itself if already playing, matching mobile-eggbert Sound.cpp.
-        if (channel != GalaxyEggbert::SoundChannel::SoundChannel10 && !loop &&
+        if (channel != GalaxyEggbert::Def::SoundChannel::SoundChannel10 && !loop &&
             ch.instance && ch.instance->getStateProperty() == SoundState::Playing)
         {
             return;
@@ -122,9 +122,9 @@ namespace GalaxyEggbert::CNA
         ch.instance->Play();
     }
 
-    void GESound::Stop(GalaxyEggbert::SoundChannel channel)
+    void GESound::Stop(GalaxyEggbert::Def::SoundChannel channel)
     {
-        const int idx = static_cast<int>(GalaxyEggbert::ToRaw(channel));
+        const int idx = static_cast<int>(GalaxyEggbert::Def::ToRaw(channel));
         if (idx < 0 || idx >= kNumChannels)
         {
             return;
@@ -147,40 +147,40 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    GalaxyEggbert::SoundChannel GESound::FootstepChannelFor(std::uint16_t icon) noexcept
+    GalaxyEggbert::Def::SoundChannel GESound::FootstepChannelFor(std::uint16_t icon) noexcept
     {
-        using GalaxyEggbert::SoundChannel;
+        using GalaxyEggbert::Def::SoundChannel;
         if (icon == 32 || icon == 33 || icon == 34 ||
             (icon >= 41 && icon <= 47) || (icon >= 139 && icon <= 143))
         {
-            return SoundChannel::SoundChannel78;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel78;
         }
         if ((icon >= 1 && icon <= 28) || (icon >= 78 && icon <= 90) ||
             (icon >= 250 && icon <= 260) || (icon >= 311 && icon <= 316) ||
             (icon >= 324 && icon <= 329))
         {
-            return SoundChannel::SoundChannel80;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel80;
         }
         if ((icon >= 284 && icon <= 303) || icon == 338)
         {
-            return SoundChannel::SoundChannel82;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel82;
         }
         if (icon >= 341 && icon <= 363)
         {
-            return SoundChannel::SoundChannel84;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel84;
         }
         if (icon >= 215 && icon <= 234)
         {
-            return SoundChannel::SoundChannel86;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel86;
         }
         if (icon >= 246 && icon <= 249)
         {
-            return SoundChannel::SoundChannel88;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel88;
         }
         if (icon >= 107 && icon <= 109)
         {
-            return SoundChannel::SoundChannel90;
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel90;
         }
-        return SoundChannel::SoundChannel3;
+        return GalaxyEggbert::Def::SoundChannel::SoundChannel3;
     }
 }

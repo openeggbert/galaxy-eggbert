@@ -80,7 +80,7 @@ int main(int argc, char** argv)
     {
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType1 &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
                 (obj.posStartX != obj.posEndX || obj.posStartY != obj.posEndY ||
                  obj.posStartZ != obj.posEndZ))
             {
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     // the treasure/egg/key placed in the sample world and confirm the
     // interaction system collects it (counter increments, object goes
     // inactive) exactly once, not on every subsequent frame.
-    const auto findFirst = [&world](ObjectType type) -> const MobileObjSpec*
+    const auto findFirst = [&world](GalaxyEggbert::Def::ObjectType type) -> const MobileObjSpec*
     {
         for (const auto& obj : world.GetMobileObjects())
         {
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
         }
     };
 
-    if (const auto* egg = findFirst(ObjectType::ObjectType6))
+    if (const auto* egg = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType6))
     {
         const float ex = egg->currentX, ey = egg->currentY, ez = egg->currentZ;
         // Real reward is deferred to voyage completion (plan.md `158`) --
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
             interaction.Update(dt, world, ex, ey, ez, 0.0f, sound);
         }
         check(interaction.LifeEggCount() == 1, "egg collected exactly once (LifeEggCount == 1)");
-        const auto* after = findFirst(ObjectType::ObjectType6);
+        const auto* after = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType6);
         check(after == nullptr || !after->active, "collected egg is no longer active (stops rendering)");
         check(interaction.Lives() == 4, "egg pickup granted a life (Lives() == 4, started at 3)");
 
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
         for (int i = 0; i < 9; ++i) // already at 1 above -- 9 more reaches the real cap of 10
         {
             MobileObjSpec freshEgg;
-            freshEgg.type = ObjectType::ObjectType6;
+            freshEgg.type = GalaxyEggbert::Def::ObjectType::ObjectType6;
             freshEgg.active = true;
             freshEgg.currentX = freshEgg.posStartX = freshEgg.posEndX = kEggCapTestX;
             freshEgg.currentY = freshEgg.posStartY = freshEgg.posEndY = kEggCapTestY;
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
         // removed (real gate is on the WHOLE touch-time block,
         // Decor.cpp:6007, not just the reward).
         MobileObjSpec eggAtCap;
-        eggAtCap.type = ObjectType::ObjectType6;
+        eggAtCap.type = GalaxyEggbert::Def::ObjectType::ObjectType6;
         eggAtCap.active = true;
         eggAtCap.currentX = eggAtCap.posStartX = eggAtCap.posEndX = kEggCapTestX;
         eggAtCap.currentY = eggAtCap.posStartY = eggAtCap.posEndY = kEggCapTestY;
@@ -295,7 +295,7 @@ int main(int argc, char** argv)
         bool cappedEggStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType6 && obj.active &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType6 && obj.active &&
                 std::fabs(obj.currentX - kEggCapTestX) < 0.01f && std::fabs(obj.currentZ - kEggCapTestZ) < 0.01f)
             {
                 cappedEggStillActive = true;
@@ -330,7 +330,7 @@ int main(int argc, char** argv)
         check(interaction.GameOverCount() == 1, "GameOverCount() increments exactly once on game-over");
     }
 
-    if (const auto* chest = findFirst(ObjectType::ObjectType5))
+    if (const auto* chest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))
     {
         const float cx = chest->currentX, cy = chest->currentY, cz = chest->currentZ;
         // Real reward deferred to voyage completion (plan.md `158`) -- see
@@ -354,7 +354,7 @@ int main(int argc, char** argv)
     // (fixed 2026-07-14 -- was wrongly an instant static burst before) and
     // self-deleting at phase>=11, confirmed via direct Decor.cpp source
     // read.
-    if (const auto* sparkleChest = findFirst(ObjectType::ObjectType5))
+    if (const auto* sparkleChest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))
     {
         GEWorldRuntime sparkleWorld;
         check(sparkleWorld.LoadFromVwrFile(worldPath), "loaded a fresh world for the sparkle-burst test");
@@ -367,7 +367,7 @@ int main(int argc, char** argv)
         // unaffected by the in-flight slide) to the chest, not a global
         // ObjectType39 count -- the sample world's own object-type
         // exhibition already places one static specimen of every
-        // ObjectType (including 39) elsewhere in the map, so a blind
+        // GalaxyEggbert::Def::ObjectType (including 39) elsewhere in the map, so a blind
         // global count is always off by one (same false-positive shape as
         // the bridge-construction test above).
         const auto countNearbySparkles = [&sparkleWorld, cx, cy, cz, kDist]()
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
             int count = 0;
             for (const auto& obj : sparkleWorld.GetMobileObjects())
             {
-                if (!obj.active || obj.type != ObjectType::ObjectType39)
+                if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType39)
                 {
                     continue;
                 }
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
               "collecting a treasure spawns exactly 4 ObjectType39 sparkle instances with a real 500px/64 posEnd");
         for (const auto& obj : sparkleWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType39 &&
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType39 &&
                 std::fabs(std::sqrt((obj.posEndX - cx) * (obj.posEndX - cx) + (obj.posEndY - cy) * (obj.posEndY - cy) +
                                      (obj.posEndZ - cz) * (obj.posEndZ - cz)) -
                           kDist) < 0.01f)
@@ -418,9 +418,9 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formula (plan.md VISUAL-012, fixed
         // 2026-07-14 -- real table_tresortrack oscillates, was wrongly
         // ascending arithmetic before).
-        check(GetObjIcon(ObjectType::ObjectType39, 0) == 166, "ObjectType39 icon at phase=0 is the real table_tresortrack[0]=166");
-        check(GetObjIcon(ObjectType::ObjectType39, 5) == 161, "ObjectType39 icon at phase=5 is the real table_tresortrack[5]=161 (the shimmer's low point)");
-        check(GetObjIcon(ObjectType::ObjectType39, 10) == 166, "ObjectType39 icon at phase=10 is the real table_tresortrack[10]=166 (back to the start)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType39, 0) == 166, "ObjectType39 icon at phase=0 is the real table_tresortrack[0]=166");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType39, 5) == 161, "ObjectType39 icon at phase=5 is the real table_tresortrack[5]=161 (the shimmer's low point)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType39, 10) == 166, "ObjectType39 icon at phase=10 is the real table_tresortrack[10]=166 (back to the start)");
     }
     else
     {
@@ -508,7 +508,7 @@ int main(int argc, char** argv)
         check(GetBlupitIcon(true, 1, 24) == GetBlupitIcon(true, 1, 0), "blupit turn icon wraps around after the real 24-frame table length");
     }
 
-    if (const auto* key = findFirst(ObjectType::ObjectType49))
+    if (const auto* key = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType49))
     {
         const float kx = key->currentX, ky = key->currentY, kz = key->currentZ;
         // Real reward deferred to voyage completion (plan.md `158`) -- see
@@ -530,7 +530,7 @@ int main(int argc, char** argv)
         int keySparkleCount = 0;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (!obj.active || obj.type != ObjectType::ObjectType39)
+            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType39)
             {
                 continue;
             }
@@ -552,7 +552,7 @@ int main(int argc, char** argv)
     // sample world places one at world (41,1,67) and one at (18,11,49);
     // walking onto either should kill Blupi (lives lost, hazard destroyed,
     // the Died event fires for that one Update() call only).
-    if (const auto* hazard = findFirst(ObjectType::ObjectType2))
+    if (const auto* hazard = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType2))
     {
         const float hx = hazard->currentX, hy = hazard->currentY, hz = hazard->currentZ;
         const int livesBeforeHazard = interaction.Lives();
@@ -568,7 +568,7 @@ int main(int argc, char** argv)
         int explosionFlashCount = 0;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType8 && obj.currentX == hx && obj.currentY == hy &&
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType8 && obj.currentX == hx && obj.currentY == hy &&
                 obj.currentZ == hz)
             {
                 ++explosionFlashCount;
@@ -586,7 +586,7 @@ int main(int argc, char** argv)
         bool hazardStillActiveAtSamePos = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType2 && obj.currentX == hx && obj.currentY == hy &&
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 && obj.currentX == hx && obj.currentY == hy &&
                 obj.currentZ == hz)
             {
                 hazardStillActiveAtSamePos = true;
@@ -613,7 +613,7 @@ int main(int argc, char** argv)
     // 3. Crate push (ObjectType12) -- position Blupi immediately west of a
     // crate and simulate walking east into it (a positive per-frame X
     // delta); the crate's currentX should increase.
-    if (const auto* crate = findFirst(ObjectType::ObjectType12))
+    if (const auto* crate = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12))
     {
         const float startX = crate->currentX;
         const float blupiZ = crate->currentZ;
@@ -626,7 +626,7 @@ int main(int argc, char** argv)
             sawCratePushSignal = sawCratePushSignal || interaction.CrateBeingPushedThisFrame();
             blupiX += moveDX;
         }
-        const auto* after = findFirst(ObjectType::ObjectType12);
+        const auto* after = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12);
         std::cout << "Crate X after push attempt: " << (after ? after->currentX : -999.0f)
                   << " (started at " << startX << ")" << std::endl;
         check(after != nullptr && after->currentX > startX, "crate was pushed east (currentX increased)");
@@ -648,7 +648,7 @@ int main(int argc, char** argv)
                                 /*blupiCanPushCrate=*/false);
             gatedBlupiX += moveDX;
         }
-        const auto* stillGated = findFirst(ObjectType::ObjectType12);
+        const auto* stillGated = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12);
         check(stillGated != nullptr && std::fabs(stillGated->currentX - gatedStartX) < 0.01f,
               "crate does NOT move when blupiCanPushCrate=false (real vehicle-mode gate)");
         check(!interaction.CrateBeingPushedThisFrame(),
@@ -669,7 +669,7 @@ int main(int argc, char** argv)
     {
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType12 && std::fabs(obj.posStartX - px) < 0.1f &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType12 && std::fabs(obj.posStartX - px) < 0.1f &&
                 std::fabs(obj.posStartY - py) < 0.1f && std::fabs(obj.posStartZ - pz) < 0.1f)
             {
                 return &obj;
@@ -721,7 +721,7 @@ int main(int argc, char** argv)
     // and the full 9-blast sequence against a synthetic target crate
     // pushed directly into the loaded world's mobile-object list (kept
     // isolated from the real sample world's own crates/position).
-    if (const auto* dynamite = findFirst(ObjectType::ObjectType55))
+    if (const auto* dynamite = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType55))
     {
         const float ddx = dynamite->currentX, ddy = dynamite->currentY, ddz = dynamite->currentZ;
         // Real reward deferred to voyage completion (plan.md `158`) -- see
@@ -752,7 +752,7 @@ int main(int argc, char** argv)
 
         auto& mutableObjects = world.GetMobileObjectsMutable();
         MobileObjSpec targetCrate;
-        targetCrate.type = ObjectType::ObjectType12;
+        targetCrate.type = GalaxyEggbert::Def::ObjectType::ObjectType12;
         targetCrate.active = true;
         targetCrate.currentX = targetCrate.posStartX = targetCrate.posEndX = placeX + 0.3f;
         targetCrate.currentY = targetCrate.posStartY = targetCrate.posEndY = placeY;
@@ -814,7 +814,7 @@ int main(int argc, char** argv)
             smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered);
             for (const auto& obj : world.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType8 &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType8 &&
                     std::fabs(obj.currentX - placeX) < 0.01f && std::fabs(obj.currentY - placeY) < 0.01f &&
                     std::fabs(obj.currentZ - placeZ) < 0.01f)
                 {
@@ -833,13 +833,13 @@ int main(int argc, char** argv)
         bool fuseStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType12 && obj.active &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType12 && obj.active &&
                 std::fabs(obj.currentX - targetCrate.currentX) < 0.01f &&
                 std::fabs(obj.currentZ - targetCrate.currentZ) < 0.01f)
             {
                 crateStillActive = true;
             }
-            if (obj.type == ObjectType::ObjectType56 && obj.active &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56 && obj.active &&
                 std::fabs(obj.currentX - placeX) < 0.01f && std::fabs(obj.currentZ - placeZ) < 0.01f)
             {
                 fuseStillActive = true;
@@ -861,7 +861,7 @@ int main(int argc, char** argv)
         constexpr float kSecondStickX = 250.0f, kSecondStickY = 1.0f, kSecondStickZ = 250.0f;
         {
             MobileObjSpec firstStick;
-            firstStick.type = ObjectType::ObjectType55;
+            firstStick.type = GalaxyEggbert::Def::ObjectType::ObjectType55;
             firstStick.active = true;
             firstStick.currentX = firstStick.posStartX = firstStick.posEndX = kSecondStickX;
             firstStick.currentY = firstStick.posStartY = firstStick.posEndY = kSecondStickY;
@@ -874,7 +874,7 @@ int main(int argc, char** argv)
 
         {
             MobileObjSpec secondStick;
-            secondStick.type = ObjectType::ObjectType55;
+            secondStick.type = GalaxyEggbert::Def::ObjectType::ObjectType55;
             secondStick.active = true;
             secondStick.currentX = secondStick.posStartX = secondStick.posEndX = kSecondStickX;
             secondStick.currentY = secondStick.posStartY = secondStick.posEndY = kSecondStickY;
@@ -896,7 +896,7 @@ int main(int argc, char** argv)
         bool secondStickStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType55 && obj.active &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType55 && obj.active &&
                 std::fabs(obj.currentX - kSecondStickX) < 0.01f && std::fabs(obj.currentZ - kSecondStickZ) < 0.01f)
             {
                 secondStickStillActive = true;
@@ -915,7 +915,7 @@ int main(int argc, char** argv)
     // a genuine no-op (object stays active, count unchanged) per
     // mobile-eggbert-reference/13-object-pickups.md.
     float fireTestX = 0.0f, fireTestY = 0.0f, fireTestZ = 0.0f;
-    if (const auto* bullets = findFirst(ObjectType::ObjectType29))
+    if (const auto* bullets = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType29))
     {
         const float bx = bullets->currentX, by = bullets->currentY, bz = bullets->currentZ;
         fireTestX = bx;
@@ -924,7 +924,7 @@ int main(int argc, char** argv)
         check(interaction.BulletCount() == 0, "BulletCount() starts at 0");
         interaction.Update(dt, world, bx, by, bz, 0.0f, sound);
         check(interaction.BulletCount() == 10, "bullet pack pickup tops BulletCount() up to 10");
-        const auto* after = findFirst(ObjectType::ObjectType29);
+        const auto* after = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType29);
         check(after == nullptr || !after->active, "collected bullet pack is no longer active");
 
         // Already at the cap: a second synthetic pack at the cap should be
@@ -933,7 +933,7 @@ int main(int argc, char** argv)
         // doesn't depend on the (now-collected) real one.
         auto& mutableObjects = world.GetMobileObjectsMutable();
         MobileObjSpec secondPack;
-        secondPack.type = ObjectType::ObjectType29;
+        secondPack.type = GalaxyEggbert::Def::ObjectType::ObjectType29;
         secondPack.active = true;
         secondPack.currentX = secondPack.posStartX = secondPack.posEndX = bx;
         secondPack.currentY = secondPack.posStartY = secondPack.posEndY = by;
@@ -963,7 +963,7 @@ int main(int argc, char** argv)
     {
         for (auto& obj : world.GetMobileObjectsMutable())
         {
-            if (obj.type == ObjectType::ObjectType29 && std::fabs(obj.currentX - fireTestX) < 0.01f &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType29 && std::fabs(obj.currentX - fireTestX) < 0.01f &&
                 std::fabs(obj.currentZ - fireTestZ) < 0.01f)
             {
                 obj.active = false;
@@ -1039,7 +1039,7 @@ int main(int argc, char** argv)
         GEWorldRuntime lethalDecorWorld;
         GEInteractionSystem lethalDecorInteraction;
         MobileObjSpec decor201;
-        decor201.type = ObjectType::ObjectType201;
+        decor201.type = GalaxyEggbert::Def::ObjectType::ObjectType201;
         decor201.posStartX = decor201.posEndX = decor201.currentX = 400.0f;
         decor201.posStartY = decor201.posEndY = decor201.currentY = 1.0f;
         decor201.posStartZ = decor201.posEndZ = decor201.currentZ = 400.0f;
@@ -1058,7 +1058,7 @@ int main(int argc, char** argv)
         check(hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::Died), "touching ObjectType201 kills Blupi (real BlupiDead(Clear1,Clear2))");
         const bool anyActive201 = std::any_of(lethalDecorWorld.GetMobileObjects().begin(),
                                                lethalDecorWorld.GetMobileObjects().end(),
-                                               [](const auto& o) { return o.active && o.type == ObjectType::ObjectType201; });
+                                               [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType201; });
         check(!anyActive201, "ObjectType201 is destroyed on lethal contact (real ObjectDelete) -- the destroyed "
                              "slot may be reused by the real ObjectType10 pop effect spawned the same frame");
         const auto* lethalDecorDeathLockEvent =
@@ -1083,14 +1083,14 @@ int main(int argc, char** argv)
         GEInteractionSystem trapInteraction;
 
         MobileObjSpec decoy;
-        decoy.type = ObjectType::ObjectType200;
+        decoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
         decoy.posStartX = decoy.posEndX = decoy.currentX = 500.0f;
         decoy.posStartY = decoy.posEndY = decoy.currentY = 1.0f;
         decoy.posStartZ = decoy.posEndZ = decoy.currentZ = 500.0f;
         trapWorld.GetMobileObjectsMutable().push_back(decoy);
 
         MobileObjSpec bulldozer;
-        bulldozer.type = ObjectType::ObjectType4;
+        bulldozer.type = GalaxyEggbert::Def::ObjectType::ObjectType4;
         bulldozer.posStartX = bulldozer.posEndX = bulldozer.currentX = 500.0f;
         bulldozer.posStartY = bulldozer.posEndY = bulldozer.currentY = 1.0f;
         bulldozer.posStartZ = bulldozer.posEndZ = bulldozer.currentZ = 500.0f;
@@ -1103,7 +1103,7 @@ int main(int argc, char** argv)
         const bool anyActiveDecoyOrEnemy =
             std::any_of(trapWorld.GetMobileObjects().begin(), trapWorld.GetMobileObjects().end(),
                         [](const auto& o) {
-                            return o.active && (o.type == ObjectType::ObjectType200 || o.type == ObjectType::ObjectType4);
+                            return o.active && (o.type == GalaxyEggbert::Def::ObjectType::ObjectType200 || o.type == GalaxyEggbert::Def::ObjectType::ObjectType4);
                         });
         check(!anyActiveDecoyOrEnemy, "both the decoy and the enemy are destroyed by the trap (real mutual ObjectDelete)");
 
@@ -1111,13 +1111,13 @@ int main(int argc, char** argv)
         GEWorldRuntime noTrapWorld;
         GEInteractionSystem noTrapInteraction;
         MobileObjSpec farDecoy;
-        farDecoy.type = ObjectType::ObjectType200;
+        farDecoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
         farDecoy.posStartX = farDecoy.posEndX = farDecoy.currentX = 500.0f;
         farDecoy.posStartY = farDecoy.posEndY = farDecoy.currentY = 1.0f;
         farDecoy.posStartZ = farDecoy.posEndZ = farDecoy.currentZ = 500.0f;
         noTrapWorld.GetMobileObjectsMutable().push_back(farDecoy);
         MobileObjSpec farBulldozer;
-        farBulldozer.type = ObjectType::ObjectType4;
+        farBulldozer.type = GalaxyEggbert::Def::ObjectType::ObjectType4;
         farBulldozer.posStartX = farBulldozer.posEndX = farBulldozer.currentX = 700.0f;
         farBulldozer.posStartY = farBulldozer.posEndY = farBulldozer.currentY = 1.0f;
         farBulldozer.posStartZ = farBulldozer.posEndZ = farBulldozer.currentZ = 700.0f;
@@ -1144,7 +1144,7 @@ int main(int argc, char** argv)
 
         auto& mutableObjects = world.GetMobileObjectsMutable();
         MobileObjSpec decoy;
-        decoy.type = ObjectType::ObjectType200;
+        decoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
         decoy.active = true;
         decoy.currentX = decoy.posStartX = decoy.posEndX = px;
         decoy.currentY = decoy.posStartY = decoy.posEndY = py;
@@ -1165,7 +1165,7 @@ int main(int argc, char** argv)
         bool foundNewDecoy = false;
         for (const auto& obj : mutableObjects)
         {
-            if (obj.active && obj.type == ObjectType::ObjectType200 && std::fabs(obj.currentX - px) < 0.01f)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType200 && std::fabs(obj.currentX - px) < 0.01f)
             {
                 foundNewDecoy = true;
             }
@@ -1194,7 +1194,7 @@ int main(int argc, char** argv)
         GEWorldRuntime secretExitWorld;
         GEInteractionSystem secretExitInteraction;
         MobileObjSpec secretExit;
-        secretExit.type = ObjectType::ObjectType21;
+        secretExit.type = GalaxyEggbert::Def::ObjectType::ObjectType21;
         secretExit.active = true;
         secretExit.posStartX = secretExit.posEndX = secretExit.currentX = 600.0f;
         secretExit.posStartY = secretExit.posEndY = secretExit.currentY = 1.0f;
@@ -1254,7 +1254,7 @@ int main(int argc, char** argv)
         std::vector<const MobileObjSpec*> freshChests;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType5 && obj.active)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType5 && obj.active)
             {
                 freshChests.push_back(&obj);
                 if (freshChests.size() == 2) break;
@@ -1286,7 +1286,7 @@ int main(int argc, char** argv)
     // demo (tools/GenerateSampleWorld3D.cpp): Shield stick at (54,1,88).
     // Fresh GEInteractionSystem so its own signals aren't polluted by
     // earlier sections.
-    if (const auto* shieldStick = findFirst(ObjectType::ObjectType25))
+    if (const auto* shieldStick = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType25))
     {
         GEInteractionSystem shieldInteraction;
         shieldInteraction.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
@@ -1309,7 +1309,7 @@ int main(int argc, char** argv)
 
     // 3.9b. Invert/Mirror (plan.md PICKUP-011) -- the sample world's own
     // demo (tools/GenerateSampleWorld3D.cpp): mirror/invert at (58,1,90).
-    if (const auto* invertPickup = findFirst(ObjectType::ObjectType40))
+    if (const auto* invertPickup = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType40))
     {
         GEInteractionSystem invertInteraction;
         invertInteraction.Update(dt, world, invertPickup->currentX, invertPickup->currentY,
@@ -1356,7 +1356,7 @@ int main(int argc, char** argv)
         int grantCount = 0;
         for (const auto& obj : burstWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType41)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType41)
             {
                 ++grantCount;
                 check(obj.currentX == bx && obj.currentY == by && obj.currentZ == bz,
@@ -1374,7 +1374,7 @@ int main(int argc, char** argv)
         int expiryCount = 0;
         for (const auto& obj : burstWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType42)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType42)
             {
                 ++expiryCount;
                 const float sdx = obj.currentX - bx, sdy = obj.currentY - by, sdz = obj.currentZ - bz;
@@ -1402,7 +1402,7 @@ int main(int argc, char** argv)
         int stillActiveAt15 = 0;
         for (const auto& obj : burstWorld.GetMobileObjects())
         {
-            if (obj.active && (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42))
+            if (obj.active && (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType41 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType42))
             {
                 ++stillActiveAt15;
             }
@@ -1414,7 +1414,7 @@ int main(int argc, char** argv)
         int stillActiveAt16 = 0;
         for (const auto& obj : burstWorld.GetMobileObjects())
         {
-            if (obj.active && (obj.type == ObjectType::ObjectType41 || obj.type == ObjectType::ObjectType42))
+            if (obj.active && (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType41 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType42))
             {
                 ++stillActiveAt16;
             }
@@ -1428,10 +1428,10 @@ int main(int argc, char** argv)
         // {186..179} (Tables.cpp:1498/1502, confirmed via direct source
         // read) -- checked at phase=0 (first frame) and phase=14 (last
         // frame before the real phase-16 self-delete, (14/2)%8==7).
-        check(GetObjIcon(ObjectType::ObjectType41, 0) == 179, "ObjectType41 icon at phase=0 is the real table_invertstart[0]=179");
-        check(GetObjIcon(ObjectType::ObjectType41, 14) == 186, "ObjectType41 icon at phase=14 is the real table_invertstart[7]=186");
-        check(GetObjIcon(ObjectType::ObjectType42, 0) == 186, "ObjectType42 icon at phase=0 is the real table_invertstop[0]=186");
-        check(GetObjIcon(ObjectType::ObjectType42, 14) == 179, "ObjectType42 icon at phase=14 is the real table_invertstop[7]=179 (descending, not ascending past 186)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType41, 0) == 179, "ObjectType41 icon at phase=0 is the real table_invertstart[0]=179");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType41, 14) == 186, "ObjectType41 icon at phase=14 is the real table_invertstart[7]=186");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType42, 0) == 186, "ObjectType42 icon at phase=0 is the real table_invertstop[0]=186");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType42, 14) == 179, "ObjectType42 icon at phase=14 is the real table_invertstop[7]=179 (descending, not ascending past 186)");
     }
 
     // Hazard immunity: a fresh interaction system touching a STILL-ACTIVE
@@ -1443,7 +1443,7 @@ int main(int argc, char** argv)
     const MobileObjSpec* hazard2 = nullptr;
     for (const auto& obj : world.GetMobileObjects())
     {
-        if (obj.type == ObjectType::ObjectType2 && obj.active)
+        if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 && obj.active)
         {
             hazard2 = &obj;
             break;
@@ -1528,7 +1528,7 @@ int main(int argc, char** argv)
     // level placement first.
     {
         MobileObjSpec spider;
-        spider.type = ObjectType::ObjectType16;
+        spider.type = GalaxyEggbert::Def::ObjectType::ObjectType16;
         spider.posStartX = spider.posEndX = spider.currentX = 5.0f;
         spider.posStartY = spider.posEndY = spider.currentY = 1.0f;
         spider.posStartZ = spider.posEndZ = spider.currentZ = 5.0f;
@@ -1557,7 +1557,7 @@ int main(int argc, char** argv)
         bool spiderStillActiveAtSamePos = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType16 && obj.currentX == 5.0f && obj.currentY == 1.0f &&
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType16 && obj.currentX == 5.0f && obj.currentY == 1.0f &&
                 obj.currentZ == 5.0f)
             {
                 spiderStillActiveAtSamePos = true;
@@ -1574,7 +1574,7 @@ int main(int argc, char** argv)
     // hazard type plays SmallShake).
     {
         MobileObjSpec fish;
-        fish.type = ObjectType::ObjectType17;
+        fish.type = GalaxyEggbert::Def::ObjectType::ObjectType17;
         fish.posStartX = fish.posEndX = fish.currentX = 6.0f;
         fish.posStartY = fish.posEndY = fish.currentY = 1.0f;
         fish.posStartZ = fish.posEndZ = fish.currentZ = 6.0f;
@@ -1591,7 +1591,7 @@ int main(int argc, char** argv)
         int fishFlashCount = 0;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType10 && obj.currentX == 6.0f && obj.currentY == 1.0f &&
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType10 && obj.currentX == 6.0f && obj.currentY == 1.0f &&
                 obj.currentZ == 6.0f)
             {
                 ++fishFlashCount;
@@ -1605,7 +1605,7 @@ int main(int argc, char** argv)
     // sample world either, so all 3 are injected directly.
     {
         MobileObjSpec wasp;
-        wasp.type = ObjectType::ObjectType44;
+        wasp.type = GalaxyEggbert::Def::ObjectType::ObjectType44;
         wasp.posStartX = wasp.posEndX = wasp.currentX = 10.0f;
         wasp.posStartY = wasp.posEndY = wasp.currentY = 1.0f;
         wasp.posStartZ = wasp.posEndZ = wasp.currentZ = 10.0f;
@@ -1619,7 +1619,7 @@ int main(int argc, char** argv)
         bool waspStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType44) waspStillActive = obj.active;
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType44) waspStillActive = obj.active;
         }
         check(waspStillActive, "the wasp itself is not destroyed by contact (unlike the shared kill list)");
 
@@ -1636,7 +1636,7 @@ int main(int argc, char** argv)
         // this contact is expected to also promote it to 97 before the pop
         // check runs, same frame.
         MobileObjSpec follower;
-        follower.type = ObjectType::ObjectType96;
+        follower.type = GalaxyEggbert::Def::ObjectType::ObjectType96;
         follower.posStartX = follower.posEndX = follower.currentX = 15.0f;
         follower.posStartY = follower.posEndY = follower.currentY = 20.0f;
         follower.posStartZ = follower.posEndZ = follower.currentZ = 15.0f;
@@ -1650,7 +1650,7 @@ int main(int argc, char** argv)
         bool followerStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if ((obj.type == ObjectType::ObjectType96 || obj.type == ObjectType::ObjectType97) &&
+            if ((obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97) &&
                 obj.posStartX == 15.0f && obj.currentZ == 15.0f)
             {
                 followerStillActive = obj.active;
@@ -1662,7 +1662,7 @@ int main(int argc, char** argv)
         // -- still kills even while ballooned, per the real source's
         // if/else-if chain (the pop check only ever matches 3/16/96/97).
         MobileObjSpec bulldozer;
-        bulldozer.type = ObjectType::ObjectType4;
+        bulldozer.type = GalaxyEggbert::Def::ObjectType::ObjectType4;
         bulldozer.posStartX = bulldozer.posEndX = bulldozer.currentX = 20.0f;
         bulldozer.posStartY = bulldozer.posEndY = bulldozer.currentY = 1.0f;
         bulldozer.posStartZ = bulldozer.posEndZ = bulldozer.currentZ = 20.0f;
@@ -1695,7 +1695,7 @@ int main(int argc, char** argv)
     // ever fires and interferes with the position readings.
     {
         MobileObjSpec patroller;
-        patroller.type = ObjectType::ObjectType17; // fish -- type doesn't matter, only its position does here
+        patroller.type = GalaxyEggbert::Def::ObjectType::ObjectType17; // fish -- type doesn't matter, only its position does here
         patroller.posStartX = 0.0f; patroller.posEndX = 10.0f;
         patroller.posStartY = patroller.posEndY = 1.0f;
         patroller.posStartZ = patroller.posEndZ = 30.0f; // a Z not used by anything else in the sample world
@@ -1712,7 +1712,7 @@ int main(int argc, char** argv)
         {
             for (const auto& obj : world.GetMobileObjects())
             {
-                if (obj.type == ObjectType::ObjectType17 && obj.posStartX == 0.0f && obj.posEndX == 10.0f)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType17 && obj.posStartX == 0.0f && obj.posEndX == 10.0f)
                 {
                     return obj.currentX;
                 }
@@ -1766,7 +1766,7 @@ int main(int argc, char** argv)
         const float bhZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
 
         MobileObjSpec blupih;
-        blupih.type = ObjectType::ObjectType32;
+        blupih.type = GalaxyEggbert::Def::ObjectType::ObjectType32;
         blupih.posStartX = bhX; blupih.posEndX = bhX + 0.001f; // nonzero delta only to satisfy the patrol gate
         blupih.posStartY = blupih.posEndY = 15.0f;
         blupih.posStartZ = blupih.posEndZ = bhZ;
@@ -1783,7 +1783,7 @@ int main(int argc, char** argv)
             int n = 0;
             for (const auto& obj : world.GetMobileObjects())
             {
-                if (obj.type == ObjectType::ObjectType23 && obj.active && obj.posStartX == x && obj.posStartZ == z)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.active && obj.posStartX == x && obj.posStartZ == z)
                 {
                     ++n;
                 }
@@ -1803,7 +1803,7 @@ int main(int argc, char** argv)
         const MobileObjSpec* bullet = nullptr;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType23 && obj.active && obj.posStartZ == bhZ && obj.posStartX == bhX)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.active && obj.posStartZ == bhZ && obj.posStartX == bhX)
             {
                 bullet = &obj;
             }
@@ -1838,9 +1838,9 @@ int main(int argc, char** argv)
             const float sdx = obj.currentX - bhX, sdy = obj.currentY - 15.0f, sdz = obj.currentZ - bhZ;
             if (obj.active && sdx * sdx + sdy * sdy + sdz * sdz < 1.0f)
             {
-                if (obj.type == ObjectType::ObjectType98) ++splatCount98;
-                else if (obj.type == ObjectType::ObjectType99) ++splatCount99;
-                else if (obj.type == ObjectType::ObjectType100) ++splatCount100;
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType98) ++splatCount98;
+                else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType99) ++splatCount99;
+                else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType100) ++splatCount100;
             }
         }
         check(splatCount98 == 1 && splatCount99 == 4 && splatCount100 == 2,
@@ -1862,7 +1862,7 @@ int main(int argc, char** argv)
         // returns a valid slot on this path (see SearchAirDistance's own
         // comment), it's just immediately voided.
         MobileObjSpec blupihFlush;
-        blupihFlush.type = ObjectType::ObjectType32;
+        blupihFlush.type = GalaxyEggbert::Def::ObjectType::ObjectType32;
         blupihFlush.posStartX = bhX; blupihFlush.posEndX = bhX + 0.001f;
         blupihFlush.posStartY = blupihFlush.posEndY = 1.0f; // directly above the y=0 floor, no gap
         blupihFlush.posStartZ = blupihFlush.posEndZ = bhZ;
@@ -1875,14 +1875,14 @@ int main(int argc, char** argv)
         }
         // Matches on posStartX/Z too, not just Y -- the object exhibition
         // (tools/GenerateSampleWorld3D.cpp) places one static (posStart==
-        // posEnd, non-fired) exhibit per real ObjectType with a non-zero
+        // posEnd, non-fired) exhibit per real GalaxyEggbert::Def::ObjectType with a non-zero
         // icon, and ObjectType23 (icon 176) is one of them, incidentally
         // also at Y=1 elsewhere in the world -- a Y-only filter would
         // wrongly match that unrelated static display item.
         int newBulletsFromFlush = 0;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType23 && obj.active &&
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.active &&
                 obj.posStartY == 1.0f && obj.posStartX == bhX && obj.posStartZ == bhZ)
             {
                 ++newBulletsFromFlush;
@@ -1913,7 +1913,7 @@ int main(int argc, char** argv)
         const float btZ = static_cast<float>(kCorridorGZ) - GEWorldRuntime::kWorldCenterZ;
 
         MobileObjSpec blupit;
-        blupit.type = ObjectType::ObjectType33;
+        blupit.type = GalaxyEggbert::Def::ObjectType::ObjectType33;
         // posStartX < posEndX && patrolStep starts at 1 -> aboutToWalkRight
         // == true -> frame 3 fires LEFT (away), frame 21 fires RIGHT (toward).
         blupit.posStartX = btX; blupit.posEndX = btX + 0.001f;
@@ -1931,7 +1931,7 @@ int main(int argc, char** argv)
         const MobileObjSpec* rightBullet = nullptr;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.type == ObjectType::ObjectType23 && obj.active && obj.posStartZ == btZ && obj.posStartX == btX)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.active && obj.posStartZ == btZ && obj.posStartX == btX)
             {
                 if (obj.posEndX < btX) leftBullet = &obj; else rightBullet = &obj;
             }
@@ -1959,7 +1959,7 @@ int main(int argc, char** argv)
     // time matters, not how it got there.
     {
         MobileObjSpec creature;
-        creature.type = ObjectType::ObjectType54;
+        creature.type = GalaxyEggbert::Def::ObjectType::ObjectType54;
         creature.posStartX = creature.currentX = 60.0f;
         creature.posStartY = creature.currentY = 1.0f;
         creature.posStartZ = creature.currentZ = 60.0f;
@@ -1972,7 +1972,7 @@ int main(int argc, char** argv)
         {
             for (auto& obj : world.GetMobileObjectsMutable())
             {
-                if (obj.type == ObjectType::ObjectType54 && obj.posStartX == 60.0f)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54 && obj.posStartX == 60.0f)
                 {
                     return &obj;
                 }
@@ -2041,7 +2041,7 @@ int main(int argc, char** argv)
     const MobileObjSpec* placedCreature = nullptr;
     for (const auto& obj : world.GetMobileObjects())
     {
-        if (obj.type == ObjectType::ObjectType54 && obj.posStartX != obj.posEndX)
+        if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54 && obj.posStartX != obj.posEndX)
         {
             placedCreature = &obj;
             break;
@@ -2070,7 +2070,7 @@ int main(int argc, char** argv)
         const float targetX = fX + 1.5f; // within wake radius, open air the whole way
 
         MobileObjSpec dormant;
-        dormant.type = ObjectType::ObjectType96;
+        dormant.type = GalaxyEggbert::Def::ObjectType::ObjectType96;
         dormant.posStartX = dormant.posEndX = dormant.currentX = fX;
         dormant.posStartY = dormant.posEndY = dormant.currentY = fY;
         dormant.posStartZ = dormant.posEndZ = dormant.currentZ = fZ;
@@ -2083,7 +2083,7 @@ int main(int argc, char** argv)
         {
             for (const auto& obj : world.GetMobileObjects())
             {
-                if ((obj.type == ObjectType::ObjectType96 || obj.type == ObjectType::ObjectType97) &&
+                if ((obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97) &&
                     obj.currentZ == z)
                 {
                     return &obj;
@@ -2094,7 +2094,7 @@ int main(int argc, char** argv)
 
         interaction.Update(dt, world, targetX, fY, fZ, 0.0f, sound);
         const auto* afterFirstFrame = findFollowerAt(fZ);
-        check(afterFirstFrame != nullptr && afterFirstFrame->type == ObjectType::ObjectType97,
+        check(afterFirstFrame != nullptr && afterFirstFrame->type == GalaxyEggbert::Def::ObjectType::ObjectType97,
               "a dormant follower (96) wakes into the homing type (97) once Blupi is within its wake box");
 
         for (int i = 0; i < 59; ++i)
@@ -2131,7 +2131,7 @@ int main(int argc, char** argv)
         const float beyondWallX = static_cast<float>(kWallGX + 5) - GEWorldRuntime::kWorldCenterX;
 
         MobileObjSpec homing;
-        homing.type = ObjectType::ObjectType97; // already awake
+        homing.type = GalaxyEggbert::Def::ObjectType::ObjectType97; // already awake
         homing.posStartX = homing.posEndX = homing.currentX = fX;
         homing.posStartY = homing.posEndY = homing.currentY = fY;
         homing.posStartZ = homing.posEndZ = homing.currentZ = fZ;
@@ -2145,7 +2145,7 @@ int main(int argc, char** argv)
         {
             for (const auto& obj : world.GetMobileObjects())
             {
-                if (obj.type == ObjectType::ObjectType97 && obj.posStartZ == fZ)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97 && obj.posStartZ == fZ)
                 {
                     return &obj;
                 }
@@ -2180,7 +2180,7 @@ int main(int argc, char** argv)
         int debrisFlashCount = 0;
         for (const auto& obj : world.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType9 && obj.currentX == destructX &&
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType9 && obj.currentX == destructX &&
                 obj.currentY == destructY && obj.currentZ == destructZ)
             {
                 ++debrisFlashCount;
@@ -2313,7 +2313,7 @@ int main(int argc, char** argv)
             int count = 0;
             for (const auto& obj : flashWorld.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType11 && obj.currentX == fx &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType11 && obj.currentX == fx &&
                     obj.currentY == fy && obj.currentZ == fz)
                 {
                     ++count;
@@ -2337,21 +2337,21 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formula (plan.md VISUAL-008-adjacent,
         // fixed 2026-07-14 -- real table_explo4 is non-monotonic, was
         // wrongly ascending arithmetic before).
-        check(GetObjIcon(ObjectType::ObjectType11, 0) == 12, "ObjectType11 icon at phase=0 is the real table_explo4[0]=12");
-        check(GetObjIcon(ObjectType::ObjectType11, 3) == 15, "ObjectType11 icon at phase=3 is the real table_explo4[3]=15");
-        check(GetObjIcon(ObjectType::ObjectType11, 4) == 7, "ObjectType11 icon at phase=4 is the real table_explo4[4]=7 (the non-monotonic jump)");
-        check(GetObjIcon(ObjectType::ObjectType11, 8) == 11, "ObjectType11 icon at phase=8 is the real table_explo4[8]=11 (last frame before self-delete)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType11, 0) == 12, "ObjectType11 icon at phase=0 is the real table_explo4[0]=12");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType11, 3) == 15, "ObjectType11 icon at phase=3 is the real table_explo4[3]=15");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType11, 4) == 7, "ObjectType11 icon at phase=4 is the real table_explo4[4]=7 (the non-monotonic jump)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType11, 8) == 11, "ObjectType11 icon at phase=8 is the real table_explo4[8]=11 (last frame before self-delete)");
 
         // GetObjIcon()'s corrected formula (VISUAL-021, fixed 2026-07-20 --
         // real table_tentacule oscillates within icons 70-86 and never
         // overflows explo.png, unlike the naive ascending-range assumption
         // the previous frozen-frame-86 case used).
-        check(GetObjIcon(ObjectType::ObjectType53, 0) == 86, "ObjectType53 icon at phase=0 is the real table_tentacule[0]=86");
-        check(GetObjIcon(ObjectType::ObjectType53, 3) == 83, "ObjectType53 icon at phase=3 is the real table_tentacule[3]=83 (rise peak)");
-        check(GetObjIcon(ObjectType::ObjectType53, 7) == -1, "ObjectType53 icon at phase=7 is the real table_tentacule[7]=-1 (blank at the peak)");
-        check(GetObjIcon(ObjectType::ObjectType53, 24) == 70, "ObjectType53 icon at phase=24 is the real table_tentacule[24]=70 (full extension)");
-        check(GetObjIcon(ObjectType::ObjectType53, 44) == -1, "ObjectType53 icon at phase=44 is the real table_tentacule[44]=-1 (fully retracted)");
-        check(GetObjIcon(ObjectType::ObjectType53, 45) == GetObjIcon(ObjectType::ObjectType53, 0),
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 0) == 86, "ObjectType53 icon at phase=0 is the real table_tentacule[0]=86");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 3) == 83, "ObjectType53 icon at phase=3 is the real table_tentacule[3]=83 (rise peak)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 7) == -1, "ObjectType53 icon at phase=7 is the real table_tentacule[7]=-1 (blank at the peak)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 24) == 70, "ObjectType53 icon at phase=24 is the real table_tentacule[24]=70 (full extension)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 44) == -1, "ObjectType53 icon at phase=44 is the real table_tentacule[44]=-1 (fully retracted)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 45) == GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 0),
               "ObjectType53 icon wraps around after the real 45-frame table length");
     }
 
@@ -2363,15 +2363,15 @@ int main(int argc, char** argv)
     // content in real mobile-eggbert or this project's own worlds (no world file places type 34) --
     // injected directly, same synthetic-rig style as the large-creature test above.
     {
-        check(GetObjIcon(ObjectType::ObjectType34, 0) == 168, "ObjectType34 icon at phase=0 is the real table_glu[0]=168");
-        check(GetObjIcon(ObjectType::ObjectType34, 6) == 171, "ObjectType34 icon at phase=6 is the real table_glu[6]=171 (peak)");
-        check(GetObjIcon(ObjectType::ObjectType34, 25) == GetObjIcon(ObjectType::ObjectType34, 0),
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType34, 0) == 168, "ObjectType34 icon at phase=0 is the real table_glu[0]=168");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType34, 6) == 171, "ObjectType34 icon at phase=6 is the real table_glu[6]=171 (peak)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType34, 25) == GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType34, 0),
               "ObjectType34 icon wraps around after the real 25-frame table length");
 
         GEWorldRuntime gooWorld;
         GEInteractionSystem gooInteraction;
         MobileObjSpec goo;
-        goo.type = ObjectType::ObjectType34;
+        goo.type = GalaxyEggbert::Def::ObjectType::ObjectType34;
         goo.posStartX = goo.currentX = 0.0f;
         goo.posStartY = goo.currentY = 1.0f;
         goo.posStartZ = goo.currentZ = 0.0f;
@@ -2389,7 +2389,7 @@ int main(int argc, char** argv)
             gooInteraction.Update(gooDt, gooWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
         }
         const auto stuckGoo = std::find_if(gooWorld.GetMobileObjects().begin(), gooWorld.GetMobileObjects().end(),
-                                              [](const auto& o) { return o.type == ObjectType::ObjectType34; });
+                                              [](const auto& o) { return o.type == GalaxyEggbert::Def::ObjectType::ObjectType34; });
         check(stuckGoo != gooWorld.GetMobileObjects().end() && stuckGoo->active,
               "the goo particle is still active after reaching posEnd, not self-deleted");
         check(stuckGoo != gooWorld.GetMobileObjects().end() && stuckGoo->patrolStep == 3,
@@ -2407,38 +2407,38 @@ int main(int argc, char** argv)
     {
         // ObjectType37: real table_clear oscillates 40-47 (identical to GEBlupiController's own
         // kClear1Frames), not an ascending 40+range70 guess; wrong divisor too (was 6, real 1).
-        check(GetObjIcon(ObjectType::ObjectType37, 0) == 40, "ObjectType37 icon at phase=0 is the real table_clear[0]=40");
-        check(GetObjIcon(ObjectType::ObjectType37, 4) == 41, "ObjectType37 icon at phase=4 is the real table_clear[4]=41");
-        check(GetObjIcon(ObjectType::ObjectType37, 30) == 42, "ObjectType37 icon at phase=30 is the real table_clear[30]=42 (past the oscillating head)");
-        check(GetObjIcon(ObjectType::ObjectType37, 69) == 47, "ObjectType37 icon at phase=69 is the real table_clear[69]=47 (last frame)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType37, 0) == 40, "ObjectType37 icon at phase=0 is the real table_clear[0]=40");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType37, 4) == 41, "ObjectType37 icon at phase=4 is the real table_clear[4]=41");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType37, 30) == 42, "ObjectType37 icon at phase=30 is the real table_clear[30]=42 (past the oscillating head)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType37, 69) == 47, "ObjectType37 icon at phase=69 is the real table_clear[69]=47 (last frame)");
 
         // ObjectType97: real table_follow2 steps by 2 (256,258,260,262,264), not by 1; wrong
         // divisor too (was 6, real 1).
-        check(GetObjIcon(ObjectType::ObjectType97, 0) == 256, "ObjectType97 icon at phase=0 is the real table_follow2[0]=256");
-        check(GetObjIcon(ObjectType::ObjectType97, 1) == 258, "ObjectType97 icon at phase=1 is the real table_follow2[1]=258 (step of 2, not 1)");
-        check(GetObjIcon(ObjectType::ObjectType97, 4) == 264, "ObjectType97 icon at phase=4 is the real table_follow2[4]=264");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType97, 0) == 256, "ObjectType97 icon at phase=0 is the real table_follow2[0]=256");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType97, 1) == 258, "ObjectType97 icon at phase=1 is the real table_follow2[1]=258 (step of 2, not 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType97, 4) == 264, "ObjectType97 icon at phase=4 is the real table_follow2[4]=264");
 
         // ObjectType31 (charge power-up): wrong divisor only (was 6, real Config::ScaleDiv(2)==2).
-        check(GetObjIcon(ObjectType::ObjectType31, 2) == 239, "ObjectType31 icon at phase=2 is 238+(2/2)%6=239 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType31, 2) == 239, "ObjectType31 icon at phase=2 is 238+(2/2)%6=239 (real divisor 2)");
 
         // ObjectType2/3 (generic patrol hazards): wrong divisor only (was 6, real ScaleDiv(2)==2).
-        check(GetObjIcon(ObjectType::ObjectType2, 2) == 13, "ObjectType2 icon at phase=2 is 12+(2/2)%9=13 (real divisor 2)");
-        check(GetObjIcon(ObjectType::ObjectType3, 2) == 49, "ObjectType3 icon at phase=2 is 48+(2/2)%9=49 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType2, 2) == 13, "ObjectType2 icon at phase=2 is 12+(2/2)%9=13 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType3, 2) == 49, "ObjectType3 icon at phase=2 is 48+(2/2)%9=49 (real divisor 2)");
 
         // ObjectType16 (spider): wrong divisor only (was 3, real ScaleDiv(1)==1).
-        check(GetObjIcon(ObjectType::ObjectType16, 1) == 70, "ObjectType16 icon at phase=1 is 69+1%9=70 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType16, 1) == 70, "ObjectType16 icon at phase=1 is 69+1%9=70 (real divisor 1)");
 
         // ObjectType200-203 (Blupi-skin types): wrong divisor only (was 6, real ScaleDiv(1)==1).
-        check(GetObjIcon(ObjectType::ObjectType200, 1) == 258, "ObjectType200 icon at phase=1 is 257+1%6=258 (real divisor 1)");
-        check(GetObjIcon(ObjectType::ObjectType203, 1) == 258, "ObjectType203 icon at phase=1 is 257+1%6=258 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType200, 1) == 258, "ObjectType200 icon at phase=1 is 257+1%6=258 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType203, 1) == 258, "ObjectType203 icon at phase=1 is 257+1%6=258 (real divisor 1)");
 
         // ObjectType5 (treasure chest): the wave's reversal peaks at icon 11 (not 10) and descends
         // to icon 1 (not 0) before wrapping -- an asymmetric 0..11..1 triangle, real
         // Decor.cpp:8297-8307, previously computed as a smooth symmetric 0..10..0 wave.
-        check(GetObjIcon(ObjectType::ObjectType5, 30) == 10, "ObjectType5 icon at phase=30 (q=10) is the real last ascending value (icon 10)");
-        check(GetObjIcon(ObjectType::ObjectType5, 33) == 11, "ObjectType5 icon at phase=33 (q=11) is the real overshoot peak (icon 11, not 10)");
-        check(GetObjIcon(ObjectType::ObjectType5, 63) == 1, "ObjectType5 icon at phase=63 (q=21) is the real value just before wrap (icon 1, not 0)");
-        check(GetObjIcon(ObjectType::ObjectType5, 0) == 0, "ObjectType5 icon at phase=0 (q=0) is still the real icon 0 (wave start unaffected)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType5, 30) == 10, "ObjectType5 icon at phase=30 (q=10) is the real last ascending value (icon 10)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType5, 33) == 11, "ObjectType5 icon at phase=33 (q=11) is the real overshoot peak (icon 11, not 10)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType5, 63) == 1, "ObjectType5 icon at phase=63 (q=21) is the real value just before wrap (icon 1, not 0)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType5, 0) == 0, "ObjectType5 icon at phase=0 (q=0) is still the real icon 0 (wave start unaffected)");
     }
 
     // GetObjIcon() audit sweep, part 2 (found 2026-07-20 completing the pass over ObjectType14/15/
@@ -2447,37 +2447,37 @@ int main(int argc, char** argv)
     {
         // ObjectType14/15/35 (object-m.png water splash/bubble types): wrong divisor (was 1, real
         // Config::ScaleDiv(2)==2).
-        check(GetObjIcon(ObjectType::ObjectType14, 2) == 100, "ObjectType14 icon at phase=2 is table_plouf[(2/2)%7]=100 (real divisor 2)");
-        check(GetObjIcon(ObjectType::ObjectType15, 2) == 104, "ObjectType15 icon at phase=2 is table_blup[(2/2)%20]=104 (real divisor 2)");
-        check(GetObjIcon(ObjectType::ObjectType35, 2) == 99, "ObjectType35 icon at phase=2 is table_tiplouf[(2/2)%3]=99 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType14, 2) == 100, "ObjectType14 icon at phase=2 is table_plouf[(2/2)%7]=100 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType15, 2) == 104, "ObjectType15 icon at phase=2 is table_blup[(2/2)%20]=104 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType35, 2) == 99, "ObjectType35 icon at phase=2 is table_tiplouf[(2/2)%3]=99 (real divisor 2)");
 
         // ObjectType49/50/51/21 (keys): wrong divisor (was 9, real Config::ScaleDiv(3)==3).
-        check(GetObjIcon(ObjectType::ObjectType49, 3) == 210, "ObjectType49 icon at phase=3 is table_cle1[(3/3)%12]=210 (real divisor 3)");
-        check(GetObjIcon(ObjectType::ObjectType50, 3) == 221, "ObjectType50 icon at phase=3 is table_cle2[(3/3)%12]=221 (real divisor 3)");
-        check(GetObjIcon(ObjectType::ObjectType51, 3) == 228, "ObjectType51 icon at phase=3 is table_cle3[(3/3)%12]=228 (real divisor 3)");
-        check(GetObjIcon(ObjectType::ObjectType21, 3) == 123, "ObjectType21 icon at phase=3 is table_cle[(3/3)%12]=123 (real divisor 3)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType49, 3) == 210, "ObjectType49 icon at phase=3 is table_cle1[(3/3)%12]=210 (real divisor 3)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType50, 3) == 221, "ObjectType50 icon at phase=3 is table_cle2[(3/3)%12]=221 (real divisor 3)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType51, 3) == 228, "ObjectType51 icon at phase=3 is table_cle3[(3/3)%12]=228 (real divisor 3)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType21, 3) == 123, "ObjectType21 icon at phase=3 is table_cle[(3/3)%12]=123 (real divisor 3)");
 
         // ObjectType25 (shield): wrong divisor (was 6, real ScaleDiv(2)==2) AND the real
         // table_shield has 16 entries (144-151, then 266-273), not 8 -- kShield was half its
         // real size.
-        check(GetObjIcon(ObjectType::ObjectType25, 2) == 145, "ObjectType25 icon at phase=2 is table_shield[(2/2)%16]=145 (real divisor 2)");
-        check(GetObjIcon(ObjectType::ObjectType25, 16) == 266, "ObjectType25 icon at phase=16 is table_shield[(16/2)%16]=266 (the real second half of the table, previously missing entirely)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType25, 2) == 145, "ObjectType25 icon at phase=2 is table_shield[(2/2)%16]=145 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType25, 16) == 266, "ObjectType25 icon at phase=16 is table_shield[(16/2)%16]=266 (the real second half of the table, previously missing entirely)");
 
         // ObjectType24 (skateboard pickup shimmer): wrong divisor (was 3, real ScaleDiv(1)==1).
-        check(GetObjIcon(ObjectType::ObjectType24, 4) == 130, "ObjectType24 icon at phase=4 is table_skate[4%34]=130 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType24, 4) == 130, "ObjectType24 icon at phase=4 is table_skate[4%34]=130 (real divisor 1)");
 
         // ObjectType26 (power pickup): wrong divisor (was 6, real ScaleDiv(2)==2).
-        check(GetObjIcon(ObjectType::ObjectType26, 2) == 137, "ObjectType26 icon at phase=2 is table_power[(2/2)%8]=137 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType26, 2) == 137, "ObjectType26 icon at phase=2 is table_power[(2/2)%8]=137 (real divisor 2)");
 
         // ObjectType40 (invert pickup): wrong divisor (was 4, real ScaleDiv(2)==2).
-        check(GetObjIcon(ObjectType::ObjectType40, 10) == 190, "ObjectType40 icon at phase=10 is table_invert[(10/2)%20]=190 (real divisor 2)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType40, 10) == 190, "ObjectType40 icon at phase=10 is table_invert[(10/2)%20]=190 (real divisor 2)");
 
         // ObjectType47/48 (caterpillar lift tracks): wrong divisor (was 6, real ScaleDiv(1)==1).
-        check(GetObjIcon(ObjectType::ObjectType47, 1) == 312, "ObjectType47 icon at phase=1 is table_chenille[1%6]=312 (real divisor 1)");
-        check(GetObjIcon(ObjectType::ObjectType48, 1) == 315, "ObjectType48 icon at phase=1 is table_chenillei[1%6]=315 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType47, 1) == 312, "ObjectType47 icon at phase=1 is table_chenille[1%6]=312 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType48, 1) == 315, "ObjectType48 icon at phase=1 is table_chenillei[1%6]=315 (real divisor 1)");
 
         // ObjectType96 (follower wake indicator): wrong divisor (was 3, real ScaleDiv(1)==1).
-        check(GetObjIcon(ObjectType::ObjectType96, 3) == 257, "ObjectType96 icon at phase=3 is table_follow1[3%26]=257 (real divisor 1)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType96, 3) == 257, "ObjectType96 icon at phase=3 is table_follow1[3%26]=257 (real divisor 1)");
     }
 
     // 17.6. Dynamite-blast explosion flash self-delete timing (plan.md
@@ -2493,7 +2493,7 @@ int main(int argc, char** argv)
         constexpr float ex = 30.0f, ey = 1.0f, ez = 30.0f;
 
         MobileObjSpec flash;
-        flash.type = ObjectType::ObjectType8;
+        flash.type = GalaxyEggbert::Def::ObjectType::ObjectType8;
         flash.active = true;
         flash.phase = 0.0f;
         flash.currentX = flash.posStartX = flash.posEndX = ex;
@@ -2506,7 +2506,7 @@ int main(int argc, char** argv)
             int count = 0;
             for (const auto& obj : explo1World.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType8 && obj.currentX == ex &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType8 && obj.currentX == ex &&
                     obj.currentY == ey && obj.currentZ == ez)
                 {
                     ++count;
@@ -2529,10 +2529,10 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formula (plan.md VISUAL-008, fixed
         // 2026-07-14 -- real table_explo1 bounces back and forth between
         // adjacent values, was wrongly ascending arithmetic before).
-        check(GetObjIcon(ObjectType::ObjectType8, 0) == 0, "ObjectType8 icon at phase=0 is the real table_explo1[0]=0");
-        check(GetObjIcon(ObjectType::ObjectType8, 8) == 4, "ObjectType8 icon at phase=8 is the real table_explo1[8]=4");
-        check(GetObjIcon(ObjectType::ObjectType8, 9) == 3, "ObjectType8 icon at phase=9 is the real table_explo1[9]=3 (bounces back down from 4)");
-        check(GetObjIcon(ObjectType::ObjectType8, 38) == 11, "ObjectType8 icon at phase=38 is the real table_explo1[38]=11 (last frame before self-delete)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType8, 0) == 0, "ObjectType8 icon at phase=0 is the real table_explo1[0]=0");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType8, 8) == 4, "ObjectType8 icon at phase=8 is the real table_explo1[8]=4");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType8, 9) == 3, "ObjectType8 icon at phase=9 is the real table_explo1[9]=3 (bounces back down from 4)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType8, 38) == 11, "ObjectType8 icon at phase=38 is the real table_explo1[38]=11 (last frame before self-delete)");
     }
 
     // 17.6b. Fish/bird explosion flash self-delete timing + icon formula
@@ -2547,7 +2547,7 @@ int main(int argc, char** argv)
         constexpr float ex = 35.0f, ey = 1.0f, ez = 35.0f;
 
         MobileObjSpec flash;
-        flash.type = ObjectType::ObjectType10;
+        flash.type = GalaxyEggbert::Def::ObjectType::ObjectType10;
         flash.active = true;
         flash.phase = 0.0f;
         flash.currentX = flash.posStartX = flash.posEndX = ex;
@@ -2560,7 +2560,7 @@ int main(int argc, char** argv)
             int count = 0;
             for (const auto& obj : explo3World.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType10 && obj.currentX == ex &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType10 && obj.currentX == ex &&
                     obj.currentY == ey && obj.currentZ == ez)
                 {
                     ++count;
@@ -2583,10 +2583,10 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formula (plan.md VISUAL-008, fixed
         // 2026-07-14 -- real table_explo3 oscillates between 32/34/35, was
         // wrongly ascending arithmetic before).
-        check(GetObjIcon(ObjectType::ObjectType10, 0) == 32, "ObjectType10 icon at phase=0 is the real table_explo3[0]=32");
-        check(GetObjIcon(ObjectType::ObjectType10, 2) == 34, "ObjectType10 icon at phase=2 is the real table_explo3[2]=34");
-        check(GetObjIcon(ObjectType::ObjectType10, 14) == 35, "ObjectType10 icon at phase=14 is the real table_explo3[14]=35 (the second oscillation phase)");
-        check(GetObjIcon(ObjectType::ObjectType10, 19) == 35, "ObjectType10 icon at phase=19 is the real table_explo3[19]=35 (last frame before self-delete)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType10, 0) == 32, "ObjectType10 icon at phase=0 is the real table_explo3[0]=32");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType10, 2) == 34, "ObjectType10 icon at phase=2 is the real table_explo3[2]=34");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType10, 14) == 35, "ObjectType10 icon at phase=14 is the real table_explo3[14]=35 (the second oscillation phase)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType10, 19) == 35, "ObjectType10 icon at phase=19 is the real table_explo3[19]=35 (last frame before self-delete)");
     }
 
     // 17.6c. Follower-blocked-path debris flash self-delete timing + icon
@@ -2601,7 +2601,7 @@ int main(int argc, char** argv)
         constexpr float ex = 45.0f, ey = 1.0f, ez = 45.0f;
 
         MobileObjSpec flash;
-        flash.type = ObjectType::ObjectType9;
+        flash.type = GalaxyEggbert::Def::ObjectType::ObjectType9;
         flash.active = true;
         flash.phase = 0.0f;
         flash.currentX = flash.posStartX = flash.posEndX = ex;
@@ -2614,7 +2614,7 @@ int main(int argc, char** argv)
             int count = 0;
             for (const auto& obj : explo2World.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType9 && obj.currentX == ex &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType9 && obj.currentX == ex &&
                     obj.currentY == ey && obj.currentZ == ez)
                 {
                     ++count;
@@ -2638,9 +2638,9 @@ int main(int argc, char** argv)
         // 2026-07-14 -- real table_explo2 has real `-1` blank-frame
         // sentinels interspersed throughout, was wrongly ascending
         // arithmetic before).
-        check(GetObjIcon(ObjectType::ObjectType9, 0) == 12, "ObjectType9 icon at phase=0 is the real table_explo2[0]=12");
-        check(GetObjIcon(ObjectType::ObjectType9, 1) == -1, "ObjectType9 icon at phase=1 is the real table_explo2[1]=-1 (a blank frame)");
-        check(GetObjIcon(ObjectType::ObjectType9, 19) == 13, "ObjectType9 icon at phase=19 is the real table_explo2[19]=13 (last frame before self-delete)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType9, 0) == 12, "ObjectType9 icon at phase=0 is the real table_explo2[0]=12");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType9, 1) == -1, "ObjectType9 icon at phase=1 is the real table_explo2[1]=-1 (a blank frame)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType9, 19) == 13, "ObjectType9 icon at phase=19 is the real table_explo2[19]=13 (last frame before self-delete)");
     }
 
     // 17.7. Pollution puff (plan.md VISUAL-013, ObjectType36) -- vehicle
@@ -2663,7 +2663,7 @@ int main(int argc, char** argv)
         int noneCount = 0;
         for (const auto& obj : noneWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType36)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType36)
             {
                 ++noneCount;
             }
@@ -2686,7 +2686,7 @@ int main(int argc, char** argv)
         const MobileObjSpec* jeepPuff = nullptr;
         for (const auto& obj : jeepWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType36)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType36)
             {
                 ++jeepCount;
                 jeepPuff = &obj;
@@ -2726,7 +2726,7 @@ int main(int argc, char** argv)
         const MobileObjSpec* jeepLeftPuff = nullptr;
         for (const auto& obj : jeepLeftWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType36)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType36)
             {
                 jeepLeftPuff = &obj;
             }
@@ -2756,7 +2756,7 @@ int main(int argc, char** argv)
         const MobileObjSpec* overPuff = nullptr;
         for (const auto& obj : overWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType36)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType36)
             {
                 overPuff = &obj;
             }
@@ -2788,7 +2788,7 @@ int main(int argc, char** argv)
         const MobileObjSpec* movedPuff = nullptr;
         for (const auto& obj : jeepWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType36)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType36)
             {
                 ++jeepStillActiveAt15;
                 movedPuff = &obj;
@@ -2807,7 +2807,7 @@ int main(int argc, char** argv)
         int jeepStillActiveAt16 = 0;
         for (const auto& obj : jeepWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType36)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType36)
             {
                 ++jeepStillActiveAt16;
             }
@@ -2817,9 +2817,9 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formula (plan.md VISUAL-013, fixed
         // 2026-07-14 -- divisor was 6, real is 2; table_pollution is a
         // plain ascending range so only the divisor needed fixing).
-        check(GetObjIcon(ObjectType::ObjectType36, 0) == 179, "ObjectType36 icon at phase=0 is the real table_pollution[0]=179");
-        check(GetObjIcon(ObjectType::ObjectType36, 2) == 180, "ObjectType36 icon at phase=2 is the real table_pollution[1]=180");
-        check(GetObjIcon(ObjectType::ObjectType36, 14) == 186, "ObjectType36 icon at phase=14 is the real table_pollution[7]=186 (last frame before self-delete)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType36, 0) == 179, "ObjectType36 icon at phase=0 is the real table_pollution[0]=179");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType36, 2) == 180, "ObjectType36 icon at phase=2 is the real table_pollution[1]=180");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType36, 14) == 186, "ObjectType36 icon at phase=14 is the real table_pollution[7]=186 (last frame before self-delete)");
     }
 
     // 17.8. Shield/Power magic trail (plan.md VISUAL-011-adjacent,
@@ -2837,7 +2837,7 @@ int main(int argc, char** argv)
         int noneCount = 0;
         for (const auto& obj : noneWorld.GetMobileObjects())
         {
-            if (obj.active && (obj.type == ObjectType::ObjectType57 || obj.type == ObjectType::ObjectType27))
+            if (obj.active && (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType27))
             {
                 ++noneCount;
             }
@@ -2853,7 +2853,7 @@ int main(int argc, char** argv)
         int shieldCountBelowThreshold = 0;
         for (const auto& obj : shieldWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType57)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57)
             {
                 ++shieldCountBelowThreshold;
             }
@@ -2865,7 +2865,7 @@ int main(int argc, char** argv)
         int shieldCount = 0;
         for (const auto& obj : shieldWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType57)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57)
             {
                 ++shieldCount;
                 shieldMarker = &obj;
@@ -2887,7 +2887,7 @@ int main(int argc, char** argv)
         int shieldCountAfterSmallMove = 0;
         for (const auto& obj : shieldWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType57)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57)
             {
                 ++shieldCountAfterSmallMove;
             }
@@ -2904,7 +2904,7 @@ int main(int argc, char** argv)
         int zOnlyCount = 0;
         for (const auto& obj : zOnlyWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType57)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57)
             {
                 ++zOnlyCount;
             }
@@ -2920,7 +2920,7 @@ int main(int argc, char** argv)
         int powerCount = 0;
         for (const auto& obj : powerWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType27)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType27)
             {
                 ++powerCount;
             }
@@ -2936,7 +2936,7 @@ int main(int argc, char** argv)
         int shieldActiveAt19 = 0;
         for (const auto& obj : shieldWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType57)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57)
             {
                 ++shieldActiveAt19;
             }
@@ -2947,7 +2947,7 @@ int main(int argc, char** argv)
         int shieldActiveAt20 = 0;
         for (const auto& obj : shieldWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType57)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType57)
             {
                 ++shieldActiveAt20;
             }
@@ -2962,7 +2962,7 @@ int main(int argc, char** argv)
         int powerActiveAt23 = 0;
         for (const auto& obj : powerWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType27)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType27)
             {
                 ++powerActiveAt23;
             }
@@ -2973,7 +2973,7 @@ int main(int argc, char** argv)
         int powerActiveAt24 = 0;
         for (const auto& obj : powerWorld.GetMobileObjects())
         {
-            if (obj.active && obj.type == ObjectType::ObjectType27)
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType27)
             {
                 ++powerActiveAt24;
             }
@@ -2983,12 +2983,12 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formulas (plan.md VISUAL-011-adjacent,
         // fixed 2026-07-14 -- both tables repeat their first 5 icons twice
         // before continuing, not a simple ascending range).
-        check(GetObjIcon(ObjectType::ObjectType57, 0) == 274, "ObjectType57 icon at phase=0 is the real table_shieldtrack[0]=274");
-        check(GetObjIcon(ObjectType::ObjectType57, 5) == 274, "ObjectType57 icon at phase=5 is the real table_shieldtrack[5]=274 (the repeat)");
-        check(GetObjIcon(ObjectType::ObjectType57, 10) == 279, "ObjectType57 icon at phase=10 is the real table_shieldtrack[10]=279 (continues past the repeat)");
-        check(GetObjIcon(ObjectType::ObjectType27, 0) == 152, "ObjectType27 icon at phase=0 is the real table_magictrack[0]=152");
-        check(GetObjIcon(ObjectType::ObjectType27, 5) == 152, "ObjectType27 icon at phase=5 is the real table_magictrack[5]=152 (the repeat)");
-        check(GetObjIcon(ObjectType::ObjectType27, 10) == 157, "ObjectType27 icon at phase=10 is the real table_magictrack[10]=157 (continues past the repeat)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType57, 0) == 274, "ObjectType57 icon at phase=0 is the real table_shieldtrack[0]=274");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType57, 5) == 274, "ObjectType57 icon at phase=5 is the real table_shieldtrack[5]=274 (the repeat)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType57, 10) == 279, "ObjectType57 icon at phase=10 is the real table_shieldtrack[10]=279 (continues past the repeat)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType27, 0) == 152, "ObjectType27 icon at phase=0 is the real table_magictrack[0]=152");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType27, 5) == 152, "ObjectType27 icon at phase=5 is the real table_magictrack[5]=152 (the repeat)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType27, 10) == 157, "ObjectType27 icon at phase=10 is the real table_magictrack[10]=157 (continues past the repeat)");
     }
 
     // 17.9. Bullet-hit splat effect self-delete timing + icon formulas
@@ -3003,7 +3003,7 @@ int main(int argc, char** argv)
         constexpr float dt = 1.0f / 20.0f;
         constexpr float sx = 40.0f, sy = 1.0f, sz = 40.0f;
 
-        const auto makeStatic = [](ObjectType type, float x, float y, float z)
+        const auto makeStatic = [](GalaxyEggbert::Def::ObjectType type, float x, float y, float z)
         {
             MobileObjSpec spec;
             spec.type = type;
@@ -3014,11 +3014,11 @@ int main(int argc, char** argv)
             spec.currentZ = spec.posStartZ = spec.posEndZ = z;
             return spec;
         };
-        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(ObjectType::ObjectType98, sx, sy, sz));
-        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(ObjectType::ObjectType99, sx, sy, sz));
-        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(ObjectType::ObjectType100, sx, sy, sz));
+        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(GalaxyEggbert::Def::ObjectType::ObjectType98, sx, sy, sz));
+        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(GalaxyEggbert::Def::ObjectType::ObjectType99, sx, sy, sz));
+        splatWorld.GetMobileObjectsMutable().push_back(makeStatic(GalaxyEggbert::Def::ObjectType::ObjectType100, sx, sy, sz));
 
-        const auto countActiveOf = [&splatWorld](ObjectType type)
+        const auto countActiveOf = [&splatWorld](GalaxyEggbert::Def::ObjectType type)
         {
             int n = 0;
             for (const auto& obj : splatWorld.GetMobileObjects())
@@ -3033,44 +3033,44 @@ int main(int argc, char** argv)
             splatWorld.Update(dt);
         }
         splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOf(ObjectType::ObjectType98) == 1, "ObjectType98 is still active just before its real phase-10 self-delete");
-        check(countActiveOf(ObjectType::ObjectType99) == 1, "ObjectType99 is still active just before its real phase-13 self-delete");
-        check(countActiveOf(ObjectType::ObjectType100) == 1, "ObjectType100 is still active just before its real phase-18 self-delete");
+        check(countActiveOf(GalaxyEggbert::Def::ObjectType::ObjectType98) == 1, "ObjectType98 is still active just before its real phase-10 self-delete");
+        check(countActiveOf(GalaxyEggbert::Def::ObjectType::ObjectType99) == 1, "ObjectType99 is still active just before its real phase-13 self-delete");
+        check(countActiveOf(GalaxyEggbert::Def::ObjectType::ObjectType100) == 1, "ObjectType100 is still active just before its real phase-18 self-delete");
 
         splatWorld.Update(dt);
         splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOf(ObjectType::ObjectType98) == 0, "ObjectType98 self-deletes once phase reaches the real 10-tick lifetime");
+        check(countActiveOf(GalaxyEggbert::Def::ObjectType::ObjectType98) == 0, "ObjectType98 self-deletes once phase reaches the real 10-tick lifetime");
 
         for (int i = 0; i < 3; ++i)
         {
             splatWorld.Update(dt);
         }
         splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOf(ObjectType::ObjectType99) == 0, "ObjectType99 self-deletes once phase reaches the real 13-tick lifetime");
+        check(countActiveOf(GalaxyEggbert::Def::ObjectType::ObjectType99) == 0, "ObjectType99 self-deletes once phase reaches the real 13-tick lifetime");
 
         for (int i = 0; i < 5; ++i)
         {
             splatWorld.Update(dt);
         }
         splatInteraction.Update(dt, splatWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOf(ObjectType::ObjectType100) == 0, "ObjectType100 self-deletes once phase reaches the real 18-tick lifetime");
+        check(countActiveOf(GalaxyEggbert::Def::ObjectType::ObjectType100) == 0, "ObjectType100 self-deletes once phase reaches the real 18-tick lifetime");
 
         // GetObjIcon()'s corrected formulas (plan.md VISUAL-009, fixed
         // 2026-07-14 -- table_sploutch2/3's real leading `-1` "invisible
         // frame" delay is now modeled instead of a static first-frame
         // return).
-        check(GetObjIcon(ObjectType::ObjectType98, 0) == 90, "ObjectType98 icon at phase=0 is the real table_sploutch1[0]=90");
-        check(GetObjIcon(ObjectType::ObjectType98, 9) == 99, "ObjectType98 icon at phase=9 is the real table_sploutch1[9]=99 (last frame)");
-        check(GetObjIcon(ObjectType::ObjectType99, 0) == -1, "ObjectType99 icon at phase=0 is the real table_sploutch2[0]=-1 (invisible delay)");
-        check(GetObjIcon(ObjectType::ObjectType99, 2) == -1, "ObjectType99 icon at phase=2 is the real table_sploutch2[2]=-1 (still invisible)");
-        check(GetObjIcon(ObjectType::ObjectType99, 3) == 90, "ObjectType99 icon at phase=3 is the real table_sploutch2[3]=90 (splash begins)");
-        check(GetObjIcon(ObjectType::ObjectType100, 0) == -1, "ObjectType100 icon at phase=0 is the real table_sploutch3[0]=-1 (invisible delay)");
-        check(GetObjIcon(ObjectType::ObjectType100, 7) == -1, "ObjectType100 icon at phase=7 is the real table_sploutch3[7]=-1 (still invisible)");
-        check(GetObjIcon(ObjectType::ObjectType100, 8) == 90, "ObjectType100 icon at phase=8 is the real table_sploutch3[8]=90 (splash begins, longest delay)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType98, 0) == 90, "ObjectType98 icon at phase=0 is the real table_sploutch1[0]=90");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType98, 9) == 99, "ObjectType98 icon at phase=9 is the real table_sploutch1[9]=99 (last frame)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType99, 0) == -1, "ObjectType99 icon at phase=0 is the real table_sploutch2[0]=-1 (invisible delay)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType99, 2) == -1, "ObjectType99 icon at phase=2 is the real table_sploutch2[2]=-1 (still invisible)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType99, 3) == 90, "ObjectType99 icon at phase=3 is the real table_sploutch2[3]=90 (splash begins)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType100, 0) == -1, "ObjectType100 icon at phase=0 is the real table_sploutch3[0]=-1 (invisible delay)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType100, 7) == -1, "ObjectType100 icon at phase=7 is the real table_sploutch3[7]=-1 (still invisible)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType100, 8) == 90, "ObjectType100 icon at phase=8 is the real table_sploutch3[8]=90 (splash begins, longest delay)");
     }
 
     // 17.10. Teleporter arc (plan.md VISUAL-010, ObjectType92) -- despite
-    // ObjectType.hpp's own "charged attack" doc comment, the real trigger
+    // Def/ObjectType.hpp's own "charged attack" doc comment, the real trigger
     // is the teleporter itself (already this engine's own TriggerTeleport()
     // call site); a single static instance, real phase>=128 self-delete.
     {
@@ -3085,7 +3085,7 @@ int main(int argc, char** argv)
             int count = 0;
             for (const auto& obj : arcWorld.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType92 && obj.currentX == ax &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType92 && obj.currentX == ax &&
                     std::fabs(obj.currentY - (ay + 5.0f / 64.0f)) < 0.001f && obj.currentZ == az)
                 {
                     ++count;
@@ -3111,21 +3111,21 @@ int main(int argc, char** argv)
         // GetObjIcon()'s corrected formula (plan.md VISUAL-010, fixed
         // 2026-07-14 -- real table_explo7 is a 128-frame scatter with `-1`
         // blanks interspersed throughout, not a static first-frame return).
-        check(GetObjIcon(ObjectType::ObjectType92, 0) == 60, "ObjectType92 icon at phase=0 is the real table_explo7[0]=60");
-        check(GetObjIcon(ObjectType::ObjectType92, 1) == 61, "ObjectType92 icon at phase=1 is the real table_explo7[1]=61");
-        check(GetObjIcon(ObjectType::ObjectType92, 2) == -1, "ObjectType92 icon at phase=2 is the real table_explo7[2]=-1 (a mid-sequence blank)");
-        check(GetObjIcon(ObjectType::ObjectType92, 127) == -1, "ObjectType92 icon at phase=127 is the real table_explo7[127]=-1 (last frame before self-delete)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType92, 0) == 60, "ObjectType92 icon at phase=0 is the real table_explo7[0]=60");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType92, 1) == 61, "ObjectType92 icon at phase=1 is the real table_explo7[1]=61");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType92, 2) == -1, "ObjectType92 icon at phase=2 is the real table_explo7[2]=-1 (a mid-sequence blank)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType92, 127) == -1, "ObjectType92 icon at phase=127 is the real table_explo7[127]=-1 (last frame before self-delete)");
 
         // GetObjIcon()'s corrected formula (found 2026-07-16 -- table_explo5/6/8 were the only
         // remaining explo tables still using an approximation formula (`(p/6) % N`) instead of an
         // exact transcription, after the 2026-07-14 pass fixed explo1/2/3/4/7).
-        check(GetObjIcon(ObjectType::ObjectType90, 0) == 54, "ObjectType90 icon at phase=0 is the real table_explo5[0]=54");
-        check(GetObjIcon(ObjectType::ObjectType90, 1) == -1, "ObjectType90 icon at phase=1 is the real table_explo5[1]=-1 (the strobe's blank tick)");
-        check(GetObjIcon(ObjectType::ObjectType90, 2) == 55, "ObjectType90 icon at phase=2 is the real table_explo5[2]=55");
-        check(GetObjIcon(ObjectType::ObjectType91, 0) == 54, "ObjectType91 icon at phase=0 is the real table_explo6[0]=54");
-        check(GetObjIcon(ObjectType::ObjectType91, 5) == 59, "ObjectType91 icon at phase=5 is the real table_explo6[5]=59 (no blanks, plain ascending)");
-        check(GetObjIcon(ObjectType::ObjectType93, 0) == 7, "ObjectType93 icon at phase=0 is the real table_explo8[0]=7");
-        check(GetObjIcon(ObjectType::ObjectType93, 4) == 11, "ObjectType93 icon at phase=4 is the real table_explo8[4]=11 (no blanks, plain ascending)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType90, 0) == 54, "ObjectType90 icon at phase=0 is the real table_explo5[0]=54");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType90, 1) == -1, "ObjectType90 icon at phase=1 is the real table_explo5[1]=-1 (the strobe's blank tick)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType90, 2) == 55, "ObjectType90 icon at phase=2 is the real table_explo5[2]=55");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType91, 0) == 54, "ObjectType91 icon at phase=0 is the real table_explo6[0]=54");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType91, 5) == 59, "ObjectType91 icon at phase=5 is the real table_explo6[5]=59 (no blanks, plain ascending)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType93, 0) == 7, "ObjectType93 icon at phase=0 is the real table_explo8[0]=7");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType93, 4) == 11, "ObjectType93 icon at phase=4 is the real table_explo8[4]=11 (no blanks, plain ascending)");
     }
 
     // 17.11. Voyage (plan.md `158`) mechanics in isolation -- the real
@@ -3310,16 +3310,16 @@ int main(int argc, char** argv)
         // decor-pixel space, see SpawnLavaAscendPuff()'s own comment).
         const int type93CountBefore =
             static_cast<int>(std::count_if(clear3World.GetMobileObjects().begin(), clear3World.GetMobileObjects().end(),
-                                            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType93; }));
+                                            [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType93; }));
         clear3World.Update(dt);
         clear3Interaction.Update(dt, clear3World, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
         const int type93CountAfter =
             static_cast<int>(std::count_if(clear3World.GetMobileObjects().begin(), clear3World.GetMobileObjects().end(),
-                                            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType93; }));
+                                            [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType93; }));
         check(type93CountAfter == type93CountBefore + 1,
               "Clear3Ascend's real puff spawn (ObjectType93) fires once per TickVoyage() call");
         const auto puff = std::find_if(clear3World.GetMobileObjects().begin(), clear3World.GetMobileObjects().end(),
-                                        [](const auto& o) { return o.active && o.type == ObjectType::ObjectType93; });
+                                        [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType93; });
         check(puff != clear3World.GetMobileObjects().end() && std::fabs(puff->currentZ - (-3.0f)) < 0.01f,
               "the spawned puff is anchored at the real world-anchor Z (no jitter applied to Z)");
         // This first spawn happens at phase=1, still within the real
@@ -3352,7 +3352,7 @@ int main(int argc, char** argv)
         constexpr float kSawReach = 500.0f / 64.0f;
         for (const auto& o : sawWorld.GetMobileObjects())
         {
-            if (o.active && o.type == ObjectType::ObjectType41)
+            if (o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType41)
             {
                 ++burstCount;
                 check(std::fabs(o.stepAdvanceTicks - 156.0f) < 0.01f,
@@ -3392,7 +3392,7 @@ int main(int argc, char** argv)
         GEInteractionSystem pickupInteraction;
 
         MobileObjSpec sucette;
-        sucette.type = ObjectType::ObjectType26;
+        sucette.type = GalaxyEggbert::Def::ObjectType::ObjectType26;
         sucette.posStartX = sucette.posEndX = sucette.currentX = 12.0f;
         sucette.posStartY = sucette.posEndY = sucette.currentY = 1.0f;
         sucette.posStartZ = sucette.posEndZ = sucette.currentZ = 34.0f;
@@ -3423,7 +3423,7 @@ int main(int argc, char** argv)
         // IsEcrased() (VerifyBlupiMovement). A fresh instance is used since the one above was
         // already consumed by the successful grant just checked.
         MobileObjSpec sucetteGated;
-        sucetteGated.type = ObjectType::ObjectType26;
+        sucetteGated.type = GalaxyEggbert::Def::ObjectType::ObjectType26;
         sucetteGated.posStartX = sucetteGated.posEndX = sucetteGated.currentX = 50.0f;
         sucetteGated.posStartY = sucetteGated.posEndY = sucetteGated.currentY = 1.0f;
         sucetteGated.posStartZ = sucetteGated.posEndZ = sucetteGated.currentZ = 60.0f;
@@ -3436,7 +3436,7 @@ int main(int argc, char** argv)
               "(vehicle/balloon/squash gate) does not grant Power");
 
         MobileObjSpec drink;
-        drink.type = ObjectType::ObjectType30;
+        drink.type = GalaxyEggbert::Def::ObjectType::ObjectType30;
         drink.posStartX = drink.posEndX = drink.currentX = 20.0f;
         drink.posStartY = drink.posEndY = drink.currentY = 1.0f;
         drink.posStartZ = drink.posEndZ = drink.currentZ = 41.0f;
@@ -3455,7 +3455,7 @@ int main(int argc, char** argv)
               "HideGranted event's pickupX/Y/Z capture the real pickup's own contact position");
 
         MobileObjSpec charge;
-        charge.type = ObjectType::ObjectType31;
+        charge.type = GalaxyEggbert::Def::ObjectType::ObjectType31;
         charge.posStartX = charge.posEndX = charge.currentX = 7.0f;
         charge.posStartY = charge.posEndY = charge.currentY = 1.0f;
         charge.posStartZ = charge.posEndZ = charge.currentZ = 9.0f;
@@ -3475,16 +3475,16 @@ int main(int argc, char** argv)
         // RespawnPickupItem() -- real ObjectStart(pos, type, 0) at the freeze's own completion.
         const int type26CountBefore = static_cast<int>(std::count_if(
             pickupWorld.GetMobileObjects().begin(), pickupWorld.GetMobileObjects().end(),
-            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType26; }));
-        pickupInteraction.RespawnPickupItem(pickupWorld, 12.0f, 1.0f, 34.0f, ObjectType::ObjectType26);
+            [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType26; }));
+        pickupInteraction.RespawnPickupItem(pickupWorld, 12.0f, 1.0f, 34.0f, GalaxyEggbert::Def::ObjectType::ObjectType26);
         const int type26CountAfter = static_cast<int>(std::count_if(
             pickupWorld.GetMobileObjects().begin(), pickupWorld.GetMobileObjects().end(),
-            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType26; }));
+            [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType26; }));
         check(type26CountAfter == type26CountBefore + 1,
               "RespawnPickupItem() spawns a new active instance of the real pickup type");
         const auto respawned =
             std::find_if(pickupWorld.GetMobileObjects().begin(), pickupWorld.GetMobileObjects().end(),
-                          [](const auto& o) { return o.active && o.type == ObjectType::ObjectType26; });
+                          [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType26; });
         check(respawned != pickupWorld.GetMobileObjects().end() &&
                   std::fabs(respawned->currentX - 12.0f) < 0.01f && std::fabs(respawned->posStartX - 12.0f) < 0.01f &&
                   std::fabs(respawned->posEndX - 12.0f) < 0.01f,
@@ -3503,7 +3503,7 @@ int main(int argc, char** argv)
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
         constexpr float sx = 5.0f, sy = 2.0f, sz = 5.0f;
 
-        const auto countActiveOfType = [&splashWorld](ObjectType type)
+        const auto countActiveOfType = [&splashWorld](GalaxyEggbert::Def::ObjectType type)
         {
             int count = 0;
             for (const auto& obj : splashWorld.GetMobileObjects())
@@ -3516,12 +3516,12 @@ int main(int argc, char** argv)
             return count;
         };
 
-        check(!splashInteraction.HasActiveObjectOfType(splashWorld, ObjectType::ObjectType14),
+        check(!splashInteraction.HasActiveObjectOfType(splashWorld, GalaxyEggbert::Def::ObjectType::ObjectType14),
               "HasActiveObjectOfType() is false before any Plouf is spawned");
-        splashInteraction.SpawnWaterSplash(splashWorld, ObjectType::ObjectType14, sx, sy, sz);
-        check(countActiveOfType(ObjectType::ObjectType14) == 1,
+        splashInteraction.SpawnWaterSplash(splashWorld, GalaxyEggbert::Def::ObjectType::ObjectType14, sx, sy, sz);
+        check(countActiveOfType(GalaxyEggbert::Def::ObjectType::ObjectType14) == 1,
               "SpawnWaterSplash(Plouf) spawns exactly 1 static instance");
-        check(splashInteraction.HasActiveObjectOfType(splashWorld, ObjectType::ObjectType14),
+        check(splashInteraction.HasActiveObjectOfType(splashWorld, GalaxyEggbert::Def::ObjectType::ObjectType14),
               "HasActiveObjectOfType() is true once a Plouf is active");
 
         for (int i = 0; i < 13; ++i)
@@ -3529,41 +3529,41 @@ int main(int argc, char** argv)
             splashWorld.Update(dt);
         }
         splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOfType(ObjectType::ObjectType14) == 1,
+        check(countActiveOfType(GalaxyEggbert::Def::ObjectType::ObjectType14) == 1,
               "the Plouf splash is still active just before its real phase-14 self-delete");
         splashWorld.Update(dt);
         splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOfType(ObjectType::ObjectType14) == 0,
+        check(countActiveOfType(GalaxyEggbert::Def::ObjectType::ObjectType14) == 0,
               "the Plouf splash self-deletes once phase reaches the real 14-tick lifetime");
 
         // Tiplouf -- same shape, shorter real 6-tick lifetime.
-        splashInteraction.SpawnWaterSplash(splashWorld, ObjectType::ObjectType35, sx, sy, sz);
-        check(countActiveOfType(ObjectType::ObjectType35) == 1,
+        splashInteraction.SpawnWaterSplash(splashWorld, GalaxyEggbert::Def::ObjectType::ObjectType35, sx, sy, sz);
+        check(countActiveOfType(GalaxyEggbert::Def::ObjectType::ObjectType35) == 1,
               "SpawnWaterSplash(Tiplouf) spawns exactly 1 static instance");
         for (int i = 0; i < 5; ++i)
         {
             splashWorld.Update(dt);
         }
         splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOfType(ObjectType::ObjectType35) == 1,
+        check(countActiveOfType(GalaxyEggbert::Def::ObjectType::ObjectType35) == 1,
               "the Tiplouf splash is still active just before its real phase-6 self-delete");
         splashWorld.Update(dt);
         splashInteraction.Update(dt, splashWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
-        check(countActiveOfType(ObjectType::ObjectType35) == 0,
+        check(countActiveOfType(GalaxyEggbert::Def::ObjectType::ObjectType35) == 0,
               "the Tiplouf splash self-deletes once phase reaches the real 6-tick lifetime");
 
         // Corrected icon tables (real table_plouf/tiplouf/blup, Tables.cpp:1508-1519, previously
         // wrong monotonic-range approximations here). Phase values below are 2x the array index
         // (real divisor Config::ScaleDiv(2)==2, fixed 2026-07-20 -- was previously indexed
         // directly by phase with no division at all).
-        check(GetObjIcon(ObjectType::ObjectType14, 0) == 99, "Plouf icon at phase=0 is the real table_plouf[0]=99");
-        check(GetObjIcon(ObjectType::ObjectType14, 6) == 102, "Plouf icon at phase=6 is the real table_plouf[3]=102 (ripple peak)");
-        check(GetObjIcon(ObjectType::ObjectType14, 12) == 99, "Plouf icon at phase=12 is the real table_plouf[6]=99 (back down)");
-        check(GetObjIcon(ObjectType::ObjectType35, 0) == 244, "Tiplouf icon at phase=0 is the real table_tiplouf[0]=244 (ambient)");
-        check(GetObjIcon(ObjectType::ObjectType35, 2) == 99, "Tiplouf icon at phase=2 is the real table_tiplouf[1]=99 (the droplet)");
-        check(GetObjIcon(ObjectType::ObjectType35, 4) == 244, "Tiplouf icon at phase=4 is the real table_tiplouf[2]=244 (back to ambient)");
-        check(GetObjIcon(ObjectType::ObjectType15, 0) == 103, "Blup icon at phase=0 is the real table_blup[0]=103");
-        check(GetObjIcon(ObjectType::ObjectType15, 6) == 106, "Blup icon at phase=6 is the real table_blup[6]=106 (shuffled, not a growing range)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType14, 0) == 99, "Plouf icon at phase=0 is the real table_plouf[0]=99");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType14, 6) == 102, "Plouf icon at phase=6 is the real table_plouf[3]=102 (ripple peak)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType14, 12) == 99, "Plouf icon at phase=12 is the real table_plouf[6]=99 (back down)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType35, 0) == 244, "Tiplouf icon at phase=0 is the real table_tiplouf[0]=244 (ambient)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType35, 2) == 99, "Tiplouf icon at phase=2 is the real table_tiplouf[1]=99 (the droplet)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType35, 4) == 244, "Tiplouf icon at phase=4 is the real table_tiplouf[2]=244 (back to ambient)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType15, 0) == 103, "Blup icon at phase=0 is the real table_blup[0]=103");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType15, 6) == 106, "Blup icon at phase=6 is the real table_blup[6]=106 (shuffled, not a growing range)");
 
         // SpawnWaterBubble() -- a 4-tile water column above the spawn point.
         GEWorldRuntime bubbleWorld;
@@ -3585,7 +3585,7 @@ int main(int argc, char** argv)
         const auto findBubble = [&bubbleWorld]()
         {
             return std::find_if(bubbleWorld.GetMobileObjects().begin(), bubbleWorld.GetMobileObjects().end(),
-                                  [](const auto& o) { return o.active && o.type == ObjectType::ObjectType15; });
+                                  [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType15; });
         };
         auto bubbleIt = findBubble();
         check(bubbleIt != bubbleWorld.GetMobileObjects().end(),
@@ -3609,7 +3609,7 @@ int main(int argc, char** argv)
         GEWorldRuntime projectileArrivalWorld;
         GEInteractionSystem projectileArrivalInteraction;
         MobileObjSpec projectile;
-        projectile.type = ObjectType::ObjectType23;
+        projectile.type = GalaxyEggbert::Def::ObjectType::ObjectType23;
         projectile.posStartX = projectile.currentX = 30.0f;
         projectile.posStartY = projectile.currentY = 5.0f;
         projectile.posStartZ = projectile.currentZ = 30.0f;
@@ -3623,7 +3623,7 @@ int main(int argc, char** argv)
                                             sound);
         const auto projectileIt = std::find_if(
             projectileArrivalWorld.GetMobileObjects().begin(), projectileArrivalWorld.GetMobileObjects().end(),
-            [](const auto& o) { return o.type == ObjectType::ObjectType23; });
+            [](const auto& o) { return o.type == GalaxyEggbert::Def::ObjectType::ObjectType23; });
         check(projectileIt != projectileArrivalWorld.GetMobileObjects().end() && !projectileIt->active,
               "the fired projectile self-deletes exactly on reaching posEnd (the shared ObjectType23/15 arrival handler)");
 
@@ -3635,7 +3635,7 @@ int main(int argc, char** argv)
         mutableDryWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0 + 1), kBGZ, Worlds::Block::make(BlockTypes::Air));
         dryInteraction.SpawnWaterBubble(dryWorld, dryWorld.GetWorld(), bx, by, bz);
         check(std::none_of(dryWorld.GetMobileObjects().begin(), dryWorld.GetMobileObjects().end(),
-                            [](const auto& o) { return o.active && o.type == ObjectType::ObjectType15; }),
+                            [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType15; }),
               "SpawnWaterBubble() is a no-op with no clear water column above (real num<=0 guard)");
     }
 
@@ -3771,26 +3771,26 @@ int main(int argc, char** argv)
     // representative icon per range plus a generic fallback. A pure
     // function, no LoadContent()/audio device needed.
     {
-        using GalaxyEggbert::SoundChannel;
-        check(GESound::FootstepChannelFor(41) == SoundChannel::SoundChannel78,
+        using GalaxyEggbert::Def::SoundChannel;
+        check(GESound::FootstepChannelFor(41) == GalaxyEggbert::Def::SoundChannel::SoundChannel78,
               "icon 41 (obstacle range 41-47) remaps to channel 78");
-        check(GESound::FootstepChannelFor(139) == SoundChannel::SoundChannel78,
+        check(GESound::FootstepChannelFor(139) == GalaxyEggbert::Def::SoundChannel::SoundChannel78,
               "icon 139 (obstacle range 139-143) remaps to channel 78 too");
-        check(GESound::FootstepChannelFor(15) == SoundChannel::SoundChannel80,
+        check(GESound::FootstepChannelFor(15) == GalaxyEggbert::Def::SoundChannel::SoundChannel80,
               "icon 15 (obstacle range 1-28) remaps to channel 80");
-        check(GESound::FootstepChannelFor(325) == SoundChannel::SoundChannel80,
+        check(GESound::FootstepChannelFor(325) == GalaxyEggbert::Def::SoundChannel::SoundChannel80,
               "icon 325 (obstacle range 324-329) remaps to channel 80 too");
-        check(GESound::FootstepChannelFor(338) == SoundChannel::SoundChannel82,
+        check(GESound::FootstepChannelFor(338) == GalaxyEggbert::Def::SoundChannel::SoundChannel82,
               "icon 338 remaps to channel 82");
-        check(GESound::FootstepChannelFor(350) == SoundChannel::SoundChannel84,
+        check(GESound::FootstepChannelFor(350) == GalaxyEggbert::Def::SoundChannel::SoundChannel84,
               "icon 350 (obstacle range 341-363) remaps to channel 84");
-        check(GESound::FootstepChannelFor(220) == SoundChannel::SoundChannel86,
+        check(GESound::FootstepChannelFor(220) == GalaxyEggbert::Def::SoundChannel::SoundChannel86,
               "icon 220 (obstacle range 215-234) remaps to channel 86");
-        check(GESound::FootstepChannelFor(247) == SoundChannel::SoundChannel88,
+        check(GESound::FootstepChannelFor(247) == GalaxyEggbert::Def::SoundChannel::SoundChannel88,
               "icon 247 (obstacle range 246-249) remaps to channel 88");
-        check(GESound::FootstepChannelFor(108) == SoundChannel::SoundChannel90,
+        check(GESound::FootstepChannelFor(108) == GalaxyEggbert::Def::SoundChannel::SoundChannel90,
               "icon 108 (obstacle range 107-109) remaps to channel 90");
-        check(GESound::FootstepChannelFor(BlockTypes::RockPile) == SoundChannel::SoundChannel3,
+        check(GESound::FootstepChannelFor(BlockTypes::RockPile) == GalaxyEggbert::Def::SoundChannel::SoundChannel3,
               "an icon outside all 7 remap ranges falls back to the generic channel 3");
     }
 
@@ -3924,13 +3924,13 @@ int main(int argc, char** argv)
                     if (!obj.active) continue;
                     switch (obj.type)
                     {
-                        case ObjectType::ObjectType2: case ObjectType::ObjectType3: case ObjectType::ObjectType4:
-                        case ObjectType::ObjectType16: case ObjectType::ObjectType17: case ObjectType::ObjectType20:
-                        case ObjectType::ObjectType32: case ObjectType::ObjectType33: case ObjectType::ObjectType44:
-                        case ObjectType::ObjectType54: case ObjectType::ObjectType96: case ObjectType::ObjectType97:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType2: case GalaxyEggbert::Def::ObjectType::ObjectType3: case GalaxyEggbert::Def::ObjectType::ObjectType4:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType16: case GalaxyEggbert::Def::ObjectType::ObjectType17: case GalaxyEggbert::Def::ObjectType::ObjectType20:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType32: case GalaxyEggbert::Def::ObjectType::ObjectType33: case GalaxyEggbert::Def::ObjectType::ObjectType44:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType54: case GalaxyEggbert::Def::ObjectType::ObjectType96: case GalaxyEggbert::Def::ObjectType::ObjectType97:
                             ++hazardsBefore;
                             break;
-                        case ObjectType::ObjectType7:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType7:
                             exitActiveBefore = true;
                             break;
                         default:
@@ -3954,13 +3954,13 @@ int main(int argc, char** argv)
                     if (!obj.active) continue;
                     switch (obj.type)
                     {
-                        case ObjectType::ObjectType2: case ObjectType::ObjectType3: case ObjectType::ObjectType4:
-                        case ObjectType::ObjectType16: case ObjectType::ObjectType17: case ObjectType::ObjectType20:
-                        case ObjectType::ObjectType32: case ObjectType::ObjectType33: case ObjectType::ObjectType44:
-                        case ObjectType::ObjectType54: case ObjectType::ObjectType96: case ObjectType::ObjectType97:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType2: case GalaxyEggbert::Def::ObjectType::ObjectType3: case GalaxyEggbert::Def::ObjectType::ObjectType4:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType16: case GalaxyEggbert::Def::ObjectType::ObjectType17: case GalaxyEggbert::Def::ObjectType::ObjectType20:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType32: case GalaxyEggbert::Def::ObjectType::ObjectType33: case GalaxyEggbert::Def::ObjectType::ObjectType44:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType54: case GalaxyEggbert::Def::ObjectType::ObjectType96: case GalaxyEggbert::Def::ObjectType::ObjectType97:
                             ++hazardsAfter;
                             break;
-                        case ObjectType::ObjectType7:
+                        case GalaxyEggbert::Def::ObjectType::ObjectType7:
                             exitActiveAfter = true;
                             break;
                         default:
@@ -3978,7 +3978,7 @@ int main(int argc, char** argv)
                 int treasuresInWorld = 0;
                 for (const auto& obj : cheatWorld.GetMobileObjects())
                 {
-                    if (obj.active && obj.type == ObjectType::ObjectType5) ++treasuresInWorld;
+                    if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType5) ++treasuresInWorld;
                 }
                 check(treasuresInWorld > 0, "cheat tests: sample world has at least one uncollected treasure");
                 const int before = cheatInteraction.TreasuresCollected();
@@ -3990,7 +3990,7 @@ int main(int argc, char** argv)
                 int treasuresRemaining = 0;
                 for (const auto& obj : cheatWorld.GetMobileObjects())
                 {
-                    if (obj.active && obj.type == ObjectType::ObjectType5) ++treasuresRemaining;
+                    if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType5) ++treasuresRemaining;
                 }
                 check(treasuresRemaining == 0, "CheatAllTreasure(): every treasure is deactivated");
             }
@@ -4000,7 +4000,7 @@ int main(int argc, char** argv)
                 const MobileObjSpec* realExit = nullptr;
                 for (const auto& obj : cheatWorld.GetMobileObjects())
                 {
-                    if (obj.active && obj.type == ObjectType::ObjectType7)
+                    if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType7)
                     {
                         realExit = &obj;
                         break;
@@ -4039,7 +4039,7 @@ int main(int argc, char** argv)
             const MobileObjSpec* blupih = nullptr;
             for (const auto& obj : auraWorld.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType32)
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32)
                 {
                     blupih = &obj;
                     break;
@@ -4081,7 +4081,7 @@ int main(int argc, char** argv)
             const MobileObjSpec* blupit = nullptr;
             for (const auto& obj : farWorld.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType33)
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
                 {
                     blupit = &obj;
                     break;
@@ -4121,14 +4121,14 @@ int main(int argc, char** argv)
         // Counts only ObjectType52 near the bridge cell itself -- the
         // sample world's own object-type exhibition (tools/
         // GenerateSampleWorld3D.cpp) already places one static specimen of
-        // every ObjectType (including 52) far away, so a blind global type
+        // every GalaxyEggbert::Def::ObjectType (including 52) far away, so a blind global type
         // count would always be off by that one pre-existing exhibit.
         const auto countBridgeObjsHere = [&bridgeWorld, bridgeX, bridgeZ]()
         {
             int count = 0;
             for (const auto& obj : bridgeWorld.GetMobileObjects())
             {
-                if (obj.active && obj.type == ObjectType::ObjectType52 &&
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52 &&
                     std::fabs(obj.currentX - bridgeX) < 0.5f && std::fabs(obj.currentZ - bridgeZ) < 0.5f)
                 {
                     ++count;

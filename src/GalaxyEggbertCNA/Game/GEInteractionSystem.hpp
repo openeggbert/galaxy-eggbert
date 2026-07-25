@@ -30,14 +30,14 @@ namespace GalaxyEggbert::CNA
     // counter to decrement.
     //
     // Shared kill-list contact (2026-07-11, plan.md E3D-MIG-132, widened
-    // 2026-07-11) now works for ObjectType 2/3/4/16/17/20/96/97 -- touching
+    // 2026-07-11) now works for GalaxyEggbert::Def::ObjectType 2/3/4/16/17/20/96/97 -- touching
     // any of them kills Blupi and destroys it. Verified directly against
     // the real Decor.cpp:5782-5816 source: that one code block IS the real
     // shared contact check for exactly this set of 8 types (2=patrol
     // hazard, 3=patrol hazard, 4=bulldozer, 16=spider, 17=fish, 20=bird,
     // 96/97=follower dormant/awake) -- the only difference the real source
     // makes between them is purely cosmetic (17/20 get a bigger screen-
-    // shake + a different explosion ObjectType), not a behavioral
+    // shake + a different explosion GalaxyEggbert::Def::ObjectType), not a behavioral
     // difference in whether/how Blupi dies, so IsGenericHazard() covers all
     // 8 with one check rather than splitting them into separate per-type
     // branches that would all do the same thing. Real death sound is a
@@ -177,7 +177,7 @@ namespace GalaxyEggbert::CNA
         // actually grants it -- see the *GrantedThisFrame() signals below.
         // blupiFirePressed/blupiCanFire (2026-07-13, plan.md BULLET-001,
         // both default false so existing callers/tests are unaffected):
-        // real Tank-mounted "Fire" (`KeyPressFlags::Fire`, a dedicated key
+        // real Tank-mounted "Fire" (`GalaxyEggbert::Def::KeyPressFlags::Fire`, a dedicated key
         // -- NOT the Action button used for dynamite/Perso/switches/
         // vehicle mount above) verified directly against Decor.cpp:
         // 4308-4344. blupiCanFire is the caller's own `GetVehicleMode()==
@@ -368,7 +368,7 @@ namespace GalaxyEggbert::CNA
         // the game class once the real 2-stage freeze resolves for
         // Sucette/Drink/Charge (plan.md `173`).
         void RespawnPickupItem(GEWorldRuntime& worldRuntime, float x, float y, float z,
-                                GalaxyEggbert::ObjectType type);
+                                GalaxyEggbert::Def::ObjectType type);
 
         // Invert start/stop particle burst (plan.md VISUAL-014/015,
         // ObjectType41 on grant / ObjectType42 on expiry) -- spawns 4
@@ -403,7 +403,7 @@ namespace GalaxyEggbert::CNA
         void SpawnFanHitFlash(GEWorldRuntime& worldRuntime, float x, float y, float z);
 
         // Teleporter arc (plan.md VISUAL-010, ObjectType92) -- despite
-        // ObjectType.hpp's own "spawned when Blupi uses a charged attack"
+        // Def/ObjectType.hpp's own "spawned when Blupi uses a charged attack"
         // doc comment, the ONLY real spawn site is the teleporter-trigger
         // block (`Decor.cpp:5593-5606`, already this engine's own existing
         // `TriggerTeleport()` call site) -- a single instance at
@@ -431,11 +431,11 @@ namespace GalaxyEggbert::CNA
         // loop, same as every other cosmetic burst. Called directly by the
         // game class at its own water Surf/Nage transition site, same
         // reasoning as `SpawnFanHitFlash()` above.
-        void SpawnWaterSplash(GEWorldRuntime& worldRuntime, GalaxyEggbert::ObjectType type, float x, float y, float z);
+        void SpawnWaterSplash(GEWorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type, float x, float y, float z);
 
         // Real pre-check for SpawnWaterSplash()'s "only one Plouf/Tiplouf
         // active at once" gate (`Decor.cpp:6993-6998`/`7007-7012`).
-        [[nodiscard]] bool HasActiveObjectOfType(const GEWorldRuntime& worldRuntime, GalaxyEggbert::ObjectType type) const;
+        [[nodiscard]] bool HasActiveObjectOfType(const GEWorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type) const;
 
         // Ambient rising water bubble (plan.md PICKUP-079, ObjectType15) --
         // real `Decor::MoveObjectBlup()` (`Decor.cpp:7027-7070`): scans
@@ -468,7 +468,7 @@ namespace GalaxyEggbert::CNA
         // check (false = stationary); ascending is real `m_blupiSpeedY<0.0`
         // (Overcraft) / `m_blupiVitesseY<-5.0` (Helicopter, threshold
         // dropped as a simplification -- just "moving up"); facingDX>=0 is
-        // real `Direction::Right`. Real `m_blupiPhase` (Jeep/Tank's own
+        // real `GalaxyEggbert::Def::Direction::Right`. Real `m_blupiPhase` (Jeep/Tank's own
         // emission schedule) is Blupi's own animation-state-phase counter,
         // reset on every real action-state change -- this engine has no
         // equivalent action-state machine yet (no visible Blupi model/
@@ -498,7 +498,7 @@ namespace GalaxyEggbert::CNA
         // spawn point, no offset/interpolation, same `speed=0` shape as
         // `SpawnFanHitFlash()`). Real `m_blupiPosMagic` is a SINGLE shared
         // tracker (Shield/Power/Hide can never be active simultaneously,
-        // per this engine's own mutually-exclusive `SecretPower` enum), so
+        // per this engine's own mutually-exclusive `GalaxyEggbert::Def::SecretPower` enum), so
         // one tracker suffices here too. `ResetMagicTrail()` mirrors every
         // real grant site's own `m_blupiPosMagic = m_blupiPos` (confirmed
         // at multiple real grant sites, e.g. `Decor.cpp:6022`) -- call it
@@ -652,7 +652,7 @@ namespace GalaxyEggbert::CNA
         // verified directly against `Decor::BlupiDead`/`VoyageInit`/
         // `VoyageStep`/`VoyageDraw`, Decor.cpp:6547-6614/10141-10350): the
         // real "soul ascends" Voyage fired by 2 of Blupi's 8 death-
-        // animation types (`BlupiAction::Clear2`/`Clear3` -- Clear1's own
+        // animation types (`GalaxyEggbert::Def::BlupiAction::Clear2`/`Clear3` -- Clear1's own
         // death has no VFX at all, Clear4/Saw is a particle burst not a
         // Voyage, Clear5-8 are unreachable dead code, and Glu -- spikes/
         // drip/projectile/large-creature-grab deaths -- is a wholly

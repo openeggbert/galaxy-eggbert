@@ -5,7 +5,7 @@
 #include "GEEditorPaletteRenderer.hpp"
 #include "GEPaletteCategories.hpp"
 
-#include <GalaxyEggbert/def/ObjectType.hpp>
+#include <GalaxyEggbert/Def/ObjectType.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
@@ -85,9 +85,9 @@ namespace GalaxyEggbert::CNA
             return placementKind_;
         }
 
-        [[nodiscard]] ObjectType SelectedObjectType() const noexcept
+        [[nodiscard]] GalaxyEggbert::Def::ObjectType SelectedObjectType() const noexcept
         {
-            return ToObjectType(selectedObjectType_);
+            return GalaxyEggbert::Def::ToObjectType(selectedObjectType_);
         }
 
         [[nodiscard]] std::uint16_t SelectedObjectVisualIcon() const noexcept

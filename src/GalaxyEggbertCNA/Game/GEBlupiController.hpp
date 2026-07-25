@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GalaxyEggbert/Def/SecretPower.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <array>
@@ -189,7 +190,7 @@ namespace GalaxyEggbert::CNA
         // Spring bounce (plan.md E3D-MIG-145, icon 211 = BlockTypes::Spring,
         // verified directly against Decor.cpp:2835-2911/7312-7320). Real
         // bounce velocity depends on whether Jump is held at the moment of
-        // contact and whether the "Power" (SecretPower) state is active:
+        // contact and whether the "Power" (GalaxyEggbert::Def::SecretPower) state is active:
         // held+Power=-25, held+noPower=-19, not-held+Power=-16,
         // not-held+noPower=-10 (negative=upward in the real source's own
         // convention) -- Power isn't modeled yet (Phase 17), so only the
@@ -284,7 +285,7 @@ namespace GalaxyEggbert::CNA
         // Decor.cpp ~5071-5137/~6014-6087, NOT the reference doc's own
         // speculative "Sp0-Sp7 tile icons" guess -- that guess is WRONG,
         // see GetSecretPower()'s own comment for the correction. Only one
-        // is ever active at a time (matches def/SecretPower.hpp's own
+        // is ever active at a time (matches Def/SecretPower.hpp's own
         // documented invariant); all 4 start their shared 100-level gauge
         // at the same value but tick down at their OWN real rate, giving
         // 4 different real durations despite the same start value:
@@ -308,7 +309,7 @@ namespace GalaxyEggbert::CNA
         // verified against mobile-eggbert-reference/13-object-pickups.md's
         // "Mirror/Invert" section, Decor.cpp ~6040-6052). Independent of the
         // 4 powers above (its own separate flag/gauge, not part of the
-        // mutually-exclusive SecretPower slot) -- real gate is only
+        // mutually-exclusive GalaxyEggbert::Def::SecretPower slot) -- real gate is only
         // `!m_blupiHide`, so it coexists with Shield/Power/Cloud and even
         // active vehicle rides. Shares the same 100-level gauge shape and
         // Power's own real ScaleTime(3)=0.15s/level tick rate (a direct
@@ -416,7 +417,7 @@ namespace GalaxyEggbert::CNA
         static constexpr float kOvercraftDescendSpeed = kOvercraftMaxSpeed * (12.0f / 12.0f);
         static constexpr float kVehicleVerticalAccel = kVehicleAccel * 0.5f; // real accel 0.5/tick (both flying modes)
 
-        // Jump vs Air preserves the real BlupiAction IDs 4/5 distinction.
+        // Jump vs Air preserves the real GalaxyEggbert::Def::BlupiAction IDs 4/5 distinction.
         // The 2D reference distinguishes them with a discrete, frame-counted
         // trigger window; this class instead
         // uses velocity sign (m_velocityY > 0 = ascending = Jump, <= 0 =
@@ -427,7 +428,7 @@ namespace GalaxyEggbert::CNA
         // its original Stop/March/Jump/Down/Up debug-stopgap set, per
         // mobile-eggbert-reference/08-animations.md §2's confirmed Air
         // frame data).
-        // StopEcrase/MarchEcrase/Balloon/Teleporting (real BlupiAction IDs
+        // StopEcrase/MarchEcrase/Balloon/Teleporting (real GalaxyEggbert::Def::BlupiAction IDs
         // 72/73/66/74) added 2026-07-11 with explicit user approval to
         // transcribe their real `table_blupi` icon-frame data (plan.md
         // E3D-MIG-064) -- unlike Jump/Air above, no pre-approved in-repo
@@ -435,7 +436,7 @@ namespace GalaxyEggbert::CNA
         // GEBlupiController.cpp) are a fresh, narrowly-scoped transcription
         // of exactly these 4 records from mobile-eggbert's
         // Tables::table_blupi, not a wholesale table copy. Real
-        // `BlupiAction` only defines ONE animation per status regardless of
+        // `GalaxyEggbert::Def::BlupiAction` only defines ONE animation per status regardless of
         // grounded/airborne (no "AirEcrase"/"AirBalloon" variant exists),
         // so this class's own m_ecrase/m_balloon/m_teleporting flags take
         // precedence over the Jump/Air/Down/Up/March/Stop cascade below
@@ -455,7 +456,7 @@ namespace GalaxyEggbert::CNA
             // GetAnimIcon()).
             Bye,
             // Real hazard-death lock + life-loss Voyage window (see
-            // TriggerDeathLock()/IsDeathHidden() below) -- one real BlupiAction
+            // TriggerDeathLock()/IsDeathHidden() below) -- one real GalaxyEggbert::Def::BlupiAction
             // status covering both freeze sub-states (locked hurt pose,
             // then invisible while the life-loss Voyage flies), same
             // "single animation regardless of grounded/airborne" shape as
@@ -471,7 +472,7 @@ namespace GalaxyEggbert::CNA
             PickupBusy,
             // Vehicle-mode Stop/March pairs (plan.md BLUPI-037/038/047/058/
             // 069/084/088/091/094, found 2026-07-18 while auditing the HUD
-            // animation icon's real scope): each real BlupiAction has its
+            // animation icon's real scope): each real GalaxyEggbert::Def::BlupiAction has its
             // own distinct Stop/March icon sequence (`table_blupi`, IDs
             // 15/16 Helico, 25/26 Jeep, 50/51 Tank, 37/38 Skate, 67/68
             // Over) -- selected below purely by `m_vehicleMode` + the same
@@ -495,7 +496,7 @@ namespace GalaxyEggbert::CNA
             // found 2026-07-18) -- same shape as the vehicle pairs above,
             // selected by `m_nage`/`m_surf`. TurnNage/TurnSurf NOT modeled,
             // same reason as the vehicle Turn variants above. `Drown`
-            // (real BlupiAction 24) is a distinct death-cause animation,
+            // (real GalaxyEggbert::Def::BlupiAction 24) is a distinct death-cause animation,
             // already covered by `DeathCause::Drown`'s own real frame
             // table under `DeathLocked` above, not a separate AnimState.
             StopNage, MarchNage,
@@ -503,7 +504,7 @@ namespace GalaxyEggbert::CNA
             // Hide (plan.md BLUPI-051, found 2026-07-18): real single
             // static pose (`table_blupi` ID 35, 9-frame idle-fidget cycle,
             // same shape as Stop's own long idle table) while
-            // `SecretPower::Hide` is active.
+            // `GalaxyEggbert::Def::SecretPower::Hide` is active.
             Hide,
             // Push (plan.md BLUPI-036, found 2026-07-18): real single
             // looping cycle (`table_blupi` ID 14, no idle/moving split in
@@ -555,24 +556,24 @@ namespace GalaxyEggbert::CNA
             Mockery, Mockeryi, Mockeryp
         };
 
-        // Real `SecretPower` (plan.md E3D-MIG-170): the underlying game enum
+        // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
         // itself only has 5 values (None/Shield/Power/Cloud/Hide,
-        // `def/SecretPower.hpp`) -- NOT 8. The reference doc's own "Sp0-Sp7"
+        // `Def/SecretPower.hpp`) -- NOT 8. The reference doc's own "Sp0-Sp7"
         // label for tile icons 158-165 is a speculative name-based guess
-        // ("likely SecretPower value 0-7") that this session's direct
+        // ("likely GalaxyEggbert::Def::SecretPower value 0-7") that this session's direct
         // `Decor.cpp` research disproves: `Decor::IsWorld()` (~7079-7095)
         // shows icons 158-165/166-173 are hub-screen world-select markers
         // (locked/unlocked pairs, `06-doors.md`'s own `AdaptDoors` section),
         // wholly unrelated to Blupi's own secret-power buffs. The real
         // buffs are granted by 4 `MoveObject` pickups instead (ObjectType25
         // Shield, 26 Sucette->Power, 30 Drink->Hide, 31 Charge->Cloud),
-        // confirmed directly in `Decor.cpp` ~6014-6087/~3048-3235.
-        enum class SecretPower : std::uint8_t { None, Shield, Power, Cloud, Hide };
+        // confirmed directly in `Decor.cpp` ~6014-6087/~3048-3235. The
+        // controller uses that shared definition directly.
 
         // Vehicle mounts (plan.md E3D-MIG-171). Real confirmed pickup->
         // vehicle mapping (mobile-eggbert-reference/13-object-pickups.md):
         // ObjectType13->Helicopter, 19->Jeep, 28->Tank, 24->Skateboard,
-        // 46->Overcraft (NOT "Balloon" despite ObjectType.hpp's own
+        // 46->Overcraft (NOT "Balloon" despite Def/ObjectType.hpp's own
         // misleading doc comment -- 10-blupi-mechanics.md's own research
         // found this is a confirmed real discrepancy: touching 46 sets
         // `m_blupiOver`, the Overcraft flag, not a separate Balloon ride).
@@ -689,7 +690,7 @@ namespace GalaxyEggbert::CNA
         void PopBalloon() noexcept;
 
         // Secret powers (plan.md E3D-MIG-170/172/173/174, see the
-        // SecretPower enum's own comment). Each Trigger*() applies the real
+        // GalaxyEggbert::Def::SecretPower enum's own comment). Each Trigger*() applies the real
         // exact OTHER-BUFF gate for that pickup (checked directly against
         // Decor.cpp) and, if it passes, grants that power (resetting the
         // shared gauge to kSecretPowerMax, overwriting whatever was active
@@ -712,9 +713,9 @@ namespace GalaxyEggbert::CNA
         bool TriggerCloud() noexcept;  // real gate: not already ANY power (loosest/most defensive)
         bool TriggerHide() noexcept;   // real gate: not already Shield/Cloud
 
-        [[nodiscard]] SecretPower GetSecretPower() const noexcept { return m_secretPower; }
-        [[nodiscard]] bool IsShielded() const noexcept { return m_secretPower == SecretPower::Shield; }
-        [[nodiscard]] bool IsHidden() const noexcept { return m_secretPower == SecretPower::Hide; }
+        [[nodiscard]] GalaxyEggbert::Def::SecretPower GetSecretPower() const noexcept { return m_secretPower; }
+        [[nodiscard]] bool IsShielded() const noexcept { return m_secretPower == GalaxyEggbert::Def::SecretPower::Shield; }
+        [[nodiscard]] bool IsHidden() const noexcept { return m_secretPower == GalaxyEggbert::Def::SecretPower::Hide; }
         // Real hazard-immunity gate (`!m_blupiShield && !m_blupiHide`,
         // confirmed identical across essentially every hazard/enemy death
         // check in Decor.cpp -- lava/spikes/saw/blitz/crusher/dynamite/fan/
@@ -811,7 +812,7 @@ namespace GalaxyEggbert::CNA
         // has none (confirmed: `AdaptMotorVehicleSound()`'s own `if`/`else if` chain checks only
         // those 4 modes). `HasVehicleMotor()` is the "should a loop be playing at all" gate;
         // `IsVehicleMotorHigh()` is the pitch-select flag, translated from the real per-mode
-        // `m_blupiMotorHigh` assignments (Jeep: `m_blupiAction != BlupiAction::Stop`, i.e.
+        // `m_blupiMotorHigh` assignments (Jeep: `m_blupiAction != GalaxyEggbert::Def::BlupiAction::Stop`, i.e.
         // nonzero horizontal velocity including coasting after input release, translated here as
         // nonzero `m_vehicleSpeed`; Helicopter/Overcraft: real code uses their own analogous
         // "not idle" checks, translated here as nonzero vertical `m_velocityY`, the flight-mode
@@ -852,7 +853,7 @@ namespace GalaxyEggbert::CNA
         bool TriggerSpringBounce(bool jumpHeld) noexcept;
 
         // Enters the teleport-transit state (plan.md E3D-MIG-147, real
-        // `BlupiAction::Teleporte`: `m_blupiVitesseX/Y=0`,
+        // `GalaxyEggbert::Def::BlupiAction::Teleporte`: `m_blupiVitesseX/Y=0`,
         // `m_blupiFocus=false`) -- freezes Blupi completely (no movement/
         // turning/jump/gravity at all, see Step()) for kTeleportDuration
         // seconds. Real gate: grounded and not already in transit
@@ -1074,7 +1075,7 @@ namespace GalaxyEggbert::CNA
         // GetAnimIcon()'s value with the real direction-mirror step applied
         // (table_mirror, BLUPI-079, added 2026-07-20, Decor.cpp:2412-2449)
         // -- real source substitutes the mirrored icon whenever
-        // Direction::Left (base data is right-facing by convention),
+        // GalaxyEggbert::Def::Direction::Left (base data is right-facing by convention),
         // flipped again by m_blupiInvert. This engine has no discrete
         // left/right facing, only a continuous 3D yaw -- approximated via
         // the same std::sin(yaw)-sign convention GalaxyEggbertCnaGame.cpp
@@ -1322,7 +1323,7 @@ namespace GalaxyEggbert::CNA
         // have their own distinct real accel/decel rates.
         float m_balloonHorizontalSpeed = 0.0f;
 
-        SecretPower m_secretPower = SecretPower::None;
+        GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;
         int m_secretPowerLevel = 0;
         float m_secretPowerTimer = 0.0f;
         bool m_secretPowerJustWarned = false;

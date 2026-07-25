@@ -8,7 +8,7 @@ namespace GalaxyEggbert::CNA
         // (mobile-eggbert `Tables.cpp:2027-2081`, data-table transcription
         // approved by the user 2026-07-14) -- a flat record list, each record
         // `{actionId, frameCount, dx1,dy1, dx2,dy2, ..., dxN,dyN}`, terminated
-        // by a 0. actionId matches the real `DecorAction` enum's raw values:
+        // by a 0. actionId matches the real `GalaxyEggbert::Def::DecorAction` enum's raw values:
         // 1=Small, 2=Big, 5=Electric (3/4 are unused gaps in the real enum
         // too). Kept as one flat array (not pre-split into 3 named tables)
         // specifically so the walk below can mirror the real

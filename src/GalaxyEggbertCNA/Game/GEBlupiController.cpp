@@ -101,7 +101,7 @@ namespace GalaxyEggbert::CNA
         // frame0..frameN-1] record layout, not by hand), added 2026-07-16
         // under the user's standing blanket approval (2026-07-14) for small
         // real data-table transcriptions -- validated by cross-checking the
-        // same script against BlupiAction::Teleporte(74) first, which
+        // same script against GalaxyEggbert::Def::BlupiAction::Teleporte(74) first, which
         // reproduced kTeleportingFrames above byte-for-byte. -1 is the real
         // "invisible frame" sentinel (same convention as kTeleportingFrames);
         // GetAnimIcon() substitutes icon 0 for it, same simplification.
@@ -559,12 +559,12 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerShield() noexcept
     {
-        if (m_secretPower == SecretPower::Shield || m_secretPower == SecretPower::Hide ||
-            m_secretPower == SecretPower::Power)
+        if (m_secretPower == GalaxyEggbert::Def::SecretPower::Shield || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide ||
+            m_secretPower == GalaxyEggbert::Def::SecretPower::Power)
         {
             return false;
         }
-        m_secretPower = SecretPower::Shield;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::Shield;
         m_secretPowerLevel = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
@@ -572,11 +572,11 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerPower() noexcept
     {
-        if (m_secretPower == SecretPower::Shield)
+        if (m_secretPower == GalaxyEggbert::Def::SecretPower::Shield)
         {
             return false;
         }
-        m_secretPower = SecretPower::Power;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::Power;
         m_secretPowerLevel = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
@@ -584,11 +584,11 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerCloud() noexcept
     {
-        if (m_secretPower != SecretPower::None)
+        if (m_secretPower != GalaxyEggbert::Def::SecretPower::None)
         {
             return false;
         }
-        m_secretPower = SecretPower::Cloud;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::Cloud;
         m_secretPowerLevel = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
@@ -596,11 +596,11 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerHide() noexcept
     {
-        if (m_secretPower == SecretPower::Shield || m_secretPower == SecretPower::Cloud)
+        if (m_secretPower == GalaxyEggbert::Def::SecretPower::Shield || m_secretPower == GalaxyEggbert::Def::SecretPower::Cloud)
         {
             return false;
         }
-        m_secretPower = SecretPower::Hide;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::Hide;
         m_secretPowerLevel = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
@@ -608,7 +608,7 @@ namespace GalaxyEggbert::CNA
 
     bool GEBlupiController::TriggerInvert() noexcept
     {
-        if (m_invert || m_secretPower == SecretPower::Hide)
+        if (m_invert || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide)
         {
             return false;
         }
@@ -630,9 +630,9 @@ namespace GalaxyEggbert::CNA
         }
         m_vehicleMode = mode;
         m_vehicleSpeed = 0.0f;
-        if (m_secretPower == SecretPower::Cloud || m_secretPower == SecretPower::Hide)
+        if (m_secretPower == GalaxyEggbert::Def::SecretPower::Cloud || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide)
         {
-            m_secretPower = SecretPower::None;
+            m_secretPower = GalaxyEggbert::Def::SecretPower::None;
             m_secretPowerLevel = 0;
             m_secretPowerTimer = 0.0f;
         }
@@ -796,7 +796,7 @@ namespace GalaxyEggbert::CNA
         m_vehicleSpeed = 0.0f;
         m_balloon = false;
         m_ecrase = false;
-        m_secretPower = SecretPower::None;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::None;
         m_secretPowerLevel = 0;
         m_secretPowerTimer = 0.0f;
         m_invert = false;
@@ -1035,7 +1035,7 @@ namespace GalaxyEggbert::CNA
             // previously-documented "not modeled" gap, now closed.
             const bool wasAboveZero = m_waterGaugeLevel > 0;
             const bool shieldOrHideImmune =
-                m_secretPower == SecretPower::Shield || m_secretPower == SecretPower::Hide;
+                m_secretPower == GalaxyEggbert::Def::SecretPower::Shield || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide;
             m_waterGaugeTimer += dt;
             while (m_waterGaugeTimer >= kWaterGaugeTickSeconds && m_waterGaugeLevel > 0)
             {
@@ -1129,7 +1129,7 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
-        // Teleport transit (plan.md E3D-MIG-147): real BlupiAction::
+        // Teleport transit (plan.md E3D-MIG-147): real GalaxyEggbert::Def::BlupiAction::
         // Teleporte zeroes velocity once at trigger and drops m_blupiFocus,
         // which gates essentially every other per-frame input/gravity
         // block in the real source -- since he's grounded (not
@@ -1449,7 +1449,7 @@ namespace GalaxyEggbert::CNA
             // velocity (kSkateboardJumpSpeed/Powered), not the headroom-
             // modulated Decor::IsNormalJump() values below, which apply to
             // ordinary (no-vehicle) Blupi only.
-            const bool powered = m_secretPower == SecretPower::Power;
+            const bool powered = m_secretPower == GalaxyEggbert::Def::SecretPower::Power;
             if (m_vehicleMode == VehicleMode::Skateboard)
             {
                 m_velocityY = powered ? kSkateboardJumpSpeedPowered : kSkateboardJumpSpeed;
@@ -1493,15 +1493,15 @@ namespace GalaxyEggbert::CNA
         // JustCrossedSecretPowerWarning() below for the caller to play the
         // real per-power channel.
         m_secretPowerJustWarned = false;
-        if (m_secretPower != SecretPower::None)
+        if (m_secretPower != GalaxyEggbert::Def::SecretPower::None)
         {
-            const float tickSeconds = m_secretPower == SecretPower::Shield ? kShieldTickSeconds
-                                     : m_secretPower == SecretPower::Power  ? kPowerTickSeconds
-                                     : m_secretPower == SecretPower::Hide   ? kHideTickSeconds
+            const float tickSeconds = m_secretPower == GalaxyEggbert::Def::SecretPower::Shield ? kShieldTickSeconds
+                                     : m_secretPower == GalaxyEggbert::Def::SecretPower::Power  ? kPowerTickSeconds
+                                     : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide   ? kHideTickSeconds
                                                                             : kCloudTickSeconds;
-            const int warnLevel = m_secretPower == SecretPower::Shield ? kShieldWarnLevel
-                                 : m_secretPower == SecretPower::Power  ? kPowerWarnLevel
-                                 : m_secretPower == SecretPower::Hide   ? kHideWarnLevel
+            const int warnLevel = m_secretPower == GalaxyEggbert::Def::SecretPower::Shield ? kShieldWarnLevel
+                                 : m_secretPower == GalaxyEggbert::Def::SecretPower::Power  ? kPowerWarnLevel
+                                 : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide   ? kHideWarnLevel
                                                                         : kCloudWarnLevel;
             m_secretPowerTimer += dt;
             while (m_secretPowerTimer >= tickSeconds && m_secretPowerLevel > 0)
@@ -1515,7 +1515,7 @@ namespace GalaxyEggbert::CNA
             }
             if (m_secretPowerLevel <= 0)
             {
-                m_secretPower = SecretPower::None;
+                m_secretPower = GalaxyEggbert::Def::SecretPower::None;
                 m_secretPowerTimer = 0.0f;
             }
         }
@@ -1733,7 +1733,7 @@ namespace GalaxyEggbert::CNA
         };
 
         // Precedence: Teleporting/Balloon/Ecrase/Hide/Nage/Surf/vehicle
-        // (each a real BlupiAction status with only ONE real animation
+        // (each a real GalaxyEggbert::Def::BlupiAction status with only ONE real animation
         // regardless of grounded/airborne, see the AnimState enum's own
         // comment) beat the normal ground/air cascade entirely: airborne
         // beats crouch/look-up beats moving beats
@@ -1747,7 +1747,7 @@ namespace GalaxyEggbert::CNA
                                   : m_teleporting ? AnimState::Teleporting
                                   : m_balloon     ? AnimState::Balloon
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
-                                  : m_secretPower == SecretPower::Hide ? AnimState::Hide
+                                  : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide ? AnimState::Hide
                                   : m_nage        ? (moving ? AnimState::MarchNage : AnimState::StopNage)
                                   : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
                                   : IsInVehicle() ? vehicleAnimState()

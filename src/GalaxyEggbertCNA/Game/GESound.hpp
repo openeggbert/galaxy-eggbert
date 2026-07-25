@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GalaxyEggbert/def/SoundChannel.hpp>
+#include <GalaxyEggbert/Def/SoundChannel.hpp>
 
 #include <Microsoft/Xna/Framework/Audio/SoundEffect.hpp>
 #include <Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp>
@@ -40,12 +40,12 @@ namespace GalaxyEggbert::CNA
         // already playing is not restarted, except
         // channel 10. A channel with no loaded file (missing WAV) is a
         // silent no-op, not an error.
-        void Play(GalaxyEggbert::SoundChannel channel, bool loop = false);
+        void Play(GalaxyEggbert::Def::SoundChannel channel, bool loop = false);
         // Stops just one channel's instance (a no-op if it isn't currently playing/doesn't
         // exist) -- needed for real looped sounds with a distinct stop trigger (e.g. the
         // crate-push loop, ch38) where StopAll() would incorrectly also kill every other
         // currently-playing sound.
-        void Stop(GalaxyEggbert::SoundChannel channel);
+        void Stop(GalaxyEggbert::Def::SoundChannel channel);
         void StopAll();
 
         void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }
@@ -54,7 +54,7 @@ namespace GalaxyEggbert::CNA
         // Named shortcuts for movement/jump/landing events. The complete
         // real channel map is maintained in
         // mobile-eggbert-reference/07-sounds.md.
-        void PlayJump() { Play(GalaxyEggbert::SoundChannel::SoundChannel1); }
+        void PlayJump() { Play(GalaxyEggbert::Def::SoundChannel::SoundChannel1); }
 
         // Real mobile-eggbert (mobile-eggbert-reference/07-sounds.md,
         // channels 0-9): channel 3 covers BOTH footstep AND landing -- one
@@ -85,7 +85,7 @@ namespace GalaxyEggbert::CNA
         // (1-28,78-90,250-260,311-316,324-329), 82 (284-303,338), 84
         // (341-363), 86 (215-234), 88 (246-249), 90 (107-109). Falls back
         // to the generic channel 3 for every icon outside all 7 ranges.
-        [[nodiscard]] static GalaxyEggbert::SoundChannel FootstepChannelFor(std::uint16_t icon) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Def::SoundChannel FootstepChannelFor(std::uint16_t icon) noexcept;
 
     private:
         struct Channel

@@ -50,6 +50,12 @@ removed after CNA reached playable parity. The last pre-removal state is recover
 all 90 applicable CTest tests pass. The ignored 277MB legacy `build/` tree was also removed;
 historical entries below are intentionally retained as migration history._
 
+_Definition cleanup 2026-07-25: `INFRA-011` is complete. The 12 shared definition headers moved
+from `include/GalaxyEggbert/def/` to `include/GalaxyEggbert/Def/`, and their declarations now live
+in `GalaxyEggbert::Def`. All consumers use the new namespace directly, without legacy aliases.
+The duplicate controller-local `SecretPower` enum was removed in favor of the shared definition.
+The full `-j2` build succeeds and all 90 applicable CTest tests pass._
+
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
 Infrastructure & Dual-Renderer — Vision") is new: a non-binding assessment of merged
@@ -2145,7 +2151,7 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
 - `GEHud` — 2D HUD rendering in mobile-eggbert's own 640x480 reference space, plus the
   `ProjectWorldToHudSpace()` static utility (world position → that reference space, via a real
   clip-space `Vector4::Transform` then inverting `GEHud`'s own ref↔viewport scale/offset math).
-- `include/GalaxyEggbert/Worlds/`, `def/*.hpp`, `BlockTypes.hpp` — engine-agnostic data model
+- `include/GalaxyEggbert/Worlds/`, `Def/*.hpp`, `BlockTypes.hpp` — engine-agnostic data model
   (`World`/`Chunk`/`Block`, real enum IDs). Shared by any future engine target; keep it that way
   (no CNA/Easy3D-specific dependencies here).
 

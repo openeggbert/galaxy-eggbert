@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Simulation ticks per rendered frame. Normal=1 is default.
 enum class GameSpeed : uint8_t
@@ -21,4 +21,4 @@ constexpr bool operator<=(GameSpeed a, GameSpeed b) { return ToRaw(a) <= ToRaw(b
 constexpr bool operator>(GameSpeed a, GameSpeed b)  { return ToRaw(a) >  ToRaw(b); }
 constexpr bool operator>=(GameSpeed a, GameSpeed b) { return ToRaw(a) >= ToRaw(b); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

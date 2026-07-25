@@ -48,6 +48,7 @@ guidance.
 
 - `src/GalaxyEggbertCNA/` — game implementation, renderer, gameplay, menus, and editor.
 - `include/GalaxyEggbert/`, `src/GalaxyEggbert/` — engine-independent world/data model.
+- `include/GalaxyEggbert/Def/` — shared game definitions in namespace `GalaxyEggbert::Def`.
 - `tools/` — generators and scripted verification executables.
 - `mobile-eggbert-reference/` — researched behavioral/source-of-truth notes.
 - `worlds3d/` — hand-authored `.vwr` worlds.

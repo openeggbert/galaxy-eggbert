@@ -29,8 +29,8 @@
 // behavior, sampled at the right stride, never hand-copied).
 //
 // §3.1/§3.2 only (not §4, explosions) -- the doc's own §4 text explicitly
-// says "which ObjectType triggers which explo1..8 table was not resolved
-// in this pass", so there is no ObjectType->table mapping to cross-check
+// says "which GalaxyEggbert::Def::ObjectType triggers which explo1..8 table was not resolved
+// in this pass", so there is no GalaxyEggbert::Def::ObjectType->table mapping to cross-check
 // against for explosions without inventing one here.
 //
 // One deliberate manual correction, not silent guessing: the doc's own
@@ -49,7 +49,7 @@
 #include <string>
 #include <vector>
 
-using GalaxyEggbert::ObjectType;
+using GalaxyEggbert::Def::ObjectType;
 using namespace GalaxyEggbert::CNA;
 
 namespace
@@ -75,10 +75,10 @@ namespace
     };
 
     // Parses every "| N (description) | F ... | ..." row from the doc's
-    // §3.1/§3.2 tables (both share this exact column shape: ObjectType |
+    // §3.1/§3.2 tables (both share this exact column shape: GalaxyEggbert::Def::ObjectType |
     // Frames | ...). Stops collecting once §4's own header line is seen,
     // so explosion-table rows (a different column shape entirely) are
-    // never misparsed as ObjectType rows.
+    // never misparsed as GalaxyEggbert::Def::ObjectType rows.
     std::vector<DocRow> ParseReferenceDoc(const std::string& path)
     {
         std::ifstream in(path);
@@ -89,7 +89,7 @@ namespace
         }
         // Matches "| 2 (patrol enemy A) | 9 | 1.0 s | ..." and
         // "| 5 (treasure sparkle) | 22 (11-icon ping-pong) | ...":
-        // group 1 = ObjectType number, group 2 = description,
+        // group 1 = GalaxyEggbert::Def::ObjectType number, group 2 = description,
         // group 3 = Frames number (the leading integer of that cell).
         const std::regex rowPattern(R"(^\|\s*(\d+)\s*\(([^)]*)\)\s*\|\s*(\d+))");
         std::string line;
@@ -124,7 +124,7 @@ namespace
     // Per-type hold divisor -- read directly from GEObjectIcons.cpp's own
     // `(p / D) % base` / `p % base` case bodies (see this file's own top
     // comment for why this specific fact, and only this fact, is read from
-    // source rather than measured). Keyed by the ObjectType actually
+    // source rather than measured). Keyed by the GalaxyEggbert::Def::ObjectType actually
     // tested (post `96`-awake-correction, i.e. 97 not 96 for that row).
     const std::map<int, int>& Divisors()
     {
@@ -145,7 +145,7 @@ namespace
     // verifyRange comfortably exceeds any real base in this table (largest
     // documented count is 34), so a false-positive short match can't
     // survive the full range check.
-    int FindModuloBase(ObjectType type, int divisor, int maxPeriod, int verifyRange)
+    int FindModuloBase(GalaxyEggbert::Def::ObjectType type, int divisor, int maxPeriod, int verifyRange)
     {
         for (int candidate = 1; candidate <= maxPeriod; ++candidate)
         {
@@ -173,7 +173,7 @@ int main()
     // reads a real file (see CMakeLists.txt's own WORKING_DIRECTORY note).
     const std::string docPath = "mobile-eggbert-reference/08-animations.md";
     const auto rows = ParseReferenceDoc(docPath);
-    check(!rows.empty(), "parsed at least one ObjectType row from " + docPath + " (file missing or format changed?)");
+    check(!rows.empty(), "parsed at least one GalaxyEggbert::Def::ObjectType row from " + docPath + " (file missing or format changed?)");
     // 3.1 has 14 rows, 3.2 has 10 (including the 96-awake labeling quirk
     // row) -- 24 total. A count assertion, not just "non-empty", so a
     // format change that silently drops rows fails loudly here too.
@@ -185,12 +185,12 @@ int main()
         // the doc's "96 (follower, awake/homing)" row really means
         // ObjectType97 in the code, not 96 -- 96 already has its own
         // separate (dormant) row.
-        ObjectType type = static_cast<ObjectType>(row.objectType);
+        GalaxyEggbert::Def::ObjectType type = static_cast<GalaxyEggbert::Def::ObjectType>(row.objectType);
         int divisorKey = row.objectType;
         std::string label = std::to_string(row.objectType) + " (" + row.label + ")";
         if (row.objectType == 96 && row.label.find("awake") != std::string::npos)
         {
-            type = ObjectType::ObjectType97;
+            type = GalaxyEggbert::Def::ObjectType::ObjectType97;
             divisorKey = 97;
             label += " [doc labels this 96, real table is keyed by ObjectType97]";
         }
@@ -198,7 +198,7 @@ int main()
         const auto divisorIt = Divisors().find(divisorKey);
         if (divisorIt == Divisors().end())
         {
-            check(false, label + ": no known divisor entry for this ObjectType (doc row added without updating "
+            check(false, label + ": no known divisor entry for this GalaxyEggbert::Def::ObjectType (doc row added without updating "
                                   "the Divisors() table above?)");
             continue;
         }

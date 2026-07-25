@@ -236,7 +236,7 @@ int main()
                     matches &= palette.SelectedPlacementKind() ==
                             GEEditorPalette::PlacementKind::Object &&
                         palette.SelectedObjectType() ==
-                            GalaxyEggbert::ToObjectType(object);
+                            GalaxyEggbert::Def::ToObjectType(object);
                 }
                 else if (spawn > 0)
                 {
@@ -366,13 +366,13 @@ int main()
     {
         GEEditorPalette palette;
         check(!palette.IsObjectMode(), "the palette starts in Blocks mode");
-        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType6,
+        check(palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType6,
               "the default object selection remains the extra-life egg");
         check(click(palette, 30.0f, 324.0f).clickConsumed,
               "the Treasures category consumes its click");
         check(click(palette, 72.0f, 324.0f).clickConsumed,
               "the chest entry consumes its click");
-        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType5,
+        check(palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType5,
               "the chest glyph selects the treasure object");
         check(palette.IsObjectMode(), "selecting an object enters Objects mode");
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
@@ -384,7 +384,7 @@ int main()
         check(!palette.IsObjectMode(), "selecting a block returns to Blocks mode");
         check(palette.SelectedBlockType() == 2,
               "the first Technical block selects verified block type 2");
-        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType5,
+        check(palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType5,
               "block selection preserves the object selection");
     }
 
@@ -393,7 +393,7 @@ int main()
         (void)click(palette, 30.0f, 240.0f);
         const auto inverter = click(palette, 450.0f, 240.0f);
         check(inverter.clickConsumed &&
-                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType40 &&
+                  palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType40 &&
                   palette.IsObjectMode(),
               "the Inverter glyph selects the functional invert object");
         check(!palette.IsNotYetImplementedNoticeVisible(),
@@ -405,7 +405,7 @@ int main()
         (void)click(palette, 30.0f, 366.0f);
         const auto woodenCase = click(palette, 408.0f, 366.0f);
         check(woodenCase.clickConsumed &&
-                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType12 &&
+                  palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType12 &&
                   palette.IsObjectMode(),
               "the Wooden case glyph selects the functional pushable crate");
         check(!palette.IsNotYetImplementedNoticeVisible(),
@@ -417,7 +417,7 @@ int main()
         (void)click(palette, 30.0f, 408.0f);
         const auto hovercraft = click(palette, 72.0f, 408.0f);
         check(hovercraft.clickConsumed &&
-                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType46 &&
+                  palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType46 &&
                   palette.IsObjectMode(),
               "the Hovercraft glyph selects Galaxy's functional Overcraft");
         check(!palette.IsNotYetImplementedNoticeVisible(),
@@ -455,18 +455,18 @@ int main()
         {
             float categoryY;
             int itemIndex;
-            GalaxyEggbert::ObjectType expectedType;
+            GalaxyEggbert::Def::ObjectType expectedType;
             const char* message;
         } bombEntries[] = {
-            {240.0f, 0, GalaxyEggbert::ObjectType::ObjectType2,
+            {240.0f, 0, GalaxyEggbert::Def::ObjectType::ObjectType2,
              "Bomb selects TYPE_BOMBEDOWN"},
-            {240.0f, 1, GalaxyEggbert::ObjectType::ObjectType3,
+            {240.0f, 1, GalaxyEggbert::Def::ObjectType::ObjectType3,
              "Hanging bomb selects TYPE_BOMBEUP"},
-            {240.0f, 2, GalaxyEggbert::ObjectType::ObjectType96,
+            {240.0f, 2, GalaxyEggbert::Def::ObjectType::ObjectType96,
              "Homing bomb selects TYPE_BOMBEFOLLOW1"},
-            {282.0f, 10, GalaxyEggbert::ObjectType::ObjectType16,
+            {282.0f, 10, GalaxyEggbert::Def::ObjectType::ObjectType16,
              "Moving bomb selects TYPE_BOMBEMOVE"},
-            {324.0f, 7, GalaxyEggbert::ObjectType::ObjectType200,
+            {324.0f, 7, GalaxyEggbert::Def::ObjectType::ObjectType200,
              "Personal bomb selects TYPE_BOMBEPERSO1"},
         };
         for (const auto& entry : bombEntries)
@@ -491,7 +491,7 @@ int main()
         (void)click(palette, 30.0f, 366.0f);
         const auto secretCase = click(palette, 450.0f, 366.0f);
         check(secretCase.clickConsumed &&
-                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType12 &&
+                  palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType12 &&
                   palette.SelectedObjectVisualIcon() ==
                       GalaxyEggbert::BlockTypes::RockPile &&
                   palette.IsObjectMode(),
@@ -618,7 +618,7 @@ int main()
         tap(499, 451);
         const auto objects = GalaxyEggbert::CollectMoveObjects(world);
         check(objects.size() == 1 &&
-                  objects[0].type == GalaxyEggbert::ObjectType::ObjectType12 &&
+                  objects[0].type == GalaxyEggbert::Def::ObjectType::ObjectType12 &&
                   objects[0].visualIcon == GalaxyEggbert::BlockTypes::RockPile,
               "placing Secret wooden case persists its exact camouflage variant");
     }

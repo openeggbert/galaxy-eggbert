@@ -20,7 +20,7 @@ becomes a second render layer or per-block metadata) — those are open question
 `09-open-questions.md`, to be resolved in a separate mapping-design task. All facts below were
 read directly from `../mobile-eggbert` (read-only reference) and cross-checked against
 galaxy-eggbert's own already-approved partial ports (`include/GalaxyEggbert/BlockTypes.hpp`,
-`include/GalaxyEggbert/def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`,
+`include/GalaxyEggbert/Def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`,
 `src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp`).
 
 **Extended 2026-07-05 (`DOC-300`-`DOC-306`) with a prose gameplay-behavior spec** — files

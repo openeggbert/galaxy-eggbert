@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GalaxyEggbert/Worlds/World.hpp"
-#include "GalaxyEggbert/def/ObjectType.hpp"
+#include "GalaxyEggbert/Def/ObjectType.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -29,9 +29,9 @@ namespace GalaxyEggbert {
 // center of the occupied voxel cell: an object standing on a solid block at
 // Y=0 therefore has Y=1. Renderers must not add another vertical block.
 struct MoveObjectRecord final {
-    ObjectType type = ObjectType::ObjectType0;
+    GalaxyEggbert::Def::ObjectType type = GalaxyEggbert::Def::ObjectType::ObjectType0;
     // Optional object-m.png tile override for placed variants whose visual
-    // identity cannot be derived from ObjectType alone. Zero uses the
+    // identity cannot be derived from GalaxyEggbert::Def::ObjectType alone. Zero uses the
     // normal GetObjIcon(type, phase) mapping. Eggbert 2's secret wooden
     // case uses this to retain its terrain camouflage across save/load.
     std::uint16_t visualIcon = 0;
@@ -61,7 +61,7 @@ struct MoveObjectRecord final {
 // metadataType discriminator reserved for MoveObjectRecord payloads in
 // Worlds::World's block-extra-metadata records. Every MoveObjectRecord in a
 // world uses this same value; the payload itself (not the metadataType)
-// distinguishes which ObjectType it is.
+// distinguishes which GalaxyEggbert::Def::ObjectType it is.
 constexpr std::uint16_t kMoveObjectMetadataType = 1;
 
 // Places @p record in @p world, anchored at floor(posStartX/Y/Z) -- the

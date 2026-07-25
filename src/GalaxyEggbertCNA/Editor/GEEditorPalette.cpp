@@ -18,7 +18,7 @@ namespace GalaxyEggbert::CNA
     GEEditorPalette::GEEditorPalette()
         : categories_(ConfirmedBlockCategories()),
           selectedBlockType_(static_cast<int>(GalaxyEggbert::BlockTypes::RockPile)),
-          selectedObjectType_(static_cast<int>(ObjectType::ObjectType6))
+          selectedObjectType_(static_cast<int>(GalaxyEggbert::Def::ObjectType::ObjectType6))
     {
         categories_.push_back(GalaxyBackgroundCategory());
     }

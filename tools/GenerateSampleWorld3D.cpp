@@ -133,7 +133,7 @@ namespace
         }
 
         MoveObjectRecord exit;
-        exit.type = ObjectType::ObjectType7;
+        exit.type = GalaxyEggbert::Def::ObjectType::ObjectType7;
         exit.posStartX = exit.posEndX = 52.0f;
         exit.posStartY = exit.posEndY = 1.0f;
         exit.posStartZ = exit.posEndZ = 50.0f;
@@ -388,7 +388,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // the CNA-side "-kWorldCenterX/Z" render/camera space -- see
     // MoveObjectRecord.hpp's doc comment.
     // ------------------------------------------------------------------
-    const auto place = [&world](ObjectType type, float x, float y, float z)
+    const auto place = [&world](GalaxyEggbert::Def::ObjectType type, float x, float y, float z)
     {
         MoveObjectRecord record;
         record.type = type;
@@ -412,7 +412,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // crow's-nest stepping stones.
     {
         MoveObjectRecord lift;
-        lift.type = ObjectType::ObjectType1;
+        lift.type = GalaxyEggbert::Def::ObjectType::ObjectType1;
         lift.posStartX = 50.0f; lift.posStartY = 5.0f; lift.posStartZ = 28.0f;
         lift.posEndX = 50.0f;   lift.posEndY = 8.0f;   lift.posEndZ = 28.0f;
         PlaceMoveObject(world, lift);
@@ -445,7 +445,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // unchanged. A short 4-unit patrol along the flat corridor floor.
     {
         MoveObjectRecord wasp;
-        wasp.type = ObjectType::ObjectType44;
+        wasp.type = GalaxyEggbert::Def::ObjectType::ObjectType44;
         wasp.posStartX = 53.0f; wasp.posStartY = 1.0f; wasp.posStartZ = 50.0f;
         wasp.posEndX = 57.0f;   wasp.posEndY = 1.0f;   wasp.posEndZ = 50.0f;
         PlaceMoveObject(world, wasp);
@@ -453,9 +453,9 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
 
     // North hill: 2 eggs + 1 chest along the ascent, 1 wasp patrolling the
     // plateau, 1 more chest + the level-exit goal in the crow's-nest.
-    place(ObjectType::ObjectType6, 47.0f, 1.0f, 44.0f);  // egg, on the connector
-    place(ObjectType::ObjectType6, 52.0f, 3.0f, 36.0f);  // egg, partway up the steps
-    place(ObjectType::ObjectType5, 45.0f, 5.0f, 29.0f);  // chest, on the plateau
+    place(GalaxyEggbert::Def::ObjectType::ObjectType6, 47.0f, 1.0f, 44.0f);  // egg, on the connector
+    place(GalaxyEggbert::Def::ObjectType::ObjectType6, 52.0f, 3.0f, 36.0f);  // egg, partway up the steps
+    place(GalaxyEggbert::Def::ObjectType::ObjectType5, 45.0f, 5.0f, 29.0f);  // chest, on the plateau
     // Real patrol range (fixed 2026-07-20, same wasp-freeze bug as the
     // spawn-corridor wasp above -- see that one's own comment for the
     // full citation). Plateau spans grid x=45..55, z=25..32 (y=4 floor) --
@@ -463,31 +463,31 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // the chests/grass-demo tiles nearby.
     {
         MoveObjectRecord wasp;
-        wasp.type = ObjectType::ObjectType44;
+        wasp.type = GalaxyEggbert::Def::ObjectType::ObjectType44;
         wasp.posStartX = 47.0f; wasp.posStartY = 5.0f; wasp.posStartZ = 30.0f;
         wasp.posEndX = 53.0f;   wasp.posEndY = 5.0f;   wasp.posEndZ = 30.0f;
         PlaceMoveObject(world, wasp);
     }
-    place(ObjectType::ObjectType5, 51.0f, 9.0f, 28.0f);  // chest, in the crow's-nest
-    place(ObjectType::ObjectType7, 49.0f, 9.0f, 28.0f);  // level-exit goal, in the crow's-nest
+    place(GalaxyEggbert::Def::ObjectType::ObjectType5, 51.0f, 9.0f, 28.0f);  // chest, in the crow's-nest
+    place(GalaxyEggbert::Def::ObjectType::ObjectType7, 49.0f, 9.0f, 28.0f);  // level-exit goal, in the crow's-nest
 
     // South tunnel: 4 crates blocking/lining the path, 1 patrol enemy, 1
     // spider (real shared kill-list contact-death, plan.md E3D-MIG-132
     // widened 2026-07-11), 1 chest tucked at the grate/pit end, 1 key past
     // the water hazard.
-    place(ObjectType::ObjectType12, 35.0f, 1.0f, 67.0f);
-    place(ObjectType::ObjectType12, 38.0f, 1.0f, 67.0f);
-    place(ObjectType::ObjectType12, 52.0f, 1.0f, 67.0f);
-    place(ObjectType::ObjectType12, 63.0f, 1.0f, 67.0f);
-    place(ObjectType::ObjectType2, 41.0f, 1.0f, 67.0f);   // standard patrol enemy
-    place(ObjectType::ObjectType16, 57.0f, 1.0f, 67.0f);  // spider
-    place(ObjectType::ObjectType49, 44.0f, 1.0f, 67.0f);  // key 1, guarding the water crossing
-    place(ObjectType::ObjectType5, 25.0f, 1.0f, 67.0f);   // chest, over the grate
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 35.0f, 1.0f, 67.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 38.0f, 1.0f, 67.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 52.0f, 1.0f, 67.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 63.0f, 1.0f, 67.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType2, 41.0f, 1.0f, 67.0f);   // standard patrol enemy
+    place(GalaxyEggbert::Def::ObjectType::ObjectType16, 57.0f, 1.0f, 67.0f);  // spider
+    place(GalaxyEggbert::Def::ObjectType::ObjectType49, 44.0f, 1.0f, 67.0f);  // key 1, guarding the water crossing
+    place(GalaxyEggbert::Def::ObjectType::ObjectType5, 25.0f, 1.0f, 67.0f);   // chest, over the grate
 
     // Walled room on the hill: not just empty architecture -- 1 chest, 1
     // large creature guarding it, and 1 more standard enemy by the doorway.
-    place(ObjectType::ObjectType5, 8.0f, 11.0f, 50.0f);
-    place(ObjectType::ObjectType2, 18.0f, 11.0f, 49.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType5, 8.0f, 11.0f, 50.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType2, 18.0f, 11.0f, 49.0f);
 
     // Large creature (ObjectType54, plan.md E3D-MIG-136, 2026-07-11) --
     // needs a real posStart != posEnd patrol path, same reason the lift/
@@ -502,7 +502,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // (patrolStep 1/3, see GEInteractionSystem.cpp).
     {
         MoveObjectRecord creature;
-        creature.type = ObjectType::ObjectType54;
+        creature.type = GalaxyEggbert::Def::ObjectType::ObjectType54;
         creature.posStartX = 12.0f; creature.posStartY = 11.0f; creature.posStartZ = 50.0f;
         creature.posEndX = 16.0f;   creature.posEndY = 11.0f;   creature.posEndZ = 50.0f;
         PlaceMoveObject(world, creature);
@@ -530,7 +530,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     world.setBlock(85, 0, 80, Block::make(BlockTypes::RockPile));  // landing floor, 3 cells below
     {
         MoveObjectRecord blupih;
-        blupih.type = ObjectType::ObjectType32;
+        blupih.type = GalaxyEggbert::Def::ObjectType::ObjectType32;
         blupih.posStartX = 85.0f; blupih.posStartY = 4.0f; blupih.posStartZ = 80.0f; // over the notch
         blupih.posEndX = 86.0f;   blupih.posEndY = 4.0f;   blupih.posEndZ = 80.0f;   // over solid ledge
         PlaceMoveObject(world, blupih);
@@ -545,7 +545,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     world.setBlock(92, 1, 85, Block::make(BlockTypes::BrickWall)); // east wall
     {
         MoveObjectRecord blupit;
-        blupit.type = ObjectType::ObjectType33;
+        blupit.type = GalaxyEggbert::Def::ObjectType::ObjectType33;
         blupit.posStartX = 84.0f; blupit.posStartY = 1.0f; blupit.posStartZ = 85.0f;
         blupit.posEndX = 85.0f;   blupit.posEndY = 1.0f;   blupit.posEndZ = 85.0f;
         PlaceMoveObject(world, blupit);
@@ -626,7 +626,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     world.setBlock(49, 5, 74, Block::make(BlockTypes::Air)); // lift shaft opening
     {
         MoveObjectRecord liftA;
-        liftA.type = ObjectType::ObjectType1;
+        liftA.type = GalaxyEggbert::Def::ObjectType::ObjectType1;
         liftA.posStartX = 49.0f; liftA.posStartY = 1.0f; liftA.posStartZ = 74.0f;
         liftA.posEndX = 49.0f;   liftA.posEndY = 5.0f;   liftA.posEndZ = 74.0f;
         PlaceMoveObject(world, liftA);
@@ -637,7 +637,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     world.setBlock(56, 3, 74, Block::make(BlockTypes::Air)); // lift shaft opening
     {
         MoveObjectRecord liftB;
-        liftB.type = ObjectType::ObjectType1;
+        liftB.type = GalaxyEggbert::Def::ObjectType::ObjectType1;
         liftB.posStartX = 56.0f; liftB.posStartY = 1.0f; liftB.posStartZ = 74.0f;
         liftB.posEndX = 56.0f;   liftB.posEndY = 3.0f;   liftB.posEndZ = 74.0f;
         PlaceMoveObject(world, liftB);
@@ -660,15 +660,15 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // stacked on top of one of them (real vertical linking), on the same
     // room's floor away from the pool, so pushing the pair genuinely moves
     // all 3 atomically -- not just unit-tested.
-    place(ObjectType::ObjectType12, 61.0f, 1.0f, 73.0f);
-    place(ObjectType::ObjectType12, 62.0f, 1.0f, 73.0f);
-    place(ObjectType::ObjectType12, 61.0f, 2.0f, 73.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 61.0f, 1.0f, 73.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 62.0f, 1.0f, 73.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType12, 61.0f, 2.0f, 73.0f);
 
     // Dynamite demo (plan.md E3D-MIG-155, 2026-07-12) -- one stick in lift
     // room B, a short walk from the linked-crate demo above, so picking it
     // up and placing it near the crates is a genuinely playable scenario,
     // not just a unit test.
-    place(ObjectType::ObjectType55, 58.0f, 1.0f, 73.0f);
+    place(GalaxyEggbert::Def::ObjectType::ObjectType55, 58.0f, 1.0f, 73.0f);
 
     // ------------------------------------------------------------------
     // Doors demo (plan.md E3D-MIG-160/161/162, 2026-07-12) -- a small room
@@ -686,7 +686,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     world.setBlock(48, 1, 90, Block::make(BlockTypes::Door1));  // key-gated door gap
     fill(45, 51, 1, 2, 93, 93, BlockTypes::BrickWall);          // wall 2 (treasure-gated door)
     world.setBlock(48, 1, 93, Block::make(static_cast<std::uint16_t>(422))); // treasure-gated door gap (needs 2)
-    place(ObjectType::ObjectType49, 46.0f, 1.0f, 88.0f);        // key 1, before wall 1
+    place(GalaxyEggbert::Def::ObjectType::ObjectType49, 46.0f, 1.0f, 88.0f);        // key 1, before wall 1
 
     // ------------------------------------------------------------------
     // Secret powers demo (plan.md E3D-MIG-170, 2026-07-12) -- one of each
@@ -696,14 +696,14 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // sites) are genuinely playable, not just unit-tested.
     // ------------------------------------------------------------------
     fill(53, 59, 0, 0, 87, 93, BlockTypes::RockPile); // secret-powers room floor
-    place(ObjectType::ObjectType25, 54.0f, 1.0f, 88.0f); // shield stick
-    place(ObjectType::ObjectType26, 56.0f, 1.0f, 88.0f); // suction-cup (-> Power)
-    place(ObjectType::ObjectType30, 54.0f, 1.0f, 92.0f); // drink (-> Hide)
-    place(ObjectType::ObjectType31, 56.0f, 1.0f, 92.0f); // charge (-> Cloud)
+    place(GalaxyEggbert::Def::ObjectType::ObjectType25, 54.0f, 1.0f, 88.0f); // shield stick
+    place(GalaxyEggbert::Def::ObjectType::ObjectType26, 56.0f, 1.0f, 88.0f); // suction-cup (-> Power)
+    place(GalaxyEggbert::Def::ObjectType::ObjectType30, 54.0f, 1.0f, 92.0f); // drink (-> Hide)
+    place(GalaxyEggbert::Def::ObjectType::ObjectType31, 56.0f, 1.0f, 92.0f); // charge (-> Cloud)
     // Invert/Mirror (plan.md PICKUP-011, 2026-07-13) -- independent of the
     // 4 powers above (its own separate gauge, not part of the mutually-
-    // exclusive SecretPower slot), placed in the same demo room.
-    place(ObjectType::ObjectType40, 58.0f, 1.0f, 90.0f); // mirror/invert
+    // exclusive GalaxyEggbert::Def::SecretPower slot), placed in the same demo room.
+    place(GalaxyEggbert::Def::ObjectType::ObjectType40, 58.0f, 1.0f, 90.0f); // mirror/invert
 
     // ------------------------------------------------------------------
     // Vehicle demo (plan.md E3D-MIG-171, 2026-07-12) -- one Jeep pickup
@@ -714,7 +714,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // walk-over pickup).
     // ------------------------------------------------------------------
     fill(61, 67, 0, 0, 87, 93, BlockTypes::RockPile); // vehicle-demo room floor
-    place(ObjectType::ObjectType19, 64.0f, 1.0f, 90.0f); // jeep
+    place(GalaxyEggbert::Def::ObjectType::ObjectType19, 64.0f, 1.0f, 90.0f); // jeep
 
     // ------------------------------------------------------------------
     // Bullet pack demo (plan.md E3D-MIG-175, 2026-07-12) -- one ammo pack,
@@ -723,7 +723,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // unit-tested.
     // ------------------------------------------------------------------
     fill(69, 75, 0, 0, 87, 93, BlockTypes::RockPile); // bullet-pack-demo room floor
-    place(ObjectType::ObjectType29, 72.0f, 1.0f, 90.0f); // bullet pack
+    place(GalaxyEggbert::Def::ObjectType::ObjectType29, 72.0f, 1.0f, 90.0f); // bullet pack
 
     // ------------------------------------------------------------------
     // Tank + firing demo (plan.md BULLET-001, 2026-07-13) -- one Tank
@@ -735,7 +735,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // to actually hit instead of flying off into open air.
     // ------------------------------------------------------------------
     fill(77, 83, 0, 0, 87, 93, BlockTypes::RockPile); // tank-demo room floor
-    place(ObjectType::ObjectType28, 80.0f, 1.0f, 90.0f); // tank
+    place(GalaxyEggbert::Def::ObjectType::ObjectType28, 80.0f, 1.0f, 90.0f); // tank
     world.setBlock(80, 1, 87, Block::make(BlockTypes::BrickWall)); // wall to shoot at
 
     // ------------------------------------------------------------------
@@ -802,7 +802,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // never places icon 440 in any actual level file either (confirmed
     // via a full grep of every worlds/*.txt) -- MAXQUART=441 (Decor.hpp)
     // and Decor.cpp's own `case 440:` branch mean it IS a real, defined
-    // ObjectType/icon id, just never one placed in practice, so this is a
+    // GalaxyEggbert::Def::ObjectType/icon id, just never one placed in practice, so this is a
     // latent atlas-bounds gap, not something to guess a fix for here.
     // Excluding it from this synthetic demo (the only place in this whole
     // repo that would ever render it) avoids exercising a known-broken
@@ -843,7 +843,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
                        Block::make(static_cast<std::uint16_t>(icon)));
     }
 
-    // Object exhibition -- every ObjectType the renderer has an icon for
+    // Object exhibition -- every GalaxyEggbert::Def::ObjectType the renderer has an icon for
     // (enumerated via GEObjectIcons::GetObjIcon, the renderer's own
     // source of truth, rather than a hand-duplicated list), on a second
     // slab east of the corridor's end (x=76..97 adjoins the corridor at
@@ -858,7 +858,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
         int slot = 0;
         for (int t = 1; t <= 203; ++t)
         {
-            const auto type = static_cast<ObjectType>(t);
+            const auto type = static_cast<GalaxyEggbert::Def::ObjectType>(t);
             if (GalaxyEggbert::CNA::GetObjIcon(type, 0) == 0)
             {
                 continue; // no icon in source data (e.g. 0/18/22/58) -- nothing to exhibit
@@ -876,7 +876,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
             // plays in the exhibition too. Kept small (+-1 unit) to stay
             // inside this specimen's own 3-unit-spaced grid cell, clear of
             // its neighbors.
-            if (type == ObjectType::ObjectType20 || type == ObjectType::ObjectType44)
+            if (type == GalaxyEggbert::Def::ObjectType::ObjectType20 || type == GalaxyEggbert::Def::ObjectType::ObjectType44)
             {
                 MoveObjectRecord spec;
                 spec.type = type;
@@ -987,7 +987,7 @@ void GenerateGlobalHub(const std::filesystem::path& outPath)
     // not just correct in the mission-math alone.
     {
         MoveObjectRecord exit;
-        exit.type = ObjectType::ObjectType7;
+        exit.type = GalaxyEggbert::Def::ObjectType::ObjectType7;
         exit.posStartX = exit.posEndX = 56.0f;
         exit.posStartY = exit.posEndY = 1.0f;
         exit.posStartZ = exit.posEndZ = 56.0f;

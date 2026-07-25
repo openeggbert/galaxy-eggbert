@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Sound effect slot index. Maps directly to sound asset file index (sound010.wav → SoundChannel10).
 // Channel 0 is reserved. Channels 1–92 are game sound effects.
@@ -106,4 +106,4 @@ enum class SoundChannel : uint8_t
 constexpr uint8_t    ToRaw(SoundChannel c)      { return static_cast<uint8_t>(c); }
 constexpr SoundChannel ToSoundChannel(int v)    { return static_cast<SoundChannel>(static_cast<uint8_t>(v)); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

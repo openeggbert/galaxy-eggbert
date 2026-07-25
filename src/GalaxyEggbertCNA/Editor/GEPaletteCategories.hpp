@@ -33,7 +33,7 @@ namespace GalaxyEggbert::CNA
         // matching cells; zero is valid here.
         std::vector<int> skyRegionIds;
         // Optional per-entry object-m.png icon override. Zero keeps the
-        // normal ObjectType-driven icon. A negative value means "capture
+        // normal GalaxyEggbert::Def::ObjectType-driven icon. A negative value means "capture
         // the currently selected terrain icon" and is used by Eggbert 2's
         // Secret wooden case: the crate is camouflaged as the current
         // terrain selection instead of looking like an ordinary crate.
@@ -64,12 +64,12 @@ namespace GalaxyEggbert::CNA
     [[nodiscard]] std::vector<int> AllBlockIconIdsInOrder();
 
     // Hand-curated MoveObject categories for the palette's Objects mode
-    // (plan.md EDITOR-109), built ONLY from ObjectType.hpp's own already-
+    // (plan.md EDITOR-109), built ONLY from Def/ObjectType.hpp's own already-
     // documented comment groups -- same "don't invent semantics" rule as
     // ConfirmedBlockCategories() above.
     //
     // Deliberately covers only DIRECTLY PLACEABLE types: lifts, enemies,
-    // collectibles, pickups, Blupi skins. ObjectType.hpp's own
+    // collectibles, pickups, Blupi skins. Def/ObjectType.hpp's own
     // "Explosions and visual effects", "Water / goo effects",
     // "Projectiles", and "Moving level objects" groups are transient
     // effects the game spawns itself (auto-expiring animations, fired
@@ -79,7 +79,7 @@ namespace GalaxyEggbert::CNA
     // AllObjectTypeIdsInOrder() below.
     [[nodiscard]] std::vector<PaletteCategory> ConfirmedObjectCategories();
 
-    // Every declared ObjectType id (1..203; ObjectType0 is the null/
+    // Every declared GalaxyEggbert::Def::ObjectType id (1..203; ObjectType0 is the null/
     // inactive slot, never placeable), in order -- the Objects mode's
     // "All Types" fallback tab, the exact counterpart of
     // AllBlockIconIdsInOrder().

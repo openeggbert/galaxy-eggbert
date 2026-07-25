@@ -9,7 +9,7 @@
 // P0-1) a single deterministic artifact to capture and diff.
 //
 // Deliberately depends on NO Easy3D/CNA graphics types -- only on the
-// engine-agnostic enums (ObjectType, SecretPower) and the graphics-free
+// engine-agnostic enums (GalaxyEggbert::Def::ObjectType, GalaxyEggbert::Def::SecretPower) and the graphics-free
 // controller enums (AnimState, VehicleMode). That keeps it headless-testable
 // and consumable by either renderer. Positions are plain world-space floats in
 // the same raw grid space the sim uses; the renderer applies its own
@@ -22,8 +22,8 @@
 // is added once a build is available to verify the mapping against GEHud.
 
 #include "GEBlupiController.hpp"          // AnimState, VehicleMode (graphics-free)
-#include <GalaxyEggbert/def/ObjectType.hpp>
-#include <GalaxyEggbert/def/SecretPower.hpp>
+#include <GalaxyEggbert/Def/ObjectType.hpp>
+#include <GalaxyEggbert/Def/SecretPower.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -55,7 +55,7 @@ namespace GalaxyEggbert::CNA
     // MobileObjSpec (the live, moved position), not `posStart`.
     struct SceneObject
     {
-        ObjectType type{};
+        GalaxyEggbert::Def::ObjectType type{};
         SceneVec3 position;
         float phase = 0.0f;     // per-instance animation tick counter
         float direction = 1.0f; // patrol direction (+1 toward posEnd, -1 back)
@@ -71,7 +71,7 @@ namespace GalaxyEggbert::CNA
         SceneVec3 position;
         GEBlupiController::AnimState animState = GEBlupiController::AnimState::Stop;
         GEBlupiController::VehicleMode vehicleMode = GEBlupiController::VehicleMode::None;
-        SecretPower secretPower = SecretPower::None;
+        GalaxyEggbert::Def::SecretPower secretPower = GalaxyEggbert::Def::SecretPower::None;
         int facing = 1;         // +1 right, -1 left (2D sprite mirror axis)
         bool visible = false;
     };

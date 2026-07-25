@@ -23,7 +23,7 @@ regenerated with the corrected formula from `02-tiles.md`. The other 60 crops (`
 grid with no gap or leading margin (`600×1740`/`600×2040`/`1440×1440`, all exact multiples of their
 tile size), confirmed by direct `identify` measurement, not assumed.
 
-`ObjectType` (`include/GalaxyEggbert/def/ObjectType.hpp`, mirrors mobile-eggbert's own enum
+`ObjectType` (`include/GalaxyEggbert/Def/ObjectType.hpp`, mirrors mobile-eggbert's own enum
 1:1 in numeric value, confirmed 0–203 with no gaps/duplicates) is already fully declared in
 galaxy-eggbert with categorized comments. Summary by category (not re-listing all 204 IDs — see
 the header for the full, already-commented list):

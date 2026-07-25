@@ -1,7 +1,7 @@
 #pragma once
 
 #include <GalaxyEggbert/Worlds/World.hpp>
-#include <GalaxyEggbert/def/ObjectType.hpp>
+#include <GalaxyEggbert/Def/ObjectType.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -18,10 +18,10 @@ namespace GalaxyEggbert::CNA
     // MoveObjectRecord: a ground object above a Y=0 floor has Y=1.
     struct MobileObjSpec
     {
-        ObjectType type;
+        GalaxyEggbert::Def::ObjectType type;
         // Optional object-m.png tile override carried by .vwr
         // MoveObjectRecord variants such as the secret wooden case.
-        // Zero keeps the normal ObjectType/phase-derived icon.
+        // Zero keeps the normal GalaxyEggbert::Def::ObjectType/phase-derived icon.
         std::uint16_t visualIcon = 0;
         float posStartX = 0.0f, posStartY = 0.0f, posStartZ = 0.0f;
         float posEndX = 0.0f, posEndY = 0.0f, posEndZ = 0.0f;
@@ -317,7 +317,7 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] static int ComputeMissionBack(int currentMission) noexcept;
 
         // Real win-exit formula (found 2026-07-17, `Decor.cpp:6411-6434`,
-        // the `BlupiAction::Win` mission handler) -- distinct from
+        // the `GalaxyEggbert::Def::BlupiAction::Win` mission handler) -- distinct from
         // ComputeMissionBack() above (which is only the real `else` branch
         // of this same handler, shared with `MissionBack`/`PauseBack`).
         // Real special cases: reaching the GLOBAL HUB's own exit

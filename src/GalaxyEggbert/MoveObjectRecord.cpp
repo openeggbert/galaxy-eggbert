@@ -73,7 +73,7 @@ MoveObjectRecord DecodeMoveObjectRecord(const std::vector<std::uint8_t>& payload
     }
 
     MoveObjectRecord record;
-    record.type = static_cast<ObjectType>(payload[0]);
+    record.type = static_cast<GalaxyEggbert::Def::ObjectType>(payload[0]);
     record.posStartX = ReadFloatLE(payload, 1);
     record.posStartY = ReadFloatLE(payload, 5);
     record.posStartZ = ReadFloatLE(payload, 9);

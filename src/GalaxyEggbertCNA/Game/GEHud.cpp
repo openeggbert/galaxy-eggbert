@@ -264,7 +264,7 @@ namespace GalaxyEggbert::CNA
                      int animIcon, bool animIconUsesElementSheet,
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                      float voyageX, float voyageY,
-                     GalaxyEggbert::GameSpeed gameSpeed)
+                     GalaxyEggbert::Def::GameSpeed gameSpeed)
     {
         if (!loaded_)
         {
@@ -567,15 +567,15 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Real GameSpeed indicator (SCORE-009/010/011, added 2026-07-20,
+        // Real GalaxyEggbert::Def::GameSpeed indicator (SCORE-009/010/011, added 2026-07-20,
         // `InputPad.cpp:1383-1404`): shown only while speed != Normal, a
         // small pad.png icon-15 panel + "0.5x"/"Nx" text at the real
         // (5, drawBoundsHeight-22) position -- same panel/text idiom as
         // the treasure counter above, just a different real position/scale.
-        if (gameSpeed != GalaxyEggbert::GameSpeed::Normal)
+        if (gameSpeed != GalaxyEggbert::Def::GameSpeed::Normal)
         {
-            const bool isSlow = gameSpeed == GalaxyEggbert::GameSpeed::Slow;
-            const std::string speedText = isSlow ? "0.5x" : std::to_string(GalaxyEggbert::ToRaw(gameSpeed)) + "x";
+            const bool isSlow = gameSpeed == GalaxyEggbert::Def::GameSpeed::Slow;
+            const std::string speedText = isSlow ? "0.5x" : std::to_string(GalaxyEggbert::Def::ToRaw(gameSpeed)) + "x";
             constexpr float kSpeedTextScale = 0.55f;
             constexpr float kSpeedPadding = 3.0f;
             constexpr float kSpeedTextH = 14.0f;

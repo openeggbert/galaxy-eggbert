@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Bitmask of keys currently held by Blupi. Collected via ObjectType49/50/51.
 // Serialised to/from save files — do not renumber.
@@ -25,4 +25,4 @@ constexpr bool operator<=(DoorKeyFlags a, DoorKeyFlags b) { return ToRaw(a) <= T
 constexpr bool operator>(DoorKeyFlags a, DoorKeyFlags b)  { return ToRaw(a) >  ToRaw(b); }
 constexpr bool operator>=(DoorKeyFlags a, DoorKeyFlags b) { return ToRaw(a) >= ToRaw(b); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

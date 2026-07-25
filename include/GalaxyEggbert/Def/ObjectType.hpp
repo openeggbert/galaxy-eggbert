@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Type of a moving object (enemy, collectible, effect, vehicle, etc.).
 // Numeric IDs must NOT be renumbered — they are stored in level files
@@ -248,4 +248,4 @@ constexpr bool operator<=(ObjectType a, ObjectType b) { return ToRaw(a) <= ToRaw
 constexpr bool operator>(ObjectType a, ObjectType b)  { return ToRaw(a) >  ToRaw(b); }
 constexpr bool operator>=(ObjectType a, ObjectType b) { return ToRaw(a) >= ToRaw(b); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

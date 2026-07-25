@@ -154,7 +154,7 @@ namespace GalaxyEggbert::CNA
                 }
 
                 MobileObjSpec spec;
-                spec.type = static_cast<ObjectType>(type);
+                spec.type = static_cast<GalaxyEggbert::Def::ObjectType>(type);
                 spec.posStartX = static_cast<float>(psx) / kMobileTileSize - kWorldCenterX;
                 spec.posStartY = kGroundObjectCenterY;
                 spec.posStartZ = static_cast<float>(psy) / kMobileTileSize - kWorldCenterZ;

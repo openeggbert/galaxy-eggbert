@@ -132,7 +132,7 @@ Confirmed via inspection of `src/GalaxyEggbertSimple3D/` and `CMakeLists.txt`:
 
 - `Worlds/*.hpp` (`Block`, `BlockMetadata`, `Chunk`, `VoxelConfig`, `World`) include only
   `<cstdint>`, `<vector>`, `<filesystem>`, `<array>`, `<stdexcept>` — no graphics/engine headers.
-- `def/*.hpp` (`BlupiAction`, `ContinueMissionType`, `DecorAction`, `Direction`, `DoorKeyFlags`,
+- `Def/*.hpp` (`BlupiAction`, `ContinueMissionType`, `DecorAction`, `Direction`, `DoorKeyFlags`,
   `GamePhase`, `GameSpeed`, `KeyPressFlags`, `ObjectType`, `SecretPower`, `SoundChannel`,
   `SpriteChannel`) and `BlockTypes.hpp`, `Def.hpp`, `GameConstants.hpp` are plain enums/constants.
 - The world-file parser reads the identical text format used by mobile-eggbert
@@ -203,7 +203,7 @@ mobile-eggbert-side change.**
 | `Sound.hpp` / `.cpp` (134/427 lines incl. `ISound.hpp`) | — | Includes CNA `SoundEffect`, `SoundEffectInstance` directly; `PlayImage` takes a `TinyPoint` screen position (2D panning) | Confirmed CNA-audio-coupled; `SoundChannel` enum + index→`sound###.wav` mapping is reusable as data |
 | `GameData.hpp` | 369 | Only includes `SharpRuntime/SharpRuntimeHelper.hpp` | **No engine coupling.** Documented flat byte-array layout: 10-byte global header + 3×210-byte gamer records = 640 bytes total. Good direct-reuse candidate for save-format compatibility |
 | `Tables.hpp` / `.cpp` | 1,019 / 2,208 | Header only includes `SharpRuntimeHelper.hpp` | **No engine coupling.** Dozens of flat `static const shortcs table_*[N]` arrays (Blupi animation frames, per-enemy-type movement/turn tables, explosion frames, decor rotation data). Strong direct-reuse candidate |
-| `Def.hpp` + `def/*.hpp` + `decor/*.hpp` | ~215 + several small files | Only `SharpRuntimeHelper.hpp` | **No engine coupling.** `Phase`, `ButtonGlyph`, layout constants (`LXIMAGE`, `MAXCELX`/`MAXCELY`, `DIMOBJX/Y`, etc.), `ObjectType` (stored as byte, ID layout must not change — matches level file format), `SoundChannel` (0..92, matches 93 `sound*.wav` files). Good direct-reuse/reference candidates |
+| `Def.hpp` + `Def/*.hpp` + `decor/*.hpp` | ~215 + several small files | Only `SharpRuntimeHelper.hpp` | **No engine coupling.** `Phase`, `ButtonGlyph`, layout constants (`LXIMAGE`, `MAXCELX`/`MAXCELY`, `DIMOBJX/Y`, etc.), `ObjectType` (stored as byte, ID layout must not change — matches level file format), `SoundChannel` (0..92, matches 93 `sound*.wav` files). Good direct-reuse/reference candidates |
 
 Assets confirmed present:
 
@@ -292,7 +292,7 @@ next-best direct-link candidates, ranked by how self-contained they are, would b
 | Candidate | Self-contained? | Notes |
 |---|---|---|
 | `Tables` | Yes | Pure static data, zero engine coupling in the header |
-| `Def` + `def/*` + `decor/*` enums | Yes | Pure enums/constants |
+| `Def` + `Def/*` + `decor/*` enums | Yes | Pure enums/constants |
 | `GameData` | Yes | Only depends on `SharpRuntimeHelper.hpp` |
 | `Decor` | No | Requires concrete `IPixmap`/`ISound` implementations to instantiate; also depends on `Tables`, `GameData`, `System::Random`, `Worlds.hpp` |
 | `Pixmap`/`Sound` | No | Directly coupled to CNA `SpriteBatch`/`SoundEffect` — a 3D remake would not want these anyway |
@@ -327,7 +327,7 @@ All confirmed present in `../mobile-eggbert/Content/` and `../mobile-eggbert/wor
 | Mobile Eggbert thing | Direct reuse? | Why / why not | Proposed Galaxy strategy |
 |---|---:|---|---|
 | `sound*.wav` files | Yes | Plain assets | Load directly by path/index |
-| `SoundChannel` enum / index mapping | Maybe | Pure data, but see §5.4 | Copy/adapt after approval, or re-derive independently since galaxy-eggbert already has its own `include/GalaxyEggbert/def/SoundChannel.hpp` (needs cross-check for exact parity — see open questions) |
+| `SoundChannel` enum / index mapping | Maybe | Pure data, but see §5.4 | Copy/adapt after approval, or re-derive independently since galaxy-eggbert already has its own `include/GalaxyEggbert/Def/SoundChannel.hpp` (needs cross-check for exact parity — see open questions) |
 | `Sound`/`ISound` classes | Probably no | Confirmed CNA-`SoundEffect`-coupled and 2D-panning-coupled (`TinyPoint pos`) | Not reusable as-is; Galaxy Eggbert needs its own thin CNA audio wrapper informed by, not copied from, this code |
 
 ### 5.6 World/save-data reuse candidates
@@ -486,7 +486,7 @@ src/GalaxyEggbertCNA/
     GEBridgeSystem.hpp / .cpp         — likely near-verbatim port from Simple3D version
 ```
 
-`include/GalaxyEggbert/` (Worlds, def/, BlockTypes, Def, GameConstants) is reused unchanged by
+`include/GalaxyEggbert/` (Worlds, Def/, BlockTypes, Def, GameConstants) is reused unchanged by
 both `GalaxyEggbertSimple3D` and the new `GalaxyEggbertCNA` target.
 
 ### CMake integration notes
@@ -582,7 +582,7 @@ with `E3D-MIG-*` IDs. Summary of phases:
 4. **Copy-with-approval items:** do you want to proceed (in a future task) with copying
    `ObjectType`, `SoundChannel`, `Def` constants, and/or `GameData`'s byte layout into
    `include/GalaxyEggbert/` verbatim, given galaxy-eggbert already has its own
-   `include/GalaxyEggbert/def/ObjectType.hpp` and `SoundChannel.hpp`? These need a parity check
+   `include/GalaxyEggbert/Def/ObjectType.hpp` and `SoundChannel.hpp`? These need a parity check
    against mobile-eggbert's versions — are they already identical, or do they need to be
    reconciled?
 

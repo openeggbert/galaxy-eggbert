@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Player (Blupi) animation/movement state. Values match original ACTION_* constants
 // from the Windows Phone game — do not renumber (used in animation tables).
@@ -100,4 +100,4 @@ enum class BlupiAction : uint8_t
 constexpr uint8_t ToRaw(BlupiAction a) { return static_cast<uint8_t>(a); }
 constexpr BlupiAction ToBlupiAction(int v) { return static_cast<BlupiAction>(static_cast<uint8_t>(v)); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace GalaxyEggbert {
+namespace GalaxyEggbert::Def {
 
 // Camera-shake animation type. Values 3 and 4 are unassigned in the original game.
 enum class DecorAction : uint8_t
@@ -20,4 +20,4 @@ constexpr bool operator<=(DecorAction a, DecorAction b) { return ToRaw(a) <= ToR
 constexpr bool operator>(DecorAction a, DecorAction b)  { return ToRaw(a) >  ToRaw(b); }
 constexpr bool operator>=(DecorAction a, DecorAction b) { return ToRaw(a) >= ToRaw(b); }
 
-} // namespace GalaxyEggbert
+} // namespace GalaxyEggbert::Def

@@ -4,7 +4,7 @@
 cross-checked (`DOC-245`); all 93 `.wav` files verified accounted for (`DOC-246`). Tracked
 as `DOC-005` in `plan.md`, broken into 10-channel batches (`DOC-235`-`DOC-244`). `SoundChannel` (93
 channels) is
-already ported 1:1 in `include/GalaxyEggbert/def/SoundChannel.hpp`, confirmed numerically identical
+already ported 1:1 in `include/GalaxyEggbert/Def/SoundChannel.hpp`, confirmed numerically identical
 to mobile-eggbert's version; **correction: that header has no names or comments per channel, only
 the bare numeric enum** (the previous version of this line said "name-only list", which overstated
 what's there — every channel is just `SoundChannelN = N`). 93 real `.wav` files exist in
@@ -208,7 +208,7 @@ below: `DOC-245` (cross-check this catalog against `SoundChannel.hpp`) and `DOC-
 
 ## `SoundChannel.hpp` cross-check (`DOC-245`)
 
-`include/GalaxyEggbert/def/SoundChannel.hpp` declares exactly 93 entries, `SoundChannel0` through
+`include/GalaxyEggbert/Def/SoundChannel.hpp` declares exactly 93 entries, `SoundChannel0` through
 `SoundChannel92`, each `SoundChannelN = N` — verified programmatically (counted 93 `= N` entries,
 confirmed the sorted numeric sequence has zero gaps from 0 to 92). No per-channel names or comments
 exist to cross-check against individually (as already corrected in the intro above); the only
