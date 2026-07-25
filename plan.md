@@ -5701,7 +5701,7 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-118` are implemented and tested. The editor's
+`EDITOR-112`) and follow-up tasks through `EDITOR-119` are implemented and tested. The editor's
 input, rendering, orchestration, and verification are separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -5920,6 +5920,11 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       each requested tick until Draw consumes it, and both golden-frame and golden-trace modes
       suppress physical input. Two consecutive golden-frame runs matched all three updated
       references exactly; golden trace remained byte-identical.
+- [x] **EDITOR-119 — add a translucent backdrop to the placement coordinates.**
+      **Done 2026-07-25:** the black `X:<n> Y:<n> Z:<n>` readout now draws over a 72%-opaque white
+      rectangle with horizontal and vertical padding, preserving legibility against both dark and
+      detailed world backgrounds. The layout owns and viewport-clips the backdrop geometry so it
+      also remains valid above the wrapped controls on narrow displays.
 
 ### Known problems / open concerns
 

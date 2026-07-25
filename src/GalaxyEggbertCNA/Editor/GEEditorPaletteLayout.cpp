@@ -117,6 +117,20 @@ namespace GalaxyEggbert::CNA
         return {centered, above, centered + textWidth, above + textHeight};
     }
 
+    GEQuadBatch::Rect GEEditorPaletteLayout::PlacementCoordinatesBackgroundRect(
+        const GEQuadBatch::Rect& textRect,
+        int viewportWidth, int viewportHeight) const noexcept
+    {
+        constexpr float kHorizontalPadding = 5.0f;
+        constexpr float kVerticalPadding = 3.0f;
+        return {
+            std::max(0.0f, textRect.x0 - kHorizontalPadding),
+            std::max(0.0f, textRect.y0 - kVerticalPadding),
+            std::min(static_cast<float>(viewportWidth), textRect.x1 + kHorizontalPadding),
+            std::min(static_cast<float>(viewportHeight), textRect.y1 + kVerticalPadding),
+        };
+    }
+
     int GEEditorPaletteLayout::PopupColumnCount(int viewportWidth) const noexcept
     {
         const float available = static_cast<float>(viewportWidth) - kPopupX - kMenuX;

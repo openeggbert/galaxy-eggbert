@@ -300,6 +300,20 @@ namespace GalaxyEggbert::CNA
                     layout.PlacementCoordinatesRect(
                         LabelWidth(coordinates), kGlyphCellPx * kTextScale,
                         viewportWidth, viewportHeight);
+                const GEQuadBatch::Rect coordinateBackgroundRect =
+                    layout.PlacementCoordinatesBackgroundRect(
+                        coordinateRect, viewportWidth, viewportHeight);
+                const std::vector<GEQuadBatch::Quad> coordinateBackground = {
+                    {
+                        coordinateBackgroundRect.x0, coordinateBackgroundRect.y0,
+                        coordinateBackgroundRect.x1, coordinateBackgroundRect.y1,
+                        0, 0, 1, 1,
+                    },
+                };
+                impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
+                GEQuadBatch::FlushQuads(
+                    device, *impl_->flatEffect, impl_->flatRenderer,
+                    coordinateBackground, viewportWidth, viewportHeight, 0.72f);
                 std::vector<GEQuadBatch::Quad> coordinateLabel;
                 AppendLabel(
                     coordinateLabel, coordinates, coordinateRect.x0, coordinateRect.y0,
