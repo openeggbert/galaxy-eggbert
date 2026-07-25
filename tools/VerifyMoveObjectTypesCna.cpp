@@ -24,7 +24,7 @@ int main()
         {32, "../mobile-eggbert/worlds/world054.txt", "blupih"},
         {40, "../mobile-eggbert/worlds/world044.txt", "mirror/invert"},
         {44, "../mobile-eggbert/worlds/world055.txt", "wasp/bee"},
-        {46, "../mobile-eggbert/worlds/world065.txt", "balloon"},
+        {46, "../mobile-eggbert/worlds/world065.txt", "Overcraft"},
         {47, "../mobile-eggbert/worlds/world102.txt", "platform lift"},
         {54, "../mobile-eggbert/worlds/world062.txt", "large creature"},
         {55, "../mobile-eggbert/worlds/world025.txt", "dynamite"},

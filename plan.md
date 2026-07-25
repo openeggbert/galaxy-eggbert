@@ -5701,7 +5701,7 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-121` are implemented and tested. The editor's
+`EDITOR-112`) and follow-up tasks through `EDITOR-122` are implemented and tested. The editor's
 input, rendering, orchestration, and verification are separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -5949,6 +5949,16 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       restoration, presentation rebuild, dirty-state protection, and undo/redo. Palette, block, and
       object integration tests cover action dispatch, targeting priority, rebuild requests, and
       history in both directions.
+- [x] **EDITOR-122 — replace false not-implemented notices with verified object mappings.**
+      **Done 2026-07-25:** three source-menu entries that already have unambiguous, fully supported
+      Galaxy counterparts now select those objects without changing their Eggbert 2 icon or menu
+      position: Inverter selects the invert/mirror pickup (`ObjectType40`), Wooden case selects the
+      pushable crate (`ObjectType12`), and Hovercraft selects Overcraft (`ObjectType46`). Stale
+      active-test labels calling type 46 a balloon were corrected at the same boundary. Secret
+      wooden case, the three bomb variants, and other genuinely unsupported entries remain unmapped
+      rather than aliasing to a merely similar 3D object. Palette tests lock the three catalogue
+      mappings, real pointer hit locations, resulting object mode/type, and absence of the temporary
+      notice.
 
 ### Known problems / open concerns
 

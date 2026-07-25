@@ -57,6 +57,12 @@ int main()
               backgroundCategory.skyRegionIds.front() == 0 &&
               backgroundCategory.skyRegionIds.back() == 31,
           "the Galaxy-only background group exposes all 32 sky regions in order");
+    check(sourceCategories[4].objectTypeIds[9] == 40,
+          "the Eggbert Inverter entry maps to Galaxy's invert pickup");
+    check(sourceCategories[7].objectTypeIds[8] == 12,
+          "the Eggbert Wooden case entry maps to Galaxy's pushable crate");
+    check(sourceCategories[8].objectTypeIds[0] == 46,
+          "the Eggbert Hovercraft entry maps to Galaxy's Overcraft");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
@@ -262,6 +268,42 @@ int main()
               "the first Technical block selects verified block type 2");
         check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType5,
               "block selection preserves the object selection");
+    }
+
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 240.0f);
+        const auto inverter = click(palette, 450.0f, 240.0f);
+        check(inverter.clickConsumed &&
+                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType40 &&
+                  palette.IsObjectMode(),
+              "the Inverter glyph selects the functional invert object");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the mapped Inverter glyph does not raise the temporary notice");
+    }
+
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 366.0f);
+        const auto woodenCase = click(palette, 408.0f, 366.0f);
+        check(woodenCase.clickConsumed &&
+                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType12 &&
+                  palette.IsObjectMode(),
+              "the Wooden case glyph selects the functional pushable crate");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the mapped Wooden case glyph does not raise the temporary notice");
+    }
+
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 408.0f);
+        const auto hovercraft = click(palette, 72.0f, 408.0f);
+        check(hovercraft.clickConsumed &&
+                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType46 &&
+                  palette.IsObjectMode(),
+              "the Hovercraft glyph selects Galaxy's functional Overcraft");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the mapped Hovercraft glyph does not raise the temporary notice");
     }
 
     {

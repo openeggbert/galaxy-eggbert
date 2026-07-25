@@ -114,7 +114,7 @@ int main()
     checkStatic(ObjectType::ObjectType13, 68, "ObjectType13 static icon");
     checkStatic(ObjectType::ObjectType30, 178, "ObjectType30 static icon");
     checkStatic(ObjectType::ObjectType19, 89, "ObjectType19 (jeep) static icon");
-    checkStatic(ObjectType::ObjectType46, 208, "ObjectType46 (balloon) static icon");
+    checkStatic(ObjectType::ObjectType46, 208, "ObjectType46 (Overcraft) static icon");
     checkStatic(ObjectType::ObjectType55, 252, "ObjectType55 (dynamite) static icon");
 
     // -- Plain ascending-range types (divisor + base + period only, no table) --
