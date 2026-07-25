@@ -62,6 +62,25 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2
 cd build-cna && ./GalaxyEggbertCNA   # must run from its own build dir (relative asset paths)
 ```
 
+#### Linux runtime bundle (`.tar.gz`)
+
+The `package` target creates a relocatable x86-64 Linux archive. It includes the executable,
+source-tracked game data, the SDL3 runtime libraries, licenses, and a launcher that keeps the
+required asset-relative working directory.
+
+```bash
+cmake -S . -B build-package -DCMAKE_BUILD_TYPE=Release \
+  -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-package --target package -j4
+tar -xzf build-package/GalaxyEggbertCNA-linux-x86_64.tar.gz
+./GalaxyEggbertCNA-linux-x86_64/run-galaxy-eggbert
+```
+
+The archive is deliberately a runtime bundle, not an AppImage: its host still supplies standard
+Linux libraries such as the graphics stack, FFmpeg, and the C++ runtime. See the bundled
+`README-Linux.md` for details. Set `-DGALAXY_EGGBERT_ENABLE_LINUX_BUNDLE=OFF` to omit the package
+target in a developer-only Linux build.
+
 Unit tests (engine-independent world-data model):
 
 ```bash
@@ -84,7 +103,7 @@ cmake -S . -B build-windows -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD
 cmake --build build-windows --target GalaxyEggbertCNA
 ```
 
-#### Windows cross-build from Linux (MinGW-w64) (not verified in this session)
+#### Windows cross-build from Linux (MinGW-w64) (compile verified 2026-07-25)
 
 **Important: Always use a clean build directory when switching toolchains (e.g., `rm -rf build-windows`).**
 
@@ -95,13 +114,21 @@ cmake --build build-windows --target GalaxyEggbertCNA
 rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-  -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
-cmake --build build-windows --target GalaxyEggbertCNA
+  -DGALAXY_EGGBERT_BUILD_CNA=ON \
+  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
+  -DCNA_GRAPHICS_BACKEND=SDL_RENDERER \
+  -DBUILD_TESTING=OFF
+cmake --build build-windows --target GalaxyEggbertCNA -j4
 ```
 
-*Note: this requires Windows-target SDL3 package configs (`SDL3`, `SDL3_image`, etc.) discoverable
-via `CMAKE_PREFIX_PATH` or a similar override — the exact mechanism has not been re-verified
-against the current `CMakeLists.txt` in this session.*
+The verified Linux environment used the repository's Windows x86-64 SDL prebuilt configuration
+and passed `-DZLIB_INCLUDE_DIR=/usr/x86_64-w64-mingw32/include` plus
+`-DZLIB_LIBRARY=/usr/x86_64-w64-mingw32/lib/libz.a`. MinGW builds now place `SDL3.dll`,
+`SDL3_image.dll`, `SDL3_mixer.dll`, and `libwinpthread-1.dll` next to the executable while linking
+the GCC/C++ runtime statically. A Wine launch confirmed this bundle reaches window creation,
+asset loading, and world loading, but then fails because CNA's current `SDL_RENDERER` backend is
+2D-only and throws on 3D vertex-buffer creation. It is therefore a valid packaging build, not yet
+a runnable Windows 3D release.
 
 #### Web / Emscripten build (manually verified; not in CI or a release pipeline)
 
@@ -170,8 +197,8 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 ### Backend status for `GalaxyEggbertCNA`
 
 - Linux: confirmed working, EasyGL backend by default (`CNA_GRAPHICS_BACKEND=EASYGL`).
-- Windows: SDL_Renderer is the intended supported backend; not verified in this session (see
-  `WINDOWS.md` for known gaps).
+- Windows: SDL_Renderer cross-compiles with MinGW-w64 and stages its required SDL/MinGW runtime
+  DLLs, but cannot yet run the 3D game because that CNA backend is 2D-only (see `WINDOWS.md`).
 - Web (Emscripten): manually verified WebGL2 build; not exercised by CI or a publishing pipeline.
 - Android: intended, see `ANDROID.md`. The Gradle build doesn't pass explicit
   `GALAXY_EGGBERT_BUILD_*` CMake args, but that's no longer a problem — `CMakeLists.txt`'s

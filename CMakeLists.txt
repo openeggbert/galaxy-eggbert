@@ -393,6 +393,41 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3main)
     endif()
 
+    # A Windows build is a directly runnable bundle, not merely an .exe that
+    # works while the MinGW/SDL build environment remains on PATH. Keep the
+    # GCC/C++ runtime in the executable and use CNA's own helpers for the
+    # remaining thread and SDL DLLs. The historical Simple3D target is
+    # intentionally not changed. --allow-multiple-definition is the same
+    # MinGW static-libstdc++ workaround CNA applies to its own CnaTests:
+    # PE/COFF otherwise fails to coalesce std::type_info::operator==.
+    if(MINGW)
+        target_link_options(GalaxyEggbertCNA PRIVATE
+            -static-libgcc -static-libstdc++ -Wl,--allow-multiple-definition)
+        cna_copy_mingw_runtime(GalaxyEggbertCNA)
+        cna_copy_sdl_runtime(GalaxyEggbertCNA)
+
+        # CNA's generic helper looks for SDL3::SDL3 and its analogous aliases.
+        # This repository's Windows prebuilt exposes import libraries through
+        # package configuration without making those targets visible here.
+        # SDL3_DIR is nevertheless the same resolved package prefix used for
+        # linking, so use its bin/ directory as a safe, build-local fallback.
+        if(SDL3_DIR)
+            get_filename_component(_ge_windows_sdl_prefix "${SDL3_DIR}/../../.." ABSOLUTE)
+            foreach(_ge_windows_sdl_dll IN ITEMS SDL3.dll SDL3_image.dll SDL3_mixer.dll)
+                set(_ge_windows_sdl_dll_path
+                    "${_ge_windows_sdl_prefix}/bin/${_ge_windows_sdl_dll}")
+                if(EXISTS "${_ge_windows_sdl_dll_path}")
+                add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${_ge_windows_sdl_dll_path}"
+                        $<TARGET_FILE_DIR:GalaxyEggbertCNA>
+                    COMMENT "Copying ${_ge_windows_sdl_dll} next to GalaxyEggbertCNA"
+                    VERBATIM)
+                endif()
+            endforeach()
+        endif()
+    endif()
+
     # -------------------------------------------------------------------
     # Mobile Eggbert asset reuse (plan.md E3D-MIG-013/030 — decided strategy)
     #
@@ -665,6 +700,78 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     endif()
     if(BUILD_TESTING)
         add_test(NAME VerifyGEWorldEditor COMMAND VerifyGEWorldEditor)
+    endif()
+
+    # -------------------------------------------------------------------
+    # Linux runtime bundle (BUILD-010)
+    #
+    # The game resolves all of its assets relative to its working directory.
+    # Install a self-contained directory layout and a launcher that enters
+    # that directory, then let CPack emit a portable .tar.gz bundle.  The
+    # bundled SDL libraries remove the build-machine-specific SDL RPATH; OS
+    # libraries such as the graphics stack and FFmpeg intentionally remain
+    # distribution dependencies rather than being copied into the archive.
+    # -------------------------------------------------------------------
+    if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN AND NOT ANDROID)
+        option(GALAXY_EGGBERT_ENABLE_LINUX_BUNDLE
+            "Enable CPack's GalaxyEggbertCNA Linux runtime bundle" ON)
+
+        if(GALAXY_EGGBERT_ENABLE_LINUX_BUNDLE)
+            set_target_properties(GalaxyEggbertCNA PROPERTIES
+                INSTALL_RPATH "$ORIGIN/lib")
+
+            configure_file(
+                "${CMAKE_CURRENT_SOURCE_DIR}/packaging/run-galaxy-eggbert.sh.in"
+                "${CMAKE_CURRENT_BINARY_DIR}/run-galaxy-eggbert"
+                @ONLY)
+
+            install(TARGETS GalaxyEggbertCNA
+                RUNTIME DESTINATION "."
+                COMPONENT Runtime)
+            install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/run-galaxy-eggbert"
+                DESTINATION "."
+                COMPONENT Runtime)
+            install(DIRECTORY Content worlds worlds3d textures3d avatars3d
+                DESTINATION "."
+                USE_SOURCE_PERMISSIONS
+                COMPONENT Runtime)
+            install(FILES LICENSE DESTINATION "." COMPONENT Runtime)
+            install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/README-linux-bundle.md"
+                DESTINATION "."
+                RENAME "README-Linux.md"
+                COMPONENT Runtime)
+
+            # The SDL prebuilt install used by CNA provides license files.
+            # Preserve them in the distributed bundle whenever SDL3_DIR points
+            # at that standard package-config location.
+            if(SDL3_DIR)
+                get_filename_component(_ge_sdl_prefix "${SDL3_DIR}/../../.." ABSOLUTE)
+                # Copy the versioned shared libraries and their SONAME
+                # symlinks. The executable's INSTALL_RPATH resolves these
+                # as $ORIGIN/lib after the bundle is extracted.
+                install(DIRECTORY "${_ge_sdl_prefix}/lib/"
+                    DESTINATION "lib"
+                    COMPONENT Runtime
+                    FILES_MATCHING PATTERN "libSDL3*.so*")
+                if(EXISTS "${_ge_sdl_prefix}/share/licenses")
+                    install(DIRECTORY "${_ge_sdl_prefix}/share/licenses/"
+                        DESTINATION "licenses/SDL"
+                        COMPONENT Runtime)
+                endif()
+            endif()
+
+            set(CPACK_GENERATOR "TGZ")
+            set(CPACK_PACKAGE_NAME "GalaxyEggbertCNA")
+            set(CPACK_PACKAGE_FILE_NAME "GalaxyEggbertCNA-linux-${CMAKE_SYSTEM_PROCESSOR}")
+            set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
+            set(CPACK_COMPONENTS_ALL Runtime)
+            # CPack otherwise invokes the root install with no component,
+            # which recursively installs library/test artifacts from CNA and
+            # Easy3D as well. Package only this project's Runtime component.
+            set(CPACK_INSTALL_CMAKE_PROJECTS
+                "${CMAKE_BINARY_DIR};${CMAKE_PROJECT_NAME};Runtime;/")
+            include(CPack)
+        endif()
     endif()
 
 endif() # GALAXY_EGGBERT_BUILD_CNA

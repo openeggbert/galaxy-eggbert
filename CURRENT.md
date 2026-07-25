@@ -1,6 +1,6 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-07-23. Update this file whenever a change alters the current state, a known
+_Last verified: 2026-07-25. Update this file whenever a change alters the current state, a known
 limitation, a supported build, or the actionable backlog. Keep historical detail in `NEXT.md` and
 `plan.md`, not here._
 
@@ -20,8 +20,15 @@ content-authoring UX, but not new gameplay mechanics.
 - All approved world-editor milestones (`EDITOR-100` through `EDITOR-112`) are complete: per-gamer
   custom worlds, palette, raycast editing, object editing, undo/redo, box fill, sky-region choice,
   save and play-test loop, and unsaved-change protection.
-- Linux native, Vulkan native, and the debug build are maintained. The Web/Emscripten build has
-  been verified manually, but is not part of CI or a release pipeline.
+- Linux native, Vulkan native, and the debug build are maintained. A MinGW-w64 cross-build of
+  `GalaxyEggbertCNA.exe` (SDL_Renderer) is confirmed. Its output now stages SDL3 and MinGW thread
+  runtime DLLs beside the executable while statically linking GCC/C++. A Wine launch reaches
+  window creation and asset/world loading, then correctly exposes the current blocker:
+  CNA's `SDL_RENDERER` backend is 2D-only and throws on `CreateVertexBuffer`. The Web/Emscripten
+  build has been verified manually, but is not part of CI or a release pipeline.
+- Linux provides a reproducible `GalaxyEggbertCNA-linux-x86_64.tar.gz` runtime bundle through
+  CMake's `package` target. It contains source-tracked assets and bundled SDL libraries; actual
+  desktop launch remains a host-environment check, not a CI/release gate.
 - GitHub Actions CI builds and tests the CNA target from a clean sibling-checkout layout. It excludes
   one known, unrelated `easy-gl` test failure.
 
@@ -46,6 +53,9 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
   it. A different test failure is a regression signal.
 - Vulkan `BasicEffect` draws with `Alpha < 1` were last recorded as an upstream CNA issue; recheck
   only when Vulkan work otherwise needs a live run.
+- The packaged Windows `SDL_RENDERER` build cannot run the 3D game yet: Wine reaches real startup,
+  then CNA throws `SDL_Renderer does not support 3D: CreateVertexBuffer`. Choose and verify a real
+  Windows 3D backend before calling this platform supported.
 - Editor text rendering is deliberately absent; every editor operation remains usable through icons,
   color, and keyboard bindings.
 - Intermittent window-focus/input loss has occurred under Xvfb/live verification. It has not been
@@ -62,8 +72,6 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 ### Ready for an explicitly chosen engineering session
 
-- `BUILD-010`: Linux distributable/package.
-- `BUILD-005`: Windows cross-build verification.
 - `INFRA-006`: partial `ObjectType` dispatch migration. Seven isolated families/extractions are done;
   the remaining cases were surveyed and mostly have genuine per-type divergence. Select a specific
   candidate before changing it—do not turn it into a broad refactor.

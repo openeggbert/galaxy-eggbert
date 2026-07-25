@@ -160,9 +160,8 @@ Produces `build-web/GalaxyEggbertCNA.{html,js,wasm,data}` — serve that directo
 (not `file://`, browsers block `.wasm`/`.data` fetches from local files) and open the `.html`.
 `CNA_ENABLE_NET` must stay `ON` (the default) even for the web build — `GalaxyEggbertCnaGame.cpp`
 unconditionally references `AvatarRenderer` symbols from `CNA_GamerServices`, which is gated behind
-it. Verified working via a real headless-Chrome/WebGL2 run (see `BUILD-003`); not yet wired into
-CI or a hosting pipeline (`BUILD-009`/`BUILD-010`, still open) — publishing the built files is a
-manual step for now.
+it. Verified working via a real headless-Chrome/WebGL2 run (see `BUILD-003`); it is not wired into
+a hosting pipeline, so publishing the built files remains a manual step.
 
 **Re-verified 2026-07-19** (user request: rebuild for their own site) — `build-web` was stale
 (last built 2026-07-17, before EDITOR-100..109 landed 2026-07-18); the editor sources were already

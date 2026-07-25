@@ -2135,9 +2135,26 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       re-confirmed the fix (a one-line test-file change, shared across all targets) on
       `build-cna`/`build-cna-vulkan`/`cmake-build-debug` too — all still clean (only the
       pre-existing quarantined `easy-gl-resource-smoke-tests` failure on the native dirs).
-- [ ] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — not attempted yet
+- [x] BUILD-005 — Windows cross-compile (MinGW-w64) for `GalaxyEggbertCNA` — **compile confirmed
+      2026-07-25**: `cmake/toolchains/mingw-w64.cmake` with the SDL_Renderer backend produced
+      a 64-bit PE `GalaxyEggbertCNA.exe` using `x86_64-w64-mingw32-g++`. `BUILD_TESTING=OFF` is
+      required for this offline production build so CMake does not fetch GoogleTest; MinGW Zlib
+      was supplied explicitly by `ZLIB_INCLUDE_DIR` and `ZLIB_LIBRARY`. **Windows runtime staging
+      completed 2026-07-25**: the active target statically links GCC/C++, copies
+      `libwinpthread-1.dll`, and stages `SDL3.dll`/`SDL3_image.dll`/`SDL3_mixer.dll` via the
+      resolved SDL package prefix (the prebuilt does not expose CNA's expected alias targets).
+      `objdump` confirms no GCC/C++ runtime DLL import remains. A real Windows launch is still
+      not a supported 3D game run: **Wine launch confirmed 2026-07-25** that the bundle creates
+      its window and loads `world001.vwr`/the background, then throws
+      `SDL_Renderer does not support 3D: CreateVertexBuffer`. The packaging is correct; the
+      Windows `SDL_RENDERER` backend is 2D-only, so selecting a Windows 3D backend is separate
+      work (see `README.md`).
 - [x] BUILD-007 — `GalaxyEggbertWorldsTests` unit tests build and all pass — **confirmed 2026-07-14**, current count is 64/64 (see TEST-001 in §13).
-- [ ] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests
+- [x] BUILD-008 — `ctest --test-dir <build-dir>` discovers and runs the world tests — **confirmed
+      2026-07-25** on `cmake-build-debug`: CTest discovered 82 tests and ran all of them; 81 passed,
+      including `VerifyGEWorldEditor`. The sole failure remains the pre-existing external
+      `easy-gl-resource-smoke-tests` assertion in the `easy-gl` sibling repository (CI excludes it),
+      so no Galaxy Eggbert test failure was found.
 - [x] BUILD-009 — CI: automated build on push (GitHub Actions), CNA target only (Linux; Web once
       BUILD-003 exists) — **done and confirmed green on a real GitHub Actions run (2026-07-23)**.
       New `.github/workflows/cna-ci.yml`: checks out `galaxy-eggbert` plus 5 pinned sibling repos
@@ -2186,7 +2203,14 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       (2 excluded: the known unrelated `easy-gl-resource-smoke-tests` failure), ~6.5 minutes
       end-to-end on a cold cache.** Not yet observed: a cache-hit run (SDL/ccache caches populated
       by this run should make the next push noticeably faster, unconfirmed until it happens).
-- [ ] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets) for `GalaxyEggbertCNA`
+- [x] BUILD-010 — Package installer / distributable (Linux AppImage or .tar.gz with bundled assets) for `GalaxyEggbertCNA` — **done 2026-07-25**: the CMake `package` target emits
+      `GalaxyEggbertCNA-linux-x86_64.tar.gz`. Its Runtime component contains the executable,
+      launcher, source-tracked `Content/`, world, texture, and avatar data, GPLv3/SDL licenses,
+      and the three SDL shared libraries. The installed executable has `$ORIGIN/lib` RPATH and
+      `ldd` confirmed all three SDL dependencies load from the unpacked bundle; host graphics,
+      FFmpeg, and C++ runtime libraries intentionally remain distribution dependencies. A real
+      desktop launch was not re-verified here because this environment's Xvfb has no usable video
+      device even for the existing native build.
 
 Dropped (dead Simple3D/U3D/Nova3D/Android direction, do not carry forward): old BUILD-001..002 as
 originally scoped to `GalaxyEggbertSimple3D`/U3D, old BUILD-004 (Android via U3D/Nova3D), old

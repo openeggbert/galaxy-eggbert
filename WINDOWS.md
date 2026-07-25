@@ -15,24 +15,27 @@ target_link_options(GalaxyEggbertSimple3D PRIVATE -static-libgcc -static-libstdc
 ```
 
 This avoids a runtime dependency on `libgcc_s_seh-1.dll`/`libstdc++-6.dll` outside the
-CLion/MSYS2 environment. `GalaxyEggbertCNA` does not currently have this option applied — if you
-need a portable `GalaxyEggbertCNA.exe`, either build it inside the CLion/MSYS2 environment (so the
-MinGW runtime DLLs are already on `PATH`), or add the same `-static-libgcc -static-libstdc++`
-link options to its CMake target.
+CLion/MSYS2 environment. `GalaxyEggbertCNA` now uses the same link options on MinGW builds,
+plus CNA's established `--allow-multiple-definition` workaround for the MinGW PE/COFF linker.
 
 ### Known gap: no runtime DLL copying
 
-Neither `GalaxyEggbertSimple3D` nor `GalaxyEggbertCNA` currently has a `POST_BUILD` step that
-copies runtime DLLs (`libwinpthread-1.dll`, or `SDL3.dll`/`SDL3_image.dll`/`SDL3_mixer.dll` for
-`GalaxyEggbertCNA`) next to the built executable — running either `.exe` outside the build
-environment on a machine without those DLLs on `PATH` will fail to launch. The sibling `../cna`
-repository's `cmake/ThirdPartySDL.cmake` already provides reusable helper functions for exactly
-this (`cna_copy_mingw_runtime(target)`, `cna_copy_sdl_runtime(target)`), but this repo's
-`CMakeLists.txt` does not currently call them for either target. Wiring these up is a real, open
-gap — not currently tracked in `NEXT.md` (which is scoped to `GalaxyEggbertCNA`'s active
-Linux-focused development), so raise it explicitly if a portable Windows build is actually needed.
-Lower priority for `GalaxyEggbertSimple3D` specifically, since that target is historical reference
-only as of 2026-07-08 and not built/fixed going forward (see `CLAUDE.md`).
+`GalaxyEggbertCNA` calls CNA's `cna_copy_mingw_runtime(target)` and
+`cna_copy_sdl_runtime(target)` helpers after every MinGW build. The repository's Windows SDL
+prebuilt resolves its import libraries through `SDL3_DIR` without exposing the helpers'
+compatibility aliases, so the target also copies the known `bin/` DLLs from that package prefix as
+a fallback. Its output directory therefore contains `libwinpthread-1.dll`, `SDL3.dll`,
+`SDL3_image.dll`, and `SDL3_mixer.dll` next to the executable. This is limited to the maintained
+CNA target. `GalaxyEggbertSimple3D` remains historical reference only and deliberately has no
+packaging work (see `CLAUDE.md`).
+
+### Current 3D backend blocker
+
+The staged `GalaxyEggbertCNA.exe` was launched through Wine on 2026-07-25. It created its SDL
+window and loaded `worlds3d/world001.vwr` plus its background texture, proving the runtime DLL
+bundle works. It then terminated at `CreateVertexBuffer`: CNA's `SDL_RENDERER` backend reports
+itself as 2D-only and does not implement 3D vertex buffers. Do not present this build as a runnable
+Windows 3D release until a Windows 3D backend is selected and verified.
 
 ### Linux / Web / Android
 

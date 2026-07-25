@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Run Galaxy Eggbert from its bundle directory so its relative asset paths
+# (Content/, worlds3d/, textures3d/, and avatars3d/) always resolve.
+set -eu
+
+bundle_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$bundle_dir"
+exec "$bundle_dir/GalaxyEggbertCNA" "$@"
