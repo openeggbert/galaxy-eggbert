@@ -5683,12 +5683,10 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 
 ## 6. Development Tooling — 3D World Editor
 
-**Status (2026-07-23): COMPLETE.** All 13 approved milestones (EDITOR-100 through EDITOR-112) are
-implemented, tested, and pushed (see "What's actually built" below and the `EDITOR-111`/`EDITOR-112`
-entries further down) — the editor is fully usable today (enter from the menu, fly around,
-place/remove blocks and objects, box-fill, undo/redo, sky-region picker, an unsaved-changes guard on
-Back, save, play-test). Was paused 2026-07-19, resumed 2026-07-23 by explicit user authorization at
-the start of an autonomous session — see the history below for that pause's own reasoning.
+**Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
+`EDITOR-112`) and the four follow-up maintainability tasks (`EDITOR-113` through `EDITOR-116`) are
+implemented and tested. The editor's input, rendering, orchestration, and verification are now
+separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
 "Known problems / open concerns" keyboard-input issue below still holds — fresh read of
@@ -5710,21 +5708,18 @@ Full detail and exact commit history live in NEXT.md §2/§3 (kept there since i
 session); summary for anyone picking this up cold:
 - Enter the editor from the real Init menu ("Editor" button), scoped to the selected gamer slot;
   a browser screen lists/creates/opens/deletes that slot's worlds under `customworlds/gamer<N>/`.
-- Free-fly camera (WASD/Space/Ctrl, RMB mouse-look, scroll = fly speed), voxel raycast crosshair
-  (Amanatides–Woo DDA), left-click place / middle-click remove a block, `F`-key or toolbar
-  box-fill (drag a cuboid across two clicks, fills as one undo command), `U`/`R` undo/redo
-  (200-deep), `Enter`/toolbar save, and a full Play-Test loop (saves, launches a real gameplay
+- Free-fly camera (WASD/Space/Ctrl, RMB mouse-look, mouse-wheel zoom), voxel raycast crosshair
+  (Amanatides–Woo DDA), left-click place / middle-click remove a block, `F`-key box-fill
+  (selects two corners and fills the cuboid as one undo command), `U`/`R` undo/redo
+  (200-deep), `Enter` save, and a full Play-Test loop (saves, launches a real gameplay
   session against the custom world, returns to the editor on win/loss/pause-back).
 - Objects mode places real `MoveObjectRecord`s (enemies, pickups, lifts) with no save/reload
   round-trip; `G`/`T`/`Tab`/`OemPlus`/`OemMinus`/`Delete` select an already-placed object, give it
   a real patrol path, and edit its speed/timing fields or remove it (EDITOR-110).
-- Palette UI (redesigned twice this session, both times from direct user screenshot feedback): a
-  single vertical column of solid-green buttons at the screen's left edge, matching free-eggbert's
-  own editor palette — 8 paired action buttons (Undo/Redo, Save/Back, Play-Test/mode-toggle,
-  BoxFill/Confirmed-All-tab), a paging row, then the current page's block/object icons one per
-  row. Every cell draws the real per-type sprite (`GEObjectIcons::GetObjIcon()` plus its
-  atlas-selection predicates — the same lookup already used to render real gameplay billboards),
-  not a placeholder color.
+- Palette UI follows Eggbert 2's source ordering: one visible `button.png` category glyph per
+  group on the left opens that group's `button.png` entries. Galaxy-specific, always-visible
+  controls provide X/Y/Z preview movement plus PLACE, play-test dice, and Stop. Unverified source
+  entries stay visible and show the two-second yellow/red `Not yet implemented.` notice.
 
 ### EDITOR-111 — sky-region picker (2026-07-23, done)
 
@@ -5852,6 +5847,40 @@ underlying logic remains thoroughly verified via the headless automated suite wi
 teeth-checks above; only the pixel-level color rendering itself is unconfirmed live.
 
 Full regression clean on all 3 native backends (same counts as EDITOR-111's own entry above).
+
+### EDITOR-113 through EDITOR-116 — maintainability cleanup (approved 2026-07-25)
+
+- [x] **EDITOR-113 — remove invisible editor hitboxes.** Delete the legacy Galaxy toolbar geometry
+      that consumes clicks around `x=450` without drawing corresponding controls. Every remaining
+      clickable rectangle must have a visible control, and the regression suite must prove a click
+      in the former hidden-toolbar area reaches the 3D view instead of being claimed by the palette.
+      **Done 2026-07-25:** the old toolbar rectangles and actions are gone. Only the visible delete,
+      category, popup, XYZ/PLACE, dice, and Stop controls consume pointer input. The former hidden
+      area is covered both at palette level and through a real editor/world integration test.
+- [x] **EDITOR-114 — split `GEWorldEditor::Update()`.** Extract camera/input collection, placement
+      preview raycasting, block/object placement, history/toolbar actions, box fill, sky-region
+      stepping, and placed-object editing into named private methods. `Update()` remains the
+      frame-level coordinator and existing behavior/tests remain unchanged.
+      **Done 2026-07-25:** `GEWorldEditor.cpp` now owns the short frame coordinator and session
+      lifecycle; `GEWorldEditorUpdate.cpp` contains named camera, preview, placement, removal,
+      session/history, fill, sky, and object-edit handlers.
+- [x] **EDITOR-115 — separate palette layout, input, and rendering.** Move all viewport-dependent
+      rectangle/page calculations into a dedicated layout component, move pointer state/action
+      resolution into a dedicated input component, and move drawing/effect ownership into a
+      renderer component. `GEEditorPalette` retains only catalogue/selection/notice state and
+      coordinates those components.
+      **Done 2026-07-25:** `GEEditorPaletteLayout`, `GEEditorPaletteInput`, and
+      `GEEditorPaletteRenderer` now own those responsibilities. `GEEditorPalette` is reduced to
+      source catalogue, current selection/category, notice timing, and component coordination.
+      Narrow layouts wrap the XYZ controls and keep every opened source entry on screen.
+- [x] **EDITOR-116 — split the editor verification suite.** Replace the monolithic
+      `VerifyGEWorldEditor.cpp` executable with several focused test executables covering pure
+      geometry/history, palette UI, editor integration, and object editing/storage. Register every
+      executable with CTest and keep all existing assertions represented.
+      **Done 2026-07-25:** CMake/CTest now registers `VerifyGEWorldEditor` (core camera, raycast,
+      blocks, history, fill, backgrounds and Stop guard), `VerifyGEEditorPalette`,
+      `VerifyGEEditorStorage`, and `VerifyGEEditorObjects`. The former 1754-line monolith is a
+      384-line core test; the moved behavior remains covered in the three focused binaries.
 
 ### Known problems / open concerns
 

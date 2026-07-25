@@ -20,34 +20,13 @@
 
 namespace GalaxyEggbert::CNA
 {
-    // In-game 3D world editor (plan.md section 6, EDITOR-1xx tasks) -- lets a
-    // player create/edit/save/play-test their own .vwr worlds from a new
-    // GamePhase::Editor mode. Not a mobile-eggbert feature: content-creation
-    // tooling, explicitly exempt from the project's faithful-remake rule
-    // (see plan.md section 6 / CLAUDE.md).
-    //
-    // EDITOR-108 (an earlier milestone): free-fly camera (EDITOR-101) + voxel
-    // raycast/highlight (EDITOR-102) + single block place/remove/save
-    // (EDITOR-103) + undo/redo (EDITOR-104) + box-fill (EDITOR-105) + a
-    // real block palette (EDITOR-106) + a real per-gamer-slot world
-    // browser (EDITOR-107), now with a Play-Test toolbar button that saves
-    // and hands off to GalaxyEggbertCnaGame for a real gameplay session
-    // against the just-saved world. EDITOR-109 added stationary MoveObject
-    // placement in Objects mode; EDITOR-110 (this milestone) adds selecting
-    // an already-placed one and editing it -- see Update()'s own comment
-    // for the G/T/Tab/OemPlus/OemMinus/Delete bindings, keyboard-only, same
-    // "no toolbar button, no text label" precedent already set by the
-    // box-fill tool (F/Escape).
+    // Owns one in-game 3D editing session: camera and placement input,
+    // palette interaction, undo history, object editing, persistence and
+    // transitions to the world browser or play-test mode.
     class GEWorldEditor
     {
     public:
-        // Enters (or re-enters) the browser for @p gamerSlot -- called from
-        // the Init screen's new Editor button, and again internally
-        // whenever the toolbar's Back button is pressed while editing.
-        // Rescans disk (GECustomWorldStorage::ListCustomWorlds) fresh each
-        // time. IsBrowsing() reports true afterward, until the caller
-        // (GalaxyEggbertCnaGame) actually loads/creates a world and calls
-        // ExitBrowser().
+        // Enters the browser and rescans the selected gamer's custom worlds.
         void EnterBrowser(int gamerSlot);
 
         [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
@@ -83,10 +62,7 @@ namespace GalaxyEggbert::CNA
         // world.
         void EnterEditing(float startX, float startY, float startZ) noexcept;
 
-        // Sets the path Save() (see Update()'s Enter-key handling below)
-        // and the toolbar's Save button write to -- set by
-        // GalaxyEggbertCnaGame right after it loads/creates the world this
-        // BrowserRequest pointed at.
+        // Sets the path used by keyboard save and play-test.
         void SetWorldPath(std::filesystem::path path) noexcept { worldPath_ = std::move(path); }
 
         // The path currently being edited (plan.md EDITOR-108) -- read by
@@ -94,118 +70,18 @@ namespace GalaxyEggbert::CNA
         // know which file to load for the play-test session.
         [[nodiscard]] const std::filesystem::path& GetWorldPath() const noexcept { return worldPath_; }
 
-        // True exactly once, right after an Update() call whose Play-Test
-        // toolbar button was clicked -- Update() already saved @p world to
-        // worldPath_ itself before setting this (same "save before
-        // testing" behavior as pressing Save first, then Play-Test). The
-        // caller (GalaxyEggbertCnaGame) still owns actually switching to
-        // GamePhase::Play and loading the saved file fresh (this class has
-        // no GEWorldRuntime/phase access), same "*ThisFrame()"/"Consume*()"
-        // idiom as ConsumeNeedsPresentationRebuild() above.
+        // Consumes the request raised by the dice button after it saves.
         [[nodiscard]] bool ConsumePlayTestRequested() noexcept;
 
-        // Reads keyboard/mouse and flies camera around, then raycasts from
-        // the (possibly just-moved) camera into @p world to find whichever
-        // block it's currently aiming at (stored for Draw() to visualize).
-        // While the right mouse button is held, mouse deltas drive
-        // yaw/pitch (relative mouse mode + cursor capture) and the cursor
-        // is hidden from the OS; releasing it frees the cursor again for
-        // left/middle-click tool handling. WASD move along the camera's
-        // own forward/right axes, Space/Left Ctrl move along world
-        // up/down, the scroll wheel zooms the camera in/out.
-        //
-        // Editing tools (edge-triggered, once per press -- RMB is already
-        // taken by camera look, so this deliberately isn't the usual
-        // Minecraft-style left=break/right=place binding):
-        //   - Left click: places the palette's currently selected block
-        //     type (GEEditorPalette::SelectedBlockType(), clicked from the
-        //     on-screen palette grid -- see Draw()) at the cell adjacent
-        //     to the aimed-at face. While the palette is in Objects mode
-        //     (its 6th toolbar button toggles), the same click instead
-        //     places a stationary MoveObjectRecord (posEnd == posStart) of
-        //     the selected ObjectType there -- an enemy/pickup/lift, which
-        //     GEWorldRuntime::ResyncFromWorld() picks up on the caller's
-        //     next RebuildWorldPresentation(), so it shows up as a real
-        //     billboard immediately without a disk round-trip.
-        //   - Middle click: removes the aimed-at block entirely.
-        //   - Enter: saves @p world to the path set via SetWorldPath().
-        //   - U: undoes the most recent block edit; R: redoes it (plain
-        //     keys, not Ctrl-modified -- Left Ctrl already flies downward).
-        //     The palette's own Undo/Redo/Save toolbar buttons trigger the
-        //     exact same actions via a mouse click, for players who don't
-        //     know the keybindings; its 4th (Back) button returns to the
-        //     browser (EnterBrowser() again, for the same gamer slot) --
-        //     EDITOR-112's unsaved-changes guard means this is a real 2-tap
-        //     when dirty (see MarkMutated()'s own comment): the first press
-        //     only brightens the button (armed, no text label to say so),
-        //     the second actually leaves, discarding whatever wasn't
-        //     saved. A no-op single tap when there's nothing unsaved. Its
-        //     5th (Play-Test) button saves @p world then requests a real
-        //     gameplay session -- see ConsumePlayTestRequested() below.
-        //   - F: box-fill tool. First press marks the aimed-at cell as
-        //     corner A; while a corner is marked, the highlight tracks a
-        //     live box between corner A and wherever the raycast currently
-        //     aims (fly anywhere in between -- the two corners can come
-        //     from completely different camera angles/distances, which is
-        //     what gives a true 3D cuboid, not just a flat footprint). A
-        //     second F press marks corner B and immediately fills the
-        //     whole box with the palette's selected block type as ONE undo
-        //     command (only the cells that actually changed); Escape
-        //     cancels back to single-cell picking with no world change.
-        //   - G: selects whichever already-placed MoveObject's billboard
-        //     projects closest to screen center (plan.md EDITOR-110) --
-        //     objects aren't voxel-grid raycast targets like blocks, so
-        //     picking is nearest-screen-space instead, reusing
-        //     GEHud::ProjectWorldToHudSpace() (no new projection math).
-        //     Pressing G with nothing within the pick radius clears the
-        //     current selection. The selection is highlighted (a distinct
-        //     color from the aim-crosshair/box-fill overlay).
-        //   - T: while an object is selected, sets its posEnd to wherever
-        //     the crosshair currently aims -- gives it a real patrol path
-        //     (posStart != posEnd is the existing "this object moves"
-        //     signal already used by GEEditCommandStack/GEWorldRuntime).
-        //   - Tab: cycles which of the selected object's 5 numeric fields
-        //     (speed, then the 4 real patrol-turn-timing fields, in
-        //     MoveObjectRecord's own declared order) OemPlus/OemMinus
-        //     below adjust.
-        //   - OemPlus/OemMinus (the +/- keys): nudge the active field by a
-        //     fixed editor-UX step (not a transcribed real constant, same
-        //     category as MoveObjectRecord's own placeholder timing
-        //     defaults), clamped so speed/ticks never go negative.
-        //   - Delete: removes the selected object entirely and clears the
-        //     selection.
-        //   All five are edge-triggered on the press, same as every other
-        //   tool key above, and each is one MoveObjectEdit undo command
-        //   (U/R undo/redo them like any other edit) -- no new toolbar
-        //   button exists for any of them, matching the box-fill tool's own
-        //   keyboard-only precedent (every tool already has a working
-        //   binding; toolbar buttons are a discoverability convenience on
-        //   top, not a functional requirement -- see GEEditorPalette's own
-        //   class comment).
-        //   - Left/Right arrow keys (EDITOR-111): step @p world's
-        //     skyRegion() down/up by 1, wrapping 0<->31 (world.hpp's own
-        //     documented valid range) -- one SkyRegionEdit undo command per
-        //     press, same edge-triggered/undoable shape as every tool
-        //     above. No live visual feedback needed beyond the real
-        //     background itself: ConsumeNeedsPresentationRebuild() fires
-        //     the same way a block edit does, so the caller's
-        //     RebuildWorldPresentation() reloads Content/backgrounds/
-        //     decorNNN.png (or falls back to a flat clear color for the 4
-        //     ids with no real art, exactly as it already does for a
-        //     freshly-loaded world) immediately -- the player SEES the sky
-        //     change, no text readout needed (this class draws no text at
-        //     all, see GEEditorPalette's own class comment). The palette's
-        //     own SkyRegionPrev/Next toolbar buttons trigger the identical
-        //     action via a mouse click, same "keyboard-first, toolbar
-        //     button as discoverability convenience" precedent as
-        //     Undo/Redo/Save/Back/PlayTest/BoxFill above.
-        // Call ConsumeNeedsPresentationRebuild() after Update() returns to
-        // find out whether @p world was actually mutated this frame.
-        //
-        // @p world is in its own RAW GRID space (see GEVoxelRaycast.hpp);
-        // the camera's own position/direction (render space, shifted by
-        // -GEWorldRuntime::kWorldCenterX/Z from that) is converted
-        // internally -- callers never need to apply this shift themselves.
+        // Updates one editor frame. RMB looks, WASD/Space/Ctrl fly and the
+        // wheel zooms. Left click or PLACE creates the selected block or
+        // object at the red preview; middle click removes a block. NumPad
+        // 4/6, 7/9 and 8/2 move the preview on X/Y/Z; NumPad 5 resets it.
+        // Enter saves, U/R undo/redo, F/Escape starts/cancels box fill,
+        // arrows select a background, and G/T/Tab/+/-/Delete edit objects.
+        // Palette presses are consumed before world editing. The visible
+        // Stop sign returns to the browser, with a second press required
+        // while unsaved changes exist; the dice saves and starts play-test.
         void Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
                     const Microsoft::Xna::Framework::Input::MouseState& mouse,
                     float dt, int viewportWidth, int viewportHeight,
@@ -221,22 +97,55 @@ namespace GalaxyEggbert::CNA
         // GEInteractionSystem/GEBlupiController.
         [[nodiscard]] bool ConsumeNeedsPresentationRebuild() noexcept;
 
-        // @p terrainTexture/elementTexture/exploTexture/blupiTexture/
-        // blupi1Texture are the same already-loaded object-m.png/
-        // element.png/explo.png/blupi.png/blupi1.png textures
-        // GalaxyEggbertCnaGame's own terrain/object rendering uses -- lent
-        // to the palette so its Objects-mode icon grid can draw each
-        // type's real sprite (GEEditorPalette::Draw()'s own comment).
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   const Easy3D::Camera3D& camera,
-                  Microsoft::Xna::Framework::Graphics::Texture2D& terrainTexture,
-                  Microsoft::Xna::Framework::Graphics::Texture2D& elementTexture,
-                  Microsoft::Xna::Framework::Graphics::Texture2D& exploTexture,
-                  Microsoft::Xna::Framework::Graphics::Texture2D& blupiTexture,
-                  Microsoft::Xna::Framework::Graphics::Texture2D& blupi1Texture,
                   int viewportWidth, int viewportHeight);
 
     private:
+        struct FrameInput
+        {
+            GEEditorPalette::UpdateResult palette;
+            bool leftHeld = false;
+            bool middleHeld = false;
+            bool enterHeld = false;
+            bool undoHeld = false;
+            bool redoHeld = false;
+            bool boxHeld = false;
+            bool escapeHeld = false;
+            bool selectHeld = false;
+            bool targetHeld = false;
+            bool cycleFieldHeld = false;
+            bool increaseFieldHeld = false;
+            bool decreaseFieldHeld = false;
+            bool deleteObjectHeld = false;
+            bool skyPreviousHeld = false;
+            bool skyNextHeld = false;
+        };
+
+        [[nodiscard]] Easy3D::Camera3D::Vector3 UpdateCamera(
+            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
+            const Microsoft::Xna::Framework::Input::MouseState& mouse,
+            float dt, Easy3D::Camera3D& camera);
+        [[nodiscard]] bool UpdatePlacementOffset(
+            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
+            GEEditorPalette::Action paletteAction);
+        void UpdatePlacementPreview(
+            const Worlds::World& world, const Easy3D::Camera3D::Vector3& forward);
+        [[nodiscard]] FrameInput ReadFrameInput(
+            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
+            const Microsoft::Xna::Framework::Input::MouseState& mouse,
+            GEEditorPalette::UpdateResult paletteResult) const;
+        void UpdateBoxPreview(const Worlds::World& world);
+        [[nodiscard]] bool HandlePlacement(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleBlockRemoval(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleSessionAndHistory(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleSkyRegion(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleObjectEditing(
+            const FrameInput& input, Easy3D::Camera3D& camera,
+            int viewportWidth, int viewportHeight, Worlds::World& world);
+        void StoreInputEdges(const FrameInput& input, bool placementOffsetKeyHeld) noexcept;
+
         float camX_ = 50.0f;
         float camY_ = 15.0f;
         float camZ_ = 50.0f;
@@ -260,16 +169,11 @@ namespace GalaxyEggbert::CNA
         float highlightX_ = 0.0f;
         float highlightY_ = 0.0f;
         float highlightZ_ = 0.0f;
-        // Raw-grid-space hit cell + outward face normal from this frame's
-        // raycast -- kept alongside the render-space highlight* fields
-        // above so Update()'s place/remove handling doesn't need to
-        // reverse the render-space shift a second time.
+        // Raw-grid cell hit by the current ray, retained for removal and
+        // box-fill. Placement uses placementCell* below.
         std::uint16_t hitCellX_ = 0;
         std::uint16_t hitCellY_ = 0;
         std::uint16_t hitCellZ_ = 0;
-        std::int8_t hitNormalX_ = 0;
-        std::int8_t hitNormalY_ = 0;
-        std::int8_t hitNormalZ_ = 0;
 
         // The ray supplies a base adjacent cell. The author can move the
         // pending placement from that base with NumPad 4/6 (X), 8/2 (Z),
@@ -297,30 +201,16 @@ namespace GalaxyEggbert::CNA
         bool needsPresentationRebuild_ = false;
         bool playTestRequested_ = false;
 
-        // Unsaved-changes guard (EDITOR-112). dirty_ is true from the first
-        // edit after EnterEditing()/Save()/PlayTest() until the next actual
-        // save -- see MarkMutated()'s own comment. backConfirmArmed_ is the
-        // Back button's own 2-tap state, same idiom as
-        // GEEditorBrowserScreen's armedDeleteIndex_.
+        // Unsaved changes make the visible Stop action require confirmation.
         bool dirty_ = false;
-        bool backConfirmArmed_ = false;
+        bool stopConfirmArmed_ = false;
 
-        // Every real edit (block/object/sky-region place, remove, fill,
-        // undo, redo) calls this instead of setting needsPresentationRebuild_
-        // directly -- centralizes "the world just changed" so dirty_ can't
-        // drift out of sync with it, and doubles as the Back-confirm's own
-        // disarm signal (a further edit while armed means the player is
-        // still working, not trying to confirm leaving). Non-mutating
-        // actions (G-select, Tab-cycle-field, Escape-cancel-box) don't
-        // disarm it -- a documented, minor scope narrowing, not an
-        // oversight: the guard's real job is catching an accidental
-        // double-click on Back itself, not tracking every possible
-        // interleaved non-mutating keystroke.
+        // Centralizes the state changed by every undoable world mutation.
         void MarkMutated() noexcept
         {
             needsPresentationRebuild_ = true;
             dirty_ = true;
-            backConfirmArmed_ = false;
+            stopConfirmArmed_ = false;
         }
 
         GEEditCommandStack commandStack_;

@@ -324,12 +324,16 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GESaveData.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
+        src/GalaxyEggbertCNA/Editor/GEWorldEditorUpdate.cpp
         src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
         src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
         src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
         src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPaletteLayout.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPaletteInput.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPaletteRenderer.cpp
         src/GalaxyEggbertCNA/Editor/GECustomWorldStorage.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
         ${GE_SHARED_SOURCES}
@@ -652,28 +656,22 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         add_test(NAME VerifyGEInputPad COMMAND VerifyGEInputPad)
     endif()
 
-    # Scripted verification for the in-game 3D world editor (plan.md
-    # section 6, EDITOR-1xx) -- GEWorldEditor.cpp depends on
-    # Easy3D::Camera3D and CNA Keyboard/Mouse types, so this links the same
-    # way VerifyGEInputPad above does (CNA + backend + SHARP_RUNTIME +
-    # easy3d), even though the assertions themselves need no
-    # GraphicsDevice/window. GEHud.cpp added for EDITOR-110's nearest-object
-    # picking, which reuses GEHud::ProjectWorldToHudSpace() rather than a
-    # new projection path (same reason VerifyInteractionSystem already
-    # links it). GEObjectIcons.cpp added for GEEditorPalette's real
-    # per-type object icons (2026-07-19, user-requested redesign away from
-    # flat category-colored cells) -- engine-agnostic (only depends on
-    # def/ObjectType.hpp), same precedent as GenerateSampleWorld3D linking
-    # it below.
-    add_executable(VerifyGEWorldEditor
-        tools/VerifyGEWorldEditor.cpp
+    # Scripted editor verification is split by responsibility so failures
+    # identify the broken subsystem instead of disappearing inside one
+    # monolithic executable. The support sources stay shared because the
+    # focused tests intentionally exercise the real editor integration.
+    set(GE_EDITOR_VERIFY_SUPPORT_SOURCES
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
+        src/GalaxyEggbertCNA/Editor/GEWorldEditorUpdate.cpp
         src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
         src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
         src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
         src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPaletteLayout.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPaletteInput.cpp
+        src/GalaxyEggbertCNA/Editor/GEEditorPaletteRenderer.cpp
         src/GalaxyEggbertCNA/Editor/GECustomWorldStorage.cpp
         src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
@@ -682,25 +680,37 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         ${GE_SHARED_SOURCES}
     )
-    target_include_directories(VerifyGEWorldEditor PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
-    )
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
-        target_link_libraries(VerifyGEWorldEditor PRIVATE
-            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
-            SHARP_RUNTIME)
-    else()
-        target_link_libraries(VerifyGEWorldEditor PRIVATE CNA SHARP_RUNTIME)
-    endif()
-    if(TARGET easy3d::easy3d)
-        target_link_libraries(VerifyGEWorldEditor PRIVATE easy3d::easy3d)
-    else()
-        target_link_libraries(VerifyGEWorldEditor PRIVATE easy3d)
-    endif()
-    if(BUILD_TESTING)
-        add_test(NAME VerifyGEWorldEditor COMMAND VerifyGEWorldEditor)
-    endif()
+
+    function(ge_add_editor_verify target source)
+        add_executable(${target}
+            ${source}
+            ${GE_EDITOR_VERIFY_SUPPORT_SOURCES}
+        )
+        target_include_directories(${target} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        )
+        if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
+            target_link_libraries(${target} PRIVATE
+                -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
+                SHARP_RUNTIME)
+        else()
+            target_link_libraries(${target} PRIVATE CNA SHARP_RUNTIME)
+        endif()
+        if(TARGET easy3d::easy3d)
+            target_link_libraries(${target} PRIVATE easy3d::easy3d)
+        else()
+            target_link_libraries(${target} PRIVATE easy3d)
+        endif()
+        if(BUILD_TESTING)
+            add_test(NAME ${target} COMMAND ${target})
+        endif()
+    endfunction()
+
+    ge_add_editor_verify(VerifyGEWorldEditor tools/VerifyGEWorldEditor.cpp)
+    ge_add_editor_verify(VerifyGEEditorPalette tools/VerifyGEEditorPalette.cpp)
+    ge_add_editor_verify(VerifyGEEditorStorage tools/VerifyGEEditorStorage.cpp)
+    ge_add_editor_verify(VerifyGEEditorObjects tools/VerifyGEEditorObjects.cpp)
 
     # -------------------------------------------------------------------
     # Linux runtime bundle (BUILD-010)
