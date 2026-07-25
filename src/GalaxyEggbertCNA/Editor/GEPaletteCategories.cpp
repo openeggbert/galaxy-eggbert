@@ -43,10 +43,10 @@ namespace GalaxyEggbert::CNA
                                   {2, 20, 15, 22, 79, 88, 86, 250},
                                   {}, {0, 1, 2, 27, 34, 35, 67, 106}),
             FreeMixedMenuCategory("Rock and terrain",
-                                  {153, 154, 185, 0, 337, 247, 339, 341, 157, 91},
+                                  {153, 154, 185, 284, 337, 247, 339, 341, 157, 91},
                                   {}, {22, 59, 68, 118, 127, 100, 128, 129, 39, 38}),
-            // Menu 4 is TODO in Free Eggbert's own decdesign.cpp.
-            FreeMixedMenuCategory("Buildings", {}, {},
+            FreeMixedMenuCategory("Buildings",
+                                  {386, 398, 186, 193, 261, 139, 41, 215, 223, 214}, {},
                                   {137, 138, 65, 66, 112, 58, 23, 80, 81, 79}),
             FreeMixedMenuCategory("Hazards",
                                   {0, 0, 0, Lava, FanLeft, 110, Spike, Drip, Saw, 0,

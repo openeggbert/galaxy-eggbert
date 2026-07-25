@@ -63,6 +63,13 @@ int main()
           "the Eggbert Wooden case entry maps to Galaxy's pushable crate");
     check(sourceCategories[8].objectTypeIds[0] == 46,
           "the Eggbert Hovercraft entry maps to Galaxy's Overcraft");
+    check(sourceCategories[2].iconIds[3] == 284,
+          "the Eggbert Cave entry maps to the named Cave_1 atlas tile");
+    const std::vector<int> expectedBuildingBlocks = {
+        386, 398, 186, 193, 261, 139, 41, 215, 223, 214,
+    };
+    check(sourceCategories[3].iconIds == expectedBuildingBlocks,
+          "all ten Buildings entries map to their named first atlas tiles");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
@@ -304,6 +311,32 @@ int main()
               "the Hovercraft glyph selects Galaxy's functional Overcraft");
         check(!palette.IsNotYetImplementedNoticeVisible(),
               "the mapped Hovercraft glyph does not raise the temporary notice");
+    }
+
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 156.0f);
+        const auto cave = click(palette, 198.0f, 156.0f);
+        check(cave.clickConsumed && palette.SelectedBlockType() == 284 &&
+                  !palette.IsObjectMode(),
+              "the Cave glyph selects the named Cave_1 block");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the mapped Cave glyph does not raise the temporary notice");
+    }
+
+    for (std::size_t index = 0; index < expectedBuildingBlocks.size(); ++index)
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 198.0f);
+        const auto building = click(
+            palette, 72.0f + static_cast<float>(index) * 42.0f, 198.0f);
+        check(building.clickConsumed &&
+                  palette.SelectedBlockType() ==
+                      static_cast<std::uint16_t>(expectedBuildingBlocks[index]) &&
+                  !palette.IsObjectMode(),
+              "a Buildings glyph selects its exact named atlas block");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "a mapped Buildings glyph does not raise the temporary notice");
     }
 
     {

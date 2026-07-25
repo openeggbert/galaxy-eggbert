@@ -5701,8 +5701,8 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): IN PROGRESS.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-122` are implemented and tested. The user has
-now explicitly approved `EDITOR-123` through `EDITOR-127`, which close all 26 source-menu entries
+`EDITOR-112`) and follow-up tasks through `EDITOR-123` are implemented and tested. The user has
+now explicitly approved `EDITOR-124` through `EDITOR-127`, which close the remaining 15 source-menu entries
 that still raise the temporary notice. The editor's input, rendering, orchestration, and
 verification remain separated into focused components.
 
@@ -5961,13 +5961,19 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       rather than aliasing to a merely similar 3D object. Palette tests lock the three catalogue
       mappings, real pointer hit locations, resulting object mode/type, and absence of the temporary
       notice.
-- [ ] **EDITOR-123 — implement Cave and all ten Buildings entries (11 remaining items).**
+- [x] **EDITOR-123 — implement Cave and all ten Buildings entries (11 remaining items).**
       Resolve the exact Eggbert 2 representative tile or variant behavior for Cave, Palace,
       Element for Palace, Building facade, Roof, Bricks, Furniture, Wooden wall, Kid's stuff
       square, Special Kid's stuff, and Invisible block. Preserve their current `button.png` icons
       and positions. Do not substitute a visually similar Galaxy block: each mapping must be
       grounded in the original binary/assets or another already-approved reference, place into the
       red preview cell, and retain normal undo/redo/save/play-test behavior.
+      **Done 2026-07-25:** the named Eggbert 2 atlas enum gives exact first representatives without
+      visual guessing: Cave 284; Palace 386; Palace element 398; Facade 186; Roof 193; Bricks 261;
+      Furniture/bookshelf 139; Wooden wall 41; Kid's square 215; Special kid's item 223; Invisible
+      block 214. The existing generic voxel placement path provides preview, undo/redo, save, and
+      play test. Automated pointer tests open the real Rock/Buildings groups, click all 11 cells,
+      verify the exact selected block id and block mode, and prove the notice remains hidden.
 - [ ] **EDITOR-124 — implement the six remaining special object entries.**
       Add faithful editor representations for Bomb, Hanging bomb, Homing bomb, Moving bomb,
       Personal bomb, and Secret wooden case. Where Galaxy's current `ObjectType` vocabulary has no

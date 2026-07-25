@@ -24,9 +24,9 @@ which backlog item to pick up next, or wait for new direction._
 
 _Last updated: 2026-07-25. The in-game 3D world editor's original plan is **COMPLETE**: all 13
 approved milestones (EDITOR-100 through EDITOR-112) are implemented and verified. User-directed
-follow-up work through EDITOR-122 is also complete, including the Eggbert-ordered palette cleanup,
+follow-up work through EDITOR-123 is also complete, including the Eggbert-ordered palette cleanup,
 XYZ placement controls/readout, object cell alignment, the Galaxy-only background-thumbnail menu,
-functional touch deletion, and three newly verified source-menu mappings. Editor work resumed
+functional touch deletion, three verified object mappings, and all Cave/Buildings mappings. Editor work resumed
 2026-07-23 by explicit user authorization (was paused 2026-07-19 — see
 plan.md §6's
 own status note for the full history), then finished the same session: EDITOR-111 (sky-region
@@ -37,9 +37,9 @@ concern noted when work was paused is still unresolved — re-confirmed twice mo
 keyboard and mouse input stopped reaching the game entirely, despite working fine for EDITOR-111's
 live check earlier the same session) — genuinely intermittent, not a code bug, see plan.md §6's
 "Known problems" for the full history. No work remains on the original approved plan; any further
-editor work is a separately selected follow-up. The user has now selected `EDITOR-123` through
-`EDITOR-127`: complete all 26 source-menu entries that still show the temporary notice, including
-the required spawn-point and BigDecor persistence._
+editor work is a separately selected follow-up. The user has now selected `EDITOR-124` through
+`EDITOR-127`: complete the 15 source-menu entries that still show the temporary notice, including
+the required special-object, spawn-point, and BigDecor persistence._
 
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
@@ -65,7 +65,7 @@ third-person).
 `src/GalaxyEggbertCNA/Editor/`, a user-requested feature letting each player create, edit, save
 and play-test their own `.vwr` worlds — inspired by free-eggbert's "Own mission" editor. The user
 approved a 13-milestone plan (EDITOR-100..112); all 13 are done, and later user-directed
-follow-ups through `EDITOR-122` are implemented — see plan.md §6 for the full write-up (what's
+follow-ups through `EDITOR-123` are implemented — see plan.md §6 for the full write-up (what's
 built, and a real open concern about keyboard input
 possibly being a window-focus issue, re-confirmed twice more as of 2026-07-23, still not a code bug,
 not yet confirmed fixed on a real desktop).
@@ -2046,7 +2046,7 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
 
 **There is no active build or test failure blocking progress.** `build-cna` builds and passes
 84 tests with the pre-existing `easy-gl` dependency test excluded (see §5). The original 3D world
-editor plan is fully complete, and user-directed follow-ups through `EDITOR-122` are implemented.
+editor plan is fully complete, and user-directed follow-ups through `EDITOR-123` are implemented.
 
 **Resolved 2026-07-19, re-verified 2026-07-23**: `build-cna-vulkan` builds and passes `ctest`
 cleanly through the entire editor line of work (EDITOR-100..112) and every INFRA-*/BUILD-*
@@ -2318,7 +2318,7 @@ user before treating them as permanent beyond it):
 ## 8. Next smallest tasks
 
 **The original editor plan is complete** (EDITOR-100 through EDITOR-112, see §3/plan.md §6), and
-the user-directed follow-ups through `EDITOR-122` are implemented. Further editor work is selected
+the user-directed follow-ups through `EDITOR-123` are implemented. Further editor work is selected
 as a new follow-up rather than silently extending the original plan.
 
 1. ~~EDITOR-111 — Sky-region picker.~~ — **done 2026-07-23**, see §3's own writeup and `plan.md`
@@ -2340,9 +2340,9 @@ as a new follow-up rather than silently extending the original plan.
    verified Inverter, Wooden case, and Hovercraft mappings.
 
 4. **EDITOR-123 through EDITOR-127 — complete all remaining source-menu entries** — **active,
-   explicitly approved 2026-07-25.** The exact 26-item inventory and acceptance criteria are in
-   `plan.md` §6. Work is split into Cave/Buildings, special objects, persisted Level start,
-   editable/persisted BigDecor scenery, and exhaustive final verification.
+   explicitly approved 2026-07-25.** EDITOR-123's exact Cave plus ten Buildings mappings are done.
+   The remaining 15-item inventory and acceptance criteria are in `plan.md` §6: special objects,
+   persisted Level start, editable/persisted BigDecor scenery, and exhaustive final verification.
 
 Non-editor tasks:
 
