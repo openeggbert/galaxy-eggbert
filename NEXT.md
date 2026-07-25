@@ -15,12 +15,14 @@ parameters now live in `ObjectDefinitionRegistry`; the deliberately retained con
 state-machine branches or narrowly specified cheats, not uncentralized type classifications.
 `INFRA-004` remains intentionally untouched.
 
-Everything else in the backlog still needs the user's own input before proceeding — either
+Everything else in the backlog still needs the user's own input before proceeding. The user will
+author `TILE-005`'s real 3D worlds manually in the finished in-game editor, so do not generate or
+pre-author those levels without a later explicit request. The remaining engineering candidates need
 visual/design judgment (`AscenseurVertigo`/`Suspended` render geometry, seam-line transparency) or
-scope/priority confirmation for large content work (`TILE-005`'s 4 remaining worlds). The
-code-quality/edge-case audit category is confirmed exhausted for the prior session (8 rounds, last
-one genuinely clean — see §3/§10). Do not manufacture more audit rounds by default; ask the user
-which backlog item to pick up next, or wait for new direction._
+an asset (the real Blupi model/rig). The code-quality/edge-case audit category is confirmed
+exhausted for the prior session (8 rounds, last one genuinely clean — see §3/§10). Do not
+manufacture more audit rounds by default; ask the user which backlog item to pick up next, or wait
+for new direction._
 
 _Last updated: 2026-07-25. The in-game 3D world editor's original plan is **COMPLETE**: all 13
 approved milestones (EDITOR-100 through EDITOR-112) are implemented and verified. User-directed

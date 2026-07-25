@@ -3694,7 +3694,12 @@ in-progress item.
 - [x] TILE-002 — 100×100 decor grid rendered as 3D geometry per the 4 confirmed render modes (CNA, 2026-07-10) — note: not "1 cube per tile" as originally phrased; CNA uses per-type render modes, not a uniform cube
 - [x] TILE-003 — Tile textures from `object-m.png`, correct 65px-pitch atlas (65px = 64px icon + 1px gap, 1px leading margin) (CNA, 2026-07-10)
 - [x] TILE-004 — Correct tile passability distinguishing decorative vs. solid tiles (CNA, 2026-07-10)
-- [ ] TILE-005 — 5 worlds (Grassland, Forest, Ice Caves, Lava Fields, Space Station) hand-authored as real 3D `.vwr` worlds — only a small sample world exists so far, not all 5
+- [ ] TILE-005 — User-owned content phase: hand-author the themed 3D `.vwr` worlds (Grassland,
+      Forest, Ice Caves, Lava Fields, Space Station) in the completed in-game editor. Decision
+      recorded 2026-07-25: the user will create this content manually once the game is otherwise
+      complete; do not generate or pre-author these worlds without a new explicit request. World
+      1's hub plus two sublevels remain the current mechanics proof, while the other missions are
+      intentionally minimal placeholders.
 - [x] TILE-006 — Level progression: win → next world, wraps at world 5 —
       **the real progression MECHANISM is now done 2026-07-17**, see the
       hub/mission-progression system writeup at `SCORE-013`-`019`. "Wraps
@@ -4499,9 +4504,9 @@ reset to `[ ]`.
       and the real per-mission filename FORMULA (`world{N:03d}.vwr`)
       genuinely used by `LoadMission()` (see `SCORE-013`'s full writeup).
       Every world beyond `world001` is a minimal placeholder, not real
-      themed level content — see `TILE-005`'s own scope note (fleshing out
-      real level content for all 78 is separate, much larger work, blocked
-      on a real 3D world editor not existing yet).
+      themed level content — see `TILE-005`'s own scope note. Fleshing out
+      real level content for all 78 is a separate, user-owned content phase;
+      the completed in-game 3D editor is the intended authoring tool.
 - [x] SCORE-015 — IsTerminated: -1=lost, -2=win, ≥1=advance to mission N —
       **the ≥1 case is done 2026-07-17** (`ComputeWorldSelectTarget()`/
       `ComputeMissionBack()` feed `LoadMission()` directly). -1/-2
