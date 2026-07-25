@@ -150,6 +150,12 @@ int main()
         GEEditorPalette palette;
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
               "the palette starts with RockPile selected");
+        const auto erase = click(palette, 30.0f, 30.0f);
+        check(erase.action == GEEditorPalette::Action::DeleteAtTarget &&
+                  erase.clickConsumed,
+              "the visible delete glyph reports a consumed removal action");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the functional delete glyph no longer raises the not-implemented notice");
         const auto hiddenArea = click(palette, 466.0f, 26.0f);
         check(hiddenArea.action == GEEditorPalette::Action::None && !hiddenArea.clickConsumed,
               "the former invisible toolbar area no longer consumes clicks");

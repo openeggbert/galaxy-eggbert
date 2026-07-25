@@ -17,9 +17,10 @@ content-authoring UX, but not new gameplay mechanics.
 
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
-- All approved world-editor milestones and follow-ups through `EDITOR-120` are complete: per-gamer
+- All approved world-editor milestones and follow-ups through `EDITOR-121` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
-  menu-based sky-region thumbnails, save and play-test loop, and unsaved-change protection.
+  functional touch deletion, menu-based sky-region thumbnails, save and play-test loop, and
+  unsaved-change protection.
 - Linux native, Vulkan native, and the debug build are maintained. A MinGW-w64 cross-build of
   `GalaxyEggbertCNA.exe` (SDL_Renderer) is confirmed. Its output now stages SDL3 and MinGW thread
   runtime DLLs beside the executable while statically linking GCC/C++. A Wine launch reaches
@@ -72,8 +73,6 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 ### Ready for an explicitly chosen engineering session
 
-- `EDITOR-121`: make the visible top-left delete glyph perform a real editor removal action; it
-  currently only shows the two-second not-implemented notice.
 - `INFRA-006`: partial `ObjectType` dispatch migration. Seven isolated families/extractions are done;
   the remaining cases were surveyed and mostly have genuine per-type divergence. Select a specific
   candidate before changing it—do not turn it into a broad refactor.

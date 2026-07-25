@@ -102,7 +102,7 @@ namespace GalaxyEggbert::CNA
         const FrameInput input = ReadFrameInput(keyboard, mouse, paletteResult);
         UpdateBoxPreview(world);
         if (!HandlePlacement(input, world) &&
-            !HandleBlockRemoval(input, world) &&
+            !HandleRemoval(input, world) &&
             !HandleSessionAndHistory(input, world) &&
             !HandleBoxFill(input, world) &&
             !HandleSkyRegion(input, world))

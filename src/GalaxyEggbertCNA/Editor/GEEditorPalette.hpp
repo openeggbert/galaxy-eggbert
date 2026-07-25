@@ -30,6 +30,7 @@ namespace GalaxyEggbert::CNA
             PlacementZMinus,
             PlacementZPlus,
             PlaceSelection,
+            DeleteAtTarget,
             SelectSkyRegion,
         };
 

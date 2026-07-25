@@ -329,14 +329,70 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
-    bool GEWorldEditor::HandleBlockRemoval(const FrameInput& input, Worlds::World& world)
+    void GEWorldEditor::RemoveObjectWithHistory(
+        Worlds::World& world, const MoveObjectRecord& record,
+        std::uint16_t anchorX, std::uint16_t anchorY, std::uint16_t anchorZ)
     {
-        if (!input.middleHeld || middleHeldLastFrame_ || input.palette.clickConsumed ||
-            !hasRaycastHit_ || boxFirstCornerPlaced_)
+        GEEditCommand command;
+        command.kind = GEEditCommand::Kind::MoveObjectEdit;
+        command.objectAnchorX = anchorX;
+        command.objectAnchorY = anchorY;
+        command.objectAnchorZ = anchorZ;
+        command.objectBefore = record;
+        command.objectAfter = std::nullopt;
+        RemoveMoveObject(world, anchorX, anchorY, anchorZ);
+        commandStack_.Push(std::move(command));
+        if (hasSelectedObject_ &&
+            selectedAnchorX_ == anchorX &&
+            selectedAnchorY_ == anchorY &&
+            selectedAnchorZ_ == anchorZ)
+        {
+            hasSelectedObject_ = false;
+        }
+        MarkMutated();
+    }
+
+    bool GEWorldEditor::HandleRemoval(const FrameInput& input, Worlds::World& world)
+    {
+        const bool toolbarRequested =
+            input.palette.action == GEEditorPalette::Action::DeleteAtTarget;
+        const bool middleRequested =
+            input.middleHeld && !middleHeldLastFrame_ && !input.palette.clickConsumed;
+        if ((!toolbarRequested && !middleRequested) || boxFirstCornerPlaced_)
         {
             return false;
         }
+
+        if (toolbarRequested && hasSelectedObject_)
+        {
+            RemoveObjectWithHistory(
+                world, selectedObject_,
+                selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
+            return true;
+        }
+
+        if (toolbarRequested && palette_.IsObjectMode() && hasHighlight_)
+        {
+            const std::optional<MoveObjectRecord> object = FindMoveObjectAt(
+                world, placementCellX_, placementCellY_, placementCellZ_);
+            if (object)
+            {
+                RemoveObjectWithHistory(
+                    world, *object,
+                    placementCellX_, placementCellY_, placementCellZ_);
+                return true;
+            }
+        }
+
+        if (!hasRaycastHit_)
+        {
+            return toolbarRequested;
+        }
         const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
+        if (before.isAir())
+        {
+            return toolbarRequested;
+        }
         const Worlds::Block after = Worlds::Block::air();
         world.setBlock(hitCellX_, hitCellY_, hitCellZ_, after);
         GEEditCommand command;
@@ -598,17 +654,9 @@ namespace GalaxyEggbert::CNA
         }
         if (input.deleteObjectHeld && !deleteObjectKeyHeldLastFrame_ && hasSelectedObject_)
         {
-            GEEditCommand command;
-            command.kind = GEEditCommand::Kind::MoveObjectEdit;
-            command.objectAnchorX = selectedAnchorX_;
-            command.objectAnchorY = selectedAnchorY_;
-            command.objectAnchorZ = selectedAnchorZ_;
-            command.objectBefore = selectedObject_;
-            command.objectAfter = std::nullopt;
-            RemoveMoveObject(world, selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
-            commandStack_.Push(std::move(command));
-            hasSelectedObject_ = false;
-            MarkMutated();
+            RemoveObjectWithHistory(
+                world, selectedObject_,
+                selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
             return true;
         }
         return false;

@@ -165,6 +165,41 @@ int main()
     }
 
     {
+        World world = slab;
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+        const auto tapDelete = [&]()
+        {
+            const MouseState down(
+                30, 30, 0, ButtonState::Pressed, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            const MouseState up(
+                30, 30, 0, ButtonState::Released, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        const auto pressKey = [&](Keys key)
+        {
+            editor.Update(KeyboardState{key}, restMouse, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        };
+
+        tapDelete();
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).isAir(),
+              "the visible delete glyph removes the aimed-at block");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "toolbar block removal requests a presentation rebuild");
+        pressKey(Keys::U);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 1,
+              "undo restores a block removed by the visible delete glyph");
+        pressKey(Keys::R);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).isAir(),
+              "redo removes the toolbar target again");
+    }
+
+    {
         World world;
         GEWorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);

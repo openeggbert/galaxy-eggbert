@@ -78,7 +78,7 @@ namespace GalaxyEggbert::CNA
         switch (pointer.hit)
         {
             case GEEditorPaletteInput::HitKind::DeleteTool:
-                notYetImplementedSeconds_ = 2.0f;
+                result.action = Action::DeleteAtTarget;
                 break;
             case GEEditorPaletteInput::HitKind::PlayTest:
                 result.action = Action::PlayTest;

@@ -5701,7 +5701,7 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-120` are implemented and tested. The editor's
+`EDITOR-112`) and follow-up tasks through `EDITOR-121` are implemented and tested. The editor's
 input, rendering, orchestration, and verification are separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -5939,6 +5939,16 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       tests cover ordering, narrow-screen visibility, exact id selection, immediate rebuild,
       undo/redo, and save/reload. A real 800×480 X11 screenshot confirmed the two-row thumbnail
       layout and selected-region border; the temporary capture-only entry hook was fully removed.
+- [x] **EDITOR-121 — make the visible delete glyph functional.**
+      **Done 2026-07-25:** the top-left red-X control now performs a real, touch-accessible removal
+      instead of showing the temporary not-implemented notice. An explicitly selected object has
+      first priority; otherwise Object mode removes the object anchored in the red placement cell,
+      and the remaining path removes the solid block hit by the view ray. Middle-click remains the
+      direct block-removal shortcut and keyboard Delete remains the selected-object shortcut.
+      All three routes share the existing command-stack mutation path, including exact object-record
+      restoration, presentation rebuild, dirty-state protection, and undo/redo. Palette, block, and
+      object integration tests cover action dispatch, targeting priority, rebuild requests, and
+      history in both directions.
 
 ### Known problems / open concerns
 

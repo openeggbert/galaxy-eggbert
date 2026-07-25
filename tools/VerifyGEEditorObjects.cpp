@@ -167,6 +167,24 @@ int main()
     check(editor.ConsumeNeedsPresentationRebuild(),
           "redoing object placement requests a presentation rebuild");
 
+    click(30, 30);
+    check(CollectMoveObjects(world).empty(),
+          "the visible delete glyph removes an object in the red preview cell");
+    check(editor.ConsumeNeedsPresentationRebuild(),
+          "toolbar object removal requests a presentation rebuild");
+    pressKey(Keys::U);
+    check(CollectMoveObjects(world).size() == 1,
+          "undo restores an object removed through the toolbar");
+    check(editor.ConsumeNeedsPresentationRebuild(),
+          "undoing toolbar object removal requests a presentation rebuild");
+    pressKey(Keys::R);
+    check(CollectMoveObjects(world).empty(),
+          "redo repeats object removal through the toolbar");
+    pressKey(Keys::U);
+    check(CollectMoveObjects(world).size() == 1,
+          "a second undo restores the toolbar-deleted object again");
+    (void)editor.ConsumeNeedsPresentationRebuild();
+
     pressKey(Keys::G);
     check(!editor.ConsumeNeedsPresentationRebuild(),
           "selecting an object does not mutate the presentation");
@@ -194,12 +212,20 @@ int main()
     check(CollectMoveObjects(world).front().stepAdvanceTicks > stepAdvanceBefore,
           "Tab changes which object field plus edits");
 
-    pressKey(Keys::Delete);
+    click(30, 30);
     check(CollectMoveObjects(world).empty(),
-          "Delete removes the selected object");
+          "the visible delete glyph removes the explicitly selected object");
     pressKey(Keys::U);
     check(CollectMoveObjects(world).size() == 1,
-          "undo restores a deleted object with its edited record");
+          "undo restores a toolbar-deleted object with its edited record");
+
+    pressKey(Keys::G);
+    pressKey(Keys::Delete);
+    check(CollectMoveObjects(world).empty(),
+          "the Delete key still removes the selected object");
+    pressKey(Keys::U);
+    check(CollectMoveObjects(world).size() == 1,
+          "undo still restores an object deleted from the keyboard");
 
     {
         World emptyWorld;

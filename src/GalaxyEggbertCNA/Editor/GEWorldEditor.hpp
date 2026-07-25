@@ -137,13 +137,16 @@ namespace GalaxyEggbert::CNA
             GEEditorPalette::UpdateResult paletteResult) const;
         void UpdateBoxPreview(const Worlds::World& world);
         [[nodiscard]] bool HandlePlacement(const FrameInput& input, Worlds::World& world);
-        [[nodiscard]] bool HandleBlockRemoval(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleRemoval(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSessionAndHistory(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSkyRegion(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleObjectEditing(
             const FrameInput& input, Easy3D::Camera3D& camera,
             int viewportWidth, int viewportHeight, Worlds::World& world);
+        void RemoveObjectWithHistory(
+            Worlds::World& world, const MoveObjectRecord& record,
+            std::uint16_t anchorX, std::uint16_t anchorY, std::uint16_t anchorZ);
         void StoreInputEdges(const FrameInput& input, bool placementOffsetKeyHeld) noexcept;
 
         float camX_ = 50.0f;
