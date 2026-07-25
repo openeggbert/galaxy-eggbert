@@ -46,8 +46,10 @@ guidance.
 
 ## Source layout
 
-- `src/GalaxyEggbertCNA/` — game implementation, renderer, gameplay, menus, and editor.
-- `include/GalaxyEggbert/`, `src/GalaxyEggbert/` — engine-independent world/data model.
+- `src/GalaxyEggbertCNA/` — CNA game host, renderer, gameplay, and menus.
+- `include/GalaxyEggbert/`, `src/GalaxyEggbert/Worlds/` — engine-independent world/data model.
+- `src/GalaxyEggbert/Editor/` — shared editor implementation in namespace
+  `GalaxyEggbert::Editor`; keep editor-owned names free of the legacy `GE` prefix.
 - `include/GalaxyEggbert/Def/` — shared game definitions in namespace `GalaxyEggbert::Def`.
 - `tools/` — generators and scripted verification executables.
 - `mobile-eggbert-reference/` — researched behavioral/source-of-truth notes.

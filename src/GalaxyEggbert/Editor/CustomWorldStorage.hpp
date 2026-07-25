@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <vector>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // Filesystem-backed storage for player-authored .vwr worlds (plan.md
     // EDITOR-107) -- deliberately NOT tracked in GESaveData (a persisted

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "GEEditorPaletteInput.hpp"
-#include "GEEditorPaletteLayout.hpp"
-#include "GEEditorPaletteRenderer.hpp"
-#include "GEPaletteCategories.hpp"
+#include "EditorPaletteInput.hpp"
+#include "EditorPaletteLayout.hpp"
+#include "EditorPaletteRenderer.hpp"
+#include "PaletteCategories.hpp"
 
 #include <GalaxyEggbert/Def/ObjectType.hpp>
 
@@ -13,9 +13,9 @@
 #include <cstdint>
 #include <vector>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
-    class GEEditorPalette
+    class EditorPalette
     {
     public:
         enum class PlacementKind
@@ -49,7 +49,7 @@ namespace GalaxyEggbert::CNA
             int skyRegion = -1;
         };
 
-        GEEditorPalette();
+        EditorPalette();
 
         UpdateResult Update(
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
@@ -131,8 +131,8 @@ namespace GalaxyEggbert::CNA
         int selectedSkyRegion_ = 0;
         float notYetImplementedSeconds_ = 0.0f;
 
-        GEEditorPaletteLayout layout_;
-        GEEditorPaletteInput input_;
-        GEEditorPaletteRenderer renderer_;
+        EditorPaletteLayout layout_;
+        EditorPaletteInput input_;
+        EditorPaletteRenderer renderer_;
     };
 }

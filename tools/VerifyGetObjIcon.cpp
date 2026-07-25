@@ -316,7 +316,7 @@ int main()
     // element.png [the implicit "none of the above" default],
     // explo.png, blupi.png/blupi1.png) a type's billboard actually
     // samples from -- used by both real gameplay rendering and the
-    // editor palette (GEEditorPalette.cpp). A type accidentally moved
+    // editor palette (EditorPalette.cpp). A type accidentally moved
     // between lists renders with a completely wrong/garbage texture --
     // visually broken, silent, no assertion elsewhere would catch it,
     // only a live screenshot would. The 4 predicates must be mutually

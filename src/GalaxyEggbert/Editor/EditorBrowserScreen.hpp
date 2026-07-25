@@ -11,17 +11,17 @@
 #include <memory>
 #include <vector>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // Per-gamer-slot world list/create/open/delete screen (plan.md
     // EDITOR-107) -- the entry point into the editor from the Init menu's
     // new Editor button. Deliberately simple: no free-text renaming (no
     // text-input widget exists anywhere in this codebase yet, a documented
     // gap, not silently invented around); worlds are distinguished by
-    // GECustomWorldStorage's own generated filename and a
+    // CustomWorldStorage's own generated filename and a
     // std::filesystem::last_write_time-derived recency order (newest
     // first -- see Refresh()).
-    class GEEditorBrowserScreen
+    class EditorBrowserScreen
     {
     public:
         enum class Action { None, Open, New, Back };
@@ -32,7 +32,7 @@ namespace GalaxyEggbert::CNA
             std::filesystem::path path; // valid when action == Open
         };
 
-        // Rescans GECustomWorldStorage::ListCustomWorlds(gamerSlot) from
+        // Rescans CustomWorldStorage::ListCustomWorlds(gamerSlot) from
         // disk -- call once when entering the browser and again after any
         // create/delete, not every frame.
         void Refresh(int gamerSlot);
@@ -50,9 +50,9 @@ namespace GalaxyEggbert::CNA
                  int viewportWidth, int viewportHeight);
 
     private:
-        [[nodiscard]] GEQuadBatch::Rect RowRect(int index) const noexcept;
-        [[nodiscard]] GEQuadBatch::Rect DeleteButtonRect(int index) const noexcept;
-        [[nodiscard]] GEQuadBatch::Rect BackButtonRect(
+        [[nodiscard]] GalaxyEggbert::CNA::GEQuadBatch::Rect RowRect(int index) const noexcept;
+        [[nodiscard]] GalaxyEggbert::CNA::GEQuadBatch::Rect DeleteButtonRect(int index) const noexcept;
+        [[nodiscard]] GalaxyEggbert::CNA::GEQuadBatch::Rect BackButtonRect(
             int viewportWidth, int viewportHeight) const noexcept;
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 

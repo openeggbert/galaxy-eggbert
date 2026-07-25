@@ -2136,7 +2136,7 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       mount needed since the test runs and exits within one process, nothing to persist.
       **Second, unrelated bug found while verifying**: `VerifyGEWorldEditor`'s own
       `CustomWorldsDir()` check hardcoded the native-only expected path
-      (`"customworlds/gamer77"`), never accounting for `GECustomWorldStorage.cpp`'s own
+      (`"customworlds/gamer77"`), never accounting for `CustomWorldStorage.cpp`'s own
       `#if defined(__EMSCRIPTEN__)` branch (`/save/customworlds`, same precedent as
       `GESaveData::kSavePath`) — fixed by mirroring the same platform branch in the test's own
       expected value (`tools/VerifyGEWorldEditor.cpp`). Confirmed this was a pre-existing test gap,
@@ -5712,13 +5712,13 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-127` are implemented and tested. All 96 entries
+`EDITOR-112`) and follow-up tasks through `EDITOR-130` are implemented and tested. All 96 entries
 in the ten Eggbert 2 source groups now have exactly one implementation. The editor's input, rendering, orchestration, and
 verification remain separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
 "Known problems / open concerns" keyboard-input issue below still holds — fresh read of
-`GalaxyEggbertCnaGame::Update()`'s `Keyboard::GetState()` call site and `GEWorldEditor`'s own key
+`GalaxyEggbertCnaGame::Update()`'s `Keyboard::GetState()` call site and `WorldEditor`'s own key
 handling confirms neither gates on window-focus/`IsActive` state or game phase (same finding as
 2026-07-19). Could not improve on the original Xvfb+`xdotool` repro in this environment (no window
 manager available to install — out of this session's repo-only scope). Proceeding on the same
@@ -5753,12 +5753,12 @@ session); summary for anyone picking this up cold:
 
 A stepper cycling `world.skyRegion()` 0-31 (world.hpp's own documented valid range — a direct
 pass-through of mobile-eggbert's level-header `region=` field). New `Kind::SkyRegionEdit` handling
-in `GEEditCommandStack` (declared since EDITOR-105 but unhandled until now): 2 new scalar fields,
+in `EditCommandStack` (declared since EDITOR-105 but unhandled until now): 2 new scalar fields,
 `skyRegionBefore`/`skyRegionAfter` (a single value changing, not a per-cell vector like
 `BlockChange`, since this isn't addressed by a grid position at all), Undo/Redo call
 `world.setSkyRegion()` with the appropriate one.
 
-**Input**: Left/Right arrow keys (confirmed genuinely unused anywhere in `GEWorldEditor.cpp` before
+**Input**: Left/Right arrow keys (confirmed genuinely unused anywhere in `WorldEditor.cpp` before
 this — a natural, unused pairing), edge-triggered same as every other tool, wrapping 0<->31 via
 modular arithmetic rather than clamping (an invented mobile-eggbert-adjacent world could reference
 any of the 32 real ids, so wrap is the correct "keep cycling" behavior, not clamp-at-the-ends).
@@ -5775,8 +5775,8 @@ falls back to a flat clear color for the 4 ids with no real art — 5/14/17/23, 
 the actual copied `Content/backgrounds/` directory next to the binary, not just the reference doc)
 immediately, live, matching exactly how a freshly-loaded world already behaves.
 
-**Verification**: `VerifyGEWorldEditor` — a direct `GEEditCommandStack`-level Undo/Redo test, plus a
-`GEWorldEditor`-level integration test proving wrap-around at BOTH ends (0->31 via Left, 31->0 via
+**Verification**: `VerifyGEWorldEditor` — a direct `EditCommandStack`-level Undo/Redo test, plus a
+`WorldEditor`-level integration test proving wrap-around at BOTH ends (0->31 via Left, 31->0 via
 Right) and Undo/Redo via the same U/R keys every other tool uses, plus a palette-button-drives-the-
 same-action test (mirroring the existing BoxFill-button-vs-F-key precedent). Adding the new toolbar-
 button row shifted every existing content-cell/paging hit-test coordinate down by one row (36px) —
@@ -5802,7 +5802,7 @@ only).
 
 Three parts, per the approved plan:
 
-**1. Unsaved-changes guard.** New `dirty_`/`backConfirmArmed_` state on `GEWorldEditor`, centralized
+**1. Unsaved-changes guard.** New `dirty_`/`backConfirmArmed_` state on `WorldEditor`, centralized
 through a new `MarkMutated()` private helper (replaces every existing `needsPresentationRebuild_ =
 true;` call site, 10 of them across block/object/sky-region place/remove/fill/undo/redo) so `dirty_`
 can't drift out of sync with "the world actually changed" and so a further edit automatically
@@ -5813,7 +5813,7 @@ only arms (`backConfirmArmed_ = true`, no state change otherwise), the second ac
 unsaved, unchanged from before. Save/PlayTest (both already existing auto-save paths) clear
 `dirty_`/`backConfirmArmed_` on an actual write to disk. Visual feedback reuses the exact
 `ButtonGreenActive()` "on"-state color the mode-toggle/tab-toggle buttons already use (no text
-labels anywhere in this class, see `GEEditorPalette`'s own class comment) — `GEEditorPalette::Draw()`
+labels anywhere in this class, see `EditorPalette`'s own class comment) — `EditorPalette::Draw()`
 gained one new `bool backConfirmArmed` parameter (defaulted to `false`, so no existing call site
 needed updating) to brighten the Back button while armed.
 
@@ -5830,9 +5830,9 @@ Verified real teeth: temporarily disabled the arm-on-first-press branch entirely
 dirty_ && ...)`) — caught 4 precise failures across the new test section (first-press-arms,
 save-clears-armed, edit-while-armed-disarms, and the re-arm-then-confirm chain), reverted.
 
-**2. Box-fill straddling the world's own Z bounds.** `GEBoxRegion::NormalizeAndClamp` itself already
+**2. Box-fill straddling the world's own Z bounds.** `BoxRegion::NormalizeAndClamp` itself already
 had a direct unit test for out-of-range corner clamping (EDITOR-105) — this is a different,
-end-to-end `GEWorldEditor`-level integration test: 2 real raycast-picked corners landing EXACTLY on
+end-to-end `WorldEditor`-level integration test: 2 real raycast-picked corners landing EXACTLY on
 the world's own Z=0 and Z=99 edge cells (not just 2 arbitrary interior cells like the sibling
 box-fill tests), confirming the real fill loop correctly covers every cell from edge to edge with no
 off-by-one at either boundary. Getting 2 raycasts to land on EXACT edge cells needed real care: hit.z
@@ -5852,7 +5852,7 @@ consistently used clear `// --- ClassName: description ---` section markers thro
 existing EDITOR-10x addition already followed this), plus a maintained top-of-file index by
 milestone — not the disorganized state the task's own wording might suggest. Did NOT do a wholesale
 reorder of the file's ~1500 lines to physically group same-class sections that ended up scattered
-across milestones (e.g. 3 separate `GEEditCommandStack` sections, 2 separate `GEPaletteCategories`
+across milestones (e.g. 3 separate `EditCommandStack` sections, 2 separate `PaletteCategories`
 sections) — each section is an isolated `{ }` block with no cross-section state dependency, so a
 reorder would have been mechanically safe, but the real benefit (cosmetic adjacency) didn't justify
 the real risk (copy-paste error moving hundreds of lines of already-passing test code) for a
@@ -5885,20 +5885,20 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       **Done 2026-07-25:** the old toolbar rectangles and actions are gone. Only the visible delete,
       category, popup, XYZ/PLACE, dice, and Stop controls consume pointer input. The former hidden
       area is covered both at palette level and through a real editor/world integration test.
-- [x] **EDITOR-114 — split `GEWorldEditor::Update()`.** Extract camera/input collection, placement
+- [x] **EDITOR-114 — split `WorldEditor::Update()`.** Extract camera/input collection, placement
       preview raycasting, block/object placement, history/toolbar actions, box fill, sky-region
       stepping, and placed-object editing into named private methods. `Update()` remains the
       frame-level coordinator and existing behavior/tests remain unchanged.
-      **Done 2026-07-25:** `GEWorldEditor.cpp` now owns the short frame coordinator and session
+      **Done 2026-07-25:** `WorldEditor.cpp` now owns the short frame coordinator and session
       lifecycle; `GEWorldEditorUpdate.cpp` contains named camera, preview, placement, removal,
       session/history, fill, sky, and object-edit handlers.
 - [x] **EDITOR-115 — separate palette layout, input, and rendering.** Move all viewport-dependent
       rectangle/page calculations into a dedicated layout component, move pointer state/action
       resolution into a dedicated input component, and move drawing/effect ownership into a
-      renderer component. `GEEditorPalette` retains only catalogue/selection/notice state and
+      renderer component. `EditorPalette` retains only catalogue/selection/notice state and
       coordinates those components.
-      **Done 2026-07-25:** `GEEditorPaletteLayout`, `GEEditorPaletteInput`, and
-      `GEEditorPaletteRenderer` now own those responsibilities. `GEEditorPalette` is reduced to
+      **Done 2026-07-25:** `EditorPaletteLayout`, `EditorPaletteInput`, and
+      `EditorPaletteRenderer` now own those responsibilities. `EditorPalette` is reduced to
       source catalogue, current selection/category, notice timing, and component coordination.
       Narrow layouts wrap the XYZ controls and keep every opened source entry on screen.
 - [x] **EDITOR-116 — split the editor verification suite.** Replace the monolithic
@@ -6062,6 +6062,15 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       edge-triggered browser request that the owning game handles by returning to `GamePhase::Init`;
       holding Escape cannot repeat or leak into another transition. Browser and forwarding tests
       cover the visible control, Escape edge, and game-facing request.
+- [x] **EDITOR-130 — move the editor to backend-neutral ownership and remove legacy prefixes.**
+      **Done 2026-07-25 by user request:** moved all 25 editor `.cpp`/`.hpp` files from
+      `src/GalaxyEggbertCNA/Editor/` to `src/GalaxyEggbert/Editor/`, changed their namespace from
+      `GalaxyEggbert::CNA` to `GalaxyEggbert::Editor`, and removed `GE` from editor-owned filenames,
+      classes, and structs. The owning CNA game and all four editor verifier tools consume the new
+      API directly. Remaining `GalaxyEggbert::CNA` qualifications inside the
+      editor identify its current rendering-host dependencies (`GEQuadBatch`, `GEHud`, and
+      `GEWorldRuntime`), not editor ownership. Verification: full `build-cna` build with `-j2` and
+      all 90 applicable CTest tests pass.
 
 ### Known problems / open concerns
 
@@ -6069,7 +6078,7 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
   originally reported that on a real desktop test of `build-cna`, no keyboard shortcut did anything
   at all (not even WASD camera movement), while the screen kept rendering/updating normally. A full
   read of the real SDL/CNA input pipeline (`Game::PollEvents()`, `SdlInputBridge`,
-  `Keyboard::GetState()`) found nothing in it or in `GalaxyEggbertCnaGame`/`GEWorldEditor` that gates
+  `Keyboard::GetState()`) found nothing in it or in `GalaxyEggbertCnaGame`/`WorldEditor` that gates
   on window-focus state or game phase — input reading is unconditional every frame (re-confirmed
   fresh 2026-07-23 before resuming editor work, same finding). A live reproduction (a windowless
   Xvfb display + `xdotool` window-focus calls, which errored since no window manager was present)

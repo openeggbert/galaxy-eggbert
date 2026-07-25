@@ -160,24 +160,25 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEInputPad.cpp
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GESaveData.cpp
-        src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
-        src/GalaxyEggbertCNA/Editor/GEWorldEditorUpdate.cpp
-        src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
-        src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
-        src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPaletteLayout.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPaletteInput.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPaletteRenderer.cpp
-        src/GalaxyEggbertCNA/Editor/GECustomWorldStorage.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
+        src/GalaxyEggbert/Editor/WorldEditor.cpp
+        src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
+        src/GalaxyEggbert/Editor/VoxelRaycast.cpp
+        src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
+        src/GalaxyEggbert/Editor/EditCommandStack.cpp
+        src/GalaxyEggbert/Editor/BoxRegion.cpp
+        src/GalaxyEggbert/Editor/PaletteCategories.cpp
+        src/GalaxyEggbert/Editor/EditorPalette.cpp
+        src/GalaxyEggbert/Editor/EditorPaletteLayout.cpp
+        src/GalaxyEggbert/Editor/EditorPaletteInput.cpp
+        src/GalaxyEggbert/Editor/EditorPaletteRenderer.cpp
+        src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
+        src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
         ${GE_SHARED_SOURCES}
     )
 
     target_include_directories(GalaxyEggbertCNA PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
     )
 
@@ -464,19 +465,19 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # repeating it in all four executables created four identical object
     # trees and rewrote them after every common editor change.
     add_library(GEEditorVerifySupport OBJECT
-        src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
-        src/GalaxyEggbertCNA/Editor/GEWorldEditorUpdate.cpp
-        src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorHighlightRenderer.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditCommandStack.cpp
-        src/GalaxyEggbertCNA/Editor/GEBoxRegion.cpp
-        src/GalaxyEggbertCNA/Editor/GEPaletteCategories.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPalette.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPaletteLayout.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPaletteInput.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorPaletteRenderer.cpp
-        src/GalaxyEggbertCNA/Editor/GECustomWorldStorage.cpp
-        src/GalaxyEggbertCNA/Editor/GEEditorBrowserScreen.cpp
+        src/GalaxyEggbert/Editor/WorldEditor.cpp
+        src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
+        src/GalaxyEggbert/Editor/VoxelRaycast.cpp
+        src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
+        src/GalaxyEggbert/Editor/EditCommandStack.cpp
+        src/GalaxyEggbert/Editor/BoxRegion.cpp
+        src/GalaxyEggbert/Editor/PaletteCategories.cpp
+        src/GalaxyEggbert/Editor/EditorPalette.cpp
+        src/GalaxyEggbert/Editor/EditorPaletteLayout.cpp
+        src/GalaxyEggbert/Editor/EditorPaletteInput.cpp
+        src/GalaxyEggbert/Editor/EditorPaletteRenderer.cpp
+        src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
+        src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
         src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
         src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
         src/GalaxyEggbertCNA/Game/GEHud.cpp
@@ -485,6 +486,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     )
     target_include_directories(GEEditorVerifySupport PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
     )
     target_link_libraries(GEEditorVerifySupport PRIVATE CNA SHARP_RUNTIME)
@@ -498,6 +500,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         add_executable(${target} ${source})
         target_include_directories(${target} PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
         )
         target_link_libraries(${target} PRIVATE GEEditorVerifySupport)

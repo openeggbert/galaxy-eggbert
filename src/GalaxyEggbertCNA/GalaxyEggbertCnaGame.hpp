@@ -12,7 +12,7 @@
 #include "Game/GETrainingHints.hpp"
 #include "Game/GEInputPad.hpp"
 #include "Game/GESaveData.hpp"
-#include "Editor/GEWorldEditor.hpp"
+#include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/Def/GamePhase.hpp>
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
@@ -423,7 +423,7 @@ namespace GalaxyEggbert::CNA
         // world path to @p path, and calls worldEditor_.ExitBrowser().
         void LoadCustomWorldForEditing(const std::filesystem::path& path);
 
-        // Loads @p path (already saved fresh by GEWorldEditor's Play-Test
+        // Loads @p path (already saved fresh by WorldEditor's Play-Test
         // button) for a real gameplay session (plan.md EDITOR-108) --
         // deliberately NOT a mission: no hub/door-gating scan, and
         // crucially no saveData_ persistence at all (a sandbox world has
@@ -574,9 +574,9 @@ namespace GalaxyEggbert::CNA
         GESaveData saveData_;
 
         // In-game 3D world editor (plan.md section 6, EDITOR-1xx tasks) --
-        // see GEWorldEditor's own class comment. Entered via GalaxyEggbert::Def::GamePhase::
+        // see WorldEditor's own class comment. Entered via GalaxyEggbert::Def::GamePhase::
         // Editor, from the Init screen's own Editor button.
-        GEWorldEditor worldEditor_;
+        GalaxyEggbert::Editor::WorldEditor worldEditor_;
 
         // Play-test session state (plan.md EDITOR-108) -- true while
         // GalaxyEggbert::Def::GamePhase::Play is running a custom world launched from the

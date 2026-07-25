@@ -1,30 +1,30 @@
-#include "GEEditorPaletteInput.hpp"
+#include "EditorPaletteInput.hpp"
 
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
-    GEEditorPaletteInput::Result GEEditorPaletteInput::HitTest(
-        float x, float y, const GEEditorPaletteLayout& layout, const State& state,
+    EditorPaletteInput::Result EditorPaletteInput::HitTest(
+        float x, float y, const EditorPaletteLayout& layout, const State& state,
         int viewportWidth, int viewportHeight) const noexcept
     {
-        if (GEQuadBatch::InRect(x, y, layout.DeleteToolRect()))
+        if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.DeleteToolRect()))
         {
             return {HitKind::DeleteTool, -1, true};
         }
-        if (GEQuadBatch::InRect(x, y, layout.PlayTestRect(viewportWidth, viewportHeight)))
+        if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.PlayTestRect(viewportWidth, viewportHeight)))
         {
             return {HitKind::PlayTest, -1, true};
         }
-        if (GEQuadBatch::InRect(x, y, layout.StopRect(viewportWidth, viewportHeight)))
+        if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.StopRect(viewportWidth, viewportHeight)))
         {
             return {HitKind::Stop, -1, true};
         }
         if (state.openCategory < 0)
         {
-            for (int i = 0; i < GEEditorPaletteLayout::PlacementButtonCount; ++i)
+            for (int i = 0; i < EditorPaletteLayout::PlacementButtonCount; ++i)
             {
-                if (GEQuadBatch::InRect(
+                if (GalaxyEggbert::CNA::GEQuadBatch::InRect(
                         x, y, layout.PlacementButtonRect(i, viewportWidth, viewportHeight)))
                 {
                     return {HitKind::PlacementButton, i, true};
@@ -33,7 +33,7 @@ namespace GalaxyEggbert::CNA
         }
         for (int i = 0; i < state.categoryCount; ++i)
         {
-            if (GEQuadBatch::InRect(x, y, layout.CategoryButtonRect(i)))
+            if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.CategoryButtonRect(i)))
             {
                 return {HitKind::Category, i, true};
             }
@@ -42,7 +42,7 @@ namespace GalaxyEggbert::CNA
         {
             for (int i = 0; i < state.contentItemCount; ++i)
             {
-                if (GEQuadBatch::InRect(
+                if (GalaxyEggbert::CNA::GEQuadBatch::InRect(
                         x, y, layout.PaletteCellRect(
                             i, state.contentItemCount, state.openCategory,
                             viewportWidth, viewportHeight)))
@@ -54,9 +54,9 @@ namespace GalaxyEggbert::CNA
         return {};
     }
 
-    GEEditorPaletteInput::Result GEEditorPaletteInput::Update(
+    EditorPaletteInput::Result EditorPaletteInput::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
-        const GEEditorPaletteLayout& layout, const State& state,
+        const EditorPaletteLayout& layout, const State& state,
         int viewportWidth, int viewportHeight)
     {
         using Microsoft::Xna::Framework::Input::ButtonState;

@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // Result of a Raycast() call (see below).
     struct RaycastHit

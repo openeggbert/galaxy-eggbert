@@ -1,16 +1,16 @@
 #pragma once
 
-#include "GEEditorPaletteLayout.hpp"
-#include "GEPaletteCategories.hpp"
+#include "EditorPaletteLayout.hpp"
+#include "PaletteCategories.hpp"
 
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 
 #include <memory>
 #include <vector>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
-    class GEEditorPaletteRenderer
+    class EditorPaletteRenderer
     {
     public:
         struct State
@@ -38,14 +38,14 @@ namespace GalaxyEggbert::CNA
             int placementZ = 0;
         };
 
-        GEEditorPaletteRenderer();
-        ~GEEditorPaletteRenderer();
-        GEEditorPaletteRenderer(const GEEditorPaletteRenderer&) = delete;
-        GEEditorPaletteRenderer& operator=(const GEEditorPaletteRenderer&) = delete;
+        EditorPaletteRenderer();
+        ~EditorPaletteRenderer();
+        EditorPaletteRenderer(const EditorPaletteRenderer&) = delete;
+        EditorPaletteRenderer& operator=(const EditorPaletteRenderer&) = delete;
 
         void Draw(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-            const GEEditorPaletteLayout& layout, const State& state,
+            const EditorPaletteLayout& layout, const State& state,
             int viewportWidth, int viewportHeight);
 
     private:

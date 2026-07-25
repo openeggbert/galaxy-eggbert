@@ -1,4 +1,4 @@
-#include "GEEditorPaletteRenderer.hpp"
+#include "EditorPaletteRenderer.hpp"
 
 #include "Game/GEQuadBatch.hpp"
 
@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <filesystem>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -55,7 +55,7 @@ namespace GalaxyEggbert::CNA
         }
 
         void AppendLabel(
-            std::vector<GEQuadBatch::Quad>& quads, const char* message,
+            std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad>& quads, const char* message,
             float left, float top, float sheetWidth, float sheetHeight)
         {
             float penX = left;
@@ -77,7 +77,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    struct GEEditorPaletteRenderer::Impl
+    struct EditorPaletteRenderer::Impl
     {
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flatEffect;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> flatRenderer;
@@ -94,16 +94,16 @@ namespace GalaxyEggbert::CNA
         std::array<bool, kSkyRegionCount> skyTextureAttempted{};
     };
 
-    GEEditorPaletteRenderer::GEEditorPaletteRenderer()
+    EditorPaletteRenderer::EditorPaletteRenderer()
         : impl_(std::make_unique<Impl>())
     {
     }
 
-    GEEditorPaletteRenderer::~GEEditorPaletteRenderer() = default;
+    EditorPaletteRenderer::~EditorPaletteRenderer() = default;
 
-    void GEEditorPaletteRenderer::Draw(
+    void EditorPaletteRenderer::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-        const GEEditorPaletteLayout& layout, const State& state,
+        const EditorPaletteLayout& layout, const State& state,
         int viewportWidth, int viewportHeight)
     {
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
@@ -140,10 +140,10 @@ namespace GalaxyEggbert::CNA
         const int itemCount = static_cast<int>(state.contentButtonIconIds.size());
         device.setBlendStateProperty(BlendState::NonPremultiplied);
 
-        std::vector<GEQuadBatch::Quad> green;
-        std::vector<GEQuadBatch::Quad> active;
-        std::vector<GEQuadBatch::Quad> gold;
-        const auto appendSolid = [](std::vector<GEQuadBatch::Quad>& target, const GEQuadBatch::Rect& rect)
+        std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> green;
+        std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> active;
+        std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> gold;
+        const auto appendSolid = [](std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad>& target, const GalaxyEggbert::CNA::GEQuadBatch::Rect& rect)
         {
             target.push_back({rect.x0, rect.y0, rect.x1, rect.y1, 0, 0, 1, 1});
         };
@@ -157,18 +157,18 @@ namespace GalaxyEggbert::CNA
         }
         if (overview)
         {
-            for (int i = 0; i < GEEditorPaletteLayout::PlacementPlaceIndex; ++i)
+            for (int i = 0; i < EditorPaletteLayout::PlacementPlaceIndex; ++i)
             {
                 appendSolid(green, layout.PlacementButtonRect(i, viewportWidth, viewportHeight));
             }
             appendSolid(gold, layout.PlacementButtonRect(
-                GEEditorPaletteLayout::PlacementPlaceIndex, viewportWidth, viewportHeight));
+                EditorPaletteLayout::PlacementPlaceIndex, viewportWidth, viewportHeight));
         }
         else
         {
             for (int i = 0; i < itemCount; ++i)
             {
-                const GEQuadBatch::Rect cell = layout.PaletteCellRect(
+                const GalaxyEggbert::CNA::GEQuadBatch::Rect cell = layout.PaletteCellRect(
                     i, itemCount, state.openCategory, viewportWidth, viewportHeight);
                 appendSolid(green, cell);
                 const int objectType = i < static_cast<int>(state.contentObjectTypeIds.size()) ?
@@ -205,20 +205,20 @@ namespace GalaxyEggbert::CNA
         }
 
         impl_->flatEffect->setDiffuseColorProperty(ButtonGreen());
-        GEQuadBatch::FlushQuads(
+        GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
             device, *impl_->flatEffect, impl_->flatRenderer, green,
             viewportWidth, viewportHeight, 1.0f);
         impl_->flatEffect->setDiffuseColorProperty(ButtonGreenActive());
-        GEQuadBatch::FlushQuads(
+        GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
             device, *impl_->flatEffect, impl_->flatRenderer, active,
             viewportWidth, viewportHeight, 1.0f);
         impl_->flatEffect->setDiffuseColorProperty(SelectionGold());
-        GEQuadBatch::FlushQuads(
+        GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
             device, *impl_->flatEffect, impl_->flatRenderer, gold,
             viewportWidth, viewportHeight, 1.0f);
 
-        const auto appendButtonIcon = [&](std::vector<GEQuadBatch::Quad>& quads, int icon,
-                                          const GEQuadBatch::Rect& rect)
+        const auto appendButtonIcon = [&](std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad>& quads, int icon,
+                                          const GalaxyEggbert::CNA::GEQuadBatch::Rect& rect)
         {
             const float sheetWidth = static_cast<float>(impl_->buttonTexture->getWidthProperty());
             const float sheetHeight = static_cast<float>(impl_->buttonTexture->getHeightProperty());
@@ -234,7 +234,7 @@ namespace GalaxyEggbert::CNA
             });
         };
 
-        std::vector<GEQuadBatch::Quad> buttonQuads;
+        std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> buttonQuads;
         appendButtonIcon(buttonQuads, kDeleteIcon, layout.DeleteToolRect());
         appendButtonIcon(buttonQuads, kPlayTestIcon, layout.PlayTestRect(viewportWidth, viewportHeight));
         appendButtonIcon(buttonQuads, kStopIcon, layout.StopRect(viewportWidth, viewportHeight));
@@ -258,7 +258,7 @@ namespace GalaxyEggbert::CNA
                         i, itemCount, state.openCategory, viewportWidth, viewportHeight));
             }
         }
-        GEQuadBatch::FlushQuads(
+        GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
             device, *impl_->buttonEffect, impl_->buttonRenderer, buttonQuads,
             viewportWidth, viewportHeight, 1.0f);
 
@@ -271,7 +271,7 @@ namespace GalaxyEggbert::CNA
                 impl_->skyEffect->setTextureEnabledProperty(true);
             }
 
-            std::vector<GEQuadBatch::Quad> missingSkyRegions;
+            std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> missingSkyRegions;
             for (int i = 0; i < static_cast<int>(state.contentSkyRegionIds.size()); ++i)
             {
                 const int region = state.contentSkyRegionIds[static_cast<std::size_t>(i)];
@@ -294,19 +294,19 @@ namespace GalaxyEggbert::CNA
                     }
                 }
 
-                const GEQuadBatch::Rect cell = layout.PaletteCellRect(
+                const GalaxyEggbert::CNA::GEQuadBatch::Rect cell = layout.PaletteCellRect(
                     i, itemCount, state.openCategory, viewportWidth, viewportHeight);
                 if (impl_->skyTextures[regionIndex])
                 {
                     // The source image is 4:3. Crop its horizontal edges
                     // instead of squeezing it into the square menu cell.
-                    const std::vector<GEQuadBatch::Quad> thumbnail = {
+                    const std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> thumbnail = {
                         {cell.x0, cell.y0, cell.x1, cell.y1,
                          0.125f, 0.0f, 0.875f, 1.0f},
                     };
                     impl_->skyEffect->setTextureProperty(
                         impl_->skyTextures[regionIndex].get());
-                    GEQuadBatch::FlushQuads(
+                    GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                         device, *impl_->skyEffect, impl_->skyRenderer, thumbnail,
                         viewportWidth, viewportHeight, 1.0f);
                 }
@@ -317,7 +317,7 @@ namespace GalaxyEggbert::CNA
             }
             impl_->flatEffect->setDiffuseColorProperty(
                 {100.0f / 255.0f, 149.0f / 255.0f, 237.0f / 255.0f});
-            GEQuadBatch::FlushQuads(
+            GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                 device, *impl_->flatEffect, impl_->flatRenderer, missingSkyRegions,
                 viewportWidth, viewportHeight, 1.0f);
 
@@ -327,14 +327,14 @@ namespace GalaxyEggbert::CNA
                     static_cast<float>(impl_->textTexture->getWidthProperty());
                 const float sheetHeight =
                     static_cast<float>(impl_->textTexture->getHeightProperty());
-                std::vector<GEQuadBatch::Quad> numberBackgrounds;
-                std::vector<GEQuadBatch::Quad> numberLabels;
+                std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> numberBackgrounds;
+                std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> numberLabels;
                 for (int i = 0; i < static_cast<int>(state.contentSkyRegionIds.size()); ++i)
                 {
                     const int region = state.contentSkyRegionIds[static_cast<std::size_t>(i)];
                     char label[4];
                     std::snprintf(label, sizeof(label), "%d", region);
-                    const GEQuadBatch::Rect cell = layout.PaletteCellRect(
+                    const GalaxyEggbert::CNA::GEQuadBatch::Rect cell = layout.PaletteCellRect(
                         i, itemCount, state.openCategory, viewportWidth, viewportHeight);
                     const float labelWidth = LabelWidth(label);
                     numberBackgrounds.push_back({
@@ -348,11 +348,11 @@ namespace GalaxyEggbert::CNA
                         sheetWidth, sheetHeight);
                 }
                 impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
-                GEQuadBatch::FlushQuads(
+                GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                     device, *impl_->flatEffect, impl_->flatRenderer, numberBackgrounds,
                     viewportWidth, viewportHeight, 0.78f);
                 impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
-                GEQuadBatch::FlushQuads(
+                GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                     device, *impl_->textEffect, impl_->textRenderer, numberLabels,
                     viewportWidth, viewportHeight, 1.0f);
             }
@@ -362,29 +362,29 @@ namespace GalaxyEggbert::CNA
         {
             const float cx = static_cast<float>(viewportWidth) * 0.5f;
             const float cy = static_cast<float>(viewportHeight) * 0.5f;
-            const std::vector<GEQuadBatch::Quad> reticle = {
+            const std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> reticle = {
                 {cx - 10, cy - 1, cx - 3, cy + 1, 0, 0, 1, 1},
                 {cx + 3, cy - 1, cx + 10, cy + 1, 0, 0, 1, 1},
                 {cx - 1, cy - 10, cx + 1, cy - 3, 0, 0, 1, 1},
                 {cx - 1, cy + 3, cx + 1, cy + 10, 0, 0, 1, 1},
             };
             impl_->flatEffect->setDiffuseColorProperty({1.0f, 0.05f, 0.05f});
-            GEQuadBatch::FlushQuads(
+            GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                 device, *impl_->flatEffect, impl_->flatRenderer, reticle,
                 viewportWidth, viewportHeight, 1.0f);
         }
 
         if (overview && impl_->textTexture && impl_->textEffect)
         {
-            constexpr const char* kLabels[GEEditorPaletteLayout::PlacementButtonCount] = {
+            constexpr const char* kLabels[EditorPaletteLayout::PlacementButtonCount] = {
                 "X-", "X+", "Y-", "Y+", "Z-", "Z+", "PLACE",
             };
             const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
             const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
-            std::vector<GEQuadBatch::Quad> axisLabels;
-            for (int i = 0; i < GEEditorPaletteLayout::PlacementPlaceIndex; ++i)
+            std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> axisLabels;
+            for (int i = 0; i < EditorPaletteLayout::PlacementPlaceIndex; ++i)
             {
-                const GEQuadBatch::Rect button =
+                const GalaxyEggbert::CNA::GEQuadBatch::Rect button =
                     layout.PlacementButtonRect(i, viewportWidth, viewportHeight);
                 AppendLabel(
                     axisLabels, kLabels[i],
@@ -393,21 +393,21 @@ namespace GalaxyEggbert::CNA
                     sheetWidth, sheetHeight);
             }
             impl_->textEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
-            GEQuadBatch::FlushQuads(
+            GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, axisLabels,
                 viewportWidth, viewportHeight, 1.0f);
 
-            const GEQuadBatch::Rect place = layout.PlacementButtonRect(
-                GEEditorPaletteLayout::PlacementPlaceIndex, viewportWidth, viewportHeight);
-            std::vector<GEQuadBatch::Quad> placeLabel;
+            const GalaxyEggbert::CNA::GEQuadBatch::Rect place = layout.PlacementButtonRect(
+                EditorPaletteLayout::PlacementPlaceIndex, viewportWidth, viewportHeight);
+            std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> placeLabel;
             AppendLabel(
-                placeLabel, kLabels[GEEditorPaletteLayout::PlacementPlaceIndex],
+                placeLabel, kLabels[EditorPaletteLayout::PlacementPlaceIndex],
                 place.x0 + ((place.x1 - place.x0) -
-                            LabelWidth(kLabels[GEEditorPaletteLayout::PlacementPlaceIndex])) * 0.5f,
+                            LabelWidth(kLabels[EditorPaletteLayout::PlacementPlaceIndex])) * 0.5f,
                 place.y0 + ((place.y1 - place.y0) - kGlyphCellPx * kTextScale) * 0.5f,
                 sheetWidth, sheetHeight);
             impl_->textEffect->setDiffuseColorProperty({0.12f, 0.08f, 0.02f});
-            GEQuadBatch::FlushQuads(
+            GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, placeLabel,
                 viewportWidth, viewportHeight, 1.0f);
 
@@ -417,14 +417,14 @@ namespace GalaxyEggbert::CNA
                 std::snprintf(
                     coordinates, sizeof(coordinates), "X:%d Y:%d Z:%d",
                     state.placementX, state.placementY, state.placementZ);
-                const GEQuadBatch::Rect coordinateRect =
+                const GalaxyEggbert::CNA::GEQuadBatch::Rect coordinateRect =
                     layout.PlacementCoordinatesRect(
                         LabelWidth(coordinates), kGlyphCellPx * kTextScale,
                         viewportWidth, viewportHeight);
-                const GEQuadBatch::Rect coordinateBackgroundRect =
+                const GalaxyEggbert::CNA::GEQuadBatch::Rect coordinateBackgroundRect =
                     layout.PlacementCoordinatesBackgroundRect(
                         coordinateRect, viewportWidth, viewportHeight);
-                const std::vector<GEQuadBatch::Quad> coordinateBackground = {
+                const std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> coordinateBackground = {
                     {
                         coordinateBackgroundRect.x0, coordinateBackgroundRect.y0,
                         coordinateBackgroundRect.x1, coordinateBackgroundRect.y1,
@@ -432,15 +432,15 @@ namespace GalaxyEggbert::CNA
                     },
                 };
                 impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
-                GEQuadBatch::FlushQuads(
+                GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                     device, *impl_->flatEffect, impl_->flatRenderer,
                     coordinateBackground, viewportWidth, viewportHeight, 0.72f);
-                std::vector<GEQuadBatch::Quad> coordinateLabel;
+                std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> coordinateLabel;
                 AppendLabel(
                     coordinateLabel, coordinates, coordinateRect.x0, coordinateRect.y0,
                     sheetWidth, sheetHeight);
                 impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
-                GEQuadBatch::FlushQuads(
+                GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                     device, *impl_->textEffect, impl_->textRenderer, coordinateLabel,
                     viewportWidth, viewportHeight, 1.0f);
             }
@@ -452,21 +452,21 @@ namespace GalaxyEggbert::CNA
             const float messageWidth = LabelWidth(kMessage);
             const float left = (static_cast<float>(viewportWidth) - messageWidth) * 0.5f;
             const float top = static_cast<float>(viewportHeight) * 0.5f - 8.0f;
-            const std::vector<GEQuadBatch::Quad> background = {
+            const std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> background = {
                 {left - 8, top - 6, left + messageWidth + 8,
                  top + kGlyphCellPx * kTextScale + 6, 0, 0, 1, 1},
             };
             impl_->flatEffect->setDiffuseColorProperty({1.0f, 0.90f, 0.05f});
-            GEQuadBatch::FlushQuads(
+            GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                 device, *impl_->flatEffect, impl_->flatRenderer, background,
                 viewportWidth, viewportHeight, 1.0f);
-            std::vector<GEQuadBatch::Quad> notice;
+            std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> notice;
             AppendLabel(
                 notice, kMessage, left, top,
                 static_cast<float>(impl_->textTexture->getWidthProperty()),
                 static_cast<float>(impl_->textTexture->getHeightProperty()));
             impl_->textEffect->setDiffuseColorProperty({1.0f, 0.05f, 0.05f});
-            GEQuadBatch::FlushQuads(
+            GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, notice,
                 viewportWidth, viewportHeight, 1.0f);
         }

@@ -1,10 +1,10 @@
-#include "GEWorldEditor.hpp"
+#include "WorldEditor.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <optional>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -28,44 +28,44 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GEWorldEditor::EnterBrowser(int gamerSlot)
+    void WorldEditor::EnterBrowser(int gamerSlot)
     {
         gamerSlot_ = gamerSlot;
         browsing_ = true;
         browserScreen_.Refresh(gamerSlot);
     }
 
-    GEWorldEditor::BrowserRequest GEWorldEditor::UpdateBrowsing(
+    WorldEditor::BrowserRequest WorldEditor::UpdateBrowsing(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int viewportWidth, int viewportHeight, bool backPressed)
     {
         const auto result =
             browserScreen_.Update(mouse, viewportWidth, viewportHeight, backPressed);
         BrowserRequest request;
-        if (result.action == GEEditorBrowserScreen::Action::Open)
+        if (result.action == EditorBrowserScreen::Action::Open)
         {
             request.shouldOpen = true;
             request.openPath = result.path;
         }
-        else if (result.action == GEEditorBrowserScreen::Action::New)
+        else if (result.action == EditorBrowserScreen::Action::New)
         {
             request.shouldCreateNew = true;
         }
-        else if (result.action == GEEditorBrowserScreen::Action::Back)
+        else if (result.action == EditorBrowserScreen::Action::Back)
         {
             request.shouldReturnToMenu = true;
         }
         return request;
     }
 
-    void GEWorldEditor::DrawBrowsing(
+    void WorldEditor::DrawBrowsing(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         int viewportWidth, int viewportHeight)
     {
         browserScreen_.Draw(device, viewportWidth, viewportHeight);
     }
 
-    void GEWorldEditor::EnterEditing(float startX, float startY, float startZ) noexcept
+    void WorldEditor::EnterEditing(float startX, float startY, float startZ) noexcept
     {
         browsing_ = false;
         camX_ = startX;
@@ -80,7 +80,7 @@ namespace GalaxyEggbert::CNA
         placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
         placementOffsetKeyHeldLastFrame_ = false;
         highlightRenderer_.Hide();
-        commandStack_ = GEEditCommandStack();
+        commandStack_ = EditCommandStack();
         boxFirstCornerPlaced_ = false;
         showingBox_ = false;
         playTestRequested_ = false;
@@ -90,7 +90,7 @@ namespace GalaxyEggbert::CNA
         stopConfirmArmed_ = false;
     }
 
-    void GEWorldEditor::Update(
+    void WorldEditor::Update(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         float dt, int viewportWidth, int viewportHeight,
@@ -98,7 +98,7 @@ namespace GalaxyEggbert::CNA
     {
         const Easy3D::Camera3D::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera);
         palette_.SetSelectedSkyRegion(world.skyRegion());
-        const GEEditorPalette::UpdateResult paletteResult =
+        const EditorPalette::UpdateResult paletteResult =
             palette_.Update(mouse, viewportWidth, viewportHeight, dt);
         const bool placementOffsetKeyHeld =
             UpdatePlacementOffset(keyboard, paletteResult.action);
@@ -118,7 +118,7 @@ namespace GalaxyEggbert::CNA
         StoreInputEdges(input, placementOffsetKeyHeld);
     }
 
-    std::optional<MoveObjectRecord> GEWorldEditor::ApplyActiveFieldDelta(
+    std::optional<MoveObjectRecord> WorldEditor::ApplyActiveFieldDelta(
         const MoveObjectRecord& record, float sign) const noexcept
     {
         MoveObjectRecord updated = record;
@@ -168,7 +168,7 @@ namespace GalaxyEggbert::CNA
         return updated;
     }
 
-    void GEWorldEditor::RefreshSelectedObjectAfterHistoryChange(const Worlds::World& world)
+    void WorldEditor::RefreshSelectedObjectAfterHistoryChange(const Worlds::World& world)
     {
         if (!hasSelectedObject_)
         {
@@ -186,21 +186,21 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    bool GEWorldEditor::ConsumeNeedsPresentationRebuild() noexcept
+    bool WorldEditor::ConsumeNeedsPresentationRebuild() noexcept
     {
         const bool result = needsPresentationRebuild_;
         needsPresentationRebuild_ = false;
         return result;
     }
 
-    bool GEWorldEditor::ConsumePlayTestRequested() noexcept
+    bool WorldEditor::ConsumePlayTestRequested() noexcept
     {
         const bool result = playTestRequested_;
         playTestRequested_ = false;
         return result;
     }
 
-    void GEWorldEditor::Draw(
+    void WorldEditor::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const Easy3D::Camera3D& camera,
         int viewportWidth, int viewportHeight)

@@ -6,7 +6,7 @@
 
 #include <memory>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // Translucent overlay tracking either a single block the editor's
     // raycast currently aims at (plan.md EDITOR-102) or a box-fill
@@ -14,7 +14,7 @@ namespace GalaxyEggbert::CNA
     // mesh only when the shown bounds actually change -- matches this
     // codebase's "rebuild the whole mesh on change, no in-place update
     // API" convention (see GETerrainRenderer's own class comment).
-    class GEEditorHighlightRenderer
+    class EditorHighlightRenderer
     {
     public:
         // Shows a highlight cube centered at the given RENDER-SPACE

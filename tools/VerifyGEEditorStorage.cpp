@@ -1,6 +1,6 @@
-#include "Editor/GECustomWorldStorage.hpp"
-#include "Editor/GEEditorBrowserScreen.hpp"
-#include "Editor/GEWorldEditor.hpp"
+#include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
+#include <GalaxyEggbert/Editor/EditorBrowserScreen.hpp>
+#include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -16,6 +16,7 @@
 int main()
 {
     using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::Worlds::Block;
     using GalaxyEggbert::Worlds::World;
     using Microsoft::Xna::Framework::Input::ButtonState;
@@ -29,7 +30,7 @@ int main()
         if (!condition) allOk = false;
     };
 
-    const auto clickBrowser = [](GEEditorBrowserScreen& browser, int x, int y)
+    const auto clickBrowser = [](EditorBrowserScreen& browser, int x, int y)
     {
         const MouseState down(
             x, y, 0, ButtonState::Pressed, ButtonState::Released,
@@ -104,34 +105,34 @@ int main()
     std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
     World().saveToFile(NextNewWorldPath(kBrowserSlot));
     {
-        GEEditorBrowserScreen browser;
+        EditorBrowserScreen browser;
         browser.Refresh(kBrowserSlot);
         const auto create = clickBrowser(browser, 300, 38);
-        check(create.action == GEEditorBrowserScreen::Action::New,
+        check(create.action == EditorBrowserScreen::Action::New,
               "the browser's New row reports a create action");
 
         const auto back = clickBrowser(browser, 80, 38);
-        check(back.action == GEEditorBrowserScreen::Action::Back,
+        check(back.action == EditorBrowserScreen::Action::Back,
               "the browser's visible Main Menu row reports a back action");
 
         const MouseState idle(
             0, 0, 0, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         check(browser.Update(idle, 800, 480, true).action ==
-                  GEEditorBrowserScreen::Action::Back,
+                  EditorBrowserScreen::Action::Back,
               "Escape reports a browser back action");
         check(browser.Update(idle, 800, 480, true).action ==
-                  GEEditorBrowserScreen::Action::None,
+                  EditorBrowserScreen::Action::None,
               "holding Escape does not repeat the browser back action");
         (void)browser.Update(idle, 800, 480, false);
 
         const auto open = clickBrowser(browser, 300, 80);
-        check(open.action == GEEditorBrowserScreen::Action::Open &&
+        check(open.action == EditorBrowserScreen::Action::Open &&
                   open.path.extension() == ".vwr",
               "a browser world row reports its .vwr path");
 
         const auto armDelete = clickBrowser(browser, 500, 80);
-        check(armDelete.action == GEEditorBrowserScreen::Action::None &&
+        check(armDelete.action == EditorBrowserScreen::Action::None &&
                   !ListCustomWorlds(kBrowserSlot).empty(),
               "the first delete click only arms confirmation");
         (void)clickBrowser(browser, 500, 80);
@@ -140,7 +141,7 @@ int main()
     }
 
     {
-        GEWorldEditor editor;
+        WorldEditor editor;
         check(editor.IsBrowsing(), "the editor starts in browser mode");
         editor.EnterBrowser(kBrowserSlot);
 
@@ -172,7 +173,7 @@ int main()
             "verify_ge_editor_storage_playtest_scratch.vwr";
         World world;
         world.setBlock(10, 5, 10, Block::make(42));
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         editor.SetWorldPath(kPlayTestPath);
         Easy3D::Camera3D camera;
@@ -219,7 +220,7 @@ int main()
             return count;
         };
 
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const int before = solidCount();

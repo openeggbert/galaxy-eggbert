@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // One named group of BlockTypes icon ids for the editor's palette
     // (plan.md EDITOR-106).

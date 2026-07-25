@@ -1,9 +1,9 @@
 #pragma once
 
-#include "GEEditCommandStack.hpp"
-#include "GEEditorBrowserScreen.hpp"
-#include "GEEditorHighlightRenderer.hpp"
-#include "GEEditorPalette.hpp"
+#include "EditCommandStack.hpp"
+#include "EditorBrowserScreen.hpp"
+#include "EditorHighlightRenderer.hpp"
+#include "EditorPalette.hpp"
 
 #include <Easy3D/Camera3D.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -18,12 +18,12 @@
 #include <optional>
 #include <utility>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // Owns one in-game 3D editing session: camera and placement input,
     // palette interaction, undo history, object editing, persistence and
     // transitions to the world browser or play-test mode.
-    class GEWorldEditor
+    class WorldEditor
     {
     public:
         // Enters the browser and rescans the selected gamer's custom worlds.
@@ -40,7 +40,7 @@ namespace GalaxyEggbert::CNA
         {
             bool shouldOpen = false;
             std::filesystem::path openPath; // valid when shouldOpen
-            bool shouldCreateNew = false;    // GECustomWorldStorage::NextNewWorldPath(gamerSlot) is the target
+            bool shouldCreateNew = false;    // CustomWorldStorage::NextNewWorldPath(gamerSlot) is the target
             bool shouldReturnToMenu = false;
         };
 
@@ -106,7 +106,7 @@ namespace GalaxyEggbert::CNA
     private:
         struct FrameInput
         {
-            GEEditorPalette::UpdateResult palette;
+            EditorPalette::UpdateResult palette;
             bool leftHeld = false;
             bool middleHeld = false;
             bool enterHeld = false;
@@ -130,13 +130,13 @@ namespace GalaxyEggbert::CNA
             float dt, Easy3D::Camera3D& camera);
         [[nodiscard]] bool UpdatePlacementOffset(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
-            GEEditorPalette::Action paletteAction);
+            EditorPalette::Action paletteAction);
         void UpdatePlacementPreview(
             const Worlds::World& world, const Easy3D::Camera3D::Vector3& forward);
         [[nodiscard]] FrameInput ReadFrameInput(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
-            GEEditorPalette::UpdateResult paletteResult) const;
+            EditorPalette::UpdateResult paletteResult) const;
         void UpdateBoxPreview(const Worlds::World& world);
         [[nodiscard]] bool HandlePlacement(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleRemoval(const FrameInput& input, Worlds::World& world);
@@ -165,7 +165,7 @@ namespace GalaxyEggbert::CNA
         int lastScrollWheelValue_ = 0;
         bool hasLastScrollWheelValue_ = false;
 
-        GEEditorHighlightRenderer highlightRenderer_;
+        EditorHighlightRenderer highlightRenderer_;
         bool hasHighlight_ = false;
         // A fresh custom world has no solid voxels for the DDA raycast to
         // hit. In that case Update() projects the aim ray onto y=0 and
@@ -220,8 +220,8 @@ namespace GalaxyEggbert::CNA
             stopConfirmArmed_ = false;
         }
 
-        GEEditCommandStack commandStack_;
-        GEEditorPalette palette_;
+        EditCommandStack commandStack_;
+        EditorPalette palette_;
 
         // Box-fill tool (plan.md EDITOR-105).
         bool boxFirstCornerPlaced_ = false;
@@ -253,7 +253,7 @@ namespace GalaxyEggbert::CNA
         float selectedRenderX_ = 0.0f;
         float selectedRenderY_ = 0.0f;
         float selectedRenderZ_ = 0.0f;
-        GEEditorHighlightRenderer selectionHighlightRenderer_;
+        EditorHighlightRenderer selectionHighlightRenderer_;
 
         // Which field Tab cycles through and OemPlus/OemMinus adjust --
         // order matches MoveObjectRecord's own declared field order.
@@ -295,6 +295,6 @@ namespace GalaxyEggbert::CNA
 
         bool browsing_ = true;
         int gamerSlot_ = 0;
-        GEEditorBrowserScreen browserScreen_;
+        EditorBrowserScreen browserScreen_;
     };
 }

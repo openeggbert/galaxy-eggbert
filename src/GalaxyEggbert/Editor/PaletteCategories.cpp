@@ -1,8 +1,8 @@
-#include "GEPaletteCategories.hpp"
+#include "PaletteCategories.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {

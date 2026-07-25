@@ -1,7 +1,7 @@
-#include "GEWorldEditor.hpp"
+#include "WorldEditor.hpp"
 
-#include "GEBoxRegion.hpp"
-#include "GEVoxelRaycast.hpp"
+#include "BoxRegion.hpp"
+#include "VoxelRaycast.hpp"
 #include "Game/GEHud.hpp"
 #include "Game/GEWorldRuntime.hpp"
 
@@ -12,7 +12,7 @@
 #include <cmath>
 #include <utility>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -56,7 +56,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    Easy3D::Camera3D::Vector3 GEWorldEditor::UpdateCamera(
+    Easy3D::Camera3D::Vector3 WorldEditor::UpdateCamera(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         float dt, Easy3D::Camera3D& camera)
@@ -136,19 +136,19 @@ namespace GalaxyEggbert::CNA
         return forward;
     }
 
-    bool GEWorldEditor::UpdatePlacementOffset(
+    bool WorldEditor::UpdatePlacementOffset(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
-        GEEditorPalette::Action paletteAction)
+        EditorPalette::Action paletteAction)
     {
         using Microsoft::Xna::Framework::Input::Keys;
         switch (paletteAction)
         {
-            case GEEditorPalette::Action::PlacementXMinus: --placementOffsetX_; break;
-            case GEEditorPalette::Action::PlacementXPlus:  ++placementOffsetX_; break;
-            case GEEditorPalette::Action::PlacementYMinus: --placementOffsetY_; break;
-            case GEEditorPalette::Action::PlacementYPlus:  ++placementOffsetY_; break;
-            case GEEditorPalette::Action::PlacementZMinus: --placementOffsetZ_; break;
-            case GEEditorPalette::Action::PlacementZPlus:  ++placementOffsetZ_; break;
+            case EditorPalette::Action::PlacementXMinus: --placementOffsetX_; break;
+            case EditorPalette::Action::PlacementXPlus:  ++placementOffsetX_; break;
+            case EditorPalette::Action::PlacementYMinus: --placementOffsetY_; break;
+            case EditorPalette::Action::PlacementYPlus:  ++placementOffsetY_; break;
+            case EditorPalette::Action::PlacementZMinus: --placementOffsetZ_; break;
+            case EditorPalette::Action::PlacementZPlus:  ++placementOffsetZ_; break;
             default: break;
         }
 
@@ -176,13 +176,13 @@ namespace GalaxyEggbert::CNA
         return held;
     }
 
-    void GEWorldEditor::UpdatePlacementPreview(
+    void WorldEditor::UpdatePlacementPreview(
         const Worlds::World& world, const Easy3D::Camera3D::Vector3& forward)
     {
         const RaycastHit hit = Raycast(
             world,
-            camX_ + static_cast<float>(GEWorldRuntime::kWorldCenterX), camY_,
-            camZ_ + static_cast<float>(GEWorldRuntime::kWorldCenterZ),
+            camX_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX), camY_,
+            camZ_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ),
             forward.X, forward.Y, forward.Z, kMaxRaycastDistance);
         hasRaycastHit_ = hit.hit;
         hasHighlight_ = hit.hit;
@@ -199,9 +199,9 @@ namespace GalaxyEggbert::CNA
                 previewY >= 0 && previewY < blocksPerAxis &&
                 previewZ >= 0 && previewZ < blocksPerAxis)
             {
-                highlightX_ = static_cast<float>(previewX - GEWorldRuntime::kWorldCenterX);
+                highlightX_ = static_cast<float>(previewX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
                 highlightY_ = static_cast<float>(previewY);
-                highlightZ_ = static_cast<float>(previewZ - GEWorldRuntime::kWorldCenterZ);
+                highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
                 placementCellX_ = static_cast<std::uint16_t>(previewX);
                 placementCellY_ = static_cast<std::uint16_t>(previewY);
                 placementCellZ_ = static_cast<std::uint16_t>(previewZ);
@@ -219,10 +219,10 @@ namespace GalaxyEggbert::CNA
         }
         const float distance = -camY_ / forward.Y;
         const int targetX = static_cast<int>(std::floor(
-            camX_ + static_cast<float>(GEWorldRuntime::kWorldCenterX) +
+            camX_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX) +
             forward.X * distance + 0.5f));
         const int targetZ = static_cast<int>(std::floor(
-            camZ_ + static_cast<float>(GEWorldRuntime::kWorldCenterZ) +
+            camZ_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ) +
             forward.Z * distance + 0.5f));
         if (distance < 0.0f || distance > kMaxRaycastDistance ||
             targetX < 0 || targetX >= blocksPerAxis ||
@@ -243,19 +243,19 @@ namespace GalaxyEggbert::CNA
             previewZ >= 0 && previewZ < blocksPerAxis;
         if (hasHighlight_)
         {
-            highlightX_ = static_cast<float>(previewX - GEWorldRuntime::kWorldCenterX);
+            highlightX_ = static_cast<float>(previewX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
             highlightY_ = static_cast<float>(previewY);
-            highlightZ_ = static_cast<float>(previewZ - GEWorldRuntime::kWorldCenterZ);
+            highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
             placementCellX_ = static_cast<std::uint16_t>(previewX);
             placementCellY_ = static_cast<std::uint16_t>(previewY);
             placementCellZ_ = static_cast<std::uint16_t>(previewZ);
         }
     }
 
-    GEWorldEditor::FrameInput GEWorldEditor::ReadFrameInput(
+    WorldEditor::FrameInput WorldEditor::ReadFrameInput(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
-        GEEditorPalette::UpdateResult paletteResult) const
+        EditorPalette::UpdateResult paletteResult) const
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
@@ -279,7 +279,7 @@ namespace GalaxyEggbert::CNA
         };
     }
 
-    void GEWorldEditor::UpdateBoxPreview(const Worlds::World& world)
+    void WorldEditor::UpdateBoxPreview(const Worlds::World& world)
     {
         showingBox_ = boxFirstCornerPlaced_ && hasHighlight_;
         if (!showingBox_)
@@ -289,19 +289,19 @@ namespace GalaxyEggbert::CNA
         const BoxRegion region = NormalizeAndClamp(
             boxCorner0X_, boxCorner0Y_, boxCorner0Z_,
             hitCellX_, hitCellY_, hitCellZ_, static_cast<int>(world.blocksPerAxis()));
-        boxMinRenderX_ = static_cast<float>(region.minX - GEWorldRuntime::kWorldCenterX);
+        boxMinRenderX_ = static_cast<float>(region.minX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
         boxMinRenderY_ = static_cast<float>(region.minY);
-        boxMinRenderZ_ = static_cast<float>(region.minZ - GEWorldRuntime::kWorldCenterZ);
-        boxMaxRenderX_ = static_cast<float>(region.maxX - GEWorldRuntime::kWorldCenterX);
+        boxMinRenderZ_ = static_cast<float>(region.minZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
+        boxMaxRenderX_ = static_cast<float>(region.maxX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
         boxMaxRenderY_ = static_cast<float>(region.maxY);
-        boxMaxRenderZ_ = static_cast<float>(region.maxZ - GEWorldRuntime::kWorldCenterZ);
+        boxMaxRenderZ_ = static_cast<float>(region.maxZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
     }
 
-    bool GEWorldEditor::HandlePlacement(const FrameInput& input, Worlds::World& world)
+    bool WorldEditor::HandlePlacement(const FrameInput& input, Worlds::World& world)
     {
         const bool requested =
             (input.leftHeld && !leftHeldLastFrame_ && !input.palette.clickConsumed) ||
-            input.palette.action == GEEditorPalette::Action::PlaceSelection;
+            input.palette.action == EditorPalette::Action::PlaceSelection;
         if (!requested || !hasHighlight_ || boxFirstCornerPlaced_)
         {
             return false;
@@ -310,10 +310,10 @@ namespace GalaxyEggbert::CNA
         const auto x = placementCellX_;
         const auto y = placementCellY_;
         const auto z = placementCellZ_;
-        GEEditCommand command;
+        EditCommand command;
         if (palette_.IsSpawnPointMode())
         {
-            command.kind = GEEditCommand::Kind::SpawnPointEdit;
+            command.kind = EditCommand::Kind::SpawnPointEdit;
             command.spawnBefore = {
                 world.hasSpawnPoint(), world.spawnX(), world.spawnY(), world.spawnZ()};
             command.spawnAfter = {true, x, y, z};
@@ -323,7 +323,7 @@ namespace GalaxyEggbert::CNA
         {
             const BigDecorRecord record{
                 palette_.SelectedBigDecorIcon(), x, y, z};
-            command.kind = GEEditCommand::Kind::BigDecorEdit;
+            command.kind = EditCommand::Kind::BigDecorEdit;
             command.bigDecorAnchorX = x;
             command.bigDecorAnchorY = y;
             command.bigDecorAnchorZ = z;
@@ -342,7 +342,7 @@ namespace GalaxyEggbert::CNA
             record.posEndX = record.posStartX;
             record.posEndY = record.posStartY;
             record.posEndZ = record.posStartZ;
-            command.kind = GEEditCommand::Kind::MoveObjectEdit;
+            command.kind = EditCommand::Kind::MoveObjectEdit;
             command.objectAnchorX = x;
             command.objectAnchorY = y;
             command.objectAnchorZ = z;
@@ -355,7 +355,7 @@ namespace GalaxyEggbert::CNA
             const Worlds::Block before = world.getBlock(x, y, z);
             const Worlds::Block after = Worlds::Block::make(palette_.SelectedBlockType());
             world.setBlock(x, y, z, after);
-            command.kind = GEEditCommand::Kind::BlockEdit;
+            command.kind = EditCommand::Kind::BlockEdit;
             command.blockChanges.push_back({x, y, z, before, after});
         }
         commandStack_.Push(std::move(command));
@@ -363,12 +363,12 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
-    void GEWorldEditor::RemoveObjectWithHistory(
+    void WorldEditor::RemoveObjectWithHistory(
         Worlds::World& world, const MoveObjectRecord& record,
         std::uint16_t anchorX, std::uint16_t anchorY, std::uint16_t anchorZ)
     {
-        GEEditCommand command;
-        command.kind = GEEditCommand::Kind::MoveObjectEdit;
+        EditCommand command;
+        command.kind = EditCommand::Kind::MoveObjectEdit;
         command.objectAnchorX = anchorX;
         command.objectAnchorY = anchorY;
         command.objectAnchorZ = anchorZ;
@@ -386,11 +386,11 @@ namespace GalaxyEggbert::CNA
         MarkMutated();
     }
 
-    void GEWorldEditor::RemoveBigDecorWithHistory(
+    void WorldEditor::RemoveBigDecorWithHistory(
         Worlds::World& world, const BigDecorRecord& record)
     {
-        GEEditCommand command;
-        command.kind = GEEditCommand::Kind::BigDecorEdit;
+        EditCommand command;
+        command.kind = EditCommand::Kind::BigDecorEdit;
         command.bigDecorAnchorX = record.x;
         command.bigDecorAnchorY = record.y;
         command.bigDecorAnchorZ = record.z;
@@ -400,10 +400,10 @@ namespace GalaxyEggbert::CNA
         MarkMutated();
     }
 
-    bool GEWorldEditor::HandleRemoval(const FrameInput& input, Worlds::World& world)
+    bool WorldEditor::HandleRemoval(const FrameInput& input, Worlds::World& world)
     {
         const bool toolbarRequested =
-            input.palette.action == GEEditorPalette::Action::DeleteAtTarget;
+            input.palette.action == EditorPalette::Action::DeleteAtTarget;
         const bool middleRequested =
             input.middleHeld && !middleHeldLastFrame_ && !input.palette.clickConsumed;
         if ((!toolbarRequested && !middleRequested) || boxFirstCornerPlaced_)
@@ -454,15 +454,15 @@ namespace GalaxyEggbert::CNA
         }
         const Worlds::Block after = Worlds::Block::air();
         world.setBlock(hitCellX_, hitCellY_, hitCellZ_, after);
-        GEEditCommand command;
-        command.kind = GEEditCommand::Kind::BlockEdit;
+        EditCommand command;
+        command.kind = EditCommand::Kind::BlockEdit;
         command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
         commandStack_.Push(std::move(command));
         MarkMutated();
         return true;
     }
 
-    bool GEWorldEditor::HandleSessionAndHistory(const FrameInput& input, Worlds::World& world)
+    bool WorldEditor::HandleSessionAndHistory(const FrameInput& input, Worlds::World& world)
     {
         if (input.enterHeld && !enterHeldLastFrame_ && !worldPath_.empty())
         {
@@ -489,7 +489,7 @@ namespace GalaxyEggbert::CNA
             }
             return true;
         }
-        if (input.palette.action == GEEditorPalette::Action::Stop)
+        if (input.palette.action == EditorPalette::Action::Stop)
         {
             if (dirty_ && !stopConfirmArmed_)
             {
@@ -502,7 +502,7 @@ namespace GalaxyEggbert::CNA
             }
             return true;
         }
-        if (input.palette.action == GEEditorPalette::Action::PlayTest && !worldPath_.empty())
+        if (input.palette.action == EditorPalette::Action::PlayTest && !worldPath_.empty())
         {
             world.saveToFile(worldPath_);
             dirty_ = false;
@@ -513,7 +513,7 @@ namespace GalaxyEggbert::CNA
         return false;
     }
 
-    bool GEWorldEditor::HandleBoxFill(const FrameInput& input, Worlds::World& world)
+    bool WorldEditor::HandleBoxFill(const FrameInput& input, Worlds::World& world)
     {
         if (input.boxHeld && !boxKeyHeldLastFrame_ && hasHighlight_)
         {
@@ -529,8 +529,8 @@ namespace GalaxyEggbert::CNA
             const BoxRegion region = NormalizeAndClamp(
                 boxCorner0X_, boxCorner0Y_, boxCorner0Z_,
                 hitCellX_, hitCellY_, hitCellZ_, static_cast<int>(world.blocksPerAxis()));
-            GEEditCommand command;
-            command.kind = GEEditCommand::Kind::BlockEdit;
+            EditCommand command;
+            command.kind = EditCommand::Kind::BlockEdit;
             const Worlds::Block fill = Worlds::Block::make(palette_.SelectedBlockType());
             for (int x = region.minX; x <= region.maxX; ++x)
             {
@@ -569,11 +569,11 @@ namespace GalaxyEggbert::CNA
         return false;
     }
 
-    bool GEWorldEditor::HandleSkyRegion(const FrameInput& input, Worlds::World& world)
+    bool WorldEditor::HandleSkyRegion(const FrameInput& input, Worlds::World& world)
     {
         constexpr std::uint32_t kRegionCount = 32;
         const std::uint32_t before = world.skyRegion();
-        if (input.palette.action == GEEditorPalette::Action::SelectSkyRegion)
+        if (input.palette.action == EditorPalette::Action::SelectSkyRegion)
         {
             if (input.palette.skyRegion < 0 ||
                 input.palette.skyRegion >= static_cast<int>(kRegionCount))
@@ -586,8 +586,8 @@ namespace GalaxyEggbert::CNA
                 return true;
             }
             world.setSkyRegion(after);
-            GEEditCommand command;
-            command.kind = GEEditCommand::Kind::SkyRegionEdit;
+            EditCommand command;
+            command.kind = EditCommand::Kind::SkyRegionEdit;
             command.skyRegionBefore = before;
             command.skyRegionAfter = after;
             commandStack_.Push(std::move(command));
@@ -613,8 +613,8 @@ namespace GalaxyEggbert::CNA
             (before + kRegionCount - 1) % kRegionCount :
             (before + 1) % kRegionCount;
         world.setSkyRegion(after);
-        GEEditCommand command;
-        command.kind = GEEditCommand::Kind::SkyRegionEdit;
+        EditCommand command;
+        command.kind = EditCommand::Kind::SkyRegionEdit;
         command.skyRegionBefore = before;
         command.skyRegionAfter = after;
         commandStack_.Push(std::move(command));
@@ -622,7 +622,7 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
-    bool GEWorldEditor::HandleObjectEditing(
+    bool WorldEditor::HandleObjectEditing(
         const FrameInput& input, Easy3D::Camera3D& camera,
         int viewportWidth, int viewportHeight, Worlds::World& world)
     {
@@ -633,12 +633,12 @@ namespace GalaxyEggbert::CNA
             for (const auto& record : CollectMoveObjects(world))
             {
                 const Easy3D::Camera3D::Vector3 renderPosition(
-                    record.posStartX - static_cast<float>(GEWorldRuntime::kWorldCenterX),
+                    record.posStartX - static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX),
                     record.posStartY,
-                    record.posStartZ - static_cast<float>(GEWorldRuntime::kWorldCenterZ));
+                    record.posStartZ - static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ));
                 float projectedX = 0.0f;
                 float projectedY = 0.0f;
-                if (!GEHud::ProjectWorldToHudSpace(
+                if (!GalaxyEggbert::CNA::GEHud::ProjectWorldToHudSpace(
                         renderPosition, camera.GetViewMatrix(), camera.GetProjectionMatrix(),
                         viewportWidth, viewportHeight, projectedX, projectedY))
                 {
@@ -668,8 +668,8 @@ namespace GalaxyEggbert::CNA
             after.posEndX = static_cast<float>(hitCellX_);
             after.posEndY = static_cast<float>(hitCellY_);
             after.posEndZ = static_cast<float>(hitCellZ_);
-            GEEditCommand command;
-            command.kind = GEEditCommand::Kind::MoveObjectEdit;
+            EditCommand command;
+            command.kind = EditCommand::Kind::MoveObjectEdit;
             command.objectAnchorX = selectedAnchorX_;
             command.objectAnchorY = selectedAnchorY_;
             command.objectAnchorZ = selectedAnchorZ_;
@@ -697,8 +697,8 @@ namespace GalaxyEggbert::CNA
                 ApplyActiveFieldDelta(selectedObject_, sign);
             if (after)
             {
-                GEEditCommand command;
-                command.kind = GEEditCommand::Kind::MoveObjectEdit;
+                EditCommand command;
+                command.kind = EditCommand::Kind::MoveObjectEdit;
                 command.objectAnchorX = selectedAnchorX_;
                 command.objectAnchorY = selectedAnchorY_;
                 command.objectAnchorZ = selectedAnchorZ_;
@@ -721,7 +721,7 @@ namespace GalaxyEggbert::CNA
         return false;
     }
 
-    void GEWorldEditor::StoreInputEdges(
+    void WorldEditor::StoreInputEdges(
         const FrameInput& input, bool placementOffsetKeyHeld) noexcept
     {
         leftHeldLastFrame_ = input.leftHeld;

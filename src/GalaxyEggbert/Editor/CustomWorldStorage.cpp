@@ -1,4 +1,4 @@
-#include "GECustomWorldStorage.hpp"
+#include "CustomWorldStorage.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <string>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {

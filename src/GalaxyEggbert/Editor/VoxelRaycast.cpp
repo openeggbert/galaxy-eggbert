@@ -1,9 +1,9 @@
-#include "GEVoxelRaycast.hpp"
+#include "VoxelRaycast.hpp"
 
 #include <cmath>
 #include <limits>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {

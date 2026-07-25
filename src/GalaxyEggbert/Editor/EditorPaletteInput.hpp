@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GEEditorPaletteLayout.hpp"
+#include "EditorPaletteLayout.hpp"
 
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
-    class GEEditorPaletteInput
+    class EditorPaletteInput
     {
     public:
         enum class HitKind
@@ -36,12 +36,12 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] Result Update(
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
-            const GEEditorPaletteLayout& layout, const State& state,
+            const EditorPaletteLayout& layout, const State& state,
             int viewportWidth, int viewportHeight);
 
     private:
         [[nodiscard]] Result HitTest(
-            float x, float y, const GEEditorPaletteLayout& layout, const State& state,
+            float x, float y, const EditorPaletteLayout& layout, const State& state,
             int viewportWidth, int viewportHeight) const noexcept;
 
         bool mouseWasDown_ = false;

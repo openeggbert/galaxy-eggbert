@@ -18,11 +18,12 @@ content-authoring UX, but not new gameplay mechanics.
 
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
-- All approved world-editor milestones and follow-ups through `EDITOR-129` are complete: per-gamer
+- All approved world-editor milestones and follow-ups through `EDITOR-130` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
   functional touch deletion, verified Inverter/crate/Overcraft entries, menu-based sky-region
   thumbnails, save and play-test loop, unsaved-change protection, correctly sourced BigDecor
-  scenery, and a visible/Escape return from the editor browser to the main menu.
+  scenery, a visible/Escape return from the editor browser to the main menu, and a backend-neutral
+  `GalaxyEggbert::Editor` namespace/source tree without legacy `GE` prefixes on editor components.
 - Linux native, Vulkan native, and the debug build are maintained. A MinGW-w64 cross-build of
   `GalaxyEggbertCNA.exe` (SDL_Renderer) is confirmed. Its output now stages SDL3 and MinGW thread
   runtime DLLs beside the executable while statically linking GCC/C++. A Wine launch reaches

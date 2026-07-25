@@ -1,8 +1,8 @@
-#include "GEEditCommandStack.hpp"
+#include "EditCommandStack.hpp"
 
 #include <utility>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -13,7 +13,7 @@ namespace GalaxyEggbert::CNA
         // elsewhere -- PlaceMoveObject() anchors at floor(posStart), which
         // need not equal the command's own anchor cell after an EDITOR-110
         // position edit.
-        void ApplyMoveObjectState(Worlds::World& world, const GEEditCommand& command,
+        void ApplyMoveObjectState(Worlds::World& world, const EditCommand& command,
                                   const std::optional<MoveObjectRecord>& state)
         {
             RemoveMoveObject(world, command.objectAnchorX, command.objectAnchorY, command.objectAnchorZ);
@@ -37,7 +37,7 @@ namespace GalaxyEggbert::CNA
         }
 
         void ApplyBigDecorState(
-            Worlds::World& world, const GEEditCommand& command,
+            Worlds::World& world, const EditCommand& command,
             const std::optional<BigDecorRecord>& state)
         {
             RemoveBigDecor(
@@ -50,7 +50,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GEEditCommandStack::Push(GEEditCommand command)
+    void EditCommandStack::Push(EditCommand command)
     {
         redoStack_.clear();
         undoStack_.push_back(std::move(command));
@@ -60,35 +60,35 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    bool GEEditCommandStack::Undo(Worlds::World& world)
+    bool EditCommandStack::Undo(Worlds::World& world)
     {
         if (undoStack_.empty())
         {
             return false;
         }
-        GEEditCommand command = std::move(undoStack_.back());
+        EditCommand command = std::move(undoStack_.back());
         undoStack_.pop_back();
 
-        if (command.kind == GEEditCommand::Kind::BlockEdit)
+        if (command.kind == EditCommand::Kind::BlockEdit)
         {
             for (const auto& change : command.blockChanges)
             {
                 world.setBlock(change.x, change.y, change.z, change.before);
             }
         }
-        else if (command.kind == GEEditCommand::Kind::MoveObjectEdit)
+        else if (command.kind == EditCommand::Kind::MoveObjectEdit)
         {
             ApplyMoveObjectState(world, command, command.objectBefore);
         }
-        else if (command.kind == GEEditCommand::Kind::SkyRegionEdit)
+        else if (command.kind == EditCommand::Kind::SkyRegionEdit)
         {
             world.setSkyRegion(command.skyRegionBefore);
         }
-        else if (command.kind == GEEditCommand::Kind::SpawnPointEdit)
+        else if (command.kind == EditCommand::Kind::SpawnPointEdit)
         {
             ApplySpawnPointState(world, command.spawnBefore);
         }
-        else if (command.kind == GEEditCommand::Kind::BigDecorEdit)
+        else if (command.kind == EditCommand::Kind::BigDecorEdit)
         {
             ApplyBigDecorState(world, command, command.bigDecorBefore);
         }
@@ -97,35 +97,35 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
-    bool GEEditCommandStack::Redo(Worlds::World& world)
+    bool EditCommandStack::Redo(Worlds::World& world)
     {
         if (redoStack_.empty())
         {
             return false;
         }
-        GEEditCommand command = std::move(redoStack_.back());
+        EditCommand command = std::move(redoStack_.back());
         redoStack_.pop_back();
 
-        if (command.kind == GEEditCommand::Kind::BlockEdit)
+        if (command.kind == EditCommand::Kind::BlockEdit)
         {
             for (const auto& change : command.blockChanges)
             {
                 world.setBlock(change.x, change.y, change.z, change.after);
             }
         }
-        else if (command.kind == GEEditCommand::Kind::MoveObjectEdit)
+        else if (command.kind == EditCommand::Kind::MoveObjectEdit)
         {
             ApplyMoveObjectState(world, command, command.objectAfter);
         }
-        else if (command.kind == GEEditCommand::Kind::SkyRegionEdit)
+        else if (command.kind == EditCommand::Kind::SkyRegionEdit)
         {
             world.setSkyRegion(command.skyRegionAfter);
         }
-        else if (command.kind == GEEditCommand::Kind::SpawnPointEdit)
+        else if (command.kind == EditCommand::Kind::SpawnPointEdit)
         {
             ApplySpawnPointState(world, command.spawnAfter);
         }
-        else if (command.kind == GEEditCommand::Kind::BigDecorEdit)
+        else if (command.kind == EditCommand::Kind::BigDecorEdit)
         {
             ApplyBigDecorState(world, command, command.bigDecorAfter);
         }

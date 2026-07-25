@@ -1,6 +1,6 @@
 #include "GalaxyEggbertCnaGame.hpp"
 
-#include "Editor/GECustomWorldStorage.hpp"
+#include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include "Game/GEObjectVerticalPlacement.hpp"
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/Worlds/Block.hpp"
@@ -748,8 +748,9 @@ namespace GalaxyEggbert::CNA
             // Preserve the established 3x3 starter-board default for old
             // custom worlds whose formerly-reserved header slots are zero.
             blupi_.SetPosition(
-                kEditorStarterSpawnRenderX, kEditorStarterSpawnY,
-                kEditorStarterSpawnRenderZ);
+                GalaxyEggbert::Editor::kEditorStarterSpawnRenderX,
+                GalaxyEggbert::Editor::kEditorStarterSpawnY,
+                GalaxyEggbert::Editor::kEditorStarterSpawnRenderZ);
         }
 
         editorPlayTestActive_ = true;
@@ -1559,7 +1560,7 @@ namespace GalaxyEggbert::CNA
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {
                 // In-game 3D world editor (plan.md section 6, EDITOR-107) --
-                // see GEWorldEditor's own class comment. IsBrowsing()
+                // see WorldEditor's own class comment. IsBrowsing()
                 // distinguishes the per-gamer-slot world browser (no World
                 // loaded yet) from actively editing one.
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
@@ -1579,8 +1580,8 @@ namespace GalaxyEggbert::CNA
                     else if (request.shouldCreateNew)
                     {
                         const std::filesystem::path newPath =
-                            NextNewWorldPath(saveData_.GetSelectedGamer());
-                        CreateEditorStarterWorld().saveToFile(newPath);
+                            GalaxyEggbert::Editor::NextNewWorldPath(saveData_.GetSelectedGamer());
+                        GalaxyEggbert::Editor::CreateEditorStarterWorld().saveToFile(newPath);
                         LoadCustomWorldForEditing(newPath);
                     }
                 }

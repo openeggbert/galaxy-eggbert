@@ -1,4 +1,4 @@
-#include "GEEditorHighlightRenderer.hpp"
+#include "EditorHighlightRenderer.hpp"
 
 #include <Easy3D/CubeBatch.hpp>
 #include <Easy3D/CubeMesh.hpp>
@@ -7,7 +7,7 @@
 #include <Microsoft/Xna/Framework/Graphics/FillMode.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -17,7 +17,7 @@ namespace GalaxyEggbert::CNA
         constexpr float kCellHighlightPadding = 0.10f;
     }
 
-    void GEEditorHighlightRenderer::ShowCell(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+    void EditorHighlightRenderer::ShowCell(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                              float centerX, float centerY, float centerZ)
     {
         const float half = 0.5f + kCellHighlightPadding * 0.5f;
@@ -30,7 +30,7 @@ namespace GalaxyEggbert::CNA
         hasWireframeEdges_ = true;
     }
 
-    void GEEditorHighlightRenderer::ShowBox(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+    void EditorHighlightRenderer::ShowBox(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             float minCenterX, float minCenterY, float minCenterZ,
                                             float maxCenterX, float maxCenterY, float maxCenterZ)
     {
@@ -44,7 +44,7 @@ namespace GalaxyEggbert::CNA
         hasWireframeEdges_ = false;
     }
 
-    void GEEditorHighlightRenderer::ShowSelectedObject(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+    void EditorHighlightRenderer::ShowSelectedObject(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                                        float centerX, float centerY, float centerZ)
     {
         const float half = 0.5f + kCellHighlightPadding * 0.5f;
@@ -56,7 +56,7 @@ namespace GalaxyEggbert::CNA
         hasWireframeEdges_ = false;
     }
 
-    void GEEditorHighlightRenderer::Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+    void EditorHighlightRenderer::Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             float minX, float minY, float minZ,
                                             float maxX, float maxY, float maxZ,
                                             float r, float g, float b)
@@ -94,12 +94,12 @@ namespace GalaxyEggbert::CNA
         visible_ = true;
     }
 
-    void GEEditorHighlightRenderer::Hide() noexcept
+    void EditorHighlightRenderer::Hide() noexcept
     {
         visible_ = false;
     }
 
-    void GEEditorHighlightRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+    void EditorHighlightRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                          const Easy3D::Camera3D& camera)
     {
         if (!visible_ || !mesh_ || !effect_)

@@ -2,10 +2,10 @@
 
 #include <cstdint>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // Inclusive axis-aligned block-index range, raw grid space (see
-    // GEVoxelRaycast.hpp) -- both min* and max* are valid, in-bounds cells
+    // VoxelRaycast.hpp) -- both min* and max* are valid, in-bounds cells
     // to fill/scan, not a half-open [min,max) range.
     struct BoxRegion
     {

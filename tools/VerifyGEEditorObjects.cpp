@@ -1,6 +1,6 @@
-#include "Editor/GEEditCommandStack.hpp"
-#include "Editor/GEVoxelRaycast.hpp"
-#include "Editor/GEWorldEditor.hpp"
+#include <GalaxyEggbert/Editor/EditCommandStack.hpp>
+#include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
+#include <GalaxyEggbert/Editor/WorldEditor.hpp>
 #include "Game/GEObjectVerticalPlacement.hpp"
 
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -13,6 +13,7 @@
 int main()
 {
     using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::CollectMoveObjects;
     using GalaxyEggbert::MoveObjectRecord;
     using GalaxyEggbert::PlaceMoveObject;
@@ -50,13 +51,13 @@ int main()
 
     {
         World world;
-        GEEditCommandStack stack;
+        EditCommandStack stack;
         const auto placed =
             makeRecord(GalaxyEggbert::Def::ObjectType::ObjectType6, 12.0f, 3.0f, 20.0f);
         PlaceMoveObject(world, placed);
 
-        GEEditCommand command;
-        command.kind = GEEditCommand::Kind::MoveObjectEdit;
+        EditCommand command;
+        command.kind = EditCommand::Kind::MoveObjectEdit;
         command.objectAnchorX = 12;
         command.objectAnchorY = 3;
         command.objectAnchorZ = 20;
@@ -72,8 +73,8 @@ int main()
 
         const auto replacement =
             makeRecord(GalaxyEggbert::Def::ObjectType::ObjectType44, 12.0f, 3.0f, 20.0f);
-        GEEditCommand overwrite;
-        overwrite.kind = GEEditCommand::Kind::MoveObjectEdit;
+        EditCommand overwrite;
+        overwrite.kind = EditCommand::Kind::MoveObjectEdit;
         overwrite.objectAnchorX = 12;
         overwrite.objectAnchorY = 3;
         overwrite.objectAnchorZ = 20;
@@ -111,7 +112,7 @@ int main()
     const float placeY = static_cast<float>(static_cast<int>(expected.y) + expected.normalY);
     const float placeZ = static_cast<float>(static_cast<int>(expected.z) + expected.normalZ);
 
-    GEWorldEditor editor;
+    WorldEditor editor;
     editor.EnterEditing(0.0f, 10.0f, 0.0f);
     Easy3D::Camera3D camera;
     const MouseState restMouse(
@@ -229,7 +230,7 @@ int main()
 
     {
         World emptyWorld;
-        GEWorldEditor emptyEditor;
+        WorldEditor emptyEditor;
         emptyEditor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D emptyCamera;
         emptyEditor.Update(

@@ -1,10 +1,10 @@
-#include "GEEditorPalette.hpp"
+#include "EditorPalette.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
 #include <algorithm>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -15,7 +15,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    GEEditorPalette::GEEditorPalette()
+    EditorPalette::EditorPalette()
         : categories_(ConfirmedBlockCategories()),
           selectedBlockType_(static_cast<int>(GalaxyEggbert::BlockTypes::RockPile)),
           selectedObjectType_(static_cast<int>(GalaxyEggbert::Def::ObjectType::ObjectType6))
@@ -23,90 +23,90 @@ namespace GalaxyEggbert::CNA
         categories_.push_back(GalaxyBackgroundCategory());
     }
 
-    const PaletteCategory* GEEditorPalette::OpenCategory() const noexcept
+    const PaletteCategory* EditorPalette::OpenCategory() const noexcept
     {
         return openCategory_ >= 0 && openCategory_ < static_cast<int>(categories_.size()) ?
             &categories_[static_cast<std::size_t>(openCategory_)] : nullptr;
     }
 
-    const std::vector<int>& GEEditorPalette::ContentBlockIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentBlockIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->iconIds : EmptyIds();
     }
 
-    const std::vector<int>& GEEditorPalette::ContentObjectTypeIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentObjectTypeIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->objectTypeIds : EmptyIds();
     }
 
-    const std::vector<int>& GEEditorPalette::ContentButtonIconIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentButtonIconIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->buttonIconIds : EmptyIds();
     }
 
-    const std::vector<int>& GEEditorPalette::ContentSkyRegionIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentSkyRegionIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->skyRegionIds : EmptyIds();
     }
 
-    const std::vector<int>& GEEditorPalette::ContentObjectVisualIconIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentObjectVisualIconIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->objectVisualIconIds : EmptyIds();
     }
 
-    const std::vector<int>& GEEditorPalette::ContentSpawnPointIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentSpawnPointIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->spawnPointIds : EmptyIds();
     }
 
-    const std::vector<int>& GEEditorPalette::ContentBigDecorIconIds() const noexcept
+    const std::vector<int>& EditorPalette::ContentBigDecorIconIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->bigDecorIconIds : EmptyIds();
     }
 
-    GEEditorPalette::UpdateResult GEEditorPalette::Update(
+    EditorPalette::UpdateResult EditorPalette::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int viewportWidth, int viewportHeight, float elapsedSeconds)
     {
         notYetImplementedSeconds_ = std::max(
             0.0f, notYetImplementedSeconds_ - std::max(0.0f, elapsedSeconds));
 
-        const GEEditorPaletteInput::State inputState{
+        const EditorPaletteInput::State inputState{
             static_cast<int>(categories_.size()),
             static_cast<int>(ContentButtonIconIds().size()),
             openCategory_,
         };
-        const GEEditorPaletteInput::Result pointer =
+        const EditorPaletteInput::Result pointer =
             input_.Update(mouse, layout_, inputState, viewportWidth, viewportHeight);
 
         UpdateResult result;
         result.clickConsumed = pointer.clickConsumed;
-        if (pointer.hit == GEEditorPaletteInput::HitKind::None)
+        if (pointer.hit == EditorPaletteInput::HitKind::None)
         {
             return result;
         }
 
         switch (pointer.hit)
         {
-            case GEEditorPaletteInput::HitKind::DeleteTool:
+            case EditorPaletteInput::HitKind::DeleteTool:
                 result.action = Action::DeleteAtTarget;
                 break;
-            case GEEditorPaletteInput::HitKind::PlayTest:
+            case EditorPaletteInput::HitKind::PlayTest:
                 result.action = Action::PlayTest;
                 break;
-            case GEEditorPaletteInput::HitKind::Stop:
+            case EditorPaletteInput::HitKind::Stop:
                 result.action = Action::Stop;
                 break;
-            case GEEditorPaletteInput::HitKind::PlacementButton:
+            case EditorPaletteInput::HitKind::PlacementButton:
             {
-                constexpr Action actions[GEEditorPaletteLayout::PlacementButtonCount] = {
+                constexpr Action actions[EditorPaletteLayout::PlacementButtonCount] = {
                     Action::PlacementXMinus,
                     Action::PlacementXPlus,
                     Action::PlacementYMinus,
@@ -116,16 +116,16 @@ namespace GalaxyEggbert::CNA
                     Action::PlaceSelection,
                 };
                 if (pointer.index >= 0 &&
-                    pointer.index < GEEditorPaletteLayout::PlacementButtonCount)
+                    pointer.index < EditorPaletteLayout::PlacementButtonCount)
                 {
                     result.action = actions[pointer.index];
                 }
                 break;
             }
-            case GEEditorPaletteInput::HitKind::Category:
+            case EditorPaletteInput::HitKind::Category:
                 openCategory_ = openCategory_ == pointer.index ? -1 : pointer.index;
                 break;
-            case GEEditorPaletteInput::HitKind::ContentItem:
+            case EditorPaletteInput::HitKind::ContentItem:
             {
                 const auto& blockIds = ContentBlockIds();
                 const auto& objectIds = ContentObjectTypeIds();
@@ -185,19 +185,19 @@ namespace GalaxyEggbert::CNA
                 }
                 break;
             }
-            case GEEditorPaletteInput::HitKind::None:
+            case EditorPaletteInput::HitKind::None:
                 break;
         }
         return result;
     }
 
-    void GEEditorPalette::Draw(
+    void EditorPalette::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         int viewportWidth, int viewportHeight, bool stopConfirmArmed,
         bool hasPlacementPreview,
         int placementX, int placementY, int placementZ)
     {
-        const GEEditorPaletteRenderer::State state{
+        const EditorPaletteRenderer::State state{
             categories_,
             ContentBlockIds(),
             ContentObjectTypeIds(),

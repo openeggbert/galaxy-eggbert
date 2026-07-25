@@ -1,7 +1,7 @@
-#include "Editor/GEEditorPalette.hpp"
-#include "Editor/GEEditorPaletteLayout.hpp"
-#include "Editor/GEPaletteCategories.hpp"
-#include "Editor/GEWorldEditor.hpp"
+#include <GalaxyEggbert/Editor/EditorPalette.hpp>
+#include <GalaxyEggbert/Editor/EditorPaletteLayout.hpp>
+#include <GalaxyEggbert/Editor/PaletteCategories.hpp>
+#include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/BigDecorRecord.hpp>
@@ -14,6 +14,7 @@
 int main()
 {
     using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::Worlds::World;
     using Microsoft::Xna::Framework::Input::ButtonState;
     using Microsoft::Xna::Framework::Input::KeyboardState;
@@ -35,7 +36,7 @@ int main()
 
     const auto sourceCategories = ConfirmedBlockCategories();
     check(sourceCategories.size() ==
-              static_cast<std::size_t>(GEEditorPaletteLayout::GalaxyBackgroundCategoryIndex),
+              static_cast<std::size_t>(EditorPaletteLayout::GalaxyBackgroundCategoryIndex),
           "the background group follows all ten Eggbert 2 source groups");
     bool blocksInRange = true;
     int curatedBlockCount = 0;
@@ -123,11 +124,11 @@ int main()
         ButtonState::Released, ButtonState::Released, ButtonState::Released);
 
     {
-        const GEEditorPaletteLayout layout;
+        const EditorPaletteLayout layout;
         check(layout.CategoryButtonRect(0).x0 == 10.0f,
               "the source category rail starts at the expected left edge");
         const auto backgroundButton = layout.CategoryButtonRect(
-            GEEditorPaletteLayout::GalaxyBackgroundCategoryIndex);
+            EditorPaletteLayout::GalaxyBackgroundCategoryIndex);
         check(backgroundButton.x0 == layout.DeleteToolRect().x1 + 2.0f &&
                   backgroundButton.y0 == layout.DeleteToolRect().y0,
               "the Galaxy background group leaves all ten source-group positions unchanged");
@@ -141,7 +142,7 @@ int main()
         check(layout.PaletteCellRect(7, 8, 7, 360, 480).y1 <= 480.0f,
               "the complete eight-entry source group remains visible on a narrow screen");
         const auto lastNarrowBackground = layout.PaletteCellRect(
-            31, 32, GEEditorPaletteLayout::GalaxyBackgroundCategoryIndex, 360, 480);
+            31, 32, EditorPaletteLayout::GalaxyBackgroundCategoryIndex, 360, 480);
         check(lastNarrowBackground.x0 >= backgroundButton.x1 &&
                   lastNarrowBackground.x1 <= 360.0f &&
                   lastNarrowBackground.y1 <= 480.0f,
@@ -175,7 +176,7 @@ int main()
               "the coordinate background remains clipped to the viewport");
     }
 
-    const auto click = [](GEEditorPalette& palette, float x, float y)
+    const auto click = [](EditorPalette& palette, float x, float y)
     {
         const MouseState down(
             static_cast<int>(x), static_cast<int>(y), 0,
@@ -190,7 +191,7 @@ int main()
     };
 
     {
-        const GEEditorPaletteLayout layout;
+        const EditorPaletteLayout layout;
         bool everyPointerSelectionMatches = true;
         bool anySourceNotice = false;
         for (std::size_t categoryIndex = 0;
@@ -200,7 +201,7 @@ int main()
             for (std::size_t itemIndex = 0;
                  itemIndex < category.buttonIconIds.size(); ++itemIndex)
             {
-                GEEditorPalette palette;
+                EditorPalette palette;
                 const auto categoryRect =
                     layout.CategoryButtonRect(static_cast<int>(categoryIndex));
                 (void)click(
@@ -227,26 +228,26 @@ int main()
                 if (block > 0)
                 {
                     matches &= palette.SelectedPlacementKind() ==
-                            GEEditorPalette::PlacementKind::Block &&
+                            EditorPalette::PlacementKind::Block &&
                         palette.SelectedBlockType() ==
                             static_cast<std::uint16_t>(block);
                 }
                 else if (object > 0)
                 {
                     matches &= palette.SelectedPlacementKind() ==
-                            GEEditorPalette::PlacementKind::Object &&
+                            EditorPalette::PlacementKind::Object &&
                         palette.SelectedObjectType() ==
                             GalaxyEggbert::Def::ToObjectType(object);
                 }
                 else if (spawn > 0)
                 {
                     matches &= palette.SelectedPlacementKind() ==
-                        GEEditorPalette::PlacementKind::SpawnPoint;
+                        EditorPalette::PlacementKind::SpawnPoint;
                 }
                 else if (bigDecor > 0)
                 {
                     matches &= palette.SelectedPlacementKind() ==
-                            GEEditorPalette::PlacementKind::BigDecor &&
+                            EditorPalette::PlacementKind::BigDecor &&
                         palette.SelectedBigDecorIcon() ==
                             static_cast<std::uint16_t>(bigDecor);
                 }
@@ -261,61 +262,61 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         const auto openBackground = click(palette, 72.0f, 30.0f);
         check(openBackground.clickConsumed,
               "the Galaxy background representative consumes its click");
         const auto region7 = click(palette, 408.0f, 30.0f);
-        check(region7.action == GEEditorPalette::Action::SelectSkyRegion &&
+        check(region7.action == EditorPalette::Action::SelectSkyRegion &&
                   region7.skyRegion == 7,
               "a background thumbnail reports its exact sky-region id");
         const auto region31 = click(palette, 744.0f, 72.0f);
-        check(region31.action == GEEditorPalette::Action::SelectSkyRegion &&
+        check(region31.action == EditorPalette::Action::SelectSkyRegion &&
                   region31.skyRegion == 31,
               "the background popup stays open for immediate visual comparison");
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
               "the palette starts with RockPile selected");
         const auto erase = click(palette, 30.0f, 30.0f);
-        check(erase.action == GEEditorPalette::Action::DeleteAtTarget &&
+        check(erase.action == EditorPalette::Action::DeleteAtTarget &&
                   erase.clickConsumed,
               "the visible delete glyph reports a consumed removal action");
         check(!palette.IsNotYetImplementedNoticeVisible(),
               "the functional delete glyph no longer raises the not-implemented notice");
         const auto hiddenArea = click(palette, 466.0f, 26.0f);
-        check(hiddenArea.action == GEEditorPalette::Action::None && !hiddenArea.clickConsumed,
+        check(hiddenArea.action == EditorPalette::Action::None && !hiddenArea.clickConsumed,
               "the former invisible toolbar area no longer consumes clicks");
         const auto emptyArea = click(palette, 400.0f, 200.0f);
-        check(emptyArea.action == GEEditorPalette::Action::None && !emptyArea.clickConsumed,
+        check(emptyArea.action == EditorPalette::Action::None && !emptyArea.clickConsumed,
               "empty world-view space is not consumed");
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         constexpr float y = 451.0f;
-        check(click(palette, 235.0f, y).action == GEEditorPalette::Action::PlacementXMinus,
+        check(click(palette, 235.0f, y).action == EditorPalette::Action::PlacementXMinus,
               "X- reports PlacementXMinus");
-        check(click(palette, 277.0f, y).action == GEEditorPalette::Action::PlacementXPlus,
+        check(click(palette, 277.0f, y).action == EditorPalette::Action::PlacementXPlus,
               "X+ reports PlacementXPlus");
-        check(click(palette, 319.0f, y).action == GEEditorPalette::Action::PlacementYMinus,
+        check(click(palette, 319.0f, y).action == EditorPalette::Action::PlacementYMinus,
               "Y- reports PlacementYMinus");
-        check(click(palette, 361.0f, y).action == GEEditorPalette::Action::PlacementYPlus,
+        check(click(palette, 361.0f, y).action == EditorPalette::Action::PlacementYPlus,
               "Y+ reports PlacementYPlus");
-        check(click(palette, 403.0f, y).action == GEEditorPalette::Action::PlacementZMinus,
+        check(click(palette, 403.0f, y).action == EditorPalette::Action::PlacementZMinus,
               "Z- reports PlacementZMinus");
-        check(click(palette, 445.0f, y).action == GEEditorPalette::Action::PlacementZPlus,
+        check(click(palette, 445.0f, y).action == EditorPalette::Action::PlacementZPlus,
               "Z+ reports PlacementZPlus");
         const auto place = click(palette, 499.0f, y);
-        check(place.action == GEEditorPalette::Action::PlaceSelection,
+        check(place.action == EditorPalette::Action::PlaceSelection,
               "PLACE reports PlaceSelection");
         check(place.clickConsumed, "PLACE consumes its own pointer click");
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         const auto open = click(palette, 30.0f, 72.0f);
         check(open.clickConsumed, "a category representative consumes its click");
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
@@ -364,7 +365,7 @@ int main()
     check(seenObjectTypes.count(8) == 0, "transient explosions are not placeable");
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         check(!palette.IsObjectMode(), "the palette starts in Blocks mode");
         check(palette.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType6,
               "the default object selection remains the extra-life egg");
@@ -389,7 +390,7 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 240.0f);
         const auto inverter = click(palette, 450.0f, 240.0f);
         check(inverter.clickConsumed &&
@@ -401,7 +402,7 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 366.0f);
         const auto woodenCase = click(palette, 408.0f, 366.0f);
         check(woodenCase.clickConsumed &&
@@ -413,7 +414,7 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 408.0f);
         const auto hovercraft = click(palette, 72.0f, 408.0f);
         check(hovercraft.clickConsumed &&
@@ -425,7 +426,7 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 156.0f);
         const auto cave = click(palette, 198.0f, 156.0f);
         check(cave.clickConsumed && palette.SelectedBlockType() == 284 &&
@@ -437,7 +438,7 @@ int main()
 
     for (std::size_t index = 0; index < expectedBuildingBlocks.size(); ++index)
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 198.0f);
         const auto building = click(
             palette, 72.0f + static_cast<float>(index) * 42.0f, 198.0f);
@@ -471,7 +472,7 @@ int main()
         };
         for (const auto& entry : bombEntries)
         {
-            GEEditorPalette palette;
+            EditorPalette palette;
             (void)click(palette, 30.0f, entry.categoryY);
             const auto selected = click(
                 palette, 72.0f + static_cast<float>(entry.itemIndex) * 42.0f,
@@ -487,7 +488,7 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 366.0f);
         const auto secretCase = click(palette, 450.0f, 366.0f);
         check(secretCase.clickConsumed &&
@@ -501,7 +502,7 @@ int main()
     }
 
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 450.0f);
         const auto levelStart = click(palette, 324.0f, 450.0f);
         check(levelStart.clickConsumed && palette.IsSpawnPointMode() &&
@@ -513,7 +514,7 @@ int main()
 
     for (const int index : {0, 1, 2, 4, 5, 6, 7, 8})
     {
-        GEEditorPalette palette;
+        EditorPalette palette;
         (void)click(palette, 30.0f, 72.0f);
         const auto scenery = click(
             palette, 72.0f + static_cast<float>(index) * 42.0f, 72.0f);
@@ -530,7 +531,7 @@ int main()
             "verify_ge_editor_palette_background.vwr";
         World world;
         world.setSkyRegion(3);
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.SetWorldPath(kBackgroundSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
@@ -571,7 +572,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const auto tap = [&](int x, int y)
@@ -599,7 +600,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const auto tap = [&](int x, int y)
@@ -627,7 +628,7 @@ int main()
         constexpr const char* kSpawnSavePath =
             "verify_ge_editor_palette_spawn.vwr";
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.SetWorldPath(kSpawnSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
@@ -673,7 +674,7 @@ int main()
         constexpr const char* kBigDecorSavePath =
             "verify_ge_editor_palette_big_decor.vwr";
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.SetWorldPath(kBigDecorSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;

@@ -1,8 +1,8 @@
-#include "GEBoxRegion.hpp"
+#include "BoxRegion.hpp"
 
 #include <algorithm>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {

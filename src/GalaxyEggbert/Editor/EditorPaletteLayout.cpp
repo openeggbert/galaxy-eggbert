@@ -1,8 +1,8 @@
-#include "GEEditorPaletteLayout.hpp"
+#include "EditorPaletteLayout.hpp"
 
 #include <algorithm>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     namespace
     {
@@ -19,12 +19,12 @@ namespace GalaxyEggbert::CNA
         constexpr float kPlacementRightClearance = 106.0f;
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::DeleteToolRect() const noexcept
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::DeleteToolRect() const noexcept
     {
         return {kMenuX, kMenuY, kMenuX + kButtonSize, kMenuY + kButtonSize};
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::PlayTestRect(
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlayTestRect(
         int viewportWidth, int viewportHeight) const noexcept
     {
         const float x = static_cast<float>(viewportWidth) - 96.0f;
@@ -32,7 +32,7 @@ namespace GalaxyEggbert::CNA
         return {x, y, x + kButtonSize, y + kButtonSize};
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::StopRect(
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::StopRect(
         int viewportWidth, int viewportHeight) const noexcept
     {
         const float x = static_cast<float>(viewportWidth) - 54.0f;
@@ -40,7 +40,7 @@ namespace GalaxyEggbert::CNA
         return {x, y, x + kButtonSize, y + kButtonSize};
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::CategoryButtonRect(int categoryIndex) const noexcept
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::CategoryButtonRect(int categoryIndex) const noexcept
     {
         if (categoryIndex == GalaxyBackgroundCategoryIndex)
         {
@@ -53,7 +53,7 @@ namespace GalaxyEggbert::CNA
         return {kMenuX, y, kMenuX + kButtonSize, y + kButtonSize};
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::PlacementButtonRect(
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlacementButtonRect(
         int index, int viewportWidth, int viewportHeight) const noexcept
     {
         const float yBottom = static_cast<float>(viewportHeight) - kPlacementBottom;
@@ -92,16 +92,16 @@ namespace GalaxyEggbert::CNA
         return {placeX, yBottom, placeX + kPlacementCompactPlaceWidth, yBottom + kButtonSize};
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::PlacementCoordinatesRect(
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlacementCoordinatesRect(
         float textWidth, float textHeight,
         int viewportWidth, int viewportHeight) const noexcept
     {
         constexpr float kTextGap = 8.0f;
-        const GEQuadBatch::Rect first =
+        const GalaxyEggbert::CNA::GEQuadBatch::Rect first =
             PlacementButtonRect(0, viewportWidth, viewportHeight);
-        const GEQuadBatch::Rect place =
+        const GalaxyEggbert::CNA::GEQuadBatch::Rect place =
             PlacementButtonRect(PlacementPlaceIndex, viewportWidth, viewportHeight);
-        const GEQuadBatch::Rect playTest = PlayTestRect(viewportWidth, viewportHeight);
+        const GalaxyEggbert::CNA::GEQuadBatch::Rect playTest = PlayTestRect(viewportWidth, viewportHeight);
         const float top = place.y0 + ((place.y1 - place.y0) - textHeight) * 0.5f;
 
         const float right = place.x1 + kTextGap;
@@ -124,8 +124,8 @@ namespace GalaxyEggbert::CNA
         return {centered, above, centered + textWidth, above + textHeight};
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::PlacementCoordinatesBackgroundRect(
-        const GEQuadBatch::Rect& textRect,
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlacementCoordinatesBackgroundRect(
+        const GalaxyEggbert::CNA::GEQuadBatch::Rect& textRect,
         int viewportWidth, int viewportHeight) const noexcept
     {
         constexpr float kHorizontalPadding = 5.0f;
@@ -138,7 +138,7 @@ namespace GalaxyEggbert::CNA
         };
     }
 
-    int GEEditorPaletteLayout::PopupColumnCount(
+    int EditorPaletteLayout::PopupColumnCount(
         int viewportWidth, int openCategory) const noexcept
     {
         const float popupX = openCategory == GalaxyBackgroundCategoryIndex ?
@@ -147,7 +147,7 @@ namespace GalaxyEggbert::CNA
         return std::max(1, static_cast<int>(available / (kButtonSize + kGap)));
     }
 
-    float GEEditorPaletteLayout::PopupOriginY(
+    float EditorPaletteLayout::PopupOriginY(
         int itemCount, int openCategory, int viewportWidth, int viewportHeight) const noexcept
     {
         const int columns = PopupColumnCount(viewportWidth, openCategory);
@@ -158,7 +158,7 @@ namespace GalaxyEggbert::CNA
         return std::min(CategoryButtonRect(openCategory).y0, lowestOrigin);
     }
 
-    GEQuadBatch::Rect GEEditorPaletteLayout::PaletteCellRect(
+    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PaletteCellRect(
         int itemIndex, int itemCount, int openCategory,
         int viewportWidth, int viewportHeight) const noexcept
     {

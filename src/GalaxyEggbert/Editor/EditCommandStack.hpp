@@ -10,10 +10,10 @@
 #include <optional>
 #include <vector>
 
-namespace GalaxyEggbert::CNA
+namespace GalaxyEggbert::Editor
 {
     // One block's before/after value at a raw-grid-space position, part of
-    // a GEEditCommand::Kind::BlockEdit command (see below).
+    // a EditCommand::Kind::BlockEdit command (see below).
     struct BlockChange
     {
         std::uint16_t x = 0;
@@ -51,7 +51,7 @@ namespace GalaxyEggbert::CNA
     // skyRegion() value before/after -- a single scalar, not a per-cell
     // vector like BlockChange, since exactly one thing changes and it
     // isn't addressed by a grid position at all.
-    struct GEEditCommand
+    struct EditCommand
     {
         enum class Kind
         {
@@ -83,18 +83,18 @@ namespace GalaxyEggbert::CNA
         std::optional<BigDecorRecord> bigDecorAfter;
     };
 
-    // Undo/redo stack of GEEditCommand actions against a Worlds::World.
+    // Undo/redo stack of EditCommand actions against a Worlds::World.
     // Mirrors GEBlupiController's own documented preference for a single
     // reusable shape over inventing a new one per feature -- here, that
     // shape is "record before/after per command, replay on Undo/Redo."
-    class GEEditCommandStack
+    class EditCommandStack
     {
     public:
         // Records @p command as the most recent action -- clears the redo
         // stack (a fresh action invalidates any previously-undone redo
         // history, standard undo/redo semantics) and evicts the oldest
         // undo entry once kMaxDepth is exceeded.
-        void Push(GEEditCommand command);
+        void Push(EditCommand command);
 
         // Reverts the most recent not-yet-undone command's changes in
         // @p world (applies each BlockChange::before) and moves it onto
@@ -113,7 +113,7 @@ namespace GalaxyEggbert::CNA
     private:
         static constexpr std::size_t kMaxDepth = 200;
 
-        std::vector<GEEditCommand> undoStack_;
-        std::vector<GEEditCommand> redoStack_;
+        std::vector<EditCommand> undoStack_;
+        std::vector<EditCommand> redoStack_;
     };
 }

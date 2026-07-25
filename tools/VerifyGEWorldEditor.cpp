@@ -1,7 +1,7 @@
-#include "Editor/GEBoxRegion.hpp"
-#include "Editor/GEEditCommandStack.hpp"
-#include "Editor/GEVoxelRaycast.hpp"
-#include "Editor/GEWorldEditor.hpp"
+#include <GalaxyEggbert/Editor/BoxRegion.hpp>
+#include <GalaxyEggbert/Editor/EditCommandStack.hpp>
+#include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
+#include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -14,6 +14,7 @@
 int main()
 {
     using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::Worlds::Block;
     using GalaxyEggbert::Worlds::World;
     using Microsoft::Xna::Framework::Input::ButtonState;
@@ -34,7 +35,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(50.0f, 15.0f, 50.0f);
         Easy3D::Camera3D camera;
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
@@ -54,7 +55,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(50.0f, 15.0f, 50.0f);
         Easy3D::Camera3D camera;
         editor.Update(KeyboardState{Keys::D}, restMouse, 1.0f, 800, 480, camera, world);
@@ -69,7 +70,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(50.0f, 15.0f, 50.0f);
         Easy3D::Camera3D camera;
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
@@ -137,7 +138,7 @@ int main()
 
     {
         World world = slab;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
@@ -166,7 +167,7 @@ int main()
 
     {
         World world = slab;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const auto tapDelete = [&]()
@@ -201,7 +202,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const MouseState left(
@@ -228,7 +229,7 @@ int main()
         constexpr const char* kSavePath = "verify_ge_world_editor_core.vwr";
         World world;
         world.setBlock(50, 4, 50, Block::make(42));
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.SetWorldPath(kSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
@@ -243,8 +244,8 @@ int main()
     {
         World world;
         world.setBlock(10, 5, 10, Block::make(1));
-        GEEditCommandStack stack;
-        GEEditCommand edit;
+        EditCommandStack stack;
+        EditCommand edit;
         edit.blockChanges.push_back(
             {10, 5, 10, Block::make(1), Block::make(2)});
         world.setBlock(10, 5, 10, Block::make(2));
@@ -257,7 +258,7 @@ int main()
 
         for (int index = 0; index < 250; ++index)
         {
-            GEEditCommand command;
+            EditCommand command;
             command.blockChanges.push_back(
                 {0, 0, 0, Block::air(), Block::make(1)});
             stack.Push(command);
@@ -282,7 +283,7 @@ int main()
 
     {
         World world = slab;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
@@ -333,9 +334,9 @@ int main()
     {
         World world;
         world.setSkyRegion(5);
-        GEEditCommandStack stack;
-        GEEditCommand command;
-        command.kind = GEEditCommand::Kind::SkyRegionEdit;
+        EditCommandStack stack;
+        EditCommand command;
+        command.kind = EditCommand::Kind::SkyRegionEdit;
         command.skyRegionBefore = 5;
         command.skyRegionAfter = 6;
         world.setSkyRegion(6);
@@ -348,7 +349,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const auto pressKey = [&](Keys key)
@@ -375,7 +376,7 @@ int main()
               "redo restores the wrapped background selection");
     }
 
-    const auto clickStop = [&](GEWorldEditor& editor, World& world,
+    const auto clickStop = [&](WorldEditor& editor, World& world,
                                Easy3D::Camera3D& camera)
     {
         const MouseState down(
@@ -390,7 +391,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         clickStop(editor, world, camera);
@@ -400,7 +401,7 @@ int main()
 
     {
         World world;
-        GEWorldEditor editor;
+        WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         editor.Update(
