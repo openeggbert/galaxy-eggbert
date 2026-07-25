@@ -2,6 +2,7 @@
 #include "Editor/GEEditorBrowserScreen.hpp"
 #include "Editor/GEWorldEditor.hpp"
 
+#include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -109,6 +110,21 @@ int main()
         check(create.action == GEEditorBrowserScreen::Action::New,
               "the browser's New row reports a create action");
 
+        const auto back = clickBrowser(browser, 80, 38);
+        check(back.action == GEEditorBrowserScreen::Action::Back,
+              "the browser's visible Main Menu row reports a back action");
+
+        const MouseState idle(
+            0, 0, 0, ButtonState::Released, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        check(browser.Update(idle, 800, 480, true).action ==
+                  GEEditorBrowserScreen::Action::Back,
+              "Escape reports a browser back action");
+        check(browser.Update(idle, 800, 480, true).action ==
+                  GEEditorBrowserScreen::Action::None,
+              "holding Escape does not repeat the browser back action");
+        (void)browser.Update(idle, 800, 480, false);
+
         const auto open = clickBrowser(browser, 300, 80);
         check(open.action == GEEditorBrowserScreen::Action::Open &&
                   open.path.extension() == ".vwr",
@@ -137,6 +153,12 @@ int main()
         (void)editor.UpdateBrowsing(down, 800, 480);
         check(editor.UpdateBrowsing(up, 800, 480).shouldCreateNew,
               "the editor forwards the browser's create request");
+
+        const MouseState idle(
+            0, 0, 0, ButtonState::Released, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        check(editor.UpdateBrowsing(idle, 800, 480, true).shouldReturnToMenu,
+              "the editor forwards Escape from the browser to the main menu");
 
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         check(!editor.IsBrowsing(), "EnterEditing leaves browser mode");
@@ -201,6 +223,8 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
         const int before = solidCount();
+        const std::size_t bigDecorBefore =
+            GalaxyEggbert::CollectBigDecor(world).size();
         const auto clickEditor = [&](int x, int y)
         {
             const MouseState down(
@@ -218,8 +242,10 @@ int main()
         check(solidCount() == before,
               "visible palette clicks never edit the 3D world behind them");
         clickEditor(466, 26);
-        check(solidCount() == before + 1,
-              "the former invisible toolbar area now reaches the 3D world");
+        check(solidCount() == before &&
+                  GalaxyEggbert::CollectBigDecor(world).size() ==
+                      bigDecorBefore + 1,
+              "the former invisible toolbar area reaches the 3D world and places the selected non-colliding scenery");
     }
 
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);

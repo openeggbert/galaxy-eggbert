@@ -37,9 +37,10 @@ namespace GalaxyEggbert::CNA
 
     GEWorldEditor::BrowserRequest GEWorldEditor::UpdateBrowsing(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
-        int viewportWidth, int viewportHeight)
+        int viewportWidth, int viewportHeight, bool backPressed)
     {
-        const auto result = browserScreen_.Update(mouse, viewportWidth, viewportHeight);
+        const auto result =
+            browserScreen_.Update(mouse, viewportWidth, viewportHeight, backPressed);
         BrowserRequest request;
         if (result.action == GEEditorBrowserScreen::Action::Open)
         {
@@ -49,6 +50,10 @@ namespace GalaxyEggbert::CNA
         else if (result.action == GEEditorBrowserScreen::Action::New)
         {
             request.shouldCreateNew = true;
+        }
+        else if (result.action == GEEditorBrowserScreen::Action::Back)
+        {
+            request.shouldReturnToMenu = true;
         }
         return request;
     }

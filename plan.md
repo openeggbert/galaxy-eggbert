@@ -6011,7 +6011,7 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       **Done 2026-07-25:** Scenery's eight entries use exact first representatives from the named
       Eggbert 2 BigDecor tables: Tree 20, Palmtree 16, plant 23, house 26, mechanical 28, kids 45,
       green slime 66, and palace element 87. `BigDecorRecord` reserves sparse metadata type 3
-      (type 2 remains plate rotation), stores a non-zero object-m.png icon at an exact XYZ anchor,
+      (type 2 remains plate rotation), stores a non-zero `explo.png` icon at an exact XYZ anchor,
       and round-trips without creating a collision block. Editor placement, overwrite, delete,
       undo/redo, dirty/rebuild signal, save/reload, and red-cell preview use a dedicated BigDecor
       placement kind. The runtime unifies legacy mobile 2D cells and sparse `.vwr` 3D cells into
@@ -6037,6 +6037,20 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       panel fit across the bottom; and the dice and Stop-sign tiles remain distinct at bottom
       right with no clipping. The temporary direct-editor capture hook was removed before the
       final rebuild.
+- [x] **EDITOR-128 — render BigDecor from its real Eggbert 2 sprite channel.**
+      **Done 2026-07-25 after live user report:** selecting Palmtree correctly stored BigDecor
+      icon 16, but the 3D renderer interpreted that number as `object-m.png` and displayed the
+      unrelated blue triangular mechanical tile at the same index. Eggbert 2's
+      `Decor.cpp` explicitly draws every `m_bigDecor` entry using `QuickIcon` channel 9
+      (`CHEXPLO`), so BigDecor now binds `explo.png` and uses its 10×10 UV grid. A named
+      `GetBigDecorIconUv()` route and regression prove Palmtree 16 resolves to the real palm cell;
+      the persisted icon format remains unchanged.
+- [x] **EDITOR-129 — provide a path from the editor world browser back to the game menu.**
+      **Done 2026-07-25 after live user report:** the per-gamer world list now has a visible
+      `< Main Menu` touch/click row, and Escape performs the same action. Both paths emit an
+      edge-triggered browser request that the owning game handles by returning to `GamePhase::Init`;
+      holding Escape cannot repeat or leak into another transition. Browser and forwarding tests
+      cover the visible control, Escape edge, and game-facing request.
 
 ### Known problems / open concerns
 

@@ -86,8 +86,15 @@ namespace GalaxyEggbert::CNA
         return {row.x1 - kDeleteButtonSize - 4.0f, y0, row.x1 - 4.0f, y0 + kDeleteButtonSize};
     }
 
+    GEQuadBatch::Rect GEEditorBrowserScreen::BackButtonRect(
+        int /*viewportWidth*/, int /*viewportHeight*/) const noexcept
+    {
+        return {20.0f, kRowY0, 170.0f, kRowY0 + kRowHeight};
+    }
+
     GEEditorBrowserScreen::UpdateResult GEEditorBrowserScreen::Update(
-        const Microsoft::Xna::Framework::Input::MouseState& mouse, int /*viewportWidth*/, int /*viewportHeight*/)
+        const Microsoft::Xna::Framework::Input::MouseState& mouse,
+        int viewportWidth, int viewportHeight, bool backPressed)
     {
         using ButtonState = Microsoft::Xna::Framework::Input::ButtonState;
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
@@ -95,9 +102,23 @@ namespace GalaxyEggbert::CNA
         const float my = static_cast<float>(mouse.getYProperty());
 
         UpdateResult result;
+        const bool backTriggered = backPressed && !backWasDown_;
+        backWasDown_ = backPressed;
+        if (backTriggered)
+        {
+            result.action = Action::Back;
+            armedDeleteIndex_ = -1;
+            mouseWasDown_ = mouseDown;
+            return result;
+        }
         if (!mouseDown && mouseWasDown_)
         {
-            if (GEQuadBatch::InRect(mx, my, RowRect(0)))
+            if (GEQuadBatch::InRect(mx, my, BackButtonRect(viewportWidth, viewportHeight)))
+            {
+                result.action = Action::Back;
+                armedDeleteIndex_ = -1;
+            }
+            else if (GEQuadBatch::InRect(mx, my, RowRect(0)))
             {
                 result.action = Action::New;
                 armedDeleteIndex_ = -1;
@@ -186,6 +207,7 @@ namespace GalaxyEggbert::CNA
         {
             flatQuads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
         };
+        addFlat(BackButtonRect(viewportWidth, viewportHeight));
         addFlat(RowRect(0)); // "+ New World" row
         for (std::size_t i = 0; i < worlds_.size(); ++i)
         {
@@ -197,6 +219,11 @@ namespace GalaxyEggbert::CNA
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
         std::vector<GEQuadBatch::Quad> labelQuads;
+        {
+            const GEQuadBatch::Rect back = BackButtonRect(viewportWidth, viewportHeight);
+            AppendLabel(labelQuads, "< Main Menu", back.x0 + 8.0f, back.y0 + 8.0f,
+                        kLabelScale, textSheetW, textSheetH);
+        }
         {
             const GEQuadBatch::Rect row0 = RowRect(0);
             AppendLabel(labelQuads, "+ New World", row0.x0 + 8.0f, row0.y0 + 8.0f, kLabelScale, textSheetW,

@@ -697,13 +697,12 @@ namespace GalaxyEggbert::CNA
         // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
         // (NEXT.md §8 task 3, mobile-eggbert-reference/
         // 01-world-file-format.md §2.3 / 15-3d-render-mapping-design.md
-        // §9.2 — confirmed non-colliding, Billboard render mode). Unlike
-        // MoveObjects, BigDecor uses the SAME icon vocabulary as the main
-        // terrain grid (object-m.png via tileAtlas_), not element.png — so
-        // this reuses terrainTexture_ through its own dedicated effect
-        // (BasicEffect only binds one texture at a time). Only ever
-        // non-empty when a world was loaded via LoadFromMobileEggbertFile()
-        // `.vwr` worlds now carry sparse 3D BigDecorRecord entries too.
+        // §9.2 — confirmed non-colliding, Billboard render mode). Eggbert 2
+        // draws this layer through CHEXPLO, so its ids sample explo.png,
+        // not the identically numbered object-m.png terrain tiles. Only
+        // ever non-empty when a world was loaded via
+        // LoadFromMobileEggbertFile(); `.vwr` worlds now carry sparse 3D
+        // BigDecorRecord entries too.
         // bigDecorCells_ is refreshed by RebuildWorldPresentation(), so
         // editor placement/removal appears immediately; only the
         // camera-facing billboard mesh is rebuilt per frame.

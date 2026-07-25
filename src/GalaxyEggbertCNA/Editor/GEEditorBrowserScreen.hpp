@@ -24,7 +24,7 @@ namespace GalaxyEggbert::CNA
     class GEEditorBrowserScreen
     {
     public:
-        enum class Action { None, Open, New };
+        enum class Action { None, Open, New, Back };
 
         struct UpdateResult
         {
@@ -43,7 +43,8 @@ namespace GalaxyEggbert::CNA
         // actually deletes and re-Refresh()es; clicking anything else
         // cancels the armed state without deleting.
         UpdateResult Update(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                           int viewportWidth, int viewportHeight);
+                           int viewportWidth, int viewportHeight,
+                           bool backPressed = false);
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                  int viewportWidth, int viewportHeight);
@@ -51,12 +52,15 @@ namespace GalaxyEggbert::CNA
     private:
         [[nodiscard]] GEQuadBatch::Rect RowRect(int index) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect DeleteButtonRect(int index) const noexcept;
+        [[nodiscard]] GEQuadBatch::Rect BackButtonRect(
+            int viewportWidth, int viewportHeight) const noexcept;
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
         int gamerSlot_ = 0;
         std::vector<std::filesystem::path> worlds_;
         int armedDeleteIndex_ = -1; // -1 = no row's delete currently armed
         bool mouseWasDown_ = false;
+        bool backWasDown_ = false;
 
         bool loaded_ = false;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;

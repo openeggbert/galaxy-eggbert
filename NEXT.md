@@ -24,9 +24,10 @@ which backlog item to pick up next, or wait for new direction._
 
 _Last updated: 2026-07-25. The in-game 3D world editor's original plan is **COMPLETE**: all 13
 approved milestones (EDITOR-100 through EDITOR-112) are implemented and verified. User-directed
-follow-up work through EDITOR-127 is also complete, including the Eggbert-ordered palette cleanup,
+follow-up work through EDITOR-129 is also complete, including the Eggbert-ordered palette cleanup,
 XYZ placement controls/readout, object cell alignment, the Galaxy-only background-thumbnail menu,
-functional touch deletion, all 96 source mappings, persisted Level start, and editable BigDecor. Editor work resumed
+functional touch deletion, all 96 source mappings, persisted Level start, editable BigDecor,
+correct `explo.png` scenery rendering, and a world-browser return to the main menu. Editor work resumed
 2026-07-23 by explicit user authorization (was paused 2026-07-19 — see
 plan.md §6's
 own status note for the full history), then finished the same session: EDITOR-111 (sky-region
@@ -39,7 +40,8 @@ live check earlier the same session) — genuinely intermittent, not a code bug,
 "Known problems" for the full history. No work remains on the original approved plan; any further
 editor work is a separately selected follow-up. `EDITOR-127` is now complete: exhaustive static
 and real-pointer checks cover all 96 source cells, the full suite is clean, and the final 800×480
-editor menu was inspected from a live capture._
+editor menu was inspected from a live capture. The subsequent live-reported Palmtree blue-tile
+regression and missing browser Back path are fixed as EDITOR-128/129._
 
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness

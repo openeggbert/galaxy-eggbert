@@ -950,6 +950,7 @@ endif()
 add_executable(VerifyBigDecorParsingCna
         tools/VerifyBigDecorParsingCna.cpp
         src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         ${GE_SHARED_SOURCES}
 )
 

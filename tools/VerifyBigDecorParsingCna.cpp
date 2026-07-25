@@ -1,4 +1,5 @@
 #include "Game/GEWorldRuntime.hpp"
+#include "Game/GEObjectIcons.hpp"
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -27,6 +28,20 @@ int main()
     };
 
     bool allOk = true;
+
+    {
+        const auto palmUv = GalaxyEggbert::CNA::GetBigDecorIconUv(16);
+        const bool usesExploTile16 =
+            palmUv.U0 == 0.6f && palmUv.V0 == 0.1f &&
+            palmUv.U1 == 0.7f && palmUv.V1 == 0.2f;
+        std::cout << (usesExploTile16 ? "PASS" : "FAIL")
+                  << ": Palmtree 16 resolves in the explo.png BigDecor atlas"
+                  << std::endl;
+        if (!usesExploTile16)
+        {
+            allOk = false;
+        }
+    }
     for (const auto& c : kCases)
     {
         GalaxyEggbert::CNA::GEWorldRuntime runtime;

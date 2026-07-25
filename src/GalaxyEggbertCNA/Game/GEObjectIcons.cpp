@@ -797,6 +797,11 @@ namespace GalaxyEggbert::CNA
         return ObjectIconUv{u0, v0, u1, v1};
     }
 
+    ObjectIconUv GetBigDecorIconUv(int icon)
+    {
+        return GetExploIconUv(icon);
+    }
+
     bool IsBlupiPngSourced(ObjectType type)
     {
         switch (type)

@@ -7,9 +7,11 @@
 
 namespace GalaxyEggbert {
 
-// One non-colliding object-m.png billboard anchored to an exact 3D world
-// cell. This is the `.vwr` counterpart of Eggbert 2's separate BigDecor:
-// layer; it is deliberately not a voxel block and never affects collision.
+// One non-colliding explo.png billboard anchored to an exact 3D world cell.
+// Eggbert 2 draws BigDecor through CHEXPLO (despite that channel's name);
+// the numeric icon vocabulary is therefore not object-m.png's. This is the
+// `.vwr` counterpart of Eggbert 2's separate BigDecor: layer; it is
+// deliberately not a voxel block and never affects collision.
 struct BigDecorRecord final {
     std::uint16_t icon = 0;
     std::uint16_t x = 0;

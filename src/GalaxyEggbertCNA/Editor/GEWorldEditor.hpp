@@ -41,12 +41,14 @@ namespace GalaxyEggbert::CNA
             bool shouldOpen = false;
             std::filesystem::path openPath; // valid when shouldOpen
             bool shouldCreateNew = false;    // GECustomWorldStorage::NextNewWorldPath(gamerSlot) is the target
+            bool shouldReturnToMenu = false;
         };
 
         // Drives the browser screen while IsBrowsing() is true -- no World
         // needed (there isn't one loaded yet).
         [[nodiscard]] BrowserRequest UpdateBrowsing(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                                                    int viewportWidth, int viewportHeight);
+                                                    int viewportWidth, int viewportHeight,
+                                                    bool backPressed = false);
 
         void DrawBrowsing(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                           int viewportWidth, int viewportHeight);

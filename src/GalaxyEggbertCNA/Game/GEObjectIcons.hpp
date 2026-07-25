@@ -126,6 +126,12 @@ namespace GalaxyEggbert::CNA
     // mobile-eggbert-reference/08-animations.md §4 for the per-tile size).
     ObjectIconUv GetExploIconUv(int icon);
 
+    // BigDecor uses the same explo.png icon domain. The original Eggbert 2
+    // renderer calls QuickIcon(CHEXPLO, icon, ...), even for trees, palms,
+    // houses and other scenery. Keeping a named helper prevents these ids
+    // from accidentally being interpreted as object-m.png terrain again.
+    ObjectIconUv GetBigDecorIconUv(int icon);
+
     // True for the 12 confirmed Category B ObjectTypes sourced from
     // explo.png (explosions/visual effects: ObjectType8/9/10/11/53/90/91/
     // 92/93/98/99/100; mobile-eggbert-reference/03-objects.md, added

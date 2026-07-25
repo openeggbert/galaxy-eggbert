@@ -17,10 +17,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
-- All approved world-editor milestones and follow-ups through `EDITOR-127` are complete: per-gamer
+- All approved world-editor milestones and follow-ups through `EDITOR-129` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
   functional touch deletion, verified Inverter/crate/Overcraft entries, menu-based sky-region
-  thumbnails, save and play-test loop, and unsaved-change protection.
+  thumbnails, save and play-test loop, unsaved-change protection, correctly sourced BigDecor
+  scenery, and a visible/Escape return from the editor browser to the main menu.
 - Linux native, Vulkan native, and the debug build are maintained. A MinGW-w64 cross-build of
   `GalaxyEggbertCNA.exe` (SDL_Renderer) is confirmed. Its output now stages SDL3 and MinGW thread
   runtime DLLs beside the executable while statically linking GCC/C++. A Wine launch reaches
@@ -39,7 +40,7 @@ As of the date above, rebuilding and testing the current source succeeds on all 
 
 | Build | Result |
 |---|---|
-| `build-cna` (EasyGL) | 84 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
+| `build-cna` (EasyGL) | 90 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
 | `build-cna-vulkan` | 79/79 pass |
 | `cmake-build-debug` | 81 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
 

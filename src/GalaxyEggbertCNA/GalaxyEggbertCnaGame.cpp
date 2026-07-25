@@ -423,15 +423,14 @@ namespace GalaxyEggbert::CNA
         blupi1ObjectEffect_->setTextureEnabledProperty(true);
         blupi1ObjectEffect_->setTextureProperty(&blupi1ObjectTexture_);
 
-        // Billboard rendering for BigDecor: cells (NEXT.md §8 task 3) —
-        // reuses terrainTexture_ (object-m.png), same icon vocabulary as the
-        // main terrain grid, via a dedicated effect (BasicEffect only binds
-        // one texture at a time). Filtered once here into bigDecorCells_ so
-        // Draw() doesn't re-scan the full 100x100 grid every frame.
+        // Billboard rendering for BigDecor: cells. Eggbert 2 renders this
+        // layer through CHEXPLO (Decor.cpp's QuickIcon(channel=9,...)), so
+        // ids such as Palmtree=16 must sample explo.png, not object-m.png
+        // where icon 16 is an unrelated blue triangular mechanical tile.
         bigDecorEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         bigDecorEffect_->VertexColorEnabled = false;
         bigDecorEffect_->setTextureEnabledProperty(true);
-        bigDecorEffect_->setTextureProperty(&terrainTexture_);
+        bigDecorEffect_->setTextureProperty(&exploTexture_);
 
         std::cout << "GalaxyEggbertCNA: " << bigDecorCells_.size()
                   << " BigDecor cell(s) parsed for billboard rendering." << std::endl;
@@ -1567,8 +1566,13 @@ namespace GalaxyEggbert::CNA
                 if (worldEditor_.IsBrowsing())
                 {
                     const auto request = worldEditor_.UpdateBrowsing(
-                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
-                    if (request.shouldOpen)
+                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                        phaseKeys.IsKeyDown(Keys::Escape));
+                    if (request.shouldReturnToMenu)
+                    {
+                        SetPhase(GalaxyEggbert::GamePhase::Init, /*bypassFade=*/true);
+                    }
+                    else if (request.shouldOpen)
                     {
                         LoadCustomWorldForEditing(request.openPath);
                     }
@@ -3941,11 +3945,10 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
-        // (NEXT.md §8 task 3) — same camera-facing billboard technique as
-        // MoveObjects above, but object-m.png (via tileAtlas_) instead of
-        // element.png, since BigDecor shares the main terrain grid's icon
-        // vocabulary. Cells may come from either a mobile BigDecor: grid
+        // Billboard rendering for worldRuntime_'s parsed BigDecor: cells.
+        // The source renderer uses CHEXPLO for this layer, so the same
+        // explo.png atlas/UV convention as explosion-channel MoveObjects is
+        // intentional. Cells may come from either a mobile BigDecor: grid
         // or sparse 3D `.vwr` BigDecorRecord metadata.
         if (bigDecorEffect_ && !bigDecorCells_.empty())
         {
@@ -3957,12 +3960,13 @@ namespace GalaxyEggbert::CNA
             constexpr float kBigDecorSize = 1.0f;
             for (const auto& cell : bigDecorCells_)
             {
-                const auto uv = tileAtlas_.GetTileUv(static_cast<int>(cell.icon));
+                const auto iconUv = GetBigDecorIconUv(static_cast<int>(cell.icon));
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(
                         cell.worldX, cell.worldY, cell.worldZ),
                     Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize),
-                    uv);
+                    Easy3D::UvRect{
+                        iconUv.U0, iconUv.V0, iconUv.U1, iconUv.V1});
             }
 
             std::vector<Easy3D::BillboardVertex> vertices;
