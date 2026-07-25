@@ -227,6 +227,7 @@ namespace GalaxyEggbert::CNA
         }
 
         palette_.Draw(
-            device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_);
+            device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_,
+            placementCellX_, placementCellY_, placementCellZ_);
     }
 }

@@ -136,7 +136,8 @@ namespace GalaxyEggbert::CNA
     void GEEditorPalette::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         int viewportWidth, int viewportHeight, bool stopConfirmArmed,
-        bool hasPlacementPreview)
+        bool hasPlacementPreview,
+        int placementX, int placementY, int placementZ)
     {
         const GEEditorPaletteRenderer::State state{
             categories_,
@@ -150,6 +151,9 @@ namespace GalaxyEggbert::CNA
             notYetImplementedSeconds_ > 0.0f,
             stopConfirmArmed,
             hasPlacementPreview,
+            placementX,
+            placementY,
+            placementZ,
         };
         renderer_.Draw(device, layout_, state, viewportWidth, viewportHeight);
     }

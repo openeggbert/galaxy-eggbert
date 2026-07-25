@@ -67,7 +67,8 @@ namespace GalaxyEggbert::CNA
         void Draw(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             int viewportWidth, int viewportHeight, bool stopConfirmArmed = false,
-            bool hasPlacementPreview = false);
+            bool hasPlacementPreview = false,
+            int placementX = 0, int placementY = 0, int placementZ = 0);
 
     private:
         [[nodiscard]] const PaletteCategory* OpenCategory() const noexcept;

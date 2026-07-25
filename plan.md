@@ -5684,9 +5684,8 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and the four follow-up maintainability tasks (`EDITOR-113` through `EDITOR-116`) are
-implemented and tested. The editor's input, rendering, orchestration, and verification are now
-separated into focused components.
+`EDITOR-112`) and follow-up tasks through `EDITOR-117` are implemented and tested. The editor's
+input, rendering, orchestration, and verification are separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
 "Known problems / open concerns" keyboard-input issue below still holds — fresh read of
@@ -5881,6 +5880,11 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       blocks, history, fill, backgrounds and Stop guard), `VerifyGEEditorPalette`,
       `VerifyGEEditorStorage`, and `VerifyGEEditorObjects`. The former 1754-line monolith is a
       384-line core test; the moved behavior remains covered in the three focused binaries.
+- [x] **EDITOR-117 — show the pending block's world position beside the XYZ controls.**
+      **Done 2026-07-25:** while a valid red placement preview exists, the palette renders a black
+      `X:<n> Y:<n> Z:<n>` readout using the exact raw-grid cell that PLACE will modify. It sits to
+      the right of the controls at the normal 800×480 layout and moves above the wrapped controls
+      when a narrow viewport has no horizontal room.
 
 ### Known problems / open concerns
 

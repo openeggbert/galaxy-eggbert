@@ -8,6 +8,7 @@
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 
+#include <cstdio>
 #include <filesystem>
 
 namespace GalaxyEggbert::CNA
@@ -288,6 +289,26 @@ namespace GalaxyEggbert::CNA
             GEQuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, placeLabel,
                 viewportWidth, viewportHeight, 1.0f);
+
+            if (state.hasPlacementPreview)
+            {
+                char coordinates[48];
+                std::snprintf(
+                    coordinates, sizeof(coordinates), "X:%d Y:%d Z:%d",
+                    state.placementX, state.placementY, state.placementZ);
+                const GEQuadBatch::Rect coordinateRect =
+                    layout.PlacementCoordinatesRect(
+                        LabelWidth(coordinates), kGlyphCellPx * kTextScale,
+                        viewportWidth, viewportHeight);
+                std::vector<GEQuadBatch::Quad> coordinateLabel;
+                AppendLabel(
+                    coordinateLabel, coordinates, coordinateRect.x0, coordinateRect.y0,
+                    sheetWidth, sheetHeight);
+                impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
+                GEQuadBatch::FlushQuads(
+                    device, *impl_->textEffect, impl_->textRenderer, coordinateLabel,
+                    viewportWidth, viewportHeight, 1.0f);
+            }
         }
 
         if (state.noticeVisible && impl_->textTexture && impl_->textEffect)

@@ -63,6 +63,20 @@ int main()
               "narrow screens wrap the placement action onto another row");
         check(layout.PaletteCellRect(7, 8, 7, 360, 480).y1 <= 480.0f,
               "the complete eight-entry source group remains visible on a narrow screen");
+
+        const auto wideCoordinates =
+            layout.PlacementCoordinatesRect(120.0f, 16.0f, 800, 480);
+        check(wideCoordinates.x0 >=
+                  layout.PlacementButtonRect(6, 800, 480).x1 &&
+                  wideCoordinates.x1 <= layout.PlayTestRect(800, 480).x0,
+              "placement coordinates sit beside the XYZ and PLACE controls");
+        const auto narrowCoordinates =
+            layout.PlacementCoordinatesRect(120.0f, 16.0f, 360, 480);
+        check(narrowCoordinates.x0 >= 0.0f &&
+                  narrowCoordinates.x1 <= 360.0f &&
+                  narrowCoordinates.y1 <=
+                      layout.PlacementButtonRect(0, 360, 480).y0,
+              "placement coordinates remain visible above wrapped controls");
     }
 
     const auto click = [](GEEditorPalette& palette, float x, float y)

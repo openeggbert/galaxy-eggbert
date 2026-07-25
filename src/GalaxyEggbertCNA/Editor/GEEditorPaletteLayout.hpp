@@ -16,6 +16,9 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] GEQuadBatch::Rect CategoryButtonRect(int categoryIndex) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect PlacementButtonRect(
             int index, int viewportWidth, int viewportHeight) const noexcept;
+        [[nodiscard]] GEQuadBatch::Rect PlacementCoordinatesRect(
+            float textWidth, float textHeight,
+            int viewportWidth, int viewportHeight) const noexcept;
         [[nodiscard]] GEQuadBatch::Rect PaletteCellRect(
             int itemIndex, int itemCount, int openCategory,
             int viewportWidth, int viewportHeight) const noexcept;

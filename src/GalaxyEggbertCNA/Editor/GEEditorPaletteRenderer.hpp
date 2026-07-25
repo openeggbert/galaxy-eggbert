@@ -26,6 +26,9 @@ namespace GalaxyEggbert::CNA
             bool noticeVisible = false;
             bool stopConfirmArmed = false;
             bool hasPlacementPreview = false;
+            int placementX = 0;
+            int placementY = 0;
+            int placementZ = 0;
         };
 
         GEEditorPaletteRenderer();

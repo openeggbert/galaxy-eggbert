@@ -85,6 +85,38 @@ namespace GalaxyEggbert::CNA
         return {placeX, yBottom, placeX + kPlacementCompactPlaceWidth, yBottom + kButtonSize};
     }
 
+    GEQuadBatch::Rect GEEditorPaletteLayout::PlacementCoordinatesRect(
+        float textWidth, float textHeight,
+        int viewportWidth, int viewportHeight) const noexcept
+    {
+        constexpr float kTextGap = 8.0f;
+        const GEQuadBatch::Rect first =
+            PlacementButtonRect(0, viewportWidth, viewportHeight);
+        const GEQuadBatch::Rect place =
+            PlacementButtonRect(PlacementPlaceIndex, viewportWidth, viewportHeight);
+        const GEQuadBatch::Rect playTest = PlayTestRect(viewportWidth, viewportHeight);
+        const float top = place.y0 + ((place.y1 - place.y0) - textHeight) * 0.5f;
+
+        const float right = place.x1 + kTextGap;
+        if (right + textWidth <= playTest.x0 - kTextGap)
+        {
+            return {right, top, right + textWidth, top + textHeight};
+        }
+
+        const float left = first.x0 - kTextGap - textWidth;
+        if (left >= kMenuX + kButtonSize + kTextGap)
+        {
+            return {left, top, left + textWidth, top + textHeight};
+        }
+
+        const float centered = std::clamp(
+            (first.x0 + place.x1 - textWidth) * 0.5f,
+            2.0f, std::max(2.0f, static_cast<float>(viewportWidth) - textWidth - 2.0f));
+        const float above = std::max(
+            2.0f, std::min(first.y0, place.y0) - textHeight - 4.0f);
+        return {centered, above, centered + textWidth, above + textHeight};
+    }
+
     int GEEditorPaletteLayout::PopupColumnCount(int viewportWidth) const noexcept
     {
         const float available = static_cast<float>(viewportWidth) - kPopupX - kMenuX;
