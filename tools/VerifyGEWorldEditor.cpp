@@ -8,6 +8,7 @@
 #include "Editor/GEWorldEditor.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -19,7 +20,7 @@
 // Scripted verification for the in-game 3D world editor (plan.md section 6,
 // EDITOR-1xx tasks). Sections so far:
 //   - EDITOR-101: the free-fly camera's pure movement math (WASD +
-//     scroll-wheel fly-speed, driven by synthetic KeyboardState/MouseState
+//     scroll-wheel camera zoom, driven by synthetic KeyboardState/MouseState
 //     values -- no GraphicsDevice/window needed at runtime, same "no
 //     graphics context needed" shape as VerifyGEInputPad). Mouse-look
 //     (holding the right button) is deliberately NOT exercised here: it
@@ -219,6 +220,25 @@ int main()
               "movement distance scales linearly with dt");
     }
 
+    // --- Scroll wheel zooms the view, without changing fly speed ---
+    {
+        GEWorldEditor editor;
+        editor.EnterEditing(50.0f, 15.0f, 50.0f);
+        Easy3D::Camera3D camera;
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, emptyWorld);
+        const float defaultFov = camera.GetFieldOfView();
+        const MouseState wheelUp(0, 0, 120, ButtonState::Released, ButtonState::Released,
+                                 ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, wheelUp, 0.0f, 800, 480, camera, emptyWorld);
+        check(camera.GetFieldOfView() < defaultFov,
+              "scrolling the mouse wheel up zooms in by narrowing the camera field of view");
+        const MouseState wheelDown(0, 0, 0, ButtonState::Released, ButtonState::Released,
+                                   ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, wheelDown, 0.0f, 800, 480, camera, emptyWorld);
+        check(camera.GetFieldOfView() > defaultFov * 0.99f,
+              "scrolling the mouse wheel down zooms the view back out");
+    }
+
     // --- Raycast: straight down hits a single floor block directly below ---
     {
         World world;
@@ -357,6 +377,38 @@ int main()
               "the original slab surface underneath is untouched by the removal");
         check(editor.ConsumeNeedsPresentationRebuild(),
               "removing a block requests a presentation rebuild");
+    }
+
+    // --- A brand-new all-air world must still admit its first placement ---
+    {
+        World world;
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        // The editor's default look is downward, so its empty-world build
+        // plane fallback has a valid y=0 target. Before the fallback, this
+        // exact click was a no-op because the DDA raycast had no block to
+        // hit in a freshly created world.
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        const MouseState leftMouse(400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+                                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, leftMouse, 0.0f, 800, 480, camera, world);
+
+        int placedCount = 0;
+        for (std::uint16_t x = 0; x < world.blocksPerAxis(); ++x)
+        {
+            for (std::uint16_t y = 0; y < world.blocksPerAxis(); ++y)
+            {
+                for (std::uint16_t z = 0; z < world.blocksPerAxis(); ++z)
+                {
+                    if (!world.getBlock(x, y, z).isAir()) ++placedCount;
+                }
+            }
+        }
+        check(placedCount == 1, "a left click places the very first block in a brand-new all-air world");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "the first placement in an all-air world requests a presentation rebuild");
     }
 
     // --- Save/load round-trip via Enter ---
@@ -600,8 +652,8 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
-        // Fixed action index 6 (BoxFill): row 3, left half -- (10,118)-(25,150).
-        constexpr float kBoxFillX = 17.0f, kBoxFillY = 134.0f;
+        // Fixed action index 6 (BoxFill) in the horizontal top toolbar.
+        constexpr float kBoxFillX = 682.0f, kBoxFillY = 26.0f;
         const auto clickBoxFillButton = [&]()
         {
             const MouseState down(static_cast<int>(kBoxFillX), static_cast<int>(kBoxFillY), 0, ButtonState::Pressed,
@@ -832,11 +884,10 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
-        // Fixed action indices 8/9 (SkyRegionPrev/Next): row 4, left/right
-        // halves -- (10,154)-(25,186) and (27,154)-(42,186) respectively,
-        // same approximate-center convention as kUndoX/kRedoX above.
-        constexpr float kSkyRegionNextX = 34.0f, kSkyRegionNextY = 170.0f;
-        constexpr float kSkyRegionPrevX = 17.0f, kSkyRegionPrevY = 170.0f;
+        // Fixed action indices 8/9 (SkyRegionPrev/Next) in the horizontal
+        // top toolbar.
+        constexpr float kSkyRegionNextX = 790.0f, kSkyRegionNextY = 26.0f;
+        constexpr float kSkyRegionPrevX = 754.0f, kSkyRegionPrevY = 26.0f;
         const auto clickButton = [&](float x, float y)
         {
             const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
@@ -861,8 +912,8 @@ int main()
 
     // --- GEWorldEditor: unsaved-changes guard, Back button 2-tap confirm (plan.md EDITOR-112) ---
     {
-        // Fixed action index 3 (Back): row 1, right half -- center ~(34,62).
-        constexpr float kBackX = 34.0f, kBackY = 62.0f;
+        // Fixed action index 3 (Back) in the horizontal top toolbar.
+        constexpr float kBackX = 780.0f, kBackY = 460.0f;
         const auto clickBack = [&](GEWorldEditor& editor, World& world, Easy3D::Camera3D& camera)
         {
             const MouseState down(static_cast<int>(kBackX), static_cast<int>(kBackY), 0, ButtonState::Pressed,
@@ -969,9 +1020,13 @@ int main()
         for (const auto& category : ConfirmedBlockCategories())
         {
             check(!category.name.empty(), "every curated category has a non-empty name");
+            curatedCount += static_cast<int>(category.buttonIconIds.size());
             for (const int iconId : category.iconIds)
             {
-                ++curatedCount;
+                if (iconId == 0)
+                {
+                    continue; // visible Eggbert 2 glyph, no verified Galaxy mapping yet
+                }
                 if (iconId < 1 || iconId > 440)
                 {
                     allCuratedInRange = false;
@@ -999,23 +1054,18 @@ int main()
             return palette.Update(up, kViewportW, kViewportH);
         };
 
-        // Layout constants mirroring GEEditorPalette.cpp's own private
-        // anonymous-namespace geometry (2026-07-19 single-column redesign;
-        // EDITOR-111, 2026-07-23, added a 9th/10th fixed action button pair
-        // -- SkyRegionPrev/Next -- pushing kHeaderRowCount from 5 to 6, so
-        // content cells now start one row lower than before: kColumnX/Y0/
-        // ButtonSize/Gap, 10 fixed action buttons paired 2-per-row
-        // (kIndexUndo..kIndexSkyRegionNext), then content cells one per row
-        // starting at kHeaderRowCount=6) -- a white-box test of this
-        // specific layout, matching this project's own precedent of
-        // pinning exact internal geometry (e.g. VerifyGEInputPad's real
-        // button rects).
-        constexpr float kUndoX = 17.0f, kUndoY = 26.0f;       // index 0, row 0 left half
-        constexpr float kRedoX = 34.0f, kRedoY = 26.0f;       // index 1, row 0 right half
-        constexpr float kSaveX = 17.0f, kSaveY = 62.0f;       // index 2, row 1 left half
-        constexpr float kTabToggleX = 34.0f, kTabToggleY = 134.0f; // index 7, row 3 right half
-        constexpr float kFirstCellX = 26.0f, kFirstCellY = 242.0f;   // content row 0 (row 6)
-        constexpr float kSecondCellY = 278.0f;                        // content row 1 (row 7)
+        // The actions occupy a horizontal top row. Below it the permanent
+        // category rail is at x=10..42; expanded category choices begin at
+        // x=46 and spread right, exactly matching the intended Free
+        // Eggbert-style interaction hierarchy.
+        constexpr float kUndoX = 466.0f, kUndoY = 26.0f;
+        constexpr float kRedoX = 502.0f, kRedoY = 26.0f;
+        constexpr float kSaveX = 538.0f, kSaveY = 26.0f;
+        constexpr float kTabToggleX = 718.0f, kTabToggleY = 26.0f;
+        constexpr float kCategoryX = 30.0f, kCategoryY = 72.0f;
+        constexpr float kFirstCellX = 72.0f, kFirstCellY = 72.0f;
+        constexpr float kUnimplementedCellX = 198.0f;
+        constexpr float kPlacementY = 451.0f;
 
         {
             GEEditorPalette palette;
@@ -1048,12 +1098,49 @@ int main()
         }
         {
             GEEditorPalette palette;
-            // Confirmed tab, content row 1: the second icon in the first
-            // curated category ("Terrain"), BrickWall.
-            const auto result = click(palette, kFirstCellX, kSecondCellY);
-            check(result.clickConsumed, "clicking a palette icon cell reports clickConsumed");
-            check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::BrickWall,
-                  "clicking the Confirmed tab's second icon selects BrickWall");
+            check(click(palette, 235.0f, kPlacementY).action ==
+                      GEEditorPalette::ToolbarAction::PlacementXMinus,
+                  "the X- touch button reports PlacementXMinus");
+            check(click(palette, 277.0f, kPlacementY).action ==
+                      GEEditorPalette::ToolbarAction::PlacementXPlus,
+                  "the X+ touch button reports PlacementXPlus");
+            check(click(palette, 319.0f, kPlacementY).action ==
+                      GEEditorPalette::ToolbarAction::PlacementYMinus,
+                  "the Y- touch button reports PlacementYMinus");
+            check(click(palette, 361.0f, kPlacementY).action ==
+                      GEEditorPalette::ToolbarAction::PlacementYPlus,
+                  "the Y+ touch button reports PlacementYPlus");
+            check(click(palette, 403.0f, kPlacementY).action ==
+                      GEEditorPalette::ToolbarAction::PlacementZMinus,
+                  "the Z- touch button reports PlacementZMinus");
+            check(click(palette, 445.0f, kPlacementY).action ==
+                      GEEditorPalette::ToolbarAction::PlacementZPlus,
+                  "the Z+ touch button reports PlacementZPlus");
+            const auto place = click(palette, 499.0f, kPlacementY);
+            check(place.action == GEEditorPalette::ToolbarAction::PlaceSelection,
+                  "the PLACE touch button reports PlaceSelection");
+            check(place.clickConsumed, "the PLACE touch button consumes its own world click");
+        }
+        {
+            GEEditorPalette palette;
+            // The persistent first rail icon opens Terrain; its individual
+            // block icons then appear immediately to the rail's right.
+            const auto openResult = click(palette, kCategoryX, kCategoryY);
+            check(openResult.clickConsumed, "clicking a category representative reports clickConsumed");
+            check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
+                  "opening a category doesn't silently change the block selection");
+            const auto selectResult = click(palette, kFirstCellX, kFirstCellY);
+            check(selectResult.clickConsumed, "clicking an expanded category icon reports clickConsumed");
+            check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
+                  "an unverified Eggbert 2 icon never aliases itself to an unrelated Galaxy block");
+            (void)click(palette, kUnimplementedCellX, kFirstCellY);
+            check(palette.IsNotYetImplementedNoticeVisible(),
+                  "an unimplemented source-menu icon keeps its place and starts the two-second notice");
+            const MouseState idle(400, 200, 0, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            (void)palette.Update(idle, kViewportW, kViewportH, 2.01f);
+            check(!palette.IsNotYetImplementedNoticeVisible(),
+                  "the Not yet implemented notice expires after two seconds");
         }
         {
             GEEditorPalette palette;
@@ -1066,6 +1153,38 @@ int main()
             check(palette.SelectedBlockType() == 1,
                   "after toggling to the All-Icons tab, the first cell selects icon id 1");
         }
+    }
+
+    // --- On-screen placement pad: axis movement + explicit PLACE action ---
+    {
+        World world;
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+
+        const auto tap = [&](int x, int y)
+        {
+            const MouseState down(x, y, 0, ButtonState::Pressed, ButtonState::Released,
+                                  ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            const MouseState up(x, y, 0, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+
+        // The default camera projects the empty-world build plane to raw
+        // cell (50,0,23). X+ must therefore move the shared preview and
+        // PLACE destination to (51,0,23).
+        tap(277, 451); // X+
+        check(world.getBlock(50, 0, 23).isAir() && world.getBlock(51, 0, 23).isAir(),
+              "an axis touch only moves the preview and does not place a block");
+        tap(499, 451); // PLACE
+        check(world.getBlock(50, 0, 23).isAir(),
+              "touch placement does not use the unshifted ray target");
+        check(world.getBlock(51, 0, 23).type() == GalaxyEggbert::BlockTypes::RockPile,
+              "X+ followed by PLACE creates the selected block at the moved preview cell");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "the PLACE touch action requests a world-presentation rebuild");
     }
 
     // --- GECustomWorldStorage: dir naming, listing, NextNewWorldPath numbering ---
@@ -1106,6 +1225,29 @@ int main()
 
         World().saveToFile(second);
         check(ListCustomWorlds(kTestGamerSlot).size() == 2, "ListCustomWorlds() finds both created worlds");
+
+        const World starter = CreateEditorStarterWorld();
+        bool rockBoardIsComplete = true;
+        for (std::uint16_t x = 49; x <= 51; ++x)
+        {
+            for (std::uint16_t z = 49; z <= 51; ++z)
+            {
+                rockBoardIsComplete &= starter.getBlock(x, 0, z).type() == GalaxyEggbert::BlockTypes::RockPile;
+            }
+        }
+        check(rockBoardIsComplete, "a new editor world starts with the requested 3x3 RockPile board");
+        const auto starterObjects = GalaxyEggbert::CollectMoveObjects(starter);
+        const auto hasStarterObject = [&starterObjects](GalaxyEggbert::ObjectType type, float x, float z)
+        {
+            return std::any_of(starterObjects.begin(), starterObjects.end(), [=](const auto& object)
+            {
+                return object.type == type && object.posStartX == x && object.posStartY == 1.0f && object.posStartZ == z;
+            });
+        };
+        check(hasStarterObject(GalaxyEggbert::ObjectType::ObjectType5, 50.0f, 50.0f),
+              "the starter board puts a treasure chest in its centre");
+        check(hasStarterObject(GalaxyEggbert::ObjectType::ObjectType7, 49.0f, 50.0f),
+              "the starter board puts the exit arrow on one edge opposite Blupi's spawn");
 
         std::filesystem::remove_all(CustomWorldsDir(kTestGamerSlot), ec);
     }
@@ -1207,10 +1349,10 @@ int main()
         check(!editor.ConsumePlayTestRequested(),
               "test setup sanity: no play-test requested before any click");
 
-        // Fixed action index 4 (Play-Test): row 2, left half -- (10,82)-(25,114).
-        const MouseState down(17, 98, 0, ButtonState::Pressed, ButtonState::Released,
+        // Fixed action index 4 (Play-Test) in the horizontal top toolbar.
+        const MouseState down(724, 451, 0, ButtonState::Pressed, ButtonState::Released,
                               ButtonState::Released, ButtonState::Released, ButtonState::Released);
-        const MouseState up(17, 98, 0, ButtonState::Released, ButtonState::Released,
+        const MouseState up(724, 451, 0, ButtonState::Released, ButtonState::Released,
                             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
@@ -1270,13 +1412,10 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         Easy3D::Camera3D camera;
 
-        // 2026-07-19 single-column layout (EDITOR-111, 2026-07-23, shifted
-        // content down one row -- see the layout-constants comment above
-        // this section's sibling block): content row 0 sits at (10..42,
-        // 226..258); toolbar button 0 (Undo) is row 0's left half, (10..25,
-        // 10..42) -- see GEEditorPalette.cpp's own geometry.
-        constexpr float kFirstCellX = 26.0f, kFirstCellY = 242.0f;
-        constexpr float kUndoX = 17.0f, kUndoY = 26.0f;
+        // The rail claims its own clicks before GEWorldEditor handles the
+        // same press as a world-placement action.
+        constexpr float kFirstCellX = 30.0f, kFirstCellY = 72.0f;
+        constexpr float kUndoX = 466.0f, kUndoY = 26.0f;
         const auto pressAndRelease = [&](float x, float y)
         {
             const MouseState down(static_cast<int>(x), static_cast<int>(y), 0, ButtonState::Pressed,
@@ -1326,9 +1465,13 @@ int main()
         for (const auto& category : ConfirmedObjectCategories())
         {
             check(!category.name.empty(), "every curated object category has a non-empty name");
+            curatedCount += static_cast<int>(category.buttonIconIds.size());
             for (const int typeId : category.iconIds)
             {
-                ++curatedCount;
+                if (typeId == 0)
+                {
+                    continue; // source-menu placeholder, deliberately not a fake object type
+                }
                 if (typeId < 1 || typeId > 203)
                 {
                     allCuratedInRange = false;
@@ -1344,15 +1487,15 @@ int main()
         check(noDuplicatesAcrossCategories,
               "no ObjectType id appears in more than one curated object category");
 
-        // Spot-check that the curated groups actually match ObjectType.hpp's
-        // own documented comment groups -- the whole point of the "don't
-        // invent semantics" rule is that these ids are copied from there,
-        // not guessed.
+        // The second source-ordered Free Eggbert row is the technical
+        // category, whose first three Galaxy placements are platform lifts.
         const auto categories = ConfirmedObjectCategories();
-        check(categories.front().name == "Platform Lifts" &&
-                  categories.front().iconIds == std::vector<int>{1, 47, 48},
-              "the Platform Lifts category matches ObjectType.hpp's own lift group (1, 47, 48)");
-        check(seenTypeIds.count(6) == 1, "the extra-life egg (ObjectType6) is a curated, placeable object");
+        check(categories[1].name == "Technical blocks" &&
+                  std::vector<int>(categories[1].buttonIconIds.begin(), categories[1].buttonIconIds.begin() + 3) ==
+                      std::vector<int>{0, 1, 2},
+              "the source-ordered Technical blocks glyphs remain in Eggbert 2 order");
+        check(seenTypeIds.count(6) == 1,
+              "the extra-life egg remains a verified placeable ObjectType");
         check(seenTypeIds.count(39) == 0,
               "the sparkle trail (ObjectType39) is excluded -- an effect the game spawns, not a placement");
         check(seenTypeIds.count(8) == 0,
@@ -1374,13 +1517,11 @@ int main()
             (void)palette.Update(down, kViewportW, kViewportH);
             return palette.Update(up, kViewportW, kViewportH);
         };
-        // 2026-07-19 single-column layout: mode toggle is fixed action
-        // index 5 (row 2, right half), content row 0/1 as in the section
-        // above -- see GEEditorPalette.cpp's own geometry.
-        constexpr float kModeButtonX = 34.0f;
-        constexpr float kModeButtonY = 98.0f;
-        constexpr float kFirstCellX = 26.0f, kFirstCellY = 242.0f;
-        constexpr float kSecondCellY = 278.0f;
+        constexpr float kModeButtonX = 646.0f;
+        constexpr float kModeButtonY = 26.0f;
+        constexpr float kCategoryX = 30.0f, kCategoryY = 324.0f;
+        constexpr float kFirstCellX = 72.0f, kFirstCellY = 324.0f;
+        constexpr float kBlockCellX = 72.0f, kBlockCellY = 72.0f;
 
         GEEditorPalette palette;
         check(!palette.IsObjectMode(), "GEEditorPalette starts in Blocks mode");
@@ -1393,22 +1534,25 @@ int main()
               "the mode toggle is handled internally -- it reports no ToolbarAction for the caller");
         check(palette.IsObjectMode(), "clicking the mode-toggle button switches to Objects mode");
 
-        // Content row 0 of the Confirmed tab in Objects mode = the first
-        // curated object category's first id (Platform Lifts -> ObjectType1).
+        // The first persistent rail icon opens Platform Lifts; its first
+        // expanded item selects ObjectType1.
+        const auto openResult = click(palette, kCategoryX, kCategoryY);
+        check(openResult.clickConsumed, "clicking an object-category representative reports clickConsumed");
         const auto cellResult = click(palette, kFirstCellX, kFirstCellY);
-        check(cellResult.clickConsumed, "clicking an object cell reports clickConsumed");
-        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType1,
-              "clicking the Objects tab's first cell selects the standard platform lift (ObjectType1)");
+        check(cellResult.clickConsumed, "clicking an expanded object cell reports clickConsumed");
+        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType5,
+              "clicking the chest glyph selects the verified treasure object");
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
               "selecting an object leaves the block selection untouched");
 
         (void)click(palette, kModeButtonX, kModeButtonY);
         check(!palette.IsObjectMode(), "clicking the mode-toggle button again switches back to Blocks mode");
-        const auto blockCellResult = click(palette, kFirstCellX, kSecondCellY);
+        (void)click(palette, 30.0f, 72.0f); // open Scenery
+        const auto blockCellResult = click(palette, kBlockCellX, kBlockCellY);
         check(blockCellResult.clickConsumed, "clicking a block cell after switching back reports clickConsumed");
-        check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::BrickWall,
+        check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
               "back in Blocks mode, the icon grid selects block types again");
-        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType1,
+        check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType5,
               "selecting a block leaves the object selection untouched");
     }
 
@@ -1536,12 +1680,9 @@ int main()
             editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
             editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
         };
-        // 2026-07-19 single-column layout: mode toggle is fixed action
-        // index 5 (row 2, right half); content row 0 is the first
-        // Confirmed-tab object cell -- see GEEditorPalette.cpp's own
-        // geometry.
-        paletteClick(34.0f, 98.0f); // mode toggle -> Objects
-        paletteClick(26.0f, 242.0f); // first object cell -> ObjectType1
+        paletteClick(646.0f, 26.0f); // mode toggle -> Objects
+        paletteClick(30.0f, 324.0f); // Treasures rail icon
+        paletteClick(72.0f, 324.0f); // chest -> ObjectType5
         (void)editor.ConsumeNeedsPresentationRebuild();
         check(CollectMoveObjects(world).empty(),
               "palette clicks in Objects mode are consumed -- they don't place an object in the world");
@@ -1554,7 +1695,7 @@ int main()
 
         const auto placed = CollectMoveObjects(world);
         check(placed.size() == 1, "a left click in Objects mode places exactly one MoveObject");
-        check(!placed.empty() && placed[0].type == GalaxyEggbert::ObjectType::ObjectType1,
+        check(!placed.empty() && placed[0].type == GalaxyEggbert::ObjectType::ObjectType5,
               "the placed MoveObject carries the palette's selected ObjectType");
         check(!placed.empty() && placed[0].posStartX == static_cast<float>(placeX) &&
                   placed[0].posStartY == static_cast<float>(placeY) &&
@@ -1576,7 +1717,7 @@ int main()
 
         editor.Update(KeyboardState{Keys::R}, restMouse, 0.0f, 800, 480, camera, world);
         const auto redone = CollectMoveObjects(world);
-        check(redone.size() == 1 && redone[0].type == GalaxyEggbert::ObjectType::ObjectType1,
+        check(redone.size() == 1 && redone[0].type == GalaxyEggbert::ObjectType::ObjectType5,
               "R redoes an object placement, restoring the exact record");
         check(editor.ConsumeNeedsPresentationRebuild(), "redoing an object placement requests a rebuild");
     }
@@ -1623,12 +1764,9 @@ int main()
             editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
             editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
         };
-        // 2026-07-19 single-column layout: mode toggle is fixed action
-        // index 5 (row 2, right half); content row 0 is the first
-        // Confirmed-tab object cell -- see GEEditorPalette.cpp's own
-        // geometry.
-        paletteClick(34.0f, 98.0f); // mode toggle -> Objects
-        paletteClick(26.0f, 242.0f); // first object cell -> ObjectType1
+        paletteClick(646.0f, 26.0f); // mode toggle -> Objects
+        paletteClick(30.0f, 324.0f); // Treasures rail icon
+        paletteClick(72.0f, 324.0f); // chest -> ObjectType5
         (void)editor.ConsumeNeedsPresentationRebuild();
 
         const MouseState leftMouse(400, 200, 0, ButtonState::Pressed, ButtonState::Released,

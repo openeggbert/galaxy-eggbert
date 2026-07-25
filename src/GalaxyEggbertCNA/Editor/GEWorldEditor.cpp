@@ -16,9 +16,10 @@ namespace GalaxyEggbert::CNA
     {
         constexpr float kPitchLimit = 1.55334f; // ~89 degrees -- avoids the gimbal flip straight up/down
         constexpr float kMouseLookRadiansPerPixel = 0.0025f;
-        constexpr float kMinFlySpeed = 1.0f;
-        constexpr float kMaxFlySpeed = 200.0f;
-        constexpr float kScrollSpeedStepPerNotch = 1.15f; // multiplicative -- stays useful close-up and world-spanning
+        constexpr float kEditorDefaultFov = 0.785398163f; // 45 degrees
+        constexpr float kEditorMinFov = 0.261799388f; // 15 degrees, zoomed in
+        constexpr float kEditorMaxFov = 1.3962634f; // 80 degrees, zoomed out
+        constexpr float kScrollZoomStepPerNotch = 0.90f;
         constexpr float kMaxRaycastDistance = 200.0f; // > the 100^3 world's ~173-unit diagonal
 
         // MoveObject select tool (plan.md EDITOR-110). kHudCenterX/Y is
@@ -99,6 +100,9 @@ namespace GalaxyEggbert::CNA
         mouseLookHeldLastFrame_ = false;
         hasLastScrollWheelValue_ = false;
         hasHighlight_ = false;
+        hasRaycastHit_ = false;
+        placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
+        placementOffsetKeyHeldLastFrame_ = false;
         highlightRenderer_.Hide();
         commandStack_ = GEEditCommandStack();
         boxFirstCornerPlaced_ = false;
@@ -145,19 +149,24 @@ namespace GalaxyEggbert::CNA
         }
         mouseLookHeldLastFrame_ = rightHeld;
 
-        // Scroll wheel adjusts fly speed (multiplicative per notch, so it
-        // stays useful at both close-up and whole-world-spanning
-        // distances). getScrollWheelValueProperty() is CUMULATIVE since
-        // startup, not per-frame -- the first reading only establishes a
-        // baseline, it never adjusts speed itself.
+        // Free Eggbert uses the wheel as a view zoom. The 3D editor has no
+        // 2D camera scale, so the equivalent is field of view: wheel-up
+        // narrows it (zoom in), wheel-down widens it (zoom out). The value
+        // is cumulative, hence the first reading only establishes a
+        // baseline.
         const int scrollWheelValue = mouse.getScrollWheelValueProperty();
-        if (hasLastScrollWheelValue_)
+        if (!hasLastScrollWheelValue_)
+        {
+            camera.SetFieldOfView(kEditorDefaultFov);
+        }
+        else
         {
             const int deltaNotches = (scrollWheelValue - lastScrollWheelValue_) / 120;
             if (deltaNotches != 0)
             {
-                flySpeed_ *= std::pow(kScrollSpeedStepPerNotch, static_cast<float>(deltaNotches));
-                flySpeed_ = std::clamp(flySpeed_, kMinFlySpeed, kMaxFlySpeed);
+                camera.SetFieldOfView(std::clamp(
+                    camera.GetFieldOfView() * std::pow(kScrollZoomStepPerNotch, static_cast<float>(deltaNotches)),
+                    kEditorMinFov, kEditorMaxFov));
             }
         }
         lastScrollWheelValue_ = scrollWheelValue;
@@ -198,6 +207,46 @@ namespace GalaxyEggbert::CNA
             camX_ + forward.X, camY_ + forward.Y, camZ_ + forward.Z));
         camera.SetUp(worldUp);
 
+        // The on-screen placement pad is handled before raycasting so a
+        // tap on any X/Y/Z button moves the red preview in this very frame.
+        // Its action button is consumed later by the same placement path as
+        // a normal left click.
+        const GEEditorPalette::UpdateResult paletteResult =
+            palette_.Update(mouse, viewportWidth, viewportHeight, dt);
+        switch (paletteResult.action)
+        {
+            case GEEditorPalette::ToolbarAction::PlacementXMinus: --placementOffsetX_; break;
+            case GEEditorPalette::ToolbarAction::PlacementXPlus:  ++placementOffsetX_; break;
+            case GEEditorPalette::ToolbarAction::PlacementYMinus: --placementOffsetY_; break;
+            case GEEditorPalette::ToolbarAction::PlacementYPlus:  ++placementOffsetY_; break;
+            case GEEditorPalette::ToolbarAction::PlacementZMinus: --placementOffsetZ_; break;
+            case GEEditorPalette::ToolbarAction::PlacementZPlus:  ++placementOffsetZ_; break;
+            default: break;
+        }
+
+        const bool offsetXMinusHeld = keyboard.IsKeyDown(Keys::NumPad4);
+        const bool offsetXPlusHeld = keyboard.IsKeyDown(Keys::NumPad6);
+        const bool offsetZMinusHeld = keyboard.IsKeyDown(Keys::NumPad8);
+        const bool offsetZPlusHeld = keyboard.IsKeyDown(Keys::NumPad2);
+        const bool offsetYMinusHeld = keyboard.IsKeyDown(Keys::NumPad7);
+        const bool offsetYPlusHeld = keyboard.IsKeyDown(Keys::NumPad9);
+        const bool offsetResetHeld = keyboard.IsKeyDown(Keys::NumPad5);
+        const bool placementOffsetKeyHeld = offsetXMinusHeld || offsetXPlusHeld || offsetZMinusHeld ||
+                                            offsetZPlusHeld || offsetYMinusHeld || offsetYPlusHeld || offsetResetHeld;
+        if (placementOffsetKeyHeld && !placementOffsetKeyHeldLastFrame_)
+        {
+            if (offsetResetHeld)
+            {
+                placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
+            }
+            else
+            {
+                placementOffsetX_ += offsetXPlusHeld ? 1 : (offsetXMinusHeld ? -1 : 0);
+                placementOffsetZ_ += offsetZPlusHeld ? 1 : (offsetZMinusHeld ? -1 : 0);
+                placementOffsetY_ += offsetYPlusHeld ? 1 : (offsetYMinusHeld ? -1 : 0);
+            }
+        }
+
         // Voxel raycast (plan.md EDITOR-102) -- camera position/direction
         // are in RENDER space (shifted by -kWorldCenterX/Z from @p world's
         // own raw grid space, see GEVoxelRaycast.hpp); only X/Z need the
@@ -207,18 +256,81 @@ namespace GalaxyEggbert::CNA
                                         camZ_ + static_cast<float>(GEWorldRuntime::kWorldCenterZ),
                                         forward.X, forward.Y, forward.Z,
                                         kMaxRaycastDistance);
+        hasRaycastHit_ = hit.hit;
         hasHighlight_ = hit.hit;
         if (hasHighlight_)
         {
-            highlightX_ = static_cast<float>(hit.x) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
-            highlightY_ = static_cast<float>(hit.y);
-            highlightZ_ = static_cast<float>(hit.z) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
             hitCellX_ = hit.x;
             hitCellY_ = hit.y;
             hitCellZ_ = hit.z;
             hitNormalX_ = hit.normalX;
             hitNormalY_ = hit.normalY;
             hitNormalZ_ = hit.normalZ;
+            // The translucent cube is a placement preview, not merely the
+            // surface currently under the cursor: it marks the exact
+            // adjacent cell that the next left click will create.
+            const int previewX = static_cast<int>(hit.x) + hit.normalX + placementOffsetX_;
+            const int previewY = static_cast<int>(hit.y) + hit.normalY + placementOffsetY_;
+            const int previewZ = static_cast<int>(hit.z) + hit.normalZ + placementOffsetZ_;
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            if (previewX >= 0 && previewX < blocksPerAxis &&
+                previewY >= 0 && previewY < blocksPerAxis &&
+                previewZ >= 0 && previewZ < blocksPerAxis)
+            {
+                highlightX_ = static_cast<float>(previewX) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+                highlightY_ = static_cast<float>(previewY);
+                highlightZ_ = static_cast<float>(previewZ) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+                placementCellX_ = static_cast<std::uint16_t>(previewX);
+                placementCellY_ = static_cast<std::uint16_t>(previewY);
+                placementCellZ_ = static_cast<std::uint16_t>(previewZ);
+            }
+            else
+            {
+                hasHighlight_ = false; // there is no valid cell to place into beyond this boundary
+            }
+        }
+        else if (forward.Y < -0.0001f)
+        {
+            // Brand-new custom worlds are deliberately all air. Before
+            // this fallback existed, their raycast could never hit, so the
+            // editor offered no first cell to place and a new world was
+            // permanently unbuildable. Treat the y=0 build plane as an
+            // empty first-placement target; after that first block exists,
+            // normal voxel-face placement resumes immediately.
+            const float targetDistance = -camY_ / forward.Y;
+            const float rawX = camX_ + static_cast<float>(GEWorldRuntime::kWorldCenterX) + forward.X * targetDistance;
+            const float rawZ = camZ_ + static_cast<float>(GEWorldRuntime::kWorldCenterZ) + forward.Z * targetDistance;
+            const int targetX = static_cast<int>(std::floor(rawX + 0.5f));
+            const int targetZ = static_cast<int>(std::floor(rawZ + 0.5f));
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            if (targetDistance >= 0.0f && targetDistance <= kMaxRaycastDistance &&
+                targetX >= 0 && targetX < blocksPerAxis && targetZ >= 0 && targetZ < blocksPerAxis)
+            {
+                hasHighlight_ = true;
+                const int previewX = targetX + placementOffsetX_;
+                const int previewY = placementOffsetY_;
+                const int previewZ = targetZ + placementOffsetZ_;
+                if (previewX < 0 || previewX >= blocksPerAxis || previewY < 0 || previewY >= blocksPerAxis ||
+                    previewZ < 0 || previewZ >= blocksPerAxis)
+                {
+                    hasHighlight_ = false;
+                }
+                else
+                {
+                    highlightX_ = static_cast<float>(previewX) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+                    highlightY_ = static_cast<float>(previewY);
+                    highlightZ_ = static_cast<float>(previewZ) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+                    placementCellX_ = static_cast<std::uint16_t>(previewX);
+                    placementCellY_ = static_cast<std::uint16_t>(previewY);
+                    placementCellZ_ = static_cast<std::uint16_t>(previewZ);
+                }
+                hitCellX_ = static_cast<std::uint16_t>(targetX);
+                hitCellY_ = 0;
+                hitCellZ_ = static_cast<std::uint16_t>(targetZ);
+                hitNormalX_ = 0;
+                hitNormalY_ = 0;
+                hitNormalZ_ = 0;
+            }
         }
 
         // Editing tools (plan.md EDITOR-103) -- edge-triggered on the
@@ -226,13 +338,6 @@ namespace GalaxyEggbert::CNA
         // (e.g. GEInputPad's "!mouseDown && mouseWasDown_" idiom, just
         // inverted here to trigger on press rather than release since
         // there's no on-screen button geometry to still be hovering over).
-        // Palette/toolbar click handling (plan.md EDITOR-106) -- checked
-        // BEFORE the 3D-world left-click place logic below, same
-        // "inputPadClaimedMouse" idiom GalaxyEggbertCnaGame.cpp's own Play
-        // on-screen D-pad already uses, so a palette icon/toolbar click
-        // doesn't ALSO place a block at the crosshair this same frame.
-        const GEEditorPalette::UpdateResult paletteResult = palette_.Update(mouse, viewportWidth, viewportHeight);
-
         const bool leftHeld = mouse.getLeftButtonProperty() == ButtonState::Pressed;
         const bool middleHeld = mouse.getMiddleButtonProperty() == ButtonState::Pressed;
         const bool enterHeld = keyboard.IsKeyDown(Keys::Enter);
@@ -269,12 +374,15 @@ namespace GalaxyEggbert::CNA
         }
 
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-        if (leftHeld && !leftHeldLastFrame_ && !paletteResult.clickConsumed && hasHighlight_ &&
+        const bool placeSelectionRequested =
+            (leftHeld && !leftHeldLastFrame_ && !paletteResult.clickConsumed) ||
+            paletteResult.action == GEEditorPalette::ToolbarAction::PlaceSelection;
+        if (placeSelectionRequested && hasHighlight_ &&
             !boxFirstCornerPlaced_)
         {
-            const int placeX = static_cast<int>(hitCellX_) + hitNormalX_;
-            const int placeY = static_cast<int>(hitCellY_) + hitNormalY_;
-            const int placeZ = static_cast<int>(hitCellZ_) + hitNormalZ_;
+            const int placeX = placementCellX_;
+            const int placeY = placementCellY_;
+            const int placeZ = placementCellZ_;
             if (placeX >= 0 && placeX < blocksPerAxis &&
                 placeY >= 0 && placeY < blocksPerAxis &&
                 placeZ >= 0 && placeZ < blocksPerAxis)
@@ -318,7 +426,7 @@ namespace GalaxyEggbert::CNA
                 MarkMutated();
             }
         }
-        else if (middleHeld && !middleHeldLastFrame_ && !paletteResult.clickConsumed && hasHighlight_ &&
+        else if (middleHeld && !middleHeldLastFrame_ && !paletteResult.clickConsumed && hasRaycastHit_ &&
                  !boxFirstCornerPlaced_)
         {
             const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
@@ -594,6 +702,7 @@ namespace GalaxyEggbert::CNA
         deleteObjectKeyHeldLastFrame_ = deleteObjectKeyHeld;
         skyRegionPrevKeyHeldLastFrame_ = skyRegionPrevKeyHeld;
         skyRegionNextKeyHeldLastFrame_ = skyRegionNextKeyHeld;
+        placementOffsetKeyHeldLastFrame_ = placementOffsetKeyHeld;
     }
 
     std::optional<MoveObjectRecord> GEWorldEditor::ApplyActiveFieldDelta(
@@ -709,6 +818,6 @@ namespace GalaxyEggbert::CNA
         }
 
         palette_.Draw(device, terrainTexture, elementTexture, exploTexture, blupiTexture, blupi1Texture,
-                      viewportWidth, viewportHeight, backConfirmArmed_);
+                      viewportWidth, viewportHeight, backConfirmArmed_, hasHighlight_);
     }
 }

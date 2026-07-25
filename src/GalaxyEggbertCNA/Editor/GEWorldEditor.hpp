@@ -112,7 +112,7 @@ namespace GalaxyEggbert::CNA
         // is hidden from the OS; releasing it frees the cursor again for
         // left/middle-click tool handling. WASD move along the camera's
         // own forward/right axes, Space/Left Ctrl move along world
-        // up/down, the scroll wheel adjusts fly speed.
+        // up/down, the scroll wheel zooms the camera in/out.
         //
         // Editing tools (edge-triggered, once per press -- RMB is already
         // taken by camera look, so this deliberately isn't the usual
@@ -251,6 +251,12 @@ namespace GalaxyEggbert::CNA
 
         GEEditorHighlightRenderer highlightRenderer_;
         bool hasHighlight_ = false;
+        // A fresh custom world has no solid voxels for the DDA raycast to
+        // hit. In that case Update() projects the aim ray onto y=0 and
+        // exposes that valid first-placement cell through hasHighlight_,
+        // while this flag preserves whether middle-click may remove a real
+        // hit voxel.
+        bool hasRaycastHit_ = false;
         float highlightX_ = 0.0f;
         float highlightY_ = 0.0f;
         float highlightZ_ = 0.0f;
@@ -264,6 +270,20 @@ namespace GalaxyEggbert::CNA
         std::int8_t hitNormalX_ = 0;
         std::int8_t hitNormalY_ = 0;
         std::int8_t hitNormalZ_ = 0;
+
+        // The ray supplies a base adjacent cell. The author can move the
+        // pending placement from that base with NumPad 4/6 (X), 8/2 (Z),
+        // and 7/9 (Y), or with the matching on-screen X/Y/Z touch buttons;
+        // NumPad 5 resets it. Keeping base and resulting cell separate
+        // makes preview, mouse/touch placement and box-fill use exactly the
+        // same destination.
+        int placementOffsetX_ = 0;
+        int placementOffsetY_ = 0;
+        int placementOffsetZ_ = 0;
+        std::uint16_t placementCellX_ = 0;
+        std::uint16_t placementCellY_ = 0;
+        std::uint16_t placementCellZ_ = 0;
+        bool placementOffsetKeyHeldLastFrame_ = false;
 
         bool leftHeldLastFrame_ = false;
         bool middleHeldLastFrame_ = false;

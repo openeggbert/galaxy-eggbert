@@ -728,7 +728,11 @@ namespace GalaxyEggbert::CNA
         // there's no real progression state to carry between play-test runs.
         interaction_ = GEInteractionSystem();
         blupi_ = GEBlupiController();
-        blupi_.SetPosition(0.0f, 1.0f, 0.0f); // same fixed spawn convention every hand-authored world shares
+        // New editor worlds use the opposite edge of their 3x3 starter
+        // board as Blupi's spawn (the chest is centred and the exit arrow
+        // occupies the other edge). Existing custom worlds continue to be
+        // valid with this fixed, documented editor spawn convention too.
+        blupi_.SetPosition(kEditorStarterSpawnRenderX, kEditorStarterSpawnY, kEditorStarterSpawnRenderZ);
 
         editorPlayTestActive_ = true;
         editorPlayTestWorldPath_ = path;
@@ -1550,7 +1554,7 @@ namespace GalaxyEggbert::CNA
                     {
                         const std::filesystem::path newPath =
                             NextNewWorldPath(saveData_.GetSelectedGamer());
-                        GalaxyEggbert::Worlds::World().saveToFile(newPath);
+                        CreateEditorStarterWorld().saveToFile(newPath);
                         LoadCustomWorldForEditing(newPath);
                     }
                 }

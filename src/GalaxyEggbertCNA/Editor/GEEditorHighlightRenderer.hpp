@@ -61,6 +61,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<Easy3D::CubeMeshRenderer> mesh_;
         bool visible_ = false;
+        bool hasWireframeEdges_ = false;
         bool hasLastBounds_ = false;
         float lastMinX_ = 0.0f, lastMinY_ = 0.0f, lastMinZ_ = 0.0f;
         float lastMaxX_ = 0.0f, lastMaxY_ = 0.0f, lastMaxZ_ = 0.0f;

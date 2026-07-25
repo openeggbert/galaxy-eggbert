@@ -10,7 +10,24 @@ namespace GalaxyEggbert::CNA
     struct PaletteCategory
     {
         std::string name;
+        // The original Free Eggbert editor uses button.png for both the
+        // permanent rail and the opened row. Keep those source icon ids
+        // alongside Galaxy's selectable block/object ids so the 3D editor
+        // preserves the original menu's visual order.
+        int buttonIconId = 0;
+        // A zero entry means that the matching button.png glyph has no
+        // verified Galaxy implementation yet.  It deliberately remains in
+        // the menu (in the original Eggbert 2 position); clicking it shows
+        // the temporary "Not yet implemented." notice instead of silently
+        // selecting an unrelated 3D item.
         std::vector<int> iconIds;
+        // Per-entry MoveObject counterpart. Exactly one of iconIds[i]
+        // (voxel block) and objectTypeIds[i] (placed object) is normally
+        // non-zero. This lets the faithful Eggbert 2 menu mix terrain,
+        // hazards, collectibles, enemies and vehicles without a hidden
+        // global Blocks/Objects toggle.
+        std::vector<int> objectTypeIds;
+        std::vector<int> buttonIconIds;
     };
 
     // Hand-curated categories built ONLY from BlockTypes.hpp's own already-

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <GalaxyEggbert/Worlds/World.hpp>
+
 #include <filesystem>
 #include <vector>
 
@@ -27,4 +29,14 @@ namespace GalaxyEggbert::CNA
     // creates the directory if it doesn't exist yet, but does NOT create
     // the file itself; the caller still saves a real World there.
     [[nodiscard]] std::filesystem::path NextNewWorldPath(int gamerSlot);
+
+    // The first scene a new Galaxy 3D editor world opens with. It is a
+    // compact playable tutorial rather than an all-air volume: a 3x3 Rock
+    // Pile board, treasure chest, exit arrow and a clear Blupi start at the
+    // opposite edge. World files do not encode a spawn point, so callers
+    // use EditorStarterSpawn* below for both editing and play-test.
+    [[nodiscard]] GalaxyEggbert::Worlds::World CreateEditorStarterWorld();
+    constexpr float kEditorStarterSpawnRenderX = 1.0f;
+    constexpr float kEditorStarterSpawnY = 1.0f;
+    constexpr float kEditorStarterSpawnRenderZ = 0.0f;
 }

@@ -4,6 +4,8 @@
 #include <Easy3D/CubeMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
+#include <Microsoft/Xna/Framework/Graphics/FillMode.hpp>
+#include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 
 namespace GalaxyEggbert::CNA
 {
@@ -12,17 +14,20 @@ namespace GalaxyEggbert::CNA
         // Slightly larger than a real 1x1x1 block so the single-cell
         // highlight doesn't z-fight with the actual terrain face it's
         // tracking.
-        constexpr float kCellHighlightPadding = 0.05f;
+        constexpr float kCellHighlightPadding = 0.10f;
     }
 
     void GEEditorHighlightRenderer::ShowCell(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                              float centerX, float centerY, float centerZ)
     {
         const float half = 0.5f + kCellHighlightPadding * 0.5f;
-        // Translucent cyan -- reads clearly against both terrain and sky.
+        // The 3D equivalent of Eggbert 2's red target square: a translucent
+        // red cube whose opaque wireframe edges make its exact boundaries
+        // readable against any terrain texture.
         Rebuild(device, centerX - half, centerY - half, centerZ - half,
                 centerX + half, centerY + half, centerZ + half,
-                0.2f, 0.9f, 1.0f);
+                1.0f, 0.08f, 0.08f);
+        hasWireframeEdges_ = true;
     }
 
     void GEEditorHighlightRenderer::ShowBox(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -36,6 +41,7 @@ namespace GalaxyEggbert::CNA
         Rebuild(device, minCenterX - half, minCenterY - half, minCenterZ - half,
                 maxCenterX + half, maxCenterY + half, maxCenterZ + half,
                 1.0f, 0.9f, 0.2f);
+        hasWireframeEdges_ = false;
     }
 
     void GEEditorHighlightRenderer::ShowSelectedObject(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -47,6 +53,7 @@ namespace GalaxyEggbert::CNA
         Rebuild(device, centerX - half, centerY - half, centerZ - half,
                 centerX + half, centerY + half, centerZ + half,
                 1.0f, 0.25f, 0.85f);
+        hasWireframeEdges_ = false;
     }
 
     void GEEditorHighlightRenderer::Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -109,7 +116,19 @@ namespace GalaxyEggbert::CNA
 
         device.setBlendStateProperty(BlendState::NonPremultiplied);
         device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        effect_->setAlphaProperty(hasWireframeEdges_ ? 0.08f : 0.35f);
         mesh_->Draw(device, *effect_);
+        if (hasWireframeEdges_)
+        {
+            Microsoft::Xna::Framework::Graphics::RasterizerState wireframe;
+            wireframe.setCullModeProperty(Microsoft::Xna::Framework::Graphics::CullMode::None);
+            wireframe.setFillModeProperty(Microsoft::Xna::Framework::Graphics::FillMode::WireFrame);
+            device.setRasterizerStateProperty(wireframe);
+            effect_->setAlphaProperty(1.0f);
+            mesh_->Draw(device, *effect_);
+            device.setRasterizerStateProperty(
+                Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+        }
         device.setDepthStencilStateProperty(DepthStencilState::Default);
         device.setBlendStateProperty(BlendState::Opaque);
     }

@@ -1,5 +1,8 @@
 #include "GECustomWorldStorage.hpp"
 
+#include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
+
 #include <algorithm>
 #include <cstdio>
 #include <string>
@@ -64,5 +67,39 @@ namespace GalaxyEggbert::CNA
         // back to a timestamp-free sequential overflow name rather than
         // silently reusing/overwriting an existing one.
         return dir / "custom_overflow.vwr";
+    }
+
+    GalaxyEggbert::Worlds::World CreateEditorStarterWorld()
+    {
+        using GalaxyEggbert::MoveObjectRecord;
+        using GalaxyEggbert::ObjectType;
+        using GalaxyEggbert::PlaceMoveObject;
+        using GalaxyEggbert::Worlds::Block;
+
+        GalaxyEggbert::Worlds::World world;
+        constexpr std::uint16_t kCenter = 50;
+        for (std::uint16_t x = kCenter - 1; x <= kCenter + 1; ++x)
+        {
+            for (std::uint16_t z = kCenter - 1; z <= kCenter + 1; ++z)
+            {
+                world.setBlock(x, 0, z, Block::make(GalaxyEggbert::BlockTypes::RockPile));
+            }
+        }
+
+        const auto placeStationary = [&world](ObjectType type, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+        {
+            MoveObjectRecord record;
+            record.type = type;
+            record.posStartX = static_cast<float>(x);
+            record.posStartY = static_cast<float>(y);
+            record.posStartZ = static_cast<float>(z);
+            record.posEndX = record.posStartX;
+            record.posEndY = record.posStartY;
+            record.posEndZ = record.posStartZ;
+            PlaceMoveObject(world, record);
+        };
+        placeStationary(ObjectType::ObjectType5, kCenter, 1, kCenter);       // chest in the centre
+        placeStationary(ObjectType::ObjectType7, kCenter - 1, 1, kCenter);   // exit arrow at one edge
+        return world;
     }
 }
