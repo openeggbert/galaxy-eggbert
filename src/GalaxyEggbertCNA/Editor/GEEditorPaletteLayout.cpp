@@ -42,6 +42,13 @@ namespace GalaxyEggbert::CNA
 
     GEQuadBatch::Rect GEEditorPaletteLayout::CategoryButtonRect(int categoryIndex) const noexcept
     {
+        if (categoryIndex == GalaxyBackgroundCategoryIndex)
+        {
+            return {
+                kMenuX + kButtonSize + kGap, kMenuY,
+                kMenuX + 2.0f * kButtonSize + kGap, kMenuY + kButtonSize,
+            };
+        }
         const float y = kCategoryY + static_cast<float>(categoryIndex) * (kButtonSize + kGap);
         return {kMenuX, y, kMenuX + kButtonSize, y + kButtonSize};
     }
@@ -131,16 +138,19 @@ namespace GalaxyEggbert::CNA
         };
     }
 
-    int GEEditorPaletteLayout::PopupColumnCount(int viewportWidth) const noexcept
+    int GEEditorPaletteLayout::PopupColumnCount(
+        int viewportWidth, int openCategory) const noexcept
     {
-        const float available = static_cast<float>(viewportWidth) - kPopupX - kMenuX;
+        const float popupX = openCategory == GalaxyBackgroundCategoryIndex ?
+            kPopupX + kButtonSize + kGap : kPopupX;
+        const float available = static_cast<float>(viewportWidth) - popupX - kMenuX;
         return std::max(1, static_cast<int>(available / (kButtonSize + kGap)));
     }
 
     float GEEditorPaletteLayout::PopupOriginY(
         int itemCount, int openCategory, int viewportWidth, int viewportHeight) const noexcept
     {
-        const int columns = PopupColumnCount(viewportWidth);
+        const int columns = PopupColumnCount(viewportWidth, openCategory);
         const int rows = std::max(1, (itemCount + columns - 1) / columns);
         const float popupHeight = static_cast<float>(rows) * kButtonSize +
             static_cast<float>(rows - 1) * kGap;
@@ -152,10 +162,12 @@ namespace GalaxyEggbert::CNA
         int itemIndex, int itemCount, int openCategory,
         int viewportWidth, int viewportHeight) const noexcept
     {
-        const int columns = PopupColumnCount(viewportWidth);
+        const int columns = PopupColumnCount(viewportWidth, openCategory);
         const int column = itemIndex % columns;
         const int row = itemIndex / columns;
-        const float x = kPopupX + static_cast<float>(column) * (kButtonSize + kGap);
+        const float popupX = openCategory == GalaxyBackgroundCategoryIndex ?
+            kPopupX + kButtonSize + kGap : kPopupX;
+        const float x = popupX + static_cast<float>(column) * (kButtonSize + kGap);
         const float y = PopupOriginY(
             itemCount, openCategory, viewportWidth, viewportHeight) +
             static_cast<float>(row) * (kButtonSize + kGap);

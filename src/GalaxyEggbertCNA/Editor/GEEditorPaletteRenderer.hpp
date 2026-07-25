@@ -19,9 +19,11 @@ namespace GalaxyEggbert::CNA
             const std::vector<int>& contentBlockIds;
             const std::vector<int>& contentObjectTypeIds;
             const std::vector<int>& contentButtonIconIds;
+            const std::vector<int>& contentSkyRegionIds;
             int openCategory = -1;
             int selectedBlockType = 0;
             int selectedObjectType = 0;
+            int selectedSkyRegion = 0;
             bool objectMode = false;
             bool noticeVisible = false;
             bool stopConfirmArmed = false;

@@ -92,6 +92,7 @@ namespace GalaxyEggbert::CNA
         Easy3D::Camera3D& camera, Worlds::World& world)
     {
         const Easy3D::Camera3D::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera);
+        palette_.SetSelectedSkyRegion(world.skyRegion());
         const GEEditorPalette::UpdateResult paletteResult =
             palette_.Update(mouse, viewportWidth, viewportHeight, dt);
         const bool placementOffsetKeyHeld =
@@ -108,6 +109,7 @@ namespace GalaxyEggbert::CNA
         {
             (void)HandleObjectEditing(input, camera, viewportWidth, viewportHeight, world);
         }
+        palette_.SetSelectedSkyRegion(world.skyRegion());
         StoreInputEdges(input, placementOffsetKeyHeld);
     }
 

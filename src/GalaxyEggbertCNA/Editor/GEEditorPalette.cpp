@@ -20,6 +20,7 @@ namespace GalaxyEggbert::CNA
           selectedBlockType_(static_cast<int>(GalaxyEggbert::BlockTypes::RockPile)),
           selectedObjectType_(static_cast<int>(ObjectType::ObjectType6))
     {
+        categories_.push_back(GalaxyBackgroundCategory());
     }
 
     const PaletteCategory* GEEditorPalette::OpenCategory() const noexcept
@@ -44,6 +45,12 @@ namespace GalaxyEggbert::CNA
     {
         const PaletteCategory* category = OpenCategory();
         return category ? category->buttonIconIds : EmptyIds();
+    }
+
+    const std::vector<int>& GEEditorPalette::ContentSkyRegionIds() const noexcept
+    {
+        const PaletteCategory* category = OpenCategory();
+        return category ? category->skyRegionIds : EmptyIds();
     }
 
     GEEditorPalette::UpdateResult GEEditorPalette::Update(
@@ -104,7 +111,15 @@ namespace GalaxyEggbert::CNA
             {
                 const auto& blockIds = ContentBlockIds();
                 const auto& objectIds = ContentObjectTypeIds();
+                const auto& skyRegionIds = ContentSkyRegionIds();
                 const int index = pointer.index;
+                if (index >= 0 && index < static_cast<int>(skyRegionIds.size()))
+                {
+                    result.action = Action::SelectSkyRegion;
+                    result.skyRegion = skyRegionIds[static_cast<std::size_t>(index)];
+                    selectedSkyRegion_ = result.skyRegion;
+                    break;
+                }
                 const int blockType = index >= 0 && index < static_cast<int>(blockIds.size()) ?
                     blockIds[static_cast<std::size_t>(index)] : 0;
                 const int objectType = index >= 0 && index < static_cast<int>(objectIds.size()) ?
@@ -144,9 +159,11 @@ namespace GalaxyEggbert::CNA
             ContentBlockIds(),
             ContentObjectTypeIds(),
             ContentButtonIconIds(),
+            ContentSkyRegionIds(),
             openCategory_,
             selectedBlockType_,
             selectedObjectType_,
+            selectedSkyRegion_,
             objectMode_,
             notYetImplementedSeconds_ > 0.0f,
             stopConfirmArmed,

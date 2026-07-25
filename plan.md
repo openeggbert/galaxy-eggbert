@@ -5701,7 +5701,7 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-119` are implemented and tested. The editor's
+`EDITOR-112`) and follow-up tasks through `EDITOR-120` are implemented and tested. The editor's
 input, rendering, orchestration, and verification are separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -5925,6 +5925,20 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       rectangle with horizontal and vertical padding, preserving legibility against both dark and
       detailed world backgrounds. The layout owns and viewport-clips the backdrop geometry so it
       also remains valid above the wrapped controls on narrow displays.
+- [x] **EDITOR-120 — expose background selection directly in the editor menu.**
+      **Done 2026-07-25:** a Galaxy-only globe glyph from `button.png` follows the ten untouched
+      Eggbert 2 source groups. Because those ten 40px groups already fill the 480px left rail, the
+      extra glyph sits beside the top delete control instead of shrinking, reordering, or moving
+      the source groups. It opens all 32 `skyRegion` choices as numbered, center-cropped live
+      thumbnails; regions 5/14/17/23 use the same blue fallback as the world renderer because no
+      corresponding source image exists. The chosen region has a gold border and the popup stays
+      open for rapid visual comparison.
+      Selection routes through the existing `SkyRegionEdit` command rather than a second mutation
+      path, so immediate presentation rebuild, undo/redo, dirty-state protection, save, and
+      play-test persistence retain their established behavior. Palette and editor integration
+      tests cover ordering, narrow-screen visibility, exact id selection, immediate rebuild,
+      undo/redo, and save/reload. A real 800×480 X11 screenshot confirmed the two-row thumbnail
+      layout and selected-region border; the temporary capture-only entry hook was fully removed.
 
 ### Known problems / open concerns
 

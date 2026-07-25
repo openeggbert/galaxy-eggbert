@@ -456,6 +456,30 @@ namespace GalaxyEggbert::CNA
 
     bool GEWorldEditor::HandleSkyRegion(const FrameInput& input, Worlds::World& world)
     {
+        constexpr std::uint32_t kRegionCount = 32;
+        const std::uint32_t before = world.skyRegion();
+        if (input.palette.action == GEEditorPalette::Action::SelectSkyRegion)
+        {
+            if (input.palette.skyRegion < 0 ||
+                input.palette.skyRegion >= static_cast<int>(kRegionCount))
+            {
+                return true;
+            }
+            const auto after = static_cast<std::uint32_t>(input.palette.skyRegion);
+            if (after == before)
+            {
+                return true;
+            }
+            world.setSkyRegion(after);
+            GEEditCommand command;
+            command.kind = GEEditCommand::Kind::SkyRegionEdit;
+            command.skyRegionBefore = before;
+            command.skyRegionAfter = after;
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+            return true;
+        }
+
         int direction = 0;
         if (input.skyPreviousHeld && !skyRegionPrevKeyHeldLastFrame_)
         {
@@ -470,8 +494,6 @@ namespace GalaxyEggbert::CNA
             return false;
         }
 
-        constexpr std::uint32_t kRegionCount = 32;
-        const std::uint32_t before = world.skyRegion();
         const std::uint32_t after = direction < 0 ?
             (before + kRegionCount - 1) % kRegionCount :
             (before + 1) % kRegionCount;

@@ -17,9 +17,9 @@ content-authoring UX, but not new gameplay mechanics.
 
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
-- All approved world-editor milestones (`EDITOR-100` through `EDITOR-112`) are complete: per-gamer
-  custom worlds, palette, raycast editing, object editing, undo/redo, box fill, sky-region choice,
-  save and play-test loop, and unsaved-change protection.
+- All approved world-editor milestones and follow-ups through `EDITOR-120` are complete: per-gamer
+  custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
+  menu-based sky-region thumbnails, save and play-test loop, and unsaved-change protection.
 - Linux native, Vulkan native, and the debug build are maintained. A MinGW-w64 cross-build of
   `GalaxyEggbertCNA.exe` (SDL_Renderer) is confirmed. Its output now stages SDL3 and MinGW thread
   runtime DLLs beside the executable while statically linking GCC/C++. A Wine launch reaches
@@ -38,7 +38,7 @@ As of the date above, rebuilding and testing the current source succeeds on all 
 
 | Build | Result |
 |---|---|
-| `build-cna` (EasyGL) | 81 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
+| `build-cna` (EasyGL) | 84 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
 | `build-cna-vulkan` | 79/79 pass |
 | `cmake-build-debug` | 81 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
 
@@ -56,8 +56,8 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 - The packaged Windows `SDL_RENDERER` build cannot run the 3D game yet: Wine reaches real startup,
   then CNA throws `SDL_Renderer does not support 3D: CreateVertexBuffer`. Choose and verify a real
   Windows 3D backend before calling this platform supported.
-- Editor text rendering is deliberately absent; every editor operation remains usable through icons,
-  color, and keyboard bindings.
+- Editor text is deliberately limited to functional readouts/notices (XYZ coordinates, background
+  ids, and the temporary not-implemented message); the main tool palette remains icon-driven.
 - Intermittent window-focus/input loss has occurred under Xvfb/live verification. It has not been
   reproduced as a Galaxy Eggbert code defect.
 
@@ -72,6 +72,8 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 ### Ready for an explicitly chosen engineering session
 
+- `EDITOR-121`: make the visible top-left delete glyph perform a real editor removal action; it
+  currently only shows the two-second not-implemented notice.
 - `INFRA-006`: partial `ObjectType` dispatch migration. Seven isolated families/extractions are done;
   the remaining cases were surveyed and mostly have genuine per-type divergence. Select a specific
   candidate before changing it—do not turn it into a broad refactor.

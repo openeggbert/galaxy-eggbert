@@ -84,6 +84,23 @@ namespace GalaxyEggbert::CNA
         return ids;
     }
 
+    PaletteCategory GalaxyBackgroundCategory()
+    {
+        constexpr int kBackgroundButtonIcon = 77;
+        PaletteCategory category;
+        category.name = "Background";
+        category.buttonIconId = kBackgroundButtonIcon;
+        category.buttonIconIds.assign(32, kBackgroundButtonIcon);
+        category.iconIds.assign(32, 0);
+        category.objectTypeIds.assign(32, 0);
+        category.skyRegionIds.reserve(32);
+        for (int region = 0; region < 32; ++region)
+        {
+            category.skyRegionIds.push_back(region);
+        }
+        return category;
+    }
+
     std::vector<PaletteCategory> ConfirmedObjectCategories()
     {
         return {

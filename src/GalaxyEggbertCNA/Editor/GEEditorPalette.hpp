@@ -30,12 +30,14 @@ namespace GalaxyEggbert::CNA
             PlacementZMinus,
             PlacementZPlus,
             PlaceSelection,
+            SelectSkyRegion,
         };
 
         struct UpdateResult
         {
             Action action = Action::None;
             bool clickConsumed = false;
+            int skyRegion = -1;
         };
 
         GEEditorPalette();
@@ -64,6 +66,11 @@ namespace GalaxyEggbert::CNA
             return ToObjectType(selectedObjectType_);
         }
 
+        void SetSelectedSkyRegion(std::uint32_t skyRegion) noexcept
+        {
+            selectedSkyRegion_ = static_cast<int>(skyRegion);
+        }
+
         void Draw(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             int viewportWidth, int viewportHeight, bool stopConfirmArmed = false,
@@ -75,12 +82,14 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] const std::vector<int>& ContentBlockIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentObjectTypeIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentButtonIconIds() const noexcept;
+        [[nodiscard]] const std::vector<int>& ContentSkyRegionIds() const noexcept;
 
         std::vector<PaletteCategory> categories_;
         int openCategory_ = -1;
         int selectedBlockType_;
         int selectedObjectType_;
         bool objectMode_ = false;
+        int selectedSkyRegion_ = 0;
         float notYetImplementedSeconds_ = 0.0f;
 
         GEEditorPaletteLayout layout_;

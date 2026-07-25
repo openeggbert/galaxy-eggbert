@@ -9,6 +9,7 @@ namespace GalaxyEggbert::CNA
     public:
         static constexpr int PlacementButtonCount = 7;
         static constexpr int PlacementPlaceIndex = 6;
+        static constexpr int GalaxyBackgroundCategoryIndex = 10;
 
         [[nodiscard]] GEQuadBatch::Rect DeleteToolRect() const noexcept;
         [[nodiscard]] GEQuadBatch::Rect PlayTestRect(int viewportWidth, int viewportHeight) const noexcept;
@@ -25,7 +26,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] GEQuadBatch::Rect PaletteCellRect(
             int itemIndex, int itemCount, int openCategory,
             int viewportWidth, int viewportHeight) const noexcept;
-        [[nodiscard]] int PopupColumnCount(int viewportWidth) const noexcept;
+        [[nodiscard]] int PopupColumnCount(
+            int viewportWidth, int openCategory = -1) const noexcept;
         [[nodiscard]] float PopupOriginY(
             int itemCount, int openCategory, int viewportWidth, int viewportHeight) const noexcept;
     };

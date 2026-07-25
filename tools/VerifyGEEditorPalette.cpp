@@ -6,6 +6,7 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <cstdio>
 #include <iostream>
 #include <set>
 
@@ -15,6 +16,7 @@ int main()
     using GalaxyEggbert::Worlds::World;
     using Microsoft::Xna::Framework::Input::ButtonState;
     using Microsoft::Xna::Framework::Input::KeyboardState;
+    using Microsoft::Xna::Framework::Input::Keys;
     using Microsoft::Xna::Framework::Input::MouseState;
 
     bool allOk = true;
@@ -30,9 +32,13 @@ int main()
     check(allBlockIds.front() == 1 && allBlockIds.back() == 440,
           "AllBlockIconIdsInOrder() is in order from 1 through 440");
 
+    const auto sourceCategories = ConfirmedBlockCategories();
+    check(sourceCategories.size() ==
+              static_cast<std::size_t>(GEEditorPaletteLayout::GalaxyBackgroundCategoryIndex),
+          "the background group follows all ten Eggbert 2 source groups");
     bool blocksInRange = true;
     int curatedBlockCount = 0;
-    for (const auto& category : ConfirmedBlockCategories())
+    for (const auto& category : sourceCategories)
     {
         check(!category.name.empty(), "every curated category has a non-empty name");
         curatedBlockCount += static_cast<int>(category.buttonIconIds.size());
@@ -46,14 +52,27 @@ int main()
     }
     check(blocksInRange, "every curated category's block ids are valid");
     check(curatedBlockCount > 0, "at least one curated block entry exists");
+    const auto backgroundCategory = GalaxyBackgroundCategory();
+    check(backgroundCategory.skyRegionIds.size() == 32 &&
+              backgroundCategory.skyRegionIds.front() == 0 &&
+              backgroundCategory.skyRegionIds.back() == 31,
+          "the Galaxy-only background group exposes all 32 sky regions in order");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
+    const MouseState restMouse(
+        0, 0, 0, ButtonState::Released, ButtonState::Released,
+        ButtonState::Released, ButtonState::Released, ButtonState::Released);
 
     {
         const GEEditorPaletteLayout layout;
         check(layout.CategoryButtonRect(0).x0 == 10.0f,
               "the source category rail starts at the expected left edge");
+        const auto backgroundButton = layout.CategoryButtonRect(
+            GEEditorPaletteLayout::GalaxyBackgroundCategoryIndex);
+        check(backgroundButton.x0 == layout.DeleteToolRect().x1 + 2.0f &&
+                  backgroundButton.y0 == layout.DeleteToolRect().y0,
+              "the Galaxy background group leaves all ten source-group positions unchanged");
         check(layout.PlayTestRect(kViewportWidth, kViewportHeight).x1 <=
                   layout.StopRect(kViewportWidth, kViewportHeight).x0,
               "play-test and stop occupy separate visible bottom-right buttons");
@@ -63,6 +82,12 @@ int main()
               "narrow screens wrap the placement action onto another row");
         check(layout.PaletteCellRect(7, 8, 7, 360, 480).y1 <= 480.0f,
               "the complete eight-entry source group remains visible on a narrow screen");
+        const auto lastNarrowBackground = layout.PaletteCellRect(
+            31, 32, GEEditorPaletteLayout::GalaxyBackgroundCategoryIndex, 360, 480);
+        check(lastNarrowBackground.x0 >= backgroundButton.x1 &&
+                  lastNarrowBackground.x1 <= 360.0f &&
+                  lastNarrowBackground.y1 <= 480.0f,
+              "all 32 background choices remain visible on a narrow screen");
 
         const auto wideCoordinates =
             layout.PlacementCoordinatesRect(120.0f, 16.0f, 800, 480);
@@ -105,6 +130,21 @@ int main()
         (void)palette.Update(down, kViewportWidth, kViewportHeight);
         return palette.Update(up, kViewportWidth, kViewportHeight);
     };
+
+    {
+        GEEditorPalette palette;
+        const auto openBackground = click(palette, 72.0f, 30.0f);
+        check(openBackground.clickConsumed,
+              "the Galaxy background representative consumes its click");
+        const auto region7 = click(palette, 408.0f, 30.0f);
+        check(region7.action == GEEditorPalette::Action::SelectSkyRegion &&
+                  region7.skyRegion == 7,
+              "a background thumbnail reports its exact sky-region id");
+        const auto region31 = click(palette, 744.0f, 72.0f);
+        check(region31.action == GEEditorPalette::Action::SelectSkyRegion &&
+                  region31.skyRegion == 31,
+              "the background popup stays open for immediate visual comparison");
+    }
 
     {
         GEEditorPalette palette;
@@ -216,6 +256,50 @@ int main()
               "the first Technical block selects verified block type 2");
         check(palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType5,
               "block selection preserves the object selection");
+    }
+
+    {
+        constexpr const char* kBackgroundSavePath =
+            "verify_ge_editor_palette_background.vwr";
+        World world;
+        world.setSkyRegion(3);
+        GEWorldEditor editor;
+        editor.SetWorldPath(kBackgroundSavePath);
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+        const auto tap = [&](int x, int y)
+        {
+            const MouseState down(
+                x, y, 0, ButtonState::Pressed, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            const MouseState up(
+                x, y, 0, ButtonState::Released, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        const auto pressKey = [&](Keys key)
+        {
+            editor.Update(KeyboardState{key}, restMouse, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        };
+
+        tap(72, 30);
+        tap(366, 30);
+        check(world.skyRegion() == 6,
+              "the seventh thumbnail applies sky region 6 to the live world");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "a thumbnail selection immediately rebuilds the background presentation");
+        pressKey(Keys::U);
+        check(world.skyRegion() == 3,
+              "undo restores the background from before the thumbnail selection");
+        pressKey(Keys::R);
+        check(world.skyRegion() == 6,
+              "redo restores the background thumbnail selection");
+        pressKey(Keys::Enter);
+        check(World::loadFromFile(kBackgroundSavePath).skyRegion() == 6,
+              "saving persists the background chosen from the menu");
+        std::remove(kBackgroundSavePath);
     }
 
     {

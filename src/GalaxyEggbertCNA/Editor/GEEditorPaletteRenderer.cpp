@@ -8,6 +8,7 @@
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
 
+#include <array>
 #include <cstdio>
 #include <filesystem>
 
@@ -26,6 +27,7 @@ namespace GalaxyEggbert::CNA
         constexpr float kGlyphAdvance = 17.0f;
         constexpr float kTextScale = 0.5f;
         constexpr float kSelectionPadding = 3.0f;
+        constexpr int kSkyRegionCount = 32;
 
         Microsoft::Xna::Framework::Vector3 ButtonGreen()
         {
@@ -85,6 +87,11 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> textTexture;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> skyEffect;
+        std::unique_ptr<Easy3D::BillboardMeshRenderer> skyRenderer;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>,
+                   kSkyRegionCount> skyTextures;
+        std::array<bool, kSkyRegionCount> skyTextureAttempted{};
     };
 
     GEEditorPaletteRenderer::GEEditorPaletteRenderer()
@@ -168,9 +175,13 @@ namespace GalaxyEggbert::CNA
                     state.contentObjectTypeIds[static_cast<std::size_t>(i)] : 0;
                 const int blockType = i < static_cast<int>(state.contentBlockIds.size()) ?
                     state.contentBlockIds[static_cast<std::size_t>(i)] : 0;
+                const int skyRegion = i < static_cast<int>(state.contentSkyRegionIds.size()) ?
+                    state.contentSkyRegionIds[static_cast<std::size_t>(i)] : -1;
                 const bool selected =
-                    (objectType > 0 && state.objectMode && objectType == state.selectedObjectType) ||
-                    (objectType == 0 && blockType > 0 && !state.objectMode &&
+                    (skyRegion >= 0 && skyRegion == state.selectedSkyRegion) ||
+                    (skyRegion < 0 && objectType > 0 && state.objectMode &&
+                     objectType == state.selectedObjectType) ||
+                    (skyRegion < 0 && objectType == 0 && blockType > 0 && !state.objectMode &&
                      blockType == state.selectedBlockType);
                 if (selected)
                 {
@@ -227,6 +238,10 @@ namespace GalaxyEggbert::CNA
         {
             for (int i = 0; i < itemCount; ++i)
             {
+                if (i < static_cast<int>(state.contentSkyRegionIds.size()))
+                {
+                    continue;
+                }
                 appendButtonIcon(
                     buttonQuads, state.contentButtonIconIds[static_cast<std::size_t>(i)],
                     layout.PaletteCellRect(
@@ -236,6 +251,102 @@ namespace GalaxyEggbert::CNA
         GEQuadBatch::FlushQuads(
             device, *impl_->buttonEffect, impl_->buttonRenderer, buttonQuads,
             viewportWidth, viewportHeight, 1.0f);
+
+        if (!state.contentSkyRegionIds.empty())
+        {
+            if (!impl_->skyEffect)
+            {
+                impl_->skyEffect = std::make_unique<BasicEffect>(device);
+                impl_->skyEffect->VertexColorEnabled = false;
+                impl_->skyEffect->setTextureEnabledProperty(true);
+            }
+
+            std::vector<GEQuadBatch::Quad> missingSkyRegions;
+            for (int i = 0; i < static_cast<int>(state.contentSkyRegionIds.size()); ++i)
+            {
+                const int region = state.contentSkyRegionIds[static_cast<std::size_t>(i)];
+                if (region < 0 || region >= kSkyRegionCount)
+                {
+                    continue;
+                }
+                const std::size_t regionIndex = static_cast<std::size_t>(region);
+                if (!impl_->skyTextureAttempted[regionIndex])
+                {
+                    impl_->skyTextureAttempted[regionIndex] = true;
+                    char backgroundPath[64];
+                    std::snprintf(
+                        backgroundPath, sizeof(backgroundPath),
+                        "Content/backgrounds/decor%03d.png", region);
+                    if (std::filesystem::exists(backgroundPath))
+                    {
+                        impl_->skyTextures[regionIndex] =
+                            std::make_unique<Texture2D>(backgroundPath, device);
+                    }
+                }
+
+                const GEQuadBatch::Rect cell = layout.PaletteCellRect(
+                    i, itemCount, state.openCategory, viewportWidth, viewportHeight);
+                if (impl_->skyTextures[regionIndex])
+                {
+                    // The source image is 4:3. Crop its horizontal edges
+                    // instead of squeezing it into the square menu cell.
+                    const std::vector<GEQuadBatch::Quad> thumbnail = {
+                        {cell.x0, cell.y0, cell.x1, cell.y1,
+                         0.125f, 0.0f, 0.875f, 1.0f},
+                    };
+                    impl_->skyEffect->setTextureProperty(
+                        impl_->skyTextures[regionIndex].get());
+                    GEQuadBatch::FlushQuads(
+                        device, *impl_->skyEffect, impl_->skyRenderer, thumbnail,
+                        viewportWidth, viewportHeight, 1.0f);
+                }
+                else
+                {
+                    appendSolid(missingSkyRegions, cell);
+                }
+            }
+            impl_->flatEffect->setDiffuseColorProperty(
+                {100.0f / 255.0f, 149.0f / 255.0f, 237.0f / 255.0f});
+            GEQuadBatch::FlushQuads(
+                device, *impl_->flatEffect, impl_->flatRenderer, missingSkyRegions,
+                viewportWidth, viewportHeight, 1.0f);
+
+            if (impl_->textTexture && impl_->textEffect)
+            {
+                const float sheetWidth =
+                    static_cast<float>(impl_->textTexture->getWidthProperty());
+                const float sheetHeight =
+                    static_cast<float>(impl_->textTexture->getHeightProperty());
+                std::vector<GEQuadBatch::Quad> numberBackgrounds;
+                std::vector<GEQuadBatch::Quad> numberLabels;
+                for (int i = 0; i < static_cast<int>(state.contentSkyRegionIds.size()); ++i)
+                {
+                    const int region = state.contentSkyRegionIds[static_cast<std::size_t>(i)];
+                    char label[4];
+                    std::snprintf(label, sizeof(label), "%d", region);
+                    const GEQuadBatch::Rect cell = layout.PaletteCellRect(
+                        i, itemCount, state.openCategory, viewportWidth, viewportHeight);
+                    const float labelWidth = LabelWidth(label);
+                    numberBackgrounds.push_back({
+                        cell.x0 + 2.0f, cell.y0 + 2.0f,
+                        cell.x0 + labelWidth + 8.0f,
+                        cell.y0 + kGlyphCellPx * kTextScale + 6.0f,
+                        0, 0, 1, 1,
+                    });
+                    AppendLabel(
+                        numberLabels, label, cell.x0 + 5.0f, cell.y0 + 5.0f,
+                        sheetWidth, sheetHeight);
+                }
+                impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
+                GEQuadBatch::FlushQuads(
+                    device, *impl_->flatEffect, impl_->flatRenderer, numberBackgrounds,
+                    viewportWidth, viewportHeight, 0.78f);
+                impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
+                GEQuadBatch::FlushQuads(
+                    device, *impl_->textEffect, impl_->textRenderer, numberLabels,
+                    viewportWidth, viewportHeight, 1.0f);
+            }
+        }
 
         if (state.hasPlacementPreview)
         {

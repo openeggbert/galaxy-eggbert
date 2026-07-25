@@ -22,9 +22,12 @@ code-quality/edge-case audit category is confirmed exhausted for the prior sessi
 one genuinely clean — see §3/§10). Do not manufacture more audit rounds by default; ask the user
 which backlog item to pick up next, or wait for new direction._
 
-_Last updated: 2026-07-23 (autonomous session). The in-game 3D world editor is **COMPLETE**: all 13
-approved milestones (EDITOR-100 through EDITOR-112) are implemented, verified, and pushed. Editor
-work resumed 2026-07-23 by explicit user authorization (was paused 2026-07-19 — see plan.md §6's
+_Last updated: 2026-07-25. The in-game 3D world editor's original plan is **COMPLETE**: all 13
+approved milestones (EDITOR-100 through EDITOR-112) are implemented and verified. User-directed
+follow-up work through EDITOR-120 is also complete, including the Eggbert-ordered palette cleanup,
+XYZ placement controls/readout, object cell alignment, and the Galaxy-only background-thumbnail
+menu. Editor work resumed 2026-07-23 by explicit user authorization (was paused 2026-07-19 — see
+plan.md §6's
 own status note for the full history), then finished the same session: EDITOR-111 (sky-region
 picker) and EDITOR-112 (unsaved-changes guard + a boundary-straddling box-fill test + section
 consolidation) both landed, verified on all 3 native backends. The keyboard-input/window-focus
@@ -32,7 +35,8 @@ concern noted when work was paused is still unresolved — re-confirmed twice mo
 (once before resuming, once again during EDITOR-112's own live-verification attempt, where BOTH
 keyboard and mouse input stopped reaching the game entirely, despite working fine for EDITOR-111's
 live check earlier the same session) — genuinely intermittent, not a code bug, see plan.md §6's
-"Known problems" for the full history. No editor work remains on the approved plan._
+"Known problems" for the full history. No work remains on the original approved plan; any further
+editor work is a separately selected follow-up._
 
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
@@ -57,8 +61,9 @@ third-person).
 **In-game 3D world editor (COMPLETE, see plan.md §6):** `GamePhase::Editor`,
 `src/GalaxyEggbertCNA/Editor/`, a user-requested feature letting each player create, edit, save
 and play-test their own `.vwr` worlds — inspired by free-eggbert's "Own mission" editor. The user
-approved a 13-milestone plan (EDITOR-100..112); **all 13 are done and pushed** as of 2026-07-23 —
-see plan.md §6 for the full write-up (what's built, and a real open concern about keyboard input
+approved a 13-milestone plan (EDITOR-100..112); all 13 are done, and later user-directed
+follow-ups through `EDITOR-120` are implemented — see plan.md §6 for the full write-up (what's
+built, and a real open concern about keyboard input
 possibly being a window-focus issue, re-confirmed twice more as of 2026-07-23, still not a code bug,
 not yet confirmed fixed on a real desktop).
 Note this editor is an explicit, user-approved **exception** to the faithful-remake rule (see
@@ -2037,9 +2042,8 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
 ## 4. Current blocker / main problem
 
 **There is no active build or test failure blocking progress.** `build-cna` builds and passes
-81/82 (the one failure is the pre-existing `easy-gl` dependency test, see §5). The 3D world editor
-line of work is **fully complete** — all 13 approved milestones (EDITOR-100..112) done and pushed
-as of 2026-07-23.
+84 tests with the pre-existing `easy-gl` dependency test excluded (see §5). The original 3D world
+editor plan is fully complete, and user-directed follow-ups through `EDITOR-120` are implemented.
 
 **Resolved 2026-07-19, re-verified 2026-07-23**: `build-cna-vulkan` builds and passes `ctest`
 cleanly through the entire editor line of work (EDITOR-100..112) and every INFRA-*/BUILD-*
@@ -2070,12 +2074,9 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
   (EDITOR-112)~~ — **done 2026-07-23**, see §3/plan.md §6's own `EDITOR-112` entry: Back is now a
   real 2-tap confirm when there are unsaved changes (dirty flag + 2nd-press-to-discard), unchanged
   single-tap otherwise.
-- **Incomplete (world editor, deliberate simplification, documented in the code):** no text
-  rendering anywhere in the editor — toolbar buttons are distinguished by position, and the
-  mode-toggle by color. (Object palette cells now draw real per-type sprites, not flat colors —
-  the multi-atlas `GEObjectIcons::GetObjIcon` plumbing this needed was implemented 2026-07-19, see
-  §3; this is no longer a gap.) Refinable later; not a functional gap (every tool has a working
-  binding).
+- **Deliberately limited editor text:** functional text now covers XYZ coordinates, numbered
+  background thumbnails, browser labels, and the two-second not-implemented notice. The main tool
+  palette remains icon-driven rather than becoming a general text UI.
 - **Resolved 2026-07-19:** `build-cna-vulkan` rebuilt/re-tested (see §4) — 76/76 (100%).
 - **Risky assumption (world editor):** `ObjectType` category names/membership in
   `GEPaletteCategories.cpp` were taken **only** from `ObjectType.hpp`'s own documented comment
@@ -2313,8 +2314,9 @@ user before treating them as permanent beyond it):
 
 ## 8. Next smallest tasks
 
-**The editor plan is complete** (EDITOR-100 through EDITOR-112, all done and pushed as of
-2026-07-23 — see §3/plan.md §6). No further editor tasks remain on the approved plan.
+**The original editor plan is complete** (EDITOR-100 through EDITOR-112, see §3/plan.md §6), and
+the user-directed follow-ups through `EDITOR-120` are implemented. Further editor work is selected
+as a new follow-up rather than silently extending the original plan.
 
 1. ~~EDITOR-111 — Sky-region picker.~~ — **done 2026-07-23**, see §3's own writeup and `plan.md`
    §6's `EDITOR-111` entry for the full history (including the live Xvfb+`xdotool` screenshot
@@ -2327,6 +2329,13 @@ user before treating them as permanent beyond it):
    Z=0/Z=99 bounds, and a completed top-of-file section index (found the file's section-naming
    already consistent throughout, so a wholesale physical reorder wasn't justified — see the plan.md
    entry for the full reasoning). `build-cna-vulkan` re-verified clean throughout.
+
+3. ~~EDITOR-113 through EDITOR-120 — menu/layout maintainability and user-directed usability
+   follow-ups.~~ — **done 2026-07-25**, see `plan.md` §6. The latest item adds a Galaxy-only
+   background group with 32 live thumbnails while preserving the ten Eggbert 2 group positions.
+
+4. **EDITOR-121 — make the visible delete glyph functional** — proposed next follow-up, not yet
+   approved. Its current click path only raises the two-second not-implemented notice.
 
 Non-editor tasks:
 

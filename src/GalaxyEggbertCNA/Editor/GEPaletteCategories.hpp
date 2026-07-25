@@ -28,6 +28,10 @@ namespace GalaxyEggbert::CNA
         // global Blocks/Objects toggle.
         std::vector<int> objectTypeIds;
         std::vector<int> buttonIconIds;
+        // Non-empty only for Galaxy Eggbert's extra Background group.
+        // Values are the actual World::skyRegion ids selected by the
+        // matching cells; zero is valid here.
+        std::vector<int> skyRegionIds;
     };
 
     // Hand-curated categories built ONLY from BlockTypes.hpp's own already-
@@ -37,6 +41,11 @@ namespace GalaxyEggbert::CNA
     // authoring, out of scope here. See AllBlockIconIdsInOrder() below for
     // full numeric coverage of every icon, identified or not.
     [[nodiscard]] std::vector<PaletteCategory> ConfirmedBlockCategories();
+
+    // Galaxy-only group appended after the ten Eggbert 2 source groups.
+    // Its representative remains a button.png glyph, while its contents
+    // are the 32 valid sky-region choices rendered as live thumbnails.
+    [[nodiscard]] PaletteCategory GalaxyBackgroundCategory();
 
     // Every valid block type id (1..440; 0 is Air, never placeable), in
     // order -- the palette's "All Icons" fallback tab, guaranteeing full
