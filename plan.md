@@ -7097,3 +7097,47 @@ specifically, same as any other large/risky item elsewhere in this file.
       while the executable target remains `GalaxyEggbertCNA`. Updated CMake, `main.cpp`, type
       registration, documentation, and source comments. Verification: full `build-cna` build with
       `-j2`; all 90 applicable CTest tests pass.
+- [ ] `INFRA-014` — Central `BlockDefinitionRegistry` for every voxel block.
+      Introduce one authoritative, CNA-independent lookup keyed by the 12-bit block type/icon id.
+      A `BlockDefinition` must describe at least: texture sheet and icon, render mode
+      (`Air`, `UniformCube`, `DirectionalCube`, `InnerPillarBox`, `ThinBar`, `InnerFlatPlate`,
+      `TripleCrossBillboard`, and the additive ground-anchored plate case), transparency/pass,
+      animation frames and divisor, collision mask, and semantic properties needed by gameplay
+      (water, hazard kind, fan direction, door/key, teleporter, switch, spring, bridge, temporary
+      block, world selector, and other currently named `BlockTypes` behavior). Unknown valid
+      object-m icons must retain the current explicit fallback: their id selects the matching
+      `object-m.png` tile and they render as an opaque static `UniformCube`; Air remains invisible.
+      Migrate `BlockTypes.hpp`, `TileAtlas`, `TerrainRenderer`, `DecorQuartTable`, gameplay
+      predicates, and editor block validation to consume the registry. Geometry-building code may
+      stay in focused renderer helpers, but those helpers must no longer own independent icon
+      classification lists: the registry selects the render mode and supplies its immutable
+      per-icon parameters. Animation, alpha-blend, collision, and semantic id lists must not remain
+      duplicated in `TerrainRenderer` or scattered switches after migration. Keep the serialized
+      `.vwr` block representation unchanged and do not introduce CNA/Easy3D types into the
+      definition data. Add exhaustive tests for all supported icon ids (including fallback and
+      Air), parity tests against the current UV/render-mode/animation/collision decisions, and
+      representative gameplay-flag tests. Done only when the full `-j2` build and all applicable
+      CTest tests pass and a grep/audit confirms that runtime block classification is registry
+      backed rather than duplicated.
+- [ ] `INFRA-015` — Central `ObjectDefinitionRegistry` for every `Def::ObjectType`/`MoveObject`.
+      Introduce one authoritative, CNA-independent lookup keyed by `Def::ObjectType`. An
+      `ObjectDefinition` must describe at least: whether the type is null, directly placeable, or
+      transient/runtime-only; its visual render mode (`Hidden`, billboard, or solid cube); texture
+      source (`element.png`, `object-m.png`, `explo.png`, `blupi.png`, `blupi1.png`, including the
+      existing phase-dependent source); icon/animation resolver; vertical-placement policy; and
+      stable semantic tags/defaults required by editor placement and runtime dispatch. Preserve
+      per-instance `MoveObjectRecord` data (visual override, start/end positions, speed, and patrol
+      timing) and keep MoveObjects separate from voxel block values; the registry defines an object
+      type, while the record defines one placed instance. Migrate `ObjectIcons`, the CNA host's
+      separate cube/billboard/texture-sheet draw branches, `WorldRuntime`, and editor object
+      validation to consume a single resolved object visual/definition. The exact Free Eggbert
+      editor menu order remains in `PaletteCategories`, but each placement must reference and
+      validate a registry entry instead of recreating type capabilities. Remove or reduce
+      `GetObjIcon`, `IsUniformCubeObject`, `IsObjectMPngSourced`, `IsExploPngSourced`,
+      `IsBlupiPngSourced*`, and similar scattered predicates to thin registry-backed accessors;
+      no second authoritative switch/list may remain. Add exhaustive coverage for the full
+      `ObjectType0..203` domain plus parity tests for icon, animation, render mode, texture source,
+      placeability, visual overrides, phase-dependent ObjectType38 behavior, and representative
+      directional patrol animations. Done only when the full `-j2` build and all applicable CTest
+      tests pass and a grep/audit confirms that object visual/type classification has one
+      authoritative registry.
