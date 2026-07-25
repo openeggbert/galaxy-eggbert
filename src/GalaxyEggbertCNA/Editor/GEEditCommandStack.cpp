@@ -35,6 +35,19 @@ namespace GalaxyEggbert::CNA
                 world.clearSpawnPoint();
             }
         }
+
+        void ApplyBigDecorState(
+            Worlds::World& world, const GEEditCommand& command,
+            const std::optional<BigDecorRecord>& state)
+        {
+            RemoveBigDecor(
+                world, command.bigDecorAnchorX, command.bigDecorAnchorY,
+                command.bigDecorAnchorZ);
+            if (state)
+            {
+                PlaceBigDecor(world, *state);
+            }
+        }
     }
 
     void GEEditCommandStack::Push(GEEditCommand command)
@@ -75,6 +88,10 @@ namespace GalaxyEggbert::CNA
         {
             ApplySpawnPointState(world, command.spawnBefore);
         }
+        else if (command.kind == GEEditCommand::Kind::BigDecorEdit)
+        {
+            ApplyBigDecorState(world, command, command.bigDecorBefore);
+        }
 
         redoStack_.push_back(std::move(command));
         return true;
@@ -107,6 +124,10 @@ namespace GalaxyEggbert::CNA
         else if (command.kind == GEEditCommand::Kind::SpawnPointEdit)
         {
             ApplySpawnPointState(world, command.spawnAfter);
+        }
+        else if (command.kind == GEEditCommand::Kind::BigDecorEdit)
+        {
+            ApplyBigDecorState(world, command, command.bigDecorAfter);
         }
 
         undoStack_.push_back(std::move(command));

@@ -1,6 +1,7 @@
 #include "GEWorldRuntime.hpp"
 #include "GEObjectVerticalPlacement.hpp"
 
+#include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -123,6 +124,7 @@ namespace GalaxyEggbert::CNA
         int decorRow = 0;
         int bigDecorRow = 0;
         bigDecor_.assign(static_cast<std::size_t>(kDecorGridSize) * kDecorGridSize, BlockTypes::Air);
+        bigDecorCells_.clear();
         mobileObjects_.clear();
 
         while (std::getline(file, line))
@@ -238,6 +240,24 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        for (int row = 0; row < kDecorGridSize; ++row)
+        {
+            for (int col = 0; col < kDecorGridSize; ++col)
+            {
+                const std::uint16_t icon = bigDecor_[
+                    static_cast<std::size_t>(row) * kDecorGridSize +
+                    static_cast<std::size_t>(col)];
+                if (icon != BlockTypes::Air)
+                {
+                    bigDecorCells_.push_back({
+                        static_cast<float>(col - kWorldCenterX),
+                        kGroundObjectCenterY,
+                        static_cast<float>(row - kWorldCenterZ),
+                        icon,
+                    });
+                }
+            }
+        }
         return true;
     }
 
@@ -257,6 +277,7 @@ namespace GalaxyEggbert::CNA
         spawnTileZ_ = 0;
         hasExplicitSpawnPoint_ = false;
         bigDecor_.clear();
+        bigDecorCells_.clear();
 
         // Found 2026-07-17 (hub/mission-progression system): a world switch
         // at runtime previously leaked the PREVIOUS world's animation phase
@@ -292,6 +313,40 @@ namespace GalaxyEggbert::CNA
             spawnTileY_ = 1;
             spawnTileZ_ = 0;
             hasExplicitSpawnPoint_ = false;
+        }
+
+        bigDecorCells_.clear();
+        for (const auto& record : CollectBigDecor(*world_))
+        {
+            bigDecorCells_.push_back({
+                static_cast<float>(record.x - kWorldCenterX),
+                static_cast<float>(record.y),
+                static_cast<float>(record.z - kWorldCenterZ),
+                record.icon,
+            });
+        }
+        if (bigDecorCells_.empty() &&
+            bigDecor_.size() ==
+                static_cast<std::size_t>(kDecorGridSize) * kDecorGridSize)
+        {
+            for (int row = 0; row < kDecorGridSize; ++row)
+            {
+                for (int col = 0; col < kDecorGridSize; ++col)
+                {
+                    const std::uint16_t icon = bigDecor_[
+                        static_cast<std::size_t>(row) * kDecorGridSize +
+                        static_cast<std::size_t>(col)];
+                    if (icon != BlockTypes::Air)
+                    {
+                        bigDecorCells_.push_back({
+                            static_cast<float>(col - kWorldCenterX),
+                            kGroundObjectCenterY,
+                            static_cast<float>(row - kWorldCenterZ),
+                            icon,
+                        });
+                    }
+                }
+            }
         }
 
         // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects

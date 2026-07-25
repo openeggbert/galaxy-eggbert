@@ -1,5 +1,6 @@
 #include "Game/GEWorldRuntime.hpp"
 
+#include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 
 #include <cstdint>
@@ -73,6 +74,29 @@ int main()
                   << ": .vwr spawn converts from raw grid to runtime render space"
                   << std::endl;
         if (!spawnMatches)
+        {
+            allOk = false;
+        }
+        std::remove(path);
+    }
+
+    {
+        constexpr const char* path = "big_decor_runtime_test.vwr";
+        GalaxyEggbert::Worlds::World world;
+        GalaxyEggbert::PlaceBigDecor(world, {87, 62, 7, 31});
+        world.saveToFile(path);
+
+        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        const bool loaded = runtime.LoadFromVwrFile(path);
+        const auto& cells = runtime.GetBigDecorCells();
+        const bool bigDecorMatches =
+            loaded && cells.size() == 1 &&
+            cells[0].worldX == 12.0f && cells[0].worldY == 7.0f &&
+            cells[0].worldZ == -19.0f && cells[0].icon == 87;
+        std::cout << (bigDecorMatches ? "PASS" : "FAIL")
+                  << ": .vwr BigDecor converts to a 3D runtime billboard"
+                  << std::endl;
+        if (!bigDecorMatches)
         {
             allOk = false;
         }

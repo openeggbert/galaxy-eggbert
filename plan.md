@@ -5701,9 +5701,8 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): IN PROGRESS.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-125` are implemented and tested. The user has
-now explicitly approved `EDITOR-126` through `EDITOR-127`, which close the remaining 8 source-menu entries
-that still raise the temporary notice. The editor's input, rendering, orchestration, and
+`EDITOR-112`) and follow-up tasks through `EDITOR-126` are implemented and tested. The user has
+now explicitly approved `EDITOR-127`, the exhaustive final source-menu verification. The editor's input, rendering, orchestration, and
 verification remain separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -6003,12 +6002,22 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       runtime-converted spawn (normal X/Z world-centre shift, unchanged Y), while old standard and
       custom worlds retain their previous defaults. Pointer, placement, undo/redo, save/reload,
       legacy-header, bounds, and runtime-coordinate tests cover the full path.
-- [ ] **EDITOR-126 — add a persisted, editable BigDecor layer for eight scenery entries.**
+- [x] **EDITOR-126 — add a persisted, editable BigDecor layer for eight scenery entries.**
       Implement Tree, Palmtree, Decorative plant, House, Mechanical background, Kid's stuff
       background, Green slime 2, and Element for Palace as the distinct billboard/decor layer they
       represent—not as solid voxel blocks. Extend `World`/`.vwr`, editor preview/placement/removal,
       rendering rebuild, undo/redo, save/reload, and play test. Reuse the existing runtime BigDecor
       billboard path while making `.vwr` worlds carry this layer for the first time.
+      **Done 2026-07-25:** Scenery's eight entries use exact first representatives from the named
+      Eggbert 2 BigDecor tables: Tree 20, Palmtree 16, plant 23, house 26, mechanical 28, kids 45,
+      green slime 66, and palace element 87. `BigDecorRecord` reserves sparse metadata type 3
+      (type 2 remains plate rotation), stores a non-zero object-m.png icon at an exact XYZ anchor,
+      and round-trips without creating a collision block. Editor placement, overwrite, delete,
+      undo/redo, dirty/rebuild signal, save/reload, and red-cell preview use a dedicated BigDecor
+      placement kind. The runtime unifies legacy mobile 2D cells and sparse `.vwr` 3D cells into
+      billboard specs; the CNA renderer now rebuilds these specs after live edits and respects
+      authored Y. Record, runtime-conversion, real-pointer, editor-history, and persistence tests
+      cover the full path.
 - [ ] **EDITOR-127 — prove the complete source menu and remove the temporary fallback.**
       Add an exhaustive regression over every entry in all ten Eggbert 2 groups proving that each
       click selects or activates an implemented block, object, spawn, or BigDecor tool; zero

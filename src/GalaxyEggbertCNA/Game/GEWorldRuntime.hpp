@@ -68,6 +68,14 @@ namespace GalaxyEggbert::CNA
         float patrolTime = 0.0f; // ticks elapsed within the current patrolStep
     };
 
+    struct BigDecorSpec
+    {
+        float worldX = 0.0f;
+        float worldY = 0.0f;
+        float worldZ = 0.0f;
+        std::uint16_t icon = 0;
+    };
+
     // Minimal mobile-eggbert .txt world-file loader for the CNA/Easy3D target.
     // Parses the tile grid, Blupi spawn point, and MoveObject records into
     // the engine-agnostic Worlds::World / mobileObjects_ list. Nothing here
@@ -332,9 +340,13 @@ namespace GalaxyEggbert::CNA
         // conversion as the main grid), but not yet rendered anywhere.
         // Recommended 3D treatment: Billboard, confirmed non-colliding — see
         // 15-3d-render-mapping-design.md §9.2. Row-major, [row*100 + col].
-        // Empty when loaded from a `.vwr` file (that format has no BigDecor
-        // concept).
+        // This legacy fixed grid is empty for `.vwr`; those worlds expose
+        // sparse 3D BigDecor through GetBigDecorCells() instead.
         [[nodiscard]] const std::vector<std::uint16_t>& GetBigDecor() const { return bigDecor_; }
+        [[nodiscard]] const std::vector<BigDecorSpec>& GetBigDecorCells() const
+        {
+            return bigDecorCells_;
+        }
 
         // MoveObject records (pickups, enemies, platform lifts, crates) --
         // from a mobile-eggbert .txt file's MoveObject: lines, OR from a
@@ -355,6 +367,7 @@ namespace GalaxyEggbert::CNA
     private:
         std::unique_ptr<Worlds::World> world_;
         std::vector<std::uint16_t> bigDecor_;
+        std::vector<BigDecorSpec> bigDecorCells_;
         std::vector<MobileObjSpec> mobileObjects_;
         int spawnTileX_ = 0;
         int spawnTileY_ = 1;

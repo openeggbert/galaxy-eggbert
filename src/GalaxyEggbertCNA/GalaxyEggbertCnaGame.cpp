@@ -433,33 +433,6 @@ namespace GalaxyEggbert::CNA
         bigDecorEffect_->setTextureEnabledProperty(true);
         bigDecorEffect_->setTextureProperty(&terrainTexture_);
 
-        const auto& bigDecor = worldRuntime_.GetBigDecor();
-        constexpr int kBigDecorGridSize = 100;
-        // LoadFromVwrFile() (the default world source) clears bigDecor_ to
-        // empty -- only LoadFromMobileEggbertFile() populates the full
-        // 100x100 grid. Guard against indexing an empty vector (segfault,
-        // found live 2026-07-09): only scan when the grid is actually the
-        // expected full size.
-        if (bigDecor.size() == static_cast<std::size_t>(kBigDecorGridSize) * kBigDecorGridSize)
-        {
-            for (int row = 0; row < kBigDecorGridSize; ++row)
-            {
-                for (int col = 0; col < kBigDecorGridSize; ++col)
-                {
-                    const std::uint16_t icon = bigDecor[
-                        static_cast<std::size_t>(row) * kBigDecorGridSize + static_cast<std::size_t>(col)];
-                    if (icon == GalaxyEggbert::BlockTypes::Air)
-                    {
-                        continue;
-                    }
-                    bigDecorCells_.push_back({
-                        static_cast<float>(col - GEWorldRuntime::kWorldCenterX),
-                        static_cast<float>(row - GEWorldRuntime::kWorldCenterZ),
-                        icon,
-                    });
-                }
-            }
-        }
         std::cout << "GalaxyEggbertCNA: " << bigDecorCells_.size()
                   << " BigDecor cell(s) parsed for billboard rendering." << std::endl;
 
@@ -585,6 +558,12 @@ namespace GalaxyEggbert::CNA
         // A no-op for every other caller, whose World hasn't changed since
         // it was loaded.
         worldRuntime_.ResyncFromWorld();
+        bigDecorCells_.clear();
+        for (const auto& cell : worldRuntime_.GetBigDecorCells())
+        {
+            bigDecorCells_.push_back({
+                cell.worldX, cell.worldY, cell.worldZ, cell.icon});
+        }
 
         auto& device = getGraphicsDeviceProperty();
 
@@ -3966,9 +3945,8 @@ namespace GalaxyEggbert::CNA
         // (NEXT.md §8 task 3) — same camera-facing billboard technique as
         // MoveObjects above, but object-m.png (via tileAtlas_) instead of
         // element.png, since BigDecor shares the main terrain grid's icon
-        // vocabulary. Only ever non-empty when a world was loaded via
-        // LoadFromMobileEggbertFile() — the default .vwr world has no
-        // BigDecor concept, so this is a no-op in that case.
+        // vocabulary. Cells may come from either a mobile BigDecor: grid
+        // or sparse 3D `.vwr` BigDecorRecord metadata.
         if (bigDecorEffect_ && !bigDecorCells_.empty())
         {
             const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
@@ -3982,7 +3960,7 @@ namespace GalaxyEggbert::CNA
                 const auto uv = tileAtlas_.GetTileUv(static_cast<int>(cell.icon));
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(
-                        cell.worldX, kGroundObjectCenterY, cell.worldZ),
+                        cell.worldX, cell.worldY, cell.worldZ),
                     Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize),
                     uv);
             }

@@ -25,6 +25,7 @@ set(GE_SHARED_SOURCES
     src/GalaxyEggbert/Worlds/Chunk.cpp
     src/GalaxyEggbert/Worlds/World.cpp
     src/GalaxyEggbert/MoveObjectRecord.cpp
+    src/GalaxyEggbert/BigDecorRecord.cpp
 )
 
 # =============================================================================
@@ -1052,12 +1053,14 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN)
             tests/GalaxyEggbert/Worlds/WorldTests.cpp
             tests/GalaxyEggbert/Worlds/BlockMetadataTest.cpp
             tests/GalaxyEggbert/MoveObjectRecordTests.cpp
+            tests/GalaxyEggbert/BigDecorRecordTests.cpp
 
             src/GalaxyEggbert/Worlds/BinaryIO.cpp
             src/GalaxyEggbert/Worlds/BitPacking.cpp
             src/GalaxyEggbert/Worlds/Chunk.cpp
             src/GalaxyEggbert/Worlds/World.cpp
             src/GalaxyEggbert/MoveObjectRecord.cpp
+            src/GalaxyEggbert/BigDecorRecord.cpp
     )
 
     target_include_directories(GalaxyEggbertWorldsTests PRIVATE

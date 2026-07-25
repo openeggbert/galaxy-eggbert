@@ -184,7 +184,8 @@ namespace GalaxyEggbert::CNA
                 const bool selected =
                     (skyRegion >= 0 && skyRegion == state.selectedSkyRegion) ||
                     (skyRegion < 0 && spawnPoint > 0 && state.spawnPointMode) ||
-                    (skyRegion < 0 && bigDecorIcon > 0 && state.bigDecorMode) ||
+                    (skyRegion < 0 && bigDecorIcon > 0 && state.bigDecorMode &&
+                     bigDecorIcon == state.selectedBigDecorIcon) ||
                     (skyRegion < 0 && spawnPoint == 0 && bigDecorIcon == 0 &&
                      objectType > 0 && state.objectMode &&
                      objectType == state.selectedObjectType) ||

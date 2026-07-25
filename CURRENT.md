@@ -17,7 +17,7 @@ content-authoring UX, but not new gameplay mechanics.
 
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
-- All approved world-editor milestones and follow-ups through `EDITOR-125` are complete: per-gamer
+- All approved world-editor milestones and follow-ups through `EDITOR-126` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
   functional touch deletion, verified Inverter/crate/Overcraft entries, menu-based sky-region
   thumbnails, save and play-test loop, and unsaved-change protection.
@@ -66,9 +66,8 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 ### Active and explicitly approved
 
-- `EDITOR-126` and `EDITOR-127`: finish the 8 remaining Eggbert 2 source-menu entries.
-  This is a persisted editable BigDecor layer for 8 scenery entries followed by an exhaustive
-  final menu test.
+- `EDITOR-127`: exhaustively verify every Eggbert 2 source-menu cell, eliminate reachable
+  temporary fallbacks, run full regression, and visually verify the final editor menu.
 
 ### Needs user direction or visual judgement
 

@@ -41,6 +41,19 @@ namespace GalaxyEggbert::CNA
             }
             return std::nullopt;
         }
+
+        std::optional<BigDecorRecord> FindBigDecorAt(
+            const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+        {
+            for (const auto& record : CollectBigDecor(world))
+            {
+                if (record.x == x && record.y == y && record.z == z)
+                {
+                    return record;
+                }
+            }
+            return std::nullopt;
+        }
     }
 
     Easy3D::Camera3D::Vector3 GEWorldEditor::UpdateCamera(
@@ -306,6 +319,18 @@ namespace GalaxyEggbert::CNA
             command.spawnAfter = {true, x, y, z};
             world.setSpawnPoint(x, y, z);
         }
+        else if (palette_.IsBigDecorMode())
+        {
+            const BigDecorRecord record{
+                palette_.SelectedBigDecorIcon(), x, y, z};
+            command.kind = GEEditCommand::Kind::BigDecorEdit;
+            command.bigDecorAnchorX = x;
+            command.bigDecorAnchorY = y;
+            command.bigDecorAnchorZ = z;
+            command.bigDecorBefore = FindBigDecorAt(world, x, y, z);
+            command.bigDecorAfter = record;
+            PlaceBigDecor(world, record);
+        }
         else if (palette_.IsObjectMode())
         {
             MoveObjectRecord record;
@@ -361,6 +386,20 @@ namespace GalaxyEggbert::CNA
         MarkMutated();
     }
 
+    void GEWorldEditor::RemoveBigDecorWithHistory(
+        Worlds::World& world, const BigDecorRecord& record)
+    {
+        GEEditCommand command;
+        command.kind = GEEditCommand::Kind::BigDecorEdit;
+        command.bigDecorAnchorX = record.x;
+        command.bigDecorAnchorY = record.y;
+        command.bigDecorAnchorZ = record.z;
+        command.bigDecorBefore = record;
+        RemoveBigDecor(world, record.x, record.y, record.z);
+        commandStack_.Push(std::move(command));
+        MarkMutated();
+    }
+
     bool GEWorldEditor::HandleRemoval(const FrameInput& input, Worlds::World& world)
     {
         const bool toolbarRequested =
@@ -389,6 +428,17 @@ namespace GalaxyEggbert::CNA
                 RemoveObjectWithHistory(
                     world, *object,
                     placementCellX_, placementCellY_, placementCellZ_);
+                return true;
+            }
+        }
+
+        if (toolbarRequested && palette_.IsBigDecorMode() && hasHighlight_)
+        {
+            const auto bigDecor = FindBigDecorAt(
+                world, placementCellX_, placementCellY_, placementCellZ_);
+            if (bigDecor)
+            {
+                RemoveBigDecorWithHistory(world, *bigDecor);
                 return true;
             }
         }

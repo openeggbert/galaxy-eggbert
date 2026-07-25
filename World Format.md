@@ -305,6 +305,12 @@ indices themselves. See `PlaceMoveObject()`/`CollectMoveObjects()` in `MoveObjec
 the full encode/decode, and `GEWorldRuntime::LoadFromVwrFile()` (CNA) for how a loaded world turns
 these back into renderable objects.
 
+`GalaxyEggbert::BigDecorRecord` is the second world-level consumer. It uses
+`metadataType = 3` (type 2 is already reserved for plate rotation), stores a
+two-byte non-zero object-m.png icon, and derives its exact X/Y/Z anchor from
+the surrounding sparse metadata record. It represents Eggbert 2's
+non-colliding BigDecor billboard layer rather than a solid voxel.
+
 ## World File `VWR1`
 
 The world file contains:

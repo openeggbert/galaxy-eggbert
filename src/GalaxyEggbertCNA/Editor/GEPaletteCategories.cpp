@@ -44,7 +44,9 @@ namespace GalaxyEggbert::CNA
             // normal-cell marine plant, support and web map to voxel ids.
             FreeMixedMenuCategory("Scenery",
                                   {0, 0, 0, Marine, 0, 0, 0, 0, 0, 76, 403},
-                                  {}, {31, 29, 32, 69, 33, 37, 82, 130, 139, 30, 142}),
+                                  {}, {31, 29, 32, 69, 33, 37, 82, 130, 139, 30, 142},
+                                  {}, {},
+                                  {20, 16, 23, 0, 26, 28, 45, 66, 87, 0, 0}),
             // Menu 2: exact representative tile from each source table.
             FreeMixedMenuCategory("Technical blocks",
                                   {2, 20, 15, 22, 79, 88, 86, 250},

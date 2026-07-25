@@ -703,15 +703,14 @@ namespace GalaxyEggbert::CNA
         // this reuses terrainTexture_ through its own dedicated effect
         // (BasicEffect only binds one texture at a time). Only ever
         // non-empty when a world was loaded via LoadFromMobileEggbertFile()
-        // (the default .vwr world has no BigDecor concept). bigDecorCells_
-        // is the filtered (non-air) cell list, computed once in
-        // LoadContent() from the fixed 100x100 grid so Draw() doesn't have
-        // to re-scan all 10000 cells every frame — only the camera-facing
-        // billboard mesh itself is rebuilt per frame, same reason as
-        // objectMeshRenderer_ above.
+        // `.vwr` worlds now carry sparse 3D BigDecorRecord entries too.
+        // bigDecorCells_ is refreshed by RebuildWorldPresentation(), so
+        // editor placement/removal appears immediately; only the
+        // camera-facing billboard mesh is rebuilt per frame.
         struct BigDecorCell
         {
             float worldX;
+            float worldY;
             float worldZ;
             std::uint16_t icon;
         };

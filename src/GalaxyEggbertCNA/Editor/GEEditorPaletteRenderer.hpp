@@ -26,6 +26,7 @@ namespace GalaxyEggbert::CNA
             int selectedBlockType = 0;
             int selectedObjectType = 0;
             int selectedSkyRegion = 0;
+            int selectedBigDecorIcon = 0;
             bool objectMode = false;
             bool spawnPointMode = false;
             bool bigDecorMode = false;

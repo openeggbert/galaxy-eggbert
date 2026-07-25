@@ -158,6 +158,7 @@ namespace GalaxyEggbert::CNA
                 }
                 else if (bigDecorIcon > 0)
                 {
+                    selectedBigDecorIcon_ = bigDecorIcon;
                     placementKind_ = PlacementKind::BigDecor;
                     openCategory_ = -1;
                 }
@@ -208,6 +209,7 @@ namespace GalaxyEggbert::CNA
             selectedBlockType_,
             selectedObjectType_,
             selectedSkyRegion_,
+            selectedBigDecorIcon_,
             IsObjectMode(),
             IsSpawnPointMode(),
             IsBigDecorMode(),

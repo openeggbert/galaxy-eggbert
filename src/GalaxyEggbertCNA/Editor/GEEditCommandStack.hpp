@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
@@ -58,6 +59,7 @@ namespace GalaxyEggbert::CNA
             MoveObjectEdit,
             SkyRegionEdit,
             SpawnPointEdit,
+            BigDecorEdit,
         };
 
         Kind kind = Kind::BlockEdit;
@@ -73,6 +75,12 @@ namespace GalaxyEggbert::CNA
         std::uint32_t skyRegionAfter = 0;
         SpawnPointState spawnBefore;
         SpawnPointState spawnAfter;
+
+        std::uint16_t bigDecorAnchorX = 0;
+        std::uint16_t bigDecorAnchorY = 0;
+        std::uint16_t bigDecorAnchorZ = 0;
+        std::optional<BigDecorRecord> bigDecorBefore;
+        std::optional<BigDecorRecord> bigDecorAfter;
     };
 
     // Undo/redo stack of GEEditCommand actions against a Worlds::World.

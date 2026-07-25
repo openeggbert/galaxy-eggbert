@@ -147,6 +147,8 @@ namespace GalaxyEggbert::CNA
         void RemoveObjectWithHistory(
             Worlds::World& world, const MoveObjectRecord& record,
             std::uint16_t anchorX, std::uint16_t anchorY, std::uint16_t anchorZ);
+        void RemoveBigDecorWithHistory(
+            Worlds::World& world, const BigDecorRecord& record);
         void StoreInputEdges(const FrameInput& input, bool placementOffsetKeyHeld) noexcept;
 
         float camX_ = 50.0f;

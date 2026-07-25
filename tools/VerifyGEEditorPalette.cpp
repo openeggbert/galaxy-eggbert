@@ -4,6 +4,7 @@
 #include "Editor/GEWorldEditor.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <cstdio>
@@ -84,6 +85,11 @@ int main()
           "Secret wooden case retains the crate behavior and current-terrain camouflage profile");
     check(sourceCategories[9].spawnPointIds[6] == 1,
           "Level start is represented by the dedicated world spawn tool");
+    const std::vector<int> expectedBigDecor = {
+        20, 16, 23, 0, 26, 28, 45, 66, 87, 0, 0,
+    };
+    check(sourceCategories[0].bigDecorIconIds == expectedBigDecor,
+          "all eight Scenery billboards use exact Eggbert 2 BigDecor table representatives");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
@@ -221,16 +227,11 @@ int main()
         const auto first = click(palette, 72.0f, 72.0f);
         check(first.clickConsumed, "an expanded category entry consumes its click");
         check(palette.SelectedBlockType() == GalaxyEggbert::BlockTypes::RockPile,
-              "an unmapped entry never aliases to another block");
-        (void)click(palette, 198.0f, 72.0f);
-        check(palette.IsNotYetImplementedNoticeVisible(),
-              "an unmapped source entry starts the two-second notice");
-        const MouseState idle(
-            400, 200, 0, ButtonState::Released, ButtonState::Released,
-            ButtonState::Released, ButtonState::Released, ButtonState::Released);
-        (void)palette.Update(idle, kViewportWidth, kViewportHeight, 2.01f);
+              "selecting BigDecor does not alias it to a voxel block");
+        check(palette.IsBigDecorMode(),
+              "the first Scenery entry selects the Tree BigDecor tool");
         check(!palette.IsNotYetImplementedNoticeVisible(),
-              "the not-implemented notice expires after two seconds");
+              "the implemented Tree entry never starts the temporary notice");
     }
 
     const auto allObjectTypes = AllObjectTypeIdsInOrder();
@@ -414,6 +415,20 @@ int main()
               "the implemented Level start does not raise the temporary notice");
     }
 
+    for (const int index : {0, 1, 2, 4, 5, 6, 7, 8})
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 72.0f);
+        const auto scenery = click(
+            palette, 72.0f + static_cast<float>(index) * 42.0f, 72.0f);
+        check(scenery.clickConsumed && palette.IsBigDecorMode() &&
+                  palette.SelectedBigDecorIcon() ==
+                      static_cast<std::uint16_t>(expectedBigDecor[index]),
+              "a BigDecor Scenery glyph selects its exact non-colliding billboard");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "an implemented BigDecor entry does not raise the temporary notice");
+    }
+
     {
         constexpr const char* kBackgroundSavePath =
             "verify_ge_editor_palette_background.vwr";
@@ -556,6 +571,62 @@ int main()
                   loaded.spawnY() == 0 && loaded.spawnZ() == 23,
               "saving and reloading retains the placed Level start");
         std::remove(kSpawnSavePath);
+    }
+
+    {
+        constexpr const char* kBigDecorSavePath =
+            "verify_ge_editor_palette_big_decor.vwr";
+        World world;
+        GEWorldEditor editor;
+        editor.SetWorldPath(kBigDecorSavePath);
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+        const auto tap = [&](int x, int y)
+        {
+            const MouseState down(
+                x, y, 0, ButtonState::Pressed, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            const MouseState up(
+                x, y, 0, ButtonState::Released, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        const auto pressKey = [&](Keys key)
+        {
+            editor.Update(KeyboardState{key}, restMouse, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        };
+
+        tap(30, 72);
+        tap(72, 72);
+        tap(499, 451);
+        auto bigDecor = GalaxyEggbert::CollectBigDecor(world);
+        check(bigDecor.size() == 1 && bigDecor[0].icon == 20 &&
+                  bigDecor[0].x == 50 && bigDecor[0].y == 0 &&
+                  bigDecor[0].z == 23 &&
+                  world.getBlock(50, 0, 23).isAir(),
+              "PLACE stores Tree in the separate non-colliding BigDecor layer");
+        check(editor.ConsumeNeedsPresentationRebuild(),
+              "BigDecor placement immediately requests a billboard rebuild");
+        pressKey(Keys::U);
+        check(GalaxyEggbert::CollectBigDecor(world).empty(),
+              "undo removes a placed BigDecor billboard");
+        pressKey(Keys::R);
+        check(GalaxyEggbert::CollectBigDecor(world).size() == 1,
+              "redo restores a placed BigDecor billboard");
+        tap(30, 30);
+        check(GalaxyEggbert::CollectBigDecor(world).empty(),
+              "the delete tool removes BigDecor at the red-preview cell");
+        pressKey(Keys::U);
+        check(GalaxyEggbert::CollectBigDecor(world).size() == 1,
+              "undo restores BigDecor removed through the delete tool");
+        pressKey(Keys::Enter);
+        const auto loaded =
+            GalaxyEggbert::CollectBigDecor(World::loadFromFile(kBigDecorSavePath));
+        check(loaded.size() == 1 && loaded[0].icon == 20,
+              "saving and reloading retains the BigDecor billboard");
+        std::remove(kBigDecorSavePath);
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -95,6 +95,11 @@ namespace GalaxyEggbert::CNA
             return static_cast<std::uint16_t>(selectedObjectVisualIcon_);
         }
 
+        [[nodiscard]] std::uint16_t SelectedBigDecorIcon() const noexcept
+        {
+            return static_cast<std::uint16_t>(selectedBigDecorIcon_);
+        }
+
         void SetSelectedSkyRegion(std::uint32_t skyRegion) noexcept
         {
             selectedSkyRegion_ = static_cast<int>(skyRegion);
@@ -121,6 +126,7 @@ namespace GalaxyEggbert::CNA
         int selectedBlockType_;
         int selectedObjectType_;
         int selectedObjectVisualIcon_ = 0;
+        int selectedBigDecorIcon_ = 0;
         PlacementKind placementKind_ = PlacementKind::Block;
         int selectedSkyRegion_ = 0;
         float notYetImplementedSeconds_ = 0.0f;
