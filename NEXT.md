@@ -37,7 +37,9 @@ concern noted when work was paused is still unresolved — re-confirmed twice mo
 keyboard and mouse input stopped reaching the game entirely, despite working fine for EDITOR-111's
 live check earlier the same session) — genuinely intermittent, not a code bug, see plan.md §6's
 "Known problems" for the full history. No work remains on the original approved plan; any further
-editor work is a separately selected follow-up._
+editor work is a separately selected follow-up. The user has now selected `EDITOR-123` through
+`EDITOR-127`: complete all 26 source-menu entries that still show the temporary notice, including
+the required spawn-point and BigDecor persistence._
 
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
@@ -2336,6 +2338,11 @@ as a new follow-up rather than silently extending the original plan.
    background group with 32 live thumbnails, make the top-left red-X control remove its current
    target through the undo/redo command stack, and replace three false temporary notices with
    verified Inverter, Wooden case, and Hovercraft mappings.
+
+4. **EDITOR-123 through EDITOR-127 — complete all remaining source-menu entries** — **active,
+   explicitly approved 2026-07-25.** The exact 26-item inventory and acceptance criteria are in
+   `plan.md` §6. Work is split into Cave/Buildings, special objects, persisted Level start,
+   editable/persisted BigDecor scenery, and exhaustive final verification.
 
 Non-editor tasks:
 

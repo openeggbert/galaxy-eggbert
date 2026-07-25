@@ -64,6 +64,12 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 ## Open work, in priority classes
 
+### Active and explicitly approved
+
+- `EDITOR-123` through `EDITOR-127`: finish all 26 remaining Eggbert 2 source-menu entries.
+  This includes 11 Cave/Buildings mappings, 6 special objects, a persisted Level start,
+  a persisted editable BigDecor layer for 8 scenery entries, and an exhaustive final menu test.
+
 ### Needs user direction or visual judgement
 
 - `AscenseurVertigo` platform geometry, `ThinMechanical` geometry, water treatment, architectural
