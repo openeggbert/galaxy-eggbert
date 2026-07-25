@@ -16,12 +16,14 @@ namespace GalaxyEggbert::CNA
 
         PaletteCategory FreeMixedMenuCategory(const char* name, std::vector<int> blockIds,
                                               std::vector<int> objectTypeIds,
-                                              std::vector<int> freeButtonIds)
+                                              std::vector<int> freeButtonIds,
+                                              std::vector<int> objectVisualIconIds = {})
         {
             blockIds.resize(freeButtonIds.size(), 0);
             objectTypeIds.resize(freeButtonIds.size(), 0);
+            objectVisualIconIds.resize(freeButtonIds.size(), 0);
             return {name, freeButtonIds.front(), std::move(blockIds), std::move(objectTypeIds),
-                    std::move(freeButtonIds)};
+                    std::move(freeButtonIds), {}, std::move(objectVisualIconIds)};
         }
     }
 
@@ -51,18 +53,19 @@ namespace GalaxyEggbert::CNA
             FreeMixedMenuCategory("Hazards",
                                   {0, 0, 0, Lava, FanLeft, 110, Spike, Drip, Saw, 0,
                                    BlitzEmitter, Crusher},
-                                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 40},
+                                  {2, 3, 96, 0, 0, 0, 0, 0, 0, 40},
                                   {8, 9, 107, 26, 42, 41, 131, 143, 132, 101, 120, 122}),
             FreeMixedMenuCategory("Moving mechanisms", {},
-                                  {1, 47, 48, 1, 1, 4, 17, 20, 44, 18, 0, 32, 33},
+                                  {1, 47, 48, 1, 1, 4, 17, 20, 44, 18, 16, 32, 33},
                                   {21, 20, 19, 28, 121, 16, 55, 60, 113, 140, 54, 95, 99}),
             FreeMixedMenuCategory("Treasures", {},
-                                  {5, 6, 26, 25, 30, 29, 31, 0, 55},
+                                  {5, 6, 26, 25, 30, 29, 31, 200, 55},
                                   {7, 10, 75, 74, 89, 88, 93, 92, 87}),
             FreeMixedMenuCategory("Keys and progression",
                                   {0, Door1, ProgressDoor2, Teleport1, 202, Spring, Temp, Bridge, 0, 0},
-                                  {49, 0, 0, 0, 0, 0, 0, 0, 12},
-                                  {125, 126, 144, 124, 56, 70, 123, 141, 17, 76}),
+                                  {49, 0, 0, 0, 0, 0, 0, 0, 12, 12},
+                                  {125, 126, 144, 124, 56, 70, 123, 141, 17, 76},
+                                  {0, 0, 0, 0, 0, 0, 0, 0, 0, -1}),
             FreeMixedMenuCategory("Vehicles", {},
                                   {46, 13, 24, 19, 28},
                                   {119, 24, 71, 57, 85}),

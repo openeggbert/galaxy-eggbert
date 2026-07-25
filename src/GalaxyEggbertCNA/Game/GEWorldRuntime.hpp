@@ -20,6 +20,10 @@ namespace GalaxyEggbert::CNA
     struct MobileObjSpec
     {
         ObjectType type;
+        // Optional object-m.png tile override carried by .vwr
+        // MoveObjectRecord variants such as the secret wooden case.
+        // Zero keeps the normal ObjectType/phase-derived icon.
+        std::uint16_t visualIcon = 0;
         float posStartX = 0.0f, posStartY = 0.0f, posStartZ = 0.0f;
         float posEndX = 0.0f, posEndY = 0.0f, posEndZ = 0.0f;
         float speed = 1.5f;

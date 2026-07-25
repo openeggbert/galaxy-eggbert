@@ -291,6 +291,7 @@ namespace GalaxyEggbert::CNA
         {
             MobileObjSpec spec;
             spec.type = record.type;
+            spec.visualIcon = record.visualIcon;
             spec.posStartX = record.posStartX - static_cast<float>(kWorldCenterX);
             spec.posStartY = record.posStartY;
             spec.posStartZ = record.posStartZ - static_cast<float>(kWorldCenterZ);

@@ -24,6 +24,7 @@ TEST(MoveObjectRecordTests, PlaceAndCollectRoundTripsAllFields) {
 
     MoveObjectRecord lift;
     lift.type = ObjectType::ObjectType1;
+    lift.visualIcon = 143;
     lift.posStartX = 60.5f;
     lift.posStartY = 2.25f;
     lift.posStartZ = 10.75f;
@@ -49,7 +50,8 @@ TEST(MoveObjectRecordTests, PlaceAndCollectRoundTripsAllFields) {
         return r.type == ObjectType::ObjectType1 && r.posStartX == 60.5f && r.posStartY == 2.25f
             && r.posStartZ == 10.75f && r.posEndX == 60.5f && r.posEndY == 8.0f && r.posEndZ == 10.75f
             && r.speed == 2.0f && r.stepAdvanceTicks == 25.0f && r.stepRecedeTicks == 30.0f
-            && r.timeStopStartTicks == 15.0f && r.timeStopEndTicks == 20.0f;
+            && r.timeStopStartTicks == 15.0f && r.timeStopEndTicks == 20.0f
+            && r.visualIcon == 143;
     });
     EXPECT_TRUE(hasEgg);
     EXPECT_TRUE(hasLift);
@@ -63,6 +65,7 @@ TEST(MoveObjectRecordTests, RoundTripsThroughSaveAndLoadFile) {
         Worlds::World world;
         MoveObjectRecord record;
         record.type = ObjectType::ObjectType12;
+        record.visualIcon = 79;
         record.posStartX = 33.0f;
         record.posStartY = 0.0f;
         record.posStartZ = 33.0f;
@@ -78,12 +81,25 @@ TEST(MoveObjectRecordTests, RoundTripsThroughSaveAndLoadFile) {
     const auto collected = CollectMoveObjects(loaded);
     ASSERT_EQ(collected.size(), 1u);
     EXPECT_EQ(collected[0].type, ObjectType::ObjectType12);
+    EXPECT_EQ(collected[0].visualIcon, 79);
     EXPECT_EQ(collected[0].posStartX, 33.0f);
     EXPECT_EQ(collected[0].posStartZ, 33.0f);
     EXPECT_EQ(collected[0].speed, 1.5f);
 
     std::error_code removeError;
     std::filesystem::remove(filePath, removeError);
+}
+
+TEST(MoveObjectRecordTests, ReadsLegacyPayloadWithoutVisualOverride) {
+    Worlds::World world;
+    std::vector<std::uint8_t> legacyPayload(45, 0);
+    legacyPayload[0] = static_cast<std::uint8_t>(ObjectType::ObjectType6);
+    world.setBlockExtraMetadata(4, 5, 6, kMoveObjectMetadataType, legacyPayload);
+
+    const auto collected = CollectMoveObjects(world);
+    ASSERT_EQ(collected.size(), 1u);
+    EXPECT_EQ(collected[0].type, ObjectType::ObjectType6);
+    EXPECT_EQ(collected[0].visualIcon, 0);
 }
 
 TEST(MoveObjectRecordTests, CollectReturnsEmptyForWorldWithNoMoveObjects) {

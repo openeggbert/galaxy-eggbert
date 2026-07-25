@@ -5701,8 +5701,8 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): IN PROGRESS.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-123` are implemented and tested. The user has
-now explicitly approved `EDITOR-124` through `EDITOR-127`, which close the remaining 15 source-menu entries
+`EDITOR-112`) and follow-up tasks through `EDITOR-124` are implemented and tested. The user has
+now explicitly approved `EDITOR-125` through `EDITOR-127`, which close the remaining 9 source-menu entries
 that still raise the temporary notice. The editor's input, rendering, orchestration, and
 verification remain separated into focused components.
 
@@ -5974,12 +5974,21 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       block 214. The existing generic voxel placement path provides preview, undo/redo, save, and
       play test. Automated pointer tests open the real Rock/Buildings groups, click all 11 cells,
       verify the exact selected block id and block mode, and prove the notice remains hidden.
-- [ ] **EDITOR-124 — implement the six remaining special object entries.**
+- [x] **EDITOR-124 — implement the six remaining special object entries.**
       Add faithful editor representations for Bomb, Hanging bomb, Homing bomb, Moving bomb,
       Personal bomb, and Secret wooden case. Where Galaxy's current `ObjectType` vocabulary has no
       lossless counterpart, extend the persisted object/editor profile deliberately rather than
       aliasing the glyph to an unrelated enemy or pickup. Placement, rendering, removal, exact
       undo/redo, save/reload, and play-test loading are required.
+      **Done 2026-07-25:** the named Eggbert 2 constants map Bomb, Hanging bomb, Homing bomb,
+      Moving bomb, and Personal bomb exactly to object types 2, 3, 96, 16, and 200. Secret wooden
+      case remains type 12's real pushable crate behavior but now captures the currently selected
+      terrain tile as its camouflage, matching the original editor's `currentIcon` variant model.
+      `MoveObjectRecord` persists that per-instance object-m.png icon in a backward-compatible
+      47-byte payload while still accepting every old 45-byte record. Runtime conversion and the
+      cube renderer honor the override; normal objects keep their type/phase icon. Pointer tests
+      click all six real menu cells, the editor placement test proves the secret variant reaches
+      the world record, and serialization tests cover new and legacy payloads.
 - [ ] **EDITOR-125 — make Level start set and persist the world's spawn point.**
       The existing Level start glyph must arm a start-position tool whose red preview cell is the
       exact saved spawn. Extend the engine-agnostic world model and backward-compatible `.vwr`

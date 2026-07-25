@@ -3478,7 +3478,9 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
-                    const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
+                    const int icon = obj.visualIcon != 0 ?
+                        static_cast<int>(obj.visualIcon) :
+                        GetObjIcon(obj.type, static_cast<int>(obj.phase));
                     Easy3D::CubeItem item;
                     item.Center = Easy3D::CubeBatch::Vector3(
                         obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ);

@@ -32,6 +32,12 @@ namespace GalaxyEggbert::CNA
         // Values are the actual World::skyRegion ids selected by the
         // matching cells; zero is valid here.
         std::vector<int> skyRegionIds;
+        // Optional per-entry object-m.png icon override. Zero keeps the
+        // normal ObjectType-driven icon. A negative value means "capture
+        // the currently selected terrain icon" and is used by Eggbert 2's
+        // Secret wooden case: the crate is camouflaged as the current
+        // terrain selection instead of looking like an ordinary crate.
+        std::vector<int> objectVisualIconIds;
     };
 
     // Hand-curated categories built ONLY from BlockTypes.hpp's own already-

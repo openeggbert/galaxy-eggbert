@@ -53,6 +53,12 @@ namespace GalaxyEggbert::CNA
         return category ? category->skyRegionIds : EmptyIds();
     }
 
+    const std::vector<int>& GEEditorPalette::ContentObjectVisualIconIds() const noexcept
+    {
+        const PaletteCategory* category = OpenCategory();
+        return category ? category->objectVisualIconIds : EmptyIds();
+    }
+
     GEEditorPalette::UpdateResult GEEditorPalette::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int viewportWidth, int viewportHeight, float elapsedSeconds)
@@ -112,6 +118,7 @@ namespace GalaxyEggbert::CNA
                 const auto& blockIds = ContentBlockIds();
                 const auto& objectIds = ContentObjectTypeIds();
                 const auto& skyRegionIds = ContentSkyRegionIds();
+                const auto& objectVisualIconIds = ContentObjectVisualIconIds();
                 const int index = pointer.index;
                 if (index >= 0 && index < static_cast<int>(skyRegionIds.size()))
                 {
@@ -127,6 +134,11 @@ namespace GalaxyEggbert::CNA
                 if (objectType > 0)
                 {
                     selectedObjectType_ = objectType;
+                    const int visualIcon =
+                        index >= 0 && index < static_cast<int>(objectVisualIconIds.size()) ?
+                            objectVisualIconIds[static_cast<std::size_t>(index)] : 0;
+                    selectedObjectVisualIcon_ =
+                        visualIcon < 0 ? selectedBlockType_ : visualIcon;
                     objectMode_ = true;
                     openCategory_ = -1;
                 }

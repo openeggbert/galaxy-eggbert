@@ -302,6 +302,7 @@ namespace GalaxyEggbert::CNA
         {
             MoveObjectRecord record;
             record.type = palette_.SelectedObjectType();
+            record.visualIcon = palette_.SelectedObjectVisualIcon();
             record.posStartX = static_cast<float>(x);
             record.posStartY = static_cast<float>(y);
             record.posStartZ = static_cast<float>(z);

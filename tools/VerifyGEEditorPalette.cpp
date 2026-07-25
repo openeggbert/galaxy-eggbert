@@ -70,6 +70,18 @@ int main()
     };
     check(sourceCategories[3].iconIds == expectedBuildingBlocks,
           "all ten Buildings entries map to their named first atlas tiles");
+    check(std::vector<int>(
+              sourceCategories[4].objectTypeIds.begin(),
+              sourceCategories[4].objectTypeIds.begin() + 3) ==
+              std::vector<int>{2, 3, 96},
+          "Bomb, Hanging bomb, and Homing bomb use their exact Eggbert 2 object types");
+    check(sourceCategories[5].objectTypeIds[10] == 16,
+          "Moving bomb uses Eggbert 2's TYPE_BOMBEMOVE object type");
+    check(sourceCategories[6].objectTypeIds[7] == 200,
+          "Personal bomb uses Eggbert 2's first personal-bomb variant");
+    check(sourceCategories[7].objectTypeIds[9] == 12 &&
+              sourceCategories[7].objectVisualIconIds[9] == -1,
+          "Secret wooden case retains the crate behavior and current-terrain camouflage profile");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
@@ -340,6 +352,56 @@ int main()
     }
 
     {
+        constexpr struct
+        {
+            float categoryY;
+            int itemIndex;
+            GalaxyEggbert::ObjectType expectedType;
+            const char* message;
+        } bombEntries[] = {
+            {240.0f, 0, GalaxyEggbert::ObjectType::ObjectType2,
+             "Bomb selects TYPE_BOMBEDOWN"},
+            {240.0f, 1, GalaxyEggbert::ObjectType::ObjectType3,
+             "Hanging bomb selects TYPE_BOMBEUP"},
+            {240.0f, 2, GalaxyEggbert::ObjectType::ObjectType96,
+             "Homing bomb selects TYPE_BOMBEFOLLOW1"},
+            {282.0f, 10, GalaxyEggbert::ObjectType::ObjectType16,
+             "Moving bomb selects TYPE_BOMBEMOVE"},
+            {324.0f, 7, GalaxyEggbert::ObjectType::ObjectType200,
+             "Personal bomb selects TYPE_BOMBEPERSO1"},
+        };
+        for (const auto& entry : bombEntries)
+        {
+            GEEditorPalette palette;
+            (void)click(palette, 30.0f, entry.categoryY);
+            const auto selected = click(
+                palette, 72.0f + static_cast<float>(entry.itemIndex) * 42.0f,
+                entry.categoryY);
+            check(selected.clickConsumed &&
+                      palette.SelectedObjectType() == entry.expectedType &&
+                      palette.SelectedObjectVisualIcon() == 0 &&
+                      palette.IsObjectMode(),
+                  entry.message);
+            check(!palette.IsNotYetImplementedNoticeVisible(),
+                  "an implemented bomb entry does not raise the temporary notice");
+        }
+    }
+
+    {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 366.0f);
+        const auto secretCase = click(palette, 450.0f, 366.0f);
+        check(secretCase.clickConsumed &&
+                  palette.SelectedObjectType() == GalaxyEggbert::ObjectType::ObjectType12 &&
+                  palette.SelectedObjectVisualIcon() ==
+                      GalaxyEggbert::BlockTypes::RockPile &&
+                  palette.IsObjectMode(),
+              "Secret wooden case selects a crate camouflaged as the current terrain icon");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the implemented Secret wooden case does not raise the temporary notice");
+    }
+
+    {
         constexpr const char* kBackgroundSavePath =
             "verify_ge_editor_palette_background.vwr";
         World world;
@@ -409,6 +471,32 @@ int main()
               "X+ followed by PLACE uses the moved preview cell");
         check(editor.ConsumeNeedsPresentationRebuild(),
               "PLACE requests a presentation rebuild");
+    }
+
+    {
+        World world;
+        GEWorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+        const auto tap = [&](int x, int y)
+        {
+            const MouseState down(
+                x, y, 0, ButtonState::Pressed, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            const MouseState up(
+                x, y, 0, ButtonState::Released, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        tap(30, 366);
+        tap(450, 366);
+        tap(499, 451);
+        const auto objects = GalaxyEggbert::CollectMoveObjects(world);
+        check(objects.size() == 1 &&
+                  objects[0].type == GalaxyEggbert::ObjectType::ObjectType12 &&
+                  objects[0].visualIcon == GalaxyEggbert::BlockTypes::RockPile,
+              "placing Secret wooden case persists its exact camouflage variant");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

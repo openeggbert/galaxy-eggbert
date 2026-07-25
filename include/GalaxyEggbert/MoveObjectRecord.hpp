@@ -31,6 +31,11 @@ namespace GalaxyEggbert {
 // Y=0 therefore has Y=1. Renderers must not add another vertical block.
 struct MoveObjectRecord final {
     ObjectType type = ObjectType::ObjectType0;
+    // Optional object-m.png tile override for placed variants whose visual
+    // identity cannot be derived from ObjectType alone. Zero uses the
+    // normal GetObjIcon(type, phase) mapping. Eggbert 2's secret wooden
+    // case uses this to retain its terrain camouflage across save/load.
+    std::uint16_t visualIcon = 0;
     float posStartX = 0.0f, posStartY = 0.0f, posStartZ = 0.0f;
     float posEndX = 0.0f, posEndY = 0.0f, posEndZ = 0.0f;
     float speed = 1.5f;

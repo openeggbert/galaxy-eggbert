@@ -67,6 +67,11 @@ namespace GalaxyEggbert::CNA
             return ToObjectType(selectedObjectType_);
         }
 
+        [[nodiscard]] std::uint16_t SelectedObjectVisualIcon() const noexcept
+        {
+            return static_cast<std::uint16_t>(selectedObjectVisualIcon_);
+        }
+
         void SetSelectedSkyRegion(std::uint32_t skyRegion) noexcept
         {
             selectedSkyRegion_ = static_cast<int>(skyRegion);
@@ -84,11 +89,13 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] const std::vector<int>& ContentObjectTypeIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentButtonIconIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentSkyRegionIds() const noexcept;
+        [[nodiscard]] const std::vector<int>& ContentObjectVisualIconIds() const noexcept;
 
         std::vector<PaletteCategory> categories_;
         int openCategory_ = -1;
         int selectedBlockType_;
         int selectedObjectType_;
+        int selectedObjectVisualIcon_ = 0;
         bool objectMode_ = false;
         int selectedSkyRegion_ = 0;
         float notYetImplementedSeconds_ = 0.0f;
