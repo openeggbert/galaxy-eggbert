@@ -209,8 +209,9 @@ Galaxy Eggbert
 ```
 
 Easy3D does not hide CNA and must not grow into a scene graph/ECS/engine (see `easy3d.md` §7).
-mobile-eggbert is read-only; `GalaxyEggbertSimple3D` stays intact but historical
-(never build/fix it as of 2026-07-08). Full rules: `CLAUDE.md` "Current Direction Lock".
+mobile-eggbert is read-only. The retired pre-CNA implementation was removed from the live tree
+2026-07-25 after parity and explicit user approval; its last state is in git at `4afd53e`.
+Full rules: `CLAUDE.md` "Current Direction Lock".
 
 **How this section relates to `## 2` below (clarified 2026-07-20, after a session found the two
 looked like duplicate tracking and asked about cleanup):** the Phases below (`E3D-MIG-0xx`-`1xx`)
@@ -2001,12 +2002,22 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       (already observed for Blupi, mooted there by the first-person camera, but NOT mooted for
       enemies since the player does see them from arbitrary angles). No resolution proposed yet.
 
-### Phase 11 — Retire Simple3D path (later) (`E3D-MIG-110`-`112`)
+### Phase 11 — Retire Simple3D path (`E3D-MIG-110`-`112`, `CLEANUP-S3D-001`)
 
-- [ ] Don't delete Simple3D now; retire only once CNA reaches playable parity. Note:
-      `CLAUDE.md` (2026-07-08) has already tightened this — Simple3D is "historical reference
-      only," never built/fixed, tighter than this phase's original premise. Re-evaluate deletion
-      with the user before acting, per CLAUDE.md's explicit-removal-task requirement.
+- [x] `E3D-MIG-110` — remove the retired source tree and its two obsolete verifier tools
+      (2026-07-25). Preconditions were satisfied: CNA had reached playable parity, the user
+      explicitly approved removal, and the exact pre-removal state remains recoverable at
+      commit `4afd53e`.
+- [x] `E3D-MIG-111` — remove its CMake option, dependency discovery, executable/verifier targets,
+      stale CI flags, and live build instructions; re-anchor active CNA provenance comments to
+      `mobile-eggbert-reference/`, production code, and regression tests (2026-07-25).
+- [x] `E3D-MIG-112` — update current documentation while preserving clearly marked migration
+      history; verify a fresh CNA-only configure, build, and full applicable test suite at no more
+      than `-j2`; remove ignored stale build artifacts that still contained the retired target
+      (2026-07-25). Verified: clean configure target inventory contains CNA/CNA verifiers and no
+      retired target; incremental full build succeeds at `-j2`; all 90 applicable CTest tests pass
+      (`easy-gl-resource-smoke-tests` remains the documented external exclusion); removed the
+      ignored 277MB `build/` tree containing `Simple3D_dep` and the retired executable.
 
 ### Phase 12 — Optional future (`E3D-MIG-120`-`124`)
 
@@ -2163,8 +2174,8 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       checkout of `../mobile-eggbert` (test data, not a build dependency — see below), installs
       the same apt package list `../cna`'s own `devices-tests.yml` already proved builds this
       dependency tree on `ubuntu-latest`, caches the vendored SDL3 prebuilt tree (keyed on
-      submodule commit hashes) and ccache, configures with `-DGALAXY_EGGBERT_BUILD_CNA=ON
-      -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`, builds, then runs `ctest --test-dir build-cna`
+      submodule commit hashes) and ccache, configures with
+      `-DGALAXY_EGGBERT_BUILD_CNA=ON`, builds, then runs `ctest --test-dir build-cna`
       excluding the one known, pre-existing, unrelated `easy-gl-resource-smoke-tests` failure.
       Deliberately scoped OUT, per explicit user decision: no golden-frame/golden-trace steps (no
       `xvfb-run`) — those stay a manual local step (NEXT.md §7), keeping this job simpler and not
@@ -5678,8 +5689,8 @@ doesn't silently re-open them or silently guess an answer:
 
 Standing rules, not one-shot tasks — durable until explicitly revisited with the user:
 
-- No Simple3D/U3D/Nova3D work of any kind — no bug fixes, no build-environment troubleshooting.
-  `GalaxyEggbertSimple3D` is historical/behavioral reference only (2026-07-08).
+- No resurrection of the retired pre-CNA/U3D/Nova3D dependency path. Its last source state is
+  preserved in git history at `4afd53e`.
 - No modifying `../mobile-eggbert`, ever, even temporarily/for analysis — copy a file into
   galaxy-eggbert first if a working copy is genuinely needed.
 - No copying mobile-eggbert code or data (tables, enums, save-format byte layout, sprite/frame
@@ -5687,7 +5698,7 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
   "just data."
 - No `.txt`→`.vwr` auto-converter tool — real 3D worlds must be hand-authored; a flat-Y
   auto-conversion would produce an unplayable curiosity, not a real level.
-- No MeshCraft, Mesh World, or further Simple3D features re-entering the active target path.
+- No MeshCraft, Mesh World, or alternate engine features re-entering the active target path.
 - No Lua unless explicitly requested by the user.
 - No Easy3D scope creep — no ECS, scene graph, or engine; small generic 3D-batching helpers only.
 - No new gameplay mechanics — every task in `## 1`/`## 2` traces to a documented mobile-eggbert
@@ -7021,9 +7032,9 @@ specifically, same as any other large/risky item elsewhere in this file.
       top of a projection call chain this refactor never modified. Flagged here rather than
       claiming a live check that wasn't actually done.
 - Standing rule, not a one-shot task (`REMAKE-ANALYSIS.md` P2-2): **reuse before re-deriving.**
-  When a CNA render/math bug has a plausible 2D/pixel root cause, check whether the engine-agnostic
-  `include/GalaxyEggbert/` tree or `GalaxyEggbertSimple3D` (historical reference only, but still
-  readable) already solved it before re-deriving the logic from scratch — `missing.md`'s own
+  When a CNA render/math bug has a plausible 2D/pixel root cause, check the engine-agnostic
+  `include/GalaxyEggbert/` tree, `mobile-eggbert-reference/`, and current verification tests
+  before re-deriving the logic from scratch — `missing.md`'s own
   lesson (a UV-bleed bug CNA reintroduced despite `BlockTypes::tileUV()` already solving it
   years earlier). No task ID; this is a practice to apply on every future render/math bug, not a
   thing to close.

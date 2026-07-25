@@ -1,5 +1,11 @@
 # mobile-eggbert 2D World Reference — Overview
 
+> **Archive note (2026-07-25):** references in this catalog to
+> `src/GalaxyEggbertSimple3D/` describe the retired pre-CNA implementation at the time this
+> research was performed. That tree was removed after CNA reached playable parity; inspect it with
+> `git show 4afd53e:<path>`. The references are retained as historical provenance, not live paths
+> or current build guidance.
+
 ## Purpose and scope
 
 This reference catalogs everything a mobile-eggbert (2D *Speedy Blupi*) world/level can contain —

@@ -8,9 +8,9 @@
 #include <vector>
 
 // Scripted verification that GalaxyEggbert::CNA::GEWorldRuntime now parses
-// MoveObject: lines (previously ignored entirely) using the same supported
-// ObjectType allowlist as GESimple3D::GEWorldRuntime. Each (type, file) pair
-// below is a real mobile-eggbert level file confirmed (by grepping
+// MoveObject: lines (previously ignored entirely) using the production
+// GEWorldRuntime ObjectType allowlist. Each (type, file) pair below is a
+// real mobile-eggbert level file confirmed (by grepping
 // ../mobile-eggbert/worlds/*.txt) to contain a MoveObject: line of that
 // exact type, so this is grounded in real level data, not synthetic.
 int main()

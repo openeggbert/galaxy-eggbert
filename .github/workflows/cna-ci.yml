@@ -1,6 +1,5 @@
 # BUILD-009 (plan.md, NEXT.md "Sibling-repo commit pins"): CI for GalaxyEggbertCNA, the sole
-# actively-developed target (see CLAUDE.md "Current Direction Lock" -- GalaxyEggbertSimple3D is
-# historical reference only and is deliberately NOT built here). Linux only (Web CI is BUILD-003,
+# game target. Linux only (Web CI is BUILD-003,
 # not done yet); no golden-frame/golden-trace steps (those need a real/virtual GPU display and
 # stay a manual, explicit local step -- see NEXT.md section 7).
 #
@@ -123,7 +122,6 @@ jobs:
         run: |
           cmake -S galaxy-eggbert -B galaxy-eggbert/build-cna \
             -DGALAXY_EGGBERT_BUILD_CNA=ON \
-            -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache
 

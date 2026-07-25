@@ -5,15 +5,14 @@
 namespace GalaxyEggbert::CNA
 {
     // element.png icon index for a MoveObject's ObjectType + animation phase.
-    // Ported from GalaxyEggbertSimple3D's already-approved
-    // GEDecorSystem::GetObjIcon() (galaxy-eggbert's own code, not a fresh
-    // mobile-eggbert transcription) -- same tables, same simplifications
+    // Grounded in the reference Tables.cpp/Decor.cpp data summarized by
+    // mobile-eggbert-reference/03-objects.md and 08-animations.md, with the
+    // same documented 3D simplifications
     // (continuous phase-indexed cycles instead of mobile-eggbert's real
     // 4-state turn/walk step machine; only "left"-facing frames for patrol
     // enemies, no separate mirrored table).
     //
-    // Known limitation, inherited from the Simple3D reference target
-    // (tracked as DOC-007, not fixed there either): ObjectType32/33 need
+    // Known limitation (tracked as DOC-007): ObjectType32/33 need
     // blupi1.png, not element.png, in real mobile-eggbert data -- still not
     // fixed. ObjectType1/12/47/48 (see IsUniformCubeObject below) and
     // ObjectType14/15/31/35/52 (see IsObjectMPngSourced below) DO now

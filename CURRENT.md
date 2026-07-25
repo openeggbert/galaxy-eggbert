@@ -6,9 +6,10 @@ limitation, a supported build, or the actionable backlog. Keep historical detail
 
 ## What this project is
 
-Galaxy Eggbert is a faithful 3D remake of `mobile-eggbert` / *Speedy Blupi*. The active and sole
-maintained target is **`GalaxyEggbertCNA`**, built directly on CNA with Easy3D as a small helper
-library. `GalaxyEggbertSimple3D` is read-only historical reference: do not build, fix, or extend it.
+Galaxy Eggbert is a faithful 3D remake of `mobile-eggbert` / *Speedy Blupi*. The sole game target
+is **`GalaxyEggbertCNA`**, built directly on CNA with Easy3D as a small helper library. The retired
+pre-CNA implementation was removed from the live tree on 2026-07-25 and remains available in git
+history at commit `4afd53e`.
 
 The in-game 3D world editor is the one approved exception to the faithful-remake rule: it may add
 content-authoring UX, but not new gameplay mechanics.

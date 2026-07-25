@@ -9,10 +9,9 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        // Ported verbatim from mobile-eggbert Sound.hpp's tableVolumePitch --
-        // the SAME real table already transcribed (with approval) into
-        // GalaxyEggbertSimple3D's GESound.cpp, reused here rather than
-        // re-transcribed. Index [ch*2] = volume multiplier, [ch*2+1] = pitch
+        // Ported verbatim, with approval, from mobile-eggbert Sound.hpp's
+        // tableVolumePitch. Index [ch*2] = volume multiplier,
+        // [ch*2+1] = pitch
         // (not applied here -- see GESound.hpp's class comment).
         constexpr float kVolumePitch[200] = {
             1.0f, 0.0f,  0.5f, 1.0f,  0.5f, 1.0f,  1.0f, 0.2f,  1.0f, 0.2f,
@@ -87,7 +86,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // Channel 10 always restarts; every other channel doesn't interrupt
-        // itself if already playing (matches Simple3D's GESound exactly).
+        // itself if already playing, matching mobile-eggbert Sound.cpp.
         if (channel != GalaxyEggbert::SoundChannel::SoundChannel10 && !loop &&
             ch.instance && ch.instance->getStateProperty() == SoundState::Playing)
         {

@@ -298,9 +298,9 @@ Do this incrementally, one family at a time, behind P0-1's golden harness.
   (RC-6). Keep the decoupling; drop the boilerplate and the prose-documented ordering hazards.
   Propose to the user first (see the note under RC-6).
 - **P2-2. Reuse before re-deriving** (RC-7). When a CNA render/math bug has a plausible 2D/pixel
-  root cause, first check whether the engine-agnostic `include/GalaxyEggbert/` tree or
-  `GalaxyEggbertSimple3D` already solved it (the `missing.md` lesson). Consider promoting more proven
-  math into the shared engine-agnostic layer.
+  root cause, first check the engine-agnostic `include/GalaxyEggbert/` tree, the researched
+  `mobile-eggbert-reference/` notes, and current verification tests (the `missing.md` lesson).
+  Consider promoting more proven math into the shared engine-agnostic layer.
 - **P2-3. Isolate sibling-repo risk** (RC-7). Pin/record the sibling-repo commits Galaxy Eggbert is
   verified against, and clearly quarantine known-upstream failures (the `easy-gl` smoke test, the
   Vulkan `BasicEffect`/`SkinnedEffect` issues) so they stop reading as Galaxy Eggbert regressions.
@@ -337,8 +337,9 @@ headless check → commit → push) **plus** the new golden/trace checks once th
 - **`../mobile-eggbert` is never modified.** The one place that would touch it (P0-2's optional
   read-only extraction tool) is flagged as requiring explicit user approval and is not assumed.
 - **No copied code/data.** P0-2 *validates* transcription; it does not license copying tables in.
-- **Direct-CNA + Easy3D lock, no Simple3D work.** P1/P2 are all inside `GalaxyEggbertCNA` and the
-  shared engine-agnostic tree; `GalaxyEggbertSimple3D` stays historical reference (read-only).
+- **Direct-CNA + Easy3D lock, no alternate engine work.** P1/P2 are all inside
+  `GalaxyEggbertCNA` and the shared engine-agnostic tree. The retired pre-CNA source is available
+  only through git history at `4afd53e`.
 - **The `GEInteractionSystem` decoupling stays.** RC-6's fix changes the *transport*, not the
   boundary, and is offered as a proposal to confirm with the user.
 - **Items needing live human judgment stay human-gated** — this analysis does not authorize new

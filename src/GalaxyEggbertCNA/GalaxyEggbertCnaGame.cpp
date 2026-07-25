@@ -378,7 +378,7 @@ namespace GalaxyEggbert::CNA
         inputPad_.LoadContent(device);
 
         // Billboard rendering for MoveObjects (15-3d-render-mapping-design.md
-        // §5/§7) — element.png, same asset already used by GalaxyEggbertSimple3D.
+        // §5/§7) — element.png from the approved mobile-eggbert assets.
         objectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/element.png", device);
         objectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         objectEffect_->VertexColorEnabled = false;
@@ -1787,16 +1787,15 @@ namespace GalaxyEggbert::CNA
         {
             terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
 
-            // Tank controls (2026-07-05, matches GalaxyEggbertSimple3D's
-            // already-shipped "Move" axis scheme): Left/Right turn, Up/Down
+            // Tank controls (2026-07-05, matching mobile-eggbert's control
+            // feel): Left/Right turn, Up/Down
             // move forward/back along the current facing — arrows are not
             // a strafe pad. LCtrl jumps and Space is reserved for "Action"
             // (matches mobile-eggbert's own InputPad.cpp key glyphs exactly:
             // LeftControl -> PlayJump, Space -> PlayAction) — Space is read
             // here but not wired to anything yet, since there is no
             // interactive-object system in GalaxyEggbertCNA yet. LShift
-            // crouches, RShift looks up (mirrors Simple3D's Down/Up
-            // BlupiState).
+            // crouches and RShift looks up.
             using Microsoft::Xna::Framework::Input::Keys;
             const auto keys = ReadKeyboardState(goldenCaptureMode_ || goldenTraceMode_);
             float turnInput = 0.0f;
@@ -2147,9 +2146,7 @@ namespace GalaxyEggbert::CNA
             // simplest of the 5 real isHazard() tile types to implement
             // faithfully for exactly that reason; Crusher/Saw/Blitz each
             // have real gating/timing conditions BlockTypes::isHazard() does
-            // NOT encode (that helper is Simple3D-only, a uniform "any
-            // hazard kills" shortcut -- not reused here since it would be
-            // unfaithful for those types), so each gets its own dedicated
+            // NOT encode, so each gets its own dedicated
             // task (E3D-MIG-142..144) instead of one generic "hazard" check.
             // GetGroundBlockType() already gates on IsOnGround() -- Lava
             // tiles are solid/walkable-on in this engine (Blupi stands on

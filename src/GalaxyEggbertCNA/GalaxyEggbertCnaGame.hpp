@@ -46,9 +46,7 @@ namespace GalaxyEggbert::CNA
     // extension (see ../cna/docs/avatar-real-rendering-ext.md) -- currently
     // a temporary placeholder model (avatars3d/blupi_placeholder/, see its
     // own README.md), not yet a real Blupi model. "C" toggles between modes
-    // (same key Simple3D already used for its own, differently-scoped
-    // camera-mode toggle -- perspective/isometric there, first/third-person
-    // here; same "switch camera view" idea).
+    // ("C" is the project's established switch-camera key).
     class GalaxyEggbertCnaGame final : public Microsoft::Xna::Framework::Game
     {
     public:

@@ -20,14 +20,13 @@ namespace GalaxyEggbert::CNA
             return std::clamp(v, 0, blocksPerAxis - 1);
         }
 
-        // blupi.png icon indices, ported from GalaxyEggbertSimple3D's own
-        // already-approved GEBlupiController.cpp (kMarchFrames/kJumpFrames/
-        // kDownFrames/kUpFrames/kAirFrames) — not a fresh mobile-eggbert
-        // transcription.
+        // blupi.png icon indices grounded in the approved table_blupi data
+        // summarized by mobile-eggbert-reference/08-animations.md
+        // (kMarchFrames/kJumpFrames/kDownFrames/kUpFrames/kAirFrames).
         //
         // kStopFrames replaced 2026-07-18 (user question: "does Blupi get
         // bored and tap his foot after standing still for a while?") --
-        // the OLD single-frame `{0}` here was a Simple3D-era placeholder,
+        // the old single-frame `{0}` here was an early 3D placeholder,
         // never the real data. The real `table_blupi` Stop record (id=1)
         // is 330 frames long, not 1 -- confirmed this is NOT a separate
         // "boredom timer" mechanism, just the natural consequence of Stop's
@@ -1266,8 +1265,7 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
-        // Tank controls (matches GalaxyEggbertSimple3D's "Move" axis
-        // handling): turning changes yaw directly; movement is always along
+        // Tank controls: turning changes yaw directly; movement is always along
         // the current facing direction, never a free strafe. 0 rad = facing
         // -Z, matching the forward vector the CNA camera derives from
         // GetYaw() (sin(yaw), 0, -cos(yaw)).
@@ -1737,13 +1735,11 @@ namespace GalaxyEggbert::CNA
         // Precedence: Teleporting/Balloon/Ecrase/Hide/Nage/Surf/vehicle
         // (each a real BlupiAction status with only ONE real animation
         // regardless of grounded/airborne, see the AnimState enum's own
-        // comment) beat the normal ground/air cascade entirely, which
-        // otherwise matches GalaxyEggbertSimple3D::GEBlupiController::
-        // UpdateState: airborne beats crouch/look-up beats moving beats
+        // comment) beat the normal ground/air cascade entirely: airborne
+        // beats crouch/look-up beats moving beats
         // idle. Airborne itself splits Jump (ascending) vs Air (falling/
         // apex) by velocity sign -- see the AnimState enum's own comment
-        // for why this differs from Simple3D's frame-counted trigger
-        // window.
+        // for the 3D velocity-sign adaptation.
         const AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
                                   : m_bye ? AnimState::Bye
                                   : m_oneShotAnimActive ? m_oneShotAnimState

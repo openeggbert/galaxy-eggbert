@@ -7,15 +7,9 @@ toolchain (GCC/G++ targeting `x86_64-w64-mingw32`).
 
 ### Static C++ runtime
 
-`GalaxyEggbertSimple3D` links the GCC/C++ runtime statically on MinGW, guarded by
-`if(MINGW)` in `CMakeLists.txt`:
-
-```cmake
-target_link_options(GalaxyEggbertSimple3D PRIVATE -static-libgcc -static-libstdc++)
-```
-
-This avoids a runtime dependency on `libgcc_s_seh-1.dll`/`libstdc++-6.dll` outside the
-CLion/MSYS2 environment. `GalaxyEggbertCNA` now uses the same link options on MinGW builds,
+`GalaxyEggbertCNA` links the GCC/C++ runtime statically on MinGW, guarded by
+`if(MINGW)` in `CMakeLists.txt`. This avoids a runtime dependency on
+`libgcc_s_seh-1.dll`/`libstdc++-6.dll` outside the CLion/MSYS2 environment,
 plus CNA's established `--allow-multiple-definition` workaround for the MinGW PE/COFF linker.
 
 ### Known gap: no runtime DLL copying
@@ -25,9 +19,7 @@ plus CNA's established `--allow-multiple-definition` workaround for the MinGW PE
 prebuilt resolves its import libraries through `SDL3_DIR` without exposing the helpers'
 compatibility aliases, so the target also copies the known `bin/` DLLs from that package prefix as
 a fallback. Its output directory therefore contains `libwinpthread-1.dll`, `SDL3.dll`,
-`SDL3_image.dll`, and `SDL3_mixer.dll` next to the executable. This is limited to the maintained
-CNA target. `GalaxyEggbertSimple3D` remains historical reference only and deliberately has no
-packaging work (see `CLAUDE.md`).
+`SDL3_image.dll`, and `SDL3_mixer.dll` next to the executable.
 
 ### Current 3D backend blocker
 

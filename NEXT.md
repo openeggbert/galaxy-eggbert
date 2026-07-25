@@ -43,6 +43,13 @@ and real-pointer checks cover all 96 source cells, the full suite is clean, and 
 editor menu was inspected from a live capture. The subsequent live-reported Palmtree blue-tile
 regression and missing browser Back path are fixed as EDITOR-128/129._
 
+_Architecture cleanup 2026-07-25: `E3D-MIG-110..112` / `CLEANUP-S3D-001` is complete. The
+retired pre-CNA source tree, its CMake option/targets, and its two obsolete verifier tools were
+removed after CNA reached playable parity. The last pre-removal state is recoverable at git commit
+`4afd53e`; a clean CMake inventory contains no retired target, the full `-j2` build succeeds, and
+all 90 applicable CTest tests pass. The ignored 277MB legacy `build/` tree was also removed;
+historical entries below are intentionally retained as migration history._
+
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
 Infrastructure & Dual-Renderer — Vision") is new: a non-binding assessment of merged
@@ -76,17 +83,15 @@ Note this editor is an explicit, user-approved **exception** to the faithful-rem
 UX is fine — inventing new *gameplay* mechanics is still not.
 
 **Important architectural decisions:**
-- **Direct CNA + Easy3D is the locked, sole long-term target** (decided 2026-07-05). The older
-  `GalaxyEggbertSimple3D` (built on `simple-3d` → U3D/Urho3D) is **historical reference only as of
-  2026-07-08** — do not build, fix, or troubleshoot it. Its code stays in the tree but is not
-  maintained.
+- **Direct CNA + Easy3D is the locked, sole target** (decided 2026-07-05). The retired pre-CNA
+  implementation was removed from the live tree on 2026-07-25 and remains in git history at
+  `4afd53e`; do not resurrect its dependency path.
 - Easy3D is a small helper library beside CNA (cameras, texture atlas, batching) — it must not
   hide CNA; game code calls CNA directly.
 - `../mobile-eggbert` is **read-only, never modified, even temporarily**. Assets (PNGs, sounds,
   world files) are freely reused by direct path; code/data (tables, enum values, byte layouts) are
   reference-only and require explicit user approval to transcribe.
-- `../simple-3d` may be read for reference only; never modified.
-- No `#ifdef` guards for engine differences — each target speaks its own API directly.
+- No `#ifdef` guards for hypothetical engine differences — the game speaks CNA directly.
 - Worlds are hand-authored via `tools/GenerateSampleWorld3D.cpp` (writes all 79 `worlds3d/*.vwr`
   files, including `world999.vwr`, this engine's own quarantined mechanics-showcase/test world);
   there is no automatic 2D→3D world converter and none is planned.
@@ -114,9 +119,6 @@ code is confirmed backend-agnostic through this.
   does not have the same line — unclear if that effect is on `AvatarRenderer`'s actual render path
   or a separate, unrelated pipeline; flag if a floating-model bug ever resurfaces specifically under
   a PBR-skinned material.
-- `GalaxyEggbertSimple3D` is **not built** (per direction lock above) — its build is known broken
-  in this environment (missing/incompatible U3D prebuilt) and this is intentionally left unfixed.
-
 ### Sibling-repo commit pins (`INFRA-009`, plan.md §7)
 
 Galaxy Eggbert depends on 5 sibling repositories, each under independent development (see the
@@ -163,7 +165,7 @@ the full writeup. Configure/build:
 source <path-to-emsdk>/emsdk_env.sh
 cmake -S . -B build-web \
   -DCMAKE_TOOLCHAIN_FILE=<path-to-emsdk>/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-  -DCMAKE_BUILD_TYPE=Release -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF -DGALAXY_EGGBERT_BUILD_CNA=ON
+  -DCMAKE_BUILD_TYPE=Release -DGALAXY_EGGBERT_BUILD_CNA=ON
 cmake --build build-web --target GalaxyEggbertCNA -j2
 ```
 Produces `build-web/GalaxyEggbertCNA.{html,js,wasm,data}` — serve that directory over plain HTTP
@@ -220,9 +222,6 @@ Last full run (2026-07-21, `build-cna` only, after `INFRA-004`):
   placement), `VerifyGetObjIcon` (`INFRA-003` — `GetObjIcon()` data-integrity regression test), and
   `VerifyUnverifiedRenderMapping` (`INFRA-004` — locks the ~131-icon "unverified render-mode guess"
   table's shape).
-- `GalaxyEggbertSimple3D`, `VerifyBigDecorParsing`, `VerifyMoveObjectTypes` — Simple3D-only targets,
-  not built per the direction lock.
-
 ### Recently implemented (2026-07-18/19: the in-game 3D world editor — see §3 for detail)
 
 **EDITOR-100..110 are complete, verified and pushed.** What works today, end to end:
@@ -355,8 +354,6 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
   `SetupJump`/`SetupZoom`/`SetupAccel`, `PauseBack`, `InitRanking`/`InitBuy`.
 - Idle "fidget" periodic sounds — blocked on `AnimState` values this engine doesn't have (same
   prerequisite as the 3D Blupi model).
-- `GalaxyEggbertSimple3D` — historical reference only, not built/maintained.
-
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
@@ -369,7 +366,7 @@ besides Windows cross-compile/packaging. Checks out `galaxy-eggbert` plus 5 pinn
 commit pins" table above) as directory siblings, plus a sparse (`worlds/`-only) checkout of
 `../mobile-eggbert` (test data, not a build dependency), reuses `../cna`'s own already-proven
 `devices-tests.yml` apt package list + vendored-SDL cache pattern, adds a ccache cache on top,
-configures `-DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF`, builds, then runs
+configures `-DGALAXY_EGGBERT_BUILD_CNA=ON`, builds, then runs
 `ctest --test-dir build-cna -E 'easy-gl-resource-smoke-tests'` (excluding the one known,
 pre-existing, unrelated upstream failure documented above).
 
@@ -2199,13 +2196,13 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
 
 Configure + build (EasyGL, the default backend):
 ```
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
 cmake --build build-cna --target GalaxyEggbertCNA -j2
 ```
 
 Configure + build (Vulkan backend):
 ```
-cmake -S . -B build-cna-vulkan -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF -DCNA_GRAPHICS_BACKEND=VULKAN
+cmake -S . -B build-cna-vulkan -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_BACKEND=VULKAN
 cmake --build build-cna-vulkan --target GalaxyEggbertCNA -j2
 ```
 (Use `-j2` maximum — this environment has crashed under more parallel jobs.)
@@ -2392,8 +2389,8 @@ Non-editor tasks:
 
 ## 9. Do not do yet
 
-- **No work on `GalaxyEggbertSimple3D`** — historical reference only, per explicit user directive.
-  Do not build, fix, or troubleshoot it.
+- **Do not resurrect the retired pre-CNA engine path.** Its last source state is already preserved
+  in git history at `4afd53e`.
 - **No modification of `../mobile-eggbert`**, not even temporarily, not even to "just check
   something" — copy a file out first if a working copy is genuinely needed.
 - **No copying mobile-eggbert code/data** (tables, enums, byte layouts) into this repository
@@ -2418,8 +2415,8 @@ Non-editor tasks:
   2026-07-20**, see §3. Still: don't second-guess it again without a fresh, explicit user report.
 - **No broad refactor or unrelated cleanup** while any of the §8 tasks are in flight — each is
   meant to be a single, small, independently-verifiable session.
-- **No Lua**, no MeshCraft/Mesh World/Nova3D/further-Simple3D features — none of these are part of
-  the locked Direct-CNA-+-Easy3D direction.
+- **No Lua, MeshCraft, Mesh World, Nova3D, or alternate engine path** — none is part of the locked
+  Direct-CNA-+-Easy3D direction.
 - **No starting `INFRA-005`/`INFRA-006` (`plan.md` §7's shared collision resolver / `ObjectType`
   handler-table task entries), or any dual-renderer work beyond the already-merged, unwired
   `GESceneFrame.hpp`,** without the user's own explicit go-ahead on that specific item — see §7's

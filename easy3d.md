@@ -20,6 +20,12 @@ platform-lift/crate objects, face culling) — the remaining gap to Simple3D is 
 sprite, HUD, sound, and gameplay logic (§12's open questions below are mostly resolved by now; see
 inline annotations).
 
+**Retirement update (2026-07-25):** CNA subsequently reached playable parity and the user
+explicitly approved Phase 11. The retired source tree, CMake target/option, and its obsolete
+verifier tools were removed from the live tree as `CLEANUP-S3D-001`; the last pre-removal state is
+recoverable at git commit `4afd53e`. All descriptions and recommendations below remain unchanged
+as a historical migration record and must not be interpreted as current build instructions.
+
 ---
 
 ## 1. Executive Summary

@@ -738,7 +738,7 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Matches GalaxyEggbertSimple3D's GEDecorSystem (AddTriggerSphere(0.7f)).
+        // Established 3D pickup-radius approximation, covered by interaction tests.
         constexpr float kPickupRadius = 0.7f;
         // The real contact hitbox is a tile-based rectangle overlap
         // (MoveObjectDetect), not a radius -- kPickupRadius is reused here
@@ -976,9 +976,8 @@ namespace GalaxyEggbert::CNA
             }
 
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
-            // posStart and posEnd at `speed` units/sec -- matches
-            // GalaxyEggbertSimple3D's GEDecorSystem::Update() exactly
-            // (same target-select/distance-flip/move-toward-target shape).
+            // posStart and posEnd at `speed` units/sec using the established
+            // target-select/distance-flip/move-toward-target shape.
             if (IsPlatformLift(obj.type))
             {
                 const float targetX = (obj.direction > 0.0f) ? obj.posEndX : obj.posStartX;
@@ -1027,8 +1026,7 @@ namespace GalaxyEggbert::CNA
             }
 
             // Crate push (ObjectType12) -- faithful to mobile-eggbert
-            // TestPushCaisse (see GalaxyEggbertSimple3D's GEDecorSystem.cpp,
-            // whose own comment cites the real function name). X-axis only,
+            // TestPushCaisse. X-axis only,
             // matching that reference exactly (mobile-eggbert is a 2D side-
             // scroller; X is its only horizontal movement axis, so a
             // Z-axis push was never a real mechanic to begin with). Real
@@ -1816,11 +1814,9 @@ namespace GalaxyEggbert::CNA
             // Pickup collection -- treasure/egg/level-exit/keys, the only
             // IsPickup() types placed in today's sample world. Sound
             // channels and removal behavior come from `mobile-eggbert-
-            // reference/13-object-pickups.md`/`07-sounds.md`, not from
-            // GalaxyEggbertSimple3D's GESound shortcuts (PlayCollect/
-            // PlayKey/PlayLife) -- that spec is the more carefully-verified
-            // source and corrects 2 real mistakes the shortcuts would have
-            // propagated: treasure/key pickup is channel 11 (or 19 for the
+            // reference/13-object-pickups.md`/`07-sounds.md`. The verified
+            // mapping avoids two earlier mistakes: treasure/key pickup is
+            // channel 11 (or 19 for the
             // set-completing treasure), not channel 10, and egg pickup is
             // channel 3, not channel 42 (42 is Shield activation, unrelated).
             if (obj.type != ObjectType::ObjectType5 && obj.type != ObjectType::ObjectType6 &&

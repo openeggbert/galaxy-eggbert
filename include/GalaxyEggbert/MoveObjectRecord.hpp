@@ -11,14 +11,13 @@ namespace GalaxyEggbert {
 // One MoveObject placement (pickup, enemy, platform lift, crate, ...)
 // embedded directly in the 3D `.vwr` world format, via Worlds::World's
 // block-extra-metadata mechanism (Worlds::Chunk::ChunkBlockMetadataRecord) --
-// not a separate top-level file section. Mirrors the simplified shape both
-// GalaxyEggbertSimple3D's and GalaxyEggbertCNA's own MobileObjSpec already
-// use for mobile-eggbert .txt-loaded MoveObject: lines (type, posStart,
+// not a separate top-level file section. Mirrors GalaxyEggbertCNA's
+// MobileObjSpec shape for mobile-eggbert .txt-loaded MoveObject: lines
+// (type, posStart,
 // posEnd, speed, plus the real patrol-timing fields below, 2026-07-11 --
 // posEnd == posStart means the object doesn't move, matching the real
-// guard). Kept engine-agnostic (plain floats, no CNA/XNA or Simple3D/U3D
-// vector types) so both targets can convert it into their own local
-// MobileObjSpec-equivalent struct.
+// guard). Kept engine-agnostic (plain floats, no CNA/XNA vector types) so
+// world serialization and the active renderer remain cleanly separated.
 //
 // IMPORTANT: positions here are in Worlds::World's own RAW GRID space
 // (range [0, world.blocksPerAxis()), same as World::setBlock's x/y/z) --

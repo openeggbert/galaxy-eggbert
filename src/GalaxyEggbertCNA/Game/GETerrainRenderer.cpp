@@ -22,9 +22,8 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
-        // Matches GEWorldRuntime::kWorldCenterX/kWorldCenterZ (== Simple3D's
-        // GEWorldRuntime::kWCX/kWCZ) — centers the 100x100 grid on the origin,
-        // one world unit per tile.
+        // Matches GEWorldRuntime::kWorldCenterX/kWorldCenterZ — centers the
+        // 100x100 reference grid on the origin, one world unit per tile.
         constexpr int kWorldCenterX = GEWorldRuntime::kWorldCenterX;
         constexpr int kWorldCenterZ = GEWorldRuntime::kWorldCenterZ;
 
@@ -286,9 +285,9 @@ namespace GalaxyEggbert::CNA
             return false;
         }
 
-        // Animation frame tables — ported 1:1 from GalaxyEggbertSimple3D's
-        // already-shipped GETerrainRenderer.cpp (same galaxy-eggbert repo;
-        // originally sourced from mobile-eggbert Tables.cpp with approval).
+        // Animation frame tables — sourced from the approved
+        // mobile-eggbert Tables.cpp data; see
+        // mobile-eggbert-reference/08-animations.md.
         constexpr int kAnimLava[8]     = {68, 69, 70, 71, 72, 71, 70, 69};
         constexpr int kAnimSpike[16]   = {374,374,373,347,373,374,374,374,373,347,347,373,374,374,374,374};
         constexpr int kAnimCrusher[10] = {317,317,318,319,320,321,322,323,323,323};

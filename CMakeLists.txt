@@ -17,8 +17,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Engine-independent shared sources (no Urho3D/Simple3D/CNA dependencies).
-# Shared by every game target — Simple3D, CNA, and the engine-agnostic test suite.
+# Engine-independent shared sources (no CNA/Easy3D dependencies).
+# Shared by the game target and the engine-agnostic test suite.
 set(GE_SHARED_SOURCES
     src/GalaxyEggbert/Worlds/BinaryIO.cpp
     src/GalaxyEggbert/Worlds/BitPacking.cpp
@@ -29,188 +29,16 @@ set(GE_SHARED_SOURCES
 )
 
 # =============================================================================
-# Simple3D port target — GalaxyEggbertSimple3D
-#
-# Historical reference only as of 2026-07-08 (see CLAUDE.md's "Current Direction Lock") — not
-# built, fixed, or maintained going forward; its build is currently broken in this environment
-# (missing/incompatible U3D prebuilt) and that is intentionally left unfixed. Default flipped to
-# OFF 2026-07-09 so a plain `cmake -S . -B build` no longer tries to build it (found via a real
-# bug: the Android Gradle build never overrides this option, so it was silently attempting to
-# build this broken/frozen target instead of GalaxyEggbertCNA). The target definition itself is
-# untouched — pass -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON explicitly if you deliberately want to try
-# it (e.g. after fixing the U3D prebuilt yourself).
-#
-# Build with:
-#   cmake -S . -B cmake-build-simple3d -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
-#   cmake --build cmake-build-simple3d --target GalaxyEggbertSimple3D -j2
-# =============================================================================
-
-option(GALAXY_EGGBERT_BUILD_SIMPLE3D "Build the Simple3D port target (historical reference only, not maintained -- see CLAUDE.md)" OFF)
-
-if(GALAXY_EGGBERT_BUILD_SIMPLE3D)
-
-    # Locate simple-3d: explicit option > sibling ../simple-3d directory.
-    set(SIMPLE3D_HOME "" CACHE PATH
-        "Path to simple-3d source directory. Defaults to ../simple-3d.")
-
-    if(NOT SIMPLE3D_HOME)
-        set(SIMPLE3D_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../simple-3d")
-    endif()
-
-    if(NOT EXISTS "${SIMPLE3D_HOME}/CMakeLists.txt")
-        message(FATAL_ERROR
-            "simple-3d not found at '${SIMPLE3D_HOME}'. "
-            "Clone it there or set -DSIMPLE3D_HOME=<path>.")
-    endif()
-
-    message(STATUS "simple-3d source: ${SIMPLE3D_HOME}")
-
-    # Suppress tests/examples inside simple-3d when built as sub-dep.
-    set(_s3d_save_BUILD_TESTING "${BUILD_TESTING}")
-    set(BUILD_TESTING  OFF CACHE BOOL "" FORCE)
-    set(BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-    add_subdirectory("${SIMPLE3D_HOME}" Simple3D_dep)
-
-    set(BUILD_TESTING "${_s3d_save_BUILD_TESTING}" CACHE BOOL "" FORCE)
-
-    # New Simple3D-specific sources.
-    set(GE_SIMPLE3D_SOURCES
-        src/GalaxyEggbertSimple3D/Program.cpp
-        src/GalaxyEggbertSimple3D/GalaxyEggbertSimpleGame.cpp
-        src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp
-        src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp
-        src/GalaxyEggbertSimple3D/Game/GEBlupiController.cpp
-        src/GalaxyEggbertSimple3D/Game/GEDecorSystem.cpp
-        src/GalaxyEggbertSimple3D/Game/GEHud.cpp
-        src/GalaxyEggbertSimple3D/Game/GECameraRig.cpp
-        src/GalaxyEggbertSimple3D/Game/GESound.cpp
-        src/GalaxyEggbertSimple3D/Game/GEExploSystem.cpp
-        src/GalaxyEggbertSimple3D/Game/GEBridgeSystem.cpp
-    )
-
-    add_executable(GalaxyEggbertSimple3D
-        ${GE_SIMPLE3D_SOURCES}
-        ${GE_SHARED_SOURCES}
-    )
-
-    target_include_directories(GalaxyEggbertSimple3D PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertSimple3D
-        ${SIMPLE3D_HOME}/include
-    )
-
-    target_link_libraries(GalaxyEggbertSimple3D PRIVATE Simple3D)
-
-    set(_u3d_desktop "/rv/data/library/github.com/u3d-community/U3D/cmake-build-debug")
-    set(_u3d_web     "/rv/data/library/github.com/u3d-community/U3D/build-web")
-
-    # On desktop pass U3D bin path for SetResourcePrefixPaths(); web uses preloaded VFS.
-    if(NOT EMSCRIPTEN)
-        target_compile_definitions(GalaxyEggbertSimple3D PRIVATE
-            GALAXY_EGGBERT_U3D_BIN_PATH="${_u3d_desktop}/bin"
-        )
-    endif()
-
-    if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
-        target_link_libraries(GalaxyEggbertSimple3D PRIVATE GL dl m rt pthread)
-    endif()
-
-    if(MINGW)
-        target_link_options(GalaxyEggbertSimple3D PRIVATE
-            -static-libgcc -static-libstdc++)
-    endif()
-
-    if(EMSCRIPTEN)
-        set_target_properties(GalaxyEggbertSimple3D PROPERTIES SUFFIX ".html")
-        target_link_libraries(GalaxyEggbertSimple3D PRIVATE embind)
-        # Data/ and CoreData/ come from the desktop U3D build (same asset content).
-        target_link_options(GalaxyEggbertSimple3D PRIVATE
-            -sALLOW_MEMORY_GROWTH=1
-            -sINITIAL_MEMORY=134217728
-            -sNO_EXIT_RUNTIME=1
-            -sFORCE_FILESYSTEM=1
-            "SHELL:--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell.html"
-            "SHELL:--preload-file ${_u3d_desktop}/bin/Data@/Data"
-            "SHELL:--preload-file ${_u3d_desktop}/bin/CoreData@/CoreData"
-            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/Content@/Content"
-            "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/worlds@/worlds"
-        )
-    endif()
-
-    # Desktop only: copy U3D Data/ CoreData/ and game Content/ worlds/ next to executable.
-    if(NOT EMSCRIPTEN AND NOT ANDROID)
-        foreach(_dir Data CoreData)
-            if(EXISTS "${_u3d_desktop}/bin/${_dir}")
-                add_custom_command(TARGET GalaxyEggbertSimple3D POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                        "${_u3d_desktop}/bin/${_dir}"
-                        "$<TARGET_FILE_DIR:GalaxyEggbertSimple3D>/${_dir}"
-                    COMMENT "Copying U3D ${_dir}/ next to GalaxyEggbertSimple3D"
-                )
-            endif()
-        endforeach()
-
-        foreach(_d Content worlds)
-            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_d}")
-                add_custom_command(TARGET GalaxyEggbertSimple3D POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                        "${CMAKE_CURRENT_SOURCE_DIR}/${_d}"
-                        "$<TARGET_FILE_DIR:GalaxyEggbertSimple3D>/${_d}"
-                    COMMENT "Copying ${_d}/ next to GalaxyEggbertSimple3D"
-                )
-            endif()
-        endforeach()
-    endif()
-
-    message(STATUS "GalaxyEggbertSimple3D target enabled.")
-
-    # Scripted verification for the BigDecor: parsing fix (mobile-eggbert-2d-reference.md
-    # §2.3) — depends on Simple3D for GEWorldRuntime's Vector3 fields, so it
-    # only exists when the Simple3D target is being built.
-    add_executable(VerifyBigDecorParsing
-        tools/VerifyBigDecorParsing.cpp
-        src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp
-        ${GE_SHARED_SOURCES}
-    )
-    target_include_directories(VerifyBigDecorParsing PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertSimple3D
-        ${SIMPLE3D_HOME}/include
-    )
-    target_link_libraries(VerifyBigDecorParsing PRIVATE Simple3D)
-
-    # Scripted verification that the 12 previously-dropped MoveObject types
-    # now spawn (mobile-eggbert-2d-reference.md §2.4).
-    add_executable(VerifyMoveObjectTypes
-        tools/VerifyMoveObjectTypes.cpp
-        src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp
-        ${GE_SHARED_SOURCES}
-    )
-    target_include_directories(VerifyMoveObjectTypes PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertSimple3D
-        ${SIMPLE3D_HOME}/include
-    )
-    target_link_libraries(VerifyMoveObjectTypes PRIVATE Simple3D)
-
-endif() # GALAXY_EGGBERT_BUILD_SIMPLE3D
-
-# =============================================================================
 # Direct CNA + Easy3D target — GalaxyEggbertCNA (long-term direction, see CLAUDE.md
 # "Current Direction Lock")
 #
-# ON by default as of 2026-07-09 (flipped alongside GALAXY_EGGBERT_BUILD_SIMPLE3D's default
-# flipping to OFF above, so a plain `cmake -S . -B build` builds something meaningful again) --
-# this is now the actively developed target: renders real, textured, animated 3D terrain (all 4
-# confirmed tile render modes + water), MoveObject/BigDecor billboards and platform-lift/crate
-# objects, face-culled terrain. Still an invisible collision-only Blupi -- no visible Blupi
-# character, HUD, or sound yet. See NEXT.md for current status (easy3d.md/plan.md "Direct CNA +
-# Easy3D Migration" for the original analysis and task list).
+# ON by default; a plain `cmake -S . -B build` configures the maintained
+# playable game, including terrain, objects, gameplay, HUD, sound, menus,
+# persistence, and the in-game 3D editor. See CURRENT.md for verified status
+# and easy3d.md/plan.md for the original migration analysis and task history.
 #
 # Build with:
-#   cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+#   cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
 #   cmake --build build-cna --target GalaxyEggbertCNA
 # =============================================================================
 
@@ -409,8 +237,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # A Windows build is a directly runnable bundle, not merely an .exe that
     # works while the MinGW/SDL build environment remains on PATH. Keep the
     # GCC/C++ runtime in the executable and use CNA's own helpers for the
-    # remaining thread and SDL DLLs. The historical Simple3D target is
-    # intentionally not changed. --allow-multiple-definition is the same
+    # remaining thread and SDL DLLs. --allow-multiple-definition is the same
     # MinGW static-libstdc++ workaround CNA applies to its own CnaTests:
     # PE/COFF otherwise fails to coalesce std::type_info::operator==.
     if(MINGW)
@@ -544,7 +371,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         endforeach()
     endif()
 
-    message(STATUS "GalaxyEggbertCNA target enabled (renders terrain, no gameplay yet).")
+    message(STATUS "GalaxyEggbertCNA target enabled (maintained playable game).")
 
     # Scripted verification for GEInteractionSystem (2026-07-10, platform
     # lift patrol/crate push/pickup collection) against the real
@@ -925,8 +752,8 @@ target_include_directories(VerifyCameraShake PRIVATE
 # GEWorldRuntime.hpp/.cpp (CNA) are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
-# MoveObject: parsing (E3D-MIG-06x prerequisite) the same way
-# VerifyMoveObjectTypes.cpp does for the Simple3D-side parser.
+# MoveObject: parsing (E3D-MIG-06x prerequisite) against real reference
+# world files and the production CNA parser.
 add_executable(VerifyMoveObjectTypesCna
         tools/VerifyMoveObjectTypesCna.cpp
         src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp

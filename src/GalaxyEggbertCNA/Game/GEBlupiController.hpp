@@ -14,16 +14,15 @@ namespace GalaxyEggbert::CNA
     // the loaded World: stands on/climbs terrain up to a 1-block step
     // (step-up traversal — one of CLAUDE.md's allowed natural 3D
     // adaptations), falls under gravity otherwise, and blocks movement into
-    // taller obstacles. Tank controls (turn + forward/back), matching
-    // GalaxyEggbertSimple3D's already-shipped scheme — see Step() below.
+    // taller obstacles. Tank controls (turn + forward/back) preserve the
+    // reference game's control feel — see Step() below.
     //
     // No 3D Blupi model exists yet (2026-07-05) — the real in-world sprite
     // (E3D-MIG-061..064) waits for it. In the meantime this tracks just
     // enough state (facing yaw, a coarse Stop/March/Jump/Down/Up animation
     // state) to drive a first-person camera and a 2D screen-corner
-    // animation indicator — see GalaxyEggbertCnaGame. The frame tables
-    // mirror GalaxyEggbertSimple3D's already-approved GEBlupiController.cpp
-    // (galaxy-eggbert's own code, not a fresh mobile-eggbert transcription).
+    // animation indicator — see GalaxyEggbertCnaGame. The frame tables are
+    // documented in mobile-eggbert-reference/08-animations.md.
     //
     // Deliberately engine-agnostic (only depends on GalaxyEggbert::Worlds)
     // so Step() can be scripted/tested without a live window or keyboard —
@@ -32,8 +31,8 @@ namespace GalaxyEggbert::CNA
     class GEBlupiController
     {
     public:
-        static constexpr float kMoveSpeed = 5.5f; // matches Simple3D::GEBlupiController
-        static constexpr float kTurnSpeed = 3.14159265f; // rad/s (180 deg/s, matches Simple3D)
+        static constexpr float kMoveSpeed = 5.5f; // established 3D tuning; locked by VerifyBlupiMovement
+        static constexpr float kTurnSpeed = 3.14159265f; // established 3D tuning: 180 deg/s
         static constexpr float kJumpSpeed = 12.0f; // real "-16, no Power, clear headroom" baseline -- see kJumpSpeedPowered's own comment
 
         // Jump-height headroom modulation (plan.md TILE-041, real
@@ -69,7 +68,7 @@ namespace GalaxyEggbert::CNA
         static constexpr float kGravity   = 25.0f;
         static constexpr float kFallLimit = -10.0f;
         static constexpr float kStepLimit = 1.0f;
-        static constexpr float kAnimFps   = 8.0f; // matches Simple3D::GEBlupiController
+        static constexpr float kAnimFps   = 8.0f; // established 3D animation cadence
 
         // Crusher squash state (plan.md E3D-MIG-143, `m_blupiEcrase` per
         // mobile-eggbert-reference/12-hazards-and-interactables.md, verified
@@ -199,9 +198,8 @@ namespace GalaxyEggbert::CNA
         // transcribed), so these preserve the REAL PROPORTION between the
         // spring's two magnitudes and the real baseline ground-jump
         // velocity (`IsNormalJump`'s held+noPower=-16) applied on top of
-        // this engine's own already-tuned kJumpSpeed -- the same technique
-        // GalaxyEggbertSimple3D's own stomp bounce already used
-        // (`kJumpSpeed * 0.65f`), not an independent re-derivation.
+        // this engine's own already-tuned kJumpSpeed, not an independent
+        // absolute-unit re-derivation.
         static constexpr float kSpringBounceHeld = kJumpSpeed * (19.0f / 16.0f);
         static constexpr float kSpringBounceNotHeld = kJumpSpeed * (10.0f / 16.0f);
 
@@ -418,20 +416,17 @@ namespace GalaxyEggbert::CNA
         static constexpr float kOvercraftDescendSpeed = kOvercraftMaxSpeed * (12.0f / 12.0f);
         static constexpr float kVehicleVerticalAccel = kVehicleAccel * 0.5f; // real accel 0.5/tick (both flying modes)
 
-        // Jump vs Air mirrors GalaxyEggbertSimple3D::GEBlupiController's own
-        // already-shipped split (real BlupiAction IDs 4/5) -- Simple3D
-        // distinguishes them by a fixed 3-frame post-trigger window (its
-        // own discrete animPhase-counted state machine); this class instead
+        // Jump vs Air preserves the real BlupiAction IDs 4/5 distinction.
+        // The 2D reference distinguishes them with a discrete, frame-counted
+        // trigger window; this class instead
         // uses velocity sign (m_velocityY > 0 = ascending = Jump, <= 0 =
         // falling/apex = Air), a natural adaptation to this class's
-        // continuous-velocity physics rather than Simple3D's frame-counted
-        // one, while keeping the same real two-state distinction (2026-07-11,
+        // continuous-velocity physics rather than a frame-counted one,
+        // while keeping the same real two-state distinction (2026-07-11,
         // plan.md E3D-MIG-064 -- expanding the animation indicator beyond
         // its original Stop/March/Jump/Down/Up debug-stopgap set, per
         // mobile-eggbert-reference/08-animations.md §2's confirmed Air
-        // frame data, already ported once via Simple3D so this reuses that
-        // same pre-approved table rather than a fresh mobile-eggbert
-        // transcription).
+        // frame data).
         // StopEcrase/MarchEcrase/Balloon/Teleporting (real BlupiAction IDs
         // 72/73/66/74) added 2026-07-11 with explicit user approval to
         // transcribe their real `table_blupi` icon-frame data (plan.md
@@ -1034,8 +1029,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] float GetYaw() const noexcept { return m_yaw; }
 
         // Current coarse animation state and the icon index to display for
-        // it right now (10 columns, 60x60 px tiles — see
-        // GalaxyEggbertSimple3D::GEBlupiController for the same convention).
+        // it right now (10 columns, 60x60 px tiles — the blupi.png atlas
+        // convention documented by the animation reference).
         // Almost always a blupi.png index -- AnimIconUsesElementSheet()
         // below is what tells a caller when it's an element.png index
         // instead, since the same numeric icon range means something
@@ -1091,13 +1086,12 @@ namespace GalaxyEggbert::CNA
         // (BLUPI-101).
         [[nodiscard]] int GetDisplayAnimIcon() const noexcept;
 
-        // Tank controls, matching GalaxyEggbertSimple3D's already-shipped
-        // scheme (GalaxyEggbertSimpleGame::SetupInput's "Move" axis) and
-        // mobile-eggbert's own control feel: turnInput (-1/0/+1, Left/Right)
+        // Tank controls matching mobile-eggbert's control feel: turnInput
+        // (-1/0/+1, Left/Right)
         // rotates facing; moveInput (-1/0/+1, Down/Up) moves forward/back
         // along the current facing direction — arrows are not a strafe pad.
-        // crouchHeld (LShift)/lookUpHeld (RShift) mirror Simple3D's Down/Up
-        // BlupiState and don't affect collision, only animation state and
+        // crouchHeld (LShift)/lookUpHeld (RShift) don't affect collision,
+        // only animation state and
         // (via the CNA game's camera) eye height/look pitch. tempPassable
         // (plan.md E3D-MIG-146, default false so existing callers/tests
         // that don't place a Temp tile are unaffected) is the caller's

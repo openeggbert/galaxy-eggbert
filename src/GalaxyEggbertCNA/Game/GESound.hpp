@@ -14,15 +14,10 @@ namespace GalaxyEggbert::CNA
     // Real mobile-eggbert sound playback for GalaxyEggbertCNA (2026-07-10).
     // Same 93 real WAV files (Content/sounds/sound000.wav..sound092.wav,
     // already copied build-time from mobile-eggbert alongside icons/
-    // backgrounds -- see CLAUDE.md's asset-reuse table, "Sounds: Direct
-    // asset reuse -- same WAV files, same indices") and the same real
-    // per-channel volume table and conflict policy as
-    // GalaxyEggbertSimple3D's already-shipped GESound
-    // (src/GalaxyEggbertSimple3D/Game/GESound.cpp, whose own comment says
-    // its volume/pitch table was "ported verbatim from mobile-eggbert
-    // Sound.hpp tableVolumePitch") -- reused here as the same real data,
-    // not a fresh transcription. Pitch is intentionally NOT applied yet
-    // (matches Simple3D's own "(ignored in Simple3D)" simplification) --
+    // backgrounds) and the real per-channel volume table and conflict
+    // policy documented in mobile-eggbert-reference/07-sounds.md and
+    // sourced from Sound.hpp/Sound.cpp. Pitch is intentionally NOT applied
+    // yet --
     // CNA's SoundEffectInstance does support a Pitch property, but the
     // table's exact pitch encoding/units were never independently verified
     // against real mobile-eggbert source, so applying it here without that
@@ -41,9 +36,8 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] int LoadedCount() const noexcept;
 
-        // Conflict policy matches Simple3D's GESound exactly (itself
-        // matching real mobile-eggbert Sound.cpp behavior per that file's
-        // own comment): a channel already playing is not restarted, except
+        // Conflict policy matches mobile-eggbert Sound.cpp: a channel
+        // already playing is not restarted, except
         // channel 10. A channel with no loaded file (missing WAV) is a
         // silent no-op, not an error.
         void Play(GalaxyEggbert::SoundChannel channel, bool loop = false);
@@ -57,13 +51,9 @@ namespace GalaxyEggbert::CNA
         void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }
         [[nodiscard]] bool IsEnabled() const noexcept { return enabled_; }
 
-        // Named shortcuts for the events GalaxyEggbertCnaGame can actually
-        // trigger today (movement/jump/landing -- there is no interactive-
-        // object system yet, so pickup/key/hazard sounds aren't wired up
-        // here; see Simple3D's GESound for the full real channel list once
-        // that system exists). Same real channel assignments as Simple3D's
-        // GESound, EXCEPT PlayLand() -- see its own comment below for the
-        // real bug found and fixed here (2026-07-12).
+        // Named shortcuts for movement/jump/landing events. The complete
+        // real channel map is maintained in
+        // mobile-eggbert-reference/07-sounds.md.
         void PlayJump() { Play(GalaxyEggbert::SoundChannel::SoundChannel1); }
 
         // Real mobile-eggbert (mobile-eggbert-reference/07-sounds.md,
@@ -71,10 +61,9 @@ namespace GalaxyEggbert::CNA
         // shared sound, not two separate events. Channel 4 is a distinct
         // real event (head-bump/ceiling-hit, triggered when Blupi's upward
         // jump arc hits an obstacle above) that has nothing to do with
-        // landing. Both Simple3D's and this class's own `PlayLand()`
-        // originally played channel 4 -- a real, confirmed bug (ported
-        // verbatim from Simple3D before the later, independently-verified
-        // channel research in 07-sounds.md), not a deliberate choice.
+        // landing. This class's original `PlayLand()` played channel 4 -- a
+        // real, confirmed bug found by the independently verified channel
+        // research in 07-sounds.md, not a deliberate choice.
         // Fixed here to channel 3, matching PlayStep() (plan.md
         // E3D-MIG-084's terrain-remap task surfaced this while researching
         // the real channels 78-91 the same shared sound remaps to).

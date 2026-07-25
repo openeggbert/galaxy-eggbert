@@ -21,9 +21,8 @@ namespace GalaxyEggbert::CNA
         constexpr int kMobileTileSize = 64;
         constexpr int kDecorGridSize = 100;
 
-        // Same ObjectType allowlist as GESimple3D::GEWorldRuntime's
-        // already-approved MoveObject parser — the 29 real, in-use types
-        // confirmed against all 78 mobile-eggbert level files (see
+        // The 29 real, in-use MoveObject types confirmed against all 78
+        // mobile-eggbert level files (see
         // mobile-eggbert-reference/01-world-file-format.md).
         bool IsSupportedMoveObjectType(int type)
         {
@@ -38,8 +37,7 @@ namespace GalaxyEggbert::CNA
         // 32 (blupih), 44 (wasp), 54 (large creature) patrol posStart<->posEnd
         // the same way as the other patrol enemies (Decor.cpp
         // MoveObjectStepIcon keys their turn/walk icon off posStart vs
-        // posEnd, i.e. they are patrol-line objects too) — mirrors
-        // GESimple3D::GEWorldRuntime's isPatrol logic.
+        // posEnd, i.e. they are patrol-line objects too).
         bool IsPatrolMoveObjectType(int type)
         {
             return type == 2 || type == 3 || type == 4 || type == 20 || type == 32 ||

@@ -12,9 +12,8 @@
 namespace GalaxyEggbert::CNA
 {
     // One moving/interactive object loaded from a mobile-eggbert MoveObject
-    // line — mirrors GESimple3D::MobileObjSpec (galaxy-eggbert's own,
-    // already-approved parsing logic), kept engine-agnostic here (plain
-    // floats, not a CNA/XNA Vector3) to match this class's existing style.
+    // line. Kept engine-agnostic here (plain floats, not a CNA/XNA Vector3)
+    // to match the serialized MoveObjectRecord and this class's style.
     // Y is the center of the occupied voxel cell, matching
     // MoveObjectRecord: a ground object above a Y=0 floor has Y=1.
     struct MobileObjSpec
@@ -43,8 +42,8 @@ namespace GalaxyEggbert::CNA
         // and pushed crates (ObjectType12); rendering uses these, not
         // posStart, so movement is actually visible. direction is the
         // patrol direction (+1 = heading toward posEnd, -1 = heading back
-        // toward posStart), matching GalaxyEggbertSimple3D's own
-        // GEDecorSystem::ObjState::direction. active is false once a
+        // toward posStart), matching Decor::MoveObjectStepLine's four-phase
+        // patrol. active is false once a
         // one-shot pickup (egg/key) has been collected -- posStart/posEnd
         // stay untouched either way, since they're the object's real path
         // bounds, not its current position.
@@ -84,8 +83,8 @@ namespace GalaxyEggbert::CNA
     class GEWorldRuntime
     {
     public:
-        static constexpr int kWorldCenterX = 50; // matches GESimple3D::GEWorldRuntime::kWCX
-        static constexpr int kWorldCenterZ = 50; // matches GESimple3D::GEWorldRuntime::kWCZ
+        static constexpr int kWorldCenterX = 50; // centers the 100-cell reference grid
+        static constexpr int kWorldCenterZ = 50; // centers the 100-cell reference grid
 
         GEWorldRuntime();
 

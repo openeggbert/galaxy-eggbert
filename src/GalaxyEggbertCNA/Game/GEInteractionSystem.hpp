@@ -11,21 +11,13 @@ namespace GalaxyEggbert::CNA
     // Real mobile-eggbert interactive-object behavior (2026-07-10): platform
     // lift patrol movement, crate push, and pickup collection (treasure/egg/
     // keys/level-exit) -- the first slice of interactive-object support.
-    // Behavior (not code) ported from two sources: GalaxyEggbertSimple3D's
-    // already-shipped GEDecorSystem.cpp (patrol ping-pong movement, and crate
-    // push specifically -- its own comment cites the real mobile-eggbert
-    // function name TestPushCaisse) for the parts it gets right, and the
-    // more carefully-researched `mobile-eggbert-reference/13-object-
+    // Behavior is grounded in the researched `mobile-eggbert-reference/13-object-
     // pickups.md`/`07-sounds.md` behavioral spec for exact pickup semantics
     // (which sound channel, whether the object is actually removed, egg's
     // MAX_EGG_COUNT=10 cap, exit's treasure-gate) -- the spec is the more
-    // authoritative source where the two disagree (see GEInteractionSystem.cpp
-    // for the one confirmed case: Simple3D never removes a collected
-    // treasure/exit object, but the real source deletes every pickup
-    // immediately on contact per `13-object-pickups.md`'s "Voyage" section).
-    //
-    // CNA has no entity/scene-graph framework to port Simple3D's code INTO,
-    // so this is a fresh, minimal implementation operating directly on
+    // authoritative source; the real source deletes every pickup
+    // immediately on contact per `13-object-pickups.md`'s "Voyage" section.
+    // This is a minimal implementation operating directly on
     // GEWorldRuntime's MobileObjSpec list and Blupi's live position.
     //
     // A basic lives foundation now exists (2026-07-11, LoseLife()/Lives()
@@ -148,8 +140,8 @@ namespace GalaxyEggbert::CNA
         // pickups Blupi is standing on. Call once per frame, after
         // blupi.Step() (so blupiX/Y/Z are this frame's final position) --
         // blupiMoveDX is this frame's X position delta (blupiX this frame
-        // minus blupiX last frame), used as a stand-in for Simple3D's
-        // blupiVelX (GEBlupiController exposes no velocity accessor; the
+        // minus blupiX last frame), used as the crate-push velocity signal
+        // (GEBlupiController exposes no velocity accessor; the
         // caller computes this itself from before/after Step() positions).
         // blupiCrouching gates type3's real duck-immunity, default false so
         // existing callers/tests that don't care about it are unaffected.

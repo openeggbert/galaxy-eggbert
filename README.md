@@ -17,12 +17,8 @@ hide CNA and game code can call CNA directly. See [CURRENT.md](CURRENT.md) for v
 status, [NEXT.md](NEXT.md) for commands and detailed history, and [plan.md](plan.md) for research
 and the full historical task inventory.
 
-`GalaxyEggbertSimple3D`, built on the `simple-3d` library (which wraps U3D/Urho3D), was the
-working, playable target through 2026-07-08. **As of 2026-07-08 it is historical reference
-only — it is not built, fixed, or maintained going forward** (its build is currently broken in
-this environment, a missing/incompatible U3D prebuilt, and that is intentionally left unfixed).
-Its code stays in the repository — it is not being deleted — and will be gradually removed only as
-`GalaxyEggbertCNA` reaches equivalent functionality, piece by piece, not kept indefinitely.
+The former `GalaxyEggbertSimple3D` implementation was retired after CNA reached playable parity
+and removed from the live tree on 2026-07-25. It remains recoverable in git history at `4afd53e`.
 
 ## Target direction
 
@@ -57,7 +53,7 @@ sibling checkouts of `../cna` and `../easy-3d` (or
 #### Linux native build (confirmed working)
 
 ```bash
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
 cmake --build build-cna --target GalaxyEggbertCNA -j2
 cd build-cna && ./GalaxyEggbertCNA   # must run from its own build dir (relative asset paths)
 ```
@@ -70,8 +66,8 @@ required asset-relative working directory.
 
 ```bash
 cmake -S . -B build-package -DCMAKE_BUILD_TYPE=Release \
-  -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
-cmake --build build-package --target package -j4
+  -DGALAXY_EGGBERT_BUILD_CNA=ON
+cmake --build build-package --target package -j2
 tar -xzf build-package/GalaxyEggbertCNA-linux-x86_64.tar.gz
 ./GalaxyEggbertCNA-linux-x86_64/run-galaxy-eggbert
 ```
@@ -99,7 +95,7 @@ Same commands as above, run from a Windows toolchain (e.g. CLion's bundled MinGW
 executable).
 
 ```powershell
-cmake -S . -B build-windows -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake -S . -B build-windows -DGALAXY_EGGBERT_BUILD_CNA=ON
 cmake --build build-windows --target GalaxyEggbertCNA
 ```
 
@@ -115,10 +111,9 @@ rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
   -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
   -DCNA_GRAPHICS_BACKEND=SDL_RENDERER \
   -DBUILD_TESTING=OFF
-cmake --build build-windows --target GalaxyEggbertCNA -j4
+cmake --build build-windows --target GalaxyEggbertCNA -j2
 ```
 
 The verified Linux environment used the repository's Windows x86-64 SDL prebuilt configuration
@@ -200,26 +195,11 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 - Windows: SDL_Renderer cross-compiles with MinGW-w64 and stages its required SDL/MinGW runtime
   DLLs, but cannot yet run the 3D game because that CNA backend is 2D-only (see `WINDOWS.md`).
 - Web (Emscripten): manually verified WebGL2 build; not exercised by CI or a publishing pipeline.
-- Android: intended, see `ANDROID.md`. The Gradle build doesn't pass explicit
-  `GALAXY_EGGBERT_BUILD_*` CMake args, but that's no longer a problem — `CMakeLists.txt`'s
-  defaults were flipped 2026-07-09 (`GALAXY_EGGBERT_BUILD_CNA` now `ON`,
-  `GALAXY_EGGBERT_BUILD_SIMPLE3D` now `OFF`), so it now correctly targets `GalaxyEggbertCNA`.
+- Android: intended, see `ANDROID.md`. `GalaxyEggbertCNA` is the sole game target and is enabled
+  by default, so Gradle needs no target-selection argument.
 
 `GalaxyEggbertCNA` is the maintained, playable target. Its full verified state and backend status
-live in [CURRENT.md](CURRENT.md). `GalaxyEggbertSimple3D` is not built or verified going forward
-(historical reference only, see "Current status" above).
-
-### `GalaxyEggbertSimple3D` build — historical reference only, do not build (as of 2026-07-08)
-
-Shown here only for completeness; per the "Current status" section above, this target is not
-built, fixed, or maintained going forward, and its build is currently broken in this environment
-(missing/incompatible U3D prebuilt) — that is intentionally left unfixed.
-
-```bash
-cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build cmake-build-debug --target GalaxyEggbertSimple3D -j2
-./cmake-build-debug/GalaxyEggbertSimple3D
-```
+live in [CURRENT.md](CURRENT.md).
 
 ## Progress
 

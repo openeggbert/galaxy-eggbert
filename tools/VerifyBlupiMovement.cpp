@@ -157,11 +157,10 @@ int main(int argc, char** argv)
     // (2026-07-11, plan.md E3D-MIG-064 -- expanding the bottom-right
     // animation indicator beyond its original Stop/March/Jump/Down/Up
     // debug-stopgap set). Real BlupiAction IDs 4 (Jump) and 5 (Air); Air's
-    // frame data is ported from GalaxyEggbertSimple3D::GEBlupiController's
-    // own already-approved kAirFrames, not a fresh mobile-eggbert
-    // transcription. Verifies the velocity-sign-based split this class
-    // uses (ascending = Jump, falling/apex = Air) in place of Simple3D's
-    // own frame-counted trigger window.
+    // frame data is grounded in mobile-eggbert-reference/08-animations.md.
+    // Verifies the velocity-sign-based split this class uses (ascending =
+    // Jump, falling/apex = Air), the active 3D physics adaptation of the
+    // reference game's discrete frame-counted trigger window.
     {
         GEBlupiController anim;
         anim.SetPosition(0.0f, 1.0f, 0.0f);
