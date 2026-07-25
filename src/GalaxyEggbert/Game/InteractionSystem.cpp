@@ -1,4 +1,5 @@
 #include "InteractionSystem.hpp"
+#include "ObjectDefinitionRegistry.hpp"
 #include "ObjectVerticalPlacement.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -11,17 +12,6 @@ namespace GalaxyEggbert::Game
 {
     namespace
     {
-        bool IsPlatformLift(GalaxyEggbert::Def::ObjectType t)
-        {
-            return t == GalaxyEggbert::Def::ObjectType::ObjectType1 || t == GalaxyEggbert::Def::ObjectType::ObjectType47 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType48;
-        }
-
-        bool IsCrate(GalaxyEggbert::Def::ObjectType t)
-        {
-            return t == GalaxyEggbert::Def::ObjectType::ObjectType12;
-        }
-
         // Real MAX_EGG_COUNT (Decor.cpp:96) -- was two separate local
         // constexpr constants (one `int`, one `float`, both correctly 10
         // today) at the egg-touch and voyage-completion gate sites, found
@@ -30,34 +20,6 @@ namespace GalaxyEggbert::Game
         // desync the two independently-enforced gates. Hoisted to one
         // shared constant both sites now use.
         constexpr int kMaxEggCount = 10;
-
-        // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2), 6th family
-        // (2026-07-23): the dynamite-blast victim membership check,
-        // extracted verbatim from an inline 27-way `||` chain at its one
-        // call site -- a pure membership predicate (every member gets
-        // IDENTICAL treatment, crates as a linked group via `IsCrate()`
-        // below, everything else a plain deactivate), not per-type
-        // divergent behavior, so this matches the existing
-        // `IsPlatformLift()`/`IsCrate()`/`IsGenericHazard()` predicate
-        // pattern directly rather than a handler table.
-        bool IsDestructibleByDynamite(GalaxyEggbert::Def::ObjectType t)
-        {
-            return t == GalaxyEggbert::Def::ObjectType::ObjectType2 || t == GalaxyEggbert::Def::ObjectType::ObjectType3 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType4 || t == GalaxyEggbert::Def::ObjectType::ObjectType6 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType12 || t == GalaxyEggbert::Def::ObjectType::ObjectType13 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType16 || t == GalaxyEggbert::Def::ObjectType::ObjectType17 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType18 || t == GalaxyEggbert::Def::ObjectType::ObjectType19 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType20 || t == GalaxyEggbert::Def::ObjectType::ObjectType24 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType25 || t == GalaxyEggbert::Def::ObjectType::ObjectType26 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType28 || t == GalaxyEggbert::Def::ObjectType::ObjectType30 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType32 || t == GalaxyEggbert::Def::ObjectType::ObjectType33 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType34 || t == GalaxyEggbert::Def::ObjectType::ObjectType40 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType44 || t == GalaxyEggbert::Def::ObjectType::ObjectType46 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType52 || t == GalaxyEggbert::Def::ObjectType::ObjectType54 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType96 || t == GalaxyEggbert::Def::ObjectType::ObjectType97 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType200 || t == GalaxyEggbert::Def::ObjectType::ObjectType201 ||
-                   t == GalaxyEggbert::Def::ObjectType::ObjectType202 || t == GalaxyEggbert::Def::ObjectType::ObjectType203;
-        }
 
         // INFRA-006 pilot (plan.md §7, `REMAKE-ANALYSIS.md` P1-2): the first
         // object-type family migrated to a per-type handler table, replacing
@@ -424,62 +386,6 @@ namespace GalaxyEggbert::Game
             }
         }
 
-        // The real shared kill list (Decor.cpp:5782-5816, verified directly
-        // against source for this task): ObjectType2/3 (generic patrol
-        // hazards), 4 (bulldozer), 16 (spider), 17 (fish), 20 (bird), 96/97
-        // (follower, both dormant and awake) all use the exact same contact-
-        // death check -- the only difference in that source block is purely
-        // cosmetic (17/20 get a bigger screen-shake + a different explosion
-        // GalaxyEggbert::Def::ObjectType than the rest), not a behavioral difference in whether
-        // or how Blupi dies, so this deliberately does NOT split them into
-        // separate per-type checks. Real per-type quirks that ARE modeled:
-        // type3's duck-immunity (see the blupiCrouching check below). Real
-        // per-type quirks NOT modeled: type17/20's bigger explosion effect
-        // (cosmetic), type2's wider "thrown object" anticipation box and
-        // taunt-suppression (cosmetic/reaction polish), type16's always-
-        // self-destroys/no-turn-table framing (already true here since
-        // every hazard here is destroyed on contact), follower 96/97's real
-        // homing-toward-Blupi movement AI (a separate, NOT-yet-implemented
-        // feature from this contact-death check -- an un-homing follower
-        // still correctly kills Blupi on contact if he touches it).
-        bool IsGenericHazard(GalaxyEggbert::Def::ObjectType t)
-        {
-            switch (t)
-            {
-                case GalaxyEggbert::Def::ObjectType::ObjectType2:
-                case GalaxyEggbert::Def::ObjectType::ObjectType3:
-                case GalaxyEggbert::Def::ObjectType::ObjectType4:
-                case GalaxyEggbert::Def::ObjectType::ObjectType16:
-                case GalaxyEggbert::Def::ObjectType::ObjectType17:
-                case GalaxyEggbert::Def::ObjectType::ObjectType20:
-                case GalaxyEggbert::Def::ObjectType::ObjectType96:
-                case GalaxyEggbert::Def::ObjectType::ObjectType97:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        // Real balloon-pop subset (Decor.cpp:5766-5781): exactly types
-        // 3/16/96/97, NOT the full 8-type IsGenericHazard() list -- 2/4/17/20
-        // still kill Blupi even while ballooned, per the real source's
-        // if/else-if chain (the pop check comes first and is mutually
-        // exclusive with the kill check; only these 4 types are ever
-        // eligible for the pop branch at all).
-        bool IsBalloonPoppableHazard(GalaxyEggbert::Def::ObjectType t)
-        {
-            switch (t)
-            {
-                case GalaxyEggbert::Def::ObjectType::ObjectType3:
-                case GalaxyEggbert::Def::ObjectType::ObjectType16:
-                case GalaxyEggbert::Def::ObjectType::ObjectType96:
-                case GalaxyEggbert::Def::ObjectType::ObjectType97:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
         // True once during the frame `prevTicks` crosses `threshold` --
         // real mobile-eggbert fires blupih/blupit's shots on an exact tick
         // equality (`time == Config::ScaleTime(N)`), which a continuously-
@@ -638,8 +544,8 @@ namespace GalaxyEggbert::Game
         // share this exact spawn shape: `Decor::DynamiteStart()`
         // (`Decor.cpp:9065`, ObjectType8, once per blast in the 9-blast
         // sequence) and the generic-hazard contact-kill site
-        // (`Decor.cpp:5797-5816`, already this engine's own existing
-        // `IsGenericHazard()` block, plan.md CAM-008/009 -- ObjectType10
+        // (`Decor.cpp:5797-5816`, already this engine's own registry-backed
+        // genericContactHazard block, plan.md CAM-008/009 -- ObjectType10
         // for fish/17 and bird/20 specifically, paired with the
         // already-wired BigShake; ObjectType8 for every other hazard
         // type, paired with SmallShake). Appends directly to pendingSpawns
@@ -817,7 +723,8 @@ namespace GalaxyEggbert::Game
         MobileObjSpec* riddenLift = nullptr;
         for (auto& candidate : objects)
         {
-            if (!candidate.active || !IsPlatformLift(candidate.type))
+            if (!candidate.active ||
+                GetObjectDefinition(candidate.type).semanticKind != ObjectSemanticKind::Lift)
             {
                 continue;
             }
@@ -978,7 +885,7 @@ namespace GalaxyEggbert::Game
             // Platform lift patrol (ObjectType1/47/48): ping-pong between
             // posStart and posEnd at `speed` units/sec using the established
             // target-select/distance-flip/move-toward-target shape.
-            if (IsPlatformLift(obj.type))
+            if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Lift)
             {
                 const float targetX = (obj.direction > 0.0f) ? obj.posEndX : obj.posStartX;
                 const float targetY = (obj.direction > 0.0f) ? obj.posEndY : obj.posStartY;
@@ -1034,7 +941,8 @@ namespace GalaxyEggbert::Game
             // (Decor.cpp:6130-6132, found 2026-07-16) -- blupiCanPushCrate
             // (vehicle+Ecrase) and blupiBallooned (already an existing
             // parameter) together cover it.
-            if (IsCrate(obj.type) && blupiCanPushCrate && !blupiBallooned)
+            if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle &&
+                blupiCanPushCrate && !blupiBallooned)
             {
                 const float relX = obj.currentX - blupiX;
                 const float relZ = obj.currentZ - blupiZ;
@@ -1063,7 +971,9 @@ namespace GalaxyEggbert::Game
                             addedAny = false;
                             for (auto& other : objects)
                             {
-                                if (!other.active || !IsCrate(other.type)) continue;
+                                if (!other.active ||
+                                    GetObjectDefinition(other.type).semanticKind !=
+                                        ObjectSemanticKind::StaticObstacle) continue;
                                 if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
                                 if (other.currentY < obj.currentY - 0.5f) continue;
                                 if (std::fabs(other.currentZ - obj.currentZ) > 0.5f) continue;
@@ -1123,7 +1033,9 @@ namespace GalaxyEggbert::Game
                             bool occupied = false;
                             for (const auto& other : objects)
                             {
-                                if (!other.active || !IsCrate(other.type)) continue;
+                                if (!other.active ||
+                                    GetObjectDefinition(other.type).semanticKind !=
+                                        ObjectSemanticKind::StaticObstacle) continue;
                                 if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
                                 if (std::fabs(other.currentX - destX) < 0.5f &&
                                     std::fabs(other.currentY - member->currentY) < 0.5f &&
@@ -1290,7 +1202,7 @@ namespace GalaxyEggbert::Game
                             {
                                 continue;
                             }
-                            if (!IsDestructibleByDynamite(victim.type))
+                            if (!GetObjectDefinition(victim.type).dynamiteDestructible)
                             {
                                 continue;
                             }
@@ -1300,7 +1212,8 @@ namespace GalaxyEggbert::Game
                             {
                                 continue;
                             }
-                            if (IsCrate(victim.type))
+                            if (GetObjectDefinition(victim.type).semanticKind ==
+                                ObjectSemanticKind::StaticObstacle)
                             {
                                 std::vector<MobileObjSpec*> linked;
                                 linked.push_back(&victim);
@@ -1310,7 +1223,9 @@ namespace GalaxyEggbert::Game
                                     addedAny = false;
                                     for (auto& other : objects)
                                     {
-                                        if (!other.active || !IsCrate(other.type)) continue;
+                                        if (!other.active ||
+                                            GetObjectDefinition(other.type).semanticKind !=
+                                                ObjectSemanticKind::StaticObstacle) continue;
                                         if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
                                         bool touches = false;
                                         for (auto* member : linked)
@@ -1567,7 +1482,8 @@ namespace GalaxyEggbert::Game
             }
 
             // Blupih/blupit's own body (ObjectType32/33) is deliberately
-            // NOT in IsGenericHazard() -- real mobile-eggbert never treats
+            // NOT marked genericContactHazard in the registry -- real
+            // mobile-eggbert never treats
             // walking into their body as a damage path, only their fired
             // projectile is harmful (see FireBlupihShot/FireBlupitShot
             // above). Falls through to the final pickup-type filter below,
@@ -1704,7 +1620,8 @@ namespace GalaxyEggbert::Game
             // channel 74 + the real ascend Voyage (icon 230, plan.md `158`
             // death-VFX follow-up, 2026-07-14), Clear1 plays/spawns
             // nothing further. While ballooned, exactly
-            // 4 of these 8 types (3/16/96/97, IsBalloonPoppableHazard())
+            // 4 of these 8 types (3/16/96/97, the registry's
+            // balloonPoppableHazard capability)
             // pop the balloon instead of killing (real channel 41 is
             // played by BlupiController's own IsBallooned() before/after
             // comparison in the caller, not here -- see PopBalloon()'s
@@ -1713,7 +1630,7 @@ namespace GalaxyEggbert::Game
             // (Decor.cpp:5784, plan.md E3D-MIG-170) -- modeled via
             // blupiInvincible, skipping the whole contact (no kill, no
             // balloon-pop either).
-            if (IsGenericHazard(obj.type))
+            if (GetObjectDefinition(obj.type).genericContactHazard)
             {
                 if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType3 && blupiCrouching)
                 {
@@ -1724,7 +1641,8 @@ namespace GalaxyEggbert::Game
                 const float hdz = obj.currentZ - blupiZ;
                 if (!blupiInvincible && hdx * hdx + hdy * hdy + hdz * hdz < kHazardContactRadius * kHazardContactRadius)
                 {
-                    if (blupiBallooned && IsBalloonPoppableHazard(obj.type))
+                    if (blupiBallooned &&
+                        GetObjectDefinition(obj.type).balloonPoppableHazard)
                     {
                         events_.push_back(Event{EventKind::BalloonPopped});
                     }
@@ -1819,14 +1737,7 @@ namespace GalaxyEggbert::Game
             // channel 11 (or 19 for the
             // set-completing treasure), not channel 10, and egg pickup is
             // channel 3, not channel 42 (42 is Shield activation, unrelated).
-            if (obj.type != GalaxyEggbert::Def::ObjectType::ObjectType5 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType6 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType7 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType21 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType49 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType50 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType51 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType55 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType25 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType26 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType30 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType31 && obj.type != GalaxyEggbert::Def::ObjectType::ObjectType29 &&
-                obj.type != GalaxyEggbert::Def::ObjectType::ObjectType40)
+            if (!GetObjectDefinition(obj.type).standardPickupTouch)
             {
                 continue;
             }
@@ -2333,7 +2244,7 @@ namespace GalaxyEggbert::Game
             {
                 continue;
             }
-            if (IsGenericHazard(obj.type) || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
+            if (GetObjectDefinition(obj.type).genericContactHazard || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
                 obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType44 ||
                 obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
             {

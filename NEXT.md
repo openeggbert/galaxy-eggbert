@@ -78,12 +78,13 @@ The executable target remains `GalaxyEggbertCNA`. CMake, the entry point, docume
 and type registration use the new name. The full `-j2` build succeeds and all 90 applicable CTest
 tests pass._
 
-_Central definition cleanup 2026-07-25: `INFRA-014/015` are complete.
+_Central definition cleanup 2026-07-25: `INFRA-014/015/016` are complete.
 `BlockDefinitionRegistry` is now the authoritative CNA-independent definition of all supported
 voxel ids, including render mode, texture, animation, collision, alpha, and gameplay semantics.
 `ObjectDefinitionRegistry` likewise covers `ObjectType0..203`, including placement, semantic and
-patrol policy plus phase/override-aware resolved visuals. Terrain/game/editor consumers use these
-registries; old `BlockTypes`/`ObjectIcons` classification helpers are thin compatibility accessors.
+ patrol policy, shared declarative interaction capabilities, and phase/override-aware resolved
+ visuals. Terrain/game/editor consumers use these registries; old `BlockTypes`/`ObjectIcons`
+ classification helpers are thin compatibility accessors.
 The new exhaustive `VerifyDefinitionRegistries` test covers the complete domains and parity
 decisions. The full `-j2` build succeeds and all 91 applicable CTest tests pass._
 
@@ -2181,7 +2182,8 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
   `GalaxyEggbertGame` both operate on the same `WorldRuntime&` instance each frame.
 - `BlockDefinitionRegistry` / `ObjectDefinitionRegistry` — the authoritative, backend-independent
   block and MoveObject type metadata. Rendering, collision, editor validation, imported-world
-  support, and texture-sheet selection consume these definitions; do not reintroduce parallel
+  support, texture-sheet selection, and shared declarative MoveObject capabilities consume these
+  definitions; do not reintroduce parallel
   icon/type classification lists in consumers.
 - `Hud` — 2D HUD rendering in mobile-eggbert's own 640x480 reference space, plus the
   `ProjectWorldToHudSpace()` static utility (world position → that reference space, via a real

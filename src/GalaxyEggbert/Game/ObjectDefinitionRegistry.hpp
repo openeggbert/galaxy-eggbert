@@ -65,6 +65,10 @@ namespace GalaxyEggbert::Game
             ObjectVerticalPlacement::CellCenter;
         bool mobileWorldSupported = false;
         bool patrolMotion = false;
+        bool dynamiteDestructible = false;
+        bool genericContactHazard = false;
+        bool balloonPoppableHazard = false;
+        bool standardPickupTouch = false;
     };
 
     struct ResolvedObjectVisual final

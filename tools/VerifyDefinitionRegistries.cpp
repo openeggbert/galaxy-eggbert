@@ -90,6 +90,30 @@ namespace
     {
         return IsOneOf(raw, {2, 3, 4, 20, 32, 33, 44, 54});
     }
+
+    bool ExpectedDynamiteDestructible(int raw)
+    {
+        return IsOneOf(raw, {
+            2, 3, 4, 6, 12, 13, 16, 17, 18, 19, 20, 24, 25, 26, 28, 30,
+            32, 33, 34, 40, 44, 46, 52, 54, 96, 97, 200, 201, 202, 203,
+        });
+    }
+
+    bool ExpectedGenericContactHazard(int raw)
+    {
+        return IsOneOf(raw, {2, 3, 4, 16, 17, 20, 96, 97});
+    }
+
+    bool ExpectedBalloonPoppableHazard(int raw)
+    {
+        return IsOneOf(raw, {3, 16, 96, 97});
+    }
+
+    bool ExpectedStandardPickupTouch(int raw)
+    {
+        return IsOneOf(raw, {5, 6, 7, 21, 25, 26, 29, 30, 31, 40, 49, 50,
+                             51, 55});
+    }
 }
 
 int main()
@@ -185,6 +209,14 @@ int main()
               "mobile-world object support is centralized without parity loss");
         Check(definition.patrolMotion == ExpectedPatrolMotion(raw),
               "patrol-motion classification is centralized without parity loss");
+        Check(definition.dynamiteDestructible == ExpectedDynamiteDestructible(raw),
+              "dynamite destructibility is centralized without parity loss");
+        Check(definition.genericContactHazard == ExpectedGenericContactHazard(raw),
+              "generic contact hazard membership is centralized without parity loss");
+        Check(definition.balloonPoppableHazard == ExpectedBalloonPoppableHazard(raw),
+              "balloon-pop hazard membership is centralized without parity loss");
+        Check(definition.standardPickupTouch == ExpectedStandardPickupTouch(raw),
+              "standard pickup-touch membership is centralized without parity loss");
 
         const auto visual0 = objectRegistry.Resolve(type, 0);
         Check(visual0.icon == GetObjIcon(type, 0),
@@ -206,6 +238,11 @@ int main()
               GetObjectDefinition(GalaxyEggbert::Def::ObjectType::ObjectType200).semanticKind ==
               ObjectSemanticKind::Avatar,
           "stable object semantic categories are centralized");
+    Check(GetObjectDefinition(GalaxyEggbert::Def::ObjectType::ObjectType12).semanticKind ==
+              ObjectSemanticKind::StaticObstacle &&
+              GetObjectDefinition(GalaxyEggbert::Def::ObjectType::ObjectType1).semanticKind ==
+              ObjectSemanticKind::Lift,
+          "crate and lift capabilities derive from centralized semantic categories");
     Check(GetObjectDefinition(GalaxyEggbert::Def::ObjectType::ObjectType6).placementKind ==
               ObjectPlacementKind::Direct,
           "extra-life egg is directly placeable");

@@ -23,8 +23,9 @@ content-authoring UX, but not new gameplay mechanics.
   source tree now contains only the `GalaxyEggbertGame` application host/platform wiring.
 - Block and MoveObject type metadata are centralized in backend-independent
   `BlockDefinitionRegistry` and `ObjectDefinitionRegistry` tables. Rendering, collision, imported
-  world support, editor validation, animation, and texture-sheet selection consume these
-  definitions instead of maintaining parallel icon/type classification lists.
+  world support, editor validation, animation, texture-sheet selection, and shared declarative
+  MoveObject interaction capabilities consume these definitions instead of maintaining parallel
+  icon/type classification lists.
 - All approved world-editor milestones and follow-ups through `EDITOR-130` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
   functional touch deletion, verified Inverter/crate/Overcraft entries, menu-based sky-region

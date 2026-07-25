@@ -51,8 +51,8 @@ guidance.
 - `include/GalaxyEggbert/BlockDefinitionRegistry.hpp` — authoritative backend-independent voxel
   definition table; render/collision/gameplay consumers must not duplicate its classifications.
 - `src/GalaxyEggbert/Game/` — canonical game implementation in namespace
-  `GalaxyEggbert::Game`; `ObjectDefinitionRegistry` is the authoritative MoveObject type/visual
-  table. Keep game-owned names free of the legacy `GE` prefix.
+  `GalaxyEggbert::Game`; `ObjectDefinitionRegistry` is the authoritative MoveObject type/visual/
+  capability table. Keep game-owned names free of the legacy `GE` prefix.
 - `src/GalaxyEggbert/Editor/` — shared editor implementation in namespace
   `GalaxyEggbert::Editor`; keep editor-owned names free of the legacy `GE` prefix.
 - `include/GalaxyEggbert/Def/` — shared game definitions in namespace `GalaxyEggbert::Def`.

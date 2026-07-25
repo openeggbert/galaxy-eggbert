@@ -1624,7 +1624,7 @@ int main(int argc, char** argv)
         check(waspStillActive, "the wasp itself is not destroyed by contact (unlike the shared kill list)");
 
         // Follower (96) -- one of the 4 real balloon-poppable types
-        // (IsBalloonPoppableHazard(), which covers both the dormant 96 and
+        // (the registry's balloonPoppableHazard capability, which covers both the dormant 96 and
         // awake 97 state identically): while ballooned, contact pops the
         // balloon instead of killing, and does NOT destroy the follower
         // either (the real Decor.cpp:5766-5781 pop branch has no
@@ -1658,7 +1658,7 @@ int main(int argc, char** argv)
         }
         check(followerStillActive, "the follower that popped the balloon is NOT destroyed (real behavior has no ObjectDelete here)");
 
-        // Bulldozer (4) -- NOT in IsBalloonPoppableHazard()'s 4-type subset
+        // Bulldozer (4) -- NOT in balloonPoppableHazard's 4-type subset
         // -- still kills even while ballooned, per the real source's
         // if/else-if chain (the pop check only ever matches 3/16/96/97).
         MobileObjSpec bulldozer;

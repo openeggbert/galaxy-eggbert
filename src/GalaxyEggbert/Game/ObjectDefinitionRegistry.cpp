@@ -71,6 +71,31 @@ namespace GalaxyEggbert::Game
             definition.patrolMotion = true;
         });
 
+        // Declarative runtime capabilities. These are intentionally not a
+        // general behavior-dispatch table: they only replace exact membership
+        // checks whose members receive identical treatment at their call site.
+        ForTypes(definitions_, {
+            2, 3, 4, 6, 12, 13, 16, 17, 18, 19, 20, 24, 25, 26, 28, 30,
+            32, 33, 34, 40, 44, 46, 52, 54, 96, 97, 200, 201, 202, 203,
+        }, [](ObjectDefinition& definition)
+        {
+            definition.dynamiteDestructible = true;
+        });
+        ForTypes(definitions_, {2, 3, 4, 16, 17, 20, 96, 97},
+                 [](ObjectDefinition& definition)
+        {
+            definition.genericContactHazard = true;
+        });
+        ForTypes(definitions_, {3, 16, 96, 97}, [](ObjectDefinition& definition)
+        {
+            definition.balloonPoppableHazard = true;
+        });
+        ForTypes(definitions_, {5, 6, 7, 21, 25, 26, 29, 30, 31, 40, 49, 50,
+                                51, 55}, [](ObjectDefinition& definition)
+        {
+            definition.standardPickupTouch = true;
+        });
+
         ForTypes(definitions_, {
             8, 9, 10, 11, 14, 15, 22, 23, 27, 34, 35, 36, 37, 38, 39, 41,
             42, 52, 53, 56, 57, 58, 90, 91, 92, 93, 98, 99, 100,

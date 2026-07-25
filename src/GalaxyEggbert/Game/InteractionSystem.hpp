@@ -38,7 +38,8 @@ namespace GalaxyEggbert::Game
     // 96/97=follower dormant/awake) -- the only difference the real source
     // makes between them is purely cosmetic (17/20 get a bigger screen-
     // shake + a different explosion GalaxyEggbert::Def::ObjectType), not a behavioral
-    // difference in whether/how Blupi dies, so IsGenericHazard() covers all
+    // difference in whether/how Blupi dies, so the registry's
+    // genericContactHazard capability covers all
     // 8 with one check rather than splitting them into separate per-type
     // branches that would all do the same thing. Real death sound is a
     // 50/50 coinflip between channel 74 and silence -- BlupiDead(Clear1,
@@ -73,7 +74,8 @@ namespace GalaxyEggbert::Game
     // (2026-07-10, plan.md E3D-MIG-134), verified directly against
     // Decor.cpp:8878-8969 (attack timing) and 7794-7869 (the real
     // ObjectStart raycast/travel-distance encoding). Their own body is
-    // NOT a damage path (not in IsGenericHazard()) -- only their fired
+    // NOT a damage path (they lack the registry's genericContactHazard
+    // capability) -- only their fired
     // ObjectType23 projectile is, spawned during a turn-dwell (patrolStep
     // 1 or 3) at the real dwell-frame(s): blupih drops one straight down
     // at frame 21, blupit fires two horizontal shots bracketing the turn

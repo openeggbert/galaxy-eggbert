@@ -7161,3 +7161,20 @@ specifically, same as any other large/risky item elsewhere in this file.
       directional animation. Verification: full `build-cna` build succeeds with `-j2`; all 91
       applicable CTest tests pass; audit found no second authoritative object visual/type
       classification.
+- [x] `INFRA-016` done (2026-07-25) — Registry-backed declarative MoveObject gameplay capabilities.
+      Move only pure ObjectType membership rules into `ObjectDefinitionRegistry`: platform lift,
+      crate, dynamite destructibility, the shared generic-contact hazard set, the balloon-pop
+      subset, and the shared pickup-touch candidate set. Migrate `InteractionSystem` to query
+      these properties and remove its parallel membership predicates/lists. Do not fold in
+      divergent per-type mechanics (shooters, wasp, follower, large creature, taunt, or their
+      timing/state-machine rules). Add exhaustive `ObjectType0..203` parity coverage and retain
+      the serialized `MoveObjectRecord` format. Done only with a full `-j2` build and all
+      applicable CTest tests passing. Implemented the four explicit per-type capabilities
+      (`dynamiteDestructible`, `genericContactHazard`, `balloonPoppableHazard`, and
+      `standardPickupTouch`) plus existing registry semantic kinds for platform lifts and crates.
+      `InteractionSystem` now queries these definitions rather than owning duplicate ObjectType
+      predicates; individual shooter, wasp, follower, large-creature, and taunt mechanics remain
+      focused in their own behavior branches. Exhaustive independent parity checks cover all 204
+      ObjectTypes and confirm the lift/crate semantic tags. Verification: full `build-cna` build
+      succeeds with `-j2`; all applicable CTest tests pass; source audit finds no former gameplay
+      membership predicates.
