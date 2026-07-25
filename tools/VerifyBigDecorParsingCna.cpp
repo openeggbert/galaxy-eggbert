@@ -54,6 +54,31 @@ int main()
         }
     }
 
+    // EDITOR-125: .vwr spawn cells are raw-grid world metadata. The
+    // runtime exposes the X/Z-shifted render position and keeps Y intact.
+    {
+        constexpr const char* path = "spawn_runtime_test.vwr";
+        GalaxyEggbert::Worlds::World world;
+        world.setSpawnPoint(62, 7, 31);
+        world.saveToFile(path);
+
+        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        const bool loaded = runtime.LoadFromVwrFile(path);
+        const bool spawnMatches =
+            loaded && runtime.HasExplicitSpawnPoint() &&
+            runtime.GetSpawnRenderX() == 12.0f &&
+            runtime.GetSpawnRenderY() == 7.0f &&
+            runtime.GetSpawnRenderZ() == -19.0f;
+        std::cout << (spawnMatches ? "PASS" : "FAIL")
+                  << ": .vwr spawn converts from raw grid to runtime render space"
+                  << std::endl;
+        if (!spawnMatches)
+        {
+            allOk = false;
+        }
+        std::remove(path);
+    }
+
     // Sanity check: the default .vwr world source has no BigDecor concept
     // (LoadFromVwrFile() clears bigDecor_ to empty) -- confirms the
     // 2026-07-09 segfault fix (guarding the grid-size check before scanning)

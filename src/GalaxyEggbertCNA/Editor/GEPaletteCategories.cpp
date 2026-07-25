@@ -17,13 +17,18 @@ namespace GalaxyEggbert::CNA
         PaletteCategory FreeMixedMenuCategory(const char* name, std::vector<int> blockIds,
                                               std::vector<int> objectTypeIds,
                                               std::vector<int> freeButtonIds,
-                                              std::vector<int> objectVisualIconIds = {})
+                                              std::vector<int> objectVisualIconIds = {},
+                                              std::vector<int> spawnPointIds = {},
+                                              std::vector<int> bigDecorIconIds = {})
         {
             blockIds.resize(freeButtonIds.size(), 0);
             objectTypeIds.resize(freeButtonIds.size(), 0);
             objectVisualIconIds.resize(freeButtonIds.size(), 0);
+            spawnPointIds.resize(freeButtonIds.size(), 0);
+            bigDecorIconIds.resize(freeButtonIds.size(), 0);
             return {name, freeButtonIds.front(), std::move(blockIds), std::move(objectTypeIds),
-                    std::move(freeButtonIds), {}, std::move(objectVisualIconIds)};
+                    std::move(freeButtonIds), {}, std::move(objectVisualIconIds),
+                    std::move(spawnPointIds), std::move(bigDecorIconIds)};
         }
     }
 
@@ -72,7 +77,8 @@ namespace GalaxyEggbert::CNA
             FreeMixedMenuCategory("Characters and goals",
                                   {0, 0, 0, 0, 0, Door1, 0, 0},
                                   {7, 200, 201, 202, 203, 0, 0, 49},
-                                  {11, 5, 96, 97, 98, 63, 62, 64}),
+                                  {11, 5, 96, 97, 98, 63, 62, 64}, {},
+                                  {0, 0, 0, 0, 0, 0, 1, 0}),
         };
     }
 

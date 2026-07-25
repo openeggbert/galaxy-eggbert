@@ -177,11 +177,20 @@ namespace GalaxyEggbert::CNA
                     state.contentBlockIds[static_cast<std::size_t>(i)] : 0;
                 const int skyRegion = i < static_cast<int>(state.contentSkyRegionIds.size()) ?
                     state.contentSkyRegionIds[static_cast<std::size_t>(i)] : -1;
+                const int spawnPoint = i < static_cast<int>(state.contentSpawnPointIds.size()) ?
+                    state.contentSpawnPointIds[static_cast<std::size_t>(i)] : 0;
+                const int bigDecorIcon = i < static_cast<int>(state.contentBigDecorIconIds.size()) ?
+                    state.contentBigDecorIconIds[static_cast<std::size_t>(i)] : 0;
                 const bool selected =
                     (skyRegion >= 0 && skyRegion == state.selectedSkyRegion) ||
-                    (skyRegion < 0 && objectType > 0 && state.objectMode &&
+                    (skyRegion < 0 && spawnPoint > 0 && state.spawnPointMode) ||
+                    (skyRegion < 0 && bigDecorIcon > 0 && state.bigDecorMode) ||
+                    (skyRegion < 0 && spawnPoint == 0 && bigDecorIcon == 0 &&
+                     objectType > 0 && state.objectMode &&
                      objectType == state.selectedObjectType) ||
-                    (skyRegion < 0 && objectType == 0 && blockType > 0 && !state.objectMode &&
+                    (skyRegion < 0 && spawnPoint == 0 && bigDecorIcon == 0 &&
+                     objectType == 0 && blockType > 0 && !state.objectMode &&
+                     !state.spawnPointMode && !state.bigDecorMode &&
                      blockType == state.selectedBlockType);
                 if (selected)
                 {

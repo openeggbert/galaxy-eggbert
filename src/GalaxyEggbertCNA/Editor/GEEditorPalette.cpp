@@ -59,6 +59,18 @@ namespace GalaxyEggbert::CNA
         return category ? category->objectVisualIconIds : EmptyIds();
     }
 
+    const std::vector<int>& GEEditorPalette::ContentSpawnPointIds() const noexcept
+    {
+        const PaletteCategory* category = OpenCategory();
+        return category ? category->spawnPointIds : EmptyIds();
+    }
+
+    const std::vector<int>& GEEditorPalette::ContentBigDecorIconIds() const noexcept
+    {
+        const PaletteCategory* category = OpenCategory();
+        return category ? category->bigDecorIconIds : EmptyIds();
+    }
+
     GEEditorPalette::UpdateResult GEEditorPalette::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int viewportWidth, int viewportHeight, float elapsedSeconds)
@@ -119,6 +131,8 @@ namespace GalaxyEggbert::CNA
                 const auto& objectIds = ContentObjectTypeIds();
                 const auto& skyRegionIds = ContentSkyRegionIds();
                 const auto& objectVisualIconIds = ContentObjectVisualIconIds();
+                const auto& spawnPointIds = ContentSpawnPointIds();
+                const auto& bigDecorIconIds = ContentBigDecorIconIds();
                 const int index = pointer.index;
                 if (index >= 0 && index < static_cast<int>(skyRegionIds.size()))
                 {
@@ -131,7 +145,23 @@ namespace GalaxyEggbert::CNA
                     blockIds[static_cast<std::size_t>(index)] : 0;
                 const int objectType = index >= 0 && index < static_cast<int>(objectIds.size()) ?
                     objectIds[static_cast<std::size_t>(index)] : 0;
-                if (objectType > 0)
+                const int spawnPoint =
+                    index >= 0 && index < static_cast<int>(spawnPointIds.size()) ?
+                        spawnPointIds[static_cast<std::size_t>(index)] : 0;
+                const int bigDecorIcon =
+                    index >= 0 && index < static_cast<int>(bigDecorIconIds.size()) ?
+                        bigDecorIconIds[static_cast<std::size_t>(index)] : 0;
+                if (spawnPoint > 0)
+                {
+                    placementKind_ = PlacementKind::SpawnPoint;
+                    openCategory_ = -1;
+                }
+                else if (bigDecorIcon > 0)
+                {
+                    placementKind_ = PlacementKind::BigDecor;
+                    openCategory_ = -1;
+                }
+                else if (objectType > 0)
                 {
                     selectedObjectType_ = objectType;
                     const int visualIcon =
@@ -139,13 +169,13 @@ namespace GalaxyEggbert::CNA
                             objectVisualIconIds[static_cast<std::size_t>(index)] : 0;
                     selectedObjectVisualIcon_ =
                         visualIcon < 0 ? selectedBlockType_ : visualIcon;
-                    objectMode_ = true;
+                    placementKind_ = PlacementKind::Object;
                     openCategory_ = -1;
                 }
                 else if (blockType > 0)
                 {
                     selectedBlockType_ = blockType;
-                    objectMode_ = false;
+                    placementKind_ = PlacementKind::Block;
                     openCategory_ = -1;
                 }
                 else
@@ -172,11 +202,15 @@ namespace GalaxyEggbert::CNA
             ContentObjectTypeIds(),
             ContentButtonIconIds(),
             ContentSkyRegionIds(),
+            ContentSpawnPointIds(),
+            ContentBigDecorIconIds(),
             openCategory_,
             selectedBlockType_,
             selectedObjectType_,
             selectedSkyRegion_,
-            objectMode_,
+            IsObjectMode(),
+            IsSpawnPointMode(),
+            IsBigDecorMode(),
             notYetImplementedSeconds_ > 0.0f,
             stopConfirmArmed,
             hasPlacementPreview,

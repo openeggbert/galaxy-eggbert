@@ -5701,8 +5701,8 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): IN PROGRESS.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-124` are implemented and tested. The user has
-now explicitly approved `EDITOR-125` through `EDITOR-127`, which close the remaining 9 source-menu entries
+`EDITOR-112`) and follow-up tasks through `EDITOR-125` are implemented and tested. The user has
+now explicitly approved `EDITOR-126` through `EDITOR-127`, which close the remaining 8 source-menu entries
 that still raise the temporary notice. The editor's input, rendering, orchestration, and
 verification remain separated into focused components.
 
@@ -5989,12 +5989,20 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       cube renderer honor the override; normal objects keep their type/phase icon. Pointer tests
       click all six real menu cells, the editor placement test proves the secret variant reaches
       the world record, and serialization tests cover new and legacy payloads.
-- [ ] **EDITOR-125 — make Level start set and persist the world's spawn point.**
+- [x] **EDITOR-125 — make Level start set and persist the world's spawn point.**
       The existing Level start glyph must arm a start-position tool whose red preview cell is the
       exact saved spawn. Extend the engine-agnostic world model and backward-compatible `.vwr`
       serialization so old worlds retain their existing default while newly edited worlds
       round-trip the chosen position. Editor undo/redo, dirty state, save/reload, play test, and
       runtime Blupi spawn must all use the same value.
+      **Done 2026-07-25:** Level start now selects a dedicated placement kind and PLACE writes the
+      exact red-preview raw-grid cell. A `SpawnPointEdit` command preserves both an existing start
+      and the legacy unset state through undo/redo. The three final v2 header slots encode X/Y/Z
+      plus one, so old all-zero headers remain unset without a format bump; incomplete or
+      out-of-range triples are rejected. Native mission loading and editor play test use the
+      runtime-converted spawn (normal X/Z world-centre shift, unchanged Y), while old standard and
+      custom worlds retain their previous defaults. Pointer, placement, undo/redo, save/reload,
+      legacy-header, bounds, and runtime-coordinate tests cover the full path.
 - [ ] **EDITOR-126 — add a persisted, editable BigDecor layer for eight scenery entries.**
       Implement Tree, Palmtree, Decorative plant, House, Mechanical background, Kid's stuff
       background, Green slime 2, and Element for Palace as the distinct billboard/decor layer they

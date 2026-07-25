@@ -38,6 +38,11 @@ namespace GalaxyEggbert::CNA
         // Secret wooden case: the crate is camouflaged as the current
         // terrain selection instead of looking like an ordinary crate.
         std::vector<int> objectVisualIconIds;
+        // Non-zero marks the matching source glyph as the editor's
+        // world-level Blupi start-position tool.
+        std::vector<int> spawnPointIds;
+        // Populated by EDITOR-126 for source BigDecor placements.
+        std::vector<int> bigDecorIconIds;
     };
 
     // Hand-curated categories built ONLY from BlockTypes.hpp's own already-

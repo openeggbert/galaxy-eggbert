@@ -291,10 +291,13 @@ The first palette index is stored in the least significant bits of the first `ui
 `GalaxyEggbert::MoveObjectRecord` (`include/GalaxyEggbert/MoveObjectRecord.hpp`, engine-agnostic)
 is the first real consumer of sparse extra metadata: it encodes a moving/interactive object
 (pickup, enemy, platform lift, crate — anything Galaxy Eggbert's `ObjectType` enum names) as a
-fixed 29-byte payload (`[objectType: 1 byte][posStartX,Y,Z: 3× float32][posEndX,Y,Z: 3× float32]
-[speed: float32]`) under a single reserved `metadataType = 1`, anchored at
+47-byte payload (`[objectType: 1 byte][posStartX,Y,Z: 3× float32][posEndX,Y,Z: 3× float32]
+[speed: float32][four patrol-timing float32 fields][visualIcon: uint16]`) under a single
+reserved `metadataType = 1`, anchored at
 `floor(posStartX/Y/Z)` — the anchor block only buckets the record for storage; the payload itself
 carries the exact float position, so nothing is lost to the block grid's integer resolution.
+The decoder also accepts the previous 45-byte form without `visualIcon`, defaulting it to zero;
+zero means that rendering continues to derive the icon from object type and animation phase.
 `World::setBlockExtraMetadata(x, y, z, metadataType, payload)` and
 `World::collectExtraMetadata(metadataType)` are thin `World`-level wrappers (added the same day)
 around `Chunk::setExtraMetadata`/`extraMetadata()` so callers don't have to compute chunk/local
@@ -316,8 +319,8 @@ CHUNK DATA...
 
 **Breaking change (2026-07-09):** header bumped v1 -> v2 to add a world-level
 `skyRegion` field (background/sky selector, see "World-level sky region"
-below) plus 4 more reserved fields for future world-level metadata (e.g. a
-spawn point, which still has no `.vwr` equivalent). This is a deliberate,
+below) plus 4 world-level metadata fields. Offset 24 now stores the mission
+number; offsets 28-36 store the optional spawn cell. This is a deliberate,
 non-backward-compatible break, not a silent reinterpretation of the old
 reserved bytes: `VoxelConfig::FormatVersion` is now `2`, and
 `World::loadFromFile` rejects any file whose header `version` byte isn't
@@ -342,10 +345,10 @@ Current v2 layout:
 |     12 |    4 | chunkTableOffset | usually `40` (the v2 header size)                           |
 |     16 |    4 | chunkDataOffset  | start of the chunk data section                             |
 |     20 |    4 | skyRegion        | world-level sky/background region id, 0-31 (see below)      |
-|     24 |    4 | reserved         | must be `0`                                                 |
-|     28 |    4 | reserved         | must be `0`                                                 |
-|     32 |    4 | reserved         | must be `0`                                                 |
-|     36 |    4 | reserved         | must be `0`                                                 |
+|     24 |    4 | missionNumber    | world mission id; `0` means no mission                      |
+|     28 |    4 | spawnXPlusOne    | raw-grid spawn X + 1; all three spawn fields `0` means unset |
+|     32 |    4 | spawnYPlusOne    | raw-grid spawn Y + 1                                         |
+|     36 |    4 | spawnZPlusOne    | raw-grid spawn Z + 1                                         |
 
 Header size: 40 bytes (up from 32 in v1).
 
@@ -378,6 +381,16 @@ ids (0-31) have a real background file — a hand-authored world referencing
 one of the 4 missing ids, or any value a real level never uses, degrades
 gracefully to a flat fallback clear color at render time rather than
 failing to load.
+
+### Optional Blupi spawn point
+
+`World::setSpawnPoint(x,y,z)` stores the exact raw-grid cell selected by the
+3D editor's Level start tool. Coordinates are encoded plus one so the
+all-zero header written by older v2 builds remains unambiguously “unset”;
+callers then retain their historical default spawn. A present spawn must
+have all three fields non-zero after encoding and remain inside the world,
+otherwise loading rejects the malformed file. Runtime presentation shifts
+X/Z by the normal world-centre offset and leaves Y unchanged.
 
 ## Recommended Future World Header
 
@@ -590,4 +603,3 @@ The format reserves flags for future versions:
 * larger worlds with `chunksX`, `chunksY`, and `chunksZ`.
 
 For the default `100³` world, v1 without RLE is already sufficient.
-

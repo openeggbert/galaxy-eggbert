@@ -21,13 +21,11 @@ constexpr std::uint16_t ChunkTableFlagEmpty = 0x0001;
 // v2 (2026-07-09, breaking change): 20-byte v1 core (magic/version/
 // chunkSize/chunksPerAxis/flags/chunkCount/tableOffset/dataOffset) + 4-byte
 // skyRegion + 4 reserved uint32 fields (16 bytes) for future world-level
-// metadata (e.g. spawn point) -- see World Format.md. 2026-07-13: the first
-// reserved field is now missionNumber (still 4 total header uint32 fields
-// after skyRegion, WorldHeaderSize unchanged -- just repurposing one
-// already-reserved slot, not a format/size change), leaving 3 truly
-// reserved.
+// metadata -- see World Format.md. 2026-07-13: the first reserved field
+// became missionNumber. EDITOR-125 uses the final three as optional spawn
+// X/Y/Z, encoded coordinate+1 so all-zero legacy headers still mean "no
+// explicit spawn". WorldHeaderSize and format version remain unchanged.
 constexpr std::uint32_t WorldHeaderSize = 40;
-constexpr std::uint32_t WorldHeaderReservedFieldCount = 3;
 constexpr std::uint32_t ChunkTableEntrySize = 20;
 
 struct SerializedChunkEntry final {
@@ -90,6 +88,14 @@ std::uint16_t World::blocksPerAxis() const noexcept {
 
 std::size_t World::chunkCount() const noexcept {
     return chunks_.size();
+}
+
+void World::setSpawnPoint(std::uint16_t x, std::uint16_t y, std::uint16_t z) {
+    validateBlockPosition(x, y, z);
+    hasSpawnPoint_ = true;
+    spawnX_ = x;
+    spawnY_ = y;
+    spawnZ_ = z;
 }
 
 Block World::getBlock(std::uint16_t x,
@@ -269,9 +275,9 @@ void World::saveToFile(const std::filesystem::path& path) const {
     Binary::writeU32LE(out, static_cast<std::uint32_t>(dataOffset));
     Binary::writeU32LE(out, skyRegion_);
     Binary::writeU32LE(out, missionNumber_);
-    for (std::uint32_t i = 0; i < WorldHeaderReservedFieldCount; ++i) {
-        Binary::writeU32LE(out, 0); // reserved
-    }
+    Binary::writeU32LE(out, hasSpawnPoint_ ? static_cast<std::uint32_t>(spawnX_) + 1u : 0u);
+    Binary::writeU32LE(out, hasSpawnPoint_ ? static_cast<std::uint32_t>(spawnY_) + 1u : 0u);
+    Binary::writeU32LE(out, hasSpawnPoint_ ? static_cast<std::uint32_t>(spawnZ_) + 1u : 0u);
 
     for (const ChunkBlob& blob : blobs) {
         writeChunkTableEntry(out, blob.entry);
@@ -308,9 +314,9 @@ World World::loadFromFile(const std::filesystem::path& path) {
     static_cast<void>(Binary::readU32LE(in)); // dataOffset, informational
     const std::uint32_t skyRegion = Binary::readU32LE(in);
     const std::uint32_t missionNumber = Binary::readU32LE(in);
-    for (std::uint32_t i = 0; i < WorldHeaderReservedFieldCount; ++i) {
-        static_cast<void>(Binary::readU32LE(in)); // reserved
-    }
+    const std::uint32_t encodedSpawnX = Binary::readU32LE(in);
+    const std::uint32_t encodedSpawnY = Binary::readU32LE(in);
+    const std::uint32_t encodedSpawnZ = Binary::readU32LE(in);
 
     if (version != VoxelConfig::FormatVersion) {
         // Breaking change (2026-07-09, header v1 -> v2): v1 files (written
@@ -333,6 +339,23 @@ World World::loadFromFile(const std::filesystem::path& path) {
     World world(chunksPerAxis);
     world.skyRegion_ = skyRegion;
     world.missionNumber_ = missionNumber;
+    const bool noSpawn =
+        encodedSpawnX == 0 && encodedSpawnY == 0 && encodedSpawnZ == 0;
+    const bool completeSpawn =
+        encodedSpawnX > 0 && encodedSpawnY > 0 && encodedSpawnZ > 0;
+    if (!noSpawn && !completeSpawn) {
+        throw std::runtime_error("World spawn point header is incomplete");
+    }
+    if (completeSpawn) {
+        const std::uint32_t axis = world.blocksPerAxis();
+        if (encodedSpawnX > axis || encodedSpawnY > axis || encodedSpawnZ > axis) {
+            throw std::runtime_error("World spawn point is outside world bounds");
+        }
+        world.setSpawnPoint(
+            static_cast<std::uint16_t>(encodedSpawnX - 1),
+            static_cast<std::uint16_t>(encodedSpawnY - 1),
+            static_cast<std::uint16_t>(encodedSpawnZ - 1));
+    }
 
     in.seekg(tableOffset, std::ios::beg);
     if (!in) {

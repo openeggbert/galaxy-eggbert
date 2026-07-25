@@ -22,6 +22,14 @@ namespace GalaxyEggbert::CNA
         Worlds::Block after;
     };
 
+    struct SpawnPointState
+    {
+        bool present = false;
+        std::uint16_t x = 0;
+        std::uint16_t y = 0;
+        std::uint16_t z = 0;
+    };
+
     // One undoable editor action (plan.md section 6, EDITOR-104). A single
     // tagged struct rather than a command class hierarchy, matching this
     // codebase's consistent preference for plain tagged structs
@@ -49,6 +57,7 @@ namespace GalaxyEggbert::CNA
             BlockEdit,
             MoveObjectEdit,
             SkyRegionEdit,
+            SpawnPointEdit,
         };
 
         Kind kind = Kind::BlockEdit;
@@ -62,6 +71,8 @@ namespace GalaxyEggbert::CNA
 
         std::uint32_t skyRegionBefore = 0;
         std::uint32_t skyRegionAfter = 0;
+        SpawnPointState spawnBefore;
+        SpawnPointState spawnAfter;
     };
 
     // Undo/redo stack of GEEditCommand actions against a Worlds::World.

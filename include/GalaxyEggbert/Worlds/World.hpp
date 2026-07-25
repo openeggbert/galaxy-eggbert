@@ -79,6 +79,28 @@ public:
     void setMissionNumber(std::uint32_t missionNumber) noexcept { missionNumber_ = missionNumber; }
 
     /**
+     * @brief Whether this world carries an explicit Blupi start cell.
+     *
+     * Old v2 worlds used zeroes in all three corresponding header slots and
+     * therefore return false, preserving each caller's historical default.
+     */
+    [[nodiscard]] bool hasSpawnPoint() const noexcept { return hasSpawnPoint_; }
+    [[nodiscard]] std::uint16_t spawnX() const noexcept { return spawnX_; }
+    [[nodiscard]] std::uint16_t spawnY() const noexcept { return spawnY_; }
+    [[nodiscard]] std::uint16_t spawnZ() const noexcept { return spawnZ_; }
+
+    /**
+     * @brief Sets the explicit raw-grid-space cell where Blupi starts.
+     * @throws std::out_of_range If a coordinate is outside world bounds.
+     */
+    void setSpawnPoint(std::uint16_t x, std::uint16_t y, std::uint16_t z);
+
+    /**
+     * @brief Restores the legacy caller-defined default spawn behavior.
+     */
+    void clearSpawnPoint() noexcept { hasSpawnPoint_ = false; }
+
+    /**
      * @brief Reads a block at world-space coordinates.
      *
      * @param x World X coordinate in range <tt>[0, blocksPerAxis())</tt>.
@@ -194,9 +216,8 @@ public:
      * 2026-07-09).
      *
      * The file stores a world header (`VWR1` magic, format settings, chunk
-     * count, table offsets, @ref skyRegion, @ref missionNumber (2026-07-13,
-     * the first of the format's 4 reserved fields put to use), and 3
-     * remaining reserved fields for future world-level metadata), a chunk
+     * count, table offsets, @ref skyRegion, @ref missionNumber, and the
+     * optional @ref hasSpawnPoint coordinates), a chunk
      * table, and serialized non-empty chunk payloads.
      *
      * @param path Destination file path.
@@ -223,6 +244,10 @@ private:
     std::vector<Chunk> chunks_;
     std::uint32_t skyRegion_ = 0;
     std::uint32_t missionNumber_ = 0;
+    bool hasSpawnPoint_ = false;
+    std::uint16_t spawnX_ = 0;
+    std::uint16_t spawnY_ = 0;
+    std::uint16_t spawnZ_ = 0;
 
     /**
      * @brief Converts chunk-grid coordinates to a linear vector index.

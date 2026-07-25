@@ -82,6 +82,8 @@ int main()
     check(sourceCategories[7].objectTypeIds[9] == 12 &&
               sourceCategories[7].objectVisualIconIds[9] == -1,
           "Secret wooden case retains the crate behavior and current-terrain camouflage profile");
+    check(sourceCategories[9].spawnPointIds[6] == 1,
+          "Level start is represented by the dedicated world spawn tool");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
@@ -402,6 +404,17 @@ int main()
     }
 
     {
+        GEEditorPalette palette;
+        (void)click(palette, 30.0f, 450.0f);
+        const auto levelStart = click(palette, 324.0f, 450.0f);
+        check(levelStart.clickConsumed && palette.IsSpawnPointMode() &&
+                  !palette.IsObjectMode(),
+              "Level start selects the dedicated spawn-point placement mode");
+        check(!palette.IsNotYetImplementedNoticeVisible(),
+              "the implemented Level start does not raise the temporary notice");
+    }
+
+    {
         constexpr const char* kBackgroundSavePath =
             "verify_ge_editor_palette_background.vwr";
         World world;
@@ -497,6 +510,52 @@ int main()
                   objects[0].type == GalaxyEggbert::ObjectType::ObjectType12 &&
                   objects[0].visualIcon == GalaxyEggbert::BlockTypes::RockPile,
               "placing Secret wooden case persists its exact camouflage variant");
+    }
+
+    {
+        constexpr const char* kSpawnSavePath =
+            "verify_ge_editor_palette_spawn.vwr";
+        World world;
+        GEWorldEditor editor;
+        editor.SetWorldPath(kSpawnSavePath);
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        Easy3D::Camera3D camera;
+        const auto tap = [&](int x, int y)
+        {
+            const MouseState down(
+                x, y, 0, ButtonState::Pressed, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            const MouseState up(
+                x, y, 0, ButtonState::Released, ButtonState::Released,
+                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, down, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, up, 0.0f, 800, 480, camera, world);
+        };
+        const auto pressKey = [&](Keys key)
+        {
+            editor.Update(KeyboardState{key}, restMouse, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        };
+
+        tap(30, 450);
+        tap(324, 450);
+        tap(499, 451);
+        check(world.hasSpawnPoint() && world.spawnX() == 50 &&
+                  world.spawnY() == 0 && world.spawnZ() == 23,
+              "PLACE stores Level start at the exact red-preview cell");
+        pressKey(Keys::U);
+        check(!world.hasSpawnPoint(),
+              "undo restores the legacy unset spawn state");
+        pressKey(Keys::R);
+        check(world.hasSpawnPoint() && world.spawnX() == 50 &&
+                  world.spawnY() == 0 && world.spawnZ() == 23,
+              "redo restores the placed Level start");
+        pressKey(Keys::Enter);
+        const World loaded = World::loadFromFile(kSpawnSavePath);
+        check(loaded.hasSpawnPoint() && loaded.spawnX() == 50 &&
+                  loaded.spawnY() == 0 && loaded.spawnZ() == 23,
+              "saving and reloading retains the placed Level start");
+        std::remove(kSpawnSavePath);
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

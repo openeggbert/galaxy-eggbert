@@ -18,6 +18,14 @@ namespace GalaxyEggbert::CNA
     class GEEditorPalette
     {
     public:
+        enum class PlacementKind
+        {
+            Block,
+            Object,
+            SpawnPoint,
+            BigDecor,
+        };
+
         enum class Action
         {
             None,
@@ -59,7 +67,22 @@ namespace GalaxyEggbert::CNA
 
         [[nodiscard]] bool IsObjectMode() const noexcept
         {
-            return objectMode_;
+            return placementKind_ == PlacementKind::Object;
+        }
+
+        [[nodiscard]] bool IsSpawnPointMode() const noexcept
+        {
+            return placementKind_ == PlacementKind::SpawnPoint;
+        }
+
+        [[nodiscard]] bool IsBigDecorMode() const noexcept
+        {
+            return placementKind_ == PlacementKind::BigDecor;
+        }
+
+        [[nodiscard]] PlacementKind SelectedPlacementKind() const noexcept
+        {
+            return placementKind_;
         }
 
         [[nodiscard]] ObjectType SelectedObjectType() const noexcept
@@ -90,13 +113,15 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] const std::vector<int>& ContentButtonIconIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentSkyRegionIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentObjectVisualIconIds() const noexcept;
+        [[nodiscard]] const std::vector<int>& ContentSpawnPointIds() const noexcept;
+        [[nodiscard]] const std::vector<int>& ContentBigDecorIconIds() const noexcept;
 
         std::vector<PaletteCategory> categories_;
         int openCategory_ = -1;
         int selectedBlockType_;
         int selectedObjectType_;
         int selectedObjectVisualIcon_ = 0;
-        bool objectMode_ = false;
+        PlacementKind placementKind_ = PlacementKind::Block;
         int selectedSkyRegion_ = 0;
         float notYetImplementedSeconds_ = 0.0f;
 

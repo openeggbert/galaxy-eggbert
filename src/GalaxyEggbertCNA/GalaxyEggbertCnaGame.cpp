@@ -531,13 +531,19 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Spawn Blupi on the ground floor (world (0,1,0) == grid (50,*,50),
-        // inside worlds3d/world001.vwr's ground floor). The .vwr format
-        // carries no spawn point itself (see LoadFromVwrFile()), so this is
-        // a fixed known-good spot for this specific sample world. The
-        // camera now follows blupi_ every frame (see Update()) instead of a
-        // fixed terrain-centroid shot.
-        blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+        // Explicit .vwr start cells use raw-grid coordinates and are shifted
+        // by GEWorldRuntime for rendering. Old worlds retain the historical
+        // fixed sample-world default.
+        if (worldRuntime_.HasExplicitSpawnPoint())
+        {
+            blupi_.SetPosition(
+                worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
+                worldRuntime_.GetSpawnRenderZ());
+        }
+        else
+        {
+            blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+        }
 
         // Real mobile-eggbert sound playback (2026-07-10, see GESound.hpp) --
         // loads whichever of Content/sounds/sound000.wav..sound092.wav
@@ -687,10 +693,16 @@ namespace GalaxyEggbert::CNA
         interaction_.SetLives(preservedLives);
         blupi_ = GEBlupiController();
 
-        // Same fixed spawn convention every hand-authored .vwr world in
-        // this engine shares (see LoadContent()'s own comment) -- the
-        // format itself still carries no real per-world spawn point.
-        blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+        if (worldRuntime_.HasExplicitSpawnPoint())
+        {
+            blupi_.SetPosition(
+                worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
+                worldRuntime_.GetSpawnRenderZ());
+        }
+        else
+        {
+            blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+        }
 
         saveData_.SetMissionNumber(missionNumber);
         saveData_.Save();
@@ -747,11 +759,20 @@ namespace GalaxyEggbert::CNA
         // there's no real progression state to carry between play-test runs.
         interaction_ = GEInteractionSystem();
         blupi_ = GEBlupiController();
-        // New editor worlds use the opposite edge of their 3x3 starter
-        // board as Blupi's spawn (the chest is centred and the exit arrow
-        // occupies the other edge). Existing custom worlds continue to be
-        // valid with this fixed, documented editor spawn convention too.
-        blupi_.SetPosition(kEditorStarterSpawnRenderX, kEditorStarterSpawnY, kEditorStarterSpawnRenderZ);
+        if (worldRuntime_.HasExplicitSpawnPoint())
+        {
+            blupi_.SetPosition(
+                worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
+                worldRuntime_.GetSpawnRenderZ());
+        }
+        else
+        {
+            // Preserve the established 3x3 starter-board default for old
+            // custom worlds whose formerly-reserved header slots are zero.
+            blupi_.SetPosition(
+                kEditorStarterSpawnRenderX, kEditorStarterSpawnY,
+                kEditorStarterSpawnRenderZ);
+        }
 
         editorPlayTestActive_ = true;
         editorPlayTestWorldPath_ = path;

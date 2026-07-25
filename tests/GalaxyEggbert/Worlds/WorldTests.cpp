@@ -88,6 +88,7 @@ TEST(WorldTests, BlockCoordinateValidationRejectsOutOfRange) {
     EXPECT_THROW(static_cast<void>(world.getBlock(0, limit, 0)), std::out_of_range);
     EXPECT_THROW(static_cast<void>(world.getBlock(0, 0, limit)), std::out_of_range);
     EXPECT_THROW(static_cast<void>(world.setBlock(limit, 0, 0, Block::make(1, 0))), std::out_of_range);
+    EXPECT_THROW(world.setSpawnPoint(limit, 0, 0), std::out_of_range);
 }
 
 TEST(WorldTests, ChunkCoordinateValidationRejectsOutOfRange) {
@@ -201,6 +202,34 @@ TEST(WorldSerializationTests, SaveAndLoadPreservesMissionNumber) {
 
     EXPECT_EQ(loaded.missionNumber(), 11u);
 
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, SaveAndLoadPreservesOptionalSpawnPoint) {
+    const auto filePath = makeTempPath(".vwr");
+
+    World world;
+    EXPECT_FALSE(world.hasSpawnPoint());
+    world.setSpawnPoint(12, 34, 56);
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_TRUE(loaded.hasSpawnPoint());
+    EXPECT_EQ(loaded.spawnX(), 12);
+    EXPECT_EQ(loaded.spawnY(), 34);
+    EXPECT_EQ(loaded.spawnZ(), 56);
+
+    removeFileNoThrow(filePath);
+}
+
+TEST(WorldSerializationTests, LegacyZeroSpawnSlotsRemainUnset) {
+    const auto filePath = makeTempPath(".vwr");
+
+    const World world;
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_FALSE(loaded.hasSpawnPoint());
     removeFileNoThrow(filePath);
 }
 

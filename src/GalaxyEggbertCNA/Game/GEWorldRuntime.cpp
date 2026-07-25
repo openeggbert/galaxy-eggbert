@@ -108,7 +108,9 @@ namespace GalaxyEggbert::CNA
         }
 
         spawnTileX_ = blupiPixelX / kMobileTileSize;
+        spawnTileY_ = 1;
         spawnTileZ_ = blupiPixelY / kMobileTileSize;
+        hasExplicitSpawnPoint_ = true;
 
         std::string line;
         // BigDecor: is a distinct section from Decor: (see
@@ -251,7 +253,9 @@ namespace GalaxyEggbert::CNA
         }
 
         spawnTileX_ = 0;
+        spawnTileY_ = 1;
         spawnTileZ_ = 0;
+        hasExplicitSpawnPoint_ = false;
         bigDecor_.clear();
 
         // Found 2026-07-17 (hub/mission-progression system): a world switch
@@ -275,6 +279,20 @@ namespace GalaxyEggbert::CNA
         // needs to reset to 0.
         skyRegion_ = static_cast<int>(world_->skyRegion());
         missionNumber_ = static_cast<int>(world_->missionNumber());
+        if (world_->hasSpawnPoint())
+        {
+            spawnTileX_ = static_cast<int>(world_->spawnX());
+            spawnTileY_ = static_cast<int>(world_->spawnY());
+            spawnTileZ_ = static_cast<int>(world_->spawnZ());
+            hasExplicitSpawnPoint_ = true;
+        }
+        else
+        {
+            spawnTileX_ = 0;
+            spawnTileY_ = 1;
+            spawnTileZ_ = 0;
+            hasExplicitSpawnPoint_ = false;
+        }
 
         // Unlike BigDecor: (a mobile-eggbert .txt-only concept), MoveObjects
         // CAN be embedded directly in the 3D .vwr format itself, via

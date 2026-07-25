@@ -22,6 +22,19 @@ namespace GalaxyEggbert::CNA
                 PlaceMoveObject(world, *state);
             }
         }
+
+        void ApplySpawnPointState(
+            Worlds::World& world, const SpawnPointState& state)
+        {
+            if (state.present)
+            {
+                world.setSpawnPoint(state.x, state.y, state.z);
+            }
+            else
+            {
+                world.clearSpawnPoint();
+            }
+        }
     }
 
     void GEEditCommandStack::Push(GEEditCommand command)
@@ -58,6 +71,10 @@ namespace GalaxyEggbert::CNA
         {
             world.setSkyRegion(command.skyRegionBefore);
         }
+        else if (command.kind == GEEditCommand::Kind::SpawnPointEdit)
+        {
+            ApplySpawnPointState(world, command.spawnBefore);
+        }
 
         redoStack_.push_back(std::move(command));
         return true;
@@ -86,6 +103,10 @@ namespace GalaxyEggbert::CNA
         else if (command.kind == GEEditCommand::Kind::SkyRegionEdit)
         {
             world.setSkyRegion(command.skyRegionAfter);
+        }
+        else if (command.kind == GEEditCommand::Kind::SpawnPointEdit)
+        {
+            ApplySpawnPointState(world, command.spawnAfter);
         }
 
         undoStack_.push_back(std::move(command));

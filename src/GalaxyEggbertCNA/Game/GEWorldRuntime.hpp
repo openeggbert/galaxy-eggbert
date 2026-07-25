@@ -103,12 +103,10 @@ namespace GalaxyEggbert::CNA
         // editor's live GetWorldMutable() edits (block AND MoveObject
         // placement/removal alike) show up immediately without a real
         // save-then-reload round trip. Deliberately does NOT touch
-        // spawnTileX_/Z_, bigDecor_, or animPhase_/animTimer_ -- those are
-        // genuine LOAD-time resets (a .txt-only concept, and "start
-        // animations at phase 0 for a newly loaded world" respectively),
-        // not something every in-place edit should redo. LoadFromVwrFile()
-        // itself now just calls this after loading, so both paths share
-        // one implementation.
+        // bigDecor_ or animPhase_/animTimer_. Spawn coordinates ARE
+        // re-derived because EDITOR-125 makes them live world metadata.
+        // LoadFromVwrFile() itself calls this after loading, so both paths
+        // share one implementation.
         void ResyncFromWorld();
 
         // Advances the animated-tile raw tick (20 fps, matching
@@ -222,7 +220,21 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool FindTeleportDestination(std::uint16_t icon, float blupiX, float blupiY, float blupiZ,
                                                      float& destX, float& destY, float& destZ) const;
         [[nodiscard]] int GetSpawnTileX() const { return spawnTileX_; }
+        [[nodiscard]] int GetSpawnTileY() const { return spawnTileY_; }
         [[nodiscard]] int GetSpawnTileZ() const { return spawnTileZ_; }
+        [[nodiscard]] bool HasExplicitSpawnPoint() const { return hasExplicitSpawnPoint_; }
+        [[nodiscard]] float GetSpawnRenderX() const
+        {
+            return static_cast<float>(spawnTileX_ - kWorldCenterX);
+        }
+        [[nodiscard]] float GetSpawnRenderY() const
+        {
+            return static_cast<float>(spawnTileY_);
+        }
+        [[nodiscard]] float GetSpawnRenderZ() const
+        {
+            return static_cast<float>(spawnTileZ_ - kWorldCenterZ);
+        }
         [[nodiscard]] int GetSkyRegion() const { return skyRegion_; }
         // Real m_mission (2026-07-13, plan.md HUD-024), a direct pass-
         // through of Worlds::World::missionNumber() -- gates level-specific
@@ -345,7 +357,9 @@ namespace GalaxyEggbert::CNA
         std::vector<std::uint16_t> bigDecor_;
         std::vector<MobileObjSpec> mobileObjects_;
         int spawnTileX_ = 0;
+        int spawnTileY_ = 1;
         int spawnTileZ_ = 0;
+        bool hasExplicitSpawnPoint_ = false;
         int skyRegion_ = 0;
         int missionNumber_ = 0;
         float animTimer_ = 0.0f;

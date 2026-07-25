@@ -298,7 +298,15 @@ namespace GalaxyEggbert::CNA
         const auto y = placementCellY_;
         const auto z = placementCellZ_;
         GEEditCommand command;
-        if (palette_.IsObjectMode())
+        if (palette_.IsSpawnPointMode())
+        {
+            command.kind = GEEditCommand::Kind::SpawnPointEdit;
+            command.spawnBefore = {
+                world.hasSpawnPoint(), world.spawnX(), world.spawnY(), world.spawnZ()};
+            command.spawnAfter = {true, x, y, z};
+            world.setSpawnPoint(x, y, z);
+        }
+        else if (palette_.IsObjectMode())
         {
             MoveObjectRecord record;
             record.type = palette_.SelectedObjectType();
