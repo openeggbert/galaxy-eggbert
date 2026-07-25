@@ -18,10 +18,10 @@ namespace GalaxyEggbert::Editor
         constexpr float kRowGap = 6.0f;
         constexpr float kDeleteButtonSize = 28.0f;
 
-        // Same text.png glyph convention GEInputPad.cpp's own label
+        // Same text.png glyph convention InputPad.cpp's own label
         // methods already document (32px cells, 16 columns, glyph index ==
         // ASCII code) -- duplicated here deliberately rather than shared:
-        // GEInputPad's own label methods stay private/un-genericized (see
+        // InputPad's own label methods stay private/un-genericized (see
         // plan.md EDITOR-106's own note), this is a small, self-contained
         // use of the same well-known asset convention, not an attempt to
         // build a shared text system.
@@ -30,7 +30,7 @@ namespace GalaxyEggbert::Editor
         constexpr float kGlyphAdvance = 17.0f;
         constexpr float kLabelScale = 0.5f;
 
-        void AppendLabel(std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad>& quads, const std::string& text,
+        void AppendLabel(std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, const std::string& text,
                          float leftX, float topY, float scale, float textSheetW, float textSheetH)
         {
             const float cellPx = kGlyphCellPx * scale;
@@ -41,7 +41,7 @@ namespace GalaxyEggbert::Editor
                 const int rank = static_cast<int>(static_cast<unsigned char>(c));
                 const int col = rank % kGlyphCols;
                 const int row = rank / kGlyphCols;
-                GalaxyEggbert::CNA::GEQuadBatch::Quad q;
+                GalaxyEggbert::Game::QuadBatch::Quad q;
                 q.x0 = penX;
                 q.y0 = topY;
                 q.x1 = penX + cellPx;
@@ -73,20 +73,20 @@ namespace GalaxyEggbert::Editor
         armedDeleteIndex_ = -1;
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorBrowserScreen::RowRect(int index) const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::RowRect(int index) const noexcept
     {
         const float y0 = kRowY0 + static_cast<float>(index) * (kRowHeight + kRowGap);
         return {kRowX0, y0, kRowX0 + kRowWidth, y0 + kRowHeight};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorBrowserScreen::DeleteButtonRect(int index) const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::DeleteButtonRect(int index) const noexcept
     {
-        const GalaxyEggbert::CNA::GEQuadBatch::Rect row = RowRect(index);
+        const GalaxyEggbert::Game::QuadBatch::Rect row = RowRect(index);
         const float y0 = row.y0 + (kRowHeight - kDeleteButtonSize) * 0.5f;
         return {row.x1 - kDeleteButtonSize - 4.0f, y0, row.x1 - 4.0f, y0 + kDeleteButtonSize};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorBrowserScreen::BackButtonRect(
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::BackButtonRect(
         int /*viewportWidth*/, int /*viewportHeight*/) const noexcept
     {
         return {20.0f, kRowY0, 170.0f, kRowY0 + kRowHeight};
@@ -113,12 +113,12 @@ namespace GalaxyEggbert::Editor
         }
         if (!mouseDown && mouseWasDown_)
         {
-            if (GalaxyEggbert::CNA::GEQuadBatch::InRect(mx, my, BackButtonRect(viewportWidth, viewportHeight)))
+            if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, BackButtonRect(viewportWidth, viewportHeight)))
             {
                 result.action = Action::Back;
                 armedDeleteIndex_ = -1;
             }
-            else if (GalaxyEggbert::CNA::GEQuadBatch::InRect(mx, my, RowRect(0)))
+            else if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, RowRect(0)))
             {
                 result.action = Action::New;
                 armedDeleteIndex_ = -1;
@@ -129,7 +129,7 @@ namespace GalaxyEggbert::Editor
                 for (std::size_t i = 0; i < worlds_.size(); ++i)
                 {
                     const int rowIndex = static_cast<int>(i) + 1;
-                    if (GalaxyEggbert::CNA::GEQuadBatch::InRect(mx, my, DeleteButtonRect(rowIndex)))
+                    if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, DeleteButtonRect(rowIndex)))
                     {
                         if (armedDeleteIndex_ == static_cast<int>(i))
                         {
@@ -144,7 +144,7 @@ namespace GalaxyEggbert::Editor
                         handled = true;
                         break;
                     }
-                    if (GalaxyEggbert::CNA::GEQuadBatch::InRect(mx, my, RowRect(rowIndex)))
+                    if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, RowRect(rowIndex)))
                     {
                         result.action = Action::Open;
                         result.path = worlds_[i];
@@ -174,7 +174,7 @@ namespace GalaxyEggbert::Editor
 
         if (!std::filesystem::exists("Content/icons/text.png"))
         {
-            return; // degrades to no text, same graceful-failure shape as GEInputPad::LoadContent()
+            return; // degrades to no text, same graceful-failure shape as InputPad::LoadContent()
         }
         textTexture_ = Texture2D("Content/icons/text.png", device);
         textEffect_ = std::make_unique<BasicEffect>(device);
@@ -202,8 +202,8 @@ namespace GalaxyEggbert::Editor
         using Microsoft::Xna::Framework::Graphics::BlendState;
         device.setBlendStateProperty(BlendState::NonPremultiplied);
 
-        std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> flatQuads;
-        const auto addFlat = [&flatQuads](const GalaxyEggbert::CNA::GEQuadBatch::Rect& r)
+        std::vector<GalaxyEggbert::Game::QuadBatch::Quad> flatQuads;
+        const auto addFlat = [&flatQuads](const GalaxyEggbert::Game::QuadBatch::Rect& r)
         {
             flatQuads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
         };
@@ -214,31 +214,31 @@ namespace GalaxyEggbert::Editor
             addFlat(RowRect(static_cast<int>(i) + 1));
             addFlat(DeleteButtonRect(static_cast<int>(i) + 1));
         }
-        GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, flatQuads, viewportWidth, viewportHeight, 0.5f);
+        GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, flatQuads, viewportWidth, viewportHeight, 0.5f);
 
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
-        std::vector<GalaxyEggbert::CNA::GEQuadBatch::Quad> labelQuads;
+        std::vector<GalaxyEggbert::Game::QuadBatch::Quad> labelQuads;
         {
-            const GalaxyEggbert::CNA::GEQuadBatch::Rect back = BackButtonRect(viewportWidth, viewportHeight);
+            const GalaxyEggbert::Game::QuadBatch::Rect back = BackButtonRect(viewportWidth, viewportHeight);
             AppendLabel(labelQuads, "< Main Menu", back.x0 + 8.0f, back.y0 + 8.0f,
                         kLabelScale, textSheetW, textSheetH);
         }
         {
-            const GalaxyEggbert::CNA::GEQuadBatch::Rect row0 = RowRect(0);
+            const GalaxyEggbert::Game::QuadBatch::Rect row0 = RowRect(0);
             AppendLabel(labelQuads, "+ New World", row0.x0 + 8.0f, row0.y0 + 8.0f, kLabelScale, textSheetW,
                        textSheetH);
         }
         for (std::size_t i = 0; i < worlds_.size(); ++i)
         {
-            const GalaxyEggbert::CNA::GEQuadBatch::Rect row = RowRect(static_cast<int>(i) + 1);
+            const GalaxyEggbert::Game::QuadBatch::Rect row = RowRect(static_cast<int>(i) + 1);
             AppendLabel(labelQuads, worlds_[i].stem().string(), row.x0 + 8.0f, row.y0 + 8.0f, kLabelScale,
                        textSheetW, textSheetH);
-            const GalaxyEggbert::CNA::GEQuadBatch::Rect del = DeleteButtonRect(static_cast<int>(i) + 1);
+            const GalaxyEggbert::Game::QuadBatch::Rect del = DeleteButtonRect(static_cast<int>(i) + 1);
             const char* deleteLabel = (armedDeleteIndex_ == static_cast<int>(i)) ? "!" : "X";
             AppendLabel(labelQuads, deleteLabel, del.x0 + 6.0f, del.y0 + 2.0f, kLabelScale, textSheetW, textSheetH);
         }
-        GalaxyEggbert::CNA::GEQuadBatch::FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportWidth, viewportHeight, 1.0f);
+        GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportWidth, viewportHeight, 1.0f);
 
         device.setBlendStateProperty(BlendState::Opaque);
     }

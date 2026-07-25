@@ -1,5 +1,5 @@
-#include "Game/GEObjectIcons.hpp"
-#include "Game/GEPlateRotationMetadata.hpp"
+#include <GalaxyEggbert/Game/ObjectIcons.hpp>
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -270,7 +270,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // big flat plain.
     fill(45, 55, 4, 4, 25, 32, BlockTypes::RockPile);
     // Real grass-top demo (icon 107, 2026-07-08 §8 task 3 -- top face
-    // deliberately left open, covered by GETerrainRenderer's separate
+    // deliberately left open, covered by TerrainRenderer's separate
     // grass_top.png overlay plate) relocated here from the old flat floor
     // patch -- grass makes far more sense on a hilltop than on a showroom
     // floor. Icons 108/109 (own texture + icon 107's texture + open side +
@@ -347,11 +347,11 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     fill(24, 26, 0, 0, 66, 68, static_cast<std::uint16_t>(200));
 
     // A short, shallow water crossing on the tunnel floor (BlockTypes::Water1
-    // -- semi-transparent alpha-blended cube, GETerrainRenderer's dedicated
+    // -- semi-transparent alpha-blended cube, TerrainRenderer's dedicated
     // water pass, 2026-07-08 design decision) partway along the tunnel.
     // Fixed 2026-07-12 (plan.md E3D-MIG-148): water is now non-solid for
     // collision (real swimming needs Blupi to sink into/through it, see
-    // GEBlupiController::GroundHeightAt()'s own comment) -- placing the
+    // BlupiController::GroundHeightAt()'s own comment) -- placing the
     // water AT the same layer as the surrounding floor (y=0) would have
     // left NOTHING solid beneath it (world Y can't go negative), turning a
     // shallow wade into a bottomless-pit death trap. The real tunnel floor
@@ -371,9 +371,9 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // Saw's default InnerFlatPlate axis is Z (same as every other confirmed
     // icon) -- this placement's own corridor runs along X, so it needs the
     // per-instance 90-degree rotation metadata (plan.md E3D-MIG-149,
-    // 2026-07-11, GEInnerFlatPlateTiles.hpp's kPlateRotationMetadataType),
+    // 2026-07-11, InnerFlatPlateTiles.hpp's kPlateRotationMetadataType),
     // not a hardcoded per-icon override.
-    GalaxyEggbert::CNA::SetPlateRotated(world, 70, 0, 67, true);
+    GalaxyEggbert::Game::SetPlateRotated(world, 70, 0, 67, true);
 
     // ------------------------------------------------------------------
     // Real MoveObject population -- ObjectTypes and rough density chosen to
@@ -403,7 +403,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // above, since a lift needs a real posStart != posEnd patrol path --
     // place() always sets them equal (fixed 2026-07-10: this lift was
     // originally placed via place(), giving it zero patrol range and
-    // making it sit permanently stationary despite GEInteractionSystem's
+    // making it sit permanently stationary despite InteractionSystem's
     // real patrol movement, caught by tools/VerifyInteractionSystem.cpp).
     //
     // MoveObject Y is the cube center, with no renderer-only +1 shift.
@@ -430,7 +430,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     //
     // Real patrol range (fixed 2026-07-20, live user report: "wasp is
     // frozen") -- `place()` always sets posStart==posEnd (a stationary
-    // demo pin), which is a real, faithful no-op for GEInteractionSystem's
+    // demo pin), which is a real, faithful no-op for InteractionSystem's
     // shared patrol-turn mechanic (`AdvancePatrolStep`'s own "no-op if
     // posStart==posEnd" guard, already verified against the real source's
     // own equivalent guard) -- but the wasp (ObjectType44) is a confirmed
@@ -499,7 +499,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // the doorway, so reaching the chest means passing it -- a genuine
     // guardian, not just a specimen. Real behavior: safe to touch while it
     // walks (patrolStep 2/4), lethal only during its turn-dwell
-    // (patrolStep 1/3, see GEInteractionSystem.cpp).
+    // (patrolStep 1/3, see InteractionSystem.cpp).
     {
         MoveObjectRecord creature;
         creature.type = GalaxyEggbert::Def::ObjectType::ObjectType54;
@@ -556,11 +556,11 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // 2026-07-11 per live-playtest user feedback) -- two small open rooms,
     // each with exactly one Teleport1 (icon 330) pillar FLOATING one cell
     // above the walkable floor (teleporter icons are always non-solid for
-    // collision, GEBlupiController::GroundHeightAt's own IsTeleporterIcon()
+    // collision, BlupiController::GroundHeightAt's own IsTeleporterIcon()
     // skip, so Blupi genuinely walks INTO the open space directly beneath
     // it -- matching the real "one tile above his feet" detection exactly,
-    // GEBlupiController::GetBlockTypeAbove()). Not a wide multi-cell
-    // teleporter structure -- GEWorldRuntime::FindTeleportDestination()
+    // BlupiController::GetBlockTypeAbove()). Not a wide multi-cell
+    // teleporter structure -- WorldRuntime::FindTeleportDestination()
     // matches by exact block type, so more than one cell per room would
     // risk matching another cell of the SAME room instead of the other
     // one (see that method's own comment). South of the tunnel,
@@ -579,7 +579,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // the walkable floor. Deliberately NOT placed inside the south
     // tunnel's own enclosed/roofed interior (where the 2 purely-visual
     // fan placements above sit) -- a real, pre-existing
-    // GEBlupiController::GroundHeightAt() limitation was found while
+    // BlupiController::GroundHeightAt() limitation was found while
     // building this task: it always resolves a column's "floor" as the
     // SINGLE topmost solid block in that ENTIRE column (scanning from the
     // top of the world down), with no concept of "the nearest solid
@@ -743,7 +743,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // single-cell gap over open air, spanned by exactly one Bridge (icon
     // 364) tile, so the real "walking onto it spawns ObjectType52, which
     // genuinely removes ground support for most of its 157-tick build
-    // sequence" behavior (GEInteractionSystem::Update()'s own comment) is
+    // sequence" behavior (InteractionSystem::Update()'s own comment) is
     // actually playable, not just unit-tested. Nothing placed beneath the
     // gap cell -- a real chasm, matching the tile's own name. Deliberately
     // NOT at grid (90,*,90) -- tools/VerifyBlupiMovement.cpp's own
@@ -768,7 +768,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // A second row (z=90) reuses the same near/far floor for icon 202 --
     // the OTHER real grabbable-bar trigger icon -- now that its own
     // "thin-bar" render geometry exists (plan.md TILE-055, implemented
-    // 2026-07-14, GEThinBarTiles.cpp): a real, thin, full-block-width rod
+    // 2026-07-14, ThinBarTiles.cpp): a real, thin, full-block-width rod
     // with 4 textured long sides and 2 blue end caps, not a plain cube.
     // ------------------------------------------------------------------
     fill(93, 95, 0, 0, 88, 90, BlockTypes::RockPile); // near floor
@@ -844,7 +844,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     }
 
     // Object exhibition -- every GalaxyEggbert::Def::ObjectType the renderer has an icon for
-    // (enumerated via GEObjectIcons::GetObjIcon, the renderer's own
+    // (enumerated via ObjectIcons::GetObjIcon, the renderer's own
     // source of truth, rather than a hand-duplicated list), on a second
     // slab east of the corridor's end (x=76..97 adjoins the corridor at
     // x=75, so it's a seamless walk east from the tested path). Static
@@ -859,7 +859,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
         for (int t = 1; t <= 203; ++t)
         {
             const auto type = static_cast<GalaxyEggbert::Def::ObjectType>(t);
-            if (GalaxyEggbert::CNA::GetObjIcon(type, 0) == 0)
+            if (GalaxyEggbert::Game::GetObjIcon(type, 0) == 0)
             {
                 continue; // no icon in source data (e.g. 0/18/22/58) -- nothing to exhibit
             }
@@ -982,7 +982,7 @@ void GenerateGlobalHub(const std::filesystem::path& outPath)
 
     // Real global-hub exit marker (`Decor.cpp:204`'s own `type=7` in the
     // real `worlds/world001.txt`) -- reaching it triggers the real win-exit
-    // special case (`GEWorldRuntime::ComputeWinExitTarget(1) == 199`),
+    // special case (`WorldRuntime::ComputeWinExitTarget(1) == 199`),
     // making the real final bonus world genuinely reachable via gameplay,
     // not just correct in the mission-math alone.
     {

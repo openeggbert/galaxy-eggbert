@@ -13,7 +13,7 @@
 
 int main()
 {
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
     using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::Worlds::World;
     using Microsoft::Xna::Framework::Input::ButtonState;
@@ -168,7 +168,7 @@ int main()
                   coordinateBackground.x1 > narrowCoordinates.x1 &&
                   coordinateBackground.y1 > narrowCoordinates.y1,
               "placement coordinates have a padded background");
-        const GEQuadBatch::Rect edgeCoordinates = {1.0f, 1.0f, 359.0f, 479.0f};
+        const QuadBatch::Rect edgeCoordinates = {1.0f, 1.0f, 359.0f, 479.0f};
         const auto edgeBackground =
             layout.PlacementCoordinatesBackgroundRect(edgeCoordinates, 360, 480);
         check(edgeBackground.x0 == 0.0f && edgeBackground.y0 == 0.0f &&

@@ -49,7 +49,7 @@ Steps:
 ## What was ruled out
 
 - **Geometry / face-culling logic**: a debug print inserted directly in
-  `GEDirectionalCubeTiles.cpp`'s `kSymmetricEntries` handling confirmed the affected face has
+  `DirectionalCubeTiles.cpp`'s `kSymmetricEntries` handling confirmed the affected face has
   `Visible = true` and a UV rect that correctly maps to icon 25's real texture region in
   `object-m.png` (verified by converting the UV rect back to pixel coordinates and cross-checking
   against the known tile-atlas layout formula in `BlockTypes.hpp`'s `tileUV()`). The face's shape

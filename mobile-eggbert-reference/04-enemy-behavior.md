@@ -30,7 +30,7 @@ Collision for both Blupi and objects is tile-based (not swept): an axis-aligned 
 tested against the tile cells it overlaps via `IsBlocIcon()`/`IsPassIcon()`; a single blocking cell
 makes the whole rectangle "occupied". This is the source-of-truth collision model mobile-eggbert
 uses — distinct from, and not necessarily reusable for, galaxy-eggbert's own 3D grid-collision code
-(e.g. `GEBlupiController` in the CNA target implements its own simplified 3D grid collision with
+(e.g. `BlupiController` in the CNA target implements its own simplified 3D grid collision with
 step-up traversal, not a transcription of this 2D system).
 
 ## The follower pattern (`ObjectType96`/`97`), as implemented 2026-07-03

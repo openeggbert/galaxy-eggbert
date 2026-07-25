@@ -11,12 +11,12 @@ the concrete remaining steps with what each one needs. Keep it factual; update i
 - **`REMAKE-ANALYSIS.md`** — root-cause analysis of the recurring "piles of problems".
 - **`renderers.md`** — dual-renderer design, owner's decision (**path A**: same CNA/Easy3D base,
   hi-fi via upgraded shaders/materials behind one `IGameRenderer`), and the 5-phase plan.
-- **`src/GalaxyEggbertCNA/Game/GESceneFrame.hpp`** — the `SceneFrame` data contract (Phase 1,
+- **`src/GalaxyEggbert/Game/SceneFrame.hpp`** — the `SceneFrame` data contract (Phase 1,
   step 1). Engine-neutral (no Easy3D/CNA graphics types), grounded in the real enums
   (`ObjectType`, `AnimState`, `VehicleMode`, `SecretPower`) and the real dynamic-object shape
   (`MobileObjSpec`). Isolated and non-breaking: nothing includes it yet, it holds no logic, `Draw()`
   is not repointed, and `IGameRenderer` does not exist yet. HUD is deliberately left out of this
-  first cut (modelling `GEHud`'s 640×480 space blind would be a guess). Enum references were verified
+  first cut (modelling `Hud`'s 640×480 space blind would be a guess). Enum references were verified
   against their definitions by inspection.
 
 ## 2. The environment blocker (why further steps are not done here)
@@ -55,13 +55,13 @@ full `ctest` → live headless check → commit → push.
 
 ### Phase 1 (finish the seam) — needs a build
 - **1b. `SceneFrameBuilder`.** A function/class that reads the live sim/world state
-  (`GEBlupiController`, `GEWorldRuntime`'s `MobileObjSpec` list, camera, `world.skyRegion()`) into a
+  (`BlupiController`, `WorldRuntime`'s `MobileObjSpec` list, camera, `world.skyRegion()`) into a
   `SceneFrame` once per frame. This is where logic currently inlined in
   `GalaxyEggbertCnaGame::Update`/`Draw` moves to.
 - **1c. Repoint `Draw()` to consume only the `SceneFrame`.** Do it in slices — camera + terrain
   first, then billboards/objects, then Blupi — verifying the frame is visually unchanged after each
   slice (this is where the golden harness, Phase 3, pays for itself).
-- **1d. Add HUD to `SceneFrame`.** Deferred from the first cut; model it against the real `GEHud`
+- **1d. Add HUD to `SceneFrame`.** Deferred from the first cut; model it against the real `Hud`
   640×480 elements once a build can verify the mapping.
 
 ### Phase 2 (renderer interface) — needs a build

@@ -1,10 +1,10 @@
-#include "Game/GEBlupiController.hpp"
-#include "Game/GEHud.hpp"
-#include "Game/GEInteractionSystem.hpp"
-#include "Game/GEObjectIcons.hpp"
-#include "Game/GESound.hpp"
-#include "Game/GETrainingHints.hpp"
-#include "Game/GEWorldRuntime.hpp"
+#include <GalaxyEggbert/Game/BlupiController.hpp>
+#include <GalaxyEggbert/Game/Hud.hpp>
+#include <GalaxyEggbert/Game/InteractionSystem.hpp>
+#include <GalaxyEggbert/Game/ObjectIcons.hpp>
+#include <GalaxyEggbert/Game/Sound.hpp>
+#include <GalaxyEggbert/Game/TrainingHints.hpp>
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <Easy3D/Camera3D.hpp>
 
@@ -15,19 +15,19 @@
 #include <iostream>
 #include <string>
 
-// Scripted, non-interactive verification of GEInteractionSystem (2026-07-10)
+// Scripted, non-interactive verification of InteractionSystem (2026-07-10)
 // against worlds3d/world999.vwr, this engine's quarantined mechanics-showcase
 // test world (renamed from world001.vwr 2026-07-17 when the real 78-world
 // hub structure took over world001.vwr as the genuine global hub) -- proves
 // platform lift patrol, crate push, and pickup collection (treasure/egg/key
-// /exit) actually work, not just "compiles and doesn't crash". GESound is
+// /exit) actually work, not just "compiles and doesn't crash". Sound is
 // constructed but never LoadContent()-ed, so every Play() call is a no-op
 // against an unloaded channel (no audio device needed for this scripted
 // check).
 int main(int argc, char** argv)
 {
     using namespace GalaxyEggbert;
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
 
     const std::string worldPath = (argc > 1) ? argv[1] : "worlds3d/world999.vwr";
 
@@ -38,11 +38,11 @@ int main(int argc, char** argv)
         if (!cond) allOk = false;
     };
 
-    // INFRA-007 (plan.md §7, step 2/3): GEInteractionSystem's 11 simple/position-payload
+    // INFRA-007 (plan.md §7, step 2/3): InteractionSystem's 11 simple/position-payload
     // *ThisFrame() flags moved to one typed EventsThisFrame() queue -- these two helpers mirror
     // what the old individual getters used to check, so the assertions below read the same.
-    const auto findEvent = [](const GEInteractionSystem& interaction, GEInteractionSystem::EventKind kind)
-        -> const GEInteractionSystem::Event*
+    const auto findEvent = [](const InteractionSystem& interaction, InteractionSystem::EventKind kind)
+        -> const InteractionSystem::Event*
     {
         for (const auto& event : interaction.EventsThisFrame())
         {
@@ -50,20 +50,20 @@ int main(int argc, char** argv)
         }
         return nullptr;
     };
-    const auto hasEvent = [&findEvent](const GEInteractionSystem& interaction, GEInteractionSystem::EventKind kind)
+    const auto hasEvent = [&findEvent](const InteractionSystem& interaction, InteractionSystem::EventKind kind)
     {
         return findEvent(interaction, kind) != nullptr;
     };
 
-    GEWorldRuntime world;
+    WorldRuntime world;
     if (!world.LoadFromVwrFile(worldPath))
     {
         std::cout << "FAIL: could not load " << worldPath << std::endl;
         return 1;
     }
 
-    GESound sound; // never LoadContent()-ed -- every Play() call below is a silent no-op
-    GEInteractionSystem interaction;
+    Sound sound; // never LoadContent()-ed -- every Play() call below is a silent no-op
+    InteractionSystem interaction;
     constexpr float dt = 1.0f / 60.0f;
 
     // 1. Platform lift (ObjectType1, placed at world (0,4,-22)..(0,9,-22) per
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 
     // 1.5. Platform lift riding (plan.md E3D-MIG-152) -- position Blupi
     // exactly at the lift's current stand height (currentY + 1, see
-    // GEInteractionSystem::IsRidingLift()'s own comment) and directly
+    // InteractionSystem::IsRidingLift()'s own comment) and directly
     // above it in X/Z, then confirm one Update() call reports riding with
     // a RideStandY() matching the lift's (now patrolled) new position.
     if (liftAfter != nullptr)
@@ -140,9 +140,9 @@ int main(int argc, char** argv)
         return nullptr;
     };
 
-    // Voyage (plan.md `158`) test helper: GEInteractionSystem has no
+    // Voyage (plan.md `158`) test helper: InteractionSystem has no
     // camera access, so a real pickup only records a THIS-FRAME pending
-    // request (GEInteractionSystem::Update() itself never starts the
+    // request (InteractionSystem::Update() itself never starts the
     // actual voyage) -- real projection is GalaxyEggbertCnaGame's own
     // ResolvePendingVoyage() job. This helper stands in for that (no real
     // projection needed in a unit test -- just reuses the pending world
@@ -152,9 +152,9 @@ int main(int argc, char** argv)
     // updates (using the sentinel-position idiom already established
     // elsewhere in this file, so nothing else triggers meanwhile) until
     // the voyage completes. Returns false if no voyage was pending.
-    const auto completePendingVoyage = [&sound, &findEvent](GEWorldRuntime& w, GEInteractionSystem& ir)
+    const auto completePendingVoyage = [&sound, &findEvent](WorldRuntime& w, InteractionSystem& ir)
     {
-        const auto* voyageEvent = findEvent(ir, GEInteractionSystem::EventKind::VoyageRequested);
+        const auto* voyageEvent = findEvent(ir, InteractionSystem::EventKind::VoyageRequested);
         if (!voyageEvent)
         {
             return false;
@@ -188,14 +188,14 @@ int main(int argc, char** argv)
     // duration is Clear4's 110-tick lock (5.5s) + the 40-tick (2.0s)
     // life-loss Voyage = 7.5s worst case -- 200 real-time-second iterations
     // at dt=1/20 comfortably covers every real cause with margin.
-    const auto completeDeathLock = [&sound, &findEvent](GEWorldRuntime& w, GEInteractionSystem& ir, GEBlupiController& b)
+    const auto completeDeathLock = [&sound, &findEvent](WorldRuntime& w, InteractionSystem& ir, BlupiController& b)
     {
-        if (const auto* deathLockEvent = findEvent(ir, GEInteractionSystem::EventKind::DeathLockRequested))
+        if (const auto* deathLockEvent = findEvent(ir, InteractionSystem::EventKind::DeathLockRequested))
         {
             const auto kind = deathLockEvent->deathLockKind;
-            const auto cause = (kind == GEInteractionSystem::PendingDeathKind::Clear1) ? GEBlupiController::DeathCause::Clear1
-                              : (kind == GEInteractionSystem::PendingDeathKind::Clear2) ? GEBlupiController::DeathCause::Clear2
-                                                                                         : GEBlupiController::DeathCause::Glu;
+            const auto cause = (kind == InteractionSystem::PendingDeathKind::Clear1) ? BlupiController::DeathCause::Clear1
+                              : (kind == InteractionSystem::PendingDeathKind::Clear2) ? BlupiController::DeathCause::Clear2
+                                                                                         : BlupiController::DeathCause::Glu;
             b.TriggerDeathLock(cause, deathLockEvent->deathLockShouldRespawn);
         }
         constexpr float lockDt = 1.0f / 20.0f;
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
                 }
                 else
                 {
-                    ir.BeginVoyage(w, GEInteractionSystem::VoyageKind::LifeLoss, 48, false, 0.0f, 0.0f, 0.0f, 0.0f,
+                    ir.BeginVoyage(w, InteractionSystem::VoyageKind::LifeLoss, 48, false, 0.0f, 0.0f, 0.0f, 0.0f,
                                    sound);
                 }
             }
@@ -356,9 +356,9 @@ int main(int argc, char** argv)
     // read.
     if (const auto* sparkleChest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))
     {
-        GEWorldRuntime sparkleWorld;
+        WorldRuntime sparkleWorld;
         check(sparkleWorld.LoadFromVwrFile(worldPath), "loaded a fresh world for the sparkle-burst test");
-        GEInteractionSystem sparkleInteraction;
+        InteractionSystem sparkleInteraction;
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
         constexpr float kDist = 500.0f / 64.0f;
         const float cx = sparkleChest->currentX, cy = sparkleChest->currentY, cz = sparkleChest->currentZ;
@@ -557,10 +557,10 @@ int main(int argc, char** argv)
         const float hx = hazard->currentX, hy = hazard->currentY, hz = hazard->currentZ;
         const int livesBeforeHazard = interaction.Lives();
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event fires the frame Blupi touches a generic hazard");
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered),
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "the Died event fires the frame Blupi touches a generic hazard");
+        check(hasEvent(interaction, InteractionSystem::EventKind::SmallShakeTriggered),
               "generic hazard contact-kill triggers SmallShake (plan.md CAM-008, real Decor.cpp behavior)");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::BigShakeTriggered),
+        check(!hasEvent(interaction, InteractionSystem::EventKind::BigShakeTriggered),
               "a non-fish/bird hazard contact-kill does NOT trigger BigShake");
         // Real explosion flash (plan.md VISUAL-008) spawned at the same
         // site: ObjectType8 for this non-fish/bird hazard, exactly at the
@@ -599,11 +599,11 @@ int main(int argc, char** argv)
         // check below, whose own interaction.Update() call would otherwise
         // wipe the still-pending DeathLockRequested event first (events_ is
         // cleared every Update() call).
-        GEBlupiController hazardDeathBlupi;
+        BlupiController hazardDeathBlupi;
         completeDeathLock(world, interaction, hazardDeathBlupi);
         check(interaction.Lives() == livesBeforeHazard - 1, "generic hazard contact costs exactly 1 life");
         interaction.Update(dt, world, hx, hy, hz, 0.0f, sound);
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event does not fire again the very next frame");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "the Died event does not fire again the very next frame");
     }
     else
     {
@@ -764,8 +764,8 @@ int main(int argc, char** argv)
         // Advance the fuse through its full ~70-tick active timeline (well
         // under 4s at the real 20Hz reference rate) in small steps so each
         // blast tick is individually crossed, not skipped over. world.phase
-        // only advances via GEWorldRuntime::Update() itself (the real game
-        // loop calls this every frame before GEInteractionSystem::Update();
+        // only advances via WorldRuntime::Update() itself (the real game
+        // loop calls this every frame before InteractionSystem::Update();
         // this test must too, or obj.phase never moves).
         bool smallShakeSeenDuringBlast = false;
         bool explosionFlashSeenAtCenter = false;
@@ -777,19 +777,19 @@ int main(int argc, char** argv)
         // covers the real ~70-tick(3.5s) blast sequence PLUS the worst-case
         // 110-tick lock(5.5s) + 40-tick(2.0s) life-loss Voyage that might
         // start near the end of it.
-        GEBlupiController blastDeathBlupi;
+        BlupiController blastDeathBlupi;
         for (int i = 0; i < 750; ++i)
         {
             world.Update(dt);
             interaction.Update(dt, world, placeX, placeY, placeZ, 0.0f, sound);
-            if (const auto* deathLockEvent = findEvent(interaction, GEInteractionSystem::EventKind::DeathLockRequested))
+            if (const auto* deathLockEvent = findEvent(interaction, InteractionSystem::EventKind::DeathLockRequested))
             {
                 const auto kind = deathLockEvent->deathLockKind;
-                const auto cause = (kind == GEInteractionSystem::PendingDeathKind::Clear1)
-                                        ? GEBlupiController::DeathCause::Clear1
-                                    : (kind == GEInteractionSystem::PendingDeathKind::Clear2)
-                                        ? GEBlupiController::DeathCause::Clear2
-                                        : GEBlupiController::DeathCause::Glu;
+                const auto cause = (kind == InteractionSystem::PendingDeathKind::Clear1)
+                                        ? BlupiController::DeathCause::Clear1
+                                    : (kind == InteractionSystem::PendingDeathKind::Clear2)
+                                        ? BlupiController::DeathCause::Clear2
+                                        : BlupiController::DeathCause::Glu;
                 blastDeathBlupi.TriggerDeathLock(cause, deathLockEvent->deathLockShouldRespawn);
             }
             blastDeathBlupi.Step(world.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
@@ -807,11 +807,11 @@ int main(int argc, char** argv)
                 }
                 else
                 {
-                    interaction.BeginVoyage(world, GEInteractionSystem::VoyageKind::LifeLoss, 48, false, 0.0f, 0.0f,
+                    interaction.BeginVoyage(world, InteractionSystem::VoyageKind::LifeLoss, 48, false, 0.0f, 0.0f,
                                             0.0f, 0.0f, sound);
                 }
             }
-            smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered);
+            smallShakeSeenDuringBlast = smallShakeSeenDuringBlast || hasEvent(interaction, InteractionSystem::EventKind::SmallShakeTriggered);
             for (const auto& obj : world.GetMobileObjects())
             {
                 if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType8 &&
@@ -977,7 +977,7 @@ int main(int argc, char** argv)
                             /*blupiFirePressed=*/true, /*blupiCanFire=*/false);
         check(interaction.BulletCount() == bulletsBeforeFiring,
               "firing while not in a Tank (canFire=false) does not consume ammo");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+        check(!hasEvent(interaction, InteractionSystem::EventKind::TankFired),
               "the TankFired event does not fire when not in a Tank (real FireTank anim gate)");
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
@@ -985,7 +985,7 @@ int main(int argc, char** argv)
                             true, true);
         check(interaction.BulletCount() == bulletsBeforeFiring - 1,
               "firing while in a Tank consumes exactly 1 bullet");
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+        check(hasEvent(interaction, InteractionSystem::EventKind::TankFired),
               "the TankFired event fires the exact frame a bullet actually launches");
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
@@ -993,7 +993,7 @@ int main(int argc, char** argv)
                             true, true);
         check(interaction.BulletCount() == bulletsBeforeFiring - 1,
               "holding Fire within the real 0.5s cooldown does not fire again");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+        check(!hasEvent(interaction, InteractionSystem::EventKind::TankFired),
               "the TankFired event does not fire while blocked by the real 0.5s cooldown");
 
         // Advance past the real 0.5s cooldown (Fire not held during the
@@ -1027,7 +1027,7 @@ int main(int argc, char** argv)
                             false, false, 1, 0, false, true, true, true, true,
                             true, true);
         check(interaction.BulletCount() == 0, "firing with no ammo left does not underflow BulletCount()");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::TankFired),
+        check(!hasEvent(interaction, InteractionSystem::EventKind::TankFired),
               "the TankFired event does not fire on the empty-clip click, no real recoil pose then");
     }
 
@@ -1036,8 +1036,8 @@ int main(int argc, char** argv)
     // contact: Clear1/Clear2 coinflip death (Shield/Hide immune), always channel 10 + SmallShake +
     // an ObjectType10 pop effect.
     {
-        GEWorldRuntime lethalDecorWorld;
-        GEInteractionSystem lethalDecorInteraction;
+        WorldRuntime lethalDecorWorld;
+        InteractionSystem lethalDecorInteraction;
         MobileObjSpec decor201;
         decor201.type = GalaxyEggbert::Def::ObjectType::ObjectType201;
         decor201.posStartX = decor201.posEndX = decor201.currentX = 400.0f;
@@ -1048,29 +1048,29 @@ int main(int argc, char** argv)
         // Shield/Hide immunity (blupiInvincible=true) -- no death, object survives.
         lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound, false, false, 0, 0,
                                        /*blupiInvincible=*/true);
-        check(!hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::Died),
+        check(!hasEvent(lethalDecorInteraction, InteractionSystem::EventKind::Died),
               "touching ObjectType201 with blupiInvincible=true does not kill Blupi (real Shield/Hide gate)");
         check(lethalDecorWorld.GetMobileObjects().front().active,
               "ObjectType201 survives contact while Blupi is invincible");
 
         // Now without invincibility -- lethal, real Clear1/Clear2 coinflip + effects.
         lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound);
-        check(hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::Died), "touching ObjectType201 kills Blupi (real BlupiDead(Clear1,Clear2))");
+        check(hasEvent(lethalDecorInteraction, InteractionSystem::EventKind::Died), "touching ObjectType201 kills Blupi (real BlupiDead(Clear1,Clear2))");
         const bool anyActive201 = std::any_of(lethalDecorWorld.GetMobileObjects().begin(),
                                                lethalDecorWorld.GetMobileObjects().end(),
                                                [](const auto& o) { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType201; });
         check(!anyActive201, "ObjectType201 is destroyed on lethal contact (real ObjectDelete) -- the destroyed "
                              "slot may be reused by the real ObjectType10 pop effect spawned the same frame");
         const auto* lethalDecorDeathLockEvent =
-            findEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::DeathLockRequested);
+            findEvent(lethalDecorInteraction, InteractionSystem::EventKind::DeathLockRequested);
         check(lethalDecorDeathLockEvent != nullptr, "lethal contact requests a death lock");
         check(lethalDecorDeathLockEvent != nullptr &&
-                  (lethalDecorDeathLockEvent->deathLockKind == GEInteractionSystem::PendingDeathKind::Clear1 ||
-                   lethalDecorDeathLockEvent->deathLockKind == GEInteractionSystem::PendingDeathKind::Clear2),
+                  (lethalDecorDeathLockEvent->deathLockKind == InteractionSystem::PendingDeathKind::Clear1 ||
+                   lethalDecorDeathLockEvent->deathLockKind == InteractionSystem::PendingDeathKind::Clear2),
               "the death lock's pending kind is the real Clear1/Clear2 coinflip, nothing else");
         check(lethalDecorDeathLockEvent != nullptr && !lethalDecorDeathLockEvent->deathLockShouldRespawn,
               "shouldRespawn is false (real: no m_blupiRestart=true anywhere in this block)");
-        check(hasEvent(lethalDecorInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
+        check(hasEvent(lethalDecorInteraction, InteractionSystem::EventKind::SmallShakeTriggered),
               "lethal contact always triggers SmallShake (real: no fish/bird BigShake variant here)");
     }
 
@@ -1079,8 +1079,8 @@ int main(int argc, char** argv)
     // with ANY real 200-203 object mutually destroy each other. Resolves the "what does placing a
     // Perso decoy actually DO" mystery HUD-017's own writeup left open.
     {
-        GEWorldRuntime trapWorld;
-        GEInteractionSystem trapInteraction;
+        WorldRuntime trapWorld;
+        InteractionSystem trapInteraction;
 
         MobileObjSpec decoy;
         decoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
@@ -1098,7 +1098,7 @@ int main(int argc, char** argv)
 
         // Blupi is far away -- this mechanic doesn't involve his position at all.
         trapInteraction.Update(dt, trapWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
-        check(hasEvent(trapInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
+        check(hasEvent(trapInteraction, InteractionSystem::EventKind::SmallShakeTriggered),
               "the Perso-decoy trap triggers SmallShake when a small enemy touches a placed decoy");
         const bool anyActiveDecoyOrEnemy =
             std::any_of(trapWorld.GetMobileObjects().begin(), trapWorld.GetMobileObjects().end(),
@@ -1108,8 +1108,8 @@ int main(int argc, char** argv)
         check(!anyActiveDecoyOrEnemy, "both the decoy and the enemy are destroyed by the trap (real mutual ObjectDelete)");
 
         // A small enemy far from any decoy is entirely unaffected.
-        GEWorldRuntime noTrapWorld;
-        GEInteractionSystem noTrapInteraction;
+        WorldRuntime noTrapWorld;
+        InteractionSystem noTrapInteraction;
         MobileObjSpec farDecoy;
         farDecoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
         farDecoy.posStartX = farDecoy.posEndX = farDecoy.currentX = 500.0f;
@@ -1123,7 +1123,7 @@ int main(int argc, char** argv)
         farBulldozer.posStartZ = farBulldozer.posEndZ = farBulldozer.currentZ = 700.0f;
         noTrapWorld.GetMobileObjectsMutable().push_back(farBulldozer);
         noTrapInteraction.Update(dt, noTrapWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
-        check(!hasEvent(noTrapInteraction, GEInteractionSystem::EventKind::SmallShakeTriggered),
+        check(!hasEvent(noTrapInteraction, InteractionSystem::EventKind::SmallShakeTriggered),
               "no trap trigger when the enemy is far from any 200-203 object");
         const bool bothStillActive =
             noTrapWorld.GetMobileObjects()[0].active && noTrapWorld.GetMobileObjects()[1].active;
@@ -1191,8 +1191,8 @@ int main(int argc, char** argv)
     // exact same real exit-gate logic as the regular exit (ObjectType7, Decor.cpp:6158-6184).
     // Previously this engine only recognized ObjectType7, so touching a secret exit did nothing.
     {
-        GEWorldRuntime secretExitWorld;
-        GEInteractionSystem secretExitInteraction;
+        WorldRuntime secretExitWorld;
+        InteractionSystem secretExitInteraction;
         MobileObjSpec secretExit;
         secretExit.type = GalaxyEggbert::Def::ObjectType::ObjectType21;
         secretExit.active = true;
@@ -1212,7 +1212,7 @@ int main(int argc, char** argv)
     // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own
     // doors demo (tools/GenerateSampleWorld3D.cpp): a key-gated Door1 at
     // grid (48,1,90) with its Key1 at (46,1,88), and a treasure-gated
-    // door (icon 421, needs 1) at (48,1,93). Fresh GEInteractionSystem
+    // door (icon 421, needs 1) at (48,1,93). Fresh InteractionSystem
     // instances so their own key/treasure counters start at 0,
     // independent of the shared `interaction` used by every test above.
     {
@@ -1220,7 +1220,7 @@ int main(int argc, char** argv)
         { return world.GetWorld().getBlock(48, 1, 90).type(); };
         check(doorTileType() == BlockTypes::Door1, "the key-gated door demo tile starts as Door1 (closed)");
 
-        GEInteractionSystem doorInteraction;
+        InteractionSystem doorInteraction;
         // Approach without holding the key -- facing +Z (toward the door
         // at z=90 from z=89), render space (grid - 50).
         doorInteraction.Update(dt, world, 48.0f - 50.0f, 1.0f, 89.0f - 50.0f, 0.0f, sound, false, false, 0, 1);
@@ -1263,7 +1263,7 @@ int main(int argc, char** argv)
         check(freshChests.size() == 2, "found 2 still-active chests for the treasure-gated door test");
         if (freshChests.size() == 2)
         {
-            GEInteractionSystem treasureDoorInteraction;
+            InteractionSystem treasureDoorInteraction;
             // Real reward (and the treasure-door rescan it triggers)
             // deferred to voyage completion (plan.md `158`) -- see the
             // egg test's own comment above.
@@ -1284,22 +1284,22 @@ int main(int argc, char** argv)
 
     // 3.9. Secret powers (plan.md E3D-MIG-170) -- the sample world's own
     // demo (tools/GenerateSampleWorld3D.cpp): Shield stick at (54,1,88).
-    // Fresh GEInteractionSystem so its own signals aren't polluted by
+    // Fresh InteractionSystem so its own signals aren't polluted by
     // earlier sections.
     if (const auto* shieldStick = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType25))
     {
-        GEInteractionSystem shieldInteraction;
+        InteractionSystem shieldInteraction;
         shieldInteraction.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
                                   shieldStick->currentZ, 0.0f, sound, false, false, 0, 0,
                                   /*blupiInvincible=*/false, /*canGrantShield=*/false);
-        check(!hasEvent(shieldInteraction, GEInteractionSystem::EventKind::ShieldGranted),
+        check(!hasEvent(shieldInteraction, InteractionSystem::EventKind::ShieldGranted),
               "the ShieldGranted event does not fire when the caller reports canGrantShield=false");
 
-        GEInteractionSystem shieldInteraction2;
+        InteractionSystem shieldInteraction2;
         shieldInteraction2.Update(dt, world, shieldStick->currentX, shieldStick->currentY,
                                    shieldStick->currentZ, 0.0f, sound, false, false, 0, 0,
                                    /*blupiInvincible=*/false, /*canGrantShield=*/true);
-        check(hasEvent(shieldInteraction2, GEInteractionSystem::EventKind::ShieldGranted),
+        check(hasEvent(shieldInteraction2, InteractionSystem::EventKind::ShieldGranted),
               "the ShieldGranted event fires on contact when canGrantShield=true");
     }
     else
@@ -1311,22 +1311,22 @@ int main(int argc, char** argv)
     // demo (tools/GenerateSampleWorld3D.cpp): mirror/invert at (58,1,90).
     if (const auto* invertPickup = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType40))
     {
-        GEInteractionSystem invertInteraction;
+        InteractionSystem invertInteraction;
         invertInteraction.Update(dt, world, invertPickup->currentX, invertPickup->currentY,
                                   invertPickup->currentZ, 0.0f, sound, false, false, 0, 0,
                                   /*blupiInvincible=*/false, /*canGrantShield=*/true, /*canGrantPower=*/true,
                                   /*canGrantCloud=*/true, /*canGrantHide=*/true, /*blupiFirePressed=*/false,
                                   /*blupiCanFire=*/false, /*blupiCloudActive=*/false, /*canGrantInvert=*/false);
-        check(!hasEvent(invertInteraction, GEInteractionSystem::EventKind::InvertGranted),
+        check(!hasEvent(invertInteraction, InteractionSystem::EventKind::InvertGranted),
               "the InvertGranted event does not fire when the caller reports canGrantInvert=false");
 
-        GEInteractionSystem invertInteraction2;
+        InteractionSystem invertInteraction2;
         invertInteraction2.Update(dt, world, invertPickup->currentX, invertPickup->currentY,
                                    invertPickup->currentZ, 0.0f, sound, false, false, 0, 0,
                                    /*blupiInvincible=*/false, /*canGrantShield=*/true, /*canGrantPower=*/true,
                                    /*canGrantCloud=*/true, /*canGrantHide=*/true, /*blupiFirePressed=*/false,
                                    /*blupiCanFire=*/false, /*blupiCloudActive=*/false, /*canGrantInvert=*/true);
-        check(hasEvent(invertInteraction2, GEInteractionSystem::EventKind::InvertGranted),
+        check(hasEvent(invertInteraction2, InteractionSystem::EventKind::InvertGranted),
               "the InvertGranted event fires on contact when canGrantInvert=true");
     }
     else
@@ -1344,8 +1344,8 @@ int main(int argc, char** argv)
     // real phase>=16 self-delete (long before the 78-tick slide actually
     // completes).
     {
-        GEWorldRuntime burstWorld;
-        GEInteractionSystem burstInteraction;
+        WorldRuntime burstWorld;
+        InteractionSystem burstInteraction;
         constexpr float bx = 10.0f, by = 1.0f, bz = 10.0f;
         constexpr float kGrantDist = 500.0f / 64.0f;
         constexpr float kExpiryDist = 400.0f / 64.0f;
@@ -1451,11 +1451,11 @@ int main(int argc, char** argv)
     }
     if (hazard2 != nullptr)
     {
-        GEInteractionSystem invincibleInteraction;
+        InteractionSystem invincibleInteraction;
         const int livesBefore = invincibleInteraction.Lives();
         invincibleInteraction.Update(dt, world, hazard2->currentX, hazard2->currentY, hazard2->currentZ, 0.0f,
                                       sound, false, false, 0, 0, /*blupiInvincible=*/true);
-        check(!hasEvent(invincibleInteraction, GEInteractionSystem::EventKind::Died),
+        check(!hasEvent(invincibleInteraction, InteractionSystem::EventKind::Died),
               "the Died event still does not fire touching a generic hazard while blupiInvincible=true");
         check(invincibleInteraction.Lives() == livesBefore,
               "no life is lost touching a generic hazard while invincible (real Shield/Hide immunity)");
@@ -1467,31 +1467,31 @@ int main(int argc, char** argv)
         check(false, "found a generic hazard (ObjectType2) for the invincibility test");
     }
 
-    // 4. GEWorldRuntime::IsBlitzActiveAtPhase() (plan.md E3D-MIG-144) -- real
+    // 4. WorldRuntime::IsBlitzActiveAtPhase() (plan.md E3D-MIG-144) -- real
     // BlitzActif() cycle: lethal only on even ticks within the first half of
     // a 100-tick cycle (num%2==0 && num<50).
-    check(GEWorldRuntime::IsBlitzActiveAtPhase(0), "Blitz active at phase 0 (cycle start, even, first half)");
-    check(!GEWorldRuntime::IsBlitzActiveAtPhase(1), "Blitz inactive at phase 1 (odd)");
-    check(GEWorldRuntime::IsBlitzActiveAtPhase(48), "Blitz active at phase 48 (even, still first half)");
-    check(!GEWorldRuntime::IsBlitzActiveAtPhase(50), "Blitz inactive at phase 50 (even, but second half)");
-    check(!GEWorldRuntime::IsBlitzActiveAtPhase(99), "Blitz inactive at phase 99 (odd, second half)");
-    check(GEWorldRuntime::IsBlitzActiveAtPhase(100), "Blitz active at phase 100 (cycle wraps back to 0)");
+    check(WorldRuntime::IsBlitzActiveAtPhase(0), "Blitz active at phase 0 (cycle start, even, first half)");
+    check(!WorldRuntime::IsBlitzActiveAtPhase(1), "Blitz inactive at phase 1 (odd)");
+    check(WorldRuntime::IsBlitzActiveAtPhase(48), "Blitz active at phase 48 (even, still first half)");
+    check(!WorldRuntime::IsBlitzActiveAtPhase(50), "Blitz inactive at phase 50 (even, but second half)");
+    check(!WorldRuntime::IsBlitzActiveAtPhase(99), "Blitz inactive at phase 99 (odd, second half)");
+    check(WorldRuntime::IsBlitzActiveAtPhase(100), "Blitz active at phase 100 (cycle wraps back to 0)");
 
-    // 5. GEWorldRuntime::IsCrusherActiveAtPhase() (plan.md E3D-MIG-143) --
+    // 5. WorldRuntime::IsCrusherActiveAtPhase() (plan.md E3D-MIG-143) --
     // real IsEcraseur() cycle: (phase/3)%10 <= 2, a 3-out-of-10 window.
-    check(GEWorldRuntime::IsCrusherActiveAtPhase(0), "Crusher active at phase 0 (cycle start)");
-    check(GEWorldRuntime::IsCrusherActiveAtPhase(8), "Crusher active at phase 8 (8/3=2, still in window)");
-    check(!GEWorldRuntime::IsCrusherActiveAtPhase(9), "Crusher inactive at phase 9 (9/3=3, just past the window)");
-    check(!GEWorldRuntime::IsCrusherActiveAtPhase(29), "Crusher inactive at phase 29 (29/3=9, end of the off window)");
-    check(GEWorldRuntime::IsCrusherActiveAtPhase(30), "Crusher active at phase 30 (30/3=10, cycle wraps)");
+    check(WorldRuntime::IsCrusherActiveAtPhase(0), "Crusher active at phase 0 (cycle start)");
+    check(WorldRuntime::IsCrusherActiveAtPhase(8), "Crusher active at phase 8 (8/3=2, still in window)");
+    check(!WorldRuntime::IsCrusherActiveAtPhase(9), "Crusher inactive at phase 9 (9/3=3, just past the window)");
+    check(!WorldRuntime::IsCrusherActiveAtPhase(29), "Crusher inactive at phase 29 (29/3=9, end of the off window)");
+    check(WorldRuntime::IsCrusherActiveAtPhase(30), "Crusher active at phase 30 (30/3=10, cycle wraps)");
 
-    // 6. GEWorldRuntime::TryActivateSwitch() (plan.md E3D-MIG-142) -- the
+    // 6. WorldRuntime::TryActivateSwitch() (plan.md E3D-MIG-142) -- the
     // sample world places a switch (starts SwitchOff) at grid (65,0,67) and
     // a linked saw (starts SawStopped) at grid (70,0,67), 5 cells apart
     // (within the real +-20 window). Grid (65,0,67) in raw grid space is
     // blupi position (15,1,67-50)=(15,1,17) in the render/camera space
     // TryActivateSwitch() (and blupi_.GetX/Y/Z()) actually use -- see
-    // GEWorldRuntime::kWorldCenterX/Z and GenerateSampleWorld3D.cpp's own
+    // WorldRuntime::kWorldCenterX/Z and GenerateSampleWorld3D.cpp's own
     // "raw grid coordinates" comment.
     {
         constexpr float kSwitchBlupiX = 15.0f, kSwitchBlupiY = 1.0f, kSwitchBlupiZ = 17.0f;
@@ -1523,7 +1523,7 @@ int main(int argc, char** argv)
     // 2026-07-11) -- none of the other 6 real member types (4/16/17/20/
     // 96/97) are placed in the sample world, so a spider (16) is injected
     // directly into the loaded world's MobileObjSpec list to prove
-    // GEInteractionSystem::Update() treats it exactly like ObjectType2/3
+    // InteractionSystem::Update() treats it exactly like ObjectType2/3
     // (contact kills Blupi, destroys the spider) without needing a real
     // level placement first.
     {
@@ -1537,8 +1537,8 @@ int main(int argc, char** argv)
         const int livesBeforeSpider = interaction.Lives();
         const int gameOverBeforeSpider = interaction.GameOverCount();
         interaction.Update(dt, world, 5.0f, 1.0f, 5.0f, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event fires touching an injected spider (ObjectType16)");
-        GEBlupiController spiderDeathBlupi;
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "the Died event fires touching an injected spider (ObjectType16)");
+        BlupiController spiderDeathBlupi;
         completeDeathLock(world, interaction, spiderDeathBlupi);
         // Lives() may already be down to 1 from earlier sections in this
         // same shared `interaction` instance -- a real life lost here can
@@ -1581,10 +1581,10 @@ int main(int argc, char** argv)
         world.GetMobileObjectsMutable().push_back(fish);
 
         interaction.Update(dt, world, 6.0f, 1.0f, 6.0f, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the Died event fires touching an injected fish (ObjectType17)");
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::BigShakeTriggered),
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "the Died event fires touching an injected fish (ObjectType17)");
+        check(hasEvent(interaction, InteractionSystem::EventKind::BigShakeTriggered),
               "fish contact-kill triggers BigShake specifically, not SmallShake");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered),
+        check(!hasEvent(interaction, InteractionSystem::EventKind::SmallShakeTriggered),
               "fish contact-kill does NOT also trigger SmallShake the same frame");
         // Real explosion flash (plan.md VISUAL-008): ObjectType10 for
         // fish/bird specifically, matching the BigShake split exactly.
@@ -1613,8 +1613,8 @@ int main(int argc, char** argv)
 
         const int livesBeforeWasp = interaction.Lives();
         interaction.Update(dt, world, 10.0f, 1.0f, 10.0f, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::BalloonTouched), "the BalloonTouched event fires touching a wasp");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "touching a wasp does not kill Blupi");
+        check(hasEvent(interaction, InteractionSystem::EventKind::BalloonTouched), "the BalloonTouched event fires touching a wasp");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "touching a wasp does not kill Blupi");
         check(interaction.Lives() == livesBeforeWasp, "touching a wasp costs no life");
         bool waspStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
@@ -1644,8 +1644,8 @@ int main(int argc, char** argv)
 
         const int livesBeforeFollower = interaction.Lives();
         interaction.Update(dt, world, 15.0f, 20.0f, 15.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::BalloonPopped), "the BalloonPopped event fires touching a follower while ballooned");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "the pop happens instead of a kill while ballooned");
+        check(hasEvent(interaction, InteractionSystem::EventKind::BalloonPopped), "the BalloonPopped event fires touching a follower while ballooned");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "the pop happens instead of a kill while ballooned");
         check(interaction.Lives() == livesBeforeFollower, "a popped balloon costs no life");
         bool followerStillActive = false;
         for (const auto& obj : world.GetMobileObjects())
@@ -1675,8 +1675,8 @@ int main(int argc, char** argv)
         const int livesBeforeBulldozer = interaction.Lives();
         const int gameOverCountBeforeBulldozer = interaction.GameOverCount();
         interaction.Update(dt, world, 20.0f, 1.0f, 20.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "bulldozer (type 4) still kills Blupi even while ballooned");
-        GEBlupiController bulldozerDeathBlupi;
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "bulldozer (type 4) still kills Blupi even while ballooned");
+        BlupiController bulldozerDeathBlupi;
         completeDeathLock(world, interaction, bulldozerDeathBlupi);
         const bool bulldozerCostALife =
             (interaction.Lives() == livesBeforeBulldozer - 1) ||
@@ -1762,8 +1762,8 @@ int main(int argc, char** argv)
         {
             mutableWorld.setBlock(kGX, static_cast<std::uint16_t>(gy), kGZ, Worlds::Block::make(BlockTypes::Air));
         }
-        const float bhX = static_cast<float>(kGX) - GEWorldRuntime::kWorldCenterX;
-        const float bhZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float bhX = static_cast<float>(kGX) - WorldRuntime::kWorldCenterX;
+        const float bhZ = static_cast<float>(kGZ) - WorldRuntime::kWorldCenterZ;
 
         MobileObjSpec blupih;
         blupih.type = GalaxyEggbert::Def::ObjectType::ObjectType32;
@@ -1821,7 +1821,7 @@ int main(int argc, char** argv)
         // spawned should register a kill this frame.
         const int livesBeforeBullet = interaction.Lives();
         interaction.Update(dt, world, bhX, 15.0f, bhZ, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "blupih's projectile is fatal on contact");
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "blupih's projectile is fatal on contact");
 
         const int bulletCountAfterContact = countBulletsAt(bhX, bhZ);
         check(bulletCountAfterContact == bulletCountBefore, "the projectile that killed Blupi is destroyed (no longer active)");
@@ -1850,7 +1850,7 @@ int main(int argc, char** argv)
         // Voyage (death-VFX follow-up) -- checked last, see the generic-
         // hazard test above for why this must come after every immediate-
         // effect check.
-        GEBlupiController bulletDeathBlupi;
+        BlupiController bulletDeathBlupi;
         completeDeathLock(world, interaction, bulletDeathBlupi);
         const bool bulletCostALife =
             (interaction.Lives() == livesBeforeBullet - 1) || (interaction.Lives() == 3 && livesBeforeBullet <= 1);
@@ -1909,8 +1909,8 @@ int main(int argc, char** argv)
         mutableWorld.setBlock(kLeftWallGX, kCorridorGY, kCorridorGZ, Worlds::Block::make(BlockTypes::Ground));
         mutableWorld.setBlock(kRightWallGX, kCorridorGY, kCorridorGZ, Worlds::Block::make(BlockTypes::Ground));
 
-        const float btX = static_cast<float>(kMidGX) - GEWorldRuntime::kWorldCenterX;
-        const float btZ = static_cast<float>(kCorridorGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float btX = static_cast<float>(kMidGX) - WorldRuntime::kWorldCenterX;
+        const float btZ = static_cast<float>(kCorridorGZ) - WorldRuntime::kWorldCenterZ;
 
         MobileObjSpec blupit;
         blupit.type = GalaxyEggbert::Def::ObjectType::ObjectType33;
@@ -1984,14 +1984,14 @@ int main(int argc, char** argv)
         if (auto* c = findCreature()) c->patrolStep = 2;
         int livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is safe while it's mid-walk (patrolStep 2)");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "large creature contact is safe while it's mid-walk (patrolStep 2)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature mid-walk");
 
         // Also safe mid-recede (patrolStep 4).
         if (auto* c = findCreature()) c->patrolStep = 4;
         livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is safe while it's mid-recede (patrolStep 4)");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "large creature contact is safe while it's mid-recede (patrolStep 4)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature mid-recede");
 
         // Turn-dwell (patrolStep 1): contact is lethal, and the creature
@@ -2000,8 +2000,8 @@ int main(int argc, char** argv)
         livesBefore = interaction.Lives();
         const int gameOverBefore = interaction.GameOverCount();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is lethal during turn-dwell (patrolStep 1)");
-        GEBlupiController turnDwellDeathBlupi;
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "large creature contact is lethal during turn-dwell (patrolStep 1)");
+        BlupiController turnDwellDeathBlupi;
         completeDeathLock(world, interaction, turnDwellDeathBlupi);
         const bool costALife =
             (interaction.Lives() == livesBefore - 1) ||
@@ -2015,7 +2015,7 @@ int main(int argc, char** argv)
         if (auto* c = findCreature()) c->patrolStep = 3;
         livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is also lethal at patrolStep 3 (the other dwell)");
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died), "large creature contact is also lethal at patrolStep 3 (the other dwell)");
 
         // Balloon immunity (real `!m_blupiBalloon` gate) -- while
         // ballooned, contact during turn-dwell does nothing at all (no
@@ -2023,8 +2023,8 @@ int main(int argc, char** argv)
         if (auto* c = findCreature()) c->patrolStep = 1;
         livesBefore = interaction.Lives();
         interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound, /*blupiCrouching=*/false, /*blupiBallooned=*/true);
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::Died), "large creature contact is harmless during turn-dwell while ballooned");
-        check(!hasEvent(interaction, GEInteractionSystem::EventKind::BalloonPopped), "large creature contact does not pop the balloon either (no pop path for type 54)");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "large creature contact is harmless during turn-dwell while ballooned");
+        check(!hasEvent(interaction, InteractionSystem::EventKind::BalloonPopped), "large creature contact does not pop the balloon either (no pop path for type 54)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature during turn-dwell while ballooned");
     }
 
@@ -2064,9 +2064,9 @@ int main(int argc, char** argv)
         // steps -- NOT teleport there in one frame (real speed is a slow
         // 1 real px/tick).
         constexpr int kGX = 10, kGY = 20, kGZ = 95;
-        const float fX = static_cast<float>(kGX) - GEWorldRuntime::kWorldCenterX;
+        const float fX = static_cast<float>(kGX) - WorldRuntime::kWorldCenterX;
         const float fY = static_cast<float>(kGY);
-        const float fZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float fZ = static_cast<float>(kGZ) - WorldRuntime::kWorldCenterZ;
         const float targetX = fX + 1.5f; // within wake radius, open air the whole way
 
         MobileObjSpec dormant;
@@ -2125,10 +2125,10 @@ int main(int argc, char** argv)
         mutableWorld.setBlock(static_cast<std::uint16_t>(kWallGX), static_cast<std::uint16_t>(kGY),
                                static_cast<std::uint16_t>(kGZ), Worlds::Block::make(BlockTypes::Ground));
 
-        const float fX = static_cast<float>(kGX) - GEWorldRuntime::kWorldCenterX;
+        const float fX = static_cast<float>(kGX) - WorldRuntime::kWorldCenterX;
         const float fY = static_cast<float>(kGY);
-        const float fZ = static_cast<float>(kGZ) - GEWorldRuntime::kWorldCenterZ;
-        const float beyondWallX = static_cast<float>(kWallGX + 5) - GEWorldRuntime::kWorldCenterX;
+        const float fZ = static_cast<float>(kGZ) - WorldRuntime::kWorldCenterZ;
+        const float beyondWallX = static_cast<float>(kWallGX + 5) - WorldRuntime::kWorldCenterX;
 
         MobileObjSpec homing;
         homing.type = GalaxyEggbert::Def::ObjectType::ObjectType97; // already awake
@@ -2171,7 +2171,7 @@ int main(int argc, char** argv)
         }
         std::cout << "Follower self-destructed after " << framesToDestruct << " frame(s) approaching the wall" << std::endl;
         check(selfDestructed, "a homing follower self-destructs when its next step would land inside solid terrain");
-        check(hasEvent(interaction, GEInteractionSystem::EventKind::SmallShakeTriggered),
+        check(hasEvent(interaction, InteractionSystem::EventKind::SmallShakeTriggered),
               "the follower's blocked-path self-destruct triggers SmallShake (plan.md CAM-008, a site the "
               "earlier camera-shake audit missed)");
 
@@ -2190,18 +2190,18 @@ int main(int argc, char** argv)
               "the follower's blocked-path self-destruct spawns an ObjectType9 debris flash at its position");
     }
 
-    // 15. GEWorldRuntime::IsTempPassableAtPhase() (plan.md E3D-MIG-146) --
+    // 15. WorldRuntime::IsTempPassableAtPhase() (plan.md E3D-MIG-146) --
     // real IsPassIcon/IsBlocIcon(324) cycle: solid for buckets 0-17,
     // passable only for buckets 18-19 of a 20-value cycle at 4 phase
     // ticks/bucket (`m_time / 4 % 20 >= 18`), so the passable window is
     // phases 72-79 of every 80-phase cycle.
-    check(!GEWorldRuntime::IsTempPassableAtPhase(0), "Temp solid at phase 0 (cycle start, bucket 0)");
-    check(!GEWorldRuntime::IsTempPassableAtPhase(71), "Temp solid at phase 71 (bucket 17, just before the window)");
-    check(GEWorldRuntime::IsTempPassableAtPhase(72), "Temp passable at phase 72 (bucket 18, window start)");
-    check(GEWorldRuntime::IsTempPassableAtPhase(79), "Temp passable at phase 79 (bucket 19, window end)");
-    check(!GEWorldRuntime::IsTempPassableAtPhase(80), "Temp solid at phase 80 (cycle wraps back to bucket 0)");
+    check(!WorldRuntime::IsTempPassableAtPhase(0), "Temp solid at phase 0 (cycle start, bucket 0)");
+    check(!WorldRuntime::IsTempPassableAtPhase(71), "Temp solid at phase 71 (bucket 17, just before the window)");
+    check(WorldRuntime::IsTempPassableAtPhase(72), "Temp passable at phase 72 (bucket 18, window start)");
+    check(WorldRuntime::IsTempPassableAtPhase(79), "Temp passable at phase 79 (bucket 19, window end)");
+    check(!WorldRuntime::IsTempPassableAtPhase(80), "Temp solid at phase 80 (cycle wraps back to bucket 0)");
 
-    // 16. GEWorldRuntime::FindTeleportDestination() (plan.md E3D-MIG-147) --
+    // 16. WorldRuntime::FindTeleportDestination() (plan.md E3D-MIG-147) --
     // a hand-carved pair of pillars far apart (unused Y=20, well above the
     // sample world's real Y range [0,13]), plus a lone pillar with no
     // partner anywhere, to prove both the successful-match and no-match
@@ -2224,19 +2224,19 @@ int main(int argc, char** argv)
 
         // Blupi's position when he triggered: one cell BELOW the entry
         // pillar (kEntryGY - 1), matching the real "stands in the open
-        // space beneath it" relationship (GEBlupiController::
+        // space beneath it" relationship (BlupiController::
         // GetBlockTypeAbove()), not at the pillar's own height.
-        const float entryX = static_cast<float>(kEntryGX) - GEWorldRuntime::kWorldCenterX;
+        const float entryX = static_cast<float>(kEntryGX) - WorldRuntime::kWorldCenterX;
         const float entryY = static_cast<float>(kEntryGY - 1);
-        const float entryZ = static_cast<float>(kEntryGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float entryZ = static_cast<float>(kEntryGZ) - WorldRuntime::kWorldCenterZ;
 
         float destX = -999.0f, destY = -999.0f, destZ = -999.0f;
         const bool found = world.FindTeleportDestination(kTestIcon, entryX, entryY, entryZ,
                                                             destX, destY, destZ);
         check(found, "FindTeleportDestination() finds the paired pillar elsewhere in the grid");
-        const float expectedDestX = static_cast<float>(kExitGX) - GEWorldRuntime::kWorldCenterX;
+        const float expectedDestX = static_cast<float>(kExitGX) - WorldRuntime::kWorldCenterX;
         const float expectedDestY = static_cast<float>(kExitGY - 1);
-        const float expectedDestZ = static_cast<float>(kExitGZ) - GEWorldRuntime::kWorldCenterZ + 1.0f;
+        const float expectedDestZ = static_cast<float>(kExitGZ) - WorldRuntime::kWorldCenterZ + 1.0f;
         std::cout << "Teleport destination: (" << destX << "," << destY << "," << destZ << ") expected ("
                   << expectedDestX << "," << expectedDestY << "," << expectedDestZ << ")" << std::endl;
         check(std::fabs(destX - expectedDestX) < 0.01f && std::fabs(destY - expectedDestY) < 0.01f &&
@@ -2263,7 +2263,7 @@ int main(int argc, char** argv)
         check(!foundLonely, "FindTeleportDestination() returns false for a lone teleporter with no partner anywhere");
     }
 
-    // 17. GEWorldRuntime::TryConsumeFan() (plan.md E3D-MIG-149) -- a
+    // 17. WorldRuntime::TryConsumeFan() (plan.md E3D-MIG-149) -- a
     // synthetic FanLeft placed at an unused Y=20 height, well clear of the
     // sample world's own 2 real fan placements (embedded in the tunnel
     // wall as pure visual/render confirmation, not yet a reachable
@@ -2276,8 +2276,8 @@ int main(int argc, char** argv)
         constexpr int kFanGX = 40, kFanGY = 20, kFanGZ = 40;
         mutableWorld.setBlock(kFanGX, kFanGY, kFanGZ, Worlds::Block::make(BlockTypes::FanLeft));
 
-        const float fanX = static_cast<float>(kFanGX) - GEWorldRuntime::kWorldCenterX;
-        const float fanZ = static_cast<float>(kFanGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float fanX = static_cast<float>(kFanGX) - WorldRuntime::kWorldCenterX;
+        const float fanZ = static_cast<float>(kFanGZ) - WorldRuntime::kWorldCenterZ;
         const float belowFanY = static_cast<float>(kFanGY - 1); // one cell below, matching GetBlockTypeAbove()'s convention
 
         check(!world.TryConsumeFan(0.0f, 1.0f, 0.0f).has_value(),
@@ -2302,8 +2302,8 @@ int main(int argc, char** argv)
     // position (no offset), real phase>=9 self-delete, corrected
     // table_explo4 icon values.
     {
-        GEWorldRuntime flashWorld;
-        GEInteractionSystem flashInteraction;
+        WorldRuntime flashWorld;
+        InteractionSystem flashInteraction;
         constexpr float fx = 12.0f, fy = 1.0f, fz = 12.0f;
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
 
@@ -2356,7 +2356,7 @@ int main(int argc, char** argv)
     }
 
     // GetObjIcon()'s corrected formula for ObjectType34 (VISUAL-016, fixed 2026-07-20 -- real
-    // table_glu oscillates within icons 168-171, identical to GEBlupiController's own kGluFrames,
+    // table_glu oscillates within icons 168-171, identical to BlupiController's own kGluFrames,
     // NOT an ascending range), plus the real "sticks to geometry" AdvancePatrolStep() special case
     // (Decor.cpp:8099-8104): unlike every other MoveObject, arriving at posEnd also collapses
     // posStart/posEnd onto the landing spot, so it never recedes. Not exercised by any placed
@@ -2368,8 +2368,8 @@ int main(int argc, char** argv)
         check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType34, 25) == GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType34, 0),
               "ObjectType34 icon wraps around after the real 25-frame table length");
 
-        GEWorldRuntime gooWorld;
-        GEInteractionSystem gooInteraction;
+        WorldRuntime gooWorld;
+        InteractionSystem gooInteraction;
         MobileObjSpec goo;
         goo.type = GalaxyEggbert::Def::ObjectType::ObjectType34;
         goo.posStartX = goo.currentX = 0.0f;
@@ -2405,7 +2405,7 @@ int main(int argc, char** argv)
     // more real bugs, mostly wrong divisors (this build's 20Hz-reference-rate ScaleDiv() constant
     // mistranscribed), plus 2 more non-monotonic tables collapsed to a naive ascending guess.
     {
-        // ObjectType37: real table_clear oscillates 40-47 (identical to GEBlupiController's own
+        // ObjectType37: real table_clear oscillates 40-47 (identical to BlupiController's own
         // kClear1Frames), not an ascending 40+range70 guess; wrong divisor too (was 6, real 1).
         check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType37, 0) == 40, "ObjectType37 icon at phase=0 is the real table_clear[0]=40");
         check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType37, 4) == 41, "ObjectType37 icon at phase=4 is the real table_clear[4]=41");
@@ -2487,8 +2487,8 @@ int main(int argc, char** argv)
     // directly-constructed instance, since there is no public single-shot
     // spawn method for this type (unlike SpawnFanHitFlash()).
     {
-        GEWorldRuntime explo1World;
-        GEInteractionSystem explo1Interaction;
+        WorldRuntime explo1World;
+        InteractionSystem explo1Interaction;
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
         constexpr float ex = 30.0f, ey = 1.0f, ez = 30.0f;
 
@@ -2541,8 +2541,8 @@ int main(int argc, char** argv)
     // tests 2.5/7.5 above; this isolates the self-delete-at-phase-20
     // logic on its own with a directly-constructed instance.
     {
-        GEWorldRuntime explo3World;
-        GEInteractionSystem explo3Interaction;
+        WorldRuntime explo3World;
+        InteractionSystem explo3Interaction;
         constexpr float dt = 1.0f / 20.0f;
         constexpr float ex = 35.0f, ey = 1.0f, ez = 35.0f;
 
@@ -2595,8 +2595,8 @@ int main(int argc, char** argv)
     // test 14b above; this isolates the self-delete-at-phase-20 logic and
     // the `-1` blank-frame icon values on their own.
     {
-        GEWorldRuntime explo2World;
-        GEInteractionSystem explo2Interaction;
+        WorldRuntime explo2World;
+        InteractionSystem explo2Interaction;
         constexpr float dt = 1.0f / 20.0f;
         constexpr float ex = 45.0f, ey = 1.0f, ez = 45.0f;
 
@@ -2653,8 +2653,8 @@ int main(int argc, char** argv)
         constexpr float dt = 1.0f / 20.0f;
         constexpr float kReach = 500.0f / 64.0f;
 
-        GEWorldRuntime noneWorld;
-        GEInteractionSystem noneInteraction;
+        WorldRuntime noneWorld;
+        InteractionSystem noneInteraction;
         for (int i = 0; i < 60; ++i)
         {
             noneInteraction.TickPollutionPuff(noneWorld, px, py, pz, false, false, false, false,
@@ -2675,8 +2675,8 @@ int main(int argc, char** argv)
         // m_blupiPhase stand-in starts at 1 on the first call (see
         // TickPollutionPuff()'s own header comment), so ticks 12/20/35/50
         // of a fresh 50-call run each hit exactly once.
-        GEWorldRuntime jeepWorld;
-        GEInteractionSystem jeepInteraction;
+        WorldRuntime jeepWorld;
+        InteractionSystem jeepInteraction;
         for (int i = 0; i < 50; ++i)
         {
             jeepInteraction.TickPollutionPuff(jeepWorld, px, py, pz, false, false, /*isJeep=*/true, false,
@@ -2716,8 +2716,8 @@ int main(int argc, char** argv)
 
         // Facing LEFT flips the drift direction (real: no negation, `num`
         // stays positive -> right bucket).
-        GEWorldRuntime jeepLeftWorld;
-        GEInteractionSystem jeepLeftInteraction;
+        WorldRuntime jeepLeftWorld;
+        InteractionSystem jeepLeftInteraction;
         for (int i = 0; i < 12; ++i)
         {
             jeepLeftInteraction.TickPollutionPuff(jeepLeftWorld, px, py, pz, false, false, true, false, false, false,
@@ -2746,8 +2746,8 @@ int main(int argc, char** argv)
         // real random jitter (no RNG exists elsewhere in this engine, so a
         // deterministic stand-in is used -- see TickPollutionPuff()'s
         // comment).
-        GEWorldRuntime overWorld;
-        GEInteractionSystem overInteraction;
+        WorldRuntime overWorld;
+        InteractionSystem overInteraction;
         for (int i = 0; i < 20; ++i)
         {
             overInteraction.TickPollutionPuff(overWorld, px, py, pz, false, /*isOvercraft=*/true, false, false,
@@ -2830,8 +2830,8 @@ int main(int argc, char** argv)
         constexpr float dt = 1.0f / 20.0f;
         constexpr float kThreshold = 40.0f / 64.0f;
 
-        GEWorldRuntime noneWorld;
-        GEInteractionSystem noneInteraction;
+        WorldRuntime noneWorld;
+        InteractionSystem noneInteraction;
         noneInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
         noneInteraction.TickMagicTrail(noneWorld, 5.0f, 1.0f, 0.0f, /*isShielded=*/false, /*isPowered=*/false);
         int noneCount = 0;
@@ -2846,8 +2846,8 @@ int main(int argc, char** argv)
 
         // Shield: below-threshold movement is a no-op; crossing it spawns
         // exactly at the current position and resets the tracker.
-        GEWorldRuntime shieldWorld;
-        GEInteractionSystem shieldInteraction;
+        WorldRuntime shieldWorld;
+        InteractionSystem shieldInteraction;
         shieldInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
         shieldInteraction.TickMagicTrail(shieldWorld, kThreshold * 0.5f, 1.0f, 0.0f, /*isShielded=*/true, false);
         int shieldCountBelowThreshold = 0;
@@ -2897,8 +2897,8 @@ int main(int argc, char** argv)
 
         // Z is ignored by the real distance check -- moving only in Z
         // never drops a marker.
-        GEWorldRuntime zOnlyWorld;
-        GEInteractionSystem zOnlyInteraction;
+        WorldRuntime zOnlyWorld;
+        InteractionSystem zOnlyInteraction;
         zOnlyInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
         zOnlyInteraction.TickMagicTrail(zOnlyWorld, 0.0f, 1.0f, 50.0f, true, false);
         int zOnlyCount = 0;
@@ -2912,8 +2912,8 @@ int main(int argc, char** argv)
         check(zOnlyCount == 0, "the real distance check ignores world Z -- moving only in Z never drops a marker");
 
         // Power: same mechanic, different type/table.
-        GEWorldRuntime powerWorld;
-        GEInteractionSystem powerInteraction;
+        WorldRuntime powerWorld;
+        InteractionSystem powerInteraction;
         powerInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
         powerInteraction.TickMagicTrail(powerWorld, kThreshold + 0.1f, 1.0f, 0.0f, /*isShielded=*/false,
                                         /*isPowered=*/true);
@@ -2998,8 +2998,8 @@ int main(int argc, char** argv)
     // constructed instances, since there is no public single-shot spawn
     // method for these types (AppendSplatEffect() is a free function).
     {
-        GEWorldRuntime splatWorld;
-        GEInteractionSystem splatInteraction;
+        WorldRuntime splatWorld;
+        InteractionSystem splatInteraction;
         constexpr float dt = 1.0f / 20.0f;
         constexpr float sx = 40.0f, sy = 1.0f, sz = 40.0f;
 
@@ -3074,8 +3074,8 @@ int main(int argc, char** argv)
     // is the teleporter itself (already this engine's own TriggerTeleport()
     // call site); a single static instance, real phase>=128 self-delete.
     {
-        GEWorldRuntime arcWorld;
-        GEInteractionSystem arcInteraction;
+        WorldRuntime arcWorld;
+        InteractionSystem arcInteraction;
         constexpr float dt = 1.0f / 20.0f;
         constexpr float ax = 25.0f, ay = 1.0f, az = 25.0f;
 
@@ -3135,11 +3135,11 @@ int main(int argc, char** argv)
     // completion timing, and the real force-complete-on-new-voyage
     // interaction.
     {
-        GEWorldRuntime voyageWorld;
-        GEInteractionSystem voyageInteraction;
+        WorldRuntime voyageWorld;
+        InteractionSystem voyageInteraction;
         constexpr float dt = 1.0f / 20.0f;
 
-        voyageInteraction.BeginVoyage(voyageWorld, GEInteractionSystem::VoyageKind::Treasure, 6, false, 0.0f, 0.0f,
+        voyageInteraction.BeginVoyage(voyageWorld, InteractionSystem::VoyageKind::Treasure, 6, false, 0.0f, 0.0f,
                                        100.0f, 0.0f, sound);
         check(voyageInteraction.VoyageActive(), "BeginVoyage() starts an active voyage");
         check(voyageInteraction.VoyageIconId() == 6 && !voyageInteraction.VoyageIsButtonChannel(),
@@ -3171,13 +3171,13 @@ int main(int argc, char** argv)
         // `if (m_voyageIcon != -1) { phase=total; Step(); }`, Decor.cpp:
         // 10160-10164): starting a NEW voyage while another is still
         // mid-flight applies the OLD one's reward immediately.
-        GEWorldRuntime forceWorld;
-        GEInteractionSystem forceInteraction;
-        forceInteraction.BeginVoyage(forceWorld, GEInteractionSystem::VoyageKind::Key1, 215, false, 0.0f, 0.0f,
+        WorldRuntime forceWorld;
+        InteractionSystem forceInteraction;
+        forceInteraction.BeginVoyage(forceWorld, InteractionSystem::VoyageKind::Key1, 215, false, 0.0f, 0.0f,
                                       1000.0f, 0.0f, sound); // real total=100, won't complete on its own here
         check(forceInteraction.VoyageActive(), "voyage A (Key1) is active");
         const int key1Before = forceInteraction.Key1Count();
-        forceInteraction.BeginVoyage(forceWorld, GEInteractionSystem::VoyageKind::Key2, 222, false, 0.0f, 0.0f, 10.0f,
+        forceInteraction.BeginVoyage(forceWorld, InteractionSystem::VoyageKind::Key2, 222, false, 0.0f, 0.0f, 10.0f,
                                       0.0f, sound);
         check(forceInteraction.Key1Count() == key1Before + 1,
               "starting voyage B (Key2) force-completes voyage A (Key1)'s real reward immediately");
@@ -3185,7 +3185,7 @@ int main(int argc, char** argv)
               "voyage B (Key2) is now the active voyage");
     }
 
-    // 17.12. GEHud::ProjectWorldToHudSpace() -- the new world->screen
+    // 17.12. Hud::ProjectWorldToHudSpace() -- the new world->screen
     // projection utility (plan.md `158`), verified against a controlled
     // camera/viewport setup with hand-computed expected results (no such
     // projection utility existed anywhere in this codebase before this).
@@ -3201,11 +3201,11 @@ int main(int argc, char** argv)
 
         // Viewport matches the 640x480 reference space exactly (scale=1,
         // no horizontal centering offset), so this isolates the
-        // projection math itself from GEHud's own separate ref<->viewport
-        // scale/offset conversion (already covered by GEHud.cpp's own
+        // projection math itself from Hud's own separate ref<->viewport
+        // scale/offset conversion (already covered by Hud.cpp's own
         // existing logic, reused verbatim here).
         float px = 0.0f, py = 0.0f;
-        bool ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f),
+        bool ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f),
                                                  camera.GetViewMatrix(), camera.GetProjectionMatrix(), 640, 480, px,
                                                  py);
         check(ok, "ProjectWorldToHudSpace() succeeds for a point in front of the camera");
@@ -3216,17 +3216,17 @@ int main(int argc, char** argv)
         // looks down -Z with +Y up) must project to the RIGHT half of the
         // screen (px > 320); a point above center must project to the
         // TOP half (screen-space Y is down, so py < 240).
-        ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(1.0f, 0.0f, 0.0f), camera.GetViewMatrix(),
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(1.0f, 0.0f, 0.0f), camera.GetViewMatrix(),
                                             camera.GetProjectionMatrix(), 640, 480, px, py);
         check(ok && px > 320.0f, "a world point to the camera's right projects to the right half of the screen");
 
-        ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f), camera.GetViewMatrix(),
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f), camera.GetViewMatrix(),
                                             camera.GetProjectionMatrix(), 640, 480, px, py);
         check(ok && py < 240.0f, "a world point above center projects to the top half of the screen (screen-Y-down)");
 
         // Behind the camera (camera looks toward -Z from Z=5, so a point
         // further along +Z than the camera itself is behind it).
-        ok = GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 10.0f), camera.GetViewMatrix(),
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 10.0f), camera.GetViewMatrix(),
                                             camera.GetProjectionMatrix(), 640, 480, px, py);
         check(!ok, "ProjectWorldToHudSpace() returns false for a point behind the camera");
     }
@@ -3239,13 +3239,13 @@ int main(int argc, char** argv)
     // animation types (Clear1/5-8 have no VFX at all, Glu is a wholly
     // separate un-researched mechanic, all out of scope here).
     {
-        GEWorldRuntime clear2World;
-        GEInteractionSystem clear2Interaction;
+        WorldRuntime clear2World;
+        InteractionSystem clear2Interaction;
         constexpr float dt = 1.0f / 20.0f;
 
         // Clear2Ascend: fixed total=100 (NOT distance-proportional, unlike
         // every pickup kind), even with a huge real HUD-space distance.
-        clear2Interaction.BeginVoyage(clear2World, GEInteractionSystem::VoyageKind::Clear2Ascend, 230, false, 100.0f,
+        clear2Interaction.BeginVoyage(clear2World, InteractionSystem::VoyageKind::Clear2Ascend, 230, false, 100.0f,
                                       500.0f, 100.0f, 200.0f, sound);
         check(clear2Interaction.VoyageActive() && clear2Interaction.VoyageIconId() == 230,
               "BeginVoyage(Clear2Ascend) starts an active voyage with the real icon 230");
@@ -3293,9 +3293,9 @@ int main(int argc, char** argv)
         // hidden, position clamped to start) -- verified against a
         // controlled world-anchor position (BeginVoyage()'s trailing
         // worldAnchorX/Y/Z params) used by the puff-particle spawn.
-        GEWorldRuntime clear3World;
-        GEInteractionSystem clear3Interaction;
-        clear3Interaction.BeginVoyage(clear3World, GEInteractionSystem::VoyageKind::Clear3Ascend, 40, false, 50.0f,
+        WorldRuntime clear3World;
+        InteractionSystem clear3Interaction;
+        clear3Interaction.BeginVoyage(clear3World, InteractionSystem::VoyageKind::Clear3Ascend, 40, false, 50.0f,
                                       100.0f, 50.0f, 0.0f, sound, 5.0f, 2.0f, -3.0f);
         check(clear3Interaction.VoyageActive() && clear3Interaction.VoyageIconId() == 40,
               "BeginVoyage(Clear3Ascend) starts an active voyage with the real icon 40");
@@ -3344,8 +3344,8 @@ int main(int argc, char** argv)
         // Real Clear4/Saw death VFX: 3 ObjectType41 particles (up/right/
         // left, no "down"), decoded from the real ObjectStart speeds
         // -70/20/-20 (Decor.cpp:6608-6613/7805-7869).
-        GEWorldRuntime sawWorld;
-        GEInteractionSystem sawInteraction;
+        WorldRuntime sawWorld;
+        InteractionSystem sawInteraction;
         sawInteraction.SpawnSawDeathBurst(sawWorld, 10.0f, 1.0f, -5.0f, sound);
         int burstCount = 0;
         bool sawUp = false, sawRight = false, sawLeft = false, sawDown = false;
@@ -3372,7 +3372,7 @@ int main(int argc, char** argv)
         // statistical: both outcomes must occur across enough trials
         // (P(all-same after 200 trials) is astronomically small for a
         // fair coin, so this is not a flaky test in practice).
-        GEInteractionSystem coinInteraction;
+        InteractionSystem coinInteraction;
         bool sawTrue = false, sawFalse = false;
         for (int i = 0; i < 200 && !(sawTrue && sawFalse); ++i)
         {
@@ -3382,14 +3382,14 @@ int main(int argc, char** argv)
     }
 
     // 17.14. Sucette(26)/Drink(30)/Charge(31) real 2-stage pickup delay (plan.md `173`, verified
-    // directly against Decor.cpp:6025-6087) -- GEInteractionSystem's OWN side of this: the
+    // directly against Decor.cpp:6025-6087) -- InteractionSystem's OWN side of this: the
     // contact-time position getters GalaxyEggbertCnaGame::ResolvePickupFreeze() needs, and
     // RespawnPickupItem() itself. The deferred buff-grant/freeze timing lives entirely in
-    // GEBlupiController (already covered directly in VerifyBlupiMovement) -- this class has no
+    // BlupiController (already covered directly in VerifyBlupiMovement) -- this class has no
     // access to it, matching the established decoupling.
     {
-        GEWorldRuntime pickupWorld;
-        GEInteractionSystem pickupInteraction;
+        WorldRuntime pickupWorld;
+        InteractionSystem pickupInteraction;
 
         MobileObjSpec sucette;
         sucette.type = GalaxyEggbert::Def::ObjectType::ObjectType26;
@@ -3401,13 +3401,13 @@ int main(int argc, char** argv)
         // 2026-07-14) -- touching it WITHOUT the button (blupiActionPressedEdge=false, the
         // default) must not grant anything.
         pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound);
-        check(!hasEvent(pickupInteraction, GEInteractionSystem::EventKind::PowerGranted),
+        check(!hasEvent(pickupInteraction, InteractionSystem::EventKind::PowerGranted),
               "touching Sucette(26) WITHOUT the action button does not grant Power (real gate)");
         // Now with the button held -- blupiActionPressedEdge=true, every other trailing param
         // left at its real default.
         pickupInteraction.Update(dt, pickupWorld, 12.0f, 1.0f, 34.0f, 0.0f, sound, false, false, 0, 0, false, true,
                                   true, true, true, false, false, false, true, /*blupiActionPressedEdge=*/true);
-        const auto* powerGrantedEvent = findEvent(pickupInteraction, GEInteractionSystem::EventKind::PowerGranted);
+        const auto* powerGrantedEvent = findEvent(pickupInteraction, InteractionSystem::EventKind::PowerGranted);
         check(powerGrantedEvent != nullptr, "touching Sucette(26) fires a PowerGranted event");
         check(powerGrantedEvent != nullptr && std::fabs(powerGrantedEvent->pickupX - 12.0f) < 0.01f &&
                   std::fabs(powerGrantedEvent->pickupY - 1.0f) < 0.01f &&
@@ -3419,7 +3419,7 @@ int main(int argc, char** argv)
         // squashed, matching the real !m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate clause.
         // This class has no vehicle-state access itself, so this only exercises that it honors
         // blupiCanGrantPower=false even with the action button held -- the vehicle-state
-        // computation itself is covered by GEBlupiController's own IsInVehicle()/IsBallooned()/
+        // computation itself is covered by BlupiController's own IsInVehicle()/IsBallooned()/
         // IsEcrased() (VerifyBlupiMovement). A fresh instance is used since the one above was
         // already consumed by the successful grant just checked.
         MobileObjSpec sucetteGated;
@@ -3431,7 +3431,7 @@ int main(int argc, char** argv)
         pickupInteraction.Update(dt, pickupWorld, 50.0f, 1.0f, 60.0f, 0.0f, sound, false, false, 0, 0, false, true,
                                   /*blupiCanGrantPower=*/false, true, true, false, false, false, true,
                                   /*blupiActionPressedEdge=*/true);
-        check(!hasEvent(pickupInteraction, GEInteractionSystem::EventKind::PowerGranted),
+        check(!hasEvent(pickupInteraction, InteractionSystem::EventKind::PowerGranted),
               "touching Sucette(26) with the action button held but blupiCanGrantPower=false "
               "(vehicle/balloon/squash gate) does not grant Power");
 
@@ -3443,11 +3443,11 @@ int main(int argc, char** argv)
         pickupWorld.GetMobileObjectsMutable().push_back(drink);
         // Same real action-button gate as Sucette above -- without it, nothing grants.
         pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound);
-        check(!hasEvent(pickupInteraction, GEInteractionSystem::EventKind::HideGranted),
+        check(!hasEvent(pickupInteraction, InteractionSystem::EventKind::HideGranted),
               "touching Drink(30) WITHOUT the action button does not grant Hide (real gate)");
         pickupInteraction.Update(dt, pickupWorld, 20.0f, 1.0f, 41.0f, 0.0f, sound, false, false, 0, 0, false, true,
                                   true, true, true, false, false, false, true, /*blupiActionPressedEdge=*/true);
-        const auto* hideGrantedEvent = findEvent(pickupInteraction, GEInteractionSystem::EventKind::HideGranted);
+        const auto* hideGrantedEvent = findEvent(pickupInteraction, InteractionSystem::EventKind::HideGranted);
         check(hideGrantedEvent != nullptr, "touching Drink(30) fires a HideGranted event");
         check(hideGrantedEvent != nullptr && std::fabs(hideGrantedEvent->pickupX - 20.0f) < 0.01f &&
                   std::fabs(hideGrantedEvent->pickupY - 1.0f) < 0.01f &&
@@ -3464,7 +3464,7 @@ int main(int argc, char** argv)
         // automatically on contact alone, unlike Sucette/Drink above (confirmed via direct source
         // read, Decor.cpp:6069-6087 has no getButtonPressedProperty() check at all).
         pickupInteraction.Update(dt, pickupWorld, 7.0f, 1.0f, 9.0f, 0.0f, sound);
-        const auto* cloudGrantedEvent = findEvent(pickupInteraction, GEInteractionSystem::EventKind::CloudGranted);
+        const auto* cloudGrantedEvent = findEvent(pickupInteraction, InteractionSystem::EventKind::CloudGranted);
         check(cloudGrantedEvent != nullptr,
               "touching Charge(31) fires a CloudGranted event with NO action button needed (real gate)");
         check(cloudGrantedEvent != nullptr && std::fabs(cloudGrantedEvent->pickupX - 7.0f) < 0.01f &&
@@ -3498,8 +3498,8 @@ int main(int argc, char** argv)
     // deletes on arrival via the shared AdvancePatrolStep() ObjectType23
     // junction).
     {
-        GEWorldRuntime splashWorld;
-        GEInteractionSystem splashInteraction;
+        WorldRuntime splashWorld;
+        InteractionSystem splashInteraction;
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
         constexpr float sx = 5.0f, sy = 2.0f, sz = 5.0f;
 
@@ -3566,8 +3566,8 @@ int main(int argc, char** argv)
         check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType15, 6) == 106, "Blup icon at phase=6 is the real table_blup[6]=106 (shuffled, not a growing range)");
 
         // SpawnWaterBubble() -- a 4-tile water column above the spawn point.
-        GEWorldRuntime bubbleWorld;
-        GEInteractionSystem bubbleInteraction;
+        WorldRuntime bubbleWorld;
+        InteractionSystem bubbleInteraction;
         auto& mutableBubbleWorld = bubbleWorld.GetWorldMutable();
         constexpr int kBGX = 20, kBGZ = 20, kBGY0 = 10;
         for (int i = 0; i < 5; ++i)
@@ -3577,8 +3577,8 @@ int main(int argc, char** argv)
         }
         mutableBubbleWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0 + 5), kBGZ,
                                       Worlds::Block::make(BlockTypes::Air));
-        const float bx = static_cast<float>(kBGX) - GEWorldRuntime::kWorldCenterX;
-        const float bz = static_cast<float>(kBGZ) - GEWorldRuntime::kWorldCenterZ;
+        const float bx = static_cast<float>(kBGX) - WorldRuntime::kWorldCenterX;
+        const float bz = static_cast<float>(kBGZ) - WorldRuntime::kWorldCenterZ;
         const float by = static_cast<float>(kBGY0);
 
         bubbleInteraction.SpawnWaterBubble(bubbleWorld, bubbleWorld.GetWorld(), bx, by, bz);
@@ -3606,8 +3606,8 @@ int main(int argc, char** argv)
         // fired projectile. Keep this synthetic one away from Blupi so the
         // test isolates terminal patrol behavior, not the separate contact-
         // kill branch that normally handles ObjectType23.
-        GEWorldRuntime projectileArrivalWorld;
-        GEInteractionSystem projectileArrivalInteraction;
+        WorldRuntime projectileArrivalWorld;
+        InteractionSystem projectileArrivalInteraction;
         MobileObjSpec projectile;
         projectile.type = GalaxyEggbert::Def::ObjectType::ObjectType23;
         projectile.posStartX = projectile.currentX = 30.0f;
@@ -3628,8 +3628,8 @@ int main(int argc, char** argv)
               "the fired projectile self-deletes exactly on reaching posEnd (the shared ObjectType23/15 arrival handler)");
 
         // No-op guard: no water column above (dry tile immediately above the spawn point).
-        GEWorldRuntime dryWorld;
-        GEInteractionSystem dryInteraction;
+        WorldRuntime dryWorld;
+        InteractionSystem dryInteraction;
         auto& mutableDryWorld = dryWorld.GetWorldMutable();
         mutableDryWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0), kBGZ, Worlds::Block::make(BlockTypes::Water1));
         mutableDryWorld.setBlock(kBGX, static_cast<std::uint16_t>(kBGY0 + 1), kBGZ, Worlds::Block::make(BlockTypes::Air));
@@ -3651,8 +3651,8 @@ int main(int argc, char** argv)
     // trigger tick" cases, rather than asserting audible playback (not
     // observable through this harness).
     {
-        GEWorldRuntime noEmitterWorld;
-        GEInteractionSystem noEmitterInteraction;
+        WorldRuntime noEmitterWorld;
+        InteractionSystem noEmitterInteraction;
         auto& mutableNoEmitterWorld = noEmitterWorld.GetWorldMutable();
         mutableNoEmitterWorld.setBlock(10, 5, 10, Worlds::Block::make(BlockTypes::Blitz));
         mutableNoEmitterWorld.setBlock(10, 6, 10, Worlds::Block::make(BlockTypes::Ground)); // NOT the emitter icon
@@ -3666,8 +3666,8 @@ int main(int argc, char** argv)
         }
         check(true, "Blitz-emitter scan/lookup runs cleanly across a full 100-tick cycle with no qualifying pair");
 
-        GEWorldRuntime emitterWorld;
-        GEInteractionSystem emitterInteraction;
+        WorldRuntime emitterWorld;
+        InteractionSystem emitterInteraction;
         auto& mutableEmitterWorld = emitterWorld.GetWorldMutable();
         mutableEmitterWorld.setBlock(10, 5, 10, Worlds::Block::make(BlockTypes::Blitz));
         mutableEmitterWorld.setBlock(10, 6, 10, Worlds::Block::make(BlockTypes::BlitzEmitter));
@@ -3693,25 +3693,25 @@ int main(int argc, char** argv)
         using GalaxyEggbert::BlockTypes::WorldSelect8;
 
         // From the global hub (mission 1): marker N -> world N*10.
-        check(GEWorldRuntime::ComputeWorldSelectTarget(1, 1) == 10,
+        check(WorldRuntime::ComputeWorldSelectTarget(1, 1) == 10,
               "global hub marker 1 -> mission 10 (world 1's hub)");
-        check(GEWorldRuntime::ComputeWorldSelectTarget(1, 5) == 50,
+        check(WorldRuntime::ComputeWorldSelectTarget(1, 5) == 50,
               "global hub marker 5 -> mission 50 (world 5's hub)");
 
         // From a world hub (mission X0): marker N -> sublevel X0+N.
-        check(GEWorldRuntime::ComputeWorldSelectTarget(10, 1) == 11,
+        check(WorldRuntime::ComputeWorldSelectTarget(10, 1) == 11,
               "world-10 hub marker 1 -> mission 11 (its own first sublevel)");
-        check(GEWorldRuntime::ComputeWorldSelectTarget(10, 2) == 12,
+        check(WorldRuntime::ComputeWorldSelectTarget(10, 2) == 12,
               "world-10 hub marker 2 -> mission 12 (its own second sublevel)");
-        check(GEWorldRuntime::ComputeWorldSelectTarget(30, 4) == 34,
+        check(WorldRuntime::ComputeWorldSelectTarget(30, 4) == 34,
               "world-30 hub marker 4 -> mission 34");
 
         // ComputeMissionBack(): a sublevel returns to its own world's hub;
         // a hub already (mission%10==0) returns to the global hub (1).
-        check(GEWorldRuntime::ComputeMissionBack(11) == 10, "sublevel 11 back -> hub 10");
-        check(GEWorldRuntime::ComputeMissionBack(15) == 10, "sublevel 15 back -> hub 10");
-        check(GEWorldRuntime::ComputeMissionBack(10) == 1, "hub 10 back -> global hub 1");
-        check(GEWorldRuntime::ComputeMissionBack(50) == 1, "hub 50 back -> global hub 1");
+        check(WorldRuntime::ComputeMissionBack(11) == 10, "sublevel 11 back -> hub 10");
+        check(WorldRuntime::ComputeMissionBack(15) == 10, "sublevel 15 back -> hub 10");
+        check(WorldRuntime::ComputeMissionBack(10) == 1, "hub 10 back -> global hub 1");
+        check(WorldRuntime::ComputeMissionBack(50) == 1, "hub 50 back -> global hub 1");
 
         // BlockTypes::isWorldSelect()/worldSelectIndex() -- icons 158-169,
         // indices 1-12 (extended 2026-07-17 from the original 8, to cover
@@ -3736,16 +3736,16 @@ int main(int argc, char** argv)
         check(progressDoorIndex(ProgressDoor2) == 2 && progressDoorIndex(ProgressDoor8) == 8,
               "progressDoorIndex() recovers the real 2-8 gated marker index");
 
-        // GEWorldRuntime::ComputeWinExitTarget() -- the real win-exit
+        // WorldRuntime::ComputeWinExitTarget() -- the real win-exit
         // formula (`Decor.cpp:6411-6434`), distinct from ComputeMissionBack()
         // above: mission 1's own exit goes to the real final bonus world
         // (199); mission 199's own exit loops back to the global hub (this
         // engine's simplification of the real true-ending sentinel); every
         // other mission falls through to the same ComputeMissionBack().
-        check(GEWorldRuntime::ComputeWinExitTarget(1) == 199, "mission 1's own exit -> mission 199 (final bonus world)");
-        check(GEWorldRuntime::ComputeWinExitTarget(199) == 1, "mission 199's own exit -> loops back to mission 1");
-        check(GEWorldRuntime::ComputeWinExitTarget(11) == 10, "sublevel 11's exit -> hub 10 (falls through to ComputeMissionBack)");
-        check(GEWorldRuntime::ComputeWinExitTarget(10) == 1, "hub 10's own exit -> global hub 1 (falls through)");
+        check(WorldRuntime::ComputeWinExitTarget(1) == 199, "mission 1's own exit -> mission 199 (final bonus world)");
+        check(WorldRuntime::ComputeWinExitTarget(199) == 1, "mission 199's own exit -> loops back to mission 1");
+        check(WorldRuntime::ComputeWinExitTarget(11) == 10, "sublevel 11's exit -> hub 10 (falls through to ComputeMissionBack)");
+        check(WorldRuntime::ComputeWinExitTarget(10) == 1, "hub 10's own exit -> global hub 1 (falls through)");
     }
 
     // 17.18. New hub/mission-progression worlds (plan.md hub/mission
@@ -3753,44 +3753,44 @@ int main(int argc, char** argv)
     // the right real missionNumber, same sanity level as the existing
     // world999.vwr load at the top of this file.
     {
-        GEWorldRuntime hubWorld;
+        WorldRuntime hubWorld;
         check(hubWorld.LoadFromVwrFile("worlds3d/world010.vwr"), "world010.vwr loads cleanly");
         check(hubWorld.GetMissionNumber() == 10, "world010.vwr reports missionNumber() == 10");
 
-        GEWorldRuntime sub11;
+        WorldRuntime sub11;
         check(sub11.LoadFromVwrFile("worlds3d/world011.vwr"), "world011.vwr loads cleanly");
         check(sub11.GetMissionNumber() == 11, "world011.vwr reports missionNumber() == 11");
 
-        GEWorldRuntime sub12;
+        WorldRuntime sub12;
         check(sub12.LoadFromVwrFile("worlds3d/world012.vwr"), "world012.vwr loads cleanly");
         check(sub12.GetMissionNumber() == 12, "world012.vwr reports missionNumber() == 12");
     }
 
-    // 18. GESound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
+    // 18. Sound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure
     // function, no LoadContent()/audio device needed.
     {
         using GalaxyEggbert::Def::SoundChannel;
-        check(GESound::FootstepChannelFor(41) == GalaxyEggbert::Def::SoundChannel::SoundChannel78,
+        check(Sound::FootstepChannelFor(41) == GalaxyEggbert::Def::SoundChannel::SoundChannel78,
               "icon 41 (obstacle range 41-47) remaps to channel 78");
-        check(GESound::FootstepChannelFor(139) == GalaxyEggbert::Def::SoundChannel::SoundChannel78,
+        check(Sound::FootstepChannelFor(139) == GalaxyEggbert::Def::SoundChannel::SoundChannel78,
               "icon 139 (obstacle range 139-143) remaps to channel 78 too");
-        check(GESound::FootstepChannelFor(15) == GalaxyEggbert::Def::SoundChannel::SoundChannel80,
+        check(Sound::FootstepChannelFor(15) == GalaxyEggbert::Def::SoundChannel::SoundChannel80,
               "icon 15 (obstacle range 1-28) remaps to channel 80");
-        check(GESound::FootstepChannelFor(325) == GalaxyEggbert::Def::SoundChannel::SoundChannel80,
+        check(Sound::FootstepChannelFor(325) == GalaxyEggbert::Def::SoundChannel::SoundChannel80,
               "icon 325 (obstacle range 324-329) remaps to channel 80 too");
-        check(GESound::FootstepChannelFor(338) == GalaxyEggbert::Def::SoundChannel::SoundChannel82,
+        check(Sound::FootstepChannelFor(338) == GalaxyEggbert::Def::SoundChannel::SoundChannel82,
               "icon 338 remaps to channel 82");
-        check(GESound::FootstepChannelFor(350) == GalaxyEggbert::Def::SoundChannel::SoundChannel84,
+        check(Sound::FootstepChannelFor(350) == GalaxyEggbert::Def::SoundChannel::SoundChannel84,
               "icon 350 (obstacle range 341-363) remaps to channel 84");
-        check(GESound::FootstepChannelFor(220) == GalaxyEggbert::Def::SoundChannel::SoundChannel86,
+        check(Sound::FootstepChannelFor(220) == GalaxyEggbert::Def::SoundChannel::SoundChannel86,
               "icon 220 (obstacle range 215-234) remaps to channel 86");
-        check(GESound::FootstepChannelFor(247) == GalaxyEggbert::Def::SoundChannel::SoundChannel88,
+        check(Sound::FootstepChannelFor(247) == GalaxyEggbert::Def::SoundChannel::SoundChannel88,
               "icon 247 (obstacle range 246-249) remaps to channel 88");
-        check(GESound::FootstepChannelFor(108) == GalaxyEggbert::Def::SoundChannel::SoundChannel90,
+        check(Sound::FootstepChannelFor(108) == GalaxyEggbert::Def::SoundChannel::SoundChannel90,
               "icon 108 (obstacle range 107-109) remaps to channel 90");
-        check(GESound::FootstepChannelFor(BlockTypes::RockPile) == GalaxyEggbert::Def::SoundChannel::SoundChannel3,
+        check(Sound::FootstepChannelFor(BlockTypes::RockPile) == GalaxyEggbert::Def::SoundChannel::SoundChannel3,
               "an icon outside all 7 remap ranges falls back to the generic channel 3");
     }
 
@@ -3853,18 +3853,18 @@ int main(int argc, char** argv)
     }
 
     // 5. Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- each
-    // test below uses its OWN fresh GEWorldRuntime/GEInteractionSystem
+    // test below uses its OWN fresh WorldRuntime/InteractionSystem
     // pair (not the heavily-mutated shared `world`/`interaction` above)
     // so the exact before/after deltas are unambiguous.
     {
-        GEWorldRuntime cheatWorld;
+        WorldRuntime cheatWorld;
         if (!cheatWorld.LoadFromVwrFile(worldPath))
         {
             check(false, "cheat tests: could not load a fresh copy of the sample world");
         }
         else
         {
-            GEInteractionSystem cheatInteraction;
+            InteractionSystem cheatInteraction;
 
             // 5.1 CheatOpenDoors: opens both real door families (key-gated
             // Door1/2/3 AND treasure-gated icon>=421) regardless of
@@ -4026,14 +4026,14 @@ int main(int argc, char** argv)
     // fresh, isolated world/interaction pair (matches the cheat tests'
     // own reasoning above).
     {
-        GEWorldRuntime auraWorld;
+        WorldRuntime auraWorld;
         if (!auraWorld.LoadFromVwrFile(worldPath))
         {
             check(false, "aura test: could not load sample world");
         }
         else
         {
-            GEInteractionSystem auraInteraction;
+            InteractionSystem auraInteraction;
             // Real blupih (ObjectType32) sample-world instance sits at
             // its posStart, (85,4,80) -- see GenerateSampleWorld3D.cpp.
             const MobileObjSpec* blupih = nullptr;
@@ -4075,9 +4075,9 @@ int main(int argc, char** argv)
         {
             // Far away (well beyond the aura radius), the aura must not
             // reach even with Cloud active.
-            GEWorldRuntime farWorld;
+            WorldRuntime farWorld;
             farWorld.LoadFromVwrFile(worldPath);
-            GEInteractionSystem farInteraction;
+            InteractionSystem farInteraction;
             const MobileObjSpec* blupit = nullptr;
             for (const auto& obj : farWorld.GetMobileObjects())
             {
@@ -4106,12 +4106,12 @@ int main(int argc, char** argv)
     // Bridge construction (ObjectType52, plan.md PICKUP-064) -- the sample
     // world's own demo (tools/GenerateSampleWorld3D.cpp): a single Bridge
     // (icon 364) tile at grid (88,0,97), world (38,1,47), spanning a real
-    // gap with nothing beneath it. Fresh GEWorldRuntime so this test's own
+    // gap with nothing beneath it. Fresh WorldRuntime so this test's own
     // many Update() calls don't affect earlier sections' object state.
     {
-        GEWorldRuntime bridgeWorld;
+        WorldRuntime bridgeWorld;
         check(bridgeWorld.LoadFromVwrFile(worldPath), "loaded the world for the bridge test");
-        GEInteractionSystem bridgeInteraction;
+        InteractionSystem bridgeInteraction;
         constexpr float bridgeX = 38.0f, bridgeY = 1.0f, bridgeZ = 47.0f;
         constexpr float dt = 1.0f / 20.0f; // matches the real 20Hz tick rate obj.phase advances at
 
@@ -4144,8 +4144,8 @@ int main(int argc, char** argv)
         // Advance to well within the documented 112-tick hollow window
         // (ticks 28-139) -- the cell must have genuinely lost its ground
         // collision (Air), not just changed its render icon. obj.phase only
-        // advances via GEWorldRuntime::Update() itself (the real game loop
-        // calls this every frame before GEInteractionSystem::Update(), same
+        // advances via WorldRuntime::Update() itself (the real game loop
+        // calls this every frame before InteractionSystem::Update(), same
         // convention as the dynamite-fuse test above), not a no-op skip.
         for (int i = 0; i < 80; ++i)
         {
@@ -4156,11 +4156,11 @@ int main(int argc, char** argv)
               "mid-construction (tick ~80), the bridge cell is genuinely non-solid (real ground-collision "
               "toggle, not a purely cosmetic overlay)");
 
-        // A second, independent GEBlupiController standing on that same
+        // A second, independent BlupiController standing on that same
         // now-hollow cell must fall (nothing exists beneath this demo's
         // real chasm) -- proves the collision change is actually consumed
         // by movement, not just visible in the raw block data.
-        GEBlupiController fallingBlupi;
+        BlupiController fallingBlupi;
         fallingBlupi.SetPosition(bridgeX, bridgeY, bridgeZ);
         fallingBlupi.Step(bridgeWorld.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
         check(!fallingBlupi.IsOnGround(),

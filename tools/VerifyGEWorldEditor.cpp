@@ -13,7 +13,7 @@
 
 int main()
 {
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
     using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::Worlds::Block;
     using GalaxyEggbert::Worlds::World;

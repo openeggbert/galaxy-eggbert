@@ -39,7 +39,7 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   per-instance phase timers; platform lifts and crates (`ObjectType1/12/47/48`) render as solid
   `UniformCube`s instead, per the confirmed two exceptions to the billboard default. Embeddable
   directly in the 3D `.vwr` format, not just parsed from mobile-eggbert `.txt`.
-- **Interactive objects** (`GEInteractionSystem`, 2026-07-10): platform lift ping-pong patrol;
+- **Interactive objects** (`InteractionSystem`, 2026-07-10): platform lift ping-pong patrol;
   crate push (X-axis only, single-crate, real adjacency/lane/floor-support/occupancy checks);
   treasure/egg/key/level-exit pickup collection with real removal-on-contact semantics, real
   sound channels, `MAX_EGG_COUNT=10` cap, exit gated on treasures-collected.
@@ -48,18 +48,18 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   grant +1 up to the cap, `LoseLife()` resets to 3 on game-over (real `DoorsLost()` behavior, not
   a permanent depletion). Wired to fall-off-world death, lava, Blitz (all deterministic, real
   channel 8), spikes (real channel 51), saw (real channel 75, real switch-linking via
-  `GEWorldRuntime::TryActivateSwitch()`), and generic `ObjectType2`/`3` patrol-hazard contact
+  `WorldRuntime::TryActivateSwitch()`), and generic `ObjectType2`/`3` patrol-hazard contact
   (real channel 74, the 50/50 death-sound coinflip simplified to always-play). Vehicle immunity/
   sub-tile x-band restrictions and the real 10-slot last-safe-position FIFO respawn are known
   simplifications. All 5 real terrain hazard tiles are now covered (only Crusher, below, is
   non-lethal) — only named-enemy contact (Phase 13) still calls nothing.
 - **Crusher squash state** (`E3D-MIG-143`, 2026-07-11): non-lethal, unlike every hazard above —
-  `GEBlupiController::TriggerCrush()`/`IsEcrased()` (reduced move speed, jump blocked, ~10s
-  auto-recovery, real entry/recovery sound channels 70/41), gated on `GEWorldRuntime::
+  `BlupiController::TriggerCrush()`/`IsEcrased()` (reduced move speed, jump blocked, ~10s
+  auto-recovery, real entry/recovery sound channels 70/41), gated on `WorldRuntime::
   IsCrusherActiveAtPhase()` (approximates the real 3-out-of-10 danger window).
 - **Basic HUD** (2026-07-11): icon-based only (no text rendering exists) — life icons
   (bottom-left, one per life) and key icons (top-left, shown only while held).
-- **Sound** (`GESound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
+- **Sound** (`Sound`, 2026-07-10): all 93 real channels load via CNA's own `SoundEffect` API,
   real per-channel volume/conflict table, wired to jump/land/footstep.
 - **Camera**: first-person default + third-person (placeholder GPU-skinned model) toggle,
   framerate-independent damping.
@@ -84,7 +84,7 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   `ObjectType` 2/3/4/16/17/20/96/97 kills Blupi (`E3D-MIG-132`, widened 2026-07-11 from just 2/3
   after finding they're all one real shared check in `Decor.cpp`); wasp (44,
   `E3D-MIG-135`, 2026-07-11) transforms him into a non-lethal "balloon" status instead
-  (`GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`), which in turn changes
+  (`BlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()`), which in turn changes
   how exactly 4 of those 8 shared-kill types (`3`/`16`/`96`/`97`) behave — they pop the balloon
   instead of killing while it's active. Every `MoveObject` (except lifts/crates) now genuinely
   patrols using the real shared 4-phase dwell/advance/dwell/recede cycle (`E3D-MIG-131`,
@@ -102,15 +102,15 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   (`E3D-MIG-140`-`144`, 2026-07-11) — 4 lethal (lava, spikes, Blitz, saw) via the lives
   foundation (`E3D-MIG-130`, alongside separately-implemented fall-off-world death),
   Crusher non-lethal (a squash state). **The spring/bounce tile is also done** (`E3D-MIG-145`,
-  2026-07-11) — the first Phase 14 mechanic that isn't a hazard: `GEBlupiController::
+  2026-07-11) — the first Phase 14 mechanic that isn't a hazard: `BlupiController::
   TriggerSpringBounce()` launches Blupi upward (one of two real magnitudes depending on whether
   Jump is held on contact) instead of costing a life. **The Temp/vanishing tile is also done**
   (`E3D-MIG-146`, 2026-07-11) — solid 90% of the time, passable (Blupi falls through) the other
   10% on a real 20-value phase cycle; unlike every other mechanic here, it's threaded directly
-  into `GEBlupiController::Step()`'s own collision scan (a new `tempPassable` parameter) rather
+  into `BlupiController::Step()`'s own collision scan (a new `tempPassable` parameter) rather
   than checked post-hoc, since it changes whether the tile IS the ground at all. **The teleporter
   is also done** (`E3D-MIG-147`, 2026-07-11, redesigned same day per live-playtest user feedback)
-  — `TriggerTeleport()` freezes Blupi for a real 6.4s, then `GEWorldRuntime::
+  — `TriggerTeleport()` freezes Blupi for a real 6.4s, then `WorldRuntime::
   FindTeleportDestination()` relocates him to the paired pillar elsewhere in the grid (or leaves
   him in place if no partner exists, matching real behavior). Detection matches the real "one
   tile above Blupi" geometry exactly (`GetBlockTypeAbove()`) — teleporter icons are always
@@ -121,11 +121,11 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   and shipped a real bug — Blupi froze permanently and was never relocated, caught only by live
   playtesting, not the unit tests written for that design — since fixed and re-verified live.)
   **Its render geometry is also done** (same task, 2026-07-11): the pillar itself is a
-  `DirectionalCube` (`GEDirectionalCubeTiles.cpp`, textured on all 4 sides, flat top/bottom —
+  `DirectionalCube` (`DirectionalCubeTiles.cpp`, textured on all 4 sides, flat top/bottom —
   supersedes an earlier questionnaire pass' "Billboard" call, revised live per direct user
   description of the real crop: `mobile-eggbert-reference/02-tiles.md`/
   `questionnaire-all-remaining-tiles.md` both updated), plus a "tip" attachment hanging below the
-  pillar, textured with the tile's own lower ~2/3 (`GETerrainRenderer.cpp`'s
+  pillar, textured with the tile's own lower ~2/3 (`TerrainRenderer.cpp`'s
   `IsTeleporterTipIcon()`/`TeleporterTipUv()`), wired into `AppendSpecialGeometry()` right after
   the `DirectionalCube` append. **Revised twice more the same day after live user re-checks**:
   (1) the tip was first built as a tapering pyramid (`Easy3D::PyramidTipItem`/
@@ -137,7 +137,7 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   `object-m.png` (small script sampling specific pixels) found the "black" was actually genuine
   alpha=0 transparency around the real teal cone graphic, not painted black — the box shape alone
   didn't fix this, since the CUBE'S OWN side faces use the same texture and were equally affected;
-  fixed by adding Teleport1-4 to `GETerrainRenderer.cpp`'s `NeedsAlphaBlend()` (previously only
+  fixed by adding Teleport1-4 to `TerrainRenderer.cpp`'s `NeedsAlphaBlend()` (previously only
   icons 30/31), routing the whole icon through the existing alpha-blended transparent-static
   render path instead of the opaque one. Verified live via headless EasyGL screenshots at multiple
   angles/distances — renders correctly: blue cube sides with the real dots/emblem-letter texture,
@@ -159,7 +159,7 @@ against `GalaxyEggbertCNA` specifically, since Simple3D's status has no bearing 
   location), treated as a symptom of the box design rather than a confirmed separate bug. Full
   5-tool suite + both backends + easy-3d's own test suite (including the re-added pyramid test)
   all re-verified.
-- **No riding a moving platform** — `GEBlupiController`'s collision only tests the static
+- **No riding a moving platform** — `BlupiController`'s collision only tests the static
   terrain grid, not `MobileObjSpec` objects.
 - **No linked-crate stacks** — crate push is single-crate only.
 - **No save/progression system** at all.
@@ -275,7 +275,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 
 ### Phase 6 — Blupi, visible and complete (`E3D-MIG-060`-`069`)
 
-- [x] `060` Collision-only movement, step-up traversal, gravity (`GEBlupiController`) — an
+- [x] `060` Collision-only movement, step-up traversal, gravity (`BlupiController`) — an
       engine-appropriate 3D grid system, explicitly NOT a transcription of the 2D
       `BlupiRect`/`BlupiAdjust`/`BlupiBloque` system. Verified via `VerifyBlupiMovement`.
 - [x] `061`/`062` `Easy3D::BillboardBatch`/`BillboardMeshRenderer` exist, used for
@@ -297,10 +297,10 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `easy3d.md` §5.4/§5.7 (load-bearing data, not casual "just data"). Blocked on `069`.
       **Partial, narrower progress (2026-07-11)**: the separate bottom-right 2D debug animation
       indicator (not this task's real 3D model target, but the same `AnimState` enum/frame-table
-      mechanism) gained a `Jump`/`Air` split (real `BlupiAction` IDs 4/5) — `GEBlupiController`
+      mechanism) gained a `Jump`/`Air` split (real `BlupiAction` IDs 4/5) — `BlupiController`
       previously collapsed all airborne time into `Jump`. Frame data for `Air` (`{169, 26, 170,
       170, 27}`) was NOT a fresh `table_blupi` transcription — it was ported from
-      `GalaxyEggbertSimple3D::GEBlupiController.cpp`'s own `kAirFrames`, already shipped/approved
+      `GalaxyEggbertSimple3D::BlupiController.cpp`'s own `kAirFrames`, already shipped/approved
       in this same repo, so this one addition didn't need new approval. The state split itself
       uses velocity sign (ascending vs falling) rather than Simple3D's fixed 3-frame trigger
       window, a natural adaptation to this class's continuous-velocity physics. Verified via new
@@ -309,7 +309,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `Balloon`(66)/`Teleporte`(74)'s real `table_blupi` icon-frame records were parsed directly
       out of `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Tables.cpp` (a small script, not by
       hand) and added as `kStopEcraseFrames`/`kMarchEcraseFrames`/`kBalloonFrames`/
-      `kTeleportingFrames` in `GEBlupiController.cpp` — frame counts (1/24/16/128, 67 of the 128
+      `kTeleportingFrames` in `BlupiController.cpp` — frame counts (1/24/16/128, 67 of the 128
       Teleporte frames being the real `-1` "invisible" sentinel) cross-checked exactly against
       `mobile-eggbert-reference/08-animations.md` §2's already-documented counts. `UpdateAnim()`'s
       precedence now checks `m_teleporting`/`m_balloon`/`m_ecrase` BEFORE the ground/air cascade
@@ -323,17 +323,17 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       fidelity claim. New `VerifyBlupiMovement.cpp` assertions cover all 3 states' exact icon
       values; full suite + both backends re-verified.
       **Real bug found and fixed 2026-07-19** (user request: "make sure the bottom-right animation
-      icon actually corresponds to what's being animated"): `GEHud`'s indicator always sampled
+      icon actually corresponds to what's being animated"): `Hud`'s indicator always sampled
       `blupi.png` for `GetAnimIcon()`'s value, but real `BlupiSearchIcon()`
       (`mobile-eggbert-reference/08-animations.md` §2's own "Channel selection" note, verified
       directly against `Decor.cpp`) selects `element.png` instead for `Clear1`/`Clear2`/`Clear3`/
       `Glu`/`Electro` specifically — of those, `Clear1`/`Clear2`/`Clear3`/`Glu` are all real,
       already-wired `DeathLocked` causes in this engine (`Electro` has no modeled mechanic yet), so
       every one of those 4 death animations was showing the wrong sheet's pixels at the same icon
-      index. Fixed with a new `GEBlupiController::AnimIconUsesElementSheet()` predicate (true only
-      for those 4 `DeathLocked` causes) threaded through `GEHud::Draw()`'s new
+      index. Fixed with a new `BlupiController::AnimIconUsesElementSheet()` predicate (true only
+      for those 4 `DeathLocked` causes) threaded through `Hud::Draw()`'s new
       `animIconUsesElementSheet` parameter, selecting `elementQuads`/`elementSheetW/H` instead of
-      `blupiQuads`/`blupiSheetW/H` for exactly this one HUD element when it applies -- `GEHud`
+      `blupiQuads`/`blupiSheetW/H` for exactly this one HUD element when it applies -- `Hud`
       already drew other element.png icons elsewhere (keys, bullets, dynamite, Voyage), so no new
       texture load or render path was needed. 8 new `VerifyBlupiMovement` assertions (one baseline
       "Stop stays on blupi.png" + the sheet flag for all 6 `DeathCause` values, including 2
@@ -344,7 +344,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 - [~] `065` Real jump/gravity constants matching mobile-eggbert's tick-domain values (gravity
       +2.0/tick to terminal 20.0, displacement = 2×velocity; jump launch values by
       Jump-held×Power combo; ledge-walk-off has no boost) — rescale from 20Hz tick-domain to
-      CNA's real framerate. Current `GEBlupiController` constants are an independent
+      CNA's real framerate. Current `BlupiController` constants are an independent
       engine-appropriate approximation, not yet cross-checked against these real values.
       **Sub-finding fixed 2026-07-16**: while researching the real Jump-held×Power combo values
       (`Decor.cpp:2913-2947`), found the real ground-jump trigger is ALSO gated on vehicle mode —
@@ -386,7 +386,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `GalaxyEggbertCnaGame::Update()` triggers `LoseLife()` + channel 8 sound + fixed-point
       respawn when Y drops below a threshold. **Real bug found and fixed (2026-07-11, user-
       reported via live playtest, same feedback batch as the teleporter fix)**: this check was
-      unreachable via normal walking. Root cause: `GEBlupiController::GroundHeightAt()`'s "no
+      unreachable via normal walking. Root cause: `BlupiController::GroundHeightAt()`'s "no
       solid block anywhere in this column" fallback returned `0`, silently treated as solid
       ground at Y=0 by both its callers (the main landing check and `TryMoveAxis`'s step-up
       gate) — confirmed live (temporary debug instrumentation, reverted before committing):
@@ -407,7 +407,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       **The real 10-slot "safe position" FIFO respawn is also done** (2026-07-11, same
       user-reported feedback batch): verified directly against `Decor.cpp:6467-6478`
       (`m_blupiValidPos` update gate) and `6654-6673` (`BlupiAddFifo`). New
-      `GEBlupiController::UpdateSafePosition(bool externallySafe)`/`GetValidX/Y/Z()` — a real
+      `BlupiController::UpdateSafePosition(bool externallySafe)`/`GetValidX/Y/Z()` — a real
       10-slot FIFO of recent positions, updated once per frame while Blupi is grounded, not
       ballooned/squashed, and the caller reports `externallySafe` (this class only knows its own
       grounded/balloon/ecrase state, not terrain hazard tiles or teleporter-trigger occupancy, so
@@ -419,7 +419,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       where you died" buffer), with the same dedup-consecutive-duplicates shape as the real FIFO
       but extended to all 3 axes (real mobile-eggbert's 2-axis dedup is a direct consequence of
       having no Z axis at all, not a deliberate 2-of-3 choice for a 3D engine). Every respawn call
-      site (the shared `triggerDeath` lambda, and `GEInteractionSystem::DiedThisFrame()`'s
+      site (the shared `triggerDeath` lambda, and `InteractionSystem::DiedThisFrame()`'s
       handler) now uses `GetValidX/Y/Z()` instead of the fixed spawn point. Verified live (forced
       continuous forward movement + temporary debug logging, reverted before committing): the
       tracked valid position correctly lagged behind Blupi's live position while walking, and
@@ -430,7 +430,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       missing" list below is stale** — the full hazard→action table (Lava→Clear3, Saw→Clear4,
       Blitz→Clear1, Fan→Clear1/Clear2 coinflip, Spike/Drip→Glu) and fixed per-action animation
       durations were both completed by Phase 14/the death-lock system (`GalaxyEggbertCnaGame.cpp`'s
-      per-hazard `triggerDeath()` calls + `GEBlupiController::TriggerDeathLock()`'s
+      per-hazard `triggerDeath()` calls + `BlupiController::TriggerDeathLock()`'s
       `kDeathLockTicks[]`, confirmed directly in source) — this note just predates that work and
       was never updated after. **Still genuinely open**: fall→1000px-past-the-death-boundary =
       instant game over bypassing remaining lives (`Decor.cpp:6406-6410`, unconditional
@@ -475,7 +475,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       the real "Power-Charge" pickup) is active, instantly destroys small enemies
       (`ObjectType4`/`32`/`33`) within 40px of Blupi's own box — an offensive aura Blupi carries,
       unrelated to the `Blitz` lightning HAZARD despite the similarly-named real function. Ported
-      as a new `GEInteractionSystem::Update()` parameter (`blupiCloudActive`, wired from the
+      as a new `InteractionSystem::Update()` parameter (`blupiCloudActive`, wired from the
       caller's existing `GetSecretPower()==Cloud` check) checked first in the per-object loop, so a
       `Type4` enemy (also in `IsGenericHazard()`'s own list) is destroyed by the aura rather than
       also killing Blupi via hazard contact the same frame. Real sound channel 59 on each kill.
@@ -505,10 +505,10 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
          Bottom=pos.Y+60-2`, 47px inside the 60px `DIMBLUPIY` cell, `Def.hpp:154`) brackets the
          user's own reported 71.875% figure (exact fraction not located as a literal source
          constant, likely the user's own sprite measurement). Since 1 block = 1.0 world unit here
-         (`GEBlupiController::GroundHeightAt()` returns topmost-solid-block-Y + 1), target height =
+         (`BlupiController::GroundHeightAt()` returns topmost-solid-block-Y + 1), target height =
          0.71875 world units → `kPlaceholderModelScale = 0.71875 / 79.029 ≈ 0.009095`.
-      2. **Grounding**: `GEBlupiController::GetY()` is NOT flush with the terrain's own rendered
-         surface. `GETerrainRenderer` places a solid block's cube `Center.Y` at the block's raw
+      2. **Grounding**: `BlupiController::GetY()` is NOT flush with the terrain's own rendered
+         surface. `TerrainRenderer` places a solid block's cube `Center.Y` at the block's raw
          grid index directly (no `+0.5`), so a column's topmost solid block at grid `Y=g` has its
          visual top surface at world `Y=g+0.5` — but `GroundHeightAt()` returns `g+1` (matching the
          separate `MoveObject`/`BigDecor` cube convention of sitting a full unit above the floor
@@ -584,7 +584,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       absence. That block accelerates `m_blupiVitesseY` upward every `ScaleTime(6)` ticks:
       no input → terminal `-3.0` px/tick; `Jump`/Up held → faster `-5.0` px/tick; Down held →
       decelerate back toward `0` (hover), never into a descent. (Negative is up in the real
-      2D screen-down Y space.) Ported into `GEBlupiController::Step()`'s own balloon branch with
+      2D screen-down Y space.) Ported into `BlupiController::Step()`'s own balloon branch with
       `kBalloonRiseSpeed`/`kBalloonRiseSpeedFast`/`kBalloonRiseAccel`, converting real px/tick at
       the pinned 20fps with 64px per block into this engine's 1-block-per-unit, +Y-up space
       (`px/tick * 20 / 64`): 0.9375 / 1.5625 units/s terminal, 1.0417 units/s^2 acceleration.
@@ -662,7 +662,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       values; 0.8 looked worse/smaller than 0.6, settled on 0.6) — same category and rigor as
       `kPlaceholderModelScale`/`kPlaceholderModelYOffset`, not a computed value. Re-verified live in
       open floor (no wall nearby) to confirm no new "floating"/mispositioned look was introduced.
-      Render-only — does not touch `GEBlupiController`'s own collision point at all. Full regression
+      Render-only — does not touch `BlupiController`'s own collision point at all. Full regression
       clean on all 3 native build dirs (same single pre-existing unrelated failure); no `ctest`
       coverage exists for avatar rendering specifically (third-person-only, screenshot-based),
       matching the same verification shape as the two sibling constants.
@@ -684,7 +684,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 
 ### Phase 8 — Sound (`E3D-MIG-080`-`089`)
 
-- [x] `080`/`081` `GESound` class, real `SoundEffect`/`SoundEffectInstance` CNA API, all 93 real
+- [x] `080`/`081` `Sound` class, real `SoundEffect`/`SoundEffectInstance` CNA API, all 93 real
       `.wav` files load, real per-channel volume/conflict table (channel 10 exempted from the
       no-overlap rule, matching real behavior). Wired to jump/land/footstep.
 - [~] `082` Channel-index parity confirmed exact; pitch intentionally NOT applied yet
@@ -694,20 +694,20 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       interval, buff-warning timing, etc. beyond current approximations).
 - [~] `084` `SoundEnviron()` terrain-specific footstep remapping — **footstep half done
       2026-07-12**, head-bump half not applicable yet. New
-      `GESound::FootstepChannelFor(icon)`, a pure icon->channel lookup covering all 7 real ranges
+      `Sound::FootstepChannelFor(icon)`, a pure icon->channel lookup covering all 7 real ranges
       from `mobile-eggbert-reference/07-sounds.md` (78: 32-34/41-47/139-143, 80: 1-28/78-90/
       250-260/311-316/324-329, 82: 284-303/338, 84: 341-363, 86: 215-234, 88: 246-249, 90:
       107-109), falling back to the generic channel 3 outside all of them. Wired into both
-      `PlayStep()`/`PlayLand()`, keyed off `GEBlupiController::GetGroundBlockType()`. **Found and
+      `PlayStep()`/`PlayLand()`, keyed off `BlupiController::GetGroundBlockType()`. **Found and
       fixed a real, pre-existing bug while researching this**: `PlayLand()` played channel 4, but
       the real source's channel 4 is head-bump/ceiling-hit — an entirely different event (hitting
       an obstacle above during a jump) — not landing at all; channel 3 covers BOTH footstep and
       landing in the real game. This wrong mapping was ported verbatim from
-      `GalaxyEggbertSimple3D`'s own `GESound` (predating the later, independently-verified
+      `GalaxyEggbertSimple3D`'s own `Sound` (predating the later, independently-verified
       channel research in `07-sounds.md`) and silently carried into `GalaxyEggbertCNA`. Fixed
       `PlayLand()` to channel 3, matching `PlayStep()`. Head-bump itself (channel 4 and its own
       79/81/83/85/87/89/91 terrain remaps) is NOT wired — there is no ceiling-hit detection in
-      `GEBlupiController` at all (Blupi's upward jump arc has no "hit an obstacle above" event to
+      `BlupiController` at all (Blupi's upward jump arc has no "hit an obstacle above" event to
       remap), a separate, not-yet-implemented mechanic; out of this task's scope. Verified: 10 new
       `VerifyInteractionSystem` assertions (one representative icon per range + the generic
       fallback) + full suite (63/63 unit tests, all verify tools) + both backends (live headless
@@ -717,7 +717,7 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       **Checked 2026-07-12, genuinely blocked, not attempted**: per
       `mobile-eggbert-reference/07-sounds.md`, channels 46-49/65 each pair to a distinct idle-
       boredom animation VARIANT (`Ouf1a`/`Ouf1b`/`Ouf5`/`Mockeryp`/`Ouf3`/`Ouf4`/`Mockery`/
-      `Mockeryi`) that doesn't exist as an `AnimState` in `GEBlupiController` at all yet — these
+      `Mockeryi`) that doesn't exist as an `AnimState` in `BlupiController` at all yet — these
       are new animation states, not sound-only additions, and implementing them meaningfully
       needs the same real `table_blupi` timing/state transcription `E3D-MIG-064` already flags as
       blocked on `069` (the real 3D Blupi model) and requiring explicit user approval. Channel 37
@@ -736,16 +736,16 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       Mirror/Invert(40)'s 66/67 pair remains unimplemented since Mirror/Invert itself isn't a
       modeled `SecretPower` value (see `174`'s own note) — the only real remaining piece of this
       task, blocked on that separate mechanic ever being scoped.
-- [ ] `087` Corrected pickup sound channels are already applied in `GEInteractionSystem`
+- [ ] `087` Corrected pickup sound channels are already applied in `InteractionSystem`
       (treasure/key 11 or 19, egg 3) — extend the same rigor to every future pickup/enemy/hazard
-      sound trigger rather than reusing `GESound`'s convenience shortcuts (`PlayCollect`/
+      sound trigger rather than reusing `Sound`'s convenience shortcuts (`PlayCollect`/
       `PlayLife`) which were found to be imprecise.
 
 ### Phase 9 — HUD (`E3D-MIG-090`-`093`) — `Decor::DrawInfo`'s real scope complete (2026-07-13)
 
 - [x] `090`-`093` Minimal lives/world/treasure HUD — **the real `Decor::DrawInfo` scope is now
       complete** (2026-07-13), drawn via real 3D
-      quads (`GEHud`, NOT `SpriteBatch` — see that class's own comment for why: CNA's Vulkan
+      quads (`Hud`, NOT `SpriteBatch` — see that class's own comment for why: CNA's Vulkan
       backend records every `SpriteBatch` batch before every 3D draw each frame, so a sprite HUD
       is always painted over by the 3D scene). Done: life icons (`blupi.png`), key icons
       (`element.png`), treasure counter text + `pad.png` panel (`text.png`, glyph-index-is-ASCII,
@@ -767,11 +767,11 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       `## 2.3` for independent re-verification against whichever other real function (if any)
       actually implements them, rather than assumed real. `HUD-014` (camera shake) IS confirmed
       real (`m_decorAction`/`DecorAction::SmallShake`/`BigShake`) but belongs with camera work, not
-      `GEHud`.
+      `Hud`.
 
 ### Phase 10 — Gameplay parity (`E3D-MIG-100`-`107`)
 
-- [~] `100` Pickups: treasure/egg/exit/keys done (`GEInteractionSystem`, 2026-07-10); dynamite,
+- [~] `100` Pickups: treasure/egg/exit/keys done (`InteractionSystem`, 2026-07-10); dynamite,
       doors/keys, secret powers, bullet pack also done since (`E3D-MIG-155`/`160`-`162`/`170`-
       `172`/`174`/`175`, all 2026-07-12) — remaining pickup types are the deliberately-deferred
       ones documented under those same task IDs (2-stage delay, sparkle-fx), not unstarted work.
@@ -809,14 +809,14 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
 mobile-eggbert-reference/04-enemy-behavior.md and /12-hazards-and-interactables.md are the source
 of truth; do not invent stomp/hit feel not documented there.
 
-- [x] `130` Lives/gauge/respawn **foundation** done (2026-07-11): `GEInteractionSystem::Lives()`/
+- [x] `130` Lives/gauge/respawn **foundation** done (2026-07-11): `InteractionSystem::Lives()`/
       `LoseLife()`, default 3, +1 per egg up to `MAX_EGG_COUNT=10`, real reset-to-3-on-zero
       (`DoorsLost()`) behavior — verified via `VerifyInteractionSystem`. This only unblocks per-type
       enemy work (`131`-`137`) and hazards (Phase 14) to actually call `LoseLife()` — none of them
       do yet (still `[ ]` below), so enemy contact still does nothing.
 - [~] `131` **Shared patrol-turn cycle done 2026-07-11** — verified directly against
       `Decor.cpp:8005-8141` (`Decor::MoveObjectStepLine`), not just the reference doc. New
-      `AdvancePatrolStep()` in `GEInteractionSystem.cpp` implements the real 4-phase state
+      `AdvancePatrolStep()` in `InteractionSystem.cpp` implements the real 4-phase state
       machine exactly (dwell@`posStart` for `timeStopStartTicks` → advance to `posEnd` over
       `stepAdvanceTicks` → dwell@`posEnd` for `timeStopEndTicks` → recede over
       `stepRecedeTicks` → loop), using normalized linear interpolation (equivalent to the real
@@ -837,7 +837,7 @@ of truth; do not invent stomp/hit feel not documented there.
       synthetic patrol object with a symmetric ~4s cycle, sampled mid-dwell at each end for
       timing-forgiving checkpoints) and an extended `MoveObjectRecordTests` round-trip
       assertion.
-- [~] `132` **Shared kill-list contact-kill done 2026-07-11** in `GEInteractionSystem`, **widened
+- [~] `132` **Shared kill-list contact-kill done 2026-07-11** in `InteractionSystem`, **widened
       2026-07-11** beyond just types 2/3 (verified against `Decor.cpp:5782-5816` directly, not
       just the reference doc — that source block IS the real shared contact check for exactly 8
       types: `ObjectType2`/`3`/`4`(bulldozer)/`16`(spider)/`17`(fish)/`20`(bird)/`96`/`97`
@@ -852,8 +852,8 @@ of truth; do not invent stomp/hit feel not documented there.
       cosmetic — contact radius is a plain sphere, same simplification as every pickup type
       above), and follower 96/97's real homing-toward-Blupi movement (a genuinely separate
       feature — an un-homing follower still correctly kills on contact). New
-      `GEInteractionSystem::DiedThisFrame()` lets the caller apply respawn (the system itself has
-      no access to `GEBlupiController`). Icon-cycling animation for all these types was already
+      `InteractionSystem::DiedThisFrame()` lets the caller apply respawn (the system itself has
+      no access to `BlupiController`). Icon-cycling animation for all these types was already
       implemented earlier (billboard rendering, NEXT.md §3) — this task was only ever about the
       contact/kill behavior. A spider (`ObjectType16`) is now placed in `worlds3d/world001.vwr`'s
       south tunnel so this is genuinely playable, not just tested via a synthetic injection.
@@ -870,7 +870,7 @@ of truth; do not invent stomp/hit feel not documented there.
       fires two horizontal shots per turn-dwell, frame 3 away from the upcoming walk direction and
       frame 21 toward it (**correction vs. this file's own earlier prose summary**, which had the
       two frames backwards — re-verified twice against the exact source condition/speed-sign
-      pair). New `SearchAirDistance()` in `GEInteractionSystem.cpp` is a real grid-cell raycast
+      pair). New `SearchAirDistance()` in `InteractionSystem.cpp` is a real grid-cell raycast
       (one cell == one real 64px tile) reproducing `SearchDistRight`'s "count clear cells to the
       next wall" behavior, including the real "0 distance = cancelled, but the attack sound still
       plays anyway" nuance (`ObjectStart` returns a valid slot even on that path — its `!= -1`
@@ -880,7 +880,7 @@ of truth; do not invent stomp/hit feel not documented there.
       `IsGenericHazard()`) — only the fired projectile is, always fatal on contact (real
       shield/hide immunity gates **fixed 2026-07-12 as part of `170`** — this note was written
       before that landed and was never updated; superBlupi immunity remains NOT modeled, no such
-      concept exists). New `GEWorldRuntime::GetWorldMutable()`
+      concept exists). New `WorldRuntime::GetWorldMutable()`
       accessor added for test tooling (hand-carving a guaranteed-shape ledge-over-a-pit/walled
       corridor rather than depending on incidental terrain shape elsewhere). A real, playable
       blupih ("turret perch", 3x3 ledge with a notch over a 3-cell drop) and blupit ("sentry
@@ -891,7 +891,7 @@ of truth; do not invent stomp/hit feel not documented there.
       cancellation, both horizontal shots' distances and directions).
 - [x] `135` **Type 44 (wasp) done 2026-07-11** — verified directly against `Decor.cpp:5826-5863`
       (trigger) and `5766-5781` (hazard-pop interaction), not just the reference doc. New
-      `GEBlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()` (real
+      `BlupiController::TriggerBalloon()`/`IsBallooned()`/`PopBalloon()` (real
       `!m_blupiBalloon` re-trigger guard, real ~10s duration — same `m_blupiTimeShield=100`/
       decrement-every-`ScaleTime(2)`-ticks pattern as Crusher, NOT literally "100 ticks").
       **Vertical physics corrected 2026-07-18** (user-reported: Blupi should float/hover, not just
@@ -902,11 +902,11 @@ of truth; do not invent stomp/hit feel not documented there.
       `m_blupiVitesseY`/`m_blupiAir`) confirms real Blupi genuinely FREEZES at a fixed height —
       true zero-gravity suspension, not a slow sink — since the only code path that would ever set
       `m_blupiAir=true`/resume gravity is itself gated off for the whole balloon duration. Fixed by
-      skipping gravity integration entirely while `m_balloon` is active (`GEBlupiController::
+      skipping gravity integration entirely while `m_balloon` is active (`BlupiController::
       Step()`) instead of applying a reduced multiplier; `kBalloonGravityMultiplier` removed as
       dead code. `VerifyBlupiMovement.cpp`'s existing "falls slower" assertion was itself
       re-verified and tightened to assert the height is EXACTLY unchanged over a multi-step span.
-      Contact does NOT kill Blupi or destroy the wasp (`GEInteractionSystem::BalloonTouchedThisFrame()`).
+      Contact does NOT kill Blupi or destroy the wasp (`InteractionSystem::BalloonTouchedThisFrame()`).
       **Real hazard-pop interaction implemented**: while ballooned, touching exactly 4 of the 8
       shared-kill-list types (`3`/`16`/`96`/`97` — confirmed via the real source's if/else-if
       chain, NOT all 8) pops the balloon instead of killing, and does NOT destroy the popping
@@ -953,10 +953,10 @@ of truth; do not invent stomp/hit feel not documented there.
       death via the shared per-action life-loss dispatch), it just ALSO plays a different sound/
       shake and clears vehicle/Balloon/Ecrase state when contact happens while riding/ballooned/
       squashed — mirroring what `BlupiDead()` already does unconditionally for every real death
-      cause. That state-clearing is now faithful (`GEBlupiController::TriggerDeathLock()` fixed to
+      cause. That state-clearing is now faithful (`BlupiController::TriggerDeathLock()` fixed to
       match `BlupiDead()`, see `067`'s own entry) — the one remaining gap is purely cosmetic:
       this engine always plays the plain channel-51 sound regardless of vehicle/Balloon/Ecrase
-      state at contact (`GEInteractionSystem` has no `GEBlupiController` access to know which
+      state at contact (`InteractionSystem` has no `BlupiController` access to know which
       applies), not worth new plumbing for an audio-only distinction. The real unconditional taunt
       icon is also NOT modeled — no idle-taunt animation system exists at all. The sample world's placement
       (`tools/GenerateSampleWorld3D.cpp`'s walled-room guardian) was converted from a zero-range
@@ -972,7 +972,7 @@ of truth; do not invent stomp/hit feel not documented there.
       completing Phase 13: verified directly against `Decor.cpp:9646-9678` (the wake box) and
       `8025-8064` (the homing step). A dormant `96` wakes into the homing `97` once Blupi is
       within its padded detection box (real 100px-padded rect approximated as a circular distance
-      check, same simplification as every other proximity test in `GEInteractionSystem`; real
+      check, same simplification as every other proximity test in `InteractionSystem`; real
       channel 92 wake sound). Once awake it steps X and Y independently (Chebyshev-style, not a
       normalized diagonal) toward Blupi's live position at the real 1px/tick speed (≈0.3125 grid-
       units/sec); Z is left untouched (real mobile-eggbert has no Z axis, matching blupih/blupit's
@@ -994,7 +994,7 @@ Nothing here is started. Full spec: `mobile-eggbert-reference/12-hazards-and-int
 Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/blitz/fan do not.
 
 - [x] `140` Lava (icon 68) — deterministic death, no immunity of any kind. Done 2026-07-11:
-      `GEBlupiController::GetGroundBlockType()` (new, testable helper) detects standing on a lava
+      `BlupiController::GetGroundBlockType()` (new, testable helper) detects standing on a lava
       block, `GalaxyEggbertCnaGame::Update()` triggers the same death consequence as
       `E3D-MIG-067`'s fall-off-world case (shared `triggerDeath()` lambda, channel 8). Verified via
       a new synthetic-world test in `VerifyBlupiMovement`. Deliberately does NOT reuse
@@ -1008,13 +1008,13 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       `VerifyBlupiMovement`.
       **Corrected 2026-07-16**: this entry was stale on 2 counts. (1) **Vehicle immunity fixed**
       2026-07-16 as part of that session's broader vehicle-gate audit — Overcraft/Jeep/Tank now
-      correctly grant immunity (`GEBlupiController::HasVehicleHazardImmunity()`); focus still isn't
+      correctly grant immunity (`BlupiController::HasVehicleHazardImmunity()`); focus still isn't
       modeled (no such concept exists). (2) **Drip (404) was already done 2026-07-14** (see
       `TILE-032`) — this entry's own "Drip NOT done, blocked on ThinMechanical" claim predates that
       and was never updated; Drip is a real, placeable `BlockTypes` constant and shares the same
       vehicle-immunity fix as Spike.
 - [x] `142` **Saw (378/379) + switches done 2026-07-11** — verified directly against
-      `Decor.cpp:7131-7148` (not just the reference doc). New `GEWorldRuntime::TryActivateSwitch()`:
+      `Decor.cpp:7131-7148` (not just the reference doc). New `WorldRuntime::TryActivateSwitch()`:
       call on an edge-detected action-button press while grounded; a no-op unless standing on a
       `Switch`/`SwitchOff` tile; toggles the switch tile to the opposite state, then scans the real
       41-cell window (this switch's X ±20, same Y and Z — `BlockTypes.hpp`'s own pre-existing
@@ -1037,7 +1037,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       (`GalaxyEggbertCnaGame.cpp`, right before the `TryActivateSwitch()` call only — NOT the whole
       shared action-button block, since Dynamite/Perso/vehicle mount-dismount share the same press
       with their own independent real gates, and dismounting must still work while riding).
-      `TryActivateSwitch()` itself is unchanged (still has no `GEBlupiController` access, matching
+      `TryActivateSwitch()` itself is unchanged (still has no `BlupiController` access, matching
       the established decoupling). Not unit-testable at this layer (no test harness for
       `GalaxyEggbertCnaGame` itself); verified via full regression suite (only the pre-existing
       unrelated `easy-gl-resource-smoke-tests` failure) + a live headless launch/exit smoke check,
@@ -1045,7 +1045,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       **Render mode fixed (2026-07-11, same day, live user re-check)**: Saw/SawStopped
       (378/379) were rendering as plain `UniformCube`s (falling through every special-geometry
       table) — user reported "nema to byt na krychly" (shouldn't be on a cube). Added both icons
-      to `GEInnerFlatPlateTiles.cpp`'s confirmed table (a genuinely thin double-sided plate
+      to `InnerFlatPlateTiles.cpp`'s confirmed table (a genuinely thin double-sided plate
       through the block's middle, outer 6 faces never drawn), superseding an earlier
       questionnaire pass' undecided "ThinMechanical" placeholder categorization —
       `mobile-eggbert-reference/02-tiles.md`/`questionnaire-all-remaining-tiles.md` both updated.
@@ -1066,14 +1066,14 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       (`IsGroundAnchoredPlateIcon()`), leaving every other confirmed `InnerFlatPlate` icon
       unaffected. The hardcoded `PlateAxis::X` icon default was ALSO wrong in principle (correct
       only for this one placement's corridor direction, not for a future Saw in a Z-running
-      corridor) — replaced with new `GEPlateRotationMetadata.hpp/.cpp`
-      (`src/GalaxyEggbertCNA/Game/`, deliberately Easy3D/CNA-independent so world-authoring tools
-      can set it without linking Easy3D, matching `GEBlupiController`/`GEWorldRuntime`'s own
+      corridor) — replaced with new `PlateRotationMetadata.hpp/.cpp`
+      (`src/GalaxyEggbert/Game/`, deliberately Easy3D/CNA-independent so world-authoring tools
+      can set it without linking Easy3D, matching `BlupiController`/`WorldRuntime`'s own
       precedent), a 1-byte per-PLACEMENT "rotated 90°" flag stored via `Worlds::World`'s existing
       sparse block extra-metadata mechanism (`kPlateRotationMetadataType=2`, next after
       `MoveObjectRecord`'s own `kMoveObjectMetadataType=1`). Saw's own icon default reverted to
       the shared `Z` axis; `GetInnerFlatPlateAxis()` now takes a `rotated` bool and swaps X<->Z.
-      `GETerrainRenderer` collects all rotated positions once per (re)build into a packed-key hash
+      `TerrainRenderer` collects all rotated positions once per (re)build into a packed-key hash
       set for O(1) lookup across its 3 `AppendSpecialGeometry()` call sites.
       `tools/GenerateSampleWorld3D.cpp` now calls `SetPlateRotated(world, 70, 0, 67, true)`
       explicitly for the real switch+saw pair. Verified: metadata round-trips through `.vwr`
@@ -1089,7 +1089,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       0.5f`), extending downward from there. Confirmed live: the screenshot shows the blade now at
       the top of its recessed "pit," flush with the surrounding floor, not at the bottom.
 - [x] `143` **Crusher (317) done 2026-07-11** — verified directly against `Decor.cpp:5549-5597`/
-      `5180-5197`/`7277-7288` (not just the reference doc). New `GEBlupiController::TriggerCrush()`/
+      `5180-5197`/`7277-7288` (not just the reference doc). New `BlupiController::TriggerCrush()`/
       `IsEcrased()`: real `!m_blupiEcrase` re-trigger guard (idempotent, returns false if already
       squashed), reduced move speed (`kEcraseSpeedMultiplier=0.5`, an approximation — the real
       table's "×4 of m_blupiSpeedX" figure doesn't cleanly convert to a fraction of `kMoveSpeed`),
@@ -1097,14 +1097,14 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       100-ticks-at-every-2nd-tick duration exactly, just as a plain countdown instead of a
       tick-based decrement). Real entry sound (channel 70) and recovery sound (channel 41,
       confirmed shared with other buff-expiry code, not crusher-specific) both wired. New
-      `GEWorldRuntime::IsCrusherActiveAtPhase()` approximates the real 3-out-of-10 danger window
+      `WorldRuntime::IsCrusherActiveAtPhase()` approximates the real 3-out-of-10 danger window
       (`m_time/3%10<=2`) — the real check runs on an explicitly non-FPS-normalized raw frame
       counter (a documented real-source quirk), which has no exact equivalent at this class's
       fixed 20-ticks/sec reference rate, so the same divisor shape is reused against that instead.
       No vehicle/focus gating modeled (same reason as spikes — neither concept exists yet).
       Verified via a `VerifyBlupiMovement` state-machine test (trigger/idempotency/speed/jump-
       block/recovery) and 5 `VerifyInteractionSystem` cycle-phase assertions.
-- [x] `144` **Blitz (305) done 2026-07-11** — new `GEWorldRuntime::IsBlitzActiveAtPhase(int)`
+- [x] `144` **Blitz (305) done 2026-07-11** — new `WorldRuntime::IsBlitzActiveAtPhase(int)`
       (static/pure, tested directly) replicates the real 100-tick flicker cycle exactly (lethal
       only on even ticks of the first half, 25% duty), using the same 20-ticks/sec `animPhase_`
       the per-tile animation-divisor system already advances at — no simplification needed here,
@@ -1117,7 +1117,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       life, gated on grounded + not already airborne (real
       `!m_blupiNage && !m_blupiSurf && !m_blupiSuspend && !m_blupiAir`, only the last clause is
       relevant here since none of the other 3 states exist yet). New
-      `GEBlupiController::TriggerSpringBounce(bool jumpHeld)` (idempotent, same
+      `BlupiController::TriggerSpringBounce(bool jumpHeld)` (idempotent, same
       no-op-while-already-triggered shape as `TriggerCrush()`/`TriggerBalloon()`) sets the real two
       noPower magnitudes (held=-19, not-held=-10 in the real source's own down-positive
       convention) — Power/SecretPower isn't modeled (Phase 17), so the two Power magnitudes
@@ -1154,24 +1154,24 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       `Config::ScaleDiv`-normalized like almost every other timer in the source, an explicit
       exception the reference doc calls out (same category as Crusher's own raw `m_time`). At
       this project's Fps20 reference rate `Config::ScaleDiv(N) == N` exactly, so raw `m_time` and
-      `GEWorldRuntime`'s own 20-ticks/sec `animPhase_` are numerically identical — unlike
+      `WorldRuntime`'s own 20-ticks/sec `animPhase_` are numerically identical — unlike
       Crusher, this is an EXACT reuse, not an approximation. New static/pure
-      `GEWorldRuntime::IsTempPassableAtPhase(int)`, same shape as `IsBlitzActiveAtPhase`/
+      `WorldRuntime::IsTempPassableAtPhase(int)`, same shape as `IsBlitzActiveAtPhase`/
       `IsCrusherActiveAtPhase`. No per-cell phase offset in the real source, so every Temp tile
       in a level blinks in perfect lockstep.
       Unlike every hazard/mechanic so far (all gated via a post-`Step()` `GetGroundBlockType()`
       check), this changes whether the tile IS solid ground at all — a collision-shape question,
       not a "what am I standing on" query — so it's threaded directly into
-      `GEBlupiController::Step()`'s new `tempPassable` parameter (default `false`, so every
+      `BlupiController::Step()`'s new `tempPassable` parameter (default `false`, so every
       existing call site is unaffected) down into `GroundHeightAt()`'s own solid-block scan
       (skips a `Temp` cell and keeps scanning downward when passable, so Blupi genuinely falls
       through to whatever's beneath, both for the main landing check and `TryMoveAxis`'s step-up
-      gate). `GEBlupiController` itself stays fully engine-agnostic/decoupled from
-      `GEWorldRuntime` (per its own class-comment design goal) — the caller
+      gate). `BlupiController` itself stays fully engine-agnostic/decoupled from
+      `WorldRuntime` (per its own class-comment design goal) — the caller
       (`GalaxyEggbertCnaGame::Update()`) pre-computes the bool from
-      `GEWorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase())` once per frame and
+      `WorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase())` once per frame and
       passes it in, same pattern as `blupiCrouching`/`blupiBallooned` in
-      `GEInteractionSystem::Update()`. Already playable — icon 324 is part of the tile
+      `InteractionSystem::Update()`. Already playable — icon 324 is part of the tile
       exhibition's full 1..440 icon range, no dedicated placement needed. Verified via 4 new
       `VerifyBlupiMovement` assertions (solid-window ground detection + a genuine fall-through
       onto a real floor beneath once passable) and 5 new `VerifyInteractionSystem` phase-boundary
@@ -1204,7 +1204,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         per-cell-occupancy collision rewrite. Detection reverted to `GetBlockTypeAbove()` (one
         cell above Blupi's own position), matching the real geometry exactly, not just adapting
         around it.
-      - New `GEBlupiController::TriggerTeleport(icon)`/`IsTeleporting()`/`GetTeleportIcon()`:
+      - New `BlupiController::TriggerTeleport(icon)`/`IsTeleporting()`/`GetTeleportIcon()`:
         idempotent (same shape as `TriggerCrush`/`TriggerBalloon`/`TriggerSpringBounce`), gated on
         grounded + not ballooned/squashed (real `!m_blupiAir && !m_blupiBalloon && !m_blupiEcrase`
         — vehicles/focus aren't modeled). Real `kTeleportDuration=6.4s` (`Config::ScaleTime(128)`
@@ -1212,7 +1212,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         freezes Blupi (no turning/movement/jump/gravity at all) via an early return — matches the
         real source's own effective behavior (`m_blupiFocus=false` gates essentially every other
         per-frame block, and nothing sets `m_blupiAir` during the transit).
-      - New `GEWorldRuntime::FindTeleportDestination()` (real `SearchTeleporte`): a full-grid scan
+      - New `WorldRuntime::FindTeleportDestination()` (real `SearchTeleporte`): a full-grid scan
         for another cell of the same icon, excluding candidates within a fixed radius of Blupi's
         own position (replacing the real source's exact entry-tile-equality skip, since this
         engine's "one cell below, not exactly at" entry convention doesn't map to an exact tile
@@ -1257,13 +1257,13 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         Root-caused via a live headless screenshot (world isolated down to just this one pillar,
         background disabled, to rule out every other on-screen object first): the cube's own 4
         side faces reuse the WHOLE tile texture (the shared `kSymmetricEntries` convention every
-        other icon in `GEDirectionalCubeTiles.cpp` uses) — which includes the SAME lower-two-
+        other icon in `DirectionalCubeTiles.cpp` uses) — which includes the SAME lower-two-
         thirds "post/spike" graphic `TeleporterTipUv()` already crops out for the real 3D
         `PyramidTipItem` hanging below. Alpha-cutout on that graphic made the cube's own flat side
         face look like a second, fake, flattened spike sitting immediately below the panel — right
         where the real 3D tip already hangs — reading as "the tip renders twice" exactly as
         reported. Fixed by adding a teleporter-specific override in
-        `GETerrainRenderer.cpp::AppendSpecialGeometry()`: the 4 side faces now sample only the top
+        `TerrainRenderer.cpp::AppendSpecialGeometry()`: the 4 side faces now sample only the top
         third of the tile (new `TeleporterPanelUv()`, the mirror crop of `TeleporterTipUv()`) —
         the panel graphic stretched across the full face, no more baked-in spike shape. The real
         3D tip itself needed no repositioning (already flush with the cube's bottom face,
@@ -1281,12 +1281,12 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       section. **Real architectural fix required first**: water blocks were solid-for-collision
       (any non-air block counted as solid ground, so Blupi always rested ON TOP of the topmost
       water layer, exactly like land) — made water ALWAYS non-solid in
-      `GEBlupiController::GroundHeightAt()` (same precedent as the teleporter pillar/fan head),
+      `BlupiController::GroundHeightAt()` (same precedent as the teleporter pillar/fan head),
       so Blupi genuinely sinks through any depth of water to the real floor beneath it. The
       tile at his own resting cell vs. the tile one above it (new `GetBlockTypeAt()`, mirroring
       `GetGroundBlockType()`/`GetBlockTypeAbove()`) then reproduces the real `IsSurfWater`/
       `IsDeepWater` distinction: water-with-dry-above = Surf, water-with-water-above = Nage. New
-      `GEBlupiController::IsSurf()`/`IsNage()`/`GetWaterGaugeLevel()`/`JustDrowned()`, set via two
+      `BlupiController::IsSurf()`/`IsNage()`/`GetWaterGaugeLevel()`/`JustDrowned()`, set via two
       new `Step()` parameters (`inSurfWater`/`inDeepWater`, both default false, caller-computed
       exactly like `tempPassable`). Gauge: 100→0 over the real ~25s (`kWaterGaugeTickSeconds =
       5/20 = 0.25s/level`, a direct `Config::ScaleTime(5)`-at-20Hz transcription, same technique
@@ -1337,12 +1337,12 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
       (110/114/118/122) belong to a separate, not-yet-render-decided tile family never placed in
       any inspected level, so the trail-walk beyond the head tile itself is NOT ported -- doc
       corrected).
-      - New `GEWorldRuntime::TryConsumeFan(blupiX, blupiY, blupiZ)`: checked one cell ABOVE Blupi
+      - New `WorldRuntime::TryConsumeFan(blupiX, blupiY, blupiZ)`: checked one cell ABOVE Blupi
         (matching `GetBlockTypeAbove()`'s convention, same placement pattern the teleporter
         established), a no-op unless that cell is a real fan head icon
         (`BlockTypes::isFan()`); on a match, immediately clears it to `Air` (real
         `ModifDecor(pos, -1)` on the head tile) and returns the icon. Fan head icons are ALWAYS
-        non-solid for collision (`GEBlupiController::GroundHeightAt`'s own new `isFan()` skip,
+        non-solid for collision (`BlupiController::GroundHeightAt`'s own new `isFan()` skip,
         same architecture as the teleporter pillar). Real sub-tile-band gating is NOT modeled (no
         sub-tile position exists). Shield/Hide immunity IS modeled (`!blupi_.IsInvincible()` at the
         call site, `GalaxyEggbertCnaGame.cpp` -- this note previously claimed it wasn't, stale since
@@ -1352,7 +1352,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         `triggerDeath()` lambda; the real particle/screen-shake effects are NOT modeled (no
         particle system exists).
       - **Found a real, deeper architectural collision limitation while verifying this live** (not
-        fixed, tracked in `NEXT.md` §5): `GEBlupiController::GroundHeightAt()` always resolves a
+        fixed, tracked in `NEXT.md` §5): `BlupiController::GroundHeightAt()` always resolves a
         column's floor as the single TOPMOST solid block in the ENTIRE column, with no concept of
         "nearest solid surface at or below Blupi's own current height." The sample world's south
         tunnel has a solid `BrickWall` ceiling (`y=3`) over its own open, walkable `y=1` interior
@@ -1364,7 +1364,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
         ceiling instead of a pillar. Confirmed via a standalone scripted walk test -- notably, NOT
         caught by any existing test in this session, including the same tunnel's own already-
         shipped switch/saw pair (`142`), because every prior hazard test used single-position
-        `Step()` calls or direct `GEWorldRuntime` queries, never a genuine multi-column walk into
+        `Step()` calls or direct `WorldRuntime` queries, never a genuine multi-column walk into
         that specific enclosed interior.
       - **Consequently, the fan hazard is placed in 2 new small OPEN rooms** (no walls/ceiling at
         all, same pattern as the teleporter rooms), NOT the tunnel's own roofed interior (which
@@ -1382,7 +1382,7 @@ Note vehicle-immunity is NOT uniform — spikes/drip/saw/crusher have it, lava/b
 
 ### Phase 15 — Crates, lifts, bridges, effects: full fidelity (`E3D-MIG-150`-`159`)
 
-Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spec:
+Extends the basic patrol/push already shipped in `InteractionSystem`. Full spec:
 `mobile-eggbert-reference/14-crates-lifts-bridges-effects.md`.
 
 - [x] `150` Linked-crate flood-fill (`SearchLinkCaisse` equivalent) — done 2026-07-12. Pushing a
@@ -1399,24 +1399,24 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       tests, all verify tools) re-verified.
       **Vehicle-mode gate fixed 2026-07-16**: verified directly against `Decor.cpp:6130-6132` —
       real crate push also excludes every vehicle mode + Balloon/Ecrase. New
-      `blupiCanPushCrate` parameter on `GEInteractionSystem::Update()` (vehicle+Ecrase, computed
+      `blupiCanPushCrate` parameter on `InteractionSystem::Update()` (vehicle+Ecrase, computed
       in `GalaxyEggbertCnaGame.cpp`; Balloon already covered by the existing `blupiBallooned`
       parameter). New `VerifyInteractionSystem` assertion (crate doesn't move with
       `blupiCanPushCrate=false`). Full suite green both backends.
 - [ ] `151` Crate "pop" push variant (landing-into-crate, different base speed) and the real
       20-tick speed ramp-up (vs. today's simplified constant-speed push) — NOT started. The pop
       trigger (landing from a fall while moving horizontally into a crate) needs coordination
-      with `GEBlupiController`'s air/fall state that doesn't exist yet; the speed ramp doesn't map
+      with `BlupiController`'s air/fall state that doesn't exist yet; the speed ramp doesn't map
       cleanly onto this engine's discrete "snap by 1 grid cell per satisfied frame" push model
       (see `150`'s own note) without a deeper rework of crate movement to be continuous/timed
       rather than instant. Deferred, not attempted this session.
 - [x] `152` Platform boarding — done 2026-07-12, verified against `Decor::AscenseurDetect`/
-      `MoveObjectStepLine` (~9184/~8005-8174). `GEInteractionSystem` now detects (before its own
+      `MoveObjectStepLine` (~9184/~8005-8174). `InteractionSystem` now detects (before its own
       per-frame lift-patrol step) whether Blupi's position matches an active lift's current
       surface (X/Z within its footprint, Y at its stand height), remembers the lift, then after
       the patrol step reports the lift's own displacement this tick (`IsRidingLift()`/
       `RideDeltaX()`/`RideDeltaZ()`/`RideStandY()`) for the caller to apply via a new
-      `GEBlupiController::RideLift(x,y,z)` (snaps position, marks grounded, zeroes vertical
+      `BlupiController::RideLift(x,y,z)` (snaps position, marks grounded, zeroes vertical
       velocity — NOT a full `SetPosition()` teleport, since this runs every single frame while
       riding). Unifies the real source's two separate functions (initial-catch-while-falling vs.
       continuous glue) into one per-frame check, since this engine's discrete position doesn't
@@ -1427,7 +1427,7 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       conditions. Verified live (temporary debug instrumentation, reverted before committing):
       Blupi's Y tracked the north-hill lift's ping-pong patrol exactly, staying grounded the
       whole ride, both before and after refactoring the logic from the game loop into
-      `GEInteractionSystem` for testability. New `VerifyInteractionSystem` assertions (riding
+      `InteractionSystem` for testability. New `VerifyInteractionSystem` assertions (riding
       true while positioned on the lift, false when far away, `RideStandY()` matches the lift's
       post-patrol-step height) + full suite (63/63 unit tests, all verify tools) + both backends.
 - [ ] `153` Vertigo edge-detection with auto-slide-off for wide/shiftable lift platforms
@@ -1442,10 +1442,10 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
 - [x] `155` Dynamite — done 2026-07-12, verified directly against `Decor.cpp` (~4792-4812 pickup/
       placement gate, ~8252-8296 fuse timing, ~9058-9175 per-blast effect — not just the
       reference doc's rounded summary). Pickup (`ObjectType55`) caps at exactly 1 carried (real
-      `m_blupiDynamite`, a second does nothing until the first is placed). `GEInteractionSystem::
+      `m_blupiDynamite`, a second does nothing until the first is placed). `InteractionSystem::
       PlaceDynamite()` (action-button, gated on carrying one + grounded) spawns a real
       `ObjectType56` fuse object. The fuse's `phase` (already advanced generically by
-      `GEWorldRuntime::Update()`) drives the exact real 9-blast sequence — ticks 50/53/55/56/59/
+      `WorldRuntime::Update()`) drives the exact real 9-blast sequence — ticks 50/53/55/56/59/
       62/64/67/69 with their exact real per-blast `(dx,dy)` pixel offsets (read directly from
       `Decor.cpp`, not approximated), /64 to this engine's grid units, real X/Y-only 2D-source
       convention (Z always 0). Each blast: clears Saw/SawStopped hazard tiles in its 2×2-tile
@@ -1515,12 +1515,12 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         research had wrongly concluded both were silent. Both are now fixed to play their real
         immediate sound; re-verified on both backends (78/78 minus the pre-existing unrelated
         `easy-gl-resource-smoke-tests` failure on `build-cna`, 73/73 on `build-cna-vulkan`).**
-      - Architecture: `GEInteractionSystem` has zero camera/graphics dependency — pickup sites
+      - Architecture: `InteractionSystem` has zero camera/graphics dependency — pickup sites
         record a same-frame pending request (`RequestVoyage()`); after `Update()`/`TryPerso()`
         return, `GalaxyEggbertCnaGame::ResolvePendingVoyage()` (which owns `camera_`) projects the
         pickup's world position into 640x480 reference space via the new
-        `GEHud::ProjectWorldToHudSpace()` (uses `Vector4::Transform` for the real clip-space W,
-        then inverts `GEHud`'s own existing ref-space<->viewport mapping) and calls the public
+        `Hud::ProjectWorldToHudSpace()` (uses `Vector4::Transform` for the real clip-space W,
+        then inverts `Hud`'s own existing ref-space<->viewport mapping) and calls the public
         `BeginVoyage()`. This mirrors the already-established pattern used by
         `SpawnInvertBurst()`/`SpawnTeleportArc()`/`ResetMagicTrail()`, and avoided adding camera
         parameters to `Update()`'s already-large (~20-parameter) signature.
@@ -1535,7 +1535,7 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
       - Verified: 18 existing `VerifyInteractionSystem` assertions updated for the new deferred
         timing (treasure/keys/egg/dynamite/Perso/both door-unlock kinds), plus new dedicated tests
         for the interpolation/reward-timing math, the force-complete-on-new-voyage interaction,
-        and `GEHud::ProjectWorldToHudSpace()`'s math against a controlled `Easy3D::Camera3D`.
+        and `Hud::ProjectWorldToHudSpace()`'s math against a controlled `Easy3D::Camera3D`.
         Full suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
         `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`.
 - [x] `159` "Death VFX" (Clear2/Clear3/Clear4 death-animation VFX) — done 2026-07-14, the
@@ -1558,7 +1558,7 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         ("soul ascends" 2000px, Lava, deterministic) both reuse the Voyage machinery `158` built
         (`VoyageKind::Clear2Ascend`/`Clear3Ascend`) — but unlike every pickup kind, BOTH endpoints
         derive from Blupi's OWN position (start = Blupi projected to HUD space via
-        `GEHud::ProjectWorldToHudSpace()`, end = straight up from there by a fixed HUD-space
+        `Hud::ProjectWorldToHudSpace()`, end = straight up from there by a fixed HUD-space
         offset), a natural technical adaptation of the real `pos`/`pos2` (both computed in 2D
         decor-pixel space before a shared `HotSpotToHud()` transform this engine has no equivalent
         2D scrolling space for). Real fixed, NON-distance-proportional durations (`Decor.cpp:
@@ -1580,14 +1580,14 @@ Extends the basic patrol/push already shipped in `GEInteractionSystem`. Full spe
         `stepAdvanceTicks=156` instead of Invert's 78, plus channel 75 (played once, matching real
         source's own single call site for that sound — the existing Saw death-site code already
         played channel 75 itself and had to be changed to NOT double-play it).
-      - **First randomness anywhere in this engine's gameplay code** (`GEInteractionSystem`'s new
+      - **First randomness anywhere in this engine's gameplay code** (`InteractionSystem`'s new
         `rng_`/`RollClear2Coinflip()`, seeded from `std::random_device`) — real `Decor::BlupiDead
         (action1, action2)`'s own `m_random.get()->Next() % 2 == 0` coinflip choice
         (`Decor.cpp:6551-6554`), genuinely non-deterministic in real source and cosmetic-only here
         (never affects `lives_`/reward state, only whether the ascend VFX/sound plays). New
         `VoyagePendingIsAscend()`/`RequestClear2Ascend()` extend the existing pending-request
         round-trip (`158`) for the ONE trigger site with no camera access (the generic-hazard-
-        contact coinflip, inside `GEInteractionSystem::Update()`) — the other 4 trigger sites
+        contact coinflip, inside `InteractionSystem::Update()`) — the other 4 trigger sites
         (fall/Lava/Saw/Fan) live directly in `GalaxyEggbertCnaGame.cpp`, which already has
         `camera_` in scope, so they call `BeginVoyage()`/`SpawnSawDeathBurst()` directly via a new
         `triggerDeathAscend` lambda alongside the existing `triggerDeath`.
@@ -1626,11 +1626,11 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   these 3 sites' real code sets `m_blupiRestart=true` anywhere nearby, unlike the other 9 real
   sites which all do. Faithfully, dying to these 3 causes leaves Blupi exactly where he died
   (once un-Hidden) instead of teleporting him away.
-- Architecture: `GEBlupiController` gained `TriggerDeathLock()`/`IsDeathLocked()`/
+- Architecture: `BlupiController` gained `TriggerDeathLock()`/`IsDeathLocked()`/
   `IsDeathHidden()`/`ConsumeDeathLockResolved()`, reusing the EXACT proven freeze-timer template
   already established by `TriggerTeleport()`/`m_teleporting` — two chained frozen sub-states
-  (the lock, then the life-loss-Voyage window) instead of one. `GEInteractionSystem` stays fully
-  decoupled from `GEBlupiController` (no shared type, matching `158`'s own precedent) — the one
+  (the lock, then the life-loss-Voyage window) instead of one. `InteractionSystem` stays fully
+  decoupled from `BlupiController` (no shared type, matching `158`'s own precedent) — the one
   real trigger site living inside `Update()` itself with no camera/controller access (the
   generic-hazard-contact coinflip) uses a small LOCAL `PendingDeathKind{Clear1,Clear2,Glu}` enum
   + a `*ThisFrame()` pending signal, consumed by the game class's new `ResolveDeathLock()`
@@ -1640,7 +1640,7 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   machinery with a fixed 40-tick total override; `LoseLife()`'s own logic is UNCHANGED, only
   moved from every death-trigger call site to this one deferred resolution point. Game-over
   (`lives_<=1`) is predicted BEFORE starting the Voyage (matching real `else { DoorsLost() }`,
-  no Voyage at all in that case). `GEBlupiController::AnimState::DeathLocked` covers both frozen
+  no Voyage at all in that case). `BlupiController::AnimState::DeathLocked` covers both frozen
   sub-states. **Real per-cause hurt-sprite frames transcribed 2026-07-16** (Blupi-model
   format-agnostic prep): `Tables::table_blupi` parsed directly via a small script (validated by
   reproducing the already-approved `kTeleportingFrames` byte-for-byte first) for all 6
@@ -1650,7 +1650,7 @@ end = Blupi's own post-respawn position). Only THEN does control return.
 - **Significant gap found and fixed 2026-07-16** (while researching the large-creature
   `ObjectType54` contact, `136`): real `BlupiDead()` (`Decor.cpp:6547-6614`) unconditionally clears
   vehicle mount/Balloon/Ecrase/every secret power (Shield/Power/Cloud/Hide)/Invert/Nage/Surf/
-  Suspend/Ghost on EVERY real death, not just a per-hazard special case. `GEBlupiController::
+  Suspend/Ghost on EVERY real death, not just a per-hazard special case. `BlupiController::
   TriggerDeathLock()` previously left every one of these completely untouched across death and
   respawn — meaning dying while riding a vehicle, ballooned, squashed, or with an active secret
   power silently carried that state through respawn, unlike real mobile-eggbert. Fixed by adding
@@ -1658,7 +1658,7 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   timing — immediately at the death trigger, not at the deferred respawn point). Real `BlupiDead()`
   does NOT redeposit a mounted vehicle's pickup back into the world (no such `ObjectStart` call in
   it, unlike voluntary/spring-forced dismount) — dying with one mounted just loses it, matching
-  this fix (no world-facing action, `GEBlupiController` has none anyway). New `VerifyBlupiMovement`
+  this fix (no world-facing action, `BlupiController` has none anyway). New `VerifyBlupiMovement`
   assertions (vehicle/Shield/Invert/Balloon/Ecrase all cleared by a death lock). This is a broader,
   more significant fix than the narrow single-mechanic vehicle-gate fixes elsewhere this session —
   it affects the shared death-lock path used by all 6 real death causes.
@@ -1667,7 +1667,7 @@ end = Blupi's own post-respawn position). Only THEN does control return.
   which, before this change, had ALREADY been moved by the old instant-respawn `triggerDeath()` —
   fixed by capturing the death position first (now largely moot since respawn itself is deferred,
   but the capture-first pattern was kept for clarity/consistency).
-- Verified: new `GEBlupiController`-level tests (per-cause fixed durations including a spot-check
+- Verified: new `BlupiController`-level tests (per-cause fixed durations including a spot-check
   of Clear4's distinct 110-tick duration and Drown's 90, full-frozen movement, `IsDeathHidden()`
   timing, `ConsumeDeathLockResolved()` firing exactly once and echoing the real `shouldRespawn`,
   auto-completion) in `VerifyBlupiMovement`, plus every existing `VerifyInteractionSystem` hazard-
@@ -1692,7 +1692,7 @@ end = Blupi's own post-respawn position). Only THEN does control return.
     working end-to-end, not just in unit tests.
   - **Follow-up, done 2026-07-20 (NEXT.md §8 non-editor task 1):** isolated the icon-48 flight
     itself. New temporary debug scaffold placed Lava directly under Blupi's spawn (via
-    `GEWorldRuntime::GetWorldMutable().setBlock()`, the same grid-coordinate formula
+    `WorldRuntime::GetWorldMutable().setBlock()`, the same grid-coordinate formula
     `GetGroundBlockType()` uses: `round(x+kWorldCenterX)`, `round(z+kWorldCenterZ)`, `round(y)-1`)
     and captured screenshots post-HUD-draw at 0.15s intervals through the transition window
     (gated on `drawFrameIndex_ > terrainPixelPrintedFrame_`, the same Vulkan-mid-draw-readback
@@ -1710,20 +1710,20 @@ Full spec: `mobile-eggbert-reference/06-doors.md`. `160`/`161`/`162` done 2026-0
 `165` deferred (see each entry).
 
 - [x] `160` Door open sequence — done 2026-07-12, verified directly against `Decor::OpenDoor`
-      (~11667). Opening a door (`GEInteractionSystem::OpenDoorAt()`, shared by the key-gated and
+      (~11667). Opening a door (`InteractionSystem::OpenDoorAt()`, shared by the key-gated and
       treasure-gated families below) sets the tile to `Air` and spawns a transient `ObjectType22`
       that slides up by exactly 1 grid unit over the real `Config::ScaleTime(50)` = 50 ticks
       (2.5s at the 20Hz reference rate), then self-destructs — handled directly by its own branch
-      in `GEInteractionSystem::Update()`'s main loop (a one-shot animation, not the generic
+      in `InteractionSystem::Update()`'s main loop (a one-shot animation, not the generic
       dwell/advance/dwell/recede patrol, which loops and doesn't fit). Real channel 33. The
-      slide object's own icon is NOT rendered accurately — `GEObjectIcons::GetObjIcon()` already
+      slide object's own icon is NOT rendered accurately — `ObjectIcons::GetObjIcon()` already
       has no confirmed icon data for type 22 regardless (returns 0), a pre-existing gap unrelated
       to this task.
 - [x] `161` Key pickup/consumption — done 2026-07-12, verified directly against `Decor.cpp`
       ~7360-7394 (`IsDoor`, probes Blupi's own cell AND one cell further in his facing direction)
       and ~5619 (key cleared on use). Doors open AUTOMATICALLY on approach while holding the
       matching key (no action-button gate, unlike switches/dynamite) — new `blupiFacingDX`/`DZ`
-      `Update()` parameters (caller derives them from `GEBlupiController::GetYaw()`) drive the
+      `Update()` parameters (caller derives them from `BlupiController::GetYaw()`) drive the
       2-cell probe. This engine's `keys1_`/`keys2_`/`keys3_` are plain pickup counters (not a
       persisted bitmask) — modeled as "count > 0 opens, cleared to 0 on use", behaviorally
       identical to the real boolean flag for the realistic case (real levels only ever grant one
@@ -1773,7 +1773,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       see `172`'s own note). `E3D-MIG-515`'s "render Sp0-Sp7 as gold-pedestal Billboard" task is
       based on the same wrong premise and should be re-scoped as a HUB-SCREEN world-select icon
       (Phase `## 2 §2 MENU-*` territory), not a secret-power pickup — not touched this session.
-      Implemented alongside this research (`GEBlupiController`'s new `SecretPower` enum/
+      Implemented alongside this research (`BlupiController`'s new `SecretPower` enum/
       `TriggerShield/Power/Cloud/Hide()`/`IsInvincible()`): the real hazard-immunity gate
       (`!m_blupiShield && !m_blupiHide`, confirmed identical across ~15 separate `Decor.cpp` call
       sites — lava/spikes/saw/blitz/crusher/dynamite/fan/the shared kill-list/wasp/large-
@@ -1793,7 +1793,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       `ObjectType.hpp`'s own misleading doc comment — `10-blupi-mechanics.md`'s own research
       already found this exact discrepancy: touching `46` sets `m_blupiOver`, not a separate
       Balloon ride; no confirmed pickup grants the real standalone Balloon vehicle, so it isn't
-      modeled). New `GEBlupiController::VehicleMode` + `TriggerMount()`/`TriggerDismount()`: real
+      modeled). New `BlupiController::VehicleMode` + `TriggerMount()`/`TriggerDismount()`: real
       gate (blocked while already riding ANY vehicle, or Nage/Surf; **not** gated on Shield/Power,
       confirmed real oddity) and mount silently cancelling Cloud/Hide but leaving Shield/Power
       untouched. Real per-mode horizontal max-speed/accel/decel have no established px-to-this-
@@ -1805,8 +1805,8 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       camera pitch on foot) instead of gravity; Jeep/Tank/Skateboard reuse the existing ground
       gravity/jump path unchanged (matching the real source's own "uses the shared ground
       gravity/Air path" note for Skateboard). Mount/dismount + the pickup-deposit-back-into-the-
-      world logic live directly in `GalaxyEggbertCnaGame.cpp` (not `GEInteractionSystem`, which
-      has no access to `GEBlupiController::VehicleMode`) — same action button as switches/
+      world logic live directly in `GalaxyEggbertCnaGame.cpp` (not `InteractionSystem`, which
+      has no access to `BlupiController::VehicleMode`) — same action button as switches/
       dynamite. NOT modeled: Balloon vehicle (no confirmed trigger), tilt easing (Jeep/Tank, no
       visible 3D model to tilt anyway), Overcraft's real altitude-cap/inverted-accel-over-gaps
       nuance (simplified to the same ramp as every other mode), and the real Helicopter floating-
@@ -1816,7 +1816,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       immunity to Spike/Drip/Saw specifically (`!m_blupiOver && !m_blupiJeep && !m_blupiTank`,
       identical clause across all 3), but NOT Helicopter or Skateboard, and NOT Lava/Blitz/Crusher
       (those 3 check only Shield/Hide/SuperBlupi, confirmed no vehicle clause at all — a real,
-      deliberate asymmetry, not an oversight). New `GEBlupiController::HasVehicleHazardImmunity()`
+      deliberate asymmetry, not an oversight). New `BlupiController::HasVehicleHazardImmunity()`
       wired into `GalaxyEggbertCnaGame.cpp`'s Spike/Drip/Saw death checks (Lava/Blitz/Crusher
       deliberately untouched). The real safe-position-FIFO gate (`Decor.cpp:6467-6478`) does NOT
       check vehicle state at all even for these 3 tiles (confirmed directly) — left as-is, already
@@ -1834,7 +1834,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       `if (IsInVehicle() || inNage || inSurf || m_suspended || m_balloon || m_ecrase)`. New
       `VerifyBlupiMovement` assertions (mount fails while ballooned, mount fails while squashed).
       **Found and fixed a real, pre-existing collision bug while live-testing this** (not vehicle-specific):
-      `GEBlupiController::TryMoveAxis()` silently froze ALL horizontal movement once `m_y` fell
+      `BlupiController::TryMoveAxis()` silently froze ALL horizontal movement once `m_y` fell
       far enough negative during a sustained fall through a floorless column (below roughly -2) —
       the step-up check compared the destination's ground height directly against the falling
       Blupi's own deeply-negative Y, misreading "I'm far below because I'm falling" as "that's an
@@ -1858,7 +1858,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       Real exact tick counts (not the earlier "~32/36" approximation): Sucette=32 ticks(1.6s),
       Drink=36(1.8s), Charge=64(3.2s) — all three genuinely freeze Blupi (`m_blupiFocus=false`,
       confirmed) for the full duration, a THIRD application of the same freeze-timer template
-      already built for `TriggerTeleport()`/the death lock (`GEBlupiController::
+      already built for `TriggerTeleport()`/the death lock (`BlupiController::
       TriggerPickupFreeze()`/`IsPickupFrozen()`/`ConsumePickupFreezeResolved()`). A death lock
       started while pickup-frozen always cancels it (real `BlupiDead()` unconditionally overwrites
       whatever action was active).
@@ -1876,12 +1876,12 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
         deferred point): Sucette ch44, Drink ch62, Charge ch55.
       - Real completion also RE-SPAWNS the same pickup at its original position (`ObjectStart`,
         speed=0, static) — a detail missing from `mobile-eggbert-reference/13-object-pickups.md`,
-        now implemented (`GEInteractionSystem::RespawnPickupItem()`).
+        now implemented (`InteractionSystem::RespawnPickupItem()`).
       - **Action-button gate — done as its own follow-up, 2026-07-14 (later the same day,
         user-requested)**: real Sucette/Drink require the action button held at contact
         (`getButtonPressedProperty()==PlayAction && setButtonPressedProperty(None)`,
         Decor.cpp:6025/6053) — this engine previously granted both automatically on contact alone.
-        Fixed via a new `blupiActionPressedEdge` parameter on `GEInteractionSystem::Update()`
+        Fixed via a new `blupiActionPressedEdge` parameter on `InteractionSystem::Update()`
         (edge-detected, same idiom as this engine's own existing switch-activation check —
         real source's own `setButtonPressedProperty(None)` "consume the press" is this engine's
         existing per-frame edge-detect, not separately modeled since nothing else in this engine
@@ -1890,20 +1890,20 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
         real, genuine asymmetry, not an oversight. New tests confirm both the positive case (button
         held → grants) and the negative case (no button → nothing happens) for Sucette/Drink, plus
         an explicit "Charge needs no button" confirmation.
-      - Verified: new `GEBlupiController`-level tests (all 3 durations including idempotent
-        no-op/cancellation-by-death-lock) in `VerifyBlupiMovement`, new `GEInteractionSystem`-level
+      - Verified: new `BlupiController`-level tests (all 3 durations including idempotent
+        no-op/cancellation-by-death-lock) in `VerifyBlupiMovement`, new `InteractionSystem`-level
         tests (contact position capture, `RespawnPickupItem()`, the action-button gate) in
         `VerifyInteractionSystem`. Full
         suite: 78 tests on `build-cna` (99%, only the pre-existing unrelated
         `easy-gl-resource-smoke-tests` failure), 73/73 (100%) on `build-cna-vulkan`.
 - [x] `174` Charge/Cloud(31) — gated against ALL other buffs including itself (loosest-guard
       opposite is Mirror/Invert(40), gated only against Hide) — done 2026-07-12 alongside `170`
-      (`GEBlupiController::TriggerCloud()`'s gate: `== None`, the strictest of the 4, matching the
+      (`BlupiController::TriggerCloud()`'s gate: `== None`, the strictest of the 4, matching the
       real `Decor.cpp` condition exactly). Mirror/Invert(40) itself is a separate, NOT-modeled
       effect (`m_blupiInvert`, not one of the 4 `SecretPower` values) — out of scope for `170`.
 - [x] `175` Bullet pack(29) — done 2026-07-12, verified against
       `mobile-eggbert-reference/13-object-pickups.md`'s "Bullet pack" section (`Decor.cpp`
-      ~5731-5744). New `GEInteractionSystem::BulletCount()` + `kBulletCap=10`, same shape as
+      ~5731-5744). New `InteractionSystem::BulletCount()` + `kBulletCap=10`, same shape as
       `dynamiteCount_`: automatic on contact (no button), gated on `bulletCount_ < kBulletCap` —
       touching a pack already at the cap is a genuine no-op (object stays active, count
       unchanged), matching the real source exactly rather than a running `+=10` total (the real
@@ -1923,7 +1923,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       search of all ~25 real `ObjectType23` references found no code anywhere where a bullet
       damages or destroys an enemy `MoveObject`. The ONLY real collision consequence is
       bullet-vs-Blupi (already implemented in this engine from an earlier session,
-      `GEInteractionSystem.cpp`'s existing `ObjectType23` contact-kill block, `E3D-MIG-134`) — real
+      `InteractionSystem.cpp`'s existing `ObjectType23` contact-kill block, `E3D-MIG-134`) — real
       bullets are a hazard, identical whether enemy-fired (blupih/blupit, already modeled) or
       player-fired (this task). Real trigger: a **dedicated `Fire` key** (`KeyPressFlags::Fire`),
       NOT the Action button used for dynamite/Perso/switches/vehicle mount — this engine's own "F"
@@ -1956,7 +1956,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
       tools, both backends).
 - [x] `176` Pickup sparkle-fx(39) — cosmetic only, spawned by treasure/key pickups — **already
       done, stale duplicate closed 2026-07-17**: this is the exact same mechanic as `VISUAL-012`
-      (done 2026-07-14). Confirmed directly in `GEInteractionSystem.cpp`: `AppendSparkleBurst()`
+      (done 2026-07-14). Confirmed directly in `InteractionSystem.cpp`: `AppendSparkleBurst()`
       is called for `ObjectType5` (treasure, line 1824) and all 3 keys (`ObjectType49/50/51`,
       lines 1846/1853/1860), matching real `Decor.cpp:5948-6006` exactly (treasure and all 3 keys
       fire the same 4-direction `ObjectType39` burst). No further work needed.
@@ -1978,7 +1978,7 @@ Not started. Full spec: `mobile-eggbert-reference/13-object-pickups.md`,
         tile icon 138 or 202 (probe point `pos+(30,22)`), horizontal move is direct `speedX*5` (no
         accel ramp, matching this task's own name), jump is a 10-tick wind-up then a fixed
         `vitesseY=-11` launch + 5-tick no-regrab grace timer, turn takes 10 ticks — every constant
-        is known and portable. `GEBlupiController.hpp` already carries the `BlupiAction` enum
+        is known and portable. `BlupiController.hpp` already carries the `BlupiAction` enum
         values (`StopSuspend`/`MarchSuspend`/`TurnSuspend`/`JumpSuspend`, from an earlier blanket
         transcription) but zero gameplay logic — genuinely unstarted. The blocker: icon 202
         ("thin-bar") is currently flagged in `mobile-eggbert-reference/02-tiles.md` as a NEW,
@@ -2068,7 +2068,7 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       `Content/icons/`, `Content/backgrounds/`, `Content/sounds/` (never `icons4x/`/`backgrounds4x/`,
       mobile-eggbert's own 4x-scale variants, ~437MB combined) — so only those 3 subdirectories are
       preloaded, plus `worlds3d/`/`textures3d/`/`avatars3d/`, for a ~24MB total `.data` package.
-      **Save persistence**: `GESaveData::kSavePath` is now `#if defined(__EMSCRIPTEN__)` (a
+      **Save persistence**: `SaveData::kSavePath` is now `#if defined(__EMSCRIPTEN__)` (a
       platform-path difference, not an engine-API one, so it doesn't fall under CLAUDE.md's
       "no `#ifdef` for engine differences" rule, which is scoped to Simple3D-vs-CNA) —
       `/save/savedata.txt` under Emscripten, unchanged `savedata.txt` natively — paired with a new
@@ -2129,7 +2129,7 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       — since these are Node-only tools (no `.html`/browser use), NODERAWFS gives them the real host
       filesystem directly, matching native behavior exactly with zero source changes and no
       per-file `--preload-file` list to maintain. **`VerifyGESaveData`**: NODERAWFS was wrong here —
-      `GESaveData::kSavePath` is the absolute `/save/savedata.txt` IDBFS mount point (see `BUILD-003`),
+      `SaveData::kSavePath` is the absolute `/save/savedata.txt` IDBFS mount point (see `BUILD-003`),
       and NODERAWFS would instead map that onto the real host's own `/save` (wrong, and would need
       root permission). Fixed with a new minimal `cmake/web/pre-test-save-dir.js` (`--pre-js`, `
       -sFORCE_FILESYSTEM=1`) that just creates `/save` in this tool's own in-memory MEMFS — no IDBFS
@@ -2138,7 +2138,7 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       `CustomWorldsDir()` check hardcoded the native-only expected path
       (`"customworlds/gamer77"`), never accounting for `CustomWorldStorage.cpp`'s own
       `#if defined(__EMSCRIPTEN__)` branch (`/save/customworlds`, same precedent as
-      `GESaveData::kSavePath`) — fixed by mirroring the same platform branch in the test's own
+      `SaveData::kSavePath`) — fixed by mirroring the same platform branch in the test's own
       expected value (`tools/VerifyGEWorldEditor.cpp`). Confirmed this was a pre-existing test gap,
       not something the NODERAWFS change touched (`VerifyGEWorldEditor` needs no NODERAWFS —
       Emscripten's MEMFS already allows creating nested directories anywhere under `/` without a
@@ -2261,7 +2261,7 @@ Corrected 2026-07-13 against real source (a dedicated research pass into `Game1.
 original draft; see each item for what the research confirmed.
 
 - [x] MENU-001 — Render `wait.png` as full-screen image during boot loading phase — **done**,
-      `GEInputPad::DrawWait()`. Confirmed exact 640×480, direct pixel match.
+      `InputPad::DrawWait()`. Confirmed exact 640×480, direct pixel match.
 - [x] MENU-002 — Display animated loading gauge (`jauge.png`, yellow fill) at bottom-centre, same
       position as mobile-eggbert (196, 426 in 640×480 space) — **done**, real position/zoom (2.0)
       confirmed via research and ported exactly; real sprite sheet is 124×88 (4 rows of 22px: row 0
@@ -2279,7 +2279,7 @@ original draft; see each item for what the research confirmed.
 - [x] MENU-005 — Hide wait gauge if resuming a saved game (ContinueMission path) — **done via
       ADAPTED trigger**: real `ContinueMission`/`Decor::CurrentRead()` is a WP7-only OS-reactivation
       snapshot mechanism with no desktop equivalent (confirmed via research); this engine instead
-      checks `GESaveData::GetHasProgress()` at the end of the same 5.0s timer and goes straight to
+      checks `SaveData::GetHasProgress()` at the end of the same 5.0s timer and goes straight to
       `Resume` instead of `Init` when true — same adapted trigger already established for Resume
       itself (plan.md MENU-040..045), not a separate new mechanism.
 
@@ -2288,7 +2288,7 @@ original draft; see each item for what the research confirmed.
 Corrected 2026-07-13 against real source (same research pass) — the draft's MENU-007/017/018
 animation descriptions were WRONG on direction/effect; see each item below.
 
-- [x] MENU-006 — Render `init.png` as full-screen background — **done**, `GEInputPad::DrawInit()`.
+- [x] MENU-006 — Render `init.png` as full-screen background — **done**, `InputPad::DrawInit()`.
       Confirmed exact 640×480. **Pillarbox color fixed 2026-07-18** (user-reported: the blue margin
       strips on the sides of the main menu should be dark blue, not the visibly lighter/different
       shade they were): `GalaxyEggbertCnaGame::Draw()`'s `device.Clear(...)` call — the color
@@ -2323,7 +2323,7 @@ animation descriptions were WRONG on direction/effect; see each item below.
       the real STRING verbatim but a STATIC "0" — per explicit user decision, since this engine has
       no per-gamer 200-door-flags array (a single hand-authored .vwr world, not the real
       100+-level/3-gamer-slot structure) — only the title/lives lines reflect real per-slot state
-      (`GESaveData`'s own 3-independent-gamer-slot extension, plan.md MENU-019/020 below).
+      (`SaveData`'s own 3-independent-gamer-slot extension, plan.md MENU-019/020 below).
 - [x] MENU-011 — "PLAY" button (`InitPlay` glyph) — **done**: real position needs no adaptation
       either. Label rendering deferred (see this section's own closing note).
 - [x] MENU-012 — "SETUP" button (`InitSetup` glyph) — **done**, same icon as `PauseSetup` (19).
@@ -2349,9 +2349,9 @@ animation descriptions were WRONG on direction/effect; see each item below.
       while blupiyoupie stays FIXED size and just fades (not "zooms out" either, no gear.png
       appears — gear.png is MainSetup/PlaySetup's OWN decoration, not Init's). Both verified live via
       headless screenshots mid-fade.
-- [x] MENU-019 — Gamer selection persisted — **done**: `GESaveData` extended (2026-07-13) with a
+- [x] MENU-019 — Gamer selection persisted — **done**: `SaveData` extended (2026-07-13) with a
       real `selectedGamer` field (matches real `data[2]`) + 3 independent `GamerSlot`s
-      (lives/missionNumber/hasProgress each) — see `GESaveData.hpp`'s own Phase-3 comment. A single
+      (lives/missionNumber/hasProgress each) — see `SaveData.hpp`'s own Phase-3 comment. A single
       tap on a gamer slot immediately selects AND persists it, matching real `Game1::SetGamer()`
       (confirmed via research this does NOT also enter Play — a separate InitPlay tap is required).
 - [x] MENU-020 — Gamer slot info read from save data — **done** for lives (real per-slot data);
@@ -2359,7 +2359,7 @@ animation descriptions were WRONG on direction/effect; see each item below.
 
 Real `SetupReset` ("Erase progress", MainSetup-only) is now also wired for real (2026-07-13): confirmed
 via research this is the SAME full `gameData.Reset()` as Cheat5, not a per-gamer-only reset, despite
-its own real label implying otherwise — maps directly onto `GESaveData::Reset()`. InitPlay/InitSetup
+its own real label implying otherwise — maps directly onto `SaveData::Reset()`. InitPlay/InitSetup
 button TEXT labels ("Play"/"Setup") are not yet rendered (deferred, same low-priority-polish status as
 a few other unlabeled buttons already noted elsewhere in this document, e.g. WinLostReturn/SetupReturn).
 
@@ -2368,8 +2368,8 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 - [x] MENU-021 — Hide all menu UI elements during Play phase — **done 2026-07-13** now that
       Init/Wait actually exist (`phaseHasRealScreen` gate in `GalaxyEggbertCnaGame::Draw()` already
       covers Wait/Init/MainSetup alongside Pause/Win/Lost/PlaySetup/Resume).
-- [x] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — **done 2026-07-13** (`GEInputPad::DrawPlay`/`UpdatePlay`) — real icon 3, top-right, real edge/release-triggered press semantics; toggles Play→Pause exactly like the pre-existing Escape key (OR'd, see MENU-027)
-- [x] MENU-023 — On-screen directional pad (`pad.png` icons 0, 1) for touch/gamepad emulation — **done 2026-07-13** — real discrete {-1,0,+1}-per-axis drag (20px reference-space threshold), current-drag-point tracking (not a fixed grab offset), proportionally-adapted position/size (real drawBounds-relative coordinates don't fit this engine's fixed 640×480 reference space at all — see `GEInputPad.hpp`'s class comment)
+- [x] MENU-022 — "PAUSE" button (`PlayPause` glyph) visible during Play — **done 2026-07-13** (`InputPad::DrawPlay`/`UpdatePlay`) — real icon 3, top-right, real edge/release-triggered press semantics; toggles Play→Pause exactly like the pre-existing Escape key (OR'd, see MENU-027)
+- [x] MENU-023 — On-screen directional pad (`pad.png` icons 0, 1) for touch/gamepad emulation — **done 2026-07-13** — real discrete {-1,0,+1}-per-axis drag (20px reference-space threshold), current-drag-point tracking (not a fixed grab offset), proportionally-adapted position/size (real drawBounds-relative coordinates don't fit this engine's fixed 640×480 reference space at all — see `InputPad.hpp`'s class comment)
 - [x] MENU-024 — On-screen "JUMP" button (`PlayJump`) visible during Play — **done 2026-07-13** — real LEVEL-triggered semantics (fires every frame the pointer is inside the rect while held, no release needed), OR'd with the existing keyboard jump (LCtrl)
 - [x] MENU-025 — On-screen "ACTION" button (`PlayAction`) visible during Play — **done 2026-07-13** — real EDGE/release-triggered semantics (single-fire on release, regardless of release position, as long as the press started on the button), OR'd with the existing keyboard action (Space)
 - [ ] MENU-026 — On-screen "DOWN" button (`PlayDown`) visible during Play (when applicable) — **not implemented** (2026-07-13 session scoped to D-pad/Jump/Action/Pause only, per explicit user request — `PlayDown` is real, icon 23, same level-triggered semantics as `PlayJump`, but has no engine-side crouch-toggle use case identified yet; a real, deliberately-deferred gap, not an oversight)
@@ -2377,7 +2377,7 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 
 #### 2.4 Phase: Pause
 
-- [x] MENU-028 — Render `pause.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawPause`) — confirmed exact 640×480, a direct pixel match for the existing reference space, no cropping/UV math needed
+- [x] MENU-028 — Render `pause.png` as full-screen background — **done 2026-07-13** (`InputPad::DrawPause`) — confirmed exact 640×480, a direct pixel match for the existing reference space, no cropping/UV math needed
 - [~] MENU-029 — Render `blupiyoupie.png` scaling/rotating in (same animation as Init but centred at 418,190) — **art+position done 2026-07-13** (confirmed 410×380, centered at real position (418,190)); **static/un-animated** — the real scale/rotate-in intro animation is a documented simplification, not implemented
 - [~] MENU-030 — "MENU" button (`PauseMenu`) with label below — **real position/icon + real "Home" text label done 2026-07-13** (icon 11, unconditional; label added in the same pass as MENU-046..057, verified against `Game1::DrawButtonsText()`'s real `DrawTextUnderButton(PauseMenu, TX_BUTTON_MENU)` call — note the real EN string is "Home", not "Menu"); **intentionally inert** — no destination screen (main menu) exists yet, a documented gap not a silent omission
 - [x] MENU-031 — "BACK" button (`PauseBack`) — shown only when mission ≠ 1 — **real position/icon + real conditional visibility + real "Back" text label done 2026-07-13**; functionally inert like MENU-030 (no hub-navigation screen exists yet, see MENU-035)
@@ -2386,10 +2386,10 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 - [x] MENU-034 — "CONTINUE" button (`PauseContinue`) with label below — **done 2026-07-13**, real "Continue" text label, fully functional (resumes Play in place, real edge/release-triggered press)
 - [x] MENU-035 — PauseBack goes to previous hub world (MissionBack logic: if
       mission%10==0 → Init, else mission/10*10) — **done 2026-07-17**, real
-      formula ported exactly as `GEWorldRuntime::ComputeMissionBack()`
+      formula ported exactly as `WorldRuntime::ComputeMissionBack()`
       (verified directly against `Game1::MissionBack()`), wired to the
       real `PauseBack` button (its own press-tracking already existed,
-      `kPauseControlBack`, just was never surfaced into `GEInputPad::
+      `kPauseControlBack`, just was never surfaced into `InputPad::
       PauseInput` before — added `backPressed`). Goes to `LoadMission(...)`
       + stays in Play (real destination for the `mission%10==0` case is
       Init, not directly back into gameplay -- an already-established,
@@ -2409,22 +2409,22 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 - [ ] MENU-038 — Animated fade-out from Pause → Play (blupiyoupie.png zooms out) — not implemented, transitions are instant (same simplification as MENU-029's static art)
 - [ ] MENU-039 — Animated slide-out when Pause → PlaySetup (blupiyoupie.png slides right) — N/A, PlaySetup phase doesn't exist yet
 
-**MENU-021..027/028..039 summary (2026-07-13):** implemented `GEInputPad` (`src/GalaxyEggbertCNA/Game/GEInputPad.hpp`/`.cpp`), a mouse-driven port of the real `InputPad` class covering the Play on-screen D-pad/Jump/Action/Pause controls and the full Pause screen (real `pause.png` + `blupiyoupie.png` art, 5 real `pad.png` buttons with real conditional visibility, Continue/Restart functionally wired). Verified via a dedicated scripted tool (`tools/VerifyGEInputPad.cpp`, 24 checks, synthetic `MouseState` values, no `GraphicsDevice` needed) covering D-pad discrete-drag thresholding, Jump's level-trigger vs Action/Pause's edge-trigger semantics, Pause-row conditional visibility, and `ResetTouchState()`'s phase-transition safety — plus live headless screenshots on both backends (EasyGL/Vulkan) confirming on-screen Play control placement and the real Pause screen layout (mission 0 correctly hides `Restart` via the real `mission%10!=0` gate). Real `drawBounds`-relative button coordinates from `InputPad.cpp` do not fit this engine's fixed 640×480 reference space at all (confirmed by computing them directly — the real Pause row alone would span off both edges) — every rect here is a proportionally-adapted layout preserving real order/relative placement/icon choices, not a literal pixel port. `PlayDown` (MENU-026) and every animated transition (MENU-029/038/039) are explicitly out of scope for this pass — see their own entries above.
+**MENU-021..027/028..039 summary (2026-07-13):** implemented `InputPad` (`src/GalaxyEggbert/Game/InputPad.hpp`/`.cpp`), a mouse-driven port of the real `InputPad` class covering the Play on-screen D-pad/Jump/Action/Pause controls and the full Pause screen (real `pause.png` + `blupiyoupie.png` art, 5 real `pad.png` buttons with real conditional visibility, Continue/Restart functionally wired). Verified via a dedicated scripted tool (`tools/VerifyGEInputPad.cpp`, 24 checks, synthetic `MouseState` values, no `GraphicsDevice` needed) covering D-pad discrete-drag thresholding, Jump's level-trigger vs Action/Pause's edge-trigger semantics, Pause-row conditional visibility, and `ResetTouchState()`'s phase-transition safety — plus live headless screenshots on both backends (EasyGL/Vulkan) confirming on-screen Play control placement and the real Pause screen layout (mission 0 correctly hides `Restart` via the real `mission%10!=0` gate). Real `drawBounds`-relative button coordinates from `InputPad.cpp` do not fit this engine's fixed 640×480 reference space at all (confirmed by computing them directly — the real Pause row alone would span off both edges) — every rect here is a proportionally-adapted layout preserving real order/relative placement/icon choices, not a literal pixel port. `PlayDown` (MENU-026) and every animated transition (MENU-029/038/039) are explicitly out of scope for this pass — see their own entries above.
 
 #### 2.5 Phase: Resume (saved game continue prompt)
 
-- [x] MENU-040 — Render `pause.png` background (same as Pause) — **done 2026-07-13** (`GEInputPad::DrawResume`), confirmed via `Game1.cpp`'s real `SetPhase()` background dispatch sharing the exact same `case Phase::Pause: case Phase::Resume: BackgroundCache("pause");`
+- [x] MENU-040 — Render `pause.png` background (same as Pause) — **done 2026-07-13** (`InputPad::DrawResume`), confirmed via `Game1.cpp`'s real `SetPhase()` background dispatch sharing the exact same `case Phase::Pause: case Phase::Resume: BackgroundCache("pause");`
 - [~] MENU-041 — Render `blupiyoupie.png` with rotation spring animation — **art+position done 2026-07-13** (reuses Pause's own static character draw, same documented non-animation simplification already established for Pause)
 - [~] MENU-042 — "MENU" button (`ResumeMenu`) → Init — **real position/icon/label done 2026-07-13** (icon 11, own distinct rect independently re-derived from `InputPad.cpp`'s bsf2=140 formula, NOT reused from PauseMenu's rect); **intentionally inert** — no Init/main-menu screen exists yet, same reasoning as Pause's own Menu button
-- [x] MENU-043 — "CONTINUE" button (`ResumeContinue`) → ContinueMission() — **done 2026-07-13**, functional: restores the checkpointed lives count (`GEInteractionSystem::SetLives()`, new) and resets Blupi to spawn (no real mid-level position/treasure/key state exists to restore — a documented simplification matching PauseRestart/WinLostReturn's own precedent)
-- [~] MENU-044 — Resume phase triggers when app reactivates with a saved mid-game state — **ADAPTED trigger implemented 2026-07-13**: the real trigger (`Game1::OnActivated()`, a WP7 app-reactivation OS lifecycle event gated on a real serialized mid-level `Decor::Current*()` snapshot — a separate, heavier mechanism than `GameData`/`GESaveData`) has no desktop equivalent and is far beyond this engine's single-`.vwr`-world scope; adapted to: offered at startup whenever `GESaveData::GetHasProgress()` is true (set at the real Win/Lost checkpoint, see MENU-046..057's own summary) — verified via a live two-process test (forced a Win checkpoint in run 1, confirmed `phase_` started as `Resume` with the correct saved lives at the start of a separate run 2)
+- [x] MENU-043 — "CONTINUE" button (`ResumeContinue`) → ContinueMission() — **done 2026-07-13**, functional: restores the checkpointed lives count (`InteractionSystem::SetLives()`, new) and resets Blupi to spawn (no real mid-level position/treasure/key state exists to restore — a documented simplification matching PauseRestart/WinLostReturn's own precedent)
+- [~] MENU-044 — Resume phase triggers when app reactivates with a saved mid-game state — **ADAPTED trigger implemented 2026-07-13**: the real trigger (`Game1::OnActivated()`, a WP7 app-reactivation OS lifecycle event gated on a real serialized mid-level `Decor::Current*()` snapshot — a separate, heavier mechanism than `GameData`/`SaveData`) has no desktop equivalent and is far beyond this engine's single-`.vwr`-world scope; adapted to: offered at startup whenever `SaveData::GetHasProgress()` is true (set at the real Win/Lost checkpoint, see MENU-046..057's own summary) — verified via a live two-process test (forced a Win checkpoint in run 1, confirmed `phase_` started as `Resume` with the correct saved lives at the start of a separate run 2)
 - [x] MENU-045 — Keyboard Back during Resume → Init — **done 2026-07-13**, adapted: Escape starts a fresh Play WITHOUT restoring saved lives (distinguishing "new game" from "continue", matching the two real buttons' own distinct intent) — Init doesn't exist, this engine's own keyboard binding choice
 
-**MENU-040..045 summary (2026-07-13):** extended `GEInputPad` with `UpdateResume()`/`DrawResume()`, reusing Pause's own background+character draw (same `pause.png`/`blupiyoupie.png`, confirmed shared in the real source) with its own distinct 2-button set (ResumeMenu icon 11 / ResumeContinue icon 10, real rects independently re-derived, NOT reused from Pause's row). Extended `GESaveData` with `lives`/`missionNumber`/`hasProgress` fields, checkpointed at the exact real Win/Lost transition points (confirmed via the same `GameData` research this session already did for MENU-067) — NOT continuous autosave. Added `GEInteractionSystem::SetLives()` to restore the checkpointed count on Continue. Verified via 2 new `VerifyGEInputPad` checks (32 total), 1 new `VerifyGESaveData` check (7 total, round-tripping all 3 new fields), a live headless screenshot of the real Resume screen, and a live two-process integration test proving the full checkpoint → restart → Resume-with-restored-lives cycle actually works end to end, not just each piece in isolation.
+**MENU-040..045 summary (2026-07-13):** extended `InputPad` with `UpdateResume()`/`DrawResume()`, reusing Pause's own background+character draw (same `pause.png`/`blupiyoupie.png`, confirmed shared in the real source) with its own distinct 2-button set (ResumeMenu icon 11 / ResumeContinue icon 10, real rects independently re-derived, NOT reused from Pause's row). Extended `SaveData` with `lives`/`missionNumber`/`hasProgress` fields, checkpointed at the exact real Win/Lost transition points (confirmed via the same `GameData` research this session already did for MENU-067) — NOT continuous autosave. Added `InteractionSystem::SetLives()` to restore the checkpointed count on Continue. Verified via 2 new `VerifyGEInputPad` checks (32 total), 1 new `VerifyGESaveData` check (7 total, round-tripping all 3 new fields), a live headless screenshot of the real Resume screen, and a live two-process integration test proving the full checkpoint → restart → Resume-with-restored-lives cycle actually works end to end, not just each piece in isolation.
 
 #### 2.6 Phase: Win
 
-- [x] MENU-046 — Render `win.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawWinLost`) — confirmed exact 640×480, direct pixel match, no cropping/UV math needed
+- [x] MENU-046 — Render `win.png` as full-screen background — **done 2026-07-13** (`InputPad::DrawWinLost`) — confirmed exact 640×480, direct pixel match, no cropping/UV math needed
 - [x] MENU-047 — Render `blupiyoupie.png` with pulsating scale (sin wave animation, amplitude 1.0±0.5) — **done 2026-07-13**, verified directly against `Game1.cpp:744-754`'s real formula (`num = sin(phaseTime/ScaleTime(3))/2+1`, i.e. `sin(t/0.15s)/2+1` at the real 20fps base rate — a perpetual pulse between 0.5x/1.5x native size, no rotation), centered at real position (418,238) — a DIFFERENT Y than Pause's 190 (confirmed, not assumed)
 - [x] MENU-048 — "RETURN" button (`WinLostReturn`) → Init — **done 2026-07-13** with the same real icon (3, shared with `PlayPause`) and a REAL, independently-derived rect (confirmed via `InputPad.cpp`'s own `bsf1=drawBoundsHeight/5` formula: (428.8,19.2)-(524.8,115.2) in this engine's 640×480 reference space — NOT PlayPause's smaller/more corner-flush rect, a distinct real button); real destination is `Init` (confirmed via `Game1.cpp`'s `WinLostReturn -> SetPhase(Init)`), which doesn't exist here — reuses the same return-to-Play-at-spawn simplification already established for the keyboard path (HUD-023), not a new one
 - [ ] MENU-049 — Display mission elapsed time in text overlay — **searched for directly in `Game1.cpp`'s `Draw()`/`DrawButtonsText()`/`DrawButtonsBackground()` (2026-07-13) and NOT found anywhere** — treated as unconfirmed/likely-not-backed-by-found-source, not implemented (same rigor as MENU-050/051 below, extended here)
@@ -2438,15 +2438,15 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
 - [x] MENU-054 — Render `blupiyoupie.png` with spin animation (6× rotation, quadratic ease-in, same as mobile-eggbert) — **done 2026-07-13**, verified directly against `Game1.cpp:725-743`'s real formula: grows from nothing to native size once over a real 5s (`num = min(phaseTime/ScaleTime(100),1)` = `min(t/5s,1)`), with a decaying spin (`rotation = (1-num)^2 * 360*6` degrees while num<1, converging to exactly 0° as it reaches full size) — centered at the same real (418,238) as Win. Verified live via headless screenshots at phaseTime=1.0s (small + visibly rotated, matching the formula's predicted ~302° at that instant) and phaseTime=5.5s (full native size, upright, no rotation)
 - [x] MENU-055 — "RETURN" button (`WinLostReturn`) → Init — **done 2026-07-13**, shares the exact same button/rect/simplification as MENU-048
 - [ ] MENU-056 — Display lives remaining and score — **searched for directly in `Game1.cpp` (2026-07-13) and NOT found** — no lives/score text draw call exists for `Phase::Lost` in the real source; not implemented (see MENU-049's note)
-- [ ] MENU-057 — If 0 lives: "GAME OVER" text; if lives remain: "TRY AGAIN" hint — **not implemented, and the "TRY AGAIN" branch is likely inapplicable to this engine's own Lost trigger**: this engine's real Lost gate (`GEInteractionSystem::GameOverCount()` incrementing) fires ONLY when lives are exhausted (already confirmed real behavior, HUD-023) and immediately resets lives to 3 in the same event (real `DoorsLost()` behavior) — so by the time Lost is ever reached here, "lives remain" is always true in the post-reset sense, but the phase itself only ever represents the true-game-over case. No text draw call for either branch was found in `Game1.cpp` regardless (see MENU-049's note)
+- [ ] MENU-057 — If 0 lives: "GAME OVER" text; if lives remain: "TRY AGAIN" hint — **not implemented, and the "TRY AGAIN" branch is likely inapplicable to this engine's own Lost trigger**: this engine's real Lost gate (`InteractionSystem::GameOverCount()` incrementing) fires ONLY when lives are exhausted (already confirmed real behavior, HUD-023) and immediately resets lives to 3 in the same event (real `DoorsLost()` behavior) — so by the time Lost is ever reached here, "lives remain" is always true in the post-reset sense, but the phase itself only ever represents the true-game-over case. No text draw call for either branch was found in `Game1.cpp` regardless (see MENU-049's note)
 
-**MENU-046..057 summary (2026-07-13):** extended `GEInputPad` with `UpdateWinLost()`/`DrawWinLost()` (real win.png/lost.png backgrounds + blupiyoupie.png animations + the shared `WinLostReturn` button), and — while researching the real Win/Lost draw code in `Game1.cpp` — also found and fixed a real gap in the already-shipped Pause screen: `Game1::DrawButtonsText()`'s real `DrawTextUnderButton()` calls for `Phase::Pause` (real EN strings "Home"/"Back"/"Setup"/"Restart"/"Continue" — note `PauseMenu`'s real text is "Home", not "Menu") were not yet ported; added via a new `GEInputPad::AppendCenteredLabel()` helper (own `text.png` instance, same glyph-is-ASCII-code convention as `GEHud`). Also added `GalaxyEggbertCnaGame::phaseTimeSeconds_`, a real `phaseTime` port (verified against `Game1.hpp`'s own "phaseTime==0 is a SetPhase() postcondition" doc comment and `Game1.cpp:237`'s unconditional per-tick increment) — expressed as elapsed seconds rather than a raw frame counter since the real formulas are all `phaseTime/Config::ScaleTime(N)` at a real 20fps base rate, making a seconds-based port exactly equivalent and framerate-independent. Verified via 3 new `VerifyGEInputPad` checks (27 total) plus live headless screenshots at 3 distinct animation timepoints (Pause labels, Win mid-pulse, Lost at phaseTime 1.0s and 5.5s) confirming the exact real formulas. MENU-049/050/051/056/057 (mission time/score/lives-remaining text) were searched for directly in `Game1.cpp` and found to not exist anywhere in the real Win/Lost draw code — treated as unconfirmed rather than invented, matching the established MENU-050/051 precedent.
+**MENU-046..057 summary (2026-07-13):** extended `InputPad` with `UpdateWinLost()`/`DrawWinLost()` (real win.png/lost.png backgrounds + blupiyoupie.png animations + the shared `WinLostReturn` button), and — while researching the real Win/Lost draw code in `Game1.cpp` — also found and fixed a real gap in the already-shipped Pause screen: `Game1::DrawButtonsText()`'s real `DrawTextUnderButton()` calls for `Phase::Pause` (real EN strings "Home"/"Back"/"Setup"/"Restart"/"Continue" — note `PauseMenu`'s real text is "Home", not "Menu") were not yet ported; added via a new `InputPad::AppendCenteredLabel()` helper (own `text.png` instance, same glyph-is-ASCII-code convention as `Hud`). Also added `GalaxyEggbertCnaGame::phaseTimeSeconds_`, a real `phaseTime` port (verified against `Game1.hpp`'s own "phaseTime==0 is a SetPhase() postcondition" doc comment and `Game1.cpp:237`'s unconditional per-tick increment) — expressed as elapsed seconds rather than a raw frame counter since the real formulas are all `phaseTime/Config::ScaleTime(N)` at a real 20fps base rate, making a seconds-based port exactly equivalent and framerate-independent. Verified via 3 new `VerifyGEInputPad` checks (27 total) plus live headless screenshots at 3 distinct animation timepoints (Pause labels, Win mid-pulse, Lost at phaseTime 1.0s and 5.5s) confirming the exact real formulas. MENU-049/050/051/056/057 (mission time/score/lives-remaining text) were searched for directly in `Game1.cpp` and found to not exist anywhere in the real Win/Lost draw code — treated as unconfirmed rather than invented, matching the established MENU-050/051 precedent.
 
 #### 2.8 Phase: MainSetup / PlaySetup (settings)
 
-- [x] MENU-058 — Render `setup.png` as full-screen background — **done 2026-07-13** (`GEInputPad::DrawSetup`) — confirmed exact 640×480, direct pixel match; confirmed via `Pixmap::BackgroundCache("setup")` + `DrawBackground()` (a genuine per-phase full-screen backdrop selection, distinct from the animated foreground decoration researched for MENU-059/060 below)
+- [x] MENU-058 — Render `setup.png` as full-screen background — **done 2026-07-13** (`InputPad::DrawSetup`) — confirmed exact 640×480, direct pixel match; confirmed via `Pixmap::BackgroundCache("setup")` + `DrawBackground()` (a genuine per-phase full-screen backdrop selection, distinct from the animated foreground decoration researched for MENU-059/060 below)
 - [x] MENU-059 — Render `speedyblupi.png` sliding in (ease-out quadratic) — **done 2026-07-13**
-      (plan.md MENU-088/089 pass), `GEInputPad::ComputeSetupFadeAnim()`/`DrawSetup()`. **Draft was
+      (plan.md MENU-088/089 pass), `InputPad::ComputeSetupFadeAnim()`/`DrawSetup()`. **Draft was
       WRONG on direction**: real is a slide in from the RIGHT (`Left=720-640*num, Right=1360-640*num`),
       not "from left" — Top/Bottom fixed at native 0/160, no vertical component.
 - [x] MENU-060 — Render two rotating `gear.png` icons — **done 2026-07-13**, same pass. Draft's own
@@ -2458,33 +2458,33 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
       mistake). Real exit reuses the identical formula with `num`/`num2` both inverted (confirmed
       via research), including gear opacity ramping the OPPOSITE direction on exit (`0.1→0.5`) —
       flagged by research as visually odd but genuinely real, not a bug, so reproduced faithfully.
-- [x] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state — **done 2026-07-13**, fully functional: real icon SWAP (13 on/21 off, confirmed via `Pixmap.cpp`'s `selected ? 13 : 21` — a DIFFERENT "pressed" convention from every other button in this class, which only ever change opacity), wired to the pre-existing `GESound::SetEnabled()`/`IsEnabled()` — a genuinely meaningful desktop equivalent of the real mute toggle, now persisted across restarts too (see MENU-067)
+- [x] MENU-061 — "SOUNDS" toggle button (`SetupSounds`) — shows ON/OFF state — **done 2026-07-13**, fully functional: real icon SWAP (13 on/21 off, confirmed via `Pixmap.cpp`'s `selected ? 13 : 21` — a DIFFERENT "pressed" convention from every other button in this class, which only ever change opacity), wired to the pre-existing `Sound::SetEnabled()`/`IsEnabled()` — a genuinely meaningful desktop equivalent of the real mute toggle, now persisted across restarts too (see MENU-067)
 - [~] MENU-062 — "JUMP" mode toggle (`SetupJump`) — left/right jump direction — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (this is about touch-button screen-side preference)
 - [~] MENU-063 — "ZOOM" toggle (`SetupZoom`) — auto-zoom on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no auto-zoom camera concept exists in this engine yet
 - [~] MENU-064 — "ACCEL" toggle (`SetupAccel`) — accelerometer on/off — **real position/icon/label done 2026-07-13**; **intentionally inert** — no meaningful desktop equivalent (accelerometer-tilt controls)
 - [x] MENU-065 — "RESET Gamer X" button (`SetupReset`) — with gamer letter in text — **done
-      2026-07-13, now fully wired** (was inert before Init/`GESaveData`'s 3-gamer-slot extension
+      2026-07-13, now fully wired** (was inert before Init/`SaveData`'s 3-gamer-slot extension
       existed): real position/icon, shown ONLY on `MainSetup` (confirmed via `Game1::
       DrawButtonsText()`'s own `if (phase==MainSetup)` label gate — `showReset` is the caller's
       job, same pattern as Pause's showBack/showRestart). Real handler is `gameData.Reset();
       gameData.Write();` — the SAME full reset as Cheat5, not a per-gamer-only reset despite the
-      label — maps directly to `GESaveData::Reset()`/`Save()`. Real 2-line label ("Player {0}
+      label — maps directly to `SaveData::Reset()`/`Save()`. Real 2-line label ("Player {0}
       :\nErase progress") collapsed to one line — no multi-line text renderer exists in this class,
       a formatting-only simplification (the gamer-letter content itself is now real, via
-      `GESaveData::GetSelectedGamer()`).
+      `SaveData::GetSelectedGamer()`).
 - [x] MENU-066 — "RETURN" button (`SetupReturn`) → Init (from MainSetup) or Play (from PlaySetup)
       — **done 2026-07-13, BOTH branches now reachable** (MainSetup used to be unreachable — this
       changed once Init landed later the same session): confirmed via `Game1.cpp`'s real handler
       (`if (playSetup) SetPhase(Play,-1); else SetPhase(Init);`) — NOT a level-reload simplification
       like Win/Lost/PauseRestart, since PlaySetup never actually stops gameplay progress
 - [x] MENU-067 — All toggles persist to GameData immediately on press — **Sounds+Reset done
-      2026-07-13** via `GESaveData` (`src/GalaxyEggbertCNA/Game/GESaveData.hpp`/`.cpp`), a
+      2026-07-13** via `SaveData` (`src/GalaxyEggbert/Game/SaveData.hpp`/`.cpp`), a
       deliberately minimal, NOT-byte-compatible substitute for the real `GameData` (see its own
       class comment for the full research/reasoning — the real format is a fixed 640-byte blob
       shaped around a 3-gamer-slot/100+-level/200-door structure, written via a WP7-only
       `IsolatedStorageFile` API with no desktop equivalent; porting that BYTE LAYOUT would buy
       nothing since no real save file could ever cross between the two engines — though the real
-      3-gamer-slot SHAPE itself was later ported faithfully via `GESaveData`'s own Phase-3
+      3-gamer-slot SHAPE itself was later ported faithfully via `SaveData`'s own Phase-3
       extension, MENU-019/020). Real write-on-toggle-press behavior matched exactly. Jump/Zoom/Accel
       have nothing to persist (they're inert, MENU-062..064) — not a gap, since they have no real
       state to save
@@ -2499,13 +2499,13 @@ a few other unlabeled buttons already noted elsewhere in this document, e.g. Win
       was reachable.
 
 **MENU-058..069 summary (2026-07-13, updated same day once Init/MENU-006..020 landed):** extended
-`GEInputPad` with `UpdateSetup()`/`DrawSetup()`, reachable via Pause's real Setup button
+`InputPad` with `UpdateSetup()`/`DrawSetup()`, reachable via Pause's real Setup button
 (`PlaySetup`) AND, once Init existed later the same session, via Init's own `InitSetup` button
 (`MainSetup`) — both share this same pair of methods, gated by a `showReset`/`isMainSetup` bool the
 caller passes (the one real difference between the two screens, `SetupReset`). A rare case where
 the real `InputPad.cpp` button rects (`bsf2=drawBoundsHeight*140/480`) need ZERO proportional
 adaptation: at this engine's own 480 reference height, bsf2 is EXACTLY 140, so every rect is used
-unadapted, unlike the Pause row's bsf1-based layout. Added `GESaveData` (see MENU-067) after a
+unadapted, unlike the Pause row's bsf1-based layout. Added `SaveData` (see MENU-067) after a
 dedicated research pass into the real `GameData.hpp`/`.cpp` format, confirming byte-COMPATIBILITY
 is a non-goal — a small, new, engine-appropriate persisted set instead, later extended (same
 session) to the real 3-independent-gamer-slot SHAPE once Init needed it. Verified via
@@ -2517,7 +2517,7 @@ later the same session as part of the MENU-088/089 fade-transitions pass, once r
 timing needed them anyway.
 
 **Real out-of-bounds bug found and fixed (2026-07-23, autonomous session, found via a fresh code
-audit)**: `GESaveData::Load()`'s `selectedGamer` parser (`GESaveData.cpp`) had ZERO bounds
+audit)**: `SaveData::Load()`'s `selectedGamer` parser (`SaveData.cpp`) had ZERO bounds
 validation, unlike the sibling `gamer.N.field` parser 2 lines below it which already rejects an
 out-of-range `gamer` index. Every accessor that reads the selected slot
 (`GetLives()`/`SetLives()`/`GetMissionNumber()`/`SetMissionNumber()`/`GetHasProgress()`/
@@ -2558,15 +2558,15 @@ backends.
 #### 2.11 Level Intro / Mission Title
 
 - [ ] MENU-079 — Level intro title card: world name text, 3 s duration (fade-in 0.5s, hold 2s, fade-out 0.5s) — not implemented; this engine tracks only a mission NUMBER (`Worlds::World::missionNumber()`), not a real world name string, so this would need new data this engine doesn't parse yet
-- [x] MENU-080 — Training level hint bar: show tutorial text from `table_training1..4` based on Blupi position — **done 2026-07-13, plan.md `HUD-024`** (`GETrainingHints.hpp`/`.cpp`, all 43 real hint records + real gate semantics transcribed)
-- [x] MENU-081 — Training hint rendered as overlay bar (pad.png icon 15 background, text centred) — **done, `HUD-024`** (`GEHud::Draw()`'s `trainingHint` parameter, full-width top-of-screen panel)
+- [x] MENU-080 — Training level hint bar: show tutorial text from `table_training1..4` based on Blupi position — **done 2026-07-13, plan.md `HUD-024`** (`TrainingHints.hpp`/`.cpp`, all 43 real hint records + real gate semantics transcribed)
+- [x] MENU-081 — Training hint rendered as overlay bar (pad.png icon 15 background, text centred) — **done, `HUD-024`** (`Hud::Draw()`'s `trainingHint` parameter, full-width top-of-screen panel)
 - [x] MENU-082 — Training hint auto-scales down if text is too wide (min 0.5×) — **done, `HUD-024`** (real `min(640/textWidth, 1.0)` shrink-to-fit, approximated via this engine's own fixed-glyph-advance model)
 
 #### 2.12 Button Font & Text Rendering
 
-- [x] MENU-083 — Render button labels using `text.png` font sheet (32×32 per glyph) — **done**, shared by `GEHud` (HUD-023/024) and `GEInputPad` (Pause/Setup labels, 2026-07-13) — each with its own `text.png` instance per the established one-instance-per-draw-path convention
-- [x] MENU-084 — `Text::DrawText` equivalent: render text string using glyph atlas — **done** (glyph index == ASCII code, read directly off the asset per `GEHud.hpp`'s own class comment, not transcribed from `table_char`)
-- [x] MENU-085 — `Text::DrawTextCenter` equivalent: centre-aligned text rendering — **done** (`GEHud`'s treasure-counter/overlay-message text, `GEInputPad::AppendCenteredLabel()` for the Pause row); a LEFT-aligned variant (`Text::DrawTextRightButton()`) was also added 2026-07-13 (`AppendLeftAlignedLabel()`) for the Setup screen's real label alignment
+- [x] MENU-083 — Render button labels using `text.png` font sheet (32×32 per glyph) — **done**, shared by `Hud` (HUD-023/024) and `InputPad` (Pause/Setup labels, 2026-07-13) — each with its own `text.png` instance per the established one-instance-per-draw-path convention
+- [x] MENU-084 — `Text::DrawText` equivalent: render text string using glyph atlas — **done** (glyph index == ASCII code, read directly off the asset per `Hud.hpp`'s own class comment, not transcribed from `table_char`)
+- [x] MENU-085 — `Text::DrawTextCenter` equivalent: centre-aligned text rendering — **done** (`Hud`'s treasure-counter/overlay-message text, `InputPad::AppendCenteredLabel()` for the Pause row); a LEFT-aligned variant (`Text::DrawTextRightButton()`) was also added 2026-07-13 (`AppendLeftAlignedLabel()`) for the Setup screen's real label alignment
 - [x] MENU-086 — Text scaling (0.45×, 0.7×, 1.0×) used for different label sizes — **done** at the specific real scales actually confirmed in use so far: 0.7 (Pause/Setup button labels, Perso HUD counter), 1.0 (treasure counter), 1.5 (Win/Lost/overlay message, this engine's own choice for a big centered message) — 0.45× not yet needed (no ported screen uses it yet)
 - [x] MENU-087 — Localised strings (MyResource strings): port key TX_ constants for button labels — **done for every button label ported so far** (real English strings only, from `MyResource::InitializeEN()` — "Home"/"Back"/"Setup"/"Restart"/"Continue" for Pause, "Sound effects"/"Jump button on the right"/"Automatic zoom on action"/"Accelerometer" for Setup); FR/DE localization is out of scope (this is a single-locale EN port, matching every other text this session)
 
@@ -2629,7 +2629,7 @@ in the original draft; the real behavior is documented here, and the `CHEAT-001.
 directly in code comments) are the canonical per-cheat task IDs going forward, kept alongside the
 pre-existing `MENU-092..102` numbering.
 
-- [x] MENU-092 — Cheat gesture recognition — **done 2026-07-13**, `GEInputPad::UpdateCheatGesture()`.
+- [x] MENU-092 — Cheat gesture recognition — **done 2026-07-13**, `InputPad::UpdateCheatGesture()`.
       **Draft was wrong on tap count**: real is a **10-tap sequence** (`cheatGesteLength=10`), not
       6. The 6 distinct glyphs (`Cheat11/12/21/22/31/32`) are tapped in exact order
       `12,22,32,12,11,21,22,21,31,32`, tracked by `cheatGesteIndex`, reset to 0 on any wrong glyph,
@@ -2640,7 +2640,7 @@ pre-existing `MENU-092..102` numbering.
       button press, not just a wrong gesture-zone tap — not modeled (a minor forgiving deviation,
       not a functional loss).
 - [x] MENU-093 — Cheat menu overlay: 9 cheat action buttons (Cheat1..Cheat9) — **done 2026-07-13**,
-      `GEInputPad::UpdateCheatMenu()`/`DrawCheatMenu()`. Real buttons are a row of nine 80×80
+      `InputPad::UpdateCheatMenu()`/`DrawCheatMenu()`. Real buttons are a row of nine 80×80
       ABSOLUTE-pixel boxes at the literal top-left (not scaled by `drawBoundsHeight` — a genuine
       real inconsistency vs. every other button in the game); adapted here as 9 equal columns
       proportionally spanning the full reference width, since the real fixed-pixel row doesn't fit
@@ -2651,11 +2651,11 @@ pre-existing `MENU-092..102` numbering.
       on screen, confirmed via live headless screenshot — the 3D scene and normal Play HUD/D-pad
       remain visible behind/through it) and no confirmation step (pressing any Cheat1-9 immediately
       closes the overlay and applies the effect instantly, matching real `showCheatMenu = false`).
-- [x] MENU-094 / CHEAT-001 — Cheat 1: OpenDoors — **done**, `GEInteractionSystem::CheatOpenDoors()`.
+- [x] MENU-094 / CHEAT-001 — Cheat 1: OpenDoors — **done**, `InteractionSystem::CheatOpenDoors()`.
       Draft was correct: toggles the real `m_bCheatDoors` flag and calls `AdaptDoors()`; ported here
       as opening every key-gated (`BlockTypes::isDoor()`) and treasure-gated (icon 421-440) door
       tile in the level via the existing `OpenDoorAt()` helper.
-- [x] MENU-095 / CHEAT-002 — Cheat 2: SuperBlupi — **done**, `GEBlupiController::m_cheatSuperBlupi`
+- [x] MENU-095 / CHEAT-002 — Cheat 2: SuperBlupi — **done**, `BlupiController::m_cheatSuperBlupi`
       + `IsInvincible()`. **Draft overstated the effect**: real `m_bSuperBlupi` is a PURE
       invincibility flag, OR'd with `!m_blupiShield && !m_blupiHide` at ~30 real hazard-death call
       sites — it does **not** grant "all abilities" as the original draft claimed.
@@ -2668,24 +2668,24 @@ pre-existing `MENU-092..102` numbering.
 - [x] MENU-097 / CHEAT-004 — Cheat 4: LayEgg — **done**, `GalaxyEggbertCnaGame::ApplyCheat()` case 4.
       **Draft was wrong**: despite the name, the real effect is `m_nbVies = 9` (sets lives to 9) —
       it does NOT spawn any egg. Confirmed live (headless run): lives 3 → 9 on trigger.
-- [x] MENU-098 / CHEAT-005 — Cheat 5: Reset gamer progress — **done**, `GESaveData::Reset()`. Draft
-      correct: real `gameData.Reset()`; ported as resetting every `GESaveData` field to its default
+- [x] MENU-098 / CHEAT-005 — Cheat 5: Reset gamer progress — **done**, `SaveData::Reset()`. Draft
+      correct: real `gameData.Reset()`; ported as resetting every `SaveData` field to its default
       and writing immediately.
 - [x] MENU-099 / CHEAT-006 — Cheat 6: Simulate trial mode toggle — **done** (no-op by design). Draft
       correct on the real effect (`simulateTrialMode = !simulateTrialMode`), but it has no
       observable effect in this engine since the Trial phase is unreachable here; wired as a
       documented no-op case in `ApplyCheat()` rather than left out, to keep the button's real
       dispatch order intact.
-- [x] MENU-100 / CHEAT-007 — Cheat 7: CleanAll — **done**, `GEInteractionSystem::CheatCleanAll()`.
+- [x] MENU-100 / CHEAT-007 — Cheat 7: CleanAll — **done**, `InteractionSystem::CheatCleanAll()`.
       **Draft was imprecise**: NOT "remove all mobile objects" — real effect only converts a
       specific type list (ObjectType 2/3/4/16/17/20/32/33/44/54/96/97 — the existing shared
       hazard-kill-list set plus wasp/large-creature/blupih/blupit) into an explosion decoration +
       screen-shake; treasures/pickups/vehicles are untouched. Ported as deactivating exactly that
       type list.
-- [x] MENU-101 / CHEAT-008 — Cheat 8: AllTreasure — **done**, `GEInteractionSystem::CheatAllTreasure()`.
+- [x] MENU-101 / CHEAT-008 — Cheat 8: AllTreasure — **done**, `InteractionSystem::CheatAllTreasure()`.
       Draft correct: every `ObjectType5` is collected, `m_nbTresor++`, `OpenDoorsTresor()` (this
       engine's `ScanAndOpenTreasureDoors()`), channel-11 sound.
-- [x] MENU-102 / CHEAT-009 — Cheat 9: EndGoal — **done**, `GEInteractionSystem::CheatFindExit()` +
+- [x] MENU-102 / CHEAT-009 — Cheat 9: EndGoal — **done**, `InteractionSystem::CheatFindExit()` +
       `ApplyCheat()` case 9. **Draft was imprecise**: NOT unconditional "win immediately" — real
       effect always teleports Blupi to the exit (`ObjectType7`); it only actually wins if
       `m_nbTresor >= m_totalTresor` already, otherwise Blupi is just moved there (real source also
@@ -2696,7 +2696,7 @@ pre-existing `MENU-092..102` numbering.
       existing 10-tap gesture (`MENU-092`), same "layered" idiom as the typed-cheat methods below.
 - [x] CHEAT-011 — "quick" typed cheat: unlocks F7/F8 (`GameSpeed::Faster`/`Fastest`, see
       `SCORE-009/010`) — **done 2026-07-20**, real `quick_cheat_enabled` (`InputPad.cpp:` typed-
-      cheat table). Extends `GEInputPad::UpdateTypedGhostCheat()`'s existing rolling buffer (now
+      cheat table). Extends `InputPad::UpdateTypedGhostCheat()`'s existing rolling buffer (now
       returns a `TypedCheatResult{ghostTyped, quickTyped}` instead of a plain bool) — both share the
       SAME buffer, matching real source's own single-buffer `cheatEntries[]` design (typing
       "quickghost" fires both, same as real source).
@@ -2714,7 +2714,7 @@ confirming the 9-button row renders correctly (icons, letters, transparent overl
 scene and Play HUD/D-pad visible behind it), then triggered Cheat 4 and Cheat 9 directly and
 confirmed their real effects (lives 3→9; Blupi teleported to the exit marker's exact position) via
 stderr diagnostics. All temporary debug code was reverted before commit. Unit coverage: 19 new
-assertions in `VerifyInteractionSystem` (fresh, isolated `GEWorldRuntime`/`GEInteractionSystem` per
+assertions in `VerifyInteractionSystem` (fresh, isolated `WorldRuntime`/`InteractionSystem` per
 test, to avoid state leakage from the large shared fixture) + 6 new assertions in
 `VerifyGEInputPad` (full 10-tap gesture unlock, wrong-tap reset, out-of-zone tap ignored, first/last
 menu button dispatch, press-vs-release gating).
@@ -2724,20 +2724,20 @@ menu button dispatch, press-vs-release gating).
 ### 2.3 HUD (Heads-Up Display)
 
 **Stale intro note removed 2026-07-14**: this paragraph used to say CNA "has no real HUD yet" —
-no longer true (real `GEHud`, 2026-07-10/11/13 across multiple sessions; each item below already
+no longer true (real `Hud`, 2026-07-10/11/13 across multiple sessions; each item below already
 carries its own accurate per-item date/citation, this was just a leftover boilerplate reset note).
 
-- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11; since 2026-07-10 at the REAL `DrawInfo` position (210,417), X+=16, via `GEHud`)
+- [x] HUD-001 — Life icons: Blupi head sprite (icon 48 from `blupi.png`) × nbVies, bottom-left row (CNA, 2026-07-11; since 2026-07-10 at the REAL `DrawInfo` position (210,417), X+=16, via `Hud`)
 - [x] HUD-002 — **Resolved 2026-07-13, this entry's own premise was wrong**: the real
       `DrawInfo` (`Decor.cpp:1190-1194`) draws exactly `m_nbVies` icons in a plain, uncapped loop
       (`for (i=0; i<m_nbVies; i++) { HudIcon(...); pos.X += 16; }`) — there is NO 5-icon cap and
       NO "+N" overflow text anywhere in the real source. `GalaxyEggbertCNA`'s existing uncapped
-      `GEHud` implementation (`HUD-001`) was already correct; no change needed.
-- [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel (CNA, 2026-07-10, `GEHud`): real position (460,450), glyphs from `text.png` whose sheet index IS the ASCII code (read off the asset, not `table_char`); fixed 17px advance approximates the real proportional widths
-- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15) (CNA, 2026-07-10, `GEHud`)
+      `Hud` implementation (`HUD-001`) was already correct; no change needed.
+- [x] HUD-003 — Treasure counter "N/total" text, bottom-centre panel (CNA, 2026-07-10, `Hud`): real position (460,450), glyphs from `text.png` whose sheet index IS the ASCII code (read off the asset, not `table_char`); fixed 17px advance approximates the real proportional widths
+- [x] HUD-004 — Panel background behind treasure counter (pad.png icon 15) (CNA, 2026-07-10, `Hud`)
       — **restored to the real 0.6 opacity 2026-07-18** (user-reported: main-menu buttons/panels
       render as solid opaque white instead of translucent). Root cause: `kPanelOpacity` (and
-      `GEInputPad::DrawInit()`'s own equivalent Init-screen panel opacity, same `pad.png` icon 15)
+      `InputPad::DrawInit()`'s own equivalent Init-screen panel opacity, same `pad.png` icon 15)
       had been forced to 1.0 since 2026-07-10 specifically because Vulkan was the default backend
       and CNA's Vulkan `BasicEffect` doesn't render an Alpha<1 draw at all (a genuine, still-unfixed
       CNA bug). Confirmed the source `pad.png` asset itself already has real alpha baked in
@@ -2747,11 +2747,11 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       `E3D-MIG-069`'s own writeup), which renders Alpha<1 correctly, both call sites restored to the
       real 0.6 value. Building with `-DCNA_GRAPHICS_BACKEND=VULKAN` will still make these panels
       vanish — the underlying CNA bug itself remains unfixed, tracked separately.
-- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11; since 2026-07-10 at the REAL position (520,418) via `GEHud`)
+- [x] HUD-005 — Key icon — red key (element.png icon 215) shown when Key1 held (CNA, 2026-07-11; since 2026-07-10 at the REAL position (520,418) via `Hud`)
 - [x] HUD-006 — Key icon — green key (element.png icon 222) shown when Key2 held (CNA, 2026-07-11; real position (530,418))
 - [x] HUD-007 — Key icon — blue key (element.png icon 229) shown when Key3 held (CNA, 2026-07-11; real position (540,418))
 - [x] HUD-008 — Shared Shield/Power/Cloud/Hide countdown gauge (jauge.png yellow fill) at
-      (90,428) — visible while any of the 4 is active (CNA, 2026-07-13, `GEHud`, verified
+      (90,428) — visible while any of the 4 is active (CNA, 2026-07-13, `Hud`, verified
       directly against `Jauge.hpp` + `Decor.cpp:5071-5137`: all 4 real states reuse the SAME
       `m_blupiTimeShield` variable and `m_jauges[1]` widget, not 4 separate gauges — corrects
       this entry's own "Shield timer" framing, which undersold the real scope)
@@ -2782,8 +2782,8 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       display (unconfirmed, not part of this task's scope), not an in-game HUD element as this
       entry assumed; do not implement here.
 - [x] HUD-012 — Water/Nage breath gauge (jauge.png, real `m_jauges[0]`) at (90,450), Blue normally
-      (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:5310-5326`, wired to the
-      already-implemented `GEBlupiController::IsNage()`/`GetWaterGaugeLevel()`, `E3D-MIG-148`)
+      (CNA, 2026-07-13, `Hud`, verified directly against `Decor.cpp:5310-5326`, wired to the
+      already-implemented `BlupiController::IsNage()`/`GetWaterGaugeLevel()`, `E3D-MIG-148`)
 - [ ] HUD-013 — `[?]` Hit flash: red full-screen overlay panel, 0.4 s fade on damage. **Flagged
       2026-07-13**: not found in `DrawInfo`. **Confirmed 2026-07-16**: read the complete real
       `DrawInfo()` (`Decor.cpp:1185-1311`) end to end -- no full-screen overlay/flash/fade drawing
@@ -2791,20 +2791,20 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       feedback mechanic -- this entry's separate red-flash-panel premise appears to be
       conflating/inventing on top of that already-real mechanic. Do not implement.
 - [x] HUD-014 — Camera shake on hit — **done 2026-07-14, filed under CAM-008..013 (camera work),
-      not `GEHud`** — see those entries for the full implementation writeup. Was blocked on
+      not `Hud`** — see those entries for the full implementation writeup. Was blocked on
       `table_decor_action`'s data-table transcription approval; the user granted blanket approval
       2026-07-14, unblocking this along with the rest of the camera-shake system.
 - [x] HUD-015 — Bullet counter: element.png icon 176 × bullets held, X+=4 fanned row at (570,442)
-      (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1197-1201`)
+      (CNA, 2026-07-13, `Hud`, verified directly against `Decor.cpp:1197-1201`)
 - [x] HUD-016 — Dynamite count: element.png icon 252 at (505,414), shown only while carrying one
-      (CNA, 2026-07-13, `GEHud`, verified directly against `Decor.cpp:1212-1217`)
+      (CNA, 2026-07-13, `Hud`, verified directly against `Decor.cpp:1212-1217`)
 - [x] HUD-017 — Perso decoy counter — **done 2026-07-13**, both the HUD element AND the
       underlying place/retrieve mechanic. Researched what "Perso" actually is (not previously
       known): a deployable `ObjectType200` decoy statue (same `blupi.png` look as Blupi himself)
       — verified directly against `Decor.cpp:4818-4841` (placement), `6088-6101` (pickup start),
       `10291-10294` (pickup completion). Real gate: mutually exclusive with dynamite (an
       `else if` in the real source — modeled the same way here, dynamite placement takes
-      priority on the same action-button press). New `GEInteractionSystem::TryPerso()`: a single
+      priority on the same action-button press). New `InteractionSystem::TryPerso()`: a single
       call handles BOTH real branches — picks up an already-placed decoy within range if one
       exists (real: takes priority over placing a new one), otherwise places a new one if
       `persoCount_ > 0` and grounded. Real cap 5 (gates pickup, not placement). HUD: button.png
@@ -2816,7 +2816,7 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       patrol into contact with ANY real 200-203 object (the placed decoy itself, OR one of the
       201-203 lethal decorations, `PICKUP-069`) mutually destroy each other — an explosion +
       channel 10 + SmallShake at the enemy's position, then an `ObjectType37` dissolve effect, the
-      decoy/decoration also deleted. Implemented as a new block in `GEInteractionSystem::Update()`
+      decoy/decoration also deleted. Implemented as a new block in `InteractionSystem::Update()`
       right before the Cloud-aura check (which targets the same 3 enemy types), reusing the
       existing `AppendExplosionFlash()` helper for both spawned effects. 4 new
       `VerifyInteractionSystem` assertions (trigger + mutual destruction, no-trigger when far
@@ -2835,10 +2835,10 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       `HUD-012`'s SAME water/Nage gauge (`m_jauges[0]`) switching from Blue to Red at the real
       low-air warning threshold (level <= 25, `Decor.cpp:4621-4623`), still driven by the same
       `m_blupiLevel`/breath variable, not a distinct charge-level mechanic. Done as part of
-      `HUD-012` (CNA, 2026-07-13, `GEHud`).
+      `HUD-012` (CNA, 2026-07-13, `Hud`).
 - [x] HUD-019 — **Corrected 2026-07-13**: same widget as `HUD-008` (`m_jauges[1]`, shared
       Shield/Power/Cloud/Hide countdown, not shield-specific) — done together with `HUD-008`
-      (CNA, 2026-07-13, `GEHud`).
+      (CNA, 2026-07-13, `Hud`).
 - [ ] HUD-020 — `[?]` "EXIT OPEN!" popup text (3 s timed, big centred text) when all treasures
       collected. **Not found in `DrawInfo`** (2026-07-13 sweep) -- a grep for "EXIT"/"OPEN"/
       "SORTIE" across `Decor.cpp`/`Game1`-layer headers found nothing; may be a localized string
@@ -2864,8 +2864,8 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       **Confirmed real 2026-07-13 (follow-up research)**: lives in `InputPad.cpp`
       (`Def::ButtonGlyph::PlayPause`/`PauseMenu`/`PauseBack`/`PauseSetup`/`PauseRestart`/
       `PauseContinue`, ~lines 160-968) — the touch/button-overlay control system, a completely
-      separate class from `GEHud`'s own `Decor::DrawInfo` port. Genuinely real and unimplemented,
-      but belongs with a future touch/button-overlay task, not folded into `GEHud` as-is.
+      separate class from `Hud`'s own `Decor::DrawInfo` port. Genuinely real and unimplemented,
+      but belongs with a future touch/button-overlay task, not folded into `Hud` as-is.
 - [x] HUD-023 — HUD hidden during non-Play phases — **done 2026-07-13**, per explicit user
       request to implement the full real `Def::Phase` state machine (not a trimmed-down subset).
       Verified directly against `Def.hpp:51-66` (the enum itself) and `Game1.cpp:394-438`/
@@ -2891,9 +2891,9 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       - **Real Win/Lost triggers**: verified they map exactly onto state this engine already
         tracks — real Lost (`Decor.cpp:6374-6435`, a death animation completing while lives are
         exhausted, `DoorsLost()`'s reset-to-3) is precisely what
-        `GEInteractionSystem::GameOverCount()` already increments at; real Win
+        `InteractionSystem::GameOverCount()` already increments at; real Win
         (`Decor::IsTerminated()`, reaching the exit with all treasure) is precisely what
-        `GEInteractionSystem::ExitReached()` already gates on. No new gameplay logic needed for
+        `InteractionSystem::ExitReached()` already gates on. No new gameplay logic needed for
         either trigger. Real `WinLostReturn` has no fixed auto-timer (explicit input only) — the
         Action key returns to Play here, resetting Blupi to the origin spawn point (NOT a full
         real level-reload — lives/treasure/keys/etc. are deliberately left as-is, a documented
@@ -2908,7 +2908,7 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
         `Wait`→`Init`→`Play` (or `Wait`→`Resume`→`Play`) flow — see §2.1/§2.2 above for full
         detail. `Trial`/`Ranking` remain real enum values with NO trigger wired to them at all
         (no upsell/ranking screens exist).
-      - **New `GEHud::Draw()` `overlayMessage` parameter**: when non-null, the real `DrawInfo` HUD
+      - **New `Hud::Draw()` `overlayMessage` parameter**: when non-null, the real `DrawInfo` HUD
         this class ports is skipped ENTIRELY (matching the real "HUD hidden outside Play"
         behavior exactly) and replaced with just one big centered message ("PAUSED"/"YOU WIN!"/
         "GAME OVER") — not a claim of real Pause/Win/Lost SCREEN parity (those are full menu
@@ -2931,7 +2931,7 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
       - **Mission concept**: `Worlds::World` gained a real `missionNumber()`/`setMissionNumber()`
         (format v2's first already-reserved header field put to use — see that class's own
         `saveToFile()`/`loadFromFile()` doc comments — no format/size change, still v2, existing
-        `.vwr` files load unaffected with `missionNumber()==0`). `GEWorldRuntime::
+        `.vwr` files load unaffected with `missionNumber()==0`). `WorldRuntime::
         GetMissionNumber()` passes it through. `LoadFromMobileEggbertFile()` (the `.txt` loader)
         always resets it to 0 — the real `m_mission` is derived from which level FILE is loaded
         (`world011.txt` -> mission 11), not a header field within the file, unlike `region=`; not
@@ -2941,7 +2941,7 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
         world's, so training hints would fire in nonsensical places overlaid on unrelated demo
         content; verified instead via `VerifyInteractionSystem` + a live headless screenshot with
         a temporary hardcoded mission override (reverted before committing).
-      - **New `GETrainingHints.hpp`/`.cpp`**: all 43 real hint records across the 4 missions
+      - **New `TrainingHints.hpp`/`.cpp`**: all 43 real hint records across the 4 missions
         (transcribed and cross-checked against `Tables.cpp`'s own doc comments identifying each
         record's text-resource-ID slot position, confirming the record grouping is right), plus
         the real `IsDisplayInfo` gate semantics (`>=0` = exact treasure-count match, `-1` =
@@ -2981,7 +2981,7 @@ carries its own accurate per-item date/citation, this was just a leftover boiler
 
 ### 2.4 Blupi Character
 
-CNA's `GEBlupiController` currently has grid-based collision, step-up traversal, gravity, and a
+CNA's `BlupiController` currently has grid-based collision, step-up traversal, gravity, and a
 minimal `AnimState` (Stop/March/Jump/Down/Up) — collision-only, not a transcription of the 2D
 `BlupiRect`/`BlupiAdjust`/`BlupiBloque` system. Blupi has **no visible billboard/model in
 first-person** yet (only a temporary 2D sprite HUD indicator plus an optional third-person
@@ -2995,7 +2995,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [x] BLUPI-003 — Walk left/right: input sets horizontal speed (CNA, 2026-07-10)
 - [x] BLUPI-004 — Crouch: Left Shift sets Down state — **stale, corrected 2026-07-16**: already
   implemented (`crouchHeld = keys.IsKeyDown(Keys::LeftShift)` in `GalaxyEggbertCnaGame.cpp`,
-  drives `AnimState::Down` in `GEBlupiController::UpdateAnim()`). Only the visible SPRITE for
+  drives `AnimState::Down` in `BlupiController::UpdateAnim()`). Only the visible SPRITE for
   this state is blocked (no 3D Blupi model, `069`) — the state-tracking itself works.
 - [ ] BLUPI-005 — Look up / glide: Right Shift in air → reduced gravity, capped fall speed —
   **premise likely wrong, corrected 2026-07-16**: verified directly against `Decor.cpp:3236-3243`
@@ -3009,7 +3009,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [x] BLUPI-006 — Auto step-up: 1-tile ledges climbed automatically (CNA, 2026-07-10) *(3D adaptation)*
 - [x] BLUPI-007 — Grid-based tile collision (CNA, 2026-07-10) — collision-only, not the 2D AABB/CharacterController transcription
 - [x] BLUPI-008 — Respawn at blupiStart on death — **stale, corrected 2026-07-16**: already
-  implemented as the real 10-slot safe-position FIFO respawn (`GEBlupiController::
+  implemented as the real 10-slot safe-position FIFO respawn (`BlupiController::
   UpdateSafePosition()`/`GetValidX/Y/Z()`, plan.md `067`), verified directly against
   `Decor.cpp:6467-6478`/`6654-6673` back on 2026-07-11 — this specific checklist entry was just
   never marked done at the time.
@@ -3033,7 +3033,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
   category as the already-documented Ecrase-hitbox non-goal above).
 - [ ] BLUPI-013 — BlupiBloque: directional collision query (can I move here?) — **clarified
   2026-07-16**: the EQUIVALENT real functionality (can Blupi move to a given position) is already
-  implemented via this engine's own 3D-native collision (`GEBlupiController::TryMoveAxis()`/
+  implemented via this engine's own 3D-native collision (`BlupiController::TryMoveAxis()`/
   `GroundHeightAt()`, `BLUPI-006`/`007`, already marked done as "3D adaptation, not the 2D
   transcription"). Not a gap — a literal `BlupiBloque` port was never the goal, just left
   unclosed as its own checklist line.
@@ -3048,7 +3048,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
   imprecise, corrected 2026-07-16**: verified directly against `Decor.cpp:4619-5324` — real
   `m_blupiLevel` is specifically the water/Nage breath gauge (100→0 while submerged, Shield/Hide
   immune), not a general "vehicles/actions charge gauge". Already implemented as `148`'s water
-  breath gauge (`GEBlupiController::GetWaterGaugeLevel()`/`kWaterGaugeMax`).
+  breath gauge (`BlupiController::GetWaterGaugeLevel()`/`kWaterGaugeMax`).
 - [ ] BLUPI-017 — m_blupiTimeNoAsc: timer preventing lift re-entry after a dismount —
       **cross-referenced 2026-07-16/17, still correctly blocked**: this is the same real timer
       already researched at `PICKUP-027`, not a standalone lift-cooldown — it's an intrinsic part
@@ -3069,7 +3069,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
   directly against `Decor.cpp:6475-6671` — the real FIFO is used SOLELY for `m_blupiValidPos`
   (safe respawn), never referenced by teleporter code at all; the real teleporter-exit mechanism
   is the separate paired-teleporter lookup (`Decor::SearchTeleporte()`, already ported as this
-  engine's own `GEWorldRuntime::FindTeleportDestination()`).
+  engine's own `WorldRuntime::FindTeleportDestination()`).
 - [x] BLUPI-021 — Blupi "front" flag (m_blupiFront): determines draw order vs objects —
       **closed 2026-07-17, architecturally moot, same category as `BLUPI-012`**: this is purely a
       2D-era manual sprite-layering workaround (which of two overlapping flat sprites paints on
@@ -3133,10 +3133,10 @@ reset to `[ ]` except the small set with direct CNA evidence.
       icon pairs for all 5 vehicle modes this covers (Helico/Jeep/Tank/Skate/Over, see `BLUPI-037/038/
       040/041/043/044/053/058/069`), Swim/Surf (`040/041/043/044`), Hide (`051`), Push (`036`), and the
       3 one-shot actions Switch/TakeDynamite/PutDynamite (`073/076`) — selected in
-      `GEBlupiController::UpdateAnim()`'s existing precedence cascade by the SAME flags that already
+      `BlupiController::UpdateAnim()`'s existing precedence cascade by the SAME flags that already
       drive the underlying (already-functional) mechanics: `m_vehicleMode`/`m_nage`/`m_surf`/
       `SecretPower::Hide`/a new `pushingCrate` `Step()` parameter (the caller's own
-      `GEInteractionSystem::CrateBeingPushedThisFrame()`, one frame delayed since that's only known
+      `InteractionSystem::CrateBeingPushedThisFrame()`, one frame delayed since that's only known
       after `interaction_.Update()` runs). **Real Turn variants (TurnHelico/Jeep/Tank/Skate/Over/Nage/
       Surf) are NOT modeled** — precise real turn-trigger detection (a direction-change edge, distinct
       from just "moving") needs its own dedicated research pass, same open gap as the base humanoid
@@ -3169,7 +3169,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
       PauseBack/PauseRestart paths, which stay instant in real source too — so only the
       `WorldSelect1-12` portal-touch path in `GalaxyEggbertCnaGame.cpp`'s ground-tile check got this;
       `DemoPortal`/exit/PauseBack/PauseRestart are deliberately unchanged. New
-      `GEBlupiController::TriggerBye()`/`IsBye()` (+ member timer, same "freeze everything, count a
+      `BlupiController::TriggerBye()`/`IsBye()` (+ member timer, same "freeze everything, count a
       timer down, auto-resume" shape as `TriggerTeleport()`) and a new `AnimState::Bye` (falls
       through to the existing static Stop-pose in `GetAnimIcon()` — checked Tables.cpp/Decor.cpp
       directly, no dedicated per-frame "wave" sprite table exists in real source; the real
@@ -3185,7 +3185,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
       pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [ ] BLUPI-050 — StopSuspend / MarchSuspend / TurnSuspend / JumpSuspend (rope hanging) — real data
       extracted (table_blupi IDs 31/32/33/34) but NOT wired: the underlying `m_suspended` mechanic
-      itself is real code (`GEBlupiController.cpp:898`) but never actually triggered by
+      itself is real code (`BlupiController.cpp:898`) but never actually triggered by
       `GalaxyEggbertCnaGame.cpp` (no rope-tile world-side detection exists) — genuinely unreachable in
       practice, matching the already-deferred Suspend mechanic itself (`177`/`BLUPI-101`, a pending
       icon-202 render-geometry decision the user asked to defer). Not worth animating a state that
@@ -3217,8 +3217,8 @@ reset to `[ ]` except the small set with direct CNA evidence.
       own per-kind frame table (`kSucetteFrames`, added 2026-07-16) — not a separate `AnimState`.
 - [x] BLUPI-058 — StopTank / MarchTank / TurnTank / FireTank (tank vehicle) — **Stop/March done
       2026-07-18; FireTank done 2026-07-19**: real data (`table_blupi` ID 53, 6 frames) wired via a
-      new `GEInteractionSystem::TankFiredThisFrame()` per-frame signal (mirrors the existing
-      `CrateBeingPushedThisFrame()` pattern, since that class has no `GEBlupiController` access) —
+      new `InteractionSystem::TankFiredThisFrame()` per-frame signal (mirrors the existing
+      `CrateBeingPushedThisFrame()` pattern, since that class has no `BlupiController` access) —
       fires only the frame a bullet actually launches, not the empty-clip click; independent of the
       existing 0.5s fire cooldown, which only gates re-firing. Turn variant still NOT modeled, same
       gap as every other vehicle.
@@ -3257,7 +3257,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
       enemy) specifically, which never gets the "ahead" Mockery variant (only Mockeryi when behind),
       ported as-is even though the real reasoning for that asymmetry isn't stated in source.
       Deliberately NOT modeled as a freeze (real source never drops `m_blupiFocus` for these, unlike
-      Bye/Teleport/pickup-freeze) — new `GEBlupiController::TriggerMockery()` is cancelled the
+      Bye/Teleport/pickup-freeze) — new `BlupiController::TriggerMockery()` is cancelled the
       instant `moving` becomes true, matching that real "movement just overwrites the action away"
       behavior, with no explicit "cancel" needed. Real per-variant entry sound also verified
       directly: Mockery/Mockeryi both use ch65 (`Decor.cpp:3151/3165`), but Mockeryp uses a
@@ -3324,7 +3324,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
       complete `Tables::table_blupi[2911]` literal and recovered all 84 named `BlupiAction` records
       that actually have one (3 of the 87 real enum values — Set/Recedeq/Advanceq — genuinely have no
       table_blupi record at all, confirmed dead/unreachable in the original game too). Of those 84,
-      ~24 are now wired into `GEBlupiController`'s `AnimState` system (see `BLUPI-047`'s shared
+      ~24 are now wired into `BlupiController`'s `AnimState` system (see `BLUPI-047`'s shared
       writeup); the rest have their real data sitting ready in the extraction but no live trigger yet
       (each one's own entry above says exactly why, mostly "no matching mechanic/edge-event exists in
       this engine").
@@ -3334,10 +3334,10 @@ reset to `[ ]` except the small set with direct CNA evidence.
       that `table_mirror` isn't a cosmetic nicety -- it's the mechanism that makes EVERY
       `table_blupi` icon this session has been transcribing correct for `Direction::Left`
       specifically (the base data is right-facing by convention). The blocker: this engine has no
-      discrete left/right facing concept at all (`GEBlupiController` only tracks a continuous 3D
+      discrete left/right facing concept at all (`BlupiController` only tracks a continuous 3D
       `m_yaw`) -- asked the user whether to defer until the real 3D Blupi model decision, or
       approximate now for the temporary debug icon; user chose to approximate now. New
-      `GEBlupiController::GetDisplayAnimIcon()` wraps `GetAnimIcon()`: `std::sin(m_yaw) < 0.0f`
+      `BlupiController::GetDisplayAnimIcon()` wraps `GetAnimIcon()`: `std::sin(m_yaw) < 0.0f`
       stands in for `Direction::Left` (same sign convention already established for
       `blupiFacingDX`/`GalaxyEggbertCnaGame.cpp:2501`), `m_invert` flips the sense exactly like the
       real `m_blupiInvert` twist, the real table_mirror[335] substitution applies on the blupi.png
@@ -3417,14 +3417,14 @@ reset to `[ ]` except the small set with direct CNA evidence.
       the naming-trap note on `BLUPI-096` above).
 - [x] BLUPI-098 — Swimming (m_blupiNage): entered when Blupi falls into water
       (`table_vitesse_nage`) — **stale checkbox, closed 2026-07-17**: done via Phase 14 `148`
-      (`GEBlupiController::IsNage()`).
+      (`BlupiController::IsNage()`).
 - [x] BLUPI-099 — Surfing (m_blupiSurf): surfboard on water surface (`table_vitesse_surf`) —
-      **stale checkbox, closed 2026-07-17**: done via Phase 14 `148` (`GEBlupiController::IsSurf()`).
+      **stale checkbox, closed 2026-07-17**: done via Phase 14 `148` (`BlupiController::IsSurf()`).
 - [ ] BLUPI-100 — Vent (fan) propulsion (m_blupiVent): blown by ventilator tile — **researched
-      2026-07-17, genuinely NOT modeled**: grepped both `GEBlupiController.cpp` and
+      2026-07-17, genuinely NOT modeled**: grepped both `BlupiController.cpp` and
       `GalaxyEggbertCnaGame.cpp` for any Fan-tile physics interaction — none exists; Fan
       tiles (`BlockTypes::FanLeft/Right/Up/Down`) are purely a visual terrain animation
-      (`GETerrainRenderer.cpp`), with no effect on Blupi's movement at all. A genuine, real,
+      (`TerrainRenderer.cpp`), with no effect on Blupi's movement at all. A genuine, real,
       still-open gap — correctly left unchecked, not stale. **NOT the same thing as the Fan
       hazard/`IsVentillo` mechanic already implemented (Phase 14 `149`)** — confirmed
       2026-07-20 (re-checked while a research fork mistakenly proposed this as a "next task",
@@ -3448,7 +3448,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
 - [x] BLUPI-102 — Motor sound crossfade: one-shot start/stop sounds + looped motor sound —
       **done 2026-07-17**, see `SOUND-008`.
 - [x] BLUPI-103 — m_blupiMotorHigh: pitch variant selection (fast vs slow motor) — **done
-      2026-07-17**, see `SOUND-008` (`GEBlupiController::IsVehicleMotorHigh()`).
+      2026-07-17**, see `SOUND-008` (`BlupiController::IsVehicleMotorHigh()`).
 
 #### 4.5 Blupi Special States & Power-ups
 
@@ -3462,10 +3462,10 @@ reset to `[ ]` except the small set with direct CNA evidence.
       (Phase 17 `172`) + the shared HUD gauge (`HUD-008`).
 - [x] BLUPI-106 — Shield trail sparkle (ObjectType57 spawned while shield active) — **stale
       checkbox, closed 2026-07-17**: done — see the `PICKUP-086/087` cancellation note for the
-      full citation (`GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, `kShieldTrack`).
+      full citation (`InteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, `kShieldTrack`).
 - [x] BLUPI-107 — SuperBlupi (m_bSuperBlupi): cheat mode, full invincibility + all powers —
       **stale checkbox, closed 2026-07-17**: done, see `MENU-095`/`CHEAT-002`
-      (`GEBlupiController::m_cheatSuperBlupi`/`SetCheatSuperBlupi()`, folded into `IsInvincible()`).
+      (`BlupiController::m_cheatSuperBlupi`/`SetCheatSuperBlupi()`, folded into `IsInvincible()`).
 - [x] BLUPI-108 — ~~Cloud mode (m_blupiCloud): from ObjectType31, floats through blocks for N
       ticks~~ **HALLUCINATED — CANCELLED (confirmed by user 2026-07-14)**: grepped real
       `Decor.cpp` for every `m_blupiCloud` reference — none gate any collision/movement-bypass
@@ -3476,7 +3476,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
       item number.
 - [x] BLUPI-109 — Invert mode (m_blupiInvert): from ObjectType40, inverted controls for 100 ticks
       — **stale checkbox, closed 2026-07-17**: the actual control-inversion IS implemented (real
-      `Decor::SetSpeedX`'s "if (m_blupiInvert) speed = -speed", `GEBlupiController::Step()`'s
+      `Decor::SetSpeedX`'s "if (m_blupiInvert) speed = -speed", `BlupiController::Step()`'s
       `m_invert` branch negating `horizontalSpeed`) — see `PICKUP-011` for the full grant/timer
       citation. Only `BLUPI-110`'s particle-burst half was previously marked done; this entry
       (the actual gameplay effect) was the still-unmarked duplicate.
@@ -3492,22 +3492,22 @@ reset to `[ ]` except the small set with direct CNA evidence.
       appending on each key's down-EDGE not held-repeat) whose own SUFFIX is matched against a
       real ~26-entry cheat-name table (`"ghost"` among them, `#ifdef MODERN` which is
       unconditionally live) to call `Decor::CheatAction()`. Ported as
-      `GEInputPad::UpdateTypedGhostCheat()` (only `"ghost"` wired for now — the other ~25 real
+      `InputPad::UpdateTypedGhostCheat()` (only `"ghost"` wired for now — the other ~25 real
       names each need their own individual verification pass before wiring, a separate future
       task, not a blind mass-port). Movement: real `BlupiGhostStep()` (`Decor.cpp:2639-2705`) is a
       genuinely separate top-priority early-return (checked before even teleporting) — free flight
       at a real exact 4x normal speed, no gravity, no collision, world-bounds clamp only; ported as
-      `GEBlupiController::Step()`'s own top-priority `m_ghost` branch (`kGhostSpeed = kMoveSpeed *
+      `BlupiController::Step()`'s own top-priority `m_ghost` branch (`kGhostSpeed = kMoveSpeed *
       4.0f`), adapting the real 2 independent screen axes to this engine's tank-control scheme
       (forward/back-along-yaw + turn for horizontal, reusing jumpPressed/crouchHeld for vertical
       flight since this engine has no other real-mapped use for them while every other Step()
       branch is skipped). "No interactions": real `MoveObjectDetect()` unconditionally returns "no
       object found" while ghosting, which nearly every hazard/pickup/enemy-contact/lift-riding
-      check in `GEInteractionSystem` is built on (all proximity tests against Blupi's own
+      check in `InteractionSystem` is built on (all proximity tests against Blupi's own
       position) — ported by substituting a sentinel far-outside-the-world position for Blupi's
-      real coordinates in the `GEInteractionSystem::Update()` call site whenever
-      `GEBlupiController::IsGhost()`, making every proximity check fail shut with zero changes
-      inside `GEInteractionSystem` itself; patrol/animation logic (which never references Blupi's
+      real coordinates in the `InteractionSystem::Update()` call site whenever
+      `BlupiController::IsGhost()`, making every proximity check fail shut with zero changes
+      inside `InteractionSystem` itself; patrol/animation logic (which never references Blupi's
       position) continues unaffected, matching real behavior. Toggle-on clears any active vehicle
       mount (real behavior); toggle-off is silently rejected while standing inside solid geometry
       (real `!DecorDetect(BlupiRect(m_blupiPos))`, `Decor.cpp:2065`) rather than stranding Blupi
@@ -3527,13 +3527,13 @@ reset to `[ ]` except the small set with direct CNA evidence.
       velocity boosts (e.g. `-25` vs `-19`), none reference wall-climbing/collision-bypass; "walk
       up walls" doesn't appear to be real. The actual real effect (higher jump while Power is
       active) IS done — `kJumpSpeedPowered`/`kSkateboardJumpSpeedPowered` etc. throughout
-      `GEBlupiController.cpp`, granted via `173`. Do not implement wall-climbing under this item.
+      `BlupiController.cpp`, granted via `173`. Do not implement wall-climbing under this item.
 - [x] BLUPI-114 — Dynamite (m_blupiDynamite): from ObjectType55; TakeDynamite / PutDynamite actions
       — **stale checkbox, closed 2026-07-17**: fully done, see Phase 15 `155`.
 - [x] BLUPI-115 — Bullet count (m_blupiBullet): from ObjectType29; FireTank expends bullets — **firing done 2026-07-13, plan.md `BULLET-001`** (ammo pickup itself already done 2026-07-12, E3D-MIG-175); see `BULLET-001`'s own entry (§ Bullets) for the full real-behavior citation and what's NOT modeled (Helicopter firing, enemy damage -- there is none, real bullets are a hazard not a weapon)
 - [x] BLUPI-116 — Ecrase mode (m_blupiEcrase): crushed flat under object (StopEcrase/MarchEcrase)
       — **stale checkbox, closed 2026-07-17**: the mechanic itself is done
-      (`GEBlupiController::TriggerCrush()`, a duration-timed crushed-flat state, wired from the
+      (`BlupiController::TriggerCrush()`, a duration-timed crushed-flat state, wired from the
       Crusher hazard in `GalaxyEggbertCnaGame.cpp`) — only the `StopEcrase`/`MarchEcrase`
       ANIMATION-STATE selection remains blocked on the missing visible-Blupi-model work, same as
       every other `BlupiAction` animation item.
@@ -3543,8 +3543,8 @@ reset to `[ ]` except the small set with direct CNA evidence.
 #### 4.6 Blupi Death & Respawn
 
 - [x] BLUPI-118 — Death: BlupiDead() triggers explosion effect, resets lives-1, respawn — **stale
-      checkbox, closed 2026-07-17**: fully done via `GEBlupiController::TriggerDeathLock()` +
-      `GEInteractionSystem::LoseLife()` (the "explosion effect" is the death-cause-specific
+      checkbox, closed 2026-07-17**: fully done via `BlupiController::TriggerDeathLock()` +
+      `InteractionSystem::LoseLife()` (the "explosion effect" is the death-cause-specific
       hurt-sprite/pickup-freeze frame array, `DeathCause`-keyed, see the session's earlier
       `kClear1Frames`/etc. writeup).
 - [x] BLUPI-119 — Death freeze: 1 s input lock before respawn — **stale checkbox, closed
@@ -3552,7 +3552,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
       (`kDeathLockTicks[cause]`), not a flat 1-second lock.
 - [x] BLUPI-120 — Drown death: different animation (ACTION_DROWN) in deep water — **stale
       checkbox, closed 2026-07-17**: the death-CAUSE distinction is done
-      (`GEBlupiController::JustDrowned()`/`DeathCause::Drown`, channel 26, Phase 14 `E3D-MIG-148`)
+      (`BlupiController::JustDrowned()`/`DeathCause::Drown`, channel 26, Phase 14 `E3D-MIG-148`)
       — only the `ACTION_DROWN` ANIMATION-STATE selection remains blocked on the missing visible-
       Blupi-model work, same as `BLUPI-116` above.
 - [ ] BLUPI-121 — Electro death: ACTION_ELECTRO animation + electric shake
@@ -3571,13 +3571,13 @@ reset to `[ ]` except the small set with direct CNA evidence.
       velocity/vertical-speed condition gating a different outcome. Confirmed invented — do not
       implement. The real, confirmed side of this (enemy-contact death, no stomp exception) is
       just the shared hazard-contact kill logic already covered by `IsGenericHazard()`
-      (galaxy-eggbert's own `GEInteractionSystem.cpp`) — already implemented, see the correction
+      (galaxy-eggbert's own `InteractionSystem.cpp`) — already implemented, see the correction
       below (ENEMY-CONTACT-001 was a false claim, retracted).
 - [ ] BLUPI-127 — ~~BounceUp: upward impulse kJumpSpeed × 0.65~~ **HALLUCINATED — CANCELLED, same
       as BLUPI-126 above — no such function exists in real source.**
 - ~~ENEMY-CONTACT-001 — Blupi has NO contact-collision detection against enemy `MoveObject`s at
       all yet~~ **RETRACTED 2026-07-14, this claim was itself wrong** — direct re-verification of
-      `GEInteractionSystem.cpp` found Blupi-enemy contact detection is already comprehensive and
+      `InteractionSystem.cpp` found Blupi-enemy contact detection is already comprehensive and
       source-confirmed: the shared 8-type hazard-contact kill list (`IsGenericHazard()`, types
       2/3/4/16/17/20/96/97, line ~1203), wasp balloon-touch (type 44, line ~1129), large-creature
       turn-dwell lethal contact (type 54, line ~1167), fired-projectile contact (type 23, line
@@ -3594,7 +3594,7 @@ reset to `[ ]` except the small set with direct CNA evidence.
 
 #### 4.7 Blupi Sounds
 
-CNA's `GESound` loads all 93 real .wav files with the real per-channel volume/conflict table and
+CNA's `Sound` loads all 93 real .wav files with the real per-channel volume/conflict table and
 is wired to jump/land/footstep events, so the base plumbing exists — but per-item wiring below is
 re-verified individually since it is not a full port yet.
 
@@ -3606,7 +3606,7 @@ re-verified individually since it is not a full port yet.
       `SOUND-018` (already wired across Lava/Blitz/etc.).
 - [x] BLUPI-133 — Surface-specific footstep: SoundEnviron maps ch3/ch4 to ch78-91 based on tile
       type — **stale checkbox, closed 2026-07-17**: fully done and tested
-      (`GESound::FootstepChannelFor()`, `E3D-MIG-084`), wired via `sound_.PlayStep()`/`PlayLand()`
+      (`Sound::FootstepChannelFor()`, `E3D-MIG-084`), wired via `sound_.PlayStep()`/`PlayLand()`
       in `GalaxyEggbertCnaGame.cpp`.
 - [ ] BLUPI-134 — Walk in water sound: ch36 (shallow water ambient) — still correctly blocked,
       see `SOUND-046` (idle-fidget `AnimState` gap, same as every other `SOUND-010c`-family item).
@@ -3707,7 +3707,7 @@ in-progress item.
 - [ ] TILE-008 — Sky dome per world (`backgrounds/decorNNN.png`)
 - [ ] TILE-009 — Per-world sky colour (ambient + fog)
 - [x] TILE-010 — Blupi spawn position parsed from world data (CNA, 2026-07-10 — collision point spawn only, no visible Blupi, see BLUPI-078)
-- [x] TILE-011 — Background texture selection by region — **done differently** (**corrected 2026-07-14**): not a mobile-eggbert-style text `region=` header line (this engine's `.vwr` format is different), but the `.vwr` v2 format's own `skyRegion` binary header field, read via `GEWorldRuntime::GetSkyRegion()` and used to pick `Content/backgrounds/decorNNN.png` directly (`GalaxyEggbertCnaGame::LoadContent()`) — same real end result (per-world background selection), different real source field.
+- [x] TILE-011 — Background texture selection by region — **done differently** (**corrected 2026-07-14**): not a mobile-eggbert-style text `region=` header line (this engine's `.vwr` format is different), but the `.vwr` v2 format's own `skyRegion` binary header field, read via `WorldRuntime::GetSkyRegion()` and used to pick `Content/backgrounds/decorNNN.png` directly (`GalaxyEggbertCnaGame::LoadContent()`) — same real end result (per-world background selection), different real source field.
 - [ ] TILE-012 — `music=` header parsed → ambient music track
 
 #### 5.2 Animated Tiles
@@ -3718,14 +3718,14 @@ div 4 (200ms). Any task below that previously assumed a uniform "6 fps" animatio
 accordingly.
 
 - [x] TILE-013 — Per-type animation phase timing using real `ScaleDiv()` divisors, not a uniform tick counter (CNA, 2026-07-10 — corrected from the old uniform-6fps assumption)
-- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}), div 2 / 100ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, stale note said "blocked on hazard/lives system": real hazard-contact check is in `GalaxyEggbertCnaGame.cpp`, not `GEInteractionSystem.cpp` — `GetGroundBlockType()==Lava` gate, confirmed live, all 5 real terrain hazards are working as of 2026-07-11/12).
+- [x] TILE-014 — Lava tiles (icon 68, 8-frame: {68,69,70,71,72,71,70,69}), div 2 / 100ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, stale note said "blocked on hazard/lives system": real hazard-contact check is in `GalaxyEggbertCnaGame.cpp`, not `InteractionSystem.cpp` — `GetGroundBlockType()==Lava` gate, confirmed live, all 5 real terrain hazards are working as of 2026-07-11/12).
 - [x] TILE-015 — Crusher tiles (10-frame: {317..323...}), div 3 / 150ms (CNA, 2026-07-10) — kill-in-frames hazard logic **also done** (**corrected 2026-07-14**, same false-negative as TILE-014 — `GalaxyEggbertCnaGame.cpp`'s `GetGroundBlockType()==Crusher` gate).
-- [x] TILE-016 — Saw tiles (6-frame: {378..383}), div 1 / 50ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, same false-negative — `GetGroundBlockType()==Saw` gate, plus the real switch/saw 41-cell linking, `GEWorldRuntime::TryActivateSwitch()`).
+- [x] TILE-016 — Saw tiles (6-frame: {378..383}), div 1 / 50ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, same false-negative — `GetGroundBlockType()==Saw` gate, plus the real switch/saw 41-cell linking, `WorldRuntime::TryActivateSwitch()`).
 - [x] TILE-017 — Spike tiles (16-frame: table_decor_piege1), div 4 / 200ms (CNA, 2026-07-10) — kill-on-contact **also done** (**corrected 2026-07-14**, same false-negative — `GetGroundBlockType()==Spike` gate).
 - [x] TILE-018 — Water1 tiles (6-frame: {92..95,94,93}), div 3 / 150ms (CNA, 2026-07-10 — animated decoration, alpha-blended cube, not wavy-edge surface)
 - [x] TILE-019 — Water2 tiles (6-frame: {91,96..98,97,96}), div 3 / 150ms (CNA, 2026-07-10 — same caveat as TILE-018)
 - [x] TILE-020 — Ventilator/fan tiles, icons 126-128, 3-frame (`table_decor_ventillog`) —
-  **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
+  **stale, corrected 2026-07-16**: already implemented (`TerrainRenderer.cpp`'s
   `case FanLeft: return 126 + (phase % 3);`, `BlockTypes::FanLeft = 126`). **Compass-direction
   label uncertain**: this checklist calls 126-128 "Up" but this engine's own `BlockTypes.hpp`
   calls it `FanLeft` (matching French `ventillo-G`=gauche/left more plausibly than "up") — the
@@ -3749,10 +3749,10 @@ accordingly.
       the same kind of render-mode decision as the already-deferred Saw-blade/`ThinMechanical`
       items, not just a table transcription. Left blocked, not implemented.
 - [x] TILE-025 — Temperature tile animation (table_decor_temp, 20-frame), div 4 / 200ms —
-  **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
+  **stale, corrected 2026-07-16**: already implemented (`TerrainRenderer.cpp`'s
   `case Temp: return kAnimTemp[phase % 20];`).
 - [x] TILE-026 — Marine tile (icon 203: table_marine, 11 frames, Object channel), div 3 / 150ms —
-  **stale, corrected 2026-07-16**: already implemented (`GETerrainRenderer.cpp`'s
+  **stale, corrected 2026-07-16**: already implemented (`TerrainRenderer.cpp`'s
   `case Marine: return kAnimMarine[phase % 11];`). Note: this "icon 203" is a terrain-tile
   `BlockTypes` icon, unrelated to the `ObjectType203` (a `MoveObject`, the lethal decoration
   implemented under `PICKUP-069` this session) despite sharing the same number — separate data
@@ -3765,9 +3765,9 @@ accordingly.
 hazard/gameplay logic wired... Blupi's collision does not test hazard tiles at all", but Phase 14
 (`E3D-MIG-140`-`149`) implemented almost all of it across 2026-07-11/12; that phase's own
 completion was never back-propagated to this checklist. Verified directly in
-`GalaxyEggbertCnaGame.cpp` (most of this logic lives there, NOT `GEInteractionSystem.cpp` — same
+`GalaxyEggbertCnaGame.cpp` (most of this logic lives there, NOT `InteractionSystem.cpp` — same
 false-negative risk flagged earlier in this file's own 2026-07-13 correction notes) and
-`GEWorldRuntime.cpp`/`GEBlupiController.cpp`.
+`WorldRuntime.cpp`/`BlupiController.cpp`.
 
 - [x] TILE-028 — Lava (icon 68): kill Blupi on contact — done (`GetGroundBlockType()==Lava` gate, `GalaxyEggbertCnaGame.cpp`).
 - [x] TILE-029 — Spike (icon 373): kill Blupi on contact — done (`GetGroundBlockType()==Spike` gate).
@@ -3789,12 +3789,12 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
       separately unit-testable for any of the 6 hazards). Full regression + both backends pass.
 - [x] TILE-033 — Blitz/lightning tile: electric instant death — done, one of the real 6 confirmed hazards (see NEXT.md §2).
 - [x] TILE-034 — Spring/ressort tile (icon 211): launches Blupi upward — done (`plan.md E3D-MIG-145`), correctly NOT a hazard (real behavior: bounce, not damage).
-- [x] TILE-035 — Temp tile: brief passability change — done (`plan.md E3D-MIG-146`), `GEBlupiController::GroundHeightAt()`'s own `tempPassable` phase-gated skip.
+- [x] TILE-035 — Temp tile: brief passability change — done (`plan.md E3D-MIG-146`), `BlupiController::GroundHeightAt()`'s own `tempPassable` phase-gated skip.
 - [x] TILE-036 — Door tile: locked door, opened by matching key — done (`plan.md E3D-MIG-160`/`161`, key- and treasure-gated families both real and working). The render-mode note (closed doors should be `Billboard`, not `UniformCube`) is confirmed STILL not done — explicitly deferred 2026-07-12 per user direction (no new render-geometry decisions that session), tracked separately (`E3D-MIG-516`/`163`, see §2.7 PICKUP-037's own note).
 - [x] TILE-037 — Teleporter tile: pair of tiles, teleport Blupi — done (`plan.md E3D-MIG-147`), real ~6.4s transit duration.
-- [x] TILE-038 — Switch tile: toggles linked door/bridge/saw state — done (`plan.md E3D-MIG-142`, `GEWorldRuntime::TryActivateSwitch()`, real 41-cell X±20 saw-linking window).
+- [x] TILE-038 — Switch tile: toggles linked door/bridge/saw state — done (`plan.md E3D-MIG-142`, `WorldRuntime::TryActivateSwitch()`, real 41-cell X±20 saw-linking window).
 - [x] TILE-039 — Bridge tile: builds a bridge (`ObjectType52` animation) — **done 2026-07-13** (`plan.md PICKUP-064`, see §2.7's own entry for the full writeup — a real live terrain-collision toggle, not cosmetic).
-- [x] TILE-040 — Ventilator tile: blows Blupi when in the fan stream — done (`plan.md E3D-MIG-149`, `GEWorldRuntime::TryConsumeFan()`).
+- [x] TILE-040 — Ventilator tile: blows Blupi when in the fan stream — done (`plan.md E3D-MIG-149`, `WorldRuntime::TryConsumeFan()`).
 - [x] TILE-041 — ~~Normal jump tile: forces a jump when stepped on~~ **description was wrong,
       corrected 2026-07-14; implemented same day**: `Decor::IsNormalJump()` is NOT a special tile
       that forces a jump on contact — it's a ceiling-clearance headroom check that modulates the
@@ -3802,7 +3802,7 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
       cells above him are clear, a reduced "bumped head" height (-12, or -16 with Power) if either
       is blocked — preventing a full jump from clipping a nearby ceiling
       (`mobile-eggbert-reference/12-hazards-and-interactables.md`'s "Jump physics" section). Done via
-      `GEBlupiController::HasJumpHeadroom()` + 3 new proportionally-anchored speed constants
+      `BlupiController::HasJumpHeadroom()` + 3 new proportionally-anchored speed constants
       (`kJumpSpeedPowered`/`kJumpSpeedReduced`/`kJumpSpeedReducedPowered`, same technique as
       `kSpringBounceHeld`/`NotHeld`). Real source offsets the probe 15px toward Blupi's facing
       direction to disambiguate near a tile boundary — simplified to a single column (this engine's
@@ -3823,7 +3823,7 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
       icon 202 was ALREADY separately confirmed by the user's own 2026-07-07 questionnaire answer in
       `mobile-eggbert-reference/02-tiles.md` as "a rod/pole Blupi walks on and climbs over a
       dangerous obstacle beneath it," an exact match found before this mechanic was ever connected
-      to that icon. Implemented via `GEBlupiController::GetBarreCellType()` (3-way: `None` = no bar
+      to that icon. Implemented via `BlupiController::GetBarreCellType()` (3-way: `None` = no bar
       tile; `Hanging` = bar tile with open air below, real type 1, grabbable; `LandingAvailable` =
       bar tile with solid ground below, real type 2, releases gracefully onto it) +
       `m_suspended`/grace-timer/drop-hold-timer state. Grab is automatic (no button), matching the
@@ -3867,18 +3867,18 @@ false-negative risk flagged earlier in this file's own 2026-07-13 correction not
 - [ ] TILE-053 — Decide and implement `ThinMechanical` render-mode geometry for saws/springs/switches/fans/bridge/pipes/grates (~25 icons) — decision not yet made
 - [ ] TILE-054 — Distinct water/liquid surface treatment (wavy-edge surface) to replace the current alpha-blended-cube placeholder
 - [x] TILE-055 — "Thin-bar" new geometry for icon 202 — **done 2026-07-14**. New
-      `GEThinBarTiles.hpp`/`.cpp` (`TryGetThinBarFaces()`), modeled directly on the existing
-      `GEInnerPillarBoxTiles` precedent: an `Easy3D::DirectionalCubeItem` sized `(1.0,
+      `ThinBarTiles.hpp`/`.cpp` (`TryGetThinBarFaces()`), modeled directly on the existing
+      `InnerPillarBoxTiles` precedent: an `Easy3D::DirectionalCubeItem` sized `(1.0,
       kThinBarThickness=0.3, kThinBarThickness=0.3)` — full block width along the bar's own X
       axis (so adjacent bar blocks connect seamlessly), thin in Y/Z. 4 long sides use the tile's
       real texture; the 2 end caps (PosX/NegX) use a flat `SwatchUv(tileUv, kMidSwatchV)`
       fallback colour, matching the user's 2026-07-07 questionnaire description ("thin
       rod/prism, not a cube; texture on the 4 long sides, 2 small square blue end faces").
-      Wired into `GETerrainRenderer::AppendSpecialGeometry()`/`IsSpecialGeometryIcon()`.
+      Wired into `TerrainRenderer::AppendSpecialGeometry()`/`IsSpecialGeometryIcon()`.
       Direct pixel inspection of `object-m.png` found icon 202's real crop is a thin stripe on an
       otherwise fully-transparent 64x64 tile — rendering it through the normal opaque static-mesh
       pass showed a solid white block (the alpha=0 background pixels' own RGB) instead of the
-      thin rod. Fixed by adding icon 202 to `NeedsAlphaBlend()` in `GETerrainRenderer.cpp`,
+      thin rod. Fixed by adding icon 202 to `NeedsAlphaBlend()` in `TerrainRenderer.cpp`,
       routing it through the same alpha-respecting "static-but-transparent" pass already used for
       icons 30/31 and the 4 teleporter pillars. Confirmed via live headless screenshots at close
       range and 3/4 angle: the tile now renders as a thin, mostly-transparent rod with visible
@@ -3901,7 +3901,7 @@ ENEMY-XXX numbering rather than re-deriving it.
 #### 6.1 Common Enemy Behaviour
 
 - [x] ENEMY-001 — Patrol movement: oscillate between posStart and posEnd — done (`131`, the
-      shared 4-phase dwell/advance/dwell/recede state machine in `GEInteractionSystem`'s
+      shared 4-phase dwell/advance/dwell/recede state machine in `InteractionSystem`'s
       `AdvancePatrolStep()`).
 - [ ] ENEMY-002 — Stationary enemies get ±2 tile default patrol range — NOT modeled; per `131`'s
       own note, patrol ranges are level-authored per instance, not auto-derived from a
@@ -3910,7 +3910,7 @@ ENEMY-XXX numbering rather than re-deriving it.
       "direction-mirrored animation-table selection... is NOT modeled — no directional walk/turn
       sprite tables exist for these types yet, only simple icon-cycling").
 - [ ] ENEMY-004 — Stomp kills all enemy types on velY < -1.0 contact — NOT modeled; confirmed no
-      velocity-gated "stomp" concept exists anywhere in `GEInteractionSystem.cpp` — contact-kill
+      velocity-gated "stomp" concept exists anywhere in `InteractionSystem.cpp` — contact-kill
       (`132`) is an unconditional touch check, not stomp-specific.
 - [ ] ENEMY-005 — Enemy respawns at posStart after 5s kill timer — **likely hallucinated,
   investigated 2026-07-16**: verified directly against `Decor.cpp:7881-7917` (`Decor::
@@ -3926,7 +3926,7 @@ ENEMY-XXX numbering rather than re-deriving it.
       but not a deliberate aerial/ground distinction).
 - [x] ENEMY-008 — `MoveObjectStepLine`: advance/recede speed + end-dwell timer logic — done (`131`).
 - [x] ENEMY-009 — `MoveObjectStepIcon`: per-type animation phase counter update — done, resolved
-      by `131`/`GEWorldRuntime::Update()`'s existing generic per-instance phase advance.
+      by `131`/`WorldRuntime::Update()`'s existing generic per-instance phase advance.
 
 #### 6.2 Per-Type Enemy Implementation
 
@@ -3942,8 +3942,8 @@ ENEMY-XXX numbering rather than re-deriving it.
       (already implemented, `AdvancePatrolStep()`); what's real and was genuinely missing is its
       own 4-table turn/walk icon selection (`table_bulldozer_left/right/turn2l/turn2r`,
       `Tables.cpp:1186-1205`) -- this engine's `GetObjIcon()` only ever used the "left" table
-      regardless of direction or turn-transition step (documented simplification, `GEObjectIcons.
-      hpp`'s own header comment). Added `GEObjectIcons::GetBulldozerIcon(patrolGoesLeftFromStart,
+      regardless of direction or turn-transition step (documented simplification, `ObjectIcons.
+      hpp`'s own header comment). Added `ObjectIcons::GetBulldozerIcon(patrolGoesLeftFromStart,
       patrolStep, patrolTimeTicks)` -- a direct port of the real switch, fed by the exact same
       `MobileObjSpec::posStartX/posEndX/patrolStep/patrolTime` fields `AdvancePatrolStep()` already
       maintains -- wired at the one render call site with real patrol-state access (the
@@ -3959,13 +3959,13 @@ ENEMY-XXX numbering rather than re-deriving it.
 - [x] ENEMY-015 — ObjectType17: fish — contact-kill done (`133`); water-specific patrol context not
       separately modeled (functionally unnecessary since collision doesn't distinguish).
 - [x] ENEMY-016 — ObjectType17: turn animation (48 frames) — **resolved 2026-07-20**, same pass as
-      `ENEMY-013`: added `GEObjectIcons::GetFishIcon()`, a direct port of the real
+      `ENEMY-013`: added `ObjectIcons::GetFishIcon()`, a direct port of the real
       `Decor.cpp:8670-8711` switch (`table_poisson_left/right/turn2l/turn2r`,
       `Tables.cpp:1212-1236`), wired at the same bulldozer render call site.
 - [x] ENEMY-017 — ObjectType20: bird — contact-kill done (`133`); aerial Y=3.0 patrol positioning
       is level-authored data, not a special-cased behavior.
 - [x] ENEMY-018 — ObjectType20: turn animation (10 frames) — **resolved 2026-07-20**, same pass as
-      `ENEMY-016`: added `GEObjectIcons::GetBirdIcon()`, real `Decor.cpp:8712-8753`
+      `ENEMY-016`: added `ObjectIcons::GetBirdIcon()`, real `Decor.cpp:8712-8753`
       (`table_oiseau_left/right/turn2l/turn2r`, `Tables.cpp:1243-1254`).
 - [x] ENEMY-019 — ObjectType33: blupit — patrol + turn-dwell-timed attack done (`134`).
 - [x] ENEMY-020 — ObjectType33: blupit fires ObjectType23 at phase 3/21 during turn — done (`134`,
@@ -3977,12 +3977,12 @@ ENEMY-XXX numbering rather than re-deriving it.
 - [x] ENEMY-023 — ObjectType44: wasp/bee — fast patrol + real balloon-status trigger/hazard-pop
       interaction done (`135`).
 - [x] ENEMY-024 — ObjectType44: turn animation (5 frames) — **resolved 2026-07-20**, same pass:
-      added `GEObjectIcons::GetWaspIcon()`, real `Decor.cpp:8754-8795`
+      added `ObjectIcons::GetWaspIcon()`, real `Decor.cpp:8754-8795`
       (`table_guepe_left/right/turn2l/turn2r`, `Tables.cpp:1261-1270`) -- the patrol/idle animation
       only, distinct from the already-implemented balloon-transform hazard interaction.
 - [x] ENEMY-025 — ObjectType54: creature — slow patrol + turn-dwell-gated lethality done (`136`).
 - [~] ENEMY-026 — ObjectType54: long turn animation (152 frames) — **turn/walk icon resolved
-      2026-07-20**: added `GEObjectIcons::GetCreatureIcon()`, real `Decor.cpp:8796-8837`
+      2026-07-20**: added `ObjectIcons::GetCreatureIcon()`, real `Decor.cpp:8796-8837`
       (`table_creature_left/right/turn2`, `Tables.cpp:1278-1307`) -- confirmed the real
       left/right walk tables are byte-identical and both turn steps (1 and 3) share one table, so
       unlike the other 4 in this family there's no direction parameter to take. **Still open**: the
@@ -3992,7 +3992,7 @@ ENEMY-XXX numbering rather than re-deriving it.
   cross-reference, corrected 2026-07-16**: this entry's own premise was already corrected in
   `136`'s own writeup — contact does NOT spare Blupi/only-destroy-the-vehicle instead of killing;
   it's an unconditional Glu death either way, which ALSO clears vehicle/Balloon/Ecrase state when
-  applicable (via `GEBlupiController::TriggerDeathLock()`, fixed 2026-07-16, matching real
+  applicable (via `BlupiController::TriggerDeathLock()`, fixed 2026-07-16, matching real
   `BlupiDead()`). `ByeByeHelico()` itself is purely a cosmetic particle effect with no state
   change (see `136`'s own note) — not worth new plumbing for. See `136` for the full writeup.
 - [ ] ENEMY-028 — ObjectType18: additional patrol enemy variant — NOT modeled as its own enemy;
@@ -4019,7 +4019,7 @@ ObjectType-to-sheet corrections repeated in §7.
       `!m_blupiShield && !m_blupiHide` hazard-immunity gate (Phase 17 `170`) applies across all
       ~15 real call sites including projectiles.
 - [x] ENEMY-035 — Projectile fire sound — done, but the real channel is **52**, not the guessed
-      ch27 (`FireBlupihShot()`/the blupit-shot branch in `GEInteractionSystem.cpp` both play
+      ch27 (`FireBlupihShot()`/the blupit-shot branch in `InteractionSystem.cpp` both play
       `SoundChannel52`).
 
 #### 6.4 Enemy Sounds
@@ -4027,7 +4027,7 @@ ObjectType-to-sheet corrections repeated in §7.
 - [x] ENEMY-036 — Stomp kill sound: ch5 — **closed 2026-07-17, stale checkbox**: no stomp concept
       exists (confirmed hallucinated, per the standing `SOUND-015`/`BLUPI-126`/`131` cancellation);
       the real generic contact-kill death sound (channel **74**) IS already wired for every
-      `IsGenericHazard()` kill (`GEInteractionSystem.cpp:1546/1681/1738`), always (real source is
+      `IsGenericHazard()` kill (`InteractionSystem.cpp:1546/1681/1738`), always (real source is
       a 50/50 coinflip between ch74 and silence, per `132`'s own note — simplified here to always
       ch74, not modeled as a coinflip, a documented simplification not a gap).
 - [ ] ENEMY-037 — Bulldozer turn sound (ch33) — NOT modeled; no per-type turn sound exists (ch33
@@ -4054,11 +4054,11 @@ ObjectType-to-sheet corrections repeated in §7.
 - [x] ENEMY-041 — ObjectType32 (blupih): real per-direction/turn-transition icon animation —
       **added 2026-07-20**, found while completing the same real gap for bulldozer/fish/bird/wasp/
       creature (`ENEMY-013/016/018/024/026`) -- no pre-existing checklist item covered this one.
-      `GEObjectIcons::GetBlupihIcon()`, direct port of `Decor.cpp:8838-8887`
+      `ObjectIcons::GetBlupihIcon()`, direct port of `Decor.cpp:8838-8887`
       (`table_blupih_left/right/turn2l/turn2r`, `Tables.cpp:1314-1333`). The real projectile-fire
       trigger at the same source site is `ENEMY-022`, already implemented separately -- untouched.
 - [x] ENEMY-042 — ObjectType33 (blupit): real per-direction/turn-transition icon animation —
-      **added 2026-07-20**, same pass as `ENEMY-041`. `GEObjectIcons::GetBlupitIcon()`, direct port
+      **added 2026-07-20**, same pass as `ENEMY-041`. `ObjectIcons::GetBlupitIcon()`, direct port
       of `Decor.cpp:8888-8927` (`table_blupit_left/right/turn2l/turn2r`, `Tables.cpp:1340-1360`).
       Real projectile-fire trigger is `ENEMY-020`, already implemented separately -- untouched.
 
@@ -4069,7 +4069,7 @@ ObjectType-to-sheet corrections repeated in §7.
 **Re-verified against source 2026-07-13 — badly stale.** This section predates the 2026-07-11/12/13
 implementation push (Phases 15-17 above, which are current) and still marked most of that work
 `[ ]`. Corrected in place below; ground truth is Phases 15/16/17 and a direct source check of
-`GEInteractionSystem.cpp`/`GEBlupiController`, not a re-derivation.
+`InteractionSystem.cpp`/`BlupiController`, not a re-derivation.
 
 **Sound-channel correction, applies throughout this section:** treasure/key pickup = Channel 11 (or
 19 if the pickup completes a set), egg = Channel 3, door open = Channel **33** (not ch7, corrected
@@ -4089,13 +4089,13 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 - [x] PICKUP-004 — ObjectType49: red key — sets Key1 flag, real sound channel (11, or 19 if set-completing) (CNA, 2026-07-10)
 - [x] PICKUP-005 — ObjectType50: green key — sets Key2 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
 - [x] PICKUP-006 — ObjectType51: blue key — sets Key3 flag, same channel correction as PICKUP-004 (CNA, 2026-07-10)
-- [x] PICKUP-007 — ObjectType25: shield orb — done (Phase 17 `170`/`172`), grants `SecretPower::Shield` instantly on contact (real 2-stage delay not modeled); pickup sound wired (ch42, see PICKUP-073 — corrected 2026-07-13, an earlier audit pass this same session wrongly flagged this as unwired since the `sound.Play()` call lives in `GalaxyEggbertCnaGame.cpp`, not `GEInteractionSystem.cpp`).
+- [x] PICKUP-007 — ObjectType25: shield orb — done (Phase 17 `170`/`172`), grants `SecretPower::Shield` instantly on contact (real 2-stage delay not modeled); pickup sound wired (ch42, see PICKUP-073 — corrected 2026-07-13, an earlier audit pass this same session wrongly flagged this as unwired since the `sound.Play()` call lives in `GalaxyEggbertCnaGame.cpp`, not `InteractionSystem.cpp`).
 - [x] PICKUP-008 — ObjectType30: drink — done (`170`/`173`), grants `SecretPower::Hide` instantly (real name is "Drink→Hide", not "+1 life"; the two-stage grab/delayed-activate animation is NOT modeled, see `173`); pickup sound wired (ch62, see PICKUP-073).
 - [x] PICKUP-009 — ObjectType21: secret exit — **done 2026-07-16**, verified directly against `Decor.cpp:6158-6184` (one `if` covers both `ObjectType7`/`21`): shares the exact same real exit-gate contact logic as the regular exit (treasure-gated win/reject sound). Previously this engine only recognized `ObjectType7`, so touching a secret exit did nothing. Real `m_bFoundCle`-equivalent flag still not modeled (no consumer exists, see PICKUP-038/039). New `VerifyInteractionSystem` assertion.
 - [x] PICKUP-010 — ObjectType31: cloud power-up — done (`170`/`172`/`174`), grants `SecretPower::Cloud` (strictest gate of the 4, matching real source) + real Cloud offensive `BlupiElectro` aura (2026-07-13, ch59); pickup sound wired (ch55, see PICKUP-073).
 - [x] PICKUP-011 — ObjectType40: invert/mirror power-up — **implemented 2026-07-13**: independent
       of the 4 SecretPower buffs (own gauge, real gate only `!Hide`), grants instant on contact,
-      negates normal ground movement (`GEBlupiController::TriggerInvert()`/`IsInverted()`, real
+      negates normal ground movement (`BlupiController::TriggerInvert()`/`IsInverted()`, real
       `Decor::SetSpeedX` "speed = -speed" behavior — vehicles deliberately unaffected, they use a
       separate real speed system), real ~15s duration (`ScaleTime(3)`, same rate as Power, no
       warning stage), pickup/expiry sounds ch66/67. Demo placement added to the secret-powers room
@@ -4136,7 +4136,7 @@ any task assuming one shared sheet for all pickups/objects is wrong.
       failure).
 - [x] PICKUP-021 — ObjectType47: platform lift rightward conveyor nudge — done (Phase 15 `154`), folded into `RideDeltaX()`'s `kConveyorNudgeSpeed`; exact real px/tick magnitude is an approximation (no established unit conversion), not a transcription.
 - [x] PICKUP-022 — ObjectType48: platform lift leftward conveyor nudge — done (`154`), same note as PICKUP-021.
-- [x] PICKUP-023 — Platform boarding/riding — done (Phase 15 `152`), was the root blocker for this whole subsection, now resolved: `GEInteractionSystem` detects standing on an active lift's footprint/height, reports its per-tick displacement, `GEBlupiController::RideLift()` applies it (X/Z as a delta preserving walking input, Y snapped absolutely).
+- [x] PICKUP-023 — Platform boarding/riding — done (Phase 15 `152`), was the root blocker for this whole subsection, now resolved: `InteractionSystem` detects standing on an active lift's footprint/height, reports its per-tick displacement, `BlupiController::RideLift()` applies it (X/Z as a delta preserving walking input, Y snapped absolutely).
 - [ ] PICKUP-024 — AscenseurVertigo (edge-hang on wide/shiftable platforms, icons 311-316) — NOT started (`153`); blocked on a deferred render/icon-selection decision, not a gameplay-logic gap.
 - [x] PICKUP-025 — AscenseurShift: shift Blupi with moving platform — done, this IS `152`'s `RideLift()` delta-shift mechanism (same feature, different name in this older checklist).
 - [ ] PICKUP-026 — AscenseurSynchro: synchronise multiple lifts — NOT modeled; no evidence of any special multi-lift linking (each lift patrols independently on its own clock, which may already be sufficient for this world's needs).
@@ -4170,16 +4170,16 @@ any task assuming one shared sheet for all pickups/objects is wrong.
 
 - [x] PICKUP-036 — DoorKeyFlags — done differently (Phase 16 `161`): `keys1_`/`keys2_`/`keys3_` are plain pickup counters, not a persisted 3-bit flag, but behaviorally identical for the realistic case (one key granted before a door needs it).
 - [x] PICKUP-037 — Door tile (IsDoor): opens when Blupi touches and holds matching key — done (`161`), automatic on approach (2-cell probe in Blupi's facing direction), no action-button gate. Render-mode correction (closed doors should be `Billboard`, not `UniformCube`) is confirmed still NOT done — explicitly skipped 2026-07-12 per user direction (no new render-geometry decisions that session), tracked as `E3D-MIG-516`/`163`.
-- [ ] PICKUP-038 — InitializeDoors: restore door states from GameData on level load — NOT modeled; no door-state persistence exists in `GESaveData` (which isn't byte-compatible with real `GameData` by design).
+- [ ] PICKUP-038 — InitializeDoors: restore door states from GameData on level load — NOT modeled; no door-state persistence exists in `SaveData` (which isn't byte-compatible with real `GameData` by design).
 - [ ] PICKUP-039 — MemorizeDoors: save door states to GameData on level exit — NOT modeled, same reason as PICKUP-038.
 - [x] PICKUP-040 — Door open animation: ObjectType22 (self-removing slide) — done (`160`), real `Config::ScaleTime(50)`=2.5s slide-up-by-1-grid-unit, then self-destructs; the slide object's own icon is not rendered accurately (no confirmed icon data for type 22 regardless, a pre-existing unrelated gap).
-- [x] PICKUP-041 — Door open sound — done, but real channel is **33**, not ch7 (verified directly in `GEInteractionSystem.cpp`'s `OpenDoorAt()`).
+- [x] PICKUP-041 — Door open sound — done, but real channel is **33**, not ch7 (verified directly in `InteractionSystem.cpp`'s `OpenDoorAt()`).
 
 #### 7.5 Visual Effects (transient objects)
 
 Re-verified 2026-07-13: confirmed **still entirely NOT implemented**, this subsection was NOT
 stale (unlike 7.1-7.4 above) — no particle/transient-visual-effect/debris system exists anywhere in
-`GEInteractionSystem`/`GEHud` beyond what's already noted elsewhere (e.g. dynamite's blast has "no
+`InteractionSystem`/`Hud` beyond what's already noted elsewhere (e.g. dynamite's blast has "no
 debris/particle visuals", Phase 15 `155`/`156`). PICKUP-042 through PICKUP-063 all remain `[ ]` as
 originally listed — no changes.
 
@@ -4196,16 +4196,16 @@ originally listed — no changes.
       in-repo source for it) — this reproduces the documented 28/112/17-tick aggregate shape with
       this engine's own uniform pacing within each window. Demo gap+bridge added to
       `tools/GenerateSampleWorld3D.cpp`. 5 new `VerifyInteractionSystem` checks (spawn, mid-sequence
-      hollow, an independent `GEBlupiController` actually falling through, restoration, self-delete)
+      hollow, an independent `BlupiController` actually falling through, restoration, self-delete)
       + full 7-tool suite + both backends pass. Not modeled: sprite mirroring (no visible Blupi
       model) and the mid-sequence sound (ch73) firing purely as its own scripted cue is modeled, but
       the construction-start sound was assigned ch72 (matching `07-sounds.md`) rather than the
       stale ch20 guess this checklist's own PICKUP-084 line still has (see that item's own note).
 - [x] PICKUP-065 — ObjectType56: dynamite fuse — done (Phase 15 `155`), real per-blast phase-driven timing (ticks 50/53/55/56/59/62/64/67/69), not the rounded "phases 50-69" this line originally guessed.
 - [x] PICKUP-066 — DynamiteStart: blast clears tiles — done (`155`), 2×2-tile area per blast (not a general "radius"), real exact 28-type destructible-object list.
-- [ ] PICKUP-067 — ObjectType200-203: Blupi avatar skins — render icons (257-262) exist in `GEObjectIcons.cpp`, but no world currently places any and no costume-select gameplay hook exists — see PICKUP-068's correction below for what `ObjectType200` actually does instead.
-- [x] PICKUP-068 — ObjectType200 — **description was wrong**: real implemented behavior (`GEInteractionSystem::TryPerso()`, "Perso" mechanic, NEXT.md's HUD-017) is a decoy placement/retrieval pickup (carry a decoy, place it on the ground, or pick an already-placed one back up), **not** a "costume select pickup → player-select voyage" trigger — no such voyage/costume-select system exists.
-- [x] PICKUP-069 — ObjectType201-203: damage Blupi on contact if shield/hide/SuperBlupi inactive — **done 2026-07-16**, found via direct `Decor.cpp:6088-6115` read (the previous "no contact-damage logic found" was wrong — it lives right next to the already-implemented `ObjectType200` Perso pickup, same `>= 200 && <= 203` range check, easy to miss reading only around the Perso branch). Real contact: same `BlupiDead(Clear1, Clear2)` 50/50 coinflip death as the generic-hazard list (Shield/Hide immune via `blupiInvincible`, SuperBlupi not modeled — no such concept exists), no `m_blupiRestart=true` anywhere in this real block (`shouldRespawn=false`) — but ALWAYS channel 10 + `SmallShake` + an `ObjectType10` pop effect (no fish/bird `BigShake` variant here, unlike the generic-hazard list's own split). New block in `GEInteractionSystem::Update()` right after the generic-hazard block, reusing `RollClear2Coinflip()`/`RequestClear2Ascend()`/`AppendExplosionFlash()`. 6 new `VerifyInteractionSystem` assertions (invincibility gate, lethal contact, object destroyed, death-lock requested with the real Clear1/Clear2 kind, `shouldRespawn=false`, `SmallShake` always fires). Full suite green both backends + live headless launch smoke check.
+- [ ] PICKUP-067 — ObjectType200-203: Blupi avatar skins — render icons (257-262) exist in `ObjectIcons.cpp`, but no world currently places any and no costume-select gameplay hook exists — see PICKUP-068's correction below for what `ObjectType200` actually does instead.
+- [x] PICKUP-068 — ObjectType200 — **description was wrong**: real implemented behavior (`InteractionSystem::TryPerso()`, "Perso" mechanic, NEXT.md's HUD-017) is a decoy placement/retrieval pickup (carry a decoy, place it on the ground, or pick an already-placed one back up), **not** a "costume select pickup → player-select voyage" trigger — no such voyage/costume-select system exists.
+- [x] PICKUP-069 — ObjectType201-203: damage Blupi on contact if shield/hide/SuperBlupi inactive — **done 2026-07-16**, found via direct `Decor.cpp:6088-6115` read (the previous "no contact-damage logic found" was wrong — it lives right next to the already-implemented `ObjectType200` Perso pickup, same `>= 200 && <= 203` range check, easy to miss reading only around the Perso branch). Real contact: same `BlupiDead(Clear1, Clear2)` 50/50 coinflip death as the generic-hazard list (Shield/Hide immune via `blupiInvincible`, SuperBlupi not modeled — no such concept exists), no `m_blupiRestart=true` anywhere in this real block (`shouldRespawn=false`) — but ALWAYS channel 10 + `SmallShake` + an `ObjectType10` pop effect (no fish/bird `BigShake` variant here, unlike the generic-hazard list's own split). New block in `InteractionSystem::Update()` right after the generic-hazard block, reusing `RollClear2Coinflip()`/`RequestClear2Ascend()`/`AppendExplosionFlash()`. 6 new `VerifyInteractionSystem` assertions (invincibility gate, lethal contact, object destroyed, death-lock requested with the real Clear1/Clear2 kind, `shouldRespawn=false`, `SmallShake` always fires). Full suite green both backends + live headless launch smoke check.
 
 #### 7.7 Pickup Sounds
 
@@ -4216,30 +4216,30 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
 - [x] PICKUP-070 — Treasure collect sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — corrected from the old "ch10 always restarts" assumption
 - [x] PICKUP-071 — Key pickup sound wired: ch11 (ch19 if set-completing) (CNA, 2026-07-10) — same channel as treasure, corrected from old ch11-only assumption (still ch11, but conflict/set-completing behavior added)
 - [x] PICKUP-072 — Egg pickup sound wired: ch3 (CNA, 2026-07-10) — corrected from the old "ch42" assumption
-- [x] PICKUP-073 — Shield/Power/Hide/Cloud pickup sound — **correction 2026-07-13**: an earlier audit pass this same session wrongly marked this as NOT wired (it only checked `GEInteractionSystem.cpp`, where the ObjectType25/26/30/31 branches indeed call no `sound.Play()` — but the actual wiring lives one layer up, in `GalaxyEggbertCnaGame.cpp`'s `*GrantedThisFrame()` consumption, added in an earlier commit this session, `426ae1c`). Real channels, confirmed against `mobile-eggbert-reference/07-sounds.md`: Shield=**42**, Power=**44** (real Sucette-complete sound, reused since the 2-stage delay isn't modeled), Cloud=**55**, Hide=**62** — not the originally-guessed ch50.
-- [x] PICKUP-074 — Win/exit sound — done, but real channel is **14** (not ch57) — `GEInteractionSystem.cpp`'s exit-reached branch; a separate ch13 plays when reaching the exit tile without enough treasures yet.
+- [x] PICKUP-073 — Shield/Power/Hide/Cloud pickup sound — **correction 2026-07-13**: an earlier audit pass this same session wrongly marked this as NOT wired (it only checked `InteractionSystem.cpp`, where the ObjectType25/26/30/31 branches indeed call no `sound.Play()` — but the actual wiring lives one layer up, in `GalaxyEggbertCnaGame.cpp`'s `*GrantedThisFrame()` consumption, added in an earlier commit this session, `426ae1c`). Real channels, confirmed against `mobile-eggbert-reference/07-sounds.md`: Shield=**42**, Power=**44** (real Sucette-complete sound, reused since the 2-stage delay isn't modeled), Cloud=**55**, Hide=**62** — not the originally-guessed ch50.
+- [x] PICKUP-074 — Win/exit sound — done, but real channel is **14** (not ch57) — `InteractionSystem.cpp`'s exit-reached branch; a separate ch13 plays when reaching the exit tile without enough treasures yet.
 - [x] PICKUP-075 — Door open — done, real channel **33** (not ch7), duplicate of PICKUP-041 above.
-- [x] PICKUP-076 — Switch activate/deactivate sound — **correction 2026-07-13**: same false-negative as PICKUP-073 (the earlier audit pass only checked `GEInteractionSystem.cpp`) — actually wired correctly in `GalaxyEggbertCnaGame.cpp`'s `TryActivateSwitch()` call site: ch77 on activate, ch76 on deactivate, exactly matching the original guess.
+- [x] PICKUP-076 — Switch activate/deactivate sound — **correction 2026-07-13**: same false-negative as PICKUP-073 (the earlier audit pass only checked `InteractionSystem.cpp`) — actually wired correctly in `GalaxyEggbertCnaGame.cpp`'s `TryActivateSwitch()` call site: ch77 on activate, ch76 on deactivate, exactly matching the original guess.
 - [x] PICKUP-077 — dynamite-blast/bullet-wall-impact sound — done, but real channel is **10** (not ch40) for both the dynamite center-blast boom and a fired bullet hitting a solid wall; the originally-guessed "ch40 explosion" is actually the real wasp-balloon-entry channel (see ENEMY-039/PICKUP note), unrelated.
 - [x] PICKUP-078 — Water plouf: ch23 — **done 2026-07-17**, verified directly against
       `Decor::MoveObjectPlouf()` (`Decor.cpp:6991-7003`). Spawns on the real dry->Surf/dry->Nage
       transition (`GalaxyEggbertCnaGame.cpp`'s water-status block, `wasDry && !nowDry`), gated to
-      one active instance at a time (`GEInteractionSystem::HasActiveObjectOfType()`, matching the
+      one active instance at a time (`InteractionSystem::HasActiveObjectOfType()`, matching the
       real pre-check exactly). Found and fixed alongside this: real channel 22 was actually wired
       to the WRONG transition (entry, not exit — see `SOUND-032`'s correction) and ch23 wasn't
-      wired to anything. Also fixed `GEObjectIcons.cpp`'s `ObjectType14` icon formula (was a wrong
+      wired to anything. Also fixed `ObjectIcons.cpp`'s `ObjectType14` icon formula (was a wrong
       monotonic-range approximation; real `table_plouf` oscillates 99->102->99, non-monotonic).
 - [x] PICKUP-079 — Water bubble: ch24 — **done 2026-07-17**, verified directly against
       `Decor::MoveObjectBlup()` (`Decor.cpp:7027-7070`). Real ambient bubble spawned periodically
       while fully submerged (Nage), rising exactly as many tiles as the clear water column above
-      Blupi (`GEInteractionSystem::SpawnWaterBubble()`, scans via `BlockTypes::isWater()`),
+      Blupi (`InteractionSystem::SpawnWaterBubble()`, scans via `BlockTypes::isWater()`),
       self-deleting on arrival at the surface (folded into the shared `AdvancePatrolStep()`
       ObjectType23-arrival branch — real source treats both types identically there). Also fixed
-      `GEObjectIcons.cpp`'s `ObjectType15` icon formula (was a wrong growing-range approximation;
+      `ObjectIcons.cpp`'s `ObjectType15` icon formula (was a wrong growing-range approximation;
       real `table_blup` is a 20-frame shuffle of just 4 icons, 103-106).
 - [x] PICKUP-080 — Water small plouf: ch64 — **done 2026-07-17**, see `SOUND-074`'s writeup for
       the jump-exit-specific trigger and its documented approximation. Also fixed
-      `GEObjectIcons.cpp`'s `ObjectType35` icon formula (was a wrong monotonic-range
+      `ObjectIcons.cpp`'s `ObjectType35` icon formula (was a wrong monotonic-range
       approximation; real `table_tiplouf` is only 3 frames, `{244,99,244}`).
 - [ ] PICKUP-081 — Glu/glue sound: ch51 — NOT modeled (ObjectType34 has no dedicated implementation); real ch51 is actually the generic hazard-contact death sound used elsewhere (crusher/spike/etc. contexts), an unrelated reuse — the "glue" association in this line item appears to be a guess, not confirmed against source.
 - [x] PICKUP-082 — Dynamite fuse sounds: ch52 (placement / explosions) — confirmed correct, matches Phase 15 `155`; also shared by blupih/blupit's projectile-fire sound (`FireBlupihShot()`), a real reused channel not specific to dynamite alone.
@@ -4253,8 +4253,8 @@ balloon = ch40/41), the line items below are corrected in place rather than rese
   ch48"/"Shield loop sound ch49" don't exist in real source at all. Verified directly:
   (1) the real Shield-trail magic-particle VISUAL effect (`ObjectType57`, `m_blupiPosMagic`
   distance-triggered spawn, `Decor.cpp:5221-5236`) already IS implemented in this engine
-  (`GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, `kShieldTrack` in
-  `GEObjectIcons.cpp`) — this pair of entries' own "no shield-trail visual... system exists"
+  (`InteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, `kShieldTrack` in
+  `ObjectIcons.cpp`) — this pair of entries' own "no shield-trail visual... system exists"
   premise was already stale/wrong when written. (2) Real channels 48/49 have nothing to do with
   Shield at all — they're the `BlupiAction::Ouf3`/`Ouf4` idle-fidget reaction sounds
   (`Decor.cpp:6286-6304`, part of the same idle "fidget" system already flagged as a known,
@@ -4323,7 +4323,7 @@ reset to `[ ]`.
 - [x] SCORE-010 — GameSpeed::Faster and GameSpeed::Fastest modes — **done
       2026-07-20, see SCORE-009.** Reachable via F7/F8 once the real
       "quick" typed cheat (extends the existing ghost-cheat rolling
-      buffer, `GEInputPad::UpdateTypedGhostCheat()` → `TypedCheatResult`)
+      buffer, `InputPad::UpdateTypedGhostCheat()` → `TypedCheatResult`)
       is typed — matches real `quick_cheat_enabled`'s gate on F7/F8 exactly.
 - [x] SCORE-011 — Slow game speed — **done 2026-07-20, see SCORE-009.**
       Real alternate-frame-skip mechanism approximated as a continuous
@@ -4344,7 +4344,7 @@ reset to `[ ]`.
       world-select marker N → world hub (mission N*10) → level-select
       marker N → sublevel (mission `X0+N`) → exit reached/`PauseBack`/
       `PauseRestart` → back to `(mission/10)*10`, or to the global hub if
-      already at a hub. New `GEWorldRuntime::ComputeWorldSelectTarget()`/
+      already at a hub. New `WorldRuntime::ComputeWorldSelectTarget()`/
       `ComputeMissionBack()`/`ComputeWinExitTarget()` (all pure, unit-
       tested — the last one is the DISTINCT real win-exit formula,
       `Decor.cpp:6411-6434`, which additionally special-cases mission 1's
@@ -4366,7 +4366,7 @@ reset to `[ ]`.
       (matches real source exactly — no adjoining door tile for sign 174 in
       any real world-hub file); markers 2-8 each sit behind a real solid
       door (new `BlockTypes::ProgressDoor2`-`8`) that opens once the
-      PRECEDING sublevel has been won — new `GESaveData::
+      PRECEDING sublevel has been won — new `SaveData::
       IsMissionDoorUnlocked()`/`UnlockMissionDoor()` (a per-gamer-slot
       persisted flag array keyed directly by mission number, mirroring real
       `m_doors[mission]` exactly, only the un-modeled per-world cosmetic-
@@ -4452,7 +4452,7 @@ reset to `[ ]`.
       detection silently broke as a side effect of `INFRA-005`'s sub-tile-
       precision collision (unrelated commit, same day). Root-caused via a
       live end-to-end investigation, not guesswork: these markers' real
-      per-icon quarter-cell mask (`GEDecorQuartTable.hpp`) is genuinely
+      per-icon quarter-cell mask (`DecorQuartTable.hpp`) is genuinely
       all-zero/thin, same category as Lava/Crusher/Saw — before INFRA-005,
       this engine's coarse (non-sub-tile) collision treated them as fully
       solid, so walking into one triggered the pre-existing CNA-only
@@ -4467,7 +4467,7 @@ reset to `[ ]`.
       a plain direct lookup of whichever tile Blupi's own body currently
       occupies, independent of solidity/grounding entirely. Fix: the
       WorldSelect/DemoPortal trigger site now calls the already-existing
-      `GEBlupiController::GetBlockTypeAt()` (built for water-Surf/Nage
+      `BlupiController::GetBlockTypeAt()` (built for water-Surf/Nage
       detection, same "not gated on IsOnGround()" shape) instead of
       `GetGroundBlockType()` — no new function needed, one call-site swap.
       Verified live end-to-end twice (temporary debug instrumentation,
@@ -4477,7 +4477,7 @@ reset to `[ ]`.
       away now correctly triggers the mission change (confirmed real
       `mission 1 → WorldSelect1 contact → mission 10` transition). New
       `VerifyBlupiMovement` regression test added: walks a synthetic
-      `GEBlupiController` through a `WorldSelect1` marker and asserts
+      `BlupiController` through a `WorldSelect1` marker and asserts
       `GetBlockTypeAt()` sees it (the fix) while `GetGroundBlockType()`
       never does (documents the exact distinction, guards against a future
       "simplification" reintroducing the bug) — 318/318 (was 311/311,
@@ -4515,7 +4515,7 @@ reset to `[ ]`.
       HUD — **wired 2026-07-20**: real gate confirmed directly against
       `Decor.cpp:1236`, `(m_mission != 1 && m_mission % 10 != 0) ||
       m_bPrivate` (`m_bPrivate` never applies here, no custom-level-load
-      path exists). New `showTreasureCounter` parameter on `GEHud::Draw()`,
+      path exists). New `showTreasureCounter` parameter on `Hud::Draw()`,
       computed at the call site the same way the Pause-menu's own
       `showRestart` already does (`mission != 1 && mission % 10 != 0`).
       Previously approximated as just "does this world have any
@@ -4523,7 +4523,7 @@ reset to `[ ]`.
       the real gate.
 - [x] SCORE-018 — Training missions (11-14): show tutorial hint overlay —
       **stale checkbox, closed 2026-07-17**: already fully done, see
-      `HUD-024`/`MENU-080..082` (`GETrainingHints`, gated on exactly
+      `HUD-024`/`MENU-080..082` (`TrainingHints`, gated on exactly
       missions 11-14) — this entry just hadn't been cross-referenced here.
 - [x] SCORE-019 — MemorizeGamerProgress: save lives and doors after each
       win/loss — **lives half done, doors half still correctly not
@@ -4534,14 +4534,14 @@ reset to `[ ]`.
       the previously write-only half of this gap. Real per-gamer door-
       unlock state (`MemorizeDoors`/`InitializeDoors`) is still correctly
       not modeled — see `SAVE-006`/`007`'s own note (no per-gamer 200-door-
-      flags array exists in `GESaveData` by design).
+      flags array exists in `SaveData` by design).
 - [ ] SCORE-020 — LastWorld: updated when completing a hub (mission divisible by 10)
 
 ---
 
 ### 2.9 Sound System
 
-CNA has real substance here: `GESound` loads all 93 real .wav files via CNA's own
+CNA has real substance here: `Sound` loads all 93 real .wav files via CNA's own
 `SoundEffect`/`SoundEffectInstance` API, reuses the real per-channel volume/conflict table, and is
 wired to jump/land/footstep events. Not done: pitch application, `SoundEnviron()` terrain-specific
 footstep/bump remapping (7 terrain pairs, channels 78-91), idle "fidget" periodic sounds (channels
@@ -4555,14 +4555,14 @@ below, the rest are unchanged/still genuinely unconfirmed).
 - [x] SOUND-001 — 93 WAV files (`sounds/sound000.wav`..`sound092.wav`) loaded (CNA, 2026-07-10)
 - [x] SOUND-002 — Per-channel volume/conflict table reused from the real data (CNA, 2026-07-10)
 - [x] SOUND-003 — Sound on/off toggle — **done, corrected 2026-07-16**: this entry's own premise
-  was wrong — real behavior (persisted mute toggle, `GESound::SetEnabled()`/`IsEnabled()`) doesn't
+  was wrong — real behavior (persisted mute toggle, `Sound::SetEnabled()`/`IsEnabled()`) doesn't
   need GameData byte-compatibility to work, just persistence at all. Already implemented via this
-  engine's own independent `GESaveData` (plan.md MENU-067, `GESaveData::GetSoundEnabled()`/
-  `SetSoundEnabled()`, wired to `GESound::SetEnabled()` on load).
+  engine's own independent `SaveData` (plan.md MENU-067, `SaveData::GetSoundEnabled()`/
+  `SetSoundEnabled()`, wired to `Sound::SetEnabled()` on load).
 - [x] SOUND-004 — Sound loop support via `SoundEffectInstance` (CNA, 2026-07-10)
 - [ ] SOUND-005 — Positional (panned) audio: volume/balance based on screen X position (SoundEnviron)
 - [x] SOUND-006 — SoundEnviron: maps ch3/ch4 footstep to tile-surface variant (ch78-91) — **stale,
-  corrected 2026-07-16**: this was already done 2026-07-12 (`GESound::FootstepChannelFor()`,
+  corrected 2026-07-16**: this was already done 2026-07-12 (`Sound::FootstepChannelFor()`,
   covers all 7 real terrain ranges: 78/80/82/84/86/88/90) — this entry was never updated
   afterward.
 - [x] SOUND-007 — Vehicle motor loop: ch16/ch18 (helicopter high/low), ch29/ch31 (jeep/tank/over)
@@ -4573,7 +4573,7 @@ below, the rest are unchanged/still genuinely unconfirmed).
       (start)/ch16-18 (loop high/low)/ch17 (stop); Jeep/Tank/Overcraft share ch28 (start)/
       ch29-31 (loop high/low)/ch30 (stop); Skateboard has no motor sound at all (confirmed: the
       real function's own `if`/`else if` chain checks only the other 4 modes). New
-      `GEBlupiController::HasVehicleMotor()`/`IsVehicleMotorHigh()` (the real per-mode
+      `BlupiController::HasVehicleMotor()`/`IsVehicleMotorHigh()` (the real per-mode
       `m_blupiMotorHigh` pitch-select flag — Jeep uses `m_blupiAction != BlupiAction::Stop`,
       i.e. nonzero horizontal velocity including coasting, translated here as nonzero
       `m_vehicleSpeed`; Helicopter/Overcraft translated as nonzero vertical `m_velocityY`, the
@@ -4585,7 +4585,7 @@ below, the rest are unchanged/still genuinely unconfirmed).
       the pre-existing unrelated `easy-gl-resource-smoke-tests` failure); live headless launch
       smoke check clean.
 - [ ] SOUND-009 — PosSound: update panned position of active motor loop each frame — **NOT
-      modeled, deliberately**: this engine's `GESound::Play()` has no positional/panned audio at
+      modeled, deliberately**: this engine's `Sound::Play()` has no positional/panned audio at
       all (same architectural gap as `SOUND-005`) — there is no pan state to update per frame.
 - [ ] SOUND-010 — Ambient sound: all 72 gameplay channels wired to correct game events (see full list below)
 - [ ] SOUND-010b — Pitch application per tableVolumePitch (new item — noted explicitly as NOT done in CNA despite the volume/conflict table being reused)
@@ -4618,7 +4618,7 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-017 — ch7: door open — **corrected 2026-07-16, wired 2026-07-20**: label is wrong.
   Verified directly against `Decor.cpp:3283-3286` — real ch7 plays on the `Down`(crouch)-action
   transition (screen scrolls down 150px), not door open (that's ch33, see `SOUND-043`). Now wired
-  under the correct real meaning: new `GEBlupiController::DownEntrySoundFiredThisFrame()` (fires
+  under the correct real meaning: new `BlupiController::DownEntrySoundFiredThisFrame()` (fires
   once, real `Config::ScaleTime(4)`=0.2s after entering `Down`), consumed in
   `GalaxyEggbertCnaGame.cpp` right after `blupi_.Step()`.
 - [x] SOUND-018 — ch8: death / hit — **stale, corrected 2026-07-16**: already wired (Lava/Blitz/
@@ -4626,15 +4626,15 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-019 — ch9: teleport in — **label wrong AND stale, corrected 2026-07-16**: verified
   directly against `Decor.cpp:10173-10177` — real ch9 is the life-loss Voyage sound (icon 48/Blupi
   channel, `m_nbVies--`), not "teleport in". Already wired
-  (`GEInteractionSystem::BeginVoyage()`'s `VoyageKind::LifeLoss` case) under the correct real
+  (`InteractionSystem::BeginVoyage()`'s `VoyageKind::LifeLoss` case) under the correct real
   meaning.
-- [x] SOUND-020 — ch10: **corrected 2026-07-13** — real use is dynamite-blast center boom AND a fired bullet hitting a solid wall, not "collect" (confirmed in `GEInteractionSystem.cpp`).
+- [x] SOUND-020 — ch10: **corrected 2026-07-13** — real use is dynamite-blast center boom AND a fired bullet hitting a solid wall, not "collect" (confirmed in `InteractionSystem.cpp`).
 - [x] SOUND-021 — ch11: key pickup AND treasure pickup (CNA, 2026-07-10 — corrected: shared by both per real data)
 - [x] SOUND-022 — ch12: teleport out — **label wrong AND stale, corrected 2026-07-16**: verified
   directly against `Decor.cpp:10179-10182` — real ch12 plays on egg-pickup Voyage completion
   (`m_voyageIcon==21 && Element channel`), not "teleport out". Already wired
-  (`GEInteractionSystem::BeginVoyage()`'s `VoyageKind::Egg` case) under the correct real meaning.
-- [x] SOUND-023 — ch13: **corrected 2026-07-13** — real use is reaching the level exit tile without enough treasures collected yet, not "bridge build phase 1" (confirmed in `GEInteractionSystem.cpp`).
+  (`InteractionSystem::BeginVoyage()`'s `VoyageKind::Egg` case) under the correct real meaning.
+- [x] SOUND-023 — ch13: **corrected 2026-07-13** — real use is reaching the level exit tile without enough treasures collected yet, not "bridge build phase 1" (confirmed in `InteractionSystem.cpp`).
 - [x] SOUND-024 — ch14: **corrected 2026-07-13** — real use is exit-reached/win (`exitReached_`), not "bridge build phase 2" (see PICKUP-074).
 - [x] SOUND-025 — ch15: helicopter motor start — **done 2026-07-17**, see `SOUND-008`.
 - [x] SOUND-026 — ch16: helicopter motor high (loop) — **done 2026-07-17**, see `SOUND-008`.
@@ -4644,7 +4644,7 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-030 — ch20: bridge completed — **label wrong, corrected 2026-07-16, wired 2026-07-20**:
   verified directly against `Decor.cpp:3628-3633` — real ch20 plays when standing back up from a
   crouch (`Down`→`Stop` transition), not "bridge completed". Now wired: new
-  `GEBlupiController::DownReleaseSoundFiredThisFrame()`, fires exactly on that transition -- real
+  `BlupiController::DownReleaseSoundFiredThisFrame()`, fires exactly on that transition -- real
   gate is `m_blupiSpeedX==0 && m_blupiSpeedY==0`, which needed no separate modeling since this
   engine's own `crouchHeld` ternary only ever resolves to `Stop` (not `March`) under the same
   condition; verified a `Down`→`March` transition (crouch released WITH movement held) does NOT
@@ -4654,7 +4654,7 @@ old scheme — cross-check against §7 when wiring these).
   action) transition sound (paired with ch7's look-down/crouch transition, `SOUND-017`), not
   "secret exit found" (no such distinct sound exists at all — confirmed via `PICKUP-083`'s own
   research, the secret exit reuses the regular exit's ch13/ch14). Now wired: new
-  `GEBlupiController::UpEntrySoundFiredThisFrame()`, same real 0.2s-delay shape as `SOUND-017`.
+  `BlupiController::UpEntrySoundFiredThisFrame()`, same real 0.2s-delay shape as `SOUND-017`.
 - [x] SOUND-032 — ch22: **corrected again 2026-07-17** (the 2026-07-16 pass had it backwards) —
   verified directly against all 4 real `PlaySound(SoundChannel22, ...)` call sites
   (`Decor.cpp:5356/5378/5392/5405`): every one is in a water-EXIT path (jump-out, transport-out,
@@ -4664,12 +4664,12 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-033 — ch23: water plouf — **done 2026-07-17**, alongside the ch22 fix above. Real
   entry splash (`Decor::MoveObjectPlouf`, `ObjectType14`) was previously entirely unwired (this
   was ch22's actual real meaning, confused with the exit sound above). Now spawns via
-  `GEInteractionSystem::SpawnWaterSplash()` on the real dry->Surf/dry->Nage transition
+  `InteractionSystem::SpawnWaterSplash()` on the real dry->Surf/dry->Nage transition
   (`wasDry && !nowDry`), single-instance-gated (`HasActiveObjectOfType()`).
 - [x] SOUND-034 — ch24: water bubble rise — **done 2026-07-17**. Real ambient bubble
   (`Decor::MoveObjectBlup`, `ObjectType15`) while fully submerged (Nage), triggered twice per
   ~3.5s cycle (`m_time % ScaleTime(70) == 0 || == ScaleTime(28)`, reproduced via this engine's
-  own `GEWorldRuntime::GetAnimPhase() % 70`). New `GEInteractionSystem::SpawnWaterBubble()` scans
+  own `WorldRuntime::GetAnimPhase() % 70`). New `InteractionSystem::SpawnWaterBubble()` scans
   the water column above Blupi (`BlockTypes::isWater()`) and spawns a bubble that rises exactly
   that many tiles, self-deleting on arrival (folded into the existing `AdvancePatrolStep()`
   ObjectType23-arrival branch, matching real source's identical treatment of both types at that
@@ -4691,7 +4691,7 @@ old scheme — cross-check against §7 when wiring these).
   `Decor.cpp:5476-5489` — real ch32 is the hub-screen world-select entry sound (`Decor::IsWorld()`
   match, `BlupiAction::Bye`), now played (`SoundChannel32`) at the world-select portal contact site
   the instant `TriggerBye()` succeeds.
-- [x] SOUND-043 — ch33: **corrected 2026-07-13** — real use is door open (confirmed in `GEInteractionSystem.cpp`'s `OpenDoorAt()`), not "bulldozer turn" — no bulldozer-turn sound exists.
+- [x] SOUND-043 — ch33: **corrected 2026-07-13** — real use is door open (confirmed in `InteractionSystem.cpp`'s `OpenDoorAt()`), not "bulldozer turn" — no bulldozer-turn sound exists.
 - [ ] SOUND-044 — ch34: unknown — **identified 2026-07-16**: verified directly against
   `Decor.cpp:5440-5453` — real ch34 is the Suspended (hanging-on-a-bar) mode's entry sound.
   Genuinely blocked on the same render-geometry decision as `AscenseurVertigo`/`Suspended`
@@ -4705,8 +4705,8 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-048 — ch38: electric arc (long) — **done, label wrong, corrected 2026-07-16**: real
   use is the crate-push loop sound (verified directly against `Decor.cpp:6138/6147` start,
   `:3637` stop on leaving `BlupiAction::Push`), not "electric arc". Now implemented: new
-  `GESound::Stop(channel)` (a per-channel stop, since `StopAll()` would incorrectly kill every
-  other playing sound), new `GEInteractionSystem::CrateBeingPushedThisFrame()` signal (true the
+  `Sound::Stop(channel)` (a per-channel stop, since `StopAll()` would incorrectly kill every
+  other playing sound), new `InteractionSystem::CrateBeingPushedThisFrame()` signal (true the
   one frame a push actually moves a crate), and `GalaxyEggbertCnaGame::wasPushingCrate_` turning
   that per-frame fact into a real start-once/stop-once loop (`sound_.Play(ch38, loop=true)` on
   the false→true transition, `sound_.Stop(ch38)` on true→false). New `VerifyInteractionSystem`
@@ -4739,10 +4739,10 @@ old scheme — cross-check against §7 when wiring these).
   wired as of the `173` 2-stage-delay work (2026-07-14), exactly at the real contact-time trigger
   point this entry originally described. Label/citation were already correct, only the "unused"
   status needed updating.
-- [x] SOUND-061 — ch51: **corrected 2026-07-13** — real use is the generic hazard-contact death sound (confirmed in `GEInteractionSystem.cpp`), not "glu/glue splash" — no glue-specific sound found.
+- [x] SOUND-061 — ch51: **corrected 2026-07-13** — real use is the generic hazard-contact death sound (confirmed in `InteractionSystem.cpp`), not "glu/glue splash" — no glue-specific sound found.
 - [x] SOUND-062 — ch52: confirmed correct — dynamite placement/explosion; also reused for blupih/blupit's real projectile-fire sound (see SOUND-037's correction).
 - [x] SOUND-063 — ch53: **label wrong, corrected 2026-07-16** — real use is the real out-of-ammo
-  click when Fire is pressed at 0 bullets (`GEInteractionSystem.cpp`'s Tank-fire block, `else`
+  click when Fire is pressed at 0 bullets (`InteractionSystem.cpp`'s Tank-fire block, `else`
   branch), not "tank fire" itself (that's ch52, see `SOUND-062`). Already wired under the correct
   meaning.
 - [x] SOUND-064 — ch54: **label wrong, corrected 2026-07-16** — real use is the BulletPack Voyage
@@ -4757,7 +4757,7 @@ old scheme — cross-check against §7 when wiring these).
   real pickup-*start* ("grab") sound, not "exit open / win" (that's ch14, see `SOUND-024`).
   Already wired.
 - [x] SOUND-068 — ch58: **corrected 2026-07-13** — real use is the Charge/Cloud (`ObjectType31`) power-up's real pickup-*start* sound, not "drink pickup" (per `mobile-eggbert-reference/07-sounds.md`); this engine plays ch55 instead at grant time (see PICKUP-073) — ch58 itself is unused here.
-- [x] SOUND-069 — ch59: **corrected 2026-07-13** — Cloud secret-power `BlupiElectro` electric-aura kill sound (added 2026-07-13, `GEInteractionSystem.cpp`).
+- [x] SOUND-069 — ch59: **corrected 2026-07-13** — Cloud secret-power `BlupiElectro` electric-aura kill sound (added 2026-07-13, `InteractionSystem.cpp`).
 - [x] SOUND-070 — ch60: **confirmed 2026-07-16** — real use is the Perso/Dynamite Voyage
   completion sound (`VoyageKind::Perso`/`Dynamite` cases). Already wired.
 - [x] SOUND-071 — ch61: **stale, corrected 2026-07-16** — real use is the Dynamite/Perso
@@ -4786,7 +4786,7 @@ old scheme — cross-check against §7 when wiring these).
   zero uses of `SoundChannel68` anywhere in real mobile-eggbert source. Genuinely unused/reserved
   in the real game itself, same as `SOUND-012`; nothing to wire.
 - [x] SOUND-079 — ch69: lightning strike — **done 2026-07-17**, see `VISUAL-024`'s writeup for the
-      full implementation (`GEInteractionSystem`'s lazy Blitz/BlitzEmitter world scan).
+      full implementation (`InteractionSystem`'s lazy Blitz/BlitzEmitter world scan).
 - [x] SOUND-080 — ch70: **stale, corrected 2026-07-16** — real use is the Crusher squash-entry
   sound (`TriggerCrush()` succeeding). Already wired.
 - [x] SOUND-081 — ch71: **stale, corrected 2026-07-16** — real use is the Teleporter entry sound
@@ -4797,7 +4797,7 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-083 — ch73: **label wrong, corrected 2026-07-16** — real use is a bridge-construction
   PROGRESS sound (fires at a fixed tick partway through the build sequence), not "wasp attack".
   Already wired.
-- [x] SOUND-084 — ch74: **corrected 2026-07-13** — real use is the generic hazard/enemy contact-kill death sound (confirmed repeatedly in `GEInteractionSystem.cpp`), not "teleport in".
+- [x] SOUND-084 — ch74: **corrected 2026-07-13** — real use is the generic hazard/enemy contact-kill death sound (confirmed repeatedly in `InteractionSystem.cpp`), not "teleport in".
 - [x] SOUND-085 — ch75: **label wrong, corrected 2026-07-16** — real use is the Saw death
   "cut apart" sound (`BlupiDead()`'s Clear4 branch, `SpawnSawDeathBurst()`), not "teleport out".
   Already wired.
@@ -4805,7 +4805,7 @@ old scheme — cross-check against §7 when wiring these).
 - [x] SOUND-087 — ch77: switch activate — confirmed correct, see PICKUP-076.
 - [ ] SOUND-088 — ch78-91: surface-specific footstep/landing variants (7 terrain pairs, mapped by SoundEnviron) — see SOUND-006
 - [x] SOUND-089 — ch92: confirmed correct — follower (ObjectType96→97) wake sound.
-- [x] SOUND-090 — Sound enable/disable respects `enabled_` flag — **done** (**corrected 2026-07-14**): `GESound::Play()` gates on `enabled_` and `SetEnabled(false)` calls `StopAll()`, wired to the real Setup sound toggle + persisted via `GESaveData`.
+- [x] SOUND-090 — Sound enable/disable respects `enabled_` flag — **done** (**corrected 2026-07-14**): `Sound::Play()` gates on `enabled_` and `SetEnabled(false)` calls `StopAll()`, wired to the real Setup sound toggle + persisted via `SaveData`.
 
 ---
 
@@ -4835,7 +4835,7 @@ damping already work.
       "documented simplification, not the textbook algorithm" category as
       several other collision adaptations this session. Solidity uses a
       plain non-air check (a visual-occlusion query, deliberately NOT
-      reusing `GEBlupiController`'s own movement-collision rules — e.g. a
+      reusing `BlupiController`'s own movement-collision rules — e.g. a
       real non-solid-for-Blupi Teleporter pillar still correctly blocks the
       camera's view through it). First-person is unaffected (the eye IS
       Blupi's own position, nothing to collide with). Live headless
@@ -4853,7 +4853,7 @@ damping already work.
       to be a MIX of different real mechanics, not one uniform trigger — corrected via a direct
       `Decor.cpp` read of every cited site: (1) the generic-hazard contact-kill branch
       (`Decor.cpp:5782-5814`) — the SAME site already implemented as galaxy-eggbert's own
-      `IsGenericHazard()` contact-kill logic (`GEInteractionSystem.cpp`) — plays SmallShake for
+      `IsGenericHazard()` contact-kill logic (`InteractionSystem.cpp`) — plays SmallShake for
       every one of its 8 types except fish/bird (see CAM-009); (2) the REAL dynamite blast
       (`Decor::DynamiteStart()`, `Decor.cpp:9068-9070`) plays SmallShake only ONCE, at the blast's
       own center tile (`dx==0 && dy==0`), not per-destroyed-object — matches galaxy-eggbert's
@@ -4867,7 +4867,7 @@ damping already work.
       `MovePersoDetect()`, `ObjectType201-203` contact damage — plan.md's own already-flagged
       `PICKUP-069` gap — and forced-vehicle-dismount-on-large-creature-contact) — correctly left
       unwired, since each would need its own new gameplay logic built first, not just a shake
-      signal. `GEInteractionSystem::SmallShakeTriggeredThisFrame()`/`BigShakeTriggeredThisFrame()`
+      signal. `InteractionSystem::SmallShakeTriggeredThisFrame()`/`BigShakeTriggeredThisFrame()`
       (new, reset every `Update()` call, same idiom as `DiedThisFrame()`) signal both (1) and (2)
       back to `GalaxyEggbertCnaGame.cpp`; `CheatCleanAll()` signals (3) via its own return value.
       6 new `VerifyInteractionSystem` checks + full regression on both backends, all pass.
@@ -4877,7 +4877,7 @@ damping already work.
       engine's own `!IsInvincible()` gate on `triggerDeath()` exactly) — NOT "large explosion"
       (unconfirmed) nor "triggered by ObjectType11" (`ObjectType11` is a cosmetic particle spawned
       *alongside* the real shake, not a separate trigger condition; this particle IS now also
-      modeled, see VISUAL-008's writeup — `GEInteractionSystem::SpawnFanHitFlash()`, wired into the
+      modeled, see VISUAL-008's writeup — `InteractionSystem::SpawnFanHitFlash()`, wired into the
       same Fan-hazard block right next to the shake trigger). Wired into
       `GalaxyEggbertCnaGame.cpp`'s existing Fan hazard block. A SECOND real BigShake trigger was
       also found and wired the same day (see
@@ -4894,7 +4894,7 @@ damping already work.
       `GalaxyEggbertCnaGame.cpp`'s existing wasp-balloon block.
 - [x] CAM-011 — Camera shake: table_decor_action per-frame (dx, dy) offsets × 3 multiplier —
       **done 2026-07-14**. `Tables::table_decor_action[519]` verbatim-transcribed into
-      `GECameraShake.cpp` (data-table transcription approved by the user 2026-07-14) and
+      `CameraShake.cpp` (data-table transcription approved by the user 2026-07-14) and
       INDEPENDENTLY byte-verified via a script comparing every one of the 519 values against the
       real source directly (exact match, not just visually proofread). The real ×3 multiplier
       (`Decor.cpp:1367-1368`) is applied exactly as found, not approximated.
@@ -4905,8 +4905,8 @@ damping already work.
       in an early test draft but is exactly how the real source behaves too, verified by matching
       the real `if (m_decorPhase < frameCount) {...} else { None }` structure line-for-line).
 - [x] CAM-013 — Camera shake implementation ported into CNA/Easy3D (StartShake equivalent) —
-      **done 2026-07-14**. New `GECameraShake.hpp`/`.cpp` (engine-agnostic, no CNA/graphics
-      dependency, same precedent as `GEBlupiController`/`GETerrainAnimDivisor`): `Trigger(type)`
+      **done 2026-07-14**. New `CameraShake.hpp`/`.cpp` (engine-agnostic, no CNA/graphics
+      dependency, same precedent as `BlupiController`/`TerrainAnimDivisor`): `Trigger(type)`
       (unconditional restart from frame 0, matching the real trigger sites' own plain
       `m_decorAction = X; m_decorPhase = 0;` — no priority gating found anywhere) + `Update(dt)`
       (real 20Hz tick, `Config::CURRENT_FPS`, confirmed) + `GetOffsetX()/GetOffsetY()` (the real
@@ -4938,12 +4938,12 @@ damping already work.
 ### 2.11 Save Data
 
 **Badly stale, corrected 2026-07-14** — this section's own header claimed "not started at all",
-but `GESaveData` (`src/GalaxyEggbertCNA/Game/GESaveData.hpp`/`.cpp`) is a real, working, tested
+but `SaveData` (`src/GalaxyEggbert/Game/SaveData.hpp`/`.cpp`) is a real, working, tested
 (`tools/VerifyGESaveData`) save system: 3 independent gamer slots (lives/missionNumber/
 hasProgress), a global `soundEnabled` flag, a persisted `selectedGamer` index, auto-save wired to
 the real Win/Lost/reset/gamer-select trigger points. It is a plain `key=value` text file, NOT
 byte-compatible with real `GameData`'s 640-byte binary layout — a deliberate, confirmed decision
-(`GESaveData.hpp`'s own header comment): the real format is shaped around a 100+-level/3-gamer-
+(`SaveData.hpp`'s own header comment): the real format is shaped around a 100+-level/3-gamer-
 slot/`IsolatedStorageFile` structure this engine's single hand-authored `.vwr` world doesn't have,
 so byte compatibility would buy nothing. Do NOT flip SAVE-001/003/006/007 to `[x]` on that basis —
 those are specifically about the real byte layout, which stays undone by design.
@@ -4951,11 +4951,11 @@ those are specifically about the real byte layout, which stays undone by design.
 - [ ] SAVE-001 — GameData: 640-byte flat binary format, binary-compatible with mobile-eggbert — still correctly undone (deliberate, see this section's own intro).
 - [x] SAVE-002 — Global header — **partially real, done differently**: `selectedGamer` and `soundEnabled` ARE persisted (the two settings with real desktop behavior behind them); `jumpRight`/`autoZoom`/`accelActive` are NOT (their own UI toggles — `SetupJump`/`SetupZoom`/`SetupAccel` — are themselves intentionally inert in this engine, no touch/accelerometer hardware to back them, see §2.2's own notes).
 - [x] SAVE-003 — 3 gamer slots — **done differently**: `GamerSlot{lives, missionNumber, hasProgress}` × 3 (`kGamerCount`), matching the real slot COUNT and the lives/lastWorld-equivalent fields; the `doors[200]` byte range is NOT ported (see SAVE-006/007).
-- [x] SAVE-004 — Auto-save — **done for win/lost/reset/gamer-select** (confirmed via 5 real `saveData_.Save()` call sites in `GalaxyEggbertCnaGame.cpp`: Win transition, Lost transition, Cheat5/SetupReset full reset, sound toggle, Init gamer-slot tap). **Correction 2026-07-14**: this entry previously called the missing quit/window-close save "a real, if minor, gap" — checked directly against real `Game1::OnExiting()`/`OnDeactivated()` (`Game1.cpp:186-208`) and that premise is wrong: real `OnExiting()` calls `decor.CurrentDelete()` (removes the mid-game snapshot), and `OnDeactivated()` calls `CurrentWrite()`/`CurrentDelete()` — neither ever calls `GameData::Save()` (the profile `GESaveData` actually mirrors). Both belong to the separate `CurrentWrite`/`CurrentRead`/`CurrentDelete` mid-game-save mechanism, already correctly noted as out of scope below (SAVE-009/010). Real mobile-eggbert does NOT save the gamer profile on quit either — galaxy-eggbert's current behavior already matches. No gap here.
+- [x] SAVE-004 — Auto-save — **done for win/lost/reset/gamer-select** (confirmed via 5 real `saveData_.Save()` call sites in `GalaxyEggbertCnaGame.cpp`: Win transition, Lost transition, Cheat5/SetupReset full reset, sound toggle, Init gamer-slot tap). **Correction 2026-07-14**: this entry previously called the missing quit/window-close save "a real, if minor, gap" — checked directly against real `Game1::OnExiting()`/`OnDeactivated()` (`Game1.cpp:186-208`) and that premise is wrong: real `OnExiting()` calls `decor.CurrentDelete()` (removes the mid-game snapshot), and `OnDeactivated()` calls `CurrentWrite()`/`CurrentDelete()` — neither ever calls `GameData::Save()` (the profile `SaveData` actually mirrors). Both belong to the separate `CurrentWrite`/`CurrentRead`/`CurrentDelete` mid-game-save mechanism, already correctly noted as out of scope below (SAVE-009/010). Real mobile-eggbert does NOT save the gamer profile on quit either — galaxy-eggbert's current behavior already matches. No gap here.
 - [x] SAVE-005 — Persistence mechanism chosen and wired for CNA — **done**: plain `key=value` text file (no JSON library is linked in this project; a hand-rolled parser was simpler than adding one for a handful of scalars), a real, working, CNA-appropriate answer to this question.
 - [x] SAVE-006 — doors[0..179]: secondary door states (180 secondary doors)
       — **the functional per-sublevel unlock half is now done 2026-07-17**,
-      see `SCORE-013`'s hub/mission-progression writeup: `GESaveData::
+      see `SCORE-013`'s hub/mission-progression writeup: `SaveData::
       IsMissionDoorUnlocked()`/`UnlockMissionDoor()` persist exactly this
       real semantic (does sublevel N's door open), just keyed directly by
       mission number rather than porting the real `m_doors[0..179]` index
@@ -5010,7 +5010,7 @@ those are specifically about the real byte layout, which stays undone by design.
       the way this item literally asks — stays `[ ]` for the full ask;
       `mainDoors` (the cosmetic gold half) is still fake/static per
       `SAVE-007`.
-- [ ] SAVE-009 — CurrentWrite / CurrentRead: mid-game save/load (on app deactivate/activate) — confirmed NOT modeled; real trigger is a WP7 OS lifecycle event (`Game1::OnActivated()`) with no desktop equivalent, and the real mechanism itself is a separate, heavier serialized-`Decor`-state snapshot than `GameData`, explicitly out of this engine's single-world scope (`GESaveData.hpp`'s own comment). Resume is offered instead whenever `hasProgress==true` from a prior Win/Lost — a documented simplification of the trigger, not a port of this item.
+- [ ] SAVE-009 — CurrentWrite / CurrentRead: mid-game save/load (on app deactivate/activate) — confirmed NOT modeled; real trigger is a WP7 OS lifecycle event (`Game1::OnActivated()`) with no desktop equivalent, and the real mechanism itself is a separate, heavier serialized-`Decor`-state snapshot than `GameData`, explicitly out of this engine's single-world scope (`SaveData.hpp`'s own comment). Resume is offered instead whenever `hasProgress==true` from a prior Win/Lost — a documented simplification of the trigger, not a port of this item.
 - [ ] SAVE-010 — CurrentDelete: remove mid-game save (on OnExiting or normal level exit) — same reasoning as SAVE-009, not modeled.
 - [ ] SAVE-011 — Accelerometer sensitivity setting — NOT modeled, no accelerometer hardware exists on desktop.
 - [ ] SAVE-012 — JumpRight setting — NOT modeled; `SetupJump` toggle is real UI (renders/responds) but intentionally has no behavioral effect (documented gap, §2.2).
@@ -5057,10 +5057,10 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       writeup, now updated). Real spawn site confirmed via direct source read (`Decor.cpp:5467`,
       the same real Fan/Ventillo-kill block CAM-009 already cites): `ObjectStart(celSwitch,
       ObjectType11, 0)` — `speed=0` means no direction/offset encoding at all (unlike every other
-      particle effect shipped so far), so `GEInteractionSystem::SpawnFanHitFlash()` is a
+      particle effect shipped so far), so `InteractionSystem::SpawnFanHitFlash()` is a
       single-instance spawn exactly at the given position, no burst. Real self-delete at
       `phase>=9` (`Decor.cpp:8431-8440`, a 9-frame lifetime). Found and fixed a FOURTH real bug in
-      `GEObjectIcons.cpp`'s icon formula for this type: wrong divisor (6 instead of the real
+      `ObjectIcons.cpp`'s icon formula for this type: wrong divisor (6 instead of the real
       `Config::ScaleDiv(1)==1`) AND wrong ascending-arithmetic assumption — real `table_explo4`
       (`Tables.cpp:1391`) is non-monotonic (`12,13,14,15,7,8,9,10,11` — jumps back from 15 to 7
       partway through), transcribed verbatim as a lookup table, same category of bug as
@@ -5070,14 +5070,14 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       **ObjectType8** — the cosmetic flash spawned once per blast in the real 9-blast dynamite-chain
       sequence (`Decor::DynamiteStart()`, `Decor.cpp:9058-9065`: `ObjectStart(posStart,
       ObjectType8, 0)`, again `speed=0`/no offset), at each blast's own already-computed
-      `(centerX,centerY,centerZ)` — this engine's dynamite-blast logic (`GEInteractionSystem.cpp`'s
+      `(centerX,centerY,centerZ)` — this engine's dynamite-blast logic (`InteractionSystem.cpp`'s
       `ObjectType56` fuse block, plan.md E3D-MIG-155/CAM-008) already computed these 9 real
       per-blast centers for its destruction/SmallShake logic, so the flash only needed a new
       `AppendDynamiteBlastFlash()` free function (pendingSpawns idiom, same reasoning as
       VISUAL-012's `AppendSparkleBurst()` — the real spawn site is inside this class's own
       per-object loop) called once per blast, not just the center one. Real self-delete at
       `phase>=39` (`Decor.cpp:8397-8399`, `Tables::table_explo1Length==39`, the longest of the 4
-      particle lifetimes modeled so far). Found and fixed a FIFTH real bug in `GEObjectIcons.cpp`:
+      particle lifetimes modeled so far). Found and fixed a FIFTH real bug in `ObjectIcons.cpp`:
       same wrong-divisor bug, plus real `table_explo1` (`Tables.cpp:1368-1374`, 39 frames)
       repeatedly bounces back and forth between adjacent values rather than advancing
       monotonically (e.g. `...,4,3,4,4,3,4,3,3,4,4,...`), transcribed verbatim as `kExplo1[39]`.
@@ -5096,7 +5096,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       ObjectType8 specifically for fish (`ObjectType17`) and bird (`ObjectType20`) — the exact
       same real fish/bird split already modeled for BigShake vs SmallShake (`CAM-008/009`), now
       also driving which explosion-flash type spawns. Real self-delete at `phase>=20`
-      (`Decor.cpp:8419-8430`). Found and fixed a SIXTH `GEObjectIcons.cpp` bug: wrong divisor (6
+      (`Decor.cpp:8419-8430`). Found and fixed a SIXTH `ObjectIcons.cpp` bug: wrong divisor (6
       instead of 1) and wrong ascending-arithmetic assumption — real `table_explo3`
       (`Tables.cpp:1384-1388`) is a repeating oscillation (`32,32,34,34` ×3, then `32,32,35,35`
       ×2), transcribed verbatim as `kExplo3[20]`. **Found and fixed a test false-positive along the
@@ -5121,7 +5121,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       the earlier CAM-008 SmallShake-trigger-site audit missed entirely (it was scoped around the
       "7 near-identical dynamite-blast sites" description and didn't crawl every
       `DecorAction::SmallShake` assignment in the file); now wired too. Real self-delete at
-      `phase>=20` (`Decor.cpp:8407-8417`). Found and fixed a SEVENTH `GEObjectIcons.cpp` bug: wrong
+      `phase>=20` (`Decor.cpp:8407-8417`). Found and fixed a SEVENTH `ObjectIcons.cpp` bug: wrong
       divisor and wrong ascending-arithmetic assumption — real `table_explo2` (`Tables.cpp:
       1377-1381`) has real `-1` blank-frame sentinels interspersed throughout, transcribed verbatim
       as `kExplo2[20]`, reusing the already-existing renderer `-1`-skip support with no further
@@ -5146,7 +5146,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       already-existing `ObjectType23` contact block. Real self-delete: `phase>=10` (98), `>=13`
       (99), `>=18` (100).
 
-      Found and fixed 3 more `GEObjectIcons.cpp` bugs: `ObjectType98`'s wrong divisor (6 instead of
+      Found and fixed 3 more `ObjectIcons.cpp` bugs: `ObjectType98`'s wrong divisor (6 instead of
       1, `table_sploutch1` is a plain ascending range so only the divisor needed fixing);
       `ObjectType99`/`100` were previously static "first real frame" stubs — their real tables
       (`table_sploutch2/3`, `Tables.cpp:1436-1448`) are now transcribed verbatim and fully
@@ -5166,16 +5166,16 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       **done 2026-07-14, description corrected**: despite `ObjectType.hpp`'s own "spawned when
       Blupi uses a charged attack" doc comment, direct source read found the ONLY real spawn site
       (`Decor.cpp:5593-5606`) is the TELEPORTER trigger — already this engine's own existing
-      `GEBlupiController::TriggerTeleport()` call site (`GalaxyEggbertCnaGame.cpp`,
+      `BlupiController::TriggerTeleport()` call site (`GalaxyEggbertCnaGame.cpp`,
       plan.md E3D-MIG-147) — spawned once, static (real `speed=0`), at
       `(blupiX, blupiY+5/64, blupiZ)` (real `celSwitch = (blupiPos.X, blupiPos.Y-5)`, the usual
-      screen-Y-to-world-Y sign flip). New `GEInteractionSystem::SpawnTeleportArc()`, called
+      screen-Y-to-world-Y sign flip). New `InteractionSystem::SpawnTeleportArc()`, called
       directly at the existing teleporter-trigger site (same shape as `SpawnFanHitFlash()`). Real
       self-delete at `phase>=128` — a long 6.4s lifetime that exactly matches this engine's own
-      `GEBlupiController::kTeleportDuration` (the arc plays for the whole real teleport transit,
+      `BlupiController::kTeleportDuration` (the arc plays for the whole real teleport transit,
       a nice confirmation the two independently-ported real constants agree).
 
-      Fixed the existing `GEObjectIcons.cpp` static "first-frame only" stub: real `table_explo7`
+      Fixed the existing `ObjectIcons.cpp` static "first-frame only" stub: real `table_explo7`
       (`Tables.cpp:1407-1422`) is a 128-frame "large multi-particle scatter" with `-1` blanks
       interspersed THROUGHOUT (not just a leading/trailing delay like `table_sploutch2/3`) — only
       6 distinct icons (60-65) ever appear, comfortably within the sheet, so the earlier "would
@@ -5201,7 +5201,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       mirrors every real grant site's own `m_blupiPosMagic = m_blupiPos` reset (confirmed at
       multiple sites, e.g. `Decor.cpp:6022`) — wired at this engine's own existing Shield/Power
       grant sites (`GalaxyEggbertCnaGame.cpp`, right next to their existing grant-sound calls).
-      Found and fixed TWO more `GEObjectIcons.cpp` bugs: `ObjectType27`'s existing formula had the
+      Found and fixed TWO more `ObjectIcons.cpp` bugs: `ObjectType27`'s existing formula had the
       usual wrong-divisor-and-ascending-arithmetic bug (real `table_magictrack` repeats icons
       152-156 TWICE before continuing, `Tables.cpp:1754-1759`); `ObjectType57` was previously a
       static "first-frame only" return under the WRONG assumption that a naive ascending 20-frame
@@ -5226,14 +5226,14 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       collect site): 4 `ObjectStart(pos, ObjectType39, speed)` calls, same `{-60,60,10,-10}`
       direction encoding as Invert, no pre-offset (matches Invert's GRANT shape, 500 real-px).
       Real self-delete at `phase>=11` (`Decor.cpp:8382-8389`, an 11-frame lifetime, shorter than
-      Invert's 16). Found and fixed a THIRD real bug in `GEObjectIcons.cpp`'s existing icon
+      Invert's 16). Found and fixed a THIRD real bug in `ObjectIcons.cpp`'s existing icon
       formula for this type — unlike the Invert pair's simple arithmetic-range bug, real
       `table_tresortrack` is a genuinely oscillating table (`166,165,164,163,162,161,162,163,
       164,165,166` — shimmers down to 161 and back, not a plain ascending range), transcribed
       verbatim as a lookup table; divisor was also wrong (6 instead of the real
       `Config::ScaleDiv(1)==1`). New free function `AppendSparkleBurst()` (not a public method
       like Invert's `SpawnInvertBurst()` — the real treasure-collect site is INSIDE
-      `GEInteractionSystem::Update()`'s own per-object loop, so it can use the existing
+      `InteractionSystem::Update()`'s own per-object loop, so it can use the existing
       `pendingSpawns` deferred-spawn pattern directly). Real source also fires this same burst for
       `ObjectType49/50/51` (key-gated doors, not key pickups) — NOT wired, since this engine's own
       door model uses static terrain tiles, not `MobileObjSpec` instances, for those; a separate
@@ -5253,7 +5253,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       **Correction, 2026-07-14 (later the same day):** the "ObjectType49/50/51 (key-gated doors,
       not key pickups)" note above had it BACKWARDS — direct re-read of `ObjectType.hpp`'s own doc
       comments confirms these ARE the 3 key pickups themselves ("Key 1/2/3 collectible"), not door
-      tiles, and this engine already collects them as such (`GEInteractionSystem.cpp`'s existing
+      tiles, and this engine already collects them as such (`InteractionSystem.cpp`'s existing
       `ObjectType49/50/51` cases, `keys1_/keys2_/keys3_`). No door-model blocker ever applied —
       wired the same `AppendSparkleBurst()` call into all 3 existing key-pickup cases. 1 new
       `VerifyInteractionSystem` check (key pickup spawns the same 4-instance burst, filtered by
@@ -5269,10 +5269,10 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       moving) and its OWN per-vehicle nozzle offset (`tinyPoint.X/Y`) and puff lifetime/speed
       (`num`, mostly 20, Overcraft's ascending case uses 58 with a small real random X jitter).
       Since `MoveObjectPollution()` is itself the gate (`if (!flag) return;`), a single
-      unconditional per-frame call (`GEInteractionSystem::TickPollutionPuff()`, called from
+      unconditional per-frame call (`InteractionSystem::TickPollutionPuff()`, called from
       `GalaxyEggbertCnaGame.cpp` right after `interaction_.Update()`) is behaviorally equivalent
       to the real 4 separate call sites. Real self-delete at `phase>=16` (`Decor.cpp:8563-8567`).
-      Found and fixed a bug in the existing `GEObjectIcons.cpp` formula for this type (wrong
+      Found and fixed a bug in the existing `ObjectIcons.cpp` formula for this type (wrong
       divisor 6 instead of the real `Config::ScaleDiv(2)==2`) — real `table_pollution` is a plain
       ascending range (`Tables.cpp:1494`, 179..186), so only the divisor needed fixing, unlike the
       non-monotonic tables fixed elsewhere.
@@ -5321,11 +5321,11 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       direction, converted to this engine's world units via the same 64px-per-tile scale used
       throughout. Real self-delete at `phase>=16` (`Decor.cpp:8575-8582`,
       `Config::ScaleTime(16)==16` at this build's 20Hz reference rate, confirmed identity function)
-      — `phase` itself is already advanced generically by `GEWorldRuntime::Update()`, no new
-      increment logic needed. New `GEInteractionSystem::SpawnInvertBurst()` (called directly by
-      `GalaxyEggbertCnaGame.cpp` at its own existing grant site, since `GEInteractionSystem::
+      — `phase` itself is already advanced generically by `WorldRuntime::Update()`, no new
+      increment logic needed. New `InteractionSystem::SpawnInvertBurst()` (called directly by
+      `GalaxyEggbertCnaGame.cpp` at its own existing grant site, since `InteractionSystem::
       Update()` has already returned by the time that fires). Along the way, found and fixed a
-      real bug in the ALREADY-WRITTEN (but until now unused) `GEObjectIcons.cpp` icon formula for
+      real bug in the ALREADY-WRITTEN (but until now unused) `ObjectIcons.cpp` icon formula for
       this type: wrong divisor (6 instead of the real `Config::ScaleDiv(2)==2`) — see VISUAL-015
       for the ObjectType42 half of this same fix. 8 new `VerifyInteractionSystem` checks (spawn
       count, real distance, self-delete timing, corrected icon values) + full regression on both
@@ -5373,14 +5373,14 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       same 4 directions, but pre-offset 100 real-px TOWARD Blupi before the same 500px push,
       netting exactly 400 real-px (closer than grant's 500px) — confirmed by working through the
       real per-direction arithmetic by hand for all 4 cases, not assumed symmetric with grant.
-      Fixed a second real bug in `GEObjectIcons.cpp`'s existing icon formula for this type: it
+      Fixed a second real bug in `ObjectIcons.cpp`'s existing icon formula for this type: it
       ascended past 186 (`186 + (p/6)%8`, reading out-of-range/unrelated sprite-sheet icons)
       instead of matching the real `table_invertstop` array's exact reverse order (186 down to
       179) — corrected to `186 - (p/2)%8`.
 - [x] VISUAL-016 — Goo particle: ObjectType34 sticks to geometry (element.png, 25 frames) —
-      **fixed 2026-07-20**: 2 real bugs, same shape as `VISUAL-021`. (1) `GEObjectIcons.cpp`'s icon
+      **fixed 2026-07-20**: 2 real bugs, same shape as `VISUAL-021`. (1) `ObjectIcons.cpp`'s icon
       formula (`168 + (p/6)%25`) assumed an ascending range with the wrong divisor -- the real
-      `table_glu` (`Tables.cpp:1610-1615`) is byte-identical to `GEBlupiController`'s own already-
+      `table_glu` (`Tables.cpp:1610-1615`) is byte-identical to `BlupiController`'s own already-
       approved `kGluFrames` (same real table, reused for Blupi's Glu death-cause animation),
       oscillating within icons 168-171 with `Config::ScaleDiv(1)==1` (no division). (2) the real
       "sticks to geometry" behavior (`Decor.cpp:8099-8104`) was entirely unmodeled: arriving at
@@ -5396,7 +5396,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       patrol-to-arrival rig, since no real placement exists to test against).
 - [x] VISUAL-017 — Magic track sparkle: ObjectType27 trail effect — **done 2026-07-14**, built
       together with VISUAL-011 (Shield trail, ObjectType57) — same mechanic, same
-      `GEInteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, see VISUAL-011's full writeup
+      `InteractionSystem::TickMagicTrail()`/`ResetMagicTrail()`, see VISUAL-011's full writeup
       for the real trigger/self-delete/icon-formula-fix details specific to this type
       (`table_magictrack`, phase>=24 self-delete, Power's own grant site).
 - [ ] VISUAL-018 — Helicopter debris: ByeByeHelico float-based debris pool when helico destroyed
@@ -5404,7 +5404,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       — **stale checkbox, closed 2026-07-17**: the billboard genuinely renders (`IsObjectMPngSourced()`
       dispatch, `GalaxyEggbertCnaGame.cpp:2707`) and the real GAMEPLAY effect (terrain grid
       overwritten live during construction) is done (`157`/`PICKUP-064`) — the only real gap is
-      that `GEObjectIcons.cpp`'s icon is frozen at frame 1 (`365`) rather than animating through
+      that `ObjectIcons.cpp`'s icon is frozen at frame 1 (`365`) rather than animating through
       all 157 frames, because the real frame range overflows `object-m.png`'s bounds
       (`365+156=521 > 439`, already documented in the code's own comment) — a genuine, previously
       acknowledged sheet-size limitation, not an unstarted feature.
@@ -5413,11 +5413,11 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       renders via the generic element.png path (not excluded by `IsUniformCubeObject()`/
       `IsObjectMPngSourced()`), and the real blast-event GAMEPLAY (9 real blast ticks, `Phase 15
       155`) is fully done. The icon is frozen at frame 1 (`253`) rather than animating, same reason
-      as `VISUAL-019` — element.png's real 290-icon grid (29 rows x 10 cols, `GEObjectIcons.cpp`'s
+      as `VISUAL-019` — element.png's real 290-icon grid (29 rows x 10 cols, `ObjectIcons.cpp`'s
       own comment) is too small for the real 100-frame range (`253+99=352 > 289`), a genuine,
       already-documented sheet-size limitation, not an unstarted feature.
 - [x] VISUAL-021 — Tentacle hazard animation: ObjectType53 (45 frames, explo.png) — **fixed
-      2026-07-20**: the previous frozen-at-frame-86 case (`GEObjectIcons.cpp`) reasoned "45 frames
+      2026-07-20**: the previous frozen-at-frame-86 case (`ObjectIcons.cpp`) reasoned "45 frames
       would exceed the sheet" from a naive ascending-range assumption -- checked the real
       `table_tentacule` (`Tables.cpp:1457-1464`) directly and it's bounded, oscillating within
       icons 70-86 (rise, blank at the peak, descend through full extension, blank fully retracted)
@@ -5431,9 +5431,9 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       2026-07-17**: the ch69 zap sound half is now done (see `SOUND-079`) — real
       `Decor::BlitzActif()` (`Decor.cpp:620-634`), a Blitz(305)-floor-with-BlitzEmitter(304)-above
       pair, on a fixed 6-tick-per-100 pattern; this engine plays it once per matching tick
-      globally rather than per-tile (its `GESound::Play()` has no positional audio at all, so a
+      globally rather than per-tile (its `Sound::Play()` has no positional audio at all, so a
       one-time lazy "does any qualifying pair exist in the world" scan is behaviorally equivalent
-      to a real per-visible-tile check, at negligible cost — new `GEInteractionSystem::
+      to a real per-visible-tile check, at negligible cost — new `InteractionSystem::
       HasBlitzEmitterPair()`, `BlockTypes::BlitzEmitter=304`). The "tiles 66-68 draw 13px higher"
       visual half is a DIFFERENT, unrelated mechanic — verified directly against
       `Decor.cpp:716-735`: it's a pure 2D sprite-corner-anchor pixel nudge in the separate
@@ -5446,7 +5446,7 @@ themselves mostly not started in CNA yet. All items reset to `[ ]`.
       2026-07-20**, a follow-up pass after `VISUAL-016`/`021` (systematically checked every
       remaining case against its real `Decor.cpp`/`Tables.cpp` source, not just a sample):
       - `ObjectType37`: real `table_clear` (`Tables.cpp:1623-1632`) oscillates within icons 40-47
-        (identical to `GEBlupiController`'s own already-approved `kClear1Frames`), was a naive
+        (identical to `BlupiController`'s own already-approved `kClear1Frames`), was a naive
         ascending-range guess, same category as `VISUAL-016`/`021`; wrong divisor too (6 vs real 1).
       - `ObjectType97`: real `table_follow2` (`Tables.cpp:1539`) steps by 2 (256,258,260,262,264),
         was assumed step-of-1; wrong divisor too (6 vs real 1).
@@ -5514,7 +5514,7 @@ now closed too.
 
 - [x] TEST-001 — `GalaxyEggbertWorldsTests`: engine-independent unit tests (BlockTests, BitPackingTests, ChunkTests, WorldTests, BlockMetadataTest, MoveObjectRecordTests) — **count reconciled 2026-07-14**: 64/64 (confirmed via a fresh `TEST(...)`/`TEST_F(...)` grep across `tests/GalaxyEggbert/`), not the previously-quoted 63.
 - [x] TEST-002 — ctest discovery in the CNA build dir — **fixed 2026-07-14**: `GalaxyEggbertWorldsTests` was already `gtest_discover_tests()`-registered (confirmed live: `ctest -N` found all 64 cases even before this fix, since a sibling dependency's own CMakeLists.txt already calls `enable_testing()` transitively) — the real gap was the 6 `VerifyXxx` binaries having no `add_test()` at all. Added one for each (`CMakeLists.txt`), with `WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` for the 3 that default to repo-root-relative paths. `ctest --test-dir build-cna` now runs all 7 tools' full suites in one command.
-- [x] TEST-003 — Test: all mobile-eggbert world files parse without error — **done 2026-07-14**: `VerifyMoveObjectTypesCna` now also sweeps every real `../mobile-eggbert/worlds/*.txt` file (enumerated at runtime via `std::filesystem::directory_iterator`, not a hardcoded list, so it stays accurate as files are added/removed) and confirms `GEWorldRuntime::LoadFromMobileEggbertFile()` returns success for each — all 78 real world files parse without error. The pre-existing curated per-`ObjectType`-example checks are unchanged and still run alongside it.
+- [x] TEST-003 — Test: all mobile-eggbert world files parse without error — **done 2026-07-14**: `VerifyMoveObjectTypesCna` now also sweeps every real `../mobile-eggbert/worlds/*.txt` file (enumerated at runtime via `std::filesystem::directory_iterator`, not a hardcoded list, so it stays accurate as files are added/removed) and confirms `WorldRuntime::LoadFromMobileEggbertFile()` returns success for each — all 78 real world files parse without error. The pre-existing curated per-`ObjectType`-example checks are unchanged and still run alongside it.
 - [x] TEST-004 — Test: `BlockTypes::tileUV` returns valid UV for all known icon IDs — **done
       2026-07-14, and found a genuine but low-impact boundary bug along the way.**
       Directly computed `tileUV()`'s implied atlas-pixel rect for every icon near the end of the
@@ -5524,7 +5524,7 @@ now closed too.
       read past the file). Icons 0..439 all fit correctly (20 cols × 22 rows × the real 65px
       pitch = exactly 1431px tall, confirmed `1 + 22*65 == 1431`) — this is specifically a
       1-icon overshoot at the very last slot, not a broader miscalibration. Corroborating evidence
-      found independently elsewhere in this same codebase: `GEObjectIcons.cpp`'s own
+      found independently elsewhere in this same codebase: `ObjectIcons.cpp`'s own
       `ObjectType52` comment already reasons about sheet overflow using bound **439** ("157 frames
       would exceed the sheet (365+156=521 > 439)"), and a nearby comment already calls this
       "object-m.png's 440-icon grid" — i.e. this discrepancy between the real 440-icon sheet and
@@ -5549,10 +5549,10 @@ now closed too.
       it — if the underlying `kPassable[441]`/`tileUV()` question above is ever resolved in a way
       that makes icon 440 valid too, this test will correctly need updating, rather than staying
       silently green on a stale assumption forever.
-- [x] TEST-005 — Test: `GEWorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files, now ctest-integrated (TEST-002).
+- [x] TEST-005 — Test: `WorldRuntime::LoadFromMobileEggbertFile` round-trip — **done**, covered by `VerifyMoveObjectTypesCna`/`VerifyBigDecorParsingCna` against real `../mobile-eggbert` world files, now ctest-integrated (TEST-002).
     - **Follow-up (2026-07-23, file-I/O trust-boundary audit):** a fresh audit pass — a different
       angle from the public-API sweep above, specifically looking for external/parsed data flowing
-      unvalidated into array indices or numeric conversions, the same shape as the `GESaveData`
+      unvalidated into array indices or numeric conversions, the same shape as the `SaveData`
       `selectedGamer` bug (§11) — checked every disk-reading path in `src/GalaxyEggbertCNA/` and
       `src/GalaxyEggbert/`. The core `.vwr`/`.vch` binary loaders (`World::loadFromFile()`,
       `Chunk::read()`) were already exhaustively guarded at every parsed field. One real gap found:
@@ -5564,10 +5564,10 @@ now closed too.
       Not reachable from any real gameplay path today — this function's only actual callers are the
       4 test tools in `tools/`, all reading trusted `../mobile-eggbert` reference files (confirmed
       by grepping every call site; `GalaxyEggbertCnaGame.cpp` only references the function in a
-      comment, never calls it) — lower severity than the `GESaveData` crash, which was reachable
+      comment, never calls it) — lower severity than the `SaveData` crash, which was reachable
       through live save-file loading. Fixed anyway since it's a real defect in a genuinely callable
       public API this project deliberately keeps around (see the function's own doc comment) rather
-      than dead code. Fix: a `SafeStoi()` wrapper in `GEWorldRuntime.cpp`'s anonymous namespace,
+      than dead code. Fix: a `SafeStoi()` wrapper in `WorldRuntime.cpp`'s anonymous namespace,
       returning 0 on parse failure — which the existing `if (tileId > 0)` gate at both call sites
       already treats as "nothing here," so no separate error path was needed. New regression test
       in `VerifyBigDecorParsingCna.cpp` (writes a synthetic file — not a `../mobile-eggbert` file,
@@ -5583,9 +5583,9 @@ now closed too.
       a value from a bounded source (either a loop over a fixed grid or `SafeStoi()`'s own
       now-validated output), so it's defense-in-depth only, not a reachable defect. Both are
       candidates for a future pass if this audit style continues, not silently dropped.
-- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `GESaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
-- [x] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw div 1, Lava div 2, Water1/Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) — **done 2026-07-14**. `AnimDivisor()` was a pure function trapped in `GETerrainRenderer.cpp`'s anonymous namespace with no graphics dependency of its own — extracted into `GETerrainAnimDivisor.hpp`/`.cpp` (behavior unchanged, `GETerrainRenderer.cpp` now calls the extracted version) so it could be linked into a new lightweight, engine-independent tool (`tools/VerifyTerrainAnimDivisor.cpp`, no CNA/graphics link needed, same precedent as `VerifyGESaveData`/`VerifyBlupiMovement`), now ctest-registered. 13 checks (all 8 real per-type divisor values + the non-animated-icon default fallback) confirm the exact mapping this item asked for. Full regression on both backends passes (76 tests on EasyGL, only the known pre-existing unrelated `easy-gl-resource-smoke-tests` failure; 71/71 on Vulkan).
-- [x] TEST-008 — Test (new): `GEInteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected — done and now ctest-integrated (`VerifyInteractionSystem`, 190+ checks as of 2026-07-13, TEST-002).
+- [ ] TEST-006 — Test: GameData read/write round-trip (640-byte format) — still correctly blocked: `SaveData` (real, working, tested via `VerifyGESaveData`) deliberately does NOT use the real 640-byte binary format (see §11's own note) — this item is specifically about byte-compatible format round-tripping, which was never pursued.
+- [x] TEST-007 — Test: animation-phase timing matches the real per-type `ScaleDiv()` divisors (Saw div 1, Lava div 2, Water1/Crusher/Water2/Marine/the 4 Fan icons div 3, Spike/Temp div 4) — **done 2026-07-14**. `AnimDivisor()` was a pure function trapped in `TerrainRenderer.cpp`'s anonymous namespace with no graphics dependency of its own — extracted into `TerrainAnimDivisor.hpp`/`.cpp` (behavior unchanged, `TerrainRenderer.cpp` now calls the extracted version) so it could be linked into a new lightweight, engine-independent tool (`tools/VerifyTerrainAnimDivisor.cpp`, no CNA/graphics link needed, same precedent as `VerifyGESaveData`/`VerifyBlupiMovement`), now ctest-registered. 13 checks (all 8 real per-type divisor values + the non-animated-icon default fallback) confirm the exact mapping this item asked for. Full regression on both backends passes (76 tests on EasyGL, only the known pre-existing unrelated `easy-gl-resource-smoke-tests` failure; 71/71 on Vulkan).
+- [x] TEST-008 — Test (new): `InteractionSystem` — treasure/egg/exit/key pickup collection, removal-on-contact, MAX_EGG_COUNT=10 cap, exit gating on treasures-collected — done and now ctest-integrated (`VerifyInteractionSystem`, 190+ checks as of 2026-07-13, TEST-002).
 - [x] TEST-009 — Test (new): crate push validity (adjacency/floor-support/occupancy checks) and platform-lift ping-pong patrol motion — done and now ctest-integrated (`VerifyMoveObjectTypesCna`/`VerifyBlupiMovement`/`VerifyInteractionSystem`, TEST-002).
 - [x] TEST-010 — Test (new): `BigDecor` billboard parsing round-trip — done and now ctest-integrated (`VerifyBigDecorParsingCna`, TEST-002).
 
@@ -5603,7 +5603,7 @@ doesn't silently re-open them or silently guess an answer:
   `Decor.cpp:8395-8489`: it's a plain 1:1 mapping (`explo1`→`ObjectType8`, `explo2`→`9`, `explo3`→
   `10`, `explo4`→`11`, `explo5`→`90`, `explo6`→`91`, `explo7`→`92`, `explo8`→`93`), each with its
   own frame count/self-delete duration, no cross-cutting trigger logic to trace. Already
-  implemented in `GEObjectIcons.cpp`'s `GetObjIcon()` for explo1-4/7 (fixed 2026-07-14); explo5/6/8
+  implemented in `ObjectIcons.cpp`'s `GetObjIcon()` for explo1-4/7 (fixed 2026-07-14); explo5/6/8
   were the 3 remaining cases still using an approximation formula (`(p/6) % N`) instead of an exact
   transcription — fixed 2026-07-16 alongside this research (new `kExplo5`/`kExplo6`/`kExplo8`,
   same "wrong divisor" bug class as every other explo case). 7 new `VerifyInteractionSystem`
@@ -5617,7 +5617,7 @@ doesn't silently re-open them or silently guess an answer:
   Icon 95 is simply phase index 3 of that 6-frame cycle. Matches
   `mobile-eggbert-reference/questionnaire-unused-tiles.md`'s own existing answer for icon 95
   ("Co to je? Odpověď: voda") and is already correctly implemented in this engine —
-  `GETerrainRenderer.cpp:298`'s `kAnimWater1[6] = {92,93,94,95,94,93}` is an exact transcription,
+  `TerrainRenderer.cpp:298`'s `kAnimWater1[6] = {92,93,94,95,94,93}` is an exact transcription,
   keyed off `BlockTypes::Water1` the same way (see TILE-018, already `[x]`). No further action
   needed; this question is fully closed, not just partially.
 - ~~`[?]` **Icon 440's real meaning despite having no valid `object-m.png` backing content**~~
@@ -6067,9 +6067,9 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       `src/GalaxyEggbertCNA/Editor/` to `src/GalaxyEggbert/Editor/`, changed their namespace from
       `GalaxyEggbert::CNA` to `GalaxyEggbert::Editor`, and removed `GE` from editor-owned filenames,
       classes, and structs. The owning CNA game and all four editor verifier tools consume the new
-      API directly. Remaining `GalaxyEggbert::CNA` qualifications inside the
-      editor identify its current rendering-host dependencies (`GEQuadBatch`, `GEHud`, and
-      `GEWorldRuntime`), not editor ownership. Verification: full `build-cna` build with `-j2` and
+      API directly. Its game-layer dependencies (`GalaxyEggbert::Game::QuadBatch`,
+      `GalaxyEggbert::Game::Hud`, and `GalaxyEggbert::Game::WorldRuntime`) remain explicit, not
+      editor ownership. Verification: full `build-cna` build with `-j2` and
       all 90 applicable CTest tests pass.
 
 ### Known problems / open concerns
@@ -6126,7 +6126,7 @@ truth for what's done and what's next.**
 
 Much of the needed infrastructure already exists and should be reused, not rebuilt:
 `GalaxyEggbert::Worlds::World::loadFromFile()`/`saveToFile()` (engine-agnostic, already tested,
-`.vwr` format), `GETerrainRenderer`/`GETileAtlas` (already renders any loaded `World`),
+`.vwr` format), `TerrainRenderer`/`TileAtlas` (already renders any loaded `World`),
 `Easy3D::Camera3D`, and `GalaxyEggbert::MoveObjectRecord`'s embed-in-`.vwr` mechanism (already
 used by `GenerateSampleWorld3D.cpp`). The editor is new UI/interaction code on top of these, not a
 new rendering or file-format stack.
@@ -6140,12 +6140,12 @@ new rendering or file-format stack.
       separate: keeps `GalaxyEggbertCnaGame` free of editor-only state and input branches.
 - [ ] `EDITOR-001` Free-fly camera (WASD + mouse look, detached from any Blupi controller) —
       reuses `Easy3D::Camera3D` directly, no new camera math needed beyond input-driven
-      position/yaw/pitch (`GEBlupiController`'s tank-control scheme is Blupi-specific, not
+      position/yaw/pitch (`BlupiController`'s tank-control scheme is Blupi-specific, not
       reusable here).
 - [ ] `EDITOR-002` Load/save `.vwr` via the existing engine-agnostic `World::loadFromFile()`/
       `saveToFile()` — no new format or parser work; this is already a tested, working API
       (`GalaxyEggbertWorldsTests`).
-- [ ] `EDITOR-003` Render the loaded world via the existing `GETerrainRenderer`/`GETileAtlas` —
+- [ ] `EDITOR-003` Render the loaded world via the existing `TerrainRenderer`/`TileAtlas` —
       reuse `GalaxyEggbertCnaGame::LoadContent()`'s terrain-setup code as a template, don't
       reimplement it.
 - [ ] `EDITOR-004` Block picking: raycast from the camera through the mouse cursor into the voxel
@@ -6171,7 +6171,7 @@ new rendering or file-format stack.
 Source documents (2026-07-20, merged from a separate branch into `develop`): `REMAKE-ANALYSIS.md`
 (root-cause analysis of why the same bug classes keep recurring), `renderers.md` +
 `renderers-next-steps.md` (a dual-renderer architecture proposal), and the first data-contract
-artifact of that proposal, `src/GalaxyEggbertCNA/Game/GESceneFrame.hpp` (currently unwired —
+artifact of that proposal, `src/GalaxyEggbert/Game/SceneFrame.hpp` (currently unwired —
 nothing includes it, `Draw()` is not repointed to it, no `IGameRenderer` exists yet). This section
 records the assessment of that material after independent review, so a future session doesn't have
 to re-derive it. It is deliberately written as **direction, not a queue of tasks to execute** —
@@ -6182,7 +6182,7 @@ every other "needs the user's own call" item elsewhere in this file.
 
 `REMAKE-ANALYSIS.md`'s central claim — **correctness is verified by a human looking at a
 screenshot, and that is the actual bug factory** — was independently checked against this
-codebase (not taken on faith): `GEObjectIcons.cpp` really does carry 34 `Fixed 202...` annotations,
+codebase (not taken on faith): `ObjectIcons.cpp` really does carry 34 `Fixed 202...` annotations,
 `GalaxyEggbertCnaGame::Update()`/`Draw()` really are ~2073/~817 lines respectively. The Saw-blade
 render-orientation saga the same day (2026-07-20, 6+ rounds of "here's a screenshot, is this
 right?" before landing on a stable answer) is a live, first-hand instance of exactly the failure
@@ -6220,7 +6220,7 @@ riskier items below:
   a behavioral-trace safety net, and the user's explicit go-ahead before a line of code changes.
 - **A handler-table refactor for `ObjectType` dispatch (P1-2)**, replacing the open-coded
   `if (type == N)` chains inside `GalaxyEggbertCnaGame::Update()` (~2073 lines) and
-  `GEInteractionSystem::Update()` (~1677 lines, `ObjectType` referenced 214 times) with a per-type
+  `InteractionSystem::Update()` (~1677 lines, `ObjectType` referenced 214 times) with a per-type
   handler table. Real leverage (would make "fix object X" touch one place instead of scattered
   sites across two god-methods), but ~70 object types is a large, multi-session migration with
   real regression risk if not done one family at a time behind a golden harness.
@@ -6340,30 +6340,30 @@ specifically, same as any other large/risky item elsewhere in this file.
          all, even though nothing is ever screenshotted). Full regression clean on all 3 native
          builds (only the pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [x] `INFRA-003` (`REMAKE-ANALYSIS.md` P0-2) — **done 2026-07-21.** New
-      `tools/VerifyGetObjIcon.cpp` (headless, engine-agnostic — `GEObjectIcons.cpp` only depends on
+      `tools/VerifyGetObjIcon.cpp` (headless, engine-agnostic — `ObjectIcons.cpp` only depends on
       `Def/ObjectType.hpp`, same precedent `GenerateSampleWorld3D` already established), registered
       with `ctest`. 232 checks covering every `case` in `GetObjIcon()`'s switch (all confirmed-real
       `ObjectType`s, not just the 34 with a `Fixed 202...` note — the extra coverage was cheap once
       the harness existed): exact per-tick sequence for every table-driven type (transcribed
-      directly from `GEObjectIcons.cpp`'s own already-committed arrays), exact formula for every
+      directly from `ObjectIcons.cpp`'s own already-committed arrays), exact formula for every
       plain-ascending/descending/triangle-wave type, and the fixed icon for every static type.
       Frame-array length (period) cross-checked inline against `mobile-eggbert-reference/
       08-animations.md` §3.1/§3.2/§4 wherever that doc documents one — including one genuine
       discrepancy the check surfaced: `08-animations.md`'s own `ObjectType25` row still says "8
       frames," but that row's own text already flags itself as stale (the real `table_shield` has
-      16 entries, matching `GEObjectIcons.cpp`'s current, already-fixed array) — the test asserts
+      16 entries, matching `ObjectIcons.cpp`'s current, already-fixed array) — the test asserts
       16, the correct current value, with a comment explaining the doc's own self-flagged staleness
       rather than silently trusting either source. A regression test, not a fresh independent
       re-verification against `../mobile-eggbert` (out of scope, would need separate approval) —
       **verified it actually catches regressions**, not just trivially passing: deliberately
-      mutated one divisor in `GEObjectIcons.cpp` (6→9 for `ObjectType17`), confirmed the test fails
+      mutated one divisor in `ObjectIcons.cpp` (6→9 for `ObjectType17`), confirmed the test fails
       with a precise mismatch message, then reverted (confirmed via a clean `git diff`).
       **Corrected 2026-07-22 — marked "done" too broadly against P0-2's actual full ask (external
       audit, independently re-verified against `REMAKE-ANALYSIS.md`'s own text before accepting)**:
       P0-2 explicitly asks to "cross-check every `GetObjIcon` array/divisor against the reference
       doc **programmatically** (parse the reference tables, compare) so the 34-and-counting 'Fixed'
       notes stop being discovered by hand." What was actually delivered is (a) a regression lock
-      whose expected values are transcribed FROM `GEObjectIcons.cpp` itself, not derived
+      whose expected values are transcribed FROM `ObjectIcons.cpp` itself, not derived
       independently, plus (b) exactly ONE manual inline cross-check against
       `08-animations.md` (the `ObjectType25` frame-count discrepancy). That is real, useful
       value — but it is not the systematic parse-`08-animations.md`-and-compare-every-entry tool
@@ -6386,7 +6386,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       and a genuinely-shorter array produce IDENTICAL output sequences, so no amount of black-box
       observation can tell them apart; confirmed this isn't a bug in the counting approach, it's a
       hard limit. **Explicit user decision**: read just the per-type hold DIVISOR from
-      `GEObjectIcons.cpp`'s own case bodies (a small `std::map<int,int>` in the tool, 24 entries) —
+      `ObjectIcons.cpp`'s own case bodies (a small `std::map<int,int>` in the tool, 24 entries) —
       a structural fact analogous to a function's calling convention, not the expected animation
       DATA itself (which stays fully independent: the actual measured frame count still comes from
       calling `GetObjIcon()` live, sampled at the right stride, never hand-copied). With the correct
@@ -6399,17 +6399,17 @@ specifically, same as any other large/risky item elsewhere in this file.
       One deliberate manual correction, not silent guessing: the doc's own "96 (follower, awake/
       homing)" row is a labeling artifact — the real awake/homing table (`kFollow2`) is keyed by
       `ObjectType97` in the code (confirmed: the object's own `obj.type` genuinely changes from 96
-      to 97 on waking, in `GEInteractionSystem.cpp`'s own wake-up transition), not still 96 — mapped
+      to 97 on waking, in `InteractionSystem.cpp`'s own wake-up transition), not still 96 — mapped
       explicitly in the tool, not inferred.
 
       **Verified it has real teeth**: deliberately shrank `kBulldozer`'s own modulo from 8 to 4 in
-      `GEObjectIcons.cpp`, confirmed the tool fails with a precise mismatch message, reverted
+      `ObjectIcons.cpp`, confirmed the tool fails with a precise mismatch message, reverted
       (confirmed via `git diff`). Full regression clean on all 3 native builds (`build-cna`/
       `cmake-build-debug`: 81/82, only the pre-existing unrelated `easy-gl-resource-smoke-tests`
       failure; `build-cna-vulkan`: 79/79 clean, that failure doesn't reproduce there).
 
       **Sibling gap closed 2026-07-23 (autonomous session, found via a systematic public-API
-      sweep)**: `GEObjectIcons.hpp`'s 5 texture-atlas-selection predicates
+      sweep)**: `ObjectIcons.hpp`'s 5 texture-atlas-selection predicates
       (`IsUniformCubeObject`/`IsObjectMPngSourced`/`IsExploPngSourced`/`IsBlupiPngSourced`/
       `UsesBlupi1Texture`) had zero test coverage anywhere in `tools/` despite `GetObjIcon()` itself
       (this entry) being thoroughly covered — these gate which of 5 real sprite sheets
@@ -6418,7 +6418,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       accidentally moved between lists renders with a completely wrong/garbage texture — visually
       broken, silent, no assertion anywhere would catch it, only a live screenshot would. Added to
       `tools/VerifyGetObjIcon.cpp`: a regression lock on today's exact membership (transcribed
-      directly from `GEObjectIcons.cpp`'s own switch statements) plus 2 EXHAUSTIVE invariant checks
+      directly from `ObjectIcons.cpp`'s own switch statements) plus 2 EXHAUSTIVE invariant checks
       swept across every real `ObjectType` value (0-255, the enum's own full `uint8_t` range): the
       4 sheet-selection predicates are mutually exclusive (no type claimed by more than one), and
       `UsesBlupi1Texture` is always a subset of `IsBlupiPngSourced` (blupi1.png selection is only
@@ -6484,10 +6484,10 @@ specifically, same as any other large/risky item elsewhere in this file.
       - **Data**: `Tables::table_decor_quart` (441 icons × 16 subcells, 0/1, row-major top-left
         origin) extracted mechanically (not hand-retyped) and independently re-extracted a second
         time to cross-check — byte-identical, zero discrepancies. Transcribed verbatim into
-        `include`-free, header-only `src/GalaxyEggbertCNA/Game/GEDecorQuartTable.hpp`
+        `include`-free, header-only `src/GalaxyEggbert/Game/DecorQuartTable.hpp`
         (`kDecorQuartTable[7056]`), explicit user approval (a real data transcription beyond the
         standing blanket approval for small tables).
-      - **New API** (`GEBlupiController`): `IsPointSolid(world,x,y,z,tempPassable,checkSubcell=true)`
+      - **New API** (`BlupiController`): `IsPointSolid(world,x,y,z,tempPassable,checkSubcell=true)`
         (real `DecorDetect()` equivalent — sub-tile precision, real per-icon mask extruded uniformly
         along this engine's own Z axis since the real mask is inherently 2D and the original never
         had a depth axis), `ResolveMove(...)` (real `TestPath()` equivalent — one march per call,
@@ -6554,7 +6554,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       grounded and airborne states" — mirroring real `Decor::TestPath()`'s own shape (one rect, X+Y
       resolved TOGETHER in a single Bresenham march, confirmed by this task's own research earlier
       in this entry). What was actually built is **3 separate, sequential per-axis `ResolveMove()`
-      calls** (`GEBlupiController.cpp`: X first, then Z, then — in the vertical block further down —
+      calls** (`BlupiController.cpp`: X first, then Z, then — in the vertical block further down —
       Y last), each resolving against a snapshot of the OTHER two axes' already-updated position, not
       one merged 3D delta resolved in a single pass. This was a real, reasoned design choice (per-axis
       resolution preserves this engine's existing "slide along a wall" behavior when a diagonal move
@@ -6625,7 +6625,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
 - [~] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **pilot done (2026-07-21), full migration still open.**
       Replace the open-coded `if (obj.type == ObjectTypeN)` chains inside
-      `GalaxyEggbertCnaGame::Update()` (~2073 lines) and `GEInteractionSystem::Update()` (~1677
+      `GalaxyEggbertCnaGame::Update()` (~2073 lines) and `InteractionSystem::Update()` (~1677
       lines, `ObjectType` referenced 214 times) with a per-type handler table (`{ObjectType →
       update fn, icon fn, hitbox}` — a plain data-oriented table, not a class-per-object rewrite).
       Migrate one object-type family at a time, each behind `INFRA-001`/`INFRA-002`'s golden
@@ -6634,7 +6634,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       **Pilot family migrated: the 5 secret-power pickups (Shield/Power/Cloud/Hide/Invert,
       ObjectType 25/26/30/31/40)**, chosen for lowest risk (not core kill/hazard logic) and freshest
       familiarity (just touched in `INFRA-007`). New `kSecretPowerPickupHandlers[]` table in
-      `GEInteractionSystem.cpp`'s anonymous namespace (`{ObjectType, Gate, requiresActionButton,
+      `InteractionSystem.cpp`'s anonymous namespace (`{ObjectType, Gate, requiresActionButton,
       grantedEvent, hasPositionPayload}` per entry — `Gate` is an enum, not a function pointer,
       since every gate is a plain caller-supplied bool, not independent logic) + one new
       `TryGrantSecretPowerPickup()` member function doing the lookup + generic dispatch. The
@@ -6796,7 +6796,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       the enemy/hazard family was ruled out, as the cleanest of 2 candidates offered (the other,
       7-enemy patrol-icon dispatch, was left for a future pass — cosmetic-only, not the ruled-out
       kill/damage logic, but still enemy-adjacent code worth its own explicit go-ahead). Unlike every
-      prior family, this one lives in `GalaxyEggbertCnaGame.cpp` (not `GEInteractionSystem.cpp`) —
+      prior family, this one lives in `GalaxyEggbertCnaGame.cpp` (not `InteractionSystem.cpp`) —
       **2 separate 5-case switches doing the SAME bijection in opposite directions**
       (`DismountAndDepositVehicle()`'s mode→type, and the action-button mount-scan's type→mode), not
       a per-type behavior dispatch. New `kVehicleModeTable[]` (anonymous namespace) +
@@ -6807,7 +6807,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       mapping itself — unchanged from before this refactor.
 
       **Verification note, stated plainly**: this exact dispatch code has no existing automated
-      test — `VerifyBlupiMovement`/`VerifyInteractionSystem` exercise `GEBlupiController::TriggerMount()`
+      test — `VerifyBlupiMovement`/`VerifyInteractionSystem` exercise `BlupiController::TriggerMount()`
       directly, bypassing `GalaxyEggbertCnaGame.cpp`'s own mapping entirely (confirmed by grep before
       claiming this). This is a provably pure, bijective, value-for-value-identical refactor (each of
       the 5 table rows checked directly against the old switch's own case, both directions, including
@@ -6858,7 +6858,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       mockery-taunt list were both explicitly NOT recommended, see below). The dynamite-blast
       victim-membership check (27 types: 2/3/4/6/12/13/16/17/18/19/20/24/25/26/28/30/32/33/34/40/
       44/46/52/54/96/97/200-203) was an inline 27-way `||` chain at its one call site
-      (`GEInteractionSystem.cpp`'s blast-victim loop) — every member gets IDENTICAL treatment
+      (`InteractionSystem.cpp`'s blast-victim loop) — every member gets IDENTICAL treatment
       (crates as a linked group via the existing `IsCrate()`, everything else a plain deactivate),
       so this is a pure membership predicate, not per-type divergent behavior — it matches the
       file's own pre-existing `IsPlatformLift()`/`IsCrate()`/`IsGenericHazard()` pattern directly,
@@ -6877,7 +6877,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       called), so this code path is provably unreached by them.
 
       **2 other candidates from this round's survey, explicitly NOT taken**: the pickup-touch-radius
-      gate (13-type exclusion list, `GEInteractionSystem.cpp:1783-1791`) is mostly already covered by
+      gate (13-type exclusion list, `InteractionSystem.cpp:1783-1791`) is mostly already covered by
       the 2 migrated pickup tables (9 of 13 members) — rewriting the remaining 4-member gap as "in
       either table OR {6,7,21,29}" would be marginal DRY benefit on an already-working, already-
       verified gate, not a genuine family migration; left as-is. The mockery-taunt qualifying list
@@ -6908,17 +6908,17 @@ specifically, same as any other large/risky item elsewhere in this file.
       a water bubble, so it cannot exercise this terminal-arrival path.
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
-      boolean flags (`GEInteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
-      per-frame event queue. Keeps the existing, deliberately-reaffirmed `GEInteractionSystem`/
-      `GEBlupiController` decoupling (see `plan.md` §6/`NEXT.md` §9 on that boundary) — only the
+      boolean flags (`InteractionSystem` → `GalaxyEggbertCnaGame` signal bus) with one typed
+      per-frame event queue. Keeps the existing, deliberately-reaffirmed `InteractionSystem`/
+      `BlupiController` decoupling (see `plan.md` §6/`NEXT.md` §9 on that boundary) — only the
       hand-rolled parallel-boolean *transport* changes, not the architectural boundary itself.
 
       **Design proposed to and approved by the user 2026-07-21** (before any code was touched, per
       this task's own precondition above): exact count confirmed as 17 (14 in
-      `GEInteractionSystem`, 3 in `GEBlupiController`), which turn out to be 3 different real
+      `InteractionSystem`, 3 in `BlupiController`), which turn out to be 3 different real
       shapes, not one:
-      - 14 simple one-shot signals, no payload (11 in `GEInteractionSystem`: shake×2, TankFired,
-        5× secret-power grant, balloon touch/pop, Died; 3 in `GEBlupiController`: the crouch/
+      - 14 simple one-shot signals, no payload (11 in `InteractionSystem`: shake×2, TankFired,
+        5× secret-power grant, balloon touch/pop, Died; 3 in `BlupiController`: the crouch/
         look-up sound cues).
       - 2 one-shot signals WITH payload, and which can both be true in the SAME frame, consumed
         independently (`VoyagePendingThisFrame()` — 7 extra parallel fields: kind/iconId/
@@ -6934,34 +6934,34 @@ specifically, same as any other large/risky item elsewhere in this file.
       game has no consumer for it today. **Decision: carry it into the new queue unchanged, don't
       use this transport-only refactor as an occasion to also drop/change it** — that's a separate
       decision for a separate day if it ever comes up.
-      Approved shape: **two independent event queues** (`GEInteractionSystem::EventsThisFrame()`,
-      `GEBlupiController::EventsThisFrame()`), not one shared type — preserves the existing
+      Approved shape: **two independent event queues** (`InteractionSystem::EventsThisFrame()`,
+      `BlupiController::EventsThisFrame()`), not one shared type — preserves the existing
       deliberate decoupling between the two classes. Each event is a tagged struct (`Kind` enum +
       a few optional payload fields), matching this codebase's existing style, not `std::variant`
       (explicitly considered and declined — no precedent for it anywhere else in this codebase).
-      Migration ordered smallest/lowest-risk first: **(1) `GEBlupiController`'s 3 sound-cue flags
-      (done, see below) → (2) `GEInteractionSystem`'s 11 no-payload flags → (3) the 2
+      Migration ordered smallest/lowest-risk first: **(1) `BlupiController`'s 3 sound-cue flags
+      (done, see below) → (2) `InteractionSystem`'s 11 no-payload flags → (3) the 2
       payload-carrying ones (Voyage, DeathLock), most care since they touch camera-projection
       timing.** `CrateBeingPushedThisFrame()` stays a plain bool throughout, out of scope.
 
-      **Step 1 done (2026-07-21):** `GEBlupiController`'s 3 sound-cue flags
+      **Step 1 done (2026-07-21):** `BlupiController`'s 3 sound-cue flags
       (`DownEntrySoundFiredThisFrame`/`UpEntrySoundFiredThisFrame`/`DownReleaseSoundFiredThisFrame`)
-      replaced by `GEBlupiController::EventKind`/`Event`/`EventsThisFrame()` (a
+      replaced by `BlupiController::EventKind`/`Event`/`EventsThisFrame()` (a
       `std::vector<Event>`, cleared and refilled every `Step()` call the same way the 3 booleans
       used to be reset/set). Consumer (`GalaxyEggbertCnaGame.cpp`, the 3 `if (blupi_.FooThisFrame())`
       checks around the crouch/look-up sound cues) rewritten as one loop + `switch` over
       `EventsThisFrame()`. `tools/VerifyBlupiMovement.cpp`'s 10 direct-getter assertions rewritten
       against a small `hasEvent(controller, kind)` test helper, same coverage as before (entry-delay
       timing, exactly-one-frame firing, the Down→Stop-only release gate). Clean, scoped diff (4
-      files: the two `GEBlupiController` files, the one `GalaxyEggbertCnaGame.cpp` call site, the
+      files: the two `BlupiController` files, the one `GalaxyEggbertCnaGame.cpp` call site, the
       one test file) — no old getters/members left behind (`grep` confirms zero remaining
       references). Full regression clean (80/81, only the pre-existing unrelated
       `easy-gl-resource-smoke-tests` failure); `VerifyBlupiMovement`'s own sound-cue assertions
       re-run individually and confirmed passing.
 
-      **Step 2 done (2026-07-21):** `GEInteractionSystem`'s 11 remaining flags (excluding
+      **Step 2 done (2026-07-21):** `InteractionSystem`'s 11 remaining flags (excluding
       `CrateBeingPushedThisFrame` and the step-3 Voyage/DeathLock pair) replaced by
-      `GEInteractionSystem::EventKind`/`Event`/`EventsThisFrame()`. Re-checking the exact payload
+      `InteractionSystem::EventKind`/`Event`/`EventsThisFrame()`. Re-checking the exact payload
       shape while implementing this surfaced a correction to the design summary above: 3 of the
       11 (`PowerGranted`/`CloudGranted`/`HideGranted`) actually carry a real payload (the pickup's
       world position, previously 9 separate float members + getters,
@@ -6979,13 +6979,13 @@ specifically, same as any other large/risky item elsewhere in this file.
       (~64 references, this task's largest test-file impact) rewritten via two small local
       helpers (`hasEvent`/`findEvent`); message-string wording updated to match (no code meaning
       change). All stale doc comments referencing the old getter names (in
-      `GEInteractionSystem.hpp`/`.cpp`, `GEBlupiController.hpp`, `VerifyBlupiMovement.cpp`) updated
+      `InteractionSystem.hpp`/`.cpp`, `BlupiController.hpp`, `VerifyBlupiMovement.cpp`) updated
       too — confirmed via `grep` that zero references to any of the 11 old getter/member names
       remain anywhere in `src/`/`include/`/`tools/`. Full regression clean (80/81, only the
       pre-existing unrelated `easy-gl-resource-smoke-tests` failure); `VerifyInteractionSystem`
       itself: 547 checks, all passing. Live smoke check: `--golden-capture` run against
       `worlds3d/world999.vwr` (this refactor's own test world, exercises
-      `GEInteractionSystem::Update()` every frame) completes cleanly with no crash, and
+      `InteractionSystem::Update()` every frame) completes cleanly with no crash, and
       `tools/verify_golden_frames.sh`'s 3 reference frames still byte-match exactly — confirms the
       render pipeline is untouched by this transport-only change.
 
@@ -7003,7 +7003,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       is silently dropped" behavior for free via plain assignment (already a documented, accepted
       simplification on `VoyageKind`'s own class comment, predating this queue). A `std::vector`
       wouldn't give this for free — pushing both would silently break the "at most one" invariant.
-      Solved with a new private `GEInteractionSystem::ReplaceEvent(EventKind, Event)` (removes any
+      Solved with a new private `InteractionSystem::ReplaceEvent(EventKind, Event)` (removes any
       existing entry of that Kind via `std::remove_if`/`erase`, then appends) — used by
       `RequestVoyage()`/`RequestClear2Ascend()` (now build an `Event` via named-member assignment
       and call `ReplaceEvent()` instead of 8-10 flat member assignments each) and all 4 death-lock
@@ -7023,7 +7023,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       self-contained helper lambdas (`completePendingVoyage`/`completeDeathLock`, mirroring the real
       consumer functions since no test can construct a full `GalaxyEggbertCnaGame`) plus ~10 direct
       call sites rewritten the same way. All stale doc comments referencing the old getter names
-      updated too (`GEInteractionSystem.hpp`'s own class comment, `GalaxyEggbertCnaGame.hpp`'s
+      updated too (`InteractionSystem.hpp`'s own class comment, `GalaxyEggbertCnaGame.hpp`'s
       `ResolvePendingVoyage()`/`ResolveDeathLock()` comments). Confirmed via `grep`: zero references
       to any of `VoyagePending*`/`DeathLockRequestedThisFrame`/`DeathLockPendingKind`/
       `DeathLockShouldRespawn` remain anywhere in `src/`/`include/`/`tools/`.
@@ -7033,7 +7033,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       confirms no coverage was lost). Live smoke check: `--golden-capture` clean, no crash, all 3
       golden reference frames still byte-match exactly. **Honest gap, not silently glossed over:**
       `ResolvePendingVoyage()`/`ResolveDeathLock()`'s real camera-projection consumer path
-      (`GEHud::ProjectWorldToHudSpace()`, `BeginVoyage()` with real view/projection matrices) has no
+      (`Hud::ProjectWorldToHudSpace()`, `BeginVoyage()` with real view/projection matrices) has no
       dedicated test coverage — this predates this refactor (no test constructs a full
       `GalaxyEggbertCnaGame`, which needs a real graphics device) and this step did not add live
       instrumentation to specifically exercise it, since every line touched there is a mechanical
@@ -7080,6 +7080,14 @@ specifically, same as any other large/risky item elsewhere in this file.
       `include/GalaxyEggbert/def/` to `include/GalaxyEggbert/Def/` and moved all 12 declarations
       and conversion helpers into namespace `GalaxyEggbert::Def`. Updated every include and
       consumer without compatibility aliases. Removed the duplicate
-      `GEBlupiController::SecretPower` enum and reused `GalaxyEggbert::Def::SecretPower`.
+      `BlupiController::SecretPower` enum and reused `GalaxyEggbert::Def::SecretPower`.
       Verification: the full `build-cna` build succeeds with `-j2`; all 90 applicable CTest tests
       pass (`easy-gl-resource-smoke-tests` remains the separately documented upstream exclusion).
+- [x] `INFRA-012` done (2026-07-25). Moved all 45 game `.cpp`/`.hpp` files from
+      `src/GalaxyEggbertCNA/Game/` to `src/GalaxyEggbert/Game/`, changed their namespace from
+      `GalaxyEggbert::CNA` to `GalaxyEggbert::Game`, and removed `GE` from game-owned filenames,
+      classes, helper namespaces, and consumers. `GalaxyEggbertCnaGame` remains in
+      `GalaxyEggbert::CNA` as the thin CNA application host and explicitly consumes the canonical
+      game layer. CMake, the editor, and all verifier/generator tools now use the new paths and
+      namespace directly. Verification: full `build-cna` build with `-j2`; all 90 applicable
+      CTest tests pass.

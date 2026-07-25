@@ -67,7 +67,7 @@ public:
      * format v2's first reserved field put to use), a direct pass-through
      * of mobile-eggbert's real `m_mission` -- gates level-specific logic
      * such as the real training-hint overlay (missions 11-14 only, see
-     * `GEHud`/`GETrainingHints`). Defaults to 0 (no mission) for worlds
+     * `Hud`/`TrainingHints`). Defaults to 0 (no mission) for worlds
      * that never call @ref setMissionNumber, matching real mobile-eggbert
      * levels outside the tutorial world range.
      */

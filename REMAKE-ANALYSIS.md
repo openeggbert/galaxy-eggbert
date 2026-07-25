@@ -21,7 +21,7 @@ into how the remake is built:
    screenshot at a time, then re-corrected. This is the deepest cause.
 2. **Load-bearing data is hand-transcribed** from a decompiled C++ source that the rules forbid
    copying or linking. Every icon = two hand-typed magic values (a frame array + an animation
-   divisor) with no cross-check. `GEObjectIcons.cpp` already carries **34 recorded "Fixed" notes**
+   divisor) with no cross-check. `ObjectIcons.cpp` already carries **34 recorded "Fixed" notes**
    for exactly this.
 3. **There is no shared collision primitive.** The original's single swept resolver (`TestPath`) is
    replaced by fragmented per-mechanic grid probes, so fixing one mechanic (fall-lockup) *created*
@@ -133,7 +133,7 @@ matter how many individual fixes land.
 
 The faithful-remake rules (correctly) forbid copying or linking mobile-eggbert's `Tables.cpp` /
 `Decor.cpp`. The consequence is that every animation, icon, and sound datum is **manually
-re-transcribed** into Galaxy Eggbert. `GEObjectIcons.cpp` (854 lines) is essentially one function
+re-transcribed** into Galaxy Eggbert. `ObjectIcons.cpp` (854 lines) is essentially one function
 with **154 `case` labels** and ~30 hand-typed `k___[]` frame arrays. Each object needs **two
 independent hand-entered values that are both easy to get wrong**:
 
@@ -153,7 +153,7 @@ The original resolves movement with **one swept check** (`Decor::TestPath`) appl
 merged position every frame, regardless of which mode produced the move. Galaxy Eggbert has **no
 such primitive**. Instead:
 
-- `GEBlupiController` implements *simplified column-based* collision (topmost solid block = floor) +
+- `BlupiController` implements *simplified column-based* collision (topmost solid block = floor) +
   a `kStepLimit` step-up rule — explicitly **not** a port of the pixel-rectangle `BlupiRect` /
   `BlupiAdjust` / `BlupiBloque` system. Per-tile-independent behavior (walking under a floating
   pillar) is faked by **excluding specific icons** from ground resolution.
@@ -177,11 +177,11 @@ enormous methods**:
 | Method | Approx. size |
 |---|---|
 | `GalaxyEggbertCnaGame::Update` | **~2,073 lines** |
-| `GEInteractionSystem::Update` | **~1,677 lines** |
+| `InteractionSystem::Update` | **~1,677 lines** |
 | `GalaxyEggbertCnaGame::Draw` | **~817 lines** |
-| `GEBlupiController::Step` | **~715 lines** |
+| `BlupiController::Step` | **~715 lines** |
 
-`ObjectType` is referenced **214 times** in `GEInteractionSystem.cpp` alone. The same type constant
+`ObjectType` is referenced **214 times** in `InteractionSystem.cpp` alone. The same type constant
 is re-tested in many independent `if` blocks per frame. **Fixing or adding one object means finding
 every place its type is mentioned in a 1,677-line function** — which is precisely how "fix object X"
 regresses object Y.
@@ -200,7 +200,7 @@ caught by eye.)
 
 ### RC-6 (compounding) — The `*ThisFrame()` signal bus makes every new feature expensive to add correctly
 
-`GEInteractionSystem` is deliberately blind to `GEBlupiController` and graphics, so results flow
+`InteractionSystem` is deliberately blind to `BlupiController` and graphics, so results flow
 back via **17 one-frame boolean flags** consumed by the orchestrator. Adding one interaction touches
 **three classes across ≥3 files** (a flag member, a line in a 15-entry reset list, a `= true` at the
 trigger site, a getter, and a consumer `if` in `GalaxyEggbertCnaGame::Update`). Correctness depends
@@ -209,7 +209,7 @@ before the flag resets"), not on an enforced contract. This does not by itself c
 bugs, but it multiplies the cost and risk of every fix that must touch it — so it belongs on the
 list.
 
-> **Note on the decoupling:** `NEXT.md`/§6 defends the `GEInteractionSystem` ↔ `GEBlupiController`
+> **Note on the decoupling:** `NEXT.md`/§6 defends the `InteractionSystem` ↔ `BlupiController`
 > decoupling as a deliberate, repeatedly-reaffirmed choice. This analysis does **not** propose
 > merging those classes or adding a direct dependency. It proposes replacing the *hand-rolled
 > parallel-boolean transport* with a single typed event/queue (RC-6 fix below) — the decoupling
@@ -340,7 +340,7 @@ headless check → commit → push) **plus** the new golden/trace checks once th
 - **Direct-CNA + Easy3D lock, no alternate engine work.** P1/P2 are all inside
   `GalaxyEggbertCNA` and the shared engine-agnostic tree. The retired pre-CNA source is available
   only through git history at `4afd53e`.
-- **The `GEInteractionSystem` decoupling stays.** RC-6's fix changes the *transport*, not the
+- **The `InteractionSystem` decoupling stays.** RC-6's fix changes the *transport*, not the
   boundary, and is offered as a proposal to confirm with the user.
 - **Items needing live human judgment stay human-gated** — this analysis does not authorize new
   autonomous "best guesses" at Saw orientation, `AscenseurVertigo`, water surface, etc. It proposes
@@ -354,12 +354,12 @@ headless check → commit → push) **plus** the new golden/trace checks once th
 |---|---|
 | BLUPI/MENU/SOUND/PICKUP dominate task churn | `plan.md` (ID-prefix counts) |
 | 19 `GetObjIcon` bugs across two audit sweeps; Balloon 3+ fixes; Sp0–Sp7 wrong premise | `plan.md`, `git log` |
-| 34 recorded "Fixed" transcription notes; 154 `case` labels | `src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp` |
-| `Update` ~2073 lines, `GEInteractionSystem::Update` ~1677, `ObjectType` ×214 | `GalaxyEggbertCnaGame.cpp`, `GEInteractionSystem.cpp` |
-| Airborne no-wall-collision; `!m_onGround` bypass; no `TestPath` equivalent | `GEBlupiController.cpp` (`TryMoveAxis`), `GEBlupiController.hpp:136-170` |
-| Collision is a column-stub, not a `BlupiRect`/`BlupiAdjust`/`BlupiBloque` port | `GEBlupiController.cpp:263-417`, `mobile-eggbert-reference/10-blupi-mechanics.md` |
+| 34 recorded "Fixed" transcription notes; 154 `case` labels | `src/GalaxyEggbert/Game/ObjectIcons.cpp` |
+| `Update` ~2073 lines, `InteractionSystem::Update` ~1677, `ObjectType` ×214 | `GalaxyEggbertCnaGame.cpp`, `InteractionSystem.cpp` |
+| Airborne no-wall-collision; `!m_onGround` bypass; no `TestPath` equivalent | `BlupiController.cpp` (`TryMoveAxis`), `BlupiController.hpp:136-170` |
+| Collision is a column-stub, not a `BlupiRect`/`BlupiAdjust`/`BlupiBloque` port | `BlupiController.cpp:263-417`, `mobile-eggbert-reference/10-blupi-mechanics.md` |
 | 40 `AnimState` values vs. 87 real `BlupiAction` states | `grep AnimState src/GalaxyEggbertCNA`, `mobile-eggbert-reference/08/10-*.md` |
 | Render-mapping reversed 3×; ~137 unverified icons | `mobile-eggbert-reference/15-3d-render-mapping-design.md` |
-| 17 `*ThisFrame()` flags, 3-file boilerplate per feature, prose-ordering hazards | `GEInteractionSystem.hpp`, `GalaxyEggbertCnaGame.{hpp,cpp}` |
+| 17 `*ThisFrame()` flags, 3-file boilerplate per feature, prose-ordering hazards | `InteractionSystem.hpp`, `GalaxyEggbertCnaGame.{hpp,cpp}` |
 | Verification = synthetic unit tests + transcribed docs + user screenshot | `plan.md`, `NEXT.md` §4/§5/§7.5 |
 | Re-derivation reintroduces solved bugs; sibling-repo-origin bugs | `missing.md`, `texture-distance-washout-bug.md`, `NEXT.md` §5 |

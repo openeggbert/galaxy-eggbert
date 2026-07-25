@@ -139,27 +139,27 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     add_executable(GalaxyEggbertCNA
         src/GalaxyEggbertCNA/main.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp
-        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
-        src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
-        src/GalaxyEggbertCNA/Game/GETerrainRenderer.cpp
-        src/GalaxyEggbertCNA/Game/GETerrainAnimDivisor.cpp
-        src/GalaxyEggbertCNA/Game/GEDirectionalCubeTiles.cpp
-        src/GalaxyEggbertCNA/Game/GESwatchUv.cpp
-        src/GalaxyEggbertCNA/Game/GEInnerPillarBoxTiles.cpp
-        src/GalaxyEggbertCNA/Game/GEThinBarTiles.cpp
-        src/GalaxyEggbertCNA/Game/GEInnerFlatPlateTiles.cpp
-        src/GalaxyEggbertCNA/Game/GEPlateRotationMetadata.cpp
-        src/GalaxyEggbertCNA/Game/GETripleCrossBillboardTiles.cpp
-        src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
-        src/GalaxyEggbertCNA/Game/GECameraShake.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
-        src/GalaxyEggbertCNA/Game/GESound.cpp
-        src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
-        src/GalaxyEggbertCNA/Game/GEHud.cpp
-        src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
-        src/GalaxyEggbertCNA/Game/GEInputPad.cpp
-        src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
-        src/GalaxyEggbertCNA/Game/GESaveData.cpp
+        src/GalaxyEggbert/Game/WorldRuntime.cpp
+        src/GalaxyEggbert/Game/TileAtlas.cpp
+        src/GalaxyEggbert/Game/TerrainRenderer.cpp
+        src/GalaxyEggbert/Game/TerrainAnimDivisor.cpp
+        src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp
+        src/GalaxyEggbert/Game/SwatchUv.cpp
+        src/GalaxyEggbert/Game/InnerPillarBoxTiles.cpp
+        src/GalaxyEggbert/Game/ThinBarTiles.cpp
+        src/GalaxyEggbert/Game/InnerFlatPlateTiles.cpp
+        src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
+        src/GalaxyEggbert/Game/TripleCrossBillboardTiles.cpp
+        src/GalaxyEggbert/Game/BlupiController.cpp
+        src/GalaxyEggbert/Game/CameraShake.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/Sound.cpp
+        src/GalaxyEggbert/Game/InteractionSystem.cpp
+        src/GalaxyEggbert/Game/Hud.cpp
+        src/GalaxyEggbert/Game/TrainingHints.cpp
+        src/GalaxyEggbert/Game/InputPad.cpp
+        src/GalaxyEggbert/Game/QuadBatch.cpp
+        src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
         src/GalaxyEggbert/Editor/VoxelRaycast.cpp
@@ -179,7 +179,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     target_include_directories(GalaxyEggbertCNA PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
     )
 
     # CNA's static library and its graphics-backend static library have
@@ -374,28 +373,28 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     message(STATUS "GalaxyEggbertCNA target enabled (maintained playable game).")
 
-    # Scripted verification for GEInteractionSystem (2026-07-10, platform
+    # Scripted verification for InteractionSystem (2026-07-10, platform
     # lift patrol/crate push/pickup collection) against the real
-    # worlds3d/world999.vwr sample world. Needs CNA linked (GESound touches
+    # worlds3d/world999.vwr sample world. Needs CNA linked (Sound touches
     # Microsoft::Xna::Framework::Audio types) but not easy3d/SDL3main --
-    # GESound::LoadContent() is never called, so no live audio device is
+    # Sound::LoadContent() is never called, so no live audio device is
     # exercised at runtime, only symbols resolved at link time. Run from the
     # repo root (relative default path "worlds3d/world999.vwr"), same
     # quirk as VerifyBlupiMovement.
     add_executable(VerifyInteractionSystem
         tools/VerifyInteractionSystem.cpp
-        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
-        src/GalaxyEggbertCNA/Game/GESound.cpp
-        src/GalaxyEggbertCNA/Game/GEInteractionSystem.cpp
-        src/GalaxyEggbertCNA/Game/GETrainingHints.cpp
-        src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
-        src/GalaxyEggbertCNA/Game/GEHud.cpp
+        src/GalaxyEggbert/Game/WorldRuntime.cpp
+        src/GalaxyEggbert/Game/Sound.cpp
+        src/GalaxyEggbert/Game/InteractionSystem.cpp
+        src/GalaxyEggbert/Game/TrainingHints.cpp
+        src/GalaxyEggbert/Game/BlupiController.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/Hud.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyInteractionSystem PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
     # Web/Node test wiring: this console tool is only ever run under Node
     # (via ctest, never in a browser -- no .html/SUFFIX set below), so
@@ -425,21 +424,21 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     endif()
 
-    # Scripted verification for GEInputPad (2026-07-13, on-screen D-pad/
+    # Scripted verification for InputPad (2026-07-13, on-screen D-pad/
     # Jump/Action/Pause + Pause-row hit-testing) -- pure layout/press-state
     # math driven by synthetic MouseState values, no GraphicsDevice/window
-    # needed at runtime, but GEInputPad.cpp's LoadContent()/DrawPlay()/
+    # needed at runtime, but InputPad.cpp's LoadContent()/DrawPlay()/
     # DrawPause() still reference CNA Texture2D/BasicEffect and
     # Easy3D::BillboardMeshRenderer symbols, so this links the same way
     # GalaxyEggbertCNA itself does (CNA + backend + SHARP_RUNTIME + easy3d).
     add_executable(VerifyGEInputPad
         tools/VerifyGEInputPad.cpp
-        src/GalaxyEggbertCNA/Game/GEInputPad.cpp
-        src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
+        src/GalaxyEggbert/Game/InputPad.cpp
+        src/GalaxyEggbert/Game/QuadBatch.cpp
     )
     target_include_directories(VerifyGEInputPad PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
         target_link_libraries(VerifyGEInputPad PRIVATE
@@ -478,16 +477,15 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/EditorPaletteRenderer.cpp
         src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
         src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
-        src/GalaxyEggbertCNA/Game/GEQuadBatch.cpp
-        src/GalaxyEggbertCNA/Game/GETileAtlas.cpp
-        src/GalaxyEggbertCNA/Game/GEHud.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+        src/GalaxyEggbert/Game/QuadBatch.cpp
+        src/GalaxyEggbert/Game/TileAtlas.cpp
+        src/GalaxyEggbert/Game/Hud.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(GEEditorVerifySupport PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
     )
     target_link_libraries(GEEditorVerifySupport PRIVATE CNA SHARP_RUNTIME)
     if(TARGET easy3d::easy3d)
@@ -501,7 +499,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         target_include_directories(${target} PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
             ${CMAKE_CURRENT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
         )
         target_link_libraries(${target} PRIVATE GEEditorVerifySupport)
         if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
@@ -604,35 +601,35 @@ endif() # GALAXY_EGGBERT_BUILD_CNA
 # Tools (engine-independent — pure C++ data model, no graphics)
 # =============================================================================
 
-# GEObjectIcons.hpp/.cpp is engine-agnostic (only depends on Def/
-# ObjectType.hpp) despite living under src/GalaxyEggbertCNA/ -- linked here
+# ObjectIcons.hpp/.cpp is engine-agnostic (only depends on Def/
+# ObjectType.hpp) despite living under src/GalaxyEggbert/Game/ -- linked here
 # so the exhibition area can enumerate every ObjectType the renderer has an
 # icon for (GetObjIcon), instead of duplicating that list by hand (same
-# precedent as VerifyBlupiMovement linking GEBlupiController.cpp below).
+# precedent as VerifyBlupiMovement linking BlupiController.cpp below).
 add_executable(GenerateSampleWorld3D
         tools/GenerateSampleWorld3D.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
-        src/GalaxyEggbertCNA/Game/GEPlateRotationMetadata.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
         ${GE_SHARED_SOURCES}
 )
 
 target_include_directories(GenerateSampleWorld3D PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# GEBlupiController.hpp/.cpp are deliberately engine-agnostic (only depend on
-# GalaxyEggbert::Worlds) despite living under src/GalaxyEggbertCNA/ — this
+# BlupiController.hpp/.cpp are deliberately engine-agnostic (only depend on
+# GalaxyEggbert::Worlds) despite living under src/GalaxyEggbert/Game/ — this
 # tool links them without needing CNA at all (see plan.md E3D-MIG-060).
 add_executable(VerifyBlupiMovement
         tools/VerifyBlupiMovement.cpp
-        src/GalaxyEggbertCNA/Game/GEBlupiController.cpp
+        src/GalaxyEggbert/Game/BlupiController.cpp
         ${GE_SHARED_SOURCES}
 )
 
 target_include_directories(VerifyBlupiMovement PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Web/Node test wiring, same rationale as VerifyInteractionSystem above:
@@ -642,24 +639,24 @@ if(EMSCRIPTEN)
     target_link_options(VerifyBlupiMovement PRIVATE -sNODERAWFS=1)
 endif()
 
-# GESaveData.hpp/.cpp are deliberately engine-agnostic (only <string>/
-# <fstream>) despite living under src/GalaxyEggbertCNA/ -- this tool links
+# SaveData.hpp/.cpp are deliberately engine-agnostic (only <string>/
+# <fstream>) despite living under src/GalaxyEggbert/Game/ -- this tool links
 # it without needing CNA at all, same precedent as VerifyBlupiMovement
 # above.
 add_executable(VerifyGESaveData
         tools/VerifyGESaveData.cpp
-        src/GalaxyEggbertCNA/Game/GESaveData.cpp
+        src/GalaxyEggbert/Game/SaveData.cpp
 )
 
 target_include_directories(VerifyGESaveData PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Web/Node test wiring: unlike the NODERAWFS tools above, GESaveData's own
+# Web/Node test wiring: unlike the NODERAWFS tools above, SaveData's own
 # kSavePath is "/save/savedata.txt" under __EMSCRIPTEN__ (an absolute IDBFS
 # mount point the real app's pre.js sets up for browser persistence, see
-# GESaveData.hpp) -- NODERAWFS would instead map that absolute path onto the
+# SaveData.hpp) -- NODERAWFS would instead map that absolute path onto the
 # real host's own "/save" directory, which is wrong here. Reuses a minimal
 # pre-js that just creates "/save" in this tool's own in-memory MEMFS (no
 # IDBFS/persistence needed -- the test runs and exits within one process).
@@ -671,33 +668,33 @@ if(EMSCRIPTEN)
         "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre-test-save-dir.js")
 endif()
 
-# GETerrainAnimDivisor.hpp/.cpp (plan.md TEST-007, 2026-07-14) is a pure
+# TerrainAnimDivisor.hpp/.cpp (plan.md TEST-007, 2026-07-14) is a pure
 # function of a BlockTypes icon id -- no CNA/graphics dependency at all,
 # same engine-independent precedent as VerifyGESaveData/VerifyBlupiMovement
 # above.
 add_executable(VerifyTerrainAnimDivisor
         tools/VerifyTerrainAnimDivisor.cpp
-        src/GalaxyEggbertCNA/Game/GETerrainAnimDivisor.cpp
+        src/GalaxyEggbert/Game/TerrainAnimDivisor.cpp
 )
 
 target_include_directories(VerifyTerrainAnimDivisor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# INFRA-003 (plan.md §7): GEObjectIcons.hpp/.cpp is engine-agnostic (only
+# INFRA-003 (plan.md §7): ObjectIcons.hpp/.cpp is engine-agnostic (only
 # depends on Def/ObjectType.hpp, see GenerateSampleWorld3D's own comment
 # above) -- a data-integrity regression test for its 34 historical "Fixed"
 # transcription bugs, same engine-independent precedent as
 # VerifyTerrainAnimDivisor above.
 add_executable(VerifyGetObjIcon
         tools/VerifyGetObjIcon.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
 )
 
 target_include_directories(VerifyGetObjIcon PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # INFRA-003 follow-up (plan.md §7): the independent programmatic
@@ -708,12 +705,12 @@ target_include_directories(VerifyGetObjIcon PRIVATE
 # against them. Same engine-independent precedent as VerifyGetObjIcon.
 add_executable(VerifyObjIconAgainstReferenceDoc
         tools/VerifyObjIconAgainstReferenceDoc.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
 )
 
 target_include_directories(VerifyObjIconAgainstReferenceDoc PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # BlockTypes::tileUV() (plan.md TEST-004) is a pure header-only function --
@@ -738,34 +735,34 @@ target_include_directories(VerifyUnverifiedRenderMapping PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# GECameraShake.hpp/.cpp (plan.md CAM-008..013) is deliberately
+# CameraShake.hpp/.cpp (plan.md CAM-008..013) is deliberately
 # engine-agnostic (no CNA/graphics dependency) despite living under
-# src/GalaxyEggbertCNA/ -- this tool links it without needing CNA at all,
+# src/GalaxyEggbert/Game/ -- this tool links it without needing CNA at all,
 # same precedent as VerifyGESaveData/VerifyTerrainAnimDivisor above.
 add_executable(VerifyCameraShake
         tools/VerifyCameraShake.cpp
-        src/GalaxyEggbertCNA/Game/GECameraShake.cpp
+        src/GalaxyEggbert/Game/CameraShake.cpp
 )
 
 target_include_directories(VerifyCameraShake PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# GEWorldRuntime.hpp/.cpp (CNA) are deliberately engine-agnostic (only
+# WorldRuntime.hpp/.cpp are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
 # MoveObject: parsing (E3D-MIG-06x prerequisite) against real reference
-# world files and the production CNA parser.
+# world files and the production game parser.
 add_executable(VerifyMoveObjectTypesCna
         tools/VerifyMoveObjectTypesCna.cpp
-        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
+        src/GalaxyEggbert/Game/WorldRuntime.cpp
         ${GE_SHARED_SOURCES}
 )
 
 target_include_directories(VerifyMoveObjectTypesCna PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Web/Node test wiring, same rationale as VerifyInteractionSystem above:
@@ -779,14 +776,14 @@ endif()
 # for BigDecor: section parsing (NEXT.md §8 task 3) instead of MoveObject:.
 add_executable(VerifyBigDecorParsingCna
         tools/VerifyBigDecorParsingCna.cpp
-        src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp
-        src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
+        src/GalaxyEggbert/Game/WorldRuntime.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
         ${GE_SHARED_SOURCES}
 )
 
 target_include_directories(VerifyBigDecorParsingCna PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Web/Node test wiring, same rationale as VerifyMoveObjectTypesCna above.
@@ -830,7 +827,7 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- pure data-table integrity check
     # (plan.md INFRA-004).
     add_test(NAME VerifyUnverifiedRenderMapping COMMAND VerifyUnverifiedRenderMapping)
-    # No file/working-directory dependency -- GECameraShake is a pure
+    # No file/working-directory dependency -- CameraShake is a pure
     # tick-based state machine (plan.md CAM-008..013).
     add_test(NAME VerifyCameraShake COMMAND VerifyCameraShake)
 endif()

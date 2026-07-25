@@ -1,5 +1,5 @@
-#include "Game/GEBlupiController.hpp"
-#include "Game/GEWorldRuntime.hpp"
+#include <GalaxyEggbert/Game/BlupiController.hpp>
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <iostream>
 
-// Scripted, non-interactive verification of GEBlupiController's grid
+// Scripted, non-interactive verification of BlupiController's grid
 // collision (plan.md E3D-MIG-060): loads a world and drives Step() with
 // scripted input instead of live keyboard input, so this proves step-up
 // traversal, wall blocking, and gravity/landing actually work against the
@@ -19,7 +19,7 @@
 int main(int argc, char** argv)
 {
     using namespace GalaxyEggbert;
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
 
     const std::filesystem::path worldPath = (argc > 1) ? argv[1] : "worlds3d/world999.vwr";
     const Worlds::World world = Worlds::World::loadFromFile(worldPath);
@@ -31,11 +31,11 @@ int main(int argc, char** argv)
         if (!cond) allOk = false;
     };
 
-    // INFRA-007 (plan.md §7): GEBlupiController's 3 one-shot sound cues
+    // INFRA-007 (plan.md §7): BlupiController's 3 one-shot sound cues
     // moved from parallel *ThisFrame() booleans to one typed event queue
     // (EventsThisFrame()) -- this helper mirrors what the old individual
     // getters used to check, so the assertions below read the same.
-    const auto hasEvent = [](const GEBlupiController& controller, GEBlupiController::EventKind kind)
+    const auto hasEvent = [](const BlupiController& controller, BlupiController::EventKind kind)
     {
         for (const auto& event : controller.EventsThisFrame())
         {
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 
     // 1. Spawn on the ground floor (world (0,1,0) == grid (50,*,50)); the
     // controller should recognize it is already standing on solid ground.
-    GEBlupiController blupi;
+    BlupiController blupi;
     blupi.SetPosition(0.0f, 1.0f, 0.0f);
     blupi.Step(world, 0.0f, 0.0f, false, false, false, dt);
     check(blupi.IsOnGround(), "spawns grounded on the ground floor");
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     // REAL floor to verify actual gravity/landing physics; the empty-
     // column case is covered separately below (GroundHeightAt() returning
     // kNoGround).
-    GEBlupiController faller;
+    BlupiController faller;
     faller.SetPosition(10.0f, 20.0f, 0.0f);
     for (int i = 0; i < 200 && !faller.IsOnGround(); ++i)
     {
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     // became true at exactly Y=0), and unreachable via any existing test
     // before this one, since every other drop test in this file lands on
     // a real floor.
-    GEBlupiController fallsForever;
+    BlupiController fallsForever;
     fallsForever.SetPosition(40.0f, 20.0f, 40.0f);
     for (int i = 0; i < 180; ++i) // 3s -- comfortably past the y=20->y<0 fall time seen live (~2.25s)
     {
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     // enough that the old bug would have kicked in (well past y=-2), and
     // confirm Z keeps changing throughout, not just for the first couple
     // of frames.
-    GEBlupiController fallingMover;
+    BlupiController fallingMover;
     fallingMover.SetPosition(40.0f, 20.0f, 40.0f);
     fallingMover.SetYaw(0.0f); // facing -Z
     float zSample1 = 0.0f, zSample2 = 0.0f;
@@ -162,10 +162,10 @@ int main(int argc, char** argv)
     // Jump, falling/apex = Air), the active 3D physics adaptation of the
     // reference game's discrete frame-counted trigger window.
     {
-        GEBlupiController anim;
+        BlupiController anim;
         anim.SetPosition(0.0f, 1.0f, 0.0f);
         anim.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(anim.GetAnimState() == GEBlupiController::AnimState::Stop,
+        check(anim.GetAnimState() == BlupiController::AnimState::Stop,
               "grounded and idle starts in the Stop anim state");
         check(anim.GetAnimIcon() == 0, "Stop anim icon is the real icon 0");
         check(!anim.AnimIconUsesElementSheet(),
@@ -173,18 +173,18 @@ int main(int argc, char** argv)
 
         anim.Step(world, 0.0f, 0.0f, true, false, false, dt); // jumpPressed
         check(!anim.IsOnGround(), "jump launches Blupi airborne");
-        check(anim.GetAnimState() == GEBlupiController::AnimState::Jump,
+        check(anim.GetAnimState() == BlupiController::AnimState::Jump,
               "freshly-launched jump (ascending, velocityY > 0) is the Jump anim state");
         check(anim.GetAnimIcon() == 17, "Jump anim icon starts at the real first jump frame (icon 17)");
 
         int stepsToApex = 0;
-        while (anim.GetAnimState() == GEBlupiController::AnimState::Jump && stepsToApex < 200)
+        while (anim.GetAnimState() == BlupiController::AnimState::Jump && stepsToApex < 200)
         {
             anim.Step(world, 0.0f, 0.0f, false, false, false, dt);
             ++stepsToApex;
         }
         check(stepsToApex < 200, "reaches the jump apex (velocityY turns non-positive) within a bounded time");
-        check(anim.GetAnimState() == GEBlupiController::AnimState::Air,
+        check(anim.GetAnimState() == BlupiController::AnimState::Air,
               "past the apex, falling (velocityY <= 0) switches to the Air anim state, not still Jump");
         check(anim.GetAnimIcon() == 169, "Air anim icon starts at the real first air frame (icon 169)");
 
@@ -195,7 +195,7 @@ int main(int argc, char** argv)
             ++stepsToLand;
         }
         check(anim.IsOnGround(), "lands again after the jump arc completes");
-        check(anim.GetAnimState() == GEBlupiController::AnimState::Stop,
+        check(anim.GetAnimState() == BlupiController::AnimState::Stop,
               "back on the ground and idle returns to the Stop anim state, not stuck in Air");
     }
 
@@ -204,7 +204,7 @@ int main(int argc, char** argv)
     // since this engine has no discrete left/right facing. Jump (icon 17)
     // is a convenient known value: real table_mirror[17]=20.
     {
-        GEBlupiController facingRight;
+        BlupiController facingRight;
         facingRight.SetPosition(0.0f, 1.0f, 0.0f);
         facingRight.SetYaw(2.0f); // sin(2.0) > 0 -- "facing right" proxy
         facingRight.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle onto ground first
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
         check(facingRight.GetDisplayAnimIcon() == 17,
               "GetDisplayAnimIcon() matches GetAnimIcon() unmirrored while facing right");
 
-        GEBlupiController facingLeft;
+        BlupiController facingLeft;
         facingLeft.SetPosition(0.0f, 1.0f, 0.0f);
         facingLeft.SetYaw(-2.0f); // sin(-2.0) < 0 -- "facing left" proxy
         facingLeft.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle onto ground first
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
         check(facingLeft.GetDisplayAnimIcon() == 20,
               "GetDisplayAnimIcon() applies the real table_mirror substitution while facing left (icon 17 -> 20)");
 
-        GEBlupiController invertedLeft;
+        BlupiController invertedLeft;
         invertedLeft.SetPosition(0.0f, 1.0f, 0.0f);
         invertedLeft.SetYaw(-2.0f);
         check(invertedLeft.TriggerInvert(), "TriggerInvert() succeeds from a fresh, non-Hide state");
@@ -232,10 +232,10 @@ int main(int argc, char** argv)
               "m_invert flips the facing sense back, matching the real m_blupiInvert twist "
               "(facing-left yaw + Invert active = no mirroring, same as facing right unmodified)");
 
-        GEBlupiController gluLeft;
+        BlupiController gluLeft;
         gluLeft.SetPosition(0.0f, 1.0f, 0.0f);
         gluLeft.SetYaw(-2.0f);
-        check(gluLeft.TriggerDeathLock(GEBlupiController::DeathCause::Glu, true),
+        check(gluLeft.TriggerDeathLock(BlupiController::DeathCause::Glu, true),
               "TriggerDeathLock(Glu) succeeds from a fresh state");
         gluLeft.Step(world, 0.0f, 0.0f, false, false, false, dt);
         check(gluLeft.AnimIconUsesElementSheet(), "Glu is one of the real element.png-sourced death causes");
@@ -252,10 +252,10 @@ int main(int argc, char** argv)
     // 2026-07-19 while cross-checking table_blupi for the skate/tank
     // animation wiring below.
     {
-        GEBlupiController crouching;
+        BlupiController crouching;
         crouching.SetPosition(0.0f, 1.0f, 0.0f);
         crouching.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
-        check(crouching.GetAnimState() == GEBlupiController::AnimState::Down,
+        check(crouching.GetAnimState() == BlupiController::AnimState::Down,
               "grounded crouch input enters the Down anim state");
         check(crouching.GetAnimIcon() == 33, "Down anim icon starts at the real first frame (icon 33)");
 
@@ -283,9 +283,9 @@ int main(int argc, char** argv)
     // no movement input either -- this engine's own crouchHeld ternary
     // only reaches Stop, not March, under that same condition).
     {
-        using EventKind = GEBlupiController::EventKind;
+        using EventKind = BlupiController::EventKind;
 
-        GEBlupiController crouchSound;
+        BlupiController crouchSound;
         crouchSound.SetPosition(0.0f, 1.0f, 0.0f);
         crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
         check(!hasEvent(crouchSound, EventKind::DownEntrySoundFired),
@@ -303,22 +303,22 @@ int main(int argc, char** argv)
               "DownEntrySoundFired is in EventsThisFrame() for exactly one Step() call, not every frame after");
 
         crouchSound.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/false, false, dt);
-        check(crouchSound.GetAnimState() == GEBlupiController::AnimState::Stop,
+        check(crouchSound.GetAnimState() == BlupiController::AnimState::Stop,
               "releasing crouch with no movement input returns to Stop");
         check(hasEvent(crouchSound, EventKind::DownReleaseSoundFired),
               "DownReleaseSoundFired fires on the real Down->Stop release transition");
 
-        GEBlupiController crouchToMarch;
+        BlupiController crouchToMarch;
         crouchToMarch.SetPosition(0.0f, 1.0f, 0.0f);
         crouchToMarch.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
         crouchToMarch.Step(world, 1.0f, 1.0f, false, /*crouchHeld=*/false, false, dt);
-        check(crouchToMarch.GetAnimState() == GEBlupiController::AnimState::March,
+        check(crouchToMarch.GetAnimState() == BlupiController::AnimState::March,
               "releasing crouch WITH movement input transitions to March, not Stop");
         check(!hasEvent(crouchToMarch, EventKind::DownReleaseSoundFired),
               "DownReleaseSoundFired does NOT fire on a Down->March transition (real gate "
               "requires speedX==0 too)");
 
-        GEBlupiController lookingUp;
+        BlupiController lookingUp;
         lookingUp.SetPosition(0.0f, 1.0f, 0.0f);
         lookingUp.Step(world, 0.0f, 0.0f, false, false, /*lookUpHeld=*/true, dt);
         check(!hasEvent(lookingUp, EventKind::UpEntrySoundFired),
@@ -343,21 +343,21 @@ int main(int argc, char** argv)
         synthetic.setBlock(kGroundX, 0, kGroundZ, Worlds::Block::make(BlockTypes::Ground));
         synthetic.setBlock(kLavaX, 0, kLavaZ, Worlds::Block::make(BlockTypes::Lava));
 
-        GEBlupiController onGround;
+        BlupiController onGround;
         onGround.SetPosition(static_cast<float>(kGroundX) - 50.0f /* kWorldCenterX */,
                               1.0f, static_cast<float>(kGroundZ) - 50.0f /* kWorldCenterZ */);
         onGround.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         check(onGround.GetGroundBlockType(synthetic) == BlockTypes::Ground,
               "GetGroundBlockType() identifies ordinary ground correctly");
 
-        GEBlupiController onLava;
+        BlupiController onLava;
         onLava.SetPosition(static_cast<float>(kLavaX) - 50.0f, 1.0f, static_cast<float>(kLavaZ) - 50.0f);
         onLava.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         check(onLava.IsOnGround(), "Blupi stands on a lava block rather than falling through it");
         check(onLava.GetGroundBlockType(synthetic) == BlockTypes::Lava,
               "GetGroundBlockType() identifies lava correctly (E3D-MIG-140 hazard detection)");
 
-        GEBlupiController airborne;
+        BlupiController airborne;
         airborne.SetPosition(static_cast<float>(kLavaX) - 50.0f, 20.0f, static_cast<float>(kLavaZ) - 50.0f);
         check(airborne.GetGroundBlockType(synthetic) == BlockTypes::Air,
               "GetGroundBlockType() returns Air while airborne, even directly above lava");
@@ -365,7 +365,7 @@ int main(int argc, char** argv)
         // Spikes (plan.md E3D-MIG-141) -- same synthetic world, one more block.
         constexpr std::uint16_t kSpikeX = 30, kSpikeZ = 30;
         synthetic.setBlock(kSpikeX, 0, kSpikeZ, Worlds::Block::make(BlockTypes::Spike));
-        GEBlupiController onSpike;
+        BlupiController onSpike;
         onSpike.SetPosition(static_cast<float>(kSpikeX) - 50.0f, 1.0f, static_cast<float>(kSpikeZ) - 50.0f);
         onSpike.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         check(onSpike.IsOnGround(), "Blupi stands on a spike block rather than falling through it");
@@ -379,7 +379,7 @@ int main(int argc, char** argv)
         // every other hazard here, not separately unit-testable yet).
         constexpr std::uint16_t kDripX = 31, kDripZ = 31;
         synthetic.setBlock(kDripX, 0, kDripZ, Worlds::Block::make(BlockTypes::Drip));
-        GEBlupiController onDrip;
+        BlupiController onDrip;
         onDrip.SetPosition(static_cast<float>(kDripX) - 50.0f, 1.0f, static_cast<float>(kDripZ) - 50.0f);
         onDrip.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         check(onDrip.IsOnGround(), "Blupi stands on a water-drip block rather than falling through it");
@@ -406,14 +406,14 @@ int main(int argc, char** argv)
             const float barreWorldX = static_cast<float>(kBarreX) - 50.0f;
 
             // Grab: standing at a Hanging cell (gz=71, open air below).
-            GEBlupiController grabber;
+            BlupiController grabber;
             grabber.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
             grabber.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
             check(grabber.IsSuspended(), "standing at a bar cell over open air grabs it automatically");
 
             // Movement while hanging: face +Z (yaw=pi) and walk toward the
             // landing at gz=74.
-            GEBlupiController climber;
+            BlupiController climber;
             climber.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
             climber.SetYaw(3.14159265f); // facing +Z
             climber.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
@@ -430,7 +430,7 @@ int main(int argc, char** argv)
 
             // Walking the OTHER way (back toward gz=70, off the bar
             // entirely) drops Blupi into free-fall instead.
-            GEBlupiController dropper;
+            BlupiController dropper;
             dropper.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
             dropper.SetYaw(0.0f); // facing -Z
             dropper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
@@ -450,7 +450,7 @@ int main(int argc, char** argv)
 
             // Jump-to-release: immediate upward velocity, not a delayed
             // wind-up (no visible model exists to show one).
-            GEBlupiController jumper;
+            BlupiController jumper;
             jumper.SetPosition(barreWorldX, 1.0f, 72.0f - 50.0f);
             jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
             check(jumper.IsSuspended(), "sanity: grabbed the bar before testing jump-release");
@@ -484,9 +484,9 @@ int main(int argc, char** argv)
         // IsEcrased()/recovery, standing on the same ordinary ground block
         // used above (the trigger *condition* -- Crusher block + active
         // cycle -- is GalaxyEggbertCnaGame's job, tested separately in
-        // GEWorldRuntime::IsCrusherActiveAtPhase(); this only tests
-        // GEBlupiController's own state machine once triggered).
-        GEBlupiController crushed;
+        // WorldRuntime::IsCrusherActiveAtPhase(); this only tests
+        // BlupiController's own state machine once triggered).
+        BlupiController crushed;
         crushed.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
         crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         check(crushed.TriggerCrush(), "TriggerCrush() returns true on a genuinely new trigger");
@@ -498,7 +498,7 @@ int main(int argc, char** argv)
         // explicit user approval): squashed+idle is StopEcrase, real icon
         // 320.
         crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-        check(crushed.GetAnimState() == GEBlupiController::AnimState::StopEcrase,
+        check(crushed.GetAnimState() == BlupiController::AnimState::StopEcrase,
               "squashed and idle is the StopEcrase anim state");
         check(crushed.GetAnimIcon() == 320, "StopEcrase anim icon is the real icon 320");
 
@@ -508,11 +508,11 @@ int main(int argc, char** argv)
         const float zBeforeCrushedMove = crushed.GetZ();
         crushed.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
         const float crushedDelta = std::fabs(crushed.GetZ() - zBeforeCrushedMove);
-        check(crushed.GetAnimState() == GEBlupiController::AnimState::MarchEcrase,
+        check(crushed.GetAnimState() == BlupiController::AnimState::MarchEcrase,
               "squashed and moving switches to the MarchEcrase anim state");
         check(crushed.GetAnimIcon() == 319, "MarchEcrase anim icon starts at the real first frame (icon 319)");
 
-        GEBlupiController normal;
+        BlupiController normal;
         normal.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
         normal.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         const float zBeforeNormalMove = normal.GetZ();
@@ -526,7 +526,7 @@ int main(int argc, char** argv)
         check(crushed.IsOnGround(), "jump input is ignored while squashed (still on ground, not launched)");
 
         // Auto-recovery after kEcraseDuration seconds.
-        const int stepsToRecover = static_cast<int>(GEBlupiController::kEcraseDuration / dt) + 5;
+        const int stepsToRecover = static_cast<int>(BlupiController::kEcraseDuration / dt) + 5;
         for (int i = 0; i < stepsToRecover && crushed.IsEcrased(); ++i)
         {
             crushed.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
@@ -536,7 +536,7 @@ int main(int argc, char** argv)
         // Wasp "balloon" status (plan.md E3D-MIG-135) -- TriggerBalloon()/
         // IsBallooned()/PopBalloon(), same synthetic world (falling
         // behavior only, doesn't need any particular ground block).
-        GEBlupiController ballooned;
+        BlupiController ballooned;
         ballooned.SetPosition(0.0f, 20.0f, 0.0f);
         check(ballooned.TriggerBalloon(), "TriggerBalloon() returns true on a genuinely new trigger");
         check(ballooned.IsBallooned(), "IsBallooned() is true immediately after TriggerBalloon()");
@@ -548,7 +548,7 @@ int main(int argc, char** argv)
         // state, regardless of grounded/airborne (the real data has no
         // separate air variant).
         ballooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-        check(ballooned.GetAnimState() == GEBlupiController::AnimState::Balloon,
+        check(ballooned.GetAnimState() == BlupiController::AnimState::Balloon,
               "ballooned is the Balloon anim state");
         check(ballooned.GetAnimIcon() == 291, "Balloon anim icon starts at the real first frame (icon 291)");
 
@@ -557,9 +557,9 @@ int main(int argc, char** argv)
         // fixed height" reading). The real dedicated balloon-movement block
         // (Decor.cpp:4039-4058, found only on the third pass) continuously
         // accelerates him upward to a terminal rise -- see
-        // GEBlupiController::kBalloonRiseSpeed's own comment for the full
+        // BlupiController::kBalloonRiseSpeed's own comment for the full
         // real-source citation and unit conversion.
-        GEBlupiController falling;
+        BlupiController falling;
         falling.SetPosition(0.0f, 20.0f, 0.0f);
         constexpr int kFallSteps = 30; // ~0.5s, short enough the falling instance doesn't reach the ground
         for (int i = 0; i < kFallSteps; ++i)
@@ -577,7 +577,7 @@ int main(int argc, char** argv)
         // decelerates back to a hover at 0 (never into a descent) --
         // Decor.cpp:4041-4057's own three branches.
         {
-            GEBlupiController riser;
+            BlupiController riser;
             riser.SetPosition(0.0f, 20.0f, 0.0f);
             riser.TriggerBalloon();
             // Well past the ~0.9s needed to reach terminal from 0.
@@ -588,7 +588,7 @@ int main(int argc, char** argv)
             const float coastY = riser.GetY();
             riser.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             const float coastRise = (riser.GetY() - coastY) / dt;
-            check(std::fabs(coastRise - GEBlupiController::kBalloonRiseSpeed) < 0.02f,
+            check(std::fabs(coastRise - BlupiController::kBalloonRiseSpeed) < 0.02f,
                   "no-input ballooned rise settles at the real terminal kBalloonRiseSpeed");
 
             // Jump held -> the faster real terminal rise.
@@ -599,7 +599,7 @@ int main(int argc, char** argv)
             const float fastY = riser.GetY();
             riser.Step(synthetic, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
             const float fastRise = (riser.GetY() - fastY) / dt;
-            check(std::fabs(fastRise - GEBlupiController::kBalloonRiseSpeedFast) < 0.02f,
+            check(std::fabs(fastRise - BlupiController::kBalloonRiseSpeedFast) < 0.02f,
                   "Jump held while ballooned reaches the faster real terminal rise");
 
             // Down (crouch) held -> decelerates to a hover, never a descent.
@@ -618,7 +618,7 @@ int main(int argc, char** argv)
         // toward the real terminal drift speed, and releasing it decelerates
         // back to exactly 0, both at their own distinct real rates.
         {
-            GEBlupiController drifter;
+            BlupiController drifter;
             drifter.SetPosition(0.0f, 20.0f, 0.0f);
             drifter.TriggerBalloon();
             for (int i = 0; i < 180; ++i)
@@ -633,7 +633,7 @@ int main(int argc, char** argv)
             drifter.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
             const float driftSpeed =
                 std::hypot(drifter.GetX() - dxBefore, drifter.GetZ() - dzBefore) / dt;
-            check(std::fabs(driftSpeed - GEBlupiController::kBalloonHorizontalSpeed) < 0.05f,
+            check(std::fabs(driftSpeed - BlupiController::kBalloonHorizontalSpeed) < 0.05f,
                   "held-direction balloon drift settles at the real terminal kBalloonHorizontalSpeed");
 
             for (int i = 0; i < 60; ++i)
@@ -651,9 +651,9 @@ int main(int argc, char** argv)
         // balloon's own horizontal drift takes over immediately instead of
         // the vehicle's ramp system still holding priority via IsInVehicle().
         {
-            GEBlupiController vehicleSting;
+            BlupiController vehicleSting;
             vehicleSting.SetPosition(0.0f, 1.0f, 0.0f);
-            vehicleSting.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            vehicleSting.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
             check(vehicleSting.IsInVehicle(), "sanity: riding a Jeep before the sting");
             check(vehicleSting.TriggerBalloon(), "TriggerBalloon() succeeds while riding a vehicle");
             check(!vehicleSting.IsInVehicle(), "getting stung force-exits the vehicle (real ByeByeHelico())");
@@ -667,7 +667,7 @@ int main(int argc, char** argv)
             constexpr std::uint16_t kCeilingX = 90, kCeilingZ = 90;
             synthetic.setBlock(kCeilingX, 0, kCeilingZ, Worlds::Block::make(BlockTypes::Ground));
             synthetic.setBlock(kCeilingX, 3, kCeilingZ, Worlds::Block::make(BlockTypes::Ground));
-            GEBlupiController capped;
+            BlupiController capped;
             capped.SetPosition(static_cast<float>(kCeilingX) - 50.0f, 1.0f, static_cast<float>(kCeilingZ) - 50.0f);
             capped.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(capped.IsOnGround(), "sanity: standing under the ceiling block before ballooning");
@@ -700,17 +700,17 @@ int main(int argc, char** argv)
         check(!ballooned.IsOnGround(), "PopBalloon() forces Blupi airborne (real m_blupiAir=true)");
 
         // PopBalloon() while NOT ballooned is a documented no-op.
-        GEBlupiController notBallooned;
+        BlupiController notBallooned;
         notBallooned.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
         notBallooned.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         notBallooned.PopBalloon();
         check(notBallooned.IsOnGround(), "PopBalloon() is a no-op while not ballooned (still grounded)");
 
         // Auto-recovery after kBalloonDuration seconds.
-        GEBlupiController recovering;
+        BlupiController recovering;
         recovering.SetPosition(0.0f, 20.0f, 0.0f);
         recovering.TriggerBalloon();
-        const int stepsToRecoverBalloon = static_cast<int>(GEBlupiController::kBalloonDuration / dt) + 5;
+        const int stepsToRecoverBalloon = static_cast<int>(BlupiController::kBalloonDuration / dt) + 5;
         for (int i = 0; i < stepsToRecoverBalloon && recovering.IsBallooned(); ++i)
         {
             recovering.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
@@ -724,7 +724,7 @@ int main(int argc, char** argv)
         // isolation, same split as the Crusher tests above.
         constexpr std::uint16_t kSpringX = 40, kSpringZ = 40;
         synthetic.setBlock(kSpringX, 0, kSpringZ, Worlds::Block::make(BlockTypes::Spring));
-        GEBlupiController onSpring;
+        BlupiController onSpring;
         onSpring.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
         onSpring.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         check(onSpring.IsOnGround(), "Blupi stands on a spring block rather than falling through it");
@@ -740,12 +740,12 @@ int main(int argc, char** argv)
         // Held-jump bounce launches noticeably higher than a not-held
         // bounce, matching the real source's two distinct magnitudes
         // (-19 held vs -10 not-held, both noPower).
-        GEBlupiController bounceHeld;
+        BlupiController bounceHeld;
         bounceHeld.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
         bounceHeld.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         bounceHeld.TriggerSpringBounce(/*jumpHeld=*/true);
 
-        GEBlupiController bounceNotHeld;
+        BlupiController bounceNotHeld;
         bounceNotHeld.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
         bounceNotHeld.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         bounceNotHeld.TriggerSpringBounce(/*jumpHeld=*/false);
@@ -770,7 +770,7 @@ int main(int argc, char** argv)
         synthetic.setBlock(kTempX, 0, kTempZ, Worlds::Block::make(BlockTypes::Ground));
         synthetic.setBlock(kTempX, 1, kTempZ, Worlds::Block::make(BlockTypes::Temp));
 
-        GEBlupiController onTemp;
+        BlupiController onTemp;
         onTemp.SetPosition(static_cast<float>(kTempX) - 50.0f, 2.0f, static_cast<float>(kTempZ) - 50.0f);
         onTemp.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, /*tempPassable=*/false);
         check(onTemp.IsOnGround(), "Blupi stands on a Temp tile during its solid (non-passable) window");
@@ -804,7 +804,7 @@ int main(int argc, char** argv)
         synthetic.setBlock(kTeleX, 0, kTeleZ, Worlds::Block::make(BlockTypes::Ground));
         synthetic.setBlock(kTeleX, 2, kTeleZ, Worlds::Block::make(BlockTypes::Teleport1));
 
-        GEBlupiController onTeleporter;
+        BlupiController onTeleporter;
         onTeleporter.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
         onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         std::cout << "Blupi Y beneath the floating teleporter pillar: " << onTeleporter.GetY() << std::endl;
@@ -826,7 +826,7 @@ int main(int argc, char** argv)
         // frame substitution is exercised at this specific phase -- see
         // GetAnimIcon()'s own comment for that behavior.
         onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-        check(onTeleporter.GetAnimState() == GEBlupiController::AnimState::Teleporting,
+        check(onTeleporter.GetAnimState() == BlupiController::AnimState::Teleporting,
               "teleporting is the Teleporting anim state");
         check(onTeleporter.GetAnimIcon() == 1, "Teleporting anim icon starts at the real first frame (icon 1)");
 
@@ -840,7 +840,7 @@ int main(int argc, char** argv)
               "Blupi is fully frozen (no movement or turning) while teleporting");
 
         // Auto-completion after kTeleportDuration seconds.
-        const int stepsToTeleport = static_cast<int>(GEBlupiController::kTeleportDuration / dt) + 5;
+        const int stepsToTeleport = static_cast<int>(BlupiController::kTeleportDuration / dt) + 5;
         for (int i = 0; i < stepsToTeleport && onTeleporter.IsTeleporting(); ++i)
         {
             onTeleporter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
@@ -848,19 +848,19 @@ int main(int argc, char** argv)
         check(!onTeleporter.IsTeleporting(), "teleport transit auto-completes after kTeleportDuration seconds");
 
         // Real gate: grounded, not ballooned, not squashed.
-        GEBlupiController airborneTeleport;
+        BlupiController airborneTeleport;
         airborneTeleport.SetPosition(0.0f, 20.0f, 0.0f);
         check(!airborneTeleport.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while airborne (real !m_blupiAir gate)");
 
-        GEBlupiController ballooned2;
+        BlupiController ballooned2;
         ballooned2.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
         ballooned2.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         ballooned2.TriggerBalloon();
         check(!ballooned2.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while ballooned (real !m_blupiBalloon gate)");
 
-        GEBlupiController crushed2;
+        BlupiController crushed2;
         crushed2.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
         crushed2.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         crushed2.TriggerCrush();
@@ -870,10 +870,10 @@ int main(int argc, char** argv)
         // Real gate also excludes every vehicle mount (Decor.cpp:5593-5594:
         // !m_blupiHelico/Over/Jeep/Tank/Skate) -- added 2026-07-16, this
         // engine's own gate previously missed this clause entirely.
-        GEBlupiController mountedTeleport;
+        BlupiController mountedTeleport;
         mountedTeleport.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
         mountedTeleport.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-        mountedTeleport.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+        mountedTeleport.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
         check(!mountedTeleport.TriggerTeleport(BlockTypes::Teleport1),
               "TriggerTeleport() is a no-op while in a vehicle (real !m_blupiJeep/Tank/etc. gate)");
 
@@ -883,13 +883,13 @@ int main(int argc, char** argv)
         // above, but chains into a SECOND fixed-duration frozen sub-state
         // (the life-loss-Voyage window) instead of auto-resuming directly.
         {
-            GEBlupiController deathLocked;
+            BlupiController deathLocked;
             deathLocked.SetPosition(0.0f, 1.0f, 0.0f);
-            check(deathLocked.TriggerDeathLock(GEBlupiController::DeathCause::Clear2, true),
+            check(deathLocked.TriggerDeathLock(BlupiController::DeathCause::Clear2, true),
                   "TriggerDeathLock() returns true when not already locked");
             check(deathLocked.IsDeathLocked(), "IsDeathLocked() is true immediately after TriggerDeathLock()");
             check(!deathLocked.IsDeathHidden(), "IsDeathHidden() is false during the lock itself (not yet Hide)");
-            check(!deathLocked.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, false),
+            check(!deathLocked.TriggerDeathLock(BlupiController::DeathCause::Clear1, false),
                   "TriggerDeathLock() is a no-op (returns false) while already locked");
 
             // Fully frozen: same shape as the teleport freeze test above.
@@ -901,7 +901,7 @@ int main(int argc, char** argv)
             deathLocked.Step(synthetic, 1.0f, 1.0f, true, false, false, dt);
             check(deathLocked.GetX() == xBeforeFrozen && deathLocked.GetYaw() == yawBeforeFrozen,
                   "Blupi is fully frozen (no movement or turning) while death-locked");
-            check(deathLocked.GetAnimState() == GEBlupiController::AnimState::DeathLocked,
+            check(deathLocked.GetAnimState() == BlupiController::AnimState::DeathLocked,
                   "the death lock is the DeathLocked anim state");
             // Real Clear2 has only a single, real "invisible" frame (table_blupi's own -1
             // sentinel) -- matches IsDeathHidden() never applying to Clear2 itself (no visible
@@ -916,9 +916,9 @@ int main(int argc, char** argv)
 
             // Real per-cause hurt-sprite frames (plan.md `067`, added 2026-07-16) -- Clear1 has a
             // real distinct first frame (icon 40), unlike Clear2's invisible-only case above.
-            GEBlupiController clear1Locked;
+            BlupiController clear1Locked;
             clear1Locked.SetPosition(0.0f, 1.0f, 0.0f);
-            clear1Locked.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
+            clear1Locked.TriggerDeathLock(BlupiController::DeathCause::Clear1, true);
             clear1Locked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(clear1Locked.GetAnimIcon() == 40,
                   "Clear1's DeathLocked anim icon starts at the real first frame (icon 40)");
@@ -927,18 +927,18 @@ int main(int argc, char** argv)
 
             // Real Clear3/Glu causes (plan.md `067`) -- the other 2 of the 4 real element.png
             // death causes this engine models (Electro, the 5th, has no modeled mechanic yet).
-            GEBlupiController clear3Locked;
+            BlupiController clear3Locked;
             clear3Locked.SetPosition(0.0f, 1.0f, 0.0f);
-            clear3Locked.TriggerDeathLock(GEBlupiController::DeathCause::Clear3, true);
+            clear3Locked.TriggerDeathLock(BlupiController::DeathCause::Clear3, true);
             clear3Locked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(clear3Locked.GetAnimIcon() == 40,
                   "Clear3's DeathLocked anim icon starts at the real first frame (icon 40)");
             check(clear3Locked.AnimIconUsesElementSheet(),
                   "Clear3's DeathLocked anim icon is on element.png too");
 
-            GEBlupiController gluLocked;
+            BlupiController gluLocked;
             gluLocked.SetPosition(0.0f, 1.0f, 0.0f);
-            gluLocked.TriggerDeathLock(GEBlupiController::DeathCause::Glu, true);
+            gluLocked.TriggerDeathLock(BlupiController::DeathCause::Glu, true);
             gluLocked.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(gluLocked.GetAnimIcon() == 168,
                   "Glu's DeathLocked anim icon starts at the real first frame (icon 168)");
@@ -975,7 +975,7 @@ int main(int argc, char** argv)
                   "the lock ends and the life-loss-Voyage window (Hide) begins on the same transition");
             check(!deathLocked.ConsumeDeathLockResolved(resolvedShouldRespawn),
                   "ConsumeDeathLockResolved() does not fire again until the NEXT lock resolves");
-            check(deathLocked.GetAnimState() == GEBlupiController::AnimState::DeathLocked,
+            check(deathLocked.GetAnimState() == BlupiController::AnimState::DeathLocked,
                   "the life-loss-Voyage window is still the DeathLocked anim state");
 
             // Real fixed 40-tick(2.0s) life-loss Voyage auto-completes,
@@ -1000,9 +1000,9 @@ int main(int argc, char** argv)
             // Clear3=70, Clear4=110, Glu=100, Drown=90 real ticks -- spot-
             // check 2 more (Clear4's real 110, the longest; Drown's real
             // 90) to confirm the lookup table itself, not just Clear2.
-            GEBlupiController clear4Lock;
+            BlupiController clear4Lock;
             clear4Lock.SetPosition(0.0f, 1.0f, 0.0f);
-            clear4Lock.TriggerDeathLock(GEBlupiController::DeathCause::Clear4, false);
+            clear4Lock.TriggerDeathLock(BlupiController::DeathCause::Clear4, false);
             constexpr float kClear4LockSeconds = 110.0f / 20.0f;
             for (int i = 0; i < static_cast<int>(kClear4LockSeconds / dt) - 3; ++i)
             {
@@ -1021,9 +1021,9 @@ int main(int argc, char** argv)
                   "ConsumeDeathLockResolved() fires for Clear4's own lock too");
             check(!clear4ShouldRespawn, "ConsumeDeathLockResolved() echoes the real shouldRespawn=false passed to TriggerDeathLock()");
 
-            GEBlupiController drownLock;
+            BlupiController drownLock;
             drownLock.SetPosition(0.0f, 1.0f, 0.0f);
-            drownLock.TriggerDeathLock(GEBlupiController::DeathCause::Drown, true);
+            drownLock.TriggerDeathLock(BlupiController::DeathCause::Drown, true);
             constexpr float kDrownLockSeconds = 90.0f / 20.0f;
             for (int i = 0; i < static_cast<int>(kDrownLockSeconds / dt) - 3; ++i)
             {
@@ -1038,12 +1038,12 @@ int main(int argc, char** argv)
         // against Decor.cpp:6025-6087) -- a third application of the same freeze-timer template
         // as TriggerTeleport()/the death lock above.
         {
-            GEBlupiController pickupFrozen;
+            BlupiController pickupFrozen;
             pickupFrozen.SetPosition(0.0f, 1.0f, 0.0f);
-            check(pickupFrozen.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette),
+            check(pickupFrozen.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Sucette),
                   "TriggerPickupFreeze() returns true when not already frozen/locked");
             check(pickupFrozen.IsPickupFrozen(), "IsPickupFrozen() is true immediately after TriggerPickupFreeze()");
-            check(!pickupFrozen.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink),
+            check(!pickupFrozen.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Drink),
                   "TriggerPickupFreeze() is a no-op (returns false) while already frozen");
 
             // Fully frozen, same shape as the death lock/teleport tests above. Also the first
@@ -1053,7 +1053,7 @@ int main(int argc, char** argv)
             pickupFrozen.Step(synthetic, 1.0f, 1.0f, true, false, false, dt);
             check(pickupFrozen.GetX() == xBeforeFrozen && pickupFrozen.GetYaw() == yawBeforeFrozen,
                   "Blupi is fully frozen (no movement or turning) while pickup-busy");
-            check(pickupFrozen.GetAnimState() == GEBlupiController::AnimState::PickupBusy,
+            check(pickupFrozen.GetAnimState() == BlupiController::AnimState::PickupBusy,
                   "the pickup delay is the PickupBusy anim state");
             // Real per-kind pickup-freeze busy-animation frames (plan.md `173`, added 2026-07-16).
             check(pickupFrozen.GetAnimIcon() == 234,
@@ -1067,7 +1067,7 @@ int main(int argc, char** argv)
             }
             check(pickupFrozen.IsPickupFrozen(), "still frozen just under the real Sucette duration (32 ticks=1.6s)");
 
-            GEBlupiController::PickupFreezeKind resolvedKind{};
+            BlupiController::PickupFreezeKind resolvedKind{};
             bool sawResolved = false;
             for (int i = 0; i < 10 && !sawResolved; ++i)
             {
@@ -1078,7 +1078,7 @@ int main(int argc, char** argv)
                 }
             }
             check(sawResolved, "ConsumePickupFreezeResolved() fires exactly once when the freeze elapses");
-            check(resolvedKind == GEBlupiController::PickupFreezeKind::Sucette,
+            check(resolvedKind == BlupiController::PickupFreezeKind::Sucette,
                   "ConsumePickupFreezeResolved() echoes the real kind passed to TriggerPickupFreeze()");
             check(!pickupFrozen.IsPickupFrozen(), "the freeze ends on the same transition");
             check(!pickupFrozen.ConsumePickupFreezeResolved(resolvedKind),
@@ -1091,9 +1091,9 @@ int main(int argc, char** argv)
             check(pickupFrozen.GetZ() != zBeforeUnfrozen, "Blupi is fully controllable again once the pickup freeze resolves");
 
             // Spot-check Drink's distinct 36-tick duration and Charge's 64-tick duration.
-            GEBlupiController drinkFreeze;
+            BlupiController drinkFreeze;
             drinkFreeze.SetPosition(0.0f, 1.0f, 0.0f);
-            drinkFreeze.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink);
+            drinkFreeze.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Drink);
             constexpr float kDrinkSeconds = 36.0f / 20.0f;
             for (int i = 0; i < static_cast<int>(kDrinkSeconds / dt) - 3; ++i)
             {
@@ -1106,9 +1106,9 @@ int main(int argc, char** argv)
             }
             check(!drinkFreeze.IsPickupFrozen(), "Drink's real 36-tick duration elapses (distinct from Sucette's 32)");
 
-            GEBlupiController chargeFreeze;
+            BlupiController chargeFreeze;
             chargeFreeze.SetPosition(0.0f, 1.0f, 0.0f);
-            chargeFreeze.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge);
+            chargeFreeze.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Charge);
             constexpr float kChargeSeconds = 64.0f / 20.0f;
             for (int i = 0; i < static_cast<int>(kChargeSeconds / dt) - 3; ++i)
             {
@@ -1123,44 +1123,44 @@ int main(int argc, char** argv)
 
             // A death lock always cancels a pending pickup freeze (real BlupiDead() unconditionally
             // overwrites whatever action was active).
-            GEBlupiController canceledByDeath;
+            BlupiController canceledByDeath;
             canceledByDeath.SetPosition(0.0f, 1.0f, 0.0f);
-            canceledByDeath.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge);
+            canceledByDeath.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Charge);
             check(canceledByDeath.IsPickupFrozen(), "pickup freeze is active before a death lock interrupts it");
-            canceledByDeath.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
+            canceledByDeath.TriggerDeathLock(BlupiController::DeathCause::Clear1, true);
             check(!canceledByDeath.IsPickupFrozen(), "TriggerDeathLock() cancels a pending pickup freeze outright");
             check(canceledByDeath.IsDeathLocked(), "the death lock itself starts normally despite the cancellation");
 
             // Real BlupiDead() (Decor.cpp:6547-6614) ALSO unconditionally clears vehicle mount/
             // Balloon/Ecrase/every secret power/Invert/Nage/Surf/Suspend/Ghost -- found 2026-07-16.
             // Death previously left every one of these completely untouched in this engine.
-            GEBlupiController fullyLoaded;
+            BlupiController fullyLoaded;
             fullyLoaded.SetPosition(0.0f, 1.0f, 0.0f);
             fullyLoaded.Step(synthetic, 0.0f, 0.0f, false, false, false, dt); // settle grounded
-            fullyLoaded.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            fullyLoaded.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
             fullyLoaded.TriggerShield();
             fullyLoaded.TriggerInvert();
             check(fullyLoaded.IsInVehicle() && fullyLoaded.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Shield &&
                       fullyLoaded.IsInverted(),
                   "sanity: vehicle/Shield/Invert are all active before the death lock clears them");
-            fullyLoaded.TriggerDeathLock(GEBlupiController::DeathCause::Clear1, true);
+            fullyLoaded.TriggerDeathLock(BlupiController::DeathCause::Clear1, true);
             check(!fullyLoaded.IsInVehicle(), "TriggerDeathLock() clears the vehicle mount (real BlupiDead())");
             check(fullyLoaded.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
                   "TriggerDeathLock() clears the active secret power (real BlupiDead())");
             check(!fullyLoaded.IsInverted(), "TriggerDeathLock() clears Invert too (real BlupiDead())");
 
-            GEBlupiController ballooned3;
+            BlupiController ballooned3;
             ballooned3.SetPosition(0.0f, 1.0f, 0.0f);
             ballooned3.TriggerBalloon();
             check(ballooned3.IsBallooned(), "sanity: ballooned before the death lock clears it");
-            ballooned3.TriggerDeathLock(GEBlupiController::DeathCause::Clear2, true);
+            ballooned3.TriggerDeathLock(BlupiController::DeathCause::Clear2, true);
             check(!ballooned3.IsBallooned(), "TriggerDeathLock() clears Balloon too (real BlupiDead())");
 
-            GEBlupiController crushed3;
+            BlupiController crushed3;
             crushed3.SetPosition(0.0f, 1.0f, 0.0f);
             crushed3.TriggerCrush();
             check(crushed3.IsEcrased(), "sanity: squashed before the death lock clears it");
-            crushed3.TriggerDeathLock(GEBlupiController::DeathCause::Drown, true);
+            crushed3.TriggerDeathLock(BlupiController::DeathCause::Drown, true);
             check(!crushed3.IsEcrased(), "TriggerDeathLock() clears Ecrase too (real BlupiDead())");
         }
 
@@ -1168,7 +1168,7 @@ int main(int argc, char** argv)
         // architecture as the teleporter above: a real Ground floor (Y=0)
         // with a FanLeft head FLOATING one cell above Blupi's standing
         // height (Y=2), matching the real placement convention already
-        // established for the teleporter (GEWorldRuntime::TryConsumeFan()'s
+        // established for the teleporter (WorldRuntime::TryConsumeFan()'s
         // own comment). Fan head icons are always non-solid for collision
         // (GroundHeightAt's own BlockTypes::isFan() skip), so Blupi must
         // land on the REAL floor beneath it (Y=1), not be blocked by or
@@ -1177,7 +1177,7 @@ int main(int argc, char** argv)
         synthetic.setBlock(kFanX, 0, kFanZ, Worlds::Block::make(BlockTypes::Ground));
         synthetic.setBlock(kFanX, 2, kFanZ, Worlds::Block::make(BlockTypes::FanLeft));
 
-        GEBlupiController underFan;
+        BlupiController underFan;
         underFan.SetPosition(static_cast<float>(kFanX) - 50.0f, 1.0f, static_cast<float>(kFanZ) - 50.0f);
         underFan.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         std::cout << "Blupi Y beneath the floating fan: " << underFan.GetY() << std::endl;
@@ -1197,17 +1197,17 @@ int main(int argc, char** argv)
             synthetic.setBlock(x, 0, kSafeStripZ, Worlds::Block::make(BlockTypes::Ground));
         }
 
-        GEBlupiController defaultValid;
+        BlupiController defaultValid;
         check(defaultValid.GetValidX() == 0.0f && defaultValid.GetValidY() == 1.0f && defaultValid.GetValidZ() == 0.0f,
               "GetValidX/Y/Z() default to the spawn point before any safe frame is ever recorded");
 
-        GEBlupiController airborneSafe;
+        BlupiController airborneSafe;
         airborneSafe.SetPosition(0.0f, 20.0f, 0.0f);
         airborneSafe.UpdateSafePosition(/*externallySafe=*/true);
         check(airborneSafe.GetValidX() == 0.0f && airborneSafe.GetValidZ() == 0.0f,
               "UpdateSafePosition() is a no-op while airborne (still the spawn-point default)");
 
-        GEBlupiController unsafeCaller;
+        BlupiController unsafeCaller;
         unsafeCaller.SetPosition(60.0f - 50.0f, 1.0f, static_cast<float>(kSafeStripZ) - 50.0f);
         unsafeCaller.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
         unsafeCaller.UpdateSafePosition(/*externallySafe=*/false);
@@ -1219,7 +1219,7 @@ int main(int argc, char** argv)
         // position should lag behind Blupi's current position by roughly
         // that buffer, never equal to (or ahead of) wherever he currently
         // is.
-        GEBlupiController safeWalker;
+        BlupiController safeWalker;
         for (int i = 0; i < 13; ++i)
         {
             safeWalker.SetPosition(static_cast<float>(60 + i) - 50.0f, 1.0f,
@@ -1255,7 +1255,7 @@ int main(int argc, char** argv)
         synthetic.setBlock(kDeepX, 1, kDeepZ, Worlds::Block::make(BlockTypes::Water1));
         synthetic.setBlock(kDeepX, 2, kDeepZ, Worlds::Block::make(BlockTypes::Water1));
 
-        const auto stepWithWaterDetection = [](GEBlupiController& c, const Worlds::World& w, float stepDt)
+        const auto stepWithWaterDetection = [](BlupiController& c, const Worlds::World& w, float stepDt)
         {
             const auto blockAt = c.GetBlockTypeAt(w);
             const auto blockAbove = c.GetBlockTypeAbove(w);
@@ -1264,17 +1264,17 @@ int main(int argc, char** argv)
             c.Step(w, 0.0f, 0.0f, false, false, false, stepDt, false, surf, nage);
         };
 
-        GEBlupiController inShallow;
+        BlupiController inShallow;
         inShallow.SetPosition(static_cast<float>(kShallowX) - 50.0f, 20.0f, static_cast<float>(kShallowZ) - 50.0f);
         for (int i = 0; i < 200; ++i) stepWithWaterDetection(inShallow, synthetic, dt);
         check(inShallow.IsOnGround() && std::fabs(inShallow.GetY() - 1.0f) < 0.01f,
               "Blupi sinks through a shallow 1-layer water pool and rests on the real floor beneath it");
         check(inShallow.IsSurf() && !inShallow.IsNage(),
               "standing in a shallow 1-layer pool is Surf (dry above), not Nage");
-        check(inShallow.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
+        check(inShallow.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the breath gauge stays full while merely Surf, not Nage");
 
-        GEBlupiController inDeep;
+        BlupiController inDeep;
         inDeep.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
         for (int i = 0; i < 200; ++i) stepWithWaterDetection(inDeep, synthetic, dt);
         check(inDeep.IsOnGround() && std::fabs(inDeep.GetY() - 1.0f) < 0.01f,
@@ -1285,7 +1285,7 @@ int main(int argc, char** argv)
         // Gauge countdown + drowning -- run enough simulated time to
         // exhaust the full 100-level gauge (the real ~25s), confirming
         // JustDrowned() fires exactly at the moment it reaches 0.
-        GEBlupiController drowning;
+        BlupiController drowning;
         drowning.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
         constexpr float kDrownDt = 0.05f;
         bool drownedOnce = false;
@@ -1308,14 +1308,14 @@ int main(int argc, char** argv)
         // breath gauge (so an unprotected Blupi would have lost well over half by this point) while
         // staying safely inside Shield's own ~25s real duration (avoiding the coincidental overlap
         // where Shield expiring mid-test would let the gauge resume depleting).
-        GEBlupiController shieldedSwimmer;
+        BlupiController shieldedSwimmer;
         shieldedSwimmer.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
         shieldedSwimmer.TriggerShield();
         for (int i = 0; i < 300; ++i) // 300 * 0.05s = 15s
         {
             stepWithWaterDetection(shieldedSwimmer, synthetic, kDrownDt);
         }
-        check(!shieldedSwimmer.JustDrowned() && shieldedSwimmer.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
+        check(!shieldedSwimmer.JustDrowned() && shieldedSwimmer.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the water gauge never depletes while Shield is active (real !m_blupiShield gate)");
 
         // Resurfacing resets the gauge -- a few seconds of genuine Nage
@@ -1323,23 +1323,23 @@ int main(int argc, char** argv)
         // full instead of resuming from where it left off (matches the
         // real "gauge hidden on resurfacing" behavior, not a persisted
         // shared resource across dives).
-        GEBlupiController resurfacer;
+        BlupiController resurfacer;
         resurfacer.SetPosition(static_cast<float>(kDeepX) - 50.0f, 1.0f, static_cast<float>(kDeepZ) - 50.0f);
         for (int i = 0; i < 60; ++i)
         {
             resurfacer.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, false, true);
         }
-        check(resurfacer.GetWaterGaugeLevel() < GEBlupiController::kWaterGaugeMax,
+        check(resurfacer.GetWaterGaugeLevel() < BlupiController::kWaterGaugeMax,
               "the gauge has ticked down after a few seconds of genuine Nage");
         resurfacer.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, true, false);
-        check(resurfacer.GetWaterGaugeLevel() == GEBlupiController::kWaterGaugeMax,
+        check(resurfacer.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the gauge resets to full the instant Nage ends (Surf), matching the real 'gauge hidden' behavior");
 
         // Secret powers (plan.md E3D-MIG-170) -- trigger gates, the shared
         // gauge's real per-power decrement rate, expiry, and the real
         // hazard-immunity gate (IsInvincible() == Shield || Hide).
         {
-            GEBlupiController shielded;
+            BlupiController shielded;
             check(shielded.TriggerShield(), "TriggerShield() succeeds from None");
             check(shielded.IsShielded() && shielded.IsInvincible(),
                   "Shield grants IsShielded()/IsInvincible()");
@@ -1347,11 +1347,11 @@ int main(int argc, char** argv)
             check(!shielded.TriggerCloud(), "TriggerCloud() fails while Shielded (real gate: == None)");
             check(!shielded.TriggerHide(), "TriggerHide() fails while Shielded (real gate: != Shield/Cloud)");
 
-            GEBlupiController hidden;
+            BlupiController hidden;
             check(hidden.TriggerHide(), "TriggerHide() succeeds from None");
             check(hidden.IsHidden() && hidden.IsInvincible(), "Hide grants IsHidden()/IsInvincible() too");
 
-            GEBlupiController powered;
+            BlupiController powered;
             check(powered.TriggerPower(), "TriggerPower() succeeds from None");
             check(!powered.IsInvincible(), "Power alone does NOT grant IsInvincible() (only Shield/Hide do)");
             check(powered.TriggerHide(), "TriggerHide() succeeds even while Power is active (real gate ignores Power)");
@@ -1359,26 +1359,26 @@ int main(int argc, char** argv)
             // Real per-power decrement rates (Decor.cpp ~5071-5137): Shield
             // every ScaleTime(5)=0.25s/level, Power every ScaleTime(3)=
             // 0.15s/level, Cloud/Hide every ScaleTime(4)=0.2s/level.
-            GEBlupiController shieldTiming;
+            BlupiController shieldTiming;
             shieldTiming.TriggerShield();
             for (int i = 0; i < 30; ++i) // 30 * 0.25s = 7.5s = 30 levels
             {
-                shieldTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kShieldTickSeconds);
+                shieldTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, BlupiController::kShieldTickSeconds);
             }
-            check(shieldTiming.GetSecretPowerLevel() == GEBlupiController::kSecretPowerMax - 30,
+            check(shieldTiming.GetSecretPowerLevel() == BlupiController::kSecretPowerMax - 30,
                   "Shield's gauge ticks down at exactly the real 0.25s/level rate");
 
-            GEBlupiController powerTiming;
+            BlupiController powerTiming;
             powerTiming.TriggerPower();
             for (int i = 0; i < 30; ++i)
             {
-                powerTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kPowerTickSeconds);
+                powerTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, BlupiController::kPowerTickSeconds);
             }
-            check(powerTiming.GetSecretPowerLevel() == GEBlupiController::kSecretPowerMax - 30,
+            check(powerTiming.GetSecretPowerLevel() == BlupiController::kSecretPowerMax - 30,
                   "Power's gauge ticks down at exactly the real 0.15s/level rate");
 
             // Expiry: the real ~25s Shield duration (100 levels * 0.25s).
-            GEBlupiController expiring;
+            BlupiController expiring;
             expiring.TriggerShield();
             for (int i = 0; i < 500 && expiring.IsShielded(); ++i) // 500 * 0.05 = 25s
             {
@@ -1389,19 +1389,19 @@ int main(int argc, char** argv)
             check(!expiring.IsInvincible(), "IsInvincible() is false again once Shield expires");
 
             // Real warning threshold: Shield warns at exactly level 10.
-            GEBlupiController warning;
+            BlupiController warning;
             warning.TriggerShield();
             bool sawWarning = false;
             for (int i = 0; i < 100 && !sawWarning; ++i)
             {
-                warning.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kShieldTickSeconds);
+                warning.Step(synthetic, 0.0f, 0.0f, false, false, false, BlupiController::kShieldTickSeconds);
                 if (warning.JustCrossedSecretPowerWarning())
                 {
                     sawWarning = true;
                 }
             }
             check(sawWarning, "JustCrossedSecretPowerWarning() fires once during Shield's real countdown");
-            check(warning.GetSecretPowerLevel() == GEBlupiController::kShieldWarnLevel,
+            check(warning.GetSecretPowerLevel() == BlupiController::kShieldWarnLevel,
                   "the warning fires at exactly the real level-10 threshold, not some other level");
         }
 
@@ -1410,34 +1410,34 @@ int main(int argc, char** argv)
         // ScaleTime(3)=0.15s/level tick rate (same as Power), no warning
         // stage, and the actual real "negate horizontal input speed" effect.
         {
-            GEBlupiController inverted;
+            BlupiController inverted;
             check(inverted.TriggerInvert(), "TriggerInvert() succeeds from no state at all");
             check(inverted.IsInverted(), "IsInverted() reflects the new state");
             check(!inverted.TriggerInvert(),
                   "TriggerInvert() fails while already Invert (real: blocked while already active)");
 
-            GEBlupiController shieldedThenInvert;
+            BlupiController shieldedThenInvert;
             shieldedThenInvert.TriggerShield();
             check(shieldedThenInvert.TriggerInvert(),
                   "TriggerInvert() succeeds while Shield is active (real gate ignores Shield/Power/Cloud)");
 
-            GEBlupiController hiddenThenInvert;
+            BlupiController hiddenThenInvert;
             hiddenThenInvert.TriggerHide();
             check(!hiddenThenInvert.TriggerInvert(),
                   "TriggerInvert() fails while Hide is active (real gate: != Hide)");
 
             // Real tick rate: ScaleTime(3)=0.15s/level, same as Power.
-            GEBlupiController invertTiming;
+            BlupiController invertTiming;
             invertTiming.TriggerInvert();
             for (int i = 0; i < 30; ++i)
             {
-                invertTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, GEBlupiController::kInvertTickSeconds);
+                invertTiming.Step(synthetic, 0.0f, 0.0f, false, false, false, BlupiController::kInvertTickSeconds);
             }
-            check(invertTiming.GetInvertLevel() == GEBlupiController::kInvertMax - 30,
+            check(invertTiming.GetInvertLevel() == BlupiController::kInvertMax - 30,
                   "Invert's gauge ticks down at exactly the real 0.15s/level rate");
 
             // Expiry: real ~15s duration (100 levels * 0.15s), no warning stage.
-            GEBlupiController invertExpiring;
+            BlupiController invertExpiring;
             invertExpiring.TriggerInvert();
             bool sawInvertExpiry = false;
             for (int i = 0; i < 400 && invertExpiring.IsInverted(); ++i) // 400 * 0.05 = 20s > 15s real duration
@@ -1455,13 +1455,13 @@ int main(int argc, char** argv)
             // SetSpeedX: "if (m_blupiInvert) speed = -speed") -- walking
             // "forward" while Inverted should move Blupi BACKWARD relative
             // to a non-inverted control at the same facing/input.
-            GEBlupiController normalWalker;
+            BlupiController normalWalker;
             normalWalker.SetYaw(0.0f); // facing -Z
             for (int i = 0; i < 60; ++i)
             {
                 normalWalker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
             }
-            GEBlupiController invertedWalker;
+            BlupiController invertedWalker;
             invertedWalker.TriggerInvert();
             invertedWalker.SetYaw(0.0f);
             for (int i = 0; i < 60; ++i)
@@ -1478,75 +1478,75 @@ int main(int argc, char** argv)
         // real per-mode horizontal accel/decel ramp + Helicopter's free
         // vertical flight.
         {
-            GEBlupiController jeep;
-            check(jeep.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false),
+            BlupiController jeep;
+            check(jeep.TriggerMount(BlupiController::VehicleMode::Jeep, false, false),
                   "TriggerMount(Jeep) succeeds from no vehicle, not Nage/Surf");
-            check(jeep.IsInVehicle() && jeep.GetVehicleMode() == GEBlupiController::VehicleMode::Jeep,
+            check(jeep.IsInVehicle() && jeep.GetVehicleMode() == BlupiController::VehicleMode::Jeep,
                   "IsInVehicle()/GetVehicleMode() reflect the new Jeep mount");
-            check(!jeep.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false),
+            check(!jeep.TriggerMount(BlupiController::VehicleMode::Tank, false, false),
                   "TriggerMount() fails while already riding another vehicle (real: blocked while riding ANY vehicle)");
 
             // Real per-vehicle hazard immunity (Decor.cpp:5504-5528, found 2026-07-16): Over/Jeep/
             // Tank protect against Spike/Drip/Saw; Helicopter/Skateboard do NOT.
             check(jeep.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is true while riding a Jeep");
-            GEBlupiController tankRider;
-            tankRider.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+            BlupiController tankRider;
+            tankRider.TriggerMount(BlupiController::VehicleMode::Tank, false, false);
             check(tankRider.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is true while riding a Tank");
-            GEBlupiController overRider;
-            overRider.TriggerMount(GEBlupiController::VehicleMode::Overcraft, false, false);
+            BlupiController overRider;
+            overRider.TriggerMount(BlupiController::VehicleMode::Overcraft, false, false);
             check(overRider.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is true while riding an Overcraft");
-            GEBlupiController heliRider;
-            heliRider.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            BlupiController heliRider;
+            heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is FALSE while riding a Helicopter (real: not one of the "
                   "3 immune modes)");
-            GEBlupiController skateRider;
-            skateRider.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            BlupiController skateRider;
+            skateRider.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false);
             check(!skateRider.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is FALSE while riding a Skateboard");
-            GEBlupiController noVehicle;
+            BlupiController noVehicle;
             check(!noVehicle.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is false with no vehicle mounted");
 
-            GEBlupiController nageRider;
-            check(!nageRider.TriggerMount(GEBlupiController::VehicleMode::Jeep, /*inNage=*/true, false),
+            BlupiController nageRider;
+            check(!nageRider.TriggerMount(BlupiController::VehicleMode::Jeep, /*inNage=*/true, false),
                   "TriggerMount() fails while Nage (real: blocked while swimming/surfing)");
-            GEBlupiController surfRider;
-            check(!surfRider.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, /*inSurf=*/true),
+            BlupiController surfRider;
+            check(!surfRider.TriggerMount(BlupiController::VehicleMode::Jeep, false, /*inSurf=*/true),
                   "TriggerMount() fails while Surf too");
 
             // Real gate also excludes Balloon/Ecrase (Decor.cpp:5649/5669/5687, found 2026-07-16)
             // -- previously missing from this engine's TriggerMount() entirely.
-            GEBlupiController balloonedMounter;
+            BlupiController balloonedMounter;
             balloonedMounter.TriggerBalloon();
             check(balloonedMounter.IsBallooned(), "sanity: ballooned before attempting to mount");
-            check(!balloonedMounter.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false),
+            check(!balloonedMounter.TriggerMount(BlupiController::VehicleMode::Jeep, false, false),
                   "TriggerMount() fails while ballooned (real !m_blupiBalloon gate)");
-            GEBlupiController crushedMounter;
+            BlupiController crushedMounter;
             crushedMounter.TriggerCrush();
             check(crushedMounter.IsEcrased(), "sanity: squashed before attempting to mount");
-            check(!crushedMounter.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false),
+            check(!crushedMounter.TriggerMount(BlupiController::VehicleMode::Jeep, false, false),
                   "TriggerMount() fails while squashed (real !m_blupiEcrase gate)");
 
-            GEBlupiController cloudMounter;
+            BlupiController cloudMounter;
             cloudMounter.TriggerCloud();
             check(cloudMounter.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Cloud,
                   "sanity: Cloud is active before mounting");
-            cloudMounter.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            cloudMounter.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false);
             check(cloudMounter.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
                   "mounting a vehicle silently cancels an active Cloud (real behavior)");
 
-            GEBlupiController shieldMounter;
+            BlupiController shieldMounter;
             shieldMounter.TriggerShield();
-            shieldMounter.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            shieldMounter.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false);
             check(shieldMounter.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Shield,
                   "mounting a vehicle does NOT cancel Shield (real: 'none of them check Shield or Power')");
 
-            GEBlupiController dismounter;
-            dismounter.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+            BlupiController dismounter;
+            dismounter.TriggerMount(BlupiController::VehicleMode::Tank, false, false);
             dismounter.TriggerDismount();
             check(!dismounter.IsInVehicle(), "TriggerDismount() clears the vehicle mode");
             dismounter.TriggerDismount(); // no-op when not riding -- just confirming it doesn't crash
@@ -1555,30 +1555,30 @@ int main(int argc, char** argv)
             // Vehicle motor sound accessors (plan.md SOUND-007/008, found 2026-07-17):
             // HasVehicleMotor() -- real source gives Helicopter/Jeep/Tank/Overcraft their own
             // motor sound set, but NOT Skateboard (confirmed via direct source read).
-            GEBlupiController noMotorVehicle;
+            BlupiController noMotorVehicle;
             check(!noMotorVehicle.HasVehicleMotor(), "HasVehicleMotor() is false with no vehicle mounted");
-            GEBlupiController jeepMotor;
-            jeepMotor.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            BlupiController jeepMotor;
+            jeepMotor.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
             check(jeepMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding a Jeep");
-            GEBlupiController tankMotor;
-            tankMotor.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+            BlupiController tankMotor;
+            tankMotor.TriggerMount(BlupiController::VehicleMode::Tank, false, false);
             check(tankMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding a Tank");
-            GEBlupiController overMotor;
-            overMotor.TriggerMount(GEBlupiController::VehicleMode::Overcraft, false, false);
+            BlupiController overMotor;
+            overMotor.TriggerMount(BlupiController::VehicleMode::Overcraft, false, false);
             check(overMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding an Overcraft");
-            GEBlupiController heliMotor;
-            heliMotor.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            BlupiController heliMotor;
+            heliMotor.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(heliMotor.HasVehicleMotor(), "HasVehicleMotor() is true while riding a Helicopter");
-            GEBlupiController skateMotor;
-            skateMotor.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+            BlupiController skateMotor;
+            skateMotor.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false);
             check(!skateMotor.HasVehicleMotor(),
                   "HasVehicleMotor() is FALSE while riding a Skateboard (real: no motor sound set for it)");
 
             // IsVehicleMotorHigh() -- real per-mode "m_blupiMotorHigh" pitch-select flag: false
             // at rest, true once genuinely moving (Jeep: nonzero horizontal speed after ramping
             // up; Helicopter: nonzero vertical velocity while ascending).
-            GEBlupiController jeepIdle;
-            jeepIdle.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            BlupiController jeepIdle;
+            jeepIdle.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
             check(!jeepIdle.IsVehicleMotorHigh(), "IsVehicleMotorHigh() is false for a Jeep at rest");
             jeepIdle.SetYaw(0.0f);
             for (int i = 0; i < 5; ++i)
@@ -1587,8 +1587,8 @@ int main(int argc, char** argv)
             }
             check(jeepIdle.IsVehicleMotorHigh(), "IsVehicleMotorHigh() is true once the Jeep has ramped up speed");
 
-            GEBlupiController heliIdle;
-            heliIdle.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            BlupiController heliIdle;
+            heliIdle.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliIdle.IsVehicleMotorHigh(), "IsVehicleMotorHigh() is false for a Helicopter at rest");
             for (int i = 0; i < 5; ++i)
             {
@@ -1605,8 +1605,8 @@ int main(int argc, char** argv)
             // (still speeding up); an instant snap-to-max-speed (like
             // Blupi's own normal walk) would make every frame's delta
             // identical from the very first one.
-            GEBlupiController jeepRamp;
-            jeepRamp.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+            BlupiController jeepRamp;
+            jeepRamp.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
             jeepRamp.SetYaw(0.0f); // facing -Z
             float zBefore = jeepRamp.GetZ();
             jeepRamp.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
@@ -1636,9 +1636,9 @@ int main(int argc, char** argv)
             // Helicopter flight: holding lookUp (real "Up") should ramp
             // m_velocityY toward the real ascend target, climbing Y over
             // several frames without needing to be grounded first.
-            GEBlupiController helicopter;
+            BlupiController helicopter;
             helicopter.SetPosition(0.0f, 5.0f, 0.0f);
-            helicopter.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            helicopter.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             const float yStart = helicopter.GetY();
             for (int i = 0; i < 30; ++i)
             {
@@ -1646,9 +1646,9 @@ int main(int argc, char** argv)
             }
             check(helicopter.GetY() > yStart, "holding lookUp while flying a Helicopter climbs Y over time");
 
-            GEBlupiController helicopterDescend;
+            BlupiController helicopterDescend;
             helicopterDescend.SetPosition(0.0f, 12.0f, 0.0f);
-            helicopterDescend.TriggerMount(GEBlupiController::VehicleMode::Helicopter, false, false);
+            helicopterDescend.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             const float yStartDescend = helicopterDescend.GetY();
             for (int i = 0; i < 30; ++i)
             {
@@ -1669,19 +1669,19 @@ int main(int argc, char** argv)
         constexpr std::uint16_t kGhostGroundX = 30, kGhostGroundZ = 30;
         ghostWorld.setBlock(kGhostGroundX, 0, kGhostGroundZ, Worlds::Block::make(BlockTypes::Ground));
 
-        GEBlupiController toggler;
+        BlupiController toggler;
         check(toggler.ToggleGhost(ghostWorld), "ToggleGhost() turns on from no state at all");
         check(toggler.IsGhost(), "IsGhost() reflects the new state");
 
-        GEBlupiController vehicleThenGhost;
-        vehicleThenGhost.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+        BlupiController vehicleThenGhost;
+        vehicleThenGhost.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
         vehicleThenGhost.ToggleGhost(ghostWorld);
         check(!vehicleThenGhost.IsInVehicle(), "turning Ghost on clears any active vehicle mount (real behavior)");
 
         // No gravity: floating in open air, still airborne after several
         // frames of Step() with no input at all (a non-ghosted Blupi
         // would fall).
-        GEBlupiController floater;
+        BlupiController floater;
         floater.SetPosition(0.0f, 20.0f, 0.0f);
         floater.ToggleGhost(ghostWorld);
         const float yBeforeFloat = floater.GetY();
@@ -1695,14 +1695,14 @@ int main(int argc, char** argv)
         // Free vertical flight via jumpPressed(up)/crouchHeld(down) --
         // this engine's adaptation of the real screen-vertical axis (see
         // kGhostSpeed's own comment).
-        GEBlupiController riser;
+        BlupiController riser;
         riser.SetPosition(0.0f, 20.0f, 0.0f);
         riser.ToggleGhost(ghostWorld);
         const float yBeforeRise = riser.GetY();
         riser.Step(ghostWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         check(riser.GetY() > yBeforeRise, "holding Jump while ghosting flies upward");
 
-        GEBlupiController sinker;
+        BlupiController sinker;
         sinker.SetPosition(0.0f, 20.0f, 0.0f);
         sinker.ToggleGhost(ghostWorld);
         const float yBeforeSink = sinker.GetY();
@@ -1716,7 +1716,7 @@ int main(int argc, char** argv)
         // +Z side of the block and walking forward crosses right through
         // its column and out the other side.
         const float ghostBlockWorldZ = static_cast<float>(kGhostGroundZ) - 50.0f;
-        GEBlupiController flyer;
+        BlupiController flyer;
         flyer.SetPosition(static_cast<float>(kGhostGroundX) - 50.0f, 0.5f, ghostBlockWorldZ + 3.0f);
         flyer.ToggleGhost(ghostWorld);
         flyer.SetYaw(0.0f); // facing -Z, straight toward/through the solid block's own column
@@ -1729,11 +1729,11 @@ int main(int argc, char** argv)
 
         // Real 4x speed: covers noticeably more ground per frame than a
         // normal (non-ghosted) walker given the identical input.
-        GEBlupiController ghostMover;
+        BlupiController ghostMover;
         ghostMover.ToggleGhost(ghostWorld);
         ghostMover.SetYaw(0.0f);
         ghostMover.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
-        GEBlupiController normalMover;
+        BlupiController normalMover;
         normalMover.SetYaw(0.0f);
         normalMover.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
         check(std::fabs(ghostMover.GetZ()) > std::fabs(normalMover.GetZ()) * 3.0f,
@@ -1742,13 +1742,13 @@ int main(int argc, char** argv)
 
         // Toggle-off gate: succeeds in open air, rejected inside solid
         // geometry (real `!DecorDetect(...)`, Decor.cpp:2065).
-        GEBlupiController offInAir;
+        BlupiController offInAir;
         offInAir.SetPosition(0.0f, 20.0f, 0.0f);
         offInAir.ToggleGhost(ghostWorld);
         check(!offInAir.ToggleGhost(ghostWorld), "ToggleGhost() off succeeds while standing in open air");
         check(!offInAir.IsGhost(), "IsGhost() reflects the toggle-off");
 
-        GEBlupiController offInsideWall;
+        BlupiController offInsideWall;
         offInsideWall.SetPosition(static_cast<float>(kGhostGroundX) - 50.0f, 0.3f,
                                    static_cast<float>(kGhostGroundZ) - 50.0f);
         offInsideWall.ToggleGhost(ghostWorld);
@@ -1761,8 +1761,8 @@ int main(int argc, char** argv)
     // Repro attempt for "grass-topped cubes reported walkable-through"
     // (NEXT.md §5/§8 task 4, reported live with no specific coordinates).
     // Icons 107/108/109 intentionally leave their PosY face un-rendered
-    // (GETerrainRenderer's grass-top overlay draws a separate plate
-    // instead -- see GEDirectionalCubeTiles.cpp) but must still be solid
+    // (TerrainRenderer's grass-top overlay draws a separate plate
+    // instead -- see DirectionalCubeTiles.cpp) but must still be solid
     // for collision (IsSolidAt() only checks Block::isAir(), independent
     // of which faces a render mode chooses to draw). This walks Blupi
     // onto every icon-107/108/109 block actually present in the loaded
@@ -1784,12 +1784,12 @@ int main(int argc, char** argv)
                     if (type == 107 || type == 108 || type == 109)
                     {
                         const float worldX =
-                            static_cast<float>(gx) - static_cast<float>(GEWorldRuntime::kWorldCenterX);
+                            static_cast<float>(gx) - static_cast<float>(WorldRuntime::kWorldCenterX);
                         const float worldZ =
-                            static_cast<float>(gz) - static_cast<float>(GEWorldRuntime::kWorldCenterZ);
+                            static_cast<float>(gz) - static_cast<float>(WorldRuntime::kWorldCenterZ);
                         const float dropFromY = static_cast<float>(gy) + 3.0f;
 
-                        GEBlupiController dropTest;
+                        BlupiController dropTest;
                         dropTest.SetPosition(worldX, dropFromY, worldZ);
                         for (int i = 0; i < 120; ++i) // ~2s, plenty to land and settle
                         {
@@ -1838,7 +1838,7 @@ int main(int argc, char** argv)
         }
         grassWallWorld.setBlock(55, 1, 50, GalaxyEggbert::Worlds::Block::make(107));
 
-        GEBlupiController stepUpWalker;
+        BlupiController stepUpWalker;
         stepUpWalker.SetPosition(0.0f, 1.0f, 0.0f);
         stepUpWalker.SetYaw(1.57079633f); // face east (+X), toward the block at render X=5
         for (int i = 0; i < 300; ++i)
@@ -1866,7 +1866,7 @@ int main(int argc, char** argv)
                                          GalaxyEggbert::Worlds::Block::make(107));
         }
 
-        GEBlupiController blockedWalker;
+        BlupiController blockedWalker;
         blockedWalker.SetPosition(0.0f, 1.0f, 0.0f);
         blockedWalker.SetYaw(1.57079633f);
         for (int i = 0; i < 300; ++i)
@@ -1890,7 +1890,7 @@ int main(int argc, char** argv)
     // 40) is well inside the tunnel's x=20-75 footprint, away from any
     // other placed structure.
     {
-        GEBlupiController tunnelWalker;
+        BlupiController tunnelWalker;
         tunnelWalker.SetPosition(-10.0f, 1.0f, 17.0f); // real tunnel floor height
         for (int i = 0; i < 30; ++i)
         {
@@ -1916,23 +1916,23 @@ int main(int argc, char** argv)
         // function body), so one call after the jump already reflects
         // exactly one frame of gravity -- subtract it here for an exact
         // comparison instead of a loose tolerance.
-        const float kOneFrameGravity = GEBlupiController::kGravity * dt;
+        const float kOneFrameGravity = BlupiController::kGravity * dt;
 
-        GEBlupiController openJumper;
+        BlupiController openJumper;
         openJumper.SetPosition(0.0f, 1.0f, 0.0f);
         for (int i = 0; i < 5; ++i) openJumper.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle grounded
         openJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         std::cout << "Open-sky jump velocityY=" << openJumper.GetVelocityY() << std::endl;
-        check(std::fabs(openJumper.GetVelocityY() - (GEBlupiController::kJumpSpeed - kOneFrameGravity)) < 0.01f,
+        check(std::fabs(openJumper.GetVelocityY() - (BlupiController::kJumpSpeed - kOneFrameGravity)) < 0.01f,
               "jumping with clear headroom uses the real full-height baseline (-16 equivalent)");
 
-        GEBlupiController tunnelJumper;
+        BlupiController tunnelJumper;
         tunnelJumper.SetPosition(-10.0f, 1.0f, 17.0f);
         for (int i = 0; i < 5; ++i) tunnelJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
         tunnelJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         std::cout << "Low-ceiling jump velocityY=" << tunnelJumper.GetVelocityY() << std::endl;
         check(std::fabs(tunnelJumper.GetVelocityY() -
-                         (GEBlupiController::kJumpSpeedReduced - kOneFrameGravity)) < 0.01f,
+                         (BlupiController::kJumpSpeedReduced - kOneFrameGravity)) < 0.01f,
               "jumping under the tunnel's low BrickWall ceiling uses the real reduced 'bumped head' "
               "height (-12 equivalent), not the full baseline");
         check(tunnelJumper.GetVelocityY() < openJumper.GetVelocityY(),
@@ -1945,36 +1945,36 @@ int main(int argc, char** argv)
     // Skateboard must use its OWN distinct real velocity (-13/-17), not the headroom-modulated
     // ordinary-Blupi values.
     {
-        const float kOneFrameGravity = GEBlupiController::kGravity * dt;
+        const float kOneFrameGravity = BlupiController::kGravity * dt;
 
-        GEBlupiController jeepJumper;
+        BlupiController jeepJumper;
         jeepJumper.SetPosition(0.0f, 1.0f, 0.0f);
         for (int i = 0; i < 5; ++i) jeepJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        jeepJumper.TriggerMount(GEBlupiController::VehicleMode::Jeep, false, false);
+        jeepJumper.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
         const float velocityYBeforeJeepJump = jeepJumper.GetVelocityY();
         jeepJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         check(jeepJumper.GetVelocityY() < velocityYBeforeJeepJump + 0.01f,
               "pressing Jump while mounted in a Jeep does not launch a normal ground jump (real "
               "!m_blupiJeep gate) -- velocityY only reflects gravity, not a jump impulse");
 
-        GEBlupiController tankJumper;
+        BlupiController tankJumper;
         tankJumper.SetPosition(0.0f, 1.0f, 0.0f);
         for (int i = 0; i < 5; ++i) tankJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        tankJumper.TriggerMount(GEBlupiController::VehicleMode::Tank, false, false);
+        tankJumper.TriggerMount(BlupiController::VehicleMode::Tank, false, false);
         const float velocityYBeforeTankJump = tankJumper.GetVelocityY();
         tankJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         check(tankJumper.GetVelocityY() < velocityYBeforeTankJump + 0.01f,
               "pressing Jump while mounted in a Tank does not launch a normal ground jump (real "
               "!m_blupiTank gate)");
 
-        GEBlupiController skateJumper;
+        BlupiController skateJumper;
         skateJumper.SetPosition(0.0f, 1.0f, 0.0f);
         for (int i = 0; i < 5; ++i) skateJumper.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        skateJumper.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+        skateJumper.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false);
         skateJumper.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         std::cout << "Skateboard jump velocityY=" << skateJumper.GetVelocityY() << std::endl;
         check(std::fabs(skateJumper.GetVelocityY() -
-                         (GEBlupiController::kSkateboardJumpSpeed - kOneFrameGravity)) < 0.01f,
+                         (BlupiController::kSkateboardJumpSpeed - kOneFrameGravity)) < 0.01f,
               "Skateboard jump uses its own real distinct velocity (-13 equivalent), not the "
               "headroom-modulated ordinary-Blupi values");
     }
@@ -1984,25 +1984,25 @@ int main(int argc, char** argv)
     // pair, split by velocity sign exactly like the base humanoid Jump/Air
     // (plan.md E3D-MIG-064).
     {
-        GEBlupiController skateAirborne;
+        BlupiController skateAirborne;
         skateAirborne.SetPosition(0.0f, 1.0f, 0.0f);
         for (int i = 0; i < 5; ++i) skateAirborne.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        skateAirborne.TriggerMount(GEBlupiController::VehicleMode::Skateboard, false, false);
+        skateAirborne.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false);
         skateAirborne.Step(world, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
         check(!skateAirborne.IsOnGround(), "Skateboard jump launches Blupi airborne");
-        check(skateAirborne.GetAnimState() == GEBlupiController::AnimState::JumpSkate,
+        check(skateAirborne.GetAnimState() == BlupiController::AnimState::JumpSkate,
               "ascending on a Skateboard is the JumpSkate anim state, not the base Jump or StopSkate");
         check(skateAirborne.GetAnimIcon() == 210,
               "JumpSkate anim icon starts at the real first frame (icon 210)");
 
         int stepsToApex = 0;
-        while (skateAirborne.GetAnimState() == GEBlupiController::AnimState::JumpSkate && stepsToApex < 200)
+        while (skateAirborne.GetAnimState() == BlupiController::AnimState::JumpSkate && stepsToApex < 200)
         {
             skateAirborne.Step(world, 0.0f, 0.0f, false, false, false, dt);
             ++stepsToApex;
         }
         check(stepsToApex < 200, "Skateboard jump reaches its apex within a bounded time");
-        check(skateAirborne.GetAnimState() == GEBlupiController::AnimState::AirSkate,
+        check(skateAirborne.GetAnimState() == BlupiController::AnimState::AirSkate,
               "past the apex, falling on a Skateboard switches to the AirSkate anim state, not "
               "MarchSkate/StopSkate");
         check(skateAirborne.GetAnimIcon() == 213,
@@ -2015,24 +2015,24 @@ int main(int argc, char** argv)
             ++stepsToLand;
         }
         check(skateAirborne.IsOnGround(), "lands again after the Skateboard jump arc completes");
-        check(skateAirborne.GetAnimState() == GEBlupiController::AnimState::StopSkate,
+        check(skateAirborne.GetAnimState() == BlupiController::AnimState::StopSkate,
               "back on the ground and idle on a Skateboard returns to StopSkate, not stuck in AirSkate");
     }
 
     // TakeSkate/DeposeSkate one-shot mount/dismount anim (table_blupi actions
     // 42/43, wired 2026-07-19 in GalaxyEggbertCnaGame.cpp's mount/dismount
-    // hook points) -- direct GEBlupiController-level coverage of the
+    // hook points) -- direct BlupiController-level coverage of the
     // TriggerOneShotAnim() mechanism itself, same "freeze, count down,
     // auto-resume" shape already used by Switch/TakeDynamite/PutDynamite.
     {
-        GEBlupiController mounting;
+        BlupiController mounting;
         mounting.SetPosition(0.0f, 1.0f, 0.0f);
-        check(mounting.TriggerOneShotAnim(GEBlupiController::AnimState::TakeSkate,
-                                           GEBlupiController::kTakeSkateDuration),
+        check(mounting.TriggerOneShotAnim(BlupiController::AnimState::TakeSkate,
+                                           BlupiController::kTakeSkateDuration),
               "TriggerOneShotAnim(TakeSkate) returns true when not already frozen/locked");
         check(mounting.IsOneShotAnimPlaying(), "IsOneShotAnimPlaying() is true immediately after triggering TakeSkate");
         mounting.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(mounting.GetAnimState() == GEBlupiController::AnimState::TakeSkate,
+        check(mounting.GetAnimState() == BlupiController::AnimState::TakeSkate,
               "TakeSkate anim state takes precedence over Stop/StopSkate while playing");
         check(mounting.GetAnimIcon() == 17, "TakeSkate anim icon starts at the real first frame (icon 17)");
 
@@ -2045,13 +2045,13 @@ int main(int argc, char** argv)
         check(stepsToResume < 200, "TakeSkate one-shot anim resolves within a bounded time");
         check(!mounting.IsOneShotAnimPlaying(), "TakeSkate one-shot anim ends on its own after kTakeSkateDuration");
 
-        GEBlupiController dismounting;
+        BlupiController dismounting;
         dismounting.SetPosition(0.0f, 1.0f, 0.0f);
-        check(dismounting.TriggerOneShotAnim(GEBlupiController::AnimState::DeposeSkate,
-                                              GEBlupiController::kDeposeSkateDuration),
+        check(dismounting.TriggerOneShotAnim(BlupiController::AnimState::DeposeSkate,
+                                              BlupiController::kDeposeSkateDuration),
               "TriggerOneShotAnim(DeposeSkate) returns true when not already frozen/locked");
         dismounting.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(dismounting.GetAnimState() == GEBlupiController::AnimState::DeposeSkate,
+        check(dismounting.GetAnimState() == BlupiController::AnimState::DeposeSkate,
               "DeposeSkate anim state takes precedence while playing");
         check(dismounting.GetAnimIcon() == 210, "DeposeSkate anim icon starts at the real first frame (icon 210)");
 
@@ -2066,17 +2066,17 @@ int main(int argc, char** argv)
     }
 
     // FireTank one-shot recoil anim (table_blupi action 53, wired
-    // 2026-07-19 alongside GEInteractionSystem::EventKind::TankFired in
-    // GalaxyEggbertCnaGame.cpp) -- same direct GEBlupiController-level
+    // 2026-07-19 alongside InteractionSystem::EventKind::TankFired in
+    // GalaxyEggbertCnaGame.cpp) -- same direct BlupiController-level
     // TriggerOneShotAnim() coverage as TakeSkate/DeposeSkate above.
     {
-        GEBlupiController firing;
+        BlupiController firing;
         firing.SetPosition(0.0f, 1.0f, 0.0f);
-        check(firing.TriggerOneShotAnim(GEBlupiController::AnimState::FireTank,
-                                         GEBlupiController::kFireTankDuration),
+        check(firing.TriggerOneShotAnim(BlupiController::AnimState::FireTank,
+                                         BlupiController::kFireTankDuration),
               "TriggerOneShotAnim(FireTank) returns true when not already frozen/locked");
         firing.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(firing.GetAnimState() == GEBlupiController::AnimState::FireTank,
+        check(firing.GetAnimState() == BlupiController::AnimState::FireTank,
               "FireTank anim state takes precedence while playing");
         check(firing.GetAnimIcon() == 251, "FireTank anim icon starts at the real first frame (icon 251)");
 
@@ -2096,7 +2096,7 @@ int main(int argc, char** argv)
     // already covered for TriggerOneShotAnim()/TriggerTeleport() above,
     // just never exercised for this specific trigger.
     {
-        GEBlupiController bye;
+        BlupiController bye;
         bye.SetPosition(0.0f, 1.0f, 0.0f);
         check(bye.TriggerBye(), "TriggerBye() returns true when not already frozen/locked");
         check(bye.IsBye(), "IsBye() is true immediately after a successful TriggerBye()");
@@ -2114,12 +2114,12 @@ int main(int argc, char** argv)
         // 2 of the real gate's 7 exclusion conditions, representative
         // samples matching the same rigor TriggerTeleport()'s own test
         // above already applies (not exhaustively all 7).
-        GEBlupiController ballooned;
+        BlupiController ballooned;
         ballooned.SetPosition(0.0f, 1.0f, 0.0f);
         check(ballooned.TriggerBalloon(), "test setup sanity: TriggerBalloon() succeeds");
         check(!ballooned.TriggerBye(), "TriggerBye() is a no-op while ballooned (real !m_blupiBalloon gate)");
 
-        GEBlupiController crushed;
+        BlupiController crushed;
         crushed.SetPosition(0.0f, 1.0f, 0.0f);
         check(crushed.TriggerCrush(), "test setup sanity: TriggerCrush() succeeds");
         check(!crushed.TriggerBye(), "TriggerBye() is a no-op while squashed (real !m_blupiEcrase gate)");
@@ -2132,19 +2132,19 @@ int main(int argc, char** argv)
     // itself, not a separate IsXPlaying()-style flag, is how the caller
     // observes it (matching this class's own header comment).
     {
-        GEBlupiController mocking;
+        BlupiController mocking;
         mocking.SetPosition(0.0f, 1.0f, 0.0f);
         check(mocking.IsMockeryCooldownElapsed(), "test setup sanity: cooldown already elapsed on a fresh controller");
-        check(mocking.TriggerMockery(GEBlupiController::AnimState::Mockery),
+        check(mocking.TriggerMockery(BlupiController::AnimState::Mockery),
               "TriggerMockery(Mockery) returns true when not already mocking/frozen/on-cooldown");
         mocking.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(mocking.GetAnimState() == GEBlupiController::AnimState::Mockery,
+        check(mocking.GetAnimState() == BlupiController::AnimState::Mockery,
               "Mockery anim state takes precedence over Stop while playing");
-        check(!mocking.TriggerMockery(GEBlupiController::AnimState::Mockeryi),
+        check(!mocking.TriggerMockery(BlupiController::AnimState::Mockeryi),
               "TriggerMockery() is a no-op while already mocking (even for a different variant)");
 
         int stepsToResumeMockery = 0;
-        while (mocking.GetAnimState() == GEBlupiController::AnimState::Mockery && stepsToResumeMockery < 300)
+        while (mocking.GetAnimState() == BlupiController::AnimState::Mockery && stepsToResumeMockery < 300)
         {
             mocking.Step(world, 0.0f, 0.0f, false, false, false, dt);
             ++stepsToResumeMockery;
@@ -2152,18 +2152,18 @@ int main(int argc, char** argv)
         check(stepsToResumeMockery < 300, "Mockery resolves within a bounded time (real kMockeryDuration)");
         check(!mocking.IsMockeryCooldownElapsed(),
               "the real cooldown (kMockeryCooldown) is active immediately after Mockery ends");
-        check(!mocking.TriggerMockery(GEBlupiController::AnimState::Mockery),
+        check(!mocking.TriggerMockery(BlupiController::AnimState::Mockery),
               "TriggerMockery() is a no-op while on cooldown, even though no longer actively mocking");
 
         // A different variant (Mockeryi) uses its own real distinct
         // duration (kMockeryiDuration), on a fresh controller so the
         // cooldown above doesn't gate it.
-        GEBlupiController mockingI;
+        BlupiController mockingI;
         mockingI.SetPosition(0.0f, 1.0f, 0.0f);
-        check(mockingI.TriggerMockery(GEBlupiController::AnimState::Mockeryi),
+        check(mockingI.TriggerMockery(BlupiController::AnimState::Mockeryi),
               "TriggerMockery(Mockeryi) returns true on a fresh controller");
         mockingI.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(mockingI.GetAnimState() == GEBlupiController::AnimState::Mockeryi,
+        check(mockingI.GetAnimState() == BlupiController::AnimState::Mockeryi,
               "Mockeryi anim state takes precedence over Stop while playing");
 
         // TriggerMockery() itself has NO explicit vehicle/balloon/etc.
@@ -2180,11 +2180,11 @@ int main(int argc, char** argv)
         // TriggerMockery() directly here without that caller-side check,
         // as a first draft of this test did, is not a real scenario --
         // confirmed by re-reading this function's own doc comment.)
-        GEBlupiController ballooned2;
+        BlupiController ballooned2;
         ballooned2.SetPosition(0.0f, 1.0f, 0.0f);
         check(ballooned2.TriggerBalloon(), "test setup sanity: TriggerBalloon() succeeds");
         ballooned2.Step(world, 0.0f, 0.0f, false, false, false, dt);
-        check(ballooned2.GetAnimState() != GEBlupiController::AnimState::Stop,
+        check(ballooned2.GetAnimState() != BlupiController::AnimState::Stop,
               "while ballooned, GetAnimState() never reads Stop -- the invariant TriggerMockery()'s "
               "own caller-side gate relies on instead of an internal balloon check");
     }
@@ -2228,7 +2228,7 @@ int main(int argc, char** argv)
         // collision) well before ever reaching it, never exercising the
         // airborne case this test exists for at all.
         const float wallX = static_cast<float>(kFloorX + 5) - 50.0f;
-        GEBlupiController jumper;
+        BlupiController jumper;
         jumper.SetPosition(wallX - 0.7f, 1.0f, static_cast<float>(kFloorZ) - 50.0f);
         jumper.SetYaw(0.0f);
         jumper.Step(airborneWallWorld, 0.0f, 0.0f, false, false, false, dt);
@@ -2253,7 +2253,7 @@ int main(int argc, char** argv)
     // WorldSelect hub-navigation marker contact detection (live bug report,
     // found/fixed 2026-07-21) -- WorldSelect1-12/ProgressDoor2-8/DemoPortal
     // (icons 158-177) have a genuinely all-zero real per-icon quarter-cell
-    // mask (same category as Lava/Crusher/Saw, GEDecorQuartTable.hpp),
+    // mask (same category as Lava/Crusher/Saw, DecorQuartTable.hpp),
     // so INFRA-005's sub-tile-precision wall collision correctly does NOT
     // treat them as solid -- Blupi walks straight through at his normal
     // floor height, never elevated onto them. The real
@@ -2280,7 +2280,7 @@ int main(int argc, char** argv)
         }
         worldSelectWorld.setBlock(kMarkerX, 1, kFloorZ, Worlds::Block::make(BlockTypes::WorldSelect1));
 
-        GEBlupiController walker;
+        BlupiController walker;
         walker.SetPosition(static_cast<float>(kFloorX) - 50.0f, 1.0f, static_cast<float>(kFloorZ) - 50.0f);
         walker.SetYaw(1.57079633f); // face +X, toward the marker
         walker.Step(worldSelectWorld, 0.0f, 0.0f, false, false, false, dt);

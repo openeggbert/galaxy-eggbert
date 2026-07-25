@@ -1,7 +1,7 @@
 #include "GalaxyEggbertCnaGame.hpp"
 
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
-#include "Game/GEObjectVerticalPlacement.hpp"
+#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
@@ -24,6 +24,8 @@
 
 namespace GalaxyEggbert::CNA
 {
+    using namespace GalaxyEggbert::Game;
+
     namespace
     {
         constexpr int kGoldenCaptureTicks[] = {60, 120, 180};
@@ -46,50 +48,50 @@ namespace GalaxyEggbert::CNA
 
         // Placeholder-model animation mapping (2026-07-09, NEXT.md §3) --
         // avatars3d/blupi_placeholder/'s 3 clips (Survey/Walk/Run) don't
-        // correspond to GEBlupiController::AnimState's states at all (10 as
+        // correspond to BlupiController::AnimState's states at all (10 as
         // of 2026-07-11's Jump/Air split plus Ecrase/Balloon/Teleporting,
         // plan.md E3D-MIG-064), so this is a rough best-effort substitution,
         // not a faithful behavioral mapping -- see
         // avatars3d/blupi_placeholder/README.md's own mapping table for the
         // reasoning per state. Swap out entirely once a real Blupi model
         // with real matching clips exists.
-        const std::string& BlupiAnimStateToPlaceholderClipName(GEBlupiController::AnimState state)
+        const std::string& BlupiAnimStateToPlaceholderClipName(BlupiController::AnimState state)
         {
             static const std::string kSurvey = "Survey";
             static const std::string kWalk = "Walk";
             static const std::string kRun = "Run";
             switch (state)
             {
-                case GEBlupiController::AnimState::March:
-                case GEBlupiController::AnimState::MarchEcrase:
-                case GEBlupiController::AnimState::MarchHelico:
-                case GEBlupiController::AnimState::MarchJeep:
-                case GEBlupiController::AnimState::MarchTank:
-                case GEBlupiController::AnimState::MarchSkate:
-                case GEBlupiController::AnimState::MarchOver:
-                case GEBlupiController::AnimState::MarchNage:
-                case GEBlupiController::AnimState::MarchSurf:
-                case GEBlupiController::AnimState::Push: return kWalk;
-                case GEBlupiController::AnimState::Jump:
-                case GEBlupiController::AnimState::Air:   return kRun;
-                case GEBlupiController::AnimState::Stop:
-                case GEBlupiController::AnimState::Down:
-                case GEBlupiController::AnimState::Up:
-                case GEBlupiController::AnimState::StopEcrase:
-                case GEBlupiController::AnimState::Balloon:
-                case GEBlupiController::AnimState::Teleporting:
-                case GEBlupiController::AnimState::Bye:
-                case GEBlupiController::AnimState::StopHelico:
-                case GEBlupiController::AnimState::StopJeep:
-                case GEBlupiController::AnimState::StopTank:
-                case GEBlupiController::AnimState::StopSkate:
-                case GEBlupiController::AnimState::StopOver:
-                case GEBlupiController::AnimState::StopNage:
-                case GEBlupiController::AnimState::StopSurf:
-                case GEBlupiController::AnimState::Hide:
-                case GEBlupiController::AnimState::Mockery:
-                case GEBlupiController::AnimState::Mockeryi:
-                case GEBlupiController::AnimState::Mockeryp:
+                case BlupiController::AnimState::March:
+                case BlupiController::AnimState::MarchEcrase:
+                case BlupiController::AnimState::MarchHelico:
+                case BlupiController::AnimState::MarchJeep:
+                case BlupiController::AnimState::MarchTank:
+                case BlupiController::AnimState::MarchSkate:
+                case BlupiController::AnimState::MarchOver:
+                case BlupiController::AnimState::MarchNage:
+                case BlupiController::AnimState::MarchSurf:
+                case BlupiController::AnimState::Push: return kWalk;
+                case BlupiController::AnimState::Jump:
+                case BlupiController::AnimState::Air:   return kRun;
+                case BlupiController::AnimState::Stop:
+                case BlupiController::AnimState::Down:
+                case BlupiController::AnimState::Up:
+                case BlupiController::AnimState::StopEcrase:
+                case BlupiController::AnimState::Balloon:
+                case BlupiController::AnimState::Teleporting:
+                case BlupiController::AnimState::Bye:
+                case BlupiController::AnimState::StopHelico:
+                case BlupiController::AnimState::StopJeep:
+                case BlupiController::AnimState::StopTank:
+                case BlupiController::AnimState::StopSkate:
+                case BlupiController::AnimState::StopOver:
+                case BlupiController::AnimState::StopNage:
+                case BlupiController::AnimState::StopSurf:
+                case BlupiController::AnimState::Hide:
+                case BlupiController::AnimState::Mockery:
+                case BlupiController::AnimState::Mockeryi:
+                case BlupiController::AnimState::Mockeryp:
                 default:
                     return kSurvey;
             }
@@ -107,21 +109,21 @@ namespace GalaxyEggbert::CNA
         struct VehicleModeMapping
         {
             GalaxyEggbert::Def::ObjectType type;
-            GEBlupiController::VehicleMode mode;
+            BlupiController::VehicleMode mode;
         };
         constexpr VehicleModeMapping kVehicleModeTable[] = {
-            {GalaxyEggbert::Def::ObjectType::ObjectType13, GEBlupiController::VehicleMode::Helicopter},
-            {GalaxyEggbert::Def::ObjectType::ObjectType19, GEBlupiController::VehicleMode::Jeep},
-            {GalaxyEggbert::Def::ObjectType::ObjectType28, GEBlupiController::VehicleMode::Tank},
-            {GalaxyEggbert::Def::ObjectType::ObjectType24, GEBlupiController::VehicleMode::Skateboard},
-            {GalaxyEggbert::Def::ObjectType::ObjectType46, GEBlupiController::VehicleMode::Overcraft},
+            {GalaxyEggbert::Def::ObjectType::ObjectType13, BlupiController::VehicleMode::Helicopter},
+            {GalaxyEggbert::Def::ObjectType::ObjectType19, BlupiController::VehicleMode::Jeep},
+            {GalaxyEggbert::Def::ObjectType::ObjectType28, BlupiController::VehicleMode::Tank},
+            {GalaxyEggbert::Def::ObjectType::ObjectType24, BlupiController::VehicleMode::Skateboard},
+            {GalaxyEggbert::Def::ObjectType::ObjectType46, BlupiController::VehicleMode::Overcraft},
         };
 
         // Mirrors the old switch's own `default: -> Overcraft` fallback
         // exactly -- `IsInVehicle()` already gates every caller so `mode`
         // is never actually `None` here, and Overcraft is the only real
         // mode left unmatched by a linear scan miss.
-        GalaxyEggbert::Def::ObjectType VehicleModeToObjectType(GEBlupiController::VehicleMode mode)
+        GalaxyEggbert::Def::ObjectType VehicleModeToObjectType(BlupiController::VehicleMode mode)
         {
             for (const auto& entry : kVehicleModeTable)
             {
@@ -133,7 +135,7 @@ namespace GalaxyEggbert::CNA
             return GalaxyEggbert::Def::ObjectType::ObjectType46;
         }
 
-        bool ObjectTypeToVehicleMode(GalaxyEggbert::Def::ObjectType type, GEBlupiController::VehicleMode& outMode)
+        bool ObjectTypeToVehicleMode(GalaxyEggbert::Def::ObjectType type, BlupiController::VehicleMode& outMode)
         {
             for (const auto& entry : kVehicleModeTable)
             {
@@ -198,7 +200,7 @@ namespace GalaxyEggbert::CNA
         // Real fixed 5.0s Wait-phase cosmetic timer (plan.md
         // MENU-001..005, confirmed via research: `Game1.cpp`'s real
         // `waitProgress = ticks/50,000,000`) -- must match
-        // GEInputPad::DrawWait()'s own gauge-fill duration (kept as a
+        // InputPad::DrawWait()'s own gauge-fill duration (kept as a
         // separately-owned constant there since that class doesn't
         // depend on this one).
         constexpr float kWaitDurationSeconds = 5.0f;
@@ -206,7 +208,7 @@ namespace GalaxyEggbert::CNA
         // Real fade-out phase-transition commit timer (plan.md
         // MENU-088/089, confirmed via research: `Config::ScaleTime(20)` =
         // 1.0s at this build's pinned 20fps) -- must match
-        // GEInputPad.cpp's own kFadeDurationSeconds (kept as a
+        // InputPad.cpp's own kFadeDurationSeconds (kept as a
         // separately-owned constant there, same cross-file convention as
         // kWaitDurationSeconds above).
         constexpr float kFadeCommitDurationSeconds = 1.0f;
@@ -227,7 +229,7 @@ namespace GalaxyEggbert::CNA
         // set -- e.g. a real non-solid-for-Blupi Teleporter pillar still
         // visually blocks the camera's view through it, which is the
         // correct behavior here even though it would be wrong for
-        // GEBlupiController's own `IsSolidAt`). Returns the safe distance
+        // BlupiController's own `IsSolidAt`). Returns the safe distance
         // along `direction` (a unit vector), always `<= maxDistance`.
         float RaymarchWallDistance(const GalaxyEggbert::Worlds::World& world,
                                    const Easy3D::Camera3D::Vector3& origin,
@@ -240,9 +242,9 @@ namespace GalaxyEggbert::CNA
             {
                 traveled = std::min(traveled + kStep, maxDistance);
                 const auto point = origin + direction * traveled;
-                const int gx = static_cast<int>(std::lround(point.X)) + GEWorldRuntime::kWorldCenterX;
+                const int gx = static_cast<int>(std::lround(point.X)) + WorldRuntime::kWorldCenterX;
                 const int gy = static_cast<int>(std::lround(point.Y));
-                const int gz = static_cast<int>(std::lround(point.Z)) + GEWorldRuntime::kWorldCenterZ;
+                const int gz = static_cast<int>(std::lround(point.Z)) + WorldRuntime::kWorldCenterZ;
                 if (gx < 0 || gz < 0 || gy < 0 || gx >= blocksPerAxis || gz >= blocksPerAxis || gy >= blocksPerAxis)
                 {
                     continue; // out of bounds -- treat as open air
@@ -283,7 +285,7 @@ namespace GalaxyEggbert::CNA
     {
         // Default world source: a genuinely 3D, hand-authored .vwr world
         // (plan.md E3D-MIG-058), not a flat mobile-eggbert .txt layout.
-        // LoadFromMobileEggbertFile() stays available on GEWorldRuntime as a
+        // LoadFromMobileEggbertFile() stays available on WorldRuntime as a
         // secondary/reference path (e.g. for later faithful-remake level
         // porting) but is no longer the default load here.
         const bool loaded = worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr");
@@ -321,7 +323,7 @@ namespace GalaxyEggbert::CNA
                   << "]." << std::endl;
 
         // Tile-atlas sanity check (plan.md E3D-MIG-053) — nothing queues a
-        // CubeBatch item from this yet; this only proves GETileAtlas resolves
+        // CubeBatch item from this yet; this only proves TileAtlas resolves
         // known block types to plausible UV rects.
         const auto printTileUv = [this](const char* name, int blockType)
         {
@@ -335,7 +337,7 @@ namespace GalaxyEggbert::CNA
         printTileUv("GoldPillar", GalaxyEggbert::BlockTypes::GoldPillar);
 
         // Static terrain mesh for the loaded world (plan.md E3D-MIG-054) —
-        // one CubeBatch item per non-air cell, textured via GETileAtlas.
+        // one CubeBatch item per non-air cell, textured via TileAtlas.
         auto& device = getGraphicsDeviceProperty();
         RebuildWorldPresentation();
 
@@ -367,12 +369,12 @@ namespace GalaxyEggbert::CNA
         grassEffect_->setTextureProperty(&grassTexture_);
 
         // Real mobile-eggbert bottom HUD + the interim animation-state
-        // indicator (2026-07-10, see GEHud.hpp -- loads its own texture
+        // indicator (2026-07-10, see Hud.hpp -- loads its own texture
         // instances, including text.png/pad.png which nothing else loads).
         hud_.LoadContent(device);
 
         // Real mobile-eggbert on-screen touch controls (2026-07-13, see
-        // GEInputPad.hpp -- loads its own pad.png instance plus
+        // InputPad.hpp -- loads its own pad.png instance plus
         // Content/backgrounds/pause.png and blupiyoupie.png, which
         // nothing else loads).
         inputPad_.LoadContent(device);
@@ -388,7 +390,7 @@ namespace GalaxyEggbert::CNA
                   << " MoveObject(s) parsed for billboard rendering." << std::endl;
 
         // Billboard rendering for the 5 object-m.png-sourced MoveObjects
-        // (GEObjectIcons::IsObjectMPngSourced, NEXT.md §3) -- reuses
+        // (ObjectIcons::IsObjectMPngSourced, NEXT.md §3) -- reuses
         // terrainTexture_ (object-m.png), same reasoning as bigDecorEffect_.
         objectMPngEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         objectMPngEffect_->VertexColorEnabled = false;
@@ -396,7 +398,7 @@ namespace GalaxyEggbert::CNA
         objectMPngEffect_->setTextureProperty(&terrainTexture_);
 
         // Billboard rendering for the 12 explo.png-sourced MoveObjects
-        // (GEObjectIcons::IsExploPngSourced, NEXT.md §3) -- explo.png isn't
+        // (ObjectIcons::IsExploPngSourced, NEXT.md §3) -- explo.png isn't
         // loaded anywhere else in GalaxyEggbertCNA, so this is a genuinely
         // new texture load (already copied next to this binary at build
         // time, same mechanism as element.png/object-m.png).
@@ -407,7 +409,7 @@ namespace GalaxyEggbert::CNA
         exploEffect_->setTextureProperty(&exploTexture_);
 
         // Billboard rendering for the 4 Blupi-skin MoveObjects
-        // (GEObjectIcons::IsBlupiPngSourced, NEXT.md §3) -- separate
+        // (ObjectIcons::IsBlupiPngSourced, NEXT.md §3) -- separate
         // Texture2D instances from blupiIconTexture_ above even though
         // ObjectType200 loads the same blupi.png file, since that one is
         // owned by the 2D SpriteBatch HUD path, not this 3D BasicEffect path.
@@ -437,7 +439,7 @@ namespace GalaxyEggbert::CNA
 
         // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3) --
         // reuses terrainTexture_ (object-m.png), the confirmed-correct sheet
-        // for these ObjectTypes (see GEObjectIcons::IsUniformCubeObject).
+        // for these ObjectTypes (see ObjectIcons::IsUniformCubeObject).
         // Only the effect is set up here; the mesh itself is rebuilt every
         // frame in Draw() now (2026-07-09, NEXT.md §8 task 3 optional
         // follow-up), same reason as the billboards -- types 47/48
@@ -504,7 +506,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // Explicit .vwr start cells use raw-grid coordinates and are shifted
-        // by GEWorldRuntime for rendering. Old worlds retain the historical
+        // by WorldRuntime for rendering. Old worlds retain the historical
         // fixed sample-world default.
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
@@ -517,17 +519,17 @@ namespace GalaxyEggbert::CNA
             blupi_.SetPosition(0.0f, 1.0f, 0.0f);
         }
 
-        // Real mobile-eggbert sound playback (2026-07-10, see GESound.hpp) --
+        // Real mobile-eggbert sound playback (2026-07-10, see Sound.hpp) --
         // loads whichever of Content/sounds/sound000.wav..sound092.wav
         // actually exist (already copied next to the binary by the
         // mobile-eggbert Content/ POST_BUILD step, same as icons/
         // backgrounds).
         sound_.LoadContent();
         std::cout << "GalaxyEggbertCNA: sound loaded — " << sound_.LoadedCount() << "/"
-                  << GESound::kNumChannels << " channel(s)." << std::endl;
+                  << Sound::kNumChannels << " channel(s)." << std::endl;
 
         // Minimal settings persistence (2026-07-13, plan.md MENU-067, see
-        // GESaveData.hpp) -- restores the one real, already-wired setting
+        // SaveData.hpp) -- restores the one real, already-wired setting
         // (sound on/off) from the previous run, if any.
         saveData_.Load();
         sound_.SetEnabled(saveData_.GetSoundEnabled());
@@ -602,7 +604,7 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        terrainRenderer_ = std::make_unique<GETerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_);
+        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_);
     }
 
     void GalaxyEggbertCnaGame::LoadMission(int missionNumber)
@@ -667,9 +669,9 @@ namespace GalaxyEggbert::CNA
         // real reset, not a partial one -- same idiom already used
         // elsewhere in this class for "start over" semantics.
         const int preservedLives = interaction_.Lives();
-        interaction_ = GEInteractionSystem();
+        interaction_ = InteractionSystem();
         interaction_.SetLives(preservedLives);
-        blupi_ = GEBlupiController();
+        blupi_ = BlupiController();
 
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
@@ -735,8 +737,8 @@ namespace GalaxyEggbert::CNA
 
         // Fresh defaults, no "preserve lives" concept (unlike LoadMission()) --
         // there's no real progression state to carry between play-test runs.
-        interaction_ = GEInteractionSystem();
-        blupi_ = GEBlupiController();
+        interaction_ = InteractionSystem();
+        blupi_ = BlupiController();
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
             blupi_.SetPosition(
@@ -819,7 +821,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::ResolvePendingVoyage()
     {
-        const auto* voyageEvent = FindInteractionEvent(GEInteractionSystem::EventKind::VoyageRequested);
+        const auto* voyageEvent = FindInteractionEvent(InteractionSystem::EventKind::VoyageRequested);
         if (!voyageEvent)
         {
             return;
@@ -830,7 +832,7 @@ namespace GalaxyEggbert::CNA
 
         float projectedX = 0.0f, projectedY = 0.0f;
         const bool worldIsStart = voyageEvent->voyageWorldIsStart;
-        const bool projected = GEHud::ProjectWorldToHudSpace(
+        const bool projected = Hud::ProjectWorldToHudSpace(
             Microsoft::Xna::Framework::Vector3(voyageEvent->voyageWorldX, voyageEvent->voyageWorldY,
                                                 voyageEvent->voyageWorldZ),
             camera_.GetViewMatrix(), camera_.GetProjectionMatrix(), viewportW, viewportH, projectedX, projectedY);
@@ -883,10 +885,10 @@ namespace GalaxyEggbert::CNA
         // wired 2026-07-19) -- Skateboard is the only vehicle with a
         // dedicated dismount pose (checked the reference doc for the
         // other 4 modes; none exist), so this fires only for it.
-        if (blupi_.GetVehicleMode() == GEBlupiController::VehicleMode::Skateboard)
+        if (blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard)
         {
-            blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::DeposeSkate,
-                                       GEBlupiController::kDeposeSkateDuration);
+            blupi_.TriggerOneShotAnim(BlupiController::AnimState::DeposeSkate,
+                                       BlupiController::kDeposeSkateDuration);
         }
         blupi_.TriggerDismount();
         auto& objects = worldRuntime_.GetMobileObjectsMutable();
@@ -921,14 +923,14 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Def::SoundChannel stopSound = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
         switch (blupi_.GetVehicleMode())
         {
-            case GEBlupiController::VehicleMode::Helicopter:
+            case BlupiController::VehicleMode::Helicopter:
                 desiredLoop = blupi_.IsVehicleMotorHigh() ? GalaxyEggbert::Def::SoundChannel::SoundChannel16 : GalaxyEggbert::Def::SoundChannel::SoundChannel18;
                 startSound = GalaxyEggbert::Def::SoundChannel::SoundChannel15;
                 stopSound = GalaxyEggbert::Def::SoundChannel::SoundChannel17;
                 break;
-            case GEBlupiController::VehicleMode::Jeep:
-            case GEBlupiController::VehicleMode::Tank:
-            case GEBlupiController::VehicleMode::Overcraft:
+            case BlupiController::VehicleMode::Jeep:
+            case BlupiController::VehicleMode::Tank:
+            case BlupiController::VehicleMode::Overcraft:
                 desiredLoop = blupi_.IsVehicleMotorHigh() ? GalaxyEggbert::Def::SoundChannel::SoundChannel29 : GalaxyEggbert::Def::SoundChannel::SoundChannel31;
                 startSound = GalaxyEggbert::Def::SoundChannel::SoundChannel28;
                 stopSound = GalaxyEggbert::Def::SoundChannel::SoundChannel30;
@@ -963,19 +965,19 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertCnaGame::ResolveDeathLock()
     {
         // Starts a NEW lock for the 4 real trigger sites living inside
-        // interaction_.Update() itself (see GEInteractionSystem::
+        // interaction_.Update() itself (see InteractionSystem::
         // EventKind::DeathLockRequested's own comment for the exact
         // shouldRespawn/PendingDeathKind->DeathCause mapping).
-        if (const auto* deathLockEvent = FindInteractionEvent(GEInteractionSystem::EventKind::DeathLockRequested))
+        if (const auto* deathLockEvent = FindInteractionEvent(InteractionSystem::EventKind::DeathLockRequested))
         {
-            using GalaxyEggbert::CNA::GEBlupiController;
-            using GalaxyEggbert::CNA::GEInteractionSystem;
-            const GEInteractionSystem::PendingDeathKind pendingKind = deathLockEvent->deathLockKind;
-            const GEBlupiController::DeathCause cause = (pendingKind == GEInteractionSystem::PendingDeathKind::Clear1)
-                                                             ? GEBlupiController::DeathCause::Clear1
-                                                         : (pendingKind == GEInteractionSystem::PendingDeathKind::Clear2)
-                                                             ? GEBlupiController::DeathCause::Clear2
-                                                             : GEBlupiController::DeathCause::Glu;
+            using GalaxyEggbert::Game::BlupiController;
+            using GalaxyEggbert::Game::InteractionSystem;
+            const InteractionSystem::PendingDeathKind pendingKind = deathLockEvent->deathLockKind;
+            const BlupiController::DeathCause cause = (pendingKind == InteractionSystem::PendingDeathKind::Clear1)
+                                                             ? BlupiController::DeathCause::Clear1
+                                                         : (pendingKind == InteractionSystem::PendingDeathKind::Clear2)
+                                                             ? BlupiController::DeathCause::Clear2
+                                                             : BlupiController::DeathCause::Glu;
             blupi_.TriggerDeathLock(cause, deathLockEvent->deathLockShouldRespawn);
         }
 
@@ -1005,11 +1007,11 @@ namespace GalaxyEggbert::CNA
 
         const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
         float endX = 0.0f, endY = 0.0f;
-        const bool projected = GEHud::ProjectWorldToHudSpace(
+        const bool projected = Hud::ProjectWorldToHudSpace(
             Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()), camera_.GetViewMatrix(),
             camera_.GetProjectionMatrix(), viewport.getWidthProperty(), viewport.getHeightProperty(), endX, endY);
         // Real `VoyageGetPosVie(m_nbVies)` uses the PRE-decrement life count (evaluated as a call
-        // argument before VoyageInit's body runs) -- kLivesX/Y/Step match GEHud.cpp's own
+        // argument before VoyageInit's body runs) -- kLivesX/Y/Step match Hud.cpp's own
         // constants exactly (already reused this way for Egg's own dynamic end point in `158`).
         constexpr float kLivesX = 210.0f, kLivesY = 417.0f, kLivesStep = 16.0f;
         const float startX = kLivesX + kLivesStep * static_cast<float>(interaction_.Lives());
@@ -1020,12 +1022,12 @@ namespace GalaxyEggbert::CNA
             endX = startX;
             endY = kLivesY;
         }
-        interaction_.BeginVoyage(worldRuntime_, GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::LifeLoss, 48,
+        interaction_.BeginVoyage(worldRuntime_, GalaxyEggbert::Game::InteractionSystem::VoyageKind::LifeLoss, 48,
                                  false, startX, kLivesY, endX, endY, sound_);
     }
 
-    const GalaxyEggbert::CNA::GEInteractionSystem::Event* GalaxyEggbertCnaGame::FindInteractionEvent(
-        GalaxyEggbert::CNA::GEInteractionSystem::EventKind kind) const noexcept
+    const GalaxyEggbert::Game::InteractionSystem::Event* GalaxyEggbertCnaGame::FindInteractionEvent(
+        GalaxyEggbert::Game::InteractionSystem::EventKind kind) const noexcept
     {
         for (const auto& event : interaction_.EventsThisFrame())
         {
@@ -1039,17 +1041,17 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertCnaGame::ResolvePickupFreeze()
     {
-        using GalaxyEggbert::CNA::GEBlupiController;
-        using GalaxyEggbert::CNA::GEInteractionSystem;
+        using GalaxyEggbert::Game::BlupiController;
+        using GalaxyEggbert::Game::InteractionSystem;
 
-        const auto* powerEvent = FindInteractionEvent(GEInteractionSystem::EventKind::PowerGranted);
-        const auto* hideEvent = FindInteractionEvent(GEInteractionSystem::EventKind::HideGranted);
-        const auto* cloudEvent = FindInteractionEvent(GEInteractionSystem::EventKind::CloudGranted);
+        const auto* powerEvent = FindInteractionEvent(InteractionSystem::EventKind::PowerGranted);
+        const auto* hideEvent = FindInteractionEvent(InteractionSystem::EventKind::HideGranted);
+        const auto* cloudEvent = FindInteractionEvent(InteractionSystem::EventKind::CloudGranted);
 
         // Starts a new freeze for whichever of the 3 real 2-stage pickups was touched this frame
         // (real immediate "grab" sound: Sucette ch50, Drink ch57, Charge ch58, Decor.cpp:
         // 6025-6087) -- the world object was already destroyed by interaction_.Update() itself.
-        if (powerEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Sucette))
+        if (powerEvent && blupi_.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Sucette))
         {
             sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel50);
             pendingPickupX_ = powerEvent->pickupX;
@@ -1057,7 +1059,7 @@ namespace GalaxyEggbert::CNA
             pendingPickupZ_ = powerEvent->pickupZ;
             pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType26;
         }
-        else if (hideEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Drink))
+        else if (hideEvent && blupi_.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Drink))
         {
             sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel57);
             pendingPickupX_ = hideEvent->pickupX;
@@ -1065,7 +1067,7 @@ namespace GalaxyEggbert::CNA
             pendingPickupZ_ = hideEvent->pickupZ;
             pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType30;
         }
-        else if (cloudEvent && blupi_.TriggerPickupFreeze(GEBlupiController::PickupFreezeKind::Charge))
+        else if (cloudEvent && blupi_.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Charge))
         {
             sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel58);
             // Real m_blupiCloud grants at CONTACT, not completion (confirmed via direct source
@@ -1084,14 +1086,14 @@ namespace GalaxyEggbert::CNA
         // Resolves an ALREADY-active freeze (possibly started a prior frame) that just elapsed --
         // grants the real deferred buff (Sucette/Drink only -- Cloud already granted above),
         // plays the real "complete" sound (ch44/ch62/ch55), and re-spawns the item.
-        GEBlupiController::PickupFreezeKind kind{};
+        BlupiController::PickupFreezeKind kind{};
         if (!blupi_.ConsumePickupFreezeResolved(kind))
         {
             return;
         }
         switch (kind)
         {
-            case GEBlupiController::PickupFreezeKind::Sucette:
+            case BlupiController::PickupFreezeKind::Sucette:
                 blupi_.TriggerPower();
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel44);
                 // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent) -- moved here from the
@@ -1099,11 +1101,11 @@ namespace GalaxyEggbert::CNA
                 // actually starts now, at completion, not at contact.
                 interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
                 break;
-            case GEBlupiController::PickupFreezeKind::Drink:
+            case BlupiController::PickupFreezeKind::Drink:
                 blupi_.TriggerHide();
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel62);
                 break;
-            case GEBlupiController::PickupFreezeKind::Charge:
+            case BlupiController::PickupFreezeKind::Charge:
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel55);
                 break;
         }
@@ -1239,7 +1241,7 @@ namespace GalaxyEggbert::CNA
         // tells the pre-existing mouse drag-look code (further below) that
         // this frame's press landed on an on-screen control, so the two
         // features don't fight over the same left-mouse-button input.
-        GEInputPad::PlayInput padPlayInput;
+        InputPad::PlayInput padPlayInput;
         bool inputPadClaimedMouse = false;
 
         // Phase transitions (plan.md HUD-023) -- read regardless of the
@@ -1267,7 +1269,7 @@ namespace GalaxyEggbert::CNA
                 // Hidden cheat menu (2026-07-13, plan.md CHEAT-001..009):
                 // real gesture zones are checked only during real
                 // Phase::Play, layered on top of (not instead of) the
-                // normal Play controls above -- see GEInputPad::
+                // normal Play controls above -- see InputPad::
                 // UpdateCheatGesture()'s own class comment for the real-
                 // behavior citation and the "layered, not exclusive"
                 // input-sharing caveat.
@@ -1290,7 +1292,7 @@ namespace GalaxyEggbert::CNA
                 }
 
                 // Real SECOND, independent cheat-entry method (plan.md
-                // BLUPI-111, see GEInputPad::UpdateTypedGhostCheat()'s own
+                // BLUPI-111, see InputPad::UpdateTypedGhostCheat()'s own
                 // comment) -- typing "ghost" toggles Ghost mode, "quick"
                 // unlocks F7/F8 (see gameSpeed_'s own member comment),
                 // layered on top of (not instead of) the on-screen cheat
@@ -1399,7 +1401,7 @@ namespace GalaxyEggbert::CNA
                 // (2026-07-13, plan.md MENU-006..020), reachable via
                 // Init's own InitSetup button -- sharing UpdateSetup()/
                 // DrawSetup(), the real "MainSetup additionally shows
-                // SetupReset" difference (see GEInputPad::UpdateSetup()'s
+                // SetupReset" difference (see InputPad::UpdateSetup()'s
                 // own class comment) is the only distinction made here.
                 const bool isMainSetup = phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
@@ -1409,9 +1411,9 @@ namespace GalaxyEggbert::CNA
                 {
                     // Real SetupSounds toggle -- a genuinely meaningful
                     // desktop equivalent, wired to the pre-existing
-                    // GESound::SetEnabled()/IsEnabled(). Persisted
+                    // Sound::SetEnabled()/IsEnabled(). Persisted
                     // immediately (2026-07-13, plan.md MENU-067, see
-                    // GESaveData.hpp), matching the real source's own
+                    // SaveData.hpp), matching the real source's own
                     // `gameData.setSoundActiveProperty(...);
                     // gameData.Write();` -- write-on-toggle, not a timer
                     // or continuous autosave.
@@ -1445,7 +1447,7 @@ namespace GalaxyEggbert::CNA
                 // wall-clock cosmetic timer (confirmed via research,
                 // decoupled from actual asset loading, which already
                 // finished synchronously in LoadContent()). See
-                // GEInputPad::DrawWait()'s own class comment for the real
+                // InputPad::DrawWait()'s own class comment for the real
                 // non-linear waitTable gauge-fill curve this timer drives.
                 if (phaseTimeSeconds_ >= kWaitDurationSeconds)
                 {
@@ -1460,7 +1462,7 @@ namespace GalaxyEggbert::CNA
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {
                 // Real Init / gamer-select menu (2026-07-13, plan.md
-                // MENU-006..020) -- see GEInputPad::UpdateInit()/
+                // MENU-006..020) -- see InputPad::UpdateInit()/
                 // DrawInit()'s own class comment for full detail.
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const auto initInput = inputPad_.UpdateInit(
@@ -1521,7 +1523,7 @@ namespace GalaxyEggbert::CNA
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {
                 // Real Resume (2026-07-13, plan.md MENU-040..045) -- see
-                // GEInputPad::UpdateResume()'s class comment for the
+                // InputPad::UpdateResume()'s class comment for the
                 // adapted-trigger reasoning; this is just the two real
                 // buttons' behavior once already in the phase.
                 const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
@@ -1531,7 +1533,7 @@ namespace GalaxyEggbert::CNA
                 {
                     // Real ResumeContinue -> ContinueMission() ->
                     // SetPhase(Play,-2): restores the checkpointed
-                    // mission (2026-07-17, now that GESaveData's own
+                    // mission (2026-07-17, now that SaveData's own
                     // already-persisted missionNumber -- written at every
                     // Win/Lost checkpoint -- is finally read back) and
                     // lives (no real mid-level position/treasure/key state
@@ -1691,7 +1693,7 @@ namespace GalaxyEggbert::CNA
                     // ComputeMissionBack() formula shared by exit-reached
                     // (WinLostReturn below): a hub (mission%10==0) goes to the
                     // global hub (1), a sublevel goes to its own world's hub.
-                    LoadMission(GEWorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
+                    LoadMission(WorldRuntime::ComputeMissionBack(worldRuntime_.GetMissionNumber()));
                     SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
             }
@@ -1746,7 +1748,7 @@ namespace GalaxyEggbert::CNA
                             {
                                 saveData_.UnlockMissionDoor(currentMission + 1);
                             }
-                            LoadMission(GEWorldRuntime::ComputeWinExitTarget(currentMission));
+                            LoadMission(WorldRuntime::ComputeWinExitTarget(currentMission));
                         }
                         else
                         {
@@ -1842,7 +1844,7 @@ namespace GalaxyEggbert::CNA
             // threaded into Step() itself (not a post-hoc GetGroundBlockType()
             // check like every other hazard) since this changes whether the
             // tile IS the ground at all, not just what Blupi is standing on.
-            const bool tempPassable = GEWorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase());
+            const bool tempPassable = WorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase());
             // Water Surf/Nage detection (plan.md E3D-MIG-148) -- computed
             // from Blupi's PRE-step position (matching tempPassable's own
             // timing above), fed into Step() itself since Nage changes
@@ -1851,7 +1853,7 @@ namespace GalaxyEggbert::CNA
             // GetBlockTypeAbove() (one cell above that) together reproduce
             // the real IsSurfWater ("water here, dry above") / IsDeepWater
             // ("water here AND above") distinction -- see
-            // GEBlupiController::IsSurf()/IsNage()'s own comment.
+            // BlupiController::IsSurf()/IsNage()'s own comment.
             // Real gate (Decor.cpp:5284-5285, found 2026-07-16) also excludes every vehicle mode +
             // Balloon/Ecrase entirely -- while riding/ballooned/squashed, water tiles never
             // trigger Surf/Nage at all (a vehicle drives straight over/through them instead).
@@ -1929,7 +1931,7 @@ namespace GalaxyEggbert::CNA
             {
                 sound_.PlayLand(groundIcon);
             }
-            if (blupi_.GetAnimState() == GEBlupiController::AnimState::March)
+            if (blupi_.GetAnimState() == BlupiController::AnimState::March)
             {
                 // kStepSoundInterval is a reasonable-sounding approximation,
                 // NOT sourced from mobile-eggbert's real march-cycle timing
@@ -1952,20 +1954,20 @@ namespace GalaxyEggbert::CNA
             // added 2026-07-20, Decor.cpp:3278-3287/3628-3633) -- ch7/ch21
             // fire once, 0.2s after entering Down/Up; ch20 fires once on
             // the Down->Stop release transition. See
-            // GEBlupiController::UpdateAnim()'s own comment for why the
+            // BlupiController::UpdateAnim()'s own comment for why the
             // real speedX==0/speedY==0 gate needs no separate modeling
             // here.
             for (const auto& blupiEvent : blupi_.EventsThisFrame())
             {
                 switch (blupiEvent.kind)
                 {
-                    case GEBlupiController::EventKind::DownEntrySoundFired:
+                    case BlupiController::EventKind::DownEntrySoundFired:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel7);
                         break;
-                    case GEBlupiController::EventKind::UpEntrySoundFired:
+                    case BlupiController::EventKind::UpEntrySoundFired:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel21);
                         break;
-                    case GEBlupiController::EventKind::DownReleaseSoundFired:
+                    case BlupiController::EventKind::DownReleaseSoundFired:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel20);
                         break;
                 }
@@ -2026,7 +2028,7 @@ namespace GalaxyEggbert::CNA
             // fall-off-world/lava, the real shared "you died" sound per
             // 07-sounds.md; channel 51: spikes/drip's real Glu-death sound,
             // distinct from channel 8's) and starts the real death-lock
-            // (`GEBlupiController::TriggerDeathLock()`, see its own
+            // (`BlupiController::TriggerDeathLock()`, see its own
             // comment) instead of applying life loss/respawn instantly --
             // both now happen once the lock elapses, via
             // ConsumeDeathLockResolved() below. `cause` drives the real
@@ -2034,7 +2036,7 @@ namespace GalaxyEggbert::CNA
             // `m_blupiRestart` flag for this specific site (see each call
             // site's own comment for its citation).
             const auto triggerDeath = [this](GalaxyEggbert::Def::SoundChannel channel,
-                                              GalaxyEggbert::CNA::GEBlupiController::DeathCause cause,
+                                              GalaxyEggbert::Game::BlupiController::DeathCause cause,
                                               bool shouldRespawn, bool playChannel = true)
             {
                 if (playChannel)
@@ -2050,7 +2052,7 @@ namespace GalaxyEggbert::CNA
             // via the pending-request round-trip pickups use) since these
             // 2 real trigger sites (fall-off-world, Lava) already have
             // `camera_`/viewport in scope, unlike the generic-hazard-
-            // contact coinflip site inside GEInteractionSystem::Update()
+            // contact coinflip site inside InteractionSystem::Update()
             // (see RequestClear2Ascend()'s own comment). kind must be
             // Clear2Ascend (icon 230, offsetY 300) or Clear3Ascend (icon
             // 40, offsetY 2000).
@@ -2059,12 +2061,12 @@ namespace GalaxyEggbert::CNA
             // synchronously (2026-07-14, deferred-timing follow-up), but
             // callers still capture blupi_.GetX/Y/Z() BEFORE calling
             // triggerDeath() for clarity/consistency with every call site.
-            const auto triggerDeathAscend = [this](GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind kind,
+            const auto triggerDeathAscend = [this](GalaxyEggbert::Game::InteractionSystem::VoyageKind kind,
                                                     float offsetY, int icon, float deathX, float deathY, float deathZ)
             {
                 const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
                 float hudX = 0.0f, hudY = 0.0f;
-                if (GEHud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
+                if (Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
                                                    camera_.GetViewMatrix(), camera_.GetProjectionMatrix(),
                                                    viewport.getWidthProperty(), viewport.getHeightProperty(), hudX,
                                                    hudY))
@@ -2131,10 +2133,10 @@ namespace GalaxyEggbert::CNA
                 const float deathZ = blupi_.GetZ();
                 // Real m_blupiRestart=true at this site (Decor.cpp:2757).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear2, true);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear2, true);
                 // Real Clear2 ascend (plan.md `158` death-VFX follow-up,
                 // Decor.cpp:2754-2761) -- deterministic, no coinflip.
-                triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
+                triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
                                     deathX, deathY, deathZ);
             }
 
@@ -2163,10 +2165,10 @@ namespace GalaxyEggbert::CNA
                 const float deathZ = blupi_.GetZ();
                 // Real m_blupiRestart=true at this site (Decor.cpp:5500).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear3, true);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear3, true);
                 // Real Clear3 ascend (plan.md `158` death-VFX follow-up,
                 // Decor.cpp:5497-5499) -- deterministic, no coinflip.
-                triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear3Ascend, 2000.0f, 40,
+                triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear3Ascend, 2000.0f, 40,
                                     deathX, deathY, deathZ);
             }
 
@@ -2182,7 +2184,7 @@ namespace GalaxyEggbert::CNA
             // since vehicles were implemented `171`). The real check also
             // restricts to a narrow central x-band within the tile
             // (`pos.X%64` roughly 15-49, touching the tile's edges doesn't
-            // count) -- not modeled, since GEBlupiController's single-point
+            // count) -- not modeled, since BlupiController's single-point
             // 3D collision has no sub-tile position within a cell to test
             // against; the whole tile is lethal here.
             if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
@@ -2190,7 +2192,7 @@ namespace GalaxyEggbert::CNA
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Glu, true);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
             }
 
             // Water drip hazard (plan.md TILE-032, real Decor::IsGoutte,
@@ -2205,7 +2207,7 @@ namespace GalaxyEggbert::CNA
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Glu, true);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
             }
 
             // Blitz hazard (plan.md E3D-MIG-144) -- real channel 8, same
@@ -2226,11 +2228,11 @@ namespace GalaxyEggbert::CNA
             // audio-only polish, not the hazard itself.
             if (!blupi_.IsInvincible() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
-                GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
+                WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear1, true);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear1, true);
             }
 
             // Crusher hazard (plan.md E3D-MIG-143) -- unlike every hazard
@@ -2245,7 +2247,7 @@ namespace GalaxyEggbert::CNA
             // entry sound (channel 70) when it actually starts a NEW squash.
             if (!blupi_.IsInvincible() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
-                GEWorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
+                WorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
                 blupi_.TriggerCrush())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel70);
@@ -2279,7 +2281,7 @@ namespace GalaxyEggbert::CNA
                 // triggerDeath() must NOT also play it here. Real
                 // m_blupiRestart=true at this site (Decor.cpp:5526).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel75,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear4, true, false);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear4, true, false);
                 interaction_.SpawnSawDeathBurst(worldRuntime_, deathX, deathY, deathZ, sound_);
             }
 
@@ -2320,7 +2322,7 @@ namespace GalaxyEggbert::CNA
             // only (bounding-box overlap, NOT contact/collision) against a
             // real, specific enemy-type list, gated on Blupi already being
             // idle (real `m_blupiAction==Stop`) so it never fights with
-            // movement/other states, and on `GEBlupiController`'s own
+            // movement/other states, and on `BlupiController`'s own
             // cooldown. The ~1-tile radius here is a natural 3D adaptation
             // of the real ~60px (~1 tile at 64px/tile) proximity box; real
             // source also inflates this box when airborne (`m_blupiAir`),
@@ -2335,7 +2337,7 @@ namespace GalaxyEggbert::CNA
             // specifically does NOT trigger the "ahead" Mockery variant
             // (only Mockeryi when behind), ported as-is even though the
             // real reasoning isn't stated in source.
-            if (blupi_.GetAnimState() == GEBlupiController::AnimState::Stop && blupi_.IsMockeryCooldownElapsed())
+            if (blupi_.GetAnimState() == BlupiController::AnimState::Stop && blupi_.IsMockeryCooldownElapsed())
             {
                 constexpr float kMockeryRadius = 1.0f;
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
@@ -2366,10 +2368,10 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
-                    GEBlupiController::AnimState variant;
+                    BlupiController::AnimState variant;
                     if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
                     {
-                        variant = GEBlupiController::AnimState::Mockeryp;
+                        variant = BlupiController::AnimState::Mockeryp;
                     }
                     else
                     {
@@ -2382,11 +2384,11 @@ namespace GalaxyEggbert::CNA
                             {
                                 continue;
                             }
-                            variant = GEBlupiController::AnimState::Mockery;
+                            variant = BlupiController::AnimState::Mockery;
                         }
                         else
                         {
-                            variant = GEBlupiController::AnimState::Mockeryi;
+                            variant = BlupiController::AnimState::Mockeryi;
                         }
                     }
                     if (blupi_.TriggerMockery(variant))
@@ -2395,7 +2397,7 @@ namespace GalaxyEggbert::CNA
                         // Mockery/Mockeryi both use ch65, but Mockeryp uses a
                         // DIFFERENT channel (ch47) -- confirmed directly, not
                         // assumed from the other two.
-                        sound_.Play(variant == GEBlupiController::AnimState::Mockeryp
+                        sound_.Play(variant == BlupiController::AnimState::Mockeryp
                                         ? GalaxyEggbert::Def::SoundChannel::SoundChannel47
                                         : GalaxyEggbert::Def::SoundChannel::SoundChannel65);
                     }
@@ -2438,7 +2440,7 @@ namespace GalaxyEggbert::CNA
                 const auto groundBlock = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
                 if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
                 {
-                    const int target = GEWorldRuntime::ComputeWorldSelectTarget(
+                    const int target = WorldRuntime::ComputeWorldSelectTarget(
                         worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock));
                     if (blupi_.TriggerBye())
                     {
@@ -2497,7 +2499,7 @@ namespace GalaxyEggbert::CNA
                 interaction_.SpawnTeleportArc(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
 
-            // Fan hazard (plan.md E3D-MIG-149, see GEWorldRuntime::
+            // Fan hazard (plan.md E3D-MIG-149, see WorldRuntime::
             // TryConsumeFan()'s own comment for the real IsVentillo() source
             // this ports, and for why only the head-tile consumption is
             // implemented, not the real trail-walk). Real "kills only if
@@ -2519,7 +2521,7 @@ namespace GalaxyEggbert::CNA
             // triggerDeath() below exactly. The real cosmetic ObjectType11
             // shockwave flash spawned at the SAME site is now also
             // modeled (plan.md VISUAL-008-adjacent, 2026-07-14, see
-            // `GEInteractionSystem::SpawnFanHitFlash()`'s own comment).
+            // `InteractionSystem::SpawnFanHitFlash()`'s own comment).
             if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) && !blupi_.IsInvincible())
             {
                 // Captured BEFORE triggerDeath() respawns Blupi -- the
@@ -2539,12 +2541,12 @@ namespace GalaxyEggbert::CNA
                 // `m_blupiRestart=true` anywhere near Decor.cpp:5458-5472).
                 const bool isClear2 = interaction_.RollClear2Coinflip();
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel10,
-                             isClear2 ? GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear2
-                                      : GalaxyEggbert::CNA::GEBlupiController::DeathCause::Clear1,
+                             isClear2 ? GalaxyEggbert::Game::BlupiController::DeathCause::Clear2
+                                      : GalaxyEggbert::Game::BlupiController::DeathCause::Clear1,
                              false);
                 if (isClear2)
                 {
-                    triggerDeathAscend(GalaxyEggbert::CNA::GEInteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
+                    triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
                                         deathX, deathY, deathZ);
                 }
             }
@@ -2629,11 +2631,11 @@ namespace GalaxyEggbert::CNA
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel26,
-                             GalaxyEggbert::CNA::GEBlupiController::DeathCause::Drown, true);
+                             GalaxyEggbert::Game::BlupiController::DeathCause::Drown, true);
             }
 
             // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
-            // see GEBlupiController::UpdateSafePosition()'s own comment) --
+            // see BlupiController::UpdateSafePosition()'s own comment) --
             // "safe" here additionally means not standing on any of the 6
             // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp/
             // Drip), not currently under a teleporter trigger (`aboveIcon`, already
@@ -2653,14 +2655,14 @@ namespace GalaxyEggbert::CNA
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Temp ||
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Drip ||
                     (safetyGroundBlock == GalaxyEggbert::BlockTypes::Blitz &&
-                     GEWorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
+                     WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
                 const bool underTeleporter =
                     aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
                     aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4;
                 blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter && !blupi_.IsNage());
             }
 
-            // Switches (plan.md E3D-MIG-142, see GEWorldRuntime::
+            // Switches (plan.md E3D-MIG-142, see WorldRuntime::
             // TryActivateSwitch()'s own comment for the real 41-cell
             // switch-to-saw linking) -- Space ("Action"), edge-detected the
             // same way jumpPressed is above so holding it doesn't retoggle
@@ -2683,16 +2685,16 @@ namespace GalaxyEggbert::CNA
                 // switch, unlike the other 4 ground-committed/no-hands vehicle states). Same
                 // "predates vehicle modeling" gap already found/fixed this session elsewhere
                 // (pickups/TriggerTeleport/ground-jump/hazard immunity) -- TryActivateSwitch()
-                // itself has no GEBlupiController access, so this is gated here in the caller
+                // itself has no BlupiController access, so this is gated here in the caller
                 // instead, matching that established decoupling. Scoped to JUST this call, NOT
                 // the whole actionPressedEdge block below -- Dynamite/Perso/vehicle mount-dismount
                 // share the same action-button press but have their own independent real gates
                 // (in particular, dismounting a vehicle must still work while riding one).
                 const bool canActivateSwitch =
-                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Overcraft &&
-                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Jeep &&
-                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Tank &&
-                    blupi_.GetVehicleMode() != GalaxyEggbert::CNA::GEBlupiController::VehicleMode::Skateboard &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Overcraft &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Jeep &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Tank &&
+                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Skateboard &&
                     !blupi_.IsBallooned();
                 if (canActivateSwitch)
                 {
@@ -2706,8 +2708,8 @@ namespace GalaxyEggbert::CNA
                         // switch already having activated above; a no-op if
                         // some other freeze is already active, matching
                         // every other TriggerX() call in this file.
-                        blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::Switch,
-                                                   GEBlupiController::kSwitchDuration);
+                        blupi_.TriggerOneShotAnim(BlupiController::AnimState::Switch,
+                                                   BlupiController::kSwitchDuration);
                     }
                 }
 
@@ -2730,8 +2732,8 @@ namespace GalaxyEggbert::CNA
                     // Real PutDynamite animation (plan.md BLUPI-076, found
                     // 2026-07-18) -- same "cosmetic on top of an action
                     // that already happened" shape as Switch above.
-                    blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::PutDynamite,
-                                               GEBlupiController::kPutDynamiteDuration);
+                    blupi_.TriggerOneShotAnim(BlupiController::AnimState::PutDynamite,
+                                               BlupiController::kPutDynamiteDuration);
                 }
                 else
                 {
@@ -2766,8 +2768,8 @@ namespace GalaxyEggbert::CNA
                 // scans for a nearby active vehicle pickup (real confirmed
                 // mapping: ObjectType13->Helicopter, 19->Jeep, 28->Tank,
                 // 24->Skateboard, 46->Overcraft) and mounts it -- done
-                // directly here (not inside GEInteractionSystem::Update(),
-                // which has no access to GEBlupiController::VehicleMode)
+                // directly here (not inside InteractionSystem::Update(),
+                // which has no access to BlupiController::VehicleMode)
                 // matching the same architecture as TryActivateSwitch/
                 // PlaceDynamite above. Real "requires the action button
                 // held/pressed at contact" gate is modeled via the same
@@ -2784,7 +2786,7 @@ namespace GalaxyEggbert::CNA
                     for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
                     {
                         if (!obj.active) continue;
-                        GEBlupiController::VehicleMode mode;
+                        BlupiController::VehicleMode mode;
                         if (!ObjectTypeToVehicleMode(obj.type, mode))
                         {
                             continue;
@@ -2799,10 +2801,10 @@ namespace GalaxyEggbert::CNA
                             // table_blupi ID 42, wired 2026-07-19) -- same
                             // "only Skateboard has this" reasoning as
                             // DeposeSkate in DismountAndDepositVehicle().
-                            if (mode == GEBlupiController::VehicleMode::Skateboard)
+                            if (mode == BlupiController::VehicleMode::Skateboard)
                             {
-                                blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::TakeSkate,
-                                                           GEBlupiController::kTakeSkateDuration);
+                                blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeSkate,
+                                                           BlupiController::kTakeSkateDuration);
                             }
                             obj.active = false;
                             break;
@@ -2812,14 +2814,14 @@ namespace GalaxyEggbert::CNA
             }
             actionKeyWasDown_ = actionPressed;
 
-            // Interactive objects (2026-07-10, see GEInteractionSystem.hpp)
+            // Interactive objects (2026-07-10, see InteractionSystem.hpp)
             // -- platform lift patrol + riding (plan.md E3D-MIG-152, 2026-
             // 07-12), crate push, pickup collection, generic hazard contact
             // (ObjectType2/3/4/16/17/20/96/97), and (2026-07-11) the wasp's
             // balloon status. Runs after blupi_.Step() so blupi_'s position
             // is this frame's final value; blupiXBeforeStep lets the
             // interaction system infer movement direction for crate push
-            // without GEBlupiController needing a velocity accessor.
+            // without BlupiController needing a velocity accessor.
             // crouchHeld gates ObjectType3's real duck-immunity;
             // blupi_.IsBallooned() gates whether a 3/16/96/97 hazard pops
             // the balloon instead of killing. blupiFacingDX/DZ (plan.md
@@ -2831,9 +2833,9 @@ namespace GalaxyEggbert::CNA
             const int blupiFacingDZ = static_cast<int>(std::lround(-std::cos(blupi_.GetYaw())));
             // Secret powers (plan.md E3D-MIG-170) -- blupiCanGrantX mirrors
             // each TriggerX()'s own internal gate exactly (see
-            // GEBlupiController::TriggerShield()/Power()/Cloud()/Hide()'s
+            // BlupiController::TriggerShield()/Power()/Cloud()/Hide()'s
             // own comments), computed here from GetSecretPower() since
-            // GEInteractionSystem has no access to GEBlupiController.
+            // InteractionSystem has no access to BlupiController.
             const auto secretPower = blupi_.GetSecretPower();
             const bool canGrantShield = secretPower != GalaxyEggbert::Def::SecretPower::Shield &&
                                         secretPower != GalaxyEggbert::Def::SecretPower::Hide &&
@@ -2844,7 +2846,7 @@ namespace GalaxyEggbert::CNA
             // and Invert have no such clause in real source (verified
             // directly, NEXT.md's listing of Shield here was wrong), so
             // canGrantShield/canGrantInvert deliberately don't get this.
-            const bool blupiVehicleOrSquashed = blupi_.GetVehicleMode() != GEBlupiController::VehicleMode::None ||
+            const bool blupiVehicleOrSquashed = blupi_.GetVehicleMode() != BlupiController::VehicleMode::None ||
                                                  blupi_.IsBallooned() || blupi_.IsEcrased();
             const bool canGrantPower = secretPower != GalaxyEggbert::Def::SecretPower::Shield &&
                                         !blupiVehicleOrSquashed;
@@ -2854,7 +2856,7 @@ namespace GalaxyEggbert::CNA
                                        secretPower != GalaxyEggbert::Def::SecretPower::Cloud &&
                                        !blupiVehicleOrSquashed;
             // Invert/Mirror (plan.md PICKUP-011) -- mirrors
-            // GEBlupiController::TriggerInvert()'s own gate exactly (not
+            // BlupiController::TriggerInvert()'s own gate exactly (not
             // already Invert, not Hide); independent of the 4 powers above.
             const bool canGrantInvert = !blupi_.IsInverted() && secretPower != GalaxyEggbert::Def::SecretPower::Hide;
             // Real Tank "Fire" (2026-07-13, plan.md BULLET-001) -- a
@@ -2862,12 +2864,12 @@ namespace GalaxyEggbert::CNA
             // button used for dynamite/Perso/switches/vehicle mount above.
             // "F" is this engine's own keyboard pick (no real keyboard
             // binding exists to match -- WP7 touch-only). Level state, not
-            // edge-triggered (see GEInteractionSystem::Update()'s own
+            // edge-triggered (see InteractionSystem::Update()'s own
             // comment for why). Gated to Tank only -- Helicopter's own
             // real firing branch was not independently confirmed this
             // session, a documented gap, not modeled here.
             const bool firePressed = keys.IsKeyDown(Keys::F);
-            const bool canFire = blupi_.GetVehicleMode() == GEBlupiController::VehicleMode::Tank;
+            const bool canFire = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank;
             // Captured before Update() so the Lost transition below can
             // detect the exact frame GameOverCount() increments (plan.md
             // HUD-023's own real trigger, Decor.cpp:6374-6435).
@@ -2887,7 +2889,7 @@ namespace GalaxyEggbert::CNA
             // every other proximity test in this file" comments), so
             // substituting a position far outside the 100x100 world makes
             // every one of them correctly fail shut, with zero changes
-            // needed inside GEInteractionSystem itself. Patrol/animation
+            // needed inside InteractionSystem itself. Patrol/animation
             // logic (which never references Blupi's position at all)
             // continues normally, matching real behavior exactly.
             constexpr float kGhostSentinelPos = 100000.0f;
@@ -2906,7 +2908,7 @@ namespace GalaxyEggbert::CNA
                                  canPushCrate);
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
-            // recorded a this-frame voyage request (GEInteractionSystem has
+            // recorded a this-frame voyage request (InteractionSystem has
             // no camera access, so it can't project the world<->HUD-space
             // endpoint itself). Resolve it here and start the real voyage.
             ResolvePendingVoyage();
@@ -2920,15 +2922,15 @@ namespace GalaxyEggbert::CNA
             // (see TickPollutionPuff()'s own comment). isMoving reuses the
             // same blupiXBeforeStep delta already computed above for the
             // interaction system's crate-push direction inference, instead
-            // of adding a new horizontal-speed accessor to GEBlupiController.
+            // of adding a new horizontal-speed accessor to BlupiController.
             {
                 const auto vehicleMode = blupi_.GetVehicleMode();
                 interaction_.TickPollutionPuff(
                     worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                    vehicleMode == GEBlupiController::VehicleMode::Helicopter,
-                    vehicleMode == GEBlupiController::VehicleMode::Overcraft,
-                    vehicleMode == GEBlupiController::VehicleMode::Jeep,
-                    vehicleMode == GEBlupiController::VehicleMode::Tank,
+                    vehicleMode == BlupiController::VehicleMode::Helicopter,
+                    vehicleMode == BlupiController::VehicleMode::Overcraft,
+                    vehicleMode == BlupiController::VehicleMode::Jeep,
+                    vehicleMode == BlupiController::VehicleMode::Tank,
                     blupi_.GetX() != blupiXBeforeStep, blupi_.GetVelocityY() > 0.0f, blupiFacingDX);
             }
 
@@ -2942,12 +2944,12 @@ namespace GalaxyEggbert::CNA
             // Real camera shake (plan.md CAM-008/009) -- generic-hazard
             // contact-kill (most types SmallShake, fish/bird BigShake) and
             // the dynamite blast's own center-tile SmallShake, both
-            // signaled from GEInteractionSystem::Update() above.
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::SmallShakeTriggered))
+            // signaled from InteractionSystem::Update() above.
+            if (FindInteractionEvent(InteractionSystem::EventKind::SmallShakeTriggered))
             {
                 cameraShake_.Trigger(CameraShakeType::Small);
             }
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::BigShakeTriggered))
+            if (FindInteractionEvent(InteractionSystem::EventKind::BigShakeTriggered))
             {
                 cameraShake_.Trigger(CameraShakeType::Big);
             }
@@ -2956,10 +2958,10 @@ namespace GalaxyEggbert::CNA
             // ID 53, wired 2026-07-19) -- fires only the frame a bullet
             // actually launched (EventKind::TankFired, gated on canFire
             // already requiring Tank mode above), not the empty-clip click.
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::TankFired))
+            if (FindInteractionEvent(InteractionSystem::EventKind::TankFired))
             {
-                blupi_.TriggerOneShotAnim(GEBlupiController::AnimState::FireTank,
-                                           GEBlupiController::kFireTankDuration);
+                blupi_.TriggerOneShotAnim(BlupiController::AnimState::FireTank,
+                                           BlupiController::kFireTankDuration);
             }
 
             // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`
@@ -2990,7 +2992,7 @@ namespace GalaxyEggbert::CNA
             // fires the instant GameOverCount() increments (real
             // DoorsLost()); Win fires the instant ExitReached() becomes
             // true (real IsTerminated(), already gated on holding every
-            // treasure -- see GEInteractionSystem::Update()'s own exit
+            // treasure -- see InteractionSystem::Update()'s own exit
             // handling).
             if (interaction_.GameOverCount() > gameOverCountBeforeUpdate)
             {
@@ -3024,7 +3026,7 @@ namespace GalaxyEggbert::CNA
             // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()
             // reflects whether Blupi was standing on an active lift BEFORE
             // interaction_.Update() just advanced its patrol step -- see
-            // GEInteractionSystem::IsRidingLift()'s own comment for the
+            // InteractionSystem::IsRidingLift()'s own comment for the
             // delta-vs-snap rationale.
             if (interaction_.IsRidingLift())
             {
@@ -3034,12 +3036,12 @@ namespace GalaxyEggbert::CNA
 
             // Secret power grants (plan.md E3D-MIG-170) -- Shield is real,
             // single-stage, instant (TriggerX()'s own internal gate should
-            // agree with what GEInteractionSystem just checked, both read
+            // agree with what InteractionSystem just checked, both read
             // the same GetSecretPower() state). Power/Cloud/Hide (Sucette/
             // Charge/Drink) are real 2-stage pickups -- see
             // ResolvePickupFreeze() below for their own grab/freeze/
             // complete handling (plan.md `173`, 2026-07-14).
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::ShieldGranted) && blupi_.TriggerShield())
+            if (FindInteractionEvent(InteractionSystem::EventKind::ShieldGranted) && blupi_.TriggerShield())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel42);
                 // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent,
@@ -3054,7 +3056,7 @@ namespace GalaxyEggbert::CNA
             // Invert" section. No warning-threshold sound (unlike the 4
             // powers above) -- real source has no warning stage for this
             // buff either.
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::InvertGranted) && blupi_.TriggerInvert())
+            if (FindInteractionEvent(InteractionSystem::EventKind::InvertGranted) && blupi_.TriggerInvert())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel66);
                 interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
@@ -3107,12 +3109,12 @@ namespace GalaxyEggbert::CNA
             // read) -- despite the enum's own generic "electric field"
             // doc comment, the real trigger IS specifically wasp-sting/
             // balloon entry, not a separate electric-field-tile hazard.
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::BalloonTouched) && blupi_.TriggerBalloon())
+            if (FindInteractionEvent(InteractionSystem::EventKind::BalloonTouched) && blupi_.TriggerBalloon())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel40);
                 cameraShake_.Trigger(CameraShakeType::Electric);
             }
-            if (FindInteractionEvent(GEInteractionSystem::EventKind::BalloonPopped))
+            if (FindInteractionEvent(InteractionSystem::EventKind::BalloonPopped))
             {
                 blupi_.PopBalloon();
             }
@@ -3207,7 +3209,7 @@ namespace GalaxyEggbert::CNA
             {
                 // First-person/player-view camera (2026-07-05): look from
                 // Blupi's eye position in his current facing direction (see
-                // GEBlupiController's GetYaw() convention: 0 rad = facing
+                // BlupiController's GetYaw() convention: 0 rad = facing
                 // -Z). Crouching lowers the eye height; looking up tilts the
                 // look target upward — neither is a real head/body pose
                 // (still no first-person 3D model), just a rough
@@ -3290,7 +3292,7 @@ namespace GalaxyEggbert::CNA
             }
 
             // Real screen-shake/forced-pan effect (plan.md CAM-008..013,
-            // see GECameraShake.hpp's own comment) -- only ticks during
+            // see CameraShake.hpp's own comment) -- only ticks during
             // real Play (matches the real `m_bPause` freeze gate; no other
             // phase should animate it). Real (dx,dy) is a 2D screen-space
             // scroll-offset in pixels; the closest natural 3D adaptation
@@ -3537,20 +3539,20 @@ namespace GalaxyEggbert::CNA
             // Def.hpp:154) brackets the user's own reported 71.875% figure
             // (exact source of that specific fraction not located as a
             // literal constant, likely the user's own sprite measurement) --
-            // since 1 block = 1.0 world unit here (GEBlupiController::
+            // since 1 block = 1.0 world unit here (BlupiController::
             // GroundHeightAt() returns topmost-solid-block-Y + 1), target
             // height = 0.71875 world units, giving scale = 0.71875 / 79.029
             // =~ 0.009095.
             //
             // kPlaceholderModelYOffset (2026-07-18, user-reported "the fox
-            // floats in the air" bug): GEBlupiController's own GetY() is
-            // NOT flush with the terrain's rendered surface -- GETerrainRenderer
+            // floats in the air" bug): BlupiController's own GetY() is
+            // NOT flush with the terrain's rendered surface -- TerrainRenderer
             // renders a solid block at grid Y with Center.Y = Y directly (no
             // +0.5), so a column's topmost solid block at grid Y=g has its
             // visual top surface at world Y=g+0.5, while GroundHeightAt()
             // (by design, matches the MoveObject/BigDecor cube convention of
             // sitting a full unit above the floor block's own grid index,
-            // see GETerrainRenderer.cpp/CubeMesh.cpp) returns g+1 -- so
+            // see TerrainRenderer.cpp/CubeMesh.cpp) returns g+1 -- so
             // GetY() sits a constant 0.5 world units above the true visual
             // ground surface. This is invisible for the first-person camera
             // (kEyeHeight is just a feel-tuned offset, already screenshot-
@@ -3606,7 +3608,7 @@ namespace GalaxyEggbert::CNA
                 constexpr float kPlaceholderModelYOffset = -0.5f;
                 constexpr float kPlaceholderModelDepthOffset = 0.6f;
                 // No render-only Balloon offset here: Blupi's own physics
-                // now genuinely lift him while ballooned (GEBlupiController's
+                // now genuinely lift him while ballooned (BlupiController's
                 // kBalloonRiseSpeed, a direct port of the real
                 // Decor.cpp:4039-4058 rising block), so GetY() itself already
                 // carries the whole effect. An earlier cosmetic sine "bob"
@@ -3721,8 +3723,8 @@ namespace GalaxyEggbert::CNA
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7, first pass 2026-07-06) —
         // now animated via each MobileObjSpec's real per-instance phase
-        // (2026-07-09, GEWorldRuntime::Update()), element.png only (see
-        // GEObjectIcons.hpp's known-limitation note re: DOC-007). Rebuilt
+        // (2026-07-09, WorldRuntime::Update()), element.png only (see
+        // ObjectIcons.hpp's known-limitation note re: DOC-007). Rebuilt
         // every frame since billboard vertex positions depend on the camera
         // (Easy3D::BillboardMeshRenderer's header comment) -- convenient,
         // since it also means the icon lookup naturally re-runs every frame
@@ -3794,7 +3796,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // Billboard rendering for the 5 object-m.png-sourced MoveObjects
-        // (GEObjectIcons::IsObjectMPngSourced, NEXT.md §3, 2026-07-09) --
+        // (ObjectIcons::IsObjectMPngSourced, NEXT.md §3, 2026-07-09) --
         // same camera-facing billboard technique as the element.png batch
         // above, but reuses terrainTexture_ (object-m.png) via
         // objectMPngEffect_, and looks up UVs through tileAtlas_ instead of
@@ -3837,7 +3839,7 @@ namespace GalaxyEggbert::CNA
         }
 
         // Billboard rendering for the 12 explo.png-sourced MoveObjects
-        // (GEObjectIcons::IsExploPngSourced, NEXT.md §3, 2026-07-09) --
+        // (ObjectIcons::IsExploPngSourced, NEXT.md §3, 2026-07-09) --
         // same camera-facing billboard technique as the batches above, but
         // exploTexture_ (a genuinely new texture) via exploEffect_, and
         // GetExploIconUv() instead of GetElementIconUv()/tileAtlas_.
@@ -3887,10 +3889,10 @@ namespace GalaxyEggbert::CNA
         }
 
         // Billboard rendering for the 4 Blupi-skin MoveObjects
-        // (GEObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
+        // (ObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
         // ObjectType200 via blupiObjectEffect_ (blupi.png), ObjectType201/
         // 202/203 via blupi1ObjectEffect_ (blupi1.png,
-        // GEObjectIcons::UsesBlupi1Texture) -- two separate batches since
+        // ObjectIcons::UsesBlupi1Texture) -- two separate batches since
         // BasicEffect only binds one texture at a time.
         if (blupiObjectEffect_ && blupi1ObjectEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
@@ -3983,7 +3985,7 @@ namespace GalaxyEggbert::CNA
         } // phase_ != Wait && phase_ != Init (3D world render guard above)
 
         // Restore opaque state after the AlphaBlend block above (billboards
-        // only) -- GEHud manages its own blend state, but this keeps device
+        // only) -- Hud manages its own blend state, but this keeps device
         // state predictable for anything drawn after this point.
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
 
@@ -3992,7 +3994,7 @@ namespace GalaxyEggbert::CNA
         device.SetDepthTestEnabled(false);
 
         // Real mobile-eggbert bottom HUD + interim animation-state
-        // indicator (2026-07-10, see GEHud.hpp for the full layout AND for
+        // indicator (2026-07-10, see Hud.hpp for the full layout AND for
         // why this is real 3D quads instead of SpriteBatch -- CNA's Vulkan
         // backend records every SpriteBatch batch before every 3D draw, so
         // a sprite HUD is always painted over by the scene; that was the
@@ -4020,11 +4022,11 @@ namespace GalaxyEggbert::CNA
             if (!phaseHasRealScreen)
             {
                 // Training-hint lookup (plan.md HUD-024): real grid position
-                // (not render-centered, GEWorldRuntime::kWorldCenterX/Z offset
+                // (not render-centered, WorldRuntime::kWorldCenterX/Z offset
                 // reversed, matching every other grid<->render conversion this
                 // session).
-                const int hintGridX = static_cast<int>(std::lround(blupi_.GetX())) + GEWorldRuntime::kWorldCenterX;
-                const int hintGridZ = static_cast<int>(std::lround(blupi_.GetZ())) + GEWorldRuntime::kWorldCenterZ;
+                const int hintGridX = static_cast<int>(std::lround(blupi_.GetX())) + WorldRuntime::kWorldCenterX;
+                const int hintGridZ = static_cast<int>(std::lround(blupi_.GetZ())) + WorldRuntime::kWorldCenterZ;
                 const char* trainingHint = FindTrainingHint(
                     worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
                     interaction_.TreasuresCollected(), blupi_.IsInVehicle(), interaction_.DynamiteCount() > 0);
@@ -4052,7 +4054,7 @@ namespace GalaxyEggbert::CNA
             }
 
             // On-screen touch controls (2026-07-13, plan.md
-            // MENU-021..027/028..039/046..057, see GEInputPad.hpp): the
+            // MENU-021..027/028..039/046..057, see InputPad.hpp): the
             // real Pause screen (background/character/5 real buttons)
             // while paused, the real Win/Lost screen (background/
             // character animation/Return button) while won/lost, or the

@@ -20,8 +20,8 @@ becomes a second render layer or per-block metadata) — those are open question
 `09-open-questions.md`, to be resolved in a separate mapping-design task. All facts below were
 read directly from `../mobile-eggbert` (read-only reference) and cross-checked against
 galaxy-eggbert's own already-approved partial ports (`include/GalaxyEggbert/BlockTypes.hpp`,
-`include/GalaxyEggbert/Def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/GEWorldRuntime.cpp`,
-`src/GalaxyEggbertCNA/Game/GEWorldRuntime.cpp`).
+`include/GalaxyEggbert/Def/*.hpp`, `src/GalaxyEggbertSimple3D/Game/WorldRuntime.cpp`,
+`src/GalaxyEggbert/Game/WorldRuntime.cpp`).
 
 **Extended 2026-07-05 (`DOC-300`-`DOC-306`) with a prose gameplay-behavior spec** — files
 `10`-`14` plus new sections in `04-enemy-behavior.md`/`06-doors.md` — under explicit, scoped user
@@ -46,7 +46,7 @@ section only summarizes.
 `S3D-4`, Chenille — see `plan.md` §13). In `GalaxyEggbertSimple3D`'s `GEDecorSystem.cpp` this
 remains **unfixed and will not be fixed** — that target is historical reference only as of
 2026-07-08, not built/fixed going forward (see `CLAUDE.md`). In `GalaxyEggbertCNA`'s
-`GEObjectIcons.cpp`, the equivalent gap is **partially fixed (2026-07-09)**: types `1`/`12`/`47`/
+`ObjectIcons.cpp`, the equivalent gap is **partially fixed (2026-07-09)**: types `1`/`12`/`47`/
 `48` (platform lifts, crates) now correctly source `object-m.png`, via a different mechanism —
 they render as solid `UniformCube` objects instead of `element.png` billboards at all (see
 `NEXT.md` §3) — but types `32`/`33` still incorrectly render from `element.png`. This is a code

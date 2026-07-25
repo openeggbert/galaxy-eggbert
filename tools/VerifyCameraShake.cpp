@@ -1,15 +1,15 @@
-#include "Game/GECameraShake.hpp"
+#include <GalaxyEggbert/Game/CameraShake.hpp>
 
 #include <iostream>
 
-// Scripted verification of GECameraShake (plan.md CAM-008..013) -- the
+// Scripted verification of CameraShake (plan.md CAM-008..013) -- the
 // real per-frame (dx,dy) camera-shake table (Tables::table_decor_action,
 // verbatim-transcribed and independently byte-verified against the real
 // source), the real x3 multiplier, the real 20Hz tick rate, and the real
 // self-clear-to-None-on-exhaustion behavior. No graphics context needed.
 int main()
 {
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
 
     bool allOk = true;
     const auto check = [&allOk](bool cond, const char* what)
@@ -18,11 +18,11 @@ int main()
         if (!cond) allOk = false;
     };
 
-    constexpr float dt = GECameraShake::kTickSeconds; // exactly one real tick per Update()
+    constexpr float dt = CameraShake::kTickSeconds; // exactly one real tick per Update()
 
     // --- SmallShake: 32 frames, first frame (-4,4)*3, self-clears after ---
     {
-        GECameraShake shake;
+        CameraShake shake;
         check(shake.GetActiveType() == CameraShakeType::None, "starts with no active shake");
         check(shake.GetOffsetX() == 0.0f && shake.GetOffsetY() == 0.0f, "starts with zero offset");
 
@@ -51,7 +51,7 @@ int main()
 
     // --- BigShake: 32 frames, pure horizontal, first frame (-4,0)*3 ---
     {
-        GECameraShake shake;
+        CameraShake shake;
         shake.Trigger(CameraShakeType::Big);
         shake.Update(dt);
         check(shake.GetOffsetX() == -12.0f && shake.GetOffsetY() == 0.0f,
@@ -67,7 +67,7 @@ int main()
 
     // --- ElectricShake: 192 frames, first frame (0,-32)*3, purely vertical start ---
     {
-        GECameraShake shake;
+        CameraShake shake;
         shake.Trigger(CameraShakeType::Electric);
         shake.Update(dt);
         check(shake.GetOffsetX() == 0.0f && shake.GetOffsetY() == -96.0f,
@@ -84,7 +84,7 @@ int main()
     // --- Re-trigger while active restarts unconditionally (real: a plain
     // assignment, no priority gating) ---
     {
-        GECameraShake shake;
+        CameraShake shake;
         shake.Trigger(CameraShakeType::Big);
         shake.Update(dt);
         shake.Update(dt);
@@ -99,7 +99,7 @@ int main()
 
     // --- Update() with no active shake is a no-op ---
     {
-        GECameraShake shake;
+        CameraShake shake;
         shake.Update(dt);
         shake.Update(dt);
         check(shake.GetActiveType() == CameraShakeType::None, "Update() with no active shake stays None");
@@ -110,7 +110,7 @@ int main()
     // --- Sub-tick dt accumulates correctly (real behavior driven at a
     // fixed 20Hz regardless of the caller's actual frame rate) ---
     {
-        GECameraShake shake;
+        CameraShake shake;
         shake.Trigger(CameraShakeType::Small);
         // Two half-ticks should advance exactly one real frame, not zero
         // and not two.

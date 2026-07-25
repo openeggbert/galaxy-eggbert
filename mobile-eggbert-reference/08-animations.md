@@ -7,7 +7,7 @@ states — 84 with a real `table_blupi`-sourced animation, 3 confirmed to have n
 breakdown — corrected 2026-07-05.)
 
 **2026-07-18 update**: added §8, a galaxy-eggbert (CNA) implementation-status cross-reference (41
-of the 84 recorded actions are now actually wired into `GEBlupiController`'s own `AnimState`
+of the 84 recorded actions are now actually wired into `BlupiController`'s own `AnimState`
 system — this file itself never tracked that, only mobile-eggbert's real behavior). Also corrected
 the Mockery section (§2, "Table/level-editing" area): its "enemy mocking Blupi" description was
 inherited verbatim from `BlupiAction.hpp`'s own misleading doc comment and is backwards — verified
@@ -15,7 +15,7 @@ directly against `Decor::MockeryDetect()` that it's actually Blupi taunting a ne
 reverse.
 
 **History**: an earlier pass in this series (2026-07-03) documented only the 8 `BlupiState` values
-`GEBlupiController.cpp` (galaxy-eggbert's own partial Simple3D port) implements, not mobile-eggbert's
+`BlupiController.cpp` (galaxy-eggbert's own partial Simple3D port) implements, not mobile-eggbert's
 real 87-state `BlupiAction` enum — the user caught that this was the wrong source of truth (both the
 generating pass and the coordinator's own verification had trusted the partial port as if it were
 complete, instead of checking mobile-eggbert's own enum directly). §2 was regenerated from scratch
@@ -27,7 +27,7 @@ Every animated sequence mobile-eggbert's tile/character/object system can produc
 GIFs assembled (with ImageMagick) from per-sheet grid crops — this is meant as a full overview of
 what the animation system does, to inform what galaxy-eggbert eventually needs to replicate. Frame
 data is taken from galaxy-eggbert's own already-approved, verified-against-source ports
-(`GETerrainRenderer.cpp`'s `kAnim*` tables, `GEBlupiController.cpp`'s state tables,
+(`TerrainRenderer.cpp`'s `kAnim*` tables, `BlupiController.cpp`'s state tables,
 `GEDecorSystem::GetObjIcon`'s per-type tables), not re-derived here. All GIFs loop (last frame
 connects back to the first).
 
@@ -48,7 +48,7 @@ sheet).
 
 **Correction (2026-07-03, found while completing this pass): the "6 fps" tick rate claimed below
 for object/explosion animations is not confirmed and is likely wrong.** Tile animations
-(`GEWorldRuntime::Update()`) and Blupi's state animations (`GEBlupiController::AdvanceAnim()`) both
+(`WorldRuntime::Update()`) and Blupi's state animations (`BlupiController::AdvanceAnim()`) both
 use an explicit, throttled timer (6 fps and 8 fps respectively — these ARE confirmed, real, in the
 code). Object animations (`GEDecorSystem::Update()`) have **no such throttle** —
 `st.animPhase = (st.animPhase + 1) % 10000;` runs unconditionally every call, and
@@ -65,7 +65,7 @@ unverified number as if confirmed). New animation entries added in this pass (§
 "N ticks, assumed frame rate" phrasing with the same caveat, not a confirmed duration.
 
 ## 1. Animated tiles (`object-m.png`, galaxy-eggbert's own uniform 6 fps ≈ 167 ms/frame tick — real
-and throttled in `GEWorldRuntime::Update()`, but a simplification: mobile-eggbert's real per-tile
+and throttled in `WorldRuntime::Update()`, but a simplification: mobile-eggbert's real per-tile
 divisors vary and mostly don't equal 167 ms/frame, e.g. Saw ticks at 50 ms/frame (20 fps, `Decor.cpp`'s
 `table_decor_scie` divisor=1) and Crusher/Water1/Marine at 150 ms/frame (divisor=3) — see the
 per-tile table below for mobile-eggbert's actual rates; do not read "6 fps" as a mobile-eggbert-confirmed
@@ -91,11 +91,11 @@ The two `-1` ("invisible") frames in `Temp`'s table are rendered as fully-transp
 behavior (Blupi falls through while invisible, per `02-tiles.md`).
 
 ## 2. Blupi character states — all 87 real `BlupiAction` values (`blupi.png`/`element.png`, 8 fps
-base tick = 125 ms/frame per `GEBlupiController.cpp`'s confirmed throttled timer)
+base tick = 125 ms/frame per `BlupiController.cpp`'s confirmed throttled timer)
 
 **Complete as of this pass.** Source of truth is mobile-eggbert's real
 `../mobile-eggbert/include/WindowsPhoneSpeedyBlupi/def/BlupiAction.hpp` enum (87 real states,
-`None`=0 excluded) — NOT galaxy-eggbert's `GEBlupiController.cpp`, which only implements 8 of
+`None`=0 excluded) — NOT galaxy-eggbert's `BlupiController.cpp`, which only implements 8 of
 these for the currently-playable Simple3D game (this was the exact gap the user caught: an earlier
 pass in this series treated the partial port as if it were the complete animation set). Frame data
 comes from parsing `Tables::table_blupi[2911]`
@@ -114,7 +114,7 @@ remapping" rewrites the base action into a mode-specific variant before the tabl
 these likely resolve to another action's animation at runtime; this pass did not trace that
 remapping logic, so they're listed as "no record found" rather than a guessed mapping.
 
-Independent cross-check: this pass's parse of `table_blupi` reproduces `GEBlupiController.cpp`'s
+Independent cross-check: this pass's parse of `table_blupi` reproduces `BlupiController.cpp`'s
 existing `March`/`Jump`/`Air`/`SwimIdle`/`SwimMove` frame arrays byte-for-byte — confirms both the
 parser and galaxy-eggbert's original 5-action port are correct as far as they go; the gap was
 purely that 82 other real actions were never in scope for that port in the first place.
@@ -494,7 +494,7 @@ Added 2026-07-18 after a user asked "did you even check `mobile-eggbert-referenc
 from-scratch `table_blupi` extraction that, in hindsight, exactly duplicated §2 above (independent
 confirmation both are correct: every frame count matched byte-for-byte). This section is the
 cross-reference that should have existed from the start — which of the 84 real recorded actions
-`GEBlupiController.cpp`'s `AnimState` system actually implements, and why not for the rest. See
+`BlupiController.cpp`'s `AnimState` system actually implements, and why not for the rest. See
 `plan.md`'s `BLUPI-0xx` checklist (especially `BLUPI-047`'s shared writeup) for full citations —
 this is a compact index into that, not a duplicate of it.
 
@@ -510,8 +510,8 @@ with its own airborne icon pair), `TakeSkate`/`DeposeSkate`(42/43, wired 2026-07
 `TriggerOneShotAnim()` at the real Skateboard mount/dismount hook points in
 `GalaxyEggbertCnaGame.cpp` — confirmed the only vehicle mode with a dedicated mount/dismount
 pose), `Sucette`(49, via `PickupBusy`), `StopTank`/`MarchTank`(50/51), `FireTank`(53, wired
-2026-07-19 via a new `GEInteractionSystem::TankFiredThisFrame()` per-frame signal, mirroring the
-existing `CrateBeingPushedThisFrame()` pattern since that class has no `GEBlupiController` access —
+2026-07-19 via a new `InteractionSystem::TankFiredThisFrame()` per-frame signal, mirroring the
+existing `CrateBeingPushedThisFrame()` pattern since that class has no `BlupiController` access —
 fires only the frame a bullet actually launches, not the empty-clip click), `Glu`(54, via
 `DeathLocked`), `Drink`(55, via `PickupBusy`), `Charge`(56, via `PickupBusy`),
 `Mockery`/`Mockeryi`/`Mockeryp`(63/64/83), `Balloon`(66), `StopOver`/`MarchOver`(67/68),

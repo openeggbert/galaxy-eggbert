@@ -92,14 +92,14 @@ Confirmed via inspection of `src/GalaxyEggbertSimple3D/` and `CMakeLists.txt`:
   | File | Lines | Simple3D-coupled? |
   |---|---:|---|
   | `GalaxyEggbertSimpleGame.cpp` | 768 | Yes |
-  | `Game/GEHud.cpp` | 624 | Yes |
+  | `Game/Hud.cpp` | 624 | Yes |
   | `Game/GEDecorSystem.cpp` | 305 | Yes |
-  | `Game/GEBlupiController.cpp` | 270 | Yes |
-  | `Game/GETerrainRenderer.cpp` | 249 | Yes |
-  | `Game/GEWorldRuntime.cpp` | 176 | Yes |
+  | `Game/BlupiController.cpp` | 270 | Yes |
+  | `Game/TerrainRenderer.cpp` | 249 | Yes |
+  | `Game/WorldRuntime.cpp` | 176 | Yes |
   | `Game/GEBridgeSystem.cpp` | 66 | **No** — only includes `GalaxyEggbert/Worlds/World.hpp`, `<vector>`, `<set>` |
   | `Game/GEExploSystem.cpp` | 50 | Yes |
-  | `Game/GESound.cpp` | 58 | Yes |
+  | `Game/Sound.cpp` | 58 | Yes |
   | `Game/GECameraRig.cpp` | 22 | Yes |
 
   Every `Game/*.hpp` except `GEBridgeSystem.hpp` includes `<Simple3D/Simple3D.h>`. `GEBridgeSystem`
@@ -374,13 +374,13 @@ task.
 ### 6.4 Systems whose logic can inspire the new CNA/Easy3D path
 
 - `GEBridgeSystem` — already engine-agnostic; likely portable with zero or near-zero changes.
-- `GEWorldRuntime` — the *shape* of "load a `World`, walk its `Chunk`s, emit renderable tile
+- `WorldRuntime` — the *shape* of "load a `World`, walk its `Chunk`s, emit renderable tile
   requests" is a good pattern to replicate against Easy3D's `CubeBatch`, even though the concrete
   Simple3D calls must be replaced.
-- `GEBlupiController`, `GEDecorSystem`, `GEExploSystem` — their state-machine structure (matching
+- `BlupiController`, `GEDecorSystem`, `GEExploSystem` — their state-machine structure (matching
   mobile-eggbert's `BlupiAction`/`ObjectType` behavior) is worth mirroring; their rendering calls
   are not.
-- `GEHud`, `GESound`, `GECameraRig` — smallest/most isolated pieces; useful as a checklist of what
+- `Hud`, `Sound`, `GECameraRig` — smallest/most isolated pieces; useful as a checklist of what
   needs a CNA/Easy3D equivalent (input-bound camera, 93-channel audio, HUD text/gauges), not as
   code to port.
 
@@ -475,12 +475,12 @@ Proposed layout, mirroring the existing `GalaxyEggbertSimple3D` structure:
 src/GalaxyEggbertCNA/
   GalaxyEggbertCNAGame.hpp / .cpp     — top-level CNA Game subclass, owns the loop
   Game/
-    GEWorldRuntime.hpp / .cpp         — loads World via existing engine-agnostic parser
-    GETerrainRenderer.hpp / .cpp      — CubeBatch-based terrain, CNA draw adapter
-    GEBlupiController.hpp / .cpp      — Blupi state machine + billboard rendering
+    WorldRuntime.hpp / .cpp         — loads World via existing engine-agnostic parser
+    TerrainRenderer.hpp / .cpp      — CubeBatch-based terrain, CNA draw adapter
+    BlupiController.hpp / .cpp      — Blupi state machine + billboard rendering
     GEDecorSystem.hpp / .cpp          — object/pickup/enemy billboards
-    GEHud.hpp / .cpp
-    GESound.hpp / .cpp                — thin CNA audio wrapper
+    Hud.hpp / .cpp
+    Sound.hpp / .cpp                — thin CNA audio wrapper
     GECameraRig.hpp / .cpp            — wraps Easy3D::OrbitCamera/FollowCamera
     GEExploSystem.hpp / .cpp
     GEBridgeSystem.hpp / .cpp         — likely near-verbatim port from Simple3D version

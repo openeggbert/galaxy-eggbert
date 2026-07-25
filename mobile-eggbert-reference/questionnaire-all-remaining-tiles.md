@@ -4241,7 +4241,7 @@ prochází podél osy X. Viz plan.md E3D-MIG-149/142 a 02-tiles.md.
 - Aktuální jméno v katalogu: `SawStopped`
 - Moje dřívější poznámka (kategorie): interactive/hazard-adjacent — **ThinMechanical** (§10.3): same circular-blade shape as 378, stopped state
 - Animace: no, passable: no
-- Použití: not found in scanned files — the Saw's toggled-off, safe static state; `GETerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled
+- Použití: not found in scanned files — the Saw's toggled-off, safe static state; `TerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled
 
 **Co to je?**
 Odpověď: SawStopped (souhlasí s dřívější poznámkou)

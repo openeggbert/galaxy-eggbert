@@ -33,9 +33,9 @@ namespace GalaxyEggbert::Editor
 
         // One request the browser screen made this frame -- the caller
         // (GalaxyEggbertCnaGame) still owns actually loading/creating the
-        // .vwr file (this class has no GEWorldRuntime access), matching
+        // .vwr file (this class has no WorldRuntime access), matching
         // this project's existing "pending signal consumed by the owning
-        // class" idiom (see GEInteractionSystem's own class comment).
+        // class" idiom (see InteractionSystem's own class comment).
         struct BrowserRequest
         {
             bool shouldOpen = false;
@@ -93,10 +93,10 @@ namespace GalaxyEggbert::Editor
         // True exactly once, right after an Update() call that placed or
         // removed a block -- the caller (GalaxyEggbertCnaGame) should
         // respond by calling its own RebuildWorldPresentation(), the same
-        // "rebuild the whole mesh on change" convention GETerrainRenderer
+        // "rebuild the whole mesh on change" convention TerrainRenderer
         // already uses for LoadMission(). Clears back to false once read,
         // same "*ThisFrame()"/"Consume*()" idiom already established by
-        // GEInteractionSystem/GEBlupiController.
+        // InteractionSystem/BlupiController.
         [[nodiscard]] bool ConsumeNeedsPresentationRebuild() noexcept;
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -156,7 +156,7 @@ namespace GalaxyEggbert::Editor
         float camX_ = 50.0f;
         float camY_ = 15.0f;
         float camZ_ = 50.0f;
-        float yaw_ = 0.0f;   // radians; matches GEBlupiController's own convention:
+        float yaw_ = 0.0f;   // radians; matches BlupiController's own convention:
                              // forward = (sin(yaw), -cos(yaw)) in the XZ plane, yaw 0 = facing -Z.
         float pitch_ = -0.35f; // radians, negative = looking down toward the terrain
         float flySpeed_ = 15.0f; // units/second

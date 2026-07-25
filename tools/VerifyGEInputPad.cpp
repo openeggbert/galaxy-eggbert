@@ -1,21 +1,21 @@
-#include "Game/GEInputPad.hpp"
+#include <GalaxyEggbert/Game/InputPad.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
 #include <iostream>
 
-// Scripted, non-interactive verification of GEInputPad (2026-07-13,
+// Scripted, non-interactive verification of InputPad (2026-07-13,
 // plan.md MENU-021..027/028..039) -- proves the on-screen D-pad/Jump/
 // Action/Pause hit-testing and Pause-row button hit-testing actually work
 // (press/drag/release semantics), not just "compiles and doesn't crash".
 // UpdatePlay()/UpdatePause() are deliberately not gated on LoadContent()
-// (see GEInputPad.cpp), so this runs with no GraphicsDevice at all --
+// (see InputPad.cpp), so this runs with no GraphicsDevice at all --
 // synthetic Microsoft::Xna::Framework::Input::MouseState values drive
 // every check, at a 640x480 viewport (scale=1, offsetX=0) so reference-
 // space coordinates match screen coordinates directly.
 int main()
 {
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
     using Microsoft::Xna::Framework::Input::ButtonState;
     using Microsoft::Xna::Framework::Input::MouseState;
 
@@ -38,8 +38,8 @@ int main()
 
     // --- Play: D-pad discrete drag ---
     {
-        GEInputPad pad;
-        GEInputPad::PlayInput in;
+        InputPad pad;
+        InputPad::PlayInput in;
 
         // Press inside the D-pad hit-square (center (80,400)) with no
         // offset yet -> both axes still 0.
@@ -72,8 +72,8 @@ int main()
     // --- Play: Jump is level-triggered (no release needed, current
     // position each frame) ---
     {
-        GEInputPad pad;
-        GEInputPad::PlayInput in;
+        InputPad pad;
+        InputPad::PlayInput in;
 
         // Real PlayJump rect: (550,390)-(620,460).
         (void)pad.UpdatePlay(mouse(300, 300, false), kViewportW, kViewportH, in);
@@ -96,8 +96,8 @@ int main()
     // --- Play: Action/Pause are edge/release-triggered (single-fire on
     // release, regardless of where the release lands) ---
     {
-        GEInputPad pad;
-        GEInputPad::PlayInput in;
+        InputPad pad;
+        InputPad::PlayInput in;
 
         // Real PlayAction rect: (550,310)-(620,380).
         (void)pad.UpdatePlay(mouse(580, 340, true), kViewportW, kViewportH, in);
@@ -115,8 +115,8 @@ int main()
         check(!in.actionPressed, "Action: single-fire -- does not refire on a later no-op frame");
     }
     {
-        GEInputPad pad;
-        GEInputPad::PlayInput in;
+        InputPad pad;
+        InputPad::PlayInput in;
 
         // Real PlayPause rect: (580,10)-(630,60).
         (void)pad.UpdatePlay(mouse(600, 30, true), kViewportW, kViewportH, in);
@@ -127,8 +127,8 @@ int main()
     // --- Play: UpdatePlay()'s own return value (mouse-claimed-by-a-
     // control signal, used to suppress the camera drag-look) ---
     {
-        GEInputPad pad;
-        GEInputPad::PlayInput in;
+        InputPad pad;
+        InputPad::PlayInput in;
 
         const bool claimedEmptySpace = pad.UpdatePlay(mouse(300, 200, true), kViewportW, kViewportH, in);
         check(!claimedEmptySpace, "UpdatePlay: pressing empty space does not claim the mouse");
@@ -145,7 +145,7 @@ int main()
     // --- Pause: unconditional buttons (Menu/Setup/Continue) vs
     // conditional (Back/Restart) ---
     {
-        GEInputPad pad;
+        InputPad pad;
 
         // Real Pause row (index 0..4): Menu[55,145], Back[165,255],
         // Setup[275,365], Restart[385,475], Continue[495,585], Y[310,400].
@@ -161,7 +161,7 @@ int main()
               "Pause: clicking a hidden Restart button (mission==1) does not fire anything");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         // showBack=true, showRestart=true (a normal, non-mission-1, non-
         // decade-boundary mission).
         auto press = pad.UpdatePause(mouse(540, 350, true), kViewportW, kViewportH, true, true);
@@ -185,7 +185,7 @@ int main()
     // --- ResetTouchState() clears an in-flight press so a keyboard-driven
     // phase change mid-drag can't leak into the next phase's own reading.
     {
-        GEInputPad pad;
+        InputPad pad;
         auto press = pad.UpdatePause(mouse(540, 350, true), kViewportW, kViewportH, true, true);
         pad.ResetTouchState();
         auto release = pad.UpdatePause(mouse(540, 350, false), kViewportW, kViewportH, true, true);
@@ -198,14 +198,14 @@ int main()
     // edge/release-triggered, same semantics as every other non-Jump
     // button in this class.
     {
-        GEInputPad pad;
+        InputPad pad;
         const bool pressReturn = pad.UpdateWinLost(mouse(470, 60, true), kViewportW, kViewportH);
         check(!pressReturn, "WinLostReturn: not yet fired on the press frame itself");
         const bool releaseReturn = pad.UpdateWinLost(mouse(470, 60, false), kViewportW, kViewportH);
         check(releaseReturn, "WinLostReturn: fires on release when the press landed inside its rect");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateWinLost(mouse(10, 10, true), kViewportW, kViewportH);
         const bool releaseOutside = pad.UpdateWinLost(mouse(10, 10, false), kViewportW, kViewportH);
         check(!releaseOutside, "WinLostReturn: does not fire when the press landed outside its rect");
@@ -214,25 +214,25 @@ int main()
     // --- PlaySetup: real rects, verified against InputPad.cpp's own
     // bsf2=drawBoundsHeight*140/480 formula, which is EXACTLY 140 at this
     // engine's 480 reference height -- used unadapted (see
-    // GEInputPad.hpp's UpdateSetup() class comment). SetupSounds
+    // InputPad.hpp's UpdateSetup() class comment). SetupSounds
     // (X 20-90, Y 180-250) and SetupReturn (X 508-620, Y 348-460) are
     // functional; SetupJump/Zoom/Accel/Reset are real-position but inert.
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateSetup(mouse(55, 215, true), kViewportW, kViewportH, false);
         const auto release = pad.UpdateSetup(mouse(55, 215, false), kViewportW, kViewportH, false);
         check(release.soundsToggled && !release.returnPressed,
               "Setup: Sounds toggle fires on release, distinct from Return");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateSetup(mouse(564, 404, true), kViewportW, kViewportH, false);
         const auto release = pad.UpdateSetup(mouse(564, 404, false), kViewportW, kViewportH, false);
         check(release.returnPressed && !release.soundsToggled,
               "Setup: Return fires on release, distinct from Sounds");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         // SetupJump rect: X 20-90, Y 250-320 -> center (55,285).
         (void)pad.UpdateSetup(mouse(55, 285, true), kViewportW, kViewportH, false);
         const auto release = pad.UpdateSetup(mouse(55, 285, false), kViewportW, kViewportH, false);
@@ -245,13 +245,13 @@ int main()
     // testing and firing -- confirms PlaySetup's own call (showReset=
     // false) can't ever trigger it even if a press lands in that rect.
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateSetup(mouse(485, 215, true), kViewportW, kViewportH, true);
         const auto release = pad.UpdateSetup(mouse(485, 215, false), kViewportW, kViewportH, true);
         check(release.resetPressed, "Setup: Reset fires on release when showReset=true (MainSetup)");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateSetup(mouse(485, 215, true), kViewportW, kViewportH, false);
         const auto release = pad.UpdateSetup(mouse(485, 215, false), kViewportW, kViewportH, false);
         check(!release.resetPressed, "Setup: Reset never fires when showReset=false (PlaySetup)");
@@ -262,13 +262,13 @@ int main()
     // needed" situation as Setup). Both buttons are now functional (Menu
     // -> Init, 2026-07-13, now that Init exists).
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateResume(mouse(390, 378, true), kViewportW, kViewportH);
         const auto release = pad.UpdateResume(mouse(390, 378, false), kViewportW, kViewportH);
         check(release.continuePressed && !release.menuPressed, "Resume: Continue fires on release");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateResume(mouse(250, 378, true), kViewportW, kViewportH);
         const auto release = pad.UpdateResume(mouse(250, 378, false), kViewportW, kViewportH);
         check(release.menuPressed && !release.continuePressed, "Resume: Menu fires on release, distinct from Continue");
@@ -282,40 +282,40 @@ int main()
     // InitSetup Y390-460 -> center (55,425); InitPlay X480-620/Y300-440
     // -> center (550,370).
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(55, 201, true), kViewportW, kViewportH);
         const auto release = pad.UpdateInit(mouse(55, 201, false), kViewportW, kViewportH);
         check(release.gamerSelected == 0 && !release.playPressed && !release.setupPressed,
               "Init: GamerA fires gamerSelected=0 on release");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(55, 271, true), kViewportW, kViewportH);
         const auto release = pad.UpdateInit(mouse(55, 271, false), kViewportW, kViewportH);
         check(release.gamerSelected == 1, "Init: GamerB fires gamerSelected=1 on release");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(55, 341, true), kViewportW, kViewportH);
         const auto release = pad.UpdateInit(mouse(55, 341, false), kViewportW, kViewportH);
         check(release.gamerSelected == 2, "Init: GamerC fires gamerSelected=2 on release");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(55, 425, true), kViewportW, kViewportH);
         const auto release = pad.UpdateInit(mouse(55, 425, false), kViewportW, kViewportH);
         check(release.setupPressed && release.gamerSelected == -1,
               "Init: InitSetup fires setupPressed on release, not a gamer selection");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
         const auto release = pad.UpdateInit(mouse(550, 370, false), kViewportW, kViewportH);
         check(release.playPressed && release.gamerSelected == -1,
               "Init: InitPlay fires playPressed on release, not a gamer selection");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
         const auto stillHeld = pad.UpdateInit(mouse(550, 370, true), kViewportW, kViewportH);
         check(!stillHeld.playPressed, "Init: InitPlay does not fire while still held (only on release)");
@@ -323,14 +323,14 @@ int main()
     {
         // Not a real mobile-eggbert button (plan.md EDITOR-107) -- opens
         // the in-game 3D world editor's browser. Rect (20,90)-(90,160).
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
         const auto release = pad.UpdateInit(mouse(55, 125, false), kViewportW, kViewportH);
         check(release.editorPressed && release.gamerSelected == -1 && !release.playPressed,
               "Init: InitEditor fires editorPressed on release, not a gamer selection or Play");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
         const auto stillHeld = pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
         check(!stillHeld.editorPressed, "Init: InitEditor does not fire while still held (only on release)");
@@ -347,7 +347,7 @@ int main()
             {71.11f, 205.2f}, {213.33f, 205.2f}, {355.56f, 205.2f}, {71.11f, 205.2f}, {71.11f, 68.4f},
             {213.33f, 68.4f}, {213.33f, 205.2f}, {213.33f, 68.4f}, {355.56f, 68.4f}, {355.56f, 205.2f},
         };
-        GEInputPad pad;
+        InputPad pad;
         bool unlocked = false;
         for (const auto& p : seq)
         {
@@ -363,7 +363,7 @@ int main()
             {71.11f, 205.2f}, {213.33f, 205.2f}, {355.56f, 205.2f}, {71.11f, 205.2f}, {71.11f, 68.4f},
             {213.33f, 68.4f}, {213.33f, 205.2f}, {213.33f, 68.4f}, {355.56f, 68.4f}, {355.56f, 205.2f},
         };
-        GEInputPad pad;
+        InputPad pad;
         // Two correct taps, then a WRONG tap (zone 11 instead of the
         // expected 3rd tap, 32).
         (void)pad.UpdateCheatGesture(mouse(71, 205, true), kViewportW, kViewportH);
@@ -386,7 +386,7 @@ int main()
         check(unlocked, "Cheat gesture: a wrong tap resets progress to 0 (the full 10-tap sequence still unlocks afterward)");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateCheatGesture(mouse(71, 205, true), kViewportW, kViewportH); // correct 1st tap
         (void)pad.UpdateCheatGesture(mouse(71, 205, false), kViewportW, kViewportH);
         (void)pad.UpdateCheatGesture(mouse(500, 400, true), kViewportW, kViewportH); // outside all 6 zones
@@ -411,19 +411,19 @@ int main()
     // doesn't fit at all -- see UpdateCheatMenu()'s own class comment).
     // Button 0 = cheat 1 (OpenDoors); button 8 = cheat 9 (EndGoal).
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateCheatMenu(mouse(30, 30, true), kViewportW, kViewportH);
         const int pressed = pad.UpdateCheatMenu(mouse(30, 30, false), kViewportW, kViewportH);
         check(pressed == 1, "Cheat menu: pressing the first button fires cheat 1 (OpenDoors) on release");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateCheatMenu(mouse(600, 30, true), kViewportW, kViewportH);
         const int pressed = pad.UpdateCheatMenu(mouse(600, 30, false), kViewportW, kViewportH);
         check(pressed == 9, "Cheat menu: pressing the last button fires cheat 9 (EndGoal) on release");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         (void)pad.UpdateCheatMenu(mouse(30, 30, true), kViewportW, kViewportH);
         const int pressed = pad.UpdateCheatMenu(mouse(30, 30, true), kViewportW, kViewportH);
         check(pressed == 0, "Cheat menu: not fired while still held (only fires on release)");
@@ -434,7 +434,7 @@ int main()
         using Keys = Microsoft::Xna::Framework::Input::Keys;
         using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
 
-        GEInputPad pad;
+        InputPad pad;
         bool anyTrue = false;
         // Types "ghost" one key-down-edge at a time, releasing between
         // each letter (matching the real "down-edge appends, held doesn't
@@ -449,7 +449,7 @@ int main()
         check(anyTrue, "Typed cheat: typing \"ghost\" letter by letter fires exactly once (on the final 't')");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         using Keys = Microsoft::Xna::Framework::Input::Keys;
         using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
         bool anyTrue = false;
@@ -461,7 +461,7 @@ int main()
         check(!anyTrue, "Typed cheat: typing \"ghost\" outside Play phase never fires (real Phase::Play gate)");
     }
     {
-        GEInputPad pad;
+        InputPad pad;
         using Keys = Microsoft::Xna::Framework::Input::Keys;
         using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
         // Holding G down across multiple frames (no release in between)
@@ -484,7 +484,7 @@ int main()
         // Suffix match: typing an unrelated prefix before "ghost" still
         // fires (real behavior matches the buffer's own SUFFIX, no reset
         // needed).
-        GEInputPad pad;
+        InputPad pad;
         using Keys = Microsoft::Xna::Framework::Input::Keys;
         using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
         bool anyTrue = false;
@@ -500,7 +500,7 @@ int main()
         // added 2026-07-20) -- same rolling-buffer mechanism as "ghost",
         // sharing the SAME buffer (typing "quickghost" should fire ghost
         // too, matching real source's one-shared-buffer design).
-        GEInputPad pad;
+        InputPad pad;
         using Keys = Microsoft::Xna::Framework::Input::Keys;
         using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
         bool anyQuick = false;

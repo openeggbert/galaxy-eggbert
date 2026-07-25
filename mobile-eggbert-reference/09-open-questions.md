@@ -75,7 +75,7 @@ the design decision, not code status — check `NEXT.md` for what's actually shi
   current CPU-side "rebuild the animated subset's mesh" approach?~~ **Resolved — 2026-07-05** —
   see `15-3d-render-mapping-design.md` §9.3: no change recommended. Animation phase is a shared,
   group-wide counter in mobile-eggbert (all tiles in a group advance in lockstep), not per-instance
-  state, so per-block metadata would be redundant with what `GETerrainRenderer::Update()` already
+  state, so per-block metadata would be redundant with what `TerrainRenderer::Update()` already
   does correctly.
 - ~~Should doors be a distinct `BlockMetadata`-tagged variant, or a billboard object layered over
   `Air`, matching mobile-eggbert's own door-open-is-a-`MoveObject` model?~~ **Resolved — 2026-07-05,

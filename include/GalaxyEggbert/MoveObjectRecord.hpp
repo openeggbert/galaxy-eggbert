@@ -21,9 +21,9 @@ namespace GalaxyEggbert {
 //
 // IMPORTANT: positions here are in Worlds::World's own RAW GRID space
 // (range [0, world.blocksPerAxis()), same as World::setBlock's x/y/z) --
-// NOT the "-kWorldCenterX/Z"-shifted render/camera space GEWorldRuntime's
+// NOT the "-kWorldCenterX/Z"-shifted render/camera space WorldRuntime's
 // own MobileObjSpec/BigDecor conversions apply. That shift is a
-// presentation-layer concern (GEWorldRuntime::kWorldCenterX/Z); this struct
+// presentation-layer concern (WorldRuntime::kWorldCenterX/Z); this struct
 // and PlaceMoveObject/CollectMoveObjects stay agnostic to it, matching
 // every other Worlds::World coordinate in this codebase. Y identifies the
 // center of the occupied voxel cell: an object standing on a solid block at

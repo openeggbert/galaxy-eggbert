@@ -13,12 +13,12 @@ namespace GalaxyEggbert::Editor
     // selection spanning two corners (plan.md EDITOR-105). Rebuilds its
     // mesh only when the shown bounds actually change -- matches this
     // codebase's "rebuild the whole mesh on change, no in-place update
-    // API" convention (see GETerrainRenderer's own class comment).
+    // API" convention (see TerrainRenderer's own class comment).
     class EditorHighlightRenderer
     {
     public:
         // Shows a highlight cube centered at the given RENDER-SPACE
-        // position -- matches GETerrainRenderer's own block-center
+        // position -- matches TerrainRenderer's own block-center
         // convention exactly (integer grid index N renders at N, spanning
         // [N-0.5, N+0.5), not [N, N+1)). A no-op rebuild if this is the
         // same cell already shown.

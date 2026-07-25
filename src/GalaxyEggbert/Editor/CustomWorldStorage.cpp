@@ -11,7 +11,7 @@ namespace GalaxyEggbert::Editor
 {
     namespace
     {
-        // Same real Emscripten/IDBFS persistence difference GESaveData::
+        // Same real Emscripten/IDBFS persistence difference SaveData::
         // kSavePath already documents -- a platform path, not an engine-API
         // difference, so it doesn't fall under CLAUDE.md's "no #ifdef for
         // engine differences" rule.

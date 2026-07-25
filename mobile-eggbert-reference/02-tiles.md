@@ -344,7 +344,7 @@ without a galaxy-eggbert constant yet.
 | ![icon376](images/tile-full-376.png) | 376 | (unnamed) | unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post | no | yes | 5/78 files |
 | ![icon377](images/tile-full-377.png) | 377 | (unnamed) | unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post | no | yes | 1/78 files |
 | ![icon378](images/tile-full-378.png) | 378 | `Saw (base)` | hazard — **InnerFlatPlate** (revised 2026-07-11 per direct live user Q&A, supersedes the "ThinMechanical, geometry not decided" placeholder below): circular saw blade — a genuinely thin, flat double-sided plate through the middle of the block (the block's outer 6 faces are never drawn), not a cube. `GetInnerFlatPlateAxis()` returns `PlateAxis::X` for this icon specifically (not the usual Z default) since its one real placement (the switch+saw pair, `worlds3d/world001.vwr`) sits in a corridor Blupi walks along X — real mobile-eggbert's own 2D sprite has no axis concept at all, so this is a 3D placement adaptation, not a faithfulness question. Was previously undecided ("ThinMechanical" §10.3: thin, flat, not bulk material) | yes, 6 frames (378-383) | no | 15/78 files — kills Blupi on contact; stoppable by Switch |
-| ![icon379](images/tile-full-379.png) | 379 | `SawStopped` | interactive/hazard-adjacent — **InnerFlatPlate** (revised 2026-07-11, same as 378): same circular-blade shape as 378, stopped state | no | no | not found in scanned files — the Saw's toggled-off, safe static state; `GETerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled |
+| ![icon379](images/tile-full-379.png) | 379 | `SawStopped` | interactive/hazard-adjacent — **InnerFlatPlate** (revised 2026-07-11, same as 378): same circular-blade shape as 378, stopped state | no | no | not found in scanned files — the Saw's toggled-off, safe static state; `TerrainRenderer` swaps a saw tile between icon 378 (spinning) and 379 (stopped) when a linked `Switch` is toggled |
 | ![icon384](images/tile-full-384.png) | 384 | `Switch` | interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights | no | no | 8/78 files — toggles linked Saw tiles |
 | ![icon385](images/tile-full-385.png) | 385 | `SwitchOff` | interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights | no | no | not found in scanned files — toggles linked Saw tiles |
 | ![icon386](images/tile-full-386.png) | 386 | (unnamed) | unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou | no | no | 6/78 files |
@@ -519,10 +519,10 @@ double-counts).
 ## Animated tile frame tables — already ported
 
 `Tables.cpp`'s animation arrays for the groups above have already been transcribed (with prior
-approval) into `src/GalaxyEggbertSimple3D/Game/GETerrainRenderer.cpp` as `kAnimLava[8]`,
+approval) into `src/GalaxyEggbertSimple3D/Game/TerrainRenderer.cpp` as `kAnimLava[8]`,
 `kAnimSpike[16]`, `kAnimCrusher[10]`, `kAnimSaw[6]`, `kAnimWater1[6]`, `kAnimWater2[6]`,
 `kAnimTemp[20]`, `kAnimMarine[11]`, plus the 3-frame fan sequences — and ported again to the CNA
-target's `GETerrainRenderer.cpp`. This file does not re-transcribe those values; see the cited
+target's `TerrainRenderer.cpp`. This file does not re-transcribe those values; see the cited
 files for the exact frame sequences, and `08-animations.md` for animated GIFs of each.
 
 ## How these images were generated

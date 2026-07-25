@@ -84,7 +84,7 @@ namespace GalaxyEggbert::Editor
     };
 
     // Undo/redo stack of EditCommand actions against a Worlds::World.
-    // Mirrors GEBlupiController's own documented preference for a single
+    // Mirrors BlupiController's own documented preference for a single
     // reusable shape over inventing a new one per feature -- here, that
     // shape is "record before/after per command, replay on Undo/Redo."
     class EditCommandStack

@@ -11,10 +11,10 @@ commits to nothing; it only proposes._
 ## Short answer
 
 It is realistic, and **half of the work that makes it possible is already done.** The simulation
-(`GEBlupiController`, `GEInteractionSystem`, `GEWorldRuntime`) is entirely graphics-free — that is
+(`BlupiController`, `InteractionSystem`, `WorldRuntime`) is entirely graphics-free — that is
 precisely the purpose of the decoupling / `*ThisFrame()` bus. All rendering lives in
-`GalaxyEggbertCnaGame::Draw()` (~817 lines from line 3100) plus `GETerrainRenderer` / `GEHud` /
-`GEObjectIcons` / the tile helpers / `GETileAtlas`.
+`GalaxyEggbertCnaGame::Draw()` (~817 lines from line 3100) plus `TerrainRenderer` / `Hud` /
+`ObjectIcons` / the tile helpers / `TileAtlas`.
 
 So the simulation already produces state and `Draw()` merely visualizes it — the seam effectively
 **already exists**, it just is not named yet. (Verified: the sim has no dependency on

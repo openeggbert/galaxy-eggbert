@@ -3,7 +3,7 @@
 // P0-2 explicitly asks to "cross-check every GetObjIcon array/divisor
 // against the reference doc PROGRAMMATICALLY (parse the reference tables,
 // compare)". VerifyGetObjIcon.cpp is a regression lock whose expected
-// values are transcribed FROM GEObjectIcons.cpp itself -- this tool is the
+// values are transcribed FROM ObjectIcons.cpp itself -- this tool is the
 // missing independent half: it PARSES mobile-eggbert-reference/
 // 08-animations.md's own §3.1/§3.2 tables directly (not hand-copied
 // numbers) and cross-checks GetObjIcon()'s actual behavior against what
@@ -21,7 +21,7 @@
 // approach: a repeated-value array and a genuinely-shorter array produce
 // IDENTICAL output sequences, so no amount of black-box observation can
 // tell them apart. Resolved (explicit user decision, 2026-07-22) by
-// reading just the per-type DIVISOR from GEObjectIcons.cpp's own case
+// reading just the per-type DIVISOR from ObjectIcons.cpp's own case
 // bodies below (`kDivisors`) -- a small, structural fact analogous to a
 // function's calling convention, not the expected animation DATA itself
 // (which stays fully independent: the actual FRAME COUNT this tool
@@ -37,9 +37,9 @@
 // "96 (follower, awake/homing)" row is a labeling artifact -- the real
 // awake/homing table (`kFollow2`) is actually keyed by ObjectType97 in the
 // code (the object's own `obj.type` field genuinely changes from 96 to 97
-// on waking, confirmed in GEInteractionSystem.cpp's own wake-up transition
+// on waking, confirmed in InteractionSystem.cpp's own wake-up transition
 // logic), not still 96. Mapped explicitly below, not inferred.
-#include "Game/GEObjectIcons.hpp"
+#include <GalaxyEggbert/Game/ObjectIcons.hpp>
 
 #include <cstdint>
 #include <fstream>
@@ -50,7 +50,7 @@
 #include <vector>
 
 using GalaxyEggbert::Def::ObjectType;
-using namespace GalaxyEggbert::CNA;
+using namespace GalaxyEggbert::Game;
 
 namespace
 {
@@ -121,7 +121,7 @@ namespace
         return rows;
     }
 
-    // Per-type hold divisor -- read directly from GEObjectIcons.cpp's own
+    // Per-type hold divisor -- read directly from ObjectIcons.cpp's own
     // `(p / D) % base` / `p % base` case bodies (see this file's own top
     // comment for why this specific fact, and only this fact, is read from
     // source rather than measured). Keyed by the GalaxyEggbert::Def::ObjectType actually
@@ -216,7 +216,7 @@ int main()
         // ObjectType25 (shield) is a KNOWN, already-documented exception, not
         // a fresh finding to fail on: the doc's own §3.1 prose (right after
         // this row) says its 8-frame table is "a known-incomplete port of
-        // mobile-eggbert's real 16-frame table_shield" -- GEObjectIcons.cpp
+        // mobile-eggbert's real 16-frame table_shield" -- ObjectIcons.cpp
         // was already fixed to the real 16 (VerifyGetObjIcon.cpp asserts
         // this same value with an identical comment); the doc's own table
         // row was simply never updated to match. Asserting the CODE is

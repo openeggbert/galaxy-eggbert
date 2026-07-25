@@ -8,14 +8,14 @@
 namespace GalaxyEggbert::Editor
 {
     // Filesystem-backed storage for player-authored .vwr worlds (plan.md
-    // EDITOR-107) -- deliberately NOT tracked in GESaveData (a persisted
+    // EDITOR-107) -- deliberately NOT tracked in SaveData (a persisted
     // list risks desyncing from disk on rename/delete); a plain directory
     // scan is simpler and can't drift. Worlds are scoped per existing
-    // gamer slot (GESaveData::GetSelectedGamer(), 0-2), matching how a
+    // gamer slot (SaveData::GetSelectedGamer(), 0-2), matching how a
     // player already picks their slot on the Init screen.
 
     // Directory holding @p gamerSlot's (0-2) custom worlds. Same platform-
-    // path convention as GESaveData::kSavePath (a real Emscripten/IDBFS
+    // path convention as SaveData::kSavePath (a real Emscripten/IDBFS
     // persistence difference, not an engine-API one).
     [[nodiscard]] std::filesystem::path CustomWorldsDir(int gamerSlot);
 

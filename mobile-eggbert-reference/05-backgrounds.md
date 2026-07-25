@@ -38,7 +38,7 @@ directly from `Game1.cpp`'s screen-state switch (not gameplay code); `speedyblup
 screen) and `blupiyoupie.png`/`gear.png` are loaded elsewhere by the same mechanism. None of these
 10 ever go through `Decor::LoadImages()`'s `region=` path.
 
-**What galaxy-eggbert currently does instead:** `GEWorldRuntime` parses `region=` into `skyRegion_`
+**What galaxy-eggbert currently does instead:** `WorldRuntime` parses `region=` into `skyRegion_`
 but the Simple3D target does not use it — it instead picks one of 5 hardcoded flat sky colors
 indexed by **world number** (1–5, "Grassland/Forest/Ice Caves/Lava Fields/Space Station"), explicitly
 marked `TODO(S3D-sky)` as a rough proxy since Simple3D lacks a fog/zone API. No real background

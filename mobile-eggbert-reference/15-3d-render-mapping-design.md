@@ -36,7 +36,7 @@ direct user identification the same way.
   applied to all 6 faces** (confirmed directly in `CubeMesh.hpp`'s doc comment: "one texture region
   per cube, not one per face"). There is no per-face texture-or-color capability today, and no
   facing/rotation concept anywhere in the CNA rendering path.
-- Every currently-used tile already renders as a uniform-textured cube via `GETerrainRenderer` —
+- Every currently-used tile already renders as a uniform-textured cube via `TerrainRenderer` —
   this is real, working, and correct for the vast majority of tiles (see §3).
 
 ## 2. Proposed per-block-type render descriptor
@@ -208,10 +208,10 @@ solid-block grid, and not a second parallel `World` layer.** Reasoning:
 Animation phase in mobile-eggbert is a **shared, group-wide counter** — all `Lava` tiles (for
 example) advance through their 8-frame loop in lockstep, driven by one global tick, not
 independent per-instance state (confirmed by `Tables.cpp`'s single shared frame-index formula per
-group, already used in `GETerrainRenderer`/`GEWorldRuntime::GetAnimPhase()`). Storing phase in each
+group, already used in `TerrainRenderer`/`WorldRuntime::GetAnimPhase()`). Storing phase in each
 block's 4-bit metadata would duplicate the same value across every instance of a group for no
 benefit. **Recommendation: no change** — keep the existing "rebuild the animated subset's mesh on
-global phase change" approach (`GETerrainRenderer::Update()`), which is already implemented,
+global phase change" approach (`TerrainRenderer::Update()`), which is already implemented,
 tested (NEXT.md: ~48 rebuild cycles over 8s, no crash), and correctly matches how mobile-eggbert
 itself models tile animation.
 

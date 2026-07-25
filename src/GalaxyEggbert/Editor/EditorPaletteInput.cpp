@@ -8,15 +8,15 @@ namespace GalaxyEggbert::Editor
         float x, float y, const EditorPaletteLayout& layout, const State& state,
         int viewportWidth, int viewportHeight) const noexcept
     {
-        if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.DeleteToolRect()))
+        if (GalaxyEggbert::Game::QuadBatch::InRect(x, y, layout.DeleteToolRect()))
         {
             return {HitKind::DeleteTool, -1, true};
         }
-        if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.PlayTestRect(viewportWidth, viewportHeight)))
+        if (GalaxyEggbert::Game::QuadBatch::InRect(x, y, layout.PlayTestRect(viewportWidth, viewportHeight)))
         {
             return {HitKind::PlayTest, -1, true};
         }
-        if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.StopRect(viewportWidth, viewportHeight)))
+        if (GalaxyEggbert::Game::QuadBatch::InRect(x, y, layout.StopRect(viewportWidth, viewportHeight)))
         {
             return {HitKind::Stop, -1, true};
         }
@@ -24,7 +24,7 @@ namespace GalaxyEggbert::Editor
         {
             for (int i = 0; i < EditorPaletteLayout::PlacementButtonCount; ++i)
             {
-                if (GalaxyEggbert::CNA::GEQuadBatch::InRect(
+                if (GalaxyEggbert::Game::QuadBatch::InRect(
                         x, y, layout.PlacementButtonRect(i, viewportWidth, viewportHeight)))
                 {
                     return {HitKind::PlacementButton, i, true};
@@ -33,7 +33,7 @@ namespace GalaxyEggbert::Editor
         }
         for (int i = 0; i < state.categoryCount; ++i)
         {
-            if (GalaxyEggbert::CNA::GEQuadBatch::InRect(x, y, layout.CategoryButtonRect(i)))
+            if (GalaxyEggbert::Game::QuadBatch::InRect(x, y, layout.CategoryButtonRect(i)))
             {
                 return {HitKind::Category, i, true};
             }
@@ -42,7 +42,7 @@ namespace GalaxyEggbert::Editor
         {
             for (int i = 0; i < state.contentItemCount; ++i)
             {
-                if (GalaxyEggbert::CNA::GEQuadBatch::InRect(
+                if (GalaxyEggbert::Game::QuadBatch::InRect(
                         x, y, layout.PaletteCellRect(
                             i, state.contentItemCount, state.openCategory,
                             viewportWidth, viewportHeight)))

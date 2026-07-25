@@ -18,6 +18,9 @@ content-authoring UX, but not new gameplay mechanics.
 
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
+- The canonical game implementation lives in `src/GalaxyEggbert/Game/` under
+  `GalaxyEggbert::Game`, without legacy `GE` prefixes on game-owned components; the CNA-specific
+  source tree now contains only the application host/platform wiring.
 - All approved world-editor milestones and follow-ups through `EDITOR-130` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
   functional touch deletion, verified Inverter/crate/Overcraft entries, menu-based sky-region
@@ -89,7 +92,7 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 - Never modify `../mobile-eggbert`; treat it as read-only reference and test data.
 - Do not transcribe its code, tables, enum values, or byte formats without explicit user approval.
 - Do not invent gameplay mechanics; confirm every gameplay feature against the reference first.
-- Keep `GEInteractionSystem` independent of `GEBlupiController`, camera, and graphics. Use its
+- Keep `InteractionSystem` independent of `BlupiController`, camera, and graphics. Use its
   established event/request boundary for cross-system behavior.
 - Keep the engine-agnostic `include/GalaxyEggbert/` world/data model free of CNA/Easy3D dependencies.
 

@@ -1,10 +1,10 @@
-#include "Game/GETerrainAnimDivisor.hpp"
+#include <GalaxyEggbert/Game/TerrainAnimDivisor.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
 #include <iostream>
 
-// Scripted verification of GETerrainAnimDivisor's AnimDivisor() (plan.md
+// Scripted verification of TerrainAnimDivisor's AnimDivisor() (plan.md
 // TEST-007) -- locks in the real per-type ScaleDiv() divisor mapping
 // against regression: Saw=1 (50ms/frame), Lava=2 (100ms/frame),
 // Water1/Crusher/Water2/Marine/the 4 Fan icons=3 (150ms/frame),
@@ -12,7 +12,7 @@
 // is a pure function of a BlockTypes icon id.
 int main()
 {
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
     using namespace GalaxyEggbert::BlockTypes;
 
     bool allOk = true;

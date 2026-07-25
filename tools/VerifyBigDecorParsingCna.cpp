@@ -1,5 +1,5 @@
-#include "Game/GEWorldRuntime.hpp"
-#include "Game/GEObjectIcons.hpp"
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
+#include <GalaxyEggbert/Game/ObjectIcons.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-// Scripted verification that GalaxyEggbert::CNA::GEWorldRuntime's
+// Scripted verification that GalaxyEggbert::Game::WorldRuntime's
 // LoadFromMobileEggbertFile() correctly parses BigDecor: sections into
 // GetBigDecor() (NEXT.md §8 task 3). Mirrors VerifyMoveObjectTypesCna.cpp's
 // pattern: each case is a real mobile-eggbert level file confirmed (by
@@ -30,7 +30,7 @@ int main()
     bool allOk = true;
 
     {
-        const auto palmUv = GalaxyEggbert::CNA::GetBigDecorIconUv(16);
+        const auto palmUv = GalaxyEggbert::Game::GetBigDecorIconUv(16);
         const bool usesExploTile16 =
             palmUv.U0 == 0.6f && palmUv.V0 == 0.1f &&
             palmUv.U1 == 0.7f && palmUv.V1 == 0.2f;
@@ -44,7 +44,7 @@ int main()
     }
     for (const auto& c : kCases)
     {
-        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        GalaxyEggbert::Game::WorldRuntime runtime;
         if (!runtime.LoadFromMobileEggbertFile(c.file))
         {
             std::cout << "FAIL: could not load " << c.file << std::endl;
@@ -78,7 +78,7 @@ int main()
         world.setSpawnPoint(62, 7, 31);
         world.saveToFile(path);
 
-        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        GalaxyEggbert::Game::WorldRuntime runtime;
         const bool loaded = runtime.LoadFromVwrFile(path);
         const bool spawnMatches =
             loaded && runtime.HasExplicitSpawnPoint() &&
@@ -101,7 +101,7 @@ int main()
         GalaxyEggbert::PlaceBigDecor(world, {87, 62, 7, 31});
         world.saveToFile(path);
 
-        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        GalaxyEggbert::Game::WorldRuntime runtime;
         const bool loaded = runtime.LoadFromVwrFile(path);
         const auto& cells = runtime.GetBigDecorCells();
         const bool bigDecorMatches =
@@ -125,7 +125,7 @@ int main()
     // from world001.vwr 2026-07-17) is this engine's quarantined mechanics
     // -showcase/test world.
     {
-        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        GalaxyEggbert::Game::WorldRuntime runtime;
         const bool loaded = runtime.LoadFromVwrFile("worlds3d/world999.vwr");
         const bool emptyAsExpected = loaded && runtime.GetBigDecor().empty();
         std::cout << (emptyAsExpected ? "PASS" : "FAIL")
@@ -156,7 +156,7 @@ int main()
             out << "Decor:\n";
             out << "abc,1,2\n"; // non-numeric first cell -- used to throw uncaught
         }
-        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        GalaxyEggbert::Game::WorldRuntime runtime;
         const bool loadedWithoutCrashing = runtime.LoadFromMobileEggbertFile(path);
         std::cout << (loadedWithoutCrashing ? "PASS" : "FAIL")
                   << ": a malformed (non-numeric) Decor: cell doesn't crash the loader" << std::endl;

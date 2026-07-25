@@ -70,7 +70,7 @@ constexpr uint16_t Platform = 200;   // floating platform
 // pickups instead, see `170`'s own writeup). Renamed 2026-07-17 once put to
 // actual use for the hub/mission-progression system: touching one selects
 // world/level N (1-8), the real destination computed contextually by
-// `GEWorldRuntime::ComputeWorldSelectTarget()` depending on the CURRENT
+// `WorldRuntime::ComputeWorldSelectTarget()` depending on the CURRENT
 // mission (same real marker range means "pick a world" from the global hub,
 // or "pick a level" from a world hub -- exactly mirroring real source).
 constexpr uint16_t WorldSelect1 = 158;
@@ -103,7 +103,7 @@ inline int worldSelectIndex(uint16_t bt) { return isWorldSelect(bt) ? static_cas
 // index 1 is always ungated) sits behind a real solid door tile that opens
 // once the PREVIOUS sublevel has been completed (`Decor::OpenDoorsWin()`'s
 // `m_doors[mission+1]=1`). This engine keys the same real per-mission
-// unlock flag directly (`GESaveData::IsMissionDoorUnlocked()`) rather than
+// unlock flag directly (`SaveData::IsMissionDoorUnlocked()`) rather than
 // porting the real 200-entry `m_doors[]` array's exact indexing scheme.
 // icons 170-176 are a free, previously-unused range (distinct from real
 // source's own icon 182 -- this engine doesn't need to match that exact

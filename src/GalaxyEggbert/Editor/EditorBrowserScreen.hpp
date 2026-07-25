@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Game/GEQuadBatch.hpp"
+#include <GalaxyEggbert/Game/QuadBatch.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
@@ -37,7 +37,7 @@ namespace GalaxyEggbert::Editor
         // create/delete, not every frame.
         void Refresh(int gamerSlot);
 
-        // Edge-triggered on release, matching GEInputPad's own click idiom.
+        // Edge-triggered on release, matching InputPad's own click idiom.
         // Deleting is a real two-tap confirm: the first click on a row's
         // "X" arms it (drawn highlighted); a second click on the SAME "X"
         // actually deletes and re-Refresh()es; clicking anything else
@@ -50,9 +50,9 @@ namespace GalaxyEggbert::Editor
                  int viewportWidth, int viewportHeight);
 
     private:
-        [[nodiscard]] GalaxyEggbert::CNA::GEQuadBatch::Rect RowRect(int index) const noexcept;
-        [[nodiscard]] GalaxyEggbert::CNA::GEQuadBatch::Rect DeleteButtonRect(int index) const noexcept;
-        [[nodiscard]] GalaxyEggbert::CNA::GEQuadBatch::Rect BackButtonRect(
+        [[nodiscard]] GalaxyEggbert::Game::QuadBatch::Rect RowRect(int index) const noexcept;
+        [[nodiscard]] GalaxyEggbert::Game::QuadBatch::Rect DeleteButtonRect(int index) const noexcept;
+        [[nodiscard]] GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect(
             int viewportWidth, int viewportHeight) const noexcept;
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 

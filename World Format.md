@@ -302,7 +302,7 @@ zero means that rendering continues to derive the icon from object type and anim
 `World::collectExtraMetadata(metadataType)` are thin `World`-level wrappers (added the same day)
 around `Chunk::setExtraMetadata`/`extraMetadata()` so callers don't have to compute chunk/local
 indices themselves. See `PlaceMoveObject()`/`CollectMoveObjects()` in `MoveObjectRecord.cpp` for
-the full encode/decode, and `GEWorldRuntime::LoadFromVwrFile()` (CNA) for how a loaded world turns
+the full encode/decode, and `WorldRuntime::LoadFromVwrFile()` (CNA) for how a loaded world turns
 these back into renderable objects.
 
 `GalaxyEggbert::BigDecorRecord` is the second world-level consumer. It uses
@@ -552,7 +552,7 @@ for each solid block:
 ```
 
 **Implemented (2026-07-09)** for `GalaxyEggbertCNA`'s static (non-animated) terrain path —
-`GETerrainRenderer::IsOccluderBlock()` is a conservative version of the "neighbor is air or
+`TerrainRenderer::IsOccluderBlock()` is a conservative version of the "neighbor is air or
 outside world" check above (a face is also kept, not culled, if the neighbor uses a
 holed/special-geometry render mode or needs alpha blending, since those aren't guaranteed to
 fully cover the shared face). Cut the default sample world's terrain mesh from 67788 to 23012

@@ -37,7 +37,7 @@ guidance.
 - Do not modify sibling repositories (`../cna`, `../easy-3d`, `../easy-gl`, `../sharp-runtime`,
   `../meta-gl`, `../mobile-eggbert`) unless the user explicitly scopes that repository into the
   task.
-- Keep `GEInteractionSystem` free of controller, camera, and graphics dependencies.
+- Keep `InteractionSystem` free of controller, camera, and graphics dependencies.
 - Keep engine-independent world data under `include/GalaxyEggbert/` and
   `src/GalaxyEggbert/Worlds/`.
 - Avoid backend-specific branches in game logic. `GalaxyEggbertCNA` speaks CNA directly.
@@ -46,8 +46,10 @@ guidance.
 
 ## Source layout
 
-- `src/GalaxyEggbertCNA/` — CNA game host, renderer, gameplay, and menus.
+- `src/GalaxyEggbertCNA/` — thin CNA application host and platform wiring.
 - `include/GalaxyEggbert/`, `src/GalaxyEggbert/Worlds/` — engine-independent world/data model.
+- `src/GalaxyEggbert/Game/` — canonical game implementation in namespace
+  `GalaxyEggbert::Game`; keep game-owned names free of the legacy `GE` prefix.
 - `src/GalaxyEggbert/Editor/` — shared editor implementation in namespace
   `GalaxyEggbert::Editor`; keep editor-owned names free of the legacy `GE` prefix.
 - `include/GalaxyEggbert/Def/` — shared game definitions in namespace `GalaxyEggbert::Def`.

@@ -2,8 +2,8 @@
 
 #include "BoxRegion.hpp"
 #include "VoxelRaycast.hpp"
-#include "Game/GEHud.hpp"
-#include "Game/GEWorldRuntime.hpp"
+#include <GalaxyEggbert/Game/Hud.hpp>
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
 #include <Microsoft/Xna/Framework/Input/Keys.hpp>
@@ -181,8 +181,8 @@ namespace GalaxyEggbert::Editor
     {
         const RaycastHit hit = Raycast(
             world,
-            camX_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX), camY_,
-            camZ_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ),
+            camX_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterX), camY_,
+            camZ_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ),
             forward.X, forward.Y, forward.Z, kMaxRaycastDistance);
         hasRaycastHit_ = hit.hit;
         hasHighlight_ = hit.hit;
@@ -199,9 +199,9 @@ namespace GalaxyEggbert::Editor
                 previewY >= 0 && previewY < blocksPerAxis &&
                 previewZ >= 0 && previewZ < blocksPerAxis)
             {
-                highlightX_ = static_cast<float>(previewX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
+                highlightX_ = static_cast<float>(previewX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
                 highlightY_ = static_cast<float>(previewY);
-                highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
+                highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
                 placementCellX_ = static_cast<std::uint16_t>(previewX);
                 placementCellY_ = static_cast<std::uint16_t>(previewY);
                 placementCellZ_ = static_cast<std::uint16_t>(previewZ);
@@ -219,10 +219,10 @@ namespace GalaxyEggbert::Editor
         }
         const float distance = -camY_ / forward.Y;
         const int targetX = static_cast<int>(std::floor(
-            camX_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX) +
+            camX_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterX) +
             forward.X * distance + 0.5f));
         const int targetZ = static_cast<int>(std::floor(
-            camZ_ + static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ) +
+            camZ_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ) +
             forward.Z * distance + 0.5f));
         if (distance < 0.0f || distance > kMaxRaycastDistance ||
             targetX < 0 || targetX >= blocksPerAxis ||
@@ -243,9 +243,9 @@ namespace GalaxyEggbert::Editor
             previewZ >= 0 && previewZ < blocksPerAxis;
         if (hasHighlight_)
         {
-            highlightX_ = static_cast<float>(previewX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
+            highlightX_ = static_cast<float>(previewX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
             highlightY_ = static_cast<float>(previewY);
-            highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
+            highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
             placementCellX_ = static_cast<std::uint16_t>(previewX);
             placementCellY_ = static_cast<std::uint16_t>(previewY);
             placementCellZ_ = static_cast<std::uint16_t>(previewZ);
@@ -289,12 +289,12 @@ namespace GalaxyEggbert::Editor
         const BoxRegion region = NormalizeAndClamp(
             boxCorner0X_, boxCorner0Y_, boxCorner0Z_,
             hitCellX_, hitCellY_, hitCellZ_, static_cast<int>(world.blocksPerAxis()));
-        boxMinRenderX_ = static_cast<float>(region.minX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
+        boxMinRenderX_ = static_cast<float>(region.minX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
         boxMinRenderY_ = static_cast<float>(region.minY);
-        boxMinRenderZ_ = static_cast<float>(region.minZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
-        boxMaxRenderX_ = static_cast<float>(region.maxX - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX);
+        boxMinRenderZ_ = static_cast<float>(region.minZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
+        boxMaxRenderX_ = static_cast<float>(region.maxX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
         boxMaxRenderY_ = static_cast<float>(region.maxY);
-        boxMaxRenderZ_ = static_cast<float>(region.maxZ - GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ);
+        boxMaxRenderZ_ = static_cast<float>(region.maxZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
     }
 
     bool WorldEditor::HandlePlacement(const FrameInput& input, Worlds::World& world)
@@ -633,12 +633,12 @@ namespace GalaxyEggbert::Editor
             for (const auto& record : CollectMoveObjects(world))
             {
                 const Easy3D::Camera3D::Vector3 renderPosition(
-                    record.posStartX - static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterX),
+                    record.posStartX - static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterX),
                     record.posStartY,
-                    record.posStartZ - static_cast<float>(GalaxyEggbert::CNA::GEWorldRuntime::kWorldCenterZ));
+                    record.posStartZ - static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ));
                 float projectedX = 0.0f;
                 float projectedY = 0.0f;
-                if (!GalaxyEggbert::CNA::GEHud::ProjectWorldToHudSpace(
+                if (!GalaxyEggbert::Game::Hud::ProjectWorldToHudSpace(
                         renderPosition, camera.GetViewMatrix(), camera.GetProjectionMatrix(),
                         viewportWidth, viewportHeight, projectedX, projectedY))
                 {

@@ -33,7 +33,7 @@ change) before conversion, not by modifying the converter itself.
 
 ## Animation mapping (placeholder, best-effort)
 
-`GEBlupiController::AnimState` has no equivalent to this fox's 3 clips —
+`BlupiController::AnimState` has no equivalent to this fox's 3 clips —
 `GalaxyEggbertCnaGame`'s mapping (documented in its own source) is a rough
 placeholder, not a faithful behavioral match:
 

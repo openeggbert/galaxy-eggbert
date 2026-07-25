@@ -1,17 +1,17 @@
 #pragma once
 
-#include "Game/GEWorldRuntime.hpp"
-#include "Game/GETileAtlas.hpp"
-#include "Game/GETerrainRenderer.hpp"
-#include "Game/GEBlupiController.hpp"
-#include "Game/GECameraShake.hpp"
-#include "Game/GEObjectIcons.hpp"
-#include "Game/GESound.hpp"
-#include "Game/GEInteractionSystem.hpp"
-#include "Game/GEHud.hpp"
-#include "Game/GETrainingHints.hpp"
-#include "Game/GEInputPad.hpp"
-#include "Game/GESaveData.hpp"
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
+#include <GalaxyEggbert/Game/TileAtlas.hpp>
+#include <GalaxyEggbert/Game/TerrainRenderer.hpp>
+#include <GalaxyEggbert/Game/BlupiController.hpp>
+#include <GalaxyEggbert/Game/CameraShake.hpp>
+#include <GalaxyEggbert/Game/ObjectIcons.hpp>
+#include <GalaxyEggbert/Game/Sound.hpp>
+#include <GalaxyEggbert/Game/InteractionSystem.hpp>
+#include <GalaxyEggbert/Game/Hud.hpp>
+#include <GalaxyEggbert/Game/TrainingHints.hpp>
+#include <GalaxyEggbert/Game/InputPad.hpp>
+#include <GalaxyEggbert/Game/SaveData.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/Def/GamePhase.hpp>
@@ -124,7 +124,7 @@ namespace GalaxyEggbert::CNA
         Easy3D::Camera3D::Vector3 cameraTargetSmoothed_{0.0f, 0.0f, 0.0f};
 
         // Parses worlds/world001.txt (plan.md Phase 4).
-        GEWorldRuntime worldRuntime_;
+        GalaxyEggbert::Game::WorldRuntime worldRuntime_;
 
         // Real mobile-eggbert background image for worldRuntime_'s skyRegion
         // (2026-07-09, NEXT.md §3 -- mobile-eggbert-reference/
@@ -163,12 +163,12 @@ namespace GalaxyEggbert::CNA
         bool backgroundLoaded_ = false;
 
         // Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
-        GETileAtlas tileAtlas_;
+        GalaxyEggbert::Game::TileAtlas tileAtlas_;
 
         // Static (non-animated) terrain mesh for the loaded world (plan.md
         // E3D-MIG-054). Lazily constructed in LoadContent() since it needs a
         // live GraphicsDevice.
-        std::unique_ptr<GETerrainRenderer> terrainRenderer_;
+        std::unique_ptr<GalaxyEggbert::Game::TerrainRenderer> terrainRenderer_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> terrainEffect_;
 
         // object-m.png, loaded directly via CNA's own Texture2D (no
@@ -182,7 +182,7 @@ namespace GalaxyEggbert::CNA
         // object-m.png (which is fully re-copied from ../mobile-eggbert on
         // every build, so nothing can be added into it). Needs its own
         // BasicEffect since BasicEffect only binds one texture at a time;
-        // drawn via GETerrainRenderer::DrawGrass() right after the main
+        // drawn via TerrainRenderer::DrawGrass() right after the main
         // terrain Draw() call.
         Microsoft::Xna::Framework::Graphics::Texture2D grassTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> grassEffect_;
@@ -191,32 +191,32 @@ namespace GalaxyEggbert::CNA
         // E3D-MIG-060) — arrow keys + Space, first-person camera follows
         // its facing. No 3D sprite yet (E3D-MIG-061..063) — see blupiIcon_
         // below for the interim 2D stand-in.
-        GEBlupiController blupi_;
+        GalaxyEggbert::Game::BlupiController blupi_;
 
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
         // stashes the pickup's own position/type from contact time until
         // the freeze resolves (potentially several frames/seconds later,
         // past when interaction_'s own *ThisFrame() signal has reset), so
         // ResolvePickupFreeze() can re-spawn it at completion. Only one
-        // freeze can be active at a time (GEBlupiController::
+        // freeze can be active at a time (BlupiController::
         // TriggerPickupFreeze() is a no-op while already frozen), so a
         // single pending slot is sufficient.
         float pendingPickupX_ = 0.0f, pendingPickupY_ = 0.0f, pendingPickupZ_ = 0.0f;
         GalaxyEggbert::Def::ObjectType pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
 
         // Real screen-shake/forced-pan camera effect (plan.md CAM-008..013,
-        // see GECameraShake.hpp's own comment for the full real-behavior
+        // see CameraShake.hpp's own comment for the full real-behavior
         // citation) -- ticked every Play-phase frame, its (dx,dy) pixel
         // offset applied as a small camera-space perturbation after the
         // normal eye/target damping (see Draw()'s own camera block).
-        GECameraShake cameraShake_;
+        GalaxyEggbert::Game::CameraShake cameraShake_;
 
-        // Real mobile-eggbert sound playback (2026-07-10, see GESound.hpp).
+        // Real mobile-eggbert sound playback (2026-07-10, see Sound.hpp).
         // jumpKeyWasDown_ edge-detects the jump key the same way
         // cameraModeKeyWasDown_ edge-detects "C" above; stepSoundTimer_
         // paces footstep sounds while marching (reset whenever Blupi isn't
         // marching, so it doesn't fire immediately on the next step).
-        GESound sound_;
+        GalaxyEggbert::Game::Sound sound_;
         bool jumpKeyWasDown_ = false;
         float stepSoundTimer_ = 0.0f;
 
@@ -226,7 +226,7 @@ namespace GalaxyEggbert::CNA
         // `wasBye`/`IsBye()` completion check right after `Step()`.
         int byePendingTarget_ = 0;
 
-        // Switch/saw linking (plan.md E3D-MIG-142, see GEWorldRuntime::
+        // Switch/saw linking (plan.md E3D-MIG-142, see WorldRuntime::
         // TryActivateSwitch()) -- Space ("Action", already read as
         // actionPressed) edge-detected the same way jumpKeyWasDown_ is.
         bool actionKeyWasDown_ = false;
@@ -245,8 +245,8 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Def::SoundChannel activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
 
         // Platform lift patrol, crate push, and pickup collection
-        // (2026-07-10, see GEInteractionSystem.hpp).
-        GEInteractionSystem interaction_;
+        // (2026-07-10, see InteractionSystem.hpp).
+        GalaxyEggbert::Game::InteractionSystem interaction_;
 
         // Real GalaxyEggbert::Def::Phase state machine (2026-07-13, plan.md HUD-023),
         // verified directly against Def.hpp's own enum (already ported
@@ -267,14 +267,14 @@ namespace GalaxyEggbert::CNA
         // shows the real wait.png/jauge.png progress gauge for a FIXED
         // 5.0s cosmetic timer (confirmed via research: real `waitProgress`
         // is wall-clock-based, decoupled from actual loading), then
-        // transitions to `Resume` if `GESaveData::GetHasProgress()` is
+        // transitions to `Resume` if `SaveData::GetHasProgress()` is
         // true, else `Init` (an adaptation of the real `Wait`->`Resume`
         // branch, which for real is gated on a WP7-only OS-reactivation
         // snapshot this engine has no equivalent for -- same adapted
         // trigger already established for Resume itself). `Init` renders
         // the real init.png/speedyblupi.png/blupiyoupie.png gamer-select
-        // menu (3 independent slots via `GESaveData`'s own 3-gamer-slot
-        // extension) -- see `GEInputPad::UpdateInit()`/`DrawInit()`'s own
+        // menu (3 independent slots via `SaveData`'s own 3-gamer-slot
+        // extension) -- see `InputPad::UpdateInit()`/`DrawInit()`'s own
         // class comment for full detail, including what's deliberately
         // NOT ported (InitRanking/InitBuy, real exit-fade animations).
         //
@@ -282,7 +282,7 @@ namespace GalaxyEggbert::CNA
         // them yet (no upsell/ranking screens exist) -- reachable in
         // principle, unreachable in practice until those screens exist.
         // `MainSetup` is now ALSO reachable (2026-07-13, via Init's own
-        // InitSetup button), sharing `GEInputPad::UpdateSetup()`/
+        // InitSetup button), sharing `InputPad::UpdateSetup()`/
         // `DrawSetup()` with `PlaySetup` (2026-07-13, plan.md
         // MENU-058..069, reachable via Pause's real Setup button) -- see
         // that method's own class comment for what is/isn't modeled on
@@ -291,7 +291,7 @@ namespace GalaxyEggbert::CNA
         // plan.md MENU-040..045) via an ADAPTED trigger (the `Wait`->
         // `Resume`-or-`Init` branch above), not the real `Game1::
         // OnActivated()` OS-reactivation event, which has no desktop
-        // equivalent -- see `GEInputPad::UpdateResume()`'s own class
+        // equivalent -- see `InputPad::UpdateResume()`'s own class
         // comment for full reasoning.
         //
         // Real Pause trigger is gamepad-Back / a touch PlayPause button --
@@ -322,17 +322,17 @@ namespace GalaxyEggbert::CNA
         // real `mission==-2` sentinel (`ContinueMission()`) -- the ONE
         // real exception: Resume->Play (via ResumeContinue) is ALWAYS
         // instant even though Resume is one of the 5 deferring phases,
-        // confirmed via research. See `GEInputPad::DrawPause()`/
+        // confirmed via research. See `InputPad::DrawPause()`/
         // `DrawResume()`/`DrawSetup()`/`DrawInit()`'s own class comments
         // for the exact real per-destination fade formulas.
         //
         // Real Lost trigger: a death animation completing while lives are
         // exhausted (`Decor.cpp:6374-6435`) -- this engine's own
-        // `GEInteractionSystem::GameOverCount()` already increments at
+        // `InteractionSystem::GameOverCount()` already increments at
         // exactly that real moment (`DoorsLost()`'s reset-to-3 behavior).
         // Real Win trigger: reaching the exit with all treasure
         // (`Decor::IsTerminated()`) -- already exactly what
-        // `GEInteractionSystem::ExitReached()` gates on. Real WinLostReturn
+        // `InteractionSystem::ExitReached()` gates on. Real WinLostReturn
         // input has no fixed auto-timer (explicit input only); this engine
         // reuses the Action key and resets Blupi to the origin spawn point
         // (not a full real level-reload, which needs infrastructure this
@@ -345,9 +345,9 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] const char* PhaseOverlayMessage() const noexcept;
 
         // Voyage (plan.md `158`) -- a no-op unless
-        // `FindInteractionEvent(GEInteractionSystem::EventKind::VoyageRequested)` finds one. Projects
+        // `FindInteractionEvent(InteractionSystem::EventKind::VoyageRequested)` finds one. Projects
         // whichever endpoint is still a 3D world position (via
-        // `GEHud::ProjectWorldToHudSpace()`, using `camera_` and the real
+        // `Hud::ProjectWorldToHudSpace()`, using `camera_` and the real
         // GraphicsDevice's current viewport -- accessible here via
         // `getGraphicsDeviceProperty()`, the same base-Game accessor
         // already used elsewhere in this file for on-screen touch-control
@@ -359,10 +359,10 @@ namespace GalaxyEggbert::CNA
         void ResolvePendingVoyage();
 
         // Death-lock/life-loss-Voyage follow-up -- a no-op unless
-        // `FindInteractionEvent(GEInteractionSystem::EventKind::DeathLockRequested)` finds one
+        // `FindInteractionEvent(InteractionSystem::EventKind::DeathLockRequested)` finds one
         // (the generic-hazard-contact/dynamite/projectile/large-creature-grab pending
         // signal from inside `interaction_.Update()`, see
-        // `GEInteractionSystem::EventKind::DeathLockRequested`'s own
+        // `InteractionSystem::EventKind::DeathLockRequested`'s own
         // comment) OR `blupi_.ConsumeDeathLockResolved()` fires (an
         // ALREADY-active lock, possibly started a previous frame,
         // elapsing). Starts a new lock via `blupi_.TriggerDeathLock()` for
@@ -438,7 +438,7 @@ namespace GalaxyEggbert::CNA
         // hub when this is active.
         void LoadCustomWorldForPlayTest(const std::filesystem::path& path);
 
-        // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `GEBlupiController::
+        // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `BlupiController::
         // HasVehicleMotor()`/`IsVehicleMotorHigh()`, found 2026-07-17) -- ports
         // `Decor::AdaptMotorVehicleSound()` exactly: computes the desired loop channel (none,
         // or the mode's own high/low variant), and if it differs from `activeMotorLoop_`, plays
@@ -447,14 +447,14 @@ namespace GalaxyEggbert::CNA
         // active one (matches the real early-out exactly). Called once per frame.
         void UpdateVehicleMotorSound();
 
-        // INFRA-007 (plan.md §7, step 2/3): GEInteractionSystem's 11 simple/position-payload
+        // INFRA-007 (plan.md §7, step 2/3): InteractionSystem's 11 simple/position-payload
         // *ThisFrame() signals are now one typed EventsThisFrame() queue instead of 11 parallel
         // booleans -- this finds the (at most one, per-Kind) event of a given Kind this frame, or
         // nullptr if none fired. Returns a pointer rather than bool so payload-carrying kinds
         // (PowerGranted/CloudGranted/HideGranted) can read their pickup position straight off the
         // returned Event, same call site, no separate position getter needed.
-        [[nodiscard]] const GalaxyEggbert::CNA::GEInteractionSystem::Event*
-        FindInteractionEvent(GalaxyEggbert::CNA::GEInteractionSystem::EventKind kind) const noexcept;
+        [[nodiscard]] const GalaxyEggbert::Game::InteractionSystem::Event*
+        FindInteractionEvent(GalaxyEggbert::Game::InteractionSystem::EventKind kind) const noexcept;
 
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
         // a no-op unless FindInteractionEvent() finds a PowerGranted/
@@ -475,7 +475,7 @@ namespace GalaxyEggbert::CNA
         // directly against the real `Decor::CheatAction(Tables::
         // CheatCodes)`, correcting several wrong/imprecise draft
         // descriptions from an earlier, unverified plan.md pass (see
-        // GEInteractionSystem.hpp's own per-cheat comments for exactly
+        // InteractionSystem.hpp's own per-cheat comments for exactly
         // what each one corrects). Cheat3 "ShowSecret" is NOT implemented
         // -- the real effect gates rendering of "hidden ObjectType12
         // secret-decor icons", but this engine's own ObjectType12 is
@@ -539,22 +539,22 @@ namespace GalaxyEggbert::CNA
         // at a real 20fps base rate -- dividing by N/20 seconds is exactly
         // equivalent and framerate-independent, unlike counting ticks.
         // Currently drives only the Win/Lost `blupiyoupie.png` animation
-        // (`GEInputPad::DrawWinLost`); not used for the Play-phase
+        // (`InputPad::DrawWinLost`); not used for the Play-phase
         // gameplay simulation, which has no timer concept of its own.
         float phaseTimeSeconds_ = 0.0f;
 
         // Real mobile-eggbert bottom HUD + the interim animation-state
-        // indicator (2026-07-10, see GEHud.hpp) -- replaces the earlier
+        // indicator (2026-07-10, see Hud.hpp) -- replaces the earlier
         // SpriteBatch-based HUD entirely: on CNA's Vulkan backend every
         // SpriteBatch batch is recorded BEFORE every 3D draw within the
         // frame, so a sprite HUD gets painted over by the 3D scene (the
-        // "icon visible for a second, then gone" live report); GEHud draws
+        // "icon visible for a second, then gone" live report); Hud draws
         // real 3D quads instead, recorded in genuine submission order on
         // both backends.
-        GEHud hud_;
+        GalaxyEggbert::Game::Hud hud_;
 
         // Real mobile-eggbert on-screen touch controls (2026-07-13,
-        // plan.md MENU-021..027/028..039, see GEInputPad.hpp) -- mouse-
+        // plan.md MENU-021..027/028..039, see InputPad.hpp) -- mouse-
         // driven Pause row (real background/character art + 5 real
         // pad.png buttons, Continue/Restart functionally wired) and Play
         // on-screen D-pad/Jump/Action/Pause controls, OR'd with keyboard
@@ -563,15 +563,15 @@ namespace GalaxyEggbert::CNA
         // press landed on a control, so the pre-existing mouse drag-look
         // camera code (below) can skip its own handling and avoid the two
         // features fighting over the same left-mouse-button input.
-        GEInputPad inputPad_;
+        GalaxyEggbert::Game::InputPad inputPad_;
 
         // Minimal settings persistence (2026-07-13, plan.md MENU-067, see
-        // GESaveData.hpp for why this is NOT byte-compatible with the
+        // SaveData.hpp for why this is NOT byte-compatible with the
         // real mobile-eggbert GameData). Loaded once in LoadContent();
         // Save() is called right after the SetupSounds toggle, matching
         // the real source's own "write immediately on toggle press"
         // behavior.
-        GESaveData saveData_;
+        GalaxyEggbert::Game::SaveData saveData_;
 
         // In-game 3D world editor (plan.md section 6, EDITOR-1xx tasks) --
         // see WorldEditor's own class comment. Entered via GalaxyEggbert::Def::GamePhase::
@@ -594,7 +594,7 @@ namespace GalaxyEggbert::CNA
         // (confirmed via research); once the real 10-tap sequence
         // completes, the overlay renders layered on top of the normal
         // Play view (no phase change, no background swap) until a cheat
-        // button is pressed. See `GEInputPad::UpdateCheatGesture()`'s own
+        // button is pressed. See `InputPad::UpdateCheatGesture()`'s own
         // class comment for the full real-behavior citation.
         bool cheatMenuShown_ = false;
 
@@ -602,7 +602,7 @@ namespace GalaxyEggbert::CNA
         // include/GalaxyEggbert/Def/GameSpeed.hpp and InputPad.cpp:582-684
         // for the full real key-mapping citations) -- F5/F6 always work,
         // F7/F8 need quickCheatEnabled_ (real "quick" typed cheat, see
-        // GEInputPad::UpdateTypedGhostCheat()'s own TypedCheatResult), Tab
+        // InputPad::UpdateTypedGhostCheat()'s own TypedCheatResult), Tab
         // toggles Slow<->Normal, F12 gives a second way to open/close the
         // existing cheat-button overlay (alongside the already-implemented
         // 10-tap gesture) -- all real, all `#ifdef MODERN`-gated in real
@@ -658,7 +658,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMeshRenderer_;
 
         // Billboard rendering for the 5 confirmed object-m.png-sourced
-        // MoveObjects (GEObjectIcons::IsObjectMPngSourced, NEXT.md §3,
+        // MoveObjects (ObjectIcons::IsObjectMPngSourced, NEXT.md §3,
         // 2026-07-09) -- same camera-facing billboard technique as
         // objectMeshRenderer_ above, but reuses terrainTexture_
         // (object-m.png) via its own dedicated effect (BasicEffect only
@@ -667,7 +667,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMPngMeshRenderer_;
 
         // Billboard rendering for the 12 confirmed explo.png-sourced
-        // MoveObjects (GEObjectIcons::IsExploPngSourced, NEXT.md §3,
+        // MoveObjects (ObjectIcons::IsExploPngSourced, NEXT.md §3,
         // 2026-07-09) -- explosions/visual effects, a genuinely new texture
         // (not previously loaded anywhere in GalaxyEggbertCNA), same
         // camera-facing billboard technique as objectMeshRenderer_ above.
@@ -676,9 +676,9 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::BillboardMeshRenderer> exploMeshRenderer_;
 
         // Billboard rendering for the 4 confirmed Blupi-skin MoveObjects
-        // (GEObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
+        // (ObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
         // ObjectType200 sources blupi.png, ObjectType201/202/203 source
-        // blupi1.png (GEObjectIcons::UsesBlupi1Texture) -- two separate
+        // blupi1.png (ObjectIcons::UsesBlupi1Texture) -- two separate
         // textures/effects/renderers since BasicEffect only binds one
         // texture at a time. blupiObjectTexture_/blupiObjectEffect_ are
         // deliberately separate from the existing blupiIconTexture_/
@@ -719,7 +719,7 @@ namespace GalaxyEggbert::CNA
         // mobile-eggbert-reference/15-3d-render-mapping-design.md §5's two
         // confirmed "render as a cube, not a billboard" exceptions:
         // ObjectType1/47/48 platform lifts and ObjectType12 crates, see
-        // GEObjectIcons::IsUniformCubeObject). Reuses terrainTexture_
+        // ObjectIcons::IsUniformCubeObject). Reuses terrainTexture_
         // (object-m.png, the confirmed-correct sheet for these types) via
         // its own effect, same reason as bigDecorEffect_ above. Rebuilt
         // every frame in Draw() (2026-07-09) using each MobileObjSpec's

@@ -1,5 +1,5 @@
-#include "Game/GEWorldRuntime.hpp"
-#include "Game/GEObjectVerticalPlacement.hpp"
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
+#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
 
 #include <algorithm>
 #include <filesystem>
@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-// Scripted verification that GalaxyEggbert::CNA::GEWorldRuntime now parses
+// Scripted verification that GalaxyEggbert::Game::WorldRuntime now parses
 // MoveObject: lines (previously ignored entirely) using the production
-// GEWorldRuntime GalaxyEggbert::Def::ObjectType allowlist. Each (type, file) pair below is a
+// WorldRuntime GalaxyEggbert::Def::ObjectType allowlist. Each (type, file) pair below is a
 // real mobile-eggbert level file confirmed (by grepping
 // ../mobile-eggbert/worlds/*.txt) to contain a MoveObject: line of that
 // exact type, so this is grounded in real level data, not synthetic.
@@ -34,7 +34,7 @@ int main()
     bool allOk = true;
     for (const auto& c : kCases)
     {
-        GalaxyEggbert::CNA::GEWorldRuntime runtime;
+        GalaxyEggbert::Game::WorldRuntime runtime;
         if (!runtime.LoadFromMobileEggbertFile(c.file))
         {
             std::cout << "FAIL: could not load " << c.file << std::endl;
@@ -50,9 +50,9 @@ int main()
             {
                 found = true;
                 grounded =
-                    obj.posStartY == GalaxyEggbert::CNA::kGroundObjectCenterY &&
-                    obj.posEndY == GalaxyEggbert::CNA::kGroundObjectCenterY &&
-                    obj.currentY == GalaxyEggbert::CNA::kGroundObjectCenterY;
+                    obj.posStartY == GalaxyEggbert::Game::kGroundObjectCenterY &&
+                    obj.posEndY == GalaxyEggbert::Game::kGroundObjectCenterY &&
+                    obj.currentY == GalaxyEggbert::Game::kGroundObjectCenterY;
                 break;
             }
         }
@@ -99,7 +99,7 @@ int main()
         int failCount = 0;
         for (const auto& file : files)
         {
-            GalaxyEggbert::CNA::GEWorldRuntime runtime;
+            GalaxyEggbert::Game::WorldRuntime runtime;
             if (!runtime.LoadFromMobileEggbertFile(file))
             {
                 std::cout << "FAIL: could not parse " << file << std::endl;

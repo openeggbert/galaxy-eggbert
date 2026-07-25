@@ -19,12 +19,12 @@ namespace GalaxyEggbert::Editor
         constexpr float kPlacementRightClearance = 106.0f;
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::DeleteToolRect() const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::DeleteToolRect() const noexcept
     {
         return {kMenuX, kMenuY, kMenuX + kButtonSize, kMenuY + kButtonSize};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlayTestRect(
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::PlayTestRect(
         int viewportWidth, int viewportHeight) const noexcept
     {
         const float x = static_cast<float>(viewportWidth) - 96.0f;
@@ -32,7 +32,7 @@ namespace GalaxyEggbert::Editor
         return {x, y, x + kButtonSize, y + kButtonSize};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::StopRect(
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::StopRect(
         int viewportWidth, int viewportHeight) const noexcept
     {
         const float x = static_cast<float>(viewportWidth) - 54.0f;
@@ -40,7 +40,7 @@ namespace GalaxyEggbert::Editor
         return {x, y, x + kButtonSize, y + kButtonSize};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::CategoryButtonRect(int categoryIndex) const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::CategoryButtonRect(int categoryIndex) const noexcept
     {
         if (categoryIndex == GalaxyBackgroundCategoryIndex)
         {
@@ -53,7 +53,7 @@ namespace GalaxyEggbert::Editor
         return {kMenuX, y, kMenuX + kButtonSize, y + kButtonSize};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlacementButtonRect(
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::PlacementButtonRect(
         int index, int viewportWidth, int viewportHeight) const noexcept
     {
         const float yBottom = static_cast<float>(viewportHeight) - kPlacementBottom;
@@ -92,16 +92,16 @@ namespace GalaxyEggbert::Editor
         return {placeX, yBottom, placeX + kPlacementCompactPlaceWidth, yBottom + kButtonSize};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlacementCoordinatesRect(
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::PlacementCoordinatesRect(
         float textWidth, float textHeight,
         int viewportWidth, int viewportHeight) const noexcept
     {
         constexpr float kTextGap = 8.0f;
-        const GalaxyEggbert::CNA::GEQuadBatch::Rect first =
+        const GalaxyEggbert::Game::QuadBatch::Rect first =
             PlacementButtonRect(0, viewportWidth, viewportHeight);
-        const GalaxyEggbert::CNA::GEQuadBatch::Rect place =
+        const GalaxyEggbert::Game::QuadBatch::Rect place =
             PlacementButtonRect(PlacementPlaceIndex, viewportWidth, viewportHeight);
-        const GalaxyEggbert::CNA::GEQuadBatch::Rect playTest = PlayTestRect(viewportWidth, viewportHeight);
+        const GalaxyEggbert::Game::QuadBatch::Rect playTest = PlayTestRect(viewportWidth, viewportHeight);
         const float top = place.y0 + ((place.y1 - place.y0) - textHeight) * 0.5f;
 
         const float right = place.x1 + kTextGap;
@@ -124,8 +124,8 @@ namespace GalaxyEggbert::Editor
         return {centered, above, centered + textWidth, above + textHeight};
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PlacementCoordinatesBackgroundRect(
-        const GalaxyEggbert::CNA::GEQuadBatch::Rect& textRect,
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::PlacementCoordinatesBackgroundRect(
+        const GalaxyEggbert::Game::QuadBatch::Rect& textRect,
         int viewportWidth, int viewportHeight) const noexcept
     {
         constexpr float kHorizontalPadding = 5.0f;
@@ -158,7 +158,7 @@ namespace GalaxyEggbert::Editor
         return std::min(CategoryButtonRect(openCategory).y0, lowestOrigin);
     }
 
-    GalaxyEggbert::CNA::GEQuadBatch::Rect EditorPaletteLayout::PaletteCellRect(
+    GalaxyEggbert::Game::QuadBatch::Rect EditorPaletteLayout::PaletteCellRect(
         int itemIndex, int itemCount, int openCategory,
         int viewportWidth, int viewportHeight) const noexcept
     {

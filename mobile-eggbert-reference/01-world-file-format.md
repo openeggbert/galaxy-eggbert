@@ -62,7 +62,7 @@ Immediately follows the `Decor:` grid: a literal `BigDecor:` line, then another 
 comma-separated grid, same icon vocabulary (`object-m.png` via `PixmapChannel::Object`), same `-1`
 = empty convention.
 
-**Fixed 2026-07-03**: both galaxy-eggbert `GEWorldRuntime` implementations (Simple3D and CNA) now
+**Fixed 2026-07-03**: both galaxy-eggbert `WorldRuntime` implementations (Simple3D and CNA) now
 correctly parse this section into a `GetBigDecor()`-exposed flat array — previously it was
 silently dropped because the row-counter had already reached 100 from the main `Decor:` grid by
 the time `BigDecor:` appeared. Parsing only; nothing renders it yet (see `09-open-questions.md`).
@@ -111,11 +111,11 @@ recomputes every frame from `type`/`stepAdvance`/`stepRecede`/`posStart`/`posEnd
 load does not strictly need them to be meaningful, only the first seven fields define the object's
 design-time behavior.
 
-**Fixed 2026-07-03**: `GEWorldRuntime::LoadFromMobileEggbertFile` (Simple3D) previously only
+**Fixed 2026-07-03**: `WorldRuntime::LoadFromMobileEggbertFile` (Simple3D) previously only
 instantiated a hardcoded subset of `type` values, silently dropping 12 real, in-use types. A scan
 of all 78 real world files found `type=` values in actual use:
 `1,2,3,4,5,6,7,12,13,16,17,19,20,21,24,26,30,32,33,40,44,46,47,49,50,51,54,55,96`. All 29 of these
 now spawn (verified via `tools/VerifyMoveObjectTypes.cpp` against real level files, 12/12 newly
 added types confirmed) — see `03-objects.md` for per-type behavior status. The CNA target's
-`GEWorldRuntime::LoadFromMobileEggbertFile` still doesn't parse `MoveObject:` lines at all
+`WorldRuntime::LoadFromMobileEggbertFile` still doesn't parse `MoveObject:` lines at all
 (explicitly deferred in its source comments — out of scope for this reference pass).

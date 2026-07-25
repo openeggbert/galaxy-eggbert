@@ -32,13 +32,13 @@ namespace GalaxyEggbert::Editor
     // @p originX/Y/Z and @p dirX/Y/Z are in @p world's own RAW GRID space
     // (same convention as World::getBlock's x/y/z arguments, [0,
     // blocksPerAxis())) -- NOT the "-kWorldCenterX/Z"-shifted render space
-    // GETerrainRenderer/GEWorldRuntime use for drawing (that shift is a
+    // TerrainRenderer/WorldRuntime use for drawing (that shift is a
     // presentation-layer concern the caller must apply/reverse itself, same
     // convention as GalaxyEggbert::MoveObjectRecord). @p dirX/Y/Z need not
     // be pre-normalized -- this function normalizes defensively.
     //
     // Internally accounts for this engine's own block-centering convention
-    // (confirmed via GETerrainRenderer.cpp/GEWorldRuntime.cpp: a block with
+    // (confirmed via TerrainRenderer.cpp/WorldRuntime.cpp: a block with
     // integer grid index N is rendered/collided as spanning [N-0.5, N+0.5),
     // i.e. continuous-to-index conversion elsewhere in this engine always
     // rounds via std::lround, never floors) -- callers do not need to

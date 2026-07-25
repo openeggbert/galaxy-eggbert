@@ -9,7 +9,7 @@
 //   /worlds3d             - preloaded read-only .vwr level files
 //   /textures3d           - preloaded read-only galaxy-eggbert-owned textures
 //   /avatars3d            - preloaded read-only third-person character model
-//   /save                 - IDBFS (persistent; GESaveData's savedata.txt lives here)
+//   /save                 - IDBFS (persistent; SaveData's savedata.txt lives here)
 //
 // TODO: call FS.syncfs(false, cb) periodically or on exit to flush IDBFS
 //       writes back to IndexedDB.  Currently data is written to the in-memory

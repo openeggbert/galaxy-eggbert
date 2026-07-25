@@ -1,14 +1,14 @@
 // INFRA-003 (plan.md §7, "Correctness Infrastructure" vision): a
-// data-integrity regression test for GEObjectIcons::GetObjIcon()'s hand-
+// data-integrity regression test for ObjectIcons::GetObjIcon()'s hand-
 // transcribed frame arrays and divisors -- the file this function lives in
-// (GEObjectIcons.cpp) carries 34 "Fixed 2026-..." annotations documenting
+// (ObjectIcons.cpp) carries 34 "Fixed 2026-..." annotations documenting
 // historical wrong-divisor/wrong-sequence bugs, each found only by a human
 // looking at a screenshot (REMAKE-ANALYSIS.md's own diagnosis, RC-1/RC-2).
 //
 // This is a REGRESSION test, not a fresh independent re-verification
 // against mobile-eggbert (which would require reading ../mobile-eggbert
 // source directly -- out of scope, needs separate approval): every expected
-// sequence/divisor/period below is transcribed from GEObjectIcons.cpp's own
+// sequence/divisor/period below is transcribed from ObjectIcons.cpp's own
 // already-committed, already-cross-referenced-against-Tables.cpp code (see
 // that file's own per-case comments for the real Tables.cpp/Decor.cpp
 // citations). The value here is locking today's confirmed-correct values in
@@ -19,7 +19,7 @@
 // 08-animations.md §3.1/3.2 wherever that doc documents one, noted per case
 // below -- this is the specific "frame-array lengths match the documented
 // counts" check plan.md's own INFRA-003 entry asks for.
-#include "Game/GEObjectIcons.hpp"
+#include <GalaxyEggbert/Game/ObjectIcons.hpp>
 
 #include <cstdint>
 #include <iostream>
@@ -27,7 +27,7 @@
 #include <vector>
 
 using GalaxyEggbert::Def::ObjectType;
-using namespace GalaxyEggbert::CNA;
+using namespace GalaxyEggbert::Game;
 
 namespace
 {
@@ -162,7 +162,7 @@ int main()
         }
     }
 
-    // -- Table-driven types (exact sequence transcribed from GEObjectIcons.cpp) --
+    // -- Table-driven types (exact sequence transcribed from ObjectIcons.cpp) --
     checkSequence(GalaxyEggbert::Def::ObjectType::ObjectType27, 1,
                   {152, 153, 154, 155, 156, 152, 153, 154, 155, 156, 157, 158, 159, 160, 157, 158,
                    159, 160, 161, 162, 163, 164, 165, 166},
@@ -187,7 +187,7 @@ int main()
                   "ObjectType97 (kFollow2, real table_follow2, step of 2; matches 08-animations.md's \"5 frames\")");
     // ObjectType14 (real table_plouf, 7-frame ripple) -- 08-animations.md doesn't
     // list this one directly (Category B, added later), but the array itself is
-    // cited against Tables.cpp:1508-1519 in GEObjectIcons.cpp.
+    // cited against Tables.cpp:1508-1519 in ObjectIcons.cpp.
     checkSequence(GalaxyEggbert::Def::ObjectType::ObjectType14, 2, {99, 100, 101, 102, 101, 100, 99}, "ObjectType14 (kPlouf)");
     checkSequence(GalaxyEggbert::Def::ObjectType::ObjectType15, 2,
                   {103, 104, 105, 106, 104, 103, 106, 105, 103, 104, 103, 105, 106, 103, 105, 106,
@@ -303,7 +303,7 @@ int main()
                   "ObjectType38 (kElectro, real table_electro)");
 
     // Genuinely no icon exists in mobile-eggbert source data for these 4 --
-    // default: return 0 is correct, not a gap (GEObjectIcons.hpp's own header comment).
+    // default: return 0 is correct, not a gap (ObjectIcons.hpp's own header comment).
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType0, 0, "ObjectType0 (no real icon -- confirmed gap, not a bug)");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType18, 0, "ObjectType18 (no real icon -- confirmed gap, not a bug)");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType22, 0, "ObjectType22 (no real icon -- confirmed gap, not a bug)");
@@ -325,7 +325,7 @@ int main()
     // only meaningful for types already on the blupi-png path).
     {
         // Regression lock: exact current membership, transcribed directly
-        // from GEObjectIcons.cpp's own switch statements (not re-derived
+        // from ObjectIcons.cpp's own switch statements (not re-derived
         // from mobile-eggbert -- see this file's own top comment on scope).
         check(IsUniformCubeObject(GalaxyEggbert::Def::ObjectType::ObjectType1) && IsUniformCubeObject(GalaxyEggbert::Def::ObjectType::ObjectType12) &&
                   IsUniformCubeObject(GalaxyEggbert::Def::ObjectType::ObjectType47) && IsUniformCubeObject(GalaxyEggbert::Def::ObjectType::ObjectType48),

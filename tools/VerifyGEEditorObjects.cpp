@@ -1,7 +1,7 @@
 #include <GalaxyEggbert/Editor/EditCommandStack.hpp>
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
-#include "Game/GEObjectVerticalPlacement.hpp"
+#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
 
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -12,7 +12,7 @@
 
 int main()
 {
-    using namespace GalaxyEggbert::CNA;
+    using namespace GalaxyEggbert::Game;
     using namespace GalaxyEggbert::Editor;
     using GalaxyEggbert::CollectMoveObjects;
     using GalaxyEggbert::MoveObjectRecord;
