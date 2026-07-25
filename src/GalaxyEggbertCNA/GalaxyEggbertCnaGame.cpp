@@ -1,6 +1,7 @@
 #include "GalaxyEggbertCnaGame.hpp"
 
 #include "Editor/GECustomWorldStorage.hpp"
+#include "Game/GEObjectVerticalPlacement.hpp"
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
@@ -25,6 +26,24 @@ namespace GalaxyEggbert::CNA
 {
     namespace
     {
+        constexpr int kGoldenCaptureTicks[] = {60, 120, 180};
+        constexpr int kGoldenCaptureCount =
+            static_cast<int>(sizeof(kGoldenCaptureTicks) / sizeof(kGoldenCaptureTicks[0]));
+
+        Microsoft::Xna::Framework::Input::KeyboardState ReadKeyboardState(bool suppressLiveInput)
+        {
+            return suppressLiveInput
+                ? Microsoft::Xna::Framework::Input::KeyboardState{}
+                : Microsoft::Xna::Framework::Input::Keyboard::GetState();
+        }
+
+        Microsoft::Xna::Framework::Input::MouseState ReadMouseState(bool suppressLiveInput)
+        {
+            return suppressLiveInput
+                ? Microsoft::Xna::Framework::Input::MouseState{}
+                : Microsoft::Xna::Framework::Input::Mouse::GetState();
+        }
+
         // Placeholder-model animation mapping (2026-07-09, NEXT.md §3) --
         // avatars3d/blupi_placeholder/'s 3 clips (Survey/Walk/Run) don't
         // correspond to GEBlupiController::AnimState's states at all (10 as
@@ -1141,6 +1160,11 @@ namespace GalaxyEggbert::CNA
     {
         Game::Update(gameTime);
 
+        if (goldenCaptureMode_ && goldenCaptureAwaitingDraw_)
+        {
+            return;
+        }
+
         // INFRA-001 (plan.md §7) -- see EnableGoldenCaptureMode()'s own
         // comment. The one-time setup runs here; the actual screenshot
         // capture (needs a rendered frame) happens in Draw().
@@ -1223,10 +1247,8 @@ namespace GalaxyEggbert::CNA
         // (and its own input reading) doesn't run at all outside Play.
         {
             using Microsoft::Xna::Framework::Input::ButtonState;
-            using Microsoft::Xna::Framework::Input::Keyboard;
             using Microsoft::Xna::Framework::Input::Keys;
-            using Microsoft::Xna::Framework::Input::Mouse;
-            const auto phaseKeys = Keyboard::GetState();
+            const auto phaseKeys = ReadKeyboardState(goldenCaptureMode_ || goldenTraceMode_);
             const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
 
             bool mousePausePressed = false;
@@ -1237,7 +1259,7 @@ namespace GalaxyEggbert::CNA
             bool mouseBackPressed = false;
             if (phase_ == GalaxyEggbert::GamePhase::Play)
             {
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
                 mousePausePressed = padPlayInput.pausePressed;
@@ -1353,7 +1375,7 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::GamePhase::Pause)
             {
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 // Real conditional visibility: Back/Restart hidden on
                 // mission 1 (can't go "back" from/replay the very first
                 // level); Restart additionally hidden on decade-boundary
@@ -1380,7 +1402,7 @@ namespace GalaxyEggbert::CNA
                 // SetupReset" difference (see GEInputPad::UpdateSetup()'s
                 // own class comment) is the only distinction made here.
                 const bool isMainSetup = phase_ == GalaxyEggbert::GamePhase::MainSetup;
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const auto setupInput = inputPad_.UpdateSetup(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup);
                 if (setupInput.soundsToggled)
@@ -1440,7 +1462,7 @@ namespace GalaxyEggbert::CNA
                 // Real Init / gamer-select menu (2026-07-13, plan.md
                 // MENU-006..020) -- see GEInputPad::UpdateInit()/
                 // DrawInit()'s own class comment for full detail.
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const auto initInput = inputPad_.UpdateInit(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 if (initInput.gamerSelected >= 0)
@@ -1502,7 +1524,7 @@ namespace GalaxyEggbert::CNA
                 // GEInputPad::UpdateResume()'s class comment for the
                 // adapted-trigger reasoning; this is just the two real
                 // buttons' behavior once already in the phase.
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const auto resumeInput = inputPad_.UpdateResume(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 if (resumeInput.continuePressed)
@@ -1541,7 +1563,7 @@ namespace GalaxyEggbert::CNA
                 // see GEWorldEditor's own class comment. IsBrowsing()
                 // distinguishes the per-gamer-slot world browser (no World
                 // loaded yet) from actively editing one.
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 if (worldEditor_.IsBrowsing())
                 {
                     const auto request = worldEditor_.UpdateBrowsing(
@@ -1675,7 +1697,7 @@ namespace GalaxyEggbert::CNA
                 // engine's own Space-key pick -- edge-triggered already
                 // (see UpdateWinLost()), so no separate debounce needed
                 // for the mouse path.
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const bool mouseReturnPressed = inputPad_.UpdateWinLost(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
@@ -1771,9 +1793,8 @@ namespace GalaxyEggbert::CNA
             // interactive-object system in GalaxyEggbertCNA yet. LShift
             // crouches, RShift looks up (mirrors Simple3D's Down/Up
             // BlupiState).
-            using Microsoft::Xna::Framework::Input::Keyboard;
             using Microsoft::Xna::Framework::Input::Keys;
-            const auto keys = Keyboard::GetState();
+            const auto keys = ReadKeyboardState(goldenCaptureMode_ || goldenTraceMode_);
             float turnInput = 0.0f;
             float moveInput = 0.0f;
             if (keys.IsKeyDown(Keys::Left))  turnInput -= 1.0f;
@@ -3145,8 +3166,7 @@ namespace GalaxyEggbert::CNA
             // since both features read the same left-mouse-button state.
             {
                 using Microsoft::Xna::Framework::Input::ButtonState;
-                using Microsoft::Xna::Framework::Input::Mouse;
-                const auto mouse = Mouse::GetState();
+                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
                 const int mouseX = mouse.getXProperty();
                 const int mouseY = mouse.getYProperty();
                 const bool lookHeld =
@@ -3307,6 +3327,12 @@ namespace GalaxyEggbert::CNA
                 blupiClipTimeSeconds_ += static_cast<double>(dt);
             }
         }
+
+        if (goldenCaptureMode_ && goldenCaptureNextIndex_ < kGoldenCaptureCount &&
+            goldenCaptureTick_ >= kGoldenCaptureTicks[goldenCaptureNextIndex_])
+        {
+            goldenCaptureAwaitingDraw_ = true;
+        }
     }
 
     void GalaxyEggbertCnaGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
@@ -3444,7 +3470,6 @@ namespace GalaxyEggbert::CNA
                 // construction from vertex/index data), so a fresh mesh is
                 // the only way to reflect a new icon/UV per frame -- cheap
                 // here since there are only a handful of cube objects.
-                constexpr float kObjectCubeGroundOffset = 1.0f; // matches kObjectGroundOffset below
                 std::vector<Easy3D::CubeVertex> cubeVertices;
                 std::vector<std::uint32_t> cubeIndices;
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
@@ -3456,7 +3481,7 @@ namespace GalaxyEggbert::CNA
                     const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                     Easy3D::CubeItem item;
                     item.Center = Easy3D::CubeBatch::Vector3(
-                        obj.currentX, obj.currentY + kObjectCubeGroundOffset, obj.currentZ);
+                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ);
                     item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
                     item.Uv = tileAtlas_.GetTileUv(icon);
                     Easy3D::AppendCubeMesh(item, cubeVertices, cubeIndices);
@@ -3709,7 +3734,6 @@ namespace GalaxyEggbert::CNA
 
             Easy3D::BillboardBatch batch;
             constexpr float kObjectSize = 1.0f;
-            constexpr float kObjectGroundOffset = 1.0f; // matches blupi_'s own ground-standing height
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 // Platform lifts/crates render as solid cubes (see
@@ -3745,7 +3769,8 @@ namespace GalaxyEggbert::CNA
                 }
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
+                    Microsoft::Xna::Framework::Vector3(
+                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -3778,7 +3803,6 @@ namespace GalaxyEggbert::CNA
 
             Easy3D::BillboardBatch batch;
             constexpr float kObjectSize = 1.0f;
-            constexpr float kObjectGroundOffset = 1.0f; // matches the element.png batch above
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 if (!obj.active || !IsObjectMPngSourced(obj.type))
@@ -3788,7 +3812,8 @@ namespace GalaxyEggbert::CNA
                 const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                 const auto uv = tileAtlas_.GetTileUv(icon);
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
+                    Microsoft::Xna::Framework::Vector3(
+                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     uv);
             }
@@ -3820,7 +3845,6 @@ namespace GalaxyEggbert::CNA
 
             Easy3D::BillboardBatch batch;
             constexpr float kObjectSize = 1.0f;
-            constexpr float kObjectGroundOffset = 1.0f; // matches the batches above
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 if (!obj.active || !IsExploPngSourced(obj.type))
@@ -3838,7 +3862,8 @@ namespace GalaxyEggbert::CNA
                 }
                 const auto uv = GetExploIconUv(icon);
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
+                    Microsoft::Xna::Framework::Vector3(
+                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -3872,7 +3897,6 @@ namespace GalaxyEggbert::CNA
             Easy3D::BillboardBatch blupiBatch;
             Easy3D::BillboardBatch blupi1Batch;
             constexpr float kObjectSize = 1.0f;
-            constexpr float kObjectGroundOffset = 1.0f; // matches the batches above
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 const int objPhase = static_cast<int>(obj.phase);
@@ -3884,7 +3908,8 @@ namespace GalaxyEggbert::CNA
                 const auto uv = GetBlupiIconUv(icon);
                 auto& batch = UsesBlupi1Texture(obj.type) ? blupi1Batch : blupiBatch;
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(obj.currentX, obj.currentY + kObjectGroundOffset, obj.currentZ),
+                    Microsoft::Xna::Framework::Vector3(
+                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -3929,12 +3954,12 @@ namespace GalaxyEggbert::CNA
 
             Easy3D::BillboardBatch batch;
             constexpr float kBigDecorSize = 1.0f;
-            constexpr float kBigDecorGroundOffset = 1.0f; // matches kObjectGroundOffset above
             for (const auto& cell : bigDecorCells_)
             {
                 const auto uv = tileAtlas_.GetTileUv(static_cast<int>(cell.icon));
                 batch.Add(
-                    Microsoft::Xna::Framework::Vector3(cell.worldX, kBigDecorGroundOffset, cell.worldZ),
+                    Microsoft::Xna::Framework::Vector3(
+                        cell.worldX, kGroundObjectCenterY, cell.worldZ),
                     Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize),
                     uv);
             }
@@ -4138,11 +4163,8 @@ namespace GalaxyEggbert::CNA
         // Vulkan mid-draw-readback corruption).
         if (goldenCaptureMode_ && drawFrameIndex_ > terrainPixelPrintedFrame_)
         {
-            static constexpr int kGoldenCaptureTicks[] = {60, 120, 180};
-            constexpr int kGoldenCaptureCount =
-                static_cast<int>(sizeof(kGoldenCaptureTicks) / sizeof(kGoldenCaptureTicks[0]));
-            if (goldenCaptureNextIndex_ < kGoldenCaptureCount &&
-                goldenCaptureTick_ >= kGoldenCaptureTicks[goldenCaptureNextIndex_])
+            if (goldenCaptureAwaitingDraw_ &&
+                goldenCaptureNextIndex_ < kGoldenCaptureCount)
             {
                 const auto& viewport = device.getViewportProperty();
                 const int w = viewport.getWidthProperty();
@@ -4160,6 +4182,7 @@ namespace GalaxyEggbert::CNA
                 std::cout << "GalaxyEggbertCNA: wrote " << filename << " (" << w << "x" << h << ")."
                           << std::endl;
                 ++goldenCaptureNextIndex_;
+                goldenCaptureAwaitingDraw_ = false;
                 if (goldenCaptureNextIndex_ >= kGoldenCaptureCount)
                 {
                     std::cout << "GalaxyEggbertCNA: golden capture complete, exiting." << std::endl;

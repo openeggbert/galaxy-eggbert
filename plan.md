@@ -5701,7 +5701,7 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 ## 6. Development Tooling — 3D World Editor
 
 **Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-117` are implemented and tested. The editor's
+`EDITOR-112`) and follow-up tasks through `EDITOR-118` are implemented and tested. The editor's
 input, rendering, orchestration, and verification are separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -5902,6 +5902,24 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       `X:<n> Y:<n> Z:<n>` readout using the exact raw-grid cell that PLACE will modify. It sits to
       the right of the controls at the normal 800×480 layout and moves above the wrapped controls
       when a narrow viewport has no horizontal room.
+- [x] **EDITOR-118 — align placed objects with their selected 3D cells.**
+      **Done 2026-07-25:** the editor already stored a new `MoveObjectRecord` at the exact red
+      preview cell and drew its selection highlight there, but all five gameplay object-render
+      paths added a second unconditional `+1` Y offset. Billboard objects such as the bird and
+      solid cube objects therefore appeared one complete block above the cell the editor reported.
+      `MoveObjectRecord`/`MobileObjSpec` now share one explicit cell-center Y contract, every
+      object texture batch renders that Y without another offset, and height-less 2D
+      mobile-eggbert imports are normalized to the ground object's Y=1 cell when loaded. Lift
+      rider height changed consistently from center+2 to center+1; the three demo lift paths and
+      `world999.vwr` were regenerated to retain their physical endpoints under the corrected
+      convention. Scripted coverage checks editor placement/render-center identity, imported 2D
+      object height, and lift riding.
+      The intentionally changed golden images exposed two independent weaknesses in the existing
+      capture harness: skipped Draw calls could capture a later simulation tick, and the supposedly
+      passive capture still accepted live desktop keyboard/mouse input. Capture now freezes at
+      each requested tick until Draw consumes it, and both golden-frame and golden-trace modes
+      suppress physical input. Two consecutive golden-frame runs matched all three updated
+      references exactly; golden trace remained byte-identical.
 
 ### Known problems / open concerns
 

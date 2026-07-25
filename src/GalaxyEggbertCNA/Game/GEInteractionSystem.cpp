@@ -1,4 +1,5 @@
 #include "GEInteractionSystem.hpp"
+#include "GEObjectVerticalPlacement.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -820,7 +821,7 @@ namespace GalaxyEggbert::CNA
             {
                 continue;
             }
-            const float liftStandY = candidate.currentY + 2.0f;
+            const float liftStandY = LiftRiderCenterY(candidate.currentY);
             if (std::fabs(blupiX - candidate.currentX) < 0.5f && std::fabs(blupiZ - candidate.currentZ) < 0.5f &&
                 std::fabs(blupiY - liftStandY) < 0.2f)
             {
@@ -1020,7 +1021,7 @@ namespace GalaxyEggbert::CNA
                     ridingLift_ = true;
                     rideDeltaX_ = (obj.currentX - riddenLiftOldX) + nudgeX;
                     rideDeltaZ_ = obj.currentZ - riddenLiftOldZ;
-                    rideStandY_ = obj.currentY + 2.0f;
+                    rideStandY_ = LiftRiderCenterY(obj.currentY);
                 }
                 continue;
             }

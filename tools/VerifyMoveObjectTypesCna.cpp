@@ -1,4 +1,5 @@
 #include "Game/GEWorldRuntime.hpp"
+#include "Game/GEObjectVerticalPlacement.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -42,11 +43,16 @@ int main()
         }
 
         bool found = false;
+        bool grounded = false;
         for (const auto& obj : runtime.GetMobileObjects())
         {
             if (static_cast<int>(obj.type) == c.type)
             {
                 found = true;
+                grounded =
+                    obj.posStartY == GalaxyEggbert::CNA::kGroundObjectCenterY &&
+                    obj.posEndY == GalaxyEggbert::CNA::kGroundObjectCenterY &&
+                    obj.currentY == GalaxyEggbert::CNA::kGroundObjectCenterY;
                 break;
             }
         }
@@ -54,6 +60,12 @@ int main()
         std::cout << (found ? "PASS" : "FAIL") << ": type=" << c.type << " (" << c.name
                   << ") spawned from " << c.file << std::endl;
         if (!found)
+        {
+            allOk = false;
+        }
+        std::cout << (grounded ? "PASS" : "FAIL")
+                  << ": imported 2D object occupies the Y=1 ground cell" << std::endl;
+        if (!grounded)
         {
             allOk = false;
         }

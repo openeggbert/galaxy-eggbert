@@ -502,10 +502,14 @@ namespace GalaxyEggbert::CNA
         // comment for the full behavior. `goldenCaptureArmed_` latches the
         // one-time setup (phase skip + fixed world load); `goldenCaptureTick_`
         // is a plain per-Update() tick count (not phaseTimeSeconds_, which
-        // resets on phase transitions); `goldenCaptureNextIndex_` walks
-        // through `kGoldenCaptureTicks` (GalaxyEggbertCnaGame.cpp) in Draw().
+        // resets on phase transitions). `goldenCaptureAwaitingDraw_` freezes
+        // simulation at each requested tick until Draw() captures it, so a
+        // skipped render cannot accidentally record a later simulation
+        // state. `goldenCaptureNextIndex_` walks through
+        // `kGoldenCaptureTicks` (GalaxyEggbertCnaGame.cpp) in Draw().
         bool goldenCaptureMode_ = false;
         bool goldenCaptureArmed_ = false;
+        bool goldenCaptureAwaitingDraw_ = false;
         int goldenCaptureTick_ = 0;
         int goldenCaptureNextIndex_ = 0;
 

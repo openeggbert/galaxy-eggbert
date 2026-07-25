@@ -1,4 +1,5 @@
 #include "GEWorldRuntime.hpp"
+#include "GEObjectVerticalPlacement.hpp"
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -153,10 +154,10 @@ namespace GalaxyEggbert::CNA
                 MobileObjSpec spec;
                 spec.type = static_cast<ObjectType>(type);
                 spec.posStartX = static_cast<float>(psx) / kMobileTileSize - kWorldCenterX;
-                spec.posStartY = 0.0f;
+                spec.posStartY = kGroundObjectCenterY;
                 spec.posStartZ = static_cast<float>(psy) / kMobileTileSize - kWorldCenterZ;
                 spec.posEndX = static_cast<float>(pex) / kMobileTileSize - kWorldCenterX;
-                spec.posEndY = 0.0f;
+                spec.posEndY = kGroundObjectCenterY;
                 spec.posEndZ = static_cast<float>(pey) / kMobileTileSize - kWorldCenterZ;
                 spec.speed = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
                 // Real patrol-timing fields (plan.md E3D-MIG-131), used by

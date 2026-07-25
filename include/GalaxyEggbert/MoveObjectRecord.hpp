@@ -26,7 +26,9 @@ namespace GalaxyEggbert {
 // own MobileObjSpec/BigDecor conversions apply. That shift is a
 // presentation-layer concern (GEWorldRuntime::kWorldCenterX/Z); this struct
 // and PlaceMoveObject/CollectMoveObjects stay agnostic to it, matching
-// every other Worlds::World coordinate in this codebase.
+// every other Worlds::World coordinate in this codebase. Y identifies the
+// center of the occupied voxel cell: an object standing on a solid block at
+// Y=0 therefore has Y=1. Renderers must not add another vertical block.
 struct MoveObjectRecord final {
     ObjectType type = ObjectType::ObjectType0;
     float posStartX = 0.0f, posStartY = 0.0f, posStartZ = 0.0f;

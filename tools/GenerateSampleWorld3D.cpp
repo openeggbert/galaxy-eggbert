@@ -406,24 +406,15 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // making it sit permanently stationary despite GEInteractionSystem's
     // real patrol movement, caught by tools/VerifyInteractionSystem.cpp).
     //
-    // posEndY fixed 2026-07-12 (NEXT.md 8 task 3): rendered UniformCube
-    // objects sit with their OWN top face at (currentY + 1.5) -- see
-    // GalaxyEggbertCnaGame.cpp's kObjectCubeGroundOffset (+1.0) plus the
-    // cube's own half-height (0.5). The old posEndY=8.0f (matching the
-    // crow's-nest floor's own grid Y exactly) put the lift's top face a full
-    // unit ABOVE the surrounding floor's own top face (9.5 vs 8.5) instead
-    // of flush with it, and left the floor solid at that column (see the
-    // shaft-opening comment above) -- confirmed live via a temporary debug
-    // screenshot (camera override, reverted, not part of this diff) showing
-    // the lift parked on top of a fully solid slab with no passage. Lowered
-    // by 1 to 7.0f so the lift's top face (7.0+1.0+0.5=8.5) lands exactly
-    // flush with the floor's own top face (8.5), plugging the new shaft
-    // opening above instead of sitting proud on solid rock.
+    // MoveObject Y is the cube center, with no renderer-only +1 shift.
+    // The lift starts centered at Y=5 on top of the plateau's Y=4 block,
+    // then parks at Y=8 with its top face flush with the two Y=8
+    // crow's-nest stepping stones.
     {
         MoveObjectRecord lift;
         lift.type = ObjectType::ObjectType1;
-        lift.posStartX = 50.0f; lift.posStartY = 4.0f; lift.posStartZ = 28.0f;
-        lift.posEndX = 50.0f;   lift.posEndY = 7.0f;   lift.posEndZ = 28.0f;
+        lift.posStartX = 50.0f; lift.posStartY = 5.0f; lift.posStartZ = 28.0f;
+        lift.posEndX = 50.0f;   lift.posEndY = 8.0f;   lift.posEndZ = 28.0f;
         PlaceMoveObject(world, lift);
     }
 
@@ -626,10 +617,9 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // lift's own shaft risks the GroundHeightAt() roofed-interior limitation
     // (NEXT.md 5) the tunnel's fixtures already hit twice. Each destination
     // platform has its own carved shaft opening at the lift's exact column,
-    // same fix as the north-hill lift above -- posEndY = platformGridY - 1
-    // so the lift's own top face (posEndY + 1.5) lands flush with the
-    // platform's top face (platformGridY + 0.5), plugging the hole instead
-    // of sitting proud on solid rock.
+    // same fix as the north-hill lift above. MoveObject Y is the lift cube's
+    // center, so each endpoint is the center of the corresponding occupied
+    // voxel cell and its top face is flush with the destination platform.
     // ------------------------------------------------------------------
     fill(45, 51, 0, 0, 71, 77, BlockTypes::RockPile); // lift room A floor
     fill(48, 50, 5, 5, 73, 75, BlockTypes::RockPile); // destination platform, y=5
@@ -637,8 +627,8 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     {
         MoveObjectRecord liftA;
         liftA.type = ObjectType::ObjectType1;
-        liftA.posStartX = 49.0f; liftA.posStartY = 0.0f; liftA.posStartZ = 74.0f;
-        liftA.posEndX = 49.0f;   liftA.posEndY = 4.0f;   liftA.posEndZ = 74.0f;
+        liftA.posStartX = 49.0f; liftA.posStartY = 1.0f; liftA.posStartZ = 74.0f;
+        liftA.posEndX = 49.0f;   liftA.posEndY = 5.0f;   liftA.posEndZ = 74.0f;
         PlaceMoveObject(world, liftA);
     }
 
@@ -648,8 +638,8 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     {
         MoveObjectRecord liftB;
         liftB.type = ObjectType::ObjectType1;
-        liftB.posStartX = 56.0f; liftB.posStartY = 0.0f; liftB.posStartZ = 74.0f;
-        liftB.posEndX = 56.0f;   liftB.posEndY = 2.0f;   liftB.posEndZ = 74.0f;
+        liftB.posStartX = 56.0f; liftB.posStartY = 1.0f; liftB.posStartZ = 74.0f;
+        liftB.posEndX = 56.0f;   liftB.posEndY = 3.0f;   liftB.posEndZ = 74.0f;
         PlaceMoveObject(world, liftB);
     }
 

@@ -15,8 +15,8 @@ namespace GalaxyEggbert::CNA
     // line — mirrors GESimple3D::MobileObjSpec (galaxy-eggbert's own,
     // already-approved parsing logic), kept engine-agnostic here (plain
     // floats, not a CNA/XNA Vector3) to match this class's existing style.
-    // No renderer consumes this list yet (see 15-3d-render-mapping-design.md
-    // for the planned Billboard/UniformCube treatment per type).
+    // Y is the center of the occupied voxel cell, matching
+    // MoveObjectRecord: a ground object above a Y=0 floor has Y=1.
     struct MobileObjSpec
     {
         ObjectType type;

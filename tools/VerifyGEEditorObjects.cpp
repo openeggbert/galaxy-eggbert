@@ -1,6 +1,7 @@
 #include "Editor/GEEditCommandStack.hpp"
 #include "Editor/GEVoxelRaycast.hpp"
 #include "Editor/GEWorldEditor.hpp"
+#include "Game/GEObjectVerticalPlacement.hpp"
 
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -28,6 +29,11 @@ int main()
         std::cout << (condition ? "PASS" : "FAIL") << ": " << message << std::endl;
         if (!condition) allOk = false;
     };
+
+    check(ObjectVisualCenterY(7.0f) == 7.0f,
+          "an object's stored Y is its visual cell center without another block offset");
+    check(LiftRiderCenterY(7.0f) == 8.0f,
+          "a rider stands one cell-center unit above a lift cube");
 
     const auto makeRecord = [](GalaxyEggbert::ObjectType type, float x, float y, float z)
     {
