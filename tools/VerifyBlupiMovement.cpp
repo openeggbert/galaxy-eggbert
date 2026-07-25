@@ -375,7 +375,7 @@ int main(int argc, char** argv)
         // Water drip (plan.md TILE-032, real Decor::IsGoutte, icon 404,
         // confirmed 2026-07-14 via direct Decor.cpp read) -- same
         // recognition-only test shape as Lava/Spike above (the actual
-        // kill trigger lives in GalaxyEggbertCnaGame::Update(), same as
+        // kill trigger lives in GalaxyEggbertGame::Update(), same as
         // every other hazard here, not separately unit-testable yet).
         constexpr std::uint16_t kDripX = 31, kDripZ = 31;
         synthetic.setBlock(kDripX, 0, kDripZ, Worlds::Block::make(BlockTypes::Drip));
@@ -483,7 +483,7 @@ int main(int argc, char** argv)
         // Crusher squash state (plan.md E3D-MIG-143) -- TriggerCrush()/
         // IsEcrased()/recovery, standing on the same ordinary ground block
         // used above (the trigger *condition* -- Crusher block + active
-        // cycle -- is GalaxyEggbertCnaGame's job, tested separately in
+        // cycle -- is GalaxyEggbertGame's job, tested separately in
         // WorldRuntime::IsCrusherActiveAtPhase(); this only tests
         // BlupiController's own state machine once triggered).
         BlupiController crushed;
@@ -719,7 +719,7 @@ int main(int argc, char** argv)
 
         // Spring bounce (plan.md E3D-MIG-145) -- same synthetic world, one
         // more block (icon 211 = BlockTypes::Spring). GetGroundBlockType()
-        // detection first (the trigger *condition* -- GalaxyEggbertCnaGame's
+        // detection first (the trigger *condition* -- GalaxyEggbertGame's
         // job), then TriggerSpringBounce()'s own state machine in
         // isolation, same split as the Crusher tests above.
         constexpr std::uint16_t kSpringX = 40, kSpringZ = 40;
@@ -2020,7 +2020,7 @@ int main(int argc, char** argv)
     }
 
     // TakeSkate/DeposeSkate one-shot mount/dismount anim (table_blupi actions
-    // 42/43, wired 2026-07-19 in GalaxyEggbertCnaGame.cpp's mount/dismount
+    // 42/43, wired 2026-07-19 in GalaxyEggbertGame.cpp's mount/dismount
     // hook points) -- direct BlupiController-level coverage of the
     // TriggerOneShotAnim() mechanism itself, same "freeze, count down,
     // auto-resume" shape already used by Switch/TakeDynamite/PutDynamite.
@@ -2067,7 +2067,7 @@ int main(int argc, char** argv)
 
     // FireTank one-shot recoil anim (table_blupi action 53, wired
     // 2026-07-19 alongside InteractionSystem::EventKind::TankFired in
-    // GalaxyEggbertCnaGame.cpp) -- same direct BlupiController-level
+    // GalaxyEggbertGame.cpp) -- same direct BlupiController-level
     // TriggerOneShotAnim() coverage as TakeSkate/DeposeSkate above.
     {
         BlupiController firing;

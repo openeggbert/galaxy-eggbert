@@ -21,7 +21,7 @@ namespace GalaxyEggbert::Game
     // units (the real table's own "sub-pixel Decor units" already
     // multiplied by 3, matching `DecorNextAction()`'s own math exactly)
     // -- converting this to a 3D camera-space perturbation is the
-    // caller's job (GalaxyEggbertCnaGame), keeping this class a pure,
+    // caller's job (GalaxyEggbertGame), keeping this class a pure,
     // engine-agnostic port of the real per-frame math, same precedent as
     // BlupiController/TerrainAnimDivisor.
     //

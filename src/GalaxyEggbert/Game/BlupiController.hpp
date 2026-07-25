@@ -22,7 +22,7 @@ namespace GalaxyEggbert::Game
     // (E3D-MIG-061..064) waits for it. In the meantime this tracks just
     // enough state (facing yaw, a coarse Stop/March/Jump/Down/Up animation
     // state) to drive a first-person camera and a 2D screen-corner
-    // animation indicator — see GalaxyEggbertCnaGame. The frame tables are
+    // animation indicator — see GalaxyEggbertGame. The frame tables are
     // documented in mobile-eggbert-reference/08-animations.md.
     //
     // Deliberately engine-agnostic (only depends on GalaxyEggbert::Worlds)
@@ -535,7 +535,7 @@ namespace GalaxyEggbert::Game
             // Same TriggerOneShotAnim() freeze/timer shape as Switch/
             // TakeDynamite/PutDynamite above; caller fires these from the
             // real Skateboard mount/dismount hook points in
-            // GalaxyEggbertCnaGame.cpp.
+            // GalaxyEggbertGame.cpp.
             TakeSkate, DeposeSkate,
             // Real Mockery/Mockeryi/Mockeryp (plan.md BLUPI-067, found
             // 2026-07-18, user question: "does Blupi stick his tongue out
@@ -700,7 +700,7 @@ namespace GalaxyEggbert::Game
         // an actual new trigger, same idiom as every other Trigger*() here.
         // Real vehicle-mode clauses (Power/Cloud/Hide only -- Shield has
         // none, confirmed directly) are enforced by the CALLER instead
-        // (`GalaxyEggbertCnaGame.cpp`'s `canGrantPower/Cloud/Hide`, fixed
+        // (`GalaxyEggbertGame.cpp`'s `canGrantPower/Cloud/Hide`, fixed
         // 2026-07-16), not inside these methods, since this class has no
         // vehicle-mode access of its own. The real 2-stage "busy" animation
         // + delay before Power(Sucette)/Hide(Drink)/Cloud(Charge) actually
@@ -992,7 +992,7 @@ namespace GalaxyEggbert::Game
         // True for exactly the one Step() call where the gauge crosses from
         // above zero to zero while still Nage -- the caller checks this
         // once per frame (same shape as every terrain-hazard death check
-        // already in GalaxyEggbertCnaGame::Update()) and applies the real
+        // already in GalaxyEggbertGame::Update()) and applies the real
         // drowning death consequence (channel 26, distinct from every other
         // death cause's sound) via the shared triggerDeath() lambda, which
         // respawns Blupi (moving him out of the water) before the next
@@ -1046,7 +1046,7 @@ namespace GalaxyEggbert::Game
         // used to be 3 parallel *ThisFrame() booleans with one typed
         // per-frame event queue, cleared and refilled every Step() call the
         // same way those booleans were reset/set. The caller
-        // (GalaxyEggbertCnaGame.cpp) iterates it and plays the matching
+        // (GalaxyEggbertGame.cpp) iterates it and plays the matching
         // real channel per Kind.
         enum class EventKind : std::uint8_t
         {
@@ -1078,7 +1078,7 @@ namespace GalaxyEggbert::Game
         // GalaxyEggbert::Def::Direction::Left (base data is right-facing by convention),
         // flipped again by m_blupiInvert. This engine has no discrete
         // left/right facing, only a continuous 3D yaw -- approximated via
-        // the same std::sin(yaw)-sign convention GalaxyEggbertCnaGame.cpp
+        // the same std::sin(yaw)-sign convention GalaxyEggbertGame.cpp
         // already uses for blupiFacingDX (a deliberate approximation for
         // this temporary debug-icon consumer, not a claim that "facing
         // left" is precisely defined in a free 3D camera). Deliberately
@@ -1157,7 +1157,7 @@ namespace GalaxyEggbert::Game
         // entirely. Needed for ground/ceiling resolution specifically
         // (ResolveMove()'s vertical-only calls, FindColumnGroundY()):
         // several real hazard tiles this engine's own hazard-detection
-        // design (GetGroundBlockType(), checked by GalaxyEggbertCnaGame.cpp)
+        // design (GetGroundBlockType(), checked by GalaxyEggbertGame.cpp)
         // depends on Blupi physically resting ON -- Lava(68)/Crusher(317)/
         // Saw(378)/Blitz(305)/Drip(404) -- have an all-zero real quarter-cell
         // mask (confirmed 2026-07-21: they are genuinely thin/non-bulk per

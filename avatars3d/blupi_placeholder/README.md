@@ -34,7 +34,7 @@ change) before conversion, not by modifying the converter itself.
 ## Animation mapping (placeholder, best-effort)
 
 `BlupiController::AnimState` has no equivalent to this fox's 3 clips —
-`GalaxyEggbertCnaGame`'s mapping (documented in its own source) is a rough
+`GalaxyEggbertGame`'s mapping (documented in its own source) is a rough
 placeholder, not a faithful behavioral match:
 
 | AnimState | Clip used | Note |

@@ -3,7 +3,7 @@
 # §7) -- found missing 2026-07-22 during an external audit of the
 # already-"done" INFRA-001/002 entries (see plan.md's own corrected
 # writeups). Sibling script to verify_golden_frames.sh, same shape, but for
-# GalaxyEggbertCnaGame::EnableGoldenTraceMode() (--golden-capture-trace)
+# GalaxyEggbertGame::EnableGoldenTraceMode() (--golden-capture-trace)
 # instead of the passive screenshot capture -- this mode ALSO drives Blupi
 # through a small fixed, deterministic input script (walk + one jump down
 # the same "tested corridor" VerifyBlupiMovement.cpp depends on staying

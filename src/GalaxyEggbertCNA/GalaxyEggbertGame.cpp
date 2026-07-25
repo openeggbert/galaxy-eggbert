@@ -1,4 +1,4 @@
-#include "GalaxyEggbertCnaGame.hpp"
+#include "GalaxyEggbertGame.hpp"
 
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
@@ -272,7 +272,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    GalaxyEggbertCnaGame::GalaxyEggbertCnaGame()
+    GalaxyEggbertGame::GalaxyEggbertGame()
     {
         Game::getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)");
         // Standard XNA pattern: the manager must be constructed in the game
@@ -281,7 +281,7 @@ namespace GalaxyEggbert::CNA
         graphics_ = std::make_unique<Microsoft::Xna::Framework::GraphicsDeviceManager>(this);
     }
 
-    void GalaxyEggbertCnaGame::LoadContent()
+    void GalaxyEggbertGame::LoadContent()
     {
         // Default world source: a genuinely 3D, hand-authored .vwr world
         // (plan.md E3D-MIG-058), not a flat mobile-eggbert .txt layout.
@@ -548,7 +548,7 @@ namespace GalaxyEggbert::CNA
                   << terrainRenderer_->PrimitiveCount() << " triangles." << std::endl;
     }
 
-    void GalaxyEggbertCnaGame::RebuildWorldPresentation()
+    void GalaxyEggbertGame::RebuildWorldPresentation()
     {
         // Re-derive skyRegion/missionNumber/mobileObjects_ from the World
         // itself first (plan.md EDITOR-109): the world editor mutates the
@@ -607,7 +607,7 @@ namespace GalaxyEggbert::CNA
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_);
     }
 
-    void GalaxyEggbertCnaGame::LoadMission(int missionNumber)
+    void GalaxyEggbertGame::LoadMission(int missionNumber)
     {
         char path[64];
         std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
@@ -691,7 +691,7 @@ namespace GalaxyEggbert::CNA
                    << std::endl;
     }
 
-    void GalaxyEggbertCnaGame::LoadCustomWorldForEditing(const std::filesystem::path& path)
+    void GalaxyEggbertGame::LoadCustomWorldForEditing(const std::filesystem::path& path)
     {
         if (!worldRuntime_.LoadFromVwrFile(path.string()))
         {
@@ -724,7 +724,7 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: LoadCustomWorldForEditing(" << path << "): loaded." << std::endl;
     }
 
-    void GalaxyEggbertCnaGame::LoadCustomWorldForPlayTest(const std::filesystem::path& path)
+    void GalaxyEggbertGame::LoadCustomWorldForPlayTest(const std::filesystem::path& path)
     {
         if (!worldRuntime_.LoadFromVwrFile(path.string()))
         {
@@ -762,7 +762,7 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path << "): loaded." << std::endl;
     }
 
-    void GalaxyEggbertCnaGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
+    void GalaxyEggbertGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
         // Real Game1::SetPhase() (2026-07-13, plan.md MENU-088/089, see
         // this method's own declaration comment for the full real
@@ -798,7 +798,7 @@ namespace GalaxyEggbert::CNA
         inputPad_.ResetTouchState();
     }
 
-    const char* GalaxyEggbertCnaGame::PhaseOverlayMessage() const noexcept
+    const char* GalaxyEggbertGame::PhaseOverlayMessage() const noexcept
     {
         switch (phase_)
         {
@@ -819,7 +819,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GalaxyEggbertCnaGame::ResolvePendingVoyage()
+    void GalaxyEggbertGame::ResolvePendingVoyage()
     {
         const auto* voyageEvent = FindInteractionEvent(InteractionSystem::EventKind::VoyageRequested);
         if (!voyageEvent)
@@ -874,7 +874,7 @@ namespace GalaxyEggbert::CNA
                                  voyageEvent->voyageIsButtonChannel, startX, startY, endX, endY, sound_);
     }
 
-    void GalaxyEggbertCnaGame::DismountAndDepositVehicle()
+    void GalaxyEggbertGame::DismountAndDepositVehicle()
     {
         if (!blupi_.IsInVehicle())
         {
@@ -914,7 +914,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GalaxyEggbertCnaGame::UpdateVehicleMotorSound()
+    void GalaxyEggbertGame::UpdateVehicleMotorSound()
     {
         using GalaxyEggbert::Def::SoundChannel;
 
@@ -962,7 +962,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GalaxyEggbertCnaGame::ResolveDeathLock()
+    void GalaxyEggbertGame::ResolveDeathLock()
     {
         // Starts a NEW lock for the 4 real trigger sites living inside
         // interaction_.Update() itself (see InteractionSystem::
@@ -1026,7 +1026,7 @@ namespace GalaxyEggbert::CNA
                                  false, startX, kLivesY, endX, endY, sound_);
     }
 
-    const GalaxyEggbert::Game::InteractionSystem::Event* GalaxyEggbertCnaGame::FindInteractionEvent(
+    const GalaxyEggbert::Game::InteractionSystem::Event* GalaxyEggbertGame::FindInteractionEvent(
         GalaxyEggbert::Game::InteractionSystem::EventKind kind) const noexcept
     {
         for (const auto& event : interaction_.EventsThisFrame())
@@ -1039,7 +1039,7 @@ namespace GalaxyEggbert::CNA
         return nullptr;
     }
 
-    void GalaxyEggbertCnaGame::ResolvePickupFreeze()
+    void GalaxyEggbertGame::ResolvePickupFreeze()
     {
         using GalaxyEggbert::Game::BlupiController;
         using GalaxyEggbert::Game::InteractionSystem;
@@ -1113,7 +1113,7 @@ namespace GalaxyEggbert::CNA
                                         pendingPickupType_);
     }
 
-    void GalaxyEggbertCnaGame::ApplyCheat(int cheatNumber)
+    void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
     {
         switch (cheatNumber)
         {
@@ -1158,7 +1158,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GalaxyEggbertCnaGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
+    void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
 
@@ -3339,7 +3339,7 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    void GalaxyEggbertCnaGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
+    void GalaxyEggbertGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
         (void)gameTime;
         auto& device = getGraphicsDeviceProperty();
@@ -4197,5 +4197,5 @@ namespace GalaxyEggbert::CNA
         }
     }
 
-    GetTypeNameCPP(GalaxyEggbertCnaGame, "GalaxyEggbertCnaGame")
+    GetTypeNameCPP(GalaxyEggbertGame, "GalaxyEggbertGame")
 }

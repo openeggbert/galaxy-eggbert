@@ -138,7 +138,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     add_executable(GalaxyEggbertCNA
         src/GalaxyEggbertCNA/main.cpp
-        src/GalaxyEggbertCNA/GalaxyEggbertCnaGame.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/TerrainRenderer.cpp

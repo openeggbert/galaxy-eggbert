@@ -77,7 +77,7 @@ Steps:
   requests a mipmap-based filter for this draw call.
 - **Fog**: `Microsoft::Xna::Framework::Graphics::BasicEffect::fogEnabled_` defaults to `false`
   (`include/Microsoft/Xna/Framework/Graphics/BasicEffect.hpp`), and nothing in
-  `GalaxyEggbertCnaGame.cpp` ever sets `FogEnabled`/`FogColor`/`FogStart`/`FogEnd`. A fog effect
+  `GalaxyEggbertGame.cpp` ever sets `FogEnabled`/`FogColor`/`FogStart`/`FogEnd`. A fog effect
   fading toward a flat color at a fixed distance would have explained the symptom neatly, but it is
   not in play.
 

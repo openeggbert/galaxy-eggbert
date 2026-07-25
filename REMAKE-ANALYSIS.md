@@ -176,9 +176,9 @@ enormous methods**:
 
 | Method | Approx. size |
 |---|---|
-| `GalaxyEggbertCnaGame::Update` | **~2,073 lines** |
+| `GalaxyEggbertGame::Update` | **~2,073 lines** |
 | `InteractionSystem::Update` | **~1,677 lines** |
-| `GalaxyEggbertCnaGame::Draw` | **~817 lines** |
+| `GalaxyEggbertGame::Draw` | **~817 lines** |
 | `BlupiController::Step` | **~715 lines** |
 
 `ObjectType` is referenced **214 times** in `InteractionSystem.cpp` alone. The same type constant
@@ -203,7 +203,7 @@ caught by eye.)
 `InteractionSystem` is deliberately blind to `BlupiController` and graphics, so results flow
 back via **17 one-frame boolean flags** consumed by the orchestrator. Adding one interaction touches
 **three classes across ≥3 files** (a flag member, a line in a 15-entry reset list, a `= true` at the
-trigger site, a getter, and a consumer `if` in `GalaxyEggbertCnaGame::Update`). Correctness depends
+trigger site, a getter, and a consumer `if` in `GalaxyEggbertGame::Update`). Correctness depends
 on **prose-documented ordering** ("reads *last* frame's value — a one-frame lag"; "must be consumed
 before the flag resets"), not on an enforced contract. This does not by itself cause the visual
 bugs, but it multiplies the cost and risk of every fix that must touch it — so it belongs on the
@@ -355,11 +355,11 @@ headless check → commit → push) **plus** the new golden/trace checks once th
 | BLUPI/MENU/SOUND/PICKUP dominate task churn | `plan.md` (ID-prefix counts) |
 | 19 `GetObjIcon` bugs across two audit sweeps; Balloon 3+ fixes; Sp0–Sp7 wrong premise | `plan.md`, `git log` |
 | 34 recorded "Fixed" transcription notes; 154 `case` labels | `src/GalaxyEggbert/Game/ObjectIcons.cpp` |
-| `Update` ~2073 lines, `InteractionSystem::Update` ~1677, `ObjectType` ×214 | `GalaxyEggbertCnaGame.cpp`, `InteractionSystem.cpp` |
+| `Update` ~2073 lines, `InteractionSystem::Update` ~1677, `ObjectType` ×214 | `GalaxyEggbertGame.cpp`, `InteractionSystem.cpp` |
 | Airborne no-wall-collision; `!m_onGround` bypass; no `TestPath` equivalent | `BlupiController.cpp` (`TryMoveAxis`), `BlupiController.hpp:136-170` |
 | Collision is a column-stub, not a `BlupiRect`/`BlupiAdjust`/`BlupiBloque` port | `BlupiController.cpp:263-417`, `mobile-eggbert-reference/10-blupi-mechanics.md` |
 | 40 `AnimState` values vs. 87 real `BlupiAction` states | `grep AnimState src/GalaxyEggbertCNA`, `mobile-eggbert-reference/08/10-*.md` |
 | Render-mapping reversed 3×; ~137 unverified icons | `mobile-eggbert-reference/15-3d-render-mapping-design.md` |
-| 17 `*ThisFrame()` flags, 3-file boilerplate per feature, prose-ordering hazards | `InteractionSystem.hpp`, `GalaxyEggbertCnaGame.{hpp,cpp}` |
+| 17 `*ThisFrame()` flags, 3-file boilerplate per feature, prose-ordering hazards | `InteractionSystem.hpp`, `GalaxyEggbertGame.{hpp,cpp}` |
 | Verification = synthetic unit tests + transcribed docs + user screenshot | `plan.md`, `NEXT.md` §4/§5/§7.5 |
 | Re-derivation reintroduces solved bugs; sibling-repo-origin bugs | `missing.md`, `texture-distance-washout-bug.md`, `NEXT.md` §5 |

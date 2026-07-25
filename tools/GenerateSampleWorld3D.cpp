@@ -194,7 +194,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // Real background image demo (NEXT.md §3, 2026-07-09) -- region 3 is a
     // real mobile-eggbert region (Content/backgrounds/decor003.png), not
     // the region=0 default, so this world visibly exercises the new
-    // skyRegion header field/GalaxyEggbertCnaGame background-loading path
+    // skyRegion header field/GalaxyEggbertGame background-loading path
     // instead of silently matching the fallback.
     world.setSkyRegion(3);
     world.setMissionNumber(missionNumber);
@@ -729,7 +729,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     // Tank + firing demo (plan.md BULLET-001, 2026-07-13) -- one Tank
     // pickup right next to the bullet pack above, so mounting it and
     // firing (real dedicated "Fire" key -- this engine's own "F" pick,
-    // see GalaxyEggbertCnaGame::Update()'s own comment) is genuinely
+    // see GalaxyEggbertGame::Update()'s own comment) is genuinely
     // playable end to end, not just unit-tested. A single free-standing
     // wall a few cells ahead gives the shot real, finite travel distance
     // to actually hit instead of flying off into open air.

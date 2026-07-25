@@ -32,7 +32,7 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
 
         // One request the browser screen made this frame -- the caller
-        // (GalaxyEggbertCnaGame) still owns actually loading/creating the
+        // (GalaxyEggbertGame) still owns actually loading/creating the
         // .vwr file (this class has no WorldRuntime access), matching
         // this project's existing "pending signal consumed by the owning
         // class" idiom (see InteractionSystem's own class comment).
@@ -68,7 +68,7 @@ namespace GalaxyEggbert::Editor
         void SetWorldPath(std::filesystem::path path) noexcept { worldPath_ = std::move(path); }
 
         // The path currently being edited (plan.md EDITOR-108) -- read by
-        // GalaxyEggbertCnaGame after ConsumePlayTestRequested() fires, to
+        // GalaxyEggbertGame after ConsumePlayTestRequested() fires, to
         // know which file to load for the play-test session.
         [[nodiscard]] const std::filesystem::path& GetWorldPath() const noexcept { return worldPath_; }
 
@@ -91,7 +91,7 @@ namespace GalaxyEggbert::Editor
                     Worlds::World& world);
 
         // True exactly once, right after an Update() call that placed or
-        // removed a block -- the caller (GalaxyEggbertCnaGame) should
+        // removed a block -- the caller (GalaxyEggbertGame) should
         // respond by calling its own RebuildWorldPresentation(), the same
         // "rebuild the whole mesh on change" convention TerrainRenderer
         // already uses for LoadMission(). Clears back to false once read,

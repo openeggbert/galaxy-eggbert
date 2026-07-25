@@ -24,7 +24,7 @@ namespace GalaxyEggbert::Game
     // below, plan.md E3D-MIG-130) -- just the counter and its real
     // reset-to-3-on-zero behavior, wired so far only to the one
     // always-active hazard that needed no per-tile-type work at all
-    // (falling off the world, see GalaxyEggbertCnaGame::Update()). This
+    // (falling off the world, see GalaxyEggbertGame::Update()). This
     // does NOT yet unblock full hazard/enemy contact below -- those still
     // need their own per-type behavior (Phase 14/13), not just a lives
     // counter to decrement.
@@ -120,7 +120,7 @@ namespace GalaxyEggbert::Game
     // RideStandY()'s own comment. BlupiController itself still has no
     // knowledge of MobileObjSpec objects (same engine-agnostic split as
     // every other terrain/object fact it doesn't compute itself) -- the
-    // caller (GalaxyEggbertCnaGame::Update()) reads these back and calls
+    // caller (GalaxyEggbertGame::Update()) reads these back and calls
     // BlupiController::RideLift() with them. Real fast-fall tunnelling
     // prevention (the 30px swept multi-step probe) is NOT modeled -- this
     // engine's own gravity/dt doesn't cross a lift's height in one frame
@@ -155,7 +155,7 @@ namespace GalaxyEggbert::Game
         // call kills Blupi via enemy contact, a Died event (EventsThisFrame())
         // fires for the rest of this frame only -- InteractionSystem has no
         // access to BlupiController, so the caller is the one that must
-        // actually respawn Blupi (see GalaxyEggbertCnaGame::Update()).
+        // actually respawn Blupi (see GalaxyEggbertGame::Update()).
         // blupiFacingDX/DZ (plan.md E3D-MIG-160, both default 0 so existing
         // callers/tests are unaffected) are the rounded cardinal-direction
         // grid offset one cell in front of Blupi's current facing (the
@@ -636,7 +636,7 @@ namespace GalaxyEggbert::Game
         // sites record a "pending" voyage request (a VoyageRequested event +
         // whichever ONE endpoint still needs projecting, plus the other,
         // already-resolved endpoint) via `RequestVoyage()`; the caller
-        // (`GalaxyEggbertCnaGame.cpp`, which has `camera_`) looks for a
+        // (`GalaxyEggbertGame.cpp`, which has `camera_`) looks for a
         // VoyageRequested event right after `Update()` returns,
         // projects the world point via `Hud::ProjectWorldToHudSpace()`,
         // and calls `BeginVoyage()` with both fully-resolved endpoints --
@@ -693,7 +693,7 @@ namespace GalaxyEggbert::Game
         //     flies FROM the fixed HUD key position TO the door's own world position).
         //   voyageIsAscend -- true only for the generic-hazard-contact Clear2 coinflip site
         //     (inside Update(), no camera access -- unlike Clear2/Clear3's OTHER 2 real trigger
-        //     sites, fall-off-world and Lava, which live directly in `GalaxyEggbertCnaGame.cpp`
+        //     sites, fall-off-world and Lava, which live directly in `GalaxyEggbertGame.cpp`
         //     and so call `BeginVoyage()` straight away, no pending round-trip needed). When
         //     true, the caller computes end = (projectedX, projectedY - voyageAscendOffsetY)
         //     instead of reading voyageFixedX/Y (which are unused/stale in this mode).
@@ -701,7 +701,7 @@ namespace GalaxyEggbert::Game
         // Death-lock request (death-lock/life-loss-Voyage follow-up) from the 4 real trigger sites
         // living inside Update() itself, which has no `BlupiController&`/camera access (every
         // OTHER real cause -- fall/Lava/Saw/Blitz/Drown/Fan -- is checked directly in
-        // `GalaxyEggbertCnaGame.cpp`, which already has `blupi_` in scope and calls
+        // `GalaxyEggbertGame.cpp`, which already has `blupi_` in scope and calls
         // `blupi_.TriggerDeathLock()` straight away): generic-hazard-contact (Clear1/Clear2 real
         // 50/50 coinflip, `shouldRespawn=false` -- confirmed no `m_blupiRestart=true` near
         // Decor.cpp:5782-5815), dynamite blast (deterministic Clear1, `shouldRespawn=false` --

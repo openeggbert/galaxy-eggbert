@@ -46,7 +46,7 @@ guidance.
 
 ## Source layout
 
-- `src/GalaxyEggbertCNA/` — thin CNA application host and platform wiring.
+- `src/GalaxyEggbertCNA/` — thin CNA application host (`GalaxyEggbertGame`) and platform wiring.
 - `include/GalaxyEggbert/`, `src/GalaxyEggbert/Worlds/` — engine-independent world/data model.
 - `src/GalaxyEggbert/Game/` — canonical game implementation in namespace
   `GalaxyEggbert::Game`; keep game-owned names free of the legacy `GE` prefix.

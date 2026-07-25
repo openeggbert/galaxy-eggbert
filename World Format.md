@@ -380,7 +380,7 @@ Legacy v1 layout, for historical reference only (no longer readable):
 of mobile-eggbert's level-header `region=` field (0-31,
 `mobile-eggbert-reference/05-backgrounds.md`) — it selects
 `Content/backgrounds/decorNNN.png` as this world's background image
-(`GalaxyEggbertCnaGame`, NEXT.md §3, 2026-07-09). Defaults to `0` for worlds
+(`GalaxyEggbertGame`, NEXT.md §3, 2026-07-09). Defaults to `0` for worlds
 that never call `setSkyRegion` (including every world loaded from a v1 file,
 though those no longer load at all post-break). Only 28 of the 32 possible
 ids (0-31) have a real background file — a hand-authored world referencing

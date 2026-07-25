@@ -13,7 +13,7 @@ commits to nothing; it only proposes._
 It is realistic, and **half of the work that makes it possible is already done.** The simulation
 (`BlupiController`, `InteractionSystem`, `WorldRuntime`) is entirely graphics-free — that is
 precisely the purpose of the decoupling / `*ThisFrame()` bus. All rendering lives in
-`GalaxyEggbertCnaGame::Draw()` (~817 lines from line 3100) plus `TerrainRenderer` / `Hud` /
+`GalaxyEggbertGame::Draw()` (~817 lines from line 3100) plus `TerrainRenderer` / `Hud` /
 `ObjectIcons` / the tile helpers / `TileAtlas`.
 
 So the simulation already produces state and `Draw()` merely visualizes it — the seam effectively
@@ -155,7 +155,7 @@ it. Do it incrementally so the game stays runnable the whole time:
    direction, vehicleMode, secretPower)`; HUD elements (640×480 ref space); environment
    (`skyRegion`, background id).
 2. A `SceneFrameBuilder` that reads sim/world state into a `SceneFrame` once per frame (this is where
-   the logic currently inlined in `Draw()`/`GalaxyEggbertCnaGame` moves to).
+   the logic currently inlined in `Draw()`/`GalaxyEggbertGame` moves to).
 3. Repoint `Draw()` to read the `SceneFrame` only — first camera + terrain, then billboards, then
    HUD, verifying the frame is visually unchanged after each slice.
 

@@ -2,7 +2,7 @@
 # INFRA-002 (plan.md §7, "Correctness Infrastructure" vision): golden-image
 # diffing on top of INFRA-001's deterministic capture mode.
 #
-# Runs GalaxyEggbertCNA --golden-capture (see main.cpp / GalaxyEggbertCnaGame::
+# Runs GalaxyEggbertCNA --golden-capture (see main.cpp / GalaxyEggbertGame::
 # EnableGoldenCaptureMode()) and byte-compares the freshly captured
 # golden_frame_NNNN.png files against the approved reference copies committed
 # under tests/golden/. Exact byte comparison, not a perceptual/fuzzy diff --

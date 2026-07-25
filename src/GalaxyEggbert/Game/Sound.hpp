@@ -30,7 +30,7 @@ namespace GalaxyEggbert::Game
 
         // Loads every Content/sounds/soundNNN.wav that actually exists
         // (0..92) -- a missing index is skipped, not an error (mirrors
-        // GalaxyEggbertCnaGame::LoadContent's background-image loader,
+        // GalaxyEggbertGame::LoadContent's background-image loader,
         // which degrades the same way for missing region files).
         void LoadContent();
 

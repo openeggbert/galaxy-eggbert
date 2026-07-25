@@ -1152,7 +1152,7 @@ namespace GalaxyEggbert::Game
                             // This class has no direct sound-instance-lifetime access (its own
                             // `sound` parameter is fire-and-forget `Play()` only), so the actual
                             // start/stop loop control lives in the caller
-                            // (`GalaxyEggbertCnaGame::wasPushingCrate_`) -- this flag is the
+                            // (`GalaxyEggbertGame::wasPushingCrate_`) -- this flag is the
                             // signal it acts on. Deliberately still a plain bool, NOT part of
                             // `events_` (INFRA-007, plan.md §7) -- this is continuous per-frame
                             // state the caller edge-detects itself, not a one-shot event.
@@ -1776,7 +1776,7 @@ namespace GalaxyEggbert::Game
             // Types 201-203 (plan.md PICKUP-069, found 2026-07-16, real Decor.cpp:6088-6115) --
             // lethal decorative objects sharing ObjectType200's real "MoveObject 200-203" range,
             // but NOT Perso itself (200, the placeable decoy, already implemented separately,
-            // handled entirely by TryPerso()/GalaxyEggbertCnaGame.cpp -- not here). Real contact:
+            // handled entirely by TryPerso()/GalaxyEggbertGame.cpp -- not here). Real contact:
             // same Clear1/Clear2 coinflip death as the generic-hazard list above (real
             // BlupiDead(Clear1, Clear2)), Shield/Hide immunity (blupiInvincible), no
             // m_blupiRestart=true anywhere in this real block (shouldRespawn=false, same as the
@@ -1890,7 +1890,7 @@ namespace GalaxyEggbert::Game
             // the pickup's own world position as the voyage's START and a
             // fixed HUD-space point (matching `Hud.cpp`'s own real
             // constants exactly) as its END -- the caller
-            // (`GalaxyEggbertCnaGame.cpp`) projects the world position and
+            // (`GalaxyEggbertGame.cpp`) projects the world position and
             // calls `BeginVoyage()` right after this `Update()` call
             // returns.
             switch (obj.type)

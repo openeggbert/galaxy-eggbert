@@ -508,7 +508,7 @@ cross-checking `table_blupi` for the skate/tank items below), `Up`(7), `Clear1`(
 `m_velocityY` sign the same way the base `Jump`/`Air` split already works — the only vehicle mode
 with its own airborne icon pair), `TakeSkate`/`DeposeSkate`(42/43, wired 2026-07-19 via
 `TriggerOneShotAnim()` at the real Skateboard mount/dismount hook points in
-`GalaxyEggbertCnaGame.cpp` — confirmed the only vehicle mode with a dedicated mount/dismount
+`GalaxyEggbertGame.cpp` — confirmed the only vehicle mode with a dedicated mount/dismount
 pose), `Sucette`(49, via `PickupBusy`), `StopTank`/`MarchTank`(50/51), `FireTank`(53, wired
 2026-07-19 via a new `InteractionSystem::TankFiredThisFrame()` per-frame signal, mirroring the
 existing `CrateBeingPushedThisFrame()` pattern since that class has no `BlupiController` access —

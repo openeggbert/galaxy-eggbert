@@ -274,7 +274,7 @@ namespace GalaxyEggbert::Game
             // the wrong UV rect for them. The icon numbers below are only
             // meaningful when looked up via TileAtlas::GetTileUv()
             // (object-m.png's 440-icon grid) -- see IsObjectMPngSourced()
-            // and GalaxyEggbertCnaGame.cpp's dedicated dispatch, mirroring
+            // and GalaxyEggbertGame.cpp's dedicated dispatch, mirroring
             // the existing IsUniformCubeObject() precedent.
             // Fixed 2026-07-20 -- wrong divisor (missing entirely, i.e. 1,
             // instead of the real Config::ScaleDiv(2)==2, Decor.cpp:8607/
@@ -426,7 +426,7 @@ namespace GalaxyEggbert::Game
             // animated, including their real leading `-1` "invisible frame"
             // delay (3 ticks for 99, 8 for 100) -- the renderer skips
             // drawing this tick when the icon is negative (see
-            // GalaxyEggbertCnaGame.cpp's explo.png billboard pass).
+            // GalaxyEggbertGame.cpp's explo.png billboard pass).
             case GalaxyEggbert::Def::ObjectType::ObjectType99:  return kSploutch2[p % 13];
             case GalaxyEggbert::Def::ObjectType::ObjectType100: return kSploutch3[p % 18];
 

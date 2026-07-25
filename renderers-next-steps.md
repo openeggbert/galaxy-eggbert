@@ -57,7 +57,7 @@ full `ctest` → live headless check → commit → push.
 - **1b. `SceneFrameBuilder`.** A function/class that reads the live sim/world state
   (`BlupiController`, `WorldRuntime`'s `MobileObjSpec` list, camera, `world.skyRegion()`) into a
   `SceneFrame` once per frame. This is where logic currently inlined in
-  `GalaxyEggbertCnaGame::Update`/`Draw` moves to.
+  `GalaxyEggbertGame::Update`/`Draw` moves to.
 - **1c. Repoint `Draw()` to consume only the `SceneFrame`.** Do it in slices — camera + terrain
   first, then billboards/objects, then Blupi — verifying the frame is visually unchanged after each
   slice (this is where the golden harness, Phase 3, pays for itself).

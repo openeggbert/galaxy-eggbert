@@ -402,7 +402,7 @@ namespace GalaxyEggbert::Game
         // the generic real commit timer is `Config::ScaleTime(20)` = 1.0s
         // at this build's pinned 20fps -- matches this engine's own
         // kWaitDurationSeconds-style cross-file convention (owned here,
-        // GalaxyEggbertCnaGame.cpp's own copy drives the actual phase
+        // GalaxyEggbertGame.cpp's own copy drives the actual phase
         // commit). Pause/Resume's own entrance flourish is a SEPARATE,
         // shorter real 0.75s (`ScaleTime(15)`).
         constexpr float kFadeDurationSeconds = 1.0f;

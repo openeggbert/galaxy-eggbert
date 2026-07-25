@@ -693,7 +693,7 @@ namespace GalaxyEggbert::Game
         // above once said "vehicles aren't modeled, so those clauses don't
         // apply", which stopped being true once VehicleMode was added; fixed
         // 2026-07-16 alongside the same gap in the Sucette/Drink/Charge
-        // pickup gates (GalaxyEggbertCnaGame.cpp).
+        // pickup gates (GalaxyEggbertGame.cpp).
         if (m_teleporting || !m_onGround || m_balloon || m_ecrase || m_vehicleMode != VehicleMode::None)
         {
             return false;

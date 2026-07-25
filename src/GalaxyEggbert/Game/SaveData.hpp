@@ -31,7 +31,7 @@ namespace GalaxyEggbert::Game
     //
     // Phase 2 (2026-07-13, plan.md MENU-040..045, real Resume phase):
     // `lives`/`missionNumber`/`hasProgress`, checkpointed the same real
-    // way -- `GalaxyEggbertCnaGame` calls `SetLives()`/`SetMissionNumber()`/
+    // way -- `GalaxyEggbertGame` calls `SetLives()`/`SetMissionNumber()`/
     // `SetHasProgress(true)` + `Save()` right at the real Win/Lost
     // transition (matching the real `MemorizeGamerProgress()` call sites
     // confirmed via research), NOT continuously. Real door-state
@@ -114,7 +114,7 @@ namespace GalaxyEggbert::Game
         // accessor below indexes gamers_[selectedGamer_] with no bounds
         // check of its own, so this is the one place that must keep
         // selectedGamer_ always valid regardless of what a caller passes.
-        // The one real call site today (GalaxyEggbertCnaGame.cpp, the
+        // The one real call site today (GalaxyEggbertGame.cpp, the
         // Init gamer-select buttons) only ever passes 0/1/2, but a public
         // setter shouldn't rely on that staying true forever.
         void SetSelectedGamer(int gamer) noexcept

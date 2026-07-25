@@ -69,7 +69,7 @@ namespace GalaxyEggbert::Game
         void LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
         // Clears in-flight touch/click tracking. Called from
-        // GalaxyEggbertCnaGame::SetPhase() alongside its own debounce
+        // GalaxyEggbertGame::SetPhase() alongside its own debounce
         // resets (matching the real Game1::SetPhase()'s own "clears input
         // debounce state on every transition" behavior) so a drag or
         // button-press in progress at the moment of a KEYBOARD-driven
@@ -322,7 +322,7 @@ namespace GalaxyEggbert::Game
         // Play is the ONE transition among this engine's 5 deferring
         // source phases that is genuinely, always instant in the real
         // game, not merely fast. The caller must pass `bypassFade=true`
-        // to `GalaxyEggbertCnaGame::SetPhase()` for this specific call
+        // to `GalaxyEggbertGame::SetPhase()` for this specific call
         // site (not this class's concern -- `UpdateResume()` only reports
         // which button fired).
         //

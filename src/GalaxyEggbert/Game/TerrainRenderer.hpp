@@ -46,7 +46,7 @@ namespace GalaxyEggbert::Game
         // main object-m.png-based Draw() -- BasicEffect only binds one
         // texture at a time, and grass_top.png is a genuinely separate,
         // galaxy-eggbert-owned asset, not part of the object-m.png atlas.
-        // Caller (GalaxyEggbertCnaGame) owns @p grassEffect and must bind
+        // Caller (GalaxyEggbertGame) owns @p grassEffect and must bind
         // its own grass texture + View/Projection/World before calling.
         // No-op if no icon-107 blocks exist in this World.
         void DrawGrass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,

@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     // Voyage (plan.md `158`) test helper: InteractionSystem has no
     // camera access, so a real pickup only records a THIS-FRAME pending
     // request (InteractionSystem::Update() itself never starts the
-    // actual voyage) -- real projection is GalaxyEggbertCnaGame's own
+    // actual voyage) -- real projection is GalaxyEggbertGame's own
     // ResolvePendingVoyage() job. This helper stands in for that (no real
     // projection needed in a unit test -- just reuses the pending world
     // position directly as one endpoint, matching real behavior closely
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
     // Death-lock/life-loss-Voyage follow-up: real life loss/respawn is now
     // deferred behind a per-cause frozen "lock" duration (70-110 real
     // ticks) then a fixed 40-tick life-loss Voyage, mirroring
-    // GalaxyEggbertCnaGame::ResolveDeathLock()'s own orchestration (which
+    // GalaxyEggbertGame::ResolveDeathLock()'s own orchestration (which
     // this standalone tool has no access to, so it's replicated here).
     // Starts the lock if a DeathLockRequested event fired, then
     // fast-forwards `b`/`w`/`ir` together until it fully resolves (respawn
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
         const float ex = egg->currentX, ey = egg->currentY, ez = egg->currentZ;
         // Real reward is deferred to voyage completion (plan.md `158`) --
         // the first contact requests it; completePendingVoyage() stands in
-        // for GalaxyEggbertCnaGame::ResolvePendingVoyage() + the flight
+        // for GalaxyEggbertGame::ResolvePendingVoyage() + the flight
         // itself. The remaining frames of continued contact (the egg is
         // now inactive) must NOT request/grant a second reward.
         interaction.Update(dt, world, ex, ey, ez, 0.0f, sound);
@@ -3383,7 +3383,7 @@ int main(int argc, char** argv)
 
     // 17.14. Sucette(26)/Drink(30)/Charge(31) real 2-stage pickup delay (plan.md `173`, verified
     // directly against Decor.cpp:6025-6087) -- InteractionSystem's OWN side of this: the
-    // contact-time position getters GalaxyEggbertCnaGame::ResolvePickupFreeze() needs, and
+    // contact-time position getters GalaxyEggbertGame::ResolvePickupFreeze() needs, and
     // RespawnPickupItem() itself. The deferred buff-grant/freeze timing lives entirely in
     // BlupiController (already covered directly in VerifyBlupiMovement) -- this class has no
     // access to it, matching the established decoupling.
@@ -3415,7 +3415,7 @@ int main(int argc, char** argv)
               "PowerGranted event's pickupX/Y/Z capture the real pickup's own contact position");
 
         // Vehicle-mode/Balloon/Ecrase gate (real Decor.cpp:6025-6087) -- caller
-        // (GalaxyEggbertCnaGame::canGrantPower) reports false while Blupi is mounted/ballooned/
+        // (GalaxyEggbertGame::canGrantPower) reports false while Blupi is mounted/ballooned/
         // squashed, matching the real !m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate clause.
         // This class has no vehicle-state access itself, so this only exercises that it honors
         // blupiCanGrantPower=false even with the action button held -- the vehicle-state

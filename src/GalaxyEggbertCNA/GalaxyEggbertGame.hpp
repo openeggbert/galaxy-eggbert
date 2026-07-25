@@ -47,10 +47,10 @@ namespace GalaxyEggbert::CNA
     // a temporary placeholder model (avatars3d/blupi_placeholder/, see its
     // own README.md), not yet a real Blupi model. "C" toggles between modes
     // ("C" is the project's established switch-camera key).
-    class GalaxyEggbertCnaGame final : public Microsoft::Xna::Framework::Game
+    class GalaxyEggbertGame final : public Microsoft::Xna::Framework::Game
     {
     public:
-        GalaxyEggbertCnaGame();
+        GalaxyEggbertGame();
 
         void LoadContent() override;
         void Update(Microsoft::Xna::Framework::GameTime& gameTime) override;
@@ -504,7 +504,7 @@ namespace GalaxyEggbert::CNA
         // simulation at each requested tick until Draw() captures it, so a
         // skipped render cannot accidentally record a later simulation
         // state. `goldenCaptureNextIndex_` walks through
-        // `kGoldenCaptureTicks` (GalaxyEggbertCnaGame.cpp) in Draw().
+        // `kGoldenCaptureTicks` (GalaxyEggbertGame.cpp) in Draw().
         bool goldenCaptureMode_ = false;
         bool goldenCaptureArmed_ = false;
         bool goldenCaptureAwaitingDraw_ = false;

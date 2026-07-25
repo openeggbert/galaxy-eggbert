@@ -53,7 +53,7 @@ namespace GalaxyEggbert::Game
     // so quads submitted last in Draw() reliably render on top. This also
     // repeats this codebase's own earlier lesson: the background quad
     // switched from SpriteBatch to a real 3D quad for a closely-related
-    // composability reason (see GalaxyEggbertCnaGame.hpp's
+    // composability reason (see GalaxyEggbertGame.hpp's
     // backgroundTexture_ comment).
     //
     // The 640x480 reference layout is mapped to the real viewport the same
@@ -65,7 +65,7 @@ namespace GalaxyEggbert::Game
     public:
         // Loads this class's own texture instances (blupi.png/element.png
         // again, plus text.png/pad.png which nothing else loads) -- kept
-        // separate from GalaxyEggbertCnaGame's own instances of the same
+        // separate from GalaxyEggbertGame's own instances of the same
         // files, matching the established one-instance-per-draw-path
         // pattern (see blupiObjectTexture_ vs blupiIconTexture_ there).
         void LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
