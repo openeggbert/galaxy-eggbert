@@ -86,6 +86,12 @@ namespace GalaxyEggbert::Game
         {
             definition.genericContactHazard = true;
         });
+        ForTypes(definitions_, {17, 20}, [](ObjectDefinition& definition)
+        {
+            definition.genericContactHazardFeedback =
+                GenericContactHazardFeedback::Big;
+        });
+        definitions_[3].genericContactHazardCrouchImmune = true;
         ForTypes(definitions_, {3, 16, 96, 97}, [](ObjectDefinition& definition)
         {
             definition.balloonPoppableHazard = true;
@@ -94,6 +100,18 @@ namespace GalaxyEggbert::Game
                                 51, 55}, [](ObjectDefinition& definition)
         {
             definition.standardPickupTouch = true;
+        });
+        ForTypes(definitions_, {4, 32, 33}, [](ObjectDefinition& definition)
+        {
+            definition.smallEnemy = true;
+        });
+        ForTypes(definitions_, {201, 202, 203}, [](ObjectDefinition& definition)
+        {
+            definition.lethalDecorContactHazard = true;
+        });
+        ForTypes(definitions_, {7, 21}, [](ObjectDefinition& definition)
+        {
+            definition.levelExit = true;
         });
 
         ForTypes(definitions_, {
@@ -108,6 +126,8 @@ namespace GalaxyEggbert::Game
         {
             definition.semanticKind = ObjectSemanticKind::Lift;
         });
+        definitions_[47].liftConveyorDirection = LiftConveyorDirection::PositiveX;
+        definitions_[48].liftConveyorDirection = LiftConveyorDirection::NegativeX;
         ForTypes(definitions_, {2, 3, 4, 16, 17, 18, 20, 32, 33, 44, 54, 96, 97},
                  [](ObjectDefinition& definition)
         {

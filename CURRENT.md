@@ -88,9 +88,9 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 ### Ready for an explicitly chosen engineering session
 
-- `INFRA-006`: partial `ObjectType` dispatch migration. Seven isolated families/extractions are done;
-  the remaining cases were surveyed and mostly have genuine per-type divergence. Select a specific
-  candidate before changing it—do not turn it into a broad refactor.
+- None. `INFRA-006`'s final ObjectType audit is complete: pure type membership and parameter rules
+  are registry-backed, while the retained branches are distinct state machines or explicitly scoped
+  cheat commands. Choose a new feature or content task before changing gameplay architecture.
 
 ## Non-negotiable boundaries
 

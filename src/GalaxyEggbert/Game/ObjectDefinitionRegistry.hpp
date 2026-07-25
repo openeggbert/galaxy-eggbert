@@ -53,6 +53,19 @@ namespace GalaxyEggbert::Game
         CellCenter,
     };
 
+    enum class GenericContactHazardFeedback : std::uint8_t
+    {
+        Small,
+        Big,
+    };
+
+    enum class LiftConveyorDirection : std::uint8_t
+    {
+        None,
+        PositiveX,
+        NegativeX,
+    };
+
     struct ObjectDefinition final
     {
         GalaxyEggbert::Def::ObjectType type =
@@ -63,12 +76,20 @@ namespace GalaxyEggbert::Game
         ObjectSemanticKind semanticKind = ObjectSemanticKind::Reserved;
         ObjectVerticalPlacement verticalPlacement =
             ObjectVerticalPlacement::CellCenter;
+        LiftConveyorDirection liftConveyorDirection =
+            LiftConveyorDirection::None;
         bool mobileWorldSupported = false;
         bool patrolMotion = false;
         bool dynamiteDestructible = false;
         bool genericContactHazard = false;
+        GenericContactHazardFeedback genericContactHazardFeedback =
+            GenericContactHazardFeedback::Small;
+        bool genericContactHazardCrouchImmune = false;
         bool balloonPoppableHazard = false;
         bool standardPickupTouch = false;
+        bool smallEnemy = false;
+        bool lethalDecorContactHazard = false;
+        bool levelExit = false;
     };
 
     struct ResolvedObjectVisual final

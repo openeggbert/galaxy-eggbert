@@ -806,12 +806,10 @@ namespace GalaxyEggbert::Game
             }
 
             // Real `BlupiElectro` aura (plan.md `068`) -- checked before
-            // every other per-object branch so a Type4 enemy (also in
-            // IsGenericHazard's own list) is destroyed by the aura rather
+            // every other per-object branch so a small enemy such as Type4
+            // (also in the generic-contact-hazard set) is destroyed by the aura rather
             // than also killing Blupi via hazard contact the same frame.
-            if (blupiCloudActive &&
-                (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
-                 obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33))
+            if (blupiCloudActive && GetObjectDefinition(obj.type).smallEnemy)
             {
                 const float adx = obj.currentX - blupiX;
                 const float ady = obj.currentY - blupiY;
@@ -827,7 +825,7 @@ namespace GalaxyEggbert::Game
             // Perso-decoy/lethal-decor trap (found 2026-07-16, real Decor.cpp:7957-7975 +
             // `Decor::MovePersoDetect()` ~9835-9865) -- resolves the "what does placing a Perso
             // decoy actually DO gameplay-wise" mystery HUD-017's own writeup left open: small
-            // enemies (4/32/33) that patrol into contact with ANY real 200-203 object -- the
+            // small enemies that patrol into contact with ANY avatar-type object -- the
             // placed Perso decoy (200) itself, OR one of the 201-203 lethal-looking decorations
             // (`170`) -- mutually destroy each other. Real effects: an ObjectType8 explosion +
             // channel 10 + SmallShake at the ENEMY's position, then an ObjectType37 dissolve
@@ -835,8 +833,7 @@ namespace GalaxyEggbert::Game
             // Checked before the Cloud aura above in real source's own per-object loop (this
             // engine's own ordering here is a natural adaptation, not a faithfulness question --
             // the two can't both apply to the same enemy the same frame regardless of order).
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
-                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
+            if (GetObjectDefinition(obj.type).smallEnemy)
             {
                 for (auto& other : objects)
                 {
@@ -844,8 +841,8 @@ namespace GalaxyEggbert::Game
                     {
                         continue;
                     }
-                    if (other.type != GalaxyEggbert::Def::ObjectType::ObjectType200 && other.type != GalaxyEggbert::Def::ObjectType::ObjectType201 &&
-                        other.type != GalaxyEggbert::Def::ObjectType::ObjectType202 && other.type != GalaxyEggbert::Def::ObjectType::ObjectType203)
+                    if (GetObjectDefinition(other.type).semanticKind !=
+                        ObjectSemanticKind::Avatar)
                     {
                         continue;
                     }
@@ -921,8 +918,18 @@ namespace GalaxyEggbert::Game
                 {
                     constexpr float kConveyorNudgeSpeed = 0.3f;
                     float nudgeX = 0.0f;
-                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType47) nudgeX = kConveyorNudgeSpeed * dt;
-                    else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType48) nudgeX = -kConveyorNudgeSpeed * dt;
+                    switch (GetObjectDefinition(obj.type).liftConveyorDirection)
+                    {
+                        case LiftConveyorDirection::PositiveX:
+                            nudgeX = kConveyorNudgeSpeed * dt;
+                            break;
+                        case LiftConveyorDirection::NegativeX:
+                            nudgeX = -kConveyorNudgeSpeed * dt;
+                            break;
+                        case LiftConveyorDirection::None:
+                        default:
+                            break;
+                    }
 
                     ridingLift_ = true;
                     rideDeltaX_ = (obj.currentX - riddenLiftOldX) + nudgeX;
@@ -1632,7 +1639,8 @@ namespace GalaxyEggbert::Game
             // balloon-pop either).
             if (GetObjectDefinition(obj.type).genericContactHazard)
             {
-                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType3 && blupiCrouching)
+                if (blupiCrouching &&
+                    GetObjectDefinition(obj.type).genericContactHazardCrouchImmune)
                 {
                     continue;
                 }
@@ -1674,7 +1682,8 @@ namespace GalaxyEggbert::Game
                         // at the SAME site, same fish/bird split:
                         // ObjectType10 for fish/bird, ObjectType8 for every
                         // other hazard type.
-                        if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType17 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType20)
+                        if (GetObjectDefinition(obj.type).genericContactHazardFeedback ==
+                            GenericContactHazardFeedback::Big)
                         {
                             events_.push_back(Event{EventKind::BigShakeTriggered});
                             AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
@@ -1700,8 +1709,7 @@ namespace GalaxyEggbert::Game
             // m_blupiRestart=true anywhere in this real block (shouldRespawn=false, same as the
             // generic-hazard list) -- but ALWAYS channel 10 + SmallShake + an ObjectType10 pop
             // effect (no fish/bird BigShake variant here, unlike the generic-hazard list).
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType201 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType202 ||
-                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType203)
+            if (GetObjectDefinition(obj.type).lethalDecorContactHazard)
             {
                 const float sdx = obj.currentX - blupiX;
                 const float sdy = obj.currentY - blupiY;
@@ -1754,7 +1762,7 @@ namespace GalaxyEggbert::Game
             // known consumer in this engine's own save/ranking scope (not modeled, matching this
             // engine's deliberately-independent SaveData format). Previously this engine only
             // recognized ObjectType7, so a secret exit did nothing at all on contact.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType7 || obj.type == GalaxyEggbert::Def::ObjectType::ObjectType21)
+            if (GetObjectDefinition(obj.type).levelExit)
             {
                 // Level-exit goal: debounced to fire once per contact
                 // "session" (real mobile-eggbert re-checks every 50 ticks

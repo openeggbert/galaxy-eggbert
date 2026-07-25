@@ -6623,7 +6623,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       Full regression clean on all 3 native backends (`build-cna`, `build-cna-vulkan`,
       `cmake-build-debug`): `VerifyBlupiMovement` all-pass, full `ctest` 81/82 (only the
       pre-existing unrelated `easy-gl-resource-smoke-tests` failure).
-- [~] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **pilot done (2026-07-21), full migration still open.**
+- [x] `INFRA-006` (`REMAKE-ANALYSIS.md` P1-2) **done (2026-07-25).**
       Replace the open-coded `if (obj.type == ObjectTypeN)` chains inside
       `GalaxyEggbertGame::Update()` (~2073 lines) and `InteractionSystem::Update()` (~1677
       lines, `ObjectType` referenced 214 times) with a per-type handler table (`{ObjectType →
@@ -6906,6 +6906,19 @@ specifically, same as any other large/risky item elsewhere in this file.
       with only the known unrelated `easy-gl-resource-smoke-tests` excluded, `build-cna-vulkan`
       79/79. No golden capture was required: its scripted input never fires a projectile or creates
       a water bubble, so it cannot exercise this terminal-arrival path.
+
+      **Closure (2026-07-25):** Completed the final audit after the central definition registries
+      landed. `ObjectDefinitionRegistry` now owns every remaining pure runtime membership or
+      parameter rule: Cloud/Perso small enemies (4/32/33), the Perso trap's avatar target category
+      (200-203), generic-hazard feedback and crouch immunity, lethal-decor contact (201-203),
+      level exits (7/21), and the signed conveyor direction for lifts 47/48; the earlier dynamite,
+      generic-contact, balloon-pop, and pickup lists were already migrated by `INFRA-016`.
+      `VerifyDefinitionRegistries` independently checks each property across all 204 ObjectTypes,
+      while existing interaction tests cover the consuming behavior. The remaining raw type checks
+      are deliberately non-uniform state machines (door/dynamite/bridge/follower/shooter/projectile/
+      wasp/creature/mockery) or single-purpose cheat/Perso commands. A generic handler table would
+      only hide that distinct control flow, so no further handler migration is warranted. Verification:
+      full `build-cna` build succeeds with `-j2`; all applicable CTest tests pass.
 - [x] `INFRA-007` (`REMAKE-ANALYSIS.md` P2-1) done (2026-07-21, all 3 steps). Replace the 17
       parallel `*ThisFrame()` one-frame
       boolean flags (`InteractionSystem` → `GalaxyEggbertGame` signal bus) with one typed

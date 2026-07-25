@@ -104,6 +104,29 @@ namespace
         return IsOneOf(raw, {2, 3, 4, 16, 17, 20, 96, 97});
     }
 
+    GalaxyEggbert::Game::GenericContactHazardFeedback
+    ExpectedGenericContactHazardFeedback(int raw)
+    {
+        using GalaxyEggbert::Game::GenericContactHazardFeedback;
+        return IsOneOf(raw, {17, 20})
+            ? GenericContactHazardFeedback::Big
+            : GenericContactHazardFeedback::Small;
+    }
+
+    bool ExpectedGenericContactHazardCrouchImmune(int raw)
+    {
+        return raw == 3;
+    }
+
+    GalaxyEggbert::Game::LiftConveyorDirection
+    ExpectedLiftConveyorDirection(int raw)
+    {
+        using GalaxyEggbert::Game::LiftConveyorDirection;
+        if (raw == 47) return LiftConveyorDirection::PositiveX;
+        if (raw == 48) return LiftConveyorDirection::NegativeX;
+        return LiftConveyorDirection::None;
+    }
+
     bool ExpectedBalloonPoppableHazard(int raw)
     {
         return IsOneOf(raw, {3, 16, 96, 97});
@@ -113,6 +136,26 @@ namespace
     {
         return IsOneOf(raw, {5, 6, 7, 21, 25, 26, 29, 30, 31, 40, 49, 50,
                              51, 55});
+    }
+
+    bool ExpectedSmallEnemy(int raw)
+    {
+        return IsOneOf(raw, {4, 32, 33});
+    }
+
+    bool ExpectedPersoDecoyAvatarTarget(int raw)
+    {
+        return IsOneOf(raw, {200, 201, 202, 203});
+    }
+
+    bool ExpectedLethalDecorContactHazard(int raw)
+    {
+        return IsOneOf(raw, {201, 202, 203});
+    }
+
+    bool ExpectedLevelExit(int raw)
+    {
+        return IsOneOf(raw, {7, 21});
     }
 }
 
@@ -213,10 +256,28 @@ int main()
               "dynamite destructibility is centralized without parity loss");
         Check(definition.genericContactHazard == ExpectedGenericContactHazard(raw),
               "generic contact hazard membership is centralized without parity loss");
+        Check(definition.genericContactHazardFeedback ==
+                  ExpectedGenericContactHazardFeedback(raw),
+              "generic contact hazard feedback is centralized without parity loss");
+        Check(definition.genericContactHazardCrouchImmune ==
+                  ExpectedGenericContactHazardCrouchImmune(raw),
+              "generic contact hazard crouch immunity is centralized without parity loss");
         Check(definition.balloonPoppableHazard == ExpectedBalloonPoppableHazard(raw),
               "balloon-pop hazard membership is centralized without parity loss");
         Check(definition.standardPickupTouch == ExpectedStandardPickupTouch(raw),
               "standard pickup-touch membership is centralized without parity loss");
+        Check(definition.smallEnemy == ExpectedSmallEnemy(raw),
+              "small-enemy membership is centralized without parity loss");
+        Check((definition.semanticKind == ObjectSemanticKind::Avatar) ==
+                  ExpectedPersoDecoyAvatarTarget(raw),
+              "Perso-decoy avatar target category is centralized without parity loss");
+        Check(definition.lethalDecorContactHazard ==
+                  ExpectedLethalDecorContactHazard(raw),
+              "lethal-decor contact membership is centralized without parity loss");
+        Check(definition.levelExit == ExpectedLevelExit(raw),
+              "level-exit membership is centralized without parity loss");
+        Check(definition.liftConveyorDirection == ExpectedLiftConveyorDirection(raw),
+              "lift conveyor direction is centralized without parity loss");
 
         const auto visual0 = objectRegistry.Resolve(type, 0);
         Check(visual0.icon == GetObjIcon(type, 0),

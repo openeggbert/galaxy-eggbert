@@ -9,11 +9,11 @@ rows) was fixed; golden-capture/trace were confirmed to actually run in this con
 through 4 real pushes (abbreviated-SHA, missing `meta-gl` sibling, missing `mobile-eggbert` test
 data — see §3), and confirmed fully green on a real run. Two items from that pass remain
 deliberately open, not silently closed: `INFRA-004`'s unverified-icon table is still bookkeeping
-only, not wired into the renderer/CI as an enforcement gate; `INFRA-006`'s handler-table migration
-is still genuinely partial (7 focused families/extractions done, ~48 `ObjectType`s and 2
-cross-cutting lists remain).
-`INFRA-004` remains intentionally untouched; `INFRA-006`'s latest small, isolated follow-up is
-recorded in §3 below and the broader migration still needs a separately scoped next family.
+only, not wired into the renderer/CI as an enforcement gate; `INFRA-006` is now complete after its
+final behavior audit. Its former pure cross-cutting membership lists and remaining uniform
+parameters now live in `ObjectDefinitionRegistry`; the deliberately retained conditions are
+state-machine branches or narrowly specified cheats, not uncentralized type classifications.
+`INFRA-004` remains intentionally untouched.
 
 Everything else in the backlog still needs the user's own input before proceeding — either
 visual/design judgment (`AscenseurVertigo`/`Suspended` render geometry, seam-line transparency) or
@@ -87,6 +87,23 @@ voxel ids, including render mode, texture, animation, collision, alpha, and game
  classification helpers are thin compatibility accessors.
 The new exhaustive `VerifyDefinitionRegistries` test covers the complete domains and parity
 decisions. The full `-j2` build succeeds and all 91 applicable CTest tests pass._
+
+_`INFRA-006` final audit 2026-07-25 — complete._ The original instruction to replace every
+`ObjectType` condition with a generic handler table was narrowed to the only safe interpretation:
+centralize pure membership/constant rules, but preserve distinct state machines as readable code.
+The audit migrated the shared small-enemy set (`4/32/33`) for Cloud aura and Perso-decoy detection,
+the existing avatar semantic category (`200..203`) for the other side of that trap, generic-hazard
+feedback (Small/Big shake plus the matching explosion), the type-3 crouch exception, lethal-decor
+contact (`201..203`), level-exit membership (`7/21`), and the signed conveyor direction of lifts
+`47/48`. `VerifyDefinitionRegistries` exhaustively checks every `ObjectType0..203`; existing
+interaction tests exercise each consuming mechanism.
+
+The remaining explicit conditions are intentionally retained: door slide, dynamite fuse/blast
+sequencing, bridge construction, follower wake/homing, Blupih/Blupit firing, projectile contact,
+wasp balloon interaction, large-creature turn-state contact, and mockery-taunt selection are
+different state machines or per-type control flow, not constant dispatch. `TryPerso` and the
+normal-exit/treasure/clean-all cheats are likewise single-purpose commands, not parallel runtime
+classification lists. No generic handler abstraction is justified after this audit._
 
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
