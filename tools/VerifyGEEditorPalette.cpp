@@ -90,6 +90,31 @@ int main()
     };
     check(sourceCategories[0].bigDecorIconIds == expectedBigDecor,
           "all eight Scenery billboards use exact Eggbert 2 BigDecor table representatives");
+    int sourceEntryCount = 0;
+    bool everySourceEntryHasExactlyOneImplementation = true;
+    for (const auto& category : sourceCategories)
+    {
+        const std::size_t count = category.buttonIconIds.size();
+        sourceEntryCount += static_cast<int>(count);
+        for (std::size_t index = 0; index < count; ++index)
+        {
+            const auto valueAt = [index](const std::vector<int>& values)
+            {
+                return index < values.size() ? values[index] : 0;
+            };
+            const int implementationCount =
+                (valueAt(category.iconIds) > 0 ? 1 : 0) +
+                (valueAt(category.objectTypeIds) > 0 ? 1 : 0) +
+                (valueAt(category.spawnPointIds) > 0 ? 1 : 0) +
+                (valueAt(category.bigDecorIconIds) > 0 ? 1 : 0);
+            everySourceEntryHasExactlyOneImplementation &=
+                implementationCount == 1;
+        }
+    }
+    check(sourceEntryCount == 96,
+          "the exhaustive source-menu inventory contains all 96 Eggbert 2 entries");
+    check(everySourceEntryHasExactlyOneImplementation,
+          "every source-menu entry has exactly one block, object, spawn, or BigDecor implementation");
 
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
@@ -163,6 +188,77 @@ int main()
         (void)palette.Update(down, kViewportWidth, kViewportHeight);
         return palette.Update(up, kViewportWidth, kViewportHeight);
     };
+
+    {
+        const GEEditorPaletteLayout layout;
+        bool everyPointerSelectionMatches = true;
+        bool anySourceNotice = false;
+        for (std::size_t categoryIndex = 0;
+             categoryIndex < sourceCategories.size(); ++categoryIndex)
+        {
+            const auto& category = sourceCategories[categoryIndex];
+            for (std::size_t itemIndex = 0;
+                 itemIndex < category.buttonIconIds.size(); ++itemIndex)
+            {
+                GEEditorPalette palette;
+                const auto categoryRect =
+                    layout.CategoryButtonRect(static_cast<int>(categoryIndex));
+                (void)click(
+                    palette, (categoryRect.x0 + categoryRect.x1) * 0.5f,
+                    (categoryRect.y0 + categoryRect.y1) * 0.5f);
+                const auto itemRect = layout.PaletteCellRect(
+                    static_cast<int>(itemIndex),
+                    static_cast<int>(category.buttonIconIds.size()),
+                    static_cast<int>(categoryIndex),
+                    kViewportWidth, kViewportHeight);
+                const auto selected = click(
+                    palette, (itemRect.x0 + itemRect.x1) * 0.5f,
+                    (itemRect.y0 + itemRect.y1) * 0.5f);
+
+                const auto valueAt = [itemIndex](const std::vector<int>& values)
+                {
+                    return itemIndex < values.size() ? values[itemIndex] : 0;
+                };
+                const int block = valueAt(category.iconIds);
+                const int object = valueAt(category.objectTypeIds);
+                const int spawn = valueAt(category.spawnPointIds);
+                const int bigDecor = valueAt(category.bigDecorIconIds);
+                bool matches = selected.clickConsumed;
+                if (block > 0)
+                {
+                    matches &= palette.SelectedPlacementKind() ==
+                            GEEditorPalette::PlacementKind::Block &&
+                        palette.SelectedBlockType() ==
+                            static_cast<std::uint16_t>(block);
+                }
+                else if (object > 0)
+                {
+                    matches &= palette.SelectedPlacementKind() ==
+                            GEEditorPalette::PlacementKind::Object &&
+                        palette.SelectedObjectType() ==
+                            GalaxyEggbert::ToObjectType(object);
+                }
+                else if (spawn > 0)
+                {
+                    matches &= palette.SelectedPlacementKind() ==
+                        GEEditorPalette::PlacementKind::SpawnPoint;
+                }
+                else if (bigDecor > 0)
+                {
+                    matches &= palette.SelectedPlacementKind() ==
+                            GEEditorPalette::PlacementKind::BigDecor &&
+                        palette.SelectedBigDecorIcon() ==
+                            static_cast<std::uint16_t>(bigDecor);
+                }
+                everyPointerSelectionMatches &= matches;
+                anySourceNotice |= palette.IsNotYetImplementedNoticeVisible();
+            }
+        }
+        check(everyPointerSelectionMatches,
+              "real pointer clicks select the exact implementation for all 96 source-menu cells");
+        check(!anySourceNotice,
+              "Not yet implemented is unreachable from every Eggbert 2 source-menu cell");
+    }
 
     {
         GEEditorPalette palette;

@@ -5700,9 +5700,9 @@ Standing rules, not one-shot tasks — durable until explicitly revisited with t
 
 ## 6. Development Tooling — 3D World Editor
 
-**Status (2026-07-25): IN PROGRESS.** The original 13 approved milestones (`EDITOR-100` through
-`EDITOR-112`) and follow-up tasks through `EDITOR-126` are implemented and tested. The user has
-now explicitly approved `EDITOR-127`, the exhaustive final source-menu verification. The editor's input, rendering, orchestration, and
+**Status (2026-07-25): COMPLETE.** The original 13 approved milestones (`EDITOR-100` through
+`EDITOR-112`) and follow-up tasks through `EDITOR-127` are implemented and tested. All 96 entries
+in the ten Eggbert 2 source groups now have exactly one implementation. The editor's input, rendering, orchestration, and
 verification remain separated into focused components.
 
 **Pre-resume re-check (2026-07-23)**: before writing any new editor code, re-verified the
@@ -6018,13 +6018,25 @@ Full regression clean on all 3 native backends (same counts as EDITOR-111's own 
       billboard specs; the CNA renderer now rebuilds these specs after live edits and respects
       authored Y. Record, runtime-conversion, real-pointer, editor-history, and persistence tests
       cover the full path.
-- [ ] **EDITOR-127 — prove the complete source menu and remove the temporary fallback.**
+- [x] **EDITOR-127 — prove the complete source menu and remove the temporary fallback.**
       Add an exhaustive regression over every entry in all ten Eggbert 2 groups proving that each
       click selects or activates an implemented block, object, spawn, or BigDecor tool; zero
       mappings and `Not yet implemented.` must no longer be reachable from these source groups.
       Keep the Galaxy-only background group, XYZ controls, delete, play-test, and Stop behavior
       unchanged. Rebuild the native game with at most two jobs, run the complete test suite, and
       visually verify the final 800×480 editor menu before declaring the menu complete.
+      **Done 2026-07-25:** an exhaustive catalogue assertion counts all 96 source entries and
+      requires exactly one non-zero block, object, spawn, or BigDecor mapping per cell. A second
+      exhaustive pass opens every real category and clicks every real item rectangle, checking the
+      precise selected kind/value and proving the temporary notice is unreachable. The clean
+      native game rebuild used two jobs and all 90 maintained project tests passed (the long-known
+      upstream `easy-gl-resource-smoke-tests` case remains excluded). A live 800×480
+      capture (`build-cna/screenshot_hud.png`) was inspected at original resolution: the ten
+      Eggbert-ordered representative buttons form the single left rail; delete/background remain
+      at top left; the red placement preview is visible; XYZ/PLACE and their white coordinate
+      panel fit across the bottom; and the dice and Stop-sign tiles remain distinct at bottom
+      right with no clipping. The temporary direct-editor capture hook was removed before the
+      final rebuild.
 
 ### Known problems / open concerns
 
