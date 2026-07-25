@@ -242,6 +242,14 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     message(STATUS "CNA source: ${CNA_HOME}")
     message(STATUS "easy-3d source: ${EASY3D_HOME}")
 
+    # Prefer the build tree's normal incremental objects over a second copy
+    # in ccache. On this workstation ccache occupied 3.7 GiB while only
+    # 22.7% of cacheable calls were hits, so misses amplified SSD writes.
+    # This is an unforced fresh-build default: callers can still opt in with
+    # -DCNA_USE_CCACHE=ON, and an existing cache choice remains untouched.
+    set(CNA_USE_CCACHE OFF CACHE BOOL
+        "Use ccache for CNA and sharp-runtime builds when available")
+
     # Default graphics backend for GalaxyEggbertCNA -- EasyGL (2026-07-18,
     # user request: make EasyGL the strongest/default backend, while keeping
     # other backends buildable for the future). BEFORE add_subdirectory(CNA_HOME)
@@ -433,81 +441,47 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     endif()
 
     # -------------------------------------------------------------------
-    # Mobile Eggbert asset reuse (plan.md E3D-MIG-013/030 — decided strategy)
+    # Runtime asset staging
     #
-    # mobile-eggbert is read-only: its Content/ and worlds/ directories are
-    # copied next to the GalaxyEggbertCNA binary at build time, never
-    # modified, and never committed into this repository (the destination
-    # is inside the git-ignored build output directory). This makes the
-    # sprite sheets, sounds, and world files available on disk for later
-    # phases (terrain/Blupi rendering, sound, world loading) — nothing in
-    # GalaxyEggbertCNA loads or reads them yet.
+    # Runtime assets used by GalaxyEggbertCNA are source-tracked here. Stage
+    # only changed files after a relink. The old mobile-eggbert Content/
+    # copy rewrote ~462 MiB every time, including ~437 MiB of unused 4x
+    # artwork; the game only reads this repository's ~22 MiB Content tree.
     # -------------------------------------------------------------------
-    set(MOBILE_EGGBERT_HOME "" CACHE PATH
-        "Path to the mobile-eggbert source directory (read-only asset source). Defaults to ../mobile-eggbert.")
-    if(NOT MOBILE_EGGBERT_HOME)
-        set(MOBILE_EGGBERT_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../mobile-eggbert")
-    endif()
+    function(ge_stage_runtime_directory sourceDirectory destinationName)
+        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+                "-DGE_COPY_SOURCE=${sourceDirectory}"
+                "-DGE_COPY_DESTINATION=$<TARGET_FILE_DIR:GalaxyEggbertCNA>/${destinationName}"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyDirectoryIfDifferent.cmake"
+            COMMENT "Updating ${destinationName}/ runtime assets (changed files only)"
+            VERBATIM)
+    endfunction()
 
-    if(NOT EMSCRIPTEN AND NOT ANDROID)
-        foreach(_me_dir Content worlds)
-            if(EXISTS "${MOBILE_EGGBERT_HOME}/${_me_dir}")
-                add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                        "${MOBILE_EGGBERT_HOME}/${_me_dir}"
-                        "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/${_me_dir}"
-                    COMMENT "Copying mobile-eggbert ${_me_dir}/ next to GalaxyEggbertCNA (read-only source, not committed)"
-                )
-            else()
-                message(WARNING
-                    "GalaxyEggbertCNA: mobile-eggbert ${_me_dir}/ not found at "
-                    "'${MOBILE_EGGBERT_HOME}/${_me_dir}'. GalaxyEggbertCNA will still build, but "
-                    "will have no ${_me_dir}/ next to it. Set -DMOBILE_EGGBERT_HOME=<path> if "
-                    "mobile-eggbert lives elsewhere.")
-            endif()
-        endforeach()
+    if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Content")
+        ge_stage_runtime_directory("${CMAKE_CURRENT_SOURCE_DIR}/Content" "Content")
     endif()
 
     # galaxy-eggbert's own hand-authored 3D worlds (plan.md E3D-MIG-058) —
-    # committed to this repository, copied next to the binary like Content/worlds above.
+    # committed to this repository and staged next to the executable.
     if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/worlds3d")
-        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_CURRENT_SOURCE_DIR}/worlds3d"
-                "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/worlds3d"
-            COMMENT "Copying worlds3d/ next to GalaxyEggbertCNA"
-        )
+        ge_stage_runtime_directory("${CMAKE_CURRENT_SOURCE_DIR}/worlds3d" "worlds3d")
     endif()
 
     # galaxy-eggbert's own 3D-specific textures (e.g. grass_top.png, icon 107 —
-    # NEXT.md §8 task 3) — genuinely owned by galaxy-eggbert, NOT part of
-    # mobile-eggbert's Content/ (which gets fully re-copied fresh from
-    # mobile-eggbert on every build, so anything placed there would be wiped
-    # out; see the "Copying mobile-eggbert Content/" step above). Same
-    # copy-next-to-binary pattern as worlds3d/ above.
+    # NEXT.md §8 task 3). Same changed-files-only staging as worlds3d/ above.
     if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/textures3d")
-        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_CURRENT_SOURCE_DIR}/textures3d"
-                "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/textures3d"
-            COMMENT "Copying textures3d/ next to GalaxyEggbertCNA"
-        )
+        ge_stage_runtime_directory("${CMAKE_CURRENT_SOURCE_DIR}/textures3d" "textures3d")
     endif()
 
     # Third-person-mode 3D character model(s) (NEXT.md §3, 2026-07-09) --
     # loaded via CNA's ContentManager, whose RootDirectory is pointed at this
-    # directory in LoadContent() (not "Content", to avoid the mobile-eggbert
-    # Content/ wipe-and-recopy issue above). Currently just a temporary
+    # directory in LoadContent(). Currently just a temporary
     # placeholder (avatars3d/blupi_placeholder/, see its own README.md) until
     # a real 3D Blupi model exists. Same copy-next-to-binary pattern as
     # worlds3d//textures3d above.
     if(NOT EMSCRIPTEN AND NOT ANDROID AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/avatars3d")
-        add_custom_command(TARGET GalaxyEggbertCNA POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_CURRENT_SOURCE_DIR}/avatars3d"
-                "$<TARGET_FILE_DIR:GalaxyEggbertCNA>/avatars3d"
-            COMMENT "Copying avatars3d/ next to GalaxyEggbertCNA"
-        )
+        ge_stage_runtime_directory("${CMAKE_CURRENT_SOURCE_DIR}/avatars3d" "avatars3d")
     endif()
 
     # -------------------------------------------------------------------
@@ -516,12 +490,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # .wasm's virtual filesystem at link time via --preload-file instead of
     # copied next to a native binary, since there is no "next to the
     # binary" on the web. Only `Content/icons`, `Content/backgrounds`, and
-    # `Content/sounds` are preloaded from mobile-eggbert's Content/ tree
+    # `Content/sounds` are preloaded from this repository's Content/ tree
     # (not the full ~460MB directory) -- confirmed via direct grep that
     # GalaxyEggbertCNA never reads `Content/icons4x/` or
-    # `Content/backgrounds4x/` (mobile-eggbert's own 4x-scale asset
-    # variants, ~437MB combined, genuinely unused here), keeping the web
-    # download to a reasonable size (~25MB of assets).
+    # `Content/backgrounds4x/` (the 4x-scale variants in mobile-eggbert,
+    # ~437MB combined, are genuinely unused here), keeping the web download
+    # to a reasonable size (~25MB of assets).
     # -------------------------------------------------------------------
     if(EMSCRIPTEN)
         set_target_properties(GalaxyEggbertCNA PROPERTIES SUFFIX ".html")
@@ -549,15 +523,15 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js"
         )
 
-        foreach(_me_dir Content/icons Content/backgrounds Content/sounds)
-            if(EXISTS "${MOBILE_EGGBERT_HOME}/${_me_dir}")
+        foreach(_content_dir Content/icons Content/backgrounds Content/sounds)
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_content_dir}")
                 target_link_options(GalaxyEggbertCNA PRIVATE
-                    "SHELL:--preload-file ${MOBILE_EGGBERT_HOME}/${_me_dir}@/${_me_dir}")
+                    "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/${_content_dir}@/${_content_dir}")
             else()
                 message(WARNING
-                    "GalaxyEggbertCNA (web): mobile-eggbert ${_me_dir}/ not found at "
-                    "'${MOBILE_EGGBERT_HOME}/${_me_dir}'. The web build will still link, but "
-                    "will have no ${_me_dir}/ in its virtual filesystem.")
+                    "GalaxyEggbertCNA (web): ${_content_dir}/ not found at "
+                    "'${CMAKE_CURRENT_SOURCE_DIR}/${_content_dir}'. The web build will still link, but "
+                    "will have no ${_content_dir}/ in its virtual filesystem.")
             endif()
         endforeach()
 
@@ -658,9 +632,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     # Scripted editor verification is split by responsibility so failures
     # identify the broken subsystem instead of disappearing inside one
-    # monolithic executable. The support sources stay shared because the
-    # focused tests intentionally exercise the real editor integration.
-    set(GE_EDITOR_VERIFY_SUPPORT_SOURCES
+    # monolithic executable. Compile their shared real-editor support once:
+    # repeating it in all four executables created four identical object
+    # trees and rewrote them after every common editor change.
+    add_library(GEEditorVerifySupport OBJECT
         src/GalaxyEggbertCNA/Editor/GEWorldEditor.cpp
         src/GalaxyEggbertCNA/Editor/GEWorldEditorUpdate.cpp
         src/GalaxyEggbertCNA/Editor/GEVoxelRaycast.cpp
@@ -680,16 +655,24 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/Game/GEObjectIcons.cpp
         ${GE_SHARED_SOURCES}
     )
+    target_include_directories(GEEditorVerifySupport PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
+    )
+    target_link_libraries(GEEditorVerifySupport PRIVATE CNA SHARP_RUNTIME)
+    if(TARGET easy3d::easy3d)
+        target_link_libraries(GEEditorVerifySupport PRIVATE easy3d::easy3d)
+    else()
+        target_link_libraries(GEEditorVerifySupport PRIVATE easy3d)
+    endif()
 
     function(ge_add_editor_verify target source)
-        add_executable(${target}
-            ${source}
-            ${GE_EDITOR_VERIFY_SUPPORT_SOURCES}
-        )
+        add_executable(${target} ${source})
         target_include_directories(${target} PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
             ${CMAKE_CURRENT_SOURCE_DIR}/src/GalaxyEggbertCNA
         )
+        target_link_libraries(${target} PRIVATE GEEditorVerifySupport)
         if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
             target_link_libraries(${target} PRIVATE
                 -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group

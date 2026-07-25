@@ -2211,6 +2211,23 @@ anything that was specific to the dead Simple3D/U3D/Nova3D/Android direction is 
       FFmpeg, and C++ runtime libraries intentionally remain distribution dependencies. A real
       desktop launch was not re-verified here because this environment's Xvfb has no usable video
       device even for the existing native build.
+- [x] BUILD-012 — Reduce local build write amplification — **done 2026-07-25**. A native game
+      relink previously ran `copy_directory` over the sibling `mobile-eggbert/Content` tree
+      (~459 MiB), including ~437 MiB of `icons4x`/`backgrounds4x` artwork that Galaxy Eggbert
+      never reads. Runtime staging now uses this repository's source-tracked `Content` (~22 MiB)
+      and a `copy_if_different` traversal for it, `worlds3d`, `textures3d`, and `avatars3d`.
+      A measured second traversal preserved inode, size, mtime, and ctime, confirming unchanged
+      assets cause no data or metadata rewrite. Web preloads use the same local `Content`
+      directories, removing the obsolete build-time asset dependency on the sibling repository.
+      The four focused editor verification programs now share one CMake OBJECT library for their
+      ~13 MiB common editor support object tree instead of compiling four copies after each common
+      source change; no extra static archive is written. Fresh Galaxy Eggbert build directories
+      now default CNA's `ccache` integration off (explicit `-DCNA_USE_CCACHE=ON` still overrides
+      it): the observed global cache occupied 3.7 GiB while its hit rate was only 22.7%, so most
+      compiler calls were writing a second cached result. The global cache itself and existing
+      stale files in old build trees were deliberately not deleted. Verification: a real
+      `GalaxyEggbertCNA` relink staged only the changed-file source set, an immediate second `-j4`
+      build performed no relink/staging, and all 84 applicable tests passed.
 
 Dropped (dead Simple3D/U3D/Nova3D/Android direction, do not carry forward): old BUILD-001..002 as
 originally scoped to `GalaxyEggbertSimple3D`/U3D, old BUILD-004 (Android via U3D/Nova3D), old
